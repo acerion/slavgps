@@ -45,14 +45,14 @@ namespace SlavGPS {
 		MapSourceTms(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 		~MapSourceTms();
 
-		bool is_direct_file_access();
-		bool is_mbtiles();
-		bool is_osm_meta_tiles();
+		bool is_direct_file_access(void) const;
+		bool is_mbtiles(void) const;
+		bool is_osm_meta_tiles(void) const;
 
-		bool supports_download_only_new();
+		bool supports_download_only_new(void) const;
 
-		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
-		void tile_to_center_coord(TileInfo * src, Coord & dest_coord);
+		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const;
+		void tile_to_center_coord(TileInfo * src, Coord & dest_coord) const;
 
 		const QString get_server_path(TileInfo * src) const;
 	};

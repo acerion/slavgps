@@ -55,7 +55,7 @@ using namespace SlavGPS;
 /* initialisation */
 void SlavGPS::osm_init(void)
 {
-	MapSource * mapnik_type = new MapSourceSlippy(MAP_ID_OSM_MAPNIK, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%1/%2/%3.png");
+	MapSource * mapnik_type = new MapSourceSlippy(MapTypeID::OSM_MAPNIK, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%1/%2/%3.png");
 	mapnik_type->set_name("OSM-Mapnik");
 	mapnik_type->dl_options.check_file_server_time = false;
 	mapnik_type->dl_options.use_etag = true;
@@ -65,7 +65,7 @@ void SlavGPS::osm_init(void)
 	mapnik_type->set_license("CC-BY-SA");
 	mapnik_type->set_license_url("http://www.openstreetmap.org/copyright");
 
-	MapSource * cycle_type = new MapSourceSlippy(MAP_ID_OSM_CYCLE, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%1/%2/%3.png");
+	MapSource * cycle_type = new MapSourceSlippy(MapTypeID::OSM_CYCLE, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%1/%2/%3.png");
 	cycle_type->set_name("OSM-Cycle");
 	cycle_type->dl_options.check_file_server_time = true;
 	cycle_type->dl_options.use_etag = false;
@@ -75,7 +75,7 @@ void SlavGPS::osm_init(void)
 	cycle_type->set_license("CC-BY-SA");
 	cycle_type->set_license_url("http://www.openstreetmap.org/copyright");
 
-	MapSource * transport_type = new MapSourceSlippy(MAP_ID_OSM_TRANSPORT, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%1/%2/%3.png");
+	MapSource * transport_type = new MapSourceSlippy(MapTypeID::OSM_TRANSPORT, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%1/%2/%3.png");
 	transport_type->set_name("OSM-Transport");
 	transport_type->dl_options.check_file_server_time = true;
 	transport_type->dl_options.use_etag = false;
@@ -85,7 +85,7 @@ void SlavGPS::osm_init(void)
 	transport_type->set_license("CC-BY-SA");
 	transport_type->set_license_url("http://www.openstreetmap.org/copyright");
 
-	MapSource * mapquest_type = new MapSourceSlippy(MAP_ID_MAPQUEST_OSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%1/%2/%3.png");
+	MapSource * mapquest_type = new MapSourceSlippy(MapTypeID::MAPQUEST_OSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%1/%2/%3.png");
 	mapquest_type->set_name("OSM-MapQuest");
 	mapquest_type->dl_options.check_file_server_time = true;
 	mapquest_type->dl_options.use_etag = false;
@@ -95,7 +95,7 @@ void SlavGPS::osm_init(void)
 	mapquest_type->set_license("MapQuest Specific");
 	mapquest_type->set_license_url("http://developer.mapquest.com/web/info/terms-of-use");
 
-	MapSource * hot_type = new MapSourceSlippy(MAP_ID_OSM_HUMANITARIAN, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%1/%2/%3.png");
+	MapSource * hot_type = new MapSourceSlippy(MapTypeID::OSM_HUMANITARIAN, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%1/%2/%3.png");
 	hot_type->set_name("OSM-Humanitarian");
 	hot_type->dl_options.check_file_server_time = true;
 	hot_type->dl_options.use_etag = false;
@@ -106,13 +106,13 @@ void SlavGPS::osm_init(void)
 	hot_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	/* No cache needed for this type. */
-	MapSource * direct_type = new MapSourceSlippy(MAP_ID_OSM_ON_DISK, QObject::tr("On Disk OSM Tile Format"), NULL, NULL);
+	MapSource * direct_type = new MapSourceSlippy(MapTypeID::OSM_ON_DISK, QObject::tr("On Disk OSM Tile Format"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
 	direct_type->set_copyright("© OpenStreetMap contributors"); // probably
 	direct_type->is_direct_file_access_flag = true;
 
 	/* No cache needed for this type. */
-	MapSource * mbtiles_type = new MapSourceSlippy(MAP_ID_MBTILES, QObject::tr("MBTiles File"), NULL, NULL);
+	MapSource * mbtiles_type = new MapSourceSlippy(MapTypeID::MBTILES, QObject::tr("MBTiles File"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
 	mbtiles_type->set_copyright("© OpenStreetMap contributors"); // probably
 	mbtiles_type->is_direct_file_access_flag = true;
@@ -120,7 +120,7 @@ void SlavGPS::osm_init(void)
 
 
 	/* No cache needed for this type. */
-	MapSource * metatiles_type = new MapSourceSlippy(MAP_ID_OSM_METATILES, QObject::tr("OSM Metatiles"), NULL, NULL);
+	MapSource * metatiles_type = new MapSourceSlippy(MapTypeID::OSM_METATILES, QObject::tr("OSM Metatiles"), NULL, NULL);
 	/* For using your own generated data assumed you know the license already! */
 	metatiles_type->set_copyright("© OpenStreetMap contributors"); // probably
 	metatiles_type->is_direct_file_access_flag = true;

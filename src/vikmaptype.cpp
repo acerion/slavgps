@@ -93,7 +93,7 @@ char * VikMapType::map_type_get_label()
 
 
 
-uint16_t VikMapType::get_tilesize_x()
+uint16_t VikMapType::get_tilesize_x(void) const
 {
 	return tilesize_x;
 }
@@ -101,7 +101,7 @@ uint16_t VikMapType::get_tilesize_x()
 
 
 
-uint16_t VikMapType::get_tilesize_y()
+uint16_t VikMapType::get_tilesize_y(void) const
 {
 	return tilesize_y;
 }

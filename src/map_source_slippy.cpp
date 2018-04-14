@@ -84,7 +84,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 	this->logo = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement this. */
 
 	this->set_name(map.name);
-	this->map_type = map.map_type;
+	this->map_type_id = map.map_type_id;
 	this->set_label(map.label);
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -115,11 +115,11 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 
 
 
-MapSourceSlippy::MapSourceSlippy(MapTypeID new_map_type, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
+MapSourceSlippy::MapSourceSlippy(MapTypeID new_map_type_id, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
-	qDebug() << "II" PREFIX << "called VikSlippy constructor with id" << (int) new_map_type;
+	qDebug() << "II" PREFIX << "called VikSlippy constructor with id" << (int) new_map_type_id;
 
-	this->map_type = new_map_type;
+	this->map_type_id = new_map_type_id;
 	this->label = new_label;
 	this->server_hostname = new_server_hostname;
 	this->server_path_format = new_server_path_format;
@@ -136,15 +136,15 @@ MapSourceSlippy::~MapSourceSlippy()
 
 
 
-bool MapSourceSlippy::is_direct_file_access()
+bool MapSourceSlippy::is_direct_file_access(void) const
 {
-	return is_direct_file_access_flag;
+	return this->is_direct_file_access_flag;
 }
 
 
 
 
-bool MapSourceSlippy::is_mbtiles()
+bool MapSourceSlippy::is_mbtiles(void) const
 {
 	return is_mbtiles_flag;
 }
@@ -152,7 +152,7 @@ bool MapSourceSlippy::is_mbtiles()
 
 
 
-bool MapSourceSlippy::is_osm_meta_tiles()
+bool MapSourceSlippy::is_osm_meta_tiles(void) const
 {
 	return is_osm_meta_tiles_flag;
 }
@@ -160,7 +160,7 @@ bool MapSourceSlippy::is_osm_meta_tiles()
 
 
 
-bool MapSourceSlippy::supports_download_only_new()
+bool MapSourceSlippy::supports_download_only_new(void) const
 {
 	return this->dl_options.check_file_server_time || this->dl_options.use_etag;
 }
@@ -168,7 +168,7 @@ bool MapSourceSlippy::supports_download_only_new()
 
 
 
-bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest)
+bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const
 {
 	bool result = map_utils_coord_to_iTMS(src_coord, xzoom, yzoom, dest);
 	return result;
@@ -177,7 +177,7 @@ bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, doubl
 
 
 
-void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
+void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
 {
 	dest_coord = map_utils_iTMS_to_center_coord(src);
 }

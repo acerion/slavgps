@@ -74,9 +74,9 @@ MapSourceTms::~MapSourceTms()
 
 
 
-MapSourceTms::MapSourceTms(MapTypeID new_map_type, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
+MapSourceTms::MapSourceTms(MapTypeID new_map_type_id, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
-	this->map_type = new_map_type;
+	this->map_type_id = new_map_type_id;
 	this->label = new_label;
 	this->server_hostname = new_server_hostname;
 	this->server_path_format = new_server_path_format;
@@ -85,7 +85,7 @@ MapSourceTms::MapSourceTms(MapTypeID new_map_type, const QString & new_label, co
 
 
 
-bool MapSourceTms::is_direct_file_access()
+bool MapSourceTms::is_direct_file_access(void) const
 {
 	return false;
 }
@@ -93,7 +93,7 @@ bool MapSourceTms::is_direct_file_access()
 
 
 
-bool MapSourceTms::is_mbtiles()
+bool MapSourceTms::is_mbtiles(void) const
 {
 	return false;
 }
@@ -101,7 +101,7 @@ bool MapSourceTms::is_mbtiles()
 
 
 
-bool MapSourceTms::is_osm_meta_tiles()
+bool MapSourceTms::is_osm_meta_tiles(void) const
 {
 	return false;
 }
@@ -109,7 +109,7 @@ bool MapSourceTms::is_osm_meta_tiles()
 
 
 
-bool MapSourceTms::supports_download_only_new()
+bool MapSourceTms::supports_download_only_new(void) const
 {
 	return this->dl_options.check_file_server_time;
 }
@@ -117,7 +117,7 @@ bool MapSourceTms::supports_download_only_new()
 
 
 
-bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest)
+bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const
 {
 	assert (src_coord.mode == CoordMode::LATLON);
 
@@ -147,7 +147,7 @@ bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double y
 
 
 
-void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
+void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
 {
 	double socalled_mpp;
 	if (src->scale >= 0) {

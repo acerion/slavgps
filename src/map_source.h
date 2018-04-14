@@ -57,28 +57,29 @@ namespace SlavGPS {
 		virtual const QString get_server_path(TileInfo * src) const;
 
 		QString get_name(void) const;
-		MapTypeID get_map_type(void) const;
+		MapTypeID get_map_type_id(void) const;
 		QString get_label(void) const;
-		uint16_t get_tilesize_x();
-		uint16_t get_tilesize_y();
+		uint16_t get_tilesize_x(void) const;
+		uint16_t get_tilesize_y(void) const;
 		ViewportDrawMode get_drawmode(void) const;
 
-		virtual bool is_direct_file_access();
-		virtual bool is_mbtiles();
-		virtual bool is_osm_meta_tiles();
+		/* TODO: do these need to be virtual methods? */
+		virtual bool is_direct_file_access(void) const;
+		virtual bool is_mbtiles(void) const;
+		virtual bool is_osm_meta_tiles(void) const;
 
-		virtual bool supports_download_only_new();
+		virtual bool supports_download_only_new(void) const;
 
-		uint8_t get_zoom_min();
-		uint8_t get_zoom_max();
-		double get_lat_min();
-		double get_lat_max();
-		double get_lon_min();
-		double get_lon_max();
+		uint8_t get_zoom_min(void) const;
+		uint8_t get_zoom_max(void) const;
+		double get_lat_min(void) const;
+		double get_lat_max(void) const;
+		double get_lon_min(void) const;
+		double get_lon_max(void) const;
 		QString get_file_extension(void) const;
 
-		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
-		virtual void tile_to_center_coord(TileInfo * src, Coord & dest_coord);
+		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const;
+		virtual void tile_to_center_coord(TileInfo * src, Coord & dest_coord) const;
 
 		virtual DownloadResult download(TileInfo * src, const QString & dest_file_path, DownloadHandle * dl_handle);
 		DownloadHandle * download_handle_init();
@@ -87,7 +88,7 @@ namespace SlavGPS {
 		const DownloadOptions * get_download_options(void) const;
 
 		void set_name(const QString & name);
-		void set_map_type(MapTypeID map_type);
+		void set_map_type_id(MapTypeID map_type_id);
 		void set_label(const QString & label);
 		void set_tilesize_x(uint16_t tilesize_x);
 		void set_tilesize_y(uint16_t tilesize_y);
@@ -105,9 +106,9 @@ namespace SlavGPS {
 		QString license_url;   /* The URL of the license of the map source. */
 		QPixmap * logo = NULL;
 
-		QString name;       /* The name of the map that may be used as the file cache directory. */
-		MapTypeID map_type; /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
-		QString label;      /* The label of the map source. */
+		QString name;          /* The name of the map that may be used as the file cache directory. */
+		MapTypeID map_type_id; /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
+		QString label;         /* The label of the map source. */
 
 		uint16_t tilesize_x; /* The size of the tile (x). */
 		uint16_t tilesize_y; /* The size of the tile (x). */

@@ -816,11 +816,11 @@ void CommandLineOptions::apply(Window * window)
 		viewport->set_zoom(mpp);
 	}
 
-	if (this->map_type_id != MAP_TYPE_ID_INITIAL) {
+	if (this->map_type_id != MapTypeID::Initial) {
 		/* Some value selected in command line. */
 
 		MapTypeID the_type_id = this->map_type_id;
-		if (the_type_id == MAP_TYPE_ID_DEFAULT) {
+		if (the_type_id == MapTypeID::Default) {
 			the_type_id = LayerMap::get_default_map_type();
 		}
 

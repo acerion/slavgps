@@ -56,7 +56,7 @@ MapSource::MapSource()
 	fprintf(stderr, "MapSource regular constructor called\n");
 
 	this->name = QObject::tr("Unknown");
-	this->map_type = MAP_TYPE_ID_INITIAL;
+	this->map_type_id = MapTypeID::Initial;
 	this->label = "<no-set>";
 
 	tilesize_x = 256;
@@ -103,9 +103,9 @@ MapSource & MapSource::operator=(MapSource map)
 	this->license_url = map.license_url;
 	this->logo        = NULL;  //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
-	this->name       = map.name;
-	this->map_type   = map.map_type;
-	this->label      = map.label;
+	this->name        = map.name;
+	this->map_type_id = map.map_type_id;
+	this->label       = map.label;
 
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -146,9 +146,9 @@ MapSource::MapSource(MapSource & map)
 	this->license_url = map.license_url;
 	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
-	this->name       = map.name;
-	this->map_type   = map.map_type;
-	this->label      = map.label;
+	this->name        = map.name;
+	this->map_type_id = map.map_type_id;
+	this->label       = map.label;
 
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -192,9 +192,9 @@ void MapSource::set_name(const QString & new_name)
 
 
 
-void MapSource::set_map_type(MapTypeID new_map_type)
+void MapSource::set_map_type_id(MapTypeID new_map_type_id)
 {
-	this->map_type = new_map_type;
+	this->map_type_id = new_map_type_id;
 }
 
 
@@ -312,10 +312,10 @@ QString MapSource::get_name(void) const
 
 
 
-MapTypeID MapSource::get_map_type(void) const
+MapTypeID MapSource::get_map_type_id(void) const
 {
-	qDebug() << "DD" PREFIX << "returning map type" << (int) this->map_type << "for map" << this->label;
-	return this->map_type;
+	qDebug() << "DD" PREFIX << "returning map type" << (int) this->map_type_id << "for map" << this->label;
+	return this->map_type_id;
 }
 
 
@@ -329,7 +329,7 @@ QString MapSource::get_label(void) const
 
 
 
-uint16_t MapSource::get_tilesize_x()
+uint16_t MapSource::get_tilesize_x(void) const
 {
 	return tilesize_x;
 }
@@ -337,7 +337,7 @@ uint16_t MapSource::get_tilesize_x()
 
 
 
-uint16_t MapSource::get_tilesize_y()
+uint16_t MapSource::get_tilesize_y(void) const
 {
 	return tilesize_y;
 }
@@ -359,9 +359,9 @@ ViewportDrawMode MapSource::get_drawmode(void) const
  * Return true when we can bypass all this download malarky.
  * Treat the files as a pre generated data set in OSM tile server layout: tiledir/%d/%d/%d.png
  */
-bool MapSource::is_direct_file_access()
+bool MapSource::is_direct_file_access(void) const
 {
-	return is_direct_file_access_flag;
+	return this->is_direct_file_access_flag;
 }
 
 
@@ -374,7 +374,7 @@ bool MapSource::is_direct_file_access()
  * See http://github.com/mapbox/mbtiles-spec
  * (Read Only ATM)
  */
-bool MapSource::is_mbtiles()
+bool MapSource::is_mbtiles(void) const
 {
 	fprintf(stderr, "MapSource: is_mbtiles\n");
 	return is_mbtiles_flag;
@@ -389,7 +389,7 @@ bool MapSource::is_mbtiles()
  * Treat the files as a pre generated data set directly by tirex or renderd
  * tiledir/Z/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy].meta
  */
-bool MapSource::is_osm_meta_tiles()
+bool MapSource::is_osm_meta_tiles(void) const
 {
 	return is_osm_meta_tiles_flag;
 }
@@ -397,7 +397,7 @@ bool MapSource::is_osm_meta_tiles()
 
 
 
-bool MapSource::supports_download_only_new()
+bool MapSource::supports_download_only_new(void) const
 {
 	return false;
 }
@@ -405,7 +405,7 @@ bool MapSource::supports_download_only_new()
 
 
 
-uint8_t MapSource::get_zoom_min()
+uint8_t MapSource::get_zoom_min(void) const
 {
 	return zoom_min;
 }
@@ -413,7 +413,7 @@ uint8_t MapSource::get_zoom_min()
 
 
 
-uint8_t MapSource::get_zoom_max()
+uint8_t MapSource::get_zoom_max(void) const
 {
 	return zoom_max;
 }
@@ -421,7 +421,7 @@ uint8_t MapSource::get_zoom_max()
 
 
 
-double MapSource::get_lat_max()
+double MapSource::get_lat_max(void) const
 {
 	return lat_max;
 }
@@ -429,7 +429,7 @@ double MapSource::get_lat_max()
 
 
 
-double MapSource::get_lat_min()
+double MapSource::get_lat_min(void) const
 {
 	return lat_min;
 }
@@ -437,7 +437,7 @@ double MapSource::get_lat_min()
 
 
 
-double MapSource::get_lon_max()
+double MapSource::get_lon_max(void) const
 {
 	return lon_max;
 }
@@ -445,7 +445,7 @@ double MapSource::get_lon_max()
 
 
 
-double MapSource::get_lon_min()
+double MapSource::get_lon_min(void) const
 {
 	return lon_min;
 }
@@ -468,7 +468,7 @@ QString MapSource::get_file_extension(void) const
 
 
 
-bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoom, TileInfo * dest)
+bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoom, TileInfo * dest) const
 {
 	fprintf(stderr, "MapSource coord_to_tile() returns false\n");
 	return false;
@@ -477,7 +477,7 @@ bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoo
 
 
 
-void MapSource::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
+void MapSource::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
 {
 	fprintf(stderr, "MapSource::tile_to_center_coord\n");
 	return;

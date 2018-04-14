@@ -92,7 +92,7 @@ namespace SlavGPS {
 		double latitude = NAN;
 		double longitude = NAN;
 		int zoom_level_osm = -1;
-		MapTypeID map_type_id = MAP_TYPE_ID_INITIAL;
+		MapTypeID map_type_id = MapTypeID::Initial;
 
 		QStringList files;
 	};

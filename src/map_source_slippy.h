@@ -47,19 +47,19 @@ namespace SlavGPS {
 
 		MapSourceSlippy & operator=(MapSourceSlippy map);
 
-		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest);
-		void tile_to_center_coord(TileInfo * src, Coord & dest_coord);
+		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const;
+		void tile_to_center_coord(TileInfo * src, Coord & dest_coord) const;
 
-		bool supports_download_only_new();
+		bool supports_download_only_new(void) const;
 
 		const QString get_server_path(TileInfo * src) const;
 
 		DownloadResult download(TileInfo * src, const QString & dest_file_path, DownloadHandle * dl_handle);
 
 
-		bool is_direct_file_access();
-		bool is_mbtiles();
-		bool is_osm_meta_tiles();
+		bool is_direct_file_access(void) const;
+		bool is_mbtiles(void) const;
+		bool is_osm_meta_tiles(void) const;
 	};
 
 

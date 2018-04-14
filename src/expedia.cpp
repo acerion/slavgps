@@ -84,8 +84,8 @@ static const unsigned int expedia_altis_count = sizeof(expedia_altis) / sizeof(e
 
 void SlavGPS::expedia_init()
 {
-	VikMapsLayer_MapType map_type = { MAP_ID_EXPEDIA, 0, 0, ViewportDrawMode::EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
-	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MAP_ID_EXPEDIA, &map_type);
+	VikMapsLayer_MapType map_type = { MapTypeID::EXPEDIA, 0, 0, ViewportDrawMode::EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
+	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::EXPEDIA, &map_type);
 }
 
 

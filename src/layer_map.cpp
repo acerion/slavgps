@@ -159,7 +159,7 @@ static ParameterScale scale_alpha = { 0, 255, SGVariant((int32_t) 255), 3, 0 };
 
 static SGVariant id_default(void)
 {
-	return SGVariant((int32_t) MAP_ID_MAPQUEST_OSM);
+	return SGVariant((int32_t) MapTypeID::MAPQUEST_OSM);
 }
 
 
@@ -371,15 +371,15 @@ void layer_map_init(void)
 /******** MAP LAYER TYPES **************/
 /***************************************/
 
-void _add_map_source(MapSource * map, const QString & label, MapTypeID map_type)
+void _add_map_source(MapSource * map_source, const QString & label, MapTypeID map_type_id)
 {
 	/* Add the label and ID of map source. */
-	map_types.push_back(SGLabelID(label, map_type));
+	map_types.push_back(SGLabelID(label, (int) map_type_id));
 
 	/* We have to clone. */
-	MapSource clone = *map; /* FIXME: to clone or not to clone? */
+	MapSource clone = *map_source; /* FIXME: to clone or not to clone? */
 	/* Register the clone in the list */
-	map_sources.push_back(map);
+	map_sources.push_back(map_source);
 
 	/* TODO: verify in application that properties dialog sees updated list of map types. */
 }
@@ -415,19 +415,19 @@ void _update_map_source(MapSource *map, const QString & label, int index)
  * Register a new MapSource.
  * Override existing one (equality of id).
  */
-void maps_layer_register_map_source(MapSource * map)
+void maps_layer_register_map_source(MapSource * map_source)
 {
-	assert (map != NULL);
+	assert (map_source != NULL);
 
-	MapTypeID map_type = map->map_type;
-	const QString label = map->get_label();
+	MapTypeID map_type_id = map_source->map_type_id;
+	const QString label = map_source->get_label();
 	assert (!label.isEmpty());
 
-	int previous = map_type_to_map_index(map_type);
+	int previous = map_type_to_map_index(map_type_id);
 	if (previous != -1) {
-		_update_map_source(map, label, previous);
+		_update_map_source(map_source, label, previous);
 	} else {
-		_add_map_source(map, label, map_type);
+		_add_map_source(map_source, label, map_type_id);
 	}
 }
 
@@ -448,9 +448,9 @@ MapTypeID LayerMap::get_map_type()
 
 
 
-void LayerMap::set_map_type(MapTypeID map_type)
+void LayerMap::set_map_type(MapTypeID map_type_id)
 {
-	int map_index_ = map_type_to_map_index(map_type);
+	int map_index_ = map_type_to_map_index(map_type_id);
 	if (map_index_ == -1) {
 		qDebug() << QObject::tr("WARNING: Unknown map type");
 	} else {
@@ -597,7 +597,7 @@ void LayerMap::set_file(const QString & name_)
 static MapTypeID map_index_to_map_type(unsigned int index)
 {
 	assert (index < map_sources.size());
-	return map_sources[index]->map_type;
+	return map_sources[index]->map_type_id;
 }
 
 
@@ -609,10 +609,10 @@ static MapTypeID map_index_to_map_type(unsigned int index)
    \return valid index if map type was found
    \return -1 if given map type was not found
 */
-static int map_type_to_map_index(MapTypeID map_type)
+static int map_type_to_map_index(MapTypeID map_type_id)
 {
 	for (unsigned int i = 0; i < map_sources.size(); i++) {
-		if (map_sources[i]->map_type == map_type) {
+		if (map_sources[i]->map_type_id == map_type_id) {
 			return (int) i;
 		}
 	}
@@ -627,9 +627,9 @@ static int map_type_to_map_index(MapTypeID map_type)
 /**
  * Convenience function to display the license.
  */
-static void maps_show_license(Window * parent, MapSource * map)
+static void maps_show_license(Window * parent, const MapSource * map_source)
 {
-	Dialog::map_license(map->get_label(), map->get_license(), map->get_license_url(), parent);
+	Dialog::map_license(map_source->get_label(), map_source->get_license(), map_source->get_license_url(), parent);
 }
 
 
@@ -660,11 +660,11 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			if (is_file_operation) {
 				ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.val_int);
 			} else {
-				MapSource * map = map_sources[this->map_index];
-				if (map->get_license() != NULL) {
+				const MapSource * map_source = map_sources[this->map_index];
+				if (map_source->get_license() != NULL) {
 					/* Check if licence for this map type has been shown before. */
 					if (!ApplicationState::get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.val_int)) {
-						maps_show_license(this->get_window(), map);
+						maps_show_license(this->get_window(), map_source);
 						ApplicationState::set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.val_int);
 					}
 				}
@@ -768,9 +768,9 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 		/* Get new value. */
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		/* Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type. */
-		bool sensitive = (MAP_ID_OSM_ON_DISK != var.i &&
-				  MAP_ID_MBTILES != var.i &&
-				  MAP_ID_OSM_METATILES != var.i);
+		bool sensitive = (MapTypeID::OSM_ON_DISK != var.i &&
+				  MapTypeID::MBTILES != var.i &&
+				  MapTypeID::OSM_METATILES != var.i);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
@@ -809,7 +809,7 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 
 		/* File only applicable for MBTiles type.
 		   Directory for all other types. */
-		sensitive = (MAP_ID_MBTILES == var.i);
+		sensitive = (MapTypeID::MBTILES == var.i);
 		GtkWidget *w5 = ww1[PARAM_FILE];
 		GtkWidget *w6 = ww2[PARAM_FILE];
 		GtkWidget *w7 = ww1[PARAM_CACHE_DIR];
@@ -870,8 +870,8 @@ LayerMap::~LayerMap()
 	this->last_center = NULL;
 
 #ifdef HAVE_SQLITE3_H
-	MapSource * map = map_sources[this->map_index];
-	if (map->is_mbtiles()) {
+	const MapSource * map_source = map_sources[this->map_index];
+	if (map_source->is_mbtiles()) {
 		if (this->mbtiles) {
 			int ans = sqlite3_close(this->mbtiles);
 			if (ans != SQLITE_OK) {
@@ -888,13 +888,13 @@ LayerMap::~LayerMap()
 
 void LayerMap::post_read(Viewport * viewport, bool from_file)
 {
-	MapSource * map = map_sources[this->map_index];
+	const MapSource * map_source = map_sources[this->map_index];
 
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
 		   So, we can check if we have to inform the user about inconsistency. */
-		if (map->get_drawmode() != viewport->get_drawmode()) {
-			const QString drawmode_name = ViewportDrawModes::get_name(map->get_drawmode());
+		if (map_source->get_drawmode() != viewport->get_drawmode()) {
+			const QString drawmode_name = ViewportDrawModes::get_name(map_source->get_drawmode());
 			const QString msg = QString(QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.")).arg(drawmode_name);
 			Dialog::warning(msg, this->get_window());
 		}
@@ -903,7 +903,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 	/* Performed in post read as we now know the map type. */
 #ifdef HAVE_SQLITE3_H
 	/* Do some SQL stuff. */
-	if (map->is_mbtiles()) {
+	if (map_source->is_mbtiles()) {
 		int ans = sqlite3_open_v2(this->filename.toUtf8().constData(),
 					  &(this->mbtiles),
 					  SQLITE_OPEN_READONLY,
@@ -919,7 +919,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 #endif
 
 	/* If the on Disk OSM Tile Layout type. */
-	if (map->map_type == MAP_ID_OSM_ON_DISK) {
+	if (map_source->map_type_id == MapTypeID::OSM_ON_DISK) {
 		/* Copy the directory into filename.
 		   Thus the map cache look up will be unique when using more than one of these map types. */
 		this->filename = this->cache_dir;
@@ -1146,7 +1146,7 @@ static void pixmap_apply_settings(QPixmap & pixmap, uint8_t alpha, double xshrin
 
 static QString get_cache_filename(MapsCacheLayout layout,
 				  const QString & cache_dir,
-				  uint16_t id,
+				  MapTypeID map_type_id,
 				  const QString & map_name,
 				  TileInfo const * coord,
 				  const QString & file_extension)
@@ -1195,7 +1195,7 @@ static QString get_cache_filename(MapsCacheLayout layout,
 	default:
 		result = QString("%1t%2s%3z%4%5%6%7%8")
 			.arg(cache_dir)
-			.arg(id)
+			.arg((int) map_type_id)
 			.arg(coord->scale)
 			.arg(coord->z)
 			.arg(QDir::separator())
@@ -1217,33 +1217,33 @@ static QString get_cache_filename(MapsCacheLayout layout,
    Function returns only a reference (pointer) to pixmap existing in
    pixmap cache.  Don't delete the pointer.
 */
-static QPixmap * get_pixmap_ref(LayerMap * layer, MapTypeID map_type, const QString map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor)
+static QPixmap * get_pixmap_ref(LayerMap * layer, MapTypeID map_type_id, const QString map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor)
 {
 	/* Get the thing. */
-	QPixmap * pixmap = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
+	QPixmap * pixmap = map_cache_get(mapcoord, map_type_id, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 	if (pixmap) {
 		//fprintf(stderr, "Layer Map: MAP CACHE HIT\n");
 	} else {
 		//fprintf(stderr, "Layer Map: MAP CACHE MISS\n");
-		MapSource * map = map_sources[layer->map_index];
-		if (map->is_direct_file_access()) {
+		const MapSource * map_source = map_sources[layer->map_index];
+		if (map_source->is_direct_file_access()) {
 			/* ATM MBTiles must be 'a direct access type'. */
-			if (map->is_mbtiles()) {
+			if (map_source->is_mbtiles()) {
 				pixmap = create_mbtiles_pixmap(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
-			} else if (map->is_osm_meta_tiles()) {
+			} else if (map_source->is_osm_meta_tiles()) {
 				pixmap = create_pixmap_from_metatile(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 			} else {
 				tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
-									 layer->cache_dir, map_type, "",
+									 layer->cache_dir, map_type_id, "",
 									 mapcoord,
-									 map->get_file_extension());
+									 map_source->get_file_extension());
 				pixmap = create_pixmap_from_file(layer, tile_file_full_path);
 			}
 		} else {
 			tile_file_full_path = get_cache_filename(layer->cache_layout,
-								 layer->cache_dir, map_type, map_name,
+								 layer->cache_dir, map_type_id, map_name,
 								 mapcoord,
-								 map->get_file_extension());
+								 map_source->get_file_extension());
 			pixmap = create_pixmap_from_file(layer, tile_file_full_path);
 		}
 
@@ -1252,7 +1252,7 @@ static QPixmap * get_pixmap_ref(LayerMap * layer, MapTypeID map_type, const QStr
 
 			map_cache_extra_t arg;
 			arg.duration = 0.0;
-			map_cache_add(pixmap, arg, mapcoord, map_sources[layer->map_index]->map_type,
+			map_cache_add(pixmap, arg, mapcoord, map_sources[layer->map_index]->map_type_id,
 				      layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 		}
 	}
@@ -1296,9 +1296,9 @@ static bool should_start_autodownload(LayerMap * layer, Viewport * viewport)
 
 	/* Don't attempt to download unsupported zoom levels. */
 	double xzoom = viewport->get_xmpp();
-	MapSource *map = map_sources[layer->map_index];
+	const MapSource * map_source = map_sources[layer->map_index];
 	int zl = map_utils_mpp_to_zoom_level(xzoom);
-	if (zl < map->get_zoom_min() || zl > map->get_zoom_max()) {
+	if (zl < map_source->get_zoom_min() || zl > map_source->get_zoom_max()) {
 		return false;
 	}
 
@@ -1426,9 +1426,9 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 	/* coord -> ID */
 	TileInfo ulm, brm;
-	MapSource *map = (MapSource *) map_sources[this->map_index];
-	if (!map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
-	    || !map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
+	const MapSource * map_source = map_sources[this->map_index];
+	if (!map_source->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
+	    || !map_source->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
 		return;
 	}
@@ -1437,8 +1437,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	/* Loop & draw. */
 	int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
 	int ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
-	MapTypeID map_type = map->map_type;
-	const QString map_name = map->get_name();
+	MapTypeID map_type = map_source->map_type_id;
+	const QString map_name = map_source->get_name();
 
 	Coord coord;
 
@@ -1455,7 +1455,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 	if ((!existence_only) && this->autodownload  && should_start_autodownload(this, viewport)) {
 		fprintf(stderr, "DEBUG: %s: Starting autodownload", __FUNCTION__);
-		if (!this->adl_only_missing && map->supports_download_only_new()) {
+		if (!this->adl_only_missing && map_source->supports_download_only_new()) {
 			/* Try to download newer tiles. */
 			this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NEW);
 		} else {
@@ -1464,7 +1464,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		}
 	}
 
-	if (map->get_tilesize_x() == 0 && !existence_only) {
+	if (map_source->get_tilesize_x() == 0 && !existence_only) {
 		for (int x = xmin; x <= xmax; x++) {
 			for (int y = ymin; y <= ymax; y++) {
 				ulm.x = x;
@@ -1477,7 +1477,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					int viewport_x;
 					int viewport_y;
 
-					map->tile_to_center_coord(&ulm, coord);
+					map_source->tile_to_center_coord(&ulm, coord);
 					viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
 					viewport_x -= (width/2);
 					viewport_y -= (height/2);
@@ -1488,8 +1488,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			}
 		}
 	} else { /* tilesize is known, don't have to keep converting coords. */
-		const double tilesize_x = map->get_tilesize_x() * xshrinkfactor;
-		const double tilesize_y = map->get_tilesize_y() * yshrinkfactor;
+		const double tilesize_x = map_source->get_tilesize_x() * xshrinkfactor;
+		const double tilesize_y = map_source->get_tilesize_y() * yshrinkfactor;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
 		const int tilesize_x_ceil = ceil(tilesize_x);
 		const int tilesize_y_ceil = ceil(tilesize_y);
@@ -1503,7 +1503,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 		int viewport_x;
 		int viewport_y;
-		map->tile_to_center_coord(&ulm, coord);
+		map_source->tile_to_center_coord(&ulm, coord);
 		viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
 
 		const int viewport_x_grid = viewport_x;
@@ -1523,12 +1523,12 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				if (existence_only) {
 					if (map_sources[this->map_index]->is_direct_file_access()) {
 						path_buf = get_cache_filename(MapsCacheLayout::OSM,
-									      this->cache_dir, map_type, map->get_name(),
-									      &ulm, map->get_file_extension());
+									      this->cache_dir, map_type, map_source->get_name(),
+									      &ulm, map_source->get_file_extension());
 					} else {
 						path_buf = get_cache_filename(this->cache_layout,
-									      this->cache_dir, map_type, map->get_name(),
-									      &ulm, map->get_file_extension());
+									      this->cache_dir, map_type, map_source->get_name(),
+									      &ulm, map_source->get_file_extension());
 					}
 
 					if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
@@ -1611,19 +1611,21 @@ void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin,
 
 void LayerMap::draw(Viewport * viewport)
 {
-	if (map_sources[this->map_index]->get_drawmode() == viewport->get_drawmode()) {
+	const MapSource * map_source = map_sources[this->map_index];
+
+	if (map_source->get_drawmode() == viewport->get_drawmode()) {
 
 		/* Copyright. */
 		double level = viewport->get_zoom();
 		const LatLonBBox bbox = viewport->get_bbox();
 
 #ifdef K_TODO   /* linkage problem. */
-		map_sources[this->map_index]->get_copyright(bbox, level, SlavGPS::vik_viewport_add_copyright_cb, viewport);
+		map_source->get_copyright(bbox, level, SlavGPS::vik_viewport_add_copyright_cb, viewport);
 #endif
 
 		/* Logo. */
 
-		const QPixmap * logo = map_sources[this->map_index]->get_logo();
+		const QPixmap * logo = map_source->get_logo();
 		viewport->add_logo(logo);
 
 		/* Get corner coords. */
@@ -1680,8 +1682,8 @@ public:
 };
 
 static QString redownload_mode_message(int redownload_mode, int mapstoget, const QString & label);
-static void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
-static void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm);
+static void mdj_calculate_mapstoget(MapDownloadJob * mdj, const MapSource * map_source, TileInfo * ulm);
+static void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, const MapSource * map_source, TileInfo * ulm);
 
 
 
@@ -1697,13 +1699,13 @@ void LayerMap::weak_ref_cb(void * ptr, void * dead_vml)
 
 
 
-static bool is_in_area(MapSource * map, TileInfo * mc)
+static bool is_in_area(const MapSource * map_source, TileInfo * mc)
 {
 	Coord center_coord;
-	map->tile_to_center_coord(mc, center_coord);
+	map_source->tile_to_center_coord(mc, center_coord);
 
-	const Coord coord_tl(LatLon(map->get_lat_max(), map->get_lon_min()), CoordMode::LATLON);
-	const Coord coord_br(LatLon(map->get_lat_min(), map->get_lon_max()), CoordMode::LATLON);
+	const Coord coord_tl(LatLon(map_source->get_lat_max(), map_source->get_lon_min()), CoordMode::LATLON);
+	const Coord coord_br(LatLon(map_source->get_lat_min(), map_source->get_lon_max()), CoordMode::LATLON);
 
 	return center_coord.is_inside(&coord_tl, &coord_br);
 }
@@ -1734,7 +1736,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 			mdj->file_full_path = get_cache_filename(mdj->cache_layout,
 								 mdj->cache_dir,
-								 map_sources[mdj->map_index]->map_type,
+								 map_sources[mdj->map_index]->map_type_id,
 								 map_sources[mdj->map_index]->get_name(),
 								 &mcoord,
 								 map_sources[mdj->map_index]->get_file_extension());
@@ -1825,7 +1827,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 			mdj->mutex.lock();
 			if (remove_mem_cache) {
-				map_cache_remove_all_shrinkfactors(&mcoord, map_sources[mdj->map_index]->map_type, mdj->layer->filename);
+				map_cache_remove_all_shrinkfactors(&mcoord, map_sources[mdj->map_index]->map_type_id, mdj->layer->filename);
 			}
 
 			if (mdj->refresh_display && mdj->map_layer_alive) {
@@ -1854,12 +1856,13 @@ static int map_download_thread(BackgroundJob * bg_job)
 void MapDownloadJob::cleanup_on_cancel(void)
 {
 	if (this->mapcoord.x || this->mapcoord.y) {
+		const MapSource * map_source = map_sources[this->map_index];
 		this->file_full_path = get_cache_filename(this->cache_layout,
 							  this->cache_dir,
-							  map_sources[this->map_index]->map_type,
-							  map_sources[this->map_index]->get_name(),
+							  map_source->map_type_id,
+							  map_source->get_name(),
 							  &this->mapcoord,
-							  map_sources[this->map_index]->get_file_extension());
+							  map_source->get_file_extension());
 		if (0 == access(this->file_full_path.toUtf8().constData(), F_OK)) {
 			qDebug() << "DD" PREFIX << "Removing file" << this->file_full_path << "(cleanup on cancel)";
 			if (!QDir::root().remove(this->file_full_path)) {
@@ -1877,18 +1880,18 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
 	TileInfo ulm, brm;
-	MapSource * map = map_sources[this->map_index];
+	const MapSource * map_source = map_sources[this->map_index];
 
-	qDebug() << "II" PREFIX << "map:" << (quintptr) map << "map index" << this->map_index;
+	qDebug() << "II" PREFIX << "map:" << (quintptr) map_source << "map index" << this->map_index;
 
 	/* Don't ever attempt download on direct access. */
-	if (map->is_direct_file_access()) {
+	if (map_source->is_direct_file_access()) {
 		qDebug() << "II" PREFIX << "Not downloading, direct access";
 		return;
 	}
 
-	if (map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
-	     && map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
+	if (map_source->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
+	     && map_source->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
 		qDebug() << "II" PREFIX << "coord to tile succeeded";
 
@@ -1897,7 +1900,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 		if (mdj->redownload_mode) {
 			mdj->mapstoget = (mdj->xf - mdj->x0 + 1) * (mdj->yf - mdj->y0 + 1);
 		} else {
-			mdj_calculate_mapstoget(mdj, map, &ulm);
+			mdj_calculate_mapstoget(mdj, map_source, &ulm);
 		}
 
 		/* For cleanup - no current map. */
@@ -1925,22 +1928,22 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
-	MapSource *map = map_sources[this->map_index];
+	const MapSource * map_source = map_sources[this->map_index];
 
 	/* Don't ever attempt download on direct access. */
-	if (map->is_direct_file_access()) {
+	if (map_source->is_direct_file_access()) {
 		return;
 	}
 
-	if (!map->coord_to_tile(coord_ul, zoom, zoom, &ulm)
-	    || !map->coord_to_tile(coord_br, zoom, zoom, &brm)) {
+	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, &ulm)
+	    || !map_source->coord_to_tile(coord_br, zoom, zoom, &brm)) {
 		fprintf(stderr, "WARNING: %s() coord_to_tile() failed", __PRETTY_FUNCTION__);
 		return;
 	}
 
 	MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, true, redownload_mode);
 
-	mdj_calculate_mapstoget(mdj, map, &ulm);
+	mdj_calculate_mapstoget(mdj, map_source, &ulm);
 
 	/* For cleanup - no current map. */
 	mdj->mapcoord.x = 0;
@@ -2005,21 +2008,21 @@ void LayerMap::redownload_new_cb(void)
  */
 void LayerMap::tile_info_cb(void)
 {
-	MapSource * map = map_sources[this->map_index];
+	const MapSource * map_source = map_sources[this->map_index];
 
 	double xzoom = this->xmapzoom ? this->xmapzoom : this->redownload_viewport->get_xmpp();
 	double yzoom = this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_ympp();
 	TileInfo ulm;
 
-	if (!map->coord_to_tile(this->redownload_ul, xzoom, yzoom, &ulm)) {
+	if (!map_source->coord_to_tile(this->redownload_ul, xzoom, yzoom, &ulm)) {
 		return;
 	}
 
 	QString tile_file_full_path;
 	QString source;
 
-	if (map->is_direct_file_access()) {
-		if (map->is_mbtiles()) {
+	if (map_source->is_direct_file_access()) {
+		if (map_source->is_mbtiles()) {
 			tile_file_full_path = this->filename;
 #ifdef HAVE_SQLITE3_H
 			/* And whether to bother going into the SQL to check it's really there or not... */
@@ -2051,7 +2054,7 @@ void LayerMap::tile_info_cb(void)
 #else
 			source = QObject::tr("Source: Not available");
 #endif
-		} else if (map->is_osm_meta_tiles()) {
+		} else if (map_source->is_osm_meta_tiles()) {
 			char path[PATH_MAX];
 			xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, 17-ulm.scale);
 			source = path;
@@ -2059,20 +2062,20 @@ void LayerMap::tile_info_cb(void)
 		} else {
 			tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
 								 this->cache_dir,
-								 map->map_type,
+								 map_source->map_type_id,
 								 "",
 								 &ulm,
-								 map->get_file_extension());
+								 map_source->get_file_extension());
 			source = QObject::tr("Source: file://%1").arg(tile_file_full_path);
 		}
 	} else {
 		tile_file_full_path = get_cache_filename(this->cache_layout,
 							 this->cache_dir,
-							 map->map_type,
-							 map->get_name(),
+							 map_source->map_type_id,
+							 map_source->get_name(),
 							 &ulm,
-							 map->get_file_extension());
-		source = QObject::tr("Source: http://%1%2").arg(map->get_server_hostname()).arg(map->get_server_path(&ulm));
+							 map_source->get_file_extension());
+		source = QObject::tr("Source: http://%1%2").arg(map_source->get_server_hostname()).arg(map_source->get_server_path(&ulm));
 	}
 
 	QStringList messages;
@@ -2193,9 +2196,9 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 
 	LayerMap * layer = (LayerMap *) _layer;
 
-	MapSource *map = map_sources[layer->map_index];
-	if (map->get_drawmode() == this->viewport->get_drawmode()
-	    && map->coord_to_tile(this->viewport->get_center2(),
+	const MapSource * map_source = map_sources[layer->map_index];
+	if (map_source->get_drawmode() == this->viewport->get_drawmode()
+	    && map_source->coord_to_tile(this->viewport->get_center2(),
 				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_xmpp(),
 				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_ympp(),
 				  &tmp)) {
@@ -2222,14 +2225,14 @@ void LayerMap::download_onscreen_maps(int redownload_mode)
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
-	MapSource *map = map_sources[this->map_index];
+	const MapSource * map_source = map_sources[this->map_index];
 
-	const ViewportDrawMode map_draw_mode = map->get_drawmode();
+	const ViewportDrawMode map_draw_mode = map_source->get_drawmode();
 	const ViewportDrawMode vp_draw_mode = viewport->get_drawmode();
 
 	if (map_draw_mode == vp_draw_mode
-	    && map->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
-	    && map->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
+	    && map_source->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
+	    && map_source->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
 
 		this->start_download_thread(viewport, coord_ul, coord_br, redownload_mode);
 
@@ -2272,11 +2275,11 @@ void LayerMap::redownload_all_onscreen_maps_cb(void)
 
 void LayerMap::about_cb(void)
 {
-	MapSource * map = map_sources[this->map_index];
-	if (map->get_license().isEmpty()) {
-		Dialog::info(map->get_label(), this->get_window());
+	const MapSource * map_source = map_sources[this->map_index];
+	if (map_source->get_license().isEmpty()) {
+		Dialog::info(map_source->get_label(), this->get_window());
 	} else {
-		maps_show_license(this->get_window(), map);
+		maps_show_license(this->get_window(), map_source);
 	}
 }
 
@@ -2288,15 +2291,15 @@ void LayerMap::about_cb(void)
  */
 int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode)
 {
-	TileInfo ulm, brm;
-	MapSource *map = map_sources[this->map_index];
+	const MapSource * map_source = map_sources[this->map_index];
 
-	if (map->is_direct_file_access()) {
+	if (map_source->is_direct_file_access()) {
 		return 0;
 	}
 
-	if (!map->coord_to_tile(coord_ul, zoom, zoom, &ulm)
-	    || !map->coord_to_tile(coord_br, zoom, zoom, &brm)) {
+	TileInfo ulm, brm;
+	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, &ulm)
+	    || !map_source->coord_to_tile(coord_br, zoom, zoom, &brm)) {
 		fprintf(stderr, "WARNING: %s() coord_to_tile() failed", __PRETTY_FUNCTION__);
 		return 0;
 	}
@@ -2306,7 +2309,7 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 	if (mdj->redownload_mode == REDOWNLOAD_ALL) {
 		mdj->mapstoget = (mdj->xf - mdj->x0 + 1) * (mdj->yf - mdj->y0 + 1);
 	} else {
-		mdj_calculate_mapstoget_other(mdj, map, &ulm);
+		mdj_calculate_mapstoget_other(mdj, map_source, &ulm);
 	}
 
 	int rv = mdj->mapstoget;
@@ -2514,7 +2517,7 @@ void LayerMap::download_all_cb(void)
 
 void LayerMap::flush_cb(void)
 {
-	map_cache_flush_type(map_sources[this->map_index]->map_type);
+	map_cache_flush_type(map_sources[this->map_index]->map_type_id);
 }
 
 
@@ -2584,7 +2587,7 @@ void LayerMap::download(Viewport * viewport, bool only_new)
 
 
 
-void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm)
+void mdj_calculate_mapstoget(MapDownloadJob * mdj, const MapSource * map_source, TileInfo * ulm)
 {
 	TileInfo mcoord = mdj->mapcoord;
 	mcoord.z = ulm->z;
@@ -2593,13 +2596,13 @@ void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * u
 	for (mcoord.x = mdj->x0; mcoord.x <= mdj->xf; mcoord.x++) {
 		for (mcoord.y = mdj->y0; mcoord.y <= mdj->yf; mcoord.y++) {
 			/* Only count tiles from supported areas. */
-			if (is_in_area(map, &mcoord)) {
+			if (is_in_area(map_source, &mcoord)) {
 				mdj->file_full_path = get_cache_filename(mdj->cache_layout,
 									 mdj->cache_dir,
-									 map->map_type,
-									 map->get_name(),
+									 map_source->map_type_id,
+									 map_source->get_name(),
 									 &mcoord,
-									 map->get_file_extension());
+									 map_source->get_file_extension());
 
 				if (0 != access(mdj->file_full_path.toUtf8().constData(), F_OK)) {
 					mdj->mapstoget++;
@@ -2614,7 +2617,7 @@ void mdj_calculate_mapstoget(MapDownloadJob * mdj, MapSource * map, TileInfo * u
 
 
 
-void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileInfo * ulm)
+void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, const MapSource * map_source, TileInfo * ulm)
 {
 	TileInfo mcoord = mdj->mapcoord;
 	mcoord.z = ulm->z;
@@ -2624,16 +2627,16 @@ void mdj_calculate_mapstoget_other(MapDownloadJob * mdj, MapSource * map, TileIn
 	for (mcoord.x = mdj->x0; mcoord.x <= mdj->xf; mcoord.x++) {
 		for (mcoord.y = mdj->y0; mcoord.y <= mdj->yf; mcoord.y++) {
 			/* Only count tiles from supported areas. */
-			if (!is_in_area(map, &mcoord)) {
+			if (!is_in_area(map_source, &mcoord)) {
 				continue;
 			}
 
 			mdj->file_full_path = get_cache_filename(mdj->cache_layout,
 								 mdj->cache_dir,
-								 map->map_type,
-								 map->get_name(),
+								 map_source->map_type_id,
+								 map_source->get_name(),
 								 &mcoord,
-								 map->get_file_extension());
+								 map_source->get_file_extension());
 			if (mdj->redownload_mode == REDOWNLOAD_NEW) {
 				/* Assume the worst - always a new file.
 				   Absolute value would require a server lookup - but that is too slow. */

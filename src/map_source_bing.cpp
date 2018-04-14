@@ -98,9 +98,9 @@ MapSourceBing::MapSourceBing()
  *
  * Returns: a newly allocated MapSourceBing object.
  */
-MapSourceBing::MapSourceBing(MapTypeID new_map_type, const QString & new_label, const QString & new_key)
+MapSourceBing::MapSourceBing(MapTypeID new_map_type_id, const QString & new_label, const QString & new_key)
 {
-	this->map_type = new_map_type;
+	this->map_type_id = new_map_type_id;
 	this->label = new_label;
 	this->name = "Bing-Aerial";
 	this->server_hostname = "ecn.t2.tiles.virtualearth.net";

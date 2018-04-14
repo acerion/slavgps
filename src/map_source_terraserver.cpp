@@ -52,9 +52,9 @@ static int mpp_to_scale(double mpp, MapTypeID type)
 	}
 
 	switch (t) {
-	case 1: return (type == MAP_ID_TERRASERVER_URBAN) ? 8 : 0;
-	case 2: return (type == MAP_ID_TERRASERVER_URBAN) ? 9 : 0;
-	case 4: return (type != MAP_ID_TERRASERVER_TOPO) ? 10 : 0;
+	case 1: return (type == MapTypeID::TERRASERVER_URBAN) ? 8 : 0;
+	case 2: return (type == MapTypeID::TERRASERVER_URBAN) ? 9 : 0;
+	case 4: return (type != MapTypeID::TERRASERVER_TOPO) ? 10 : 0;
 	case 8: return 11;
 	case 16: return 12;
 	case 32: return 13;
@@ -79,7 +79,7 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo * dest)
+bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo * dest) const
 {
 	if (src_coord.mode != CoordMode::UTM) {
 		return false;
@@ -89,7 +89,7 @@ bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, d
 		return false;
 	}
 
-	dest->scale = mpp_to_scale(xmpp, this->map_type);
+	dest->scale = mpp_to_scale(xmpp, this->map_type_id);
 	if (!dest->scale) {
 		return false;
 	}
@@ -103,7 +103,7 @@ bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, d
 
 
 
-bool MapSourceTerraserver::is_direct_file_access(void)
+bool MapSourceTerraserver::is_direct_file_access(void) const
 {
 	return false;
 }
@@ -111,7 +111,7 @@ bool MapSourceTerraserver::is_direct_file_access(void)
 
 
 
-bool MapSourceTerraserver::is_mbtiles(void)
+bool MapSourceTerraserver::is_mbtiles(void) const
 {
 	return false;
 }
@@ -119,10 +119,10 @@ bool MapSourceTerraserver::is_mbtiles(void)
 
 
 
-void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord & dest_coord)
+void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
 {
 	/* FIXME: slowdown here! */
-	double mpp = scale_to_mpp (src->scale);
+	double mpp = scale_to_mpp(src->scale);
 	dest_coord.mode = CoordMode::UTM;
 	dest_coord.utm.zone = src->z;
 	dest_coord.utm.easting = ((src->x * 200) + 100) * mpp;
@@ -134,7 +134,7 @@ void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord & dest_coo
 
 const QString MapSourceTerraserver::get_server_path(TileInfo * src) const
 {
-	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type).arg(src->scale).arg(src->x).arg(src->y).arg(src->z);
+	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type_id).arg(src->scale).arg(src->x).arg(src->y).arg(src->z);
 	return uri;
 }
 
@@ -149,24 +149,24 @@ const QString MapSourceTerraserver::get_server_hostname(void) const
 
 
 
-MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type, const QString & new_label)
+MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString & new_label)
 {
-	switch (new_type) {
-	case MAP_ID_TERRASERVER_AERIAL:
+	switch (new_type_id) {
+	case MapTypeID::TERRASERVER_AERIAL:
 		this->copyright = "© DigitalGlobe";
 		break;
-	case MAP_ID_TERRASERVER_TOPO:
+	case MapTypeID::TERRASERVER_TOPO:
 		this->copyright = "© LandVoyage";
 		break;
-	case MAP_ID_TERRASERVER_URBAN:
+	case MapTypeID::TERRASERVER_URBAN:
 		this->copyright = "© DigitalGlobe";
 		break;
 	default:
-		qDebug() << "EE: Map Source Terraserver: unknown type" << (int) new_type;
+		qDebug() << "EE: Map Source Terraserver: unknown type" << (int) new_type_id;
 	}
 
 	this->label = new_label;
-	this->map_type = new_type;
+	this->map_type_id = new_type_id;
 
 	this->tilesize_x = 200;
 	this->tilesize_y = 200;
