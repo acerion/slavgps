@@ -837,6 +837,7 @@ void CommandLineOptions::apply(Window * window)
 			}
 		}
 
+		add_map = add_map && MapSource::is_map_type_id_registered(the_type_id);
 		if (add_map) {
 			LayerMap * layer = new LayerMap();
 

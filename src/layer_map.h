@@ -97,7 +97,7 @@ namespace SlavGPS {
 		void mkdir_if_default_dir();
 		void set_file(const QString & name);
 
-		void set_map_type_id(MapTypeID type_id);
+		bool set_map_type_id(MapTypeID type_id);
 		MapTypeID get_map_type_id(void) const;
 		static MapTypeID get_default_map_type_id(void);
 
@@ -114,7 +114,7 @@ namespace SlavGPS {
 		static void set_cache_default(MapsCacheLayout layout);
 
 
-		unsigned int map_index = 0;
+		MapTypeID map_type_id = MapTypeID::Initial;
 		QString cache_dir;
 		MapsCacheLayout cache_layout = MapsCacheLayout::Viking;
 		int32_t alpha = 0;
@@ -130,7 +130,7 @@ namespace SlavGPS {
 		double last_xmpp = 0.0;
 		double last_ympp = 0.0;
 
-		/* Should this be 0 or -1? */
+		/* TODO: Should this be 0 or -1? */
 		int dl_tool_x = -1;
 		int dl_tool_y = -1;
 
@@ -150,12 +150,12 @@ namespace SlavGPS {
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
 
-		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type_id, const QString & map_name, QString & tile_file_full_path);
-		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, MapTypeID map_type_id, const QString & map_name, QString & path_buf);
+		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name, QString & tile_file_full_path);
+		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name, QString & path_buf);
 
 		bool should_start_autodownload(Viewport * viewport);
 
-		QPixmap * get_pixmap_ref(MapTypeID map_type_id, const QString map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor);
+		QPixmap * get_pixmap_ref(const QString & map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor);
 		QPixmap * create_mbtiles_pixmap(int xx, int yy, int zoom);
 		QPixmap * create_pixmap_from_metatile(int xx, int yy, int zz);
 		QPixmap * create_pixmap_from_file(const QString & tile_file_full_path);

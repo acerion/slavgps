@@ -56,7 +56,7 @@ using namespace SlavGPS;
 void SlavGPS::osm_init(void)
 {
 	MapSource * mapnik_type = new MapSourceSlippy(MapTypeID::OSM_MAPNIK, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%1/%2/%3.png");
-	mapnik_type->set_name("OSM-Mapnik");
+	mapnik_type->set_map_type_string("OSM-Mapnik"); /* Non-translatable. */
 	mapnik_type->dl_options.check_file_server_time = false;
 	mapnik_type->dl_options.use_etag = true;
 	mapnik_type->zoom_min = 0;
@@ -66,7 +66,7 @@ void SlavGPS::osm_init(void)
 	mapnik_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	MapSource * cycle_type = new MapSourceSlippy(MapTypeID::OSM_CYCLE, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%1/%2/%3.png");
-	cycle_type->set_name("OSM-Cycle");
+	cycle_type->set_map_type_string("OSM-Cycle"); /* Non-translatable. */
 	cycle_type->dl_options.check_file_server_time = true;
 	cycle_type->dl_options.use_etag = false;
 	cycle_type->zoom_min = 0;
@@ -76,7 +76,7 @@ void SlavGPS::osm_init(void)
 	cycle_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	MapSource * transport_type = new MapSourceSlippy(MapTypeID::OSM_TRANSPORT, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%1/%2/%3.png");
-	transport_type->set_name("OSM-Transport");
+	transport_type->set_map_type_string("OSM-Transport"); /* Non-translatable. */
 	transport_type->dl_options.check_file_server_time = true;
 	transport_type->dl_options.use_etag = false;
 	transport_type->zoom_min = 0;
@@ -86,7 +86,7 @@ void SlavGPS::osm_init(void)
 	transport_type->set_license_url("http://www.openstreetmap.org/copyright");
 
 	MapSource * mapquest_type = new MapSourceSlippy(MapTypeID::MAPQUEST_OSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%1/%2/%3.png");
-	mapquest_type->set_name("OSM-MapQuest");
+	mapquest_type->set_map_type_string("OSM-MapQuest"); /* Non-translatable. */
 	mapquest_type->dl_options.check_file_server_time = true;
 	mapquest_type->dl_options.use_etag = false;
 	mapquest_type->zoom_min = 0;
@@ -96,7 +96,7 @@ void SlavGPS::osm_init(void)
 	mapquest_type->set_license_url("http://developer.mapquest.com/web/info/terms-of-use");
 
 	MapSource * hot_type = new MapSourceSlippy(MapTypeID::OSM_HUMANITARIAN, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%1/%2/%3.png");
-	hot_type->set_name("OSM-Humanitarian");
+	hot_type->set_map_type_string("OSM-Humanitarian"); /* Non-translatable. */
 	hot_type->dl_options.check_file_server_time = true;
 	hot_type->dl_options.use_etag = false;
 	hot_type->zoom_min = 0;

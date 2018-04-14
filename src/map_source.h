@@ -56,7 +56,8 @@ namespace SlavGPS {
 		const QString get_server_hostname(void) const;
 		virtual const QString get_server_path(TileInfo * src) const;
 
-		QString get_name(void) const;
+		static bool is_map_type_id_registered(MapTypeID map_type_id);
+		QString get_map_type_string(void) const;
 		MapTypeID get_map_type_id(void) const;
 		QString get_label(void) const;
 		uint16_t get_tilesize_x(void) const;
@@ -87,8 +88,8 @@ namespace SlavGPS {
 
 		const DownloadOptions * get_download_options(void) const;
 
-		void set_name(const QString & name);
-		void set_map_type_id(MapTypeID map_type_id);
+		void set_map_type_string(const QString & map_type_string);
+		bool set_map_type_id(MapTypeID map_type_id);
 		void set_label(const QString & label);
 		void set_tilesize_x(uint16_t tilesize_x);
 		void set_tilesize_y(uint16_t tilesize_y);
@@ -106,9 +107,9 @@ namespace SlavGPS {
 		QString license_url;   /* The URL of the license of the map source. */
 		QPixmap * logo = NULL;
 
-		QString name;          /* The name of the map that may be used as the file cache directory. */
-		MapTypeID map_type_id; /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
-		QString label;         /* The label of the map source. */
+		QString map_type_string;  /* The name of the map that may be used as the file cache directory. Non-translatable. */
+		MapTypeID map_type_id;    /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
+		QString label;            /* The label of the map source. */
 
 		uint16_t tilesize_x; /* The size of the tile (x). */
 		uint16_t tilesize_y; /* The size of the tile (x). */

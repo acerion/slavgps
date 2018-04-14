@@ -83,7 +83,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 	this->set_license_url(map.license_url);
 	this->logo = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement this. */
 
-	this->set_name(map.name);
+	this->set_map_type_string(map.map_type_string); /* Non-translatable. */
 	this->map_type_id = map.map_type_id;
 	this->set_label(map.label);
 	this->tilesize_x = map.tilesize_x;

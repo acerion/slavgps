@@ -37,6 +37,7 @@
 #include "mapcoord.h"
 #include "download.h"
 #include "map_source.h"
+#include "layer_map.h"
 
 
 
@@ -55,7 +56,7 @@ MapSource::MapSource()
 {
 	fprintf(stderr, "MapSource regular constructor called\n");
 
-	this->name = QObject::tr("Unknown");
+	this->map_type_string = QObject::tr("Unknown"); /* I usually write that it's non-translatable, but this is exception. TODO: maybe this is a sign of bad design. */
 	this->map_type_id = MapTypeID::Initial;
 	this->label = "<no-set>";
 
@@ -103,9 +104,9 @@ MapSource & MapSource::operator=(MapSource map)
 	this->license_url = map.license_url;
 	this->logo        = NULL;  //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
-	this->name        = map.name;
-	this->map_type_id = map.map_type_id;
-	this->label       = map.label;
+	this->map_type_string = map.map_type_string;
+	this->map_type_id     = map.map_type_id;
+	this->label           = map.label;
 
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -146,9 +147,9 @@ MapSource::MapSource(MapSource & map)
 	this->license_url = map.license_url;
 	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
 
-	this->name        = map.name;
-	this->map_type_id = map.map_type_id;
-	this->label       = map.label;
+	this->map_type_string = map.map_type_string;
+	this->map_type_id     = map.map_type_id;
+	this->label           = map.label;
 
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -178,23 +179,29 @@ MapSource::MapSource(MapSource & map)
 
 
 
-void MapSource::set_name(const QString & new_name)
+void MapSource::set_map_type_string(const QString & new_map_type_string)
 {
-	this->name = new_name;
+	this->map_type_string = new_map_type_string;
 
 #ifdef K_TODO
 	/* Sanitize the name here for file usage.
 	   A simple check just to prevent containing slashes ATM. */
-	g_strdelimit(name, "\\/", 'x' );
+	g_strdelimit(this->map_type_string, "\\/", 'x' );
 #endif
 }
 
 
 
 
-void MapSource::set_map_type_id(MapTypeID new_map_type_id)
+bool MapSource::set_map_type_id(MapTypeID new_map_type_id)
 {
+	if (!MapSource::is_map_type_id_registered(new_map_type_id)) {
+		qDebug() << "EE" PREFIX << "Unknown map type" << (int) new_map_type_id;
+		return false;
+	}
+
 	this->map_type_id = new_map_type_id;
+	return true;
 }
 
 
@@ -304,9 +311,9 @@ const QPixmap * MapSource::get_logo(void) const
 
 
 
-QString MapSource::get_name(void) const
+QString MapSource::get_map_type_string(void) const
 {
-	return this->name;
+	return this->map_type_string;
 }
 
 
