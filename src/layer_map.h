@@ -65,6 +65,17 @@ namespace SlavGPS {
 
 
 
+	enum class MapDownloadMode {
+		MissingOnly = 0,    /* Download only missing maps. */
+		MissingAndBad,      /* Download missing and bad maps. */
+		New,                /* Download missing maps that are newer on server only. */
+		All,                /* Download all maps. */
+		DownloadAndRefresh  /* Download missing maps and refresh cache. */
+	};
+
+
+
+
 	class LayerMapInterface : public LayerInterface {
 	public:
 		LayerMapInterface();
@@ -101,11 +112,11 @@ namespace SlavGPS {
 		MapTypeID get_map_type_id(void) const;
 		static MapTypeID get_default_map_type_id(void);
 
-		void start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, int redownload_mode);
+		void start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode);
 		void download(Viewport * viewport, bool only_new);
 		void download_section(const Coord & coord_ul, const Coord & coord_br, double zoom);
 
-		void download_onscreen_maps(int redownload_mode);
+		void download_onscreen_maps(MapDownloadMode map_download_mode);
 
 		static void weak_ref_cb(void * ptr, void * dead_vml);
 
@@ -147,8 +158,8 @@ namespace SlavGPS {
 #endif
 
 	private:
-		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
-		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, int redownload_mode);
+		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode);
+		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode);
 
 		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name, QString & tile_file_full_path);
 		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name, QString & path_buf);

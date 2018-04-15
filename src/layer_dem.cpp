@@ -1129,7 +1129,7 @@ static void srtm_draw_existence(Viewport * viewport)
 				continue;
 			}
 
-			cache_file_path = QString("%1srtm3-%2%3").arg(map_cache_dir()).arg(continent_dir).arg(QDir::separator()) + srtm_file_name(lat, lon);
+			cache_file_path = QString("%1srtm3-%2%3").arg(MapCache::get_dir()).arg(continent_dir).arg(QDir::separator()) + srtm_file_name(lat, lon);
 			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
 				continue;
 			}
@@ -1205,7 +1205,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 	for (double i = floor(min_max.lat.min * 8)/8; i <= floor(min_max.lat.max * 8)/8; i+=0.125) {
 		/* Check lat dir first -- faster. */
-		QString buf = QString("%1dem24k/%2/").arg(map_cache_dir()).arg((int) i);
+		QString buf = QString("%1dem24k/%2/").arg(MapCache::get_dir()).arg((int) i);
 
 		if (0 != access(buf.toUtf8().constData(), F_OK)) {
 			continue;
@@ -1213,13 +1213,13 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 		for (double j = floor(min_max.lon.min * 8)/8; j <= floor(min_max.lon.max * 8)/8; j+=0.125) {
 			/* Check lon dir first -- faster. */
-			buf = QString("%1dem24k/%2/%3/").arg(map_cache_dir()).arg((int) i).arg((int) j);
+			buf = QString("%1dem24k/%2/%3/").arg(MapCache::get_dir()).arg((int) i).arg((int) j);
 			if (0 != access(buf.toUtf8().constData(), F_OK)) {
 				continue;
 			}
 
 			buf = QString("%1dem24k/%2/%3/%4,%5.dem")
-				.arg(map_cache_dir())
+				.arg(MapCache::get_dir())
 				.arg((int) i)
 				.arg((int) j)
 				.arg(floor(i*8)/8, 0, 'f', 3, '0')  /* "%.03f" */
@@ -1411,7 +1411,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 #else
 	QString cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
 #endif
-	QString cache_file_path = map_cache_dir() + cache_file_name;
+	QString cache_file_path = MapCache::get_dir() + cache_file_name;
 
 	QString message;
 	if (0 == access(cache_file_path.toUtf8().constData(), F_OK)) {
@@ -1459,7 +1459,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		const QString dem_full_path = map_cache_dir() + cache_file_name;
+		const QString dem_full_path = MapCache::get_dir() + cache_file_name;
 		qDebug() << "II: Layer DEM: Download Tool: Release: released left button, path is" << dem_full_path;
 
 		/* TODO: check if already in filelist. */

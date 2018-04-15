@@ -661,9 +661,9 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInf
 	if (this->alpha < 255) {
 		ui_pixmap_scale_alpha(*pixmap, this->alpha);
 	}
-	map_cache_extra_t arg;
+	MapCacheItemExtra arg;
 	arg.duration = tt;
-	map_cache_add(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	MapCache::add(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 }
 
 
@@ -750,9 +750,9 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
 			if (this->alpha < 255) {
 				ui_pixmap_set_alpha(*pixmap, this->alpha);
 			}
-			map_cache_extra_t arg;
+			MapCacheItemExtra arg;
 			arg.duration = -42.0;
-			map_cache_add(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+			MapCache::add(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
 		if (g_planet_import_time < stat_buf.st_mtime) {
@@ -775,7 +775,7 @@ QPixmap * LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 	const Coord coord_ul = map_utils_iTMS_to_coord(ti_ul);
 	const Coord coord_br = map_utils_iTMS_to_coord(ti_br);
 
-	QPixmap * pixmap = map_cache_get(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	QPixmap * pixmap = MapCache::get(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 	if (pixmap) {
 		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
 	} else {
@@ -911,7 +911,7 @@ typedef struct {
 
 static void mapnik_layer_flush_memory(menu_array_values * values)
 {
-	map_cache_flush_type(MapTypeID::MapnikRender);
+	MapCache::flush_type(MapTypeID::MapnikRender);
 }
 
 
@@ -1081,7 +1081,7 @@ void LayerMapnik::tile_info()
 	/* Requested position to map coord. */
 	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ti_ul);
 
-	map_cache_extra_t extra = map_cache_get_extra(&ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	MapCacheItemExtra extra = MapCache::get_extra(&ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 
 	const QString tile_filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
 

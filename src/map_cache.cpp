@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #include <unordered_map>
@@ -29,8 +28,10 @@
 #include <unistd.h>
 
 #include <glib.h>
+
 #include <QDebug>
 #include <QDir>
+#include <QPixmap>
 
 #include "ui_builder.h"
 #include "globals.h"
@@ -46,6 +47,25 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Map Cache:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
+class MapCacheItem {
+public:
+	MapCacheItem(QPixmap * new_pixmap, MapCacheItemExtra & new_extra);
+	~MapCacheItem();
+
+	size_t get_size(void) const;
+
+	QPixmap * pixmap = NULL;
+	MapCacheItemExtra extra;
+};
+
+
+
+
 #define MC_KEY_SIZE 64
 
 #define HASHKEY_FORMAT_STRING "%d-%d-%d-%d-%d-%lu-%d-%.3f-%.3f"
@@ -54,16 +74,7 @@ using namespace SlavGPS;
 
 
 
-
-typedef struct {
-	QPixmap * pixmap;
-	map_cache_extra_t extra;
-} cache_item_t;
-
-
-
-
-static std::unordered_map<std::string, cache_item_t *> maps_cache;
+static std::unordered_map<std::string, MapCacheItem *> maps_cache;
 static std::list<std::string> keys_list;
 static size_t cache_size = 0;
 static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
@@ -79,7 +90,7 @@ static ParameterSpecification prefs[] = {
 
 
 
-static void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra);
+static void cache_add(std::string & key, QPixmap * pixmap, MapCacheItemExtra & extra);
 static void cache_remove(std::string & key);
 static void cache_remove_oldest();
 static void flush_matching(std::string & key_part);
@@ -87,12 +98,28 @@ static void flush_matching(std::string & key_part);
 
 
 
-static void cache_item_free(cache_item_t * ci)
+MapCacheItem::MapCacheItem(QPixmap * new_pixmap, MapCacheItemExtra & new_extra)
 {
-#ifdef K_TODO
-	g_object_unref(ci->pixmap);
-#endif
-	free(ci);
+	this->pixmap = new_pixmap;
+	this->extra = new_extra;
+}
+
+
+
+MapCacheItem::~MapCacheItem()
+{
+	delete this->pixmap;
+}
+
+
+
+size_t MapCacheItem::get_size(void) const
+{
+	size_t size = this->pixmap->width() * this->pixmap->height() * (this->pixmap->depth() / 8);
+	size += sizeof (MapCacheItemExtra);
+	size += 100; /* Not sure what this value represents, probably a guess at an average pixmap metadata size. This value existed in Viking. */
+
+	return size;
 }
 
 
@@ -106,11 +133,9 @@ void MapCache::init(void)
 
 
 
-void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra)
+void cache_add(std::string & key, QPixmap * pixmap, MapCacheItemExtra & extra)
 {
-	cache_item_t * ci = (cache_item_t *) malloc(sizeof (cache_item_t));
-	ci->pixmap = pixmap;
-	ci->extra = extra;
+	MapCacheItem * ci = new MapCacheItem(pixmap, extra);
 
 	size_t before = maps_cache.size();
 
@@ -120,16 +145,14 @@ void cache_add(std::string & key, QPixmap * pixmap, map_cache_extra_t extra)
 	size_t after = maps_cache.size();
 
 	if (after != before) {
-		cache_size += pixmap->width() * pixmap->height() * (pixmap->depth() / 8);
-		/* ATM size of 'extra' data hardly worth trying to count (compared to pixmap sizes)
-		   Not sure what this 100 represents anyway - probably a guess at an average pixmap metadata size */
-		cache_size += 100;
+		/* An item has been added, not replaced/updated. */
+		cache_size += ci->get_size();
 	}
 
 	keys_list.push_back(key);
 
 	if (maps_cache.size() != keys_list.size()) {
-		fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+		qDebug() << "EE" PREFIX << "ERROR: size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 		exit(EXIT_FAILURE);
 	}
 }
@@ -141,10 +164,11 @@ void cache_remove(std::string & key)
 {
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end() && iter->second && iter->second->pixmap){
-		QPixmap * pixmap = iter->second->pixmap;
-		cache_size -= pixmap->width() * pixmap->height() * (pixmap->depth() / 8);
-		cache_size -= 100;
+		MapCacheItem * ci = iter->second;
+		QPixmap * pixmap = ci->pixmap;
+		cache_size -= ci->get_size();
 		maps_cache.erase(key);
+		delete ci;
 	}
 }
 
@@ -158,7 +182,7 @@ void cache_remove_oldest()
 	keys_list.pop_front();
 
 	if (maps_cache.size() != keys_list.size()) {
-		fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+		qDebug() << "EE" PREFIX << "ERROR: size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 		exit(EXIT_FAILURE);
 	}
 }
@@ -170,7 +194,7 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+void MapCache::add(QPixmap * pixmap, MapCacheItemExtra & extra, TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	if (pixmap->isNull()) {
 		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
@@ -212,7 +236,7 @@ void SlavGPS::map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo 
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+QPixmap * MapCache::get(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
@@ -238,8 +262,10 @@ QPixmap * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type_id, uin
 
 
 
-map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+MapCacheItemExtra MapCache::get_extra(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
+	MapCacheItemExtra extra;
+
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
 	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
@@ -247,12 +273,12 @@ map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID ma
 
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end() && iter->second) {
-		return iter->second->extra;
+		extra = iter->second->extra;
 	} else {
-		map_cache_extra_t ret;
-		ret.duration = 0.0;
-		return ret;
+		extra.duration = 0.0;
 	}
+
+	return extra;
 }
 
 
@@ -288,7 +314,7 @@ void flush_matching(std::string & key_part)
 		}
 
 		if (maps_cache.size() != keys_list.size()) {
-			fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+			qDebug() << "EE" PREFIX << "size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -302,7 +328,7 @@ void flush_matching(std::string & key_part)
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type_id, const QString & file_name)
+void MapCache::remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type_id, const QString & file_name)
 {
 	char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
@@ -315,7 +341,7 @@ void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID 
 
 
 
-void SlavGPS::map_cache_flush()
+void MapCache::flush(void)
 {
 	/* Everything happens within the mutex lock section. */
 	mc_mutex.lock();
@@ -327,7 +353,7 @@ void SlavGPS::map_cache_flush()
 	}
 
 	if (maps_cache.size() != keys_list.size()) {
-		fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+		qDebug() << "EE" PREFIX << "size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 		exit(EXIT_FAILURE);
 	}
 
@@ -343,7 +369,7 @@ void SlavGPS::map_cache_flush()
    Just remove cache items for the specified map type
    i.e. all related xyz+zoom+alpha+etc...
 */
-void SlavGPS::map_cache_flush_type(MapTypeID map_type_id)
+void MapCache::flush_type(MapTypeID map_type_id)
 {
 	char key_[MC_KEY_SIZE];
 	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING_TYPE, (int) map_type_id);
@@ -364,7 +390,7 @@ void MapCache::uninit(void)
 
 
 /* Size of map cache in memory. */
-size_t SlavGPS::map_cache_get_size()
+size_t MapCache::get_size()
 {
 	return cache_size;
 }
@@ -373,7 +399,7 @@ size_t SlavGPS::map_cache_get_size()
 
 
 /* Count of items in the map cache. */
-int SlavGPS::map_cache_get_count()
+int MapCache::get_count()
 {
 	return maps_cache.size();
 }
@@ -381,7 +407,7 @@ int SlavGPS::map_cache_get_count()
 
 
 
-const QString & SlavGPS::map_cache_dir()
+const QString & MapCache::get_dir()
 {
 #ifdef K_TODO
 	return MapCache::get_default_maps_dir();

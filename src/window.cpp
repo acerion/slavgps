@@ -1504,7 +1504,7 @@ void Window::menu_copy_centre_cb(void)
 
 void Window::map_cache_flush_cb(void)
 {
-	map_cache_flush();
+	MapCache::flush();
 }
 
 
@@ -3622,9 +3622,9 @@ Window * Window::new_window()
 
 void Window::menu_view_cache_info_cb(void)
 {
-	const size_t bytes = map_cache_get_size();
+	const size_t bytes = MapCache::get_size();
 	const QString size_string = Measurements::get_file_size_string(bytes);
-	const QString msg = QString("Map Cache size is %1 with %2 items").arg(size_string).arg(map_cache_get_count());
+	const QString msg = QString("Map Cache size is %1 with %2 items").arg(size_string).arg(MapCache::get_count());
 
 	Dialog::info(msg, this);
 }

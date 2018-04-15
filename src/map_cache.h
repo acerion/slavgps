@@ -40,26 +40,11 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		double duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered(i.e. read from disk)
-	} map_cache_extra_t;
+	class MapCacheItemExtra {
+	public:
+		double duration = 0.0; // Mostly for Mapnik Rendering duration - negative values indicate not rendered(i.e. read from disk)
+	};
 
-
-
-
-	void map_cache_add(QPixmap * pixmap, map_cache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
-	QPixmap * map_cache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
-	map_cache_extra_t map_cache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
-
-	void map_cache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, const QString & file_name);
-	void map_cache_flush();
-	void map_cache_flush_type(MapTypeID map_type);
-
-	size_t map_cache_get_size();
-	int map_cache_get_count();
-
-
-	const QString & map_cache_dir();
 
 
 
@@ -68,6 +53,18 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
+		static void add(QPixmap * pixmap, MapCacheItemExtra & extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+		static QPixmap * get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+		static MapCacheItemExtra get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+
+		static size_t get_size(void);
+		static int get_count(void);
+
+		static void remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, const QString & file_name);
+		static void flush(void);
+		static void flush_type(MapTypeID map_type);
+
+		static const QString & get_dir();
 		static const QString & get_default_maps_dir(void);
 	private:
 	};
