@@ -52,9 +52,9 @@ static int mpp_to_scale(double mpp, MapTypeID type)
 	}
 
 	switch (t) {
-	case 1: return (type == MapTypeID::TERRASERVER_URBAN) ? 8 : 0;
-	case 2: return (type == MapTypeID::TERRASERVER_URBAN) ? 9 : 0;
-	case 4: return (type != MapTypeID::TERRASERVER_TOPO) ? 10 : 0;
+	case 1: return (type == MapTypeID::TerraserverUrban) ? 8 : 0;
+	case 2: return (type == MapTypeID::TerraserverUrban) ? 9 : 0;
+	case 4: return (type != MapTypeID::TerraserverTopo) ? 10 : 0;
 	case 8: return 11;
 	case 16: return 12;
 	case 32: return 13;
@@ -152,13 +152,13 @@ const QString MapSourceTerraserver::get_server_hostname(void) const
 MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString & new_label)
 {
 	switch (new_type_id) {
-	case MapTypeID::TERRASERVER_AERIAL:
+	case MapTypeID::TerraserverAerial:
 		this->copyright = "© DigitalGlobe";
 		break;
-	case MapTypeID::TERRASERVER_TOPO:
+	case MapTypeID::TerraserverTopo:
 		this->copyright = "© LandVoyage";
 		break;
-	case MapTypeID::TERRASERVER_URBAN:
+	case MapTypeID::TerraserverUrban:
 		this->copyright = "© DigitalGlobe";
 		break;
 	default:

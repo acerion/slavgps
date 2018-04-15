@@ -29,7 +29,6 @@
 #include "map_source_bing.h"
 #include "webtool_center.h"
 #include "external_tools.h"
-#include "map_ids.h"
 #include "util.h"
 
 
@@ -49,7 +48,7 @@ using namespace SlavGPS;
 /* Initialization. */
 void SlavGPS::bing_init()
 {
-	MapSources::register_map_source(new MapSourceBing(MapTypeID::BING_AERIAL, QObject::tr("Bing Aerial"), API_KEY));
+	MapSources::register_map_source(new MapSourceBing(MapTypeID::BingAerial, QObject::tr("Bing Aerial"), API_KEY));
 
 	/* Allow opening web location. */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Bing"), "http://www.bing.com/maps/?v=2&cp=%1~%2&lvl=%3"));

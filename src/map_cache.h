@@ -30,7 +30,7 @@
 #include <QString>
 
 #include "mapcoord.h"
-#include "map_ids.h"
+#include "map_source.h"
 
 
 

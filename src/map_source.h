@@ -30,7 +30,6 @@
 #include "mapcoord.h"
 #include "bbox.h"
 #include "download.h"
-#include "map_ids.h"
 
 
 
@@ -40,11 +39,51 @@ namespace SlavGPS {
 
 
 
+	enum class MapTypeID {
+		Initial             =  -1, /* No ID set yet. */
+		Default             =   0, /* Let the program select default map type id. */
+
+		/* Old Terraserver ids - listed for compatibility. */
+		TerraserverAerial   =   1,
+		TerraserverTopo     =   2,
+		TerraserverUrban    =   4,
+
+		Expedia             =   5,
+
+		MapnikRender        =   7,
+
+		/* Mostly OSM related - except the Blue Marble value. */
+		OSMMapnik           =  13,
+		BlueMarble          =  15,
+		OSMCycle            =  17,
+		MapQuestOSM         =  19,
+		OSMTransport        =  20,
+		OSMOnDisk           =  21,
+		OSMHumanitarian     =  22,
+		MBTiles             =  23,
+		OSMMetatiles        =  24,
+
+		BingAerial          = 212
+
+		/*
+		  Unfortunately previous ID allocations have been a
+		  little haphazard, but hopefully future IDs can be
+		  follow this scheme:
+
+		   - 0 to 31 are intended for hard coded internal defaults
+		   - 32-127 are intended for XML configuration map supplied defaults: see data/maps.xml
+		   - 128 and above are intended for end user configurations.
+		*/
+	};
+
+
+
+
 	class MapSource {
 	public:
 		MapSource();
 		MapSource(MapSource & map);
-		~MapSource();
+		virtual ~MapSource();
 
 		virtual MapSource & operator=(MapSource map);
 

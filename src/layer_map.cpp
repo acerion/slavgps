@@ -28,13 +28,11 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include <mutex>
 #include <map>
 #include <cstdlib>
 #include <cassert>
-#include <cstring>
 #include <cmath>
 
 #ifdef HAVE_UNISTD_H
@@ -55,7 +53,6 @@
 #include "layer_map.h"
 #include "metatile.h"
 #include "ui_util.h"
-#include "map_ids.h"
 #include "layer_defaults.h"
 #include "widget_file_entry.h"
 #include "dialog.h"
@@ -122,27 +119,27 @@ static std::vector<SGLabelID> map_types;
 
 
 static std::vector<SGLabelID> params_mapzooms = {
-	SGLabelID(N_("Use Viking Zoom Level"), 0),
-	SGLabelID("0.25", 1),
-	SGLabelID("0.5", 2),
-	SGLabelID("1", 3),
-	SGLabelID("2", 4),
-	SGLabelID("4", 5),
-	SGLabelID("8", 6),
-	SGLabelID("16", 7),
-	SGLabelID("32", 8),
-	SGLabelID("64", 9),
-	SGLabelID("128", 10),
-	SGLabelID("256", 11),
-	SGLabelID("512", 12),
-	SGLabelID("1024", 13),
-	SGLabelID("USGS 10k", 14),
-	SGLabelID("USGS 24k", 15),
-	SGLabelID("USGS 25k", 16),
-	SGLabelID("USGS 50k", 17),
-	SGLabelID("USGS 100k", 18),
-	SGLabelID("USGS 200k", 19),
-	SGLabelID("USGS 250k", 20),
+	SGLabelID(QObject::tr("Use Viking Zoom Level"), 0),
+	SGLabelID(QObject::tr("0.25"),       1),
+	SGLabelID(QObject::tr("0.5"),        2),
+	SGLabelID(QObject::tr("1"),          3),
+	SGLabelID(QObject::tr("2"),          4),
+	SGLabelID(QObject::tr("4"),          5),
+	SGLabelID(QObject::tr("8"),          6),
+	SGLabelID(QObject::tr("16"),         7),
+	SGLabelID(QObject::tr("32"),         8),
+	SGLabelID(QObject::tr("64"),         9),
+	SGLabelID(QObject::tr("128"),       10),
+	SGLabelID(QObject::tr("256"),       11),
+	SGLabelID(QObject::tr("512"),       12),
+	SGLabelID(QObject::tr("1024"),      13),
+	SGLabelID(QObject::tr("USGS 10k"),  14),
+	SGLabelID(QObject::tr("USGS 24k"),  15),
+	SGLabelID(QObject::tr("USGS 25k"),  16),
+	SGLabelID(QObject::tr("USGS 50k"),  17),
+	SGLabelID(QObject::tr("USGS 100k"), 18),
+	SGLabelID(QObject::tr("USGS 200k"), 19),
+	SGLabelID(QObject::tr("USGS 250k"), 20),
 };
 
 static double __mapzooms_x[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
@@ -163,7 +160,7 @@ static ParameterScale scale_alpha = { 0, 255, SGVariant((int32_t) 255), 3, 0 };
 
 static SGVariant id_default(void)
 {
-	return SGVariant((int32_t) MapTypeID::MAPQUEST_OSM);
+	return SGVariant((int32_t) MapTypeID::MapQuestOSM);
 }
 
 
@@ -416,8 +413,8 @@ void MapSources::register_map_source(MapSource * map_source)
 
 
 /**
- * Returns the actual map id (rather than the internal type index value).
- */
+   Returns map type id
+*/
 MapTypeID LayerMap::get_map_type_id(void) const
 {
 	return this->map_type_id;
@@ -478,7 +475,7 @@ void LayerMap::mkdir_if_default_dir()
 	    && 0 != access(this->cache_dir.toUtf8().constData(), F_OK)) {
 
 		if (g_mkdir(this->cache_dir.toUtf8().constData(), 0777) != 0) {
-			qDebug() << "WW: Layer Map:: Failed to create directory" << this->cache_dir;
+			qDebug() << "WW" PREFIX << "Failed to create directory" << this->cache_dir;
 		}
 	}
 }
@@ -517,9 +514,9 @@ void LayerMap::set_cache_dir(const QString & dir)
 
 
 
-void LayerMap::set_file(const QString & name_)
+void LayerMap::set_file_full_path(const QString & new_file_full_path)
 {
-	this->filename = name_;
+	this->file_full_path = new_file_full_path;
 }
 
 
@@ -563,7 +560,7 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_FILE:
-		this->set_file(data.val_string);
+		this->set_file_full_path(data.val_string);
 		break;
 	case PARAM_MAPTYPE:
 		if (!MapSource::is_map_type_id_registered((MapTypeID) data.val_int)) {
@@ -606,7 +603,7 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			this->xmapzoom = __mapzooms_x[data.val_int];
 			this->ymapzoom = __mapzooms_y[data.val_int];
 		} else {
-			qDebug() << QObject::tr("WARNING: Unknown Map Zoom");
+			qDebug() << "WW" PREFIX << "Unknown Map Zoom" << data.val_int;
 		}
 		break;
 	default:
@@ -652,7 +649,7 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 		rv = SGVariant((int32_t) this->cache_layout);
 		break;
 	case PARAM_FILE:
-		rv = SGVariant(this->filename);
+		rv = SGVariant(this->file_full_path);
 		break;
 	case PARAM_MAPTYPE:
 		rv = SGVariant((int32_t) this->map_type_id);
@@ -685,9 +682,9 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 		/* Get new value. */
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		/* Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type. */
-		bool sensitive = (MapTypeID::OSM_ON_DISK != var.i &&
-				  MapTypeID::MBTILES != var.i &&
-				  MapTypeID::OSM_METATILES != var.i);
+		bool sensitive = (MapTypeID::OSMOnDisk != var.i &&
+				  MapTypeID::MBTiles != var.i &&
+				  MapTypeID::OSMMetatiles != var.i);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
@@ -726,7 +723,7 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 
 		/* File only applicable for MBTiles type.
 		   Directory for all other types. */
-		sensitive = (MapTypeID::MBTILES == var.i);
+		sensitive = (MapTypeID::MBTiles == var.i);
 		GtkWidget *w5 = ww1[PARAM_FILE];
 		GtkWidget *w6 = ww2[PARAM_FILE];
 		GtkWidget *w7 = ww1[PARAM_CACHE_DIR];
@@ -793,7 +790,7 @@ LayerMap::~LayerMap()
 			int ans = sqlite3_close(this->mbtiles);
 			if (ans != SQLITE_OK) {
 				/* Only to console for information purposes only. */
-				fprintf(stderr, "WARNING: SQL Close problem: %d\n", ans);
+				qDebug() << "WW" PREFIX << "SQL Close problem:" << ans;
 			}
 		}
 	}
@@ -821,25 +818,25 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 #ifdef HAVE_SQLITE3_H
 	/* Do some SQL stuff. */
 	if (map_source->is_mbtiles()) {
-		int ans = sqlite3_open_v2(this->filename.toUtf8().constData(),
+		int ans = sqlite3_open_v2(this->file_full_path.toUtf8().constData(),
 					  &(this->mbtiles),
 					  SQLITE_OPEN_READONLY,
 					  NULL);
 		if (ans != SQLITE_OK) {
 			/* That didn't work, so here's why: */
-			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
+			qDebug() << "WW" PREFIX << sqlite3_errmsg(this->mbtiles);
 
-			Dialog::error(tr("Failed to open MBTiles file: %1").arg(this->filename), this->get_window());
+			Dialog::error(tr("Failed to open MBTiles file: %1").arg(this->file_full_path), this->get_window());
 			this->mbtiles = NULL;
 		}
 	}
 #endif
 
 	/* If the on Disk OSM Tile Layout type. */
-	if (map_source->map_type_id == MapTypeID::OSM_ON_DISK) {
+	if (map_source->map_type_id == MapTypeID::OSMOnDisk) {
 		/* Copy the directory into filename.
 		   Thus the map cache look up will be unique when using more than one of these map types. */
-		this->filename = this->cache_dir;
+		this->file_full_path = this->cache_dir;
 	}
 }
 
@@ -889,9 +886,9 @@ static void pixmap_scale(QPixmap & pixmap, double scale_x, double scale_y)
 #ifdef K_TODO
 static int sql_select_tile_dump_cb(void *data, int cols, char **fields, char **col_names)
 {
-	fprintf(stderr, "WARNING: Found %d columns\n", cols);
+	qDebug() << "WW" PREFIX << "Found" << cols << "columns";
 	for (int i = 0; i < cols; i++) {
-		fprintf(stderr, "WARNING: SQL processing %s = %s\n", col_names[i], fields[i]);
+		qDebug() << "WW" PREFIX << "SQL processing" << col_names[i] << "=" << fields[i];
 	}
 	return 0;
 }
@@ -913,7 +910,7 @@ static QPixmap * create_pixmap_sql_exec(sqlite3 * sql, int xx, int yy, int zoom)
 	sqlite3_stmt *sql_stmt = NULL;
 	int ans = sqlite3_prepare_v2(sql, statement, -1, &sql_stmt, NULL);
 	if (ans != SQLITE_OK) {
-		fprintf(stderr, "WARNING: %s: %s - %d: %s\n", __FUNCTION__, "prepare failure", ans, statement);
+		qDebug() << "WW" PREFIX << "prepare failure -" << ans << "-" << statement;
 		finished = true;
 	}
 
@@ -924,13 +921,13 @@ static QPixmap * create_pixmap_sql_exec(sqlite3 * sql, int xx, int yy, int zoom)
 			/* Get tile_data blob. */
 			int count = sqlite3_column_count(sql_stmt);
 			if (count != 1)  {
-				fprintf(stderr, "WARNING: %s: %s - %d\n", __FUNCTION__, "count not one", count);
+				qDebug() << "WW" PREFIX << "count not one -" << count;
 				finished = true;
 			} else {
 				const void *data = sqlite3_column_blob(sql_stmt, 0);
 				int bytes = sqlite3_column_bytes(sql_stmt, 0);
 				if (bytes < 1)  {
-					fprintf(stderr, "WARNING: %s: %s (%d)\n", __FUNCTION__, "not enough bytes", bytes);
+					qDebug() << "WW" PREFIX << "not enough bytes:" << bytes;
 					finished = true;
 				} else {
 					/* Convert these blob bytes into a pixmap via these streaming operations. */
@@ -938,7 +935,7 @@ static QPixmap * create_pixmap_sql_exec(sqlite3 * sql, int xx, int yy, int zoom)
 					GError *error = NULL;
 					pixmap = gdk_pixbuf_new_from_stream(stream, NULL, &error);
 					if (error) {
-						fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
+						qDebug() << "WW" PREFIX << error->message;
 						g_error_free(error);
 					}
 					g_input_stream_close(stream, NULL, NULL);
@@ -950,7 +947,7 @@ static QPixmap * create_pixmap_sql_exec(sqlite3 * sql, int xx, int yy, int zoom)
 			/* e.g. SQLITE_DONE | SQLITE_ERROR | SQLITE_MISUSE | etc...
 			   Finished normally and give up on any errors. */
 			if (ans != SQLITE_DONE) {
-				fprintf(stderr, "WARNING: %s: %s - %d\n", __FUNCTION__, "step issue", ans);
+				qDebug() << "WW" PREFIX << "step issue" << ans;
 			}
 			finished = true;
 			break;
@@ -979,7 +976,7 @@ QPixmap * LayerMap::create_mbtiles_pixmap(int xx, int yy, int zoom)
 		  int ans = sqlite3_exec(this->mbtiles, statement, sql_select_tile_dump_cb, pixmap, &errMsg);
 		  if (ans != SQLITE_OK) {
 		  // Only to console for information purposes only
-		  fprintf(stderr, "WARNING: SQL problem: %d for %s - error: %s\n", ans, statement, errMsg);
+		  qDebug() << "WW" PREFIX << "SQL problem:" << ans << "for" << statement << "- error:" << errMsg;
 		  sqlite3_free(errMsg);
 		  }
 		  free(statement);
@@ -1025,7 +1022,7 @@ QPixmap * LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
 		GError *error = NULL;
 		pixmap = gdk_pixbuf_new_from_stream(stream, NULL, &error);
 		if (error) {
-			fprintf(stderr, "WARNING: %s: %s", __FUNCTION__, error->message);
+			qDebug() << "WW" PREFIX << error->message;
 			g_error_free(error);
 		}
 		g_input_stream_close(stream, NULL, NULL);
@@ -1135,42 +1132,44 @@ static QString get_cache_filename(MapsCacheLayout layout,
 QPixmap * LayerMap::get_pixmap_ref(const QString & map_type_string, TileInfo * mapcoord, QString & tile_file_full_path, double scale_x, double scale_y)
 {
 	/* Get the thing. */
-	QPixmap * pixmap = map_cache_get(mapcoord, this->map_type_id, this->alpha, scale_x, scale_y, this->filename);
+	QPixmap * pixmap = map_cache_get(mapcoord, this->map_type_id, this->alpha, scale_x, scale_y, this->file_full_path);
 	if (pixmap) {
 		//fprintf(stderr, "Layer Map: MAP CACHE HIT\n");
-	} else {
-		//fprintf(stderr, "Layer Map: MAP CACHE MISS\n");
-		const MapSource * map_source = map_sources[this->map_type_id];
-		if (map_source->is_direct_file_access()) {
-			/* ATM MBTiles must be 'a direct access type'. */
-			if (map_source->is_mbtiles()) {
-				pixmap = this->create_mbtiles_pixmap(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
-			} else if (map_source->is_osm_meta_tiles()) {
-				pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
-			} else {
-				tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
-									 this->cache_dir, this->map_type_id, "",
-									 mapcoord,
-									 map_source->get_file_extension());
-				pixmap = this->create_pixmap_from_file(tile_file_full_path);
-			}
+		return pixmap;
+	}
+
+	//fprintf(stderr, "Layer Map: MAP CACHE MISS\n");
+	const MapSource * map_source = map_sources[this->map_type_id];
+	if (map_source->is_direct_file_access()) {
+		/* ATM MBTiles must be 'a direct access type'. */
+		if (map_source->is_mbtiles()) {
+			pixmap = this->create_mbtiles_pixmap(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
+		} else if (map_source->is_osm_meta_tiles()) {
+			pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 		} else {
-			tile_file_full_path = get_cache_filename(this->cache_layout,
-								 this->cache_dir, this->map_type_id, map_type_string,
+			tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
+								 this->cache_dir, this->map_type_id, "",
 								 mapcoord,
 								 map_source->get_file_extension());
 			pixmap = this->create_pixmap_from_file(tile_file_full_path);
 		}
-
-		if (pixmap) {
-			pixmap_apply_settings(*pixmap, this->alpha, scale_x, scale_y);
-
-			map_cache_extra_t arg;
-			arg.duration = 0.0;
-			map_cache_add(pixmap, arg, mapcoord, map_source->map_type_id,
-				      this->alpha, scale_x, scale_y, this->filename);
-		}
+	} else {
+		tile_file_full_path = get_cache_filename(this->cache_layout,
+							 this->cache_dir, this->map_type_id, map_type_string,
+							 mapcoord,
+							 map_source->get_file_extension());
+		pixmap = this->create_pixmap_from_file(tile_file_full_path);
 	}
+
+	if (pixmap) {
+		pixmap_apply_settings(*pixmap, this->alpha, scale_x, scale_y);
+
+		map_cache_extra_t arg;
+		arg.duration = 0.0;
+		map_cache_add(pixmap, arg, mapcoord, map_source->map_type_id,
+			      this->alpha, scale_x, scale_y, this->file_full_path);
+	}
+
 	return pixmap;
 }
 
@@ -1313,26 +1312,27 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 {
 	double xzoom = viewport->get_xmpp();
 	double yzoom = viewport->get_ympp();
-	double xshrinkfactor = 1.0;
-	double yshrinkfactor = 1.0;
+	double scale_x = 1.0;
+	double scale_y = 1.0;
 	bool existence_only = false;
 
 	if (this->xmapzoom && (this->xmapzoom != xzoom || this->ymapzoom != yzoom)) {
-		xshrinkfactor = this->xmapzoom / xzoom;
-		yshrinkfactor = this->ymapzoom / yzoom;
+		scale_x = this->xmapzoom / xzoom;
+		scale_y = this->ymapzoom / yzoom;
 		xzoom = this->xmapzoom;
 		yzoom = this->xmapzoom;
-		if (! (xshrinkfactor > MIN_SHRINKFACTOR && xshrinkfactor < MAX_SHRINKFACTOR &&
-			yshrinkfactor > MIN_SHRINKFACTOR && yshrinkfactor < MAX_SHRINKFACTOR)) {
-			if (xshrinkfactor > REAL_MIN_SHRINKFACTOR && yshrinkfactor > REAL_MIN_SHRINKFACTOR) {
-				fprintf(stderr, "DEBUG: %s: existence_only due to SHRINKFACTORS", __FUNCTION__);
+		if (! (scale_x > MIN_SHRINKFACTOR && scale_x < MAX_SHRINKFACTOR &&
+			scale_y > MIN_SHRINKFACTOR && scale_y < MAX_SHRINKFACTOR)) {
+
+			if (scale_x > REAL_MIN_SHRINKFACTOR && scale_y > REAL_MIN_SHRINKFACTOR) {
+				qDebug() << "DD" PREFIX << "existence_only due to SHRINKFACTORS";
 				existence_only = true;
 			} else {
 				/* Report the reason for not drawing. */
-				Window * w = this->get_window();
-				if (w) {
+				Window * window = this->get_window();
+				if (window) {
 					QString msg = QString("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
-					w->statusbar_update(StatusBarField::INFO, msg);
+					window->statusbar_update(StatusBarField::INFO, msg);
 				}
 				return;
 			}
@@ -1361,14 +1361,14 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	   Also prevents very large number of tile download requests. */
 	int tiles = (xmax-xmin) * (ymax-ymin);
 	if (tiles > MAX_TILES) {
-		fprintf(stderr, "DEBUG: %s: existence_only due to wanting too many tiles (%d)", __FUNCTION__, tiles);
+		qDebug() << "DD" PREFIX << "existence_only due to wanting too many tiles:" << tiles;
 		existence_only = true;
 	}
 
 	QString path_buf;
 
 	if ((!existence_only) && this->autodownload  && this->should_start_autodownload(viewport)) {
-		fprintf(stderr, "DEBUG: %s: Starting autodownload", __FUNCTION__);
+		qDebug() << "DD" PREFIX << "Starting autodownload";
 		if (!this->adl_only_missing && map_source->supports_download_only_new()) {
 			/* Try to download newer tiles. */
 			this->start_download_thread(viewport, coord_ul, coord_br, REDOWNLOAD_NEW);
@@ -1383,7 +1383,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			for (int y = ymin; y <= ymax; y++) {
 				ulm.x = x;
 				ulm.y = y;
-				const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm, path_buf, xshrinkfactor, yshrinkfactor);
+				const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm, path_buf, scale_x, scale_y);
 				qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
 				if (pixmap) {
 					const int width = pixmap->width();
@@ -1402,8 +1402,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			}
 		}
 	} else { /* tilesize is known, don't have to keep converting coords. */
-		const double tilesize_x = map_source->get_tilesize_x() * xshrinkfactor;
-		const double tilesize_y = map_source->get_tilesize_y() * yshrinkfactor;
+		const double tilesize_x = map_source->get_tilesize_x() * scale_x;
+		const double tilesize_y = map_source->get_tilesize_y() * scale_y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
 		const int tilesize_x_ceil = ceil(tilesize_x);
 		const int tilesize_y_ceil = ceil(tilesize_y);
@@ -1452,7 +1452,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				} else {
 					/* Try correct scale first. */
 					int scale_factor = 1;
-					const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm, path_buf, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+					const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm, path_buf, scale_x * scale_factor, scale_y * scale_factor);
 					qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
 					if (pixmap) {
 						const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
@@ -1462,12 +1462,12 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					} else {
 						/* Otherwise try different scales. */
 						if (SCALE_SMALLER_ZOOM_FIRST) {
-							if (!this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type_string, path_buf)) {
-								this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type_string, path_buf);
+							if (!this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf)) {
+								this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf);
 							}
 						} else {
-							if (!this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type_string, path_buf)) {
-								this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, xshrinkfactor, yshrinkfactor, map_type_string, path_buf);
+							if (!this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf)) {
+								this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf);
 							}
 						}
 					}
@@ -1709,7 +1709,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 					break;
 
 				default:
-					fprintf(stderr, "WARNING: redownload mode %d unknown\n", mdj->redownload_mode);
+					qDebug() << "WW" PREFIX << "Redownload mode unknown:" << mdj->redownload_mode;
 				}
 			}
 
@@ -1742,7 +1742,7 @@ static int map_download_thread(BackgroundJob * bg_job)
 
 			mdj->mutex.lock();
 			if (remove_mem_cache) {
-				map_cache_remove_all_shrinkfactors(&mcoord, map_source->map_type_id, mdj->layer->filename);
+				map_cache_remove_all_shrinkfactors(&mcoord, map_source->map_type_id, mdj->layer->file_full_path);
 			}
 
 			if (mdj->refresh_display && mdj->map_layer_alive) {
@@ -1853,7 +1853,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 
 	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, &ulm)
 	    || !map_source->coord_to_tile(coord_br, zoom, zoom, &brm)) {
-		fprintf(stderr, "WARNING: %s() coord_to_tile() failed", __PRETTY_FUNCTION__);
+		qDebug() << "WW" PREFIX << "coord_to_tile() failed";
 		return;
 	}
 
@@ -1939,7 +1939,7 @@ void LayerMap::tile_info_cb(void)
 
 	if (map_source->is_direct_file_access()) {
 		if (map_source->is_mbtiles()) {
-			tile_file_full_path = this->filename;
+			tile_file_full_path = this->file_full_path;
 #ifdef HAVE_SQLITE3_H
 			/* And whether to bother going into the SQL to check it's really there or not... */
 			QString exists;
@@ -2216,7 +2216,7 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 	TileInfo ulm, brm;
 	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, &ulm)
 	    || !map_source->coord_to_tile(coord_br, zoom, zoom, &brm)) {
-		fprintf(stderr, "WARNING: %s() coord_to_tile() failed", __PRETTY_FUNCTION__);
+		qDebug() << "WW" PREFIX << "coord_to_tile() failed";
 		return 0;
 	}
 
@@ -2404,7 +2404,7 @@ void LayerMap::download_all_cb(void)
 		map_count = map_count + this->how_many_maps(coord_ul, coord_br, zoom_vals[zz], selected_download_method);
 	}
 
-	fprintf(stderr, "DEBUG: Layer Map: download request map count %d for method %d", map_count, selected_download_method);
+	qDebug() << "DD" PREFIX << "download request map count" << map_count << "for method" << selected_download_method;
 
 	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
@@ -2618,7 +2618,7 @@ QString redownload_mode_message(int redownload_mode, int maps_to_get, const QStr
 
 LayerMap::LayerMap()
 {
-	fprintf(stderr, "LayerMap::LayerMap()\n");
+	qDebug() << "DD" PREFIX << "constructor called";
 
 	this->type = LayerType::MAP;
 	strcpy(this->debug_string, "MAP");

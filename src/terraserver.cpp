@@ -26,7 +26,6 @@
 #include "terraserver.h"
 #include "map_source_terraserver.h"
 #include "layer_map.h"
-#include "map_ids.h"
 
 
 
@@ -38,7 +37,7 @@ using namespace SlavGPS;
 
 void SlavGPS::terraserver_init()
 {
-	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TERRASERVER_TOPO, "Terraserver Topos"));
-	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TERRASERVER_AERIAL, "Terraserver Aerials"));
-	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TERRASERVER_URBAN, "Terraserver Urban Areas"));
+	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverTopo, "Terraserver Topos"));
+	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverAerial, "Terraserver Aerials"));
+	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverUrban, "Terraserver Urban Areas"));
 }

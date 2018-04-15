@@ -41,7 +41,7 @@
 
 
 
-#include "map_ids.h"
+#include "map_source.h"
 #include "preferences.h"
 #include "coord.h"
 

@@ -94,8 +94,8 @@ namespace SlavGPS {
 		QString get_map_label(void) const;
 
 		void set_cache_dir(const QString & dir);
-		void mkdir_if_default_dir();
-		void set_file(const QString & name);
+		void mkdir_if_default_dir(void);
+		void set_file_full_path(const QString & new_file_full_path);
 
 		bool set_map_type_id(MapTypeID type_id);
 		MapTypeID get_map_type_id(void) const;
@@ -140,7 +140,7 @@ namespace SlavGPS {
 		Coord redownload_br;
 
 		Viewport * redownload_viewport = NULL;
-		QString filename;
+		QString file_full_path;
 
 #ifdef HAVE_SQLITE3_H
 		sqlite3 * mbtiles = NULL;
@@ -155,10 +155,11 @@ namespace SlavGPS {
 
 		bool should_start_autodownload(Viewport * viewport);
 
-		QPixmap * get_pixmap_ref(const QString & map_name, TileInfo * mapcoord, QString & tile_file_full_path, double xshrinkfactor, double yshrinkfactor);
+		QPixmap * get_pixmap_ref(const QString & map_type_string, TileInfo * mapcoord, QString & tile_file_full_path, double scale_x, double scale_y);
+		QPixmap * get_pixmap_ref(const QString & map_type_string, TileInfo * mapcoord, double scale_x, double scale_y);
 		QPixmap * create_mbtiles_pixmap(int xx, int yy, int zoom);
 		QPixmap * create_pixmap_from_metatile(int xx, int yy, int zz);
-		QPixmap * create_pixmap_from_file(const QString & tile_file_full_path);
+		QPixmap * create_pixmap_from_file(const QString & file_full_path);
 
 	public slots:
 		void download_all_cb(void);
