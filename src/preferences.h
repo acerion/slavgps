@@ -70,10 +70,8 @@ namespace SlavGPS {
 		static void register_parameter(const ParameterSpecification & param_spec, const SGVariant & default_param_value);
 
 		/* Set value of a single parameter. */
-		static bool set_param_value(const char * param_name, const SGVariant & param_value);
 		static bool set_param_value(const QString & param_name, const SGVariant & param_value);
 		/* Get value of a single parameter. */
-		static SGVariant get_param_value(const char * param_name);
 		static SGVariant get_param_value(const QString & param_name);
 
 

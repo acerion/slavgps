@@ -303,7 +303,7 @@ static bool preferences_load_from_file()
 
 
 
-bool Preferences::set_param_value(const char * param_name, const SGVariant & param_value)
+bool Preferences::set_param_value(const QString & param_name, const SGVariant & param_value)
 {
 	auto iter = registered_parameter_specifications.find(QString(param_name));
 	if (iter == registered_parameter_specifications.end()) {
@@ -332,14 +332,6 @@ bool Preferences::set_param_value(const char * param_name, const SGVariant & par
 	qDebug() << "II: Preferences: set new value of parameter" << param_name << "=" << param_value;
 
 	return true;
-}
-
-
-
-
-bool Preferences::set_param_value(const QString & param_name, const SGVariant & param_value)
-{
-	return Preferences::set_param_value(param_name, param_value);
 }
 
 
@@ -451,36 +443,12 @@ void Preferences::uninit()
 
 
 
-SGVariant Preferences::get_param_value(const char * param_name)
-{
-	SGVariant empty; /* Will have type id == Empty */
-
-	if (!preferences.loaded) {
-		qDebug() << "DD: Preferences: calling _get() for the first time (param name is" << param_name << ")";
-
-		/* Since we can't load the file in Preferences::init() (no params registered yet),
-		   do it once before we get the first param name. */
-		preferences_load_from_file();
-		preferences.loaded = true;
-	}
-
-	auto val_iter = registered_parameter_values.find(QString(param_name));
-	if (val_iter == registered_parameter_values.end()) {
-		return empty;
-	} else {
-		return val_iter.value();
-	}
-}
-
-
-
-
 SGVariant Preferences::get_param_value(const QString & param_name)
 {
 	SGVariant empty; /* Will have type id == Empty */
 
 	if (!preferences.loaded) {
-		qDebug() << "DD: Preferences: calling _get() for the first time (param name is" << param_name << ")";
+		qDebug() << "DD" PREFIX << "calling _get() for the first time (param name is" << param_name << ")";
 
 		/* Since we can't load the file in Preferences::init() (no params registered yet),
 		   do it once before we get the first param name. */

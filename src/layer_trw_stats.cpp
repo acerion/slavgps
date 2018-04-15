@@ -38,6 +38,7 @@
 #include "globals.h"
 #include "vikutils.h"
 #include "util.h"
+#include "preferences.h"
 
 
 

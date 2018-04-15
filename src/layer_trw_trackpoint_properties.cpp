@@ -35,6 +35,7 @@
 #include "date_time_dialog.h"
 #include "util.h"
 #include "measurements.h"
+#include "preferences.h"
 
 #ifdef K_INCLUDES
 #include "coords.h"

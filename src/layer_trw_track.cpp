@@ -55,6 +55,7 @@
 #include "tree_view_internal.h"
 #include "routing.h"
 #include "measurements.h"
+#include "preferences.h"
 
 
 

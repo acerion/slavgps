@@ -45,7 +45,6 @@
 
 #include "globals.h"
 #include "variant.h"
-//#include "preferences.h"
 
 
 
