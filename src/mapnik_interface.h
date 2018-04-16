@@ -48,7 +48,7 @@ namespace SlavGPS {
 
 	QString mapnik_interface_load_map_file(MapnikInterface * mi, const QString & filename, unsigned int width, unsigned int height);
 
-	QPixmap * mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br);
+	QPixmap mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br);
 
 	QString mapnik_interface_get_copyright(MapnikInterface * mi);
 

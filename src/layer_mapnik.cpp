@@ -64,6 +64,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer Mapnik:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 
@@ -645,21 +650,21 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInfo * ti_ul)
 {
 	int64_t tt1 = g_get_real_time();
-	QPixmap * pixmap = mapnik_interface_render(this->mi, coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
+	QPixmap pixmap = mapnik_interface_render(this->mi, coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
 	int64_t tt2 = g_get_real_time();
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
-	if (pixmap->isNull()) {
+	if (pixmap.isNull()) {
 #ifdef K_TODO
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
 		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 #endif
 	}
-	this->possibly_save_pixmap(*pixmap, ti_ul);
+	this->possibly_save_pixmap(pixmap, ti_ul);
 
 	/* NB Mapnik can apply alpha, but use our own function for now. */
 	if (this->alpha < 255) {
-		ui_pixmap_scale_alpha(*pixmap, this->alpha);
+		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 	MapCacheItemExtra arg;
 	arg.duration = tt;
@@ -732,23 +737,20 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coo
  * If function returns QPixmap properly, reference counter to this
  * buffer has to be decreased, when buffer is no longer needed.
  */
-QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rerender_)
+QPixmap LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rerender_) const
 {
 	*rerender_ = false;
-	QPixmap * pixmap = NULL;
+	QPixmap pixmap;
 	const QString filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
 
 	struct stat stat_buf;
 	if (stat(filename.toUtf8().constData(), &stat_buf) == 0) {
 		/* Get from disk. */
-		pixmap = new QPixmap();
-		if (!pixmap->load(filename)) {
-			delete pixmap;
-			pixmap = NULL;
+		if (!pixmap.load(filename)) {
 			qDebug() << "WW: Layer Mapnik: failed to load pixmap from" << filename;
 		} else {
 			if (this->alpha < 255) {
-				ui_pixmap_set_alpha(*pixmap, this->alpha);
+				ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
 			MapCacheItemExtra arg;
 			arg.duration = -42.0;
@@ -770,23 +772,23 @@ QPixmap * LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * re
  * Caller has to decrease reference counter of returned QPixmap,
  * when buffer is no longer needed.
  */
-QPixmap * LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
+QPixmap LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 {
 	const Coord coord_ul = map_utils_iTMS_to_coord(ti_ul);
 	const Coord coord_br = map_utils_iTMS_to_coord(ti_br);
 
-	QPixmap * pixmap = MapCache::get(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
-	if (pixmap) {
-		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
+	QPixmap pixmap = MapCache::get_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	if (!pixmap.isNull()) {
+		qDebug() << "II" PREFIX << "MAP CACHE HIT";
 	} else {
-		fprintf(stderr, "MapnikLayer: MAP CACHE MISS\n");
+		qDebug() << "II" PREFIX << "MAP CACHE MISS";
 
 		bool rerender_ = false;
 		if (this->use_file_cache && !this->file_cache_dir.isEmpty()) {
 			pixmap = this->load_pixmap(ti_ul, ti_br, &rerender_);
 		}
 
-		if (! pixmap || rerender_) {
+		if (pixmap.isNull() || rerender_) {
 			if (true) {
 				this->thread_add(ti_ul, coord_ul, coord_br, ti_ul->x, ti_ul->y, ti_ul->z, ti_ul->scale, this->filename_xml.toUtf8().constData());
 			} else {
@@ -837,7 +839,6 @@ void LayerMapnik::draw(Viewport * viewport)
 	if (map_utils_coord_to_iTMS(coord_ul, xzoom, yzoom, &ti_ul) &&
 	     map_utils_coord_to_iTMS(coord_br, xzoom, yzoom, &ti_br)) {
 		/* TODO: Understand if tilesize != 256 does this need to use shrinkfactors? */
-		QPixmap * pixmap;
 		int xx, yy;
 
 		int xmin = MIN(ti_ul.x, ti_br.x), xmax = MAX(ti_ul.x, ti_br.x);
@@ -852,15 +853,11 @@ void LayerMapnik::draw(Viewport * viewport)
 				ti_br.x = x+1;
 				ti_br.y = y+1;
 
-				pixmap = this->get_pixmap(&ti_ul, &ti_br);
-
-				if (pixmap) {
+				const QPixmap pixmap = this->get_pixmap(&ti_ul, &ti_br);
+				if (!pixmap.isNull()) {
 					const Coord coord = map_utils_iTMS_to_coord(&ti_ul);
 					viewport->coord_to_screen_pos(coord, &xx, &yy);
-					viewport->draw_pixmap(*pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
-#ifdef K_TODO
-					g_object_unref(pixmap);
-#endif
+					viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 				}
 			}
 		}

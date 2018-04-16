@@ -79,8 +79,8 @@ namespace SlavGPS {
 		void possibly_save_pixmap(QPixmap & pixmap, TileInfo * ulm);
 		void render(const Coord & coord_ul, const Coord & coord_br, TileInfo * ti_ul);
 		void thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, const QString & file_name);
-		QPixmap * load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender);
-		QPixmap * get_pixmap(TileInfo * ulm, TileInfo * brm);
+		QPixmap load_pixmap(TileInfo * ulm, TileInfo * brm, bool * rerender) const;
+		QPixmap get_pixmap(TileInfo * ulm, TileInfo * brm);
 		void rerender();
 		void tile_info();
 		bool feature_release(QMouseEvent * event, LayerTool * tool);

@@ -54,12 +54,12 @@ using namespace SlavGPS;
 
 class MapCacheItem {
 public:
-	MapCacheItem(QPixmap * new_pixmap, MapCacheItemExtra & new_extra);
-	~MapCacheItem();
+	MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemExtra & new_extra);
+	~MapCacheItem() {};
 
 	size_t get_size(void) const;
 
-	QPixmap * pixmap = NULL;
+	QPixmap pixmap;
 	MapCacheItemExtra extra;
 };
 
@@ -90,7 +90,7 @@ static ParameterSpecification prefs[] = {
 
 
 
-static void cache_add(std::string & key, QPixmap * pixmap, MapCacheItemExtra & extra);
+static void cache_add(std::string & key, const QPixmap pixmap, MapCacheItemExtra & extra);
 static void cache_remove(std::string & key);
 static void cache_remove_oldest();
 static void flush_matching(std::string & key_part);
@@ -98,7 +98,7 @@ static void flush_matching(std::string & key_part);
 
 
 
-MapCacheItem::MapCacheItem(QPixmap * new_pixmap, MapCacheItemExtra & new_extra)
+MapCacheItem::MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemExtra & new_extra)
 {
 	this->pixmap = new_pixmap;
 	this->extra = new_extra;
@@ -106,18 +106,16 @@ MapCacheItem::MapCacheItem(QPixmap * new_pixmap, MapCacheItemExtra & new_extra)
 
 
 
-MapCacheItem::~MapCacheItem()
-{
-	delete this->pixmap;
-}
-
-
 
 size_t MapCacheItem::get_size(void) const
 {
-	size_t size = this->pixmap->width() * this->pixmap->height() * (this->pixmap->depth() / 8);
-	size += sizeof (MapCacheItemExtra);
-	size += 100; /* Not sure what this value represents, probably a guess at an average pixmap metadata size. This value existed in Viking. */
+	size_t size = 0;
+
+	if (!this->pixmap.isNull()) {
+		size += this->pixmap.width() * this->pixmap.height() * (this->pixmap.depth() / 8);
+		size += sizeof (MapCacheItemExtra);
+		size += 100; /* Not sure what this value represents, probably a guess at an average pixmap metadata size. This value existed in Viking. */
+	}
 
 	return size;
 }
@@ -133,7 +131,7 @@ void MapCache::init(void)
 
 
 
-void cache_add(std::string & key, QPixmap * pixmap, MapCacheItemExtra & extra)
+void cache_add(std::string & key, const QPixmap pixmap, MapCacheItemExtra & extra)
 {
 	MapCacheItem * ci = new MapCacheItem(pixmap, extra);
 
@@ -163,9 +161,8 @@ void cache_add(std::string & key, QPixmap * pixmap, MapCacheItemExtra & extra)
 void cache_remove(std::string & key)
 {
 	auto iter = maps_cache.find(key);
-	if (iter != maps_cache.end() && iter->second && iter->second->pixmap){
+	if (iter != maps_cache.end()) {
 		MapCacheItem * ci = iter->second;
-		QPixmap * pixmap = ci->pixmap;
 		cache_size -= ci->get_size();
 		maps_cache.erase(key);
 		delete ci;
@@ -194,9 +191,9 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void MapCache::add(QPixmap * pixmap, MapCacheItemExtra & extra, TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+void MapCache::add(const QPixmap & pixmap, MapCacheItemExtra & extra, TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
-	if (pixmap->isNull()) {
+	if (pixmap.isNull()) {
 		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
 		return;
 	}
@@ -208,9 +205,6 @@ void MapCache::add(QPixmap * pixmap, MapCacheItemExtra & extra, TileInfo * mapco
 	std::string key(key_);
 
 	mc_mutex.lock();
-#ifdef K_TODO
-	g_object_ref(pixmap);
-#endif
 
 	cache_add(key, pixmap, extra);
 
@@ -236,27 +230,23 @@ void MapCache::add(QPixmap * pixmap, MapCacheItemExtra & extra, TileInfo * mapco
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap * MapCache::get(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+QPixmap MapCache::get_pixmap(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
+	QPixmap result;
+
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
 	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
-	mc_mutex.lock(); /* prevent returning pixmap when cache is being cleared */
-
+	mc_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end()) {
-#ifdef K_TODO
-		g_object_ref(iter->second->pixmap);
-#endif
-		mc_mutex.unlock();
-
-		return iter->second->pixmap;
-	} else {
-		mc_mutex.unlock();
-		return NULL;
+		result = iter->second->pixmap;
 	}
+	mc_mutex.unlock();
+
+	return result;
 }
 
 

@@ -229,12 +229,12 @@ QString SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const QStr
 /**
    Returns a pixmap of the specified area.
 */
-QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
+QPixmap SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
-	QPixmap * pixmap = NULL; /* Initially the pixmap returns true for ::isNull(). */
+	QPixmap result; /* Initially the pixmap returns true for ::isNull(). */
 
 	if (!mi) {
-		return pixmap;
+		return result;
 	}
 
 #ifdef K_TODO
@@ -269,7 +269,7 @@ QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, 
 			}
 			memcpy(ImageRawDataPtr, image.raw_data(), width * height * 4);
 #ifdef K_TODO
-			pixmap = gdk_pixbuf_new_from_data(ImageRawDataPtr, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
+			result = gdk_pixbuf_new_from_data(ImageRawDataPtr, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
 #endif
 		} else {
 			g_warning("%s not rendered", __FUNCTION__);
@@ -281,7 +281,7 @@ QPixmap * SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, 
 		g_warning("An unknown error occurred while rendering");
 	}
 #endif
-	return pixmap;
+	return result;
 }
 
 

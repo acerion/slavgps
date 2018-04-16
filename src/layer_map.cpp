@@ -957,9 +957,9 @@ static QPixmap * create_pixmap_sql_exec(sqlite3 * sql, int xx, int yy, int zoom)
 
 
 
-QPixmap * LayerMap::create_mbtiles_pixmap(int xx, int yy, int zoom)
+QPixmap LayerMap::create_mbtiles_pixmap(int xx, int yy, int zoom)
 {
-	QPixmap *pixmap = NULL;
+	QPixmap pixmap;
 
 #ifdef HAVE_SQLITE3_H
 	if (this->mbtiles) {
@@ -987,15 +987,16 @@ QPixmap * LayerMap::create_mbtiles_pixmap(int xx, int yy, int zoom)
 
 
 
-QPixmap * LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
+QPixmap LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
 {
 	const int tile_max = METATILE_MAX_SIZE;
 	char err_msg[PATH_MAX] = { 0 };
 	int compressed;
+	QPixmap result;
 
 	char * buf = (char *) malloc(tile_max);
 	if (!buf) {
-		return NULL;
+		return result;
 	}
 
 	int len = metatile_read(this->cache_dir.toUtf8().constData(), xx, yy, zz, buf, tile_max, &compressed, err_msg);
@@ -1004,16 +1005,15 @@ QPixmap * LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
 			/* Not handled yet - I don't think this is used often - so implement later if necessary. */
 			qDebug() << "EE" PREFIX << "compressed metatiles not implemented";
 			free(buf);
-			return NULL;
+			return result;
 		}
 
 		/* Convert these buf bytes into a pixmap via these streaming operations. */
-		QPixmap * pixmap = NULL;
 
 #ifdef K_TODO
 		GInputStream *stream = g_memory_input_stream_new_from_data(buf, len, NULL);
 		GError *error = NULL;
-		pixmap = gdk_pixbuf_new_from_stream(stream, NULL, &error);
+		result = gdk_pixbuf_new_from_stream(stream, NULL, &error);
 		if (error) {
 			qDebug() << "WW" PREFIX << error->message;
 			g_error_free(error);
@@ -1021,12 +1021,13 @@ QPixmap * LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
 		g_input_stream_close(stream, NULL, NULL);
 #endif
 		free(buf);
-		return pixmap;
+
 	} else {
 		free(buf);
 		qDebug() << "EE" PREFIX << "failed:" << err_msg;
-		return NULL;
 	}
+
+	return result;
 }
 
 
@@ -1122,11 +1123,11 @@ static QString get_cache_filename(MapsCacheLayout layout,
    Function returns only a reference (pointer) to pixmap existing in
    pixmap cache.  Don't delete the pointer.
 */
-QPixmap * LayerMap::get_pixmap_ref(const QString & map_type_string, TileInfo * mapcoord, QString & tile_file_full_path, double scale_x, double scale_y)
+QPixmap LayerMap::get_pixmap(const QString & map_type_string, TileInfo * mapcoord, QString & tile_file_full_path, double scale_x, double scale_y)
 {
 	/* Get the thing. */
-	QPixmap * pixmap = MapCache::get(mapcoord, this->map_type_id, this->alpha, scale_x, scale_y, this->file_full_path);
-	if (pixmap) {
+	QPixmap pixmap = MapCache::get_pixmap(mapcoord, this->map_type_id, this->alpha, scale_x, scale_y, this->file_full_path);
+	if (!pixmap.isNull()) {
 		qDebug() << "II" PREFIX << "CACHE HIT";
 		return pixmap;
 	}
@@ -1137,17 +1138,17 @@ QPixmap * LayerMap::get_pixmap_ref(const QString & map_type_string, TileInfo * m
 		/* ATM MBTiles must be 'a direct access type'. */
 		if (map_source->is_mbtiles()) {
 			pixmap = this->create_mbtiles_pixmap(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
-			qDebug() << "II" PREFIX << "Creating pixmap from mbtiles:" << (pixmap ? "success" : "failure");
+			qDebug() << "II" PREFIX << "Creating pixmap from mbtiles:" << (pixmap.isNull() ? "failure" : "success");
 		} else if (map_source->is_osm_meta_tiles()) {
 			pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
-			qDebug() << "II" PREFIX << "Creating pixmap from metatile:" << (pixmap ? "success" : "failure");
+			qDebug() << "II" PREFIX << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
 		} else {
 			tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
 								 this->cache_dir, this->map_type_id, "",
 								 mapcoord,
 								 map_source->get_file_extension());
 			pixmap = this->create_pixmap_from_file(tile_file_full_path);
-			qDebug() << "II" PREFIX << "Creating pixmap from file:" << (pixmap ? "success" : "failure");
+			qDebug() << "II" PREFIX << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
 		}
 	} else {
 		tile_file_full_path = get_cache_filename(this->cache_layout,
@@ -1155,21 +1156,17 @@ QPixmap * LayerMap::get_pixmap_ref(const QString & map_type_string, TileInfo * m
 							 mapcoord,
 							 map_source->get_file_extension());
 		pixmap = this->create_pixmap_from_file(tile_file_full_path);
-		qDebug() << "II" PREFIX << "creating pixmap from cache:" << (pixmap ? "success" : "failure");
+		qDebug() << "II" PREFIX << "creating pixmap from cache:" << (pixmap.isNull() ? "failure" : "success");
 	}
 
-	if (pixmap) {
-		qDebug() << "II" PREFIX << "pixmap isNull()?:" << pixmap->isNull();
+	if (!pixmap.isNull()) {
+		pixmap_apply_settings(pixmap, this->alpha, scale_x, scale_y);
 
-		pixmap_apply_settings(*pixmap, this->alpha, scale_x, scale_y);
+		MapCacheItemExtra extra;
+		extra.duration = 0.0;
 
-		MapCacheItemExtra arg;
-		arg.duration = 0.0;
-
-#if 0
-		MapCache::add(pixmap, arg, mapcoord, map_source->map_type_id,
+		MapCache::add(pixmap, extra, mapcoord, map_source->map_type_id,
 			      this->alpha, scale_x, scale_y, this->file_full_path);
-#endif
 	}
 
 	return pixmap;
@@ -1178,24 +1175,22 @@ QPixmap * LayerMap::get_pixmap_ref(const QString & map_type_string, TileInfo * m
 
 
 
-QPixmap * LayerMap::create_pixmap_from_file(const QString & tile_file_full_path)
+QPixmap LayerMap::create_pixmap_from_file(const QString & tile_file_full_path)
 {
+	QPixmap result;
+
 	if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK | R_OK)) {
 		qDebug() << "EE" PREFIX << "can't access file" << tile_file_full_path;
-		return NULL;
+		return result;
 	}
 
-	QPixmap * pixmap = new QPixmap;
-
-	if (!pixmap->load(tile_file_full_path)) {
+	if (!result.load(tile_file_full_path)) {
 		Window * window = this->get_window();
 		if (window) {
 			window->statusbar_update(StatusBarField::INFO, QString("Couldn't open image file"));
 		}
-		delete pixmap;
-		pixmap = NULL;
 	}
-	return pixmap;
+	return result;
 }
 
 
@@ -1256,14 +1251,17 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
 		ulm2.scale = ulm.scale + scale_inc;
-		const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm2, tile_file_full_path, scale_x * scale_factor, scale_y * scale_factor);
-		qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
-		if (pixmap) {
+
+		const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm2, tile_file_full_path, scale_x * scale_factor, scale_y * scale_factor);
+		if (!pixmap.isNull()) {
+			qDebug() << "II" PREFIX << "Pixmap found";
 			const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
 			qDebug() << "II" PREFIX << "Calling draw_pixmap";
-			viewport->draw_pixmap(*pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
+			viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
 			return true;
+		} else {
+			qDebug() << "II" PREFIX << "Pixmap not found";
 		}
 	}
 	return false;
@@ -1290,16 +1288,19 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 				TileInfo ulm3 = ulm2;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
-				const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm3, path_buf, scale_x / scale_factor, scale_y / scale_factor);
-				qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
-				if (pixmap) {
+
+				const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm3, path_buf, scale_x / scale_factor, scale_y / scale_factor);
+				if (!pixmap.isNull()) {
+					qDebug() << "II" PREFIX << "Pixmap found";
 					int pixmap_x = 0;
 					int pixmap_y = 0;
 					int dest_x = viewport_x + pict_x * (tilesize_x_ceil / scale_factor);
 					int dest_y = viewport_y + pict_y * (tilesize_y_ceil / scale_factor);
 					qDebug() << "II" PREFIX << "Calling draw_pixmap";
-					viewport->draw_pixmap(*pixmap, dest_x, dest_y, pixmap_x, pixmap_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
+					viewport->draw_pixmap(pixmap, dest_x, dest_y, pixmap_x, pixmap_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
 					return true;
+				} else {
+					qDebug() << "II" PREFIX << "Pixmap not found";
 				}
 			}
 		}
@@ -1385,11 +1386,12 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			for (int y = ymin; y <= ymax; y++) {
 				ulm.x = x;
 				ulm.y = y;
-				const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm, path_buf, scale_x, scale_y);
-				qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
-				if (pixmap) {
-					const int width = pixmap->width();
-					const int height = pixmap->height();
+
+				const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm, path_buf, scale_x, scale_y);
+				if (!pixmap.isNull()) {
+					qDebug() << "II" PREFIX << "Pixmap found";
+					const int width = pixmap.width();
+					const int height = pixmap.height();
 					int viewport_x;
 					int viewport_y;
 
@@ -1399,7 +1401,9 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					viewport_y -= (height/2);
 
 					qDebug() << "II" PREFIX << "Calling draw_pixmap";
-					viewport->draw_pixmap(*pixmap, viewport_x, viewport_y, 0, 0, width, height);
+					viewport->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, width, height);
+				} else {
+					qDebug() << "II" PREFIX << "Pixmap not found";
 				}
 			}
 		}
@@ -1454,15 +1458,15 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				} else {
 					/* Try correct scale first. */
 					int scale_factor = 1;
-					const QPixmap * pixmap = this->get_pixmap_ref(map_type_string, &ulm, path_buf, scale_x * scale_factor, scale_y * scale_factor);
-					qDebug() << "II" PREFIX << (((quintptr) pixmap) ? "Pixmap found" : "Pixmap not found");
-					if (pixmap) {
-						qDebug() << "II" PREFIX << "pixmap isNull()?" << pixmap->isNull();
+					const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm, path_buf, scale_x * scale_factor, scale_y * scale_factor);
+					if (!pixmap.isNull()) {
+						qDebug() << "II" PREFIX << "Pixmap found";
 						const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 						const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
 						qDebug() << "II" PREFIX << "Calling draw_pixmap, pixmap_x =" << pixmap_x << "pixmap_y =" << pixmap_y << "viewport_x =" << viewport_x << "viewport_y =" << viewport_y;
-						viewport->draw_pixmap(*pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
+						viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
 					} else {
+						qDebug() << "II" PREFIX << "Pixmap not found";
 						/* Otherwise try different scales. */
 						if (SCALE_SMALLER_ZOOM_FIRST) {
 							if (!this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf)) {
