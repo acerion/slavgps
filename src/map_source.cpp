@@ -271,15 +271,13 @@ void MapSource::set_file_extension(const QString & new_file_extension)
 
 
 /**
- * @self: the MapSource of interest.
- * @bbox: bounding box of interest.
- * @zoom: the zoom level of interest.
- * @fct: the callback function to use to return matching copyrights.
- * @data: the user data to use to call the callbaack function.
- *
- * Retrieve copyright(s) for the corresponding bounding box and zoom level.
- */
-void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), Viewport * viewport)
+   Add copyright strings from map strings to viewport for the
+   corresponding bounding box and zoom level.
+
+   @bbox: bounding box of interest
+   @zoom: the zoom level of interest
+*/
+void MapSource::add_copyright(Viewport * viewport, const LatLonBBox &  bbox, double zoom)
 {
 	return;
 }

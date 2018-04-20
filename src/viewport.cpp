@@ -1779,16 +1779,6 @@ void Viewport::add_copyright(QString const & copyright)
 
 
 
-#ifdef K_TODO
-void vik_viewport_add_copyright_cb(Viewport * viewport, QString const & copyright)
-{
-	viewport->add_copyright(copyright);
-}
-#endif
-
-
-
-
 void Viewport::add_logo(QPixmap const * logo)
 {
 	if (!logo) {

@@ -216,14 +216,14 @@ static SGVariant cache_layout_default(void)
 
 
 enum {
-	PARAM_MAPTYPE = 0,
+	PARAM_MAP_TYPE_ID = 0,
 	PARAM_CACHE_DIR,
 	PARAM_CACHE_LAYOUT,
 	PARAM_FILE,
 	PARAM_ALPHA,
-	PARAM_AUTODOWNLOAD,
-	PARAM_ONLYMISSING,
-	PARAM_MAPZOOM,
+	PARAM_AUTO_DOWNLOAD,
+	PARAM_ONLY_MISSING,
+	PARAM_MAP_ZOOM,
 	NUM_PARAMS
 };
 
@@ -232,14 +232,14 @@ SGFileTypeFilter map_file_type[1] = { SGFileTypeFilter::MBTILES };
 
 ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
-	{ PARAM_MAPTYPE,       NULL, "mode",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::COMBOBOX,    &map_types,       id_default,           NULL, NULL },
+	{ PARAM_MAP_TYPE_ID,   NULL, "mode",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::COMBOBOX,    &map_types,       id_default,           NULL, NULL },
 	{ PARAM_CACHE_DIR,     NULL, "directory",      SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,             directory_default,    NULL, NULL },
 	{ PARAM_CACHE_LAYOUT,  NULL, "cache_type",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::COMBOBOX,    &cache_types,     cache_layout_default, NULL, N_("This determines the tile storage layout on disk") },
 	{ PARAM_FILE,          NULL, "mapfile",        SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Map File:"),                            WidgetType::FILEENTRY,   map_file_type,    file_default,         NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
 	{ PARAM_ALPHA,         NULL, "alpha",          SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HSCALE,      &scale_alpha,     NULL,                 NULL, N_("Control the Alpha value for transparency effects") },
-	{ PARAM_AUTODOWNLOAD,  NULL, "autodownload",   SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,             sg_variant_true,      NULL, NULL },
-	{ PARAM_ONLYMISSING,   NULL, "adlonlymissing", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
-	{ PARAM_MAPZOOM,       NULL, "mapzoom",        SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::COMBOBOX,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
+	{ PARAM_AUTO_DOWNLOAD, NULL, "autodownload",   SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,             sg_variant_true,      NULL, NULL },
+	{ PARAM_ONLY_MISSING,  NULL, "adlonlymissing", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
+	{ PARAM_MAP_ZOOM,      NULL, "mapzoom",        SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::COMBOBOX,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
 	{ NUM_PARAMS,          NULL, NULL,             SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                                         WidgetType::NONE,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
 };
@@ -249,7 +249,7 @@ ParameterSpecification maps_layer_param_specs[] = {
 
 void LayerMap::set_autodownload_default(bool autodownload)
 {
-	maps_layer_param_specs[PARAM_AUTODOWNLOAD].hardwired_default_value = autodownload ? sg_variant_true : sg_variant_false;
+	maps_layer_param_specs[PARAM_AUTO_DOWNLOAD].hardwired_default_value = autodownload ? sg_variant_true : sg_variant_false;
 }
 
 
@@ -555,7 +555,7 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 	case PARAM_FILE:
 		this->set_file_full_path(data.val_string);
 		break;
-	case PARAM_MAPTYPE:
+	case PARAM_MAP_TYPE_ID:
 		if (!MapSource::is_map_type_id_registered((MapTypeID) data.val_int)) {
 			qDebug() << "EE" PREFIX << "Unknown map type" << data.val_int;
 		} else {
@@ -584,13 +584,13 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			this->alpha = data.val_int;
 		}
 		break;
-	case PARAM_AUTODOWNLOAD:
+	case PARAM_AUTO_DOWNLOAD:
 		this->autodownload = data.val_bool;
 		break;
-	case PARAM_ONLYMISSING:
+	case PARAM_ONLY_MISSING:
 		this->adl_only_missing = data.val_bool;
 		break;
-	case PARAM_MAPZOOM:
+	case PARAM_MAP_ZOOM:
 		if (data.val_int < (int) params_mapzooms.size()) {
 			this->mapzoom_id = data.val_int;
 			this->xmapzoom = __mapzooms_x[data.val_int];
@@ -644,19 +644,19 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_FILE:
 		rv = SGVariant(this->file_full_path);
 		break;
-	case PARAM_MAPTYPE:
+	case PARAM_MAP_TYPE_ID:
 		rv = SGVariant((int32_t) this->map_type_id);
 		break;
 	case PARAM_ALPHA:
 		rv = SGVariant((int32_t) this->alpha);
 		break;
-	case PARAM_AUTODOWNLOAD:
+	case PARAM_AUTO_DOWNLOAD:
 		rv = SGVariant(this->autodownload); /* kamilkamil: in viking code there is a type mismatch. */
 		break;
-	case PARAM_ONLYMISSING:
+	case PARAM_ONLY_MISSING:
 		rv = SGVariant(this->adl_only_missing); /* kamilkamil: in viking code there is a type mismatch. */
 		break;
-	case PARAM_MAPZOOM:
+	case PARAM_MAP_ZOOM:
 		rv = SGVariant((int32_t) this->mapzoom_id);
 		break;
 	default: break;
@@ -671,7 +671,7 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 {
 	switch (values->param_id) {
 		/* Alter sensitivity of download option widgets according to the map_index setting. */
-	case PARAM_MAPTYPE: {
+	case PARAM_MAP_TYPE_ID: {
 		/* Get new value. */
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		/* Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type. */
@@ -680,10 +680,10 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 				  MapTypeID::OSMMetatiles != var.i);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
-		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
-		GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
-		GtkWidget *w3 = ww1[PARAM_AUTODOWNLOAD];
-		GtkWidget *w4 = ww2[PARAM_AUTODOWNLOAD];
+		GtkWidget *w1 = ww1[PARAM_ONLY_MISSING];
+		GtkWidget *w2 = ww2[PARAM_ONLY_MISSING];
+		GtkWidget *w3 = ww1[PARAM_AUTO_DOWNLOAD];
+		GtkWidget *w4 = ww2[PARAM_AUTO_DOWNLOAD];
 		/* Depends on autodownload value. */
 		LayerMap * layer = (LayerMap *) values->layer;
 		bool missing_sense = sensitive && layer->autodownload;
@@ -741,13 +741,13 @@ void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 	}
 
 		/* Alter sensitivity of 'download only missing' widgets according to the autodownload setting. */
-	case PARAM_AUTODOWNLOAD: {
+	case PARAM_AUTO_DOWNLOAD: {
 		/* Get new value. */
 		SGVariant var = a_uibuilder_widget_get_value(gtk_widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
-		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
-		GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
+		GtkWidget *w1 = ww1[PARAM_ONLY_MISSING];
+		GtkWidget *w2 = ww2[PARAM_ONLY_MISSING];
 		if (w1) {
 			w1->setEnabled(var.b);
 		}
@@ -876,16 +876,14 @@ static void pixmap_scale(QPixmap & pixmap, double scale_x, double scale_y)
 
 
 #ifdef HAVE_SQLITE3_H
-#ifdef K_TODO
-static int sql_select_tile_dump_cb(void *data, int cols, char **fields, char **col_names)
+static int sql_select_tile_dump_cb(void * data, int cols, char ** fields, char ** col_names)
 {
-	qDebug() << "WW" PREFIX << "Found" << cols << "columns";
+	qDebug() << "DD" PREFIX << "Found" << cols << "columns";
 	for (int i = 0; i < cols; i++) {
-		qDebug() << "WW" PREFIX << "SQL processing" << col_names[i] << "=" << fields[i];
+		qDebug() << "DD" PREFIX << "SQL processing" << col_names[i] << "=" << fields[i];
 	}
 	return 0;
 }
-#endif
 
 
 
@@ -1532,20 +1530,16 @@ void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin,
 
 void LayerMap::draw(Viewport * viewport)
 {
-	const MapSource * map_source = map_sources[this->map_type_id];
+	MapSource * map_source = map_sources[this->map_type_id];
 
 	if (map_source->get_drawmode() == viewport->get_drawmode()) {
 
 		/* Copyright. */
 		double level = viewport->get_zoom();
 		const LatLonBBox bbox = viewport->get_bbox();
-
-#ifdef K_TODO   /* linkage problem. */
-		map_source->get_copyright(bbox, level, SlavGPS::vik_viewport_add_copyright_cb, viewport);
-#endif
+		map_source->add_copyright(viewport, bbox, level);
 
 		/* Logo. */
-
 		const QPixmap * logo = map_source->get_logo();
 		viewport->add_logo(logo);
 
@@ -1993,35 +1987,38 @@ void LayerMap::tile_info_cb(void)
 		source = QObject::tr("Source: http://%1%2").arg(map_source->get_server_hostname()).arg(map_source->get_server_path(&ulm));
 	}
 
-	QStringList messages;
-	messages.push_back(source);
+	QStringList items;
+	items.push_back(source);
 
-	/* kamilTODO: you have very similar code in LayerMapnik::tile_info. */
+	QString file_info;
+	QString timestamp_info;
+	get_tile_file_info_strings(tile_file_full_path, file_info, timestamp_info);
+	items.push_back(file_info);
+	items.push_back(timestamp_info);
 
-	QString file_message;
-	QString time_message;
+	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
+}
 
+
+
+
+void SlavGPS::get_tile_file_info_strings(const QString & tile_file_full_path, QString & file_info, QString & timestamp_info)
+{
 	if (0 == access(tile_file_full_path.toUtf8().constData(), F_OK)) {
-		file_message = tr("Tile File: %1").arg(tile_file_full_path);
-		/* Get some timestamp information of the tile. */
+		file_info = QObject::tr("Tile File: %1").arg(tile_file_full_path);
+		/* Get timestamp information about the tile. */
 		struct stat stat_buf;
-		if (stat(tile_file_full_path.toUtf8().constData(), &stat_buf) == 0) {
+		if (0 == stat(tile_file_full_path.toUtf8().constData(), &stat_buf)) {
 			char time_buf[64];
 			strftime(time_buf, sizeof (time_buf), "%c", gmtime((const time_t *) &stat_buf.st_mtime));
-			time_message = tr("Tile File Timestamp: %1").arg(time_buf);
+			timestamp_info = QObject::tr("Tile File Timestamp: %1").arg(time_buf);
 		} else {
-			time_message = tr("Tile File Timestamp: Not Available");
+			timestamp_info = QObject::tr("Tile File Timestamp: Not Available");
 		}
-
 	} else {
-		file_message = tr("Tile File: %1 [Not Available]").arg(tile_file_full_path);
-		time_message = "";
+		file_info = QObject::tr("Tile File: %1 [Not Available]").arg(tile_file_full_path);
+		timestamp_info = "";
 	}
-
-	messages.push_back(file_message);
-	messages.push_back(time_message);
-
-	a_dialog_list(tr("Tile Information"), messages, 5, this->get_window());
 }
 
 
@@ -2251,61 +2248,40 @@ bool maps_dialog_zoom_between(Window * parent,
 			      MapDownloadMode * selected_download_mode)
 {
 
-	QDialog dialog(parent);
+	BasicDialog dialog(parent);
 	dialog.setWindowTitle(title);
 
 
-	QVBoxLayout vbox;
-	QLayout * old = dialog.layout();
-	delete old;
-	dialog.setLayout(&vbox);
+	int row = 0;
 
 
-	QLabel zoom_label1(QObject::tr("Zoom Start:"));
-	vbox.addWidget(&zoom_label1);
-
-
+	dialog.grid->addWidget(new QLabel(QObject::tr("Zoom Start:")), row, 0);
 	QComboBox zoom_combo1;
 	for (int i = 0; i < zoom_list.size(); i++) {
 		zoom_combo1.addItem(zoom_list.at(i), i);
 	}
 	zoom_combo1.setCurrentIndex(default_zoom1);
-	vbox.addWidget(&zoom_combo1);
+	dialog.grid->addWidget(&zoom_combo1, row, 1);
+	row++;
 
 
-	QLabel zoom_label2(QObject::tr("Zoom End:"));
-	vbox.addWidget(&zoom_label2);
-
-
+	dialog.grid->addWidget(new QLabel(QObject::tr("Zoom End:")), row, 0);
 	QComboBox zoom_combo2;
 	for (int i = 0; i < zoom_list.size(); i++) {
 		zoom_combo2.addItem(zoom_list.at(i), i);
 	}
 	zoom_combo2.setCurrentIndex(default_zoom2);
-	vbox.addWidget(&zoom_combo2);
+	dialog.grid->addWidget(&zoom_combo2, row, 1);
+	row++;
 
 
-	QLabel download_label(QObject::tr("Download Maps Method:"));
-	vbox.addWidget(&download_label);
-
-
+	dialog.grid->addWidget(new QLabel(QObject::tr("Download Maps Method:")), row, 0);
 	QComboBox download_combo;
 	for (int i = 0; i < download_list.size(); i++) {
 		download_combo.addItem(download_list.at(i), i);
 	}
 	download_combo.setCurrentIndex((int) default_download_mode);
-	vbox.addWidget(&download_combo);
-
-
-	/* kamilTODO: Set focus on Ok button. */
-
-
-	QDialogButtonBox button_box;
-	button_box.addButton(QDialogButtonBox::Ok);
-	button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-	vbox.addWidget(&button_box);
+	dialog.grid->addWidget(&download_combo, row, 1);
 
 
 	if (dialog.exec() != QDialog::Accepted) {

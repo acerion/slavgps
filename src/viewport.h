@@ -104,11 +104,6 @@ namespace SlavGPS {
 
 
 
-	void vik_viewport_add_copyright_cb(Viewport * viewport, QString const & copyright);
-
-
-
-
 } /* namespace SlavGPS */
 
 

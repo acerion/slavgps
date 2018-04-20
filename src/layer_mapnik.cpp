@@ -1080,33 +1080,15 @@ void LayerMapnik::tile_info()
 
 	MapCacheItemExtra extra = MapCache::get_extra(&ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 
-	const QString tile_filename = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
+	const QString tile_file_full_path = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
 
 	QStringList items;
 
-	/* kamilTODO: you have very similar code in LayerMap::tile_info. */
-
-	QString file_message;
-	QString time_message;
-
-	if (0 == access(tile_filename.toUtf8().constData(), F_OK)) {
-		file_message = QString(tr("Tile File: %1")).arg(tile_filename);
-		/* Get some timestamp information of the tile. */
-		struct stat stat_buf;
-		if (stat(tile_filename.toUtf8().constData(), &stat_buf) == 0) {
-			char time_buf[64];
-			strftime(time_buf, sizeof (time_buf), "%c", gmtime((const time_t *) &stat_buf.st_mtime));
-			time_message = QString(tr("Tile File Timestamp: %1")).arg(time_buf);
-		} else {
-			time_message = QString(tr("Tile File Timestamp: Not Available"));
-		}
-	} else {
-		file_message = QString(tr("Tile File: %1 [Not Available]")).arg(tile_filename);
-		time_message = QString("");
-	}
-
-	items.push_back(file_message);
-	items.push_back(time_message);
+	QString file_info;
+	QString timestamp_info;
+	get_tile_file_info_strings(tile_file_full_path, file_info, timestamp_info);
+	items.push_back(file_info);
+	items.push_back(timestamp_info);
 
 	/* Show the info. */
 	if (extra.duration > 0.0) {

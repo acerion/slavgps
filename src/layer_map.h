@@ -87,6 +87,7 @@ namespace SlavGPS {
 
 
 	class LayerMap : public Layer {
+		Q_OBJECT
 	public:
 		LayerMap();
 		~LayerMap();
@@ -203,6 +204,11 @@ namespace SlavGPS {
 	public:
 		static void register_map_source(MapSource * map_source);
 	};
+
+
+
+
+	void get_tile_file_info_strings(const QString & tile_file_full_path, QString & file_info, QString & timestamp_info);
 
 
 

@@ -157,9 +157,9 @@ const QString MapSourceBing::get_server_path(TileInfo * src) const
 
 
 
-void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, QString const &), Viewport * viewport)
+void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, double zoom)
 {
-	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
+	qDebug() << "DD" PREFIX << "looking for" << bbox << "at zoom" << zoom;
 
 	const int scale = map_utils_mpp_to_scale(zoom);
 
@@ -181,7 +181,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 		    (17 - scale) > current->minZoom &&
 		    (17 - scale) < current->maxZoom) {
 
-			(*fct)(viewport, current->attribution);
+			viewport->add_copyright(current->attribution);
 			qDebug() << "DD: Map Source Bind: get copyright: found match:" << current->attribution;
 		}
 	}
