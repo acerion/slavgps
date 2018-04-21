@@ -43,7 +43,6 @@
 #include "thumbnails.h"
 #include "ui_util.h"
 #include "application_state.h"
-#include "globals.h"
 #include "vikutils.h"
 #include "viewport.h"
 #include "viewport_internal.h"

@@ -24,6 +24,11 @@
 
 
 
+#include <cmath>
+
+
+
+
 #include <QString>
 
 
@@ -35,9 +40,9 @@ namespace SlavGPS {
 
 #define SG_PRECISION_ALTITUDE           2
 #define SG_PRECISION_ALTITUDE_WIDE      5
-#define SG_ALTITUDE_PRECISION      2
-#define SG_ALTITUDE_RANGE_MIN  -5000 /* [meters] */   /* See also VIK_VAL_MIN_ALT */
-#define SG_ALTITUDE_RANGE_MAX  25000 /* [meters] */   /* See also VIK_VAL_MAX_ALT */
+#define SG_ALTITUDE_PRECISION           2
+#define SG_ALTITUDE_RANGE_MIN       -5000 /* [meters] */   /* See also VIK_VAL_MIN_ALT */
+#define SG_ALTITUDE_RANGE_MAX       25000 /* [meters] */   /* See also VIK_VAL_MAX_ALT */
 
 
 #define SG_PRECISION_DISTANCE   2
@@ -49,6 +54,49 @@ namespace SlavGPS {
 
 
 #define DEGREE_SYMBOL "\302\260"
+
+
+
+
+#define ALTI_TO_MPP 1.4017295
+#define MPP_TO_ALTI 0.7134044
+
+#define VIK_FEET_IN_METER 3.2808399
+#define VIK_METERS_TO_FEET(X) ((X)*VIK_FEET_IN_METER)
+#define VIK_FEET_TO_METERS(X) ((X)/VIK_FEET_IN_METER)
+
+#define VIK_MILES_IN_METER 0.000621371192
+#define VIK_METERS_TO_MILES(X) ((X)*VIK_MILES_IN_METER)
+#define VIK_MILES_TO_METERS(X) ((X)/VIK_MILES_IN_METER)
+
+#define VIK_NAUTICAL_MILES_IN_METER 0.000539957
+#define VIK_METERS_TO_NAUTICAL_MILES(X) ((X)*VIK_NAUTICAL_MILES_IN_METER)
+#define VIK_NAUTICAL_MILES_TO_METERS(X) ((X)/VIK_NAUTICAL_MILES_IN_METER)
+
+/* MPS - Metres Per Second. */
+/* MPH - Metres Per Hour. */
+#define VIK_MPH_IN_MPS 2.23693629
+#define VIK_MPS_TO_MPH(X) ((X)*VIK_MPH_IN_MPS)
+#define VIK_MPH_TO_MPS(X) ((X)/VIK_MPH_IN_MPS)
+
+/* KPH - Kilometres Per Hour. */
+#define VIK_KPH_IN_MPS 3.6
+#define VIK_MPS_TO_KPH(X) ((X)*VIK_KPH_IN_MPS)
+#define VIK_KPH_TO_MPS(X) ((X)/VIK_KPH_IN_MPS)
+
+#define VIK_KNOTS_IN_MPS 1.94384449
+#define VIK_MPS_TO_KNOTS(X) ((X)*VIK_KNOTS_IN_MPS)
+#define VIK_KNOTS_TO_MPS(X) ((X)/VIK_KNOTS_IN_MPS)
+
+#define DEG2RAD(x) ((x)*(M_PI/180))
+#define RAD2DEG(x) ((x)*(180/M_PI))
+
+/* Mercator projection, latitude conversion (degrees). */
+#define MERCLAT(x) (RAD2DEG(log(tan((0.25 * M_PI) + (0.5 * DEG2RAD(x))))))
+#define DEMERCLAT(x) (RAD2DEG(atan(sinh(DEG2RAD(x)))))
+
+#define VIK_DEFAULT_ALTITUDE 0.0
+#define VIK_DEFAULT_DOP 0.0
 
 
 
@@ -74,10 +122,10 @@ namespace SlavGPS {
 
 
 	enum class SpeedUnit {
-		KILOMETRES_PER_HOUR,
-		MILES_PER_HOUR,
-		METRES_PER_SECOND,
-		KNOTS
+		KilometresPerHour,
+		MilesPerHour,
+		MetresPerSecond,
+		Knots
 	};
 
 

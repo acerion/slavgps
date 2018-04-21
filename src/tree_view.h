@@ -30,7 +30,6 @@
 #include <QObject>
 #include <QMenu>
 
-#include "globals.h"
 #include "tree_item.h"
 
 

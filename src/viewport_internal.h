@@ -38,7 +38,6 @@
 #include "viewport_decorations.h"
 #include "coord.h"
 #include "bbox.h"
-#include "globals.h"
 
 
 

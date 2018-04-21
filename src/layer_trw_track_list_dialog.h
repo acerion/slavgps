@@ -36,7 +36,6 @@
 #include <QTableView>
 #include <QContextMenuEvent>
 
-#include "globals.h"
 #include "measurements.h"
 
 

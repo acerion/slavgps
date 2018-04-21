@@ -52,13 +52,13 @@
 #include "file.h"
 #include "gpx.h"
 #include "file_utils.h"
-#include "globals.h"
 #include "preferences.h"
 #include "babel.h"
 #include "tree_view_internal.h"
 #include "layer_trw_track_internal.h"
 #include "util.h"
 #include "vikutils.h"
+#include "preferences.h"
 
 #ifdef K_INCLUDES
 #include "babel.h"
@@ -920,18 +920,23 @@ bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFil
 		result = geojson_write_file(file, trw);
 		break;
 	case SGFileType::KML:
-		fclose(file);
-		switch (Preferences::get_kml_export_units()) {
-		case VIK_KML_EXPORT_UNITS_STATUTE:
-			return a_babel_convert_export(trw, NULL, "-o kml", file_full_path, NULL);
-			break;
-		case VIK_KML_EXPORT_UNITS_NAUTICAL:
-			return a_babel_convert_export(trw, NULL, "-o kml,units=n", file_full_path, NULL);
-			break;
-		default:
-			/* VIK_KML_EXPORT_UNITS_METRIC: */
-			return a_babel_convert_export(trw, NULL, "-o kml,units=m", file_full_path, NULL);
-			break;
+		fclose(file); {
+			const KMLExportUnits units = Preferences::get_kml_export_units();
+			/* FIXME: why use the 'break' statements if you return? */
+			switch (units) {
+			case KMLExportUnits::Metric:
+				return a_babel_convert_export(trw, NULL, "-o kml,units=m", file_full_path, NULL);
+				break;
+			case KMLExportUnits::Statute:
+				return a_babel_convert_export(trw, NULL, "-o kml", file_full_path, NULL);
+				break;
+			case KMLExportUnits::Nautical:
+				return a_babel_convert_export(trw, NULL, "-o kml,units=n", file_full_path, NULL);
+				break;
+			default:
+				qDebug() << "EE" PREFIX << "invalid KML Export units" << (int) units;
+				break;
+			}
 		}
 		break;
 	default:

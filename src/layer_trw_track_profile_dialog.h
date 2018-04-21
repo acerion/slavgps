@@ -39,7 +39,6 @@
 #include <QDialogButtonBox>
 #include <QGridLayout>
 
-#include "globals.h"
 #include "viewport.h"
 #include "layer_trw_track_internal.h"
 #include "measurements.h"

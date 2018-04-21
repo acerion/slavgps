@@ -26,7 +26,6 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "globals.h"
 #include "layer_trw.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_painter.h"

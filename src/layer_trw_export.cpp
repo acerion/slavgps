@@ -41,7 +41,6 @@
 #include "file_utils.h"
 #include "dialog.h"
 #include "util.h"
-#include "globals.h"
 #include "window.h"
 #include "vikutils.h"
 #include "widget_file_entry.h"

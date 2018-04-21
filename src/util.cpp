@@ -51,7 +51,6 @@
 
 
 #include "util.h"
-#include "globals.h"
 
 
 

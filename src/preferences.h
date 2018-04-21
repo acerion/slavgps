@@ -83,6 +83,43 @@ namespace SlavGPS {
 
 
 
+	/* Time display format. */
+	enum class SGTimeReference {
+		Locale, /* User's locale. */
+		World,  /* Derive the local timezone at the object's position. */
+		UTC,
+	};
+
+
+
+
+	/* KML export preferences. */
+	enum class KMLExportUnits {
+		Metric,
+		Statute,
+		Nautical,
+	};
+
+
+
+
+	enum class GPXExportTrackSort {
+		Alpha,
+		Time,
+		Creation
+	};
+
+
+
+
+	enum class GPXExportWptSymName {
+		Titlecase,
+		Lowercase,
+	};
+
+
+
+
 	class Preferences {
 	public:
 		Preferences() {};
@@ -128,9 +165,9 @@ namespace SlavGPS {
 		static double get_default_lat();
 		static double get_default_lon();
 		static SGTimeReference get_time_ref_frame();
-		static vik_kml_export_units_t get_kml_export_units();
+		static KMLExportUnits get_kml_export_units();
 		static GPXExportTrackSort get_gpx_export_trk_sort();
-		static vik_gpx_export_wpt_sym_name_t get_gpx_export_wpt_sym_name();
+		static GPXExportWptSymName get_gpx_export_wpt_sym_name();
 #ifndef WINDOWS
 		/* Windows automatically uses the system defined viewer.
 		   ATM for other systems need to specify the program to use. */

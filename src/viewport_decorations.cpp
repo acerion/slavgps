@@ -46,7 +46,6 @@
 #include "viewport.h"
 #include "viewport_internal.h"
 #include "coords.h"
-#include "globals.h"
 
 
 

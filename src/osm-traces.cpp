@@ -45,7 +45,6 @@
 #include "background.h"
 #include "preferences.h"
 #include "application_state.h"
-#include "globals.h"
 #include "util.h"
 
 

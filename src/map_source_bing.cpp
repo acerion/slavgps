@@ -44,7 +44,6 @@
 #include <glib/gstdio.h>
 
 #include "vikutils.h"
-#include "globals.h"
 #include "map_source_bing.h"
 #include "map_utils.h"
 #include "bbox.h"

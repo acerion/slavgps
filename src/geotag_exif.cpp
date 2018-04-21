@@ -43,7 +43,6 @@
 
 #include "geotag_exif.h"
 #include "config.h"
-#include "globals.h"
 #include "file.h"
 #include "layer_trw_waypoint.h"
 

@@ -37,7 +37,6 @@
 #include "ui_util.h"
 #include "date_time_dialog.h"
 #include "degrees_converters.h"
-#include "globals.h"
 #include "viewport_internal.h"
 
 

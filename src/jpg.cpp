@@ -40,7 +40,6 @@
 #include "layer_aggregate.h"
 #include "viewport_internal.h"
 #include "layers_panel.h"
-#include "globals.h"
 #include "vikutils.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"

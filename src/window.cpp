@@ -45,7 +45,6 @@
 #include "layer_trw.h"
 #include "layer_aggregate.h"
 #include "layer_map.h"
-#include "globals.h"
 #include "ui_builder.h"
 #include "application_state.h"
 #include "background.h"

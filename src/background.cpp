@@ -36,7 +36,6 @@
 #include "application_state.h"
 #include "util.h"
 #include "ui_builder.h"
-#include "globals.h"
 #include "window.h"
 
 #ifdef K_INCLUDES

@@ -52,7 +52,6 @@
 #include "layer_trw_track_internal.h"
 #include "tree_view_internal.h"
 #include "application_state.h"
-#include "globals.h"
 #include "babel.h"
 #include "dialog.h"
 #include "util.h"

@@ -38,7 +38,6 @@
 #include "viewport_internal.h"
 #include "util.h"
 #include "dialog.h"
-#include "globals.h"
 
 
 

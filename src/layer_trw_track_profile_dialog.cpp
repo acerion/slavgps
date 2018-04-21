@@ -44,7 +44,6 @@
 #include "ui_util.h"
 #include "dialog.h"
 #include "application_state.h"
-#include "globals.h"
 #include "preferences.h"
 #include "measurements.h"
 
@@ -2174,21 +2173,21 @@ QString get_speed_grid_label(SpeedUnit speed_unit, double value)
 	QString result;
 
 	switch (speed_unit) {
-	case SpeedUnit::KILOMETRES_PER_HOUR:
+	case SpeedUnit::KilometresPerHour:
 		result = QObject::tr("%1 km/h").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
-	case SpeedUnit::MILES_PER_HOUR:
+	case SpeedUnit::MilesPerHour:
 		result = QObject::tr("%1 mph").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
-	case SpeedUnit::METRES_PER_SECOND:
+	case SpeedUnit::MetresPerSecond:
 		result = QObject::tr("%1 m/s").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
-	case SpeedUnit::KNOTS:
+	case SpeedUnit::Knots:
 		result = QObject::tr("%1 knots").arg(value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	default:
 		result = QObject::tr("--");
-		qDebug() << "EE:" PREFIX << "unrecognized speed unit" << (int) speed_unit;
+		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
 		break;
 	}
 

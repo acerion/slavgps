@@ -52,9 +52,7 @@
 #include "preferences.h"
 #include "widget_list_selection.h"
 #include "layers_panel.h"
-
-/* For ALTI_TO_MPP. */
-#include "globals.h"
+#include "measurements.h"
 #include "application_state.h"
 #include "dialog.h"
 

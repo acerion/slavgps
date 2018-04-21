@@ -24,7 +24,6 @@
 
 #include <cstdlib>
 
-#include "globals.h"
 #include "google.h"
 #include "external_tools.h"
 #include "webtool_center.h"

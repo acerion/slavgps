@@ -35,7 +35,6 @@
 
 
 #include "garmin_symbols.h"
-#include "globals.h"
 #include "preferences.h"
 #include "util.h"
 

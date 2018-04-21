@@ -154,26 +154,27 @@ QString Measurements::get_speed_string(double value, int precision)
 		return "--";
 	}
 
-	const SpeedUnit unit = Preferences::get_unit_speed();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
 	QString buffer;
 
-	switch (unit) {
-	case SpeedUnit::KILOMETRES_PER_HOUR:
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
 		buffer = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (value), 0, 'f', precision);
 		break;
-	case SpeedUnit::MILES_PER_HOUR:
+	case SpeedUnit::MilesPerHour:
 		buffer = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (value), 0, 'f', precision);
 		break;
-	case SpeedUnit::KNOTS:
-		buffer = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (value), 0, 'f', precision);
-		break;
-	case SpeedUnit::METRES_PER_SECOND:
+	case SpeedUnit::MetresPerSecond:
 		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::Knots:
+		buffer = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (value), 0, 'f', precision);
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE: Measurements: invalid speed unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
+		break;
 	}
 
 	return buffer;
@@ -188,26 +189,27 @@ QString Measurements::get_speed_string_dont_recalculate(double value, int precis
 		return "--";
 	}
 
-	const SpeedUnit unit = Preferences::get_unit_speed();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
 	QString buffer;
 
-	switch (unit) {
-	case SpeedUnit::KILOMETRES_PER_HOUR:
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
 		buffer = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
 		break;
-	case SpeedUnit::MILES_PER_HOUR:
+	case SpeedUnit::MilesPerHour:
 		buffer = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
 		break;
-	case SpeedUnit::KNOTS:
-		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::METRES_PER_SECOND:
+	case SpeedUnit::MetresPerSecond:
 		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::Knots:
+		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE: Measurements: invalid speed unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
+		break;
 	}
 
 	return buffer;

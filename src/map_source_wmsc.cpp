@@ -35,7 +35,6 @@
 
 #include <glib.h>
 
-#include "globals.h"
 #include "map_source_wmsc.h"
 #include "map_utils.h"
 

@@ -43,7 +43,6 @@
 #include "layer_trw_geotag.h"
 #include "file_utils.h"
 #include "application_state.h"
-#include "globals.h"
 #include "layer_trw.h"
 #include "layer_trw_track_internal.h"
 #include "window.h"

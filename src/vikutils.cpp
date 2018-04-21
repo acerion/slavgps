@@ -55,7 +55,6 @@
 #include "map_utils.h"
 
 #ifdef K_INCLUDES
-#include "globals.h"
 #include "download.h"
 #include "file.h"
 #endif
@@ -328,21 +327,23 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 
 
 
-double SlavGPS::convert_speed_mps_to(double speed, SpeedUnit speed_units)
+double SlavGPS::convert_speed_mps_to(double speed, SpeedUnit speed_unit)
 {
-	switch (speed_units) {
-	case SpeedUnit::KILOMETRES_PER_HOUR:
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
 		speed = VIK_MPS_TO_KPH(speed);
 		break;
-	case SpeedUnit::MILES_PER_HOUR:
+	case SpeedUnit::MilesPerHour:
 		speed = VIK_MPS_TO_MPH(speed);
 		break;
-	case SpeedUnit::KNOTS:
+	case SpeedUnit::MetresPerSecond:
+		/* Already in m/s so nothing to do. */
+		break;
+	case SpeedUnit::Knots:
 		speed = VIK_MPS_TO_KNOTS(speed);
 		break;
 	default:
-		/* SpeedUnit::METRES_PER_SECOND: */
-		/* Already in m/s so nothing to do. */
+		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
 		break;
 	}
 
@@ -357,18 +358,20 @@ QString SlavGPS::get_speed_unit_string(SpeedUnit speed_unit)
 	QString result;
 
 	switch (speed_unit) {
-	case SpeedUnit::MILES_PER_HOUR:
+	case SpeedUnit::KilometresPerHour:
+		result = QObject::tr("km/h");
+		break;
+	case SpeedUnit::MilesPerHour:
 		result = QObject::tr("mph");
 		break;
-	case SpeedUnit::METRES_PER_SECOND:
+	case SpeedUnit::MetresPerSecond:
 		result = QObject::tr("m/s");
 		break;
-	case SpeedUnit::KNOTS:
+	case SpeedUnit::Knots:
 		result = QObject::tr("knots");
 		break;
 	default:
-		/* SpeedUnit::KILOMETRES_PER_HOUR */
-		result = QObject::tr("km/h");
+		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
 		break;
 	}
 
@@ -384,21 +387,22 @@ QString SlavGPS::get_speed_string(double speed, SpeedUnit speed_unit)
 	const int fract = 2; /* Number of digits after decimal point. */
 
 	switch (speed_unit) {
-	case SpeedUnit::KILOMETRES_PER_HOUR:
+	case SpeedUnit::KilometresPerHour:
 		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (speed), 0, 'f', fract);
 		break;
-	case SpeedUnit::MILES_PER_HOUR:
+	case SpeedUnit::MilesPerHour:
 		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (speed), 0, 'f', fract);
 		break;
-	case SpeedUnit::KNOTS:
-		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (speed), 0, 'f', fract);
-		break;
-	case SpeedUnit::METRES_PER_SECOND:
+	case SpeedUnit::MetresPerSecond:
 		result = QObject::tr("%1 m/s").arg(speed, 0, 'f', fract);
+		break;
+	case SpeedUnit::Knots:
+		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (speed), 0, 'f', fract);
 		break;
 	default:
 		result = "--";
-		qDebug() << "EE: Utils: get speed string: invalid speed unit" << (int) speed_unit;
+		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
+		break;
 	}
 
 	return result;

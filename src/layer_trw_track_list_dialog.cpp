@@ -35,7 +35,6 @@
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_properties_dialog.h"
 #include "application_state.h"
-#include "globals.h"
 #include "window.h"
 #include "vikutils.h"
 #include "util.h"

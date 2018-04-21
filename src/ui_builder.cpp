@@ -51,7 +51,6 @@
 #include "layer_trw_waypoint_properties.h"
 #include "layer_trw_waypoint.h"
 #include "ui_builder.h"
-#include "globals.h"
 #include "widget_color_button.h"
 #include "widget_file_list.h"
 #include "widget_file_entry.h"

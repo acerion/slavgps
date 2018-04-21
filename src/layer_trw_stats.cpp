@@ -35,7 +35,6 @@
 #include "layer_trw_track_internal.h"
 #include "ui_util.h"
 #include "application_state.h"
-#include "globals.h"
 #include "vikutils.h"
 #include "util.h"
 #include "preferences.h"

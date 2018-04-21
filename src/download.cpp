@@ -55,7 +55,6 @@
 #include "curl_download.h"
 #include "ui_builder.h"
 #include "preferences.h"
-#include "globals.h"
 #include "util.h"
 #include "vikutils.h"
 

@@ -40,7 +40,6 @@
 #include "layer_trw_waypoint.h"
 #include "layer_trw.h"
 #include "file.h"
-#include "globals.h"
 #include "preferences.h"
 
 

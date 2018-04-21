@@ -28,7 +28,6 @@
 
 #include "geojson.h"
 #include "gpx.h"
-#include "globals.h"
 #include "window.h"
 #include "util.h"
 #include "layer_trw.h"

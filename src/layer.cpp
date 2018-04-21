@@ -43,7 +43,6 @@
 #include "layer_georef.h"
 #include "layer_gps.h"
 #include "layer_mapnik.h"
-#include "globals.h"
 #include "tree_view_internal.h"
 #include "ui_builder.h"
 #include "vikutils.h"

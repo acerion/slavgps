@@ -27,7 +27,7 @@
 #include <QObject>
 
 #include "coords.h"
-#include "globals.h"
+#include "measurements.h"
 
 
 

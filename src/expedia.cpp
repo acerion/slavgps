@@ -31,7 +31,6 @@
 
 #include <gtk/gtk.h>
 
-#include "globals.h"
 #include "coords.h"
 #include "coord.h"
 #include "mapcoord.h"

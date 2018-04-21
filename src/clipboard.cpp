@@ -40,7 +40,6 @@
 #include "clipboard.h"
 #include "dialog.h"
 #include "layer_trw.h"
-#include "globals.h"
 #include "layers_panel.h"
 #include "window.h"
 

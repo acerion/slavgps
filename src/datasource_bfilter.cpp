@@ -35,7 +35,6 @@
 #include "gpx.h"
 #include "acquire.h"
 #include "application_state.h"
-#include "globals.h"
 #include "preferences.h"
 #include "util.h"
 

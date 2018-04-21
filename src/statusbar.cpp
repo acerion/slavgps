@@ -28,7 +28,6 @@
 
 #include "statusbar.h"
 #include "background.h"
-#include "globals.h"
 
 
 

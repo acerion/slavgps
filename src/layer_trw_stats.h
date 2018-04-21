@@ -32,7 +32,6 @@
 #include <QGridLayout>
 #include <QCheckBox>
 
-#include "globals.h"
 #include "layer_trw_track.h"
 #include "layer_trw_track_statistics.h"
 

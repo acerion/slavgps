@@ -51,7 +51,6 @@
 #include "map_cache.h"
 #include "file.h"
 #include "dialog.h"
-#include "globals.h"
 #include "download.h"
 #include "preferences.h"
 #include "util.h"

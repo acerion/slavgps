@@ -47,7 +47,6 @@
 #include <glib/gstdio.h>
 #include "thumbnails.h"
 //#include "file.h"
-#include "globals.h"
 #include "vikutils.h"
 
 

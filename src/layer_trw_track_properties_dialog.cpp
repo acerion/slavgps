@@ -57,7 +57,6 @@
 #include "ui_util.h"
 #include "dialog.h"
 #include "application_state.h"
-#include "globals.h"
 #include "preferences.h"
 #include "measurements.h"
 

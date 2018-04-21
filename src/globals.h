@@ -39,13 +39,6 @@
 
 
 
-typedef uint32_t sg_uid_t;
-#define SG_UID_INITIAL  1
-#define SG_UID_NONE     0
-
-
-
-
 namespace SlavGPS {
 
 
@@ -104,83 +97,6 @@ namespace SlavGPS {
 #define VIKING_VERSION PACKAGE_VERSION
 #define VIKING_VERSION_NAME "This Name For Rent"
 #define VIKING_URL PACKAGE_URL
-
-#define ALTI_TO_MPP 1.4017295
-#define MPP_TO_ALTI 0.7134044
-
-#define VIK_FEET_IN_METER 3.2808399
-#define VIK_METERS_TO_FEET(X) ((X)*VIK_FEET_IN_METER)
-#define VIK_FEET_TO_METERS(X) ((X)/VIK_FEET_IN_METER)
-
-#define VIK_MILES_IN_METER 0.000621371192
-#define VIK_METERS_TO_MILES(X) ((X)*VIK_MILES_IN_METER)
-#define VIK_MILES_TO_METERS(X) ((X)/VIK_MILES_IN_METER)
-
-#define VIK_NAUTICAL_MILES_IN_METER 0.000539957
-#define VIK_METERS_TO_NAUTICAL_MILES(X) ((X)*VIK_NAUTICAL_MILES_IN_METER)
-#define VIK_NAUTICAL_MILES_TO_METERS(X) ((X)/VIK_NAUTICAL_MILES_IN_METER)
-
-/* MPS - Metres Per Second. */
-/* MPH - Metres Per Hour. */
-#define VIK_MPH_IN_MPS 2.23693629
-#define VIK_MPS_TO_MPH(X) ((X)*VIK_MPH_IN_MPS)
-#define VIK_MPH_TO_MPS(X) ((X)/VIK_MPH_IN_MPS)
-
-/* KPH - Kilometres Per Hour. */
-#define VIK_KPH_IN_MPS 3.6
-#define VIK_MPS_TO_KPH(X) ((X)*VIK_KPH_IN_MPS)
-#define VIK_KPH_TO_MPS(X) ((X)/VIK_KPH_IN_MPS)
-
-#define VIK_KNOTS_IN_MPS 1.94384449
-#define VIK_MPS_TO_KNOTS(X) ((X)*VIK_KNOTS_IN_MPS)
-#define VIK_KNOTS_TO_MPS(X) ((X)/VIK_KNOTS_IN_MPS)
-
-#define VIK_DEFAULT_ALTITUDE 0.0
-#define VIK_DEFAULT_DOP 0.0
-
-
-#define DEG2RAD(x) ((x)*(M_PI/180))
-#define RAD2DEG(x) ((x)*(180/M_PI))
-
-/* Mercator projection, latitude conversion (degrees). */
-#define MERCLAT(x) (RAD2DEG(log(tan((0.25 * M_PI) + (0.5 * DEG2RAD(x))))))
-#define DEMERCLAT(x) (RAD2DEG(atan(sinh(DEG2RAD(x)))))
-
-
-
-
-	/* Time display format. */
-	enum class SGTimeReference {
-		Locale, /* User's locale. */
-		World,  /* Derive the local timezone at the object's position. */
-		UTC,
-	};
-
-
-
-	/* KML export preferences. */
-	typedef enum {
-		VIK_KML_EXPORT_UNITS_METRIC,
-		VIK_KML_EXPORT_UNITS_STATUTE,
-		VIK_KML_EXPORT_UNITS_NAUTICAL,
-	} vik_kml_export_units_t;
-
-
-
-
-	enum class GPXExportTrackSort {
-		Alpha,
-		Time,
-		Creation
-	};
-
-
-
-
-	typedef enum {
-		VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE,
-		VIK_GPX_EXPORT_WPT_SYM_NAME_LOWERCASE,
-	} vik_gpx_export_wpt_sym_name_t;
 
 
 

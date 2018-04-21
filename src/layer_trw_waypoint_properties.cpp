@@ -42,7 +42,6 @@
 #include "layer_trw_waypoint_properties.h"
 #include "layer_trw_waypoint.h"
 #include "dialog.h"
-#include "globals.h"
 #include "ui_builder.h"
 #include "date_time_dialog.h"
 

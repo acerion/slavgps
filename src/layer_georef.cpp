@@ -45,7 +45,6 @@
 #include "layer_georef.h"
 #include "widget_file_entry.h"
 //#include "file.h"
-#include "globals.h"
 #include "viewport_zoom.h"
 
 

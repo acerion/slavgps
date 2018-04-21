@@ -29,7 +29,6 @@
 #include "window.h"
 #include "viewport_internal.h"
 #include "webtool_bounds.h"
-#include "globals.h"
 
 
 

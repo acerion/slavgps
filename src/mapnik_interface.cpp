@@ -44,7 +44,6 @@
 #include <QPixmap>
 
 #include "mapnik_interface.h"
-#include "globals.h"
 #include "application_state.h"
 #include "util.h"
 

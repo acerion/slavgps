@@ -40,7 +40,6 @@
 #include <cstdlib>
 #include <cassert>
 
-#include "globals.h"
 #include "map_source_tms.h"
 #include "map_utils.h"
 

@@ -42,7 +42,6 @@
 #include "coord.h"
 #include "layer_trw_waypoint.h"
 #include "dialog.h"
-#include "globals.h"
 #include "ui_util.h"
 #endif
 

@@ -51,7 +51,6 @@
 #include <QDebug>
 
 #include "gpx.h"
-#include "globals.h"
 #include "preferences.h"
 #include "layer_trw.h"
 #include "layer_trw_track_internal.h"
@@ -61,6 +60,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX ": GPX:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -917,11 +921,17 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 		fprintf(f, "  <link>%s</link>\n", entitize(wp->image_full_path).toUtf8().constData());
 	}
 	if (!wp->symbol_name.isEmpty()) {
-		if (Preferences::get_gpx_export_wpt_sym_name()) {
-			/* Lowercase the symbol name. */
-			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toLower().toUtf8().constData());
-		} else {
+		const GPXExportWptSymName pref = Preferences::get_gpx_export_wpt_sym_name();
+		switch (pref) {
+		case GPXExportWptSymName::Titlecase:
 			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toUtf8().constData());
+			break;
+		case GPXExportWptSymName::Lowercase:
+			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toLower().toUtf8().constData());
+			break;
+		default:
+			qDebug() << "EE:" PREFIX << "invalid GPX Export Waypoint Symbol Name preference" << (int) pref;
+			break;
 		}
 	}
 

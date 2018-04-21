@@ -59,7 +59,6 @@
 #include "background.h"
 #include "util.h"
 #include "application_state.h"
-#include "globals.h"
 #include "ui_builder.h"
 #include "layers_panel.h"
 #include "preferences.h"

@@ -35,7 +35,7 @@
 #include <QPixmap>
 
 #include "coord.h"
-#include "globals.h"
+#include "measurements.h"
 #include "tree_view.h"
 #include "layer.h"
 #include "file.h"

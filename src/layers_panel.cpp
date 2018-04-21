@@ -37,7 +37,6 @@
 #include "layer_interface.h"
 #include "tree_view_internal.h"
 #include "dialog.h"
-#include "globals.h"
 #include "util.h"
 #include "clipboard.h"
 

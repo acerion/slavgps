@@ -30,7 +30,6 @@
 #include "viewport_internal.h"
 #include "webtool_center.h"
 #include "util.h"
-#include "globals.h"
 #include "map_utils.h"
 
 

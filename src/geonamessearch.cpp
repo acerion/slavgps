@@ -32,8 +32,6 @@
 #include "geonamessearch.h"
 #include "download.h"
 #include "util.h"
-#include "globals.h"
-#include "util.h"
 #include "widget_list_selection.h"
 #include "layer_trw.h"
 

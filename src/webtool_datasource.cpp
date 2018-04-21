@@ -43,7 +43,6 @@
 #include "window.h"
 #include "viewport_internal.h"
 #include "webtool_datasource.h"
-#include "globals.h"
 #include "acquire.h"
 #include "map_utils.h"
 #include "dialog.h"

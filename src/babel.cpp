@@ -54,7 +54,6 @@
 #include "util.h"
 #include "vikutils.h"
 #include "preferences.h"
-#include "globals.h"
 
 
 

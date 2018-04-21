@@ -35,7 +35,6 @@
 #include "dir.h"
 #include "file.h"
 #include "util.h"
-#include "globals.h"
 #include "ui_builder.h"
 #include "vikutils.h"
 
@@ -66,10 +65,10 @@ static std::vector<SGLabelID> params_units_distance = {
 };
 
 static std::vector<SGLabelID> params_units_speed = {
-	SGLabelID("km/h",  (int) SpeedUnit::KILOMETRES_PER_HOUR),
-	SGLabelID("mph",   (int) SpeedUnit::MILES_PER_HOUR),
-	SGLabelID("m/s",   (int) SpeedUnit::METRES_PER_SECOND),
-	SGLabelID("knots", (int) SpeedUnit::KNOTS)
+	SGLabelID("km/h",  (int) SpeedUnit::KilometresPerHour),
+	SGLabelID("mph",   (int) SpeedUnit::MilesPerHour),
+	SGLabelID("m/s",   (int) SpeedUnit::MetresPerSecond),
+	SGLabelID("knots", (int) SpeedUnit::Knots)
 };
 
 static std::vector<SGLabelID> params_units_height = {
@@ -506,7 +505,7 @@ void Preferences::register_default_values()
 	i++;
 	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DistanceUnit::Kilometres, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) SpeedUnit::KILOMETRES_PER_HOUR, general_prefs[i].type_id));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) SpeedUnit::KilometresPerHour, general_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) HeightUnit::Metres, general_prefs[i].type_id));
 	i++;
@@ -538,11 +537,11 @@ void Preferences::register_default_values()
 	Preferences::register_group(PREFERENCES_NAMESPACE_IO, QObject::tr("Export/External"));
 
 	i = 0;
-	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_KML_EXPORT_UNITS_METRIC, io_prefs[i].type_id));
+	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) KMLExportUnits::Metric, io_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) GPXExportTrackSort::Time, io_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE, io_prefs[i].type_id));
+	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) GPXExportWptSymName::Titlecase, io_prefs[i].type_id));
 	i++;
 
 #ifndef WINDOWS
@@ -641,9 +640,9 @@ SGTimeReference Preferences::get_time_ref_frame()
 
 /* External/Export Options. */
 
-vik_kml_export_units_t Preferences::get_kml_export_units()
+KMLExportUnits Preferences::get_kml_export_units()
 {
-	return (vik_kml_export_units_t) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".kml_export_units").val_int;
+	return (KMLExportUnits) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".kml_export_units").val_int;
 }
 
 
@@ -657,9 +656,9 @@ GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 
 
 
-vik_gpx_export_wpt_sym_name_t Preferences::get_gpx_export_wpt_sym_name()
+GPXExportWptSymName Preferences::get_gpx_export_wpt_sym_name()
 {
-	return (vik_gpx_export_wpt_sym_name_t) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_wpt_sym_names").val_int;
+	return (GPXExportWptSymName) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_wpt_sym_names").val_int;
 }
 
 

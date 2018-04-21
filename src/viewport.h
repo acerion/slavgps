@@ -30,7 +30,6 @@
 #include <QString>
 
 #include "coord.h"
-#include "globals.h"
 
 
 
