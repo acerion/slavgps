@@ -25,6 +25,8 @@
 
 #include <QDebug>
 
+#include <glib.h>
+
 #include "window.h"
 #include "dialog.h"
 #include "geonamessearch.h"

@@ -110,15 +110,16 @@ void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 	/* Always store internally in metres. */
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	switch (height_unit) {
-	case HeightUnit::METRES:
+	case HeightUnit::Metres:
 		this->cur_tp->altitude = this->alt->value();
 		break;
-	case HeightUnit::FEET:
+	case HeightUnit::Feet:
 		this->cur_tp->altitude = VIK_FEET_TO_METERS(this->alt->value());
 		break;
 	default:
-		this->cur_tp->altitude = this->alt->value();
-		qDebug() << "EE: TrackPoint Properties: invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
+		this->cur_tp->altitude = 0;
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
 	}
 }
 
@@ -297,15 +298,15 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	switch (height_unit) {
-	case HeightUnit::METRES:
+	case HeightUnit::Metres:
 		this->alt->setValue(tp->altitude);
 		break;
-	case HeightUnit::FEET:
+	case HeightUnit::Feet:
 		this->alt->setValue(VIK_METERS_TO_FEET(tp->altitude));
 		break;
 	default:
-		qDebug() << "EE" PREFIX "invalid height unit" << (int) height_unit << "in" << __FUNCTION__ << __LINE__;
-		this->alt->setValue(tp->altitude);
+		this->alt->setValue(0);
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
 		break;
 	}
 
@@ -323,7 +324,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 			if (tp->timestamp == this->cur_tp->timestamp) {
 				this->diff_speed->setText("--");
 			} else {
-				const double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
+				const double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (std::abs(tp->timestamp - this->cur_tp->timestamp));
 				this->diff_speed->setText(Measurements::get_speed_string(tmp_speed));
 			}
 		} else {

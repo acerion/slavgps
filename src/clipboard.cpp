@@ -33,6 +33,8 @@
 #include <unistd.h>
 #endif
 
+#include <glib.h>
+
 #include "tree_view.h"
 #include "tree_view_internal.h"
 #include "clipboard.h"

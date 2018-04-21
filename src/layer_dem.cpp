@@ -40,6 +40,8 @@
 #include <QHash>
 #include <QDir>
 
+#include <glib.h>
+
 #include "window.h"
 #include "background.h"
 #include "layer_map.h"
@@ -406,7 +408,7 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
 			this->min_elev = VIK_FEET_TO_METERS(param_value.val_double);
 		} else {
 			this->min_elev = param_value.val_double;
@@ -415,7 +417,7 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 	case PARAM_MAX_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
 			this->max_elev = VIK_FEET_TO_METERS(param_value.val_double);
 		} else {
 			this->max_elev = param_value.val_double;
@@ -466,7 +468,7 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 		qDebug() << this->files;
 
 		/* Save in relative format if necessary. */
-		if (is_file_operation && Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+		if (is_file_operation && Preferences::get_file_path_format() == FilePathFormat::Relative) {
 			dem_layer_convert_to_relative_filenaming(rv.val_string_list, this->files);
 			rv.type_id = SGVariantType::StringList; /* TODO: direct assignment of variant type - fix (hide) this. */
 		} else {
@@ -490,7 +492,7 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
 			rv = SGVariant((double) VIK_METERS_TO_FEET(this->min_elev));
 		} else {
 			rv = SGVariant(this->min_elev);
@@ -499,7 +501,7 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 	case PARAM_MAX_ELEV:
 		/* Convert for display in desired units.
 		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::FEET) {
+		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
 			rv = SGVariant(VIK_METERS_TO_FEET(this->max_elev));
 		} else {
 			rv = SGVariant(this->max_elev);
@@ -891,9 +893,9 @@ const QString srtm_file_name(int lat, int lon)
 {
 	return QString("%1%2%3%4.hgt.zip")
 		.arg((lat >= 0) ? 'N' : 'S')
-		.arg(ABS (lat), 2, 10, QChar('0'))
+		.arg(std::abs(lat), 2, 10, QChar('0'))
 		.arg((lon >= 0) ? 'E' : 'W')
-		.arg(ABS (lon), 3, 10, QChar('0'));
+		.arg(std::abs(lon), 3, 10, QChar('0'));
 }
 
 

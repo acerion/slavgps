@@ -37,11 +37,7 @@
 
 #include <cstdlib>
 #include <cassert>
-
-#ifdef HAVE_STRING_H
 #include <cstring>
-#endif
-
 #include <vector>
 #include <list>
 #include <cmath>

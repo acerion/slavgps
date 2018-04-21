@@ -153,15 +153,16 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, wp_param_specs[SG_WP_PARAM_ALT]);
 		const HeightUnit height_unit = Preferences::get_unit_height();
 		switch (height_unit) {
-		case HeightUnit::METRES:
+		case HeightUnit::Metres:
 			wp->altitude = param_value.get_altitude();
 			break;
-		case HeightUnit::FEET:
+		case HeightUnit::Feet:
 			wp->altitude = VIK_FEET_TO_METERS(param_value.get_altitude());
 			break;
 		default:
-			wp->altitude = param_value.get_altitude();
-			qDebug() << "EE: Waypoint Properties" << __FUNCTION__ << "unknown height unit" << (int) height_unit;
+			wp->altitude = 0;
+			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+			break;
 		}
 
 

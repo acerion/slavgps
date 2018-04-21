@@ -60,9 +60,9 @@ static std::vector<SGLabelID> params_degree_formats = {
 };
 
 static std::vector<SGLabelID> params_units_distance = {
-	SGLabelID("Kilometres",     (int) DistanceUnit::KILOMETRES),
-	SGLabelID("Miles",          (int) DistanceUnit::MILES),
-	SGLabelID("Nautical Miles", (int) DistanceUnit::NAUTICAL_MILES),
+	SGLabelID("Kilometres",     (int) DistanceUnit::Kilometres),
+	SGLabelID("Miles",          (int) DistanceUnit::Miles),
+	SGLabelID("Nautical Miles", (int) DistanceUnit::NauticalMiles),
 };
 
 static std::vector<SGLabelID> params_units_speed = {
@@ -73,8 +73,8 @@ static std::vector<SGLabelID> params_units_speed = {
 };
 
 static std::vector<SGLabelID> params_units_height = {
-	SGLabelID("Metres", (int) HeightUnit::METRES),
-	SGLabelID("Feet",   (int) HeightUnit::FEET),
+	SGLabelID("Metres", (int) HeightUnit::Metres),
+	SGLabelID("Feet",   (int) HeightUnit::Feet),
 };
 
 
@@ -504,11 +504,11 @@ void Preferences::register_default_values()
 	i = 0;
 	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DegreeFormat::DMS, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DistanceUnit::KILOMETRES, general_prefs[i].type_id));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DistanceUnit::Kilometres, general_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) SpeedUnit::KILOMETRES_PER_HOUR, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) HeightUnit::METRES, general_prefs[i].type_id));
+	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) HeightUnit::Metres, general_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(general_prefs[i], SGVariant(true, general_prefs[i].type_id));
 	i++;
@@ -527,7 +527,7 @@ void Preferences::register_default_values()
 	i++;
 	Preferences::register_parameter(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant((int32_t) VIK_STARTUP_METHOD_HOME_LOCATION, startup_prefs[i].type_id));
+	Preferences::register_parameter(startup_prefs[i], SGVariant((int32_t) StartupMethod::HomeLocation, startup_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter(startup_prefs[i], SGVariant("", startup_prefs[i].type_id));
 	i++;
@@ -562,7 +562,7 @@ void Preferences::register_default_values()
 	Preferences::register_group(PREFERENCES_NAMESPACE_ADVANCED, QObject::tr("Advanced"));
 
 	i = 0;
-	Preferences::register_parameter(prefs_advanced[i], SGVariant((int32_t) VIK_FILE_REF_FORMAT_ABSOLUTE, prefs_advanced[i].type_id));
+	Preferences::register_parameter(prefs_advanced[i], SGVariant((int32_t) FilePathFormat::Absolute, prefs_advanced[i].type_id));
 	i++;
 	Preferences::register_parameter(prefs_advanced[i], SGVariant(true, prefs_advanced[i].type_id));
 	i++;
@@ -690,9 +690,9 @@ QString Preferences::get_external_gpx_program_2(void)
 
 /* Advanced Options */
 
-vik_file_ref_format_t Preferences::get_file_ref_format()
+FilePathFormat Preferences::get_file_path_format()
 {
-	return (vik_file_ref_format_t) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".save_file_reference_mode").val_uint;
+	return (FilePathFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".save_file_reference_mode").val_int;
 }
 
 
@@ -730,9 +730,9 @@ bool Preferences::get_add_default_map_layer()
 
 
 
-vik_startup_method_t Preferences::get_startup_method()
+StartupMethod Preferences::get_startup_method()
 {
-	return (vik_startup_method_t) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".startup_method").val_uint;
+	return (StartupMethod) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".startup_method").val_int;
 }
 
 

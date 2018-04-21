@@ -64,6 +64,11 @@ using namespace SlavGPS;
 
 
 
+extern bool vik_debug;
+
+
+
+
 #define PREFIX ": Babel:" << __FUNCTION__ << __LINE__ << ">"
 
 

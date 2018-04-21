@@ -53,6 +53,44 @@ namespace SlavGPS {
 
 
 
+	/* Coord display format. */
+	enum class DegreeFormat {
+		DDD,
+		DMM,
+		DMS,
+		RAW,
+	};
+
+
+
+
+	enum class DistanceUnit {
+		Kilometres,
+		Miles,
+		NauticalMiles,
+	};
+
+
+
+
+	enum class SpeedUnit {
+		KILOMETRES_PER_HOUR,
+		MILES_PER_HOUR,
+		METRES_PER_SECOND,
+		KNOTS
+	};
+
+
+
+
+	enum class HeightUnit {
+		Metres,
+		Feet,
+	};
+
+
+
+
 	class Measurements {
 	public:
 		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */

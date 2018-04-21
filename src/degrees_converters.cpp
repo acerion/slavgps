@@ -22,9 +22,7 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_MATH_H
 #include <cmath>
-#endif
 #include <cstring>
 #include <cstdlib>
 

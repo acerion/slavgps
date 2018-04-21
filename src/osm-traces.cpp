@@ -56,6 +56,11 @@ using namespace SlavGPS;
 
 
 
+extern bool vik_verbose;
+
+
+
+
 /* Params will be osm_traces.username, osm_traces.password */
 /* We have to make sure these don't collide. */
 #define PREFERENCES_NAMESPACE_OSM_TRACES "osm_traces"

@@ -259,7 +259,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 				/* Force creation of image file. */
 				((LayerGeoref *) this)->create_image_file();
 			}
-			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
 				const QString cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
 					rv = SGVariant(file_GetRelativeFilename(cwd, this->image_full_path));

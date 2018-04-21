@@ -38,6 +38,8 @@
 
 #include <QDebug>
 
+#include <glib.h>
+
 #include "thumbnails.h"
 #include "ui_util.h"
 #include "application_state.h"
@@ -264,15 +266,17 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 
 		/* Convert distance back into metres for use in finding a trackpoint. */
 		switch (distance_unit) {
-		case DistanceUnit::MILES:
+		case DistanceUnit::Kilometres:
+			dist_i = dist_i * 1000.0;
+			break;
+		case DistanceUnit::Miles:
 			dist_i = VIK_MILES_TO_METERS(dist_i);
 			break;
-		case DistanceUnit::NAUTICAL_MILES:
+		case DistanceUnit::NauticalMiles:
 			dist_i = VIK_NAUTICAL_MILES_TO_METERS(dist_i);
 			break;
 		default:
-			/* DistanceUnit::KILOMETRES. */
-			dist_i = dist_i*1000.0;
+			qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 			break;
 		}
 

@@ -70,6 +70,8 @@ using namespace SlavGPS;
 
 
 extern Tree * g_tree;
+extern bool vik_debug;
+extern bool vik_verbose;
 
 
 
@@ -391,7 +393,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 			param_value = SGVariant(this->filename_css);
 			bool set = false;
 			if (is_file_operation) {
-				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+				if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
 					const QString cwd = QDir::currentPath();
 					if (!cwd.isEmpty()) {
 						param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_css));
@@ -408,7 +410,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) co
 			param_value = SGVariant(this->filename_xml);
 			bool set = false;
 			if (is_file_operation) {
-				if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+				if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
 					const QString cwd = QDir::currentPath();
 					if (!cwd.isEmpty()) {
 						param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_xml));
@@ -576,7 +578,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 /* Free returned string after use. */
 static QString get_filename(const QString dir, unsigned int x, unsigned int y, unsigned int zoom)
 {
-	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg((17 - zoom)).arg(x).arg(y));
+	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg((MAGIC_SEVENTEEN - zoom)).arg(x).arg(y));
 }
 
 

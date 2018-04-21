@@ -39,7 +39,7 @@ using namespace SlavGPS;
 
 
 /* World Scale:
-   VIK_GZ(17) down to submeter scale: 1/VIK_GZ(5)
+   VIK_GZ(MAGIC_SEVENTEEN) down to submeter scale: 1/VIK_GZ(5)
 
    No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that. */
 
@@ -69,12 +69,12 @@ static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpp
 int SlavGPS::map_utils_mpp_to_scale(double mpp)
 {
 	for (int i = 0; i < num_scales; i++) {
-		if (ABS(scale_mpps[i] - mpp) < ERROR_MARGIN) {
+		if (std::abs(scale_mpps[i] - mpp) < ERROR_MARGIN) {
 			return i;
 		}
 	}
 	for (int i = 0; i < num_scales_neg; i++) {
-		if (ABS(scale_neg_mpps[i] - mpp) < 0.000001) {
+		if (std::abs(scale_neg_mpps[i] - mpp) < 0.000001) {
 			return -i;
 		}
 	}
@@ -93,9 +93,9 @@ int SlavGPS::map_utils_mpp_to_scale(double mpp)
  */
 int SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
 {
-	int answer = 17 - map_utils_mpp_to_scale(mpp);
+	int answer = MAGIC_SEVENTEEN - map_utils_mpp_to_scale(mpp);
 	if (answer < 0) {
-		answer = 17;
+		answer = MAGIC_SEVENTEEN;
 	}
 	return answer;
 }
@@ -143,8 +143,8 @@ bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, dou
 		return false;
 	}
 
-	dest->x = (src_coord.ll.lon + 180) / 360 * VIK_GZ(17) / xzoom;
-	dest->y = (180 - MERCLAT(src_coord.ll.lat)) / 360 * VIK_GZ(17) / xzoom;
+	dest->x = (src_coord.ll.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
+	dest->y = (180 - MERCLAT(src_coord.ll.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
 	dest->z = 0;
 
 	return true;
@@ -165,8 +165,8 @@ static Coord _to_vikcoord_with_offset(const TileInfo * src, double offset)
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
 	dest_coord.mode = CoordMode::LATLON;
-	dest_coord.ll.lon = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
-	dest_coord.ll.lat = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
+	dest_coord.ll.lon = ((src->x+offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360) - 180;
+	dest_coord.ll.lat = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360));
 
 	return dest_coord;
 }

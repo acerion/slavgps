@@ -28,16 +28,12 @@
 #include <cstdlib>
 #include <cassert>
 #include <cctype>
-
-#ifdef HAVE_MATH_H
-#include <cmath>
-#endif
-
-#ifdef HAVE_STRING_H
 #include <cstring>
-#endif
+#include <cmath>
 
 #include <QDir>
+
+#include <glib.h>
 
 #include "gpspoint.h"
 #include "layer_trw_track_internal.h"
@@ -782,7 +778,7 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 		if (!wp->image_full_path.isEmpty()) {
 			QString tmp_image_full_path;
 			QString cwd;
-			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
 				cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
 					tmp_image_full_path = file_GetRelativeFilename(cwd, wp->image_full_path);

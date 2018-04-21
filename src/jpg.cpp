@@ -23,6 +23,15 @@
 #include "config.h"
 #endif
 
+#include <cstdlib>
+#include <cstring>
+
+#ifdef HAVE_MAGIC_H
+#include <magic.h>
+#endif
+
+#include <glib.h>
+
 #include "jpg.h"
 #include "file.h"
 #include "file_utils.h"
@@ -36,13 +45,6 @@
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
 #endif
-
-#ifdef HAVE_MAGIC_H
-#include <magic.h>
-#endif
-
-#include <cstdlib>
-#include <cstring>
 
 
 

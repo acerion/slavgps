@@ -31,6 +31,7 @@
 #include "webtool_center.h"
 #include "util.h"
 #include "globals.h"
+#include "map_utils.h"
 
 
 
@@ -61,7 +62,7 @@ WebToolCenter::~WebToolCenter()
 
 QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	int zoom_level = 17;
+	int zoom_level = MAGIC_SEVENTEEN;
 	LatLon lat_lon;
 
 	/* Coords.

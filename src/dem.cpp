@@ -25,16 +25,10 @@
 #endif
 
 #include <cstdio>
-#ifdef HAVE_STRING_H
 #include <cstring>
-#endif
-#include <glib.h>
-#ifdef HAVE_MATH_H
 #include <cmath>
-#endif
-#ifdef HAVE_STDLIB_H
 #include <cstdlib>
-#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
@@ -44,6 +38,8 @@
 #include <QDebug>
 #include <QFile>
 #include <QString>
+
+#include <glib.h>
 
 #include "compression.h"
 #include "dem.h"

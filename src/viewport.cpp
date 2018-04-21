@@ -38,6 +38,8 @@
 #include <QDebug>
 #include <QPainter>
 
+#include <glib.h>
+
 #include "generic_tools.h"
 #include "viewport.h"
 #include "viewport_internal.h"
@@ -183,7 +185,7 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 	double zoom_x = 4.0;
 	double zoom_y = 4.0;
 
-	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
+	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
 		double value;
 		if (ApplicationState::get_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, &value)) {
 			initial_lat_lon.lat = value;
@@ -270,7 +272,7 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 Viewport::~Viewport()
 {
 	qDebug() << "II: Viewport: ~Viewport called";
-	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
+	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
 		const LatLon lat_lon = this->center.get_latlon();
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon);
@@ -1215,7 +1217,7 @@ ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in)
    whilst also scaling the other coordinate value. */
 static void clip_x(int * x1, int * y1, int * x2, int * y2)
 {
-	while (ABS(*x1) > 32768) {
+	while (std::abs(*x1) > 32768) {
 		*x1 = *x2 + (0.5 * (*x1 - *x2));
 		*y1 = *y2 + (0.5 * (*y1 - *y2));
 	}
@@ -1226,7 +1228,7 @@ static void clip_x(int * x1, int * y1, int * x2, int * y2)
 
 static void clip_y(int * x1, int * y1, int * x2, int * y2)
 {
-	while (ABS(*y1) > 32767) {
+	while (std::abs(*y1) > 32767) {
 		*x1 = *x2 + (0.5 * (*x1 - *x2));
 		*y1 = *y2 + (0.5 * (*y1 - *y2));
 	}
@@ -2036,10 +2038,17 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	int16_t alt;
 	QString message;
 	if ((alt = DEMCache::get_elev_by_coord(&coord, interpol_method)) != DEM_INVALID_ELEVATION) {
-		if (Preferences::get_unit_height() == HeightUnit::METRES) {
+		const HeightUnit height_unit = Preferences::get_unit_height();
+		switch (height_unit) {
+		case HeightUnit::Metres:
 			message = QString("%1 %2 %3m").arg(first).arg(second).arg(alt);
-		} else {
+			break;
+		case HeightUnit::Feet:
 			message = QString("%1 %2 %3ft").arg(first).arg(second).arg((int) VIK_METERS_TO_FEET(alt));
+			break;
+		default:
+			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+			break;
 		}
 	} else {
 		message = QString("%1 %2").arg(first).arg(second);

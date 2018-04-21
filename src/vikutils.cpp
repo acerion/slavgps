@@ -52,6 +52,7 @@
 #include "ui_util.h"
 #include "measurements.h"
 #include "preferences.h"
+#include "map_utils.h"
 
 #ifdef K_INCLUDES
 #include "globals.h"
@@ -142,7 +143,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 					if (tp->timestamp != tp_prev->timestamp) {
 
 						/* Work out from previous trackpoint location and time difference. */
-						speed = Coord::distance(tp->coord, tp_prev->coord) / ABS(tp->timestamp - tp_prev->timestamp);
+						speed = Coord::distance(tp->coord, tp_prev->coord) / std::abs(tp->timestamp - tp_prev->timestamp);
 						speedtype = strdup("*"); // Interpolated
 					} else {
 						speedtype = strdup("**");
@@ -169,7 +170,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 					if (tp->timestamp != tp_prev->timestamp) {
 						/* Work out from previous trackpoint altitudes and time difference.
 						   'speed' can be negative if going downhill. */
-						speed = (tp->altitude - tp_prev->altitude) / ABS(tp->timestamp - tp_prev->timestamp);
+						speed = (tp->altitude - tp_prev->altitude) / std::abs(tp->timestamp - tp_prev->timestamp);
 						speedtype = strdup("*"); // Interpolated
 					} else {
 						speedtype = strdup("**"); // Unavailable
@@ -190,14 +191,16 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 		}
 
 		case 'A': {
-			HeightUnit height_units = Preferences::get_unit_height();
-			switch (height_units) {
-			case HeightUnit::FEET:
+			const HeightUnit height_unit = Preferences::get_unit_height();
+			switch (height_unit) {
+			case HeightUnit::Metres:
+				values[i] = QObject::tr("%1Alt %2m").arg(separator).arg((int)round(tp->altitude));
+				break;
+			case HeightUnit::Feet:
 				values[i] = QObject::tr("%1Alt %2feet").arg(separator).arg((int)round(VIK_METERS_TO_FEET(tp->altitude)));
 				break;
 			default:
-				/* HeightUnit::METRES: */
-				values[i] = QObject::tr("%1Alt %2m").arg(separator).arg((int)round(tp->altitude));
+				qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
 				break;
 			}
 			break;
@@ -214,16 +217,18 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 				int diff = (int) round(Coord::distance(tp->coord, tp_prev->coord));
 
 				QString dist_units_str;
-				DistanceUnit distance_unit = Preferences::get_unit_distance();
+				const DistanceUnit distance_unit = Preferences::get_unit_distance();
 				/* Expect the difference between track points to be small hence use metres or yards. */
 				switch (distance_unit) {
-				case DistanceUnit::MILES:
-				case DistanceUnit::NAUTICAL_MILES:
+				case DistanceUnit::Kilometres:
+					dist_units_str = QObject::tr("m");
+					break;
+				case DistanceUnit::Miles:
+				case DistanceUnit::NauticalMiles:
 					dist_units_str = QObject::tr("yards");
 					break;
 				default:
-					/* DistanceUnit::KILOMETRES: */
-					dist_units_str = QObject::tr("m");
+					qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 					break;
 				}
 
@@ -407,15 +412,16 @@ QString SlavGPS::get_distance_unit_string(DistanceUnit distance_unit)
 	QString result;
 
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		result = QObject::tr("km");
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		result = QObject::tr("miles");
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		result = QObject::tr("NM");
 	default:
-		qDebug() << "EE: Utils: get distance unit string: invalid distance unit" << (int) distance_unit;
 		result = "";
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 	return result;
 }
@@ -429,17 +435,18 @@ QString SlavGPS::get_distance_string(double distance, DistanceUnit distance_unit
 	const int fract = 2; /* Number of digits after decimal point. */
 
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		result = QObject::tr("%1 km").arg(distance / 1000.0, 0, 'f', fract);
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES (distance), 0, 'f', fract);
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES (distance), 0, 'f', fract);
 		break;
 	default:
-		qDebug() << "EE: Utils: get distance string: invalid distance unit" << (int) distance_unit;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 
 	return result;
@@ -451,17 +458,14 @@ QString SlavGPS::get_distance_string(double distance, DistanceUnit distance_unit
 double SlavGPS::convert_distance_meters_to(double distance, DistanceUnit distance_unit)
 {
 	switch (distance_unit) {
-	case DistanceUnit::MILES:
-		return VIK_METERS_TO_MILES(distance);
-
-	case DistanceUnit::NAUTICAL_MILES:
-		return VIK_METERS_TO_NAUTICAL_MILES(distance);
-
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		return distance / 1000.0;
-
+	case DistanceUnit::Miles:
+		return VIK_METERS_TO_MILES(distance);
+	case DistanceUnit::NauticalMiles:
+		return VIK_METERS_TO_NAUTICAL_MILES(distance);
 	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", (int) distance_unit);
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 		return distance;
 	}
 }
@@ -494,7 +498,7 @@ void SGUtils::set_auto_features_on_first_run(void)
 
 		/* Enable auto add map + Enable IP lookup. */
 		Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_STARTUP ".add_default_map_layer"), SGVariant((bool) true));
-		Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_STARTUP ".startup_method"),        SGVariant((int32_t) VIK_STARTUP_METHOD_AUTO_LOCATION));
+		Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_STARTUP ".startup_method"),        SGVariant((int32_t) StartupMethod::AutoLocation));
 
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */
@@ -809,7 +813,7 @@ void CommandLineOptions::apply(Window * window)
 
 	if (this->zoom_level_osm >= 0) {
 		/* Convert OSM zoom level into Viking zoom level. */
-		double mpp = exp((17 - this->zoom_level_osm) * log(2));
+		double mpp = exp((MAGIC_SEVENTEEN - this->zoom_level_osm) * log(2));
 		if (mpp > 1.0) {
 			mpp = round(mpp);
 		}

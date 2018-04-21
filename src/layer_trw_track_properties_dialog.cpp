@@ -69,6 +69,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer TRW Track Properties:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 void SlavGPS::track_properties_dialog(Track * trk, Window * parent)
 {
 	TrackPropertiesDialog dialog(QObject::tr("Track Properties"), trk, parent);
@@ -276,18 +281,19 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 	QString result;
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		/* Even though kilometres, the average distance between points is going to be quite small so keep in metres. */
 		result = tr("%1 m").arg((tp_count - seg_count) == 0 ? 0 : tr_len / (tp_count - seg_count), 0, 'f', 2);
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		result = tr("%1 miles").arg((tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / (tp_count - seg_count)), 0, 'f', 3);
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		result = tr("%1 NM").arg((tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)), 0, 'f', 3);
 		break;
 	default:
-		qDebug() << "EE: Track Properties Dialog: can't get distance unit for 'avg. dist between tps.'; distance_unit = " << (int) distance_unit;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 	this->w_avg_dist = ui_label_new_selectable(result, this);
 	this->grid->addWidget(new QLabel(tr("Average Distance Between Trackpoints:")), row, 0);
@@ -305,20 +311,21 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	}
 
 	result = "";
-	HeightUnit height_unit = Preferences::get_unit_height();
+	const HeightUnit height_unit = Preferences::get_unit_height();
 	if (altitudes.y_min == VIK_DEFAULT_ALTITUDE) {
 		result = tr("No Data");
 	} else {
 		switch (height_unit) {
-		case HeightUnit::METRES:
+		case HeightUnit::Metres:
 			result = tr("%1 m - %2 m").arg(altitudes.y_min, 0, 'f', 0).arg(altitudes.y_max, 0, 'f', 0);
 			break;
-		case HeightUnit::FEET:
+		case HeightUnit::Feet:
 			result = tr("%1 feet - %2 feet").arg(VIK_METERS_TO_FEET(altitudes.y_min), 0, 'f', 0).arg(VIK_METERS_TO_FEET(altitudes.y_max), 0, 'f', 0);
 			break;
 		default:
 			result = tr("--");
-			qDebug() << "EE: Track Properties Dialog: can't get height unit for 'elevation range'; height_unit = " << (int) height_unit;
+			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+			break;
 		}
 	}
 	this->w_elev_range = ui_label_new_selectable(result, this);
@@ -332,15 +339,16 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		result = tr("No Data");
 	} else {
 		switch (height_unit) {
-		case HeightUnit::METRES:
+		case HeightUnit::Metres:
 			result = tr("%1 m / %2 m").arg(altitudes.y_max, 0, 'f', 0).arg(altitudes.y_min, 0, 'f', 0);
 			break;
-		case HeightUnit::FEET:
+		case HeightUnit::Feet:
 			result = tr("%1 feet / %2 feet").arg(VIK_METERS_TO_FEET(altitudes.y_max), 0, 'f', 0).arg(VIK_METERS_TO_FEET(altitudes.y_min), 0, 'f', 0);
 			break;
 		default:
 			result = tr("--");
-			qDebug() << "EE: Track Properties Dialog: can't get height unit for 'total elevation gain/loss'; height_unit = " << (int) height_unit;
+			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+			break;
 		}
 	}
 	this->w_elev_gain = ui_label_new_selectable(result, this);

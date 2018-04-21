@@ -36,10 +36,7 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_MATH_H
 #include <cmath>
-#endif
-
 #include <cstdlib>
 #include <cassert>
 
@@ -130,14 +127,14 @@ bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double y
 		return false;
 	}
 
-	/* Note : VIK_GZ(17) / xzoom / 2 = number of tile on Y axis */
+	/* Note : VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2 = number of tile on Y axis */
 	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
-		xzoom, yzoom, VIK_GZ(17) / xzoom / 2);
-	dest->x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(17) / xzoom / 2);
+		xzoom, yzoom, VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
+	dest->x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
-	dest->y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(17) / xzoom / 2);
+	dest->y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
 	dest->z = 0;
 	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__,
 		src_coord.ll.lon, src_coord.ll.lat, dest->x, dest->y);
@@ -156,11 +153,11 @@ void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord & dest_coord) cons
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
 	}
 	dest_coord.mode = CoordMode::LATLON;
-	dest_coord.ll.lon = (src->x + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
+	dest_coord.ll.lon = (src->x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
-	dest_coord.ll.lat = -((src->y + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
+	dest_coord.ll.lat = -((src->y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
 	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
 		src->x, src->y, dest_coord.ll.lon, dest_coord.ll.lat);
 }
@@ -175,9 +172,9 @@ const QString MapSourceTms::get_server_path(TileInfo * src) const
 	 */
 
 	/* Note : nb tiles on Y axis */
-	int nb_tiles = VIK_GZ(17 - src->scale - 1);
+	int nb_tiles = VIK_GZ(MAGIC_SEVENTEEN - src->scale - 1);
 
-	const QString uri = QString(this->server_path_format).arg(17 - src->scale - 1).arg(src->x).arg(nb_tiles - src->y - 1);
+	const QString uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src->scale - 1).arg(src->x).arg(nb_tiles - src->y - 1);
 
 	return QString(uri);
 }

@@ -193,7 +193,7 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec)
 {
 	/* Index is only an index into values from this layer. */
-	int index = KPOINTER_TO_INT (index_ptr);
+	int index = (int) (long) (index_ptr);
 	ParameterSpecification * layer_param_spec = default_parameters_specifications.at(index + id);
 
 	write_parameter_value(value, layer_param_spec->layer_type, layer_param_spec->name, layer_param_spec->type);

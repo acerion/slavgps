@@ -43,6 +43,7 @@
 
 #include "map_source.h"
 #include "coord.h"
+#include "measurements.h"
 
 
 

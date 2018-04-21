@@ -52,6 +52,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer TRW Track List Dialog:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 /* Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here! */
 #define TRACK_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
 
@@ -304,7 +309,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * Foreach entry we copy the various individual track properties into the tree store
  * formatting & converting the internal values into something for display.
  */
-void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
+void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_unit, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
 {
 	double trk_dist = trk->get_length();
 	/* Store unit converted value. */
@@ -346,12 +351,14 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 		max_alt = altitudes.y_max;
 	}
 
-	switch (height_units) {
-	case HeightUnit::FEET:
+	switch (height_unit) {
+	case HeightUnit::Metres: /* No need to convert. */
+		break;
+	case HeightUnit::Feet:
 		max_alt = VIK_METERS_TO_FEET(max_alt);
 		break;
 	default:
-		/* HeightUnit::METRES: no need to convert. */
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
 		break;
 	}
 
@@ -449,9 +456,9 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 
 void TrackListDialog::build_model(bool hide_layer_names)
 {
-	DistanceUnit distance_units = Preferences::get_unit_distance();
-	SpeedUnit speed_units = Preferences::get_unit_speed();
-	HeightUnit height_units = Preferences::get_unit_height();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const SpeedUnit speed_units = Preferences::get_unit_speed();
+	const HeightUnit height_unit = Preferences::get_unit_height();
 
 
 	this->model = new QStandardItemModel();
@@ -461,12 +468,19 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
 	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
 
-	if (distance_units == DistanceUnit::MILES) {
-		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(miles)"));
-	} else if (distance_units == DistanceUnit::NAUTICAL_MILES) {
-		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(nautical miles)"));
-	} else {
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
 		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(km)"));
+		break;
+	case DistanceUnit::Miles:
+		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(miles)"));
+		break;
+	case DistanceUnit::NauticalMiles:
+		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(nautical miles)"));
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 
 	this->model->setHorizontalHeaderItem(DURATION_COLUMN, new QStandardItem("Duration\n(minutes)"));
@@ -475,10 +489,16 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(tr("Average Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
 	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(tr("Maximum Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
 
-	if (height_units == HeightUnit::FEET) {
-		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Feet)"));
-	} else {
+	switch (height_unit) {
+	case HeightUnit::Metres:
 		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Metres)"));
+		break;
+	case HeightUnit::Feet:
+		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Feet)"));
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
 	}
 
 
@@ -547,7 +567,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	}
 
 	for (auto iter = this->tracks->begin(); iter != this->tracks->end(); iter++) {
-		this->add_row(*iter, distance_units, speed_units, height_units, date_format);
+		this->add_row(*iter, distance_unit, speed_units, height_unit, date_format);
 	}
 
 

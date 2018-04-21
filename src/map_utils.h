@@ -41,6 +41,7 @@ namespace SlavGPS {
 	/* 1 << (x) is like a 2**(x) */
 	/* Not sure what GZ stands for probably Google Zoom. */
 	#define VIK_GZ(x) ((1<<(x)))
+	#define MAGIC_SEVENTEEN 17
 
 
 	int map_utils_mpp_to_scale(double mpp);

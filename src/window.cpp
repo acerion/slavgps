@@ -2440,7 +2440,7 @@ void Window::finish_new(void)
 		return;
 	}
 
-	if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_SPECIFIED_FILE) {
+	if (Preferences::get_startup_method() == StartupMethod::SpecifiedFile) {
 		this->open_file(Preferences::get_startup_file(), true);
 		if (!this->current_document_full_path.isEmpty()) {
 			return;
@@ -2459,7 +2459,7 @@ void Window::finish_new(void)
 
 	/* If not loaded any file, maybe try the location lookup. */
 	if (this->loaded_type == FileLoadResult::READ_FAILURE) {
-		if (Preferences::get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
+		if (Preferences::get_startup_method() == StartupMethod::AutoLocation) {
 
 			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
 			LocatorJob * locator = new LocatorJob(this);

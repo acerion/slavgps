@@ -34,6 +34,11 @@
 
 
 
+#include "measurements.h"
+
+
+
+
 namespace SlavGPS {
 
 

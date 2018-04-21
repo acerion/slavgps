@@ -31,6 +31,24 @@
 
 
 #include "globals.h"
+#include "measurements.h"
+
+
+
+
+/* Group for global preferences */
+#define PREFERENCES_NAMESPACE_GENERAL "viking.globals"
+
+/* Another group of global preferences,
+   but in a separate section to try to keep things organized */
+/* AKA Export/External Prefs */
+#define PREFERENCES_NAMESPACE_IO "viking.io"
+
+/* Group for global preferences - but 'advanced'
+   User changeable but only for those that need it */
+#define PREFERENCES_NAMESPACE_ADVANCED "viking.advanced"
+
+#define PREFERENCES_NAMESPACE_STARTUP "viking.startup"
 
 
 
@@ -42,6 +60,25 @@ namespace SlavGPS {
 
 	class SGVariant;
 	class ParameterSpecification;
+
+
+
+
+	enum class StartupMethod {
+		HomeLocation,
+		LastLocation,
+		SpecifiedFile,
+		AutoLocation,
+	};
+
+
+
+
+	/* Format of file paths, mainly for saving of a viking file. */
+	enum class FilePathFormat {
+		Absolute,
+		Relative,
+	};
 
 
 
@@ -101,12 +138,12 @@ namespace SlavGPS {
 #endif
 		static QString get_external_gpx_program_1(void);
 		static QString get_external_gpx_program_2(void);
-		static vik_file_ref_format_t get_file_ref_format();
+		static FilePathFormat get_file_path_format();
 		static bool get_ask_for_create_track_name();
 		static bool get_create_track_tooltip();
 		static int get_recent_number_files();
 		static bool get_add_default_map_layer();
-		static vik_startup_method_t get_startup_method();
+		static StartupMethod get_startup_method();
 		static QString get_startup_file(void);
 		static bool get_check_version();
 

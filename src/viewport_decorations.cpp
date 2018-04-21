@@ -103,22 +103,23 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 	const Coord left =  viewport->screen_pos_to_coord(0,                                     viewport->size_height / 2);
 	const Coord right = viewport->screen_pos_to_coord(viewport->size_width * RELATIVE_WIDTH, viewport->size_height / 2);
 
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		base_distance = Coord::distance(left, right); /* In meters. */
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
 		base_distance = VIK_METERS_TO_MILES (Coord::distance(left, right)) * 10.0;
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
 		base_distance = VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(left, right)) * 10.0;
 		break;
 	default:
 		base_distance = 1; /* Keep the compiler happy. */
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "failed to get correct units of distance, got" << (int) distance_unit;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 
 	/* At this point "base_distance" is a distance between "left" and "right" in physical units.
@@ -185,14 +186,14 @@ QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, Distan
 	QString scale_value;
 
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		if (scale_unit >= 1000) {
 			scale_value = QObject::tr("y%1 km").arg((int) scale_unit / 1000);
 		} else {
 			scale_value = QObject::tr("y%1 m").arg((int) scale_unit);
 		}
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		/* Handle units in 0.1 miles. */
 		if (scale_unit < 10.0) {
 			scale_value = QObject::tr("%1 miles").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */
@@ -202,7 +203,7 @@ QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, Distan
 			scale_value = QObject::tr("%1 miles").arg((int) (scale_unit / 10.0));
 		}
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		/* Handle units in 0.1 NM. */
 		if (scale_unit < 10.0) {
 			scale_value = QObject::tr("%1 NM").arg(scale_unit / 10.0, 0, 'f', 1); /* "%0.1f" */
@@ -213,7 +214,8 @@ QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, Distan
 		}
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "failed to get correct units of distance, got" << (int) distance_unit;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 
 	return scale_value;

@@ -554,9 +554,9 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 
 						line += eq_pos+1;
 						if (param_spec->type_id == SGVariantType::StringList) {
-							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
+							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, ((void *) (long) i)),
 										   g_strdup(line));
-							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
+							g_hash_table_replace(string_lists, (void *) (long) i, l);
 							/* Aadd the value to a list, possibly making a new list.
 							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {

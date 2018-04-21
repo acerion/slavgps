@@ -25,13 +25,11 @@
 #include "config.h"
 #endif
 
-#include <gtk/gtk.h>
-#ifdef HAVE_MATH_H
 #include <cmath>
-#endif
-
 #include <cstdlib>
 #include <cassert>
+
+#include <gtk/gtk.h>
 
 #include "globals.h"
 #include "coords.h"

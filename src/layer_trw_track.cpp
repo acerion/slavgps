@@ -874,7 +874,7 @@ time_t Track::get_duration(bool segment_gaps) const
 				    && (*std::prev(iter))->has_timestamp
 				    && !(*iter)->newsegment) {
 
-					duration += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
+					duration += std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
 				}
 			}
 		}
@@ -928,11 +928,11 @@ double Track::get_average_speed() const
 		    && !(*iter)->newsegment) {
 
 			len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			time += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
+			time += std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
 		}
 	}
 
-	return (time == 0) ? 0 : ABS(len/time);
+	return (time == 0) ? 0 : std::abs(len/time);
 }
 
 
@@ -965,12 +965,12 @@ double Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 			if (((*iter)->timestamp - (*std::prev(iter))->timestamp) < track_min_stop_length_seconds) {
 				len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
-				time += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
+				time += std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
 			}
 		}
 	}
 
-	return (time == 0) ? 0 : ABS(len / time);
+	return (time == 0) ? 0 : std::abs(len / time);
 }
 
 
@@ -991,7 +991,7 @@ double Track::get_max_speed() const
 		    && (!(*iter)->newsegment)) {
 
 			speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
-				/ ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
+				/ std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
 
 			if (speed > maxspeed) {
 				maxspeed = speed;
@@ -1726,7 +1726,7 @@ Trackpoint * Track::get_tp_by_max_speed() const
 		    && !(*iter)->newsegment) {
 
 			speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
-				/ ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
+				/ std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
 
 			if (speed > maxspeed) {
 				maxspeed = speed;
@@ -3099,18 +3099,19 @@ QString Track::get_tooltip(void)
 	}
 	/* Get length and consider the appropriate distance units. */
 	double tr_len = this->get_length();
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		result = QObject::tr("%1%2 km %3").arg(timestamp_string).arg(tr_len/1000.0, 0, 'f', 1).arg(duration_string);
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		result = QObject::tr("%1%2 miles %3").arg(timestamp_string).arg(VIK_METERS_TO_MILES(tr_len), 0, 'f', 1).arg(duration_string);
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		result = QObject::tr("%1%2 NM %3").arg(timestamp_string).arg(VIK_METERS_TO_NAUTICAL_MILES(tr_len), 0, 'f', 1).arg(duration_string);
 		break;
 	default:
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 		break;
 	}
 
@@ -3462,8 +3463,8 @@ void Track::geotagging_track_cb(void)
 
 static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradient)
 {
-	if ((dist->lon >= ABS(to->ll.lon - from->ll.lon))
-	    && (dist->lat >= ABS(to->ll.lat - from->ll.lat))) {
+	if ((dist->lon >= std::abs(to->ll.lon - from->ll.lon))
+	    && (dist->lat >= std::abs(to->ll.lat - from->ll.lat))) {
 
 		return NULL;
 	}
@@ -3471,7 +3472,7 @@ static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradi
 	Coord * coord = new Coord();
 	coord->mode = CoordMode::LATLON;
 
-	if (ABS(gradient) < 1) {
+	if (std::abs(gradient) < 1) {
 		if (from->ll.lon > to->ll.lon) {
 			coord->ll.lon = from->ll.lon - dist->lon;
 		} else {
@@ -3554,8 +3555,8 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 		     (next_rect = std::next(cur_rect)) != rects_to_download->end();
 		     cur_rect++) {
 
-			if ((wh.lon < ABS ((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
-			    || (wh.lat < ABS ((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
+			if ((wh.lon < std::abs((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
+			    || (wh.lat < std::abs((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
 
 				add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
 			}

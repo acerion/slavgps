@@ -55,7 +55,7 @@ struct _VikStatusbar {
 static bool button_release_event(GtkWidget * widget, QEvent * ev, void ** user_data)
 {
 	if (((GdkEventButton *) ev)->button == 3) {
-		int type = KPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "type"));
+		int type = g_object_get_data(G_OBJECT(widget), "type");
 		VikStatusbar * vs = VIK_STATUSBAR (user_data);
 		/* Right Click: so copy the text in the INFO buffer only ATM. */
 		if (type == VIK_STATUSBAR_INFO) {
@@ -86,7 +86,7 @@ static void vik_statusbar_init(VikStatusbar * vs)
 			vs->status[i] = gtk_statusbar_new();
 			gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(vs->status[i]), false);
 		}
-		g_object_set_data(G_OBJECT (vs->status[i]), "type", KINT_TO_POINTER(i));
+		g_object_set_data(G_OBJECT (vs->status[i]), "type", i);
 	}
 
 

@@ -31,6 +31,11 @@
 
 
 
+#include <glib.h>
+
+
+
+
 #include "layer_trw.h"
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoints.h"

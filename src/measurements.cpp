@@ -37,22 +37,28 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Measurements:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 QString Measurements::get_altitude_string(double value, int precision)
 {
-	const HeightUnit unit = Preferences::get_unit_height();
+	const HeightUnit height_unit = Preferences::get_unit_height();
 
 	QString buffer;
 
-	switch (unit) {
-	case HeightUnit::METRES:
+	switch (height_unit) {
+	case HeightUnit::Metres:
 		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
 		break;
-	case HeightUnit::FEET:
+	case HeightUnit::Feet:
 		buffer = QObject::tr("%1 feet").arg(value, 0, 'f', precision);
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE: Measurements: invalid altitude unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
 	}
 
 	return buffer;
@@ -63,20 +69,21 @@ QString Measurements::get_altitude_string(double value, int precision)
 
 QString Measurements::get_altitude_string_recalculate(double value, int precision)
 {
-	const HeightUnit unit = Preferences::get_unit_height();
+	const HeightUnit height_unit = Preferences::get_unit_height();
 
 	QString buffer;
 
-	switch (unit) {
-	case HeightUnit::METRES:
+	switch (height_unit) {
+	case HeightUnit::Metres:
 		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
 		break;
-	case HeightUnit::FEET:
+	case HeightUnit::Feet:
 		buffer = QObject::tr("%1 feet").arg(VIK_METERS_TO_FEET(value), 0, 'f', precision);
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE: Measurements: invalid altitude unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
 	}
 
 	return buffer;
@@ -87,23 +94,24 @@ QString Measurements::get_altitude_string_recalculate(double value, int precisio
 
 QString Measurements::get_distance_string(double value, int precision)
 {
-	const DistanceUnit unit = Preferences::get_unit_distance();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 
 	QString buffer;
 
-	switch (unit) {
-	case DistanceUnit::KILOMETRES:
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
 		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		buffer = QObject::tr("%1 miles").arg(value, 0, 'f', precision);
 		break;
-	case DistanceUnit::NAUTICAL_MILES: /* TODO: verify this case. */
+	case DistanceUnit::NauticalMiles: /* TODO: verify this case. */
 		buffer = QObject::tr("%1 NM").arg(value, 0, 'f', precision);
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE: Measurements: invalid distance unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 
 	return buffer;
@@ -114,21 +122,22 @@ QString Measurements::get_distance_string(double value, int precision)
 
 QString Measurements::get_distance_string_short(double value, int precision)
 {
-	const DistanceUnit unit = Preferences::get_unit_distance();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 
 	QString buffer;
 
-	switch (unit) {
-	case DistanceUnit::KILOMETRES:
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
 		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
 		break;
-	case DistanceUnit::MILES:
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::Miles:
+	case DistanceUnit::NauticalMiles:
 		buffer = QObject::tr("%1 yards").arg(value * 1.0936133, 0, 'f', precision); /* Miles -> yards. TODO: verify this calculation. */
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE: Measurements: invalid distance unit" << (int) unit << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 
 	return buffer;

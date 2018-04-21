@@ -28,6 +28,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include <glib.h>
+
 #include "datasource_bfilter.h"
 #include "babel.h"
 #include "gpx.h"
@@ -203,7 +205,7 @@ ProcessOptions * BFilterCompressDialog::get_process_options(const QString & inpu
 	ProcessOptions * po = new ProcessOptions();
 	const double value = this->spin->value();
 
-	char units = Preferences::get_unit_distance() == DistanceUnit::KILOMETRES ? 'k' : ' ';
+	char units = Preferences::get_unit_distance() == DistanceUnit::Kilometres ? 'k' : ' ';
 	/* I toyed with making the length,crosstrack or relative methods selectable.
 	   However several things:
 	   - mainly that typical values to use for the error relate to method being used - so hard to explain and then give a default sensible value in the UI.

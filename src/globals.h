@@ -31,10 +31,11 @@
 
 #include <cstdint>
 
-#include <glib.h>
+
 
 
 #define SG_APPLICATION_NAME "slavgps"
+
 
 
 
@@ -46,44 +47,6 @@ typedef uint32_t sg_uid_t;
 
 
 namespace SlavGPS {
-
-
-
-
-	/* Coord display format. */
-	enum class DegreeFormat {
-		DDD,
-		DMM,
-		DMS,
-		RAW,
-	};
-
-
-
-
-	enum class DistanceUnit {
-		KILOMETRES,
-		MILES,
-		NAUTICAL_MILES,
-	};
-
-
-
-
-	enum class SpeedUnit {
-		KILOMETRES_PER_HOUR,
-		MILES_PER_HOUR,
-		METRES_PER_SECOND,
-		KNOTS
-	};
-
-
-
-
-	enum class HeightUnit {
-		METRES,
-		FEET,
-	};
 
 
 
@@ -137,16 +100,6 @@ namespace SlavGPS {
 
 
 
-} /* namespace SlavGPS */
-
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #define PROJECT "Viking"
 #define VIKING_VERSION PACKAGE_VERSION
 #define VIKING_VERSION_NAME "This Name For Rent"
@@ -193,98 +146,48 @@ extern "C" {
 #define MERCLAT(x) (RAD2DEG(log(tan((0.25 * M_PI) + (0.5 * DEG2RAD(x))))))
 #define DEMERCLAT(x) (RAD2DEG(atan(sinh(DEG2RAD(x)))))
 
-/* Some command line options. */
-extern bool vik_debug;
-extern bool vik_verbose;
-extern bool vik_version;
 
 
 
-/* Location preferences. */
-typedef enum {
-	VIK_LOCATION_LAT,
-	VIK_LOCATION_LONG,
-} vik_location_t;
+	/* Time display format. */
+	enum class SGTimeReference {
+		Locale, /* User's locale. */
+		World,  /* Derive the local timezone at the object's position. */
+		UTC,
+	};
 
 
 
-
-
-/* Time display format. */
-enum class SGTimeReference {
-	Locale, /* User's locale. */
-	World,  /* Derive the local timezone at the object's position. */
-	UTC,
-};
-
-
-
-/* KML export preferences. */
-typedef enum {
-	VIK_KML_EXPORT_UNITS_METRIC,
-	VIK_KML_EXPORT_UNITS_STATUTE,
-	VIK_KML_EXPORT_UNITS_NAUTICAL,
-} vik_kml_export_units_t;
-
-
-
-enum class GPXExportTrackSort {
-	Alpha,
-	Time,
-	Creation
-};
-
-
-typedef enum {
-	VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE,
-	VIK_GPX_EXPORT_WPT_SYM_NAME_LOWERCASE,
-} vik_gpx_export_wpt_sym_name_t;
+	/* KML export preferences. */
+	typedef enum {
+		VIK_KML_EXPORT_UNITS_METRIC,
+		VIK_KML_EXPORT_UNITS_STATUTE,
+		VIK_KML_EXPORT_UNITS_NAUTICAL,
+	} vik_kml_export_units_t;
 
 
 
 
-/* File reference preferences - mainly in saving of a viking file. */
-typedef enum {
-	VIK_FILE_REF_FORMAT_ABSOLUTE,
-	VIK_FILE_REF_FORMAT_RELATIVE,
-} vik_file_ref_format_t;
-
-typedef enum {
-	VIK_STARTUP_METHOD_HOME_LOCATION,
-	VIK_STARTUP_METHOD_LAST_LOCATION,
-	VIK_STARTUP_METHOD_SPECIFIED_FILE,
-	VIK_STARTUP_METHOD_AUTO_LOCATION,
-} vik_startup_method_t;
+	enum class GPXExportTrackSort {
+		Alpha,
+		Time,
+		Creation
+	};
 
 
 
 
-/* Group for global preferences */
-#define PREFERENCES_NAMESPACE_GENERAL "viking.globals"
-
-/* Another group of global preferences,
-   but in a separate section to try to keep things organized */
-/* AKA Export/External Prefs */
-#define PREFERENCES_NAMESPACE_IO "viking.io"
-
-/* Group for global preferences - but 'advanced'
-   User changeable but only for those that need it */
-#define PREFERENCES_NAMESPACE_ADVANCED "viking.advanced"
-
-#define PREFERENCES_NAMESPACE_STARTUP "viking.startup"
+	typedef enum {
+		VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE,
+		VIK_GPX_EXPORT_WPT_SYM_NAME_LOWERCASE,
+	} vik_gpx_export_wpt_sym_name_t;
 
 
 
 
-/* Stuff added during migrantion from glib to something else. */
-#define KINT_TO_POINTER(i) ((void *) (long) (i))
-#define KPOINTER_TO_INT(p) ((int) (long) (p))
+} /* namespace SlavGPS */
 
 
 
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif /* #ifndef _SG_GLOBALS_H_ */

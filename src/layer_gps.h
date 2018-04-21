@@ -37,6 +37,10 @@
 
 
 
+#include <glib.h>
+
+
+
 #include "layer.h"
 #include "layer_interface.h"
 #include "variant.h"

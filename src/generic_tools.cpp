@@ -48,6 +48,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Generic Tools:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 #ifdef WINDOWS
 #define SG_MOVE_MODIFIER Qt::AltModifier
 #else
@@ -208,9 +213,9 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 		char str[128];
 
 		/* Draw label with distance. */
-		DistanceUnit distance_unit = Preferences::get_unit_distance();
+		const DistanceUnit distance_unit = Preferences::get_unit_distance();
 		switch (distance_unit) {
-		case DistanceUnit::KILOMETRES:
+		case DistanceUnit::Kilometres:
 			if (distance >= 1000 && distance < 100000) {
 				sprintf(str, "%3.2f km", distance/1000.0);
 			} else if (distance < 1000) {
@@ -219,7 +224,7 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 				sprintf(str, "%d km", (int)distance/1000);
 			}
 			break;
-		case DistanceUnit::MILES:
+		case DistanceUnit::Miles:
 			if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
 				sprintf(str, "%3.2f miles", VIK_METERS_TO_MILES(distance));
 			} else if (distance < VIK_MILES_TO_METERS(1)) {
@@ -228,7 +233,7 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 				sprintf(str, "%d miles", (int)VIK_METERS_TO_MILES(distance));
 			}
 			break;
-		case DistanceUnit::NAUTICAL_MILES:
+		case DistanceUnit::NauticalMiles:
 			if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
 				sprintf(str, "%3.2f NM", VIK_METERS_TO_NAUTICAL_MILES(distance));
 			} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
@@ -238,7 +243,8 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 			}
 			break;
 		default:
-			qDebug() << "EE: Layer Tools: draw ruler: invalid distance unit" << (int) distance_unit;
+			qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+			break;
 		}
 
 		/* Draw distance label. */
@@ -345,19 +351,20 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 		cursor_coord.get_latlon().to_strings_raw(lat, lon);
 
 		if (this->has_start_coord) {
-			DistanceUnit distance_unit = Preferences::get_unit_distance();
+			const DistanceUnit distance_unit = Preferences::get_unit_distance();
 			switch (distance_unit) {
-			case DistanceUnit::KILOMETRES:
+			case DistanceUnit::Kilometres:
 				msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(Coord::distance(cursor_coord, this->start_coord));
 				break;
-			case DistanceUnit::MILES:
+			case DistanceUnit::Miles:
 				msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES(Coord::distance(cursor_coord, this->start_coord)));
 				break;
-			case DistanceUnit::NAUTICAL_MILES:
+			case DistanceUnit::NauticalMiles:
 				msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES(Coord::distance(cursor_coord, this->start_coord)));
 				break;
 			default:
-				qDebug() << "EE: Generic Tool Ruler: handle mouse click: invalid distance unit:" << (int) distance_unit;
+				qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+				break;
 			}
 
 			qDebug() << "II: Generic Tool Ruler: second click, dropping start coordinates";
@@ -420,19 +427,20 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 	cursor_coord.get_latlon().to_strings_raw(lat, lon);
 
 	QString msg;
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(Coord::distance(cursor_coord, this->start_coord));
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES (Coord::distance(cursor_coord, this->start_coord)));
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(cursor_coord, this->start_coord)));
 		break;
 	default:
-		qDebug() << "EE: Generic Tool Ruler: handle mouse move: unknown distance unit:" << (int) distance_unit;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
 	}
 
 	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);

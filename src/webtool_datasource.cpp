@@ -266,7 +266,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 	QString center_lon;
 	lat_lon.to_strings_raw(center_lat, center_lon);
 
-	int zoom_level = 17; /* A zoomed in default. */
+	int zoom_level = MAGIC_SEVENTEEN; /* A zoomed in default. */
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	if (a_viewport->get_xmpp() == a_viewport->get_ympp()) {
 		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());

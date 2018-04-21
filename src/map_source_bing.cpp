@@ -34,13 +34,8 @@
 #endif
 
 #include <list>
-#ifdef HAVE_MATH_H
 #include <cmath>
-#endif
-
-#ifdef HAVE_STDLIB_H
 #include <cstdlib>
-#endif
 
 #include <QDebug>
 #include <QDir>
@@ -70,6 +65,11 @@ using namespace SlavGPS;
 
 /* Format for URL. */
 #define URL_ATTR_FMT "http://dev.virtualearth.net/REST/v1/Imagery/Metadata/Aerial/0,0?zl=1&mapVersion=v1&key=%1&include=ImageryProviders&output=xml"
+
+
+
+
+extern bool vik_debug;
 
 
 
@@ -148,7 +148,7 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 const QString MapSourceBing::get_server_path(TileInfo * src) const
 {
-	const QString quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
+	const QString quadtree = compute_quad_tree(MAGIC_SEVENTEEN - src->scale, src->x, src->y);
 	const QString uri = QString(this->server_path_format).arg(quadtree);
 
 	return uri;
@@ -178,8 +178,8 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 		const Attribution * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
-		    (17 - scale) > current->minZoom &&
-		    (17 - scale) < current->maxZoom) {
+		    (MAGIC_SEVENTEEN - scale) > current->minZoom &&
+		    (MAGIC_SEVENTEEN - scale) < current->maxZoom) {
 
 			viewport->add_copyright(current->attribution);
 			qDebug() << "DD: Map Source Bind: get copyright: found match:" << current->attribution;

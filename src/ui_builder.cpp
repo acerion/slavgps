@@ -376,15 +376,16 @@ void PropertiesDialog::fill(Waypoint * wp, const std::vector<const ParameterSpec
 	QString alt;
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	switch (height_unit) {
-	case HeightUnit::METRES:
+	case HeightUnit::Metres:
 		alt = QString("%1").arg(wp->altitude);
 		break;
-	case HeightUnit::FEET:
+	case HeightUnit::Feet:
 		alt = QString("%1").arg(VIK_METERS_TO_FEET(wp->altitude));
 		break;
 	default:
-		alt = QString("%1").arg(wp->altitude);
-		qDebug() << "EE: Waypoint Properties: dialog: invalid height units:" << (int) height_unit;
+		alt = "???";
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
 	}
 
 	param_spec = param_specs[SG_WP_PARAM_ALT];

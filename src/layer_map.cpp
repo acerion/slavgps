@@ -91,6 +91,11 @@ LayerMapInterface vik_map_layer_interface;
 
 
 
+extern bool vik_debug;
+
+
+
+
 #define LAYER_MAP_GRID_COLOR "#E6202E" /* Red-ish. */
 
 #define VIK_SETTINGS_MAP_MAX_TILES "maps_max_tiles"
@@ -624,7 +629,7 @@ SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
 			rv = SGVariant("");
 			set = true;
 		} else if (is_file_operation && !this->cache_dir.isEmpty()) {
-			if (Preferences::get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+			if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
 				const QString cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
 					rv = SGVariant(file_GetRelativeFilename(cwd, this->cache_dir));
@@ -1064,7 +1069,7 @@ static QString get_cache_filename(MapsCacheLayout layout,
 		if (map_type_string.isEmpty()) {
 			result = QString("%1%2%3%4%5%6%7")
 				.arg(cache_dir)
-				.arg(17 - coord->scale)
+				.arg(MAGIC_SEVENTEEN - coord->scale)
 				.arg(QDir::separator())
 				.arg(coord->x)
 				.arg(QDir::separator())
@@ -1075,7 +1080,7 @@ static QString get_cache_filename(MapsCacheLayout layout,
 				/* Cache dir not the default - assume it's been directed somewhere specific. */
 				result = QString("%1%2%3%4%5%6%7")
 					.arg(cache_dir)
-					.arg(17 - coord->scale)
+					.arg(MAGIC_SEVENTEEN - coord->scale)
 					.arg(QDir::separator())
 					.arg(coord->x)
 					.arg(QDir::separator())
@@ -1087,7 +1092,7 @@ static QString get_cache_filename(MapsCacheLayout layout,
 					.arg(cache_dir)
 					.arg(map_type_string)
 					.arg(QDir::separator())
-					.arg(17 - coord->scale)
+					.arg(MAGIC_SEVENTEEN - coord->scale)
 					.arg(QDir::separator())
 					.arg(coord->x)
 					.arg(QDir::separator())
@@ -1135,10 +1140,10 @@ QPixmap LayerMap::get_pixmap(const QString & map_type_string, TileInfo * mapcoor
 	if (map_source->is_direct_file_access()) {
 		/* ATM MBTiles must be 'a direct access type'. */
 		if (map_source->is_mbtiles()) {
-			pixmap = this->create_mbtiles_pixmap(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
+			pixmap = this->create_mbtiles_pixmap(mapcoord->x, mapcoord->y, (MAGIC_SEVENTEEN - mapcoord->scale));
 			qDebug() << "II" PREFIX << "Creating pixmap from mbtiles:" << (pixmap.isNull() ? "failure" : "success");
 		} else if (map_source->is_osm_meta_tiles()) {
-			pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
+			pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (MAGIC_SEVENTEEN - mapcoord->scale));
 			qDebug() << "II" PREFIX << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
 		} else {
 			tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
@@ -1936,7 +1941,7 @@ void LayerMap::tile_info_cb(void)
 #ifdef HAVE_SQLITE3_H
 			/* And whether to bother going into the SQL to check it's really there or not... */
 			QString exists;
-			int zoom = 17 - ulm.scale;
+			int zoom = MAGIC_SEVENTEEN - ulm.scale;
 			if (this->mbtiles) {
 				QPixmap * pixmap = create_pixmap_sql_exec(this->mbtiles, ulm.x, ulm.y, zoom);
 				if (pixmap) {
@@ -1965,7 +1970,7 @@ void LayerMap::tile_info_cb(void)
 #endif
 		} else if (map_source->is_osm_meta_tiles()) {
 			char path[PATH_MAX];
-			xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, 17-ulm.scale);
+			xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, MAGIC_SEVENTEEN - ulm.scale);
 			source = path;
 			tile_file_full_path = path;
 		} else {

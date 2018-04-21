@@ -762,9 +762,18 @@ static QString distance_string(double distance)
 	char str[128];
 
 	/* Draw label with distance. */
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
-	case DistanceUnit::MILES:
+	case DistanceUnit::Kilometres:
+		if (distance >= 1000 && distance < 100000) {
+			result = QObject::tr("1 km").arg(distance/1000.0, 6, 'f', 2); /* ""%3.2f" */
+		} else if (distance < 1000) {
+			result = QObject::tr("%1 m").arg((int) distance);
+		} else {
+			result = QObject::tr("%1 km").arg((int) distance/1000);
+		}
+		break;
+	case DistanceUnit::Miles:
 		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
 			result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 6, 'f', 2); /* "%3.2f" */
 		} else if (distance < 1609.4) {
@@ -773,7 +782,7 @@ static QString distance_string(double distance)
 			result = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
 		}
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
 			result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 6, 'f', 2); /* "%3.2f" */
 		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
@@ -783,14 +792,7 @@ static QString distance_string(double distance)
 		}
 		break;
 	default:
-		/* DistanceUnit::KILOMETRES */
-		if (distance >= 1000 && distance < 100000) {
-			result = QObject::tr("1 km").arg(distance/1000.0, 6, 'f', 2); /* ""%3.2f" */
-		} else if (distance < 1000) {
-			result = QObject::tr("%1 m").arg((int) distance);
-		} else {
-			result = QObject::tr("%1 km").arg((int) distance/1000);
-		}
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 		break;
 	}
 	return result;
@@ -810,10 +812,18 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 	const QString str_total = distance_string(distance);
 
 	if ((elev_gain > 0.1) || (elev_loss > 0.1)) {
-		if (Preferences::get_unit_height() == HeightUnit::METRES) {
+
+		const HeightUnit height_unit = Preferences::get_unit_height();
+		switch (height_unit) {
+		case HeightUnit::Metres:
 			str_gain_loss = QObject::tr(" - Gain %1m:Loss %2m").arg((int) elev_gain).arg((int) elev_loss);
-		} else {
+			break;
+		case HeightUnit::Feet:
 			str_gain_loss = QObject::tr(" - Gain %1ft:Loss %2ft").arg((int) VIK_METERS_TO_FEET(elev_gain)).arg((int)VIK_METERS_TO_FEET(elev_loss));
+			break;
+		default:
+			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+			break;
 		}
 	}
 

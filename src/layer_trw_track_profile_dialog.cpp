@@ -247,7 +247,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 		break;
 	case GeoCanvasDomain::Elevation:
 		/* Convert into appropriate units. */
-		if (this->geocanvas.height_unit == HeightUnit::FEET) {
+		if (this->geocanvas.height_unit == HeightUnit::Feet) {
 			/* Convert altitudes into feet units. */
 			for (int i = 0; i < this->width; i++) {
 				this->track_data.y[i] = VIK_METERS_TO_FEET(this->track_data.y[i]);
@@ -1067,15 +1067,19 @@ QString get_y_distance_string(double distance)
 {
 	QString result;
 
-	switch (Preferences::get_unit_distance()) {
-	case DistanceUnit::MILES:
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		result = QObject::tr("%1 km").arg(distance, 0, 'f', 2); /* kamilTODO: why not distance/1000? */
+		break;
+	case DistanceUnit::Miles:
 		result = QObject::tr("%1 miles").arg(distance, 0, 'f', 2);
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		result = QObject::tr("%1 NM").arg(distance, 0, 'f', 2);
 		break;
 	default:
-		result = QObject::tr("%1 km").arg(distance, 0, 'f', 2); /* kamilTODO: why not distance/1000? */
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 		break;
 	}
 
@@ -1112,7 +1116,7 @@ void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, double max_speed_in, boo
 			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
 			if (elev != DEM_INVALID_ELEVATION) {
 				/* Convert into height units. */
-				if (this->geocanvas.height_unit == HeightUnit::FEET) {
+				if (this->geocanvas.height_unit == HeightUnit::Feet) {
 					elev = VIK_METERS_TO_FEET(elev);
 				}
 				/* No conversion needed if already in metres. */
@@ -1266,7 +1270,7 @@ static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & trac
 				int16_t elev = DEMCache::get_elev_by_coord(&tp->coord, DemInterpolation::SIMPLE);
 				if (elev != DEM_INVALID_ELEVATION) {
 					/* Convert into height units. */
-					if (Preferences::get_unit_height() == HeightUnit::FEET) {
+					if (Preferences::get_unit_height() == HeightUnit::Feet) {
 						elev = VIK_METERS_TO_FEET(elev);
 					}
 					/* No conversion needed if already in metres. */
@@ -2199,15 +2203,15 @@ QString get_elevation_grid_label(HeightUnit height_unit, double value)
 	QString result;
 
 	switch (height_unit) {
-	case HeightUnit::METRES:
+	case HeightUnit::Metres:
 		result = QObject::tr("%1 m").arg(value, 0, 'f', SG_PRECISION_ALTITUDE);
 		break;
-	case HeightUnit::FEET:
+	case HeightUnit::Feet:
 		result = QObject::tr("%1 ft").arg(value, 0, 'f', SG_PRECISION_ALTITUDE);
 		break;
 	default:
 		result = QObject::tr("--");
-		qDebug() << "EE:" PREFIX << "unrecognized height unit" << (int) height_unit;
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
 		break;
 	}
 
@@ -2222,18 +2226,18 @@ QString get_distance_grid_label(DistanceUnit distance_unit, double value)
 	QString result;
 
 	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
+	case DistanceUnit::Kilometres:
 		result = QObject::tr("%1 km").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
 		break;
-	case DistanceUnit::MILES:
+	case DistanceUnit::Miles:
 		result = QObject::tr("%1 miles").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
 		break;
-	case DistanceUnit::NAUTICAL_MILES:
+	case DistanceUnit::NauticalMiles:
 		result = QObject::tr("%1 NM").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
 		break;
 	default:
 		result = QObject::tr("--");
-		qDebug() << "EE:" PREFIX << "unrecognized distance unit" << (int) distance_unit;
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 		break;
 	}
 

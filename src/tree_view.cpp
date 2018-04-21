@@ -467,18 +467,18 @@ typedef struct _SortTuple
 	int64_t timestamp;
 } SortTuple;
 
-static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
+static int sort_tuple_compare(const void * a, const void * b, void * order)
 {
 	SortTuple *sa = (SortTuple *)a;
 	SortTuple *sb = (SortTuple *)b;
 
 	int answer = -1;
 #ifdef K_TODO
-	if (KPOINTER_TO_INT(order) < VL_SO_DATE_ASCENDING) {
+	if (((int) (long) order) < VL_SO_DATE_ASCENDING) {
 		/* Alphabetical comparison, default ascending order. */
 		answer = g_strcmp0(sa->name, sb->name);
 		/* Invert sort order for descending order. */
-		if (KPOINTER_TO_INT(order) == VL_SO_ALPHABETICAL_DESCENDING) {
+		if (((int) (long) order) == VL_SO_ALPHABETICAL_DESCENDING) {
 			answer = -answer;
 		}
 	} else {
@@ -488,7 +488,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
 			answer = 1;
 		}
 		/* Invert sort order for descending order. */
-		if (KPOINTER_TO_INT(order) == VL_SO_DATE_DESCENDING) {
+		if (((int) (long) order) == VL_SO_DATE_DESCENDING) {
 			answer = -answer;
 		}
 	}
@@ -549,7 +549,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 			  length,
 			  sizeof (SortTuple),
 			  sort_tuple_compare,
-			  KINT_TO_POINTER(order));
+			  order);
 
 	/* As the sorted list contains the reordered position offsets, extract this and then apply to the tree view. */
 	int * positions = (int *) malloc(sizeof(int) * length);
@@ -1024,7 +1024,7 @@ TreeIndex * TreeView::get_index_at_pos(int pos_x, int pos_y)
 bool TreeView::is_editing_in_progress()
 {
 	/* Don't know how to get cell for the selected item. */
-	//return KPOINTER_TO_INT(g_object_get_data(G_OBJECT(cell), "editing"));
+	//return ((int) (long) g_object_get_data(G_OBJECT(cell), "editing"));
 
 	/* Instead maintain our own value applying to the whole tree. */
 	return this->editing;

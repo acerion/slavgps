@@ -25,6 +25,8 @@
 #include <list>
 #include <cstdint>
 
+#include <glib.h>
+
 #include "coord.h"
 #include "mapcoord.h"
 #include "map_source_slippy.h"

@@ -1571,13 +1571,17 @@ void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track 
 void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
 	QString tmp_buf1;
-	switch (Preferences::get_unit_height()) {
-	case HeightUnit::FEET:
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	switch (height_unit) {
+	case HeightUnit::Metres:
+		tmp_buf1 = QObject::tr("Wpt: Alt %1m").arg((int) round(wp->altitude));
+		break;
+	case HeightUnit::Feet:
 		tmp_buf1 = QObject::tr("Wpt: Alt %1ft").arg((int) round(VIK_METERS_TO_FEET(wp->altitude)));
 		break;
 	default:
-		// HeightUnit::METRES:
-		tmp_buf1 = QObject::tr("Wpt: Alt %1m").arg((int) round(wp->altitude));
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
 	}
 
 	/* Position part.

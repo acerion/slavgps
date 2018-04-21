@@ -53,6 +53,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer TRW Waypoint List:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 
@@ -392,7 +397,7 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * For each entry we copy the various individual waypoint properties into the table,
  * formatting & converting the internal values into something for display.
  */
-void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
+void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
 {
 	/* Get start date. */
 	QString start_date;
@@ -409,12 +414,14 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_units, const Q
 	visible = visible && trw->get_waypoints_visibility();
 
 	double alt = wp->altitude;
-	switch (height_units) {
-	case HeightUnit::FEET:
+	switch (height_unit) {
+	case HeightUnit::Metres: /* No need to convert. */
+		break;
+	case HeightUnit::Feet:
 		alt = VIK_METERS_TO_FEET(alt);
 		break;
 	default:
-		/* HeightUnit::METRES: no need to convert. */
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
 		break;
 	}
 
@@ -490,7 +497,7 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 		return;
 	}
 
-	HeightUnit height_units = Preferences::get_unit_height();
+	const HeightUnit height_unit = Preferences::get_unit_height();
 
 	this->model = new QStandardItemModel();
 	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
@@ -498,10 +505,16 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
 	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
 	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
-	if (height_units == HeightUnit::FEET) {
-		this->model->setHorizontalHeaderItem(HEIGHT_COLUMN, new QStandardItem("Height\n(Feet)"));
-	} else {
+	switch (height_unit) {
+	case HeightUnit::Metres:
 		this->model->setHorizontalHeaderItem(HEIGHT_COLUMN, new QStandardItem("Height\n(Metres)"));
+		break;
+	case HeightUnit::Feet:
+		this->model->setHorizontalHeaderItem(HEIGHT_COLUMN, new QStandardItem("Height\n(Feet)"));
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
 	}
 	this->model->setHorizontalHeaderItem(SYMBOL_COLUMN, new QStandardItem("Symbol"));
 
@@ -560,7 +573,7 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	}
 
 	for (auto iter = waypoints->begin(); iter != waypoints->end(); iter++) {
-		this->add_row(*iter, height_units, date_format);
+		this->add_row(*iter, height_unit, date_format);
 	}
 
 	/* TODO: add initial sorting by layer name or waypoint name. */

@@ -38,23 +38,16 @@ renaming functions and defining LatLon and UTM structs.
 #include "config.h"
 #endif
 
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+
 #include <QLocale>
 #include <QDebug>
 
 #include <glib.h>
-#include <cstdint>
-#include <cstdio>
-
-#ifdef HAVE_STDLIB_H
-#include <cstdlib>
-#endif
-#ifdef HAVE_STRING_H
-#include <cstring>
-#endif
-#ifdef HAVE_MATH_H
-#include <cmath>
-#endif
-
 
 #include "measurements.h"
 #include "coords.h"

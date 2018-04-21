@@ -48,6 +48,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer TRW Stats:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 #define N_LABELS 12
 static const char * labels[N_LABELS] = {
 	"Number of Tracks",
@@ -170,9 +175,40 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	((QLabel *) grid->itemAtPosition(5, col)->widget())->setText(tmp_string);
 
 
-	switch (Preferences::get_unit_height()) {
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	switch (height_unit) {
 		/* Note always round off height value output since sub unit accuracy is overkill. */
-	case HeightUnit::FEET:
+	case HeightUnit::Metres:
+
+		/* 6: Minimum Altitude */
+		if (stats.min_alt != VIK_VAL_MIN_ALT) {
+			tmp_string = tr("%1 m").arg((int) round(stats.min_alt));
+		} else {
+			tmp_string = "--";
+		}
+		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(tmp_string);
+
+
+		/* 7: Maximum Altitude */
+		if (stats.max_alt != VIK_VAL_MAX_ALT) {
+			tmp_string = tr("%1 m").arg((int) round(stats.max_alt));
+		} else {
+			tmp_string = "--";
+		}
+		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(tmp_string);
+
+
+		/* 8: Total Elevation Gain/Loss */
+		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain)).arg((int) round(stats.elev_loss));
+		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(tmp_string);
+
+
+		/* 9: Avg. Elevation Gain/Loss */
+		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain/stats.count)).arg((int) round(stats.elev_loss/stats.count));
+		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(tmp_string);
+
+		break;
+	case HeightUnit::Feet:
 
 		/* 6: Minimum Altitude */
 		if (stats.min_alt != VIK_VAL_MIN_ALT) {
@@ -203,35 +239,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 		break;
 	default:
-		/* HeightUnit::METRES */
-
-		/* 6: Minimum Altitude */
-		if (stats.min_alt != VIK_VAL_MIN_ALT) {
-			tmp_string = tr("%1 m").arg((int) round(stats.min_alt));
-		} else {
-			tmp_string = "--";
-		}
-		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(tmp_string);
-
-
-		/* 7: Maximum Altitude */
-		if (stats.max_alt != VIK_VAL_MAX_ALT) {
-			tmp_string = tr("%1 m").arg((int) round(stats.max_alt));
-		} else {
-			tmp_string = "--";
-		}
-		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(tmp_string);
-
-
-		/* 8: Total Elevation Gain/Loss */
-		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain)).arg((int) round(stats.elev_loss));
-		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(tmp_string);
-
-
-		/* 9: Avg. Elevation Gain/Loss */
-		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain/stats.count)).arg((int) round(stats.elev_loss/stats.count));
-		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(tmp_string);
-
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
 		break;
 	}
 
