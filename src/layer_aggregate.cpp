@@ -385,7 +385,7 @@ void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 
 void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_ASCENDING);
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalAscending);
 	this->children->sort(Layer::compare_name_ascending);
 }
 
@@ -394,7 +394,7 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 
 void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_DESCENDING);
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalDescending);
 	this->children->sort(Layer::compare_name_descending);
 }
 
@@ -403,7 +403,7 @@ void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 
 void LayerAggregate::sort_timestamp_ascend_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, VL_SO_DATE_ASCENDING);
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateAscending);
 	this->children->sort(Layer::compare_timestamp_ascending);
 }
 
@@ -412,7 +412,7 @@ void LayerAggregate::sort_timestamp_ascend_cb(void) /* Slot. */
 
 void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, VL_SO_DATE_DESCENDING);
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateDescending);
 	this->children->sort(Layer::compare_timestamp_descending);
 }
 

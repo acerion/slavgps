@@ -70,6 +70,7 @@ namespace SlavGPS {
 	class WaypointSearch;
 	class PropertiesDialogTP;
 	class DataSource;
+	enum class TreeViewSortOrder;
 
 
 
@@ -369,8 +370,8 @@ namespace SlavGPS {
 		CoordMode coord_mode;
 
 
-		sort_order_t track_sort_order;
-		sort_order_t wp_sort_order;
+		TreeViewSortOrder track_sort_order;
+		TreeViewSortOrder wp_sort_order;
 
 		TRWMetadata * metadata = NULL;
 

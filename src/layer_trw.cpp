@@ -188,11 +188,11 @@ static std::vector<SGLabelID> params_font_sizes = {
 
 
 static std::vector<SGLabelID> params_sort_order = {
-	SGLabelID("None",            VL_SO_NONE),
-	SGLabelID("Name Ascending",  VL_SO_ALPHABETICAL_ASCENDING),
-	SGLabelID("Name Descending", VL_SO_ALPHABETICAL_DESCENDING),
-	SGLabelID("Date Ascending",  VL_SO_DATE_ASCENDING),
-	SGLabelID("Date Descending", VL_SO_DATE_DESCENDING),
+	SGLabelID("None",            (int) TreeViewSortOrder::None),
+	SGLabelID("Name Ascending",  (int) TreeViewSortOrder::AlphabeticalAscending),
+	SGLabelID("Name Descending", (int) TreeViewSortOrder::AlphabeticalDescending),
+	SGLabelID("Date Ascending",  (int) TreeViewSortOrder::DateAscending),
+	SGLabelID("Date Descending", (int) TreeViewSortOrder::DateDescending),
 };
 
 static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
@@ -825,8 +825,10 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_TRACK_SORT_ORDER:
-		if (data.val_int < VL_SO_LAST) {
-			this->track_sort_order = (sort_order_t) data.val_int;
+		if (data.val_int < (int) TreeViewSortOrder::Last) {
+			this->track_sort_order = (TreeViewSortOrder) data.val_int;
+		} else {
+			qDebug() << "EE" PREFIX << "invalid Track Sort Order" << data.val_int;
 		}
 		break;
 	case PARAM_WP_LABELS:
@@ -903,8 +905,10 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_WP_SORT_ORDER:
-		if (data.val_int < VL_SO_LAST) {
-			this->wp_sort_order = (sort_order_t) data.val_int;
+		if (data.val_int < (int) TreeViewSortOrder::Last) {
+			this->wp_sort_order = (TreeViewSortOrder) data.val_int;
+		} else {
+			qDebug() << "EE" PREFIX << "invalid Waypoint Sort Order" << data.val_int;
 		}
 		break;
 		// Metadata

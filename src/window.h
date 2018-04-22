@@ -83,6 +83,7 @@ namespace SlavGPS {
 	class LayersPanel;
 	class ScreenPos;
 	class DataSource;
+	enum class LayerType;
 
 
 

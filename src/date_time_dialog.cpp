@@ -27,6 +27,7 @@
 #include "date_time_dialog.h"
 #include "clipboard.h"
 #include "vikutils.h"
+#include "layer.h"
 
 
 

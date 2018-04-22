@@ -96,7 +96,7 @@ namespace SlavGPS {
 
 		bool is_editing_in_progress();
 		void expand(TreeIndex const & index);
-		void sort_children(TreeIndex const & parent_index, sort_order_t order);
+		void sort_children(TreeIndex const & parent_index, TreeViewSortOrder sort_order);
 
 		bool editing = false;
 

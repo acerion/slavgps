@@ -47,7 +47,6 @@
 #include "tree_view.h"
 #include "bbox.h"
 #include "coord.h"
-#include "globals.h"
 
 
 
@@ -133,7 +132,7 @@ namespace SlavGPS {
 		Track * find_track_by_name(const QString & trk_name);
 		Track * find_track_by_date(char const * date_str);
 
-		void uniquify(sort_order_t sort_order);
+		void uniquify(TreeViewSortOrder sort_order);
 		QString new_unique_element_name(const QString & old_name);
 
 		/* Update the tree view of the track id - primarily to update the icon. */

@@ -473,11 +473,11 @@ static int sort_tuple_compare(const void * a, const void * b, void * order)
 
 	int answer = -1;
 #ifdef K_TODO
-	if (((int) (long) order) < VL_SO_DATE_ASCENDING) {
+	if (((int) (long) order) < TreeViewSortOrder::DateAscending) {
 		/* Alphabetical comparison, default ascending order. */
 		answer = g_strcmp0(sa->name, sb->name);
 		/* Invert sort order for descending order. */
-		if (((int) (long) order) == VL_SO_ALPHABETICAL_DESCENDING) {
+		if (((int) (long) order) == TreeViewSortOrder::AlphabeticalDescending) {
 			answer = -answer;
 		}
 	} else {
@@ -487,7 +487,7 @@ static int sort_tuple_compare(const void * a, const void * b, void * order)
 			answer = 1;
 		}
 		/* Invert sort order for descending order. */
-		if (((int) (long) order) == VL_SO_DATE_DESCENDING) {
+		if (((int) (long) order) == TreeViewSortOrder::DateDescending) {
 			answer = -answer;
 		}
 	}
@@ -516,9 +516,9 @@ static int sort_tuple_compare(const void * a, const void * b, void * order)
  * For a KML file with over 10,000 tracks (3Mb zipped) - See 'UK Hampshire Rights of Way'
  * http://www3.hants.gov.uk/row/row-maps.htm
  */
-void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
+void TreeView::sort_children(TreeIndex const & parent_index, TreeViewSortOrder sort_order)
 {
-	if (order == VL_SO_NONE) {
+	if (sort_order == TreeViewSortOrder::None) {
 		/* Nothing to do. */
 		return;
 	}
@@ -548,7 +548,7 @@ void TreeView::sort_children(TreeIndex const & parent_index, sort_order_t order)
 			  length,
 			  sizeof (SortTuple),
 			  sort_tuple_compare,
-			  order);
+			  sort_order);
 
 	/* As the sorted list contains the reordered position offsets, extract this and then apply to the tree view. */
 	int * positions = (int *) malloc(sizeof(int) * length);

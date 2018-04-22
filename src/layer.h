@@ -24,6 +24,13 @@
 
 
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+
+
+
 #include <cstdint>
 
 #include <QObject>
@@ -52,6 +59,38 @@ namespace SlavGPS {
 	class LayersPanel;
 	class SGVariant;
 	class ParameterSpecification;
+
+
+
+
+	enum class SublayerType {
+		NONE,
+		TRACKS,
+		WAYPOINTS,
+		TRACK,
+		WAYPOINT,
+		ROUTES,
+		ROUTE
+	};
+
+
+
+
+	enum class LayerType {
+		AGGREGATE = 0,
+		TRW,
+		COORD,
+		GEOREF,
+		GPS,
+		MAP,
+		DEM,
+#ifdef HAVE_LIBMAPNIK
+		MAPNIK,
+#endif
+		NUM_TYPES // Also use this value to indicate no layer association
+	};
+
+	LayerType& operator++(LayerType& layer_type);
 
 
 

@@ -443,7 +443,7 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 /**
    \brief Force unqiue track names for Tracks/Routes sublayer
 */
-void LayerTRWTracks::uniquify(sort_order_t sort_order)
+void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 {
 	if (this->items.empty()) {
 		qDebug() << "EE" PREFIX << "called for empty tracks/routes set";
@@ -955,8 +955,8 @@ void LayerTRWTracks::paste_sublayer_cb(void)
 
 void LayerTRWTracks::sort_order_a2z_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_ALPHABETICAL_ASCENDING;
-	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_ASCENDING);
+	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::AlphabeticalAscending;
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalAscending);
 }
 
 
@@ -964,8 +964,8 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 
 void LayerTRWTracks::sort_order_z2a_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_ALPHABETICAL_DESCENDING;
-	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_DESCENDING);
+	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::AlphabeticalDescending;
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalDescending);
 }
 
 
@@ -973,8 +973,8 @@ void LayerTRWTracks::sort_order_z2a_cb(void)
 
 void LayerTRWTracks::sort_order_timestamp_ascend_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_DATE_ASCENDING;
-	this->tree_view->sort_children(this->index, VL_SO_DATE_ASCENDING);
+	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::DateAscending;
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateAscending);
 }
 
 
@@ -982,8 +982,8 @@ void LayerTRWTracks::sort_order_timestamp_ascend_cb(void)
 
 void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = VL_SO_DATE_DESCENDING;
-	this->tree_view->sort_children(this->index, VL_SO_DATE_DESCENDING);
+	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::DateDescending;
+	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateDescending);
 }
 
 

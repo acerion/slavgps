@@ -59,6 +59,17 @@ namespace SlavGPS {
 
 
 
+	enum class TreeViewSortOrder {
+		None = 0,
+		AlphabeticalAscending,
+		AlphabeticalDescending,
+		DateAscending,
+		DateDescending,
+		Last
+	};
+
+
+
 
 	class TreeView;
 	class Layer;

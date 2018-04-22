@@ -31,7 +31,6 @@
 #include <QString>
 
 #include "viewport_internal.h"
-#include "globals.h"
 
 
 

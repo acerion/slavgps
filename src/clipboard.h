@@ -24,17 +24,13 @@
 
 
 
-#include "globals.h"
-
-
-
-
 namespace SlavGPS {
 
 
 
 
 	class LayersPanel;
+	enum class LayerType;
 
 
 

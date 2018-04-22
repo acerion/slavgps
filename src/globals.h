@@ -25,16 +25,7 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstdint>
-
-
-
-
-#define SG_APPLICATION_NAME "slavgps"
 
 
 
@@ -44,55 +35,12 @@ namespace SlavGPS {
 
 
 
-	enum class SublayerType {
-		NONE,
-		TRACKS,
-		WAYPOINTS,
-		TRACK,
-		WAYPOINT,
-		ROUTES,
-		ROUTE
-	};
-
-
-
-
-	enum class LayerType {
-		AGGREGATE = 0,
-		TRW,
-		COORD,
-		GEOREF,
-		GPS,
-		MAP,
-		DEM,
-#ifdef HAVE_LIBMAPNIK
-		MAPNIK,
-#endif
-		NUM_TYPES // Also use this value to indicate no layer association
-	};
-
-	LayerType& operator++(LayerType& layer_type);
-
-
-
-
 	typedef int16_t param_id_t; /* This shall be a signed type. */
 
 
 
 
-	typedef enum sort_order_e {
-		VL_SO_NONE = 0,
-		VL_SO_ALPHABETICAL_ASCENDING,
-		VL_SO_ALPHABETICAL_DESCENDING,
-		VL_SO_DATE_ASCENDING,
-		VL_SO_DATE_DESCENDING,
-		VL_SO_LAST
-	} sort_order_t;
-
-
-
-
+#define SG_APPLICATION_NAME "slavgps"
 #define PROJECT "Viking"
 #define VIKING_VERSION PACKAGE_VERSION
 #define VIKING_VERSION_NAME "This Name For Rent"

@@ -35,7 +35,6 @@
 
 #include "tree_view.h"
 #include "viewport.h"
-#include "globals.h"
 #include "vikutils.h"
 #include "layer.h"
 

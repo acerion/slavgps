@@ -46,7 +46,6 @@
 #include "tree_view.h"
 #include "bbox.h"
 #include "coord.h"
-#include "globals.h"
 
 
 
@@ -151,7 +150,7 @@ namespace SlavGPS {
 		void add_children_to_tree(void);
 
 
-		void uniquify(sort_order_t sort_order);
+		void uniquify(TreeViewSortOrder sort_order);
 		QString new_unique_element_name(const QString & old_name);
 
 		void propagate_new_waypoint_name(const Waypoint * wp);
