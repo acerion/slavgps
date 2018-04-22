@@ -482,7 +482,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 
 	qDebug() << "II: Toolbox: move received, passing to tool" << this->active_tool->get_description();
 
-	if (ToolStatus::ACK_GRAB_FOCUS == this->active_tool->handle_mouse_move(layer, event)) {
+	if (ToolStatus::AckGrabFocus == this->active_tool->handle_mouse_move(layer, event)) {
 #ifdef K_TODO
 		this->window->viewport->setFocus();
 #endif

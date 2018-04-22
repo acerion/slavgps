@@ -288,7 +288,7 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 	n_rows += *cur_row;
 
 	DEMColumn * new_column = (DEMColumn *) malloc(sizeof (DEMColumn));
-	this->columns[*cur_column] = new_column; /* kamilFIXME: this may cause crash if index is out of range. */
+	this->columns[*cur_column] = new_column; /* FIXME: this may cause crash if index is out of range. */
 	this->columns[*cur_column]->east_west = east_west;
 	this->columns[*cur_column]->south = south;
 	this->columns[*cur_column]->n_points = n_rows;

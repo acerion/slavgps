@@ -147,9 +147,10 @@ namespace SlavGPS {
 		void set_image_full_path(const QString & full_path);
 
 		bool dialog(Viewport * viewport, Window * window);
-		bool move_release(QMouseEvent * event, LayerTool * tool);
-		bool zoom_press(QMouseEvent * event, LayerTool * tool);
-		bool move_press(QMouseEvent * event, LayerTool * tool);
+
+		ToolStatus move_release(QMouseEvent * event, LayerTool * tool);
+		ToolStatus zoom_press(QMouseEvent * event, LayerTool * tool);
+		ToolStatus move_press(QMouseEvent * event, LayerTool * tool);
 
 
 	public slots:

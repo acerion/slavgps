@@ -46,7 +46,7 @@
 #include <QDir>
 #include <QTemporaryFile>
 
-#if 1 //#ifdef HAVE_MAGIC_H // kamilFIXME: check dependency during configuration
+#if 1 //#ifdef HAVE_MAGIC_H // FIXME: check dependency during configuration
 #include <magic.h>
 #endif
 

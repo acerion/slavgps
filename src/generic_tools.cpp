@@ -393,7 +393,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 		this->window->redraw_tree_items_wrapper_cb();
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -405,7 +405,7 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 
 	if (!this->has_start_coord) {
 		qDebug() << "II: Generic Tool Ruler: not drawing, we don't have start coordinates";
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 	}
 
 	const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
@@ -448,7 +448,7 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
 	this->invalidate_start_coord = true;
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -463,7 +463,7 @@ ToolStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * e
 		this->invalidate_start_coord = false;
 		this->has_start_coord = false;
 	}
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -489,11 +489,11 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 		this->viewport->update();
 
 		this->deactivate_tool(layer);
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 	}
 
 	/* Regardless of whether we used it, return false so other GTK things may use it. */
-	return ToolStatus::IGNORED;
+	return ToolStatus::Ignored;
 }
 
 
@@ -596,7 +596,7 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 	}
 
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -618,7 +618,7 @@ ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event
 		   the box and abort "zoom to rectangle" procedure. */
 
 		this->ztr_is_active = false;
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 	}
 
 	/* Update shape and size of "zoom to rectangle" box. The box
@@ -655,7 +655,7 @@ ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event
 	this->viewport->set_pixmap(marked_pixmap);
 	this->viewport->update();
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -666,7 +666,7 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_release() called";
 
 	if (event->button() != Qt::LeftButton && event->button() != Qt::RightButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
@@ -722,7 +722,7 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 	   has been redrawn from scratch. */
 	this->ztr_is_active = false;
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -764,7 +764,7 @@ ToolStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 		this->window->pan_click(event);
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -789,7 +789,7 @@ ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * 
 
 	this->window->redraw_tree_items_wrapper();
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -800,7 +800,7 @@ ToolStatus LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
 	qDebug() << "DD: Layer Tools: Pan: calling window->pan_move()";
 	this->window->pan_move(event);
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -811,7 +811,7 @@ ToolStatus LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event
 	if (event->button() == Qt::LeftButton) {
 		this->window->pan_release(event);
 	}
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -854,7 +854,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 	/* Only allow selection on primary button. */
 	if (event->button() != Qt::LeftButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 
@@ -890,7 +890,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 		}
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -904,7 +904,7 @@ ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent
 
 	/* Only allow selection on primary button. */
 	if (event->button() != Qt::LeftButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 
@@ -942,7 +942,7 @@ ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent
 		}
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -965,7 +965,7 @@ ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event
 			this->window->pan_move(event);
 		}
 	}
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1001,5 +1001,5 @@ ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * ev
 		}
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }

@@ -60,7 +60,7 @@ Coord Coord::copy_change_mode(CoordMode new_mode) const
 	Coord dest;
 
 	if (this->mode == new_mode) {
-		dest = *this; /* kamilFIXME: verify this assignment of objects. */
+		dest = *this;
 	} else {
 		if (new_mode == CoordMode::LATLON) {
 			dest.ll = UTM::to_latlon(this->utm);
@@ -226,6 +226,21 @@ bool Coord::operator==(const Coord & coord) const
 bool Coord::operator!=(const Coord & coord) const
 {
 	return !(*this == coord);
+}
+
+
+
+
+Coord & Coord::operator=(const Coord & other)
+{
+	if (other.mode == CoordMode::LATLON) {
+		this->ll = other.ll;
+	} else {
+		this->utm = other.utm;
+	}
+	this->mode = other.mode;
+
+        return *this;
 }
 
 

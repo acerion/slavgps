@@ -70,6 +70,7 @@ namespace SlavGPS {
 
 		bool operator==(const Coord & coord) const;
 		bool operator!=(const Coord & coord) const;
+		Coord & operator=(const Coord & other);
 
 
 		LatLon ll;

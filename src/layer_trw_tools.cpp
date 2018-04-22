@@ -471,13 +471,13 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 	if (this->layer_edit_info->holding) {
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 	}
 	if (!trw->visible || !trw->waypoints->visible) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	/* Does this tool have a waypoint, on which it can operate? */
@@ -556,7 +556,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		/* TODO: do we need to emit this signal every time a right-click fails? */
 		trw->emit_layer_changed();
 
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	/* Finally, a waypoint that this tool can operate on. Not too much operation, though. */
@@ -577,7 +577,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		break;
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -588,11 +588,11 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (!this->layer_edit_info->holding) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Coord new_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
@@ -603,7 +603,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 	/* Selected item is being moved to new position. */
 	this->perform_move(this->viewport->coord_to_screen_pos(new_coord));
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -614,12 +614,12 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (!this->layer_edit_info->holding) {
 		/* ::handle_mouse_press() probably never happened. */
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 
@@ -636,13 +636,13 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 
 		trw->get_waypoints_node().recalculate_bbox();
 		trw->emit_layer_changed();
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 		}
 
 	case Qt::RightButton:
 	default:
 		this->perform_release();
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 }
 
@@ -978,9 +978,9 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		draw_sync(trw, tool->viewport->scr_buffer, pixmap);
 		trw->draw_sync_done = false;
 
-		return ToolStatus::ACK_GRAB_FOCUS;
+		return ToolStatus::AckGrabFocus;
 	}
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -990,11 +990,11 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 {
 	if (tool->id_string == LAYER_TRW_TOOL_CREATE_TRACK && !((LayerToolTRWNewTrack *) tool)->creation_in_progress) {
 		/* Track is not being created at the moment, so a Key can't affect work of this tool. */
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 	if (tool->id_string == LAYER_TRW_TOOL_CREATE_ROUTE && !((LayerToolTRWNewRoute *) tool)->creation_in_progress) {
 		/* Route is not being created at the moment, so a Key can't affect work of this tool. */
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Track * track = trw->get_edited_track();
@@ -1003,7 +1003,7 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 	/* Check of consistency between LayerTRW and the tool. */
 	if (!track) {
 		qDebug() << "EE: Layer TRW Tools: new track handle key press: creation-in-progress=true, but no track selected in layer";
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 #endif
 
@@ -1025,16 +1025,16 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 
 		trw->reset_edited_track();
 		trw->emit_layer_changed();
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 
 	case Qt::Key_Backspace:
 		track->remove_last_trackpoint();
 		trw->update_statusbar();
 		trw->emit_layer_changed();
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 
 	default:
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 }
 
@@ -1058,21 +1058,21 @@ ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEv
 {
 	if (!track) {
 		qDebug() << "EE: LayerTRW: Extend Track: NULL track argument";
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (ev->button() == Qt::MiddleButton) {
 		/* As the display is panning, the new track pixmap is now invalid so don't draw it
 		   otherwise this drawing done results in flickering back to an old image. */
 		trw->draw_sync_do = false;
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (ev->button() == Qt::RightButton) {
 		track->remove_last_trackpoint();
 		trw->update_statusbar();
 		trw->emit_layer_changed();
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 	}
 
 	Trackpoint * tp = new Trackpoint();
@@ -1098,7 +1098,7 @@ ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEv
 
 	trw->emit_layer_changed();
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1114,7 +1114,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 	if (ev->button() != Qt::LeftButton) {
 		/* TODO: this shouldn't even happen. */
 		/* TODO: this function calls extend_track_with_mouse_click() which handles right mouse button. Why we don't allow it here? */
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Track * track = NULL;
@@ -1140,7 +1140,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, false, trw->get_window());
 			if (new_name.isEmpty()) {
-				return ToolStatus::IGNORED;
+				return ToolStatus::Ignored;
 			}
 		}
 		track = trw->new_track_create_common(new_name);
@@ -1157,11 +1157,11 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	/* End the process of creating a track. */
@@ -1185,7 +1185,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 #endif
 	}
 	trw->emit_layer_changed();
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1207,7 +1207,7 @@ static ToolStatus tool_new_track_release(LayerTool * tool, LayerTRW * trw, QMous
 		trw->draw_sync_done = true;
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1242,7 +1242,7 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 	if (ev->button() != Qt::LeftButton) {
 		/* TODO: this shouldn't even happen. */
 		/* TODO: this function calls extend_track_with_mouse_click() which handles right mouse button. Why we don't allow it here? */
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Track * track = NULL;
@@ -1268,7 +1268,7 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_click(Layer * layer, QMouseEvent *
 		if (Preferences::get_ask_for_create_track_name()) {
 			new_name = a_dialog_new_track(new_name, true, trw->get_window());
 			if (new_name.isEmpty()) {
-				return ToolStatus::IGNORED;
+				return ToolStatus::Ignored;
 			}
 		}
 		track = trw->new_route_create_common(new_name);
@@ -1285,11 +1285,11 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_double_click(Layer * layer, QMouse
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	/* End the process of creating a track. */
@@ -1313,7 +1313,7 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_double_click(Layer * layer, QMouse
 #endif
 	}
 	trw->emit_layer_changed();
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1367,7 +1367,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	const Coord coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
@@ -1378,7 +1378,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 			trw->emit_layer_changed();
 		}
 	}
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1416,15 +1416,15 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	TrackpointSearch tp_search(ev->x(), ev->y(), this->viewport);
 
 	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (!trw->visible && !(trw->tracks->visible && trw->routes->visible)) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Track * track = trw->get_edited_track();
@@ -1438,7 +1438,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 		if (track->visible && ScreenPos::is_close_enough(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
 			this->perform_selection(event_pos);
-			return ToolStatus::ACK;
+			return ToolStatus::Ack;
 		}
 
 	}
@@ -1453,7 +1453,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 			trw->trackpoint_properties_show();
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
 			trw->emit_layer_changed();
-			return ToolStatus::ACK;
+			return ToolStatus::Ack;
 		}
 	}
 
@@ -1467,12 +1467,12 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 			trw->trackpoint_properties_show();
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
 			trw->emit_layer_changed();
-			return ToolStatus::ACK;
+			return ToolStatus::Ack;
 		}
 	}
 
 	/* The mouse click wasn't near enough any Trackpoint that belongs to any tracks/routes in this layer. */
-	return ToolStatus::IGNORED;
+	return ToolStatus::Ignored;
 }
 
 
@@ -1483,11 +1483,11 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (!this->layer_edit_info->holding) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Coord new_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
@@ -1500,7 +1500,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 	/* Selected item is being moved to new position. */
 	this->perform_move(this->viewport->coord_to_screen_pos(new_coord));
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1511,21 +1511,21 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (ev->button() != Qt::LeftButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (!this->layer_edit_info->holding) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Track * track = trw->get_edited_track(); /* This is the track, to which belongs the edited trackpoint. */
 	if (!track) {
 		/* Well, there was no track that was edited, so nothing to do here. */
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	Coord new_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
@@ -1550,7 +1550,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 
 	trw->emit_layer_changed();
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1630,7 +1630,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 
 	} else if (ev->button() == Qt::MiddleButton) {
 		trw->draw_sync_do = false;
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
 	else if (track && track->type_id == "sg.trw.route" && !track->get_tp_first()) {
@@ -1653,7 +1653,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		RoutingEngine * engine = routing_default_engine();
 		if (!engine) {
 			trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
-			return ToolStatus::ACK;
+			return ToolStatus::Ack;
 		}
 		const QString msg1 = QObject::tr("Querying %1 for route between (%2, %3) and (%4, %5).")
 			.arg(engine->get_label())
@@ -1693,7 +1693,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		return ret;
 	}
 
-	return ToolStatus::ACK;
+	return ToolStatus::Ack;
 }
 
 
@@ -1705,7 +1705,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKey
 
 	Track * track = trw->get_edited_track();
 	if (!track) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	switch (ev->key()) {
@@ -1713,14 +1713,14 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKey
 		trw->route_finder_started = false;
 		trw->reset_edited_track();
 		trw->emit_layer_changed();
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 
 	case Qt::Key_Backspace:
 		this->undo(trw, track);
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 
 	default:
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 }
 
@@ -1748,7 +1748,7 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * vi
 ToolStatus LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->type != LayerType::TRW) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	LayerTRW * trw = (LayerTRW *) layer;
@@ -1756,8 +1756,8 @@ ToolStatus LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEven
 	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->viewport);
 	if (!found_image.isEmpty()) {
 		trw->show_wp_picture_cb();
-		return ToolStatus::ACK; /* Found a match. */
+		return ToolStatus::Ack; /* Found a match. */
 	} else {
-		return ToolStatus::IGNORED; /* Go through other layers, searching for a match. */
+		return ToolStatus::Ignored; /* Go through other layers, searching for a match. */
 	}
 }

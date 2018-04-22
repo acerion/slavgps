@@ -293,7 +293,6 @@ Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 		this->trackpoints.push_back(new_tp);
 	}
 
-	//this->name = g_strdup(from.name); /* kamilFIXME: in original code initialization of name is duplicated. */
 	this->visible = from.visible;
 	this->draw_name_mode = from.draw_name_mode;
 	this->max_number_dist_labels = from.max_number_dist_labels;

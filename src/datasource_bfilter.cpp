@@ -110,7 +110,6 @@ BFilterSimplifyDialog::BFilterSimplifyDialog()
 
 
 
-/* FIXME: caller of the function may pass value of first argument with type uint32_t, but the function expects int32_t. */
 ProcessOptions * BFilterSimplifyDialog::get_process_options(const QString & input_filename, const QString & not_used)
 {
 	ProcessOptions * po = new ProcessOptions();
@@ -213,7 +212,10 @@ ProcessOptions * BFilterCompressDialog::get_process_options(const QString & inpu
 	   NB units not applicable if relative method used - defaults to Miles when not specified. */
 	po->babel_args = "-i gpx";
 	po->input_file_name = input_filename;
-	po->babel_filters = QString(g_strdup_printf("-x simplify,crosstrack,error=%-.5f%c", value, units)); /* FIXME: memory leak. */
+
+	char * str = g_strdup_printf("-x simplify,crosstrack,error=%-.5f%c", value, units);
+	po->babel_filters = QString(str);
+	free(str);
 
 	/* Store for subsequent default use. */
 	bfilter_compress_params_defaults[0] = SGVariant(value);

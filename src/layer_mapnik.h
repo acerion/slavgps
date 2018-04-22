@@ -83,7 +83,7 @@ namespace SlavGPS {
 		QPixmap get_pixmap(TileInfo * ulm, TileInfo * brm);
 		void rerender();
 		void tile_info();
-		bool feature_release(QMouseEvent * event, LayerTool * tool);
+		ToolStatus feature_release(QMouseEvent * event, LayerTool * tool);
 
 
 

@@ -129,7 +129,7 @@ ProcessOptions * DataSourceRoutingDialog::get_process_options(void)
 
 	RoutingEngine * engine = routing_ui_selector_get_nth(this->engines_combo, last_engine);
 	if (!engine) {
-		return NULL; /* kamil FIXME: this needs to be handled in caller. */
+		return NULL; /* FIXME: this needs to be handled in caller. */
 	}
 
 	po->url = engine->get_url_from_directions(from, to);

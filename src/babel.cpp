@@ -195,7 +195,7 @@ bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelSomething 
 	const QString name_src = GPX::write_tmp_file(trw, NULL);
 
 	if (!name_src.isEmpty()) {
-		ProcessOptions po(bargs, name_src, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+		ProcessOptions po(bargs, name_src, NULL, NULL);
 		ret = a_babel_convert_import(trw, &po, (DownloadOptions *) unused, babel_something);
 		QDir::root().remove(name_src);
 	}
@@ -676,16 +676,14 @@ void Babel::uninit()
 {
 	if (Babel::file_types.size()) {
 		for (auto iter = Babel::file_types.begin(); iter != Babel::file_types.end(); iter++) {
-			/* kamilFIXME: how should we do this? How to destroy BabelFileType? */
-			// delete (*iter);
+			delete (*iter).second;
 			Babel::file_types.erase(iter);
 		}
 	}
 
 	if (Babel::devices.size()) {
 		for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
-			/* kamilFIXME: how should we do this? How to destroy BabelDevice? */
-			// delete (*iter);
+			delete *iter;
 			Babel::devices.erase(iter);
 		}
 	}

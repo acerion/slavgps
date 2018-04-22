@@ -1124,16 +1124,16 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * view
 ToolStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (!layer) {
-		return (ToolStatus) false; /* kamilFIXME: check this cast of returned value. */
+		return ToolStatus::Ignored;
 	}
 
-	return (ToolStatus) ((LayerMapnik *) layer)->feature_release(ev, this); /* kamilFIXME: check this cast of returned value. */
+	return ((LayerMapnik *) layer)->feature_release(ev, this);
 }
 
 
 
 
-bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
+ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
 		this->rerender_ul = tool->viewport->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
@@ -1155,9 +1155,11 @@ bool LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 		}
 
 		this->right_click_menu->exec(QCursor::pos());
+
+		/* FIXME: Where do we return Ack? */
 	}
 
-	return false;
+	return ToolStatus::Ignored;
 }
 
 

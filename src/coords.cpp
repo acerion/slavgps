@@ -335,17 +335,14 @@ void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
 
 	switch (format) {
 	case DegreeFormat::DDD:
-		/* FIXME: memory leak. */
 		lat = convert_lat_dec_to_ddd(lat_lon.lat);
 		lon = convert_lon_dec_to_ddd(lat_lon.lon);
 		break;
 	case DegreeFormat::DMM:
-		/* FIXME: memory leak. */
 		lat = convert_lat_dec_to_dmm(lat_lon.lat);
 		lon = convert_lon_dec_to_dmm(lat_lon.lon);
 		break;
 	case DegreeFormat::DMS:
-		/* FIXME: memory leak. */
 		lat = convert_lat_dec_to_dms(lat_lon.lat);
 		lon = convert_lon_dec_to_dms(lat_lon.lon);
 		break;
@@ -358,7 +355,6 @@ void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
 		break;
 	}
 #else
-	/* TODO: memory leak. */
 	lat = convert_lat_dec_to_ddd(lat_lon.lat);
 	lon = convert_lon_dec_to_ddd(lat_lon.lon);
 #endif

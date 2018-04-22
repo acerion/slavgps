@@ -895,6 +895,33 @@ bool VikFile::export_track(Track * trk, const QString & file_full_path, SGFileTy
 
 
 
+static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
+{
+	bool result = false;
+	const KMLExportUnits units = Preferences::get_kml_export_units();
+
+	switch (units) {
+	case KMLExportUnits::Metric:
+		result = a_babel_convert_export(trw, NULL, "-o kml,units=m", file_full_path, NULL);
+		break;
+	case KMLExportUnits::Statute:
+		result = a_babel_convert_export(trw, NULL, "-o kml", file_full_path, NULL);
+		break;
+	case KMLExportUnits::Nautical:
+		result = a_babel_convert_export(trw, NULL, "-o kml,units=n", file_full_path, NULL);
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid KML Export units" << (int) units;
+		result = false;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
 /* Call it when @trk argument to VikFile::export() is NULL. */
 bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
@@ -920,32 +947,16 @@ bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFil
 		result = geojson_write_file(file, trw);
 		break;
 	case SGFileType::KML:
-		fclose(file); {
-			const KMLExportUnits units = Preferences::get_kml_export_units();
-			/* FIXME: why use the 'break' statements if you return? */
-			switch (units) {
-			case KMLExportUnits::Metric:
-				return a_babel_convert_export(trw, NULL, "-o kml,units=m", file_full_path, NULL);
-				break;
-			case KMLExportUnits::Statute:
-				return a_babel_convert_export(trw, NULL, "-o kml", file_full_path, NULL);
-				break;
-			case KMLExportUnits::Nautical:
-				return a_babel_convert_export(trw, NULL, "-o kml,units=n", file_full_path, NULL);
-				break;
-			default:
-				qDebug() << "EE" PREFIX << "invalid KML Export units" << (int) units;
-				break;
-			}
-		}
+		result = export_to_kml(file_full_path, trw);
 		break;
 	default:
-		qDebug() << "EE: File: Export: unexpected file type for non-track" << (int) file_type;
+		qDebug() << "EE" PREFIX << "invalid file type for non-track" << (int) file_type;
 	}
 
 	fclose(file);
 	return result;
 }
+
 
 
 

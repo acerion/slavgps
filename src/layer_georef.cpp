@@ -1111,26 +1111,26 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_)
 
 ToolStatus LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	return (ToolStatus) ((LayerGeoref *) layer)->move_release(ev, this); /* kamilFIXME: resolve this cast of returned value. */
+	return ((LayerGeoref *) layer)->move_release(ev, this);
 }
 
 
 
 
-bool LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
+ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::GEOREF) {
-		/* kamilFIXME: this shouldn't happen, right? */
-		return false;
+		/* FIXME: this shouldn't happen, right? */
+		return ToolStatus::Ignored;
 	}
 
 	if (this->click_x != -1) {
 		this->utm_tl.easting += (ev->x() - this->click_x) * tool->viewport->get_xmpp();
 		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->viewport->get_ympp();
 		this->emit_layer_changed();
-		return true;
+		return ToolStatus::Ack;
 	}
-	return false; /* I didn't move anything on this layer! */
+	return ToolStatus::Ignored; /* I didn't move anything on this layer! */
 }
 
 
@@ -1154,17 +1154,17 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_)
 
 ToolStatus LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
-	return (ToolStatus) ((LayerGeoref *) layer)->zoom_press(ev, this); /* kamilFIXME: check this cast of returned value. */
+	return ((LayerGeoref *) layer)->zoom_press(ev, this);
 }
 
 
 
 
-bool LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
+ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::GEOREF) {
-		/* kamilFIXME: this shouldn't happen, right? */
-		return false;
+		/* FIXME: this shouldn't happen, right? */
+		return ToolStatus::Ignored;
 	}
 
 	if (ev->button() == Qt::LeftButton) {
@@ -1181,7 +1181,7 @@ bool LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 	tool->viewport->set_xmpp(this->mpp_easting);
 	tool->viewport->set_ympp(this->mpp_northing);
 	this->emit_layer_changed();
-	return true;
+	return ToolStatus::Ack;
 }
 
 
@@ -1189,21 +1189,21 @@ bool LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 
 ToolStatus LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
-	return (ToolStatus) ((LayerGeoref *) layer)->move_press(ev, this); /* kamilFIXME: check this cast of returned value. */
+	return ((LayerGeoref *) layer)->move_press(ev, this);
 }
 
 
 
 
-bool LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
+ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::GEOREF) {
-		/* kamilFIXME: this shouldn't happen, right? */
-		return false;
+		/* FIXME: this shouldn't happen, right? */
+		return ToolStatus::Ignored;
 	}
 	this->click_x = ev->x();
 	this->click_y = ev->y();
-	return true;
+	return ToolStatus::Ack;
 }
 
 

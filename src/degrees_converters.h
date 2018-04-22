@@ -24,19 +24,24 @@
 
 
 
+#include <QString>
+
+
+
+
 namespace SlavGPS {
 
 
 
 
-	char * convert_lat_dec_to_ddd(double lat);
-	char * convert_lon_dec_to_ddd(double lon);
+	QString convert_lat_dec_to_ddd(double lat);
+	QString convert_lon_dec_to_ddd(double lon);
 
-	char * convert_lat_dec_to_dmm(double lat);
-	char * convert_lon_dec_to_dmm(double lon);
+	QString convert_lat_dec_to_dmm(double lat);
+	QString convert_lon_dec_to_dmm(double lon);
 
-	char * convert_lat_dec_to_dms(double lat);
-	char * convert_lon_dec_to_dms(double lon);
+	QString convert_lat_dec_to_dms(double lat);
+	QString convert_lon_dec_to_dms(double lon);
 
 	double convert_dms_to_dec(char const * dms);
 

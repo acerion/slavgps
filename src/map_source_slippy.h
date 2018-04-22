@@ -44,7 +44,7 @@ namespace SlavGPS {
 		~MapSourceSlippy();
 		MapSourceSlippy(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 
-		MapSourceSlippy & operator=(MapSourceSlippy map);
+		MapSourceSlippy & operator=(const MapSourceSlippy & other);
 
 		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const;
 		void tile_to_center_coord(TileInfo * src, Coord & dest_coord) const;

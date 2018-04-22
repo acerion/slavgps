@@ -1365,18 +1365,18 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport
 ToolStatus LayerToolDEMDownload::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->type != LayerType::DEM) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	/* Left button: download. Right button: context menu. */
 	if (ev->button() != Qt::LeftButton && ev->button() != Qt::RightButton) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	if (((LayerDEM *) layer)->download_release(ev, this)) {
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 	} else {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 }
 

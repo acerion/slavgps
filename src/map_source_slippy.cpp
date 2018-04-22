@@ -74,40 +74,44 @@ MapSourceSlippy::MapSourceSlippy()
 
 
 
-MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
+MapSourceSlippy & MapSourceSlippy::operator=(const MapSourceSlippy & other)
 {
-	fprintf(stderr, "MapSourceSlippy copy assignment called\n");
+	qDebug() << "II" PREFIX << "copy assignment called";
+	if (&other == this) {
+		/* Self-assignment. */
+		return *this;
+	}
 
-	this->set_copyright(map.copyright);
-	this->set_license(map.license);
-	this->set_license_url(map.license_url);
-	this->logo = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement this. */
+	this->set_copyright(other.copyright);
+	this->set_license(other.license);
+	this->set_license_url(other.license_url);
+	this->logo = NULL; //memcpy(this->logo, other.logo, sizeof (QPixmap)); /* FIXME: implement this. */
 
-	this->set_map_type_string(map.map_type_string); /* Non-translatable. */
-	this->map_type_id = map.map_type_id;
-	this->set_label(map.label);
-	this->tilesize_x = map.tilesize_x;
-	this->tilesize_y = map.tilesize_y;
-	this->drawmode = map.drawmode;
-	this->set_file_extension(map.file_extension);
+	this->set_map_type_string(other.map_type_string); /* Non-translatable. */
+	this->map_type_id = other.map_type_id;
+	this->set_label(other.label);
+	this->tilesize_x = other.tilesize_x;
+	this->tilesize_y = other.tilesize_y;
+	this->drawmode = other.drawmode;
+	this->set_file_extension(other.file_extension);
 
-	memcpy(&this->dl_options, &map.dl_options, sizeof (DownloadOptions));
+	memcpy(&this->dl_options, &other.dl_options, sizeof (DownloadOptions));
 
-	this->server_hostname    = map.server_hostname;
-	this->server_path_format = map.server_path_format;
+	this->server_hostname    = other.server_hostname;
+	this->server_path_format = other.server_path_format;
 
-	this->zoom_min = map.zoom_min;
-	this->zoom_max = map.zoom_max;
-	this->lat_min = map.lat_min;
-	this->lat_max = map.lat_max;
-	this->lon_min = map.lon_min;
-	this->lon_max = map.lon_max;
+	this->zoom_min = other.zoom_min;
+	this->zoom_max = other.zoom_max;
+	this->lat_min = other.lat_min;
+	this->lat_max = other.lat_max;
+	this->lon_min = other.lon_min;
+	this->lon_max = other.lon_max;
 
-	this->is_direct_file_access_flag = map.is_direct_file_access_flag;
-	this->is_mbtiles_flag = map.is_mbtiles_flag;
-	this->is_osm_meta_tiles_flag = map.is_osm_meta_tiles_flag;
+	this->is_direct_file_access_flag = other.is_direct_file_access_flag;
+	this->is_mbtiles_flag = other.is_mbtiles_flag;
+	this->is_osm_meta_tiles_flag = other.is_osm_meta_tiles_flag;
 
-	this->switch_xy = map.switch_xy;
+	this->switch_xy = other.switch_xy;
 
         return *this;
 }

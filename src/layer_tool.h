@@ -86,12 +86,12 @@ namespace SlavGPS {
 	  layer was selected (find way/trackpoint).
 	*/
 	enum class ToolStatus {
-		IGNORED = 0,
-		ACK,
-		ACK_REDRAW_ABOVE,
-		ACK_REDRAW_ALL,
-		ACK_REDRAW_IF_VISIBLE,
-		ACK_GRAB_FOCUS, /* Only for move. */
+		Ignored = 0,
+		Ack,
+		AckRedrawAbove,
+		AckRedrawAll,
+		AckRedrawIfVisible,
+		AckGrabFocus, /* Only for move. */
 	};
 
 
@@ -105,11 +105,11 @@ namespace SlavGPS {
 
 		QString get_description(void) const;
 
-		virtual ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event)        { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::IGNORED; }
-		virtual ToolStatus handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::IGNORED; }; /* TODO: where do we call this function? */
+		virtual ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event)        { return ToolStatus::Ignored; }
+		virtual ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return ToolStatus::Ignored; }
+		virtual ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::Ignored; }
+		virtual ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::Ignored; }
+		virtual ToolStatus handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::Ignored; }; /* TODO: where do we call this function? */
 		virtual void activate_tool(Layer * layer) { return; };
 		virtual void deactivate_tool(Layer * layer) { return; };
 

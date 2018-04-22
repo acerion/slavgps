@@ -51,7 +51,7 @@ namespace SlavGPS {
 
 		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
 
-		/* FIXME: these are most probably unused. */
+		/* FIXME: these are most probably unused after changes in acquire. Make them used again. */
 		void off(void * user_data, QString & babel_args, QString & file_path);
 		void progress_func(BabelProgressCode code, void * data, AcquireProcess * acquiring);
 		DataSourceDialog * create_progress_dialog(void * user_data);

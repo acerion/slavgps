@@ -85,7 +85,7 @@ namespace SlavGPS {
 		MapSource(MapSource & map);
 		virtual ~MapSource();
 
-		virtual MapSource & operator=(MapSource map);
+		virtual MapSource & operator=(const MapSource & other);
 
 		virtual void add_copyright(Viewport * viewport, const LatLonBBox & bbox, double zoom);
 		QString get_license(void) const;

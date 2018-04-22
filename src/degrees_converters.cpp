@@ -16,8 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -68,17 +69,25 @@ static char * convert_dec_to_ddd(double dec, char pos_c, char neg_c)
 
 
 
-char * SlavGPS::convert_lat_dec_to_ddd(double lat)
+QString SlavGPS::convert_lat_dec_to_ddd(double lat)
 {
-	return convert_dec_to_ddd(lat, 'N', 'S');
+	char * str = convert_dec_to_ddd(lat, 'N', 'S');
+	const QString result(str);
+	free(str);
+
+	return result;
 }
 
 
 
 
-char * SlavGPS::convert_lon_dec_to_ddd(double lon)
+QString SlavGPS::convert_lon_dec_to_ddd(double lon)
 {
-	return convert_dec_to_ddd(lon, 'E', 'W');
+	char * str = convert_dec_to_ddd(lon, 'E', 'W');
+	const QString result(str);
+	free(str);
+
+	return result;
 }
 
 
@@ -115,17 +124,25 @@ static char * convert_dec_to_dmm(double dec, char pos_c, char neg_c)
 
 
 
-char * SlavGPS::convert_lat_dec_to_dmm(double lat)
+QString SlavGPS::convert_lat_dec_to_dmm(double lat)
 {
-	return convert_dec_to_dmm(lat, 'N', 'S');
+	char * str = convert_dec_to_dmm(lat, 'N', 'S');
+	const QString result(str);
+	free(str);
+
+	return result;
 }
 
 
 
 
-char * SlavGPS::convert_lon_dec_to_dmm(double lon)
+QString SlavGPS::convert_lon_dec_to_dmm(double lon)
 {
-	return convert_dec_to_dmm(lon, 'E', 'W');
+	char * str = convert_dec_to_dmm(lon, 'E', 'W');
+	const QString result(str);
+	free(str);
+
+	return result;
 }
 
 
@@ -167,17 +184,25 @@ static char * convert_dec_to_dms(double dec, char pos_c, char neg_c)
 
 
 
-char * SlavGPS::convert_lat_dec_to_dms(double lat)
+QString SlavGPS::convert_lat_dec_to_dms(double lat)
 {
-	return convert_dec_to_dms(lat, 'N', 'S');
+	char * str = convert_dec_to_dms(lat, 'N', 'S');
+	const QString result(str);
+	free(str);
+
+	return result;
 }
 
 
 
 
-char * SlavGPS::convert_lon_dec_to_dms(double lon)
+QString SlavGPS::convert_lon_dec_to_dms(double lon)
 {
-	return convert_dec_to_dms(lon, 'E', 'W');
+	char * str = convert_dec_to_dms(lon, 'E', 'W');
+	const QString result(str);
+	free(str);
+
+	return result;
 }
 
 

@@ -433,7 +433,7 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 			const int idx = get_legacy_index(data.val_string, OLD_NUM_PROTOCOLS);
 			if (idx != -1) {
 				/* It is a valid index: activate compatibility. */
-				this->protocol = protocols_args[idx].label; /* FIXME: memory leak. */
+				this->protocol = protocols_args[idx].label;
 			} else {
 				this->protocol = data.val_string;
 			}
@@ -1085,7 +1085,7 @@ void GPSSession::run(void)
 	bool result;
 
 	if (this->direction == GPSDirection::DOWN) {
-		ProcessOptions po(this->babel_args, this->port, NULL, NULL); /* kamil FIXME: memory leak through these pointers? */
+		ProcessOptions po(this->babel_args, this->port, NULL, NULL);
 		result = a_babel_convert_import(this->trw, &po, NULL, this);
 	} else {
 		result = a_babel_convert_export(this->trw, this->trk, this->babel_args, this->port, this);

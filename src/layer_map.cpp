@@ -1578,7 +1578,7 @@ void LayerMap::draw(Viewport * viewport)
 class MapDownloadJob : public BackgroundJob {
 public:
 	MapDownloadJob() {};
-	MapDownloadJob(LayerMap * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, MapDownloadMode map_download_mode);
+	MapDownloadJob(LayerMap * layer, const TileInfo & ulm, const TileInfo & brm, bool refresh_display, MapDownloadMode map_download_mode);
 	~MapDownloadJob();
 
 	void cleanup_on_cancel(void);
@@ -1815,7 +1815,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 
 		qDebug() << "II" PREFIX << "coord to tile succeeded";
 
-		MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, true, map_download_mode);
+		MapDownloadJob * mdj = new MapDownloadJob(this, ulm, brm, true, map_download_mode);
 
 		if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
 			mdj->n_items = mdj->calculate_maps_to_get(map_source, &ulm, true);
@@ -1858,7 +1858,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, true, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, ulm, brm, true, map_download_mode);
 	mdj->n_items = mdj->calculate_maps_to_get(map_source, &ulm, true);
 
 	/* For cleanup - no current map. */
@@ -2031,7 +2031,7 @@ void SlavGPS::get_tile_file_info_strings(const QString & tile_file_full_path, QS
 ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEvent * event)
 {
 	if (!_layer || _layer->type != LayerType::MAP) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	LayerMap * layer = (LayerMap *) _layer;
@@ -2042,7 +2042,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEve
 			const Coord coord_br = this->viewport->screen_pos_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
 			layer->start_download_thread(this->viewport, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
-			return ToolStatus::ACK;
+			return ToolStatus::Ack;
 		} else {
 			layer->redownload_ul = this->viewport->screen_pos_to_coord(MAX(0, MIN(event->x(), layer->dl_tool_x)), MAX(0, MIN(event->y(), layer->dl_tool_y)));
 			layer->redownload_br = this->viewport->screen_pos_to_coord(MIN(this->viewport->get_width(), MAX(event->x(), layer->dl_tool_x)), MIN(this->viewport->get_height(), MAX (event->y(), layer->dl_tool_y)));
@@ -2077,7 +2077,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEve
 			layer->dl_right_click_menu->exec(QCursor::pos());
 		}
 	}
-	return ToolStatus::IGNORED;
+	return ToolStatus::Ignored;
 }
 
 
@@ -2107,7 +2107,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 {
 	TileInfo tmp;
 	if (!_layer || _layer->type != LayerType::MAP) {
-		return ToolStatus::IGNORED;
+		return ToolStatus::Ignored;
 	}
 
 	LayerMap * layer = (LayerMap *) _layer;
@@ -2121,9 +2121,9 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 
 		layer->dl_tool_x = event->x();
 		layer->dl_tool_y = event->y();
-		return ToolStatus::ACK;
+		return ToolStatus::Ack;
 	}
-	return ToolStatus::IGNORED;
+	return ToolStatus::Ignored;
 }
 
 
@@ -2220,7 +2220,7 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 		return 0;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, &ulm, &brm, false, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, ulm, brm, false, map_download_mode);
 	int n_items = 0;
 
 	if (mdj->map_download_mode == MapDownloadMode::All) {
@@ -2486,6 +2486,7 @@ int MapDownloadJob::calculate_maps_to_get(const MapSource * map_source, TileInfo
 	TileInfo mcoord = this->mapcoord;
 	mcoord.z = ulm->z;
 	mcoord.scale = ulm->scale;
+	QPixmap pixmap; /* Defined on top, to avoid creating this object multiple times in the loop. */
 
 	int n = 0;
 
@@ -2519,14 +2520,9 @@ int MapDownloadJob::calculate_maps_to_get(const MapSource * map_source, TileInfo
 						n++;
 					} else {
 						if (this->map_download_mode == MapDownloadMode::MissingAndBad) {
-							/* see if this one is bad or what */
-							QPixmap * pixmap = new QPixmap();
-							if (!pixmap->load(this->file_full_path)) {
-								delete pixmap;
-								pixmap = NULL;
+							/* See if pixmap specified by path is bad or missing. */
+							if (!pixmap.load(this->file_full_path)) {
 								n++;
-							} else {
-								/* kamilFIXME: where do we free the pixmap? */
 							}
 							break;
 							/* Other download cases already considered or just ignored. */
@@ -2543,27 +2539,25 @@ int MapDownloadJob::calculate_maps_to_get(const MapSource * map_source, TileInfo
 
 
 
-MapDownloadJob::MapDownloadJob(LayerMap * layer_, TileInfo * ulm_, TileInfo * brm_, bool refresh_display_, MapDownloadMode new_map_download_mode)
+MapDownloadJob::MapDownloadJob(LayerMap * new_layer, const TileInfo & new_ulm, const TileInfo & new_brm, bool new_refresh_display, MapDownloadMode new_map_download_mode)
 {
 	this->thread_fn = map_download_thread;
 
-	this->layer = layer_;
-	this->refresh_display = refresh_display_;
+	this->layer = new_layer;
+	this->refresh_display = new_refresh_display;
 
 	/* cache_dir and buffer for dest filename. */
 	this->cache_dir = layer->cache_dir;
 	this->map_type_id = layer->map_type_id;
 	this->cache_layout = layer->cache_layout;
 
-	/* kamilFIXME: in original code there was an assignment of structures:
-	   this->mapcoord = ulm_; */
-	memcpy(&this->mapcoord, ulm_, sizeof (TileInfo));
+	this->mapcoord = new_ulm;
 	this->map_download_mode = new_map_download_mode;
 
-	this->x0 = MIN(ulm_->x, brm_->x);
-	this->xf = MAX(ulm_->x, brm_->x);
-	this->y0 = MIN(ulm_->y, brm_->y);
-	this->yf = MAX(ulm_->y, brm_->y);
+	this->x0 = MIN(new_ulm.x, new_brm.x);
+	this->xf = MAX(new_ulm.x, new_brm.x);
+	this->y0 = MIN(new_ulm.y, new_brm.y);
+	this->yf = MAX(new_ulm.y, new_brm.y);
 }
 
 
