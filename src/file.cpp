@@ -308,7 +308,7 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 
 static void string_list_delete(void * key, void * l, void * user_data)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* 20071021 bugfix */
 	if (list) {
 		for (auto iter = list->begin(); iter != list->end(); iter++) {

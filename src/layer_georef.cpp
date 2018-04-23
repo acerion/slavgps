@@ -644,7 +644,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 		return;
 	}
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	bool upper = g_ascii_isupper(filename[strlen(filename) - 1]);
 	const QString filew = filename + (upper ? "W" : "w");
 
@@ -840,7 +840,7 @@ void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 
 		this->check_br_is_good_or_msg_user();
 	}
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_object_unref(G_OBJECT(img_pixmap));
 #endif
 }
@@ -866,7 +866,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	int row = 0;
 
 	this->map_image_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::IMAGE, tr("Select image file"), this->layer->get_window());
-#ifdef K_TODO
+#ifdef K_OLD_IMPLEMENTATION
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
 	this->grid->addWidget(new QLabel(tr("Map Image:")), row, 0);
@@ -970,7 +970,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 	QObject::connect(this->calc_mpp_button, SIGNAL (released(void)), this, SLOT (calculate_mpp_from_coords_cb(void)));
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	QObject::connect(world_file_entry_button, SIGNAL (triggered(bool)), this, SLOT (load_cb));
 #endif
 	QObject::connect(this->coord_mode_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (coord_mode_changed_cb(int)));

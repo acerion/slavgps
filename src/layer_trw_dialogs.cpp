@@ -192,7 +192,7 @@ bool SlavGPS::a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int
 
 
 	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	this->button_box.addButton(QDialogButtonBox::Ok);
 	this->button_box.addButton(QDialogButtonBox::Cancel);
 	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);

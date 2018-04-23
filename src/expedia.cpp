@@ -210,7 +210,7 @@ static DownloadResult expedia_download(TileInfo * src, const QString & dest_file
 	height += 2 * REAL_HEIGHT_BUFFER;
 	width  += 2 * REAL_WIDTH_BUFFER;
 
-	/* kamilFIXME: "char" is not a correct data type for uri. There was a "char" data type here. */
+	/* kamilTODO: "char" is not a correct data type for uri. There was a "char" data type here. */
 	const QString uri = QString("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%1,%2&Lang=%3&Alti=%4&Size=%5,%6&Offs=0.000000,0.000000&BCheck&tpid=1")
 		.arg(lat_lon.lat)
 		.arg(lat_lon.lon)

@@ -97,7 +97,7 @@ AcquireGetter::~AcquireGetter()
 void AcquireGetter::on_complete_process(void)
 {
 	if (
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	    this->acquiring->running
 #else
 	    true
@@ -223,12 +223,12 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		setup_dialog = NULL;
 	}
 
-	this->data_source_dialog = setup_dialog; /* TODO: setup or progress dialog? */
+	this->data_source_dialog = setup_dialog; /* FIXME: setup or progress dialog? */
 	this->running = true;
 	this->status = new QLabel(QObject::tr("Working..."));
 
 	DataSourceDialog * progress_dialog = NULL;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (new_data_source->create_progress_dialog) {
 		progress_dialog = new_data_source->create_progress_dialog(this->user_data);
 	}
@@ -289,7 +289,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 				this->running = false;
 				/* NB Thread will free memory. */
 			} else {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 				/* Get data for Off command. */
 				if (new_data_source->off_func) {
 					QString babel_args_off;
@@ -347,7 +347,7 @@ void AcquireProcess::import_progress_cb(BabelProgressCode code, void * data)
 		}
 	}
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* See DataSourceGPS::progress_func(). */
 	this->data_source->progress_func(code, data, this);
 #endif

@@ -398,7 +398,7 @@ int MapCache::get_count()
 
 const QString & MapCache::get_dir()
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	return MapCache::get_default_maps_dir();
 #else
 	static QString a_dir("/home/kamil/.viking-maps/");

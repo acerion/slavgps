@@ -507,7 +507,7 @@ void Viewport::sync(void)
 void Viewport::pan_sync(int x_off, int y_off)
 {
 	qDebug() << "II: Viewport: Pan Sync";
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	int x, y, wid, hei;
 
 	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->size_width, this->size_height);
@@ -2009,7 +2009,9 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	int pos_x = position.x();
 	int pos_y = position.y();
 
-	//this->window->tb->move(ev); /* TODO: uncomment this. */
+#ifdef K_FIXME_RESTORE
+	this->window->tb->move(ev);
+#endif
 
 	/* Get coordinates in viewport's coordinates mode. Get them as strings, just for presentation purposes. */
 	static Coord coord;
@@ -2054,7 +2056,9 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 	this->window->get_statusbar()->set_message(StatusBarField::POSITION, message);
 
-	//this->window->pan_move(ev); /* TODO: uncomment this. */
+#ifdef K_FIXME_RESTORE
+	this->window->pan_move(ev);
+#endif
 }
 
 

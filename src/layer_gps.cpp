@@ -943,7 +943,7 @@ void GPSSession::import_progress_cb(BabelProgressCode code, void * data)
 	this->mutex.lock();
 	if (!this->in_progress) {
 		this->mutex.unlock();
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		delete this;
 #endif
 	}
@@ -1008,7 +1008,7 @@ void GPSSession::export_progress_cb(BabelProgressCode code, void * data)
 	this->mutex.lock();
 	if (!this->in_progress) {
 		this->mutex.unlock();
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		delete sess;
 #endif
 	}
@@ -1840,7 +1840,7 @@ LayerGPS::LayerGPS()
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i] = new LayerTRW();
 
-		/* TODO: this doesn't work. */
+		/* FIXME: this doesn't work. */
 		uint16_t menu_items = (uint16_t) LayerMenuItem::ALL;
 		menu_items &= ~((uint16_t) LayerMenuItem::CUT | (uint16_t) LayerMenuItem::DELETE);
 		this->trw_children[i]->set_menu_selection((LayerMenuItem) menu_items);

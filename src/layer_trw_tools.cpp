@@ -946,7 +946,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		/* Display of the distance 'tooltip' during track creation is controlled by a preference. */
 		if (Preferences::get_create_track_tooltip()) {
 			const QString distance_label = distance_string(distance);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			PangoLayout *pl = gtk_widget_create_pango_layout(tool->viewport), NULL);
 			pango_layout_set_font_description(pl, gtk_widget_get_style(tool->viewport)->font_desc);
 			pango_layout_set_text(pl, distance_label, -1);
@@ -1606,7 +1606,7 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 
 	/* Remove last ' to:...' */
 	if (!track->comment.isEmpty()) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		char * last_to = strrchr(track->comment, 't');
 		if (last_to && (last_to - track->comment > 1)) {
 			track->set_comment(track->comment.left(last_to - track->comment - 1));
@@ -1664,7 +1664,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg1);
 		trw->get_window()->set_busy_cursor();
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		/* Give GTK a change to display the new status bar before querying the web. */
 		while (gtk_events_pending()) {
 			gtk_main_iteration();

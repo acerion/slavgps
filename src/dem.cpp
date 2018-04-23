@@ -141,7 +141,7 @@ bool DEM::parse_header(char * buffer)
 	/* zone */
 	get_int_and_continue(&buffer, &int_val, true);
 	this->utm_zone = int_val;
-	/* TODO -- southern or northern hemisphere?! */
+	/* FIXME: southern or northern hemisphere?! */
 	this->utm_letter = 'N';
 
 	double val;

@@ -97,7 +97,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(Viewport * new_viewport, void *
 
 	this->input_field.setText(get_last_user_string(this->web_tool_data_source));
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* 'ok' when press return in the entry. */
 	QObject::connect(&this->input_field, SIGNAL("activate"), dialog, SLOT (accept));
 #endif
@@ -205,7 +205,7 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 WebToolDatasource::WebToolDatasource()
 {
 	qDebug() << "II: Web Tool Datasource created";

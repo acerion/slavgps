@@ -695,7 +695,7 @@ void Babel::uninit()
 /**
    \brief Indicates if babel is available or not.
 
-   TODO: what about Babel::is_detected?
+   FIXME: what about Babel::is_detected?
 
    Returns: true if babel available.
 */

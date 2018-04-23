@@ -115,7 +115,7 @@ void Toolbox::activate_tool(QAction * qa)
 	QString tool_id = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_id);
 	Layer * layer = this->window->items_tree->get_selected_layer();
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (!layer) {
 		return;
 	}
@@ -186,7 +186,7 @@ void Toolbox::activate_tool(const QString & tool_id)
 
 	qDebug() << "II: Toolbox: activating tool" << tool_id;
 	Layer * layer = this->window->items_tree->get_selected_layer();
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (!layer) {
 		return;
 	}
@@ -483,7 +483,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 	qDebug() << "II: Toolbox: move received, passing to tool" << this->active_tool->get_description();
 
 	if (ToolStatus::AckGrabFocus == this->active_tool->handle_mouse_move(layer, event)) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		this->window->viewport->setFocus();
 #endif
 	}

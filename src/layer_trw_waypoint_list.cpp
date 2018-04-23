@@ -171,7 +171,7 @@ void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 	Waypoint * wp = this->selected_wp;
 	LayerTRW * trw = wp->get_parent_layer_trw();
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	char * quoted_file = g_shell_quote(wp->image);
 #endif
 	const QString viewer = Preferences::get_image_viewer();
@@ -195,7 +195,7 @@ typedef struct {
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 
 
@@ -262,7 +262,7 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_positions)
 {
 	copy_data_t cd;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
@@ -282,7 +282,7 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 
 void WaypointListDialog::copy_selected_only_visible_columns_cb(void) /* Slot. */
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	trw_layer_copy_selected(tree_view, false);
 #endif
 }
@@ -292,7 +292,7 @@ void WaypointListDialog::copy_selected_only_visible_columns_cb(void) /* Slot. */
 
 void WaypointListDialog::copy_selected_with_position_cb(void) /* Slot. */
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	trw_layer_copy_selected(tree_view, true);
 #endif
 }
@@ -641,7 +641,7 @@ WaypointListDialog::~WaypointListDialog()
 void WaypointListDialog::accept_cb(void) /* Slot. */
 {
 	/* FIXME: check and make sure the waypoint still exists before doing anything to it. */
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 	/* Here we save in track objects changes made in the dialog. */
 

@@ -162,7 +162,7 @@ void SlavGPS::routing_register(RoutingEngine * engine)
 	RoutingEngine * found_engine = search_by_string_id(routing_engines, string_id);
 	if (found_engine) {
 		qDebug() << "DD: Routing: register:" << string_id << "already exists: update";
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		/* Update main list. */
 		g_object_unref(found_engine);
 		found_engine = g_object_ref(engine);
@@ -194,7 +194,7 @@ void SlavGPS::routing_register(RoutingEngine * engine)
 
 		/* TODO: verify that constructed list of routers is visible as a combo list in dialog. */
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		/* TODO: previously the string IDs of routing engines
 		   were passed to UI builder like below. Verify
 		   whether this is still necessary. */
@@ -211,7 +211,7 @@ void SlavGPS::routing_register(RoutingEngine * engine)
  */
 void SlavGPS::routing_unregister_all()
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_list_foreach(routing_engines, (GFunc) g_object_unref, NULL);
 #endif
 }
@@ -227,7 +227,7 @@ void SlavGPS::routing_unregister_all()
  */
 void SlavGPS::routing_foreach_engine(GFunc func, QComboBox * combo)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_list_foreach(routing_engines, func, user_data);
 #endif
 }
@@ -248,7 +248,7 @@ static void fill_engine_box(void * data, QComboBox * user_data)
 	RoutingEngine * engine = (RoutingEngine *) data;
 	/* Retrieve combo. */
 	QComboBox * combo = (QComboBox *) user_data;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* Only register engine fulfilling expected behavior. */
 	Predicate predicate = (Predicate) g_object_get_data(G_OBJECT (combo), "func");
 	void * predicate_data = g_object_get_data(G_OBJECT (combo), "user_data");
@@ -285,7 +285,7 @@ QComboBox * SlavGPS::routing_ui_selector_new(Predicate func, void * user_data)
 {
 	/* Create the combo */
 	QComboBox * combo = new QComboBox();
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* Save data for foreach function. */
 	g_object_set_data(G_OBJECT (combo), "func", (void *) func);
 	g_object_set_data(G_OBJECT (combo), "user_data", user_data);
@@ -311,7 +311,7 @@ QComboBox * SlavGPS::routing_ui_selector_new(Predicate func, void * user_data)
 RoutingEngine * SlavGPS::routing_ui_selector_get_nth(QComboBox * combo, int pos)
 {
 	RoutingEngine * engine = NULL;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* Retrieve engine. */
 	GList * engines = (GList *) g_object_get_data(G_OBJECT (combo) , "engines");
 	RoutingEngine * engine = (RoutingEngine *) g_list_nth_data(engines, pos);

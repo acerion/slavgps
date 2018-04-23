@@ -141,7 +141,7 @@ typedef struct {
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 
 
@@ -194,7 +194,7 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 void TrackListDialog::copy_selected_cb(void)
 {
 	copy_data_t cd;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
@@ -223,7 +223,7 @@ void TrackListDialog::add_menu_items(QMenu & menu)
 {
 	QAction * qa = NULL;
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* OLD COMMENT: ATM view auto selects, so don't bother with separate select menu entry. */
 	qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("&Select"));
 	/* The callback worked by exposing selected item in tree view. */
@@ -286,7 +286,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	this->selected_track = trk;
 
 	QMenu menu(this);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* When multiple rows are selected, the number of applicable operation is lower. */
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
 	if (gtk_tree_selection_count_selected_rows (selection) != 1) {
@@ -580,7 +580,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 	this->setMinimumSize(750, 400);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* TODO: The callback worked by exposing selected item in tree view. */
 	QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
 
@@ -655,7 +655,7 @@ TrackListDialog::~TrackListDialog()
 void TrackListDialog::accept_cb(void) /* Slot. */
 {
 	/* FIXME: check and make sure the track still exists before doing anything to it. */
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 	/* Here we save in track objects changes made in the dialog. */
 

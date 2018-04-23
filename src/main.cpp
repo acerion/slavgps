@@ -56,7 +56,7 @@ using namespace SlavGPS;
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 
 /* FIXME LOCALEDIR must be configured by ./configure --localedir */
@@ -113,7 +113,7 @@ int main(int argc, char ** argv)
 	}
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #if HAVE_X11_XLIB_H
 	XSetErrorHandler(myXErrorHandler);
 #endif

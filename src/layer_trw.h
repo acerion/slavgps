@@ -109,7 +109,7 @@ namespace SlavGPS {
 
 		QString description;
 		QString author;
-		QString keywords;  /* TODO: handling/storing a GList of individual tags? */
+		QString keywords;  /* TODO: handling/storing a list of individual tags? */
 		/* TODO: verify how the timestamp should work: when and how it should be set. */
 		bool has_timestamp;
 		QString timestamp; /* TODO: Consider storing as proper time_t. */

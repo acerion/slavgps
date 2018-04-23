@@ -795,7 +795,7 @@ Window * Layer::get_window(void)
 
 void Layer::ref(void)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_object_ref(this->vl);
 #endif
 }
@@ -805,7 +805,7 @@ void Layer::ref(void)
 
 void Layer::unref(void)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_object_unref(this->vl);
 	return;
 #endif
@@ -816,7 +816,7 @@ void Layer::unref(void)
 
 void Layer::weak_ref(LayerRefCB cb, void * obj)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_object_weak_ref(G_OBJECT (this->vl), cb, obj);
 	return;
 #endif
@@ -827,7 +827,7 @@ void Layer::weak_ref(LayerRefCB cb, void * obj)
 
 void Layer::weak_unref(LayerRefCB cb, void * obj)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_object_weak_unref(G_OBJECT (this->vl), cb, obj);
 	return;
 #endif

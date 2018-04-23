@@ -186,7 +186,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, wp_param_specs[SG_WP_PARAM_SYMBOL]);
 		wp->set_symbol(param_value.val_string);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		if (wp->source != sourceentry->text()) {
 			wp->set_source(sourceentry->text());
 		}
@@ -195,7 +195,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		}
 #endif
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		GtkTreeIter iter, first;
 		gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &first);
 		if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(symbolentry), &iter) || !memcmp(&iter, &first, sizeof(GtkTreeIter))) {

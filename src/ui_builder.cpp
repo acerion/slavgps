@@ -366,7 +366,7 @@ void PropertiesDialog::fill(Waypoint * wp, const std::vector<const ParameterSpec
 	widget = this->new_widget(*param_spec, SGVariant(wp->timestamp, SGVariantType::Timestamp));
 	form->addRow(param_spec->ui_label, widget);
 	this->widgets.insert(std::pair<param_id_t, QWidget *>(param_spec->id, widget));
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
 #endif
 
@@ -664,7 +664,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 
 	case WidgetType::BUTTON:
 		if (param_spec.type_id == SGVariantType::Pointer && param_spec.widget_data) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			rv = gtk_button_new_with_label((const char *) param_spec.widget_data);
 			QObject::connect(rv, SIGNAL (triggered(bool)), param_spec.extra_widget_data, SLOT (value.val_pointer));
 
@@ -766,7 +766,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 			/* TODO: look at old implementation below: */
 			/* Implementation in old code: */
-#ifdef K_TODO
+#ifdef K_OLD_IMPLEMENTATION
 			if (param_spec.extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
 				int pos = widget->currentIndex();
@@ -823,7 +823,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		if (param_spec.type_id == SGVariantType::Int) {
 			rv = SGVariant((int32_t) ((SGSlider *) widget)->get_value());
 		} else if (param_spec.type_id == SGVariantType::Double) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			rv = SGVariant((double) gtk_range_get_value(GTK_RANGE(widget)));
 #endif
 		} else {

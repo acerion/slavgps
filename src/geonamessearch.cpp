@@ -361,7 +361,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 
 	free_geoname_list(wiki_places);
 
-#ifdef K_TODO
+#if 0
 	/* 'selected' contains pointer to geonames that were
 	   present on 'wiki_places'.  Freeing 'wiki_places' freed also
 	   pointers stored in 'selected', so there is no need to call

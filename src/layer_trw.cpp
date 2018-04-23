@@ -879,7 +879,7 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 
 	case PARAM_WPBA:
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		this->wpbgand = (GdkFunction) data.b;
 		if (this->waypoint_bg_gc) {
 			gdk_gc_set_function(this->waypoint_bg_gc, data.b ? GDK_AND : GDK_COPY);
@@ -1256,8 +1256,7 @@ static unsigned int strcase_hash(gconstpointer v)
 
 void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
 {
-
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* TODO: re-implement/re-enable this feature. */
 
 	/* If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
@@ -2615,7 +2614,7 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex & src_item_index, void *
 			}
 		}
 	} else {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		trw_src->move_item(trw_dest, sublayer->name, sublayer->type_id);
 #endif
 	}
@@ -4514,7 +4513,7 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 
 	const QString program = Preferences::get_image_viewer();
 	const QString image_full_path = this->get_edited_wp()->image_full_path;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	char * quoted_file = g_shell_quote((char *) image_full_path);
 #endif
 	QStringList args;

@@ -468,7 +468,7 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSS
 		/* After this the index is valid. */
 
 		setup_dialog->proto_combo->setCurrentIndex(g_last_device_index);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		g_object_ref(setup_dialog->proto_combo);
 #endif
 
@@ -522,7 +522,7 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSS
 
 
 		setup_dialog->serial_port_combo->setCurrentIndex(0);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		g_object_ref(setup_dialog->serial_port_combo);
 #endif
 		setup_dialog->grid->addWidget(new QLabel(QObject::tr("Serial Port:")), 1, 0);
@@ -647,7 +647,7 @@ DataSourceDialog * DataSourceGPS::create_progress_dialog(void * user_data)
 	QLabel * trklabel = new QLabel("");
 	QLabel * rtelabel = new QLabel("");
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), gpslabel, false, false, 5);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), wplabel, false, false, 5);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), trklabel, false, false, 5);

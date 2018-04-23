@@ -1012,7 +1012,7 @@ QPixmap LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
 
 		/* Convert these buf bytes into a pixmap via these streaming operations. */
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		GInputStream *stream = g_memory_input_stream_new_from_data(buf, len, NULL);
 		GError *error = NULL;
 		result = gdk_pixbuf_new_from_stream(stream, NULL, &error);
@@ -1059,7 +1059,9 @@ static QString get_cache_filename(MapsCacheLayout layout,
 				  TileInfo const * coord,
 				  const QString & file_extension)
 {
-	/* TODO: verify format strings: whether they match strings from Viking, and whether they match directory paths in Viking's cache. */
+	/* TODO: verify format strings: whether they match strings
+	   from Viking, and whether they match directory paths in
+	   Viking's cache. */
 
 	QString result;
 
@@ -2094,7 +2096,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 
 	this->cursor_click = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
 	this->cursor_release = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	this->cursor_shape = Qt::BitmapCursor;
 	this->cursor_data = &cursor_mapdl_pixmap;
 #endif

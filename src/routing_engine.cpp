@@ -47,7 +47,7 @@ using namespace SlavGPS;
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 static void vik_routing_engine_set_property(void      * object,
 					    unsigned int   property_id,
 					    const GValue * value,

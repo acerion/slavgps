@@ -184,7 +184,7 @@ void SlavGPS::osm_init(void)
 	/* Not really OSM but can't be bothered to create somewhere else to put it... */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
 	RoutingEngine * osrm = (RoutingEngine *) g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
 								    "id", "osrm",

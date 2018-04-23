@@ -38,7 +38,7 @@ using namespace SlavGPS;
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 WebTool::WebTool()
 {
 	qDebug() << "II: Web Tool created";

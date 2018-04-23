@@ -98,7 +98,7 @@ LayerTRWPainter::LayerTRWPainter(LayerTRW * new_trw)
 	this->trw = new_trw;
 	this->window = this->trw->get_window();
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(viewport->font_desc));
 	pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->font_desc));
 #endif
@@ -487,7 +487,7 @@ void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const S
 	points[3] = QPoint(end.x, end.y);
 
 	QPen tmp_pen;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (((begin.x - x) > 0 && (begin.y - y) > 0) || ((begin.x - x) < 0 && (begin.y - y) < 0)) {
 		tmp_pen = gtk_widget_get_style(this->viewport)->light_gc[3];
 	} else {
@@ -1155,7 +1155,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, Viewport * a_viewport, bool d
 
 CachedPixmap::~CachedPixmap()
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_object_unref(G_OBJECT(cp->pixmap));
 #endif
 }
@@ -1255,7 +1255,7 @@ void LayerTRWPainter::make_wp_pens(void)
 	this->wp_label_bg_pen = QPen(this->wp_label_bg_color);
 	this->wp_label_bg_pen.setWidth(1);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
 #endif
 	return;

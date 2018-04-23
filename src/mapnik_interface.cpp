@@ -82,7 +82,7 @@ public:
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 /* Can't change prj after init - but ATM only support drawing in Spherical Mercator. */
 static mapnik::projection prj(mapnik::MAPNIK_GMERC_PROJ);
 #endif
@@ -112,7 +112,7 @@ void SlavGPS::mapnik_interface_free(MapnikInterface * mi)
 
 void SlavGPS::mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	qDebug() << "DD: Mapnik Interface" << __FUNCTION__ << "using mapnik version" << MAPNIK_VERSION_STRING);
 	try {
 		if (plugins_dir) {
@@ -145,7 +145,7 @@ static void set_copyright(MapnikInterface * mi)
 {
 	mi->copyright = "";
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	mapnik::parameters pmts = mi->myMap->get_extra_parameters();
 #if MAPNIK_VERSION < 300000
 	for (mapnik::parameters::const_iterator ii = pmts.begin(); ii != pmts.end(); ii++) {
@@ -191,7 +191,7 @@ QString SlavGPS::mapnik_interface_load_map_file(MapnikInterface * mi, const QStr
 	}
 
 	try {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		mi->myMap->remove_all(); /* Support reloading. */
 		mapnik::load_map(*mi->myMap, filename.toUtf8().constData());
 
@@ -236,7 +236,7 @@ QPixmap SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, do
 		return result;
 	}
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* Note prj & bbox want stuff in lon,lat order! */
 	double p0x = lon_tl;
 	double p0y = lat_tl;
@@ -267,7 +267,7 @@ QPixmap SlavGPS::mapnik_interface_render(MapnikInterface * mi, double lat_tl, do
 				return NULL;
 			}
 			memcpy(ImageRawDataPtr, image.raw_data(), width * height * 4);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			result = gdk_pixbuf_new_from_data(ImageRawDataPtr, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
 #endif
 		} else {
@@ -310,7 +310,7 @@ QString SlavGPS::mapnik_interface_get_copyright(MapnikInterface * mi)
 QStringList * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
 {
 	QStringList * parameters = new QStringList;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	mapnik::parameters pmts = mi->myMap->get_extra_parameters();
 	/* Simply want the strings of each parameter so we can display something... */
 #if MAPNIK_VERSION < 300000
@@ -341,7 +341,7 @@ QStringList * SlavGPS::mapnik_interface_get_parameters(MapnikInterface * mi)
 QString SlavGPS::mapnik_interface_about(void)
 {
 	QString msg;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* Normally about 10 plugins so list them all. */
 #if MAPNIK_VERSION >= 200200
 	std::vector<std::string> plugins = mapnik::datasource_cache::instance().plugin_names();

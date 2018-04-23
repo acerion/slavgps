@@ -262,7 +262,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 			this->track_data.y[i] = convert_distance_meters_to(this->track_data.y[i], this->geocanvas.distance_unit);
 		}
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		this->track_data.y_min = 0;
 		this->track_data.y_max = convert_distance_meters_to(trk->get_length_including_gaps(), this->geocanvas.distance_unit);
 #endif
@@ -1516,7 +1516,7 @@ void ProfileGraph::draw_x_grid_time(time_t visible_begin, time_t visible_end)
 	const int interval_index = time_intervals->get_interval_index(visible_begin, visible_end, n_intervals);
 	const time_t time_interval = time_intervals->get_interval_value(interval_index);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
 	if ((visible_end - visible_begin + 1) > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * n_intervals * n_intervals) {
 		return;
@@ -1625,7 +1625,7 @@ bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 {
 	qDebug() << "SLOT:" PREFIX << "reacting to signal from viewport" << viewport->type_string;
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (controls->configure_dialog) {
 		/* Determine size offsets between dialog size and size for images.
 		   Only on the initialisation of the dialog. */
@@ -2089,7 +2089,7 @@ void TrackProfileDialog::configure_widgets(int index)
 		graph->labels.x_label = tr("Track Distance:");
 		graph->labels.x_value = ui_label_new_selectable(tr("No Data"), this);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		if (this->graphs[index].y_domain == GeoCanvasDomain::Speed) {
 			graph->controls.show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
 			graph->controls.show_gps_speed->setCheckState(show_sd_gps_speed ? Qt::Checked : Qt::Unchecked);

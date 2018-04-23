@@ -73,7 +73,7 @@ using namespace SlavGPS;
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 
 #ifdef HAVE_LIBGEXIV2
@@ -248,7 +248,7 @@ LatLon SlavGPS::a_geotag_get_position(const char *filename)
 {
 	LatLon lat_lon;
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
@@ -287,7 +287,7 @@ MyReturn0:
 #endif
 #endif
 
-#endif /* #ifdef K_TODO */
+#endif /* #ifdef K_FIXME_RESTORE */
 	return lat_lon;
 }
 
@@ -306,7 +306,7 @@ Waypoint * SlavGPS::a_geotag_create_waypoint_from_file(const QString & filename,
 	/* Default return values (for failures). */
 	name = "";
 	Waypoint * wp = NULL;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
@@ -407,7 +407,7 @@ MyReturn:
 #endif
 #endif
 
-#endif /* #ifdef K_TODO */
+#endif /* #ifdef K_FIXME_RESTORE */
 	return wp;
 }
 
@@ -435,7 +435,7 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coo
 	}
 	wp->coord = coord;
 	wp->altitude = alt;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
@@ -469,7 +469,7 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coo
 #endif
 #endif
 
-#endif /* #ifdef K_TODO */
+#endif /* #ifdef K_FIXME_RESTORE */
 
 	wp->set_image_full_path(filename);
 
@@ -492,7 +492,7 @@ QString SlavGPS::a_geotag_get_exif_date_from_file(const QString & filename, bool
 	QString datetime;
 	*has_GPS_info = false;
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
@@ -550,14 +550,14 @@ QString SlavGPS::a_geotag_get_exif_date_from_file(const QString & filename, bool
 #endif
 #endif
 
-#endif /* #ifdef K_TODO */
+#endif /* #ifdef K_FIXME_RESTORE */
 
 	return datetime;
 }
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #ifdef HAVE_LIBEXIF
 /**
    If the entry doesn't exist, create it.
@@ -794,7 +794,7 @@ static void convert_to_entry(const char *set_value, double gdvalue, ExifEntry *e
 	}
 }
 #endif
-#endif /* #ifdef K_TODO */
+#endif /* #ifdef K_FIXME_RESTORE */
 
 
 
@@ -816,7 +816,7 @@ int SlavGPS::a_geotag_write_exif_gps(const QString & filename, const Coord & coo
 			qDebug() << "WW: Geotag Exif" << __FUNCTION__ << "couldn't read file" << filename;
 		}
 	}
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
 	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
@@ -928,6 +928,6 @@ int SlavGPS::a_geotag_write_exif_gps(const QString & filename, const Coord & coo
 			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, filename);
 		}
 	}
-#endif /* #ifdef K_TODO */
+#endif /* #ifdef K_FIXME_RESTORE */
 	return result;
 }

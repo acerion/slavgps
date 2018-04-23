@@ -165,7 +165,7 @@ int SlavGPS::a_background_testcancel(BackgroundJob * bg_job)
 		qDebug() << "WW" PREFIX << "stop all threads";
 		return -1;
 	}
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (bg_job && bg_job->remove_from_list) {
 		bg_job->cleanup_on_cancel();
 		qDebug() << "WW" PREFIX << "remove from list";
@@ -326,7 +326,7 @@ void SlavGPS::a_background_post_init()
 #endif
 #endif
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* Don't destroy win. */
 	QObject::connect(bgwindow, SIGNAL("delete-event"), NULL, SLOT (gtk_widget_hide_on_delete));
 #endif
@@ -356,7 +356,7 @@ void SlavGPS::a_background_uninit()
 #ifdef HAVE_LIBMAPNIK
 	g_thread_pool_free(thread_pool_local_mapnik, true, false);
 #endif
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	gtk_list_store_clear(bgstore);
 	g_object_unref(bgstore);
 #endif

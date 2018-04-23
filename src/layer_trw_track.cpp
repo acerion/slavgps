@@ -702,7 +702,10 @@ std::list<Track *> * Track::split_into_segments()
 				last++;
 			}
 
-			/* kamilFIXME: first constructor of new_track copies all trackpoints from *this, and then we do new_track->assign(). Copying in constructor is unnecessary. */
+			/* kamilFIXME: first constructor of new_track
+			   copies all trackpoints from *this, and then
+			   we do new_track->assign(). Copying in
+			   constructor is unnecessary. */
 			Track * new_track = new Track(*this);
 			new_track->trackpoints.assign(first, last);
 			new_track->recalculate_bbox();
@@ -1016,13 +1019,13 @@ TrackData Track::make_values_distance_over_time_helper(void) const
 	auto iter = this->trackpoints.begin();
 	time_t first = (*iter)->timestamp;
 
-	data.x[i] = (*iter)->timestamp - first; // FIXME it should be 'data.x[i] = (*iter)->timestamp;'
+	data.x[i] = (*iter)->timestamp - first; // TODO it should be 'data.x[i] = (*iter)->timestamp;'
 	data.y[i] = 0;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp - first; //FIXME it should be 'data.x[i] = (*iter)->timestamp;'
+		data.x[i] = (*iter)->timestamp - first; // TODO it should be 'data.x[i] = (*iter)->timestamp;'
 		data.y[i] = data.y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 		i++;
 		iter++;
@@ -1044,13 +1047,13 @@ TrackData Track::make_values_altitude_over_time_helper(void) const
 	auto iter = this->trackpoints.begin();
 	time_t first = (*iter)->timestamp;
 
-	data.x[i] = (*iter)->timestamp - first; // FIXME: it should be 'data.x[i] = (*iter)->timestamp;'
+	data.x[i] = (*iter)->timestamp - first; // TODO: it should be 'data.x[i] = (*iter)->timestamp;'
 	data.y[i] = (*iter)->altitude;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp - first; // FIXME: it should be 'data.x[i] = (*iter)->timestamp;'
+		data.x[i] = (*iter)->timestamp - first; // TODO: it should be 'data.x[i] = (*iter)->timestamp;'
 		data.y[i] = (*iter)->altitude;
 		i++;
 		iter++;
@@ -1223,7 +1226,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 		}
 	}
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	assert(current_chunk == compressed_n_points);
 #endif
 
@@ -1946,7 +1949,7 @@ Track * Track::unmarshall(uint8_t * data, size_t data_len)
 	}					\
 	data += len;
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	Trackpoint * new_tp;
 	for (unsigned int i = 0; i < ntp; i++) {
 		new_tp = new Trackpoint();
@@ -2508,7 +2511,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	QAction * qa = NULL;
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
 	/* Convert internal pointer into track. */
 	parent_layer_->menu_data->misc = this;
@@ -3575,7 +3578,7 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 		rect->center = *cur_coord;
 		rects_to_download->push_front(rect);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		/* TODO: do we need to do this? Can we do this? */
 		free(*iter);
 #endif
@@ -3785,7 +3788,7 @@ void Track::refine_route_cb(void)
 
 	QComboBox * combo = NULL;
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	gtk_widget_show_all(label);
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);

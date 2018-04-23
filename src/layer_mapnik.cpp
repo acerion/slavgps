@@ -656,7 +656,7 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInf
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
 	if (pixmap.isNull()) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
 		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 #endif
@@ -721,7 +721,7 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coo
 
 	RenderInfo * ri = new RenderInfo(this, coord_ul, coord_br, ti_ul, request);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	g_hash_table_insert(requests, request, NULL);
 #endif
 	tp_mutex.unlock();
@@ -866,7 +866,7 @@ void LayerMapnik::draw(Viewport * viewport)
 		/* Done after so drawn on top.
 		   Just a handy guide to tile blocks. */
 		if (vik_debug && vik_verbose) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			QPen * black_pen = viewport->get_widget()->style->black_pen;
 			int width = viewport->get_width();
 			int height = viewport->get_height();
@@ -996,14 +996,14 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 	if (vik_debug) {
 		action = new QAction(QObject::tr("&Flush Memory Cache"), this);
 		action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_flush_memory));
 #endif
 		menu.addAction(action);
 	}
 
 	action = new QAction(QObject::tr("Re&fresh"), this);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_reload));
 #endif
 	menu.addAction(action);
@@ -1011,20 +1011,20 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 	if ("" != this->filename_css) {
 		action = new QAction(QObject::tr("&Run Carto Command"), this);
 		action->setIcon(QIcon::fromTheme("GTK_STOCK_EXECUTE"));
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_carto));
 #endif
 		menu.addAction(action);
 	}
 
 	action = new QAction(QObject::tr("&Info"), this);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_information));
 #endif
 	menu.addAction(action);
 
 	action = new QAction(QObject::tr("&About"), this);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_about));
 #endif
 	menu.addAction(action);
@@ -1106,13 +1106,13 @@ void LayerMapnik::tile_info()
 LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAPNIK)
 {
 	this->id_string = "sg.tool.layer_mapnik.feature";
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	this->action_icon_path   = GTK_STOCK_INFO;
 #endif
 	this->action_label       = QObject::tr("&Mapnik Features");
 	this->action_tooltip     = QObject::tr("Mapnik Features");
 	// this->action_accelerator = ...; /* Empty accelerator. */
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	this->cursor_shape = Qt::ArrowCursor;
 	this->cursor_data = NULL;
 #endif

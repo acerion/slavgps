@@ -82,7 +82,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog()
 {
 	/* Engine selector. */
 	QLabel * engine_label = new QLabel(tr("Engine:"));
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	this->engines_combo = routing_ui_selector_new(RoutingEngine::supports_refine(void), NULL);
 #else
 	this->engines_combo = routing_ui_selector_new(NULL, NULL);

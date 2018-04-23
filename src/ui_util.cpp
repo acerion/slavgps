@@ -83,7 +83,7 @@ void SlavGPS::open_url(const QString & url)
 
 void SlavGPS::new_email(const QString & address, Window * parent)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	const QString uri = QString("mailto:%1").arg(address);
 	GError *error = NULL;
 	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri.toUtf8().constData(), GDK_CURRENT_TIME, &error);
@@ -114,7 +114,7 @@ void SlavGPS::new_email(const QString & address, Window * parent)
 */
 int SlavGPS::ui_get_gtk_settings_integer(const char * property_name, int default_value)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
 		gtk_settings_get_default())), property_name)) {
 
@@ -124,7 +124,7 @@ int SlavGPS::ui_get_gtk_settings_integer(const char * property_name, int default
 	} else {
 #endif
 		return default_value;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	}
 #endif
 }
@@ -165,7 +165,7 @@ void SlavGPS::ui_pixmap_set_alpha(QPixmap & pixmap, int alpha)
  */
 void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	unsigned char *pixels;
 	int iii, jjj;
 
@@ -201,7 +201,7 @@ void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha)
 
 void SlavGPS::ui_add_recent_file(const QString & file_full_path)
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (!file_full_path.isEmpty()) {
 		GtkRecentManager * manager = gtk_recent_manager_get_default();
 		GFile * file = g_file_new_for_commandline_arg(file_full_path);

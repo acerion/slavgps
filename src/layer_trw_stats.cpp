@@ -295,7 +295,7 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 
 	/* Delete old list of items. */
 	if (this->tracks) {
-		/* kamilTODO: delete this->tracks. */
+		/* kamilFIXME: delete this->tracks. */
 	}
 
 	/* Get the latest list of items to analyse. */
@@ -330,7 +330,7 @@ TRWStatsDialog::~TRWStatsDialog()
 
 	//free(this->stats_table);
 
-	/* kamilTODO: delete this->tracks here? */
+	/* kamilFIXME: delete this->tracks here? */
 }
 
 

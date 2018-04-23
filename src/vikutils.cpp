@@ -893,7 +893,7 @@ bool CommandLineOptions::parse(QCoreApplication & app)
 	this->debug = parser.isSet(opt_debug);
 	qDebug() << "DD" PREFIX << "debug is" << this->debug;
 	if (this->debug) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_debug, NULL);
 #endif
 	}
@@ -1126,7 +1126,7 @@ QPen SGUtils::new_pen(const QColor & color, int width)
 	QPen pen(color);
 	pen.setWidth(width);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* TODO: apply these attributes to a pen. */
 	//GDK_LINE_SOLID
 	//GDK_CAP_ROUND

@@ -222,7 +222,7 @@ DataSourceGCDialog::DataSourceGCDialog(Viewport * new_viewport)
 
 	this->circle_pen.setColor(QColor("#000000"));
 	this->circle_pen.setWidth(3);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	gdk_gc_set_function(this->circle_pen, GDK_INVERT);
 #endif
 	this->circle_onscreen = true;

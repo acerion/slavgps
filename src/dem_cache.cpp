@@ -224,7 +224,7 @@ void DEMCache::unload_from_cache(QStringList & file_paths)
 {
 	for (int i = 0; i < file_paths.size(); i++) {
 		dem_cache_unref(file_paths.at(i));
-		/* kamilTODO: "delete (*iter)" ? */
+		/* kamilFIXME: "delete (*iter)" ? */
 	}
 }
 

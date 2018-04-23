@@ -101,7 +101,7 @@ void SGTimestampWidget::on_timestamp_entry_value_set_cb(void)
 {
 	const time_t new_value = (time_t) this->timestamp_entry->value();
 	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << new_value;
-	this->timestamp_button->set_label(new_value, Qt::TextDate, NULL /* TODO: &tp->coord */, NULL);
+	this->timestamp_button->set_label(new_value, Qt::TextDate, NULL /* FIXME: &tp->coord */, NULL);
 }
 
 

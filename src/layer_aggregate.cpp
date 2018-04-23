@@ -918,7 +918,7 @@ void LayerAggregate::drag_drop_request(Layer * src, TreeIndex & src_item_index, 
 
 	Layer * layer = src->tree_view->get_tree_item(src_item_index)->to_layer();
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	char * dp = gtk_tree_path_to_string(dest_path);
 	TreeIndex * dest_index = src->tree_view->get_index_from_path_str(dp);
 

@@ -47,7 +47,7 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype);
 static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec);
 static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
@@ -110,7 +110,7 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 		break;
 
 	case SGVariantType::StringList:
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		value = SGVariant(str_to_glist(str)); /* TODO convert. */
 #endif
@@ -264,7 +264,7 @@ static bool layer_defaults_load_from_file(void)
 		return false;
 	}
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	/* Ensure if have a key file, then any missing values are set from the internal defaults. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		use_internal_defaults_if_missing_default(layer_type);

@@ -347,7 +347,7 @@ BFilterPolygon::BFilterPolygon()
 
 
 
-/* TODO: shell_escape stuff. */
+/* FIXME: shell_escape stuff. */
 ProcessOptions * BFilterPolygonDialog::get_process_options(const QString & input_filename, const QString & input_track_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
@@ -379,7 +379,7 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 
 
 
-/* TODO: shell_escape stuff */
+/* FIXME: shell_escape stuff */
 ProcessOptions * BFilterExcludePolygonDialog::get_process_options(const QString & input_filename, const QString & input_track_filename)
 {
 	ProcessOptions * po = new ProcessOptions();

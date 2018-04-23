@@ -138,7 +138,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	connect(this->toplayer, SIGNAL(layer_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	QObject::connect(this->tree_view, this, SIGNAL("button_press_event"), SLOT (button_press_cb));
 	QObject::connect(this->tree_view, this, SIGNAL("key_press_event"), SLOT (layers_key_press_cb));
 #endif
@@ -176,7 +176,7 @@ bool LayersPanel::button_press_cb(QMouseEvent * ev)
 
 	if (ev->button() == Qt::RightButton) {
 		TreeIndex * index = this->tree_view->get_index_at_pos(ev->x(), ev->y());
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		if (index && index->isValid()) {
 			this->popup(index, (MouseButton) ev->button);
 			this->tree_view->select(&iter);
@@ -282,7 +282,7 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 		/* kamilFIXME: this doesn't work for Map in tree view. Why? */
 		uint16_t layer_menu_items = (uint16_t) layer->get_menu_items_selection();
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		/* "New layer -> layer types" submenu. */
 		layer_menu_items |= (uint16_t) LayerMenuItem::NEW;
 #endif
@@ -370,7 +370,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 			assert (aggregate->tree_view);
 
 			if (false
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			    sibling_layer_index.isValid()
 #endif
 			    ) {
@@ -440,7 +440,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		   TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
 				g_tree->tree_get_main_viewport()->set_trigger(NULL);
@@ -527,7 +527,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		   TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
 				g_tree->tree_get_main_viewport()->set_trigger(NULL);
@@ -660,7 +660,7 @@ LayerAggregate * LayersPanel::get_top_layer()
 void LayersPanel::clear()
 {
 	if (!this->toplayer->is_empty()) {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 #endif
 		this->toplayer->clear(); /* simply deletes all layers */

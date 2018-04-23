@@ -408,7 +408,7 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 
 	QLabel * label = new QLabel(msg);
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 	GtkTreeStore *store = gtk_tree_store_new(6, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
 	for (auto iter = list.begin(); iter != list.end(); iter++) {

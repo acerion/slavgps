@@ -279,7 +279,7 @@ Waypoint *Waypoint::unmarshall(uint8_t * data, size_t data_len)
 		(s) = NULL;			\
 	}					\
 	data += len;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	vwu_get(wp->name);
 	vwu_get(wp->comment);
 	vwu_get(wp->description);

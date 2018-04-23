@@ -450,7 +450,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 
 	layer_type = selected->type;
 
-	QString name = selected->name; /* TODO: look at how viking gets name in this function. */
+	QString name = selected->name; /* FIXME: look at how viking gets name in this function. */
 
 	/* Since we intercept copy and paste keyboard operations, this is called even when a cell is being edited. */
 	if (selected->tree_view->is_editing_in_progress()) {

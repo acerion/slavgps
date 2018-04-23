@@ -88,7 +88,7 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 	/* Don't redraw unless we really have to. */
 	if (Coord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */
 		this->cur_tp->coord = coord;
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		gtk_dialog_response(GTK_DIALOG(tpwin), SG_TRACK_CHANGED);
 #endif
 	}
@@ -274,12 +274,12 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->timestamp_widget->setEnabled(tp->has_timestamp);
 
 	/* Enable adding timestamps - but not on routepoints. */
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	if (!tp->has_timestamp && !is_route) {
 		this->timestamp_widget->timestamp_button->setEnabled(true);
 	} else {
 		this->set_dialog_title(track->name);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 		if (!this->timestamp_widget->timestamp_button->icon().isNull()) {
 			this->timestamp_widget->timestamp_button->setIcon(QIcon());
 		}
@@ -415,7 +415,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->trkpt_name = new QLineEdit("", this);
 	this->grid->addWidget(new QLabel(tr("Name:")), 0, 0);
 	this->grid->addWidget(this->trkpt_name, 0, 1);
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	connect(this->trkpt_name, "focus-out-event", this, SLOT (set_name_cb(void)));
 #endif
 

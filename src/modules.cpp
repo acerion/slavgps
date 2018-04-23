@@ -93,7 +93,7 @@ using namespace SlavGPS;
 
 
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 
 static void modules_register_map_source(VikGobjectBuilder * self, MapSource * map_source)
 {
@@ -271,7 +271,7 @@ void SlavGPS::modules_init()
 	osm_traces_init();
 #endif
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #ifdef VIK_CONFIG_BING
 	bing_init();
 #endif
@@ -296,7 +296,7 @@ void SlavGPS::modules_init()
 	DataSourceGeoCache::init();
 #endif
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_init();
 #endif
@@ -317,7 +317,7 @@ void SlavGPS::modules_init()
  */
 void SlavGPS::modules_post_init()
 {
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #ifdef VIK_CONFIG_GOOGLE
 	google_post_init();
 #endif
@@ -329,7 +329,7 @@ void SlavGPS::modules_post_init()
 	layer_trw_init();
 
 	layer_gps_init();
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 	layer_mapnik_init();
 #endif
 	viewport_init();
@@ -344,7 +344,7 @@ void SlavGPS::modules_uninit()
 	osm_traces_uninit();
 #endif
 
-#ifdef K_TODO
+#ifdef K_FIXME_RESTORE
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_uninit();
 #endif
