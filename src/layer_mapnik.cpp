@@ -48,7 +48,7 @@
 #include "mapnik_interface.h"
 #include "background.h"
 #include "dialog.h"
-
+#include "statusbar.h"
 #include "layer_map.h"
 #include "layer_mapnik.h"
 #include "widget_file_entry.h"

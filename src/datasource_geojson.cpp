@@ -25,6 +25,7 @@
 #include "window.h"
 #include "util.h"
 #include "datasource_geojson.h"
+#include "statusbar.h"
 
 
 

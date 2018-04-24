@@ -42,6 +42,7 @@
 #include "bbox.h"
 #include "dialog.h"
 #include "util.h"
+#include "statusbar.h"
 
 
 

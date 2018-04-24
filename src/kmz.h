@@ -23,7 +23,9 @@
 
 
 
+
 #include <QPixmap>
+#include <QString>
 
 
 
@@ -39,8 +41,8 @@ namespace SlavGPS {
 
 
 
-	int kmz_save_file(QPixmap * pixmap, const char * filename, double north, double east, double south, double west);
-	int kmz_open_file(const char * filename, Viewport * viewport, LayersPanel * panel);
+	int kmz_save_file(const QPixmap & pixmap, const QString & file_full_path, double north, double east, double south, double west);
+	int kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel);
 
 
 

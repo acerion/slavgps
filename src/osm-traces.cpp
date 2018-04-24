@@ -46,6 +46,7 @@
 #include "preferences.h"
 #include "application_state.h"
 #include "util.h"
+#include "statusbar.h"
 
 
 

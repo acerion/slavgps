@@ -37,6 +37,7 @@
 #include "util.h"
 #include "ui_builder.h"
 #include "window.h"
+#include "statusbar.h"
 
 #ifdef K_INCLUDES
 #include "preferences.h"

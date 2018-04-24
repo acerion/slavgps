@@ -55,6 +55,7 @@
 #include "measurements.h"
 #include "application_state.h"
 #include "dialog.h"
+#include "statusbar.h"
 
 
 
@@ -387,9 +388,9 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 
 
 
-QPixmap * Viewport::get_pixmap(void) const
+QPixmap Viewport::get_pixmap(void) const
 {
-	return this->scr_buffer;
+	return *this->scr_buffer;
 }
 
 

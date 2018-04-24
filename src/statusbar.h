@@ -56,9 +56,10 @@ namespace SlavGPS {
 		~StatusBar();
 
 		void set_message(StatusBarField field, QString const & message);
+		QAction * toggleViewAction(void) const;
 
 	private:
-
+		QAction * toggle_view_action = NULL;
 		std::vector<QWidget *> fields;
 	};
 

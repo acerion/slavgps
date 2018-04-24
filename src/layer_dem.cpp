@@ -55,6 +55,7 @@
 #include "preferences.h"
 #include "util.h"
 #include "vikutils.h"
+#include "statusbar.h"
 
 
 

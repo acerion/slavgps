@@ -39,6 +39,7 @@
 #include "viewport_internal.h"
 #include "viewport_zoom.h"
 #include "layers_panel.h"
+#include "statusbar.h"
 
 
 
@@ -381,7 +382,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 			qDebug() << "II: Generic Tool Ruler: first click, saving start coordinates";
 
 			/* Save clean viewport (clean == without ruler drawn on top of it). */
-			this->orig_viewport_pixmap = *this->viewport->get_pixmap();
+			this->orig_viewport_pixmap = this->viewport->get_pixmap();
 
 			this->has_start_coord = true;
 		}
@@ -569,7 +570,7 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 			this->ztr_is_active = true;
 			this->ztr_start_x = event_pos.x;
 			this->ztr_start_y = event_pos.y;
-			this->ztr_orig_viewport_pixmap = *this->viewport->get_pixmap();
+			this->ztr_orig_viewport_pixmap = this->viewport->get_pixmap();
 			break;
 		default:
 			break;

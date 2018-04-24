@@ -208,7 +208,7 @@ namespace SlavGPS {
 
 
 		/* Viewport buffer management/drawing to screen. */
-		QPixmap * get_pixmap(void) const;   /* Get pointer to drawing buffer. */
+		QPixmap get_pixmap(void) const;   /* Get contents of drawing buffer. */
 		void set_pixmap(const QPixmap & pixmap);
 		void sync(void);              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);

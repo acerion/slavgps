@@ -65,6 +65,7 @@
 #include "tree_view_internal.h"
 #include "measurements.h"
 #include "garmin_symbols.h"
+#include "statusbar.h"
 
 
 
@@ -214,15 +215,6 @@ Window::Window()
 	this->center_changed_cb();
 #endif
 
-	this->hpaned = gtk_hpaned_new();
-	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_tree, false, true);
-	gtk_paned_pack2(GTK_PANED(this->hpaned), this->viewport, true, true);
-
-	/* This packs the button into the window (a gtk container). */
-	this->main_vbox->addWidget(this->hpaned);
-
-	gtk_box_pack_end(GTK_BOX(this->main_vbox), GTK_WIDGET(this->viking_vs), false, true, 0);
-
 #endif
 	a_background_add_window(this);
 
@@ -281,13 +273,33 @@ Window::Window()
 			}
 		}
 
-		int position = -1; // Let GTK determine default positioning
-		if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_PANE_POSITION, &position)) {
-			position = -1;
+		int size = 0;
+		if (ApplicationState::get_integer(VIK_SETTINGS_WIN_MAIN_DOCK_SIZE, &size) && size > 30) { /* TODO: magic number, describing some minimal usable width/height of dock. */
+
+			/* Adjust geometry of panel dock. TODO: this
+			   doesn't work. Either setGeometry() doesn't
+			   work, or something overwrites panel's
+			   size. */
+
+			QRect geometry = this->panel_dock->geometry();
+			const Qt::DockWidgetArea area = this->dockWidgetArea(this->panel_dock);
+			switch (area) {
+			case Qt::LeftDockWidgetArea:
+			case Qt::RightDockWidgetArea:
+				geometry.setWidth(size);
+				qDebug() << "II" PREFIX << "Restoring window panel width" << size;
+				this->panel_dock->setGeometry(geometry);
+				break;
+			case Qt::TopDockWidgetArea:
+			case Qt::BottomDockWidgetArea:
+				geometry.setHeight(size);
+				qDebug() << "II" PREFIX << "Restoring window panel height" << size;
+				this->panel_dock->setGeometry(geometry);
+				break;
+			default:
+				break;
+			}
 		}
-#ifdef K_FIXME_RESTORE
-		gtk_paned_set_position(GTK_PANED(this->hpaned), position);
-#endif
 	}
 
 #ifdef K_FIXME_RESTORE
@@ -314,6 +326,9 @@ Window::Window()
 
 	/* Set the application icon. */
 	this->setWindowIcon(QIcon(":/icons/application.png"));
+
+
+	qDebug() << "II" PREFIX << "final panel geometry" << this->panel_dock->geometry();
 }
 
 
@@ -324,9 +339,6 @@ Window::~Window()
 	a_background_remove_window(this);
 
 	window_list.remove(this);
-#ifdef K_FIXME_RESTORE
-	delete this->tb;
-#endif
 	delete this->viewport;
 	delete this->items_tree;
 }
@@ -656,11 +668,6 @@ void Window::create_actions(void)
 		this->menu_view->addAction(this->qa_drawmode_latlon);
 
 		connect(group, SIGNAL (triggered(QAction *)), this, SLOT (change_coord_mode_cb(QAction *)));
-#ifdef K_FIXME_RESTORE
-		for (unsigned int i = 0; i < G_N_ELEMENTS (mode_entries); i++) {
-			toolbar_action_mode_entry_register(window->viking_vtb, &mode_entries[i]);
-		}
-#endif
 
 
 		this->menu_view->addSeparator();
@@ -669,40 +676,45 @@ void Window::create_actions(void)
 		qa = new QAction(tr("Go to the &Default Location"), this);
 		qa->setToolTip("Go to the default location");
 		qa->setIcon(QIcon::fromTheme("go-home"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_default_location_cb(void)));
 		this->menu_view->addAction(qa);
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_default_location_cb(void)));
+
 
 		qa = new QAction(tr("Go to &Location..."), this);
 		qa->setToolTip("Go to address/place using text search");
 		qa->setIcon(QIcon::fromTheme("go-jump"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_location_cb(void)));
 		this->menu_view->addAction(qa);
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_location_cb(void)));
+
 
 		qa = new QAction(tr("&Go to Lat/Lon..."), this);
 		qa->setToolTip("Go to arbitrary lat/lon coordinate");
 		qa->setIcon(QIcon::fromTheme("go-jump"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_latlon_cb(void)));
 		this->menu_view->addAction(qa);
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_latlon_cb(void)));
+
 
 		qa = new QAction(tr("Go to UTM..."), this);
 		qa->setToolTip("Go to arbitrary UTM coordinate");
 		qa->setIcon(QIcon::fromTheme("go-jump"));
-		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_utm_cb(void)));
 		this->menu_view->addAction(qa);
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_utm_cb(void)));
+
 
 		this->qa_previous_location = new QAction(tr("Go to the Pre&vious Location"), this);
 		this->qa_previous_location->setToolTip("Go to the previous location");
 		this->qa_previous_location->setIcon(QIcon::fromTheme("go-previous"));
 		this->qa_previous_location->setEnabled(false); /* At the beginning there is no "previous location" to go to. */
-		connect(this->qa_previous_location, SIGNAL(triggered(bool)), this, SLOT(goto_previous_location_cb(void)));
 		this->menu_view->addAction(this->qa_previous_location);
+		connect(this->qa_previous_location, SIGNAL(triggered(bool)), this, SLOT(goto_previous_location_cb(void)));
+
 
 		this->qa_next_location = new QAction(tr("Go to the &Next Location"), this);
 		this->qa_next_location->setToolTip("Go to the next location");
 		this->qa_next_location->setIcon(QIcon::fromTheme("go-next"));
 		this->qa_next_location->setEnabled(false); /* At the beginning there is no "next location" to go to. */
-		connect(this->qa_next_location, SIGNAL(triggered(bool)), this, SLOT(goto_next_location_cb(void)));
 		this->menu_view->addAction(this->qa_next_location);
+		connect(this->qa_next_location, SIGNAL(triggered(bool)), this, SLOT(goto_next_location_cb(void)));
 
 
 		this->menu_view->addSeparator();
@@ -712,8 +724,8 @@ void Window::create_actions(void)
 		qa->setShortcut(Qt::Key_F5);
 		qa->setToolTip("Refresh any maps displayed");
 		qa->setIcon(QIcon::fromTheme("view-refresh"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_refresh_cb(void)));
 		this->menu_view->addAction(qa);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_refresh_cb(void)));
 
 
 		this->menu_view->addSeparator();
@@ -722,91 +734,96 @@ void Window::create_actions(void)
 		qa = new QAction(tr("Set &Highlight Color..."), this);
 		qa->setToolTip("Set Highlight Color");
 		qa->setIcon(QIcon::fromTheme("TODO GTK_STOCK_SELECT_COLOR"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_highlight_color_cb(void)));
 		this->menu_view->addAction(qa);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_highlight_color_cb(void)));
+
 
 		qa = new QAction(tr("Set Bac&kground Color..."), this);
 		qa->setToolTip("Set Background Color");
 		qa->setIcon(QIcon::fromTheme("TODO GTK_STOCK_SELECT_COLOR"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_bg_color_cb(void)));
 		this->menu_view->addAction(qa);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_bg_color_cb(void)));
+
 
 		this->qa_view_full_screen_state = new QAction("&Full Screen", this);
 		this->qa_view_full_screen_state->setShortcut(Qt::Key_F11);
 		this->qa_view_full_screen_state->setCheckable(true);
-		this->qa_view_full_screen_state->setChecked(this->full_screen_state);
+		this->qa_view_full_screen_state->setChecked(false); /* Final value of this checkbox will be set by code restoring window state. */
 		this->qa_view_full_screen_state->setToolTip("Activate full screen mode");
 		this->qa_view_full_screen_state->setIcon(QIcon::fromTheme("view-fullscreen"));
-		connect(this->qa_view_full_screen_state, SIGNAL(triggered(bool)), this, SLOT(set_full_screen_state_cb(bool)));
-
-
 		this->menu_view->addAction(this->qa_view_full_screen_state);
+		connect(this->qa_view_full_screen_state, SIGNAL (triggered(bool)), this, SLOT (set_full_screen_state_cb(bool)));
 
 
-		QMenu * show_submenu = new QMenu("&Show", this);
+		QMenu * show_submenu = new QMenu(tr("&Show"), this);
 		this->menu_view->addMenu(show_submenu);
 
-		this->qa_view_scale_visibility = new QAction("Show &Scale", this);
+		this->qa_view_scale_visibility = new QAction(tr("Show &Scale"), this);
 		this->qa_view_scale_visibility->setShortcut(Qt::SHIFT + Qt::Key_F5);
 		this->qa_view_scale_visibility->setCheckable(true);
-		this->qa_view_scale_visibility->setChecked(this->scale_visibility);
-		this->qa_view_scale_visibility->setToolTip("Show Scale");
-		connect(this->qa_view_scale_visibility, SIGNAL(triggered(bool)), this, SLOT(set_scale_visibility_cb(bool)));
+		this->qa_view_scale_visibility->setChecked(true);
+		this->qa_view_scale_visibility->setToolTip(tr("Show Scale"));
+		show_submenu->addAction(this->qa_view_scale_visibility);
+		connect(this->qa_view_scale_visibility, SIGNAL (triggered(bool)), this, SLOT (set_scale_visibility_cb(bool)));
 
-		this->qa_view_center_mark_visibility = new QAction("Show &Center Mark", this);
+
+		this->qa_view_center_mark_visibility = new QAction(tr("Show &Center Mark"), this);
 		this->qa_view_center_mark_visibility->setShortcut(Qt::Key_F6);
 		this->qa_view_center_mark_visibility->setCheckable(true);
-		this->qa_view_center_mark_visibility->setChecked(this->center_mark_visibility);
-		this->qa_view_center_mark_visibility->setToolTip("Show Center Mark");
-		connect(this->qa_view_center_mark_visibility, SIGNAL(triggered(bool)), this, SLOT(set_center_mark_visibility_cb(bool)));
+		this->qa_view_center_mark_visibility->setChecked(true);
+		this->qa_view_center_mark_visibility->setToolTip(tr("Show Center Mark"));
+		show_submenu->addAction(this->qa_view_center_mark_visibility);
+		connect(this->qa_view_center_mark_visibility, SIGNAL (triggered(bool)), this, SLOT (set_center_mark_visibility_cb(bool)));
 
-		this->qa_view_highlight_usage = new QAction("Use &Highlighting", this);
+
+		this->qa_view_highlight_usage = new QAction(tr("Use &Highlighting"), this);
 		this->qa_view_highlight_usage->setShortcut(Qt::Key_F7);
 		this->qa_view_highlight_usage->setCheckable(true);
-		this->qa_view_highlight_usage->setChecked(this->highlight_usage);
-		this->qa_view_highlight_usage->setToolTip("Use highlighting when drawing selected items");
-		connect(this->qa_view_highlight_usage, SIGNAL(triggered(bool)), this, SLOT(set_highlight_usage_cb(bool)));
+		this->qa_view_highlight_usage->setChecked(true);
+		this->qa_view_highlight_usage->setToolTip(tr("Use highlighting when drawing selected items"));
+		show_submenu->addAction(this->qa_view_highlight_usage);
+		connect(this->qa_view_highlight_usage, SIGNAL (triggered(bool)), this, SLOT (set_highlight_usage_cb(bool)));
 		/* TODO: icon: GTK_STOCK_UNDERLINE */
 
-		this->qa_view_side_panel_visibility = this->panel_dock->toggleViewAction(); /* Existing action! */
-		this->qa_view_side_panel_visibility->setText("Show Side &Panel");
-		this->qa_view_side_panel_visibility->setShortcut(Qt::Key_F9);
-		this->qa_view_side_panel_visibility->setCheckable(true);
-		this->qa_view_side_panel_visibility->setChecked(this->side_panel_visibility);
-		this->qa_view_side_panel_visibility->setToolTip("Show Side Panel");
-		connect(this->qa_view_side_panel_visibility, SIGNAL(triggered(bool)), this, SLOT(set_side_panel_visibility_cb(bool)));
+
+		qa = this->panel_dock->toggleViewAction(); /* Existing action! */
+		qa->setText(tr("Show Side &Panel"));
+		qa->setShortcut(Qt::Key_F9);
+		qa->setCheckable(true);
+		qa->setChecked(this->panel_dock->isVisible());
+		qa->setToolTip(tr("Show Side Panel"));
+		show_submenu->addAction(qa);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_side_panel_visibility_cb(bool)));
 		/* TODO: icon: GTK_STOCK_INDEX */
 
-		this->qa_view_status_bar_visibility = new QAction("Show Status&bar", this);
-		this->qa_view_status_bar_visibility->setShortcut(Qt::Key_F12);
-		this->qa_view_status_bar_visibility->setCheckable(true);
-		this->qa_view_status_bar_visibility->setChecked(this->status_bar_visibility);
-		this->qa_view_status_bar_visibility->setToolTip("Show Statusbar");
-		connect(this->qa_view_status_bar_visibility, SIGNAL(triggered(bool)), this, SLOT(set_status_bar_visibility_cb(bool)));
 
-		this->qa_view_tool_bar_visibility = this->toolbar->toggleViewAction(); /* Existing action! */
-		this->qa_view_tool_bar_visibility->setText("Show &Toolbar");
-		this->qa_view_tool_bar_visibility->setShortcut(Qt::Key_F3);
-		this->qa_view_tool_bar_visibility->setCheckable(true);
-		this->qa_view_tool_bar_visibility->setChecked(this->tool_bar_visibility);
-		this->qa_view_tool_bar_visibility->setToolTip("Show Toolbar");
+		qa = this->status_bar->toggleViewAction();
+		qa->setText(tr("Show Status&bar"));
+		qa->setShortcut(Qt::Key_F12);
+		qa->setCheckable(true);
+		qa->setChecked(this->status_bar->isVisible());
+		qa->setToolTip(tr("Show Statusbar"));
+		show_submenu->addAction(qa);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_status_bar_visibility_cb(bool)));
+
+
+		qa = this->toolbar->toggleViewAction(); /* This is already existing action! */
+		qa->setText(tr("Show &Toolbar"));
+		qa->setShortcut(Qt::Key_F3);
+		qa->setCheckable(true);
+		// qa->setChecked(this->toolbar->toggleViewAction()->isVisible());
+		qa->setToolTip(tr("Show Toolbar"));
 		/* No signal connection needed, we have toggleViewAction(). */
-
-		this->qa_view_main_menu_visibility = new QAction("Show &Menu", this);
-		this->qa_view_main_menu_visibility->setShortcut(Qt::Key_F4);
-		this->qa_view_main_menu_visibility->setCheckable(true);
-		this->qa_view_main_menu_visibility->setChecked(true);
-		this->qa_view_main_menu_visibility->setToolTip("Show Menu");
-		connect(qa_view_main_menu_visibility, SIGNAL(triggered(bool)), this, SLOT(set_main_menu_visibility_cb(bool)));
+		show_submenu->addAction(qa);
 
 
-		show_submenu->addAction(this->qa_view_scale_visibility);
-		show_submenu->addAction(this->qa_view_center_mark_visibility);
-		show_submenu->addAction(this->qa_view_highlight_usage);
-		show_submenu->addAction(this->qa_view_side_panel_visibility);
-		show_submenu->addAction(this->qa_view_status_bar_visibility);
-		show_submenu->addAction(this->qa_view_tool_bar_visibility);
-		show_submenu->addAction(this->qa_view_main_menu_visibility);
+		qa = new QAction(tr("Show &Menu"), this);
+		qa->setShortcut(Qt::Key_F4);
+		qa->setCheckable(true);
+		qa->setChecked(true);
+		qa->setToolTip(tr("Show Menu"));
+		show_submenu->addAction(qa);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_main_menu_visibility_cb(bool)));
 
 
 		this->menu_view->addSeparator();
@@ -815,21 +832,19 @@ void Window::create_actions(void)
 		qa_view_zoom_in = new QAction("Zoom &In", this);
 		qa_view_zoom_in->setShortcut(Qt::CTRL + Qt::Key_Plus);
 		qa_view_zoom_in->setIcon(QIcon::fromTheme("zoom-in"));
-		connect(qa_view_zoom_in, SIGNAL(triggered(bool)), this, SLOT(zoom_cb(void)));
+		connect(qa_view_zoom_in, SIGNAL (triggered(bool)), this, SLOT (zoom_cb(void)));
+		this->menu_view->addAction(qa_view_zoom_in);
 
 		qa_view_zoom_out = new QAction("Zoom &Out", this);
 		qa_view_zoom_out->setShortcut(Qt::CTRL + Qt::Key_Minus);
 		qa_view_zoom_out->setIcon(QIcon::fromTheme("zoom-out"));
-		connect(qa_view_zoom_out, SIGNAL(triggered(bool)), this, SLOT(zoom_cb(void)));
+		connect(qa_view_zoom_out, SIGNAL (triggered(bool)), this, SLOT (zoom_cb(void)));
+		this->menu_view->addAction(qa_view_zoom_out);
 
 		qa_view_zoom_to = new QAction("Zoom &To...", this);
 		qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Z);
 		qa_view_zoom_to->setIcon(QIcon::fromTheme("zoom-fit-best"));
-		connect(qa_view_zoom_to, SIGNAL(triggered(bool)), this, SLOT(zoom_to_cb(void)));
-
-
-		this->menu_view->addAction(qa_view_zoom_in);
-		this->menu_view->addAction(qa_view_zoom_out);
+		connect(qa_view_zoom_to, SIGNAL (triggered(bool)), this, SLOT (zoom_to_cb(void)));
 		this->menu_view->addAction(qa_view_zoom_to);
 
 
@@ -1543,9 +1558,6 @@ void Window::preferences_cb(void) /* Slot. */
 	if (Preferences::get_time_ref_frame() == SGTimeReference::World) {
 		vu_setup_lat_lon_tz_lookup();
 	}
-#ifdef K_FIXME_RESTORE
-	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
-#endif
 }
 
 
@@ -1583,9 +1595,9 @@ void Window::closeEvent(QCloseEvent * ev)
 			bool state_fullscreen = states.testFlag(Qt::WindowFullScreen);
 			ApplicationState::set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
 
-			ApplicationState::set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->side_panel_visibility);
-			ApplicationState::set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->status_bar_visibility);
-			ApplicationState::set_boolean(VIK_SETTINGS_WIN_TOOLBAR, this->tool_bar_visibility);
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->panel_dock->isVisible());
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->status_bar->isVisible());
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_TOOLBAR,   this->toolbar->isVisible());
 
 			/* If supersized - no need to save the enlarged width+height values. */
 			if (!(state_fullscreen || state_max)) {
@@ -1593,9 +1605,27 @@ void Window::closeEvent(QCloseEvent * ev)
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_WIDTH, this->width());
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
-#ifdef K_FIXME_RESTORE
-			ApplicationState::set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(this->hpaned)));
-#endif
+
+			const QRect geometry = this->panel_dock->geometry();
+			int size = 0;
+			const Qt::DockWidgetArea area = this->dockWidgetArea(this->panel_dock);
+			switch (area) {
+			case Qt::LeftDockWidgetArea:
+			case Qt::RightDockWidgetArea:
+				size = geometry.width();
+				break;
+			case Qt::TopDockWidgetArea:
+			case Qt::BottomDockWidgetArea:
+				size = geometry.height();
+				break;
+			default:
+				break;
+			}
+
+			if (size > 0) {
+				qDebug() << "II" PREFIX << "Saving window's panel size" << size;
+				ApplicationState::set_integer(VIK_SETTINGS_WIN_MAIN_DOCK_SIZE, size);
+			}
 		}
 
 		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH, this->viewport_save_width);
@@ -1686,18 +1716,12 @@ void Window::goto_next_location_cb(void)
 
 void Window::set_full_screen_state_cb(bool new_state)
 {
-	if (this->full_screen_state != new_state) {
-		this->full_screen_state = new_state;
+	if (this->qa_view_full_screen_state->isChecked() != new_state) {
 
-#ifdef K_FIXME_RESTORE
-		/* TODO: Since this slot can be called explicitly (as a regular method),
-		   shouldn't we keep related quaction/checkbox in sync here? */
-
-		this->qa_view_full_screen_state;
-#endif
+		this->qa_view_full_screen_state->setChecked(new_state);
 
 		const Qt::WindowStates state = this->windowState();
-		if (this->full_screen_state) {
+		if (this->qa_view_full_screen_state->isChecked()) {
 			this->setWindowState(state | Qt::WindowFullScreen);
 		} else {
 			this->setWindowState(state & (~Qt::WindowFullScreen));
@@ -1710,8 +1734,8 @@ void Window::set_full_screen_state_cb(bool new_state)
 
 void Window::set_scale_visibility_cb(bool new_state)
 {
-	if (new_state != this->scale_visibility) {
-		this->scale_visibility = new_state;
+	if (this->qa_view_scale_visibility->isChecked() != new_state) {
+		this->qa_view_scale_visibility->setChecked(new_state);
 		this->viewport->set_scale_visibility(new_state);
 		this->redraw_tree_items_wrapper();
 	}
@@ -1722,8 +1746,8 @@ void Window::set_scale_visibility_cb(bool new_state)
 
 void Window::set_center_mark_visibility_cb(bool new_state)
 {
-	if (new_state != this->center_mark_visibility) {
-		this->center_mark_visibility = new_state;
+	if (this->qa_view_center_mark_visibility->isChecked() != new_state) {
+		this->qa_view_center_mark_visibility->setChecked(new_state);
 		this->viewport->set_center_mark_visibility(new_state);
 		this->redraw_tree_items_wrapper();
 	}
@@ -1733,8 +1757,8 @@ void Window::set_center_mark_visibility_cb(bool new_state)
 
 void Window::set_highlight_usage_cb(bool new_state)
 {
-	if (new_state != this->highlight_usage) {
-		this->highlight_usage = new_state;
+	if (this->qa_view_highlight_usage->isChecked() != new_state) {
+		this->qa_view_highlight_usage->setChecked(new_state);
 		this->viewport->set_highlight_usage(new_state);
 		this->redraw_tree_items_wrapper();
 	}
@@ -1744,16 +1768,14 @@ void Window::set_highlight_usage_cb(bool new_state)
 
 void Window::set_side_panel_visibility_cb(bool new_state)
 {
-	if (this->side_panel_visibility != new_state) {
-		qDebug() << "II: Window: setting side panel visibility to" << new_state;
+	if (this->panel_dock->isVisible() != new_state) {
+		qDebug() << "II" PREFIX << "setting side panel visibility to" << new_state;
 
-		this->side_panel_visibility = new_state;
-		this->panel_dock->setVisible(this->side_panel_visibility);
+		this->panel_dock->setVisible(new_state);
 
 		/* We need to set the qaction because this slot function
 		   may be called like a regular function too. */
-		QAction * qa = this->panel_dock->toggleViewAction();
-		qa->setChecked(new_state);
+		this->panel_dock->toggleViewAction()->setChecked(new_state);
 	}
 }
 
@@ -1770,8 +1792,7 @@ bool Window::get_side_panel_visibility(void) const
 
 void Window::set_status_bar_visibility_cb(bool new_state)
 {
-	this->status_bar_visibility = new_state;
-	this->status_bar->setVisible(this->status_bar_visibility);
+	this->status_bar->setVisible(new_state);
 }
 
 
@@ -1791,47 +1812,16 @@ void Window::zoom_cb(void)
 	QKeySequence seq = qa->shortcut();
 
 	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
+		qDebug() << "DD" PREFIX << "Zoom In";
 		this->viewport->zoom_in();
 	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
+		qDebug() << "DD" PREFIX << "Zoom Out";
 		this->viewport->zoom_out();
 	} else {
-		qDebug() << "EE: Window: unhandled case";
+		qDebug() << "EE" PREFIX << "invalid zoom key sequence" << seq;
 		return;
 	}
 
-#ifdef K_FIXME_RESTORE
-	unsigned int what = 128;
-
-	if (!strcmp(gtk_action_get_name(a), "ZoomIn")) {
-		what = -3;
-	} else if (!strcmp(gtk_action_get_name(a), "ZoomOut")) {
-		what = -4;
-	} else if (!strcmp(gtk_action_get_name(a), "Zoom0.25")) {
-		what = -2;
-	} else if (!strcmp(gtk_action_get_name(a), "Zoom0.5")) {
-		what = -1;
-	} else {
-		char *s = (char *)gtk_action_get_name(a);
-		what = atoi(s+4);
-	}
-
-	switch (what) {
-	case -3:
-
-		break;
-	case -4:
-		window->viewport->zoom_out();
-		break;
-	case -1:
-		window->viewport->set_zoom(0.5);
-		break;
-	case -2:
-		window->viewport->set_zoom(0.25);
-		break;
-	default:
-		window->viewport->set_zoom(what);
-	}
-#endif
 	this->redraw_tree_items_wrapper();
 }
 
@@ -1944,10 +1934,6 @@ void Window::open_file_cb(void)
 		return;
 	}
 
-	//GSList *files = NULL;
-	//GSList *cur_file = NULL;
-
-
 	QFileDialog file_selector(this, "Select a GPS data file to open");
 
 	if (last_folder_files_url.isValid()) {
@@ -1967,12 +1953,7 @@ void Window::open_file_cb(void)
 #endif
 
 	filter << QObject::tr("GPX (*.gpx)");
-
-#ifdef K_FIXME_RESTORE
-	gtk_file_filter_set_name(filter, QObject::tr("JPG"));
-	gtk_file_filter_add_mime_type(filter, "image/jpeg");
-#endif
-
+	filter << QObject::tr("JPEG (*.jpg, *.jpeg *.JPG *.JPEG)");
 	filter << QObject::tr("Viking (*.vik *.viking)");
 
 
@@ -2776,10 +2757,9 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 	//this->redraw_tree_items();
 
 	/* Save buffer as file. */
-	QPixmap * pixmap = scaled_viewport->get_pixmap();
-
-	if (!pixmap) {
-		fprintf(stderr, "EE: Viewport: Failed to generate internal pixmap size: %d x %d\n", image_width, image_height);
+	const QPixmap pixmap = scaled_viewport->get_pixmap();
+	if (pixmap.isNull()) {
+		qDebug() << "EE" PREFIX << "Failed to get viewport pixmap of size" << image_width << image_height;
 
 		this->status_bar->set_message(StatusBarField::INFO, QString(""));
 		Dialog::error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
@@ -2793,21 +2773,15 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	if (save_kmz) {
 		const LatLonBBox bbox = this->viewport->get_bbox();
-
-#ifdef K_FIXME_RESTORE
-		ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west);
-#endif
+		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO: handle returned value. */
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
-		if (!pixmap->save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
+		if (!pixmap.save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
 			qDebug() << "WW: Viewport: Save to Image: Unable to write to file" << file_full_path;
 			success = false;
 		}
 	}
 
-#ifdef K_FIXME_RESTORE
-	g_object_unref(G_OBJECT(pixmap));
-#endif
 	delete scaled_viewport;
 
 	const QString message = success ? tr("Image file generated.") : tr("Failed to generate image file.");
@@ -2872,16 +2846,16 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 			this->redraw_tree_items();
 
 			/* Save buffer as file. */
-			// QPixmap * pixmap = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, image_width, image_height);
-			QPixmap * pixmap = this->viewport->get_pixmap();
-			if (!pixmap->save(file_full_path, extension)) {
-				qDebug() << "WW: Viewport: Save to Image Dir: Unable to write to file" << file_full_path;
-				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1").arg(file_full_path));
+			const QPixmap pixmap = this->viewport->get_pixmap();
+			if (pixmap.isNull()) {
+				qDebug() << "EE" PREFIX << "Unable to create viewport pixmap" << file_full_path;
+				this->status_bar->set_message(StatusBarField::INFO, QObject::tr("Unable to create viewport's image"));
+			} else if (!pixmap.save(file_full_path, extension)) {
+				qDebug() << "EE" PREFIX << "Unable to write to file" << file_full_path;
+				this->status_bar->set_message(StatusBarField::INFO, QObject::tr("Unable to write to file %1").arg(file_full_path));
+			} else {
+				; /* Pixmap is valid and has been saved. */
 			}
-
-#ifdef K_FIXME_RESTORE
-			g_object_unref(G_OBJECT(pixmap));
-#endif
 		}
 	}
 
@@ -3554,7 +3528,7 @@ void Window::import_kmz_file_cb(void)
 	const QString full_path = selection.at(0);
 
 	/* TODO convert ans value into readable explaination of failure... */
-	int ans = kmz_open_file(full_path.toUtf8().constData(), this->viewport, this->items_tree);
+	int ans = kmz_open_file(full_path, this->viewport, this->items_tree);
 	if (ans) {
 		Dialog::error(tr("Unable to import %1.").arg(full_path), this);
 	}
@@ -3595,15 +3569,11 @@ Window * Window::new_window()
 		}
 
 		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {
-#ifdef K_FIXME_RESTORE
 			window->set_status_bar_visibility_cb(visibility);
-#endif
 		}
 
 		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_TOOLBAR, &visibility)) {
-#ifdef K_FIXME_RESTORE
-			gtk_widget_hide(toolbar_get_widget(window->viking_vtb));
-#endif
+			window->toolbar->setVisible(visibility);
 		}
 
 		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_MENUBAR, &visibility)) {

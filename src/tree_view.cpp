@@ -38,6 +38,7 @@
 #include "layers_panel.h"
 #include "ui_builder.h"
 #include "dialog.h"
+#include "statusbar.h"
 //#include "layer_aggregate.h"
 //#include "layer_coord.h"
 

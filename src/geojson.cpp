@@ -31,6 +31,7 @@
 #include "window.h"
 #include "util.h"
 #include "layer_trw.h"
+#include "statusbar.h"
 
 #include <glib.h>
 #include <glib/gstdio.h>

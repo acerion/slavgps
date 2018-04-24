@@ -51,6 +51,7 @@
 #include "util.h"
 #include "preferences.h"
 #include "routing.h"
+#include "statusbar.h"
 
 
 
@@ -893,7 +894,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		/* Reset to background. */
 		//QPainter painter2(ds->drawable);
 		//painter2.drawPixmap(0, 0, *ds->pixmap);
-		*pixmap = *tool->viewport->get_pixmap();
+		*pixmap = tool->viewport->get_pixmap(); /* TODO: this doesn't seem to be right. */
 #ifdef K_OLD_IMPLEMENTATION
 		gdk_draw_drawable(pixmap,
 				  trw->painter->current_track_new_point_pen,

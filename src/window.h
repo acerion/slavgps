@@ -33,7 +33,6 @@
 #include <QUrl>
 #include <QComboBox>
 
-#include "statusbar.h"
 #include "file.h"
 #include "acquire.h"
 #include "viewport.h"
@@ -49,7 +48,7 @@
 #define VIK_SETTINGS_WIN_FULLSCREEN              "window_fullscreen"
 #define VIK_SETTINGS_WIN_WIDTH                   "window_width"
 #define VIK_SETTINGS_WIN_HEIGHT                  "window_height"
-#define VIK_SETTINGS_WIN_PANE_POSITION           "window_horizontal_pane_position"
+#define VIK_SETTINGS_WIN_MAIN_DOCK_SIZE          "window_horizontal_pane_position"
 #define VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT "window_copy_centre_full_format"
 
 #define VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH     "window_save_image_width"
@@ -83,7 +82,9 @@ namespace SlavGPS {
 	class LayersPanel;
 	class ScreenPos;
 	class DataSource;
+	class StatusBar;
 	enum class LayerType;
+	enum class StatusBarField;
 
 
 
@@ -365,28 +366,13 @@ namespace SlavGPS {
 		/* Cursor of window's central widget. */
 		QCursor viewport_cursor;
 
-		/* Display various window items. */
-		bool full_screen_state = false;
-
-		bool scale_visibility = true;
-		bool center_mark_visibility = true;
-		bool highlight_usage = true;
-
-		bool side_panel_visibility = true;
-		bool status_bar_visibility = true;
-		bool tool_bar_visibility = true;
 
 		bool only_updating_coord_mode_ui = false; /* Hack for a bug in GTK. */
 
 		QAction * qa_view_full_screen_state = NULL;
-
 		QAction * qa_view_scale_visibility = NULL;
 		QAction * qa_view_center_mark_visibility = NULL;
 		QAction * qa_view_highlight_usage = NULL;
-		QAction * qa_view_side_panel_visibility = NULL;
-		QAction * qa_view_status_bar_visibility = NULL;
-		QAction * qa_view_tool_bar_visibility = NULL;
-		QAction * qa_view_main_menu_visibility = NULL;
 
 		QAction * qa_drawmode_expedia = NULL;
 		QAction * qa_drawmode_mercator = NULL;

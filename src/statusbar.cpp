@@ -25,6 +25,7 @@
 
 #include <QLabel>
 #include <QDebug>
+#include <QAction>
 
 #include "statusbar.h"
 #include "background.h"
@@ -153,6 +154,8 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	label->setToolTip(tooltip);
 	this->fields[(int) StatusBarField::INFO] = label;
 	this->addPermanentWidget(label);
+
+	this->toggle_view_action = new QAction();
 }
 
 
@@ -191,4 +194,13 @@ void StatusBar::set_message(StatusBarField field, QString const & message)
 StatusBar::~StatusBar()
 {
 	this->fields.clear();
+	delete this->toggle_view_action;
+}
+
+
+
+
+QAction * StatusBar::toggleViewAction(void) const
+{
+	return this->toggle_view_action;
 }

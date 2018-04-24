@@ -60,6 +60,7 @@
 #include "application_state.h"
 #include "ui_builder.h"
 #include "util.h"
+#include "statusbar.h"
 
 
 

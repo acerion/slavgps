@@ -1465,7 +1465,7 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
 
 	/* The pixmap = margin + graph area. */
 	qDebug() << "II: Track Profile: saving viewport" << this->viewport->type_string;
-	this->saved_img.img = *this->viewport->get_pixmap();
+	this->saved_img.img = this->viewport->get_pixmap();
 	this->saved_img.valid = true;
 }
 

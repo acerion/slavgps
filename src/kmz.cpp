@@ -90,10 +90,8 @@ static char * doc_kml_str(const QString & file_name, const char * image_filename
 
 
 /**
- * kmz_save_file:
- *
  * @pixmap:   The image to save
- * @filename: Save the KMZ as this filename
+ * @file_full_path: Save the KMZ as this file path
  * @north:    Top latitude in degrees
  * @east:     Right most longitude in degrees
  * @south:    Bottom latitude in degrees
@@ -110,7 +108,7 @@ static char * doc_kml_str(const QString & file_name, const char * image_filename
  *
  * The KMZ is a zipped file containing a KML file with the associated image.
  */
-int SlavGPS::kmz_save_file(QPixmap * pixmap, const char * filename, double north, double east, double south, double west)
+int SlavGPS::kmz_save_file(const QPixmap & pixmap, const QString & file_full_path, double north, double east, double south, double west)
 {
 #ifdef HAVE_ZIP_H
 /* Older libzip compatibility: */
@@ -122,14 +120,14 @@ typedef struct zip_source zip_source_t;
 	char *image_filename = "image.jpg";
 
 	/* Generate KMZ file (a zip file). */
-	struct zip* archive = zip_open(filename, ZIP_CREATE | ZIP_TRUNCATE, &ans);
+	struct zip* archive = zip_open(file_full_path, ZIP_CREATE | ZIP_TRUNCATE, &ans);
 	if (!archive) {
-		fprintf(stderr, "WARNING: Unable to create archive: '%s' Error code %d\n", filename, ans);
+		fprintf(stderr, "WARNING: Unable to create archive: '%s' Error code %d\n", file_full_path, ans);
 		return ans;
 	}
 
 	/* Generate KML file. */
-	char *dk = doc_kml_str(FileUtils::get_base_name(filename), image_filename, north, south, east, west);
+	char *dk = doc_kml_str(FileUtils::get_base_name(file_full_path), image_filename, north, south, east, west);
 	int dkl = strlen(dk);
 
 	/* KML must be named doc.kml in the kmz file. */
@@ -365,7 +363,7 @@ static bool parse_kml(const char * buffer, int len, char ** name, char ** image,
 
 
 /**
- * @filename:   The KMZ file to open
+ * @file_full_path:   The KMZ file to open
  * @viewport:   The #Viewport
  * @panel:      The #LayersPanel that the converted KMZ will be stored in
  *
@@ -380,7 +378,7 @@ static bool parse_kml(const char * buffer, int len, char ** name, char ** image,
  *  132 - Couldn't get image from KML
  *  133 - Image file problem
  */
-int SlavGPS::kmz_open_file(const char * filename, Viewport * viewport, LayersPanel * panel)
+int SlavGPS::kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel)
 {
 /* Unzip. */
 #ifdef HAVE_ZIP_H
@@ -394,9 +392,9 @@ typedef struct zip_file zip_file_t;
 #endif
 
 	int ans = ZIP_ER_OK;
-	zip_t * archive = zip_open(filename, ZIP_RDONLY, &ans);
+	zip_t * archive = zip_open(file_full_path, ZIP_RDONLY, &ans);
 	if (!archive) {
-		fprintf(stderr, "WARNING: Unable to open archive: '%s' Error code %d\n", filename, ans);
+		fprintf(stderr, "WARNING: Unable to open archive: '%s' Error code %d\n", file_full_path, ans);
 		return ans;
 	}
 

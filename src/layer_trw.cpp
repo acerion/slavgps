@@ -67,7 +67,7 @@
 #include "toolbox.h"
 #include "thumbnails.h"
 #include "datasources.h"
-
+#include "statusbar.h"
 
 #include "layer_gps.h"
 #include "layer_trw_stats.h"
