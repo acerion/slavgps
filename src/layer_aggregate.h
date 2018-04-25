@@ -87,7 +87,7 @@ namespace SlavGPS {
 		std::list<Waypoint *> * create_waypoints_list();
 		std::list<Track *> * create_tracks_list();
 		std::list<Track *> * create_tracks_list(const QString & type_id);
-		std::list<Layer const *> * get_all_layers_of_type(std::list<Layer const *> * layers, LayerType layer_type, bool include_invisible);
+		void get_all_layers_of_type(std::list<const Layer *> & layers, LayerType layer_type, bool include_invisible);
 		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool is_empty(void) const;

@@ -4178,8 +4178,8 @@ void LayerTRW::download_map_along_track_cb(void)
 		return;
 	}
 
-	std::list<Layer const *> * layers = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
-	int num_maps = layers->size();
+	const std::list<Layer const *> layers = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
+	int num_maps = layers.size();
 	if (!num_maps) {
 		Dialog::error(tr("No map layer in use. Create one first"), this->get_window());
 		return;
@@ -4190,7 +4190,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	std::list<LayerMap *> map_layers;
 	QStringList map_labels; /* List of names of map layers that are currently used. */
 
-	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 		map_layers.push_back((LayerMap *) *iter); /* kamilFIXME: casting const pointer to non-const. */
 		map_labels << ((LayerMap *) *iter)->get_map_label();
 	}
@@ -4207,7 +4207,6 @@ void LayerTRW::download_map_along_track_cb(void)
 	unsigned int selected_map_idx = 0;
 	unsigned int selected_zoom_idx = 0;
 	if (!a_dialog_map_and_zoom(map_labels, 0, zoom_labels, default_zoom_idx, &selected_map_idx, &selected_zoom_idx, this->get_window())) {
-		delete layers;
 		return;
 	}
 
@@ -4218,7 +4217,6 @@ void LayerTRW::download_map_along_track_cb(void)
 
 	vik_track_download_map(track, *iter, zoom_values[selected_zoom_idx]);
 
-	delete layers;
 	return;
 }
 

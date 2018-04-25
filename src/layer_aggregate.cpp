@@ -421,13 +421,13 @@ void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 
 std::list<Waypoint *> * LayerAggregate::create_waypoints_list()
 {
-	std::list<Layer const *> * layers = new std::list<Layer const *>;
-	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
+	std::list<const Layer *> layers;
+	this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
 	std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
 
-	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 
 		/* TODO: move this to layer trw containers. */
 		Waypoints & wps = ((LayerTRW *) (*iter))->get_waypoint_items();
@@ -435,7 +435,6 @@ std::list<Waypoint *> * LayerAggregate::create_waypoints_list()
 			waypoints->push_back(i->second);
 		}
 	}
-	delete layers;
 
 	return waypoints;
 }
@@ -465,33 +464,31 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	Viewport * viewport = this->get_window()->get_viewport();
 
 	bool found = false;
-	std::list<Layer const *> * layers = new std::list<Layer const *>;
-	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
+	std::list<const Layer *> layers;
+	this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 
 	/* Search tracks first. */
-	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 		/* Make it auto select the item if found. */
 		found = ((LayerTRW *) (*iter))->find_track_by_date(date_str, viewport, true);
 		if (found) {
 			break;
 		}
 	}
-	delete layers;
+	layers.clear();
 
 	if (!found) {
 		/* Reset and try on Waypoints. */ /* kamilTODO: do we need to reset the list? Did it change? */
-		layers = new std::list<Layer const *>;
-		layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
+		this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
-		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+		for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 			/* Make it auto select the item if found. */
 			found = ((LayerTRW *) (*iter))->find_waypoint_by_date(date_str, viewport, true);
 			if (found) {
 				break;
 			}
 		}
-		delete layers;
 	}
 
 	if (!found) {
@@ -514,16 +511,15 @@ std::list<Track *> * LayerAggregate::create_tracks_list(const QString & items_ty
 
 std::list<Track *> * LayerAggregate::create_tracks_list()
 {
-	std::list<Layer const *> * layers = new std::list<Layer const *>;
-	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
+	std::list<Layer const *> layers;
+	this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	/* For each TRW layers keep adding the tracks and routes to build a list of all of them. */
 	std::list<Track *> * tracks = new std::list<Track *>;
-	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 		((LayerTRW *) (*iter))->get_tracks_node().get_track_values(tracks);
 		((LayerTRW *) (*iter))->get_routes_node().get_track_values(tracks);
 	}
-	delete layers;
 
 	return tracks;
 }
@@ -737,10 +733,10 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 
 
 
-std::list<Layer const *> * LayerAggregate::get_all_layers_of_type(std::list<Layer const *> * layers, LayerType expected_layer_type, bool include_invisible)
+void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, LayerType expected_layer_type, bool include_invisible)
 {
 	if (this->children->empty()) {
-		return layers;
+		return;
 	}
 
 	auto child = this->children->begin();
@@ -751,11 +747,11 @@ std::list<Layer const *> * LayerAggregate::get_all_layers_of_type(std::list<Laye
 			/* Don't even consider invisible aggregrates, unless told to. */
 			if (layer->visible || include_invisible) {
 				LayerAggregate * aggregate = (LayerAggregate *) layer;
-				layers = aggregate->get_all_layers_of_type(layers, type, include_invisible);
+				aggregate->get_all_layers_of_type(layers, type, include_invisible);
 			}
 		} else if (expected_layer_type == layer->type) {
 			if (layer->visible || include_invisible) {
-				layers->push_back(layer); /* now in top down order */
+				layers.push_back(layer); /* now in top down order */
 			}
 		} else if (expected_layer_type == LayerType::TRW) {
 			if (layer->type != LayerType::GPS) {
@@ -773,13 +769,13 @@ std::list<Layer const *> * LayerAggregate::get_all_layers_of_type(std::list<Laye
 
 			std::list<Layer const * > * gps_trw_layers = ((LayerGPS *) layer)->get_children();
 			for (auto iter = gps_trw_layers->begin(); iter != gps_trw_layers->end(); iter++) {
-				layers->push_front(*iter);
+				layers.push_front(*iter);
 			}
 			delete gps_trw_layers;
 		}
 		child++;
 	}
-	return layers;
+	return;
 }
 
 

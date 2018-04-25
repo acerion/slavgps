@@ -236,6 +236,12 @@ namespace SlavGPS {
 
 		bool the_same_object(const Layer * layer) const;
 
+		/* If there are any highlighted/selected elements in
+		   the layer, unhighlight them.  Return true if any
+		   element in layer has been un-highlighted and the
+		   layer needs to be redrawn. */
+		virtual bool clear_highlight(void) { return false; }
+
 		/* GUI. */
 		QIcon get_icon(void);
 		LayerMenuItem get_menu_items_selection(void);

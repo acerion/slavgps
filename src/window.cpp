@@ -97,6 +97,15 @@ static std::list<Window *> window_list;
 
 
 
+enum {
+	OPEN_FILE_IN_THE_SAME_WINDOW = 0,
+	OPEN_FILE_IN_NEW_WINDOW = 1,
+};
+
+
+
+
+
 Tree * g_tree = NULL;
 
 
@@ -310,11 +319,6 @@ Window::Window()
 	gtk_drag_dest_add_uri_targets(this->viewport);
 	QObject::connect(this->viewport, SIGNAL("drag-data-received"), NULL, SLOT (drag_data_received_cb));
 
-	// Store the thread value so comparisons can be made to determine the gdk update method
-	// Hopefully we are storing the main thread value here :)
-	//  [ATM any window initialization is always be performed by the main thread]
-	this->thread = g_thread_self();
-
 	// Set the default tool + mode
 	gtk_action_activate(gtk_action_group_get_action(this->action_group, "Pan"));
 	gtk_action_activate(gtk_action_group_get_action(this->action_group, "ModeMercator"));
@@ -415,14 +419,14 @@ void Window::create_actions(void)
 
 		qa_file_open = this->menu_file->addAction(QIcon::fromTheme("document-open"), tr("&Open..."));
 		qa_file_open->setShortcut(Qt::CTRL + Qt::Key_O);
-		qa_file_open->setData(QVariant((int) 12)); /* kamilFIXME: magic number. */
+		qa_file_open->setData(QVariant((int) OPEN_FILE_IN_NEW_WINDOW));
 		connect(qa_file_open, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
 
 		/* This submenu will be populated by Window::update_recent_files(). */
 		this->submenu_recent_files = this->menu_file->addMenu(tr("Open &Recent File"));
 
 		qa = this->menu_file->addAction(QIcon::fromTheme("list-add"), tr("Append &File..."));
-		qa->setData(QVariant((int) 21)); /* kamilFIXME: magic number. */
+		qa->setData(QVariant((int) OPEN_FILE_IN_THE_SAME_WINDOW));
 		qa->setToolTip("Append data from a different file");
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
 
@@ -1879,8 +1883,7 @@ bool Window::clear_highlight()
 	bool need_redraw = false;
 	if (g_tree->selected_tree_item) {
 		if (g_tree->selected_tree_item->tree_item_type == TreeItemType::LAYER) {
-			/* FIXME: we assume here that only LayerTRW can be a selected layer. */
-			need_redraw |= ((LayerTRW *) g_tree->selected_tree_item)->clear_highlight();
+			need_redraw |= ((Layer *) g_tree->selected_tree_item)->clear_highlight();
 		}
 		g_tree->selected_tree_item = NULL;
 	}
@@ -1923,16 +1926,7 @@ void Window::show_layer_defaults_cb(void)
 void Window::open_file_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
-
-	bool newwindow;
-	if (qa->data().toInt() == 12) {
-		newwindow = true;
-	} else if (qa->data().toInt() == 21) {
-		newwindow = false;
-	} else {
-		qDebug() << "EE: Window: unrecognized Open/Append action value:" << qa->data().toInt();
-		return;
-	}
+	const bool new_window = qa->data().toInt() == OPEN_FILE_IN_NEW_WINDOW;
 
 	QFileDialog file_selector(this, "Select a GPS data file to open");
 
@@ -1974,7 +1968,7 @@ void Window::open_file_cb(void)
 
 	last_folder_files_url = file_selector.directoryUrl();
 
-	if ((this->contents_modified || !this->current_document_full_path.isEmpty()) && newwindow) {
+	if ((this->contents_modified || !this->current_document_full_path.isEmpty()) && new_window) {
 		const QStringList selection = file_selector.selectedFiles();
 		if (!selection.size()) {
 			return;
@@ -1982,22 +1976,22 @@ void Window::open_file_cb(void)
 		this->open_window(selection);
 	} else {
 		QStringList selection = file_selector.selectedFiles();
-		bool set_as_current_document = newwindow && (selection.size() == 1); /* Only change current document path if one file. */
+		bool set_as_current_document = new_window && (selection.size() == 1); /* Only change current document path if one file. */
 		bool first_vik_file = true;
 		auto iter = selection.begin();
 		while (iter != selection.end()) {
 
 			const QString file_full_path = *iter;
-			if (newwindow && VikFile::has_vik_file_magic(file_full_path)) {
+			if (new_window && VikFile::has_vik_file_magic(file_full_path)) {
 				/* Load first of many .vik files in current window. */
 				if (first_vik_file) {
 					this->open_file(file_full_path, true);
 					first_vik_file = false;
 				} else {
 					/* Load each subsequent .vik file in a separate window. */
-					Window * new_window = Window::new_window();
-					if (new_window) {
-						new_window->open_file(file_full_path, true);
+					Window * new_window2 = Window::new_window();
+					if (new_window2) {
+						new_window2->open_file(file_full_path, true);
 					}
 				}
 			} else {
@@ -2089,7 +2083,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 		success = true;
 		/* When FileLoadResult::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = !restore_original_filename;
-		this->update_recently_used_document(new_document_full_path.toUtf8().constData());
+
 		this->update_recent_files(new_document_full_path);
 		this->redraw_tree_items_wrapper();
 		break;
@@ -2139,7 +2133,6 @@ bool Window::menu_file_save_as_cb(void)
 #ifdef K_FIXME_RESTORE
 	gtk_window_set_transient_for(file_selector, this);
 	gtk_window_set_destroy_with_parent(file_selector, true);
-
 #endif
 
 	/* Auto append / replace extension with '.vik' to the suggested file name as it's going to be a Viking File. */
@@ -2174,8 +2167,10 @@ bool Window::menu_file_save_as_cb(void)
 
 
 
-void Window::update_recent_files(QString const & path)
+void Window::update_recent_files(QString const & file_full_path)
 {
+	this->update_desktop_recent_documents(file_full_path);
+
 	/*
 	  TODO
 	  - add file type filter? gtk_recent_filter_add_group(filter, "viking");
@@ -2184,13 +2179,13 @@ void Window::update_recent_files(QString const & path)
 
 	/* Remove existing duplicate. */
 	for (auto iter = this->recent_files.begin(); iter != this->recent_files.end(); iter++) {
-		if (*iter == path) { /* This test will become more complicated as elements stored in ::recent_files become more complex. */
+		if (*iter == file_full_path) { /* This test will become more complicated as elements stored in ::recent_files become more complex. */
 			this->recent_files.erase(iter);
 			break;
 		}
 	}
 
-	this->recent_files.push_front(path);
+	this->recent_files.push_front(file_full_path);
 
 	unsigned int limit = Preferences::get_recent_number_files();
 
@@ -2211,7 +2206,8 @@ void Window::update_recent_files(QString const & path)
 
 
 
-void Window::update_recently_used_document(const QString & file_full_path)
+/* Update desktop manager's list of recently used documents. */
+void Window::update_desktop_recent_documents(const QString & file_full_path)
 {
 #ifdef K_FIXME_RESTORE
 	/* Update Recently Used Document framework */
@@ -2410,11 +2406,10 @@ int determine_location_thread(BackgroundJob * bg_job)
 
 
 /**
- * Steps to be taken once initial loading has completed.
- */
+   Steps to be taken once initial loading has completed
+*/
 void Window::finish_new(void)
 {
-#ifdef K_FIXME_RESTORE
 	/* Don't add a map if we've loaded a Viking file already. */
 	if (!this->current_document_full_path.isEmpty()) {
 		return;
@@ -2427,6 +2422,7 @@ void Window::finish_new(void)
 		}
 	}
 
+#ifdef K_FIXME_RESTORE
 	/* Maybe add a default map layer. */
 	if (Preferences::get_add_default_map_layer()) {
 		LayerMap * layer = new LayerMap();
@@ -3253,19 +3249,19 @@ void Window::configure_event_cb()
 void Window::draw_click_cb(QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
-	window->viewport->setFocus();
+	this->viewport->setFocus();
 
 	/* middle button pressed.  we reserve all middle button and scroll events
 	 * for panning and zooming; tools only get left/right/movement
 	 */
-	if (event->button() == Qt::MiddleButton) {
-		if (window->tb->active_tool->pan_handler) {
+	if (ev->button() == Qt::MiddleButton) {
+		if (this->tb->active_tool->pan_handler) {
 			// Tool still may need to do something (such as disable something)
-			window->tb->click(event);
+			this->tb->click(ev);
 		}
-		window->pan_click(event);
+		this->pan_click(ev);
 	} else {
-		window->tb->click(event);
+		this->tb->click(ev);
 	}
 #endif
 }
@@ -3303,16 +3299,16 @@ static bool window_pan_timeout(Window * window)
 void Window::draw_release_cb(QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
-	window->viewport->setFocus();
+	this->viewport->setFocus();
 
-	if (event->button() == Qt::MiddleButton) {  /* move / pan */
-		if (window->tb->active_tool->pan_handler) {
+	if (ev->button() == Qt::MiddleButton) {  /* move / pan */
+		if (this->tb->active_tool->pan_handler) {
 			// Tool still may need to do something (such as reenable something)
-			window->tb->release(event);
+			this->tb->release(ev);
 		}
-		window->pan_release(event);
+		this->pan_release(ev);
 	} else {
-		window->tb->release(event);
+		this->tb->release(ev);
 	}
 #endif
 }
@@ -3341,7 +3337,7 @@ void Window::export_to_kml_cb(void)
 
    Returns: %true on success
 */
-bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, const QString & full_dir_path, char const *extension)
+bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_type, const QString & full_dir_path, char const *extension)
 {
 	bool success = true;
 
@@ -3349,7 +3345,7 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 	this->set_busy_cursor();
 
-	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 		const Layer * layer = *iter;
 		QString file_full_path = full_dir_path + QDir::separator() + layer->name + extension;
 
@@ -3403,11 +3399,9 @@ bool Window::export_to(std::list<const Layer *> * layers, SGFileType file_type, 
 
 void Window::export_to_common(SGFileType file_type, char const * extension)
 {
-	std::list<Layer const *> * layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
-
-	if (!layers || layers->empty()) {
+	const std::list<const Layer *> layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
+	if (layers.empty()) {
 		Dialog::info(tr("Nothing to Export!"), this);
-		/* kamilFIXME: delete layers? */
 		return;
 	}
 
@@ -3423,13 +3417,11 @@ void Window::export_to_common(SGFileType file_type, char const * extension)
 #endif
 
 	if (QDialog::Accepted != file_selector.exec()) {
-		/* kamilFIXME: delete layers? */
 		return;
 	}
 
 	QStringList selection = file_selector.selectedFiles();
 	if (!selection.size()) {
-		/* kamilFIXME: delete layers? */
 		return;
 	}
 
@@ -3437,8 +3429,6 @@ void Window::export_to_common(SGFileType file_type, char const * extension)
 	if (!this->export_to(layers, file_type, full_dir_path, extension)) {
 		Dialog::error(tr("Could not convert all files"), this);
 	}
-
-	delete layers;
 }
 
 
@@ -3493,7 +3483,7 @@ bool Window::save_current_document()
 	bool success = true;
 
 	if (VikFile::save(this->items_tree->get_top_layer(), this->viewport, this->current_document_full_path)) {
-		this->update_recently_used_document(this->current_document_full_path);
+		this->update_recent_files(this->current_document_full_path);
 	} else {
 		Dialog::error(tr("The filename you requested could not be opened for writing."), this);
 		success = false;
@@ -3604,18 +3594,16 @@ void Window::menu_view_cache_info_cb(void)
 void Window::apply_new_preferences(void)
 {
 	/* Want to update all TRW layers. */
-	std::list<Layer const *> * layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
-	if (!layers || layers->empty()) {
+	const std::list<Layer const *> layers = this->items_tree->get_all_layers_of_type(LayerType::TRW, true);
+	if (layers.empty()) {
 		return;
 	}
 
-	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
 		/* Reset the individual waypoints themselves due to the preferences change. */
 		LayerTRW * trw = (LayerTRW *) *iter;
 		trw->reset_waypoints();
 	}
-
-	delete layers;
 
 	this->redraw_tree_items_wrapper();
 }
@@ -3639,7 +3627,7 @@ void Window::destroy_window_cb(void)
  * This is the global key press handler
  *  Global shortcuts are available at any time and hence are not restricted to when a certain tool is enabled
  */
-bool Window::key_press_event_cb(QKeyEvent * event)
+bool Window::key_press_event_cb(QKeyEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
 	// The keys handled here are not in the menuing system for a couple of reasons:
@@ -3666,18 +3654,21 @@ bool Window::key_press_event_cb(QKeyEvent * event)
 		map_download = true;
 		map_download_only_new = false;
 	}
-	// Standard Ctrl+KP+ / Ctrl+KP- to zoom in/out respectively
-	else if (ev->keyval == GDK_KEY_KP_Add && (ev->state & modifiers) == GDK_CONTROL_MASK) {
+
+	else
+#endif
+	/* Standard Ctrl++ / Ctrl+- to zoom in/out respectively. */
+	if (ev->key() == Qt::Key_Plus && ev->modifiers() == Qt::ControlModifier) {
 		this->viewport->zoom_in();
 		this->redraw_tree_items_wrapper();
 		return true; // handled keypress
-	}
-	else if (ev->keyval == GDK_KEY_KP_Subtract && (ev->state & modifiers) == GDK_CONTROL_MASK) {
+	} else if (ev->key() == Qt::Key_Minus && ev->modifiers() == Qt::ControlModifier) {
 		this->viewport->zoom_out();
 		this->redraw_tree_items_wrapper();
 		return true; // handled keypress
 	}
 
+#ifdef K_FIXME_RESTORE
 	if (map_download) {
 		this->simple_map_update(map_download_only_new);
 		return true; // handled keypress

@@ -622,10 +622,11 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 
 
 
-std::list<Layer const *> * LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
+std::list<const Layer *> LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
 {
-	std::list<Layer const *> * layers = new std::list<Layer const *>;
-	return this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);
+	std::list<const Layer *> layers;
+	this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);
+	return layers;
 }
 
 
@@ -633,13 +634,11 @@ std::list<Layer const *> * LayersPanel::get_all_layers_of_type(LayerType layer_t
 
 bool LayersPanel::has_any_layer_of_type(LayerType type)
 {
-	std::list<Layer const *> * dems = this->get_all_layers_of_type(type, true); /* Includes hidden layers. */
-	if (dems->empty()) {
-		delete dems;
+	std::list<const Layer *> dems = this->get_all_layers_of_type(type, true); /* Includes hidden layers. */
+	if (dems.empty()) {
 		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), this->window);
 		return false;
 	}
-	delete dems;
 	return true;
 }
 

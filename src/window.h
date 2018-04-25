@@ -141,7 +141,7 @@ namespace SlavGPS {
 
 		void simple_map_update(bool only_new);
 
-		bool export_to(std::list<const Layer *> * layers, SGFileType file_type, const QString & full_dir_path, char const *extension);
+		bool export_to(const std::list<const Layer *> & layers, SGFileType file_type, const QString & full_dir_path, char const *extension);
 		void export_to_common(SGFileType file_type, char const * extension);
 
 		void import_kmz_file_cb(void);
@@ -325,7 +325,7 @@ namespace SlavGPS {
 		void create_ui(void);
 
 		void display_tool_name();
-		void update_recently_used_document(const QString & file_full_path);
+		void update_desktop_recent_documents(const QString & file_full_path);
 		void update_recent_files(QString const & path);
 		void open_window(const QStringList & file_full_paths);
 

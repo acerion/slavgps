@@ -833,10 +833,10 @@ void CommandLineOptions::apply(Window * window)
 		}
 
 		/* Don't add map layer if one already exists. */
-		std::list<Layer const *> * maps = g_tree->tree_get_items_tree()->get_all_layers_of_type(LayerType::MAP, true);
+		const std::list<const Layer *> map_layers = g_tree->tree_get_items_tree()->get_all_layers_of_type(LayerType::MAP, true);
 		bool add_map = true;
 
-		for (auto iter = maps->begin(); iter != maps->end(); iter++) {
+		for (auto iter = map_layers.begin(); iter != map_layers.end(); iter++) {
 			LayerMap * map = (LayerMap *) *iter;
 			MapTypeID type_id = map->get_map_type_id();
 			if (the_type_id == type_id) {
