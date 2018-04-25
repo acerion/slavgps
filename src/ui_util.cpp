@@ -106,33 +106,6 @@ void SlavGPS::new_email(const QString & address, Window * parent)
 
 
 /**
-   Reads an integer from the GTK default settings registry
-   (see http://library.gnome.org/devel/gtk/stable/GtkSettings.html).
-   @param property_name The property to read.
-   @param default_value The default value in case the value could not be read.
-   @return The value for the property if it exists, otherwise the @a default_value.
-*/
-int SlavGPS::ui_get_gtk_settings_integer(const char * property_name, int default_value)
-{
-#ifdef K_FIXME_RESTORE
-	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
-		gtk_settings_get_default())), property_name)) {
-
-		int value;
-		g_object_get(G_OBJECT(gtk_settings_get_default()), property_name, &value, NULL);
-		return value;
-	} else {
-#endif
-		return default_value;
-#ifdef K_FIXME_RESTORE
-	}
-#endif
-}
-
-
-
-
-/**
  * Returns a label widget that is made selectable (i.e. the user can copy the text).
  * @param text String to display - maybe NULL
  * @return The label widget
@@ -199,18 +172,34 @@ void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha)
 
 
 
-void SlavGPS::ui_add_recent_file(const QString & file_full_path)
+/* Update desktop manager's list of recently used documents. */
+void SlavGPS::update_desktop_recent_documents(Window * window, const QString & file_full_path, const QString & mime_type)
 {
 #ifdef K_FIXME_RESTORE
-	if (!file_full_path.isEmpty()) {
-		GtkRecentManager * manager = gtk_recent_manager_get_default();
-		GFile * file = g_file_new_for_commandline_arg(file_full_path);
-		char * uri = g_file_get_uri (file);
-		if (uri && manager) {
-			gtk_recent_manager_add_item(manager, uri);
-		}
-		g_object_unref(file);
-		free(uri);
+	/* Update Recently Used Document framework */
+	GtkRecentManager *manager = gtk_recent_manager_get_default();
+	GtkRecentData * recent_data = g_slice_new(GtkRecentData);
+	char *groups[] = { (char *) "viking", NULL};
+	GFile * file = g_file_new_for_commandline_arg(file_full_path);
+	char * uri = g_file_get_uri(file);
+	char * basename = g_path_get_basename(file_full_path);
+	g_object_unref(file);
+	file = NULL;
+
+	recent_data->display_name   = basename;
+	recent_data->description    = NULL;
+	recent_data->mime_type      = (char *) mime_type;
+	recent_data->app_name       = (char *) g_get_application_name();
+	recent_data->app_exec       = g_strjoin(" ", g_get_prgname(), "%f", NULL);
+	recent_data->groups         = groups;
+	recent_data->is_private     = false;
+	if (!gtk_recent_manager_add_full(manager, uri, recent_data)) {
+		this->get_statusbar()->set_message(StatusBarField::INFO, QString("Unable to add '%s' to the list of recently used documents").arg(uri));
 	}
+
+	free(uri);
+	free(basename);
+	free(recent_data->app_exec);
+	g_slice_free(GtkRecentData, recent_data);
 #endif
 }

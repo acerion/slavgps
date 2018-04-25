@@ -38,14 +38,6 @@ using namespace SlavGPS;
 
 
 
-#ifdef K_FIXME_RESTORE
-WebTool::WebTool()
-{
-	qDebug() << "II: Web Tool created";
-}
-#endif
-
-
 
 WebTool::~WebTool()
 {

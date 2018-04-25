@@ -309,6 +309,7 @@ namespace SlavGPS {
 		void set_default_location_cb(void);
 		void preferences_cb(void);
 		void open_file_cb(void);
+		void open_recent_file_cb(void);
 
 		void menu_file_properties_cb(void);
 		bool menu_file_save_cb(void);
@@ -325,7 +326,6 @@ namespace SlavGPS {
 		void create_ui(void);
 
 		void display_tool_name();
-		void update_desktop_recent_documents(const QString & file_full_path);
 		void update_recent_files(QString const & path);
 		void open_window(const QStringList & file_full_paths);
 

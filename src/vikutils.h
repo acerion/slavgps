@@ -112,14 +112,6 @@ namespace SlavGPS {
 
 	QString vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path);
 
-
-
-	QTimeZone const * vu_get_tz_at_location(const Coord * coord);
-
-	void vu_setup_lat_lon_tz_lookup();
-	void vu_finalize_lat_lon_tz_lookup();
-
-
 	void vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max);
 	void vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max, double zoom, bool save_position);
 
@@ -129,6 +121,19 @@ namespace SlavGPS {
 
 
 	QString file_base_name(const QString & full_path);
+
+
+
+
+	class TZLookup {
+	public:
+		static void init();
+		static void uninit();
+		static const QTimeZone * get_tz_at_location(const Coord & coord);
+	private:
+		static int load_from_dir(const QString & dir);
+	};
+
 
 
 

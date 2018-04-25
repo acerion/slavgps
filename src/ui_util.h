@@ -50,14 +50,13 @@ namespace SlavGPS {
 	void open_url(const QString & url);
 	void new_email(const QString & address, Window * parent);
 
-	int ui_get_gtk_settings_integer(const char * property_name, int default_value);
 	QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 
 	/* @alpha should be in range 0-255 */
 	void ui_pixmap_set_alpha(QPixmap & pixmap, int alpha);
 	void ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha);
 
-	void ui_add_recent_file(const QString & file_full_path);
+	void update_desktop_recent_documents(Window * window, const QString & file_full_path, const QString & mime_type);
 
 
 

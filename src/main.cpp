@@ -166,7 +166,7 @@ int main(int argc, char ** argv)
 
 	/* May need to initialize the Positonal TimeZone lookup. */
 	if (Preferences::get_time_ref_frame() == SGTimeReference::World) {
-		vu_setup_lat_lon_tz_lookup();
+		TZLookup::init();
 	}
 
 
@@ -220,7 +220,7 @@ int main(int argc, char ** argv)
 
 	Download::uninit();
 
-	vu_finalize_lat_lon_tz_lookup();
+	TZLookup::uninit();
 
 	/* Clean up any temporary files. */
 	Util::remove_all_in_deletion_list();

@@ -205,17 +205,6 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 
 
 
-#ifdef K_FIXME_RESTORE
-WebToolDatasource::WebToolDatasource()
-{
-	qDebug() << "II: Web Tool Datasource created";
-
-	this->url_format_code = strdup("LRBT");
-	this->input_field_label_text = tr("Search Term");
-}
-#endif
-
-
 
 WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 				     const QString & new_url_format,
@@ -228,7 +217,7 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 
 	this->label = new_tool_name;
 	this->url_format = new_url_format;
-	this->url_format_code = new_url_format_code;
+	this->url_format_code = new_url_format_code; /* A default value would be "LRBT". */
 
 	if (!new_file_type.isEmpty()) {
 		this->file_type = new_file_type;

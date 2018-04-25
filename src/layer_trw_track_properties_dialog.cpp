@@ -366,7 +366,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		const LatLon center((this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2);
 		LayerTRW * parent_layer = (LayerTRW *) this->trk->owning_layer;
 		const Coord coord(center, parent_layer->get_coord_mode());
-		this->tz = vu_get_tz_at_location(&coord);
+		this->tz = TZLookup::get_tz_at_location(coord);
 
 
 		QString msg = SGUtils::get_time_string(t1, Qt::TextDate, &coord, this->tz);

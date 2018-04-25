@@ -1560,7 +1560,7 @@ void Window::preferences_cb(void) /* Slot. */
 
 	/* Ensure TZ Lookup initialized. */
 	if (Preferences::get_time_ref_frame() == SGTimeReference::World) {
-		vu_setup_lat_lon_tz_lookup();
+		TZLookup::init();
 	}
 }
 
@@ -2169,7 +2169,7 @@ bool Window::menu_file_save_as_cb(void)
 
 void Window::update_recent_files(QString const & file_full_path)
 {
-	this->update_desktop_recent_documents(file_full_path);
+	SlavGPS::update_desktop_recent_documents(this, file_full_path, "text/x-gps-data");
 
 	/*
 	  TODO
@@ -2199,50 +2199,15 @@ void Window::update_recent_files(QString const & file_full_path)
 	for (auto iter = this->recent_files.begin(); iter != this->recent_files.end(); iter++) {
 		QAction * qa = this->submenu_recent_files->addAction(*iter);
 		qa->setToolTip(*iter);
-		/* TODO: connect the action to slot. */
+		qa->setData(*iter);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_recent_file_cb()));
 	}
 }
 
 
 
 
-/* Update desktop manager's list of recently used documents. */
-void Window::update_desktop_recent_documents(const QString & file_full_path)
-{
-#ifdef K_FIXME_RESTORE
-	/* Update Recently Used Document framework */
-	GtkRecentManager *manager = gtk_recent_manager_get_default();
-	GtkRecentData * recent_data = g_slice_new(GtkRecentData);
-	char *groups[] = { (char *) "viking", NULL};
-	GFile * file = g_file_new_for_commandline_arg(file_full_path);
-	char * uri = g_file_get_uri(file);
-	char * basename = g_path_get_basename(file_full_path);
-	g_object_unref(file);
-	file = NULL;
-
-	recent_data->display_name   = basename;
-	recent_data->description    = NULL;
-	recent_data->mime_type      = (char *) "text/x-gps-data";
-	recent_data->app_name       = (char *) g_get_application_name();
-	recent_data->app_exec       = g_strjoin(" ", g_get_prgname(), "%f", NULL);
-	recent_data->groups         = groups;
-	recent_data->is_private     = false;
-	if (!gtk_recent_manager_add_full(manager, uri, recent_data)) {
-		this->get_statusbar()->set_message(StatusBarField::INFO, QString("Unable to add '%s' to the list of recently used documents").arg(uri));
-	}
-
-	free(uri);
-	free(basename);
-	free(recent_data->app_exec);
-	g_slice_free(GtkRecentData, recent_data);
-#endif
-}
-
-
-
-
-
- /**
+/**
  * Call this before doing things that may take a long time and otherwise not show any other feedback
  * such as loading and saving files.
  */
@@ -3760,73 +3725,25 @@ void Window::drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, 
 
 
 
-#ifdef K_FIXME_RESTORE   /* Remnants of window_gtk.cpp */
-
-
-
-
-static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
+void Window::open_recent_file_cb(void)
 {
-	char * filename = gtk_recent_chooser_get_current_uri(chooser);
-	if (filename != NULL) {
-		GFile * file = g_file_new_for_uri(filename);
-		char * path = g_file_get_path(file);
-		g_object_unref(file);
-		if (window->filename) {
-			const QStringList file_full_paths = { path };
-			window->open_window(file_full_paths);
-		} else {
-			window->open_file(path, true);
-			free(path);
-		}
+	QAction * qa = (QAction *) QObject::sender();
+	const QString file_full_path = qa->data().toString();
+
+	if (file_full_path.isEmpty()) {
+		qDebug() << "EE" PREFIX << "file path from 'recent file' action is empty";
+		return;
 	}
 
-	free(filename);
-}
-
-
-
-
-/* TODO - add method to add tool icons defined from outside this file,
-   and remove the reverse dependency on icon definition from this file. */
-static struct {
-	const GdkPixdata *data;
-	char *stock_id;
-} stock_icons[] = {
-	{ &mover_22_pixbuf,		(char *) "vik-icon-pan"              },
-	{ &zoom_18_pixbuf,		(char *) "vik-icon-zoom"             },
-	{ &ruler_18_pixbuf,		(char *) "vik-icon-ruler"            },
-	{ &select_18_pixbuf,		(char *) "vik-icon-select"           },
-	{ &vik_new_route_18_pixbuf,     (char *) "vik-icon-Create Route"     },
-	{ &route_finder_18_pixbuf,	(char *) "vik-icon-Route Finder"     },
-	{ &demdl_18_pixbuf,		(char *) "vik-icon-DEM Download"     },
-	{ &showpic_18_pixbuf,		(char *) "vik-icon-Show Picture"     },
-	{ &addtr_18_pixbuf,		(char *) "vik-icon-Create Track"     },
-	{ &edtr_18_pixbuf,		(char *) "vik-icon-Edit Trackpoint"  },
-	{ &addwp_18_pixbuf,		(char *) "vik-icon-Create Waypoint"  },
-	{ &edwp_18_pixbuf,		(char *) "vik-icon-Edit Waypoint"    },
-	{ &geozoom_18_pixbuf,		(char *) "vik-icon-Georef Zoom Tool" },
-	{ &geomove_18_pixbuf,		(char *) "vik-icon-Georef Move Map"  },
-	{ &mapdl_18_pixbuf,		(char *) "vik-icon-Maps Download"    },
-};
-
-static int n_stock_icons = G_N_ELEMENTS (stock_icons);
-
-
-
-
-static void register_vik_icons(GtkIconFactory *icon_factory)
-{
-	GtkIconSet *icon_set;
-
-	for (int i = 0; i < n_stock_icons; i++) {
-		icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(stock_icons[i].data, false, NULL));
-		gtk_icon_factory_add(icon_factory, stock_icons[i].stock_id, icon_set);
-		gtk_icon_set_unref(icon_set);
+	if (this->current_document_full_path.isEmpty()) {
+		/* We don't have any file opened yet. Open this file
+		   in this window.  TODO: what if we don't have any
+		   file open, but we already did some work in this
+		   window without saving it to file? */
+		this->open_file(file_full_path, true);
+	} else {
+		/* Current window has already some file open. Open the
+		   'recent file' in new window. */
+		this->open_window(QStringList(file_full_path));
 	}
 }
-
-
-
-
-#endif

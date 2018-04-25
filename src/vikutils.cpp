@@ -84,7 +84,7 @@ bool vik_version = false;
 
 
 
-static struct kdtree * kd = NULL;
+static struct kdtree * kd_timezones = NULL;
 
 
 
@@ -565,49 +565,47 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 
 
 /**
- * @dir: The directory from which to load the latlontz.txt file.
- *
- * Returns: The number of elements within the latlontz.txt loaded.
- */
-static int load_ll_tz_dir(const QString & dir)
+   @dir: The directory from which to load the latlontz.txt file.
+
+   @returns the number of elements within the latlontz.txt loaded.
+*/
+int TZLookup::load_from_dir(const QString & dir)
 {
 	int inserted = 0;
 	const QString path = dir + QDir::separator() + "latlontz.txt";
 	if (0 != access(path.toUtf8().constData(), R_OK)) {
+		qDebug() << "WW" PREFIX << "Could not access time zones file" << path;
+		return inserted;
+	}
+
+	long line_num = 0;
+	FILE * file = fopen(path.toUtf8().constData(), "r");
+	if (!file) {
+		qDebug() << "WW" PREFIX << "Could not open time zones file" << path;
 		return inserted;
 	}
 
 	char buffer[4096];
-	long line_num = 0;
-	FILE * file = fopen(path.toUtf8().constData(), "r");
-	if (!file) {
-		qDebug() << "WW: LL/TZ: Could not open file" << path;
-		return inserted;
-	}
-
-	while (fgets(buffer, 4096, file)) {
+	while (fgets(buffer, sizeof (buffer), file)) {
 		line_num++;
-		char **components = g_strsplit(buffer, " ", 3);
-		unsigned int nn = g_strv_length(components);
-		if (nn == 3) {
-			double pt[2] = { SGUtils::c_to_double(components[0]), SGUtils::c_to_double(components[1]) };
-			QTimeZone * time_zone = new QTimeZone(QByteArray(g_strchomp(components[2]))); /* FIXME: memory leak. */
-			if (kd_insert(kd, pt, time_zone)) {
-				qDebug() << "EE" PREFIX << "Insertion problem of" << time_zone <<  "for line" << line_num << "of latlontz.txt";
+		const QStringList components = QString(buffer).split(" ", QString::SkipEmptyParts);
+		if (components.size() == 3) {
+			double pt[2] = { SGUtils::c_to_double(components.at(0)), SGUtils::c_to_double(components.at(1)) };
+			QTimeZone * time_zone = new QTimeZone(QByteArray(components.at(2).trimmed().toUtf8().constData()));
+			if (kd_insert(kd_timezones, pt, time_zone)) {
+				qDebug() << "EE" PREFIX << "Insertion problem for tz" << time_zone <<  "created from line" << line_num << buffer;
 			} else {
 				inserted++;
 			}
-			/* NB Don't free time_zone as it's part of the kdtree data now. */
-			free(components[0]);
-			free(components[1]);
+			/* Don't free time_zone as it's part of the kdtree data now. */
 		} else {
-			fprintf(stderr, "WARNING: Line %ld of latlontz.txt does not have 3 parts\n", line_num);
+			qDebug() << "WW" PREFIX << "Line" << line_num << "in time zones file does not have 3 parts:" << buffer;
 		}
-		free(components);
 	}
 
 	fclose(file);
 
+	qDebug() << "II" PREFIX << "Loaded" << inserted << "time zones";
 	return inserted;
 }
 
@@ -617,14 +615,14 @@ static int load_ll_tz_dir(const QString & dir)
 /**
  * Can be called multiple times but only initializes the lookup once.
  */
-void SlavGPS::vu_setup_lat_lon_tz_lookup()
+void TZLookup::init()
 {
 	/* Only setup once. */
-	if (kd) {
+	if (kd_timezones) {
 		return;
 	}
 
-	kd = kd_create(2);
+	kd_timezones = kd_create(2);
 
 	/* Look in the directories of data path. */
 	const QStringList data_dirs = SlavGPSLocations::get_data_dirs();
@@ -633,7 +631,7 @@ void SlavGPS::vu_setup_lat_lon_tz_lookup()
 	/* Process directories in reverse order for priority. */
 	int n_data_dirs = data_dirs.size();
 	for (int i = n_data_dirs - 1; i >= 0; i--) {
-		loaded += load_ll_tz_dir(data_dirs.at(i));
+		loaded += TZLookup::load_from_dir(data_dirs.at(i));
 	}
 
 	qDebug() << "DD" PREFIX << "Loaded" << loaded << "elements";
@@ -645,22 +643,34 @@ void SlavGPS::vu_setup_lat_lon_tz_lookup()
 
 
 
-/**
- * Clear memory used by the lookup.
- * Only call on program exit.
- */
-void SlavGPS::vu_finalize_lat_lon_tz_lookup()
+static void tz_destructor(void * data)
 {
-	if (kd) {
-		kd_data_destructor(kd, g_free);
-		kd_free(kd);
+	if (data) {
+		QTimeZone * time_zone = (QTimeZone *) data;
+		qDebug() << "DD" PREFIX << "Will delete time zone" << time_zone;
+		delete time_zone;
 	}
 }
 
 
 
 
-static double dist_sq(double * a1, double * a2, int dims)
+/**
+   Clear memory used by the lookup.
+   Only call on program exit.
+*/
+void TZLookup::uninit(void)
+{
+	if (kd_timezones) {
+		kd_data_destructor(kd_timezones, tz_destructor);
+		kd_free(kd_timezones);
+	}
+}
+
+
+
+
+static double dist_sq(const double * a1, const double * a2, int dims)
 {
 	double dist_sq = 0, diff;
 	while (--dims >= 0) {
@@ -710,22 +720,22 @@ static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZon
  * Use the k-d tree method (http://en.wikipedia.org/wiki/Kd-tree) to quickly retrieve
  * the nearest location to the given position.
  */
-QTimeZone const * SlavGPS::vu_get_tz_at_location(const Coord * coord)
+const QTimeZone * TZLookup::get_tz_at_location(const Coord & coord)
 {
 	QTimeZone * tz = NULL;
-	if (!coord || !kd) {
+	if (!kd_timezones) {
 		return tz;
 	}
 
-	LatLon ll = coord->get_latlon();
-	double pt[2] = { ll.lat, ll.lon };
+	const LatLon ll = coord.get_latlon();
+	const double pt[2] = { ll.lat, ll.lon };
 
 	double nearest;
 	if (!ApplicationState::get_double(VIK_SETTINGS_NEAREST_TZ_FACTOR, &nearest)) {
 		nearest = 1.0;
 	}
 
-	struct kdres * presults = kd_nearest_range(kd, pt, nearest);
+	struct kdres * presults = kd_nearest_range(kd_timezones, pt, nearest);
 	while (!kd_res_end(presults)) {
 		double pos[2];
 		QTimeZone * ans = (QTimeZone *) kd_res_item(presults, pos);
@@ -755,7 +765,7 @@ QTimeZone const * SlavGPS::vu_get_tz_at_location(const Coord * coord)
  *          (only applicable for SGTimeReference::World)
  * @tz:     TimeZone string - maybe NULL.
  *          (only applicable for SGTimeReference::World)
- *          Useful to pass in the cached value from vu_get_tz_at_location() to save looking it up again for the same position
+ *          Useful to pass in the cached value from TZLookup::get_tz_at_location() to save looking it up again for the same position
  *
  * Returns: A string of the time according to the time display property.
  */
@@ -773,7 +783,7 @@ QString SGUtils::get_time_string(time_t time, Qt::DateFormat format, const Coord
 	case SGTimeReference::World:
 		if (coord && !tz) {
 			/* No timezone specified so work it out. */
-			QTimeZone const * tz_from_location = vu_get_tz_at_location(coord);
+			QTimeZone const * tz_from_location = TZLookup::get_tz_at_location(*coord);
 			if (tz_from_location) {
 				time_string = time_string_tz(time, format, *tz_from_location);
 			} else {
@@ -1126,11 +1136,10 @@ QPen SGUtils::new_pen(const QColor & color, int width)
 	QPen pen(color);
 	pen.setWidth(width);
 
-#ifdef K_FIXME_RESTORE
-	/* TODO: apply these attributes to a pen. */
-	//GDK_LINE_SOLID
-	//GDK_CAP_ROUND
-	//GDK_JOIN_ROUND
+#ifdef K_FIXME_RESTORE /* apply these attributes to a pen. */
+	GDK_LINE_SOLID
+	GDK_CAP_ROUND
+	GDK_JOIN_ROUND
 #endif
 
 	return pen;

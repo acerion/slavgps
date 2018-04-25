@@ -566,7 +566,8 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 	} else {
 		this->loaded = true;
 		if (!from_file) {
-			ui_add_recent_file(this->filename_xml);
+			/* TODO: shouldn't we use Window::update_recent_files()? */
+			update_desktop_recent_documents(this->get_window(), this->filename_xml, ""); /* TODO: provide correct mime data type for mapnik data. */
 		}
 	}
 }
