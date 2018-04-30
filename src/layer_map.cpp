@@ -237,16 +237,16 @@ SGFileTypeFilter map_file_type[1] = { SGFileTypeFilter::MBTILES };
 
 ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
-	{ PARAM_MAP_TYPE_ID,   NULL, "mode",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::COMBOBOX,    &map_types,       id_default,           NULL, NULL },
-	{ PARAM_CACHE_DIR,     NULL, "directory",      SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FOLDERENTRY, NULL,             directory_default,    NULL, NULL },
-	{ PARAM_CACHE_LAYOUT,  NULL, "cache_type",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::COMBOBOX,    &cache_types,     cache_layout_default, NULL, N_("This determines the tile storage layout on disk") },
-	{ PARAM_FILE,          NULL, "mapfile",        SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Map File:"),                            WidgetType::FILEENTRY,   map_file_type,    file_default,         NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
-	{ PARAM_ALPHA,         NULL, "alpha",          SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HSCALE,      &scale_alpha,     NULL,                 NULL, N_("Control the Alpha value for transparency effects") },
-	{ PARAM_AUTO_DOWNLOAD, NULL, "autodownload",   SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CHECKBUTTON, NULL,             sg_variant_true,      NULL, NULL },
-	{ PARAM_ONLY_MISSING,  NULL, "adlonlymissing", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CHECKBUTTON, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
-	{ PARAM_MAP_ZOOM,      NULL, "mapzoom",        SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::COMBOBOX,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
+	{ PARAM_MAP_TYPE_ID,   NULL, "mode",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::ComboBox,    &map_types,       id_default,           NULL, NULL },
+	{ PARAM_CACHE_DIR,     NULL, "directory",      SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry, NULL,             directory_default,    NULL, NULL },
+	{ PARAM_CACHE_LAYOUT,  NULL, "cache_type",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::ComboBox,    &cache_types,     cache_layout_default, NULL, N_("This determines the tile storage layout on disk") },
+	{ PARAM_FILE,          NULL, "mapfile",        SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Map File:"),                            WidgetType::FileEntry,   map_file_type,    file_default,         NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
+	{ PARAM_ALPHA,         NULL, "alpha",          SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,      &scale_alpha,     NULL,                 NULL, N_("Control the Alpha value for transparency effects") },
+	{ PARAM_AUTO_DOWNLOAD, NULL, "autodownload",   SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton, NULL,             sg_variant_true,      NULL, NULL },
+	{ PARAM_ONLY_MISSING,  NULL, "adlonlymissing", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton, NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
+	{ PARAM_MAP_ZOOM,      NULL, "mapzoom",        SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::ComboBox,    &params_mapzooms, mapzoom_default,      NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          NULL, NULL,             SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                                         WidgetType::NONE,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,          NULL, NULL,             SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                                         WidgetType::None,        NULL,             NULL,                 NULL, NULL }, /* Guard. */
 };
 
 
@@ -309,7 +309,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, Viewport *
 
 
 static ParameterSpecification prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL, "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FOLDERENTRY, NULL, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer") },
+	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL, "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FolderEntry, NULL, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer") },
 };
 
 

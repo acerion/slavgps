@@ -68,21 +68,20 @@ namespace SlavGPS {
 
 
 	enum class WidgetType {
-		CHECKBUTTON = 0,
-		RADIOGROUP,
-		SPINBOX_DOUBLE,  /* SGVariantType::DOUBLE */
-		SPINBOX_INT,     /* SGVariantType::INT */
-		ENTRY,
-		PASSWORD,
-		FILEENTRY,
-		FOLDERENTRY,
-		HSCALE,          /* SGVariantType::DOUBLE or SGVariantType::INT */
-		COLOR,
-		COMBOBOX,        /* SGVariantType::STRING or SGVariantType::INT */
-		FILELIST,
-		BUTTON,
-		DATETIME,
-		NONE
+		CheckButton = 0,
+		RadioGroup,
+		SpinBoxDouble,  /* SGVariantType::Double */
+		SpinBoxInt,     /* SGVariantType::Int */
+		Entry,
+		Password,
+		FileEntry,
+		FolderEntry,
+		HScale,         /* SGVariantType::Double or SGVariantType::Int */
+		Color,
+		ComboBox,       /* SGVariantType::String or SGVariantType::Int */
+		FileList,
+		DateTime,
+		None
 	};
 
 	QString widget_type_get_label(WidgetType type_id);

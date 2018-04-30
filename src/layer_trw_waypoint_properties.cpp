@@ -59,16 +59,16 @@ using namespace SlavGPS;
 
 
 ParameterSpecification wp_param_specs[] = {
-	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::Latitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::Longitude,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::Timestamp,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),         WidgetType::DATETIME,    NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::Altitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_SYMBOL,   NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Symbol"),       WidgetType::COMBOBOX,    NULL, NULL, NULL, NULL },
-	{ SG_WP_PARAM_MAX,      NULL, "",  SGVariantType::Empty,      PARAMETER_GROUP_GENERIC,  "",                          WidgetType::ENTRY,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_NAME,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::Entry,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LAT,      NULL, "",  SGVariantType::Latitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::Entry,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LON,      NULL, "",  SGVariantType::Longitude,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::Entry,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     NULL, "",  SGVariantType::Timestamp,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),         WidgetType::DateTime,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_ALT,      NULL, "",  SGVariantType::Altitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::Entry,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_COMMENT,  NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::Entry,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_DESC,     NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::Entry,       NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_IMAGE,    NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FileEntry,   NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_SYMBOL,   NULL, "",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Symbol"),       WidgetType::ComboBox,    NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_MAX,      NULL, "",  SGVariantType::Empty,      PARAMETER_GROUP_GENERIC,  "",                          WidgetType::Entry,       NULL, NULL, NULL, NULL },
 };
 
 

@@ -171,14 +171,14 @@ enum {
 
 
 static ParameterSpecification dem_layer_param_specs[] = {
-	{ PARAM_FILES,      NULL, "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FILELIST,        NULL,             NULL,             NULL, NULL },
-	{ PARAM_SOURCE,     NULL, "source",   SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::RADIOGROUP,      &params_source,   source_default,   NULL, NULL },
-	{ PARAM_COLOR,      NULL, "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::COLOR,           NULL,             color_default,    NULL, NULL },
-	{ PARAM_TYPE,       NULL, "type",     SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::RADIOGROUP,      &params_type,     type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   NULL, "min_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_min_elev,  NULL,             NULL, NULL },
-	{ PARAM_MAX_ELEV,   NULL, "max_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::SPINBOX_DOUBLE,  &scale_max_elev,  NULL,             NULL, NULL },
+	{ PARAM_FILES,      NULL, "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,             NULL,             NULL, NULL },
+	{ PARAM_SOURCE,     NULL, "source",   SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::RadioGroup,      &params_source,   source_default,   NULL, NULL },
+	{ PARAM_COLOR,      NULL, "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,             color_default,    NULL, NULL },
+	{ PARAM_TYPE,       NULL, "type",     SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::RadioGroup,      &params_type,     type_default,     NULL, NULL },
+	{ PARAM_MIN_ELEV,   NULL, "min_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::SpinBoxDouble,   &scale_min_elev,  NULL,             NULL, NULL },
+	{ PARAM_MAX_ELEV,   NULL, "max_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::SpinBoxDouble,   &scale_max_elev,  NULL,             NULL, NULL },
 
-	{ NUM_PARAMS,       NULL, NULL,       SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, QString(""),                     WidgetType::NONE,            NULL,             NULL,             NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL, NULL,       SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, QString(""),                     WidgetType::None,            NULL,             NULL,             NULL, NULL }, /* Guard. */
 };
 
 

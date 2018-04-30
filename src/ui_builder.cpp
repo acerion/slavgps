@@ -108,39 +108,41 @@ ParameterSpecification & ParameterSpecification::operator=(const ParameterSpecif
 
 QString SlavGPS::widget_type_get_label(WidgetType type_id)
 {
+	QString result;
+
 	switch (type_id) {
-	case WidgetType::CHECKBUTTON:
-		return "CheckButton";
-	case WidgetType::RADIOGROUP:
-		return "RadioGroup";
-	case WidgetType::SPINBOX_DOUBLE:
-		return "Spinbox(double)";
-	case WidgetType::SPINBOX_INT:
-		return "Spinbox(int)";
-	case WidgetType::ENTRY:
-		return "Entry";
-	case WidgetType::PASSWORD:
-		return "Password";
-	case WidgetType::FILEENTRY:
-		return "FileEntry";
-	case WidgetType::FOLDERENTRY:
-		return "FolderEntry";
-	case WidgetType::HSCALE:
-		return "HScale";
-	case WidgetType::COLOR:
-		return "Color";
-	case WidgetType::COMBOBOX:
-		return "ComboBox";
-	case WidgetType::FILELIST:
-		return "FileList";
-	case WidgetType::BUTTON:
-		return "Button";
-	case WidgetType::DATETIME:
-		return "DateTime";
-	case WidgetType::NONE:
+	case WidgetType::CheckButton:
+		result = "CheckButton";
+	case WidgetType::RadioGroup:
+		result = "RadioGroup";
+	case WidgetType::SpinBoxDouble:
+		result = "SpinBoxDouble";
+	case WidgetType::SpinBoxInt:
+		result = "SpinBoxInt";
+	case WidgetType::Entry:
+		result = "Entry";
+	case WidgetType::Password:
+		result = "Password";
+	case WidgetType::FileEntry:
+		result = "FileEntry";
+	case WidgetType::FolderEntry:
+		result = "FolderEntry";
+	case WidgetType::HScale:
+		result = "HScale";
+	case WidgetType::Color:
+		result = "Color";
+	case WidgetType::ComboBox:
+		result = "ComboBox";
+	case WidgetType::FileList:
+		result = "FileList";
+	case WidgetType::DateTime:
+		result = "DateTime";
+	case WidgetType::None:
 	default:
-		return "none/unknown";
+		result = "None/Unknown";
 	}
+
+	return result;
 }
 
 
@@ -487,7 +489,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 	QWidget * widget = NULL;
 	switch (param_spec.widget_type) {
 
-	case WidgetType::COLOR:
+	case WidgetType::Color:
 		if (param_spec.type_id == SGVariantType::Color) {
 			qDebug() << "II: UI Builder: creating color button with colors" << value;
 			SGColorButton * widget_ = new SGColorButton(value.val_color, NULL);
@@ -497,7 +499,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::CHECKBUTTON:
+	case WidgetType::CheckButton:
 		if (param_spec.type_id == SGVariantType::Boolean) {
 			QCheckBox * widget_ = new QCheckBox;
 			if (value.val_bool) {
@@ -507,7 +509,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::COMBOBOX: {
+	case WidgetType::ComboBox: {
 
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::String);
 
@@ -545,7 +547,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 	}
 		break;
 
-	case WidgetType::RADIOGROUP:
+	case WidgetType::RadioGroup:
 		if (param_spec.type_id == SGVariantType::Int && param_spec.widget_data) {
 			const std::vector<SGLabelID> * items = (const std::vector<SGLabelID> *) param_spec.widget_data;
 			assert (items);
@@ -554,7 +556,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::SPINBOX_INT:
+	case WidgetType::SpinBoxInt:
 
 		assert (param_spec.type_id == SGVariantType::Int);
 		if (param_spec.type_id == SGVariantType::Int && param_spec.widget_data) {
@@ -572,7 +574,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::SPINBOX_DOUBLE:
+	case WidgetType::SpinBoxDouble:
 
 		assert (param_spec.type_id == SGVariantType::Double);
 		if (param_spec.type_id == SGVariantType::Double && param_spec.widget_data) {
@@ -592,11 +594,11 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::ENTRY:
+	case WidgetType::Entry:
 		widget = new QLineEdit(value.to_string());
 		break;
 
-	case WidgetType::PASSWORD:
+	case WidgetType::Password:
 		if (param_spec.type_id == SGVariantType::String) {
 			QLineEdit * widget_ = new QLineEdit();
 			widget_->setEchoMode(QLineEdit::Password);
@@ -607,7 +609,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 
 		break;
-	case WidgetType::FILEENTRY:
+	case WidgetType::FileEntry:
 		if (param_spec.type_id == SGVariantType::String) {
 
 			SGFileTypeFilter file_type_filter = SGFileTypeFilter::ANY;
@@ -624,7 +626,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::FOLDERENTRY:
+	case WidgetType::FolderEntry:
 		if (param_spec.type_id == SGVariantType::String) {
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, SGFileTypeFilter::ANY, tr("Select folder"), NULL);
 			if (!value.val_string.isEmpty()) {
@@ -635,7 +637,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::FILELIST:
+	case WidgetType::FileList:
 		if (param_spec.type_id == SGVariantType::StringList) {
 			SGFileList * widget_ = new SGFileList(param_spec.ui_label, value.val_string_list, this);
 
@@ -643,7 +645,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::HSCALE:
+	case WidgetType::HScale:
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Double);
 		if ((param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Double) && param_spec.widget_data) {
 
@@ -662,18 +664,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 		break;
 
-	case WidgetType::BUTTON:
-		if (param_spec.type_id == SGVariantType::Pointer && param_spec.widget_data) {
-#ifdef K_FIXME_RESTORE
-			rv = gtk_button_new_with_label((const char *) param_spec.widget_data);
-			QObject::connect(rv, SIGNAL (triggered(bool)), param_spec.extra_widget_data, SLOT (value.val_pointer));
-
-			widget = widget_;
-#endif
-		}
-		break;
-
-	case WidgetType::DATETIME:
+	case WidgetType::DateTime:
 		/* TODO: zero timestamp may still be a valid timestamp. */
 		if (param_value.get_timestamp() != 0) {
 			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.get_timestamp(), this);
@@ -748,14 +739,14 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 	SGVariant rv;
 
 	switch (param_spec.widget_type) {
-	case WidgetType::COLOR:
+	case WidgetType::Color:
 		rv = SGVariant(((SGColorButton *) widget)->get_color());
 		break;
-	case WidgetType::CHECKBUTTON:
+	case WidgetType::CheckButton:
 		rv = SGVariant((bool) ((QCheckBox *) widget)->isChecked());
 		break;
 
-	case WidgetType::COMBOBOX:
+	case WidgetType::ComboBox:
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::String);
 
 		if (param_spec.type_id == SGVariantType::Int) {
@@ -782,35 +773,35 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 		break;
 
-	case WidgetType::RADIOGROUP:
+	case WidgetType::RadioGroup:
 		/* get_id_of_selected() returns arbitrary ID. */
 		rv = SGVariant((int32_t) ((SGRadioGroup *) widget)->get_id_of_selected());
 		break;
 
-	case WidgetType::SPINBOX_INT:
+	case WidgetType::SpinBoxInt:
 		assert (param_spec.type_id == SGVariantType::Int);
 		rv = SGVariant((int32_t) ((QSpinBox *) widget)->value());
 		break;
 
-	case WidgetType::SPINBOX_DOUBLE:
+	case WidgetType::SpinBoxDouble:
 		assert (param_spec.type_id == SGVariantType::Double);
 		rv = SGVariant((double) ((QDoubleSpinBox *) widget)->value());
 		break;
 
-	case WidgetType::ENTRY:
+	case WidgetType::Entry:
 		rv = SGVariant(param_spec.type_id, ((QLineEdit *) widget)->text()); /* String representation -> variant. */
 		break;
 
-	case WidgetType::PASSWORD:
+	case WidgetType::Password:
 		rv = SGVariant(((QLineEdit *) widget)->text());
 		break;
 
-	case WidgetType::FILEENTRY:
-	case WidgetType::FOLDERENTRY:
+	case WidgetType::FileEntry:
+	case WidgetType::FolderEntry:
 		rv = SGVariant(((SGFileEntry *) widget)->get_filename());
 		break;
 
-	case WidgetType::FILELIST:
+	case WidgetType::FileList:
 		rv = SGVariant(((SGFileList *) widget)->get_list());
 		for (auto iter = rv.val_string_list.constBegin(); iter != rv.val_string_list.constEnd(); iter++) {
 			qDebug() << "II: UI Builder: file on retrieved list: " << *iter;
@@ -818,7 +809,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 		break;
 
-	case WidgetType::HSCALE:
+	case WidgetType::HScale:
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Double);
 		if (param_spec.type_id == SGVariantType::Int) {
 			rv = SGVariant((int32_t) ((SGSlider *) widget)->get_value());
@@ -830,7 +821,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 			;
 		}
 		break;
-	case WidgetType::DATETIME:
+	case WidgetType::DateTime:
 		rv = SGVariant(((SGDateTimeButton *) widget)->get_value(), SGVariantType::Timestamp);
 		break;
 	default:
@@ -861,9 +852,9 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param_spec)
 {
 	SGVariant param_value;
-	if (param_spec.widget_type == WidgetType::SPINBOX_DOUBLE
-	    || param_spec.widget_type == WidgetType::SPINBOX_INT
-	    || param_spec.widget_type == WidgetType::HSCALE) {
+	if (param_spec.widget_type == WidgetType::SpinBoxDouble
+	    || param_spec.widget_type == WidgetType::SpinBoxInt
+	    || param_spec.widget_type == WidgetType::HScale) {
 
 		/* This will be overwritten below by value from settings file. */
 		ParameterScale * scale = (ParameterScale *) param_spec.widget_data;
