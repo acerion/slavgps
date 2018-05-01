@@ -4255,10 +4255,10 @@ void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 
 
 
-int LayerTRW::read_layer_data(FILE * file, char const * dirpath)
+LayerDataReadStatus LayerTRW::read_layer_data(FILE * file, char const * dirpath)
 {
 	qDebug() << "DD: Layer TRW: Read Layer Data from File: will call gpspoint_read_file() to read Layer Data";
-	return (int) a_gpspoint_read_file(file, this, dirpath);
+	return a_gpspoint_read_file(file, this, dirpath);
 }
 
 

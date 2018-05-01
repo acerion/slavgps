@@ -81,7 +81,7 @@ void GoTo::register_tool(GotoTool * goto_tool)
 void GoTo::unregister_all_tools()
 {
 	for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
-		/* kamilFIXME: delete objects? */
+		delete *iter;
 	}
 }
 

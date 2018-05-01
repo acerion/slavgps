@@ -711,10 +711,10 @@ void Layer::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * Gt
 
 
 
-int Layer::read_layer_data(FILE * file, char const * dirpath)
+LayerDataReadStatus Layer::read_layer_data(FILE * file, char const * dirpath)
 {
-	/* kamilFIXME: Magic number to indicate call of base class method. */
-	return -5;
+	/* Value that indicates call of base class method. */
+	return LayerDataReadStatus::Unrecognized;
 }
 
 

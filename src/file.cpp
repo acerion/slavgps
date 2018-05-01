@@ -445,18 +445,22 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 					pop(&stack);
 				}
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
-				qDebug() << "DD: File: Read: encountered begin of LayerData:" << line;
+				qDebug() << "DD" PREFIX << "encountered begin of LayerData:" << line;
 				Layer * layer = (Layer *) stack->data;
-				int rv = layer->read_layer_data(file, dirpath);
-				if (rv == 0) {
-					qDebug() << "DD: File: Read: LayerData read unsuccessfully";
+				const LayerDataReadStatus rv = layer->read_layer_data(file, dirpath);
+				switch (rv) {
+				case LayerDataReadStatus::Error:
+					qDebug() << "EE" PREFIX << "LayerData read unsuccessfully";
 					successful_read = false;
-				} else if (rv > 0) {
-					qDebug() << "DD: File: Read: LayerData read successfully";
+					break;
+				case LayerDataReadStatus::Success:
+					qDebug() << "DD" PREFIX << "LayerData read successfully";
 					/* Success, pass. */
-				} else { /* Simply skip layer data over. */
+					break;
+				case LayerDataReadStatus::Unrecognized:
+					/* Simply skip layer data over. */
 					while (fgets(buffer, sizeof (buffer), file)) {
-						qDebug() << "DD: File: Read: skipping over layer data:" << QString(line).left(20);
+						qDebug() << "DD" PREFIX "skipping over layer data:" << QString(line).left(30);
 						line_num++;
 
 						line = buffer;
@@ -475,7 +479,10 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 							break;
 						}
 					}
-					continue;
+					break;
+				default:
+					qDebug() << "EE" PREFIX << "invalid file read status" << (int) rv;
+					break;
 				}
 			} else {
 				successful_read = false;
@@ -801,7 +808,9 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 			}
 		} else {
 			/* Try final supported file type. */
-			if (! (success = a_gpspoint_read_file(file, layer, dirpath))) {
+			const LayerDataReadStatus rv = a_gpspoint_read_file(file, layer, dirpath);
+			success = (rv == LayerDataReadStatus::Success);
+			if (!success) {
 				/* Failure here means we don't know how to handle the file. */
 				load_answer = FileLoadResult::UNSUPPORTED_FAILURE;
 			}

@@ -36,11 +36,12 @@ namespace SlavGPS {
 
 
 	class LayerTRW;
+	enum class LayerDataReadStatus;
 
 
 
 
-	bool a_gpspoint_read_file(FILE * file, LayerTRW * trw, const char * dirpath);
+	LayerDataReadStatus a_gpspoint_read_file(FILE * file, LayerTRW * trw, const char * dirpath);
 	void a_gpspoint_write_file(FILE * file, const LayerTRW * trw);
 
 

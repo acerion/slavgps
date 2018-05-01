@@ -47,9 +47,12 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype);
 static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
 
-#ifdef K_FIXME_RESTORE
+#ifdef K_OLD_IMPLEMENTATION
 static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec);
 static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
+#endif
+
+#ifdef K_FIXME_RESTORE
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
 #endif
 

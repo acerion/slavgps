@@ -292,7 +292,7 @@ void GPSPointParser::reset()
  * No obvious way to test for a 'gpspoint' file,
  * thus set a flag if any actual tag found during processing of the file.
  */
-bool SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, char const * dirpath)
+LayerDataReadStatus SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, char const * dirpath)
 {
 	assert (file != NULL && trw != NULL);
 
@@ -376,7 +376,11 @@ bool SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, char const * dir
 		point_parser.reset();
 	}
 
-	return have_read_something;
+	if (have_read_something) {
+		return LayerDataReadStatus::Success;
+	} else {
+		return LayerDataReadStatus::Error;
+	}
 }
 
 

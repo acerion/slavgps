@@ -57,7 +57,7 @@ namespace SlavGPS {
 	public:
 		GotoTool();
 		GotoTool(const QString & new_label);
-		~GotoTool();
+		virtual ~GotoTool();
 
 		virtual QString get_label(void) const;
 		virtual QString get_url_format(void) const = 0;

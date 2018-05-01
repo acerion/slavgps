@@ -1005,7 +1005,7 @@ QPixmap LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
 	int len = metatile_read(this->cache_dir.toUtf8().constData(), xx, yy, zz, buf, tile_max, &compressed, err_msg);
 	if (len > 0) {
 		if (compressed) {
-			/* Not handled yet - I don't think this is used often - so implement later if necessary. */
+			/* TODO: Not handled yet - I don't think this is used often - so implement later if necessary. */
 			qDebug() << "EE" PREFIX << "compressed metatiles not implemented";
 			free(buf);
 			return result;

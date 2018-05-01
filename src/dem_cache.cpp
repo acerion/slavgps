@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #include <unordered_map>
@@ -34,10 +33,18 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
-	DEM * dem;
-	unsigned int ref_count;
-} LoadedDEM;
+class LoadedDEM {
+public:
+	LoadedDEM(DEM * dem);
+	~LoadedDEM();
+
+	DEM * dem = NULL;
+	unsigned int ref_count = 0;
+};
+
+
+
+
 
 typedef struct {
 	const Coord * coord;
@@ -73,10 +80,18 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce);
 
 
 
-static void loaded_dem_free(LoadedDEM *ldem)
+LoadedDEM::LoadedDEM(DEM * new_dem)
 {
-	delete ldem->dem;
-	free(ldem);
+	this->dem = new_dem;
+	this->ref_count++;
+}
+
+
+
+
+LoadedDEM::~LoadedDEM()
+{
+	delete this->dem;
 }
 
 
@@ -84,9 +99,10 @@ static void loaded_dem_free(LoadedDEM *ldem)
 
 void DEMCache::uninit(void)
 {
-	if (loaded_dems.size()) {
-		loaded_dems.clear();
+	for (auto iter = loaded_dems.begin(); iter != loaded_dems.end(); iter++) {
+		delete (*iter).second;
 	}
+	loaded_dems.clear();
 }
 
 
@@ -121,9 +137,7 @@ DEM * DEMCache::load_file_into_cache(const QString & file_path)
 			delete dem;
 			return NULL;
 		}
-		LoadedDEM * ldem = (LoadedDEM *) malloc(sizeof (LoadedDEM));
-		ldem->ref_count = 1;
-		ldem->dem = dem;
+		LoadedDEM * ldem = new LoadedDEM(dem);
 		loaded_dems[file_path] = ldem;
 		return dem;
 	}
@@ -142,6 +156,7 @@ static void dem_cache_unref(const QString & file_path)
 	(*iter).second->ref_count--;
 	if ((*iter).second->ref_count == 0) {
 		loaded_dems.erase(iter);
+		delete (*iter).second;
 	}
 }
 
@@ -224,7 +239,6 @@ void DEMCache::unload_from_cache(QStringList & file_paths)
 {
 	for (int i = 0; i < file_paths.size(); i++) {
 		dem_cache_unref(file_paths.at(i));
-		/* kamilFIXME: "delete (*iter)" ? */
 	}
 }
 

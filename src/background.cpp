@@ -357,10 +357,6 @@ void SlavGPS::a_background_uninit()
 #ifdef HAVE_LIBMAPNIK
 	g_thread_pool_free(thread_pool_local_mapnik, true, false);
 #endif
-#ifdef K_FIXME_RESTORE
-	gtk_list_store_clear(bgstore);
-	g_object_unref(bgstore);
-#endif
 
 	delete bgwindow;
 }

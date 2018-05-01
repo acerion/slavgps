@@ -42,6 +42,16 @@ namespace SlavGPS {
 
 
 
+
+	enum class LayerDataReadStatus {
+		Error,
+		Success,
+		Unrecognized, /* E.g. unrecognized section. */
+	};
+
+
+
+
 	enum class SGFileTypeFilter {
 		ANY = 0,
 		IMAGE,   // JPG+PNG+TIFF
