@@ -1546,9 +1546,7 @@ void LayerMap::draw(Viewport * viewport)
 		const LatLonBBox bbox = viewport->get_bbox();
 		map_source->add_copyright(viewport, bbox, level);
 
-		/* Logo. */
-		const QPixmap * logo = map_source->get_logo();
-		viewport->add_logo(logo);
+		viewport->add_logo(map_source->get_logo());
 
 		/* Get corner coords. */
 		if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->get_is_one_utm_zone()) {

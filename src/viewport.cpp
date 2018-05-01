@@ -1780,10 +1780,10 @@ void Viewport::add_copyright(QString const & copyright)
 
 
 
-void Viewport::add_logo(QPixmap const * logo)
+void Viewport::add_logo(const QPixmap * logo)
 {
 	if (!logo) {
-		qDebug() << "EE: Viewport: trying to add NULL logo";
+		qDebug() << "WW" PREFIX << "trying to add NULL logo";
 		return;
 	}
 

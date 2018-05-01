@@ -87,9 +87,9 @@ MapSource::MapSource()
 
 MapSource::~MapSource()
 {
-	fprintf(stderr, "MapSource destructor called\n");
+	qDebug() << "II" PREFIX << "destructor called";
 
-	delete logo; /* TODO: already done in parent class' destructor? */
+	delete this->logo;
 }
 
 
@@ -106,7 +106,12 @@ MapSource & MapSource::operator=(const MapSource & other)
 	this->copyright   = other.copyright;
 	this->license     = other.license;
 	this->license_url = other.license_url;
-	this->logo        = NULL;  //memcpy(this->logo, other.logo, sizeof (QPixmap)); /* FIXME: implement. */
+
+	delete this->logo;
+	this->logo = NULL;
+	if (other.logo) {
+		this->logo = new QPixmap(*other.logo);
+	}
 
 	this->map_type_string = other.map_type_string;
 	this->map_type_id     = other.map_type_id;
@@ -144,12 +149,15 @@ MapSource & MapSource::operator=(const MapSource & other)
 
 MapSource::MapSource(MapSource & map)
 {
-	fprintf(stderr, "MapSource copy constructor called\n");
+	qDebug() << "II" PREFIX << "copy constructor called";
 
 	this->copyright   = map.copyright;
 	this->license     = map.license;
 	this->license_url = map.license_url;
-	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (QPixmap)); /* FIXME: implement. */
+
+	if (map.logo) {
+		this->logo = new QPixmap(*map.logo);
+	}
 
 	this->map_type_string = map.map_type_string;
 	this->map_type_id     = map.map_type_id;
@@ -307,7 +315,7 @@ QString MapSource::get_license_url(void) const
 
 const QPixmap * MapSource::get_logo(void) const
 {
-	return logo;
+	return this->logo;
 }
 
 
