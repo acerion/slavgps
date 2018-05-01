@@ -102,7 +102,7 @@ static size_t curl_get_etag_func(void * ptr, size_t size, size_t nmemb, void * s
 
 static int curl_progress_func(void * clientp, double dltotal, double dlnow, double ultotal, double ulnow)
 {
-	return a_background_testcancel(NULL);
+	return (int) a_background_testcancel(NULL);
 }
 
 

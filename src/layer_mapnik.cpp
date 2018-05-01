@@ -680,8 +680,8 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 {
 	RenderInfo * data = (RenderInfo *) bg_job;
 
-	int res = a_background_thread_progress(bg_job, 0);
-	if (res == 0) {
+	const bool end_job = a_background_thread_progress(bg_job, 0);
+	if (!end_job) {
 		data->lmk->render(data->coord_ul, data->coord_br, &data->ti_ul);
 	}
 
@@ -689,10 +689,10 @@ static int render_info_background_fn(BackgroundJob * bg_job)
 	g_hash_table_remove(requests, data->request);
 	tp_mutex.unlock();
 
-	if (res == 0) {
+	if (!end_job) {
 		data->lmk->emit_layer_changed(); /* NB update display from background. */
 	}
-	return res;
+	return end_job;
 }
 
 

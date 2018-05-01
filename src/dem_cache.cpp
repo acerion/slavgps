@@ -215,8 +215,8 @@ bool DEMCache::load_files_into_cache(QStringList & file_paths, BackgroundJob * b
 #if 1
 			dem_count++;
 			/* Progress also detects abort request via the returned value. */
-			int result = a_background_thread_progress(bg_job, ((double) dem_count) / dem_total);
-			if (result != 0) {
+			const bool end_job = a_background_thread_progress(bg_job, ((double) dem_count) / dem_total);
+			if (end_job) {
 				return false; /* Abort thread. */
 			}
 #endif

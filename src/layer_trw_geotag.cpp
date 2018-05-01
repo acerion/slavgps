@@ -596,8 +596,8 @@ static int trw_layer_geotag_thread(BackgroundJob * job)
 		trw_layer_geotag_process(geotag);
 
 		/* Update thread progress and detect stop requests. */
-		int result = a_background_thread_progress(job, ((double) ++done) / total);
-		if (result != 0) {
+		const bool end_job = a_background_thread_progress(job, ((double) ++done) / total);
+		if (end_job) {
 			return -1; /* Abort thread */
 		}
 	}

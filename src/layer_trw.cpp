@@ -55,7 +55,6 @@
 #include "file.h"
 #include "dialog.h"
 #include "dem.h"
-//#include "dem_cache.h"
 #include "background.h"
 #include "util.h"
 #include "application_state.h"
@@ -83,9 +82,8 @@
 
 #ifdef K_INCLUDES
 #include "garmin_symbols.h"
-#include "background.h"
 #include "gpx.h"
-
+#include "dem_cache.h"
 #include "babel.h"
 #include "acquire.h"
 #include "external_tools.h"
@@ -3938,7 +3936,8 @@ static int create_thumbnails_thread(BackgroundJob * bg_job)
 	const int n = creator->original_image_files_paths.size();
 	for (int i = 0; i < n; i++) {
 		Thumbnails::generate_thumbnail_if_missing(creator->original_image_files_paths.at(i));
-		if (0 != a_background_thread_progress(bg_job, (i + 1.0) / n)) {
+		const bool end_job = a_background_thread_progress(bg_job, (i + 1.0) / n);
+		if (end_job) {
 			return -1; /* Abort thread. */
 		}
 	}

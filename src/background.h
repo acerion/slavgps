@@ -37,6 +37,7 @@
 #include <QVBoxLayout>
 #include <QStandardItemModel>
 #include <QTableView>
+#include <QRunnable>
 
 
 
@@ -48,6 +49,7 @@ namespace SlavGPS {
 
 	class Window;
 	class BackgroundJob;
+	class BackgroundJob2;
 
 
 
@@ -76,6 +78,29 @@ namespace SlavGPS {
 		virtual void cleanup_on_cancel(void) {};
 
 		background_thread_fn thread_fn = NULL;
+		int n_items = 0;
+		bool remove_from_list = false;
+		QPersistentModelIndex * index = NULL;
+		int progress = 0; /* 0 - 100% */
+	};
+
+
+
+
+	class BackgroundJob2 : public QRunnable {
+	public:
+		BackgroundJob2();
+		~BackgroundJob2();
+
+		static void run_in_background(BackgroundJob2 * bg_job, ThreadPoolType pool_type, const QString & job_description);
+
+		virtual void run() = 0; /* Re-implementation of QRunnable::run(). */
+
+		virtual void cleanup_on_cancel(void) {};
+
+		bool set_progress_state(int progress);
+		bool test_termination_condition(void);
+
 		int n_items = 0;
 		bool remove_from_list = false;
 		QPersistentModelIndex * index = NULL;
@@ -117,9 +142,43 @@ namespace SlavGPS {
 
 
 
+
+	class BackgroundWindow2 : public QDialog {
+		Q_OBJECT
+
+	public:
+		BackgroundWindow2(QWidget * parent);
+		~BackgroundWindow2() {};
+
+		void show_window(void);
+		QPersistentModelIndex * insert_job(const QString & message, BackgroundJob2 * bg_job);
+		void remove_job(QStandardItem * item);
+
+		QStandardItemModel * model = NULL;
+		QTableView * view = NULL;
+
+
+	private slots:
+		void close_cb(void);
+		void remove_selected_cb(void);
+		void remove_all_cb(void);
+		void remove_selected_state_cb(void);
+
+	private:
+
+		QDialogButtonBox * button_box = NULL;
+		QPushButton * close = NULL;
+		QPushButton * remove_selected = NULL;
+		QPushButton * remove_all = NULL;
+		QVBoxLayout * vbox = NULL;
+	};
+
+
+
+
 	void a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description);
-	int a_background_thread_progress(BackgroundJob * bg_job, int progress);
-	int a_background_testcancel(BackgroundJob * bg_job);
+	bool a_background_thread_progress(BackgroundJob * bg_job, int progress);
+	bool a_background_testcancel(BackgroundJob * bg_job);
 	void a_background_show_window();
 	void a_background_init();
 	void a_background_post_init();

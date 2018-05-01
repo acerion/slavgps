@@ -73,6 +73,7 @@ enum {
 
 
 static BackgroundWindow * bgwindow = NULL;
+static BackgroundWindow2 * bgwindow2 = NULL;
 
 static GThreadPool *thread_pool_remote = NULL;
 static GThreadPool *thread_pool_local = NULL;
@@ -108,6 +109,15 @@ public:
 
 
 
+class BackgroundProgress2 : public QStyledItemDelegate {
+public:
+	BackgroundProgress2(QObject * parent_object) : QStyledItemDelegate(parent_object) {};
+	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+};
+
+
+
+
 static void background_thread_update()
 {
 	for (auto i = windows_to_update.begin(); i != windows_to_update.end(); i++) {
@@ -121,10 +131,13 @@ static void background_thread_update()
 
 
 /**
- * @callbackdata: Thread data
- * @progress:     The value should be between 0 and 100 indicating percentage of the task complete
- */
-int SlavGPS::a_background_thread_progress(BackgroundJob * bg_job, int progress)
+   @callbackdata: Thread data
+   @progress:     The value should be between 0 and 100 indicating percentage of the task complete
+
+   @return true if job should be ended/terminated
+   @return false otherwise
+*/
+bool SlavGPS::a_background_thread_progress(BackgroundJob * bg_job, int progress)
 {
 	int res = a_background_testcancel(bg_job);
 
@@ -139,6 +152,32 @@ int SlavGPS::a_background_thread_progress(BackgroundJob * bg_job, int progress)
 	background_thread_update();
 
 	return res;
+}
+
+
+
+
+/**
+   @progress: The value should be between 0 and 100 indicating percentage of the task complete
+
+   @return true if job should be ended/terminated
+   @return false otherwise
+*/
+bool BackgroundJob2::set_progress_state(int new_progress)
+{
+	const bool end_job = this->test_termination_condition();
+
+	if (this->index->isValid()) {
+		this->progress = new_progress;
+
+		//gtk_list_store_set(GTK_LIST_STORE(bgstore), this->index, PROGRESS_COLUMN, myfraction * 100, -1);
+	}
+
+	this->n_items--;
+	bgitemcount--;
+	background_thread_update();
+
+	return end_job;
 }
 
 
@@ -160,20 +199,39 @@ static void thread_die(BackgroundJob * bg_job)
 
 
 
-int SlavGPS::a_background_testcancel(BackgroundJob * bg_job)
+bool SlavGPS::a_background_testcancel(BackgroundJob * bg_job)
 {
 	if (stop_all_threads) {
 		qDebug() << "WW" PREFIX << "stop all threads";
-		return -1;
+		return true;
 	}
 #ifdef K_FIXME_RESTORE
 	if (bg_job && bg_job->remove_from_list) {
 		bg_job->cleanup_on_cancel();
 		qDebug() << "WW" PREFIX << "remove from list";
-		return -1;
+		return true;
 	}
 #endif
-	return 0;
+	return false;
+}
+
+
+
+
+bool BackgroundJob2::test_termination_condition(void)
+{
+	if (stop_all_threads) {
+		qDebug() << "WW" PREFIX << "stop all threads";
+		return true;
+	}
+#ifdef K_FIXME_RESTORE
+	if (this->remove_from_list) {
+		this->cleanup_on_cancel();
+		qDebug() << "WW" PREFIX << "remove from list";
+		return true;
+	}
+#endif
+	return false;
 }
 
 
@@ -239,6 +297,47 @@ void SlavGPS::a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_ty
 
 
 /**
+   @brief Run a thread function in background
+
+   @bg_job: data for thread function (contains pointer to the function)
+   @pool_type: Which pool this thread should run in
+   @job_description:
+*/
+void BackgroundJob2::run_in_background(BackgroundJob2 * bg_job, ThreadPoolType pool_type, const QString & job_description)
+{
+	qDebug() << "II: Background: creating background thread" << job_description;
+
+	bg_job->remove_from_list = true;
+
+	bg_job->progress = 0;
+	bg_job->index = bgwindow2->insert_job(job_description, bg_job);
+
+	bg_job = bg_job;
+
+	bgitemcount += bg_job->n_items;
+
+	/* Run the thread in the background. */
+	qDebug() << "II" PREFIX << "starting worker function";
+	bg_job->run();
+
+#ifdef K_FIXME_RESTORE
+	qDebug() << "II: Background2: helper function: worker function returned, remove_from_list =" << bg_job->remove_from_list << ", job index = " << bg_job->index << bg_job->index->isValid();
+
+	if (bg_job && bg_job->remove_from_list) {
+		if (bg_job->index && bg_job->index->isValid()) {
+			qDebug() << "II: Background2: removing job from list";
+			bgwindow2->model->removeRow(bg_job->index->row());
+		}
+	}
+
+	thread_die(bg_job);
+#endif
+}
+
+
+
+
+/**
  * Display the background jobs window.
  */
 void SlavGPS::a_background_show_window()
@@ -256,6 +355,24 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 	QStandardItem * child = parent_item->child(item->row(), PROGRESS_COLUMN);
 
 	BackgroundJob * bg_job = (BackgroundJob *) child->data(RoleLayerData).toULongLong();
+
+	if (bg_job->index && bg_job->index->isValid()) {
+		qDebug() << "II: Background: removing job" << parent_item->child(item->row(), TITLE_COLUMN)->text();
+
+		bg_job->remove_from_list = false;
+		this->model->removeRow(bg_job->index->row());
+	}
+}
+
+
+
+
+void BackgroundWindow2::remove_job(QStandardItem * item)
+{
+	QStandardItem * parent_item = this->model->invisibleRootItem();
+	QStandardItem * child = parent_item->child(item->row(), PROGRESS_COLUMN);
+
+	BackgroundJob2 * bg_job = (BackgroundJob2 *) child->data(RoleLayerData).toULongLong();
 
 	if (bg_job->index && bg_job->index->isValid()) {
 		qDebug() << "II: Background: removing job" << parent_item->child(item->row(), TITLE_COLUMN)->text();
@@ -339,6 +456,7 @@ void SlavGPS::a_background_post_init()
 void SlavGPS::a_background_post_init_window(QWidget * parent_widget)
 {
 	bgwindow = new BackgroundWindow(parent_widget);
+	bgwindow2 = new BackgroundWindow2(parent_widget);
 }
 
 
@@ -359,6 +477,7 @@ void SlavGPS::a_background_uninit()
 #endif
 
 	delete bgwindow;
+	delete bgwindow2;
 }
 
 
@@ -460,6 +579,86 @@ BackgroundWindow::BackgroundWindow(QWidget * parent_widget) : QDialog(parent_wid
 
 
 
+BackgroundWindow2::BackgroundWindow2(QWidget * parent_widget) : QDialog(parent_widget)
+{
+	this->button_box = new QDialogButtonBox();
+	this->close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+	this->close->setDefault(true);
+	this->remove_selected = this->button_box->addButton("Remove &Selected", QDialogButtonBox::ActionRole);
+	this->remove_all = this->button_box->addButton("Remove &All",  QDialogButtonBox::ActionRole);
+
+
+	this->model = new QStandardItemModel();
+	this->model->setHorizontalHeaderItem(TITLE_COLUMN, new QStandardItem("Job"));
+	this->model->setHorizontalHeaderItem(PROGRESS_COLUMN, new QStandardItem("Progress"));
+
+
+	this->view = new QTableView();
+	this->view->setSelectionBehavior(QAbstractItemView::SelectRows); /* Single click in a cell selects whole row. */
+	this->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	this->view->verticalHeader()->setVisible(false);
+	this->view->setWordWrap(false);
+	this->view->setTextElideMode(Qt::ElideLeft); /* The most interesting part should be on the right-hand side of text. */
+	this->view->setShowGrid(false);
+	this->view->setModel(this->model);
+	this->view->show();
+
+
+	this->view->horizontalHeader()->setSectionHidden(DATA_COLUMN, true);
+	this->view->horizontalHeader()->setDefaultSectionSize(200);
+	this->view->horizontalHeader()->setSectionResizeMode(TITLE_COLUMN, QHeaderView::Interactive);
+	this->view->horizontalHeader()->setStretchLastSection(true);
+
+
+	BackgroundProgress2 * delegate = new BackgroundProgress2(this);
+	this->view->setItemDelegateForColumn(PROGRESS_COLUMN, delegate);
+
+
+	this->vbox = new QVBoxLayout;
+	this->vbox->addWidget(this->view);
+	this->vbox->addWidget(this->button_box);
+
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+	this->setWindowTitle("Viking Background Jobs");
+
+#if 0
+	/* This artificial string list is just for testing purposes. */
+	QStringList job_list;
+	job_list << "aa" << "bb" << "cc" << "dd" << "ee" << "ff";
+	int value = 0;
+
+	for (auto iter = job_list.begin(); iter != job_list.end(); ++iter) {
+
+		qDebug() << "II: Background: adding to initial list:" << (*iter);
+
+		BackgroundJob2 * bg_job = new BackgroundJob2();
+		bg_job->progress = value;
+		bg_job->index = this->insert_job(*iter, bg_job);
+		qDebug() << "II: Background: added to list an item with index" << bg_job->index->isValid();
+
+		value += 10;
+	}
+#endif
+
+
+	connect(this->close, SIGNAL(clicked()), this, SLOT(close_cb()));
+	connect(this->remove_selected, SIGNAL(clicked()), this, SLOT(remove_selected_cb()));
+	connect(this->remove_all, SIGNAL(clicked()), this, SLOT(remove_all_cb()));
+
+	QItemSelectionModel * selection_model = this->view->selectionModel();
+	connect(selection_model, SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)), this, SLOT(remove_selected_state_cb(void)));
+	this->remove_selected_state_cb();
+
+	this->resize(QSize(400, 400));
+}
+
+
+
+
 void BackgroundWindow::close_cb()
 {
 	bgwindow->hide();
@@ -468,7 +667,40 @@ void BackgroundWindow::close_cb()
 
 
 
+void BackgroundWindow2::close_cb()
+{
+	bgwindow2->hide();
+}
+
+
+
+
 void BackgroundWindow::remove_selected_cb()
+{
+	QStandardItem * item = NULL;
+	QModelIndexList indexes = this->view->selectionModel()->selectedIndexes();
+
+	while (!indexes.isEmpty()) {
+
+		QModelIndex index = indexes.last();
+		if (!index.isValid()) {
+			continue;
+		}
+		QStandardItem * item_ = this->model->itemFromIndex(index);
+		this->remove_job(item_);
+
+		this->model->removeRows(indexes.last().row(), 1);
+		indexes.removeLast();
+		indexes = this->view->selectionModel()->selectedIndexes();
+	}
+
+	background_thread_update();
+}
+
+
+
+
+void BackgroundWindow2::remove_selected_cb()
 {
 	QStandardItem * item = NULL;
 	QModelIndexList indexes = this->view->selectionModel()->selectedIndexes();
@@ -511,7 +743,38 @@ void BackgroundWindow::remove_all_cb()
 
 
 
+void BackgroundWindow2::remove_all_cb()
+{
+	QModelIndex parent_index = QModelIndex();
+	for (int r = this->model->rowCount(parent_index) - 1; r >= 0; --r) {
+		QModelIndex index = this->model->index(r, 0, parent_index);
+		QVariant name = model->data(index);
+		qDebug() << "II: Background2: removing job" << name;
+
+		QStandardItem * item = this->model->itemFromIndex(index);
+		this->remove_job(item);
+	}
+
+	background_thread_update();
+}
+
+
+
+
 void BackgroundWindow::remove_selected_state_cb(void)
+{
+	QModelIndexList indexes = this->view->selectionModel()->selectedIndexes();
+	if (indexes.isEmpty()) {
+		this->remove_selected->setEnabled(false);
+	} else {
+		this->remove_selected->setEnabled(true);
+	}
+}
+
+
+
+
+void BackgroundWindow2::remove_selected_state_cb(void)
 {
 	QModelIndexList indexes = this->view->selectionModel()->selectedIndexes();
 	if (indexes.isEmpty()) {
@@ -540,7 +803,60 @@ void BackgroundWindow::show_window(void)
 
 
 
+void BackgroundWindow2::show_window(void)
+{
+	QItemSelectionModel * selection_model = this->view->selectionModel();
+	QModelIndex index = selection_model->currentIndex();
+	if (index.isValid()) {
+		qDebug() << "II: Background2: clearing current selection";
+		selection_model->select(index, QItemSelectionModel::Clear | QItemSelectionModel::Deselect);
+	}
+
+	this->remove_selected_state_cb();
+	this->show();
+}
+
+
+
+
 QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, BackgroundJob* bg_job)
+{
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+
+	/* TITLE_COLUMN */
+	item = new QStandardItem(message);
+	item->setToolTip(message);
+	items << item;
+
+	/* PROGRESS_COLUMN */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((qulonglong) bg_job);
+	item->setData(variant, RoleBackgroundData);
+	items << item;
+
+	this->model->invisibleRootItem()->appendRow(items);
+
+	/* We generate index of item in second column. Notice that the
+	   index is valid only after inserting items (i.e. appending row)
+	   into model, that's why we do it right at the end. */
+	QPersistentModelIndex * index = new QPersistentModelIndex(this->model->indexFromItem(item));
+
+#if 1
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	//this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
+#endif
+
+	return index;
+}
+
+
+
+
+QPersistentModelIndex * BackgroundWindow2::insert_job(const QString & message, BackgroundJob2 * bg_job)
 {
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -602,7 +918,42 @@ void BackgroundProgress::paint(QPainter * painter, const QStyleOptionViewItem &o
 
 
 
+/**
+   @brief Reimplemented ::paint() method, drawing a progress bar in PROGRESS_COLUMN column
+*/
+void BackgroundProgress2::paint(QPainter * painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+	BackgroundJob2 * bg_job = (BackgroundJob2 *) index.data(RoleLayerData).toULongLong();
+
+	QRect rect(option.rect.x() + 1, option.rect.y() + 1, option.rect.width() - 2, option.rect.height() - 2);
+
+	/* http://doc.qt.io/qt-5/qabstractitemdelegate.html#details */
+
+        QStyleOptionProgressBar progressBarOption;
+        progressBarOption.rect = option.rect;
+        progressBarOption.minimum = 0; /* We could get min/max/unit from BackgroundJob for non-percentage progress indicators. */
+        progressBarOption.maximum = 100;
+        progressBarOption.progress = bg_job->progress;
+        progressBarOption.text = QString::number(bg_job->progress) + "%";
+        progressBarOption.textVisible = true;
+
+        QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter);
+}
+
+
+
+
 BackgroundJob::BackgroundJob()
+{
+
+}
+
+BackgroundJob2::BackgroundJob2()
+{
+
+}
+
+BackgroundJob2::~BackgroundJob2()
 {
 
 }

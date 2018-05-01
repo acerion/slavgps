@@ -378,7 +378,8 @@ static int load_attributions_thread(BackgroundJob * bg_job)
 	bg_job->load_attributions();
 #endif
 
-	if (0 != a_background_thread_progress(bg_job, 1)) {
+	const bool end_job = a_background_thread_progress(bg_job, 1);
+	if (end_job) {
 		return -1; /* Abort thread. */
 	}
 #ifdef K_FIXME_RESTORE

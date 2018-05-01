@@ -30,12 +30,16 @@
 
 #include "dem.h"
 #include "coord.h"
-#include "background.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class BackgroundJob;
 
 
 

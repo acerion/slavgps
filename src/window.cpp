@@ -2293,52 +2293,45 @@ QAction * Window::get_drawmode_action(ViewportDrawMode mode)
 
 
 
-static int determine_location_thread(BackgroundJob * bg_job);
-
-
-
-
-class LocatorJob : public BackgroundJob {
+class LocatorJob : public BackgroundJob2 {
 public:
-	LocatorJob(Window * window_);
+	LocatorJob(Window * window);
+	void run(void);
+
+private:
 	Window * window = NULL;
 };
 
 
 
 
-LocatorJob::LocatorJob(Window * window_)
+LocatorJob::LocatorJob(Window * new_window)
 {
-	this->thread_fn = determine_location_thread;
 	this->n_items = 1; /* There is only one location to determine. */
 
-	this->window = window_;
+	this->window = new_window;
 }
 
 
 
 
 /**
- * @bg_job: Data used by our background thread mechanism
- *
- * Use the features in goto module to determine where we are
- * Then set up the viewport:
- *  1. To goto the location
- *  2. Set an appropriate level zoom for the location type
- *  3. Some statusbar message feedback
- */
-int determine_location_thread(BackgroundJob * bg_job)
+   Use the features in goto module to determine where we are
+   Then set up the viewport:
+   1. To goto the location
+   2. Set an appropriate level zoom for the location type
+   3. Some statusbar message feedback
+*/
+void LocatorJob::run(void)
 {
-	LocatorJob * locator = (LocatorJob *) bg_job;
-
-	LatLon ll;
+	LatLon lat_lon;
 	QString name;
-	int ans = GoTo::where_am_i(locator->window->viewport, ll, name);
+	int ans = GoTo::where_am_i(this->window->viewport, lat_lon, name);
 
-	int result = a_background_thread_progress(bg_job, 1.0);
-	if (result != 0) {
-		locator->window->statusbar_update(StatusBarField::INFO, QString("Location lookup aborted"));
-		return -1; /* Abort thread */
+	const bool end_job = this->set_progress_state(1.0);
+	if (end_job) {
+		this->window->statusbar_update(StatusBarField::INFO, QString("Location lookup aborted"));
+		return; /* Abort thread */
 	}
 
 	if (ans) {
@@ -2353,18 +2346,18 @@ int determine_location_thread(BackgroundJob * bg_job)
 			zoom = 2048.0;
 		}
 
-		locator->window->viewport->set_zoom(zoom);
-		locator->window->viewport->set_center_from_latlon(ll, false);
+		this->window->viewport->set_zoom(zoom);
+		this->window->viewport->set_center_from_latlon(lat_lon, false);
 
-		locator->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
+		this->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
 
 		// Signal to redraw from the background
-		locator->window->items_tree->emit_items_tree_updated_cb("determine location");
+		this->window->items_tree->emit_items_tree_updated_cb("determine location");
 	} else {
-		locator->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
+		this->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
 	}
 
-	return 0;
+	return;
 }
 
 
@@ -2398,16 +2391,18 @@ void Window::finish_new(void)
 		this->redraw_tree_items_wrapper();
 	}
 
+#endif
+
 	/* If not loaded any file, maybe try the location lookup. */
-	if (this->loaded_type == FileLoadResult::READ_FAILURE) {
+	if (true || this->loaded_type == FileLoadResult::READ_FAILURE) {
 		if (Preferences::get_startup_method() == StartupMethod::AutoLocation) {
 
 			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
 			LocatorJob * locator = new LocatorJob(this);
-			a_background_thread(locator, ThreadPoolType::REMOTE, tr("Determining location"));
+			BackgroundJob2::run_in_background(locator, ThreadPoolType::REMOTE, tr("Determining location"));
 		}
 	}
-#endif
+
 }
 
 

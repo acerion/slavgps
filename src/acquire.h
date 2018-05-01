@@ -142,7 +142,7 @@ namespace SlavGPS {
 	public:
 		AcquireGetter() {};
 		~AcquireGetter();
-		void run(); /* Re-implementation of QRunnable::get(). */
+		void run(); /* Re-implementation of QRunnable::run(). */
 		void on_complete_process(void);
 
 
