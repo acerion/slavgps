@@ -225,7 +225,7 @@ Window::Window()
 #endif
 
 #endif
-	a_background_add_window(this);
+	Background::add_window(this);
 
 	window_list.push_front(this);
 
@@ -340,7 +340,7 @@ Window::Window()
 
 Window::~Window()
 {
-	a_background_remove_window(this);
+	Background::remove_window(this);
 
 	window_list.remove(this);
 	delete this->viewport;
@@ -1303,7 +1303,7 @@ void Window::create_ui(void)
 		}
 	}
 
-	a_background_post_init_window(this);
+	Background::post_init_window(this);
 }
 
 
@@ -1853,7 +1853,7 @@ void Window::zoom_to_cb(void)
  */
 void Window::show_background_jobs_window_cb(void)
 {
-	a_background_show_window();
+	Background::show_window();
 }
 
 
@@ -2293,7 +2293,7 @@ QAction * Window::get_drawmode_action(ViewportDrawMode mode)
 
 
 
-class LocatorJob : public BackgroundJob2 {
+class LocatorJob : public BackgroundJob {
 public:
 	LocatorJob(Window * window);
 	void run(void);
@@ -2399,7 +2399,7 @@ void Window::finish_new(void)
 
 			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
 			LocatorJob * locator = new LocatorJob(this);
-			BackgroundJob2::run_in_background(locator, ThreadPoolType::REMOTE, tr("Determining location"));
+			Background::run_in_background(locator, ThreadPoolType::REMOTE, tr("Determining location"));
 		}
 	}
 

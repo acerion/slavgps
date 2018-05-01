@@ -110,16 +110,17 @@ static const OsmTraceVisibility trace_visibilities[] = {
 
 
 
-static int osm_traces_upload_thread(BackgroundJob * bg_job);
 static int find_initial_visibility_index(void);
 
 
 
 
-class OsmTracesInfo : public BackgroundJob {
+class OSMTracesInfo : public BackgroundJob {
 public:
-	OsmTracesInfo(LayerTRW * trw, Track * trk);
-	~OsmTracesInfo();
+	OSMTracesInfo(LayerTRW * trw, Track * trk);
+	~OSMTracesInfo();
+
+	void run(void);
 
 	QString name;
 	QString description;
@@ -142,19 +143,18 @@ static ParameterSpecification prefs[] = {
 
 
 
-OsmTracesInfo::OsmTracesInfo(LayerTRW * trw_, Track * trk_)
+OSMTracesInfo::OSMTracesInfo(LayerTRW * new_trw, Track * new_trk)
 {
-	this->thread_fn = osm_traces_upload_thread;
 	this->n_items = 1;
 
-	this->trw = trw_;
-	this->trk = trk_;
+	this->trw = new_trw;
+	this->trk = new_trk;
 }
 
 
 
 
-OsmTracesInfo::~OsmTracesInfo()
+OSMTracesInfo::~OSMTracesInfo()
 {
 	this->trw->unref();
 	this->trw = NULL;
@@ -313,43 +313,38 @@ static int osm_traces_upload_file(const QString & user,
 
 
 /**
- * Uploading function executed by the background" thread.
- */
-static int osm_traces_upload_thread(BackgroundJob * bg_job)
+   Uploading function executed by the background" thread.
+*/
+void OSMTracesInfo::run(void)
 {
-	OsmTracesInfo * oti = (OsmTracesInfo *) bg_job;
 	/* Due to OSM limits, we have to enforce ele and time fields
 	   also don't upload invisible tracks. */
 	static GPXWriteOptions options(true, true, false, false);
 
-	if (!oti) {
-		return -1;
-	}
-
 	QString filename;
 
 	/* Writing gpx file. */
-	if (oti->trk != NULL) {
+	if (this->trk != NULL) {
 		/* Upload only the selected track. */
-		if (oti->anonymize_times) {
-			Track * trk = new Track(*oti->trk);
-			trk->anonymize_times();
-			filename = GPX::write_track_tmp_file(trk, &options);
-			trk->free();
+		if (this->anonymize_times) {
+			Track * trk2 = new Track(*this->trk);
+			trk2->anonymize_times();
+			filename = GPX::write_track_tmp_file(trk2, &options);
+			trk2->free();
 		} else {
-			filename = GPX::write_track_tmp_file(oti->trk, &options);
+			filename = GPX::write_track_tmp_file(this->trk, &options);
 		}
 	} else {
 		/* Upload the whole LayerTRW. */
-		filename = GPX::write_tmp_file(oti->trw, &options);
+		filename = GPX::write_tmp_file(this->trw, &options);
 	}
 
 	if (filename.isEmpty()) {
-		return -1;
+		return;
 	}
 
 	/* Finally, upload it. */
-	int ans = osm_traces_upload_file(osm_user, osm_password, filename, oti->name.toUtf8().constData(), oti->description.toUtf8().constData(), oti->tags.toUtf8().constData(), oti->visibility);
+	int ans = osm_traces_upload_file(osm_user, osm_password, filename, this->name.toUtf8().constData(), this->description.toUtf8().constData(), this->tags.toUtf8().constData(), this->visibility);
 
 	/* Show result in statusbar or failure in dialog for user feedback. */
 
@@ -366,7 +361,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 
 	/* Test to see if window it was invoked on is still valid.
 	   Not sure if this test really works! (i.e. if the window was closed in the mean time). */
-	Window * w = oti->trw->get_window();
+	Window * w = this->trw->get_window();
 	if (w) {
 		QString msg;
 		if (ans == 0) {
@@ -388,7 +383,7 @@ static int osm_traces_upload_thread(BackgroundJob * bg_job)
 		qDebug() << "EE: OSM Traces: failed to remove temporary file" << filename;
 		ret = -1;
 	}
-	return ret;
+	return;
 }
 
 
@@ -549,7 +544,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		osm_save_current_credentials(user_entry->text(), password_entry->text());
 
 		/* Storing data for the future thread. */
-		OsmTracesInfo * info = new OsmTracesInfo(trw, trk);
+		OSMTracesInfo * info = new OSMTracesInfo(trw, trk);
 		info->name        = name_entry->text();
 		info->description = description_entry->text();
 		/* TODO Normalize tags: they will be used as URL part. */
@@ -568,7 +563,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->name);
 
-		a_background_thread(info, ThreadPoolType::REMOTE, job_description);
+		Background::run_in_background(info, ThreadPoolType::REMOTE, job_description);
 	}
 }
 

@@ -68,8 +68,10 @@ namespace SlavGPS {
 		QString attribution;
 		bool loading_attributions = false;
 
-	private:
 		int load_attributions();
+
+	private:
+
 		void async_load_attributions();
 		QString compute_quad_tree(int zoom, int tilex, int tiley) const;
 		static void bstart_element(GMarkupParseContext * context,
@@ -87,7 +89,6 @@ namespace SlavGPS {
 
 		bool parse_file_for_attributions(QFile & file);
 		int emit_update(void * data);
-		background_thread_fn thread_fn = NULL;
 	};
 
 

@@ -616,6 +616,8 @@ class RenderInfo : public BackgroundJob {
 public:
 	RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul, const char * request);
 
+	void run(void);
+
 	LayerMapnik * lmk = NULL;
 
 	Coord coord_ul;
@@ -627,11 +629,9 @@ public:
 
 
 
-static int render_info_background_fn(BackgroundJob * bg_job);
 
 RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul_, const char * request_)
 {
-	this->thread_fn = render_info_background_fn;
 	this->n_items = 1;
 
 	this->lmk = layer;
@@ -676,23 +676,21 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInf
 
 
 
-static int render_info_background_fn(BackgroundJob * bg_job)
+void RenderInfo::run(void)
 {
-	RenderInfo * data = (RenderInfo *) bg_job;
-
-	const bool end_job = a_background_thread_progress(bg_job, 0);
+	const bool end_job = this->set_progress_state(0);
 	if (!end_job) {
-		data->lmk->render(data->coord_ul, data->coord_br, &data->ti_ul);
+		this->lmk->render(this->coord_ul, this->coord_br, &this->ti_ul);
 	}
 
 	tp_mutex.lock();
-	g_hash_table_remove(requests, data->request);
+	g_hash_table_remove(requests, this->request);
 	tp_mutex.unlock();
 
 	if (!end_job) {
-		data->lmk->emit_layer_changed(); /* NB update display from background. */
+		this->lmk->emit_layer_changed(); /* NB update display from background. */
 	}
-	return end_job;
+	return;
 }
 
 
@@ -729,7 +727,7 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coo
 
 	const QString base_name = FileUtils::get_base_name(file_name);
 	const QString job_description = QObject::tr("Mapnik Render %1:%2:%3 %4").arg(zoom).arg(x).arg(y).arg(base_name);
-	a_background_thread(ri, ThreadPoolType::LOCAL_MAPNIK, job_description);
+	Background::run_in_background(ri, ThreadPoolType::LOCAL_MAPNIK, job_description);
 }
 
 

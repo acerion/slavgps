@@ -71,10 +71,11 @@ using namespace SlavGPS;
 
 
 /* Structure for DEM data used in background thread. */
-class DemLoadJob : public BackgroundJob {
+class DEMLoadJob : public BackgroundJob {
 public:
-	DemLoadJob(LayerDEM * layer);
+	DEMLoadJob(LayerDEM * layer);
 
+	void run(void);
 	void cleanup_on_cancel(void);
 
 	LayerDEM * layer = NULL;
@@ -87,6 +88,8 @@ class DEMDownloadJob : public BackgroundJob {
 public:
 	DEMDownloadJob(const QString & dest_file_path, const LatLon & lat_lon, LayerDEM * layer);
 	~DEMDownloadJob();
+
+	void run(void);
 
 	QString dest_file_path;
 	double lat, lon;
@@ -187,8 +190,6 @@ static ParameterSpecification dem_layer_param_specs[] = {
 static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static void srtm_draw_existence(Viewport * viewport);
-static int dem_load_list_thread(BackgroundJob * bg_job);
-static int dem_download_thread(BackgroundJob * bg_job);
 #ifdef VIK_CONFIG_DEM24K
 static void dem24k_draw_existence(Viewport * viewport);
 #endif
@@ -311,48 +312,42 @@ Layer * LayerDEMInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 
 
 
-DemLoadJob::DemLoadJob(LayerDEM * layer_)
+DEMLoadJob::DEMLoadJob(LayerDEM * new_layer)
 {
-	this->thread_fn = dem_load_list_thread;
-	this->n_items = layer_->files.size(); /* Number of DEM files. */
+	this->n_items = new_layer->files.size(); /* Number of DEM files. */
 
-	this->layer = layer_;
+	this->layer = new_layer;
 }
 
 
 
 
-/*
- * Function for starting the DEM file loading as a background thread/
- */
-static int dem_load_list_thread(BackgroundJob * bg_job)
+/**
+   Function for starting the DEM file loading as a background thread
+*/
+void DEMLoadJob::run(void)
 {
-	DemLoadJob * load_job = (DemLoadJob *) bg_job;
+	QStringList dem_filenames = this->layer->files; /* kamilTODO: do we really need to make the copy? */
 
-	int result = 0; /* Default to good. */
-	/* Actual Load. */
-
-	QStringList dem_filenames = load_job->layer->files; /* kamilTODO: do we really need to make the copy? */
-
-	if (!DEMCache::load_files_into_cache(dem_filenames, load_job)) {
+	if (!DEMCache::load_files_into_cache(dem_filenames, this)) {
 		/* Thread cancelled. */
-		result = -1;
+		;
 	}
 
 	/* ATM as each file is processed the screen is not updated (no mechanism exposed to DEMCache::load_files_into_cache()).
 	   Thus force draw only at the end, as loading is complete/aborted. */
-	if (load_job->layer) {
+	if (this->layer) {
 		qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' after loading list of files";
-		load_job->layer->emit_layer_changed(); /* NB update from background thread. */
+		this->layer->emit_layer_changed(); /* NB update from background thread. */
 	}
 
-	return result;
+	return;
 }
 
 
 
 
-void DemLoadJob::cleanup_on_cancel(void)
+void DEMLoadJob::cleanup_on_cancel(void)
 {
 	/* Abort loading.
 	   Instead of freeing the list, leave it as partially processed.
@@ -441,8 +436,8 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 		/* No need for thread if no files. */
 		if (!this->files.empty()) {
 			/* Thread Load. */
-			DemLoadJob * load_job = new DemLoadJob(this);
-			a_background_thread(load_job, ThreadPoolType::LOCAL, QObject::tr("DEM Loading"));
+			DEMLoadJob * load_job = new DEMLoadJob(this);
+			Background::run_in_background(load_job, ThreadPoolType::LOCAL, QObject::tr("DEM Loading"));
 		}
 
 		break;
@@ -1022,12 +1017,11 @@ LayerDEM::~LayerDEM()
 
 
 
-DEMDownloadJob::DEMDownloadJob(const QString & dest_file_path_, const LatLon & lat_lon, LayerDEM * layer_dem)
+DEMDownloadJob::DEMDownloadJob(const QString & new_dest_file_path, const LatLon & lat_lon, LayerDEM * layer_dem)
 {
-	this->thread_fn = dem_download_thread;
 	this->n_items = 1; /* We are downloading one DEM tile at a time. */
 
-	this->dest_file_path = dest_file_path_;
+	this->dest_file_path = new_dest_file_path;
 	this->lat = lat_lon.lat;
 	this->lon = lat_lon.lon;
 	this->layer = layer_dem;
@@ -1302,38 +1296,32 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 
 
 
-static int dem_download_thread(BackgroundJob * bg_job)
+void DEMDownloadJob::run(void)
 {
-	DEMDownloadJob * dl_job = (DEMDownloadJob *) bg_job;
+	qDebug() << "II" PREFIX << "download thread";
 
-	qDebug() << "II: Layer DEM: download thread --------------------";
-
-	if (dl_job->source == DEM_SOURCE_SRTM) {
-		srtm_dem_download_thread(dl_job);
+	if (this->source == DEM_SOURCE_SRTM) {
+		srtm_dem_download_thread(this);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (p->source == DEM_SOURCE_DEM24K) {
-		dem24k_dem_download_thread(dl_job);
+		dem24k_dem_download_thread(this);
 #endif
 	} else {
-		return 0;
+		return;
 	}
 
-	//gdk_threads_enter();
+	this->mutex.lock();
+	if (this->layer) {
+		this->layer->weak_unref(LayerDEM::weak_ref_cb, this);
 
-	dl_job->mutex.lock();
-	if (dl_job->layer) {
-		dl_job->layer->weak_unref(LayerDEM::weak_ref_cb, dl_job);
-
-		if (dl_job->layer->add_file(dl_job->dest_file_path)) {
-			qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' on downloading file";
-			dl_job->layer->emit_layer_changed(); /* NB update from background thread. */
+		if (this->layer->add_file(this->dest_file_path)) {
+			qDebug() << "SIGNAL" PREFIX << "will emit 'layer changed' on downloading file";
+			this->layer->emit_layer_changed(); /* NB update from background thread. */
 		}
 	}
-	dl_job->mutex.unlock();
+	this->mutex.unlock();
 
-	//gdk_threads_leave();
-
-	return 0;
+	return;
 }
 
 
@@ -1467,9 +1455,9 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
 			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, failed to add the file, downloading it";
-			const QString job_description = QObject::tr("Downloading DEM  %1").arg(cache_file_name);
+			const QString job_description = QObject::tr("Downloading DEM %1").arg(cache_file_name);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
-			a_background_thread(job, ThreadPoolType::REMOTE, job_description);
+			Background::run_in_background(job, ThreadPoolType::REMOTE, job_description);
 		} else {
 			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, successfully added the file, emitting 'changed'";
 			this->emit_layer_changed();

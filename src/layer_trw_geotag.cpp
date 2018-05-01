@@ -71,7 +71,6 @@ typedef struct {
 
 
 
-static int trw_layer_geotag_thread(BackgroundJob * job);
 static void save_default_values(option_values_t default_values);
 
 
@@ -173,6 +172,14 @@ public:
 	GeotagJob(GeoTagWidgets * widgets);
 	~GeotagJob();
 
+	void run(void);
+
+
+	void geotag(void);
+	void geotag_waypoint(void);
+	void geotag_tracks(Tracks & tracks);
+	void geotag_track(Track * trk);
+
 	LayerTRW * trw = NULL;
 	char * image = NULL;
 	Waypoint * wp = NULL;    /* Use specified waypoint or otherwise the track(s) if NULL. */
@@ -191,10 +198,9 @@ public:
 
 
 
+
 GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 {
-	this->thread_fn = trw_layer_geotag_thread;
-
 	this->trw = widgets->trw;
 	this->wp = widgets->wp;
 	this->trk = widgets->trk;
@@ -240,7 +246,6 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 #endif
 
 	this->n_items = this->files->size();
-
 }
 
 
@@ -321,29 +326,29 @@ static option_values_t get_default_values()
 
 
 /**
- * Correlate the image against the specified track.
- */
-static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
+   Correlate the image against the specified track.
+*/
+void GeotagJob::geotag_track(Track * trk2)
 {
 	/* If already found match then don't need to check this track. */
-	if (options->found_match) {
+	if (this->found_match) {
 		return;
 	}
 
-	for (auto iter = trk->begin(); iter != trk->end(); iter++) {
+	for (auto iter = trk2->begin(); iter != trk2->end(); iter++) {
 
 		Trackpoint * tp = *iter;
 
 		/* Is it exactly this point? */
-		if (options->PhotoTime == tp->timestamp) {
-			options->coord = tp->coord;
-			options->altitude = tp->altitude;
-			options->found_match = true;
+		if (this->PhotoTime == tp->timestamp) {
+			this->coord = tp->coord;
+			this->altitude = tp->altitude;
+			this->found_match = true;
 			break;
 		}
 
 		/* Now need two trackpoints, hence check next is available. */
-		if (std::next(iter) == trk->end()) {
+		if (std::next(iter) == trk2->end()) {
 			break;
 		}
 
@@ -358,7 +363,7 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 		}
 
 		/* When interpolating between segments, no need for any special segment handling. */
-		if (!options->ov.interpolate_segments) {
+		if (!this->ov.interpolate_segments) {
 			/* Don't check between segments. */
 			if (tp_next->newsegment) {
 				/* Simply move on to consider next point. */
@@ -367,20 +372,20 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 		}
 
 		/* Too far. */
-		if (tp->timestamp > options->PhotoTime) {
+		if (tp->timestamp > this->PhotoTime) {
 			break;
 		}
 
 		/* Is is between this and the next point? */
-		if ((options->PhotoTime > tp->timestamp) && (options->PhotoTime < tp_next->timestamp)) {
-			options->found_match = true;
+		if ((this->PhotoTime > tp->timestamp) && (this->PhotoTime < tp_next->timestamp)) {
+			this->found_match = true;
 			/* Interpolate. */
 			/* Calculate the "scale": a decimal giving the relative distance
 			 * in time between the two points. Ie, a number between 0 and 1 -
 			 * 0 is the first point, 1 is the next point, and 0.5 would be
 			 * half way. */
 			double scale = (double)tp_next->timestamp - (double)tp->timestamp;
-			scale = ((double)options->PhotoTime - (double)tp->timestamp) / scale;
+			scale = ((double)this->PhotoTime - (double)tp->timestamp) / scale;
 
 			LatLon ll_result;
 
@@ -393,10 +398,10 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 			ll_result.lon = ll1.lon + ((ll2.lon - ll1.lon) * scale);
 
 			/* Set coord. */
-			options->coord = Coord(ll_result, CoordMode::LATLON);
+			this->coord = Coord(ll_result, CoordMode::LATLON);
 
 			/* Interpolate elevation. */
-			options->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);
+			this->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);
 			break;
 		}
 	}
@@ -405,10 +410,10 @@ static void trw_layer_geotag_track(Track * trk, GeotagJob * options)
 
 
 
-static void trw_layer_geotag_tracks(Tracks & tracks, GeotagJob * options)
+void GeotagJob::geotag_tracks(Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		trw_layer_geotag_track(i->second, options);
+		this->geotag_track(i->second);
 	}
 }
 
@@ -418,18 +423,18 @@ static void trw_layer_geotag_tracks(Tracks & tracks, GeotagJob * options)
 /**
  * Simply align the images the waypoint position.
  */
-static void trw_layer_geotag_waypoint(GeotagJob * options)
+void GeotagJob::geotag_waypoint(void)
 {
 	/* Write EXIF if specified - although a fairly useless process if you've turned it off! */
-	if (options->ov.write_exif) {
+	if (this->ov.write_exif) {
 		bool has_gps_exif = false;
 
-		const QString datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
+		const QString datetime = a_geotag_get_exif_date_from_file(this->image, &has_gps_exif);
 		/* If image already has gps info - don't attempt to change it unless forced. */
-		if (options->ov.overwrite_gps_exif || !has_gps_exif) {
-			int ans = a_geotag_write_exif_gps(options->image, options->wp->coord, options->wp->altitude, options->ov.no_change_mtime);
+		if (this->ov.overwrite_gps_exif || !has_gps_exif) {
+			int ans = a_geotag_write_exif_gps(this->image, this->wp->coord, this->wp->altitude, this->ov.no_change_mtime);
 			if (ans != 0) {
-				options->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
+				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->image));
 			}
 		}
 	}
@@ -439,102 +444,102 @@ static void trw_layer_geotag_waypoint(GeotagJob * options)
 
 
 /**
- * Correlate the image to any track within the TrackWaypoint layer.
- */
-static void trw_layer_geotag_process(GeotagJob * options)
+   Correlate the image to any track within the TrackWaypoint layer
+*/
+void GeotagJob::geotag(void)
 {
-	if (!options->trw) {
+	if (!this->trw) {
 		return;
 	}
 
-	if (!options->image) {
+	if (!this->image) {
 		return;
 	}
 
-	if (options->wp) {
-		trw_layer_geotag_waypoint(options);
+	if (this->wp) {
+		this->geotag_waypoint();
 		return;
 	}
 
 	bool has_gps_exif = false;
 
-	const QString datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
+	const QString datetime = a_geotag_get_exif_date_from_file(this->image, &has_gps_exif);
 	if (datetime.isEmpty()) {
 		return;
 	}
 
 	/* If image already has gps info - don't attempt to change it. */
-	if (!options->ov.overwrite_gps_exif && has_gps_exif) {
-		if (options->ov.create_waypoints) {
+	if (!this->ov.overwrite_gps_exif && has_gps_exif) {
+		if (this->ov.create_waypoints) {
 			/* Create waypoint with file information. */
 			QString file_name;
-			Waypoint * wp = a_geotag_create_waypoint_from_file(options->image,
-									   options->trw->get_coord_mode(),
+			Waypoint * wp2 = a_geotag_create_waypoint_from_file(this->image,
+									   this->trw->get_coord_mode(),
 									   file_name);
-			if (!wp) {
+			if (!wp2) {
 				/* Couldn't create Waypoint. */
 				return;
 			}
 			if (!file_name.size()) {
-				file_name = file_base_name(options->image);
+				file_name = file_base_name(this->image);
 			}
 
 			bool updated_waypoint = false;
 
-			if (options->ov.overwrite_waypoints) {
-				Waypoint * current_wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
+			if (this->ov.overwrite_waypoints) {
+				Waypoint * current_wp = this->trw->get_waypoints_node().find_waypoint_by_name(file_name);
 				if (current_wp) {
 					/* Existing wp found, so set new position, comment and image. */
-					(void) a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, file_name, current_wp);
+					(void) a_geotag_waypoint_positioned(this->image, wp2->coord, wp2->altitude, file_name, current_wp);
 					updated_waypoint = true;
 				}
 			}
 
 			if (!updated_waypoint) {
-				options->trw->add_waypoint_from_file(wp, file_name);
+				this->trw->add_waypoint_from_file(wp2, file_name);
 			}
 
 			/* Mark for redraw. */
-			options->redraw = true;
+			this->redraw = true;
 		}
 		return;
 	}
 
-	options->PhotoTime = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
+	this->PhotoTime = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, this->ov.TimeZoneHours, this->ov.TimeZoneMins);
 
 	/* Apply any offset. */
-	options->PhotoTime = options->PhotoTime + options->ov.time_offset;
+	this->PhotoTime = this->PhotoTime + this->ov.time_offset;
 
-	options->found_match = false;
+	this->found_match = false;
 
-	if (options->trk) {
+	if (this->trk) {
 		/* Single specified track. */
-		trw_layer_geotag_track(options->trk, options);
+		this->geotag_track(this->trk);
 	} else {
 		/* Try all tracks. */
-		std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_track_items();
+		std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = this->trw->get_track_items();
 		if (tracks.size() > 0) {
-			trw_layer_geotag_tracks(tracks, options);
+			this->geotag_tracks(tracks);
 		}
 	}
 
 	/* Match found? */
-	if (options->found_match) {
+	if (this->found_match) {
 
-		if (options->ov.create_waypoints) {
+		if (this->ov.create_waypoints) {
 
 			bool updated_waypoint = false;
 
-			if (options->ov.overwrite_waypoints) {
+			if (this->ov.overwrite_waypoints) {
 
 				/* Update existing WP. */
 				/* Find a WP with current name. */
-				QString file_name = file_base_name(options->image);
-				Waypoint * wp = options->trw->get_waypoints_node().find_waypoint_by_name(file_name);
-				if (wp) {
+				QString file_name = file_base_name(this->image);
+				Waypoint * wp2 = this->trw->get_waypoints_node().find_waypoint_by_name(file_name);
+				if (wp2) {
 					/* Found, so set new position, comment and image. */
 					/* TODO: how do we use file_name modified by the function below? */
-					(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, wp);
+					(void)a_geotag_waypoint_positioned(this->image, this->coord, this->altitude, file_name, wp2);
 					updated_waypoint = true;
 				}
 			}
@@ -543,22 +548,22 @@ static void trw_layer_geotag_process(GeotagJob * options)
 				/* Create waypoint with found position. */
 				QString file_name;
 				/* TODO: how do we use file_name modified by the function below? */
-				Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, file_name, NULL);
+				Waypoint * wp2 = a_geotag_waypoint_positioned(this->image, this->coord, this->altitude, file_name, NULL);
 				if (!file_name.size()) {
-					file_name = file_base_name(options->image);
+					file_name = file_base_name(this->image);
 				}
-				options->trw->add_waypoint_from_file(wp, file_name);
+				this->trw->add_waypoint_from_file(wp2, file_name);
 			}
 
 			/* Mark for redraw. */
-			options->redraw = true;
+			this->redraw = true;
 		}
 
 		/* Write EXIF if specified. */
-		if (options->ov.write_exif) {
-			int ans = a_geotag_write_exif_gps(options->image, options->coord, options->altitude, options->ov.no_change_mtime);
+		if (this->ov.write_exif) {
+			int ans = a_geotag_write_exif_gps(this->image, this->coord, this->altitude, this->ov.no_change_mtime);
 			if (ans != 0) {
-				options->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
+				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->image));
 			}
 		}
 	}
@@ -579,40 +584,38 @@ GeotagJob::~GeotagJob()
 
 
 /**
- * Run geotagging process in a separate thread.
- */
-static int trw_layer_geotag_thread(BackgroundJob * job)
+   Run geotagging process in a separate thread.
+*/
+void GeotagJob::run(void)
 {
-	GeotagJob * geotag = (GeotagJob *) job;
-
-	unsigned int total = geotag->files->size();
+	unsigned int total = this->files->size();
 	unsigned int done = 0;
 
 	/* TODO decide how to report any issues to the user... */
 
-	for (auto iter = geotag->files->begin(); iter != geotag->files->end(); iter++) {
-		/* Foreach file attempt to geotag it. */
-		geotag->image = *iter;
-		trw_layer_geotag_process(geotag);
+	for (auto iter = this->files->begin(); iter != this->files->end(); iter++) {
+		/* For each file attempt to geotag it. */
+		this->image = *iter;
+		this->geotag();
 
 		/* Update thread progress and detect stop requests. */
-		const bool end_job = a_background_thread_progress(job, ((double) ++done) / total);
+		const bool end_job = this->set_progress_state(((double) ++done) / total);
 		if (end_job) {
-			return -1; /* Abort thread */
+			return; /* Abort thread */
 		}
 	}
 
-	if (geotag->redraw) {
-		if (geotag->trw) {
-			geotag->trw->get_waypoints_node().recalculate_bbox();
+	if (this->redraw) {
+		if (this->trw) {
+			this->trw->get_waypoints_node().recalculate_bbox();
 			/* Ensure any new images get show. */
-			geotag->trw->generate_missing_thumbnails();
+			this->trw->generate_missing_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
-			geotag->trw->emit_layer_changed(); /* NB Update from background. */
+			this->trw->emit_layer_changed(); /* NB Update from background. */
 		}
 	}
 
-	return 0;
+	return;
 }
 
 
@@ -637,7 +640,7 @@ static void trw_layer_geotag_response_cb(QDialog * dialog, int resp, GeoTagWidge
 		const QString job_description = QObject::tr("Geotagging %1 Images...").arg(len);
 
 		/* Processing lots of files can take time - so run a background effort. */
-		a_background_thread(options, ThreadPoolType::LOCAL, job_description);
+		Background::run_in_background(options, ThreadPoolType::LOCAL, job_description);
 		break;
 	}
 	}

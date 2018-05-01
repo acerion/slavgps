@@ -1576,7 +1576,7 @@ void LayerMap::draw(Viewport * viewport)
 /*************************/
 
 /* Pass along data to thread, exists even if layer is deleted. */
-class MapDownloadJob : public BackgroundJob2 {
+class MapDownloadJob : public BackgroundJob {
 public:
 	MapDownloadJob() {};
 	MapDownloadJob(LayerMap * layer, const TileInfo & ulm, const TileInfo & brm, bool refresh_display, MapDownloadMode map_download_mode);
@@ -1832,7 +1832,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 		if (mdj->n_items) {
 			const QString job_description = map_download_mode_message(map_download_mode, mdj->n_items, map_source->get_label());
 			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
-			BackgroundJob2::run_in_background(mdj, ThreadPoolType::REMOTE, job_description);
+			Background::run_in_background(mdj, ThreadPoolType::REMOTE, job_description);
 		} else {
 			delete mdj;
 		}
@@ -1870,7 +1870,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 	if (mdj->n_items) {
 		const QString job_description = map_download_mode_message(map_download_mode, mdj->n_items, map_source->get_label());
 		mdj->layer->weak_ref(weak_ref_cb, mdj);
-		BackgroundJob2::run_in_background(mdj, ThreadPoolType::REMOTE, job_description);
+		Background::run_in_background(mdj, ThreadPoolType::REMOTE, job_description);
 	} else {
 		delete mdj;
 	}

@@ -48,13 +48,6 @@ namespace SlavGPS {
 
 
 	class Window;
-	class BackgroundJob;
-	class BackgroundJob2;
-
-
-
-
-	typedef int (* background_thread_fn)(BackgroundJob *);
 
 
 
@@ -70,31 +63,12 @@ namespace SlavGPS {
 
 
 
-	class BackgroundJob {
+	class BackgroundJob : public QRunnable {
 	public:
-		BackgroundJob();
-		virtual ~BackgroundJob() {};
+		BackgroundJob() {};
+		~BackgroundJob() {};
 
-		virtual void cleanup_on_cancel(void) {};
-
-		background_thread_fn thread_fn = NULL;
-		int n_items = 0;
-		bool remove_from_list = false;
-		QPersistentModelIndex * index = NULL;
-		int progress = 0; /* 0 - 100% */
-	};
-
-
-
-
-	class BackgroundJob2 : public QRunnable {
-	public:
-		BackgroundJob2();
-		~BackgroundJob2();
-
-		static void run_in_background(BackgroundJob2 * bg_job, ThreadPoolType pool_type, const QString & job_description);
-
-		virtual void run() = 0; /* Re-implementation of QRunnable::run(). */
+		virtual void run() {}; /* Re-implementation of QRunnable::run(). TODO: make this function pure virtual in future. */
 
 		virtual void cleanup_on_cancel(void) {};
 
@@ -112,7 +86,6 @@ namespace SlavGPS {
 
 	class BackgroundWindow : public QDialog {
 		Q_OBJECT
-
 	public:
 		BackgroundWindow(QWidget * parent);
 		~BackgroundWindow() {};
@@ -143,49 +116,21 @@ namespace SlavGPS {
 
 
 
-	class BackgroundWindow2 : public QDialog {
-		Q_OBJECT
-
+	class Background {
 	public:
-		BackgroundWindow2(QWidget * parent);
-		~BackgroundWindow2() {};
+		static void init();
+		static void post_init();
+		static void post_init_window(QWidget * parent);
+		static void uninit(void);
 
-		void show_window(void);
-		QPersistentModelIndex * insert_job(const QString & message, BackgroundJob2 * bg_job);
-		void remove_job(QStandardItem * item);
+		static void run_in_background(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description); /* TODO: should this become a non-static method of BackgroundJob? */
 
-		QStandardItemModel * model = NULL;
-		QTableView * view = NULL;
+		static bool test_termination_condition(void);
 
-
-	private slots:
-		void close_cb(void);
-		void remove_selected_cb(void);
-		void remove_all_cb(void);
-		void remove_selected_state_cb(void);
-
-	private:
-
-		QDialogButtonBox * button_box = NULL;
-		QPushButton * close = NULL;
-		QPushButton * remove_selected = NULL;
-		QPushButton * remove_all = NULL;
-		QVBoxLayout * vbox = NULL;
+		static void show_window();
+		static void add_window(Window * window);
+		static void remove_window(Window * window);
 	};
-
-
-
-
-	void a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description);
-	bool a_background_thread_progress(BackgroundJob * bg_job, int progress);
-	bool a_background_testcancel(BackgroundJob * bg_job);
-	void a_background_show_window();
-	void a_background_init();
-	void a_background_post_init();
-	void a_background_post_init_window(QWidget * parent);
-	void a_background_uninit();
-	void a_background_add_window(Window * window);
-	void a_background_remove_window(Window * window);
 
 
 

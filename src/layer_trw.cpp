@@ -3900,15 +3900,12 @@ void LayerTRW::trackpoint_properties_show()
 
 
 
-
-static int create_thumbnails_thread(BackgroundJob * bg_job);
-
-
-
 /* Structure for thumbnail creating data used in the background thread. */
 class ThumbnailCreator : public BackgroundJob {
 public:
 	ThumbnailCreator(LayerTRW * layer, const QStringList & original_image_files_paths);
+
+	void run(void);
 
 	LayerTRW * layer = NULL;  /* Layer needed for redrawing. */
 	QStringList original_image_files_paths;
@@ -3917,37 +3914,34 @@ public:
 
 
 
-ThumbnailCreator::ThumbnailCreator(LayerTRW * layer_, const QStringList & new_original_image_files_paths)
+ThumbnailCreator::ThumbnailCreator(LayerTRW * new_layer, const QStringList & new_original_image_files_paths)
 {
-	this->thread_fn = create_thumbnails_thread;
 	this->n_items = new_original_image_files_paths.size();
 
-	this->layer = layer_;
+	this->layer = new_layer;
 	this->original_image_files_paths = new_original_image_files_paths;
 }
 
 
 
 
-static int create_thumbnails_thread(BackgroundJob * bg_job)
+void ThumbnailCreator::run(void)
 {
-	ThumbnailCreator * creator = (ThumbnailCreator *) bg_job;
-
-	const int n = creator->original_image_files_paths.size();
+	const int n = this->original_image_files_paths.size();
 	for (int i = 0; i < n; i++) {
-		Thumbnails::generate_thumbnail_if_missing(creator->original_image_files_paths.at(i));
-		const bool end_job = a_background_thread_progress(bg_job, (i + 1.0) / n);
+		Thumbnails::generate_thumbnail_if_missing(this->original_image_files_paths.at(i));
+		const bool end_job = this->set_progress_state((i + 1.0) / n);
 		if (end_job) {
-			return -1; /* Abort thread. */
+			return; /* Abort thread. */
 		}
 	}
 
 	/* Redraw to show the thumbnails as they are now created. */
-	if (creator->layer) {
-		creator->layer->emit_layer_changed(); /* NB update from background thread. */
+	if (this->layer) {
+		this->layer->emit_layer_changed(); /* NB update from background thread. */
 	}
 
-	return 0;
+	return;
 }
 
 
@@ -3966,7 +3960,7 @@ void LayerTRW::generate_missing_thumbnails(void)
 	}
 
 	ThumbnailCreator * creator = new ThumbnailCreator(this, original_image_files_paths);
-	a_background_thread(creator, ThreadPoolType::LOCAL, tr("Creating %1 Image Thumbnails...").arg(n_images));
+	Background::run_in_background(creator, ThreadPoolType::LOCAL, tr("Creating %1 Image Thumbnails...").arg(n_images));
 }
 
 

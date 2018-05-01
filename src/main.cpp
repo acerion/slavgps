@@ -150,7 +150,7 @@ int main(int argc, char ** argv)
 	layer_georef_init();
 	LayerMap::init();
 	MapCache::init();
-	a_background_init();
+	Background::init();
 	routing_prefs_init();
 
 	/*
@@ -159,7 +159,7 @@ int main(int argc, char ** argv)
 	  Can now use Preferences::get_param_value()
 	*/
 
-	a_background_post_init();
+	Background::post_init();
 	Babel::post_init();
 
 	modules_post_init();
@@ -209,7 +209,7 @@ int main(int argc, char ** argv)
 	int rv = app.exec();
 
 	Babel::uninit();
-	a_background_uninit();
+	Background::uninit();
 
 	MapCache::uninit();
 	DEMCache::uninit();

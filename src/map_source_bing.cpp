@@ -73,6 +73,19 @@ extern bool vik_debug;
 
 
 
+class MapSourceBingAttributions : public BackgroundJob {
+public:
+	MapSourceBingAttributions(MapSourceBing * new_map_source) : map_source(new_map_source) {};
+	~MapSourceBingAttributions() {};
+
+	void run(void);
+private:
+	MapSourceBing * map_source = NULL;
+};
+
+
+
+
 MapSourceBing::MapSourceBing()
 {
 #ifdef K_FIXME_RESTORE
@@ -371,16 +384,14 @@ int MapSourceBing::emit_update(void * data)
 
 
 
-
-static int load_attributions_thread(BackgroundJob * bg_job)
+/* Function for loading attributions. */
+void MapSourceBingAttributions::run(void)
 {
-#ifdef K_FIXME_RESTORE
-	bg_job->load_attributions();
-#endif
+	this->map_source->load_attributions();
 
-	const bool end_job = a_background_thread_progress(bg_job, 1);
+	const bool end_job = this->set_progress_state(1);
 	if (end_job) {
-		return -1; /* Abort thread. */
+		return; /* Abort thread. */
 	}
 #ifdef K_FIXME_RESTORE
 	/* Emit update. */
@@ -388,7 +399,7 @@ static int load_attributions_thread(BackgroundJob * bg_job)
 	g_idle_add((GSourceFunc)_emit_update, NULL /* FIXME */);
 #endif
 
-	return 0;
+	return;
 }
 
 
@@ -396,12 +407,8 @@ static int load_attributions_thread(BackgroundJob * bg_job)
 
 void MapSourceBing::async_load_attributions()
 {
-	/* kamilFIXME: since object passed to a_background_thread() is of type BackgroundJob,
-	   and MapSourceBing does not inherit from BackgroundJob, we have a type error here. */
-	this->thread_fn = load_attributions_thread;
-#ifdef K_FIXME_RESTORE
-	this->n_items = 1;
+	MapSourceBingAttributions * bg_job = new MapSourceBingAttributions(this);
+	bg_job->n_items = 1;
 
-	a_background_thread(this, ThreadPoolType::REMOTE, QString(QObject::tr("Bing attribution Loading")));
-#endif
+	Background::run_in_background(bg_job, ThreadPoolType::REMOTE, QString(QObject::tr("Bing attribution Loading")));
 }
