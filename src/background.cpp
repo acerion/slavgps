@@ -17,20 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 
-#include <cstdlib>
+
+
 #include <list>
 #include <cmath>
 
-#include <glib.h>
+
+
 
 #include <QApplication>
 #include <QDebug>
 #include <QHeaderView>
 #include <QStyledItemDelegate>
+#include <QThreadPool>
+
+
+
 
 #include "background.h"
 #include "application_state.h"
@@ -38,11 +43,9 @@
 #include "ui_builder.h"
 #include "window.h"
 #include "statusbar.h"
-
 #ifdef K_INCLUDES
 #include "preferences.h"
 #endif
-
 
 
 
@@ -70,6 +73,8 @@ enum {
 };
 
 
+
+static QThreadPool thread_pool;
 
 
 static BackgroundWindow * bgwindow = NULL;
@@ -114,6 +119,29 @@ static void background_thread_update()
 
 
 
+BackgroundJob::~BackgroundJob()
+{
+	qDebug() << "II" PREFIX "destructing job" << this->description << ", job index" << (this->index->isValid() ? "is valid" : "is invalid");
+
+	if (this->remove_from_list) {
+		if (this->index && this->index->isValid()) {
+			qDebug() << "II" PREFIX << "removing job from list";
+			bgwindow->model->removeRow(this->index->row());
+		}
+	}
+
+	if (this->n_items) {
+		bgitemcount -= this->n_items;
+		background_thread_update();
+	}
+
+	delete this->index;
+	this->index = NULL;
+}
+
+
+
+
 /**
    @progress: The value should be between 0 and 100 indicating percentage of the task complete
 
@@ -135,22 +163,6 @@ bool BackgroundJob::set_progress_state(int new_progress)
 	background_thread_update();
 
 	return end_job;
-}
-
-
-
-
-static void thread_die(BackgroundJob * bg_job)
-{
-	if (bg_job->n_items) {
-		bgitemcount -= bg_job->n_items;
-		background_thread_update();
-	}
-
-	delete bg_job->index;
-	bg_job->index = NULL;
-
-	delete bg_job;
 }
 
 
@@ -188,30 +200,6 @@ bool BackgroundJob::test_termination_condition(void)
 
 
 
-#ifdef K_OLD_IMPLEMENTATION
-static void thread_helper(void * job_, void * unused_user_data)
-{
-	BackgroundJob * bg_job = (BackgroundJob *) job_;
-
-	qDebug() << "II: Background: helper function: starting worker function";
-
-	bg_job->thread_fn(bg_job);
-
-	qDebug() << "II: Background: helper function: worker function returned, remove_from_list =" << bg_job->remove_from_list << ", job index = " << bg_job->index << bg_job->index->isValid();
-
-	if (bg_job && bg_job->remove_from_list) {
-		if (bg_job->index && bg_job->index->isValid()) {
-			qDebug() << "II: Background: removing job from list";
-			bgwindow->model->removeRow(bg_job->index->row());
-		}
-	}
-
-	thread_die(bg_job);
-}
-
-
-
-
 /**
    @brief Run a thread function in background
 
@@ -219,72 +207,22 @@ static void thread_helper(void * job_, void * unused_user_data)
    @pool_type: Which pool this thread should run in
    @job_description:
 */
-void SlavGPS::a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description)
+void Background::run_in_background(BackgroundJob * bg_job, ThreadPoolType pool_type)
 {
-	qDebug() << "II: Background: creating background thread" << job_description;
+	qDebug() << "II" PREFIX << "creating background thread for job" << bg_job->description;
 
 	bg_job->remove_from_list = true;
 
 	bg_job->progress = 0;
-	bg_job->index = bgwindow->insert_job(job_description, bg_job);
+	bg_job->index = bgwindow->insert_job(bg_job);
 
 	bg_job = bg_job;
 
 	bgitemcount += bg_job->n_items;
 
 	/* Run the thread in the background. */
-	if (pool_type == ThreadPoolType::REMOTE) {
-		g_thread_pool_push(thread_pool_remote, bg_job, NULL);
-#ifdef HAVE_LIBMAPNIK
-	} else if (pool_type == ThreadPoolType::LOCAL_MAPNIK) {
-		g_thread_pool_push(thread_pool_local_mapnik, bg_job, NULL);
-
-#endif
-	} else {
-		g_thread_pool_push(thread_pool_local, bg_job, NULL);
-	}
-}
-#endif
-
-
-
-
-/**
-   @brief Run a thread function in background
-
-   @bg_job: data for thread function (contains pointer to the function)
-   @pool_type: Which pool this thread should run in
-   @job_description:
-*/
-void Background::run_in_background(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description)
-{
-	qDebug() << "II: Background: creating background thread" << job_description;
-
-	bg_job->remove_from_list = true;
-
-	bg_job->progress = 0;
-	bg_job->index = bgwindow->insert_job(job_description, bg_job);
-
-	bg_job = bg_job;
-
-	bgitemcount += bg_job->n_items;
-
-	/* Run the thread in the background. */
-	qDebug() << "II" PREFIX << "starting worker function";
-	bg_job->run();
-
-#ifdef K_FIXME_RESTORE
-	qDebug() << "II: Background2: helper function: worker function returned, remove_from_list =" << bg_job->remove_from_list << ", job index = " << bg_job->index << bg_job->index->isValid();
-
-	if (bg_job && bg_job->remove_from_list) {
-		if (bg_job->index && bg_job->index->isValid()) {
-			qDebug() << "II: Background2: removing job from list";
-			bgwindow->model->removeRow(bg_job->index->row());
-		}
-	}
-
-	thread_die(bg_job);
-#endif
+	qDebug() << "II" PREFIX << "adding job" << bg_job->description << "to thread pool";
+	thread_pool.start(bg_job);
 }
 
 
@@ -296,7 +234,6 @@ void Background::run_in_background(BackgroundJob * bg_job, ThreadPoolType pool_t
 void Background::show_window()
 {
 	bgwindow->show();
-
 }
 
 
@@ -310,7 +247,7 @@ void BackgroundWindow::remove_job(QStandardItem * item)
 	BackgroundJob * bg_job = (BackgroundJob *) child->data(RoleLayerData).toULongLong();
 
 	if (bg_job->index && bg_job->index->isValid()) {
-		qDebug() << "II: Background: removing job" << parent_item->child(item->row(), TITLE_COLUMN)->text();
+		qDebug() << "II" PREFIX << "removing job" << parent_item->child(item->row(), TITLE_COLUMN)->text();
 
 		bg_job->remove_from_list = false;
 		this->model->removeRow(bg_job->index->row());
@@ -354,7 +291,7 @@ void Background::init()
 */
 void Background::post_init(void)
 {
-	/* Initialize thread pools. */
+	/* Initialize thread pools. TODO: we don't have local/remote pools anymore. Address this fact in this file. */
 	int max_threads = 10;  /* Limit maximum number of threads running at one time. */
 	int maxt;
 	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS, &maxt)) {
@@ -367,6 +304,10 @@ void Background::post_init(void)
 		const int threads = Util::get_number_of_threads();
 		max_threads = threads > 1 ? threads - 1 : 1; /* Don't use all available CPUs! */
 	}
+
+	qDebug() << "II" PREFIX << "setting threads limit to" << max_threads;
+	thread_pool.setMaxThreadCount(max_threads);
+	thread_pool.setExpiryTimeout(-1); /* No expiry. */
 
 #ifdef K_FIXME_RESTORE
 	/* Don't destroy win. */
@@ -468,12 +409,13 @@ BackgroundWindow::BackgroundWindow(QWidget * parent_widget) : QDialog(parent_wid
 
 	for (auto iter = job_list.begin(); iter != job_list.end(); ++iter) {
 
-		qDebug() << "II: Background: adding to initial list:" << (*iter);
+		qDebug() << "II" PREFIX << "adding to initial list:" << (*iter);
 
 		BackgroundJob * bg_job = new BackgroundJob();
+		bg_job->set_description(*iter);
 		bg_job->progress = value;
-		bg_job->index = this->insert_job(*iter, bg_job);
-		qDebug() << "II: Background: added to list an item with index" << bg_job->index->isValid();
+		bg_job->index = this->insert_job(bg_job);
+		qDebug() << "II" PREFIX << "added to list an item with index" << bg_job->index->isValid();
 
 		value += 10;
 	}
@@ -533,7 +475,7 @@ void BackgroundWindow::remove_all_cb()
 	for (int r = this->model->rowCount(parent_index) - 1; r >= 0; --r) {
 		QModelIndex index = this->model->index(r, 0, parent_index);
 		QVariant name = model->data(index);
-		qDebug() << "II: Background2: removing job" << name;
+		qDebug() << "II" PREFIX << "removing job" << name;
 
 		QStandardItem * item = this->model->itemFromIndex(index);
 		this->remove_job(item);
@@ -563,7 +505,7 @@ void BackgroundWindow::show_window(void)
 	QItemSelectionModel * selection_model = this->view->selectionModel();
 	QModelIndex index = selection_model->currentIndex();
 	if (index.isValid()) {
-		qDebug() << "II: Background2: clearing current selection";
+		qDebug() << "II" PREFIX << "clearing current selection";
 		selection_model->select(index, QItemSelectionModel::Clear | QItemSelectionModel::Deselect);
 	}
 
@@ -574,15 +516,15 @@ void BackgroundWindow::show_window(void)
 
 
 
-QPersistentModelIndex * BackgroundWindow::insert_job(const QString & message, BackgroundJob * bg_job)
+QPersistentModelIndex * BackgroundWindow::insert_job(BackgroundJob * bg_job)
 {
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
 	QVariant variant;
 
 	/* TITLE_COLUMN */
-	item = new QStandardItem(message);
-	item->setToolTip(message);
+	item = new QStandardItem(bg_job->description);
+	item->setToolTip(bg_job->description);
 	items << item;
 
 	/* PROGRESS_COLUMN */
@@ -632,3 +574,81 @@ void BackgroundProgress::paint(QPainter * painter, const QStyleOptionViewItem &o
 
         QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter);
 }
+
+
+
+
+#ifdef K_OLD_IMPLEMENTATION
+
+static void thread_die(BackgroundJob * bg_job)
+{
+	if (bg_job->n_items) {
+		bgitemcount -= bg_job->n_items;
+		background_thread_update();
+	}
+
+	delete bg_job->index;
+	bg_job->index = NULL;
+
+	delete bg_job;
+}
+
+
+
+
+static void thread_helper(void * job_, void * unused_user_data)
+{
+	BackgroundJob * bg_job = (BackgroundJob *) job_;
+
+	qDebug() << "II" PREFIX << "starting worker function";
+
+	bg_job->thread_fn(bg_job);
+
+	qDebug() << "II" PREFIX << "worker function returned, remove_from_list =" << bg_job->remove_from_list << ", job index = " << bg_job->index << bg_job->index->isValid();
+
+	if (bg_job && bg_job->remove_from_list) {
+		if (bg_job->index && bg_job->index->isValid()) {
+			qDebug() << "II" PREFIX << "removing job" << bg_job->description << "from list";
+			bgwindow->model->removeRow(bg_job->index->row());
+		}
+	}
+
+	thread_die(bg_job);
+}
+
+
+
+
+/**
+   @brief Run a thread function in background
+
+   @bg_job: data for thread function (contains pointer to the function)
+   @pool_type: Which pool this thread should run in
+   @job_description:
+*/
+void SlavGPS::a_background_thread(BackgroundJob * bg_job, ThreadPoolType pool_type)
+{
+	qDebug() << "II" PREFIX << "creating background thread" << bg_job->job_description;
+
+	bg_job->remove_from_list = true;
+
+	bg_job->progress = 0;
+	bg_job->index = bgwindow->insert_job(bg_job);
+
+	bg_job = bg_job;
+
+	bgitemcount += bg_job->n_items;
+
+	/* Run the thread in the background. */
+	if (pool_type == ThreadPoolType::REMOTE) {
+		g_thread_pool_push(thread_pool_remote, bg_job, NULL);
+#ifdef HAVE_LIBMAPNIK
+	} else if (pool_type == ThreadPoolType::LOCAL_MAPNIK) {
+		g_thread_pool_push(thread_pool_local_mapnik, bg_job, NULL);
+
+#endif
+	} else {
+		g_thread_pool_push(thread_pool_local, bg_job, NULL);
+	}
+}
+#endif

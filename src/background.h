@@ -66,12 +66,13 @@ namespace SlavGPS {
 	class BackgroundJob : public QRunnable {
 	public:
 		BackgroundJob() {};
-		~BackgroundJob() {};
+		~BackgroundJob();
 
 		virtual void run() {}; /* Re-implementation of QRunnable::run(). TODO: make this function pure virtual in future. */
 
 		virtual void cleanup_on_cancel(void) {};
 
+		void set_description(const QString & job_description) { this->description = job_description; };
 		bool set_progress_state(int progress);
 		bool test_termination_condition(void);
 
@@ -79,6 +80,8 @@ namespace SlavGPS {
 		bool remove_from_list = false;
 		QPersistentModelIndex * index = NULL;
 		int progress = 0; /* 0 - 100% */
+
+		QString description;
 	};
 
 
@@ -91,7 +94,7 @@ namespace SlavGPS {
 		~BackgroundWindow() {};
 
 		void show_window(void);
-		QPersistentModelIndex * insert_job(const QString & message, BackgroundJob * bg_job);
+		QPersistentModelIndex * insert_job(BackgroundJob * bg_job);
 		void remove_job(QStandardItem * item);
 
 		QStandardItemModel * model = NULL;
@@ -123,7 +126,7 @@ namespace SlavGPS {
 		static void post_init_window(QWidget * parent);
 		static void uninit(void);
 
-		static void run_in_background(BackgroundJob * bg_job, ThreadPoolType pool_type, const QString & job_description); /* TODO: should this become a non-static method of BackgroundJob? */
+		static void run_in_background(BackgroundJob * bg_job, ThreadPoolType pool_type); /* TODO: should this become a non-static method of BackgroundJob? */
 
 		static bool test_termination_condition(void);
 

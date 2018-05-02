@@ -437,7 +437,8 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 		if (!this->files.empty()) {
 			/* Thread Load. */
 			DEMLoadJob * load_job = new DEMLoadJob(this);
-			Background::run_in_background(load_job, ThreadPoolType::LOCAL, QObject::tr("DEM Loading"));
+			load_job->set_description(QObject::tr("DEM Loading"));
+			Background::run_in_background(load_job, ThreadPoolType::LOCAL);
 		}
 
 		break;
@@ -1457,7 +1458,8 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, failed to add the file, downloading it";
 			const QString job_description = QObject::tr("Downloading DEM %1").arg(cache_file_name);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
-			Background::run_in_background(job, ThreadPoolType::REMOTE, job_description);
+			job->set_description(job_description);
+			Background::run_in_background(job, ThreadPoolType::REMOTE);
 		} else {
 			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, successfully added the file, emitting 'changed'";
 			this->emit_layer_changed();

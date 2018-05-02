@@ -634,13 +634,14 @@ static void trw_layer_geotag_response_cb(QDialog * dialog, int resp, GeoTagWidge
 	default: {
 		/* GTK_RESPONSE_ACCEPT: */
 		/* Get options. */
-		GeotagJob * options = new GeotagJob(GeoTagWidgets * widgets);
-		int len = options->files->size();
+		GeotagJob * geotag_job = new GeotagJob(GeoTagWidgets * widgets);
+		int len = geotag_job->files->size();
 
 		const QString job_description = QObject::tr("Geotagging %1 Images...").arg(len);
+		geotag_job->set_description(job_description);
 
 		/* Processing lots of files can take time - so run a background effort. */
-		Background::run_in_background(options, ThreadPoolType::LOCAL, job_description);
+		Background::run_in_background(geotag_job, ThreadPoolType::LOCAL);
 		break;
 	}
 	}

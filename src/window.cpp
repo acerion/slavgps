@@ -2399,7 +2399,8 @@ void Window::finish_new(void)
 
 			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
 			LocatorJob * locator = new LocatorJob(this);
-			Background::run_in_background(locator, ThreadPoolType::REMOTE, tr("Determining location"));
+			locator->set_description(tr("Determining location"));
+			Background::run_in_background(locator, ThreadPoolType::REMOTE);
 		}
 	}
 

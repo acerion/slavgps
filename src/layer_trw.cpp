@@ -3960,7 +3960,8 @@ void LayerTRW::generate_missing_thumbnails(void)
 	}
 
 	ThumbnailCreator * creator = new ThumbnailCreator(this, original_image_files_paths);
-	Background::run_in_background(creator, ThreadPoolType::LOCAL, tr("Creating %1 Image Thumbnails...").arg(n_images));
+	creator->set_description(tr("Creating %1 Image Thumbnails...").arg(n_images));
+	Background::run_in_background(creator, ThreadPoolType::LOCAL);
 }
 
 

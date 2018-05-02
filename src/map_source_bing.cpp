@@ -409,6 +409,7 @@ void MapSourceBing::async_load_attributions()
 {
 	MapSourceBingAttributions * bg_job = new MapSourceBingAttributions(this);
 	bg_job->n_items = 1;
+	bg_job->set_description(QObject::tr("Bing attribution Loading"));
 
-	Background::run_in_background(bg_job, ThreadPoolType::REMOTE, QString(QObject::tr("Bing attribution Loading")));
+	Background::run_in_background(bg_job, ThreadPoolType::REMOTE);
 }
