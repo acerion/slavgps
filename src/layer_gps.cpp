@@ -296,7 +296,7 @@ LayerGPSInterface::LayerGPSInterface()
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->menu_items_selection = LayerMenuItem::ALL;
+	this->menu_items_selection = TreeItemOperation::All;
 
 	this->ui_labels.new_layer = QObject::tr("New GPS Layer");
 	this->ui_labels.layer_type = QObject::tr("GPS");
@@ -1842,9 +1842,9 @@ LayerGPS::LayerGPS()
 		this->trw_children[i] = new LayerTRW();
 
 		/* FIXME: this doesn't work. */
-		uint16_t menu_items = (uint16_t) LayerMenuItem::ALL;
-		menu_items &= ~((uint16_t) LayerMenuItem::CUT | (uint16_t) LayerMenuItem::DELETE);
-		this->trw_children[i]->set_menu_selection((LayerMenuItem) menu_items);
+		uint16_t menu_items = (uint16_t) TreeItemOperation::All;
+		menu_items &= ~((uint16_t) TreeItemOperation::Cut | (uint16_t) TreeItemOperation::Delete);
+		this->trw_children[i]->set_menu_selection((TreeItemOperation) menu_items);
 	}
 }
 

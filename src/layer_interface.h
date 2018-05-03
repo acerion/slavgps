@@ -49,7 +49,7 @@ namespace SlavGPS {
 	class Layer;
 	class Viewport;
 	class LayerTool;
-	enum class LayerMenuItem;
+	enum class TreeItemOperation;
 
 
 
@@ -84,7 +84,7 @@ namespace SlavGPS {
 
 		/* Menu items (actions) to be created and put into a
 		   context menu for given layer type. */
-		LayerMenuItem menu_items_selection = LayerMenuItem::NONE;
+		TreeItemOperation menu_items_selection = TreeItemOperation::None;
 
 
 		/* Specification of parameters in each layer type is

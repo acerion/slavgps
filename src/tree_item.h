@@ -61,6 +61,29 @@ namespace SlavGPS {
 
 
 
+	/* Which standard operations shall be present in context menu for a tree item? */
+	enum class TreeItemOperation {
+		None       = 0x0000,
+		Properties = 0x0001,
+		Cut        = 0x0002,
+		Copy       = 0x0004,
+		Paste      = 0x0008,
+		Delete     = 0x0010,
+		New        = 0x0020,
+		All        = 0xffff,
+	};
+#ifdef K_TODO
+	TreeItemOperation operator&(const TreeItemOperation& arg1, const TreeItemOperation& arg2);
+	TreeItemOperation operator|(const TreeItemOperation& arg1, const TreeItemOperation& arg2);
+        TreeItemOperation operator~(const TreeItemOperation& arg);
+#endif
+
+
+
+
+
+
+
 	typedef QPersistentModelIndex TreeIndex;
 
 

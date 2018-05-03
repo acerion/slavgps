@@ -37,7 +37,7 @@
 #include "coord.h"
 #include "measurements.h"
 #include "tree_view.h"
-#include "layer.h"
+//#include "layer.h"
 #include "file.h"
 
 

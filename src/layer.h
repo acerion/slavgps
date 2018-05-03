@@ -96,25 +96,6 @@ namespace SlavGPS {
 
 
 
-	/* Which items shall be present in context menu for a layer? */
-	enum class LayerMenuItem {
-		NONE       = 0x0000,
-		PROPERTIES = 0x0001,
-		CUT        = 0x0002,
-		COPY       = 0x0004,
-		PASTE      = 0x0008,
-		DELETE     = 0x0010,
-		NEW        = 0x0020,
-		ALL        = 0xffff,
-	};
-#ifdef K_TODO
-	LayerMenuItem operator&(const LayerMenuItem& arg1, const LayerMenuItem& arg2);
-	LayerMenuItem operator|(const LayerMenuItem& arg1, const LayerMenuItem& arg2);
-	LayerMenuItem operator~(const LayerMenuItem& arg);
-#endif
-
-
-
 	typedef void (* LayerRefCB) (void * ptr, void * dead_vml);
 
 
@@ -164,8 +145,8 @@ namespace SlavGPS {
 		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)                    { return false; };
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
-		virtual void set_menu_selection(LayerMenuItem selection) { return; };
-		virtual LayerMenuItem get_menu_selection(void) const { return LayerMenuItem::NONE; };
+		virtual void set_menu_selection(TreeItemOperation selection) { return; };
+		virtual TreeItemOperation get_menu_selection(void) const { return TreeItemOperation::None; };
 
 		virtual void cut_sublayer(TreeItem * item) { return; };
 		virtual void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len) { return; };
@@ -245,7 +226,7 @@ namespace SlavGPS {
 
 		/* GUI. */
 		QIcon get_icon(void);
-		LayerMenuItem get_menu_items_selection(void);
+		TreeItemOperation get_menu_items_selection(void);
 
 		/* QString name; */ /* Inherited from TreeItem. */
 

@@ -127,3 +127,26 @@ bool TreeItem::compare_name(const TreeItem * a, const TreeItem * b)
 {
 	return a->name < b->name;
 }
+
+
+
+
+TreeItemOperation operator&(TreeItemOperation& arg1, TreeItemOperation& arg2)
+{
+	TreeItemOperation result = static_cast<TreeItemOperation>(static_cast<uint16_t>(arg1) | static_cast<uint16_t>(arg2));
+	return result;
+}
+
+
+TreeItemOperation operator|(TreeItemOperation& arg1, TreeItemOperation& arg2)
+{
+	TreeItemOperation result = static_cast<TreeItemOperation>(static_cast<uint16_t>(arg1) & static_cast<uint16_t>(arg2));
+	return result;
+}
+
+
+TreeItemOperation operator~(const TreeItemOperation& arg)
+{
+	TreeItemOperation result = static_cast<TreeItemOperation>(~(static_cast<uint16_t>(arg)));
+	return result;
+}

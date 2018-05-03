@@ -151,8 +151,8 @@ namespace SlavGPS {
 		void handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 		void handle_select_tool_double_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 
-		void set_menu_selection(LayerMenuItem selection);
-		LayerMenuItem get_menu_selection();
+		void set_menu_selection(TreeItemOperation selection);
+		TreeItemOperation get_menu_selection();
 
 		void marshall(uint8_t ** data, size_t * data_len);
 
@@ -404,7 +404,7 @@ namespace SlavGPS {
 		bool has_missing_thumbnails = true;
 
 		/* Menu. */
-		LayerMenuItem menu_selection;
+		TreeItemOperation menu_selection;
 
 
 		bool clear_highlight();

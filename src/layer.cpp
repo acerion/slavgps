@@ -542,10 +542,10 @@ bool Layer::handle_selection_in_tree(void)
 
 
 
-LayerMenuItem Layer::get_menu_items_selection(void)
+TreeItemOperation Layer::get_menu_items_selection(void)
 {
-	LayerMenuItem rv = this->get_menu_selection();
-	if (rv == LayerMenuItem::NONE) {
+	TreeItemOperation rv = this->get_menu_selection();
+	if (rv == TreeItemOperation::None) {
 		/* Perhaps this line could go to base class. */
 		return this->get_interface().menu_items_selection;
 	} else {
@@ -855,27 +855,4 @@ LayerType& SlavGPS::operator++(LayerType& layer_type)
 void Layer::location_info_cb(void) /* Slot. */
 {
 
-}
-
-
-
-
-LayerMenuItem operator&(LayerMenuItem& arg1, LayerMenuItem& arg2)
-{
-	LayerMenuItem result = static_cast<LayerMenuItem>(static_cast<uint16_t>(arg1) | static_cast<uint16_t>(arg2));
-	return result;
-}
-
-
-LayerMenuItem operator|(LayerMenuItem& arg1, LayerMenuItem& arg2)
-{
-	LayerMenuItem result = static_cast<LayerMenuItem>(static_cast<uint16_t>(arg1) & static_cast<uint16_t>(arg2));
-	return result;
-}
-
-
-LayerMenuItem operator~(const LayerMenuItem& arg)
-{
-	LayerMenuItem result = static_cast<LayerMenuItem>(~(static_cast<uint16_t>(arg)));
-	return result;
 }

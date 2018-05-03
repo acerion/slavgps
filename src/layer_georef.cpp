@@ -110,7 +110,7 @@ LayerGeorefInterface::LayerGeorefInterface()
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->menu_items_selection = LayerMenuItem::ALL;
+	this->menu_items_selection = TreeItemOperation::All;
 
 	this->ui_labels.new_layer = QObject::tr("New GeoRef Map Layer");
 	this->ui_labels.layer_type = QObject::tr("GeoRef Map");

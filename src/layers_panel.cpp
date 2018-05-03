@@ -220,33 +220,33 @@ bool LayersPanel::key_press(QKeyEvent * ev)
    Number and type of menu items is controlled by \param layer_menu_items.
    Returned pointer is owned by caller.
 
-   \param layer_menu_items - bit sum of LayerMenuItem values
+   \param layer_menu_items - bit sum of TreeItemOperation values
 
    \return freshly created menu with specified items
 */
 void LayersPanel::context_menu_add_standard_items(QMenu * menu, uint16_t layer_menu_items)
 {
-	if (layer_menu_items & (uint16_t) LayerMenuItem::PROPERTIES) {
+	if (layer_menu_items & (uint16_t) TreeItemOperation::Properties) {
 		menu->addAction(this->window->qa_tree_item_properties);
 	}
 
-	if (layer_menu_items & (uint16_t) LayerMenuItem::CUT) {
+	if (layer_menu_items & (uint16_t) TreeItemOperation::Cut) {
 		menu->addAction(this->qa_layer_cut);
 	}
 
-	if (layer_menu_items & (uint16_t) LayerMenuItem::COPY) {
+	if (layer_menu_items & (uint16_t) TreeItemOperation::Copy) {
 		menu->addAction(this->qa_layer_copy);
 	}
 
-	if (layer_menu_items & (uint16_t) LayerMenuItem::PASTE) {
+	if (layer_menu_items & (uint16_t) TreeItemOperation::Paste) {
 		menu->addAction(this->qa_layer_paste);
 	}
 
-	if (layer_menu_items & (uint16_t) LayerMenuItem::DELETE) {
+	if (layer_menu_items & (uint16_t) TreeItemOperation::Delete) {
 		menu->addAction(this->qa_layer_remove);
 	}
 
-	if (layer_menu_items & (uint16_t) LayerMenuItem::NEW) {
+	if (layer_menu_items & (uint16_t) TreeItemOperation::New) {
 		this->context_menu_add_new_layer_submenu(menu);
 	}
 }
@@ -256,7 +256,7 @@ void LayersPanel::context_menu_add_standard_items(QMenu * menu, uint16_t layer_m
 
 void LayersPanel::context_menu_add_new_layer_submenu(QMenu * menu)
 {
-	QMenu * layers_submenu = new QMenu("New Layer");
+	QMenu * layers_submenu = new QMenu(tr("New Layer"));
 	menu->addMenu(layers_submenu);
 	this->window->new_layers_submenu_add_actions(layers_submenu);
 }
@@ -271,7 +271,7 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 		return;
 	}
 
-	QMenu * menu = new QMenu(this);
+	QMenu menu;
 
 	if (item->tree_item_type == TreeItemType::LAYER) {
 
@@ -279,32 +279,25 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 
 		Layer * layer = item->to_layer();
 
-		/* kamilFIXME: this doesn't work for Map in tree view. Why? */
 		uint16_t layer_menu_items = (uint16_t) layer->get_menu_items_selection();
 		/* "New layer -> layer types" submenu. */
-		layer_menu_items |= (uint16_t) LayerMenuItem::NEW;
+		layer_menu_items |= (uint16_t) TreeItemOperation::New;
 
-		this->context_menu_add_standard_items(menu, layer_menu_items);
+		this->context_menu_add_standard_items(&menu, layer_menu_items);
 
 		/* Layer-type-specific menu items. */
-		layer->add_menu_items(*menu);
+		layer->add_menu_items(menu);
 	} else {
 		qDebug() << "II: Layers Panel: context menu event: menu for sublayer" << item->type_id << item->name;
 
 
-		if (!item->add_context_menu_items(*menu, true)) {
-			delete menu;
+		if (!item->add_context_menu_items(menu, true)) {
 			return;
 		}
 		/* TODO: specific things for different types. */
 	}
 
-	if (menu) {
-		menu->exec(QCursor::pos());
-		delete menu;
-	} else {
-		qDebug() << "EE: Layers Panel: show context menu: null menu";
-	}
+	menu.exec(QCursor::pos());
 
 	return;
 
@@ -316,7 +309,7 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 void LayersPanel::context_menu_show_for_new_layer(void)
 {
 	QMenu * menu = new QMenu(this);
-	this->context_menu_add_standard_items(menu, (uint16_t) LayerMenuItem::NEW);
+	this->context_menu_add_standard_items(menu, (uint16_t) TreeItemOperation::New);
 	menu->exec(QCursor::pos());
 	delete menu;
 }
