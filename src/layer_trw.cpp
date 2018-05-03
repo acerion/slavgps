@@ -34,11 +34,22 @@
 #include <cctype>
 #include <cassert>
 
+
+
+
 #include <QDateTime>
+#include <QInputDialog>
+#include <QStandardPaths>
+
+
+
 
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
+
+
+
 
 #include "layer_trw.h"
 #include "layer_trw_painter.h"

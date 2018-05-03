@@ -30,6 +30,18 @@
 #include <cstdlib>
 #include <unistd.h>
 
+
+
+
+#include <QTimeZone>
+#include <QCommandLineOption>
+#include <QCommandLineParser>
+#include <QDir>
+#include <QFileInfo>
+
+
+
+
 #include <glib.h>
 
 

@@ -53,11 +53,6 @@ using namespace SlavGPS;
 
 
 
-static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev);
-
-
-
-
 LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 {
 	this->panel_box = new QVBoxLayout;
@@ -136,12 +131,6 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(layer_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
-
-
-#ifdef K_FIXME_RESTORE
-	QObject::connect(this->tree_view, this, SIGNAL("button_press_event"), SLOT (button_press_cb));
-	QObject::connect(this->tree_view, this, SIGNAL("key_press_event"), SLOT (layers_key_press_cb));
-#endif
 }
 
 
@@ -170,46 +159,19 @@ void LayersPanel::emit_items_tree_updated_cb(const QString & trigger_name)
 
 
 
-bool LayersPanel::button_press_cb(QMouseEvent * ev)
-{
-	/* I don't understand what's going on with mouse buttons in this function. */
-
-	if (ev->button() == Qt::RightButton) {
-		TreeIndex * index = this->tree_view->get_index_at_pos(ev->x(), ev->y());
-#ifdef K_FIXME_RESTORE
-		if (index && index->isValid()) {
-			this->popup(index, (MouseButton) ev->button);
-			this->tree_view->select(&iter);
-		} else {
-			this->popup(NULL, (MouseButton) ev->button);
-		}
-		return true;
-#endif
-	}
-
-	return false;
-}
-
-
-
-
-static bool layers_key_press_cb(LayersPanel * panel, QKeyEvent * ev)
-{
-	return panel->key_press(ev);
-}
-
-
-
-
-bool LayersPanel::key_press(QKeyEvent * ev)
+void LayersPanel::keyPressEvent(QKeyEvent * ev)
 {
 	/* Accept all forms of delete keys. */
 	if (ev->key() == Qt::Key_Delete || ev->key() == Qt::Key_Backspace) {
 		this->delete_selected_cb();
-		return true;
+		ev->accept();
+		return;
 	}
-	return false;
+
+	/* Let base class handle unhandled events. */
+	QWidget::keyPressEvent(ev);
 }
+
 
 
 

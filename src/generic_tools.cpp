@@ -26,7 +26,14 @@
 #include <cassert>
 #include <cstring>
 
+
+
+
+#include <QPainter>
 #include <QDebug>
+
+
+
 
 #include "window.h"
 #include "generic_tools.h"
@@ -953,7 +960,7 @@ ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event
 {
 	if (layer != this->layer_edit_info->edited_layer) {
 		/* TODO: these two pointers should be the same, so one of them is redundant. */
-		qDebug() << "EE: LayerToolSelect: release: layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
+		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
 	}
 
 	if (this->select_and_move_activated) {
@@ -976,7 +983,7 @@ ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * ev
 {
 	if (layer != this->layer_edit_info->edited_layer) {
 		/* TODO: these two pointers should be the same, so one of them is redundant. */
-		qDebug() << "EE: LayerToolSelect: release: layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
+		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
 	}
 
 	if (this->select_and_move_activated) {

@@ -64,38 +64,6 @@ LayerTool::LayerTool(Window * new_window, Viewport * new_viewport, LayerType new
 
 LayerTool::~LayerTool()
 {
-#ifdef K_FIXME_RESTORE
-	if (radioActionEntry.stock_id) {
-		free((void *) radioActionEntry.stock_id);
-		radioActionEntry.stock_id = NULL;
-	}
-	if (radioActionEntry.label) {
-		free((void *) radioActionEntry.label);
-		radioActionEntry.label = NULL;
-	}
-	if (radioActionEntry.accelerator) {
-		free((void *) radioActionEntry.accelerator);
-		radioActionEntry.accelerator = NULL;
-	}
-	if (radioActionEntry.tooltip) {
-		free((void *) radioActionEntry.tooltip);
-		radioActionEntry.tooltip = NULL;
-	}
-
-	if (ruler) {
-		free(ruler);
-		ruler = NULL;
-	}
-	if (zoom) {
-		if (zoom->pixmap) {
-			g_object_unref(G_OBJECT (zoom->pixmap));
-		}
-
-		free(zoom);
-		zoom = NULL;
-	}
-#endif
-
 	delete this->cursor_click;
 	delete this->cursor_release;
 
@@ -134,12 +102,12 @@ void LayerTool::perform_selection(const ScreenPos & screen_pos)
 	/* We have just clicked the item, we aren't moving the cursor yet. */
 	this->layer_edit_info->moving = false;
 
-#ifdef K_FIXME_RESTORE
+	//#ifdef K_FIXME_RESTORE
 	/* What was this supposed to do? */
 	//gdk_gc_set_function(this->layer_edit_info->pen, GDK_INVERT);
 	this->viewport->draw_rectangle(this->layer_edit_info->pen, screen_pos.x - 3, screen_pos.y - 3, 6, 6);
 	this->viewport->sync();
-#endif
+	//#endif
 
 	this->layer_edit_info->old_screen_pos = screen_pos;
 }

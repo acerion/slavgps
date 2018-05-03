@@ -29,11 +29,21 @@
 #include <mutex>
 #include <cstring>
 #include <cmath>
+#include <time.h>
+
+
+
 
 #include <QDebug>
+#include <QFileDialog>
+
+
+
 
 #include <glib.h>
-#include <time.h>
+
+
+
 
 #include "coords.h"
 #include "coord.h"

@@ -23,6 +23,7 @@
 
 #include <QApplication>
 #include <QResource>
+#include <QTranslator>
 
 
 

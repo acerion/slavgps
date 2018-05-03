@@ -24,12 +24,14 @@
 
 
 
-#include <QtWidgets>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QToolBar>
 
-#include "layer.h"
+
+
+
+#include "tree_item.h"
 
 
 
@@ -41,6 +43,11 @@ namespace SlavGPS {
 
 	class LayerAggregate;
 	class Window;
+	class Viewport;
+	class TreeView;
+	class Layer;
+	enum class LayerType;
+	enum class CoordMode;
 
 
 
@@ -75,12 +82,8 @@ namespace SlavGPS {
 		TreeView * get_tree_view();
 
 		void contextMenuEvent(QContextMenuEvent * event);
+		void keyPressEvent(QKeyEvent * event);
 
-
-		/* This should be somehow private. */
-		bool key_press(QKeyEvent * ev);
-		void move_item(bool up);
-		bool button_press_cb(QMouseEvent * event);
 
 	private:
 		void context_menu_show_for_item(TreeItem * item);
@@ -89,6 +92,8 @@ namespace SlavGPS {
 		void context_menu_add_new_layer_submenu(QMenu * menu);
 
 		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
+
+		void move_item(bool up);
 
 		LayerAggregate * toplayer = NULL;
 		TreeIndex toplayer_item;

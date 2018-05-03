@@ -31,7 +31,7 @@
 #include <QDebug>
 #include <QHeaderView>
 
-//#include "layer.h"
+#include "layer.h"
 #include "window.h"
 #include "tree_view.h"
 #include "tree_view_internal.h"
