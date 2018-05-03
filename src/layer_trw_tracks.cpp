@@ -357,9 +357,9 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 
 void LayerTRWTracks::set_items_visibility(bool on_off)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->visible = on_off;
-		this->tree_view->set_tree_item_visibility(i->second->index, on_off);
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		iter->second->visible = on_off;
+		this->tree_view->set_tree_item_visibility(iter->second->index, on_off);
 	}
 }
 
@@ -368,22 +368,20 @@ void LayerTRWTracks::set_items_visibility(bool on_off)
 
 void LayerTRWTracks::toggle_items_visibility(void)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->visible = !i->second->visible;
-		this->tree_view->toggle_tree_item_visibility(i->second->index);
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		iter->second->visible = !iter->second->visible;
+		this->tree_view->toggle_tree_item_visibility(iter->second->index);
 	}
 }
 
 
 
 
-std::list<Track *> * LayerTRWTracks::get_track_values(std::list<Track *> * target)
+void LayerTRWTracks::get_tracks_list(std::list<Track *> & list)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		target->push_back(i->second);
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		list.push_back(iter->second);
 	}
-
-	return target;
 }
 
 
@@ -391,9 +389,9 @@ std::list<Track *> * LayerTRWTracks::get_track_values(std::list<Track *> * targe
 
 void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
+	for (auto it = this->items.begin(); it != this->items.end(); it++) {
 
-		Track * trk = i->second;
+		Track * trk = it->second;
 
 		if (!trk->visible) {
 			continue;
@@ -416,7 +414,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 				/* Was the old trackpoint we already found closer than this one? */
 				|| dist_x + dist_y < abs(tp_pos.x - search->closest_x) + abs(tp_pos.y - search->closest_y))) {
 
-				search->closest_track = i->second;
+				search->closest_track = it->second;
 				search->closest_tp = *iter;
 				search->closest_tp_iter = iter;
 				search->closest_x = tp_pos.x;
@@ -432,8 +430,8 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 
 void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->convert(dest_mode);
+	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		iter->second->convert(dest_mode);
 	}
 }
 
@@ -583,21 +581,20 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 time_t LayerTRWTracks::get_earliest_timestamp()
 {
 	time_t timestamp = 0;
-	std::list<Track *> * tracks_ = new std::list<Track *>;
-	tracks_ = this->get_track_values(tracks_);
+	std::list<Track *> tracks_;
+	this->get_tracks_list(tracks_);
 
-	if (!tracks_->empty()) {
-		tracks_->sort(Track::compare_timestamp);
+	if (!tracks_.empty()) {
+		tracks_.sort(Track::compare_timestamp);
 
 		/* Only need to check the first track as they have been sorted by time. */
-		Track * trk = *(tracks_->begin());
+		Track * trk = *(tracks_.begin());
 		/* Assume trackpoints already sorted by time. */
 		Trackpoint * tpt = trk->get_tp_first();
 		if (tpt && tpt->has_timestamp) {
 			timestamp = tpt->timestamp;
 		}
 	}
-	delete tracks_;
 	return timestamp;
 }
 

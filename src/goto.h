@@ -53,8 +53,9 @@ namespace SlavGPS {
 
 	class GoTo {
 	public:
+		static void uninit(void);
+
 		static void register_tool(GotoTool * tool);
-		static void unregister_all_tools(void); /* FIXME: this is unused at the moment. */
 
 		static void goto_location(Window * window, Viewport * viewport);
 		static void goto_latlon(Window * window, Viewport * viewport);

@@ -493,7 +493,7 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit, const QS
  */
 void WaypointListDialog::build_model(bool hide_layer_names)
 {
-	if (!this->waypoints || this->waypoints->empty()) {
+	if (this->waypoints.empty()) {
 		return;
 	}
 
@@ -572,7 +572,7 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 		date_format = WAYPOINT_LIST_DATE_FORMAT;
 	}
 
-	for (auto iter = waypoints->begin(); iter != waypoints->end(); iter++) {
+	for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
 		this->add_row(*iter, height_unit, date_format);
 	}
 
@@ -601,10 +601,12 @@ void SlavGPS::waypoint_list_dialog(QString const & title, Layer * layer)
 {
 	WaypointListDialog dialog(title, layer->get_window());
 
+	dialog.waypoints.clear();
+
 	if (layer->type == LayerType::TRW) {
-		dialog.waypoints = ((LayerTRW *) layer)->create_waypoints_list();
+		((LayerTRW *) layer)->get_waypoints_list(dialog.waypoints);
 	} else if (layer->type == LayerType::AGGREGATE) {
-		dialog.waypoints = ((LayerAggregate *) layer)->create_waypoints_list();
+		((LayerAggregate *) layer)->get_waypoints_list(dialog.waypoints);
 	} else {
 		assert (0);
 	}
@@ -632,7 +634,6 @@ WaypointListDialog::WaypointListDialog(QString const & title, QWidget * parent_w
 
 WaypointListDialog::~WaypointListDialog()
 {
-	delete this->waypoints;
 }
 
 

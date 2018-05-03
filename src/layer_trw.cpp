@@ -3645,34 +3645,28 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
    Function returns freshly allocated container. The container itself is owned by caller. Elements in container are not.
 */
-std::list<SlavGPS::Waypoint *> * LayerTRW::create_waypoints_list()
+void LayerTRW::get_waypoints_list(std::list<SlavGPS::Waypoint *> & list)
 {
-	std::list<Waypoint *> * wps = new std::list<Waypoint *>;
-
 	for (auto iter = this->waypoints->items.begin(); iter != this->waypoints->items.end(); iter++) {
-		wps->push_back((*iter).second);
+		list.push_back((*iter).second);
 	}
-
-	return wps;
 }
 
 
 
 
 /**
- * Create the latest list of tracks with the associated layer(s).
- * Although this will always be from a single layer here.
- */
-std::list<Track *> * LayerTRW::create_tracks_list(const QString & item_type_id)
+   Fill the list with tracks and/or routes from the layer.
+*/
+void LayerTRW::get_tracks_list(std::list<Track *> & list, const QString & type_id_string)
 {
-	std::list<Track *> * tracks_ = new std::list<Track *>;
-	if (item_type_id == "sg.trw.tracks") {
-		tracks_ = this->tracks->get_track_values(tracks_);
-	} else {
-		tracks_ = this->routes->get_track_values(tracks_);
+	if (type_id_string == "" || type_id_string == "sg.trw.tracks") {
+		this->tracks->get_tracks_list(list);
 	}
 
-	return tracks_;
+	if (type_id_string == "" || type_id_string == "sg.trw.routes") {
+		this->routes->get_tracks_list(list);
+	}
 }
 
 
@@ -4212,20 +4206,6 @@ void LayerTRW::download_map_along_track_cb(void)
 	vik_track_download_map(track, *iter, zoom_values[selected_zoom_idx]);
 
 	return;
-}
-
-
-
-
-/**
- * Create the latest list of tracks and routes.
- */
-std::list<Track *> * LayerTRW::create_tracks_list()
-{
-	std::list<Track *> * tracks_ = new std::list<Track *>;
-	tracks_ = this->tracks->get_track_values(tracks_);
-	tracks_ = this->routes->get_track_values(tracks_);
-	return tracks_;
 }
 
 

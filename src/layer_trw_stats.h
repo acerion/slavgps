@@ -59,9 +59,9 @@ namespace SlavGPS {
 
 		QGridLayout * stats_table = NULL;
 		QCheckBox * checkbox = NULL;
-		std::list<Track *> * tracks = NULL;
+		std::list<Track *> tracks;
 		Layer * layer = NULL; /* Just a reference. */
-		QString type_id;
+		QString type_id_string;
 
 		void collect_stats(TrackStatistics & stats, bool include_invisible);
 		void display_stats(TrackStatistics & stats);

@@ -281,12 +281,8 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 
 		/* kamilFIXME: this doesn't work for Map in tree view. Why? */
 		uint16_t layer_menu_items = (uint16_t) layer->get_menu_items_selection();
-
-#ifdef K_FIXME_RESTORE
 		/* "New layer -> layer types" submenu. */
 		layer_menu_items |= (uint16_t) LayerMenuItem::NEW;
-#endif
-
 
 		this->context_menu_add_standard_items(menu, layer_menu_items);
 

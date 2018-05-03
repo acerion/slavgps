@@ -1192,17 +1192,17 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 
 	/* Tracks sorted according to preferences. */
 	if (trw->tracks && (trw->get_tracks_visibility() || (options && options->hidden))) {
-		std::list<Track *> * track_values = NULL;
-		track_values = trw->tracks->get_track_values(track_values); /* TODO: make trw->tracks non-pointer? */
 
-		if (track_values && track_values->size()) {
+		std::list<Track *> track_values;
+		trw->tracks->get_tracks_list(track_values); /* TODO: make trw->tracks non-pointer? */
 
+		if (track_values.size()) {
 			switch (Preferences::get_gpx_export_trk_sort()) {
 			case GPXExportTrackSort::Time:
-				track_values->sort(Track::compare_timestamp);
+				track_values.sort(Track::compare_timestamp);
 				break;
 			case GPXExportTrackSort::Alpha:
-				track_values->sort(TreeItem::compare_name);
+				track_values.sort(TreeItem::compare_name);
 				break;
 			default:
 				break;
@@ -1210,29 +1210,27 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 
 			/* Loop around each list and write each one. */
 			context.options->is_route = false;
-			for (auto iter = track_values->begin(); iter != track_values->end(); iter++) {
+			for (auto iter = track_values.begin(); iter != track_values.end(); iter++) {
 				gpx_write_track(*iter, &context);
 			}
 		}
-		delete track_values;
 	}
 
 
 	/* Routes always sorted by name. */
 	if (trw->routes && (trw->get_routes_visibility() || (options && options->hidden))) {
 
-		std::list<Track *> * route_values = NULL;
-		route_values = trw->routes->get_track_values(route_values); /* TODO: make trw->routes non-pointer? */
-		if (route_values && route_values->size()) {
+		std::list<Track *> route_values;
+		trw->routes->get_tracks_list(route_values); /* TODO: make trw->routes non-pointer? */
 
-			route_values->sort(TreeItem::compare_name);
+		if (route_values.size()) {
+			route_values.sort(TreeItem::compare_name);
 
 			context.options->is_route = true;
-			for (auto iter = route_values->begin(); iter != route_values->end(); iter++) {
+			for (auto iter = route_values.begin(); iter != route_values.end(); iter++) {
 				gpx_write_track(*iter, &context);
 			}
 		}
-		delete route_values;
 	}
 
 

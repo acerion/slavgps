@@ -274,9 +274,8 @@ namespace SlavGPS {
 
 
 
-		std::list<Waypoint *> * create_waypoints_list();
-		std::list<Track *> * create_tracks_list();
-		std::list<Track *> * create_tracks_list(const QString & type_id);
+		void get_waypoints_list(std::list<Waypoint *> & list);
+		void get_tracks_list(std::list<Track *> & list, const QString & type_id_string);
 
 
 		void trackpoint_properties_show();

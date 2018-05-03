@@ -565,7 +565,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 		date_format = TRACK_LIST_DATE_FORMAT;
 	}
 
-	for (auto iter = this->tracks->begin(); iter != this->tracks->end(); iter++) {
+	for (auto iter = this->tracks.begin(); iter != this->tracks.end(); iter++) {
 		this->add_row(*iter, distance_unit, speed_units, height_unit, date_format);
 	}
 
@@ -594,27 +594,20 @@ void TrackListDialog::build_model(bool hide_layer_names)
 /**
    @title: the title for the dialog
    @layer: The layer, from which a list of tracks should be extracted
-   @type_id: TreeItem type to be show in list (empty string for both tracks and layers)
+   @type_id_string: TreeItem type to be show in list (empty string for both tracks and routes)
 
   Common method for showing a list of tracks with extended information
 */
-void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QString & type_id)
+void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QString & type_id_string)
 {
 	TrackListDialog dialog(title, layer->get_window());
 
+	dialog.tracks.clear();
 
 	if (layer->type == LayerType::AGGREGATE) {
-		if (type_id == "") { /* No particular sublayer type means both tracks and routes. */
-			dialog.tracks = ((LayerAggregate *) layer)->create_tracks_list();
-		} else {
-			dialog.tracks = ((LayerAggregate *) layer)->create_tracks_list(type_id);
-		}
+		((LayerAggregate *) layer)->get_tracks_list(dialog.tracks, type_id_string);
 	} else if (layer->type == LayerType::TRW) {
-		if (type_id == "") { /* No particular sublayer type means both tracks and routes. */
-			dialog.tracks = ((LayerTRW *) layer)->create_tracks_list();
-		} else {
-			dialog.tracks = ((LayerTRW *) layer)->create_tracks_list(type_id);
-		}
+		((LayerTRW *) layer)->get_tracks_list(dialog.tracks, type_id_string);
 	} else {
 		assert (0);
 	}
@@ -646,7 +639,6 @@ TrackListDialog::TrackListDialog(QString const & title, QWidget * parent_widget)
 
 TrackListDialog::~TrackListDialog()
 {
-	delete this->tracks;
 }
 
 

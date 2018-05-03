@@ -270,7 +270,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 */
 void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisible)
 {
-	for (auto iter = this->tracks->begin(); iter != this->tracks->end(); iter++) {
+	for (auto iter = this->tracks.begin(); iter != this->tracks.end(); iter++) {
 		Track * trk = *iter;
 		LayerTRW * trw = trk->get_parent_layer_trw();
 		assert (trw->type == LayerType::TRW);
@@ -294,16 +294,14 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 	qDebug() << "DD: Layer TRW Stats: include invisible items:" << include_invisible;
 
 	/* Delete old list of items. */
-	if (this->tracks) {
-		/* kamilFIXME: delete this->tracks. */
-	}
+	this->tracks.clear();
 
 	/* Get the latest list of items to analyse. */
 	/* kamilTODO: why do we need to get the latest list on checkbox toggle? */
 	if (this->layer->type == LayerType::TRW) {
-		this->tracks = ((LayerTRW *) this->layer)->create_tracks_list(this->type_id);
+		((LayerTRW *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
 	} else if (layer->type == LayerType::AGGREGATE) {
-		this->tracks = ((LayerAggregate *) this->layer)->create_tracks_list(this->type_id);
+		((LayerAggregate *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
 	} else {
 		assert (0);
 	}
@@ -339,12 +337,12 @@ TRWStatsDialog::~TRWStatsDialog()
 /**
    @name: name of object, for which the stats will be calculated
    @layer: layer containing given tracks/routes
-   @type_id: type of TRW sublayer to show stats for
+   @type_id_string: type of TRW sublayer to show stats for
    @parent: parent widget
 
    Display a dialog with stats across many tracks.
 */
-void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QString & type_id_, QWidget * parent)
+void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QString & new_type_id_string, QWidget * parent)
 {
 	TRWStatsDialog * dialog = new TRWStatsDialog(parent);
 	dialog->setWindowTitle(QObject::tr("Statistics"));
@@ -367,12 +365,12 @@ void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QS
 	}
 
 	dialog->layer = layer;
-	dialog->type_id = type_id_;
+	dialog->type_id_string = new_type_id_string;
 
 	if (layer->type == LayerType::TRW) {
-		dialog->tracks = ((LayerTRW *) layer)->create_tracks_list(dialog->type_id);
+		((LayerTRW *) layer)->get_tracks_list(dialog->tracks, dialog->type_id_string);
 	} else if (layer->type == LayerType::AGGREGATE) {
-		dialog->tracks = ((LayerAggregate *) layer)->create_tracks_list(dialog->type_id);
+		((LayerAggregate *) layer)->get_tracks_list(dialog->tracks, dialog->type_id_string);
 	} else {
 		qDebug() << "EE: Layer TRW Stats: wrong layer type" << (int) layer->type;
 		assert (0);

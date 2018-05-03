@@ -56,8 +56,9 @@ void ExternalTools::register_tool(ExternalTool * ext_tool)
 
 
 
-void ExternalTools::unregister_all(void) /* FIXME: this is unused at the moment. */
+void ExternalTools::uninit(void)
 {
+	/* Unregister all tools. */
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
 		delete *iter;
 	}

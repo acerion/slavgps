@@ -419,24 +419,15 @@ void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 
 
 
-std::list<Waypoint *> * LayerAggregate::create_waypoints_list()
+void LayerAggregate::get_waypoints_list(std::list<Waypoint *> & list)
 {
 	std::list<const Layer *> layers;
 	this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
-	std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
-
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-
-		/* TODO: move this to layer trw containers. */
-		Waypoints & wps = ((LayerTRW *) (*iter))->get_waypoint_items();
-		for (auto i = wps.begin(); i != wps.end(); i++) {
-			waypoints->push_back(i->second);
-		}
+		((LayerTRW *) (*iter))->get_waypoints_list(list);
 	}
-
-	return waypoints;
 }
 
 
@@ -500,28 +491,15 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 
-std::list<Track *> * LayerAggregate::create_tracks_list(const QString & items_type_id)
-{
-	/* FIXME: add handling of items_type_id. */
-	return this->create_tracks_list();
-}
-
-
-
-
-std::list<Track *> * LayerAggregate::create_tracks_list()
+void LayerAggregate::get_tracks_list(std::list<Track *> & list, const QString & type_id_string)
 {
 	std::list<Layer const *> layers;
 	this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
-	/* For each TRW layers keep adding the tracks and routes to build a list of all of them. */
-	std::list<Track *> * tracks = new std::list<Track *>;
+	/* For each TRW layers keep adding the tracks and/or routes to build a list of all of them. */
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		((LayerTRW *) (*iter))->get_tracks_node().get_track_values(tracks);
-		((LayerTRW *) (*iter))->get_routes_node().get_track_values(tracks);
+		((LayerTRW *) (*iter))->get_tracks_list(list, type_id_string);
 	}
-
-	return tracks;
 }
 
 

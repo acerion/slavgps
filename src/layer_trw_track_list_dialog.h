@@ -66,7 +66,7 @@ namespace SlavGPS {
 		~TrackListDialog();
 		void build_model(bool hide_layer_names);
 
-		std::list<Track *> * tracks = NULL;
+		std::list<Track *> tracks;
 
 	private slots:
 		void copy_selected_cb(void);

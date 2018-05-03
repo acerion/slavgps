@@ -64,7 +64,7 @@ namespace SlavGPS {
 		~WaypointListDialog();
 		void build_model(bool hide_layer_names);
 
-		std::list<Waypoint *> * waypoints = NULL;
+		std::list<Waypoint *> waypoints;
 
 	private slots:
 		void waypoint_view_cb(void);

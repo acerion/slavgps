@@ -47,6 +47,7 @@
 #include "util.h"
 #include "version_check.h"
 #include "routing.h"
+#include "external_tools.h"
 
 
 
@@ -217,6 +218,7 @@ int main(int argc, char ** argv)
 	Preferences::uninit();
 	ApplicationState::uninit();
 	modules_uninit();
+	ExternalTools::uninit();
 
 	Download::uninit();
 
