@@ -82,6 +82,7 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu, bool wp_has_image);
 		void add_copy_menu_items(QMenu & menu);
 		void waypoint_select(LayerTRW * layer);
+		void copy_selected(bool include_positions);
 
 		QWidget * parent = NULL;
 		QDialogButtonBox * button_box = NULL;

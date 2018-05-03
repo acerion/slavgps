@@ -42,6 +42,9 @@ namespace SlavGPS {
 
 		static void populate_symbols_list(QComboBox * symbol_list, const QString & preselected_symbol_name);
 
+		/* See if specific symbol name is equal to name used by this module to indicate "no Garmin symbol selected". */
+		static bool is_none_symbol_name(const QString & symbol_name);
+
 		/* Use when preferences have changed to reload icons. */
 		static void clear_symbols(void);
 	};

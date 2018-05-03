@@ -259,13 +259,13 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 
 
 
-static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_positions)
+void WaypointListDialog::copy_selected(bool include_positions)
 {
 	copy_data_t cd;
 #ifdef K_FIXME_RESTORE
-	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+	GtkTreeSelection * selection = gtk_tree_view_get_selection(this->view);
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
-	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
+	GList * gl = gtk_tree_view_get_columns(this->view);
 	unsigned int count = g_list_length(gl);
 	g_list_free(gl);
 	cd.has_layer_names = (count > N_COLUMNS-3);
@@ -282,9 +282,7 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 
 void WaypointListDialog::copy_selected_only_visible_columns_cb(void) /* Slot. */
 {
-#ifdef K_FIXME_RESTORE
-	trw_layer_copy_selected(tree_view, false);
-#endif
+	this->copy_selected(false);
 }
 
 
@@ -292,9 +290,7 @@ void WaypointListDialog::copy_selected_only_visible_columns_cb(void) /* Slot. */
 
 void WaypointListDialog::copy_selected_with_position_cb(void) /* Slot. */
 {
-#ifdef K_FIXME_RESTORE
-	trw_layer_copy_selected(tree_view, true);
-#endif
+	this->copy_selected(true);
 }
 
 

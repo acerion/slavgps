@@ -184,9 +184,15 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		}
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, wp_param_specs[SG_WP_PARAM_SYMBOL]);
-		wp->set_symbol(param_value.val_string);
+		if (GarminSymbols::is_none_symbol_name(param_value.val_string)) {
+			qDebug() << "zzzz none:" << param_value.val_string;
+			wp->set_symbol(""); /* Save empty string instead of actual "none" string. */
+		} else {
+			qDebug() << "zzzz some:" << param_value.val_string;
+			wp->set_symbol(param_value.val_string);
+		}
 
-#ifdef K_FIXME_RESTORE
+#ifdef TODO
 		if (wp->source != sourceentry->text()) {
 			wp->set_source(sourceentry->text());
 		}
@@ -194,20 +200,6 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 			wp->set_type(typeentry->text());
 		}
 #endif
-
-#ifdef K_FIXME_RESTORE
-		GtkTreeIter iter, first;
-		gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &first);
-		if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(symbolentry), &iter) || !memcmp(&iter, &first, sizeof(GtkTreeIter))) {
-			wp->set_symbol(NULL);
-		} else {
-			char *sym;
-			gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1);
-			wp->set_symbol(sym);
-			free(sym);
-		}
-#endif
-
 
 		std::get<SG_WP_DIALOG_OK>(result) = true;
 		std::get<SG_WP_DIALOG_NAME>(result) = default_wp_name != wp->name;

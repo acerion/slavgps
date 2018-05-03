@@ -58,6 +58,9 @@ using namespace SlavGPS;
 static std::unordered_map<QString, int, MyQStringKeyHashInsensitive, MyQStringKeyEqualInsensitive> symbol_names;
 static std::unordered_map<QString, int, MyQStringKeyHashInsensitive, MyQStringKeyEqualInsensitive> old_symbol_names;
 
+/* First item on list of symbols, meaning "no symbol selected. */
+static const QString none_symbol_name(QObject::tr("(none)"));
+
 
 
 
@@ -467,7 +470,7 @@ void GarminSymbols::populate_symbols_list(QComboBox * symbol_list, const QString
 		return;
 	}
 
-	symbol_list->addItem(QObject::tr("(none)"));
+	symbol_list->addItem(none_symbol_name);
 
 	int selected_idx = -1;
 	int i = 0;
@@ -485,6 +488,14 @@ void GarminSymbols::populate_symbols_list(QComboBox * symbol_list, const QString
 	if (selected_idx != -1) {
 		symbol_list->setCurrentIndex(selected_idx);
 	}
+}
+
+
+
+
+bool GarminSymbols::is_none_symbol_name(const QString & symbol_name)
+{
+	return symbol_name == none_symbol_name;
 }
 
 
