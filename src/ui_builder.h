@@ -122,7 +122,11 @@ namespace SlavGPS {
 		const char * tooltip;
 
 		ParameterSpecification & operator=(const ParameterSpecification & other);
+		bool get_hardwired_value(SGVariant & value) const;
 	};
+
+
+
 
 	enum {
 		PARAMETER_GROUP_HIDDEN  = -2,  /* This parameter won't be displayed in UI. */
@@ -140,9 +144,6 @@ namespace SlavGPS {
 
 	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * param_specs);
 	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
-
-
-	bool parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param_spec);
 
 
 

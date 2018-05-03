@@ -695,7 +695,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const DownloadResult result)
 		break;
 	default:
 		debug << "Unknown";
-		qDebug() << "EE" PREFIX << "Unexpected download result" << (int) result;
+		qDebug() << "EE" PREFIX << "invalid download result" << (int) result;
 		break;
 	};
 

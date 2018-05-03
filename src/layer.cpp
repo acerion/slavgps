@@ -201,7 +201,7 @@ void Layer::preconfigure_interfaces(void)
 			SGVariant param_value;
 
 			/* param_value will be overwritten below by value from settings file. */
-			parameter_get_hardwired_value(param_value, *param_spec);
+			param_spec->get_hardwired_value(param_value);
 
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
 			/* kamilTODO: if invalid, call LayerDefaults::set() to save the value? */
@@ -227,9 +227,10 @@ static bool layer_defaults_register(LayerType layer_type)
 	/* Process each parameter. */
 	SGVariant value;
 	for (auto iter = layer_interface->parameter_specifications.begin(); iter != layer_interface->parameter_specifications.end(); iter++) {
-		if (iter->second->group_id != PARAMETER_GROUP_HIDDEN) {
-			if (parameter_get_hardwired_value(value, *iter->second)) {
-				LayerDefaults::set(layer_type, iter->second, value);
+		const ParameterSpecification * param_spec = iter->second;
+		if (param_spec->group_id != PARAMETER_GROUP_HIDDEN) {
+			if (param_spec->get_hardwired_value(value)) {
+				LayerDefaults::set(layer_type, *param_spec, value);
 				answer = true;
 			}
 		}
@@ -847,6 +848,51 @@ LayerType& SlavGPS::operator++(LayerType& layer_type)
 {
 	layer_type = static_cast<LayerType>(static_cast<int>(layer_type) + 1);
 	return layer_type;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const LayerType & layer_type)
+{
+	switch (layer_type) {
+	case LayerType::AGGREGATE:
+		debug << "LayerAggregate";
+		break;
+	case LayerType::TRW:
+		debug << "LayerTRW";
+		break;
+	case LayerType::COORD:
+		debug << "LayerCoord";
+		break;
+	case LayerType::GEOREF:
+		debug << "LayerGeoref";
+		break;
+	case LayerType::GPS:
+		debug << "LayerGPS";
+		break;
+	case LayerType::MAP:
+		debug << "LayerMap";
+		break;
+	case LayerType::DEM:
+		debug << "LayerDEM";
+		break;
+#ifdef HAVE_LIBMAPNIK
+	case LayerType::MAPNIK:
+		debug << "LayerMapnik";
+		break;
+#endif
+	case LayerType::NUM_TYPES:
+		qDebug() << "EE" PREFIX << "unexpectedly handling NUM_TYPES layer type";
+		debug << "(layer-type-last)";
+		break;
+	default:
+		debug << "layer-type-unknown";
+		qDebug() << "EE" PREFIX << "invalid layer type" << (int) layer_type;
+		break;
+	};
+
+	return debug;
 }
 
 

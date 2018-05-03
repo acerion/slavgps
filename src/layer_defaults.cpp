@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (c) 2016 - 2018 Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,24 +17,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
-#include <cassert>
+
+
+
+
 #include <vector>
 
-//#include <glib/gstdio.h>
+
+
 
 #include <QSettings>
 #include <QDebug>
 
+
+
+
 #include "ui_builder.h"
+#include "layer.h"
 #include "layer_defaults.h"
 #include "layer_interface.h"
 #include "dir.h"
-#include "file.h"
 
 
 
@@ -43,39 +47,21 @@ using namespace SlavGPS;
 
 
 
-static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success);
-static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype);
-static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
-static void use_internal_defaults_if_missing_default(LayerType layer_type);
-
-#ifdef K_OLD_IMPLEMENTATION
-static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec);
-static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
-#endif
-
-
-
-static bool layer_defaults_load_from_file(void);
-static bool layer_defaults_save_to_file(void);
-
-
-
-
+#define PREFIX ": Layer Defaults:" << __FUNCTION__ << __LINE__ << ">>"
 #define VIKING_LAYER_DEFAULTS_INI_FILE "viking_layer_defaults.ini"
 
 
-/* A list of the parameter types in use. */
-std::vector<ParameterSpecification *> default_parameters_specifications;
 
+
+/* A list of the parameter types in use. */
+static std::vector<ParameterSpecification *> default_parameters_specifications;
 static QSettings * keyfile = NULL;
 static bool loaded;
 
 
 
-/* "read" is supposed to indicate that this is a low-level function,
-   reading directly from file, even though the reading is made from QT
-   abstraction of settings file. */
-static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType type_id, bool * success)
+
+SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const char * name, SGVariantType type_id, bool * success)
 {
 	SGVariant value;
 	QString group = Layer::get_type_id_string(layer_type);
@@ -84,7 +70,7 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 	QVariant variant = keyfile->value(key);
 
 	if (!variant.isValid()) {
-		qDebug() << "EE: Layer Defaults: failed to read key" << key;
+		qDebug() << "EE" PREFIX << "failed to read key" << key;
 		*success = false;
 		return value;
 	}
@@ -123,12 +109,12 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 		break;
 
 	default:
-		qDebug() << "EE: Layer Defaults:" << __FUNCTION__ << "unhandled value type" << (int) type_id;
+		qDebug() << "EE" PREFIX << "unhandled value type" << (int) type_id;
 		*success = false;
 		break;
 	}
 
-	qDebug() << "II: Layer Defaults:" << __FUNCTION__ << "read value" << value;
+	qDebug() << "II" PREFIX << "read value" << value;
 
 	return value;
 
@@ -137,23 +123,7 @@ static SGVariant read_parameter_value(LayerType layer_type, const char * name, S
 
 
 
-/* "read" is supposed to indicate that this is a low-level function,
-   reading directly from file, even though the reading is made from QT
-   abstraction of settings file. */
-static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype)
-{
-	bool success = true;
-	/* This should always succeed - don't worry about 'success'. */
-	return read_parameter_value(layer_type, name, ptype, &success);
-}
-
-
-
-
-/* "write" is supposed to indicate that this is a low-level function,
-   writing directly to file, even though the writing is made to QT
-   abstraction of settings file. */
-static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype)
+void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype)
 {
 	QVariant variant;
 
@@ -177,7 +147,7 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 		variant = value.val_color;
 		break;
 	default:
-		qDebug() << "EE: Layer Defaults: unhandled parameter type" << (int) ptype;
+		qDebug() << "EE" PREFIX << "unhandled parameter type" << (int) ptype;
 		return;
 	}
 
@@ -188,39 +158,8 @@ static void write_parameter_value(const SGVariant & value, LayerType layer_type,
 
 
 
-#ifdef K_OLD_IMPLEMENTATION
 
-
-static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec)
-{
-	/* Index is only an index into values from this layer. */
-	int index = (int) (long) (index_ptr);
-	ParameterSpecification * layer_param_spec = default_parameters_specifications.at(index + id);
-
-	write_parameter_value(value, layer_param_spec->layer_type, layer_param_spec->name, layer_param_spec->type);
-}
-
-
-
-
-static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2)
-{
-	/* Index is only an index into values from this layer. */
-	int index = (int) (long) (index_ptr);
-	ParameterSpecification * layer_param_spec = default_parameters_specifications.at(index + id);
-
-	return read_parameter_value(layer_param_spec->layer_type, layer_param_spec->name, layer_param_spec->type);
-}
-
-
-
-
-#endif
-
-
-
-
-static void use_internal_defaults_if_missing_default(LayerType layer_type)
+void LayerDefaults::fill_from_hardwired_defaults(LayerType layer_type)
 {
 	LayerInterface * interface = Layer::get_interface(layer_type);
 
@@ -231,13 +170,25 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 			continue;
 		}
 
+		/* Now we are dealing with a concrete, layer-specific
+		   parameter.
+
+		   See if its value has been read from configuration
+		   file.  If not, try to get the value hardwired in
+		   application and add it to the configuration file so
+		   that the file has full, consistent set of
+		   values. */
+
 		bool success = false;
-		/* Check if a value is stored in settings file. If not, get program's internal, hardwired value. */
-		read_parameter_value(layer_type, param_spec->name, param_spec->type_id, &success);
+		LayerDefaults::get_parameter_value(layer_type, param_spec->name, param_spec->type_id, &success);
 		if (!success) {
+			/* Value of this parameter has not been read
+			   from config file. Try to find it in
+			   program's hardwired values. */
+			qDebug() << "II" PREFIX << "Getting hardwired value of parameter" << layer_type << param_spec->name;
 			SGVariant value;
-			if (parameter_get_hardwired_value(value, *param_spec)) {
-				write_parameter_value(value, layer_type, param_spec->name, param_spec->type_id);
+			if (param_spec->get_hardwired_value(value)) {
+				save_parameter_value(value, layer_type, param_spec->name, param_spec->type_id);
 			}
 		}
 	}
@@ -251,27 +202,25 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
    kamilFIXME: return value is not checked.
 */
-static bool layer_defaults_load_from_file(void)
+bool LayerDefaults::load_from_file(void)
 {
 	//GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
 
 	if (!keyfile) {
-		qDebug() << "EE: Layer Defaults: key file is not initialized";
+		qDebug() << "EE" PREFIX << "key file is not initialized";
 		exit(EXIT_FAILURE);
 	}
 
 	enum QSettings::Status status = keyfile->status();
 	if (status != QSettings::NoError) {
-		qDebug() << "EE: Layer Defaults: key file status is" << status;
+		qDebug() << "EE" PREFIX << "key file status is" << status;
 		return false;
 	}
 
-#ifdef K_FIXME_RESTORE
-	/* Ensure if have a key file, then any missing values are set from the internal defaults. */
+	/* Set any missing values from the program's internal/hardwired defaults. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
-		use_internal_defaults_if_missing_default(layer_type);
+		LayerDefaults::fill_from_hardwired_defaults(layer_type);
 	}
-#endif
 
 	return true;
 }
@@ -284,7 +233,7 @@ static bool layer_defaults_load_from_file(void)
 
    \return true
 */
-static bool layer_defaults_save_to_file(void)
+bool LayerDefaults::save_to_file(void)
 {
 	keyfile->sync();
 	return true;
@@ -294,20 +243,18 @@ static bool layer_defaults_save_to_file(void)
 
 
 /**
- * @parent:      The Window
- * @layer_name:  The layer
- *
- * This displays a Window showing the default parameter values for the selected layer.
- * It allows the parameters to be changed.
- *
- * Returns: %true if the window is displayed (because there are parameters to view).
- */
+   This displays a dialog window showing the default parameter values for the selected layer.
+   It allows the parameters to be changed.
+
+   \return true if "OK" key has been pressed in the dialog window,
+   \return false otherwise
+*/
 bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
 		   do it once before we display the params. */
-		layer_defaults_load_from_file();
+		LayerDefaults::load_from_file();
 		loaded = true;
 	}
 
@@ -324,10 +271,10 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 		for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
 			const SGVariant param_value = dialog.get_param_value(iter->first, *(iter->second));
 			values->at(iter->first) = param_value;
-			write_parameter_value(param_value, layer_type, iter->second->name, iter->second->type_id);
+			save_parameter_value(param_value, layer_type, iter->second->name, iter->second->type_id);
 		}
 
-		layer_defaults_save_to_file();
+		LayerDefaults::save_to_file();
 
 		return true;
 	} else {
@@ -339,35 +286,37 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 
 
 /**
-   @layer_param:     The parameter
-   @default_value:   The default value
-   @layer_type:      Type of layer in which the parameter resides
+   @layer_type
+   @layer_param_spec
+   @default_value
 
-   Call this function on to set the default value for the particular parameter.
+   Call this function to set the default value for the particular parameter.
 */
-void LayerDefaults::set(LayerType layer_type, ParameterSpecification * layer_param_spec, const SGVariant & default_value)
+void LayerDefaults::set(LayerType layer_type, const ParameterSpecification & layer_param_spec, const SGVariant & default_value)
 {
 	/* Copy value. */
-	ParameterSpecification * new_param = new ParameterSpecification;
-	*new_param = *layer_param_spec;
-	default_parameters_specifications.push_back(new_param);
+	ParameterSpecification * new_spec = new ParameterSpecification;
+	*new_spec = layer_param_spec;
+	default_parameters_specifications.push_back(new_spec);
 
-	write_parameter_value(default_value, layer_type, layer_param_spec->name, layer_param_spec->type_id);
+	save_parameter_value(default_value, layer_type, layer_param_spec.name, layer_param_spec.type_id);
 }
 
 
 
 
 /**
- * Call this function at startup.
- */
+   @brief Initialize LayerDefaults module
+
+   Call this function at startup.
+*/
 void LayerDefaults::init(void)
 {
 	/* kamilFIXME: improve this section. Make sure that the file exists. */
 	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_LAYER_DEFAULTS_INI_FILE);
 	keyfile = new QSettings(full_path, QSettings::IniFormat);
 
-	qDebug() << "II: Layer Defaults: key file initialized as" << keyfile << "with path" << full_path;
+	qDebug() << "II" PREFIX << "key file initialized as" << keyfile << "with path" << full_path;
 
 	loaded = false;
 }
@@ -376,11 +325,17 @@ void LayerDefaults::init(void)
 
 
 /**
- * Call this function on program exit.
- */
+   @brief Deinitialize LayerDefaults module
+
+   Call this function on program exit.
+*/
 void LayerDefaults::uninit(void)
 {
 	delete keyfile;
+
+	for (auto iter = default_parameters_specifications.begin(); iter != default_parameters_specifications.end(); iter++) {
+		delete *iter;
+	}
 	default_parameters_specifications.clear();
 }
 
@@ -388,22 +343,24 @@ void LayerDefaults::uninit(void)
 
 
 /**
- * @layer_name:  String name of the layer
- * @param_name:  String name of the parameter
- * @param_type:  The parameter type
- *
- * Call this function to get the default value for the parameter requested.
- */
+   @layer_type
+   @param_name
+   @param_type
+
+   Call this function to get the default value for the parameter requested.
+*/
 SGVariant LayerDefaults::get(LayerType layer_type, const char * param_name, SGVariantType param_type)
 {
 	if (!loaded) {
-		/* Since we can't load the file in a_defaults_init (no params registered yet),
+		/* Since we can't load the file in
+		   LayerDefaults::init() (no params registered yet),
 		   do it once before we get the first key. */
-		layer_defaults_load_from_file();
+		LayerDefaults::load_from_file();
 		loaded = true;
 	}
 
-	return read_parameter_value(layer_type, param_name, param_type);
+	bool dummy;
+	return LayerDefaults::get_parameter_value(layer_type, param_name, param_type, &dummy);
 }
 
 
@@ -427,5 +384,40 @@ bool LayerDefaults::save(void)
 	  simply sync keyfile to disc file.
 	*/
 
-	return layer_defaults_save_to_file();
+	return LayerDefaults::save_to_file();
 }
+
+
+
+
+#ifdef K_OLD_IMPLEMENTATION
+
+
+
+
+static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec)
+{
+	/* Index is only an index into values from this layer. */
+	int index = (int) (long) (index_ptr);
+	ParameterSpecification * layer_param_spec = default_parameters_specifications.at(index + id);
+
+	save_parameter_value(value, layer_param_spec->layer_type, layer_param_spec->name, layer_param_spec->type);
+}
+
+
+
+
+static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2)
+{
+	/* Index is only an index into values from this layer. */
+	int index = (int) (long) (index_ptr);
+	ParameterSpecification * layer_param_spec = default_parameters_specifications.at(index + id);
+
+	bool dummy;
+	return LayerDefaults::get_parameter_value(layer_param_spec->layer_type, layer_param_spec->name, layer_param_spec->type, &dummy);
+}
+
+
+
+
+#endif

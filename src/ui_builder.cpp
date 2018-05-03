@@ -849,21 +849,21 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 
 
 
-bool SlavGPS::parameter_get_hardwired_value(SGVariant & value, const ParameterSpecification & param_spec)
+bool ParameterSpecification::get_hardwired_value(SGVariant & value) const
 {
 	SGVariant param_value;
-	if (param_spec.widget_type == WidgetType::SpinBoxDouble
-	    || param_spec.widget_type == WidgetType::SpinBoxInt
-	    || param_spec.widget_type == WidgetType::HScale) {
+	if (this->widget_type == WidgetType::SpinBoxDouble
+	    || this->widget_type == WidgetType::SpinBoxInt
+	    || this->widget_type == WidgetType::HScale) {
 
 		/* This will be overwritten below by value from settings file. */
-		ParameterScale * scale = (ParameterScale *) param_spec.widget_data;
+		ParameterScale * scale = (ParameterScale *) this->widget_data;
 		value = scale->initial;
 		return true;
 	} else {
-		if (param_spec.hardwired_default_value) {
+		if (this->hardwired_default_value) {
 			/* This will be overwritten below by value from settings file. */
-			value = param_spec.hardwired_default_value();
+			value = this->hardwired_default_value();
 			return true;
 		}
 	}

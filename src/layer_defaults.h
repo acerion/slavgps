@@ -29,7 +29,6 @@
 
 
 
-#include "layer.h"
 #include "variant.h"
 
 
@@ -41,6 +40,7 @@ namespace SlavGPS {
 
 
 	class ParameterSpecification;
+	enum class LayerType;
 
 
 
@@ -51,12 +51,21 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void set(LayerType layer_type, ParameterSpecification * layer_param_spec, const SGVariant & default_value);
+		static void set(LayerType layer_type, const ParameterSpecification & layer_param_spec, const SGVariant & default_value);
 		static SGVariant get(LayerType layer_type, const char * param_name, SGVariantType param_type);
 
 		static bool show_window(LayerType layer_type, QWidget * parent);
 
 		static bool save(void);
+
+	private:
+		static bool load_from_file(void);
+		static bool save_to_file(void);
+
+		static void fill_from_hardwired_defaults(LayerType layer_type);
+
+		static SGVariant get_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success);
+		static void save_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
 	};
 
 

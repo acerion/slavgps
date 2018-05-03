@@ -39,6 +39,7 @@
 #include <QMenu>
 #include <QString>
 #include <QPen>
+#include <QDebug>
 
 #include "tree_view.h"
 #include "viewport.h"
@@ -92,6 +93,7 @@ namespace SlavGPS {
 	};
 
 	LayerType& operator++(LayerType& layer_type);
+ 	QDebug operator<<(QDebug debug, const LayerType & layer_type);
 
 
 
