@@ -95,6 +95,9 @@ static std::list<Window *> window_list;
 #define VIEWPORT_SAVE_DEFAULT_FORMAT   ViewportSaveFormat::PNG
 
 
+#define VIKING_ACCELERATOR_KEY_FILE "keys.rc"
+
+
 
 
 enum {
@@ -215,8 +218,6 @@ Window::Window()
 
 	QObject::connect(this->layers_tree, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
 
-	/* Allow key presses to be processed anywhere. */
-	QObject::connect(this, SIGNAL("key_press_event"), this, SLOT (key_press_event_cb));
 
 #ifdef K_FIXME_RESTORE
 	/* I think that it's no longer necessary. */
@@ -3580,92 +3581,75 @@ void Window::destroy_window_cb(void)
 
 
 
-
-#define VIKING_ACCELERATOR_KEY_FILE "keys.rc"
-/**
- * Used to handle keys pressed in main UI, e.g. as hotkeys.
- *
- * This is the global key press handler
- *  Global shortcuts are available at any time and hence are not restricted to when a certain tool is enabled
- */
-bool Window::key_press_event_cb(QKeyEvent * ev)
+void Window::keyPressEvent(QKeyEvent * ev)
 {
-#ifdef K_FIXME_RESTORE
-	// The keys handled here are not in the menuing system for a couple of reasons:
-	//  . Keeps the menu size compact (alebit at expense of discoverably)
-	//  . Allows differing key bindings to perform the same actions
+	const int key = ev->key();
+	const Qt::KeyboardModifiers modifiers = ev->modifiers();
 
-	// First decide if key events are related to the maps layer
 	bool map_download = false;
-	bool map_download_only_new = true; // Only new or reload
+	bool map_download_only_new = true; /* Only new or reload. */
 
-	GdkModifierType modifiers = (GdkModifierType) gtk_accelerator_get_default_mod_mask();
-
-	// Standard 'Refresh' keys: F5 or Ctrl+r
-	// Note 'F5' is actually handled via menu_view_refresh_cb() later on
-	//  (not 'R' it's 'r' notice the case difference!!)
-	if (ev->keyval == GDK_r && (ev->state & modifiers) == GDK_CONTROL_MASK) {
+	/* Standard 'Refresh' keys are: F5 or Ctrl+r.  Regular 'F5 is
+	   handled via menu_view_refresh_cb(), so here handle other
+	   combinations. */
+	if (key == Qt::Key_R && modifiers == Qt::ControlModifier) {
 		map_download = true;
 		map_download_only_new = true;
-	}
-	// Full cache reload with Ctrl+F5 or Ctrl+Shift+r [This is not in the menu system]
-	// Note the use of uppercase R here since shift key has been pressed
-	else if ((ev->keyval == GDK_F5 && (ev->state & modifiers) == GDK_CONTROL_MASK) ||
-		 (ev->keyval == GDK_R && (ev->state & modifiers) == (GDK_CONTROL_MASK + GDK_SHIFT_MASK))) {
+
+	} else if ((key == Qt::Key_F5 && modifiers == Qt::ControlModifier)
+		 || (key == Qt::Key_R && modifiers == (Qt::ControlModifier + Qt::ShiftModifier))) {
+
+		/* Full cache reload. */
 		map_download = true;
 		map_download_only_new = false;
+
+	} else if (key == Qt::Key_Escape) {
+		/* Restore Main Menu via Escape key if the user has hidden it.
+		   This key is more likely to be used as they may not remember the function key */
+		if (!this->menu_bar->isVisible()) {
+			this->menu_bar->setVisible(true);
+		}
+		/* End of handling of this key. */
+		return;
+	} else {
+		/* Standard Ctrl++ / Ctrl+- to zoom in/out are already
+		   handled by global qa_view_zoom_in/out actions in
+		   window. No more keys to handle. */
+
+		QMainWindow::keyPressEvent(ev);
+		/* End of handling of this key. */
+		return;
 	}
 
-	else
-#endif
-	/* Standard Ctrl++ / Ctrl+- to zoom in/out respectively. */
-	if (ev->key() == Qt::Key_Plus && ev->modifiers() == Qt::ControlModifier) {
-		this->viewport->zoom_in();
-		this->redraw_tree_items_wrapper();
-		return true; // handled keypress
-	} else if (ev->key() == Qt::Key_Minus && ev->modifiers() == Qt::ControlModifier) {
-		this->viewport->zoom_out();
-		this->redraw_tree_items_wrapper();
-		return true; // handled keypress
-	}
 
 #ifdef K_FIXME_RESTORE
 	if (map_download) {
 		this->simple_map_update(map_download_only_new);
-		return true; // handled keypress
+		return;
 	}
 
 	Layer * layer = this->items_tree->get_selected_layer();
 	if (layer && this->tb->active_tool && this->tb->active_tool->key_press) {
 		LayerType ltype = this->tb->active_tool->layer_type;
 		if (layer && ltype == layer->type) {
-			return this->tb->active_tool->key_press(layer, ev, this->tb->active_tool);
+			this->tb->active_tool->key_press(layer, ev, this->tb->active_tool);
+			return;
 		}
 	}
 
-	// Ensure called only on window tools (i.e. not on any of the Layer tools since the layer is NULL)
+	/* Ensure called only on window tools (i.e. not on any of the
+	   Layer tools since the layer is NULL). */
 	if (this->current_tool < TOOL_LAYER) {
-		// No layer - but enable window tool keypress processing - these should be able to handle a NULL layer
+		/* No layer - but enable window tool keypress
+		   processing - these should be able to handle a NULL
+		   layer. */
 		if (this->tb->active_tool->key_press) {
-			return this->tb->active_tool->key_press(layer, ev, this->tb->active_tool);
-		}
-	}
-
-	/* Restore Main Menu via Escape key if the user has hidden it */
-	/* This key is more likely to be used as they may not remember the function key */
-	if (ev->keyval == GDK_Escape) {
-		GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/SetShow/ViewMainMenu");
-		if (check_box) {
-			bool state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-			if (!state) {
-				gtk_widget_show(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
-				gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
-				return true; /* handled keypress */
-			}
+			this->tb->active_tool->key_press(layer, ev, this->tb->active_tool);
+			return;
 		}
 	}
 #endif
-	return false; /* don't handle the keypress */
+	return;
 }
 
 

@@ -134,6 +134,7 @@ namespace SlavGPS {
 		char type_string[30];
 
 		void closeEvent(QCloseEvent * event);
+		void keyPressEvent(QKeyEvent * event);
 
 
 		QAction * get_drawmode_action(ViewportDrawMode mode);
@@ -285,7 +286,6 @@ namespace SlavGPS {
 
 		void menu_view_cache_info_cb(void);
 
-		bool key_press_event_cb(QKeyEvent * event);
 		void drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, int x, int y, GtkSelectionData * selection_data, unsigned int target_type, unsigned int time);
 
 

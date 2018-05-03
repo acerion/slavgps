@@ -1942,7 +1942,7 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 	qDebug() << "II: Viewport: wheel event, buttons =" << (int) ev->buttons() << "angle =" << angle.y();
 	ev->accept();
 
-	const Qt::KeyboardModifiers modifiers = ev->modifiers(); // (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+	const Qt::KeyboardModifiers modifiers = ev->modifiers();
 
 	const int w = this->get_width();
 	const int h = this->get_height();

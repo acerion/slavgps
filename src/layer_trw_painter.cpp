@@ -1155,9 +1155,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, Viewport * a_viewport, bool d
 
 CachedPixmap::~CachedPixmap()
 {
-#ifdef K_FIXME_RESTORE
-	g_object_unref(G_OBJECT(cp->pixmap));
-#endif
+	delete this->pixmap;
 }
 
 

@@ -148,7 +148,6 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 
 #ifdef K_FIXME_RESTORE
 	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(original_image);
-	g_object_unref(G_OBJECT(original_image));
 	original_image = tmpbuf;
 #endif
 

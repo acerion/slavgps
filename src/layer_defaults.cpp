@@ -46,15 +46,14 @@ using namespace SlavGPS;
 static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success);
 static SGVariant read_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype);
 static void write_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
+static void use_internal_defaults_if_missing_default(LayerType layer_type);
 
 #ifdef K_OLD_IMPLEMENTATION
 static void defaults_run_setparam(void * index_ptr, param_id_t id, const SGVariant & value, ParameterSpecification * param_spec);
 static SGVariant defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 #endif
 
-#ifdef K_FIXME_RESTORE
-static void use_internal_defaults_if_missing_default(LayerType layer_type);
-#endif
+
 
 static bool layer_defaults_load_from_file(void);
 static bool layer_defaults_save_to_file(void);

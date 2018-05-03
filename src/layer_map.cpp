@@ -1949,7 +1949,7 @@ void LayerMap::tile_info_cb(void)
 				QPixmap * pixmap = create_pixmap_sql_exec(this->mbtiles, ulm.x, ulm.y, zoom);
 				if (pixmap) {
 					exists = QObject::tr("YES");
-					g_object_unref(G_OBJECT(pixmap));
+					delete pixmap;
 				} else {
 					exists = QObject::tr("NO");
 				}
