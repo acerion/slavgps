@@ -1535,7 +1535,7 @@ void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin,
 
 
 
-void LayerMap::draw(Viewport * viewport)
+void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	MapSource * map_source = map_sources[this->map_type_id];
 

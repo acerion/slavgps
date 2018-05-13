@@ -168,15 +168,13 @@ Window::Window()
 
 	/* Own signals. */
 	connect(this->viewport, SIGNAL(center_updated(void)), this, SLOT(center_changed_cb(void)));
-	connect(this->items_tree, SIGNAL(items_tree_updated()), this, SLOT(redraw_tree_items_wrapper_cb()));
+	connect(this->items_tree, SIGNAL(items_tree_updated()), this, SLOT(draw_tree_items_cb()));
 
 	g_tree = new Tree();
 	g_tree->tree_view = this->get_items_tree()->get_tree_view();
 	g_tree->window = this;
 	g_tree->items_tree = this->items_tree;
 	g_tree->viewport = this->viewport;
-
-	connect(g_tree, SIGNAL(items_tree_updated()), this, SLOT(redraw_tree_items_wrapper_cb()));
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
 
@@ -946,21 +944,10 @@ void Window::create_actions(void)
 
 
 
-void Window::redraw_tree_items_wrapper_cb()
+void Window::draw_tree_items_cb()
 {
-	qDebug() << "SLOT: Window: redraw_tree_items_wrapper_cb()";
-	this->redraw_tree_items_wrapper();
-}
-
-
-
-
-void Window::redraw_tree_items_wrapper(void)
-{
-	qDebug() << "II: Window: redraw_tree_items + sync begin" << __FUNCTION__ << __LINE__;
-	this->redraw_tree_items();
-	this->draw_sync();
-	qDebug() << "II: Window: redraw_tree_items + sync end" << __FUNCTION__ << __LINE__;
+	qDebug() << "SLOT" PREFIX;
+	this->draw_tree_items();
 }
 
 
@@ -1026,11 +1013,11 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 		this->items_tree->add_layer(layer, this->viewport->get_coord_mode());
 
 		//this->viewport->reconfigure_drawing_area();
-		qDebug() << "II: Layers Panel: calling layer->draw() for new layer" << Layer::get_type_ui_label(layer_type);
-		layer->draw(this->viewport);
+		qDebug() << "II: Layers Panel: calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
+		layer->draw_tree_item(this->viewport, false, false);
 
-		qDebug() << "II: Window: new layer, call redraw_tree_items_wrapper()" << __FUNCTION__ << __LINE__;
-		this->redraw_tree_items_wrapper();
+		qDebug() << "II" PREFIX "call draw_tree_items()";
+		this->draw_tree_items();
 		this->contents_modified = true;
 	}
 }
@@ -1038,8 +1025,11 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 
 
-void Window::redraw_tree_items(void)
+void Window::draw_tree_items(void)
 {
+	qDebug() << "\nII" PREFIX;
+
+#ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
 	this->trigger_center = this->viewport->get_center2();
 	Layer * new_trigger = this->trigger;
@@ -1055,39 +1045,21 @@ void Window::redraw_tree_items(void)
 	} else {
 		this->viewport->set_half_drawn(true);
 	}
+#endif
 
-	qDebug() << "II: Window:    selection: draw redraw";
 
-	/* Actually draw. */
 	this->viewport->clear();
-	/* Main layer drawing. */
-	this->items_tree->draw_all(this->viewport);
 
-	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap).
-	   FIXME: we shouldn't draw things *again*. */
-	if (this->viewport->get_highlight_usage()) {
-		qDebug() << "II: Window:    selection: do draw with highlight";
-
-		/* If there is a layer or layer's sublayers or items
-		   that are selected in main tree, draw them with
-		   highlight. */
-		if (g_tree->selected_tree_item) {
-			/* It is up to the selected item to see and
-			   decide what exactly is selected and how to
-			   draw it. Window class doesn't care about
-			   such details. */
-			g_tree->selected_tree_item->draw_tree_item(this->viewport, true, true);
-		} else {
-			;
-		}
-	} else {
-		qDebug() << "II: Window:    selection: don't draw with highlight";
-	}
+	/* Main layer drawing.  This is a standard drawing of items in
+	   main viewport, so allow highlight. */
+	this->items_tree->draw_tree_items(this->viewport, true, false);
 
 	/* Other viewport decoration items on top if they are enabled/in use. */
 	this->viewport->draw_decorations();
 
 	this->viewport->set_half_drawn(false); /* Just in case. */
+
+	this->draw_sync();
 }
 
 
@@ -1097,7 +1069,7 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
 	qDebug() << "SLOT: Window: draw_layer" << (qulonglong) uid;
 	/* TODO: draw only one layer, not all of them. */
-	this->redraw_tree_items();
+	this->draw_tree_items();
 }
 
 
@@ -1368,7 +1340,7 @@ void Window::pan_move(QMouseEvent * ev)
 							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
 		this->pan_move_flag = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -1406,7 +1378,7 @@ void Window::pan_release(QMouseEvent * ev)
 
 	this->pan_off();
 	if (do_draw) {
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -1485,7 +1457,7 @@ void Window::menu_edit_delete_all_cb(void)
 		if (Dialog::yes_or_no(tr("Are you sure you want to delete all layers?"), this)) {
 			this->items_tree->clear();
 			this->set_current_document_full_path("");
-			this->redraw_tree_items_wrapper();
+			this->draw_tree_items();
 		}
 	}
 }
@@ -1667,9 +1639,9 @@ void Window::goto_location_cb()
 
 void Window::goto_latlon_cb(void)
 {
-	/* TODO: call redraw_tree_items_wrapper() conditionally? */
+	/* TODO: call draw_tree_items() conditionally? */
 	GoTo::goto_latlon(this, this->viewport);
-	this->redraw_tree_items_wrapper();
+	this->draw_tree_items();
 }
 
 
@@ -1677,9 +1649,9 @@ void Window::goto_latlon_cb(void)
 
 void Window::goto_utm_cb(void)
 {
-	/* TODO: call redraw_tree_items_wrapper() conditionally? */
+	/* TODO: call draw_tree_items() conditionally? */
 	GoTo::goto_utm(this, this->viewport);
-	this->redraw_tree_items_wrapper();
+	this->draw_tree_items();
 }
 
 
@@ -1695,7 +1667,7 @@ void Window::goto_previous_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -1712,7 +1684,7 @@ void Window::goto_next_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -1742,7 +1714,7 @@ void Window::set_scale_visibility_cb(bool new_state)
 	if (this->qa_view_scale_visibility->isChecked() != new_state) {
 		this->qa_view_scale_visibility->setChecked(new_state);
 		this->viewport->set_scale_visibility(new_state);
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -1754,7 +1726,7 @@ void Window::set_center_mark_visibility_cb(bool new_state)
 	if (this->qa_view_center_mark_visibility->isChecked() != new_state) {
 		this->qa_view_center_mark_visibility->setChecked(new_state);
 		this->viewport->set_center_mark_visibility(new_state);
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -1765,7 +1737,7 @@ void Window::set_highlight_usage_cb(bool new_state)
 	if (this->qa_view_highlight_usage->isChecked() != new_state) {
 		this->qa_view_highlight_usage->setChecked(new_state);
 		this->viewport->set_highlight_usage(new_state);
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -1827,7 +1799,7 @@ void Window::zoom_cb(void)
 		return;
 	}
 
-	this->redraw_tree_items_wrapper();
+	this->draw_tree_items();
 }
 
 
@@ -1841,7 +1813,7 @@ void Window::zoom_to_cb(void)
 	if (a_dialog_custom_zoom(&xmpp, &ympp, this)) {
 		this->viewport->set_xmpp(xmpp);
 		this->viewport->set_ympp(ympp);
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -2086,7 +2058,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 		restore_original_filename = !restore_original_filename;
 
 		this->update_recent_files(new_document_full_path);
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 		break;
 	}
 
@@ -2389,7 +2361,7 @@ void Window::finish_new(void)
 
 		this->items_tree->get_top_layer()->add_layer(layer, true);
 
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 
 #endif
@@ -2688,7 +2660,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	}
 
 	if (has_xhair || has_scale) {
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 #endif
@@ -2710,9 +2682,9 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, false, zoom);
 
-	/* Redraw all layers at current position and zoom. */
-	g_tree->tree_get_items_tree()->draw_all(scaled_viewport);
-	//this->redraw_tree_items();
+	/* Redraw all layers at current position and zoom.
+	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
+	g_tree->tree_get_items_tree()->draw_tree_items(scaled_viewport, true, false);
 
 	/* Save buffer as file. */
 	const QPixmap pixmap = scaled_viewport->get_pixmap();
@@ -2801,7 +2773,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 			this->viewport->set_center_from_utm(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
-			this->redraw_tree_items();
+			this->draw_tree_items();
 
 			/* Save buffer as file. */
 			const QPixmap pixmap = this->viewport->get_pixmap();
@@ -2821,7 +2793,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	this->viewport->set_xmpp(old_xmpp);
 	this->viewport->set_ympp(old_ympp);
 	this->viewport->reconfigure_drawing_area();
-	this->redraw_tree_items_wrapper();
+	this->draw_tree_items();
 
 	return true;
 }
@@ -2921,7 +2893,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
 		this->viewport->set_zoom(zoom_request);
 		/* Force drawing update. */
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -3075,7 +3047,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 		} else if (olddrawmode == ViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::LATLON);
 		}
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -3102,7 +3074,7 @@ void Window::menu_view_set_highlight_color_cb(void)
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
 		this->viewport->set_highlight_color(selected_color);
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -3117,7 +3089,7 @@ void Window::menu_view_set_bg_color_cb(void)
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
 		this->viewport->set_background_color(selected_color);
-		this->redraw_tree_items_wrapper();
+		this->draw_tree_items();
 	}
 }
 
@@ -3161,7 +3133,7 @@ void Window::menu_view_pan_cb(void)
 		break;
 	}
 
-	this->redraw_tree_items_wrapper();
+	this->draw_tree_items();
 }
 
 
@@ -3191,7 +3163,7 @@ void Window::simple_map_update(bool only_new)
 void Window::configure_event_cb()
 {
 	static int first = 1;
-	this->redraw_tree_items();
+	this->draw_tree_items();
 	if (first) {
 		/* This is a hack to set the cursor corresponding to the first tool.
 		   FIXME find the correct way to initialize both tool and its cursor. */
@@ -3247,7 +3219,7 @@ static bool window_pan_timeout(Window * window)
 	window->pan_move_flag = false;
 	window->single_click_pending = false;
 	window->viewport->set_center_from_screen_pos(window->delayed_pan_pos);
-	window->redraw_tree_items_wrapper();
+	window->draw_tree_items();
 
 	/* Really turn off the pan moving!! */
 	window->pan_off();
@@ -3485,7 +3457,7 @@ void Window::import_kmz_file_cb(void)
 		Dialog::error(tr("Unable to import %1.").arg(full_path), this);
 	}
 
-	this->redraw_tree_items_wrapper();
+	this->draw_tree_items();
 }
 
 
@@ -3567,7 +3539,7 @@ void Window::apply_new_preferences(void)
 		trw->reset_waypoints();
 	}
 
-	this->redraw_tree_items_wrapper();
+	this->draw_tree_items();
 }
 
 

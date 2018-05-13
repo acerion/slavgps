@@ -130,7 +130,7 @@ namespace SlavGPS {
 		 */
 		virtual bool handle_selection_in_tree(void) { return false; };
 
-		virtual void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required) { return; };
+		virtual void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected) { return; };
 
 		virtual bool properties_dialog() { return false; };
 

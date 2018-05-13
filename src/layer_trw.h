@@ -209,11 +209,8 @@ namespace SlavGPS {
 		bool find_track_by_date(char const * date, Viewport * viewport, bool select);
 		bool find_waypoint_by_date(char const * date, Viewport * viewport, bool select);
 
-		/* Draw all items of the layer, without highlight. */
-		void draw(Viewport * viewport);
-
 		/* Draw all items of the layer, with highlight. */
-		void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required);
+		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 
 
 		void recalculate_bbox(void);

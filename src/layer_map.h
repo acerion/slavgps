@@ -96,7 +96,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
-		void draw(Viewport * viewport);
+		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 		void draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br);
 		QString get_tooltip();
 		void add_menu_items(QMenu & menu);

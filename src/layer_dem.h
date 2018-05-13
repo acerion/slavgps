@@ -68,7 +68,7 @@ namespace SlavGPS {
 		~LayerDEM();
 
 		/* Layer interface methods. */
-		void draw(Viewport * viewport);
+		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip();
 		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(const QString & dem_file_path);

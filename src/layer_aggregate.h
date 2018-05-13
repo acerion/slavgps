@@ -67,7 +67,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 
-		void draw(Viewport * viewport);
+		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip();
 		void marshall(uint8_t ** data, size_t * data_len);
 		void change_coord_mode(CoordMode mode);

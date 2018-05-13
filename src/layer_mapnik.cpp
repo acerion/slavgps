@@ -806,7 +806,7 @@ QPixmap LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 
 
 
-void LayerMapnik::draw(Viewport * viewport)
+void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	if (!this->loaded) {
 		return;
@@ -921,7 +921,7 @@ static void mapnik_layer_reload(menu_array_values * values)
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	lmk->post_read(viewport, false);
-	lmk->draw(viewport);
+	lmk->draw_tree_item(viewport, false, false);
 }
 
 
@@ -948,7 +948,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 	if (!ans.isEmpty()) {
 		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(ans), lmk->get_window());
 	} else {
-		lmk->draw(viewport);
+		lmk->draw_tree_item(viewport, false, false);
 	}
 }
 

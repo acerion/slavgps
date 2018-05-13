@@ -60,7 +60,7 @@ namespace SlavGPS {
 		~LayersPanel();
 
 		void add_layer(Layer * layer, const CoordMode & viewport_coord_mode);
-		void draw_all(Viewport * viewport);
+		void draw_tree_items(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 
 		/* If a layer is selected, get the layer.
 		   If a sublayer is selected, get the sublayer's owning/parent layer. */

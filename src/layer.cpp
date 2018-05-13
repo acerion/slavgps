@@ -350,17 +350,6 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 
 
 
-void Layer::draw_if_visible(Viewport * viewport)
-{
-	if (this->visible) {
-		qDebug() << "II" PREFIX << "calling draw() for" << this->name;
-		this->draw(viewport);
-	}
-}
-
-
-
-
 typedef struct {
 	LayerType layer_type;
 	int len;

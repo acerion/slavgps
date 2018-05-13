@@ -932,7 +932,7 @@ static bool srtm_get_continent_dir(QString & continent_dir, int lat, int lon)
 
 
 
-void LayerDEM::draw(Viewport * viewport)
+void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	/* Draw rectangles around areas, for which DEM tiles are already downloaded. */
 	if (this->source == DEM_SOURCE_SRTM) {

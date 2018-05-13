@@ -670,7 +670,7 @@ bool Waypoint::handle_selection_in_tree(void)
  * Only handles a single waypoint
  * It assumes the waypoint belongs to the TRW Layer (it doesn't check this is the case)
  */
-void Waypoint::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
+void Waypoint::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 1
@@ -680,13 +680,11 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 	}
 #endif
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	const bool allowed = hl_is_allowed;
-	const bool required = allowed
-		&& (hl_is_required /* Parent code requires us to do highlight. */
-		    || TreeItem::the_same_object(g_tree->selected_tree_item, this)); /* This item discovers that it is selected and decides to be highlighted. */
+	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
+	qDebug () << "------------ draw track" << this->name << "highlight_selected = " << highlight_selected << "item is selected =" << item_is_selected;
 
-	parent_layer->painter->draw_waypoint(this, viewport, allowed && required);
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	parent_layer->painter->draw_waypoint(this, viewport, item_is_selected && highlight_selected);
 }
 
 

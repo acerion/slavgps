@@ -99,9 +99,9 @@ namespace SlavGPS {
 		~Window();
 		static Window * new_window();
 
+		void draw_tree_items();
 		void draw_sync();
-		void redraw_tree_items();
-		void redraw_tree_items_wrapper(void);
+
 		void update_status_bar_on_redraw();
 
 		void handle_selection_of_layer(const Layer * layer);
@@ -194,7 +194,7 @@ namespace SlavGPS {
 
 		void menu_layer_new_cb(void);
 		void draw_layer_cb(sg_uid_t uid);
-		void redraw_tree_items_wrapper_cb(void);
+		void draw_tree_items_cb(void);
 
 
 		void goto_default_location_cb(void);

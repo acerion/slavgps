@@ -52,6 +52,11 @@ extern Tree * g_tree;
 
 
 
+#define PREFIX ": Layer Aggregate:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 LayerAggregateInterface vik_aggregate_layer_interface;
 
 
@@ -291,12 +296,13 @@ void LayerAggregate::move_layer(TreeIndex & child_index, bool up)
  * of the pixmap before drawing the trigger layer so we can use it again
  * later.
  */
-void LayerAggregate::draw(Viewport * viewport)
+void LayerAggregate::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	Layer * trigger = viewport->get_trigger();
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
+#ifdef K_FIXME_RESTORE
 		if (layer->the_same_object(trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
@@ -311,8 +317,12 @@ void LayerAggregate::draw(Viewport * viewport)
 		    || !viewport->get_half_drawn()) {
 
 			qDebug() << "II: Layer Aggregate: calling draw_if_visible() for" << layer->name;
-			layer->draw_if_visible(viewport);
+			layer->draw_tree_item(viewport, false, false);
 		}
+#else
+		qDebug() << "II" PREFIX "calling draw_tree_item(" << highlight_selected << parent_is_selected << ") for" << layer->name;
+		layer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
+#endif
 	}
 }
 

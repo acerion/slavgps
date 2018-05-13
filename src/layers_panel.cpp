@@ -53,6 +53,11 @@ using namespace SlavGPS;
 
 
 
+extern Tree * g_tree;
+
+
+
+
 LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 {
 	this->panel_box = new QVBoxLayout;
@@ -367,12 +372,23 @@ void LayersPanel::move_item(bool up)
 
 
 
-void LayersPanel::draw_all(Viewport * viewport_)
+void LayersPanel::draw_tree_items(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
-	if (viewport_ && this->toplayer->visible) {
-		qDebug() << "II: Layers Panel: calling toplayer->draw()";
-		this->toplayer->draw(viewport_);
+	if (!viewport || !this->toplayer->visible) {
+		return;
 	}
+
+	/* We call ::get_highlight_usage() here, on top of call chain,
+	   so that all layer items can use this information and don't
+	   have to call ::get_highlight_usage() themselves. */
+	highlight_selected = highlight_selected && viewport->get_highlight_usage();
+	qDebug() << "II" PREFIX "calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
+	this->toplayer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
+
+	/* K_TODO: layers panel or tree view or aggregate layer should
+	   recognize which layer lays under non-transparent layers,
+	   and don't draw the layer hidden under non-transparent
+	   layer. */
 }
 
 

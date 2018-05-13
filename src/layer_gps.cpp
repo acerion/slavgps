@@ -574,7 +574,7 @@ SGVariant LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 
 
 
-void LayerGPS::draw(Viewport * viewport)
+void LayerGPS::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	Layer * trigger = viewport->get_trigger();
 
@@ -589,7 +589,7 @@ void LayerGPS::draw(Viewport * viewport)
 			}
 		}
 		if (!viewport->get_half_drawn()) {
-			trw->draw_if_visible(viewport);
+			trw->draw_tree_item(viewport, false, false);
 		}
 	}
 #if REALTIME_GPS_TRACKING_ENABLED

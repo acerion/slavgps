@@ -333,7 +333,7 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 
 
 
-void LayerGeoref::draw(Viewport * viewport)
+void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	if (!this->image) {
 		return;

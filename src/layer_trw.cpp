@@ -1263,22 +1263,8 @@ static unsigned int strcase_hash(gconstpointer v)
 
 
 
-void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
+void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
-#ifdef K_FIXME_RESTORE
-	/* TODO: re-implement/re-enable this feature. */
-
-	/* If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
-	   This may seem slightly inefficient to test each time for every layer
-	   but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice. */
-	if (viewport->get_highlight_usage() && TreeItem::the_same_object(g_tree->selected_tree_item, this)) {
-		return;
-	}
-#endif
-
-
-
-
 	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
 #if 1
 	/* Check the layer for visibility (including all the parents' visibilities). */
@@ -1287,41 +1273,30 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_i
 	}
 #endif
 
+	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
+
 	/* This will copy viewport's parameters (size, coords, etc.)
 	   to painter, so that painter knows whether, what and how to
 	   paint. */
 	this->painter->set_viewport(viewport);
 
-	const bool allowed = hl_is_allowed;
-	const bool required = allowed
-		&& (hl_is_required /* Parent code requires us to do highlight. */
-		    || TreeItem::the_same_object(g_tree->selected_tree_item, this)); /* This item discovers that it is selected and decides to be highlighted. */
-
 	if (this->tracks->visible) {
-		qDebug() << "II: Layer TRW: calling function to draw tracks, highlight:" << allowed << required;
-		this->tracks->draw_tree_item(viewport, allowed, required);
+		qDebug() << "II: Layer TRW: calling function to draw tracks, highlight:" << highlight_selected << item_is_selected;
+		this->tracks->draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
 	if (this->routes->visible) {
-		qDebug() << "II: Layer TRW: calling function to draw routes, highlight:" << allowed << required;
-		this->routes->draw_tree_item(viewport, allowed, required);
+		qDebug() << "II: Layer TRW: calling function to draw routes, highlight:" << highlight_selected << item_is_selected;
+		this->routes->draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
 	if (this->waypoints->visible) {
-		qDebug() << "II: Layer TRW: calling function to draw waypoints, highlight:" << allowed << required;
-		this->waypoints->draw_tree_item(viewport, allowed, required);
+		qDebug() << "II: Layer TRW: calling function to draw waypoints, highlight:" << highlight_selected << item_is_selected;
+		this->waypoints->draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
 	return;
 
-}
-
-
-
-
-void LayerTRW::draw(Viewport * viewport)
-{
-	this->draw_tree_item(viewport, false, false);
 }
 
 

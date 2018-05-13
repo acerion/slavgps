@@ -181,7 +181,7 @@ SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) con
 
 
 
-void LayerCoord::draw(Viewport * viewport)
+void LayerCoord::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	const CoordMode mode = viewport->get_coord_mode();
 	switch (mode) {

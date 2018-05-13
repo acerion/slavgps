@@ -898,10 +898,9 @@ bool LayerTRWTracks::handle_selection_in_tree(void)
 
 /**
  * Generally for drawing all tracks or routes or waypoints
- * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required)
+void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	if (!this->is_in_tree()) {
 		/* This subnode hasn't been added to tree yet. */
@@ -920,18 +919,13 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool hl_is_allowed, boo
 		return;
 	}
 
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	const bool allowed = hl_is_allowed;
-	const bool required = allowed
-		&& (hl_is_required /* Parent code requires us to do highlight. */
-		    || TreeItem::the_same_object(g_tree->selected_tree_item, this)); /* This item discovers that it is selected and decides to be highlighted. */
-
+	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
 
 #ifdef K_TODO
 	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
 #endif
 		for (auto i = this->items.begin(); i != this->items.end(); i++) {
-			i->second->draw_tree_item(viewport, allowed, required);
+			i->second->draw_tree_item(viewport, highlight_selected, item_is_selected);
 		}
 #ifdef K_TODO
 	}

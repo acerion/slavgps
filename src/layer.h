@@ -132,8 +132,7 @@ namespace SlavGPS {
 		   created from create() or set_param(). */
 		virtual void post_read(Viewport * viewport, bool from_file);
 
-		virtual void draw(Viewport * viewport) { return; };
-		void draw_if_visible(Viewport * viewport);
+		virtual void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected) { return; };
 
 		virtual QString get_tooltip(void);
 

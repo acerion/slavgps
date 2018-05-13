@@ -176,7 +176,7 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree(void);
 
-		void draw_tree_item(Viewport * viewport, bool hl_is_allowed, bool hl_is_required);
+		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 
 		/* Similar to C++ container's ::clear() method: call
 		   destructor for all elements of this container,

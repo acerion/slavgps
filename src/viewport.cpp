@@ -1861,9 +1861,9 @@ void Viewport::paintEvent(QPaintEvent * ev)
 
 void Viewport::resizeEvent(QResizeEvent * ev)
 {
-	qDebug() << "II: Viewport: resize event";
+	qDebug() << "II" PREFIX << "resize event";
 	this->reconfigure_drawing_area();
-	g_tree->tree_get_main_window()->redraw_tree_items();
+	g_tree->tree_get_main_window()->draw_tree_items();
 	//this->draw_scale();
 
 	return;
@@ -1992,8 +1992,8 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		break;
 	};
 
-	qDebug() << "II: Viewport: wheel event, call Window::redraw_tree_items_wrapper_cb()" << __FUNCTION__ << __LINE__;
-	this->window->redraw_tree_items_wrapper_cb();
+	qDebug() << "II" PREFIX "call Window::draw_tree_items()";
+	this->window->draw_tree_items();
 }
 
 
@@ -2243,7 +2243,9 @@ bool Viewport::print_cb(QPrinter * printer)
 
 	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, 0);
 
-	g_tree->tree_get_items_tree()->draw_all(scaled_viewport);
+	/* Since we are printing viewport as it is, we allow existing
+	   highlights to be drawn to print canvas. */
+	g_tree->tree_get_items_tree()->draw_tree_items(scaled_viewport, true, false);
 
 
 	QPainter printer_painter;
