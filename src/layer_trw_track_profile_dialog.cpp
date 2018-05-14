@@ -1770,7 +1770,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 	bool keep_dialog = false;
 
 	/* FIXME: check and make sure the track still exists before doing anything to it. */
-	/* Note: destroying diaglog (eg, parent window exit) won't give "response". */
+	/* Note: destroying dialog (eg, parent window exit) won't give "response". */
 	switch (resp) {
 	case SG_TRACK_PROFILE_CANCEL:
 		this->reject();

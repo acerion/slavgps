@@ -67,7 +67,6 @@ typedef int GtkCellRendererToggle;
 typedef int GtkCellRendererText;
 typedef int GtkCellEditable;
 typedef int GtkSelectionData;
-typedef int GtkTreeSelection;
 typedef int GtkTreePath;
 
 static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data);

@@ -110,13 +110,11 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 
 Waypoint::~Waypoint()
 {
-	/* kamilFIXME: in C code I had to add free()ing of Waypoint::name. */
 }
 
 
 
 
-/* Hmmm tempted to put in new constructor. */
 void Waypoint::set_name(const QString & new_name)
 {
 	this->name = new_name;

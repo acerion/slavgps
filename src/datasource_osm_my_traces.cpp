@@ -488,7 +488,7 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 	while (dialog.exec() == QDialog::Accepted) {
 
 		/* Possibily not the fastest method but we don't have thousands of entries to process... */
-		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+		QItemSelectionModel * selection = view.selectionModel();
 		std::list<GPXMetaData *> * selected = new std::list<GPXMetaData *>;
 
 		/* Because we don't store the full data in the gtk model, we have to scan & look it up. */

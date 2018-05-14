@@ -194,8 +194,9 @@ static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTr
 void TrackListDialog::copy_selected_cb(void)
 {
 	copy_data_t cd;
+
 #ifdef K_FIXME_RESTORE
-	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+	QItemSelectionModel * selection = tree_view.selectionModel();
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
 	unsigned int count = g_list_length(gl);
@@ -286,10 +287,11 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	this->selected_track = trk;
 
 	QMenu menu(this);
+
 #ifdef K_FIXME_RESTORE
 	/* When multiple rows are selected, the number of applicable operation is lower. */
-	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
-	if (gtk_tree_selection_count_selected_rows (selection) != 1) {
+	QItemSelectionModel * selection = tree_view.selectionModel();
+	if (selection.selectedRows(0).size() > 1) {
 		this->add_copy_menu_items(QMenu & menu);
 	}
 

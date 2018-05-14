@@ -2445,15 +2445,6 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 
 
 
-/* kamilFIXME: this assumes that trackpoints is non-NULL and has some elements. */
-TrackPoints::iterator Track::get_last()
-{
-	return std::prev(this->trackpoints.end());
-}
-
-
-
-
 std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 {
 	std::list<Rect *> * rectangles = new std::list<Rect *>;
@@ -2490,11 +2481,11 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 	}
 
 	return rectangles;
- }
+}
 
 
 
-
+#if 0
 /* kamilFIXME: this assumes that there are any trackpoints on the list. */
 CoordMode Track::get_coord_mode(void) const
 {
@@ -2502,7 +2493,7 @@ CoordMode Track::get_coord_mode(void) const
 
 	return (*this->trackpoints.begin())->coord.mode;
 }
-
+#endif
 
 
 
@@ -3586,10 +3577,7 @@ std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
 		rect->center = *cur_coord;
 		rects_to_download->push_front(rect);
 
-#ifdef K_FIXME_RESTORE
-		/* TODO: do we need to do this? Can we do this? */
-		free(*iter);
-#endif
+		delete *iter;
 	}
 
 	return rects_to_download;
@@ -3994,7 +3982,7 @@ void Track::remove_last_trackpoint(void)
 		return;
 	}
 
-	auto iter = this->get_last();
+	auto iter = std::prev(this->trackpoints.end());
 	this->erase_trackpoint(iter);
 	this->recalculate_bbox();
 }
