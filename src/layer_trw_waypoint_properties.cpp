@@ -224,7 +224,7 @@ PropertiesDialogWaypoint::PropertiesDialogWaypoint(Waypoint * wp_, QString const
 
 void PropertiesDialogWaypoint::set_timestamp_cb(time_t timestamp)
 {
-	this->date_time_button->set_label(timestamp, Qt::TextDate, &this->wp->coord, NULL);
+	this->date_time_button->set_label(timestamp, Qt::TextDate, this->wp->coord, NULL);
 }
 
 

@@ -252,7 +252,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 			QString time_string;
 			if (tp->has_timestamp) {
 				/* Compact date time format. */
-				time_string = SGUtils::get_time_string(tp->timestamp, Qt::TextDate, &tp->coord, NULL);
+				time_string = SGUtils::get_time_string(tp->timestamp, Qt::TextDate, tp->coord, NULL);
 			} else {
 				time_string = "--";
 			}
@@ -761,7 +761,11 @@ const QTimeZone * TZLookup::get_tz_at_location(const Coord & coord)
 		kd_res_next(presults);
 	}
 
-	qDebug() << "DD" PREFIX << "TimeZOne lookup found" << kd_res_size(presults) << "results - picked" << tz->displayName(QDateTime::currentDateTime());
+	if (tz) {
+		qDebug() << "DD" PREFIX << "time zone lookup found" << kd_res_size(presults) << "results - picked" << tz->displayName(QDateTime::currentDateTime());
+	} else {
+		qDebug() << "WW" PREFIX << "time zone lookup NOT found";
+	}
 	kd_res_free(presults);
 
 	return tz;
@@ -781,43 +785,48 @@ const QTimeZone * TZLookup::get_tz_at_location(const Coord & coord)
  *
  * Returns: A string of the time according to the time display property.
  */
-QString SGUtils::get_time_string(time_t time, Qt::DateFormat format, const Coord * coord, const QTimeZone * tz)
+QString SGUtils::get_time_string(time_t timestamp, Qt::DateFormat format, const Coord & coord, const QTimeZone * tz)
 {
-	qDebug() << "DD" PREFIX << "timestamp =" << time;
+	qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp;
 
 	QString time_string;
 
 	const SGTimeReference ref = Preferences::get_time_ref_frame();
 	switch (ref) {
 	case SGTimeReference::UTC:
-		time_string = QDateTime::fromTime_t(time, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "time string from UTC" << time_string;
 		break;
 	case SGTimeReference::World:
-		if (coord && !tz) {
+		if (!tz) {
 			/* No timezone specified so work it out. */
-			QTimeZone const * tz_from_location = TZLookup::get_tz_at_location(*coord);
+			QTimeZone const * tz_from_location = TZLookup::get_tz_at_location(coord);
 			if (tz_from_location) {
-				time_string = time_string_tz(time, format, *tz_from_location);
+				time_string = time_string_tz(timestamp, format, *tz_from_location);
+				qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "string with tz from location" << time_string;
 			} else {
 				/* No results (e.g. could be in the middle of a sea).
 				   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-				const LatLon ll = coord->get_latlon();
-				time_string = time_string_adjusted(&time, round (ll.lon / 15.0) * 3600);
+				const LatLon ll = coord.get_latlon();
+				time_string = time_string_adjusted(&timestamp, round (ll.lon / 15.0) * 3600);
+				qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "time string adjusted" << time_string;
 			}
 		} else {
 			/* Use specified timezone. */
-			time_string = time_string_tz(time, format, *tz);
+			time_string = time_string_tz(timestamp, format, *tz);
+			qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "string with given tz" << time_string;
 		}
 		break;
 	case SGTimeReference::Locale:
-		time_string = QDateTime::fromTime_t(time, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "string with time from locale" << time_string;
 		break;
 	default:
 		qDebug() << "EE" PREFIX << "unexpected SGTimeReference value" << (int) ref;
 		break;
 	}
 
-	qDebug() << "DD" PREFIX << "timestamp =" << time << "string =" << time_string;
+	qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "final time string =" << time_string;
 
 	return time_string;
 }

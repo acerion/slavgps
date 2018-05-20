@@ -144,7 +144,7 @@ namespace SlavGPS {
 
 		static bool create_temporary_file(QTemporaryFile & file, const QString & name_pattern);
 		static void copy_label_menu(QAbstractButton * button);
-		static QString get_time_string(time_t time, Qt::DateFormat format, const Coord * coord, const QTimeZone * tz);
+		static QString get_time_string(time_t time, Qt::DateFormat format, const Coord & coord, const QTimeZone * tz);
 
 
 		static void color_to_string(char * buffer, size_t buffer_size, const QColor & color);

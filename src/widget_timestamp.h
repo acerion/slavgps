@@ -46,9 +46,11 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		SGTimestampWidget(QWidget * parent = NULL);
-		void set_timestamp(time_t timestamp, const Coord * coord);
+		void set_timestamp(time_t timestamp, const Coord & coord);
 		void reset_timestamp(void);
 		time_t get_timestamp(void) const;
+
+		void clear(void);
 
 	signals:
 		void value_is_set(time_t new_value);

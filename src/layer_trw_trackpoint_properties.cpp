@@ -64,7 +64,7 @@ using namespace SlavGPS;
 void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
 	if (tp->has_timestamp) {
-		this->timestamp_widget->set_timestamp(tp->timestamp, &tp->coord);
+		this->timestamp_widget->set_timestamp(tp->timestamp, tp->coord);
 	} else {
 		this->timestamp_widget->reset_timestamp();
 	}
@@ -273,19 +273,13 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->alt->setEnabled(true);
 	this->timestamp_widget->setEnabled(tp->has_timestamp);
 
-	/* Enable adding timestamps - but not on routepoints. */
-#ifdef K_FIXME_RESTORE
-	if (!tp->has_timestamp && !is_route) {
-		this->timestamp_widget->timestamp_button->setEnabled(true);
-	} else {
-		this->set_dialog_title(track->name);
-#ifdef K_FIXME_RESTORE
-		if (!this->timestamp_widget->timestamp_button->icon().isNull()) {
-			this->timestamp_widget->timestamp_button->setIcon(QIcon());
-		}
-#endif
+	this->set_dialog_title(track->name);
+
+	this->timestamp_widget->setEnabled(!is_route);
+	if (is_route) {
+		/* Remove any data that may have been previously displayed. */
+		this->timestamp_widget->clear();
 	}
-#endif
 
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
 

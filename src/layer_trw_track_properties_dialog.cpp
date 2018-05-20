@@ -369,14 +369,14 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		this->tz = TZLookup::get_tz_at_location(coord);
 
 
-		QString msg = SGUtils::get_time_string(t1, Qt::TextDate, &coord, this->tz);
+		QString msg = SGUtils::get_time_string(t1, Qt::TextDate, coord, this->tz);
 		this->w_time_start = ui_label_new_selectable(msg, this);
 		this->grid->addWidget(new QLabel(tr("Start:")), row, 0);
 		this->grid->addWidget(this->w_time_start, row, 1);
 		row++;
 
 
-		msg = SGUtils::get_time_string(t2, Qt::TextDate, &coord, this->tz);
+		msg = SGUtils::get_time_string(t2, Qt::TextDate, coord, this->tz);
 		this->w_time_end = ui_label_new_selectable(msg, this);
 		this->grid->addWidget(new QLabel(tr("End:")), row, 0);
 		this->grid->addWidget(this->w_time_end, row, 1);
