@@ -71,16 +71,13 @@ namespace SlavGPS {
 	private slots:
 		void copy_selected_cb(void);
 		void track_view_cb(void);
-		void track_stats_cb(void);
+		void track_statistics_cb(void);
+		void track_properties_cb(void);
 		void accept_cb(void);
 
 	private:
 		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, const QString & date_format);
 		void contextMenuEvent(QContextMenuEvent * event);
-		void add_menu_items(QMenu & menu);
-		void add_copy_menu_item(QMenu & menu);
-
-		void track_select(LayerTRW * trw, Track * trk);
 
 		QWidget * parent = NULL;
 		QDialogButtonBox * button_box = NULL;

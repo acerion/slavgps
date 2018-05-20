@@ -19,15 +19,19 @@
  */
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
 
 #include <cassert>
+
+
+
 
 #include <QHeaderView>
 #include <QDebug>
 #include <QDateTime>
+
+
+
 
 #include "layer.h"
 #include "layer_trw.h"
@@ -79,25 +83,10 @@ enum {
 
 
 
-/* Instead of hooking automatically on tree view item selection,
-   this is performed on demand via the specific menu request. */
-void TrackListDialog::track_select(LayerTRW * trw, Track * trk)
-{
-	if (!trw || !trk) {
-		qDebug() << "EE: Track List Dialog: layer or track is NULL:" << (qintptr) trw << (qintptr) trk;
-		return;
-	}
-
-	trw->tree_view->select_and_expose(trk->index);
-}
-
-
-
-
-void TrackListDialog::track_stats_cb(void)
+void TrackListDialog::track_properties_cb(void)
 {
 	if (!this->selected_track) {
-		qDebug() << "EE: Track List: encountered NULL Track in callback" << __FUNCTION__;
+		qDebug() << "EE" PREFIX "encountered NULL Track in callback";
 		return;
 	}
 
@@ -116,6 +105,28 @@ void TrackListDialog::track_stats_cb(void)
 
 
 
+void TrackListDialog::track_statistics_cb(void)
+{
+	if (!this->selected_track) {
+		qDebug() << "EE" PREFIX << "encountered NULL Track in callback";
+		return;
+	}
+
+	Track * trk = this->selected_track;
+	LayerTRW * trw = trk->get_parent_layer_trw();
+
+	if (!trk->name.isEmpty()) {
+
+		/* Kill off this dialog to allow interaction with properties window.
+		   Since the properties also allows track manipulations it won't cause conflicts here. */
+		this->accept();
+		track_statistics_dialog(trk, trw->get_window());
+	}
+}
+
+
+
+
 void TrackListDialog::track_view_cb(void)
 {
 	if (!this->selected_track) {
@@ -127,9 +138,8 @@ void TrackListDialog::track_view_cb(void)
 	LayerTRW * trw = trk->get_parent_layer_trw();
 	Viewport * viewport = trw->get_window()->get_viewport();
 
-	viewport->show_bbox(trk->get_bbox());
-
-	this->track_select(trw, trk);
+	viewport->show_bbox(trk->get_bbox()); /* K_TODO: does it work? */
+	trw->tree_view->select_and_expose(trk->index);
 }
 
 
@@ -211,40 +221,6 @@ void TrackListDialog::copy_selected_cb(void)
 
 
 
-void TrackListDialog::add_copy_menu_item(QMenu & menu)
-{
-	QAction * qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("&Copy Data"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_cb()));
-}
-
-
-
-
-void TrackListDialog::add_menu_items(QMenu & menu)
-{
-	QAction * qa = NULL;
-
-#ifdef K_FIXME_RESTORE
-	/* OLD COMMENT: ATM view auto selects, so don't bother with separate select menu entry. */
-	qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("&Select"));
-	/* The callback worked by exposing selected item in tree view. */
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_select_cb()));
-#endif
-
-	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&View"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_view_cb()));
-
-	qa = menu.addAction(tr("&Statistics"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_stats_cb()));
-
-	this->add_copy_menu_item(menu);
-
-	return;
-}
-
-
-
-
 void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 {
 	QPoint orig = ev->pos();
@@ -257,10 +233,10 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QPoint point = orig;
 	QModelIndex index = this->view->indexAt(point);
 	if (!index.isValid()) {
-		qDebug() << "II: Track List: context menu event: INvalid index";
+		qDebug() << "II" PREFIX << "context menu event: INvalid index";
 		return;
 	} else {
-		qDebug() << "II: Track List: context menu event: on index.row =" << index.row() << "index.column =" << index.column();
+		qDebug() << "II" PREFIX << "context menu event: on index.row =" << index.row() << "index.column =" << index.column();
 	}
 
 
@@ -268,37 +244,46 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 
 
 	QStandardItem * child = parent_item->child(index.row(), TRACK_COLUMN);
-	qDebug() << "II: Track List: selected track" << child->text();
+	qDebug() << "II" PREFIX << "selected track" << child->text();
 
 	child = parent_item->child(index.row(), TRACK_COLUMN);
 	Track * trk = child->data(RoleLayerData).value<Track *>();
 	if (!trk) {
-		qDebug() << "EE: Track List Dialog: null track in context menu handler";
+		qDebug() << "EE" PREFIX << "null track in context menu handler";
 		return;
 	}
 
 	/* If we were able to get list of Tracks, all of them need to have associated parent layer. */
 	LayerTRW * trw = trk->get_parent_layer_trw();
 	if (!trw) {
-		qDebug() << "EE: Track List: failed to get non-NULL parent layer @" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE" PREFIX << "failed to get non-NULL parent layer @" << __FUNCTION__ << __LINE__;
 		return;
 	}
 
 	this->selected_track = trk;
 
+
+
 	QMenu menu(this);
 
-#ifdef K_FIXME_RESTORE
 	/* When multiple rows are selected, the number of applicable operation is lower. */
-	QItemSelectionModel * selection = tree_view.selectionModel();
-	if (selection.selectedRows(0).size() > 1) {
-		this->add_copy_menu_items(QMenu & menu);
+	QAction * qa = NULL;
+	QItemSelectionModel * selection = this->view->selectionModel();
+	if (selection->selectedRows(0).size() == 1) {
+
+		qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&Show in Tree View"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_view_cb()));
+
+		qa = menu.addAction(tr("&Statistics"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_statistics_cb()));
+
+		qa = menu.addAction(tr("&Properties"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_properties_cb()));
 	}
 
-	this->add_copy_menu_item(menu);
-#else
-	this->add_menu_items(menu);
-#endif
+	qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("&Copy Data"));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_cb()));
+
 	menu.exec(QCursor::pos());
 	return;
 }
@@ -510,6 +495,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	this->view->setTextElideMode(Qt::ElideRight);
 	this->view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	this->view->setSelectionBehavior(QAbstractItemView::SelectRows);
 	this->view->setShowGrid(false);
 	this->view->setModel(this->model);
 	this->view->show();
@@ -581,13 +567,6 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	}
 
 	this->setMinimumSize(750, 400);
-
-#ifdef K_FIXME_RESTORE
-	/* TODO: The callback worked by exposing selected item in tree view. */
-	QObject::connect(gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), SIGNAL("changed"), view, SLOT (track_select_cb));
-
-	/* TODO: Maybe add full menu of a Track class in the table view too. */
-#endif
 }
 
 

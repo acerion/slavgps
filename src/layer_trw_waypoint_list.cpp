@@ -18,16 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #include <cmath>
-//#include <cstring>
-//#include <cstdlib>
-//#include <cstdio>
 #include <cassert>
+
+
+
 
 #include <QMenu>
 #include <QDebug>
 #include <QHeaderView>
 #include <QDateTime>
+
+
+
 
 #include "layer.h"
 #include "layer_trw.h"
@@ -297,40 +303,6 @@ void WaypointListDialog::copy_selected_with_position_cb(void) /* Slot. */
 
 
 
-void WaypointListDialog::add_copy_menu_items(QMenu & menu)
-{
-	QAction * qa = NULL;
-
-	qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("&Copy Data"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_only_visible_columns_cb()));
-
-	qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("Copy Data (with &positions)"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_with_position_cb()));
-}
-
-
-
-
-void WaypointListDialog::add_menu_items(QMenu & menu, bool wp_has_image)
-{
-	QAction * qa = NULL;
-
-	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&Zoom onto"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_view_cb()));
-
-	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_properties_cb()));
-
-	qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture..."));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_waypoint_cb()));
-	qa->setEnabled(wp_has_image);
-
-	return;
-}
-
-
-
-
 void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 {
 	QPoint orig = ev->pos();
@@ -343,10 +315,10 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QPoint point = orig;
 	QModelIndex index = this->view->indexAt(point);
 	if (!index.isValid()) {
-		qDebug() << "II: Waypoint List: context menu event: INvalid index";
+		qDebug() << "II" PREFIX << "context menu event: INvalid index";
 		return;
 	} else {
-		qDebug() << "II: Waypoint List: context menu event: on index.row =" << index.row() << "index.column =" << index.column();
+		qDebug() << "II" PREFIX << "context menu event: on index.row =" << index.row() << "index.column =" << index.column();
 	}
 
 
@@ -354,34 +326,50 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 
 
 	QStandardItem * child = parent_item->child(index.row(), WAYPOINT_COLUMN);
-	qDebug() << "II: Waypoint List: selected waypoint" << child->text();
+	qDebug() << "II" PREFIX << "selected waypoint" << child->text();
 
 	child = parent_item->child(index.row(), WAYPOINT_COLUMN);
 	Waypoint * wp = child->data(RoleLayerData).value<Waypoint *>();
 	if (!wp) {
-		qDebug() << "EE: Waypoint List: failed to get non-NULL Waypoint from table";
+		qDebug() << "EE" PREFIX << "failed to get non-NULL Waypoint from table";
 		return;
 	}
 
 	/* If we were able to get list of Waypoints, all of them need to have associated parent layer. */
 	LayerTRW * trw = wp->get_parent_layer_trw();
 	if (!trw) {
-		qDebug() << "EE: Waypoint List: failed to get non-NULL parent layer @" << __FUNCTION__ << __LINE__;
+		qDebug() << "EE" PREFIX << "failed to get non-NULL parent layer";
 		return;
 	}
 
 	this->selected_wp = wp;
 
+
+
+	QAction * qa = NULL;
 	QMenu menu(this);
-#ifdef K_FIXME_RESTORE
 	/* When multiple rows are selected, the number of applicable operation is lower. */
-	QItemSelectionModel * selection = tree_view.selectionModel();
-	if (selection.selectedRows(0).size() > 1) {
-		this->add_copy_menu_items(QMenu & menu);
+	QItemSelectionModel * selection = this->view->selectionModel();
+	if (selection->selectedRows(0).size() == 1) {
+
+		qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&Zoom onto"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_view_cb()));
+
+		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_properties_cb()));
+
+		qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture..."));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_waypoint_cb()));
+		qa->setEnabled(!wp->image_full_path.isEmpty());
 	}
-#else
-	this->add_menu_items(menu, !wp->image_full_path.isEmpty());
-#endif
+
+	qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("&Copy Data"));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_only_visible_columns_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("Copy Data (with &positions)"));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_with_position_cb()));
+
+
 
 	menu.exec(QCursor::pos());
 	return;
@@ -523,6 +511,7 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	this->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	this->view->setTextElideMode(Qt::ElideRight);
 	this->view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	this->view->setSelectionBehavior(QAbstractItemView::SelectRows);
 	this->view->setShowGrid(false);
 	this->view->setModel(this->model);
 	this->view->show();
