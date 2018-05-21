@@ -382,20 +382,9 @@ void TreeView::unselect(TreeIndex const & index)
 
 
 
-/*
-  TODO: improve handling of 'editable' property.
-  Non-editable items have e.g limited number of fields in context menu.
-
-  The following properties of @tree_item are used to set properties of entry in tree:
-  - TreeItem::editable
-  - TreeItem::visible;
-  - TreeItem::get_tooltip()
-*/
-TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QString & name)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
-
-	qDebug() << "II" PREFIX << "adding tree item" << name;
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -441,18 +430,24 @@ TreeIndex const & TreeView::add_tree_item(TreeIndex const & parent_index, TreeIt
 	items << item;
 
 
-	if (parent_index.isValid()) {
-		this->tree_model->itemFromIndex(parent_index)->appendRow(items);
-	} else {
-		/* Adding tree item just right under top-level item. */
-		this->tree_model->invisibleRootItem()->appendRow(items);
-	}
-	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
+	return items;
+}
 
-	tree_item->index = QPersistentModelIndex(first_item->index());
-	tree_item->tree_view = this;
 
-	return tree_item->index;
+
+
+/*
+  TODO: improve handling of 'editable' property.
+  Non-editable items have e.g limited number of fields in context menu.
+
+  The following properties of @tree_item are used to set properties of entry in tree:
+  - TreeItem::editable
+  - TreeItem::visible;
+  - TreeItem::get_tooltip()
+*/
+TreeIndex const & TreeView::append_tree_item(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+{
+	return this->append_row(parent_index, tree_item, name);
 }
 
 
@@ -657,7 +652,7 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 {
 #ifdef K_FIXME_RESTORE
 	char *s_dest = gtk_tree_path_to_string(path);
-	fprintf(stdout, QObject::tr("delete data from %1\n").arg(s_dest);
+	fprintf(stdout, QObject::tr("delete data from %1\n").arg(s_dest));
 	free(s_dest);
 #endif
 	return false;
@@ -666,23 +661,81 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 
 
-
-TreeIndex const & TreeView::insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name)
+TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name)
 {
-#ifdef K_FIXME_RESTORE
 	if (sibling_index.isValid()) {
+
+		int row = sibling_index.row();
+
 		if (above) {
-			gtk_tree_store_insert_before(this->tree_model, iter, parent_iter, sibling_index);
+			/* New item will occupy row, where sibling
+			   item was. Sibling item will go one row
+			   lower. */
+			return this->insert_row(parent_index, item, name, row);
+
 		} else {
-			gtk_tree_store_insert_after(this->tree_model, iter, parent_iter, sibling_index);
+			const int n_rows = this->tree_model->rowCount(parent_index);
+			if (n_rows == row + 1) {
+				return this->append_row(parent_index, item, name);
+			} else {
+				row++;
+				return this->insert_row(parent_index, item, name, row);
+			}
 		}
-	} else
-#endif
-		{
-			this->add_tree_item(parent_index, item, name);
-			return item->index;
-		}
+	} else {
+		/* Fall back in case of invalid sibling. */
+		qDebug() << "WW" PREFIX << "Invalid sibling index, fall back to appending tree item";
+		return this->append_row(parent_index, item, name);
+	}
 }
+
+
+
+
+const TreeIndex & TreeView::insert_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row)
+{
+	qDebug() << "II" PREFIX << "inserting tree item" << name;
+
+	QList<QStandardItem *> items = this->create_new_row(tree_item, name);
+
+	if (parent_index.isValid()) {
+		this->tree_model->itemFromIndex(parent_index)->insertRow(row, items);
+	} else {
+		/* Adding tree item just right under top-level item. */
+		this->tree_model->invisibleRootItem()->insertRow(row, items);
+	}
+	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
+
+	tree_item->index = QPersistentModelIndex(items.at(0)->index());
+	tree_item->tree_view = this;
+
+	return tree_item->index;
+}
+
+
+
+
+const TreeIndex & TreeView::append_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name)
+{
+	qDebug() << "II" PREFIX << "appending tree item" << name;
+
+	QList<QStandardItem *> items = this->create_new_row(tree_item, name);
+
+	if (parent_index.isValid()) {
+		this->tree_model->itemFromIndex(parent_index)->appendRow(items);
+	} else {
+		/* Adding tree item just right under top-level item. */
+		this->tree_model->invisibleRootItem()->appendRow(items);
+	}
+	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
+
+	tree_item->index = QPersistentModelIndex(items.at(0)->index());
+	tree_item->tree_view = this;
+
+	return tree_item->index;
+}
+
+
 
 
 

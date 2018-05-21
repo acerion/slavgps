@@ -131,7 +131,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	this->toplayer->set_name(tr("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	this->toplayer_item = this->tree_view->add_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
+	this->toplayer_item = this->tree_view->append_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
 
 
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
@@ -325,11 +325,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
 			assert (aggregate->tree_view);
 
-			if (false
-#ifdef K_FIXME_RESTORE
-			    sibling_layer_index.isValid()
-#endif
-			    ) {
+			if (sibling_layer_index.isValid()) {
 				aggregate->insert_layer(layer, sibling_layer_index);
 			} else {
 				aggregate->add_layer(layer, true);

@@ -140,7 +140,7 @@ Layer * LayerAggregateInterface::unmarshall(uint8_t * data, size_t data_len, Vie
 
 
 
-void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index)
+void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer_index)
 {
 	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
@@ -155,7 +155,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		TreeIndex inserted_item_index = this->tree_view->insert_tree_item(this->index, replace_index, layer, put_above, layer->name);
+		TreeIndex inserted_item_index = this->tree_view->insert_tree_item(this->index, sibling_layer_index, layer, put_above, layer->name);
 		this->tree_view->set_tree_item_timestamp(inserted_item_index, layer->get_timestamp());
 
 		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
@@ -163,12 +163,13 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 		}
 	}
 
-	if (replace_index.isValid()) {
-		Layer * existing_layer = this->tree_view->get_tree_item(replace_index)->to_layer();
+	if (sibling_layer_index.isValid()) {
+
+		Layer * sibling_layer = this->tree_view->get_tree_item(sibling_layer_index)->to_layer();
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
-			if (existing_layer->the_same_object(*i)) {
+			if (sibling_layer->the_same_object(*i)) {
 				theone = i;
 			}
 		}
@@ -219,7 +220,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	this->tree_view->add_tree_item(this->index, layer, layer->name);
+	this->tree_view->append_tree_item(this->index, layer, layer->name);
 
 	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 
@@ -867,7 +868,7 @@ void LayerAggregate::add_children_to_tree(void)
 		Layer * layer = *child;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->add_tree_item(this->index, layer, layer->name);
+		this->tree_view->append_tree_item(this->index, layer, layer->name);
 
 		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 	}

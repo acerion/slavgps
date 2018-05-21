@@ -1316,7 +1316,7 @@ void LayerTRW::add_children_to_tree(void)
 
 		assert (!this->tracks->is_in_tree());
 		if (!this->tracks->is_in_tree()) {
-			this->tree_view->add_tree_item(this->index, this->tracks, tr("Tracks"));
+			this->tree_view->append_tree_item(this->index, this->tracks, tr("Tracks"));
 		}
 		this->tracks->add_children_to_tree();
 	}
@@ -1326,7 +1326,7 @@ void LayerTRW::add_children_to_tree(void)
 
 		assert (!this->routes->is_in_tree());
 		if (!this->routes->is_in_tree()) {
-			this->tree_view->add_tree_item(this->index, this->routes, tr("Routes"));
+			this->tree_view->append_tree_item(this->index, this->routes, tr("Routes"));
 		}
 
 		this->routes->add_children_to_tree();
@@ -1337,7 +1337,7 @@ void LayerTRW::add_children_to_tree(void)
 
 		assert (!this->waypoints->is_in_tree());
 		if (!this->waypoints->is_in_tree()) {
-			this->tree_view->add_tree_item(this->index, this->waypoints, tr("Waypoints"));
+			this->tree_view->append_tree_item(this->index, this->waypoints, tr("Waypoints"));
 		}
 
 		this->waypoints->add_children_to_tree();
@@ -2270,14 +2270,14 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 			return;
 		}
 
-		this->tree_view->add_tree_item(this->index, this->waypoints, tr("Waypoints"));
+		this->tree_view->append_tree_item(this->index, this->waypoints, tr("Waypoints"));
 	}
 
 	/* Now we can proceed with adding a waypoint to Waypoints node. */
 
 	this->waypoints->add_waypoint(wp);
 
-	this->tree_view->add_tree_item(this->waypoints->index, wp, wp->name);
+	this->tree_view->append_tree_item(this->waypoints->index, wp, wp->name);
 
 	this->tree_view->set_tree_item_timestamp(wp->index, wp->has_timestamp ? wp->timestamp : 0);
 
@@ -2306,7 +2306,7 @@ void LayerTRW::add_track(Track * trk)
 			return;
 		}
 
-		this->tree_view->add_tree_item(this->index, this->tracks, tr("Tracks"));
+		this->tree_view->append_tree_item(this->index, this->tracks, tr("Tracks"));
 	}
 
 	/* Now we can proceed with adding a track to Tracks node. */
@@ -2319,7 +2319,7 @@ void LayerTRW::add_track(Track * trk)
 		timestamp = tp->timestamp;
 	}
 
-	this->tree_view->add_tree_item(this->tracks->index, trk, trk->name);
+	this->tree_view->append_tree_item(this->tracks->index, trk, trk->name);
 	this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
 
 	/* Sort now as post_read is not called on a track connected to tree. */
@@ -2347,14 +2347,14 @@ void LayerTRW::add_route(Track * trk)
 			return;
 		}
 
-		this->tree_view->add_tree_item(this->index, this->routes, tr("Routes"));
+		this->tree_view->append_tree_item(this->index, this->routes, tr("Routes"));
 	}
 
 	/* Now we can proceed with adding a route to Routes node. */
 
 	this->routes->add_track(trk);
 
-	this->tree_view->add_tree_item(this->routes->index, trk, trk->name);
+	this->tree_view->append_tree_item(this->routes->index, trk, trk->name);
 
 	/* Sort now as post_read is not called on a route connected to tree. */
 	this->tree_view->sort_children(this->routes->get_index(), this->track_sort_order);

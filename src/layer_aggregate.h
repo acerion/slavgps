@@ -77,7 +77,7 @@ namespace SlavGPS {
 
 
 		void add_layer(Layer * layer, bool allow_reordering);
-		void insert_layer(Layer * layer, TreeIndex const & replace_index);
+		void insert_layer(Layer * layer, TreeIndex const & selected_item_index);
 		void move_layer(TreeIndex & child_index, bool up);
 		bool delete_layer(Layer * layer);
 		void clear();

@@ -527,7 +527,7 @@ void LayerTRWWaypoints::add_children_to_tree(void)
 
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
-		this->tree_view->add_tree_item(this->index, wp, wp->name);
+		this->tree_view->append_tree_item(this->index, wp, wp->name);
 		this->tree_view->set_tree_item_timestamp(wp->index, timestamp);
 	}
 }

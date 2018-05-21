@@ -69,7 +69,7 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		TreeIndex const & add_tree_item(TreeIndex const & parent_index, TreeItem * item, const QString & name);
+		TreeIndex const & append_tree_item(TreeIndex const & parent_index, TreeItem * item, const QString & name);
 		TreeIndex const & insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name);
 		TreeItem * get_tree_item(TreeIndex const & item_index);
 
@@ -109,6 +109,11 @@ namespace SlavGPS {
 
 	signals:
 		void tree_item_needs_redraw(sg_uid_t uid);
+
+	private:
+		const TreeIndex & append_row(const TreeIndex & parent_index, TreeItem * item, const QString & name);
+		const TreeIndex & insert_row(const TreeIndex & parent_index, TreeItem * item, const QString & name, int row);
+		QList<QStandardItem *> create_new_row(TreeItem * tree_item, const QString & name);
 	};
 
 
