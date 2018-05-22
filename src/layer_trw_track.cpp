@@ -3780,28 +3780,21 @@ void Track::refine_route_cb(void)
 	BasicDialog dialog(main_window);
 	dialog.setWindowTitle(QObject::tr("Refine Route with Routing Engine..."));
 
-	QLabel * label = new QLabel(QObject::tr("Select routing engine"));
+	QLabel * label = new QLabel(QObject::tr("Select routing engine:"));
 
-	QComboBox * combo = NULL;
-
-#ifdef K_FIXME_RESTORE
-	gtk_widget_show_all(label);
-
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, true, true, 0);
-
-	combo = routing_ui_selector_new(RoutingEngine::supports_refine(), NULL);
+	QComboBox * combo = Routing::create_engines_combo(routing_engine_supports_refine);
 	combo->setCurrentIndex(last_engine);
-	gtk_widget_show_all(combo);
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), combo, true, true, 0);
-#endif
+	dialog.grid->addWidget(label, 0, 0);
+	dialog.grid->addWidget(combo, 1, 0);
+
 
 	dialog.button_box->button(QDialogButtonBox::Ok)->setDefault(true);
 
 	if (dialog.exec() == QDialog::Accepted) {
 		/* Dialog validated: retrieve selected engine and do the job */
 		last_engine = combo->currentIndex();
-		RoutingEngine *routing = routing_ui_selector_get_nth(combo, last_engine);
+		RoutingEngine * engine = Routing::get_engine_by_index(combo, last_engine);
 
 		/* Change cursor */
 		main_window->set_busy_cursor();
@@ -3811,7 +3804,7 @@ void Track::refine_route_cb(void)
 		parent_layer->route_finder_check_added_track = true;
 
 		/* the job */
-		routing->refine(parent_layer, this);
+		engine->refine(parent_layer, this);
 
 		/* FIXME: remove or rename this hack */
 		if (parent_layer->route_finder_added_track) {

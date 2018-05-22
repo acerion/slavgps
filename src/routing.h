@@ -24,11 +24,10 @@
 
 
 
-#include <cstdint>
-
 #include <QComboBox>
 
-#include <glib.h>
+
+
 
 #include "routing_engine.h"
 
@@ -40,22 +39,29 @@ namespace SlavGPS {
 
 
 
-	/* Default. */
-	bool routing_default_find(LayerTRW * trw, const LatLon & start, const LatLon & end);
+	class LayerTRW;
+	class LatLon;
 
-	/* Routing engines management. */
-	void routing_prefs_init();
-	void routing_register(RoutingEngine * engine);
-	void routing_unregister_all();
-	void routing_foreach_engine(GFunc func, QComboBox * combo);
 
-	/* UI. */
-	typedef bool (* Predicate)(void * data, void * user_data);
-	QComboBox * routing_ui_selector_new(Predicate func, void * user_data);
-	RoutingEngine * routing_ui_selector_get_nth(QComboBox * combo, int pos);
 
-	/* Needs to be visible to display info about which routing engine is getting the route in viktrwlayer.c. */
-	RoutingEngine * routing_default_engine(void);
+
+	typedef bool (* RoutingEnginePredicate)(RoutingEngine * engine);
+
+
+
+
+	class Routing {
+	public:
+		static void register_engine(RoutingEngine * engine);
+		static void unregister_all_engines(void); /* TODO: this function is not called anywhere. */
+		static void prefs_init(void);
+
+		static RoutingEngine * get_default_engine(void);
+		static bool find_route_with_default_engine(LayerTRW * trw, const LatLon & start, const LatLon & end);
+
+		static QComboBox * create_engines_combo(RoutingEnginePredicate predicate);
+		static RoutingEngine * get_engine_by_index(QComboBox * combo, int index);
+	};
 
 
 

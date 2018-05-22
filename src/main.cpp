@@ -153,7 +153,7 @@ int main(int argc, char ** argv)
 	LayerMap::init();
 	MapCache::init();
 	Background::init();
-	routing_prefs_init();
+	Routing::prefs_init();
 
 	/*
 	  Second stage initialization.

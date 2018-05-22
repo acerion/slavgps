@@ -64,6 +64,12 @@ namespace SlavGPS {
 		QString label;  /* The label of the routing engine. */
 		char * format = NULL; /* The format of the output (see gpsbabel). */
 	};
+
+
+
+
+	/* RoutingEnginePredicate */
+	bool routing_engine_supports_refine(RoutingEngine * engine);
 }
 
 

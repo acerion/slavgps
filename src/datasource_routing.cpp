@@ -82,11 +82,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog()
 {
 	/* Engine selector. */
 	QLabel * engine_label = new QLabel(tr("Engine:"));
-#ifdef K_FIXME_RESTORE
-	this->engines_combo = routing_ui_selector_new(RoutingEngine::supports_refine(void), NULL);
-#else
-	this->engines_combo = routing_ui_selector_new(NULL, NULL);
-#endif
+	this->engines_combo = Routing::create_engines_combo(routing_engine_supports_refine);
 	this->engines_combo->setCurrentIndex(last_engine);
 
 	/* From and To entries. */
@@ -127,7 +123,7 @@ ProcessOptions * DataSourceRoutingDialog::get_process_options(void)
 	/* Retrieve engine. */
 	last_engine = this->engines_combo->currentIndex();
 
-	RoutingEngine * engine = routing_ui_selector_get_nth(this->engines_combo, last_engine);
+	RoutingEngine * engine = Routing::get_engine_by_index(this->engines_combo, last_engine);
 	if (!engine) {
 		return NULL; /* FIXME: this needs to be handled in caller. */
 	}

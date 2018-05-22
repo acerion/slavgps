@@ -195,7 +195,6 @@ void SlavGPS::osm_init(void)
 								    "url-stop-ll", "&loc=%s,%s",
 								    "url-via-ll", "&loc=%s,%s",
 								    NULL);
-	routing_register(VIK_ROUTING_ENGINE (osrm));
-	g_object_unref(osrm);
+	Routing::register_engine(osrm);
 #endif
 }

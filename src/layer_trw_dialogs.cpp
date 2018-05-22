@@ -32,6 +32,7 @@
 #include <QComboBox>
 
 #include "layer_trw_dialogs.h"
+#include "dialog.h"
 
 
 
@@ -165,7 +166,7 @@ bool SlavGPS::a_dialog_time_threshold(const QString & title, const QString & lab
 
 bool SlavGPS::a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const QStringList & zoom_labels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent)
 {
-	QDialog dialog(parent);
+	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Download along track"));
 
 
@@ -184,30 +185,10 @@ bool SlavGPS::a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int
 	zoom_combo.setCurrentIndex(default_zoom_idx);
 
 
-	QGridLayout * grid = new QGridLayout();
-	grid->addWidget(&map_label, 0, 0);
-	grid->addWidget(&map_combo, 0, 1);
-	grid->addWidget(&zoom_label, 1, 0);
-	grid->addWidget(&zoom_combo, 1, 1);
-
-
-	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-#ifdef K_FIXME_RESTORE
-	this->button_box.addButton(QDialogButtonBox::Ok);
-	this->button_box.addButton(QDialogButtonBox::Cancel);
-	QObject::connect(&this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
-	QObject::connect(&this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
-#endif
-
-
-	QVBoxLayout * vbox = new QVBoxLayout();
-	vbox->addLayout(grid);
-	vbox->addWidget(&button_box);
-
-
-	QLayout * old = dialog.layout();
-	delete old;
-	dialog.setLayout(vbox); /* setLayout takes ownership of vbox. */
+	dialog.grid->addWidget(&map_label, 0, 0);
+	dialog.grid->addWidget(&map_combo, 0, 1);
+	dialog.grid->addWidget(&zoom_label, 1, 0);
+	dialog.grid->addWidget(&zoom_combo, 1, 1);
 
 
 	if (QDialog::Accepted == dialog.exec()) {

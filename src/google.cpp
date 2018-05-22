@@ -76,7 +76,7 @@ void SlavGPS::google_post_init()
 	/* Google no longer supports the API we used. */
 
 	if (Babel::is_available()) {
-		 RoutingEngine * routing = g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
+		 RoutingEngine * engine = g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
 							   "id", "google",
 							   "label", "Google",
 							   "format", "google",
@@ -87,8 +87,7 @@ void SlavGPS::google_post_init()
 							   "url-stop-dir", "+to:%s",
 							   "referer", "http://maps.google.com/",
 							   NULL);
-		 routing_register(VIK_ROUTING_ENGINE (routing));
-		 g_object_unref(routing);
+		 Routing::register_engine(engine);
 	 }
 #endif
 }

@@ -18,25 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/**
- * SECTION:vikrouting
- * @short_description: the routing framework
- *
- * This module handles the list of #RoutingEngine.
- * It also handles the "default" functions.
- */
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cstdlib>
 #include <list>
+
+
+
 
 #include <QDebug>
 
-#include <glib.h>
-#include <glib/gstdio.h>
+
+
 
 #include "babel.h"
 #include "preferences.h"
@@ -74,9 +71,9 @@ static ParameterSpecification prefs[] = {
 
 
 /**
- * Initialize the preferences of the routing feature.
- */
-void SlavGPS::routing_prefs_init()
+   Initialize the preferences of the routing feature.
+*/
+void Routing::prefs_init(void)
 {
 	Preferences::register_group(PREFERENCES_NAMESPACE_ROUTING, QObject::tr("Routing"));
 	Preferences::register_parameter(prefs[0], SGVariant("", prefs[0].type_id));
@@ -100,11 +97,11 @@ static RoutingEngine * search_by_string_id(std::vector<RoutingEngine *> & engine
 
 
 /**
- * @id: the id of the engine we are looking for.
- *
- * Returns: the found engine or %NULL.
- */
-RoutingEngine * vik_routing_find_engine(const QString & id)
+   @id: the id of the engine we are looking for.
+
+   Returns: the found engine or %NULL.
+*/
+RoutingEngine * routing_ui_find_engine(const QString & id)
 {
 	return search_by_string_id(routing_engines, id);
 }
@@ -113,14 +110,14 @@ RoutingEngine * vik_routing_find_engine(const QString & id)
 
 
 /**
- * Retrieve the default engine, based on user's preferences.
- *
- * Returns: the default engine.
- */
-RoutingEngine * SlavGPS::routing_default_engine(void)
+   Retrieve the default engine, based on user's preferences.
+
+   Returns: the default engine.
+*/
+RoutingEngine * Routing::get_default_engine(void)
 {
 	const QString id = Preferences::get_param_value(PREFERENCES_NAMESPACE_ROUTING ".default").val_string;
-	RoutingEngine * engine = vik_routing_find_engine(id);
+	RoutingEngine * engine = routing_ui_find_engine(id);
 	if (engine == NULL && routing_engines.size()) {
 		/* Fallback to first element */
 		engine = routing_engines[0];
@@ -133,14 +130,14 @@ RoutingEngine * SlavGPS::routing_default_engine(void)
 
 
 /**
- * Route computation with default engine.
- *
- * Return indicates success or not.
- */
-bool SlavGPS::routing_default_find(LayerTRW * trw, const LatLon & start, const LatLon & end)
+   @brief Route computation with default engine
+
+   @return value indicating success or failure
+*/
+bool Routing::find_route_with_default_engine(LayerTRW * trw, const LatLon & start, const LatLon & end)
 {
 	/* The engine. */
-	RoutingEngine * engine = routing_default_engine();
+	RoutingEngine * engine = Routing::get_default_engine();
 	/* The route computation. */
 	return engine->find(trw, start, end);
 }
@@ -149,11 +146,11 @@ bool SlavGPS::routing_default_find(LayerTRW * trw, const LatLon & start, const L
 
 
 /**
- * @engine: new routing engine to register.
- *
- * Register a new routing engine.
- */
-void SlavGPS::routing_register(RoutingEngine * engine)
+   @brief Register a new routing engine
+
+   @engine: new routing engine to register
+*/
+void Routing::register_engine(RoutingEngine * engine)
 {
 	const QString label = QString(engine->get_label());
 	const QString string_id = QString(engine->get_id());
@@ -207,92 +204,46 @@ void SlavGPS::routing_register(RoutingEngine * engine)
 
 
 /**
- * Unregister all registered routing engines.
- */
-void SlavGPS::routing_unregister_all()
+   Unregister all registered routing engines.
+*/
+void Routing::unregister_all_engines(void)
 {
-#ifdef K_FIXME_RESTORE
-	g_list_foreach(routing_engines, (GFunc) g_object_unref, NULL);
-#endif
-}
-
-
-
-
-/**
- * @func: the function to run on each element.
- * @user_data: user's data to give to each call of @func.
- *
- * Loop over all registered routing engines.
- */
-void SlavGPS::routing_foreach_engine(GFunc func, QComboBox * combo)
-{
-#ifdef K_FIXME_RESTORE
-	g_list_foreach(routing_engines, func, user_data);
-#endif
-}
-
-
-
-
-/*
- * This function is called for all routing engine registered.
- * Following result of the predicate function, the current engine
- * is added to the combobox. In order to retrieve the RoutingEngine
- * object, we store a list of added engine in a void's data "engines".
- *
- * @see g_list_foreach()
- */
-static void fill_engine_box(void * data, QComboBox * user_data)
-{
-	RoutingEngine * engine = (RoutingEngine *) data;
-	/* Retrieve combo. */
-	QComboBox * combo = (QComboBox *) user_data;
-#ifdef K_FIXME_RESTORE
-	/* Only register engine fulfilling expected behavior. */
-	Predicate predicate = (Predicate) g_object_get_data(G_OBJECT (combo), "func");
-	void * predicate_data = g_object_get_data(G_OBJECT (combo), "user_data");
-	/* No predicate means to register all engines. */
-	bool ok = predicate == NULL || predicate(engine, predicate_data);
-
-	if (ok) {
-		/* Add item in widget. */
-		const char *label = engine->get_label();
-		combo->addItem(label);
-		/* Save engine in internal list. */
-		GList * engines = (GList *) g_object_get_data(combo , "engines");
-		engines = g_list_append(engines, engine);
-		g_object_set_data(combo, "engines", engines);
+	for (auto iter = routing_engines.begin(); iter != routing_engines.end(); iter++) {
+		delete *iter;
 	}
-#endif
 }
 
 
 
 
+
 /**
- * @func: user function to decide if an engine has to be added or not.
- * @user_data: user data for previous function.
- *
- * Creates a combo box to allow selection of a routing engine.
- *
- * We use void data hastable to store and retrieve the RoutingEngine
- * associated to the selection.
- *
- * Returns: the combo box
- */
-QComboBox * SlavGPS::routing_ui_selector_new(Predicate func, void * user_data)
+   @brief Creates a combo box to allow selection of a routing engine
+
+   @predicate: user function to decide if an engine has to be added or not
+
+   We use void data hastable to store and retrieve the RoutingEngine
+   associated to the selection.
+
+   @return newly allocated combo box
+*/
+QComboBox * Routing::create_engines_combo(RoutingEnginePredicate predicate)
 {
-	/* Create the combo */
 	QComboBox * combo = new QComboBox();
-#ifdef K_FIXME_RESTORE
-	/* Save data for foreach function. */
-	g_object_set_data(G_OBJECT (combo), "func", (void *) func);
-	g_object_set_data(G_OBJECT (combo), "user_data", user_data);
 
 	/* Filter all engines with given user function. */
-	routing_foreach_engine(fill_engine_box, combo);
-#endif
+
+	for (auto iter = routing_engines.begin(); iter != routing_engines.end(); iter++) {
+		RoutingEngine * engine = *iter;
+
+		/* Only register engine fulfilling expected behavior.
+		   No predicate means to register all engines. */
+		const bool add = predicate == NULL || predicate(engine);
+		if (add) {
+			combo->addItem(engine->get_label(), engine->id);
+		}
+	}
+
 	return combo;
 }
 
@@ -300,21 +251,14 @@ QComboBox * SlavGPS::routing_ui_selector_new(Predicate func, void * user_data)
 
 
 /**
- * @combo: the GtkWidget combobox
- * @pos: the selected position
- *
- * Retrieve the RoutingEngine stored in a list attached to @combo
- * via the "engines" property.
- *
- * Returns: the RoutingEngine object associated to @pos.
- */
-RoutingEngine * SlavGPS::routing_ui_selector_get_nth(QComboBox * combo, int pos)
+   @combo: routing engines combo
+   @index: index of item selected in the combo
+
+   @return RoutingEngine object from position @index in @combo.
+*/
+RoutingEngine * Routing::get_engine_by_index(QComboBox * combo, int index)
 {
-	RoutingEngine * engine = NULL;
-#ifdef K_FIXME_RESTORE
-	/* Retrieve engine. */
-	GList * engines = (GList *) g_object_get_data(G_OBJECT (combo) , "engines");
-	RoutingEngine * engine = (RoutingEngine *) g_list_nth_data(engines, pos);
-#endif
+	const QString engine_id = combo->itemData(index).toString();
+	RoutingEngine * engine = routing_ui_find_engine(engine_id);
 	return engine;
 }

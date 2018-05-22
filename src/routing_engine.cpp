@@ -196,3 +196,11 @@ bool RoutingEngine::supports_refine(void)
 {
 	return false;
 }
+
+
+
+
+bool SlavGPS::routing_engine_supports_refine(RoutingEngine * engine)
+{
+	return engine->supports_refine();
+}
