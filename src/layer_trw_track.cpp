@@ -1161,13 +1161,13 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 				/* Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero). */
 				compressed_ad.y[current_chunk] = altitude1;
 				if (current_chunk > 0) {
-					/* FIXME: verify this. */
+					/* TODO: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 			} else {
 				compressed_ad.y[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (delta_d / 2)) / current_seg_length);
 				if (current_chunk > 0) {
-					/* FIXME: verify this. */
+					/* TODO: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 			}
@@ -1209,14 +1209,14 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 
 				compressed_ad.y[current_chunk] = current_area_under_curve / current_dist;
 				if (current_chunk > 0) {
-					/* FIXME: verify this. */
+					/* TODO: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 				if (std::next(iter) == this->trackpoints.end()) {
 					for (int i = current_chunk + 1; i < compressed_n_points; i++) {
 						compressed_ad.y[i] = compressed_ad.y[current_chunk];
 						if (current_chunk > 0) {
-							/* FIXME: verify this. */
+							/* TODO: verify this. */
 							compressed_ad.x[i] = compressed_ad.x[current_chunk - 1] + delta_d;
 						}
 					}
@@ -1226,7 +1226,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 				current_area_under_curve += dist_along_seg * (altitude1 + (altitude2 - altitude1) * dist_along_seg / current_seg_length);
 				compressed_ad.y[current_chunk] = current_area_under_curve / delta_d;
 				if (current_chunk > 0) {
-					/* FIXME: verify this. */
+					/* TODO: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 			}
@@ -3367,16 +3367,12 @@ bool Track::handle_selection_in_tree(void)
  */
 void Track::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 1
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
 		return;
 	}
-#endif
 
 	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
-	qDebug () << "------------ draw waypoint" << this->name << "highlight_selected = " << highlight_selected << "item is selected =" << item_is_selected;
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	parent_layer->painter->draw_track(this, viewport, item_is_selected && highlight_selected);

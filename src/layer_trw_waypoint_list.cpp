@@ -177,15 +177,12 @@ void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 	Waypoint * wp = this->selected_wp;
 	LayerTRW * trw = wp->get_parent_layer_trw();
 
-#ifdef K_FIXME_RESTORE
-	char * quoted_file = g_shell_quote(wp->image);
-#endif
 	const QString viewer = Preferences::get_image_viewer();
-	const QString path = wp->image_full_path;
-	const QString command = QString("%1 %2").arg(viewer).arg(path);
+	const QString quoted_path = Util::shell_quote(wp->image_full_path);
+	const QString command = QString("%1 %2").arg(viewer).arg(quoted_path);
 
 	if (!QProcess::startDetached(command)) {
-		Dialog::error(QObject::QObject::tr("Could not launch viewer program '%1' to view file '%2'.").arg(viewer).arg(path), trw->get_window());
+		Dialog::error(QObject::QObject::tr("Could not launch viewer program '%1' to view file '%2'.").arg(viewer).arg(quoted_path), trw->get_window());
 	}
 }
 
@@ -625,16 +622,16 @@ WaypointListDialog::~WaypointListDialog()
 
 
 
+/* Here we save in track objects changes made in the dialog. */
 void WaypointListDialog::accept_cb(void) /* Slot. */
 {
 	/* FIXME: check and make sure the waypoint still exists before doing anything to it. */
-#ifdef K_FIXME_RESTORE
 
-	/* Here we save in track objects changes made in the dialog. */
-
-	this->trw->update_tree_view(this->wp);
-	this->trw->emit_layer_changed();
-#endif
+	if (this->selected_wp) {
+		LayerTRW * trw = this->selected_wp->get_parent_layer_trw();
+		trw->waypoints->update_tree_view(this->selected_wp);
+		trw->emit_layer_changed();
+	}
 
 	this->accept();
 }

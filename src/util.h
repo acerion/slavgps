@@ -75,6 +75,8 @@ namespace SlavGPS {
 		static bool remove(QFile & file);
 
 		static QString write_tmp_file_from_bytes(const void * buffer, size_t count);
+
+		static QString shell_quote(const QString & string);
 	};
 
 

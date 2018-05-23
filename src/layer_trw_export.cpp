@@ -99,9 +99,9 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 	const QString name_used = GPX::write_tmp_file(this, &options);
 
 	if (!name_used.isEmpty()) {
-		char * quoted_file = g_shell_quote(name_used.toUtf8().constData());
+		const QString quoted_file = Util::shell_quote(name_used);
 		const QString command = QString("%1 %2").arg(external_program).arg(quoted_file);
-		free(quoted_file);
+
 		if (!QProcess::startDetached(command)) {
 			Dialog::error(QObject::QObject::tr("Could not launch %1.").arg(external_program), this->get_window());
 		}

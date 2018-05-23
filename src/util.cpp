@@ -273,3 +273,18 @@ QString Util::write_tmp_file_from_bytes(const void * buffer, size_t count)
 
 	return result;
 }
+
+
+
+
+QString Util::shell_quote(const QString & string)
+{
+#ifdef K_FIXME
+	/* Implement shell quoting. */
+#else
+	char * quoted = g_shell_quote(string.toUtf8().constData());
+	const QString result(quoted);
+	g_free(quoted);
+	return result;
+#endif
+}

@@ -407,7 +407,7 @@ void LayerTRWWaypoints::propagate_new_waypoint_name(const Waypoint * wp)
    new icon of a waypoint (or lack of the icon) is shown wherever it
    needs to be shown.
 */
-void LayerTRWWaypoints::set_new_waypoint_icon(Waypoint * wp)
+void LayerTRWWaypoints::set_new_waypoint_icon(const Waypoint * wp)
 {
 	/* Update the tree view. */
 	if (wp->index.isValid()) {
@@ -770,13 +770,10 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 	}
 
 
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 1
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
 		return;
 	}
-#endif
 
 	if (this->items.empty()) {
 		return;
@@ -980,4 +977,18 @@ QString DefaultNameGenerator::try_new_name(void) const
 	result = this->number_to_name(this->highest_item_number);
 
 	return result;
+}
+
+
+
+
+/**
+   Update how track is displayed in tree view - primarily update track's icon
+*/
+void LayerTRWWaypoints::update_tree_view(const Waypoint * wp)
+{
+	if (wp && index.isValid()) {
+		this->propagate_new_waypoint_name(wp);
+		this->set_new_waypoint_icon(wp);
+	}
 }

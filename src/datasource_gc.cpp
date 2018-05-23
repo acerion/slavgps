@@ -249,9 +249,8 @@ ProcessOptions * DataSourceGCDialog::get_process_options(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	//char *safe_string = g_shell_quote (this->center_entry.text());
-	char *safe_user = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string.toUtf8().constData());
-	char *safe_pass = g_shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password").val_string.toUtf8().constData());
+	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string);
+	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password").val_string);
 
 	double lat, lon;
 	if (2 != sscanf(this->center_entry.text().toUtf8().constData(), "%lf,%lf", &lat, &lon)) {
@@ -279,9 +278,6 @@ ProcessOptions * DataSourceGCDialog::get_process_options(void)
 
 	po->shell_command = command1 + command2 + command3;
 
-	//free(safe_string);
-	free(safe_user);
-	free(safe_pass);
 
 	return po;
 }

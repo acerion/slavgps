@@ -601,12 +601,12 @@ time_t LayerTRWTracks::get_earliest_timestamp()
 
 
 
-/*
- * Update the tree view of the track id - primarily to update the icon.
- */
+/**
+   Update how track is displayed in tree view - primarily update track's icon
+*/
 void LayerTRWTracks::update_tree_view(Track * trk)
 {
-	if (trk->index.isValid()) {
+	if (trk && trk->index.isValid()) {
 		if (trk->has_color) {
 			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 			pixmap.fill(trk->color);
@@ -907,13 +907,10 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 		return;
 	}
 
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 1
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
 		return;
 	}
-#endif
 
 	if (this->items.empty()) {
 		return;
