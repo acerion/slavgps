@@ -384,17 +384,13 @@ void Layer::marshall(uint8_t ** data, size_t * data_len)
 
 void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 {
-	GByteArray* b = g_byte_array_new();
+	GByteArray * byte_array = g_byte_array_new();
 	int len;
 
-#define vlm_append(obj, sz) 	\
-	len = (sz);					\
-	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
-	g_byte_array_append(b, (uint8_t *) (obj), len);
 
 	/* Store the internal properties first. */
-	vlm_append(&this->visible, sizeof (this->visible));
-	vlm_append(this->name.toUtf8().constData(), this->name.size());
+	Clipboard::append_object(byte_array, (uint8_t *) &this->visible, sizeof (this->visible));
+	Clipboard::append_object(byte_array, (uint8_t *) this->name.toUtf8().constData(), this->name.size());
 
 	/* Now the actual parameters. */
 	SGVariant param_value;
@@ -406,83 +402,60 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 		case SGVariantType::String:
 			/* Remember need braces as these are macro calls, not single statement functions! */
 			if (!param_value.val_string.isEmpty()) {
-				vlm_append(param_value.val_string.toUtf8().constData(), param_value.val_string.length());
+				Clipboard::append_object(byte_array, (uint8_t *) param_value.val_string.toUtf8().constData(), param_value.val_string.length());
 			} else {
 				/* Need to insert empty string otherwise the unmarshall will get confused. */
-				vlm_append("", 0);
+				Clipboard::append_object(byte_array, (uint8_t *) "", 0);
 			}
 			break;
 			/* Print out the string list in the array. */
 		case SGVariantType::StringList: {
 			/* Write length of list (# of strings). */
-			const int listlen = param_value.val_string_list.size();
-			g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
+			const clipboard_size_t list_len = param_value.val_string_list.size();
+			g_byte_array_append(byte_array, (uint8_t *) &list_len, sizeof (list_len));
 
 			/* Write each string. */
 			for (auto l = param_value.val_string_list.constBegin(); l != param_value.val_string_list.constEnd(); l++) {
 				QByteArray arr = (*l).toUtf8();
 				const char * s = arr.constData();
-				vlm_append(s, strlen(s));
+				Clipboard::append_object(byte_array, (uint8_t *) s, strlen(s));
 			}
 
 			break;
 		}
 		default:
-			vlm_append(&param_value, sizeof (param_value));
+			Clipboard::append_object(byte_array, (uint8_t *) &param_value, sizeof (param_value));
 			break;
 		}
 	}
 
-	*data = b->data;
-	*data_len = b->len;
-	g_byte_array_free (b, false);
-
-#undef vlm_append
+	*data = byte_array->data;
+	*data_len = byte_array->len;
+	g_byte_array_free(byte_array, false);
 }
-
 
 
 
 void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 {
-	char *s;
-	uint8_t *b = (uint8_t *) data;
+	Clipboard::take_object(&this->visible, &data);
 
-#define vlm_size (*(int *) b)
-#define vlm_read(obj)				\
-	memcpy((obj), b+sizeof(int), vlm_size);	\
-	b += sizeof(int) + vlm_size;
-
-	vlm_read(&this->visible);
-
-	s = (char *) malloc(vlm_size + 1);
-	s[vlm_size]=0;
-	vlm_read(s);
-	this->set_name(QString(s));
-	free(s);
+	this->set_name(Clipboard::take_string(&data));
 
 	SGVariant param_value;
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 		qDebug() << "DD" PREFIX << "Unmarshalling parameter" << iter->second->name;
 		switch (iter->second->type_id) {
 		case SGVariantType::String:
-			s = (char *) malloc(vlm_size + 1);
-			s[vlm_size] = 0;
-			vlm_read(s);
-			param_value = SGVariant(QString(s));
+			param_value = SGVariant(Clipboard::take_string(&data));
 			this->set_param_value(iter->first, param_value, false);
-			free(s);
 			break;
 		case SGVariantType::StringList: {
-			int listlen = vlm_size;
-			b += sizeof(int); /* Skip listlen. */;
+			const clipboard_size_t list_len = Clipboard::peek_size(data);
+			data += sizeof (clipboard_size_t); /* Skip 'list_len' field. */;
 
-			for (int j = 0; j < listlen; j++) {
-				/* Get a string. */
-				s = (char *) malloc(vlm_size + 1);
-				s[vlm_size] = 0;
-				vlm_read(s);
-				param_value.val_string_list.push_back(s);
+			for (clipboard_size_t j = 0; j < list_len; j++) {
+				param_value.val_string_list.push_back(Clipboard::take_string(&data));
 			}
 
 			this->set_param_value(iter->first, param_value, false);
@@ -490,7 +463,7 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 			break;
 		}
 		default:
-			vlm_read(&param_value);
+			Clipboard::take_object(&param_value, &data);
 			this->set_param_value(iter->first, param_value, false);
 			break;
 		}

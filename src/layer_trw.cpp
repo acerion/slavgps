@@ -1102,66 +1102,53 @@ void LayerTRWInterface::change_param(void * gtk_widget, void * ui_change_values)
 
 
 
+
+
 void LayerTRW::marshall(uint8_t ** data, size_t * data_len)
 {
-	uint8_t *pd;
-	size_t pl;
-
 	*data = NULL;
 
 	// Use byte arrays to store sublayer data
 	// much like done elsewhere e.g. Layer::marshall_params()
-	GByteArray *ba = g_byte_array_new();
+	GByteArray * byte_array = g_byte_array_new();
 
-	uint8_t *sl_data;
-	size_t sl_len;
+	uint8_t * helper_byte_array;
+	size_t helper_size;
 
 	unsigned int object_length;
 	unsigned int subtype;
-	// store:
-	// the length of the item
-	// the sublayer type of item
-	// the the actual item
 
-#define tlm_append(object_pointer, size, type)				\
-	subtype = (int) (type);						\
-	object_length = (size);						\
-	g_byte_array_append(ba, (uint8_t *)&object_length, sizeof(object_length)); \
-	g_byte_array_append(ba, (uint8_t *)&subtype, sizeof(subtype));	\
-	g_byte_array_append(ba, (object_pointer), object_length);
 
 	// Layer parameters first
-	this->marshall_params(&pd, &pl);
-	g_byte_array_append(ba, (uint8_t *)&pl, sizeof(pl));
-	g_byte_array_append(ba, pd, pl);
-	std::free(pd);
+	this->marshall_params(&helper_byte_array, &helper_size);
+	g_byte_array_append(byte_array, (uint8_t *)&helper_size, sizeof(helper_size));
+	g_byte_array_append(byte_array, helper_byte_array, helper_size);
+	std::free(helper_byte_array);
 
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-		i->second->marshall(&sl_data, &sl_len);
-		tlm_append(sl_data, sl_len, SublayerType::WAYPOINT);
-		std::free(sl_data);
+		i->second->marshall(&helper_byte_array, &helper_size);
+		Clipboard::append_object_with_type(byte_array, helper_byte_array, helper_size, (int) SublayerType::WAYPOINT);
+		std::free(helper_byte_array);
 	}
 
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		i->second->marshall(&sl_data, &sl_len);
-		tlm_append(sl_data, sl_len, SublayerType::TRACK);
-		std::free(sl_data);
+		i->second->marshall(&helper_byte_array, &helper_size);
+		Clipboard::append_object_with_type(byte_array, helper_byte_array, helper_size, (int) SublayerType::TRACK);
+		std::free(helper_byte_array);
 	}
 
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		i->second->marshall(&sl_data, &sl_len);
-		tlm_append(sl_data, sl_len, SublayerType::ROUTE);
-		std::free(sl_data);
+		i->second->marshall(&helper_byte_array, &helper_size);
+		Clipboard::append_object_with_type(byte_array, helper_byte_array, helper_size, (int) SublayerType::ROUTE);
+		std::free(helper_byte_array);
 	}
 
 
-#undef tlm_append
-
-	*data = ba->data;
-	*data_len = ba->len;
+	*data = byte_array->data;
+	*data_len = byte_array->len;
 }
 
 
@@ -1183,18 +1170,12 @@ Layer * LayerTRWInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 	int consumed_length = pl;
 	const int sizeof_len_and_subtype = sizeof(int) + sizeof(int);
 
-#define tlm_size (*(int *)data)
-	// See marshalling above for order of how this is written
-#define tlm_next				\
-	data += sizeof_len_and_subtype + tlm_size;
-
 	// Now the individual sublayers:
-
 	while (*data && consumed_length < data_len) {
 		// Normally four extra bytes at the end of the datastream
 		//  (since it's a GByteArray and that's where it's length is stored)
 		//  So only attempt read when there's an actual block of sublayer data
-		if (consumed_length + tlm_size < data_len) {
+		if (consumed_length + Clipboard::peek_size(data) < data_len) {
 
 			// Reuse pl to read the subtype from the data stream
 			memcpy(&pl, data+sizeof(int), sizeof(pl));
@@ -1221,8 +1202,10 @@ Layer * LayerTRWInterface::unmarshall(uint8_t * data, size_t data_len, Viewport 
 				trk->convert(trw->coord_mode);
 			}
 		}
-		consumed_length += tlm_size + sizeof_len_and_subtype;
-		tlm_next;
+		consumed_length += Clipboard::peek_size(data) + sizeof_len_and_subtype;
+
+		// See marshalling above for order of how this is written  // kamilkamil
+		data += sizeof_len_and_subtype + Clipboard::peek_size(data);
 	}
 	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, data_len);
 

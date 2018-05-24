@@ -217,39 +217,31 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 
 
 
-
 /*
  * Take a Waypoint and convert it into a byte array.
  */
 void Waypoint::marshall(uint8_t ** data, size_t * data_len)
 {
-	GByteArray *b = g_byte_array_new();
+	GByteArray * byte_array = g_byte_array_new();
 	size_t len;
 
 	/* This creates space for fixed sized members like ints and whatnot
 	   and copies that amount of data from the waypoint to byte array. */
-	g_byte_array_append(b, (uint8_t *) this, sizeof(Waypoint));
+	g_byte_array_append(byte_array, (uint8_t *) this, sizeof(Waypoint));
 
-	/* This allocates space for variant sized strings
-	   and copies that amount of data from the waypoint to byte array. */
-#define vwm_append(s)						\
-	len = (s) ? strlen(s) + 1 : 0;				\
-	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
-	if (s) g_byte_array_append(b, (uint8_t *) s, len);
 
-	vwm_append(name.toUtf8().constData());
-	vwm_append(comment.toUtf8().constData());
-	vwm_append(description.toUtf8().constData());
-	vwm_append(source.toUtf8().constData());
-	vwm_append(type.toUtf8().constData());
-	vwm_append(url.toUtf8().constData());
-	vwm_append(image_full_path.toUtf8().constData());
-	vwm_append(symbol_name.toUtf8().constData());
+	Clipboard::append_string(byte_array, name.toUtf8().constData());
+	Clipboard::append_string(byte_array, comment.toUtf8().constData());
+	Clipboard::append_string(byte_array, description.toUtf8().constData());
+	Clipboard::append_string(byte_array, source.toUtf8().constData());
+	Clipboard::append_string(byte_array, type.toUtf8().constData());
+	Clipboard::append_string(byte_array, url.toUtf8().constData());
+	Clipboard::append_string(byte_array, image_full_path.toUtf8().constData());
+	Clipboard::append_string(byte_array, symbol_name.toUtf8().constData());
 
-	*data = b->data;
-	*data_len = b->len;
-	g_byte_array_free(b, false);
-#undef vwm_append
+	*data = byte_array->data;
+	*data_len = byte_array->len;
+	g_byte_array_free(byte_array, false);
 }
 
 
@@ -258,38 +250,24 @@ void Waypoint::marshall(uint8_t ** data, size_t * data_len)
 /*
  * Take a byte array and convert it into a Waypoint.
  */
-Waypoint *Waypoint::unmarshall(uint8_t * data, size_t data_len)
+Waypoint * Waypoint::unmarshall(uint8_t * data, size_t data_len)
 {
-	size_t len;
-	Waypoint *wp = new Waypoint();
+	Waypoint * wp = new Waypoint();
 
 	/* This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...). */
-	memcpy(wp, data, sizeof(Waypoint));
+	memcpy(wp, data, sizeof (Waypoint));
 	data += sizeof (Waypoint);
 
-	/* Now the variant sized strings... */
-#define vwu_get(s)				\
-	len = *(size_t *)data;			\
-	data += sizeof (len);			\
-	if (len) {				\
-		(s) = g_strdup((char *) data);	\
-	} else {				\
-		(s) = NULL;			\
-	}					\
-	data += len;
-#ifdef K_FIXME_RESTORE
-	vwu_get(wp->name);
-	vwu_get(wp->comment);
-	vwu_get(wp->description);
-	vwu_get(wp->source);
-	vwu_get(wp->type);
-	vwu_get(wp->url);
-	vwu_get(wp->image);
-	vwu_get(wp->symbol_name);
-#endif
+	wp->name = Clipboard::take_string(&data);
+	wp->comment = Clipboard::take_string(&data);
+	wp->description = Clipboard::take_string(&data);
+	wp->source = Clipboard::take_string(&data);
+	wp->type = Clipboard::take_string(&data);
+	wp->url = Clipboard::take_string(&data);
+	wp->image_full_path = Clipboard::take_string(&data);
+	wp->symbol_name = Clipboard::take_string(&data);
 
 	return wp;
-#undef vwu_get
 }
 
 

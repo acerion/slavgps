@@ -24,6 +24,21 @@
 
 
 
+#include <cstdint>
+
+
+
+
+#include <glib.h>
+
+
+
+
+#include <QString>
+
+
+
+
 namespace SlavGPS {
 
 
@@ -31,6 +46,11 @@ namespace SlavGPS {
 
 	class LayersPanel;
 	enum class LayerType;
+
+
+
+
+	typedef size_t clipboard_size_t;
 
 
 
@@ -51,6 +71,27 @@ namespace SlavGPS {
 		static void copy_selected(LayersPanel * panel);
 		static bool paste(LayersPanel * panel);
 		static ClipboardDataType get_current_type();
+
+
+
+		/* This allocates space for variant sized strings and copies that
+		   amount of data from the string to byte array. */
+		static void append_string(GByteArray * byte_array, const char * string);
+		static void append_object(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size);
+
+		/*
+		  Store:
+		  the length of the item
+		  the sublayer type of item
+		  the the actual item
+		*/
+		static void append_object_with_type(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size, int obj_type);
+
+
+		static clipboard_size_t peek_size(uint8_t * data);
+		static void move_to_next_object(uint8_t ** data, clipboard_size_t * data_size);
+		static void take_object(void * target, uint8_t ** data);
+		static QString take_string(uint8_t ** data);
 	};
 
 

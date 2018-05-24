@@ -1885,44 +1885,37 @@ bool Track::get_minmax_alt(double * min_alt, double * max_alt) const
 
 
 
-
 void Track::marshall(uint8_t ** data, size_t * data_len)
 {
-	GByteArray * b = g_byte_array_new();
-	g_byte_array_append(b, (uint8_t *) this, sizeof(Track));
+	GByteArray * byte_array = g_byte_array_new();
+	g_byte_array_append(byte_array, (uint8_t *) this, sizeof(Track));
 
 	/* we'll fill out number of trackpoints later */
-	unsigned int intp = b->len;
+	unsigned int intp = byte_array->len;
 	unsigned int len;
-	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));
+	g_byte_array_append(byte_array, (uint8_t *)&len, sizeof(len));
 
 
-	/* This allocates space for variant sized strings
-	   and copies that amount of data from the track to byte array. */
-#define vtm_append(s)	       \
-	len = (s) ? strlen(s)+1 : 0;			\
-	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
-	if (s) g_byte_array_append(b, (uint8_t *) s, len);
 
 	auto iter = this->trackpoints.begin();
 	unsigned int ntp = 0;
 	while (iter != this->trackpoints.end()) {
-		g_byte_array_append(b, (uint8_t *) *iter, sizeof (Trackpoint));
-		vtm_append((*iter)->name.toUtf8().constData());
+		g_byte_array_append(byte_array, (uint8_t *) *iter, sizeof (Trackpoint));
+		Clipboard::append_string(byte_array, (*iter)->name.toUtf8().constData());
 		iter++;
 		ntp++;
 	}
-	*(unsigned int *)(b->data + intp) = ntp;
+	*(unsigned int *)(byte_array->data + intp) = ntp;
 
-	vtm_append(this->name.toUtf8().constData());
-	vtm_append(this->comment.toUtf8().constData());
-	vtm_append(this->description.toUtf8().constData());
-	vtm_append(this->source.toUtf8().constData());
+	Clipboard::append_string(byte_array, this->name.toUtf8().constData());
+	Clipboard::append_string(byte_array, this->comment.toUtf8().constData());
+	Clipboard::append_string(byte_array, this->description.toUtf8().constData());
+	Clipboard::append_string(byte_array, this->source.toUtf8().constData());
 	/* kamilTODO: where is ->type? */
 
-	*data = b->data;
-	*data_len = b->len;
-	g_byte_array_free(b, false);
+	*data = byte_array->data;
+	*data_len = byte_array->len;
+	g_byte_array_free(byte_array, false);
 }
 
 
@@ -1947,33 +1940,21 @@ Track * Track::unmarshall(uint8_t * data, size_t data_len)
 	unsigned int ntp = *(unsigned int *) data;
 	data += sizeof(ntp);
 
-	unsigned int len;
-
-#define vtu_get(s)	       \
-	len = *(unsigned int *)data;		\
-	data += sizeof(len);			\
-	if (len) {				\
-		(s) = g_strdup((char *)data);	\
-	} else {				\
-		(s) = NULL;			\
-	}					\
-	data += len;
-
-#ifdef K_FIXME_RESTORE
-	Trackpoint * new_tp;
 	for (unsigned int i = 0; i < ntp; i++) {
-		new_tp = new Trackpoint();
+		Trackpoint * new_tp = new Trackpoint();
 		memcpy(new_tp, data, sizeof(*new_tp));
 		data += sizeof(*new_tp);
-		vtu_get(new_tp->name_.toUtf8().constData());
+
+		new_tp->name = Clipboard::take_string(&data);
+
 		new_trk->trackpoints.push_back(new_tp);
 	}
-	vtu_get(new_trk->name.toUtf8().constData());
-	vtu_get(new_trk->comment.toUtf8().constData());
-	vtu_get(new_trk->description);
-	vtu_get(new_trk->source);
+
+	new_trk->name = Clipboard::take_string(&data);
+	new_trk->comment = Clipboard::take_string(&data);
+	new_trk->description = Clipboard::take_string(&data);
+	new_trk->source = Clipboard::take_string(&data);
 	/* kamilTODO: where is ->type? */
-#endif
 
 	return new_trk;
 }

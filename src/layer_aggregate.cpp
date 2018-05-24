@@ -79,33 +79,27 @@ LayerAggregateInterface::LayerAggregateInterface()
 
 
 
-void LayerAggregate::marshall(uint8_t **data, size_t * data_len)
+void LayerAggregate::marshall(uint8_t ** data, size_t * data_len)
 {
-	uint8_t *ld;
-	size_t ll;
-	GByteArray* b = g_byte_array_new();
-	int len;
+	size_t helper_size;
+	GByteArray * byte_array = g_byte_array_new();
 
-#define alm_append(obj, sz)					\
-	len = (sz);						\
-	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
-	g_byte_array_append(b, (uint8_t *)(obj), len);
-
-	this->marshall_params(&ld, &ll);
-	alm_append(ld, ll);
-	free(ld);
+	uint8_t * helper_byte_array = NULL;
+	this->marshall_params(&helper_byte_array, &helper_size);
+	Clipboard::append_object(byte_array, helper_byte_array, helper_size);
+	free(helper_byte_array);
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		Layer::marshall((*child), &ld, &ll);
-		if (ld) {
-			alm_append(ld, ll);
-			free(ld);
+		Layer::marshall((*child), &helper_byte_array, &helper_size);
+		if (helper_byte_array) {
+			Clipboard::append_object(byte_array, helper_byte_array, helper_size);
+			free(helper_byte_array);
 		}
 	}
-	*data = b->data;
-	*data_len = b->len;
-	g_byte_array_free(b, false);
-#undef alm_append
+
+	*data = byte_array->data;
+	*data_len = byte_array->len;
+	g_byte_array_free(byte_array, false);
 }
 
 
@@ -113,28 +107,21 @@ void LayerAggregate::marshall(uint8_t **data, size_t * data_len)
 
 Layer * LayerAggregateInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
-#define alm_size (*(int *)data)
-#define alm_next		 \
-	data_len -= sizeof(int) + alm_size;		\
-	data += sizeof(int) + alm_size;
-
 	LayerAggregate * aggregate = new LayerAggregate();
 
-	aggregate->unmarshall_params(data + sizeof (int), alm_size);
-	alm_next;
+	aggregate->unmarshall_params(data + sizeof (clipboard_size_t), Clipboard::peek_size(data));
+	Clipboard::move_to_next_object(&data, &data_len);
 
 	while (data_len > 0) {
-		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
+		Layer * child_layer = Layer::unmarshall(data + sizeof (clipboard_size_t), Clipboard::peek_size(data), viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
 			QObject::connect(child_layer, SIGNAL(Layer::changed(void)), (Layer *) aggregate, SLOT(child_layer_changed_cb(const QString &)));
 		}
-		alm_next;
+		Clipboard::move_to_next_object(&data, &data_len);
 	}
 	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << data_len;
 	return aggregate;
-#undef alm_size
-#undef alm_next
 }
 
 

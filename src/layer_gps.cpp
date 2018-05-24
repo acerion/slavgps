@@ -334,35 +334,28 @@ QString LayerGPS::get_tooltip()
 
 
 
-#define alm_append(m_obj, m_sz) {					\
-		int m_len = (m_sz);					\
-		g_byte_array_append(b, (uint8_t *)&m_len, sizeof (m_len)); \
-		g_byte_array_append(b, (uint8_t *)(m_obj), m_len);	\
-	}
-
 /* "Copy". */
 void LayerGPS::marshall(uint8_t ** data, size_t * data_len)
 {
-	uint8_t *ld;
-	size_t ll;
-	GByteArray* b = g_byte_array_new();
+	uint8_t *helper_byte_array;
+	size_t helper_size;
+	GByteArray * byte_array = g_byte_array_new();
 
-	this->marshall_params(&ld, &ll);
-	alm_append(ld, ll);
-	free(ld);
+	this->marshall_params(&helper_byte_array, &helper_size);
+	Clipboard::append_object(byte_array, helper_byte_array, helper_size);
+	free(helper_byte_array);
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
-		Layer::marshall(this->trw_children[i], &ld, &ll);
-		if (ld) {
-			alm_append(ld, ll);
-			free(ld);
+		Layer::marshall(this->trw_children[i], &helper_byte_array, &helper_size);
+		if (helper_byte_array) {
+			Clipboard::append_object(byte_array, helper_byte_array, helper_size);
+			free(helper_byte_array);
 		}
 	}
-	*data = b->data;
-	*data_len = b->len;
-	g_byte_array_free(b, false);
+	*data = byte_array->data;
+	*data_len = byte_array->len;
+	g_byte_array_free(byte_array, false);
 }
-#undef alm_append
 
 
 
@@ -370,32 +363,25 @@ void LayerGPS::marshall(uint8_t ** data, size_t * data_len)
 /* "Paste". */
 Layer * LayerGPSInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
 {
-#define alm_size (*(int *)data)
-#define alm_next		 \
-	data_len -= sizeof(int) + alm_size;		\
-	data += sizeof(int) + alm_size;
-
 	LayerGPS * layer = new LayerGPS();
 	layer->set_coord_mode(viewport->get_coord_mode());
 
-	layer->unmarshall_params(data + sizeof (int), alm_size);
-	alm_next;
+	layer->unmarshall_params(data + sizeof (clipboard_size_t), Clipboard::peek_size(data));
+	Clipboard::move_to_next_object(&data, &data_len);
 
 	int i = 0;
 	while (data_len > 0 && i < GPS_CHILD_LAYER_MAX) {
-		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
+		Layer * child_layer = Layer::unmarshall(data + sizeof (clipboard_size_t), Clipboard::peek_size(data), viewport);
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* NB no need to attach signal update handler here
 			   as this will always be performed later on in LayerGPS::add_children_to_tree(). */
 		}
-		alm_next;
+		Clipboard::move_to_next_object(&data, &data_len);
 	}
 	// qDebug() << "II: Layer GPS: LayerGPSInterface::unmarshall() ended with" << data_len;
 	assert (data_len == 0);
 	return layer;
-#undef alm_size
-#undef alm_next
 }
 
 

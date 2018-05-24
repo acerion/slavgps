@@ -601,3 +601,88 @@ ClipboardDataType Clipboard::get_current_type()
 #endif
 	return answer;
 }
+
+
+
+
+void Clipboard::append_string(GByteArray * byte_array, const char * string)
+{
+	clipboard_size_t size = (clipboard_size_t) (string ? strlen(string) + 1 : 0);
+	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
+	if (string) {
+		g_byte_array_append(byte_array, (uint8_t *) string, size);
+	}
+}
+
+
+
+
+void Clipboard::append_object(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size)
+{
+	clipboard_size_t size = obj_size;
+	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
+	g_byte_array_append(byte_array, obj, size);
+}
+
+
+
+
+void Clipboard::append_object_with_type(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size, int obj_type)
+{
+	int type = obj_type;
+	clipboard_size_t size = obj_size;
+
+	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
+	g_byte_array_append(byte_array, (uint8_t *) &type, sizeof (type));
+	g_byte_array_append(byte_array, obj, size);
+}
+
+
+
+
+clipboard_size_t Clipboard::peek_size(uint8_t * data)
+{
+	return (*(clipboard_size_t *) data);
+}
+
+
+
+
+void Clipboard::move_to_next_object(uint8_t ** data, clipboard_size_t * data_size)
+{
+	const clipboard_size_t this_object_size = Clipboard::peek_size(*data);
+
+	(*data_size) -= sizeof (clipboard_size_t) + this_object_size;
+	(*data) += sizeof (clipboard_size_t) + this_object_size;
+}
+
+
+
+
+void Clipboard::take_object(void * target, uint8_t ** data)
+{
+	const clipboard_size_t this_object_size = Clipboard::peek_size(*data);
+
+	memcpy(target, (*data) + sizeof (clipboard_size_t), this_object_size);
+	(*data) += sizeof (clipboard_size_t) + this_object_size;
+}
+
+
+
+
+QString Clipboard::take_string(uint8_t ** data)
+{
+	QString result;
+
+	const clipboard_size_t len = Clipboard::peek_size(*data);
+	(*data) += sizeof (len);
+
+	if (len) {
+		result = QString((char *) *data);
+	} else {
+		// result = "";
+	}
+	(*data) += len;
+
+	return result;
+}
