@@ -43,7 +43,7 @@ namespace SlavGPS {
 	class LayerCoordInterface : public LayerInterface {
 	public:
 		LayerCoordInterface();
-		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
 	};
 
 

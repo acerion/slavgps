@@ -55,7 +55,7 @@ namespace SlavGPS {
 	class LayerDEMInterface : public LayerInterface {
 	public:
 		LayerDEMInterface();
-		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
 		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
 	};
 

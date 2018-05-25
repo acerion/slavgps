@@ -220,7 +220,7 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 /*
  * Take a Waypoint and convert it into a byte array.
  */
-void Waypoint::marshall(uint8_t ** data, size_t * data_len)
+void Waypoint::marshall(Pickle & pickle)
 {
 	GByteArray * byte_array = g_byte_array_new();
 	size_t len;
@@ -239,8 +239,8 @@ void Waypoint::marshall(uint8_t ** data, size_t * data_len)
 	Clipboard::append_string(byte_array, image_full_path.toUtf8().constData());
 	Clipboard::append_string(byte_array, symbol_name.toUtf8().constData());
 
-	*data = byte_array->data;
-	*data_len = byte_array->len;
+	pickle.data = byte_array->data;
+	pickle.data_size = byte_array->len;
 	g_byte_array_free(byte_array, false);
 }
 
@@ -250,22 +250,25 @@ void Waypoint::marshall(uint8_t ** data, size_t * data_len)
 /*
  * Take a byte array and convert it into a Waypoint.
  */
-Waypoint * Waypoint::unmarshall(uint8_t * data, size_t data_len)
+Waypoint * Waypoint::unmarshall(Pickle & pickle)
 {
+	const pickle_size_t data_size = pickle.take_size();
+	const QString type_id = pickle.take_string();
+
 	Waypoint * wp = new Waypoint();
 
 	/* This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...). */
-	memcpy(wp, data, sizeof (Waypoint));
-	data += sizeof (Waypoint);
+	memcpy(wp, pickle.data, sizeof (Waypoint));
+	pickle.data += sizeof (Waypoint);
 
-	wp->name = Clipboard::take_string(&data);
-	wp->comment = Clipboard::take_string(&data);
-	wp->description = Clipboard::take_string(&data);
-	wp->source = Clipboard::take_string(&data);
-	wp->type = Clipboard::take_string(&data);
-	wp->url = Clipboard::take_string(&data);
-	wp->image_full_path = Clipboard::take_string(&data);
-	wp->symbol_name = Clipboard::take_string(&data);
+	wp->name = pickle.take_string();
+	wp->comment = pickle.take_string();
+	wp->description = pickle.take_string();
+	wp->source = pickle.take_string();
+	wp->type = pickle.take_string();
+	wp->url = pickle.take_string();
+	wp->image_full_path = pickle.take_string();
+	wp->symbol_name = pickle.take_string();
 
 	return wp;
 }

@@ -121,7 +121,7 @@ namespace SlavGPS {
 	class LayerTRWInterface : public LayerInterface {
 	public:
 		LayerTRWInterface();
-		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
 		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
 	};
 
@@ -154,11 +154,11 @@ namespace SlavGPS {
 		void set_menu_selection(TreeItemOperation selection);
 		TreeItemOperation get_menu_selection();
 
-		void marshall(uint8_t ** data, size_t * data_len);
+		void marshall(Pickle & pickle);
 
 		void cut_sublayer(TreeItem * item);
-		void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len);
-		bool paste_sublayer(TreeItem * item, uint8_t * data, size_t len);
+		void copy_sublayer(TreeItem * item, Pickle & pickle);
+		bool paste_sublayer(TreeItem * item, Pickle & pickle);
 		void delete_sublayer(TreeItem * item);
 
 		void change_coord_mode(CoordMode dest_mode);

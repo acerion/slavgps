@@ -50,7 +50,7 @@ namespace SlavGPS {
 
 
 
-	typedef size_t clipboard_size_t;
+	typedef size_t pickle_size_t;
 
 
 
@@ -60,6 +60,30 @@ namespace SlavGPS {
 		LAYER,
 		SUBLAYER,
 		TEXT,
+	};
+
+
+
+
+	class Pickle {
+	public:
+		~Pickle();
+
+		pickle_size_t peek_size(pickle_size_t offset = 0) const;
+		pickle_size_t take_size(void);
+
+		QString peek_string(pickle_size_t offset = 0) const;
+		QString take_string(void);
+
+		void put_object(void * object, pickle_size_t object_size);
+		void take_object(void * target);
+
+		void move_to_next_object(void);
+
+		void clear(void);
+
+		uint8_t * data = NULL;
+		pickle_size_t data_size = 0;
 	};
 
 
@@ -77,7 +101,7 @@ namespace SlavGPS {
 		/* This allocates space for variant sized strings and copies that
 		   amount of data from the string to byte array. */
 		static void append_string(GByteArray * byte_array, const char * string);
-		static void append_object(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size);
+		static void append_object(GByteArray * byte_array, uint8_t * obj, pickle_size_t obj_size);
 
 		/*
 		  Store:
@@ -85,14 +109,9 @@ namespace SlavGPS {
 		  the sublayer type of item
 		  the the actual item
 		*/
-		static void append_object_with_type(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size, int obj_type);
-
-
-		static clipboard_size_t peek_size(uint8_t * data);
-		static void move_to_next_object(uint8_t ** data, clipboard_size_t * data_size);
-		static void take_object(void * target, uint8_t ** data);
-		static QString take_string(uint8_t ** data);
+		static void append_object_with_type(GByteArray * byte_array, Pickle & pickle, pickle_size_t obj_size, int obj_type);
 	};
+
 
 
 

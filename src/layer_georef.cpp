@@ -169,12 +169,12 @@ QString LayerGeoref::get_tooltip()
 
 
 
-Layer * LayerGeorefInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
+Layer * LayerGeorefInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerGeoref * layer = new LayerGeoref();
 	layer->configure_from_viewport(viewport);
 
-	layer->unmarshall_params(data, data_len);
+	layer->unmarshall_params(pickle);
 
 	if (!layer->image_full_path.isEmpty()) {
 		layer->post_read(viewport, true);

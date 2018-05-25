@@ -107,10 +107,10 @@ LayerCoordInterface::LayerCoordInterface()
 
 
 
-Layer * LayerCoordInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
+Layer * LayerCoordInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerCoord * layer = new LayerCoord();
-	layer->unmarshall_params(data, data_len);
+	layer->unmarshall_params(pickle);
 	return layer;
 }
 

@@ -66,7 +66,7 @@ namespace SlavGPS {
 	public:
 		LayerInterface() {};
 
-		virtual Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport) { return NULL; };
+		virtual Layer * unmarshall(Pickle & pickle, Viewport * viewport) { return NULL; };
 
 		QKeySequence action_accelerator;
 		QIcon action_icon;

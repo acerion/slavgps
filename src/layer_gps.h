@@ -147,7 +147,7 @@ namespace SlavGPS {
 	class LayerGPSInterface : public LayerInterface {
 	public:
 		LayerGPSInterface();
-		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
 	};
 
 
@@ -162,7 +162,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip();
-		void marshall(uint8_t ** data, size_t * data_len);
+		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);
 		void add_children_to_tree(void);

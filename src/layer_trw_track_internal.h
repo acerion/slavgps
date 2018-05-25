@@ -238,8 +238,8 @@ namespace SlavGPS {
 		TrackData make_track_data_altitude_over_time(void) const;
 		TrackData make_track_data_speed_over_distance(void) const;
 
-		void marshall(uint8_t ** data, size_t * data_len);
-		static Track * unmarshall(uint8_t * data, size_t data_len);
+		void marshall(Pickle & pickle);
+		static Track * unmarshall(Pickle & pickle);
 
 
 		void recalculate_bbox(void);

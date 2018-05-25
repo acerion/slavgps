@@ -356,33 +356,35 @@ typedef struct {
 	uint8_t data[0];
 } header_t;
 
-void Layer::marshall(Layer * layer, uint8_t ** data, size_t * data_len)
+void Layer::marshall(Layer * layer, Pickle & pickle)
 {
-	layer->marshall(data, data_len);
-	if (*data) {
-		header_t * header = (header_t *) malloc(*data_len + sizeof (*header));
+	pickle.put_object(&layer->type, sizeof (layer->type));
+	layer->marshall(pickle);
+
+	if (pickle.data) {
+		header_t * header = (header_t *) malloc(pickle.data_size + sizeof (*header));
 		header->layer_type = layer->type;
-		header->len = *data_len;
-		memcpy(header->data, *data, *data_len);
-		free(*data);
-		*data = (uint8_t *) header;
-		*data_len = *data_len + sizeof (*header);
+		header->len = pickle.data_size;
+		memcpy(header->data, pickle.data, pickle.data_size);
+		free(pickle.data);
+		pickle.data = (uint8_t *) header;
+		pickle.data_size += sizeof (*header);
 	}
 }
 
 
 
 
-void Layer::marshall(uint8_t ** data, size_t * data_len)
+void Layer::marshall(Pickle & pickle)
 {
-	this->marshall_params(data, data_len);
+	this->marshall_params(pickle);
 	return;
 }
 
 
 
 
-void Layer::marshall_params(uint8_t ** data, size_t * data_len)
+void Layer::marshall_params(Pickle & pickle)
 {
 	GByteArray * byte_array = g_byte_array_new();
 	int len;
@@ -411,7 +413,7 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 			/* Print out the string list in the array. */
 		case SGVariantType::StringList: {
 			/* Write length of list (# of strings). */
-			const clipboard_size_t list_len = param_value.val_string_list.size();
+			const pickle_size_t list_len = param_value.val_string_list.size();
 			g_byte_array_append(byte_array, (uint8_t *) &list_len, sizeof (list_len));
 
 			/* Write each string. */
@@ -429,33 +431,36 @@ void Layer::marshall_params(uint8_t ** data, size_t * data_len)
 		}
 	}
 
-	*data = byte_array->data;
-	*data_len = byte_array->len;
+	pickle.data = byte_array->data;
+	pickle.data_size = byte_array->len;
 	g_byte_array_free(byte_array, false);
 }
 
 
 
-void Layer::unmarshall_params(uint8_t * data, size_t data_len)
+void Layer::unmarshall_params(Pickle & pickle)
 {
-	Clipboard::take_object(&this->visible, &data);
+	const pickle_size_t params_size = pickle.peek_size();
+	pickle.data += sizeof (pickle_size_t),
 
-	this->set_name(Clipboard::take_string(&data));
+	pickle.take_object(&this->visible);
+
+	this->set_name(pickle.take_string());
 
 	SGVariant param_value;
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 		qDebug() << "DD" PREFIX << "Unmarshalling parameter" << iter->second->name;
 		switch (iter->second->type_id) {
 		case SGVariantType::String:
-			param_value = SGVariant(Clipboard::take_string(&data));
+			param_value = SGVariant(pickle.take_string());
 			this->set_param_value(iter->first, param_value, false);
 			break;
 		case SGVariantType::StringList: {
-			const clipboard_size_t list_len = Clipboard::peek_size(data);
-			data += sizeof (clipboard_size_t); /* Skip 'list_len' field. */;
+			const pickle_size_t list_len = pickle.peek_size();
+			pickle.data += sizeof (pickle_size_t); /* Skip 'list_len' field. */;
 
-			for (clipboard_size_t j = 0; j < list_len; j++) {
-				param_value.val_string_list.push_back(Clipboard::take_string(&data));
+			for (pickle_size_t j = 0; j < list_len; j++) {
+				param_value.val_string_list.push_back(pickle.take_string());
 			}
 
 			this->set_param_value(iter->first, param_value, false);
@@ -463,20 +468,23 @@ void Layer::unmarshall_params(uint8_t * data, size_t data_len)
 			break;
 		}
 		default:
-			Clipboard::take_object(&param_value, &data);
+			pickle.take_object(&param_value);
 			this->set_param_value(iter->first, param_value, false);
 			break;
 		}
 	}
+
+	pickle.move_to_next_object(); /* TODO: is it ok to put it here? */
 }
 
 
 
 
-Layer * Layer::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
+Layer * Layer::unmarshall(Pickle & pickle, Viewport * viewport)
 {
-	header_t * header = (header_t *) data;
-	return vik_layer_interfaces[(int) header->layer_type]->unmarshall(header->data, header->len, viewport);
+	const pickle_size_t object_size = pickle.take_size();
+	header_t * header = (header_t *) pickle.data;
+	return vik_layer_interfaces[(int) header->layer_type]->unmarshall(pickle, viewport);
 }
 
 

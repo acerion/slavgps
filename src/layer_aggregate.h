@@ -52,7 +52,7 @@ namespace SlavGPS {
 	class LayerAggregateInterface : public LayerInterface {
 	public:
 		LayerAggregateInterface();
-		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
 	};
 
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip();
-		void marshall(uint8_t ** data, size_t * data_len);
+		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 		void add_menu_items(QMenu & menu);

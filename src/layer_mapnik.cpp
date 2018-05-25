@@ -340,14 +340,14 @@ void LayerMapnik::set_cache_dir(const QString & name_)
 
 
 
-Layer * LayerMapnikInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
+Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerMapnik * layer = new LayerMapnik();
 
 	layer->tile_size_x = size_default().val_uint; /* FUTURE: Is there any use in this being configurable? */
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
-	layer->unmarshall_params(data, data_len);
+	layer->unmarshall_params(pickle);
 
 	return layer;
 }

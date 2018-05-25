@@ -620,13 +620,12 @@ void LayerTRW::cut_sublayer(TreeItem * sublayer)
 
 void LayerTRW::copy_sublayer_common(TreeItem * item)
 {
-	uint8_t * data_ = NULL;
-	unsigned int len;
+	Pickle pickle;
 
-	this->copy_sublayer(item, &data_, &len);
+	this->copy_sublayer(item, pickle);
 
-	if (data_) {
-		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, len, item->name, data_);
+	if (pickle.data) {
+		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle.data_size, item->name, pickle.data);
 	}
 }
 
@@ -642,45 +641,41 @@ void LayerTRW::cut_sublayer_common(TreeItem * item, bool confirm)
 
 
 
-void LayerTRW::copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len)
+void LayerTRW::copy_sublayer(TreeItem * item, Pickle & pickle)
 {
 	if (!item) {
 		qDebug() << "WW: Layer TRW: 'copy sublayer' received NULL sublayer";
-		*data = NULL;
+		pickle.data = NULL; /* TODO: memory leak? */
 		return;
 	}
 
-	uint8_t *id;
-	size_t il;
+	Pickle helper_pickle;
+	GByteArray * byte_array = g_byte_array_new();
 
-	GByteArray *ba = g_byte_array_new();
+	item->marshall(helper_pickle);
 
-	item->marshall(&id, &il);
+	g_byte_array_append(byte_array, helper_pickle.data, helper_pickle.data_size);
 
-	g_byte_array_append(ba, id, il);
-
-	std::free(id);
-
-	*len = ba->len;
-	*data = ba->data;
+	pickle.data = byte_array->data;
+	pickle.data_size = byte_array->len;
 }
 
 
 
 
-bool LayerTRW::paste_sublayer(TreeItem * item, uint8_t * data, size_t data_len)
+bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 {
 	if (!item) {
 		qDebug() << "WW: Layer TRW: 'paste sublayer' received NULL item";
 		return false;
 	}
 
-	if (!data) {
+	if (!pickle.data) {
 		return false;
 	}
 
 	if (item->type_id == "sg.trw.waypoint") {
-		Waypoint * wp = Waypoint::unmarshall(data, data_len);
+		Waypoint * wp = Waypoint::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.waypoint", wp->name);
 		wp->set_name(uniq_name);
@@ -697,7 +692,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, uint8_t * data, size_t data_len)
 		return true;
 	}
 	if (item->type_id == "sg.trw.track") {
-		Track * trk = Track::unmarshall(data, data_len);
+		Track * trk = Track::unmarshall(pickle);
 
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.track", trk->name);
@@ -714,7 +709,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, uint8_t * data, size_t data_len)
 		return true;
 	}
 	if (item->type_id == "sg.trw.route") {
-		Track * trk = Track::unmarshall(data, data_len);
+		Track * trk = Track::unmarshall(pickle);
 		/* When copying - we'll create a new name based on the original. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.route", trk->name);
 		trk->set_name(uniq_name);
@@ -1104,15 +1099,15 @@ void LayerTRWInterface::change_param(void * gtk_widget, void * ui_change_values)
 
 
 
-void LayerTRW::marshall(uint8_t ** data, size_t * data_len)
+void LayerTRW::marshall(Pickle & pickle)
 {
-	*data = NULL;
+	pickle.data = NULL;
 
 	// Use byte arrays to store sublayer data
 	// much like done elsewhere e.g. Layer::marshall_params()
 	GByteArray * byte_array = g_byte_array_new();
 
-	uint8_t * helper_byte_array;
+	Pickle helper_pickle;
 	size_t helper_size;
 
 	unsigned int object_length;
@@ -1120,94 +1115,92 @@ void LayerTRW::marshall(uint8_t ** data, size_t * data_len)
 
 
 	// Layer parameters first
-	this->marshall_params(&helper_byte_array, &helper_size);
-	g_byte_array_append(byte_array, (uint8_t *)&helper_size, sizeof(helper_size));
-	g_byte_array_append(byte_array, helper_byte_array, helper_size);
-	std::free(helper_byte_array);
+	this->marshall_params(helper_pickle);
+	g_byte_array_append(byte_array, (uint8_t *) &helper_pickle.data_size, sizeof (helper_pickle.data_size));
+	g_byte_array_append(byte_array, helper_pickle.data, helper_pickle.data_size);
+	helper_pickle.clear();
 
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-		i->second->marshall(&helper_byte_array, &helper_size);
-		Clipboard::append_object_with_type(byte_array, helper_byte_array, helper_size, (int) SublayerType::WAYPOINT);
-		std::free(helper_byte_array);
+		i->second->marshall(helper_pickle);
+		Clipboard::append_object_with_type(byte_array, helper_pickle, helper_pickle.data_size, (int) SublayerType::WAYPOINT);
+		helper_pickle.clear();
 	}
 
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		i->second->marshall(&helper_byte_array, &helper_size);
-		Clipboard::append_object_with_type(byte_array, helper_byte_array, helper_size, (int) SublayerType::TRACK);
-		std::free(helper_byte_array);
+		i->second->marshall(helper_pickle);
+		Clipboard::append_object_with_type(byte_array, helper_pickle, helper_pickle.data_size, (int) SublayerType::TRACK);
+		helper_pickle.clear();
 	}
 
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		i->second->marshall(&helper_byte_array, &helper_size);
-		Clipboard::append_object_with_type(byte_array, helper_byte_array, helper_size, (int) SublayerType::ROUTE);
-		std::free(helper_byte_array);
+		i->second->marshall(helper_pickle);
+		Clipboard::append_object_with_type(byte_array, helper_pickle, helper_pickle.data_size, (int) SublayerType::ROUTE);
+		helper_pickle.clear();
 	}
 
 
-	*data = byte_array->data;
-	*data_len = byte_array->len;
+	pickle.data = byte_array->data;
+	pickle.data_size = byte_array->len;
 }
 
 
 
 
-Layer * LayerTRWInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
+Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerTRW * trw = new LayerTRW();
 	trw->set_coord_mode(viewport->get_coord_mode());
 
-	int pl;
+	const pickle_size_t original_data_size = pickle.data_size;
 
-	// First the overall layer parameters
-	memcpy(&pl, data, sizeof(pl));
-	data += sizeof(pl);
-	trw->unmarshall_params(data, pl);
-	data += pl;
 
-	int consumed_length = pl;
-	const int sizeof_len_and_subtype = sizeof(int) + sizeof(int);
+	/* First the overall layer parameters. */
+	pickle_size_t data_size = pickle.peek_size();
+	trw->unmarshall_params(pickle);
+
+	pickle_size_t consumed_length = data_size;
+	const pickle_size_t sizeof_len_and_subtype = sizeof (pickle_size_t) + sizeof (int); /* Object size + object type. */
 
 	// Now the individual sublayers:
-	while (*data && consumed_length < data_len) {
+	while (pickle.data && consumed_length < original_data_size) {
 		// Normally four extra bytes at the end of the datastream
 		//  (since it's a GByteArray and that's where it's length is stored)
 		//  So only attempt read when there's an actual block of sublayer data
-		if (consumed_length + Clipboard::peek_size(data) < data_len) {
+		if (consumed_length + pickle.peek_size() < original_data_size) {
 
-			// Reuse pl to read the subtype from the data stream
-			memcpy(&pl, data+sizeof(int), sizeof(pl));
+			const QString type_id = pickle.peek_string(sizeof (pickle_size_t)); /* Look at type id string that is after object size. */
 
-			const QString & type_id = (const QString &) pl;
-
-			// Also remember to (attempt to) convert each coordinate in case this is pasted into a different track_drawing_mode
+			/* Also remember to (attempt to) convert each
+			   coordinate in case this is pasted into a
+			   different track_drawing_mode. */
 			if (type_id == "sg.trw.track") {
-				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
+				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets track name, so we don't have to do it here. */
 				trw->add_track(trk);
 				trk->convert(trw->coord_mode);
-			}
-			if (type_id == "sg.trw.waypoint") {
-				Waypoint * wp = Waypoint::unmarshall(data + sizeof_len_and_subtype, 0);
+			} else if (type_id == "sg.trw.waypoint") {
+				Waypoint * wp = Waypoint::unmarshall(pickle);
 				/* Unmarshalling already sets waypoint name, so we don't have to do it here. */
 				trw->add_waypoint(wp);
 				wp->convert(trw->coord_mode);
-			}
-			if (type_id == "sg.trw.route") {
-				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
+			} else if (type_id == "sg.trw.route") {
+				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets route name, so we don't have to do it here. */
 				trw->add_route(trk);
 				trk->convert(trw->coord_mode);
+			} else {
+				qDebug() << "EE" PREFIX << "Invalid sublayer type id" << type_id;
 			}
 		}
-		consumed_length += Clipboard::peek_size(data) + sizeof_len_and_subtype;
+		consumed_length += pickle.peek_size() + sizeof_len_and_subtype;
 
 		// See marshalling above for order of how this is written  // kamilkamil
-		data += sizeof_len_and_subtype + Clipboard::peek_size(data);
+		pickle.data += sizeof_len_and_subtype + pickle.peek_size();
 	}
-	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, data_len);
+	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, original_data_size);
 
 	// Not stored anywhere else so need to regenerate
 	trw->get_waypoints_node().recalculate_bbox();

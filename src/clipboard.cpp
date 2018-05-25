@@ -148,7 +148,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	}
 
 	if (vc->type == ClipboardDataType::LAYER) {
-		Layer * new_layer = Layer::unmarshall(vc->data, vc->len, panel->get_viewport());
+		Layer * new_layer = Layer::unmarshall(vc->data, panel->get_viewport());
 		panel->add_layer(new_layer, viewport->get_coord_mode());
 	} else if (vc->type == ClipboardDataType::SUBLAYER) {
 		Layer * selected = panel->get_selected_layer();
@@ -607,7 +607,7 @@ ClipboardDataType Clipboard::get_current_type()
 
 void Clipboard::append_string(GByteArray * byte_array, const char * string)
 {
-	clipboard_size_t size = (clipboard_size_t) (string ? strlen(string) + 1 : 0);
+	pickle_size_t size = (pickle_size_t) (string ? strlen(string) + 1 : 0);
 	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
 	if (string) {
 		g_byte_array_append(byte_array, (uint8_t *) string, size);
@@ -617,9 +617,9 @@ void Clipboard::append_string(GByteArray * byte_array, const char * string)
 
 
 
-void Clipboard::append_object(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size)
+void Clipboard::append_object(GByteArray * byte_array, uint8_t * obj, pickle_size_t obj_size)
 {
-	clipboard_size_t size = obj_size;
+	pickle_size_t size = obj_size;
 	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
 	g_byte_array_append(byte_array, obj, size);
 }
@@ -627,62 +627,108 @@ void Clipboard::append_object(GByteArray * byte_array, uint8_t * obj, clipboard_
 
 
 
-void Clipboard::append_object_with_type(GByteArray * byte_array, uint8_t * obj, clipboard_size_t obj_size, int obj_type)
+void Clipboard::append_object_with_type(GByteArray * byte_array, Pickle & pickle, pickle_size_t obj_size, int obj_type)
 {
 	int type = obj_type;
-	clipboard_size_t size = obj_size;
+	pickle_size_t size = obj_size;
 
 	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
 	g_byte_array_append(byte_array, (uint8_t *) &type, sizeof (type));
-	g_byte_array_append(byte_array, obj, size);
+	g_byte_array_append(byte_array, pickle.data, size);
 }
 
 
 
 
-clipboard_size_t Clipboard::peek_size(uint8_t * data)
+Pickle::~Pickle()
 {
-	return (*(clipboard_size_t *) data);
+	this->clear();
 }
 
 
 
 
-void Clipboard::move_to_next_object(uint8_t ** data, clipboard_size_t * data_size)
+pickle_size_t Pickle::peek_size(pickle_size_t offset) const
 {
-	const clipboard_size_t this_object_size = Clipboard::peek_size(*data);
-
-	(*data_size) -= sizeof (clipboard_size_t) + this_object_size;
-	(*data) += sizeof (clipboard_size_t) + this_object_size;
+	return (*(pickle_size_t *) this->data + offset);
 }
 
 
 
 
-void Clipboard::take_object(void * target, uint8_t ** data)
+pickle_size_t Pickle::take_size(void)
 {
-	const clipboard_size_t this_object_size = Clipboard::peek_size(*data);
-
-	memcpy(target, (*data) + sizeof (clipboard_size_t), this_object_size);
-	(*data) += sizeof (clipboard_size_t) + this_object_size;
+	pickle_size_t result = (*(pickle_size_t *) this->data);
+	this->data += sizeof (result);
+	return result;
 }
 
 
 
 
-QString Clipboard::take_string(uint8_t ** data)
+void Pickle::move_to_next_object(void)
+{
+	const pickle_size_t this_object_size = this->peek_size();
+
+	this->data += sizeof (pickle_size_t) + this_object_size;
+	this->data_size -= sizeof (pickle_size_t) + this_object_size;
+}
+
+
+
+void Pickle::put_object(void * object, pickle_size_t object_size)
+{
+	memcpy(this->data, object, object_size);
+	this->data += object_size;
+}
+
+
+void Pickle::take_object(void * target)
+{
+	const pickle_size_t this_object_size = this->peek_size();
+
+	memcpy(target, this->data + sizeof (pickle_size_t), this_object_size);
+	this->data += sizeof (pickle_size_t) + this_object_size;
+}
+
+
+
+QString Pickle::peek_string(pickle_size_t offset) const
+{
+	/* Look for string that is @offset bytes from beginning of data.
+	   At that position there will be string size, which also needs to be skipped. */
+	QString result = QString((char *) (this->data + sizeof (pickle_size_t) + offset));
+	return result;
+}
+
+
+
+
+QString Pickle::take_string(void)
 {
 	QString result;
 
-	const clipboard_size_t len = Clipboard::peek_size(*data);
-	(*data) += sizeof (len);
+	const pickle_size_t object_size = this->peek_size();
+	this->data += sizeof (pickle_size_t);
 
-	if (len) {
-		result = QString((char *) *data);
+	if (object_size > 0) {
+		result = QString((char *) this->data);
 	} else {
 		// result = "";
 	}
-	(*data) += len;
+	this->data += object_size;
 
 	return result;
+}
+
+
+
+
+void Pickle::clear(void)
+{
+	if (this->data) {
+		std::free(this->data);
+		this->data = NULL;
+	}
+	this->data_size = 0;
 }

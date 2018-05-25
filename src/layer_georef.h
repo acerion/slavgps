@@ -114,7 +114,7 @@ namespace SlavGPS {
 	class LayerGeorefInterface : public LayerInterface {
 	public:
 		LayerGeorefInterface();
-		Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
 		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
 	};
 

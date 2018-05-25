@@ -1885,7 +1885,7 @@ bool Track::get_minmax_alt(double * min_alt, double * max_alt) const
 
 
 
-void Track::marshall(uint8_t ** data, size_t * data_len)
+void Track::marshall(Pickle & pickle)
 {
 	GByteArray * byte_array = g_byte_array_new();
 	g_byte_array_append(byte_array, (uint8_t *) this, sizeof(Track));
@@ -1913,8 +1913,8 @@ void Track::marshall(uint8_t ** data, size_t * data_len)
 	Clipboard::append_string(byte_array, this->source.toUtf8().constData());
 	/* kamilTODO: where is ->type? */
 
-	*data = byte_array->data;
-	*data_len = byte_array->len;
+	pickle.data = byte_array->data;
+	pickle.data_size = byte_array->len;
 	g_byte_array_free(byte_array, false);
 }
 
@@ -1924,36 +1924,39 @@ void Track::marshall(uint8_t ** data, size_t * data_len)
 /*
  * Take a byte array and convert it into a Track.
  */
-Track * Track::unmarshall(uint8_t * data, size_t data_len)
+Track * Track::unmarshall(Pickle & pickle)
 {
-	Track * new_trk = new Track(((Track *)data)->type_id == "sg.trw.route");
+	const pickle_size_t data_size = pickle.take_size();
+	const QString type_id = pickle.take_string();
+
+	Track * new_trk = new Track(((Track *)pickle.data)->type_id == "sg.trw.route");
 	/* Basic properties: */
-	new_trk->visible = ((Track *)data)->visible;
-	new_trk->draw_name_mode = ((Track *)data)->draw_name_mode;
-	new_trk->max_number_dist_labels = ((Track *)data)->max_number_dist_labels;
-	new_trk->has_color = ((Track *)data)->has_color;
-	new_trk->color = ((Track *)data)->color;
-	new_trk->bbox = ((Track *)data)->bbox;
+	new_trk->visible = ((Track *)pickle.data)->visible;
+	new_trk->draw_name_mode = ((Track *)pickle.data)->draw_name_mode;
+	new_trk->max_number_dist_labels = ((Track *)pickle.data)->max_number_dist_labels;
+	new_trk->has_color = ((Track *)pickle.data)->has_color;
+	new_trk->color = ((Track *)pickle.data)->color;
+	new_trk->bbox = ((Track *)pickle.data)->bbox;
 
-	data += sizeof(*new_trk);
+	pickle.data += sizeof(*new_trk);
 
-	unsigned int ntp = *(unsigned int *) data;
-	data += sizeof(ntp);
+	unsigned int ntp = *(unsigned int *) pickle.data;
+	pickle.data += sizeof(ntp);
 
 	for (unsigned int i = 0; i < ntp; i++) {
 		Trackpoint * new_tp = new Trackpoint();
-		memcpy(new_tp, data, sizeof(*new_tp));
-		data += sizeof(*new_tp);
+		memcpy(new_tp, pickle.data, sizeof(*new_tp));
+		pickle.data += sizeof(*new_tp);
 
-		new_tp->name = Clipboard::take_string(&data);
+		new_tp->name = pickle.take_string();
 
 		new_trk->trackpoints.push_back(new_tp);
 	}
 
-	new_trk->name = Clipboard::take_string(&data);
-	new_trk->comment = Clipboard::take_string(&data);
-	new_trk->description = Clipboard::take_string(&data);
-	new_trk->source = Clipboard::take_string(&data);
+	new_trk->name = pickle.take_string();
+	new_trk->comment = pickle.take_string();
+	new_trk->description = pickle.take_string();
+	new_trk->source = pickle.take_string();
 	/* kamilTODO: where is ->type? */
 
 	return new_trk;

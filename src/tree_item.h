@@ -42,6 +42,7 @@ namespace SlavGPS {
 	class Layer;
 	class Viewport;
 	class TreeView;
+	class Pickle;
 
 
 
@@ -120,7 +121,7 @@ namespace SlavGPS {
 		virtual bool toggle_visible(void);
 		virtual void set_visible(bool new_state);
 
-		virtual void marshall(uint8_t ** data, size_t * data_len) { };
+		virtual void marshall(Pickle & pickle) { };
 
 		/**
 		   \brief The item has been selected in items tree. Do something about it.

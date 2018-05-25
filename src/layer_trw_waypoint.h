@@ -70,8 +70,8 @@ namespace SlavGPS {
 
 		QString get_tooltip(void);
 
-		void marshall(uint8_t ** data, size_t * data_len);
-		static Waypoint * unmarshall(uint8_t * data, size_t data_len);
+		void marshall(Pickle & pickle);
+		static Waypoint * unmarshall(Pickle & pickle);
 
 		void convert(CoordMode dest_mode);
 

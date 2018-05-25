@@ -79,48 +79,46 @@ LayerAggregateInterface::LayerAggregateInterface()
 
 
 
-void LayerAggregate::marshall(uint8_t ** data, size_t * data_len)
+void LayerAggregate::marshall(Pickle & pickle)
 {
-	size_t helper_size;
 	GByteArray * byte_array = g_byte_array_new();
 
-	uint8_t * helper_byte_array = NULL;
-	this->marshall_params(&helper_byte_array, &helper_size);
-	Clipboard::append_object(byte_array, helper_byte_array, helper_size);
-	free(helper_byte_array);
+	Pickle helper_pickle;
+	this->marshall_params(helper_pickle);
+	Clipboard::append_object(byte_array, helper_pickle.data, helper_pickle.data_size);
+	helper_pickle.clear();
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		Layer::marshall((*child), &helper_byte_array, &helper_size);
-		if (helper_byte_array) {
-			Clipboard::append_object(byte_array, helper_byte_array, helper_size);
-			free(helper_byte_array);
+		Layer::marshall(*child, helper_pickle);
+		if (helper_pickle.data) {
+			Clipboard::append_object(byte_array, helper_pickle.data, helper_pickle.data_size);
+			helper_pickle.clear();
 		}
 	}
 
-	*data = byte_array->data;
-	*data_len = byte_array->len;
+	pickle.data = byte_array->data;
+	pickle.data_size = byte_array->len;
 	g_byte_array_free(byte_array, false);
 }
 
 
 
 
-Layer * LayerAggregateInterface::unmarshall(uint8_t * data, size_t data_len, Viewport * viewport)
+Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerAggregate * aggregate = new LayerAggregate();
 
-	aggregate->unmarshall_params(data + sizeof (clipboard_size_t), Clipboard::peek_size(data));
-	Clipboard::move_to_next_object(&data, &data_len);
+	aggregate->unmarshall_params(pickle);
 
-	while (data_len > 0) {
-		Layer * child_layer = Layer::unmarshall(data + sizeof (clipboard_size_t), Clipboard::peek_size(data), viewport);
+	while (pickle.data_size > 0) {
+		Layer * child_layer = Layer::unmarshall(pickle, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
 			QObject::connect(child_layer, SIGNAL(Layer::changed(void)), (Layer *) aggregate, SLOT(child_layer_changed_cb(const QString &)));
 		}
-		Clipboard::move_to_next_object(&data, &data_len);
+		pickle.move_to_next_object();
 	}
-	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << data_len;
+	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << pickle.data_size;
 	return aggregate;
 }
 

@@ -112,10 +112,10 @@ namespace SlavGPS {
 		Layer();
 		~Layer();
 
-		static void    marshall(Layer * layer, uint8_t ** data, size_t * data_len);
-		void           marshall_params(uint8_t ** data, size_t * data_len);
-		static Layer * unmarshall(uint8_t * data, size_t data_len, Viewport * viewport);
-		void           unmarshall_params(uint8_t * data, size_t data_len);
+		static void    marshall(Layer * layer, Pickle & pickle);
+		void           marshall_params(Pickle & pickle);
+		static Layer * unmarshall(Pickle & pickle, Viewport * viewport);
+		void           unmarshall_params(Pickle & pickle);
 
 		static Layer * construct_layer(LayerType layer_type, Viewport * viewport, bool interactive = false);
 
@@ -152,7 +152,7 @@ namespace SlavGPS {
 
 		virtual void cut_sublayer(TreeItem * item) { return; };
 		virtual void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len) { return; };
-		virtual bool paste_sublayer(TreeItem * item, uint8_t * data, size_t len) { return false; };
+		virtual bool paste_sublayer(TreeItem * item, Pickle & pickle) { return false; };
 		virtual void delete_sublayer(TreeItem * item) { return; };
 
 		virtual void change_coord_mode(CoordMode dest_mode) { return; };
@@ -235,7 +235,7 @@ namespace SlavGPS {
 		LayerType type;
 
 	protected:
-		virtual void marshall(uint8_t ** data, size_t * data_len);
+		virtual void marshall(Pickle & pickle);
 
 		LayerInterface * interface = NULL;
 		QMenu * right_click_menu = NULL;
