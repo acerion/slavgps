@@ -259,7 +259,7 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 	/* Just storing keys only. */
 	requests = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".rerender_after").val_uint;
+	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".rerender_after").u.val_uint;
 	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * hours * 60 * 60).toTime_t(); /* In local time zone. */
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
@@ -294,7 +294,7 @@ void SlavGPS::layer_mapnik_init(void)
 	    && fd.type_id != SGVariantType::Empty
 	    && rfd.type_id != SGVariantType::Empty) {
 
-		mapnik_interface_initialize(pd.val_string.toUtf8().constData(), fd.val_string.toUtf8().constData(), rfd.val_bool);
+		mapnik_interface_initialize(pd.val_string.toUtf8().constData(), fd.val_string.toUtf8().constData(), rfd.u.val_bool);
 	} else {
 		qDebug() << "EE: Layer Mapnik: Init: Unable to initialize mapnik interface from preferences";
 	}
@@ -344,7 +344,7 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerMapnik * layer = new LayerMapnik();
 
-	layer->tile_size_x = size_default().val_uint; /* FUTURE: Is there any use in this being configurable? */
+	layer->tile_size_x = size_default().u.val_uint; /* FUTURE: Is there any use in this being configurable? */
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
 	layer->unmarshall_params(pickle);
@@ -365,12 +365,12 @@ bool LayerMapnik::set_param_value(uint16_t id, const SGVariant & data, bool is_f
 			this->set_file_xml(data.val_string);
 			break;
 		case PARAM_ALPHA:
-			if (data.val_int >= scale_alpha.min && data.val_int <= scale_alpha.max) {
-				this->alpha = data.val_int;
+			if (data.u.val_int >= scale_alpha.min && data.u.val_int <= scale_alpha.max) {
+				this->alpha = data.u.val_int;
 			}
 			break;
 		case PARAM_USE_FILE_CACHE:
-			this->use_file_cache = data.val_bool;
+			this->use_file_cache = data.u.val_bool;
 			break;
 		case PARAM_FILE_CACHE_DIR:
 			this->set_cache_dir(data.val_string);
@@ -1174,7 +1174,7 @@ LayerMapnik::LayerMapnik()
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
 
-	this->tile_size_x = size_default().val_uint; /* FUTURE: Is there any use in this being configurable? */
+	this->tile_size_x = size_default().u.val_uint; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
 	this->mi = mapnik_interface_new();
 

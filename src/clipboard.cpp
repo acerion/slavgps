@@ -646,7 +646,7 @@ pickle_size_t Pickle::take_size(void)
 
 
 
-void Pickle::put_object(const char * object, pickle_size_t object_size)
+void Pickle::put_raw_object(const char * object, pickle_size_t object_size)
 {
 	this->byte_array.append(object, object_size);
 }
@@ -669,8 +669,8 @@ void Pickle::put_string(const QString & string)
 {
 	const pickle_size_t length = strlen(string.toUtf8().constData()) + 1;
 
-	this->put_tlv_tag("pickle.string");
-	this->put_tlv_length(length);
+	this->put_pickle_tag("pickle.string");
+	this->put_pickle_length(length);
 
 	/* Value. */
 	if (strlen(string.toUtf8().constData()) > 0) {
@@ -700,8 +700,8 @@ QString Pickle::take_string(void)
 
 	this->print_bytes("take string - before");
 
-	const char * tag = this->take_tlv_tag("pickle.string");
-	const pickle_size_t length = this->take_tlv_length();
+	const char * tag = this->take_pickle_tag("pickle.string");
+	const pickle_size_t length = this->take_pickle_length();
 
 	if (length > 0) {
 		value = QString((char *) this->byte_array.begin() + this->read_iter);
@@ -721,7 +721,6 @@ void Pickle::clear(void)
 {
 	this->byte_array.clear();
 	this->read_iter = 0;
-	this->write_iter = 0;
 	this->data_size_ = 0;
 }
 
@@ -730,11 +729,31 @@ void Pickle::clear(void)
 
 void Pickle::put_variant(const SGVariant & var, SGVariantType type_id)
 {
-	this->put_tlv_tag("pickle.variant");
-	this->put_tlv_length(sizeof (SGVariant));
+	this->put_pickle_tag("pickle.variant");
+	this->put_raw_int((int) var.type_id);
+
+	/* We can just do memcpy() on union with POD fields, but
+	   non-trivial data types need to be handled separately. */
 
 	switch (type_id) {
+	case SGVariantType::Color: {
+		this->put_raw_int(0); /* Dummy value. */
+
+		int r = var.val_color.red();
+		int g = var.val_color.green();
+		int b = var.val_color.blue();
+		int a = var.val_color.alpha();
+
+		this->put_raw_object((char *) &r, sizeof (r));
+		this->put_raw_object((char *) &g, sizeof (g));
+		this->put_raw_object((char *) &b, sizeof (b));
+		this->put_raw_object((char *) &a, sizeof (a));
+
+		break;
+	}
 	case SGVariantType::String:
+		this->put_raw_int(0); /* Dummy value. */
+
 		if (!var.val_string.isEmpty()) {
 			this->put_string(var.val_string);
 		} else {
@@ -743,10 +762,10 @@ void Pickle::put_variant(const SGVariant & var, SGVariantType type_id)
 		}
 		break;
 		/* Print out the string list in the array. */
-	case SGVariantType::StringList: {
+	case SGVariantType::StringList:
+
 		/* Write length of list (# of strings). */
-		const pickle_size_t list_len = var.val_string_list.size();
-		this->byte_array.append((char *) &list_len, sizeof (list_len));
+		this->put_raw_int(var.val_string_list.size());
 
 		/* Write each string. */
 		for (auto i = var.val_string_list.constBegin(); i != var.val_string_list.constEnd(); i++) {
@@ -754,9 +773,10 @@ void Pickle::put_variant(const SGVariant & var, SGVariantType type_id)
 		}
 
 		break;
-	}
 	default:
-		this->put_object((char *) &var, sizeof (var));
+		/* Plain Old Datatype. */
+		this->put_raw_int(sizeof (var.u));
+		this->put_raw_object((char *) &var.u, sizeof (var.u));
 		break;
 	}
 }
@@ -764,30 +784,66 @@ void Pickle::put_variant(const SGVariant & var, SGVariantType type_id)
 
 
 
-SGVariant Pickle::take_variant(SGVariantType type_id)
+SGVariant Pickle::take_variant(SGVariantType expected_type_id)
 {
 	SGVariant result;
 
-	const char * tag = this->take_tlv_tag("pickle.variant");
-	const pickle_size_t length = this->take_tlv_length();
+	const char * tag = this->take_pickle_tag("pickle.variant");
+	const SGVariantType type_id = (SGVariantType) this->take_raw_int();
 
-	qDebug() << "take_variant(), length =" << length;
 
-	switch (type_id) {
-	case SGVariantType::String:
+	if (type_id != expected_type_id) {
+		qDebug() << "EE" PREFIX << "wrong variant type id:" << type_id << "!=" << expected_type_id;
+		assert(0);
+	}
+
+
+	/* We can just do memcpy() on union with POD fields, but
+	   non-trivial data types need to be handled separately using
+	   their constructors. */
+	switch (expected_type_id) {
+	case SGVariantType::Color: {
+		const int dummy = this->take_raw_int();
+
+		int r = 0;
+		int g = 0;
+		int b = 0;
+		int a = 0;
+
+		this->take_raw_object((char *) &r, sizeof (r));
+		this->take_raw_object((char *) &g, sizeof (g));
+		this->take_raw_object((char *) &b, sizeof (b));
+		this->take_raw_object((char *) &a, sizeof (a));
+
+		result = SGVariant(r, g, b, a);
+
+		break;
+	}
+	case SGVariantType::String: {
+		const int dummy = this->take_raw_int();
 		result = SGVariant(this->take_string());
 		break;
+	}
 	case SGVariantType::StringList: {
-		const pickle_size_t list_len = this->take_size();
-
-		for (pickle_size_t j = 0; j < list_len; j++) {
+		const int n_strings = this->take_raw_int();
+		for (int i = 0; i < n_strings; i++) {
 			result.val_string_list.push_back(this->take_string());
 		}
 
 		break;
 	}
 	default:
-		this->take_tlv_value((char *) &result, length);
+		/* Plain Old Datatype. */
+		const int expected_size = this->take_raw_int();
+
+		/* Test that we are reading correct data. */
+		if (expected_size != sizeof (result.u)) {
+			qDebug() << "EE" PREFIX << "unexpected size of POD:" << expected_size << "!=" << sizeof (result.u);
+			assert(0);
+		}
+
+		this->take_raw_object((char *) &result.u, sizeof (result.u));
+		result.type_id = type_id; /* For non-trivial data types this is done by constructor. */
 		break;
 	}
 
@@ -805,7 +861,7 @@ void Pickle::put_pickle(const Pickle & pickle)
 
 
 
-void Pickle::put_tlv_tag(const char * tag)
+void Pickle::put_pickle_tag(const char * tag)
 {
 	this->byte_array.append(tag, strlen(tag) + 1);
 }
@@ -813,7 +869,7 @@ void Pickle::put_tlv_tag(const char * tag)
 
 
 
-const char * Pickle::take_tlv_tag(const char * expected_tag)
+const char * Pickle::take_pickle_tag(const char * expected_tag)
 {
 	const char * tag_value = this->byte_array.begin() + this->read_iter;
 	this->read_iter += strlen(tag_value) + 1; /* +1 for terminating NUL. */
@@ -829,15 +885,33 @@ const char * Pickle::take_tlv_tag(const char * expected_tag)
 
 
 
-void Pickle::put_tlv_length(pickle_size_t length)
+void Pickle::put_pickle_length(pickle_size_t length)
 {
 	this->byte_array.append((char *) &length, sizeof (length));
 }
 
 
+void Pickle::put_raw_int(int value)
+{
+	this->byte_array.append((char *) &value, sizeof (int));
+}
+
+int Pickle::take_raw_int(void)
+{
+	int result;
+	const size_t size = sizeof (int);
+
+	memcpy(&result, this->byte_array.begin() + this->read_iter, size);
+	this->read_iter += size;
+
+	return result;
+}
 
 
-pickle_size_t Pickle::take_tlv_length(void)
+
+
+
+pickle_size_t Pickle::take_pickle_length(void)
 {
 	const char * tmp = this->byte_array.begin() + this->read_iter;
 
@@ -847,10 +921,10 @@ pickle_size_t Pickle::take_tlv_length(void)
 }
 
 
-void Pickle::take_tlv_value(char * target, pickle_size_t length)
+void Pickle::take_raw_object(char * target, pickle_size_t size)
 {
-	memcpy(target, this->byte_array.begin() + this->read_iter, length);
-	this->read_iter += length;
+	memcpy(target, this->byte_array.begin() + this->read_iter, size);
+	this->read_iter += size;
 }
 
 

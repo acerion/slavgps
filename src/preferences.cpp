@@ -484,7 +484,7 @@ QHash<QString, ParameterSpecification>::iterator Preferences::end()
 
 bool Preferences::get_restore_window_state(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".restore_window_state").val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".restore_window_state").u.val_bool;
 }
 
 
@@ -576,7 +576,7 @@ void Preferences::register_default_values()
 
 DegreeFormat Preferences::get_degree_format(void)
 {
-	return (DegreeFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".degree_format").val_int;
+	return (DegreeFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".degree_format").u.val_int;
 }
 
 
@@ -584,7 +584,7 @@ DegreeFormat Preferences::get_degree_format(void)
 
 DistanceUnit Preferences::get_unit_distance()
 {
-	return (DistanceUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_distance").val_int;
+	return (DistanceUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_distance").u.val_int;
 }
 
 
@@ -592,7 +592,7 @@ DistanceUnit Preferences::get_unit_distance()
 
 SpeedUnit Preferences::get_unit_speed(void)
 {
-	return (SpeedUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_speed").val_int;
+	return (SpeedUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_speed").u.val_int;
 }
 
 
@@ -600,7 +600,7 @@ SpeedUnit Preferences::get_unit_speed(void)
 
 HeightUnit Preferences::get_unit_height(void)
 {
-	return (HeightUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_height").val_int;
+	return (HeightUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_height").u.val_int;
 }
 
 
@@ -608,7 +608,7 @@ HeightUnit Preferences::get_unit_height(void)
 
 bool Preferences::get_use_large_waypoint_icons()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".use_large_waypoint_icons").val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".use_large_waypoint_icons").u.val_bool;
 }
 
 
@@ -616,7 +616,7 @@ bool Preferences::get_use_large_waypoint_icons()
 
 double Preferences::get_default_lat()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".default_latitude").val_double;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".default_latitude").u.val_double;
 }
 
 
@@ -624,7 +624,7 @@ double Preferences::get_default_lat()
 
 double Preferences::get_default_lon()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".default_longitude").val_double;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".default_longitude").u.val_double;
 }
 
 
@@ -632,7 +632,7 @@ double Preferences::get_default_lon()
 
 SGTimeReference Preferences::get_time_ref_frame()
 {
-	return (SGTimeReference) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".time_reference_frame").val_int;
+	return (SGTimeReference) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".time_reference_frame").u.val_int;
 }
 
 
@@ -642,7 +642,7 @@ SGTimeReference Preferences::get_time_ref_frame()
 
 KMLExportUnits Preferences::get_kml_export_units()
 {
-	return (KMLExportUnits) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".kml_export_units").val_int;
+	return (KMLExportUnits) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".kml_export_units").u.val_int;
 }
 
 
@@ -650,7 +650,7 @@ KMLExportUnits Preferences::get_kml_export_units()
 
 GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 {
-	return (GPXExportTrackSort) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_track_sort").val_int;
+	return (GPXExportTrackSort) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_track_sort").u.val_int;
 }
 
 
@@ -658,7 +658,7 @@ GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 
 GPXExportWptSymName Preferences::get_gpx_export_wpt_sym_name()
 {
-	return (GPXExportWptSymName) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_wpt_sym_names").val_int;
+	return (GPXExportWptSymName) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_wpt_sym_names").u.val_int;
 }
 
 
@@ -691,7 +691,7 @@ QString Preferences::get_external_gpx_program_2(void)
 
 FilePathFormat Preferences::get_file_path_format()
 {
-	return (FilePathFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".save_file_reference_mode").val_int;
+	return (FilePathFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".save_file_reference_mode").u.val_int;
 }
 
 
@@ -699,7 +699,7 @@ FilePathFormat Preferences::get_file_path_format()
 
 bool Preferences::get_ask_for_create_track_name()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".ask_for_create_track_name").val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".ask_for_create_track_name").u.val_bool;
 }
 
 
@@ -707,7 +707,7 @@ bool Preferences::get_ask_for_create_track_name()
 
 bool Preferences::get_create_track_tooltip()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".create_track_tooltip").val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".create_track_tooltip").u.val_bool;
 }
 
 
@@ -715,7 +715,7 @@ bool Preferences::get_create_track_tooltip()
 
 int Preferences::get_recent_number_files()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".number_recent_files").val_int;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".number_recent_files").u.val_int;
 }
 
 
@@ -723,7 +723,7 @@ int Preferences::get_recent_number_files()
 
 bool Preferences::get_add_default_map_layer()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".add_default_map_layer").val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".add_default_map_layer").u.val_bool;
 }
 
 
@@ -731,7 +731,7 @@ bool Preferences::get_add_default_map_layer()
 
 StartupMethod Preferences::get_startup_method()
 {
-	return (StartupMethod) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".startup_method").val_int;
+	return (StartupMethod) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".startup_method").u.val_int;
 }
 
 
@@ -747,5 +747,5 @@ QString Preferences::get_startup_file(void)
 
 bool Preferences::get_check_version()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".check_version").val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".check_version").u.val_bool;
 }

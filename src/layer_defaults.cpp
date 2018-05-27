@@ -129,16 +129,16 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 
 	switch (ptype) {
 	case SGVariantType::Double:
-		variant = QVariant((double) value.val_double);
+		variant = QVariant((double) value.u.val_double);
 		break;
 	case SGVariantType::Uint:
-		variant = QVariant((qulonglong) value.val_uint);
+		variant = QVariant((qulonglong) value.u.val_uint);
 		break;
 	case SGVariantType::Int:
-		variant = QVariant((qlonglong) value.val_int);
+		variant = QVariant((qlonglong) value.u.val_int);
 		break;
 	case SGVariantType::Boolean:
-		variant = QVariant((bool) value.val_bool);
+		variant = QVariant((bool) value.u.val_bool);
 		break;
 	case SGVariantType::String:
 		variant = value.val_string;

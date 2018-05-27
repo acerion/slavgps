@@ -502,7 +502,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 	case WidgetType::CheckButton:
 		if (param_spec.type_id == SGVariantType::Boolean) {
 			QCheckBox * widget_ = new QCheckBox;
-			if (value.val_bool) {
+			if (value.u.val_bool) {
 				widget_->setCheckState(Qt::Checked);
 			}
 			widget = widget_;
@@ -523,7 +523,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 			for (auto iter = items->begin(); iter != items->end(); iter++) {
 				if (param_spec.type_id == SGVariantType::Int) {
 					widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
-					if (param_value.val_int == (int32_t) (*iter).id) {
+					if (param_value.u.val_int == (int32_t) (*iter).id) {
 						selected_idx = i;
 					}
 				} else if (param_spec.type_id == SGVariantType::String) {
@@ -561,7 +561,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		assert (param_spec.type_id == SGVariantType::Int);
 		if (param_spec.type_id == SGVariantType::Int && param_spec.widget_data) {
 
-			int32_t init_val = value.val_int;
+			int32_t init_val = value.u.val_int;
 			ParameterScale * scale = (ParameterScale *) param_spec.widget_data;
 			QSpinBox * widget_ = new QSpinBox();
 			widget_->setMinimum(scale->min);
@@ -579,7 +579,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		assert (param_spec.type_id == SGVariantType::Double);
 		if (param_spec.type_id == SGVariantType::Double && param_spec.widget_data) {
 
-			const double init_val = value.val_double;
+			const double init_val = value.u.val_double;
 			ParameterScale * scale = (ParameterScale *) param_spec.widget_data;
 			QDoubleSpinBox * widget_ = new QDoubleSpinBox();
 			/* Order of fields is important. Use setDecimals() before using setValue(). */
@@ -655,10 +655,10 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 			SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
 
 			if (param_spec.type_id == SGVariantType::Int) {
-				widget_->set_value(value.val_int);
+				widget_->set_value(value.u.val_int);
 				widget = widget_;
 			} else {
-				widget_->set_value(value.val_double);
+				widget_->set_value(value.u.val_double);
 				widget = widget_;
 			}
 		}

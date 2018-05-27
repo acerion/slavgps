@@ -138,12 +138,12 @@ void test_pickle(void)
 		const SGVariant out_var_double1 = pickle.take_variant(SGVariantType::Double);
 		const SGVariant out_var_double2 = pickle.take_variant(SGVariantType::Double);
 #if 1
-		fprintf(stderr, "%.12f (%.12f)\n", out_var_double1.val_double, val1);
-		fprintf(stderr, "%.12f (%.12f)\n", out_var_double2.val_double, val2);
+		fprintf(stderr, "%.12f (%.12f)\n", out_var_double1.u.val_double, val1);
+		fprintf(stderr, "%.12f (%.12f)\n", out_var_double2.u.val_double, val2);
 #endif
 #if 1
-		qDebug() << QString("Double 1: %1").arg(out_var_double1.val_double, 0, 'f', 12) << (out_var_double1.type_id == SGVariantType::Double ? "(type correct)" : "(type incorrect)");
-		qDebug() << QString("Double 2: %1").arg(out_var_double2.val_double, 0, 'f', 12) << (out_var_double2.type_id == SGVariantType::Double ? "(type correct)" : "(type incorrect)");
+		qDebug() << QString("Double 1: %1").arg(out_var_double1.u.val_double, 0, 'f', 12) << (out_var_double1.type_id == SGVariantType::Double ? "(type correct)" : "(type incorrect)");
+		qDebug() << QString("Double 2: %1").arg(out_var_double2.u.val_double, 0, 'f', 12) << (out_var_double2.type_id == SGVariantType::Double ? "(type correct)" : "(type incorrect)");
 #endif
 	}
 

@@ -224,7 +224,7 @@ void Waypoint::marshall(Pickle & pickle)
 {
 	/* This creates space for fixed sized members like ints and whatnot
 	   and copies that amount of data from the waypoint to byte array. */
-	pickle.put_object((char *) this, sizeof (Waypoint));
+	pickle.put_raw_object((char *) this, sizeof (Waypoint));
 
 	pickle.put_string(this->name);
 	pickle.put_string(this->comment);

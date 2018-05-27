@@ -134,12 +134,12 @@ bool LayerCoord::set_param_value(uint16_t id, const SGVariant & param_value, boo
 		this->color_sec = param_value.val_color;
 		break;
 	case PARAM_MIN_INC:
-		this->deg_inc = param_value.val_double / 60.0;
+		this->deg_inc = param_value.u.val_double / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		if (param_value.val_int >= scale_line_thickness.min && param_value.val_int <= scale_line_thickness.max) {
+		if (param_value.u.val_int >= scale_line_thickness.min && param_value.u.val_int <= scale_line_thickness.max) {
 			qDebug() << "II: Layer Coordinate: saving line thickness" << param_value;
-			this->line_thickness = param_value.val_int;
+			this->line_thickness = param_value.u.val_int;
 		}
 		break;
 	default:

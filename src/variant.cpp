@@ -56,18 +56,21 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 {
 	this->type_id = type_id_;
 
+	union SGVariantPODFields u;
+	qDebug() << "--------------- size of union is" << sizeof (u);
+
 	switch (type_id_) {
 	case SGVariantType::Double:
-		this->val_double = (double) strtod(str, NULL);
+		this->u.val_double = (double) strtod(str, NULL);
 		break;
 	case SGVariantType::Uint:
-		this->val_uint = strtoul(str, NULL, 10);
+		this->u.val_uint = strtoul(str, NULL, 10);
 		break;
 	case SGVariantType::Int:
-		this->val_int = strtol(str, NULL, 10);
+		this->u.val_int = strtol(str, NULL, 10);
 		break;
 	case SGVariantType::Boolean:
-		this->val_bool = TEST_BOOLEAN(str);
+		this->u.val_bool = TEST_BOOLEAN(str);
 		break;
 	case SGVariantType::Color:
 		this->val_color = QColor(str);
@@ -101,16 +104,16 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 
 	switch (type_id_) {
 	case SGVariantType::Double:
-		this->val_double = str.toDouble();
+		this->u.val_double = str.toDouble();
 		break;
 	case SGVariantType::Uint:
-		this->val_uint = str.toULong();
+		this->u.val_uint = str.toULong();
 		break;
 	case SGVariantType::Int:
-		this->val_int = str.toLong();
+		this->u.val_int = str.toLong();
 		break;
 	case SGVariantType::Boolean:
-		this->val_bool = TEST_BOOLEAN(str.toUtf8().constData());
+		this->u.val_bool = TEST_BOOLEAN(str.toUtf8().constData());
 		break;
 	case SGVariantType::Color:
 		this->val_color = QColor(str);
@@ -149,7 +152,7 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 
 	switch (type_id_) {
 	case SGVariantType::Double:
-		this->val_double = d;
+		this->u.val_double = d;
 		break;
 	case SGVariantType::Latitude:
 	case SGVariantType::Longitude:
@@ -169,7 +172,7 @@ SGVariant::SGVariant(int32_t i, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Int);
 	this->type_id = type_id_;
-	this->val_int = i;
+	this->u.val_int = i;
 }
 
 
@@ -179,7 +182,7 @@ SGVariant::SGVariant(uint32_t u, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Uint);
 	this->type_id = type_id_;
-	this->val_uint = u;
+	this->u.val_uint = u;
 }
 
 
@@ -209,7 +212,7 @@ SGVariant::SGVariant(bool b, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Boolean);
 	this->type_id = type_id_;
-	this->val_bool = b;
+	this->u.val_bool = b;
 }
 
 
@@ -286,19 +289,19 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::Empty:
 		break;
 	case SGVariantType::Double:
-		debug << value.val_double;
+		debug << value.u.val_double;
 		break;
 	case SGVariantType::Uint:
-		debug << value.val_uint;
+		debug << value.u.val_uint;
 		break;
 	case SGVariantType::Int:
-		debug << value.val_int;
+		debug << value.u.val_int;
 		break;
 	case SGVariantType::String:
 		debug << value.val_string;
 		break;
 	case SGVariantType::Boolean:
-		debug << value.val_bool;
+		debug << value.u.val_bool;
 		break;
 	case SGVariantType::Color:
 		debug << value.val_color.red() << value.val_color.green() << value.val_color.blue() << value.val_color.alpha();
@@ -307,7 +310,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 		debug << value.val_string_list;
 		break;
 	case SGVariantType::Pointer:
-		debug << QString("0x%1").arg((qintptr) value.val_pointer);
+		debug << QString("0x%1").arg((qintptr) value.u.val_pointer);
 		break;
 	case SGVariantType::Timestamp:
 		debug << value.get_timestamp();
@@ -433,19 +436,19 @@ QString SGVariant::to_string() const
 		return QString("<empty value>");
 
 	case SGVariantType::Double:
-		return QString("%1").arg(this->val_double, 0, 'f', 20);
+		return QString("%1").arg(this->u.val_double, 0, 'f', 20);
 
 	case SGVariantType::Uint:
-		return QString("%1").arg(this->val_uint);
+		return QString("%1").arg(this->u.val_uint);
 
 	case SGVariantType::Int:
-		return QString("%1").arg(this->val_int);
+		return QString("%1").arg(this->u.val_int);
 
 	case SGVariantType::String:
 		return this->val_string;
 
 	case SGVariantType::Boolean:
-		return QString("%1").arg(this->val_bool);
+		return QString("%1").arg(this->u.val_bool);
 
 	case SGVariantType::Color:
 		return QString("%1 %2 %3 %4").arg(this->val_color.red()).arg(this->val_color.green()).arg(this->val_color.blue()).arg(this->val_color.alpha());
@@ -454,7 +457,7 @@ QString SGVariant::to_string() const
 		return this->val_string_list.join(" / ");
 
 	case SGVariantType::Pointer:
-		return QString("0x%1").arg((qintptr) this->val_pointer);
+		return QString("0x%1").arg((qintptr) this->u.val_pointer);
 
 	case SGVariantType::Timestamp:
 		return QString("%1").arg(this->get_timestamp());

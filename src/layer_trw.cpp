@@ -740,76 +740,76 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 {
 	switch (id) {
 	case PARAM_TRACKS_VISIBLE:
-		this->tracks->visible = data.val_bool;
+		this->tracks->visible = data.u.val_bool;
 		break;
 	case PARAM_WAYPOINTS_VISIBLE:
-		this->waypoints->visible = data.val_bool;
+		this->waypoints->visible = data.u.val_bool;
 		break;
 	case PARAM_ROUTES_VISIBLE:
-		this->routes->visible = data.val_bool;
+		this->routes->visible = data.u.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_LABELS:
-		this->painter->draw_track_labels = data.val_bool;
+		this->painter->draw_track_labels = data.u.val_bool;
 		break;
 	case PARAM_TRACK_LABEL_FONT_SIZE:
-		if (data.val_int < FS_NUM_SIZES) {
-			this->painter->track_label_font_size = (font_size_t) data.val_int;
+		if (data.u.val_int < FS_NUM_SIZES) {
+			this->painter->track_label_font_size = (font_size_t) data.u.val_int;
 		}
 		break;
 	case PARAM_TRACK_DRAWING_MODE:
-		this->painter->track_drawing_mode = (LayerTRWTrackDrawingMode) data.val_int;
+		this->painter->track_drawing_mode = (LayerTRWTrackDrawingMode) data.u.val_int;
 		break;
 	case PARAM_TRACK_COLOR_COMMON:
 		this->painter->track_color_common = data.val_color;
 		this->painter->make_track_pens();
 		break;
 	case PARAM_DRAW_TRACKPOINTS:
-		this->painter->draw_trackpoints = data.val_bool;
+		this->painter->draw_trackpoints = data.u.val_bool;
 		break;
 	case PARAM_TRACKPOINT_SIZE:
-		if (data.val_int >= scale_trackpoint_size.min && data.val_int <= scale_trackpoint_size.max) {
-			this->painter->trackpoint_size = data.val_int;
+		if (data.u.val_int >= scale_trackpoint_size.min && data.u.val_int <= scale_trackpoint_size.max) {
+			this->painter->trackpoint_size = data.u.val_int;
 		}
 		break;
 	case PARAM_DRAW_TRACK_ELEVATION:
-		this->painter->draw_track_elevation = data.val_bool;
+		this->painter->draw_track_elevation = data.u.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_STOPS:
-		this->painter->draw_track_stops = data.val_bool;
+		this->painter->draw_track_stops = data.u.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_LINES:
-		this->painter->draw_track_lines = data.val_bool;
+		this->painter->draw_track_lines = data.u.val_bool;
 		break;
 	case PARAM_DRAW_TRACK_DIRECTIONS:
-		this->painter->draw_track_directions = data.val_bool;
+		this->painter->draw_track_directions = data.u.val_bool;
 		break;
 	case PARAM_TRACK_DIRECTION_SIZE:
-		if (data.val_int >= scale_track_direction_size.min && data.val_int <= scale_track_direction_size.max) {
-			this->painter->draw_track_directions_size = data.val_int;
+		if (data.u.val_int >= scale_track_direction_size.min && data.u.val_int <= scale_track_direction_size.max) {
+			this->painter->draw_track_directions_size = data.u.val_int;
 		}
 		break;
 	case PARAM_TRACK_MIN_STOP_LENGTH:
-		if (data.val_int >= scale_track_min_stop_length.min && data.val_int <= scale_track_min_stop_length.max) {
-			this->painter->track_min_stop_length = data.val_int;
+		if (data.u.val_int >= scale_track_min_stop_length.min && data.u.val_int <= scale_track_min_stop_length.max) {
+			this->painter->track_min_stop_length = data.u.val_int;
 		}
 		break;
 	case PARAM_TRACK_ELEVATION_FACTOR:
-		if (data.val_int >= scale_track_elevation_factor.min && data.val_int <= scale_track_elevation_factor.max) {
-			this->painter->track_elevation_factor = data.val_int;
+		if (data.u.val_int >= scale_track_elevation_factor.min && data.u.val_int <= scale_track_elevation_factor.max) {
+			this->painter->track_elevation_factor = data.u.val_int;
 		}
 		break;
 	case PARAM_TRACK_THICKNESS:
-		if (data.val_int >= scale_track_thickness.min && data.val_int <= scale_track_thickness.max) {
-			if (data.val_int != this->painter->track_thickness) {
-				this->painter->track_thickness = data.val_int;
+		if (data.u.val_int >= scale_track_thickness.min && data.u.val_int <= scale_track_thickness.max) {
+			if (data.u.val_int != this->painter->track_thickness) {
+				this->painter->track_thickness = data.u.val_int;
 				this->painter->make_track_pens();
 			}
 		}
 		break;
 	case PARAM_TRACK_BG_THICKNESS:
-		if (data.val_int >= scale_track_bg_thickness.min && data.val_int <= scale_track_bg_thickness.max) {
-			if (data.val_int != this->painter->track_bg_thickness) {
-				this->painter->track_bg_thickness = data.val_int;
+		if (data.u.val_int >= scale_track_bg_thickness.min && data.u.val_int <= scale_track_bg_thickness.max) {
+			if (data.u.val_int != this->painter->track_bg_thickness) {
+				this->painter->track_bg_thickness = data.u.val_int;
 				this->painter->make_track_pens();
 			}
 		}
@@ -821,43 +821,43 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		break;
 
 	case PARAM_TRACK_DRAW_SPEED_FACTOR:
-		if (data.val_double >= scale_track_draw_speed_factor.min && data.val_double <= scale_track_draw_speed_factor.max) {
-			this->painter->track_draw_speed_factor = data.val_double;
+		if (data.u.val_double >= scale_track_draw_speed_factor.min && data.u.val_double <= scale_track_draw_speed_factor.max) {
+			this->painter->track_draw_speed_factor = data.u.val_double;
 		}
 		break;
 	case PARAM_TRACK_SORT_ORDER:
-		if (data.val_int < (int) TreeViewSortOrder::Last) {
-			this->track_sort_order = (TreeViewSortOrder) data.val_int;
+		if (data.u.val_int < (int) TreeViewSortOrder::Last) {
+			this->track_sort_order = (TreeViewSortOrder) data.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid Track Sort Order" << data.val_int;
+			qDebug() << "EE" PREFIX << "invalid Track Sort Order" << data.u.val_int;
 		}
 		break;
 	case PARAM_WP_LABELS:
-		this->painter->draw_wp_labels = data.val_bool;
+		this->painter->draw_wp_labels = data.u.val_bool;
 		break;
 	case PARAM_DRAW_WP_IMAGES:
-		this->painter->draw_wp_images = data.val_bool;
+		this->painter->draw_wp_images = data.u.val_bool;
 		break;
 	case PARAM_WP_IMAGE_SIZE:
-		if (data.val_int >= scale_wp_image_size.min && data.val_int <= scale_wp_image_size.max) {
-			if (data.val_int != this->painter->wp_image_size) {
-				this->painter->wp_image_size = data.val_int;
+		if (data.u.val_int >= scale_wp_image_size.min && data.u.val_int <= scale_wp_image_size.max) {
+			if (data.u.val_int != this->painter->wp_image_size) {
+				this->painter->wp_image_size = data.u.val_int;
 				this->wp_image_cache_flush();
 			}
 		}
 		break;
 	case PARAM_WP_IMAGE_ALPHA:
-		if (data.val_int >= scale_wp_image_alpha.min && data.val_int <= scale_wp_image_alpha.max) {
-			if (data.val_int != this->painter->wp_image_alpha) {
-				this->painter->wp_image_alpha = data.val_int;
+		if (data.u.val_int >= scale_wp_image_alpha.min && data.u.val_int <= scale_wp_image_alpha.max) {
+			if (data.u.val_int != this->painter->wp_image_alpha) {
+				this->painter->wp_image_alpha = data.u.val_int;
 				this->wp_image_cache_flush();
 			}
 		}
 		break;
 
 	case PARAM_WP_IMAGE_CACHE_SIZE:
-		if (data.val_int >= scale_wp_image_cache_size.min && data.val_int <= scale_wp_image_cache_size.max) {
-			this->wp_image_cache_size = data.val_int;
+		if (data.u.val_int >= scale_wp_image_cache_size.min && data.u.val_int <= scale_wp_image_cache_size.max) {
+			this->wp_image_cache_size = data.u.val_int;
 			while (this->wp_image_cache.size() > this->wp_image_cache_size) { /* If shrinking cache_size, free pixbuf ASAP. */
 				this->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
 			}
@@ -888,28 +888,28 @@ bool LayerTRW::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 #endif
 		break;
 	case PARAM_WP_MARKER_TYPE:
-		if (data.val_int < (int) GraphicMarker::Max) {
-			this->painter->wp_marker_type = (GraphicMarker) data.val_int;
+		if (data.u.val_int < (int) GraphicMarker::Max) {
+			this->painter->wp_marker_type = (GraphicMarker) data.u.val_int;
 		}
 		break;
 	case PARAM_WP_MARKER_SIZE:
-		if (data.val_int >= scale_wp_marker_size.min && data.val_int <= scale_wp_marker_size.max) {
-			this->painter->wp_marker_size = data.val_int;
+		if (data.u.val_int >= scale_wp_marker_size.min && data.u.val_int <= scale_wp_marker_size.max) {
+			this->painter->wp_marker_size = data.u.val_int;
 		}
 		break;
 	case PARAM_DRAW_WP_SYMBOLS:
-		this->painter->draw_wp_symbols = data.val_bool;
+		this->painter->draw_wp_symbols = data.u.val_bool;
 		break;
 	case PARAM_WP_LABEL_FONT_SIZE:
-		if (data.val_int < FS_NUM_SIZES) {
-			this->painter->wp_label_font_size = (font_size_t) data.val_int;
+		if (data.u.val_int < FS_NUM_SIZES) {
+			this->painter->wp_label_font_size = (font_size_t) data.u.val_int;
 		}
 		break;
 	case PARAM_WP_SORT_ORDER:
-		if (data.val_int < (int) TreeViewSortOrder::Last) {
-			this->wp_sort_order = (TreeViewSortOrder) data.val_int;
+		if (data.u.val_int < (int) TreeViewSortOrder::Last) {
+			this->wp_sort_order = (TreeViewSortOrder) data.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid Waypoint Sort Order" << data.val_int;
+			qDebug() << "EE" PREFIX << "invalid Waypoint Sort Order" << data.u.val_int;
 		}
 		break;
 		// Metadata

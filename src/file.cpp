@@ -171,19 +171,19 @@ void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVar
 		case SGVariantType::Double: {
 			// char buf[15]; /* Locale independent. */
 			// fprintf(file, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
-			fprintf(file, "%f\n", data.val_double);
+			fprintf(file, "%f\n", data.u.val_double);
 			break;
 		}
 		case SGVariantType::Uint:
-			fprintf(file, "%u\n", data.val_uint); /* kamilkamil: in viking code the format specifier was incorrect. */
+			fprintf(file, "%u\n", data.u.val_uint); /* kamilkamil: in viking code the format specifier was incorrect. */
 			break;
 
 		case SGVariantType::Int:
-			fprintf(file, "%d\n", data.val_int);
+			fprintf(file, "%d\n", data.u.val_int);
 			break;
 
 		case SGVariantType::Boolean:
-			fprintf(file, "%c\n", data.val_bool ? 't' : 'f');
+			fprintf(file, "%c\n", data.u.val_bool ? 't' : 'f');
 			break;
 
 		case SGVariantType::String:

@@ -84,29 +84,32 @@ namespace SlavGPS {
 		QString peek_string(pickle_size_t offset = 0) const;
 		QString take_string(void);
 
-		void put_object(const char * object, pickle_size_t object_size);
+		void put_raw_object(const char * object, pickle_size_t object_size);
+		void take_raw_object(char * target, pickle_size_t size);
 		void take_object(void * target);
 
 		void put_variant(const SGVariant & var, SGVariantType type_id);
-		SGVariant take_variant(SGVariantType type_id);
+		SGVariant take_variant(SGVariantType expected_type_id);
 
 		void clear(void);
 
 		pickle_size_t data_size(void) const { return this->data_size_; };
 
+
+		/* Convenience functions. We could use put/take_raw_object() instead. */
+		void put_raw_int(int value);
+		int take_raw_int(void);
+
 	private:
-		void put_tlv_tag(const char * tag);
-		const char * take_tlv_tag(const char * expected_tag);
+		void put_pickle_tag(const char * tag);
+		const char * take_pickle_tag(const char * expected_tag);
 
-		void put_tlv_length(pickle_size_t length);
-		pickle_size_t take_tlv_length(void);
-
-		void take_tlv_value(char * target, pickle_size_t length);
+		void put_pickle_length(pickle_size_t length);
+		pickle_size_t take_pickle_length(void);
 
 		void print_bytes(const char * label) const;
 
 		int read_iter = 0;
-		int write_iter = 0;
 		QByteArray byte_array;
 		pickle_size_t data_size_ = 0;
 	};

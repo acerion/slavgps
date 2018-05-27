@@ -393,29 +393,29 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 		break;
 
 	case PARAM_SOURCE:
-		this->source = param_value.val_int;
+		this->source = param_value.u.val_int;
 		break;
 
 	case PARAM_TYPE:
-		this->dem_type = param_value.val_int;
+		this->dem_type = param_value.u.val_int;
 		break;
 
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
-			this->min_elev = VIK_FEET_TO_METERS(param_value.val_double);
+			this->min_elev = VIK_FEET_TO_METERS(param_value.u.val_double);
 		} else {
-			this->min_elev = param_value.val_double;
+			this->min_elev = param_value.u.val_double;
 		}
 		break;
 	case PARAM_MAX_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
-			this->max_elev = VIK_FEET_TO_METERS(param_value.val_double);
+			this->max_elev = VIK_FEET_TO_METERS(param_value.u.val_double);
 		} else {
-			this->max_elev = param_value.val_double;
+			this->max_elev = param_value.u.val_double;
 		}
 		break;
 	case PARAM_FILES: {

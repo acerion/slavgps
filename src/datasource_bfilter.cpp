@@ -98,7 +98,7 @@ BFilterSimplifyDialog::BFilterSimplifyDialog()
 
 	this->grid->addWidget(new QLabel(tr("Max number of points:")), 0, 0);
 
-	const int32_t init_val = bfilter_simplify_params_defaults[0].val_int;
+	const int32_t init_val = bfilter_simplify_params_defaults[0].u.val_int;
 	this->spin = new QSpinBox();
 	this->spin->setMinimum(scale.min);
 	this->spin->setMaximum(scale.max);
@@ -180,7 +180,7 @@ BFilterCompressDialog::BFilterCompressDialog()
 
 	this->grid->addWidget(new QLabel(tr("Error Factor:")), 0, 0);
 
-	const double init_val = bfilter_compress_params_defaults[0].val_double;
+	const double init_val = bfilter_compress_params_defaults[0].u.val_double;
 	this->spin = new QDoubleSpinBox();
 	/* Order of fields is important. Use setDecimals() before using setValue(). */
 	this->spin->setDecimals(scale.digits);

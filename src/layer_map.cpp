@@ -439,10 +439,10 @@ MapTypeID LayerMap::get_default_map_type_id(void)
 {
 	/* TODO: verify that this function call works as expected. */
 	SGVariant var = LayerDefaults::get(LayerType::MAP, "mode", SGVariantType::Int); /* kamilTODO: get the default value from LayerInterface. */
-	if (var.val_int == 0) {
+	if (var.u.val_int == 0) {
 		var = id_default();
 	}
-	return (MapTypeID) var.val_int;
+	return (MapTypeID) var.u.val_int;
 }
 
 
@@ -553,18 +553,18 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		this->set_cache_dir(data.val_string);
 		break;
 	case PARAM_CACHE_LAYOUT:
-		if ((MapsCacheLayout) data.val_int < MapsCacheLayout::Num) {
-			this->cache_layout = (MapsCacheLayout) data.val_int;
+		if ((MapsCacheLayout) data.u.val_int < MapsCacheLayout::Num) {
+			this->cache_layout = (MapsCacheLayout) data.u.val_int;
 		}
 		break;
 	case PARAM_FILE:
 		this->set_file_full_path(data.val_string);
 		break;
 	case PARAM_MAP_TYPE_ID:
-		if (!MapSource::is_map_type_id_registered((MapTypeID) data.val_int)) {
-			qDebug() << "EE" PREFIX << "Unknown map type" << data.val_int;
+		if (!MapSource::is_map_type_id_registered((MapTypeID) data.u.val_int)) {
+			qDebug() << "EE" PREFIX << "Unknown map type" << data.u.val_int;
 		} else {
-			this->map_type_id = (MapTypeID) data.val_int;
+			this->map_type_id = (MapTypeID) data.u.val_int;
 
 			/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
 			if (is_file_operation) {
@@ -585,23 +585,23 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_ALPHA:
-		if (data.val_int >= scale_alpha.min && data.val_int <= scale_alpha.max) {
-			this->alpha = data.val_int;
+		if (data.u.val_int >= scale_alpha.min && data.u.val_int <= scale_alpha.max) {
+			this->alpha = data.u.val_int;
 		}
 		break;
 	case PARAM_AUTO_DOWNLOAD:
-		this->autodownload = data.val_bool;
+		this->autodownload = data.u.val_bool;
 		break;
 	case PARAM_ONLY_MISSING:
-		this->adl_only_missing = data.val_bool;
+		this->adl_only_missing = data.u.val_bool;
 		break;
 	case PARAM_MAP_ZOOM:
-		if (data.val_int < (int) params_mapzooms.size()) {
-			this->mapzoom_id = data.val_int;
-			this->xmapzoom = __mapzooms_x[data.val_int];
-			this->ymapzoom = __mapzooms_y[data.val_int];
+		if (data.u.val_int < (int) params_mapzooms.size()) {
+			this->mapzoom_id = data.u.val_int;
+			this->xmapzoom = __mapzooms_x[data.u.val_int];
+			this->ymapzoom = __mapzooms_y[data.u.val_int];
 		} else {
-			qDebug() << "WW" PREFIX << "Unknown Map Zoom" << data.val_int;
+			qDebug() << "WW" PREFIX << "Unknown Map Zoom" << data.u.val_int;
 		}
 		break;
 	default:

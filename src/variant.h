@@ -61,6 +61,16 @@ namespace SlavGPS {
 
 
 
+	union SGVariantPODFields {
+		double val_double;
+		uint32_t val_uint;
+		int32_t val_int;
+		bool val_bool;
+		void * val_pointer; /* For internal usage - don't save this value in a file! */
+	};
+
+
+
 
 	class SGVariant {
 	public:
@@ -96,15 +106,11 @@ namespace SlavGPS {
 
 
 		SGVariantType type_id;
-		double val_double = 0.0;
-		uint32_t val_uint = 0;
-		int32_t val_int = 0;
-		bool val_bool = false;
+
+		SGVariantPODFields u;
 		QString val_string;
 		QColor val_color;
 		QStringList val_string_list;
-		void * val_pointer = NULL; /* For internal usage - don't save this value in a file! */
-
 	private:
 		time_t val_timestamp;    /* SGVariantType::TIMESTAMP */
 		double val_lat_lon_alt;  /* SGVariantType::LATITUDE/LONGITUDE/ALTITUDE */

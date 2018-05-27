@@ -435,22 +435,22 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		}
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
-		this->download_tracks = data.val_bool;
+		this->download_tracks = data.u.val_bool;
 		break;
 	case PARAM_UPLOAD_TRACKS:
-		this->upload_tracks = data.val_bool;
+		this->upload_tracks = data.u.val_bool;
 		break;
 	case PARAM_DOWNLOAD_ROUTES:
-		this->download_routes = data.val_bool;
+		this->download_routes = data.u.val_bool;
 		break;
 	case PARAM_UPLOAD_ROUTES:
-		this->upload_routes = data.val_bool;
+		this->upload_routes = data.u.val_bool;
 		break;
 	case PARAM_DOWNLOAD_WAYPOINTS:
-		this->download_waypoints = data.val_bool;
+		this->download_waypoints = data.u.val_bool;
 		break;
 	case PARAM_UPLOAD_WAYPOINTS:
-		this->upload_waypoints = data.val_bool;
+		this->upload_waypoints = data.u.val_bool;
 		break;
 #if REALTIME_GPS_TRACKING_ENABLED
 	case PARAM_GPSD_HOST:
@@ -467,16 +467,16 @@ bool LayerGPS::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 		this->gpsd_retry_interval = strtol(data.val_string.toUtf8().constData(), NULL, 10);
 		break;
 	case PARAM_REALTIME_REC:
-		this->realtime_record = data.val_bool;
+		this->realtime_record = data.u.val_bool;
 		break;
 	case PARAM_REALTIME_CENTER_START:
-		this->realtime_jump_to_start = data.val_bool;
+		this->realtime_jump_to_start = data.u.val_bool;
 		break;
 	case PARAM_VEHICLE_POSITION:
-		this->vehicle_position = data.val_int;
+		this->vehicle_position = data.u.val_int;
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
-		this->realtime_update_statusbar = data.val_bool;
+		this->realtime_update_statusbar = data.u.val_bool;
 		break;
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 	default:

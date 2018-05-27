@@ -159,7 +159,7 @@ static ParameterScale scale_age = { 1, 365, SGVariant((int32_t) (VIK_CONFIG_DEFA
 static SGVariant convert_to_display(SGVariant value)
 {
 	/* From seconds into days. */
-	return SGVariant((int32_t) (value.val_int / 86400));
+	return SGVariant((int32_t) (value.u.val_int / 86400));
 }
 
 
@@ -168,7 +168,7 @@ static SGVariant convert_to_display(SGVariant value)
 static SGVariant convert_to_internal(SGVariant value)
 {
 	/* From days into seconds. */
-	return SGVariant((int32_t) (86400 * value.val_int));
+	return SGVariant((int32_t) (86400 * value.u.val_int));
 }
 
 

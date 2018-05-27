@@ -192,36 +192,36 @@ bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bo
 		this->set_image_full_path(param_value.val_string);
 		break;
 	case PARAM_CORNER_UTM_EASTING:
-		this->utm_tl.easting = param_value.val_double;
+		this->utm_tl.easting = param_value.u.val_double;
 		break;
 	case PARAM_CORNER_UTM_NORTHING:
-		this->utm_tl.northing = param_value.val_double;
+		this->utm_tl.northing = param_value.u.val_double;
 		break;
 	case PARAM_MPP_EASTING:
-		this->mpp_easting = param_value.val_double;
+		this->mpp_easting = param_value.u.val_double;
 		break;
 	case PARAM_MPP_NORTHING:
-		this->mpp_northing = param_value.val_double;
+		this->mpp_northing = param_value.u.val_double;
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		if (param_value.val_uint <= UTM_ZONES) {
-			this->utm_tl.zone = param_value.val_uint; /* FIXME: data type mismatch: int vs uint. */
+		if (param_value.u.val_uint <= UTM_ZONES) {
+			this->utm_tl.zone = param_value.u.val_uint; /* FIXME: data type mismatch: int vs uint. */
 		} else {
-			qDebug() << "EE" PREFIX << "invalid utm zone" << param_value.val_uint;
+			qDebug() << "EE" PREFIX << "invalid utm zone" << param_value.u.val_uint;
 		}
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
-		if (param_value.val_uint >= 65 || param_value.val_uint <= 90) {
-			this->utm_tl.letter = param_value.val_uint;
+		if (param_value.u.val_uint >= 65 || param_value.u.val_uint <= 90) {
+			this->utm_tl.letter = param_value.u.val_uint;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid utm band letter" << param_value.val_uint;
+			qDebug() << "EE" PREFIX << "invalid utm band letter" << param_value.u.val_uint;
 		}
 		break;
 	case PARAM_ALPHA:
-		if (param_value.val_uint <= 255) {
-			this->alpha = param_value.val_uint;
+		if (param_value.u.val_uint <= 255) {
+			this->alpha = param_value.u.val_uint;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid alpha value" << param_value.val_uint;
+			qDebug() << "EE" PREFIX << "invalid alpha value" << param_value.u.val_uint;
 		}
 		break;
 	default:
@@ -635,7 +635,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 	}
 	GeorefConfigDialog * dialog = (GeorefConfigDialog *) user_data;
 
-	if (!Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".georef_auto_read_world_file").val_bool) {
+	if (!Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".georef_auto_read_world_file").u.val_bool) {
 		return;
 	}
 

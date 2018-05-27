@@ -1887,19 +1887,19 @@ bool Track::get_minmax_alt(double * min_alt, double * max_alt) const
 
 void Track::marshall(Pickle & pickle)
 {
-	pickle.put_object((char *) this, sizeof (Track));
+	pickle.put_raw_object((char *) this, sizeof (Track));
 
 	/* we'll fill out number of trackpoints later */
 	unsigned int intp = pickle.data_size();
 	unsigned int len;
-	pickle.put_object((char *) &len, sizeof(len));
+	pickle.put_raw_object((char *) &len, sizeof(len));
 
 
 
 	auto iter = this->trackpoints.begin();
 	unsigned int ntp = 0;
 	while (iter != this->trackpoints.end()) {
-		pickle.put_object((char *) *iter, sizeof (Trackpoint));
+		pickle.put_raw_object((char *) *iter, sizeof (Trackpoint));
 		pickle.put_string((*iter)->name);
 		iter++;
 		ntp++;

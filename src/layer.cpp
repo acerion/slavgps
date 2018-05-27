@@ -358,7 +358,7 @@ typedef struct {
 
 void Layer::marshall(Layer * layer, Pickle & pickle)
 {
-	pickle.put_object((char *) &layer->type, sizeof (layer->type));
+	pickle.put_raw_object((char *) &layer->type, sizeof (layer->type));
 	layer->marshall(pickle);
 
 	if (pickle.data_size() > 0) {
@@ -389,7 +389,7 @@ void Layer::marshall(Pickle & pickle)
 void Layer::marshall_params(Pickle & pickle)
 {
 	/* Store the internal properties first. TODO: why we put these parameters here, in "marshall params"? */
-	pickle.put_object((char *) &this->visible, sizeof (this->visible));
+	pickle.put_raw_object((char *) &this->visible, sizeof (this->visible));
 	pickle.put_string(this->name);
 
 	/* Now the actual parameters. */
