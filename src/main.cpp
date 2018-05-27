@@ -49,6 +49,7 @@
 #include "version_check.h"
 #include "routing.h"
 #include "external_tools.h"
+#include "clipboard.h"
 
 
 
@@ -91,9 +92,74 @@ static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
 
 
 
+void test_pickle(void)
+{
+	qDebug() << "Testing pickle with raw strings";
+	{
+		Pickle pickle;
+		pickle.put_string("Hello, world!");
+		pickle.put_string(QString("This is a test of pickle"));
+
+		qDebug() << "String 1:" << pickle.take_string();
+		qDebug() << "String 2:" << pickle.take_string();
+	}
+
+
+	qDebug() << "Testing pickle with strings in variant";
+	{
+		Pickle pickle;
+		SGVariant in_var_string1("one two three four five six");
+		SGVariant in_var_string2("this is the best lemonade ever");
+
+		pickle.put_variant(in_var_string1, SGVariantType::String);
+		pickle.put_variant(in_var_string2, SGVariantType::String);
+
+
+		SGVariant out_var_string1 = pickle.take_variant(SGVariantType::String);
+		SGVariant out_var_string2 = pickle.take_variant(SGVariantType::String);
+
+		qDebug() << out_var_string1.val_string << (out_var_string1.type_id == SGVariantType::String ? "(type correct)" : "(type incorrect)");
+		qDebug() << out_var_string2.val_string << (out_var_string2.type_id == SGVariantType::String ? "(type correct)" : "(type incorrect)");
+	}
+
+
+	qDebug() << "Testing pickle with doubles in variant";
+	{
+		Pickle pickle;
+		double val1 = 0.123456789;
+		double val2 = 1234567890.123456789;
+		SGVariant in_var_double1(val1);
+		SGVariant in_var_double2(val2);
+
+		pickle.put_variant(in_var_double1, SGVariantType::Double);
+		pickle.put_variant(in_var_double2, SGVariantType::Double);
+
+
+		const SGVariant out_var_double1 = pickle.take_variant(SGVariantType::Double);
+		const SGVariant out_var_double2 = pickle.take_variant(SGVariantType::Double);
+#if 1
+		fprintf(stderr, "%.12f (%.12f)\n", out_var_double1.val_double, val1);
+		fprintf(stderr, "%.12f (%.12f)\n", out_var_double2.val_double, val2);
+#endif
+#if 1
+		qDebug() << QString("Double 1: %1").arg(out_var_double1.val_double, 0, 'f', 12) << (out_var_double1.type_id == SGVariantType::Double ? "(type correct)" : "(type incorrect)");
+		qDebug() << QString("Double 2: %1").arg(out_var_double2.val_double, 0, 'f', 12) << (out_var_double2.type_id == SGVariantType::Double ? "(type correct)" : "(type incorrect)");
+#endif
+	}
+
+
+	qDebug() << "End of tests of pickle";
+
+	exit(EXIT_SUCCESS);
+}
+
+
+
 
 int main(int argc, char ** argv)
 {
+	//test_pickle();
+
 	QApplication app(argc, argv);
 	CommandLineOptions command_line_options;
 
@@ -209,6 +275,7 @@ int main(int argc, char ** argv)
 	VersionCheck::run_check(first_window);
 
 	int rv = app.exec();
+
 
 	Babel::uninit();
 	Background::uninit();

@@ -81,24 +81,15 @@ LayerAggregateInterface::LayerAggregateInterface()
 
 void LayerAggregate::marshall(Pickle & pickle)
 {
-	GByteArray * byte_array = g_byte_array_new();
-
-	Pickle helper_pickle;
-	this->marshall_params(helper_pickle);
-	Clipboard::append_object(byte_array, helper_pickle.data, helper_pickle.data_size);
-	helper_pickle.clear();
+	this->marshall_params(pickle);
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
+		Pickle helper_pickle;
 		Layer::marshall(*child, helper_pickle);
-		if (helper_pickle.data) {
-			Clipboard::append_object(byte_array, helper_pickle.data, helper_pickle.data_size);
-			helper_pickle.clear();
+		if (helper_pickle.data_size() > 0) {
+			pickle.put_pickle(helper_pickle);
 		}
 	}
-
-	pickle.data = byte_array->data;
-	pickle.data_size = byte_array->len;
-	g_byte_array_free(byte_array, false);
 }
 
 
@@ -110,13 +101,12 @@ Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, Viewport * viewport
 
 	aggregate->unmarshall_params(pickle);
 
-	while (pickle.data_size > 0) {
+	while (pickle.data_size() > 0) {
 		Layer * child_layer = Layer::unmarshall(pickle, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
 			QObject::connect(child_layer, SIGNAL(Layer::changed(void)), (Layer *) aggregate, SLOT(child_layer_changed_cb(const QString &)));
 		}
-		pickle.move_to_next_object();
 	}
 	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << pickle.data_size;
 	return aggregate;

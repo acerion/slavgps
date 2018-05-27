@@ -358,17 +358,19 @@ typedef struct {
 
 void Layer::marshall(Layer * layer, Pickle & pickle)
 {
-	pickle.put_object(&layer->type, sizeof (layer->type));
+	pickle.put_object((char *) &layer->type, sizeof (layer->type));
 	layer->marshall(pickle);
 
-	if (pickle.data) {
+	if (pickle.data_size() > 0) {
+#ifdef K_TODO
 		header_t * header = (header_t *) malloc(pickle.data_size + sizeof (*header));
 		header->layer_type = layer->type;
-		header->len = pickle.data_size;
+		header->len = pickle.data_size();
 		memcpy(header->data, pickle.data, pickle.data_size);
 		free(pickle.data);
 		pickle.data = (uint8_t *) header;
 		pickle.data_size += sizeof (*header);
+#endif
 	}
 }
 
@@ -386,95 +388,33 @@ void Layer::marshall(Pickle & pickle)
 
 void Layer::marshall_params(Pickle & pickle)
 {
-	GByteArray * byte_array = g_byte_array_new();
-	int len;
-
-
-	/* Store the internal properties first. */
-	Clipboard::append_object(byte_array, (uint8_t *) &this->visible, sizeof (this->visible));
-	Clipboard::append_object(byte_array, (uint8_t *) this->name.toUtf8().constData(), this->name.size());
+	/* Store the internal properties first. TODO: why we put these parameters here, in "marshall params"? */
+	pickle.put_object((char *) &this->visible, sizeof (this->visible));
+	pickle.put_string(this->name);
 
 	/* Now the actual parameters. */
-	SGVariant param_value;
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 		qDebug() << "DD" PREFIX << "Marshalling parameter" << iter->second->name;
 
-		param_value = this->get_param_value(iter->first, false);
-		switch (iter->second->type_id) {
-		case SGVariantType::String:
-			/* Remember need braces as these are macro calls, not single statement functions! */
-			if (!param_value.val_string.isEmpty()) {
-				Clipboard::append_object(byte_array, (uint8_t *) param_value.val_string.toUtf8().constData(), param_value.val_string.length());
-			} else {
-				/* Need to insert empty string otherwise the unmarshall will get confused. */
-				Clipboard::append_object(byte_array, (uint8_t *) "", 0);
-			}
-			break;
-			/* Print out the string list in the array. */
-		case SGVariantType::StringList: {
-			/* Write length of list (# of strings). */
-			const pickle_size_t list_len = param_value.val_string_list.size();
-			g_byte_array_append(byte_array, (uint8_t *) &list_len, sizeof (list_len));
-
-			/* Write each string. */
-			for (auto l = param_value.val_string_list.constBegin(); l != param_value.val_string_list.constEnd(); l++) {
-				QByteArray arr = (*l).toUtf8();
-				const char * s = arr.constData();
-				Clipboard::append_object(byte_array, (uint8_t *) s, strlen(s));
-			}
-
-			break;
-		}
-		default:
-			Clipboard::append_object(byte_array, (uint8_t *) &param_value, sizeof (param_value));
-			break;
-		}
+		const SGVariant param_value = this->get_param_value(iter->first, false);
+		pickle.put_variant(param_value, iter->second->type_id);
 	}
-
-	pickle.data = byte_array->data;
-	pickle.data_size = byte_array->len;
-	g_byte_array_free(byte_array, false);
 }
 
 
 
 void Layer::unmarshall_params(Pickle & pickle)
 {
-	const pickle_size_t params_size = pickle.peek_size();
-	pickle.data += sizeof (pickle_size_t),
+	const pickle_size_t params_size = pickle.take_size();
 
 	pickle.take_object(&this->visible);
-
 	this->set_name(pickle.take_string());
 
-	SGVariant param_value;
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 		qDebug() << "DD" PREFIX << "Unmarshalling parameter" << iter->second->name;
-		switch (iter->second->type_id) {
-		case SGVariantType::String:
-			param_value = SGVariant(pickle.take_string());
-			this->set_param_value(iter->first, param_value, false);
-			break;
-		case SGVariantType::StringList: {
-			const pickle_size_t list_len = pickle.peek_size();
-			pickle.data += sizeof (pickle_size_t); /* Skip 'list_len' field. */;
-
-			for (pickle_size_t j = 0; j < list_len; j++) {
-				param_value.val_string_list.push_back(pickle.take_string());
-			}
-
-			this->set_param_value(iter->first, param_value, false);
-
-			break;
-		}
-		default:
-			pickle.take_object(&param_value);
-			this->set_param_value(iter->first, param_value, false);
-			break;
-		}
+		const SGVariant param_value = pickle.take_variant(iter->second->type_id);
+		this->set_param_value(iter->first, param_value, false);
 	}
-
-	pickle.move_to_next_object(); /* TODO: is it ok to put it here? */
 }
 
 
@@ -483,8 +423,12 @@ void Layer::unmarshall_params(Pickle & pickle)
 Layer * Layer::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	const pickle_size_t object_size = pickle.take_size();
+#ifdef K_TODO
 	header_t * header = (header_t *) pickle.data;
 	return vik_layer_interfaces[(int) header->layer_type]->unmarshall(pickle, viewport);
+#else
+	return NULL;
+#endif
 }
 
 

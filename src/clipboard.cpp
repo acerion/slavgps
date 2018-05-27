@@ -26,6 +26,8 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cassert>
+#include <cctype>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -47,6 +49,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define PREFIX ": Clipboard:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -605,38 +612,9 @@ ClipboardDataType Clipboard::get_current_type()
 
 
 
-void Clipboard::append_string(GByteArray * byte_array, const char * string)
+Pickle::Pickle()
 {
-	pickle_size_t size = (pickle_size_t) (string ? strlen(string) + 1 : 0);
-	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
-	if (string) {
-		g_byte_array_append(byte_array, (uint8_t *) string, size);
-	}
 }
-
-
-
-
-void Clipboard::append_object(GByteArray * byte_array, uint8_t * obj, pickle_size_t obj_size)
-{
-	pickle_size_t size = obj_size;
-	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
-	g_byte_array_append(byte_array, obj, size);
-}
-
-
-
-
-void Clipboard::append_object_with_type(GByteArray * byte_array, Pickle & pickle, pickle_size_t obj_size, int obj_type)
-{
-	int type = obj_type;
-	pickle_size_t size = obj_size;
-
-	g_byte_array_append(byte_array, (uint8_t *) &size, sizeof (size));
-	g_byte_array_append(byte_array, (uint8_t *) &type, sizeof (type));
-	g_byte_array_append(byte_array, pickle.data, size);
-}
-
 
 
 
@@ -650,7 +628,7 @@ Pickle::~Pickle()
 
 pickle_size_t Pickle::peek_size(pickle_size_t offset) const
 {
-	return (*(pickle_size_t *) this->data + offset);
+	return (*(pickle_size_t *) this->byte_array.begin() + this->read_iter + offset);
 }
 
 
@@ -658,38 +636,50 @@ pickle_size_t Pickle::peek_size(pickle_size_t offset) const
 
 pickle_size_t Pickle::take_size(void)
 {
-	pickle_size_t result = (*(pickle_size_t *) this->data);
-	this->data += sizeof (result);
+	const char * tmp = this->byte_array.begin() + this->read_iter;
+
+	pickle_size_t result = *((pickle_size_t *) tmp);
+	this->read_iter += sizeof (result);
 	return result;
 }
 
 
 
 
-void Pickle::move_to_next_object(void)
+void Pickle::put_object(const char * object, pickle_size_t object_size)
 {
-	const pickle_size_t this_object_size = this->peek_size();
-
-	this->data += sizeof (pickle_size_t) + this_object_size;
-	this->data_size -= sizeof (pickle_size_t) + this_object_size;
+	this->byte_array.append(object, object_size);
 }
 
 
-
-void Pickle::put_object(void * object, pickle_size_t object_size)
-{
-	memcpy(this->data, object, object_size);
-	this->data += object_size;
-}
 
 
 void Pickle::take_object(void * target)
 {
-	const pickle_size_t this_object_size = this->peek_size();
+	const pickle_size_t object_size = this->take_size();
 
-	memcpy(target, this->data + sizeof (pickle_size_t), this_object_size);
-	this->data += sizeof (pickle_size_t) + this_object_size;
+	memcpy(target, this->byte_array.begin() + this->read_iter, object_size);
+	this->read_iter += object_size;
 }
+
+
+
+
+void Pickle::put_string(const QString & string)
+{
+	const pickle_size_t length = strlen(string.toUtf8().constData()) + 1;
+
+	this->put_tlv_tag("pickle.string");
+	this->put_tlv_length(length);
+
+	/* Value. */
+	if (strlen(string.toUtf8().constData()) > 0) {
+		this->byte_array.append(string.toUtf8().constData(), length);
+	}
+
+	this->print_bytes("put string - after");
+}
+
 
 
 
@@ -697,7 +687,7 @@ QString Pickle::peek_string(pickle_size_t offset) const
 {
 	/* Look for string that is @offset bytes from beginning of data.
 	   At that position there will be string size, which also needs to be skipped. */
-	QString result = QString((char *) (this->data + sizeof (pickle_size_t) + offset));
+	const QString result = QString((char *) (this->byte_array.begin() + this->read_iter + sizeof (pickle_size_t) + offset));
 	return result;
 }
 
@@ -706,19 +696,22 @@ QString Pickle::peek_string(pickle_size_t offset) const
 
 QString Pickle::take_string(void)
 {
-	QString result;
+	QString value;
 
-	const pickle_size_t object_size = this->peek_size();
-	this->data += sizeof (pickle_size_t);
+	this->print_bytes("take string - before");
 
-	if (object_size > 0) {
-		result = QString((char *) this->data);
-	} else {
-		// result = "";
+	const char * tag = this->take_tlv_tag("pickle.string");
+	const pickle_size_t length = this->take_tlv_length();
+
+	if (length > 0) {
+		value = QString((char *) this->byte_array.begin() + this->read_iter);
 	}
-	this->data += object_size;
+	this->read_iter += length;
 
-	return result;
+
+	qDebug() << "II" PREFIX << "tag =" << tag << ", length =" << length << ", value =" << value;
+
+	return value;
 }
 
 
@@ -726,9 +719,152 @@ QString Pickle::take_string(void)
 
 void Pickle::clear(void)
 {
-	if (this->data) {
-		std::free(this->data);
-		this->data = NULL;
+	this->byte_array.clear();
+	this->read_iter = 0;
+	this->write_iter = 0;
+	this->data_size_ = 0;
+}
+
+
+
+
+void Pickle::put_variant(const SGVariant & var, SGVariantType type_id)
+{
+	this->put_tlv_tag("pickle.variant");
+	this->put_tlv_length(sizeof (SGVariant));
+
+	switch (type_id) {
+	case SGVariantType::String:
+		if (!var.val_string.isEmpty()) {
+			this->put_string(var.val_string);
+		} else {
+			/* Need to insert empty string otherwise the unmarshall will get confused. */
+			this->put_string("");
+		}
+		break;
+		/* Print out the string list in the array. */
+	case SGVariantType::StringList: {
+		/* Write length of list (# of strings). */
+		const pickle_size_t list_len = var.val_string_list.size();
+		this->byte_array.append((char *) &list_len, sizeof (list_len));
+
+		/* Write each string. */
+		for (auto i = var.val_string_list.constBegin(); i != var.val_string_list.constEnd(); i++) {
+			this->put_string(*i);
+		}
+
+		break;
 	}
-	this->data_size = 0;
+	default:
+		this->put_object((char *) &var, sizeof (var));
+		break;
+	}
+}
+
+
+
+
+SGVariant Pickle::take_variant(SGVariantType type_id)
+{
+	SGVariant result;
+
+	const char * tag = this->take_tlv_tag("pickle.variant");
+	const pickle_size_t length = this->take_tlv_length();
+
+	qDebug() << "take_variant(), length =" << length;
+
+	switch (type_id) {
+	case SGVariantType::String:
+		result = SGVariant(this->take_string());
+		break;
+	case SGVariantType::StringList: {
+		const pickle_size_t list_len = this->take_size();
+
+		for (pickle_size_t j = 0; j < list_len; j++) {
+			result.val_string_list.push_back(this->take_string());
+		}
+
+		break;
+	}
+	default:
+		this->take_tlv_value((char *) &result, length);
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+void Pickle::put_pickle(const Pickle & pickle)
+{
+	this->byte_array.append(pickle.byte_array);
+}
+
+
+
+
+void Pickle::put_tlv_tag(const char * tag)
+{
+	this->byte_array.append(tag, strlen(tag) + 1);
+}
+
+
+
+
+const char * Pickle::take_tlv_tag(const char * expected_tag)
+{
+	const char * tag_value = this->byte_array.begin() + this->read_iter;
+	this->read_iter += strlen(tag_value) + 1; /* +1 for terminating NUL. */
+
+	if (0 != strcmp(expected_tag, tag_value)) {
+		qDebug() << "EE" PREFIX << "unexpected tlv tag" << tag_value << ", expected" << expected_tag;
+		assert(0);
+	}
+
+	return tag_value;
+}
+
+
+
+
+void Pickle::put_tlv_length(pickle_size_t length)
+{
+	this->byte_array.append((char *) &length, sizeof (length));
+}
+
+
+
+
+pickle_size_t Pickle::take_tlv_length(void)
+{
+	const char * tmp = this->byte_array.begin() + this->read_iter;
+
+	pickle_size_t result = *((pickle_size_t *) tmp);
+	this->read_iter += sizeof (result);
+	return result;
+}
+
+
+void Pickle::take_tlv_value(char * target, pickle_size_t length)
+{
+	memcpy(target, this->byte_array.begin() + this->read_iter, length);
+	this->read_iter += length;
+}
+
+
+
+
+void Pickle::print_bytes(const char * label) const
+{
+	fprintf(stderr, "\nByte array at '%s'\n", label);
+	for (int i = 0; i < this->byte_array.size(); i++) {
+		fprintf(stderr, "%02x ", this->byte_array.at(i));
+	}
+	fprintf(stderr, "\n");
+	for (int i = 0; i < this->byte_array.size(); i++) {
+		fprintf(stderr, "%2c ", isprint(this->byte_array.at(i)) ? this->byte_array.at(i) : ' ');
+	}
+	fprintf(stderr, "\n");
 }

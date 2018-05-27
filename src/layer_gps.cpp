@@ -337,23 +337,15 @@ QString LayerGPS::get_tooltip()
 /* "Copy". */
 void LayerGPS::marshall(Pickle & pickle)
 {
-	Pickle helper_pickle;
-	GByteArray * byte_array = g_byte_array_new();
-
-	this->marshall_params(helper_pickle);
-	Clipboard::append_object(byte_array, helper_pickle.data, helper_pickle.data_size);
-	helper_pickle.clear();
+	this->marshall_params(pickle);
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
+		Pickle helper_pickle;
 		Layer::marshall(this->trw_children[i], helper_pickle);
-		if (helper_pickle.data) {
-			Clipboard::append_object(byte_array, helper_pickle.data, helper_pickle.data_size);
-			helper_pickle.clear();
+		if (helper_pickle.data_size() > 0) {
+			pickle.put_pickle(helper_pickle);
 		}
 	}
-	pickle.data = byte_array->data;
-	pickle.data_size = byte_array->len;
-	g_byte_array_free(byte_array, false);
 }
 
 
@@ -368,17 +360,17 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 	layer->unmarshall_params(pickle);
 
 	int i = 0;
-	while (pickle.data_size > 0 && i < GPS_CHILD_LAYER_MAX) {
+	while (pickle.data_size() > 0 && i < GPS_CHILD_LAYER_MAX) {
 		Layer * child_layer = Layer::unmarshall(pickle, viewport);
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* NB no need to attach signal update handler here
 			   as this will always be performed later on in LayerGPS::add_children_to_tree(). */
 		}
-		pickle.move_to_next_object();
 	}
+
 	// qDebug() << "II: Layer GPS: LayerGPSInterface::unmarshall() ended with" << pickle.data_szie;
-	assert (pickle.data_size == 0);
+	assert (pickle.data_size() == 0);
 	return layer;
 }
 

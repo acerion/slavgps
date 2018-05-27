@@ -1887,35 +1887,32 @@ bool Track::get_minmax_alt(double * min_alt, double * max_alt) const
 
 void Track::marshall(Pickle & pickle)
 {
-	GByteArray * byte_array = g_byte_array_new();
-	g_byte_array_append(byte_array, (uint8_t *) this, sizeof(Track));
+	pickle.put_object((char *) this, sizeof (Track));
 
 	/* we'll fill out number of trackpoints later */
-	unsigned int intp = byte_array->len;
+	unsigned int intp = pickle.data_size();
 	unsigned int len;
-	g_byte_array_append(byte_array, (uint8_t *)&len, sizeof(len));
+	pickle.put_object((char *) &len, sizeof(len));
 
 
 
 	auto iter = this->trackpoints.begin();
 	unsigned int ntp = 0;
 	while (iter != this->trackpoints.end()) {
-		g_byte_array_append(byte_array, (uint8_t *) *iter, sizeof (Trackpoint));
-		Clipboard::append_string(byte_array, (*iter)->name.toUtf8().constData());
+		pickle.put_object((char *) *iter, sizeof (Trackpoint));
+		pickle.put_string((*iter)->name);
 		iter++;
 		ntp++;
 	}
+#if K_TODO
 	*(unsigned int *)(byte_array->data + intp) = ntp;
+#endif
 
-	Clipboard::append_string(byte_array, this->name.toUtf8().constData());
-	Clipboard::append_string(byte_array, this->comment.toUtf8().constData());
-	Clipboard::append_string(byte_array, this->description.toUtf8().constData());
-	Clipboard::append_string(byte_array, this->source.toUtf8().constData());
+	pickle.put_string(this->name);
+	pickle.put_string(this->comment);
+	pickle.put_string(this->description);
+	pickle.put_string(this->source);
 	/* kamilTODO: where is ->type? */
-
-	pickle.data = byte_array->data;
-	pickle.data_size = byte_array->len;
-	g_byte_array_free(byte_array, false);
 }
 
 
@@ -1929,6 +1926,7 @@ Track * Track::unmarshall(Pickle & pickle)
 	const pickle_size_t data_size = pickle.take_size();
 	const QString type_id = pickle.take_string();
 
+#ifdef K_TODO
 	Track * new_trk = new Track(((Track *)pickle.data)->type_id == "sg.trw.route");
 	/* Basic properties: */
 	new_trk->visible = ((Track *)pickle.data)->visible;
@@ -1958,6 +1956,9 @@ Track * Track::unmarshall(Pickle & pickle)
 	new_trk->description = pickle.take_string();
 	new_trk->source = pickle.take_string();
 	/* kamilTODO: where is ->type? */
+#else
+	Track * new_trk = new Track(false);
+#endif
 
 	return new_trk;
 }

@@ -222,26 +222,18 @@ bool Waypoint::apply_dem_data(bool skip_existing)
  */
 void Waypoint::marshall(Pickle & pickle)
 {
-	GByteArray * byte_array = g_byte_array_new();
-	size_t len;
-
 	/* This creates space for fixed sized members like ints and whatnot
 	   and copies that amount of data from the waypoint to byte array. */
-	g_byte_array_append(byte_array, (uint8_t *) this, sizeof(Waypoint));
+	pickle.put_object((char *) this, sizeof (Waypoint));
 
-
-	Clipboard::append_string(byte_array, name.toUtf8().constData());
-	Clipboard::append_string(byte_array, comment.toUtf8().constData());
-	Clipboard::append_string(byte_array, description.toUtf8().constData());
-	Clipboard::append_string(byte_array, source.toUtf8().constData());
-	Clipboard::append_string(byte_array, type.toUtf8().constData());
-	Clipboard::append_string(byte_array, url.toUtf8().constData());
-	Clipboard::append_string(byte_array, image_full_path.toUtf8().constData());
-	Clipboard::append_string(byte_array, symbol_name.toUtf8().constData());
-
-	pickle.data = byte_array->data;
-	pickle.data_size = byte_array->len;
-	g_byte_array_free(byte_array, false);
+	pickle.put_string(this->name);
+	pickle.put_string(this->comment);
+	pickle.put_string(this->description);
+	pickle.put_string(this->source);
+	pickle.put_string(this->type);
+	pickle.put_string(this->url);
+	pickle.put_string(this->image_full_path);
+	pickle.put_string(this->symbol_name);
 }
 
 
@@ -258,8 +250,7 @@ Waypoint * Waypoint::unmarshall(Pickle & pickle)
 	Waypoint * wp = new Waypoint();
 
 	/* This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...). */
-	memcpy(wp, pickle.data, sizeof (Waypoint));
-	pickle.data += sizeof (Waypoint);
+	pickle.take_object(wp);
 
 	wp->name = pickle.take_string();
 	wp->comment = pickle.take_string();

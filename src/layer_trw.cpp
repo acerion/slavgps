@@ -624,8 +624,10 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 
 	this->copy_sublayer(item, pickle);
 
-	if (pickle.data) {
-		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle.data_size, item->name, pickle.data);
+	if (pickle.data_size() > 0) {
+#ifdef K_TODO
+		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle.data_size(), item->name, pickle.data);
+#endif
 	}
 }
 
@@ -644,20 +646,15 @@ void LayerTRW::cut_sublayer_common(TreeItem * item, bool confirm)
 void LayerTRW::copy_sublayer(TreeItem * item, Pickle & pickle)
 {
 	if (!item) {
-		qDebug() << "WW: Layer TRW: 'copy sublayer' received NULL sublayer";
-		pickle.data = NULL; /* TODO: memory leak? */
+		qDebug() << "WW" PREFIX << "function received NULL sublayer";
 		return;
 	}
 
 	Pickle helper_pickle;
-	GByteArray * byte_array = g_byte_array_new();
-
 	item->marshall(helper_pickle);
-
-	g_byte_array_append(byte_array, helper_pickle.data, helper_pickle.data_size);
-
-	pickle.data = byte_array->data;
-	pickle.data_size = byte_array->len;
+	if (helper_pickle.data_size() > 0) {
+		pickle.put_pickle(helper_pickle);
+	}
 }
 
 
@@ -670,7 +667,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		return false;
 	}
 
-	if (!pickle.data) {
+	if (pickle.data_size() <= 0) {
 		return false;
 	}
 
@@ -1101,49 +1098,37 @@ void LayerTRWInterface::change_param(void * gtk_widget, void * ui_change_values)
 
 void LayerTRW::marshall(Pickle & pickle)
 {
-	pickle.data = NULL;
+	/* Layer parameters go first. */
+	this->marshall_params(pickle);
 
-	// Use byte arrays to store sublayer data
-	// much like done elsewhere e.g. Layer::marshall_params()
-	GByteArray * byte_array = g_byte_array_new();
 
 	Pickle helper_pickle;
-	size_t helper_size;
-
-	unsigned int object_length;
-	unsigned int subtype;
-
-
-	// Layer parameters first
-	this->marshall_params(helper_pickle);
-	g_byte_array_append(byte_array, (uint8_t *) &helper_pickle.data_size, sizeof (helper_pickle.data_size));
-	g_byte_array_append(byte_array, helper_pickle.data, helper_pickle.data_size);
-	helper_pickle.clear();
-
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-		i->second->marshall(helper_pickle);
-		Clipboard::append_object_with_type(byte_array, helper_pickle, helper_pickle.data_size, (int) SublayerType::WAYPOINT);
+		i->second->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+		if (helper_pickle.data_size() > 0) {
+			pickle.put_pickle(helper_pickle);
+		}
 		helper_pickle.clear();
 	}
 
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		i->second->marshall(helper_pickle);
-		Clipboard::append_object_with_type(byte_array, helper_pickle, helper_pickle.data_size, (int) SublayerType::TRACK);
+		i->second->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+		if (helper_pickle.data_size() > 0) {
+			pickle.put_pickle(helper_pickle);
+		}
 		helper_pickle.clear();
 	}
 
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		i->second->marshall(helper_pickle);
-		Clipboard::append_object_with_type(byte_array, helper_pickle, helper_pickle.data_size, (int) SublayerType::ROUTE);
+		i->second->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+		if (helper_pickle.data_size() > 0) {
+			pickle.put_pickle(helper_pickle);
+		}
 		helper_pickle.clear();
 	}
-
-
-	pickle.data = byte_array->data;
-	pickle.data_size = byte_array->len;
 }
 
 
@@ -1154,7 +1139,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 	LayerTRW * trw = new LayerTRW();
 	trw->set_coord_mode(viewport->get_coord_mode());
 
-	const pickle_size_t original_data_size = pickle.data_size;
+	const pickle_size_t original_data_size = pickle.data_size();
 
 
 	/* First the overall layer parameters. */
@@ -1165,7 +1150,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 	const pickle_size_t sizeof_len_and_subtype = sizeof (pickle_size_t) + sizeof (int); /* Object size + object type. */
 
 	// Now the individual sublayers:
-	while (pickle.data && consumed_length < original_data_size) {
+	while (pickle.data_size() > 0 && consumed_length < original_data_size) {
 		// Normally four extra bytes at the end of the datastream
 		//  (since it's a GByteArray and that's where it's length is stored)
 		//  So only attempt read when there's an actual block of sublayer data
@@ -1196,9 +1181,10 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 			}
 		}
 		consumed_length += pickle.peek_size() + sizeof_len_and_subtype;
-
+#ifdef K_TODO
 		// See marshalling above for order of how this is written  // kamilkamil
 		pickle.data += sizeof_len_and_subtype + pickle.peek_size();
+#endif
 	}
 	//fprintf(stderr, "DEBUG: consumed_length %d vs len %d\n", consumed_length, original_data_size);
 

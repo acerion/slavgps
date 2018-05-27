@@ -39,6 +39,11 @@
 
 
 
+#include "variant.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -67,23 +72,43 @@ namespace SlavGPS {
 
 	class Pickle {
 	public:
+		Pickle();
 		~Pickle();
+
+		void put_pickle(const Pickle & pickle);
 
 		pickle_size_t peek_size(pickle_size_t offset = 0) const;
 		pickle_size_t take_size(void);
 
+		void put_string(const QString & string);
 		QString peek_string(pickle_size_t offset = 0) const;
 		QString take_string(void);
 
-		void put_object(void * object, pickle_size_t object_size);
+		void put_object(const char * object, pickle_size_t object_size);
 		void take_object(void * target);
 
-		void move_to_next_object(void);
+		void put_variant(const SGVariant & var, SGVariantType type_id);
+		SGVariant take_variant(SGVariantType type_id);
 
 		void clear(void);
 
-		uint8_t * data = NULL;
-		pickle_size_t data_size = 0;
+		pickle_size_t data_size(void) const { return this->data_size_; };
+
+	private:
+		void put_tlv_tag(const char * tag);
+		const char * take_tlv_tag(const char * expected_tag);
+
+		void put_tlv_length(pickle_size_t length);
+		pickle_size_t take_tlv_length(void);
+
+		void take_tlv_value(char * target, pickle_size_t length);
+
+		void print_bytes(const char * label) const;
+
+		int read_iter = 0;
+		int write_iter = 0;
+		QByteArray byte_array;
+		pickle_size_t data_size_ = 0;
 	};
 
 
@@ -95,21 +120,6 @@ namespace SlavGPS {
 		static void copy_selected(LayersPanel * panel);
 		static bool paste(LayersPanel * panel);
 		static ClipboardDataType get_current_type();
-
-
-
-		/* This allocates space for variant sized strings and copies that
-		   amount of data from the string to byte array. */
-		static void append_string(GByteArray * byte_array, const char * string);
-		static void append_object(GByteArray * byte_array, uint8_t * obj, pickle_size_t obj_size);
-
-		/*
-		  Store:
-		  the length of the item
-		  the sublayer type of item
-		  the the actual item
-		*/
-		static void append_object_with_type(GByteArray * byte_array, Pickle & pickle, pickle_size_t obj_size, int obj_type);
 	};
 
 
