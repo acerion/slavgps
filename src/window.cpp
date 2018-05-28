@@ -1487,7 +1487,8 @@ void Window::menu_copy_centre_cb(void)
 
 	const QString message = QString("%1 %2").arg(first).arg(second);
 
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", 0, message, NULL);
+	Pickle dummy;
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", dummy, message);
 }
 
 

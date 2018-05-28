@@ -448,7 +448,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 	ClipboardDataType type = ClipboardDataType::NONE;
 	LayerType layer_type = LayerType::AGGREGATE;
 	QString type_id; /* Type ID of copied tree item. */
-	uint8_t *data = NULL;
+	unsigned char * data = NULL;
 	unsigned int len = 0;
 
 	if (!selected || !selected->index.isValid()) {
@@ -480,16 +480,21 @@ void Clipboard::copy_selected(LayersPanel * panel)
 			len = ilen;
 		}
 	}
-
+#if 1
+	Pickle pickle;
+	Clipboard::copy(type, layer_type, type_id, pickle, name);
+#else
 	Clipboard::copy(type, layer_type, type_id, len, name, data);
+#endif
 }
 
 
 
 
-void Clipboard::copy(ClipboardDataType type, LayerType layer_type, const QString & type_id, unsigned int len, const QString & text, uint8_t * data)
+void Clipboard::copy(ClipboardDataType type, LayerType layer_type, const QString & type_id, Pickle & pickle, const QString & text)
 {
 #ifdef K
+	const int len = pickle.data_size();
 	vik_clipboard_t * vc = (vik_clipboard_t *) malloc(sizeof(*vc) + len); /* kamil: + len? */
 	GtkClipboard * c = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
@@ -498,9 +503,9 @@ void Clipboard::copy(ClipboardDataType type, LayerType layer_type, const QString
 	vc->type_id = type_id;
 	vc->len = len;
 	vc->text = text;
-	if (data) {
-		memcpy(vc->data, data, len);
-		free(data);
+	if (len) {
+		memcpy(vc->data, pickle.byte_array, piclke.data_size());
+		free(pickle.byte_array);
 	}
 	vc->pid = getpid();
 
@@ -618,6 +623,7 @@ Pickle::Pickle()
 
 
 
+
 Pickle::~Pickle()
 {
 	this->clear();
@@ -727,132 +733,6 @@ void Pickle::clear(void)
 
 
 
-void Pickle::put_variant(const SGVariant & var, SGVariantType type_id)
-{
-	this->put_pickle_tag("pickle.variant");
-	this->put_raw_int((int) var.type_id);
-
-	/* We can just do memcpy() on union with POD fields, but
-	   non-trivial data types need to be handled separately. */
-
-	switch (type_id) {
-	case SGVariantType::Color: {
-		this->put_raw_int(0); /* Dummy value. */
-
-		int r = var.val_color.red();
-		int g = var.val_color.green();
-		int b = var.val_color.blue();
-		int a = var.val_color.alpha();
-
-		this->put_raw_object((char *) &r, sizeof (r));
-		this->put_raw_object((char *) &g, sizeof (g));
-		this->put_raw_object((char *) &b, sizeof (b));
-		this->put_raw_object((char *) &a, sizeof (a));
-
-		break;
-	}
-	case SGVariantType::String:
-		this->put_raw_int(0); /* Dummy value. */
-
-		if (!var.val_string.isEmpty()) {
-			this->put_string(var.val_string);
-		} else {
-			/* Need to insert empty string otherwise the unmarshall will get confused. */
-			this->put_string("");
-		}
-		break;
-		/* Print out the string list in the array. */
-	case SGVariantType::StringList:
-
-		/* Write length of list (# of strings). */
-		this->put_raw_int(var.val_string_list.size());
-
-		/* Write each string. */
-		for (auto i = var.val_string_list.constBegin(); i != var.val_string_list.constEnd(); i++) {
-			this->put_string(*i);
-		}
-
-		break;
-	default:
-		/* Plain Old Datatype. */
-		this->put_raw_int(sizeof (var.u));
-		this->put_raw_object((char *) &var.u, sizeof (var.u));
-		break;
-	}
-}
-
-
-
-
-SGVariant Pickle::take_variant(SGVariantType expected_type_id)
-{
-	SGVariant result;
-
-	const char * tag = this->take_pickle_tag("pickle.variant");
-	const SGVariantType type_id = (SGVariantType) this->take_raw_int();
-
-
-	if (type_id != expected_type_id) {
-		qDebug() << "EE" PREFIX << "wrong variant type id:" << type_id << "!=" << expected_type_id;
-		assert(0);
-	}
-
-
-	/* We can just do memcpy() on union with POD fields, but
-	   non-trivial data types need to be handled separately using
-	   their constructors. */
-	switch (expected_type_id) {
-	case SGVariantType::Color: {
-		const int dummy = this->take_raw_int();
-
-		int r = 0;
-		int g = 0;
-		int b = 0;
-		int a = 0;
-
-		this->take_raw_object((char *) &r, sizeof (r));
-		this->take_raw_object((char *) &g, sizeof (g));
-		this->take_raw_object((char *) &b, sizeof (b));
-		this->take_raw_object((char *) &a, sizeof (a));
-
-		result = SGVariant(r, g, b, a);
-
-		break;
-	}
-	case SGVariantType::String: {
-		const int dummy = this->take_raw_int();
-		result = SGVariant(this->take_string());
-		break;
-	}
-	case SGVariantType::StringList: {
-		const int n_strings = this->take_raw_int();
-		for (int i = 0; i < n_strings; i++) {
-			result.val_string_list.push_back(this->take_string());
-		}
-
-		break;
-	}
-	default:
-		/* Plain Old Datatype. */
-		const int expected_size = this->take_raw_int();
-
-		/* Test that we are reading correct data. */
-		if (expected_size != sizeof (result.u)) {
-			qDebug() << "EE" PREFIX << "unexpected size of POD:" << expected_size << "!=" << sizeof (result.u);
-			assert(0);
-		}
-
-		this->take_raw_object((char *) &result.u, sizeof (result.u));
-		result.type_id = type_id; /* For non-trivial data types this is done by constructor. */
-		break;
-	}
-
-	return result;
-}
-
-
-
-
 void Pickle::put_pickle(const Pickle & pickle)
 {
 	this->byte_array.append(pickle.byte_array);
@@ -891,10 +771,15 @@ void Pickle::put_pickle_length(pickle_size_t length)
 }
 
 
+
+
 void Pickle::put_raw_int(int value)
 {
 	this->byte_array.append((char *) &value, sizeof (int));
 }
+
+
+
 
 int Pickle::take_raw_int(void)
 {
@@ -910,7 +795,6 @@ int Pickle::take_raw_int(void)
 
 
 
-
 pickle_size_t Pickle::take_pickle_length(void)
 {
 	const char * tmp = this->byte_array.begin() + this->read_iter;
@@ -919,6 +803,8 @@ pickle_size_t Pickle::take_pickle_length(void)
 	this->read_iter += sizeof (result);
 	return result;
 }
+
+
 
 
 void Pickle::take_raw_object(char * target, pickle_size_t size)

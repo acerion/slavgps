@@ -625,9 +625,9 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 	this->copy_sublayer(item, pickle);
 
 	if (pickle.data_size() > 0) {
-#ifdef K_TODO
-		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle.data_size(), item->name, pickle.data);
-#endif
+//#ifdef K_TODO
+		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle, item->name);
+//#endif
 	}
 }
 

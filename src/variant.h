@@ -37,6 +37,11 @@ namespace SlavGPS {
 
 
 
+	class Pickle;
+
+
+
+
 	/* id is index. */
 	enum class SGVariantType {
 		Empty = 0,
@@ -80,6 +85,9 @@ namespace SlavGPS {
 		SGVariant(SGVariantType type_id, const QString & str);
 
 		SGVariant(const SGVariant & val); /* Copy constructor. */
+
+		void marshall(Pickle & pickle, SGVariantType type_id) const;
+		static SGVariant unmarshall(Pickle & pickle, SGVariantType expected_type_id);
 
 		SGVariant()                           { type_id = SGVariantType::Empty; }
 		SGVariant(double d,                   SGVariantType type_id = SGVariantType::Double);

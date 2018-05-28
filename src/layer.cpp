@@ -388,7 +388,7 @@ void Layer::marshall(Pickle & pickle)
 
 void Layer::marshall_params(Pickle & pickle)
 {
-	/* Store the internal properties first. TODO: why we put these parameters here, in "marshall params"? */
+	/* Store the internal properties first. TODO: why we put these members here, in "marshall params"? */
 	pickle.put_raw_object((char *) &this->visible, sizeof (this->visible));
 	pickle.put_string(this->name);
 
@@ -397,7 +397,7 @@ void Layer::marshall_params(Pickle & pickle)
 		qDebug() << "DD" PREFIX << "Marshalling parameter" << iter->second->name;
 
 		const SGVariant param_value = this->get_param_value(iter->first, false);
-		pickle.put_variant(param_value, iter->second->type_id);
+		param_value.marshall(pickle, iter->second->type_id);
 	}
 }
 
@@ -412,7 +412,7 @@ void Layer::unmarshall_params(Pickle & pickle)
 
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
 		qDebug() << "DD" PREFIX << "Unmarshalling parameter" << iter->second->name;
-		const SGVariant param_value = pickle.take_variant(iter->second->type_id);
+		const SGVariant param_value = SGVariant::unmarshall(pickle, iter->second->type_id);
 		this->set_param_value(iter->first, param_value, false);
 	}
 }

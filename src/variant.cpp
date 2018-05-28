@@ -26,6 +26,7 @@
 #include "variant.h"
 #include "vikutils.h"
 #include "measurements.h"
+#include "clipboard.h"
 
 
 
@@ -55,9 +56,6 @@ SGVariant::SGVariant(const SGVariant & val)
 SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 {
 	this->type_id = type_id_;
-
-	union SGVariantPODFields u;
-	qDebug() << "--------------- size of union is" << sizeof (u);
 
 	switch (type_id_) {
 	case SGVariantType::Double:
@@ -178,11 +176,11 @@ SGVariant::SGVariant(int32_t i, SGVariantType type_id_)
 
 
 
-SGVariant::SGVariant(uint32_t u, SGVariantType type_id_)
+SGVariant::SGVariant(uint32_t new_u, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Uint);
 	this->type_id = type_id_;
-	this->u.val_uint = u;
+	this->u.val_uint = new_u;
 }
 
 
@@ -289,7 +287,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::Empty:
 		break;
 	case SGVariantType::Double:
-		debug << value.u.val_double;
+		debug << QString("%1").arg(value.u.val_double, 0, 'f', 12);
 		break;
 	case SGVariantType::Uint:
 		debug << value.u.val_uint;
@@ -475,4 +473,130 @@ QString SGVariant::to_string() const
 		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) this->type_id;
 		return QString("");
 	};
+}
+
+
+
+
+void SGVariant::marshall(Pickle & pickle, SGVariantType new_type_id) const
+{
+	pickle.put_pickle_tag("pickle.variant");
+	pickle.put_raw_int((int) this->type_id);
+
+	/* We can just do memcpy() on union with POD fields, but
+	   non-trivial data types need to be handled separately. */
+
+	switch (new_type_id) {
+	case SGVariantType::Color: {
+		pickle.put_raw_int(0); /* Dummy value. */
+
+		int r = this->val_color.red();
+		int g = this->val_color.green();
+		int b = this->val_color.blue();
+		int a = this->val_color.alpha();
+
+		pickle.put_raw_object((char *) &r, sizeof (r));
+		pickle.put_raw_object((char *) &g, sizeof (g));
+		pickle.put_raw_object((char *) &b, sizeof (b));
+		pickle.put_raw_object((char *) &a, sizeof (a));
+
+		break;
+	}
+	case SGVariantType::String:
+		pickle.put_raw_int(0); /* Dummy value. */
+
+		if (!this->val_string.isEmpty()) {
+			pickle.put_string(this->val_string);
+		} else {
+			/* Need to insert empty string otherwise the unmarshall will get confused. */
+			pickle.put_string("");
+		}
+		break;
+		/* Print out the string list in the array. */
+	case SGVariantType::StringList:
+
+		/* Write length of list (# of strings). */
+		pickle.put_raw_int(this->val_string_list.size());
+
+		/* Write each string. */
+		for (auto i = this->val_string_list.constBegin(); i != this->val_string_list.constEnd(); i++) {
+			pickle.put_string(*i);
+		}
+
+		break;
+	default:
+		/* Plain Old Datatype. */
+		pickle.put_raw_int(sizeof (this->u));
+		pickle.put_raw_object((char *) &this->u, sizeof (this->u));
+		break;
+	}
+}
+
+
+
+
+SGVariant SGVariant::unmarshall(Pickle & pickle, SGVariantType expected_type_id)
+{
+	SGVariant result;
+
+	const char * tag = pickle.take_pickle_tag("pickle.variant");
+	const SGVariantType type_id = (SGVariantType) pickle.take_raw_int();
+
+
+	if (type_id != expected_type_id) {
+		qDebug() << "EE" PREFIX << "wrong variant type id:" << type_id << "!=" << expected_type_id;
+		assert(0);
+	}
+
+
+	/* We can just do memcpy() on union with POD fields, but
+	   non-trivial data types need to be handled separately using
+	   their constructors. */
+	switch (expected_type_id) {
+	case SGVariantType::Color: {
+		const int dummy = pickle.take_raw_int();
+
+		int r = 0;
+		int g = 0;
+		int b = 0;
+		int a = 0;
+
+		pickle.take_raw_object((char *) &r, sizeof (r));
+		pickle.take_raw_object((char *) &g, sizeof (g));
+		pickle.take_raw_object((char *) &b, sizeof (b));
+		pickle.take_raw_object((char *) &a, sizeof (a));
+
+		result = SGVariant(r, g, b, a);
+
+		break;
+	}
+	case SGVariantType::String: {
+		const int dummy = pickle.take_raw_int();
+		result = SGVariant(pickle.take_string());
+		break;
+	}
+	case SGVariantType::StringList: {
+		const int n_strings = pickle.take_raw_int();
+		for (int i = 0; i < n_strings; i++) {
+			result.val_string_list.push_back(pickle.take_string());
+		}
+
+		break;
+	}
+	default:
+		/* Plain Old Datatype. */
+		const int expected_size = pickle.take_raw_int();
+
+		/* Test that we are reading correct data. */
+		if (expected_size != sizeof (result.u)) {
+			qDebug() << "EE" PREFIX << "unexpected size of POD:" << expected_size << "!=" << sizeof (result.u);
+			assert(0);
+		}
+
+		pickle.take_raw_object((char *) &result.u, sizeof (result.u));
+		result.type_id = type_id; /* For non-trivial data types this is done by constructor. */
+		break;
+	}
+
+	return result;
 }

@@ -24,16 +24,6 @@
 
 
 
-#include <cstdint>
-
-
-
-
-#include <glib.h>
-
-
-
-
 #include <QString>
 
 
@@ -88,8 +78,6 @@ namespace SlavGPS {
 		void take_raw_object(char * target, pickle_size_t size);
 		void take_object(void * target);
 
-		void put_variant(const SGVariant & var, SGVariantType type_id);
-		SGVariant take_variant(SGVariantType expected_type_id);
 
 		void clear(void);
 
@@ -100,7 +88,7 @@ namespace SlavGPS {
 		void put_raw_int(int value);
 		int take_raw_int(void);
 
-	private:
+
 		void put_pickle_tag(const char * tag);
 		const char * take_pickle_tag(const char * expected_tag);
 
@@ -109,6 +97,7 @@ namespace SlavGPS {
 
 		void print_bytes(const char * label) const;
 
+	private:
 		int read_iter = 0;
 		QByteArray byte_array;
 		pickle_size_t data_size_ = 0;
@@ -119,7 +108,7 @@ namespace SlavGPS {
 
 	class Clipboard {
 	public:
-		static void copy(ClipboardDataType  type, LayerType layer_type, const QString & type_id, unsigned int len, const QString & text, uint8_t * data);
+		static void copy(ClipboardDataType type, LayerType layer_type, const QString & type_id, Pickle & pickle, const QString & text);
 		static void copy_selected(LayersPanel * panel);
 		static bool paste(LayersPanel * panel);
 		static ClipboardDataType get_current_type();

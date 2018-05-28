@@ -277,7 +277,8 @@ void WaypointListDialog::copy_selected(bool include_positions)
 	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
 #endif
 
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", 0, cd.str, NULL);
+	Pickle dummy;
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", dummy, cd.str);
 }
 
 
