@@ -286,9 +286,6 @@ namespace SlavGPS {
 
 		void menu_view_cache_info_cb(void);
 
-		void drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, int x, int y, GtkSelectionData * selection_data, unsigned int target_type, unsigned int time);
-
-
 
 	protected:
 

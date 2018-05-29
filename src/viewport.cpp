@@ -37,6 +37,7 @@
 #include <QWheelEvent>
 #include <QDebug>
 #include <QPainter>
+#include <QMimeData>
 
 #include <glib.h>
 
@@ -2429,4 +2430,33 @@ bool Viewport::show_latlons(const LatLonMinMax & min_max)
 bool Viewport::show_bbox(const LatLonBBox & a_bbox)
 {
 	return this->show_latlons(LatLonMinMax(a_bbox));
+}
+
+
+
+
+/* Tell QT what type of MIME data we accept. */
+void Viewport::dragEnterEvent(QDragEnterEvent * event)
+{
+	if (event->mimeData()->hasFormat("text/plain")) {
+		event->acceptProposedAction();
+	}
+
+}
+
+
+
+
+void Viewport::dropEvent(QDropEvent * event)
+{
+	const QString & text = event->mimeData()->text();
+
+	qDebug() << "II" PREFIX << "--------- drop event with text" << text;
+
+	/* If our parent window has enabled dropping, it needs to be able to handle dropped data. */
+	if (text.length()) {
+		this->window->open_file(text, false);
+	}
+
+	event->acceptProposedAction();
 }

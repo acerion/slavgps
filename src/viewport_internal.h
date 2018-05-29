@@ -71,6 +71,9 @@ namespace SlavGPS {
 		void mouseReleaseEvent(QMouseEvent * event);
 		void wheelEvent(QWheelEvent * event);
 
+		void dragEnterEvent(QDragEnterEvent * event);
+		void dropEvent(QDropEvent * event);
+
 		void draw_mouse_motion_cb(QMouseEvent * event);
 
 

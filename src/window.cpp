@@ -210,9 +210,7 @@ Window::Window()
 	QObject::connect(this->viewport, SIGNAL("scroll_event"), this, SLOT (draw_scroll_cb));
 
 	QObject::connect(this->viewport, SIGNAL("button_press_event"), this, SLOT (draw_click_cb(QMouseEvent *)));
-	QObject::connect(this->viewport, SIGNAL("button_release_event"), this, SLOT (draw_release_cb(QMouseEvent *));
-
-
+	QObject::connect(this->viewport, SIGNAL("button_release_event"), this, SLOT (draw_release_cb(QMouseEvent *)));
 
 	QObject::connect(this->layers_tree, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
 
@@ -310,22 +308,13 @@ Window::Window()
 		}
 	}
 
-#ifdef K_FIXME_RESTORE
-	gtk_window_set_default_size(this, width, height);
+	/* Drag and Drop of files are accepted only onto the viewport, nowhere else */
+	this->viewport->setAcceptDrops(true);
 
-	// Only accept Drag and Drop of files onto the viewport
-	gtk_drag_dest_set(this->viewport, GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
-	gtk_drag_dest_add_uri_targets(this->viewport);
-	QObject::connect(this->viewport, SIGNAL("drag-data-received"), NULL, SLOT (drag_data_received_cb));
 
-	// Set the default tool + mode
-	gtk_action_activate(gtk_action_group_get_action(this->action_group, "Pan"));
-	gtk_action_activate(gtk_action_group_get_action(this->action_group, "ModeMercator"));
-
-	const QString accel_file_full_path = SlavGPSLocations::get_file_full_path(VIKING_ACCELERATOR_KEY_FILE);
-	gtk_accel_map_load(accel_file_full_path.toUtf8().constData());
-#endif
-
+	/* Set the default tool + mode. */
+	this->toolbox->activate_tool("sg.tool.generic.pan");
+	this->qa_drawmode_mercator->setChecked(true);
 
 	/* Set the application icon. */
 	this->setWindowIcon(QIcon(":/icons/application.png"));
@@ -641,12 +630,9 @@ void Window::create_actions(void)
 
 		group = new QActionGroup(this);
 
-		/* kamilFIXME: select initial value in the group based on... */
-
 		this->qa_drawmode_utm = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::UTM), this);
 		this->qa_drawmode_utm->setData(QVariant((int) ViewportDrawMode::UTM));
 		this->qa_drawmode_utm->setCheckable(true);
-		this->qa_drawmode_utm->setChecked(true);
 		group->addAction(this->qa_drawmode_utm);
 		this->menu_view->addAction(this->qa_drawmode_utm);
 
@@ -1609,11 +1595,6 @@ void Window::closeEvent(QCloseEvent * ev)
 		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH, this->viewport_save_width);
 		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_HEIGHT, this->viewport_save_height);
 		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT, (int) this->viewport_save_format);
-
-#ifdef K_FIXME_RESTORE
-		const QString accel_file_full_path = SlavGPSLocations::get_file_full_path(VIKING_ACCELERATOR_KEY_FILE);
-		gtk_accel_map_save(accel_file_full_path.toUtf8().constData());
-#endif
 	}
 }
 
@@ -2250,13 +2231,14 @@ QAction * Window::get_drawmode_action(ViewportDrawMode mode)
 	case ViewportDrawMode::MERCATOR:
 		qa = this->qa_drawmode_mercator;
 		break;
-
 	case ViewportDrawMode::LATLON:
 		qa = this->qa_drawmode_latlon;
 		break;
-
-	default:
+	case ViewportDrawMode::UTM:
 		qa = this->qa_drawmode_utm;
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "unexpected draw mode" << (int) mode;
 		break;
 	}
 
@@ -2354,7 +2336,7 @@ void Window::finish_new(void)
 		}
 	}
 
-#ifdef K_FIXME_RESTORE
+#ifdef K_TODO
 	/* Maybe add a default map layer. */
 	if (Preferences::get_add_default_map_layer()) {
 		LayerMap * layer = new LayerMap();
@@ -3623,56 +3605,6 @@ void Window::keyPressEvent(QKeyEvent * ev)
 	}
 #endif
 	return;
-}
-
-
-
-
-
-enum {
-	TARGET_URIS,
-};
-void Window::drag_data_received_cb(GtkWidget * widget, GdkDragContext *context, int x, int y, GtkSelectionData * selection_data, unsigned int target_type, unsigned int time)
-{
-	bool success = false;
-#ifdef K_FIXME_RESTORE
-	if ((selection_data != NULL) && (gtk_selection_data_get_length(selection_data) > 0)) {
-		switch (target_type) {
-		case TARGET_URIS: {
-			char * str = (char *) gtk_selection_data_get_data(selection_data);
-			fprintf(stderr, "DEBUG: drag received string:%s \n", str);
-
-			// Convert string into GSList of individual entries for use with our open signal
-			char ** entries = g_strsplit(str, "\r\n", 0);
-			QStringList file_full_path;
-			int entry_runner = 0;
-			char * entry = entries[entry_runner];
-			while (entry) {
-				if (strcmp(entry, "")) {
-					// Drag+Drop gives URIs. And so in particular, %20 in place of spaces in file_full_paths
-					//  thus need to convert the text into a plain string
-					char *filename = g_filename_from_uri(entry, NULL, NULL);
-					if (filename) {
-						file_full_paths << filename;
-					}
-				}
-				entry_runner++;
-				entry = entries[entry_runner];
-			}
-
-			if (!file_full_paths.empty()) {
-				this->open_window(file_full_paths);
-			}
-
-			success = true;
-			break;
-		}
-		default: break;
-		}
-	}
-
-	gtk_drag_finish(context, success, false, time);
-#endif
 }
 
 
