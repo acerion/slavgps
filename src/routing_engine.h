@@ -58,11 +58,11 @@ namespace SlavGPS {
 
 		QString get_id(void) const { return this->id; }
 		QString get_label(void) const { return this->label; }
-		char * get_format(void) const { return this->format; }
+		QString get_format(void) const { return this->format; }
 
 		QString id;     /* The identifier of the routing engine. */
 		QString label;  /* The label of the routing engine. */
-		char * format = NULL; /* The format of the output (see gpsbabel). */
+		QString format; /* The format of the output (see gpsbabel). */
 	};
 
 

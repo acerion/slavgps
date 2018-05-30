@@ -206,8 +206,8 @@ bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon &
 {
 	const QString uri = this->get_url_for_coords(start, end);
 
-	char * format_ = this->get_format();
-	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
+	const QString format_ = this->get_format();
+	ProcessOptions po(NULL, NULL, format_, uri);
 	bool ret = a_babel_convert_import(trw, &po, &this->dl_options, NULL);
 
 	return ret;
@@ -320,8 +320,8 @@ bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 	const QString uri = this->get_url_for_track(trk);
 
 	/* Convert and insert data in model. */
-	char * format_ = this->get_format();
-	ProcessOptions po(NULL, NULL, format_, uri); /* kamil FIXME: memory leak through these pointers? */
+	const QString format_ = this->get_format();
+	ProcessOptions po(NULL, NULL, format_, uri);
 	bool ret = a_babel_convert_import(trw, &po, &this->dl_options, NULL);
 
 	return ret;

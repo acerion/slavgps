@@ -222,7 +222,7 @@ static ParameterSpecification prefs[] = {
 
 static time_t g_planet_import_time;
 static std::mutex tp_mutex;
-static GHashTable *requests = NULL;
+static QHash<QString, bool> mapnik_requests; /* Just for storing of QStrings. */
 
 
 
@@ -256,8 +256,6 @@ void SlavGPS::vik_mapnik_layer_init(void)
  */
 void SlavGPS::vik_mapnik_layer_post_init(void)
 {
-	/* Just storing keys only. */
-	requests = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
 	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".rerender_after").u.val_uint;
 	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * hours * 60 * 60).toTime_t(); /* In local time zone. */
@@ -614,7 +612,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, TileInfo * ti_ul)
 
 class RenderInfo : public BackgroundJob {
 public:
-	RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul, const char * request);
+	RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul, const QString & new_request);
 
 	void run(void);
 
@@ -624,13 +622,13 @@ public:
 	Coord coord_br;
 	TileInfo ti_ul;
 
-	const char * request = NULL;
+	QString request;
 };
 
 
 
 
-RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul_, const char * request_)
+RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul_, const QString & new_request)
 {
 	this->n_items = 1;
 
@@ -640,7 +638,7 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 	this->coord_br = new_coord_br;
 	this->ti_ul = *ti_ul_;
 
-	this->request = request_;
+	this->request = new_request;
 }
 
 
@@ -657,14 +655,13 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInf
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
 	if (pixmap.isNull()) {
-#ifdef K_FIXME_RESTORE
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
-		pixmap = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(&vikmapniklayer_pixmap, false, NULL), this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-#endif
+		const QPixmap substitute = QPixmap(":/icons/layer/mapnik.png");
+		pixmap = substitute.scaled(this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
 	this->possibly_save_pixmap(pixmap, ti_ul);
 
-	/* NB Mapnik can apply alpha, but use our own function for now. */
+	/* TODO: Mapnik can apply alpha, but use our own function for now. */
 	if (this->alpha < 255) {
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
@@ -684,7 +681,7 @@ void RenderInfo::run(void)
 	}
 
 	tp_mutex.lock();
-	g_hash_table_remove(requests, this->request);
+	mapnik_requests.remove(this->request);
 	tp_mutex.unlock();
 
 	if (!end_job) {
@@ -696,7 +693,7 @@ void RenderInfo::run(void)
 
 
 
-#define REQUEST_HASHKEY_FORMAT "%d-%d-%d-%d-%d"
+#define REQUEST_HASHKEY_FORMAT "%1-%2-%3-%4-%5"
 
 
 
@@ -707,22 +704,19 @@ void RenderInfo::run(void)
 void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, const QString & file_name)
 {
 	/* Create request. */
-	unsigned int nn = (file_name.isEmpty() ? 0 : g_str_hash(file_name.toUtf8().constData()));
-	char *request = g_strdup_printf(REQUEST_HASHKEY_FORMAT, x, y, z, zoom, nn);
+	const unsigned int nn = file_name.isEmpty() ? 0 : qHash(file_name, 0);
+	const QString request = QString(REQUEST_HASHKEY_FORMAT).arg(x).arg(y).arg(z).arg(zoom).arg(nn);
 
 	tp_mutex.lock();
 
-	if (g_hash_table_lookup_extended(requests, request, NULL, NULL)) {
-		free(request);
+	if (mapnik_requests.contains(request)) {
 		tp_mutex.unlock();
 		return;
 	}
 
 	RenderInfo * ri = new RenderInfo(this, coord_ul, coord_br, ti_ul, request);
+	mapnik_requests.insert(request, true);
 
-#ifdef K_FIXME_RESTORE
-	g_hash_table_insert(requests, request, NULL);
-#endif
 	tp_mutex.unlock();
 
 	const QString base_name = FileUtils::get_base_name(file_name);
@@ -900,14 +894,8 @@ LayerMapnik::~LayerMapnik()
 
 
 
-typedef struct {
-	LayerMapnik * lmk;
-} menu_array_values;
 
-
-
-
-static void mapnik_layer_flush_memory(menu_array_values * values)
+void LayerMapnik::flush_memory_cb(void)
 {
 	MapCache::flush_type(MapTypeID::MapnikRender);
 }
@@ -915,40 +903,37 @@ static void mapnik_layer_flush_memory(menu_array_values * values)
 
 
 
-static void mapnik_layer_reload(menu_array_values * values)
+void LayerMapnik::reload_cb(void)
 {
-	LayerMapnik * lmk = values->lmk;
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	lmk->post_read(viewport, false);
-	lmk->draw_tree_item(viewport, false, false);
+	this->post_read(viewport, false);
+	this->draw_tree_item(viewport, false, false);
 }
 
 
 
 
 /**
- * Force carto run.
- *
- * Most carto projects will consist of many files.
- * ATM don't have a way of detecting when any of the included files have changed.
- * Thus allow a manual method to force re-running carto.
- */
-static void mapnik_layer_carto(menu_array_values * values)
-{
-	LayerMapnik * lmk = values->lmk;
+   Force carto run
 
+   Most carto projects will consist of many files.
+   ATM don't have a way of detecting when any of the included files have changed.
+   Thus allow a manual method to force re-running carto.
+*/
+void LayerMapnik::run_carto_cb(void)
+{
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
 	/* Don't load the XML config if carto load fails. */
-	if (!lmk->carto_load()) {
+	if (!this->carto_load()) {
 		return;
 	}
-	const QString ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml, lmk->tile_size_x, lmk->tile_size_x);
+	const QString ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
 	if (!ans.isEmpty()) {
-		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(ans), lmk->get_window());
+		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
 	} else {
-		lmk->draw_tree_item(viewport, false, false);
+		this->draw_tree_item(viewport, false, false);
 	}
 }
 
@@ -956,18 +941,16 @@ static void mapnik_layer_carto(menu_array_values * values)
 
 
 /**
- * Show Mapnik configuration parameters.
- */
-static void mapnik_layer_information(menu_array_values * values)
+   Show Mapnik configuration parameters
+*/
+void LayerMapnik::information_cb(void)
 {
-	LayerMapnik * lmk = values->lmk;
-
-	if (!lmk->mi) {
+	if (!this->mi) {
 		return;
 	}
-	QStringList * params = mapnik_interface_get_parameters(lmk->mi);
+	QStringList * params = mapnik_interface_get_parameters(this->mi);
 	if (params->size()) {
-		a_dialog_list(QObject::tr("Mapnik Information"), *params, 1, lmk->get_window());
+		a_dialog_list(QObject::tr("Mapnik Information"), *params, 1, this->get_window());
 	}
 	delete params;
 }
@@ -975,10 +958,9 @@ static void mapnik_layer_information(menu_array_values * values)
 
 
 
-static void mapnik_layer_about(menu_array_values * values)
+void LayerMapnik::about_cb(void)
 {
-	LayerMapnik * lmk = values->lmk;
-	Dialog::info(mapnik_interface_about(), lmk->get_window());
+	Dialog::info(mapnik_interface_about(), this->get_window());
 }
 
 
@@ -986,47 +968,35 @@ static void mapnik_layer_about(menu_array_values * values)
 
 void LayerMapnik::add_menu_items(QMenu & menu)
 {
-	static menu_array_values values = {
-		this,
-	};
-
 	QAction * action = NULL;
 
 	/* Typical users shouldn't need to use this functionality - so debug only ATM. */
 	if (vik_debug) {
 		action = new QAction(QObject::tr("&Flush Memory Cache"), this);
 		action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
-#ifdef K_FIXME_RESTORE
-		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_flush_memory));
-#endif
+		QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (flush_memory_cb()));
 		menu.addAction(action);
 	}
 
 	action = new QAction(QObject::tr("Re&fresh"), this);
-#ifdef K_FIXME_RESTORE
-	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_reload));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (reload_cb()));
 	menu.addAction(action);
+
 
 	if ("" != this->filename_css) {
 		action = new QAction(QObject::tr("&Run Carto Command"), this);
 		action->setIcon(QIcon::fromTheme("GTK_STOCK_EXECUTE"));
-#ifdef K_FIXME_RESTORE
-		QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_carto));
-#endif
+		QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (run_carto_cb()));
 		menu.addAction(action);
 	}
 
 	action = new QAction(QObject::tr("&Info"), this);
-#ifdef K_FIXME_RESTORE
-	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_information));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (information_cb()));
 	menu.addAction(action);
 
+
 	action = new QAction(QObject::tr("&About"), this);
-#ifdef K_FIXME_RESTORE
-	QObject::connect(action, SIGNAL (triggered(bool)), &values, SLOT (mapnik_layer_about));
-#endif
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (about_cb()));
 	menu.addAction(action);
 }
 
@@ -1149,7 +1119,7 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 			this->right_click_menu->addAction(action);
 
 			action = new QAction(QObject::tr("&Info"), this);
-			action->setIcon(QIcon::fromTheme("GTK_STOCK_INFO"));
+			action->setIcon(QIcon::fromTheme("dialog-information"));
 			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_tile_info_cb));
 			this->right_click_menu->addAction(action);
 		}

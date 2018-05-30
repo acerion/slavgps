@@ -32,9 +32,6 @@
 
 #include <cstdlib>
 
-#include <glib.h>
-#include <glib/gstdio.h>
-
 #include "layer_trw.h"
 #include "babel.h"
 #include "routing_engine.h"
@@ -43,68 +40,6 @@
 
 
 using namespace SlavGPS;
-
-
-
-
-#ifdef K_FIXME_RESTORE
-static void vik_routing_engine_set_property(void      * object,
-					    unsigned int   property_id,
-					    const GValue * value,
-					    GParamSpec   * pspec)
-{
-	VikRoutingPrivate * priv = VIK_ROUTING_ENGINE_PRIVATE (object);
-
-	switch (property_id) {
-	case PROP_ID:
-		priv->id = g_value_get_string(value);
-		break;
-
-	case PROP_LABEL:
-		priv->label = g_value_get_string(value);
-		break;
-
-	case PROP_FORMAT:
-		free(priv->format);
-		priv->format = g_strdup(g_value_get_string(value));
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-
-
-
-static void vik_routing_engine_get_property(void      * object,
-					    unsigned int   property_id,
-					    GValue       * value,
-					    GParamSpec   * pspec)
-{
-	VikRoutingPrivate * priv = VIK_ROUTING_ENGINE_PRIVATE (object);
-
-	switch (property_id) {
-	case PROP_ID:
-		g_value_set_string(value, priv->id);
-		break;
-
-	case PROP_LABEL:
-		g_value_set_string(value, priv->label);
-		break;
-
-	case PROP_FORMAT:
-		g_value_set_string(value, priv->format);
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-#endif
 
 
 
@@ -118,8 +53,6 @@ RoutingEngine::RoutingEngine()
 
 RoutingEngine::~RoutingEngine()
 {
-	free(this->format);
-	this->format = NULL;
 }
 
 

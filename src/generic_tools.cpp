@@ -160,8 +160,6 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 #if 1
 	/* Fill between middle and innermost circle. */
 	{
-		// "#2255cc", GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER;
-
 		this->viewport->compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
 		float start_angle = (90 - RAD2DEG(baseangle)) * 16;
 		float span_angle = -RAD2DEG(angle) * 16;
@@ -886,7 +884,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 				if (selected_item->tree_item_type == TreeItemType::SUBLAYER
 				    || selected_item->to_layer()->type == LayerType::TRW) {
 
-					tree_view->unselect(selected_item->index);
+					tree_view->deselect(selected_item->index);
 					if (this->window->clear_highlight()) {
 						this->window->draw_tree_items();
 					}
@@ -938,7 +936,7 @@ ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent
 				if (selected_item->tree_item_type == TreeItemType::SUBLAYER
 				    || selected_item->to_layer()->type == LayerType::TRW) {
 
-					tree_view->unselect(selected_item->index);
+					tree_view->deselect(selected_item->index);
 					if (this->window->clear_highlight()) {
 						this->window->draw_tree_items();
 					}

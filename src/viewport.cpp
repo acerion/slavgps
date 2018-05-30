@@ -343,9 +343,13 @@ QPen Viewport::get_highlight_pen(void) const
 void Viewport::set_highlight_thickness(int w)
 {
 	this->highlight_pen.setWidth(w);
-	// GDK_LINE_SOLID
-	// GDK_CAP_ROUND
-	// GDK_JOIN_ROUND
+
+	this->highlight_pen.setCapStyle(Qt::RoundCap);
+	this->highlight_pen.setJoinStyle(Qt::RoundJoin);
+
+#if 0   /* This line style is used by default. */
+	this->highlight_pen.setStyle(Qt::SolidLine);
+#endif
 }
 
 

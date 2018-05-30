@@ -26,7 +26,11 @@
 
 #include <cstdint>
 
+#include <QObject>
+
 #include "layer.h"
+#include "layer_interface.h"
+#include "layer_tool.h"
 #include "mapnik_interface.h"
 
 
@@ -55,6 +59,7 @@ namespace SlavGPS {
 
 
 	class LayerMapnik : public Layer {
+		Q_OBJECT
 	public:
 		LayerMapnik();
 		~LayerMapnik();
@@ -103,6 +108,12 @@ namespace SlavGPS {
 		Coord rerender_ul;
 		Coord rerender_br;
 		double rerender_zoom = 0;
+
+		void flush_memory_cb(void);
+		void reload_cb(void);
+		void run_carto_cb(void);
+		void information_cb(void);
+		void about_cb(void);
 	};
 
 

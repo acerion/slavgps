@@ -1156,11 +1156,11 @@ QPen SGUtils::new_pen(const QColor & color, int width)
 {
 	QPen pen(color);
 	pen.setWidth(width);
+	pen.setCapStyle(Qt::RoundCap);
+	pen.setJoinStyle(Qt::RoundJoin);
 
-#ifdef K_FIXME_RESTORE /* apply these attributes to a pen. */
-	GDK_LINE_SOLID
-	GDK_CAP_ROUND
-	GDK_JOIN_ROUND
+#if 0   /* This line style is used by default. */
+	pen.setStyle(Qt::SolidLine);
 #endif
 
 	return pen;

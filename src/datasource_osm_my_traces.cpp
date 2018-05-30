@@ -467,7 +467,7 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 
 	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
-	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(view)), GTK_SELECTION_MULTIPLE);
+	gtk_tree_selection_set_mode(view->selectionModel(), GTK_SELECTION_MULTIPLE);
 	g_object_unref(store);
 
 	GtkWidget *scrolledwindow = gtk_scrolled_window_new (NULL, NULL);

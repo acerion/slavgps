@@ -40,10 +40,9 @@
 #include "goto_tool_xml.h"
 #include "goto.h"
 #include "util.h"
-#ifdef K_INCLUDES
 #include "routing.h"
 #include "routing_engine_web.h"
-#endif
+
 
 
 
@@ -184,17 +183,17 @@ void SlavGPS::osm_init(void)
 	/* Not really OSM but can't be bothered to create somewhere else to put it... */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
 
-#ifdef K_FIXME_RESTORE
+
 	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
-	RoutingEngine * osrm = (RoutingEngine *) g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
-								    "id", "osrm",
-								    "label", "OSRM",
-								    "format", "gpx",
-								    "url-base", "http://router.project-osrm.org/viaroute?output=gpx",
-								    "url-start-ll", "&loc=%s,%s",
-								    "url-stop-ll", "&loc=%s,%s",
-								    "url-via-ll", "&loc=%s,%s",
-								    NULL);
+	RoutingEngineWeb * osrm = new RoutingEngineWeb();
+	/* TODO: review and improve these assignments and format specifiers. */
+	osrm->id = "osrm";
+	osrm->label = "OSRM";
+	osrm->format = "gpx";
+	osrm->url_base = "http://router.project-osrm.org/viaroute?output=gpx";
+	osrm->url_start_ll_fmt = "&loc=%s,%s";
+	osrm->url_stop_ll_fmt = "&loc=%s,%s";
+	osrm->url_via_ll_fmt = "&loc=%s,%s";
+
 	Routing::register_engine(osrm);
-#endif
 }

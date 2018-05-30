@@ -73,7 +73,6 @@ namespace SlavGPS {
 		TreeIndex const & insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name);
 		TreeItem * get_tree_item(TreeIndex const & item_index);
 
-		TreeIndex * get_index_at_pos(int x, int y);
 		TreeIndex * get_index_from_path_str(char const * path_str);
 		TreeItem * get_selected_tree_item(void);
 
@@ -89,7 +88,7 @@ namespace SlavGPS {
 
 		void select(TreeIndex const & index);
 		void select_and_expose(TreeIndex  const & index);
-		void unselect(TreeIndex const & index);
+		void deselect(TreeIndex const & index);
 		bool move(TreeIndex const & index, bool up);
 
 		void detach_item(TreeItem * item);

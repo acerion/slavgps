@@ -1209,13 +1209,16 @@ void LayerTRWPainter::make_track_pens(void)
 	int new_track_width = (this->track_thickness < 2) ? 2 : this->track_thickness;
 	this->current_track_pen = QPen(QColor("#FF0000"));
 	this->current_track_pen.setWidth(new_track_width);
-	//gdk_gc_set_line_attributes(this->current_trk_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
-
+	this->current_track_pen.setCapStyle(Qt::RoundCap);
+	this->current_track_pen.setJoinStyle(Qt::RoundJoin);
+	this->current_track_pen.setStyle(Qt::DashLine);
 
 	/* 'new_point' pen is exactly the same as the current track pen. */
 	this->current_track_new_point_pen = QPen(QColor("#FF0000"));
 	this->current_track_new_point_pen.setWidth(new_track_width);
-	//gdk_gc_set_line_attributes(this->current_trk_new_point_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+	this->current_track_new_point_pen.setCapStyle(Qt::RoundCap);
+	this->current_track_new_point_pen.setJoinStyle(Qt::RoundJoin);
+	this->current_track_new_point_pen.setStyle(Qt::DashLine);
 
 	this->track_pens.clear();
 	this->track_pens.resize((int) LayerTRWTrackGraphics::Max);

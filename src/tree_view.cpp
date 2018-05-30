@@ -372,11 +372,9 @@ void TreeView::select(TreeIndex const & index)
 
 
 
-void TreeView::unselect(TreeIndex const & index)
+void TreeView::deselect(TreeIndex const & index)
 {
-#ifdef K_FIXME_RESTORE
-	gtk_tree_selection_unselect_iter(gtk_tree_view_get_selection(this), iter);
-#endif
+	this->selectionModel()->select(index, QItemSelectionModel::Deselect);
 }
 
 
@@ -796,7 +794,7 @@ TreeView::TreeView(QWidget * parent_widget) : QTreeView(parent_widget)
 	   See vik_tree_view_sort_children(). */
 
 	gtk_tree_view_set_reorderable(this, true);
-	QObject::connect(gtk_tree_view_get_selection(this), SIGNAL("changed"), this, SLOT (select_cb));
+	QObject::connect(this->selectionModel(), SIGNAL("changed"), this, SLOT (select_cb));
 #endif
 }
 
@@ -1050,25 +1048,6 @@ void TreeView::add_columns()
 	QObject::connect(renderer, SIGNAL("toggled"), this, SLOT (vik_tree_view_toggled_cb));
 }
 #endif
-
-
-
-
-TreeIndex * TreeView::get_index_at_pos(int pos_x, int pos_y)
-{
-	TreeIndex * index = NULL;
-#ifdef K_FIXME_RESTORE
-	GtkTreePath * path;
-	(void) gtk_tree_view_get_path_at_pos(this, pos_x, pos_y, &path, NULL, NULL, NULL);
-	if (!path) {
-		return NULL;
-	}
-
-	gtk_tree_model_get_iter(GTK_TREE_MODEL (this->tree_model), iter, path);
-	gtk_tree_path_free(path);
-#endif
-	return index;
-}
 
 
 
