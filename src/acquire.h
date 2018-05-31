@@ -122,7 +122,7 @@ namespace SlavGPS {
 
 
 	/* Parent class for data sources that have the same process
-	   function: a_babel_convert_import(), called either directly or
+	   function: universal_import_fn(), called either directly or
 	   indirectly. */
 	class DataSourceBabel : public DataSource {
 	public:

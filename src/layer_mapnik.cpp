@@ -1076,9 +1076,8 @@ void LayerMapnik::tile_info()
 LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAPNIK)
 {
 	this->id_string = "sg.tool.layer_mapnik.feature";
-#ifdef K_FIXME_RESTORE
-	this->action_icon_path   = GTK_STOCK_INFO;
-#endif
+
+	this->action_icon_path   = ":/icons/layer_tool/mapnik_feature.png";
 	this->action_label       = QObject::tr("&Mapnik Features");
 	this->action_tooltip     = QObject::tr("Mapnik Features");
 	// this->action_accelerator = ...; /* Empty accelerator. */

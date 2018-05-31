@@ -648,9 +648,9 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 				const QString url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
 				/* NB download type is GPX (or a compressed version). */
-				ProcessOptions my_po = *process_options;
-				my_po.url = url;
-				convert_result = a_babel_convert_import(target_layer, &my_po, &dl_options, babel_something);
+				ProcessOptions babel_action = *process_options;
+				babel_action.url = url;
+				convert_result = babel_action.import_from_url(target_layer, &dl_options);
 				/* TODO investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 

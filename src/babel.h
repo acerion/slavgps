@@ -68,6 +68,13 @@ namespace SlavGPS {
 		ProcessOptions(const QString & babel_args, const QString & input_file_name, const QString & input_file_type, const QString & url);
 		~ProcessOptions() {};
 
+		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, BabelSomething * babel_something);
+		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options);
+		bool import_from_local_file(LayerTRW * trw, BabelSomething * babel_something);
+		bool import_with_shell_command(LayerTRW * trw, BabelSomething * babel_something);
+
+		bool turn_off_device(void);
+
 		QString babel_args;      /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
 		QString input_file_name; /* Input filename (or device port e.g. /dev/ttyS0). */
 		QString input_file_type; /* If empty, then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
@@ -127,7 +134,7 @@ namespace SlavGPS {
 
 
 
-	bool a_babel_convert_import(LayerTRW * trw, ProcessOptions *process_options, DownloadOptions * dl_options, BabelSomething * babel_something);
+
 	bool a_babel_convert_export(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelSomething * babel_something);
 
 

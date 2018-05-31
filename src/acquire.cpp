@@ -298,8 +298,8 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 					if (!babel_args_off.isEmpty()) {
 						/* Turn off. */
-						ProcessOptions off_po(babel_args_off, file_path_off, NULL, NULL);
-						a_babel_convert_import(NULL, &off_po, NULL, NULL);
+						ProcessOptions off_options(babel_args_off, file_path_off, NULL, NULL);
+						off_options.turn_off_device();
 					}
 				}
 #endif
@@ -601,7 +601,7 @@ void Acquire::uninit(void)
 
 
 
-bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something)
+bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * babel_action, DownloadOptions * download_options, BabelSomething * babel_something)
 {
-	return a_babel_convert_import(trw, process_options, download_options, babel_something);
+	return babel_action->universal_import_fn(trw, download_options, babel_something);
 }

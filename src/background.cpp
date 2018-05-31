@@ -187,7 +187,7 @@ bool BackgroundJob::test_termination_condition(void)
 		return true;
 	}
 
-#ifdef K_FIXME_RESTORE
+#ifdef K_FIXME_RESTORE /* Should we call ::cleanup_on_cancel() in test function? */
 	if (this->remove_from_list) {
 		this->cleanup_on_cancel();
 		qDebug() << "WW" PREFIX << "background job termination: remove from list";
@@ -308,11 +308,6 @@ void Background::post_init(void)
 	qDebug() << "II" PREFIX << "setting threads limit to" << max_threads;
 	thread_pool.setMaxThreadCount(max_threads);
 	thread_pool.setExpiryTimeout(-1); /* No expiry. */
-
-#ifdef K_FIXME_RESTORE
-	/* Don't destroy win. */
-	QObject::connect(bgwindow, SIGNAL("delete-event"), NULL, SLOT (gtk_widget_hide_on_delete));
-#endif
 }
 
 

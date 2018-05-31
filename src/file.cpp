@@ -795,15 +795,17 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
-			ProcessOptions po("-i kml", full_path, NULL, NULL);
-			if (! (success = a_babel_convert_import(layer, &po, NULL, NULL))) {
+			ProcessOptions babel_action("-i kml", full_path, NULL, NULL);
+			success = babel_action.import_from_local_file(layer, NULL);
+			if (!success) {
 				load_answer = FileLoadResult::GPSBABEL_FAILURE;
 			}
 		}
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */
 		else if (FileUtils::has_extension(full_path, ".gpx") || check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			if (! (success = GPX::read_file(file, layer))) {
+			success = GPX::read_file(file, layer);
+			if (!success) {
 				load_answer = FileLoadResult::GPX_FAILURE;
 			}
 		} else {
