@@ -249,7 +249,7 @@ namespace SlavGPS {
 
 
 
-	class GPSSession : public QRunnable, public BabelSomething {
+	class GPSSession : public QRunnable, public AcquireTool {
 	public:
 		GPSSession(GPSDirection dir, LayerTRW * trw, Track * track, const QString & port, Viewport * viewport, bool in_progress);
 

@@ -557,7 +557,7 @@ void DataSourceMyOSMDialog::set_in_current_view_property(std::list<GPXMetaData *
 
 
 
-bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something)
+bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something)
 {
 	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
 

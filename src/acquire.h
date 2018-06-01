@@ -66,7 +66,7 @@ namespace SlavGPS {
 	/**
 	   Global data structure used to expose the progress dialog to the worker thread.
 	*/
-	class AcquireProcess : public BabelSomething {
+	class AcquireProcess : public AcquireTool {
 		Q_OBJECT
 	public:
 		AcquireProcess() {};
@@ -103,7 +103,7 @@ namespace SlavGPS {
 		virtual ~DataSource() {};
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something) { return false; };
+		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something) { return false; };
 		virtual void progress_func(BabelProgressCode code, void * data, AcquireProcess * acquiring) { return; };
 		virtual void cleanup(void * data) { return; };
 
@@ -130,7 +130,7 @@ namespace SlavGPS {
 		~DataSourceBabel() {};
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something);
+		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something);
 		virtual void cleanup(void * data) { return; };
 	};
 

@@ -1065,7 +1065,10 @@ void GPSSession::run(void)
 		ProcessOptions babel_action(this->babel_args, this->port, NULL, NULL);
 		result = babel_action.universal_import_fn(this->trw, NULL, this);
 	} else {
-		result = a_babel_convert_export(this->trw, this->trk, this->babel_args, this->port, this);
+		ProcessOptions export_options;
+		export_options.babel_args = this->babel_args;
+		export_options.output_file_full_path = this->port;
+		result = export_options.universal_export_fn(this->trw, this->trk, this);
 	}
 
 	if (!result) {

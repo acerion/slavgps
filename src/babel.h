@@ -45,7 +45,7 @@ namespace SlavGPS {
 
 	class LayerTRW;
 	class Track;
-	class BabelSomething;
+	class AcquireTool;
 
 
 
@@ -68,10 +68,12 @@ namespace SlavGPS {
 		ProcessOptions(const QString & babel_args, const QString & input_file_name, const QString & input_file_type, const QString & url);
 		~ProcessOptions() {};
 
-		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, BabelSomething * babel_something);
+		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator);
 		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options);
-		bool import_from_local_file(LayerTRW * trw, BabelSomething * babel_something);
-		bool import_with_shell_command(LayerTRW * trw, BabelSomething * babel_something);
+		bool import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator);
+		bool import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator);
+
+		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * babel_something);
 
 		bool turn_off_device(void);
 
@@ -81,6 +83,7 @@ namespace SlavGPS {
 		QString url;             /* URL input rather than a filename. */
 		QString babel_filters;   /* Optional filter arguments to gpsbabel. */
 		QString shell_command;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
+		QString output_file_full_path;
 	};
 
 
@@ -134,12 +137,6 @@ namespace SlavGPS {
 
 
 
-
-	bool a_babel_convert_export(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelSomething * babel_something);
-
-
-
-
 	class Babel {
 	public:
 		Babel() {};
@@ -157,7 +154,7 @@ namespace SlavGPS {
 		void get_gpsbabel_path_from_preferences(void);
 
 		bool set_program_name(QString & program, QStringList & args);
-		bool convert_through_intermediate_file(const QString & program, const QStringList & args, BabelSomething * babel_something, LayerTRW * trw, const QString & intermediate_file_path);
+		bool convert_through_intermediate_file(const QString & program, const QStringList & args, AcquireTool * progress_indicator, LayerTRW * trw, const QString & intermediate_file_path);
 
 		QString gpsbabel_path; /* Path to gpsbabel. */
 		QString unbuffer_path; /* Path to unbuffer. */
@@ -173,14 +170,24 @@ namespace SlavGPS {
 
 
 
-
-	class BabelConverter : public QObject {
+	class AcquireTool : public QObject {
 		Q_OBJECT
 	public:
-		BabelConverter(const QString & program, const QStringList & args, BabelSomething * babel_something);
-		~BabelConverter();
+		AcquireTool() {};
+		virtual void import_progress_cb(BabelProgressCode code, void * data) { return; };
+		virtual void export_progress_cb(BabelProgressCode code, void * data) { return; };
+	};
 
-		bool run_conversion(bool do_import);
+
+
+
+	class BabelProcess : public AcquireTool {
+		Q_OBJECT
+	public:
+		BabelProcess(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator);
+		~BabelProcess();
+
+		bool run_process(bool do_import);
 
 		QProcess * process = NULL;
 
@@ -191,27 +198,16 @@ namespace SlavGPS {
 		void read_stdout_cb(void);
 
 	private:
-		BabelSomething * babel_something = NULL;
+		AcquireTool * progress_indicator = NULL;
 	};
 
 
 
 
-	class BabelSomething : public QObject {
-		Q_OBJECT
+	class BabelFeatureLoader : public BabelProcess {
 	public:
-		BabelSomething() {};
-		virtual void import_progress_cb(BabelProgressCode code, void * data) { return; };
-		virtual void export_progress_cb(BabelProgressCode code, void * data) { return; };
-	};
-
-
-
-
-	class BabelFeatureLoader : public BabelSomething {
-		Q_OBJECT
-	public:
-		BabelFeatureLoader() {};
+		BabelFeatureLoader(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator)
+			: BabelProcess(program, args, NULL) {};
 		void import_progress_cb(BabelProgressCode code, void * data);
 		void export_progress_cb(BabelProgressCode code, void * data) { return; };
 	};

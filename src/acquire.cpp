@@ -601,7 +601,7 @@ void Acquire::uninit(void)
 
 
 
-bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * babel_action, DownloadOptions * download_options, BabelSomething * babel_something)
+bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * babel_action, DownloadOptions * download_options, AcquireTool * progress_indicator)
 {
-	return babel_action->universal_import_fn(trw, download_options, babel_something);
+	return babel_action->universal_import_fn(trw, download_options, progress_indicator);
 }

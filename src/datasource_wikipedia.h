@@ -41,7 +41,7 @@ namespace SlavGPS {
 		~DataSourceWikipedia() {};
 
 		/* This data source does not provide configuration dialog. */
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, BabelSomething * babel_something);
+		bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something);
 	};
 
 

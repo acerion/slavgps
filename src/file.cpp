@@ -908,26 +908,33 @@ bool VikFile::export_track(Track * trk, const QString & file_full_path, SGFileTy
 
 static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
-	bool result = false;
-	const KMLExportUnits units = Preferences::get_kml_export_units();
+	bool status = true;
 
+	ProcessOptions export_options;
+	export_options.output_file_full_path = file_full_path;
+
+	const KMLExportUnits units = Preferences::get_kml_export_units();
 	switch (units) {
 	case KMLExportUnits::Metric:
-		result = a_babel_convert_export(trw, NULL, "-o kml,units=m", file_full_path, NULL);
+		export_options.babel_args = "-o kml,units=m";
 		break;
 	case KMLExportUnits::Statute:
-		result = a_babel_convert_export(trw, NULL, "-o kml", file_full_path, NULL);
+		export_options.babel_args = "-o kml";
 		break;
 	case KMLExportUnits::Nautical:
-		result = a_babel_convert_export(trw, NULL, "-o kml,units=n", file_full_path, NULL);
+		export_options.babel_args = "-o kml,units=n";
 		break;
 	default:
 		qDebug() << "EE" PREFIX << "invalid KML Export units" << (int) units;
-		result = false;
+		status = false;
 		break;
 	}
 
-	return result;
+	if (status) {
+		status = export_options.universal_export_fn(trw, NULL, NULL);
+	}
+
+	return status;
 }
 
 
@@ -994,13 +1001,15 @@ bool VikFile::export_(LayerTRW * trw, const QString & file_full_path, SGFileType
 
 bool VikFile::export_with_babel(LayerTRW * trw, const QString & full_output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints)
 {
-	const QString babel_args = QString("%1 %2 %3 -o %4")
+	ProcessOptions export_options;
+	export_options.babel_args = QString("%1 %2 %3 -o %4")
 		.arg(tracks ? "-t" : "")
 		.arg(routes ? "-r" : "")
 		.arg(waypoints ? "-w" : "")
-		.arg(output_file_type);
+		.arg(output_file_type);;
+	export_options.output_file_full_path = full_output_file_path;
 
-	return a_babel_convert_export(trw, NULL, babel_args, full_output_file_path, NULL);
+	return export_options.universal_export_fn(trw, NULL, NULL);
 }
 
 

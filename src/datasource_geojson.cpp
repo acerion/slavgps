@@ -128,7 +128,7 @@ ProcessOptions * DataSourceGeoJSONDialog::get_process_options(void)
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoJSON::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * unused, BabelSomething * babel_something)
+bool DataSourceGeoJSON::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * unused, AcquireTool * babel_something)
 {
 	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
 

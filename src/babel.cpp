@@ -188,7 +188,7 @@ bool Babel::set_program_name(QString & program, QStringList & args)
  *
  * Returns: %true on success.
  */
-bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelSomething * babel_something)
+bool a_babel_convert(LayerTRW * trw, const QString & babel_args, AcquireTool * progress_indicator)
 {
 	bool ret = false;
 	const QString bargs = babel_args + " -i gpx";
@@ -196,7 +196,7 @@ bool a_babel_convert(LayerTRW * trw, const QString & babel_args, BabelSomething 
 
 	if (!name_src.isEmpty()) {
 		ProcessOptions babel_action(bargs, name_src, NULL, NULL);
-		ret = babel_action.universal_import_fn(trw, (DownloadOptions *) unused, babel_something);
+		ret = babel_action.universal_import_fn(trw, (DownloadOptions *) unused, progress_indicator);
 		QDir::root().remove(name_src);
 	}
 
@@ -244,12 +244,12 @@ static void babel_watch(GPid pid, int status, void * cb_data)
    \return true on success
    \return false otherwise
 */
-bool Babel::convert_through_intermediate_file(const QString & program, const QStringList & args, BabelSomething * babel_something, LayerTRW * trw, const QString & intermediate_file_path)
+bool Babel::convert_through_intermediate_file(const QString & program, const QStringList & args, AcquireTool * progress_indicator, LayerTRW * trw, const QString & intermediate_file_path)
 {
 	qDebug().nospace() << "II: Babel: convert through intermediate file: will write to intermediate file '" << intermediate_file_path << "'";
 
-	BabelConverter converter(program, args, babel_something);
-	if (!converter.run_conversion(true)) {
+	BabelProcess converter(program, args, progress_indicator);
+	if (!converter.run_process(true)) {
 		qDebug() << "EE: Babel: convert through intermediate file: conversion failed";
 		return false;
 	}
@@ -295,7 +295,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
  *
  * Returns: %true on success.
  */
-bool ProcessOptions::import_from_local_file(LayerTRW * trw, BabelSomething * babel_something)
+bool ProcessOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator)
 {
 	qDebug() << "II" PREFIX << "importing from local file" << this->input_file_name;
 
@@ -343,7 +343,7 @@ bool ProcessOptions::import_from_local_file(LayerTRW * trw, BabelSomething * bab
 	args << intermediate_file_path;
 
 
-	const bool ret = babel.convert_through_intermediate_file(program, args, babel_something, trw, intermediate_file_path);
+	const bool ret = babel.convert_through_intermediate_file(program, args, progress_indicator, trw, intermediate_file_path);
 
 	intermediate_file.remove(); /* Close and remove. */
 
@@ -367,7 +367,7 @@ bool ProcessOptions::import_from_local_file(LayerTRW * trw, BabelSomething * bab
  * Uses Babel::convert_through_intermediate_file() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool ProcessOptions::import_with_shell_command(LayerTRW * trw, BabelSomething * babel_something)
+bool ProcessOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator)
 {
 	qDebug() << "II" PREFIX << "using shell command" << this->shell_command;
 
@@ -390,7 +390,7 @@ bool ProcessOptions::import_with_shell_command(LayerTRW * trw, BabelSomething * 
 
 	const QString program(BASH_LOCATION);
 	const QStringList args(QStringList() << "-c" << full_shell_command);
-	return babel.convert_through_intermediate_file(program, args, babel_something, trw, intermediate_file_fullpath);
+	return babel.convert_through_intermediate_file(program, args, progress_indicator, trw, intermediate_file_fullpath);
 }
 
 
@@ -477,18 +477,18 @@ bool ProcessOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
  *
  * Returns: %true on success.
  */
-bool ProcessOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, BabelSomething * babel_something)
+bool ProcessOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator)
 {
 	if (!this->url.isEmpty()) {
 		return this->import_from_url(trw, dl_options);
 	}
 
 	if (!this->babel_args.isEmpty()) {
-		return this->import_from_local_file(trw, babel_something);
+		return this->import_from_local_file(trw, progress_indicator);
 	}
 
 	if (!this->shell_command.isEmpty()) {
-		return this->import_with_shell_command(trw, babel_something);
+		return this->import_with_shell_command(trw, progress_indicator);
 	}
 
 	qDebug() << "EE" PREFIX << "no process option found";
@@ -520,7 +520,7 @@ bool ProcessOptions::turn_off_device()
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool SlavGPS::a_babel_convert_export(LayerTRW * trw, Track * trk, const QString & babel_args, const QString & target_file_full_path, BabelSomething * babel_something)
+bool ProcessOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * progress_indicator)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -545,7 +545,7 @@ bool SlavGPS::a_babel_convert_export(LayerTRW * trw, Track * trk, const QString 
 	args << "gpx";
 
 
-	const QStringList sub_args = babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
+	const QStringList sub_args = this->babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
 	if (sub_args.size()) {
 		args << sub_args;
 	}
@@ -554,7 +554,7 @@ bool SlavGPS::a_babel_convert_export(LayerTRW * trw, Track * trk, const QString 
 	args << "-f";
 	args << tmp_file_full_path;
 	args << "-F";
-	args << target_file_full_path;
+	args << this->output_file_full_path;
 
 
 	/* Now strips out invisible tracks and waypoints. */
@@ -563,8 +563,8 @@ bool SlavGPS::a_babel_convert_export(LayerTRW * trw, Track * trk, const QString 
 		return false;
 	}
 
-	BabelConverter converter(program, args, babel_something);
-	return converter.run_conversion(false);
+	BabelProcess converter(program, args, progress_indicator);
+	return converter.run_process(false);
 }
 
 
@@ -639,10 +639,8 @@ static bool load_babel_features(void)
 
 	args << QString("-^3");
 
-	BabelFeatureLoader feature_loader;
-
-	BabelConverter converter(program, args, &feature_loader);
-	return converter.run_conversion(true);
+	BabelFeatureLoader feature_loader(program, args, NULL);
+	return feature_loader.run_process(true);
 }
 
 
@@ -718,14 +716,14 @@ bool Babel::is_available(void)
 
 
 
-BabelConverter::BabelConverter(const QString & program, const QStringList & args, BabelSomething * new_babel_something)
+BabelProcess::BabelProcess(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator)
 {
 	this->process = new QProcess(this);
 
 	this->process->setProgram(program);
 	this->process->setArguments(args);
 
-	this->babel_something = new_babel_something;
+	this->progress_indicator = new_progress_indicator;
 
 	QObject::connect(this->process, SIGNAL (started()), this, SLOT (started_cb()));
 	QObject::connect(this->process, SIGNAL (finished(int, QProcess::ExitStatus)), this, SLOT (finished_cb(int, QProcess::ExitStatus)));
@@ -743,7 +741,7 @@ BabelConverter::BabelConverter(const QString & program, const QStringList & args
 
 
 
-BabelConverter::~BabelConverter()
+BabelProcess::~BabelProcess()
 {
 	delete this->process;
 }
@@ -751,18 +749,27 @@ BabelConverter::~BabelConverter()
 
 
 
-bool BabelConverter::run_conversion(bool do_import)
+bool BabelProcess::run_process(bool do_import)
 {
 	bool success = true;
 	this->process->start();
 	//this->process->waitForStarted(-1);
 	this->process->waitForFinished(-1);
 
-	if (do_import) {
-		this->babel_something->import_progress_cb(BabelProgressCode::Completed, NULL);
+	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+		if (do_import) {
+			this->progress_indicator->import_progress_cb(BabelProgressCode::Completed, NULL);
+		} else {
+			this->progress_indicator->export_progress_cb(BabelProgressCode::Completed, NULL);
+		}
 	} else {
-		this->babel_something->export_progress_cb(BabelProgressCode::Completed, NULL);
+		if (do_import) {
+			this->import_progress_cb(BabelProgressCode::Completed, NULL);
+		} else {
+			this->export_progress_cb(BabelProgressCode::Completed, NULL);
+		}
 	}
+
 
 #ifdef K_OLD_IMPLEMENTATION
 	/* Old implementation. New implementation uses QProcess and signal sent on new data appearing on stdout. */
@@ -806,7 +813,7 @@ bool BabelConverter::run_conversion(bool do_import)
 
 
 
-void BabelConverter::started_cb(void)
+void BabelProcess::started_cb(void)
 {
 	qDebug() << "II: Babel Converter: process started";
 }
@@ -814,7 +821,7 @@ void BabelConverter::started_cb(void)
 
 
 
-void BabelConverter::error_occurred_cb(QProcess::ProcessError error)
+void BabelProcess::error_occurred_cb(QProcess::ProcessError error)
 {
 	qDebug() << "II: Babel Converter: error occurred when running process:" << error;
 }
@@ -822,7 +829,7 @@ void BabelConverter::error_occurred_cb(QProcess::ProcessError error)
 
 
 
-void BabelConverter::finished_cb(int exit_code, QProcess::ExitStatus exitStatus)
+void BabelProcess::finished_cb(int exit_code, QProcess::ExitStatus exitStatus)
 {
 	qDebug() << "II: Babel Converter: process finished with exit code" << exit_code << "and exit status" << exitStatus;
 
@@ -836,7 +843,7 @@ void BabelConverter::finished_cb(int exit_code, QProcess::ExitStatus exitStatus)
 
 
 
-void BabelConverter::read_stdout_cb()
+void BabelProcess::read_stdout_cb()
 {
 	char buffer[512];
 
@@ -844,7 +851,11 @@ void BabelConverter::read_stdout_cb()
 		this->process->readLine(buffer, sizeof (buffer));
 		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
 
-		this->babel_something->import_progress_cb(BabelProgressCode::Completed, buffer);
+		if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+			this->progress_indicator->import_progress_cb(BabelProgressCode::Completed, buffer);
+		} else {
+			this->import_progress_cb(BabelProgressCode::Completed, buffer);
+		}
 	}
 }
 
