@@ -25,15 +25,12 @@
 
 
 
-#include <cstdint>
-
 #include <QObject>
 #include <QMenu>
 #include <QDialog>
 #include <QLabel>
 #include <QRunnable>
 
-#include "babel.h"
 #include "ui_builder.h"
 #include "datasource.h"
 
@@ -51,16 +48,27 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class DataSource;
-	class DataSourceWebToolDialog;
-	class WebToolDatasource;
 
 
 
 
-	/**
-	   Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
-	*/
-	typedef void (* DataSourceCleanupFunc)(void * user_data);
+	enum class AcquireProgressCode {
+		DiagOutput, /* A line of data/diagnostic output is available. */
+		Completed,  /* Acquire tool completed work. */
+	};
+
+
+
+
+	class AcquireTool : public QObject {
+		Q_OBJECT
+	public:
+		AcquireTool() {};
+		virtual void import_progress_cb(AcquireProgressCode code, void * data) { return; };
+		virtual void export_progress_cb(AcquireProgressCode code, void * data) { return; };
+	};
+
+
 
 
 	/**
@@ -75,7 +83,7 @@ namespace SlavGPS {
 		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
 		QMenu * build_menu(const QString & submenu_label, DataSourceInputType input_type);
 
-		void import_progress_cb(BabelProgressCode code, void * data);
+		void import_progress_cb(AcquireProgressCode code, void * data);
 
 		QLabel * status = NULL;
 		Window * window = NULL;
@@ -104,7 +112,7 @@ namespace SlavGPS {
 
 		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
 		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something) { return false; };
-		virtual void progress_func(BabelProgressCode code, void * data, AcquireProcess * acquiring) { return; };
+		virtual void progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring) { return; };
 		virtual void cleanup(void * data) { return; };
 
 		QString window_title;
@@ -116,22 +124,6 @@ namespace SlavGPS {
 		bool autoview = false;
 		bool keep_dialog_open = false; /* ... when done. */
 		bool is_thread = false;
-	};
-
-
-
-
-	/* Parent class for data sources that have the same process
-	   function: universal_import_fn(), called either directly or
-	   indirectly. */
-	class DataSourceBabel : public DataSource {
-	public:
-		DataSourceBabel() {};
-		~DataSourceBabel() {};
-
-		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something);
-		virtual void cleanup(void * data) { return; };
 	};
 
 

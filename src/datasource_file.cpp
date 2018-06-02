@@ -102,7 +102,7 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-ProcessOptions * DataSourceFileDialog::get_process_options(void)
+ProcessOptions * DataSourceFileDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

@@ -35,7 +35,7 @@
 
 
 #include "datasource.h"
-#include "acquire.h"
+#include "babel.h"
 
 
 
@@ -56,7 +56,7 @@ namespace SlavGPS {
 	public:
 		BFilterSimplifyDialog();
 
-		ProcessOptions * get_process_options(const QString & input_filename, const QString & not_used);
+		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 		QSpinBox * spin = NULL;
 	};
 
@@ -74,7 +74,7 @@ namespace SlavGPS {
 	public:
 		BFilterCompressDialog();
 
-		ProcessOptions * get_process_options(const QString & input_filename, const QString & not_used);
+		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 		QDoubleSpinBox * spin = NULL;
 	};
 
@@ -92,7 +92,7 @@ namespace SlavGPS {
 	public:
 		BFilterDuplicatesDialog() {};
 
-		ProcessOptions * get_process_options(const QString & input_filename, const QString & not_used);
+		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 	};
 
 
@@ -109,7 +109,7 @@ namespace SlavGPS {
 	public:
 		BFilterManualDialog();
 
-		ProcessOptions * get_process_options(const QString & input_filename, const QString & not_used);
+		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 		QLineEdit * entry = NULL;
 	};
 
@@ -125,7 +125,7 @@ namespace SlavGPS {
 	public:
 		BFilterPolygonDialog();
 
-		ProcessOptions * get_process_options(const QString & input_filename, const QString & input_track_filename);
+		ProcessOptions * get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
 	};
 
 
@@ -140,7 +140,7 @@ namespace SlavGPS {
 	public:
 		BFilterExcludePolygonDialog();
 
-		ProcessOptions * get_process_options(const QString & input_filename, const QString & input_track_filename);
+		ProcessOptions * get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
 	};
 
 

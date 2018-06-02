@@ -103,7 +103,7 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog()
 
 
 
-ProcessOptions * DataSourceGeoJSONDialog::get_process_options(void)
+ProcessOptions * DataSourceGeoJSONDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

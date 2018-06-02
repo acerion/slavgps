@@ -110,13 +110,13 @@ BFilterSimplifyDialog::BFilterSimplifyDialog()
 
 
 
-ProcessOptions * BFilterSimplifyDialog::get_process_options(const QString & input_filename, const QString & not_used)
+ProcessOptions * BFilterSimplifyDialog::get_process_options_layer(const QString & input_layer_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
 	const int32_t value = this->spin->value();
 
 	po->babel_args = "-i gpx";
-	po->input_file_name = input_filename;
+	po->input_file_name = input_layer_filename;
 	po->babel_filters = QString("-x simplify,count=%1").arg(value);
 
 	/* Store for subsequent default use. */
@@ -198,7 +198,7 @@ BFilterCompressDialog::BFilterCompressDialog()
 /**
    http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
 */
-ProcessOptions * BFilterCompressDialog::get_process_options(const QString & input_filename, const QString & not_used)
+ProcessOptions * BFilterCompressDialog::get_process_options_layer(const QString & input_layer_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
 	const double value = this->spin->value();
@@ -211,7 +211,7 @@ ProcessOptions * BFilterCompressDialog::get_process_options(const QString & inpu
 	   - options make this more complicated to use - is even that useful to be allowed to change the error value?
 	   NB units not applicable if relative method used - defaults to Miles when not specified. */
 	po->babel_args = "-i gpx";
-	po->input_file_name = input_filename;
+	po->input_file_name = input_layer_filename;
 
 	char * str = g_strdup_printf("-x simplify,crosstrack,error=%-.5f%c", value, units);
 	po->babel_filters = QString(str);
@@ -253,12 +253,12 @@ DataSourceDialog * BFilterDuplicates::create_setup_dialog(Viewport * viewport, v
 
 
 
-ProcessOptions * BFilterDuplicatesDialog::get_process_options(const QString & input_filename, const QString & not_used)
+ProcessOptions * BFilterDuplicatesDialog::get_process_options_layer(const QString & input_layer_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
 
 	po->babel_args = "-i gpx";
-	po->input_file_name = input_filename;
+	po->input_file_name = input_layer_filename;
 	po->babel_filters = QString("-x duplicate,location");
 
 	return po;
@@ -313,13 +313,13 @@ BFilterManualDialog::BFilterManualDialog()
 
 
 
-ProcessOptions * BFilterManualDialog::get_process_options(const QString & input_filename, const QString & not_used)
+ProcessOptions * BFilterManualDialog::get_process_options_layer(const QString & input_layer_filename)
 {
 	ProcessOptions * po = new ProcessOptions();
 	const QString value = this->entry->text();
 
 	po->babel_args = "-i gpx";
-	po->input_file_name = input_filename;
+	po->input_file_name = input_layer_filename;
 	po->babel_filters = QString("-x %1").arg(value);
 
 	return po;
@@ -348,11 +348,11 @@ BFilterPolygon::BFilterPolygon()
 
 
 /* FIXME: shell_escape stuff. */
-ProcessOptions * BFilterPolygonDialog::get_process_options(const QString & input_filename, const QString & input_track_filename)
+ProcessOptions * BFilterPolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
 	ProcessOptions * po = new ProcessOptions();
 
-	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(input_track_filename).arg(input_filename);
+	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
 
 	return po;
 }
@@ -379,11 +379,12 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 
 
 
+
 /* FIXME: shell_escape stuff */
-ProcessOptions * BFilterExcludePolygonDialog::get_process_options(const QString & input_filename, const QString & input_track_filename)
+ProcessOptions * BFilterExcludePolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
 	ProcessOptions * po = new ProcessOptions();
-	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(input_track_filename).arg(input_filename);
+	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
 
 	return po;
 }

@@ -76,7 +76,7 @@ DataSourceDialog * DataSourceOSMTraces::create_setup_dialog(Viewport * viewport,
 
 
 
-ProcessOptions * DataSourceOSMDialog::get_process_options(void)
+ProcessOptions * DataSourceOSMDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

@@ -258,8 +258,8 @@ namespace SlavGPS {
 		void set_gps_device_info(const QString & info);
 		void process_line_for_gps_info(const char * line);
 
-		void import_progress_cb(BabelProgressCode code, void * data);
-		void export_progress_cb(BabelProgressCode code, void * data);
+		void import_progress_cb(AcquireProgressCode code, void * data);
+		void export_progress_cb(AcquireProgressCode code, void * data);
 
 		void run();
 

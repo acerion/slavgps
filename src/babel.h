@@ -34,6 +34,7 @@
 #include <QStringList>
 
 #include "download.h"
+#include "acquire.h"
 
 
 
@@ -45,21 +46,11 @@ namespace SlavGPS {
 
 	class LayerTRW;
 	class Track;
-	class AcquireTool;
-
-
-
-
-	enum class BabelProgressCode {
-		DiagOutput, /* A line of diagnostic output is available. The pointer is to a NULL-terminated line of diagnostic output from gpsbabel. */
-		Completed,  /* gpsbabel finished, or NULL if no callback is needed. */
-	};
 
 
 
 
 	/**
-	   All values are set to NULL by default.
 	   Need to specify at least one of babel_args, URL or shell_command.
 	*/
 	struct ProcessOptions {
@@ -170,16 +161,6 @@ namespace SlavGPS {
 
 
 
-	class AcquireTool : public QObject {
-		Q_OBJECT
-	public:
-		AcquireTool() {};
-		virtual void import_progress_cb(BabelProgressCode code, void * data) { return; };
-		virtual void export_progress_cb(BabelProgressCode code, void * data) { return; };
-	};
-
-
-
 
 	class BabelProcess : public AcquireTool {
 		Q_OBJECT
@@ -208,8 +189,24 @@ namespace SlavGPS {
 	public:
 		BabelFeatureLoader(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator)
 			: BabelProcess(program, args, NULL) {};
-		void import_progress_cb(BabelProgressCode code, void * data);
-		void export_progress_cb(BabelProgressCode code, void * data) { return; };
+		void import_progress_cb(AcquireProgressCode code, void * data);
+		void export_progress_cb(AcquireProgressCode code, void * data) { return; };
+	};
+
+
+
+
+	/* Parent class for data sources that have the same process
+	   function: universal_import_fn(), called either directly or
+	   indirectly. */
+	class DataSourceBabel : public DataSource {
+	public:
+		DataSourceBabel() {};
+		~DataSourceBabel() {};
+
+		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
+		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something);
+		virtual void cleanup(void * data) { return; };
 	};
 
 

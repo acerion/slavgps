@@ -245,7 +245,7 @@ DataSourceGCDialog::DataSourceGCDialog(Viewport * new_viewport)
 
 
 
-ProcessOptions * DataSourceGCDialog::get_process_options(void)
+ProcessOptions * DataSourceGCDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

@@ -53,7 +53,7 @@ namespace SlavGPS {
 	public:
 		DataSourceGeoJSONDialog();
 
-		ProcessOptions * get_process_options(void);
+		ProcessOptions * get_process_options_none(void);
 
 		SGFileEntry * file_entry = NULL;
 		QStringList selected_files;

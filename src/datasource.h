@@ -67,8 +67,10 @@ namespace SlavGPS {
 	public:
 		DataSourceDialog() {};
 
-		virtual ProcessOptions * get_process_options(void) { return NULL; };
-		virtual ProcessOptions * get_process_options(const QString & input_filename, const QString & input_track_filename) { return NULL; };
+		virtual ProcessOptions * get_process_options_none(void) { return NULL; };
+		virtual ProcessOptions * get_process_options_layer_track(const QString & input_layer_filename, const QString & input_track_filename) { return NULL; };
+		virtual ProcessOptions * get_process_options_layer(const QString & input_layer_filename) { return NULL; };
+
 		virtual void adjust_download_options(DownloadOptions & dl_options) { return; };
 	};
 

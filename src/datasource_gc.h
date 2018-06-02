@@ -33,7 +33,7 @@
 
 
 #include "datasource.h"
-#include "acquire.h"
+#include "babel.h"
 
 
 
@@ -63,7 +63,7 @@ namespace SlavGPS {
 		DataSourceGCDialog(Viewport * viewport);
 		~DataSourceGCDialog();
 
-		ProcessOptions * get_process_options(void);
+		ProcessOptions * get_process_options_none(void);
 
 		QSpinBox num_spin;
 		QLineEdit center_entry; /* TODO make separate widgets for lat/lon. */

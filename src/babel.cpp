@@ -586,7 +586,7 @@ static void set_mode(BabelMode * mode, const QString & mode_string)
 /**
    Load a single feature stored in the given line.
 */
-void BabelFeatureLoader::import_progress_cb(BabelProgressCode code, void * data)
+void BabelFeatureLoader::import_progress_cb(AcquireProgressCode code, void * data)
 {
 	if (!data) {
 		return;
@@ -758,15 +758,15 @@ bool BabelProcess::run_process(bool do_import)
 
 	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		if (do_import) {
-			this->progress_indicator->import_progress_cb(BabelProgressCode::Completed, NULL);
+			this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 		} else {
-			this->progress_indicator->export_progress_cb(BabelProgressCode::Completed, NULL);
+			this->progress_indicator->export_progress_cb(AcquireProgressCode::Completed, NULL);
 		}
 	} else {
 		if (do_import) {
-			this->import_progress_cb(BabelProgressCode::Completed, NULL);
+			this->import_progress_cb(AcquireProgressCode::Completed, NULL);
 		} else {
-			this->export_progress_cb(BabelProgressCode::Completed, NULL);
+			this->export_progress_cb(AcquireProgressCode::Completed, NULL);
 		}
 	}
 
@@ -791,11 +791,11 @@ bool BabelProcess::run_process(bool do_import)
 
 		while (fgets(line, sizeof(line), diag)) {
 			if (cb) {
-				cb(BabelProgressCode::DiagOutput, line, cb_data);
+				cb(AcquireProgressCode::DiagOutput, line, cb_data);
 			}
 		}
 		if (cb) {
-			cb(BabelProgressCode::Completed, NULL, cb_data);
+			cb(AcquireProgressCode::Completed, NULL, cb_data);
 		}
 		fclose(diag);
 		diag = NULL;
@@ -852,9 +852,9 @@ void BabelProcess::read_stdout_cb()
 		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
 
 		if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
-			this->progress_indicator->import_progress_cb(BabelProgressCode::Completed, buffer);
+			this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, buffer);
 		} else {
-			this->import_progress_cb(BabelProgressCode::Completed, buffer);
+			this->import_progress_cb(AcquireProgressCode::Completed, buffer);
 		}
 	}
 }

@@ -31,7 +31,7 @@
 
 
 #include "datasource.h"
-#include "acquire.h"
+#include "babel.h"
 
 
 
@@ -58,7 +58,7 @@ namespace SlavGPS {
 		DataSourceURLDialog();
 		~DataSourceURLDialog();
 
-		ProcessOptions * get_process_options(void);
+		ProcessOptions * get_process_options_none(void);
 		void adjust_download_options(DownloadOptions & dl_options) const;
 
 	private:

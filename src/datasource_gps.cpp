@@ -201,7 +201,7 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-ProcessOptions * DatasourceGPSSetup::get_process_options(void)
+ProcessOptions * DatasourceGPSSetup::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -352,13 +352,13 @@ static void set_gps_info(const char * info, AcquireProcess * acquiring)
  * These outputs differ when different GPS devices are used, so we will need to test
  * them on several and add the corresponding support.
  */
-void DataSourceGPS::progress_func(BabelProgressCode code, void * data, AcquireProcess * acquiring)
+void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring)
 {
 	char *line;
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 
 	switch (code) {
-	case BabelProgressCode::DiagOutput:
+	case AcquireProgressCode::DiagOutput:
 		line = (char *)data;
 
 		if (acquiring->running) {
@@ -431,7 +431,7 @@ void DataSourceGPS::progress_func(BabelProgressCode code, void * data, AcquirePr
 			set_current_count(gps_dialog->count, acquiring);
 		}
 		break;
-	case BabelProgressCode::Completed:
+	case AcquireProgressCode::Completed:
 		break;
 	default:
 		break;

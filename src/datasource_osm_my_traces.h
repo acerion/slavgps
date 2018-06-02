@@ -68,7 +68,7 @@ namespace SlavGPS {
 	public:
 		DataSourceMyOSMDialog() {};
 
-		ProcessOptions * get_process_options(void);
+		ProcessOptions * get_process_options_none(void);
 
 		void set_in_current_view_property(std::list<GPXMetaData *> & list);
 

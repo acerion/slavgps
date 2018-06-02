@@ -112,7 +112,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog()
 
 
 
-ProcessOptions * DataSourceRoutingDialog::get_process_options(void)
+ProcessOptions * DataSourceRoutingDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

@@ -121,7 +121,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog()
 
 
 
-ProcessOptions * DataSourceGeoTagDialog::get_process_options(void)
+ProcessOptions * DataSourceGeoTagDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

@@ -114,7 +114,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(Viewport * new_viewport, void *
 
 
 
-ProcessOptions * DataSourceWebToolDialog::get_process_options(void)
+ProcessOptions * DataSourceWebToolDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

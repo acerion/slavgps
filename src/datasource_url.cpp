@@ -118,7 +118,7 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-ProcessOptions * DataSourceURLDialog::get_process_options(void)
+ProcessOptions * DataSourceURLDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

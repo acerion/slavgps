@@ -31,7 +31,7 @@
 
 
 
-#include "acquire.h"
+#include "babel.h"
 #include "datasource.h"
 
 
@@ -59,7 +59,7 @@ namespace SlavGPS {
 		DataSourceOSMDialog(Viewport * viewport);
 		~DataSourceOSMDialog();
 
-		ProcessOptions * get_process_options(void);
+		ProcessOptions * get_process_options_none(void);
 
 	public slots:
 		void accept_cb(void);

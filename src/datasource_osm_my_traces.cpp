@@ -124,7 +124,7 @@ DataSourceDialog * DataSourceOSMMyTraces::create_setup_dialog(Viewport * new_vie
 
 
 
-ProcessOptions * DataSourceMyOSMDialog::get_process_options(void)
+ProcessOptions * DataSourceMyOSMDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 

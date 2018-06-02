@@ -31,6 +31,7 @@
 #include <QDebug>
 #include <QHeaderView>
 #include <QDateTime>
+#include <QProcess>
 
 
 

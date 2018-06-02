@@ -337,7 +337,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 
 
-void AcquireProcess::import_progress_cb(BabelProgressCode code, void * data)
+void AcquireProcess::import_progress_cb(AcquireProgressCode code, void * data)
 {
 	assert (this->data_source);
 
@@ -371,9 +371,9 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		*/
 		qDebug() << "II" PREFIX << "input type: TRWLayer";
 
-		const QString name_src = GPX::write_tmp_file(acq->trw, NULL);
-		po = setup_dialog->get_process_options(name_src, NULL);
-		Util::add_to_deletion_list(name_src);
+		const QString layer_file_full_path = GPX::write_tmp_file(acq->trw, NULL);
+		po = setup_dialog->get_process_options_layer(layer_file_full_path);
+		Util::add_to_deletion_list(layer_file_full_path);
 		}
 		break;
 
@@ -384,21 +384,21 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		*/
 		qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
 
-		const QString name_src = GPX::write_tmp_file(acq->trw, NULL);
-		const QString name_src_track = GPX::write_track_tmp_file(acq->trk, NULL);
+		const QString layer_file_full_path = GPX::write_tmp_file(acq->trw, NULL);
+		const QString track_file_full_path = GPX::write_track_tmp_file(acq->trk, NULL);
 
-		po = setup_dialog->get_process_options(name_src, name_src_track);
+		po = setup_dialog->get_process_options_layer_track(layer_file_full_path, track_file_full_path);
 
-		Util::add_to_deletion_list(name_src);
-		Util::add_to_deletion_list(name_src_track);
+		Util::add_to_deletion_list(layer_file_full_path);
+		Util::add_to_deletion_list(track_file_full_path);
 		}
 		break;
 
 	case DataSourceInputType::Track: {
 		qDebug() << "II" PREFIX << "input type: Track";
 
-		const QString name_src_track = GPX::write_track_tmp_file(acq->trk, NULL);
-		po = setup_dialog->get_process_options("", name_src_track);
+		const QString track_file_full_path = GPX::write_track_tmp_file(acq->trk, NULL);
+		po = setup_dialog->get_process_options_layer_track("", track_file_full_path);
 		}
 		break;
 
@@ -423,7 +423,7 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		qDebug() << "II" PREFIX << "input type: None";
 
 		assert (setup_dialog);
-		po = setup_dialog->get_process_options();
+		po = setup_dialog->get_process_options_none();
 		break;
 
 	default:

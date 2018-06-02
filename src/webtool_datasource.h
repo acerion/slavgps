@@ -30,7 +30,7 @@
 
 
 
-#include "acquire.h"
+#include "babel.h"
 #include "datasource.h"
 #include "webtool.h"
 
@@ -95,7 +95,7 @@ namespace SlavGPS {
 	public:
 		DataSourceWebToolDialog(Viewport * viewport, void * new_web_tool_data_source);
 
-		ProcessOptions * get_process_options(void);
+		ProcessOptions * get_process_options_none(void);
 
 		WebToolDatasource * web_tool_data_source = NULL;
 		Viewport * viewport = NULL;
