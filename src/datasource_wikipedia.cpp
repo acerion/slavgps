@@ -76,7 +76,7 @@ bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel
 
 
 
-int DataSourceWikipedia::run_config_dialog(void)
+int DataSourceWikipedia::run_config_dialog(AcquireProcess * acquire_context)
 {
 	return QDialog::Accepted;
 }

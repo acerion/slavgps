@@ -117,14 +117,11 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		void create_process_options(LayerTRW * trw, Track * trk);
-		void create_download_options(void);
-
 		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something) { return false; };
 		virtual void progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring) { return; };
 		virtual void cleanup(void * data) { return; };
 
-		virtual int run_config_dialog(void) { return QDialog::Rejected; };
+		virtual int run_config_dialog(AcquireProcess * acquire_context) { return QDialog::Rejected; };
 
 		QString window_title;
 		QString layer_title;
@@ -155,6 +152,7 @@ namespace SlavGPS {
 		void run(); /* Re-implementation of QRunnable::run(). */
 		void on_complete_process(void);
 
+		void configure_target_layer(DataSourceMode mode);
 
 		DataSource * data_source = NULL;
 		AcquireProcess * acquiring = NULL;

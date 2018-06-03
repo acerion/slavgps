@@ -81,7 +81,7 @@ DataSourceOSMTraces::DataSourceOSMTraces(Viewport * new_viewport)
 
 
 
-int DataSourceOSMTraces::run_config_dialog(void)
+int DataSourceOSMTraces::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
@@ -89,7 +89,8 @@ int DataSourceOSMTraces::run_config_dialog(void)
 
 	int answer = this->config_dialog->exec();
 	if (answer == QDialog::Accepted) {
-
+		this->process_options = this->config_dialog->create_process_options_none();
+		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;

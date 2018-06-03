@@ -49,7 +49,7 @@ namespace SlavGPS {
 		DataSourceGPS();
 		~DataSourceGPS() {};
 
-		int run_config_dialog(void);
+		int run_config_dialog(AcquireProcess * acquire_context);
 
 		/* FIXME: these are most probably unused after changes in acquire. Make them used again. */
 		void off(void * user_data, QString & babel_args, QString & file_path);

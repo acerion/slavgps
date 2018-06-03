@@ -86,7 +86,7 @@ DataSourceGeoTag::DataSourceGeoTag()
 
 
 
-int DataSourceGeoTag::run_config_dialog(void)
+int DataSourceGeoTag::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert(!this->config_dialog);
 

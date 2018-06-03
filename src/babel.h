@@ -209,7 +209,7 @@ namespace SlavGPS {
 		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something);
 		virtual void cleanup(void * data) { return; };
 
-		virtual int run_config_dialog() { return QDialog::Rejected; };
+		virtual int run_config_dialog(AcquireProcess * acquire_context) { return QDialog::Rejected; };
 	};
 
 

@@ -83,7 +83,7 @@ BFilterSimplify::BFilterSimplify()
 
 
 
-int BFilterSimplify::run_config_dialog(void)
+int BFilterSimplify::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
@@ -91,7 +91,8 @@ int BFilterSimplify::run_config_dialog(void)
 
 	int answer = this->config_dialog->exec();
 	if (answer == QDialog::Accepted) {
-
+		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -172,7 +173,7 @@ BFilterCompress::BFilterCompress()
 
 
 
-int BFilterCompress::run_config_dialog(void)
+int BFilterCompress::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
@@ -180,7 +181,8 @@ int BFilterCompress::run_config_dialog(void)
 
 	int answer = this->config_dialog->exec();
 	if (answer == QDialog::Accepted) {
-
+		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -260,7 +262,7 @@ BFilterDuplicates::BFilterDuplicates()
 
 
 
-int BFilterDuplicates::run_config_dialog(void)
+int BFilterDuplicates::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
@@ -268,7 +270,8 @@ int BFilterDuplicates::run_config_dialog(void)
 
 	int answer = this->config_dialog->exec();
 	if (answer == QDialog::Accepted) {
-
+		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -315,7 +318,7 @@ BFilterManual::BFilterManual()
 
 
 
-int BFilterManual::run_config_dialog(void)
+int BFilterManual::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
@@ -323,7 +326,8 @@ int BFilterManual::run_config_dialog(void)
 
 	int answer = this->config_dialog->exec();
 	if (answer == QDialog::Accepted) {
-
+		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;
@@ -391,6 +395,19 @@ BabelOptions * BFilterPolygonDialog::get_process_options_layer_track(const QStri
 
 
 
+int BFilterPolygon::run_config_dialog(AcquireProcess * acquire_context)
+{
+	/* There is no *real* dialog for which to call ::exec(). */
+
+	this->config_dialog = new DataSourceDialog(this->window_title);
+	this->process_options = this->config_dialog->create_process_options_layer_track(acquire_context->trw, acquire_context->trk);
+
+	return QDialog::Accepted;
+}
+
+
+
+
 /************************************ Exclude Polygon ***********************************/
 
 
@@ -418,4 +435,16 @@ BabelOptions * BFilterExcludePolygonDialog::get_process_options_layer_track(cons
 	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
 
 	return po;
+}
+
+
+
+int BFilterExcludePolygon::run_config_dialog(AcquireProcess * acquire_context)
+{
+	/* There is no *real* dialog for which to call ::exec(). */
+
+	this->config_dialog = new DataSourceDialog(this->window_title);
+	this->process_options = this->config_dialog->create_process_options_layer_track(acquire_context->trw, acquire_context->trk);
+
+	return QDialog::Accepted;
 }

@@ -62,8 +62,6 @@ namespace SlavGPS {
 		BabelOptions * get_process_options_layer(const QString & input_layer_filename) { return NULL; };
 		BabelOptions * get_process_options_layer_track(const QString & input_layer_filename) { return NULL; };
 
-		void adjust_download_options(DownloadOptions & dl_options) { return; };
-
 		BabelFileType * get_file_type_selection(void);
 
 	private slots:

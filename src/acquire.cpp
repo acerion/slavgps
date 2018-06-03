@@ -142,6 +142,51 @@ void AcquireGetter::on_complete_process(void)
 
 
 
+void AcquireGetter::configure_target_layer(DataSourceMode mode)
+{
+	switch (mode) {
+	case DataSourceMode::CreateNewLayer:
+		this->creating_new_layer = true;
+		break;
+
+	case DataSourceMode::AddToLayer: {
+		Layer * selected_layer = this->acquiring->panel->get_selected_layer();
+		if (selected_layer->type == LayerType::TRW) {
+			this->acquiring->trw = (LayerTRW *) selected_layer;
+			this->creating_new_layer = false;
+		}
+		}
+		break;
+
+	case DataSourceMode::AutoLayerManagement:
+		/* NOOP */
+		break;
+
+	case DataSourceMode::ManualLayerManagement: {
+		/* Don't create in acquire - as datasource will perform the necessary actions. */
+		this->creating_new_layer = false;
+		Layer * selected_layer = this->acquiring->panel->get_selected_layer();
+		if (selected_layer->type == LayerType::TRW) {
+			this->acquiring->trw = (LayerTRW *) selected_layer;
+		}
+		}
+		break;
+	default:
+		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) mode;
+		break;
+	};
+
+
+	if (this->creating_new_layer) {
+		this->acquiring->trw = new LayerTRW();
+		this->acquiring->trw->set_coord_mode(this->acquiring->viewport->get_coord_mode());
+		this->acquiring->trw->set_name(this->data_source->layer_title);
+	}
+}
+
+
+
+
 BabelOptions::BabelOptions(const QString & new_babel_args, const QString & new_input_file_name, const QString & new_input_file_type, const QString & new_url)
 {
 	if (!new_babel_args.isEmpty()) {
@@ -191,13 +236,10 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	this->parent_data_source_dialog = (DataSourceDialog *) new_parent_data_source_dialog;
 	this->data_source = new_data_source;
 
-	if (QDialog::Accepted != new_data_source->run_config_dialog()) {
+	if (QDialog::Accepted != new_data_source->run_config_dialog(this)) {
 		qDebug() << "II" PREFIX << "Data source config dialog returned !Accepted";
 		return;
 	}
-
-	new_data_source->create_process_options(this->trw, this->trk);
-	new_data_source->create_download_options();
 
 	AcquireGetter getter;
 	getter.acquiring = this;
@@ -216,83 +258,42 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	}
 #endif
 
+	getter.configure_target_layer(mode);
 
-	switch (mode) {
-	case DataSourceMode::CreateNewLayer:
-		getter.creating_new_layer = true;
-		break;
-
-	case DataSourceMode::AddToLayer: {
-		Layer * selected_layer = this->panel->get_selected_layer();
-		if (selected_layer->type == LayerType::TRW) {
-			getter.acquiring->trw = (LayerTRW *) selected_layer;
-			getter.creating_new_layer = false;
+	if (!new_data_source->process_options->is_valid()) {
+		/* This shouldn't happen... */
+		this->status->setText(QObject::tr("Unable to create command\nAcquire method failed.")); /* TODO: this should go to dialog box. */
+		if (progress_dialog) {
+			progress_dialog->exec(); /* TODO: improve handling of invalid process options. */
 		}
-		}
-		break;
-
-	case DataSourceMode::AutoLayerManagement:
-		/* NOOP */
-		break;
-
-	case DataSourceMode::ManualLayerManagement: {
-		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		getter.creating_new_layer = false;
-		Layer * selected_layer = this->panel->get_selected_layer();
-		if (selected_layer->type == LayerType::TRW) {
-			getter.acquiring->trw = (LayerTRW *) selected_layer;
-		}
-		}
-		break;
-	default:
-		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) mode;
-		break;
-	};
-
-
-	if (getter.creating_new_layer) {
-		getter.acquiring->trw = new LayerTRW();
-		getter.acquiring->trw->set_coord_mode(this->viewport->get_coord_mode());
-		getter.acquiring->trw->set_name(new_data_source->layer_title);
 	}
 
-	BabelOptions * process_options = getter.data_source->process_options;
-
 	if (new_data_source->is_thread) {
-		if (process_options->is_valid()) {
+		getter.run();
 
-			getter.run();
+		if (progress_dialog) {
+			progress_dialog->exec();
+		}
 
-			if (progress_dialog) {
-				progress_dialog->exec();
-			}
-
-			if (this->running) {
-				/* Cancel and mark for thread to finish. */
+		if (this->running) {
+			/* Cancel and mark for thread to finish. */
 				this->running = false;
 				/* NB Thread will free memory. */
-			} else {
-#ifdef K_FIXME_RESTORE
-				/* Get data for Off command. */
-				if (new_data_source->off_func) {
-					QString babel_args_off;
-					QString file_path_off;
-					interface->off_func(pass_along_data, babel_args_off, file_path_off);
-
-					if (!babel_args_off.isEmpty()) {
-						/* Turn off. */
-						BabelOptions off_options(babel_args_off, file_path_off, NULL, NULL);
-						off_options.turn_off_device();
-					}
-				}
-#endif
-			}
 		} else {
-			/* This shouldn't happen... */
-			this->status->setText(QObject::tr("Unable to create command\nAcquire method failed.")); /* TODO: this should go to dialog box. */
-			if (progress_dialog) {
-				progress_dialog->exec();
+#ifdef K_FIXME_RESTORE
+			/* Get data for Off command. */
+			if (new_data_source->off_func) {
+				QString babel_args_off;
+				QString file_path_off;
+				interface->off_func(pass_along_data, babel_args_off, file_path_off);
+
+				if (!babel_args_off.isEmpty()) {
+					/* Turn off. */
+					BabelOptions off_options(babel_args_off, file_path_off, NULL, NULL);
+					off_options.turn_off_device();
+				}
 			}
+#endif
 		}
 	} else {
 		/* Bypass thread method malarkly - you'll just have to wait... */
@@ -348,91 +349,60 @@ DataSource::~DataSource()
 
 
 
-void DataSource::create_process_options(LayerTRW * trw, Track * trk)
+BabelOptions * DataSourceDialog::create_process_options_layer(LayerTRW * trw)
 {
-	assert (this->config_dialog);
+	qDebug() << "II" PREFIX << "input type: TRWLayer";
 
-	switch (this->input_type) {
+	BabelOptions * process_options = NULL;
 
-	case DataSourceInputType::TRWLayer: {
-		/*
-		  BFilterSimplify    inherits from DataSourceBabel
-		  BFilterCompress    inherits from DataSourceBabel
-		  BFilterDuplicates  inherits from DataSourceBabel
-		  BFilterManual      inherits from DataSourceBabel
-		*/
-		qDebug() << "II" PREFIX << "input type: TRWLayer";
+	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
+	process_options = this->get_process_options_layer(layer_file_full_path);
+	Util::add_to_deletion_list(layer_file_full_path);
 
-		const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
-		this->process_options = this->config_dialog->get_process_options_layer(layer_file_full_path);
-		Util::add_to_deletion_list(layer_file_full_path);
-		}
-		break;
-
-	case DataSourceInputType::TRWLayerTrack: {
-		/*
-		  BFilterPolygon          inherits from DataSourceBabel
-		  BFilterExcludePolygon   inherits from DataSourceBabel
-		*/
-		qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
-
-		const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
-		const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
-
-		this->process_options = this->config_dialog->get_process_options_layer_track(layer_file_full_path, track_file_full_path);
-
-		Util::add_to_deletion_list(layer_file_full_path);
-		Util::add_to_deletion_list(track_file_full_path);
-		}
-		break;
-
-	case DataSourceInputType::Track: {
-		qDebug() << "II" PREFIX << "input type: Track";
-
-		const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
-		this->process_options = this->config_dialog->get_process_options_layer_track("", track_file_full_path);
-		}
-		break;
-
-	case DataSourceInputType::None:
-		/*
-		  DataSourceFile        inherits from DataSourceBabel
-		  DataSourceOSMTraces   inherits from DataSourceBabel
-		  DataSourceURL         inherits from DataSourceBabel
-		  DataSourceGeoCache    inherits from DataSourceBabel
-		  DataSourceRouting     inherits from DataSourceBabel
-		  DataSourceGPS         inherits from DataSourceBabel
-		  DataSourceWebTool     inherits from DataSourceBabel
-		  DataSourceOSMMyTraces inherits from DataSource
-		  DataSourceGeoTag      inherits from DataSource
-		  DataSourceGeoJSON     inherits from DataSource
-		  DataSourceWikipedia   inherits from DataSource
-
-		  DataSourceWikipedia is also of type None, but it
-		  doesn't provide setup dialog and doesn't implement
-		  this method, so we will call empty method in base
-		  class.
-		*/
-		qDebug() << "II" PREFIX << "input type: None";
-
-		this->process_options = this->config_dialog->get_process_options_none();
-		break;
-
-	default:
-		qDebug() << "EE" PREFIX << "unsupported Datasource Input Type" << (int) this->input_type;
-		break;
-	};
-
-	return;
+	return process_options;
 }
 
 
 
 
-void DataSource::create_download_options(void)
+BabelOptions * DataSourceDialog::create_process_options_layer_track(LayerTRW * trw, Track * trk)
 {
-	this->download_options = new DownloadOptions; /* With default values. */
-	this->config_dialog->adjust_download_options(*this->download_options);
+	qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
+
+	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
+	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
+
+	BabelOptions * process_options = this->get_process_options_layer_track(layer_file_full_path, track_file_full_path);
+
+	Util::add_to_deletion_list(layer_file_full_path);
+	Util::add_to_deletion_list(track_file_full_path);
+
+	return process_options;
+}
+
+
+
+
+BabelOptions * DataSourceDialog::create_process_options_track(Track * trk)
+{
+	qDebug() << "II" PREFIX << "input type: Track";
+
+	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
+	BabelOptions * process_options = this->get_process_options_layer_track("", track_file_full_path);
+
+	return process_options;
+}
+
+
+
+
+BabelOptions * DataSourceDialog::create_process_options_none(void)
+{
+	qDebug() << "II" PREFIX << "input type: None";
+
+	BabelOptions * process_options = this->get_process_options_none();
+
+	return process_options;
 }
 
 

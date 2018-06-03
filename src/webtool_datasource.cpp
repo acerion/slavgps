@@ -183,7 +183,7 @@ DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window
 
 
 
-int DataSourceWebTool::run_config_dialog(void)
+int DataSourceWebTool::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
@@ -198,7 +198,8 @@ int DataSourceWebTool::run_config_dialog(void)
 	}
 
 	if (answer == QDialog::Accepted) {
-
+		this->process_options = this->config_dialog->create_process_options_none();
+		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
 	return answer;

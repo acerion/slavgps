@@ -46,7 +46,7 @@ namespace SlavGPS {
 		DataSourceURL();
 		~DataSourceURL() {};
 
-		int run_config_dialog(void);
+		int run_config_dialog(AcquireProcess * acquire_context);
 	};
 
 
@@ -59,7 +59,6 @@ namespace SlavGPS {
 		~DataSourceURLDialog();
 
 		BabelOptions * get_process_options_none(void);
-		void adjust_download_options(DownloadOptions & dl_options) const;
 
 	private:
 		QLineEdit url_input;

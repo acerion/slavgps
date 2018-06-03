@@ -51,7 +51,7 @@ namespace SlavGPS {
 	public:
 		DataSourceWebTool() {};
 		DataSourceWebTool(bool search, const QString & window_title, const QString & layer_title, Viewport * viewport, WebToolDatasource * web_tool_data_source);
-		int run_config_dialog(void);
+		int run_config_dialog(AcquireProcess * acquire_context);
 
 		void cleanup(void * data);
 

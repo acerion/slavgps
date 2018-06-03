@@ -66,7 +66,7 @@ DataSourceGeoJSON::DataSourceGeoJSON()
 
 
 
-int DataSourceGeoJSON::run_config_dialog(void)
+int DataSourceGeoJSON::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
