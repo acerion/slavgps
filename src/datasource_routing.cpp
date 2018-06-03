@@ -27,6 +27,11 @@
 
 
 
+#include <cassert>
+
+
+
+
 #include <QComboBox>
 #include <QLineEdit>
 
@@ -70,15 +75,19 @@ DataSourceRouting::DataSourceRouting()
 
 
 
-DataSourceDialog * DataSourceRouting::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceRouting::run_config_dialog(void)
 {
-	return new DataSourceRoutingDialog();
+	assert (!this->config_dialog);
+
+	this->config_dialog = new DataSourceRoutingDialog(this->window_title);
+
+	return this->config_dialog->exec();
 }
 
 
 
 
-DataSourceRoutingDialog::DataSourceRoutingDialog()
+DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	/* Engine selector. */
 	QLabel * engine_label = new QLabel(tr("Engine:"));

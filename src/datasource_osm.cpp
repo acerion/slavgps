@@ -17,13 +17,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+
+
+
+#include <cassert>
+
+
+
+
 #include <QDebug>
+
+
+
 
 #include "datasource_osm.h"
 #include "viewport_internal.h"
@@ -54,8 +65,10 @@ static int g_last_page_number = 0;
 
 
 
-DataSourceOSMTraces::DataSourceOSMTraces(void)
+DataSourceOSMTraces::DataSourceOSMTraces(Viewport * new_viewport)
 {
+	this->viewport = new_viewport;
+
 	this->window_title = QObject::tr("OSM traces");
 	this->layer_title = QObject::tr("OSM traces");
 	this->mode = DataSourceMode::AutoLayerManagement;
@@ -68,15 +81,19 @@ DataSourceOSMTraces::DataSourceOSMTraces(void)
 
 
 
-DataSourceDialog * DataSourceOSMTraces::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceOSMTraces::run_config_dialog(void)
 {
-	return new DataSourceOSMDialog(viewport);
+	assert (!this->config_dialog);
+
+	this->config_dialog = new DataSourceOSMTracesDialog(this->window_title, this->viewport);
+
+	return this->config_dialog->exec();
 }
 
 
 
 
-ProcessOptions * DataSourceOSMDialog::get_process_options_none(void)
+ProcessOptions * DataSourceOSMTracesDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -97,7 +114,7 @@ ProcessOptions * DataSourceOSMDialog::get_process_options_none(void)
 
 
 
-DataSourceOSMDialog::DataSourceOSMDialog(Viewport * new_viewport)
+DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title)
 {
 	/* Page selector. */
 	QLabel * label = new QLabel(tr("Page Number:"));
@@ -110,7 +127,7 @@ DataSourceOSMDialog::DataSourceOSMDialog(Viewport * new_viewport)
 	this->grid->addWidget(label, 0, 0);
 	this->grid->addWidget(&this->spin_box, 0, 1);
 
-	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMDialog::accept_cb);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMTracesDialog::accept_cb);
 
 	this->viewport = new_viewport;
 }
@@ -118,14 +135,14 @@ DataSourceOSMDialog::DataSourceOSMDialog(Viewport * new_viewport)
 
 
 
-DataSourceOSMDialog::~DataSourceOSMDialog()
+DataSourceOSMTracesDialog::~DataSourceOSMTracesDialog()
 {
 }
 
 
 
 
-void DataSourceOSMDialog::accept_cb(void)
+void DataSourceOSMTracesDialog::accept_cb(void)
 {
 	g_last_page_number = this->spin_box.value();
 	qDebug() << "II: Datasource OSM Traces: dialog result: accepted, page number =" << g_last_page_number;

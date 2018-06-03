@@ -42,7 +42,7 @@ namespace SlavGPS {
 		DataSourceFile();
 		~DataSourceFile() {};
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 	};
 
 

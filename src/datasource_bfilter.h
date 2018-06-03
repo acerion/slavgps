@@ -49,12 +49,12 @@ namespace SlavGPS {
 	public:
 		BFilterSimplify();
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 	};
 
 	class BFilterSimplifyDialog : public DataSourceDialog {
 	public:
-		BFilterSimplifyDialog();
+		BFilterSimplifyDialog(const QString & window_title);
 
 		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 		QSpinBox * spin = NULL;
@@ -67,12 +67,12 @@ namespace SlavGPS {
 	public:
 		BFilterCompress();
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 	};
 
 	class BFilterCompressDialog : public DataSourceDialog {
 	public:
-		BFilterCompressDialog();
+		BFilterCompressDialog(const QString & window_title);
 
 		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 		QDoubleSpinBox * spin = NULL;
@@ -85,12 +85,12 @@ namespace SlavGPS {
 	public:
 		BFilterDuplicates();
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 	};
 
 	class BFilterDuplicatesDialog : public DataSourceDialog {
 	public:
-		BFilterDuplicatesDialog() {};
+		BFilterDuplicatesDialog(const QString & window_title) : DataSourceDialog(window_title) {};
 
 		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 	};
@@ -102,12 +102,12 @@ namespace SlavGPS {
 	public:
 		BFilterManual();
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 	};
 
 	class BFilterManualDialog : public DataSourceDialog {
 	public:
-		BFilterManualDialog();
+		BFilterManualDialog(const QString & window_title);
 
 		ProcessOptions * get_process_options_layer(const QString & input_layer_filename);
 		QLineEdit * entry = NULL;
@@ -119,11 +119,12 @@ namespace SlavGPS {
 	class BFilterPolygon : public DataSourceBabel {
 	public:
 		BFilterPolygon();
+		int run_config_dialog(void) { return QDialog::Accepted; };
 	};
 
 	class BFilterPolygonDialog : public DataSourceDialog {
 	public:
-		BFilterPolygonDialog();
+		BFilterPolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
 
 		ProcessOptions * get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
 	};
@@ -134,11 +135,12 @@ namespace SlavGPS {
 	class BFilterExcludePolygon : public DataSourceBabel {
 	public:
 		BFilterExcludePolygon();
+		int run_config_dialog(void) { return QDialog::Accepted; };
 	};
 
 	class BFilterExcludePolygonDialog : public DataSourceDialog {
 	public:
-		BFilterExcludePolygonDialog();
+		BFilterExcludePolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
 
 		ProcessOptions * get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
 	};

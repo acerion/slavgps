@@ -54,19 +54,23 @@ namespace SlavGPS {
 
 	class DataSourceOSMMyTraces : public DataSource {
 	public:
-		DataSourceOSMMyTraces();
+		DataSourceOSMMyTraces() {};
+		DataSourceOSMMyTraces(Viewport * viewport);
 		~DataSourceOSMMyTraces() {};
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something);
+		bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something);
+
+		int run_config_dialog(void);
+
+		Viewport * viewport = NULL;
 	};
 
 
 
 
-	class DataSourceMyOSMDialog : public DataSourceDialog {
+	class DataSourceOSMMyTracesDialog : public DataSourceDialog {
 	public:
-		DataSourceMyOSMDialog() {};
+		DataSourceOSMMyTracesDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title) { this->viewport = new_viewport; };
 
 		ProcessOptions * get_process_options_none(void);
 

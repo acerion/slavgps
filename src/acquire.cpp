@@ -67,22 +67,16 @@ using namespace SlavGPS;
 
 
 static std::vector<DataSource *> g_bfilters;
-static Track * filter_track = NULL;
+static Track * bfilter_track = NULL;
 static AcquireProcess * g_acquiring = NULL;
-
-
-
-
-static ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DataSource * data_source);
-static DownloadOptions * acquire_create_download_options(DataSourceDialog * setup_dialog);
 
 
 
 
 AcquireGetter::~AcquireGetter()
 {
-	delete this->po;
-	delete this->dl_options;
+	//delete this->process_options_;
+	//delete this->dl_options_;
 }
 
 
@@ -119,14 +113,14 @@ void AcquireGetter::on_complete_process(void)
 			}
 		}
 
-		if (this->acquiring->data_source_dialog) {
-			if (this->acquiring->data_source->keep_dialog_open) {
+		if (this->data_source->config_dialog) {
+			if (this->data_source->keep_dialog_open) {
 				/* Only allow dialog's validation when format selection is done. */
-				this->acquiring->data_source_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
-				this->acquiring->data_source_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+				this->data_source->config_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+				this->data_source->config_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 			} else {
 				/* Call 'accept()' slot to close the dialog. */
-				this->acquiring->data_source_dialog->accept();
+				this->data_source->config_dialog->accept();
 			}
 		}
 
@@ -134,7 +128,7 @@ void AcquireGetter::on_complete_process(void)
 		if (this->acquiring->trw) {
 			this->acquiring->trw->post_read(this->acquiring->viewport, true);
 			/* View this data if desired - must be done after post read (so that the bounds are known). */
-			if (this->acquiring->data_source && this->acquiring->data_source->autoview) {
+			if (this->data_source && this->data_source->autoview) {
 				this->acquiring->trw->move_viewport_to_show_all(this->acquiring->viewport);
 			}
 			this->acquiring->panel->emit_items_tree_updated_cb("acquire completed");
@@ -173,10 +167,9 @@ ProcessOptions::ProcessOptions(const QString & new_babel_args, const QString & n
 /* Re-implementation of QRunnable::run() */
 void AcquireGetter::run(void)
 {
-	DataSource * data_source = this->acquiring->data_source;
-	assert (data_source);
+	assert (this->data_source);
 
-	bool result = data_source->process_func(this->acquiring->trw, this->po, this->dl_options, this->acquiring);
+	bool result = this->data_source->acquire_into_layer(this->acquiring->trw, this->acquiring);
 
 	if (this->acquiring->running && !result) {
 		this->acquiring->status->setText(QObject::tr("Error: acquisition failed."));
@@ -187,7 +180,7 @@ void AcquireGetter::run(void)
 		this->on_complete_process();
 	}
 
-	data_source->cleanup(this->acquiring->parent_data_source_dialog);
+	this->data_source->cleanup(this->acquiring->parent_data_source_dialog);
 
 	this->acquiring->running = false;
 }
@@ -200,30 +193,21 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	this->parent_data_source_dialog = (DataSourceDialog *) new_parent_data_source_dialog;
 	this->data_source = new_data_source;
 
-
-	DataSourceDialog * setup_dialog = new_data_source->create_setup_dialog(this->viewport, this->parent_data_source_dialog);
-	if (setup_dialog) {
-		setup_dialog->setWindowTitle(new_data_source->window_title);
-
-		if (setup_dialog->exec() != QDialog::Accepted) {
-			delete setup_dialog;
-			return;
-		}
+	if (QDialog::Accepted != new_data_source->run_config_dialog()) {
+		qDebug() << "II" PREFIX << "Data source config dialog returned !Accepted";
+		return;
 	}
 
+	new_data_source->create_process_options(this->trw, this->trk);
+	new_data_source->create_download_options();
 
 	AcquireGetter getter;
 	getter.acquiring = this;
-	getter.po = acquire_create_process_options(this, setup_dialog, new_data_source);
-	getter.dl_options = acquire_create_download_options(setup_dialog);
+	getter.data_source = new_data_source;
 	getter.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
-	if (setup_dialog) {
-		delete setup_dialog;
-		setup_dialog = NULL;
-	}
 
-	this->data_source_dialog = setup_dialog; /* FIXME: setup or progress dialog? */
+	//this->config_dialog = data_source->config_dialog; /* FIXME: setup or progress dialog? */
 	this->running = true;
 	this->status = new QLabel(QObject::tr("Working..."));
 
@@ -274,9 +258,10 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		getter.acquiring->trw->set_name(new_data_source->layer_title);
 	}
 
+	ProcessOptions * process_options = getter.data_source->process_options;
 
 	if (new_data_source->is_thread) {
-		if (!getter.po->babel_args.isEmpty() || !getter.po->url.isEmpty() || !getter.po->shell_command.isEmpty()) {
+		if (!process_options->babel_args.isEmpty() || !process_options->url.isEmpty() || !process_options->shell_command.isEmpty()) {
 
 			getter.run();
 
@@ -314,7 +299,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	} else {
 		/* Bypass thread method malarkly - you'll just have to wait... */
 
-		bool success = new_data_source->process_func(getter.acquiring->trw, getter.po, getter.dl_options, this);
+		bool success = new_data_source->acquire_into_layer(getter.acquiring->trw, this);
 		if (!success) {
 			Dialog::error(QObject::tr("Error: acquisition failed."), this->window);
 		}
@@ -331,7 +316,6 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 
 	delete progress_dialog;
-	delete setup_dialog;
 }
 
 
@@ -356,38 +340,38 @@ void AcquireProcess::import_progress_cb(AcquireProgressCode code, void * data)
 
 
 
-ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSourceDialog * setup_dialog, DataSource * data_source)
+void DataSource::create_process_options(LayerTRW * trw, Track * trk)
 {
-	ProcessOptions * po = NULL;
+	assert (this->config_dialog);
 
-	switch (data_source->input_type) {
+	switch (this->input_type) {
 
 	case DataSourceInputType::TRWLayer: {
 		/*
-		  BFilterSimplify
-		  BFilterCompress
-		  BFilterDuplicates
-		  BFilterManual
+		  BFilterSimplify    inherits from DataSourceBabel
+		  BFilterCompress    inherits from DataSourceBabel
+		  BFilterDuplicates  inherits from DataSourceBabel
+		  BFilterManual      inherits from DataSourceBabel
 		*/
 		qDebug() << "II" PREFIX << "input type: TRWLayer";
 
-		const QString layer_file_full_path = GPX::write_tmp_file(acq->trw, NULL);
-		po = setup_dialog->get_process_options_layer(layer_file_full_path);
+		const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
+		this->process_options = this->config_dialog->get_process_options_layer(layer_file_full_path);
 		Util::add_to_deletion_list(layer_file_full_path);
 		}
 		break;
 
 	case DataSourceInputType::TRWLayerTrack: {
 		/*
-		  BFilterPolygon
-		  BFilterExcludePolygon
+		  BFilterPolygon          inherits from DataSourceBabel
+		  BFilterExcludePolygon   inherits from DataSourceBabel
 		*/
 		qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
 
-		const QString layer_file_full_path = GPX::write_tmp_file(acq->trw, NULL);
-		const QString track_file_full_path = GPX::write_track_tmp_file(acq->trk, NULL);
+		const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
+		const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
 
-		po = setup_dialog->get_process_options_layer_track(layer_file_full_path, track_file_full_path);
+		this->process_options = this->config_dialog->get_process_options_layer_track(layer_file_full_path, track_file_full_path);
 
 		Util::add_to_deletion_list(layer_file_full_path);
 		Util::add_to_deletion_list(track_file_full_path);
@@ -397,23 +381,24 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 	case DataSourceInputType::Track: {
 		qDebug() << "II" PREFIX << "input type: Track";
 
-		const QString track_file_full_path = GPX::write_track_tmp_file(acq->trk, NULL);
-		po = setup_dialog->get_process_options_layer_track("", track_file_full_path);
+		const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
+		this->process_options = this->config_dialog->get_process_options_layer_track("", track_file_full_path);
 		}
 		break;
 
 	case DataSourceInputType::None:
 		/*
-		  DataSourceFile
-		  DataSourceOSMTraces
-  		  DataSourceOSMMyTraces
-		  DataSourceURL
-		  DataSourceGeoCache
-		  DataSourceGeoTag
-		  DataSourceGeoJSON
-		  DataSourceRouting
-		  DataSourceGPS
-		  DataSourceWebTool
+		  DataSourceFile        inherits from DataSourceBabel
+		  DataSourceOSMTraces   inherits from DataSourceBabel
+		  DataSourceURL         inherits from DataSourceBabel
+		  DataSourceGeoCache    inherits from DataSourceBabel
+		  DataSourceRouting     inherits from DataSourceBabel
+		  DataSourceGPS         inherits from DataSourceBabel
+		  DataSourceWebTool     inherits from DataSourceBabel
+		  DataSourceOSMMyTraces inherits from DataSource
+		  DataSourceGeoTag      inherits from DataSource
+		  DataSourceGeoJSON     inherits from DataSource
+		  DataSourceWikipedia   inherits from DataSource
 
 		  DataSourceWikipedia is also of type None, but it
 		  doesn't provide setup dialog and doesn't implement
@@ -422,52 +407,50 @@ ProcessOptions * acquire_create_process_options(AcquireProcess * acq, DataSource
 		*/
 		qDebug() << "II" PREFIX << "input type: None";
 
-		assert (setup_dialog);
-		po = setup_dialog->get_process_options_none();
+		this->process_options = this->config_dialog->get_process_options_none();
 		break;
 
 	default:
-		qDebug() << "EE" PREFIX << "unsupported Datasource Input Type" << (int) data_source->input_type;
+		qDebug() << "EE" PREFIX << "unsupported Datasource Input Type" << (int) this->input_type;
 		break;
 	};
 
-	return po;
+	return;
 }
 
 
 
 
-DownloadOptions * acquire_create_download_options(DataSourceDialog * setup_dialog)
+void DataSource::create_download_options(void)
 {
-	DownloadOptions * dl_options = new DownloadOptions; /* With default values. */
-	setup_dialog->adjust_download_options(*dl_options);
-	return dl_options;
+	this->download_options = new DownloadOptions; /* With default values. */
+	this->config_dialog->adjust_download_options(*this->download_options);
 }
 
 
 
 
-void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode new_mode, Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceDialog * new_parent_data_source_dialog)
+void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode)
 {
-	AcquireProcess acquiring(new_window, new_panel, new_viewport);
-	acquiring.acquire(new_data_source, new_mode, new_parent_data_source_dialog);
+	AcquireProcess acquiring(g_acquiring->window, g_acquiring->panel, g_acquiring->viewport);
+	acquiring.acquire(data_source, mode, NULL);
 }
 
 
 
 
-void AcquireProcess::acquire_trwlayer_cb(void)
+void AcquireProcess::filter_trwlayer_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
-	int idx = qa->data().toInt();
+	const int filter_idx = qa->data().toInt();
 
-	this->acquire(g_bfilters[idx], g_bfilters[idx]->mode, NULL);
+	this->acquire(g_bfilters[filter_idx], g_bfilters[filter_idx]->mode, NULL);
 }
 
 
 
 
-QMenu * AcquireProcess::build_menu(const QString & submenu_label, DataSourceInputType input_type)
+QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type)
 {
 	QMenu * menu = NULL;
 	int i = 0;
@@ -477,12 +460,12 @@ QMenu * AcquireProcess::build_menu(const QString & submenu_label, DataSourceInpu
 
 		if (filter->input_type == input_type) {
 			if (!menu) { /* Do this just once, but return NULL if no filters. */
-				menu = new QMenu(submenu_label);
+				menu = new QMenu(menu_label);
 			}
 
-			QAction * action = new QAction(filter->window_title, this);
+			QAction * action = new QAction(filter->window_title, g_acquiring);
 			action->setData(i);
-			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (acquire_trwlayer_cb(void)));
+			QObject::connect(action, SIGNAL (triggered(bool)), g_acquiring, SLOT (filter_trwlayer_cb(void)));
 			menu->addAction(action);
 		}
 		i++;
@@ -495,42 +478,34 @@ QMenu * AcquireProcess::build_menu(const QString & submenu_label, DataSourceInpu
 
 
 /**
- * Create a sub menu intended for rightclicking on a TRWLayer's menu called "Filter".
- *
- * Returns: %NULL if no filters.
- */
-QMenu * Acquire::create_trwlayer_menu(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * trw)
-{
-	g_acquiring->window = new_window;
-	g_acquiring->panel = new_panel;
-	g_acquiring->viewport = new_viewport;
-	g_acquiring->trw = trw;
-	g_acquiring->trk = NULL;
+   @brief Create a "Filter" sub menu intended for rightclicking on a TRW layer
 
-	return g_acquiring->build_menu(QObject::tr("&Filter"), DataSourceInputType::TRWLayer);
+   @return NULL if no filters are available for a TRW layer
+   @return new menu otherwise
+*/
+QMenu * Acquire::create_bfilter_layer_menu(void)
+{
+	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::TRWLayer);
 }
 
 
 
 
 /**
- * Create a sub menu intended for rightclicking on a TRWLayer's menu called "Filter with Track "TRACKNAME"...".
- *
- * Returns: %NULL if no filters or no filter track has been set.
- */
-QMenu * Acquire::create_trwlayer_track_menu(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * new_trw)
+   @brief Create a sub menu intended for rightclicking on a TRWLayer's menu called "Filter with Track "TRACKNAME"..."
+
+   @return NULL if no filters or no filter track has been set
+   @return menu otherwise
+*/
+QMenu * Acquire::create_bfilter_layer_track_menu(void)
 {
-	if (filter_track == NULL) {
+	if (bfilter_track == NULL) {
 		return NULL;
 	} else {
-		g_acquiring->window = new_window;
-		g_acquiring->panel = new_panel;
-		g_acquiring->viewport = new_viewport;
-		g_acquiring->trw = new_trw;
-		g_acquiring->trk = filter_track;
+		g_acquiring->trk = bfilter_track;
 
-		const QString submenu_label = QObject::tr("Filter with %1").arg(filter_track->name);
-		return g_acquiring->build_menu(submenu_label, DataSourceInputType::TRWLayerTrack);
+		const QString menu_label = QObject::tr("Filter with %1").arg(bfilter_track->name);
+		return Acquire::create_bfilter_menu(menu_label, DataSourceInputType::TRWLayerTrack);
 	}
 }
 
@@ -538,19 +513,14 @@ QMenu * Acquire::create_trwlayer_track_menu(Window * new_window, LayersPanel * n
 
 
 /**
- * Create a sub menu intended for rightclicking on a track's menu called "Filter".
- *
- * Returns: %NULL if no applicable filters
- */
-QMenu * Acquire::create_track_menu(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, Track * new_trk)
-{
-	g_acquiring->window = new_window;
-	g_acquiring->panel = new_panel;
-	g_acquiring->viewport = new_viewport;
-	g_acquiring->trw = NULL;
-	g_acquiring->trk = new_trk;
+   @brief Create a "Filter" sub menu intended for rightclicking on a TRW track
 
-	return g_acquiring->build_menu(QObject::tr("&Filter"), DataSourceInputType::Track);
+   @return NULL if no filters are available for a TRW track
+   @return new menu otherwise
+*/
+QMenu * Acquire::create_bfilter_track_menu(void)
+{
+	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::Track);
 }
 
 
@@ -559,13 +529,13 @@ QMenu * Acquire::create_track_menu(Window * new_window, LayersPanel * new_panel,
 /**
  * Sets application-wide track to use with filter. references the track.
  */
-void Acquire::set_filter_track(Track * trk)
+void Acquire::set_bfilter_track(Track * trk)
 {
-	if (filter_track) {
-		filter_track->free();
+	if (bfilter_track) {
+		bfilter_track->free();
 	}
 
-	filter_track = trk;
+	bfilter_track = trk;
 	trk->ref();
 }
 
@@ -601,7 +571,19 @@ void Acquire::uninit(void)
 
 
 
-bool DataSourceBabel::process_func(LayerTRW * trw, ProcessOptions * babel_action, DownloadOptions * download_options, AcquireTool * progress_indicator)
+bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireTool * progress_indicator)
 {
-	return babel_action->universal_import_fn(trw, download_options, progress_indicator);
+	return this->process_options->universal_import_fn(trw, this->download_options, progress_indicator);
+}
+
+
+
+
+void Acquire::set_context(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * new_trw, Track * new_trk)
+{
+	g_acquiring->window = new_window;
+	g_acquiring->panel = new_panel;
+	g_acquiring->viewport = new_viewport;
+	g_acquiring->trw = new_trw;
+	g_acquiring->trk = new_trk;
 }

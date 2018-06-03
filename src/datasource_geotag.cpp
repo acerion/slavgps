@@ -16,8 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
+
+#include <cassert>
+
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -78,15 +86,18 @@ DataSourceGeoTag::DataSourceGeoTag()
 
 
 
-DataSourceDialog * DataSourceGeoTag::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceGeoTag::run_config_dialog(void)
 {
-	return new DataSourceGeoTagDialog;
+	assert(!this->config_dialog);
+
+	this->config_dialog = new DataSourceGeoTagDialog(this->window_title);
+	return this->config_dialog->exec();
 }
 
 
 
 
-DataSourceGeoTagDialog::DataSourceGeoTagDialog()
+DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	/* QFileDialog::ExistingFiles: allow selecting more than one.
 	   By default the file selector is created with AcceptMode::AcceptOpen. */
@@ -146,10 +157,10 @@ ProcessOptions * DataSourceGeoTagDialog::get_process_options_none(void)
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoTag::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something)
+bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
 {
-	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
-	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring->parent_data_source_dialog;
+	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
+	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring_context->parent_data_source_dialog;
 
 	/* Process selected files.
 	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */
@@ -157,7 +168,7 @@ bool DataSourceGeoTag::process_func(LayerTRW * trw, ProcessOptions * process_opt
 		const QString file_full_path = user_data->selected_files.at(0);
 
 		QString name;
-		Waypoint * wp = a_geotag_create_waypoint_from_file(file_full_path, acquiring->viewport->get_coord_mode(), name);
+		Waypoint * wp = a_geotag_create_waypoint_from_file(file_full_path, acquiring_context->viewport->get_coord_mode(), name);
 		if (wp) {
 			/* Create name if geotag method didn't return one. */
 			if (!name.size()) {
@@ -165,7 +176,7 @@ bool DataSourceGeoTag::process_func(LayerTRW * trw, ProcessOptions * process_opt
 			}
 			trw->add_waypoint_from_file(wp, name);
 		} else {
-			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(file_full_path));
+			acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(file_full_path));
 		}
 	}
 

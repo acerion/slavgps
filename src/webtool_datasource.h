@@ -42,14 +42,22 @@ namespace SlavGPS {
 
 
 
+	class WebToolDatasource;
+
+
+
+
 	class DataSourceWebTool : public DataSourceBabel {
 	public:
-		DataSourceWebTool(bool search, const QString & window_title, const QString & layer_title);
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		DataSourceWebTool() {};
+		DataSourceWebTool(bool search, const QString & window_title, const QString & layer_title, Viewport * viewport, WebToolDatasource * web_tool_data_source);
+		int run_config_dialog(void);
 
 		void cleanup(void * data);
 
 		bool search = false;
+		Viewport * viewport = NULL;
+		WebToolDatasource * web_tool_data_source = NULL;
 	};
 
 
@@ -93,7 +101,7 @@ namespace SlavGPS {
 	class DataSourceWebToolDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceWebToolDialog(Viewport * viewport, void * new_web_tool_data_source);
+		DataSourceWebToolDialog(const QString & window_title, Viewport * viewport, WebToolDatasource * new_web_tool_data_source);
 
 		ProcessOptions * get_process_options_none(void);
 

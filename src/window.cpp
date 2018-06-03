@@ -2435,7 +2435,8 @@ void Window::acquire_handler(DataSource * data_source)
 		mode = DataSourceMode::CreateNewLayer;
 	}
 
-	Acquire::acquire_from_source(data_source, mode, this, this->items_tree, this->viewport, NULL);
+	Acquire::set_context(this, this->items_tree, this->viewport, NULL, NULL);
+	Acquire::acquire_from_source(data_source, mode);
 }
 
 
@@ -2498,7 +2499,7 @@ void Window::acquire_from_gc_cb(void)
 		return;
 	}
 
-	this->acquire_handler(new DataSourceGeoCache());
+	this->acquire_handler(new DataSourceGeoCache(g_tree->tree_get_main_viewport()));
 }
 #endif
 

@@ -45,13 +45,16 @@ namespace SlavGPS {
 
 	class DataSourceGeoCache : public DataSourceBabel {
 	public:
-		DataSourceGeoCache();
+		DataSourceGeoCache() {};
+		DataSourceGeoCache(Viewport * viewport);
 		~DataSourceGeoCache() {};
 
 		static void init(void);
 		static bool have_programs(void); /* Check if programs necessary for using GeoCaches data source are available. */
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
+
+		Viewport * viewport = NULL;
 	};
 
 
@@ -60,7 +63,7 @@ namespace SlavGPS {
 	class DataSourceGCDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceGCDialog(Viewport * viewport);
+		DataSourceGCDialog(const QString & window_title, Viewport * viewport);
 		~DataSourceGCDialog();
 
 		ProcessOptions * get_process_options_none(void);

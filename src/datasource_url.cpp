@@ -16,11 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #include <vector>
 #include <cstdlib>
+#include <cassert>
+
+
+
 
 #include "datasource_url.h"
 #include "acquire.h"
@@ -74,15 +80,19 @@ DataSourceURL::DataSourceURL()
 
 
 
-DataSourceDialog * DataSourceURL::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceURL::run_config_dialog(void)
 {
-	return new DataSourceURLDialog();
+	assert (!this->config_dialog);
+
+	this->config_dialog = new DataSourceURLDialog(this->window_title);
+
+	return this->config_dialog->exec();
 }
 
 
 
 
-DataSourceURLDialog::DataSourceURLDialog()
+DataSourceURLDialog::DataSourceURLDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	if (g_last_file_type_index == INVALID_ENTRY_INDEX) {
 		g_last_file_type_index = find_initial_file_type_index();

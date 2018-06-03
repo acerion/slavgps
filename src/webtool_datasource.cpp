@@ -29,6 +29,7 @@
 
 
 #include <vector>
+#include <cassert>
 
 
 
@@ -87,10 +88,10 @@ static QString get_last_user_string(const WebToolDatasource * web_tool_datasourc
 
 
 
-DataSourceWebToolDialog::DataSourceWebToolDialog(Viewport * new_viewport, void * new_web_tool_data_source)
+DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, Viewport * new_viewport, WebToolDatasource * new_web_tool_data_source) : DataSourceDialog(window_title)
 {
 	this->viewport = new_viewport;
-	this->web_tool_data_source = (WebToolDatasource * ) new_web_tool_data_source;
+	this->web_tool_data_source = new_web_tool_data_source;
 
 
 	QLabel * user_string_label = new QLabel(tr("%1:").arg(this->web_tool_data_source->input_field_label_text), this);
@@ -163,8 +164,11 @@ void DataSourceWebTool::cleanup(void * data)
 
 
 
-DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window_title, const QString & new_layer_title)
+DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window_title, const QString & new_layer_title, Viewport * new_viewport, WebToolDatasource * new_web_tool_data_source)
 {
+	this->viewport = new_viewport;
+	this->web_tool_data_source = new_web_tool_data_source;
+
 	this->window_title = new_window_title;
 	this->layer_title = new_layer_title;
 	this->mode = DataSourceMode::AddToLayer;
@@ -178,14 +182,20 @@ DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window
 
 
 
-DataSourceDialog * DataSourceWebTool::create_setup_dialog(Viewport * viewport, void * web_tool_data_source)
+
+int DataSourceWebTool::run_config_dialog(void)
 {
+	assert (!this->config_dialog);
+
 	if (this->search) {
-		return new DataSourceWebToolDialog(viewport, web_tool_data_source);
+		this->config_dialog = new DataSourceWebToolDialog(this->window_title, this->viewport, this->web_tool_data_source);
+		return this->config_dialog->exec();
 	} else {
-		return NULL;
+		this->config_dialog = NULL;
+		return QDialog::Rejected;
 	}
 }
+
 
 
 
@@ -193,7 +203,7 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 {
 	bool search = this->webtool_needs_user_string();
 
-	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label());
+	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label(), a_window->get_viewport(), this);
 
 	AcquireProcess acquiring(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport());
 	acquiring.acquire(data_source, data_source->mode, this);

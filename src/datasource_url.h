@@ -46,7 +46,7 @@ namespace SlavGPS {
 		DataSourceURL();
 		~DataSourceURL() {};
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 	};
 
 
@@ -55,7 +55,7 @@ namespace SlavGPS {
 	class DataSourceURLDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceURLDialog();
+		DataSourceURLDialog(const QString & window_title);
 		~DataSourceURLDialog();
 
 		ProcessOptions * get_process_options_none(void);

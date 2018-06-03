@@ -27,6 +27,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -441,14 +442,19 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 
 
 
-DataSourceDialog * DataSourceGPS::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceGPS::run_config_dialog(void)
 {
+	assert (!this->config_dialog);
+
 	/* This function will be created for downloading data from
 	   GPS, so build the dialog with all checkboxes available and
 	   checked - hence second argument to constructor is
 	   "true". */
 	GPSTransferType xfer = GPSTransferType::WPT; /* This doesn't really matter much because second arg to constructor is 'true'. */
-	return new DatasourceGPSSetup(xfer, true, NULL);
+	this->config_dialog = new DatasourceGPSSetup(this->window_title, xfer, true, NULL);
+
+	return this->config_dialog->exec();
+
 }
 
 
@@ -592,7 +598,7 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSS
    @xfer: The default type of items enabled for transfer, others disabled
    @xfer_all: When specified all items are enabled for transfer
 */
-DatasourceGPSSetup::DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWidget * parent)
+DatasourceGPSSetup::DatasourceGPSSetup(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent) : DataSourceDialog(window_title)
 {
 	this->direction = GPSDirection::UP;
 	this->setWindowTitle(QObject::tr("GPS Upload"));
@@ -669,7 +675,7 @@ DataSourceDialog * DataSourceGPS::create_progress_dialog(void * user_data)
 
 
 
-DatasourceGPSProgress::DatasourceGPSProgress(QWidget * parent)
+DatasourceGPSProgress::DatasourceGPSProgress(const QString & window_title, QWidget * parent) : DataSourceDialog(window_title)
 {
 }
 

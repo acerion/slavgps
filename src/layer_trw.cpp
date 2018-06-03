@@ -1908,7 +1908,8 @@ void LayerTRW::acquire_handler(DataSource * data_source)
 		mode = DataSourceMode::CreateNewLayer;
 	}
 
-	Acquire::acquire_from_source(data_source, mode, this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL);
+	Acquire::set_context(this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL, NULL);
+	Acquire::acquire_from_source(data_source, mode);
 }
 
 
@@ -1977,7 +1978,7 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
-	this->acquire_handler(new DataSourceGeoCache());
+	this->acquire_handler(new DataSourceGeoCache(g_tree->tree_get_main_viewport()));
 }
 #endif
 
@@ -2062,7 +2063,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	}
 
 
-	DatasourceGPSSetup gps_upload_setup(xfer_type, xfer_all);
+	DatasourceGPSSetup gps_upload_setup(QObject::tr("Upload"), xfer_type, xfer_all);
 	if (gps_upload_setup.exec() != QDialog::Accepted) {
 		return;
 	}

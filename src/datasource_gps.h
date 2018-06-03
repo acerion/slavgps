@@ -49,7 +49,7 @@ namespace SlavGPS {
 		DataSourceGPS();
 		~DataSourceGPS() {};
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 
 		/* FIXME: these are most probably unused after changes in acquire. Make them used again. */
 		void off(void * user_data, QString & babel_args, QString & file_path);
@@ -64,7 +64,7 @@ namespace SlavGPS {
 	class DatasourceGPSSetup : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DatasourceGPSSetup(GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
+		DatasourceGPSSetup(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
 		~DatasourceGPSSetup();
 
 		ProcessOptions * get_process_options_none(void);
@@ -107,7 +107,7 @@ namespace SlavGPS {
 	class DatasourceGPSProgress : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DatasourceGPSProgress(QWidget * parent = NULL);
+		DatasourceGPSProgress(const QString & window_title, QWidget * parent = NULL);
 		~DatasourceGPSProgress();
 
 		ProcessOptions * get_process_options_none(void) { return NULL; };

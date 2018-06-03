@@ -42,8 +42,9 @@ namespace SlavGPS {
 		DataSourceGeoTag();
 		~DataSourceGeoTag() {};
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
-		bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something);
+		bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something);
+
+		int run_config_dialog(void);
 	};
 
 
@@ -51,7 +52,7 @@ namespace SlavGPS {
 
 	class DataSourceGeoTagDialog : public DataSourceDialog {
 	public:
-		DataSourceGeoTagDialog();
+		DataSourceGeoTagDialog(const QString & window_title);
 
 		ProcessOptions * get_process_options_none(void);
 

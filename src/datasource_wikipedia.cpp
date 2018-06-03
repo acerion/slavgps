@@ -58,16 +58,25 @@ DataSourceWikipedia::DataSourceWikipedia()
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceWikipedia::process_func(LayerTRW * trw, ProcessOptions * po, DownloadOptions * unused, AcquireTool * babel_something)
+bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
 {
-	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
+	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
 
 	if (!trw) {
 		qDebug() << "EE: Datasource Wikipedia: missing TRW layer";
 		return false;
 	}
 
-	a_geonames_wikipedia_box(acquiring->window, trw, acquiring->viewport->get_min_max_lat_lon());
+	a_geonames_wikipedia_box(acquiring_context->window, trw, acquiring_context->viewport->get_min_max_lat_lon());
 
 	return true;
+}
+
+
+
+
+
+int DataSourceWikipedia::run_config_dialog(void)
+{
+	return QDialog::Accepted;
 }

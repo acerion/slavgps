@@ -23,6 +23,7 @@
 #endif
 
 #include <cstdlib>
+#include <cassert>
 
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
@@ -68,8 +69,10 @@ using namespace SlavGPS;
 
 
 
-DataSourceOSMMyTraces::DataSourceOSMMyTraces()
+DataSourceOSMMyTraces::DataSourceOSMMyTraces(Viewport * new_viewport)
 {
+	this->viewport = new_viewport;
+
 	this->window_title = QObject::tr("OSM My Traces");
 	this->layer_title = QObject::tr("OSM My Traces");
 	this->mode = DataSourceMode::ManualLayerManagement; /* We'll do this ourselves. */
@@ -97,34 +100,37 @@ DataSourceOSMMyTraces::DataSourceOSMMyTraces()
 
 
 
-DataSourceDialog * DataSourceOSMMyTraces::create_setup_dialog(Viewport * new_viewport, void * user_data)
+int DataSourceOSMMyTraces::run_config_dialog(void)
 {
-	DataSourceMyOSMDialog * setup_dialog = new DataSourceMyOSMDialog();
+	assert (!this->config_dialog);
+
+	DataSourceOSMMyTracesDialog * dialog = new DataSourceOSMMyTracesDialog(this->window_title, this->viewport);
 
 	/* Keep reference to viewport. */
-	setup_dialog->viewport = new_viewport;
+	dialog->viewport = this->viewport;
 
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
-	setup_dialog->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
-	setup_dialog->grid->addWidget(user_label, 0, 0);
-	setup_dialog->grid->addWidget(&setup_dialog->user_entry, 0, 1);
+	dialog->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
+	dialog->grid->addWidget(user_label, 0, 0);
+	dialog->grid->addWidget(&dialog->user_entry, 0, 1);
 
 
 	QLabel * password_label = new QLabel(QObject::tr("Password:"));
-	setup_dialog->password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
-	setup_dialog->grid->addWidget(password_label, 1, 0);
-	setup_dialog->grid->addWidget(&setup_dialog->password_entry, 1, 1);
+	dialog->password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
+	dialog->grid->addWidget(password_label, 1, 0);
+	dialog->grid->addWidget(&dialog->password_entry, 1, 1);
 
-	osm_fill_credentials_widgets(setup_dialog->user_entry, setup_dialog->password_entry);
+	osm_fill_credentials_widgets(dialog->user_entry, dialog->password_entry);
 
-	return setup_dialog;
+	this->config_dialog = dialog;
+
+	return this->config_dialog->exec();
 }
 
 
 
-
-ProcessOptions * DataSourceMyOSMDialog::get_process_options_none(void)
+ProcessOptions * DataSourceOSMMyTracesDialog::get_process_options_none(void)
 {
 	ProcessOptions * po = new ProcessOptions();
 
@@ -532,7 +538,7 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 /**
    For each track - mark whether the start is in within the viewport.
 */
-void DataSourceMyOSMDialog::set_in_current_view_property(std::list<GPXMetaData *> & list)
+void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMetaData *> & list)
 {
 	/* Get Viewport bounding box. */
 	const LatLonBBox bbox = this->viewport->get_bbox();
@@ -557,20 +563,20 @@ void DataSourceMyOSMDialog::set_in_current_view_property(std::list<GPXMetaData *
 
 
 
-bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something)
+bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
 {
-	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
+	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
 
-	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring->user_data;
+	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 
 	bool result = false;
 
 	/* Support .zip + bzip2 files directly. */
-	DownloadOptions dl_options(2); /* Allow a couple of redirects. */
-	dl_options.convert_file = a_try_decompress_file;
-	dl_options.user_pass = osm_get_current_credentials();
+	DownloadOptions local_dl_options(2); /* Allow a couple of redirects. */
+	local_dl_options.convert_file = a_try_decompress_file;
+	local_dl_options.user_pass = osm_get_current_credentials();
 
-	DownloadHandle dl_handle(&dl_options);
+	DownloadHandle dl_handle(&local_dl_options);
 
 	QTemporaryFile tmp_file;
 	if (!dl_handle.download_to_tmp_file(tmp_file, DS_OSM_TRACES_GPX_FILES)) {
@@ -596,7 +602,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
 		if (!this->is_thread) {
-			Dialog::info(QObject::tr("No GPS Traces found"), acquiring->window);
+			Dialog::info(QObject::tr("No GPS Traces found"), acquiring_context->window);
 		}
 		free(xd);
 		return false;
@@ -604,13 +610,13 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 
 	xd->list_of_gpx_meta_data.reverse();
 
-	((DataSourceMyOSMDialog *) acquiring->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
+	((DataSourceOSMMyTracesDialog *) acquiring_context->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 
-	std::list<GPXMetaData *> * selected = select_from_list(acquiring->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	std::list<GPXMetaData *> * selected = select_from_list(acquiring_context->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 
 	/* If non thread - show program is 'doing something...' */
 	if (!this->is_thread) {
-		acquiring->window->set_busy_cursor();
+		acquiring_context->window->set_busy_cursor();
 	}
 
 	/* If passed in on an existing layer - we will create everything into that.
@@ -632,7 +638,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 			if (create_new_layer) {
 				/* Have data but no layer - so create one. */
 				target_layer = new LayerTRW();
-				target_layer->set_coord_mode(acquiring->viewport->get_coord_mode());
+				target_layer->set_coord_mode(acquiring_context->viewport->get_coord_mode());
 				if (!(*iter)->name.isEmpty()) {
 					target_layer->set_name((*iter)->name);
 				} else {
@@ -648,25 +654,25 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 				const QString url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
 				/* NB download type is GPX (or a compressed version). */
-				ProcessOptions babel_action = *process_options;
+				ProcessOptions babel_action = *this->process_options;
 				babel_action.url = url;
-				convert_result = babel_action.import_from_url(target_layer, &dl_options);
+				convert_result = babel_action.import_from_url(target_layer, &local_dl_options);
 				/* TODO investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
 				got_something = got_something || convert_result;
 				if (!convert_result) {
 					/* Report errors to the status bar. */
-					acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
+					acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
 				}
 			}
 
 			if (convert_result) {
 				/* Can use the layer. */
-				acquiring->panel->get_top_layer()->add_layer(target_layer, true);
+				acquiring_context->panel->get_top_layer()->add_layer(target_layer, true);
 				/* Move to area of the track. */
-				target_layer->post_read(acquiring->window->get_viewport(), true);
-				target_layer->move_viewport_to_show_all(acquiring->window->get_viewport());
+				target_layer->post_read(acquiring_context->window->get_viewport(), true);
+				target_layer->move_viewport_to_show_all(acquiring_context->window->get_viewport());
 				vtl_last = target_layer;
 			} else {
 				if (create_new_layer) {
@@ -705,7 +711,7 @@ bool DataSourceOSMMyTraces::process_func(LayerTRW * trw, ProcessOptions * proces
 	}
 
 	if (!this->is_thread) {
-		acquiring->window->clear_busy_cursor();
+		acquiring_context->window->clear_busy_cursor();
 	}
 
 	return result;

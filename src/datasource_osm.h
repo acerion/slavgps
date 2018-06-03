@@ -44,20 +44,23 @@ namespace SlavGPS {
 
 	class DataSourceOSMTraces : public DataSourceBabel {
 	public:
-		DataSourceOSMTraces();
+		DataSourceOSMTraces() {};
+		DataSourceOSMTraces(Viewport * viewport);
 		~DataSourceOSMTraces() {};
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
+
+		Viewport * viewport = NULL;
 	};
 
 
 
 
-	class DataSourceOSMDialog : public DataSourceDialog {
+	class DataSourceOSMTracesDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceOSMDialog(Viewport * viewport);
-		~DataSourceOSMDialog();
+		DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport);
+		~DataSourceOSMTracesDialog();
 
 		ProcessOptions * get_process_options_none(void);
 

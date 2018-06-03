@@ -26,6 +26,7 @@
 #include <vector>
 #include <cstring>
 #include <cstdlib>
+#include <cassert>
 
 #include <QDebug>
 
@@ -70,10 +71,15 @@ DataSourceFile::DataSourceFile()
 
 
 
-DataSourceDialog * DataSourceFile::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceFile::run_config_dialog(void)
 {
-	return new DataSourceFileDialog("");
+	assert (!this->config_dialog);
+
+	this->config_dialog = new DataSourceFileDialog("");
+
+	return this->config_dialog->exec();
 }
+
 
 
 

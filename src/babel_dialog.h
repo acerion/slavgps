@@ -51,8 +51,7 @@ namespace SlavGPS {
 	class BabelDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		BabelDialog();
-		BabelDialog(QString const & title, QWidget * parent = NULL);
+		BabelDialog(const QString & window_title, QWidget * parent = NULL);
 		~BabelDialog();
 
 		void build_ui(const BabelMode * mode = NULL);

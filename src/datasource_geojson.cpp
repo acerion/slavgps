@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <cassert>
+
 #include "datasource.h"
 #include "acquire.h"
 #include "babel.h"
@@ -64,15 +66,19 @@ DataSourceGeoJSON::DataSourceGeoJSON()
 
 
 
-DataSourceDialog * DataSourceGeoJSON::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceGeoJSON::run_config_dialog(void)
 {
-	return new DataSourceGeoJSONDialog();
+	assert (!this->config_dialog);
+
+	this->config_dialog = new DataSourceGeoJSONDialog(this->window_title);
+
+	return this->config_dialog->exec();
 }
 
 
 
 
-DataSourceGeoJSONDialog::DataSourceGeoJSONDialog()
+DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	/* QFileDialog::ExistingFiles: allow selecting more than one.
 	   By default the file selector is created with AcceptMode::AcceptOpen. */
@@ -128,28 +134,28 @@ ProcessOptions * DataSourceGeoJSONDialog::get_process_options_none(void)
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoJSON::process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * unused, AcquireTool * babel_something)
+bool DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
 {
-	AcquireProcess * acquiring = (AcquireProcess *) babel_something;
+	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
 
-	DataSourceGeoJSONDialog * config_dialog = (DataSourceGeoJSONDialog *) acquiring->parent_data_source_dialog;
+	DataSourceGeoJSONDialog * local_config_dialog = (DataSourceGeoJSONDialog *) acquiring_context->parent_data_source_dialog; /* TODO: isn't local config dialog and member config dialog the same? */
 
 	/* Process selected files. */
-	for (int i = 0; i < config_dialog->selected_files.size(); i++) {
-		const QString file_full_path = config_dialog->selected_files.at(i);
+	for (int i = 0; i < local_config_dialog->selected_files.size(); i++) {
+		const QString file_full_path = local_config_dialog->selected_files.at(i);
 
 		const QString gpx_filename = geojson_import_to_gpx(file_full_path);
 		if (!gpx_filename.isEmpty()) {
 			/* Important that this process is run in the main thread. */
-			acquiring->window->open_file(gpx_filename, false);
+			acquiring_context->window->open_file(gpx_filename, false);
 			/* Delete the temporary file. */
 			QDir::root().remove(gpx_filename);
 		} else {
-			acquiring->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(file_full_path));
+			acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(file_full_path));
 		}
 	}
 
-	config_dialog->selected_files.clear();
+	local_config_dialog->selected_files.clear();
 
 	/* No failure. */
 	return true;

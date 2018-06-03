@@ -204,9 +204,10 @@ namespace SlavGPS {
 		DataSourceBabel() {};
 		~DataSourceBabel() {};
 
-		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something);
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something);
 		virtual void cleanup(void * data) { return; };
+
+		virtual int run_config_dialog() { return QDialog::Rejected; };
 	};
 
 

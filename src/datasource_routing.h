@@ -48,7 +48,7 @@ namespace SlavGPS {
 		DataSourceRouting();
 		~DataSourceRouting() {};
 
-		DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data);
+		int run_config_dialog(void);
 	};
 
 
@@ -57,7 +57,7 @@ namespace SlavGPS {
 	class DataSourceRoutingDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceRoutingDialog();
+		DataSourceRoutingDialog(const QString & window_title);
 		~DataSourceRoutingDialog();
 
 		ProcessOptions * get_process_options_none(void);

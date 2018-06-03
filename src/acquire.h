@@ -81,7 +81,6 @@ namespace SlavGPS {
 		AcquireProcess(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport) : window(new_window), panel(new_panel), viewport(new_viewport) {};
 
 		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
-		QMenu * build_menu(const QString & submenu_label, DataSourceInputType input_type);
 
 		void import_progress_cb(AcquireProgressCode code, void * data);
 
@@ -95,11 +94,11 @@ namespace SlavGPS {
 		bool running = false;
 
 		DataSource * data_source = NULL;
-		DataSourceDialog * data_source_dialog = NULL;
+		DataSourceDialog * config_dialog = NULL;
 		DataSourceDialog * parent_data_source_dialog = NULL;
 
 	public slots:
-		void acquire_trwlayer_cb(void);
+		void filter_trwlayer_cb(void);
 	};
 
 
@@ -110,13 +109,18 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource() {};
 
-		virtual DataSourceDialog * create_setup_dialog(Viewport * viewport, void * user_data) { return NULL; };
-		virtual bool process_func(LayerTRW * trw, ProcessOptions * process_options, DownloadOptions * download_options, AcquireTool * babel_something) { return false; };
+		void create_process_options(LayerTRW * trw, Track * trk);
+		void create_download_options(void);
+
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something) { return false; };
 		virtual void progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring) { return; };
 		virtual void cleanup(void * data) { return; };
 
+		virtual int run_config_dialog(void) { return QDialog::Rejected; };
+
 		QString window_title;
 		QString layer_title;
+
 
 		DataSourceMode mode;
 		DataSourceInputType input_type;
@@ -124,6 +128,11 @@ namespace SlavGPS {
 		bool autoview = false;
 		bool keep_dialog_open = false; /* ... when done. */
 		bool is_thread = false;
+
+		DataSourceDialog * config_dialog = NULL;
+
+		ProcessOptions * process_options = NULL;
+		DownloadOptions * download_options = NULL;
 	};
 
 
@@ -138,11 +147,9 @@ namespace SlavGPS {
 		void on_complete_process(void);
 
 
+		DataSource * data_source = NULL;
 		AcquireProcess * acquiring = NULL;
 		bool creating_new_layer = false;
-
-		ProcessOptions * po = NULL;
-		DownloadOptions * dl_options = NULL;
 	};
 
 
@@ -153,13 +160,18 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void acquire_from_source(DataSource * new_data_source, DataSourceMode new_mode, Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, DataSourceDialog * new_parent_data_source_dialog);
+		static void acquire_from_source(DataSource * data_source, DataSourceMode mode);
 
-		static QMenu * create_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
-		static QMenu * create_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
-		static QMenu * create_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk);
+		static void set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk);
 
-		static void set_filter_track(Track * trk);
+		static QMenu * create_bfilter_layer_menu(void);
+		static QMenu * create_bfilter_layer_track_menu(void);
+		static QMenu * create_bfilter_track_menu(void);
+
+		static void set_bfilter_track(Track * trk);
+
+	private:
+		static QMenu * create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type);
 	};
 
 

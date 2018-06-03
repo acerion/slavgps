@@ -27,6 +27,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cassert>
 
 #include <glib.h>
 
@@ -82,17 +83,18 @@ BFilterSimplify::BFilterSimplify()
 
 
 
-DataSourceDialog * BFilterSimplify::create_setup_dialog(Viewport * viewport, void * user_data)
+int BFilterSimplify::run_config_dialog(void)
 {
-	DataSourceDialog * dialog = new BFilterSimplifyDialog();
-	dialog->setWindowTitle(this->window_title);
-	return dialog;
+	assert (!this->config_dialog);
+
+	this->config_dialog = new BFilterSimplifyDialog(this->window_title);
+	return this->config_dialog->exec();
 }
 
 
 
 
-BFilterSimplifyDialog::BFilterSimplifyDialog()
+BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	static const ParameterScale scale = { 1, 10000, SGVariant((int32_t) 100), 10, 0 }; /* TODO: verify the hardcoded default value. */
 
@@ -164,17 +166,18 @@ BFilterCompress::BFilterCompress()
 
 
 
-DataSourceDialog * BFilterCompress::create_setup_dialog(Viewport * viewport, void * user_data)
+int BFilterCompress::run_config_dialog(void)
 {
-	DataSourceDialog * dialog = new BFilterCompressDialog();
-	dialog->setWindowTitle(this->window_title);
-	return dialog;
+	assert (!this->config_dialog);
+
+	this->config_dialog = new BFilterCompressDialog(this->window_title);
+	return this->config_dialog->exec();
 }
 
 
 
 
-BFilterCompressDialog::BFilterCompressDialog()
+BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	static const ParameterScale scale = { 0.0, 1.000, SGVariant(0.001), 0.001, 3 }; /* TODO: verify the hardcoded default value. */
 
@@ -245,9 +248,13 @@ BFilterDuplicates::BFilterDuplicates()
 
 
 
-DataSourceDialog * BFilterDuplicates::create_setup_dialog(Viewport * viewport, void * user_data)
+int BFilterDuplicates::run_config_dialog(void)
 {
-	return new BFilterDuplicatesDialog();
+	assert (!this->config_dialog);
+
+	this->config_dialog = new BFilterDuplicatesDialog(this->window_title);
+
+	return this->config_dialog->exec();
 }
 
 
@@ -291,17 +298,19 @@ BFilterManual::BFilterManual()
 
 
 
-DataSourceDialog * BFilterManual::create_setup_dialog(Viewport * viewport, void * user_data)
+int BFilterManual::run_config_dialog(void)
 {
-	DataSourceDialog * dialog = new BFilterManualDialog();
-	dialog->setWindowTitle(this->window_title);
-	return dialog;
+	assert (!this->config_dialog);
+
+	this->config_dialog = new BFilterManualDialog(this->window_title);
+
+	return this->config_dialog->exec();
 }
 
 
 
 
-BFilterManualDialog::BFilterManualDialog()
+BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
 	this->grid->addWidget(new QLabel(tr("Manual filter:")), 0, 0);
 

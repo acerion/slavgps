@@ -35,6 +35,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cassert>
 
 #include <QDebug>
 #include <QStandardPaths>
@@ -76,8 +77,10 @@ using namespace SlavGPS;
 
 
 
-DataSourceGeoCache::DataSourceGeoCache()
+DataSourceGeoCache::DataSourceGeoCache(Viewport * new_viewport)
 {
+	this->viewport = new_viewport;
+
 	this->window_title = QObject::tr("Download Geocaches");
 	this->layer_title = QObject::tr("Geocaching.com Caches");
 	this->mode = DataSourceMode::AutoLayerManagement;
@@ -188,15 +191,19 @@ void DataSourceGCDialog::draw_circle_cb(void)
 
 
 
-DataSourceDialog * DataSourceGeoCache::create_setup_dialog(Viewport * viewport, void * user_data)
+int DataSourceGeoCache::run_config_dialog(void)
 {
-	return new DataSourceGCDialog(viewport);
+	assert (!this->config_dialog);
+
+	this->config_dialog = new DataSourceGCDialog(this->window_title, this->viewport);
+
+	return this->config_dialog->exec();
 }
 
 
 
 
-DataSourceGCDialog::DataSourceGCDialog(Viewport * new_viewport)
+DataSourceGCDialog::DataSourceGCDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title)
 {
 	this->viewport = new_viewport;
 
