@@ -87,15 +87,20 @@ int DataSourceOSMTraces::run_config_dialog(void)
 
 	this->config_dialog = new DataSourceOSMTracesDialog(this->window_title, this->viewport);
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
 
 
-ProcessOptions * DataSourceOSMTracesDialog::get_process_options_none(void)
+BabelOptions * DataSourceOSMTracesDialog::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	const LatLonBBoxStrings bbox_strings = this->viewport->get_bbox().to_strings();
 

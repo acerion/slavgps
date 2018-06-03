@@ -72,7 +72,7 @@ namespace SlavGPS {
 	public:
 		DataSourceOSMMyTracesDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title) { this->viewport = new_viewport; };
 
-		ProcessOptions * get_process_options_none(void);
+		BabelOptions * get_process_options_none(void);
 
 		void set_in_current_view_property(std::list<GPXMetaData *> & list);
 

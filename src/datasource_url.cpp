@@ -86,7 +86,12 @@ int DataSourceURL::run_config_dialog(void)
 
 	this->config_dialog = new DataSourceURLDialog(this->window_title);
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
@@ -128,9 +133,9 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-ProcessOptions * DataSourceURLDialog::get_process_options_none(void)
+BabelOptions * DataSourceURLDialog::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	/* TODO: handle situation when there is only one item in the combo (i.e. GPX). */
 

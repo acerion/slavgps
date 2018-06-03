@@ -197,7 +197,12 @@ int DataSourceGeoCache::run_config_dialog(void)
 
 	this->config_dialog = new DataSourceGCDialog(this->window_title, this->viewport);
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
@@ -252,9 +257,9 @@ DataSourceGCDialog::DataSourceGCDialog(const QString & window_title, Viewport * 
 
 
 
-ProcessOptions * DataSourceGCDialog::get_process_options_none(void)
+BabelOptions * DataSourceGCDialog::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string);
 	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password").val_string);

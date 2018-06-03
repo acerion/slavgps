@@ -77,7 +77,12 @@ int DataSourceFile::run_config_dialog(void)
 
 	this->config_dialog = new DataSourceFileDialog("");
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
@@ -108,9 +113,9 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-ProcessOptions * DataSourceFileDialog::get_process_options_none(void)
+BabelOptions * DataSourceFileDialog::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	g_last_directory_url = this->file_entry->file_selector->directoryUrl();
 	g_last_filter = this->file_entry->file_selector->selectedNameFilter();

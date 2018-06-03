@@ -207,7 +207,7 @@ bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon &
 	const QString uri = this->get_url_for_coords(start, end);
 
 	const QString format_ = this->get_format();
-	ProcessOptions babel_action(NULL, NULL, format_, uri);
+	BabelOptions babel_action(NULL, NULL, format_, uri);
 	bool ret = babel_action.import_from_url(trw, &this->dl_options);
 
 	return ret;
@@ -321,7 +321,7 @@ bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 
 	/* Convert and insert data in model. */
 	const QString format_ = this->get_format();
-	ProcessOptions babel_action(NULL, NULL, format_, uri);
+	BabelOptions babel_action(NULL, NULL, format_, uri);
 	bool ret = babel_action.import_from_url(trw, &this->dl_options);
 
 	return ret;

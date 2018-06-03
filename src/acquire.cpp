@@ -75,8 +75,6 @@ static AcquireProcess * g_acquiring = NULL;
 
 AcquireGetter::~AcquireGetter()
 {
-	//delete this->process_options_;
-	//delete this->dl_options_;
 }
 
 
@@ -144,7 +142,7 @@ void AcquireGetter::on_complete_process(void)
 
 
 
-ProcessOptions::ProcessOptions(const QString & new_babel_args, const QString & new_input_file_name, const QString & new_input_file_type, const QString & new_url)
+BabelOptions::BabelOptions(const QString & new_babel_args, const QString & new_input_file_name, const QString & new_input_file_type, const QString & new_url)
 {
 	if (!new_babel_args.isEmpty()) {
 		this->babel_args = new_babel_args;
@@ -258,10 +256,10 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		getter.acquiring->trw->set_name(new_data_source->layer_title);
 	}
 
-	ProcessOptions * process_options = getter.data_source->process_options;
+	BabelOptions * process_options = getter.data_source->process_options;
 
 	if (new_data_source->is_thread) {
-		if (!process_options->babel_args.isEmpty() || !process_options->url.isEmpty() || !process_options->shell_command.isEmpty()) {
+		if (process_options->is_valid()) {
 
 			getter.run();
 
@@ -283,7 +281,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 					if (!babel_args_off.isEmpty()) {
 						/* Turn off. */
-						ProcessOptions off_options(babel_args_off, file_path_off, NULL, NULL);
+						BabelOptions off_options(babel_args_off, file_path_off, NULL, NULL);
 						off_options.turn_off_device();
 					}
 				}
@@ -335,6 +333,16 @@ void AcquireProcess::import_progress_cb(AcquireProgressCode code, void * data)
 	/* See DataSourceGPS::progress_func(). */
 	this->data_source->progress_func(code, data, this);
 #endif
+}
+
+
+
+
+DataSource::~DataSource()
+{
+	delete this->process_options;
+	delete this->download_options;
+	delete this->config_dialog;
 }
 
 

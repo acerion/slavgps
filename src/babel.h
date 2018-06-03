@@ -53,16 +53,18 @@ namespace SlavGPS {
 	/**
 	   Need to specify at least one of babel_args, URL or shell_command.
 	*/
-	struct ProcessOptions {
+	struct BabelOptions : public AcquireOptions {
 	public:
-		ProcessOptions() {};
-		ProcessOptions(const QString & babel_args, const QString & input_file_name, const QString & input_file_type, const QString & url);
-		~ProcessOptions() {};
+		BabelOptions() {};
+		BabelOptions(const QString & babel_args, const QString & input_file_name, const QString & input_file_type, const QString & url);
+		~BabelOptions() {};
 
 		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator);
 		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options);
 		bool import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator);
 		bool import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator);
+
+		bool is_valid(void) const;
 
 		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * babel_something);
 

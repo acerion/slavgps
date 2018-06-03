@@ -58,9 +58,9 @@ namespace SlavGPS {
 
 		void get_write_mode(BabelMode & mode);
 
-		ProcessOptions * get_process_options_none(void) { return NULL; };
-		ProcessOptions * get_process_options_layer(const QString & input_layer_filename) { return NULL; };
-		ProcessOptions * get_process_options_layer_track(const QString & input_layer_filename) { return NULL; };
+		BabelOptions * get_process_options_none(void) { return NULL; };
+		BabelOptions * get_process_options_layer(const QString & input_layer_filename) { return NULL; };
+		BabelOptions * get_process_options_layer_track(const QString & input_layer_filename) { return NULL; };
 
 		void adjust_download_options(DownloadOptions & dl_options) { return; };
 

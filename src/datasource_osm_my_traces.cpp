@@ -125,14 +125,19 @@ int DataSourceOSMMyTraces::run_config_dialog(void)
 
 	this->config_dialog = dialog;
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
 
-ProcessOptions * DataSourceOSMMyTracesDialog::get_process_options_none(void)
+BabelOptions * DataSourceOSMMyTracesDialog::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	/* Overwrite authentication info. */
 	osm_save_current_credentials(this->user_entry.text(), this->password_entry.text());
@@ -654,7 +659,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 				const QString url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
 				/* NB download type is GPX (or a compressed version). */
-				ProcessOptions babel_action = *this->process_options;
+				BabelOptions babel_action = *this->process_options;
 				babel_action.url = url;
 				convert_result = babel_action.import_from_url(target_layer, &local_dl_options);
 				/* TODO investigate using a progress bar:

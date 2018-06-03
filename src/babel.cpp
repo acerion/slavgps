@@ -195,7 +195,7 @@ bool a_babel_convert(LayerTRW * trw, const QString & babel_args, AcquireTool * p
 	const QString name_src = GPX::write_tmp_file(trw, NULL);
 
 	if (!name_src.isEmpty()) {
-		ProcessOptions babel_action(bargs, name_src, NULL, NULL);
+		BabelOptions babel_action(bargs, name_src, NULL, NULL);
 		ret = babel_action.universal_import_fn(trw, (DownloadOptions *) unused, progress_indicator);
 		QDir::root().remove(name_src);
 	}
@@ -295,7 +295,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
  *
  * Returns: %true on success.
  */
-bool ProcessOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator)
+bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator)
 {
 	qDebug() << "II" PREFIX << "importing from local file" << this->input_file_name;
 
@@ -367,7 +367,7 @@ bool ProcessOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progre
  * Uses Babel::convert_through_intermediate_file() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool ProcessOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator)
+bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator)
 {
 	qDebug() << "II" PREFIX << "using shell command" << this->shell_command;
 
@@ -410,7 +410,7 @@ bool ProcessOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * pro
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool ProcessOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
+bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 {
 	qDebug() << "II" PREFIX << "importing from URL" << this->url;
 
@@ -438,7 +438,7 @@ bool ProcessOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
 	if (DownloadResult::Success == dl_handle.get_url_http(this->url, "", name_src)) {
 		if (!this->input_file_type.isEmpty() || !this->babel_filters.isEmpty()) {
 
-			ProcessOptions opts_local; /* TODO: maybe we could reuse 'this->' ? */
+			BabelOptions opts_local; /* TODO: maybe we could reuse 'this->' ? */
 			opts_local.babel_args = (!this->input_file_type.isEmpty()) ? QString(" -i %1").arg(this->input_file_type) : "";
 			opts_local.input_file_name = name_src;
 			opts_local.babel_filters = this->babel_filters;
@@ -466,7 +466,7 @@ bool ProcessOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
 
 /**
  * @trw: The TRW layer to place data into. Duplicate items will be overwritten.
- * @process_options: The options to control the appropriate processing function. See #ProcessOptions for more detail.
+ * @process_options: The options to control the appropriate processing function. See #BabelOptions for more detail.
  * @cb: Optional callback function.
  * @cb_data: Passed along to cb.
  * @dl_options: If downloading from a URL use these options (may be NULL).
@@ -477,7 +477,7 @@ bool ProcessOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
  *
  * Returns: %true on success.
  */
-bool ProcessOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator)
+bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator)
 {
 	if (!this->url.isEmpty()) {
 		return this->import_from_url(trw, dl_options);
@@ -498,7 +498,7 @@ bool ProcessOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_op
 
 
 
-bool ProcessOptions::turn_off_device()
+bool BabelOptions::turn_off_device()
 {
 	return this->universal_import_fn(NULL, NULL, NULL);
 }
@@ -520,7 +520,7 @@ bool ProcessOptions::turn_off_device()
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool ProcessOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * progress_indicator)
+bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * progress_indicator)
 {
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -565,6 +565,16 @@ bool ProcessOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireToo
 
 	BabelProcess converter(program, args, progress_indicator);
 	return converter.run_process(false);
+}
+
+
+
+
+bool BabelOptions::is_valid(void) const
+{
+	return !this->babel_args.isEmpty()
+		|| !this->url.isEmpty()
+		|| !this->shell_command.isEmpty();
 }
 
 

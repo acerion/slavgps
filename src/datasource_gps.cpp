@@ -202,9 +202,9 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-ProcessOptions * DatasourceGPSSetup::get_process_options_none(void)
+BabelOptions * DatasourceGPSSetup::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	if (gps_acquire_in_progress) {
 		po->babel_args = "";
@@ -453,7 +453,12 @@ int DataSourceGPS::run_config_dialog(void)
 	GPSTransferType xfer = GPSTransferType::WPT; /* This doesn't really matter much because second arg to constructor is 'true'. */
 	this->config_dialog = new DatasourceGPSSetup(this->window_title, xfer, true, NULL);
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 
 }
 

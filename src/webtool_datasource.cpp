@@ -115,9 +115,9 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, V
 
 
 
-ProcessOptions * DataSourceWebToolDialog::get_process_options_none(void)
+BabelOptions * DataSourceWebToolDialog::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	if (this->web_tool_data_source->webtool_needs_user_string()) {
 		this->web_tool_data_source->user_string = this->input_field.text();
@@ -187,13 +187,21 @@ int DataSourceWebTool::run_config_dialog(void)
 {
 	assert (!this->config_dialog);
 
+	int answer;
+
 	if (this->search) {
 		this->config_dialog = new DataSourceWebToolDialog(this->window_title, this->viewport, this->web_tool_data_source);
-		return this->config_dialog->exec();
+		answer = this->config_dialog->exec();
 	} else {
 		this->config_dialog = NULL;
-		return QDialog::Rejected;
+		answer = QDialog::Rejected;
 	}
+
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 

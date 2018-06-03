@@ -71,6 +71,14 @@ namespace SlavGPS {
 
 
 
+	class AcquireOptions {
+	public:
+		virtual bool is_valid(void) const = 0;
+	};
+
+
+
+
 	/**
 	   Global data structure used to expose the progress dialog to the worker thread.
 	*/
@@ -107,7 +115,7 @@ namespace SlavGPS {
 	class DataSource {
 	public:
 		DataSource() {};
-		virtual ~DataSource() {};
+		virtual ~DataSource();
 
 		void create_process_options(LayerTRW * trw, Track * trk);
 		void create_download_options(void);
@@ -131,8 +139,9 @@ namespace SlavGPS {
 
 		DataSourceDialog * config_dialog = NULL;
 
-		ProcessOptions * process_options = NULL;
+		BabelOptions * process_options = NULL;
 		DownloadOptions * download_options = NULL;
+		AcquireOptions * acquire_options = NULL;
 	};
 
 

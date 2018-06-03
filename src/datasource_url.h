@@ -58,7 +58,7 @@ namespace SlavGPS {
 		DataSourceURLDialog(const QString & window_title);
 		~DataSourceURLDialog();
 
-		ProcessOptions * get_process_options_none(void);
+		BabelOptions * get_process_options_none(void);
 		void adjust_download_options(DownloadOptions & dl_options) const;
 
 	private:

@@ -103,7 +103,7 @@ namespace SlavGPS {
 	public:
 		DataSourceWebToolDialog(const QString & window_title, Viewport * viewport, WebToolDatasource * new_web_tool_data_source);
 
-		ProcessOptions * get_process_options_none(void);
+		BabelOptions * get_process_options_none(void);
 
 		WebToolDatasource * web_tool_data_source = NULL;
 		Viewport * viewport = NULL;

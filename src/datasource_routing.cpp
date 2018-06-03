@@ -81,7 +81,12 @@ int DataSourceRouting::run_config_dialog(void)
 
 	this->config_dialog = new DataSourceRoutingDialog(this->window_title);
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
@@ -121,9 +126,9 @@ DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) :
 
 
 
-ProcessOptions * DataSourceRoutingDialog::get_process_options_none(void)
+BabelOptions * DataSourceRoutingDialog::get_process_options_none(void)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	/* Retrieve directions. */
 	const QString from = this->from_entry.text();

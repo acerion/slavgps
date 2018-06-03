@@ -26,7 +26,6 @@
 
 #include "acquire.h"
 #include "datasource.h"
-#include "babel_dialog.h"
 #include "widget_file_entry.h"
 
 
@@ -45,6 +44,9 @@ namespace SlavGPS {
 		bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something);
 
 		int run_config_dialog(void);
+
+	private:
+		QStringList selected_files;
 	};
 
 
@@ -54,10 +56,7 @@ namespace SlavGPS {
 	public:
 		DataSourceGeoTagDialog(const QString & window_title);
 
-		ProcessOptions * get_process_options_none(void);
-
 		SGFileEntry * file_entry = NULL;
-		QStringList selected_files;
 	};
 
 

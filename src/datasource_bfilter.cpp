@@ -88,7 +88,13 @@ int BFilterSimplify::run_config_dialog(void)
 	assert (!this->config_dialog);
 
 	this->config_dialog = new BFilterSimplifyDialog(this->window_title);
-	return this->config_dialog->exec();
+
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
@@ -112,9 +118,9 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 
 
 
-ProcessOptions * BFilterSimplifyDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterSimplifyDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 	const int32_t value = this->spin->value();
 
 	po->babel_args = "-i gpx";
@@ -171,7 +177,13 @@ int BFilterCompress::run_config_dialog(void)
 	assert (!this->config_dialog);
 
 	this->config_dialog = new BFilterCompressDialog(this->window_title);
-	return this->config_dialog->exec();
+
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
@@ -201,9 +213,9 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 /**
    http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
 */
-ProcessOptions * BFilterCompressDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterCompressDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 	const double value = this->spin->value();
 
 	char units = Preferences::get_unit_distance() == DistanceUnit::Kilometres ? 'k' : ' ';
@@ -254,15 +266,20 @@ int BFilterDuplicates::run_config_dialog(void)
 
 	this->config_dialog = new BFilterDuplicatesDialog(this->window_title);
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
 
 
-ProcessOptions * BFilterDuplicatesDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterDuplicatesDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	po->babel_args = "-i gpx";
 	po->input_file_name = input_layer_filename;
@@ -304,7 +321,12 @@ int BFilterManual::run_config_dialog(void)
 
 	this->config_dialog = new BFilterManualDialog(this->window_title);
 
-	return this->config_dialog->exec();
+	int answer = this->config_dialog->exec();
+	if (answer == QDialog::Accepted) {
+
+	}
+
+	return answer;
 }
 
 
@@ -322,9 +344,9 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 
 
 
-ProcessOptions * BFilterManualDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterManualDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 	const QString value = this->entry->text();
 
 	po->babel_args = "-i gpx";
@@ -357,9 +379,9 @@ BFilterPolygon::BFilterPolygon()
 
 
 /* FIXME: shell_escape stuff. */
-ProcessOptions * BFilterPolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
+BabelOptions * BFilterPolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 
 	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
 
@@ -390,9 +412,9 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 
 
 /* FIXME: shell_escape stuff */
-ProcessOptions * BFilterExcludePolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
+BabelOptions * BFilterExcludePolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
-	ProcessOptions * po = new ProcessOptions();
+	BabelOptions * po = new BabelOptions();
 	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
 
 	return po;

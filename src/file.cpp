@@ -795,7 +795,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
-			ProcessOptions babel_action("-i kml", full_path, NULL, NULL);
+			BabelOptions babel_action("-i kml", full_path, NULL, NULL);
 			success = babel_action.import_from_local_file(layer, NULL);
 			if (!success) {
 				load_answer = FileLoadResult::GPSBABEL_FAILURE;
@@ -910,7 +910,7 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
 	bool status = true;
 
-	ProcessOptions export_options;
+	BabelOptions export_options;
 	export_options.output_file_full_path = file_full_path;
 
 	const KMLExportUnits units = Preferences::get_kml_export_units();
@@ -1001,7 +1001,7 @@ bool VikFile::export_(LayerTRW * trw, const QString & file_full_path, SGFileType
 
 bool VikFile::export_with_babel(LayerTRW * trw, const QString & full_output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints)
 {
-	ProcessOptions export_options;
+	BabelOptions export_options;
 	export_options.babel_args = QString("%1 %2 %3 -o %4")
 		.arg(tracks ? "-t" : "")
 		.arg(routes ? "-r" : "")

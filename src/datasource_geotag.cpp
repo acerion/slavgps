@@ -90,8 +90,22 @@ int DataSourceGeoTag::run_config_dialog(void)
 {
 	assert(!this->config_dialog);
 
-	this->config_dialog = new DataSourceGeoTagDialog(this->window_title);
-	return this->config_dialog->exec();
+	DataSourceGeoTagDialog * dialog = new DataSourceGeoTagDialog(this->window_title);
+
+	int answer = dialog->exec();
+	if (answer == QDialog::Accepted) {
+		this->selected_files = dialog->file_entry->file_selector->selectedFiles();
+		g_last_directory_url = dialog->file_entry->file_selector->directoryUrl();
+
+#ifdef K_TODO
+		/* TODO Memorize the file filter for later reuse? */
+		g_last_filter = dialog->file_entry->file_selector->selectedNameFilter();
+#endif
+	}
+
+	this->config_dialog = dialog;
+
+	return answer;
 }
 
 
@@ -132,40 +146,17 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 
 
 
-ProcessOptions * DataSourceGeoTagDialog::get_process_options_none(void)
-{
-	ProcessOptions * po = new ProcessOptions();
-
-	this->selected_files = this->file_entry->file_selector->selectedFiles();
-
-	g_last_directory_url = this->file_entry->file_selector->directoryUrl();
-
-#ifdef K_TODO
-	/* TODO Memorize the file filter for later reuse? */
-	g_last_filter = this->file_entry->file_selector->selectedNameFilter();
-#endif
-
-	/* Return some value so *thread* processing will continue */
-	po->babel_args = "fake command"; /* Not really used, thus no translations. */
-
-	return po;
-}
-
-
-
-
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
 bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
 {
 	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
-	DataSourceGeoTagDialog * user_data = (DataSourceGeoTagDialog *) acquiring_context->parent_data_source_dialog;
 
 	/* Process selected files.
 	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */
-	for (int i = 0; i < user_data->selected_files.size(); i++) {
-		const QString file_full_path = user_data->selected_files.at(0);
+	for (int i = 0; i < this->selected_files.size(); i++) {
+		const QString file_full_path = this->selected_files.at(0);
 
 		QString name;
 		Waypoint * wp = a_geotag_create_waypoint_from_file(file_full_path, acquiring_context->viewport->get_coord_mode(), name);
@@ -180,7 +171,7 @@ bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_so
 		}
 	}
 
-	user_data->selected_files.clear();
+	this->selected_files.clear();
 
 	/* No failure. */
 	return true;
