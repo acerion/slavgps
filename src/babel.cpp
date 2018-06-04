@@ -297,7 +297,7 @@ bool Babel::convert_through_intermediate_file(const QString & program, const QSt
  */
 bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator)
 {
-	qDebug() << "II" PREFIX << "importing from local file" << this->input_file_name;
+	qDebug() << "II" PREFIX << "importing from local file" << this->input;
 
 	if (!babel.is_detected) {
 		qDebug() << "EE: Babel: gpsbabel not found in PATH";
@@ -324,7 +324,7 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
 
 
 	args << "-f";
-	args << this->input_file_name;
+	args << this->input;
 
 
 	if (!this->babel_filters.isEmpty()) {
@@ -380,10 +380,11 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progr
 
 
 	QString full_shell_command;
-	if (!this->input_file_type.isEmpty()) {
-		full_shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F %4").arg(this->shell_command).arg(babel.gpsbabel_path).arg(this->input_file_type).arg(intermediate_file_fullpath);
-	} else {
+	if (this->input_data_format.isEmpty()) {
 		full_shell_command = QString("%s > %s").arg(shell_command).arg(intermediate_file_fullpath);
+	} else {
+		full_shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F %4").arg(this->shell_command).arg(babel.gpsbabel_path).arg(this->input_data_format).arg(intermediate_file_fullpath);
+
 	}
 	qDebug() << "DD: Babel: Convert from shell command: shell command" << full_shell_command;
 
@@ -412,7 +413,7 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progr
  */
 bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 {
-	qDebug() << "II" PREFIX << "importing from URL" << this->url;
+	qDebug() << "II" PREFIX << "importing from URL" << this->input;
 
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
@@ -422,7 +423,7 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 
 	bool ret = false;
 
-	qDebug() << "DD: Babel: input_file_type =" << this->input_file_type << ", url =" << this->url;
+	qDebug() << "DD" PREFIX << "input data format =" << this->input_data_format << ", url =" << this->input;
 
 
 	QTemporaryFile tmp_file;
@@ -435,15 +436,15 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 
 	DownloadHandle dl_handle(&babel_dl_options);
 
-	if (DownloadResult::Success == dl_handle.get_url_http(this->url, "", name_src)) {
-		if (!this->input_file_type.isEmpty() || !this->babel_filters.isEmpty()) {
+	if (DownloadResult::Success == dl_handle.get_url_http(this->input, "", name_src)) {
+		if (!this->input_data_format.isEmpty() || !this->babel_filters.isEmpty()) {
 
-			BabelOptions opts_local; /* TODO: maybe we could reuse 'this->' ? */
-			opts_local.babel_args = (!this->input_file_type.isEmpty()) ? QString(" -i %1").arg(this->input_file_type) : "";
-			opts_local.input_file_name = name_src;
-			opts_local.babel_filters = this->babel_filters;
+			BabelOptions opts_local_file(BabelOptionsMode::FromFile); /* TODO: maybe we could reuse 'this->' ? */
+			opts_local_file.input = name_src;
+			opts_local_file.babel_args = (!this->input_data_format.isEmpty()) ? QString(" -i %1").arg(this->input_data_format) : "";
+			opts_local_file.babel_filters = this->babel_filters;
 
-			ret = opts_local.import_from_local_file(trw, NULL);
+			ret = opts_local_file.import_from_local_file(trw, NULL);
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << "DD: Babel: directly read GPX file" << name_src;
@@ -479,20 +480,20 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
  */
 bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator)
 {
-	if (!this->url.isEmpty()) {
+	switch (this->mode) {
+	case BabelOptionsMode::FromURL:
 		return this->import_from_url(trw, dl_options);
-	}
 
-	if (!this->babel_args.isEmpty()) {
+	case BabelOptionsMode::FromFile:
 		return this->import_from_local_file(trw, progress_indicator);
-	}
 
-	if (!this->shell_command.isEmpty()) {
+	case BabelOptionsMode::FromShellCommand:
 		return this->import_with_shell_command(trw, progress_indicator);
-	}
 
-	qDebug() << "EE" PREFIX << "no process option found";
-	return false;
+	default:
+		qDebug() << "EE" PREFIX << "unexpected babel options mode" << (int) this->mode;
+		return false;
+	}
 }
 
 
@@ -554,7 +555,7 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool 
 	args << "-f";
 	args << tmp_file_full_path;
 	args << "-F";
-	args << this->output_file_full_path;
+	args << this->output;
 
 
 	/* Now strips out invisible tracks and waypoints. */
@@ -573,7 +574,7 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool 
 bool BabelOptions::is_valid(void) const
 {
 	return !this->babel_args.isEmpty()
-		|| !this->url.isEmpty()
+		|| !this->input.isEmpty()
 		|| !this->shell_command.isEmpty();
 }
 

@@ -1062,12 +1062,14 @@ void GPSSession::run(void)
 	bool result;
 
 	if (this->direction == GPSDirection::DOWN) {
-		BabelOptions babel_action(this->babel_args, this->port, NULL, NULL);
-		result = babel_action.universal_import_fn(this->trw, NULL, this);
+		BabelOptions babel_options(BabelOptionsMode::FromFile);
+		babel_options.input = this->port;
+		babel_options.babel_args = this->babel_args;
+		result = babel_options.universal_import_fn(this->trw, NULL, this);
 	} else {
-		BabelOptions export_options;
+		BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO: ::FromFile, but not input file specified. */
+		export_options.output = this->port;
 		export_options.babel_args = this->babel_args;
-		export_options.output_file_full_path = this->port;
 		result = export_options.universal_export_fn(this->trw, this->trk, this);
 	}
 
@@ -1232,8 +1234,9 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	} else {
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
-			const QString device_off = QString("-i %1,%2").arg(protocol).arg("power_off");
-			BabelOptions off_options(device_off, port, NULL, NULL);
+			BabelOptions off_options(BabelOptionsMode::FromFile);
+			off_options.input = port;
+			off_options.babel_args = QString("-i %1,%2").arg(protocol).arg("power_off");
 
 			if (!off_options.turn_off_device()) {
 				Dialog::error(QObject::tr("Could not turn off device."), layer->get_window());

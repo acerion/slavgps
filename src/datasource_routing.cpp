@@ -129,7 +129,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) :
 
 BabelOptions * DataSourceRoutingDialog::get_process_options_none(void)
 {
-	BabelOptions * po = new BabelOptions();
+
 
 	/* Retrieve directions. */
 	const QString from = this->from_entry.text();
@@ -143,15 +143,17 @@ BabelOptions * DataSourceRoutingDialog::get_process_options_none(void)
 		return NULL; /* FIXME: this needs to be handled in caller. */
 	}
 
-	po->url = engine->get_url_from_directions(from, to);
-	po->input_file_type = QString(engine->get_format());
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
+
+	babel_options->input = engine->get_url_from_directions(from, to);
+	babel_options->input_data_format = QString(engine->get_format());
 	/* Don't modify dl_options, i.e. use the default download settings. */
 
 	/* Save last selection. */
 	last_from_str = from;
 	last_to_str = to;
 
-	return po;
+	return babel_options;
 }
 
 

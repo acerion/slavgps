@@ -116,8 +116,6 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 BabelOptions * DataSourceFileDialog::get_process_options_none(void)
 {
-	BabelOptions * po = new BabelOptions();
-
 	g_last_directory_url = this->file_entry->file_selector->directoryUrl();
 	g_last_filter = this->file_entry->file_selector->selectedNameFilter();
 
@@ -125,12 +123,13 @@ BabelOptions * DataSourceFileDialog::get_process_options_none(void)
 	const QString selected = this->get_file_type_selection()->identifier;
 
 	/* Generate the process options. */
-	po->babel_args = QString("-i %1").arg(selected);
-	po->input_file_name = this->file_entry->get_filename();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
+	babel_options->input = this->file_entry->get_filename();
+	babel_options->babel_args = QString("-i %1").arg(selected);
 
-	qDebug() << "II: Datasource File: using Babel args" << po->babel_args << "and input file" << po->input_file_name;
+	qDebug() << "II: Datasource File: using Babel args" << babel_options->babel_args << "and input file" << babel_options->input;
 
-	return po;
+	return babel_options;
 }
 
 

@@ -117,8 +117,6 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, V
 
 BabelOptions * DataSourceWebToolDialog::get_process_options_none(void)
 {
-	BabelOptions * po = new BabelOptions();
-
 	if (this->web_tool_data_source->webtool_needs_user_string()) {
 		this->web_tool_data_source->user_string = this->input_field.text();
 
@@ -129,8 +127,9 @@ BabelOptions * DataSourceWebToolDialog::get_process_options_none(void)
 	}
 
 
-	po->url = this->web_tool_data_source->get_url_at_current_position(this->viewport);
-	qDebug() << "DD: Web Tool Datasource: url =" << po->url;
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
+	babel_options->input = this->web_tool_data_source->get_url_at_current_position(this->viewport);
+	qDebug() << "DD: Web Tool Datasource: url =" << babel_options->input;
 
 	/* Only use first section of the file_type string.
 	   One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things
@@ -139,18 +138,15 @@ BabelOptions * DataSourceWebToolDialog::get_process_options_none(void)
 	QStringList parts;
 	if (!this->web_tool_data_source->file_type.isEmpty()) {
 		parts = this->web_tool_data_source->file_type.split(" ");
-	}
-
-	if (parts.size()) {
-		po->input_file_type = parts.at(0);
-	} else {
-		po->input_file_type = "";
+		if (parts.size()) {
+			babel_options->input_data_format = parts.at(0);
+		}
 	}
 
 
-	po->babel_filters = this->web_tool_data_source->babel_filter_args;
+	babel_options->babel_filters = this->web_tool_data_source->babel_filter_args;
 
-	return po;
+	return babel_options;
 
 }
 

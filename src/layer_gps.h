@@ -44,8 +44,8 @@
 #include "layer.h"
 #include "layer_interface.h"
 #include "variant.h"
-#include "babel.h"
 #include "dialog.h"
+#include "acquire.h"
 
 
 

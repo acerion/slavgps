@@ -187,25 +187,6 @@ void AcquireGetter::configure_target_layer(DataSourceMode mode)
 
 
 
-BabelOptions::BabelOptions(const QString & new_babel_args, const QString & new_input_file_name, const QString & new_input_file_type, const QString & new_url)
-{
-	if (!new_babel_args.isEmpty()) {
-		this->babel_args = new_babel_args;
-	}
-	if (!new_input_file_name.isEmpty()) {
-		this->input_file_name = new_input_file_name;
-	}
-	if (!new_input_file_type.isEmpty()) {
-		this->input_file_type = new_input_file_type;
-	}
-	if (!new_url.isEmpty()) {
-		this->url = new_url;
-	}
-}
-
-
-
-
 /* This routine is the worker thread. There is only one simultaneous download allowed. */
 /* Re-implementation of QRunnable::run() */
 void AcquireGetter::run(void)
@@ -289,7 +270,9 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 				if (!babel_args_off.isEmpty()) {
 					/* Turn off. */
-					BabelOptions off_options(babel_args_off, file_path_off, NULL, NULL);
+					BabelOptions off_options;
+					off_options.input = file_path_off;
+					off_options.babel_args = babel_args_off;
 					off_options.turn_off_device();
 				}
 			}

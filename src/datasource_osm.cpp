@@ -101,7 +101,7 @@ int DataSourceOSMTraces::run_config_dialog(AcquireProcess * acquire_context)
 
 BabelOptions * DataSourceOSMTracesDialog::get_process_options_none(void)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
 
 	const LatLonBBoxStrings bbox_strings = this->viewport->get_bbox().to_strings();
 
@@ -109,12 +109,12 @@ BabelOptions * DataSourceOSMTracesDialog::get_process_options_none(void)
 	const int page = this->spin_box.value();
 
 	/* Download is of GPX type. */
-	po->url = QString(DOWNLOAD_URL_FMT).arg(bbox_strings.west).arg(bbox_strings.south).arg(bbox_strings.east).arg(bbox_strings.north).arg(page);
+	babel_options->input = QString(DOWNLOAD_URL_FMT).arg(bbox_strings.west).arg(bbox_strings.south).arg(bbox_strings.east).arg(bbox_strings.north).arg(page);
 	/* Don't modify dl_options, use the default download settings. */
 
-	qDebug() << "DD: Datasource OSM: URL =" << po->url;
+	qDebug() << "DD: Datasource OSM: URL =" << babel_options->input;
 
-	return po;
+	return babel_options;
 }
 
 

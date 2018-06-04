@@ -33,6 +33,7 @@
 
 
 #include "acquire.h"
+#include "babel.h"
 #include "datasource.h"
 #include "layer_gps.h"
 

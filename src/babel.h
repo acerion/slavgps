@@ -50,13 +50,21 @@ namespace SlavGPS {
 
 
 
+	enum class BabelOptionsMode {
+		FromURL,
+		FromFile,
+		FromShellCommand
+	};
+
+
+
+
 	/**
 	   Need to specify at least one of babel_args, URL or shell_command.
 	*/
 	struct BabelOptions : public AcquireOptions {
 	public:
-		BabelOptions() {};
-		BabelOptions(const QString & babel_args, const QString & input_file_name, const QString & input_file_type, const QString & url);
+		BabelOptions(BabelOptionsMode new_mode) : mode(new_mode) { };
 		~BabelOptions() {};
 
 		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator);
@@ -70,13 +78,15 @@ namespace SlavGPS {
 
 		bool turn_off_device(void);
 
+		QString input;             /* Full path to input file, or input device (e.g. /dev/ttyS0), or URL. */
+		QString input_data_format; /* If empty, then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
+		QString output;
+
 		QString babel_args;      /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
-		QString input_file_name; /* Input filename (or device port e.g. /dev/ttyS0). */
-		QString input_file_type; /* If empty, then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
-		QString url;             /* URL input rather than a filename. */
 		QString babel_filters;   /* Optional filter arguments to gpsbabel. */
 		QString shell_command;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
-		QString output_file_full_path;
+
+		BabelOptionsMode mode;
 	};
 
 

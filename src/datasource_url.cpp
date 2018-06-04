@@ -140,20 +140,20 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 BabelOptions * DataSourceURLDialog::get_process_options_none(void)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
 
 	/* TODO: handle situation when there is only one item in the combo (i.e. GPX). */
 
 	g_last_file_type_index = this->file_type_combo.currentIndex();
 
-	po->input_file_type = ""; /* Default to gpx. */
+	babel_options->input_data_format = ""; /* Default to gpx. */
 	if (Babel::file_types.size()) {
-		po->input_file_type = Babel::file_types.at(g_last_file_type_index)->identifier;
+		babel_options->input_data_format = Babel::file_types.at(g_last_file_type_index)->identifier;
 	}
 
-	po->url = this->url_input.text();
+	babel_options->input = this->url_input.text();
 
-	return po;
+	return babel_options;
 }
 
 

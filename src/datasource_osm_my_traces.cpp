@@ -138,7 +138,7 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireProcess * acquire_context)
 
 BabelOptions * DataSourceOSMMyTracesDialog::get_process_options_none(void)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
 
 	/* Overwrite authentication info. */
 	osm_save_current_credentials(this->user_entry.text(), this->password_entry.text());
@@ -147,7 +147,7 @@ BabelOptions * DataSourceOSMMyTracesDialog::get_process_options_none(void)
 	   But ATM we aren't. */
 	/* dl_options = NULL; */
 
-	return po;
+	return babel_options;
 }
 
 
@@ -657,11 +657,11 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 			bool convert_result = false;
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
-				const QString url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
-				/* NB download type is GPX (or a compressed version). */
+				/* Download type is GPX (or a compressed version). */
 				BabelOptions babel_action = *this->process_options;
-				babel_action.url = url;
+				babel_action.input = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id); /* URL. */
+
 				convert_result = babel_action.import_from_url(target_layer, &local_dl_options);
 				/* TODO investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
@@ -669,7 +669,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 				got_something = got_something || convert_result;
 				if (!convert_result) {
 					/* Report errors to the status bar. */
-					acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
+					acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(babel_action.input));
 				}
 			}
 

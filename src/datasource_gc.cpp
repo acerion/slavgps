@@ -260,7 +260,6 @@ DataSourceGCDialog::DataSourceGCDialog(const QString & window_title, Viewport * 
 
 BabelOptions * DataSourceGCDialog::get_process_options_none(void)
 {
-	BabelOptions * po = new BabelOptions();
 
 	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string);
 	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password").val_string);
@@ -289,10 +288,10 @@ BabelOptions * DataSourceGCDialog::get_process_options_none(void)
 		.arg(SGUtils::double_to_c(lon).toUtf8().constData());
 	const QString command3 = QString("%1 -z ~/.geo/caches/*.html").arg(GC_PROGRAM2);
 
-	po->shell_command = command1 + command2 + command3;
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromShellCommand);
+	babel_options->shell_command = command1 + command2 + command3;
 
-
-	return po;
+	return babel_options;
 }
 
 

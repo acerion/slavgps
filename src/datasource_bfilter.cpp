@@ -121,17 +121,17 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 
 BabelOptions * BFilterSimplifyDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 	const int32_t value = this->spin->value();
 
-	po->babel_args = "-i gpx";
-	po->input_file_name = input_layer_filename;
-	po->babel_filters = QString("-x simplify,count=%1").arg(value);
+	babel_options->input = input_layer_filename;
+	babel_options->babel_args = "-i gpx";
+	babel_options->babel_filters = QString("-x simplify,count=%1").arg(value);
 
 	/* Store for subsequent default use. */
 	bfilter_simplify_params_defaults[0] = SGVariant(value);
 
-	return po;
+	return babel_options;
 }
 
 
@@ -217,27 +217,24 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 */
 BabelOptions * BFilterCompressDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 	const double value = this->spin->value();
 
-	char units = Preferences::get_unit_distance() == DistanceUnit::Kilometres ? 'k' : ' ';
+	const char units = Preferences::get_unit_distance() == DistanceUnit::Kilometres ? 'k' : ' ';
 	/* I toyed with making the length,crosstrack or relative methods selectable.
 	   However several things:
 	   - mainly that typical values to use for the error relate to method being used - so hard to explain and then give a default sensible value in the UI.
 	   - also using relative method fails when track doesn't have HDOP info - error reported to stderr - which we don't capture ATM.
 	   - options make this more complicated to use - is even that useful to be allowed to change the error value?
 	   NB units not applicable if relative method used - defaults to Miles when not specified. */
-	po->babel_args = "-i gpx";
-	po->input_file_name = input_layer_filename;
-
-	char * str = g_strdup_printf("-x simplify,crosstrack,error=%-.5f%c", value, units);
-	po->babel_filters = QString(str);
-	free(str);
+	babel_options->input = input_layer_filename;
+	babel_options->babel_args = "-i gpx";
+	babel_options->babel_filters = QString("-x simplify,crosstrack,error=%1%2").arg(value, -1, 'f', 5).arg(units); /* '-1' for left-align. */
 
 	/* Store for subsequent default use. */
 	bfilter_compress_params_defaults[0] = SGVariant(value);
 
-	return po;
+	return babel_options;
 }
 
 
@@ -282,13 +279,13 @@ int BFilterDuplicates::run_config_dialog(AcquireProcess * acquire_context)
 
 BabelOptions * BFilterDuplicatesDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 
-	po->babel_args = "-i gpx";
-	po->input_file_name = input_layer_filename;
-	po->babel_filters = QString("-x duplicate,location");
+	babel_options->input = input_layer_filename;
+	babel_options->babel_args = "-i gpx";
+	babel_options->babel_filters = QString("-x duplicate,location");
 
-	return po;
+	return babel_options;
 }
 
 
@@ -350,14 +347,14 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 
 BabelOptions * BFilterManualDialog::get_process_options_layer(const QString & input_layer_filename)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 	const QString value = this->entry->text();
 
-	po->babel_args = "-i gpx";
-	po->input_file_name = input_layer_filename;
-	po->babel_filters = QString("-x %1").arg(value);
+	babel_options->input = input_layer_filename;
+	babel_options->babel_args = "-i gpx";
+	babel_options->babel_filters = QString("-x %1").arg(value);
 
-	return po;
+	return babel_options;
 }
 
 
@@ -385,11 +382,14 @@ BFilterPolygon::BFilterPolygon()
 /* FIXME: shell_escape stuff. */
 BabelOptions * BFilterPolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
-	BabelOptions * po = new BabelOptions();
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromShellCommand);
 
-	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
+	const QString command1 = QString("gpsbabel -i gpx -f %1 -o arc -F - ").arg(track_input_file_full_path);
+	const QString command2 = QString("gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(layer_input_file_full_path);
 
-	return po;
+	babel_options->shell_command = command1 + " | " + command2;
+
+	return babel_options;
 }
 
 
@@ -431,10 +431,10 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 /* FIXME: shell_escape stuff */
 BabelOptions * BFilterExcludePolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
-	BabelOptions * po = new BabelOptions();
-	po->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromShellCommand);
+	babel_options->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
 
-	return po;
+	return babel_options;
 }
 
 

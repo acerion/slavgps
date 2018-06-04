@@ -795,8 +795,10 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
-			BabelOptions babel_action("-i kml", full_path, NULL, NULL);
-			success = babel_action.import_from_local_file(layer, NULL);
+			BabelOptions babel_options(BabelOptionsMode::FromFile);
+			babel_options.input = full_path;
+			babel_options.babel_args = "-i kml";
+			success = babel_options.import_from_local_file(layer, NULL);
 			if (!success) {
 				load_answer = FileLoadResult::GPSBABEL_FAILURE;
 			}
@@ -910,8 +912,8 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
 	bool status = true;
 
-	BabelOptions export_options;
-	export_options.output_file_full_path = file_full_path;
+	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO: ::FromFile, but no input file specified. */
+	export_options.output = file_full_path;
 
 	const KMLExportUnits units = Preferences::get_kml_export_units();
 	switch (units) {
@@ -999,15 +1001,15 @@ bool VikFile::export_(LayerTRW * trw, const QString & file_full_path, SGFileType
 
 
 
-bool VikFile::export_with_babel(LayerTRW * trw, const QString & full_output_file_path, const QString & output_file_type, bool tracks, bool routes, bool waypoints)
+bool VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints)
 {
-	BabelOptions export_options;
+	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO: ::FromFile, but no input file specified, just output. */
+	export_options.output = output_file_full_path;
 	export_options.babel_args = QString("%1 %2 %3 -o %4")
 		.arg(tracks ? "-t" : "")
 		.arg(routes ? "-r" : "")
 		.arg(waypoints ? "-w" : "")
-		.arg(output_file_type);;
-	export_options.output_file_full_path = full_output_file_path;
+		.arg(output_data_format);;
 
 	return export_options.universal_export_fn(trw, NULL, NULL);
 }

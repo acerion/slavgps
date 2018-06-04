@@ -204,11 +204,11 @@ QString RoutingEngineWeb::get_url_for_coords(const LatLon & start, const LatLon 
 
 bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon & end)
 {
-	const QString uri = this->get_url_for_coords(start, end);
+	BabelOptions babel_options(BabelOptionsMode::FromURL);
+	babel_options.input = this->get_url_for_coords(start, end);
+	babel_options.input_data_format = this->get_format();
 
-	const QString format_ = this->get_format();
-	BabelOptions babel_action(NULL, NULL, format_, uri);
-	bool ret = babel_action.import_from_url(trw, &this->dl_options);
+	bool ret = babel_options.import_from_url(trw, &this->dl_options);
 
 	return ret;
 }
@@ -316,13 +316,12 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk)
 
 bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 {
-	/* Compute URL. */
-	const QString uri = this->get_url_for_track(trk);
+	BabelOptions babel_options(BabelOptionsMode::FromURL);
+	babel_options.input = this->get_url_for_track(trk);
+	babel_options.input_data_format = this->get_format();
 
 	/* Convert and insert data in model. */
-	const QString format_ = this->get_format();
-	BabelOptions babel_action(NULL, NULL, format_, uri);
-	bool ret = babel_action.import_from_url(trw, &this->dl_options);
+	bool ret = babel_options.import_from_url(trw, &this->dl_options);
 
 	return ret;
 }
