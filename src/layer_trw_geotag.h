@@ -24,7 +24,21 @@
 
 
 
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QLabel>
+
+
+
+
+#include "dialog.h"
+#include "widget_file_list.h"
+
+
+
+
 namespace SlavGPS {
+
 
 
 
@@ -38,6 +52,47 @@ namespace SlavGPS {
 
 	/* To be only called from within LayerTRW. */
 	void trw_layer_geotag_dialog(Window * parent, LayerTRW * layer, Waypoint * wp, Track * trk);
+
+
+
+
+	class GeoTagDialog : public BasicDialog {
+		Q_OBJECT
+	public:
+		GeoTagDialog(QWidget * parent) : BasicDialog(parent) {};
+		~GeoTagDialog();
+
+	public slots:
+		void on_accept_cb(void);
+		void write_exif_cb_cb(void);
+		void create_waypoints_cb_cb(void);
+
+	public:
+
+		LayerTRW * trw = NULL;      /* To pass on. */
+		Waypoint * wp = NULL;       /* Use specified waypoint or otherwise the track(s) if NULL. */
+		Track * trk = NULL;         /* Use specified track or all tracks if NULL. */
+
+		SGFileList * files_selection = NULL;
+
+		QLabel * create_waypoints_l = NULL;
+		QCheckBox * create_waypoints_cb = NULL;
+
+		QLabel * overwrite_waypoints_l = NULL;    /* Referenced so the sensitivity can be changed. */
+		QCheckBox * overwrite_waypoints_cb = NULL;
+
+		QCheckBox * write_exif_cb = NULL;
+
+		QLabel * overwrite_gps_exif_l = NULL;   /* Referenced so the sensitivity can be changed. */
+		QCheckBox * overwrite_gps_exif_cb = NULL;
+
+		QLabel * no_change_mtime_l = NULL;    /* Referenced so the sensitivity can be changed. */
+		QCheckBox * no_change_mtime_cb = NULL;
+
+		QCheckBox * interpolate_segments_cb = NULL;
+		QLineEdit * time_zone_entry = NULL;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
+		QLineEdit * time_offset_entry = NULL;
+	};
 
 
 

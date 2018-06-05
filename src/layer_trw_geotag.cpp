@@ -16,12 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-/*
- *  Similar to the track and trackpoint properties dialogs,
- *   this is made a separate file for ease of grouping related stuff together
- */
+
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -31,10 +30,14 @@
 #include <cstring>
 #include <cstdlib>
 
-#include <glib.h>
+
+
 
 #include <QCheckBox>
 #include <QLineEdit>
+
+
+
 
 #include "widget_file_list.h"
 #include "geotag_exif.h"
@@ -56,6 +59,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Layer TRW GeoTag:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 typedef struct {
 	bool create_waypoints;
 	bool overwrite_waypoints;
@@ -66,12 +74,13 @@ typedef struct {
 	int time_offset;
 	int TimeZoneHours;
 	int TimeZoneMins;
-} option_values_t;
+} GeoTagValues;
 
 
 
 
-static void save_default_values(option_values_t default_values);
+static void save_default_values(GeoTagValues values);
+static GeoTagValues get_default_values(void);
 
 
 
@@ -81,12 +90,12 @@ static void save_default_values(option_values_t default_values);
 
 #define EXIF_DATE_FORMAT "%d:%d:%d %d:%d:%d"
 
-time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int TZOffsetMinutes)
+time_t ConvertToUnixTime(char * StringTime, char * Format, int TZOffsetHours, int TZOffsetMinutes)
 {
 	/* Read the time using the specified format.  The format and
-	  string being read from must have the most significant time
-	  on the left, and the least significant on the right: ie,
-	  Year on the left, seconds on the right. */
+	   string being read from must have the most significant time
+	   on the left, and the least significant on the right: ie,
+	   Year on the left, seconds on the right. */
 
 	/* Sanity check... */
 	if (StringTime == NULL || Format == NULL) {
@@ -125,43 +134,9 @@ time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int 
 
 
 
-typedef struct {
-	BasicDialog * dialog = NULL;
-	SGFileList *files = NULL;
-	LayerTRW * trw = NULL;      /* To pass on. */
-	Waypoint * wp = NULL;       /* Use specified waypoint or otherwise the track(s) if NULL. */
-	Track * trk = NULL;         /* Use specified track or all tracks if NULL. */
-	QCheckBox *create_waypoints_b = NULL;
-	QLabel *overwrite_waypoints_l = NULL;    /* Referenced so the sensitivity can be changed. */
-	QCheckBox *overwrite_waypoints_b = NULL;
-	QCheckBox *write_exif_b = NULL;
-	QLabel *overwrite_gps_exif_l = NULL;   /* Referenced so the sensitivity can be changed. */
-	QCheckBox *overwrite_gps_exif_b = NULL;
-	QLabel *no_change_mtime_l = NULL;    /* Referenced so the sensitivity can be changed. */
-	QCheckBox *no_change_mtime_b = NULL;
-	QCheckBox *interpolate_segments_b = NULL;
-	QLineEdit time_zone_b;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
-	QLineEdit time_offset_b;
-} GeoTagWidgets;
-
-
-
-
-static GeoTagWidgets *geotag_widgets_new()
+GeoTagDialog::~GeoTagDialog()
 {
-	GeoTagWidgets * widgets = (GeoTagWidgets *) malloc(sizeof (GeoTagWidgets));
-	memset(widgets, 0, sizeof (GeoTagWidgets));
-
-	return widgets;
-}
-
-
-
-
-static void geotag_widgets_free(GeoTagWidgets *widgets)
-{
-	/* Need to free SGFileList?? */
-	free(widgets);
+	/* TODO: Need to free SGFileList?? */
 }
 
 
@@ -169,7 +144,7 @@ static void geotag_widgets_free(GeoTagWidgets *widgets)
 
 class GeotagJob : public BackgroundJob {
 public:
-	GeotagJob(GeoTagWidgets * widgets);
+	GeotagJob(GeoTagDialog * dialog);
 	~GeotagJob();
 
 	void run(void);
@@ -180,13 +155,16 @@ public:
 	void geotag_tracks(Tracks & tracks);
 	void geotag_track(Track * trk);
 
+	QStringList selected_files;
+	QString current_file;
+
 	LayerTRW * trw = NULL;
-	char * image = NULL;
-	Waypoint * wp = NULL;    /* Use specified waypoint or otherwise the track(s) if NULL. */
 	Track * trk = NULL;      /* Use specified track or all tracks if NULL. */
+	Waypoint * wp = NULL;    /* Use specified waypoint or otherwise the track(s) if NULL. */
+
 	/* User options... */
-	option_values_t ov;
-	std::list<char *> * files = NULL;
+	GeoTagValues values;
+
 	time_t PhotoTime = 0;
 	/* Store answer from interpolation for an image. */
 	bool found_match = false;
@@ -199,53 +177,55 @@ public:
 
 
 
-GeotagJob::GeotagJob(GeoTagWidgets * widgets)
+GeotagJob::GeotagJob(GeoTagDialog * dialog)
 {
-	this->trw = widgets->trw;
-	this->wp = widgets->wp;
-	this->trk = widgets->trk;
+	this->trw = dialog->trw;
+	this->wp = dialog->wp;
+	this->trk = dialog->trk;
 
-	/* Values extracted from the widgets: */
-	this->ov.create_waypoints = widgets->create_waypoints_b->isChecked();
-	this->ov.overwrite_waypoints = widgets->overwrite_waypoints_b->isChecked();
-	this->ov.write_exif = widgets->write_exif_b->isChecked();
-	this->ov.overwrite_gps_exif = widgets->overwrite_gps_exif_b->isChecked();
-	this->ov.no_change_mtime = widgets->no_change_mtime_b->isChecked();
-	this->ov.interpolate_segments = widgets->interpolate_segments_b->isChecked();
+	/* Values extracted from the dialog: */
+	this->values.create_waypoints = dialog->create_waypoints_cb->isChecked();
+	this->values.overwrite_waypoints = dialog->overwrite_waypoints_cb->isChecked();
+	this->values.write_exif = dialog->write_exif_cb->isChecked();
+	this->values.overwrite_gps_exif = dialog->overwrite_gps_exif_cb->isChecked();
+	this->values.no_change_mtime = dialog->no_change_mtime_cb->isChecked();
+	this->values.interpolate_segments = dialog->interpolate_segments_cb->isChecked();
 
-	this->ov.TimeZoneHours = 0;
-	this->ov.TimeZoneMins = 0;
-#ifdef K_FIXME_RESTORE
-	const char * TZString = widgets->time_zone_b.text();
+	this->values.TimeZoneHours = 0;
+	this->values.TimeZoneMins = 0;
+	const QString TZString = dialog->time_zone_entry->text();
 	/* Check the string. If there is a colon, then (hopefully) it's a time in xx:xx format.
-	 * If not, it's probably just a +/-xx format. In all other cases,
-	 * it will be interpreted as +/-xx, which, if given a string, returns 0. */
-	if (strstr(TZString, ":")) {
+	   If not, it's probably just a +/-xx format. In all other cases,
+	   it will be interpreted as +/-xx, which, if given a string, returns 0. */
+	if (TZString.contains(":")) {
 		/* Found colon. Split into two. */
-		sscanf(TZString, "%d:%d", &this->ov.TimeZoneHours, &this->ov.TimeZoneMins);
-		if (this->ov.TimeZoneHours < 0) {
-			this->ov.TimeZoneMins *= -1;
+		const QStringList elems = TZString.split(":");
+		if (elems.size() == 2) {
+			this->values.TimeZoneHours = elems.at(0).toInt();
+			this->values.TimeZoneMins = elems.at(1).toInt();
+
+			if (this->values.TimeZoneHours < 0) {
+				this->values.TimeZoneMins *= -1;
+			}
+			qDebug() << "II" PREFIX << "String" << TZString << "parsed as" << this->values.TimeZoneHours << this->values.TimeZoneMins;
+		} else {
+			qDebug() << "EE" PREFIX << "String" << TZString << "can't be parsed";
 		}
 	} else {
-		/* No colon. Just parse. */
-		this->ov.TimeZoneHours = atoi(TZString);
+		/* No colon. Just parse as int. */
+		this->values.TimeZoneHours = TZString.toInt();
 	}
-#endif
-	this->ov.time_offset = atoi(widgets->time_offset_b.text().toUtf8().constData());
+	this->values.time_offset = dialog->time_offset_entry->text().toInt();
 
 	this->redraw = false;
 
 	/* Save settings for reuse. */
-	save_default_values(this->ov);
+	save_default_values(this->values);
 
-	this->files->clear();
-	const QStringList a_list = widgets->files->get_list();
+	this->selected_files.clear();
+	this->selected_files = dialog->files_selection->get_list();
 
-#ifdef K_FIXME_RESTORE
-	this->files->insert(this->files->begin(), a_list->begin(), a_list->end());
-#endif
-
-	this->n_items = this->files->size();
+	this->n_items = this->selected_files.size();
 }
 
 
@@ -264,25 +244,25 @@ GeotagJob::GeotagJob(GeoTagWidgets * widgets)
 
 
 
-static void save_default_values(option_values_t default_values)
+static void save_default_values(GeoTagValues values)
 {
-	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT,      default_values.create_waypoints);
-	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_WAYPOINTS,  default_values.overwrite_waypoints);
-	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_WRITE_EXIF,           default_values.write_exif);
-	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_GPS_EXIF,   default_values.overwrite_gps_exif);
-	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_NO_CHANGE_MTIME,      default_values.no_change_mtime);
-	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_INTERPOLATE_SEGMENTS, default_values.interpolate_segments);
-	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET,          default_values.time_offset);
-	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS,    default_values.TimeZoneHours);
-	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS,     default_values.TimeZoneMins);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT,      values.create_waypoints);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_WAYPOINTS,  values.overwrite_waypoints);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_WRITE_EXIF,           values.write_exif);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_OVERWRITE_GPS_EXIF,   values.overwrite_gps_exif);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_NO_CHANGE_MTIME,      values.no_change_mtime);
+	ApplicationState::set_boolean(VIK_SETTINGS_GEOTAG_INTERPOLATE_SEGMENTS, values.interpolate_segments);
+	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET,          values.time_offset);
+	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS,    values.TimeZoneHours);
+	ApplicationState::set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS,     values.TimeZoneMins);
 }
 
 
 
 
-static option_values_t get_default_values()
+static GeoTagValues get_default_values(void)
 {
-	option_values_t default_values;
+	GeoTagValues default_values;
 	if (!ApplicationState::get_boolean(VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT, &default_values.create_waypoints)) {
 		default_values.create_waypoints = true;
 	}
@@ -363,7 +343,7 @@ void GeotagJob::geotag_track(Track * trk2)
 		}
 
 		/* When interpolating between segments, no need for any special segment handling. */
-		if (!this->ov.interpolate_segments) {
+		if (!this->values.interpolate_segments) {
 			/* Don't check between segments. */
 			if (tp_next->newsegment) {
 				/* Simply move on to consider next point. */
@@ -380,10 +360,11 @@ void GeotagJob::geotag_track(Track * trk2)
 		if ((this->PhotoTime > tp->timestamp) && (this->PhotoTime < tp_next->timestamp)) {
 			this->found_match = true;
 			/* Interpolate. */
-			/* Calculate the "scale": a decimal giving the relative distance
-			 * in time between the two points. Ie, a number between 0 and 1 -
-			 * 0 is the first point, 1 is the next point, and 0.5 would be
-			 * half way. */
+			/* Calculate the "scale": a decimal giving the
+			   relative distance in time between the two
+			   points. Ie, a number between 0 and 1 - 0 is
+			   the first point, 1 is the next point, and
+			   0.5 would be half way. */
 			double scale = (double)tp_next->timestamp - (double)tp->timestamp;
 			scale = ((double)this->PhotoTime - (double)tp->timestamp) / scale;
 
@@ -394,7 +375,7 @@ void GeotagJob::geotag_track(Track * trk2)
 
 			ll_result.lat = ll1.lat + ((ll2.lat - ll1.lat) * scale);
 
-			/* NB This won't cope with going over the 180 degrees longitude boundary. */
+			/* This won't cope with going over the 180 degrees longitude boundary. */
 			ll_result.lon = ll1.lon + ((ll2.lon - ll1.lon) * scale);
 
 			/* Set coord. */
@@ -421,20 +402,20 @@ void GeotagJob::geotag_tracks(Tracks & tracks)
 
 
 /**
- * Simply align the images the waypoint position.
- */
+   Simply align the images the waypoint position
+*/
 void GeotagJob::geotag_waypoint(void)
 {
 	/* Write EXIF if specified - although a fairly useless process if you've turned it off! */
-	if (this->ov.write_exif) {
+	if (this->values.write_exif) {
 		bool has_gps_exif = false;
 
-		const QString datetime = a_geotag_get_exif_date_from_file(this->image, &has_gps_exif);
+		const QString datetime = a_geotag_get_exif_date_from_file(this->current_file, &has_gps_exif);
 		/* If image already has gps info - don't attempt to change it unless forced. */
-		if (this->ov.overwrite_gps_exif || !has_gps_exif) {
-			int ans = a_geotag_write_exif_gps(this->image, this->wp->coord, this->wp->altitude, this->ov.no_change_mtime);
+		if (this->values.overwrite_gps_exif || !has_gps_exif) {
+			int ans = a_geotag_write_exif_gps(this->current_file, this->wp->coord, this->wp->altitude, this->values.no_change_mtime);
 			if (ans != 0) {
-				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->image));
+				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->current_file));
 			}
 		}
 	}
@@ -452,7 +433,7 @@ void GeotagJob::geotag(void)
 		return;
 	}
 
-	if (!this->image) {
+	if (this->current_file.isEmpty()) {
 		return;
 	}
 
@@ -463,17 +444,17 @@ void GeotagJob::geotag(void)
 
 	bool has_gps_exif = false;
 
-	const QString datetime = a_geotag_get_exif_date_from_file(this->image, &has_gps_exif);
+	const QString datetime = a_geotag_get_exif_date_from_file(this->current_file, &has_gps_exif);
 	if (datetime.isEmpty()) {
 		return;
 	}
 
 	/* If image already has gps info - don't attempt to change it. */
-	if (!this->ov.overwrite_gps_exif && has_gps_exif) {
-		if (this->ov.create_waypoints) {
+	if (!this->values.overwrite_gps_exif && has_gps_exif) {
+		if (this->values.create_waypoints) {
 			/* Create waypoint with file information. */
 			QString file_name;
-			Waypoint * wp2 = a_geotag_create_waypoint_from_file(this->image,
+			Waypoint * wp2 = a_geotag_create_waypoint_from_file(this->current_file,
 									   this->trw->get_coord_mode(),
 									   file_name);
 			if (!wp2) {
@@ -481,16 +462,16 @@ void GeotagJob::geotag(void)
 				return;
 			}
 			if (!file_name.size()) {
-				file_name = file_base_name(this->image);
+				file_name = file_base_name(this->current_file);
 			}
 
 			bool updated_waypoint = false;
 
-			if (this->ov.overwrite_waypoints) {
+			if (this->values.overwrite_waypoints) {
 				Waypoint * current_wp = this->trw->get_waypoints_node().find_waypoint_by_name(file_name);
 				if (current_wp) {
 					/* Existing wp found, so set new position, comment and image. */
-					(void) a_geotag_waypoint_positioned(this->image, wp2->coord, wp2->altitude, file_name, current_wp);
+					(void) a_geotag_waypoint_positioned(this->current_file, wp2->coord, wp2->altitude, file_name, current_wp);
 					updated_waypoint = true;
 				}
 			}
@@ -505,10 +486,10 @@ void GeotagJob::geotag(void)
 		return;
 	}
 
-	this->PhotoTime = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, this->ov.TimeZoneHours, this->ov.TimeZoneMins);
+	this->PhotoTime = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, this->values.TimeZoneHours, this->values.TimeZoneMins);
 
 	/* Apply any offset. */
-	this->PhotoTime = this->PhotoTime + this->ov.time_offset;
+	this->PhotoTime = this->PhotoTime + this->values.time_offset;
 
 	this->found_match = false;
 
@@ -526,20 +507,20 @@ void GeotagJob::geotag(void)
 	/* Match found? */
 	if (this->found_match) {
 
-		if (this->ov.create_waypoints) {
+		if (this->values.create_waypoints) {
 
 			bool updated_waypoint = false;
 
-			if (this->ov.overwrite_waypoints) {
+			if (this->values.overwrite_waypoints) {
 
 				/* Update existing WP. */
 				/* Find a WP with current name. */
-				QString file_name = file_base_name(this->image);
+				QString file_name = file_base_name(this->current_file);
 				Waypoint * wp2 = this->trw->get_waypoints_node().find_waypoint_by_name(file_name);
 				if (wp2) {
 					/* Found, so set new position, comment and image. */
 					/* TODO: how do we use file_name modified by the function below? */
-					(void)a_geotag_waypoint_positioned(this->image, this->coord, this->altitude, file_name, wp2);
+					(void)a_geotag_waypoint_positioned(this->current_file, this->coord, this->altitude, file_name, wp2);
 					updated_waypoint = true;
 				}
 			}
@@ -548,9 +529,9 @@ void GeotagJob::geotag(void)
 				/* Create waypoint with found position. */
 				QString file_name;
 				/* TODO: how do we use file_name modified by the function below? */
-				Waypoint * wp2 = a_geotag_waypoint_positioned(this->image, this->coord, this->altitude, file_name, NULL);
+				Waypoint * wp2 = a_geotag_waypoint_positioned(this->current_file, this->coord, this->altitude, file_name, NULL);
 				if (!file_name.size()) {
-					file_name = file_base_name(this->image);
+					file_name = file_base_name(this->current_file);
 				}
 				this->trw->add_waypoint_from_file(wp2, file_name);
 			}
@@ -560,10 +541,10 @@ void GeotagJob::geotag(void)
 		}
 
 		/* Write EXIF if specified. */
-		if (this->ov.write_exif) {
-			int ans = a_geotag_write_exif_gps(this->image, this->coord, this->altitude, this->ov.no_change_mtime);
+		if (this->values.write_exif) {
+			int ans = a_geotag_write_exif_gps(this->current_file, this->coord, this->altitude, this->values.no_change_mtime);
 			if (ans != 0) {
-				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->image));
+				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->current_file));
 			}
 		}
 	}
@@ -574,10 +555,7 @@ void GeotagJob::geotag(void)
 
 GeotagJob::~GeotagJob()
 {
-	if (!this->files->empty()) {
-		/* kamilFIXME: is that all that we need to clean up? */
-		delete this->files;
-	}
+	/* kamilTODO: is that all that we need to clean up? */
 }
 
 
@@ -588,18 +566,18 @@ GeotagJob::~GeotagJob()
 */
 void GeotagJob::run(void)
 {
-	unsigned int total = this->files->size();
-	unsigned int done = 0;
+	const int n_files = this->selected_files.size();
+	int done = 0;
 
 	/* TODO decide how to report any issues to the user... */
 
-	for (auto iter = this->files->begin(); iter != this->files->end(); iter++) {
+	for (auto iter = this->selected_files.begin(); iter != this->selected_files.end(); iter++) {
 		/* For each file attempt to geotag it. */
-		this->image = *iter;
+		this->current_file = *iter;
 		this->geotag();
 
 		/* Update thread progress and detect stop requests. */
-		const bool end_job = this->set_progress_state(((double) ++done) / total);
+		const bool end_job = this->set_progress_state(((double) ++done) / n_files);
 		if (end_job) {
 			return; /* Abort thread */
 		}
@@ -611,7 +589,7 @@ void GeotagJob::run(void)
 			/* Ensure any new images get show. */
 			this->trw->generate_missing_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
-			this->trw->emit_layer_changed(); /* NB Update from background. */
+			this->trw->emit_layer_changed(); /* Update from background. */
 		}
 	}
 
@@ -622,68 +600,56 @@ void GeotagJob::run(void)
 
 
 /**
- * Parse user input from dialog response.
- */
-static void trw_layer_geotag_response_cb(QDialog * dialog, int resp, GeoTagWidgets *widgets)
+   Parse user input from dialog response
+*/
+void GeoTagDialog::on_accept_cb(void)
 {
-#ifdef K_FIXME_RESTORE
-	switch (resp) {
-	case GTK_RESPONSE_DELETE_EVENT: /* Received delete event (not from buttons). */
-	case GTK_RESPONSE_REJECT:
-		break;
-	default: {
-		/* GTK_RESPONSE_ACCEPT: */
-		/* Get options. */
-		GeotagJob * geotag_job = new GeotagJob(GeoTagWidgets * widgets);
-		int len = geotag_job->files->size();
+	GeotagJob * geotag_job = new GeotagJob(this);
+	int len = geotag_job->selected_files.size();
 
-		const QString job_description = QObject::tr("Geotagging %1 Images...").arg(len);
-		geotag_job->set_description(job_description);
+	const QString job_description = QObject::tr("Geotagging %1 Images...").arg(len);
+	geotag_job->set_description(job_description);
 
-		/* Processing lots of files can take time - so run a background effort. */
-		Background::run_in_background(geotag_job, ThreadPoolType::LOCAL);
-		break;
-	}
-	}
-	geotag_widgets_free(widgets);
-	gtk_widget_destroy(GTK_WIDGET(dialog));
-#endif
+	/* Processing lots of files can take time - so run a background effort. */
+	Background::run_in_background(geotag_job, ThreadPoolType::LOCAL);
 }
 
 
 
 
 /**
- * Handle widget sensitivities.
- */
-static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
+   Handle widget sensitivities
+*/
+void GeoTagDialog::write_exif_cb_cb(void)
 {
 	/* Overwriting & file modification times are irrelevant if not going to write EXIF! */
-	if (gtw->write_exif_b->isChecked()) {
-		gtw->overwrite_gps_exif_b->setEnabled(true);
-		gtw->overwrite_gps_exif_l->setEnabled(true);
-		gtw->no_change_mtime_b->setEnabled(true);
-		gtw->no_change_mtime_l->setEnabled(true);
+	if (this->write_exif_cb->isChecked()) {
+		this->overwrite_gps_exif_l->setEnabled(true);
+		this->overwrite_gps_exif_cb->setEnabled(true);
+
+		this->no_change_mtime_l->setEnabled(true);
+		this->no_change_mtime_cb->setEnabled(true);
 	} else {
-		gtw->overwrite_gps_exif_b->setEnabled(false);
-		gtw->overwrite_gps_exif_l->setEnabled(false);
-		gtw->no_change_mtime_b->setEnabled(false);
-		gtw->no_change_mtime_l->setEnabled(false);
+		this->overwrite_gps_exif_l->setEnabled(false);
+		this->overwrite_gps_exif_cb->setEnabled(false);
+
+		this->no_change_mtime_l->setEnabled(false);
+		this->no_change_mtime_cb->setEnabled(false);
 	}
 }
 
 
 
 
-static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
+void GeoTagDialog::create_waypoints_cb_cb(void)
 {
 	/* Overwriting waypoints are irrelevant if not going to create them! */
-	if (gtw->create_waypoints_b->isChecked()) {
-		gtw->overwrite_waypoints_b->setEnabled(true);
-		gtw->overwrite_waypoints_l->setEnabled(true);
+	if (this->create_waypoints_cb->isChecked()) {
+		this->overwrite_waypoints_cb->setEnabled(true);
+		this->overwrite_waypoints_l->setEnabled(true);
 	} else {
-		gtw->overwrite_waypoints_b->setEnabled(false);
-		gtw->overwrite_waypoints_l->setEnabled(false);
+		this->overwrite_waypoints_cb->setEnabled(false);
+		this->overwrite_waypoints_l->setEnabled(false);
 	}
 }
 
@@ -691,135 +657,152 @@ static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 
 
 /**
- * @parent: The Window of the calling process
- * @layer: The LayerTrw to use for correlating images to tracks
- * @track: Optional - The particular track to use (if specified) for correlating images
- * @track_name: Optional - The name of specified track to use
+   @parent: The Window of the calling process
+   @trw: The LayerTrw to use for correlating images to tracks
+   @trk: Optional - The particular track to use (if specified) for correlating images
  */
 void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint * wp, Track * trk)
 {
-	GeoTagWidgets * widgets = geotag_widgets_new();
+	GeoTagDialog * dialog = new GeoTagDialog(parent);
+	dialog->setWindowTitle(QObject::tr("Geotag Images"));
 
-	widgets->dialog = new BasicDialog(parent);
-	widgets->dialog->setWindowTitle(QObject::tr("Geotag Images"));
+	dialog->trw = trw;
+	dialog->wp = wp;
+	dialog->trk = trk;
 
-#ifdef K_FIXME_RESTORE
+	int row = 1;
+
+	const QStringList file_list;
+	dialog->files_selection = new SGFileList(QObject::tr("Images"), file_list, dialog);
+	// TODO: VIK_FILE_LIST(vik_file_list_new(, mime_type_filters));
+	dialog->grid->addWidget(dialog->files_selection, 1, 0, 1, 2);
+	row++;
+
+
+	dialog->create_waypoints_l = new QLabel(QObject::tr("Create Waypoints:"));
+	dialog->create_waypoints_cb = new QCheckBox();
+	dialog->grid->addWidget(dialog->create_waypoints_l, row, 0);
+	dialog->grid->addWidget(dialog->create_waypoints_cb, row, 1);
+	row++;
+
+
+	dialog->overwrite_waypoints_l = new QLabel(QObject::tr("Overwrite Existing Waypoints:"));
+	dialog->overwrite_waypoints_cb = new QCheckBox();
+	dialog->grid->addWidget(dialog->overwrite_waypoints_l, row, 0);
+	dialog->grid->addWidget(dialog->overwrite_waypoints_cb, row, 1);
+	row++;
+
+
+	dialog->write_exif_cb = new QCheckBox();
+	dialog->grid->addWidget(new QLabel(QObject::tr("Write EXIF:")), row, 0);
+	dialog->grid->addWidget(dialog->write_exif_cb, row, 1);
+	row++;
+
+
+	dialog->overwrite_gps_exif_l = new QLabel(QObject::tr("Overwrite Existing GPS Information:"));
+	dialog->overwrite_gps_exif_cb = new QCheckBox();
+	dialog->grid->addWidget(dialog->overwrite_gps_exif_l, row, 0);
+	dialog->grid->addWidget(dialog->overwrite_gps_exif_cb, row, 1);
+	row++;
+
+
+	dialog->no_change_mtime_l = new QLabel(QObject::tr("Keep File Modification Timestamp:"));
+	dialog->no_change_mtime_cb = new QCheckBox();
+	dialog->grid->addWidget(dialog->no_change_mtime_l, row, 0);
+	dialog->grid->addWidget(dialog->no_change_mtime_cb, row, 1);
+	row++;
+
+
+	QLabel * interpolate_segments_l = new QLabel(QObject::tr("Interpolate Between Track Segments:"));
+	dialog->interpolate_segments_cb = new QCheckBox();
+	dialog->grid->addWidget(interpolate_segments_l, row, 0);
+	dialog->grid->addWidget(dialog->interpolate_segments_cb, row, 1);
+	row++;
+
+
+	QLabel * time_offset_l = new QLabel(QObject::tr("Image Time Offset (Seconds):"));
+	dialog->time_offset_entry = new QLineEdit();
+	dialog->grid->addWidget(time_offset_l, row, 0);
+	dialog->grid->addWidget(dialog->time_offset_entry, row, 1);
+	dialog->time_offset_entry->setToolTip(QObject::tr("The number of seconds to ADD to the photos time to make it match the GPS data. Calculate this with (GPS - Photo). Can be negative or positive. Useful to adjust times when a camera's timestamp was incorrect."));
+	row++;
+
+
+	QLabel * time_zone_l = new QLabel(QObject::tr("Image Timezone:"));
+	dialog->time_zone_entry = new QLineEdit();
+	dialog->grid->addWidget(time_zone_l, row, 0);
+	dialog->grid->addWidget(dialog->time_zone_entry, row, 1);
+	dialog->time_zone_entry->setToolTip(QObject::tr("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
+	// TODO: gtk_entry_set_width_chars(dialog->time_zone_entry, 7);
+	row++;
+
+
+
 	QStringList mime_type_filters;
 	mime_type_filters << "image/jpeg";
 
-	widgets->files = VIK_FILE_LIST(vik_file_list_new(QObject::tr("Images"), mime_type_filters));
-	widgets->trw = trw;
-	widgets->wp = wp;
-	widgets->trk = trk;
-	widgets->create_waypoints_b = new QCheckBox();
-	widgets->overwrite_waypoints_l = new QLabel(QObject::tr("Overwrite Existing Waypoints:"));
-	widgets->overwrite_waypoints_b = new QCheckBox();
-	widgets->write_exif_b = new QCheckBox();
-	widgets->overwrite_gps_exif_l = new QLabel(QObject::tr("Overwrite Existing GPS Information:"));
-	widgets->overwrite_gps_exif_b = new QCheckBox();
-	widgets->no_change_mtime_l = new QLabel(QObject::tr("Keep File Modification Timestamp:"));
-	widgets->no_change_mtime_b = new QCheckBox();
-	widgets->interpolate_segments_b = new QCheckBox();
+	/* Set default values of ui controls. */
+	GeoTagValues default_values = get_default_values();
 
-	gtk_entry_set_width_chars(widgets->time_zone_b, 7);
-	gtk_entry_set_width_chars(widgets->time_offset_b, 7);
+	dialog->create_waypoints_cb->setChecked(default_values.create_waypoints);
+	dialog->overwrite_waypoints_cb->setChecked(default_values.overwrite_waypoints);
+	dialog->write_exif_cb->setChecked(default_values.write_exif);
+	dialog->overwrite_gps_exif_cb->setChecked(default_values.overwrite_gps_exif);
+	dialog->no_change_mtime_cb->setChecked(default_values.no_change_mtime);
+	dialog->interpolate_segments_cb->setChecked(default_values.interpolate_segments);
 
-	/* Defaults. */
-	option_values_t default_values = get_default_values();
-
-	widgets->create_waypoints_b->setChecked(default_values.create_waypoints);
-	widgets->overwrite_waypoints_b->setChecked(default_values.overwrite_waypoints);
-	widgets->write_exif_b->setChecked(default_values.write_exif);
-	widgets->overwrite_gps_exif_b->setChecked(default_values.overwrite_gps_exif);
-	widgets->no_change_mtime_b->setChecked(default_values.no_change_mtime);
-	widgets->interpolate_segments_b->setChecked(default_values.interpolate_segments);
-
-	char tmp_string[7];
-	snprintf(tmp_string, 7, "%+02d:%02d", default_values.TimeZoneHours, abs(default_values.TimeZoneMins));
-	widgets->time_zone_b.seText(tmp_string);
-	snprintf(tmp_string, 7, "%d", default_values.time_offset);
-	widgets->time_offset_b.setText(tmp_string);
+	char tmp_string[10];
+	snprintf(tmp_string, sizeof (tmp_string), "%+02d:%02d", default_values.TimeZoneHours, abs(default_values.TimeZoneMins));
+	dialog->time_zone_entry->setText(tmp_string);
+	snprintf(tmp_string, sizeof (tmp_string), "%d", default_values.time_offset);
+	dialog->time_offset_entry->setText(tmp_string);
 
 	/* Ensure sensitivities setup. */
-	write_exif_b_cb(GTK_WIDGET(widgets->write_exif_b), widgets);
-	QObject::connect(widgets->write_exif_b, SIGNAL("toggled"), widgets, SLOT (write_exif_b_cb));
+	dialog->write_exif_cb_cb();
+	dialog->create_waypoints_cb_cb();
 
-	create_waypoints_b_cb(GTK_WIDGET(widgets->create_waypoints_b), widgets);
-	QObject::connect(widgets->create_waypoints_b, SIGNAL("toggled"), widgets, SLOT (create_waypoints_b_cb));
+	QObject::connect(dialog->write_exif_cb, SIGNAL (toggled(bool)), dialog, SLOT (write_exif_cb_cb(void)));
+	QObject::connect(dialog->create_waypoints_cb, SIGNAL (toggled(bool)), dialog, SLOT (create_waypoints_cb_cb(void)));
 
-	QHBoxLayout * cw_hbox = new QHBoxLayout();
-	QLabel * create_waypoints_l = new QLabel(QObject::tr("Create Waypoints:"));
-	cw_hbox->addWidget(create_waypoints_l);
-	cw_hbox->addWidget(widgets->create_waypoints_b);
-
-	QHBoxLayout * ow_hbox = new QHBoxLayout();
-	ow_hbox->addWidget(widgets->overwrite_waypoints_l);
-	ow_hbox->addWidget(widgets->overwrite_waypoints_b);
-
-	QHBoxLayout * we_hbox = new QHBoxLayout();
-	we_hbox->addWidget(new QLabel(QObject::tr("Write EXIF:")));
-	we_hbox->addWidget(widgets->write_exif_b);
-
-	QHBoxLayout * og_hbox = new QHBoxLayout();
-	og_hbox->addWidget(widgets->overwrite_gps_exif_l);
-	og_hbox->addWidget(widgets->overwrite_gps_exif_b);
-
-	QHBoxLayout * fm_hbox = new QHBoxLayout();
-	fm_hbox->addWidget(widgets->no_change_mtime_l);
-	fm_hbox->addWidget(widgets->no_change_mtime_b);
-
-	QHBoxLayout * is_hbox = new QHBoxLayout();
-	QLabel * interpolate_segments_l = new QLabel(QObject::tr("Interpolate Between Track Segments:"));
-	is_hbox->addWidget(widgets->interpolate_segments_l);
-	is_hbox->addWidget(widgets->interpolate_segments_b);
-
-	QHBoxLayout * to_hbox = new QHBoxLayout();
-	QLabel * time_offset_l = new QLabel(QObject::tr("Image Time Offset (Seconds):"));
-	to_hbox->addWidget(time_offset_l);
-	to_hbox->addWidget(&widgets->time_offset_b);
-	widgets->time_offset_b.setToolTip(QObject::tr("The number of seconds to ADD to the photos time to make it match the GPS data. Calculate this with (GPS - Photo). Can be negative or positive. Useful to adjust times when a camera's timestamp was incorrect."));
-
-	QHBoxLayout * tz_hbox = new QHBoxLayout();
-	QLabel * time_zone_l = new QLabel(QObject::tr("Image Timezone:"));
-	tz_hbox->addWidget(time_zone_l);
-	tz_hbox->addWidget(&widgets->time_zone_b);
-	widgets->time_zone_b.setToolTip(QObject::tr("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
 
 	QString track_string;
-	if (widgets->wp) {
-		track_string = tr("Using waypoint: %1").arg(wp->name);
+	if (dialog->wp) {
+		track_string = QObject::tr("Using waypoint: %1").arg(wp->name);
+
 		/* Control sensitivities. */
-		widgets->create_waypoints_b->setEnabled(false);
-		create_waypoints_l->setEnabled(false);
-		widgets->overwrite_waypoints_b->setEnabled(false);
-		widgets->overwrite_waypoints_l->setEnabled(false);
-		widgets->interpolate_segments_b->setEnabled(false);
+		dialog->create_waypoints_l->setEnabled(false);
+		dialog->create_waypoints_cb->setEnabled(false);
+
+
+		dialog->overwrite_waypoints_l->setEnabled(false);
+		dialog->overwrite_waypoints_cb->setEnabled(false);
+
 		interpolate_segments_l->setEnabled(false);
-		widgets->time_offset_b->setEnabled(false);
+		dialog->interpolate_segments_cb->setEnabled(false);
+
 		time_offset_l->setEnabled(false);
-		widgets->time_zone_b->setEnabled(false);
+		dialog->time_offset_entry->setEnabled(false);
+
 		time_zone_l->setEnabled(false);
-	} else if (widgets->trk) {
-		track_string = tr("Using track: %1").arg(trk->name);
+		dialog->time_zone_entry->setEnabled(false);
+	} else if (dialog->trk) {
+		track_string = QObject::tr("Using track: %1").arg(trk->name);
 	} else {
-		track_string = tr("Using all tracks in: %1").arg(trw->name);
+		track_string = QObject::tr("Using all tracks in: %1").arg(trw->name);
 	}
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), new QLabel(track_string), false, false, 5);
+	row = 0;
+	dialog->create_waypoints_cb = new QCheckBox();
+	dialog->grid->addWidget(new QLabel(track_string), row, 0, 1, 2);
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), GTK_WIDGET(widgets->files), true, true, 0);
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), cw_hbox,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), ow_hbox,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), we_hbox,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), og_hbox,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), fm_hbox,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), is_hbox,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), to_hbox,  false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), tz_hbox,  false, false, 0);
+	QObject::connect(dialog->button_box, SIGNAL (accepted(void)), dialog, SLOT (on_accept_cb(void)));
+	dialog->button_box->button(QDialogButtonBox::Cancel)->setDefault(true);
 
-	QObject::connect(widgets->dialog, SIGNAL("response"), widgets, SLOT (trw_layer_geotag_response_cb));
+	dialog->exec();
 
-	widgets->dialog->button_box->button(QDialogButtonBox::Discard)->setDefault(true);
-#endif
+	/* TODO: is it safe to delete dialog here? There is a
+	   background job running, started in ::on_accept_cb(), that
+	   may be using some data from the dialog. */
+	delete dialog;
 }

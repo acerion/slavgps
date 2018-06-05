@@ -1227,13 +1227,10 @@ static unsigned int strcase_hash(gconstpointer v)
 
 void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
-	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
-#if 1
 	/* Check the layer for visibility (including all the parents' visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
 		return;
 	}
-#endif
 
 	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
 

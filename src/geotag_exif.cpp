@@ -425,7 +425,7 @@ MyReturn:
  *
  * Here EXIF processing is used to get non position related information (i.e. just the comment).
  */
-Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coord & coord, double alt, QString & name, Waypoint *wp)
+Waypoint * SlavGPS::a_geotag_waypoint_positioned(const QString & file_full_path, const Coord & coord, double alt, QString & name, Waypoint *wp)
 {
 	name = "";
 	if (wp == NULL) {
@@ -439,7 +439,7 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coo
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new();
-	if (gexiv2_metadata_open_path(gemd, filename, NULL)) {
+	if (gexiv2_metadata_open_path(gemd, file_full_path.toUtf8().constData(), NULL)) {
 			wp->comment = geotag_get_exif_comment (gemd);
 			if (gexiv2_metadata_has_tag(gemd, "Exif.Image.XPTitle")) {
 				name = QString(gexiv2_metadata_get_tag_interpreted_string(gemd, "Exif.Image.XPTitle"));
@@ -448,7 +448,7 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coo
 	gexiv2_metadata_free(gemd);
 #else
 #ifdef HAVE_LIBEXIF
-	ExifData *ed = exif_data_new_from_file(filename);
+	ExifData *ed = exif_data_new_from_file(file_full_path.toUtf8().constData());
 
 	/* Set info from exif values. */
 	if (ed) {
@@ -471,7 +471,7 @@ Waypoint * SlavGPS::a_geotag_waypoint_positioned(const char *filename, const Coo
 
 #endif /* #ifdef K_FIXME_RESTORE */
 
-	wp->set_image_full_path(filename);
+	wp->set_image_full_path(file_full_path);
 
 	return wp;
 }
