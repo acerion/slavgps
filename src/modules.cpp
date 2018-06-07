@@ -164,7 +164,6 @@ static void modules_load_config_dir(const QString & dir)
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_exttools));
 		vik_gobject_builder_parse(builder, tools);
-		g_object_unref(builder);
 	}
 
 	const QString datasources = dir + QDir::separator() + VIKING_DATASOURCES_FILE;
@@ -172,7 +171,6 @@ static void modules_load_config_dir(const QString & dir)
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_datasources));
 		vik_gobject_builder_parse(builder, datasources);
-		g_object_unref(builder);
 	}
 
 	/* Go-to search engines. */
@@ -181,7 +179,6 @@ static void modules_load_config_dir(const QString & dir)
 		VikGobjectBuilder * builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_gototools));
 		vik_gobject_builder_parse(builder, go_to);
-		g_object_unref(builder);
 	}
 
 	/* Routing engines. */
@@ -190,7 +187,6 @@ static void modules_load_config_dir(const QString & dir)
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
 		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_routing_engine));
 		vik_gobject_builder_parse(builder, routing);
-		g_object_unref(builder);
 	}
 }
 

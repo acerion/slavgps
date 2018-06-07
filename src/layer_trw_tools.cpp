@@ -921,7 +921,6 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 
 		/* Now add distance to where the pointer is. */
 		const Coord screen_coord = tool->viewport->screen_pos_to_coord(ev->x(), ev->y());
-		LatLon ll = screen_coord.get_latlon(); /* kamilFIXME: unused variable. */
 		double last_step = Coord::distance(screen_coord, last_tpt->coord);
 		distance = distance + last_step;
 
@@ -963,8 +962,6 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 			QPen background_block_pen = SGUtils::new_pen(QColor("#cccccc"), 1);
 			fill_rectangle(pixmap, background_block_pen, xd-2, yd-2, wd+4, hd+2);
 			gdk_draw_layout(pixmap, trw->painter->current_track_new_point_pen, xd, yd, pl);
-
-			g_object_unref(G_OBJECT (pl));
 #endif
 		}
 

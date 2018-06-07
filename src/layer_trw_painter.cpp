@@ -97,12 +97,6 @@ LayerTRWPainter::LayerTRWPainter(LayerTRW * new_trw)
 {
 	this->trw = new_trw;
 	this->window = this->trw->get_window();
-
-#ifdef K_FIXME_RESTORE
-	pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(viewport->font_desc));
-	pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->font_desc));
-#endif
-
 }
 
 
@@ -216,10 +210,6 @@ static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y
 void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord & coord)
 {
 	const ScreenPos label_pos = this->viewport->coord_to_screen_pos(coord);
-
-	//int width, height;
-	//pango_layout_get_pixel_size(this->tracklabellayout, &width, &height);
-	//this->viewport->draw_layout(this->track_bg_gc, label_pos.x - width/2, label_pos.y - height/2, this->tracklabellayout);
 
 	QPen pen;
 	pen.setColor(fg_color);
@@ -1091,19 +1081,6 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos,
 void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, bool do_highlight)
 {
 	/* Could this be stored in the waypoint rather than recreating each pass? */
-
-#ifdef K_OLD_IMPLEMENTATION
-	/* Unused. Leaving as reference. */
-	int label_x, label_y;
-	int label_width, label_height;
-	pango_layout_get_pixel_size(this->trw->wplabellayout, &label_width, &label_height);
-	label_x = x - label_width/2;
-	if (wp->symbol_pixmap) {
-		label_y = y - label_height - 2 - wp->symbol_pixmap->height()/2;
-	} else {
-		label_y = y - this->wp_marker_size - label_height - 2;
-	}
-#endif
 
 	const int label_x = pos.x;
 	const int label_y = pos.y;

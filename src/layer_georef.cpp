@@ -815,17 +815,14 @@ void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 		return;
 	}
 
-	QPixmap * img_pixmap = new QPixmap();
-	if (!img_pixmap->load(filename)) {
-		delete img_pixmap;
-		img_pixmap = NULL;
-
+	QPixmap img_pixmap;
+	if (img_pixmap.load(filename)) {
 		Dialog::error(tr("Couldn't open image file %1").arg(filename), this->layer->get_window());
 		return;
 	}
 
-	const int img_width = img_pixmap->width();
-	const int img_height = img_pixmap->height();
+	const int img_width = img_pixmap.width();
+	const int img_height = img_pixmap.height();
 
 	if (img_width == 0 || img_height == 0) {
 		Dialog::error(tr("Invalid image size: %1").arg(filename), this->layer->get_window());
@@ -840,9 +837,6 @@ void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 
 		this->check_br_is_good_or_msg_user();
 	}
-#ifdef K_FIXME_RESTORE
-	g_object_unref(G_OBJECT(img_pixmap));
-#endif
 }
 
 

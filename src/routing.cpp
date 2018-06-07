@@ -152,8 +152,8 @@ bool Routing::find_route_with_default_engine(LayerTRW * trw, const LatLon & star
 */
 void Routing::register_engine(RoutingEngine * engine)
 {
-	const QString label = QString(engine->get_label());
-	const QString string_id = QString(engine->get_id());
+	const QString label = engine->get_label();
+	const QString string_id = engine->get_id();
 
 	/* Check if string_id already exists in list. */
 	RoutingEngine * found_engine = search_by_string_id(routing_engines, string_id);

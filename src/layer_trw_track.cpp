@@ -2753,8 +2753,9 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (extend_track_end_route_finder_cb()));
 	}
 
-	/* ATM can't upload a single waypoint but can do waypoints to a GPS. */
-	if (this->type_id != "sg.trw.waypoint") { /* FIXME: this should be also in some other TRW sublayer (in Waypoints?). */
+	/* ATM can't upload a single waypoint but can do waypoints to a GPS.
+	   TODO: add this menu item to Waypoints as well? */
+	if (this->type_id != "sg.trw.waypoint") {
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), tr("&Upload to GPS..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_gps_cb()));
 	}
