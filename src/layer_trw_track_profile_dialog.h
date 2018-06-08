@@ -128,19 +128,9 @@ namespace SlavGPS {
 		QLabel * y_value = NULL;
 		QLabel * t_value = NULL; /* Actual clock time, only for time-based graphs. */
 
-		QString x_label;
-		QString y_label;
-		QString t_label;
-	};
-
-
-
-
-	class GeoCanvasControls {
-	public:
-		QCheckBox * show_dem = NULL;
-		QCheckBox * show_gps_speed = NULL;
-		QCheckBox * show_speed = NULL;
+		QLabel * x_label = NULL;
+		QLabel * y_label = NULL;
+		QLabel * t_label = NULL;
 	};
 
 
@@ -191,8 +181,6 @@ namespace SlavGPS {
 		void clear_image(QPixmap * pix);
 
 		void draw_all_graphs(bool resized);
-		void configure_widgets(int index);
-		QWidget * create_graph_page(ProfileGraph * graph);
 
 		void save_values(void);
 
@@ -253,6 +241,13 @@ namespace SlavGPS {
 		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, int index, TrackProfileDialog * dialog);
 		~ProfileGraph();
 
+		virtual void draw_additional_indicators(TrackInfo & track_info) {};
+		virtual void configure_controls(TrackProfileDialog * dialog) {};
+		virtual void save_values(void) {};
+
+		void configure_labels(TrackProfileDialog * dialog);
+		QWidget * create_widgets_layout(TrackProfileDialog * dialog);
+
 		void create_viewport(int index, TrackProfileDialog * dialog);
 		QString get_graph_title(void) const;
 
@@ -297,8 +292,6 @@ namespace SlavGPS {
 		Viewport * viewport = NULL;
 		PropSaved saved_img;
 
-		void (*draw_additional_indicators_fn)(ProfileGraph *, TrackInfo &) = NULL;
-
 		int width = 0;
 		int height = 0;
 		int bottom_edge = 0;
@@ -329,16 +322,85 @@ namespace SlavGPS {
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;
 
-		GeoCanvasControls controls;
 		GeoCanvasLabels labels;
 
 		QGridLayout * labels_grid = NULL;
+		QVBoxLayout * main_vbox = NULL;
 		QVBoxLayout * controls_vbox = NULL;
 
 	private:
 		bool regenerate_data_from_scratch(Track * trk);
 	};
 
+
+
+
+	class ProfileGraphET : public ProfileGraph {
+	public:
+		ProfileGraphET(TrackProfileDialog * dialog);
+		void draw_additional_indicators(TrackInfo & track_info);
+		void configure_controls(TrackProfileDialog * dialog);
+		void save_values(void);
+	private:
+		QCheckBox * show_dem_cb = NULL;
+		QCheckBox * show_speed_cb = NULL;
+	};
+
+
+	class ProfileGraphSD : public ProfileGraph {
+	public:
+		ProfileGraphSD(TrackProfileDialog * dialog);
+		void draw_additional_indicators(TrackInfo & track_info);
+		void configure_controls(TrackProfileDialog * dialog);
+		void save_values(void);
+	private:
+		QCheckBox * show_gps_speed_cb = NULL;
+	};
+
+
+	class ProfileGraphED : public ProfileGraph {
+	public:
+		ProfileGraphED(TrackProfileDialog * dialog);
+		void draw_additional_indicators(TrackInfo & track_info);
+		void configure_controls(TrackProfileDialog * dialog);
+		void save_values(void);
+	private:
+		QCheckBox * show_dem_cb = NULL;
+		QCheckBox * show_gps_speed_cb = NULL;
+	};
+
+
+	class ProfileGraphGD : public ProfileGraph {
+	public:
+		ProfileGraphGD(TrackProfileDialog * dialog);
+		void draw_additional_indicators(TrackInfo & track_info);
+		void configure_controls(TrackProfileDialog * dialog);
+		void save_values(void);
+	private:
+		QCheckBox * show_gps_speed_cb = NULL;
+	};
+
+
+	class ProfileGraphST : public ProfileGraph {
+	public:
+		ProfileGraphST(TrackProfileDialog * dialog);
+		void draw_additional_indicators(TrackInfo & track_info);
+		void configure_controls(TrackProfileDialog * dialog);
+		void save_values(void);
+	private:
+		QCheckBox * show_gps_speed_cb = NULL;
+	};
+
+
+	class ProfileGraphDT : public ProfileGraph {
+	public:
+		ProfileGraphDT(TrackProfileDialog * dialog);
+		void draw_additional_indicators(TrackInfo & track_info);
+		void configure_controls(TrackProfileDialog * dialog);
+		void save_values(void);
+	private:
+		QCheckBox * show_speed_cb = NULL;
+	};
 
 
 

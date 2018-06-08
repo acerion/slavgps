@@ -55,10 +55,22 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX " Track Profile:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 #define VIK_SETTINGS_TRACK_PROFILE_WIDTH "track_profile_display_width"
 #define VIK_SETTINGS_TRACK_PROFILE_HEIGHT "track_profile_display_height"
 
-#define PREFIX " Track Profile:" << __FUNCTION__ << __LINE__ << ">"
+#define VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM        "track_profile_et_show_dem"
+#define VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_SPEED      "track_profile_et_show_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED  "track_profile_sd_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM        "track_profile_ed_show_dem"
+#define VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED  "track_profile_ed_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED  "track_profile_gd_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED  "track_profile_st_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_SPEED      "track_profile_dt_show_speed"
 
 
 
@@ -130,19 +142,6 @@ static const time_t time_interval_values[] = {
 	1209600,/* 2 weeks. */
 	2419200,/* 4 weeks. */
 };
-
-
-
-
-/* Local show settings to restore on dialog opening. */
-static bool g_show_dem                = true;
-static bool g_show_alt_gps_speed      = true;
-static bool g_show_gps_speed          = true;
-static bool g_show_gradient_gps_speed = true;
-static bool g_show_dist_speed         = false;
-static bool g_show_elev_speed         = false;
-static bool g_show_elev_dem           = false;
-static bool g_show_sd_gps_speed       = true;
 
 
 
@@ -372,7 +371,7 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 	   index and value that will nicely cover visible range of
 	   data. */
 
-	static Intervals<double> * intervals = distance_intervals;
+	Intervals<double> * intervals = distance_intervals;
 	const int n_intervals = GRAPH_X_INTERVALS;
 
 	int interval_index = intervals->get_interval_index(this->x_min_visible_d, this->x_max_visible_d, n_intervals);
@@ -400,7 +399,7 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 	   index and value that will nicely cover visible range of
 	   data. */
 
-	static Intervals<time_t> * intervals = time_intervals;
+	Intervals<time_t> * intervals = time_intervals;
 	const int n_intervals = GRAPH_X_INTERVALS;
 
 	int interval_index = intervals->get_interval_index(this->x_min_visible_t, this->x_max_visible_t, n_intervals);
@@ -445,7 +444,7 @@ void ProfileGraph::set_initial_visible_range_y(void)
 	   index and value that will nicely cover visible range of
 	   data. */
 	const int n_intervals = GRAPH_Y_INTERVALS;
-	static Intervals<double> * intervals = NULL;
+	Intervals<double> * intervals = NULL;
 
 	switch (this->geocanvas.y_domain) {
 	case GeoCanvasDomain::Speed:
@@ -1253,18 +1252,16 @@ void ProfileGraph::draw_function_values(void)
 
 
 
-static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & track_info)
+void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
 {
-	/* Show DEMS. */
-	if (graph->controls.show_dem && graph->controls.show_dem->checkState())  {
+	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
+		const double max_function_value = this->y_max_visible;
 
-		const double max_function_value = graph->y_max_visible;
+		const QColor color = this->dem_alt_pen.color();
 
-		const QColor color = graph->dem_alt_pen.color();
-
-		for (int i = 0; i < graph->width; i++) {
+		for (int i = 0; i < this->width; i++) {
 			/* This could be slow doing this each time... */
-			Trackpoint * tp = track_info.trk->get_closest_tp_by_percentage_time(((double) i / (double) graph->width), NULL);
+			Trackpoint * tp = track_info.trk->get_closest_tp_by_percentage_time(((double) i / (double) this->width), NULL);
 			if (tp) {
 				int16_t elev = DEMCache::get_elev_by_coord(&tp->coord, DemInterpolation::SIMPLE);
 				if (elev != DEM_INVALID_ELEVATION) {
@@ -1275,11 +1272,11 @@ static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & trac
 					/* No conversion needed if already in metres. */
 
 					/* offset is in current height units. */
-					const double current_function_value = elev - graph->y_min_visible;
+					const double current_function_value = elev - this->y_min_visible;
 
-					const int x = graph->left_edge + i;
-					const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-					graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+					const int x = this->left_edge + i;
+					const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+					this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 				}
 			}
 		}
@@ -1287,19 +1284,19 @@ static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & trac
 
 
 	/* Show speeds. */
-	if (graph->controls.show_speed && graph->controls.show_speed->checkState()) {
+	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 		/* This is just an indicator - no actual values can be inferred by user. */
 
 		const double max_function_value = track_info.max_speed * 110 / 100;
 
-		const QColor color = graph->gps_speed_pen.color();
-		for (int i = 0; i < graph->width; i++) {
+		const QColor color = this->gps_speed_pen.color();
+		for (int i = 0; i < this->width; i++) {
 
-			const double current_function_value = graph->track_data.y[i];
+			const double current_function_value = this->track_data.y[i];
 
-			const int x = graph->left_edge + i;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x = this->left_edge + i;
+			const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 
@@ -1309,30 +1306,30 @@ static void draw_additional_indicators_et(ProfileGraph * graph, TrackInfo & trac
 
 
 
-static void draw_additional_indicators_sd(ProfileGraph * graph, TrackInfo & track_info)
+void ProfileGraphSD::draw_additional_indicators(TrackInfo & track_info)
 {
-	if (graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState()) {
+	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
 		const double max_function_arg = track_info.trk->get_length_including_gaps();
-		const double max_function_value = graph->y_max_visible;
+		const double max_function_value = this->y_max_visible;
 		double current_function_arg = 0.0;
 		double current_function_value = 0.0;
 
-		const QColor color = graph->gps_speed_pen.color();
+		const QColor color = this->gps_speed_pen.color();
 		for (auto iter = std::next(track_info.trk->trackpoints.begin()); iter != track_info.trk->trackpoints.end(); iter++) {
 			double gps_speed = (*iter)->speed;
 			if (std::isnan(gps_speed)) {
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
+			gps_speed = convert_speed_mps_to(gps_speed, this->geocanvas.speed_unit);
 
 			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			current_function_value = gps_speed - graph->y_min_visible;
+			current_function_value = gps_speed - this->y_min_visible;
 
-			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
+			const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -1340,10 +1337,10 @@ static void draw_additional_indicators_sd(ProfileGraph * graph, TrackInfo & trac
 
 
 
-void draw_additional_indicators_ed(ProfileGraph * graph, TrackInfo & track_info)
+void ProfileGraphED::draw_additional_indicators(TrackInfo & track_info)
 {
-	const bool do_show_dem = graph->controls.show_dem && graph->controls.show_dem->checkState();
-	const bool do_show_gps_speed = graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState();
+	const bool do_show_dem = this->show_dem_cb && this->show_dem_cb->checkState();
+	const bool do_show_gps_speed = this->show_gps_speed_cb && this->show_gps_speed_cb->checkState();
 
 	if (do_show_dem || do_show_gps_speed) {
 
@@ -1352,38 +1349,37 @@ void draw_additional_indicators_ed(ProfileGraph * graph, TrackInfo & track_info)
 			track_info.max_speed = track_info.trk->get_max_speed();
 		}
 
-		graph->draw_dem_alt_speed_dist(track_info.trk, track_info.max_speed, do_show_dem, do_show_gps_speed);
+		this->draw_dem_alt_speed_dist(track_info.trk, track_info.max_speed, do_show_dem, do_show_gps_speed);
 	}
 }
 
 
 
 
-static void draw_additional_indicators_gd(ProfileGraph * graph, TrackInfo & track_info)
+void ProfileGraphGD::draw_additional_indicators(TrackInfo & track_info)
 {
-	const bool do_show_gps_speed = graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState();
-
+	const bool do_show_gps_speed = this->show_gps_speed_cb && this->show_gps_speed_cb->checkState();
 	if (do_show_gps_speed) {
-		/* Ensure somekind of max speed when not set. */
+		/* Ensure some kind of max speed when not set. */
 		if (track_info.max_speed < 0.01) {
 			track_info.max_speed = track_info.trk->get_max_speed();
 		}
-		graph->draw_speed_dist(track_info.trk, track_info.max_speed, do_show_gps_speed);
 	}
+	this->draw_speed_dist(track_info.trk, track_info.max_speed, do_show_gps_speed);
 }
 
 
 
 
-static void draw_additional_indicators_st(ProfileGraph * graph, TrackInfo & track_info)
+void ProfileGraphST::draw_additional_indicators(TrackInfo & track_info)
 {
-	if (graph->controls.show_gps_speed && graph->controls.show_gps_speed->checkState()) {
+	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
 		time_t beg_time = (*track_info.trk->trackpoints.begin())->timestamp;
 		const time_t max_function_arg = (*std::prev(track_info.trk->trackpoints.end()))->timestamp - beg_time;
-		const double max_function_value = graph->y_max_visible;
+		const double max_function_value = this->y_max_visible;
 
-		const QColor color = graph->gps_speed_pen.color();
+		const QColor color = this->gps_speed_pen.color();
 
 		for (auto iter = track_info.trk->trackpoints.begin(); iter != track_info.trk->trackpoints.end(); iter++) {
 			double gps_speed = (*iter)->speed;
@@ -1391,14 +1387,14 @@ static void draw_additional_indicators_st(ProfileGraph * graph, TrackInfo & trac
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, graph->geocanvas.speed_unit);
+			gps_speed = convert_speed_mps_to(gps_speed, this->geocanvas.speed_unit);
 
 			const time_t current_function_arg = (*iter)->timestamp - beg_time;
-			const double current_function_value = gps_speed - graph->y_min_visible;
+			const double current_function_value = gps_speed - this->y_min_visible;
 
-			const int x = graph->left_edge + graph->width * current_function_arg / max_function_arg;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
+			const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -1406,24 +1402,74 @@ static void draw_additional_indicators_st(ProfileGraph * graph, TrackInfo & trac
 
 
 
-static void draw_additional_indicators_dt(ProfileGraph * graph, TrackInfo & track_info)
+void ProfileGraphDT::draw_additional_indicators(TrackInfo & track_info)
 {
 	/* Show speed indicator. */
-	if (graph->controls.show_speed && graph->controls.show_speed->checkState()) {
+	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 
 		const double max_function_value = track_info.max_speed * 110 / 100;
 
-		const QColor color = graph->gps_speed_pen.color();
+		const QColor color = this->gps_speed_pen.color();
 		/* This is just an indicator - no actual values can be inferred by user. */
-		for (int i = 0; i < graph->width; i++) {
+		for (int i = 0; i < this->width; i++) {
 
-			const double current_function_value = graph->track_data.y[i];
+			const double current_function_value = this->track_data.y[i];
 
-			const int x = graph->left_edge + i;
-			const int y = graph->bottom_edge - graph->height * current_function_value / max_function_value;
-			graph->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x = this->left_edge + i;
+			const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
+}
+
+
+
+
+void ProfileGraphET::save_values(void)
+{
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM, this->show_dem_cb->checkState());
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_SPEED, this->show_speed_cb->checkState());
+}
+
+
+
+
+void ProfileGraphSD::save_values(void)
+{
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
+}
+
+
+
+
+void ProfileGraphED::save_values(void)
+{
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM, this->show_dem_cb->checkState());
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
+}
+
+
+
+
+void ProfileGraphGD::save_values(void)
+{
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
+}
+
+
+
+
+void ProfileGraphST::save_values(void)
+{
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
+}
+
+
+
+
+void ProfileGraphDT::save_values(void)
+{
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_SPEED, this->show_speed_cb->checkState());
 }
 
 
@@ -1456,9 +1502,7 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
 	this->draw_x_grid(track_info);
 	this->draw_y_grid();
 
-	if (this->draw_additional_indicators_fn) {
-		this->draw_additional_indicators_fn(this, track_info);
-	}
+	this->draw_additional_indicators(track_info);
 
 	this->viewport->draw_border();
 	this->viewport->update();
@@ -1726,30 +1770,8 @@ void TrackProfileDialog::save_values(void)
 	ApplicationState::set_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, this->profile_height);
 
 	/* Just for this session. */
-	/* TODO: we need smarter approach to saving state of graphs. */
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ED]->controls.show_dem) {
-		g_show_dem = this->graphs[SG_TRACK_PROFILE_TYPE_ED]->controls.show_dem->checkState();
-	}
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ED]->controls.show_gps_speed) {
-		g_show_alt_gps_speed = this->graphs[SG_TRACK_PROFILE_TYPE_ED]->controls.show_gps_speed->checkState();
-	}
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ST]->controls.show_gps_speed) {
-		g_show_gps_speed = this->graphs[SG_TRACK_PROFILE_TYPE_ST]->controls.show_gps_speed->checkState();
-	}
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_GD]->controls.show_gps_speed) {
-		g_show_gradient_gps_speed = this->graphs[SG_TRACK_PROFILE_TYPE_GD]->controls.show_gps_speed->checkState();
-	}
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_DT]->controls.show_speed) {
-		g_show_dist_speed = this->graphs[SG_TRACK_PROFILE_TYPE_DT]->controls.show_speed->checkState();
-	}
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ET]->controls.show_dem) {
-		g_show_elev_dem = this->graphs[SG_TRACK_PROFILE_TYPE_ET]->controls.show_dem->checkState();
-	}
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_ET]->controls.show_speed) {
-		g_show_elev_speed = this->graphs[SG_TRACK_PROFILE_TYPE_ET]->controls.show_speed->checkState();
-	}
-	if (this->graphs[SG_TRACK_PROFILE_TYPE_SD]->controls.show_gps_speed) {
-		g_show_sd_gps_speed = this->graphs[SG_TRACK_PROFILE_TYPE_SD]->controls.show_gps_speed->checkState();
+	for (int i = 0; i < SG_TRACK_PROFILE_TYPE_MAX; i++) {
+		this->graphs[i]->save_values();
 	}
 }
 
@@ -1861,6 +1883,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 
 	/* Keep same behaviour for now: destroy dialog if click on any button. */
 	if (!keep_dialog) {
+		this->destroy_cb();
 		this->accept();
 	}
 }
@@ -1882,50 +1905,28 @@ void TrackProfileDialog::checkbutton_toggle_cb(void)
 
 
 /**
- *  Create the widgets for the given graph tab.
- */
-QWidget * TrackProfileDialog::create_graph_page(ProfileGraph * graph)
+   Create the widgets for the given graph tab
+*/
+QWidget * ProfileGraph::create_widgets_layout(TrackProfileDialog * dialog)
 {
 	/* kamilTODO: who deletes these two pointers? */
-	graph->labels_grid = new QGridLayout();
-	QVBoxLayout * controls_vbox = new QVBoxLayout;
-	graph->controls_vbox = new QVBoxLayout;
+	this->labels_grid = new QGridLayout();
+	this->main_vbox = new QVBoxLayout;
+	this->controls_vbox = new QVBoxLayout;
 
-	graph->viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	graph->controls_vbox->addWidget(graph->viewport);
+	this->viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-
-	graph->labels_grid->addWidget(new QLabel(graph->labels.x_label), 0, 0);
-	graph->labels_grid->addWidget(graph->labels.x_value, 0, 1);
-
-	graph->labels_grid->addWidget(new QLabel(graph->labels.y_label), 1, 0);
-	graph->labels_grid->addWidget(graph->labels.y_value, 1, 1);
-
-	if (graph->labels.t_value) {
-		graph->labels_grid->addWidget(new QLabel(graph->labels.t_label), 2, 0);
-		graph->labels_grid->addWidget(graph->labels.t_value, 2, 1);
-	}
-	graph->controls_vbox->addLayout(graph->labels_grid);
+	this->main_vbox->addWidget(this->viewport);
+	this->main_vbox->addLayout(this->labels_grid);
+	this->main_vbox->addLayout(this->controls_vbox);
 
 
-	if (graph->controls.show_dem) {
-		controls_vbox->addWidget(graph->controls.show_dem);
-	}
-	if (graph->controls.show_gps_speed) {
-		controls_vbox->addWidget(graph->controls.show_gps_speed);
-	}
-	if (graph->controls.show_speed) {
-		controls_vbox->addWidget(graph->controls.show_speed);
-	}
-	graph->controls_vbox->addLayout(controls_vbox);
-
-
-	QWidget * widget = new QWidget(this);
+	QWidget * widget = new QWidget(dialog);
 	widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	widget->setMinimumSize(500, 300);
 	QLayout * old = widget->layout();
 	delete old;
-	widget->setLayout(graph->controls_vbox);
+	widget->setLayout(this->main_vbox);
 
 	return widget;
 
@@ -2011,12 +2012,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 
-	this->graphs[SG_TRACK_PROFILE_TYPE_ED] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ED, this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_GD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  SG_TRACK_PROFILE_TYPE_GD, this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ST] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_ST, this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_DT] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  SG_TRACK_PROFILE_TYPE_DT, this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ET, this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_SD, this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ED] = new ProfileGraphED(this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_GD] = new ProfileGraphGD(this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ST] = new ProfileGraphST(this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_DT] = new ProfileGraphDT(this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraphET(this);
+	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraphSD(this);
 
 
 	this->tabs = new QTabWidget();
@@ -2028,16 +2029,19 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 
 
 	for (int index = SG_TRACK_PROFILE_TYPE_ED; index < SG_TRACK_PROFILE_TYPE_MAX; index++) {
-		if (!this->graphs[index]->viewport) {
+		ProfileGraph * graph = this->graphs[index];
+
+		if (!graph->viewport) {
 			continue;
 		}
 
-		this->configure_widgets(index);
+		QWidget * page = graph->create_widgets_layout(this);
+		graph->configure_labels(this);
+		graph->configure_controls(this);
 
-		QWidget * page = this->create_graph_page(this->graphs[index]);
-		this->tabs->addTab(page, this->graphs[index]->get_graph_title());
+		this->tabs->addTab(page, graph->get_graph_title());
 
-		connect(this->graphs[index]->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
+		connect(graph->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
 	}
 
 
@@ -2080,91 +2084,177 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 
 
 
-void TrackProfileDialog::configure_widgets(int index)
+void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 {
-	ProfileGraph * graph = this->graphs[index];
-
-	switch (graph->geocanvas.x_domain) {
+	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Distance:
-		graph->labels.x_label = tr("Track Distance:");
-		graph->labels.x_value = ui_label_new_selectable(tr("No Data"), this);
-
-#ifdef K_FIXME_RESTORE
-		if (this->graphs[index].y_domain == GeoCanvasDomain::Speed) {
-			graph->controls.show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
-			graph->controls.show_gps_speed->setCheckState(show_sd_gps_speed ? Qt::Checked : Qt::Unchecked);
-			connect(graph->controls.show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		}
-#endif
+		this->labels.x_label = new QLabel(QObject::tr("Track Distance:"));
+		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		break;
 
 	case GeoCanvasDomain::Time:
-		graph->labels.x_label = tr("Track Time:");
-		graph->labels.x_value = ui_label_new_selectable(tr("No Data"), this);
+		this->labels.x_label = new QLabel(QObject::tr("Track Time:"));
+		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		/* Additional timestamp to provide more information in UI. */
-		graph->labels.t_label = tr("Time/Date:");
-		graph->labels.t_value = ui_label_new_selectable(tr("No Data"), this);
-
-		graph->controls.show_gps_speed = new QCheckBox(tr("Show &GPS Speed"), this);
-		graph->controls.show_gps_speed->setCheckState(g_show_gps_speed ? Qt::Checked : Qt::Unchecked);
-		connect(graph->controls.show_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-
-		graph->controls.show_speed = new QCheckBox(tr("Show S&peed"), this);
-		graph->controls.show_speed->setCheckState(g_show_elev_dem ? Qt::Checked : Qt::Unchecked);
-		connect(graph->controls.show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		this->labels.t_label = new QLabel(QObject::tr("Time/Date:"));
+		this->labels.t_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) this->graphs[index]->geocanvas.x_domain << "for index" << index;
+		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) this->geocanvas.x_domain;
 		break;
 	}
 
 
-	switch (this->graphs[index]->geocanvas.y_domain) {
+	switch (this->geocanvas.y_domain) {
 	case GeoCanvasDomain::Elevation:
-		graph->labels.y_label = tr("Track Height:");
-		graph->labels.y_value = ui_label_new_selectable(tr("No Data"), this);
-
-		if (!graph->controls.show_dem) {
-			graph->controls.show_dem = new QCheckBox(tr("Show D&EM"), this);
-			graph->controls.show_dem->setCheckState(g_show_elev_speed ? Qt::Checked : Qt::Unchecked);
-			connect(graph->controls.show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		}
+		this->labels.y_label = new QLabel(QObject::tr("Track Height:"));
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		break;
 
 	case GeoCanvasDomain::Gradient:
-		graph->labels.y_label = tr("Track Gradient:");
-		graph->labels.y_value = ui_label_new_selectable(tr("No Data"), this);
+		this->labels.y_label = new QLabel(QObject::tr("Track Gradient:"));
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		break;
 
 	case GeoCanvasDomain::Speed:
-		graph->labels.y_label = tr("Track Speed:");
-		graph->labels.y_value = ui_label_new_selectable(tr("No Data"), this);
+		this->labels.y_label = new QLabel(QObject::tr("Track Speed:"));
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		break;
 
 	case GeoCanvasDomain::Distance:
-		graph->labels.y_label = tr("Track Distance:");
-		graph->labels.y_value = ui_label_new_selectable(tr("No Data"), this);
-
-		if (!graph->controls.show_speed) {
-			graph->controls.show_speed = new QCheckBox(tr("Show S&peed"), this);
-			graph->controls.show_speed->setCheckState(g_show_dist_speed ? Qt::Checked : Qt::Unchecked);
-			connect(graph->controls.show_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
-		}
+		this->labels.y_label = new QLabel(QObject::tr("Track Distance:"));
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->graphs[index]->geocanvas.y_domain << "for index" << index;
+		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
 		break;
+	}
+
+	this->labels_grid->addWidget(this->labels.x_label, 0, 0);
+	this->labels_grid->addWidget(this->labels.x_value, 0, 1);
+
+	this->labels_grid->addWidget(this->labels.y_label, 1, 0);
+	this->labels_grid->addWidget(this->labels.y_value, 1, 1);
+
+	if (this->labels.t_value) {
+		this->labels_grid->addWidget(this->labels.t_label, 2, 0);
+		this->labels_grid->addWidget(this->labels.t_value, 2, 1);
 	}
 
 	return;
 }
+
+
+
+
+void ProfileGraphET::configure_controls(TrackProfileDialog * dialog)
+{
+	bool value;
+
+	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM, &value)) {
+		this->show_dem_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_dem_cb);
+	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+
+	this->show_speed_cb = new QCheckBox(QObject::tr("Show Speed"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_SPEED, &value)) {
+		this->show_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_speed_cb);
+	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+}
+
+
+
+
+void ProfileGraphSD::configure_controls(TrackProfileDialog * dialog)
+{
+	bool value;
+
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED, &value)) {
+		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_gps_speed_cb);
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+}
+
+
+
+
+void ProfileGraphED::configure_controls(TrackProfileDialog * dialog)
+{
+	bool value;
+
+	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM, &value)) {
+		this->show_dem_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_dem_cb);
+	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED, &value)) {
+		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_gps_speed_cb);
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+}
+
+
+
+
+void ProfileGraphGD::configure_controls(TrackProfileDialog * dialog)
+{
+	bool value;
+
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED, &value)) {
+		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_gps_speed_cb);
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+}
+
+
+
+
+void ProfileGraphST::configure_controls(TrackProfileDialog * dialog)
+{
+	bool value;
+
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED, &value)) {
+		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_gps_speed_cb);
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+}
+
+
+
+
+void ProfileGraphDT::configure_controls(TrackProfileDialog * dialog)
+{
+	bool value;
+
+	this->show_speed_cb = new QCheckBox(QObject::tr("Show S&peed"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_SPEED, &value)) {
+		this->show_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	}
+	this->controls_vbox->addWidget(this->show_speed_cb);
+	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+}
+
 
 
 
@@ -2361,25 +2451,13 @@ ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, i
 
 
 	if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Elevation) {
-		this->draw_additional_indicators_fn = draw_additional_indicators_ed;
-
 	} else if (x_domain == GeoCanvasDomain::Distance&& y_domain == GeoCanvasDomain::Gradient) {
-		this->draw_additional_indicators_fn = draw_additional_indicators_gd;
-
 	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Speed) {
-		this->draw_additional_indicators_fn = draw_additional_indicators_st;
-
 	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Distance) {
-		this->draw_additional_indicators_fn = draw_additional_indicators_dt;
-
 	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Elevation) {
-		this->draw_additional_indicators_fn = draw_additional_indicators_et;
-
 	} else if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Speed) {
-		this->draw_additional_indicators_fn = draw_additional_indicators_sd;
 	} else {
 		qDebug() << "EE" PREFIX << "unhandled combination of x/y domains:" << (int) x_domain << (int) y_domain;
-		this->draw_additional_indicators_fn = NULL;
 	}
 
 
@@ -2393,6 +2471,15 @@ ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, i
 	this->create_viewport(index, dialog);
 }
 
+
+
+
+ProfileGraphET::ProfileGraphET(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ET, dialog) {}
+ProfileGraphSD::ProfileGraphSD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_SD, dialog) {}
+ProfileGraphED::ProfileGraphED(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ED, dialog) {}
+ProfileGraphGD::ProfileGraphGD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  SG_TRACK_PROFILE_TYPE_GD, dialog) {}
+ProfileGraphST::ProfileGraphST(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_ST, dialog) {}
+ProfileGraphDT::ProfileGraphDT(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  SG_TRACK_PROFILE_TYPE_DT, dialog) {}
 
 
 
