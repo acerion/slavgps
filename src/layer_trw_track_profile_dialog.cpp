@@ -46,6 +46,7 @@
 #include "application_state.h"
 #include "preferences.h"
 #include "measurements.h"
+#include "graph_intervals.h"
 
 
 
@@ -75,6 +76,19 @@ using namespace SlavGPS;
 
 
 
+#define GRAPH_INITIAL_WIDTH 400
+#define GRAPH_INITIAL_HEIGHT 300
+
+#define GRAPH_MARGIN_LEFT 80 // 70
+#define GRAPH_MARGIN_RIGHT 40 // 1
+#define GRAPH_MARGIN_TOP 20
+#define GRAPH_MARGIN_BOTTOM 30 // 1
+#define GRAPH_X_INTERVALS 5
+#define GRAPH_Y_INTERVALS 5
+
+
+
+
 enum {
 	SG_TRACK_PROFILE_CANCEL,
 	SG_TRACK_PROFILE_SPLIT_AT_MARKER,
@@ -86,68 +100,17 @@ enum {
 
 
 
-static Intervals <time_t> * time_intervals;
-static Intervals <double> * distance_intervals;
-static Intervals <double> * altitude_intervals;
-static Intervals <double> * gradient_intervals;
-static Intervals <double> * speed_intervals;
-
-
-
-
-
-/* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double altitude_interval_values[] = {1.0, 2.0, 4.0, 5.0, 10.0, 15.0, 20.0,
-						  25.0, 40.0, 50.0, 75.0, 100.0,
-						  150.0, 200.0, 250.0, 375.0, 500.0,
-						  750.0, 1000.0, 2000.0, 5000.0, 10000.0, 100000.0};
-
-/* (Hopefully!) Human friendly gradient grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double gradient_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
-						  12.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 75.0,
-						  100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
-						  750.0, 1000.0, 10000.0, 100000.0};
-/* Normally gradients should range up to couple hundred precent at most,
-   however there are possibilities of having points with no altitude after a point with a big altitude
-  (such as places with invalid DEM values in otherwise mountainous regions) - thus giving huge negative gradients. */
-
-/* (Hopefully!) Human friendly grid sizes - note no fixed 'ratio' just numbers that look nice... */
-/* As need to cover walking speeds - have many low numbers (but also may go up to airplane speeds!). */
-static const double speed_interval_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
-					       15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
-					       100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
-					       750.0, 1000.0, 10000.0};
-
-/* (Hopefully!) Human friendly distance grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double distance_interval_values[] = {0.1, 0.2, 0.5,
-						  1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
-						  15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
-						  100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
-						  750.0, 1000.0, 10000.0};
-
-/* Time intervals in seconds. */
-static const time_t time_interval_values[] = {
-	60,     /* 1 minute. */
-	120,    /* 2 minutes. */
-	300,    /* 5 minutes. */
-	900,    /* 15 minutes. */
-	1800,   /* half hour. */
-	3600,   /* 1 hour. */
-	10800,  /* 3 hours. */
-	21600,  /* 6 hours. */
-	43200,  /* 12 hours. */
-	86400,  /* 1 day. */
-	172800, /* 2 days. */
-	604800, /* 1 week. */
-	1209600,/* 2 weeks. */
-	2419200,/* 4 weeks. */
-};
+static GraphIntervalsTime     time_intervals;
+static GraphIntervalsDistance distance_intervals;
+static GraphIntervalsAltitude altitude_intervals;
+static GraphIntervalsGradient gradient_intervals;
+static GraphIntervalsSpeed    speed_intervals;
 
 
 
 
 static void time_label_update(QLabel * label, time_t seconds_from_start);
-static void real_time_label_update(QLabel * label, Trackpoint * tp);
+static void real_time_label_update(QLabel * label, const Trackpoint * tp);
 static QString get_y_distance_string(double distance);
 
 static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
@@ -164,29 +127,10 @@ static QString get_graph_title(void);
 
 TrackProfileDialog::~TrackProfileDialog()
 {
-	delete time_intervals;
-	delete distance_intervals;
-	delete altitude_intervals;
-	delete gradient_intervals;
-	delete speed_intervals;
-
-	for (int i = 0; i < SG_TRACK_PROFILE_TYPE_MAX; i++ ) {
-		delete this->graphs[i];
+	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+		delete *iter;
 	}
 }
-
-
-
-
-#define GRAPH_INITIAL_WIDTH 400
-#define GRAPH_INITIAL_HEIGHT 300
-
-#define GRAPH_MARGIN_LEFT 80 // 70
-#define GRAPH_MARGIN_RIGHT 40 // 1
-#define GRAPH_MARGIN_TOP 20
-#define GRAPH_MARGIN_BOTTOM 30 // 1
-#define GRAPH_X_INTERVALS 5
-#define GRAPH_Y_INTERVALS 5
 
 
 
@@ -308,51 +252,6 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 
 
 
-/* This method is used for purposes of determining how large a
-   distance - an interval of values - will be if we split min-max
-   range into n_intervals. Then there will be n_interval grid lines
-   drawn on a graph, each spaced at interval. */
-template <class T>
-int Intervals<T>::get_interval_index(T min, T max, int n_intervals)
-{
-	const T interval_upper_limit = (max - min) / n_intervals;
-
-	/* Search for index of nearest interval. */
-	int index = 0;
-	while (interval_upper_limit > this->values[index]) {
-		index++;
-		/* Last Resort Check */
-		if (index == this->n_values) {
-			/* Return the last valid value. */
-			index--;
-			qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index1 =" << index << ", interval =" << this->values[index];
-			return index;
-		}
-	}
-
-	if (index != 0) {
-		/* To cancel out the last index++ in the loop above:
-		   that one last increment was one too many. */
-		index--;
-	}
-
-	qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index2 =" << index << ", interval =" << this->values[index];
-
-	return index;
-}
-
-
-
-
-template <class T>
-T Intervals<T>::get_interval_value(int index)
-{
-	return this->values[index];
-}
-
-
-
-
 void ProfileGraph::set_initial_visible_range_x_distance(void)
 {
 	/* We won't display any x values outside of
@@ -371,11 +270,10 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 	   index and value that will nicely cover visible range of
 	   data. */
 
-	Intervals<double> * intervals = distance_intervals;
 	const int n_intervals = GRAPH_X_INTERVALS;
 
-	int interval_index = intervals->get_interval_index(this->x_min_visible_d, this->x_max_visible_d, n_intervals);
-	this->x_interval_d = intervals->values[interval_index];
+	int interval_index = distance_intervals.intervals.get_interval_index(this->x_min_visible_d, this->x_max_visible_d, n_intervals);
+	this->x_interval_d = distance_intervals.intervals.values[interval_index];
 }
 
 
@@ -399,11 +297,10 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 	   index and value that will nicely cover visible range of
 	   data. */
 
-	Intervals<time_t> * intervals = time_intervals;
 	const int n_intervals = GRAPH_X_INTERVALS;
 
-	int interval_index = intervals->get_interval_index(this->x_min_visible_t, this->x_max_visible_t, n_intervals);
-	this->x_interval_t = intervals->values[interval_index];
+	int interval_index = time_intervals.intervals.get_interval_index(this->x_min_visible_t, this->x_max_visible_t, n_intervals);
+	this->x_interval_t = time_intervals.intervals.values[interval_index];
 }
 
 
@@ -444,20 +341,20 @@ void ProfileGraph::set_initial_visible_range_y(void)
 	   index and value that will nicely cover visible range of
 	   data. */
 	const int n_intervals = GRAPH_Y_INTERVALS;
-	Intervals<double> * intervals = NULL;
+	GraphIntervals<double> * intervals = NULL;
 
 	switch (this->geocanvas.y_domain) {
 	case GeoCanvasDomain::Speed:
-		intervals = speed_intervals;
+		intervals = &speed_intervals.intervals;
 		break;
 	case GeoCanvasDomain::Elevation:
-		intervals = altitude_intervals;
+		intervals = &altitude_intervals.intervals;
 		break;
 	case GeoCanvasDomain::Distance:
-		intervals = distance_intervals;
+		intervals = &distance_intervals.intervals;
 		break;
 	case GeoCanvasDomain::Gradient:
-		intervals = gradient_intervals;
+		intervals = &gradient_intervals.intervals;
 		break;
 	default:
 		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
@@ -623,15 +520,9 @@ static double tp_percentage_by_distance(TrackInfo & track_info, Trackpoint * tp)
    Find a trackpoint corresponding to cursor position when button was released.
    Draw marking for this trackpoint.
 */
-void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * ev, ProfileGraph * graph)
+void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouseEvent * ev, ProfileGraph * graph)
 {
 	assert (graph->viewport == viewport);
-
-#ifdef K_TODO
-	/* TODO: is this assignment necessary in this function?
-	   Shouldn't it be done only once, on resize? */
-	graph->width = viewport->get_graph_width();
-#endif
 
 	const int current_pos_x = graph->get_cursor_pos_x(ev);
 	this->selected_tp = set_center_at_graph_position(current_pos_x, this->trw, this->main_viewport, this->track_info, graph->geocanvas.x_domain, graph->width);
@@ -644,20 +535,16 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 	this->button_split_at_marker->setEnabled(true);
 
 
-	/* Attempt to redraw marker on all graphs. TODO: why on all graphs, when event was only on one of them? */
-	for (int type = SG_TRACK_PROFILE_TYPE_ED; type < SG_TRACK_PROFILE_TYPE_MAX; type++) {
+	/* Attempt to redraw marker on all graphs. Notice that this
+	   does not redraw full graphs, just marks.
 
-		ProfileGraph * a_graph = this->graphs[type];
-
+	   This is done on all graphs because we want to have 'mouse
+	   release' event reflected in all graphs. */
+	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+		ProfileGraph * a_graph = *iter;
 		if (!a_graph->viewport) {
 			continue;
 		}
-
-#ifdef K_TODO
-		/* TODO: is it necessary here? */
-		a_graph->width = a_graph->viewport->get_graph_width();
-		a_graph->height = a_graph->viewport->get_graph_height();
-#endif
 
 		QPointF selected_pos = a_graph->get_position_of_tp(this->track_info, this->selected_tp);
 		if (selected_pos.x() == -1 || selected_pos.y() == -1) {
@@ -678,7 +565,7 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_ed_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->track_graph_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ED]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ED]);
 	return true;
 }
 
@@ -687,7 +574,7 @@ bool TrackProfileDialog::track_ed_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_gd_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->track_graph_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_GD]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_GD]);
 	return true;
 }
 
@@ -696,7 +583,7 @@ bool TrackProfileDialog::track_gd_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_st_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->track_graph_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ST]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ST]);
 	return true;
 }
 
@@ -705,7 +592,7 @@ bool TrackProfileDialog::track_st_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_dt_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->track_graph_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_DT]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_DT]);
 	return true;
 }
 
@@ -714,7 +601,7 @@ bool TrackProfileDialog::track_dt_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_et_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->track_graph_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ET]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ET]);
 	return true;
 }
 
@@ -723,7 +610,7 @@ bool TrackProfileDialog::track_et_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_sd_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->track_graph_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_SD]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_SD]);
 	return true;
 }
 
@@ -759,13 +646,6 @@ bool TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph 
 		return false;
 	}
 
-#ifdef K_TODO
-	/* TODO: are these assignments necessary in this function?
-	   Shouldn't they be done only once, on resize? */
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-#endif
-
 	this->current_tp = this->track_info.trk->get_closest_tp_by_percentage_dist((double) current_pos_x / graph->width, &meters_from_start);
 
 	double current_pos_y = graph->get_pos_y(current_pos_x);
@@ -799,13 +679,6 @@ bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * gr
 	if (current_pos_x < 0) {
 		return false;
 	}
-
-#ifdef K_TODO
-	/* TODO: are these assignments necessary in this function?
-	   Shouldn't they be done only once, on resize? */
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-#endif
 
 	this->current_tp = this->track_info.trk->get_closest_tp_by_percentage_time((double) current_pos_x / graph->width, &seconds_from_start);
 
@@ -868,15 +741,11 @@ void time_label_update(QLabel * label, time_t seconds_from_start)
 
 
 
-void real_time_label_update(QLabel * label, Trackpoint * tp)
+void real_time_label_update(QLabel * label, const Trackpoint * tp)
 {
 	QString result;
 	if (tp->has_timestamp) {
-		/* Alternatively could use %c format but I prefer a slightly more compact form here.
-		   The full date can of course be seen on the Statistics tab. */
-		static char tmp_buf[64];
-		strftime(tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&tp->timestamp)); /* TODO: translate the string. */
-		result = QString(tmp_buf);
+		result = QDateTime::fromTime_t(tp->timestamp, Qt::LocalTime).toString(Qt::ISODate); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 	} else {
 		result = QObject::tr("No Data");
 	}
@@ -1191,8 +1060,8 @@ void ProfileGraph::draw_x_grid_distance(double visible_begin, double visible_end
 	visible_begin = convert_distance_meters_to(visible_begin, this->geocanvas.distance_unit);
 	visible_end = convert_distance_meters_to(visible_end, this->geocanvas.distance_unit);
 
-	const int interval_index = distance_intervals->get_interval_index(visible_begin, visible_end, n_intervals);
-	const double distance_interval = distance_intervals->get_interval_value(interval_index);
+	const int interval_index = distance_intervals.intervals.get_interval_index(visible_begin, visible_end, n_intervals);
+	const double distance_interval = distance_intervals.intervals.get_interval_value(interval_index);
 
 #if 1
 	//double dist_per_pixel = full_distance / this->width;
@@ -1557,8 +1426,8 @@ void ProfileGraph::draw_x_grid_time(time_t visible_begin, time_t visible_end)
 {
 	const int n_intervals = GRAPH_Y_INTERVALS;
 
-	const int interval_index = time_intervals->get_interval_index(visible_begin, visible_end, n_intervals);
-	const time_t time_interval = time_intervals->get_interval_value(interval_index);
+	const int interval_index = time_intervals.intervals.get_interval_index(visible_begin, visible_end, n_intervals);
+	const time_t time_interval = time_intervals.intervals.get_interval_value(interval_index);
 
 #ifdef K_FIXME_RESTORE
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
@@ -1590,12 +1459,16 @@ void ProfileGraph::draw_x_grid_time(time_t visible_begin, time_t visible_end)
 */
 void TrackProfileDialog::draw_all_graphs(bool resized)
 {
-	for (int i = SG_TRACK_PROFILE_TYPE_ED; i < SG_TRACK_PROFILE_TYPE_MAX; i++) {
-		if (this->graphs[i]->viewport) {
-			/* If dialog window is resized then saved image is no longer valid. */
-			this->graphs[i]->saved_img.valid = !resized;
-			this->draw_single_graph(this->graphs[i]);
+	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+		ProfileGraph * graph = *iter;
+
+		if (!graph->viewport) {
+			continue;
 		}
+
+		/* If dialog window is resized then saved image is no longer valid. */
+		graph->saved_img.valid = !resized;
+		this->draw_single_graph(graph);
 	}
 }
 
@@ -1663,46 +1536,15 @@ void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 
 
 /**
- * Configure/Resize the profile & speed/time images.
- */
+   Configure/Resize the profile & speed/time images
+*/
 bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 {
 	qDebug() << "SLOT:" PREFIX << "reacting to signal from viewport" << viewport->type_string;
 
-#ifdef K_FIXME_RESTORE
-	if (controls->configure_dialog) {
-		/* Determine size offsets between dialog size and size for images.
-		   Only on the initialisation of the dialog. */
-		controls->profile_width_offset = event->width - controls->profile_width;
-		controls->profile_height_offset = event->height - controls->profile_height;
-		controls->configure_dialog = false;
-
-		/* Without this the settting, the dialog will only grow in vertical size - one can not then make it smaller! */
-		gtk_widget_set_size_request(widget, controls->profile_width+controls->profile_width_offset, controls->profile_height+controls->profile_height_offset);
-
-		/* Allow resizing back down to a minimal size (especially useful if the initial size has been made bigger after restoring from the saved settings). */
-		GdkGeometry geom = { 600+controls->profile_width_offset, 300+controls->profile_height_offset, 0, 0, 0, 0, 0, 0, 0, 0, GDK_GRAVITY_STATIC };
-		gdk_window_set_geometry_hints(gtk_widget_get_window(widget), &geom, GDK_HINT_MIN_SIZE);
-	} else {
-		controls->profile_width_old = controls->profile_width;
-		controls->profile_height_old = controls->profile_height;
-	}
-
-	/* Now adjust From Dialog size to get image size. */
-	controls->profile_width = event->width - controls->profile_width_offset;
-	controls->profile_height = event->height - controls->profile_height_offset;
-
-	/* ATM we receive configure_events when the dialog is moved and so no further action is necessary. */
-	if (!controls->configure_dialog &&
-	    (controls->profile_width_old == controls->profile_width) && (controls->profile_height_old == controls->profile_height)) {
-
-		return false;
-	}
-#endif
 	/* TODO: shouldn't we re-allocate the per-viewport table of doubles here? */
 
-	/* Draw stuff. */
-	draw_all_graphs(true);
+	this->draw_all_graphs(true);
 
 	return false;
 }
@@ -1770,8 +1612,8 @@ void TrackProfileDialog::save_values(void)
 	ApplicationState::set_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, this->profile_height);
 
 	/* Just for this session. */
-	for (int i = 0; i < SG_TRACK_PROFILE_TYPE_MAX; i++) {
-		this->graphs[i]->save_values();
+	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+		(*iter)->save_values();
 	}
 }
 
@@ -1909,10 +1751,9 @@ void TrackProfileDialog::checkbutton_toggle_cb(void)
 */
 QWidget * ProfileGraph::create_widgets_layout(TrackProfileDialog * dialog)
 {
-	/* kamilTODO: who deletes these two pointers? */
+	this->main_vbox = new QVBoxLayout();
 	this->labels_grid = new QGridLayout();
-	this->main_vbox = new QVBoxLayout;
-	this->controls_vbox = new QVBoxLayout;
+	this->controls_vbox = new QVBoxLayout();
 
 	this->viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -1980,13 +1821,6 @@ QString ProfileGraph::get_graph_title(void) const
 
 TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Viewport * main_viewport_, Window * a_parent) : QDialog(a_parent)
 {
-	time_intervals = new Intervals<time_t>(time_interval_values, sizeof (time_interval_values) / sizeof (time_interval_values[0]));
-	distance_intervals = new Intervals<double>(distance_interval_values, sizeof (distance_interval_values) / sizeof (distance_interval_values[0]));
-	altitude_intervals = new Intervals<double>(altitude_interval_values, sizeof (altitude_interval_values) / sizeof (altitude_interval_values[0]));
-	gradient_intervals = new Intervals<double>(gradient_interval_values, sizeof (gradient_interval_values) / sizeof (gradient_interval_values[0]));
-	speed_intervals = new Intervals<double>(speed_interval_values, sizeof (speed_interval_values) / sizeof (speed_interval_values[0]));
-
-
 	this->setWindowTitle(tr("%1 - Track Profile").arg(a_trk->name));
 
 	this->trw = (LayerTRW *) a_trk->owning_layer;
@@ -2012,12 +1846,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	}
 
 
-	this->graphs[SG_TRACK_PROFILE_TYPE_ED] = new ProfileGraphED(this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_GD] = new ProfileGraphGD(this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ST] = new ProfileGraphST(this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_DT] = new ProfileGraphDT(this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_ET] = new ProfileGraphET(this);
-	this->graphs[SG_TRACK_PROFILE_TYPE_SD] = new ProfileGraphSD(this);
+	this->graphs.push_back(new ProfileGraphED(this));
+	this->graphs.push_back(new ProfileGraphGD(this));
+	this->graphs.push_back(new ProfileGraphST(this));
+	this->graphs.push_back(new ProfileGraphDT(this));
+	this->graphs.push_back(new ProfileGraphET(this));
+	this->graphs.push_back(new ProfileGraphSD(this));
 
 
 	this->tabs = new QTabWidget();
@@ -2028,8 +1862,8 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	this->track_info.track_length_including_gaps = this->track_info.trk->get_length_including_gaps();
 
 
-	for (int index = SG_TRACK_PROFILE_TYPE_ED; index < SG_TRACK_PROFILE_TYPE_MAX; index++) {
-		ProfileGraph * graph = this->graphs[index];
+	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+		ProfileGraph * graph = *iter;
 
 		if (!graph->viewport) {
 			continue;

@@ -142,7 +142,8 @@ SOURCES += main.cpp \
     application_state.cpp \
     statusbar.cpp \
     modules.cpp \
-    variant.cpp
+    variant.cpp \
+    graph_intervals.cpp
 
 
 HEADERS += window.h \
@@ -283,7 +284,8 @@ HEADERS += window.h \
     acquire.h \
     babel.h \
     babel_dialog.h \
-    variant.h
+    variant.h \
+    graph_intervals.h
 
 
 

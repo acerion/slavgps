@@ -25,6 +25,7 @@
 
 
 #include <cstdint>
+#include <vector>
 
 #include <QObject>
 #include <QDialog>
@@ -70,7 +71,7 @@ namespace SlavGPS {
 
 
 	typedef enum {
-		SG_TRACK_PROFILE_TYPE_ED, /* ed = elevation as a function of -distance. */
+		SG_TRACK_PROFILE_TYPE_ED, /* ed = elevation as a function of distance. */
 		SG_TRACK_PROFILE_TYPE_GD, /* gd = gradient as a function of distance. */
 		SG_TRACK_PROFILE_TYPE_ST, /* st = speed as a function of time. */
 		SG_TRACK_PROFILE_TYPE_DT, /* dt = distance as a function of time. */
@@ -80,19 +81,6 @@ namespace SlavGPS {
 		SG_TRACK_PROFILE_TYPE_MAX,
 	} TrackProfileType;
 
-
-
-
-	template <class T>
-	class Intervals {
-	public:
-		Intervals(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
-		int get_interval_index(T min, T max, int n_intervals);
-		T get_interval_value(int index);
-
-		const T * values = NULL;
-		int n_values = 0;
-	};
 
 
 
@@ -176,7 +164,7 @@ namespace SlavGPS {
 
 
 	public:
-		void track_graph_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
+		void handle_mouse_button_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
 
 		void clear_image(QPixmap * pix);
 
@@ -212,7 +200,7 @@ namespace SlavGPS {
 		int profile_width_offset;
 		int profile_height_offset;
 
-		ProfileGraph * graphs[SG_TRACK_PROFILE_TYPE_MAX] = { NULL };
+		std::vector<ProfileGraph *> graphs;
 
 		Trackpoint * selected_tp = NULL; /* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
 		bool  is_selected_drawn = false;
