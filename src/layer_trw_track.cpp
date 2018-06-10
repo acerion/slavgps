@@ -1557,7 +1557,7 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 			/* Handle glitch in values of consecutive time stamps.
 			   TODO: improve code that calculates pseudo-values of result when a glitch has been found. */
 			qDebug() << "WW" PREFIX << "glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
-			result.x[i] = data_dt.x[i - 1];
+			result.x[i] = result.x[i - 1]; /* TODO: This won't work for a two or more invalid timestamps in a row. */
 			result.y[i] = 0;
 		} else {
 			/* Iterate over 'n + 1 + n' points of a track to get

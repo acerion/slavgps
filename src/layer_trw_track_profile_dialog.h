@@ -227,7 +227,7 @@ namespace SlavGPS {
 	class ProfileGraph {
 	public:
 		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, int index, TrackProfileDialog * dialog);
-		~ProfileGraph();
+		virtual ~ProfileGraph();
 
 		virtual void draw_additional_indicators(TrackInfo & track_info) {};
 		virtual void configure_controls(TrackProfileDialog * dialog) {};
@@ -267,12 +267,8 @@ namespace SlavGPS {
 		void draw_x_grid(const TrackInfo & track_info);
 		void draw_y_grid(void);
 
-		void draw_x_grid_time(time_t visible_begin, time_t visible_end);
-		void draw_x_grid_distance(double visible_begin, double visible_end);
-
 		void draw_x_grid_sub_d(void);
 		void draw_x_grid_sub_t(void);
-		void draw_y_grid_sub(void);
 
 		QString get_y_grid_label(float value);
 
@@ -326,6 +322,8 @@ namespace SlavGPS {
 	class ProfileGraphET : public ProfileGraph {
 	public:
 		ProfileGraphET(TrackProfileDialog * dialog);
+		~ProfileGraphET() {};
+
 		void draw_additional_indicators(TrackInfo & track_info);
 		void configure_controls(TrackProfileDialog * dialog);
 		void save_values(void);
@@ -338,6 +336,8 @@ namespace SlavGPS {
 	class ProfileGraphSD : public ProfileGraph {
 	public:
 		ProfileGraphSD(TrackProfileDialog * dialog);
+		~ProfileGraphSD() {};
+
 		void draw_additional_indicators(TrackInfo & track_info);
 		void configure_controls(TrackProfileDialog * dialog);
 		void save_values(void);
@@ -349,6 +349,8 @@ namespace SlavGPS {
 	class ProfileGraphED : public ProfileGraph {
 	public:
 		ProfileGraphED(TrackProfileDialog * dialog);
+		~ProfileGraphED() {};
+
 		void draw_additional_indicators(TrackInfo & track_info);
 		void configure_controls(TrackProfileDialog * dialog);
 		void save_values(void);
@@ -361,6 +363,8 @@ namespace SlavGPS {
 	class ProfileGraphGD : public ProfileGraph {
 	public:
 		ProfileGraphGD(TrackProfileDialog * dialog);
+		~ProfileGraphGD() {};
+
 		void draw_additional_indicators(TrackInfo & track_info);
 		void configure_controls(TrackProfileDialog * dialog);
 		void save_values(void);
@@ -372,6 +376,8 @@ namespace SlavGPS {
 	class ProfileGraphST : public ProfileGraph {
 	public:
 		ProfileGraphST(TrackProfileDialog * dialog);
+		~ProfileGraphST() {};
+
 		void draw_additional_indicators(TrackInfo & track_info);
 		void configure_controls(TrackProfileDialog * dialog);
 		void save_values(void);
@@ -383,6 +389,8 @@ namespace SlavGPS {
 	class ProfileGraphDT : public ProfileGraph {
 	public:
 		ProfileGraphDT(TrackProfileDialog * dialog);
+		~ProfileGraphDT() {};
+
 		void draw_additional_indicators(TrackInfo & track_info);
 		void configure_controls(TrackProfileDialog * dialog);
 		void save_values(void);

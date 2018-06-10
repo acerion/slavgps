@@ -111,7 +111,6 @@ static GraphIntervalsSpeed    speed_intervals;
 
 static void time_label_update(QLabel * label, time_t seconds_from_start);
 static void real_time_label_update(QLabel * label, const Trackpoint * tp);
-static QString get_y_distance_string(double distance);
 
 static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
 static QString get_elevation_grid_label(HeightUnit height_unit, double value);
@@ -119,6 +118,7 @@ static QString get_distance_grid_label(DistanceUnit distance_unit, double value)
 static QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value);
 static QString get_time_grid_label(int interval_index, int value);
 static QString get_time_grid_label_2(time_t interval_value, time_t value);
+static QString get_time_grid_label_3(time_t interval_value, time_t value);
 
 static QString get_graph_title(void);
 
@@ -284,8 +284,23 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 	/* We won't display any x values outside of
 	   track_data.x_min/max. We will never be able to zoom out to
 	   show e.g. negative times. */
+#if 0
+	/* It's not a good idea to use track's min/max values as
+	   min/max visible range.  I've seen track data with glitches
+	   in timestamps, where in the middle of a track, in a row of
+	   correctly incrementing timestamps there was suddenly one
+	   smaller timestamp. */
 	this->x_min_visible_t = this->track_data.x_min;
 	this->x_max_visible_t = this->track_data.x_max;
+#else
+	/* Instead of x_min/x_max use first and last timestamp.
+
+	   TODO: this is still not perfect solution: the glitch in
+	   timestamp may occur in first or last trackpoint. Find a
+	   good way to find a correct first/last timestamp. */
+	this->x_min_visible_t = this->track_data.x[0];
+	this->x_max_visible_t = this->track_data.x[this->track_data.n_points - 1];
+#endif
 
 	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
 		/* TODO: verify what happens if we return here. */
@@ -861,7 +876,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		break;
 	case GeoCanvasDomain::Distance:
 		if (graph->labels.y_value) {
-			graph->labels.y_value->setText(get_y_distance_string(y));
+			graph->labels.y_value->setText(Measurements::get_distance_string(y));
 		}
 		break;
 	case GeoCanvasDomain::Gradient:
@@ -924,33 +939,6 @@ int ProfileGraph::get_cursor_pos_x(QMouseEvent * ev) const
 	}
 
 	return x;
-}
-
-
-
-
-/* TODO: don't we have a function for this kind of stuff in measurements.cpp? */
-QString get_y_distance_string(double distance)
-{
-	QString result;
-
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		result = QObject::tr("%1 km").arg(distance, 0, 'f', 2); /* kamilTODO: why not distance/1000? */
-		break;
-	case DistanceUnit::Miles:
-		result = QObject::tr("%1 miles").arg(distance, 0, 'f', 2);
-		break;
-	case DistanceUnit::NauticalMiles:
-		result = QObject::tr("%1 NM").arg(distance, 0, 'f', 2);
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
-
-	return result;
 }
 
 
@@ -1047,48 +1035,6 @@ void ProfileGraph::draw_grid_vertical_line(int pos_x, const QString & label)
 	this->viewport->draw_line(this->viewport->grid_pen,
 				  pos_x, 0,
 				  pos_x, 0 + this->height);
-}
-
-
-
-
-void ProfileGraph::draw_x_grid_distance(double visible_begin, double visible_end)
-{
-	const int n_intervals = GRAPH_X_INTERVALS;
-
-	/* Set to display units from length in metres. */
-	visible_begin = convert_distance_meters_to(visible_begin, this->geocanvas.distance_unit);
-	visible_end = convert_distance_meters_to(visible_end, this->geocanvas.distance_unit);
-
-	const int interval_index = distance_intervals.intervals.get_interval_index(visible_begin, visible_end, n_intervals);
-	const double distance_interval = distance_intervals.intervals.get_interval_value(interval_index);
-
-#if 1
-	//double dist_per_pixel = full_distance / this->width;
-
-	const double per_interval_value = distance_interval * this->width / this->track_data.y_max;
-	for (int interval_idx = 1; distance_interval * interval_idx <= this->track_data.y_max; interval_idx++) {
-
-		const double distance_value = distance_interval * interval_idx;
-		const QString label = get_distance_grid_label_2(this->geocanvas.distance_unit, interval_index, distance_value);
-
-		const int pos_x = (int) (interval_idx * per_interval_value);
-		this->draw_grid_vertical_line(pos_x, label);
-	}
-#else
-
-	/* For last iteration of 'for' loop this denominator will be
-	   equal to numerator, giving 'x = this->width * 1' as a result. */
-	const int n = visible_end - visible_begin;
-
-	for (int i = visible_begin; i <= visible_end; i++) {
-		if (i % ((int) distance_interval) == 0) {
-			const QString label = get_distance_grid_label_2(this->geocanvas.distance_unit, interval_index, i);
-			const int x = this->width * (i - visible_begin) / n;
-			this->draw_grid_vertical_line(x, label);
-		}
-	}
-#endif
 }
 
 
@@ -1422,38 +1368,6 @@ void ProfileGraph::draw_speed_dist(Track * trk, double max_speed_in, bool do_spe
 
 
 
-void ProfileGraph::draw_x_grid_time(time_t visible_begin, time_t visible_end)
-{
-	const int n_intervals = GRAPH_Y_INTERVALS;
-
-	const int interval_index = time_intervals.intervals.get_interval_index(visible_begin, visible_end, n_intervals);
-	const time_t time_interval = time_intervals.intervals.get_interval_value(interval_index);
-
-#ifdef K_FIXME_RESTORE
-	/* If stupidly long track in time - don't bother trying to draw grid lines. */
-	if ((visible_end - visible_begin + 1) > time_intervals->values[G_N_ELEMENTS(time_intervals->values)-1] * n_intervals * n_intervals) {
-		return;
-	}
-#endif
-
-	/* For last iteration of 'for' loop this denominator will be
-	   equal to numerator, giving 'x = this->width * 1' as a result. */
-	const time_t n = visible_end - visible_begin;
-
-	/* TODO: optimise this: do we really need to go through N
-	   timestamps? Can't we increase loop incrementation after
-	   drawing first vertical line? */
-	for (time_t i = visible_begin; i <= visible_end; i++) {
-		if (i % time_interval == 0) {
-			const int x = this->width * (i - visible_begin) / n;
-			this->draw_grid_vertical_line(x, get_time_grid_label(interval_index, i));
-		}
-	}
-}
-
-
-
-
 /**
    Draw all graphs
 */
@@ -1623,7 +1537,6 @@ void TrackProfileDialog::save_values(void)
 void TrackProfileDialog::destroy_cb(void) /* Slot. */
 {
 	this->save_values();
-	//delete controls;
 }
 
 
@@ -1928,7 +1841,7 @@ void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 		break;
 
 	case GeoCanvasDomain::Time:
-		this->labels.x_label = new QLabel(QObject::tr("Track Time:"));
+		this->labels.x_label = new QLabel(QObject::tr("Time From Start:"));
 		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
 
 		/* Additional timestamp to provide more information in UI. */
@@ -1971,15 +1884,28 @@ void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 		break;
 	}
 
-	this->labels_grid->addWidget(this->labels.x_label, 0, 0);
-	this->labels_grid->addWidget(this->labels.x_value, 0, 1);
 
-	this->labels_grid->addWidget(this->labels.y_label, 1, 0);
-	this->labels_grid->addWidget(this->labels.y_value, 1, 1);
+	/* Use spacer item in last column to bring first two columns
+	   (with parameter's name and parameter's value) close
+	   together. */
+	QSpacerItem * spacer = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum); /* Maximum horizontal stretch. */
+
+	int row = 0;
+	this->labels_grid->addWidget(this->labels.x_label, row, 0, Qt::AlignLeft);
+	this->labels_grid->addWidget(this->labels.x_value, row, 1, Qt::AlignRight);
+	this->labels_grid->addItem(spacer, row, 3);
+	row++;
+
+	this->labels_grid->addWidget(this->labels.y_label, row, 0, Qt::AlignLeft);
+	this->labels_grid->addWidget(this->labels.y_value, row, 1, Qt::AlignRight);
+	this->labels_grid->addItem(spacer, row, 3);
+	row++;
 
 	if (this->labels.t_value) {
-		this->labels_grid->addWidget(this->labels.t_label, 2, 0);
-		this->labels_grid->addWidget(this->labels.t_value, 2, 1);
+		this->labels_grid->addWidget(this->labels.t_label, row, 0, Qt::AlignLeft);
+		this->labels_grid->addWidget(this->labels.t_value, row, 1, Qt::AlignRight);
+		this->labels_grid->addItem(spacer, row, 3);
+		row++;
 	}
 
 	return;
@@ -2278,6 +2204,48 @@ QString get_time_grid_label_2(time_t interval_value, time_t value)
 
 
 
+QString get_time_grid_label_3(time_t interval_value, time_t value)
+{
+	QString result;
+
+	const QDateTime date_time = QDateTime::fromTime_t(value, Qt::LocalTime);
+
+	switch (interval_value) {
+	case 60:
+	case 120:
+	case 300:
+	case 900:
+		/* Minutes. */
+	case 1800:
+	case 3600:
+	case 10800:
+	case 21600:
+		/* Hours. */
+		result = QString(date_time.time().toString());
+		break;
+
+	case 43200:
+	case 86400:
+	case 172800:
+		/* Days. */
+	case 604800:
+	case 1209600:
+		/* Weeks. */
+	case 2419200:
+		/* Months. */
+		result = QString(date_time.date().toString(Qt::ISODate));
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unhandled time interval value" << interval_value;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
 ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, int index, TrackProfileDialog * dialog)
 {
 	this->geocanvas.x_domain = x_domain;
@@ -2393,7 +2361,7 @@ void find_grid_line_indices(T min_visible, T max_visible, T interval, int * firs
 
 
 
-void ProfileGraph::draw_y_grid_sub(void)
+void ProfileGraph::draw_y_grid(void)
 {
 	if (this->y_max_visible - this->y_min_visible == 0) {
 		qDebug() << "EE:" PREFIX << "zero visible range:" << this->y_min_visible << this->y_max_visible;
@@ -2530,12 +2498,10 @@ void ProfileGraph::draw_x_grid(const TrackInfo & track_info)
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Time:
 		this->draw_x_grid_sub_t();
-		//this->draw_x_grid_time(0, track_info.duration);
 		break;
 
 	case GeoCanvasDomain::Distance:
 		this->draw_x_grid_sub_d();
-		//this->draw_x_grid_distance(0, track_info.track_length_including_gaps);
 		break;
 
 	default:
@@ -2546,43 +2512,9 @@ void ProfileGraph::draw_x_grid(const TrackInfo & track_info)
 
 
 
-void ProfileGraph::draw_y_grid(void)
-{
-#if 1
-	this->draw_y_grid_sub();
-#else
-	switch (this->geocanvas.y_domain) {
-
-	case GeoCanvasDomain::Elevation:
-		this->draw_y_grid_elevation();
-		break;
-
-	case GeoCanvasDomain::Distance:
-		this->draw_y_grid_distance();
-		break;
-
-	case GeoCanvasDomain::Speed:
-		this->draw_y_grid_speed();
-		break;
-
-	case GeoCanvasDomain::Gradient:
-		this->draw_y_grid_gradient();
-		break;
-
-	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
-		break;
-	}
-#endif
-}
-
-
-
-
 GeoCanvas::GeoCanvas()
 {
 	this->height_unit = Preferences::get_unit_height();
 	this->distance_unit = Preferences::get_unit_distance();
 	this->speed_unit = Preferences::get_unit_speed();
-
 }

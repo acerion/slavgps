@@ -52,6 +52,7 @@ SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::Fil
 	this->hbox = new QHBoxLayout;
 	this->hbox->addWidget(this->line);
 	this->hbox->addWidget(this->browse);
+	this->hbox->setContentsMargins(0, 0, 0, 0);
 
 
 	QLayout * old = this->layout();
