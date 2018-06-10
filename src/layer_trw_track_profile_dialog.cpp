@@ -227,7 +227,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 
 
 
-	/* Prepare x/y-range values. */
+	/* Do necessary adjustments to x values. */
 
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Distance:
@@ -2349,11 +2349,11 @@ void ProfileGraph::regenerate_sizes(void)
 
 
 /**
-   Find first grid line. It will be a multiple of y-interval
-   just below y_min_visible.
+   Find first grid line. It will be a multiple of interval
+   just below min_visible.
 
-   Find last grid line. It will be a multiple of y-interval
-   just above y_max_visible.
+   Find last grid line. It will be a multiple of interval
+   just above max_visible.
 
    All grid lines will be drawn starting from the first to
    last (provided that they will fall within graph's main
@@ -2361,7 +2361,7 @@ void ProfileGraph::regenerate_sizes(void)
 
    When looking for first and last line, start from zero value
    and go up or down: a grid line will be always drawn at zero
-   and/or at multiples of y-interval (depending whether they
+   and/or at multiples of interval (depending whether they
    will fall within graph's main area).
 */
 template <typename T>

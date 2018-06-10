@@ -1020,23 +1020,25 @@ double Track::get_max_speed() const
 /* Simple method for copying "distance over time" information from Track to TrackData. */
 TrackData Track::make_values_distance_over_time_helper(void) const
 {
-	const int tp_count = this->get_tp_count();
-
-	TrackData data(tp_count);
-
 	/* No special handling of segments ATM... */
-	int i = 0;
-	auto iter = this->trackpoints.begin();
-	time_t first = (*iter)->timestamp;
 
-	data.x[i] = (*iter)->timestamp - first; // TODO it should be 'data.x[i] = (*iter)->timestamp;'
+	const int tp_count = this->get_tp_count();
+	TrackData data(tp_count);
+	auto iter = this->trackpoints.begin();
+
+	int i = 0;
+	data.x[i] = (*iter)->timestamp;
 	data.y[i] = 0;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp - first; // TODO it should be 'data.x[i] = (*iter)->timestamp;'
+		data.x[i] = (*iter)->timestamp;
 		data.y[i] = data.y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
+
+		if (data.x[i] <= data.x[i - 1]) {
+			qDebug() << "WW" PREFIX << "inconsistent time data at index" << i << ":" << data.x[i] << data.x[i - 1];
+		}
 		i++;
 		iter++;
 	}
@@ -1055,15 +1057,14 @@ TrackData Track::make_values_altitude_over_time_helper(void) const
 
 	int i = 0;
 	auto iter = this->trackpoints.begin();
-	time_t first = (*iter)->timestamp;
 
-	data.x[i] = (*iter)->timestamp - first; // TODO: it should be 'data.x[i] = (*iter)->timestamp;'
+	data.x[i] = (*iter)->timestamp;
 	data.y[i] = (*iter)->altitude;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp - first; // TODO: it should be 'data.x[i] = (*iter)->timestamp;'
+		data.x[i] = (*iter)->timestamp;
 		data.y[i] = (*iter)->altitude;
 		i++;
 		iter++;
@@ -1344,14 +1345,25 @@ TrackData Track::make_track_data_speed_over_time(void) const
 
 	result.allocate_vector(tp_count);
 
-	time_t first = data_dt.x[0];
-	result.y[0] = 0.0;
-	result.x[0] = data_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
-	for (int i = 1; i < tp_count; i++) {
-		const double delta_t = (data_dt.x[i] - data_dt.x[i - 1]);
-		const double delta_d = (data_dt.y[i] - data_dt.y[i - 1]);
-		result.y[i] = delta_d / delta_t;
-		result.x[i] = data_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
+	int i = 0;
+	result.x[i] = data_dt.x[0];
+	result.y[i] = 0.0;
+	i++;
+
+	for (; i < tp_count; i++) {
+		if (data_dt.x[i] <= data_dt.x[i - 1]) {
+			/* Handle glitch in values of consecutive time stamps.
+			   TODO: improve code that calculates pseudo-values of result when a glitch has been found. */
+			qDebug() << "WW" PREFIX << "glitch in timestamps:" << i << data_dt.x[i] << data_dt.x[i - 1];
+			result.x[i] = data_dt.x[i - 1];
+			result.y[i] = 0;
+		} else {
+			const double delta_t = (data_dt.x[i] - data_dt.x[i - 1]);
+			const double delta_d = (data_dt.y[i] - data_dt.y[i - 1]);
+
+			result.x[i] = data_dt.x[i];
+			result.y[i] = delta_d / delta_t;
+		}
 	}
 
 	result.n_points = tp_count;
@@ -1381,16 +1393,22 @@ TrackData Track::make_track_data_distance_over_time(void) const
 
 	result.allocate_vector(tp_count);
 
-	/* TODO: not much is going on here. Once we move "- first" to
-	   caller (i.e. to Track Profile), the loop will have to be
-	   converted to memcpy. */
+	int i = 0;
+	result.x[i] = data_dt.x[i];
+	result.y[i] = result.y[i];
+	i++;
 
-	time_t first = data_dt.x[0];
-	result.x[0] = data_dt.x[0] - first; /* TODO: we should copy timestamp, without -first. */
-	result.y[0] = result.y[0];
-	for (int i = 1; i < data_dt.n_points; i++) {
-		result.x[i] = data_dt.x[i] - first; /* TODO: we should copy timestamp, without -first. */
-		result.y[i] = data_dt.y[i - 1];
+	for (; i < data_dt.n_points; i++) {
+		if (data_dt.x[i] <= data_dt.x[i - 1]) {
+			/* Handle glitch in values of consecutive time stamps.
+			   TODO: improve code that calculates pseudo-values of result when a glitch has been found. */
+			qDebug() << "WW" PREFIX << "glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
+			result.x[i] = data_dt.x[i - 1];
+			result.y[i] = 0;
+		} else {
+			result.x[i] = data_dt.x[i];
+			result.y[i] = data_dt.y[i - 1];
+		}
 	}
 
 	result.valid = true;
@@ -1533,24 +1551,33 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 	result.x[i] = 0;
 	result.y[i] = 0;
 	i++;
-	for (; i < tp_count; i++) {
-		/* Iterate over 'n + 1 + n' points of a track to get
-		   an average speed for that part.  This will
-		   essentially interpolate between segments, which I
-		   think is right given the usage of
-		   'get_length_including_gaps'. n == 0 is no averaging. */
-		const int n = 0;
-		double delta_d = 0.0;
-		double delta_t = 0.0;
-		for (int j = i - n; j <= i + n; j++) {
-			if (j - 1 >= 0 && j < tp_count) {
-				delta_d += (data_dt.y[j] - data_dt.y[j - 1]);
-				delta_t += (data_dt.x[j] - data_dt.x[j - 1]);
-			}
-		}
 
-		result.y[i] = delta_d / delta_t;
-		result.x[i] = result.x[i - 1] + (delta_d / (n + 1 + n)); /* Accumulate the distance. */
+	for (; i < tp_count; i++) {
+		if (data_dt.x[i] <= data_dt.x[i - 1]) {
+			/* Handle glitch in values of consecutive time stamps.
+			   TODO: improve code that calculates pseudo-values of result when a glitch has been found. */
+			qDebug() << "WW" PREFIX << "glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
+			result.x[i] = data_dt.x[i - 1];
+			result.y[i] = 0;
+		} else {
+			/* Iterate over 'n + 1 + n' points of a track to get
+			   an average speed for that part.  This will
+			   essentially interpolate between segments, which I
+			   think is right given the usage of
+			   'get_length_including_gaps'. n == 0 is no averaging. */
+			const int n = 0;
+			double delta_d = 0.0;
+			double delta_t = 0.0;
+			for (int j = i - n; j <= i + n; j++) {
+				if (j - 1 >= 0 && j < tp_count) {
+					delta_d += (data_dt.y[j] - data_dt.y[j - 1]);
+					delta_t += (data_dt.x[j] - data_dt.x[j - 1]);
+				}
+			}
+
+			result.y[i] = delta_d / delta_t;
+			result.x[i] = result.x[i - 1] + (delta_d / (n + 1 + n)); /* Accumulate the distance. */
+		}
 	}
 
 	assert(i == tp_count);
