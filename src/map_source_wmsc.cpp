@@ -37,6 +37,7 @@
 
 #include "map_source_wmsc.h"
 #include "map_utils.h"
+#include "viewport_internal.h"
 
 
 

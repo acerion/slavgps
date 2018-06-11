@@ -107,6 +107,8 @@
 #include "clipboard.h"
 #include "gpspoint.h"
 #include "widget_list_selection.h"
+#include "viewport_internal.h"
+
 
 
 
@@ -625,9 +627,9 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 	this->copy_sublayer(item, pickle);
 
 	if (pickle.data_size() > 0) {
-//#ifdef K_TODO
+#ifdef K_TODO
 		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle, item->name);
-//#endif
+#endif
 	}
 }
 

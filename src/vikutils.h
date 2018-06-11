@@ -89,8 +89,7 @@ namespace SlavGPS {
 		bool verbose = false;
 		bool version = false;
 
-		double latitude = NAN;
-		double longitude = NAN;
+		LatLon lat_lon;
 		int zoom_level_osm = -1;
 		MapTypeID map_type_id = MapTypeID::Initial;
 

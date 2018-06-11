@@ -40,7 +40,6 @@
 #include <QDialogButtonBox>
 #include <QGridLayout>
 
-#include "viewport.h"
 #include "layer_trw_track_internal.h"
 #include "measurements.h"
 
@@ -58,6 +57,7 @@ namespace SlavGPS {
 	class Track;
 	class Trackpoint;
 	class ProfileGraph;
+	class ScreenPos;
 
 
 

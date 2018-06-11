@@ -56,6 +56,7 @@
 #include "util.h"
 #include "vikutils.h"
 #include "statusbar.h"
+#include "viewport_internal.h"
 
 
 
@@ -66,6 +67,11 @@ using namespace SlavGPS;
 
 
 #define PREFIX "Layer DEM" << __FUNCTION__ << __LINE__
+
+
+
+
+void draw_loaded_dem_box(Viewport * viewport);
 
 
 
@@ -551,9 +557,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	  we have dem for but don't want to cover the map (or maybe
 	  we just need translucent DEM?).
 	*/
-#ifdef K_TODO
 	draw_loaded_dem_box(viewport);
-#endif
 
 	switch (dem->horiz_units) {
 	case VIK_DEM_HORIZ_LL_ARCSECONDS:
@@ -875,9 +879,9 @@ void draw_loaded_dem_box(Viewport * viewport)
 	}
 
 	qDebug() << "II: Layer DEM: drawing loaded DEM box";
-#ifdef K_TODO
+
 	viewport->draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
-#endif
+
 #endif
 	return;
 }

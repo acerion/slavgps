@@ -34,7 +34,6 @@
 #include <QPen>
 
 #include "tree_view.h"
-#include "viewport.h"
 #include "vikutils.h"
 #include "layer.h"
 

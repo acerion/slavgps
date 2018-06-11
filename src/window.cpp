@@ -595,9 +595,9 @@ void Window::create_actions(void)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (map_cache_flush_cb(void)));
 		this->menu_edit->addAction(qa);
 
-		qa = new QAction("&Set the Default Location", this);
+		qa = new QAction("&Set Current as the Default Location", this);
 		qa->setIcon(QIcon::fromTheme("go-next"));
-		qa->setToolTip(tr("Set the Default Location to the current position"));
+		qa->setToolTip(tr("Save current position as the Default Location"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_default_location_cb(void)));
 		this->menu_edit->addAction(qa);
 
@@ -1014,6 +1014,11 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 void Window::draw_tree_items(void)
 {
 	qDebug() << "\nII" PREFIX;
+
+	if (!this->viewport->is_ready()) {
+		/* Viewport may not be ready during early stages of application's life. */
+		return;
+	}
 
 #ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
@@ -2286,7 +2291,7 @@ void LocatorJob::run(void)
 
 	const bool end_job = this->set_progress_state(1.0);
 	if (end_job) {
-		this->window->statusbar_update(StatusBarField::INFO, QString("Location lookup aborted"));
+		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Location lookup aborted"));
 		return; /* Abort thread */
 	}
 
@@ -2305,12 +2310,12 @@ void LocatorJob::run(void)
 		this->window->viewport->set_zoom(zoom);
 		this->window->viewport->set_center_from_latlon(lat_lon, false);
 
-		this->window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
+		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Location found: %1").arg(name));
 
 		// Signal to redraw from the background
 		this->window->items_tree->emit_items_tree_updated_cb("determine location");
 	} else {
-		this->window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
+		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Unable to determine location"));
 	}
 
 	return;
@@ -2336,7 +2341,7 @@ void Window::finish_new(void)
 		}
 	}
 
-#ifdef K_TODO
+
 	/* Maybe add a default map layer. */
 	if (Preferences::get_add_default_map_layer()) {
 		LayerMap * layer = new LayerMap();
@@ -2347,7 +2352,6 @@ void Window::finish_new(void)
 		this->draw_tree_items();
 	}
 
-#endif
 
 	/* If not loaded any file, maybe try the location lookup. */
 	if (true || this->loaded_type == FileLoadResult::READ_FAILURE) {

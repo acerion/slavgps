@@ -41,6 +41,11 @@ namespace SlavGPS {
 
 
 
+	class Viewport;
+
+
+
+
 	void vik_mapnik_layer_init(void);
 	void vik_mapnik_layer_post_init(void);
 	void vik_mapnik_layer_uninit(void);

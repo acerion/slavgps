@@ -54,6 +54,7 @@
 #include "widget_file_entry.h"
 #include "file.h"
 #include "file_utils.h"
+#include "viewport_internal.h"
 
 
 

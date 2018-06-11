@@ -46,6 +46,7 @@
 #include "widget_file_entry.h"
 //#include "file.h"
 #include "viewport_zoom.h"
+#include "viewport_internal.h"
 
 
 

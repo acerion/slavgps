@@ -48,6 +48,7 @@
 #include "map_utils.h"
 #include "bbox.h"
 #include "background.h"
+#include "viewport_internal.h"
 
 
 

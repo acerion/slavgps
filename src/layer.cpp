@@ -47,6 +47,7 @@
 #include "ui_builder.h"
 #include "vikutils.h"
 #include "application_state.h"
+#include "viewport_internal.h"
 
 
 

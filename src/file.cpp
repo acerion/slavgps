@@ -638,9 +638,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 		pop(&stack);
 	}
 
-	if (latlon.is_valid()) {
-		viewport->set_center_from_latlon(latlon, true);
-	}
+	viewport->set_center_from_latlon(latlon, true); /* The function will reject latlon if it's invalid. */
 
 	if ((!aggregate->visible) && aggregate->tree_view) {
 		aggregate->tree_view->set_tree_item_visibility(aggregate->index, false);

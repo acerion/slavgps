@@ -42,7 +42,6 @@
 #include <QDebug>
 
 #include "tree_view.h"
-#include "viewport.h"
 #include "globals.h"
 #include "clipboard.h"
 
@@ -54,6 +53,7 @@ namespace SlavGPS {
 
 
 
+	class Viewport;
 	class Window;
 	class LayerTRW;
 	class LayerTool;
@@ -62,6 +62,7 @@ namespace SlavGPS {
 	class SGVariant;
 	class ParameterSpecification;
 	enum class LayerDataReadStatus;
+	enum class CoordMode;
 
 
 

@@ -66,6 +66,7 @@
 #include "routing.h"
 #include "measurements.h"
 #include "preferences.h"
+#include "viewport_internal.h"
 
 
 

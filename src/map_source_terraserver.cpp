@@ -27,6 +27,7 @@
 #include "map_source_terraserver.h"
 #include "coord.h"
 #include "mapcoord.h"
+#include "viewport_internal.h"
 
 
 

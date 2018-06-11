@@ -27,12 +27,16 @@
 
 #include "layer.h"
 #include "window.h"
-#include "viewport.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class Viewport;
 
 
 

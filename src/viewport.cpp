@@ -226,15 +226,7 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 	}
 
 
-
-	this->center.mode = CoordMode::LATLON;
-	this->center.ll.lat = initial_lat_lon.lat;
-	this->center.ll.lon = initial_lat_lon.lon;
-	const UTM initial_utm = LatLon::to_utm(initial_lat_lon);
-	this->center.utm.zone = initial_utm.zone; /* kamilTODO: why do we assign utm values when mode is CoordMode::LATLON? */
-	this->center.utm.letter = initial_utm.letter;
-	this->save_current_center();
-
+	this->set_center_from_latlon(initial_lat_lon, true); /* The function will reject latlon if it's invalid. */
 
 
 	this->init_drawing_area();
@@ -899,8 +891,13 @@ bool Viewport::forward_available(void) const
    @save_position: Whether this new position should be saved into the history of positions
                    Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
 */
-void Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position)
+bool Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position)
 {
+	if (!lat_lon.is_valid()) {
+		qDebug() << "EE" PREFIX << "not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
+		return false;
+	}
+
 	this->center = Coord(lat_lon, this->coord_mode);
 	if (save_position) {
 		this->save_current_center();
@@ -909,6 +906,8 @@ void Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position
 	if (this->coord_mode == CoordMode::UTM) {
 		this->utm_zone_check();
 	}
+
+	return true;
 }
 
 
@@ -2463,4 +2462,12 @@ void Viewport::dropEvent(QDropEvent * event)
 	}
 
 	event->acceptProposedAction();
+}
+
+
+
+
+bool Viewport::is_ready(void) const
+{
+	return this->scr_buffer != NULL;
 }

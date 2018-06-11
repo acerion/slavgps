@@ -61,6 +61,7 @@
 #include "ui_builder.h"
 #include "util.h"
 #include "statusbar.h"
+#include "viewport_internal.h"
 
 
 

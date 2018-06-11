@@ -46,6 +46,7 @@
 #include "tree_view_internal.h"
 #include "layer_aggregate.h"
 #include "clipboard.h"
+#include "viewport_internal.h"
 
 
 

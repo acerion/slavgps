@@ -65,6 +65,7 @@
 #include "measurements.h"
 #include "preferences.h"
 #include "map_utils.h"
+#include "viewport_internal.h"
 
 #ifdef K_INCLUDES
 #include "download.h"
@@ -842,8 +843,8 @@ void CommandLineOptions::apply(Window * window)
 
 	Viewport * viewport = window->get_viewport();
 
-	if (this->latitude != NAN && this->longitude != NAN) {
-		viewport->set_center_from_latlon(LatLon(this->latitude, this->longitude), true);
+	if (this->lat_lon.is_valid()) {
+		viewport->set_center_from_latlon(this->lat_lon, true);
 	}
 
 	if (this->zoom_level_osm >= 0) {
@@ -936,28 +937,31 @@ bool CommandLineOptions::parse(QCoreApplication & app)
 	this->version = parser.isSet(opt_version);
 	qDebug() << "DD" PREFIX << "version is" << this->version;
 
+
+
 	if (parser.isSet(opt_latitude) != parser.isSet(opt_longitude)) {
 		qDebug() << "EE" PREFIX << "you need to specify both latitude and longitude";
 		return false;
 	}
 
-	if (parser.isSet(opt_latitude)) {
+	if (parser.isSet(opt_latitude) && parser.isSet(opt_longitude)) {
 		QLocale locale; /* System's locale. */
-		bool ok = true;
-		this->latitude = locale.toDouble(parser.value(opt_latitude), &ok);
-		if (ok) {
-			this->longitude = locale.toDouble(parser.value(opt_longitude), &ok);
+		bool parse_ok = true;
+		this->lat_lon.lat = locale.toDouble(parser.value(opt_latitude), &parse_ok);
+		if (parse_ok) {
+			this->lat_lon.lon = locale.toDouble(parser.value(opt_longitude), &parse_ok);
 		}
 
-		if (ok) {
-			qDebug() << "DD" PREFIX << "lat/lon is" << this->latitude << this->longitude;
+		if (parse_ok && this->lat_lon.is_valid()) {
+			qDebug() << "DD" PREFIX << "lat/lon is" << this->lat_lon.lat << this->lat_lon.lon;
 		} else {
-			this->latitude = NAN;
-			this->longitude = NAN;
-			qDebug() << "EE" PREFIX << "invalid lat/lon";
+			this->lat_lon.invalidate();
+			qDebug() << "EE" PREFIX << "Failed to parse lat/lon values from command line:" << parser.value(opt_latitude) << parser.value(opt_longitude);
 			return false;
 		}
 	}
+
+
 
 	if (parser.isSet(opt_zoom)) {
 		this->zoom_level_osm = parser.value(opt_zoom).toInt();
