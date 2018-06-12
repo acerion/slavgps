@@ -57,7 +57,7 @@ namespace SlavGPS {
 		void reset_data(void);
 
 		QStringList copyrights;
-		std::list<QPixmap const *> logos;
+		std::list<ViewportLogo> logos;
 
 	private:
 		void draw_scale(Viewport * viewport);

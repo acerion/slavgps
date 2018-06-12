@@ -180,6 +180,8 @@ namespace SlavGPS {
 
 		bool get_side_panel_visibility(void) const;
 
+		void emit_center_or_zoom_changed(const QString & trigger_name);
+
 
 		QAction * qa_tree_item_properties = NULL;
 
@@ -383,6 +385,9 @@ namespace SlavGPS {
 
 		/* The last used directory for saving viewport to image(s). */
 		QUrl last_folder_images_url;
+
+	signals:
+		void center_or_zoom_changed(void);
 	};
 
 

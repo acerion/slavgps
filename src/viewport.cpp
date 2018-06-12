@@ -66,7 +66,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Viewport: "
+#define PREFIX ": Viewport: " << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -147,7 +147,7 @@ double Viewport::calculate_utm_zone_width(void) const
 		return 0.0;
 
 	default:
-		qDebug() << "EE" PREFIX << __FUNCTION__ << __LINE__ << "unexpected coord mode" << (int) this->coord_mode;
+		qDebug() << "EE" PREFIX << "unexpected coord mode" << (int) this->coord_mode;
 		return 0.0;
 	}
 }
@@ -362,23 +362,23 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
-		qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "deleting old scr_buffer";
+		qDebug() << "II" PREFIX << "deleting old scr_buffer";
 		delete this->scr_buffer;
 	}
 
-	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "creating new scr_buffer with size" << this->size_width << this->size_height;
+	qDebug() << "II" PREFIX << "creating new scr_buffer with size" << this->size_width << this->size_height;
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
 	/* TODO trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
-		qDebug() << "DD" PREFIX << __FUNCTION__ << __LINE__ << "deleting old snapshot buffer";
+		qDebug() << "DD" PREFIX << "deleting old snapshot buffer";
 		delete this->snapshot_buffer;
 	}
-	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "creating new snapshot buffer with size" << this->size_width << this->size_height;
+	qDebug() << "II" PREFIX << "creating new snapshot buffer with size" << this->size_width << this->size_height;
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 
-	qDebug() << "SIGNAL" PREFIX << __FUNCTION__ << __LINE__ << "sending \"drawing area reconfigured\" from" << this->type_string;
+	qDebug() << "SIGNAL" PREFIX << "sending \"drawing area reconfigured\" from" << this->type_string;
 	emit this->drawing_area_reconfigured(this);
 }
 
@@ -405,7 +405,7 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 
 bool Viewport::reconfigure_drawing_area_cb(void)
 {
-	qDebug() << "SLOT" PREFIX << __FUNCTION__ << __LINE__;
+	qDebug() << "SLOT" PREFIX;
 	this->reconfigure_drawing_area();
 	return true;
 }
@@ -418,7 +418,7 @@ bool Viewport::reconfigure_drawing_area_cb(void)
 */
 void Viewport::clear(void)
 {
-	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "clear whole viewport" << this->type_string << this->width() << this->height();
+	qDebug() << "II" PREFIX << "clear whole viewport" << this->type_string << this->width() << this->height();
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 
@@ -494,7 +494,7 @@ bool Viewport::get_scale_visibility(void) const
 
 void Viewport::sync(void)
 {
-	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "sync (will call ->render())";
+	qDebug() << "II" PREFIX << "sync (will call ->render())";
 	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
 	this->render(this->scr_buffer);
 }
@@ -719,7 +719,7 @@ void Viewport::save_current_center(void)
 
 	this->print_centers("Viewport::save_current_center()");
 
-	qDebug() << "SIGNAL" PREFIX << __FUNCTION__ << __LINE__ << "emitting center_updated()";
+	qDebug() << "SIGNAL" PREFIX << "emitting center_updated()";
 	emit this->center_updated();
 }
 
@@ -1784,15 +1784,21 @@ void Viewport::add_copyright(QString const & copyright)
 
 
 
-void Viewport::add_logo(const QPixmap * logo)
+void Viewport::add_logo(const ViewportLogo & logo)
 {
-	if (!logo) {
-		qDebug() << "WW" PREFIX << "trying to add NULL logo";
+	if (logo.logo_id == "") {
+		qDebug() << "WW" PREFIX << "trying to add empty logo";
 		return;
 	}
 
-	auto iter = std::find(this->decorations.logos.begin(), this->decorations.logos.end(), logo); /* TODO: how does comparison of pointers work? */
-	if (iter == this->decorations.logos.end()) {
+	bool found = false;
+	for (auto iter = this->decorations.logos.begin(); iter != this->decorations.logos.end(); iter++) {
+		if (iter->logo_id == logo.logo_id) {
+			found = true;
+		}
+	}
+
+	if (!found) {
 		this->decorations.logos.push_front(logo);
 	}
 
@@ -1847,7 +1853,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 
 void Viewport::paintEvent(QPaintEvent * ev)
 {
-	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__;
+	qDebug() << "II" PREFIX;
 
 	QPainter painter(this);
 
@@ -2288,7 +2294,7 @@ void Viewport::draw_simple_crosshair(const ScreenPos & pos)
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-	qDebug() << "II" PREFIX << __FUNCTION__ << __LINE__ << "crosshair at" << pos.x << pos.y;
+	qDebug() << "II" PREFIX << "crosshair at" << pos.x << pos.y;
 
 	if (pos.x < this->margin_left || pos.x > this->margin_left + graph_width) {
 		/* Position outside of graph area. */
@@ -2352,7 +2358,7 @@ QString ViewportDrawModes::get_name(ViewportDrawMode mode)
 	case ViewportDrawMode::LATLON:
 		return QObject::tr("&Lat/Lon Mode");
 	default:
-		qDebug() << "EE" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
+		qDebug() << "EE" PREFIX << "unexpected draw mode" << (int) mode;
 		return "";
 	}
 }
@@ -2377,7 +2383,7 @@ QString ViewportDrawModes::get_id_string(ViewportDrawMode mode)
 		mode_id_string = "latlon";
 		break;
 	default:
-		qDebug() << "EE" PREFIX << __FUNCTION__ << __LINE__ << "unexpected draw mode" << (int) mode;
+		qDebug() << "EE" PREFIX << "unexpected draw mode" << (int) mode;
 		break;
 	}
 

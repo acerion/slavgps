@@ -96,7 +96,8 @@ MapSourceBing::MapSourceBing()
                                      "<no-set>" /* default value */,
 				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 #endif
-	this->logo = new QPixmap(":/icons/bing_maps.png");
+	this->logo.logo_pixmap = QPixmap(":/icons/bing_maps.png");
+	this->logo.logo_id = "Bing Maps"; /* TODO: verify this label, whether it is unique for this map source. */
 }
 
 

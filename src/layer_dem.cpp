@@ -366,25 +366,27 @@ void DEMLoadJob::cleanup_on_cancel(void)
 /**
  * Process the list of DEM files and convert each one to a relative path.
  */
-static void dem_layer_convert_to_relative_filenaming(QStringList & relfiles, const QStringList & files)
+static QStringList dem_layer_convert_to_relative_filenaming(const QStringList & input_files)
 {
+	QStringList result;
+
 	const QString cwd = QDir::currentPath();
 	if (cwd.isEmpty()) {
-		relfiles = files;
-		return;
+		result = input_files;
+		return result;
 	}
 
-	for (auto iter = files.begin(); iter != files.end(); iter++) {
+	for (auto iter = input_files.begin(); iter != input_files.end(); iter++) {
 		const QString file = file_GetRelativeFilename(cwd, *iter);
-		relfiles.push_front(file);
+		result.push_front(file);
 	}
 
-	if (relfiles.empty()) {
+	if (result.empty()) {
 		/* TODO: is this correct? Should we return original files? Is this condition ever true? */
-		relfiles = files;
+		result = input_files;
 	}
 
-	return;
+	return result;
 }
 
 
@@ -471,8 +473,7 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 
 		/* Save in relative format if necessary. */
 		if (is_file_operation && Preferences::get_file_path_format() == FilePathFormat::Relative) {
-			dem_layer_convert_to_relative_filenaming(rv.val_string_list, this->files);
-			rv.type_id = SGVariantType::StringList; /* TODO: direct assignment of variant type - fix (hide) this. */
+			rv = SGVariant(dem_layer_convert_to_relative_filenaming(this->files));
 		} else {
 			rv = SGVariant(this->files);
 		}

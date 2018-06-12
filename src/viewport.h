@@ -28,6 +28,7 @@
 #include <cstdint>
 
 #include <QString>
+#include <QPixmap>
 
 #include "coord.h"
 
@@ -48,6 +49,15 @@ namespace SlavGPS {
 
 
 	class Viewport;
+
+
+
+
+	class ViewportLogo {
+	public:
+		QPixmap logo_pixmap;
+		QString logo_id; /* For easy comparison of logos. For Map Sources this will be map_type_string; */
+	};
 
 
 

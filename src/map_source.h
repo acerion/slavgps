@@ -29,6 +29,7 @@
 #include "mapcoord.h"
 #include "bbox.h"
 #include "download.h"
+#include "viewport.h"
 
 
 
@@ -95,7 +96,7 @@ namespace SlavGPS {
 		virtual void add_copyright(Viewport * viewport, const LatLonBBox & bbox, double zoom);
 		QString get_license(void) const;
 		QString get_license_url(void) const;
-		const QPixmap * get_logo(void) const;
+		const ViewportLogo & get_logo(void) const;
 
 		const QString get_server_hostname(void) const;
 		virtual const QString get_server_path(TileInfo * src) const;
@@ -149,7 +150,7 @@ namespace SlavGPS {
 		QString copyright;     /* The copyright of the map source. */
 		QString license;       /* The license of the map source. */
 		QString license_url;   /* The URL of the license of the map source. */
-		QPixmap * logo = NULL;
+		ViewportLogo logo;
 
 		QString map_type_string;  /* The name of the map that may be used as the file cache directory. Non-translatable. */
 		MapTypeID map_type_id;    /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */

@@ -61,12 +61,12 @@ using namespace SlavGPS;
 
 
 static int last_goto_idx = -1;
-static QString last_location;
+static QString g_last_location;
 static std::vector<GotoTool *> goto_tools;
 
-static bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent);
-static bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent);
-static QString goto_location_dialog(Window * window);
+static int goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent = NULL);
+static int goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent = NULL);
+static int goto_location_dialog(QString & new_location, const QString & initial_location, Window * parent = NULL);
 
 
 
@@ -146,7 +146,7 @@ void GotoDialog::text_changed_cb(const QString & text)
 
 
 
-GotoDialog::GotoDialog(QWidget * parent) : BasicDialog(parent)
+GotoDialog::GotoDialog(const QString & initial_location, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(tr("goto"));
 
@@ -172,12 +172,12 @@ GotoDialog::GotoDialog(QWidget * parent) : BasicDialog(parent)
 
 	QObject::connect(&this->input_field, SIGNAL (returnPressed(void)), this, SLOT(accept()));
 	QObject::connect(&this->input_field, SIGNAL (textChanged(const QString &)), this, SLOT (text_changed_cb(const QString &)));
-	if (!last_location.isEmpty()) {
+	if (!initial_location.isEmpty()) {
 		/* Notice that this may be not a *successful* location. */
-		this->input_field.setText(last_location);
+		this->input_field.setText(initial_location);
 	}
 	/* Set initial 'enabled = X' state of button. */
-	this->text_changed_cb(last_location);
+	this->text_changed_cb(initial_location);
 	this->grid->addWidget(&this->input_field, 3, 0);
 
 
@@ -198,38 +198,40 @@ GotoDialog::~GotoDialog()
 /**
    @brief Get name of a location to go to
 
-   @return NULL on errors
-   @return NULL if empty string has been entered
-   @return non-NULL string with location entered in dialog on success
+   Name of location is returned through @location argument.
+
+   @return QDialog::Accepted if user entered a string
+   @return QDialog::Rejected otherwise
 */
-QString goto_location_dialog(Window * window)
+int goto_location_dialog(QString & new_location, const QString & initial_location, Window * parent)
 {
-	QString empty_string("");
-
-
-	GotoDialog dialog;
+	GotoDialog dialog(initial_location);
 	if (0 == dialog.providers_combo.count()) {
-		Dialog::error(QObject::tr("There are no GoTo engines available."), window);
-		return empty_string;
+		Dialog::error(QObject::tr("There are no GoTo engines available."), parent);
+		new_location = "";
+		return QDialog::Rejected;
 	}
 
 
 	if (dialog.exec() != QDialog::Accepted) {
-		return empty_string;
+		new_location = "";
+		return QDialog::Rejected;
 	}
 
 
 	last_goto_idx = dialog.providers_combo.currentIndex();
 	ApplicationState::set_string(VIK_SETTINGS_GOTO_PROVIDER, goto_tools[last_goto_idx]->get_label());
-	const QString location = dialog.input_field.text();
-	if (location.isEmpty()) {
+
+	QString user_input = dialog.input_field.text();
+	if (user_input.isEmpty()) {
 		qDebug() << "EE: goto: can't get string" << dialog.input_field.text();
-		return empty_string;
+		new_location = "";
+		return QDialog::Rejected;
+	} else {
+		new_location = user_input;
 	}
 
-	last_location = location;
-
-	return location;
+	return QDialog::Accepted;
 }
 
 
@@ -267,36 +269,43 @@ static bool get_coordinate_of(Viewport * viewport, const QString & name, /* in/o
 
 
 
-void GoTo::goto_location(Window * window, Viewport * viewport)
+bool GoTo::goto_location(Window * window, Viewport * viewport)
 {
+	bool moved_to_new_position = false;
+
 	if (goto_tools.empty()) {
 		Dialog::warning(QObject::tr("No goto tool available."), window);
-		return;
+		return moved_to_new_position;
 	}
 
-	bool more = true;
+	bool ask_again = true;
 	do {
-		const QString location = goto_location_dialog(window);
-		if (location.isEmpty()) {
-			more = false;
+		QString location;
+		if (QDialog::Rejected == goto_location_dialog(location, g_last_location, window)) {
+			/* User has cancelled dialog. */
+			ask_again = false;
 		} else {
 			Coord location_coord;
 			GotoToolResult ans = goto_tools[last_goto_idx]->get_coord(viewport, location.toUtf8().data(), &location_coord);
 			switch (ans) {
 			case GotoToolResult::Found:
 				viewport->set_center_from_coord(location_coord, true);
-				more = false;
+				ask_again = false;
+				moved_to_new_position = true;
+				g_last_location = location;
 				break;
 			case GotoToolResult::NotFound:
-				more = prompt_try_again(QObject::tr("I don't know that location. Do you want another goto?"), window);
+				ask_again = prompt_try_again(QObject::tr("I don't know that location. Do you want another goto?"), window);
 				break;
 			case GotoToolResult::Error:
 			default:
-				more = prompt_try_again(QObject::tr("Service request failure. Do you want another goto?"), window);
+				ask_again = prompt_try_again(QObject::tr("Service request failure. Do you want another goto?"), window);
 				break;
 			}
 		}
-	} while (more);
+	} while (ask_again);
+
+	return moved_to_new_position;
 }
 
 
@@ -473,24 +482,28 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
 
 
-void GoTo::goto_latlon(Window * window, Viewport * viewport)
+bool GoTo::goto_latlon(Window * window, Viewport * viewport)
 {
 	LatLon new_lat_lon;
 	const LatLon initial_lat_lon = viewport->get_center()->get_latlon();
 
-	if (!goto_latlon_dialog(new_lat_lon, initial_lat_lon, window)) {
-		return;
+	if (QDialog::Rejected == goto_latlon_dialog(new_lat_lon, initial_lat_lon, window)) {
+		return false;
 	}
 
 	const Coord new_center = Coord(new_lat_lon, viewport->get_coord_mode());
 	viewport->set_center_from_coord(new_center, true);
 
-	return;
+	return true;
 }
 
 
 
-bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent)
+/**
+   @return QDialog::Accepted if user entered new lat/lon
+   @return QDialog::Rejected otherwise
+*/
+int goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent)
 {
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to Lat/Lon"));
@@ -508,34 +521,34 @@ bool goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Wi
 		new_lat_lon.lat = convert_dms_to_dec(lat_input.text().toUtf8().constData());
 		new_lat_lon.lon = convert_dms_to_dec(lon_input.text().toUtf8().constData());
 #endif
-		return true;
+		return QDialog::Accepted;
 	} else {
-		return false;
+		return QDialog::Rejected;
 	}
 }
 
 
 
 
-void GoTo::goto_utm(Window * window, Viewport * viewport)
+bool GoTo::goto_utm(Window * window, Viewport * viewport)
 {
 	UTM new_utm;
 	const UTM initial_utm = viewport->get_center()->get_utm();
 
-	if (!goto_utm_dialog(new_utm, initial_utm, window)) {
-		return;
+	if (QDialog::Rejected == goto_utm_dialog(new_utm, initial_utm, window)) {
+		return false;
 	}
 
 	const Coord new_center = Coord(new_utm, viewport->get_coord_mode());
 	viewport->set_center_from_coord(new_center, true);
 
-	return;
+	return true;
 }
 
 
 
 
-bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent)
+int goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent)
 {
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to UTM"));
@@ -547,8 +560,8 @@ bool goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent)
 
 	if (dialog.exec() == QDialog::Accepted) {
 		new_utm = entry.get_value();
-		return true;
+		return QDialog::Accepted;
 	} else {
-		return false;
+		return QDialog::Rejected;
 	}
 }

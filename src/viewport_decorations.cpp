@@ -311,10 +311,10 @@ void ViewportDecorations::draw_logos(Viewport * viewport)
 	int x_pos = viewport->size_width - PAD;
 	int y_pos = PAD;
 	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
-		QPixmap const * logo = *iter;
-		const int logo_width = logo->width();
-		const int logo_height = logo->height();
-		viewport->draw_pixmap(*logo, 0, 0, x_pos - logo_width, y_pos, logo_width, logo_height);
+		const QPixmap & logo_pixmap = iter->logo_pixmap;
+		const int logo_width = logo_pixmap.width();
+		const int logo_height = logo_pixmap.height();
+		viewport->draw_pixmap(logo_pixmap, 0, 0, x_pos - logo_width, y_pos, logo_width, logo_height);
 		x_pos = x_pos - logo_width - PAD;
 	}
 }
@@ -339,8 +339,8 @@ void ViewportDecorations::reset_copyrights(void)
 
 void ViewportDecorations::reset_logos(void)
 {
-	/* Do not free pointers, they are owned by someone else.
-	   TODO: this is potentially a source of problems - if owner deletes pointer, it becomes invalid in viewport, right?. */
+	/* There are no pointers involved in logos, so we can safely
+	   do ::clear() here. */
 	this->logos.clear();
 }
 

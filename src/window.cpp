@@ -167,8 +167,9 @@ Window::Window()
 
 
 	/* Own signals. */
-	connect(this->viewport, SIGNAL(center_updated(void)), this, SLOT(center_changed_cb(void)));
-	connect(this->items_tree, SIGNAL(items_tree_updated()), this, SLOT(draw_tree_items_cb()));
+	connect(this->viewport, SIGNAL (center_updated(void)), this, SLOT (center_changed_cb(void)));
+	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
+	connect(this, SIGNAL (center_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
 
 	g_tree = new Tree();
 	g_tree->tree_view = this->get_items_tree()->get_tree_view();
@@ -217,7 +218,7 @@ Window::Window()
 
 #ifdef K_FIXME_RESTORE
 	/* I think that it's no longer necessary. */
-	/* Set initial button sensitivity. */
+	/* Set initial sensitivity of prev/next menu actions. */
 	this->center_changed_cb();
 #endif
 
@@ -1058,7 +1059,7 @@ void Window::draw_tree_items(void)
 
 void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
-	qDebug() << "SLOT: Window: draw_layer" << (qulonglong) uid;
+	qDebug() << "SLOT" PREFIX << "layer" << (qulonglong) uid;
 	/* TODO: draw only one layer, not all of them. */
 	this->draw_tree_items();
 }
@@ -1127,11 +1128,11 @@ void Window::statusbar_update(StatusBarField field, QString const & message)
 
 void Window::center_changed_cb(void) /* Slot. */
 {
-	qDebug() << "SLOT: Window: center changed";
+	qDebug() << "SLOT" PREFIX;
 
 	/* TODO: see if this comment should be implemented or not:
 	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
-	this->qa_next_location->setEnabled(this->viewport->back_available());
+	this->qa_previous_location->setEnabled(this->viewport->back_available());
 	this->qa_next_location->setEnabled(this->viewport->forward_available());
 }
 
@@ -1325,13 +1326,13 @@ void Window::pan_click(QMouseEvent * ev)
 
 void Window::pan_move(QMouseEvent * ev)
 {
-	qDebug() << "II: Window: pan move";
+	qDebug() << "II" PREFIX;
 	if (this->pan_pos.x != -1) {
 		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
 							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
 		this->pan_move_flag = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
-		this->draw_tree_items();
+		this->emit_center_or_zoom_changed("pan move");
 	}
 }
 
@@ -1340,7 +1341,7 @@ void Window::pan_move(QMouseEvent * ev)
 
 void Window::pan_release(QMouseEvent * ev)
 {
-	qDebug() << "II: Window: pan release";
+	qDebug() << "II" PREFIX;
 	bool do_draw = true;
 
 	if (this->pan_move_flag == false) {
@@ -1350,7 +1351,7 @@ void Window::pan_release(QMouseEvent * ev)
 			this->delayed_pan_pos = this->pan_pos;
 
 			/* Get double click time. */
-			int interval = qApp->doubleClickInterval() * 1.1;
+			int interval = qApp->doubleClickInterval();
 
 			/* Give chance for a double click to occur. Viking used +50 instead of *1.1. */
 			interval *= 1.1;
@@ -1369,7 +1370,7 @@ void Window::pan_release(QMouseEvent * ev)
 
 	this->pan_off();
 	if (do_draw) {
-		this->draw_tree_items();
+		this->emit_center_or_zoom_changed("pan release");
 	}
 }
 
@@ -1609,7 +1610,7 @@ void Window::closeEvent(QCloseEvent * ev)
 void Window::goto_default_location_cb(void)
 {
 	this->viewport->set_center_from_latlon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()), true);
-	this->items_tree->emit_items_tree_updated_cb("go to default location");
+	this->emit_center_or_zoom_changed("go to default location");
 }
 
 
@@ -1617,8 +1618,9 @@ void Window::goto_default_location_cb(void)
 
 void Window::goto_location_cb()
 {
-	GoTo::goto_location(this, this->viewport);
-	this->items_tree->emit_items_tree_updated_cb("go to location");
+	if (GoTo::goto_location(this, this->viewport)) {
+		this->emit_center_or_zoom_changed("go to location");
+	}
 }
 
 
@@ -1626,9 +1628,9 @@ void Window::goto_location_cb()
 
 void Window::goto_latlon_cb(void)
 {
-	/* TODO: call draw_tree_items() conditionally? */
-	GoTo::goto_latlon(this, this->viewport);
-	this->draw_tree_items();
+	if (GoTo::goto_latlon(this, this->viewport)) {
+		this->emit_center_or_zoom_changed("go to latlon");
+	}
 }
 
 
@@ -1636,9 +1638,9 @@ void Window::goto_latlon_cb(void)
 
 void Window::goto_utm_cb(void)
 {
-	/* TODO: call draw_tree_items() conditionally? */
-	GoTo::goto_utm(this, this->viewport);
-	this->draw_tree_items();
+	if (GoTo::goto_utm(this, this->viewport)) {
+		this->emit_center_or_zoom_changed("go to utm");
+	}
 }
 
 
@@ -1648,13 +1650,13 @@ void Window::goto_previous_location_cb(void)
 {
 	bool changed = this->viewport->go_back();
 
-	/* Recheck buttons sensitivities, as the center changed signal
-	   is not sent on back/forward changes (otherwise we would get
-	   stuck in an infinite loop!). */
+	/* Recheck sensitivities of prev/next menu actions, as the
+	   center changed signal is not sent on back/forward changes
+	   (otherwise we would get stuck in an infinite loop!). */
 	this->center_changed_cb();
 
 	if (changed) {
-		this->draw_tree_items();
+		this->emit_center_or_zoom_changed("go to previous location");
 	}
 }
 
@@ -1665,13 +1667,13 @@ void Window::goto_next_location_cb(void)
 {
 	bool changed = this->viewport->go_forward();
 
-	/* Recheck buttons sensitivities, as the center changed signal
-	   is not sent on back/forward changes (otherwise we would get
-	   stuck in an infinite loop!). */
+	/* Recheck sensitivities of prev/next menu actions, as the
+	   center changed signal is not sent on back/forward changes
+	   (otherwise we would get stuck in an infinite loop!). */
 	this->center_changed_cb();
 
 	if (changed) {
-		this->draw_tree_items();
+		this->emit_center_or_zoom_changed("go to next location");
 	}
 }
 
@@ -1774,19 +1776,22 @@ void Window::zoom_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 	QKeySequence seq = qa->shortcut();
+	QString debug_msg;
 
 	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
 		qDebug() << "DD" PREFIX << "Zoom In";
+		debug_msg = "zoom in";
 		this->viewport->zoom_in();
 	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
 		qDebug() << "DD" PREFIX << "Zoom Out";
+		debug_msg = "zoom out";
 		this->viewport->zoom_out();
 	} else {
 		qDebug() << "EE" PREFIX << "invalid zoom key sequence" << seq;
 		return;
 	}
 
-	this->draw_tree_items();
+	this->emit_center_or_zoom_changed(debug_msg);
 }
 
 
@@ -1800,7 +1805,7 @@ void Window::zoom_to_cb(void)
 	if (a_dialog_custom_zoom(&xmpp, &ympp, this)) {
 		this->viewport->set_xmpp(xmpp);
 		this->viewport->set_ympp(ympp);
-		this->draw_tree_items();
+		this->emit_center_or_zoom_changed("zoom to...");
 	}
 }
 
@@ -2312,8 +2317,7 @@ void LocatorJob::run(void)
 
 		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Location found: %1").arg(name));
 
-		// Signal to redraw from the background
-		this->window->items_tree->emit_items_tree_updated_cb("determine location");
+		this->window->emit_center_or_zoom_changed("determine location");
 	} else {
 		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Unable to determine location"));
 	}
@@ -2880,8 +2884,9 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	double current_zoom = this->viewport->get_zoom();
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
 		this->viewport->set_zoom(zoom_request);
-		/* Force drawing update. */
-		this->draw_tree_items();
+
+		/* Ask to draw updated viewport. */
+		this->emit_center_or_zoom_changed("zoom level selected");
 	}
 }
 
@@ -3121,7 +3126,7 @@ void Window::menu_view_pan_cb(void)
 		break;
 	}
 
-	this->draw_tree_items();
+	this->emit_center_or_zoom_changed("pan from menu");
 }
 
 
@@ -3636,4 +3641,17 @@ void Window::open_recent_file_cb(void)
 		   'recent file' in new window. */
 		this->open_window(QStringList(file_full_path));
 	}
+}
+
+
+
+
+/**
+   To be called when action initiated in Window (e.g. in Window's
+   menus) has changed center of viewport or zoom of viewport.
+*/
+void Window::emit_center_or_zoom_changed(const QString & trigger_name)
+{
+	qDebug() << "SIGNAL" PREFIX << "will emit 'center or zoom changed' signal after" << trigger_name << "event in Window";
+	emit this->center_or_zoom_changed();
 }

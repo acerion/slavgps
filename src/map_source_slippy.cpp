@@ -86,11 +86,8 @@ MapSourceSlippy & MapSourceSlippy::operator=(const MapSourceSlippy & other)
 	this->set_license(other.license);
 	this->set_license_url(other.license_url);
 
-	delete this->logo;
-	this->logo = NULL;
-	if (other.logo) {
-		this->logo = new QPixmap(*other.logo);
-	}
+	this->logo.logo_pixmap = other.logo.logo_pixmap;
+	this->logo.logo_id     = other.logo.logo_id;
 
 	this->set_map_type_string(other.map_type_string); /* Non-translatable. */
 	this->map_type_id = other.map_type_id;

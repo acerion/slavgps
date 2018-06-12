@@ -88,8 +88,6 @@ MapSource::MapSource()
 MapSource::~MapSource()
 {
 	qDebug() << "II" PREFIX << "destructor called";
-
-	delete this->logo;
 }
 
 
@@ -107,11 +105,8 @@ MapSource & MapSource::operator=(const MapSource & other)
 	this->license     = other.license;
 	this->license_url = other.license_url;
 
-	delete this->logo;
-	this->logo = NULL;
-	if (other.logo) {
-		this->logo = new QPixmap(*other.logo);
-	}
+	this->logo.logo_pixmap = other.logo.logo_pixmap;
+	this->logo.logo_id     = other.logo.logo_id;
 
 	this->map_type_string = other.map_type_string;
 	this->map_type_id     = other.map_type_id;
@@ -155,9 +150,8 @@ MapSource::MapSource(MapSource & map)
 	this->license     = map.license;
 	this->license_url = map.license_url;
 
-	if (map.logo) {
-		this->logo = new QPixmap(*map.logo);
-	}
+	this->logo.logo_pixmap = map.logo.logo_pixmap;
+	this->logo.logo_id     = map.logo.logo_id;
 
 	this->map_type_string = map.map_type_string;
 	this->map_type_id     = map.map_type_id;
@@ -313,7 +307,7 @@ QString MapSource::get_license_url(void) const
 
 
 
-const QPixmap * MapSource::get_logo(void) const
+const ViewportLogo & MapSource::get_logo(void) const
 {
 	return this->logo;
 }

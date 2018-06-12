@@ -168,7 +168,7 @@ namespace SlavGPS {
 
 
 		void add_copyright(QString const & copyright);
-		void add_logo(QPixmap const * logo);
+		void add_logo(const ViewportLogo & logo);
 
 
 
