@@ -1000,9 +1000,9 @@ void SGUtils::copy_label_menu(QAbstractButton * button)
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max)
+void SlavGPS::vu_zoom_to_show_bbox(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox)
 {
-	vu_zoom_to_show_latlons_common(mode, viewport, min_max, 1.0, true);
+	vu_zoom_to_show_bbox_common(viewport, mode, bbox, 1.0, true);
 	return;
 }
 
@@ -1012,28 +1012,28 @@ void SlavGPS::vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, const
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max_to_show, double zoom, bool save_position)
+void SlavGPS::vu_zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */
 	/* This method is not particularly fast - but should work well enough. */
 
-	const Coord coord(LatLonMinMax::get_average(min_max_to_show), mode);
+	const Coord coord(bbox.get_center(), mode);
 	viewport->set_center_from_coord(coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions. */
 	double lowest_latitude = 0.0;
-	if (min_max_to_show.max.lat < min_max_to_show.min.lat) {
-		lowest_latitude = min_max_to_show.max.lat;
+	if (bbox.north < bbox.south) {
+		lowest_latitude = bbox.north;
 	} else {
-		lowest_latitude = min_max_to_show.min.lat;
+		lowest_latitude = bbox.south;
 	}
 
 	double maximal_longitude = 0.0;
-	if (min_max_to_show.max.lon > min_max_to_show.min.lon) {
-	        maximal_longitude = min_max_to_show.max.lon;
+	if (bbox.east > bbox.west) {
+	        maximal_longitude = bbox.east;
 	} else {
-		maximal_longitude = min_max_to_show.min.lon;
+		maximal_longitude = bbox.west;
 	}
 
 	/* Never zoom in too far - generally not that useful, as too close! */
@@ -1043,16 +1043,16 @@ void SlavGPS::vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport
 
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels. */
 	while (zoom <= SG_VIEWPORT_ZOOM_MAX) {
-		const LatLonMinMax current_min_max = viewport->get_min_max_lat_lon();
+		const LatLonBBox current_bbox = viewport->get_bbox();
 		/* NB I think the logic used in this test to determine if the bounds is within view
 		   fails if track goes across 180 degrees longitude.
 		   Hopefully that situation is not too common...
 		   Mind you viking doesn't really do edge locations to well anyway. */
 
-		if (current_min_max.min.lat < lowest_latitude
-		    && current_min_max.max.lat > lowest_latitude
-		    && current_min_max.min.lon < maximal_longitude
-		    && current_min_max.max.lon > maximal_longitude) {
+		if (current_bbox.south < lowest_latitude
+		    && current_bbox.north > lowest_latitude
+		    && current_bbox.west < maximal_longitude
+		    && current_bbox.east > maximal_longitude) {
 
 			/* Found within zoom level. */
 			break;

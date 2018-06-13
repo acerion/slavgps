@@ -168,6 +168,7 @@ Window::Window()
 
 	/* Own signals. */
 	connect(this->viewport, SIGNAL (center_updated(void)), this, SLOT (center_changed_cb(void)));
+	connect(this->viewport, SIGNAL (center_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
 	connect(this, SIGNAL (center_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
 

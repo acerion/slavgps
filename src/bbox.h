@@ -61,6 +61,9 @@ namespace SlavGPS {
 
 	class LatLonBBox  {
 	public:
+		LatLonBBox() {};
+		LatLonBBox(const LatLon & corner1, const LatLon & corner2);
+
 		LatLonBBoxStrings to_strings(void) const;
 		LatLon get_center_coordinate(void) const;
 
@@ -85,10 +88,10 @@ namespace SlavGPS {
 		LatLon get_center(void) const;
 
 
-		double north = NAN;
-		double south = NAN;
-		double east  = NAN;
-		double west  = NAN;
+		double north = NAN; /* Maximal latitude (towards +90 north). */
+		double south = NAN; /* Minimal latitude (towards -90 south). */
+		double east  = NAN; /* Maximal longitude (towards +180 east). */
+		double west  = NAN; /* Minimal longitude (towards -180 west). */
 
 	private:
 		bool valid = false;

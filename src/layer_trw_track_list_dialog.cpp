@@ -131,7 +131,7 @@ void TrackListDialog::track_statistics_cb(void)
 void TrackListDialog::track_view_cb(void)
 {
 	if (!this->selected_track) {
-		qDebug() << "EE: Track List: encountered NULL Track in callback" << __FUNCTION__;
+		qDebug() << "EE" PREFIX << "encountered NULL selected Track in callback";
 		return;
 	}
 
@@ -139,7 +139,7 @@ void TrackListDialog::track_view_cb(void)
 	LayerTRW * trw = trk->get_parent_layer_trw();
 	Viewport * viewport = trw->get_window()->get_viewport();
 
-	viewport->show_bbox(trk->get_bbox()); /* K_TODO: does it work? */
+	viewport->show_bbox(trk->get_bbox());
 	trw->tree_view->select_and_expose(trk->index);
 }
 

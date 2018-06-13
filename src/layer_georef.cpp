@@ -1204,16 +1204,6 @@ ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 
 
 
-static void goto_center_ll(Viewport * viewport, const LatLon & ll_tl, const LatLon & ll_br)
-{
-	const LatLon ll_center = LatLon::get_average(ll_tl, ll_br);
-	const Coord new_center(ll_center, viewport->get_coord_mode());
-	viewport->set_center_from_coord(new_center, true);
-}
-
-
-
-
 LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord & coord_tl, const Coord & coord_br)
 {
 	if (!pixmap || pixmap->isNull()) {
@@ -1246,9 +1236,13 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	layer->mpp_easting = xmpp;
 	layer->mpp_northing = ympp;
 
-	goto_center_ll(viewport, ll_tl, ll_br);
+	const LatLonBBox bbox(ll_tl, ll_br);
+
+	const Coord new_center(bbox.get_center(), viewport->get_coord_mode());
+	viewport->set_center_from_coord(new_center, true);
+
 	/* Set best zoom level. */
-	vu_zoom_to_show_latlons(viewport->get_coord_mode(), viewport, LatLonMinMax(ll_br, ll_tl));
+	vu_zoom_to_show_bbox(viewport, viewport->get_coord_mode(), bbox);
 
 	return layer;
 }

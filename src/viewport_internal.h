@@ -131,7 +131,6 @@ namespace SlavGPS {
 		int get_leftmost_zone(void) const;
 		int get_rightmost_zone(void) const;
 
-		bool show_latlons(const LatLonMinMax & min_max);
 		bool show_bbox(const LatLonBBox & bbox);
 
 		LatLonMinMax get_min_max_lat_lon(void) const;
@@ -243,6 +242,9 @@ namespace SlavGPS {
 		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, bool explicit_set_zoom, double zoom);
 
 
+		void emit_center_or_zoom_changed(const QString & trigger_name);
+
+
 		/* Whether or not to display some decorations. */
 		bool scale_visibility = true;
 		bool center_mark_visibility = true;
@@ -330,6 +332,7 @@ namespace SlavGPS {
 		void button_released(Viewport * viewport, QMouseEvent * event);
 		void center_updated(void);
 		void drawing_area_reconfigured(Viewport * viewport);
+		void center_or_zoom_changed(void);
 
 
 	public slots:

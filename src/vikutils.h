@@ -111,8 +111,8 @@ namespace SlavGPS {
 
 	QString vu_get_canonical_filename(Layer * layer, const QString & path, const QString & reference_file_full_path);
 
-	void vu_zoom_to_show_latlons(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max);
-	void vu_zoom_to_show_latlons_common(CoordMode mode, Viewport * viewport, const LatLonMinMax & min_max, double zoom, bool save_position);
+	void vu_zoom_to_show_bbox(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox);
+	void vu_zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position);
 
 
 	/* Allow comparing versions. */

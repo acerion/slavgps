@@ -2427,18 +2427,11 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 
 
 
-bool Viewport::show_latlons(const LatLonMinMax & min_max)
-{
-	vu_zoom_to_show_latlons(this->get_coord_mode(), this, min_max);
-	return true;
-}
-
-
-
-
 bool Viewport::show_bbox(const LatLonBBox & a_bbox)
 {
-	return this->show_latlons(LatLonMinMax(a_bbox));
+	vu_zoom_to_show_bbox(this, this->get_coord_mode(), a_bbox);
+	this->emit_center_or_zoom_changed("show bbox");
+	return true;
 }
 
 
@@ -2476,4 +2469,17 @@ void Viewport::dropEvent(QDropEvent * event)
 bool Viewport::is_ready(void) const
 {
 	return this->scr_buffer != NULL;
+}
+
+
+
+
+/**
+   To be called when action initiated in Viewport has changed center
+   of viewport or zoom of viewport.
+*/
+void Viewport::emit_center_or_zoom_changed(const QString & trigger_name)
+{
+	qDebug() << "SIGNAL" PREFIX << "will emit 'center or zoom changed' signal after" << trigger_name << "event in Viewport";
+	emit this->center_or_zoom_changed();
 }

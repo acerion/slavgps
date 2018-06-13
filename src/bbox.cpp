@@ -32,6 +32,30 @@ using namespace SlavGPS;
 
 
 
+LatLonBBox::LatLonBBox(const LatLon & corner1, const LatLon & corner2)
+{
+	/* TODO: what happens if corner1/corner2 crosses the boundary of +/- longitude? */
+
+	if (corner1.lat > corner2.lat) {
+		this->north = corner1.lat;
+		this->south = corner2.lat;
+	} else {
+		this->north = corner2.lat;
+		this->south = corner1.lat;
+	}
+
+	if (corner1.lon > corner2.lon) {
+		this->east = corner1.lon;
+		this->west = corner2.lon;
+	} else {
+		this->east = corner2.lon;
+		this->west = corner1.lon;
+	}
+}
+
+
+
+
 LatLon LatLonBBox::get_center_coordinate(void) const
 {
 	return LatLon((this->north + this->south) / 2, (this->east + this->west) / 2);
