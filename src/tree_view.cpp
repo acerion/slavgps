@@ -665,6 +665,9 @@ TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, Tre
 
 		int row = sibling_index.row();
 
+		/* FIXME: the code executed if above == false does not work. Try inserting DEM layer into empty tree. */
+		above = true;
+
 		if (above) {
 			/* New item will occupy row, where sibling
 			   item was. Sibling item will go one row

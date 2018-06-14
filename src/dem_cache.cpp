@@ -183,52 +183,6 @@ DEM * DEMCache::get(const QString & file_path)
 
 
 /**
-   \brief Load a group of DEM tiles from given list of paths
-
-   When updating a list as a parameter, this should be before freeing the list so
-   the same DEMs won't be loaded & unloaded. (?)
-
-   Function modifies the list to remove DEMs which did not load.
-
-   TODO: don't delete them when they don't exist.
-   We need to warn the user, but we should keep them in the list.
-   We need to know that they weren't referenced though when we
-   do the DEMCache::unload_from_cache().
-
-   \return false on errors
-   \return true otherwise
-*/
-bool DEMCache::load_files_into_cache(QStringList & file_paths, BackgroundJob * bg_job)
-{
-	auto iter = file_paths.begin();
-	unsigned int dem_count = 0;
-	const unsigned int dem_total = file_paths.size();
-	while (iter != file_paths.end()) {
-		QString dem_file_path = *iter;
-		if (!DEMCache::load_file_into_cache(dem_file_path)) {
-			iter = file_paths.erase(iter);
-		} else {
-			iter++;
-		}
-		/* When running a thread - inform of progress. */
-		if (bg_job) {
-#if 1
-			dem_count++;
-			/* Progress also detects abort request via the returned value. */
-			const bool end_job = bg_job->set_progress_state(((double) dem_count) / dem_total);
-			if (end_job) {
-				return false; /* Abort thread. */
-			}
-#endif
-		}
-	}
-	return true;
-}
-
-
-
-
-/**
    \brief Unload DEMs specified by given file paths
 
    The list itself is not modified.

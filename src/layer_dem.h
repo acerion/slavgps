@@ -26,9 +26,13 @@
 
 #include <QPen>
 #include <QColor>
+#include <QObject>
 
 #include "layer.h"
+#include "layer_interface.h"
+#include "layer_tool.h"
 #include "dem.h"
+#include "background.h"
 
 
 
@@ -63,6 +67,7 @@ namespace SlavGPS {
 
 
 	class LayerDEM : public Layer {
+		Q_OBJECT
 	public:
 		LayerDEM();
 		~LayerDEM();
@@ -95,6 +100,7 @@ namespace SlavGPS {
 
 	private slots:
 		void location_info_cb(void);
+		void on_loading_to_cache_completed_cb(void);
 	};
 
 
@@ -105,6 +111,24 @@ namespace SlavGPS {
 		LayerToolDEMDownload(Window * window, Viewport * viewport);
 
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+	};
+
+
+
+
+	class DEMLoadJob : public BackgroundJob {
+		Q_OBJECT
+	public:
+		DEMLoadJob(LayerDEM * layer);
+
+		void run(void);
+		void cleanup_on_cancel(void);
+		bool load_files_into_cache(void);
+
+		LayerDEM * layer = NULL;
+		QStringList file_paths;
+	signals:
+		void loading_to_cache_completed();
 	};
 
 

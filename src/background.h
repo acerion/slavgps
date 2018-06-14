@@ -63,7 +63,8 @@ namespace SlavGPS {
 
 
 
-	class BackgroundJob : public QRunnable {
+	class BackgroundJob : public QObject, public QRunnable { /* public QObject must come first on list of base classes. */
+		Q_OBJECT
 	public:
 		BackgroundJob() {};
 		~BackgroundJob();

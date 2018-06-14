@@ -40,10 +40,7 @@
 #include <QHash>
 #include <QDir>
 
-#include <glib.h>
-
 #include "window.h"
-#include "background.h"
 #include "layer_map.h"
 #include "layer_dem.h"
 #include "dem.h"
@@ -72,20 +69,6 @@ using namespace SlavGPS;
 
 
 void draw_loaded_dem_box(Viewport * viewport);
-
-
-
-
-/* Structure for DEM data used in background thread. */
-class DEMLoadJob : public BackgroundJob {
-public:
-	DEMLoadJob(LayerDEM * layer);
-
-	void run(void);
-	void cleanup_on_cancel(void);
-
-	LayerDEM * layer = NULL;
-};
 
 
 
@@ -321,7 +304,7 @@ Layer * LayerDEMInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 DEMLoadJob::DEMLoadJob(LayerDEM * new_layer)
 {
 	this->n_items = new_layer->files.size(); /* Number of DEM files. */
-
+	this->file_paths = this->layer->files;
 	this->layer = new_layer;
 }
 
@@ -333,21 +316,46 @@ DEMLoadJob::DEMLoadJob(LayerDEM * new_layer)
 */
 void DEMLoadJob::run(void)
 {
-	QStringList dem_filenames = this->layer->files; /* kamilTODO: do we really need to make the copy? */
-
-	if (!DEMCache::load_files_into_cache(dem_filenames, this)) {
-		/* Thread cancelled. */
-		;
+	const bool load_status = this->load_files_into_cache();
+	if (!load_status) {
+		; /* Thread cancelled. */
 	}
 
-	/* ATM as each file is processed the screen is not updated (no mechanism exposed to DEMCache::load_files_into_cache()).
-	   Thus force draw only at the end, as loading is complete/aborted. */
-	if (this->layer) {
-		qDebug() << "SIGNAL: Layer DEM: will emit 'layer changed' after loading list of files";
-		this->layer->emit_layer_changed(); /* NB update from background thread. */
-	}
+	/* Signal completion of work only after all files from the
+	   list have been loaded (or abortion of task has been
+	   detected). Don't signal the layer on each file. */
+	emit this->loading_to_cache_completed();
 
 	return;
+}
+
+
+
+
+/**
+   \brief Load a group of DEM tiles into program's cache
+
+   \return true when function processed all files (successfully or unsuccessfully)
+   \return false if function was interrupted after detecting request for end of processing
+*/
+bool DEMLoadJob::load_files_into_cache(void)
+{
+	unsigned int dem_count = 0;
+	const unsigned int dem_total = this->file_paths.size();
+
+	for (auto iter = this->file_paths.begin(); iter != this->file_paths.end(); iter++) {
+		if (!DEMCache::load_file_into_cache(*iter)) {
+			qDebug() << "EE" PREFIX << "Failed to load into cache file" << *iter;
+		}
+
+		dem_count++;
+		/* Progress also detects abort request via the returned value. */
+		const bool end_job = this->set_progress_state(((double) dem_count) / dem_total);
+		if (end_job) {
+			return false; /* Abort thread. */
+		}
+	}
+	return true;
 }
 
 
@@ -446,6 +454,8 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 			/* Thread Load. */
 			DEMLoadJob * load_job = new DEMLoadJob(this);
 			load_job->set_description(QObject::tr("DEM Loading"));
+			QObject::connect(load_job, SIGNAL (loading_to_cache_completed(void)), this, SLOT (on_loading_to_cache_completed_cb(void)));
+
 			Background::run_in_background(load_job, ThreadPoolType::LOCAL);
 		}
 
@@ -592,10 +602,10 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 	double max_lon_as = min_max.max.lon * 3600;
 	double min_lon_as = min_max.min.lon * 3600;
 
-	double start_lat_as = MAX(min_lat_as, dem->min_north);
-	double end_lat_as   = MIN(max_lat_as, dem->max_north);
-	double start_lon_as = MAX(min_lon_as, dem->min_east);
-	double end_lon_as   = MIN(max_lon_as, dem->max_east);
+	double start_lat_as = std::max(min_lat_as, dem->min_north);
+	double end_lat_as   = std::min(max_lat_as, dem->max_north);
+	double start_lon_as = std::max(min_lon_as, dem->min_east);
+	double end_lon_as   = std::min(max_lon_as, dem->max_east);
 
 	double start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
 	double end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
@@ -766,19 +776,19 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	bleft.change_mode(CoordMode::UTM);
 	bright.change_mode(CoordMode::UTM);
 
-	double max_nor = MAX(tleft.utm.northing, tright.utm.northing);
-	double min_nor = MIN(bleft.utm.northing, bright.utm.northing);
-	double max_eas = MAX(bright.utm.easting, tright.utm.easting);
-	double min_eas = MIN(bleft.utm.easting, tleft.utm.easting);
+	double max_nor = std::max(tleft.utm.northing, tright.utm.northing);
+	double min_nor = std::min(bleft.utm.northing, bright.utm.northing);
+	double max_eas = std::max(bright.utm.easting, tright.utm.easting);
+	double min_eas = std::min(bleft.utm.easting, tleft.utm.easting);
 
 	double start_eas, end_eas;
-	double start_nor = MAX(min_nor, dem->min_north);
-	double end_nor   = MIN(max_nor, dem->max_north);
+	double start_nor = std::max(min_nor, dem->min_north);
+	double end_nor   = std::min(max_nor, dem->max_north);
 	if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
 	    && (tleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')
 	    && (bleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
-		start_eas = MAX(min_eas, dem->min_east);
+		start_eas = std::max(min_eas, dem->min_east);
 	} else {
 		start_eas = dem->min_east;
 	}
@@ -787,7 +797,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	    && (tright.utm.letter >= 'N') == (dem->utm_letter >= 'N')
 	    && (bright.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
-		end_eas = MIN(max_eas, dem->max_east);
+		end_eas = std::min(max_eas, dem->max_east);
 	} else {
 		end_eas = dem->max_east;
 	}
@@ -1158,7 +1168,7 @@ static void srtm_draw_existence(Viewport * viewport)
 				sp_ne.y = 0;
 			}
 
-			//qDebug() << "II: Layer DEM: drawing existence rectangle for" << buf;
+			qDebug() << "DD" PREFIX << "drawing existence rectangle for" << cache_file_path;
 			viewport->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 		}
 	}
@@ -1176,25 +1186,25 @@ static void srtm_draw_existence(Viewport * viewport)
 static void dem24k_dem_download_thread(DemDownloadJob * dl_job)
 {
 	/* TODO: dest dir. */
-	char *cmdline = g_strdup_printf("%s %.03f %.03f",
-					DEM24K_DOWNLOAD_SCRIPT,
-					floor(dl_job->lat * 8) / 8,
-					ceil(dl_job->lon * 8) / 8);
+	const QString cmdline = QString("%1 %2 %3")
+		.arg(DEM24K_DOWNLOAD_SCRIPT)
+		.arg(floor(dl_job->lat * 8) / 8, 0, 'f', 3, '0')  /* "%.03f" */
+		.arg(ceil(dl_job->lon * 8) / 8, 0, 'f', 3, '0');  /* "%.03f" */
+
 	/* FIXME: don't use system, use execv or something. check for existence. */
-	system(cmdline);
-	free(cmdline);
+	system(cmdline.toUtf8().constData());
 }
 
 
 
 
-static char * dem24k_lat_lon_to_cache_file_name(double lat, double lon)
+static QString dem24k_lat_lon_to_cache_file_name(double lat, double lon)
 {
-	return g_strdup_printf("dem24k/%d/%d/%.03f,%.03f.dem",
-			       (int) lat,
-			       (int) lon,
-			       floor(lat*8)/8,
-			       ceil(lon*8)/8);
+	return QString("dem24k/%1/%2/%3,%4.dem")
+		.arg((int) lat),
+		.arg((int) lon),
+		.arg(floor(lat * 8) / 8, 'f', 3, '0'),
+		.arg(ceil(lon * 8) / 8, 'f', 3, '0');
 }
 
 
@@ -1205,29 +1215,29 @@ static void dem24k_draw_existence(Viewport * viewport)
 {
 	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
 
-	for (double i = floor(min_max.lat.min * 8)/8; i <= floor(min_max.lat.max * 8)/8; i+=0.125) {
+	for (double lat = floor(min_max.lat.min * 8)/8; lat <= floor(min_max.lat.max * 8)/8; lat += 0.125) {
 		/* Check lat dir first -- faster. */
-		QString buf = QString("%1dem24k/%2/").arg(MapCache::get_dir()).arg((int) i);
+		const QString cache_file_path = QString("%1dem24k/%2/").arg(MapCache::get_dir()).arg((int) lat);
 
-		if (0 != access(buf.toUtf8().constData(), F_OK)) {
+		if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
 			continue;
 		}
 
 		for (double j = floor(min_max.lon.min * 8)/8; j <= floor(min_max.lon.max * 8)/8; j+=0.125) {
 			/* Check lon dir first -- faster. */
-			buf = QString("%1dem24k/%2/%3/").arg(MapCache::get_dir()).arg((int) i).arg((int) j);
-			if (0 != access(buf.toUtf8().constData(), F_OK)) {
+			cache_file_path = QString("%1dem24k/%2/%3/").arg(MapCache::get_dir()).arg((int) lat).arg((int) j);
+			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
 				continue;
 			}
 
-			buf = QString("%1dem24k/%2/%3/%4,%5.dem")
+			cache_file_path = QString("%1dem24k/%2/%3/%4,%5.dem")
 				.arg(MapCache::get_dir())
-				.arg((int) i)
+				.arg((int) lat)
 				.arg((int) j)
 				.arg(floor(i*8)/8, 0, 'f', 3, '0')  /* "%.03f" */
 				.arg(floor(j*8)/8, 0, 'f', 3, '0'); /* "%.03f" */
 
-			if (0 == access(buf.toUtf8().constData(), F_OK)) {
+			if (0 == access(cache_file_path.toUtf8().constData(), F_OK)) {
 				Coord coord_ne;
 				Coord coord_sw;
 
@@ -1250,7 +1260,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 					sp_ne.y = 0;
 				}
 
-				qDebug() << "DD: Layer DEM: drawing rectangle";
+				qDebug() << "DD" PREFIX << "drawing existence rectangle for" << cache_file_path;
 				viewport->draw_rectangle(viewport->black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 			}
 		}
@@ -1403,7 +1413,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	}
 
 #ifdef VIK_CONFIG_DEM24K
-	QString cache_file_name(dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon));
+	QString cache_file_name = dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon);
 #else
 	QString cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
 #endif
@@ -1437,12 +1447,12 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	const Coord coord = tool->viewport->screen_pos_to_coord(ev->x(), ev->y());
 	const LatLon ll = coord.get_latlon();
 
-	qDebug() << "II: Layer DEM: Download Tool: Release: received event, processing (coord" << ll.lat << ll.lon << ")";
+	qDebug() << "II" PREFIX << "received event, processing (coord" << ll.lat << ll.lon << ")";
 
 	QString cache_file_name;
 	if (this->source == DEM_SOURCE_SRTM) {
 		cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
-		qDebug() << "II: Layer DEM: Download Tool: Release: cache file name" << cache_file_name;
+		qDebug() << "II" PREFIX << "cache file name" << cache_file_name;
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
 		cache_file_name = dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon);
@@ -1450,28 +1460,30 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (!cache_file_name.length()) {
-		qDebug() << "NN: Layer DEM: Download Tool: Release: received click, but no dem file";
+		qDebug() << "WW" PREFIX << "received click, but no DEM file";
 		return true;
 	}
 
 	if (ev->button() == Qt::LeftButton) {
 		const QString dem_full_path = MapCache::get_dir() + cache_file_name;
-		qDebug() << "II: Layer DEM: Download Tool: Release: released left button, path is" << dem_full_path;
+		qDebug() << "II" PREFIX << "released left button, path is" << dem_full_path;
 
-		/* TODO: check if already in filelist. */
-		if (!this->add_file(dem_full_path)) {
-			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, failed to add the file, downloading it";
+		if (this->files.contains(dem_full_path)) {
+			qDebug() << "II" PREFIX << "path already on list of files:" << dem_full_path;
+
+		} else if (!this->add_file(dem_full_path)) {
+			qDebug() << "II" PREFIX << "released left button, failed to add the file, downloading it";
 			const QString job_description = QObject::tr("Downloading DEM %1").arg(cache_file_name);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
 			job->set_description(job_description);
 			Background::run_in_background(job, ThreadPoolType::REMOTE);
 		} else {
-			qDebug() << "II: Layer DEM: Download Tool: Release: released left button, successfully added the file, emitting 'changed'";
+			qDebug() << "II" PREFIX << "released left button, successfully added the file, emitting 'changed'";
 			this->emit_layer_changed();
 		}
 
 	} else if (ev->button() == Qt::RightButton) {
-		qDebug() << "II: Layer DEM: release right button";
+		qDebug() << "II" PREFIX << "release right button";
 		if (!this->right_click_menu) {
 
 			this->right_click_menu = new QMenu();
@@ -1505,4 +1517,13 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * 
 	 * Download over area. */
 	qDebug() << "II: Layer DEM: received click event, ignoring";
 	return true;
+}
+
+
+
+
+void LayerDEM::on_loading_to_cache_completed_cb(void)
+{
+	qDebug() << "SIGNAL" PREFIX << "will emit 'layer changed' after loading list of files";
+	this->emit_layer_changed();
 }
