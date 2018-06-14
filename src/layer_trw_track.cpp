@@ -3289,7 +3289,7 @@ void Track::open_astro_cb(void)
 void Track::reverse_cb(void)
 {
 	this->reverse();
-	((LayerTRW *) this->owning_layer)->emit_layer_changed();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Track - reverse");
 }
 
 
@@ -3452,7 +3452,7 @@ void Track::convert_track_route_cb(void)
 	}
 
 	/* Update in case color of track / route changes when moving between sublayers. */
-	parent_layer->emit_layer_changed();
+	parent_layer->emit_layer_changed("TRW - Track - convert track route");
 }
 
 
@@ -3825,7 +3825,7 @@ void Track::refine_route_cb(void)
 		parent_layer->route_finder_added_track = NULL;
 		parent_layer->route_finder_check_added_track = false;
 
-		parent_layer->emit_layer_changed();
+		parent_layer->emit_layer_changed("TRW - refine route");
 
 		/* Restore cursor */
 		main_window->clear_busy_cursor();
@@ -3861,7 +3861,7 @@ void Track::split_by_segments_cb(void)
 		delete tracks_;
 		/* Remove original track. */
 		parent_layer->delete_track(this);
-		parent_layer->emit_layer_changed();
+		parent_layer->emit_layer_changed("TRW - Track - split by segment");
 	} else {
 		Dialog::error(tr("Can not split track as it has no segments"), g_tree->tree_get_main_window());
 	}
@@ -3953,7 +3953,7 @@ void Track::delete_sublayer(bool confirm)
 	}
 
 	if (was_visible) {
-		parent_layer->emit_layer_changed();
+		parent_layer->emit_layer_changed("TRW - delete sublayer");
 	}
 }
 

@@ -98,6 +98,9 @@ namespace SlavGPS {
 	private:
 		void child_visible_set(LayersPanel * panel, bool visible);
 
+	public slots:
+		/* Aggregate Layer can contain other layers and should be notified about changes in them. */
+		void child_layer_changed_cb(const QString & child_layer_name);
 
 	private slots:
 		void child_visible_on_cb(void);

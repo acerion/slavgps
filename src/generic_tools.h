@@ -112,6 +112,7 @@ namespace SlavGPS {
 
 		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
+		void handle_mouse_click_common(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 

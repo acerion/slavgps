@@ -193,7 +193,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 		assert(0);
 	}
 
-	this->emit_layer_changed();
+	this->emit_layer_changed("TRW - handle select tool release");
 	return true;
 }
 
@@ -248,7 +248,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 			}
 
 			qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
-			this->emit_layer_changed();
+			this->emit_layer_changed("TRW - handle select tool click");
 			return true;
 		}
 	}
@@ -270,7 +270,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 				this->tpwin_update_dialog_data();
 			}
 
-			this->emit_layer_changed();
+			this->emit_layer_changed("TRW - handle select tool click - tracks");
 			return true;
 		}
 	}
@@ -289,7 +289,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 				this->tpwin_update_dialog_data();
 			}
 
-			this->emit_layer_changed();
+			this->emit_layer_changed("TRW - handle select tool click - routes");
 			return true;
 		}
 	}
@@ -534,7 +534,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 			trw->set_edited_wp(wp_search.closest_wp);
 
 			/* Could make it so don't update if old WP is off screen and new is null but oh well. */
-			trw->emit_layer_changed();
+			trw->emit_layer_changed("TRW - edit waypoint - click");
 
 			this->perform_selection(ScreenPos(ev->x(), ev->y()));
 
@@ -550,12 +550,12 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		   selected, no waypoint is selected by this tool, and
 		   no waypoint is drawn as selected. */
 
-		trw->reset_edited_wp();
+		const bool wp_was_edited = trw->reset_edited_wp();
+		const bool something_was_released = this->perform_release();
 
-		this->perform_release();
-
-		/* TODO: do we need to emit this signal every time a right-click fails? */
-		trw->emit_layer_changed();
+		if (wp_was_edited || something_was_released) {
+			trw->emit_layer_changed("Waypoint has been deselected after mouse click on area of layer without waypoints");
+		}
 
 		return ToolStatus::Ignored;
 	}
@@ -636,7 +636,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseE
 		trw->get_edited_wp()->coord = new_coord;
 
 		trw->get_waypoints_node().recalculate_bbox();
-		trw->emit_layer_changed();
+		trw->emit_layer_changed("TRW - edit waypoint - mouse release");
 		return ToolStatus::Ack;
 		}
 
@@ -1022,13 +1022,13 @@ static ToolStatus tool_new_track_handle_key_press(LayerTool * tool, LayerTRW * t
 		}
 
 		trw->reset_edited_track();
-		trw->emit_layer_changed();
+		trw->emit_layer_changed("TRW - new track - handle key escape");
 		return ToolStatus::Ack;
 
 	case Qt::Key_Backspace:
 		track->remove_last_trackpoint();
 		trw->update_statusbar();
-		trw->emit_layer_changed();
+		trw->emit_layer_changed("TRW - new track - handle key backspace");
 		return ToolStatus::Ack;
 
 	default:
@@ -1069,7 +1069,7 @@ ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEv
 	if (ev->button() == Qt::RightButton) {
 		track->remove_last_trackpoint();
 		trw->update_statusbar();
-		trw->emit_layer_changed();
+		trw->emit_layer_changed("TRW - extend track with mouse click");
 		return ToolStatus::Ack;
 	}
 
@@ -1094,7 +1094,7 @@ ToolStatus extend_track_with_mouse_click(LayerTRW * trw, Track * track, QMouseEv
 	trw->ct_x2 = ev->x();
 	trw->ct_y2 = ev->y();
 
-	trw->emit_layer_changed();
+	trw->emit_layer_changed("TRW - extend track with mouse click end");
 
 	return ToolStatus::Ack;
 }
@@ -1182,7 +1182,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 		}
 #endif
 	}
-	trw->emit_layer_changed();
+	trw->emit_layer_changed("TRW - new track - handle mouse double click");
 	return ToolStatus::Ack;
 }
 
@@ -1310,7 +1310,7 @@ ToolStatus LayerToolTRWNewRoute::handle_mouse_double_click(Layer * layer, QMouse
 		}
 #endif
 	}
-	trw->emit_layer_changed();
+	trw->emit_layer_changed("TRW - new route - handle mouse double click");
 	return ToolStatus::Ack;
 }
 
@@ -1373,7 +1373,7 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 		trw->get_waypoints_node().recalculate_bbox();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";
-			trw->emit_layer_changed();
+			trw->emit_layer_changed("TRW - new waypoint - handle mouse click");
 		}
 	}
 	return ToolStatus::Ack;
@@ -1450,7 +1450,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 			trw->trackpoint_properties_show();
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
-			trw->emit_layer_changed();
+			trw->emit_layer_changed("TRW - edit waypoint - tracks closest");
 			return ToolStatus::Ack;
 		}
 	}
@@ -1464,7 +1464,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 			trw->trackpoint_properties_show();
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
-			trw->emit_layer_changed();
+			trw->emit_layer_changed("TRW - edit waypoint - routes closest");
 			return ToolStatus::Ack;
 		}
 	}
@@ -1546,7 +1546,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 		trw->tpwin_update_dialog_data();
 	}
 
-	trw->emit_layer_changed();
+	trw->emit_layer_changed("TRW - edit trackpoint - handle mouse release");
 
 	return ToolStatus::Ack;
 }
@@ -1600,7 +1600,7 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 	}
 	delete new_end;
 
-	trw->emit_layer_changed();
+	trw->emit_layer_changed("TRW - extended route finder");
 
 	/* Remove last ' to:...' */
 	if (!track->comment.isEmpty()) {
@@ -1679,7 +1679,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg2);
 
 
-		trw->emit_layer_changed();
+		trw->emit_layer_changed("TRW - extended route finder - handle mouse click - route");
 	} else {
 		trw->reset_edited_track();
 
@@ -1710,7 +1710,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKey
 	case  Qt::Key_Escape:
 		trw->route_finder_started = false;
 		trw->reset_edited_track();
-		trw->emit_layer_changed();
+		trw->emit_layer_changed("TRW - extender route finder - handle key escape");
 		return ToolStatus::Ack;
 
 	case Qt::Key_Backspace:

@@ -50,6 +50,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": Waypoint:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 extern Tree * g_tree;
 
 extern bool g_have_astro_program;
@@ -458,7 +463,7 @@ void Waypoint::properties_dialog_cb(void)
 		parent_layer_->get_waypoints_node().set_new_waypoint_icon(this);
 
 		if (parent_layer_->visible) {
-			parent_layer_->emit_layer_changed();
+			parent_layer_->emit_layer_changed("TRW - Waypoint - properties");
 		}
 	}
 }
@@ -649,6 +654,8 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
 
+	qDebug() << "II" PREFIX << "Drawing waypoint" << this->name << "selected = " << item_is_selected;
+
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	parent_layer->painter->draw_waypoint(this, viewport, item_is_selected && highlight_selected);
 }
@@ -710,7 +717,7 @@ void Waypoint::delete_sublayer(bool confirm)
 	parent_layer->tree_view->set_tree_item_timestamp(parent_layer->index, parent_layer->get_timestamp());
 
 	if (was_visible) {
-		parent_layer->emit_layer_changed();
+		parent_layer->emit_layer_changed("TRW - Waypoint - delete");
 	}
 }
 

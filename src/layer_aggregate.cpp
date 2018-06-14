@@ -105,7 +105,7 @@ Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, Viewport * viewport
 		Layer * child_layer = Layer::unmarshall(pickle, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
-			QObject::connect(child_layer, SIGNAL(Layer::changed(void)), (Layer *) aggregate, SLOT(child_layer_changed_cb(const QString &)));
+			QObject::connect(child_layer, SIGNAL (layer_changed(const QString &)), aggregate, SLOT(child_layer_changed_cb(const QString &)));
 		}
 	}
 	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << pickle.data_size;
@@ -164,7 +164,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 		this->children->push_back(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(layer_changed(const QString &)), (Layer *) this, SLOT(child_layer_changed_cb(const QString &)));
+	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 }
 
 
@@ -214,7 +214,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_front(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(layer_changed(const QString &)), this, SLOT(child_layer_changed_cb(const QString &)));
+	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 }
 
 
@@ -329,7 +329,7 @@ void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 		t_view->toggle_tree_item_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
-	this->emit_layer_changed();
+	this->emit_layer_changed("Aggregate - child visible toggle");
 }
 
 
@@ -347,7 +347,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 	}
 
 	/* Redraw as view may have changed. */
-	this->emit_layer_changed();
+	this->emit_layer_changed("Aggregate - child visible set");
 }
 
 
@@ -929,4 +929,18 @@ LayerAggregate::LayerAggregate()
 	this->set_name(Layer::get_type_ui_label(this->type));
 
 	this->children = new std::list<Layer *>;
+}
+
+
+
+
+void LayerAggregate::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
+{
+	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
+	if (this->visible) {
+		/* TODO: this can used from the background - e.g. in acquire
+		   so will need to flow background update status through too. */
+		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
+		emit this->layer_changed(this->get_name());
+	}
 }

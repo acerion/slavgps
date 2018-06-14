@@ -1755,7 +1755,7 @@ void MapDownloadJob::run(void)
 
 			if (this->refresh_display && this->map_layer_alive) {
 				/* TODO: check if it's on visible area. */
-				this->layer->emit_layer_changed(); /* NB update display from background. */
+				this->layer->emit_layer_changed("Map - map download"); /* NB update display from background. */
 			}
 			this->mutex.unlock();
 

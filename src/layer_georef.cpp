@@ -1122,7 +1122,7 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 	if (this->click_x != -1) {
 		this->utm_tl.easting += (ev->x() - this->click_x) * tool->viewport->get_xmpp();
 		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->viewport->get_ympp();
-		this->emit_layer_changed();
+		this->emit_layer_changed("Georef - move released");
 		return ToolStatus::Ack;
 	}
 	return ToolStatus::Ignored; /* I didn't move anything on this layer! */
@@ -1175,7 +1175,7 @@ ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 	}
 	tool->viewport->set_xmpp(this->mpp_easting);
 	tool->viewport->set_ympp(this->mpp_northing);
-	this->emit_layer_changed();
+	this->emit_layer_changed("Georef - zoom press");
 	return ToolStatus::Ack;
 }
 

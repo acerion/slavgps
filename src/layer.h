@@ -120,8 +120,8 @@ namespace SlavGPS {
 
 		static Layer * construct_layer(LayerType layer_type, Viewport * viewport, bool interactive = false);
 
-		void emit_layer_changed(void);
-		void emit_layer_changed_although_invisible(void);
+		void emit_layer_changed(const QString & where);
+		void emit_layer_changed_although_invisible(const QString & where);
 
 		const LayerInterface & get_interface(void) const;
 		static LayerInterface * get_interface(LayerType layer_type);
@@ -240,10 +240,6 @@ namespace SlavGPS {
 
 		LayerInterface * interface = NULL;
 		QMenu * right_click_menu = NULL;
-
-	public slots:
-		void child_layer_changed_cb(const QString & child_layer_name);
-
 
 	protected slots:
 		virtual void location_info_cb(void);

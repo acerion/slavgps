@@ -119,13 +119,12 @@ namespace SlavGPS {
 	class DEMLoadJob : public BackgroundJob {
 		Q_OBJECT
 	public:
-		DEMLoadJob(LayerDEM * layer);
+		DEMLoadJob(const QStringList & file_paths);
 
 		void run(void);
 		void cleanup_on_cancel(void);
 		bool load_files_into_cache(void);
 
-		LayerDEM * layer = NULL;
 		QStringList file_paths;
 	signals:
 		void loading_to_cache_completed();

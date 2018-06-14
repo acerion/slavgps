@@ -105,11 +105,11 @@ void SlavGPS::layer_init(void)
 /**
  * Draw specified layer.
  */
-void Layer::emit_layer_changed()
+void Layer::emit_layer_changed(const QString & where)
 {
 	if (this->visible && this->tree_view) {
 		Window::set_redraw_trigger(this);
-		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'layer changed' signal";
+		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'layer changed' signal @" << where;
 		emit this->layer_changed(this->get_name());
 	}
 }
@@ -121,26 +121,11 @@ void Layer::emit_layer_changed()
  * Should only be done by LayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
-void Layer::emit_layer_changed_although_invisible()
+void Layer::emit_layer_changed_although_invisible(const QString & where)
 {
 	Window::set_redraw_trigger(this);
-	qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
+	qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal @" << where;
 	emit this->layer_changed(this->get_name());
-}
-
-
-
-
-/* Doesn't set the trigger. should be done by aggregate layer when child emits 'changed' signal. */
-void Layer::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
-{
-	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
-	if (this->visible) {
-		/* TODO: this can used from the background - e.g. in acquire
-		   so will need to flow background update status through too. */
-		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
-		emit this->layer_changed(this->get_name());
-	}
 }
 
 

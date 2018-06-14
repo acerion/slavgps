@@ -125,8 +125,11 @@ namespace SlavGPS {
 		void perform_move(const ScreenPos & new_screen_pos);
 
 		/* Selected item belonging to a layer has been released.
-		   Call this method only when there was an item that was being selected. */
-		void perform_release(void);
+		   Call this method only when there was an item that was being selected.
+
+		   Return information about whether there was something to be released.
+		*/
+		bool perform_release(void);
 
 
 		QString action_icon_path;

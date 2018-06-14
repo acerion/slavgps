@@ -637,7 +637,7 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 	trk->set_comment(this->w_comment->text());
 
 	this->trw->update_tree_view(this->trk);
-	this->trw->emit_layer_changed();
+	this->trw->emit_layer_changed("TRW - Track List Dialog - accept");
 #endif
 
 	this->accept();

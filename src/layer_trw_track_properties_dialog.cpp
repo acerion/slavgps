@@ -433,7 +433,7 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 	} else {
 		parent_layer->get_routes_node().update_tree_view(this->trk);
 	}
-	parent_layer->emit_layer_changed();
+	parent_layer->emit_layer_changed("TRW - Track Properties Dialog");
 
 	this->accept();
 }

@@ -139,7 +139,7 @@ void LayerTool::perform_move(const ScreenPos & new_pos)
 
 
 
-void LayerTool::perform_release(void)
+bool LayerTool::perform_release(void)
 {
 	assert (this->layer_edit_info);
 
@@ -148,9 +148,12 @@ void LayerTool::perform_release(void)
 	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->old_screen_pos.x - 3, this->layer_edit_info->old_screen_pos.y - 3, 6, 6);
 #endif
 
-	qDebug() << "----------------------------" << __FUNCTION__ << "holding = false";
+	const bool something_released = this->layer_edit_info->holding || this->layer_edit_info->moving;
+
 	this->layer_edit_info->holding = false;
 	this->layer_edit_info->moving = false;
+
+	return something_released;
 }
 
 

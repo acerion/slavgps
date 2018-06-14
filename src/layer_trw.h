@@ -329,7 +329,9 @@ namespace SlavGPS {
 
 		Waypoint * get_edited_wp(void);
 		void set_edited_wp(Waypoint * wp);
-		void reset_edited_wp(void);
+
+		/* Returns true if there was some waypoint that was selected/edited. */
+		bool reset_edited_wp(void);
 
 
 		void delete_sublayer_common(TreeItem * item, bool confirm);

@@ -55,7 +55,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Viewport Decorations: "
+#define PREFIX ": Viewport Decorations:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -274,7 +274,7 @@ void ViewportDecorations::draw_copyrights(Viewport * viewport)
 
 void ViewportDecorations::draw_center_mark(Viewport * viewport)
 {
-	qDebug() << "II:" PREFIX << __FUNCTION__ << __LINE__ << "draw center mark:" << viewport->center_mark_visibility;
+	//qDebug() << "II" PREFIX << "center mark visibility =" << viewport->center_mark_visibility;
 
 	if (!viewport->center_mark_visibility) {
 		return;

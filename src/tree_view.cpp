@@ -282,7 +282,7 @@ bool TreeView::get_tree_item_visibility_with_parents(TreeIndex const & item_inde
 	TreeIndex this_item_index = item_index;
 
 	do {
-#if 1           /* Debug. */
+#if 0           /* Debug. */
 		TreeItem * item = this->get_tree_item(this_item_index);
 		if (!item) {
 			return false; /* The item doesn't exist, so let's return 'is invisible' for it. */
@@ -1083,7 +1083,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 	bool result = selected_item->properties_dialog();
 	if (result) {
 		if (selected_item->tree_item_type == TreeItemType::LAYER) {
-			selected_item->to_layer()->emit_layer_changed();
+			selected_item->to_layer()->emit_layer_changed("Tree View - Item Properties");
 		}
 		return true;
 	}

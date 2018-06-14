@@ -704,7 +704,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 	   however since we may create the layer - need to do the update here. */
 	if (got_something) {
 		Layer * layer_last = (Layer *) vtl_last;
-		layer_last->emit_layer_changed();
+		layer_last->emit_layer_changed("OSM My Traces - acquire into layer");
 	}
 
 	/* ATM The user is only informed if all getting *all* of the traces failed. */

@@ -1091,7 +1091,7 @@ void GPSSession::run(void)
 					this->trw->post_read(this->viewport, true);
 					/* View the data available. */
 					this->trw->move_viewport_to_show_all(this->viewport) ;
-					this->trw->emit_layer_changed(); /* NB update from background thread. */
+					this->trw->emit_layer_changed("GPS Session - post read"); /* NB update from background thread. */
 				}
 			}
 		} else {
@@ -1570,9 +1570,9 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 		/* NB update from background thread. */
 		if (update_all) {
-			layer->emit_layer_changed();
+			layer->emit_layer_changed("GPS - update all");
 		} else {
-			layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_layer_changed();
+			layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_layer_changed("GPS - TRW - update realtime");
 		}
 	}
 }
@@ -1838,5 +1838,20 @@ void LayerGPS::set_coord_mode(CoordMode new_mode)
 {
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i]->set_coord_mode(new_mode);
+	}
+}
+
+
+
+
+/* Doesn't set the trigger. should be done by aggregate layer when child emits 'changed' signal. */
+void LayerGPS::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
+{
+	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
+	if (this->visible) {
+		/* TODO: this can used from the background - e.g. in acquire
+		   so will need to flow background update status through too. */
+		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
+		emit this->layer_changed(this->get_name());
 	}
 }

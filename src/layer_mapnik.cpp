@@ -686,7 +686,7 @@ void RenderInfo::run(void)
 	tp_mutex.unlock();
 
 	if (!end_job) {
-		this->lmk->emit_layer_changed(); /* NB update display from background. */
+		this->lmk->emit_layer_changed("Mapnik - render info"); /* NB update display from background. */
 	}
 	return;
 }
@@ -790,7 +790,7 @@ QPixmap LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 			} else {
 				/* Run in the foreground. */
 				this->render(coord_ul, coord_br, ti_ul);
-				this->emit_layer_changed();
+				this->emit_layer_changed("Mapnik - get pixmap");
 			}
 		}
 	}

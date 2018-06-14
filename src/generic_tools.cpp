@@ -773,6 +773,8 @@ ToolStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 }
 
 
+
+
 ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << "DD: Layer Tools: Pan: ->handle_mouse_double_click() called";
@@ -853,46 +855,19 @@ LayerToolSelect::~LayerToolSelect()
 
 ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_click() called";
+	qDebug() << "DD" PREFIX << this->id_string;
 
 	this->select_and_move_activated = false;
 
-	/* Only allow selection on primary button. */
+	/* Only allow selection on left button. */
 	if (event->button() != Qt::LeftButton) {
 		return ToolStatus::Ignored;
 	}
 
-
 	if (event->modifiers() & SG_MOVE_MODIFIER) {
 		this->window->pan_click(event);
 	} else {
-		/* TODO: the code in this branch visits (in one way or
-		   the other) whole tree of layers, starting with top
-		   level aggregate layer.  Should we really visit all
-		   layers? Shouldn't we visit only selected items and
-		   its children? */
-
-		const bool handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->viewport, this);
-		if (!handled) {
-			/* Deselect & redraw screen if necessary to remove the highlight. */
-
-			TreeView * tree_view = this->window->items_tree->get_tree_view();
-			TreeItem * selected_item = tree_view->get_selected_tree_item();
-			if (selected_item) {
-				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */
-				if (selected_item->tree_item_type == TreeItemType::SUBLAYER
-				    || selected_item->to_layer()->type == LayerType::TRW) {
-
-					tree_view->deselect(selected_item->index);
-					if (this->window->clear_highlight()) {
-						this->window->draw_tree_items();
-					}
-				}
-			}
-		} else {
-			/* Some layer has handled the click - so enable movement. */
-			this->select_and_move_activated = true;
-		}
+		this->handle_mouse_click_common(layer, event);
 	}
 
 	return ToolStatus::Ack;
@@ -903,51 +878,64 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_double_click() called";
+	qDebug() << "DD" PREFIX << this->id_string;
 
 	this->select_and_move_activated = false;
 
-	/* Only allow selection on primary button. */
+	/* Only allow selection on left button. */
 	if (event->button() != Qt::LeftButton) {
 		return ToolStatus::Ignored;
 	}
 
-
 	if (event->modifiers() & SG_MOVE_MODIFIER) {
 		this->window->pan_click(event);
 	} else {
-		/* TODO: the code in this branch visits (in one way or
-		   the other) whole tree of layers, starting with top
-		   level aggregate layer.  Should we really visit all
-		   layers? Shouldn't we visit only selected items and
-		   its children? */
-
-		qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_double_click() called, looking for layer";
-		const bool handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->viewport, this);
-		if (!handled) {
-			qDebug() << "DD: Layer Tools:" << this->id_string << "->handle_mouse_double_click() not handled";
-			/* Deselect & redraw screen if necessary to remove the highlight. */
-
-			TreeView * tree_view = this->window->items_tree->get_tree_view();
-			TreeItem * selected_item = tree_view->get_selected_tree_item();
-			if (selected_item) {
-				/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */
-				if (selected_item->tree_item_type == TreeItemType::SUBLAYER
-				    || selected_item->to_layer()->type == LayerType::TRW) {
-
-					tree_view->deselect(selected_item->index);
-					if (this->window->clear_highlight()) {
-						this->window->draw_tree_items();
-					}
-				}
-			}
-		} else {
-			/* Some layer has handled the click - so enable movement. */
-			this->select_and_move_activated = true;
-		}
+		this->handle_mouse_click_common(layer, event);
 	}
 
 	return ToolStatus::Ack;
+}
+
+
+
+
+void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * event)
+{
+	/* TODO: the code in this branch visits (in one way or the
+	   other) whole tree of layers, starting with top level
+	   aggregate layer.  Should we really visit all layers?
+	   Shouldn't we visit only selected items and its children? */
+
+	bool handled = false;
+	if (event->type() == QEvent::MouseButtonDblClick) {
+		qDebug() << "DD" PREFIX << this->id_string << "handling double click, looking for layer";
+		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->viewport, this);
+	} else {
+		qDebug() << "DD" PREFIX << this->id_string << "handle single click, looking for layer";
+		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->viewport, this);
+	}
+
+	if (!handled) {
+		qDebug() << "DD" PREFIX << this->id_string << "mouse event not handled";
+		/* Deselect & redraw screen if necessary to remove the highlight. */
+
+		TreeView * tree_view = this->window->items_tree->get_tree_view();
+		TreeItem * selected_item = tree_view->get_selected_tree_item();
+		if (selected_item) {
+			/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */
+			if (selected_item->tree_item_type == TreeItemType::SUBLAYER
+			    || selected_item->to_layer()->type == LayerType::TRW) {
+
+				tree_view->deselect(selected_item->index);
+				if (this->window->clear_highlight()) {
+					this->window->draw_tree_items();
+				}
+			}
+		}
+	} else {
+		/* Some layer has handled the click - so enable movement. */
+		this->select_and_move_activated = true;
+	}
 }
 
 

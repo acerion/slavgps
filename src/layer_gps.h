@@ -239,6 +239,9 @@ namespace SlavGPS {
 		void gps_start_stop_tracking_cb(void);
 		void gps_empty_realtime_cb(void);
 #endif
+
+		/* GPS Layer can contain other layers and should be notified about changes in them. */
+		void child_layer_changed_cb(const QString & child_layer_name);
 	};
 
 

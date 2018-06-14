@@ -885,7 +885,7 @@ void CommandLineOptions::apply(Window * window)
 			layer->set_name(Layer::get_type_ui_label(layer->type));
 
 			g_tree->tree_get_items_tree()->get_top_layer()->add_layer(layer, true);
-			layer->emit_layer_changed();
+			layer->emit_layer_changed("Command Line Options - Apply");
 		}
 	}
 }

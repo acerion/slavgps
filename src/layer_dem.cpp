@@ -182,7 +182,7 @@ static void srtm_draw_existence(Viewport * viewport);
 #ifdef VIK_CONFIG_DEM24K
 static void dem24k_draw_existence(Viewport * viewport);
 #endif
-
+static void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & coord_ne, const Coord & coord_sw, const QString & cache_file_path);
 
 
 
@@ -301,11 +301,10 @@ Layer * LayerDEMInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 
 
-DEMLoadJob::DEMLoadJob(LayerDEM * new_layer)
+DEMLoadJob::DEMLoadJob(const QStringList & new_file_paths)
 {
-	this->n_items = new_layer->files.size(); /* Number of DEM files. */
-	this->file_paths = this->layer->files;
-	this->layer = new_layer;
+	this->file_paths = new_file_paths;
+	this->n_items = this->file_paths.size(); /* Number of DEM files. */
 }
 
 
@@ -452,7 +451,7 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 		/* No need for thread if no files. */
 		if (!this->files.empty()) {
 			/* Thread Load. */
-			DEMLoadJob * load_job = new DEMLoadJob(this);
+			DEMLoadJob * load_job = new DEMLoadJob(this->files);
 			load_job->set_description(QObject::tr("DEM Loading"));
 			QObject::connect(load_job, SIGNAL (loading_to_cache_completed(void)), this, SLOT (on_loading_to_cache_completed_cb(void)));
 
@@ -912,7 +911,6 @@ const QString srtm_file_name(int lat, int lon)
 
 
 /* Return the continent for the specified lat, lon. */
-/* TODO */
 static bool srtm_get_continent_dir(QString & continent_dir, int lat, int lon)
 {
 	static QHash<QString, QString> continents; /* Coords -> continent. */
@@ -1123,14 +1121,12 @@ static const QString srtm_lat_lon_to_cache_file_name(double lat, double lon)
 
 
 
-/* TODO: generalize. */
 static void srtm_draw_existence(Viewport * viewport)
 {
 	QString cache_file_path;
 
 	const LatLonBBox bbox = viewport->get_bbox();
 	QPen pen("black");
-
 
 	qDebug() << "DD: Layer DEM: Existence: viewport bounding box: north:" << (int) bbox.north << "south:" << (int) bbox.south << "east:" << (int) bbox.east << "west:" << (int) bbox.west;
 
@@ -1157,24 +1153,28 @@ static void srtm_draw_existence(Viewport * viewport)
 			coord_ne.ll.lon = lon + 1;
 			coord_ne.mode = CoordMode::LATLON;
 
-			ScreenPos sp_sw = viewport->coord_to_screen_pos(coord_sw);
-			ScreenPos sp_ne = viewport->coord_to_screen_pos(coord_ne);
-
-			if (sp_sw.x < 0) {
-				sp_sw.x = 0;
-			}
-
-			if (sp_ne.y < 0) {
-				sp_ne.y = 0;
-			}
-
-			qDebug() << "DD" PREFIX << "drawing existence rectangle for" << cache_file_path;
-			viewport->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+			draw_existence_common(viewport, pen, coord_sw, coord_ne, cache_file_path);
 		}
 	}
 }
 
 
+void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & coord_ne, const Coord & coord_sw, const QString & cache_file_path)
+{
+	ScreenPos sp_sw = viewport->coord_to_screen_pos(coord_sw);
+	ScreenPos sp_ne = viewport->coord_to_screen_pos(coord_ne);
+
+	if (sp_sw.x < 0) {
+		sp_sw.x = 0;
+	}
+
+	if (sp_ne.y < 0) {
+		sp_ne.y = 0;
+	}
+
+	qDebug() << "DD" PREFIX << "drawing existence rectangle for" << cache_file_path;
+	viewport->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+}
 
 
 /**************************************************
@@ -1183,7 +1183,7 @@ static void srtm_draw_existence(Viewport * viewport)
 
 #ifdef VIK_CONFIG_DEM24K
 
-static void dem24k_dem_download_thread(DemDownloadJob * dl_job)
+static void dem24k_dem_download_thread(DEMDownloadJob * dl_job)
 {
 	/* TODO: dest dir. */
 	const QString cmdline = QString("%1 %2 %3")
@@ -1201,31 +1201,31 @@ static void dem24k_dem_download_thread(DemDownloadJob * dl_job)
 static QString dem24k_lat_lon_to_cache_file_name(double lat, double lon)
 {
 	return QString("dem24k/%1/%2/%3,%4.dem")
-		.arg((int) lat),
-		.arg((int) lon),
-		.arg(floor(lat * 8) / 8, 'f', 3, '0'),
-		.arg(ceil(lon * 8) / 8, 'f', 3, '0');
+		.arg((int) lat)
+		.arg((int) lon)
+		.arg(floor(lat * 8) / 8, 0, 'f', 3, '0')
+		.arg(ceil(lon * 8) / 8, 0, 'f', 3, '0');
 }
 
 
 
 
-/* TODO: generalize. */
 static void dem24k_draw_existence(Viewport * viewport)
 {
 	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
+	QPen pen("black");
 
-	for (double lat = floor(min_max.lat.min * 8)/8; lat <= floor(min_max.lat.max * 8)/8; lat += 0.125) {
+	for (double lat = floor(min_max.min.lat * 8) / 8; lat <= floor(min_max.max.lat * 8) / 8; lat += 0.125) {
 		/* Check lat dir first -- faster. */
-		const QString cache_file_path = QString("%1dem24k/%2/").arg(MapCache::get_dir()).arg((int) lat);
+		QString cache_file_path = QString("%1dem24k/%2/").arg(MapCache::get_dir()).arg((int) lat);
 
 		if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
 			continue;
 		}
 
-		for (double j = floor(min_max.lon.min * 8)/8; j <= floor(min_max.lon.max * 8)/8; j+=0.125) {
+		for (double lon = floor(min_max.min.lon * 8) / 8; lon <= floor(min_max.max.lon * 8) / 8; lon += 0.125) {
 			/* Check lon dir first -- faster. */
-			cache_file_path = QString("%1dem24k/%2/%3/").arg(MapCache::get_dir()).arg((int) lat).arg((int) j);
+			cache_file_path = QString("%1dem24k/%2/%3/").arg(MapCache::get_dir()).arg((int) lat).arg((int) lon);
 			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
 				continue;
 			}
@@ -1233,42 +1233,30 @@ static void dem24k_draw_existence(Viewport * viewport)
 			cache_file_path = QString("%1dem24k/%2/%3/%4,%5.dem")
 				.arg(MapCache::get_dir())
 				.arg((int) lat)
-				.arg((int) j)
-				.arg(floor(i*8)/8, 0, 'f', 3, '0')  /* "%.03f" */
-				.arg(floor(j*8)/8, 0, 'f', 3, '0'); /* "%.03f" */
+				.arg((int) lon)
+				.arg(floor(lat * 8) / 8, 0, 'f', 3, '0')  /* "%.03f" */
+				.arg(floor(lon * 8) / 8, 0, 'f', 3, '0'); /* "%.03f" */
 
-			if (0 == access(cache_file_path.toUtf8().constData(), F_OK)) {
-				Coord coord_ne;
-				Coord coord_sw;
-
-				coord_sw.ll.lat = i;
-				coord_sw.ll.lon = j-0.125;
-				coord_sw.mode = CoordMode::LATLON;
-
-				coord_ne.ll.lat = i+0.125;
-				coord_ne.ll.lon = j;
-				coord_ne.mode = CoordMode::LATLON;
-
-				const ScreenPos sp_sw = viewport->coord_to_screen_pos(coord_sw);
-				const ScreenPos sp_ne = viewport->coord_to_screen_pos(coord_ne);
-
-				if (sp_sw.x < 0) {
-					sp_sw.x = 0;
-				}
-
-				if (sp_ne.y < 0) {
-					sp_ne.y = 0;
-				}
-
-				qDebug() << "DD" PREFIX << "drawing existence rectangle for" << cache_file_path;
-				viewport->draw_rectangle(viewport->black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
+				continue;
 			}
+
+			Coord coord_ne;
+			Coord coord_sw;
+
+			coord_sw.ll.lat = lat;
+			coord_sw.ll.lon = lon - 0.125;
+			coord_sw.mode = CoordMode::LATLON;
+
+			coord_ne.ll.lat = lat + 0.125;
+			coord_ne.ll.lon = lon;
+			coord_ne.mode = CoordMode::LATLON;
+
+			draw_existence_common(viewport, pen, coord_sw, coord_ne, cache_file_path);
 		}
 	}
 }
 #endif
-
-
 
 
 /**************************************************
@@ -1332,7 +1320,7 @@ void DEMDownloadJob::run(void)
 
 		if (this->layer->add_file(this->dest_file_path)) {
 			qDebug() << "SIGNAL" PREFIX << "will emit 'layer changed' on downloading file";
-			this->layer->emit_layer_changed(); /* NB update from background thread. */
+			this->layer->emit_layer_changed("DEM - downloaded file"); /* NB update from background thread. */
 		}
 	}
 	this->mutex.unlock();
@@ -1479,7 +1467,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 			Background::run_in_background(job, ThreadPoolType::REMOTE);
 		} else {
 			qDebug() << "II" PREFIX << "released left button, successfully added the file, emitting 'changed'";
-			this->emit_layer_changed();
+			this->emit_layer_changed("DEM - released left button");
 		}
 
 	} else if (ev->button() == Qt::RightButton) {
@@ -1525,5 +1513,5 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * 
 void LayerDEM::on_loading_to_cache_completed_cb(void)
 {
 	qDebug() << "SIGNAL" PREFIX << "will emit 'layer changed' after loading list of files";
-	this->emit_layer_changed();
+	this->emit_layer_changed("DEM - loading to cache completed");
 }

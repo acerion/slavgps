@@ -589,7 +589,7 @@ void GeotagJob::run(void)
 			/* Ensure any new images get show. */
 			this->trw->generate_missing_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
-			this->trw->emit_layer_changed(); /* Update from background. */
+			this->trw->emit_layer_changed("TRW Geotag - run"); /* Update from background. */
 		}
 	}
 

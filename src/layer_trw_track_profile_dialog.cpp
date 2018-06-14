@@ -416,7 +416,7 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 
 	if (tp) {
 		main_viewport->set_center_from_coord(tp->coord, true);
-		trw->emit_layer_changed();
+		trw->emit_layer_changed("TRw - Track Profile Dialog - set center");
 	}
 	return tp;
 }
@@ -1554,12 +1554,12 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		break;
 	case SG_TRACK_PROFILE_OK:
 		this->trw->get_tracks_node().update_tree_view(this->track_info.trk);
-		this->trw->emit_layer_changed();
+		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Profile OK");
 		this->accept();
 		break;
 	case SG_TRACK_PROFILE_REVERSE:
 		this->track_info.trk->reverse();
-		this->trw->emit_layer_changed();
+		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Reverse");
 		keep_dialog = true;
 		break;
 	case SG_TRACK_PROFILE_SPLIT_SEGMENTS: {
@@ -1586,7 +1586,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			} else {
 				this->trw->delete_track(this->track_info.trk);
 			}
-			this->trw->emit_layer_changed(); /* Chase thru the hoops. */
+			this->trw->emit_layer_changed("TRW - Track Profile Dialog - Split"); /* Chase thru the hoops. */
 		}
 	}
 		break;
@@ -1628,7 +1628,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		this->track_info.trk->recalculate_bbox();
 		trk_right->recalculate_bbox();
 
-		this->trw->emit_layer_changed();
+		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Split At Marker");
 	}
 		break;
 	default:

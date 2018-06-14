@@ -841,7 +841,7 @@ void LayerTRWTracks::items_visibility_on_cb(void) /* Slot. */
 {
 	this->set_items_visibility(true);
 	/* Redraw. */
-	((LayerTRW *) this->owning_layer)->emit_layer_changed();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Tracks - items visibility on");
 }
 
 
@@ -851,7 +851,7 @@ void LayerTRWTracks::items_visibility_off_cb(void) /* Slot. */
 {
 	this->set_items_visibility(false);
 	/* Redraw. */
-	((LayerTRW *) this->owning_layer)->emit_layer_changed();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Tracks - items visibility off");
 }
 
 
@@ -861,7 +861,7 @@ void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
 {
 	this->toggle_items_visibility();
 	/* Redraw. */
-	((LayerTRW *) this->owning_layer)->emit_layer_changed();
+	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Tracks - items visibility toggle");
 }
 
 
