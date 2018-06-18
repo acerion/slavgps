@@ -77,15 +77,6 @@ extern Tree * g_tree;
 
 
 
-enum {
-	LAYER_NAME_COLUMN = 0,    /* Layer Name (string). May not be displayed. */
-	WAYPOINT_COLUMN,          /* Waypoint Name (string) + pointer to waypoint */
-	DATE_COLUMN,              /* Date (string). */
-	VISIBLE_COLUMN,           /* Visibility (boolean). */
-	COMMENT_COLUMN,           /* Comment (string). */
-	HEIGHT_COLUMN,            /* Height (integer). */
-	SYMBOL_COLUMN,            /* Symbol icon (pixmap). */
-};
 
 
 
@@ -324,10 +315,10 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QStandardItem * parent_item = this->model->invisibleRootItem();
 
 
-	QStandardItem * child = parent_item->child(index.row(), WAYPOINT_COLUMN);
+	QStandardItem * child = parent_item->child(index.row(), WaypointListModel::Waypoint);
 	qDebug() << "II" PREFIX << "selected waypoint" << child->text();
 
-	child = parent_item->child(index.row(), WAYPOINT_COLUMN);
+	child = parent_item->child(index.row(), WaypointListModel::Waypoint);
 	Waypoint * wp = child->data(RoleLayerData).value<Waypoint *>();
 	if (!wp) {
 		qDebug() << "EE" PREFIX << "failed to get non-NULL Waypoint from table";
@@ -415,48 +406,46 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit, const QS
 	QVariant variant;
 	QString tooltip(wp->description);
 
-	/* TODO: add sorting by columns. Add reordering of columns. */
 
 
-	/* LAYER_NAME_COLUMN */
+	/* LayerName */
 	item = new QStandardItem(trw->name);
 	item->setToolTip(tooltip);
 	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
 	items << item;
 
-	/* WAYPOINT_COLUMN */
+	/* Waypoint */
 	item = new QStandardItem(wp->name);
 	item->setToolTip(tooltip);
 	variant = QVariant::fromValue(wp);
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* DATE_COLUMN */
+	/* Date */
 	item = new QStandardItem(start_date);
 	item->setToolTip(tooltip);
 	items << item;
 
-	/* VISIBLE_COLUMN */
+	/* Visibility */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
 	item->setCheckable(true);
 	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
 	items << item;
 
-	/* COMMENT_COLUMN */
+	/* Comment */
 	item = new QStandardItem(wp->comment);
 	item->setToolTip(tooltip);
 	items << item;
 
-	/* HEIGHT_COLUMN */
+	/* Elevation */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
 	variant = QVariant::fromValue((int) round(alt));
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* SYMBOL_COLUMN */
-	/* TODO: table should be sortable by this column. */
+	/* Icon */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
 	item->setIcon(get_wp_icon_small(wp->symbol_name));
@@ -484,23 +473,23 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	const HeightUnit height_unit = Preferences::get_unit_height();
 
 	this->model = new QStandardItemModel();
-	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
-	this->model->setHorizontalHeaderItem(WAYPOINT_COLUMN, new QStandardItem("Name"));
-	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
-	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
-	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
+	this->model->setHorizontalHeaderItem(WaypointListModel::LayerName, new QStandardItem("Layer"));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Waypoint, new QStandardItem("Name"));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Date, new QStandardItem("Date"));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Visibility, new QStandardItem("Visibility"));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Comment, new QStandardItem("Comment"));
 	switch (height_unit) {
 	case HeightUnit::Metres:
-		this->model->setHorizontalHeaderItem(HEIGHT_COLUMN, new QStandardItem("Height\n(Metres)"));
+		this->model->setHorizontalHeaderItem(WaypointListModel::Elevation, new QStandardItem("Height\n(Metres)"));
 		break;
 	case HeightUnit::Feet:
-		this->model->setHorizontalHeaderItem(HEIGHT_COLUMN, new QStandardItem("Height\n(Feet)"));
+		this->model->setHorizontalHeaderItem(WaypointListModel::Elevation, new QStandardItem("Height\n(Feet)"));
 		break;
 	default:
 		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
 		break;
 	}
-	this->model->setHorizontalHeaderItem(SYMBOL_COLUMN, new QStandardItem("Symbol"));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Icon, new QStandardItem("Symbol"));
 
 
 	this->view = new QTableView();
@@ -513,33 +502,30 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	this->view->setSelectionBehavior(QAbstractItemView::SelectRows);
 	this->view->setShowGrid(false);
 	this->view->setModel(this->model);
-	this->view->show();
-	this->view->setVisible(false);
-	this->view->resizeRowsToContents();
-	this->view->resizeColumnsToContents();
-	this->view->setVisible(true);
+	this->view->setSortingEnabled(true);
 
 
-	this->view->horizontalHeader()->setSectionHidden(LAYER_NAME_COLUMN, hide_layer_names);
-	this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
 
-	this->view->horizontalHeader()->setSectionHidden(WAYPOINT_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(WAYPOINT_COLUMN, QHeaderView::Interactive);
+	this->view->horizontalHeader()->setSectionHidden(WaypointListModel::LayerName, hide_layer_names);
+	this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::LayerName, QHeaderView::Interactive);
 
-	this->view->horizontalHeader()->setSectionHidden(DATE_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
+	this->view->horizontalHeader()->setSectionHidden(WaypointListModel::Waypoint, false);
+	this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Waypoint, QHeaderView::Interactive);
 
-	this->view->horizontalHeader()->setSectionHidden(VISIBLE_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
+	this->view->horizontalHeader()->setSectionHidden(WaypointListModel::Date, false);
+	this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Date, QHeaderView::ResizeToContents);
 
-	this->view->horizontalHeader()->setSectionHidden(COMMENT_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Stretch);
+	this->view->horizontalHeader()->setSectionHidden(WaypointListModel::Visibility, false);
+	this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Visibility, QHeaderView::ResizeToContents);
 
-	this->view->horizontalHeader()->setSectionHidden(HEIGHT_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(HEIGHT_COLUMN, QHeaderView::ResizeToContents);
+	this->view->horizontalHeader()->setSectionHidden(WaypointListModel::Comment, false);
+	this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch);
 
-	this->view->horizontalHeader()->setSectionHidden(SYMBOL_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(SYMBOL_COLUMN, QHeaderView::ResizeToContents);
+	this->view->horizontalHeader()->setSectionHidden(WaypointListModel::Elevation, false);
+	this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Elevation, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(WaypointListModel::Icon, false);
+	this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Icon, QHeaderView::ResizeToContents);
 
 	this->vbox->addWidget(this->view);
 	this->vbox->addWidget(this->button_box);
@@ -561,16 +547,23 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 		this->add_row(*iter, height_unit, date_format);
 	}
 
-	/* TODO: add initial sorting by layer name or waypoint name. */
-#ifdef K_TODO
-	if (hide_layer_name) {
-		sort by waypoint name;
+
+	if (hide_layer_names) {
+		this->view->sortByColumn(WaypointListModel::Waypoint, Qt::SortOrder::AscendingOrder);
 	} else {
-		sort by layer name;
+		this->view->sortByColumn(WaypointListModel::LayerName, Qt::SortOrder::AscendingOrder);
 	}
-#endif
+
 
 	this->setMinimumSize(700, 400);
+
+
+	this->view->show();
+
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
 }
 
 
@@ -636,4 +629,16 @@ void WaypointListDialog::accept_cb(void) /* Slot. */
 	}
 
 	this->accept();
+}
+
+
+
+
+void WaypointListModel::sort(int column, Qt::SortOrder order)
+{
+	if (column == WaypointListModel::Icon) {
+		return;
+	}
+
+	QStandardItemModel::sort(column, order);
 }

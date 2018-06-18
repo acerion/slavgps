@@ -57,6 +57,27 @@ namespace SlavGPS {
 
 
 
+	class WaypointListModel : public QStandardItemModel {
+		Q_OBJECT
+
+	public:
+		enum Column {
+			LayerName = 0,     /* Layer Name (string). May not be displayed. */
+			Waypoint,          /* Waypoint Name (string) + pointer to waypoint */
+			Date,              /* Date (string). */
+			Visibility,        /* Visibility (boolean). */
+			Comment,           /* Comment (string). */
+			Elevation,         /* Height (integer). */
+			Icon,              /* Symbol icon (pixmap). */
+		};
+
+		WaypointListModel(QObject * parent = NULL) : QStandardItemModel(parent) {};
+		void sort(int column, Qt::SortOrder order = Qt::AscendingOrder);
+	};
+
+
+
+
 	class WaypointListDialog : public QDialog {
 		Q_OBJECT
 	public:

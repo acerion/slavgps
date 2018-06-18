@@ -500,11 +500,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->view->setSelectionBehavior(QAbstractItemView::SelectRows);
 	this->view->setShowGrid(false);
 	this->view->setModel(this->model);
-	this->view->show();
-	this->view->setVisible(false);
-	this->view->resizeRowsToContents();
-	this->view->resizeColumnsToContents();
-	this->view->setVisible(true);
+	this->view->setSortingEnabled(true);
 
 
 	this->view->horizontalHeader()->setSectionHidden(LAYER_NAME_COLUMN, hide_layer_names);
@@ -561,7 +557,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 	/* Notice that we enable and perform sorting after adding all items in the for() loop. */
-	this->view->setSortingEnabled(true);
+
 	if (hide_layer_names) {
 		this->view->sortByColumn(TRACK_COLUMN, Qt::AscendingOrder);
 	} else {
@@ -569,6 +565,15 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	}
 
 	this->setMinimumSize(750, 400);
+
+
+	this->view->show();
+
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
+
 }
 
 
