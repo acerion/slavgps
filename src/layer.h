@@ -113,10 +113,11 @@ namespace SlavGPS {
 		Layer();
 		~Layer();
 
-		static void    marshall(Layer * layer, Pickle & pickle);
-		void           marshall_params(Pickle & pickle);
+		virtual void marshall(Pickle & pickle);
+		virtual void marshall_params(Pickle & pickle);
+		virtual void unmarshall_params(Pickle & pickle);
 		static Layer * unmarshall(Pickle & pickle, Viewport * viewport);
-		void           unmarshall_params(Pickle & pickle);
+
 
 		static Layer * construct_layer(LayerType layer_type, Viewport * viewport, bool interactive = false);
 
@@ -236,7 +237,6 @@ namespace SlavGPS {
 		LayerType type;
 
 	protected:
-		virtual void marshall(Pickle & pickle);
 
 		LayerInterface * interface = NULL;
 		QMenu * right_click_menu = NULL;

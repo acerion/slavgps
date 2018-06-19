@@ -85,6 +85,8 @@ namespace SlavGPS {
 		QColor get_fg_color(const Track * trk) const;
 		QColor get_bg_color(bool do_highlight) const;
 
+		inline bool coord_fits_in_viewport(const Coord & coord) const;
+
 		QPixmap * update_pixmap_cache(const QString & image_full_path, Waypoint & wp);
 
 		void draw_waypoint_sub(Waypoint * wp, bool do_hightlight);

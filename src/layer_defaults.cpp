@@ -98,10 +98,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const char * 
 		break;
 
 	case SGVariantType::StringList:
-#ifdef K_FIXME_RESTORE
-		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
-		value = SGVariant(str_to_glist(str)); /* TODO convert. */
-#endif
+		value = SGVariant(variant.toStringList());
 		break;
 
 	case SGVariantType::Color:

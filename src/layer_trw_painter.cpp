@@ -119,9 +119,10 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 
 	if (this->vp_coord_mode == CoordMode::UTM && this->vp_is_one_utm_zone) {
 
-		/* TODO: magic numbers. */
-		const int width = this->vp_xmpp * (this->vp_width / 2) + 1600 / this->vp_xmpp;
-		const int height = this->vp_ympp * (this->vp_height / 2) + 1600 / this->vp_ympp;
+		const int outside_margin = 1600; /* TODO: magic number. */
+
+		const int width = this->vp_xmpp * (this->vp_width / 2) + outside_margin / this->vp_xmpp;
+		const int height = this->vp_ympp * (this->vp_height / 2) + outside_margin / this->vp_ympp;
 		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
 
 		this->coord_leftmost = this->vp_center.utm.easting - width;
@@ -133,9 +134,11 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
-		/* TODO: magic numbers. */
-		const Coord upperleft = this->viewport->screen_pos_to_coord(-500, -500);
-		const Coord bottomright = this->viewport->screen_pos_to_coord(this->vp_width + 500, this->vp_height + 500);
+
+		const int outside_margin = 500; /* TODO: magic number. */
+
+		const Coord upperleft = this->viewport->screen_pos_to_coord(-outside_margin, -outside_margin);
+		const Coord bottomright = this->viewport->screen_pos_to_coord(this->vp_width + outside_margin, this->vp_height + outside_margin);
 
 		this->coord_leftmost = upperleft.ll.lon;
 		this->coord_rightmost = bottomright.ll.lon;
@@ -229,29 +232,34 @@ void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_c
  */
 void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
+	const int n_intervals_max = trk->max_number_dist_labels + 1;
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	double track_length = trk->get_length_including_gaps();
+
+	track_length = convert_distance_meters_to(track_length, distance_unit);
+
+
 	/* TODO: we already have distance intervals code in layer_trw_track_profile_dialog.cpp. Reuse it somehow? */
+#if 1
 	static const double distance_intervals[] = { 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
 						     25.0, 40.0, 50.0, 75.0, 100.0,
 						     150.0, 200.0, 250.0, 500.0, 1000.0};
-
-	double dist = trk->get_length_including_gaps() / (trk->max_number_dist_labels + 1);
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
-
-	/* Convert to specified unit to find the friendly breakdown value. */
-	dist = convert_distance_meters_to(dist, distance_unit);
+	double interval = track_length / n_intervals_max;
 
 	int index = 0;
 	const int n_intervals = (sizeof distance_intervals) / (sizeof distance_intervals[0]);
 	for (size_t i = 0; i < n_intervals; i++) {
-		if (distance_intervals[i] > dist) {
+		if (distance_intervals[i] > interval) {
 			index = i;
-			dist = distance_intervals[index];
+			interval = distance_intervals[index];
 			break;
 		}
 	}
+#else
+#endif
 
 	for (int i = 1; i < trk->max_number_dist_labels+1; i++) {
-		double dist_i = dist * i;
+		double dist_i = interval * i;
 
 		/* Convert distance back into metres for use in finding a trackpoint. */
 		switch (distance_unit) {
@@ -610,13 +618,10 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 		bool second_condition_A = ((!this->vp_is_one_utm_zone) || tp->coord.utm.zone == this->vp_center.utm.zone);  /* Only check zones if UTM & one_utm_zone. */
 
-		bool fits_horizontally = (tp->coord.ll.lon < this->coord_rightmost && tp->coord.ll.lon > this->coord_leftmost)
-			|| (tp->coord.utm.easting < this->coord_rightmost && tp->coord.utm.easting > this->coord_leftmost);
+		const bool fits_into_viewport = this->coord_fits_in_viewport(tp->coord);
 
-		bool fits_vertically = (tp->coord.ll.lat > this->coord_bottommost && tp->coord.ll.lat < this->coord_topmost)
-			|| (tp->coord.utm.northing > this->coord_bottommost && tp->coord.utm.northing < this->coord_topmost);
 
-		bool second_condition = (second_condition_A && fits_horizontally && fits_vertically);
+		bool second_condition = (second_condition_A && fits_into_viewport);
 #ifdef K_OLD_IMPLEMENTATION
 		if ((!this->vp_is_one_utm_zone && !this->lat_lon) /* UTM & zones; do everything. */
 		    || (((!this->vp_is_one_utm_zone) || tp->coord.utm_zone == this->center->utm_zone) /* Only check zones if UTM & one_utm_zone. */
@@ -783,24 +788,8 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 #endif
 
 
-		bool fits_into_viewport = false;
-		switch (this->vp_coord_mode) {
-		case CoordMode::UTM: {
-			const bool fits_horizontally_utm = (tp->coord.utm.easting < this->coord_rightmost && tp->coord.utm.easting > this->coord_leftmost);
-			const bool fits_vertically_utm = (tp->coord.utm.northing > this->coord_bottommost && tp->coord.utm.northing < this->coord_topmost);
-			fits_into_viewport = fits_horizontally_utm && fits_vertically_utm;
-			break;
-		}
-		case CoordMode::LATLON: {
-			const bool fits_horizontally_ll = (tp->coord.ll.lon < this->coord_rightmost && tp->coord.ll.lon > this->coord_leftmost);
-			const bool fits_vertically_ll = (tp->coord.ll.lat > this->coord_bottommost && tp->coord.ll.lat < this->coord_topmost);
-			fits_into_viewport = fits_horizontally_ll && fits_vertically_ll;
-			break;
-		}
-		default:
-			qDebug() << "EE:" PREFIX << "unexpected viewport coordinate mode" << (int) this->vp_coord_mode;
-			break;
-		}
+		const bool fits_into_viewport = this->coord_fits_in_viewport(tp->coord);
+
 
 		if (fits_into_viewport) {
 			curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
@@ -886,10 +875,9 @@ void LayerTRWPainter::draw_track(Track * trk, Viewport * a_viewport, bool do_hig
 
 void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 {
-	bool cond = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone)
+	const bool cond = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone)
 		|| ((this->vp_coord_mode == CoordMode::LATLON || wp->coord.utm.zone == this->vp_center.utm.zone) &&
-		    (wp->coord.ll.lon < this->coord_rightmost && wp->coord.ll.lon > this->coord_leftmost && wp->coord.ll.lat > this->coord_bottommost && wp->coord.ll.lat < this->coord_topmost)
-		    || (wp->coord.utm.easting < this->coord_rightmost && wp->coord.utm.easting > this->coord_leftmost && wp->coord.utm.northing > this->coord_bottommost && wp->coord.utm.northing < this->coord_topmost));
+		    this->coord_fits_in_viewport(wp->coord));
 
 
 	if (!cond) {
@@ -1237,4 +1225,29 @@ void LayerTRWPainter::make_wp_pens(void)
 	gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
 #endif
 	return;
+}
+
+
+
+
+inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
+{
+	bool fits_horizontally = false;
+	bool fits_vertically = false;
+
+	switch (this->vp_coord_mode) {
+	case CoordMode::UTM:
+		fits_horizontally = coord.utm.easting < this->coord_rightmost && coord.utm.easting > this->coord_leftmost;
+		fits_vertically = coord.utm.northing > this->coord_bottommost && coord.utm.northing < this->coord_topmost;
+		break;
+	case CoordMode::LATLON:
+		fits_horizontally = coord.ll.lon < this->coord_rightmost && coord.ll.lon > this->coord_leftmost;
+		fits_vertically = coord.ll.lat > this->coord_bottommost && coord.ll.lat < this->coord_topmost;
+		break;
+	default:
+		qDebug() << "EE:" PREFIX << "unexpected viewport coordinate mode" << (int) this->vp_coord_mode;
+		break;
+	}
+
+	return fits_horizontally && fits_vertically;
 }

@@ -85,7 +85,7 @@ void LayerAggregate::marshall(Pickle & pickle)
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Pickle helper_pickle;
-		Layer::marshall(*child, helper_pickle);
+		(*child)->marshall(helper_pickle);
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}

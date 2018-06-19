@@ -341,7 +341,7 @@ void LayerGPS::marshall(Pickle & pickle)
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		Pickle helper_pickle;
-		Layer::marshall(this->trw_children[i], helper_pickle);
+		this->trw_children[i]->marshall(helper_pickle);
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}

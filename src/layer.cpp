@@ -335,39 +335,25 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 
 
 
-
-typedef struct {
-	LayerType layer_type;
-	int len;
-	uint8_t data[0];
-} header_t;
-
-void Layer::marshall(Layer * layer, Pickle & pickle)
-{
-	pickle.put_raw_object((char *) &layer->type, sizeof (layer->type));
-	layer->marshall(pickle);
-
-	if (pickle.data_size() > 0) {
-#ifdef K_TODO
-		header_t * header = (header_t *) malloc(pickle.data_size + sizeof (*header));
-		header->layer_type = layer->type;
-		header->len = pickle.data_size();
-		memcpy(header->data, pickle.data, pickle.data_size);
-		free(pickle.data);
-		pickle.data = (uint8_t *) header;
-		pickle.data_size += sizeof (*header);
-#endif
-	}
-}
-
-
-
-
 void Layer::marshall(Pickle & pickle)
 {
+	pickle.put_raw_object((char *) &this->type, sizeof (this->type));
+
 	this->marshall_params(pickle);
 	return;
 }
+
+
+
+
+Layer * Layer::unmarshall(Pickle & pickle, Viewport * viewport)
+{
+	LayerType layer_type;
+	pickle.take_raw_object((char *) &layer_type, sizeof (layer_type));
+
+	return vik_layer_interfaces[(int) layer_type]->unmarshall(pickle, viewport);
+}
+
 
 
 
@@ -401,20 +387,6 @@ void Layer::unmarshall_params(Pickle & pickle)
 		const SGVariant param_value = SGVariant::unmarshall(pickle, iter->second->type_id);
 		this->set_param_value(iter->first, param_value, false);
 	}
-}
-
-
-
-
-Layer * Layer::unmarshall(Pickle & pickle, Viewport * viewport)
-{
-	const pickle_size_t object_size = pickle.take_size();
-#ifdef K_TODO
-	header_t * header = (header_t *) pickle.data;
-	return vik_layer_interfaces[(int) header->layer_type]->unmarshall(pickle, viewport);
-#else
-	return NULL;
-#endif
 }
 
 
