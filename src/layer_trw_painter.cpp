@@ -52,6 +52,7 @@
 #include "layer_trw.h"
 #include "window.h"
 #include "preferences.h"
+#include "graph_intervals.h"
 
 
 
@@ -232,33 +233,17 @@ void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_c
  */
 void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
-	const int n_intervals_max = trk->max_number_dist_labels + 1;
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	double track_length = trk->get_length_including_gaps();
-
 	track_length = convert_distance_meters_to(track_length, distance_unit);
 
+	const int n_intervals_max = trk->max_number_dist_labels;
+	GraphIntervalsDistance intervals;
+	const int index = intervals.intervals.get_interval_index(0, track_length, n_intervals_max);
 
-	/* TODO: we already have distance intervals code in layer_trw_track_profile_dialog.cpp. Reuse it somehow? */
-#if 1
-	static const double distance_intervals[] = { 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
-						     25.0, 40.0, 50.0, 75.0, 100.0,
-						     150.0, 200.0, 250.0, 500.0, 1000.0};
-	double interval = track_length / n_intervals_max;
+	const double interval = intervals.intervals.get_interval_value(index);
 
-	int index = 0;
-	const int n_intervals = (sizeof distance_intervals) / (sizeof distance_intervals[0]);
-	for (size_t i = 0; i < n_intervals; i++) {
-		if (distance_intervals[i] > interval) {
-			index = i;
-			interval = distance_intervals[index];
-			break;
-		}
-	}
-#else
-#endif
-
-	for (int i = 1; i < trk->max_number_dist_labels+1; i++) {
+	for (int i = 1; i <= n_intervals_max; i++) {
 		double dist_i = interval * i;
 
 		/* Convert distance back into metres for use in finding a trackpoint. */

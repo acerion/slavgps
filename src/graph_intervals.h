@@ -53,27 +53,27 @@ namespace SlavGPS {
 	int GraphIntervals<T>::get_interval_index(T min, T max, int n_intervals)
 	{
 		const T interval_upper_limit = (max - min) / n_intervals;
+		qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "min/max/n_intervals/interval upper limit:" << min << max << n_intervals << interval_upper_limit;
 
 		/* Search for index of nearest interval. */
 		int index = 0;
-		while (interval_upper_limit > this->values[index]) {
-			index++;
-			/* Last Resort Check */
-			if (index == this->n_values) {
-				/* Return the last valid value. */
+		for (index = 0; index < this->n_values; index++) {
+			if (interval_upper_limit == this->values[index]) {
+				qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "found exact interval value" << this->values[index];
+				break;
+			} else if (interval_upper_limit < this->values[index] && index > 0) {
 				index--;
-				qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index1 =" << index << ", interval =" << this->values[index];
-				return index;
+				qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "found smaller interval value" << this->values[index];
+				break;
+			} else {
+				; /* Keep looking. */
 			}
 		}
 
-		if (index != 0) {
-			/* To cancel out the last index++ in the loop above:
-			   that one last increment was one too many. */
+		if (index == this->n_values) {
 			index--;
+			qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "interval value not found, returning last interval value" << this->values[index];
 		}
-
-		qDebug() << "++++" << __FUNCTION__ << __LINE__ << "min/max/n_intervals:" << min << max << n_intervals << "index2 =" << index << ", interval =" << this->values[index];
 
 		return index;
 	}
