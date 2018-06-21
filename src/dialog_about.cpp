@@ -28,7 +28,7 @@
 
 
 #include <QFormLayout>
-#include <QTextEdit>
+#include <QTextBrowser>
 
 
 
@@ -83,31 +83,29 @@ void Dialog::about(QWidget * parent)
 	QTabWidget * tabs = new QTabWidget(parent);
 	dialog.grid->addWidget(tabs, 0, 0);
 
-	QTextEdit * text_about_this_program = new QTextEdit(&dialog);
+	QTextBrowser * text_about_this_program = new QTextBrowser(&dialog);
 	tabs->addTab(text_about_this_program, QObject::tr("About this program"));
 
-	QTextEdit * text_license = new QTextEdit(&dialog);
+	QTextBrowser * text_license = new QTextBrowser(&dialog);
 	tabs->addTab(text_license, QObject::tr("License"));
 
-	QTextEdit * text_libraries = new QTextEdit(&dialog);
+	QTextBrowser * text_libraries = new QTextBrowser(&dialog);
 	tabs->addTab(text_libraries, QObject::tr("Libraries"));
 
-	QTextEdit * text_about_viking = new QTextEdit(&dialog);
+	QTextBrowser * text_about_viking = new QTextBrowser(&dialog);
 	tabs->addTab(text_about_viking, QObject::tr("About Viking"));
-
-	/* TODO: make links clickable. */
 
 	static const QString copyright = QObject::tr("<b>Copyright:</b><br/>"
 						     "2017, Kamil Ignacak<br/>"
 						     "2003-2008, Evan Battaglia<br/>"
-						     "2008-" THEYEAR", Viking's contributors<br/>");
+						     "2008-" THEYEAR", Viking's contributors<br/><br/><br/>");
 
 	static const QString copyright_viking = QObject::tr("<b>Copyright:</b><br/>"
 							    "2003-2008, Evan Battaglia<br/>"
-							    "2008-" THEYEAR", Viking's contributors<br/>");
+							    "2008-" THEYEAR", Viking's contributors<br/><br/><br/>");
 
-	static const QString short_description_viking = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.");
-	static const QString short_description = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.");
+	static const QString short_description_viking = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.<br/><br/><br/>");
+	static const QString short_description = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.<br/><br/><br/>");
 	static const QString license = QObject::tr("This program is free software; you can redistribute it and/or modify "
 						   "it under the terms of the GNU General Public License as published by "
 						   "the Free Software Foundation; either version 2 of the License, or "
@@ -122,22 +120,30 @@ void Dialog::about(QWidget * parent)
 						   "along with this program; if not, write to the Free Software "
 						   "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA");
 
-	text_about_this_program->insertHtml(QString("%1 %2<br/>%3<br/>%4<br/><br/>%5<br/><br/>").arg(SLAVGPS_PACKAGE_NAME).arg(SLAVGPS_VERSION).arg(short_description).arg(SLAVGPS_URL).arg(copyright));
-	text_about_this_program->insertHtml(QObject::tr("%1 is a fork of %2 %3. The fork has been made in year 2017").arg(SLAVGPS_PACKAGE_NAME).arg(VIKING_PACKAGE_NAME).arg(VIKING_VERSION));
+	text_about_this_program->insertPlainText(QString("%1 %2\n").arg(SLAVGPS_PACKAGE_NAME).arg(SLAVGPS_VERSION));
+	text_about_this_program->insertHtml(short_description);
+	text_about_this_program->insertHtml(QString("<a href=\"%1\">%2</a><br/><br/><br/>").arg(SLAVGPS_URL).arg(SLAVGPS_URL));
+	text_about_this_program->insertHtml(copyright);
+	text_about_this_program->insertPlainText(QObject::tr("%1 is a fork of %2 %3. The fork has been made in year 2017").arg(SLAVGPS_PACKAGE_NAME).arg(VIKING_PACKAGE_NAME).arg(VIKING_VERSION));
+	text_about_this_program->setOpenExternalLinks(true); /* Open with system's default browser. */
 	text_about_this_program->setReadOnly(true);
 	text_about_this_program->moveCursor(QTextCursor::Start); /* Scroll to top of page. */
 
-	text_license->insertHtml(QString("%1<br/><br/>%2<br/><br/>%3").arg(short_description).arg(copyright).arg(license));
+	text_license->insertHtml(QString("%1%2%3").arg(short_description).arg(copyright).arg(license));
 	text_license->setReadOnly(true);
 	text_license->moveCursor(QTextCursor::Start); /* Scroll to top of page. */
 
-	text_about_viking->insertHtml(QString("%1 %2<br/>%3<br/>%4<br/><br/>%5<br/><br/>").arg(PACKAGE_NAME).arg(VIKING_VERSION).arg(short_description_viking).arg(VIKING_URL).arg(copyright_viking));
+	text_about_viking->insertPlainText(QString("%1 %2\n").arg(PACKAGE_NAME).arg(VIKING_VERSION));
+	text_about_viking->insertHtml(short_description_viking);
+	text_about_viking->insertHtml(QString("<a href=\"%1\">%2</a><br/><br/></br/>").arg(VIKING_URL).arg(VIKING_URL));
+	text_about_viking->insertHtml(copyright_viking);
 	text_about_viking->insertHtml(QObject::tr("<b>Author:</b><br/>%1<br/><br/><br/>").arg(viking_author));
 	text_about_viking->insertHtml(QObject::tr("<b>Contributors:</b><br/>%1<br/>").arg(viking_contributors));
 	text_about_viking->insertHtml(QObject::tr("Few other bugfixes/minor patches from various contributors. See ChangeLog for details.<br/><br/><br/>"));
 	text_about_viking->insertHtml(QObject::tr("<b>Documenters:</b><br/>%1<br/><br/>").arg(viking_documenters));
-	text_about_viking->insertHtml(QObject::tr("Translation is coordinated on http://launchpad.net/viking"));
-	text_about_viking->setReadOnly(true);
+	text_about_viking->insertHtml(QObject::tr("Translation is coordinated on <a href=\"http://launchpad.net/viking\">http://launchpad.net/viking</a>"));
+	text_about_viking->setOpenExternalLinks(true); /* Open with system's default browser. */
+	//text_about_viking->setReadOnly(true);
 	text_about_viking->moveCursor(QTextCursor::Start); /* Scroll to top of page. */
 
 	QString libs;

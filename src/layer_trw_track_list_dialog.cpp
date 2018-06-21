@@ -363,8 +363,6 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 		;
 	}
 
-	/* TODO: Add reordering of columns? */
-
 
 	/* LAYER_NAME_COLUMN */
 	item = new QStandardItem(trw->name);

@@ -82,6 +82,19 @@ namespace SlavGPS {
 		/* Is this bbox valid? */
 		bool is_valid(void) const;
 
+
+		/**
+		   +--------------+
+		   |box           |
+		   |              |
+		   |    . point   |
+		   |              |
+		   |              |
+		   +--------------+
+		*/
+		bool contains_point(const LatLon & point) const;
+
+
 		/* Get coordinate of a point that is a simple
 		   arithmetic average of north/south, east/west
 		   values. */

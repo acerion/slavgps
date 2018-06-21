@@ -733,7 +733,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	dialog->grid->addWidget(time_zone_l, row, 0);
 	dialog->grid->addWidget(dialog->time_zone_entry, row, 1);
 	dialog->time_zone_entry->setToolTip(QObject::tr("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC."));
-	// TODO: gtk_entry_set_width_chars(dialog->time_zone_entry, 7);
+	dialog->time_zone_entry->setMaxLength(7);
 	row++;
 
 

@@ -733,14 +733,14 @@ ToolStatus LayerToolTRWNewTrack::handle_key_press(Layer * layer, QKeyEvent * ev)
 /*
  * Draw specified pixmap.
  */
-static int draw_sync(LayerTRW * trw, QPixmap * drawable, QPixmap * pixmap)
+static int draw_sync(LayerTRW * trw, QPixmap * drawable, const QPixmap & pixmap)
 {
 	/* Sometimes don't want to draw normally because another
 	   update has taken precedent such as panning the display
 	   which means this pixmap is no longer valid. */
 	if (1 /* trw->draw_sync_do*/ ) {
 		QPainter painter(drawable);
-		painter.drawPixmap(0, 0, *pixmap);
+		painter.drawPixmap(0, 0, pixmap);
 		qDebug() << "SIGNAL:" PREFIX << "will emit 'layer_changed()' signal for" << trw->get_name();
 		emit trw->layer_changed(trw->get_name());
 #ifdef K_OLD_IMPLEMENTATION
@@ -876,25 +876,10 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 	if (/* trw->draw_sync_done && */ track && !track->empty()) {
 		Trackpoint * last_tpt = track->get_tp_last();
 
-		static QPixmap * pixmap = NULL;
-
-		/* Need to check in case window has been resized. */
-		int w1 = tool->viewport->get_width();
-		int h1 = tool->viewport->get_height();
-
-		if (!pixmap) {
-			pixmap = new QPixmap(w1, h1);
-		}
-		int w2, h2;
-		if (w1 != pixmap->width() || h1 != pixmap->height()) {
-			delete pixmap;
-			pixmap = new QPixmap(w1, h1);
-		}
-
 		/* Reset to background. */
 		//QPainter painter2(ds->drawable);
 		//painter2.drawPixmap(0, 0, *ds->pixmap);
-		*pixmap = tool->viewport->get_pixmap(); /* TODO: this doesn't seem to be right. */
+		QPixmap pixmap = tool->viewport->get_pixmap();
 #ifdef K_OLD_IMPLEMENTATION
 		gdk_draw_drawable(pixmap,
 				  trw->painter->current_track_new_point_pen,
@@ -909,7 +894,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		/* FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
 		   otherwise using Viewport::draw_* functions puts the data into the base pixmap,
 		   thus when we come to reset to the background it would include what we have already drawn!! */
-		QPainter painter(pixmap);
+		QPainter painter(&pixmap);
 		painter.setPen(trw->painter->current_track_new_point_pen);
 		qDebug() << "II: Layer TRW: drawing line" << x1 << y1 << ev->x() << ev->y();
 		painter.drawLine(x1, y1, ev->x(), ev->y());

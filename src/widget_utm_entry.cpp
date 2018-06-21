@@ -86,7 +86,6 @@ SGUTMEntry::SGUTMEntry(QWidget * parent)
 
 	this->band_letter_entry = new QLineEdit();
 	this->band_letter_entry->setMaxLength(1);
-	//gtk_entry_set_width_chars (GTK_ENTRY(this->band_letter_entry), 2);
 	char tmp_letter[2];
 	tmp_letter[0] = 'N';
 	tmp_letter[1] = '\0';

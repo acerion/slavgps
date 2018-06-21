@@ -149,3 +149,21 @@ LatLon LatLonBBox::get_center(void) const
 	}
 	return result;
 }
+
+
+
+
+bool LatLonBBox::contains_point(const LatLon & point) const
+{
+	/* TODO: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
+
+	if (point.lat <= this->north
+	    && point.lat >= this->south
+	    && point.lon <= this->east
+	    && point.lon >= this->west) {
+
+		return true;
+	} else {
+		return false;
+	}
+}

@@ -545,23 +545,11 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 */
 void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMetaData *> & list)
 {
-	/* Get Viewport bounding box. */
-	const LatLonBBox bbox = this->viewport->get_bbox();
+	const LatLonBBox viewport_bbox = this->viewport->get_bbox();
 
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
 		GPXMetaData * gmd = *iter;
-		/* Convert point position into a 'fake' bounding box.
-		   TODO - probably should have function to see if point is within bounding box
-		   rather than constructing this fake bounding box for the test. */
-		LatLonBBox gmd_bbox;
-		gmd_bbox.north = gmd->ll.lat;
-		gmd_bbox.east = gmd->ll.lon;
-		gmd_bbox.south = gmd->ll.lat;
-		gmd_bbox.west = gmd->ll.lon;
-
-		if (BBOX_INTERSECT (bbox, gmd_bbox)) {
-			gmd->in_current_view = true;
-		}
+		gmd->in_current_view = viewport_bbox.contains_point(gmd->ll);
 	}
 }
 
