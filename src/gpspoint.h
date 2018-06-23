@@ -41,8 +41,11 @@ namespace SlavGPS {
 
 
 
-	LayerDataReadStatus a_gpspoint_read_file(FILE * file, LayerTRW * trw, const char * dirpath);
-	void a_gpspoint_write_file(FILE * file, const LayerTRW * trw);
+	class GPSPoint {
+	public:
+		static LayerDataReadStatus read_layer(FILE * file, LayerTRW * trw, const char * dirpath);
+		static void write_layer(FILE * file, const LayerTRW * trw);
+	};
 
 
 

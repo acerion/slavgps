@@ -46,7 +46,7 @@
 #include "layer_trw_tracks.h"
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoints.h"
-#include "file.h"
+//#include "file.h"
 
 
 
@@ -71,6 +71,8 @@ namespace SlavGPS {
 	class PropertiesDialogTP;
 	class DataSource;
 	enum class TreeViewSortOrder;
+	enum class LayerDataReadStatus;
+	enum class SGFileType;
 
 
 

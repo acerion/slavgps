@@ -33,7 +33,6 @@
 #include <QUrl>
 #include <QComboBox>
 
-#include "file.h"
 #include "acquire.h"
 #include "viewport.h"
 #include "viewport_save_dialog.h"
@@ -66,6 +65,12 @@ typedef int GtkSelectionData;
 
 
 namespace SlavGPS {
+
+
+
+
+	enum class SGFileType;
+	enum class FileLoadResult;
 
 
 
@@ -356,7 +361,7 @@ namespace SlavGPS {
 
 		QString current_document_full_path;
 
-		FileLoadResult loaded_type = FileLoadResult::READ_FAILURE; /* AKA none. */
+		FileLoadResult loaded_type;
 
 		/* Tool management state. */
 		LayerType tool_layer_type;

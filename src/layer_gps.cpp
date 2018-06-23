@@ -65,7 +65,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Layer GPS:" << __FUNCTION__ << __LINE__ << ">"
+#define PREFIX ": Layer GPS:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -673,8 +673,8 @@ void LayerGPS::add_children_to_tree(void)
 	           device = ((BabelDevice*)g_list_nth_data(Babel::devices, last_active))->name;
 	   Need to access uibuild widgets somehow.... */
 
-	if (!this->index.isValid()) {
-		qDebug() << "EE:" PREFIX  << "layer is not connected to tree";
+	if (!this->is_in_tree()) {
+		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
 		return;
 	}
 

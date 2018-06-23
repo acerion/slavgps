@@ -1268,7 +1268,7 @@ void LayerTRW::add_children_to_tree(void)
 	qDebug() << "DD: Layer TRW: Add Children to Tree";
 
 	if (!this->is_in_tree()) {
-		qDebug() << "EE: Layer TRW: Add Children to Tree: layer not connected to tree";
+		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
 		return;
 	}
 
@@ -2219,7 +2219,7 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE: Layer TRW: add waypoint: layer not connected to tree";
+		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
 		return;
 	}
 
@@ -2255,7 +2255,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 void LayerTRW::add_track(Track * trk)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE: Layer TRW: add track: layer not connected to tree";
+		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
 		return;
 	}
 
@@ -2296,7 +2296,7 @@ void LayerTRW::add_track(Track * trk)
 void LayerTRW::add_route(Track * trk)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE: Layer TRW: add route: layer not connected to tree";
+		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
 		return;
 	}
 
@@ -4180,7 +4180,7 @@ void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 LayerDataReadStatus LayerTRW::read_layer_data(FILE * file, char const * dirpath)
 {
 	qDebug() << "DD: Layer TRW: Read Layer Data from File: will call gpspoint_read_file() to read Layer Data";
-	return a_gpspoint_read_file(file, this, dirpath);
+	return GPSPoint::read_layer(file, this, dirpath);
 }
 
 
@@ -4189,7 +4189,7 @@ LayerDataReadStatus LayerTRW::read_layer_data(FILE * file, char const * dirpath)
 void LayerTRW::write_layer_data(FILE * file) const
 {
 	fprintf(file, "\n\n~LayerData\n");
-	a_gpspoint_write_file(file, this);
+	GPSPoint::write_layer(file, this);
 	fprintf(file, "~EndLayerData\n");
 }
 

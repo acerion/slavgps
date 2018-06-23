@@ -67,6 +67,7 @@
 #include "measurements.h"
 #include "preferences.h"
 #include "viewport_internal.h"
+#include "file.h"
 
 
 

@@ -38,12 +38,17 @@
 #include "measurements.h"
 #include "tree_view.h"
 //#include "layer.h"
-#include "file.h"
+//#include "file.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LayerTRW;
 
 
 

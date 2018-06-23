@@ -48,6 +48,7 @@
 #include "vikutils.h"
 #include "application_state.h"
 #include "viewport_internal.h"
+#include "file.h"
 
 
 

@@ -810,7 +810,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 			}
 		} else {
 			/* Try final supported file type. */
-			const LayerDataReadStatus rv = a_gpspoint_read_file(file, layer, dirpath);
+			const LayerDataReadStatus rv = GPSPoint::read_layer(file, layer, dirpath);
 			success = (rv == LayerDataReadStatus::Success);
 			if (!success) {
 				/* Failure here means we don't know how to handle the file. */
@@ -959,7 +959,7 @@ bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFil
 		GPX::write_file(file, trw, &options);
 		break;
 	case SGFileType::GPSPOINT:
-		a_gpspoint_write_file(file, trw);
+		GPSPoint::write_layer(file, trw);
 		break;
 	case SGFileType::GEOJSON:
 		result = geojson_write_file(file, trw);

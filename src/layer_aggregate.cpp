@@ -177,7 +177,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE: Layer Aggregate: Aggregate Layer not connected to tree";
+		qDebug() << "EE" PREFIX "Aggregate Layer" << this->name << "is not connected to tree";
 		return;
 	}
 

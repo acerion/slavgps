@@ -149,6 +149,8 @@ Window::Window()
 {
 	strcpy(this->type_string, "SG QT WINDOW");
 
+	this->loaded_type = FileLoadResult::READ_FAILURE; /* AKA none. */
+
 
 	for (int i = 0; i < QIcon::themeSearchPaths().size(); i++) {
 		qDebug() << "II: Window: XDG DATA FOLDER: " << QIcon::themeSearchPaths().at(i);

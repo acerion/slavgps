@@ -112,6 +112,9 @@ namespace SlavGPS {
 		static bool export_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden);
 
 		static bool export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints);
+
+	private:
+		static bool read_file(FILE * file, LayerAggregate * top_layer, const char * dirpath, Viewport * viewport);
 	};
 
 

@@ -41,6 +41,11 @@ namespace SlavGPS {
 
 
 
+	enum class SGFileTypeFilter;
+
+
+
+
 	class SGFileEntry : public QWidget {
 		Q_OBJECT
 	public:

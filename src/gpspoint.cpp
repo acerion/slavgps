@@ -308,7 +308,7 @@ void GPSPointParser::reset()
  * No obvious way to test for a 'gpspoint' file,
  * thus set a flag if any actual tag found during processing of the file.
  */
-LayerDataReadStatus SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, char const * dirpath)
+LayerDataReadStatus GPSPoint::read_layer(FILE * file, LayerTRW * trw, char const * dirpath)
 {
 	assert (file != NULL && trw != NULL);
 
@@ -968,7 +968,7 @@ static void a_gpspoint_write_tracks(FILE * file, Tracks & tracks)
 
 
 
-void SlavGPS::a_gpspoint_write_file(FILE * file, LayerTRW const * trw)
+void GPSPoint::write_layer(FILE * file, LayerTRW const * trw)
 {
 	Tracks & tracks = ((LayerTRW *) trw)->get_track_items();
 	Tracks & routes = ((LayerTRW *) trw)->get_route_items();
