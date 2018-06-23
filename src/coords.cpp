@@ -121,6 +121,15 @@ void LatLon::to_strings_raw(QString & lat_string, QString & lon_string) const
 
 
 
+QDebug SlavGPS::operator<<(QDebug debug, const LatLon & lat_lon)
+{
+	debug << lat_lon.to_string();
+	return debug;
+}
+
+
+
+
 #define PIOVER180 0.01745329252
 
 #define K0 0.9996
@@ -156,6 +165,29 @@ UTM::UTM(const QString & northing_string, const QString & easting_string, int zo
 bool UTM::is_equal(const UTM & utm1, const UTM & utm2)
 {
 	return (utm1.easting == utm2.easting && utm1.northing == utm2.northing && utm1.zone == utm2.zone);
+}
+
+
+
+
+QString UTM::to_string(void) const
+{
+	const QString result = QString("N = %1, E = %1, Z = %3, L = %4")
+		.arg(this->northing)
+		.arg(this->easting)
+		.arg(this->zone)
+		.arg(this->letter);
+
+	return result;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const UTM & utm)
+{
+	debug << utm.to_string();
+	return debug;
 }
 
 

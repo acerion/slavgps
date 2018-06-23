@@ -246,6 +246,26 @@ Coord & Coord::operator=(const Coord & other)
 
 
 
+QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
+{
+	switch (coord.mode) {
+	case CoordMode::UTM:
+		debug << "Coordinate UTM:" << coord.utm;
+		break;
+	case CoordMode::LATLON:
+		debug << "Coordinate LatLon:" << coord.ll;
+		break;
+	default:
+		debug << "EE: Coordinate: unexpected coordinate mode" << (int) coord.mode;
+		break;
+	}
+
+	return debug;
+}
+
+
+
+
 static LatLon get_north_west_corner(const LatLon & center, const LatLon & distance_from_center)
 {
 	LatLon ret;

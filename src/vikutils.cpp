@@ -549,12 +549,11 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 	if (g_path_is_absolute(path.toUtf8().constData())) {
 		canonical = path;
 	} else {
-		char * vw_filename = strdup(reference_file_full_path.toUtf8().constData());
 		char * dirpath = NULL;
-		if (vw_filename) {
-			dirpath = g_path_get_dirname(vw_filename);
-		} else {
+		if (reference_file_full_path.isEmpty()) {
 			dirpath = g_get_current_dir(); // Fallback - if here then probably can't create the correct path
+		} else {
+			dirpath = g_path_get_dirname(reference_file_full_path.toUtf8().constData());
 		}
 
 
@@ -568,7 +567,6 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 
 		canonical = SGUtils::get_canonical_path(full_path);
 		free(dirpath);
-		free(vw_filename);
 	}
 
 	return canonical;

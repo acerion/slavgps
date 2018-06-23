@@ -77,6 +77,7 @@ namespace SlavGPS {
 		UTM utm;
 		CoordMode mode = CoordMode::UTM;
 	};
+	QDebug operator<<(QDebug debug, const Coord & coord);
 
 
 

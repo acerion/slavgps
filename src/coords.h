@@ -92,6 +92,7 @@ namespace SlavGPS {
 
 		static UTM to_utm(const LatLon & lat_lon);
 	};
+	QDebug operator<<(QDebug debug, const LatLon & lat_lon);
 
 
 
@@ -128,11 +129,14 @@ namespace SlavGPS {
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
 		static LatLon to_latlon(const UTM & utm);
 
+		QString to_string(void) const;
+
 		double northing = 0;
 		double easting = 0;
 		int zone = 0;
 		char letter = 0;
 	};
+	QDebug operator<<(QDebug debug, const UTM & utm);
 
 
 

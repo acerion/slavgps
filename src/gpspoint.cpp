@@ -17,13 +17,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <QDebug>
+
+
 
 #include <cstdlib>
 #include <cassert>
@@ -31,9 +35,19 @@
 #include <cstring>
 #include <cmath>
 
+
+
+
+#include <QDebug>
 #include <QDir>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "gpspoint.h"
 #include "layer_trw_track_internal.h"
@@ -50,14 +64,15 @@ using namespace SlavGPS;
 
 
 
-typedef struct {
-	FILE * f;
-	bool is_route;
-} TP_write_info_type;
+#define PREFIX ": GPSPoint:" << __FUNCTION__ << __LINE__ << ">"
 
-//static void a_gpspoint_write_track(const void * id, const Track * trk, FILE * f);
-static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info);
-//static void a_gpspoint_write_waypoint(const void * id, const Waypoint * wp, FILE * f);
+
+
+
+static void a_gpspoint_write_tracks(FILE * file, const Tracks & tracks);
+static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool is_route);
+static void a_gpspoint_write_waypoints(FILE * file, const Waypoints & waypoints);
+
 
 
 
@@ -74,11 +89,12 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 class GPSPointParser {
 public:
 	void reset(void);
-	void process_tag(char const * tag, unsigned int len);
-	void process_key_and_value(char const * key, unsigned int key_len, char const * value, unsigned int value_len);
-	Track * add_track(LayerTRW * trw);
-	void add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, const char * dirpath);
-	Trackpoint * add_trackpoint(CoordMode coordinate_mode);
+	void process_tag(char const * tag, int len);
+	void process_key_and_value(const char * key, int key_len, const char * value, int value_len);
+
+	Track * create_track(LayerTRW * trw);
+	Waypoint * create_waypoint(CoordMode coordinate_mode, const char * dirpath);
+	Trackpoint * create_trackpoint(CoordMode coordinate_mode);
 
 	int line_type = GPSPOINT_TYPE_NONE;
 	LatLon line_latlon;
@@ -136,10 +152,10 @@ if trackpoint, make trackpoint, store to current track (error / skip if none)
 #define VIKING_LINE_SIZE 4096
 static char line_buffer[VIKING_LINE_SIZE];
 
-static Track * current_track;
 
 
-static char * slashdup(const QString input)
+
+static char * slashdup(const QString & input)
 {
 	char * str = strdup(input.toUtf8().constData());
 
@@ -299,7 +315,7 @@ LayerDataReadStatus SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, c
 	const CoordMode coord_mode = trw->get_coord_mode();
 
 	GPSPointParser point_parser;
-	current_track = NULL;
+	Track * current_track = NULL;
 
 	bool have_read_something = false;
 
@@ -347,8 +363,7 @@ LayerDataReadStatus SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, c
 				}
 			}
 
-			/* Won't have super massively long strings, so potential truncation in cast is acceptable. */
-			unsigned int len = (unsigned int)(tag_end - tag_start);
+			const int len = tag_end - tag_start;
 			point_parser.process_tag(tag_start, len);
 
 			if (*tag_end == '\0') {
@@ -361,15 +376,17 @@ LayerDataReadStatus SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, c
 
 		if (point_parser.line_type == GPSPOINT_TYPE_WAYPOINT && point_parser.line_name) {
 			have_read_something = true;
-			point_parser.add_waypoint(trw, coord_mode, dirpath);
+			Waypoint * wp = point_parser.create_waypoint(coord_mode, dirpath);
+			trw->add_waypoint_from_file(wp, point_parser.line_name);
 
 		} else if ((point_parser.line_type == GPSPOINT_TYPE_TRACK || point_parser.line_type == GPSPOINT_TYPE_ROUTE) && point_parser.line_name) {
 			have_read_something = true;
-			current_track = point_parser.add_track(trw);
+			current_track = point_parser.create_track(trw);
+			trw->add_track_from_file2(current_track, point_parser.line_name);
 
 		} else if ((point_parser.line_type == GPSPOINT_TYPE_TRACKPOINT || point_parser.line_type == GPSPOINT_TYPE_ROUTEPOINT) && current_track) {
 			have_read_something = true;
-			Trackpoint * tp = point_parser.add_trackpoint(coord_mode);
+			Trackpoint * tp = point_parser.create_trackpoint(coord_mode);
 			current_track->trackpoints.push_back(tp);
 		}
 
@@ -386,7 +403,7 @@ LayerDataReadStatus SlavGPS::a_gpspoint_read_file(FILE * file, LayerTRW * trw, c
 
 
 
-void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, const char * dirpath)
+Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const char * dirpath)
 {
 	Waypoint * wp = new Waypoint();
 	wp->visible = this->line_visible;
@@ -395,10 +412,6 @@ void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, con
 	wp->timestamp = this->line_timestamp;
 
 	wp->coord = Coord(this->line_latlon, coordinate_mode);
-
-	trw->add_waypoint_from_file(wp, this->line_name);
-	free(this->line_name);
-	this->line_name = NULL;
 
 	if (this->line_comment) {
 		wp->set_comment(QString(this->line_comment));
@@ -430,15 +443,17 @@ void GPSPointParser::add_waypoint(LayerTRW * trw, CoordMode coordinate_mode, con
 	if (this->line_symbol) {
 		wp->set_symbol(this->line_symbol);
 	}
+
+	return wp;
 }
 
 
 
-Track * GPSPointParser::add_track(LayerTRW * trw)
+Track * GPSPointParser::create_track(LayerTRW * trw)
 {
 	Track * trk = new Track(this->line_type == GPSPOINT_TYPE_ROUTE);
-	/* NB don't set defaults here as all properties are stored in the GPS_POINT format. */
-	// vik_track_set_defaults (pl);
+	/* Don't set defaults here as all properties are stored in the GPS_POINT format. */
+	// vik_track_set_defaults(trk);
 
 	/* Thanks to Peter Jones for this Fix. */
 	if (!this->line_name) {
@@ -473,9 +488,7 @@ Track * GPSPointParser::add_track(LayerTRW * trw)
 	trk->max_number_dist_labels = this->line_dist_label;
 
 	/* trk->trackpoints = NULL; */ /* kamilTODO: why it was here? */
-	trw->add_track_from_file2(trk, this->line_name);
-	free(this->line_name);
-	this->line_name = NULL;
+
 
 	return trk;
 }
@@ -483,7 +496,8 @@ Track * GPSPointParser::add_track(LayerTRW * trw)
 
 
 
-Trackpoint * GPSPointParser::add_trackpoint(CoordMode coordinate_mode)
+/* Create trackpoint from current parser data. */
+Trackpoint * GPSPointParser::create_trackpoint(CoordMode coordinate_mode)
 {
 	Trackpoint * tp = new Trackpoint();
 	tp->coord = Coord(this->line_latlon, coordinate_mode);
@@ -504,6 +518,8 @@ Trackpoint * GPSPointParser::add_trackpoint(CoordMode coordinate_mode)
 		tp->pdop = this->line_pdop;
 	}
 
+	qDebug() << "II" PREFIX << "new trackpoint at" << tp->coord << "(" << this->line_latlon << ")";
+
 	return tp;
 }
 
@@ -518,33 +534,33 @@ Trackpoint * GPSPointParser::add_trackpoint(CoordMode coordinate_mode)
 
    So we must determine end of tag name, start of value, end of value.
 */
-void GPSPointParser::process_tag(char const * tag, unsigned int len)
+void GPSPointParser::process_tag(char const * tag, int len)
 {
 	char const * value_start = NULL;
 	char const * value_end = NULL;
 
-	/* Searching for key end. */
-	char const * key_end = tag;
-
-	while (++key_end - tag < len) {
-		if (*key_end == '=') {
+	/* Search for end of key. */
+	int key_len = 0;
+	while (key_len < len) {
+		if (*(tag + key_len) == '=') {
 			break;
 		}
+		key_len++;
 	}
 
-	if (key_end - tag == len) {
+	if (key_len == len) {
 		return; /* No good. */
 	}
 
-	if (key_end - tag == len + 1) {
-		value_start = value_end = 0; /* size = 0 */
+	if (key_len == len + 1) {
+		value_end = value_start; /* value's size = 0 */
 	} else {
-		value_start = key_end + 1; /* equal_sign plus one. */
+		value_start = tag + key_len + 1; /* equal_sign plus one. */
 
 		if (*value_start == '"') {
 			value_start++;
 			if (*value_start == '"') {
-				value_start = value_end = 0; /* size = 0 */
+				value_end = value_start = 0; /* value's size = 0 */
 			} else {
 				if (*(tag+len-1) == '"') {
 					value_end = tag + len - 1;
@@ -556,48 +572,35 @@ void GPSPointParser::process_tag(char const * tag, unsigned int len)
 			value_end = tag + len; /* Value start really IS value start. */
 		}
 
+
+		const int value_len = value_end - value_start;
+
 		/* Detect broken lines which end without any text or the enclosing ". i.e. like: comment=" */
-		if ((value_end - value_start) < 0) {
+		if (value_len < 0) {
 			return;
 		}
 
-		this->process_key_and_value(tag, key_end - tag, value_start, value_end - value_start);
+		if (key_len >= VIKING_LINE_SIZE || value_len >= VIKING_LINE_SIZE) {
+			return;
+		}
+
+		char key[VIKING_LINE_SIZE];
+		memcpy(key, tag, key_len);
+		key[key_len] = '\0';
+
+		char value[VIKING_LINE_SIZE];
+		memcpy(value, value_start, value_len);
+		value[value_len] = '\0';
+
+		this->process_key_and_value(key, key_len, value, value_len);
 	}
 }
 
 
 
 
-/*
-  value = NULL for none.
-*/
-void GPSPointParser::process_key_and_value(char const * key, unsigned int key_len, char const * value, unsigned int value_len)
+void GPSPointParser::process_key_and_value(const char * key, int key_len, const char * value, int value_len)
 {
-	if (key_len == 4 && 0 == strncasecmp(key, "type", key_len)) {
-		if (value == NULL) {
-			this->line_type = GPSPOINT_TYPE_NONE;
-		} else if (value_len == 5 && 0 == strncasecmp(value, "track", value_len)) {
-			this->line_type = GPSPOINT_TYPE_TRACK;
-		} else if (value_len == 10 && 0 == strncasecmp(value, "trackpoint", value_len)) {
-			this->line_type = GPSPOINT_TYPE_TRACKPOINT;
-		} else if (value_len == 8 && 0 == strncasecmp(value, "waypoint", value_len)) {
-			this->line_type = GPSPOINT_TYPE_WAYPOINT;
-		} else if (value_len == 5 && 0 == strncasecmp(value, "route", value_len)) {
-			this->line_type = GPSPOINT_TYPE_ROUTE;
-		} else if (value_len == 10 && 0 == strncasecmp(value, "routepoint", value_len)) {
-			this->line_type = GPSPOINT_TYPE_ROUTEPOINT;
-		} else {
-			/* All others are ignored. */
-			this->line_type = GPSPOINT_TYPE_NONE;
-		}
-
-		return;
-	}
-
-	if (!value) {
-		return;
-	}
-
 	switch (key_len) {
 	case 3:
 		if (0 == strncasecmp(key, "sat", key_len)) { /* Trackpoint's extended attribute. */
@@ -609,7 +612,31 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 		break;
 
 	case 4:
-		if (0 == strncasecmp(key, "hdop", key_len)) { /* Trackpoint's extended attribute. */
+		if (0 == strncasecmp(key, "type", key_len)) {
+			if (value_len == 0) {
+				this->line_type = GPSPOINT_TYPE_NONE;
+
+			} else if (value_len == 5 && 0 == strncasecmp(value, "track", value_len)) {
+				this->line_type = GPSPOINT_TYPE_TRACK;
+
+			} else if (value_len == 5 && 0 == strncasecmp(value, "route", value_len)) {
+				this->line_type = GPSPOINT_TYPE_ROUTE;
+
+			} else if (value_len == 8 && 0 == strncasecmp(value, "waypoint", value_len)) {
+				this->line_type = GPSPOINT_TYPE_WAYPOINT;
+
+			} else if (value_len == 10 && 0 == strncasecmp(value, "trackpoint", value_len)) {
+				this->line_type = GPSPOINT_TYPE_TRACKPOINT;
+
+			} else if (value_len == 10 && 0 == strncasecmp(value, "routepoint", value_len)) {
+				this->line_type = GPSPOINT_TYPE_ROUTEPOINT;
+
+			} else {
+				/* All others are ignored. */
+				this->line_type = GPSPOINT_TYPE_NONE;
+			}
+
+		} else if (0 == strncasecmp(key, "hdop", key_len)) { /* Trackpoint's extended attribute. */
 			this->line_hdop = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "vdop", key_len)) { /* Trackpoint's extended attribute. */
@@ -626,7 +653,6 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 		break;
 
 	case 5:
-
 		if (0 == strncasecmp(key, "speed", key_len)) { /* Trackpoint's extended attribute. */
 			this->line_speed = SGUtils::c_to_double(value);
 
@@ -723,7 +749,7 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 		break;
 
 	default:
-		qDebug() << "EE: GPSPoint: process key and value: unhandled key" << key << "of length" << key_len;
+		qDebug() << "EE" PREFIX "process key and value: unhandled key" << key << "of length" << key_len;
 		break;
 	}
 }
@@ -731,9 +757,9 @@ void GPSPointParser::process_key_and_value(char const * key, unsigned int key_le
 
 
 
-static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
+static void a_gpspoint_write_waypoints(FILE * file, const Waypoints & waypoints)
 {
-	for (auto i = data.begin(); i != data.end(); i++) {
+	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 
 		Waypoint * wp = i->second;
 
@@ -746,7 +772,7 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 			continue;
 		}
 
-		static LatLon lat_lon = wp->coord.get_latlon();
+		const LatLon lat_lon = wp->coord.get_latlon();
 		char * tmp_name = slashdup(wp->name);
 		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), tmp_name);
 		free(tmp_name);
@@ -791,7 +817,9 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 			/* If cwd not available - use image filename as is.
 			   This should be an absolute path as set in thumbnails. */
 			if (cwd.isEmpty()) {
-				tmp_image_full_path = QString(slashdup(wp->image_full_path));
+				char * tmp = slashdup(wp->image_full_path);
+				tmp_image_full_path = QString(tmp);
+				free(tmp);
 			}
 
 			if (!tmp_image_full_path.isEmpty()) {
@@ -814,13 +842,11 @@ static void a_gpspoint_write_waypoints(FILE * file, Waypoints & data)
 
 
 
-static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info)
+static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool is_route)
 {
-	static LatLon lat_lon = tp->coord.get_latlon();
+	const LatLon lat_lon = tp->coord.get_latlon();
 
-	FILE * file = write_info->f;
-
-	fprintf(file, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
+	fprintf(file, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", is_route ? "route" : "track", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {
 		char * name = slashdup(tp->name);
@@ -871,7 +897,7 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 
 
 
-static void a_gpspoint_write_track(FILE * file, Tracks & tracks)
+static void a_gpspoint_write_tracks(FILE * file, Tracks & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
@@ -931,9 +957,9 @@ static void a_gpspoint_write_track(FILE * file, Tracks & tracks)
 		}
 		fprintf(file, "\n");
 
-		TP_write_info_type tp_write_info = { file, trk->type_id == "sg.trw.route" };
+		const bool is_route = trk->type_id == "sg.trw.route";
 		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-			a_gpspoint_write_trackpoint(*iter, &tp_write_info);
+			a_gpspoint_write_trackpoint(file, *iter, is_route);
 		}
 		fprintf(file, "type=\"%send\"\n", trk->type_id == "sg.trw.route" ? "route" : "track");
 	}
@@ -952,6 +978,6 @@ void SlavGPS::a_gpspoint_write_file(FILE * file, LayerTRW const * trw)
 	a_gpspoint_write_waypoints(file, waypoints);
 	fprintf(file, "type=\"waypointlistend\"\n");
 
-	a_gpspoint_write_track(file, tracks);
-	a_gpspoint_write_track(file, routes);
+	a_gpspoint_write_tracks(file, tracks);
+	a_gpspoint_write_tracks(file, routes);
 }

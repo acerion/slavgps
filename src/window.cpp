@@ -1900,28 +1900,31 @@ void Window::open_file_cb(void)
 		file_selector.setDirectoryUrl(last_folder_files_url);
 	}
 
-	QStringList filter;
 
-	/* File filters are listed this way for alphabetical ordering. */
-#ifdef VIK_CONFIG_GEOCACHES
-	filter << QObject::tr("Geocaching (*.loc)");
-#endif
+	/* Order of adding of the file types will match order of
+	   appearance on filters list.
+
+	   Could have filters for gpspoint (*.gps,*.gpsoint?) +
+	   gpsmapper (*.gsm,*.gpsmapper?).  However assume this are
+	   barely used and thus not worthy of inclusion as they'll
+	   just make the options too many and have no clear file
+	   pattern.  One can always use the all option. */
+	QStringList filter;
+	filter << QObject::tr("All (*)");
+	filter << QObject::tr("Viking (*.vik *.viking)");
+	filter << QObject::tr("JPEG (*.jpg, *.jpeg *.JPG *.JPEG)");
+	filter << QObject::tr("GPX (*.gpx)");
 
 #ifdef K_FIXME_RESTORE
 	gtk_file_filter_set_name(filter, QObject::tr("Google Earth"));
 	gtk_file_filter_add_mime_type(filter, "application/vnd.google-earth.kml+xml");
 #endif
 
-	filter << QObject::tr("GPX (*.gpx)");
-	filter << QObject::tr("JPEG (*.jpg, *.jpeg *.JPG *.JPEG)");
-	filter << QObject::tr("Viking (*.vik *.viking)");
+#ifdef VIK_CONFIG_GEOCACHES
+	filter << QObject::tr("Geocaching (*.loc)");
+#endif
 
 
-	/* Could have filters for gpspoint (*.gps,*.gpsoint?) + gpsmapper (*.gsm,*.gpsmapper?).
-	   However assume this are barely used and thus not worthy of inclusion
-	   as they'll just make the options too many and have no clear file pattern.
-	   One can always use the all option. */
-	filter << QObject::tr("All (*)");
 
 	file_selector.setNameFilters(filter);
 
