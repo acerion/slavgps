@@ -140,11 +140,13 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 		if (waypoint_name.isEmpty()) {
 			waypoint_name = FileUtils::get_base_name(file_full_path);
 		}
-		trw->add_waypoint_from_file(wp, waypoint_name);
+		wp->set_name(waypoint_name);
+		trw->add_waypoint_from_file(wp);
 	} else {
 		wp = new Waypoint();
 		wp->visible = true;
-		trw->add_waypoint_from_file(wp, file_base_name(file_full_path));
+		wp->set_name(file_base_name(file_full_path));
+		trw->add_waypoint_from_file(wp);
 		wp->set_image_full_path(file_full_path);
 		/* Simply set position to the current center. */
 		wp->coord = viewport->get_center2();

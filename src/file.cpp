@@ -18,7 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -28,6 +27,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <cassert>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -60,10 +60,6 @@
 #include "vikutils.h"
 #include "preferences.h"
 
-#ifdef K_INCLUDES
-#include "babel.h"
-#endif
-
 
 
 
@@ -79,7 +75,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " File: "
+#define PREFIX ": File:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -94,31 +90,85 @@ using namespace SlavGPS;
 
 
 
-typedef struct _Stack Stack;
+class LayerStack {
+public:
+	void push(Layer * layer);
+	void pop(void);
+	bool empty(void) { return this->layers.empty(); };
 
-struct _Stack {
-	Stack *under;
-	void * data;
+	std::list<Layer *> layers;
+
+	Layer * first = NULL; /* First layer on top of stack. */
+	Layer * second = NULL; /* Second layer, counting from top (second after LayerStack::first). */
 };
+static int layer_stack_size = 0;
+
+
+class LayersStack {
+public:
+	LayersStack * under = NULL;
+	std::list<Layer const *> * layers = NULL;
+};
+static int layers_stack_size = 0;
 
 
 
-
-static void pop(Stack **stack)
+void LayerStack::push(Layer * layer)
 {
-	Stack * tmp = (*stack)->under;
-	free(*stack);
-	*stack = tmp;
+	this->layers.push_front(layer);
+
+	this->first = layer;
+
+	if (this->layers.size() > 1) {
+		this->second = *std::next(this->layers.begin());
+	} else {
+		this->second = NULL;
+	}
 }
 
 
 
 
-static void push(Stack ** stack)
+void LayerStack::pop(void)
 {
-	Stack * tmp = (Stack *) malloc(sizeof (Stack));
+	this->layers.pop_front();
+
+	this->first = NULL;
+	this->second = NULL;
+
+	if (this->layers.size() > 0) {
+		this->first = *this->layers.begin();
+
+		if (this->layers.size() > 1) {
+			this->second = *std::next(this->layers.begin());
+		}
+	}
+}
+
+
+
+
+static void pop(LayersStack ** stack)
+{
+	LayersStack * tmp = (*stack)->under;
+	delete *stack;
+	*stack = tmp;
+
+	layers_stack_size--;
+	assert (layers_stack_size >= 0);
+}
+
+
+
+
+static void push(LayersStack ** stack)
+{
+	LayersStack * tmp = new LayersStack;
 	tmp->under = *stack;
 	*stack = tmp;
+
+	assert(layers_stack_size >= 0);
+	layers_stack_size++;
 }
 
 
@@ -260,31 +310,29 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 	}
 
 
-	std::list<Layer const *> * children = aggregate->get_children();
-	Stack * aggregates = NULL;
-	push(&aggregates);
-	aggregates->data = (void *) children;
-	aggregates->under = NULL;
+	LayersStack * stack = NULL;
+	push(&stack);
+	stack->layers = aggregate->get_children();
 
-	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
-		const Layer * current = ((std::list<Layer const *> *) aggregates->data)->front();
+	while (stack && stack->layers && stack->layers->size()) {
+		const Layer * current = stack->layers->front();
 		fprintf(file, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
 		write_layer_params_and_data(file, current);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
-			push(&aggregates);
-			std::list<Layer const *> * children_ = ((LayerAggregate *) current)->get_children();
-			aggregates->data = (void *) children_;
+			push(&stack);
+			stack->layers = ((LayerAggregate *) current)->get_children();
+
 		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
-			push(&aggregates);
-			std::list<Layer const *> * children_ = ((LayerGPS *) current)->get_children();
-			aggregates->data = (void *) children_;
+			push(&stack);
+			stack->layers = ((LayerGPS *) current)->get_children();
+
 		} else {
-			((std::list<Layer const *> *) aggregates->data)->pop_front();
+			stack->layers->pop_front();
 			fprintf(file, "~EndLayer\n\n");
-			while (aggregates && (!aggregates->data)) {
-				pop(&aggregates);
-				if (aggregates) {
-					((std::list<Layer const *> *) aggregates->data)->pop_front();
+			while (stack && (!stack->layers)) {
+				pop(&stack);
+				if (stack) {
+					stack->layers->pop_front();
 					fprintf(file, "~EndLayer\n\n");
 				}
 			}
@@ -338,7 +386,7 @@ static void string_list_set_param(int i, const QStringList & string_list, Layer 
  *
  * TODO flow up line number(s) / error messages of problems encountered...
  */
-static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * dirpath, Viewport * viewport)
+bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * dirpath, Viewport * viewport)
 {
 	LatLon latlon;
 	char buffer[4096];
@@ -348,14 +396,12 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 	uint8_t param_specs_count = 0;
 
 	GHashTable * string_lists = g_hash_table_new(g_direct_hash, g_direct_equal);
-	LayerAggregate * aggregate = parent_layer;
+	LayerAggregate * aggregate = top_layer;
 
 	bool successful_read = true;
 
-	Stack * stack = NULL;
-	push(&stack);
-	stack->under = NULL;
-	stack->data = (void *) parent_layer;
+	LayerStack stack;
+	stack.push(top_layer);
 
 	while (fgets(buffer, sizeof (buffer), file))  {
 		line_num++;
@@ -391,70 +437,93 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 				continue;
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
 				qDebug() << "DD: File: Read: encountered begin of Layer:" << line;
-				LayerType parent_type = ((Layer *) stack->data)->type;
-				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE)
-							&& (parent_type != LayerType::GPS))) {
+
+				if (!stack.first) { /* TODO: verify that this condition is handled correctly inside of this branch. */
+					successful_read = false;
+					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer\n", line_num);
+					stack.push(NULL); /* Inside INVALID layer. */
+					continue;
+				}
+
+
+				const LayerType parent_type = stack.first->type;
+				if (parent_type != LayerType::AGGREGATE && parent_type != LayerType::GPS) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, (int) parent_type);
-					push(&stack); /* Inside INVALID layer. */
-					stack->data = NULL;
+					stack.push(NULL); /* Inside INVALID layer. */
 					continue;
-				} else {
-					LayerType layer_type = Layer::type_from_type_id_string(QString(line + 6));
-					push(&stack);
-					if (layer_type == LayerType::NUM_TYPES) {
-						successful_read = false;
-						fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
-						stack->data = NULL;
-					} else if (parent_type == LayerType::GPS) {
-						LayerGPS * g = (LayerGPS *) stack->under->data;
-						stack->data = (void *) g->get_a_child();
-						param_specs = Layer::get_interface(layer_type)->parameters_c;
-						param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
-
-					} else { /* Any other LayerType::X type. */
-						Layer * layer = Layer::construct_layer(layer_type, viewport);
-						stack->data = (void *) layer;
-						param_specs = Layer::get_interface(layer_type)->parameters_c;
-						param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
-					}
 				}
+
+				const LayerType layer_type = Layer::type_from_type_id_string(QString(line + 6));
+				TreeView * tree_view = NULL;
+
+				if (layer_type == LayerType::NUM_TYPES) {
+					successful_read = false;
+					fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
+					stack.push(NULL);
+				} else if (parent_type == LayerType::GPS) {
+					LayerGPS * gps = (LayerGPS *) stack.second;
+					Layer * child = gps->get_a_child();
+					stack.push(child);
+					param_specs = Layer::get_interface(layer_type)->parameters_c;
+					param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+
+					gps->tree_view->append_tree_item(gps->index, child, child->name);
+
+				} else { /* Any other LayerType::X type. */
+
+					Layer * layer = Layer::construct_layer(layer_type, viewport);
+					stack.push(layer);
+					param_specs = Layer::get_interface(layer_type)->parameters_c;
+					param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+
+					/* Notice that stack.second may become available
+					   only after stack.push() executed above, e.g.
+					   when before the push() there was only Top Layer
+					   in the stack. */
+
+					//LayerAggregate * agg = (LayerAggregate *) stack.second;
+					//qDebug() << "II" PREFIX << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
+					//agg->tree_view->append_tree_item(agg->index, layer, layer->name);
+				}
+
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
 				qDebug() << "DD: File: Read: encountered end of Layer:" << line;
-				if (stack->under == NULL) {
+				if (stack.second == NULL) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num);
 				} else {
 					/* Add any string lists we've accumulated. */
-					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, (Layer *) stack->data);
+					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, stack.first);
 					g_hash_table_remove_all(string_lists);
 
-					if (stack->data && stack->under->data) {
-						if (((Layer *) stack->under->data)->type == LayerType::AGGREGATE) {
-							Layer * layer = (Layer *) stack->data;
-							((LayerAggregate *) stack->under->data)->add_layer(layer, false);
-							layer->add_children_to_tree();
+					qDebug() << "------- EndLayer for pair of first/second = " << stack.first->name << stack.second->name;
+
+					if (stack.first && stack.second) {
+						if (stack.second->type == LayerType::AGGREGATE) {
+							Layer * layer = stack.first;
+							//layer->add_children_to_tree();
 							layer->post_read(viewport, true);
-						} else if (((Layer *) stack->under->data)->type == LayerType::GPS) {
+						} else if (stack.second->type == LayerType::GPS) {
 							/* TODO: anything else needs to be done here? */
 						} else {
 							successful_read = false;
-							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, (int) ((Layer *) stack->data)->type);
+							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, (int) stack.first->type);
 						}
 					}
-					pop(&stack);
+					stack.pop();
 				}
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
 				qDebug() << "DD" PREFIX << "encountered begin of LayerData:" << line;
-				Layer * layer = (Layer *) stack->data;
+				Layer * layer = stack.first;
 				const LayerDataReadStatus rv = layer->read_layer_data(file, dirpath);
 				switch (rv) {
 				case LayerDataReadStatus::Error:
-					qDebug() << "EE" PREFIX << "LayerData read unsuccessfully";
+					qDebug() << "EE" PREFIX << "LayerData for layer named" << layer->name << "read unsuccessfully";
 					successful_read = false;
 					break;
 				case LayerDataReadStatus::Success:
-					qDebug() << "DD" PREFIX << "LayerData read successfully";
+					qDebug() << "DD" PREFIX << "LayerData for layer named" << layer->name << "read successfully";
 					/* Success, pass. */
 					break;
 				case LayerDataReadStatus::Unrecognized:
@@ -491,7 +560,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 		} else {
 			int32_t eq_pos = -1;
 			uint16_t i;
-			if (! stack->data) {
+			if (!stack.first) {
 				continue;
 			}
 
@@ -501,47 +570,50 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 				}
 			}
 
-			Layer * layer = (Layer *) stack->data;
+			Layer * layer = stack.first;
 
-			if (stack->under == NULL && eq_pos == 12 && strncasecmp(line, "FILE_VERSION", eq_pos) == 0) {
+			if (stack.second == NULL && eq_pos == 12 && strncasecmp(line, "FILE_VERSION", eq_pos) == 0) {
 				int version = strtol(line+13, NULL, 10);
 				fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version);
 				if (version > VIKING_FILE_VERSION) {
 					successful_read = false;
 				}
 				/* However we'll still carry and attempt to read whatever we can. */
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "xmpp", eq_pos) == 0) { /* "hard coded" params: global & for all layer-types */
+			} else if (stack.second == NULL && eq_pos == 4 && strncasecmp(line, "xmpp", eq_pos) == 0) { /* "hard coded" params: global & for all layer-types */
 				viewport->set_xmpp(strtod_i8n(line+5, NULL));
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "ympp", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 4 && strncasecmp(line, "ympp", eq_pos) == 0) {
 				viewport->set_ympp(strtod_i8n(line+5, NULL));
-			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lat", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 3 && strncasecmp(line, "lat", eq_pos) == 0) {
 				latlon.lat = strtod_i8n(line+4, NULL);
-			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
 				latlon.lon = strtod_i8n(line+4, NULL);
 
-			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0) {
 				if (!ViewportDrawModes::set_draw_mode_from_file(viewport, line + 5)) {
 					successful_read = false;
 				}
 
-			} else if (stack->under == NULL && eq_pos == 5 && strncasecmp(line, "color", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 5 && strncasecmp(line, "color", eq_pos) == 0) {
 				viewport->set_background_color(QString(line+6));
-			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {
 				viewport->set_highlight_color(QString(line+15));
-			} else if (stack->under == NULL && eq_pos == 9 && strncasecmp(line, "drawscale", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 9 && strncasecmp(line, "drawscale", eq_pos) == 0) {
 				viewport->set_scale_visibility(TEST_BOOLEAN(line+10));
-			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "drawcentermark", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 14 && strncasecmp(line, "drawcentermark", eq_pos) == 0) {
 				viewport->set_center_mark_visibility(TEST_BOOLEAN(line+15));
-			} else if (stack->under == NULL && eq_pos == 13 && strncasecmp(line, "drawhighlight", eq_pos) == 0) {
+			} else if (stack.second == NULL && eq_pos == 13 && strncasecmp(line, "drawhighlight", eq_pos) == 0) {
 				viewport->set_highlight_usage(TEST_BOOLEAN(line+14));
 
-			} else if (stack->under && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
+			} else if (stack.second && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
 				layer->set_name(QString(line+5));
+
+				qDebug() << "II" PREFIX << "calling add_layer(), parent / child = " << stack.second->name << "->" << layer->name;
+				((LayerAggregate *) stack.second)->add_layer(layer, false);
 
 			} else if (eq_pos == 7 && strncasecmp(line, "visible", eq_pos) == 0) {
 				layer->visible = TEST_BOOLEAN(line+8);
 
-			} else if (eq_pos != -1 && stack->under) {
+			} else if (eq_pos != -1 && stack.second) {
 				bool found_match = false;
 
 				/* Go though layer params. If len == eq_pos && starts_with jazz, set it. */
@@ -597,7 +669,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 								/* TODO: review this section. */
 								new_val = SGVariant(line);
 							}
-							Layer * l_a_y_e_r = (Layer *) stack->data;
+							Layer * l_a_y_e_r = stack.first;
 							qDebug() << "DD: File: Read: setting value of parameter" << param_spec->name << "of layer" << layer->name;
 							l_a_y_e_r->set_param_value(i, new_val, true);
 						}
@@ -613,6 +685,7 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 					// successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Unknown parameter. Line:\n%s\n", line_num, line);
 				}
+
 			} else {
 				successful_read = false;
 				fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer.\n", line_num);
@@ -627,15 +700,19 @@ static bool file_read(FILE * file, LayerAggregate * parent_layer, const char * d
 		*/
 	}
 
-	while (stack) {
-		if (stack->under && stack->under->data && stack->data){
-			Layer * layer = (Layer *) stack->data;
-			qDebug() << "DD: Read File: will call Aggregate Layer's add_layer()";
-			((LayerAggregate *) stack->under->data)->add_layer(layer, false);
-			qDebug() << "DD: Read File: will call child layer's post_read()";
-			layer->post_read(viewport, true);
+	while (!stack.empty()) {
+		if (stack.second && stack.first){
+
+			LayerAggregate * parent = (LayerAggregate *) stack.second;
+			Layer * child = stack.first;
+
+			//qDebug() << "DD" PREFIX << "will call parent Aggregate Layer's" << parent->name << "add_layer(" << child->name << ")";
+			//parent->add_layer(child, false);
+
+			//qDebug() << "DD" PREFIX << "will call child layer's" << child->name << "post_read()";
+			//child->post_read(viewport, true);
 		}
-		pop(&stack);
+		stack.pop();
 	}
 
 	viewport->set_center_from_latlon(latlon, true); /* The function will reject latlon if it's invalid. */
@@ -660,11 +737,11 @@ if "[Layer Type="
   push(&stack)
   new default layer of type (str_to_type) (check interface->name)
 if "[EndLayer]"
-  Layer * layer = stack->data;
+  Layer * layer = stack.first;
   pop(&stack);
-  vik_aggregate_layer_add_layer(stack->data, layer);
+  vik_aggregate_layer_add_layer(stack.first, layer);
 if "[LayerData]"
-  vik_layer_data (VIK_LAYER_DATA(stack->data), f, viewport);
+  vik_layer_data (VIK_LAYER_DATA(stack.first), f, viewport);
 
 */
 
@@ -772,7 +849,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 	char * dirpath = g_path_get_dirname(full_path.toUtf8().constData());
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (check_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
-		if (file_read(file, parent_layer, dirpath, viewport)) {
+		if (VikFile::read_file(file, parent_layer, dirpath, viewport)) {
 			load_answer = FileLoadResult::VIK_SUCCESS;
 		} else {
 			load_answer = FileLoadResult::VIK_FAILURE_NON_FATAL;
@@ -786,9 +863,9 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		   must be loaded into a new TrackWaypoint layer (hence it be created). */
 		bool success = true; /* Detect load failures - mainly to remove the layer created as it's not required. */
 
-		LayerTRW * layer = new LayerTRW();
-		layer->set_coord_mode(viewport->get_coord_mode());
-		layer->set_name(FileUtils::get_base_name(full_path));
+		LayerTRW * trw = new LayerTRW();
+		trw->set_coord_mode(viewport->get_coord_mode());
+		trw->set_name(FileUtils::get_base_name(full_path));
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
@@ -796,7 +873,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 			BabelOptions babel_options(BabelOptionsMode::FromFile);
 			babel_options.input = full_path;
 			babel_options.babel_args = "-i kml";
-			success = babel_options.import_from_local_file(layer, NULL);
+			success = babel_options.import_from_local_file(trw, NULL);
 			if (!success) {
 				load_answer = FileLoadResult::GPSBABEL_FAILURE;
 			}
@@ -804,13 +881,13 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */
 		else if (FileUtils::has_extension(full_path, ".gpx") || check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			success = GPX::read_file(file, layer);
+			success = GPX::read_file(file, trw);
 			if (!success) {
 				load_answer = FileLoadResult::GPX_FAILURE;
 			}
 		} else {
 			/* Try final supported file type. */
-			const LayerDataReadStatus rv = GPSPoint::read_layer(file, layer, dirpath);
+			const LayerDataReadStatus rv = GPSPoint::read_layer(file, trw, dirpath);
 			success = (rv == LayerDataReadStatus::Success);
 			if (!success) {
 				/* Failure here means we don't know how to handle the file. */
@@ -821,13 +898,12 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 
 		/* Clean up when we can't handle the file. */
 		if (!success) {
-			/* free up layer. */
-			layer->unref();
+			delete trw;
 		} else {
 			/* Complete the setup from the successful load. */
-			layer->post_read(viewport, true);
-			parent_layer->add_layer(layer, false);
-			layer->move_viewport_to_show_all(viewport);
+			trw->post_read(viewport, true);
+			parent_layer->add_layer(trw, false);
+			trw->move_viewport_to_show_all(viewport);
 		}
 	}
 	fclose(file);

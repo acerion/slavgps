@@ -165,7 +165,8 @@ bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_so
 			if (!name.size()) {
 				name = file_base_name(file_full_path);
 			}
-			trw->add_waypoint_from_file(wp, name);
+			wp->set_name(name);
+			trw->add_waypoint_from_file(wp);
 		} else {
 			acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(file_full_path));
 		}

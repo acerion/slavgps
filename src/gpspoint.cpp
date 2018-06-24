@@ -374,20 +374,26 @@ LayerDataReadStatus GPSPoint::read_layer(FILE * file, LayerTRW * trw, char const
 		}
 
 
-		if (point_parser.line_type == GPSPOINT_TYPE_WAYPOINT && point_parser.line_name) {
-			have_read_something = true;
-			Waypoint * wp = point_parser.create_waypoint(coord_mode, dirpath);
-			trw->add_waypoint_from_file(wp, point_parser.line_name);
+		have_read_something = true;
 
-		} else if ((point_parser.line_type == GPSPOINT_TYPE_TRACK || point_parser.line_type == GPSPOINT_TYPE_ROUTE) && point_parser.line_name) {
-			have_read_something = true;
+		if (point_parser.line_type == GPSPOINT_TYPE_WAYPOINT && point_parser.line_name) {
+			Waypoint * wp = point_parser.create_waypoint(coord_mode, dirpath);
+			trw->add_waypoint(wp);
+
+		} else if (point_parser.line_type == GPSPOINT_TYPE_TRACK && point_parser.line_name) {
 			current_track = point_parser.create_track(trw);
-			trw->add_track_from_file2(current_track, point_parser.line_name);
+			trw->add_track(current_track);
+
+		} else if (point_parser.line_type == GPSPOINT_TYPE_ROUTE && point_parser.line_name) {
+			current_track = point_parser.create_track(trw);
+			trw->add_route(current_track);
 
 		} else if ((point_parser.line_type == GPSPOINT_TYPE_TRACKPOINT || point_parser.line_type == GPSPOINT_TYPE_ROUTEPOINT) && current_track) {
-			have_read_something = true;
 			Trackpoint * tp = point_parser.create_trackpoint(coord_mode);
 			current_track->trackpoints.push_back(tp);
+
+		} else {
+			have_read_something = false;
 		}
 
 		point_parser.reset();
@@ -410,6 +416,7 @@ Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const char
 	wp->altitude = this->line_altitude;
 	wp->has_timestamp = this->line_has_timestamp;
 	wp->timestamp = this->line_timestamp;
+	wp->name = this->line_name;
 
 	wp->coord = Coord(this->line_latlon, coordinate_mode);
 
@@ -461,6 +468,7 @@ Track * GPSPointParser::create_track(LayerTRW * trw)
 	}
 
 	trk->visible = this->line_visible;
+	trk->name = this->line_name;
 
 	if (this->line_comment) {
 		trk->set_comment(QString(this->line_comment));

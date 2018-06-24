@@ -477,7 +477,8 @@ void GeotagJob::geotag(void)
 			}
 
 			if (!updated_waypoint) {
-				this->trw->add_waypoint_from_file(wp2, file_name);
+				wp2->set_name(file_name);
+				this->trw->add_waypoint_from_file(wp2);
 			}
 
 			/* Mark for redraw. */
@@ -533,7 +534,8 @@ void GeotagJob::geotag(void)
 				if (!file_name.size()) {
 					file_name = file_base_name(this->current_file);
 				}
-				this->trw->add_waypoint_from_file(wp2, file_name);
+				wp2->set_name(file_name);
+				this->trw->add_waypoint_from_file(wp2);
 			}
 
 			/* Mark for redraw. */

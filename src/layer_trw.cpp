@@ -2376,11 +2376,10 @@ QString LayerTRW::new_unique_element_name(const QString & item_type_id, const QS
 
 
 
-void LayerTRW::add_waypoint_from_file(Waypoint * wp, const QString & wp_name)
+void LayerTRW::add_waypoint_from_file(Waypoint * wp)
 {
 	/* No more uniqueness of name forced when loading from a file.
 	   This now makes this function a little redunant as we just flow the parameters through. */
-	wp->set_name(wp_name);
 
 	this->add_waypoint(wp);
 }
@@ -2388,75 +2387,36 @@ void LayerTRW::add_waypoint_from_file(Waypoint * wp, const QString & wp_name)
 
 
 
-void LayerTRW::add_track_from_file(Track * incoming_track, const QString & incoming_track_name)
+void LayerTRW::add_track_from_file(Track * trk)
 {
 	Track * curr_track = this->get_edited_track();
 
 	if (this->route_finder_append && curr_track) {
-		incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
+		trk->remove_dup_points(); /* Make "double point" track work to undo. */
 
 		/* Enforce end of current track equal to start of tr. */
 		Trackpoint * cur_end = curr_track->get_tp_last();
-		Trackpoint * new_start = incoming_track->get_tp_first();
+		Trackpoint * new_start = trk->get_tp_first();
 		if (cur_end && new_start) {
 			if (cur_end->coord != new_start->coord) {
 				curr_track->add_trackpoint(new Trackpoint(*cur_end), false);
 			}
 		}
 
-		curr_track->steal_and_append_trackpoints(incoming_track);
-		incoming_track->free();
+		curr_track->steal_and_append_trackpoints(trk);
+		trk->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
-		incoming_track->set_name(incoming_track_name);
 		/* No more uniqueness of name forced when loading from a file. */
-		if (incoming_track->type_id == "sg.trw.route") {
-			this->add_route(incoming_track);
+		if (trk->type_id == "sg.trw.route") {
+			this->routes->add_track_to_data_structure_only(trk);
 		} else {
-			this->add_track(incoming_track);
+			this->tracks->add_track_to_data_structure_only(trk);
 		}
 
 		if (this->route_finder_check_added_track) {
-			incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
-			this->route_finder_added_track = incoming_track;
-		}
-	}
-}
-
-
-
-
-void LayerTRW::add_track_from_file2(Track * incoming_track, const QString & incoming_track_name)
-{
-	Track * curr_track = this->get_edited_track();
-
-	if (this->route_finder_append && curr_track) {
-		incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
-
-		/* Enforce end of current track equal to start of tr. */
-		Trackpoint * cur_end = curr_track->get_tp_last();
-		Trackpoint * new_start = incoming_track->get_tp_first();
-		if (cur_end && new_start) {
-			if (cur_end->coord != new_start->coord) {
-				curr_track->add_trackpoint(new Trackpoint(*cur_end), false);
-			}
-		}
-
-		curr_track->steal_and_append_trackpoints(incoming_track);
-		incoming_track->free();
-		this->route_finder_append = false; /* This means we have added it. */
-	} else {
-		incoming_track->set_name(incoming_track_name);
-		/* No more uniqueness of name forced when loading from a file. */
-		if (incoming_track->type_id == "sg.trw.route") {
-			this->routes->add_track_to_data_structure_only(incoming_track);
-		} else {
-			this->tracks->add_track_to_data_structure_only(incoming_track);
-		}
-
-		if (this->route_finder_check_added_track) {
-			incoming_track->remove_dup_points(); /* Make "double point" track work to undo. */
-			this->route_finder_added_track = incoming_track;
+			trk->remove_dup_points(); /* Make "double point" track work to undo. */
+			this->route_finder_added_track = trk;
 		}
 	}
 }

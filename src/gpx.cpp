@@ -432,7 +432,8 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		if (c_wp_name.isEmpty()) {
 			c_wp_name = QString("VIKING_WP%1").arg(unnamed_waypoints++, 4, 10, (QChar) '0');
 		}
-		trw->add_waypoint_from_file(c_wp, c_wp_name);
+		c_wp->set_name(c_wp_name);
+		trw->add_waypoint_from_file(c_wp);
 		c_wp = NULL;
 		break;
 
@@ -445,7 +446,8 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		if (c_tr_name.isEmpty()) {
 			c_tr_name = QString("VIKING_RT%1").arg(unnamed_routes++, 3, 10, (QChar) '0');
 		}
-		trw->add_track_from_file2(c_tr, c_tr_name);
+		c_tr->set_name(c_tr_name);
+		trw->add_track_from_file(c_tr);
 		c_tr = NULL;
 		break;
 
@@ -500,11 +502,10 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
-	case tt_wpt_sym: {
+	case tt_wpt_sym:
 		c_wp->set_symbol(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
-	}
 
 	case tt_trk_desc:
 		c_tr->set_description(c_cdata->str);

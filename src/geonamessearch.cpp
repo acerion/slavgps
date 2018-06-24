@@ -356,7 +356,9 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 				wiki_wp->set_symbol("forest");
 			}
 		}
-		trw->add_waypoint_from_file(wiki_wp, wiki_geoname->name);
+
+		wiki_wp->set_name(wiki_geoname->name);
+		trw->add_waypoint_from_file(wiki_wp);
 	}
 
 	free_geoname_list(wiki_places);
