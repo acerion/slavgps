@@ -431,6 +431,7 @@ void Window::create_actions(void)
 		qa = this->menu_file->addAction(tr("Save &As..."));
 		qa->setIcon(QIcon::fromTheme("document-save-as"));
 		qa->setToolTip("Save the file under different name");
+		qa->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_S);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_as_cb()));
 
 		qa = this->menu_file->addAction(tr("Properties..."));
@@ -1448,12 +1449,14 @@ void Window::menu_edit_delete_cb(void)
 void Window::menu_edit_delete_all_cb(void)
 {
 	/* Do nothing if empty. */
-	if (!this->items_tree->get_top_layer()->is_empty()) {
-		if (Dialog::yes_or_no(tr("Are you sure you want to delete all layers?"), this)) {
-			this->items_tree->clear();
-			this->set_current_document_full_path("");
-			this->draw_tree_items();
-		}
+	if (0 == this->items_tree->get_top_layer()->get_children_count()) {
+		return;
+	}
+
+	if (Dialog::yes_or_no(tr("Are you sure you want to delete all layers?"), this)) {
+		this->items_tree->clear();
+		this->set_current_document_full_path("");
+		this->draw_tree_items();
 	}
 }
 

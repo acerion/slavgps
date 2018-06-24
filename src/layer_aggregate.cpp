@@ -727,15 +727,15 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 				continue;
 			}
 
-			if (((LayerGPS *) layer)->is_empty()) {
+			if (0 == layer->get_children_count()) {
 				continue;
 			}
 
-			std::list<Layer const * > * gps_trw_layers = ((LayerGPS *) layer)->get_children();
-			for (auto iter = gps_trw_layers->begin(); iter != gps_trw_layers->end(); iter++) {
+			std::list<Layer const * > * gps_children = layer->get_children();
+			for (auto iter = gps_children->begin(); iter != gps_children->end(); iter++) {
 				layers.push_front(*iter);
 			}
-			delete gps_trw_layers;
+			delete gps_children;
 		}
 		child++;
 	}
@@ -806,15 +806,15 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 				continue;
 			}
 
-			if (((LayerGPS *) layer)->is_empty()) {
+			if (0 == layer->get_children_count()) {
 				continue;
 			}
 
-			std::list<Layer const * > * gps_trw_layers = ((LayerGPS *) layer)->get_children();
-			for (auto iter = gps_trw_layers->begin(); iter != gps_trw_layers->end(); iter++) {
+			std::list<Layer const * > * gps_children = layer->get_children();
+			for (auto iter = gps_children->begin(); iter != gps_children->end(); iter++) {
 				layers->push_front(*iter);
 			}
-			delete gps_trw_layers;
+			delete gps_children;
 		}
 		child++;
 	}
@@ -865,9 +865,9 @@ std::list<Layer const *> * LayerAggregate::get_children(void) const
 
 
 
-bool LayerAggregate::is_empty(void) const
+int LayerAggregate::get_children_count(void) const
 {
-	return this->children->empty();
+	return this->children->size();
 }
 
 

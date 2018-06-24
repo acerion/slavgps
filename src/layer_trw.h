@@ -205,7 +205,7 @@ namespace SlavGPS {
 		bool get_routes_visibility();
 		bool get_waypoints_visibility();
 
-		bool is_empty();
+		bool is_empty(void) const;
 
 
 		bool find_track_by_date(char const * date, Viewport * viewport, bool select);

@@ -831,7 +831,7 @@ LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : Layer
 	this->action_icon_path   = ":/icons/layer_tool/select_18.png";
 	this->action_label       = QObject::tr("&Select");
 	this->action_tooltip     = QObject::tr("Select Tool");
-	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_S;
+	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_L;
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);

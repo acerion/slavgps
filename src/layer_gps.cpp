@@ -721,12 +721,15 @@ LayerTRW * LayerGPS::get_a_child()
 
 
 
-bool LayerGPS::is_empty(void) const
+int LayerGPS::get_children_count(void) const
 {
 	if (this->trw_children[0]) {
-		return false;
+		/* First child layer not created, so the second/third is not created either. */
+		return 0;
+	} else {
+		/* First child has been created, so the second/third has been created as well. */
+		return GPS_CHILD_LAYER_MAX;
 	}
-	return true;
 }
 
 

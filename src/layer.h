@@ -185,6 +185,12 @@ namespace SlavGPS {
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 
+		/* Most of layer types aren't able to store child layers.
+		   Those that do, may have zero child layers at the moment. */
+		virtual int get_children_count(void) const { return 0; };
+
+		/* Return list of children layers. Most of layer types won't have child layers. */
+		virtual std::list<Layer const *> * get_children(void) const { return NULL; };
 
 		/* "type id string" means Layer's internal, fixed string
 		   that can be used in .vik file operations and to

@@ -89,35 +89,28 @@ using namespace SlavGPS;
 
 
 
-
+template <class T>
 class LayerStack {
 public:
-	void push(Layer * layer);
+	void push(T data);
 	void pop(void);
 	bool empty(void) { return this->layers.empty(); };
 
-	std::list<Layer *> layers;
+	std::list<T> layers;
 
-	Layer * first = NULL; /* First layer on top of stack. */
-	Layer * second = NULL; /* Second layer, counting from top (second after LayerStack::first). */
+	T first = NULL; /* First layer (or list of layers) on top of stack. */
+	T second = NULL; /* Second layer (or list of layers), counting from top (second after LayerStack::first). */
 };
-static int layer_stack_size = 0;
-
-
-class LayersStack {
-public:
-	LayersStack * under = NULL;
-	std::list<Layer const *> * layers = NULL;
-};
-static int layers_stack_size = 0;
 
 
 
-void LayerStack::push(Layer * layer)
+
+template <class T>
+void LayerStack<T>::push(T data)
 {
-	this->layers.push_front(layer);
+	this->layers.push_front(data);
 
-	this->first = layer;
+	this->first = data;
 
 	if (this->layers.size() > 1) {
 		this->second = *std::next(this->layers.begin());
@@ -129,7 +122,8 @@ void LayerStack::push(Layer * layer)
 
 
 
-void LayerStack::pop(void)
+template <class T>
+void LayerStack<T>::pop(void)
 {
 	this->layers.pop_front();
 
@@ -143,32 +137,6 @@ void LayerStack::pop(void)
 			this->second = *std::next(this->layers.begin());
 		}
 	}
-}
-
-
-
-
-static void pop(LayersStack ** stack)
-{
-	LayersStack * tmp = (*stack)->under;
-	delete *stack;
-	*stack = tmp;
-
-	layers_stack_size--;
-	assert (layers_stack_size >= 0);
-}
-
-
-
-
-static void push(LayersStack ** stack)
-{
-	LayersStack * tmp = new LayersStack;
-	tmp->under = *stack;
-	*stack = tmp;
-
-	assert(layers_stack_size >= 0);
-	layers_stack_size++;
 }
 
 
@@ -279,11 +247,8 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 
 
 
-static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * viewport)
+void file_write_header(FILE * file, const LayerAggregate * top_level_layer, Viewport * viewport)
 {
-	LayerAggregate * aggregate = parent_layer;
-
-	/* Crazhy CRAZHY. */
 	const LatLon lat_lon = viewport->get_center()->get_latlon();
 
 	const QString mode_id_string = ViewportDrawModes::get_id_string(viewport->get_drawmode());
@@ -305,50 +270,56 @@ static void file_write(FILE * file, LayerAggregate * parent_layer, Viewport * vi
 		viewport->get_center_mark_visibility() ? "t" : "f",
 		viewport->get_highlight_usage() ? "t" : "f");
 
-	if (!aggregate->visible) {
+	if (!top_level_layer->visible) {
 		fprintf(file, "visible=f\n");
 	}
 
+	return;
+}
 
-	LayersStack * stack = NULL;
-	push(&stack);
-	stack->layers = aggregate->get_children();
 
-	while (stack && stack->layers && stack->layers->size()) {
-		const Layer * current = stack->layers->front();
+
+
+static void file_write(FILE * file, LayerAggregate * top_level_layer, Viewport * viewport)
+{
+	file_write_header(file, top_level_layer, viewport);
+
+	LayerStack<std::list<const Layer *> *> stack;
+	stack.push(top_level_layer->get_children()); /* This is Top Level Aggregate Layer, so this is safe even if there are no children. */
+
+	while (stack.layers.size() && stack.layers.front()->size()) {
+
+		const Layer * current = stack.layers.front()->front();
 		fprintf(file, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
 		write_layer_params_and_data(file, current);
-		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
-			push(&stack);
-			stack->layers = ((LayerAggregate *) current)->get_children();
 
-		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
-			push(&stack);
-			stack->layers = ((LayerGPS *) current)->get_children();
+		/* The layer at the front has been written, and we
+		   will put its children (if any) on stack below. So
+		   we don't need the front layer anymore. */
+		stack.layers.front()->pop_front();
 
+		std::list<const Layer *> * children = current->get_children();
+		if (children && !children->empty()) {
+			/* This may happen for Aggregate or GPS layer. */
+			stack.push(children);
 		} else {
-			stack->layers->pop_front();
+			/* This layer had no children, so we have completed writing it. */
 			fprintf(file, "~EndLayer\n\n");
-			while (stack && (!stack->layers)) {
-				pop(&stack);
-				if (stack) {
-					stack->layers->pop_front();
+
+			while (!stack.empty() && stack.layers.front()->empty()) {
+				/* We have written all layers in given level.
+				   Time to go back one level up (to parent level). */
+				stack.pop();
+
+				if (stack.empty()) {
+					/* We have completed writing Top Level Layer. This layer doesn't require ~EndLayer tag. */
+				} else {
+					/* This marks end of aggregate or gps layer. */
 					fprintf(file, "~EndLayer\n\n");
 				}
 			}
 		}
 	}
-	/*
-	  get vikaggregatelayer's children (?)
-	  foreach write ALL params,
-	  then layer data (IF function exists)
-	  then endlayer
-
-	  impl:
-	  stack of layers (LIST) we are working on
-	  when layer->next == NULL ...
-	  we move on.
-	*/
 }
 
 
@@ -400,7 +371,7 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 
 	bool successful_read = true;
 
-	LayerStack stack;
+	LayerStack<Layer *> stack;
 	stack.push(top_layer);
 
 	while (fgets(buffer, sizeof (buffer), file))  {

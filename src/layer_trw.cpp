@@ -1611,7 +1611,7 @@ LayerTRWWaypoints & LayerTRW::get_waypoints_node(void)
 
 
 
-bool LayerTRW::is_empty()
+bool LayerTRW::is_empty(void) const
 {
 	return ! (this->tracks->items.size() || this->routes->items.size() || this->waypoints->items.size());
 }

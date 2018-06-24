@@ -170,9 +170,10 @@ namespace SlavGPS {
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 
+		int get_children_count(void) const;
 		std::list<Layer const * > * get_children(void) const;
 		LayerTRW * get_a_child();
-		bool is_empty(void) const;
+
 		void realtime_tracking_draw(Viewport * viewport);
 		Trackpoint * create_realtime_trackpoint(bool forced);
 		void update_statusbar(Window * window);
