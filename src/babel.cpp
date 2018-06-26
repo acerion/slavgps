@@ -559,7 +559,7 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool 
 
 
 	/* Now strips out invisible tracks and waypoints. */
-	if (!VikFile::export_(trw, tmp_file_full_path, SGFileType::GPX, trk, false)) {
+	if (!VikFile::export_trw(trw, tmp_file_full_path, SGFileType::GPX, trk, false)) {
 		qDebug() << "EE: Babel: Convert to: Error exporting to" << tmp_file_full_path;
 		return false;
 	}

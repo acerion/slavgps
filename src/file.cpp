@@ -39,6 +39,7 @@
 #include <glib/gstdio.h>
 
 #include <QDebug>
+#include <QHash>
 
 #include "viewport_internal.h"
 #include "layer_aggregate.h"
@@ -142,25 +143,6 @@ void LayerStack<T>::pop(void)
 
 
 
-static bool check_magic(FILE * f, char const * magic_number, unsigned int magic_length)
-{
-	char magic[magic_length];
-	bool rv = false;
-	int8_t i;
-	if (fread(magic, 1, sizeof(magic), f) == sizeof(magic) &&
-	     strncmp(magic, magic_number, sizeof(magic)) == 0) {
-		rv = true;
-	}
-
-	for (i = sizeof(magic)-1; i >= 0; i--) { /* The ol' pushback. */
-		ungetc(magic[i],f);
-	}
-	return rv;
-}
-
-
-
-
 static bool str_starts_with(char const * haystack, char const * needle, uint16_t len_needle, bool must_be_longer)
 {
 	if (strlen(haystack) > len_needle - (!must_be_longer) && strncasecmp(haystack, needle, len_needle) == 0) {
@@ -196,12 +178,17 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 
 
 
+/**
+   See if the line contains any interesting data.
+   Return length of pre-processed line if it contains the data.
+*/
 size_t handle_line(char ** line)
 {
-	while ((**line) == ' ' || (**line) =='\t') {
+	while ((**line) == ' ' || (**line) == '\t') {
 		(*line)++;
 	}
 
+	/* Comment. */
 	if ((*line)[0] == '#') {
 		return 0;
 	}
@@ -279,57 +266,58 @@ bool read_header(FILE * file, char * buffer, size_t buffer_size, Layer * top_lay
 			continue;
 		}
 
-
 		size_t name_len = 0; /* Length of parameter's name. */
+		const char * value_start = NULL;
 		for (size_t i = 0; i < line_len; i++) {
 			if (line[i] == '=') {
 				name_len = i;
+				value_start = line + name_len + 1;
 			}
 		}
 
 
 		if (name_len == 12 && strncasecmp(line, "FILE_VERSION", name_len) == 0) {
-			int version = strtol(line+13, NULL, 10);
+			int version = strtol(value_start, NULL, 10);
 			fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version);
 			if (version > VIKING_FILE_VERSION) {
 				successful_read = false;
 			}
 			/* However we'll still carry and attempt to read whatever we can. */
 		} else if (name_len == 4 && strncasecmp(line, "xmpp", name_len) == 0) { /* "hard coded" params: global & for all layer-types */
-			viewport->set_xmpp(strtod_i8n(line+5, NULL));
+			viewport->set_xmpp(strtod_i8n(value_start, NULL));
 
 		} else if (name_len == 4 && strncasecmp(line, "ympp", name_len) == 0) {
-			viewport->set_ympp(strtod_i8n(line+5, NULL));
+			viewport->set_ympp(strtod_i8n(value_start, NULL));
 
 		} else if (name_len == 3 && strncasecmp(line, "lat", name_len) == 0) {
-			lat_lon.lat = strtod_i8n(line+4, NULL);
+			lat_lon.lat = strtod_i8n(value_start, NULL);
 
 		} else if (name_len == 3 && strncasecmp(line, "lon", name_len) == 0) {
-			lat_lon.lon = strtod_i8n(line+4, NULL);
+			lat_lon.lon = strtod_i8n(value_start, NULL);
 
 		} else if (name_len == 4 && strncasecmp(line, "mode", name_len) == 0) {
-			if (!ViewportDrawModes::set_draw_mode_from_file(viewport, line + 5)) {
+			if (!ViewportDrawModes::set_draw_mode_from_file(viewport, value_start)) {
 				successful_read = false;
 			}
 
 		} else if (name_len == 5 && strncasecmp(line, "color", name_len) == 0) {
-			viewport->set_background_color(QString(line+6));
+			viewport->set_background_color(QString(value_start));
 
 		} else if (name_len == 14 && strncasecmp(line, "highlightcolor", name_len) == 0) {
-			viewport->set_highlight_color(QString(line+15));
+			viewport->set_highlight_color(QString(value_start));
 
 		} else if (name_len == 9 && strncasecmp(line, "drawscale", name_len) == 0) {
-			viewport->set_scale_visibility(TEST_BOOLEAN(line+10));
+			viewport->set_scale_visibility(TEST_BOOLEAN(value_start));
 
 		} else if (name_len == 14 && strncasecmp(line, "drawcentermark", name_len) == 0) {
-			viewport->set_center_mark_visibility(TEST_BOOLEAN(line+15));
+			viewport->set_center_mark_visibility(TEST_BOOLEAN(value_start));
 
 		} else if (name_len == 13 && strncasecmp(line, "drawhighlight", name_len) == 0) {
-			viewport->set_highlight_usage(TEST_BOOLEAN(line+14));
+			viewport->set_highlight_usage(TEST_BOOLEAN(value_start));
 
 		} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
 			/* This branch exists for both top level layer and sub-layers. */
-			top_layer->visible = TEST_BOOLEAN(line+8);
+			top_layer->visible = TEST_BOOLEAN(value_start);
 
 		} else {
 			successful_read = false;
@@ -383,22 +371,6 @@ static void file_write(FILE * file, LayerAggregate * top_level_layer, Viewport *
 			}
 		}
 	}
-}
-
-
-
-
-static void string_list_delete(void * key, void * l, void * user_data)
-{
-#ifdef K_FIXME_RESTORE
-	/* 20071021 bugfix */
-	if (list) {
-		for (auto iter = list->begin(); iter != list->end(); iter++) {
-			free(*iter);
-		}
-		delete list;
-	}
-#endif
 }
 
 
@@ -468,8 +440,7 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
 	uint8_t param_specs_count = 0;
 
-	GHashTable * string_lists = g_hash_table_new(g_direct_hash, g_direct_equal);
-	LayerAggregate * aggregate = top_layer;
+	QHash<param_id_t, QStringList> string_lists; /* Parameter id -> value of parameter (value of parameter is of type QStringList). */
 
 	bool successful_read = true;
 
@@ -481,7 +452,8 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 	}
 
 	/* First interesting line after header is already in
-	   buffer. Therefore don't read it on top of this loop. */
+	   buffer. Therefore don't read it on top of this loop, use
+	   do-while loop instead. */
 	do {
 		line_num++;
 
@@ -556,18 +528,27 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num);
 				} else {
+					Layer * parent_layer = stack.second;
+					Layer * layer = stack.first;
+
 					/* Add any string lists we've accumulated. */
-					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, stack.first);
-					g_hash_table_remove_all(string_lists);
+
+					for (auto iter = string_lists.begin(); iter != string_lists.end(); iter++) {
+						const param_id_t param_id = iter.key();
+						const QStringList & string_list = iter.value();
+						const SGVariant param_value(string_list);
+
+						layer->set_param_value(param_id, param_value, true);
+					}
+					string_lists.clear();
 
 					qDebug() << "------- EndLayer for pair of first/second = " << stack.first->name << stack.second->name;
 
-					if (stack.first && stack.second) {
-						if (stack.second->type == LayerType::AGGREGATE) {
-							Layer * layer = stack.first;
+					if (layer && parent_layer) {
+						if (parent_layer->type == LayerType::AGGREGATE) {
 							//layer->add_children_to_tree();
 							layer->post_read(viewport, true);
-						} else if (stack.second->type == LayerType::GPS) {
+						} else if (parent_layer->type == LayerType::GPS) {
 							/* TODO: anything else needs to be done here? */
 						} else {
 							successful_read = false;
@@ -621,38 +602,41 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 				fprintf(stderr, "WARNING: Line %ld: Unknown tilde command\n", line_num);
 			}
 		} else {
-			int eq_pos = -1;
-			if (!stack.first) {
+			if (!stack.first || !stack.second) {
 				continue;
 			}
 
-			for (int i = 0; i < (int) len; i++) {
+			/* The layer, for which we will set parameters. */
+			Layer * layer = stack.first;
+
+			/* Parent layer of current layer. */
+			LayerAggregate * parent_layer = (LayerAggregate *) stack.second;
+
+
+			size_t name_len = 0; /* Length of parameter's name. */
+			const char * value_start = NULL;
+			for (size_t i = 0; i < len; i++) {
 				if (line[i] == '=') {
-					eq_pos = i;
+					name_len = i;
+					value_start = line + name_len + 1;
 				}
 			}
 
-			Layer * layer = stack.first;
+			if (name_len == 4 && strncasecmp(line, "name", name_len) == 0) {
 
-			if (stack.second && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
+				layer->set_name(QString(value_start));
 
-				/* Notice the condition:
-				   "stack.second". This means that we
-				   operate on non-Top Level Layer and
-				   we can set its name. */
+				qDebug() << "II" PREFIX << "calling add_layer(), parent / child = " << parent_layer->name << "->" << layer->name;
+				parent_layer->add_layer(layer, false);
 
-				layer->set_name(QString(line+5));
+			} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
+				layer->visible = TEST_BOOLEAN(value_start);
 
-				qDebug() << "II" PREFIX << "calling add_layer(), parent / child = " << stack.second->name << "->" << layer->name;
-				((LayerAggregate *) stack.second)->add_layer(layer, false);
+			} else if (name_len != 0) { /* Some other parameter. */
 
-			} else if (eq_pos == 7 && strncasecmp(line, "visible", eq_pos) == 0) {
-				layer->visible = TEST_BOOLEAN(line+8);
-
-			} else if (stack.second && eq_pos != -1) {
 				bool parameter_found = false;
 
-				/* Go though layer params. If len == eq_pos && starts_with jazz, set it. */
+				/* Go though layer params. If len == name_len && starts_with jazz, set it. */
 				/* Also got to check for name and visible. */
 
 				if (!param_specs) {
@@ -665,19 +649,24 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 
 					const ParameterSpecification * param_spec = &param_specs[i];
 
-					if (!(strlen(param_spec->name) == eq_pos && strncasecmp(line, param_spec->name, eq_pos) == 0)) {
+					if (!(strlen(param_spec->name) == name_len && strncasecmp(line, param_spec->name, name_len) == 0)) {
 						continue;
 					}
 
-					line += eq_pos + 1;
-
 					if (param_spec->type_id == SGVariantType::StringList) {
-						GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, ((void *) (long) i)), g_strdup(line));
-						g_hash_table_replace(string_lists, (void *) (long) i, l);
+
 						/* Aadd the value to a list, possibly making a new list.
 						   This will be passed to the layer when we read an ~EndLayer. */
+
+						/* Append current value to list of strings.
+						   The list of strings is a value of layer's parameter 'i'.
+
+						   [] operator returns modifiable reference to existing value,
+						   or to default-constructed value. In both cases we append
+						   new value (value_start) to list of strings at key 'i'. */
+						string_lists[i] << QString(value_start);
 					} else {
-						const SGVariant new_val = new_sgvariant_sub(line, param_spec->type_id);
+						const SGVariant new_val = new_sgvariant_sub(value_start, param_spec->type_id);
 
 						qDebug() << "DD" PREFIX << "setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
 						layer->set_param_value(i, new_val, true);
@@ -726,13 +715,9 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 
 	viewport->set_center_from_latlon(lat_lon, true); /* The function will reject lat_lon if it's invalid. */
 
-	if ((!aggregate->visible) && aggregate->tree_view) {
-		aggregate->tree_view->set_tree_item_visibility(aggregate->index, false);
+	if (!top_layer->visible && top_layer->tree_view) {
+		top_layer->tree_view->set_tree_item_visibility(top_layer->index, false);
 	}
-
-	/* Delete anything we've forgotten about -- should only happen when file ends before an EndLayer. */
-	g_hash_table_foreach(string_lists, string_list_delete, NULL);
-	g_hash_table_destroy(string_lists);
 
 	return successful_read;
 }
@@ -764,7 +749,7 @@ bool VikFile::has_vik_file_magic(const QString & file_full_path)
 	bool result = false;
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "r");
 	if (file) {
-		result = check_magic(file, VIK_MAGIC, VIK_MAGIC_LEN);
+		result = FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN);
 		fclose(file);
 	}
 	return result;
@@ -837,7 +822,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 
 	char * dirpath = g_path_get_dirname(full_path.toUtf8().constData());
 	/* Attempt loading the primary file type first - our internal .vik file: */
-	if (check_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
+	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
 		if (VikFile::read_file(file, parent_layer, dirpath, viewport)) {
 			load_answer = FileLoadResult::VIK_SUCCESS;
 		} else {
@@ -857,7 +842,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		trw->set_name(FileUtils::get_base_name(full_path));
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
-		if (FileUtils::has_extension(full_path, ".kml") && check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
+		if (FileUtils::has_extension(full_path, ".kml") && FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			/* Implicit Conversion. */
 			BabelOptions babel_options(BabelOptionsMode::FromFile);
 			babel_options.input = full_path;
@@ -867,9 +852,11 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 				load_answer = FileLoadResult::GPSBABEL_FAILURE;
 			}
 		}
-		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
-		   - which currently confuses our check_magic function. */
-		else if (FileUtils::has_extension(full_path, ".gpx") || check_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
+		/* NB use a extension check first, as a GPX file
+		   header may have a Byte Order Mark (BOM) in it -
+		   which currently confuses our
+		   FileUtils::file_has_magic() function. */
+		else if (FileUtils::has_extension(full_path, ".gpx") || FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			success = GPX::read_file(file, trw);
 			if (!success) {
 				load_answer = FileLoadResult::GPX_FAILURE;
@@ -946,7 +933,7 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 
 
 
-bool VikFile::export_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
+bool VikFile::export_trw_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
@@ -1006,7 +993,7 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 
 
 /* Call it when @trk argument to VikFile::export() is NULL. */
-bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
+bool VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
@@ -1052,12 +1039,12 @@ bool VikFile::export_layer(LayerTRW * trw, const QString & file_full_path, SGFil
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS.
  */
-bool VikFile::export_(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden)
+bool VikFile::export_trw(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden)
 {
 	if (trk) {
-		return VikFile::export_track(trk, file_full_path, file_type, write_hidden);
+		return VikFile::export_trw_track(trk, file_full_path, file_type, write_hidden);
 	} else {
-		return VikFile::export_layer(trw, file_full_path, file_type, write_hidden);
+		return VikFile::export_trw_layer(trw, file_full_path, file_type, write_hidden);
 	}
 }
 

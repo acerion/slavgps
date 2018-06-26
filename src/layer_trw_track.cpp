@@ -3209,7 +3209,7 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 		last_directory_url = file_selector.directoryUrl();
 
 		g_tree->tree_get_main_window()->set_busy_cursor();
-		const bool success = VikFile::export_track(this, output_file_full_path, file_type, true);
+		const bool success = VikFile::export_trw_track(this, output_file_full_path, file_type, true);
 		g_tree->tree_get_main_window()->clear_busy_cursor();
 
 		if (!success) {

@@ -47,6 +47,11 @@ using namespace SlavGPS;
 
 
 
+#define PREFIX ": File Utils:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
 QString FileUtils::get_base_name(const QString & file_name)
 {
 	int len = 0;
@@ -87,5 +92,24 @@ bool FileUtils::has_extension(const QString & file_name, const QString & file_ex
 
 	const bool result = base_name.right(file_extension.size()) == file_extension;
 	qDebug() << "DD: File: has extension:" << file_extension << "in" << base_name << ":" << result;
+	return result;
+}
+
+
+
+
+bool FileUtils::file_has_magic(FILE * file, char const * magic, size_t size)
+{
+	char buffer[16] = { 0 }; /* There should be no magic longer than few (3-4) characters. */
+	if (size > sizeof (buffer)) {
+		qDebug() << "EE" PREFIX << "expected magic length too large:" << size;
+		return false;
+	}
+
+	const bool result = (size == fread(buffer, 1, size, file) && 0 == strncmp(buffer, magic, size));
+
+	for (int i = size - 1; i >= 0; i--) { /* The ol' pushback. */
+		ungetc(buffer[i], file);
+	}
 	return result;
 }
