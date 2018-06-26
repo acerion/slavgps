@@ -366,7 +366,7 @@ bool Preferences::save_to_file(void)
 			const SGVariant param_value = val_iter.value();
 			if (param_value.type_id != SGVariantType::Pointer) {
 				qDebug() << "II: Preferences: saving param" << param_name << "=" << param_value.type_id << param_value;
-				file_write_layer_param(file, param_name.toUtf8().constData(), param_value.type_id, param_value);
+				param_value.write(file, param_name.toUtf8().constData());
 			}
 		}
 	}

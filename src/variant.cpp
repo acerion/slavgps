@@ -600,3 +600,53 @@ SGVariant SGVariant::unmarshall(Pickle & pickle, SGVariantType expected_type_id)
 
 	return result;
 }
+
+
+
+
+void SGVariant::write(FILE * file, char const * param_name) const
+{
+	/* String lists are handled differently. We get a QStringList (that shouldn't
+	   be freed) back for get_param and if it is empty we shouldn't write
+	   anything at all (otherwise we'd read in a list with an empty string,
+	   not an empty string list). */
+	if (this->type_id == SGVariantType::StringList) {
+		for (auto iter = this->val_string_list.constBegin(); iter != this->val_string_list.constEnd(); iter++) {
+			fprintf(file, "%s=", param_name);
+			fprintf(file, "%s\n", (*iter).toUtf8().constData());
+		}
+	} else {
+		fprintf(file, "%s=", param_name);
+		switch (this->type_id) {
+		case SGVariantType::Double: {
+			// char buf[15]; /* Locale independent. */
+			// fprintf(file, "%s\n", (char *) g_dtostr(this->u.val_double, buf, sizeof (buf))); break;
+			fprintf(file, "%f\n", this->u.val_double);
+			break;
+		}
+		case SGVariantType::Uint:
+			fprintf(file, "%u\n", this->u.val_uint); /* kamilkamil: in viking code the format specifier was incorrect. */
+			break;
+
+		case SGVariantType::Int:
+			fprintf(file, "%d\n", this->u.val_int);
+			break;
+
+		case SGVariantType::Boolean:
+			fprintf(file, "%c\n", this->u.val_bool ? 't' : 'f');
+			break;
+
+		case SGVariantType::String:
+			fprintf(file, "%s\n", this->val_string.isEmpty() ? "" : this->val_string.toUtf8().constData());
+			break;
+
+		case SGVariantType::Color:
+			fprintf(file, "#%.2x%.2x%.2x\n", this->val_color.red(), this->val_color.green(), this->val_color.blue());
+			break;
+
+		default:
+			qDebug() << "EE" PREFIX << "Unhandled variant type id" << (int) this->type_id;
+			break;
+		}
+	}
+}

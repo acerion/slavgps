@@ -188,7 +188,7 @@ namespace SlavGPS {
 		int wp_image_alpha;
 		int wp_image_size;
 
-		GdkFunction wpbgand;
+		bool /* GdkFunction */ wpbgand;
 
 	}; /* class LayerTRWPainter */
 

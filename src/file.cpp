@@ -172,55 +172,6 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 
 
-void SlavGPS::file_write_layer_param(FILE * file, char const * param_name, SGVariantType type, const SGVariant & data)
-{
-	/* String lists are handled differently. We get a QStringList (that shouldn't
-	   be freed) back for get_param and if it is empty we shouldn't write
-	   anything at all (otherwise we'd read in a list with an empty string,
-	   not an empty string list). */
-	if (type == SGVariantType::StringList) {
-		for (auto iter = data.val_string_list.constBegin(); iter != data.val_string_list.constEnd(); iter++) {
-			fprintf(file, "%s=", param_name);
-			fprintf(file, "%s\n", (*iter).toUtf8().constData());
-		}
-	} else {
-		fprintf(file, "%s=", param_name);
-		switch (type)	{
-		case SGVariantType::Double: {
-			// char buf[15]; /* Locale independent. */
-			// fprintf(file, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
-			fprintf(file, "%f\n", data.u.val_double);
-			break;
-		}
-		case SGVariantType::Uint:
-			fprintf(file, "%u\n", data.u.val_uint); /* kamilkamil: in viking code the format specifier was incorrect. */
-			break;
-
-		case SGVariantType::Int:
-			fprintf(file, "%d\n", data.u.val_int);
-			break;
-
-		case SGVariantType::Boolean:
-			fprintf(file, "%c\n", data.u.val_bool ? 't' : 'f');
-			break;
-
-		case SGVariantType::String:
-			fprintf(file, "%s\n", data.val_string.isEmpty() ? "" : data.val_string.toUtf8().constData());
-			break;
-
-		case SGVariantType::Color:
-			fprintf(file, "#%.2x%.2x%.2x\n", data.val_color.red(), data.val_color.green(), data.val_color.blue());
-			break;
-
-		default:
-			break;
-		}
-	}
-}
-
-
-
-
 static void write_layer_params_and_data(FILE * file, const Layer * layer)
 {
 	fprintf(file, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
@@ -228,20 +179,44 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 		fprintf(file, "visible=f\n");
 	}
 
-	SGVariant param_value;
 	for (auto iter = layer->get_interface().parameter_specifications.begin(); iter != layer->get_interface().parameter_specifications.end(); iter++) {
 
 		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
-		param_value = layer->get_param_value(iter->first, true);
-		file_write_layer_param(file, iter->second->name, iter->second->type_id, param_value);
+		const SGVariant param_value = layer->get_param_value(iter->first, true);
+		if (iter->second->type_id != param_value.type_id) {
+			qDebug() << "EE" PREFIX << "type id mismatch for parameter named" << iter->second->name << ":" << iter->second->type_id << param_value.type_id;
+			assert (iter->second->type_id == param_value.type_id);
+		}
+		param_value.write(file, iter->second->name);
 	}
 
 	layer->write_layer_data(file);
+}
 
-	/* foreach param:
-	   write param, and get_value, etc.
-	   then run layer data, and that's it.
-	*/
+
+
+
+size_t handle_line(char ** line)
+{
+	while ((**line) == ' ' || (**line) =='\t') {
+		(*line)++;
+	}
+
+	if ((*line)[0] == '#') {
+		return 0;
+	}
+
+
+	size_t len = strlen(*line);
+	if (len > 0 && (*line)[len - 1] == '\n') {
+		(*line)[--len] = '\0';
+	}
+
+	if (len > 0 && (*line)[len - 1] == '\r') {
+		(*line)[--len] = '\0';
+	}
+
+	return len;
 }
 
 
@@ -261,20 +236,108 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, View
 
 	fprintf(file, "#VIKING GPS Data file " VIKING_URL "\n");
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
-	fprintf(file, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
-		viewport->get_xmpp(), viewport->get_ympp(), lat_lon.lat, lat_lon.lon,
-		mode_id_string.toUtf8().constData(),
-		bg_color_string,
-		hl_color_string,
-		viewport->get_scale_visibility() ? "t" : "f",
-		viewport->get_center_mark_visibility() ? "t" : "f",
-		viewport->get_highlight_usage() ? "t" : "f");
+	fprintf(file, "\nxmpp=%f\n", viewport->get_xmpp());
+	fprintf(file, "ympp=%f\n", viewport->get_ympp());
+	fprintf(file, "lat=%f\n", lat_lon.lat);
+	fprintf(file, "lon=%f\n", lat_lon.lon);
+	fprintf(file, "mode=%s\n", mode_id_string.toUtf8().constData());
+	fprintf(file, "color=%s\n", bg_color_string);
+	fprintf(file, "highlightcolor=%s\n", hl_color_string);
+	fprintf(file, "drawscale=%s\n", viewport->get_scale_visibility() ? "t" : "f");
+	fprintf(file, "drawcentermark=%s\n", viewport->get_center_mark_visibility() ? "t" : "f");
+	fprintf(file, "drawhighlight=%s\n", viewport->get_highlight_usage() ? "t" : "f");
 
 	if (!top_level_layer->visible) {
 		fprintf(file, "visible=f\n");
 	}
 
 	return;
+}
+
+
+
+
+bool read_header(FILE * file, char * buffer, size_t buffer_size, Layer * top_layer, Viewport * viewport, LatLon & lat_lon, long & line_num)
+{
+	bool successful_read = true;
+
+	while (fgets(buffer, buffer_size, file))  {
+
+		if (buffer[0] == '~') {
+			/* Beginning of first layer. Stop reading
+			   header, return the buffer through function
+			   argument. */
+			return successful_read;
+		}
+
+		line_num++;
+
+		char * line = buffer;
+
+		const size_t line_len = handle_line(&line);
+		if (line_len == 0) {
+			continue;
+		}
+
+
+		size_t name_len = 0; /* Length of parameter's name. */
+		for (size_t i = 0; i < line_len; i++) {
+			if (line[i] == '=') {
+				name_len = i;
+			}
+		}
+
+
+		if (name_len == 12 && strncasecmp(line, "FILE_VERSION", name_len) == 0) {
+			int version = strtol(line+13, NULL, 10);
+			fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version);
+			if (version > VIKING_FILE_VERSION) {
+				successful_read = false;
+			}
+			/* However we'll still carry and attempt to read whatever we can. */
+		} else if (name_len == 4 && strncasecmp(line, "xmpp", name_len) == 0) { /* "hard coded" params: global & for all layer-types */
+			viewport->set_xmpp(strtod_i8n(line+5, NULL));
+
+		} else if (name_len == 4 && strncasecmp(line, "ympp", name_len) == 0) {
+			viewport->set_ympp(strtod_i8n(line+5, NULL));
+
+		} else if (name_len == 3 && strncasecmp(line, "lat", name_len) == 0) {
+			lat_lon.lat = strtod_i8n(line+4, NULL);
+
+		} else if (name_len == 3 && strncasecmp(line, "lon", name_len) == 0) {
+			lat_lon.lon = strtod_i8n(line+4, NULL);
+
+		} else if (name_len == 4 && strncasecmp(line, "mode", name_len) == 0) {
+			if (!ViewportDrawModes::set_draw_mode_from_file(viewport, line + 5)) {
+				successful_read = false;
+			}
+
+		} else if (name_len == 5 && strncasecmp(line, "color", name_len) == 0) {
+			viewport->set_background_color(QString(line+6));
+
+		} else if (name_len == 14 && strncasecmp(line, "highlightcolor", name_len) == 0) {
+			viewport->set_highlight_color(QString(line+15));
+
+		} else if (name_len == 9 && strncasecmp(line, "drawscale", name_len) == 0) {
+			viewport->set_scale_visibility(TEST_BOOLEAN(line+10));
+
+		} else if (name_len == 14 && strncasecmp(line, "drawcentermark", name_len) == 0) {
+			viewport->set_center_mark_visibility(TEST_BOOLEAN(line+15));
+
+		} else if (name_len == 13 && strncasecmp(line, "drawhighlight", name_len) == 0) {
+			viewport->set_highlight_usage(TEST_BOOLEAN(line+14));
+
+		} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
+			/* This branch exists for both top level layer and sub-layers. */
+			top_layer->visible = TEST_BOOLEAN(line+8);
+
+		} else {
+			successful_read = false;
+			fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer (%s).\n", line_num, line);
+		}
+	}
+
+	return successful_read;
 }
 
 
@@ -350,6 +413,45 @@ static void string_list_set_param(int i, const QStringList & string_list, Layer 
 
 
 
+SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
+{
+	SGVariant new_val;
+	switch (type_id) {
+	case SGVariantType::Double:
+		new_val = SGVariant((double) strtod_i8n(line, NULL));
+		break;
+
+	case SGVariantType::Uint:
+		new_val = SGVariant((uint32_t) strtoul(line, NULL, 10));
+		break;
+
+	case SGVariantType::Int:
+		new_val = SGVariant((int32_t) strtol(line, NULL, 10));
+		break;
+
+	case SGVariantType::Boolean:
+		new_val = SGVariant((bool) TEST_BOOLEAN(line));
+		break;
+
+	case SGVariantType::Color:
+		new_val.val_color.setNamedColor(line);
+		if (!new_val.val_color.isValid()) {
+			new_val.val_color.setNamedColor("black"); /* Fallback value. */
+		}
+		break;
+
+	default:
+		/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
+		/* TODO: review this section. */
+		new_val = SGVariant(line);
+	}
+
+	return new_val;
+}
+
+
+
+
 /**
  * Read in a Viking file and return how successful the parsing was.
  * ATM this will always work, in that even if there are parsing problems
@@ -359,7 +461,7 @@ static void string_list_set_param(int i, const QStringList & string_list, Layer 
  */
 bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * dirpath, Viewport * viewport)
 {
-	LatLon latlon;
+	LatLon lat_lon;
 	char buffer[4096];
 	long line_num = 0;
 
@@ -374,28 +476,18 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 	LayerStack<Layer *> stack;
 	stack.push(top_layer);
 
-	while (fgets(buffer, sizeof (buffer), file))  {
+	if (!read_header(file, buffer, sizeof (buffer), top_layer, viewport, lat_lon, line_num)) {
+		return false;
+	}
+
+	/* First interesting line after header is already in
+	   buffer. Therefore don't read it on top of this loop. */
+	do {
 		line_num++;
 
 		char * line = buffer;
-		while (*line == ' ' || *line =='\t') {
-			line++;
-		}
 
-		if (line[0] == '#') {
-			continue;
-		}
-
-
-		size_t len = strlen(line);
-		if (len > 0 && line[len-1] == '\n') {
-			line[--len] = '\0';
-		}
-
-		if (len > 0 && line[len-1] == '\r') {
-			line[--len] = '\0';
-		}
-
+		size_t len = handle_line(&line);
 		if (len == 0) {
 			continue;
 		}
@@ -529,13 +621,12 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 				fprintf(stderr, "WARNING: Line %ld: Unknown tilde command\n", line_num);
 			}
 		} else {
-			int32_t eq_pos = -1;
-			uint16_t i;
+			int eq_pos = -1;
 			if (!stack.first) {
 				continue;
 			}
 
-			for (i = 0; i < len; i++) {
+			for (int i = 0; i < (int) len; i++) {
 				if (line[i] == '=') {
 					eq_pos = i;
 				}
@@ -543,39 +634,13 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 
 			Layer * layer = stack.first;
 
-			if (stack.second == NULL && eq_pos == 12 && strncasecmp(line, "FILE_VERSION", eq_pos) == 0) {
-				int version = strtol(line+13, NULL, 10);
-				fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version);
-				if (version > VIKING_FILE_VERSION) {
-					successful_read = false;
-				}
-				/* However we'll still carry and attempt to read whatever we can. */
-			} else if (stack.second == NULL && eq_pos == 4 && strncasecmp(line, "xmpp", eq_pos) == 0) { /* "hard coded" params: global & for all layer-types */
-				viewport->set_xmpp(strtod_i8n(line+5, NULL));
-			} else if (stack.second == NULL && eq_pos == 4 && strncasecmp(line, "ympp", eq_pos) == 0) {
-				viewport->set_ympp(strtod_i8n(line+5, NULL));
-			} else if (stack.second == NULL && eq_pos == 3 && strncasecmp(line, "lat", eq_pos) == 0) {
-				latlon.lat = strtod_i8n(line+4, NULL);
-			} else if (stack.second == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
-				latlon.lon = strtod_i8n(line+4, NULL);
+			if (stack.second && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
 
-			} else if (stack.second == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0) {
-				if (!ViewportDrawModes::set_draw_mode_from_file(viewport, line + 5)) {
-					successful_read = false;
-				}
+				/* Notice the condition:
+				   "stack.second". This means that we
+				   operate on non-Top Level Layer and
+				   we can set its name. */
 
-			} else if (stack.second == NULL && eq_pos == 5 && strncasecmp(line, "color", eq_pos) == 0) {
-				viewport->set_background_color(QString(line+6));
-			} else if (stack.second == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {
-				viewport->set_highlight_color(QString(line+15));
-			} else if (stack.second == NULL && eq_pos == 9 && strncasecmp(line, "drawscale", eq_pos) == 0) {
-				viewport->set_scale_visibility(TEST_BOOLEAN(line+10));
-			} else if (stack.second == NULL && eq_pos == 14 && strncasecmp(line, "drawcentermark", eq_pos) == 0) {
-				viewport->set_center_mark_visibility(TEST_BOOLEAN(line+15));
-			} else if (stack.second == NULL && eq_pos == 13 && strncasecmp(line, "drawhighlight", eq_pos) == 0) {
-				viewport->set_highlight_usage(TEST_BOOLEAN(line+14));
-
-			} else if (stack.second && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
 				layer->set_name(QString(line+5));
 
 				qDebug() << "II" PREFIX << "calling add_layer(), parent / child = " << stack.second->name << "->" << layer->name;
@@ -584,8 +649,8 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 			} else if (eq_pos == 7 && strncasecmp(line, "visible", eq_pos) == 0) {
 				layer->visible = TEST_BOOLEAN(line+8);
 
-			} else if (eq_pos != -1 && stack.second) {
-				bool found_match = false;
+			} else if (stack.second && eq_pos != -1) {
+				bool parameter_found = false;
 
 				/* Go though layer params. If len == eq_pos && starts_with jazz, set it. */
 				/* Also got to check for name and visible. */
@@ -596,59 +661,32 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 					continue;
 				}
 
-				for (i = 0; i < param_specs_count; i++) {
+				for (int i = 0; i < param_specs_count; i++) {
 
 					const ParameterSpecification * param_spec = &param_specs[i];
 
-					if (strlen(param_spec->name) == eq_pos && strncasecmp(line, param_spec->name, eq_pos) == 0) {
-
-						line += eq_pos+1;
-						if (param_spec->type_id == SGVariantType::StringList) {
-							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, ((void *) (long) i)),
-										   g_strdup(line));
-							g_hash_table_replace(string_lists, (void *) (long) i, l);
-							/* Aadd the value to a list, possibly making a new list.
-							   This will be passed to the layer when we read an ~EndLayer. */
-						} else {
-							SGVariant new_val;
-							switch (param_spec->type_id) {
-							case SGVariantType::Double:
-								new_val = SGVariant((double) strtod_i8n(line, NULL));
-								break;
-
-							case SGVariantType::Uint:
-								new_val = SGVariant((uint32_t) strtoul(line, NULL, 10));
-								break;
-
-							case SGVariantType::Int:
-								new_val = SGVariant((int32_t) strtol(line, NULL, 10));
-								break;
-
-							case SGVariantType::Boolean:
-								new_val = SGVariant((bool) TEST_BOOLEAN(line));
-								break;
-
-							case SGVariantType::Color:
-								new_val.val_color.setNamedColor(line);
-								if (!new_val.val_color.isValid()) {
-									new_val.val_color.setNamedColor("black"); /* Fallback value. */
-								}
-								break;
-
-							default:
-								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
-								/* TODO: review this section. */
-								new_val = SGVariant(line);
-							}
-							Layer * l_a_y_e_r = stack.first;
-							qDebug() << "DD: File: Read: setting value of parameter" << param_spec->name << "of layer" << layer->name;
-							l_a_y_e_r->set_param_value(i, new_val, true);
-						}
-						found_match = true;
-						break;
+					if (!(strlen(param_spec->name) == eq_pos && strncasecmp(line, param_spec->name, eq_pos) == 0)) {
+						continue;
 					}
+
+					line += eq_pos + 1;
+
+					if (param_spec->type_id == SGVariantType::StringList) {
+						GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, ((void *) (long) i)), g_strdup(line));
+						g_hash_table_replace(string_lists, (void *) (long) i, l);
+						/* Aadd the value to a list, possibly making a new list.
+						   This will be passed to the layer when we read an ~EndLayer. */
+					} else {
+						const SGVariant new_val = new_sgvariant_sub(line, param_spec->type_id);
+
+						qDebug() << "DD" PREFIX << "setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
+						layer->set_param_value(i, new_val, true);
+					}
+					parameter_found = true;
+					break;
 				}
-				if (! found_match) {
+
+				if (!parameter_found) {
 					/* ATM don't flow up this issue because at least one internal parameter has changed from version 1.3
 					   and don't what to worry users about raising such issues.
 					   TODO Maybe hold old values here - compare the line value against them and if a match
@@ -669,7 +707,7 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 		   name=this
 		   #comment
 		*/
-	}
+	} while (fgets(buffer, sizeof (buffer), file));
 
 	while (!stack.empty()) {
 		if (stack.second && stack.first){
@@ -686,7 +724,7 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 		stack.pop();
 	}
 
-	viewport->set_center_from_latlon(latlon, true); /* The function will reject latlon if it's invalid. */
+	viewport->set_center_from_latlon(lat_lon, true); /* The function will reject lat_lon if it's invalid. */
 
 	if ((!aggregate->visible) && aggregate->tree_view) {
 		aggregate->tree_view->set_tree_item_visibility(aggregate->index, false);
@@ -718,36 +756,16 @@ if "[LayerData]"
 
 /* ---------------------------------------------------- */
 
-static FILE * xfopen(char const * fn)
-{
-	if (strcmp(fn,"-") == 0) {
-		return stdin;
-	} else {
-		return fopen(fn, "r");
-	}
-}
-
-
-
-
-static void xfclose(FILE * f)
-{
-	if (f != stdin && f != stdout) {
-		fclose(f);
-		f = NULL;
-	}
-}
-
 
 
 
 bool VikFile::has_vik_file_magic(const QString & file_full_path)
 {
 	bool result = false;
-	FILE * ff = fopen(file_full_path.toUtf8().constData(), "r");
-	if (ff) {
-		result = check_magic(ff, VIK_MAGIC, VIK_MAGIC_LEN);
-		fclose(ff);
+	FILE * file = fopen(file_full_path.toUtf8().constData(), "r");
+	if (file) {
+		result = check_magic(file, VIK_MAGIC, VIK_MAGIC_LEN);
+		fclose(file);
 	}
 	return result;
 }

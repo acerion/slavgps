@@ -25,6 +25,7 @@
 
 
 #include <cstdint>
+#include <cstdio>
 
 #include <QString>
 #include <QColor>
@@ -111,6 +112,8 @@ namespace SlavGPS {
 		double get_altitude() const;
 
 		QString to_string() const;
+
+		void write(FILE * file, char const * param_name) const;
 
 
 		SGVariantType type_id;

@@ -86,7 +86,6 @@ namespace SlavGPS {
 	QString append_file_ext(const QString & file_name, SGFileType file_type);
 
 
-	void file_write_layer_param(FILE * f, char const * param_name, SGVariantType type, const SGVariant & param_value);
 	char const * file_GetRelativeFilename(const char * currentDirectory, const char * absoluteFilename);
 	QString file_GetRelativeFilename(const QString & current_dir_path, const QString & file_path);
 
