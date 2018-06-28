@@ -168,7 +168,7 @@ namespace SlavGPS {
 		virtual void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 
 		/* Read layer-specific data from Vik file. */
-		virtual LayerDataReadStatus read_layer_data(FILE * file, char const * dirpath);
+		virtual LayerDataReadStatus read_layer_data(FILE * file, const QString & dirpath);
 		/* Write layer-specific data to Vik file. */
 		virtual void write_layer_data(FILE * file) const;
 

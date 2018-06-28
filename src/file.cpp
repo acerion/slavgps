@@ -90,6 +90,7 @@ using namespace SlavGPS;
 
 
 
+
 template <class T>
 class LayerStack {
 public:
@@ -119,6 +120,36 @@ void LayerStack<T>::push(T data)
 		this->second = NULL;
 	}
 }
+
+
+
+
+class ReadParser {
+public:
+	ReadParser(FILE * new_file) : file(new_file) {};
+
+	void handle_layer_begin(const char * line, Viewport * viewport);
+	void handle_layer_end(const char * line, Viewport * viewport);
+	void handle_layer_data_begin(const QString & dirpath);
+	void handle_layer_parameters(const char * line, size_t line_len);
+
+	bool read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon);
+
+	LayerStack<Layer *> stack;
+	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
+	uint8_t param_specs_count = 0;
+
+	size_t line_num = 0;
+
+	QHash<param_id_t, QStringList> string_lists; /* Parameter id -> value of parameter (value of parameter is of type QStringList). */
+
+	bool successful_read = true;
+
+	char buffer[4096];
+	const size_t buffer_size = sizeof (ReadParser::buffer);
+
+	FILE * file = NULL;
+};
 
 
 
@@ -179,10 +210,16 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 
 
 /**
-   See if the line contains any interesting data.
-   Return length of pre-processed line if it contains the data.
+   Discard empty characters in the @line.
+   Discard line starting with '#' (comment character).
+
+   Move beginning of @line accordingly, to point to beginning of
+   non-empty data.
+
+   Return length of non-empty, non-comment line.
+   Return zero if the processed line turns out to be empty.
 */
-size_t handle_line(char ** line)
+size_t consume_empty_in_line(char ** line)
 {
 	while ((**line) == ' ' || (**line) == '\t') {
 		(*line)++;
@@ -244,24 +281,24 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, View
 
 
 
-bool read_header(FILE * file, char * buffer, size_t buffer_size, Layer * top_layer, Viewport * viewport, LatLon & lat_lon, long & line_num)
+bool ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon)
 {
-	bool successful_read = true;
+	bool success = true;
 
-	while (fgets(buffer, buffer_size, file))  {
+	while (fgets(this->buffer, this->buffer_size, this->file))  {
 
-		if (buffer[0] == '~') {
+		if (this->buffer[0] == '~') {
 			/* Beginning of first layer. Stop reading
 			   header, return the buffer through function
 			   argument. */
-			return successful_read;
+			return success;
 		}
 
-		line_num++;
+		this->line_num++;
 
-		char * line = buffer;
+		char * line = this->buffer;
 
-		const size_t line_len = handle_line(&line);
+		const size_t line_len = consume_empty_in_line(&line);
 		if (line_len == 0) {
 			continue;
 		}
@@ -280,7 +317,7 @@ bool read_header(FILE * file, char * buffer, size_t buffer_size, Layer * top_lay
 			int version = strtol(value_start, NULL, 10);
 			fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version);
 			if (version > VIKING_FILE_VERSION) {
-				successful_read = false;
+				success = false;
 			}
 			/* However we'll still carry and attempt to read whatever we can. */
 		} else if (name_len == 4 && strncasecmp(line, "xmpp", name_len) == 0) { /* "hard coded" params: global & for all layer-types */
@@ -297,7 +334,7 @@ bool read_header(FILE * file, char * buffer, size_t buffer_size, Layer * top_lay
 
 		} else if (name_len == 4 && strncasecmp(line, "mode", name_len) == 0) {
 			if (!ViewportDrawModes::set_draw_mode_from_file(viewport, value_start)) {
-				successful_read = false;
+				success = false;
 			}
 
 		} else if (name_len == 5 && strncasecmp(line, "color", name_len) == 0) {
@@ -320,12 +357,12 @@ bool read_header(FILE * file, char * buffer, size_t buffer_size, Layer * top_lay
 			top_layer->visible = TEST_BOOLEAN(value_start);
 
 		} else {
-			successful_read = false;
-			fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer (%s).\n", line_num, line);
+			success = false;
+			fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer (%s).\n", this->line_num, line);
 		}
 	}
 
-	return successful_read;
+	return success;
 }
 
 
@@ -401,6 +438,10 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 		new_val = SGVariant((int32_t) strtol(line, NULL, 10));
 		break;
 
+	case SGVariantType::String:
+		new_val = SGVariant(line);
+		break;
+
 	case SGVariantType::Boolean:
 		new_val = SGVariant((bool) TEST_BOOLEAN(line));
 		break;
@@ -412,10 +453,15 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 		}
 		break;
 
-	default:
-		/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
-		/* TODO: review this section. */
+	case SGVariantType::StringList:
+		/* TODO: review this section that creates string list. */
 		new_val = SGVariant(line);
+		break;
+
+	default:
+		/* Other types should not appear in a file. */
+		qDebug() << "EE" PREFIX << "unexpected type id" << type_id;
+		break;
 	}
 
 	return new_val;
@@ -423,31 +469,255 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 
 
 
+void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
+{
+	if (!this->stack.first) { /* TODO: verify that this condition is handled correctly inside of this branch. */
+		this->successful_read = false;
+		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer\n", this->line_num);
+		this->stack.push(NULL); /* Inside INVALID layer. */
+		return;
+	}
+
+
+	const LayerType parent_type = this->stack.first->type;
+	if (parent_type != LayerType::AGGREGATE && parent_type != LayerType::GPS) {
+		this->successful_read = false;
+		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) parent_type);
+		this->stack.push(NULL); /* Inside INVALID layer. */
+		return;
+	}
+
+	const LayerType layer_type = Layer::type_from_type_id_string(QString(line + 6));
+	TreeView * tree_view = NULL;
+
+	if (layer_type == LayerType::NUM_TYPES) {
+		this->successful_read = false;
+		fprintf(stderr, "WARNING: Line %zd: Unknown type %s\n", this->line_num, line + 6);
+		this->stack.push(NULL);
+	} else if (parent_type == LayerType::GPS) {
+		LayerGPS * gps = (LayerGPS *) this->stack.second;
+		Layer * child = gps->get_a_child();
+		this->stack.push(child);
+		this->param_specs = Layer::get_interface(layer_type)->parameters_c;
+		this->param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+
+		gps->tree_view->append_tree_item(gps->index, child, child->name);
+
+	} else { /* Any other LayerType::X type. */
+
+		Layer * layer = Layer::construct_layer(layer_type, viewport);
+		this->stack.push(layer);
+		this->param_specs = Layer::get_interface(layer_type)->parameters_c;
+		this->param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+
+		/* Notice that stack.second may become available
+		   only after stack.push() executed above, e.g.
+		   when before the push() there was only Top Layer
+		   in the stack. */
+
+		//LayerAggregate * agg = (LayerAggregate *) stack.second;
+		//qDebug() << "II" PREFIX << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
+		//agg->tree_view->append_tree_item(agg->index, layer, layer->name);
+	}
+
+	return;
+}
+
+
+
+void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
+{
+	if (this->stack.second == NULL) {
+		this->successful_read = false;
+		fprintf(stderr, "WARNING: Line %zd: Mismatched ~EndLayer command\n", this->line_num);
+	} else {
+		Layer * parent_layer = this->stack.second;
+		Layer * layer = this->stack.first;
+
+		/* Add any string lists we've accumulated. */
+
+		for (auto iter = this->string_lists.begin(); iter != this->string_lists.end(); iter++) {
+			const param_id_t param_id = iter.key();
+			const QStringList & string_list = iter.value();
+			const SGVariant param_value(string_list);
+
+			layer->set_param_value(param_id, param_value, true);
+		}
+		this->string_lists.clear();
+
+		qDebug() << "------- EndLayer for pair of first/second = " << this->stack.first->name << this->stack.second->name;
+
+		if (layer && parent_layer) {
+			if (parent_layer->type == LayerType::AGGREGATE) {
+				//layer->add_children_to_tree();
+				layer->post_read(viewport, true);
+			} else if (parent_layer->type == LayerType::GPS) {
+				/* TODO: anything else needs to be done here? */
+			} else {
+				this->successful_read = false;
+				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) this->stack.first->type);
+			}
+		}
+		this->stack.pop();
+	}
+
+	return;
+}
+
+
+
+
+void ReadParser::handle_layer_data_begin(const QString & dirpath)
+{
+	Layer * layer = this->stack.first;
+
+	const LayerDataReadStatus read_status = layer->read_layer_data(this->file, dirpath);
+	switch (read_status) {
+	case LayerDataReadStatus::Error:
+		qDebug() << "EE" PREFIX << "LayerData for layer named" << layer->name << "read unsuccessfully";
+		this->successful_read = false;
+		break;
+	case LayerDataReadStatus::Success:
+		qDebug() << "DD" PREFIX << "LayerData for layer named" << layer->name << "read successfully";
+		/* Success, pass. */
+		break;
+	case LayerDataReadStatus::Unrecognized:
+		/* Simply skip layer data over. */
+
+		while (fgets(this->buffer, this->buffer_size, this->file)) {
+			qDebug() << "DD" PREFIX "skipping over unrecognized layer data:" << QString(this->buffer).left(30);
+			this->line_num++;
+
+			char * line = this->buffer;
+
+			if (0 == consume_empty_in_line(&line)) {
+				/* Skip empty line. */
+				continue;
+			}
+
+			if (strcasecmp(line, "~EndLayerData") == 0) {
+				qDebug() << "DD" PREFIX << "encountered end of LayerData:" << line;
+				break;
+			}
+		}
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid layer data read status" << (int) read_status;
+		break;
+	}
+
+	return;
+}
+
+
+
+
+void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
+{
+	/* The layer, for which we will set parameters. */
+	Layer * layer = this->stack.first;
+
+	/* Parent layer of current layer. */
+	LayerAggregate * parent_layer = (LayerAggregate *) this->stack.second;
+
+
+	size_t name_len = 0; /* Length of parameter's name. */
+	const char * value_start = NULL;
+	for (size_t i = 0; i < line_len; i++) {
+		if (line[i] == '=') {
+			name_len = i;
+			value_start = line + name_len + 1;
+		}
+	}
+
+	if (name_len == 4 && strncasecmp(line, "name", name_len) == 0) {
+
+		layer->set_name(QString(value_start));
+
+		qDebug() << "II" PREFIX << "calling add_layer(), parent / child = " << parent_layer->name << "->" << layer->name;
+		parent_layer->add_layer(layer, false);
+
+	} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
+		layer->visible = TEST_BOOLEAN(value_start);
+
+	} else if (name_len != 0) { /* Some other parameter. */
+
+		bool parameter_found = false;
+
+		/* Go though layer params. If len == name_len && starts_with jazz, set it. */
+		/* Also got to check for name and visible. */
+
+		if (!this->param_specs) {
+			this->successful_read = false;
+			fprintf(stderr, "WARNING: Line %zd: No options for this kind of layer\n", this->line_num);
+			return;
+		}
+
+		for (int i = 0; i < this->param_specs_count; i++) {
+
+			const ParameterSpecification * param_spec = &this->param_specs[i];
+
+			if (!(strlen(param_spec->name) == name_len && strncasecmp(line, param_spec->name, name_len) == 0)) {
+				continue;
+			}
+
+			if (param_spec->type_id == SGVariantType::StringList) {
+
+				/* Aadd the value to a list, possibly making a new list.
+				   This will be passed to the layer when we read an ~EndLayer. */
+
+				/* Append current value to list of strings.
+				   The list of strings is a value of layer's parameter 'i'.
+
+				   [] operator returns modifiable reference to existing value,
+				   or to default-constructed value. In both cases we append
+				   new value (value_start) to list of strings at key 'i'. */
+				this->string_lists[i] << QString(value_start);
+			} else {
+				const SGVariant new_val = new_sgvariant_sub(value_start, param_spec->type_id);
+
+				qDebug() << "DD" PREFIX << "setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
+				layer->set_param_value(i, new_val, true);
+			}
+			parameter_found = true;
+			break;
+		}
+
+		if (!parameter_found) {
+			/* ATM don't flow up this issue because at least one internal parameter has changed from version 1.3
+			   and don't what to worry users about raising such issues.
+			   TODO Maybe hold old values here - compare the line value against them and if a match
+			   generate a different style of message in the GUI... */
+			// this->successful_read = false;
+			fprintf(stderr, "WARNING: Line %zd: Unknown parameter. Line:\n%s\n", this->line_num, line);
+		}
+
+	} else {
+		this->successful_read = false;
+		fprintf(stderr, "WARNING: Line %zd: Invalid parameter or parameter outside of layer.\n", this->line_num);
+	}
+
+	return;
+}
+
+
+
 
 /**
- * Read in a Viking file and return how successful the parsing was.
- * ATM this will always work, in that even if there are parsing problems
- * then there will be no new values to override the defaults.
- *
- * TODO flow up line number(s) / error messages of problems encountered...
- */
-bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * dirpath, Viewport * viewport)
+   Read in a Viking file and return how successful the parsing was.
+   ATM this will always work, in that even if there are parsing problems
+   then there will be no new values to override the defaults.
+
+   TODO flow up line number(s) / error messages of problems encountered...
+*/
+bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport)
 {
 	LatLon lat_lon;
-	char buffer[4096];
-	long line_num = 0;
 
-	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
-	uint8_t param_specs_count = 0;
+	ReadParser read_parser(file);
+	read_parser.stack.push(top_layer);
 
-	QHash<param_id_t, QStringList> string_lists; /* Parameter id -> value of parameter (value of parameter is of type QStringList). */
-
-	bool successful_read = true;
-
-	LayerStack<Layer *> stack;
-	stack.push(top_layer);
-
-	if (!read_header(file, buffer, sizeof (buffer), top_layer, viewport, lat_lon, line_num)) {
+	if (!read_parser.read_header(top_layer, viewport, lat_lon)) {
 		return false;
 	}
 
@@ -455,239 +725,42 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 	   buffer. Therefore don't read it on top of this loop, use
 	   do-while loop instead. */
 	do {
-		line_num++;
+		read_parser.line_num++;
 
-		char * line = buffer;
-
-		size_t len = handle_line(&line);
-		if (len == 0) {
+		char * line = read_parser.buffer;
+		size_t line_len = consume_empty_in_line(&line);
+		if (0 == line_len) {
 			continue;
 		}
 
-
 		if (line[0] == '~') {
 			line++;
-			len--;
+			line_len--;
+
 			if (*line == '\0') {
 				continue;
+
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
 				qDebug() << "DD: File: Read: encountered begin of Layer:" << line;
-
-				if (!stack.first) { /* TODO: verify that this condition is handled correctly inside of this branch. */
-					successful_read = false;
-					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer\n", line_num);
-					stack.push(NULL); /* Inside INVALID layer. */
-					continue;
-				}
-
-
-				const LayerType parent_type = stack.first->type;
-				if (parent_type != LayerType::AGGREGATE && parent_type != LayerType::GPS) {
-					successful_read = false;
-					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, (int) parent_type);
-					stack.push(NULL); /* Inside INVALID layer. */
-					continue;
-				}
-
-				const LayerType layer_type = Layer::type_from_type_id_string(QString(line + 6));
-				TreeView * tree_view = NULL;
-
-				if (layer_type == LayerType::NUM_TYPES) {
-					successful_read = false;
-					fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
-					stack.push(NULL);
-				} else if (parent_type == LayerType::GPS) {
-					LayerGPS * gps = (LayerGPS *) stack.second;
-					Layer * child = gps->get_a_child();
-					stack.push(child);
-					param_specs = Layer::get_interface(layer_type)->parameters_c;
-					param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
-
-					gps->tree_view->append_tree_item(gps->index, child, child->name);
-
-				} else { /* Any other LayerType::X type. */
-
-					Layer * layer = Layer::construct_layer(layer_type, viewport);
-					stack.push(layer);
-					param_specs = Layer::get_interface(layer_type)->parameters_c;
-					param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
-
-					/* Notice that stack.second may become available
-					   only after stack.push() executed above, e.g.
-					   when before the push() there was only Top Layer
-					   in the stack. */
-
-					//LayerAggregate * agg = (LayerAggregate *) stack.second;
-					//qDebug() << "II" PREFIX << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
-					//agg->tree_view->append_tree_item(agg->index, layer, layer->name);
-				}
+				read_parser.handle_layer_begin(line, viewport);
 
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
 				qDebug() << "DD: File: Read: encountered end of Layer:" << line;
-				if (stack.second == NULL) {
-					successful_read = false;
-					fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num);
-				} else {
-					Layer * parent_layer = stack.second;
-					Layer * layer = stack.first;
+				read_parser.handle_layer_end(line, viewport);
 
-					/* Add any string lists we've accumulated. */
-
-					for (auto iter = string_lists.begin(); iter != string_lists.end(); iter++) {
-						const param_id_t param_id = iter.key();
-						const QStringList & string_list = iter.value();
-						const SGVariant param_value(string_list);
-
-						layer->set_param_value(param_id, param_value, true);
-					}
-					string_lists.clear();
-
-					qDebug() << "------- EndLayer for pair of first/second = " << stack.first->name << stack.second->name;
-
-					if (layer && parent_layer) {
-						if (parent_layer->type == LayerType::AGGREGATE) {
-							//layer->add_children_to_tree();
-							layer->post_read(viewport, true);
-						} else if (parent_layer->type == LayerType::GPS) {
-							/* TODO: anything else needs to be done here? */
-						} else {
-							successful_read = false;
-							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, (int) stack.first->type);
-						}
-					}
-					stack.pop();
-				}
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
 				qDebug() << "DD" PREFIX << "encountered begin of LayerData:" << line;
-				Layer * layer = stack.first;
-				const LayerDataReadStatus rv = layer->read_layer_data(file, dirpath);
-				switch (rv) {
-				case LayerDataReadStatus::Error:
-					qDebug() << "EE" PREFIX << "LayerData for layer named" << layer->name << "read unsuccessfully";
-					successful_read = false;
-					break;
-				case LayerDataReadStatus::Success:
-					qDebug() << "DD" PREFIX << "LayerData for layer named" << layer->name << "read successfully";
-					/* Success, pass. */
-					break;
-				case LayerDataReadStatus::Unrecognized:
-					/* Simply skip layer data over. */
-					while (fgets(buffer, sizeof (buffer), file)) {
-						qDebug() << "DD" PREFIX "skipping over layer data:" << QString(line).left(30);
-						line_num++;
+				read_parser.handle_layer_data_begin(dirpath);
 
-						line = buffer;
-
-						len = strlen(line);
-						if (len > 0 && line[len-1] == '\n') {
-							line[--len] = '\0';
-						}
-
-						if (len > 0 && line[len-1] == '\r') {
-							line[--len] = '\0';
-						}
-
-						if (strcasecmp(line, "~EndLayerData") == 0) {
-							qDebug() << "DD: File: Read: encountered end of LayerData:" << line;
-							break;
-						}
-					}
-					break;
-				default:
-					qDebug() << "EE" PREFIX << "invalid file read status" << (int) rv;
-					break;
-				}
 			} else {
-				successful_read = false;
-				fprintf(stderr, "WARNING: Line %ld: Unknown tilde command\n", line_num);
+				read_parser.successful_read = false;
+				fprintf(stderr, "WARNING: Line %zd: Unknown tilde command\n", read_parser.line_num);
 			}
 		} else {
-			if (!stack.first || !stack.second) {
+			if (!read_parser.stack.first || !read_parser.stack.second) {
 				continue;
 			}
-
-			/* The layer, for which we will set parameters. */
-			Layer * layer = stack.first;
-
-			/* Parent layer of current layer. */
-			LayerAggregate * parent_layer = (LayerAggregate *) stack.second;
-
-
-			size_t name_len = 0; /* Length of parameter's name. */
-			const char * value_start = NULL;
-			for (size_t i = 0; i < len; i++) {
-				if (line[i] == '=') {
-					name_len = i;
-					value_start = line + name_len + 1;
-				}
-			}
-
-			if (name_len == 4 && strncasecmp(line, "name", name_len) == 0) {
-
-				layer->set_name(QString(value_start));
-
-				qDebug() << "II" PREFIX << "calling add_layer(), parent / child = " << parent_layer->name << "->" << layer->name;
-				parent_layer->add_layer(layer, false);
-
-			} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
-				layer->visible = TEST_BOOLEAN(value_start);
-
-			} else if (name_len != 0) { /* Some other parameter. */
-
-				bool parameter_found = false;
-
-				/* Go though layer params. If len == name_len && starts_with jazz, set it. */
-				/* Also got to check for name and visible. */
-
-				if (!param_specs) {
-					successful_read = false;
-					fprintf(stderr, "WARNING: Line %ld: No options for this kind of layer\n", line_num);
-					continue;
-				}
-
-				for (int i = 0; i < param_specs_count; i++) {
-
-					const ParameterSpecification * param_spec = &param_specs[i];
-
-					if (!(strlen(param_spec->name) == name_len && strncasecmp(line, param_spec->name, name_len) == 0)) {
-						continue;
-					}
-
-					if (param_spec->type_id == SGVariantType::StringList) {
-
-						/* Aadd the value to a list, possibly making a new list.
-						   This will be passed to the layer when we read an ~EndLayer. */
-
-						/* Append current value to list of strings.
-						   The list of strings is a value of layer's parameter 'i'.
-
-						   [] operator returns modifiable reference to existing value,
-						   or to default-constructed value. In both cases we append
-						   new value (value_start) to list of strings at key 'i'. */
-						string_lists[i] << QString(value_start);
-					} else {
-						const SGVariant new_val = new_sgvariant_sub(value_start, param_spec->type_id);
-
-						qDebug() << "DD" PREFIX << "setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
-						layer->set_param_value(i, new_val, true);
-					}
-					parameter_found = true;
-					break;
-				}
-
-				if (!parameter_found) {
-					/* ATM don't flow up this issue because at least one internal parameter has changed from version 1.3
-					   and don't what to worry users about raising such issues.
-					   TODO Maybe hold old values here - compare the line value against them and if a match
-					   generate a different style of message in the GUI... */
-					// successful_read = false;
-					fprintf(stderr, "WARNING: Line %ld: Unknown parameter. Line:\n%s\n", line_num, line);
-				}
-
-			} else {
-				successful_read = false;
-				fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer.\n", line_num);
-			}
+			read_parser.handle_layer_parameters(line, line_len);
 		}
 		/* could be:
 		   [Layer Type=Bla]
@@ -696,13 +769,13 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 		   name=this
 		   #comment
 		*/
-	} while (fgets(buffer, sizeof (buffer), file));
+	} while (fgets(read_parser.buffer, read_parser.buffer_size, file));
 
-	while (!stack.empty()) {
-		if (stack.second && stack.first){
+	while (!read_parser.stack.empty()) {
+		if (read_parser.stack.second && read_parser.stack.first){
 
-			LayerAggregate * parent = (LayerAggregate *) stack.second;
-			Layer * child = stack.first;
+			LayerAggregate * parent = (LayerAggregate *) read_parser.stack.second;
+			Layer * child = read_parser.stack.first;
 
 			//qDebug() << "DD" PREFIX << "will call parent Aggregate Layer's" << parent->name << "add_layer(" << child->name << ")";
 			//parent->add_layer(child, false);
@@ -710,7 +783,7 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 			//qDebug() << "DD" PREFIX << "will call child layer's" << child->name << "post_read()";
 			//child->post_read(viewport, true);
 		}
-		stack.pop();
+		read_parser.stack.pop();
 	}
 
 	viewport->set_center_from_latlon(lat_lon, true); /* The function will reject lat_lon if it's invalid. */
@@ -719,7 +792,8 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const char * di
 		top_layer->tree_view->set_tree_item_visibility(top_layer->index, false);
 	}
 
-	return successful_read;
+	const bool result = read_parser.successful_read;
+	return result;
 }
 
 
@@ -820,7 +894,10 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 
 	FileLoadResult load_answer = FileLoadResult::OTHER_SUCCESS;
 
-	char * dirpath = g_path_get_dirname(full_path.toUtf8().constData());
+	char * dirpath_ = g_path_get_dirname(full_path.toUtf8().constData());
+	QString dirpath(dirpath_);
+	free(dirpath_);
+
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
 		if (VikFile::read_file(file, parent_layer, dirpath, viewport)) {
@@ -870,7 +947,6 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 				load_answer = FileLoadResult::UNSUPPORTED_FAILURE;
 			}
 		}
-		free(dirpath);
 
 		/* Clean up when we can't handle the file. */
 		if (!success) {
@@ -882,6 +958,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 			trw->move_viewport_to_show_all(viewport);
 		}
 	}
+
 	fclose(file);
 	return load_answer;
 }

@@ -93,7 +93,7 @@ public:
 	void process_key_and_value(const char * key, int key_len, const char * value, int value_len);
 
 	Track * create_track(LayerTRW * trw);
-	Waypoint * create_waypoint(CoordMode coordinate_mode, const char * dirpath);
+	Waypoint * create_waypoint(CoordMode coordinate_mode, const QString & dirpath);
 	Trackpoint * create_trackpoint(CoordMode coordinate_mode);
 
 	int line_type = GPSPOINT_TYPE_NONE;
@@ -308,7 +308,7 @@ void GPSPointParser::reset()
  * No obvious way to test for a 'gpspoint' file,
  * thus set a flag if any actual tag found during processing of the file.
  */
-LayerDataReadStatus GPSPoint::read_layer(FILE * file, LayerTRW * trw, char const * dirpath)
+LayerDataReadStatus GPSPoint::read_layer(FILE * file, LayerTRW * trw, const QString & dirpath)
 {
 	assert (file != NULL && trw != NULL);
 
@@ -409,7 +409,7 @@ LayerDataReadStatus GPSPoint::read_layer(FILE * file, LayerTRW * trw, char const
 
 
 
-Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const char * dirpath)
+Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QString & dirpath)
 {
 	Waypoint * wp = new Waypoint();
 	wp->visible = this->line_visible;

@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 	class GPSPoint {
 	public:
-		static LayerDataReadStatus read_layer(FILE * file, LayerTRW * trw, const char * dirpath);
+		static LayerDataReadStatus read_layer(FILE * file, LayerTRW * trw, const QString & dirpath);
 		static void write_layer(FILE * file, const LayerTRW * trw);
 	};
 
