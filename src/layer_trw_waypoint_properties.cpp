@@ -317,13 +317,13 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 	hasGeotagCB = new QCheckBox(QObject::tr("Has Geotag"));
 	hasGeotagCB->setEnabled(false);
 	bool hasGeotag;
-	a_geotag_get_exif_date_from_file(wp->image, &hasGeotag);
+	GeotagExif::get_exif_date_from_file(wp->image, &hasGeotag);
 	hasGeotagCB->setChecked(hasGeotag);
 
 	consistentGeotagCB = new QCheckBox(QObject::tr("Consistent Position"));
 	consistentGeotagCB->setEnabled(false);
 	if (hasGeotag) {
-		const Coord coord(a_geotag_get_position(wp->image), coord_mode);
+		const Coord coord(GeotagExif::get_position(wp->image), coord_mode);
 		consistentGeotagCB->setChecked(coord == wp->coord);
 	}
 #endif

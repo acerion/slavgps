@@ -667,7 +667,7 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 {
 	/* Update directly - not changing the mtime. */
-	a_geotag_write_exif_gps(this->image_full_path, this->coord, this->altitude, true);
+	GeotagExif::write_exif_gps(this->image_full_path, this->coord, this->altitude, true);
 }
 
 
@@ -676,7 +676,7 @@ void Waypoint::geotagging_waypoint_mtime_keep_cb(void)
 void Waypoint::geotagging_waypoint_mtime_update_cb(void)
 {
 	/* Update directly. */
-	a_geotag_write_exif_gps(this->image_full_path, this->coord, this->altitude, false);
+	GeotagExif::write_exif_gps(this->image_full_path, this->coord, this->altitude, false);
 }
 
 

@@ -25,6 +25,9 @@
 
 #include <QString>
 
+
+
+
 #include "coord.h"
 
 
@@ -39,16 +42,19 @@ namespace SlavGPS {
 
 
 
+	class GeotagExif {
 
-	Waypoint * a_geotag_create_waypoint_from_file(const QString & file_full_path, CoordMode vcmode, QString & name);
+	public:
+		static Waypoint * create_waypoint_from_file(const QString & file_full_path, CoordMode coord_mode);
 
-	Waypoint * a_geotag_waypoint_positioned(const QString & file_full_path, const Coord & coord, double alt, QString & name, Waypoint * wp);
+		static QString waypoint_set_comment_get_name(const QString & file_full_path, Waypoint * wp);
 
-	QString a_geotag_get_exif_date_from_file(const QString & file_full_path, bool * has_GPS_info);
+		static QString get_exif_date_from_file(const QString & file_full_path, bool * has_GPS_info);
 
-	LatLon a_geotag_get_position(const char * file_full_path);
+		static LatLon get_position(const QString & file_full_path);
 
-	int a_geotag_write_exif_gps(const QString & file_full_path, const Coord & coord, double alt, bool no_change_mtime);
+		static int write_exif_gps(const QString & file_full_path, const Coord & coord, double alt, bool no_change_mtime);
+	};
 
 
 

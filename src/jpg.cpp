@@ -129,18 +129,16 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 		trw = (LayerTRW *) layer;
 	}
 
-	QString waypoint_name;
 	Waypoint * wp = NULL;
 
 #ifdef VIK_CONFIG_GEOTAG
-	wp = a_geotag_create_waypoint_from_file(file_full_path, viewport->get_coord_mode(), waypoint_name);
+	wp = GeotagExif::create_waypoint_from_file(file_full_path, viewport->get_coord_mode());
 #endif
 	if (wp) {
-		/* Create name if geotag method didn't return one. */
-		if (waypoint_name.isEmpty()) {
-			waypoint_name = FileUtils::get_base_name(file_full_path);
+		if (wp->name.isEmpty()) {
+			/* GeotagExif method doesn't guarantee setting waypoints name. */
+			wp->set_name(FileUtils::get_base_name(file_full_path));
 		}
-		wp->set_name(waypoint_name);
 		trw->add_waypoint_from_file(wp);
 	} else {
 		wp = new Waypoint();

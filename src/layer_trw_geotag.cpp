@@ -410,10 +410,10 @@ void GeotagJob::geotag_waypoint(void)
 	if (this->values.write_exif) {
 		bool has_gps_exif = false;
 
-		const QString datetime = a_geotag_get_exif_date_from_file(this->current_file, &has_gps_exif);
+		const QString datetime = GeotagExif::get_exif_date_from_file(this->current_file, &has_gps_exif);
 		/* If image already has gps info - don't attempt to change it unless forced. */
 		if (this->values.overwrite_gps_exif || !has_gps_exif) {
-			int ans = a_geotag_write_exif_gps(this->current_file, this->wp->coord, this->wp->altitude, this->values.no_change_mtime);
+			int ans = GeotagExif::write_exif_gps(this->current_file, this->wp->coord, this->wp->altitude, this->values.no_change_mtime);
 			if (ans != 0) {
 				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->current_file));
 			}
@@ -444,7 +444,7 @@ void GeotagJob::geotag(void)
 
 	bool has_gps_exif = false;
 
-	const QString datetime = a_geotag_get_exif_date_from_file(this->current_file, &has_gps_exif);
+	const QString datetime = GeotagExif::get_exif_date_from_file(this->current_file, &has_gps_exif);
 	if (datetime.isEmpty()) {
 		return;
 	}
@@ -453,32 +453,37 @@ void GeotagJob::geotag(void)
 	if (!this->values.overwrite_gps_exif && has_gps_exif) {
 		if (this->values.create_waypoints) {
 			/* Create waypoint with file information. */
-			QString file_name;
-			Waypoint * wp2 = a_geotag_create_waypoint_from_file(this->current_file,
-									   this->trw->get_coord_mode(),
-									   file_name);
-			if (!wp2) {
+			Waypoint * new_wp = GeotagExif::create_waypoint_from_file(this->current_file, this->trw->get_coord_mode());
+			if (!new_wp) {
 				/* Couldn't create Waypoint. */
 				return;
 			}
-			if (!file_name.size()) {
-				file_name = file_base_name(this->current_file);
+			if (new_wp->name.isEmpty()) {
+				/* GeotagExif method doesn't guarantee setting waypoints name. */
+				new_wp->set_name(file_base_name(this->current_file));
 			}
 
-			bool updated_waypoint = false;
+			QString new_wp_name = new_wp->name;
+
+			bool updated_existing_waypoint = false;
 
 			if (this->values.overwrite_waypoints) {
-				Waypoint * current_wp = this->trw->get_waypoints_node().find_waypoint_by_name(file_name);
+				Waypoint * current_wp = this->trw->get_waypoints_node().find_waypoint_by_name(new_wp_name);
 				if (current_wp) {
 					/* Existing wp found, so set new position, comment and image. */
-					(void) a_geotag_waypoint_positioned(this->current_file, wp2->coord, wp2->altitude, file_name, current_wp);
-					updated_waypoint = true;
+					current_wp->coord = new_wp->coord;
+					current_wp->altitude = new_wp->altitude;
+					current_wp->set_image_full_path(this->current_file);
+
+					new_wp_name = GeotagExif::waypoint_set_comment_get_name(this->current_file, current_wp);
+					updated_existing_waypoint = true;
 				}
 			}
 
-			if (!updated_waypoint) {
-				wp2->set_name(file_name);
-				this->trw->add_waypoint_from_file(wp2);
+			if (!updated_existing_waypoint) {
+				new_wp->set_name(new_wp_name);
+				this->trw->add_waypoint_from_file(new_wp);
+				/* TODO: do we delete the new_wp if we don't add it to layer? How was it done in Viking? */
 			}
 
 			/* Mark for redraw. */
@@ -510,31 +515,43 @@ void GeotagJob::geotag(void)
 
 		if (this->values.create_waypoints) {
 
-			bool updated_waypoint = false;
+			bool updated_existing_waypoint = false;
 
 			if (this->values.overwrite_waypoints) {
 
 				/* Update existing WP. */
 				/* Find a WP with current name. */
-				QString file_name = file_base_name(this->current_file);
-				Waypoint * wp2 = this->trw->get_waypoints_node().find_waypoint_by_name(file_name);
+				QString wp_name = file_base_name(this->current_file);
+				Waypoint * wp2 = this->trw->get_waypoints_node().find_waypoint_by_name(wp_name);
 				if (wp2) {
-					/* Found, so set new position, comment and image. */
-					/* TODO: how do we use file_name modified by the function below? */
-					(void)a_geotag_waypoint_positioned(this->current_file, this->coord, this->altitude, file_name, wp2);
-					updated_waypoint = true;
+					/* Found, so set new position, image and (below) a comment. */
+					wp2->coord = this->coord;
+					wp2->altitude = this->altitude;
+					wp2->set_image_full_path(this->current_file);
+
+					/* We ignore the returned wp name because the existing wp
+					   already has a name. We only update waypoint's comment. */
+					wp_name = GeotagExif::waypoint_set_comment_get_name(this->current_file, wp2);
+					updated_existing_waypoint = true;
 				}
 			}
 
-			if (!updated_waypoint) {
+			if (!updated_existing_waypoint) {
 				/* Create waypoint with found position. */
-				QString file_name;
-				/* TODO: how do we use file_name modified by the function below? */
-				Waypoint * wp2 = a_geotag_waypoint_positioned(this->current_file, this->coord, this->altitude, file_name, NULL);
-				if (!file_name.size()) {
-					file_name = file_base_name(this->current_file);
+
+				Waypoint * wp2 = new Waypoint();
+				wp2->visible = true;
+				wp2->coord = this->coord;
+				wp2->altitude = this->altitude;
+				wp2->set_image_full_path(this->current_file);
+
+				/* Brand new wp, so we don't ignore wp name returned by this function.
+				   If the name is not empty, we will use it for the wp. */
+				QString wp_name = GeotagExif::waypoint_set_comment_get_name(this->current_file, wp2);
+				if (wp_name.isEmpty()) {
+					wp_name = file_base_name(this->current_file);
 				}
-				wp2->set_name(file_name);
+				wp2->set_name(wp_name);
 				this->trw->add_waypoint_from_file(wp2);
 			}
 
@@ -544,7 +561,7 @@ void GeotagJob::geotag(void)
 
 		/* Write EXIF if specified. */
 		if (this->values.write_exif) {
-			int ans = a_geotag_write_exif_gps(this->current_file, this->coord, this->altitude, this->values.no_change_mtime);
+			int ans = GeotagExif::write_exif_gps(this->current_file, this->coord, this->altitude, this->values.no_change_mtime);
 			if (ans != 0) {
 				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->current_file));
 			}

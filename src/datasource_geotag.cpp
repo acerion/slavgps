@@ -158,14 +158,12 @@ bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_so
 	for (int i = 0; i < this->selected_files.size(); i++) {
 		const QString file_full_path = this->selected_files.at(0);
 
-		QString name;
-		Waypoint * wp = a_geotag_create_waypoint_from_file(file_full_path, acquiring_context->viewport->get_coord_mode(), name);
+		Waypoint * wp = GeotagExif::create_waypoint_from_file(file_full_path, acquiring_context->viewport->get_coord_mode());
 		if (wp) {
-			/* Create name if geotag method didn't return one. */
-			if (!name.size()) {
-				name = file_base_name(file_full_path);
+			if (wp->name.isEmpty()) {
+				/* GeotagExif method doesn't guarantee setting waypoints name. */
+				wp->set_name(file_base_name(file_full_path));
 			}
-			wp->set_name(name);
 			trw->add_waypoint_from_file(wp);
 		} else {
 			acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to create waypoint from %1").arg(file_full_path));
