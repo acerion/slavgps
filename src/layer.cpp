@@ -94,7 +94,7 @@ static bool layer_defaults_register(LayerType layer_type);
 void SlavGPS::layer_init(void)
 {
 	/* Register all parameter defaults, early in the start up sequence. */
-	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
+	for (LayerType layer_type = LayerType::Aggregate; layer_type < LayerType::Max; ++layer_type) {
 		/* ATM ignore the returned value. */
 		layer_defaults_register(layer_type);
 	}
@@ -132,7 +132,7 @@ void Layer::emit_layer_changed_although_invisible(const QString & where)
 
 
 
-static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
+static LayerInterface * vik_layer_interfaces[(int) LayerType::Max] = {
 	&vik_aggregate_layer_interface,
 	&vik_trw_layer_interface,
 	&vik_coord_layer_interface,
@@ -150,7 +150,7 @@ static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 
 LayerInterface * Layer::get_interface(LayerType layer_type)
 {
-	assert (layer_type < LayerType::NUM_TYPES);
+	assert (layer_type < LayerType::Max);
 	return vik_layer_interfaces[(int) layer_type];
 }
 
@@ -166,7 +166,7 @@ const LayerInterface & Layer::get_interface(void) const
 
 void Layer::preconfigure_interfaces(void)
 {
-	for (SlavGPS::LayerType type = SlavGPS::LayerType::AGGREGATE; type < SlavGPS::LayerType::NUM_TYPES; ++type) {
+	for (SlavGPS::LayerType type = SlavGPS::LayerType::Aggregate; type < SlavGPS::LayerType::Max; ++type) {
 
 		LayerInterface * interface = Layer::get_interface(type);
 
@@ -247,7 +247,7 @@ const QString Layer::get_name(void) const
 
 QString Layer::get_type_id_string(void) const
 {
-	return this->get_interface(this->type)->fixed_layer_type_string;
+	return this->interface->fixed_layer_type_string;
 }
 
 
@@ -283,29 +283,29 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 
 	static sg_uid_t layer_uid = SG_UID_INITIAL;
 
-	assert (layer_type != LayerType::NUM_TYPES);
+	assert (layer_type != LayerType::Max);
 
 	bool use_default_properties = true;
 	Layer * layer = NULL;
 
-	if (layer_type == LayerType::AGGREGATE) {
+	if (layer_type == LayerType::Aggregate) {
 		layer = new LayerAggregate();
 
 	} else if (layer_type == LayerType::TRW) {
 		layer = new LayerTRW();
 		(void) ApplicationState::get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &use_default_properties);
 		((LayerTRW *) layer)->set_coord_mode(viewport->get_coord_mode());
-	} else if (layer_type == LayerType::COORD) {
+	} else if (layer_type == LayerType::Coordinates) {
 		layer = new LayerCoord();
-	} else if (layer_type == LayerType::MAP) {
+	} else if (layer_type == LayerType::Map) {
 		layer = new LayerMap();
 	} else if (layer_type == LayerType::DEM) {
 		layer = new LayerDEM();
-	} else if (layer_type == LayerType::GEOREF) {
+	} else if (layer_type == LayerType::Georef) {
 		layer = new LayerGeoref();
 		((LayerGeoref *) layer)->configure_from_viewport(viewport);
 #ifdef HAVE_LIBMAPNIK
-	} else if (layer_type == LayerType::MAPNIK) {
+	} else if (layer_type == LayerType::Mapnik) {
 		layer = new LayerMapnik();
 #endif
 	} else if (layer_type == LayerType::GPS) {
@@ -508,12 +508,12 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 LayerType Layer::type_from_type_id_string(const QString & type_id_string)
 {
-	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+	for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
 		if (type_id_string == Layer::get_type_id_string(type)) {
 			return type;
 		}
 	}
-	return LayerType::NUM_TYPES;
+	return LayerType::Max;
 }
 
 
@@ -569,9 +569,9 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 
 
 
-QString Layer::get_tooltip(void)
+QString Layer::get_tooltip(void) const
 {
-	return QString(tr("Layer::tooltip"));
+	return this->interface->ui_labels.layer_type;
 }
 
 
@@ -729,33 +729,33 @@ LayerType& SlavGPS::operator++(LayerType& layer_type)
 QDebug SlavGPS::operator<<(QDebug debug, const LayerType & layer_type)
 {
 	switch (layer_type) {
-	case LayerType::AGGREGATE:
+	case LayerType::Aggregate:
 		debug << "LayerAggregate";
 		break;
 	case LayerType::TRW:
 		debug << "LayerTRW";
 		break;
-	case LayerType::COORD:
+	case LayerType::Coordinates:
 		debug << "LayerCoord";
 		break;
-	case LayerType::GEOREF:
+	case LayerType::Georef:
 		debug << "LayerGeoref";
 		break;
 	case LayerType::GPS:
 		debug << "LayerGPS";
 		break;
-	case LayerType::MAP:
+	case LayerType::Map:
 		debug << "LayerMap";
 		break;
 	case LayerType::DEM:
 		debug << "LayerDEM";
 		break;
 #ifdef HAVE_LIBMAPNIK
-	case LayerType::MAPNIK:
+	case LayerType::Mapnik:
 		debug << "LayerMapnik";
 		break;
 #endif
-	case LayerType::NUM_TYPES:
+	case LayerType::Max:
 		qDebug() << "EE" PREFIX << "unexpectedly handling NUM_TYPES layer type";
 		debug << "(layer-type-last)";
 		break;

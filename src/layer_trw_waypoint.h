@@ -73,7 +73,7 @@ namespace SlavGPS {
 		bool apply_dem_data(bool skip_existing_elevations);
 		void apply_dem_data_common(bool skip_existing_elevations);
 
-		QString get_tooltip(void);
+		QString get_tooltip(void) const;
 
 		void marshall(Pickle & pickle);
 		static Waypoint * unmarshall(Pickle & pickle);

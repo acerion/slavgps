@@ -51,7 +51,7 @@ LayerTool::LayerTool(Window * new_window, Viewport * new_viewport, LayerType new
 	this->viewport = new_viewport;
 	this->layer_type = new_layer_type;
 
-	if (layer_type == LayerType::NUM_TYPES) {
+	if (layer_type == LayerType::Max) {
 		strcpy(this->debug_string, "LayerType::generic");
 	} else {
 		strcpy(this->debug_string, "LayerType::");

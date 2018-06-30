@@ -615,7 +615,7 @@ void Window::create_actions(void)
 		{
 			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), QString("&Layer Defaults"));
 
-			for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+			for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
 				qa = defaults_submenu->addAction("&" + Layer::get_type_ui_label(type) + "...");
 				qa->setData(QVariant((int) type));
 				qa->setIcon(Layer::get_interface(type)->action_icon);
@@ -1036,7 +1036,7 @@ void Window::draw_tree_items(void)
 		; /* Do nothing -- have to redraw everything. */
 	} else if ((old_trigger != new_trigger)
 		   || (old_center != this->trigger_center)
-		   || (new_trigger->type == LayerType::AGGREGATE)) {
+		   || (new_trigger->type == LayerType::Aggregate)) {
 		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
 		this->viewport->set_half_drawn(true);
@@ -1154,7 +1154,7 @@ QMenu * Window::get_layer_menu(QMenu * menu)
 
 QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
 {
-	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+	for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
 
 		const LayerInterface * iface = Layer::get_interface(type);
 
@@ -1229,7 +1229,7 @@ void Window::create_ui(void)
 	/* Menu Tools -> layer-specific tools;
 	   Toolbar -> layer-specific tools. */
 	{
-		for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+		for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
 
 			/* We can't build the layer tools when a layer
 			   interface is constructed, because the layer
@@ -1449,7 +1449,7 @@ void Window::menu_edit_delete_cb(void)
 void Window::menu_edit_delete_all_cb(void)
 {
 	/* Do nothing if empty. */
-	if (0 == this->items_tree->get_top_layer()->get_children_count()) {
+	if (0 == this->items_tree->get_top_layer()->get_child_layers_count()) {
 		return;
 	}
 
@@ -1486,7 +1486,7 @@ void Window::menu_copy_centre_cb(void)
 	const QString message = QString("%1 %2").arg(first).arg(second);
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", dummy, message);
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::Aggregate, "", dummy, message);
 }
 
 
@@ -3152,7 +3152,7 @@ void Window::menu_view_pan_cb(void)
 void Window::simple_map_update(bool only_new)
 {
 	/* Find the most relevent single map layer to operate on. */
-	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerType::MAP);
+	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerType::Map);
 	if (layer) {
 		((LayerMap *) layer)->download(this->viewport, only_new);
 	}

@@ -320,7 +320,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 		/* A new layer can be inserted only under an Aggregate layer.
 		   Find first one in tree hierarchy (going up). */
-		TreeIndex aggregate_index = this->go_up_to_layer(selected_layer->index, LayerType::AGGREGATE);
+		TreeIndex aggregate_index = this->go_up_to_layer(selected_layer->index, LayerType::Aggregate);
 		if (aggregate_index.isValid()) {
 			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
 			assert (aggregate->tree_view);
@@ -621,7 +621,7 @@ LayerAggregate * LayersPanel::get_top_layer()
  */
 void LayersPanel::clear()
 {
-	if (0 != this->toplayer->get_children_count()) {
+	if (0 != this->toplayer->get_child_layers_count()) {
 #ifdef K_FIXME_RESTORE
 		g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 #endif

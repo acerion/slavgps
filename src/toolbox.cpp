@@ -403,8 +403,8 @@ void Toolbox::handle_mouse_click(QMouseEvent * event)
 
 
 	LayerType layer_tool_type = this->active_tool->layer_type;
-	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
-	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
+	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */
+	    && layer_tool_type != LayerType::Max) {    /* Click received for something other than generic tool. */
 
 		qDebug() << "EE: Toolbox: click received, invalid type";
 		return;
@@ -437,8 +437,8 @@ void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 
 
 	LayerType layer_tool_type = this->active_tool->layer_type;
-	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
-	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
+	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */
+	    && layer_tool_type != LayerType::Max) {    /* Click received for something other than generic tool. */
 
 		qDebug() << "EE: Toolbox: double click received, invalid type";
 		return;
@@ -472,8 +472,8 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 
 
 	LayerType layer_tool_type = this->active_tool->layer_type;
-	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
-	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
+	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */
+	    && layer_tool_type != LayerType::Max) {    /* Click received for something other than generic tool. */
 
 		qDebug() << "EE: Toolbox: double click received, invalid type";
 		return;
@@ -511,8 +511,8 @@ void Toolbox::handle_mouse_release(QMouseEvent * event)
 
 
 	LayerType layer_tool_type = this->active_tool->layer_type;
-	if (layer_tool_type != layer->type                   /* Click received for layer other than current layer. */
-	    && layer_tool_type != LayerType::NUM_TYPES) {    /* Click received for something other than generic tool. */
+	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */
+	    && layer_tool_type != LayerType::Max) {    /* Click received for something other than generic tool. */
 
 		qDebug() << "EE: Toolbox: release received, invalid type";
 		return;

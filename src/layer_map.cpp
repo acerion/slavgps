@@ -310,7 +310,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, Viewport *
 
 
 static ParameterSpecification prefs[] = {
-	{ (param_id_t) LayerType::NUM_TYPES, PREFERENCES_NAMESPACE_GENERAL, "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FolderEntry, NULL, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer") },
+	{ (param_id_t) LayerType::Max, PREFERENCES_NAMESPACE_GENERAL, "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FolderEntry, NULL, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer") },
 };
 
 
@@ -439,7 +439,7 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 MapTypeID LayerMap::get_default_map_type_id(void)
 {
 	/* TODO: verify that this function call works as expected. */
-	SGVariant var = LayerDefaults::get(LayerType::MAP, "mode", SGVariantType::Int); /* kamilTODO: get the default value from LayerInterface. */
+	SGVariant var = LayerDefaults::get(LayerType::Map, "mode", SGVariantType::Int); /* kamilTODO: get the default value from LayerInterface. */
 	if (var.u.val_int == 0) {
 		var = id_default();
 	}
@@ -842,7 +842,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 
 
 
-QString LayerMap::get_tooltip(void)
+QString LayerMap::get_tooltip(void) const
 {
 	return this->get_map_label();
 }
@@ -2035,7 +2035,7 @@ void SlavGPS::get_tile_file_info_strings(const QString & tile_file_full_path, QS
 
 ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEvent * event)
 {
-	if (!_layer || _layer->type != LayerType::MAP) {
+	if (!_layer || _layer->type != LayerType::Map) {
 		return ToolStatus::Ignored;
 	}
 
@@ -2088,7 +2088,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEve
 
 
 
-LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAP)
+LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Map)
 {
 	this->id_string = "sg.tool.layer_map.maps_download";
 
@@ -2111,7 +2111,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
-	if (!_layer || _layer->type != LayerType::MAP) {
+	if (!_layer || _layer->type != LayerType::Map) {
 		return ToolStatus::Ignored;
 	}
 
@@ -2599,7 +2599,7 @@ LayerMap::LayerMap()
 {
 	qDebug() << "DD" PREFIX << "constructor called";
 
-	this->type = LayerType::MAP;
+	this->type = LayerType::Map;
 	strcpy(this->debug_string, "MAP");
 	this->interface = &vik_map_layer_interface;
 

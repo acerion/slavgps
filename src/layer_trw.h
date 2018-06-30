@@ -139,7 +139,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
-		QString get_tooltip();
+		QString get_tooltip(void) const;
 
 
 		/* Methods for generic "Select" tool. */
@@ -188,9 +188,9 @@ namespace SlavGPS {
 		void add_route(Track * trk);
 		void add_waypoint(Waypoint * wp);
 
-		Tracks & get_track_items();
-		Tracks & get_route_items();
-		Waypoints & get_waypoint_items();
+		TracksContainer & get_track_items();
+		TracksContainer & get_route_items();
+		WaypointsContainer & get_waypoint_items();
 
 		LayerTRWTracks & get_tracks_node(void);
 		LayerTRWTracks & get_routes_node(void);

@@ -217,7 +217,7 @@ void TrackListDialog::copy_selected_cb(void)
 	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
 #endif
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", dummy, cd.str);
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::Aggregate, "", dummy, cd.str);
 }
 
 
@@ -590,7 +590,7 @@ void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QStr
 
 	dialog.tracks.clear();
 
-	if (layer->type == LayerType::AGGREGATE) {
+	if (layer->type == LayerType::Aggregate) {
 		((LayerAggregate *) layer)->get_tracks_list(dialog.tracks, type_id_string);
 	} else if (layer->type == LayerType::TRW) {
 		((LayerTRW *) layer)->get_tracks_list(dialog.tracks, type_id_string);
@@ -598,7 +598,7 @@ void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QStr
 		assert (0);
 	}
 
-	dialog.build_model(layer->type != LayerType::AGGREGATE);
+	dialog.build_model(layer->type != LayerType::Aggregate);
 	dialog.exec();
 }
 

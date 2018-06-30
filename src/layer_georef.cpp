@@ -162,7 +162,7 @@ void SlavGPS::layer_georef_init(void)
 
 
 
-QString LayerGeoref::get_tooltip()
+QString LayerGeoref::get_tooltip(void) const
 {
 	return this->image_full_path;
 }
@@ -1088,7 +1088,7 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 
 
-LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::GEOREF)
+LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Georef)
 {
 	this->id_string = "sg.tool.layer_georef.move";
 
@@ -1114,7 +1114,7 @@ ToolStatus LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent 
 
 ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 {
-	if (this->type != LayerType::GEOREF) {
+	if (this->type != LayerType::Georef) {
 		/* FIXME: this shouldn't happen, right? */
 		return ToolStatus::Ignored;
 	}
@@ -1131,7 +1131,7 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 
 
 
-LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::GEOREF)
+LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Georef)
 {
 	this->id_string = "sg.tool.layer_georef.zoom";
 
@@ -1157,7 +1157,7 @@ ToolStatus LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * 
 
 ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 {
-	if (this->type != LayerType::GEOREF) {
+	if (this->type != LayerType::Georef) {
 		/* FIXME: this shouldn't happen, right? */
 		return ToolStatus::Ignored;
 	}
@@ -1192,7 +1192,7 @@ ToolStatus LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * 
 
 ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 {
-	if (this->type != LayerType::GEOREF) {
+	if (this->type != LayerType::Georef) {
 		/* FIXME: this shouldn't happen, right? */
 		return ToolStatus::Ignored;
 	}
@@ -1252,7 +1252,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 LayerGeoref::LayerGeoref()
 {
-	this->type = LayerType::GEOREF;
+	this->type = LayerType::Georef;
 	strcpy(this->debug_string, "GEOREF");
 	this->interface = &vik_georef_layer_interface;
 

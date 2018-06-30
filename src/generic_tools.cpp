@@ -310,7 +310,7 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 
 
 
-GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
+GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.ruler";
 
@@ -505,7 +505,7 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 
 
 
-GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
+GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.zoom";
 
@@ -733,7 +733,7 @@ ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * ev
 
 
 
-LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
+LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.pan";
 
@@ -824,7 +824,7 @@ ToolStatus LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event
 
 
 
-LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::NUM_TYPES)
+LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.select";
 

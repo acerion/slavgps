@@ -237,7 +237,7 @@ void SGDateTimeButton::copy_formatted_time_string_cb(void)
 	qDebug() << "SLOT: Date Time Button: copy formatted time string";
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", dummy, this->text());
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::Aggregate, "", dummy, this->text());
 }
 
 

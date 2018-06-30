@@ -68,7 +68,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
-		QString get_tooltip();
+		QString get_tooltip(void) const;
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
@@ -91,8 +91,8 @@ namespace SlavGPS {
 		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 
-		int get_children_count(void) const;
-		std::list<Layer const *> * get_children(void) const;
+		int get_child_layers_count(void) const;
+		std::list<Layer const *> get_child_layers(void) const;
 
 		std::list<Layer *> * children = NULL;
 

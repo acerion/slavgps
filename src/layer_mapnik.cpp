@@ -302,7 +302,7 @@ void SlavGPS::layer_mapnik_init(void)
 
 
 
-QString LayerMapnik::get_tooltip()
+QString LayerMapnik::get_tooltip(void) const
 {
 	return this->filename_xml;
 }
@@ -1074,7 +1074,7 @@ void LayerMapnik::tile_info()
 
 
 
-LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::MAPNIK)
+LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Mapnik)
 {
 	this->id_string = "sg.tool.layer_mapnik.feature";
 
@@ -1137,7 +1137,7 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 
 LayerMapnik::LayerMapnik()
 {
-	this->type = LayerType::MAPNIK;
+	this->type = LayerType::Mapnik;
 	strcpy(this->debug_string, "MAPNIK");
 	this->interface = &vik_mapnik_layer_interface;
 

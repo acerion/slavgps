@@ -115,6 +115,21 @@ void TreeView::set_tree_item_timestamp(TreeIndex const & item_index, time_t time
 
 
 
+void TreeView::set_tree_item_tooltip(TreeIndex const & item_index, const QString & tooltip)
+{
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
+	if (!parent_item) {
+		/* "item_index" points at the top tree item. */
+		qDebug() << "II" PREFIX << "querying Top Tree Item for item" << item_index.row() << item_index.column();
+		parent_item = this->tree_model->invisibleRootItem();
+	}
+	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Name);
+	ch->setToolTip(tooltip);
+}
+
+
+
+
 void TreeView::select_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->get_selected_tree_item();
@@ -386,7 +401,6 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
-	QStandardItem * first_item = NULL;
 	QVariant variant;
 
 	const QString tooltip = tree_item->get_tooltip();
@@ -399,12 +413,10 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
 	if (!tree_item->icon.isNull()) { /* Icon can be set with ::set_tree_item_icon(). */
 		item->setIcon(tree_item->icon);
 	}
-	first_item = item;
 	items << item;
 
 	/* TreeViewColumn::Visible */
 	item = new QStandardItem();
-	item->setToolTip(tooltip);
 	item->setCheckable(true);
 	item->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
 	items << item;

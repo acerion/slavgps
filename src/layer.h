@@ -68,33 +68,33 @@ namespace SlavGPS {
 
 
 	enum class SublayerType {
-		NONE,
-		TRACKS,
-		WAYPOINTS,
-		TRACK,
-		WAYPOINT,
-		ROUTES,
-		ROUTE
+		None,
+		Tracks,
+		Waypoints,
+		Track,
+		Waypoint,
+		Routes,
+		Route
 	};
 
 
 
 
 	enum class LayerType {
-		AGGREGATE = 0,
+		Aggregate = 0,
 		TRW,
-		COORD,
-		GEOREF,
+		Coordinates,
+		Georef,
 		GPS,
-		MAP,
+		Map,
 		DEM,
 #ifdef HAVE_LIBMAPNIK
-		MAPNIK,
+		Mapnik,
 #endif
-		NUM_TYPES // Also use this value to indicate no layer association
+		Max /* Also use this value to indicate no layer association. */
 	};
 
-	LayerType& operator++(LayerType& layer_type);
+	LayerType& operator++(LayerType & layer_type);
  	QDebug operator<<(QDebug debug, const LayerType & layer_type);
 
 
@@ -137,7 +137,7 @@ namespace SlavGPS {
 
 		virtual void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected) { return; };
 
-		virtual QString get_tooltip(void);
+		virtual QString get_tooltip(void) const;
 
 		bool handle_selection_in_tree(void);
 
@@ -187,10 +187,10 @@ namespace SlavGPS {
 
 		/* Most of layer types aren't able to store child layers.
 		   Those that do, may have zero child layers at the moment. */
-		virtual int get_children_count(void) const { return 0; };
+		virtual int get_child_layers_count(void) const { return 0; };
 
 		/* Return list of children layers. Most of layer types won't have child layers. */
-		virtual std::list<Layer const *> * get_children(void) const { return NULL; };
+		virtual std::list<Layer const *> get_child_layers(void) const { std::list<Layer const *> a_list; return a_list; };
 
 		/* "type id string" means Layer's internal, fixed string
 		   that can be used in .vik file operations and to

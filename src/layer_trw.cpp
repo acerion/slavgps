@@ -1326,7 +1326,7 @@ int LayerTRW::get_track_thickness()
 /*
  * Build up multiple routes information.
  */
-static void trw_layer_routes_tooltip(Tracks & tracks, double * length)
+static void trw_layer_routes_tooltip(TracksContainer & tracks, double * length)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		*length = *length + i->second->get_length();
@@ -1347,7 +1347,7 @@ typedef struct {
 /*
  * Build up layer multiple track information via updating the tooltip_tracks structure.
  */
-static void trw_layer_tracks_tooltip(Tracks & tracks, tooltip_tracks * tt)
+static void trw_layer_tracks_tooltip(TracksContainer & tracks, tooltip_tracks * tt)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
@@ -1404,9 +1404,9 @@ static void trw_layer_tracks_tooltip(Tracks & tracks, tooltip_tracks * tt)
   no tracks, a single track or multiple tracks
   (which may or may not have timing information)
 */
-QString LayerTRW::get_tooltip()
+QString LayerTRW::get_tooltip(void) const
 {
-	static QString msg;
+	QString tooltip;
 
 	/* For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.] */
 
@@ -1470,7 +1470,7 @@ QString LayerTRW::get_tooltip()
 		}
 
 		/* Put together all the elements to form compact tooltip text. */
-		msg = QObject::tr("Tracks: %1 - Waypoints: %2 - Routes: %3 %4 %5")
+		tooltip = QObject::tr("Tracks: %1 - Waypoints: %2 - Routes: %3 %4 %5")
 			.arg(this->tracks->items.size())
 			.arg(this->waypoints->items.size())
 			.arg(this->routes->items.size())
@@ -1478,7 +1478,7 @@ QString LayerTRW::get_tooltip()
 			.arg(route_length);
 
 	}
-	return msg;
+	return tooltip;
 }
 
 
@@ -1563,7 +1563,7 @@ void LayerTRW::reset_internal_selections(void)
 
 
 
-Tracks & LayerTRW::get_track_items()
+TracksContainer & LayerTRW::get_track_items()
 {
 	return this->tracks->items;
 }
@@ -1571,7 +1571,7 @@ Tracks & LayerTRW::get_track_items()
 
 
 
-Tracks & LayerTRW::get_route_items()
+TracksContainer & LayerTRW::get_route_items()
 {
 	return this->routes->items;
 }
@@ -1579,7 +1579,7 @@ Tracks & LayerTRW::get_route_items()
 
 
 
-Waypoints & LayerTRW::get_waypoint_items()
+WaypointsContainer & LayerTRW::get_waypoint_items()
 {
 	return this->waypoints->items;
 }
@@ -4074,7 +4074,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		return;
 	}
 
-	const std::list<Layer const *> layers = panel->get_all_layers_of_type(LayerType::MAP, true); /* Includes hidden map layer types. */
+	const std::list<Layer const *> layers = panel->get_all_layers_of_type(LayerType::Map, true); /* Includes hidden map layer types. */
 	int num_maps = layers.size();
 	if (!num_maps) {
 		Dialog::error(tr("No map layer in use. Create one first"), this->get_window());

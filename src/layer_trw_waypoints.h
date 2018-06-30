@@ -108,7 +108,7 @@ namespace SlavGPS {
 	   item in the data structures used on the viewport and on the
 	   layers panel.
 	*/
-	typedef std::unordered_map<sg_uid_t, Waypoint *> Waypoints;
+	typedef std::unordered_map<sg_uid_t, Waypoint *> WaypointsContainer;
 
 
 
@@ -144,7 +144,7 @@ namespace SlavGPS {
 		LayerTRWWaypoints(TreeView * ref_tree_view);
 		~LayerTRWWaypoints();
 
-		QString get_tooltip();
+		QString get_tooltip(void) const;
 
 
 		void add_children_to_tree(void);
@@ -209,7 +209,7 @@ namespace SlavGPS {
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 
-		Waypoints items;
+		WaypointsContainer items;
 
 
 		DefaultNameGenerator name_generator;

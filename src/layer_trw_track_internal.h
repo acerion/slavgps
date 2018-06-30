@@ -180,13 +180,13 @@ namespace SlavGPS {
 		void ref();
 		void free();
 
-		QString get_tooltip(void);
+		QString get_tooltip(void) const;
 
 
 		/* STL-like container interface. */
 		TrackPoints::iterator begin();
 		TrackPoints::iterator end();
-		bool empty();
+		bool empty(void) const;
 		TrackPoints::iterator erase(TrackPoints::iterator first, TrackPoints::iterator last);
 		void push_front(Trackpoint * tp);
 

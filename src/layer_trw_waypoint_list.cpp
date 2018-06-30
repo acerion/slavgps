@@ -270,7 +270,7 @@ void WaypointListDialog::copy_selected(bool include_positions)
 #endif
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::AGGREGATE, "", dummy, cd.str);
+	Clipboard::copy(ClipboardDataType::TEXT, LayerType::Aggregate, "", dummy, cd.str);
 }
 
 
@@ -583,13 +583,13 @@ void SlavGPS::waypoint_list_dialog(QString const & title, Layer * layer)
 
 	if (layer->type == LayerType::TRW) {
 		((LayerTRW *) layer)->get_waypoints_list(dialog.waypoints);
-	} else if (layer->type == LayerType::AGGREGATE) {
+	} else if (layer->type == LayerType::Aggregate) {
 		((LayerAggregate *) layer)->get_waypoints_list(dialog.waypoints);
 	} else {
 		assert (0);
 	}
 
-	dialog.build_model(layer->type != LayerType::AGGREGATE);
+	dialog.build_model(layer->type != LayerType::Aggregate);
 	dialog.exec();
 }
 

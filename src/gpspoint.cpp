@@ -69,9 +69,9 @@ using namespace SlavGPS;
 
 
 
-static void a_gpspoint_write_tracks(FILE * file, const Tracks & tracks);
+static void a_gpspoint_write_tracks(FILE * file, const TracksContainer & tracks);
 static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool is_route);
-static void a_gpspoint_write_waypoints(FILE * file, const Waypoints & waypoints);
+static void a_gpspoint_write_waypoints(FILE * file, const WaypointsContainer & waypoints);
 
 
 
@@ -765,7 +765,7 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 
 
 
-static void a_gpspoint_write_waypoints(FILE * file, const Waypoints & waypoints)
+static void a_gpspoint_write_waypoints(FILE * file, const WaypointsContainer & waypoints)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 
@@ -905,7 +905,7 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 
 
 
-static void a_gpspoint_write_tracks(FILE * file, Tracks & tracks)
+static void a_gpspoint_write_tracks(FILE * file, TracksContainer & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
@@ -978,9 +978,9 @@ static void a_gpspoint_write_tracks(FILE * file, Tracks & tracks)
 
 void GPSPoint::write_layer(FILE * file, LayerTRW const * trw)
 {
-	Tracks & tracks = ((LayerTRW *) trw)->get_track_items();
-	Tracks & routes = ((LayerTRW *) trw)->get_route_items();
-	Waypoints & waypoints = ((LayerTRW *) trw)->get_waypoint_items();
+	TracksContainer & tracks = ((LayerTRW *) trw)->get_track_items();
+	TracksContainer & routes = ((LayerTRW *) trw)->get_route_items();
+	WaypointsContainer & waypoints = ((LayerTRW *) trw)->get_waypoint_items();
 
 	fprintf(file, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(file, waypoints);

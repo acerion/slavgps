@@ -215,7 +215,7 @@ bool LayerDefaults::load_from_file(void)
 	}
 
 	/* Set any missing values from the program's internal/hardwired defaults. */
-	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
+	for (LayerType layer_type = LayerType::Aggregate; layer_type < LayerType::Max; ++layer_type) {
 		LayerDefaults::fill_from_hardwired_defaults(layer_type);
 	}
 

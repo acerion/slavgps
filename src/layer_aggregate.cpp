@@ -122,8 +122,8 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 
 	/* These types are 'base' types in that you what other information on top. */
 	if (layer->type == LayerType::DEM
-	    || layer->type == LayerType::MAP
-	    || layer->type == LayerType::GEOREF) {
+	    || layer->type == LayerType::Map
+	    || layer->type == LayerType::Georef) {
 
 		put_above = false;
 	}
@@ -165,6 +165,9 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 	}
 
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+
+	/* Update our own tooltip. */
+	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
 }
 
 
@@ -187,8 +190,8 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	if (allow_reordering) {
 		/* These types are 'base' types in that you what other information on top. */
 		if (layer->type == LayerType::DEM
-		    || layer->type == LayerType::MAP
-		    || layer->type == LayerType::GEOREF) {
+		    || layer->type == LayerType::Map
+		    || layer->type == LayerType::Georef) {
 			put_above = false;
 		}
 	}
@@ -199,9 +202,10 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 
-	if (this->children->empty()) {
+	if (!this->children->empty()) {
 		this->tree_view->expand(this->index);
 	}
+
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
@@ -215,6 +219,9 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+
+	/* Update our own tooltip. */
+	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
 }
 
 
@@ -587,6 +594,9 @@ void LayerAggregate::clear()
 		delete layer;
 	}
 	this->children->clear();
+
+	/* Update our own tooltip. */
+	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
 }
 
 
@@ -616,6 +626,9 @@ bool LayerAggregate::delete_layer(Layer * layer)
 		}
 	}
 	delete layer;
+
+	/* Update our own tooltip. */
+	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
 
 	return was_visible;
 }
@@ -683,7 +696,7 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 		Layer * layer = *child;
 		if (layer->visible && layer->type == layer_type) {
 			return layer;
-		} else if (layer->visible && layer->type == LayerType::AGGREGATE) {
+		} else if (layer->visible && layer->type == LayerType::Aggregate) {
 			Layer * rv = ((LayerAggregate *) layer)->get_top_visible_layer_of_type(layer_type);
 			if (rv) {
 				return rv;
@@ -707,7 +720,7 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 	/* Where appropriate *don't* include non-visible layers. */
 	while (child != this->children->end()) {
 		Layer * layer = *child;
-		if (layer->type == LayerType::AGGREGATE) {
+		if (layer->type == LayerType::Aggregate) {
 			/* Don't even consider invisible aggregrates, unless told to. */
 			if (layer->visible || include_invisible) {
 				LayerAggregate * aggregate = (LayerAggregate *) layer;
@@ -727,15 +740,14 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 				continue;
 			}
 
-			if (0 == layer->get_children_count()) {
+			if (0 == layer->get_child_layers_count()) {
 				continue;
 			}
 
-			std::list<Layer const * > * gps_children = layer->get_children();
-			for (auto iter = gps_children->begin(); iter != gps_children->end(); iter++) {
+			std::list<Layer const * > gps_children = layer->get_child_layers();
+			for (auto iter = gps_children.begin(); iter != gps_children.end(); iter++) {
 				layers.push_front(*iter);
 			}
-			delete gps_children;
 		}
 		child++;
 	}
@@ -806,15 +818,14 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 				continue;
 			}
 
-			if (0 == layer->get_children_count()) {
+			if (0 == layer->get_child_layers_count()) {
 				continue;
 			}
 
-			std::list<Layer const * > * gps_children = layer->get_children();
-			for (auto iter = gps_children->begin(); iter != gps_children->end(); iter++) {
+			std::list<Layer const * > gps_children = layer->get_child_layers();
+			for (auto iter = gps_children.begin(); iter != gps_children.end(); iter++) {
 				layers->push_front(*iter);
 			}
-			delete gps_children;
 		}
 		child++;
 	}
@@ -847,25 +858,28 @@ void LayerAggregate::add_children_to_tree(void)
 
 		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 	}
+
+	/* Update our own tooltip. */
+	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
 }
 
 
 
 
-std::list<Layer const *> * LayerAggregate::get_children(void) const
+std::list<Layer const *> LayerAggregate::get_child_layers(void) const
 {
-	std::list<Layer const *> * result = new std::list<Layer const *>;
+	std::list<Layer const *> result;
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		result->push_back(*iter);
+		result.push_back(*iter);
 	}
-	qDebug() << "II: Layer Aggregate: returning" << result->size() << "children";
+	qDebug() << "II: Layer Aggregate: returning" << result.size() << "children";
 	return result;
 }
 
 
 
 
-int LayerAggregate::get_children_count(void) const
+int LayerAggregate::get_child_layers_count(void) const
 {
 	return this->children->size();
 }
@@ -900,19 +914,14 @@ void LayerAggregate::drag_drop_request(Layer * src, TreeIndex & src_item_index, 
 
 
 /**
- * Generate tooltip text for the layer.
- */
-QString LayerAggregate::get_tooltip()
+   @brief Generate tooltip text for the layer
+*/
+QString LayerAggregate::get_tooltip(void) const
 {
-	QString tool_tip;
+	/* We could have a more complicated tooltip that numbers each
+	   type of layers, but for now a simple overall count should be enough. */
 
-	size_t size = this->children->size();
-	if (size) {
-		/* Could have a more complicated tooltip that numbers each
-		   type of layers, but for now a simple overall count. */
-		tool_tip = QString(tr("%n layer(s)", "", size));
-	}
-	return tool_tip;
+	return tr("%n immediate child layer(s)", "", this->children->size());
 }
 
 
@@ -922,7 +931,7 @@ LayerAggregate::LayerAggregate()
 {
 	qDebug() << "II: LayerAggregate::LayerAggregate()";
 
-	this->type = LayerType::AGGREGATE;
+	this->type = LayerType::Aggregate;
 	strcpy(this->debug_string, "LayerType::AGGREGATE");
 
 	this->interface = &vik_aggregate_layer_interface;

@@ -161,7 +161,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
-		QString get_tooltip();
+		QString get_tooltip(void) const;
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);
@@ -170,8 +170,8 @@ namespace SlavGPS {
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 
-		int get_children_count(void) const;
-		std::list<Layer const * > * get_children(void) const;
+		int get_child_layers_count(void) const;
+		std::list<Layer const * > get_child_layers(void) const;
 		LayerTRW * get_a_child();
 
 		void realtime_tracking_draw(Viewport * viewport);

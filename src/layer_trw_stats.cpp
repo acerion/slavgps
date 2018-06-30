@@ -300,7 +300,7 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 	/* kamilTODO: why do we need to get the latest list on checkbox toggle? */
 	if (this->layer->type == LayerType::TRW) {
 		((LayerTRW *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
-	} else if (layer->type == LayerType::AGGREGATE) {
+	} else if (layer->type == LayerType::Aggregate) {
 		((LayerAggregate *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
 	} else {
 		assert (0);
@@ -367,7 +367,7 @@ void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QS
 
 	if (layer->type == LayerType::TRW) {
 		((LayerTRW *) layer)->get_tracks_list(dialog->tracks, dialog->type_id_string);
-	} else if (layer->type == LayerType::AGGREGATE) {
+	} else if (layer->type == LayerType::Aggregate) {
 		((LayerAggregate *) layer)->get_tracks_list(dialog->tracks, dialog->type_id_string);
 	} else {
 		qDebug() << "EE: Layer TRW Stats: wrong layer type" << (int) layer->type;

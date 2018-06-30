@@ -471,7 +471,7 @@ void Waypoint::properties_dialog_cb(void)
 
 
 
-QString Waypoint::get_tooltip(void)
+QString Waypoint::get_tooltip(void) const
 {
 	if (!this->comment.isEmpty()) {
 		return this->comment;

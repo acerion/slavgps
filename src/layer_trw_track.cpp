@@ -2364,7 +2364,7 @@ TrackPoints::iterator Track::end()
 
 
 
-bool Track::empty()
+bool Track::empty(void) const
 {
 	return this->trackpoints.empty();
 }
@@ -3098,7 +3098,7 @@ void Track::rezoom_to_show_full_cb(void)
 
 
 /* The same tooltip for route and track. */
-QString Track::get_tooltip(void)
+QString Track::get_tooltip(void) const
 {
 	/* Could be a better way of handling strings - but this works. */
 	char timestamp_string[20] = { 0 };

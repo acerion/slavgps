@@ -108,7 +108,7 @@ static unsigned int print_rgn_stuff(char const * nm, FILE * f)
 
 
 
-static void write_waypoints(FILE * f, Waypoints & waypoints)
+static void write_waypoints(FILE * f, WaypointsContainer & waypoints)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		Waypoint * wp = i->second;
@@ -131,7 +131,7 @@ static void write_trackpoint(Trackpoint * tp, FILE * f)
 
 
 
-static void write_track(FILE * f, Tracks & tracks)
+static void write_track(FILE * f, TracksContainer & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		unsigned int len = print_rgn_stuff(i->second->comment.toUtf8().constData(), f);
@@ -150,8 +150,8 @@ static void write_track(FILE * f, Tracks & tracks)
 
 void SlavGPS::gpsmapper_write_file(FILE * f, LayerTRW * trw)
 {
-	Tracks & tracks = trw->get_track_items();
-	Waypoints & waypoints = trw->get_waypoint_items();
+	TracksContainer & tracks = trw->get_track_items();
+	WaypointsContainer & waypoints = trw->get_waypoint_items();
 
 	fprintf(f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
 		trw->name.toUtf8().constData(), trw->name.toUtf8().constData());

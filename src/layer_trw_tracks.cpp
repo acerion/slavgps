@@ -124,15 +124,19 @@ LayerTRWTracks::~LayerTRWTracks()
 
 
 
-QString LayerTRWTracks::get_tooltip(void)
+QString LayerTRWTracks::get_tooltip(void) const
 {
+	QString tooltip;
+
 	if (this->type_id == "sg.trw.routes") {
 		/* Very simple tooltip - may expand detail in the future. */
-		return QString("Routes: %1").arg(this->items.size());
+		tooltip = tr("Routes: %1").arg(this->items.size());
 	} else {
 		/* Very simple tooltip - may expand detail in the future. */
-		return QString("Tracks: %1").arg(this->items.size());
+		tooltip = tr("Tracks: %1").arg(this->items.size());
 	}
+
+	return tooltip;
 }
 
 

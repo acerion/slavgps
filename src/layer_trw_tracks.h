@@ -87,7 +87,7 @@ namespace SlavGPS {
 	   item in the data structures used on the viewport and on the
 	   layers panel.
 	*/
-	typedef std::unordered_map<sg_uid_t, Track *> Tracks;
+	typedef std::unordered_map<sg_uid_t, Track *> TracksContainer;
 
 
 
@@ -123,7 +123,7 @@ namespace SlavGPS {
 		LayerTRWTracks(bool is_routes, TreeView * ref_tree_view);
 		~LayerTRWTracks();
 
-		QString get_tooltip();
+		QString get_tooltip(void) const;
 
 		void add_children_to_tree(void);
 
@@ -198,7 +198,7 @@ namespace SlavGPS {
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 
-		Tracks items;
+		TracksContainer items;
 
 
 	public slots:

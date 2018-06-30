@@ -103,7 +103,7 @@ namespace SlavGPS {
 
 		static bool compare_name(const TreeItem * a, const TreeItem * b);
 
-		virtual QString get_tooltip(void);
+		virtual QString get_tooltip(void) const;
 
 		/* A TreeItem object needs to implement this method if it contains (is direct
 		   parent of) any items/children that need to be added to application's tree

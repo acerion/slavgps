@@ -77,9 +77,10 @@ namespace SlavGPS {
 		TreeItem * get_selected_tree_item(void);
 
 
-		void set_tree_item_name(TreeIndex const & item_index, QString const & name);
+		void set_tree_item_name(TreeIndex const & item_index, const QString & name);
 		void set_tree_item_icon(TreeIndex const & item_index, const QIcon & icon);
 		void set_tree_item_timestamp(TreeIndex const & item_index, time_t timestamp);
+		void set_tree_item_tooltip(TreeIndex const & item_index, const QString & tooltip);
 
 		bool get_tree_item_visibility(TreeIndex const & item_index);
 		bool get_tree_item_visibility_with_parents(TreeIndex const & item_index);

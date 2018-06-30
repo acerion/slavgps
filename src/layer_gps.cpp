@@ -326,7 +326,7 @@ void SlavGPS::layer_gps_init(void)
 
 
 
-QString LayerGPS::get_tooltip()
+QString LayerGPS::get_tooltip(void) const
 {
 	return QObject::tr("Protocol: %1").arg(this->protocol);
 }
@@ -695,13 +695,13 @@ void LayerGPS::add_children_to_tree(void)
 
 
 
-std::list<Layer const * > * LayerGPS::get_children(void) const
+std::list<Layer const * > LayerGPS::get_child_layers(void) const
 {
-	std::list<Layer const * > * children_ = new std::list<Layer const *>;
+	std::list<Layer const * > result;
 	for (int i = GPS_CHILD_LAYER_MAX - 1; i >= 0; i--) {
-		children_->push_front((Layer const *) this->trw_children[i]);
+		result.push_front((Layer const *) this->trw_children[i]);
 	}
-	return children_;
+	return result;
 }
 
 
@@ -721,7 +721,7 @@ LayerTRW * LayerGPS::get_a_child()
 
 
 
-int LayerGPS::get_children_count(void) const
+int LayerGPS::get_child_layers_count(void) const
 {
 	if (this->trw_children[0]) {
 		/* First child layer not created, so the second/third is not created either. */

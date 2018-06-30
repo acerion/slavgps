@@ -152,7 +152,7 @@ public:
 
 	void geotag(void);
 	void geotag_waypoint(void);
-	void geotag_tracks(Tracks & tracks);
+	void geotag_tracks(TracksContainer & tracks);
 	void geotag_track(Track * trk);
 
 	QStringList selected_files;
@@ -391,7 +391,7 @@ void GeotagJob::geotag_track(Track * trk2)
 
 
 
-void GeotagJob::geotag_tracks(Tracks & tracks)
+void GeotagJob::geotag_tracks(TracksContainer & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		this->geotag_track(i->second);

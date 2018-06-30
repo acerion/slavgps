@@ -70,9 +70,9 @@ sg_uid_t TreeItem::get_uid(void) const
 
 
 
-QString TreeItem::get_tooltip(void)
+QString TreeItem::get_tooltip(void) const
 {
-	return QString("generic TreeItem tooltip");
+	return tr("Tree Item");
 }
 
 

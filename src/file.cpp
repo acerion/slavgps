@@ -100,8 +100,8 @@ public:
 
 	std::list<T> layers;
 
-	T first = NULL; /* First layer (or list of layers) on top of stack. */
-	T second = NULL; /* Second layer (or list of layers), counting from top (second after LayerStack::first). */
+	T first{};  /* C++ Value Initialization. First layer (or list of layers) on top of stack. */
+	T second{}; /* C++ Value Initialization. Second layer (or list of layers), counting from top (second after LayerStack::first). */
 };
 
 
@@ -117,7 +117,7 @@ void LayerStack<T>::push(T data)
 	if (this->layers.size() > 1) {
 		this->second = *std::next(this->layers.begin());
 	} else {
-		this->second = NULL;
+		this->second = T(); /* Empty value. */
 	}
 }
 
@@ -159,8 +159,8 @@ void LayerStack<T>::pop(void)
 {
 	this->layers.pop_front();
 
-	this->first = NULL;
-	this->second = NULL;
+	this->first = T();  /* Empty value. */
+	this->second = T(); /* Empty value. */
 
 	if (this->layers.size() > 0) {
 		this->first = *this->layers.begin();
@@ -210,7 +210,7 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 
 
 /**
-   Discard empty characters in the @line.
+   Discard initial empty characters in the @line.
    Discard line starting with '#' (comment character).
 
    Move beginning of @line accordingly, to point to beginning of
@@ -372,29 +372,29 @@ static void file_write(FILE * file, LayerAggregate * top_level_layer, Viewport *
 {
 	file_write_header(file, top_level_layer, viewport);
 
-	LayerStack<std::list<const Layer *> *> stack;
-	stack.push(top_level_layer->get_children()); /* This is Top Level Aggregate Layer, so this is safe even if there are no children. */
+	LayerStack<std::list<const Layer *>> stack;
+	stack.push(top_level_layer->get_child_layers()); /* List of layers pushed to stack may be empty (if Top Level Layer has no children). */
 
-	while (stack.layers.size() && stack.layers.front()->size()) {
+	while (stack.layers.size() && stack.layers.front().size()) {
 
-		const Layer * current = stack.layers.front()->front();
+		const Layer * current = stack.layers.front().front();
 		fprintf(file, "\n~Layer %s\n", current->get_type_id_string().toUtf8().constData());
 		write_layer_params_and_data(file, current);
 
 		/* The layer at the front has been written, and we
 		   will put its children (if any) on stack below. So
 		   we don't need the front layer anymore. */
-		stack.layers.front()->pop_front();
+		stack.layers.front().pop_front();
 
-		std::list<const Layer *> * children = current->get_children();
-		if (children && !children->empty()) {
+		std::list<const Layer *> children = current->get_child_layers();
+		if (!children.empty()) {
 			/* This may happen for Aggregate or GPS layer. */
 			stack.push(children);
 		} else {
 			/* This layer had no children, so we have completed writing it. */
 			fprintf(file, "~EndLayer\n\n");
 
-			while (!stack.empty() && stack.layers.front()->empty()) {
+			while (!stack.empty() && stack.layers.front().empty()) {
 				/* We have written all layers in given level.
 				   Time to go back one level up (to parent level). */
 				stack.pop();
@@ -480,7 +480,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 
 
 	const LayerType parent_type = this->stack.first->type;
-	if (parent_type != LayerType::AGGREGATE && parent_type != LayerType::GPS) {
+	if (parent_type != LayerType::Aggregate && parent_type != LayerType::GPS) {
 		this->successful_read = false;
 		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) parent_type);
 		this->stack.push(NULL); /* Inside INVALID layer. */
@@ -490,7 +490,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 	const LayerType layer_type = Layer::type_from_type_id_string(QString(line + 6));
 	TreeView * tree_view = NULL;
 
-	if (layer_type == LayerType::NUM_TYPES) {
+	if (layer_type == LayerType::Max) {
 		this->successful_read = false;
 		fprintf(stderr, "WARNING: Line %zd: Unknown type %s\n", this->line_num, line + 6);
 		this->stack.push(NULL);
@@ -507,8 +507,8 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 
 		Layer * layer = Layer::construct_layer(layer_type, viewport);
 		this->stack.push(layer);
-		this->param_specs = Layer::get_interface(layer_type)->parameters_c;
-		this->param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
+		this->param_specs = layer->get_interface().parameters_c;
+		this->param_specs_count = layer->get_interface().parameter_specifications.size();
 
 		/* Notice that stack.second may become available
 		   only after stack.push() executed above, e.g.
@@ -548,7 +548,7 @@ void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
 		qDebug() << "------- EndLayer for pair of first/second = " << this->stack.first->name << this->stack.second->name;
 
 		if (layer && parent_layer) {
-			if (parent_layer->type == LayerType::AGGREGATE) {
+			if (parent_layer->type == LayerType::Aggregate) {
 				//layer->add_children_to_tree();
 				layer->post_read(viewport, true);
 			} else if (parent_layer->type == LayerType::GPS) {

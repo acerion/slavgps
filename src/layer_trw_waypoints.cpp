@@ -101,7 +101,7 @@ LayerTRWWaypoints::~LayerTRWWaypoints()
 
 
 
-QString LayerTRWWaypoints::get_tooltip(void)
+QString LayerTRWWaypoints::get_tooltip(void) const
 {
 	/* Very simple tooltip - may expand detail in the future. */
 	return tr("Waypoints: %1").arg(this->items.size());
