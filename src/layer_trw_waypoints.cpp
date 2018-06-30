@@ -125,25 +125,26 @@ Waypoint * LayerTRWWaypoints::find_waypoint_by_name(const QString & wp_name)
 
 
 
-Waypoint * LayerTRWWaypoints::find_waypoint_by_date(char const * date)
+std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(char const * date) const
 {
 	char date_buf[20];
-	Waypoint * wp = NULL;
+	std::list<TreeItem *> result;
 
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		date_buf[0] = '\0';
-		wp = i->second;
+		Waypoint * wp = i->second;
+
+		if (!wp->has_timestamp) {
+			continue;
+		}
 
 		/* Might be an easier way to compare dates rather than converting the strings all the time... */
-		if (wp->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&wp->timestamp));
-
-			if (!g_strcmp0(date, date_buf)) {
-				return wp;
-			}
+		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&wp->timestamp));
+		if (0 == g_strcmp0(date, date_buf)) {
+			result.push_back(wp);
 		}
 	}
-	return NULL;
+	return result;
 }
 
 

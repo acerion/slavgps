@@ -190,9 +190,9 @@ void Layer::preconfigure_interfaces(void)
 			/* param_value will be overwritten below by value from settings file. */
 			param_spec->get_hardwired_value(param_value);
 
-			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
-			/* kamilTODO: if invalid, call LayerDefaults::set() to save the value? */
-			/* kamilTODO: what if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
+			/* kamilTODO: make sure that the value read from Layer Defaults is valid.
+			   If invalid, call LayerDefaults::set() to save the value?
+			   What if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
 			param_value = LayerDefaults::get(type, param_spec->name, param_spec->type_id);
 			interface->parameter_default_values[param_spec->id] = param_value;
 		}

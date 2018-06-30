@@ -142,27 +142,26 @@ QString LayerTRWTracks::get_tooltip(void) const
 
 
 
-Track * LayerTRWTracks::find_track_by_date(char const * date)
+std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(char const * date) const
 {
 	char date_buf[20];
-	Track * trk = NULL;
+	std::list<TreeItem *> result;
 
 	for (auto i = this->items.begin(); i != this->items.end(); i++) {
 		date_buf[0] = '\0';
-		trk = i->second;
+		Track * trk = i->second;
 
 		/* Might be an easier way to compare dates rather than converting the strings all the time... */
 		if (!trk->empty()
 		    && (*trk->trackpoints.begin())->has_timestamp) {
 
 			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpoints.begin())->timestamp));
-
-			if (!g_strcmp0(date, date_buf)) {
-				return trk;
+			if (0 == g_strcmp0(date, date_buf)) {
+				result.push_back(trk);
 			}
 		}
 	}
-	return NULL;
+	return result;
 }
 
 

@@ -115,27 +115,31 @@ Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, Viewport * viewport
 
 
 
+bool is_base_type(LayerType layer_type)
+{
+	/* These types are 'base' types in that you what other information on top. */
+	return layer_type == LayerType::DEM
+		|| layer_type == LayerType::Map
+		|| layer_type == LayerType::Georef;
+}
+
+
+
+
 void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer_index)
 {
 	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
 
 	/* These types are 'base' types in that you what other information on top. */
-	if (layer->type == LayerType::DEM
-	    || layer->type == LayerType::Map
-	    || layer->type == LayerType::Georef) {
-
+	if (is_base_type(layer->type)) {
 		put_above = false;
 	}
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		TreeIndex inserted_item_index = this->tree_view->insert_tree_item(this->index, sibling_layer_index, layer, put_above, layer->name);
-		this->tree_view->set_tree_item_timestamp(inserted_item_index, layer->get_timestamp());
-
-		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
-			this->tree_view->expand(this->index);
-		}
+		this->tree_view->insert_tree_item(this->index, sibling_layer_index, layer, put_above, layer->name);
+		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 	}
 
 	if (sibling_layer_index.isValid()) {
@@ -168,6 +172,10 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 
 	/* Update our own tooltip. */
 	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
+
+	if (!this->children->empty()) {
+		this->tree_view->expand(this->index);
+	}
 }
 
 
@@ -187,25 +195,15 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	/* By default layers go to the top. */
 	bool put_above = true;
-	if (allow_reordering) {
-		/* These types are 'base' types in that you what other information on top. */
-		if (layer->type == LayerType::DEM
-		    || layer->type == LayerType::Map
-		    || layer->type == LayerType::Georef) {
-			put_above = false;
-		}
+
+	if (allow_reordering && is_base_type(layer->type)) {
+		put_above = false;
 	}
 
 
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 	this->tree_view->append_tree_item(this->index, layer, layer->name);
-
 	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
-
-	if (!this->children->empty()) {
-		this->tree_view->expand(this->index);
-	}
-
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
@@ -222,6 +220,10 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	/* Update our own tooltip. */
 	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
+
+	if (!this->children->empty()) {
+		this->tree_view->expand(this->index);
+	}
 }
 
 
@@ -436,49 +438,33 @@ void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 
 
 /**
- * Search all TrackWaypoint layers in this aggregate layer for an item on the user specified date
- */
+   Search all TrackWaypoint layers in this aggregate layer for items with user-specified date
+*/
 void LayerAggregate::search_date_cb(void) /* Slot. */
 {
-	char * date_str = a_dialog_get_date(tr("Search by Date"), this->get_window());
-	if (!date_str) {
+	char date_str[sizeof ("2018-06-30  ")] = { 0 };
+	if (!Dialog::get_date(tr("Search by Date"), date_str, sizeof (date_str), this->get_window())) {
 		return;
 	}
 
-	Viewport * viewport = this->get_window()->get_viewport();
-
-	bool found = false;
 	std::list<const Layer *> layers;
 	this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 
-	/* Search tracks first. */
+	std::list<TreeItem *> items_by_date;
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		/* Make it auto select the item if found. */
-		found = ((LayerTRW *) (*iter))->find_track_by_date(date_str, viewport, true);
-		if (found) {
-			break;
-		}
+		items_by_date.splice(items_by_date.end(), ((LayerTRW *) (*iter))->get_tracks_by_date(date_str)); /* Move items from one list to another. */
 	}
-	layers.clear();
-
-	if (!found) {
-		/* Reset and try on Waypoints. */ /* kamilTODO: do we need to reset the list? Did it change? */
-		this->get_all_layers_of_type(layers, LayerType::TRW, true);
-
-		for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-			/* Make it auto select the item if found. */
-			found = ((LayerTRW *) (*iter))->find_waypoint_by_date(date_str, viewport, true);
-			if (found) {
-				break;
-			}
-		}
+	/* Routes don't have date, so we don't search for routes by date. */
+	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
+		items_by_date.splice(items_by_date.end(), ((LayerTRW *) (*iter))->get_waypoints_by_date(date_str)); /* Move items from one list to another. */
 	}
 
-	if (!found) {
+	if (items_by_date.empty()) {
 		Dialog::info(tr("No items found with the requested date."), this->get_window());
+	} else {
+		; /* TODO: show list of items found. */
 	}
-	free(date_str);
 }
 
 
@@ -855,7 +841,6 @@ void LayerAggregate::add_children_to_tree(void)
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->append_tree_item(this->index, layer, layer->name);
-
 		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 	}
 

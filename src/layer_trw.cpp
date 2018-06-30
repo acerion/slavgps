@@ -560,32 +560,22 @@ void TRWMetadata::set_timestamp(const QString & new_timestamp)
 
 
 /**
- * Find a track by date.
- */
-bool LayerTRW::find_track_by_date(char const * date_str, Viewport * viewport, bool select)
+   Return list of tracks meeting date criterion
+*/
+std::list<TreeItem *> LayerTRW::get_tracks_by_date(char const * date_str) const
 {
-	Track * trk = this->tracks->find_track_by_date(date_str);
-	if (trk && select) {
-		viewport->show_bbox(trk->get_bbox());
-		this->tree_view->select_and_expose(trk->index);
-		this->emit_layer_changed("TRW - track selected by date");
-	}
-	return (bool) trk;
+	return this->tracks->get_tracks_by_date(date_str);
 }
 
 
+
+
 /**
- * Find a waypoint by date.
- */
-bool LayerTRW::find_waypoint_by_date(char const * date_str, Viewport * viewport, bool select)
+   Return list of waypoints meeting date criterion
+*/
+std::list<TreeItem *> LayerTRW::get_waypoints_by_date(char const * date_str) const
 {
-	Waypoint * wp = this->waypoints->find_waypoint_by_date(date_str);
-	if (wp && select) {
-		viewport->set_center_from_coord(wp->coord, true);
-		this->tree_view->select_and_expose(wp->index);
-		this->emit_layer_changed("TRW - waypoint selected by date");
-	}
-	return (bool) wp;
+	return this->waypoints->get_waypoints_by_date(date_str);
 }
 
 

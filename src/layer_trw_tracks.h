@@ -130,7 +130,7 @@ namespace SlavGPS {
 
 		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */
 		Track * find_track_by_name(const QString & trk_name);
-		Track * find_track_by_date(char const * date_str);
+		std::list<TreeItem *> get_tracks_by_date(const char * date_str) const;
 
 		void uniquify(TreeViewSortOrder sort_order);
 		QString new_unique_element_name(const QString & old_name);
