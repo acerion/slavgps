@@ -131,7 +131,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 	this->toplayer->set_name(tr("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
 	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	this->toplayer_item = this->tree_view->append_tree_item(invalid_parent_index, this->toplayer, this->toplayer->name);
+	this->toplayer_item = this->tree_view->push_tree_item_back(invalid_parent_index, this->toplayer, this->toplayer->name);
 
 
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
@@ -354,14 +354,23 @@ void LayersPanel::move_item(bool up)
 	this->tree_view->select(selected_item->index); /* Cancel any layer-name editing going on... */
 
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
+		qDebug() << "II" PREFIX << "Move layer" << selected_item->name << (up ? "up" : "down");
 		/* A layer can be owned only by Aggregate layer.
 		   TODO: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
-		if (parent_layer) { /* Not toplevel. */
-			parent_layer->move_layer(selected_item->index, up);
-			qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
-			this->emit_items_tree_updated_cb(parent_layer->get_name());
+		if (parent_layer) { /* Selected item is not top level layer. */
+			qDebug() << "-----" PREFIX "step one";
+			if (parent_layer->change_child_item_position(selected_item->index, up)) {
+				qDebug() << "-----" PREFIX "step two";
+				this->tree_view->change_tree_item_position(selected_item, up);
+				qDebug() << "-----" PREFIX "step tree";
+
+				qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
+				this->emit_items_tree_updated_cb(parent_layer->get_name());
+			}
 		}
+	} else {
+		qDebug() << "II" PREFIX << "Move sublayer" << selected_item->name << (up ? "up" : "down");
 	}
 }
 

@@ -142,6 +142,8 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 	}
 
+	layer->owning_layer = this;
+
 	if (sibling_layer_index.isValid()) {
 
 		Layer * sibling_layer = this->tree_view->get_tree_item(sibling_layer_index)->to_layer();
@@ -200,21 +202,27 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		put_above = false;
 	}
 
+	layer->owning_layer = this;
 
-	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	this->tree_view->append_tree_item(this->index, layer, layer->name);
-	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
 		layer->add_children_to_tree();
 	}
 
+
 	if (put_above) {
-		this->children->push_back(layer);
-	} else {
+		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		this->tree_view->push_tree_item_front(this->index, layer, layer->name);
+
 		this->children->push_front(layer);
+	} else {
+		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		this->tree_view->push_tree_item_back(this->index, layer, layer->name);
+
+		this->children->push_back(layer);
 	}
+	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
@@ -229,40 +237,69 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 
-void LayerAggregate::move_layer(TreeIndex & child_index, bool up)
+bool LayerAggregate::change_child_item_position(TreeIndex & child_index, bool up)
 {
-	auto theone = this->children->end();
+	auto child_iter = this->children->end();
 
-	this->tree_view->move(child_index, up);
+	//this->tree_view->change_tree_item_position(child_index, up);
 
-	Layer * layer = this->tree_view->get_tree_item(child_index)->to_layer();
+	/* We are in aggregate layer, so the child must be a layer as well. */
+	TreeItem * tree_item = this->tree_view->get_tree_item(child_index);
+	assert (tree_item->tree_item_type == TreeItemType::LAYER);
 
-	for (auto i = this->children->begin(); i != this->children->end(); i++) {
-		if (layer->the_same_object(*i)) {
-			theone = i;
+	Layer * child_layer = tree_item->to_layer();
+
+	/* Find container iterator of given tree item.
+	   This is not the same as tree item index. */
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		if (child_layer->the_same_object(*iter)) {
+			child_iter = iter;
 		}
 	}
 
-	if (up) {
-		std::swap(*theone, *std::next(theone));
-	} else {
-		std::swap(*theone, *std::prev(theone));
+	if (child_iter == this->children->end()) {
+		qDebug() << "EE" PREFIX << "Failed to find iterator of child item";
+		return false;
 	}
+
+	bool result = false;
+	if (up) {
+		if (child_iter == this->children->begin()) {
+			qDebug() << "WW" PREFIX << "Not moving child" << child_layer->name << "up, already at the beginning";
+		} else {
+			qDebug() << "II" PREFIX << "Moving child" << child_layer->name << "up in list of" << this->name << "children";
+			std::swap(*child_iter, *std::prev(child_iter));
+			result = true;
+		}
+	} else {
+		if (std::next(child_iter) == this->children->end()) {
+			qDebug() << "WW" PREFIX << "Not moving child" << child_layer->name << "down, already at the end";
+		} else {
+			qDebug() << "II" PREFIX << "Moving child" << child_layer->name << "down in list of" << this->name << "children";
+			std::swap(*child_iter, *std::next(child_iter));
+			result = true;
+		}
+	}
+
+	/* In this function we only move children in aggregate's container.
+	   Movement in tree widget is handled elsewhere. */
+
+	return result;
 
 #ifdef K_OLD_IMPLEMENTATION
 	/* the old switcheroo */
-	if (up && theone + 1 != val->children->end()) {
+	if (up && child_iter + 1 != val->children->end()) {
 
-		Layer * tmp = *(theone + 1);
-		*(theone + 1) = *(theone);
-		*(theone) = tmp;
-	} else if (!up && theone - 1 != val->children->end()) {
+		Layer * tmp = *(child_iter + 1);
+		*(child_iter + 1) = *(child_iter);
+		*(child_iter) = tmp;
+	} else if (!up && child_iter - 1 != val->children->end()) {
 
-		Layer * tmp = *(theone - 1);
-		*(theone - 1) = *(theone);
+		Layer * tmp = *(child_iter - 1);
+		*(child_iter - 1) = *(child_iter);
 
-		first = theone->prev;
-		second = theone;
+		first = child_iter->prev;
+		second = child_iter;
 	} else {
 		return;
 	}
@@ -840,7 +877,7 @@ void LayerAggregate::add_children_to_tree(void)
 		Layer * layer = *child;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->append_tree_item(this->index, layer, layer->name);
+		this->tree_view->push_tree_item_back(this->index, layer, layer->name);
 		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
 	}
 

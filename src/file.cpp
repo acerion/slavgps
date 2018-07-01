@@ -495,13 +495,13 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 		fprintf(stderr, "WARNING: Line %zd: Unknown type %s\n", this->line_num, line + 6);
 		this->stack.push(NULL);
 	} else if (parent_type == LayerType::GPS) {
-		LayerGPS * gps = (LayerGPS *) this->stack.second;
-		Layer * child = gps->get_a_child();
+		LayerGPS * parent = (LayerGPS *) this->stack.second;
+		Layer * child = parent->get_a_child();
 		this->stack.push(child);
 		this->param_specs = Layer::get_interface(layer_type)->parameters_c;
 		this->param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
 
-		gps->tree_view->append_tree_item(gps->index, child, child->name);
+		parent->tree_view->push_tree_item_back(parent->index, child, child->name);
 
 	} else { /* Any other LayerType::X type. */
 
@@ -517,7 +517,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 
 		//LayerAggregate * agg = (LayerAggregate *) stack.second;
 		//qDebug() << "II" PREFIX << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
-		//agg->tree_view->append_tree_item(agg->index, layer, layer->name);
+		//agg->tree_view->push_tree_item_back(agg->index, layer, layer->name);
 	}
 
 	return;

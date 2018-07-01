@@ -645,7 +645,7 @@ void LayerTRWTracks::add_children_to_tree(void)
 
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
-		this->tree_view->append_tree_item(this->index, trk, trk->name);
+		this->tree_view->push_tree_item_back(this->index, trk, trk->name);
 		this->tree_view->set_tree_item_icon(trk->index, this->icon);
 		this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
 	}

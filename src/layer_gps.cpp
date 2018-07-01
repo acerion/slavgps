@@ -684,7 +684,7 @@ void LayerGPS::add_children_to_tree(void)
 		/* TODO: find a way to pass 'above=true' argument to function adding new tree item. */
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->append_tree_item(this->index, trw, trw_names[ix].label);
+		this->tree_view->push_tree_item_back(this->index, trw, trw_names[ix].label);
 
 		this->tree_view->set_tree_item_timestamp(trw->index, trw->get_timestamp());
 

@@ -45,6 +45,19 @@
 
 
 
+/*
+  TODO: improve handling of 'editable' property.
+  Non-editable items have e.g limited number of fields in context menu.
+
+  The following properties of @tree_item are used to set properties of entry in tree:
+  - TreeItem::editable
+  - TreeItem::visible;
+  - TreeItem::get_tooltip()
+*/
+
+
+
+
 using namespace SlavGPS;
 
 
@@ -160,33 +173,38 @@ void TreeView::select_cb(void) /* Slot. */
 
 
 
-bool TreeView::move(TreeIndex const & item_index, bool up)
+bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 {
-	TreeItem * item = this->get_tree_item(item_index);
-	if (!item || item->tree_item_type != TreeItemType::LAYER) {
+	if (!tree_item || tree_item->tree_item_type != TreeItemType::LAYER) {
 		return false;
 	}
 
-#ifdef K_FIXME_RESTORE
-	TreeIndex switch_index;
-	if (up) {
-		/* Iter to path to iter. */
-		GtkTreePath *path = gtk_tree_model_get_path(this->tree_model, item_index);
-		if (!gtk_tree_path_prev(path) || !gtk_tree_model_get_iter(this->tree_model, &switch_index, path)) {
-			gtk_tree_path_free(path);
-			return false;
-		}
-		gtk_tree_path_free(path);
-	} else {
-		switch_index = *item_index;
-		if (!gtk_tree_model_iter_next(this->tree_model, &switch_index)) {
-			return false;
-		}
+	QModelIndex parent_index = tree_item->index.parent();
+	if (!parent_index.isValid()) {
+		qDebug() << "WW" PREFIX << "Parent index is invalid. Function called for top level item?";
+		return false;
 	}
-	gtk_tree_store_swap(GTK_TREE_STORE(this->tree_model), item_index, &switch_index);
-#endif
-	/* Now, the easy part. actually switching them, not the GUI. */
-	/* If item is map... */
+
+	QStandardItem * source_parent_item = this->tree_model->itemFromIndex(parent_index);
+	QStandardItem * target_parent_item = source_parent_item;
+
+	const int n_rows = source_parent_item->rowCount();
+
+	const int source_row = tree_item->index.row();
+	const int target_row = up ? source_row - 1 : source_row + 1;
+
+	if (target_row < 0 || target_row > n_rows - 1) {
+		qDebug() << "WW" PREFIX << "Can't move item" << (up ? "up" : "down") << ": out of range";
+		return false;
+	}
+
+
+	/* This is the actual move: cut from old position and paste into new position. */
+	QList<QStandardItem *> items = source_parent_item->takeRow(source_row);
+	target_parent_item->insertRow(target_row, items);
+
+
+	tree_item->index = QPersistentModelIndex(items.at(0)->index());
 
 	return true;
 }
@@ -206,6 +224,7 @@ TreeItem * TreeView::get_selected_tree_item(void)
 {
 	TreeIndex selected = QPersistentModelIndex(this->currentIndex());
 	if (!selected.isValid()) {
+		qDebug() << "WW" PREFIX << "No selected tree item";
 		return NULL;
 	}
 
@@ -446,18 +465,49 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
 
 
 
-/*
-  TODO: improve handling of 'editable' property.
-  Non-editable items have e.g limited number of fields in context menu.
+/**
+   \brief Add given @tree_item at the beginning of list of children of given parent tree item
 
-  The following properties of @tree_item are used to set properties of entry in tree:
-  - TreeItem::editable
-  - TreeItem::visible;
-  - TreeItem::get_tooltip()
+   @param parent_index - index of parent tree item under which to put new @tree_item
+   @param tree_item - tree_item to be added
+   @param name - name of tree item to be added
+
+   @return tree index of newly added tree item
 */
-TreeIndex const & TreeView::append_tree_item(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+TreeIndex const & TreeView::push_tree_item_front(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
 {
-	return this->append_row(parent_index, tree_item, name);
+	qDebug() << "II" PREFIX << "Pushing front tree item" << name;
+
+	return this->insert_row(parent_index, tree_item, name, 0);
+}
+
+
+
+
+/**
+   \brief Add given @tree_item at the end of list of children of given parent tree item
+
+   @param parent_index - index of parent tree item under which to put new @tree_item
+   @param tree_item - tree_item to be added
+   @param name - name of tree item to be added
+
+   @return tree index of newly added tree item
+*/
+TreeIndex const & TreeView::push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+{
+	qDebug() << "II" PREFIX << "Pushing back tree item" << name;
+
+	int n_rows = 0;
+	if (parent_index.isValid()) {
+		n_rows = this->tree_model->itemFromIndex(parent_index)->rowCount();
+	} else {
+		/* This may happen when pushing back top level layer. TODO: make a separate method for installing top level layer? */
+		n_rows = 0;
+	}
+
+	const int row = n_rows == 0 ? 0 : n_rows - 1;
+
+	return this->insert_row(parent_index, tree_item, name, row);
 }
 
 
@@ -478,11 +528,12 @@ static int sort_tuple_compare(const void * a, const void * b, void * order)
 
 	int answer = -1;
 #ifdef K_FIXME_RESTORE
-	if (((int) (long) order) < TreeViewSortOrder::DateAscending) {
+	const int sort_order = (int) (long) order;
+	if (sort_order < TreeViewSortOrder::DateAscending) {
 		/* Alphabetical comparison, default ascending order. */
 		answer = g_strcmp0(sa->name, sb->name);
 		/* Invert sort order for descending order. */
-		if (((int) (long) order) == TreeViewSortOrder::AlphabeticalDescending) {
+		if (sort_order == TreeViewSortOrder::AlphabeticalDescending) {
 			answer = -answer;
 		}
 	} else {
@@ -492,7 +543,7 @@ static int sort_tuple_compare(const void * a, const void * b, void * order)
 			answer = 1;
 		}
 		/* Invert sort order for descending order. */
-		if (((int) (long) order) == TreeViewSortOrder::DateDescending) {
+		if (sort_order == TreeViewSortOrder::DateDescending) {
 			answer = -answer;
 		}
 	}
@@ -1050,19 +1101,6 @@ TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
 #endif
 	return index;
 }
-
-
-
-
-#ifdef K_FIXME_RESTORE
-void TreeView::add_columns()
-{
-	QObject::connect(renderer, SIGNAL("edited"), this, SLOT (vik_tree_view_edited_cb));
-	QObject::connect(renderer, SIGNAL("editing-started"), this, SLOT (vik_tree_view_edit_start_cb));
-	QObject::connect(renderer, SIGNAL("editing-canceled"), this, SLOT (vik_tree_view_edit_stop_cb));
-	QObject::connect(renderer, SIGNAL("toggled"), this, SLOT (vik_tree_view_toggled_cb));
-}
-#endif
 
 
 

@@ -109,7 +109,7 @@ namespace SlavGPS {
 		   parent of) any items/children that need to be added to application's tree
 		   of items.
 
-		   This method should call append_tree_item() on any such
+		   This method should call push_tree_item_back() on any such
 		   child that needs to be added to the tree. */
 		virtual void add_children_to_tree(void) {};
 
@@ -151,8 +151,8 @@ namespace SlavGPS {
 
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::LAYER;
-		TreeIndex index;             /* Set in TreeView::append_tree_item(). */
-		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::append_tree_item(). */
+		TreeIndex index;             /* Set in TreeView::push_tree_item_back/push_tree_item_front(). */
+		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::push_tree_item_back/push_tree_item_front(). */
 
 		bool editable = true; /* Is this item is editable? TODO: be more specific: is the data editable, or is the reference visible in the tree editable? */
 		bool visible = true;  /* Is this item is visible in a tree of data items? */

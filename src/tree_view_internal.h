@@ -69,7 +69,8 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		TreeIndex const & append_tree_item(TreeIndex const & parent_index, TreeItem * item, const QString & name);
+		TreeIndex const & push_tree_item_front(TreeIndex const & parent_index, TreeItem * item, const QString & name);
+		TreeIndex const & push_tree_item_back(TreeIndex const & parent_index, TreeItem * item, const QString & name);
 		TreeIndex const & insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name);
 		TreeItem * get_tree_item(TreeIndex const & item_index);
 
@@ -90,7 +91,9 @@ namespace SlavGPS {
 		void select(TreeIndex const & index);
 		void select_and_expose(TreeIndex  const & index);
 		void deselect(TreeIndex const & index);
-		bool move(TreeIndex const & index, bool up);
+
+		/* Move tree item up or down in list of its siblings. */
+		bool change_tree_item_position(TreeItem * tree_item, bool up);
 
 		void detach_item(TreeItem * item);
 
