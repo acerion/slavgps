@@ -228,21 +228,21 @@ TreeItem * TreeView::get_selected_tree_item(void)
 		return NULL;
 	}
 
-	TreeItem * item = this->get_tree_item(selected);
-	if (!item) {
+	TreeItem * tree_item = this->get_tree_item(selected);
+	if (!tree_item) {
 		qDebug() << "EE: TreeView: get selected tree item: can't get item for valid index";
 	}
 
-	return item;
+	return tree_item;
 }
 
 
 
 
-void TreeView::detach_item(TreeItem * item)
+void TreeView::detach_item(TreeItem * tree_item)
 {
-	this->tree_model->removeRow(item->index.row(), item->index.parent());
-	item->tree_view = NULL;
+	this->tree_model->removeRow(tree_item->index.row(), tree_item->index.parent());
+	tree_item->tree_view = NULL;
 }
 
 
@@ -317,12 +317,12 @@ bool TreeView::get_tree_item_visibility_with_parents(TreeIndex const & item_inde
 
 	do {
 #if 0           /* Debug. */
-		TreeItem * item = this->get_tree_item(this_item_index);
-		if (!item) {
+		TreeItem * tree_item = this->get_tree_item(this_item_index);
+		if (!tree_item) {
 			return false; /* The item doesn't exist, so let's return 'is invisible' for it. */
 		}
 
-		qDebug() << "II: TreeView: Checking visibility of" << item->name << "in tree, forever loop depth =" << loop_depth++;
+		qDebug() << "II: TreeView: Checking visibility of" << tree_item->name << "in tree, forever loop depth =" << loop_depth++;
 #endif
 
 		if (!this->get_tree_item_visibility(this_item_index)) {
@@ -478,7 +478,7 @@ TreeIndex const & TreeView::push_tree_item_front(TreeIndex const & parent_index,
 {
 	qDebug() << "II" PREFIX << "Pushing front tree item" << name;
 
-	return this->insert_row(parent_index, tree_item, name, 0);
+	return this->insert_tree_item_at_row(parent_index, tree_item, name, 0);
 }
 
 
@@ -495,19 +495,17 @@ TreeIndex const & TreeView::push_tree_item_front(TreeIndex const & parent_index,
 */
 TreeIndex const & TreeView::push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
 {
-	qDebug() << "II" PREFIX << "Pushing back tree item" << name;
-
-	int n_rows = 0;
+	int row = 0;
 	if (parent_index.isValid()) {
-		n_rows = this->tree_model->itemFromIndex(parent_index)->rowCount();
+		row = this->tree_model->itemFromIndex(parent_index)->rowCount();
+		qDebug() << "II" PREFIX << "Pushing back tree item" << name << "in row" << row;
 	} else {
 		/* This may happen when pushing back top level layer. TODO: make a separate method for installing top level layer? */
-		n_rows = 0;
+		row = 0;
+		qDebug() << "WW" PREFIX << "Pushing back tree item" << name << "in row" << row;
 	}
 
-	const int row = n_rows == 0 ? 0 : n_rows - 1;
-
-	return this->insert_row(parent_index, tree_item, name, row);
+	return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
 }
 
 
@@ -670,19 +668,19 @@ static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreeP
 
 		if (gtk_tree_path_get_depth(dest_cp) > 1) { /* Can't be sibling of top layer. */
 
-			TreeItem * item = NULL;
+			TreeItem * tree_item = NULL;
 
 			/* Find the first ancestor that is a full layer, and store in dest_parent_index. */
 			do {
 				gtk_tree_path_up(dest_cp);
 				gtk_tree_model_get_iter(src_model, &dest_parent_index, dest_cp);
 
-				item = layer->tree_view->get_tree_item(dest_parent_index);
-			} while (gtk_tree_path_get_depth(dest_cp) > 1 && item->tree_item_type != TreeItemType::LAYER);
+				tree_item = layer->tree_view->get_tree_item(dest_parent_index);
+			} while (gtk_tree_path_get_depth(dest_cp) > 1 && tree_item->tree_item_type != TreeItemType::LAYER);
 
 
-			TreeItem * item = layer->tree_view->get_tree_item(&src_item);
-			Layer * layer_source  = (Layer *) item->owning_layer;
+			tree_item = layer->tree_view->get_tree_item(&src_item);
+			Layer * layer_source  = (Layer *) tree_item->owning_layer;
 			assert (layer_source);
 			Layer * layer_dest = layer->tree_view->get_tree_item(dest_parent_index)->to_layer();
 
@@ -722,9 +720,10 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 
 
-TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, TreeIndex const & sibling_index, TreeItem * item, bool above, const QString & name)
+TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above, const QString & name)
 {
 	if (sibling_index.isValid()) {
+		qDebug() << "II" PREFIX << "Inserting tree item" << name << "next to sibling";
 
 		int row = sibling_index.row();
 
@@ -735,28 +734,28 @@ TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, Tre
 			/* New item will occupy row, where sibling
 			   item was. Sibling item will go one row
 			   lower. */
-			return this->insert_row(parent_index, item, name, row);
+			return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
 
 		} else {
 			const int n_rows = this->tree_model->rowCount(parent_index);
 			if (n_rows == row + 1) {
-				return this->append_row(parent_index, item, name);
+				return this->push_tree_item_back(parent_index, tree_item, name);
 			} else {
 				row++;
-				return this->insert_row(parent_index, item, name, row);
+				return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
 			}
 		}
 	} else {
 		/* Fall back in case of invalid sibling. */
-		qDebug() << "WW" PREFIX << "Invalid sibling index, fall back to appending tree item";
-		return this->append_row(parent_index, item, name);
+		qDebug() << "WW" PREFIX << "Invalid sibling index, fall back to pushing back tree item";
+		return this->push_tree_item_back(parent_index, tree_item, name);
 	}
 }
 
 
 
 
-const TreeIndex & TreeView::insert_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row)
+const TreeIndex & TreeView::insert_tree_item_at_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row)
 {
 	qDebug() << "II" PREFIX << "inserting tree item" << name;
 
@@ -775,31 +774,6 @@ const TreeIndex & TreeView::insert_row(const TreeIndex & parent_index, TreeItem 
 
 	return tree_item->index;
 }
-
-
-
-
-const TreeIndex & TreeView::append_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name)
-{
-	qDebug() << "II" PREFIX << "appending tree item" << name;
-
-	QList<QStandardItem *> items = this->create_new_row(tree_item, name);
-
-	if (parent_index.isValid()) {
-		this->tree_model->itemFromIndex(parent_index)->appendRow(items);
-	} else {
-		/* Adding tree item just right under top-level item. */
-		this->tree_model->invisibleRootItem()->appendRow(items);
-	}
-	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
-
-	tree_item->index = QPersistentModelIndex(items.at(0)->index());
-	tree_item->tree_view = this;
-
-	return tree_item->index;
-}
-
-
 
 
 

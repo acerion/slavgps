@@ -294,50 +294,77 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	/* Could be something different so we have to do this. */
 	layer->change_coord_mode(viewport_coord_mode);
 
-	qDebug() << "II: Layers Panel: add layer: attempting to add layer" << layer->debug_string;
+	qDebug() << "II" PREFIX << "attempting to add layer named" << layer->get_name();
+
 
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
-		qDebug() << "II: Layers Panel: add layer: no selected layer, adding layer" << layer->debug_string << "under top level aggregate layer";
+		qDebug() << "II" PREFIX << "No selected layer, adding layer named" << layer->get_name() << "under Top Level Layer";
 		this->toplayer->add_layer(layer, true);
 
-	} else {
-		/* Some item in tree view is already selected. Let's find a good
-		   place for given layer to be added - a first aggregate
-		   layer that we meet going up in hierarchy. */
+		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
+		this->emit_items_tree_updated_cb(layer->get_name());
 
-		Layer * selected_layer = selected_item->to_layer(); /* If selected item is layer, then the layer itself is returned here. Otherwise, parent/owning layer of selected sublayer is returned. */
-		if (selected_item->tree_item_type == TreeItemType::SUBLAYER) {
-			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << selected_layer->debug_string << "as selected layer";
-		} else {
-			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << selected_layer->debug_string << "as selected layer";
-		}
-		assert (selected_layer->tree_view);
-		TreeIndex sibling_layer_index = selected_layer->index;
-
-		/* A new layer can be inserted only under an Aggregate layer.
-		   Find first one in tree hierarchy (going up). */
-		TreeIndex aggregate_index = this->go_up_to_layer(selected_layer->index, LayerType::Aggregate);
-		if (aggregate_index.isValid()) {
-			LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
-			assert (aggregate->tree_view);
-
-			if (sibling_layer_index.isValid()) {
-				aggregate->insert_layer(layer, sibling_layer_index);
-			} else {
-				aggregate->add_layer(layer, true);
-			}
-		} else {
-			/* TODO: add error handling? */
-			qDebug() << "EE: Layers Panel: add layer: failure, can't find aggregate layer";
-		}
+		return;
 	}
 
-	qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for layer" << layer->get_name();
-	this->emit_items_tree_updated_cb(layer->get_name());
+
+	/* If selected item is layer, then the layer itself is
+	   returned here. Otherwise, parent/owning layer of selected
+	   sublayer is returned. */
+	Layer * selected_layer = selected_item->to_layer();
+	assert (selected_layer->tree_view);
+	assert (selected_layer->index.isValid());
+	TreeIndex selected_layer_index = selected_layer->index;
+	qDebug() << "II" PREFIX << "Selected layer is named" << selected_layer->get_name();
+
+
+	if (selected_layer->type == LayerType::Aggregate) {
+		/* If selected layer is Aggregate layer, we want new
+		   layer to go into this selected Aggregate layer.
+
+		   Notice that this case also covers situation when
+		   selected Aggregate layer is Top Level Layer. */
+
+		qDebug() << "II" PREFIX << "Selected layer is Aggregate layer named" << selected_layer->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
+
+		LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(selected_layer_index)->to_layer();
+		aggregate->add_layer(layer, true);
+
+		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
+		this->emit_items_tree_updated_cb(layer->get_name());
+
+		return;
+	}
+
+
+	/* Some non-Aggregate layer is selected. Since we can insert
+	   layers only under Aggregate layer, let's find the Aggregate
+	   layer by going up in hierarchy. */
+	qDebug() << "II" PREFIX << "Selected layer is non-Aggregate layer named" << selected_layer->get_name() << ", looking for Aggregate layer";
+	TreeIndex aggregate_index = this->go_up_to_layer(selected_layer_index, LayerType::Aggregate);
+	if (aggregate_index.isValid()) {
+		LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
+		assert (aggregate->tree_view);
+
+		qDebug() << "II" PREFIX << "Found closest Aggregate layer named" << aggregate->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
+
+		aggregate->insert_layer(layer, selected_layer_index);
+
+		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
+		this->emit_items_tree_updated_cb(layer->get_name());
+
+		return;
+	}
+
+
+	/* TODO: add error handling? */
+	qDebug() << "EE" PREFIX << "Can't find place for new layer";
+
+	return;
 }
 
 
