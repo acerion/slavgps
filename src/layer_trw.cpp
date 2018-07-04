@@ -2530,7 +2530,7 @@ bool LayerTRW::delete_track(Track * trk)
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->tracks->items.size() == 0) {
-		this->tree_view->detach_item(this->tracks);
+		this->tree_view->detach_tree_item(this->tracks);
 	}
 	/* In case it was selected (no item delete signal ATM). */
 	this->get_window()->clear_highlight();
@@ -2552,7 +2552,7 @@ bool LayerTRW::delete_route(Track * trk)
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->routes->items.size() == 0) {
-		this->tree_view->detach_item(this->routes);
+		this->tree_view->detach_tree_item(this->routes);
 	}
 
 	/* In case it was selected (no item delete signal ATM). */
@@ -2575,7 +2575,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 	/* If last sublayer, then remove sublayer container. */
 	if (this->waypoints->items.size() == 0) {
-		this->tree_view->detach_item(this->waypoints);
+		this->tree_view->detach_tree_item(this->waypoints);
 	}
 
 	/* In case it was selected (no item delete signal ATM). */
@@ -2596,9 +2596,9 @@ void LayerTRW::delete_all_routes()
 	}
 
 	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		this->tree_view->detach_item(i->second);
+		this->tree_view->detach_tree_item(i->second);
 	}
-	this->tree_view->detach_item(this->routes);
+	this->tree_view->detach_tree_item(this->routes);
 	this->routes->visible = false; /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
@@ -2624,9 +2624,9 @@ void LayerTRW::delete_all_tracks()
 	}
 
 	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		this->tree_view->detach_item(i->second);
+		this->tree_view->detach_tree_item(i->second);
 	}
-	this->tree_view->detach_item(this->tracks);
+	this->tree_view->detach_tree_item(this->tracks);
 	this->tracks->visible = false; /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
@@ -2651,9 +2651,9 @@ void LayerTRW::delete_all_waypoints()
 	this->waypoints->name_generator.reset();
 
 	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-		this->tree_view->detach_item(i->second);
+		this->tree_view->detach_tree_item(i->second);
 	}
-	this->tree_view->detach_item(this->waypoints);
+	this->tree_view->detach_tree_item(this->waypoints);
 	this->waypoints->visible = false; /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was

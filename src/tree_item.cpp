@@ -131,6 +131,23 @@ bool TreeItem::compare_name(const TreeItem * a, const TreeItem * b)
 
 
 
+bool TreeItem::compare_name_descending(const TreeItem * a, const TreeItem * b)
+{
+	/* TODO: is it '>' or '<'? */
+	return (a->name > b->name);
+}
+
+
+
+
+bool TreeItem::compare_name_ascending(const TreeItem * a, const TreeItem * b)
+{
+	return !TreeItem::compare_name_descending(a, b);
+}
+
+
+
+
 TreeItemOperation operator&(TreeItemOperation& arg1, TreeItemOperation& arg2)
 {
 	TreeItemOperation result = static_cast<TreeItemOperation>(static_cast<uint16_t>(arg1) | static_cast<uint16_t>(arg2));

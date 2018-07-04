@@ -102,6 +102,9 @@ namespace SlavGPS {
 		sg_uid_t get_uid(void) const;
 
 		static bool compare_name(const TreeItem * a, const TreeItem * b);
+		static bool compare_name_descending(const TreeItem * a, const TreeItem * b);
+		static bool compare_name_ascending(const TreeItem * a, const TreeItem * b);
+
 
 		virtual QString get_tooltip(void) const;
 

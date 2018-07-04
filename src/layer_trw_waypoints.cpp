@@ -885,7 +885,7 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	const bool was_visible = wp->visible;
 
-	parent_layer->tree_view->detach_item(wp);
+	parent_layer->tree_view->detach_tree_item(wp);
 
 	this->name_generator.remove_name(wp->name);
 

@@ -208,10 +208,6 @@ namespace SlavGPS {
 		static bool compare_timestamp_descending(const Layer * first, const Layer * second);
 		static bool compare_timestamp_ascending(const Layer * first, const Layer * second);
 
-		static bool compare_name_descending(const Layer * first, const Layer * second);
-		static bool compare_name_ascending(const Layer * first, const Layer * second);
-
-
 
 		const QString get_name(void) const;
 		void set_name(const QString & new_name);

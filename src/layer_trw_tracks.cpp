@@ -1048,7 +1048,7 @@ bool LayerTRWTracks::delete_track(Track * trk)
 	/* Could be current_tp, so we have to check. */
 	parent_layer->cancel_tps_of_track(trk);
 
-	this->tree_view->detach_item(trk);
+	this->tree_view->detach_tree_item(trk);
 	this->items.erase(trk->uid); /* Erase by key. */
 
 	delete trk;

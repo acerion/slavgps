@@ -23,10 +23,19 @@
 
 
 
+
+#include <list>
+
+
+
+
 #include <QStandardItemModel>
 #include <QTreeView>
 #include <QString>
 #include <QObject>
+
+
+
 
 #include "tree_view.h"
 #include "config.h"
@@ -95,7 +104,7 @@ namespace SlavGPS {
 		/* Move tree item up or down in list of its siblings. */
 		bool change_tree_item_position(TreeItem * tree_item, bool up);
 
-		void detach_item(TreeItem * tree_item);
+		void detach_tree_item(TreeItem * tree_item);
 
 		bool is_editing_in_progress();
 		void expand(TreeIndex const & index);

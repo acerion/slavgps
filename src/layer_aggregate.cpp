@@ -417,8 +417,16 @@ void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 
 void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalAscending);
-	this->children->sort(Layer::compare_name_ascending);
+	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
+
+	this->blockSignals(true);
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		t_view->detach_tree_item(*iter);
+	}
+	this->children->sort(TreeItem::compare_name_descending);
+	this->add_children_to_tree();
+
+	this->blockSignals(false);
 }
 
 
@@ -426,8 +434,16 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 
 void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalDescending);
-	this->children->sort(Layer::compare_name_descending);
+	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
+
+	this->blockSignals(true);
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		t_view->detach_tree_item(*iter);
+	}
+	this->children->sort(TreeItem::compare_name_ascending);
+	this->add_children_to_tree();
+
+	this->blockSignals(false);
 }
 
 
@@ -612,7 +628,7 @@ void LayerAggregate::clear()
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		if (layer->is_in_tree()) {
-			tree->detach_item(layer);
+			tree->detach_tree_item(layer);
 		}
 		delete layer;
 	}
@@ -640,7 +656,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 
 	const bool was_visible = layer->visible;
 
-	this->tree_view->detach_item(layer);
+	this->tree_view->detach_tree_item(layer);
 
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
 		if (layer->the_same_object(*iter)) {
@@ -873,8 +889,8 @@ void LayerAggregate::add_children_to_tree(void)
 		return;
 	}
 
-	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		Layer * layer = *child;
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		Layer * layer = *iter;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->push_tree_item_back(this->index, layer, layer->name);

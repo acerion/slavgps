@@ -642,23 +642,6 @@ bool Layer::compare_timestamp_ascending(const Layer * first, const Layer * secon
 
 
 
-bool Layer::compare_name_descending(const Layer * first, const Layer * second)
-{
-	/* TODO: is it '>' or '<'? */
-	return (first->name > second->name);
-}
-
-
-
-
-bool Layer::compare_name_ascending(const Layer * first, const Layer * second)
-{
-	return !Layer::compare_name_descending(first, second);
-}
-
-
-
-
 Window * Layer::get_window(void)
 {
 	return g_tree->tree_get_main_window();

@@ -239,7 +239,7 @@ TreeItem * TreeView::get_selected_tree_item(void)
 
 
 
-void TreeView::detach_item(TreeItem * tree_item)
+void TreeView::detach_tree_item(TreeItem * tree_item)
 {
 	this->tree_model->removeRow(tree_item->index.row(), tree_item->index.parent());
 	tree_item->tree_view = NULL;
@@ -725,26 +725,8 @@ TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, Tre
 	if (sibling_index.isValid()) {
 		qDebug() << "II" PREFIX << "Inserting tree item" << name << "next to sibling";
 
-		int row = sibling_index.row();
-
-		/* FIXME: the code executed if above == false does not work. Try inserting DEM layer into empty tree. */
-		above = true;
-
-		if (above) {
-			/* New item will occupy row, where sibling
-			   item was. Sibling item will go one row
-			   lower. */
-			return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
-
-		} else {
-			const int n_rows = this->tree_model->rowCount(parent_index);
-			if (n_rows == row + 1) {
-				return this->push_tree_item_back(parent_index, tree_item, name);
-			} else {
-				row++;
-				return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
-			}
-		}
+		int row = sibling_index.row() + (above ? 0 : 1);
+		return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
 	} else {
 		/* Fall back in case of invalid sibling. */
 		qDebug() << "WW" PREFIX << "Invalid sibling index, fall back to pushing back tree item";
