@@ -87,7 +87,7 @@ namespace SlavGPS {
 	   item in the data structures used on the viewport and on the
 	   layers panel.
 	*/
-	typedef std::unordered_map<sg_uid_t, Track *> TracksContainer;
+	typedef std::unordered_map<sg_uid_t, Track *> TracksMap;
 
 
 
@@ -116,6 +116,8 @@ namespace SlavGPS {
 
 	class LayerTRWTracks : public TreeItem {
 		Q_OBJECT
+
+		friend class LayerTRW;
 	public:
 		LayerTRWTracks();
 		LayerTRWTracks(bool is_routes);
@@ -147,7 +149,7 @@ namespace SlavGPS {
 
 		void list_trk_uids(std::list<sg_uid_t> & list);
 
-		std::list<sg_uid_t> find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
+		std::list<Track *> find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude);
 		std::list<Track *> find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold);
 
 		/* Get list of pointers to tracks, sorted by name.  If
@@ -184,6 +186,12 @@ namespace SlavGPS {
 		   container. */
 		void clear(void);
 
+		/* Similar to C++ container's ::size() method. */
+		size_t size(void) const;
+
+		/* Similar to C++ container's ::empty() method. */
+		bool empty(void) const;
+
 
 		void add_track(Track * trk);
 		void add_track_to_data_structure_only(Track * trk);
@@ -197,8 +205,6 @@ namespace SlavGPS {
 
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
-
-		TracksContainer items;
 
 
 	public slots:
@@ -218,6 +224,9 @@ namespace SlavGPS {
 
 	private:
 		LatLonBBox bbox;
+
+		std::list<Track *> * children_list = NULL;
+		TracksMap children_map;
 	};
 
 

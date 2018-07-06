@@ -248,6 +248,15 @@ void TreeView::detach_tree_item(TreeItem * tree_item)
 
 
 
+void TreeView::detach_children(TreeItem * parent_tree_item)
+{
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(parent_tree_item->index);
+	parent_item->removeRows(0, parent_item->rowCount());
+}
+
+
+
+
 void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & icon)
 {
 	if (!item_index.isValid()) {

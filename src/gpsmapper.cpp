@@ -43,7 +43,7 @@ using namespace SlavGPS;
 
   Returns 0 if invalid/no rgn stuff, else returns len of.
 */
-static unsigned int print_rgn_stuff(char const * nm, FILE * f)
+static unsigned int print_rgn_stuff(FILE * file, char const * nm)
 {
 	if (!nm) {
 		return 0;
@@ -71,13 +71,13 @@ static unsigned int print_rgn_stuff(char const * nm, FILE * f)
 	if (len > 11 && strncasecmp(name + len - 10, "RGN", 3) == 0
 	    && strncasecmp(name + len - 4, "0x", 2) == 0) {
 
-		fprintf(f, "[%.5s]\nType=%.4s\nLabel=", name + len - 10, name + len - 4);
-		fwrite(name, sizeof(char), len - 11, f);
-		fprintf(f, "\n");
+		fprintf(file, "[%.5s]\nType=%.4s\nLabel=", name + len - 10, name + len - 4);
+		fwrite(name, sizeof(char), len - 11, file);
+		fprintf(file, "\n");
 
 		/* Added by oddgeir@oddgeirkvien.com, 2005.02.02 */
 		if (layers) {
-			fprintf(f, "%s\n", layers);
+			fprintf(file, "%s\n", layers);
 		}
 
 		free(name);
@@ -87,13 +87,13 @@ static unsigned int print_rgn_stuff(char const * nm, FILE * f)
 	} else if (len > 13 && strncasecmp(name + len - 12, "RGN", 3) == 0
 		   && strncasecmp(name + len - 6, "0x", 2) == 0) {
 
-		fprintf(f, "[%.5s]\nType=%.6s\nLabel=", name + len - 12, name + len - 6);
-		fwrite(name, sizeof(char), len - 13, f);
-		fprintf(f, "\n");
+		fprintf(file, "[%.5s]\nType=%.6s\nLabel=", name + len - 12, name + len - 6);
+		fwrite(name, sizeof(char), len - 13, file);
+		fprintf(file, "\n");
 
 		/* Added by oddgeir@oddgeirkvien.com, 2005.02.02 */
 		if (layers) {
-			fprintf(f, "%s\n", layers);
+			fprintf(file, "%s\n", layers);
 		}
 
 		free(name);
@@ -108,14 +108,14 @@ static unsigned int print_rgn_stuff(char const * nm, FILE * f)
 
 
 
-static void write_waypoints(FILE * f, WaypointsContainer & waypoints)
+static void write_waypoints(FILE * file, WaypointsContainer & waypoints)
 {
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		Waypoint * wp = i->second;
-		unsigned int len = print_rgn_stuff(wp->comment.toUtf8().constData(), f);
+	for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
+		Waypoint * wp = iter->second;
+		unsigned int len = print_rgn_stuff(file, wp->comment.toUtf8().constData());
 		if (len) {
-			fprintf(f, "Data0=(%s)\n", wp->coord.get_latlon().to_string().toUtf8().constData()); /* "Data0=(lat,lon)\n" */
-			fprintf(f, "[END-%.5s]\n\n", wp->comment.toUtf8().constData() + len + 1);
+			fprintf(file, "Data0=(%s)\n", wp->coord.get_latlon().to_string().toUtf8().constData()); /* "Data0=(lat,lon)\n" */
+			fprintf(file, "[END-%.5s]\n\n", wp->comment.toUtf8().constData() + len + 1);
 		}
 	}
 }
@@ -123,24 +123,26 @@ static void write_waypoints(FILE * f, WaypointsContainer & waypoints)
 
 
 
-static void write_trackpoint(Trackpoint * tp, FILE * f)
+static void write_trackpoint(FILE * file, Trackpoint * tp)
 {
-	fprintf(f, "(%s),", tp->coord.get_latlon().to_string().toUtf8().constData()); /* "(%s,%s)," */
+	fprintf(file, "(%s),", tp->coord.get_latlon().to_string().toUtf8().constData()); /* "(%s,%s)," */
 }
 
 
 
 
-static void write_track(FILE * f, TracksContainer & tracks)
+static void write_tracks(FILE * file, const std::list<Track *> & tracks)
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		unsigned int len = print_rgn_stuff(i->second->comment.toUtf8().constData(), f);
+	for (auto tracks_iter = tracks.begin(); tracks_iter != tracks.end(); tracks_iter++) {
+		Track * trk = *tracks_iter;
+
+		unsigned int len = print_rgn_stuff(file, trk->comment.toUtf8().constData());
 		if (len) {
-			fprintf(f, "Data0=");
-			for (auto iter = i->second->trackpoints.begin(); iter != i->second->trackpoints.end(); iter++) {
-				write_trackpoint(*iter, f);
+			fprintf(file, "Data0=");
+			for (auto tp_iter = trk->trackpoints.begin(); tp_iter != trk->trackpoints.end(); tp_iter++) {
+				write_trackpoint(file, *tp_iter);
 			}
-			fprintf(f, "\n[END-%.5s]\n\n", i->second->comment.toUtf8().constData() + len + 1);
+			fprintf(file, "\n[END-%.5s]\n\n", trk->comment.toUtf8().constData() + len + 1);
 		}
 	}
 }
@@ -148,14 +150,14 @@ static void write_track(FILE * f, TracksContainer & tracks)
 
 
 
-void SlavGPS::gpsmapper_write_file(FILE * f, LayerTRW * trw)
+void SlavGPS::gpsmapper_write_file(FILE * file, LayerTRW * trw)
 {
-	TracksContainer & tracks = trw->get_track_items();
-	WaypointsContainer & waypoints = trw->get_waypoint_items();
+	const std::list<Track *> & tracks = trw->get_tracks();
+	WaypointsContainer & waypoints = trw->get_waypoints();
 
-	fprintf(f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
+	fprintf(file, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
 		trw->name.toUtf8().constData(), trw->name.toUtf8().constData());
 
-	write_waypoints(f, waypoints);
-	write_track(f, tracks);
+	write_waypoints(file, waypoints);
+	write_tracks(file, tracks);
 }

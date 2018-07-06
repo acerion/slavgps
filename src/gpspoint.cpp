@@ -69,7 +69,7 @@ using namespace SlavGPS;
 
 
 
-static void a_gpspoint_write_tracks(FILE * file, const TracksContainer & tracks);
+static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & tracks);
 static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool is_route);
 static void a_gpspoint_write_waypoints(FILE * file, const WaypointsContainer & waypoints);
 
@@ -905,11 +905,11 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 
 
 
-static void a_gpspoint_write_tracks(FILE * file, TracksContainer & tracks)
+static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & tracks)
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
+	for (auto tracks_iter = tracks.begin(); tracks_iter != tracks.end(); tracks_iter++) {
 
-		Track * trk = i->second;
+		Track * trk = *tracks_iter;
 
 		/* Sanity clauses. */
 		if (!trk) {
@@ -966,8 +966,8 @@ static void a_gpspoint_write_tracks(FILE * file, TracksContainer & tracks)
 		fprintf(file, "\n");
 
 		const bool is_route = trk->type_id == "sg.trw.route";
-		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-			a_gpspoint_write_trackpoint(file, *iter, is_route);
+		for (auto tp_iter = trk->trackpoints.begin(); tp_iter != trk->trackpoints.end(); tp_iter++) {
+			a_gpspoint_write_trackpoint(file, *tp_iter, is_route);
 		}
 		fprintf(file, "type=\"%send\"\n", trk->type_id == "sg.trw.route" ? "route" : "track");
 	}
@@ -978,9 +978,9 @@ static void a_gpspoint_write_tracks(FILE * file, TracksContainer & tracks)
 
 void GPSPoint::write_layer(FILE * file, LayerTRW const * trw)
 {
-	TracksContainer & tracks = ((LayerTRW *) trw)->get_track_items();
-	TracksContainer & routes = ((LayerTRW *) trw)->get_route_items();
-	WaypointsContainer & waypoints = ((LayerTRW *) trw)->get_waypoint_items();
+	const std::list<Track *> & tracks = trw->get_tracks();
+	const std::list<Track *> & routes = trw->get_routes();
+	WaypointsContainer & waypoints = trw->get_waypoints();
 
 	fprintf(file, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(file, waypoints);

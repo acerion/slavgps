@@ -420,6 +420,8 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
 
 	this->blockSignals(true);
+	t_view->blockSignals(true);
+
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
 		t_view->detach_tree_item(*iter);
 	}
@@ -427,6 +429,7 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 	this->add_children_to_tree();
 
 	this->blockSignals(false);
+	t_view->blockSignals(false);
 }
 
 
@@ -437,6 +440,8 @@ void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
 
 	this->blockSignals(true);
+	t_view->blockSignals(true);
+
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
 		t_view->detach_tree_item(*iter);
 	}
@@ -444,6 +449,7 @@ void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 	this->add_children_to_tree();
 
 	this->blockSignals(false);
+	t_view->blockSignals(false);
 }
 
 

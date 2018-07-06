@@ -1096,8 +1096,8 @@ void LayerTRW::marshall(Pickle & pickle)
 
 	Pickle helper_pickle;
 
-	for (auto i = this->waypoints->items.begin(); i != this->waypoints->items.end(); i++) {
-		i->second->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+	for (auto iter = this->waypoints->items.begin(); iter != this->waypoints->items.end(); iter++) {
+		iter->second->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1105,8 +1105,8 @@ void LayerTRW::marshall(Pickle & pickle)
 	}
 
 
-	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		i->second->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+	for (auto iter = this->tracks->children_list->begin(); iter != this->tracks->children_list->end(); iter++) {
+		(*iter)->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1114,8 +1114,8 @@ void LayerTRW::marshall(Pickle & pickle)
 	}
 
 
-	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		i->second->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+	for (auto iter = this->routes->children_list->begin(); iter != this->routes->children_list->end(); iter++) {
+		(*iter)->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1262,7 +1262,7 @@ void LayerTRW::add_children_to_tree(void)
 		return;
 	}
 
-	if (this->tracks->items.size() > 0) {
+	if (this->tracks->size() > 0) {
 		qDebug() << "DD: Layer TRW: Add Children to Tree: Tracks";
 
 		assert (!this->tracks->is_in_tree());
@@ -1272,7 +1272,7 @@ void LayerTRW::add_children_to_tree(void)
 		this->tracks->add_children_to_tree();
 	}
 
-	if (this->routes->items.size() > 0) {
+	if (this->routes->size() > 0) {
 		qDebug() << "DD: Layer TRW: Add Children to Tree: Routes";
 
 		assert (!this->routes->is_in_tree());
@@ -1283,7 +1283,7 @@ void LayerTRW::add_children_to_tree(void)
 		this->routes->add_children_to_tree();
 	}
 
-	if (this->waypoints->items.size() > 0) {
+	if (this->waypoints->size() > 0) {
 		qDebug() << "DD: Layer TRW: Add Children to Tree: Waypoints";
 
 		assert (!this->waypoints->is_in_tree());
@@ -1316,10 +1316,10 @@ int LayerTRW::get_track_thickness()
 /*
  * Build up multiple routes information.
  */
-static void trw_layer_routes_tooltip(TracksContainer & tracks, double * length)
+static void trw_layer_routes_tooltip(const std::list<Track *> & tracks, double * length)
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		*length = *length + i->second->get_length();
+	for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
+		*length = *length + (*iter)->get_length();
 	}
 }
 
@@ -1337,11 +1337,11 @@ typedef struct {
 /*
  * Build up layer multiple track information via updating the tooltip_tracks structure.
  */
-static void trw_layer_tracks_tooltip(TracksContainer & tracks, tooltip_tracks * tt)
+static void trw_layer_tracks_tooltip(std::list<Track *> & tracks, tooltip_tracks * tt)
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
+	for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
 
-		Track * trk = i->second;
+		Track * trk = *iter;
 
 		tt->length = tt->length + trk->get_length();
 
@@ -1400,9 +1400,9 @@ QString LayerTRW::get_tooltip(void) const
 
 	/* For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.] */
 
-	if (!this->tracks->items.empty()) {
+	if (!this->tracks->empty()) {
 		tooltip_tracks tt = { 0.0, 0, 0, 0 };
-		trw_layer_tracks_tooltip(this->tracks->items, &tt);
+		trw_layer_tracks_tooltip(this->get_tracks(), &tt);
 
 		QDateTime date_start;
 		date_start.setTime_t(tt.start_time);
@@ -1450,7 +1450,7 @@ QString LayerTRW::get_tooltip(void) const
 
 		QString route_length;
 		double rlength = 0.0;
-		trw_layer_routes_tooltip(this->routes->items, &rlength);
+		trw_layer_routes_tooltip(this->get_routes(), &rlength);
 		if (rlength > 0.0) {
 			/* Setup info dependent on distance units. */
 			const DistanceUnit distance_unit = Preferences::get_unit_distance();
@@ -1461,9 +1461,9 @@ QString LayerTRW::get_tooltip(void) const
 
 		/* Put together all the elements to form compact tooltip text. */
 		tooltip = QObject::tr("Tracks: %1 - Waypoints: %2 - Routes: %3 %4 %5")
-			.arg(this->tracks->items.size())
-			.arg(this->waypoints->items.size())
-			.arg(this->routes->items.size())
+			.arg(this->tracks->size())
+			.arg(this->waypoints->size())
+			.arg(this->routes->size())
 			.arg(len_duration)
 			.arg(route_length);
 
@@ -1553,23 +1553,23 @@ void LayerTRW::reset_internal_selections(void)
 
 
 
-TracksContainer & LayerTRW::get_track_items()
+std::list<Track *> & LayerTRW::get_tracks(void) const
 {
-	return this->tracks->items;
+	return *this->tracks->children_list; /* FIXME: convert the container to non-pointer. */
 }
 
 
 
 
-TracksContainer & LayerTRW::get_route_items()
+std::list<Track *> & LayerTRW::get_routes(void) const
 {
-	return this->routes->items;
+	return *this->routes->children_list; /* FIXME: convert the container to non-pointer. */
 }
 
 
 
 
-WaypointsContainer & LayerTRW::get_waypoint_items()
+WaypointsContainer & LayerTRW::get_waypoints(void) const
 {
 	return this->waypoints->items;
 }
@@ -1603,7 +1603,7 @@ LayerTRWWaypoints & LayerTRW::get_waypoints_node(void)
 
 bool LayerTRW::is_empty(void) const
 {
-	return ! (this->tracks->items.size() || this->routes->items.size() || this->waypoints->items.size());
+	return ! (this->tracks->size() || this->routes->size() || this->waypoints->size());
 }
 
 
@@ -1708,9 +1708,9 @@ bool LayerTRW::move_viewport_to_show_all(Viewport * viewport)
 
 void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	if ((!this->tracks || this->tracks->items.empty())
-	    && (!this->routes || this->routes->items.empty())
-	    && (!this->waypoints || this->waypoints->items.empty())) {
+	if ((!this->tracks || this->tracks->empty())
+	    && (!this->routes || this->routes->empty())
+	    && (!this->waypoints || this->waypoints->empty())) {
 
 		Dialog::info(tr("This layer has no tracks, routes or waypoints."), this->get_window());
 		return;
@@ -2217,7 +2217,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		/* "Waypoints" node has not been shown in tree view.
 		   That's because we start showing the node only after first waypoint is added. */
 
-		if (0 != this->waypoints->items.size()) {
+		if (0 != this->waypoints->size()) {
 			qDebug() << "EE: Layer TRW: add waypoint: 'Waypoints' node not connected, but has non-zero items already.";
 			return;
 		}
@@ -2253,7 +2253,7 @@ void LayerTRW::add_track(Track * trk)
 		/* "Tracks" node has not been shown in tree view.
 		   That's because we start showing the node only after first track is added. */
 
-		if (0 != this->tracks->items.size()) {
+		if (0 != this->tracks->size()) {
 			qDebug() << "EE: Layer TRW: add track: 'Tracks' node not connected, but has non-zero items already.";
 			return;
 		}
@@ -2294,7 +2294,7 @@ void LayerTRW::add_route(Track * trk)
 		/* "Routes" node has not been shown in tree view.
 		   That's because we start showing the node only after first route is added. */
 
-		if (0 != this->routes->items.size()) {
+		if (0 != this->routes->size()) {
 			qDebug() << "EE: Layer TRW: add route: 'Routes' node not connected, but has non-zero items already.";
 			return;
 		}
@@ -2429,7 +2429,7 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 	}
 
 	if (item_type_id == "sg.trw.track") {
-		Track * trk = this->tracks->items.at(sublayer_uid);
+		Track * trk = this->tracks->children_map.at(sublayer_uid); // zzz
 		Track * trk2 = new Track(*trk);
 
 		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name);
@@ -2445,7 +2445,7 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 	}
 
 	if (item_type_id == "sg.trw.route") {
-		Track * trk = this->routes->items.at(sublayer_uid);
+		Track * trk = this->routes->children_map.at(sublayer_uid);
 		Track * trk2 = new Track(*trk);
 
 		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name);
@@ -2529,7 +2529,7 @@ bool LayerTRW::delete_track(Track * trk)
 	const bool was_visible = this->tracks->delete_track(trk);
 
 	/* If last sublayer, then remove sublayer container. */
-	if (this->tracks->items.size() == 0) {
+	if (this->tracks->size() == 0) {
 		this->tree_view->detach_tree_item(this->tracks);
 	}
 	/* In case it was selected (no item delete signal ATM). */
@@ -2551,7 +2551,7 @@ bool LayerTRW::delete_route(Track * trk)
 	const bool was_visible = this->routes->delete_track(trk);
 
 	/* If last sublayer, then remove sublayer container. */
-	if (this->routes->items.size() == 0) {
+	if (this->routes->size() == 0) {
 		this->tree_view->detach_tree_item(this->routes);
 	}
 
@@ -2574,7 +2574,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 	const bool was_visible = this->waypoints->delete_waypoint(wp);
 
 	/* If last sublayer, then remove sublayer container. */
-	if (this->waypoints->items.size() == 0) {
+	if (this->waypoints->size() == 0) {
 		this->tree_view->detach_tree_item(this->waypoints);
 	}
 
@@ -2595,8 +2595,8 @@ void LayerTRW::delete_all_routes()
 		this->reset_edited_track();
 	}
 
-	for (auto i = this->routes->items.begin(); i != this->routes->items.end(); i++) {
-		this->tree_view->detach_tree_item(i->second);
+	for (auto iter = this->routes->children_list->begin(); iter != this->routes->children_list->end(); iter++) {
+		this->tree_view->detach_tree_item(*iter);
 	}
 	this->tree_view->detach_tree_item(this->routes);
 	this->routes->visible = false; /* There is no such item in tree anymore. */
@@ -2623,8 +2623,8 @@ void LayerTRW::delete_all_tracks()
 		this->reset_edited_track();
 	}
 
-	for (auto i = this->tracks->items.begin(); i != this->tracks->items.end(); i++) {
-		this->tree_view->detach_tree_item(i->second);
+	for (auto iter = this->tracks->children_list->begin(); iter != this->tracks->children_list->end(); iter++) {
+		this->tree_view->detach_tree_item(*iter);
 	}
 	this->tree_view->detach_tree_item(this->tracks);
 	this->tracks->visible = false; /* There is no such item in tree anymore. */
@@ -2850,9 +2850,9 @@ void LayerTRW::merge_with_other_cb(void)
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
 	bool with_timestamps = track->get_tp_first()->has_timestamp;
-	std::list<sg_uid_t> other_track_uids = source_sublayer->find_tracks_with_timestamp_type(with_timestamps, track);
+	std::list<Track *> merge_candidates = source_sublayer->find_tracks_with_timestamp_type(with_timestamps, track);
 
-	if (other_track_uids.empty()) {
+	if (merge_candidates.empty()) {
 		if (with_timestamps) {
 			Dialog::error(tr("Failed. No other tracks with timestamps in this layer found"), this->get_window());
 		} else {
@@ -2860,19 +2860,10 @@ void LayerTRW::merge_with_other_cb(void)
 		}
 		return;
 	}
-	other_track_uids.reverse();
-
-	/* Get list of names for usage with list selection dialog function.
-	   The dialog function will present tracks in a manner allowing differentiating between tracks with the same name. */
-	std::list<Track *> other_tracks;
-	for (auto iter = other_track_uids.begin(); iter != other_track_uids.end(); iter++) {
-		other_tracks.push_back(source_sublayer->items.at(*iter));
-	}
-
 	/* Sort alphabetically for user presentation. */
-	other_tracks.sort(TreeItem::compare_name);
+	merge_candidates.sort(TreeItem::compare_name);
 
-	std::list<Track *> merge_list = a_dialog_select_from_list(other_tracks,
+	std::list<Track *> merge_list = a_dialog_select_from_list(merge_candidates,
 								  ListSelectionMode::MultipleItems,
 								  is_route ? tr("Select route to merge with") : tr("Select track to merge with"),
 								  SGListSelection::get_headers_for_track(),
@@ -3079,7 +3070,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 
-	std::list<sg_uid_t> tracks_with_timestamp = this->tracks->find_tracks_with_timestamp_type(true, orig_track);
+	std::list<Track *> tracks_with_timestamp = this->tracks->find_tracks_with_timestamp_type(true, orig_track);
 	if (tracks_with_timestamp.empty()) {
 		Dialog::error(tr("Failed. No other track in this layer has timestamp"), this->get_window());
 		return;
@@ -3866,15 +3857,15 @@ void LayerTRW::sort_all()
 	}
 
 	/* Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity! */
-	if (this->tracks->items.size() > 1) {
+	if (this->tracks->size() > 1) {
 		this->tree_view->sort_children(this->tracks->get_index(), this->track_sort_order);
 	}
 
-	if (this->routes->items.size() > 1) {
+	if (this->routes->size() > 1) {
 		this->tree_view->sort_children(this->routes->get_index(), this->track_sort_order);
 	}
 
-	if (this->waypoints->items.size() > 1) {
+	if (this->waypoints->size() > 1) {
 		this->tree_view->sort_children(this->waypoints->get_index(), this->wp_sort_order);
 	}
 }

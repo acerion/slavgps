@@ -53,6 +53,7 @@
 #include "clipboard.h"
 #include "statusbar.h"
 #include "window.h"
+#include "layers_panel.h"
 //#include "thumbnails.h"
 
 
@@ -89,6 +90,8 @@ LayerTRWTracks::LayerTRWTracks()
 	this->type_id = "sg.trw.routes";
 	this->accepted_child_type_ids << "sg.trw.route";
 	this->editable = false;
+
+	this->children_list = new std::list<Track *>;
 }
 
 
@@ -130,10 +133,10 @@ QString LayerTRWTracks::get_tooltip(void) const
 
 	if (this->type_id == "sg.trw.routes") {
 		/* Very simple tooltip - may expand detail in the future. */
-		tooltip = tr("Routes: %1").arg(this->items.size());
+		tooltip = tr("Routes: %1").arg(this->children_list->size());
 	} else {
 		/* Very simple tooltip - may expand detail in the future. */
-		tooltip = tr("Tracks: %1").arg(this->items.size());
+		tooltip = tr("Tracks: %1").arg(this->children_list->size());
 	}
 
 	return tooltip;
@@ -147,9 +150,9 @@ std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(char const * date) cons
 	char date_buf[20];
 	std::list<TreeItem *> result;
 
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
 		date_buf[0] = '\0';
-		Track * trk = i->second;
+		Track * trk = *iter;
 
 		/* Might be an easier way to compare dates rather than converting the strings all the time... */
 		if (!trk->empty()
@@ -173,8 +176,8 @@ std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(char const * date) cons
  */
 Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		Track * trk = i->second;
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		Track * trk = *iter;
 		if (trk && !trk->name.isEmpty()) {
 			if (trk->name == trk_name) {
 				return trk;
@@ -191,9 +194,9 @@ void LayerTRWTracks::recalculate_bbox(void)
 {
 	this->bbox.invalidate();
 
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		iter->second->recalculate_bbox();
-		const LatLonBBox trk_bbox = iter->second->get_bbox();
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		(*iter)->recalculate_bbox();
+		const LatLonBBox trk_bbox = (*iter)->get_bbox();
 		BBOX_EXPAND_WITH_BBOX(this->bbox, trk_bbox);
 	}
 
@@ -203,23 +206,25 @@ void LayerTRWTracks::recalculate_bbox(void)
 
 
 
-void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list)
+void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list) // zzz
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		list.push_back(i->first);
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		list.push_back((*iter)->uid);
 	}
 }
 
 
 
 
-std::list<sg_uid_t> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude)
+std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_timestamps, Track * exclude)
 {
-	std::list<sg_uid_t> result;
+	std::list<Track *> result;
 
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		Trackpoint * p1, * p2;
-		Track * trk = i->second;
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		Trackpoint * p1 = NULL;
+		Trackpoint * p2 = NULL;
+		Track * trk = *iter;
+
 		if (trk == exclude) {
 			continue;
 		}
@@ -240,7 +245,7 @@ std::list<sg_uid_t> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_ti
 			}
 		}
 
-		result.push_front(i->first);
+		result.push_front(trk);
 	}
 
 	return result; /* I hope that Return Value Optimization works. */
@@ -262,8 +267,8 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, 
 		return result;
 	}
 
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		Track * trk = i->second;
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		Track * trk = *iter;
 
 		/* Outline:
 		 * Detect reasons for not merging, and return.
@@ -298,7 +303,7 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, 
 			}
 		}
 
-		result.push_front(i->second);
+		result.push_front(*iter);
 	}
 
 	return result; /* I hope that Return Value Optimization works. */
@@ -310,12 +315,12 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, 
 std::list<Track *> LayerTRWTracks::get_sorted_by_name(const Track * exclude) const
 {
 	std::list<Track *> result;
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
 		/* Skip given track. */
-		if (exclude && iter->second == exclude) {
+		if (exclude && *iter == exclude) {
 			continue;
 		}
-		result.push_back(iter->second);
+		result.push_back(*iter);
 	}
 
 	/* Sort list of names alphabetically. */
@@ -336,7 +341,7 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
-	if (this->items.size() <= 1) {
+	if (this->children_list->size() <= 1) {
 		return NULL;
 	}
 
@@ -360,9 +365,9 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 
 void LayerTRWTracks::set_items_visibility(bool on_off)
 {
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		iter->second->visible = on_off;
-		this->tree_view->set_tree_item_visibility(iter->second->index, on_off);
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		(*iter)->visible = on_off;
+		this->tree_view->set_tree_item_visibility((*iter)->index, on_off);
 	}
 }
 
@@ -371,9 +376,9 @@ void LayerTRWTracks::set_items_visibility(bool on_off)
 
 void LayerTRWTracks::toggle_items_visibility(void)
 {
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		iter->second->visible = !iter->second->visible;
-		this->tree_view->toggle_tree_item_visibility(iter->second->index);
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		(*iter)->visible = !(*iter)->visible;
+		this->tree_view->toggle_tree_item_visibility((*iter)->index);
 	}
 }
 
@@ -382,8 +387,8 @@ void LayerTRWTracks::toggle_items_visibility(void)
 
 void LayerTRWTracks::get_tracks_list(std::list<Track *> & list)
 {
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		list.push_back(iter->second);
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		list.push_back(*iter);
 	}
 }
 
@@ -392,9 +397,9 @@ void LayerTRWTracks::get_tracks_list(std::list<Track *> & list)
 
 void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 {
-	for (auto it = this->items.begin(); it != this->items.end(); it++) {
+	for (auto track_iter = this->children_list->begin(); track_iter != this->children_list->end(); track_iter++) {
 
-		Track * trk = it->second;
+		Track * trk = *track_iter;
 
 		if (!trk->visible) {
 			continue;
@@ -417,7 +422,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 				/* Was the old trackpoint we already found closer than this one? */
 				|| dist_x + dist_y < abs(tp_pos.x - search->closest_x) + abs(tp_pos.y - search->closest_y))) {
 
-				search->closest_track = it->second;
+				search->closest_track = *track_iter;
 				search->closest_tp = *iter;
 				search->closest_tp_iter = iter;
 				search->closest_x = tp_pos.x;
@@ -433,8 +438,8 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 
 void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 {
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		iter->second->convert(dest_mode);
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		(*iter)->convert(dest_mode);
 	}
 }
 
@@ -446,7 +451,7 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 */
 void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 {
-	if (this->items.empty()) {
+	if (this->children_list->empty()) {
 		qDebug() << "EE" PREFIX << "called for empty tracks/routes set";
 		return;
 	}
@@ -529,9 +534,9 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 	if (this->type_id == "sg.trw.tracks") {
 
 		int color_i = 0;
-		for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
 
-			Track * trk = iter->second;
+			Track * trk = *iter;
 
 			/* Tracks get a random spread of colors if not already assigned. */
 			if (!trk->has_color) {
@@ -554,21 +559,21 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 	} else { /* Routes. */
 
 		bool use_dark = false;
-		for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
+		for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
 
-			Track * trk = iter->second;
+			Track * route = *iter;
 
 			/* Routes get an intermix of reds. */
-			if (!trk->has_color) {
+			if (!route->has_color) {
 				if (use_dark) {
-					trk->color.setNamedColor("#B40916"); /* Dark Red. */
+					route->color.setNamedColor("#B40916"); /* Dark Red. */
 				} else {
-					trk->color.setNamedColor("#FF0000"); /* Red. */
+					route->color.setNamedColor("#FF0000"); /* Red. */
 				}
-				trk->has_color = true;
+				route->has_color = true;
 			}
 
-			this->update_tree_view(trk);
+			this->update_tree_view(route);
 
 			use_dark = !use_dark;
 		}
@@ -626,8 +631,8 @@ void LayerTRWTracks::update_tree_view(Track * trk)
 
 void LayerTRWTracks::add_children_to_tree(void)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		Track * trk = i->second;
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		Track * trk = *iter;
 
 		if (trk->has_color) {
 			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
@@ -824,7 +829,7 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 */
 void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	const unsigned int n_items = this->items.size();
+	const unsigned int n_items = this->children_list->size();
 	this->recalculate_bbox();
 
 	if (n_items > 0) {
@@ -915,7 +920,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 		return;
 	}
 
-	if (this->items.empty()) {
+	if (this->children_list->empty()) {
 		return;
 	}
 
@@ -924,8 +929,8 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 #ifdef K_TODO
 	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
 #endif
-		for (auto i = this->items.begin(); i != this->items.end(); i++) {
-			i->second->draw_tree_item(viewport, highlight_selected, item_is_selected);
+		for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+			(*iter)->draw_tree_item(viewport, highlight_selected, item_is_selected);
 		}
 #ifdef K_TODO
 	}
@@ -946,8 +951,26 @@ void LayerTRWTracks::paste_sublayer_cb(void)
 
 void LayerTRWTracks::sort_order_a2z_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::AlphabeticalAscending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalAscending);
+
+	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
+
+	this->blockSignals(true);
+	t_view->blockSignals(true);
+
+	qDebug() << "----" PREFIX << "detach items - begin";
+	t_view->detach_children(this);
+	qDebug() << "----" PREFIX "detach items - end";
+
+	qDebug() << "----" PREFIX "sort items - begin";
+	this->children_list->sort(TreeItem::compare_name_descending);
+	qDebug() << "----" PREFIX "sort items - end";
+
+	qDebug() << "----" PREFIX "attach items - begin";
+	this->add_children_to_tree();
+	qDebug() << "----" PREFIX "attach items - end";
+
+	this->blockSignals(false);
+	t_view->blockSignals(false);
 }
 
 
@@ -993,11 +1016,29 @@ TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, Viewport * new_viewport)
 
 void LayerTRWTracks::clear(void)
 {
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		delete (*iter).second;
+	this->children_map.clear();
+
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		delete *iter;
 	}
 
-	this->items.clear();
+	this->children_list->clear();
+}
+
+
+
+
+size_t LayerTRWTracks::size(void) const
+{
+	return this->children_list ? this->children_list->size() : 0;
+}
+
+
+
+
+bool LayerTRWTracks::empty(void) const
+{
+	return this->children_list? this->children_list->empty() : true;
 }
 
 
@@ -1013,7 +1054,8 @@ void LayerTRWTracks::add_track(Track * trk)
 void LayerTRWTracks::add_track_to_data_structure_only(Track * trk)
 {
 	trk->owning_layer = this->owning_layer;
-	this->items.insert({{ trk->uid, trk }});
+	this->children_map.insert({{ trk->uid, trk }});
+	this->children_list->push_back(trk);
 }
 
 
@@ -1049,7 +1091,16 @@ bool LayerTRWTracks::delete_track(Track * trk)
 	parent_layer->cancel_tps_of_track(trk);
 
 	this->tree_view->detach_tree_item(trk);
-	this->items.erase(trk->uid); /* Erase by key. */
+	this->children_map.erase(trk->uid); /* Erase by key. */ // zzz
+
+
+	/* TODO: optimize. */
+	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		if ((*iter)->uid == trk->uid) {
+			this->children_list->erase(iter);
+		}
+	}
+
 
 	delete trk;
 

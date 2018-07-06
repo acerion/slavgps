@@ -295,11 +295,11 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
-	qa->setEnabled((bool) (this->tracks->items.size() + this->routes->items.size()));
+	qa->setEnabled((bool) (this->tracks->size() + this->routes->size()));
 
 	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
-	qa->setEnabled((bool) (this->waypoints->items.size()));
+	qa->setEnabled((bool) (this->waypoints->size()));
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */

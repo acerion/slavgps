@@ -185,10 +185,8 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, wp_param_specs[SG_WP_PARAM_SYMBOL]);
 		if (GarminSymbols::is_none_symbol_name(param_value.val_string)) {
-			qDebug() << "zzzz none:" << param_value.val_string;
 			wp->set_symbol(""); /* Save empty string instead of actual "none" string. */
 		} else {
-			qDebug() << "zzzz some:" << param_value.val_string;
 			wp->set_symbol(param_value.val_string);
 		}
 

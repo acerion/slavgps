@@ -152,7 +152,7 @@ public:
 
 	void geotag(void);
 	void geotag_waypoint(void);
-	void geotag_tracks(TracksContainer & tracks);
+	void geotag_tracks(const std::list<Track *> & tracks);
 	void geotag_track(Track * trk);
 
 	QStringList selected_files;
@@ -391,10 +391,10 @@ void GeotagJob::geotag_track(Track * trk2)
 
 
 
-void GeotagJob::geotag_tracks(TracksContainer & tracks)
+void GeotagJob::geotag_tracks(const std::list<Track *> & tracks)
 {
-	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		this->geotag_track(i->second);
+	for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
+		this->geotag_track(*iter);
 	}
 }
 
@@ -504,7 +504,7 @@ void GeotagJob::geotag(void)
 		this->geotag_track(this->trk);
 	} else {
 		/* Try all tracks. */
-		std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = this->trw->get_track_items();
+		std::list<Track *> & tracks = this->trw->get_tracks();
 		if (tracks.size() > 0) {
 			this->geotag_tracks(tracks);
 		}

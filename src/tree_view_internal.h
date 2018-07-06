@@ -105,6 +105,7 @@ namespace SlavGPS {
 		bool change_tree_item_position(TreeItem * tree_item, bool up);
 
 		void detach_tree_item(TreeItem * tree_item);
+		void detach_children(TreeItem * parent_tree_item);
 
 		bool is_editing_in_progress();
 		void expand(TreeIndex const & index);

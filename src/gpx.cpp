@@ -1168,7 +1168,7 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 
 	if (trw->get_waypoints_visibility() || (options && options->hidden)) {
 		/* Gather waypoints in a vector, sort them and write to file. */
-		WaypointsContainer & waypoints = trw->get_waypoint_items();
+		WaypointsContainer & waypoints = trw->get_waypoints();
 		std::vector<Waypoint *> copy;
 		copy.resize(waypoints.size());
 

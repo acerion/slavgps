@@ -331,7 +331,7 @@ void LayerTRWWaypoints::change_coord_mode(CoordMode new_mode)
 */
 void LayerTRWWaypoints::uniquify(TreeViewSortOrder sort_order)
 {
-	if (this->items.empty()) {
+	if (this->empty()) {
 		qDebug() << "EE" PREFIX << "called for empty waypoints set";
 		return;
 	}
@@ -765,18 +765,17 @@ bool LayerTRWWaypoints::handle_selection_in_tree(void)
  */
 void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
+	if (this->empty()) {
+		return;
+	}
+
 	if (!this->is_in_tree()) {
 		/* This subnode hasn't been added to tree yet. */
 		return;
 	}
 
-
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
-		return;
-	}
-
-	if (this->items.empty()) {
 		return;
 	}
 
@@ -847,6 +846,22 @@ void LayerTRWWaypoints::clear(void)
 	}
 
 	this->items.clear();
+}
+
+
+
+
+size_t LayerTRWWaypoints::size(void) const
+{
+	return this->items.size();
+}
+
+
+
+
+bool LayerTRWWaypoints::empty(void) const
+{
+	return this->items.empty();
 }
 
 

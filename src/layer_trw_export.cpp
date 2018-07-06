@@ -117,15 +117,16 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_file_full_path)
 {
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
-	if (this->get_route_items().size()) {
-		mode.routes_write = 1;
-	}
-	if (this->get_track_items().size()) {
+	if (this->get_tracks().size()) {
 		mode.tracks_write = 1;
 	}
-	if (this->get_waypoint_items().size()) {
+	if (this->get_routes().size()) {
+		mode.routes_write = 1;
+	}
+	if (this->get_waypoints().size()) {
 		mode.waypoints_write = 1;
 	}
+
 	bool failed = false;
 
 	BabelDialog * dialog = new BabelDialog(title);

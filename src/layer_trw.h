@@ -188,9 +188,9 @@ namespace SlavGPS {
 		void add_route(Track * trk);
 		void add_waypoint(Waypoint * wp);
 
-		TracksContainer & get_track_items();
-		TracksContainer & get_route_items();
-		WaypointsContainer & get_waypoint_items();
+		std::list<Track *> & get_tracks(void) const;
+		std::list<Track *> & get_routes(void) const;
+		WaypointsContainer & get_waypoints(void) const;
 
 		LayerTRWTracks & get_tracks_node(void);
 		LayerTRWTracks & get_routes_node(void);

@@ -196,6 +196,12 @@ namespace SlavGPS {
 		   container. */
 		void clear(void);
 
+		/* Similar to C++ container's ::size() method. */
+		size_t size(void) const;
+
+		/* Similar to C++ container's ::empty() method. */
+		bool empty(void) const;
+
 
 		void add_waypoint(Waypoint * wp);
 
