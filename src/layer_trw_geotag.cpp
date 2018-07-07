@@ -152,7 +152,6 @@ public:
 
 	void geotag(void);
 	void geotag_waypoint(void);
-	void geotag_tracks(const std::list<Track *> & tracks);
 	void geotag_track(Track * trk);
 
 	QStringList selected_files;
@@ -391,16 +390,6 @@ void GeotagJob::geotag_track(Track * trk2)
 
 
 
-void GeotagJob::geotag_tracks(const std::list<Track *> & tracks)
-{
-	for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
-		this->geotag_track(*iter);
-	}
-}
-
-
-
-
 /**
    Simply align the images the waypoint position
 */
@@ -504,9 +493,9 @@ void GeotagJob::geotag(void)
 		this->geotag_track(this->trk);
 	} else {
 		/* Try all tracks. */
-		std::list<Track *> & tracks = this->trw->get_tracks();
-		if (tracks.size() > 0) {
-			this->geotag_tracks(tracks);
+		const std::list<Track *> & tracks = this->trw->get_tracks();
+		for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
+			this->geotag_track(*iter);
 		}
 	}
 

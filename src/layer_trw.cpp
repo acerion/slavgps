@@ -1314,36 +1314,33 @@ int LayerTRW::get_track_thickness()
 
 
 /*
- * Build up multiple routes information.
- */
-static void trw_layer_routes_tooltip(const std::list<Track *> & tracks, double * length)
+  Build up multiple routes information
+*/
+double LayerTRW::get_routes_tooltip_data(void) const
 {
-	for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
-		*length = *length + (*iter)->get_length();
+	double result = 0;
+	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
+		result += (*iter)->get_length();
 	}
+
+	return result;
 }
 
 
 
 
-/* Structure to hold multiple track information for a layer. */
-typedef struct {
-	double length;
-	time_t  start_time;
-	time_t  end_time;
-	int    duration;
-} tooltip_tracks;
-
 /*
- * Build up layer multiple track information via updating the tooltip_tracks structure.
- */
-static void trw_layer_tracks_tooltip(std::list<Track *> & tracks, tooltip_tracks * tt)
+  Get information about layer's tracks
+*/
+LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 {
-	for (auto iter = tracks.begin(); iter != tracks.end(); iter++) {
+	TracksTooltipData result;
+
+	for (auto iter = this->tracks.children_list.begin(); iter != this->tracks.children_list.end(); iter++) {
 
 		Track * trk = *iter;
 
-		tt->length = tt->length + trk->get_length();
+		result.length += trk->get_length();
 
 		/* Ensure times are available. */
 		if (trk->empty() || !trk->get_tp_first()->has_timestamp) {
@@ -1362,53 +1359,48 @@ static void trw_layer_tracks_tooltip(std::list<Track *> & tracks, tooltip_tracks
 
 		/* Assume never actually have a track with a time of 0 (1st Jan 1970).
 		   Hence initialize to the first 'proper' value. */
-		if (tt->start_time == 0) {
-			tt->start_time = t1;
+		if (result.start_time == 0) {
+			result.start_time = t1;
 		}
-		if (tt->end_time == 0) {
-			tt->end_time = t2;
+		if (result.end_time == 0) {
+			result.end_time = t2;
 		}
 
 		/* Update find the earliest / last times. */
-		if (t1 < tt->start_time) {
-			tt->start_time = t1;
+		if (t1 < result.start_time) {
+			result.start_time = t1;
 		}
 
-		if (t2 > tt->end_time) {
-			tt->end_time = t2;
+		if (t2 > result.end_time) {
+			result.end_time = t2;
 		}
 
 		/* Keep track of total time.
 		   There maybe gaps within a track (eg segments)
 		   but this should be generally good enough for a simple indicator. */
-		tt->duration = tt->duration + (int) (t2 - t1);
+		result.duration = result.duration + (int) (t2 - t1);
 	}
+
+	return result;
 }
 
 
 
 
 /*
-  Generate tooltip text for the layer.
-  This is relatively complicated as it considers information for
-  no tracks, a single track or multiple tracks
-  (which may or may not have timing information)
+  Generate tooltip text for the layer
 */
 QString LayerTRW::get_tooltip(void) const
 {
-	QString tooltip;
-
-	/* For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.] */
-
+	QString tracks_info;
 	if (!this->tracks.empty()) {
-		tooltip_tracks tt = { 0.0, 0, 0, 0 };
-		trw_layer_tracks_tooltip(((LayerTRW *) this)->get_tracks(), &tt); /* TODO: get rid of casting. */
+		TracksTooltipData ttd = this->get_tracks_tooltip_data();
 
 		QDateTime date_start;
-		date_start.setTime_t(tt.start_time);
+		date_start.setTime_t(ttd.start_time);
 
 		QDateTime date_end;
-		date_end.setTime_t(tt.end_time);
+		date_end.setTime_t(ttd.end_time);
 
 		QString duration_string;
 
@@ -1417,58 +1409,59 @@ QString LayerTRW::get_tooltip(void) const
 			duration_string = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
 		} else {
 			/* Same date so just show it and keep rest of text on the same line - provided it's a valid time! */
-			if (tt.start_time != 0) {
+			if (ttd.start_time != 0) {
 				duration_string = date_start.toString(Qt::SystemLocaleLongDate);
 			}
 		}
 
-
-		QString len_duration;
-
-		if (tt.length > 0.0) {
+		if (ttd.length > 0.0) {
 			/* Setup info dependent on distance units. */
 			const DistanceUnit distance_unit = Preferences::get_unit_distance();
 			const QString distance_unit_string = get_distance_unit_string(distance_unit);
-			const double distance_in_units = convert_distance_meters_to(tt.length, distance_unit);
+			const double distance_in_units = convert_distance_meters_to(ttd.length, distance_unit);
 
 			/* Timing information if available. */
 
-			if (tt.duration > 0) {
-				len_duration = QObject::tr("\n%1Total Length %2 %3 in %4 %5")
+			if (ttd.duration > 0) {
+				tracks_info = QObject::tr("\n%1Total Length %2 %3 in %4 %5")
 					.arg(duration_string)
 					.arg(distance_in_units, 0, 'f', 1)
 					.arg(distance_unit_string)
-					.arg((int)(tt.duration/3600))
-					.arg((int) round(tt.duration / 60.0) % 60, 2, 10, (QChar) '0');
+					.arg((int)(ttd.duration/3600))
+					.arg((int) round(ttd.duration / 60.0) % 60, 2, 10, (QChar) '0');
 			} else {
-				len_duration = QObject::tr("\n%1Total Length %2 %3")
+				tracks_info = QObject::tr("\n%1Total Length %2 %3")
 					.arg(duration_string)
 					.arg(distance_in_units, 0, 'f', 1).arg(distance_unit_string);
 			}
-
 		}
+	}
 
-		QString route_length;
-		double rlength = 0.0;
-		trw_layer_routes_tooltip(((LayerTRW *) this)->get_routes(), &rlength); /* TODO: get rid of this cast. */
+
+	QString routes_info;
+	if (!this->routes.empty()) {
+		const double rlength = this->get_routes_tooltip_data();
 		if (rlength > 0.0) {
 			/* Setup info dependent on distance units. */
 			const DistanceUnit distance_unit = Preferences::get_unit_distance();
 			const QString distance_unit_string = get_distance_unit_string(distance_unit);
 			const double distance_in_units = convert_distance_meters_to(rlength, distance_unit);
-			route_length = QObject::tr("\nTotal route length %.1f %s").arg(distance_in_units).arg(distance_unit_string);
+			routes_info = QObject::tr("\nTotal route length %.1f %s").arg(distance_in_units).arg(distance_unit_string);
 		}
-
-		/* Put together all the elements to form compact tooltip text. */
-		tooltip = QObject::tr("Tracks: %1 - Waypoints: %2 - Routes: %3 %4 %5")
-			.arg(this->tracks.size())
-			.arg(this->waypoints.size())
-			.arg(this->routes.size())
-			.arg(len_duration)
-			.arg(route_length);
-
 	}
-	return tooltip;
+
+
+	/* Put together all the elements to form compact tooltip text. */
+	const QString result = QObject::tr("Tracks: %1 - Waypoints: %2 - Routes: %3"
+					   "%4"
+					   "%5")
+		.arg(this->tracks.size())
+		.arg(this->waypoints.size())
+		.arg(this->routes.size())
+		.arg(tracks_info)
+		.arg(routes_info);
+
+	return result;
 }
 
 
@@ -1548,54 +1541,6 @@ void LayerTRW::reset_internal_selections(void)
 	this->reset_edited_track();
 	this->reset_edited_wp();
 	this->cancel_current_tp(false);
-}
-
-
-
-
-std::list<Track *> & LayerTRW::get_tracks(void)
-{
-	return this->tracks.children_list;
-}
-
-
-
-
-std::list<Track *> & LayerTRW::get_routes(void)
-{
-	return this->routes.children_list;
-}
-
-
-
-
-std::list<Waypoint *> & LayerTRW::get_waypoints(void)
-{
-	return this->waypoints.children_list;
-}
-
-
-
-
-LayerTRWTracks & LayerTRW::get_tracks_node(void)
-{
-	return this->tracks;
-}
-
-
-
-
-LayerTRWTracks & LayerTRW::get_routes_node(void)
-{
-	return this->routes;
-}
-
-
-
-
-LayerTRWWaypoints & LayerTRW::get_waypoints_node(void)
-{
-	return this->waypoints;
 }
 
 

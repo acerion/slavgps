@@ -187,13 +187,13 @@ namespace SlavGPS {
 		void add_route(Track * trk);
 		void add_waypoint(Waypoint * wp);
 
-		std::list<Track *> & get_tracks(void);
-		std::list<Track *> & get_routes(void);
-		std::list<Waypoint *> & get_waypoints(void);
+		const std::list<Track *> & get_tracks(void) const { return this->tracks.children_list; };
+		const std::list<Track *> & get_routes(void) const { return this->routes.children_list; };
+		const std::list<Waypoint *> & get_waypoints(void) const { return this->waypoints.children_list; };
 
-		LayerTRWTracks & get_tracks_node(void);
-		LayerTRWTracks & get_routes_node(void);
-		LayerTRWWaypoints & get_waypoints_node(void);
+		LayerTRWTracks & get_tracks_node(void) { return this->tracks; };
+		LayerTRWTracks & get_routes_node(void) { return this->routes; };
+		LayerTRWWaypoints & get_waypoints_node(void) { return this->waypoints; };
 
 		LayerTRWTracks tracks; /* Sub-node, under which all layer's tracks are shown. */
 		LayerTRWTracks routes; /* Sub-node, under which all layer's routes are shown. */
@@ -499,6 +499,18 @@ namespace SlavGPS {
 
 	private:
 		void wp_image_cache_flush();
+
+		/* Structure to hold multiple track information for a layer. */
+		class TracksTooltipData {
+		public:
+			double length = 0;
+			time_t start_time = 0;
+			time_t end_time = 0;
+			int    duration = 0;
+		};
+
+		TracksTooltipData get_tracks_tooltip_data(void) const;
+		double get_routes_tooltip_data(void) const;
 
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */
