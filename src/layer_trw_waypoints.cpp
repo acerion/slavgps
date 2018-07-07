@@ -104,7 +104,7 @@ LayerTRWWaypoints::~LayerTRWWaypoints()
 QString LayerTRWWaypoints::get_tooltip(void) const
 {
 	/* Very simple tooltip - may expand detail in the future. */
-	return tr("Waypoints: %1").arg(this->items.size());
+	return tr("Waypoints: %1").arg(this->children_list.size());
 }
 
 
@@ -112,10 +112,10 @@ QString LayerTRWWaypoints::get_tooltip(void) const
 
 Waypoint * LayerTRWWaypoints::find_waypoint_by_name(const QString & wp_name)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		if (i->second && !i->second->name.isEmpty()) {
-			if (i->second->name == wp_name) {
-				return i->second;
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		if ((*iter)->name.isEmpty()) {
+			if ((*iter)->name == wp_name) {
+				return *iter;
 			}
 		}
 	}
@@ -130,9 +130,9 @@ std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(char const * date
 	char date_buf[20];
 	std::list<TreeItem *> result;
 
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		date_buf[0] = '\0';
-		Waypoint * wp = i->second;
+		Waypoint * wp = *iter;
 
 		if (!wp->has_timestamp) {
 			continue;
@@ -152,8 +152,8 @@ std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(char const * date
 
 void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		list.push_back(i->first);
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		list.push_back((*iter)->uid);
 	}
 }
 
@@ -163,8 +163,8 @@ void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 std::list<Waypoint *> LayerTRWWaypoints::get_sorted_by_name(void) const
 {
 	std::list<Waypoint *> result;
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		result.push_back(i->second);
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		result.push_back(*iter);
 	}
 	result.sort(TreeItem::compare_name);
 
@@ -183,7 +183,7 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
-	if (this->items.size() <= 1) {
+	if (this->children_list.size() <= 1) {
 		return NULL;
 	}
 
@@ -206,9 +206,9 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 
 void LayerTRWWaypoints::set_items_visibility(bool on_off)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->visible = on_off;
-		this->tree_view->set_tree_item_visibility(i->second->index, on_off);
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		(*iter)->visible = on_off;
+		this->tree_view->set_tree_item_visibility((*iter)->index, on_off);
 	}
 }
 
@@ -217,9 +217,9 @@ void LayerTRWWaypoints::set_items_visibility(bool on_off)
 
 void LayerTRWWaypoints::toggle_items_visibility(void)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->visible = !i->second->visible;
-		this->tree_view->toggle_tree_item_visibility(i->second->index);
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		(*iter)->visible = !(*iter)->visible;
+		this->tree_view->toggle_tree_item_visibility((*iter)->index);
 	}
 }
 
@@ -228,8 +228,8 @@ void LayerTRWWaypoints::toggle_items_visibility(void)
 
 void LayerTRWWaypoints::search_closest_wp(WaypointSearch * search)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		Waypoint * wp = i->second;
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		Waypoint * wp = *iter;
 		if (!wp->visible) {
 			continue;
 		}
@@ -274,9 +274,9 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewpo
 {
 	QString found;
 
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 
-		Waypoint * wp = i->second;
+		Waypoint * wp = *iter;
 		if (!wp->image_full_path.isEmpty() && wp->visible) {
 			const ScreenPos wp_pos = viewport->coord_to_screen_pos(wp->coord);
 			int slackx = wp->image_width / 2;
@@ -303,8 +303,8 @@ QStringList LayerTRWWaypoints::get_list_of_missing_thumbnails(void) const
 {
 	QStringList paths;
 
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		const Waypoint * wp = i->second;
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		const Waypoint * wp = *iter;
 		if (!wp->image_full_path.isEmpty() && !Thumbnails::thumbnail_exists(wp->image_full_path)) {
 			paths.push_back(wp->image_full_path);
 		}
@@ -318,8 +318,8 @@ QStringList LayerTRWWaypoints::get_list_of_missing_thumbnails(void) const
 
 void LayerTRWWaypoints::change_coord_mode(CoordMode new_mode)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		i->second->convert(new_mode);
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		(*iter)->convert(new_mode);
 	}
 }
 
@@ -430,14 +430,14 @@ void LayerTRWWaypoints::recalculate_bbox(void)
 {
 	this->bbox.invalidate();
 
-	if (0 == this->items.size()) {
+	if (0 == this->children_list.size()) {
 		/* E.g. after all waypoints have been removed from TRW layer. */
 		return;
 	}
 
 
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		const LatLon lat_lon = iter->second->coord.get_latlon();
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		const LatLon lat_lon = (*iter)->coord.get_latlon();
 		BBOX_EXPAND_WITH_LATLON(this->bbox, lat_lon);
 	}
 	this->bbox.validate();
@@ -497,8 +497,8 @@ time_t LayerTRWWaypoints::get_earliest_timestamp()
 {
 	time_t timestamp = 0;
 
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		Waypoint * wp = i->second;
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		Waypoint * wp = *iter;
 		if (wp->has_timestamp) {
 			/* When timestamp not set yet - use the first value encountered. */
 			if (timestamp == 0) {
@@ -519,9 +519,9 @@ time_t LayerTRWWaypoints::get_earliest_timestamp()
 
 void LayerTRWWaypoints::add_children_to_tree(void)
 {
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		time_t timestamp = 0;
-		Waypoint * wp = i->second;
+		Waypoint * wp = *iter;
 		if (wp->has_timestamp) {
 			timestamp = wp->timestamp;
 		}
@@ -654,12 +654,12 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 {
 	Viewport * viewport = g_tree->tree_get_main_viewport();
-	const unsigned int n_items = this->items.size();
+	const unsigned int n_items = this->children_list.size();
 
 	if (1 == n_items) {
 		/* Only 1 waypoint - jump straight to it. Notice that we don't care about waypoint's visibility.  */
-		const auto item = this->items.begin();
-		viewport->set_center_from_coord(item->second->coord, true);
+		const auto iter = this->children_list.begin();
+		viewport->set_center_from_coord((*iter)->coord, true);
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
@@ -732,8 +732,8 @@ void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 	}
 
 	int changed_ = 0;
-	for (auto i = this->items.begin(); i != this->items.end(); i++) {
-		changed_ = changed_ + (int) i->second->apply_dem_data(skip_existing_elevations);
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		changed_ = changed_ + (int) (*iter)->apply_dem_data(skip_existing_elevations);
 	}
 
 	LayerTRW * trw = (LayerTRW *) this->owning_layer;
@@ -783,9 +783,9 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 	const LatLonBBox viewport_bbox = viewport->get_bbox();
 
 	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {
-		for (auto i = this->items.begin(); i != this->items.end(); i++) {
-			qDebug() << "II: Layer TRW Waypoints: draw tree item" << i->second->type_id << i->second->name;
-			i->second->draw_tree_item(viewport, highlight_selected, item_is_selected);
+		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+			qDebug() << "II: Layer TRW Waypoints: draw tree item" << (*iter)->type_id << (*iter)->name;
+			(*iter)->draw_tree_item(viewport, highlight_selected, item_is_selected);
 		}
 	}
 }
@@ -841,11 +841,12 @@ void LayerTRWWaypoints::sort_order_timestamp_descend_cb(void)
 
 void LayerTRWWaypoints::clear(void)
 {
-	for (auto iter = this->items.begin(); iter != this->items.end(); iter++) {
-		delete (*iter).second;
+	this->children_map.clear();
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		delete *iter;
 	}
 
-	this->items.clear();
+	this->children_list.clear();
 }
 
 
@@ -853,7 +854,7 @@ void LayerTRWWaypoints::clear(void)
 
 size_t LayerTRWWaypoints::size(void) const
 {
-	return this->items.size();
+	return this->children_list.size();
 }
 
 
@@ -861,7 +862,7 @@ size_t LayerTRWWaypoints::size(void) const
 
 bool LayerTRWWaypoints::empty(void) const
 {
-	return this->items.empty();
+	return this->children_list.empty();
 }
 
 
@@ -870,7 +871,8 @@ bool LayerTRWWaypoints::empty(void) const
 void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
 {
 	wp->owning_layer = this->owning_layer;
-	this->items.insert({{ wp->uid, wp }});
+	this->children_map.insert({{ wp->uid, wp }});
+	this->children_list.push_back(wp);
 
 	this->set_new_waypoint_icon(wp);
 
@@ -904,7 +906,14 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	this->name_generator.remove_name(wp->name);
 
-	this->items.erase(wp->uid); /* Erase by key. */
+	this->children_map.erase(wp->uid); /* Erase by key. */
+
+	/* TODO: optimize. */
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		if ((*iter)->uid == wp->uid) {
+			this->children_list.erase(iter);
+		}
+	}
 
 	delete wp;
 

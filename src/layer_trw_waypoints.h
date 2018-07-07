@@ -33,6 +33,7 @@
 
 
 #include <unordered_map>
+#include <list>
 
 
 
@@ -108,7 +109,6 @@ namespace SlavGPS {
 	   item in the data structures used on the viewport and on the
 	   layers panel.
 	*/
-	typedef std::unordered_map<sg_uid_t, Waypoint *> WaypointsContainer;
 
 
 
@@ -139,6 +139,8 @@ namespace SlavGPS {
 
 	class LayerTRWWaypoints : public TreeItem {
 		Q_OBJECT
+
+		friend class LayerTRW;
 	public:
 		LayerTRWWaypoints();
 		LayerTRWWaypoints(TreeView * ref_tree_view);
@@ -215,7 +217,7 @@ namespace SlavGPS {
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
 
-		WaypointsContainer items;
+
 
 
 		DefaultNameGenerator name_generator;
@@ -241,6 +243,8 @@ namespace SlavGPS {
 
 	private:
 		LatLonBBox bbox;
+		std::list<Waypoint *> children_list;
+		std::unordered_map<sg_uid_t, Waypoint *> children_map;
 	};
 
 

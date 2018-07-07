@@ -225,7 +225,7 @@ namespace SlavGPS {
 	private:
 		LatLonBBox bbox;
 
-		std::list<Track *> * children_list = NULL;
+		std::list<Track *> children_list;
 		TracksMap children_map;
 	};
 

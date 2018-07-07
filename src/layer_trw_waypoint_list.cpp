@@ -624,7 +624,7 @@ void WaypointListDialog::accept_cb(void) /* Slot. */
 
 	if (this->selected_wp) {
 		LayerTRW * trw = this->selected_wp->get_parent_layer_trw();
-		trw->waypoints->update_tree_view(this->selected_wp);
+		trw->waypoints.update_tree_view(this->selected_wp);
 		trw->emit_layer_changed("TRW - Waypoint List Dialog - Accept");
 	}
 

@@ -31,7 +31,6 @@
 
 #include <cstdint>
 #include <list>
-#include <unordered_map>
 #include <deque>
 
 #include <QStandardItem>
@@ -188,22 +187,22 @@ namespace SlavGPS {
 		void add_route(Track * trk);
 		void add_waypoint(Waypoint * wp);
 
-		std::list<Track *> & get_tracks(void) const;
-		std::list<Track *> & get_routes(void) const;
-		WaypointsContainer & get_waypoints(void) const;
+		std::list<Track *> & get_tracks(void);
+		std::list<Track *> & get_routes(void);
+		std::list<Waypoint *> & get_waypoints(void);
 
 		LayerTRWTracks & get_tracks_node(void);
 		LayerTRWTracks & get_routes_node(void);
 		LayerTRWWaypoints & get_waypoints_node(void);
 
-		LayerTRWTracks * tracks = NULL; /* Sub-node, under which all layer's tracks are shown. */
-		LayerTRWTracks * routes = NULL; /* Sub-node, under which all layer's routes are shown. */
-		LayerTRWWaypoints * waypoints = NULL; /* Sub-node, under which all layer's waypoints are shown. */
+		LayerTRWTracks tracks; /* Sub-node, under which all layer's tracks are shown. */
+		LayerTRWTracks routes; /* Sub-node, under which all layer's routes are shown. */
+		LayerTRWWaypoints waypoints; /* Sub-node, under which all layer's waypoints are shown. */
 
 
-		bool get_tracks_visibility();
-		bool get_routes_visibility();
-		bool get_waypoints_visibility();
+		bool get_tracks_visibility(void) const;
+		bool get_routes_visibility(void) const;
+		bool get_waypoints_visibility(void) const;
 
 		bool is_empty(void) const;
 

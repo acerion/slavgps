@@ -71,7 +71,7 @@ using namespace SlavGPS;
 
 static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & tracks);
 static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool is_route);
-static void a_gpspoint_write_waypoints(FILE * file, const WaypointsContainer & waypoints);
+static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> & waypoints);
 
 
 
@@ -765,11 +765,11 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 
 
 
-static void a_gpspoint_write_waypoints(FILE * file, const WaypointsContainer & waypoints)
+static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> & waypoints)
 {
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
+	for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
 
-		Waypoint * wp = i->second;
+		Waypoint * wp = *iter;
 
 		/* Sanity clauses. */
 		if (!wp) {
@@ -976,11 +976,11 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 
 
 
-void GPSPoint::write_layer(FILE * file, LayerTRW const * trw)
+void GPSPoint::write_layer(FILE * file, LayerTRW * trw)
 {
 	const std::list<Track *> & tracks = trw->get_tracks();
 	const std::list<Track *> & routes = trw->get_routes();
-	WaypointsContainer & waypoints = trw->get_waypoints();
+	const std::list<Waypoint *> & waypoints = trw->get_waypoints();
 
 	fprintf(file, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(file, waypoints);

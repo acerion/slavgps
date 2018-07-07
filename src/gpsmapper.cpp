@@ -108,10 +108,10 @@ static unsigned int print_rgn_stuff(FILE * file, char const * nm)
 
 
 
-static void write_waypoints(FILE * file, WaypointsContainer & waypoints)
+static void write_waypoints(FILE * file, const std::list<Waypoint *> & waypoints)
 {
 	for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
-		Waypoint * wp = iter->second;
+		Waypoint * wp = *iter;
 		unsigned int len = print_rgn_stuff(file, wp->comment.toUtf8().constData());
 		if (len) {
 			fprintf(file, "Data0=(%s)\n", wp->coord.get_latlon().to_string().toUtf8().constData()); /* "Data0=(lat,lon)\n" */
@@ -153,7 +153,7 @@ static void write_tracks(FILE * file, const std::list<Track *> & tracks)
 void SlavGPS::gpsmapper_write_file(FILE * file, LayerTRW * trw)
 {
 	const std::list<Track *> & tracks = trw->get_tracks();
-	WaypointsContainer & waypoints = trw->get_waypoints();
+	const std::list<Waypoint *> & waypoints = trw->get_waypoints();
 
 	fprintf(file, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
 		trw->name.toUtf8().constData(), trw->name.toUtf8().constData());

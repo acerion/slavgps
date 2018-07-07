@@ -90,8 +90,6 @@ LayerTRWTracks::LayerTRWTracks()
 	this->type_id = "sg.trw.routes";
 	this->accepted_child_type_ids << "sg.trw.route";
 	this->editable = false;
-
-	this->children_list = new std::list<Track *>;
 }
 
 
@@ -133,10 +131,10 @@ QString LayerTRWTracks::get_tooltip(void) const
 
 	if (this->type_id == "sg.trw.routes") {
 		/* Very simple tooltip - may expand detail in the future. */
-		tooltip = tr("Routes: %1").arg(this->children_list->size());
+		tooltip = tr("Routes: %1").arg(this->children_list.size());
 	} else {
 		/* Very simple tooltip - may expand detail in the future. */
-		tooltip = tr("Tracks: %1").arg(this->children_list->size());
+		tooltip = tr("Tracks: %1").arg(this->children_list.size());
 	}
 
 	return tooltip;
@@ -150,7 +148,7 @@ std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(char const * date) cons
 	char date_buf[20];
 	std::list<TreeItem *> result;
 
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		date_buf[0] = '\0';
 		Track * trk = *iter;
 
@@ -176,7 +174,7 @@ std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(char const * date) cons
  */
 Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 {
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
 		if (trk && !trk->name.isEmpty()) {
 			if (trk->name == trk_name) {
@@ -194,7 +192,7 @@ void LayerTRWTracks::recalculate_bbox(void)
 {
 	this->bbox.invalidate();
 
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->recalculate_bbox();
 		const LatLonBBox trk_bbox = (*iter)->get_bbox();
 		BBOX_EXPAND_WITH_BBOX(this->bbox, trk_bbox);
@@ -208,7 +206,7 @@ void LayerTRWTracks::recalculate_bbox(void)
 
 void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list) // zzz
 {
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		list.push_back((*iter)->uid);
 	}
 }
@@ -220,7 +218,7 @@ std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_tim
 {
 	std::list<Track *> result;
 
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Trackpoint * p1 = NULL;
 		Trackpoint * p2 = NULL;
 		Track * trk = *iter;
@@ -267,7 +265,7 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, 
 		return result;
 	}
 
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
 
 		/* Outline:
@@ -315,7 +313,7 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, 
 std::list<Track *> LayerTRWTracks::get_sorted_by_name(const Track * exclude) const
 {
 	std::list<Track *> result;
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		/* Skip given track. */
 		if (exclude && *iter == exclude) {
 			continue;
@@ -341,7 +339,7 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
-	if (this->children_list->size() <= 1) {
+	if (this->children_list.size() <= 1) {
 		return NULL;
 	}
 
@@ -365,7 +363,7 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 
 void LayerTRWTracks::set_items_visibility(bool on_off)
 {
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->visible = on_off;
 		this->tree_view->set_tree_item_visibility((*iter)->index, on_off);
 	}
@@ -376,7 +374,7 @@ void LayerTRWTracks::set_items_visibility(bool on_off)
 
 void LayerTRWTracks::toggle_items_visibility(void)
 {
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->visible = !(*iter)->visible;
 		this->tree_view->toggle_tree_item_visibility((*iter)->index);
 	}
@@ -387,7 +385,7 @@ void LayerTRWTracks::toggle_items_visibility(void)
 
 void LayerTRWTracks::get_tracks_list(std::list<Track *> & list)
 {
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		list.push_back(*iter);
 	}
 }
@@ -397,7 +395,7 @@ void LayerTRWTracks::get_tracks_list(std::list<Track *> & list)
 
 void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 {
-	for (auto track_iter = this->children_list->begin(); track_iter != this->children_list->end(); track_iter++) {
+	for (auto track_iter = this->children_list.begin(); track_iter != this->children_list.end(); track_iter++) {
 
 		Track * trk = *track_iter;
 
@@ -438,7 +436,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch * search)
 
 void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 {
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->convert(dest_mode);
 	}
 }
@@ -451,7 +449,7 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 */
 void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 {
-	if (this->children_list->empty()) {
+	if (this->children_list.empty()) {
 		qDebug() << "EE" PREFIX << "called for empty tracks/routes set";
 		return;
 	}
@@ -534,7 +532,7 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 	if (this->type_id == "sg.trw.tracks") {
 
 		int color_i = 0;
-		for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 
 			Track * trk = *iter;
 
@@ -559,7 +557,7 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 	} else { /* Routes. */
 
 		bool use_dark = false;
-		for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 
 			Track * route = *iter;
 
@@ -631,7 +629,7 @@ void LayerTRWTracks::update_tree_view(Track * trk)
 
 void LayerTRWTracks::add_children_to_tree(void)
 {
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
 
 		if (trk->has_color) {
@@ -829,7 +827,7 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 */
 void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	const unsigned int n_items = this->children_list->size();
+	const unsigned int n_items = this->children_list.size();
 	this->recalculate_bbox();
 
 	if (n_items > 0) {
@@ -920,7 +918,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 		return;
 	}
 
-	if (this->children_list->empty()) {
+	if (this->children_list.empty()) {
 		return;
 	}
 
@@ -929,7 +927,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 #ifdef K_TODO
 	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
 #endif
-		for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 			(*iter)->draw_tree_item(viewport, highlight_selected, item_is_selected);
 		}
 #ifdef K_TODO
@@ -962,7 +960,7 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 	qDebug() << "----" PREFIX "detach items - end";
 
 	qDebug() << "----" PREFIX "sort items - begin";
-	this->children_list->sort(TreeItem::compare_name_descending);
+	this->children_list.sort(TreeItem::compare_name_descending);
 	qDebug() << "----" PREFIX "sort items - end";
 
 	qDebug() << "----" PREFIX "attach items - begin";
@@ -1018,11 +1016,11 @@ void LayerTRWTracks::clear(void)
 {
 	this->children_map.clear();
 
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		delete *iter;
 	}
 
-	this->children_list->clear();
+	this->children_list.clear();
 }
 
 
@@ -1030,7 +1028,7 @@ void LayerTRWTracks::clear(void)
 
 size_t LayerTRWTracks::size(void) const
 {
-	return this->children_list ? this->children_list->size() : 0;
+	return this->children_list.size();
 }
 
 
@@ -1038,7 +1036,7 @@ size_t LayerTRWTracks::size(void) const
 
 bool LayerTRWTracks::empty(void) const
 {
-	return this->children_list? this->children_list->empty() : true;
+	return this->children_list.empty();
 }
 
 
@@ -1055,7 +1053,7 @@ void LayerTRWTracks::add_track_to_data_structure_only(Track * trk)
 {
 	trk->owning_layer = this->owning_layer;
 	this->children_map.insert({{ trk->uid, trk }});
-	this->children_list->push_back(trk);
+	this->children_list.push_back(trk);
 }
 
 
@@ -1095,9 +1093,9 @@ bool LayerTRWTracks::delete_track(Track * trk)
 
 
 	/* TODO: optimize. */
-	for (auto iter = this->children_list->begin(); iter != this->children_list->end(); iter++) {
+	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		if ((*iter)->uid == trk->uid) {
-			this->children_list->erase(iter);
+			this->children_list.erase(iter);
 		}
 	}
 

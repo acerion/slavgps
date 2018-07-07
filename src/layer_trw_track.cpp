@@ -3313,10 +3313,10 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	QString message;
 
 	if (this->type_id == "sg.trw.track") {
-		tracks = parent_layer->tracks;
+		tracks = &parent_layer->tracks;
 		message = tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	} else {
-		tracks = parent_layer->routes;
+		tracks = &parent_layer->routes;
 		message = tr("A route with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	}
 

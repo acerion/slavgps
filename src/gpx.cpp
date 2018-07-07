@@ -1167,16 +1167,8 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 	}
 
 	if (trw->get_waypoints_visibility() || (options && options->hidden)) {
-		/* Gather waypoints in a vector, sort them and write to file. */
-		WaypointsContainer & waypoints = trw->get_waypoints();
-		std::vector<Waypoint *> copy;
-		copy.resize(waypoints.size());
-
-		for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
-			copy.push_back(iter->second);
-		}
-
-		sort(copy.begin(), copy.end(), gpx_waypoint_compare);
+		std::list<Waypoint *> copy = trw->get_waypoints();
+		copy.sort(gpx_waypoint_compare);
 
 		for (auto iter = copy.begin(); iter != copy.end(); iter++) {
 			gpx_write_waypoint(*iter, &context);
@@ -1192,10 +1184,10 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 
 
 	/* Tracks sorted according to preferences. */
-	if (trw->tracks && (trw->get_tracks_visibility() || (options && options->hidden))) {
+	if (trw->tracks.size() && (trw->get_tracks_visibility() || (options && options->hidden))) {
 
 		std::list<Track *> track_values;
-		trw->tracks->get_tracks_list(track_values); /* TODO: make trw->tracks non-pointer? */
+		trw->tracks.get_tracks_list(track_values);
 
 		if (track_values.size()) {
 			switch (Preferences::get_gpx_export_trk_sort()) {
@@ -1219,10 +1211,10 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 
 
 	/* Routes always sorted by name. */
-	if (trw->routes && (trw->get_routes_visibility() || (options && options->hidden))) {
+	if (trw->routes.size() && (trw->get_routes_visibility() || (options && options->hidden))) {
 
 		std::list<Track *> route_values;
-		trw->routes->get_tracks_list(route_values); /* TODO: make trw->routes non-pointer? */
+		trw->routes.get_tracks_list(route_values);
 
 		if (route_values.size()) {
 			route_values.sort(TreeItem::compare_name);

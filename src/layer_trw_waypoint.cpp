@@ -457,7 +457,7 @@ void Waypoint::properties_dialog_cb(void)
 
 		if (std::get<SG_WP_DIALOG_NAME>(result)) {
 			/* Waypoint's name has been changed. */
-			parent_layer_->waypoints->propagate_new_waypoint_name(this);
+			parent_layer_->waypoints.propagate_new_waypoint_name(this);
 		}
 
 		parent_layer_->get_waypoints_node().set_new_waypoint_icon(this);
@@ -603,7 +603,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 		}
 	}
 
-	if (parent_layer->waypoints->find_waypoint_by_name(new_name)) {
+	if (parent_layer->waypoints.find_waypoint_by_name(new_name)) {
 		/* An existing waypoint has been found with the requested name. */
 		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), g_tree->tree_get_main_window())) {
 			return empty_string;
@@ -614,7 +614,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	this->set_name(new_name);
 
 	parent_layer->tree_view->set_tree_item_name(this->index, new_name);
-	parent_layer->tree_view->sort_children(parent_layer->waypoints->get_index(), parent_layer->wp_sort_order);
+	parent_layer->tree_view->sort_children(parent_layer->waypoints.get_index(), parent_layer->wp_sort_order);
 
 	g_tree->emit_items_tree_updated();
 
@@ -711,7 +711,7 @@ void Waypoint::delete_sublayer(bool confirm)
 	}
 
 	bool was_visible = parent_layer->delete_waypoint(this);
-	parent_layer->waypoints->recalculate_bbox();
+	parent_layer->waypoints.recalculate_bbox();
 
 	/* Reset layer timestamp in case it has now changed. */
 	parent_layer->tree_view->set_tree_item_timestamp(parent_layer->index, parent_layer->get_timestamp());
