@@ -264,7 +264,7 @@ void DataSourceGPS::off(void * user_data, QString & babel_args, QString & file_p
 
 static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 {
-	if (acquiring->running) {
+	if (acquiring->acquire_is_running) {
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 		QString msg;
 
@@ -294,7 +294,7 @@ static void set_total_count(unsigned int cnt, AcquireProcess * acquiring)
 /* Compare this function with GPSSession::set_current_count(int cnt) */
 static void set_current_count(int cnt, AcquireProcess * acquiring)
 {
-	if (acquiring->running) {
+	if (acquiring->acquire_is_running) {
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 
 		if (cnt < gps_dialog->total_count) {
@@ -335,7 +335,7 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 
 static void set_gps_info(const char * info, AcquireProcess * acquiring)
 {
-	if (acquiring->running) {
+	if (acquiring->acquire_is_running) {
 		((DatasourceGPSProgress *) acquiring->parent_data_source_dialog)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
 	}
 }
@@ -357,8 +357,8 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 	case AcquireProgressCode::DiagOutput:
 		line = (char *)data;
 
-		if (acquiring->running) {
-			acquiring->status->setText(QObject::tr("Status: Working..."));
+		if (acquiring->acquire_is_running) {
+			acquiring->progress_dialog->set_status(QObject::tr("Status: Working..."));
 		}
 
 		/* Tells us the type of items that will follow. */

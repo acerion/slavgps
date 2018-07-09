@@ -1839,8 +1839,9 @@ void LayerTRW::acquire_handler(DataSource * data_source)
 		mode = DataSourceMode::CreateNewLayer;
 	}
 
-	Acquire::set_context(this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL, NULL);
-	Acquire::acquire_from_source(data_source, mode);
+	AcquireProcess acquire;
+	acquire.set_context(this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL, NULL);
+	acquire.acquire_from_source(data_source, mode);
 }
 
 

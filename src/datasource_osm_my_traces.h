@@ -38,6 +38,7 @@
 
 
 #include "datasource.h"
+#include "acquire.h"
 
 
 

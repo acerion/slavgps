@@ -68,6 +68,7 @@
 #include "preferences.h"
 #include "viewport_internal.h"
 #include "file.h"
+#include "acquire.h"
 
 
 
@@ -2021,7 +2022,10 @@ void Track::recalculate_bbox(void)
 	}
 	this->bbox.validate();
 
-	qDebug() << "DD" PREFIX << "Recalculated bounds of track:" << this->bbox;
+	/* TODO: enable this debug and verify whether it appears only
+	   once for a given track during import ("acquire") of the
+	   track from external file. */
+	// qDebug() << "DD" PREFIX << "Recalculated bounds of track:" << this->bbox;
 }
 
 

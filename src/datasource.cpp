@@ -27,9 +27,41 @@
 #include "config.h"
 #endif
 
+
+
+
+#include <QPushButton>
+
+
+
+
 #include "datasource.h"
+#include "dialog.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+DataProgressDialog::DataProgressDialog(const QString & window_title, QWidget * parent) : BasicDialog(parent)
+{
+	this->setWindowTitle(window_title);
+	this->status = new QLabel(QObject::tr("Working..."));
+	this->grid->addWidget(status, 0, 0);
+
+	/* There will be nothing to confirm with OK button when data
+	   source is importing data, so the OK button needs to be
+	   blocked. */
+	this->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
+}
+
+
+
+
+void DataProgressDialog::set_status(const QString & text)
+{
+	this->status->setText(text);
+}

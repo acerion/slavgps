@@ -64,6 +64,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		AcquireTool() {};
+		virtual int kill(const QString & status) { return -1; };
 		virtual void import_progress_cb(AcquireProgressCode code, void * data) { return; };
 		virtual void export_progress_cb(AcquireProgressCode code, void * data) { return; };
 	};
@@ -88,25 +89,38 @@ namespace SlavGPS {
 		AcquireProcess() {};
 		AcquireProcess(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport) : window(new_window), panel(new_panel), viewport(new_viewport) {};
 
+		void acquire_from_source(DataSource * data_source, DataSourceMode mode);
+		void set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk);
+
 		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
 
 		void import_progress_cb(AcquireProgressCode code, void * data);
 
-		QLabel * status = NULL;
+		void configure_target_layer(DataSourceMode mode);
+
+		enum {
+			Success,
+			Failure
+		};
+
 		Window * window = NULL;
 		LayersPanel * panel = NULL;
 		Viewport * viewport = NULL;
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
 
-		bool running = false;
+		bool acquire_is_running = false;
+
+		bool creating_new_layer = false;
 
 		DataSource * data_source = NULL;
 		DataSourceDialog * config_dialog = NULL;
 		DataSourceDialog * parent_data_source_dialog = NULL;
+		DataProgressDialog * progress_dialog = NULL;
 
 	public slots:
 		void filter_trwlayer_cb(void);
+		void handle_getter_status_cb(int status);
 	};
 
 
@@ -120,8 +134,11 @@ namespace SlavGPS {
 		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something) { return false; };
 		virtual void progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring) { return; };
 		virtual void cleanup(void * data) { return; };
+		virtual int kill(const QString & status) { return -1; };
 
 		virtual int run_config_dialog(AcquireProcess * acquire_context) { return QDialog::Rejected; };
+
+		virtual DataProgressDialog * create_progress_dialog(const QString & title);
 
 		QString window_title;
 		QString layer_title;
@@ -135,7 +152,6 @@ namespace SlavGPS {
 		bool is_thread = false;
 
 		DataSourceDialog * config_dialog = NULL;
-
 		BabelOptions * process_options = NULL;
 		DownloadOptions * download_options = NULL;
 		AcquireOptions * acquire_options = NULL;
@@ -145,18 +161,21 @@ namespace SlavGPS {
 
 
 	/* Remember that by default QRunnable is auto-deleted on thread exit. */
-	class AcquireGetter : public QRunnable {
+	class AcquireGetter : public QObject, public QRunnable {
+		Q_OBJECT
 	public:
 		AcquireGetter() {};
 		~AcquireGetter();
 		void run(); /* Re-implementation of QRunnable::run(). */
 		void on_complete_process(void);
 
-		void configure_target_layer(DataSourceMode mode);
 
+		bool result = false;
 		DataSource * data_source = NULL;
 		AcquireProcess * acquiring = NULL;
-		bool creating_new_layer = false;
+		DataProgressDialog * progress_dialog = NULL;
+	signals:
+		void report_status(int status);
 	};
 
 

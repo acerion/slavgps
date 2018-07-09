@@ -824,8 +824,10 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 void LayerTRWPainter::draw_track(Track * trk, Viewport * a_viewport, bool do_highlight)
 {
 	if (!BBOX_INTERSECT (trk->bbox, a_viewport->get_bbox())) {
+#if 0
 		qDebug() << "DD" PREFIX << "track bbox:" << trk->bbox;
 		qDebug() << "DD" PREFIX << "viewport bbox:" << a_viewport->get_bbox();
+#endif
 		return;
 	}
 

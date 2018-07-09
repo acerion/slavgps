@@ -24,6 +24,12 @@
 
 
 
+#include <QLabel>
+#include <QString>
+
+
+
+
 #include "dialog.h"
 
 
@@ -79,6 +85,19 @@ namespace SlavGPS {
 		virtual BabelOptions * get_process_options_layer_track(const QString & input_layer_filename, const QString & input_track_filename) { return NULL; };
 		virtual BabelOptions * get_process_options_layer(const QString & input_layer_filename) { return NULL; };
 
+	};
+
+
+
+
+	class DataProgressDialog : public BasicDialog {
+		Q_OBJECT
+	public:
+		DataProgressDialog(const QString & window_title, QWidget * parent = NULL);
+
+		void set_status(const QString & text);
+	private:
+		QLabel * status = NULL;
 	};
 
 

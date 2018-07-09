@@ -217,6 +217,21 @@ static void babel_watch(GPid pid, int status, void * cb_data)
 
 
 
+BabelOptions::BabelOptions(const BabelOptions & other)
+{
+	this->input             = other.input;
+	this->input_data_format = other.input_data_format;
+	this->output            = other.output;
+	this->babel_args        = other.babel_args;
+	this->babel_filters     = other.babel_filters;
+	this->shell_command     = other.shell_command;
+	this->mode              = other.mode;
+	/* Ignore babel_process field. */
+}
+
+
+
+
 /**
    Runs gpsbabel program with the \param args and uses the GPX module to
    import the GPX data into \param trw layer. Assumes that upon
@@ -244,12 +259,12 @@ static void babel_watch(GPid pid, int status, void * cb_data)
    \return true on success
    \return false otherwise
 */
-bool Babel::convert_through_intermediate_file(const QString & program, const QStringList & args, AcquireTool * progress_indicator, LayerTRW * trw, const QString & intermediate_file_path)
+bool BabelProcess::convert_through_intermediate_file(LayerTRW * trw, const QString & intermediate_file_path)
 {
-	qDebug().nospace() << "II: Babel: convert through intermediate file: will write to intermediate file '" << intermediate_file_path << "'";
+	qDebug() << "II" PREFIX << "will write to intermediate file" << intermediate_file_path;
 
-	BabelProcess converter(program, args, progress_indicator);
-	if (!converter.run_process(true)) {
+
+	if (!this->run_import()) {
 		qDebug() << "EE: Babel: convert through intermediate file: conversion failed";
 		return false;
 	}
@@ -343,7 +358,10 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
 	args << intermediate_file_path;
 
 
-	const bool ret = babel.convert_through_intermediate_file(program, args, progress_indicator, trw, intermediate_file_path);
+	this->babel_process = new BabelProcess();
+	this->babel_process->set_parameters(program, args, progress_indicator);
+	const bool ret = this->babel_process->convert_through_intermediate_file(trw, intermediate_file_path);
+	delete this->babel_process;
 
 	intermediate_file.remove(); /* Close and remove. */
 
@@ -391,7 +409,24 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progr
 
 	const QString program(BASH_LOCATION);
 	const QStringList args(QStringList() << "-c" << full_shell_command);
-	return babel.convert_through_intermediate_file(program, args, progress_indicator, trw, intermediate_file_fullpath);
+
+	this->babel_process = new BabelProcess();
+	this->babel_process->set_parameters(program, args, progress_indicator);
+	bool rv = this->babel_process->convert_through_intermediate_file(trw, intermediate_file_fullpath);
+	delete this->babel_process;
+	return rv;
+}
+
+
+
+
+int BabelOptions::kill(const QString & status)
+{
+	if (this->babel_process && QProcess::NotRunning != this->babel_process->process->state()) {
+		return this->babel_process->kill(status);
+	} else {
+		return -3;
+	}
 }
 
 
@@ -564,8 +599,9 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool 
 		return false;
 	}
 
-	BabelProcess converter(program, args, progress_indicator);
-	return converter.run_process(false);
+	BabelProcess converter;
+	converter.set_parameters(program, args, progress_indicator);
+	return converter.run_export();
 }
 
 
@@ -650,8 +686,9 @@ static bool load_babel_features(void)
 
 	args << QString("-^3");
 
-	BabelFeatureLoader feature_loader(program, args, NULL);
-	return feature_loader.run_process(true);
+	BabelFeatureLoader feature_loader;
+	feature_loader.set_parameters(program, args, NULL);
+	return feature_loader.run_process();
 }
 
 
@@ -727,24 +764,30 @@ bool Babel::is_available(void)
 
 
 
-BabelProcess::BabelProcess(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator)
+BabelProcess::BabelProcess()
 {
-	this->process = new QProcess(this);
-
-	this->process->setProgram(program);
-	this->process->setArguments(args);
-
-	this->progress_indicator = new_progress_indicator;
+	this->process = new QProcess();
 
 	QObject::connect(this->process, SIGNAL (started()), this, SLOT (started_cb()));
 	QObject::connect(this->process, SIGNAL (finished(int, QProcess::ExitStatus)), this, SLOT (finished_cb(int, QProcess::ExitStatus)));
 	QObject::connect(this->process, SIGNAL (errorOccurred(QProcess::ProcessError)), this, SLOT (error_occurred_cb(QProcess::ProcessError)));
 	QObject::connect(this->process, SIGNAL (readyReadStandardOutput()), this, SLOT (read_stdout_cb()));
 
+}
+
+
+
+
+void BabelProcess::set_parameters(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator)
+{
+	this->process->setProgram(program);
+	this->process->setArguments(args);
+	this->progress_indicator = new_progress_indicator;
+
 	if (true || vik_debug) {
-		qDebug() << "DD: Babel: general convert: program" << program;
+		qDebug() << "DD" PREFIX << "program is" << program;
 		for (int i = 0; i < args.size(); i++) {
-			qDebug() << "DD: Babel Converter: arg no." << i << ": '" << args.at(i) << "'";
+			qDebug() << "DD" PREFIX << "arg no." << i << "=" << args.at(i);
 		}
 	}
 }
@@ -760,25 +803,16 @@ BabelProcess::~BabelProcess()
 
 
 
-bool BabelProcess::run_process(bool do_import)
+bool BabelProcess::run_process(void)
 {
 	bool success = true;
 	this->process->start();
-	//this->process->waitForStarted(-1);
 	this->process->waitForFinished(-1);
 
 	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
-		if (do_import) {
-			this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
-		} else {
-			this->progress_indicator->export_progress_cb(AcquireProgressCode::Completed, NULL);
-		}
+		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
-		if (do_import) {
-			this->import_progress_cb(AcquireProgressCode::Completed, NULL);
-		} else {
-			this->export_progress_cb(AcquireProgressCode::Completed, NULL);
-		}
+		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	}
 
 
@@ -821,6 +855,55 @@ bool BabelProcess::run_process(bool do_import)
 	return success;
 }
 
+
+bool BabelProcess::run_import(void)
+{
+	bool success = true;
+	qDebug() << "II" PREFIX;
+	this->process->start();
+	qDebug() << "II" PREFIX;
+	this->process->waitForFinished(-1);
+
+	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
+	} else {
+		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
+	}
+
+	return success;
+}
+
+
+
+
+bool BabelProcess::run_export(void)
+{
+	bool success = true;
+	this->process->start();
+	this->process->waitForFinished(-1);
+
+	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+		this->progress_indicator->export_progress_cb(AcquireProgressCode::Completed, NULL);
+	} else {
+		this->export_progress_cb(AcquireProgressCode::Completed, NULL);
+	}
+
+	return success;
+}
+
+
+
+int BabelProcess::kill(const QString & status)
+{
+	if (this->process) {
+		qDebug() << "II" PREFIX << "killing process" << status;
+		this->process->kill();
+		return 0;
+	} else {
+		qDebug() << "WW" PREFIX << "process doesn't exit" << status;
+		return -2;
+	}
+}
 
 
 

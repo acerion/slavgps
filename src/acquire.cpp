@@ -31,6 +31,7 @@
 
 #include <cassert>
 #include <vector>
+#include <unistd.h>
 
 
 
@@ -84,7 +85,7 @@ AcquireGetter::~AcquireGetter()
  * Some common things to do on completion of a datasource process
  *  . Update layer
  *  . Update dialog info
- *  . Update main dsisplay
+ *  . Update main viewport
  */
 void AcquireGetter::on_complete_process(void)
 {
@@ -95,8 +96,13 @@ void AcquireGetter::on_complete_process(void)
 	    true
 #endif
 	    ) {
-		this->acquiring->status->setText(QObject::tr("Done."));
-		if (this->creating_new_layer) {
+		qDebug() << "II" PREFIX;
+		emit report_status(3);
+
+		qDebug() << "II" PREFIX;
+
+		if (this->acquiring->creating_new_layer) {
+			qDebug() << "II" PREFIX;
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO: create function for this operation to hide detail: */
 			if (!this->acquiring->trw->is_empty()) {
@@ -107,7 +113,7 @@ void AcquireGetter::on_complete_process(void)
 				   so that they can be displayed on "tree updated" event. */
 				this->acquiring->trw->add_children_to_tree();
 			} else {
-				this->acquiring->status->setText(QObject::tr("No data.")); /* TODO: where do we display this message? */
+				emit report_status(4);
 			}
 		}
 
@@ -133,7 +139,7 @@ void AcquireGetter::on_complete_process(void)
 		}
 	} else {
 		/* Cancelled. */
-		if (this->creating_new_layer) {
+		if (this->acquiring->creating_new_layer) {
 			this->acquiring->trw->unref();
 		}
 	}
@@ -142,7 +148,7 @@ void AcquireGetter::on_complete_process(void)
 
 
 
-void AcquireGetter::configure_target_layer(DataSourceMode mode)
+void AcquireProcess::configure_target_layer(DataSourceMode mode)
 {
 	switch (mode) {
 	case DataSourceMode::CreateNewLayer:
@@ -150,9 +156,9 @@ void AcquireGetter::configure_target_layer(DataSourceMode mode)
 		break;
 
 	case DataSourceMode::AddToLayer: {
-		Layer * selected_layer = this->acquiring->panel->get_selected_layer();
+		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
-			this->acquiring->trw = (LayerTRW *) selected_layer;
+			this->trw = (LayerTRW *) selected_layer;
 			this->creating_new_layer = false;
 		}
 		}
@@ -165,22 +171,22 @@ void AcquireGetter::configure_target_layer(DataSourceMode mode)
 	case DataSourceMode::ManualLayerManagement: {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
 		this->creating_new_layer = false;
-		Layer * selected_layer = this->acquiring->panel->get_selected_layer();
+		Layer * selected_layer = this->panel->get_selected_layer();
 		if (selected_layer->type == LayerType::TRW) {
-			this->acquiring->trw = (LayerTRW *) selected_layer;
+			this->trw = (LayerTRW *) selected_layer;
 		}
 		}
 		break;
 	default:
-		qDebug() << "EE: Acquire: unexpected DataSourceMode" << (int) mode;
+		qDebug() << "EE" PREFIX << "unexpected DataSourceMode" << (int) mode;
 		break;
 	};
 
 
 	if (this->creating_new_layer) {
-		this->acquiring->trw = new LayerTRW();
-		this->acquiring->trw->set_coord_mode(this->acquiring->viewport->get_coord_mode());
-		this->acquiring->trw->set_name(this->data_source->layer_title);
+		this->trw = new LayerTRW();
+		this->trw->set_coord_mode(this->viewport->get_coord_mode());
+		this->trw->set_name(this->data_source->layer_title);
 	}
 }
 
@@ -193,11 +199,11 @@ void AcquireGetter::run(void)
 {
 	assert (this->data_source);
 
-	bool result = this->data_source->acquire_into_layer(this->acquiring->trw, this->acquiring);
+	this->result = this->data_source->acquire_into_layer(this->acquiring->trw, this->acquiring);
 
-	if (this->acquiring->running && !result) {
-		this->acquiring->status->setText(QObject::tr("Error: acquisition failed."));
-		if (this->creating_new_layer) {
+	if (this->acquiring->acquire_is_running && !this->result) {
+		this->acquiring->progress_dialog->set_status(QObject::tr("Error: acquisition failed."));
+		if (this->acquiring->creating_new_layer) {
 			this->acquiring->trw->unref();
 		}
 	} else {
@@ -206,7 +212,7 @@ void AcquireGetter::run(void)
 
 	this->data_source->cleanup(this->acquiring->parent_data_source_dialog);
 
-	this->acquiring->running = false;
+	this->acquiring->acquire_is_running = false;
 }
 
 
@@ -225,28 +231,24 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	AcquireGetter getter;
 	getter.acquiring = this;
 	getter.data_source = new_data_source;
-	getter.creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
+	getter.acquiring->creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
 
-	//this->config_dialog = data_source->config_dialog; /* FIXME: setup or progress dialog? */
-	this->running = true;
-	this->status = new QLabel(QObject::tr("Working..."));
 
-	DataSourceDialog * progress_dialog = NULL;
-#ifdef K_FIXME_RESTORE
-	if (new_data_source->create_progress_dialog) {
-		progress_dialog = new_data_source->create_progress_dialog(this->user_data);
-	}
-#endif
 
-	getter.configure_target_layer(mode);
+	this->creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
+	this->configure_target_layer(mode);
+	this->acquire_is_running = true;
+	this->progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
+	this->progress_dialog->set_status(QObject::tr("Importing data..."));
+
 
 	if (!new_data_source->process_options->is_valid()) {
 		/* This shouldn't happen... */
-		this->status->setText(QObject::tr("Unable to create command\nAcquire method failed.")); /* TODO: this should go to dialog box. */
-		if (progress_dialog) {
-			progress_dialog->exec(); /* TODO: improve handling of invalid process options. */
-		}
+		this->progress_dialog->set_status(QObject::tr("Unable to create command\nAcquire method failed.")); /* TODO: this should go to dialog box. */
+		this->progress_dialog->exec(); /* TODO: improve handling of invalid process options. */
+		delete this->progress_dialog;
+		return;
 	}
 
 	if (new_data_source->is_thread) {
@@ -256,9 +258,9 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 			progress_dialog->exec();
 		}
 
-		if (this->running) {
+		if (this->acquire_is_running) {
 			/* Cancel and mark for thread to finish. */
-				this->running = false;
+				this->acquire_is_running = false;
 				/* NB Thread will free memory. */
 		} else {
 #ifdef K_FIXME_RESTORE
@@ -308,7 +310,7 @@ void AcquireProcess::import_progress_cb(AcquireProgressCode code, void * data)
 	assert (this->data_source);
 
 	if (this->data_source->is_thread) {
-		if (!this->running) {
+		if (!this->acquire_is_running) {
 			this->data_source->cleanup(this->parent_data_source_dialog);
 		}
 	}
@@ -327,6 +329,16 @@ DataSource::~DataSource()
 	delete this->process_options;
 	delete this->download_options;
 	delete this->config_dialog;
+}
+
+
+
+
+DataProgressDialog * DataSource::create_progress_dialog(const QString & title)
+{
+	DataProgressDialog * dialog = new DataProgressDialog(title);
+
+	return dialog;
 }
 
 
@@ -393,8 +405,15 @@ BabelOptions * DataSourceDialog::create_process_options_none(void)
 
 void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode)
 {
-	AcquireProcess acquiring(g_acquiring->window, g_acquiring->panel, g_acquiring->viewport);
-	acquiring.acquire(data_source, mode, NULL);
+	/* TODO: remove the function. */
+}
+
+
+
+
+void AcquireProcess::acquire_from_source(DataSource * new_data_source, DataSourceMode mode)
+{
+	this->acquire(new_data_source, mode, NULL);
 }
 
 
@@ -406,6 +425,41 @@ void AcquireProcess::filter_trwlayer_cb(void)
 	const int filter_idx = qa->data().toInt();
 
 	this->acquire(g_bfilters[filter_idx], g_bfilters[filter_idx]->mode, NULL);
+}
+
+
+
+
+void AcquireProcess::handle_getter_status_cb(int status)
+{
+	switch (status) {
+	case AcquireProcess::Success:
+		qDebug() << "II" PREFIX << "Success";
+		if (this->progress_dialog) {
+			this->progress_dialog->set_status(QObject::tr("Import completed successfully"));
+		}
+		break;
+	case AcquireProcess::Failure:
+		qDebug() << "II" PREFIX << "Failure";
+		if (this->progress_dialog) {
+			this->progress_dialog->set_status(QObject::tr("Failed to import data"));
+		}
+	case 3:
+		qDebug() << "II" PREFIX << "Done";
+		if (this->progress_dialog) {
+			this->progress_dialog->set_status(QObject::tr("Done"));
+		}
+		break;
+	case 4:
+		qDebug() << "II" PREFIX << "No Data";
+		if (this->progress_dialog) {
+			this->progress_dialog->set_status(QObject::tr("No Data"));
+		}
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "Unhandled getter status" << status;
+		break;
+	};
 }
 
 
@@ -540,6 +594,18 @@ bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireTool * progress_
 
 
 
+int DataSourceBabel::kill(const QString & status)
+{
+	if (this->process_options) {
+		return this->process_options->kill(status);
+	} else {
+		return -4;
+	}
+}
+
+
+
+
 void Acquire::set_context(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * new_trw, Track * new_trk)
 {
 	g_acquiring->window = new_window;
@@ -547,4 +613,16 @@ void Acquire::set_context(Window * new_window, LayersPanel * new_panel, Viewport
 	g_acquiring->viewport = new_viewport;
 	g_acquiring->trw = new_trw;
 	g_acquiring->trk = new_trk;
+}
+
+
+
+
+void AcquireProcess::set_context(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * new_trw, Track * new_trk)
+{
+	this->window = new_window;
+	this->panel = new_panel;
+	this->viewport = new_viewport;
+	this->trw = new_trw;
+	this->trk = new_trk;
 }

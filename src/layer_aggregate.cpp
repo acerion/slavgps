@@ -204,13 +204,6 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	layer->owning_layer = this;
 
-
-	if (layer->type == LayerType::GPS) {
-		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
-		layer->add_children_to_tree();
-	}
-
-
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->push_tree_item_front(this->index, layer, layer->name);
@@ -223,6 +216,11 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_back(layer);
 	}
 	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
+
+	if (layer->type == LayerType::GPS) {
+		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
+		layer->add_children_to_tree();
+	}
 
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 

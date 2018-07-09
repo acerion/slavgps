@@ -301,7 +301,10 @@ bool TreeView::get_tree_item_visibility(TreeIndex const & index)
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(index.parent());
 	if (!parent_item) {
 		/* "index" points at the top-level item. */
-		qDebug() << "II" PREFIX << "querying Top Level Item for item" << index.row() << index.column();
+		//qDebug() << "II" PREFIX << "querying Top Level Item for item" << index.row() << index.column();
+		if (index.row() == -1 || index.column() == -1) {
+			qDebug() << "EE" PREFIX << "invalid row or column";
+		}
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(index.row(), (int) TreeViewColumn::Visible);

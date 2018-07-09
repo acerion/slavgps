@@ -2452,8 +2452,9 @@ void Window::acquire_handler(DataSource * data_source)
 		mode = DataSourceMode::CreateNewLayer;
 	}
 
-	Acquire::set_context(this, this->items_tree, this->viewport, NULL, NULL);
-	Acquire::acquire_from_source(data_source, mode);
+	AcquireProcess acquire;
+	acquire.set_context(this, this->items_tree, this->viewport, NULL, NULL);
+	acquire.acquire_from_source(data_source, mode);
 }
 
 

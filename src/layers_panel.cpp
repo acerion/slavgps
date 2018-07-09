@@ -646,6 +646,10 @@ bool LayersPanel::has_any_layer_of_type(LayerType type)
 
 LayerAggregate * LayersPanel::get_top_layer()
 {
+	if (NULL == this->toplayer) {
+		qDebug() << "EE" PREFIX << "Top layer is NULL";
+	}
+
 	return this->toplayer;
 }
 
