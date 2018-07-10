@@ -1834,7 +1834,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 			const QString job_description = map_download_mode_message(map_download_mode, mdj->n_items, map_source->get_label());
 			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
 			mdj->set_description(job_description);
-			Background::run_in_background(mdj, ThreadPoolType::REMOTE);
+			mdj->run_in_background(ThreadPoolType::Remote);
 		} else {
 			delete mdj;
 		}
@@ -1873,7 +1873,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		const QString job_description = map_download_mode_message(map_download_mode, mdj->n_items, map_source->get_label());
 		mdj->layer->weak_ref(weak_ref_cb, mdj);
 		mdj->set_description(job_description);
-		Background::run_in_background(mdj, ThreadPoolType::REMOTE);
+		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
 		delete mdj;
 	}

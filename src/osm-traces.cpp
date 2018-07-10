@@ -564,7 +564,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->name);
 		info->set_description(job_description);
 
-		Background::run_in_background(info, ThreadPoolType::REMOTE);
+		info->run_in_background(ThreadPoolType::Remote);
 	}
 }
 

@@ -245,7 +245,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 	if (!new_data_source->process_options->is_valid()) {
 		/* This shouldn't happen... */
-		this->progress_dialog->set_status(QObject::tr("Unable to create command\nAcquire method failed.")); /* TODO: this should go to dialog box. */
+		this->progress_dialog->set_status(QObject::tr("Unable to create command\nAcquire method failed."));
 		this->progress_dialog->exec(); /* TODO: improve handling of invalid process options. */
 		delete this->progress_dialog;
 		return;
@@ -398,14 +398,6 @@ BabelOptions * DataSourceDialog::create_process_options_none(void)
 	BabelOptions * process_options = this->get_process_options_none();
 
 	return process_options;
-}
-
-
-
-
-void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode)
-{
-	/* TODO: remove the function. */
 }
 
 

@@ -413,5 +413,5 @@ void MapSourceBing::async_load_attributions()
 	bg_job->n_items = 1;
 	bg_job->set_description(QObject::tr("Bing attribution Loading"));
 
-	Background::run_in_background(bg_job, ThreadPoolType::REMOTE);
+	bg_job->run_in_background(ThreadPoolType::Remote);
 }

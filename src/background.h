@@ -28,7 +28,15 @@
 #include "config.h"
 #endif
 
+
+
+
+#include <list>
 #include <cstdint>
+#include <mutex>
+
+
+
 
 #include <QObject>
 #include <QDialog>
@@ -48,15 +56,16 @@ namespace SlavGPS {
 
 
 	class Window;
+	class BackgroundWindow;
 
 
 
 
 	enum class ThreadPoolType {
-		REMOTE, /* i.e. Network requests - can have an arbitary large pool. */
-		LOCAL,  /* i.e. CPU bound tasks - pool should be no larger than available CPUs for best performance. */
+		Remote, /* i.e. Network requests - can have an arbitary large pool. */
+		Local,  /* i.e. CPU bound tasks - pool should be no larger than available CPUs for best performance. */
 #ifdef HAVE_LIBMAPNIK
-		LOCAL_MAPNIK,  /* Due to potential issues with multi-threading a separate configurable pool for Mapnik. */
+		LocalMapnik,  /* Due to potential issues with multi-threading a separate configurable pool for Mapnik. */
 #endif
 	};
 
@@ -73,9 +82,13 @@ namespace SlavGPS {
 
 		virtual void cleanup_on_cancel(void) {};
 
+		void run_in_background(ThreadPoolType pool_type);
+
 		void set_description(const QString & job_description) { this->description = job_description; };
 		bool set_progress_state(int progress);
 		bool test_termination_condition(void);
+
+		void detach_from_window(BackgroundWindow * window);
 
 		int n_items = 0;
 		bool remove_from_list = false;
@@ -83,6 +96,8 @@ namespace SlavGPS {
 		int progress = 0; /* 0 - 100% */
 
 		QString description;
+
+		std::mutex mutex;
 	};
 
 
@@ -95,8 +110,8 @@ namespace SlavGPS {
 		~BackgroundWindow() {};
 
 		void show_window(void);
-		QPersistentModelIndex * insert_job(BackgroundJob * bg_job);
-		void remove_job(QStandardItem * item);
+		void append_job(BackgroundJob * bg_job);
+		void remove_job(QPersistentModelIndex * index);
 
 		QStandardItemModel * model = NULL;
 		QTableView * view = NULL;
@@ -110,6 +125,8 @@ namespace SlavGPS {
 
 	private:
 
+		void remove_job(QStandardItem * item);
+
 		QDialogButtonBox * button_box = NULL;
 		QPushButton * close = NULL;
 		QPushButton * remove_selected = NULL;
@@ -122,18 +139,33 @@ namespace SlavGPS {
 
 	class Background {
 	public:
-		static void init();
-		static void post_init();
+		static void init(void);
+		static void post_init(void);
 		static void post_init_window(QWidget * parent);
 		static void uninit(void);
-
-		static void run_in_background(BackgroundJob * bg_job, ThreadPoolType pool_type); /* TODO: should this become a non-static method of BackgroundJob? */
 
 		static bool test_termination_condition(void);
 
 		static void show_window();
 		static void add_window(Window * window);
 		static void remove_window(Window * window);
+
+		void update_status_indication(void);
+
+		BackgroundWindow * bgwindow = NULL;
+
+		/* Total number of items processed in background.
+		   The items may come from different jobs. */
+		int n_items = 0;
+
+	private:
+		/* List of main (top-level) windows that will be updated (in
+		   statusbar) with information about status of background jobs. */
+		std::list<Window *> main_windows;
+
+
+
+		bool stop_all_threads = false;
 	};
 
 

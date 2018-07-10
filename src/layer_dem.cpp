@@ -455,7 +455,7 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 			load_job->set_description(QObject::tr("DEM Loading"));
 			QObject::connect(load_job, SIGNAL (loading_to_cache_completed(void)), this, SLOT (on_loading_to_cache_completed_cb(void)));
 
-			Background::run_in_background(load_job, ThreadPoolType::LOCAL);
+			load_job->run_in_background(ThreadPoolType::Local);
 		}
 
 		break;
@@ -957,6 +957,21 @@ void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 	}
 
 	for (auto iter = this->files.begin(); iter != this->files.end(); iter++) {
+
+		/* FIXME: dereferencing this iterator may fail when two things happen at the same time:
+		   - layer is drawn,
+		   - new DEM tiles are being downloaded.
+		   Try this scenario:
+		   1. create new DEM Layer,
+		   2. open list of background jobs to observe downloads,
+		   3. select "DEM download" tool from toolbar,
+		   4. click with the tool in viewport to start downloading new DEM tile,
+		   5. quickly switch to Pan tool, start moving viewport around to cause its redraws.
+
+		   When new tile is downloaded and added to
+		   this->files while this loop in ::draw_tree_item()
+		   is executed, the iter becomes invalid and
+		   dereferencing it crashes the program. */
 		const QString dem_file_path = *iter;
 		DEM * dem = DEMCache::get(dem_file_path);
 		if (dem) {
@@ -1464,7 +1479,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 			const QString job_description = QObject::tr("Downloading DEM %1").arg(cache_file_name);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
 			job->set_description(job_description);
-			Background::run_in_background(job, ThreadPoolType::REMOTE);
+			job->run_in_background(ThreadPoolType::Remote);
 		} else {
 			qDebug() << "II" PREFIX << "released left button, successfully added the file, emitting 'changed'";
 			this->emit_layer_changed("DEM - released left button");

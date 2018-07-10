@@ -186,8 +186,6 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void acquire_from_source(DataSource * data_source, DataSourceMode mode);
-
 		static void set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk);
 
 		static QMenu * create_bfilter_layer_menu(void);

@@ -619,7 +619,7 @@ void GeoTagDialog::on_accept_cb(void)
 	geotag_job->set_description(job_description);
 
 	/* Processing lots of files can take time - so run a background effort. */
-	Background::run_in_background(geotag_job, ThreadPoolType::LOCAL);
+	geotag_job->run_in_background(ThreadPoolType::Local);
 }
 
 

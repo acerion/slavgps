@@ -723,7 +723,7 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coo
 	const QString base_name = FileUtils::get_base_name(file_name);
 	const QString job_description = QObject::tr("Mapnik Render %1:%2:%3 %4").arg(zoom).arg(x).arg(y).arg(base_name);
 	ri->set_description(job_description);
-	Background::run_in_background(ri, ThreadPoolType::LOCAL_MAPNIK);
+	ri->run_in_background(ThreadPoolType::LocalMapnik);
 }
 
 
