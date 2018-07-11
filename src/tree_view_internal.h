@@ -73,14 +73,14 @@ namespace SlavGPS {
 	class TreeView : public QTreeView {
 		Q_OBJECT
 	public:
-		TreeView(QWidget * parent_widget);
+		TreeView(TreeItem * top_level_layer, QWidget * parent_widget);
 		TreeView();
 
 		~TreeView();
 
-		TreeIndex const & push_tree_item_front(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name);
-		TreeIndex const & push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name);
-		TreeIndex const & insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above, const QString & name);
+		bool push_tree_item_front(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name);
+		bool push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name);
+		bool insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above, const QString & name);
 		TreeItem * get_tree_item(TreeIndex const & item_index);
 
 		TreeIndex * get_index_from_path_str(char const * path_str);
@@ -124,7 +124,7 @@ namespace SlavGPS {
 		void tree_item_needs_redraw(sg_uid_t uid);
 
 	private:
-		const TreeIndex & insert_tree_item_at_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row);
+		bool insert_tree_item_at_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row);
 		QList<QStandardItem *> create_new_row(TreeItem * tree_item, const QString & name);
 	};
 

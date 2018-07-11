@@ -777,7 +777,6 @@ void Window::create_actions(void)
 		this->qa_view_highlight_usage->setToolTip(tr("Use highlighting when drawing selected items"));
 		show_submenu->addAction(this->qa_view_highlight_usage);
 		connect(this->qa_view_highlight_usage, SIGNAL (triggered(bool)), this, SLOT (set_highlight_usage_cb(bool)));
-		/* TODO: icon: GTK_STOCK_UNDERLINE */
 
 
 		qa = this->panel_dock->toggleViewAction(); /* Existing action! */
@@ -788,7 +787,6 @@ void Window::create_actions(void)
 		qa->setToolTip(tr("Show Side Panel"));
 		show_submenu->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_side_panel_visibility_cb(bool)));
-		/* TODO: icon: GTK_STOCK_INDEX */
 
 
 		qa = this->status_bar->toggleViewAction();

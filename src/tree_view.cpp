@@ -484,13 +484,23 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
    @param tree_item - tree_item to be added
    @param name - name of tree item to be added
 
-   @return tree index of newly added tree item
+   @return true on success
+   @return false on failure
 */
-TreeIndex const & TreeView::push_tree_item_front(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+bool TreeView::push_tree_item_front(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
 {
-	qDebug() << "II" PREFIX << "Pushing front tree item" << name;
-
-	return this->insert_tree_item_at_row(parent_index, tree_item, name, 0);
+	if (parent_index.isValid()) {
+		const int row = 0;
+		qDebug() << "II" PREFIX << "Pushing front tree item named" << name;
+		return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
+	} else {
+		/* Parent index must always be valid. The only
+		   possibility would be when we would push top level
+		   layer, but this has been already done in tree
+		   view's constructor. */
+		qDebug() << "EE" PREFIX << "Trying to push tree item with invalid parent item";
+		return false;
+	}
 }
 
 
@@ -503,21 +513,23 @@ TreeIndex const & TreeView::push_tree_item_front(TreeIndex const & parent_index,
    @param tree_item - tree_item to be added
    @param name - name of tree item to be added
 
-   @return tree index of newly added tree item
+   @return true on success
+   @return false on failure
 */
-TreeIndex const & TreeView::push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+bool TreeView::push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
 {
-	int row = 0;
 	if (parent_index.isValid()) {
-		row = this->tree_model->itemFromIndex(parent_index)->rowCount();
-		qDebug() << "II" PREFIX << "Pushing back tree item" << name << "in row" << row;
+		const int row = this->tree_model->itemFromIndex(parent_index)->rowCount();
+		qDebug() << "II" PREFIX << "Pushing back tree item named" << name << "in row" << row;
+		return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
 	} else {
-		/* This may happen when pushing back top level layer. TODO: make a separate method for installing top level layer? */
-		row = 0;
-		qDebug() << "WW" PREFIX << "Pushing back tree item" << name << "in row" << row;
+		/* Parent index must always be valid. The only
+		   possibility would be when we would push top level
+		   layer, but this has been already done in tree
+		   view's constructor. */
+		qDebug() << "EE" PREFIX << "Trying to push tree item with invalid parent item";
+		return false;
 	}
-
-	return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
 }
 
 
@@ -732,7 +744,7 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 
 
-TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above, const QString & name)
+bool TreeView::insert_tree_item(const TreeIndex & parent_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above, const QString & name)
 {
 	if (sibling_index.isValid()) {
 		qDebug() << "II" PREFIX << "Inserting tree item" << name << "next to sibling";
@@ -749,7 +761,7 @@ TreeIndex const & TreeView::insert_tree_item(const TreeIndex & parent_index, Tre
 
 
 
-const TreeIndex & TreeView::insert_tree_item_at_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row)
+bool TreeView::insert_tree_item_at_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row)
 {
 	qDebug() << "II" PREFIX << "inserting tree item" << name;
 
@@ -766,13 +778,13 @@ const TreeIndex & TreeView::insert_tree_item_at_row(const TreeIndex & parent_ind
 	tree_item->index = QPersistentModelIndex(items.at(0)->index());
 	tree_item->tree_view = this;
 
-	return tree_item->index;
+	return true;
 }
 
 
 
 
-TreeView::TreeView(QWidget * parent_widget) : QTreeView(parent_widget)
+TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeView(parent_widget)
 {
 	this->tree_model = new TreeModel(this, NULL);
 
@@ -830,6 +842,12 @@ TreeView::TreeView(QWidget * parent_widget) : QTreeView(parent_widget)
 	gtk_tree_view_set_reorderable(this, true);
 	QObject::connect(this->selectionModel(), SIGNAL("changed"), this, SLOT (select_cb));
 #endif
+
+
+	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
+	const int row = 0;
+	qDebug() << "II" PREFIX << "Inserting top level layer in row" << row;
+	this->insert_tree_item_at_row(invalid_parent_index, top_level_layer, top_level_layer->name, row);
 }
 
 

@@ -68,7 +68,10 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	{
-		this->tree_view = new TreeView(this);
+		this->toplayer = new LayerAggregate();
+		this->toplayer->set_name(tr("Top Layer"));
+
+		this->tree_view = new TreeView(this->toplayer, this);
 		this->panel_box->addWidget(this->tree_view);
 		this->tree_view->show();
 	}
@@ -125,13 +128,6 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	this->setLayout(this->panel_box);
-
-
-	this->toplayer = new LayerAggregate();
-	this->toplayer->set_name(tr("Top Layer"));
-	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
-	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-	this->toplayer_item = this->tree_view->push_tree_item_back(invalid_parent_index, this->toplayer, this->toplayer->name);
 
 
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));

@@ -91,17 +91,11 @@ Layer * TreeItem::to_layer(void) const
 
 bool TreeItem::the_same_object(const TreeItem * item1, const TreeItem * item2)
 {
-	/* TODO: use UID to compare tree items. */
-
 	if (NULL == item1 || NULL == item2) {
 		return false;
 	}
 
-	if (item1 != item2) {
-		return false;
-	}
-
-	return true;
+	return item1->uid == item2->uid;
 }
 
 

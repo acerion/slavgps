@@ -96,7 +96,6 @@ namespace SlavGPS {
 		void move_item(bool up);
 
 		LayerAggregate * toplayer = NULL;
-		TreeIndex toplayer_item;
 		TreeView * tree_view = NULL;
 		Window * window = NULL; /* Reference. */
 
