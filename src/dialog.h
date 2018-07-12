@@ -114,13 +114,6 @@ namespace SlavGPS {
 
 void a_dialog_list(const QString & title, const QStringList & items, int padding, QWidget * parent = NULL);
 
-/* Okay, everthing below here is an architechtural flaw. */
-
-bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent);
-
-
-
-
 
 
 

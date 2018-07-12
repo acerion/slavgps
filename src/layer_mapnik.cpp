@@ -827,8 +827,8 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
-	double xzoom = viewport->get_xmpp();
-	double yzoom = viewport->get_ympp();
+	double xzoom = viewport->get_map_zoom().get_x();
+	double yzoom = viewport->get_map_zoom().get_y();
 
 	TileInfo ti_ul, ti_br;
 

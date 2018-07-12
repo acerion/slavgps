@@ -48,14 +48,16 @@ using namespace SlavGPS;
 
 
 
-bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent)
+bool ViewportZoomDialog::custom_zoom_dialog(MapZoom & zoom, QWidget * parent)
 {
-	ViewportZoomDialog dialog(xmpp, ympp, parent);
+	ViewportZoomDialog dialog(zoom, parent);
+
 	if (QDialog::Accepted == dialog.exec()) {
-		dialog.get_values(xmpp, ympp);
+		zoom = dialog.get_value();
+
 		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
 		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
-		qDebug() << qSetRealNumberPrecision(5 + 1 + SG_VIEWPORT_ZOOM_PRECISION) << "DD: Dialog: Saving custom zoom as" << *xmpp << *ympp;
+		qDebug() << qSetRealNumberPrecision(5 + 1 + SG_VIEWPORT_ZOOM_PRECISION) << "DD: Dialog: Saving custom zoom as" << zoom;
 		return true;
 	} else {
 		return false;
@@ -65,7 +67,7 @@ bool a_dialog_custom_zoom(double * xmpp, double * ympp, QWidget * parent)
 
 
 
-ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * parent)
+ViewportZoomDialog::ViewportZoomDialog(MapZoom & zoom, QWidget * parent)
 {
 	this->setWindowTitle(QObject::tr("Zoom Factors..."));
 
@@ -83,7 +85,7 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 	this->xspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->xspin.setSingleStep(1);
 	this->xspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
-	this->xspin.setValue(*xmpp);
+	this->xspin.setValue(zoom.get_x());
 
 	this->grid->addWidget(xlabel, row, 0);
 	this->grid->addWidget(&this->xspin, row, 1);
@@ -97,7 +99,7 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 	this->yspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->yspin.setSingleStep(1);
 	this->yspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
-	this->yspin.setValue(*ympp);
+	this->yspin.setValue(zoom.get_y());
 
 	this->grid->addWidget(ylabel, row, 0);
 	this->grid->addWidget(&this->yspin, row, 1);
@@ -105,7 +107,7 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 
 
 	this->checkbox.setText(QObject::tr("X and Y zoom factors must be equal"));
-	if (*xmpp == *ympp) {
+	if (zoom.x_y_is_equal()) {
 		this->checkbox.setChecked(true);
 	}
 	this->grid->addWidget(&this->checkbox, row, 0, 1, 2); /* Row span = 1, Column span = 2. */
@@ -119,10 +121,9 @@ ViewportZoomDialog::ViewportZoomDialog(double * xmpp, double * ympp, QWidget * p
 
 
 
-void ViewportZoomDialog::get_values(double * xmpp, double * ympp)
+MapZoom ViewportZoomDialog::get_value(void) const
 {
-	*xmpp = this->xspin.value();
-	*ympp = this->yspin.value();
+	return MapZoom(this->xspin.value(), this->yspin.value());
 }
 
 
@@ -278,4 +279,127 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 	}
 
 	return redraw_viewport;
+}
+
+
+
+
+MapZoom::MapZoom(const MapZoom & other)
+{
+	this->x = other.x;
+	this->y = other.y;
+}
+
+
+
+
+bool MapZoom::x_y_is_equal(void) const
+{
+	return this->x == this->y;
+}
+
+
+
+
+double MapZoom::get_x(void) const
+{
+	return this->x;
+}
+
+
+
+
+double MapZoom::get_y(void) const
+{
+	return this->y;
+}
+
+
+
+
+bool MapZoom::set(double new_x, double new_y)
+{
+	if (new_x >= SG_VIEWPORT_ZOOM_MIN
+	    && new_x <= SG_VIEWPORT_ZOOM_MAX
+	    && new_y >= SG_VIEWPORT_ZOOM_MIN
+	    && new_y <= SG_VIEWPORT_ZOOM_MAX) {
+
+		this->x = new_x;
+		this->y = new_y;
+
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+bool MapZoom::zoom_in(int factor)
+{
+	if (this->x >= (SG_VIEWPORT_ZOOM_MIN * factor) && this->y >= (SG_VIEWPORT_ZOOM_MIN * factor)) {
+		this->x /= factor;
+		this->y /= factor;
+		return true;
+	}
+
+	return false;
+}
+
+
+
+
+bool MapZoom::zoom_out(int factor)
+{
+	if (this->x <= (SG_VIEWPORT_ZOOM_MAX / factor) && this->y <= (SG_VIEWPORT_ZOOM_MAX / factor)) {
+		this->x *= factor;
+		this->y *= factor;
+
+		return true;
+	}
+
+	return false;
+}
+
+
+
+
+QString MapZoom::pretty_print(CoordMode coord_mode) const
+{
+	QString result;
+
+	const QString unit = coord_mode == CoordMode::UTM ? "mpp" : "pixelfact";
+
+	if (this->x_y_is_equal()) {
+		if ((int) this->x - this->x < 0.0) {
+			result = QObject::tr("%1 %2").arg(this->x, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION).arg(unit);
+		} else {
+			/* xmpp should be a whole number so don't show useless .000 bit. */
+		        result = QObject::tr("%1 %2").arg((int) this->x).arg(unit);
+		}
+	} else {
+		result = QObject::tr("%1/%2f %3")
+			.arg(this->x, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
+			.arg(this->y, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
+			.arg(unit);
+	}
+
+	return result;
+}
+
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const MapZoom & map_zoom)
+{
+	debug << "MapZoom" << map_zoom.get_x() << map_zoom.get_y();
+	return debug;
+}
+
+
+
+
+bool MapZoom::operator==(const MapZoom & other) const
+{
+	return this->x == other.x && this->y == other.y;
 }

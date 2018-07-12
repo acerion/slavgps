@@ -963,25 +963,9 @@ void Window::draw_sync()
 
 void Window::update_status_bar_on_redraw(void)
 {
-	QString zoom_level;
-	const double xmpp = this->viewport->get_xmpp();
-	const double ympp = this->viewport->get_ympp();
-	const QString unit = this->viewport->get_coord_mode() == CoordMode::UTM ? "mpp" : "pixelfact";
-	if (xmpp != ympp) {
-		zoom_level = tr("%1/%2f %3")
-			.arg(xmpp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
-			.arg(ympp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
-			.arg(unit);
-	} else {
-		if ((int)xmpp - xmpp < 0.0) {
-			zoom_level = tr("%1 %2").arg(xmpp, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION).arg(unit);
-		} else {
-			/* xmpp should be a whole number so don't show useless .000 bit. */
-			zoom_level = tr("%1 %2").arg((int) xmpp).arg(unit);
-		}
-	}
+	const QString zoom_level = this->viewport->get_map_zoom().pretty_print(this->viewport->get_coord_mode());
 
-	qDebug() << "II: Window: zoom level is" << zoom_level;
+	qDebug() << "II" PREFIX << "zoom level is" << zoom_level;
 	this->status_bar->set_message(StatusBarField::ZOOM, zoom_level);
 	this->display_tool_name();
 }
@@ -1803,12 +1787,10 @@ void Window::zoom_cb(void)
 
 void Window::zoom_to_cb(void)
 {
-	double xmpp = this->viewport->get_xmpp();
-	double ympp = this->viewport->get_ympp();
+	MapZoom zoom = this->viewport->get_map_zoom();
 
-	if (a_dialog_custom_zoom(&xmpp, &ympp, this)) {
-		this->viewport->set_xmpp(xmpp);
-		this->viewport->set_ympp(ympp);
+	if (ViewportZoomDialog::custom_zoom_dialog(/* in/out */ zoom, this)) {
+		this->viewport->set_map_zoom(zoom);
 		this->emit_center_or_zoom_changed("zoom to...");
 	}
 }
@@ -2319,7 +2301,7 @@ void LocatorJob::run(void)
 			zoom = 2048.0;
 		}
 
-		this->window->viewport->set_zoom(zoom);
+		this->window->viewport->set_map_zoom(zoom);
 		this->window->viewport->set_center_from_latlon(lat_lon, false);
 
 		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Location found: %1").arg(name));
@@ -2570,7 +2552,7 @@ void Window::draw_viewport_to_image_file_cb(void)
 	this->save_viewport_to_image(file_full_path,
 				     this->viewport_save_width,
 				     this->viewport_save_height,
-				     this->viewport->get_xmpp(), /* TODO: support for xmpp and ympp? */
+				     this->viewport->get_map_zoom(),
 				     this->viewport_save_format,
 				     false);
 }
@@ -2599,7 +2581,7 @@ void Window::draw_viewport_to_image_dir_cb(void)
 	this->save_viewport_to_dir(dir_full_path,
 				   this->viewport_save_width,
 				   this->viewport_save_height,
-				   this->viewport->get_xmpp(), /* TODO: support for xmpp and ympp? */
+				   this->viewport->get_map_zoom(),
 				   this->viewport_save_format,
 				   dialog.tiles_width_spin->value(),
 				   dialog.tiles_height_spin->value());
@@ -2647,7 +2629,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	this->save_viewport_to_image(file_full_path,
 				     dialog.width_spin->value(),
 				     dialog.height_spin->value(),
-				     this->viewport->get_xmpp(), /* TODO: support for xmpp and ympp? */
+				     this->viewport->get_map_zoom(),
 				     ViewportSaveFromat::JPEG,
 				     true);
 
@@ -2676,11 +2658,11 @@ void Window::print_cb(void)
 
 
 
-void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, double zoom, ViewportSaveFormat save_format, bool save_kmz)
+void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const MapZoom & target_map_zoom, ViewportSaveFormat save_format, bool save_kmz)
 {
 	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
 
-	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, false, zoom);
+	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, false, target_map_zoom);
 
 	/* Redraw all layers at current position and zoom.
 	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
@@ -2725,7 +2707,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 
 
-bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, double zoom, ViewportSaveFormat save_format, unsigned int tiles_w, unsigned int tiles_h)
+bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, const MapZoom & map_zoom, ViewportSaveFormat save_format, unsigned int tiles_w, unsigned int tiles_h)
 {
 	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
 		Dialog::error(tr("You must be in UTM mode to use this feature"), this);
@@ -2734,9 +2716,8 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 
 
 	/* backup old zoom & set new */
-	double old_xmpp = this->viewport->get_xmpp();
-	double old_ympp = this->viewport->get_ympp();
-	this->viewport->set_zoom(zoom);
+	const MapZoom orig_map_zoom = this->viewport->get_map_zoom();
+	this->viewport->set_map_zoom(map_zoom);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
 	this->viewport->reconfigure_drawing_area(image_width, image_height);
@@ -2753,20 +2734,23 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	UTM utm_orig = this->viewport->get_center()->utm;
 	const char * extension = save_format == ViewportSaveFormat::PNG ? "png" : "jpg";
 
+	/* TODO: support non-identical x/y zoom values. */
+	const double xmpp = map_zoom.get_x();
+
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
 			QString file_full_path = QString("%1%2y%3-x%4.%5").arg(dir_full_path).arg(QDir::separator()).arg(y).arg(x).arg(extension);
 			utm = utm_orig;
 			if (tiles_w & 0x1) {
-				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (image_width * zoom);
+				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (image_width * xmpp);
 			} else {
-				utm.easting += ((double)x - (((double)tiles_w)+1)/2) * (image_width * zoom);
+				utm.easting += ((double)x - (((double)tiles_w)+1)/2) * (image_width * xmpp);
 			}
 
 			if (tiles_h & 0x1) {/* odd */
-				utm.northing -= ((double)y - ceil(((double)tiles_h)/2)) * (image_height * zoom);
+				utm.northing -= ((double)y - ceil(((double)tiles_h)/2)) * (image_height * xmpp);
 			} else { /* even */
-				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (image_height * zoom);
+				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (image_height * xmpp);
 			}
 
 			/* TODO: move to correct place. */
@@ -2790,8 +2774,9 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	}
 
 	this->viewport->set_center_from_utm(utm_orig, false);
-	this->viewport->set_xmpp(old_xmpp);
-	this->viewport->set_ympp(old_ympp);
+
+	this->viewport->set_map_zoom(orig_map_zoom);
+
 	this->viewport->reconfigure_drawing_area();
 	this->draw_tree_items();
 
@@ -2891,7 +2876,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	/* But has it really changed? */
 	double current_zoom = this->viewport->get_zoom();
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
-		this->viewport->set_zoom(zoom_request);
+		this->viewport->set_map_zoom(zoom_request);
 
 		/* Ask to draw updated viewport. */
 		this->emit_center_or_zoom_changed("zoom level selected");

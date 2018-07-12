@@ -591,7 +591,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 {
 	Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 
-	unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* TODO: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 80); /* TODO: smarter calculation. */
 
 	double nscale_deg = dem->north_scale / ((double) 3600);
 	double escale_deg = dem->east_scale / ((double) 3600);
@@ -763,7 +763,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 
 void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 10); /* TODO: smarter calculation. */
 
 	Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
 	Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);

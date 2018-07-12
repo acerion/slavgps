@@ -97,11 +97,11 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 	int zoom_level = MAGIC_SEVENTEEN; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
-	if (a_viewport->get_xmpp() == a_viewport->get_ympp()) {
+	if (a_viewport->get_map_zoom().get_x() == a_viewport->get_map_zoom().get_y()) {
 		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
 	}
 
-	QString zoom((int) zoom_level);
+	QString zoom((int) zoom_level); /* TODO: add MapZoom::to_string() */
 
 	int len = this->url_format_code.size();
 	if (len == 0) {

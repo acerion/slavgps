@@ -32,6 +32,7 @@
 #include <QDoubleSpinBox>
 #include <QGridLayout>
 #include <QCheckBox>
+#include <QDebug>
 
 
 
@@ -59,6 +60,33 @@ namespace SlavGPS {
 	class Window;
 	class Viewport;
 	class ScreenPos;
+	enum class CoordMode;
+
+
+
+
+	class MapZoom {
+		friend class Viewport;
+	public:
+		MapZoom(double new_x = 0.0f, double new_y = 0.0f) : x(new_x), y(new_y) {};
+		MapZoom(const MapZoom & other);
+
+		bool set(double x, double y);
+		double get_x(void) const;
+		double get_y(void) const;
+		bool x_y_is_equal(void) const;
+
+		bool zoom_in(int factor);
+		bool zoom_out(int factor);
+
+		QString pretty_print(CoordMode coord_mode) const;
+
+		bool operator==(const MapZoom & other) const;
+	private:
+		double x = 0.0f;
+		double y = 0.0f;
+	};
+	QDebug operator<<(QDebug debug, const MapZoom & map_zoom);
 
 
 
@@ -106,10 +134,12 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		ViewportZoomDialog() {};
-		ViewportZoomDialog(double * xmpp, double * ympp, QWidget * a_parent = NULL);
+		ViewportZoomDialog(MapZoom & zoom, QWidget * a_parent = NULL);
 		~ViewportZoomDialog() {};
 
-		void get_values(double * xmpp, double * ympp);
+		MapZoom get_value(void) const;
+
+		static bool custom_zoom_dialog(/* in/out */ MapZoom & zoom, QWidget * parent);
 
 	private slots:
 		void spin_changed_cb(double new_value);
@@ -120,6 +150,7 @@ namespace SlavGPS {
 
 		QCheckBox checkbox;
 	};
+
 
 
 

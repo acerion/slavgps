@@ -36,6 +36,7 @@
 #include "viewport.h"
 #include "viewport_save_dialog.h"
 #include "viewport_decorations.h"
+#include "viewport_zoom.h"
 #include "coord.h"
 #include "bbox.h"
 
@@ -156,14 +157,17 @@ namespace SlavGPS {
 		ScreenPos coord_to_screen_pos(const Coord & coord);
 
 		/* Viewport scale. */
-		void set_xmpp(double new_xmpp);
-		void set_ympp(double new_ympp);
-		double get_xmpp(void) const;
-		double get_ympp(void) const;
-		void set_zoom(double new_mpp);
+		void set_map_zoom_x(double new_xmpp);
+		void set_map_zoom_y(double new_ympp);
+		void set_map_zoom(double new_mpp);
+
 		double get_zoom(void) const;
 		void zoom_in();
 		void zoom_out();
+
+		void set_map_zoom(const MapZoom & other);
+		const MapZoom & get_map_zoom(void) const;
+
 
 
 		void add_copyright(QString const & copyright);
@@ -239,7 +243,7 @@ namespace SlavGPS {
 		bool is_ready(void) const;
 
 
-		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, bool explicit_set_zoom, double zoom);
+		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, bool explicit_set_zoom, const MapZoom & scaled_map_zoom);
 
 
 		void emit_center_or_zoom_changed(const QString & trigger_name);
@@ -248,10 +252,6 @@ namespace SlavGPS {
 		/* Whether or not to display some decorations. */
 		bool scale_visibility = true;
 		bool center_mark_visibility = true;
-
-		double xmpp, ympp;
-		double xmfactor, ymfactor;
-
 
 		CoordMode coord_mode;
 		Coord center;
@@ -323,6 +323,10 @@ namespace SlavGPS {
 		   and emit a signal to notify clients the list has been updated. */
 		void save_current_center(void);
 
+
+		MapZoom map_zoom;
+		double xmfactor = 0.0f;
+		double ymfactor = 0.0f;
 
 		Window * window = NULL;
 		ViewportDecorations decorations;

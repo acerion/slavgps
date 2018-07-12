@@ -61,7 +61,7 @@ WebToolCenter::~WebToolCenter()
 
 QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	int zoom_level = MAGIC_SEVENTEEN;
+
 	LatLon lat_lon;
 
 	/* Coords.
@@ -73,7 +73,8 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 	}
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
-	if (a_viewport->get_xmpp() == a_viewport->get_ympp()) {
+	int zoom_level = MAGIC_SEVENTEEN;
+	if (a_viewport->get_map_zoom().x_y_is_equal()) {
 		zoom_level = this->mpp_to_zoom_level(a_viewport->get_zoom());
 	}
 

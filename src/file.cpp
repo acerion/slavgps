@@ -260,8 +260,8 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, View
 
 	fprintf(file, "#VIKING GPS Data file " VIKING_URL "\n");
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
-	fprintf(file, "\nxmpp=%f\n", viewport->get_xmpp());
-	fprintf(file, "ympp=%f\n", viewport->get_ympp());
+	fprintf(file, "\nxmpp=%f\n", viewport->get_map_zoom().get_x());
+	fprintf(file, "ympp=%f\n", viewport->get_map_zoom().get_y());
 	fprintf(file, "lat=%f\n", lat_lon.lat);
 	fprintf(file, "lon=%f\n", lat_lon.lon);
 	fprintf(file, "mode=%s\n", mode_id_string.toUtf8().constData());
@@ -321,10 +321,10 @@ bool ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & la
 			}
 			/* However we'll still carry and attempt to read whatever we can. */
 		} else if (name_len == 4 && strncasecmp(line, "xmpp", name_len) == 0) { /* "hard coded" params: global & for all layer-types */
-			viewport->set_xmpp(strtod_i8n(value_start, NULL));
+			viewport->set_map_zoom_x(strtod_i8n(value_start, NULL));
 
 		} else if (name_len == 4 && strncasecmp(line, "ympp", name_len) == 0) {
-			viewport->set_ympp(strtod_i8n(value_start, NULL));
+			viewport->set_map_zoom_y(strtod_i8n(value_start, NULL));
 
 		} else if (name_len == 3 && strncasecmp(line, "lat", name_len) == 0) {
 			lat_lon.lat = strtod_i8n(value_start, NULL);

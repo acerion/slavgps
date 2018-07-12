@@ -1212,7 +1212,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 	}
 
 	/* Don't attempt to download unsupported zoom levels. */
-	double xzoom = viewport->get_xmpp();
+	double xzoom = viewport->get_map_zoom().get_x();
 	const MapSource * map_source = map_sources[this->map_type_id];
 	int zl = map_utils_mpp_to_zoom_level(xzoom);
 	if (zl < map_source->get_zoom_min() || zl > map_source->get_zoom_max()) {
@@ -1223,21 +1223,19 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 		Coord * new_center = new Coord();
 		*new_center = center;
 		this->last_center = new_center;
-		this->last_xmpp = viewport->get_xmpp();
-		this->last_ympp = viewport->get_ympp();
+		this->last_map_zoom = viewport->get_map_zoom();
 		return true;
 	}
 
-	/* TODO: perhaps Coord::distance() */
-	if ((*this->last_center == center)
-	    && (this->last_xmpp == viewport->get_xmpp())
-	    && (this->last_ympp == viewport->get_ympp())) {
+
+	if ((*this->last_center == center) /* TODO: perhaps Coord::distance()? */
+	    && this->last_map_zoom == viewport->get_map_zoom()) {
+
 		return false;
 	}
 
-	*(this->last_center) = center;
-	this->last_xmpp = viewport->get_xmpp();
-	this->last_ympp = viewport->get_ympp();
+	*this->last_center = center;
+	this->last_map_zoom = viewport->get_map_zoom();
 	return true;
 }
 
@@ -1319,8 +1317,9 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 
 void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
 {
-	double xzoom = viewport->get_xmpp();
-	double yzoom = viewport->get_ympp();
+	double xzoom = viewport->get_map_zoom().get_x();
+	double yzoom = viewport->get_map_zoom().get_y();
+
 	double scale_x = 1.0;
 	double scale_y = 1.0;
 	bool existence_only = false;
@@ -1800,8 +1799,8 @@ void MapDownloadJob::cleanup_on_cancel(void)
 
 void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode)
 {
-	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
-	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
+	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_map_zoom().get_x();
+	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_map_zoom().get_y();
 	TileInfo ulm, brm;
 	const MapSource * map_source = map_sources[this->map_type_id];
 
@@ -1928,8 +1927,8 @@ void LayerMap::tile_info_cb(void)
 {
 	const MapSource * map_source = map_sources[this->map_type_id];
 
-	double xzoom = this->xmapzoom ? this->xmapzoom : this->redownload_viewport->get_xmpp();
-	double yzoom = this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_ympp();
+	double xzoom = this->xmapzoom ? this->xmapzoom : this->redownload_viewport->get_map_zoom().get_x();
+	double yzoom = this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_map_zoom().get_y();
 	TileInfo ulm;
 
 	if (!map_source->coord_to_tile(this->redownload_ul, xzoom, yzoom, &ulm)) {
@@ -2120,8 +2119,8 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 	const MapSource * map_source = map_sources[layer->map_type_id];
 	if (map_source->get_drawmode() == this->viewport->get_drawmode()
 	    && map_source->coord_to_tile(this->viewport->get_center2(),
-				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_xmpp(),
-				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_ympp(),
+				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_map_zoom().get_x(),
+				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_map_zoom().get_y(),
 				  &tmp)) {
 
 		layer->dl_tool_x = event->x();
@@ -2138,8 +2137,8 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 {
 	Viewport * viewport = this->get_window()->get_viewport();
 
-	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_xmpp();
-	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_ympp();
+	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_map_zoom().get_x();
+	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_map_zoom().get_y();
 
 	TileInfo ulm, brm;
 

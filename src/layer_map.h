@@ -139,8 +139,7 @@ namespace SlavGPS {
 		bool adl_only_missing = false;
 
 		Coord * last_center = NULL;
-		double last_xmpp = 0.0;
-		double last_ympp = 0.0;
+		MapZoom last_map_zoom;
 
 		/* TODO: Should this be 0 or -1? */
 		int dl_tool_x = -1;
