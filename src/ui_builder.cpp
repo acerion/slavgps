@@ -619,7 +619,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, file_type_filter, tr("Select file"), NULL);
 			if (!value.val_string.isEmpty()) {
-				widget_->set_filename(value.val_string);
+				widget_->preselect_file_full_path(value.val_string);
 			}
 
 			widget = widget_;
@@ -630,7 +630,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		if (param_spec.type_id == SGVariantType::String) {
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, SGFileTypeFilter::ANY, tr("Select folder"), NULL);
 			if (!value.val_string.isEmpty()) {
-				widget_->set_filename(value.val_string);
+				widget_->preselect_file_full_path(value.val_string);
 			}
 
 			widget = widget_;
@@ -798,7 +798,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	case WidgetType::FileEntry:
 	case WidgetType::FolderEntry:
-		rv = SGVariant(((SGFileEntry *) widget)->get_filename());
+		rv = SGVariant(((SGFileEntry *) widget)->get_selected_file_full_path());
 		break;
 
 	case WidgetType::FileList:

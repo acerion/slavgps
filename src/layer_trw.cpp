@@ -4074,7 +4074,7 @@ LayerDataReadStatus LayerTRW::read_layer_data(FILE * file, const QString & dirpa
 void LayerTRW::write_layer_data(FILE * file) const
 {
 	fprintf(file, "\n\n~LayerData\n");
-	GPSPoint::write_layer(file, (LayerTRW *) this); /* TODO: get rid of the cast. */
+	GPSPoint::write_layer(file, this);
 	fprintf(file, "~EndLayerData\n");
 }
 

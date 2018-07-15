@@ -17,9 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+
+
+
 #include <cstring>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "widget_file_entry.h"
 
@@ -31,17 +41,17 @@ using namespace SlavGPS;
 
 
 
-/* TODO: add copying of text edited in QLineEdit into this->selector_filename and this->file_selector. */
+/* TODO: add copying of text edited in QLineEdit into this->current_file_full_path and this->file_dialog. */
 
 
 
 
 SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
 {
-	this->file_selector = new QFileDialog();
-	this->file_selector->setFileMode(mode);
-	this->file_selector->setOptions(options);
-	this->file_selector->setWindowTitle(title);
+	this->file_dialog = new QFileDialog();
+	this->file_dialog->setFileMode(mode);
+	this->file_dialog->setOptions(options);
+	this->file_dialog->setWindowTitle(title);
 
 	this->add_file_type_filters(file_type_filter);
 
@@ -111,7 +121,7 @@ void SGFileEntry::add_file_type_filters(SGFileTypeFilter file_type_filter)
 		break;
 	}
 
-	this->file_selector->setMimeTypeFilters(mime);
+	this->file_dialog->setMimeTypeFilters(mime);
 }
 
 
@@ -120,10 +130,10 @@ void SGFileEntry::add_file_type_filters(SGFileTypeFilter file_type_filter)
 void SGFileEntry::open_browser_cb(void) /* Slot. */
 {
 
-	if (this->file_selector->exec()) {
-		this->selector_filename = this->file_selector->selectedFiles().at(0);
-		this->line->insert(this->selector_filename);
-		qDebug() << "II: Widget File Entry: clicking OK results in this file:" << this->selector_filename;
+	if (this->file_dialog->exec()) {
+		this->current_file_full_path = this->file_dialog->selectedFiles().at(0);
+		this->line->insert(this->current_file_full_path);
+		qDebug() << "II: Widget File Entry: clicking OK results in this file:" << this->current_file_full_path;
 
 	}
 }
@@ -131,21 +141,21 @@ void SGFileEntry::open_browser_cb(void) /* Slot. */
 
 
 
-void SGFileEntry::set_filename(QString & filename)
+void SGFileEntry::preselect_file_full_path(const QString & filename)
 {
-	this->selector_filename = filename;
-	if (this->file_selector) {
-		this->file_selector->selectFile(this->selector_filename);
+	this->current_file_full_path = filename;
+	if (this->file_dialog) {
+		this->file_dialog->selectFile(this->current_file_full_path);
 	}
-	this->line->insert(this->selector_filename);
+	this->line->insert(this->current_file_full_path);
 }
 
 
 
 
-QString SGFileEntry::get_filename(void)
+QString SGFileEntry::get_selected_file_full_path(void) const
 {
-	QStringList selection = this->file_selector->selectedFiles();
+	QStringList selection = this->file_dialog->selectedFiles();
 	static QString empty("");
 
 	if (selection.size()) {
@@ -155,4 +165,60 @@ QString SGFileEntry::get_filename(void)
 		qDebug() << "II: Widget File Entry: will return empty string";
 		return empty;
 	}
+}
+
+
+
+
+QStringList SGFileEntry::get_selected_files_full_paths(void) const
+{
+	return this->file_dialog->selectedFiles();
+}
+
+
+
+
+QUrl SGFileEntry::get_directory_url(void) const
+{
+	return this->file_dialog->directoryUrl();
+}
+
+
+
+
+void SGFileEntry::set_directory_url(const QUrl & dir_url)
+{
+	this->file_dialog->setDirectoryUrl(dir_url);
+}
+
+
+
+
+void SGFileEntry::set_name_filters(const QStringList & name_filters)
+{
+	this->file_dialog->setNameFilters(name_filters);
+}
+
+
+
+
+void SGFileEntry::select_name_filter(const QString & name_filter)
+{
+	this->file_dialog->selectNameFilter(name_filter);
+}
+
+
+
+
+QString SGFileEntry::get_selected_name_filter(void) const
+{
+	return this->file_dialog->selectedNameFilter();
+}
+
+
+
+
+void SGFileEntry::set_accept_mode(QFileDialog::AcceptMode accept_mode)
+{
+	this->file_dialog->setAcceptMode(accept_mode);
 }

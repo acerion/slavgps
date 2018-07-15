@@ -52,11 +52,18 @@ namespace SlavGPS {
 		SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, const QString & title, QWidget * parent);
 		~SGFileEntry();
 
-		void set_filename(QString & filename);
-		QString get_filename();
+		void preselect_file_full_path(const QString & file_path);
+		QString get_selected_file_full_path(void) const;
+		QStringList get_selected_files_full_paths(void) const;
 
-		/* kamil TODO: add setter for file filters. */
-		QFileDialog * file_selector = NULL;
+		void set_directory_url(const QUrl & dir_url);
+		QUrl get_directory_url(void) const;
+
+		void set_name_filters(const QStringList & name_filters);
+		void select_name_filter(const QString & name_filter);
+		QString get_selected_name_filter(void) const;
+
+		void set_accept_mode(QFileDialog::AcceptMode accept_mode);
 
 	private slots:
 		void open_browser_cb();
@@ -64,11 +71,12 @@ namespace SlavGPS {
 	private:
 		void add_file_type_filters(SGFileTypeFilter file_type_filter);
 
+		QFileDialog * file_dialog = NULL;
 		QLineEdit * line = NULL;
 		QPushButton * browse = NULL;
 		QHBoxLayout * hbox = NULL;
 
-		QString selector_filename;
+		QString current_file_full_path;
 	};
 
 

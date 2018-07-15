@@ -976,7 +976,7 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 
 
 
-void GPSPoint::write_layer(FILE * file, LayerTRW * trw)
+void GPSPoint::write_layer(FILE * file, const LayerTRW * trw)
 {
 	const std::list<Track *> & tracks = trw->get_tracks();
 	const std::list<Track *> & routes = trw->get_routes();

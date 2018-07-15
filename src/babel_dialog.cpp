@@ -258,7 +258,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
 		this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::ANY, tr("Select Target File File for Export"), NULL);
-		this->file_entry->file_selector->setAcceptMode(QFileDialog::AcceptSave);
+		this->file_entry->set_accept_mode(QFileDialog::AcceptSave);
 	} else {
 		this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, SGFileTypeFilter::ANY, tr("Select File to Import"), NULL);
 	}
@@ -267,12 +267,12 @@ void BabelDialog::build_ui(const BabelMode * mode)
 #ifdef K_TODO
 	/* We don't do this because we don't have filename here. */
 	if (!filename.isEmpty()) {
-		this->file_entry->set_filename(filename);
+		this->file_entry->preselect_file(filename);
 	}
 
 	/* We don't do this because last_directory_url is kept by classes inheriting from this class. */
 	if (last_directory_url.isValid()) {
-		this->file_entry->file_selector->setDirectoryUrl(last_directory_url);
+		this->file_entry->set_directory_url(last_directory_url);
 	}
 #endif
 
@@ -359,9 +359,9 @@ void BabelDialog::file_type_changed_cb(int index)
 		}
 	}
 
-	this->file_entry->file_selector->setNameFilters(filters);
+	this->file_entry->set_name_filters(filters);
 	if (!selected.isEmpty()) {
-		this->file_entry->file_selector->selectNameFilter(selected);
+		this->file_entry->select_name_filter(selected);
 	}
 }
 

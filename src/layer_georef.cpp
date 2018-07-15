@@ -640,7 +640,7 @@ static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
 		return;
 	}
 
-	const QString filename = file_entry->get_filename();
+	const QString filename = file_entry->get_selected_file_full_path();
 	if (filename.isEmpty()) {
 		return;
 	}
@@ -811,7 +811,7 @@ void GeorefConfigDialog::check_br_is_good_or_msg_user(void)
 
 void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 {
-	const QString filename = this->map_image_file_entry->get_filename();
+	const QString filename = this->map_image_file_entry->get_selected_file_full_path();
 	if (!filename.length()) {
 		return;
 	}
@@ -924,7 +924,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->x_scale_spin->setValue(this->layer->mpp_easting);
 	this->y_scale_spin->setValue(this->layer->mpp_northing);
 	if (!this->layer->image_full_path.isEmpty()) {
-		this->map_image_file_entry->set_filename(this->layer->image_full_path);
+		this->map_image_file_entry->preselect_file_full_path(this->layer->image_full_path);
 	}
 
 
@@ -1014,8 +1014,8 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	/* TODO check if image has changed otherwise no need to regenerate pixmap. */
 	if (this->image.isNull()) {
-		if (this->image_full_path != dialog.map_image_file_entry->get_filename()) {
-			this->set_image_full_path(dialog.map_image_file_entry->get_filename());
+		if (this->image_full_path != dialog.map_image_file_entry->get_selected_file_full_path()) {
+			this->set_image_full_path(dialog.map_image_file_entry->get_selected_file_full_path());
 			this->post_read(viewport, false);
 		}
 	}

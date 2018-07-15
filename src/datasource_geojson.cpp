@@ -74,12 +74,12 @@ int DataSourceGeoJSON::run_config_dialog(AcquireProcess * acquire_context)
 
 	int answer = dialog->exec();
 	if (answer == QDialog::Accepted) {
-		this->selected_files = dialog->file_entry->file_selector->selectedFiles();
-		g_last_directory_url = dialog->file_entry->file_selector->directoryUrl();
+		this->selected_files = dialog->file_entry->get_selected_files_full_paths();
+		g_last_directory_url = dialog->file_entry->get_directory_url();
 
 #ifdef K_TODO
 		/* TODO Memorize the file filter for later reuse? */
-		g_last_filter = dialog->file_entry->file_selector->selectedNameFilter();
+		g_last_filter = dialog->file_entry->get_selected_name_filter();
 #endif
 	}
 
@@ -98,19 +98,19 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) :
 	this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFiles, SGFileTypeFilter::ANY, tr("Select File to Import"), NULL);
 
 	if (g_last_directory_url.isValid()) {
-		this->file_entry->file_selector->setDirectoryUrl(g_last_directory_url);
+		this->file_entry->set_directory_url(g_last_directory_url);
 	}
 #ifdef K_TODO
 	if (!g_last_filter.isEmpty()) {
-		this->file_entry->file_selector->selectNameFilter(g_last_filter);
+		this->file_entry->select_name_filter(g_last_filter);
 	}
 #endif
 
 	const QString filter1 = QObject::tr("GeoJSON (*.geojson)");
 	const QString filter2 = QObject::tr("All (*)");
 	const QStringList filters = { filter1, filter2 };
-	this->file_entry->file_selector->setNameFilters(filters);
-	this->file_entry->file_selector->selectNameFilter(filter1); /* Default to geojson. */
+	this->file_entry->set_name_filters(filters);
+	this->file_entry->select_name_filter(filter1); /* Default to geojson. */
 
 	this->setMinimumWidth(DIALOG_MIN_WIDTH);
 
