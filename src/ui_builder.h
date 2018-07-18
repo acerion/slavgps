@@ -133,13 +133,22 @@ namespace SlavGPS {
 		PARAMETER_GROUP_GENERIC = -1   /* All parameters in given module are in one category, so there is no point in creating more than one distinct group. There is only one group. */
 	};
 
-	typedef struct {
-		double min;
-		double max;
+
+	template <class T>
+	class ParameterScale {
+	public:
+		ParameterScale(const T & new_min, const T & new_max, const SGVariant & new_initial, const T & new_step, int new_n_digits) :
+			min(new_min), max(new_max), initial(new_initial), step(new_step), n_digits(new_n_digits) {};
+
+		bool is_in_range(const T & value) const { return (value >= this->min && value <= this->max); };
+
+		T min;
+		T max;
+
 		SGVariant initial;
-		double step;
-		uint8_t digits;
-	} ParameterScale;
+		T step;
+		int n_digits;
+	};
 
 
 	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * param_specs);

@@ -562,7 +562,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		if (param_spec.type_id == SGVariantType::Int && param_spec.widget_data) {
 
 			int32_t init_val = value.u.val_int;
-			ParameterScale * scale = (ParameterScale *) param_spec.widget_data;
+			ParameterScale<int> * scale = (ParameterScale<int> *) param_spec.widget_data;
 			QSpinBox * widget_ = new QSpinBox();
 			widget_->setMinimum(scale->min);
 			widget_->setMaximum(scale->max);
@@ -580,10 +580,10 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		if (param_spec.type_id == SGVariantType::Double && param_spec.widget_data) {
 
 			const double init_val = value.u.val_double;
-			ParameterScale * scale = (ParameterScale *) param_spec.widget_data;
+			ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data;
 			QDoubleSpinBox * widget_ = new QDoubleSpinBox();
 			/* Order of fields is important. Use setDecimals() before using setValue(). */
-			widget_->setDecimals(scale->digits);
+			widget_->setDecimals(scale->n_digits);
 			widget_->setMinimum(scale->min);
 			widget_->setMaximum(scale->max);
 			widget_->setSingleStep(scale->step);
@@ -647,19 +647,20 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 
 	case WidgetType::HScale:
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Double);
-		if ((param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Double) && param_spec.widget_data) {
-
-			ParameterScale * scale = (ParameterScale *) param_spec.widget_data;
-
-			/* TODO: implement a slider for values of type 'double'. */
-			SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
+		if (param_spec.widget_data) {
 
 			if (param_spec.type_id == SGVariantType::Int) {
+				ParameterScale<int> * scale = (ParameterScale<int> *) param_spec.widget_data;
+				SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
 				widget_->set_value(value.u.val_int);
 				widget = widget_;
-			} else {
+			} else if (param_spec.type_id == SGVariantType::Double) {
+				ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data;
+				SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
 				widget_->set_value(value.u.val_double);
 				widget = widget_;
+			} else {
+				qDebug() << "EE" PREFIX << "unexpected param spec type" << param_spec.type_id;
 			}
 		}
 		break;
@@ -814,11 +815,9 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		if (param_spec.type_id == SGVariantType::Int) {
 			rv = SGVariant((int32_t) ((SGSlider *) widget)->get_value());
 		} else if (param_spec.type_id == SGVariantType::Double) {
-#ifdef K_FIXME_RESTORE
-			rv = SGVariant((double) gtk_range_get_value(GTK_RANGE(widget)));
-#endif
+			rv = SGVariant((double) ((SGSlider *) widget)->get_value());
 		} else {
-			;
+			qDebug() << "EE" PREFIX << "unexpected param spec type" << param_spec.type_id;
 		}
 		break;
 	case WidgetType::DateTime:
@@ -852,12 +851,15 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 bool ParameterSpecification::get_hardwired_value(SGVariant & value) const
 {
 	SGVariant param_value;
-	if (this->widget_type == WidgetType::SpinBoxDouble
-	    || this->widget_type == WidgetType::SpinBoxInt
-	    || this->widget_type == WidgetType::HScale) {
-
+	if (this->widget_type == WidgetType::SpinBoxDouble) {
 		/* This will be overwritten below by value from settings file. */
-		ParameterScale * scale = (ParameterScale *) this->widget_data;
+		ParameterScale<double> * scale = (ParameterScale<double> *) this->widget_data;
+		value = scale->initial;
+		return true;
+
+	} else if (this->widget_type == WidgetType::SpinBoxInt || this->widget_type == WidgetType::HScale) {
+		/* This will be overwritten below by value from settings file. */
+		ParameterScale<int> * scale = (ParameterScale<int> *) this->widget_data;
 		value = scale->initial;
 		return true;
 	} else {

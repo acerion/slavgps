@@ -86,11 +86,8 @@ SGUTMEntry::SGUTMEntry(QWidget * parent)
 
 	this->band_letter_entry = new QLineEdit();
 	this->band_letter_entry->setMaxLength(1);
-	char tmp_letter[2];
-	tmp_letter[0] = 'N';
-	tmp_letter[1] = '\0';
-	this->band_letter_entry->setText(tmp_letter);
-	this->grid->addWidget(new QLabel(QObject::tr("Letter:")), row, 0);
+	this->band_letter_entry->setText("N");
+	this->grid->addWidget(new QLabel(QObject::tr("Band Letter:")), row, 0);
 	this->grid->addWidget(this->band_letter_entry, row, 1);
 	row++;
 
@@ -108,13 +105,8 @@ void SGUTMEntry::set_value(const UTM & utm)
 {
 	this->easting_spin->setValue(utm.easting);
 	this->northing_spin->setValue(utm.northing);
-
 	this->zone_spin->setValue(utm.zone);
-
-	char tmp_letter[2];
-	tmp_letter[0] = utm.letter;
-	tmp_letter[1] = '\0';
-	this->band_letter_entry->setText(tmp_letter);
+	this->band_letter_entry->setText(QString(utm.band_letter));
 }
 
 
@@ -130,8 +122,8 @@ UTM SGUTMEntry::get_value(void) const
 
 	const QString text = this->band_letter_entry->text();
 	if (1 == text.size()) {
-		utm.letter = text.at(0).toUpper().toLatin1();
-		qDebug() << "II:" PREFIX << "UTM letter conversion" << text << "->" << utm.letter;
+		utm.band_letter = text.at(0).toUpper().toLatin1();
+		qDebug() << "II:" PREFIX << "UTM band letter conversion" << text << "->" << utm.band_letter;
 	}
 
 	return utm;

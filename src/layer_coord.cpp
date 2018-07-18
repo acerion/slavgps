@@ -49,8 +49,8 @@ using namespace SlavGPS;
 
 
 
-static ParameterScale scale_minutes_width  = { 0.05,  60.0,            SGVariant(1.0), 0.25,    10 }; /* PARAM_MIN_INC */
-static ParameterScale scale_line_thickness = {    1,    15,    SGVariant((int32_t) 3),    1,     0 }; /* PARAM_LINE_THICKNESS */
+static ParameterScale<double> scale_minutes_width(0.05,  60.0,    SGVariant(1.0),         0.25,    10); /* PARAM_MIN_INC */
+static ParameterScale<int>    scale_line_thickness(  1,    15,    SGVariant((int32_t) 3),    1,     0); /* PARAM_LINE_THICKNESS */
 
 
 static SGVariant color_default_deg(void) { return SGVariant(QColor("blue")); }

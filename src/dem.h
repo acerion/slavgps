@@ -109,7 +109,7 @@ namespace SlavGPS {
 		double max_north;
 
 		int utm_zone;
-		char utm_letter;
+		char utm_band_letter;
 
 		char const type_string[30] = "DEM object";
 

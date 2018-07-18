@@ -92,7 +92,7 @@ namespace SlavGPS {
 		QPushButton * calc_mpp_button = NULL;
 
 
-		SGSlider * alpha_slider = NULL;
+		SGSlider * alpha_slider = NULL; /* alpha is represented by int type. */
 
 	public slots:
 		void load_cb(void);
@@ -164,7 +164,7 @@ namespace SlavGPS {
 		int image_height = 0;
 		QString image_full_path;
 
-		uint8_t alpha = 255;
+		int alpha = 255;
 
 		UTM utm_tl; /* Top Left. */
 		double mpp_easting = 0.0;

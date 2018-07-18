@@ -100,7 +100,7 @@ namespace SlavGPS {
 
 		QString filename_css; /* CartoCSS MML File - use 'carto' to convert into xml. */
 		QString filename_xml;
-		int32_t alpha = 0;
+		int alpha = 0;
 
 		unsigned int tile_size_x = 0; /* Y is the same as X ATM. */
 		bool loaded = false;

@@ -103,7 +103,7 @@ int BFilterSimplify::run_config_dialog(AcquireProcess * acquire_context)
 
 BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
-	static const ParameterScale scale = { 1, 10000, SGVariant((int32_t) 100), 10, 0 }; /* TODO: verify the hardcoded default value. */
+	static const ParameterScale<int> scale(1, 10000, SGVariant((int32_t) 100), 10, 0); /* TODO: verify the hardcoded default value. */
 
 	this->grid->addWidget(new QLabel(tr("Max number of points:")), 0, 0);
 
@@ -193,14 +193,14 @@ int BFilterCompress::run_config_dialog(AcquireProcess * acquire_context)
 
 BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
-	static const ParameterScale scale = { 0.0, 1.000, SGVariant(0.001), 0.001, 3 }; /* TODO: verify the hardcoded default value. */
+	static const ParameterScale<double> scale(0.0, 1.000, SGVariant(0.001), 0.001, 3); /* TODO: verify the hardcoded default value. */
 
 	this->grid->addWidget(new QLabel(tr("Error Factor:")), 0, 0);
 
 	const double init_val = bfilter_compress_params_defaults[0].u.val_double;
 	this->spin = new QDoubleSpinBox();
 	/* Order of fields is important. Use setDecimals() before using setValue(). */
-	this->spin->setDecimals(scale.digits);
+	this->spin->setDecimals(scale.n_digits);
 	this->spin->setMinimum(scale.min);
 	this->spin->setMaximum(scale.max);
 	this->spin->setSingleStep(scale.step);

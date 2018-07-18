@@ -136,7 +136,7 @@ void SlavGPS::ui_pixmap_set_alpha(QPixmap & pixmap, int alpha)
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */
-void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha)
+void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, int alpha)
 {
 #ifdef K_FIXME_RESTORE
 	unsigned char *pixels;
@@ -160,7 +160,7 @@ void SlavGPS::ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha)
 		for (jjj = 0; jjj < height; jjj++) {
 			pixels += 3;
 			if (*pixels != 0) {
-				*pixels = (uint8_t)(((uint16_t)*pixels * (uint16_t)alpha) / 255);
+				*pixels = (uint8_t)(((uint16_t)*pixels * alpha) / 255);
 			}
 			pixels++;
 		}

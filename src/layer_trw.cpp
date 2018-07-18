@@ -171,17 +171,17 @@ static std::vector<SGLabelID> params_wpsymbols = {
 #define MAX_ARROW_SIZE 20
 
                                                       /*            min,              max,                     hardwired default,    step,   digits */
-static ParameterScale scale_track_thickness         = {               1,               10,                SGVariant((int32_t) 1),       1,        0 }; /* PARAM_TRACK_THICKNESS */
-static ParameterScale scale_track_draw_speed_factor = {               0,              100,                       SGVariant(30.0),       1,        0 }; /* PARAM_TRACK_DRAW_SPEED_FACTOR */
-static ParameterScale scale_wp_image_size           = {              16,              128,               SGVariant((int32_t) 64),       4,        0 }; /* PARAM_WP_IMAGE_SIZE */
-static ParameterScale scale_wp_image_alpha          = {               0,              255,              SGVariant((int32_t) 255),       5,        0 }; /* PARAM_WP_IMAGE_ALPHA */
-static ParameterScale scale_wp_image_cache_size     = {               5,              500,              SGVariant((int32_t) 300),       5,        0 }; /* PARAM_WP_IMAGE_CACHE_SIZE */
-static ParameterScale scale_track_bg_thickness      = {               0,                8,                SGVariant((int32_t) 0),       1,        0 }; /* PARAM_TRACK_BG_THICKNESS */
-static ParameterScale scale_wp_marker_size          = {               1,               64,                SGVariant((int32_t) 4),       1,        0 }; /* PARAM_WP_MARKER_SIZE */
-static ParameterScale scale_track_min_stop_length   = { MIN_STOP_LENGTH,  MAX_STOP_LENGTH,               SGVariant((int32_t) 60),       1,        0 }; /* PARAM_TRACK_MIN_STOP_LENGTH */
-static ParameterScale scale_track_elevation_factor  = {               1,              100,               SGVariant((int32_t) 30),       1,        0 }; /* PARAM_TRACK_ELEVATION_FACTOR */
-static ParameterScale scale_trackpoint_size         = {  MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE),       1,        0 }; /* PARAM_TRACKPOINT_SIZE */
-static ParameterScale scale_track_direction_size    = {  MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5),       1,        0 }; /* PARAM_TRACK_DIRECTION_SIZE */
+static ParameterScale<int> scale_track_thickness         (              1,               10,                SGVariant((int32_t) 1),       1,        0); /* PARAM_TRACK_THICKNESS */
+static ParameterScale<int> scale_track_draw_speed_factor (              0,              100,                       SGVariant(30.0),       1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
+static ParameterScale<int> scale_wp_image_size           (             16,              128,               SGVariant((int32_t) 64),       4,        0); /* PARAM_WP_IMAGE_SIZE */
+static ParameterScale<int> scale_wp_image_alpha          (              0,              255,              SGVariant((int32_t) 255),       5,        0); /* PARAM_WP_IMAGE_ALPHA */
+static ParameterScale<int> scale_wp_image_cache_size     (              5,              500,              SGVariant((int32_t) 300),       5,        0); /* PARAM_WP_IMAGE_CACHE_SIZE */
+static ParameterScale<int> scale_track_bg_thickness      (              0,                8,                SGVariant((int32_t) 0),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
+static ParameterScale<int> scale_wp_marker_size          (              1,               64,                SGVariant((int32_t) 4),       1,        0); /* PARAM_WP_MARKER_SIZE */
+static ParameterScale<int> scale_track_min_stop_length   (MIN_STOP_LENGTH,  MAX_STOP_LENGTH,               SGVariant((int32_t) 60),       1,        0); /* PARAM_TRACK_MIN_STOP_LENGTH */
+static ParameterScale<int> scale_track_elevation_factor  (              1,              100,               SGVariant((int32_t) 30),       1,        0); /* PARAM_TRACK_ELEVATION_FACTOR */
+static ParameterScale<int> scale_trackpoint_size         ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE),       1,        0); /* PARAM_TRACKPOINT_SIZE */
+static ParameterScale<int> scale_track_direction_size    ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
 
 
 

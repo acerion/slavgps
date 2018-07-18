@@ -124,7 +124,7 @@ namespace SlavGPS {
 	class UTM {
 	public:
 		UTM() {};
-		UTM(const QString & northing_string, const QString & easting_string, int zone_value, const QString & letter_string);
+		UTM(const QString & northing_string, const QString & easting_string, int zone, char band_letter);
 
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
 		static LatLon to_latlon(const UTM & utm);
@@ -134,7 +134,7 @@ namespace SlavGPS {
 		double northing = 0;
 		double easting = 0;
 		int zone = 0;
-		char letter = 0;
+		char band_letter = 0;
 	};
 	QDebug operator<<(QDebug debug, const UTM & utm);
 

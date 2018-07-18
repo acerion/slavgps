@@ -80,7 +80,7 @@ static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
 static std::mutex mc_mutex;
 
-static ParameterScale scale_cache_size = { 1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0 };
+static ParameterScale<int> scale_cache_size(1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0);
 
 static ParameterSpecification prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_GENERAL, "mapcache_size", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Map cache memory size (MB):"), WidgetType::HScale, &scale_cache_size, NULL, NULL, NULL },
@@ -190,7 +190,7 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void MapCache::add(const QPixmap & pixmap, MapCacheItemExtra & extra, TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+void MapCache::add(const QPixmap & pixmap, MapCacheItemExtra & extra, TileInfo * mapcoord, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	if (pixmap.isNull()) {
 		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
@@ -229,7 +229,7 @@ void MapCache::add(const QPixmap & pixmap, MapCacheItemExtra & extra, TileInfo *
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap MapCache::get_pixmap(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+QPixmap MapCache::get_pixmap(TileInfo * mapcoord, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	QPixmap result;
 
@@ -251,7 +251,7 @@ QPixmap MapCache::get_pixmap(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t
 
 
 
-MapCacheItemExtra MapCache::get_extra(TileInfo * mapcoord, MapTypeID map_type_id, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+MapCacheItemExtra MapCache::get_extra(TileInfo * mapcoord, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	MapCacheItemExtra extra;
 

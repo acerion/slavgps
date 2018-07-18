@@ -142,7 +142,7 @@ bool DEM::parse_header(char * buffer)
 	get_int_and_continue(&buffer, &int_val, true);
 	this->utm_zone = int_val;
 	/* FIXME: southern or northern hemisphere?! */
-	this->utm_letter = 'N';
+	this->utm_band_letter = 'N';
 
 	double val;
 	/* skip numbers 5-19  */
@@ -719,13 +719,13 @@ bool DEM::overlap(const LatLonBBox & other_bbox)
 		dem_northeast_utm.northing = this->max_north;
 		dem_northeast_utm.easting = this->max_east;
 		dem_northeast_utm.zone = this->utm_zone;
-		dem_northeast_utm.letter = this->utm_letter;
+		dem_northeast_utm.band_letter = this->utm_band_letter;
 
 		UTM dem_southwest_utm;
 		dem_southwest_utm.northing = this->min_north;
 		dem_southwest_utm.easting = this->min_east;
 		dem_southwest_utm.zone = this->utm_zone;
-		dem_southwest_utm.letter = this->utm_letter;
+		dem_southwest_utm.band_letter = this->utm_band_letter;
 
 		dem_northeast = UTM::to_latlon(dem_northeast_utm);
 		dem_southwest = UTM::to_latlon(dem_southwest_utm);

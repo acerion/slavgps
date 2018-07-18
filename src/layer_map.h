@@ -129,7 +129,7 @@ namespace SlavGPS {
 		MapTypeID map_type_id = MapTypeID::Initial;
 		QString cache_dir;
 		MapsCacheLayout cache_layout = MapsCacheLayout::Viking;
-		int32_t alpha = 0;
+		int alpha = 0;
 
 		int mapzoom_id = 0;
 		double xmapzoom = 0.0;

@@ -925,7 +925,7 @@ QPixmap * LayerTRWPainter::update_pixmap_cache(const QString & image_full_path, 
 
 
 	/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
-	if (this->wp_image_alpha != 255) {
+	if (this->wp_image_alpha <= 255) {
 		ui_pixmap_set_alpha(*cp->pixmap, this->wp_image_alpha);
 	}
 

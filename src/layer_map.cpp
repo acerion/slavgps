@@ -161,7 +161,7 @@ static void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x
 
 
 
-static ParameterScale scale_alpha = { 0, 255, SGVariant((int32_t) 255), 3, 0 };
+static ParameterScale<int> scale_alpha(0, 255, SGVariant((int32_t) 255), 3, 0);
 
 
 
@@ -1037,10 +1037,10 @@ QPixmap LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
 
 
 
-static void pixmap_apply_settings(QPixmap & pixmap, uint8_t alpha, double scale_x, double scale_y)
+static void pixmap_apply_settings(QPixmap & pixmap, int alpha, double scale_x, double scale_y)
 {
 	/* Apply alpha setting. */
-	if (alpha < 255) {
+	if (scale_alpha.is_in_range(alpha)) {
 		ui_pixmap_set_alpha(pixmap, alpha);
 	}
 

@@ -100,7 +100,7 @@ namespace SlavGPS {
 		SGVariant(int r, int g, int b, int a, SGVariantType type_id = SGVariantType::Color);
 		SGVariant(const QColor & color,       SGVariantType type_id = SGVariantType::Color);
 		SGVariant(const QStringList & sl,     SGVariantType type_id = SGVariantType::StringList);
-		SGVariant(time_t timestamp,           SGVariantType type_id);
+		SGVariant(time_t timestamp,           SGVariantType type_id); /* Just to be sure that a proper constructor has been selected, you have provide value of second arg explicitly. */
 		/* Notice that there is no separate one-argument constructor for Timestamp data type.
 		   It would be too similar to SGVariant(uint32_t u). Use SGVariant(time_t, SGVariantType) instead. */
 
@@ -114,6 +114,8 @@ namespace SlavGPS {
 		QString to_string() const;
 
 		void write(FILE * file, char const * param_name) const;
+
+		SGVariant & operator=(const SGVariant & other);
 
 
 		SGVariantType type_id;

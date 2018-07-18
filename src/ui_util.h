@@ -25,11 +25,6 @@
 
 
 
-#include <cstdint>
-
-
-
-
 #include <QLabel>
 #include <QStandardItem>
 #include <QPixmap>
@@ -54,7 +49,7 @@ namespace SlavGPS {
 
 	/* @alpha should be in range 0-255 */
 	void ui_pixmap_set_alpha(QPixmap & pixmap, int alpha);
-	void ui_pixmap_scale_alpha(QPixmap & pixmap, uint8_t alpha);
+	void ui_pixmap_scale_alpha(QPixmap & pixmap, int alpha);
 
 	void update_desktop_recent_documents(Window * window, const QString & file_full_path, const QString & mime_type);
 

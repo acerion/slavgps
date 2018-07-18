@@ -103,8 +103,8 @@ public:
 
 
 /* Upper limit is that high in case if units are feet. */
-static ParameterScale scale_min_elev = { 0, 30000,    SGVariant(0.0), 10, 1 };
-static ParameterScale scale_max_elev = { 1, 30000, SGVariant(1000.0), 10, 1 };
+static ParameterScale<int> scale_min_elev(0, 30000,    SGVariant(0.0), 10, 1);
+static ParameterScale<int> scale_max_elev(1, 30000, SGVariant(1000.0), 10, 1);
 
 
 
@@ -784,8 +784,8 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	double start_nor = std::max(min_nor, dem->min_north);
 	double end_nor   = std::min(max_nor, dem->max_north);
 	if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
-	    && (tleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')
-	    && (bleft.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	    && (tleft.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')
+	    && (bleft.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		start_eas = std::max(min_eas, dem->min_east);
 	} else {
@@ -793,8 +793,8 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	}
 
 	if (tright.utm.zone == dem->utm_zone && bright.utm.zone == dem->utm_zone
-	    && (tright.utm.letter >= 'N') == (dem->utm_letter >= 'N')
-	    && (bright.utm.letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	    && (tright.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')
+	    && (bright.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		end_eas = std::min(max_eas, dem->max_east);
 	} else {
@@ -813,7 +813,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 	UTM counter;
 	counter.zone = dem->utm_zone;
-	counter.letter = dem->utm_letter;
+	counter.band_letter = dem->utm_band_letter;
 
 	unsigned int x;
 	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {

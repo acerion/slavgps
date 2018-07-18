@@ -78,8 +78,8 @@ static std::vector<SGLabelID> params_units_height = {
 
 
 /* Hardwired default location is New York. */
-static ParameterScale scale_lat = {  -90.0,  90.0, SGVariant(40.714490),  0.05, 2 };
-static ParameterScale scale_lon = { -180.0, 180.0, SGVariant(-74.007130), 0.05, 2 };
+static ParameterScale<double> scale_lat( -90.0,  90.0, SGVariant(40.714490),  0.05, 2);
+static ParameterScale<double> scale_lon(-180.0, 180.0, SGVariant(-74.007130), 0.05, 2);
 
 static std::vector<SGLabelID> params_time_ref_frame = {
 	SGLabelID("Locale", 0),
@@ -144,7 +144,7 @@ static std::vector<SGLabelID> params_vik_fileref = {
 	SGLabelID("Relative", 1),
 };
 
-static ParameterScale scale_recent_files = { -1, 25, SGVariant((int32_t) 10), 1, 0 }; /* Viking's comment about value of hardwired default: "Seemingly GTK's default for the number of recent files.". */
+static ParameterScale<int> scale_recent_files(-1, 25, SGVariant((int32_t) 10), 1, 0); /* Viking's comment about value of hardwired default: "Seemingly GTK's default for the number of recent files.". */
 
 static ParameterSpecification prefs_advanced[] = {
 	{ 0, PREFERENCES_NAMESPACE_ADVANCED, "save_file_reference_mode",  SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::ComboBox,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },

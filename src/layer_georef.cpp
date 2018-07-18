@@ -87,9 +87,9 @@ ParameterSpecification georef_layer_param_specs[] = {
 	{ PARAM_CORNER_UTM_NORTHING,     NULL, "corner_northing",      SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
 	{ PARAM_MPP_EASTING,             NULL, "mpp_easting",          SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
 	{ PARAM_MPP_NORTHING,            NULL, "mpp_northing",         SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_ZONE,         NULL, "corner_zone",          SGVariantType::Uint,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_BAND_LETTER,  NULL, "corner_letter_as_int", SGVariantType::Uint,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_ALPHA,                   NULL, "alpha",                SGVariantType::Uint,   PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_ZONE,         NULL, "corner_zone",          SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
+	{ PARAM_CORNER_UTM_BAND_LETTER,  NULL, "corner_letter_as_int", SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
+	{ PARAM_ALPHA,                   NULL, "alpha",                SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
 
 	{ NUM_PARAMS,                    NULL, NULL,                   SGVariantType::Empty,  PARAMETER_GROUP_GENERIC,QString(""), WidgetType::None, NULL, NULL, NULL, NULL }, /* Guard. */
 };
@@ -98,6 +98,7 @@ ParameterSpecification georef_layer_param_specs[] = {
 
 
 LayerGeorefInterface vik_georef_layer_interface;
+static ParameterScale<int> alpha_scale(0, 255, SGVariant((int32_t) 0), 1, 0);
 
 
 
@@ -205,24 +206,26 @@ bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bo
 		this->mpp_northing = param_value.u.val_double;
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		if (param_value.u.val_uint <= UTM_ZONES) {
-			this->utm_tl.zone = param_value.u.val_uint; /* FIXME: data type mismatch: int vs uint. */
+		if (param_value.u.val_int <= UTM_ZONES) {
+			this->utm_tl.zone = param_value.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid utm zone" << param_value.u.val_uint;
+			qDebug() << "EE" PREFIX << "invalid utm zone" << param_value.u.val_int;
 		}
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
-		if (param_value.u.val_uint >= 65 || param_value.u.val_uint <= 90) {
-			this->utm_tl.letter = param_value.u.val_uint;
+		/* The parameter is called "corner_letter_as_int", so we have to use .val_int here. */
+		if (param_value.u.val_int >= 'A' || param_value.u.val_int <= 'Z') {
+			this->utm_tl.band_letter = (char) param_value.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid utm band letter" << param_value.u.val_uint;
+			qDebug() << "EE" PREFIX << "invalid utm band letter/decimal =" << param_value.u.val_int;
 		}
 		break;
 	case PARAM_ALPHA:
-		if (param_value.u.val_uint <= 255) {
-			this->alpha = param_value.u.val_uint;
+		/* Alpha shall always be of type int. */
+		if (alpha_scale.is_in_range(param_value.u.val_int)) {
+			this->alpha = param_value.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid alpha value" << param_value.u.val_uint;
+			qDebug() << "EE" PREFIX << "invalid alpha value" << param_value.u.val_int;
 		}
 		break;
 	default:
@@ -285,13 +288,15 @@ SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) co
 		rv = SGVariant(this->mpp_northing);
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		rv = SGVariant((uint32_t) this->utm_tl.zone); /* FIXME: why do we need to do cast here? FIXME: data type mismatch: int vs uint */
+		rv = SGVariant((int32_t) this->utm_tl.zone);
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
-		rv = SGVariant((uint32_t) this->utm_tl.letter); /* FIXME: why do we need to do cast here? */
+		/* The parameter is called "corner_letter_as_int", so we have to cast to int here. */
+		rv = SGVariant((int32_t) this->utm_tl.band_letter);
 		break;
 	case PARAM_ALPHA:
-		rv = SGVariant((uint32_t) this->alpha); /* FIXME: why do we need to do cast here? */
+		/* Alpha shall always be int. Cast to int here, to be sure that it's stored in variant correctly. */
+		rv = SGVariant((int32_t) this->alpha);
 		break;
 	default:
 		break;
@@ -455,7 +460,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 		this->image_width = this->image.width();
 		this->image_height = this->image.height();
 
-		if (!this->image.isNull() && this->alpha < 255) {
+		if (!this->image.isNull() && alpha_scale.is_in_range(this->alpha)) {
 			ui_pixmap_set_alpha(this->image, this->alpha);
 		}
 	}
@@ -957,7 +962,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	}
 
 
-	ParameterScale alpha_scale = { 0, 255, SGVariant((int32_t) this->layer->alpha), 1, 0 };
+	alpha_scale.initial = SGVariant((int32_t) this->layer->alpha);
 	this->alpha_slider = new SGSlider(alpha_scale, Qt::Horizontal);
 	this->grid->addWidget(new QLabel(tr("Alpha:")), row, 0);
 	this->grid->addWidget(this->alpha_slider, row, 1);
@@ -1020,12 +1025,13 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 		}
 	}
 
-	if (!this->image.isNull() && this->alpha < 255) {
-		ui_pixmap_set_alpha(this->image, this->alpha);
-	}
-
-	if (!this->scaled_image.isNull() && this->alpha < 255) {
-		ui_pixmap_set_alpha(this->scaled_image, this->alpha);
+	if (alpha_scale.is_in_range(this->alpha)) {
+		if (!this->image.isNull()) {
+			ui_pixmap_set_alpha(this->image, this->alpha);
+		}
+		if (!this->scaled_image.isNull()) {
+			ui_pixmap_set_alpha(this->scaled_image, this->alpha);
+		}
 	}
 
 	const int current_coord_mode = dialog.coord_mode_combo->currentData().toInt();

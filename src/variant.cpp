@@ -389,6 +389,61 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 
 
 
+SGVariant & SGVariant::operator=(const SGVariant & other)
+{
+	if (&other == this) {
+		return *this;
+	}
+
+	this->type_id = other.type_id;
+
+	switch (other.type_id) {
+	case SGVariantType::Empty:
+		break;
+	case SGVariantType::Double:
+		this->u.val_double = other.u.val_double;
+		break;
+	case SGVariantType::Uint:
+		this->u.val_uint = other.u.val_uint;
+		break;
+	case SGVariantType::Int:
+		this->u.val_int = other.u.val_int;
+		break;
+	case SGVariantType::String:
+		this->val_string = other.val_string;
+		break;
+	case SGVariantType::Boolean:
+		this->u.val_bool = other.u.val_bool;
+		break;
+	case SGVariantType::Color:
+		this->val_color = other.val_color;
+		break;
+	case SGVariantType::StringList:
+		this->val_string_list = other.val_string_list;
+		break;
+	case SGVariantType::Pointer:
+		this->u.val_pointer = other.u.val_pointer;
+		break;
+	case SGVariantType::Timestamp:
+		this->val_timestamp = other.val_timestamp;
+		break;
+	case SGVariantType::Latitude:
+	case SGVariantType::Longitude:
+	case SGVariantType::Altitude:
+		/* This is for debug, so we don't apply any format specifiers. */
+		this->val_lat_lon_alt = other.val_lat_lon_alt;
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) other.type_id;
+		break;
+	};
+
+	return *this;
+}
+
+
+
+
 time_t SGVariant::get_timestamp() const
 {
 	return this->val_timestamp;

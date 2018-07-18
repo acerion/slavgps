@@ -138,25 +138,24 @@ QDebug SlavGPS::operator<<(QDebug debug, const LatLon & lat_lon)
 #define EquatorialRadius 6378137
 #define EccentricitySquared 0.00669438
 
-static char coords_utm_letter( double latitude );
+static char coords_utm_band_letter(double latitude);
 
 
 
 
-UTM::UTM(const QString & northing_string, const QString & easting_string, int zone_value, const QString & letter_string)
+UTM::UTM(const QString & northing_string, const QString & easting_string, int zone_value, char new_band_letter)
 {
 	/* TODO: revisit data types (double or int?) for northing/easting. */
 	/* TODO: add error checking. */
 	this->northing = northing_string.toDouble();
 	this->easting  = easting_string.toDouble();
 	this->zone = zone_value;
-	if (1 == letter_string.size()) {
-		this->letter = letter_string.at(0).toUpper().toLatin1();
-	}
-	qDebug() << "II:" PREFIX << "UTM northing conversion" << northing_string << "->" << this->northing;
-	qDebug() << "II:" PREFIX << "UTM easting conversion"  << easting_string  << "->" << this->easting;
-	qDebug() << "II:" PREFIX << "UTM zone conversion"     << zone_value      << "->" << this->zone;
-	qDebug() << "II:" PREFIX << "UTM letter conversion"   << letter_string   << "->" << this->letter;
+	this->band_letter = new_band_letter; // _string.at(0).toUpper().toLatin1();
+
+	qDebug() << "II:" PREFIX << "UTM northing conversion"      << northing_string << "->" << this->northing;
+	qDebug() << "II:" PREFIX << "UTM easting conversion"       << easting_string  << "->" << this->easting;
+	qDebug() << "II:" PREFIX << "UTM zone conversion"          << zone_value      << "->" << this->zone;
+	qDebug() << "II:" PREFIX << "UTM band letter conversion"   << new_band_letter << "->" << this->band_letter;
 }
 
 
@@ -176,7 +175,7 @@ QString UTM::to_string(void) const
 		.arg(this->northing)
 		.arg(this->easting)
 		.arg(this->zone)
-		.arg(this->letter);
+		.arg(this->band_letter);
 
 	return result;
 }
@@ -274,14 +273,14 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
     utm.northing = northing;
     utm.easting = easting;
     utm.zone = zone;
-    utm.letter = coords_utm_letter( latitude );
+    utm.band_letter = coords_utm_band_letter(latitude);
     return utm;
 }
 
 
-static char coords_utm_letter( double latitude )
+static char coords_utm_band_letter(double latitude)
     {
-    /* This routine determines the correct UTM letter designator for the
+    /* This routine determines the correct UTM band letter designator for the
     ** given latitude.  It returns 'Z' if the latitude is outside the UTM
     ** limits of 84N to 80S.
     */
@@ -312,10 +311,6 @@ static char coords_utm_letter( double latitude )
 
 LatLon UTM::to_latlon(const UTM & utm)
 {
-    double northing, easting;
-    int zone;
-    char letter[100];
-    double x, y;
     double eccPrimeSquared;
     double e1;
     double N1, T1, C1, R1, D, M;
@@ -323,20 +318,18 @@ LatLon UTM::to_latlon(const UTM & utm)
     double mu, phi1_rad;
     double latitude, longitude;
 
-    northing = utm.northing;
-    easting = utm.easting;
-    zone = utm.zone;
-    letter[0] = utm.letter;
+    char band_letter[100]; /* TODO: shouldn't we initialize this with zeros? */
+    band_letter[0] = utm.band_letter;
 
     /* Now convert. */
-    x = easting - 500000.0;	/* remove 500000 meter offset */
-    y = northing;
-    if ( ( *letter - 'N' ) < 0 ) {
+    double x = utm.easting - 500000.0; /* remove 500000 meter offset */
+    double y = utm.northing;
+    if ( ( *band_letter - 'N' ) < 0 ) {
       /* southern hemisphere */
       y -= 10000000.0;	/* remove 1e7 meter offset */
     }
 
-    long_origin = ( zone - 1 ) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
+    long_origin = ( utm.zone - 1 ) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */
     eccPrimeSquared = EccentricitySquared / ( 1.0 - EccentricitySquared );
     e1 = ( 1.0 - sqrt( 1.0 - EccentricitySquared ) ) / ( 1.0 + sqrt( 1.0 - EccentricitySquared ) );
     M = y / K0;

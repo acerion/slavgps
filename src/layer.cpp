@@ -166,11 +166,14 @@ const LayerInterface & Layer::get_interface(void) const
 
 void Layer::preconfigure_interfaces(void)
 {
-	for (SlavGPS::LayerType type = SlavGPS::LayerType::Aggregate; type < SlavGPS::LayerType::Max; ++type) {
+	for (SlavGPS::LayerType layer_type = SlavGPS::LayerType::Aggregate; layer_type < SlavGPS::LayerType::Max; ++layer_type) {
 
-		LayerInterface * interface = Layer::get_interface(type);
+		qDebug() << "";
+		qDebug() << "II" PREFIX << "preconfiguring interface, layer type" << layer_type;
 
-		QString path = QString(":/icons/layer/") + Layer::get_type_id_string(type).toLower() + QString(".png");
+		LayerInterface * interface = Layer::get_interface(layer_type);
+
+		const QString path = QString(":/icons/layer/") + Layer::get_type_id_string(layer_type).toLower() + QString(".png");
 		qDebug() << "II" PREFIX << "preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
 
@@ -179,6 +182,10 @@ void Layer::preconfigure_interfaces(void)
 		}
 
 		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->name; param_spec++) {
+
+			qDebug() << "";
+			qDebug() << "II" PREFIX << "preconfiguring interface, param spec name is" << param_spec->name << "type is" << param_spec->type_id << "id is" << param_spec->id;
+
 			interface->parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_spec->id, param_spec));
 
 			/* Read and store default values of layer's parameters.
@@ -193,9 +200,12 @@ void Layer::preconfigure_interfaces(void)
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid.
 			   If invalid, call LayerDefaults::set() to save the value?
 			   What if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
-			param_value = LayerDefaults::get(type, param_spec->name, param_spec->type_id);
+			qDebug() << "II" << PREFIX << "will call ::get() for param" << param_spec->type_id;
+			param_value = LayerDefaults::get(layer_type, param_spec->name, param_spec->type_id);
 			interface->parameter_default_values[param_spec->id] = param_value;
 		}
+
+		qDebug() << "";
 	}
 }
 

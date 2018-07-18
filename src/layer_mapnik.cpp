@@ -81,8 +81,8 @@ static SGVariant size_default(void)      { return SGVariant((uint32_t) 256); }
 static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
 
 
-static ParameterScale scale_alpha   = { 0,  255, SGVariant((int32_t) 255),  5, 0 }; /* PARAM_ALPHA */
-static ParameterScale scale_timeout = { 0, 1024, SGVariant((int32_t) 168), 12, 0 }; /* Renderer timeout hours. Value of hardwired default is one week. */
+static ParameterScale<int> scale_alpha(0,  255, SGVariant((int32_t) 255),  5, 0); /* PARAM_ALPHA */
+static ParameterScale<int> scale_timeout(0, 1024, SGVariant((int32_t) 168), 12, 0); /* Renderer timeout hours. Value of hardwired default is one week. */
 
 
 enum {
@@ -663,7 +663,7 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInf
 	this->possibly_save_pixmap(pixmap, ti_ul);
 
 	/* TODO: Mapnik can apply alpha, but use our own function for now. */
-	if (this->alpha < 255) {
+	if (scale_alpha.is_in_range(this->alpha)) {
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 	MapCacheItemExtra arg;
@@ -745,7 +745,7 @@ QPixmap LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rere
 		if (!pixmap.load(filename)) {
 			qDebug() << "WW: Layer Mapnik: failed to load pixmap from" << filename;
 		} else {
-			if (this->alpha < 255) {
+			if (scale_alpha.is_in_range(this->alpha)) {
 				ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
 			MapCacheItemExtra arg;
