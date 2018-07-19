@@ -43,6 +43,7 @@ renaming functions and defining LatLon and UTM structs.
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <cassert>
 
 #include <QLocale>
 #include <QDebug>
@@ -318,13 +319,11 @@ LatLon UTM::to_latlon(const UTM & utm)
     double mu, phi1_rad;
     double latitude, longitude;
 
-    char band_letter[100]; /* TODO: shouldn't we initialize this with zeros? */
-    band_letter[0] = utm.band_letter;
-
     /* Now convert. */
     double x = utm.easting - 500000.0; /* remove 500000 meter offset */
     double y = utm.northing;
-    if ( ( *band_letter - 'N' ) < 0 ) {
+    assert (utm.band_letter >= 'A' && utm.band_letter <= 'Z');
+    if (utm.band_letter < 'N') {
       /* southern hemisphere */
       y -= 10000000.0;	/* remove 1e7 meter offset */
     }

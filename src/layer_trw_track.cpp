@@ -314,7 +314,8 @@ Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 	this->set_comment(from.comment);
 	this->set_description(from.description);
 	this->set_source(from.source);
-	/* kamilFIXME: where is ->type? */
+
+	/* this->type_id is set by Track::Track(bool is_route) called by this constructor. */
 
 	this->has_color = from.has_color;
 	this->color = from.color;

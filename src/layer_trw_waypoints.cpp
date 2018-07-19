@@ -350,7 +350,6 @@ void LayerTRWWaypoints::uniquify(TreeViewSortOrder sort_order)
 		const QString uniqe_name = this->new_unique_element_name(wp->name);
 		wp->set_name(uniqe_name);
 		this->propagate_new_waypoint_name(wp);
-		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		/* Try to find duplicate names again in the updated set of waypoints. */
 		wp = this->find_waypoint_with_duplicate_name();

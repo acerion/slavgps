@@ -84,7 +84,7 @@ QString Util::uri_escape(const QString & buffer)
 {
 	const char * str = buffer.toUtf8().constData();
 
-	char * esc_str = (char *) malloc(3 * strlen(str)); /* FIXME: The size should be +1. */
+	char * esc_str = (char *) malloc(3 * strlen(str) + 1);
 	char * dst = esc_str;
 
 	for (const char * src = str; *src; src++) {

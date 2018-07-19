@@ -403,3 +403,11 @@ bool MapZoom::operator==(const MapZoom & other) const
 {
 	return this->x == other.x && this->y == other.y;
 }
+
+
+
+
+bool MapZoom::value_is_valid(double zoom)
+{
+	return zoom >= SG_VIEWPORT_ZOOM_MIN && zoom <= SG_VIEWPORT_ZOOM_MAX;
+}

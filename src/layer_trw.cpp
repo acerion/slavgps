@@ -2378,7 +2378,6 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name);
 		trk2->set_name(uniq_name);
-		/* kamilFIXME: in C application did we free this unique name anywhere? */
 
 		trw_dest->add_track(trk2);
 

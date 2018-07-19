@@ -1828,7 +1828,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		LatLon ll = test.get_latlon();
 		ll.lat += this->get_map_zoom().y * get_height() / 11000.0; // about 11km per degree latitude
 
-		test = Coord(LatLon::to_utm(ll), CoordMode::UTM); /* kamilFIXME: it was ViewportDrawMode::UTM. */
+		test = Coord(LatLon::to_utm(ll), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
 
 		*baseangle = M_PI - atan2(test_pos.x - x1, test_pos.y - y1);
@@ -2187,9 +2187,14 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	scaled_viewport->set_drawmode(this->get_drawmode());
 	scaled_viewport->set_coord_mode(this->get_coord_mode());
 	scaled_viewport->set_center_from_coord(this->center, false);
-	/* FIXME: do we allow mpp values from outside of a specific subset? */
-	scaled_viewport->set_map_zoom_x(this->map_zoom.x / scale_factor);
-	scaled_viewport->set_map_zoom_y(this->map_zoom.y / scale_factor);
+
+	if (MapZoom::value_is_valid(this->map_zoom.x / scale_factor) && MapZoom::value_is_valid(this->map_zoom.y / scale_factor)) {
+		scaled_viewport->set_map_zoom_x(this->map_zoom.x / scale_factor);
+		scaled_viewport->set_map_zoom_y(this->map_zoom.y / scale_factor);
+	} else {
+		/* TODO: now what? */
+	}
+
 
 	qDebug() << "II" PREFIX << "scaled viewport's bounding box set to" << scaled_viewport->get_bbox();
 

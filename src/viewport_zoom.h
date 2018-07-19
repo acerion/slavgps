@@ -76,6 +76,8 @@ namespace SlavGPS {
 		double get_y(void) const;
 		bool x_y_is_equal(void) const;
 
+		static bool value_is_valid(double zoom);
+
 		bool zoom_in(int factor);
 		bool zoom_out(int factor);
 
