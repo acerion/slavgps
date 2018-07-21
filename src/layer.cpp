@@ -86,11 +86,6 @@ static bool layer_defaults_register(LayerType layer_type);
 
 
 
-#define VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT "layers_create_trw_auto_default"
-
-
-
-
 void SlavGPS::layer_init(void)
 {
 	/* Register all parameter defaults, early in the start up sequence. */
@@ -291,44 +286,48 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 {
 	qDebug() << "II" PREFIX << "will create new" << Layer::get_type_ui_label(layer_type) << "layer";
 
-	static sg_uid_t layer_uid = SG_UID_INITIAL;
-
-	assert (layer_type != LayerType::Max);
-
-	bool use_default_properties = true;
 	Layer * layer = NULL;
 
-	if (layer_type == LayerType::Aggregate) {
+	switch (layer_type) {
+	case LayerType::Aggregate:
 		layer = new LayerAggregate();
-
-	} else if (layer_type == LayerType::TRW) {
+		break;
+	case LayerType::TRW:
 		layer = new LayerTRW();
-		(void) ApplicationState::get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &use_default_properties);
-		((LayerTRW *) layer)->set_coord_mode(viewport->get_coord_mode());
-	} else if (layer_type == LayerType::Coordinates) {
+		break;
+	case LayerType::Coordinates:
 		layer = new LayerCoord();
-	} else if (layer_type == LayerType::Map) {
+		break;
+	case LayerType::Map:
 		layer = new LayerMap();
-	} else if (layer_type == LayerType::DEM) {
+		break;
+	case LayerType::DEM:
 		layer = new LayerDEM();
-	} else if (layer_type == LayerType::Georef) {
+		break;
+	case LayerType::Georef:
 		layer = new LayerGeoref();
 		((LayerGeoref *) layer)->configure_from_viewport(viewport);
+		break;
 #ifdef HAVE_LIBMAPNIK
-	} else if (layer_type == LayerType::Mapnik) {
+	case LayerType::Mapnik:
 		layer = new LayerMapnik();
+		break;
 #endif
-	} else if (layer_type == LayerType::GPS) {
+	case LayerType::GPS:
 		layer = new LayerGPS();
-		((LayerGPS *) layer)->set_coord_mode(viewport->get_coord_mode());
-	} else {
-		assert (0);
+		break;
+	case LayerType::Max:
+	default:
+		qDebug() << "EE" PREFIX << "unhandled layer type" << layer_type;
+		break;
 	}
 
 	assert (layer);
 
+	layer->set_coord_mode(viewport->get_coord_mode());
 
-	if (interactive && layer->has_properties_dialog && !use_default_properties) {
+
+	if (interactive && layer->has_properties_dialog) {
 		if (!layer->properties_dialog()) {
 			delete layer;
 			return NULL;
@@ -337,8 +336,6 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 		/* Layer::get_type_ui_label() returns localized string. */
 		layer->set_name(Layer::get_type_ui_label(layer_type));
 	}
-
-	layer->layer_instance_uid = ++layer_uid;
 
 	return layer;
 }
@@ -698,13 +695,6 @@ void Layer::weak_unref(LayerRefCB cb, void * obj)
 	g_object_weak_unref(G_OBJECT (this->vl), cb, obj);
 	return;
 #endif
-}
-
-
-
-bool Layer::the_same_object(const Layer * layer) const
-{
-	return layer && (layer->layer_instance_uid == this->layer_instance_uid);
 }
 
 

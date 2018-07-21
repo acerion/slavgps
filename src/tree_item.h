@@ -93,7 +93,7 @@ namespace SlavGPS {
 	class TreeItem : public QObject {
 		Q_OBJECT
 	public:
-		TreeItem() {};
+		TreeItem();
 		~TreeItem() {};
 
 		TreeIndex const & get_index(void);
@@ -162,7 +162,6 @@ namespace SlavGPS {
 
 		bool has_properties_dialog = false; /* Does this tree item has dialog, in which you can view or change *configurable* properties? */
 
-		sg_uid_t uid = SG_UID_INITIAL;
 
 		QString name;
 		QString type_id;
@@ -173,6 +172,9 @@ namespace SlavGPS {
 		QIcon icon; /* .isNull() may return true for this field (if child class doesn't assign anything to the icon). */
 
 		char debug_string[100] = { 0 };
+
+	protected:
+		sg_uid_t uid = SG_UID_INITIAL;
 	};
 
 

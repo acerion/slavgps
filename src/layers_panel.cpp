@@ -437,7 +437,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
+			if (TreeItem::the_same_object(this->get_selected_layer(), g_tree->tree_get_main_viewport()->get_trigger())) {
 				g_tree->tree_get_main_viewport()->set_trigger(NULL);
 			}
 
@@ -524,7 +524,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected_layer()->the_same_object(g_tree->tree_get_main_viewport()->get_trigger())) {
+			if (TreeItem::the_same_object(this->get_selected_layer(), g_tree->tree_get_main_viewport()->get_trigger())) {
 				g_tree->tree_get_main_viewport()->set_trigger(NULL);
 			}
 

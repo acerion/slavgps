@@ -1267,7 +1267,7 @@ void LayerTRW::add_children_to_tree(void)
 
 		assert (!this->tracks.is_in_tree());
 		if (!this->tracks.is_in_tree()) {
-			this->tree_view->push_tree_item_back(this->index, &this->tracks, tr("Tracks"));
+			this->tree_view->push_tree_item_back(this, &this->tracks);
 		}
 		this->tracks.add_children_to_tree();
 	}
@@ -1277,7 +1277,7 @@ void LayerTRW::add_children_to_tree(void)
 
 		assert (!this->routes.is_in_tree());
 		if (!this->routes.is_in_tree()) {
-			this->tree_view->push_tree_item_back(this->index, &this->routes, tr("Routes"));
+			this->tree_view->push_tree_item_back(this, &this->routes);
 		}
 
 		this->routes.add_children_to_tree();
@@ -1288,7 +1288,7 @@ void LayerTRW::add_children_to_tree(void)
 
 		assert (!this->waypoints.is_in_tree());
 		if (!this->waypoints.is_in_tree()) {
-			this->tree_view->push_tree_item_back(this->index, &this->waypoints, tr("Waypoints"));
+			this->tree_view->push_tree_item_back(this, &this->waypoints);
 		}
 
 		this->waypoints.add_children_to_tree();
@@ -2165,16 +2165,16 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 			return;
 		}
 
-		this->tree_view->push_tree_item_back(this->index, &this->waypoints, tr("Waypoints"));
+		this->tree_view->push_tree_item_back(this, &this->waypoints);
 	}
 
 	/* Now we can proceed with adding a waypoint to Waypoints node. */
 
 	this->waypoints.add_waypoint(wp);
 
-	this->tree_view->push_tree_item_back(this->waypoints.get_index(), wp, wp->name);
+	this->tree_view->push_tree_item_back(&this->waypoints, wp);
 
-	this->tree_view->set_tree_item_timestamp(wp->index, wp->has_timestamp ? wp->timestamp : 0);
+	this->tree_view->set_tree_item_timestamp(wp, wp->has_timestamp ? wp->timestamp : 0);
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
 	this->tree_view->sort_children(this->waypoints.get_index(), this->wp_sort_order);
@@ -2201,7 +2201,7 @@ void LayerTRW::add_track(Track * trk)
 			return;
 		}
 
-		this->tree_view->push_tree_item_back(this->index, &this->tracks, tr("Tracks"));
+		this->tree_view->push_tree_item_back(this, &this->tracks);
 	}
 
 	/* Now we can proceed with adding a track to Tracks node. */
@@ -2214,8 +2214,8 @@ void LayerTRW::add_track(Track * trk)
 		timestamp = tp->timestamp;
 	}
 
-	this->tree_view->push_tree_item_back(this->tracks.index, trk, trk->name);
-	this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
+	this->tree_view->push_tree_item_back(&this->tracks, trk);
+	this->tree_view->set_tree_item_timestamp(trk, timestamp);
 
 	/* Sort now as post_read is not called on a track connected to tree. */
 	this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
@@ -2242,14 +2242,14 @@ void LayerTRW::add_route(Track * trk)
 			return;
 		}
 
-		this->tree_view->push_tree_item_back(this->index, &this->routes, tr("Routes"));
+		this->tree_view->push_tree_item_back(this, &this->routes);
 	}
 
 	/* Now we can proceed with adding a route to Routes node. */
 
 	this->routes.add_track(trk);
 
-	this->tree_view->push_tree_item_back(this->routes.index, trk, trk->name);
+	this->tree_view->push_tree_item_back(&this->routes, trk);
 
 	/* Sort now as post_read is not called on a route connected to tree. */
 	this->tree_view->sort_children(this->routes.get_index(), this->track_sort_order);
@@ -2383,8 +2383,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		this->delete_track(trk);
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->set_tree_item_timestamp(trw_dest->index, trw_dest->get_timestamp());
-		trw_src->tree_view->set_tree_item_timestamp(trw_src->index, trw_src->get_timestamp());
+		trw_dest->tree_view->set_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
+		trw_src->tree_view->set_tree_item_timestamp(trw_src, trw_src->get_timestamp());
 	}
 
 	if (item_type_id == "sg.trw.route") {
@@ -2414,8 +2414,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 		trw_dest->waypoints.recalculate_bbox();
 		trw_src->waypoints.recalculate_bbox();
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->set_tree_item_timestamp(trw_dest->index, trw_dest->get_timestamp());
-		trw_src->tree_view->set_tree_item_timestamp(trw_src->index, trw_src->get_timestamp());
+		trw_dest->tree_view->set_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
+		trw_src->tree_view->set_tree_item_timestamp(trw_src, trw_src->get_timestamp());
 	}
 }
 
@@ -3383,7 +3383,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	}
 
 	/* Reset layer timestamps in case they have now changed. */
-	this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
+	this->tree_view->set_tree_item_timestamp(this, this->get_timestamp());
 
 	this->emit_layer_changed("TRW - delete selected tracks");
 }
@@ -3464,7 +3464,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 	this->waypoints.recalculate_bbox();
 	/* Reset layer timestamp in case it has now changed. */
-	this->tree_view->set_tree_item_timestamp(this->index, this->get_timestamp());
+	this->tree_view->set_tree_item_timestamp(this, this->get_timestamp());
 	this->emit_layer_changed("TRW - delete selected waypoints");
 
 }
@@ -4085,12 +4085,6 @@ LayerTRW::LayerTRW() : Layer()
 	this->type = LayerType::TRW;
 	strcpy(this->debug_string, "TRW");
 	this->interface = &vik_trw_layer_interface;
-
-	/* TODO: hide these details. */
-	this->tracks.type_id = "sg.trw.tracks";
-	this->tracks.accepted_child_type_ids << "sg.trw.track";
-	this->routes.type_id = "sg.trw.routes";
-	this->routes.accepted_child_type_ids << "sg.trw.route";
 
 	this->tracks.owning_layer = this;
 	this->routes.owning_layer = this;

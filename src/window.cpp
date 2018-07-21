@@ -2714,14 +2714,6 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 		return false;
 	}
 
-
-	/* backup old zoom & set new */
-	const MapZoom orig_map_zoom = this->viewport->get_map_zoom();
-	this->viewport->set_map_zoom(map_zoom);
-
-	/* Set expected width and height. Do this only once for all images (all images have the same size). */
-	this->viewport->reconfigure_drawing_area(image_width, image_height);
-
 	QDir dir(dir_full_path);
 	if (!dir.exists()) {
 		if (!dir.mkpath(dir_full_path)) {
@@ -2730,8 +2722,16 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 		}
 	}
 
+	const MapZoom orig_map_zoom = this->viewport->get_map_zoom();
+	const UTM utm_orig = this->viewport->get_center()->utm;
+
+	this->viewport->set_map_zoom(map_zoom);
+
+	/* Set expected width and height. Do this only once for all images (all images have the same size). */
+	this->viewport->reconfigure_drawing_area(image_width, image_height);
+
+
 	UTM utm;
-	UTM utm_orig = this->viewport->get_center()->utm;
 	const char * extension = save_format == ViewportSaveFormat::PNG ? "png" : "jpg";
 
 	/* TODO: support non-identical x/y zoom values. */

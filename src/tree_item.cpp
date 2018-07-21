@@ -19,12 +19,37 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
+#include <mutex>
+
+
+
+
 #include "tree_item.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+static sg_uid_t g_uid_counter = SG_UID_INITIAL;
+static std::mutex g_uid_counter_mutex;
+
+
+
+
+TreeItem::TreeItem()
+{
+	g_uid_counter_mutex.lock();
+	++g_uid_counter;
+	this->uid = g_uid_counter;
+	g_uid_counter_mutex.unlock();
+}
 
 
 

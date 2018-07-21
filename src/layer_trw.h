@@ -195,9 +195,9 @@ namespace SlavGPS {
 		LayerTRWTracks & get_routes_node(void) { return this->routes; };
 		LayerTRWWaypoints & get_waypoints_node(void) { return this->waypoints; };
 
-		LayerTRWTracks tracks; /* Sub-node, under which all layer's tracks are shown. */
-		LayerTRWTracks routes; /* Sub-node, under which all layer's routes are shown. */
-		LayerTRWWaypoints waypoints; /* Sub-node, under which all layer's waypoints are shown. */
+		LayerTRWTracks tracks{false}; /* Sub-node, under which all layer's tracks are shown. */
+		LayerTRWTracks routes{true};  /* Sub-node, under which all layer's routes are shown. */
+		LayerTRWWaypoints waypoints;  /* Sub-node, under which all layer's waypoints are shown. */
 
 
 		bool get_tracks_visibility(void) const;

@@ -556,7 +556,7 @@ void LayerGPS::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		LayerTRW * trw = this->trw_children[i];
-		if (trw->the_same_object(trigger)) {
+		if (TreeItem::the_same_object(trw, trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
 				viewport->snapshot_load();
@@ -570,7 +570,7 @@ void LayerGPS::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 	}
 #if REALTIME_GPS_TRACKING_ENABLED
 	if (this->realtime_tracking_in_progress) {
-		if (this->the_same_object(trigger)) {
+		if (TreeItem::the_same_object(this, trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
 				viewport->snapshot_load();
@@ -684,9 +684,10 @@ void LayerGPS::add_children_to_tree(void)
 		/* TODO: find a way to pass 'above=true' argument to function adding new tree item. */
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->push_tree_item_back(this->index, trw, trw_names[ix].label);
+		trw->set_name(trw_names[ix].label);
+		this->tree_view->push_tree_item_back(this, trw);
 
-		this->tree_view->set_tree_item_timestamp(trw->index, trw->get_timestamp());
+		this->tree_view->set_tree_item_timestamp(trw, trw->get_timestamp());
 
 		QObject::connect(trw, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 	}

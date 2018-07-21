@@ -100,9 +100,11 @@ LayerTRWTracks::LayerTRWTracks(bool is_routes) : LayerTRWTracks()
 	if (is_routes) {
 		this->type_id = "sg.trw.routes";
 		this->accepted_child_type_ids << "sg.trw.route";
+		this->name = tr("Routes");
 	} else {
 		this->type_id = "sg.trw.tracks";
 		this->accepted_child_type_ids << "sg.trw.track";
+		this->name = tr("Tracks");
 	}
 }
 
@@ -207,7 +209,7 @@ void LayerTRWTracks::recalculate_bbox(void)
 void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list) // zzz
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		list.push_back((*iter)->uid);
+		list.push_back((*iter)->get_uid());
 	}
 }
 
@@ -470,7 +472,7 @@ void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 
 		/* TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
 		if (trk->index.isValid()) {
-			this->tree_view->set_tree_item_name(trk->index, uniq_name);
+			this->tree_view->set_tree_item_name(trk);
 			this->tree_view->sort_children(this->get_index(), sort_order);
 		}
 
@@ -620,7 +622,7 @@ void LayerTRWTracks::update_tree_view(Track * trk)
 		} else {
 			trk->icon = QIcon(); /* Invalidate icon. */
 		}
-		this->tree_view->set_tree_item_icon(trk->index, trk->icon);
+		this->tree_view->set_tree_item_icon(trk);
 	}
 }
 
@@ -635,9 +637,9 @@ void LayerTRWTracks::add_children_to_tree(void)
 		if (trk->has_color) {
 			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 			pixmap.fill(trk->color);
-			this->icon = QIcon(pixmap);
+			trk->icon = QIcon(pixmap);
 		} else {
-			this->icon = QIcon(); /* Invalidate icon. */
+			trk->icon = QIcon(); /* Invalidate icon. */
 		}
 
 		time_t timestamp = 0;
@@ -648,9 +650,9 @@ void LayerTRWTracks::add_children_to_tree(void)
 
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
-		this->tree_view->push_tree_item_back(this->index, trk, trk->name);
-		this->tree_view->set_tree_item_icon(trk->index, this->icon);
-		this->tree_view->set_tree_item_timestamp(trk->index, timestamp);
+		this->tree_view->push_tree_item_back(this, trk);
+		this->tree_view->set_tree_item_icon(trk);
+		this->tree_view->set_tree_item_timestamp(trk, timestamp);
 	}
 }
 
@@ -1052,7 +1054,7 @@ void LayerTRWTracks::add_track(Track * trk)
 void LayerTRWTracks::add_track_to_data_structure_only(Track * trk)
 {
 	trk->owning_layer = this->owning_layer;
-	this->children_map.insert({{ trk->uid, trk }});
+	this->children_map.insert({{ trk->get_uid(), trk }});
 	this->children_list.push_back(trk);
 }
 
@@ -1089,12 +1091,12 @@ bool LayerTRWTracks::delete_track(Track * trk)
 	parent_layer->cancel_tps_of_track(trk);
 
 	this->tree_view->detach_tree_item(trk);
-	this->children_map.erase(trk->uid); /* Erase by key. */ // zzz
+	this->children_map.erase(trk->get_uid()); /* Erase by key. */ // zzz
 
 
 	/* TODO: optimize. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		if ((*iter)->uid == trk->uid) {
+		if (TreeItem::the_same_object(*iter, trk)) {
 			this->children_list.erase(iter);
 		}
 	}

@@ -328,7 +328,7 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 		char *name = g_strescape(text, NULL);
 
 		selected->set_name(name);
-		selected->tree_view->set_tree_item_name(selected->index, name);
+		selected->tree_view->set_tree_item_name(selected);
 		free(name);
 
 		return;

@@ -138,8 +138,8 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->insert_tree_item(this->index, sibling_layer_index, layer, put_above, layer->name);
-		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
+		this->tree_view->insert_tree_item(this, sibling_layer_index, layer, put_above);
+		this->tree_view->set_tree_item_timestamp(layer, layer->get_timestamp());
 	}
 
 	layer->owning_layer = this;
@@ -150,7 +150,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
-			if (sibling_layer->the_same_object(*i)) {
+			if (TreeItem::the_same_object(sibling_layer, *i)) {
 				theone = i;
 			}
 		}
@@ -173,7 +173,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
+	this->tree_view->set_tree_item_tooltip(this);
 
 	if (!this->children->empty()) {
 		this->tree_view->expand(this->index);
@@ -206,16 +206,16 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->push_tree_item_front(this->index, layer, layer->name);
+		this->tree_view->push_tree_item_front(this, layer);
 
 		this->children->push_front(layer);
 	} else {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->push_tree_item_back(this->index, layer, layer->name);
+		this->tree_view->push_tree_item_back(this, layer);
 
 		this->children->push_back(layer);
 	}
-	this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
+	this->tree_view->set_tree_item_timestamp(layer, layer->get_timestamp());
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
@@ -225,7 +225,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
+	this->tree_view->set_tree_item_tooltip(this);
 
 	if (!this->children->empty()) {
 		this->tree_view->expand(this->index);
@@ -250,7 +250,7 @@ bool LayerAggregate::change_child_item_position(TreeIndex & child_index, bool up
 	/* Find container iterator of given tree item.
 	   This is not the same as tree item index. */
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		if (child_layer->the_same_object(*iter)) {
+		if (TreeItem::the_same_object(child_layer, *iter)) {
 			child_iter = iter;
 		}
 	}
@@ -323,7 +323,7 @@ void LayerAggregate::draw_tree_item(Viewport * viewport, bool highlight_selected
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 #ifdef K_FIXME_RESTORE
-		if (layer->the_same_object(trigger)) {
+		if (TreeItem::the_same_object(layer, trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
 				viewport->snapshot_load();
@@ -639,7 +639,7 @@ void LayerAggregate::clear()
 	this->children->clear();
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
+	this->tree_view->set_tree_item_tooltip(this);
 }
 
 
@@ -656,14 +656,14 @@ void LayerAggregate::clear()
 bool LayerAggregate::delete_layer(Layer * layer)
 {
 	assert (layer->is_in_tree());
-	assert (this->tree_view->get_tree_item(layer->index)->to_layer()->the_same_object(layer));
+	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->to_layer(), layer));
 
 	const bool was_visible = layer->visible;
 
 	this->tree_view->detach_tree_item(layer);
 
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		if (layer->the_same_object(*iter)) {
+		if (TreeItem::the_same_object(layer, *iter)) {
 			this->children->erase(iter);
 			break;
 		}
@@ -671,7 +671,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 	delete layer;
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
+	this->tree_view->set_tree_item_tooltip(this);
 
 	return was_visible;
 }
@@ -897,12 +897,12 @@ void LayerAggregate::add_children_to_tree(void)
 		Layer * layer = *iter;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->push_tree_item_back(this->index, layer, layer->name);
-		this->tree_view->set_tree_item_timestamp(layer->index, layer->get_timestamp());
+		this->tree_view->push_tree_item_back(this, layer);
+		this->tree_view->set_tree_item_timestamp(layer, layer->get_timestamp());
 	}
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this->index, this->get_tooltip());
+	this->tree_view->set_tree_item_tooltip(this);
 }
 
 

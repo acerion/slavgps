@@ -91,14 +91,6 @@ extern bool g_have_diary_program;
 
 
 
-/* Simple UID implementation using an integer. */
-static sg_uid_t global_trk_uid = SG_UID_INITIAL;
-static sg_uid_t global_rt_uid = SG_UID_INITIAL;
-static std::mutex trk_uid_mutex;
-static std::mutex rt_uid_mutex;
-
-
-
 /* The last used directories. */
 static QUrl last_directory_url;
 
@@ -267,16 +259,8 @@ Track::Track(bool is_route)
 
 	if (is_route) {
 		this->type_id = "sg.trw.route";
-
-		rt_uid_mutex.lock();
-		this->uid = ++global_rt_uid;
-		rt_uid_mutex.unlock();
 	} else {
 		this->type_id = "sg.trw.track";
-
-		trk_uid_mutex.lock();
-		this->uid = ++global_trk_uid;
-		trk_uid_mutex.unlock();
 	}
 
 	this->ref_count = 1;
@@ -3351,7 +3335,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	this->update_profile_dialog();
 
 
-	parent_layer->tree_view->set_tree_item_name(this->index, new_name);
+	parent_layer->tree_view->set_tree_item_name(this);
 	parent_layer->tree_view->sort_children(tracks->get_index(), parent_layer->track_sort_order);
 
 
@@ -3947,7 +3931,7 @@ void Track::delete_sublayer(bool confirm)
 		was_visible = parent_layer->delete_track(this);
 
 		/* Reset layer timestamp in case it has now changed. */
-		parent_layer->tree_view->set_tree_item_timestamp(parent_layer->index, parent_layer->get_timestamp());
+		parent_layer->tree_view->set_tree_item_timestamp(parent_layer, parent_layer->get_timestamp());
 	} else {
 		if (confirm) {
 			/* Get confirmation from the user. */

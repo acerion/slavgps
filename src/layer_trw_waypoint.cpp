@@ -63,21 +63,11 @@ extern bool g_have_diary_program;
 
 
 
-/* Simple UID implementation using an integer. */
-static sg_uid_t global_wp_uid = SG_UID_INITIAL;
-static std::mutex wp_uid_mutex;
-
-
-
-
 Waypoint::Waypoint()
 {
 	this->tree_item_type = TreeItemType::SUBLAYER;
 
 	this->name = tr("Waypoint");
-	wp_uid_mutex.lock();
-	this->uid = ++global_wp_uid;
-	wp_uid_mutex.unlock();
 
 	this->type_id = "sg.trw.waypoint";
 
@@ -613,7 +603,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	/* Update WP name and refresh the tree view. */
 	this->set_name(new_name);
 
-	parent_layer->tree_view->set_tree_item_name(this->index, new_name);
+	parent_layer->tree_view->set_tree_item_name(this);
 	parent_layer->tree_view->sort_children(parent_layer->waypoints.get_index(), parent_layer->wp_sort_order);
 
 	g_tree->emit_items_tree_updated();
@@ -714,7 +704,7 @@ void Waypoint::delete_sublayer(bool confirm)
 	parent_layer->waypoints.recalculate_bbox();
 
 	/* Reset layer timestamp in case it has now changed. */
-	parent_layer->tree_view->set_tree_item_timestamp(parent_layer->index, parent_layer->get_timestamp());
+	parent_layer->tree_view->set_tree_item_timestamp(parent_layer, parent_layer->get_timestamp());
 
 	if (was_visible) {
 		parent_layer->emit_layer_changed("TRW - Waypoint - delete");

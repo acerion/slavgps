@@ -78,19 +78,19 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		bool push_tree_item_front(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name);
-		bool push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name);
-		bool insert_tree_item(TreeIndex const & parent_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above, const QString & name);
+		bool push_tree_item_front(const TreeItem * parent_tree_item, TreeItem * tree_item);
+		bool push_tree_item_back(const TreeItem * parent_tree_item, TreeItem * tree_item);
+		bool insert_tree_item(const TreeItem * parent_tree_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above);
 		TreeItem * get_tree_item(TreeIndex const & item_index);
 
 		TreeIndex * get_index_from_path_str(char const * path_str);
 		TreeItem * get_selected_tree_item(void);
 
 
-		void set_tree_item_name(TreeIndex const & item_index, const QString & name);
-		void set_tree_item_icon(TreeIndex const & item_index, const QIcon & icon);
-		void set_tree_item_timestamp(TreeIndex const & item_index, time_t timestamp);
-		void set_tree_item_tooltip(TreeIndex const & item_index, const QString & tooltip);
+		void set_tree_item_name(const TreeItem * tree_item);
+		void set_tree_item_icon(const TreeItem * tree_item);
+		void set_tree_item_timestamp(const TreeItem * tree_item, time_t timestamp);
+		void set_tree_item_tooltip(const TreeItem * tree_item);
 
 		bool get_tree_item_visibility(TreeIndex const & item_index);
 		bool get_tree_item_visibility_with_parents(TreeIndex const & item_index);
@@ -124,7 +124,7 @@ namespace SlavGPS {
 		void tree_item_needs_redraw(sg_uid_t uid);
 
 	private:
-		bool insert_tree_item_at_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row);
+		bool insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row);
 		QList<QStandardItem *> create_new_row(TreeItem * tree_item, const QString & name);
 	};
 

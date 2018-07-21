@@ -141,6 +141,8 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree(void);
 
+		virtual void set_coord_mode(CoordMode mode) { return; };
+
 		/* Methods for generic "Select" tool. */
 		virtual bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)         { return false; };
 		virtual bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)  { return false; };
@@ -222,7 +224,6 @@ namespace SlavGPS {
 		void weak_ref(LayerRefCB cb, void * obj);
 		void weak_unref(LayerRefCB cb, void * obj);
 
-		bool the_same_object(const Layer * layer) const;
 
 		/* If there are any highlighted/selected elements in
 		   the layer, unhighlight them.  Return true if any
@@ -249,8 +250,6 @@ namespace SlavGPS {
 	signals:
 		void layer_changed(const QString & layer_name);
 
-	private:
-		sg_uid_t layer_instance_uid = SG_UID_INITIAL;
 	};
 
 

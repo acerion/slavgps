@@ -111,15 +111,15 @@ TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
 
 
 
-void TreeView::set_tree_item_timestamp(TreeIndex const & item_index, time_t timestamp)
+void TreeView::set_tree_item_timestamp(const TreeItem * tree_item, time_t timestamp)
 {
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
-		/* "item_index" points at the top tree item. */
-		qDebug() << "II" PREFIX << "querying Top Tree Item for item" << item_index.row() << item_index.column();
+		/* "tree_item->index" points at the top tree item. */
+		qDebug() << "II" PREFIX << "querying Top Tree Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Timestamp);
+	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Timestamp);
 
 	QVariant variant = QVariant::fromValue((qlonglong) timestamp);
 	this->tree_model->setData(ch->index(), variant, RoleLayerData);
@@ -128,16 +128,16 @@ void TreeView::set_tree_item_timestamp(TreeIndex const & item_index, time_t time
 
 
 
-void TreeView::set_tree_item_tooltip(TreeIndex const & item_index, const QString & tooltip)
+void TreeView::set_tree_item_tooltip(const TreeItem * tree_item)
 {
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
-		/* "item_index" points at the top tree item. */
-		qDebug() << "II" PREFIX << "querying Top Tree Item for item" << item_index.row() << item_index.column();
+		/* "tree_item->index" points at the top tree item. */
+		qDebug() << "II" PREFIX << "querying Top Tree Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Name);
-	ch->setToolTip(tooltip);
+	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Name);
+	ch->setToolTip(tree_item->get_tooltip());
 }
 
 
@@ -257,12 +257,14 @@ void TreeView::detach_children(TreeItem * parent_tree_item)
 
 
 
-void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & icon)
+void TreeView::set_tree_item_icon(const TreeItem * tree_item)
 {
-	if (!item_index.isValid()) {
+	if (!tree_item->index.isValid()) {
 		qDebug() << "EE" PREFIX << "invalid item index";
 		return;
 	}
+
+	const QIcon & icon = tree_item->icon;
 
 	if (icon.isNull()) {
 		/* Not an error. Perhaps there is no resource defined for an icon. */
@@ -271,26 +273,26 @@ void TreeView::set_tree_item_icon(TreeIndex const & item_index, const QIcon & ic
 
 	/* Icon is a property of TreeViewColumn::Name column. */
 
-	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
-		/* "item_index" points at the top-level item. */
-		qDebug() << "II" PREFIX << "querying Top Level Item for item" << item_index.row() << item_index.column();
+		/* "tree_item->index" points at the top-level item. */
+		qDebug() << "II" PREFIX << "querying Top Level Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::Name);
+	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Name);
 	ch->setIcon(icon);
 }
 
 
 
 
-void TreeView::set_tree_item_name(TreeIndex const & item_index, QString const & name)
+void TreeView::set_tree_item_name(const TreeItem * tree_item)
 {
-	if (!item_index.isValid()) {
+	if (!tree_item->index.isValid()) {
 		qDebug() << "EE: TreeView: invalid item index";
 		return;
 	}
-	this->tree_model->itemFromIndex(item_index)->setText(name);
+	this->tree_model->itemFromIndex(tree_item->index)->setText(tree_item->name);
 }
 
 
@@ -480,19 +482,18 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
 /**
    \brief Add given @tree_item at the beginning of list of children of given parent tree item
 
-   @param parent_index - index of parent tree item under which to put new @tree_item
+   @param parent_tree_index - parent tree item under which to put new @tree_item
    @param tree_item - tree_item to be added
-   @param name - name of tree item to be added
 
    @return true on success
    @return false on failure
 */
-bool TreeView::push_tree_item_front(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+bool TreeView::push_tree_item_front(const TreeItem * parent_tree_item, TreeItem * tree_item)
 {
-	if (parent_index.isValid()) {
+	if (parent_tree_item->index.isValid()) {
 		const int row = 0;
-		qDebug() << "II" PREFIX << "Pushing front tree item named" << name;
-		return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
+		qDebug() << "II" PREFIX << "Pushing front tree item named" << tree_item->name;
+		return this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 	} else {
 		/* Parent index must always be valid. The only
 		   possibility would be when we would push top level
@@ -509,19 +510,18 @@ bool TreeView::push_tree_item_front(TreeIndex const & parent_index, TreeItem * t
 /**
    \brief Add given @tree_item at the end of list of children of given parent tree item
 
-   @param parent_index - index of parent tree item under which to put new @tree_item
+   @param parent_tree_index - parent tree item under which to put new @tree_item
    @param tree_item - tree_item to be added
-   @param name - name of tree item to be added
 
    @return true on success
    @return false on failure
 */
-bool TreeView::push_tree_item_back(TreeIndex const & parent_index, TreeItem * tree_item, const QString & name)
+bool TreeView::push_tree_item_back(const TreeItem * parent_tree_item, TreeItem * tree_item)
 {
-	if (parent_index.isValid()) {
-		const int row = this->tree_model->itemFromIndex(parent_index)->rowCount();
-		qDebug() << "II" PREFIX << "Pushing back tree item named" << name << "in row" << row;
-		return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
+	if (parent_tree_item->index.isValid()) {
+		const int row = this->tree_model->itemFromIndex(parent_tree_item->index)->rowCount();
+		qDebug() << "II" PREFIX << "Pushing back tree item named" << tree_item->name << "in row" << row;
+		return this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 	} else {
 		/* Parent index must always be valid. The only
 		   possibility would be when we would push top level
@@ -744,31 +744,31 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 
 
-bool TreeView::insert_tree_item(const TreeIndex & parent_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above, const QString & name)
+bool TreeView::insert_tree_item(const TreeItem * parent_tree_item, TreeIndex const & sibling_index, TreeItem * tree_item, bool above)
 {
 	if (sibling_index.isValid()) {
-		qDebug() << "II" PREFIX << "Inserting tree item" << name << "next to sibling";
+		qDebug() << "II" PREFIX << "Inserting tree item" << tree_item->name << "next to sibling";
 
 		int row = sibling_index.row() + (above ? 0 : 1);
-		return this->insert_tree_item_at_row(parent_index, tree_item, name, row);
+		return this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 	} else {
 		/* Fall back in case of invalid sibling. */
 		qDebug() << "WW" PREFIX << "Invalid sibling index, fall back to pushing back tree item";
-		return this->push_tree_item_back(parent_index, tree_item, name);
+		return this->push_tree_item_back(parent_tree_item, tree_item);
 	}
 }
 
 
 
 
-bool TreeView::insert_tree_item_at_row(const TreeIndex & parent_index, TreeItem * tree_item, const QString & name, int row)
+bool TreeView::insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row)
 {
-	qDebug() << "II" PREFIX << "inserting tree item" << name;
+	qDebug() << "II" PREFIX << "inserting tree item" << tree_item->name;
 
-	QList<QStandardItem *> items = this->create_new_row(tree_item, name);
+	QList<QStandardItem *> items = this->create_new_row(tree_item, tree_item->name);
 
-	if (parent_index.isValid()) {
-		this->tree_model->itemFromIndex(parent_index)->insertRow(row, items);
+	if (parent_tree_item && parent_tree_item->index.isValid()) {
+		this->tree_model->itemFromIndex(parent_tree_item->index)->insertRow(row, items);
 	} else {
 		/* Adding tree item just right under top-level item. */
 		this->tree_model->invisibleRootItem()->insertRow(row, items);
@@ -844,10 +844,10 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 #endif
 
 
-	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
+	TreeItem * invalid_parent_tree_item = NULL; /* Top layer doesn't have any parent index. */
 	const int row = 0;
 	qDebug() << "II" PREFIX << "Inserting top level layer in row" << row;
-	this->insert_tree_item_at_row(invalid_parent_index, top_level_layer, top_level_layer->name, row);
+	this->insert_tree_item_at_row(invalid_parent_tree_item, top_level_layer, row);
 }
 
 
@@ -910,8 +910,8 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		qDebug() << "II" PREFIX << "edited item in column Visible: is checkable?" << item->isCheckable();
 
 		tree_item->visible = (bool) item->checkState();
-		qDebug() << "SIGNAL" PREFIX "emitting tree_item_needs_redraw(), uid=", tree_item->uid;
-		emit this->tree_item_needs_redraw(tree_item->uid);
+		qDebug() << "SIGNAL" PREFIX "emitting tree_item_needs_redraw(), uid=", tree_item->get_uid();
+		emit this->tree_item_needs_redraw(tree_item->get_uid());
 		break;
 
 	case TreeViewColumn::TreeItem:

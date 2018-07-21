@@ -80,6 +80,7 @@ LayerTRWWaypoints::LayerTRWWaypoints()
 	this->accepted_child_type_ids << "sg.trw.waypoint";
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);
+	this->name = tr("Waypoints");
 }
 
 
@@ -153,7 +154,7 @@ std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(char const * date
 void LayerTRWWaypoints::list_wp_uids(std::list<sg_uid_t> & list)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		list.push_back((*iter)->uid);
+		list.push_back((*iter)->get_uid());
 	}
 }
 
@@ -392,7 +393,7 @@ void LayerTRWWaypoints::propagate_new_waypoint_name(const Waypoint * wp)
 {
 	/* Update the tree view. */
 	if (wp->index.isValid()) {
-		this->tree_view->set_tree_item_name(wp->index, wp->name);
+		this->tree_view->set_tree_item_name(wp);
 		this->tree_view->sort_children(this->get_index(), ((LayerTRW *) this->owning_layer)->wp_sort_order);
 	} else {
 		qDebug() << "EE: Layer TRW: trying to rename waypoint with invalid index";
@@ -407,12 +408,12 @@ void LayerTRWWaypoints::propagate_new_waypoint_name(const Waypoint * wp)
    new icon of a waypoint (or lack of the icon) is shown wherever it
    needs to be shown.
 */
-void LayerTRWWaypoints::set_new_waypoint_icon(const Waypoint * wp)
+void LayerTRWWaypoints::set_new_waypoint_icon(Waypoint * wp)
 {
 	/* Update the tree view. */
 	if (wp->index.isValid()) {
-		this->icon = get_wp_icon_small(wp->symbol_name);
-		this->tree_view->set_tree_item_icon(wp->index, this->icon);
+		wp->icon = get_wp_icon_small(wp->symbol_name);
+		this->tree_view->set_tree_item_icon(wp);
 	} else {
 		qDebug() << "EE" PREFIX << "Invalid index of a waypoint";
 	}
@@ -527,8 +528,8 @@ void LayerTRWWaypoints::add_children_to_tree(void)
 
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
-		this->tree_view->push_tree_item_back(this->index, wp, wp->name);
-		this->tree_view->set_tree_item_timestamp(wp->index, timestamp);
+		this->tree_view->push_tree_item_back(this, wp);
+		this->tree_view->set_tree_item_timestamp(wp, timestamp);
 	}
 }
 
@@ -870,7 +871,7 @@ bool LayerTRWWaypoints::empty(void) const
 void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
 {
 	wp->owning_layer = this->owning_layer;
-	this->children_map.insert({{ wp->uid, wp }});
+	this->children_map.insert({{ wp->get_uid(), wp }});
 	this->children_list.push_back(wp);
 
 	this->set_new_waypoint_icon(wp);
@@ -905,11 +906,11 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	this->name_generator.remove_name(wp->name);
 
-	this->children_map.erase(wp->uid); /* Erase by key. */
+	this->children_map.erase(wp->get_uid()); /* Erase by key. */
 
 	/* TODO: optimize. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		if ((*iter)->uid == wp->uid) {
+		if (TreeItem::the_same_object(*iter, wp)) {
 			this->children_list.erase(iter);
 		}
 	}
@@ -1009,7 +1010,7 @@ QString DefaultNameGenerator::try_new_name(void) const
 /**
    Update how track is displayed in tree view - primarily update track's icon
 */
-void LayerTRWWaypoints::update_tree_view(const Waypoint * wp)
+void LayerTRWWaypoints::update_tree_view(Waypoint * wp)
 {
 	if (wp && index.isValid()) {
 		this->propagate_new_waypoint_name(wp);
