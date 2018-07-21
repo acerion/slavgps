@@ -327,8 +327,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 		qDebug() << "II" PREFIX << "Selected layer is Aggregate layer named" << selected_layer->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
-		LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(selected_layer_index)->to_layer();
-		aggregate->add_layer(layer, true);
+		((LayerAggregate *) selected_layer)->add_layer(layer, true);
 
 		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -341,14 +340,14 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	   layers only under Aggregate layer, let's find the Aggregate
 	   layer by going up in hierarchy. */
 	qDebug() << "II" PREFIX << "Selected layer is non-Aggregate layer named" << selected_layer->get_name() << ", looking for Aggregate layer";
-	TreeIndex aggregate_index = this->go_up_to_layer(selected_layer_index, LayerType::Aggregate);
-	if (aggregate_index.isValid()) {
-		LayerAggregate * aggregate = (LayerAggregate *) this->tree_view->get_tree_item(aggregate_index)->to_layer();
+	Layer * aggregate_candidate = this->go_up_to_layer(selected_layer, LayerType::Aggregate);
+	if (aggregate_candidate) {
+		LayerAggregate * aggregate = (LayerAggregate *) aggregate_candidate;
 		assert (aggregate->tree_view);
 
 		qDebug() << "II" PREFIX << "Found closest Aggregate layer named" << aggregate->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
-		aggregate->insert_layer(layer, selected_layer_index);
+		aggregate->insert_layer(layer, selected_layer); /* Insert layer next to selected layer. */
 
 		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
@@ -374,7 +373,7 @@ void LayersPanel::move_item(bool up)
 		return;
 	}
 
-	this->tree_view->select(selected_item->index); /* Cancel any layer-name editing going on... */
+	this->tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		qDebug() << "II" PREFIX << "Move layer" << selected_item->name << (up ? "up" : "down");
@@ -383,7 +382,7 @@ void LayersPanel::move_item(bool up)
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) { /* Selected item is not top level layer. */
 			qDebug() << "-----" PREFIX "step one";
-			if (parent_layer->change_child_item_position(selected_item->index, up)) {
+			if (parent_layer->change_child_item_position(selected_item, up)) {
 				qDebug() << "-----" PREFIX "step two";
 				this->tree_view->change_tree_item_position(selected_item, up);
 				qDebug() << "-----" PREFIX "step tree";
@@ -755,30 +754,31 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 
 
 /*
-  Go up the tree to find a Layer of given type.
+  Go up the tree to find a Layer of given type
 
-  If @param index already refers to layer of given type, the function
-  doesn't really go up, it returns the same index.
+  If @param tree_item already refers to layer of given type, the
+  function doesn't really go up, it returns the same tree item.
 
-  If you want to skip item pointed to by @param index and start from
-  its parent, you have to calculate parent by yourself before passing
-  an index to this function.
+  If you want to skip tree item pointed to by @param tree_item and
+  start from its parent, you have to calculate parent by yourself and
+  pass the parent to this function.
 */
-TreeIndex const LayersPanel::go_up_to_layer(TreeIndex const & item_index, LayerType expected_layer_type)
+Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerType expected_layer_type)
 {
+	TreeIndex const & item_index = tree_item->index;
         TreeIndex this_index = item_index;
 	TreeIndex parent_index;
 
 	while (1) {
 		if (!this_index.isValid()) {
-			return this_index; /* Returning copy of invalid index. */
+			return NULL; /* Returning invalid layer. */
 		}
 
 		TreeItem * this_item = this->tree_view->get_tree_item(this_index);
 		if (this_item->tree_item_type == TreeItemType::LAYER) {
 
-			if (((Layer *) this_item)->type ==  expected_layer_type) {
-				return this_index; /* Returning index of matching layer. */
+			if (((Layer *) this_item)->type == expected_layer_type) {
+				return (Layer *) this_item; /* Returning matching layer. */
 			}
 		}
 
@@ -787,7 +787,7 @@ TreeIndex const LayersPanel::go_up_to_layer(TreeIndex const & item_index, LayerT
 
 		/* Parent also may be invalid. */
 		if (!parent_index.isValid()) {
-			return parent_index; /* Returning copy of invalid index. */
+			return NULL; /* Returning invalid layer */
 		}
 
 		this_index = parent_index;

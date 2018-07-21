@@ -367,7 +367,7 @@ void LayerTRWTracks::set_items_visibility(bool on_off)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->visible = on_off;
-		this->tree_view->set_tree_item_visibility((*iter)->index, on_off);
+		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
 
@@ -378,7 +378,7 @@ void LayerTRWTracks::toggle_items_visibility(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->visible = !(*iter)->visible;
-		this->tree_view->toggle_tree_item_visibility((*iter)->index);
+		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
 
@@ -472,8 +472,8 @@ void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 
 		/* TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
 		if (trk->index.isValid()) {
-			this->tree_view->set_tree_item_name(trk);
-			this->tree_view->sort_children(this->get_index(), sort_order);
+			this->tree_view->apply_tree_item_name(trk);
+			this->tree_view->sort_children(this, sort_order);
 		}
 
 		/* Try to find duplicate names again in the updated set of tracks. */
@@ -622,7 +622,7 @@ void LayerTRWTracks::update_tree_view(Track * trk)
 		} else {
 			trk->icon = QIcon(); /* Invalidate icon. */
 		}
-		this->tree_view->set_tree_item_icon(trk);
+		this->tree_view->apply_tree_item_icon(trk);
 	}
 }
 
@@ -651,8 +651,8 @@ void LayerTRWTracks::add_children_to_tree(void)
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
 		this->tree_view->push_tree_item_back(this, trk);
-		this->tree_view->set_tree_item_icon(trk);
-		this->tree_view->set_tree_item_timestamp(trk, timestamp);
+		this->tree_view->apply_tree_item_icon(trk);
+		this->tree_view->apply_tree_item_timestamp(trk, timestamp);
 	}
 }
 
@@ -916,7 +916,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 	}
 
 	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
+	if (!this->tree_view->get_tree_item_visibility_with_parents(this)) {
 		return;
 	}
 
@@ -979,7 +979,7 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 void LayerTRWTracks::sort_order_z2a_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::AlphabeticalDescending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalDescending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalDescending);
 }
 
 
@@ -988,7 +988,7 @@ void LayerTRWTracks::sort_order_z2a_cb(void)
 void LayerTRWTracks::sort_order_timestamp_ascend_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::DateAscending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateAscending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::DateAscending);
 }
 
 
@@ -997,7 +997,7 @@ void LayerTRWTracks::sort_order_timestamp_ascend_cb(void)
 void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->track_sort_order = TreeViewSortOrder::DateDescending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateDescending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::DateDescending);
 }
 
 

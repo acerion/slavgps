@@ -926,7 +926,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 			if (selected_item->tree_item_type == TreeItemType::SUBLAYER
 			    || selected_item->to_layer()->type == LayerType::TRW) {
 
-				tree_view->deselect(selected_item->index);
+				tree_view->deselect_tree_item(selected_item);
 				if (this->window->clear_highlight()) {
 					this->window->draw_tree_items();
 				}

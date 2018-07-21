@@ -94,7 +94,7 @@ void WaypointListDialog::waypoint_select(LayerTRW * layer)
 	LayerTRW * trw = wp->get_parent_layer_trw();
 
 	if (wp && trw) {
-		trw->tree_view->select_and_expose(wp->index);
+		trw->tree_view->select_and_expose_tree_item(wp);
 	} else {
 		qDebug() << "EE: Waypoint List Dialog: selecting either NULL layer or NULL wp:" << (qintptr) trw << (qintptr) wp;
 	}

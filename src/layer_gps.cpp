@@ -687,7 +687,7 @@ void LayerGPS::add_children_to_tree(void)
 		trw->set_name(trw_names[ix].label);
 		this->tree_view->push_tree_item_back(this, trw);
 
-		this->tree_view->set_tree_item_timestamp(trw, trw->get_timestamp());
+		this->tree_view->apply_tree_item_timestamp(trw, trw->get_timestamp());
 
 		QObject::connect(trw, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 	}

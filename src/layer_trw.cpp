@@ -1220,7 +1220,7 @@ static unsigned int strcase_hash(gconstpointer v)
 void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	/* Check the layer for visibility (including all the parents' visibilities). */
-	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
+	if (!this->tree_view->get_tree_item_visibility_with_parents(this)) {
 		return;
 	}
 
@@ -1755,7 +1755,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		} else {
 			g_tree->tree_get_main_viewport()->set_center_from_coord(wp->coord, true);
 			g_tree->emit_items_tree_updated();
-			this->tree_view->select_and_expose(wp->index);
+			this->tree_view->select_and_expose_tree_item(wp);
 
 			break;
 		}
@@ -2174,10 +2174,10 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 	this->tree_view->push_tree_item_back(&this->waypoints, wp);
 
-	this->tree_view->set_tree_item_timestamp(wp, wp->has_timestamp ? wp->timestamp : 0);
+	this->tree_view->apply_tree_item_timestamp(wp, wp->has_timestamp ? wp->timestamp : 0);
 
 	/* Sort now as post_read is not called on a waypoint connected to tree. */
-	this->tree_view->sort_children(this->waypoints.get_index(), this->wp_sort_order);
+	this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
 
 	this->waypoints.name_generator.add_name(wp->name);
 }
@@ -2215,10 +2215,10 @@ void LayerTRW::add_track(Track * trk)
 	}
 
 	this->tree_view->push_tree_item_back(&this->tracks, trk);
-	this->tree_view->set_tree_item_timestamp(trk, timestamp);
+	this->tree_view->apply_tree_item_timestamp(trk, timestamp);
 
 	/* Sort now as post_read is not called on a track connected to tree. */
-	this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
+	this->tree_view->sort_children(&this->tracks, this->track_sort_order);
 
 	this->tracks.update_tree_view(trk);
 }
@@ -2252,7 +2252,7 @@ void LayerTRW::add_route(Track * trk)
 	this->tree_view->push_tree_item_back(&this->routes, trk);
 
 	/* Sort now as post_read is not called on a route connected to tree. */
-	this->tree_view->sort_children(this->routes.get_index(), this->track_sort_order);
+	this->tree_view->sort_children(&this->routes, this->track_sort_order);
 
 	this->routes.update_tree_view(trk);
 }
@@ -2383,8 +2383,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		this->delete_track(trk);
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->set_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
-		trw_src->tree_view->set_tree_item_timestamp(trw_src, trw_src->get_timestamp());
+		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
+		trw_src->tree_view->apply_tree_item_timestamp(trw_src, trw_src->get_timestamp());
 	}
 
 	if (item_type_id == "sg.trw.route") {
@@ -2414,8 +2414,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 		trw_dest->waypoints.recalculate_bbox();
 		trw_src->waypoints.recalculate_bbox();
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->set_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
-		trw_src->tree_view->set_tree_item_timestamp(trw_src, trw_src->get_timestamp());
+		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
+		trw_src->tree_view->apply_tree_item_timestamp(trw_src, trw_src->get_timestamp());
 	}
 }
 
@@ -3383,7 +3383,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	}
 
 	/* Reset layer timestamps in case they have now changed. */
-	this->tree_view->set_tree_item_timestamp(this, this->get_timestamp());
+	this->tree_view->apply_tree_item_timestamp(this, this->get_timestamp());
 
 	this->emit_layer_changed("TRW - delete selected tracks");
 }
@@ -3464,7 +3464,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 	this->waypoints.recalculate_bbox();
 	/* Reset layer timestamp in case it has now changed. */
-	this->tree_view->set_tree_item_timestamp(this, this->get_timestamp());
+	this->tree_view->apply_tree_item_timestamp(this, this->get_timestamp());
 	this->emit_layer_changed("TRW - delete selected waypoints");
 
 }
@@ -3801,15 +3801,15 @@ void LayerTRW::sort_all()
 
 	/* Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity! */
 	if (this->tracks.size() > 1) {
-		this->tree_view->sort_children(this->tracks.get_index(), this->track_sort_order);
+		this->tree_view->sort_children(&this->tracks, this->track_sort_order);
 	}
 
 	if (this->routes.size() > 1) {
-		this->tree_view->sort_children(this->routes.get_index(), this->track_sort_order);
+		this->tree_view->sort_children(&this->routes, this->track_sort_order);
 	}
 
 	if (this->waypoints.size() > 1) {
-		this->tree_view->sort_children(this->waypoints.get_index(), this->wp_sort_order);
+		this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
 	}
 }
 

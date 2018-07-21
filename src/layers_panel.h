@@ -91,7 +91,7 @@ namespace SlavGPS {
 		void context_menu_add_standard_items(QMenu * menu, uint16_t layer_menu_items);
 		void context_menu_add_new_layer_submenu(QMenu * menu);
 
-		TreeIndex const go_up_to_layer(TreeIndex const & index, LayerType layer_type);
+		Layer * go_up_to_layer(const TreeItem * tree_item, LayerType layer_type);
 
 		void move_item(bool up);
 

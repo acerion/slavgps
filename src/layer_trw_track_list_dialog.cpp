@@ -140,7 +140,7 @@ void TrackListDialog::track_view_cb(void)
 	Viewport * viewport = trw->get_window()->get_viewport();
 
 	viewport->show_bbox(trk->get_bbox());
-	trw->tree_view->select_and_expose(trk->index);
+	trw->tree_view->select_and_expose_tree_item(trk);
 }
 
 

@@ -788,8 +788,8 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const QString &
 
 	viewport->set_center_from_latlon(lat_lon, true); /* The function will reject lat_lon if it's invalid. */
 
-	if (!top_layer->visible && top_layer->tree_view) {
-		top_layer->tree_view->set_tree_item_visibility(top_layer->index, false);
+	if (top_layer->tree_view && !top_layer->visible) {
+		top_layer->tree_view->apply_tree_item_visibility(top_layer);
 	}
 
 	const bool result = read_parser.successful_read;

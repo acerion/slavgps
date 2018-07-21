@@ -19,17 +19,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+
+
 
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
 
+
+
+
 #include <QVariant>
 #include <QDebug>
 #include <QHeaderView>
+
+
+
 
 #include "layer.h"
 #include "window.h"
@@ -39,8 +51,6 @@
 #include "ui_builder.h"
 #include "dialog.h"
 #include "statusbar.h"
-//#include "layer_aggregate.h"
-//#include "layer_coord.h"
 
 
 
@@ -82,13 +92,16 @@ typedef int GtkCellEditable;
 typedef int GtkSelectionData;
 typedef int GtkTreePath;
 
+
+
+
 static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data);
 static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path);
 
 
 
 
-TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
+TreeItem * TreeView::get_tree_item(const TreeIndex & item_index) const
 {
 	if (item_index.row() == -1 || item_index.column() == -1) {
 		qDebug() << "WW" PREFIX << "querying for item with -1 row or column";
@@ -111,7 +124,7 @@ TreeItem * TreeView::get_tree_item(TreeIndex const & item_index)
 
 
 
-void TreeView::set_tree_item_timestamp(const TreeItem * tree_item, time_t timestamp)
+void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item, time_t timestamp)
 {
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
@@ -128,7 +141,7 @@ void TreeView::set_tree_item_timestamp(const TreeItem * tree_item, time_t timest
 
 
 
-void TreeView::set_tree_item_tooltip(const TreeItem * tree_item)
+void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 {
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
@@ -212,15 +225,15 @@ bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 
 
 
-void TreeView::select_and_expose(TreeIndex const & index)
+void TreeView::select_and_expose_tree_item(const TreeItem * tree_item)
 {
-	this->setCurrentIndex(index);
+	this->setCurrentIndex(tree_item->index);
 }
 
 
 
 
-TreeItem * TreeView::get_selected_tree_item(void)
+TreeItem * TreeView::get_selected_tree_item(void) const
 {
 	TreeIndex selected = QPersistentModelIndex(this->currentIndex());
 	if (!selected.isValid()) {
@@ -257,7 +270,7 @@ void TreeView::detach_children(TreeItem * parent_tree_item)
 
 
 
-void TreeView::set_tree_item_icon(const TreeItem * tree_item)
+void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 {
 	if (!tree_item->index.isValid()) {
 		qDebug() << "EE" PREFIX << "invalid item index";
@@ -286,7 +299,7 @@ void TreeView::set_tree_item_icon(const TreeItem * tree_item)
 
 
 
-void TreeView::set_tree_item_name(const TreeItem * tree_item)
+void TreeView::apply_tree_item_name(const TreeItem * tree_item)
 {
 	if (!tree_item->index.isValid()) {
 		qDebug() << "EE: TreeView: invalid item index";
@@ -298,8 +311,10 @@ void TreeView::set_tree_item_name(const TreeItem * tree_item)
 
 
 
-bool TreeView::get_tree_item_visibility(TreeIndex const & index)
+bool TreeView::get_tree_item_visibility(const TreeItem * tree_item)
 {
+	const TreeIndex & index = tree_item->index;
+
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(index.parent());
 	if (!parent_item) {
 		/* "index" points at the top-level item. */
@@ -323,29 +338,27 @@ bool TreeView::get_tree_item_visibility(TreeIndex const & index)
    i.e. if any parent is invisible then this item will also be considered
    invisible (even though it itself may be marked as visible).
 */
-bool TreeView::get_tree_item_visibility_with_parents(TreeIndex const & item_index)
+bool TreeView::get_tree_item_visibility_with_parents(const TreeItem * tree_item)
 {
+	const TreeIndex & index = tree_item->index;
+
 	int loop_depth = 1;
 
-	TreeIndex this_item_index = item_index;
+	TreeIndex this_item_index = tree_item->index;
+	const TreeItem * this_tree_item = tree_item;
 
 	do {
 #if 0           /* Debug. */
-		TreeItem * tree_item = this->get_tree_item(this_item_index);
-		if (!tree_item) {
-			return false; /* The item doesn't exist, so let's return 'is invisible' for it. */
-		}
-
 		qDebug() << "II: TreeView: Checking visibility of" << tree_item->name << "in tree, forever loop depth =" << loop_depth++;
 #endif
 
-		if (!this->get_tree_item_visibility(this_item_index)) {
+		if (!this->get_tree_item_visibility(this_tree_item)) {
 			/* Simple case: this item is not visible. */
 			return false;
 		}
 		/* This item is visible. What about its parent? */
 
-		TreeIndex parent_item_index = this_item_index.parent();
+		TreeIndex parent_item_index = this_tree_item->index.parent();
 		if (!parent_item_index.isValid()) {
 			/* This item doesn't have valid parent, so it
 			   must be a top-level item. The top-level item
@@ -353,8 +366,11 @@ bool TreeView::get_tree_item_visibility_with_parents(TreeIndex const & item_inde
 			   so return true. */
 			return true;
 		}
+		TreeItem * parent_tree_item = this->get_tree_item(parent_item_index);
+
 
 		this_item_index = parent_item_index;
+		this_tree_item = parent_tree_item;
 
 	} while (1); /* Forever loop that will finish either on first invisible item it meets, or on visible top-level item. */
 }
@@ -362,20 +378,24 @@ bool TreeView::get_tree_item_visibility_with_parents(TreeIndex const & item_inde
 
 
 
-void TreeView::set_tree_item_visibility(TreeIndex const & item_index, bool visible)
+bool TreeView::apply_tree_item_visibility(const TreeItem * tree_item)
 {
-	if (!!item_index.isValid()) {
-		qDebug() << "EE" PREFIX << "invalid item index";
-		return;
+	if (!tree_item || !tree_item->index.isValid()) {
+		qDebug() << "EE" PREFIX << "invalid tree item" << (tree_item ? "bad index" : "NULL pointer");
+		return false;
 	}
+
 	/* kamilFIXME: this does not take into account third state. */
-	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) TreeViewColumn::Visible);
-	this->tree_model->itemFromIndex(visible_index)->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
+	QModelIndex visible_index = tree_item->index.sibling(tree_item->index.row(), (int) TreeViewColumn::Visible);
+	this->tree_model->itemFromIndex(visible_index)->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
+
+	return true;
 }
 
 
 
 
+#if 0
 void TreeView::toggle_tree_item_visibility(TreeIndex const & item_index)
 {
 	if (!item_index.isValid()) {
@@ -389,12 +409,15 @@ void TreeView::toggle_tree_item_visibility(TreeIndex const & item_index)
 	bool visible = item->checkState() == Qt::Checked;
 	item->setCheckState(!visible ? Qt::Checked : Qt::Unchecked);
 }
+#endif
 
 
 
 
-void TreeView::expand(TreeIndex const & index)
+void TreeView::expand_tree_item(const TreeItem * tree_item)
 {
+	TreeIndex const & index = tree_item->index;
+
 	if (!index.isValid()) {
 		qDebug() << "EE" PREFIX << "invalid index";
 		return;
@@ -407,8 +430,10 @@ void TreeView::expand(TreeIndex const & index)
 
 
 
-void TreeView::select(TreeIndex const & index)
+void TreeView::select_tree_item(const TreeItem * tree_item)
 {
+	TreeIndex const & index = tree_item->index;
+
 	if (!index.isValid()) {
 		qDebug() << "EE" PREFIX << "invalid index";
 		return;
@@ -420,9 +445,9 @@ void TreeView::select(TreeIndex const & index)
 
 
 
-void TreeView::deselect(TreeIndex const & index)
+void TreeView::deselect_tree_item(const TreeItem * tree_item)
 {
-	this->selectionModel()->select(index, QItemSelectionModel::Deselect);
+	this->selectionModel()->select(tree_item->index, QItemSelectionModel::Deselect);
 }
 
 
@@ -443,7 +468,7 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
 	item = new QStandardItem(name);
 	item->setToolTip(tooltip);
 	item->setEditable(tree_item->editable);
-	if (!tree_item->icon.isNull()) { /* Icon can be set with ::set_tree_item_icon(). */
+	if (!tree_item->icon.isNull()) { /* Icon can be set with ::apply_tree_item_icon(). */
 		item->setIcon(tree_item->icon);
 	}
 	items << item;
@@ -467,7 +492,7 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
 	items << item;
 
 	/* TreeViewColumn::Timestamp */
-	/* Value in this column can be set with ::set_tree_item_timestamp(). */
+	/* Value in this column can be set with ::apply_tree_item_timestamp(). */
 	qlonglong timestamp = 0;
 	item = new QStandardItem((qlonglong) timestamp);
 	items << item;
@@ -594,8 +619,10 @@ static int sort_tuple_compare(const void * a, const void * b, void * order)
  * For a KML file with over 10,000 tracks (3Mb zipped) - See 'UK Hampshire Rights of Way'
  * http://www3.hants.gov.uk/row/row-maps.htm
  */
-void TreeView::sort_children(TreeIndex const & parent_index, TreeViewSortOrder sort_order)
+void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrder sort_order)
 {
+	TreeIndex const & parent_index = parent_tree_item->index;
+
 	if (sort_order == TreeViewSortOrder::None) {
 		/* Nothing to do. */
 		return;
@@ -744,12 +771,12 @@ static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTre
 
 
 
-bool TreeView::insert_tree_item(const TreeItem * parent_tree_item, TreeIndex const & sibling_index, TreeItem * tree_item, bool above)
+bool TreeView::insert_tree_item(const TreeItem * parent_tree_item, const TreeItem * sibling_tree_item, TreeItem * tree_item, bool above)
 {
-	if (sibling_index.isValid()) {
-		qDebug() << "II" PREFIX << "Inserting tree item" << tree_item->name << "next to sibling";
+	if (sibling_tree_item && sibling_tree_item->index.isValid()) {
+		qDebug() << "II" PREFIX << "Inserting tree item named" << tree_item->name << "next to sibling named" << sibling_tree_item->name;
 
-		int row = sibling_index.row() + (above ? 0 : 1);
+		int row = sibling_tree_item->index.row() + (above ? 0 : 1);
 		return this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
 	} else {
 		/* Fall back in case of invalid sibling. */
@@ -1050,12 +1077,12 @@ Qt::DropActions TreeModel::supportedDropActions() const
 
 static void vik_tree_view_edited_cb(GtkCellRendererText *cell, char *path_str, const char *new_name, TreeView * tree_view)
 {
+#ifdef K_FIXME_RESTORE
 	tree_view->editing = false;
 
 	/* Get type and data. */
 	TreeIndex * index = tree_view->get_index_from_path_str(path_str);
 
-#ifdef K_FIXME_RESTORE
 	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[VT_ITEM_EDITED_SIGNAL], 0, index, new_name);
 #endif
 }
@@ -1065,7 +1092,9 @@ static void vik_tree_view_edited_cb(GtkCellRendererText *cell, char *path_str, c
 
 static void vik_tree_view_edit_start_cb(GtkCellRenderer *cell, GtkCellEditable *editable, char *path, TreeView * tree_view)
 {
+#ifdef K_FIXME_RESTORE
 	tree_view->editing = true;
+#endif
 }
 
 
@@ -1073,25 +1102,29 @@ static void vik_tree_view_edit_start_cb(GtkCellRenderer *cell, GtkCellEditable *
 
 static void vik_tree_view_edit_stop_cb(GtkCellRenderer *cell, TreeView * tree_view)
 {
+#ifdef K_FIXME_RESTORE
 	tree_view->editing = false;
+#endif
 }
 
 
 
 
+#ifdef K_OLD_IMPLEMENTATION
 TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
 {
 	TreeIndex * index = NULL;
-#ifdef K_FIXME_RESTORE
+
 	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->tree_model), iter, path_str);
-#endif
+
 	return index;
 }
+#endif
 
 
 
 
-bool TreeView::is_editing_in_progress()
+bool TreeView::is_editing_in_progress(void) const
 {
 	/* Don't know how to get cell for the selected item. */
 	//return ((int) (long) g_object_get_data(G_OBJECT(cell), "editing"));

@@ -80,26 +80,25 @@ namespace SlavGPS {
 
 		bool push_tree_item_front(const TreeItem * parent_tree_item, TreeItem * tree_item);
 		bool push_tree_item_back(const TreeItem * parent_tree_item, TreeItem * tree_item);
-		bool insert_tree_item(const TreeItem * parent_tree_index, TreeIndex const & sibling_index, TreeItem * tree_item, bool above);
-		TreeItem * get_tree_item(TreeIndex const & item_index);
+		bool insert_tree_item(const TreeItem * parent_tree_index, const TreeItem * sibling_tree_item, TreeItem * tree_item, bool above);
+		TreeItem * get_tree_item(TreeIndex const & item_index) const;
 
-		TreeIndex * get_index_from_path_str(char const * path_str);
-		TreeItem * get_selected_tree_item(void);
+		TreeItem * get_selected_tree_item(void) const;
 
+		void apply_tree_item_name(const TreeItem * tree_item);
+		void apply_tree_item_icon(const TreeItem * tree_item);
+		void apply_tree_item_timestamp(const TreeItem * tree_item, time_t timestamp);
+		void apply_tree_item_tooltip(const TreeItem * tree_item);
 
-		void set_tree_item_name(const TreeItem * tree_item);
-		void set_tree_item_icon(const TreeItem * tree_item);
-		void set_tree_item_timestamp(const TreeItem * tree_item, time_t timestamp);
-		void set_tree_item_tooltip(const TreeItem * tree_item);
+		bool get_tree_item_visibility(const TreeItem * tree_item);
+		bool get_tree_item_visibility_with_parents(const TreeItem * tree_item);
+		bool apply_tree_item_visibility(const TreeItem * tree_item);
 
-		bool get_tree_item_visibility(TreeIndex const & item_index);
-		bool get_tree_item_visibility_with_parents(TreeIndex const & item_index);
-		void set_tree_item_visibility(TreeIndex const &  item_index, bool visible);
-		void toggle_tree_item_visibility(TreeIndex const & item_index);
+		void select_tree_item(const TreeItem * tree_item);
+		void select_and_expose_tree_item(const TreeItem * tree_item);
+		void deselect_tree_item(const TreeItem * tree_item);
 
-		void select(TreeIndex const & index);
-		void select_and_expose(TreeIndex  const & index);
-		void deselect(TreeIndex const & index);
+		void expand_tree_item(const TreeItem * tree_item);
 
 		/* Move tree item up or down in list of its siblings. */
 		bool change_tree_item_position(TreeItem * tree_item, bool up);
@@ -107,13 +106,9 @@ namespace SlavGPS {
 		void detach_tree_item(TreeItem * tree_item);
 		void detach_children(TreeItem * parent_tree_item);
 
-		bool is_editing_in_progress();
-		void expand(TreeIndex const & index);
-		void sort_children(TreeIndex const & parent_index, TreeViewSortOrder sort_order);
+		void sort_children(const TreeItem * parent_tree_item, TreeViewSortOrder sort_order);
 
-		bool editing = false;
-
-		TreeModel * tree_model = NULL;
+		bool is_editing_in_progress(void) const;
 
 	private slots:
 		void select_cb(void);
@@ -126,6 +121,10 @@ namespace SlavGPS {
 	private:
 		bool insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row);
 		QList<QStandardItem *> create_new_row(TreeItem * tree_item, const QString & name);
+
+		bool editing = false;
+
+		TreeModel * tree_model = NULL;
 	};
 
 

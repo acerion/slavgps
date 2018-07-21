@@ -333,7 +333,7 @@ bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, Viewport * view
 void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter)
 {
 	/* Always select + highlight the track. */
-	this->tree_view->select_and_expose(track->index);
+	this->tree_view->select_and_expose_tree_item(track);
 	const Track * current_selected_track = this->get_edited_track();
 
 	/* Select the Trackpoint.
@@ -359,7 +359,7 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp)
 {
 	/* Select. */
-	this->tree_view->select_and_expose(wp->index);
+	this->tree_view->select_and_expose_tree_item(wp);
 
 	/* Too easy to move it so must be holding shift to start immediately moving it
 	   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
@@ -530,7 +530,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 			   TODO: do we need to verify that
 			   wp_search.closest_wp != current_wp? */
 
-			trw->tree_view->select_and_expose(wp_search.closest_wp->index);
+			trw->tree_view->select_and_expose_tree_item(wp_search.closest_wp);
 			trw->set_edited_wp(wp_search.closest_wp);
 
 			/* Could make it so don't update if old WP is off screen and new is null but oh well. */
@@ -1430,7 +1430,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		trw->get_tracks_node().track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp) {
-			trw->tree_view->select_and_expose(tp_search.closest_track->index);
+			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);
 			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
 
 			trw->trackpoint_properties_show();
@@ -1444,7 +1444,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		trw->get_routes_node().track_search_closest_tp(&tp_search);
 
 		if (tp_search.closest_tp) {
-			trw->tree_view->select_and_expose(tp_search.closest_track->index);
+			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);
 			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
 
 			trw->trackpoint_properties_show();

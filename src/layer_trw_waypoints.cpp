@@ -209,7 +209,7 @@ void LayerTRWWaypoints::set_items_visibility(bool on_off)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->visible = on_off;
-		this->tree_view->set_tree_item_visibility((*iter)->index, on_off);
+		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
 
@@ -220,7 +220,7 @@ void LayerTRWWaypoints::toggle_items_visibility(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->visible = !(*iter)->visible;
-		this->tree_view->toggle_tree_item_visibility((*iter)->index);
+		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
 
@@ -393,8 +393,8 @@ void LayerTRWWaypoints::propagate_new_waypoint_name(const Waypoint * wp)
 {
 	/* Update the tree view. */
 	if (wp->index.isValid()) {
-		this->tree_view->set_tree_item_name(wp);
-		this->tree_view->sort_children(this->get_index(), ((LayerTRW *) this->owning_layer)->wp_sort_order);
+		this->tree_view->apply_tree_item_name(wp);
+		this->tree_view->sort_children(this, ((LayerTRW *) this->owning_layer)->wp_sort_order);
 	} else {
 		qDebug() << "EE: Layer TRW: trying to rename waypoint with invalid index";
 	}
@@ -413,7 +413,7 @@ void LayerTRWWaypoints::set_new_waypoint_icon(Waypoint * wp)
 	/* Update the tree view. */
 	if (wp->index.isValid()) {
 		wp->icon = get_wp_icon_small(wp->symbol_name);
-		this->tree_view->set_tree_item_icon(wp);
+		this->tree_view->apply_tree_item_icon(wp);
 	} else {
 		qDebug() << "EE" PREFIX << "Invalid index of a waypoint";
 	}
@@ -529,7 +529,7 @@ void LayerTRWWaypoints::add_children_to_tree(void)
 		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
 
 		this->tree_view->push_tree_item_back(this, wp);
-		this->tree_view->set_tree_item_timestamp(wp, timestamp);
+		this->tree_view->apply_tree_item_timestamp(wp, timestamp);
 	}
 }
 
@@ -775,7 +775,7 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 	}
 
 	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
+	if (!this->tree_view->get_tree_item_visibility_with_parents(this)) {
 		return;
 	}
 
@@ -806,7 +806,7 @@ void LayerTRWWaypoints::paste_sublayer_cb(void)
 void LayerTRWWaypoints::sort_order_a2z_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::AlphabeticalAscending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalAscending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalAscending);
 }
 
 
@@ -815,7 +815,7 @@ void LayerTRWWaypoints::sort_order_a2z_cb(void)
 void LayerTRWWaypoints::sort_order_z2a_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::AlphabeticalDescending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::AlphabeticalDescending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::AlphabeticalDescending);
 }
 
 
@@ -824,7 +824,7 @@ void LayerTRWWaypoints::sort_order_z2a_cb(void)
 void LayerTRWWaypoints::sort_order_timestamp_ascend_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::DateAscending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateAscending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::DateAscending);
 }
 
 
@@ -833,7 +833,7 @@ void LayerTRWWaypoints::sort_order_timestamp_ascend_cb(void)
 void LayerTRWWaypoints::sort_order_timestamp_descend_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->wp_sort_order = TreeViewSortOrder::DateDescending;
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateDescending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::DateDescending);
 }
 
 

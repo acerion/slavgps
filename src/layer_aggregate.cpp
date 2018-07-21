@@ -126,7 +126,7 @@ bool is_base_type(LayerType layer_type)
 
 
 
-void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer_index)
+void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 {
 	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
@@ -138,15 +138,13 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->insert_tree_item(this, sibling_layer_index, layer, put_above);
-		this->tree_view->set_tree_item_timestamp(layer, layer->get_timestamp());
+		this->tree_view->insert_tree_item(this, sibling_layer, layer, put_above);
+		this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
 	}
 
 	layer->owning_layer = this;
 
-	if (sibling_layer_index.isValid()) {
-
-		Layer * sibling_layer = this->tree_view->get_tree_item(sibling_layer_index)->to_layer();
+	if (sibling_layer->index.isValid()) {
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -173,7 +171,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & sibling_layer
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this);
+	this->tree_view->apply_tree_item_tooltip(this);
 
 	if (!this->children->empty()) {
 		this->tree_view->expand(this->index);
@@ -215,7 +213,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 		this->children->push_back(layer);
 	}
-	this->tree_view->set_tree_item_timestamp(layer, layer->get_timestamp());
+	this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
@@ -225,7 +223,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this);
+	this->tree_view->apply_tree_item_tooltip(this);
 
 	if (!this->children->empty()) {
 		this->tree_view->expand(this->index);
@@ -235,17 +233,15 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 
-bool LayerAggregate::change_child_item_position(TreeIndex & child_index, bool up)
+bool LayerAggregate::change_child_item_position(TreeItem * child_item, bool up)
 {
 	auto child_iter = this->children->end();
 
-	//this->tree_view->change_tree_item_position(child_index, up);
+	//this->tree_view->change_tree_item_position(child_item->index, up);
 
 	/* We are in aggregate layer, so the child must be a layer as well. */
-	TreeItem * tree_item = this->tree_view->get_tree_item(child_index);
-	assert (tree_item->tree_item_type == TreeItemType::LAYER);
-
-	Layer * child_layer = tree_item->to_layer();
+	assert (child_item->tree_item_type == TreeItemType::LAYER);
+	Layer * child_layer = child_item->to_layer();
 
 	/* Find container iterator of given tree item.
 	   This is not the same as tree item index. */
@@ -369,8 +365,8 @@ void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
-		/* Also set checkbox on/off. */
-		t_view->toggle_tree_item_visibility(layer->index);
+		/* Also set checkbox on/off in tree view. */
+		t_view->apply_tree_item_visibility(layer);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_layer_changed("Aggregate - child visible toggle");
@@ -386,8 +382,8 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		layer->visible = on_off;
-		/* Also set checkbox on_off. */
-		panel->get_tree_view()->set_tree_item_visibility(layer->index, on_off);
+		/* Also set checkbox on_off in tree view. */
+		panel->get_tree_view()->apply_tree_item_visibility(layer);
 	}
 
 	/* Redraw as view may have changed. */
@@ -455,7 +451,7 @@ void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 
 void LayerAggregate::sort_timestamp_ascend_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateAscending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::DateAscending);
 	this->children->sort(Layer::compare_timestamp_ascending);
 }
 
@@ -464,7 +460,7 @@ void LayerAggregate::sort_timestamp_ascend_cb(void) /* Slot. */
 
 void LayerAggregate::sort_timestamp_descend_cb(void) /* Slot. */
 {
-	this->tree_view->sort_children(this->index, TreeViewSortOrder::DateDescending);
+	this->tree_view->sort_children(this, TreeViewSortOrder::DateDescending);
 	this->children->sort(Layer::compare_timestamp_descending);
 }
 
@@ -639,7 +635,7 @@ void LayerAggregate::clear()
 	this->children->clear();
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this);
+	this->tree_view->apply_tree_item_tooltip(this);
 }
 
 
@@ -671,7 +667,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 	delete layer;
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this);
+	this->tree_view->apply_tree_item_tooltip(this);
 
 	return was_visible;
 }
@@ -898,11 +894,11 @@ void LayerAggregate::add_children_to_tree(void)
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->push_tree_item_back(this, layer);
-		this->tree_view->set_tree_item_timestamp(layer, layer->get_timestamp());
+		this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
 	}
 
 	/* Update our own tooltip. */
-	this->tree_view->set_tree_item_tooltip(this);
+	this->tree_view->apply_tree_item_tooltip(this);
 }
 
 

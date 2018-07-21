@@ -3335,8 +3335,8 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	this->update_profile_dialog();
 
 
-	parent_layer->tree_view->set_tree_item_name(this);
-	parent_layer->tree_view->sort_children(tracks->get_index(), parent_layer->track_sort_order);
+	parent_layer->tree_view->apply_tree_item_name(this);
+	parent_layer->tree_view->sort_children(tracks, parent_layer->track_sort_order);
 
 
 	g_tree->emit_items_tree_updated();
@@ -3373,7 +3373,7 @@ bool Track::handle_selection_in_tree(void)
 void Track::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
 	/* Check the layer for visibility (including all the parents visibilities). */
-	if (!this->tree_view->get_tree_item_visibility_with_parents(this->index)) {
+	if (!this->tree_view->get_tree_item_visibility_with_parents(this)) {
 		return;
 	}
 
@@ -3931,7 +3931,7 @@ void Track::delete_sublayer(bool confirm)
 		was_visible = parent_layer->delete_track(this);
 
 		/* Reset layer timestamp in case it has now changed. */
-		parent_layer->tree_view->set_tree_item_timestamp(parent_layer, parent_layer->get_timestamp());
+		parent_layer->tree_view->apply_tree_item_timestamp(parent_layer, parent_layer->get_timestamp());
 	} else {
 		if (confirm) {
 			/* Get confirmation from the user. */
