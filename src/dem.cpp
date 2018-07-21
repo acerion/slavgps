@@ -67,6 +67,11 @@ using namespace SlavGPS;
 
 
 
+static const int g_secs_per_degree = 60 * 60;
+
+
+
+
 
 static bool get_double_and_continue(char ** buffer, double * tmp, bool warn)
 {
@@ -175,25 +180,27 @@ bool DEM::parse_header(char * buffer)
 
 	/* now we get the four corner points. record the min and max. */
 	get_double_and_continue(&buffer, &val, true);
-	this->min_east = this->max_east = val;
+	this->min_east_seconds = val;
+	this->max_east_seconds = val;
 	get_double_and_continue(&buffer, &val, true);
-	this->min_north = this->max_north = val;
+	this->min_north_seconds = val;
+	this->max_north_seconds = val;
 
 	for (int i = 0; i < 3; i++) {
 		get_double_and_continue(&buffer, &val, true);
-		if (val < this->min_east) {
-			this->min_east = val;
+		if (val < this->min_east_seconds) {
+			this->min_east_seconds = val;
 		}
 
-		if (val > this->max_east) {
-			this->max_east = val;
+		if (val > this->max_east_seconds) {
+			this->max_east_seconds = val;
 		}
 		get_double_and_continue(&buffer, &val, true);
-		if (val < this->min_north) {
-			this->min_north = val;
+		if (val < this->min_north_seconds) {
+			this->min_north_seconds = val;
 		}
-		if (val > this->max_north) {
-			this->max_north = val;
+		if (val > this->max_north_seconds) {
+			this->max_north_seconds = val;
 		}
 	}
 
@@ -204,7 +211,7 @@ bool DEM::parse_header(char * buffer)
 
 
 
-void DEM::parse_block_as_cont(char * buffer, int * cur_column, int * cur_row)
+void DEM::parse_block_as_cont(char * buffer, int32_t * cur_column, int32_t * cur_row)
 {
 	int tmp;
 	while (*cur_row < this->columns[*cur_column]->n_points) {
@@ -226,7 +233,7 @@ void DEM::parse_block_as_cont(char * buffer, int * cur_column, int * cur_row)
 
 
 
-void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
+void DEM::parse_block_as_header(char * buffer, int32_t * cur_column, int32_t * cur_row)
 {
 	/* 1 x n_rows 1 east_west south x x x DATA */
 
@@ -245,7 +252,7 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 	if (!get_double_and_continue(&buffer, &tmp, true)) {
 		return;
 	}
-	unsigned int n_rows = (unsigned int) tmp;
+	int32_t n_rows = (int32_t) tmp;
 
 	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
 		qDebug() << "WW: DEM: Parse Block: Incorrect DEM Class B record: expected 1";
@@ -280,19 +287,17 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 	(*cur_column)++;
 
 	/* empty spaces for things before that were skipped */
-	(*cur_row) = (south - this->min_north) / this->north_scale;
-	if (south > this->max_north || (*cur_row) < 0) {
+	(*cur_row) = (south - this->min_north_seconds) / this->north_scale;
+	if (south > this->max_north_seconds || (*cur_row) < 0) {
 		(*cur_row) = 0;
 	}
 
 	n_rows += *cur_row;
 
-	DEMColumn * new_column = (DEMColumn *) malloc(sizeof (DEMColumn));
-	this->columns[*cur_column] = new_column; /* FIXME: this may cause crash if index is out of range. */
-	this->columns[*cur_column]->east_west = east_west;
-	this->columns[*cur_column]->south = south;
-	this->columns[*cur_column]->n_points = n_rows;
-	this->columns[*cur_column]->points = (int16_t *) malloc(sizeof (int16_t) * n_rows);
+
+	/* FIXME: make sure that array index is valid. */
+	this->columns[*cur_column] = new DEMColumn(east_west, south, n_rows);
+
 
 	/* no information for things before that */
 	for (int i = 0; i < (*cur_row); i++) {
@@ -307,7 +312,7 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 
 
 
-void DEM::parse_block(char * buffer, int * cur_column, int * cur_row)
+void DEM::parse_block(char * buffer, int32_t * cur_column, int32_t * cur_row)
 {
 	/* if haven't read anything or have read all items in a columns and are expecting a new column */
 	if (*cur_column == -1 || *cur_row == -1) {
@@ -322,25 +327,52 @@ void DEM::parse_block(char * buffer, int * cur_column, int * cur_row)
 
 bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_name, bool zip)
 {
+	/*
+	  S01E006.hgt.zip
+	  S11E119.hgt.zip
+	  S12E096.hgt.zip
+	  S22W136.hgt.zip
+	  N00E072.hgt.zip
+	  N41E056.hgt.zip
+	*/
+
+	if (file_name.length() < (int) strlen("S01E006")) {
+		qDebug() << "EE" PREFIX << "Invalid file name" << file_name;
+		return false;
+	}
+
+
 	const int num_rows_3sec = 1201;
 	const int num_rows_1sec = 3601;
 
 	this->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
 	this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
 
-	/* TODO */
-	this->min_north = atoi(file_name.toUtf8().constData() + 1) * 3600;
-	this->min_east = atoi(file_name.toUtf8().constData() + 4) * 3600;
+
+	bool ok;
+	this->min_north_seconds = file_name.midRef(1, 2).toInt(&ok) * g_secs_per_degree;
+	if (!ok) {
+		qDebug() << "EE" PREFIX << "Failed to convert northing value";
+		return false;
+	}
 	if (file_name[0] == 'S') {
-		this->min_north = -this->min_north;
+		this->min_north_seconds = -this->min_north_seconds;
 	}
 
+
+	this->min_east_seconds = file_name.midRef(4, 3).toInt(&ok) * g_secs_per_degree;
+	if (!ok) {
+		qDebug() << "EE" PREFIX << "Failed to convert easting value";
+		return false;
+	}
 	if (file_name[3] == 'W') {
-		this->min_east = -this->min_east;
+		this->min_east_seconds = -this->min_east_seconds;
 	}
 
-	this->max_north = 3600 + this->min_north;
-	this->max_east = 3600 + this->min_east;
+
+	this->max_north_seconds = 3600 + this->min_north_seconds;
+	this->max_east_seconds = 3600 + this->min_east_seconds;
+
 
 	this->n_columns = 0;
 
@@ -383,7 +415,7 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 	} else if (dem_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
 		arcsec = 1;
 	} else {
-		qDebug() << "WW: DEM: Read SRTM HGT: file" << file_name << "does not have right size";
+		qDebug() << "WW" PREFIX << "file" << file_name << "does not have right size";
 		file.unmap(file_contents);
 		file.close();
 		return false;
@@ -394,12 +426,8 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 
 	for (int i = 0; i < num_rows; i++) {
 		this->n_columns++;
-		DEMColumn * new_column = (DEMColumn *) malloc(sizeof (DEMColumn));
+		DEMColumn * new_column = new DEMColumn(this->min_east_seconds + arcsec * i, this->min_north_seconds, num_rows);
 		this->columns.push_back(new_column);
-		this->columns[i]->east_west = this->min_east + arcsec * i;
-		this->columns[i]->south = this->min_north;
-		this->columns[i]->n_points = num_rows;
-		this->columns[i]->points = (int16_t *) malloc(sizeof (int16_t) * num_rows);
 	}
 
 	int ent = 0;
@@ -421,17 +449,13 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 
 
 
-#define IS_SRTM_HGT(fn) (strlen((fn))==11 && (fn)[7]=='.' && (fn)[8]=='h' && (fn)[9]=='g' && (fn)[10]=='t' && ((fn)[0]=='N' || (fn)[0]=='S') && ((fn)[3]=='E' || (fn)[3]=='W'))
-
-
-
-
 static bool is_strm_hgt(const QString & file_name)
 {
 	size_t len = file_name.size();
 	return (len == 11 || ((len == 15) && (file_name[11] == '.' && file_name[12] == 'z' && file_name[13] == 'i' && file_name[14] == 'p')))
 		&& file_name[7] == '.' && file_name[8] == 'h' && file_name[9] == 'g' && file_name[10] == 't'
-		&& (file_name[0] == 'N' || file_name[0] == 'S') && (file_name[3] == 'E' || file_name[3] == 'W');
+		&& (file_name[0] == 'N' || file_name[0] == 'S')
+		&& (file_name[3] == 'E' || file_name[3] == 'W');
 }
 
 
@@ -493,8 +517,8 @@ bool DEM::read_other(const QString & full_path)
 		fix_exponentiation(buffer);
 
 		/* Use the two variables to record state for ->parse_block(). */
-		int cur_column = -1;
-		int cur_row = -1;
+		int32_t cur_column = -1;
+		int32_t cur_row = -1;
 
 		this->parse_block(buffer, &cur_column, &cur_row);
 	}
@@ -511,8 +535,8 @@ bool DEM::read_other(const QString & full_path)
 
 	/* FIXME bug in 10m DEM's */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->north_scale == 10) {
-		this->min_east -= 100;
-		this->min_north += 200;
+		this->min_east_seconds -= 100;
+		this->min_north_seconds += 200;
 	}
 
 	return true;
@@ -524,7 +548,7 @@ bool DEM::read_other(const QString & full_path)
 
 DEM::~DEM()
 {
-	for (unsigned int i = 0; i < this->n_columns; i++) {
+	for (int32_t i = 0; i < this->n_columns; i++) {
 		free(this->columns[i]->points);
 		free(this->columns[i]);
 	}
@@ -534,7 +558,7 @@ DEM::~DEM()
 
 
 
-int16_t DEM::get_xy(unsigned int col, unsigned int row)
+int16_t DEM::get_xy(int32_t col, int32_t row)
 {
 	if (col < this->n_columns) {
 		if (row < this->columns[col]->n_points) {
@@ -550,14 +574,14 @@ int16_t DEM::get_xy(unsigned int col, unsigned int row)
 
 int16_t DEM::get_east_north(double east, double north)
 {
-	if (east > this->max_east || east < this->min_east ||
-	    north > this->max_north || north < this->min_north) {
+	if (east > this->max_east_seconds || east < this->min_east_seconds ||
+	    north > this->max_north_seconds || north < this->min_north_seconds) {
 
 		return DEM_INVALID_ELEVATION;
 	}
 
-	int col = (int) floor((east - this->min_east) / this->east_scale);
-	int row = (int) floor((north - this->min_north) / this->north_scale);
+	int col = (int) floor((east - this->min_east_seconds) / this->east_scale);
+	int row = (int) floor((north - this->min_north_seconds) / this->north_scale);
 
 	return this->get_xy(col, row);
 }
@@ -572,8 +596,8 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 	int cols[4], rows[4];
 	LatLon ll[4];
 
-	if (east > this->max_east || east < this->min_east ||
-	    north > this->max_north || north < this->min_north) {
+	if (east > this->max_east_seconds || east < this->min_east_seconds ||
+	    north > this->max_north_seconds || north < this->min_north_seconds) {
 
 		return false;  /* got nothing */
 	}
@@ -582,10 +606,10 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 
 	/* order of the data: sw, nw, ne, se */
 	/* sw */
-	cols[0] = (int) floor((east - this->min_east) / this->east_scale);
-	rows[0] = (int) floor((north - this->min_north) / this->north_scale);
-	ll[0].lon = (this->min_east + this->east_scale*cols[0]) / 3600;
-	ll[0].lat = (this->min_north + this->north_scale*rows[0]) / 3600;
+	cols[0] = (int) floor((east - this->min_east_seconds) / this->east_scale);
+	rows[0] = (int) floor((north - this->min_north_seconds) / this->north_scale);
+	ll[0].lon = (this->min_east_seconds + this->east_scale*cols[0]) / 3600;
+	ll[0].lat = (this->min_north_seconds + this->north_scale*rows[0]) / 3600;
 	/* nw */
 	cols[1] = cols[0];
 	rows[1] = rows[0] + 1;
@@ -692,64 +716,79 @@ int16_t DEM::get_shepard_interpol(double east, double north)
 
 
 
-void DEM::east_north_to_xy(double east, double north, unsigned int * col, unsigned int * row)
+void DEM::east_north_to_xy(double east, double north, int32_t * col, int32_t * row)
 {
-	*col = (unsigned int) floor((east - this->min_east) / this->east_scale);
-	*row = (unsigned int) floor((north - this->min_north) / this->north_scale);
+	*col = (int32_t) floor((east - this->min_east_seconds) / this->east_scale);
+	*row = (int32_t) floor((north - this->min_north_seconds) / this->north_scale);
 }
 
 
 
 
 
-bool DEM::overlap(const LatLonBBox & other_bbox)
+bool DEM::intersect(const LatLonBBox & other_bbox)
 {
 	LatLon dem_northeast;
 	LatLon dem_southwest;
 
-	/* get min, max lat/lon of DEM data */
+	/* Get min/max lat/lon of DEM data. */
 	if (this->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		dem_northeast.lat = this->max_north / 3600.0;
-		dem_northeast.lon = this->max_east / 3600.0;
-		dem_southwest.lat = this->min_north / 3600.0;
-		dem_southwest.lon = this->min_east / 3600.0;
+		dem_northeast.lat = this->max_north_seconds / 3600.0;
+		dem_northeast.lon = this->max_east_seconds / 3600.0;
+		dem_southwest.lat = this->min_north_seconds / 3600.0;
+		dem_southwest.lon = this->min_east_seconds / 3600.0;
 
 	} else if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 		UTM dem_northeast_utm;
-		dem_northeast_utm.northing = this->max_north;
-		dem_northeast_utm.easting = this->max_east;
+		dem_northeast_utm.northing = this->max_north_seconds;
+		dem_northeast_utm.easting = this->max_east_seconds;
 		dem_northeast_utm.zone = this->utm_zone;
 		dem_northeast_utm.band_letter = this->utm_band_letter;
 
 		UTM dem_southwest_utm;
-		dem_southwest_utm.northing = this->min_north;
-		dem_southwest_utm.easting = this->min_east;
+		dem_southwest_utm.northing = this->min_north_seconds;
+		dem_southwest_utm.easting = this->min_east_seconds;
 		dem_southwest_utm.zone = this->utm_zone;
 		dem_southwest_utm.band_letter = this->utm_band_letter;
 
 		dem_northeast = UTM::to_latlon(dem_northeast_utm);
 		dem_southwest = UTM::to_latlon(dem_southwest_utm);
 	} else {
-		// Unknown horiz_units - this shouldn't normally happen
-		// Thus can't work out positions to use
+		/* Unknown horiz_units - this shouldn't normally happen.
+		   Thus can't work out positions to use. */
 		return false;
 	}
 
-	/* I wish we could use BBOX_INTERSECT() here. */
+	LatLonBBox bbox;
+	bbox.north = dem_northeast.lat;
+	bbox.south = dem_southwest.lat;
+	bbox.east = dem_northeast.lon;
+	bbox.west = dem_southwest.lon;
 
-	if ((other_bbox.north > dem_northeast.lat && other_bbox.south > dem_northeast.lat) ||
-	    (other_bbox.north < dem_southwest.lat && other_bbox.south < dem_southwest.lat)) {
+	qDebug() << "II" PREFIX << "Viewport:" << other_bbox;
+	qDebug() << "II" PREFIX << "DEM:     " << bbox;
+	qDebug() << "II" PREFIX << "Overlap: " << (BBOX_INTERSECT(bbox, other_bbox) ? "true" : "false");
 
-		qDebug() << "DD: DEM: Overlap: false 1";
-		return false;
+	return BBOX_INTERSECT(bbox, other_bbox);
+}
 
-	} else if ((other_bbox.east > dem_northeast.lon && other_bbox.west > dem_northeast.lon) ||
-		   (other_bbox.east < dem_southwest.lon && other_bbox.west < dem_southwest.lon)) {
 
-		qDebug() << "DD: DEM: Overlap: false 2";
-		return false;
-	} else {
-		qDebug() << "DD: DEM: Overlap: true";
-		return true;
-	}
+
+
+DEMColumn::DEMColumn(double new_east_west, double new_south, int32_t new_n_points)
+{
+	this->east_west = new_east_west;
+	this->south = new_south;
+	this->n_points = new_n_points;
+
+	this->points = (int16_t *) malloc(sizeof (int16_t) * this->n_points);
+}
+
+
+
+
+DEMColumn::~DEMColumn()
+{
+	free(this->points);
+	this->points = NULL;
 }

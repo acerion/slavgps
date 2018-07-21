@@ -63,7 +63,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX "Layer DEM" << __FUNCTION__ << __LINE__
+#define PREFIX " Layer DEM" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -103,8 +103,8 @@ public:
 
 
 /* Upper limit is that high in case if units are feet. */
-static ParameterScale<int> scale_min_elev(0, 30000,    SGVariant(0.0), 10, 1);
-static ParameterScale<int> scale_max_elev(1, 30000, SGVariant(1000.0), 10, 1);
+static ParameterScale<double> scale_min_elev(0.0, 30000.0,    SGVariant(0.0), 10, 1);
+static ParameterScale<double> scale_max_elev(1.0, 30000.0, SGVariant(1000.0), 10, 1);
 
 
 
@@ -203,7 +203,7 @@ static char const * dem_height_colors[] = {
 	"#f7f7f7", "#fbfbfb", "#ffffff"
 };
 
-static const unsigned int DEM_N_HEIGHT_COLORS = sizeof(dem_height_colors)/sizeof(dem_height_colors[0]);
+static const int32_t DEM_N_HEIGHT_COLORS = sizeof(dem_height_colors)/sizeof(dem_height_colors[0]);
 
 
 
@@ -223,7 +223,7 @@ static char const * dem_gradient_colors[] = {
 	"#FFFFFF"
 };
 
-static const unsigned int DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/sizeof(dem_gradient_colors[0]);
+static const int32_t DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/sizeof(dem_gradient_colors[0]);
 
 
 
@@ -280,19 +280,14 @@ QString LayerDEM::get_tooltip(void) const
 
 
 
+
+
 Layer * LayerDEMInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerDEM * layer = new LayerDEM();
 
-	/* TODO: share ->colors[] between layers. */
+	/* Overwrite base color configured in constructor. */
 	layer->colors[0] = QColor(layer->base_color);
-	for (unsigned int i = 1; i < DEM_N_HEIGHT_COLORS; i++) {
-		layer->colors[i] = QColor(dem_height_colors[i]);
-	}
-
-	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		layer->gradients[i] = QColor(dem_gradient_colors[i]);
-	}
 
 	layer->unmarshall_params(pickle);
 	return layer;
@@ -339,8 +334,8 @@ void DEMLoadJob::run(void)
 */
 bool DEMLoadJob::load_files_into_cache(void)
 {
-	unsigned int dem_count = 0;
-	const unsigned int dem_total = this->file_paths.size();
+	size_t dem_count = 0;
+	const size_t dem_total = this->file_paths.size();
 
 	for (auto iter = this->file_paths.begin(); iter != this->file_paths.end(); iter++) {
 		if (!DEMCache::load_file_into_cache(*iter)) {
@@ -440,13 +435,13 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 		/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
 		this->files = param_value.val_string_list;
 
-		qDebug() << "DD: Layer DEM: set param value: list of files:";
+		qDebug() << "DD" PREFIX << "list of files:";
 		if (!this->files.empty()) {
 			for (auto iter = this->files.begin(); iter != this->files.end(); ++iter) {
-				qDebug() << "DD: Layer DEM: set param value: file:" << *iter;
+				qDebug() << "DD" PREFIX << "file:" << *iter;
 			}
 		} else {
-			qDebug() << "DD: Layer DEM: set param value: no files";
+			qDebug() << "DD" PREFIX << "no files";
 		}
 		/* No need for thread if no files. */
 		if (!this->files.empty()) {
@@ -477,7 +472,7 @@ SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
 	switch (id) {
 
 	case PARAM_FILES:
-		qDebug() << "II: Layer DEM: get param value: string list (" << this->files.size() << " elements):";
+		qDebug() << "II" PREFIX << "string list (" << this->files.size() << " elements):";
 		qDebug() << this->files;
 
 		/* Save in relative format if necessary. */
@@ -542,15 +537,13 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 
 void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 {
-	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
-
 	/* If given DEM is loaded into application, we want to know whether the DEM and
 	   current viewport overlap, so that we know whether we should draw it in
 	   viewport or not. We do this check every time a viewport has been changed
 	   (moved or re-zoomed). */
 	const LatLonBBox viewport_bbox = viewport->get_bbox();
-	if (!dem->overlap(viewport_bbox)) {
-		qDebug() << "II:" PREFIX << "no overlap, skipping";
+	if (!dem->intersect(viewport_bbox)) {
+		qDebug() << "II" PREFIX << "DEM does not overlap viewport, not drawing the DEM";
 		return;
 	}
 
@@ -571,13 +564,13 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 	switch (dem->horiz_units) {
 	case VIK_DEM_HORIZ_LL_ARCSECONDS:
-		this->draw_dem_ll(viewport, dem, min_max);
+		this->draw_dem_ll(viewport, dem);
 		break;
 	case VIK_DEM_HORIZ_UTM_METERS:
 		this->draw_dem_utm(viewport, dem);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unexpected DEM horiz units" << (int) dem->horiz_units;
+		qDebug() << "EE" PREFIX << "unexpected DEM horiz units" << (int) dem->horiz_units;
 		break;
 	}
 
@@ -587,44 +580,49 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 
 
-void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & min_max)
-{
-	Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+/* Get index to array of colors or gradients for given value 'm_value' of elevation or gradient. */
+#define GET_INDEX(m_value, m_min_elev, m_max_elev, m_palette_size) \
+	(1 + ((int) floor(((m_value - m_min_elev)/(m_max_elev - m_min_elev)) * (m_palette_size - 2))))
 
+
+
+
+
+void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
+{
 	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 80); /* TODO: smarter calculation. */
 
 	double nscale_deg = dem->north_scale / ((double) 3600);
 	double escale_deg = dem->east_scale / ((double) 3600);
 
-	double max_lat_as = min_max.max.lat * 3600;
-	double min_lat_as = min_max.min.lat * 3600;
-	double max_lon_as = min_max.max.lon * 3600;
-	double min_lon_as = min_max.min.lon * 3600;
-
-	double start_lat_as = std::max(min_lat_as, dem->min_north);
-	double end_lat_as   = std::min(max_lat_as, dem->max_north);
-	double start_lon_as = std::max(min_lon_as, dem->min_east);
-	double end_lon_as   = std::min(max_lon_as, dem->max_east);
+	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	double start_lat_as = std::max(viewport_bbox.south * 3600.0, dem->min_north_seconds);
+	double end_lat_as   = std::min(viewport_bbox.north * 3600.0, dem->max_north_seconds);
+	double start_lon_as = std::max(viewport_bbox.west * 3600.0, dem->min_east_seconds);
+	double end_lon_as   = std::min(viewport_bbox.east * 3600.0, dem->max_east_seconds);
 
 	double start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
 	double end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
 	double start_lon = floor(start_lon_as / dem->east_scale) * escale_deg;
 	double end_lon   = ceil(end_lon_as / dem->east_scale) * escale_deg;
 
-	unsigned int start_x, start_y;
+	int32_t start_x;
+        int32_t start_y;
 	dem->east_north_to_xy(start_lon_as, start_lat_as, &start_x, &start_y);
-	unsigned int gradient_skip_factor = 1;
+	int32_t gradient_skip_factor = 1;
 	if (this->dem_type == DEM_TYPE_GRADIENT) {
 		gradient_skip_factor = skip_factor;
 	}
 
-	/* Verify sane elev interval. */
+	/* Verify sane elevation range. */
 	if (this->max_elev <= this->min_elev) {
 		this->max_elev = this->min_elev + 1;
 	}
 
+	Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
 	LatLon counter;
-	unsigned int x;
+	int32_t x;
 	for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
 		/* NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
 		   the leftmost column does also get drawn, if the center point is out of viewport. */
@@ -650,7 +648,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 			nextcolumn = dem->columns[new_x];
 		}
 
-		unsigned int y;
+		int32_t y;
 		for (y = start_y, counter.lat = start_lat; counter.lat <= end_lat; counter.lat += nscale_deg * skip_factor, y += skip_factor) {
 			if (y > column->n_points) {
 				break;
@@ -667,7 +665,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 			box_c = counter;
 			box_c.lat += (nscale_deg * skip_factor)/2;
 			box_c.lon -= (escale_deg * skip_factor)/2;
-			tmp = Coord(box_c, viewport->get_coord_mode());
+			tmp = Coord(box_c, viewport_coord_mode);
 			viewport->coord_to_screen_pos(tmp, &box_x, &box_y);
 			/* Catch box at borders. */
 			if (box_x < 0) {
@@ -680,7 +678,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 
 			box_c.lat -= nscale_deg * skip_factor;
 			box_c.lon += escale_deg * skip_factor;
-			tmp = Coord(box_c, viewport->get_coord_mode());
+			tmp = Coord(box_c, viewport_coord_mode);
 			viewport->coord_to_screen_pos(tmp, &box_width, &box_height);
 			box_width -= box_x;
 			box_height -= box_y;
@@ -705,12 +703,13 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 			if (this->dem_type == DEM_TYPE_GRADIENT) {
 				/* Calculate and sum gradient in all directions. */
 				int16_t change = 0;
-				int32_t new_y;
 
 				/* Calculate gradient from height points all around the current one. */
-				new_y = y - gradient_skip_factor;
-				if (new_y < 0) {
+				int32_t new_y;
+				if (y < gradient_skip_factor) {
 					new_y = y;
+				} else {
+					new_y = y - gradient_skip_factor;
 				}
 				change += get_height_difference(elev, prevcolumn->points[new_y]);
 				change += get_height_difference(elev, column->points[new_y]);
@@ -738,16 +737,14 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & 
 					change = this->max_elev;
 				}
 
-				int idx = (int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1;
-				//fprintf(stderr, "VIEWPORT: filling rectangle with gradient (%s:%d)\n", __FUNCTION__, __LINE__);
+				int idx = GET_INDEX(change, this->min_elev, this->max_elev, DEM_N_GRADIENT_COLORS);
 				viewport->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
 
 			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 				if (elev > 0 && !below_minimum) {
-					idx = (int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1;
+					idx = GET_INDEX(elev, this->min_elev, this->max_elev, DEM_N_HEIGHT_COLORS);
 				}
-				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
 				viewport->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
 			} else {
 				; /* No other dem type to process. */
@@ -781,24 +778,24 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	double min_eas = std::min(bleft.utm.easting, tleft.utm.easting);
 
 	double start_eas, end_eas;
-	double start_nor = std::max(min_nor, dem->min_north);
-	double end_nor   = std::min(max_nor, dem->max_north);
+	double start_nor = std::max(min_nor, dem->min_north_seconds);
+	double end_nor   = std::min(max_nor, dem->max_north_seconds);
 	if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
 	    && (tleft.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')
 	    && (bleft.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
-		start_eas = std::max(min_eas, dem->min_east);
+		start_eas = std::max(min_eas, dem->min_east_seconds);
 	} else {
-		start_eas = dem->min_east;
+		start_eas = dem->min_east_seconds;
 	}
 
 	if (tright.utm.zone == dem->utm_zone && bright.utm.zone == dem->utm_zone
 	    && (tright.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')
 	    && (bright.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
-		end_eas = std::min(max_eas, dem->max_east);
+		end_eas = std::min(max_eas, dem->max_east_seconds);
 	} else {
-		end_eas = dem->max_east;
+		end_eas = dem->max_east_seconds;
 	}
 
 	start_nor = floor(start_nor / dem->north_scale) * dem->north_scale;
@@ -806,23 +803,26 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	start_eas = floor(start_eas / dem->east_scale) * dem->east_scale;
 	end_eas   = ceil(end_eas / dem->east_scale) * dem->east_scale;
 
-	unsigned int start_x, start_y;
+	int32_t start_x;
+	int32_t start_y;
 	dem->east_north_to_xy(start_eas, start_nor, &start_x, &start_y);
 
 	/* TODO: why start_x and start_y are -1 -- rounding error from above? */
+
+	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
 
 	UTM counter;
 	counter.zone = dem->utm_zone;
 	counter.band_letter = dem->utm_band_letter;
 
-	unsigned int x;
+	int32_t x;
 	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
 		if (x <= 0 || x >= dem->n_columns) { /* kamilTODO: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
 			continue;
 		}
 
-		DEMColumn * column = dem->columns[x];
-		unsigned int y;
+		const DEMColumn * column = dem->columns[x];
+	        int32_t y;
 		for (y = start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
 			if (y > column->n_points) {
 				continue;
@@ -844,11 +844,11 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 			{
 				/* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
-				const ScreenPos pos = viewport->coord_to_screen_pos(Coord(counter, viewport->get_coord_mode()));
+				const ScreenPos pos = viewport->coord_to_screen_pos(Coord(counter, viewport_coord_mode));
 
 				int idx = 0; /* Default index for color of 'sea'. */
 				if (elev > 0) {
-					idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
+					idx = GET_INDEX(elev, this->min_elev, this->max_elev, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
 				viewport->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
@@ -865,7 +865,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 void draw_loaded_dem_box(Viewport * viewport)
 {
 #ifdef K_TODO
-	/* For getting values of dem_northeast and dem_southwest see vik_dem_overlap(). */
+	/* For getting values of dem_northeast and dem_southwest see DEM::intersect(). */
 	const Coord demne(dem_northeast, viewport->get_coord_mode());
 	const Coord demsw(dem_southwest, viewport->get_coord_mode());
 
@@ -888,7 +888,7 @@ void draw_loaded_dem_box(Viewport * viewport)
 		sp_ne.y = 0;
 	}
 
-	qDebug() << "II: Layer DEM: drawing loaded DEM box";
+	qDebug() << "II" PREFIX << "drawing loaded DEM box";
 
 	viewport->draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 
@@ -975,10 +975,10 @@ void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		const QString dem_file_path = *iter;
 		DEM * dem = DEMCache::get(dem_file_path);
 		if (dem) {
-			qDebug() << "II: Layer DEM: got file" << dem_file_path << "from cache, will now draw it";
+			qDebug() << "II" PREFIX << "got file" << dem_file_path << "from cache, will now draw it";
 			this->draw_dem(viewport, dem);
 		} else {
-			qDebug() << "EE: Layer DEM: failed to get file" << dem_file_path << "from cache, not drawing";
+			qDebug() << "EE" PREFIX << "failed to get file" << dem_file_path << "from cache, not drawing";
 		}
 	}
 }
@@ -988,7 +988,7 @@ void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 LayerDEM::LayerDEM()
 {
-	qDebug() << "II: LayerDEM::LayerDEM()";
+	qDebug() << "II" PREFIX << "LayerDEM::LayerDEM()";
 
 	this->type = LayerType::DEM;
 	strcpy(this->debug_string, "LayerType::DEM");
@@ -996,25 +996,22 @@ LayerDEM::LayerDEM()
 
 	this->dem_type = 0;
 
-	this->colors = (QColor *) malloc(sizeof(QColor) * DEM_N_HEIGHT_COLORS);
-	this->gradients = (QColor *) malloc(sizeof(QColor) * DEM_N_GRADIENT_COLORS);
+	this->colors.reserve(DEM_N_HEIGHT_COLORS);
+	this->gradients.reserve(DEM_N_GRADIENT_COLORS);
 
-	/* Ensure the base color is available so the default color can be applied. */
-	this->colors[0] = QColor("#0000FF");
+
+	/* TODO: share ->colors[] between layers. */
+	this->colors[0] = QColor("#0000FF"); /* Ensure the base color is available as soon as possible. */
+	for (int32_t i = 1; i < DEM_N_HEIGHT_COLORS; i++) {
+		this->colors[i] = QColor(dem_height_colors[i]);
+	}
+
+	for (size_t i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+		this->gradients[i] = QColor(dem_gradient_colors[i]);
+	}
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
-
-	/* TODO: share ->colors[] between layers. */
-	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-		if (i > 0) {
-			this->colors[i] = QColor(dem_height_colors[i]);
-		}
-	}
-
-	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		this->gradients[i] = QColor(dem_gradient_colors[i]);
-	}
 }
 
 
@@ -1022,16 +1019,6 @@ LayerDEM::LayerDEM()
 
 LayerDEM::~LayerDEM()
 {
-	if (this->colors) {
-		free(this->colors);
-		this->colors = NULL;
-	}
-
-	if (this->gradients) {
-		free(this->gradients);
-		this->gradients = NULL;
-	}
-
 	DEMCache::unload_from_cache(this->files);
 	this->files.clear();
 }
@@ -1107,7 +1094,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	case DownloadResult::Success:
 	case DownloadResult::DownloadNotRequired:
 	default:
-		qDebug() << "II: Layer DEM: layer download progress = 100";
+		qDebug() << "II" PREFIX << "layer download progress = 100";
 		dl_job->progress = 100;
 		break;
 	}
@@ -1143,7 +1130,7 @@ static void srtm_draw_existence(Viewport * viewport)
 	const LatLonBBox bbox = viewport->get_bbox();
 	QPen pen("black");
 
-	qDebug() << "DD: Layer DEM: Existence: viewport bounding box: north:" << (int) bbox.north << "south:" << (int) bbox.south << "east:" << (int) bbox.east << "west:" << (int) bbox.west;
+	qDebug() << "DD" PREFIX << "viewport bounding box:" << bbox;
 
 	for (int lat = floor(bbox.south); lat <= floor(bbox.north); lat++) {
 		for (int lon = floor(bbox.west); lon <= floor(bbox.east); lon++) {
@@ -1227,10 +1214,10 @@ static QString dem24k_lat_lon_to_cache_file_name(double lat, double lon)
 
 static void dem24k_draw_existence(Viewport * viewport)
 {
-	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
+	const LatLonBBox viewport_bbox = viewport->get_bbox();
 	QPen pen("black");
 
-	for (double lat = floor(min_max.min.lat * 8) / 8; lat <= floor(min_max.max.lat * 8) / 8; lat += 0.125) {
+	for (double lat = floor(viewport_bbox.south * 8) / 8; lat <= floor(viewport_bbox.north * 8) / 8; lat += 0.125) {
 		/* Check lat dir first -- faster. */
 		QString cache_file_path = QString("%1dem24k/%2/").arg(MapCache::get_dir()).arg((int) lat);
 
@@ -1238,7 +1225,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 			continue;
 		}
 
-		for (double lon = floor(min_max.min.lon * 8) / 8; lon <= floor(min_max.max.lon * 8) / 8; lon += 0.125) {
+		for (double lon = floor(viewport_bbox.west * 8) / 8; lon <= floor(viewport_bbox.east * 8) / 8; lon += 0.125) {
 			/* Check lon dir first -- faster. */
 			cache_file_path = QString("%1dem24k/%2/%3/").arg(MapCache::get_dir()).arg((int) lat).arg((int) lon);
 			if (0 != access(cache_file_path.toUtf8().constData(), F_OK)) {
@@ -1300,14 +1287,14 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 		stat(dem_file_path.toUtf8().constData(), &sb);
 		if (sb.st_size) {
 			this->files.push_front(dem_file_path);
-			qDebug () << "II: Layer DEM: Add file: will now load file" << dem_file_path << "from cache";
+			qDebug () << "II" PREFIX << "will now load file" << dem_file_path << "from cache";
 			DEMCache::load_file_into_cache(dem_file_path);
 		} else {
-			qDebug() << "II: Layer DEM: Add file:" << dem_file_path << ": file size is zero";
+			qDebug() << "II" PREFIX << dem_file_path << ": file size is zero";
 		}
 		return true;
 	} else {
-		qDebug() << "II: Layer DEM: Add file:" << dem_file_path << ": file does not exist";
+		qDebug() << "II" PREFIX << dem_file_path << ": file does not exist";
 		return false;
 	}
 }
@@ -1400,7 +1387,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	QMenu * menu = (QMenu *) qa->parentWidget();
 
 	const LatLon ll(menu->property("lat").toDouble(), menu->property("lon").toDouble());
-	qDebug() << "II: Layer DEM: will display file info for coordinates" << ll.lat << ll.lon;
+	qDebug() << "II" PREFIX << "will display file info for coordinates" << ll;
 
 	int intlat = (int) floor(ll.lat);
 	int intlon = (int) floor(ll.lon);
@@ -1518,7 +1505,7 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * 
 	/* Choose & keep track of cache dir.
 	 * Download in background thread.
 	 * Download over area. */
-	qDebug() << "II: Layer DEM: received click event, ignoring";
+	qDebug() << "II" PREFIX << "received click event, ignoring";
 	return true;
 }
 

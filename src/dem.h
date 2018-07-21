@@ -61,6 +61,9 @@ namespace SlavGPS {
 	class DEMColumn {
 
 	public:
+		DEMColumn(double east_west, double south, int32_t n_points);
+		~DEMColumn();
+
 		/* East-West coordinate for ALL items in the column. */
 		double east_west;
 
@@ -68,7 +71,7 @@ namespace SlavGPS {
 		double south;
 		// double north;
 
-		unsigned int n_points;
+		int32_t n_points;
 		int16_t * points;
 	};
 
@@ -82,20 +85,20 @@ namespace SlavGPS {
 
 		bool read(const QString & file_path);
 
-		int16_t get_xy(unsigned int x, unsigned int y);
+		int16_t get_xy(int32_t x, int32_t y);
 		int16_t get_east_north(double east, double north);
 		int16_t get_simple_interpol(double east, double north);
 		int16_t get_shepard_interpol(double east, double north);
 		// int16_t vik_dem_get_best_interpol(DEM * dem, double east, double north);
 
-		void east_north_to_xy(double east, double north, unsigned int * col, unsigned int * row);
+		void east_north_to_xy(double east, double north, int32_t * col, int32_t * row);
 
 		bool get_ref_points_elev_dist(double east, double north, /* in seconds */
 					      int16_t * elevs, int16_t * dists);
 
-		bool overlap(const LatLonBBox & other_bbox);
+		bool intersect(const LatLonBBox & other_bbox);
 
-		unsigned int n_columns;
+		int32_t n_columns;
 		std::vector<DEMColumn *> columns;
 
 		uint8_t horiz_units;
@@ -103,10 +106,10 @@ namespace SlavGPS {
 		double east_scale; /* Gap between samples. */
 		double north_scale;
 
-		double min_east;
-		double min_north;
-		double max_east;
-		double max_north;
+		double min_east_seconds;
+		double min_north_seconds;
+		double max_east_seconds;
+		double max_north_seconds;
 
 		int utm_zone;
 		char utm_band_letter;
@@ -117,10 +120,11 @@ namespace SlavGPS {
 	private:
 		bool read_srtm_hgt(const QString & file_full_path, const QString & file_name, bool zip);
 		bool read_other(const QString & full_path);
+
 		bool parse_header(char * buffer);
-		void parse_block(char * buffer, int * cur_column, int * cur_row);
-		void parse_block_as_header(char * buffer, int * cur_column, int * cur_row);
-		void parse_block_as_cont(char * buffer, int * cur_column, int * cur_row);
+		void parse_block(char * buffer, int32_t * cur_column, int * cur_row);
+		void parse_block_as_header(char * buffer, int32_t * cur_column, int32_t * cur_row);
+		void parse_block_as_cont(char * buffer, int32_t * cur_column, int32_t * cur_row);
 	};
 
 

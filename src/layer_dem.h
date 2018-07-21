@@ -24,6 +24,11 @@
 
 
 
+#include <vector>
+
+
+
+
 #include <QPen>
 #include <QColor>
 #include <QObject>
@@ -78,17 +83,15 @@ namespace SlavGPS {
 		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(const QString & dem_file_path);
 		void draw_dem(Viewport * viewport, DEM * dem);
-		void draw_dem_ll(Viewport * viewport, DEM * dem, const LatLonMinMax & min_max);
+		void draw_dem_ll(Viewport * viewport, DEM * dem);
 		void draw_dem_utm(Viewport * viewport, DEM * dem);
 		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
 
 		static void weak_ref_cb(void * ptr, void * dead_vdl);
 
-		/* Table of colors. */
-		QColor * colors = NULL;
-		/* Table of gradients. */
-		QColor * gradients = NULL;
+		std::vector<QColor> colors;
+		std::vector<QColor> gradients;
 
 		QStringList files;
 		double min_elev = 0;
