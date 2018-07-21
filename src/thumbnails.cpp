@@ -89,20 +89,16 @@ static QString md5_hash(const char * message);
 
 bool Thumbnails::thumbnail_exists(const QString & original_file_full_path)
 {
-	QPixmap * pixmap = Thumbnails::get_thumbnail(original_file_full_path);
-	if (pixmap) {
-		delete pixmap;
-		return true;
-	}
-	return false;
+	const QPixmap pixmap = Thumbnails::get_thumbnail(original_file_full_path);
+	return !pixmap.isNull();
 }
 
 
 
 
-QPixmap * Thumbnails::get_default_thumbnail()
+QPixmap Thumbnails::get_default_thumbnail(void)
 {
-	return new QPixmap(":/thumbnails/not_loaded_yet.png");
+	return QPixmap(":/thumbnails/not_loaded_yet.png");
 }
 
 
@@ -231,7 +227,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 
 
 
-QPixmap * Thumbnails::get_thumbnail(const QString & original_file_full_path)
+QPixmap Thumbnails::get_thumbnail(const QString & original_file_full_path)
 {
 	const QString canonical_path = SGUtils::get_canonical_path(original_file_full_path);
 	const QString original_uri = QString("file://%1").arg(canonical_path);
@@ -240,19 +236,19 @@ QPixmap * Thumbnails::get_thumbnail(const QString & original_file_full_path)
 	const QString thumb_path = QString("%1%2%3%4.png").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR).arg(md5);
 
 
-	QPixmap * thumb = new QPixmap();
-	if (!thumb->load(thumb_path)) {
+	QPixmap thumbnail;
+	if (!thumbnail.load(thumb_path)) {
 		goto err;
 	}
 
 #ifdef K_FIXME_RESTORE
 	/* Note that these don't need freeing... */
-	const char * ssize = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::Size");
+	const char * ssize = gdk_pixbuf_get_option(thumbnail, "tEXt::Thumb::Size");
 	if (!ssize) {
 		goto err;
 	}
 
-	const char * smtime = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::MTime");
+	const char * smtime = gdk_pixbuf_get_option(thumbnail, "tEXt::Thumb::MTime");
 	if (!smtime) {
 		goto err;
 	}
@@ -269,13 +265,12 @@ QPixmap * Thumbnails::get_thumbnail(const QString & original_file_full_path)
 
 	goto out;
 err:
-	if (thumb) {
-		delete thumb; /* Deleting because we are handling error here. */
-		thumb = NULL;
+	if (!thumbnail.isNull()) {
+		thumbnail = QPixmap(); /* Resetting because we are handling error here. */
 	}
 
 out:
-	return thumb;
+	return thumbnail;
 }
 
 

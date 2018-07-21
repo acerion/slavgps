@@ -892,17 +892,20 @@ void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 
 
 
-QPixmap * LayerTRWPainter::update_pixmap_cache(const QString & image_full_path, Waypoint & wp)
+CachedPixmap LayerTRWPainter::generate_wp_cached_pixmap(const QString & image_full_path) const
 {
-	bool success = false;
-	CachedPixmap * cp = new CachedPixmap;
+	CachedPixmap cache_object;
+
 	if (this->wp_image_size == PIXMAP_THUMB_SIZE) {
 		/* What a coincidence! Perhaps the image has already been "thumbnailed"
 		   and we can read it from thumbnails dir. */
-		cp->pixmap = Thumbnails::get_thumbnail(image_full_path);
+		cache_object.pixmap = Thumbnails::get_thumbnail(image_full_path);
+		if (!cache_object.pixmap.isNull()) {
+			cache_object.image_file_full_path = image_full_path;
+		}
 	}
 
-	if (!cp->pixmap) {
+	if (cache_object.pixmap.isNull()) {
 		/* We didn't manage to read the file from thumbnails file.
 		   Either because the expected pixmap size (painter->wp_image_size)
 		   is not equal to thumbnail size, or because there was no thumbnail on disc.
@@ -910,47 +913,22 @@ QPixmap * LayerTRWPainter::update_pixmap_cache(const QString & image_full_path, 
 
 		QPixmap original_image;
 		if (original_image.load(image_full_path)) {
-			cp->pixmap = new QPixmap();
-			*cp->pixmap = Thumbnails::scale_pixmap(original_image, this->wp_image_size, this->wp_image_size);
-			assert (!cp->pixmap->isNull());
-			cp->image_file_path = image_full_path;
+			cache_object.pixmap = Thumbnails::scale_pixmap(original_image, this->wp_image_size, this->wp_image_size);
+			if (!cache_object.pixmap.isNull()) {
+				cache_object.image_file_full_path = image_full_path;
+			}
 		}
 	}
 
-	if (!cp->pixmap) {
-		/* Last resort. */
-		cp->pixmap = Thumbnails::get_default_thumbnail();
-		cp->image_file_path = "";
+	if (cache_object.pixmap.isNull()) {
+		/* Last resort. TODO: default thumbnail should be
+		   somehow shared object. We don't want too many
+		   copies of the default thumbnail in memory. */
+		cache_object.pixmap = Thumbnails::get_default_thumbnail();
+		cache_object.image_file_full_path = "";
 	}
 
-
-	/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
-	if (this->wp_image_alpha <= 255) {
-		ui_pixmap_set_alpha(*cp->pixmap, this->wp_image_alpha);
-	}
-
-
-	/* Needed so 'click picture' tool knows how big the pic is; we
-	   don't store it in cp because they may have been freed
-	   already.
-	   TODO: shouldn't we do this outside of this function, with a
-	   size of pixmap returned by the function? */
-	wp.image_width = cp->pixmap->width();
-	wp.image_height = cp->pixmap->height();
-
-	this->trw->wp_image_cache.push_back(cp);
-	/* Keep size of queue under a limit. */
-	if (this->trw->wp_image_cache.size() > this->trw->wp_image_cache_size) {
-		/* TODO: review management of cache and watching its
-		   limit. Make sure that it really works. */
-		/* FIXME: we are deleting pixmap object. What
-		   about the validity of deleted pointer that
-		   has been returned by
-		   update_pixmap_cache()? */
-		this->trw->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
-	}
-
-	return cp->pixmap;
+	return cache_object;
 }
 
 
@@ -970,25 +948,43 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, 
 		return false;
 	}
 
-	QPixmap * pixmap = NULL;
+	QPixmap pixmap;
 
 	auto iter = std::find_if(this->trw->wp_image_cache.begin(), this->trw->wp_image_cache.end(), CachedPixmapCompareByPath(wp->image_full_path));
 	if (iter != this->trw->wp_image_cache.end()) {
 		/* Found a matching pixmap in cache. */
-		pixmap = (*iter)->pixmap;
+		pixmap = (*iter).pixmap;
 	} else {
-		/* Cache miss. */
-		qDebug() << "II: Layer TRW Painter: Waypoint image" << wp->image_full_path << "not found in cache";
-		pixmap = this->update_pixmap_cache(wp->image_full_path, *wp);
+		/* WP Image Cache miss. */
+		qDebug() << "II" PREFIX << "Waypoint image" << wp->image_full_path << "not found in cache, generating new cached image";
+
+		CachedPixmap cache_object = this->generate_wp_cached_pixmap(wp->image_full_path);
+
+		if (!cache_object.pixmap.isNull()) {
+			/* Needed so 'click picture' tool knows how
+			   big the pic is; we don't store it in
+			   cache_object because they may have been
+			   freed already. */
+			wp->image_width = cache_object.pixmap.width();
+			wp->image_height = cache_object.pixmap.height();
+
+			/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
+			if (this->wp_image_alpha <= 255) {
+				ui_pixmap_set_alpha(cache_object.pixmap, this->wp_image_alpha);
+			}
+			this->trw->wp_image_cache_add(cache_object);
+
+			pixmap = cache_object.pixmap;
+		}
 	}
 
-	if (!pixmap) {
-		qDebug() << "EE:" PREFIX << "failed to get wp pixmap from any source";
+	if (pixmap.isNull()) {
+		qDebug() << "EE" PREFIX << "failed to get wp pixmap from any source";
 		return false;
 	}
 
-	const int w = pixmap->width();
-	const int h = pixmap->height();
+	const int w = pixmap.width();
+	const int h = pixmap.height();
 	const int x = pos.x;
 	const int y = pos.y;
 
@@ -1006,7 +1002,7 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, 
 
 			this->viewport->draw_rectangle(pen, target_rect.adjusted(-delta, -delta, delta, delta));
 		}
-		this->viewport->draw_pixmap(*pixmap, target_rect, QRect(0, 0, w, h));
+		this->viewport->draw_pixmap(pixmap, target_rect, QRect(0, 0, w, h));
 	}
 	return true;
 }
@@ -1108,7 +1104,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, Viewport * a_viewport, bool d
 
 CachedPixmap::~CachedPixmap()
 {
-	delete this->pixmap;
+
 }
 
 

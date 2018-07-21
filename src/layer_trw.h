@@ -76,30 +76,6 @@ namespace SlavGPS {
 
 
 
-	/* A cached waypoint image. */
-	/* This data structure probably should be put somewhere else - it could be reused in other modules. */
-	class CachedPixmap {
-	public:
-		CachedPixmap() {};
-		~CachedPixmap();
-		QPixmap * pixmap = NULL;
-		QString image_file_path;
-	};
-
-
-
-
-	/* Binary predicate for searching a pixmap (CachedPixmap) in pixmap cache container. */
-	struct CachedPixmapCompareByPath {
-	CachedPixmapCompareByPath(const QString & searched_full_path) : searched_full_path_(searched_full_path) { }
-		bool operator()(CachedPixmap * item) const { return item->image_file_path == searched_full_path_; }
-	private:
-		const QString searched_full_path_;
-	};
-
-
-
-
 	class TRWMetadata {
 
 	public:
@@ -394,7 +370,7 @@ namespace SlavGPS {
 
 		/* Viking has been using queue to be able to easily remove (pop()) oldest images (the ones that
 		   are the longest in queue) when size of cached images goes over cache size limit. */
-		std::deque<CachedPixmap *> wp_image_cache;
+		std::deque<CachedPixmap> wp_image_cache;
 		int32_t wp_image_cache_size;
 
 
@@ -495,6 +471,8 @@ namespace SlavGPS {
 		void insert_point_after_cb(void);
 		void insert_point_before_cb(void);
 		void routes_stats_cb();
+
+		void wp_image_cache_add(CachedPixmap & cached_pixmap);
 
 
 	private:

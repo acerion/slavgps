@@ -31,42 +31,82 @@
 
 
 
-/* Note that using LayerTRWTrackDrawingMode::BySpeed may be slow especially for vast
-   numbers of trackpoints as we are (re)calculating the color for
-   every point. */
-enum class LayerTRWTrackDrawingMode {
-	ByTrack,
-	BySpeed,
-	AllSameColor
-};
+#include <QString>
+#include <QPixmap>
 
 
 
 
-/* These symbols are used for Waypoints, but they can be used elsewhere too. */
-enum class GraphicMarker {
-	/* There were four markers originally in Viking. */
-	FilledSquare,
-	Square,
-	Circle,
-	X,
-
-	Max
-};
+namespace SlavGPS {
 
 
 
-/* See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html */
-typedef enum {
-	FS_XX_SMALL = 0,
-	FS_X_SMALL,
-	FS_SMALL,
-	FS_MEDIUM, // DEFAULT
-	FS_LARGE,
-	FS_X_LARGE,
-	FS_XX_LARGE,
-	FS_NUM_SIZES
-} font_size_t;
+
+	/* A cached waypoint image. */
+	/* This data structure probably should be put somewhere else - it could be reused in other modules. */
+	class CachedPixmap {
+	public:
+		CachedPixmap() {};
+		~CachedPixmap();
+		QPixmap pixmap;
+		QString image_file_full_path;
+	};
+
+
+
+
+	/* Binary predicate for searching a pixmap (CachedPixmap) in pixmap cache container. */
+	struct CachedPixmapCompareByPath {
+	CachedPixmapCompareByPath(const QString & new_searched_full_path) : searched_full_path(new_searched_full_path) { }
+		bool operator()(CachedPixmap & item) const { return item.image_file_full_path == this->searched_full_path; }
+	private:
+		const QString searched_full_path;
+	};
+
+
+
+
+	/* Note that using LayerTRWTrackDrawingMode::BySpeed may be slow especially for vast
+	   numbers of trackpoints as we are (re)calculating the color for
+	   every point. */
+	enum class LayerTRWTrackDrawingMode {
+		ByTrack,
+		BySpeed,
+		AllSameColor
+	};
+
+
+
+
+	/* These symbols are used for Waypoints, but they can be used elsewhere too. */
+	enum class GraphicMarker {
+		/* There were four markers originally in Viking. */
+		FilledSquare,
+		Square,
+		Circle,
+		X,
+		Max
+	};
+
+
+
+
+	/* See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html */
+	typedef enum {
+		FS_XX_SMALL = 0,
+		FS_X_SMALL,
+		FS_SMALL,
+		FS_MEDIUM, // DEFAULT
+		FS_LARGE,
+		FS_X_LARGE,
+		FS_XX_LARGE,
+		FS_NUM_SIZES
+	} font_size_t;
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

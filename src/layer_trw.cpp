@@ -718,10 +718,23 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 
 
 
-void LayerTRW::wp_image_cache_flush()
+void LayerTRW::wp_image_cache_flush(void)
 {
-	for (auto iter = this->wp_image_cache.begin(); iter != this->wp_image_cache.end(); iter++) {
-		delete *iter;
+	this->wp_image_cache.clear();
+}
+
+
+
+
+void LayerTRW::wp_image_cache_add(CachedPixmap & cached_pixmap)
+{
+	this->wp_image_cache.push_back(cached_pixmap);
+
+	/* Keep size of queue under a limit. */
+	if (this->wp_image_cache.size() > this->wp_image_cache_size) {
+		/* TODO: review management of cache and watching its
+		   limit. Make sure that it really works. */
+		this->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
 	}
 }
 
@@ -4121,8 +4134,6 @@ LayerTRW::LayerTRW() : Layer()
 
 LayerTRW::~LayerTRW()
 {
-	this->wp_image_cache_flush();
-
 	delete this->tpwin;
 
 	delete this->painter;

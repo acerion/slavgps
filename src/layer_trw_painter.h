@@ -87,7 +87,8 @@ namespace SlavGPS {
 
 		inline bool coord_fits_in_viewport(const Coord & coord) const;
 
-		QPixmap * update_pixmap_cache(const QString & image_full_path, Waypoint & wp);
+		/* Generate new cache object for given image path, but don't add the object to cache. */
+		CachedPixmap generate_wp_cached_pixmap(const QString & image_full_path) const;
 
 		void draw_waypoint_sub(Waypoint * wp, bool do_hightlight);
 		void draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
