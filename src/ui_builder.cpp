@@ -848,27 +848,22 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 
 
 
-bool ParameterSpecification::get_hardwired_value(SGVariant & value) const
+SGVariant ParameterSpecification::get_hardcoded_value(void) const
 {
 	SGVariant param_value;
 	if (this->widget_type == WidgetType::SpinBoxDouble) {
-		/* This will be overwritten below by value from settings file. */
 		ParameterScale<double> * scale = (ParameterScale<double> *) this->widget_data;
-		value = scale->initial;
-		return true;
+		param_value = scale->initial;
 
 	} else if (this->widget_type == WidgetType::SpinBoxInt || this->widget_type == WidgetType::HScale) {
-		/* This will be overwritten below by value from settings file. */
 		ParameterScale<int> * scale = (ParameterScale<int> *) this->widget_data;
-		value = scale->initial;
-		return true;
+		param_value = scale->initial;
+
 	} else {
 		if (this->hardwired_default_value) {
-			/* This will be overwritten below by value from settings file. */
-			value = this->hardwired_default_value();
-			return true;
+			param_value = this->hardwired_default_value();
 		}
 	}
 
-	return false;
+	return param_value; /* param_value.is_valid() may or may not return true. */
 }

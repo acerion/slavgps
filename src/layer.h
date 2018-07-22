@@ -127,7 +127,11 @@ namespace SlavGPS {
 		const LayerInterface & get_interface(void) const;
 		static LayerInterface * get_interface(LayerType layer_type);
 		void configure_interface(LayerInterface * intf, ParameterSpecification * param_specs);
+
+		/* Call before LayerDefaults::init() */
 		static void preconfigure_interfaces(void);
+		/* Call after LayerDefaults::init() */
+		static void postconfigure_interfaces(void);
 
 		/* Rarely used, this is called after a read operation
 		   or properties box is run.  usually used to create
@@ -251,11 +255,6 @@ namespace SlavGPS {
 		void layer_changed(const QString & layer_name);
 
 	};
-
-
-
-
-	void layer_init(void);
 
 
 

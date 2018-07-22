@@ -122,7 +122,7 @@ namespace SlavGPS {
 		const char * tooltip;
 
 		ParameterSpecification & operator=(const ParameterSpecification & other);
-		bool get_hardwired_value(SGVariant & value) const;
+		SGVariant get_hardcoded_value(void) const;
 	};
 
 

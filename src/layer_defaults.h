@@ -62,9 +62,12 @@ namespace SlavGPS {
 		static bool load_from_file(void);
 		static bool save_to_file(void);
 
-		static void fill_from_hardwired_defaults(LayerType layer_type);
+		static void fill_missing_from_hardcoded_defaults(LayerType layer_type);
 
-		static SGVariant get_parameter_value(LayerType layer_type, const char * name, SGVariantType ptype, bool * success);
+		/* Check value of ::is_valid() of returned variant to
+		   see whether lookup of parameter has succeeded. */
+		static SGVariant get_parameter_value(LayerType layer_type, const char * name, SGVariantType type_id);
+
 		static void save_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
 	};
 

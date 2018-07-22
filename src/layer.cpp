@@ -81,23 +81,6 @@ extern Tree * g_tree;
 
 
 
-static bool layer_defaults_register(LayerType layer_type);
-
-
-
-
-void SlavGPS::layer_init(void)
-{
-	/* Register all parameter defaults, early in the start up sequence. */
-	for (LayerType layer_type = LayerType::Aggregate; layer_type < LayerType::Max; ++layer_type) {
-		/* ATM ignore the returned value. */
-		layer_defaults_register(layer_type);
-	}
-}
-
-
-
-
 /**
  * Draw specified layer.
  */
@@ -161,74 +144,71 @@ const LayerInterface & Layer::get_interface(void) const
 
 void Layer::preconfigure_interfaces(void)
 {
+	SGVariant param_value;
+
 	for (SlavGPS::LayerType layer_type = SlavGPS::LayerType::Aggregate; layer_type < SlavGPS::LayerType::Max; ++layer_type) {
 
-		qDebug() << "";
-		qDebug() << "II" PREFIX << "preconfiguring interface, layer type" << layer_type;
+		qDebug() << "II" PREFIX << "preconfiguring interface for layer type" << layer_type;
 
 		LayerInterface * interface = Layer::get_interface(layer_type);
 
 		const QString path = QString(":/icons/layer/") + Layer::get_type_id_string(layer_type).toLower() + QString(".png");
-		qDebug() << "II" PREFIX << "preconfiguring interface, action icon path is" << path;
 		interface->action_icon = QIcon(path);
 
 		if (!interface->parameters_c) {
+			/* Some layer types don't have parameters. */
 			continue;
 		}
 
 		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->name; param_spec++) {
-
-			qDebug() << "";
-			qDebug() << "II" PREFIX << "preconfiguring interface, param spec name is" << param_spec->name << "type is" << param_spec->type_id << "id is" << param_spec->id;
-
+			qDebug() << "II" PREFIX << "param spec name is" << param_spec->name << "type is" << param_spec->type_id << "id is" << param_spec->id;
 			interface->parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_spec->id, param_spec));
-
-			/* Read and store default values of layer's parameters.
-			   First try to get program's internal/hardwired value.
-			   Then try to get value from settings file. */
-
-			SGVariant param_value;
-
-			/* param_value will be overwritten below by value from settings file. */
-			param_spec->get_hardwired_value(param_value);
-
-			/* kamilTODO: make sure that the value read from Layer Defaults is valid.
-			   If invalid, call LayerDefaults::set() to save the value?
-			   What if LayerDefaults doesn't contain value for given parameter? The line below overwrites hardwired value. */
-			qDebug() << "II" << PREFIX << "will call ::get() for param" << param_spec->type_id;
-			param_value = LayerDefaults::get(layer_type, param_spec->name, param_spec->type_id);
-			interface->parameter_default_values[param_spec->id] = param_value;
 		}
-
-		qDebug() << "";
 	}
 }
 
 
 
-/**
- * Store default values for this layer.
- *
- * Returns whether any parameters where registered.
- */
-static bool layer_defaults_register(LayerType layer_type)
-{
-	LayerInterface * layer_interface = Layer::get_interface(layer_type);
-	bool answer = false; /* In case all parameters are 'not in properties'. */
 
-	/* Process each parameter. */
-	SGVariant value;
-	for (auto iter = layer_interface->parameter_specifications.begin(); iter != layer_interface->parameter_specifications.end(); iter++) {
-		const ParameterSpecification * param_spec = iter->second;
-		if (param_spec->group_id != PARAMETER_GROUP_HIDDEN) {
-			if (param_spec->get_hardwired_value(value)) {
-				LayerDefaults::set(layer_type, *param_spec, value);
-				answer = true;
-			}
+void Layer::postconfigure_interfaces(void)
+{
+	SGVariant param_value;
+
+	for (SlavGPS::LayerType layer_type = SlavGPS::LayerType::Aggregate; layer_type < SlavGPS::LayerType::Max; ++layer_type) {
+
+		qDebug() << "II" PREFIX << "postconfiguring interface for layer type" << layer_type;
+
+		LayerInterface * interface = Layer::get_interface(layer_type);
+
+		if (!interface->parameters_c) {
+			/* Some layer types don't have parameters. */
+			continue;
+		}
+
+		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->name; param_spec++) {
+
+			/* Read and store default values of layer's
+			   parameters.
+
+			   LayerDefaults module stores default values
+			   of layer parameters (if the default values
+			   were defined somewhere).
+
+			   The LayerDefaults module reads the default
+			   values from two sources: from program's
+			   hardcoded values, and from config file.
+
+			   So at this point we can just call get() and
+			   don't care about exact source (config file
+			   or hardcoded value) of the value. */
+
+			/* kamilTODO: make sure that the value read from Layer Defaults is valid.
+			   What if LayerDefaults doesn't contain value for given parameter? */
+			qDebug() << "II" << PREFIX << "will call LayerDefaults::get() for param" << param_spec->type_id;
+			param_value = LayerDefaults::get(layer_type, param_spec->name, param_spec->type_id);
+			interface->parameter_default_values[param_spec->id] = param_value;
 		}
 	}
-
-	return answer;
 }
 
 

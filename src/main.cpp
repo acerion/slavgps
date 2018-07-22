@@ -207,7 +207,11 @@ int main(int argc, char ** argv)
 	Preferences::register_default_values();
 
 
+	Layer::preconfigure_interfaces();
 	LayerDefaults::init();
+	Layer::postconfigure_interfaces();
+
+
 
 	Download::init();
 
@@ -240,7 +244,7 @@ int main(int argc, char ** argv)
 
 
 	QResource::registerResource("icons.rcc");
-	Layer::preconfigure_interfaces();
+
 
 	Acquire::init();
 

@@ -117,6 +117,7 @@ namespace SlavGPS {
 
 		SGVariant & operator=(const SGVariant & other);
 
+		bool is_valid(void) const { return this->type_id != SGVariantType::Empty; }
 
 		SGVariantType type_id;
 

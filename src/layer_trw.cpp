@@ -170,7 +170,7 @@ static std::vector<SGLabelID> params_wpsymbols = {
 #define MIN_ARROW_SIZE 3
 #define MAX_ARROW_SIZE 20
 
-                                                      /*            min,              max,                     hardwired default,    step,   digits */
+                                                        /*            min,              max,                     hardcoded default,    step,   digits */
 static ParameterScale<int> scale_track_thickness         (              1,               10,                SGVariant((int32_t) 1),       1,        0); /* PARAM_TRACK_THICKNESS */
 static ParameterScale<int> scale_track_draw_speed_factor (              0,              100,                       SGVariant(30.0),       1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
 static ParameterScale<int> scale_wp_image_size           (             16,              128,               SGVariant((int32_t) 64),       4,        0); /* PARAM_WP_IMAGE_SIZE */
