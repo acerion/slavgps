@@ -54,9 +54,35 @@ namespace SlavGPS {
 
 
 
+	class ViewportCanvas {
+		friend class Viewport;
+		friend class ViewportDecorations;
+	public:
+		ViewportCanvas();
+		~ViewportCanvas();
+
+		void reconfigure(int width, int height);
+
+	protected:
+		QPainter * painter = NULL;
+		QPixmap * pixmap = NULL;
+		QPixmap * snapshot_buffer = NULL;
+
+		int width = 0;
+		int height = 0;
+
+		/* Half of the normal width and height. */
+		int width_2 = 0;
+		int height_2 = 0;
+	};
+
+
+
+
 	class Viewport : public QWidget {
 	Q_OBJECT
 
+		friend class ViewportDecorations;
 	public:
 		Viewport(Window * parent);
 		~Viewport();
@@ -264,15 +290,6 @@ namespace SlavGPS {
 		int centers_max;      /* configurable maximum size of the history list. */
 		int centers_radius;   /* Metres. */
 
-		QPixmap * scr_buffer = NULL;
-
-		int size_width = 0;
-		int size_height = 0;
-		/* Half of the normal width and height. */
-		int size_width_2 = 0;
-		int size_height_2 = 0;
-
-
 		double utm_zone_width = 0.0;
 		bool is_one_utm_zone;
 
@@ -302,7 +319,6 @@ namespace SlavGPS {
 
 		/* Trigger stuff. */
 		Layer * trigger = NULL;
-		QPixmap * snapshot_buffer = NULL;
 		bool half_drawn = false;
 
 		char type_string[100] = { 0 };
@@ -345,6 +361,8 @@ namespace SlavGPS {
 
 	protected:
 		bool eventFilter(QObject * object, QEvent * event);
+
+		ViewportCanvas canvas;
 	};
 
 

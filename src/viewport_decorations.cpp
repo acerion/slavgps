@@ -97,10 +97,10 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
-	int MAXIMUM_WIDTH = viewport->size_width * RELATIVE_WIDTH;
+	int MAXIMUM_WIDTH = viewport->canvas.width * RELATIVE_WIDTH;
 
-	const Coord left =  viewport->screen_pos_to_coord(0,                                     viewport->size_height / 2);
-	const Coord right = viewport->screen_pos_to_coord(viewport->size_width * RELATIVE_WIDTH, viewport->size_height / 2);
+	const Coord left =  viewport->screen_pos_to_coord(0,                                       viewport->canvas.height / 2);
+	const Coord right = viewport->screen_pos_to_coord(viewport->canvas.width * RELATIVE_WIDTH, viewport->canvas.height / 2);
 
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
@@ -140,7 +140,7 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 	const QString scale_value = this->draw_scale_helper_value(viewport, distance_unit, scale_unit);
 
 
-	QPointF scale_start(PAD, viewport->size_height - PAD); /* Bottom-left corner of scale. */
+	QPointF scale_start(PAD, viewport->canvas.height - PAD); /* Bottom-left corner of scale. */
 	QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
 	QRectF bounding_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 300, (int) value_start.y());
 	viewport->draw_text(QFont("Helvetica", 40), pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
@@ -149,11 +149,11 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 
 #if 1
 	/* Debug. */
-	QPainter painter(viewport->scr_buffer);
-	painter.setPen(QColor("red"));
-	painter.drawEllipse(scale_start, 3, 3);
-	painter.setPen(QColor("blue"));
-	painter.drawEllipse(value_start, 3, 3);
+	//QPainter painter(viewport->scr_buffer);
+	viewport->canvas.painter->setPen(QColor("red"));
+	viewport->canvas.painter->drawEllipse(scale_start, 3, 3);
+	viewport->canvas.painter->setPen(QColor("blue"));
+	viewport->canvas.painter->drawEllipse(value_start, 3, 3);
 #endif
 
 	viewport->repaint();
@@ -165,11 +165,11 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 void ViewportDecorations::draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h)
 {
 	/* Black scale. */
-	viewport->draw_line(pen, PAD,             viewport->size_height - PAD, PAD + scale_len, viewport->size_height - PAD);
-	viewport->draw_line(pen, PAD,             viewport->size_height - PAD, PAD,             viewport->size_height - PAD - h);
-	viewport->draw_line(pen, PAD + scale_len, viewport->size_height - PAD, PAD + scale_len, viewport->size_height - PAD - h);
+	viewport->draw_line(pen, PAD,             viewport->canvas.height - PAD, PAD + scale_len, viewport->canvas.height - PAD);
+	viewport->draw_line(pen, PAD,             viewport->canvas.height - PAD, PAD,             viewport->canvas.height - PAD - h);
+	viewport->draw_line(pen, PAD + scale_len, viewport->canvas.height - PAD, PAD + scale_len, viewport->canvas.height - PAD - h);
 
-	int y1 = viewport->size_height - PAD;
+	int y1 = viewport->canvas.height - PAD;
 	for (int i = 1; i < 10; i++) {
 		int x1 = PAD + i * scale_len / 10;
 		int diff = ((i == 5) ? (2 * h / 3) : (1 * h / 3));
@@ -257,12 +257,12 @@ void ViewportDecorations::draw_copyrights(Viewport * viewport)
 
 	/* Copyright text will be in bottom-right corner. */
 	/* Use no more than half of width of viewport. */
-	int x_size = 0.5 * viewport->size_width;
-	int y_size = 0.7 * viewport->size_height;
-	int w_size = viewport->size_width - x_size - PAD;
-	int h_size = viewport->size_height - y_size - PAD;
+	int x_size = 0.5 * viewport->canvas.width;
+	int y_size = 0.7 * viewport->canvas.height;
+	int w_size = viewport->canvas.width - x_size - PAD;
+	int h_size = viewport->canvas.height - y_size - PAD;
 
-	QPointF box_start = QPointF(viewport->size_width - PAD, viewport->size_height - PAD); /* Anchor in bottom-right corner. */
+	QPointF box_start = QPointF(viewport->canvas.width - PAD, viewport->canvas.height - PAD); /* Anchor in bottom-right corner. */
 	QRectF bounding_rect = QRectF(box_start.x(), box_start.y(), -w_size, -h_size);
 	viewport->draw_text(QFont("Helvetica", 12), this->pen_marks_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, result, 0);
 
@@ -282,8 +282,8 @@ void ViewportDecorations::draw_center_mark(Viewport * viewport)
 
 	const int len = 30;
 	const int gap = 4;
-	int center_x = viewport->size_width / 2;
-	int center_y = viewport->size_height / 2;
+	int center_x = viewport->canvas.width / 2;
+	int center_y = viewport->canvas.height / 2;
 
 	const QPen & pen_fg = this->pen_marks_fg;
 	const QPen & pen_bg = this->pen_marks_bg;
@@ -308,7 +308,7 @@ void ViewportDecorations::draw_center_mark(Viewport * viewport)
 
 void ViewportDecorations::draw_logos(Viewport * viewport)
 {
-	int x_pos = viewport->size_width - PAD;
+	int x_pos = viewport->canvas.width - PAD;
 	int y_pos = PAD;
 	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
 		const QPixmap & logo_pixmap = iter->logo_pixmap;

@@ -733,17 +733,16 @@ ToolStatus LayerToolTRWNewTrack::handle_key_press(Layer * layer, QKeyEvent * ev)
 /*
  * Draw specified pixmap.
  */
-static int draw_sync(LayerTRW * trw, QPixmap * drawable, const QPixmap & pixmap)
+static int draw_sync(LayerTRW * trw, Viewport * viewport, const QPixmap & pixmap)
 {
-	/* Sometimes don't want to draw normally because another
-	   update has taken precedent such as panning the display
-	   which means this pixmap is no longer valid. */
 	if (1 /* trw->draw_sync_do*/ ) {
-		QPainter painter(drawable);
-		painter.drawPixmap(0, 0, pixmap);
+		viewport->draw_pixmap(pixmap, 0, 0);
 		qDebug() << "SIGNAL:" PREFIX << "will emit 'layer_changed()' signal for" << trw->get_name();
 		emit trw->layer_changed(trw->get_name());
 #ifdef K_OLD_IMPLEMENTATION
+		/* Sometimes don't want to draw normally because another
+		   update has taken precedent such as panning the display
+		   which means this pixmap is no longer valid. */
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
 				  ds->pixmap,
@@ -958,7 +957,7 @@ static ToolStatus tool_new_track_move(LayerTool * tool, LayerTRW * trw, QMouseEv
 		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, trw);
 
 		//passalong->pen = new QPen(trw->painter->current_track_new_point_pen);
-		draw_sync(trw, tool->viewport->scr_buffer, pixmap);
+		draw_sync(trw, tool->viewport, pixmap);
 		trw->draw_sync_done = false;
 
 		return ToolStatus::AckGrabFocus;
