@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
- *(at your option) any later version.
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,6 +25,7 @@
 
 
 #include <QWidget>
+#include <QSettings>
 
 
 
@@ -48,7 +49,7 @@ namespace SlavGPS {
 	class LayerDefaults {
 
 	public:
-		static void init(void);
+		static bool init(void);
 		static void uninit(void);
 
 		static void set(LayerType layer_type, const ParameterSpecification & layer_param_spec, const SGVariant & default_value);
@@ -58,8 +59,9 @@ namespace SlavGPS {
 
 		static bool save(void);
 
+		static bool is_initialized(void) { return LayerDefaults::loaded; };
+
 	private:
-		static bool load_from_file(void);
 		static bool save_to_file(void);
 
 		static void fill_missing_from_hardcoded_defaults(LayerType layer_type);
@@ -69,6 +71,9 @@ namespace SlavGPS {
 		static SGVariant get_parameter_value(LayerType layer_type, const char * name, SGVariantType type_id);
 
 		static void save_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
+
+		static QSettings * keyfile;
+		static bool loaded;
 	};
 
 

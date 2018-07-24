@@ -54,8 +54,8 @@ using namespace SlavGPS;
 
 
 /* A list of the parameter types in use. */
-static QSettings * g_keyfile = NULL;
-static bool g_loaded;
+QSettings * LayerDefaults::keyfile = NULL;
+bool LayerDefaults::loaded = false;
 
 
 
@@ -65,11 +65,21 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const char * 
 	SGVariant value;
 	QString group = Layer::get_type_id_string(layer_type);
 
+
+	if (!LayerDefaults::keyfile) { /* Don't use LayerDefaults::loaded, it may be set to false during initialization stage. */
+		/* We shouldn't be even able to call this function. */
+		qDebug() << "EE" PREFIX << "Trying to get parameter value when layer defaults aren't initialized";
+		return value;
+	}
+
+
 	QString key(group + QString("/") + QString(name));
-	QVariant variant = g_keyfile->value(key);
+	QVariant variant = LayerDefaults::keyfile->value(key);
 
 	if (!variant.isValid()) {
-		qDebug() << "EE" PREFIX << "failed to read key" << key;
+		/* Not necessarily an error. Maybe this value simply
+		   doesn't exist in config file. */
+		qDebug() << "WW" PREFIX << "failed to read key" << key;
 		return value; /* Here the value is invalid. */
 	}
 
@@ -147,7 +157,7 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 
 	const QString group = Layer::get_type_id_string(layer_type);
 	QString key(group + QString("/") + QString(name));
-	g_keyfile->setValue(key, variant);
+	LayerDefaults::keyfile->setValue(key, variant);
 }
 
 
@@ -203,47 +213,13 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 
 
 /**
-   \brief Load "layer defaults" configuration from a settings file
-*/
-bool LayerDefaults::load_from_file(void)
-{
-	/* Make sure that layer defaults are initialized after layer
-	   interfaces have been configured.  In each program
-	   configuration we will always have Coordinate Layer, and
-	   that layer has more than zero configurable parameters. */
-	assert(Layer::get_interface(LayerType::Coordinates)->parameter_specifications.size());
-
-	if (!g_keyfile) {
-		qDebug() << "EE" PREFIX << "key file is not initialized";
-		exit(EXIT_FAILURE);
-	}
-
-	enum QSettings::Status status = g_keyfile->status();
-	if (status != QSettings::NoError) {
-		qDebug() << "EE" PREFIX << "key file status is" << status;
-		return false;
-	}
-
-	/* Set any missing values from the program's internal/hardcoded defaults. */
-	for (LayerType layer_type = LayerType::Aggregate; layer_type < LayerType::Max; ++layer_type) {
-		qDebug() << "II" PREFIX << "Loading default values from hardcoded values for layer type" << layer_type;
-		LayerDefaults::fill_missing_from_hardcoded_defaults(layer_type);
-	}
-
-	return true;
-}
-
-
-
-
-/**
    \brief Save "layer defaults" configuration to a settings file
 
    \return true
 */
 bool LayerDefaults::save_to_file(void)
 {
-	g_keyfile->sync();
+	LayerDefaults::keyfile->sync();
 	return true;
 }
 
@@ -259,13 +235,6 @@ bool LayerDefaults::save_to_file(void)
 */
 bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 {
-	if (!g_loaded) {
-		/* Since we can't load the file in a_defaults_init (no params registered yet),
-		   do it once before we display the params. */
-		LayerDefaults::load_from_file();
-		g_loaded = true;
-	}
-
 	LayerInterface * interface = Layer::get_interface(layer_type);
 
 	PropertiesDialog dialog(interface->ui_labels.layer_defaults, parent);
@@ -313,15 +282,44 @@ void LayerDefaults::set(LayerType layer_type, const ParameterSpecification & lay
 
    Call this function at startup.
 */
-void LayerDefaults::init(void)
+bool LayerDefaults::init(void)
 {
-	/* kamilFIXME: improve this section. Make sure that the file exists. */
+	/* Make sure that layer defaults are initialized after layer
+	   interfaces have been configured.  In each program
+	   configuration we will always have Coordinate Layer, and
+	   that layer has more than zero configurable parameters. */
+	assert(Layer::get_interface(LayerType::Coordinates)->parameter_specifications.size());
+
+
 	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_LAYER_DEFAULTS_INI_FILE);
-	g_keyfile = new QSettings(full_path, QSettings::IniFormat);
+	LayerDefaults::keyfile = new QSettings(full_path, QSettings::IniFormat);
+	/* Even if we fail to open the location indicated by file
+	   path, the object still may be created and serve as a
+	   storage in memory. */
+	if (!keyfile) {
+		qDebug() << "EE" PREFIX << "Failed to create storage for layer defaults using file" << full_path;
+		return false;
+	}
 
-	qDebug() << "II" PREFIX << "key file initialized with path" << full_path;
 
-	g_loaded = false;
+	const enum QSettings::Status status = LayerDefaults::keyfile->status();
+	if (status != QSettings::NoError) {
+		qDebug() << "EE" PREFIX << "Invalid status of storage for layer defaults:" << status;
+		return false;
+	}
+
+
+	/* Set any missing values from the program's internal/hardcoded defaults. */
+	for (LayerType layer_type = LayerType::Aggregate; layer_type < LayerType::Max; ++layer_type) {
+		qDebug() << "II" PREFIX << "Loading default values from hardcoded values for layer type" << layer_type;
+		LayerDefaults::fill_missing_from_hardcoded_defaults(layer_type);
+	}
+
+
+	LayerDefaults::loaded = true;
+
+
+	return true;
 }
 
 
@@ -334,7 +332,7 @@ void LayerDefaults::init(void)
 */
 void LayerDefaults::uninit(void)
 {
-	delete g_keyfile;
+	delete LayerDefaults::keyfile;
 }
 
 
@@ -349,20 +347,6 @@ void LayerDefaults::uninit(void)
 */
 SGVariant LayerDefaults::get(LayerType layer_type, const char * param_name, SGVariantType param_type)
 {
-	if (!g_loaded) {
-		/*
-		  Since we can't load the file in
-		  LayerDefaults::init() (no params registered yet), do
-		  it once before we get the first key.
-
-		  We ignore errors that may have occurred during
-		  loading, we can't do anything about it. We will have
-		  to rely on layer's hardcoded defaults.
-		*/
-		LayerDefaults::load_from_file();
-		g_loaded = true;
-	}
-
 	return LayerDefaults::get_parameter_value(layer_type, param_name, param_type);
 }
 

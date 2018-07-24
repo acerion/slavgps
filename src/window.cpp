@@ -615,10 +615,15 @@ void Window::create_actions(void)
 		{
 			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), QString("&Layer Defaults"));
 
+
+			qDebug() << "------------------------- menus";
+
 			for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
 				qa = defaults_submenu->addAction("&" + Layer::get_type_ui_label(type) + "...");
 				qa->setData(QVariant((int) type));
 				qa->setIcon(Layer::get_interface(type)->action_icon);
+				/* Layer Defaults should be already initialized. If they aren't, it's because of runtime errors. */
+				qa->setEnabled(LayerDefaults::is_initialized());
 				connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_layer_defaults_cb()));
 			}
 		}
