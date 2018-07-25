@@ -88,7 +88,7 @@ namespace SlavGPS {
 	private:
 		void context_menu_show_for_item(TreeItem * item);
 		void context_menu_show_for_new_layer();
-		void context_menu_add_standard_items(QMenu * menu, uint16_t layer_menu_items);
+		void context_menu_add_standard_items(QMenu * menu, TreeItem::MenuOperation menu_operations);
 		void context_menu_add_new_layer_submenu(QMenu * menu);
 
 		Layer * go_up_to_layer(const TreeItem * tree_item, LayerType layer_type);

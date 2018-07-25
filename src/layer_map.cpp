@@ -279,8 +279,6 @@ LayerMapInterface::LayerMapInterface()
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_M;
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->menu_items_selection = TreeItemOperation::All;
-
 	this->ui_labels.new_layer = QObject::tr("New Map Layer");
 	this->ui_labels.layer_type = QObject::tr("Map");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Map Layer");

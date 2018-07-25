@@ -62,29 +62,6 @@ namespace SlavGPS {
 
 
 
-	/* Which standard operations shall be present in context menu for a tree item? */
-	enum class TreeItemOperation {
-		None       = 0x0000,
-		Properties = 0x0001,
-		Cut        = 0x0002,
-		Copy       = 0x0004,
-		Paste      = 0x0008,
-		Delete     = 0x0010,
-		New        = 0x0020,
-		All        = 0xffff,
-	};
-#ifdef K_TODO
-	TreeItemOperation operator&(const TreeItemOperation& arg1, const TreeItemOperation& arg2);
-	TreeItemOperation operator|(const TreeItemOperation& arg1, const TreeItemOperation& arg2);
-        TreeItemOperation operator~(const TreeItemOperation& arg);
-#endif
-
-
-
-
-
-
-
 	typedef QPersistentModelIndex TreeIndex;
 
 
@@ -95,6 +72,20 @@ namespace SlavGPS {
 	public:
 		TreeItem();
 		~TreeItem() {};
+
+
+		/* Which standard operations shall be present in context menu for a tree item? */
+		enum MenuOperation {
+			None       = 0x0000,
+			Properties = 0x0001,
+			Cut        = 0x0002,
+			Copy       = 0x0004,
+			Paste      = 0x0008,
+			Delete     = 0x0010,
+			New        = 0x0020,
+			All        = 0xffff,
+		};
+
 
 		TreeIndex const & get_index(void);
 		void set_index(TreeIndex & i);
@@ -146,6 +137,9 @@ namespace SlavGPS {
 		   Return one of these. */
 		Layer * to_layer(void) const;
 
+		TreeItem::MenuOperation get_menu_operation_ids(void) const;
+		void set_menu_operation_ids(TreeItem::MenuOperation new_value);
+
 		/* See if two items are exactly the same object (i.e. whether pointers point to the same object).
 		   Return true if this condition is true.
 		   Return false otherwise.
@@ -175,8 +169,17 @@ namespace SlavGPS {
 
 	protected:
 		sg_uid_t uid = SG_UID_INITIAL;
+
+		/* Menu items (actions) to be created and put into a
+		   context menu for given tree item type. */
+		TreeItem::MenuOperation menu_operation_ids = TreeItem::MenuOperation::All;
 	};
 
+	/* These silly names are a workaroud for clash of operator definitions.
+	   https://stackoverflow.com/questions/10755058/qflags-enum-type-conversion-fails-all-of-a-sudden */
+	TreeItem::MenuOperation operator_bit_and(const TreeItem::MenuOperation arg1, const TreeItem::MenuOperation arg2);
+	TreeItem::MenuOperation operator_bit_or(const TreeItem::MenuOperation arg1, const TreeItem::MenuOperation arg2);
+	TreeItem::MenuOperation operator_bit_not(const TreeItem::MenuOperation arg);
 
 
 

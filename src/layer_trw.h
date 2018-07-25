@@ -128,9 +128,6 @@ namespace SlavGPS {
 		void handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 		void handle_select_tool_double_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 
-		void set_menu_selection(TreeItemOperation selection);
-		TreeItemOperation get_menu_selection();
-
 		void marshall(Pickle & pickle);
 
 		void cut_sublayer(TreeItem * item);
@@ -377,9 +374,6 @@ namespace SlavGPS {
 		/* Whether the program needs to generate thumbnails of
 		   images that are part of this layer. */
 		bool has_missing_thumbnails = true;
-
-		/* Menu. */
-		TreeItemOperation menu_selection;
 
 
 		bool clear_highlight();

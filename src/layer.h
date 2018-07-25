@@ -154,10 +154,6 @@ namespace SlavGPS {
 		virtual bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool)       { return false; };
 		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)                    { return false; };
 
-		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
-		virtual void set_menu_selection(TreeItemOperation selection) { return; };
-		virtual TreeItemOperation get_menu_selection(void) const { return TreeItemOperation::None; };
-
 		virtual void cut_sublayer(TreeItem * item) { return; };
 		virtual void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len) { return; };
 		virtual bool paste_sublayer(TreeItem * item, Pickle & pickle) { return false; };
@@ -237,7 +233,6 @@ namespace SlavGPS {
 
 		/* GUI. */
 		QIcon get_icon(void);
-		TreeItemOperation get_menu_items_selection(void);
 
 		/* QString name; */ /* Inherited from TreeItem. */
 

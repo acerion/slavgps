@@ -403,20 +403,6 @@ bool Layer::handle_selection_in_tree(void)
 
 
 
-TreeItemOperation Layer::get_menu_items_selection(void)
-{
-	TreeItemOperation rv = this->get_menu_selection();
-	if (rv == TreeItemOperation::None) {
-		/* Perhaps this line could go to base class. */
-		return this->get_interface().menu_items_selection;
-	} else {
-		return rv;
-	}
-}
-
-
-
-
 QIcon Layer::get_icon(void)
 {
 	return this->get_interface().action_icon;

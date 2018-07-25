@@ -90,6 +90,7 @@ LayerTRWTracks::LayerTRWTracks()
 	this->type_id = "sg.trw.routes";
 	this->accepted_child_type_ids << "sg.trw.route";
 	this->editable = false;
+	this->menu_operation_ids = TreeItem::MenuOperation::None;
 }
 
 
@@ -791,6 +792,7 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 	QAction * qa = NULL;
 
 
+	/* TODO: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
 	/* TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::SUBLAYER);

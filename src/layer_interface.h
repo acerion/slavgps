@@ -48,7 +48,6 @@ namespace SlavGPS {
 	class Layer;
 	class Viewport;
 	class LayerTool;
-	enum class TreeItemOperation;
 
 
 
@@ -80,10 +79,6 @@ namespace SlavGPS {
 		/* Does given layer type have configurable properties that can be viewed and edited in dialog window?
 		   This returns correct value only after Layer::set_initial_parameter_values() has been called. */
 		bool has_properties_dialog(void) { return this->parameter_specifications.size() != 0; };
-
-		/* Menu items (actions) to be created and put into a
-		   context menu for given layer type. */
-		TreeItemOperation menu_items_selection = TreeItemOperation::None;
 
 
 		/* Specification of parameters in each layer type is

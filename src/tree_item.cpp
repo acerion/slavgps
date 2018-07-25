@@ -167,22 +167,42 @@ bool TreeItem::compare_name_ascending(const TreeItem * a, const TreeItem * b)
 
 
 
-TreeItemOperation operator&(TreeItemOperation& arg1, TreeItemOperation& arg2)
+TreeItem::MenuOperation SlavGPS::operator_bit_or(TreeItem::MenuOperation arg1, TreeItem::MenuOperation arg2)
 {
-	TreeItemOperation result = static_cast<TreeItemOperation>(static_cast<uint16_t>(arg1) | static_cast<uint16_t>(arg2));
+	TreeItem::MenuOperation result = static_cast<TreeItem::MenuOperation>(static_cast<uint16_t>(arg1) | static_cast<uint16_t>(arg2));
 	return result;
 }
 
 
-TreeItemOperation operator|(TreeItemOperation& arg1, TreeItemOperation& arg2)
+
+
+TreeItem::MenuOperation SlavGPS::operator_bit_and(TreeItem::MenuOperation arg1, TreeItem::MenuOperation arg2)
 {
-	TreeItemOperation result = static_cast<TreeItemOperation>(static_cast<uint16_t>(arg1) & static_cast<uint16_t>(arg2));
+	TreeItem::MenuOperation result = static_cast<TreeItem::MenuOperation>(static_cast<uint16_t>(arg1) & static_cast<uint16_t>(arg2));
 	return result;
 }
 
 
-TreeItemOperation operator~(const TreeItemOperation& arg)
+
+
+TreeItem::MenuOperation SlavGPS::operator_bit_not(const TreeItem::MenuOperation arg)
 {
-	TreeItemOperation result = static_cast<TreeItemOperation>(~(static_cast<uint16_t>(arg)));
+	TreeItem::MenuOperation result = static_cast<TreeItem::MenuOperation>(~(static_cast<uint16_t>(arg)));
 	return result;
+}
+
+
+
+
+TreeItem::MenuOperation TreeItem::get_menu_operation_ids(void) const
+{
+	return this->menu_operation_ids;
+}
+
+
+
+
+void TreeItem::set_menu_operation_ids(TreeItem::MenuOperation new_value)
+{
+	this->menu_operation_ids = new_value;
 }

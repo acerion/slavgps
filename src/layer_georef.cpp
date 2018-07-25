@@ -112,8 +112,6 @@ LayerGeorefInterface::LayerGeorefInterface()
 	// this->action_accelerator = ...; /* Empty accelerator. */
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->menu_items_selection = TreeItemOperation::All;
-
 	this->ui_labels.new_layer = QObject::tr("New GeoRef Map Layer");
 	this->ui_labels.layer_type = QObject::tr("GeoRef Map");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of GeoRef Map Layer");
@@ -1121,7 +1119,7 @@ ToolStatus LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent 
 ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::Georef) {
-		/* FIXME: this shouldn't happen, right? */
+		qDebug() << "EE" PREFIX << "Unexpected layer type" << this->type;
 		return ToolStatus::Ignored;
 	}
 
@@ -1164,7 +1162,7 @@ ToolStatus LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * 
 ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::Georef) {
-		/* FIXME: this shouldn't happen, right? */
+		qDebug() << "EE" PREFIX << "Unexpected layer type" << this->type;
 		return ToolStatus::Ignored;
 	}
 
@@ -1199,7 +1197,7 @@ ToolStatus LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * 
 ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::Georef) {
-		/* FIXME: this shouldn't happen, right? */
+		qDebug() << "EE" PREFIX << "Unexpected layer type" << this->type;
 		return ToolStatus::Ignored;
 	}
 	this->click_x = ev->x();

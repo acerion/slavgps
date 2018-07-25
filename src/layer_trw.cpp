@@ -345,8 +345,6 @@ LayerTRWInterface::LayerTRWInterface()
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Y;
 	// this->action_icon = ...; /* Set elsewhere. */
 
-	this->menu_items_selection = TreeItemOperation::All;
-
 	this->ui_labels.new_layer = QObject::tr("New Track/Route/Waypoint Layer");
 	this->ui_labels.layer_type = QObject::tr("TrackWaypoint");
 	this->ui_labels.layer_defaults = QObject::tr("Default Settings of Track/Route/Waypoint Layer");
@@ -3958,22 +3956,6 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 
 
 
-void LayerTRW::set_menu_selection(TreeItemOperation selection)
-{
-	this->menu_selection = selection;
-}
-
-
-
-
-TreeItemOperation LayerTRW::get_menu_selection()
-{
-	return this->menu_selection;
-}
-
-
-
-
 /* ----------- Downloading maps along tracks --------------- */
 
 void vik_track_download_map(Track * trk, LayerMap * layer_map, double zoom_level)
@@ -4125,8 +4107,6 @@ LayerTRW::LayerTRW() : Layer()
 	   base. */
 	this->painter->make_track_pens();
 	this->painter->make_wp_pens();
-
-	this->menu_selection = this->interface->menu_items_selection;
 }
 
 
