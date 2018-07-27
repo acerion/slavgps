@@ -105,6 +105,34 @@ LayerToolContainer * GenericTools::create_tools(Window * window, Viewport * view
 
 
 
+class MyLine {
+public:
+	MyLine(int new_x1, int new_y1, int new_x2, int new_y2) : x1(new_x1), y1(new_y1), x2(new_x2), y2(new_y2)
+	{
+		this->len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+		this->dx = (x2 - x1) / len * 10;
+		this->dy = (y2 - y1) / len * 10;
+		this->c = cos(DEG2RAD(15.0));
+		this->s = sin(DEG2RAD(15.0));
+	}
+
+	int x1;
+	int y1;
+	int x2;
+	int y2;
+
+	double len = 0;
+	double dx = 0;
+	double dy = 0;
+	double c = 0;
+	double s = 0;
+	double angle = 0;
+	double baseangle = 0;
+};
+
+
+
+
 /**
    @param x1, y1 - coordinates of beginning of ruler (start coordinates, where cursor was pressed down)
    @param x2, y2 - coordinates of end of ruler (end coordinates, where cursor currently is)
@@ -113,13 +141,50 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 {
 	qDebug() << "DD: Generic Layer Tool: Ruler: draw";
 
-	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-	double dx = (x2 - x1) / len * 10;
-	double dy = (y2 - y1) / len * 10;
-	double c = cos(DEG2RAD(15.0));
-	double s = sin(DEG2RAD(15.0));
-	double angle;
-	double baseangle = 0;
+	MyLine line(x1, y1, x2, y2);
+
+	char tmp[64];
+
+	this->viewport->compute_bearing(line.x1, line.y1, line.x2, line.y2, &line.angle, &line.baseangle);
+	sprintf(tmp, "%3.1f°", RAD2DEG(line.angle));
+	const QString bearing_label(tmp);
+
+
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		if (distance >= 1000 && distance < 100000) {
+			sprintf(tmp, "%3.2f km", distance/1000.0);
+		} else if (distance < 1000) {
+			sprintf(tmp, "%d m", (int)distance);
+		} else {
+			sprintf(tmp, "%d km", (int)distance/1000);
+		}
+		break;
+	case DistanceUnit::Miles:
+		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
+			sprintf(tmp, "%3.2f miles", VIK_METERS_TO_MILES(distance));
+		} else if (distance < VIK_MILES_TO_METERS(1)) {
+			sprintf(tmp, "%d yards", (int)(distance*1.0936133));
+		} else {
+			sprintf(tmp, "%d miles", (int)VIK_METERS_TO_MILES(distance));
+		}
+		break;
+	case DistanceUnit::NauticalMiles:
+		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
+			sprintf(tmp, "%3.2f NM", VIK_METERS_TO_NAUTICAL_MILES(distance));
+		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
+			sprintf(tmp, "%d yards", (int)(distance*1.0936133));
+		} else {
+			sprintf(tmp, "%d NM", (int)VIK_METERS_TO_NAUTICAL_MILES(distance));
+		}
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
+	}
+	const QString distance_label(tmp);
+
 
 	/* Draw line with arrow ends. */
 	{
@@ -128,183 +193,118 @@ void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, 
 		painter.drawLine(tmp_x1, tmp_y1, tmp_x2, tmp_y2);
 
 
-		Viewport::clip_line(&x1, &y1, &x2, &y2);
-		painter.drawLine(x1,      y1,      x2,                     y2);
-		painter.drawLine(x1 - dy, y1 + dx, x1 + dy,                y1 - dx);
-		painter.drawLine(x2 - dy, y2 + dx, x2 + dy,                y2 - dx);
-		painter.drawLine(x2,      y2,      x2 - (dx * c + dy * s), y2 - (dy * c - dx * s));
-		painter.drawLine(x2,      y2,      x2 - (dx * c - dy * s), y2 - (dy * c + dx * s));
-		painter.drawLine(x1,      y1,      x1 + (dx * c + dy * s), y1 + (dy * c - dx * s));
-		painter.drawLine(x1,      y1,      x1 + (dx * c - dy * s), y1 + (dy * c + dx * s));
+		Viewport::clip_line(&line.x1, &line.y1, &line.x2, &line.y2);
 
+		painter.drawLine(line.x1,           line.y1,           line.x2,                                         line.y2);
+		painter.drawLine(line.x1 - line.dy, line.y1 + line.dx, line.x1 + line.dy,                               line.y1 - line.dx);
+		painter.drawLine(line.x2 - line.dy, line.y2 + line.dx, line.x2 + line.dy,                               line.y2 - line.dx);
+		painter.drawLine(line.x2,           line.y2,           line.x2 - (line.dx * line.c + line.dy * line.s), line.y2 - (line.dy * line.c - line.dx * line.s));
+		painter.drawLine(line.x2,           line.y2,           line.x2 - (line.dx * line.c - line.dy * line.s), line.y2 - (line.dy * line.c + line.dx * line.s));
+		painter.drawLine(line.x1,           line.y1,           line.x1 + (line.dx * line.c + line.dy * line.s), line.y1 + (line.dy * line.c - line.dx * line.s));
+		painter.drawLine(line.x1,           line.y1,           line.x1 + (line.dx * line.c - line.dy * line.s), line.y1 + (line.dy * line.c + line.dx * line.s));
 	}
 
 
 	/* Draw compass. */
 
-#define CR 80
 
-	/* Distance between circles. */
-	const int dist = 4;
+	const int radius_delta = 4;   /* Distance between circles. */
+	const int radius = 80;       /* Compass radius. */
 
-#if 1
-	/* Three full circles. */
-	painter.drawArc(x1 - CR + dist, y1 - CR + dist, 2 * (CR - dist), 2 * (CR - dist), 0, 16 * 360); /* Innermost. */
-	painter.drawArc(x1 - CR,        y1 - CR,        2 * CR,          2 * CR,          0, 16 * 360); /* Middle. */
-	painter.drawArc(x1 - CR - dist, y1 - CR - dist, 2 * (CR + dist), 2 * (CR + dist), 0, 16 * 360); /* Outermost. */
-#endif
+	if (1) {
+		/* Three full circles. */
+		painter.drawArc(x1 - radius + radius_delta, y1 - radius + radius_delta, 2 * (radius - radius_delta), 2 * (radius - radius_delta), 0, 16 * 360); /* Innermost. */
+		painter.drawArc(x1 - radius,                y1 - radius,                2 * radius,                  2 * radius,                  0, 16 * 360); /* Middle. */
+		painter.drawArc(x1 - radius - radius_delta, y1 - radius - radius_delta, 2 * (radius + radius_delta), 2 * (radius + radius_delta), 0, 16 * 360); /* Outermost. */
+	}
 
-
-
-
-#if 1
 	/* Fill between middle and innermost circle. */
-	{
-		this->viewport->compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
-		float start_angle = (90 - RAD2DEG(baseangle)) * 16;
-		float span_angle = -RAD2DEG(angle) * 16;
-		fprintf(stderr, "DD: Generic Tool Ruler: draw in rectangle %d %d %d %d / %f / %f\n", x1-CR+dist/2, y1-CR+dist/2, 2*CR-dist, 2*CR-dist, start_angle, span_angle);
+	if (1) {
+		const float start_angle = (90 - RAD2DEG(line.baseangle)) * 16;
+		const float span_angle = -RAD2DEG(line.angle) * 16;
 		QPen new_pen(QColor("red"));
-		new_pen.setWidth(dist);
+		new_pen.setWidth(radius_delta);
 		painter.setPen(new_pen);
-		painter.drawArc(x1 - CR + dist / 2, y1 - CR + dist / 2, 2 * CR - dist, 2 * CR - dist, start_angle, span_angle);
+		painter.drawArc(line.x1 - radius + radius_delta / 2,
+				line.y1 - radius + radius_delta / 2,
+				2 * radius - radius_delta,
+				2 * radius - radius_delta,
+				start_angle, span_angle);
 
 		painter.setPen(pen);
 	}
-#endif
 
-#if 1
 	/* Ticks around circles, every N degrees. */
-	{
-		int ticksize = 2 * dist;
+	if (1) {
+		int ticksize = 2 * radius_delta;
 		for (int i = 0; i < 180; i += 5) {
-			c = cos(DEG2RAD(i) * 2 + baseangle);
-			s = sin(DEG2RAD(i) * 2 + baseangle);
-			painter.drawLine(x1 + (CR-dist)*c, y1 + (CR-dist)*s, x1 + (CR+ticksize)*c, y1 + (CR+ticksize)*s);
+			line.c = cos(DEG2RAD(i) * 2 + line.baseangle);
+			line.s = sin(DEG2RAD(i) * 2 + line.baseangle);
+			painter.drawLine(line.x1 + (radius-radius_delta)*line.c, line.y1 + (radius-radius_delta)*line.s, line.x1 + (radius+ticksize)*line.c, line.y1 + (radius+ticksize)*line.s);
 		}
 	}
-#endif
 
-
-#if 1
-	{
+	if (1) {
 		/* Two axis inside a compass.
 		   Varying angle will rotate the axis. I don't know why you would need this :) */
 		//float angle = 0;
-		int c2 = (CR + dist * 2) * sin(baseangle);
-		int s2 = (CR + dist * 2) * cos(baseangle);
-		painter.drawLine(x1 - c2, y1 - s2, x1 + c2, y1 + s2);
-		painter.drawLine(x1 + s2, y1 - c2, x1 - s2, y1 + c2);
+		int c2 = (radius + radius_delta * 2) * sin(line.baseangle);
+		int s2 = (radius + radius_delta * 2) * cos(line.baseangle);
+		painter.drawLine(line.x1 - c2, line.y1 - s2, line.x1 + c2, line.y1 + s2);
+		painter.drawLine(line.x1 + s2, line.y1 - c2, line.x1 - s2, line.y1 + c2);
 	}
-#endif
 
 
-
-
-	/* Draw labels. */
-	{
-		painter.drawText(x1-5, y1-CR-3*dist-8, "N");
+	/* Draw compass labels. */
+	if (1) {
+		painter.drawText(line.x1 - 5, line.y1 - radius - 3 * radius_delta - 8, "N");
 	}
-#if 1
-	// QPen label_pen = SGUtils::new_pen(QColor("#cccccc"), 1);
-	// fill_rectangle(d, label_pen, (x)-2, (y)-1, (w)+4, (h)+1);
-	// draw_rectangle(d, gc, (x)-2, (y)-1, (w)+4, (h)+1);
-	#define LABEL(x, y, w, h, text) {				\
-		painter.drawText((x), (y), text); }
-#endif
 
+
+	const int margin = 3;
 	{
-		int wd, hd, xd, yd;
-		int wb, hb, xb, yb;
-		char str[128];
-
-		/* Draw label with distance. */
-		const DistanceUnit distance_unit = Preferences::get_unit_distance();
-		switch (distance_unit) {
-		case DistanceUnit::Kilometres:
-			if (distance >= 1000 && distance < 100000) {
-				sprintf(str, "%3.2f km", distance/1000.0);
-			} else if (distance < 1000) {
-				sprintf(str, "%d m", (int)distance);
-			} else {
-				sprintf(str, "%d km", (int)distance/1000);
-			}
-			break;
-		case DistanceUnit::Miles:
-			if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
-				sprintf(str, "%3.2f miles", VIK_METERS_TO_MILES(distance));
-			} else if (distance < VIK_MILES_TO_METERS(1)) {
-				sprintf(str, "%d yards", (int)(distance*1.0936133));
-			} else {
-				sprintf(str, "%d miles", (int)VIK_METERS_TO_MILES(distance));
-			}
-			break;
-		case DistanceUnit::NauticalMiles:
-			if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
-				sprintf(str, "%3.2f NM", VIK_METERS_TO_NAUTICAL_MILES(distance));
-			} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
-				sprintf(str, "%d yards", (int)(distance*1.0936133));
-			} else {
-				sprintf(str, "%d NM", (int)VIK_METERS_TO_NAUTICAL_MILES(distance));
-			}
-			break;
-		default:
-			qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-			break;
-		}
-
 		/* Draw distance label. */
 		{
-			QRectF r1 = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignHCenter, QString(str));
-			wd = r1.width();
-			hd = r1.height();
-			if (dy>0) {
-				xd = (x1 + x2) / 2 + dy;
-				yd = (y1 + y2) / 2 - hd / 2 - dx;
+			QRectF label1_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignHCenter, distance_label);
+
+			int label1_x;
+			int label1_y;
+
+			if (line.dy > 0) {
+				label1_x = (line.x1 + line.x2) / 2 + line.dy;
+				label1_y = (line.y1 + line.y2) / 2 - label1_rect.height() / 2 - line.dx;
 			} else {
-				xd = (x1 + x2) / 2 - dy;
-				yd = (y1 + y2) / 2 - hd / 2 + dx;
+				label1_x = (line.x1 + line.x2) / 2 - line.dy;
+				label1_y = (line.y1 + line.y2) / 2 - label1_rect.height() / 2 + line.dx;
 			}
 
-			if (xd < -5 || yd < -5 || xd > this->viewport->get_width() + 5 || yd > this->viewport->get_height() + 5) {
-				xd = x2 + 10;
-				yd = y2 - 5;
+			if (label1_x < -5 || label1_y < -5 || label1_x > this->viewport->get_width() + 5 || label1_y > this->viewport->get_height() + 5) {
+				label1_x = line.x2 + 10;
+				label1_y = line.y2 - 5;
 			}
 
-			LABEL(xd, yd, wd, hd, QString(str));
+			label1_rect.moveTo(label1_x, label1_y);
+			label1_rect.adjust(-margin, -margin, margin, margin);
+
+			painter.fillRect(label1_rect, QColor("gray"));
+			painter.drawText(label1_rect, Qt::AlignCenter, distance_label);
 		}
 
-#if 1
+
 		/* Draw bearing label. */
 		{
+			QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
 
-			sprintf(str, "%3.1f°", RAD2DEG(angle));
-			QRectF box = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignHCenter, QString(str));
-			wb = box.width();
-			hb = box.height();
+			const int label2_x = line.x1 - radius * cos(line.angle - M_PI_2) / 2;
+			const int label2_y = line.y1 - radius * sin(line.angle - M_PI_2) / 2;
 
-			xb = x1 + CR * cos(angle - M_PI_2);
-			yb = y1 + CR * sin(angle - M_PI_2);
+			label2_rect.moveTo(label2_x - label2_rect.width() / 2, label2_y - label2_rect.height() / 2);
+			label2_rect.adjust(-margin, -margin, margin, margin);
 
-			if (xb < -5 || yb < -5 || xb > this->viewport->get_width() + 5 || yb > this->viewport->get_height() + 5) {
-				xb = x2 + 10;
-				yb = y2 + 10;
-			}
-
-			{
-				QRect r1(xd - 2, yd - 1, wd + 4, hd + 1);
-				QRect r2(xb - 2, yb - 1, wb + 4, hb + 1);
-				if (r1.intersects(r2)) {
-					xb = xd + wd + 5;
-				}
-			}
-			LABEL(xb, yb, wb, hb, QString(str));
+			painter.fillRect(label2_rect, QColor("pink"));
+			painter.drawText(label2_rect, Qt::AlignCenter, bearing_label);
 		}
-#endif
 	}
-
-#undef LABEL
-
 }
 
 
@@ -381,6 +381,8 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 			/* Restore clean viewport (clean == without ruler drawn on top of it). */
 			this->viewport->set_pixmap(this->orig_viewport_pixmap);
+
+			/* This will call Viewport::paintEvent(), triggering final render to screen. */
 			this->viewport->update();
 		} else {
 			msg = QObject::tr("%1 %2").arg(lat).arg(lon);
@@ -419,13 +421,12 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 	const ScreenPos start_pos = this->viewport->coord_to_screen_pos(this->start_coord);
 
 	QPixmap marked_pixmap = this->orig_viewport_pixmap;
-	//marked_pixmap.fill(QColor("transparent"));
-
 	QPainter painter(&marked_pixmap);
-	//painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 
 	this->draw(painter, start_pos.x, start_pos.y, event->x(), event->y(), Coord::distance(cursor_coord, this->start_coord));
 	this->viewport->set_pixmap(marked_pixmap);
+
+	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();
 
 	QString lat;
@@ -492,6 +493,8 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 
 		/* Restore clean viewport (clean == without ruler drawn on top of it). */
 		this->viewport->set_pixmap(this->orig_viewport_pixmap);
+
+		/* This will call Viewport::paintEvent(), triggering final render to screen. */
 		this->viewport->update();
 
 		this->deactivate_tool(layer);
@@ -659,6 +662,8 @@ ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event
 	painter.setPen(new_pen);
 	painter.drawRect(xx, yy, width, height);
 	this->viewport->set_pixmap(marked_pixmap);
+
+	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();
 
 	return ToolStatus::Ack;
