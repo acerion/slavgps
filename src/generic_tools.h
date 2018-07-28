@@ -82,10 +82,11 @@ namespace SlavGPS {
 		void deactivate_tool(Layer * layer);
 
 	private:
+		void reset_tool();
+
 		QPixmap orig_viewport_pixmap; /* Pixmap with saved viewport's state without ruler drawn on top of it. */
 
 		Coord start_coord;
-		bool reset_state = false; /* Discard/invalidate ->start_coord on release of left mouse button? */
 
 		Ruler * ruler = NULL;
 	};

@@ -57,6 +57,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Generic Tools"
 #define PREFIX ": Generic Tools:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -169,52 +170,41 @@ static QString get_msg(const Coord & cursor_coord, const Coord & start_coord)
 
 ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Generic Tool Ruler: ->handle_mouse_click() called";
+	qDebug() << SG_PREFIX_D << "called";
+
+
+	if (event->button() != Qt::LeftButton) {
+		return ToolStatus::Ignored;
+	}
+
+	QString msg;
 
 	const ScreenPos event_pos(event->x(), event->y());
+	const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
-	if (event->button() == Qt::LeftButton) {
+	if (this->ruler) {
+		qDebug() << SG_PREFIX_I << "second click, resetting ruler";
 
-		QString msg;
+		msg = get_msg(cursor_coord, this->start_coord);
 
-		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
-
-		if (this->ruler) {
-			qDebug() << "II" PREFIX << "second click, resetting ruler";
-
-			msg = get_msg(cursor_coord, this->start_coord);
-
-			delete this->ruler;
-			this->ruler = NULL;
-			this->start_coord = Coord();
-
-			/* Restore clean viewport (clean == without ruler drawn on top of it). */
-			this->viewport->set_pixmap(this->orig_viewport_pixmap);
-
-			/* This will call Viewport::paintEvent(), triggering final render to screen. */
-			this->viewport->update();
-
-		} else {
-			qDebug() << "II" PREFIX << "first click, starting ruler";
-
-			QString lat;
-			QString lon;
-			cursor_coord.get_latlon().to_strings_raw(lat, lon);
-			msg = QObject::tr("%1 %2").arg(lat).arg(lon);
-
-			/* Save clean viewport (clean == without ruler drawn on top of it). */
-			this->orig_viewport_pixmap = this->viewport->get_pixmap();
-
-			this->ruler = new Ruler(this->viewport, event->x(), event->y(), Preferences::get_unit_distance());
-
-			this->start_coord = cursor_coord;
-		}
-
-		this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
+		this->reset_tool();
 	} else {
-		this->viewport->set_center_from_screen_pos(event_pos);
-		this->window->draw_tree_items();
+		qDebug() << SG_PREFIX_I << "first click, starting ruler";
+
+		QString lat;
+		QString lon;
+		cursor_coord.get_latlon().to_strings_raw(lat, lon);
+		msg = QObject::tr("%1 %2").arg(lat).arg(lon);
+
+		/* Save clean viewport (clean == without ruler drawn on top of it). */
+		this->orig_viewport_pixmap = this->viewport->get_pixmap();
+
+		this->ruler = new Ruler(this->viewport, event->x(), event->y(), Preferences::get_unit_distance());
+
+		this->start_coord = cursor_coord;
 	}
+
+	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 
 	return ToolStatus::Ack;
 }
@@ -227,30 +217,31 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 	qDebug() << "DD" PREFIX << "called";
 
 	if (!this->ruler) {
-		qDebug() << "II" PREFIX << "not drawing, we don't have start coordinates";
-		return ToolStatus::Ack;
+		/* Ruler tool may be selected, but there was no first
+		   click that would establish beginning of the
+		   ruler. Mouse move event does not influence the
+		   ruler, because the ruler doesn't exist yet. */
+		return ToolStatus::Ignored;
 	}
+
 
 	const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 
-	//const ScreenPos start_pos = this->viewport->coord_to_screen_pos(this->start_coord);
 
+	/* Redraw ruler that goes from place of initial click
+	   (remembered by ruler) to place where mouse cursor is
+	   now. */
 	QPixmap marked_pixmap = this->orig_viewport_pixmap;
 	QPainter painter(&marked_pixmap);
-
 	this->ruler->end_moved_to(event->x(), event->y(), painter, Coord::distance(cursor_coord, this->start_coord));
 	this->viewport->set_pixmap(marked_pixmap);
-
 	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();
 
 
 	const QString msg = get_msg(cursor_coord, this->start_coord);
-
 	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 
-	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
-	this->reset_state = true;
 
 	return ToolStatus::Ack;
 }
@@ -260,14 +251,8 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 
 ToolStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "II" PREFIX << "called";
-	if (this->reset_state) {
-		/* In ->move() we have been using ->start_coord to draw a ruler.
-		   Now the ->start_coord is unnecessary and should be discarded. */
-		this->reset_state = false;
-		delete this->ruler;
-		this->ruler = NULL;
-	}
+	qDebug() << SG_PREFIX_I << "called";
+
 	return ToolStatus::Ack;
 }
 
@@ -276,7 +261,8 @@ ToolStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * e
 
 void GenericToolRuler::deactivate_tool(Layer * layer)
 {
-	qDebug() << "II: Generic Tool Ruler: ->deactivate_tool() called";
+	qDebug() << SG_PREFIX_I << "called";
+
 	this->window->draw_tree_items();
 }
 
@@ -285,23 +271,36 @@ void GenericToolRuler::deactivate_tool(Layer * layer)
 
 ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 {
+	qDebug() << SG_PREFIX_D << "called";
+
 	if (event->key() == Qt::Key_Escape) {
-		this->reset_state = false;
-		delete this->ruler;
-		this->ruler = NULL;
-
-		/* Restore clean viewport (clean == without ruler drawn on top of it). */
-		this->viewport->set_pixmap(this->orig_viewport_pixmap);
-
-		/* This will call Viewport::paintEvent(), triggering final render to screen. */
-		this->viewport->update();
-
+		this->reset_tool();
 		this->deactivate_tool(layer);
 		return ToolStatus::Ack;
 	}
 
 	/* Regardless of whether we used it, return false so other GTK things may use it. */
 	return ToolStatus::Ignored;
+}
+
+
+
+
+void GenericToolRuler::reset_tool(void)
+{
+	delete this->ruler;
+	this->ruler = NULL;
+
+	if (this->orig_viewport_pixmap.isNull()) {
+		qDebug() << SG_PREFIX_W << "Detected NULL orig viewport pixmap";
+	} else {
+		/* Restore clean viewport (clean == without ruler drawn on top of it). */
+		this->viewport->set_pixmap(this->orig_viewport_pixmap);
+		this->orig_viewport_pixmap = QPixmap();
+
+		/* This will call Viewport::paintEvent(), triggering final render to screen. */
+		this->viewport->update();
+	}
 }
 
 
