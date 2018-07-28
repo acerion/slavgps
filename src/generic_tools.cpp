@@ -47,6 +47,7 @@
 #include "viewport_zoom.h"
 #include "layers_panel.h"
 #include "statusbar.h"
+#include "ruler.h"
 
 
 
@@ -105,209 +106,6 @@ LayerToolContainer * GenericTools::create_tools(Window * window, Viewport * view
 
 
 
-class MyLine {
-public:
-	MyLine(int new_x1, int new_y1, int new_x2, int new_y2) : x1(new_x1), y1(new_y1), x2(new_x2), y2(new_y2)
-	{
-		this->len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-		this->dx = (x2 - x1) / len * 10;
-		this->dy = (y2 - y1) / len * 10;
-		this->c = cos(DEG2RAD(15.0));
-		this->s = sin(DEG2RAD(15.0));
-	}
-
-	int x1;
-	int y1;
-	int x2;
-	int y2;
-
-	double len = 0;
-	double dx = 0;
-	double dy = 0;
-	double c = 0;
-	double s = 0;
-	double angle = 0;
-	double baseangle = 0;
-};
-
-
-
-
-/**
-   @param x1, y1 - coordinates of beginning of ruler (start coordinates, where cursor was pressed down)
-   @param x2, y2 - coordinates of end of ruler (end coordinates, where cursor currently is)
-*/
-void GenericToolRuler::draw(QPainter & painter, int x1, int y1, int x2, int y2, double distance)
-{
-	qDebug() << "DD: Generic Layer Tool: Ruler: draw";
-
-	MyLine line(x1, y1, x2, y2);
-
-	char tmp[64];
-
-	this->viewport->compute_bearing(line.x1, line.y1, line.x2, line.y2, &line.angle, &line.baseangle);
-	sprintf(tmp, "%3.1f°", RAD2DEG(line.angle));
-	const QString bearing_label(tmp);
-
-
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		if (distance >= 1000 && distance < 100000) {
-			sprintf(tmp, "%3.2f km", distance/1000.0);
-		} else if (distance < 1000) {
-			sprintf(tmp, "%d m", (int)distance);
-		} else {
-			sprintf(tmp, "%d km", (int)distance/1000);
-		}
-		break;
-	case DistanceUnit::Miles:
-		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
-			sprintf(tmp, "%3.2f miles", VIK_METERS_TO_MILES(distance));
-		} else if (distance < VIK_MILES_TO_METERS(1)) {
-			sprintf(tmp, "%d yards", (int)(distance*1.0936133));
-		} else {
-			sprintf(tmp, "%d miles", (int)VIK_METERS_TO_MILES(distance));
-		}
-		break;
-	case DistanceUnit::NauticalMiles:
-		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
-			sprintf(tmp, "%3.2f NM", VIK_METERS_TO_NAUTICAL_MILES(distance));
-		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
-			sprintf(tmp, "%d yards", (int)(distance*1.0936133));
-		} else {
-			sprintf(tmp, "%d NM", (int)VIK_METERS_TO_NAUTICAL_MILES(distance));
-		}
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
-	const QString distance_label(tmp);
-
-
-	/* Draw line with arrow ends. */
-	{
-		int tmp_x1 = x1, tmp_y1 = y1, tmp_x2 = x2, tmp_y2 = y2;
-		Viewport::clip_line(&tmp_x1, &tmp_y1, &tmp_x2, &tmp_y2);
-		painter.drawLine(tmp_x1, tmp_y1, tmp_x2, tmp_y2);
-
-
-		Viewport::clip_line(&line.x1, &line.y1, &line.x2, &line.y2);
-
-		painter.drawLine(line.x1,           line.y1,           line.x2,                                         line.y2);
-		painter.drawLine(line.x1 - line.dy, line.y1 + line.dx, line.x1 + line.dy,                               line.y1 - line.dx);
-		painter.drawLine(line.x2 - line.dy, line.y2 + line.dx, line.x2 + line.dy,                               line.y2 - line.dx);
-		painter.drawLine(line.x2,           line.y2,           line.x2 - (line.dx * line.c + line.dy * line.s), line.y2 - (line.dy * line.c - line.dx * line.s));
-		painter.drawLine(line.x2,           line.y2,           line.x2 - (line.dx * line.c - line.dy * line.s), line.y2 - (line.dy * line.c + line.dx * line.s));
-		painter.drawLine(line.x1,           line.y1,           line.x1 + (line.dx * line.c + line.dy * line.s), line.y1 + (line.dy * line.c - line.dx * line.s));
-		painter.drawLine(line.x1,           line.y1,           line.x1 + (line.dx * line.c - line.dy * line.s), line.y1 + (line.dy * line.c + line.dx * line.s));
-	}
-
-
-	/* Draw compass. */
-
-
-	const int radius_delta = 4;   /* Distance between circles. */
-	const int radius = 80;       /* Compass radius. */
-
-	if (1) {
-		/* Three full circles. */
-		painter.drawArc(x1 - radius + radius_delta, y1 - radius + radius_delta, 2 * (radius - radius_delta), 2 * (radius - radius_delta), 0, 16 * 360); /* Innermost. */
-		painter.drawArc(x1 - radius,                y1 - radius,                2 * radius,                  2 * radius,                  0, 16 * 360); /* Middle. */
-		painter.drawArc(x1 - radius - radius_delta, y1 - radius - radius_delta, 2 * (radius + radius_delta), 2 * (radius + radius_delta), 0, 16 * 360); /* Outermost. */
-	}
-
-	/* Fill between middle and innermost circle. */
-	if (1) {
-		const float start_angle = (90 - RAD2DEG(line.baseangle)) * 16;
-		const float span_angle = -RAD2DEG(line.angle) * 16;
-		QPen new_pen(QColor("red"));
-		new_pen.setWidth(radius_delta);
-		painter.setPen(new_pen);
-		painter.drawArc(line.x1 - radius + radius_delta / 2,
-				line.y1 - radius + radius_delta / 2,
-				2 * radius - radius_delta,
-				2 * radius - radius_delta,
-				start_angle, span_angle);
-
-		painter.setPen(pen);
-	}
-
-	/* Ticks around circles, every N degrees. */
-	if (1) {
-		int ticksize = 2 * radius_delta;
-		for (int i = 0; i < 180; i += 5) {
-			line.c = cos(DEG2RAD(i) * 2 + line.baseangle);
-			line.s = sin(DEG2RAD(i) * 2 + line.baseangle);
-			painter.drawLine(line.x1 + (radius-radius_delta)*line.c, line.y1 + (radius-radius_delta)*line.s, line.x1 + (radius+ticksize)*line.c, line.y1 + (radius+ticksize)*line.s);
-		}
-	}
-
-	if (1) {
-		/* Two axis inside a compass.
-		   Varying angle will rotate the axis. I don't know why you would need this :) */
-		//float angle = 0;
-		int c2 = (radius + radius_delta * 2) * sin(line.baseangle);
-		int s2 = (radius + radius_delta * 2) * cos(line.baseangle);
-		painter.drawLine(line.x1 - c2, line.y1 - s2, line.x1 + c2, line.y1 + s2);
-		painter.drawLine(line.x1 + s2, line.y1 - c2, line.x1 - s2, line.y1 + c2);
-	}
-
-
-	/* Draw compass labels. */
-	if (1) {
-		painter.drawText(line.x1 - 5, line.y1 - radius - 3 * radius_delta - 8, "N");
-	}
-
-
-	const int margin = 3;
-	{
-		/* Draw distance label. */
-		{
-			QRectF label1_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignHCenter, distance_label);
-
-			int label1_x;
-			int label1_y;
-
-			if (line.dy > 0) {
-				label1_x = (line.x1 + line.x2) / 2 + line.dy;
-				label1_y = (line.y1 + line.y2) / 2 - label1_rect.height() / 2 - line.dx;
-			} else {
-				label1_x = (line.x1 + line.x2) / 2 - line.dy;
-				label1_y = (line.y1 + line.y2) / 2 - label1_rect.height() / 2 + line.dx;
-			}
-
-			if (label1_x < -5 || label1_y < -5 || label1_x > this->viewport->get_width() + 5 || label1_y > this->viewport->get_height() + 5) {
-				label1_x = line.x2 + 10;
-				label1_y = line.y2 - 5;
-			}
-
-			label1_rect.moveTo(label1_x, label1_y);
-			label1_rect.adjust(-margin, -margin, margin, margin);
-
-			painter.fillRect(label1_rect, QColor("gray"));
-			painter.drawText(label1_rect, Qt::AlignCenter, distance_label);
-		}
-
-
-		/* Draw bearing label. */
-		{
-			QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
-
-			const int label2_x = line.x1 - radius * cos(line.angle - M_PI_2) / 2;
-			const int label2_y = line.y1 - radius * sin(line.angle - M_PI_2) / 2;
-
-			label2_rect.moveTo(label2_x - label2_rect.width() / 2, label2_y - label2_rect.height() / 2);
-			label2_rect.adjust(-margin, -margin, margin, margin);
-
-			painter.fillRect(label2_rect, QColor("pink"));
-			painter.drawText(label2_rect, Qt::AlignCenter, bearing_label);
-		}
-	}
-}
-
-
 
 
 GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
@@ -323,9 +121,6 @@ GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : Lay
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
 	//shape = Qt::BitmapCursor;
 	//this->cursor_data = &cursor_ruler_pixbuf;
-
-	this->pen.setColor("black");
-	this->pen.setWidth(1);
 }
 
 
@@ -335,6 +130,38 @@ GenericToolRuler::~GenericToolRuler()
 {
 	delete this->cursor_click;
 	delete this->cursor_release;
+	delete this->ruler;
+}
+
+
+
+
+static QString get_msg(const Coord & cursor_coord, const Coord & start_coord)
+{
+	QString msg;
+
+	QString lat;
+	QString lon;
+	cursor_coord.get_latlon().to_strings_raw(lat, lon);
+
+	const double distance = Coord::distance(cursor_coord, start_coord);
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(distance);
+		break;
+	case DistanceUnit::Miles:
+		msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES (distance));
+		break;
+	case DistanceUnit::NauticalMiles:
+		msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES (distance));
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
+	}
+
+	return msg;
 }
 
 
@@ -352,50 +179,38 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
-		QString lat;
-		QString lon;
-		cursor_coord.get_latlon().to_strings_raw(lat, lon);
+		if (this->ruler) {
+			qDebug() << "II" PREFIX << "second click, resetting ruler";
 
-		if (this->has_start_coord) {
-			const DistanceUnit distance_unit = Preferences::get_unit_distance();
-			switch (distance_unit) {
-			case DistanceUnit::Kilometres:
-				msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(Coord::distance(cursor_coord, this->start_coord));
-				break;
-			case DistanceUnit::Miles:
-				msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES(Coord::distance(cursor_coord, this->start_coord)));
-				break;
-			case DistanceUnit::NauticalMiles:
-				msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES(Coord::distance(cursor_coord, this->start_coord)));
-				break;
-			default:
-				qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-				break;
-			}
+			msg = get_msg(cursor_coord, this->start_coord);
 
-			qDebug() << "II: Generic Tool Ruler: second click, dropping start coordinates";
-
-
-
-			this->has_start_coord = false;
+			delete this->ruler;
+			this->ruler = NULL;
+			this->start_coord = Coord();
 
 			/* Restore clean viewport (clean == without ruler drawn on top of it). */
 			this->viewport->set_pixmap(this->orig_viewport_pixmap);
 
 			/* This will call Viewport::paintEvent(), triggering final render to screen. */
 			this->viewport->update();
+
 		} else {
+			qDebug() << "II" PREFIX << "first click, starting ruler";
+
+			QString lat;
+			QString lon;
+			cursor_coord.get_latlon().to_strings_raw(lat, lon);
 			msg = QObject::tr("%1 %2").arg(lat).arg(lon);
-			qDebug() << "II: Generic Tool Ruler: first click, saving start coordinates";
 
 			/* Save clean viewport (clean == without ruler drawn on top of it). */
 			this->orig_viewport_pixmap = this->viewport->get_pixmap();
 
-			this->has_start_coord = true;
+			this->ruler = new Ruler(this->viewport, event->x(), event->y(), Preferences::get_unit_distance());
+
+			this->start_coord = cursor_coord;
 		}
 
 		this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
-		this->start_coord = cursor_coord;
 	} else {
 		this->viewport->set_center_from_screen_pos(event_pos);
 		this->window->draw_tree_items();
@@ -409,51 +224,33 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Generic Tool Ruler: ->handle_mouse_move() called";
+	qDebug() << "DD" PREFIX << "called";
 
-	if (!this->has_start_coord) {
-		qDebug() << "II: Generic Tool Ruler: not drawing, we don't have start coordinates";
+	if (!this->ruler) {
+		qDebug() << "II" PREFIX << "not drawing, we don't have start coordinates";
 		return ToolStatus::Ack;
 	}
 
 	const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 
-	const ScreenPos start_pos = this->viewport->coord_to_screen_pos(this->start_coord);
+	//const ScreenPos start_pos = this->viewport->coord_to_screen_pos(this->start_coord);
 
 	QPixmap marked_pixmap = this->orig_viewport_pixmap;
 	QPainter painter(&marked_pixmap);
 
-	this->draw(painter, start_pos.x, start_pos.y, event->x(), event->y(), Coord::distance(cursor_coord, this->start_coord));
+	this->ruler->end_moved_to(event->x(), event->y(), painter, Coord::distance(cursor_coord, this->start_coord));
 	this->viewport->set_pixmap(marked_pixmap);
 
 	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();
 
-	QString lat;
-	QString lon;
-	cursor_coord.get_latlon().to_strings_raw(lat, lon);
 
-	QString msg;
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(Coord::distance(cursor_coord, this->start_coord));
-		break;
-	case DistanceUnit::Miles:
-		msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES (Coord::distance(cursor_coord, this->start_coord)));
-		break;
-	case DistanceUnit::NauticalMiles:
-		msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(cursor_coord, this->start_coord)));
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
+	const QString msg = get_msg(cursor_coord, this->start_coord);
 
 	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 
 	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
-	this->invalidate_start_coord = true;
+	this->reset_state = true;
 
 	return ToolStatus::Ack;
 }
@@ -463,12 +260,13 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 
 ToolStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "II: Generic Tool Ruler: ->handle_mouse_release() called";
-	if (this->invalidate_start_coord) {
+	qDebug() << "II" PREFIX << "called";
+	if (this->reset_state) {
 		/* In ->move() we have been using ->start_coord to draw a ruler.
 		   Now the ->start_coord is unnecessary and should be discarded. */
-		this->invalidate_start_coord = false;
-		this->has_start_coord = false;
+		this->reset_state = false;
+		delete this->ruler;
+		this->ruler = NULL;
 	}
 	return ToolStatus::Ack;
 }
@@ -488,8 +286,9 @@ void GenericToolRuler::deactivate_tool(Layer * layer)
 ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 {
 	if (event->key() == Qt::Key_Escape) {
-		this->invalidate_start_coord = false;
-		this->has_start_coord = false;
+		this->reset_state = false;
+		delete this->ruler;
+		this->ruler = NULL;
 
 		/* Restore clean viewport (clean == without ruler drawn on top of it). */
 		this->viewport->set_pixmap(this->orig_viewport_pixmap);

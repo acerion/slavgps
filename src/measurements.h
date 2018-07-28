@@ -148,6 +148,7 @@ namespace SlavGPS {
 
 		static QString get_distance_string_short(double value, int precision = SG_PRECISION_DISTANCE);
 		static QString get_distance_string(double value, int precision = SG_PRECISION_DISTANCE);
+		static QString get_distance_string_for_ruler(double value, DistanceUnit distance_unit);
 
 		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
 		static QString get_speed_string_dont_recalculate(double value, int precision = SG_PRECISION_SPEED);

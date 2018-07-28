@@ -38,6 +38,7 @@ namespace SlavGPS {
 
 	class Window;
 	class Viewport;
+	class Ruler;
 
 
 
@@ -81,15 +82,12 @@ namespace SlavGPS {
 		void deactivate_tool(Layer * layer);
 
 	private:
-		void draw(QPainter & painter, int x1, int y1, int x2, int y2, double distance);
-
-		QPen pen;
-
 		QPixmap orig_viewport_pixmap; /* Pixmap with saved viewport's state without ruler drawn on top of it. */
 
-		bool has_start_coord = false;
 		Coord start_coord;
-		bool invalidate_start_coord = false; /* Discard/invalidate ->start_coord on release of left mouse button? */
+		bool reset_state = false; /* Discard/invalidate ->start_coord on release of left mouse button? */
+
+		Ruler * ruler = NULL;
 	};
 
 

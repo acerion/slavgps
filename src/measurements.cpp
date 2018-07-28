@@ -264,3 +264,46 @@ QString Measurements::get_duration_string(time_t duration)
 
 	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
 }
+
+
+
+
+QString Measurements::get_distance_string_for_ruler(double distance, DistanceUnit distance_unit)
+{
+	QString distance_label;
+
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		if (distance >= 1000 && distance < 100000) {
+			distance_label = QObject::tr("%1 km").arg(distance/1000.0, 0, 'f', 2);
+		} else if (distance < 1000) {
+			distance_label = QObject::tr("%1 m").arg((int) distance);
+		} else {
+			distance_label = QObject::tr("%1 km").arg((int) distance/1000);
+		}
+		break;
+	case DistanceUnit::Miles:
+		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
+			distance_label = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 0, 'f', 2);
+		} else if (distance < VIK_MILES_TO_METERS(1)) {
+			distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+		} else {
+			distance_label = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
+		}
+		break;
+	case DistanceUnit::NauticalMiles:
+		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
+			distance_label = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 0, 'f', 2);
+		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
+			distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+		} else {
+			distance_label = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
+		}
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		break;
+	}
+
+	return distance_label;
+}

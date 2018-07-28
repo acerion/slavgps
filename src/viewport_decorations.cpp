@@ -155,8 +155,6 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 	viewport->canvas.painter->setPen(QColor("blue"));
 	viewport->canvas.painter->drawEllipse(value_start, 3, 3);
 #endif
-
-	viewport->repaint();
 }
 
 
@@ -299,8 +297,6 @@ void ViewportDecorations::draw_center_mark(Viewport * viewport)
 	viewport->draw_line(pen_fg, center_x + gap, center_y,        center_x + len, center_y);
 	viewport->draw_line(pen_fg, center_x,       center_y - len,  center_x,       center_y - gap);
 	viewport->draw_line(pen_fg, center_x,       center_y + gap,  center_x,       center_y + len);
-
-	viewport->update();
 }
 
 

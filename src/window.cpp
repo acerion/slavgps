@@ -1040,6 +1040,9 @@ void Window::draw_tree_items(void)
 	/* Other viewport decoration items on top if they are enabled/in use. */
 	this->viewport->draw_decorations();
 
+	/* This will call Viewport::paintEvent(), triggering final render to screen. */
+	this->viewport->update();
+
 	this->viewport->set_half_drawn(false); /* Just in case. */
 
 	this->draw_sync();

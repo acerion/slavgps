@@ -26,6 +26,7 @@
 
 
 #include <cstdint>
+#include <QString>
 
 
 
@@ -45,6 +46,12 @@ namespace SlavGPS {
 #define VIKING_VERSION PACKAGE_VERSION
 #define VIKING_VERSION_NAME "This Name For Rent"
 #define VIKING_URL PACKAGE_URL
+
+
+#define SG_PREFIX_D << "DD " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_I << "II " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_W << "WW " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_E << "EE " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
 
 
 

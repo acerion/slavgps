@@ -474,6 +474,7 @@ void ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos & 
 
 
 	if (is_selected_drawn || is_current_drawn) {
+		/* This will call Viewport::paintEvent(), triggering final render to screen. */
 		this->viewport->update();
 	}
 }
@@ -1320,6 +1321,8 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
 	this->draw_additional_indicators(track_info);
 
 	this->viewport->draw_border();
+
+	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();
 
 	/* The pixmap = margin + graph area. */

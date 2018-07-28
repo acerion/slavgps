@@ -1877,12 +1877,7 @@ void Viewport::mouseMoveEvent(QMouseEvent * ev)
 {
 	this->draw_mouse_motion_cb(ev);
 
-	if (ev->buttons() != Qt::NoButton) {
-		// qDebug() << "II: Viewport: mouse move with buttons";
-		this->window->get_toolbox()->handle_mouse_move(ev);
-	} else {
-		//qDebug() << "II: Viewport: mouse move without buttons";
-	}
+	this->window->get_toolbox()->handle_mouse_move(ev);
 
 	emit this->cursor_moved(this, ev);
 
