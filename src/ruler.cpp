@@ -50,29 +50,40 @@ using namespace SlavGPS;
 
 
 
-Ruler::Ruler(Viewport * new_viewport, int begin_x, int begin_y, DistanceUnit new_distance_unit)
+Ruler::Ruler(Viewport * new_viewport, DistanceUnit new_distance_unit)
 {
-	this->x1 = begin_x;
-	this->y1 = begin_y;
 	this->distance_unit = new_distance_unit;
 	this->viewport = new_viewport;
 
 	this->line_pen.setColor(QColor("black"));
 	this->line_pen.setWidth(1);
+
+	this->compass_pen.setColor(QColor("black"));
+	this->compass_pen.setWidth(1);
+
 	this->arc_pen.setColor(QColor("red"));
 	this->arc_pen.setWidth(COMPASS_RADIUS_DELTA);
 }
 
 
 
-
-
-void Ruler::end_moved_to(int new_x2, int new_y2, QPainter & painter, double new_distance1, double new_distance2)
+void Ruler::set_begin(int begin_x, int begin_y)
 {
-	this->x2 = new_x2;
-	this->y2 = new_y2;
-	this->distance1 = new_distance1;
-	this->distance2 = new_distance2;
+	this->x1 = begin_x;
+	this->y1 = begin_y;
+
+	this->begin_coord = this->viewport->screen_pos_to_coord(begin_x, begin_y);
+}
+
+
+
+
+void Ruler::set_end(int end_x, int end_y)
+{
+	this->x2 = end_x;
+	this->y2 = end_y;
+
+	this->end_coord = this->viewport->screen_pos_to_coord(end_x, end_y);
 
 	this->len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	this->dx = (x2 - x1) / len * 10;
@@ -80,40 +91,17 @@ void Ruler::end_moved_to(int new_x2, int new_y2, QPainter & painter, double new_
 	this->c = cos(DEG2RAD(15.0));
 	this->s = sin(DEG2RAD(15.0));
 
-	this->viewport->compute_bearing(this->x1, this->y1, this->x2, this->y2, &this->angle, &this->baseangle);
+	this->viewport->compute_bearing(this->x1, this->y1, this->x2, this->y2, &this->angle, &this->base_angle);
 
-	this->draw_line(painter);
+	this->line_distance = Coord::distance(this->end_coord, this->begin_coord);
 }
 
 
 
 
-/**
-   @param x1, y1 - coordinates of beginning of ruler (start coordinates, where cursor was pressed down)
-   @param x2, y2 - coordinates of end of ruler (end coordinates, where cursor currently is)
-*/
-void Ruler::draw_line(QPainter & painter)
+void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 {
-	const QString bearing_label = QObject::tr("%1°").arg(RAD2DEG(this->angle), 3, 'f', 2);
-	QString distance_label;
-	if (this->distance1 > -0.5 && this->distance2 > -0.5) {
-		distance_label = QString("%1\n%2")
-			.arg(Measurements::get_distance_string_for_ruler(this->distance1, this->distance_unit))
-			.arg(Measurements::get_distance_string_for_ruler(this->distance2, this->distance_unit));
-	} else if (this->distance1 > -0.5) {
-		distance_label = Measurements::get_distance_string_for_ruler(this->distance1, this->distance_unit);
-	} else if (this->distance2 > -0.5) {
-		distance_label = Measurements::get_distance_string_for_ruler(this->distance2, this->distance_unit);
-	} else {
-		; /* NOOP */
-	}
-
-
-	QPen main_pen;
-	main_pen.setColor(QColor("black"));
-	main_pen.setWidth(1);
-	painter.setPen(main_pen);
-
+	painter.setPen(this->line_pen);
 
 	/* Draw line with arrow ends. */
 	if (1) {
@@ -142,9 +130,10 @@ void Ruler::draw_line(QPainter & painter)
 
 	const int radius = COMPASS_RADIUS;
 	const int radius_delta = COMPASS_RADIUS_DELTA;
-
+	painter.setPen(this->compass_pen);
 
 	if (1) {
+
 		/* Three full circles. */
 		painter.drawArc(this->x1 - radius + radius_delta, this->y1 - radius + radius_delta, 2 * (radius - radius_delta), 2 * (radius - radius_delta), 0, 16 * 360); /* Innermost. */
 		painter.drawArc(this->x1 - radius,                this->y1 - radius,                2 * radius,                  2 * radius,                  0, 16 * 360); /* Middle. */
@@ -153,14 +142,10 @@ void Ruler::draw_line(QPainter & painter)
 
 	/* Fill between middle and innermost circle. */
 	if (1) {
-		const float start_angle = (90 - RAD2DEG(this->baseangle)) * 16;
+		const float start_angle = (90 - RAD2DEG(this->base_angle)) * 16;
 		const float span_angle = -RAD2DEG(this->angle) * 16;
 
-		QPen fill_pen;
-
-		fill_pen.setColor(QColor("red"));
-		fill_pen.setWidth(radius_delta);
-		painter.setPen(fill_pen);
+		painter.setPen(this->arc_pen);
 
 		painter.drawArc(this->x1 - radius + radius_delta / 2,
 				this->y1 - radius + radius_delta / 2,
@@ -171,14 +156,14 @@ void Ruler::draw_line(QPainter & painter)
 
 	}
 
-	painter.setPen(main_pen);
+	painter.setPen(this->compass_pen);
 
 	/* Ticks around circles, every N degrees. */
 	if (1) {
 		int ticksize = 2 * radius_delta;
 		for (int i = 0; i < 180; i += 5) {
-			this->c = cos(DEG2RAD(i) * 2 + this->baseangle);
-			this->s = sin(DEG2RAD(i) * 2 + this->baseangle);
+			this->c = cos(DEG2RAD(i) * 2 + this->base_angle);
+			this->s = sin(DEG2RAD(i) * 2 + this->base_angle);
 			painter.drawLine(this->x1 + (radius-radius_delta)*this->c, this->y1 + (radius-radius_delta)*this->s, this->x1 + (radius+ticksize)*this->c, this->y1 + (radius+ticksize)*this->s);
 		}
 	}
@@ -187,8 +172,8 @@ void Ruler::draw_line(QPainter & painter)
 		/* Two axis inside a compass.
 		   Varying angle will rotate the axis. I don't know why you would need this :) */
 		//float angle = 0;
-		int c2 = (radius + radius_delta * 2) * sin(this->baseangle);
-		int s2 = (radius + radius_delta * 2) * cos(this->baseangle);
+		int c2 = (radius + radius_delta * 2) * sin(this->base_angle);
+		int s2 = (radius + radius_delta * 2) * cos(this->base_angle);
 		painter.drawLine(this->x1 - c2, this->y1 - s2, this->x1 + c2, this->y1 + s2);
 		painter.drawLine(this->x1 + s2, this->y1 - c2, this->x1 - s2, this->y1 + c2);
 	}
@@ -200,10 +185,26 @@ void Ruler::draw_line(QPainter & painter)
 	}
 
 
+
 	const int margin = 3;
 
-	/* Draw distance label. */
-	if (1) {
+	/* Draw distance tooltip. */
+	if (1 && paint_tooltips) {
+
+		QString distance_label;
+		if (this->line_distance > -0.5 && this->total_distance > -0.5) {
+			distance_label = QString("%1\n%2")
+				.arg(Measurements::get_distance_string_for_ruler(this->line_distance, this->distance_unit))
+				.arg(Measurements::get_distance_string_for_ruler(this->total_distance, this->distance_unit));
+		} else if (this->line_distance > -0.5) {
+			distance_label = Measurements::get_distance_string_for_ruler(this->line_distance, this->distance_unit);
+		} else if (this->total_distance > -0.5) {
+			distance_label = Measurements::get_distance_string_for_ruler(this->total_distance, this->distance_unit);
+		} else {
+			; /* NOOP */
+		}
+
+
 		QRectF label1_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignHCenter, distance_label);
 
 		int label1_x;
@@ -230,8 +231,10 @@ void Ruler::draw_line(QPainter & painter)
 	}
 
 
-	/* Draw bearing label. */
-	if (1) {
+	/* Draw bearing tooltip. */
+	if (1 && paint_tooltips) {
+		const QString bearing_label = QObject::tr("%1°").arg(RAD2DEG(this->angle), 3, 'f', 2);
+
 		QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
 
 		const int label2_x = this->x1 - radius * cos(this->angle - M_PI_2) / 2;
@@ -243,4 +246,33 @@ void Ruler::draw_line(QPainter & painter)
 		painter.fillRect(label2_rect, QColor("pink"));
 		painter.drawText(label2_rect, Qt::AlignCenter, bearing_label);
 	}
+}
+
+
+
+
+QString Ruler::get_msg(void) const
+{
+	QString msg;
+
+	QString lat;
+	QString lon;
+	this->end_coord.get_latlon().to_strings_raw(lat, lon);
+
+	switch (this->distance_unit) {
+	case DistanceUnit::Kilometres:
+		msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(this->line_distance);
+		break;
+	case DistanceUnit::Miles:
+		msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES (this->line_distance));
+		break;
+	case DistanceUnit::NauticalMiles:
+		msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES (this->line_distance));
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "invalid distance unit" << (int) distance_unit;
+		break;
+	}
+
+	return msg;
 }

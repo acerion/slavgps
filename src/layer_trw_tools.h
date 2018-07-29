@@ -119,8 +119,6 @@ namespace SlavGPS {
 		LayerTRW * creation_in_progress = NULL;
 		Ruler * ruler = NULL;
 		QPixmap orig_viewport_pixmap;
-		Coord start_coord;
-		ScreenPos start_event_pos;
 	};
 
 

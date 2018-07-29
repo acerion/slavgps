@@ -887,26 +887,22 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 
 	/* If we haven't sync'ed yet, we don't have time to do more. */
 	if (/* trw->draw_sync_done && */ track && !track->empty()) {
-		Trackpoint * last_tpt = track->get_tp_last();
-
-		const Coord cursor_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
-
-		const double current_fragment_distance = Coord::distance(cursor_coord, this->start_coord);
-		/* We didn't actually create the new track fragment
-		   yet, so track->get_length() returns length without
-		   this last, non-existent fragment. */
-		const double total_distance = track->get_length() + current_fragment_distance;
-
 
 		QPixmap marked_pixmap = this->orig_viewport_pixmap;
 		QPainter painter(&marked_pixmap);
-		painter.setPen(trw->painter->current_track_new_point_pen); /* TODO: Make this work. Currently ruler will use its own pen. */
 
-		if (Preferences::get_create_track_tooltip()) {
-			this->ruler->end_moved_to(ev->x(), ev->y(), painter, current_fragment_distance, total_distance);
-		} else {
-			this->ruler->end_moved_to(ev->x(), ev->y(), painter);
-		}
+
+
+		this->ruler->set_end(ev->x(), ev->y());
+
+
+		/* We didn't actually create the new track fragment
+		   yet, so track->get_length() returns length without
+		   this last, non-existent, work-in-progress fragment. */
+		const double total_distance = track->get_length() + ruler->get_line_distance();
+		this->ruler->set_total_distance(total_distance);
+		this->ruler->paint_ruler(painter, Preferences::get_create_track_tooltip());
+
 
 		this->viewport->set_pixmap(marked_pixmap);
 		/* This will call Viewport::paintEvent(), triggering final render to screen. */
@@ -919,7 +915,9 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 
 
 		/* Adjust elevation data (if available) for the current pointer position. */
-		double elev_new = (double) DEMCache::get_elev_by_coord(&cursor_coord, DemInterpolation::BEST);
+		const Coord cursor_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+		const double elev_new = (double) DEMCache::get_elev_by_coord(&cursor_coord, DemInterpolation::BEST);
+		const Trackpoint * last_tpt = track->get_tp_last();
 		if (elev_new != DEM_INVALID_ELEVATION) {
 			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
 				/* Adjust elevation of last track point. */
@@ -933,12 +931,8 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 			}
 		}
 
-		double angle;
-		double baseangle;
-		this->viewport->compute_bearing(this->start_event_pos.x, this->start_event_pos.y, ev->x(), ev->y(), &angle, &baseangle);
-
 		/* Update statusbar with full gain/loss information. */
-		statusbar_write(total_distance, elev_gain, elev_loss, current_fragment_distance, angle, trw);
+		statusbar_write(total_distance, elev_gain, elev_loss, ruler->get_line_distance(), this->ruler->get_angle(), trw);
 
 		return ToolStatus::AckGrabFocus;
 	}
@@ -1087,9 +1081,9 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 		delete this->ruler;
 		this->ruler = NULL;
 	}
-	this->ruler = new Ruler(this->viewport, ev->x(), ev->y(), Preferences::get_unit_distance());
-	this->start_event_pos = ScreenPos(ev->x(), ev->y());
-	this->start_coord = this->viewport->screen_pos_to_coord(this->start_event_pos);
+	this->ruler = new Ruler(this->viewport, Preferences::get_unit_distance());
+	this->ruler->set_line_pen(trw->painter->current_track_new_point_pen);
+	this->ruler->set_begin(ev->x(), ev->y());
 	this->orig_viewport_pixmap = this->viewport->get_pixmap(); /* Save clean viewport (clean == without ruler drawn on top of it). */
 
 

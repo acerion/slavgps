@@ -137,37 +137,6 @@ GenericToolRuler::~GenericToolRuler()
 
 
 
-static QString get_msg(const Coord & cursor_coord, const Coord & start_coord)
-{
-	QString msg;
-
-	QString lat;
-	QString lon;
-	cursor_coord.get_latlon().to_strings_raw(lat, lon);
-
-	const double distance = Coord::distance(cursor_coord, start_coord);
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(distance);
-		break;
-	case DistanceUnit::Miles:
-		msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES (distance));
-		break;
-	case DistanceUnit::NauticalMiles:
-		msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES (distance));
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
-
-	return msg;
-}
-
-
-
-
 ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "called";
@@ -179,18 +148,16 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 	QString msg;
 
-	const ScreenPos event_pos(event->x(), event->y());
-	const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
-
 	if (this->ruler) {
 		qDebug() << SG_PREFIX_I << "second click, resetting ruler";
 
-		msg = get_msg(cursor_coord, this->start_coord);
+		msg = this->ruler->get_msg();
 
-		this->reset_tool();
+		this->reset_ruler();
 	} else {
 		qDebug() << SG_PREFIX_I << "first click, starting ruler";
 
+		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
 		QString lat;
 		QString lon;
 		cursor_coord.get_latlon().to_strings_raw(lat, lon);
@@ -199,9 +166,8 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 		/* Save clean viewport (clean == without ruler drawn on top of it). */
 		this->orig_viewport_pixmap = this->viewport->get_pixmap();
 
-		this->ruler = new Ruler(this->viewport, event->x(), event->y(), Preferences::get_unit_distance());
-
-		this->start_coord = cursor_coord;
+		this->ruler = new Ruler(this->viewport, Preferences::get_unit_distance());
+		this->ruler->set_begin(event->x(), event->y());
 	}
 
 	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
@@ -225,21 +191,19 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 	}
 
 
-	const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
-
-
 	/* Redraw ruler that goes from place of initial click
 	   (remembered by ruler) to place where mouse cursor is
 	   now. */
 	QPixmap marked_pixmap = this->orig_viewport_pixmap;
 	QPainter painter(&marked_pixmap);
-	this->ruler->end_moved_to(event->x(), event->y(), painter, Coord::distance(cursor_coord, this->start_coord), -1.0);
+	this->ruler->set_end(event->x(), event->y());
+	this->ruler->paint_ruler(painter, Preferences::get_create_track_tooltip());
 	this->viewport->set_pixmap(marked_pixmap);
 	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();
 
 
-	const QString msg = get_msg(cursor_coord, this->start_coord);
+	const QString msg = ruler->get_msg();
 	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 
 
@@ -274,7 +238,7 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 	qDebug() << SG_PREFIX_D << "called";
 
 	if (event->key() == Qt::Key_Escape) {
-		this->reset_tool();
+		this->reset_ruler();
 		this->deactivate_tool(layer);
 		return ToolStatus::Ack;
 	}
@@ -286,7 +250,7 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 
 
 
-void GenericToolRuler::reset_tool(void)
+void GenericToolRuler::reset_ruler(void)
 {
 	delete this->ruler;
 	this->ruler = NULL;

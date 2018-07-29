@@ -26,11 +26,13 @@
 
 
 #include <QPainter>
+#include <QString>
 
 
 
 
 #include "measurements.h"
+#include "coord.h"
 
 
 
@@ -46,8 +48,18 @@ namespace SlavGPS {
 
 	class Ruler {
 	public:
-		Ruler(Viewport * new_viewport, int begin_x, int begin_y, DistanceUnit new_distance_unit);
-		void end_moved_to(int new_x2, int new_y2, QPainter & painter, double distance1 = -1.0, double distance2 = -1.0);
+		Ruler(Viewport * new_viewport, DistanceUnit new_distance_unit);
+
+		void set_begin(int begin_x, int begin_y);
+		void set_end(int end_x, int end_y);
+		void set_total_distance(double new_total_distance) { this->total_distance = new_total_distance; }
+		void set_line_pen(const QPen & pen) { this->line_pen = pen; }
+
+		void paint_ruler(QPainter & painter, bool paint_tooltips);
+
+		QString get_msg(void) const;
+		double get_angle(void) const { return this->angle; }
+		double get_line_distance(void) const { return this->line_distance; }
 
 	private:
 		void draw_line(QPainter & painter);
@@ -63,16 +75,20 @@ namespace SlavGPS {
 		double c = 0;
 		double s = 0;
 		double angle = 0;
-		double baseangle = 0;
+		double base_angle = 0;
 
 		DistanceUnit distance_unit;
+		double line_distance = 0.0;
+		double total_distance = 0.0;
 
 		Viewport * viewport = NULL;
-		double distance1 = 0.0;
-		double distance2 = 0.0;
 
 		QPen line_pen;
+		QPen compass_pen;
 		QPen arc_pen;
+
+		Coord begin_coord;
+		Coord end_coord;
 	};
 
 
