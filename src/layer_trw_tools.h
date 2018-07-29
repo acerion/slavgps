@@ -107,7 +107,7 @@ namespace SlavGPS {
 
 	class LayerToolTRWNewTrack : public LayerTool {
 	public:
-		LayerToolTRWNewTrack(Window * window, Viewport * viewport);
+		LayerToolTRWNewTrack(Window * window, Viewport * viewport, bool is_route_tool);
 
 		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
@@ -115,23 +115,7 @@ namespace SlavGPS {
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
 
-		LayerTRW * creation_in_progress = NULL;
-		Ruler * ruler = NULL;
-		QPixmap orig_viewport_pixmap;
-		Coord start_coord;
-		ScreenPos start_event_pos;
-	};
-
-	class LayerToolTRWNewRoute : public LayerTool {
-	public:
-		LayerToolTRWNewRoute(Window * window, Viewport * viewport);
-
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
-
+		bool is_route_tool = false;
 		LayerTRW * creation_in_progress = NULL;
 		Ruler * ruler = NULL;
 		QPixmap orig_viewport_pixmap;

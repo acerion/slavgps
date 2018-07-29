@@ -368,10 +368,10 @@ LayerToolContainer * LayerTRWInterface::create_tools(Window * window, Viewport *
 	tool = new LayerToolTRWNewWaypoint(window, viewport);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWNewTrack(window, viewport);
+	tool = new LayerToolTRWNewTrack(window, viewport, false);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWNewRoute(window, viewport);
+	tool = new LayerToolTRWNewTrack(window, viewport, true);
 	tools->insert({{ tool->id_string, tool }});
 
 	tool = new LayerToolTRWExtendedRouteFinder(window, viewport);
@@ -4278,7 +4278,7 @@ void LayerTRW::reset_track_creation_in_progress()
 
 bool LayerTRW::get_route_creation_in_progress() const
 {
-	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
 	return new_route_tool->creation_in_progress == this;
 }
 
@@ -4287,7 +4287,7 @@ bool LayerTRW::get_route_creation_in_progress() const
 
 void LayerTRW::reset_route_creation_in_progress()
 {
-	LayerToolTRWNewRoute * new_route_tool = (LayerToolTRWNewRoute *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
 	if (new_route_tool->creation_in_progress == this) {
 		new_route_tool->creation_in_progress = NULL;
 	}
