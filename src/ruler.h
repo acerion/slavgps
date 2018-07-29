@@ -47,7 +47,7 @@ namespace SlavGPS {
 	class Ruler {
 	public:
 		Ruler(Viewport * new_viewport, int begin_x, int begin_y, DistanceUnit new_distance_unit);
-		void end_moved_to(int new_x2, int new_y2, QPainter & painter, double distance);
+		void end_moved_to(int new_x2, int new_y2, QPainter & painter, double distance1 = -1.0, double distance2 = -1.0);
 
 	private:
 		void draw_line(QPainter & painter);
@@ -68,7 +68,8 @@ namespace SlavGPS {
 		DistanceUnit distance_unit;
 
 		Viewport * viewport = NULL;
-		double distance = 0.0;
+		double distance1 = 0.0;
+		double distance2 = 0.0;
 
 		QPen line_pen;
 		QPen arc_pen;

@@ -233,7 +233,7 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 	   now. */
 	QPixmap marked_pixmap = this->orig_viewport_pixmap;
 	QPainter painter(&marked_pixmap);
-	this->ruler->end_moved_to(event->x(), event->y(), painter, Coord::distance(cursor_coord, this->start_coord));
+	this->ruler->end_moved_to(event->x(), event->y(), painter, Coord::distance(cursor_coord, this->start_coord), -1.0);
 	this->viewport->set_pixmap(marked_pixmap);
 	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();

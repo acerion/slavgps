@@ -67,11 +67,12 @@ Ruler::Ruler(Viewport * new_viewport, int begin_x, int begin_y, DistanceUnit new
 
 
 
-void Ruler::end_moved_to(int new_x2, int new_y2, QPainter & painter, double new_distance)
+void Ruler::end_moved_to(int new_x2, int new_y2, QPainter & painter, double new_distance1, double new_distance2)
 {
 	this->x2 = new_x2;
 	this->y2 = new_y2;
-	this->distance = new_distance;
+	this->distance1 = new_distance1;
+	this->distance2 = new_distance2;
 
 	this->len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	this->dx = (x2 - x1) / len * 10;
@@ -94,7 +95,19 @@ void Ruler::end_moved_to(int new_x2, int new_y2, QPainter & painter, double new_
 void Ruler::draw_line(QPainter & painter)
 {
 	const QString bearing_label = QObject::tr("%1°").arg(RAD2DEG(this->angle), 3, 'f', 2);
-	const QString distance_label = Measurements::get_distance_string_for_ruler(this->distance, this->distance_unit);
+	QString distance_label;
+	if (this->distance1 > -0.5 && this->distance2 > -0.5) {
+		distance_label = QString("%1\n%2")
+			.arg(Measurements::get_distance_string_for_ruler(this->distance1, this->distance_unit))
+			.arg(Measurements::get_distance_string_for_ruler(this->distance2, this->distance_unit));
+	} else if (this->distance1 > -0.5) {
+		distance_label = Measurements::get_distance_string_for_ruler(this->distance1, this->distance_unit);
+	} else if (this->distance2 > -0.5) {
+		distance_label = Measurements::get_distance_string_for_ruler(this->distance2, this->distance_unit);
+	} else {
+		; /* NOOP */
+	}
+
 
 	QPen main_pen;
 	main_pen.setColor(QColor("black"));

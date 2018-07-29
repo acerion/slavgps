@@ -25,8 +25,15 @@
 
 
 
+#include <QPixmap>
+
+
+
+
 #include "layer.h"
 #include "window.h"
+#include "coord.h"
+#include "viewport.h"
 
 
 
@@ -37,6 +44,7 @@ namespace SlavGPS {
 
 
 	class Viewport;
+	class Ruler;
 
 
 
@@ -108,6 +116,10 @@ namespace SlavGPS {
 		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
 
 		LayerTRW * creation_in_progress = NULL;
+		Ruler * ruler = NULL;
+		QPixmap orig_viewport_pixmap;
+		Coord start_coord;
+		ScreenPos start_event_pos;
 	};
 
 	class LayerToolTRWNewRoute : public LayerTool {
@@ -121,6 +133,10 @@ namespace SlavGPS {
 		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
 
 		LayerTRW * creation_in_progress = NULL;
+		Ruler * ruler = NULL;
+		QPixmap orig_viewport_pixmap;
+		Coord start_coord;
+		ScreenPos start_event_pos;
 	};
 
 
