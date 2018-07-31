@@ -66,6 +66,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Viewport"
 #define PREFIX ": Viewport: " << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -1889,7 +1890,7 @@ void Viewport::mouseMoveEvent(QMouseEvent * ev)
 
 void Viewport::mouseReleaseEvent(QMouseEvent * ev)
 {
-	qDebug() << "II: Viewport: mouse release event, button" << (int) ev->button();
+	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
 
 	this->window->get_toolbox()->handle_mouse_release(ev);
 	emit this->button_released(this, ev);

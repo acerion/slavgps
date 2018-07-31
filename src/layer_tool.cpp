@@ -36,6 +36,8 @@
 #include "layer.h"
 #include "layer_tool.h"
 #include "viewport_internal.h"
+#include "window.h"
+#include "layers_panel.h"
 
 
 
@@ -163,4 +165,32 @@ LayerEditInfo::LayerEditInfo()
 {
 	this->pen.setColor(QColor("black"));
 	this->pen.setWidth(2);
+}
+
+
+
+
+bool LayerTool::activate_tool(void)
+{
+	if (this->layer_type == LayerType::Max) {
+		/* Generic tool, does not depend on any layer being selected. */
+		return true;
+	}
+	/* Else: layer specific tool. */
+
+	Layer * layer = this->window->items_tree->get_selected_layer();
+	if (layer) {
+		/* Layer specific tool has a layer that it can operate on. */
+		return true;
+	}
+
+	return false;
+}
+
+
+
+
+bool LayerTool::deactivate_tool(void)
+{
+	return true;
 }

@@ -223,11 +223,13 @@ ToolStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * e
 
 
 
-void GenericToolRuler::deactivate_tool(Layer * layer)
+bool GenericToolRuler::deactivate_tool(void)
 {
 	qDebug() << SG_PREFIX_I << "called";
 
 	this->window->draw_tree_items();
+
+	return true;
 }
 
 
@@ -239,7 +241,7 @@ ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
 
 	if (event->key() == Qt::Key_Escape) {
 		this->reset_ruler();
-		this->deactivate_tool(layer);
+		this->deactivate_tool();
 		return ToolStatus::Ack;
 	}
 
@@ -436,7 +438,7 @@ ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event
 
 ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_release() called";
+	qDebug() << SG_PREFIX_D << "called";
 
 	if (event->button() != Qt::LeftButton && event->button() != Qt::RightButton) {
 		return ToolStatus::Ignored;

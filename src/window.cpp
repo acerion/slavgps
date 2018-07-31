@@ -75,6 +75,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Window"
 #define PREFIX ": Window:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -317,7 +318,7 @@ Window::Window()
 
 
 	/* Set the default tool + mode. */
-	this->toolbox->activate_tool("sg.tool.generic.pan");
+	this->toolbox->activate_tool_by_id("sg.tool.generic.pan");
 	this->qa_drawmode_mercator->setChecked(true);
 
 	/* Set the application icon. */
@@ -1208,7 +1209,9 @@ void Window::create_ui(void)
 				QAction * default_qa = actions.first();
 				default_qa->setChecked(true);
 				default_qa->trigger();
-				this->toolbox->activate_tool(default_qa);
+
+				const QString default_tool_id = default_qa->objectName();
+				this->toolbox->activate_tool_by_id(default_tool_id);
 			}
 		} else {
 			qDebug() << "EE: Window: Create UI: NULL generic tools group";
@@ -1272,23 +1275,16 @@ void Window::create_ui(void)
 void Window::layer_tool_cb(QAction * qa)
 {
 	/* Handle old tool first. */
-	QAction * old_qa = this->toolbox->get_active_tool_action();
-	if (old_qa) {
-		qDebug() << "II: Window: deactivating old tool" << old_qa->objectName();
-		this->toolbox->deactivate_tool(old_qa);
-	} else {
-		/* The only valid situation when it happens is only during start up of application. */
-		qDebug() << "WW: Window: no old action found";
-	}
+	this->toolbox->deactivate_current_tool();
 
 
 	/* Now handle newly selected tool. */
 	if (qa) {
-		this->toolbox->activate_tool(qa);
+		const QString new_tool_id = qa->objectName();
+		qDebug() << SG_PREFIX_I << "setting 'release' cursor for tool" << new_tool_id;
 
-		QString tool_name = qa->objectName();
-		qDebug() << "II: Window: setting 'release' cursor for" << tool_name;
-		this->viewport->setCursor(*this->toolbox->get_cursor_release(tool_name));
+		this->toolbox->activate_tool_by_id(new_tool_id);
+		this->viewport->setCursor(*this->toolbox->get_cursor_release(new_tool_id));
 		this->display_tool_name();
 	}
 }
@@ -1296,10 +1292,10 @@ void Window::layer_tool_cb(QAction * qa)
 
 
 
-void Window::activate_tool(const QString & tool_id)
+void Window::activate_tool_by_id(const QString & tool_id)
 {
 	this->toolbox->deactivate_current_tool();
-	this->toolbox->activate_tool(tool_id);
+	this->toolbox->activate_tool_by_id(tool_id);
 
 	return;
 }

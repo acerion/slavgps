@@ -121,65 +121,7 @@ LayerTool * Toolbox::get_tool(QString const & tool_id)
 
 
 
-void Toolbox::activate_tool(QAction * qa)
-{
-	QString tool_id = qa->objectName();
-	LayerTool * tool = this->get_tool(tool_id);
-	Layer * layer = this->window->items_tree->get_selected_layer();
-#ifdef K_FIXME_RESTORE
-	if (!layer) {
-		return;
-	}
-#endif
-
-	if (!tool) {
-		qDebug() << SG_PREFIX_E << "trying to activate a non-existent tool" << tool_id;
-		return;
-	}
-	/* Is the tool already active? */
-	if (this->active_tool == tool) {
-		assert (this->active_tool_qa == qa);
-		return;
-	}
-
-	if (this->active_tool) {
-		this->active_tool->deactivate_tool(NULL);
-	}
-	qDebug() << SG_PREFIX_I << "activating tool" << tool_id;
-	tool->activate_tool(layer);
-	this->active_tool = tool;
-	this->active_tool_qa = qa;
-}
-
-
-
-
-
-bool Toolbox::deactivate_tool(QAction * qa)
-{
-	QString tool_id = qa->objectName();
-	LayerTool * tool = this->get_tool(tool_id);
-	if (!tool) {
-		qDebug() << SG_PREFIX_E << "trying to deactivate a non-existent tool" << tool_id;
-		return true;
-	}
-
-	qDebug() << SG_PREFIX_I << "deactivating tool" << tool_id;
-
-	assert (this->active_tool);
-
-	tool->deactivate_tool(NULL);
-	qa->setChecked(false);
-
-	this->active_tool = NULL;
-	this->active_tool_qa = NULL;
-	return false;
-}
-
-
-
-
-void Toolbox::activate_tool(const QString & tool_id)
+void Toolbox::activate_tool_by_id(const QString & tool_id)
 {
 	LayerTool * new_tool = this->get_tool(tool_id);
 	if (!new_tool) {
@@ -192,21 +134,16 @@ void Toolbox::activate_tool(const QString & tool_id)
 			/* Don't re-activate the same tool. */
 			return;
 		}
-		this->active_tool->deactivate_tool(NULL);
+		this->active_tool->deactivate_tool();
 	}
 
 	qDebug() << SG_PREFIX_I << "activating tool" << tool_id;
-	Layer * layer = this->window->items_tree->get_selected_layer();
-#ifdef K_FIXME_RESTORE
-	if (!layer) {
-		return;
-	}
-#endif
-	new_tool->activate_tool(layer);
-	this->active_tool = new_tool;
-	this->active_tool_qa = new_tool->qa;
 
-	this->active_tool->qa->setChecked(true);
+	if (new_tool->activate_tool()) {
+		this->active_tool = new_tool;
+		this->active_tool_qa = new_tool->qa;
+		this->active_tool->qa->setChecked(true);
+	}
 
 	return;
 }
@@ -215,7 +152,7 @@ void Toolbox::activate_tool(const QString & tool_id)
 
 
 
-void Toolbox::deactivate_tool(const QString & tool_id)
+void Toolbox::deactivate_tool_by_id(const QString & tool_id)
 {
 	LayerTool * tool = this->get_tool(tool_id);
 	if (!tool) {
@@ -228,8 +165,7 @@ void Toolbox::deactivate_tool(const QString & tool_id)
 		return;
 	}
 
-	Layer * layer = this->window->items_tree->get_selected_layer();
-	tool->deactivate_tool(layer);
+	tool->deactivate_tool();
 	tool->qa->setChecked(false);
 	this->active_tool = NULL;
 	this->active_tool_qa = NULL;
@@ -241,7 +177,9 @@ void Toolbox::deactivate_tool(const QString & tool_id)
 
 void Toolbox::deactivate_current_tool(void)
 {
-	this->deactivate_tool(this->active_tool);
+	if (this->active_tool) {
+		this->deactivate_tool_by_id(this->active_tool->id_string);
+	}
 	this->active_tool = NULL;
 	this->active_tool_qa = NULL;
 }
@@ -255,24 +193,6 @@ const LayerTool * Toolbox::get_current_tool(void) const
 	return this->active_tool;
 }
 
-
-
-
-/**
-   @brief Simple wrapper
-
-   @param tool - tool to deactivate
-*/
-void Toolbox::deactivate_tool(LayerTool * tool)
-{
-	if (!tool) {
-		qDebug() << SG_PREFIX_W << "passed NULL tool to deactivate";
-		return;
-	}
-
-	Layer * layer = this->window->items_tree->get_selected_layer();
-	tool->deactivate_tool(layer);
-}
 
 
 

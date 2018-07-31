@@ -2085,7 +2085,7 @@ void LayerTRW::new_track_cb() /* Slot. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.track", tr("Track")) ;
 		this->new_track_create_common(uniq_name);
 
-		this->get_window()->activate_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_TRACK);
 	}
 }
 
@@ -2122,7 +2122,7 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 		const QString uniq_name = this->new_unique_element_name("sg.trw.route", tr("Route")) ;
 		this->new_route_create_common(uniq_name);
 
-		this->get_window()->activate_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+		this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_CREATE_ROUTE);
 	}
 }
 
@@ -2693,7 +2693,7 @@ void LayerTRW::extend_track_end_cb(void)
 		return;
 	}
 
-	this->get_window()->activate_tool(track->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
+	this->get_window()->activate_tool_by_id(track->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!track->empty()) {
 		Viewport * viewport = g_tree->tree_get_main_viewport();
@@ -2714,7 +2714,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 		return;
 	}
 
-	this->get_window()->activate_tool(LAYER_TRW_TOOL_ROUTE_FINDER);
+	this->get_window()->activate_tool_by_id(LAYER_TRW_TOOL_ROUTE_FINDER);
 
 	this->route_finder_started = true;
 

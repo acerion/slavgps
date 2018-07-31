@@ -79,7 +79,8 @@ namespace SlavGPS {
 		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
-		void deactivate_tool(Layer * layer);
+
+		bool deactivate_tool(void);
 
 	private:
 		void reset_ruler(void);

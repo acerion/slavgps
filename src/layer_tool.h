@@ -110,8 +110,12 @@ namespace SlavGPS {
 		virtual ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::Ignored; }
 		virtual ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::Ignored; }
 		virtual ToolStatus handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::Ignored; }; /* TODO: where do we call this function? */
-		virtual void activate_tool(Layer * layer) { return; };
-		virtual void deactivate_tool(Layer * layer) { return; };
+
+		/* Return true if tool has been successfully activated.
+		   Return false otherwise. */
+		virtual bool activate_tool(void);
+
+		virtual bool deactivate_tool(void);
 
 
 		/* Start holding a layer's item at point x/y.

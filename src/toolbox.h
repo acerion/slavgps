@@ -57,24 +57,20 @@ namespace SlavGPS {
 		const LayerTool * get_current_tool(void) const;
 
 
-		void activate_tool(QAction * qa);
-		bool deactivate_tool(QAction * qa);
-
 		/**
 		   @brief Activate a tool specified by its globally unique ID
 
 		   @param tool_id Tool's globally unique ID
 		*/
-		void activate_tool(const QString & tool_id);
+		void activate_tool_by_id(const QString & tool_id);
 
 		/**
 		   @brief Deactivate a tool specified by its globally unique ID
 
 		   @param tool_id Tool's globally unique ID
 		*/
-		void deactivate_tool(const QString & tool_id);
+		void deactivate_tool_by_id(const QString & tool_id);
 
-		void deactivate_tool(LayerTool * tool);
 		void deactivate_current_tool(void);
 
 
