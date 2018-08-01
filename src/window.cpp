@@ -1833,15 +1833,20 @@ bool vik_window_clear_highlight_cb(Window * window)
 
 
 
-bool Window::clear_highlight()
+bool Window::clear_highlight(void)
 {
 	bool need_redraw = false;
-	if (g_tree->selected_tree_item) {
-		if (g_tree->selected_tree_item->tree_item_type == TreeItemType::LAYER) {
-			need_redraw |= ((Layer *) g_tree->selected_tree_item)->clear_highlight();
+
+	for (auto iter = g_tree->selected_tree_items.begin(); iter != g_tree->selected_tree_items.end(); ++iter) {
+		TreeItem * tree_item = iter->second;
+		if (tree_item->tree_item_type == TreeItemType::LAYER) {
+			need_redraw |= ((Layer *) tree_item)->clear_highlight();
 		}
-		g_tree->selected_tree_item = NULL;
 	}
+
+	/* Clearing highlight means that there are no selected items. */
+	g_tree->selected_tree_items.clear();
+
 	return need_redraw;
 }
 

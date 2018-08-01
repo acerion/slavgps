@@ -69,9 +69,11 @@ namespace SlavGPS {
 
 	class TreeItem : public QObject {
 		Q_OBJECT
+
+		friend class Tree;
 	public:
 		TreeItem();
-		~TreeItem() {};
+		~TreeItem();
 
 
 		/* Which standard operations shall be present in context menu for a tree item? */

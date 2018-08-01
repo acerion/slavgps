@@ -330,7 +330,6 @@ QCursor const * Toolbox::get_cursor_release(QString const & tool_id)
 		return;							\
 	}								\
 									\
-	qDebug() << SG_PREFIX_I << "selected layer is named" << layer->debug_string; \
 									\
 	LayerType layer_tool_type = this->active_tool->layer_type;	\
 	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */	\
@@ -339,8 +338,8 @@ QCursor const * Toolbox::get_cursor_release(QString const & tool_id)
 		qDebug() << SG_PREFIX_E << "layer type does not match";	\
 		return;							\
 	}								\
-									\
-	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
+
+
 
 
 
@@ -348,6 +347,8 @@ QCursor const * Toolbox::get_cursor_release(QString const & tool_id)
 void Toolbox::handle_mouse_click(QMouseEvent * event)
 {
 	handle_mouse_event_common();
+
+	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
 	this->active_tool->handle_mouse_click(layer, event);
@@ -390,6 +391,8 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 void Toolbox::handle_mouse_release(QMouseEvent * event)
 {
 	handle_mouse_event_common();
+
+	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release); /* TODO: move this into release() method. */
 	this->active_tool->handle_mouse_release(layer, event);

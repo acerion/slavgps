@@ -130,6 +130,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer TRW"
 #define PREFIX ": Layer TRW:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -1235,7 +1236,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		return;
 	}
 
-	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
+	const bool item_is_selected = parent_is_selected || g_tree->is_in_selected(this);
 
 	/* This will copy viewport's parameters (size, coords, etc.)
 	   to painter, so that painter knows whether, what and how to
@@ -2559,7 +2560,7 @@ void LayerTRW::delete_all_routes()
 	   set to this item or any of its children, or to anything
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
-	g_tree->selected_tree_item = NULL;
+	g_tree->selected_tree_items.clear();
 
 	this->routes.clear();
 
@@ -2587,7 +2588,7 @@ void LayerTRW::delete_all_tracks()
 	   set to this item or any of its children, or to anything
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
-	g_tree->selected_tree_item = NULL;
+	g_tree->selected_tree_items.clear();
 
 	this->tracks.clear();
 
@@ -2614,7 +2615,7 @@ void LayerTRW::delete_all_waypoints()
 	   set to this item or any of its children, or to anything
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
-	g_tree->selected_tree_item = NULL;
+	g_tree->selected_tree_items.clear();
 
 	this->waypoints.clear();
 
@@ -4131,14 +4132,15 @@ void LayerTRW::set_coord_mode(CoordMode new_mode)
 
 
 
-bool LayerTRW::handle_selection_in_tree()
+bool LayerTRW::handle_selection_in_tree(void)
 {
-	qDebug() << "II: LayerTRW: handle selection in tree: top";
+	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
 
 	this->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
 	/* Set info about current selection. */
-	g_tree->selected_tree_item = this;
+
+	g_tree->add_to_selected(this);
 
 	/* Set highlight thickness. */
 	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_track_thickness());

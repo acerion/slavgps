@@ -28,11 +28,17 @@
 
 
 #include "tree_item.h"
+#include "tree_view.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+extern Tree * g_tree;
 
 
 
@@ -49,6 +55,14 @@ TreeItem::TreeItem()
 	++g_uid_counter;
 	this->uid = g_uid_counter;
 	g_uid_counter_mutex.unlock();
+}
+
+
+
+
+TreeItem::~TreeItem()
+{
+	g_tree->remove_from_selected(this);
 }
 
 

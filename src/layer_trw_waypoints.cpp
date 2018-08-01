@@ -57,6 +57,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer TRW Waypoints"
 #define PREFIX ": Layer TRW Waypoints:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -751,7 +752,8 @@ bool LayerTRWWaypoints::handle_selection_in_tree(void)
 	//parent_layer->set_statusbar_msg_info_trk(this);
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
-	g_tree->selected_tree_item = this;
+	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
+	g_tree->add_to_selected(this);
 
 	return true;
 }
@@ -780,12 +782,22 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 		return;
 	}
 
-	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
+	if (1) {
+		if (g_tree->is_in_selected(this)) {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
+		} else if (parent_is_selected) {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
+		} else {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as non-selected";
+		}
+	}
+
+	const bool item_is_selected = parent_is_selected || g_tree->is_in_selected(this);
 	const LatLonBBox viewport_bbox = viewport->get_bbox();
 
 	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-			qDebug() << "II: Layer TRW Waypoints: draw tree item" << (*iter)->type_id << (*iter)->name;
+			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->type_id << (*iter)->name;
 			(*iter)->draw_tree_item(viewport, highlight_selected, item_is_selected);
 		}
 	}

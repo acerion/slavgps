@@ -24,6 +24,7 @@
 
 
 #include <cstdint>
+#include <map>
 
 #include <QStandardItem>
 #include <QPersistentModelIndex>
@@ -92,18 +93,24 @@ namespace SlavGPS {
 		LayersPanel * tree_get_items_tree() { return this->items_tree; };
 		Viewport * tree_get_main_viewport() { return this->viewport; };
 
+		void add_to_selected(TreeItem * tree_item);
+		bool remove_from_selected(const TreeItem * tree_item);
+		bool is_in_selected(const TreeItem * tree_item) const;
+
 		TreeView * tree_view = NULL; /* Reference. */
 		Window * window = NULL;
 		LayersPanel * items_tree = NULL;
 		Viewport * viewport = NULL;
 
 		/* Set in TreeItem::handle_selection_in_tree(). Used to draw selected tree items with highlight in viewport. */
-		TreeItem * selected_tree_item = NULL;
+		std::map<sg_uid_t, TreeItem *> selected_tree_items;
 
 		void emit_items_tree_updated(void) { emit this->items_tree_updated(); };
 
 	signals:
 		void items_tree_updated(void);
+
+
 	};
 
 

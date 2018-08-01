@@ -92,13 +92,12 @@ static bool tool_sync_done = true; /* TODO: get rid of this global variable. */
 
 
 
-void LayerTool::perform_selection(const ScreenPos & screen_pos)
+void LayerTool::remember_selection(const ScreenPos & screen_pos)
 {
 	assert (this->layer_edit_info);
 
 	/* We have clicked on an item, and we are holding it.
 	   We will hold it during move, until we release it. */
-	qDebug() << "----------------------------" << __FUNCTION__ << "holding = true";
 	this->layer_edit_info->holding = true;
 
 	/* We have just clicked the item, we aren't moving the cursor yet. */

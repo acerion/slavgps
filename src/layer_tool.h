@@ -122,7 +122,7 @@ namespace SlavGPS {
 		   You want to call this method in response to click event of a tool, when some item of a layer has been selected.
 		   The generic Layer Tool itself doesn't actually select any selections
 		   inside of a layer, but it still does some useful, generic stuff. */
-		void perform_selection(const ScreenPos & screen_pos);
+		void remember_selection(const ScreenPos & screen_pos);
 
 		/* Selected item belonging to a layer is being moved to new position x/y.
 		   Call this method only when there is an item (in a layer) that is selected. */

@@ -222,15 +222,15 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, LayerTool * tool)
 {
 	if (ev->button() != Qt::LeftButton) {
-		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_I << "Skipping non-left button";
 		return false;
 	}
 	if (this->type != LayerType::TRW) {
-		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_E << "Skipping non-TRW layer";
 		return false;
 	}
 	if (!this->tracks.visible && !this->waypoints.visible && !this->routes.visible) {
-		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_D << "Skipping - all sublayers are invisible";
 		return false;
 	}
 
@@ -239,38 +239,43 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
 	if (this->waypoints.visible && BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox)) {
-		qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_I << "Waypoints present in viewport, trying to catch waypoint";
 		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->painter->draw_wp_images);
 		this->waypoints.search_closest_wp(&wp_search);
 
 		if (wp_search.closest_wp) {
-			qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
+
+			qDebug() << SG_PREFIX_I << "Selection process found waypoint" << wp_search.closest_wp->name;
+
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
 			tool->layer_edit_info->edited_layer = this;
 			tool->layer_edit_info->type_id = wp_search.closest_wp->type_id;
 
 			if (ev->type() == QEvent::MouseButtonDblClick
 			    /* flags() & Qt::MouseEventCreatedDoubleClick */) {
-				qDebug() << "DD: Layer TRW: double" << __FUNCTION__ << __LINE__;
+				qDebug() << SG_PREFIX_D << "Selected waypoint through double click";
 				this->handle_select_tool_double_click_do_waypoint_selection(ev, tool, wp_search.closest_wp);
 			} else {
-				qDebug() << "DD: Layer TRW: single" << __FUNCTION__ << __LINE__;
+				qDebug() << SG_PREFIX_D << "Selected waypoint through single click";
 				this->handle_select_tool_click_do_waypoint_selection(ev, tool, wp_search.closest_wp);
 			}
 
-			qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
-			this->emit_layer_changed("TRW - handle select tool click");
+			this->emit_layer_changed("Waypoint has been selected with select tool click");
 			return true;
 		}
 	}
-	qDebug() << "DD: Layer TRW:" << __FUNCTION__ << __LINE__;
+	qDebug() << SG_PREFIX_D << "No waypoint found, will look for tracks";
 
 	/* Used for both track and route lists. */
 	TrackpointSearch tp_search(ev->x(), ev->y(), viewport);
 
 	if (this->tracks.visible && BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox)) {
+		qDebug() << SG_PREFIX_I << "Tracks present in viewport, trying to catch track";
 		this->tracks.track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
+
+			qDebug() << SG_PREFIX_I << "Selection process found track" << tp_search.closest_track->name;
+
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
 			tool->layer_edit_info->edited_layer = this;
 			tool->layer_edit_info->type_id = tp_search.closest_track->type_id;
@@ -281,15 +286,21 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 				this->tpwin_update_dialog_data();
 			}
 
-			this->emit_layer_changed("TRW - handle select tool click - tracks");
+			this->emit_layer_changed("Track has been selected with select tool click");
 			return true;
 		}
 	}
+	qDebug() << SG_PREFIX_D << "No track found, will look for routes";
+
 
 	/* Try again for routes. */
 	if (this->routes.visible && BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox)) {
+		qDebug() << SG_PREFIX_I << "Routes present in viewport, trying to catch route";
 		this->routes.track_search_closest_tp(&tp_search);
 		if (tp_search.closest_tp) {
+
+			qDebug() << SG_PREFIX_I << "Selection process found route" << tp_search.closest_track->name;
+
 			/* We have found a Trackpoint. Select Tool needs to know to which layer it belongs to. */
 			tool->layer_edit_info->edited_layer = this;
 			tool->layer_edit_info->type_id = tp_search.closest_track->type_id;
@@ -300,7 +311,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 				this->tpwin_update_dialog_data();
 			}
 
-			this->emit_layer_changed("TRW - handle select tool click - routes");
+			this->emit_layer_changed("Route has been selected with select tool click");
 			return true;
 		}
 	}
@@ -353,10 +364,13 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 	    || (current_selected_track && current_selected_track->selected_tp_iter.iter == tp_iter)) {
 
 		/* Remember position at which selection occurred. */
-		tool->perform_selection(ScreenPos(ev->x(), ev->y()));
+		tool->remember_selection(ScreenPos(ev->x(), ev->y()));
 	}
 
 	this->set_edited_track(track, tp_iter);
+	if (track) {
+		track->handle_selection_in_tree();
+	}
 
 	this->set_statusbar_msg_info_tp(tp_iter, track);
 }
@@ -378,10 +392,12 @@ void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, 
 	    || (this->get_edited_wp() == wp && this->get_edited_wp()->image_full_path.isEmpty())) {
 
 		/* Remember position at which selection occurred. */
-		tool->perform_selection(ScreenPos(ev->x(), ev->y()));
+		tool->remember_selection(ScreenPos(ev->x(), ev->y()));
 	}
 
-	this->set_edited_wp(wp);
+	if (wp) {
+		wp->handle_selection_in_tree();
+	}
 }
 
 
@@ -392,19 +408,20 @@ void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, 
 */
 void LayerTRW::handle_select_tool_double_click_do_waypoint_selection(QMouseEvent * ev, LayerTool * tool, Waypoint * wp)
 {
+	/* Even if we don't show image, the waypoint still needs to be selected. */
 	this->handle_select_tool_click_do_waypoint_selection(ev, tool, wp);
 
-	qDebug() << "DD: Layer TRW: handle double wp:" << (long) wp << __FUNCTION__ << __LINE__;
-
-	if (wp) {
-		qDebug() << "DD: Layer TRW: handle double wp:" << (long) wp << wp->image_full_path.isEmpty() << __FUNCTION__ << __LINE__;
+	if (!wp) {
+		return;
 	}
 
-
-	if (wp && !wp->image_full_path.isEmpty()) {
-		qDebug() << "DD: Layer TRW: call call back" << __FUNCTION__ << __LINE__;
-		this->show_wp_picture_cb();
+	if (wp->image_full_path.isEmpty()) {
+		qDebug() << SG_PREFIX_D << "Waypoint named" << wp->name << "has empty image path, ignoring double click";
+		return;
 	}
+
+	qDebug() << SG_PREFIX_D << "Will call 'show wp picture' callback";
+	this->show_wp_picture_cb();
 }
 
 
@@ -516,7 +533,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 			/* A waypoint has been selected in some way
 			   (e.g. by selecting it in items tree), and
 			   now it is also selected by this tool. */
-			this->perform_selection(event_pos);
+			this->remember_selection(event_pos);
 
 			/* Global "edited waypoint" now became tool's edited waypoint. */
 			our_waypoint = current_wp;
@@ -547,7 +564,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 			/* Could make it so don't update if old WP is off screen and new is null but oh well. */
 			trw->emit_layer_changed("TRW - edit waypoint - click");
 
-			this->perform_selection(ScreenPos(ev->x(), ev->y()));
+			this->remember_selection(ScreenPos(ev->x(), ev->y()));
 
 		        our_waypoint = wp_search.closest_wp;
 		}
@@ -1285,7 +1302,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
 		if (track->visible && ScreenPos::is_close_enough(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
-			this->perform_selection(event_pos);
+			this->remember_selection(event_pos);
 			return ToolStatus::Ack;
 		}
 

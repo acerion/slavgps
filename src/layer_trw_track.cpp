@@ -78,6 +78,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer TRW Track"
 #define PREFIX ": Layer TRW Track:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -3358,7 +3359,8 @@ bool Track::handle_selection_in_tree(void)
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 	parent_layer->set_edited_track(this); /* But this tree item is selected. */
 
-	g_tree->selected_tree_item = this;
+	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
+	g_tree->add_to_selected(this);
 
 	return true;
 }
@@ -3377,8 +3379,17 @@ void Track::draw_tree_item(Viewport * viewport, bool highlight_selected, bool pa
 		return;
 	}
 
-	const bool item_is_selected = parent_is_selected || TreeItem::the_same_object(g_tree->selected_tree_item, this);
+	if (1) {
+		if (g_tree->is_in_selected(this)) {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
+		} else if (parent_is_selected) {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
+		} else {
+			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as non-selected";
+		}
+	}
 
+	const bool item_is_selected = parent_is_selected || g_tree->is_in_selected(this);
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	parent_layer->painter->draw_track(this, viewport, item_is_selected && highlight_selected);
 }

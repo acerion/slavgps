@@ -1159,3 +1159,36 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 	return false;
 }
+
+
+
+
+void Tree::add_to_selected(TreeItem * tree_item)
+{
+	this->selected_tree_items.insert(std::pair<sg_uid_t, TreeItem *>(tree_item->uid, tree_item));
+}
+
+
+
+
+bool Tree::remove_from_selected(const TreeItem * tree_item)
+{
+	if (!tree_item) {
+		return 0;
+	}
+
+	/* erase() returns number of removed items. */
+	return 0 != this->selected_tree_items.erase(tree_item->uid);
+}
+
+
+
+
+bool Tree::is_in_selected(const TreeItem * tree_item) const
+{
+	if (!tree_item) {
+		return false;
+	}
+
+	return this->selected_tree_items.end() != this->selected_tree_items.find(tree_item->uid);
+}
