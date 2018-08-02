@@ -508,6 +508,9 @@ bool DEM::read_other(const QString & full_path)
 	/* TODO: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
 
 	this->n_columns = 0;
+	/* Use the two variables to record state for ->parse_block(). */
+	int32_t cur_column = -1;
+	int32_t cur_row = -1;
 
 	/* Column -- Data */
 	while (!feof(f)) {
@@ -515,10 +518,6 @@ bool DEM::read_other(const QString & full_path)
 		buffer[fread(buffer, 1, DEM_BLOCK_SIZE, f)] = '\0';
 
 		fix_exponentiation(buffer);
-
-		/* Use the two variables to record state for ->parse_block(). */
-		int32_t cur_column = -1;
-		int32_t cur_row = -1;
 
 		this->parse_block(buffer, &cur_column, &cur_row);
 	}

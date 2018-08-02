@@ -1165,6 +1165,11 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 void Tree::add_to_selected(TreeItem * tree_item)
 {
+	/* At this moment we support selection of only one item at a
+	   time. So if anyone selects a new item, all other (old) selected
+	   items must be forgotten. */
+	this->selected_tree_items.clear();
+
 	this->selected_tree_items.insert(std::pair<sg_uid_t, TreeItem *>(tree_item->uid, tree_item));
 }
 
