@@ -37,6 +37,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "DateTime Dialog"
+
+
+
+
 /**
    @title: title to use for the dialog
    @initial_timestamp: the initial date/time to be shown in dialog
@@ -85,12 +90,11 @@ SGDateTimeDialog::SGDateTimeDialog(QDateTime const & date_time, bool show_clock,
 {
 	this->vbox = new QVBoxLayout;
 	this->calendar = new QCalendarWidget(this);
-	this->calendar->setSelectedDate(date_time.date());
 	if (show_clock) {
 		this->clock = new QTimeEdit(this);
-		this->clock->setTime(date_time.time());
 		this->clock->setDisplayFormat(QString("h:mm:ss t"));
 	}
+	this->set_date_time(date_time);
 
 	this->button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -118,17 +122,46 @@ SGDateTimeDialog::~SGDateTimeDialog()
 
 
 
-time_t SGDateTimeDialog::get_timestamp()
+time_t SGDateTimeDialog::get_timestamp(void) const
 {
 	QDateTime date_time;
 	date_time.setDate(this->calendar->selectedDate());
+	qDebug() << SG_PREFIX_D << "Extracted date timestamp:" << date_time << date_time.toTime_t();
+
 	if (this->clock) {
 		date_time.setTime(this->clock->time());
 	}
-
-	qDebug() << "DD: Date Time Dialog: get timestamp:" << date_time << date_time.toTime_t();
+	qDebug() << SG_PREFIX_D << "Extracted combined timestamp:" << date_time << date_time.toTime_t();
 
 	return date_time.toTime_t();
+}
+
+
+
+
+QDateTime SGDateTimeDialog::get_date_time(void) const
+{
+	QDateTime date_time;
+	date_time.setDate(this->calendar->selectedDate());
+	qDebug() << SG_PREFIX_D << "Extracted date:" << date_time;
+
+	if (this->clock) {
+		date_time.setTime(this->clock->time());
+	}
+	qDebug() << SG_PREFIX_D << "Extracted combined date+time:" << date_time;
+
+	return date_time;
+}
+
+
+
+
+void SGDateTimeDialog::set_date_time(const QDateTime & date_time)
+{
+	this->calendar->setSelectedDate(date_time.date());
+	if (this->clock) {
+		this->clock->setTime(date_time.time());
+	}
 }
 
 
@@ -143,7 +176,6 @@ SGDateTimeButton::SGDateTimeButton(QWidget * parent_widget) : QPushButton(parent
 	this->dialog->setWindowTitle(tr("Edit Date/Time"));
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
 }
-
 
 
 
@@ -170,13 +202,17 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 {
 	qDebug() << "SLOT: Date Time Dialog: 'Open Dialog' slot";
 
+	/* Make sure that the dialog shows the correct date/time - the
+	   value that was last retrieved from the date time dialog. */
+	dialog->set_date_time(QDateTime::fromTime_t(this->timestamp));
+
 	int dialog_code = dialog->exec();
 
 	if (dialog_code == QDialog::Accepted) {
 		this->timestamp = this->dialog->get_timestamp();
 		qDebug() << "II: DateTime: returning timestamp" << this->timestamp;
 
-		qDebug() << "SIGNAL: Date Time Dialog: will emit 'Value is Set' signal" << this->timestamp;
+		qDebug() << "SIGNAL: Date Time Dialog: will emit 'Value is Set' signal for timestamp" << this->timestamp;
 		emit this->value_is_set(this->timestamp);
 	} else {
 		qDebug() << "II: DateTime: returning zero";
@@ -266,10 +302,9 @@ void SGDateTimeButton::clear_time_cb(void)
 
 
 
-/* TODO: perhaps "format" should be a member of this class, passed to constructor. */
-void SGDateTimeButton::set_label(time_t timestamp_value, Qt::DateFormat format, const Coord & coord, const QTimeZone * tz)
+void SGDateTimeButton::set_label(time_t timestamp_value, const Coord & coord, const QTimeZone * tz)
 {
-	const QString msg = SGUtils::get_time_string(timestamp_value, format, coord, tz);
+	const QString msg = SGUtils::get_time_string(timestamp_value, this->date_time_format, coord, tz);
 
 	this->setText(msg);
 	this->setIcon(QIcon()); /* Invalid/null button icon will indicate that a timestamp is set, and is displayed as button label. */

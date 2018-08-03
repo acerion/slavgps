@@ -59,7 +59,10 @@ namespace SlavGPS {
 	public:
 		SGDateTimeDialog(QDateTime const & date_time, bool show_clock, QWidget * parent = NULL);
 		~SGDateTimeDialog();
-		time_t get_timestamp();
+		time_t get_timestamp(void) const;
+
+		void set_date_time(QDateTime const & date_time);
+		QDateTime get_date_time(void) const;
 
 	private:
 		QVBoxLayout * vbox = NULL;
@@ -79,8 +82,10 @@ namespace SlavGPS {
 		~SGDateTimeButton();
 		time_t get_value(void);
 
-		void set_label(time_t timestamp_value, Qt::DateFormat format, const Coord & coord, const QTimeZone * tz);
+		void set_label(time_t timestamp_value, const Coord & coord, const QTimeZone * tz);
 		void clear_label(void);
+
+		void set_date_time_format(Qt::DateFormat format);
 
 	protected:
 		/* Reimplemented from QAbstractButton */
@@ -94,6 +99,8 @@ namespace SlavGPS {
 	private:
 		SGDateTimeDialog * dialog = NULL;
 		time_t timestamp = 0;
+
+		Qt::DateFormat date_time_format = Qt::ISODate;
 
 	signals:
 		void value_is_set(time_t timestamp);

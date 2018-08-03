@@ -74,7 +74,7 @@ SGTimestampWidget::SGTimestampWidget(QWidget * parent)
 void SGTimestampWidget::set_timestamp(time_t timestamp, const Coord & coord)
 {
 	this->timestamp_entry->setValue(timestamp);
-	this->timestamp_button->set_label(timestamp, Qt::TextDate, coord, NULL);
+	this->timestamp_button->set_label(timestamp, coord, NULL);
 }
 
 
@@ -103,7 +103,7 @@ void SGTimestampWidget::on_timestamp_entry_value_set_cb(void)
 	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << new_value;
 
 	Coord coord;
-	this->timestamp_button->set_label(new_value, Qt::TextDate, coord /* FIXME: &tp->coord */, NULL);
+	this->timestamp_button->set_label(new_value, coord /* FIXME: &tp->coord */, NULL);
 }
 
 
