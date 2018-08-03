@@ -632,7 +632,7 @@ void LayerGeoref::export_params_cb(void)
    Based on simple file name conventions.
    Only attempted if the preference is on.
 */
-static void maybe_read_world_file(SGFileEntry * file_entry, void * user_data)
+static void maybe_read_world_file(FileSelector * file_entry, void * user_data)
 {
 	if (!user_data) {
 		return;
@@ -863,7 +863,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	int row = 0;
 
-	this->map_image_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::IMAGE, tr("Select image file"), this->layer->get_window());
+	this->map_image_file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, FileSelector::FileTypeFilter::Image, tr("Select image file"), this->layer->get_window());
 #ifdef K_OLD_IMPLEMENTATION
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
@@ -871,7 +871,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->grid->addWidget(this->map_image_file_entry, row, 1);
 	row++;
 
-	this->world_file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::ANY, tr("Select world file"), this->layer->get_window());
+	this->world_file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, FileSelector::FileTypeFilter::Any, tr("Select world file"), this->layer->get_window());
 	this->grid->addWidget(new QLabel(tr("World File Parameters:")), row, 0);
 	this->grid->addWidget(this->world_file_entry, row, 1);
 	row++;

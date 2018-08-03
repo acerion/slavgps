@@ -36,6 +36,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Babel Dialog"
+
+
+
+
 /* The last file format selected. */
 static int g_last_file_type_index = 0;
 
@@ -257,10 +262,10 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 
 	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
-		this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::AnyFile, SGFileTypeFilter::ANY, tr("Select Target File File for Export"), NULL);
+		this->file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, FileSelector::FileTypeFilter::Any, tr("Select Target File File for Export"), NULL);
 		this->file_entry->set_accept_mode(QFileDialog::AcceptSave);
 	} else {
-		this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, SGFileTypeFilter::ANY, tr("Select File to Import"), NULL);
+		this->file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, FileSelector::FileTypeFilter::Any, tr("Select File to Import"), NULL);
 	}
 	this->grid->addWidget(this->file_entry, 1, 0);
 
@@ -346,23 +351,19 @@ void BabelDialog::file_type_changed_cb(int index)
 	/* Update file type filters in file selection dialog according
 	   to currently selected babel file type. */
 	QStringList filters;
-	QString selected;
-
-	filters << tr("All files (*)");
 
 	BabelFileType * selection = this->get_file_type_selection();
 	if (selection) {
 		if (!selection->extension.isEmpty()) {
-			selected = selection->label + " (*." + selection->extension + ")";
-			qDebug() << "II: Babel Dialog: using" << selected << "as selected file filter";
+			const QString selected = selection->label + " (*." + selection->extension + ")";
+			qDebug() << SG_PREFIX_I << "using" << selected << "as selected file filter";
 			filters << selected;
 		}
 	}
 
+	filters << tr("All files (*)");
+
 	this->file_entry->set_name_filters(filters);
-	if (!selected.isEmpty()) {
-		this->file_entry->select_name_filter(selected);
-	}
 }
 
 

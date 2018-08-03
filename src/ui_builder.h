@@ -74,7 +74,7 @@ namespace SlavGPS {
 		SpinBoxInt,     /* SGVariantType::Int */
 		Entry,
 		Password,
-		FileEntry,
+		FileSelector,
 		FolderEntry,
 		HScale,         /* SGVariantType::Double or SGVariantType::Int */
 		Color,

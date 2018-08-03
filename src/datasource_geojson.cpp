@@ -41,8 +41,7 @@ using namespace SlavGPS;
 static QUrl g_last_directory_url;
 
 /* The last used file filter. */
-/* TODO: verify how this overlaps with babel_dialog.cpp:g_last_file_type_index. */
-// static QString g_last_filter;
+static QString g_last_filter;
 
 
 
@@ -76,11 +75,7 @@ int DataSourceGeoJSON::run_config_dialog(AcquireProcess * acquire_context)
 	if (answer == QDialog::Accepted) {
 		this->selected_files = dialog->file_entry->get_selected_files_full_paths();
 		g_last_directory_url = dialog->file_entry->get_directory_url();
-
-#ifdef K_TODO
-		/* TODO Memorize the file filter for later reuse? */
 		g_last_filter = dialog->file_entry->get_selected_name_filter();
-#endif
 	}
 
 	this->config_dialog = dialog;
@@ -95,22 +90,15 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) :
 {
 	/* QFileDialog::ExistingFiles: allow selecting more than one.
 	   By default the file selector is created with AcceptMode::AcceptOpen. */
-	this->file_entry = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFiles, SGFileTypeFilter::ANY, tr("Select File to Import"), NULL);
+	this->file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFiles, FileSelector::FileTypeFilter::GeoJSON, tr("Select File to Import"), NULL);
 
 	if (g_last_directory_url.isValid()) {
 		this->file_entry->set_directory_url(g_last_directory_url);
 	}
-#ifdef K_TODO
+
 	if (!g_last_filter.isEmpty()) {
 		this->file_entry->select_name_filter(g_last_filter);
 	}
-#endif
-
-	const QString filter1 = QObject::tr("GeoJSON (*.geojson)");
-	const QString filter2 = QObject::tr("All (*)");
-	const QStringList filters = { filter1, filter2 };
-	this->file_entry->set_name_filters(filters);
-	this->file_entry->select_name_filter(filter1); /* Default to geojson. */
 
 	this->setMinimumWidth(DIALOG_MIN_WIDTH);
 

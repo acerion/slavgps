@@ -46,14 +46,14 @@ using namespace SlavGPS;
 
 
 
-SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
+FileSelector::FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, FileTypeFilter new_file_type_filter, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
 {
 	this->file_dialog = new QFileDialog();
 	this->file_dialog->setFileMode(mode);
 	this->file_dialog->setOptions(options);
 	this->file_dialog->setWindowTitle(title);
 
-	this->add_file_type_filters(file_type_filter);
+	this->add_file_type_filters(new_file_type_filter);
 
 	this->line = new QLineEdit(this);
 	this->browse = new QPushButton("Browse", this);
@@ -79,43 +79,53 @@ SGFileEntry::SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::Fil
 
 
 
-SGFileEntry::~SGFileEntry()
+FileSelector::~FileSelector()
 {
 }
 
 
 
 
-void SGFileEntry::add_file_type_filters(SGFileTypeFilter file_type_filter)
+void FileSelector::add_file_type_filters(FileTypeFilter new_file_type_filter)
 {
 	/* Always have an catch all filter at the end. */
 
+	this->file_type_filter = new_file_type_filter;
+
 	QStringList mime;
 
-	switch (file_type_filter) {
-	case SGFileTypeFilter::IMAGE: {
+	switch (this->file_type_filter) {
+	case FileTypeFilter::Image:
 		mime << "image/jpeg";
 		mime << "image/png";
 		mime << "image/tiff";
 		mime << "application/octet-stream"; /* "All files (*)" */
-
 		break;
-	}
-	case SGFileTypeFilter::MBTILES: {
+
+	case FileTypeFilter::MBTILES:
 		mime << tr("MBTiles (*.sqlite, *.mbtiles, *.db3)");
 		mime << tr("All files (*)");
 		break;
-	}
-	case SGFileTypeFilter::XML: {
+
+	case FileTypeFilter::XML:
 		mime << tr("XML (*.xml)");
 		mime << tr("All files (*)");
 		break;
-	}
-	case SGFileTypeFilter::CARTO: {
+
+	case FileTypeFilter::Carto:
 		mime << tr("MML (.*.mml)");
 		mime << tr("All files (*)");
 		break;
-	}
+
+	case FileTypeFilter::JPEG:
+		mime << "image/jpeg";
+		mime << "application/octet-stream"; /* "All files (*)" */
+		break;
+
+	case FileTypeFilter::GeoJSON:
+		mime << tr("GeoJSON (*.geojson)");
+		mime << tr("All files (*)");
+
 	default:
 		mime << tr("All files (*)");
 		break;
@@ -127,7 +137,7 @@ void SGFileEntry::add_file_type_filters(SGFileTypeFilter file_type_filter)
 
 
 
-void SGFileEntry::open_browser_cb(void) /* Slot. */
+void FileSelector::open_browser_cb(void) /* Slot. */
 {
 
 	if (this->file_dialog->exec()) {
@@ -141,7 +151,7 @@ void SGFileEntry::open_browser_cb(void) /* Slot. */
 
 
 
-void SGFileEntry::preselect_file_full_path(const QString & filename)
+void FileSelector::preselect_file_full_path(const QString & filename)
 {
 	this->current_file_full_path = filename;
 	if (this->file_dialog) {
@@ -153,7 +163,7 @@ void SGFileEntry::preselect_file_full_path(const QString & filename)
 
 
 
-QString SGFileEntry::get_selected_file_full_path(void) const
+QString FileSelector::get_selected_file_full_path(void) const
 {
 	QStringList selection = this->file_dialog->selectedFiles();
 	static QString empty("");
@@ -170,7 +180,7 @@ QString SGFileEntry::get_selected_file_full_path(void) const
 
 
 
-QStringList SGFileEntry::get_selected_files_full_paths(void) const
+QStringList FileSelector::get_selected_files_full_paths(void) const
 {
 	return this->file_dialog->selectedFiles();
 }
@@ -178,7 +188,7 @@ QStringList SGFileEntry::get_selected_files_full_paths(void) const
 
 
 
-QUrl SGFileEntry::get_directory_url(void) const
+QUrl FileSelector::get_directory_url(void) const
 {
 	return this->file_dialog->directoryUrl();
 }
@@ -186,7 +196,7 @@ QUrl SGFileEntry::get_directory_url(void) const
 
 
 
-void SGFileEntry::set_directory_url(const QUrl & dir_url)
+void FileSelector::set_directory_url(const QUrl & dir_url)
 {
 	this->file_dialog->setDirectoryUrl(dir_url);
 }
@@ -194,7 +204,7 @@ void SGFileEntry::set_directory_url(const QUrl & dir_url)
 
 
 
-void SGFileEntry::set_name_filters(const QStringList & name_filters)
+void FileSelector::set_name_filters(const QStringList & name_filters)
 {
 	this->file_dialog->setNameFilters(name_filters);
 }
@@ -202,7 +212,7 @@ void SGFileEntry::set_name_filters(const QStringList & name_filters)
 
 
 
-void SGFileEntry::select_name_filter(const QString & name_filter)
+void FileSelector::select_name_filter(const QString & name_filter)
 {
 	this->file_dialog->selectNameFilter(name_filter);
 }
@@ -210,7 +220,7 @@ void SGFileEntry::select_name_filter(const QString & name_filter)
 
 
 
-QString SGFileEntry::get_selected_name_filter(void) const
+QString FileSelector::get_selected_name_filter(void) const
 {
 	return this->file_dialog->selectedNameFilter();
 }
@@ -218,7 +228,7 @@ QString SGFileEntry::get_selected_name_filter(void) const
 
 
 
-void SGFileEntry::set_accept_mode(QFileDialog::AcceptMode accept_mode)
+void FileSelector::set_accept_mode(QFileDialog::AcceptMode accept_mode)
 {
 	this->file_dialog->setAcceptMode(accept_mode);
 }

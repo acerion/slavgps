@@ -41,16 +41,23 @@ namespace SlavGPS {
 
 
 
-	enum class SGFileTypeFilter;
-
-
-
-
-	class SGFileEntry : public QWidget {
+	class FileSelector : public QWidget {
 		Q_OBJECT
 	public:
-		SGFileEntry(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, SGFileTypeFilter file_type_filter, const QString & title, QWidget * parent);
-		~SGFileEntry();
+
+		enum class FileTypeFilter {
+			Any = 0,
+			Image,   // JPG+PNG+TIFF
+			MBTILES,
+			XML,
+			Carto, /* MML + MSS */
+			JPEG,
+			GeoJSON,
+			Last
+		};
+
+		FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, FileTypeFilter file_type_filter, const QString & title, QWidget * parent);
+		~FileSelector();
 
 		void preselect_file_full_path(const QString & file_path);
 		QString get_selected_file_full_path(void) const;
@@ -69,7 +76,7 @@ namespace SlavGPS {
 		void open_browser_cb();
 
 	private:
-		void add_file_type_filters(SGFileTypeFilter file_type_filter);
+		void add_file_type_filters(FileTypeFilter file_type_filter);
 
 		QFileDialog * file_dialog = NULL;
 		QLineEdit * line = NULL;
@@ -77,6 +84,8 @@ namespace SlavGPS {
 		QHBoxLayout * hbox = NULL;
 
 		QString current_file_full_path;
+
+		FileTypeFilter file_type_filter;
 	};
 
 

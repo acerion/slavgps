@@ -123,8 +123,8 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 		result = "Entry";
 	case WidgetType::Password:
 		result = "Password";
-	case WidgetType::FileEntry:
-		result = "FileEntry";
+	case WidgetType::FileSelector:
+		result = "FileSelector";
 	case WidgetType::FolderEntry:
 		result = "FolderEntry";
 	case WidgetType::HScale:
@@ -609,15 +609,15 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 		}
 
 		break;
-	case WidgetType::FileEntry:
+	case WidgetType::FileSelector:
 		if (param_spec.type_id == SGVariantType::String) {
 
-			SGFileTypeFilter file_type_filter = SGFileTypeFilter::ANY;
+			FileSelector::FileTypeFilter file_type_filter = FileSelector::FileTypeFilter::Any;
 			if (param_spec.widget_data) {
-				file_type_filter = *((SGFileTypeFilter *) param_spec.widget_data); /* Pointer to a table of size one. */
+				file_type_filter = *((FileSelector::FileTypeFilter *) param_spec.widget_data); /* Pointer to a table of size one. */
 			}
 
-			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, file_type_filter, tr("Select file"), NULL);
+			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, file_type_filter, tr("Select file"), NULL);
 			if (!value.val_string.isEmpty()) {
 				widget_->preselect_file_full_path(value.val_string);
 			}
@@ -628,7 +628,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 
 	case WidgetType::FolderEntry:
 		if (param_spec.type_id == SGVariantType::String) {
-			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, SGFileTypeFilter::ANY, tr("Select folder"), NULL);
+			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::Directory, FileSelector::FileTypeFilter::Any, tr("Select folder"), NULL);
 			if (!value.val_string.isEmpty()) {
 				widget_->preselect_file_full_path(value.val_string);
 			}
@@ -797,9 +797,9 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		rv = SGVariant(((QLineEdit *) widget)->text());
 		break;
 
-	case WidgetType::FileEntry:
+	case WidgetType::FileSelector:
 	case WidgetType::FolderEntry:
-		rv = SGVariant(((SGFileEntry *) widget)->get_selected_file_full_path());
+		rv = SGVariant(((FileSelector *) widget)->get_selected_file_full_path());
 		break;
 
 	case WidgetType::FileList:

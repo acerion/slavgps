@@ -55,7 +55,7 @@ namespace SlavGPS {
 	public:
 		DataSourceGeoJSONDialog(const QString & window_title);
 
-		SGFileEntry * file_entry = NULL;
+		FileSelector * file_entry = NULL;
 	};
 
 

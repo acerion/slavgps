@@ -56,7 +56,7 @@ namespace SlavGPS {
 	public:
 		DataSourceGeoTagDialog(const QString & window_title);
 
-		SGFileEntry * file_entry = NULL;
+		FileSelector * file_entry = NULL;
 	};
 
 

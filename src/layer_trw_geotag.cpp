@@ -682,7 +682,11 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 
 	const QStringList file_list;
 	dialog->files_selection = new SGFileList(QObject::tr("Images"), file_list, dialog);
-	// TODO: VIK_FILE_LIST(vik_file_list_new(, mime_type_filters));
+#ifdef K_TODO
+	QStringList mime_type_filters;
+	mime_type_filters << "image/jpeg";
+	VIK_FILE_LIST(vik_file_list_new(, mime_type_filters));
+#endif
 	dialog->grid->addWidget(dialog->files_selection, 1, 0, 1, 2);
 	row++;
 
@@ -746,8 +750,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 
 
 
-	QStringList mime_type_filters;
-	mime_type_filters << "image/jpeg";
+
 
 	/* Set default values of ui controls. */
 	GeoTagValues default_values = get_default_values();

@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 
 
-	class SGFileEntry;
+	class FileSelector;
 
 
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 		void on_accept_cb(void);
 
 	public:
-		SGFileEntry * file_entry = NULL;
+		FileSelector * file_entry = NULL;
 		QComboBox * file_types_combo = NULL;
 
 	private:

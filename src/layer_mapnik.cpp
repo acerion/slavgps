@@ -96,20 +96,20 @@ enum {
 
 
 
-SGFileTypeFilter file_type_css[1] = { SGFileTypeFilter::CARTO };
-SGFileTypeFilter file_type_xml[1] = { SGFileTypeFilter::XML };
+FileSelector::FileTypeFilter file_type_css[1] = { FileSelector::FileTypeFilter::Carto };
+FileSelector::FileTypeFilter file_type_xml[1] = { FileSelector::FileTypeFilter::XML };
 
 
 
 ParameterSpecification mapnik_layer_param_specs[] = {
 
-	{ PARAM_CONFIG_CSS,     NULL, "config-file-mml", SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("CSS (MML) Config File:"), WidgetType::FileEntry,   file_type_css, file_default,         NULL, N_("CartoCSS configuration file") },
-	{ PARAM_CONFIG_XML,     NULL, "config-file-xml", SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("XML Config File:"),       WidgetType::FileEntry,   file_type_xml, file_default,         NULL, N_("Mapnik XML configuration file") },
-	{ PARAM_ALPHA,          NULL, "alpha",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                 WidgetType::HScale,      &scale_alpha,  NULL,                 NULL, NULL },
-	{ PARAM_USE_FILE_CACHE, NULL, "use-file-cache",  SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Use File Cache:"),        WidgetType::CheckButton, NULL,          sg_variant_true,      NULL, NULL },
-	{ PARAM_FILE_CACHE_DIR, NULL, "file-cache-dir",  SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("File Cache Directory:"),  WidgetType::FolderEntry, NULL,          cache_dir_default,    NULL, NULL },
+	{ PARAM_CONFIG_CSS,     NULL, "config-file-mml", SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("CSS (MML) Config File:"), WidgetType::FileSelector, file_type_css, file_default,         NULL, N_("CartoCSS configuration file") },
+	{ PARAM_CONFIG_XML,     NULL, "config-file-xml", SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("XML Config File:"),       WidgetType::FileSelector, file_type_xml, file_default,         NULL, N_("Mapnik XML configuration file") },
+	{ PARAM_ALPHA,          NULL, "alpha",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                 WidgetType::HScale,       &scale_alpha,  NULL,                 NULL, NULL },
+	{ PARAM_USE_FILE_CACHE, NULL, "use-file-cache",  SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Use File Cache:"),        WidgetType::CheckButton,  NULL,          sg_variant_true,      NULL, NULL },
+	{ PARAM_FILE_CACHE_DIR, NULL, "file-cache-dir",  SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("File Cache Directory:"),  WidgetType::FolderEntry,  NULL,          cache_dir_default,    NULL, NULL },
 
-	{ NUM_PARAMS,           NULL, NULL,              SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                           WidgetType::None,        NULL,          NULL,                 NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,           NULL, NULL,              SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                           WidgetType::None,         NULL,          NULL,                 NULL, NULL }, /* Guard. */
 };
 
 
@@ -206,14 +206,14 @@ static SGVariant fonts_default(void)
 
 static ParameterSpecification prefs[] = {
 	/* Changing these values only applies before first mapnik layer is 'created' */
-	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "plugins_directory",       SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Plugins Directory:"),        WidgetType::FolderEntry, NULL,           plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 1, PREFERENCES_NAMESPACE_MAPNIK, "fonts_directory",         SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Fonts Directory:"),          WidgetType::FolderEntry, NULL,           fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 2, PREFERENCES_NAMESPACE_MAPNIK, "recurse_fonts_directory", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC,  QObject::tr("Recurse Fonts Directory:"),  WidgetType::CheckButton, NULL,           sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 3, PREFERENCES_NAMESPACE_MAPNIK, "rerender_after",          SGVariantType::Int,     PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout (hours):"), WidgetType::SpinBoxInt,  &scale_timeout, NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "plugins_directory",       SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Plugins Directory:"),        WidgetType::FolderEntry,   NULL,           plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 1, PREFERENCES_NAMESPACE_MAPNIK, "fonts_directory",         SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Fonts Directory:"),          WidgetType::FolderEntry,   NULL,           fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 2, PREFERENCES_NAMESPACE_MAPNIK, "recurse_fonts_directory", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC,  QObject::tr("Recurse Fonts Directory:"),  WidgetType::CheckButton,   NULL,           sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 3, PREFERENCES_NAMESPACE_MAPNIK, "rerender_after",          SGVariantType::Int,     PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout (hours):"), WidgetType::SpinBoxInt,    &scale_timeout, NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
 	/* Changeable any time. */
-	{ 4, PREFERENCES_NAMESPACE_MAPNIK, "carto",                   SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("CartoCSS:"),                 WidgetType::FileEntry,   NULL,           NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
+	{ 4, PREFERENCES_NAMESPACE_MAPNIK, "carto",                   SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("CartoCSS:"),                 WidgetType::FileSelector,  NULL,           NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
 
-	{ 5, NULL,                         "",                        SGVariantType::Empty,   PARAMETER_GROUP_GENERIC,  QString(""),                              WidgetType::None,        NULL,           NULL,            NULL, NULL } /* Guard. */
+	{ 5, NULL,                         "",                        SGVariantType::Empty,   PARAMETER_GROUP_GENERIC,  QString(""),                              WidgetType::None,          NULL,           NULL,            NULL, NULL } /* Guard. */
 };
 
 
