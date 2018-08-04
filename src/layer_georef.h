@@ -70,8 +70,8 @@ namespace SlavGPS {
 		LatLon get_ll_br(void) const;
 		void check_br_is_good_or_msg_user(void);
 
-		FileSelector * map_image_file_entry = NULL;
-		FileSelector * world_file_entry = NULL;
+		FileSelector * map_image_file_selector = NULL;
+		FileSelector * world_file_selector = NULL;
 
 		QDoubleSpinBox * x_scale_spin = NULL;
 		QDoubleSpinBox * y_scale_spin = NULL;

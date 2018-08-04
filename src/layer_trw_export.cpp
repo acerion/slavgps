@@ -134,16 +134,16 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 
 	const QString cwd = QDir::currentPath();
 	if (!cwd.isEmpty()) {
-		dialog->file_entry->set_directory_url(QUrl(cwd));
+		dialog->file_selector->set_directory_url(QUrl(cwd));
 	}
 
 	/* Set possible name of the file. */
-	dialog->file_entry->preselect_file_full_path(default_file_full_path);
+	dialog->file_selector->preselect_file_full_path(default_file_full_path);
 
 	int rv = dialog->exec();
 	if (rv == QDialog::Accepted) {
 		const BabelFileType * file_type = dialog->get_file_type_selection();
-		const QString output_file_full_path = dialog->file_entry->get_selected_file_full_path();
+		const QString output_file_full_path = dialog->file_selector->get_selected_file_full_path();
 
 		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: accepted";
 		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type identifier:" << file_type->identifier;

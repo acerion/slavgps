@@ -93,13 +93,13 @@ DataSourceFileDialog::DataSourceFileDialog(const QString & title) : BabelDialog(
 {
 	this->build_ui();
 	if (g_last_directory_url.isValid()) {
-		this->file_entry->set_directory_url(g_last_directory_url);
+		this->file_selector->set_directory_url(g_last_directory_url);
 	}
 	if (!g_last_filter.isEmpty()) {
-		this->file_entry->select_name_filter(g_last_filter);
+		this->file_selector->select_name_filter(g_last_filter);
 	}
 
-	this->file_entry->setFocus();
+	this->file_selector->setFocus();
 
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceFileDialog::accept_cb);
 }
@@ -116,15 +116,15 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 BabelOptions * DataSourceFileDialog::get_process_options_none(void)
 {
-	g_last_directory_url = this->file_entry->get_directory_url();
-	g_last_filter = this->file_entry->get_selected_name_filter();
+	g_last_directory_url = this->file_selector->get_directory_url();
+	g_last_filter = this->file_selector->get_selected_name_filter();
 
 
 	const QString selected = this->get_file_type_selection()->identifier;
 
 	/* Generate the process options. */
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
-	babel_options->input = this->file_entry->get_selected_file_full_path();
+	babel_options->input = this->file_selector->get_selected_file_full_path();
 	babel_options->babel_args = QString("-i %1").arg(selected);
 
 	qDebug() << "II: Datasource File: using Babel args" << babel_options->babel_args << "and input file" << babel_options->input;
@@ -142,5 +142,5 @@ void DataSourceFileDialog::accept_cb(void)
 	qDebug() << "II: Datasource File: dialog result: accepted";
 	qDebug() << "II: Datasource File: selected format type identifier:" << file_type->identifier;
 	qDebug() << "II: Datasource File: selected format type label:" << file_type->label;
-	qDebug() << "II: Datasource File: selected file path:" << this->file_entry->get_selected_file_full_path();
+	qDebug() << "II: Datasource File: selected file path:" << this->file_selector->get_selected_file_full_path();
 }

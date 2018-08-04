@@ -4152,23 +4152,6 @@ bool LayerTRW::handle_selection_in_tree(void)
 
 
 
-bool LayerTRW::clear_highlight()
-{
-#ifdef K_TODO
-	/* TODO: this is not used anymore. What to do with this code? When to return true and when false? */
-	if (this->selected_sublayer_index) {
-		this->selected_sublayer_index = NULL;
-		return true;
-	} else {
-		return false;
-	}
-#endif
-	return true;
-}
-
-
-
-
 /**
    \brief Get layer's selected track or route
 

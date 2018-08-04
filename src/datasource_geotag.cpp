@@ -93,9 +93,9 @@ int DataSourceGeoTag::run_config_dialog(AcquireProcess * acquire_context)
 
 	int answer = dialog->exec();
 	if (answer == QDialog::Accepted) {
-		this->selected_files = dialog->file_entry->get_selected_files_full_paths();
-		g_last_directory_url = dialog->file_entry->get_directory_url();
-		g_last_filter = dialog->file_entry->get_selected_name_filter();
+		this->selected_files = dialog->file_selector->get_selected_files_full_paths();
+		g_last_directory_url = dialog->file_selector->get_directory_url();
+		g_last_filter = dialog->file_selector->get_selected_name_filter();
 	}
 
 	this->config_dialog = dialog;
@@ -110,14 +110,15 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 {
 	/* QFileDialog::ExistingFiles: allow selecting more than one.
 	   By default the file selector is created with AcceptMode::AcceptOpen. */
-	this->file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFiles, FileSelector::FileTypeFilter::JPEG, tr("Select File to Import"), NULL);
+	this->file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFiles, tr("Select File to Import"), NULL);
+	this->file_selector->set_file_type_filter(FileSelector::FileTypeFilter::JPEG);
 
 	if (g_last_directory_url.isValid()) {
-		this->file_entry->set_directory_url(g_last_directory_url);
+		this->file_selector->set_directory_url(g_last_directory_url);
 	}
 
 	if (!g_last_filter.isEmpty()) {
-		this->file_entry->select_name_filter(g_last_filter);
+		this->file_selector->select_name_filter(g_last_filter);
 	}
 
 	this->setMinimumWidth(DIALOG_MIN_WIDTH);
@@ -127,7 +128,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 	   Store in user_data type and then apply when creating the waypoints.
 	   However not much point since these will have images associated with them! */
 
-	this->grid->addWidget(this->file_entry, 0, 0);
+	this->grid->addWidget(this->file_selector, 0, 0);
 }
 
 

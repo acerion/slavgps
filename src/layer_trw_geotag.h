@@ -73,7 +73,7 @@ namespace SlavGPS {
 		Waypoint * wp = NULL;       /* Use specified waypoint or otherwise the track(s) if NULL. */
 		Track * trk = NULL;         /* Use specified track or all tracks if NULL. */
 
-		SGFileList * files_selection = NULL;
+		FileList * files_selection = NULL;
 
 		QLabel * create_waypoints_l = NULL;
 		QCheckBox * create_waypoints_cb = NULL;

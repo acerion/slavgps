@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 
@@ -24,10 +23,17 @@
 
 #include <cstring>
 
+
+
+
 #include <QDebug>
 #include <QHeaderView>
 
+
+
+
 #include "widget_file_list.h"
+#include "globals.h"
 
 
 
@@ -37,10 +43,13 @@ using namespace SlavGPS;
 
 
 
-SGFileList::SGFileList(const QString & title, const QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
-{
+#define SG_MODULE "File List Widget"
 
-#if 1
+
+
+
+FileList::FileList(const QString & title, const QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
+{
 	this->button_box = new QDialogButtonBox();
 	this->add = this->button_box->addButton("Add", QDialogButtonBox::ActionRole);
 	this->del = this->button_box->addButton("Delete", QDialogButtonBox::ActionRole);
@@ -69,7 +78,7 @@ SGFileList::SGFileList(const QString & title, const QStringList & fl, QWidget * 
 
 	this->file_list = fl;
 	for (auto iter = this->file_list.constBegin(); iter != this->file_list.constEnd(); ++iter) {
-		qDebug() << "SGFileList: adding to initial file list:" << (*iter);
+		qDebug() << "FileList: adding to initial file list:" << (*iter);
 
 		QStandardItem * item = new QStandardItem(*iter);
 		item->setToolTip(*iter);
@@ -92,23 +101,31 @@ SGFileList::SGFileList(const QString & title, const QStringList & fl, QWidget * 
 
 	connect(this->add, SIGNAL(clicked()), this, SLOT(add_file()));
 	connect(this->del, SIGNAL(clicked()), this, SLOT(del_file()));
-#endif
+
+
+	this->file_selector = new QFileDialog();
+	this->file_selector->setFileMode(QFileDialog::ExistingFiles);
+
+
+	qDebug() << SG_PREFIX_I << "Constructor completed";
 }
 
 
 
 
-SGFileList::~SGFileList()
+FileList::~FileList()
 {
 	for (auto iter = this->file_list.constBegin(); iter != this->file_list.constEnd(); iter++) {
 		qDebug() << "File on list: " << QString(*iter);
 	}
+
+	qDebug() << SG_PREFIX_I << "Destructor completed";
 }
 
 
 
 
-QStringList SGFileList::get_list(void)
+QStringList FileList::get_list(void)
 {
 	this->file_list.clear();
 
@@ -126,35 +143,36 @@ QStringList SGFileList::get_list(void)
 
 
 
-void SGFileList::add_file()
+void FileList::add_file()
 {
-	qDebug() << "Add file";
+	qDebug() << SG_PREFIX_D << "called";
 
 	if (!this->file_selector) {
-		this->file_selector = new QFileDialog();
-		this->file_selector->setFileMode(QFileDialog::ExistingFiles);
+
 	}
 
-	if (this->file_selector->exec()) {
-		QStringList selection = this->file_selector->selectedFiles();
-		for (QStringList::const_iterator iter = selection.constBegin(); iter != selection.constEnd(); ++iter) {
-			qDebug() << (*iter);
-
-			QStandardItem * item = new QStandardItem(*iter);
-			item->setToolTip(*iter);
-			this->model->appendRow(item);
-		}
-		this->view->setVisible(false);
-		this->view->resizeRowsToContents();
-		this->view->resizeColumnsToContents();
-		this->view->setVisible(true);
+	if (QDialog::Accepted != this->file_selector->exec()) {
+		return;
 	}
+
+	QStringList selection = this->file_selector->selectedFiles();
+	for (QStringList::const_iterator iter = selection.constBegin(); iter != selection.constEnd(); ++iter) {
+		qDebug() << (*iter);
+
+		QStandardItem * item = new QStandardItem(*iter);
+		item->setToolTip(*iter);
+		this->model->appendRow(item);
+	}
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
 }
 
 
 
 
-void SGFileList::del_file()
+void FileList::del_file()
 {
 	qDebug() << "Delete file";
 
@@ -165,4 +183,22 @@ void SGFileList::del_file()
 
 	this->model->removeRow(index.row());
 
+}
+
+
+
+
+
+
+void FileList::set_file_type_filter(FileSelector::FileTypeFilter new_file_type_filter)
+{
+	this->file_type_filter = new_file_type_filter;
+
+	QStringList filter_list;
+	const bool is_mime = FileSelector::get_file_filter_string(this->file_type_filter, filter_list);
+	if (is_mime) {
+		this->file_selector->setMimeTypeFilters(filter_list);
+	} else {
+		this->file_selector->setNameFilters(filter_list);
+	}
 }

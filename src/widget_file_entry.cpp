@@ -46,14 +46,12 @@ using namespace SlavGPS;
 
 
 
-FileSelector::FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, FileTypeFilter new_file_type_filter, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
+FileSelector::FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
 {
 	this->file_dialog = new QFileDialog();
 	this->file_dialog->setFileMode(mode);
 	this->file_dialog->setOptions(options);
 	this->file_dialog->setWindowTitle(title);
-
-	this->add_file_type_filters(new_file_type_filter);
 
 	this->line = new QLineEdit(this);
 	this->browse = new QPushButton("Browse", this);
@@ -86,52 +84,74 @@ FileSelector::~FileSelector()
 
 
 
-void FileSelector::add_file_type_filters(FileTypeFilter new_file_type_filter)
+void FileSelector::set_file_type_filter(FileTypeFilter new_file_type_filter)
 {
-	/* Always have an catch all filter at the end. */
-
 	this->file_type_filter = new_file_type_filter;
 
-	QStringList mime;
+	QStringList filter_list;
+	const bool is_mime = FileSelector::get_file_filter_string(this->file_type_filter, filter_list);
 
-	switch (this->file_type_filter) {
+	if (is_mime) {
+		this->file_dialog->setMimeTypeFilters(filter_list);
+	} else {
+		this->file_dialog->setNameFilters(filter_list);
+	}
+}
+
+
+
+
+bool FileSelector::get_file_filter_string(FileTypeFilter file_type_filter, QStringList & filter_list)
+{
+	bool is_mime = true;
+
+	switch (file_type_filter) {
 	case FileTypeFilter::Image:
-		mime << "image/jpeg";
-		mime << "image/png";
-		mime << "image/tiff";
-		mime << "application/octet-stream"; /* "All files (*)" */
+		filter_list << "image/jpeg";
+		filter_list << "image/png";
+		filter_list << "image/tiff";
+		filter_list << "application/octet-stream"; /* "All files (*)" */
+		is_mime = true;
 		break;
 
 	case FileTypeFilter::MBTILES:
-		mime << tr("MBTiles (*.sqlite, *.mbtiles, *.db3)");
-		mime << tr("All files (*)");
+		filter_list << tr("MBTiles (*.sqlite, *.mbtiles, *.db3)");
+		filter_list << tr("All files (*)");
+		is_mime = false;
 		break;
 
 	case FileTypeFilter::XML:
-		mime << tr("XML (*.xml)");
-		mime << tr("All files (*)");
+		filter_list << tr("XML (*.xml)");
+		filter_list << tr("All files (*)");
+		is_mime = false;
 		break;
 
 	case FileTypeFilter::Carto:
-		mime << tr("MML (.*.mml)");
-		mime << tr("All files (*)");
+		filter_list << tr("MML (.*.mml)");
+		filter_list << tr("All files (*)");
+		is_mime = false;
 		break;
 
 	case FileTypeFilter::JPEG:
-		mime << "image/jpeg";
-		mime << "application/octet-stream"; /* "All files (*)" */
+		filter_list << "image/jpeg";
+		filter_list << "application/octet-stream"; /* "All files (*)" */
+		is_mime = true;
 		break;
 
 	case FileTypeFilter::GeoJSON:
-		mime << tr("GeoJSON (*.geojson)");
-		mime << tr("All files (*)");
+		filter_list << tr("GeoJSON (*.geojson)");
+		filter_list << tr("All files (*)");
+		is_mime = false;
+		break;
 
 	default:
-		mime << tr("All files (*)");
+		/* Always have an catch all filter at the end. */
+		filter_list << "application/octet-stream"; /* "All files (*)" */
+		is_mime = true;
 		break;
 	}
 
-	this->file_dialog->setMimeTypeFilters(mime);
+	return is_mime;
 }
 
 
@@ -139,8 +159,7 @@ void FileSelector::add_file_type_filters(FileTypeFilter new_file_type_filter)
 
 void FileSelector::open_browser_cb(void) /* Slot. */
 {
-
-	if (this->file_dialog->exec()) {
+	if (QDialog::Accepted == this->file_dialog->exec()) {
 		this->current_file_full_path = this->file_dialog->selectedFiles().at(0);
 		this->line->insert(this->current_file_full_path);
 		qDebug() << "II: Widget File Entry: clicking OK results in this file:" << this->current_file_full_path;

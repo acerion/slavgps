@@ -617,7 +617,8 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 				file_type_filter = *((FileSelector::FileTypeFilter *) param_spec.widget_data); /* Pointer to a table of size one. */
 			}
 
-			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, file_type_filter, tr("Select file"), NULL);
+			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), NULL);
+			widget_->set_file_type_filter(file_type_filter);
 			if (!value.val_string.isEmpty()) {
 				widget_->preselect_file_full_path(value.val_string);
 			}
@@ -628,7 +629,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 
 	case WidgetType::FolderEntry:
 		if (param_spec.type_id == SGVariantType::String) {
-			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::Directory, FileSelector::FileTypeFilter::Any, tr("Select folder"), NULL);
+			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::Directory, tr("Select folder"), NULL);
 			if (!value.val_string.isEmpty()) {
 				widget_->preselect_file_full_path(value.val_string);
 			}
@@ -639,7 +640,7 @@ QWidget * PropertiesDialog::new_widget(const ParameterSpecification & param_spec
 
 	case WidgetType::FileList:
 		if (param_spec.type_id == SGVariantType::StringList) {
-			SGFileList * widget_ = new SGFileList(param_spec.ui_label, value.val_string_list, this);
+			FileList * widget_ = new FileList(param_spec.ui_label, value.val_string_list, this);
 
 			widget = widget_;
 		}
@@ -803,7 +804,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::FileList:
-		rv = SGVariant(((SGFileList *) widget)->get_list());
+		rv = SGVariant(((FileList *) widget)->get_list());
 		for (auto iter = rv.val_string_list.constBegin(); iter != rv.val_string_list.constEnd(); iter++) {
 			qDebug() << "II: UI Builder: file on retrieved list: " << *iter;
 		}

@@ -616,9 +616,6 @@ void Window::create_actions(void)
 		{
 			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), QString("&Layer Defaults"));
 
-
-			qDebug() << "------------------------- menus";
-
 			for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
 				qa = defaults_submenu->addAction("&" + Layer::get_type_ui_label(type) + "...");
 				qa->setData(QVariant((int) type));
@@ -1832,17 +1829,13 @@ bool vik_window_clear_highlight_cb(Window * window)
 
 
 
-
+/**
+   Remove all tree items from "selected tree items" collection.
+   If there were any, it means that we need to redraw layers.
+*/
 bool Window::clear_highlight(void)
 {
-	bool need_redraw = false;
-
-	for (auto iter = g_tree->selected_tree_items.begin(); iter != g_tree->selected_tree_items.end(); ++iter) {
-		TreeItem * tree_item = iter->second;
-		if (tree_item->tree_item_type == TreeItemType::LAYER) {
-			need_redraw |= ((Layer *) tree_item)->clear_highlight();
-		}
-	}
+	const bool need_redraw = (0 != g_tree->selected_tree_items.size());
 
 	/* Clearing highlight means that there are no selected items. */
 	g_tree->selected_tree_items.clear();

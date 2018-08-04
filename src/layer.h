@@ -225,12 +225,6 @@ namespace SlavGPS {
 		void weak_unref(LayerRefCB cb, void * obj);
 
 
-		/* If there are any highlighted/selected elements in
-		   the layer, unhighlight them.  Return true if any
-		   element in layer has been un-highlighted and the
-		   layer needs to be redrawn. */
-		virtual bool clear_highlight(void) { return false; }
-
 		/* GUI. */
 		QIcon get_icon(void);
 

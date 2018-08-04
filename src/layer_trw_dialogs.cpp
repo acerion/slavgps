@@ -86,7 +86,6 @@ TimeThresholdDialog::TimeThresholdDialog(const QString & title, const QString & 
 	this->radio_group = new SGRadioGroup("", &items, NULL); /* kamilTODO: delete this widget in destructor? */
 
 
-	/* TODO: add some kind of validation and indication for values out of range. */
 	this->custom_spin.setMinimum(1); /* [minutes] */
 	this->custom_spin.setMaximum(60 * 24 * 366); /* [minutes] */
 	this->custom_spin.setValue(custom_threshold);

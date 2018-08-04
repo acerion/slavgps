@@ -376,9 +376,6 @@ namespace SlavGPS {
 		bool has_missing_thumbnails = true;
 
 
-		bool clear_highlight();
-
-
 	public slots:
 		void trackpoint_properties_cb(int response);
 

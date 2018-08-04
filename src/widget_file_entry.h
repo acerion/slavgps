@@ -31,6 +31,9 @@
 #include <QFileDialog>
 #include <QLineEdit>
 
+
+
+
 #include "file.h"
 
 
@@ -56,7 +59,7 @@ namespace SlavGPS {
 			Last
 		};
 
-		FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, FileTypeFilter file_type_filter, const QString & title, QWidget * parent);
+		FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent);
 		~FileSelector();
 
 		void preselect_file_full_path(const QString & file_path);
@@ -72,12 +75,14 @@ namespace SlavGPS {
 
 		void set_accept_mode(QFileDialog::AcceptMode accept_mode);
 
+		void set_file_type_filter(FileTypeFilter file_type_filter);
+
+		static bool get_file_filter_string(FileTypeFilter file_type_filter, QStringList & filter_list);
+
 	private slots:
 		void open_browser_cb();
 
 	private:
-		void add_file_type_filters(FileTypeFilter file_type_filter);
-
 		QFileDialog * file_dialog = NULL;
 		QLineEdit * line = NULL;
 		QPushButton * browse = NULL;
@@ -85,7 +90,7 @@ namespace SlavGPS {
 
 		QString current_file_full_path;
 
-		FileTypeFilter file_type_filter;
+		FileTypeFilter file_type_filter = FileTypeFilter::Any;
 	};
 
 

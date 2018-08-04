@@ -73,9 +73,9 @@ int DataSourceGeoJSON::run_config_dialog(AcquireProcess * acquire_context)
 
 	int answer = dialog->exec();
 	if (answer == QDialog::Accepted) {
-		this->selected_files = dialog->file_entry->get_selected_files_full_paths();
-		g_last_directory_url = dialog->file_entry->get_directory_url();
-		g_last_filter = dialog->file_entry->get_selected_name_filter();
+		this->selected_files = dialog->file_selector->get_selected_files_full_paths();
+		g_last_directory_url = dialog->file_selector->get_directory_url();
+		g_last_filter = dialog->file_selector->get_selected_name_filter();
 	}
 
 	this->config_dialog = dialog;
@@ -90,21 +90,22 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) :
 {
 	/* QFileDialog::ExistingFiles: allow selecting more than one.
 	   By default the file selector is created with AcceptMode::AcceptOpen. */
-	this->file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFiles, FileSelector::FileTypeFilter::GeoJSON, tr("Select File to Import"), NULL);
+	this->file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFiles, tr("Select File to Import"), NULL);
+	this->file_selector->set_file_type_filter(FileSelector::FileTypeFilter::GeoJSON);
 
 	if (g_last_directory_url.isValid()) {
-		this->file_entry->set_directory_url(g_last_directory_url);
+		this->file_selector->set_directory_url(g_last_directory_url);
 	}
 
 	if (!g_last_filter.isEmpty()) {
-		this->file_entry->select_name_filter(g_last_filter);
+		this->file_selector->select_name_filter(g_last_filter);
 	}
 
 	this->setMinimumWidth(DIALOG_MIN_WIDTH);
 
-	this->grid->addWidget(this->file_entry, 0, 0);
+	this->grid->addWidget(this->file_selector, 0, 0);
 
-	this->file_entry->setFocus();
+	this->file_selector->setFocus();
 }
 
 

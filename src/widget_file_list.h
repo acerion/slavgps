@@ -36,18 +36,25 @@
 
 
 
+#include "widget_file_entry.h"
+
+
+
+
 namespace SlavGPS {
 
 
 
 
-	class SGFileList : public QWidget {
+	class FileList : public QWidget {
 		Q_OBJECT
 	public:
-		SGFileList(const QString & title, const QStringList & fl, QWidget * parent);
-		~SGFileList();
+		FileList(const QString & title, const QStringList & fl, QWidget * parent);
+		~FileList();
 
 		QStringList get_list(void);
+
+		void set_file_type_filter(FileSelector::FileTypeFilter file_type_filter);
 
 	signals:
 
@@ -67,6 +74,8 @@ namespace SlavGPS {
 		QTableView * view = NULL;
 
 		QFileDialog * file_selector = NULL;
+
+		FileSelector::FileTypeFilter file_type_filter = FileSelector::FileTypeFilter::Any;
 	};
 
 

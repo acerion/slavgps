@@ -632,7 +632,7 @@ void LayerGeoref::export_params_cb(void)
    Based on simple file name conventions.
    Only attempted if the preference is on.
 */
-static void maybe_read_world_file(FileSelector * file_entry, void * user_data)
+static void maybe_read_world_file(FileSelector * file_selector, void * user_data)
 {
 	if (!user_data) {
 		return;
@@ -643,7 +643,7 @@ static void maybe_read_world_file(FileSelector * file_entry, void * user_data)
 		return;
 	}
 
-	const QString filename = file_entry->get_selected_file_full_path();
+	const QString filename = file_selector->get_selected_file_full_path();
 	if (filename.isEmpty()) {
 		return;
 	}
@@ -814,7 +814,7 @@ void GeorefConfigDialog::check_br_is_good_or_msg_user(void)
 
 void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 {
-	const QString filename = this->map_image_file_entry->get_selected_file_full_path();
+	const QString filename = this->map_image_file_selector->get_selected_file_full_path();
 	if (!filename.length()) {
 		return;
 	}
@@ -863,17 +863,18 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	int row = 0;
 
-	this->map_image_file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, FileSelector::FileTypeFilter::Image, tr("Select image file"), this->layer->get_window());
-#ifdef K_OLD_IMPLEMENTATION
+	this->map_image_file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select image file"), this->layer->get_window());
+	this->map_image_file_selector->set_file_type_filter(FileSelector::FileTypeFilter::Image);
+#ifdef K_TODO /* Handle "maybe_read_world_file" argument in file selector. */
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
 	this->grid->addWidget(new QLabel(tr("Map Image:")), row, 0);
-	this->grid->addWidget(this->map_image_file_entry, row, 1);
+	this->grid->addWidget(this->map_image_file_selector, row, 1);
 	row++;
 
-	this->world_file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, FileSelector::FileTypeFilter::Any, tr("Select world file"), this->layer->get_window());
+	this->world_file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select world file"), this->layer->get_window());
 	this->grid->addWidget(new QLabel(tr("World File Parameters:")), row, 0);
-	this->grid->addWidget(this->world_file_entry, row, 1);
+	this->grid->addWidget(this->world_file_selector, row, 1);
 	row++;
 
 	this->x_scale_spin = new QDoubleSpinBox();
@@ -927,7 +928,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->x_scale_spin->setValue(this->layer->mpp_easting);
 	this->y_scale_spin->setValue(this->layer->mpp_northing);
 	if (!this->layer->image_full_path.isEmpty()) {
-		this->map_image_file_entry->preselect_file_full_path(this->layer->image_full_path);
+		this->map_image_file_selector->preselect_file_full_path(this->layer->image_full_path);
 	}
 
 
@@ -1017,8 +1018,8 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 	/* TODO check if image has changed otherwise no need to regenerate pixmap. */
 	if (this->image.isNull()) {
-		if (this->image_full_path != dialog.map_image_file_entry->get_selected_file_full_path()) {
-			this->set_image_full_path(dialog.map_image_file_entry->get_selected_file_full_path());
+		if (this->image_full_path != dialog.map_image_file_selector->get_selected_file_full_path()) {
+			this->set_image_full_path(dialog.map_image_file_selector->get_selected_file_full_path());
 			this->post_read(viewport, false);
 		}
 	}

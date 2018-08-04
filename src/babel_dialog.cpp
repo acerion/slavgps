@@ -262,12 +262,12 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 
 	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
-		this->file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, FileSelector::FileTypeFilter::Any, tr("Select Target File File for Export"), NULL);
-		this->file_entry->set_accept_mode(QFileDialog::AcceptSave);
+		this->file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select Target File File for Export"), NULL);
+		this->file_selector->set_accept_mode(QFileDialog::AcceptSave);
 	} else {
-		this->file_entry = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, FileSelector::FileTypeFilter::Any, tr("Select File to Import"), NULL);
+		this->file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select File to Import"), NULL);
 	}
-	this->grid->addWidget(this->file_entry, 1, 0);
+	this->grid->addWidget(this->file_selector, 1, 0);
 
 #ifdef K_TODO
 	/* We don't do this because we don't have filename here. */
@@ -329,7 +329,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 	/* Blinky cursor in input field will be visible and will bring
 	   user's eyes to widget that has a focus. */
-	this->file_entry->setFocus();
+	this->file_selector->setFocus();
 
 
 	connect(this->button_box, SIGNAL (accepted(void)), this, SLOT (on_accept_cb(void)));
@@ -363,7 +363,7 @@ void BabelDialog::file_type_changed_cb(int index)
 
 	filters << tr("All files (*)");
 
-	this->file_entry->set_name_filters(filters);
+	this->file_selector->set_name_filters(filters);
 }
 
 
