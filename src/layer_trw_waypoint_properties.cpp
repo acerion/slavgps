@@ -17,18 +17,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+
+
+
 #include <QDebug>
 
-#include "degrees_converters.h"
-#include "preferences.h"
-#include "thumbnails.h"
-#include "garmin_symbols.h"
+
+
 
 #ifdef K_INCLUDES
 #ifdef VIK_CONFIG_GEOTAG
@@ -44,6 +45,10 @@
 #include "dialog.h"
 #include "ui_builder.h"
 #include "date_time_dialog.h"
+#include "degrees_converters.h"
+#include "preferences.h"
+#include "thumbnails.h"
+#include "garmin_symbols.h"
 
 
 
@@ -53,7 +58,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Waypoint Properties:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Waypoint Poperties"
 
 
 
@@ -100,23 +105,65 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 	std::tuple<bool, bool> result(false, false);
 
-	std::vector<const ParameterSpecification *> param_specs;
-	for (int i = 0; i < SG_WP_PARAM_MAX; i++) {
-		param_specs.push_back(&wp_param_specs[i]);
+	std::map<param_id_t, ParameterSpecification *> param_specs;
+	for (param_id_t param_id = 0; param_id < SG_WP_PARAM_MAX; param_id++) {
+		param_specs.insert(std::pair<param_id_t, ParameterSpecification *>(param_id, &wp_param_specs[param_id]));
 	}
 
 
-	PropertiesDialogWaypoint dialog(wp, QObject::tr("Waypoint Properties"), parent);
-	dialog.fill(wp, param_specs, default_wp_name);
+	std::map<param_id_t, SGVariant> values;
+	{
+		const LatLon lat_lon = wp->coord.get_latlon();
 
-	qDebug() << "combo =" << (quintptr) dialog.symbol_combo;
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_NAME, SGVariant(default_wp_name))); /* TODO: This should be somehow taken from param_specs->default */
+
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_LAT, SGVariant(lat_lon.lat, SGVariantType::Latitude)));
+
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_LON, SGVariant(lat_lon.lon, SGVariantType::Longitude)));
+
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_TIME, SGVariant(wp->timestamp, SGVariantType::Timestamp)));
+#ifdef K_FIXME_RESTORE
+		QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
+#endif
+
+		QString alt;
+		const HeightUnit height_unit = Preferences::get_unit_height();
+		switch (height_unit) {
+		case HeightUnit::Metres:
+			alt = QString("%1").arg(wp->altitude);
+			break;
+		case HeightUnit::Feet:
+			alt = QString("%1").arg(VIK_METERS_TO_FEET(wp->altitude));
+			break;
+		default:
+			alt = "???";
+			qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
+			break;
+		}
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_ALT, SGVariant(alt)));
+
+		/* TODO: comment may contain URL. Make the label or input field clickable. */
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_COMMENT, SGVariant(wp->comment)));
+
+		/* TODO: description may contain URL. Make the label or input field clickable. */
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_DESC, SGVariant(wp->description)));
+
+		/* TODO: perhaps add file filter for image files? */
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_IMAGE, SGVariant(wp->image_full_path)));
+
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_SYMBOL, SGVariant(wp->symbol_name)));
+	}
+
+
+
+	PropertiesDialogWaypoint dialog(wp, QObject::tr("Waypoint Properties"), parent);
+	const std::vector<SGLabelID> empty_parameter_groups; /* No parameter groups -> dialog class will create only one tab with default label. */
+	dialog.fill(param_specs, values, empty_parameter_groups);
+
 	dialog.date_time_button = (SGDateTimeButton *) dialog.get_widget(wp_param_specs[SG_WP_PARAM_TIME]);
-	qDebug() << "date time button =" << (quintptr) dialog.date_time_button;
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_reset(void)), &dialog, SLOT (clear_timestamp_cb(void)));
-	qDebug() << "date time button =" << (quintptr) dialog.date_time_button;
 
-	qDebug() << "combo =" << (quintptr) dialog.symbol_combo;
 	dialog.symbol_combo = (QComboBox *) dialog.get_widget(wp_param_specs[SG_WP_PARAM_SYMBOL]);
 	QObject::connect(dialog.symbol_combo, SIGNAL (currentIndexChanged(int)), &dialog, SLOT (symbol_entry_changed_cb(int)));
 	GarminSymbols::populate_symbols_list(dialog.symbol_combo, wp->symbol_name);
@@ -164,7 +211,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 			break;
 		default:
 			wp->altitude = 0;
-			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+			qDebug() << SG_PREFIX_E << "invalid height unit" << (int) height_unit;
 			break;
 		}
 

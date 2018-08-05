@@ -58,6 +58,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer"
 #define PREFIX ": Layer:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -423,60 +424,39 @@ bool Layer::properties_dialog()
 /* Returns true if OK was pressed. */
 bool Layer::properties_dialog(Viewport * viewport)
 {
-	qDebug() << "II" PREFIX << "opening properties dialog for layer" << this->get_type_ui_label();
+	qDebug() << SG_PREFIX_I << "Opening properties dialog for layer" << this->get_type_ui_label();
+
+	const LayerInterface * iface = this->interface;
+
+
+	/* Set of values of this layer's parameters.
+	   The values will be used to fill widgets inside of Properties Dialog below. */
+	std::map<param_id_t, SGVariant> values;
+	for (auto iter = iface->parameter_specifications.begin(); iter != iface->parameter_specifications.end(); ++iter) {
+		const SGVariant value = this->get_param_value(iter->first, false);
+		values.insert(std::pair<param_id_t, SGVariant>(iter->first, value));
+	}
+
 
 	PropertiesDialog dialog(NULL);
-	dialog.fill(this->interface);
-	int dialog_code = dialog.exec();
-
-	if (dialog_code == QDialog::Accepted) {
-
-		bool must_redraw = false;
-
-		for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); ++iter) {
-
-			const ParameterSpecification & param_spec = *(iter->second);
-			const SGVariant param_value = dialog.get_param_value(param_spec);
-
-			bool set = this->set_param_value(iter->first, param_value, false);
-			if (set) {
-				must_redraw = true;
-			}
-		}
-
-		this->post_read(viewport, false); /* Update any gc's. */
-		return true;
-	} else {
-		/* Redraw (?). */
+	dialog.fill(iface->parameter_specifications, values, iface->parameter_groups);
+	if (QDialog::Accepted != dialog.exec()) {
 		return false;
 	}
 
-#ifdef K_OLD_IMPLEMENTATION
-	int prop = a_uibuilder_properties_factory(QObject::tr("Layer Properties"),
-						  viewport->get_window(),
-						  layer->get_interface().parameters_c,
-						  layer->get_interface().parameters.size(),
-						  layer->get_interface().parameter_groups,
-						  layer->get_interface().parameter_groups_count,
-						  (bool (*)(void*, uint16_t, SGVariant, void*, bool)) layer->set_param,
-						  layer,
-						  viewport,
-						  (SGVariant (*)(void*, uint16_t, bool)) layer->get_param,
-						  layer,
-						  layer->get_interface().change_param)
 
-	switch (prop) {
-	case 0:
-	case 3:
-		return false;
-		/* Redraw (?). */
-	case 2: {
-		layer->post_read(viewport, false); /* Update any gc's. */
+	bool must_redraw = false; /* TODO: why do we need this flag? */
+	for (auto iter = iface->parameter_specifications.begin(); iter != iface->parameter_specifications.end(); ++iter) {
+
+		const ParameterSpecification & param_spec = *(iter->second);
+		const SGVariant param_value = dialog.get_param_value(param_spec);
+
+		must_redraw |= this->set_param_value(iter->first, param_value, false);
 	}
-	default:
-		return true;
-	}
-#endif
+
+
+	this->post_read(viewport, false); /* Update any gc's. */
+	return true;
 }
 
 

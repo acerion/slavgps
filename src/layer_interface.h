@@ -104,7 +104,7 @@ namespace SlavGPS {
 		   of the groups are in parameter_groups. */
 		ParameterSpecification * parameters_c = NULL;
 		std::map<param_id_t, ParameterSpecification *> parameter_specifications;
-		std::map<param_id_t, SGVariant>  parameter_default_values;
+		std::map<param_id_t, SGVariant> parameter_default_values;
 		std::vector<SGLabelID> parameter_groups;
 
 		struct {

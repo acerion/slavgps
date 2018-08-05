@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (c) 2016 - 2018 Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -251,162 +252,47 @@ void PropertiesDialog::fill(Preferences * preferences)
 
 
 
-void PropertiesDialog::fill(LayerInterface * interface)
+void PropertiesDialog::fill(const std::map<param_id_t, ParameterSpecification *> & param_specs, const std::map<param_id_t, SGVariant> & values, const std::vector<SGLabelID> & param_groups)
 {
-	qDebug() << "\n" SG_PREFIX_I << "Creating Properties Dialog from layer interface";
+	qDebug() << "\n" SG_PREFIX_I << "Creating Properties Dialog";
 
-	std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
-
-	for (auto param_iter = interface->parameter_specifications.begin(); param_iter != interface->parameter_specifications.end(); ++param_iter) {
+	for (auto param_iter = param_specs.begin(); param_iter != param_specs.end(); ++param_iter) {
 
 		const ParameterSpecification & param_spec = *(param_iter->second);
 
-		param_id_t group_id = param_spec.group_id;
-		if (group_id == PARAMETER_GROUP_HIDDEN) {
-			param_iter++;
-			continue;
-		}
-
-		QFormLayout * form = NULL;
-		auto form_iter = this->forms.find(group_id);
-		if (form_iter == this->forms.end()) {
-
-			const bool use_generic_label = interface->parameter_groups.empty() || group_id >= (int) interface->parameter_groups.size();
-			const QString page_label = use_generic_label ? tr("Properties") : interface->parameter_groups[group_id].label;
-
-			form = this->insert_tab(page_label);
-
-			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
-
-			qDebug() << SG_PREFIX_I << "Created tab" << page_label;
-		} else {
-			form = form_iter->second;
-		}
-
-
-		const SGVariant param_value = values->at(param_iter->first);
+		const SGVariant param_value = values.at(param_iter->first);
 		QWidget * widget = this->make_widget(param_spec, param_value);
 
+		const param_id_t group_id = param_spec.group_id;
+
 		if (group_id != PARAMETER_GROUP_HIDDEN) {
-			/* We create widgets for hidden parameters, but don't put them in form.
-			   We create them so that PropertiesDialog::get_param_value() works
+			/* We created widget for hidden parameter above, but don't put it in UI form.
+			   We have created the widget so that PropertiesDialog::get_param_value() works
 			   correctly and consistently for both hidden and visible parameters. */
+
+			QFormLayout * form = NULL;
+			auto form_iter = this->forms.find(group_id);
+			if (form_iter == this->forms.end()) {
+
+				const bool use_generic_label = param_groups.empty() || group_id >= (int) param_groups.size();
+				const QString page_label = use_generic_label ? tr("Properties") : param_groups[group_id].label;
+
+				form = this->insert_tab(page_label);
+
+				this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
+
+				qDebug() << SG_PREFIX_I << "Created tab" << page_label;
+			} else {
+				form = form_iter->second;
+			}
+
 			form->addRow(param_spec.ui_label, widget);
 		}
 
 		/* Name of parameter in parameter specification is
-		   unique in a layer. So we can use it as a key. */
+		   unique in a layer, so we can use it as a key. */
 		this->widgets.insert(QString(param_spec.name), widget);
 	}
-}
-
-
-
-
-void PropertiesDialog::fill(Waypoint * wp, const std::vector<const ParameterSpecification *> & param_specs, const QString & default_name)
-{
-	qDebug() << "\n" SG_PREFIX_I << "Creating Properties Dialog from waypoint";
-
-	int i = 0;
-	QFormLayout * form = this->insert_tab(tr("Properties"));
-	this->forms.insert(std::pair<param_id_t, QFormLayout *>(param_specs[SG_WP_PARAM_NAME]->group_id, form));
-	SGVariant param_value; // = layer->get_param_value(i, false);
-	QWidget * widget = NULL;
-
-
-
-	const ParameterSpecification * param_spec = param_specs[SG_WP_PARAM_NAME];
-	param_value = SGVariant(default_name); /* TODO: This should be somehow taken from param_specs->default */
-	widget = this->make_widget(*param_spec, param_value);
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-
-
-
-	const LatLon lat_lon = wp->coord.get_latlon();
-
-
-
-	param_spec = param_specs[SG_WP_PARAM_LAT];
-	widget = this->make_widget(*param_spec, SGVariant(lat_lon.lat, SGVariantType::Latitude));
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-
-
-
-	param_spec = param_specs[SG_WP_PARAM_LON];
-	widget = this->make_widget(*param_spec, SGVariant(lat_lon.lon, SGVariantType::Longitude));
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-
-
-
-	/* TODO: Consider if there should be a remove time button... */
-	param_spec = param_specs[SG_WP_PARAM_TIME];
-	widget = this->make_widget(*param_spec, SGVariant(wp->timestamp, SGVariantType::Timestamp));
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-#ifdef K_FIXME_RESTORE
-	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
-#endif
-
-
-
-	QString alt;
-	const HeightUnit height_unit = Preferences::get_unit_height();
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		alt = QString("%1").arg(wp->altitude);
-		break;
-	case HeightUnit::Feet:
-		alt = QString("%1").arg(VIK_METERS_TO_FEET(wp->altitude));
-		break;
-	default:
-		alt = "???";
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		break;
-	}
-
-	param_spec = param_specs[SG_WP_PARAM_ALT];
-	param_value = SGVariant(alt);
-	widget = this->make_widget(*param_spec, param_value);
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-
-
-
-	/* TODO: comment may contain URL. Make the label or input field clickable. */
-	param_spec = param_specs[SG_WP_PARAM_COMMENT];
-	param_value = SGVariant(wp->comment);
-	widget = this->make_widget(*param_spec, param_value);
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-
-
-
-	/* TODO: description may contain URL. Make the label or input field clickable. */
-	param_spec = param_specs[SG_WP_PARAM_DESC];
-	param_value = SGVariant(wp->description);
-	widget = this->make_widget(*param_spec, param_value);
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-
-
-
-	/* TODO: perhaps add file filter for image files? */
-	param_spec = param_specs[SG_WP_PARAM_IMAGE];
-	param_value = SGVariant(wp->image_full_path);
-	widget = this->make_widget(*param_spec, param_value);
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
-
-
-
-	param_spec = param_specs[SG_WP_PARAM_SYMBOL];
-	param_value = SGVariant(wp->symbol_name);
-	widget = this->make_widget(*param_spec, param_value);
-	form->addRow(param_spec->ui_label, widget);
-	this->widgets.insert(QString(param_spec->name), widget);
 }
 
 

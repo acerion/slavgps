@@ -237,29 +237,31 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 {
 	LayerInterface * interface = Layer::get_interface(layer_type);
 
+	/* We want the dialog to present values of layer defaults, so
+	   the second argument must be interface->parameter_default_values. */
+	std::map<param_id_t, SGVariant> & values = interface->parameter_default_values;
+
+
 	PropertiesDialog dialog(interface->ui_labels.layer_defaults, parent);
-	dialog.fill(interface);
-	int dialog_code = dialog.exec();
-
-	if (dialog_code == QDialog::Accepted) {
-
-		std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
-
-		for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
-
-			const ParameterSpecification & param_spec = *(iter->second);
-			const SGVariant param_value = dialog.get_param_value(param_spec);
-
-			values->at(iter->first) = param_value;
-			save_parameter_value(param_value, layer_type, param_spec.name, param_spec.type_id);
-		}
-
-		LayerDefaults::save_to_file();
-
-		return true;
-	} else {
+	dialog.fill(interface->parameter_specifications, values, interface->parameter_groups);
+	if (QDialog::Accepted != dialog.exec()) {
 		return false;
 	}
+
+
+	for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
+
+		const ParameterSpecification & param_spec = *(iter->second);
+		const SGVariant param_value = dialog.get_param_value(param_spec);
+
+		values.at(iter->first) = param_value;
+		save_parameter_value(param_value, layer_type, param_spec.name, param_spec.type_id);
+	}
+
+
+	LayerDefaults::save_to_file();
+
+	return true;
 }
 
 

@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (c) 2016 - 2018 Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -173,8 +174,7 @@ namespace SlavGPS {
 		~PropertiesDialog();
 
 		void fill(Preferences * preferences);
-		void fill(LayerInterface * interface);
-		void fill(Waypoint * wp, const std::vector<const ParameterSpecification *> & param_specs, const QString & default_name);
+		void fill(const std::map<param_id_t, ParameterSpecification *> & parameter_specifications, const std::map<param_id_t, SGVariant> & values, const std::vector<SGLabelID> & parameter_groups);
 
 		SGVariant get_param_value(const ParameterSpecification & param_spec);
 		QWidget * get_widget(const ParameterSpecification & param_spec);
