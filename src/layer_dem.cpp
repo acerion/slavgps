@@ -392,9 +392,9 @@ static QStringList dem_layer_convert_to_relative_filenaming(const QStringList & 
 
 
 
-bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
+bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
 {
-	switch (id) {
+	switch (param_id) {
 	case PARAM_COLOR:
 		this->base_color = param_value.val_color;
 		this->colors[0] = this->base_color;
@@ -463,11 +463,11 @@ bool LayerDEM::set_param_value(uint16_t id, const SGVariant & param_value, bool 
 
 
 
-SGVariant LayerDEM::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation) const
 {
 	SGVariant rv;
 
-	switch (id) {
+	switch (param_id) {
 
 	case PARAM_FILES:
 		qDebug() << "II" PREFIX << "string list (" << this->files.size() << " elements):";

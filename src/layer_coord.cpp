@@ -44,6 +44,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Coord Layer"
 #define PREFIX ": Layer Coord:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -116,9 +117,9 @@ Layer * LayerCoordInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 
 /* Viewport can be NULL as it's not used ATM. */
-bool LayerCoord::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
+bool LayerCoord::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
 {
-	switch (id) {
+	switch (param_id) {
 	case PARAM_COLOR_DEG:
 		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving degrees color" << param_value;
 		this->color_deg = param_value.val_color;
@@ -149,10 +150,10 @@ bool LayerCoord::set_param_value(uint16_t id, const SGVariant & param_value, boo
 
 
 
-SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerCoord::get_param_value(param_id_t param_id, bool is_file_operation) const
 {
 	SGVariant rv;
-	switch (id) {
+	switch (param_id) {
 	case PARAM_COLOR_DEG:
 		rv = SGVariant(this->color_deg);
 		break;
@@ -169,7 +170,7 @@ SGVariant LayerCoord::get_param_value(param_id_t id, bool is_file_operation) con
 		rv = SGVariant((int32_t) this->line_thickness);
 		break;
 	default:
-		qDebug() << "EE: Layer Coordinate:" << __FUNCTION__ << "unexpected param id" << id;
+		qDebug() << SG_PREFIX_E << "Unknown parameter id" << param_id;
 		break;
 	}
 	qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "returning" << rv;

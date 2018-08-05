@@ -46,6 +46,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Preferences"
 #define PREFIX ": Preferences:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -144,7 +145,7 @@ static std::vector<SGLabelID> params_vik_fileref = {
 	SGLabelID("Relative", 1),
 };
 
-static ParameterScale<int> scale_recent_files(-1, 25, SGVariant((int32_t) 10), 1, 0); /* Viking's comment about value of hardwired default: "Seemingly GTK's default for the number of recent files.". */
+static ParameterScale<int> scale_recent_files(-1, 25, SGVariant((int32_t) 10), 1, 0); /* Viking's comment about value of hardcoded default: "Seemingly GTK's default for the number of recent files.". */
 
 static ParameterSpecification prefs_advanced[] = {
 	{ 0, PREFERENCES_NAMESPACE_ADVANCED, "save_file_reference_mode",  SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::ComboBox,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
@@ -389,12 +390,16 @@ void Preferences::show_window(QWidget * parent)
 
 	if (QDialog::Accepted == dialog.exec()) {
 		for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
-			const QString param_name = iter.key();
+
 			const ParameterSpecification & param_spec = iter.value();
 
-			const SGVariant param_value = dialog.get_param_value(param_name, param_spec);
+			const QString param_name(param_spec.name);
+			assert (param_name == iter.key());
 
-			qDebug() << "II: Preferences: extracted from dialog parameter" << param_name << "=" << param_value;
+			const SGVariant param_value = dialog.get_param_value(param_spec);
+
+			qDebug() << SG_PREFIX_I << "extracted from dialog parameter" << param_name << "=" << param_value;
+
 			Preferences::set_param_value(param_name, param_value);
 		}
 		Preferences::save_to_file();

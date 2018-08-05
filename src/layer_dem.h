@@ -85,8 +85,8 @@ namespace SlavGPS {
 		void draw_dem(Viewport * viewport, DEM * dem);
 		void draw_dem_ll(Viewport * viewport, DEM * dem);
 		void draw_dem_utm(Viewport * viewport, DEM * dem);
-		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
-		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
+		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
+		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
 		static void weak_ref_cb(void * ptr, void * dead_vdl);
 

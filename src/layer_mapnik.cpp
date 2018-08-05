@@ -82,7 +82,7 @@ static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_defaul
 
 
 static ParameterScale<int> scale_alpha(0,  255, SGVariant((int32_t) 255),  5, 0); /* PARAM_ALPHA */
-static ParameterScale<int> scale_timeout(0, 1024, SGVariant((int32_t) 168), 12, 0); /* Renderer timeout hours. Value of hardwired default is one week. */
+static ParameterScale<int> scale_timeout(0, 1024, SGVariant((int32_t) 168), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
 
 
 enum {
@@ -352,9 +352,9 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 
 
-bool LayerMapnik::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
+bool LayerMapnik::set_param_value(param_id_t param_id, const SGVariant & data, bool is_file_operation)
 {
-	switch (id) {
+	switch (param_id) {
 		case PARAM_CONFIG_CSS:
 			this->set_file_css(data.val_string);
 			break;
@@ -381,55 +381,55 @@ bool LayerMapnik::set_param_value(uint16_t id, const SGVariant & data, bool is_f
 
 
 
-SGVariant LayerMapnik::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerMapnik::get_param_value(param_id_t param_id, bool is_file_operation) const
 {
 	SGVariant param_value;
-	switch (id) {
-		case PARAM_CONFIG_CSS: {
+	switch (param_id) {
+	case PARAM_CONFIG_CSS: {
+		param_value = SGVariant(this->filename_css);
+		bool set = false;
+		if (is_file_operation) {
+			if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
+				const QString cwd = QDir::currentPath();
+				if (!cwd.isEmpty()) {
+					param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_css));
+					set = true;
+				}
+			}
+		}
+		if (!set) {
 			param_value = SGVariant(this->filename_css);
-			bool set = false;
-			if (is_file_operation) {
-				if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
-					const QString cwd = QDir::currentPath();
-					if (!cwd.isEmpty()) {
-						param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_css));
-						set = true;
-					}
+		}
+		break;
+	}
+	case PARAM_CONFIG_XML: {
+		param_value = SGVariant(this->filename_xml);
+		bool set = false;
+		if (is_file_operation) {
+			if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
+				const QString cwd = QDir::currentPath();
+				if (!cwd.isEmpty()) {
+					param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_xml));
+					set = true;
 				}
 			}
-			if (!set) {
-				param_value = SGVariant(this->filename_css);
-			}
-			break;
 		}
-		case PARAM_CONFIG_XML: {
+		if (!set) {
 			param_value = SGVariant(this->filename_xml);
-			bool set = false;
-			if (is_file_operation) {
-				if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
-					const QString cwd = QDir::currentPath();
-					if (!cwd.isEmpty()) {
-						param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_xml));
-						set = true;
-					}
-				}
-			}
-			if (!set) {
-				param_value = SGVariant(this->filename_xml);
-			}
-			break;
 		}
-		case PARAM_ALPHA:
-			param_value = SGVariant((int32_t) this->alpha);
-			break;
-		case PARAM_USE_FILE_CACHE:
-			param_value = SGVariant(this->use_file_cache);
-			break;
-		case PARAM_FILE_CACHE_DIR:
-			param_value = SGVariant(this->file_cache_dir);
-			break;
-		default:
-			break;
+		break;
+	}
+	case PARAM_ALPHA:
+		param_value = SGVariant((int32_t) this->alpha);
+		break;
+	case PARAM_USE_FILE_CACHE:
+		param_value = SGVariant(this->use_file_cache);
+		break;
+	case PARAM_FILE_CACHE_DIR:
+		param_value = SGVariant(this->file_cache_dir);
+		break;
+	default:
+		break;
 	}
 	return param_value;
 }

@@ -25,7 +25,10 @@
 
 
 #include <map>
-#include <cstdint>
+#include <vector>
+
+
+
 
 #include <QIcon>
 #include <QMouseEvent>
@@ -33,9 +36,13 @@
 #include <QString>
 #include <QPen>
 
+
+
+
 #include "tree_view.h"
 #include "vikutils.h"
 #include "layer.h"
+#include "ui_builder.h"
 
 
 
@@ -93,12 +100,12 @@ namespace SlavGPS {
 		   set of default values of parameters, to be used
 		   when user creates a new instance of layer of type X.
 
-		   Parameters can be combined into groups, the names
+		   Parameters can be combined into groups, the names and IDs
 		   of the groups are in parameter_groups. */
 		ParameterSpecification * parameters_c = NULL;
 		std::map<param_id_t, ParameterSpecification *> parameter_specifications;
 		std::map<param_id_t, SGVariant>  parameter_default_values;
-		const char ** parameter_groups = NULL;
+		std::vector<SGLabelID> parameter_groups;
 
 		struct {
 			QString new_layer;      /* Menu "Layers" -> "New type-X Layer". */

@@ -56,8 +56,8 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
-		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
-		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
+		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
+		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
 	private:
 		void draw_latlon(Viewport * viewport);

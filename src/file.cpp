@@ -413,10 +413,10 @@ static void file_write(FILE * file, LayerAggregate * top_level_layer, Viewport *
 
 
 
-static void string_list_set_param(int i, const QStringList & string_list, Layer * layer)
+static void string_list_set_param(param_id_t param_id, const QStringList & string_list, Layer * layer)
 {
 	const SGVariant param_value(string_list);
-	layer->set_param_value(i, param_value, true);
+	layer->set_param_value(param_id, param_value, true);
 }
 
 
@@ -653,31 +653,35 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 			return;
 		}
 
-		for (int i = 0; i < this->param_specs_count; i++) {
+		/* param_id is an id of parameter in layer's array of ParameterSpecification variables. */
+		for (int param_id = 0; param_id < this->param_specs_count; param_id++) {
 
-			const ParameterSpecification * param_spec = &this->param_specs[i];
+			const ParameterSpecification * param_spec = &this->param_specs[param_id];
 
-			if (!(strlen(param_spec->name) == name_len && strncasecmp(line, param_spec->name, name_len) == 0)) {
+			if (name_len != strlen(param_spec->name)) {
+				continue;
+			}
+			if (0 != strncasecmp(line, param_spec->name, name_len)) {
 				continue;
 			}
 
 			if (param_spec->type_id == SGVariantType::StringList) {
 
-				/* Aadd the value to a list, possibly making a new list.
+				/* Add the value to a list, possibly making a new list.
 				   This will be passed to the layer when we read an ~EndLayer. */
 
 				/* Append current value to list of strings.
-				   The list of strings is a value of layer's parameter 'i'.
+				   The list of strings is a value of layer's parameter 'param_id'.
 
 				   [] operator returns modifiable reference to existing value,
 				   or to default-constructed value. In both cases we append
-				   new value (value_start) to list of strings at key 'i'. */
-				this->string_lists[i] << QString(value_start);
+				   new value (value_start) to list of strings at key 'param_id'. */
+				this->string_lists[param_id] << QString(value_start);
 			} else {
 				const SGVariant new_val = new_sgvariant_sub(value_start, param_spec->type_id);
 
 				qDebug() << "DD" PREFIX << "setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
-				layer->set_param_value(i, new_val, true);
+				layer->set_param_value(param_id, new_val, true);
 			}
 			parameter_found = true;
 			break;

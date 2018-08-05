@@ -117,7 +117,7 @@ namespace SlavGPS {
 		WidgetType widget_type;
 		void * widget_data;
 
-		LayerDefaultFunc hardwired_default_value; /* Program's internal, hardwired value that will be used if settings file doesn't contain a value for given parameter. */
+		LayerDefaultFunc hardcoded_default_value; /* Program's internal, hardcoded value that will be used if settings file doesn't contain a value for given parameter. */
 		ParameterExtra * extra;
 		const char * tooltip;
 
@@ -159,9 +159,9 @@ namespace SlavGPS {
 
 	class SGLabelID {
 	public:
-		SGLabelID(const QString & label_, int id_) { label = label_; id = id_; }
+		SGLabelID(const QString & label_, int id_) : label(label_), id(id_) {};
 		QString label;
-		int id;
+		int id = 0;
 	};
 
 
@@ -169,26 +169,18 @@ namespace SlavGPS {
 
 	class PropertiesDialog : public QDialog {
 	public:
-		PropertiesDialog(QString const & title = "Properties", QWidget * parent = NULL);
+		PropertiesDialog(QString const & title = tr("Properties"), QWidget * parent = NULL);
 		~PropertiesDialog();
 
 		void fill(Preferences * preferences);
-		void fill(Layer * layer);
 		void fill(LayerInterface * interface);
 		void fill(Waypoint * wp, const std::vector<const ParameterSpecification *> & param_specs, const QString & default_name);
 
-		SGVariant get_param_value(param_id_t param_id, const ParameterSpecification & param_spec);
-		SGVariant get_param_value(const QString & param_name, const ParameterSpecification & param_spec);
-
-		/* Referencing parameters (and widgets that are
-		   related to the parameters) can be done through
-		   either parameter name (QString) or parameter id
-		   (param_id_t). */
-		QHash<QString, QWidget *> widgets2;
-		std::map<param_id_t, QWidget *> widgets;
+		SGVariant get_param_value(const ParameterSpecification & param_spec);
+		QWidget * get_widget(const ParameterSpecification & param_spec);
 
 	private:
-		QWidget * new_widget(const ParameterSpecification & param_spec, const SGVariant & param_value);
+		QWidget * make_widget(const ParameterSpecification & param_spec, const SGVariant & param_value);
 
 		QFormLayout * insert_tab(QString const & label);
 		std::map<param_id_t, ParameterSpecification *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end);
@@ -199,6 +191,8 @@ namespace SlavGPS {
 		QPushButton * ok = NULL;
 		QPushButton * cancel = NULL;
 		QVBoxLayout * vbox = NULL;
+
+		QHash<QString, QWidget *> widgets; /* Parameter name (ParameterSpecification::name) -> widget. */
 
 		std::map<param_id_t, QFormLayout *> forms;
 

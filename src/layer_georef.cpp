@@ -81,6 +81,12 @@ enum {
 
 
 
+/* Properties dialog for Georef Layer is too complicated
+   (non-standard) to be built with standard UI builder based on
+   parameter specifications. Therefore all parameters are marked as
+   "hidden". This means that widgets in the properties dialog (and the
+   dialog itself) will not be built using parameters specification. */
+
 ParameterSpecification georef_layer_param_specs[] = {
 	{ PARAM_IMAGE_FULL_PATH,         NULL, "image",                SGVariantType::String, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
 	{ PARAM_CORNER_UTM_EASTING,      NULL, "corner_easting",       SGVariantType::Double, PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
@@ -91,7 +97,7 @@ ParameterSpecification georef_layer_param_specs[] = {
 	{ PARAM_CORNER_UTM_BAND_LETTER,  NULL, "corner_letter_as_int", SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
 	{ PARAM_ALPHA,                   NULL, "alpha",                SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL },
 
-	{ NUM_PARAMS,                    NULL, NULL,                   SGVariantType::Empty,  PARAMETER_GROUP_GENERIC,QString(""), WidgetType::None, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                    NULL, NULL,                   SGVariantType::Empty,  PARAMETER_GROUP_HIDDEN, QString(""), WidgetType::None, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -185,9 +191,9 @@ Layer * LayerGeorefInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 
 
-bool LayerGeoref::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
+bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
 {
-	switch (id) {
+	switch (param_id) {
 	case PARAM_IMAGE_FULL_PATH:
 		this->set_image_full_path(param_value.val_string);
 		break;
@@ -249,10 +255,10 @@ void LayerGeoref::create_image_file()
 
 
 
-SGVariant LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operation) const
 {
 	SGVariant rv;
-	switch (id) {
+	switch (param_id) {
 	case PARAM_IMAGE_FULL_PATH: {
 		bool is_set = false;
 		if (is_file_operation) {

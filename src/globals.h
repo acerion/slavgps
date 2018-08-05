@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +26,6 @@
 
 
 
-#include <cstdint>
 #include <QString>
 
 
@@ -36,22 +36,27 @@ namespace SlavGPS {
 
 
 
-	typedef int16_t param_id_t; /* This shall be a signed type. */
+	typedef int param_id_t; /* This shall be a signed type. */
 
 
 
 
 #define SG_APPLICATION_NAME "slavgps"
-#define PROJECT "Viking"
+#define PROJECT "SlavGPS"
 #define VIKING_VERSION PACKAGE_VERSION
 #define VIKING_VERSION_NAME "This Name For Rent"
 #define VIKING_URL PACKAGE_URL
 
 
-#define SG_PREFIX_D "DD " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_I "II " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_W "WW " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_E "EE " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("SlavGPS::", "").replace("virtual ", "") << __LINE__ << " > "
+
+#define SG_NAMESPACE_PREFIX "SlavGPS::"
+
+#define SG_PREFIX_D      "DD  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_I      "II  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_W      "WW  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_E      "EE  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_SLOT   "SLT " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_SIGNAL "SIG " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
 
 
 

@@ -255,7 +255,7 @@ ParameterSpecification maps_layer_param_specs[] = {
 
 void LayerMap::set_autodownload_default(bool autodownload)
 {
-	maps_layer_param_specs[PARAM_AUTO_DOWNLOAD].hardwired_default_value = autodownload ? sg_variant_true : sg_variant_false;
+	maps_layer_param_specs[PARAM_AUTO_DOWNLOAD].hardcoded_default_value = autodownload ? sg_variant_true : sg_variant_false;
 }
 
 
@@ -545,9 +545,9 @@ static void maps_show_license(Window * parent, const MapSource * map_source)
 
 
 
-bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file_operation)
+bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool is_file_operation)
 {
-	switch (id) {
+	switch (param_id) {
 	case PARAM_CACHE_DIR:
 		this->set_cache_dir(data.val_string);
 		break;
@@ -612,10 +612,10 @@ bool LayerMap::set_param_value(uint16_t id, const SGVariant & data, bool is_file
 
 
 
-SGVariant LayerMap::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation) const
 {
 	SGVariant rv;
-	switch (id) {
+	switch (param_id) {
 	case PARAM_CACHE_DIR: {
 		bool set = false;
 		/* Only save a blank when the map cache location equals the default.

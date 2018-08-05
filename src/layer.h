@@ -181,11 +181,11 @@ namespace SlavGPS {
 
 		/* Get current, per-instance-of-layer, value of a layer parameter. The parameter is specified by its id.
 		   @is_file_operation denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
+		virtual SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
 		/* Returns true if needs to redraw due to changed param. */
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
+		virtual bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 
 		/* Most of layer types aren't able to store child layers.
 		   Those that do, may have zero child layers at the moment. */

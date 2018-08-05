@@ -135,8 +135,8 @@ namespace SlavGPS {
 		QString get_tooltip(void) const;
 		void add_menu_items(QMenu & menu);
 		bool properties_dialog(Viewport * viewport);
-		bool set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation);
-		SGVariant get_param_value(param_id_t id, bool is_file_operation) const;
+		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
+		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
 
 

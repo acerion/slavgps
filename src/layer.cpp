@@ -426,15 +426,18 @@ bool Layer::properties_dialog(Viewport * viewport)
 	qDebug() << "II" PREFIX << "opening properties dialog for layer" << this->get_type_ui_label();
 
 	PropertiesDialog dialog(NULL);
-	dialog.fill(this);
+	dialog.fill(this->interface);
 	int dialog_code = dialog.exec();
 
 	if (dialog_code == QDialog::Accepted) {
 
 		bool must_redraw = false;
 
-		for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
-			const SGVariant param_value = dialog.get_param_value(iter->first, *(iter->second));
+		for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); ++iter) {
+
+			const ParameterSpecification & param_spec = *(iter->second);
+			const SGVariant param_value = dialog.get_param_value(param_spec);
+
 			bool set = this->set_param_value(iter->first, param_value, false);
 			if (set) {
 				must_redraw = true;
@@ -583,7 +586,7 @@ void Layer::add_menu_items(QMenu & menu)
 
 
 
-SGVariant Layer::get_param_value(param_id_t id, bool is_file_operation) const
+SGVariant Layer::get_param_value(param_id_t param_id, bool is_file_operation) const
 {
 	 return SGVariant(); /* Type ID will be ::Empty. */
 }
@@ -591,7 +594,7 @@ SGVariant Layer::get_param_value(param_id_t id, bool is_file_operation) const
 
 
 
-bool Layer::set_param_value(uint16_t id, const SGVariant & param_value, bool is_file_operation)
+bool Layer::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
 {
 	return false;
 }

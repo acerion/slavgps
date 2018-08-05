@@ -246,9 +246,12 @@ bool LayerDefaults::show_window(LayerType layer_type, QWidget * parent)
 		std::map<param_id_t, SGVariant> * values = &interface->parameter_default_values;
 
 		for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
-			const SGVariant param_value = dialog.get_param_value(iter->first, *(iter->second));
+
+			const ParameterSpecification & param_spec = *(iter->second);
+			const SGVariant param_value = dialog.get_param_value(param_spec);
+
 			values->at(iter->first) = param_value;
-			save_parameter_value(param_value, layer_type, iter->second->name, iter->second->type_id);
+			save_parameter_value(param_value, layer_type, param_spec.name, param_spec.type_id);
 		}
 
 		LayerDefaults::save_to_file();
