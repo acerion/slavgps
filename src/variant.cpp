@@ -661,11 +661,21 @@ SGVariant SGVariant::unmarshall(Pickle & pickle, SGVariantType expected_type_id)
 
 void SGVariant::write(FILE * file, char const * param_name) const
 {
-	/* String lists are handled differently. We get a QStringList (that shouldn't
-	   be freed) back for get_param and if it is empty we shouldn't write
-	   anything at all (otherwise we'd read in a list with an empty string,
-	   not an empty string list). */
 	if (this->type_id == SGVariantType::StringList) {
+		/*
+		  String lists are handled differently. We get a
+		  QStringList and if it is empty we shouldn't write
+		  anything at all (otherwise we'd read in a list with
+		  an empty string, not an empty string list).
+
+		  For a list of files in DEM layer the result will look like this:
+
+		  ~Layer DEM
+		  name=DEM
+		  files=/mnt/viking/test_data/srtm_hgt/version2_1/SRTM3/Australia/S11E119.hgt.zip
+		  files=/mnt/viking/test_data/srtm_hgt/version2_1/SRTM3/South_America/S56W072.hgt.zip
+		  files=/mnt/viking/test_data/srtm_hgt/version2_1/SRTM3/South_America/S04W042.hgt.zip
+		*/
 		for (auto iter = this->val_string_list.constBegin(); iter != this->val_string_list.constEnd(); iter++) {
 			fprintf(file, "%s=", param_name);
 			fprintf(file, "%s\n", (*iter).toUtf8().constData());
