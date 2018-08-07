@@ -480,23 +480,21 @@ LayerType Layer::type_from_type_id_string(const QString & type_id_string)
    Every new layer gets assigned some initial/default values of these parameters.
    These initial/default values of parameters are stored in the Layer Interface.
    This method copies the values from the interface into given layer.
+
+   At the point when the function is called, the interface's default
+   values of parameters should be already initialized with values from
+   config file and with hardcoded values. So this function doesn't
+   have to care about using correct source of default values.
+
+   The function sets values of hidden parameters (group_id ==
+   PARAMETER_GROUP_HIDDEN) as well.
 */
 void Layer::set_initial_parameter_values(void)
 {
-	SGVariant param_value;
-
-	std::map<param_id_t, SGVariant> * defaults = &this->interface->parameter_default_values;
+	std::map<param_id_t, SGVariant> & defaults = this->interface->parameter_default_values;
 
 	for (auto iter = this->interface->parameter_specifications.begin(); iter != this->interface->parameter_specifications.end(); iter++) {
-		/* Ensure parameter is for use. */
-		if (true || iter->second->group_id > PARAMETER_GROUP_HIDDEN) { /* TODO: how to correctly determine if parameter is "for use"? */
-			/* ATM can't handle string lists.
-			   Only DEM files uses this currently. */
-			if (iter->second->type_id != SGVariantType::StringList) {
-				param_value = defaults->at(iter->first);
-				this->set_param_value(iter->first, param_value, true); /* Possibly comes from a file. */
-			}
-		}
+		this->set_param_value(iter->first, defaults.at(iter->first), true); /* true = parameter value possibly comes from a file. TODO: verify the comment. */
 	}
 
 	this->has_properties_dialog = this->interface->has_properties_dialog();

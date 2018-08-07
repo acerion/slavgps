@@ -65,6 +65,7 @@ SGRadioGroup::SGRadioGroup(const QString & title_, const std::vector<SGLabelID> 
 
 SGRadioGroup::~SGRadioGroup()
 {
+	qDebug() << "kamil SGRadioGroup destructor called";
 	delete this->vbox;
 	delete this->group;
 }

@@ -240,7 +240,10 @@ void PropertiesDialog::fill(Preferences * preferences)
 
 
 		const ParameterSpecification & param_spec = iter.value();
-		const QString param_name = iter.key(); /* TODO: isn't it the same as param_spec->name? */
+		const QString param_name = iter.key();
+		/* Remember that iter.ke() is <some namespace><dot>param_spec.name.
+		   This is not the best place to re-create map's key by concatenating
+		   some strings. Just use iter.key() and be done with it. */
 		const SGVariant param_value = preferences->get_param_value(param_name);
 
 		QWidget * widget = this->make_widget(param_spec, param_value);
@@ -619,16 +622,18 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		} else if (param_spec.type_id == SGVariantType::String) {
 			rv = SGVariant(((QComboBox *) widget)->currentText());
 
-			/* TODO: look at old implementation below: */
-			/* Implementation in old code: */
+			/* TODO: look at old implementation below.
+			   Verify if in places that use SGVariantType::String +
+			   WidgetType::ComboBox this code is still needed. */
 #ifdef K_OLD_IMPLEMENTATION
 			if (param_spec.extra_widget_data) {
 				/* Combobox displays labels and we want values from extra. */
-				int pos = widget->currentIndex();
-				rv = SGVariant((char *) ((const char **) param_spec.extra_widget_data)[pos]);
+				const int pos = widget->currentIndex();
+				const QStringList * strings = (const QStringList *) param_spec.extra_widget_data;
+				rv = SGVariant(strings->at(pos));
 			} else {
-				/* Return raw value. */
-				rv = SGVariant((char *) widget->currentText()); /* TODO: verify this assignment. */
+				/* Return value of UI label of selected combo box. */
+				rv = SGVariant(widget->currentText());
 			}
 #endif
 		} else {
