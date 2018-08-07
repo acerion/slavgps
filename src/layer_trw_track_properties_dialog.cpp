@@ -156,7 +156,7 @@ void TrackPropertiesDialog::create_properties_page(void)
 	row++;
 
 
-       	this->w_color = new SGColorButton(this->trk->color, NULL);
+       	this->w_color = new ColorButtonWidget(this->trk->color, NULL);
 	this->grid->addWidget(new QLabel(tr("Color:")), row, 0);
 	this->grid->addWidget(this->w_color, row, 1);
 	row++;

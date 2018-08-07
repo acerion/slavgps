@@ -638,7 +638,7 @@ void LayerGeoref::export_params_cb(void)
    Based on simple file name conventions.
    Only attempted if the preference is on.
 */
-static void maybe_read_world_file(FileSelector * file_selector, void * user_data)
+static void maybe_read_world_file(FileSelectorWidget * file_selector, void * user_data)
 {
 	if (!user_data) {
 		return;
@@ -869,8 +869,8 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	int row = 0;
 
-	this->map_image_file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select image file"), this->layer->get_window());
-	this->map_image_file_selector->set_file_type_filter(FileSelector::FileTypeFilter::Image);
+	this->map_image_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select image file"), this->layer->get_window());
+	this->map_image_file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Image);
 #ifdef K_TODO /* Handle "maybe_read_world_file" argument in file selector. */
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
@@ -878,7 +878,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->grid->addWidget(this->map_image_file_selector, row, 1);
 	row++;
 
-	this->world_file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select world file"), this->layer->get_window());
+	this->world_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select world file"), this->layer->get_window());
 	this->grid->addWidget(new QLabel(tr("World File Parameters:")), row, 0);
 	this->grid->addWidget(this->world_file_selector, row, 1);
 	row++;
@@ -912,7 +912,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 	{
-		this->utm_entry = new SGUTMEntry();
+		this->utm_entry = new UTMEntryWidget();
 		this->utm_entry->set_value(this->layer->utm_tl);
 		this->utm_entry->set_text(tr("Corner pixel easting:"),
 					  tr("The UTM \"easting\" value of the upper-left corner pixel of the map"),
@@ -948,14 +948,14 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 		const Coord coord(this->layer->utm_tl, CoordMode::LATLON);
 
-		this->lat_lon_tl_entry = new SGLatLonEntry();
+		this->lat_lon_tl_entry = new LatLonEntryWidget();
 		this->lat_lon_tl_entry->set_text(tr("Upper left latitude:"),
 						 tr("Upper left latitude"),
 						 tr("Upper left longitude:"),
 						 tr("Upper left longitude"));
 		this->lat_lon_tl_entry->set_value(coord.ll);
 
-		this->lat_lon_br_entry = new SGLatLonEntry();
+		this->lat_lon_br_entry = new LatLonEntryWidget();
 		this->lat_lon_br_entry->set_text(tr("Lower right latitude:"),
 						 tr("Lower right latitude"),
 						 tr("Lower right longitude:"),
@@ -968,7 +968,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 	alpha_scale.initial = SGVariant((int32_t) this->layer->alpha);
-	this->alpha_slider = new SGSlider(alpha_scale, Qt::Horizontal);
+	this->alpha_slider = new SliderWidget(alpha_scale, Qt::Horizontal);
 	this->grid->addWidget(new QLabel(tr("Alpha:")), row, 0);
 	this->grid->addWidget(this->alpha_slider, row, 1);
 	row++;

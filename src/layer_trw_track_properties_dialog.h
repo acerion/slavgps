@@ -73,7 +73,7 @@ namespace SlavGPS {
 		QLineEdit * w_description = NULL;
 		QLineEdit * w_source = NULL;
 		QLineEdit * w_type = NULL;
-		SGColorButton * w_color = NULL;
+		ColorButtonWidget * w_color = NULL;
 		QComboBox * w_namelabel = NULL;
 		QSpinBox * w_number_distlabels = NULL;
 	};

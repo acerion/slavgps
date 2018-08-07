@@ -508,7 +508,7 @@ int goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Win
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to Lat/Lon"));
 
-	SGLatLonEntry entry;
+	LatLonEntryWidget entry;
 	entry.set_value(initial_lat_lon);
 	dialog.grid->addWidget(&entry, 0, 0);
 	entry.setFocus(); /* This will set keyboard focus in first field of entry widget. */
@@ -553,7 +553,7 @@ int goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent)
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to UTM"));
 
-	SGUTMEntry entry;
+	UTMEntryWidget entry;
 	entry.set_value(initial_utm);
 	dialog.grid->addWidget(&entry, 0, 0);
 	entry.setFocus(); /* This will set keyboard focus in first field of entry widget. */

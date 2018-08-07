@@ -67,7 +67,7 @@ namespace SlavGPS {
 		QSpinBox * width_spin = NULL;
 		QSpinBox * height_spin = NULL;
 		QLabel * total_area_label = NULL;
-		SGRadioGroup * output_format_radios = NULL;
+		RadioGroupWidget * output_format_radios = NULL;
 
 	public:
 		/* Only used for ViewportSaveMode::Directory. */

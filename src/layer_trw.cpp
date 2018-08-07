@@ -2831,7 +2831,7 @@ void LayerTRW::merge_with_other_cb(void)
 	std::list<Track *> merge_list = a_dialog_select_from_list(merge_candidates,
 								  ListSelectionMode::MultipleItems,
 								  is_route ? tr("Select route to merge with") : tr("Select track to merge with"),
-								  SGListSelection::get_headers_for_track(),
+								  ListSelectionWidget::get_headers_for_track(),
 								  this->get_window());
 
 	if (merge_list.empty()) {
@@ -2886,7 +2886,7 @@ void LayerTRW::append_track_cb(void)
 	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
 								    ListSelectionMode::SingleItem,
 								    is_route ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track"),
-								    SGListSelection::get_headers_for_track(),
+								    ListSelectionWidget::get_headers_for_track(),
 								    this->get_window());
 	/* It's a list, but shouldn't contain more than one other track! */
 	if (sources_list.empty()) {
@@ -2951,7 +2951,7 @@ void LayerTRW::append_other_cb(void)
 	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
 								    ListSelectionMode::SingleItem,
 								    target_is_route ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track"),
-								    SGListSelection::get_headers_for_track(),
+								    ListSelectionWidget::get_headers_for_track(),
 								    this->get_window());
 	if (sources_list.empty()) {
 		return;
@@ -3390,7 +3390,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	std::list<Track *> delete_list = a_dialog_select_from_list(all_tracks,
 								   ListSelectionMode::MultipleItems,
 								   tr("Select tracks to delete"),
-								   SGListSelection::get_headers_for_track(),
+								   ListSelectionWidget::get_headers_for_track(),
 								   this->get_window());
 
 	if (delete_list.empty()) {
@@ -3433,7 +3433,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	std::list<Track *> delete_list = a_dialog_select_from_list(all_routes,
 								   ListSelectionMode::MultipleItems,
 								   tr("Select routes to delete"),
-								   SGListSelection::get_headers_for_track(),
+								   ListSelectionWidget::get_headers_for_track(),
 								   this->get_window());
 
 	/* Delete requested routes.
@@ -3470,7 +3470,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	std::list<Waypoint *> delete_list = a_dialog_select_from_list(all_waypoints,
 								      ListSelectionMode::MultipleItems,
 								      tr("Select waypoints to delete"),
-								      SGListSelection::get_headers_for_waypoint(),
+								      ListSelectionWidget::get_headers_for_waypoint(),
 								      this->get_window());
 
 	if (delete_list.empty()) {

@@ -109,7 +109,7 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames,
 									   ListSelectionMode::MultipleItems,
 									   title,
-									   SGListSelection::get_headers_for_geoname(),
+									   ListSelectionWidget::get_headers_for_geoname(),
 									   parent);
 
 	if (!selected_geonames.size()) {

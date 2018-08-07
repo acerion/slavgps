@@ -36,11 +36,11 @@ namespace SlavGPS {
 
 
 
-	class SGColorButton : public QToolButton {
+	class ColorButtonWidget : public QToolButton {
 		Q_OBJECT
 	public:
-		SGColorButton(QColor const & color_, QWidget * parent);
-		~SGColorButton();
+		ColorButtonWidget(QColor const & color_, QWidget * parent);
+		~ColorButtonWidget();
 
 		QColor get_color(void);
 

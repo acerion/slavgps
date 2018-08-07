@@ -65,11 +65,11 @@ namespace SlavGPS {
 
 
 
-	class SGListSelection : public QTableView {
+	class ListSelectionWidget : public QTableView {
 		Q_OBJECT
 	public:
-		SGListSelection() {};
-		SGListSelection(ListSelectionMode selection_mode, QWidget * a_parent = NULL);
+		ListSelectionWidget() {};
+		ListSelectionWidget(ListSelectionMode selection_mode, QWidget * a_parent = NULL);
 
 		void set_headers(const QStringList & header_labels);
 
@@ -113,7 +113,7 @@ namespace SlavGPS {
 	std::list<T> a_dialog_select_from_list(const std::list<T> & elements, ListSelectionMode selection_mode, const QString & title, const QStringList & header_labels, QWidget * parent)
 	{
 		BasicDialog dialog(parent);
-		SGListSelection list_widget(selection_mode, &dialog);
+		ListSelectionWidget list_widget(selection_mode, &dialog);
 		list_widget.set_headers(header_labels);
 
 		dialog.setWindowTitle(title);

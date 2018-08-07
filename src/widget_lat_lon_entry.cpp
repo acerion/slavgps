@@ -43,7 +43,7 @@ using namespace SlavGPS;
 
 
 
-SGLatLonEntry::SGLatLonEntry(QWidget * parent)
+LatLonEntryWidget::LatLonEntryWidget(QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 
@@ -80,7 +80,7 @@ SGLatLonEntry::SGLatLonEntry(QWidget * parent)
 
 	/* Ensure the first entry field has focus so we can start
 	   typing straight away.  User of this widget has to call
-	   SGLatLonEntry::setFocus() after putting the widget in
+	   LatLonEntryWidget::setFocus() after putting the widget in
 	   layout. */
 	this->setFocusProxy(this->lat_spin);
 }
@@ -88,7 +88,7 @@ SGLatLonEntry::SGLatLonEntry(QWidget * parent)
 
 
 
-void SGLatLonEntry::set_value(const LatLon & lat_lon)
+void LatLonEntryWidget::set_value(const LatLon & lat_lon)
 {
 	this->lat_spin->setValue(lat_lon.lat);
 	this->lon_spin->setValue(lat_lon.lon);
@@ -97,7 +97,7 @@ void SGLatLonEntry::set_value(const LatLon & lat_lon)
 
 
 
-LatLon SGLatLonEntry::get_value(void) const
+LatLon LatLonEntryWidget::get_value(void) const
 {
 	LatLon lat_lon;
 
@@ -110,7 +110,7 @@ LatLon SGLatLonEntry::get_value(void) const
 
 
 
-void SGLatLonEntry::set_text(const QString & latitude_label, const QString & latitude_tooltip, const QString & longitude_label, const QString & longitude_tooltip)
+void LatLonEntryWidget::set_text(const QString & latitude_label, const QString & latitude_tooltip, const QString & longitude_label, const QString & longitude_tooltip)
 {
 	this->lat_spin->setToolTip(latitude_tooltip);
 	this->lat_label->setText(latitude_label);

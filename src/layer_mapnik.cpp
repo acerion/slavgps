@@ -96,8 +96,8 @@ enum {
 
 
 
-FileSelector::FileTypeFilter file_type_css[1] = { FileSelector::FileTypeFilter::Carto };
-FileSelector::FileTypeFilter file_type_xml[1] = { FileSelector::FileTypeFilter::XML };
+FileSelectorWidget::FileTypeFilter file_type_css[1] = { FileSelectorWidget::FileTypeFilter::Carto };
+FileSelectorWidget::FileTypeFilter file_type_xml[1] = { FileSelectorWidget::FileTypeFilter::XML };
 
 
 

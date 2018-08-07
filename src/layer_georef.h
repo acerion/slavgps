@@ -49,7 +49,7 @@ namespace SlavGPS {
 
 
 	class Viewport;
-	class FileSelector;
+	class FileSelectorWidget;
 	class LayerGeoref;
 
 
@@ -70,8 +70,8 @@ namespace SlavGPS {
 		LatLon get_ll_br(void) const;
 		void check_br_is_good_or_msg_user(void);
 
-		FileSelector * map_image_file_selector = NULL;
-		FileSelector * world_file_selector = NULL;
+		FileSelectorWidget * map_image_file_selector = NULL;
+		FileSelectorWidget * world_file_selector = NULL;
 
 		QDoubleSpinBox * x_scale_spin = NULL;
 		QDoubleSpinBox * y_scale_spin = NULL;
@@ -83,16 +83,16 @@ namespace SlavGPS {
 		   modes, and how I display them depending on state of
 		   "coord_mode_combo", I have to have equal number of
 		   widgets for UTM mode and for LatLon mode. */
-		SGUTMEntry * utm_entry = NULL;
+		UTMEntryWidget * utm_entry = NULL;
 		QWidget * dummy_entry1 = NULL;
 		QWidget * dummy_entry2 = NULL;
 
-		SGLatLonEntry * lat_lon_tl_entry = NULL;
-		SGLatLonEntry * lat_lon_br_entry = NULL;
+		LatLonEntryWidget * lat_lon_tl_entry = NULL;
+		LatLonEntryWidget * lat_lon_br_entry = NULL;
 		QPushButton * calc_mpp_button = NULL;
 
 
-		SGSlider * alpha_slider = NULL; /* alpha is represented by int type. */
+		SliderWidget * alpha_slider = NULL; /* alpha is represented by int type. */
 
 	public slots:
 		void load_cb(void);

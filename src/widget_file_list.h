@@ -46,15 +46,15 @@ namespace SlavGPS {
 
 
 
-	class FileList : public QWidget {
+	class FileListWidget : public QWidget {
 		Q_OBJECT
 	public:
-		FileList(const QString & title, const QStringList & fl, QWidget * parent);
-		~FileList();
+		FileListWidget(const QString & title, const QStringList & fl, QWidget * parent);
+		~FileListWidget();
 
 		QStringList get_list(void);
 
-		void set_file_type_filter(FileSelector::FileTypeFilter file_type_filter);
+		void set_file_type_filter(FileSelectorWidget::FileTypeFilter file_type_filter);
 
 	signals:
 
@@ -75,7 +75,7 @@ namespace SlavGPS {
 
 		QFileDialog * file_selector = NULL;
 
-		FileSelector::FileTypeFilter file_type_filter = FileSelector::FileTypeFilter::Any;
+		FileSelectorWidget::FileTypeFilter file_type_filter = FileSelectorWidget::FileTypeFilter::Any;
 	};
 
 

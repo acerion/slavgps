@@ -42,7 +42,7 @@ using namespace SlavGPS;
 
 
 
-SGUTMEntry::SGUTMEntry(QWidget * parent)
+UTMEntryWidget::UTMEntryWidget(QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 
@@ -101,7 +101,7 @@ SGUTMEntry::SGUTMEntry(QWidget * parent)
 
 
 
-void SGUTMEntry::set_value(const UTM & utm)
+void UTMEntryWidget::set_value(const UTM & utm)
 {
 	this->easting_spin->setValue(utm.easting);
 	this->northing_spin->setValue(utm.northing);
@@ -112,7 +112,7 @@ void SGUTMEntry::set_value(const UTM & utm)
 
 
 
-UTM SGUTMEntry::get_value(void) const
+UTM UTMEntryWidget::get_value(void) const
 {
 	UTM utm;
 
@@ -132,7 +132,7 @@ UTM SGUTMEntry::get_value(void) const
 
 
 
-void SGUTMEntry::set_text(const QString & east_label, const QString & east_tooltip, const QString & north_label, const QString & north_tooltip)
+void UTMEntryWidget::set_text(const QString & east_label, const QString & east_tooltip, const QString & north_label, const QString & north_tooltip)
 {
 	this->easting_spin->setToolTip(east_tooltip);
 	this->easting_label->setText(east_label);

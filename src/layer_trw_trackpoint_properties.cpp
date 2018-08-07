@@ -454,7 +454,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->grid->addWidget(this->course, 4, 1);
 
 
-	this->timestamp_widget = new SGTimestampWidget();
+	this->timestamp_widget = new TimestampWidget();
 	this->grid->addWidget(this->timestamp_widget, 5, 0, 2, 2);
 	// TODO: connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_to_tp_cb(time_t)));
 	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (set_timestamp_cb(time_t)));

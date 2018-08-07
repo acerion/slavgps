@@ -46,7 +46,7 @@ using namespace SlavGPS;
 
 
 
-FileSelector::FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
+FileSelectorWidget::FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
 {
 	this->file_dialog = new QFileDialog();
 	this->file_dialog->setFileMode(mode);
@@ -77,19 +77,19 @@ FileSelector::FileSelector(enum QFileDialog::Option options, enum QFileDialog::F
 
 
 
-FileSelector::~FileSelector()
+FileSelectorWidget::~FileSelectorWidget()
 {
 }
 
 
 
 
-void FileSelector::set_file_type_filter(FileTypeFilter new_file_type_filter)
+void FileSelectorWidget::set_file_type_filter(FileTypeFilter new_file_type_filter)
 {
 	this->file_type_filter = new_file_type_filter;
 
 	QStringList filter_list;
-	const bool is_mime = FileSelector::get_file_filter_string(this->file_type_filter, filter_list);
+	const bool is_mime = FileSelectorWidget::get_file_filter_string(this->file_type_filter, filter_list);
 
 	if (is_mime) {
 		this->file_dialog->setMimeTypeFilters(filter_list);
@@ -101,7 +101,7 @@ void FileSelector::set_file_type_filter(FileTypeFilter new_file_type_filter)
 
 
 
-bool FileSelector::get_file_filter_string(FileTypeFilter file_type_filter, QStringList & filter_list)
+bool FileSelectorWidget::get_file_filter_string(FileTypeFilter file_type_filter, QStringList & filter_list)
 {
 	bool is_mime = true;
 
@@ -157,7 +157,7 @@ bool FileSelector::get_file_filter_string(FileTypeFilter file_type_filter, QStri
 
 
 
-void FileSelector::open_browser_cb(void) /* Slot. */
+void FileSelectorWidget::open_browser_cb(void) /* Slot. */
 {
 	if (QDialog::Accepted == this->file_dialog->exec()) {
 		this->current_file_full_path = this->file_dialog->selectedFiles().at(0);
@@ -170,7 +170,7 @@ void FileSelector::open_browser_cb(void) /* Slot. */
 
 
 
-void FileSelector::preselect_file_full_path(const QString & filename)
+void FileSelectorWidget::preselect_file_full_path(const QString & filename)
 {
 	this->current_file_full_path = filename;
 	if (this->file_dialog) {
@@ -182,7 +182,7 @@ void FileSelector::preselect_file_full_path(const QString & filename)
 
 
 
-QString FileSelector::get_selected_file_full_path(void) const
+QString FileSelectorWidget::get_selected_file_full_path(void) const
 {
 	QStringList selection = this->file_dialog->selectedFiles();
 	static QString empty("");
@@ -199,7 +199,7 @@ QString FileSelector::get_selected_file_full_path(void) const
 
 
 
-QStringList FileSelector::get_selected_files_full_paths(void) const
+QStringList FileSelectorWidget::get_selected_files_full_paths(void) const
 {
 	return this->file_dialog->selectedFiles();
 }
@@ -207,7 +207,7 @@ QStringList FileSelector::get_selected_files_full_paths(void) const
 
 
 
-QUrl FileSelector::get_directory_url(void) const
+QUrl FileSelectorWidget::get_directory_url(void) const
 {
 	return this->file_dialog->directoryUrl();
 }
@@ -215,7 +215,7 @@ QUrl FileSelector::get_directory_url(void) const
 
 
 
-void FileSelector::set_directory_url(const QUrl & dir_url)
+void FileSelectorWidget::set_directory_url(const QUrl & dir_url)
 {
 	this->file_dialog->setDirectoryUrl(dir_url);
 }
@@ -223,7 +223,7 @@ void FileSelector::set_directory_url(const QUrl & dir_url)
 
 
 
-void FileSelector::set_name_filters(const QStringList & name_filters)
+void FileSelectorWidget::set_name_filters(const QStringList & name_filters)
 {
 	this->file_dialog->setNameFilters(name_filters);
 }
@@ -231,7 +231,7 @@ void FileSelector::set_name_filters(const QStringList & name_filters)
 
 
 
-void FileSelector::select_name_filter(const QString & name_filter)
+void FileSelectorWidget::select_name_filter(const QString & name_filter)
 {
 	this->file_dialog->selectNameFilter(name_filter);
 }
@@ -239,7 +239,7 @@ void FileSelector::select_name_filter(const QString & name_filter)
 
 
 
-QString FileSelector::get_selected_name_filter(void) const
+QString FileSelectorWidget::get_selected_name_filter(void) const
 {
 	return this->file_dialog->selectedNameFilter();
 }
@@ -247,7 +247,7 @@ QString FileSelector::get_selected_name_filter(void) const
 
 
 
-void FileSelector::set_accept_mode(QFileDialog::AcceptMode accept_mode)
+void FileSelectorWidget::set_accept_mode(QFileDialog::AcceptMode accept_mode)
 {
 	this->file_dialog->setAcceptMode(accept_mode);
 }

@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 
 
-	class FileSelector;
+	class FileSelectorWidget;
 
 
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 		void on_accept_cb(void);
 
 	public:
-		FileSelector * file_selector = NULL;
+		FileSelectorWidget * file_selector = NULL;
 		QComboBox * file_types_combo = NULL;
 
 	private:

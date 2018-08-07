@@ -44,7 +44,7 @@ using namespace SlavGPS;
 
 
 
-SGListSelection::SGListSelection(ListSelectionMode selection_mode, QWidget * a_parent) : QTableView(a_parent)
+ListSelectionWidget::ListSelectionWidget(ListSelectionMode selection_mode, QWidget * a_parent) : QTableView(a_parent)
 {
 	switch (selection_mode) {
 	case ListSelectionMode::SingleItem:
@@ -75,7 +75,7 @@ SGListSelection::SGListSelection(ListSelectionMode selection_mode, QWidget * a_p
 
 
 
-void SGListSelection::set_headers(const QStringList & header_labels)
+void ListSelectionWidget::set_headers(const QStringList & header_labels)
 {
 	//this->model.setItemPrototype(new SGItem());
 
@@ -94,7 +94,7 @@ void SGListSelection::set_headers(const QStringList & header_labels)
 
 
 
-QStringList SGListSelection::get_headers_for_track(void)
+QStringList ListSelectionWidget::get_headers_for_track(void)
 {
 	QStringList headers;
 	headers << QObject::tr("Name") << QObject::tr("Comment");
@@ -104,7 +104,7 @@ QStringList SGListSelection::get_headers_for_track(void)
 
 
 
-QStringList SGListSelection::get_headers_for_waypoint(void)
+QStringList ListSelectionWidget::get_headers_for_waypoint(void)
 {
 	QStringList headers;
 	headers << QObject::tr("Name") << QObject::tr("Comment");
@@ -114,7 +114,7 @@ QStringList SGListSelection::get_headers_for_waypoint(void)
 
 
 
-QStringList SGListSelection::get_headers_for_geoname(void)
+QStringList ListSelectionWidget::get_headers_for_geoname(void)
 {
 	QStringList headers;
 	headers << QObject::tr("Name") << QObject::tr("Feature") << QObject::tr("Lat/Lon");
@@ -124,7 +124,7 @@ QStringList SGListSelection::get_headers_for_geoname(void)
 
 
 
-QStringList SGListSelection::get_headers_for_string(void)
+QStringList ListSelectionWidget::get_headers_for_string(void)
 {
 	QStringList headers;
 	headers << QObject::tr("Name");

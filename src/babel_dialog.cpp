@@ -262,10 +262,10 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 
 	if (mode && (mode->tracks_write || mode->routes_write || mode->waypoints_write)) {
-		this->file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select Target File File for Export"), NULL);
+		this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select Target File File for Export"), NULL);
 		this->file_selector->set_accept_mode(QFileDialog::AcceptSave);
 	} else {
-		this->file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select File to Import"), NULL);
+		this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select File to Import"), NULL);
 	}
 	this->grid->addWidget(this->file_selector, 1, 0);
 

@@ -39,7 +39,7 @@ using namespace SlavGPS;
 
 
 
-SGSlider::SGSlider(const ParameterScale<int> & scale, Qt::Orientation orientation, QWidget * parent) : QWidget(parent)
+SliderWidget::SliderWidget(const ParameterScale<int> & scale, Qt::Orientation orientation, QWidget * parent) : QWidget(parent)
 {
 	/* Set minimum width of label, so that width of label widget
 	   doesn't change when number of digits in the label changes. */
@@ -93,7 +93,7 @@ SGSlider::SGSlider(const ParameterScale<int> & scale, Qt::Orientation orientatio
 
 
 
-SGSlider::SGSlider(const ParameterScale<double> & scale, Qt::Orientation orientation, QWidget * parent) : QWidget(parent)
+SliderWidget::SliderWidget(const ParameterScale<double> & scale, Qt::Orientation orientation, QWidget * parent) : QWidget(parent)
 {
 	/* Set minimum width of label, so that width of label widget
 	   doesn't change when number of digits in the label changes. */
@@ -147,14 +147,14 @@ SGSlider::SGSlider(const ParameterScale<double> & scale, Qt::Orientation orienta
 
 
 
-SGSlider::~SGSlider()
+SliderWidget::~SliderWidget()
 {
 }
 
 
 
 
-void SGSlider::set_value(int val)
+void SliderWidget::set_value(int val)
 {
 	this->slider.setValue(val);
 	this->value_changed_cb(val);
@@ -163,14 +163,14 @@ void SGSlider::set_value(int val)
 
 
 
-int SGSlider::get_value(void)
+int SliderWidget::get_value(void)
 {
 	return this->slider.value();
 }
 
 
 
-void SGSlider::value_changed_cb(int val)
+void SliderWidget::value_changed_cb(int val)
 {
 	this->label.setText(QString("%1").arg(val));
 }

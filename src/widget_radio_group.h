@@ -43,11 +43,11 @@ namespace SlavGPS {
 
 
 
-	class SGRadioGroup : public QGroupBox {
+	class RadioGroupWidget : public QGroupBox {
 		Q_OBJECT
 	public:
-		SGRadioGroup(const QString & title, const std::vector<SGLabelID> * items, QWidget * parent = NULL);
-		~SGRadioGroup();
+		RadioGroupWidget(const QString & title, const std::vector<SGLabelID> * items, QWidget * parent = NULL);
+		~RadioGroupWidget();
 
 		int get_id_of_selected(void);
 		void set_id_of_selected(int id);

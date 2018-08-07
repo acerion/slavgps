@@ -359,7 +359,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 	case WidgetType::Color:
 		if (param_spec.type_id == SGVariantType::Color) {
 			qDebug() << SG_PREFIX_I << "Creating color button with colors" << value;
-			SGColorButton * widget_ = new SGColorButton(value.val_color, NULL);
+			ColorButtonWidget * widget_ = new ColorButtonWidget(value.val_color, NULL);
 
 			//widget_->setStyleSheet("* { border: none; background-color: rgb(255,125,100) }");
 			widget = widget_;
@@ -418,7 +418,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		if (param_spec.type_id == SGVariantType::Int && param_spec.widget_data) {
 			const std::vector<SGLabelID> * items = (const std::vector<SGLabelID> *) param_spec.widget_data;
 			assert (items);
-			SGRadioGroup * widget_ = new SGRadioGroup("", items, this);
+			RadioGroupWidget * widget_ = new RadioGroupWidget("", items, this);
 			widget = widget_;
 		}
 		break;
@@ -479,12 +479,12 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 	case WidgetType::FileSelector:
 		if (param_spec.type_id == SGVariantType::String) {
 
-			FileSelector::FileTypeFilter file_type_filter = FileSelector::FileTypeFilter::Any;
+			FileSelectorWidget::FileTypeFilter file_type_filter = FileSelectorWidget::FileTypeFilter::Any;
 			if (param_spec.widget_data) {
-				file_type_filter = *((FileSelector::FileTypeFilter *) param_spec.widget_data); /* Pointer to a table of size one. */
+				file_type_filter = *((FileSelectorWidget::FileTypeFilter *) param_spec.widget_data); /* Pointer to a table of size one. */
 			}
 
-			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), NULL);
+			FileSelectorWidget * widget_ = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), NULL);
 			widget_->set_file_type_filter(file_type_filter);
 			if (!value.val_string.isEmpty()) {
 				widget_->preselect_file_full_path(value.val_string);
@@ -496,7 +496,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 
 	case WidgetType::FolderEntry:
 		if (param_spec.type_id == SGVariantType::String) {
-			FileSelector * widget_ = new FileSelector(QFileDialog::Option(0), QFileDialog::Directory, tr("Select folder"), NULL);
+			FileSelectorWidget * widget_ = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::Directory, tr("Select folder"), NULL);
 			if (!value.val_string.isEmpty()) {
 				widget_->preselect_file_full_path(value.val_string);
 			}
@@ -507,7 +507,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 
 	case WidgetType::FileList:
 		if (param_spec.type_id == SGVariantType::StringList) {
-			FileList * widget_ = new FileList(param_spec.ui_label, value.val_string_list, this);
+			FileListWidget * widget_ = new FileListWidget(param_spec.ui_label, value.val_string_list, this);
 
 			widget = widget_;
 		}
@@ -519,12 +519,12 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 
 			if (param_spec.type_id == SGVariantType::Int) {
 				ParameterScale<int> * scale = (ParameterScale<int> *) param_spec.widget_data;
-				SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
+				SliderWidget * widget_ = new SliderWidget(*scale, Qt::Horizontal);
 				widget_->set_value(value.u.val_int);
 				widget = widget_;
 			} else if (param_spec.type_id == SGVariantType::Double) {
 				ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data;
-				SGSlider * widget_ = new SGSlider(*scale, Qt::Horizontal);
+				SliderWidget * widget_ = new SliderWidget(*scale, Qt::Horizontal);
 				widget_->set_value(value.u.val_double);
 				widget = widget_;
 			} else {
@@ -607,7 +607,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	switch (param_spec.widget_type) {
 	case WidgetType::Color:
-		rv = SGVariant(((SGColorButton *) widget)->get_color());
+		rv = SGVariant(((ColorButtonWidget *) widget)->get_color());
 		break;
 	case WidgetType::CheckButton:
 		rv = SGVariant((bool) ((QCheckBox *) widget)->isChecked());
@@ -644,7 +644,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	case WidgetType::RadioGroup:
 		/* get_id_of_selected() returns arbitrary ID. */
-		rv = SGVariant((int32_t) ((SGRadioGroup *) widget)->get_id_of_selected());
+		rv = SGVariant((int32_t) ((RadioGroupWidget *) widget)->get_id_of_selected());
 		break;
 
 	case WidgetType::SpinBoxInt:
@@ -670,11 +670,11 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	case WidgetType::FileSelector:
 	case WidgetType::FolderEntry:
-		rv = SGVariant(((FileSelector *) widget)->get_selected_file_full_path());
+		rv = SGVariant(((FileSelectorWidget *) widget)->get_selected_file_full_path());
 		break;
 
 	case WidgetType::FileList:
-		rv = SGVariant(((FileList *) widget)->get_list());
+		rv = SGVariant(((FileListWidget *) widget)->get_list());
 		for (auto iter = rv.val_string_list.constBegin(); iter != rv.val_string_list.constEnd(); iter++) {
 			qDebug() << SG_PREFIX_I << "File on retrieved list:" << *iter;
 		}
@@ -684,9 +684,9 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 	case WidgetType::HScale:
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Double);
 		if (param_spec.type_id == SGVariantType::Int) {
-			rv = SGVariant((int32_t) ((SGSlider *) widget)->get_value());
+			rv = SGVariant((int32_t) ((SliderWidget *) widget)->get_value());
 		} else if (param_spec.type_id == SGVariantType::Double) {
-			rv = SGVariant((double) ((SGSlider *) widget)->get_value());
+			rv = SGVariant((double) ((SliderWidget *) widget)->get_value());
 		} else {
 			qDebug() << SG_PREFIX_E << "Unexpected param spec type" << param_spec.type_id;
 		}

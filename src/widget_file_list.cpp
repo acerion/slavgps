@@ -48,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-FileList::FileList(const QString & title, const QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
+FileListWidget::FileListWidget(const QString & title, const QStringList & fl, QWidget * parent_widget) : QWidget(parent_widget)
 {
 	this->button_box = new QDialogButtonBox();
 	this->add = this->button_box->addButton("Add", QDialogButtonBox::ActionRole);
@@ -113,7 +113,7 @@ FileList::FileList(const QString & title, const QStringList & fl, QWidget * pare
 
 
 
-FileList::~FileList()
+FileListWidget::~FileListWidget()
 {
 	for (auto iter = this->file_list.constBegin(); iter != this->file_list.constEnd(); iter++) {
 		qDebug() << "File on list: " << QString(*iter);
@@ -125,7 +125,7 @@ FileList::~FileList()
 
 
 
-QStringList FileList::get_list(void)
+QStringList FileListWidget::get_list(void)
 {
 	this->file_list.clear();
 
@@ -143,7 +143,7 @@ QStringList FileList::get_list(void)
 
 
 
-void FileList::add_file()
+void FileListWidget::add_file()
 {
 	qDebug() << SG_PREFIX_D << "called";
 
@@ -172,7 +172,7 @@ void FileList::add_file()
 
 
 
-void FileList::del_file()
+void FileListWidget::del_file()
 {
 	qDebug() << "Delete file";
 
@@ -190,12 +190,12 @@ void FileList::del_file()
 
 
 
-void FileList::set_file_type_filter(FileSelector::FileTypeFilter new_file_type_filter)
+void FileListWidget::set_file_type_filter(FileSelectorWidget::FileTypeFilter new_file_type_filter)
 {
 	this->file_type_filter = new_file_type_filter;
 
 	QStringList filter_list;
-	const bool is_mime = FileSelector::get_file_filter_string(this->file_type_filter, filter_list);
+	const bool is_mime = FileSelectorWidget::get_file_filter_string(this->file_type_filter, filter_list);
 	if (is_mime) {
 		this->file_selector->setMimeTypeFilters(filter_list);
 	} else {

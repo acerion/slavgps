@@ -686,8 +686,8 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	int row = 1;
 
 	const QStringList file_list;
-	dialog->files_selection = new FileList(QObject::tr("Images"), file_list, dialog);
-	dialog->files_selection->set_file_type_filter(FileSelector::FileTypeFilter::JPEG);
+	dialog->files_selection = new FileListWidget(QObject::tr("Images"), file_list, dialog);
+	dialog->files_selection->set_file_type_filter(FileSelectorWidget::FileTypeFilter::JPEG);
 	dialog->grid->addWidget(dialog->files_selection, 1, 0, 1, 2);
 	row++;
 

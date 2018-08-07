@@ -45,10 +45,10 @@ namespace SlavGPS {
 
 
 
-	class SGLatLonEntry : public QFrame {
+	class LatLonEntryWidget : public QFrame {
 		Q_OBJECT
 	public:
-		SGLatLonEntry(QWidget * parent = NULL);
+		LatLonEntryWidget(QWidget * parent = NULL);
 
 		void set_value(const LatLon & lat_lon);
 		LatLon get_value(void) const;

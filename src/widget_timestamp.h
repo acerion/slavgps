@@ -42,10 +42,10 @@ namespace SlavGPS {
 
 
 
-	class SGTimestampWidget : public QFrame {
+	class TimestampWidget : public QFrame {
 		Q_OBJECT
 	public:
-		SGTimestampWidget(QWidget * parent = NULL);
+		TimestampWidget(QWidget * parent = NULL);
 		void set_timestamp(time_t timestamp, const Coord & coord);
 		void reset_timestamp(void);
 		time_t get_timestamp(void) const;

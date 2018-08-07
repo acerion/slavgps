@@ -110,8 +110,8 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 {
 	/* QFileDialog::ExistingFiles: allow selecting more than one.
 	   By default the file selector is created with AcceptMode::AcceptOpen. */
-	this->file_selector = new FileSelector(QFileDialog::Option(0), QFileDialog::ExistingFiles, tr("Select File to Import"), NULL);
-	this->file_selector->set_file_type_filter(FileSelector::FileTypeFilter::JPEG);
+	this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFiles, tr("Select File to Import"), NULL);
+	this->file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::JPEG);
 
 	if (g_last_directory_url.isValid()) {
 		this->file_selector->set_directory_url(g_last_directory_url);

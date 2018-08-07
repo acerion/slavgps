@@ -44,7 +44,7 @@ namespace SlavGPS {
 
 
 
-	class FileSelector : public QWidget {
+	class FileSelectorWidget : public QWidget {
 		Q_OBJECT
 	public:
 
@@ -59,8 +59,8 @@ namespace SlavGPS {
 			Last
 		};
 
-		FileSelector(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent);
-		~FileSelector();
+		FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent);
+		~FileSelectorWidget();
 
 		void preselect_file_full_path(const QString & file_path);
 		QString get_selected_file_full_path(void) const;

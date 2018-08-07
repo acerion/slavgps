@@ -45,10 +45,10 @@ namespace SlavGPS {
 
 
 
-	class SGUTMEntry : public QFrame {
+	class UTMEntryWidget : public QFrame {
 		Q_OBJECT
 	public:
-		SGUTMEntry(QWidget * parent = NULL);
+		UTMEntryWidget(QWidget * parent = NULL);
 
 		void set_value(const UTM & utm);
 		UTM get_value(void) const;

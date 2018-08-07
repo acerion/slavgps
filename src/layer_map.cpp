@@ -234,7 +234,7 @@ enum {
 };
 
 
-FileSelector::FileTypeFilter map_file_type[1] = { FileSelector::FileTypeFilter::MBTILES };
+FileSelectorWidget::FileTypeFilter map_file_type[1] = { FileSelectorWidget::FileTypeFilter::MBTILES };
 
 ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */

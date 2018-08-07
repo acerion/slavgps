@@ -42,7 +42,7 @@ using namespace SlavGPS;
 
 
 
-SGTimestampWidget::SGTimestampWidget(QWidget * parent)
+TimestampWidget::TimestampWidget(QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
 
@@ -71,7 +71,7 @@ SGTimestampWidget::SGTimestampWidget(QWidget * parent)
 
 
 
-void SGTimestampWidget::set_timestamp(time_t timestamp, const Coord & coord)
+void TimestampWidget::set_timestamp(time_t timestamp, const Coord & coord)
 {
 	this->timestamp_entry->setValue(timestamp);
 	this->timestamp_button->set_label(timestamp, coord, NULL);
@@ -80,7 +80,7 @@ void SGTimestampWidget::set_timestamp(time_t timestamp, const Coord & coord)
 
 
 
-void SGTimestampWidget::reset_timestamp(void)
+void TimestampWidget::reset_timestamp(void)
 {
 	this->timestamp_entry->setValue(0);
 	this->timestamp_button->clear_label();
@@ -89,7 +89,7 @@ void SGTimestampWidget::reset_timestamp(void)
 
 
 
-time_t SGTimestampWidget::get_timestamp(void) const
+time_t TimestampWidget::get_timestamp(void) const
 {
 	return (time_t) this->timestamp_entry->value();
 }
@@ -97,7 +97,7 @@ time_t SGTimestampWidget::get_timestamp(void) const
 
 
 
-void SGTimestampWidget::on_timestamp_entry_value_set_cb(void)
+void TimestampWidget::on_timestamp_entry_value_set_cb(void)
 {
 	const time_t new_value = (time_t) this->timestamp_entry->value();
 	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << new_value;
@@ -109,7 +109,7 @@ void SGTimestampWidget::on_timestamp_entry_value_set_cb(void)
 
 
 
-void SGTimestampWidget::on_timestamp_button_value_set_cb(void)
+void TimestampWidget::on_timestamp_button_value_set_cb(void)
 {
 	const time_t new_value = (time_t) this->timestamp_button->get_value();
 	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << new_value;
@@ -119,7 +119,7 @@ void SGTimestampWidget::on_timestamp_button_value_set_cb(void)
 
 
 
-void SGTimestampWidget::on_timestamp_button_value_reset_cb(void)
+void TimestampWidget::on_timestamp_button_value_reset_cb(void)
 {
 	qDebug() << "SLOT:" PREFIX << __FUNCTION__;
 	this->clear();
@@ -128,7 +128,7 @@ void SGTimestampWidget::on_timestamp_button_value_reset_cb(void)
 
 
 
-void SGTimestampWidget::clear(void)
+void TimestampWidget::clear(void)
 {
 	this->timestamp_entry->setValue(0);
 	this->timestamp_button->clear_label();

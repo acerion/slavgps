@@ -121,7 +121,7 @@ namespace SlavGPS {
 		QDoubleSpinBox * alt = NULL;
 		QLabel * course = NULL;
 
-		SGTimestampWidget * timestamp_widget = NULL;
+		TimestampWidget * timestamp_widget = NULL;
 
 		QLabel * diff_dist = NULL;
 		QLabel * diff_time = NULL;

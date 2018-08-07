@@ -64,7 +64,7 @@ namespace SlavGPS {
 		QDialogButtonBox button_box;
 		QSpinBox custom_spin;
 		QVBoxLayout * vbox = NULL;
-		SGRadioGroup * radio_group = NULL;
+		RadioGroupWidget * radio_group = NULL;
 	};
 
 

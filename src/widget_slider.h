@@ -41,12 +41,12 @@ namespace SlavGPS {
 
 
 
-	class SGSlider : public QWidget {
+	class SliderWidget : public QWidget {
 		Q_OBJECT
 	public:
-		SGSlider(const ParameterScale<int> & scale, Qt::Orientation orientation, QWidget * parent = NULL);
-		SGSlider(const ParameterScale<double> & scale, Qt::Orientation orientation, QWidget * parent = NULL);
-		~SGSlider();
+		SliderWidget(const ParameterScale<int> & scale, Qt::Orientation orientation, QWidget * parent = NULL);
+		SliderWidget(const ParameterScale<double> & scale, Qt::Orientation orientation, QWidget * parent = NULL);
+		~SliderWidget();
 
 		void set_value(int val);
 		int get_value(void);
