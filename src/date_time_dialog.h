@@ -85,7 +85,7 @@ namespace SlavGPS {
 		void set_label(time_t timestamp_value, const Coord & coord, const QTimeZone * tz);
 		void clear_label(void);
 
-		void set_date_time_format(Qt::DateFormat format);
+		void set_date_time_format(Qt::DateFormat date_time_format);
 
 	protected:
 		/* Reimplemented from QAbstractButton */

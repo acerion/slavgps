@@ -98,7 +98,7 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		void add_row(Waypoint * wp, HeightUnit height_units, const QString & date_format);
+		void add_row(Waypoint * wp, HeightUnit height_units);
 		void contextMenuEvent(QContextMenuEvent * event);
 		void waypoint_select(LayerTRW * layer);
 		void copy_selected(bool include_positions);
@@ -112,6 +112,8 @@ namespace SlavGPS {
 
 		/* Waypoint selected in list. */
 		Waypoint * selected_wp = NULL;
+
+		Qt::DateFormat date_time_format = Qt::ISODate;
 	};
 
 

@@ -70,17 +70,6 @@ extern Tree * g_tree;
 
 
 
-/* Long formatted date+basic time - listing this way ensures the string
-   comparison sort works - so no local type format %x or %c here! */
-#define WAYPOINT_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
-
-
-
-
-
-
-
-
 /* Instead of hooking automatically on table item selection,
    this is performed on demand via the specific context menu request. */
 void WaypointListDialog::waypoint_select(LayerTRW * layer)
@@ -372,14 +361,14 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * For each entry we copy the various individual waypoint properties into the table,
  * formatting & converting the internal values into something for display.
  */
-void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
+void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit)
 {
 	/* Get start date. */
 	QString start_date;
 	if (wp->has_timestamp) {
 		QDateTime date_start;
 		date_start.setTime_t(wp->timestamp);
-		start_date = date_start.toString(date_format);
+		start_date = date_start.toString(this->date_time_format);
 	}
 
 	LayerTRW * trw = wp->get_parent_layer_trw();
@@ -538,13 +527,14 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 
 
 
-	QString date_format;
-	if (!ApplicationState::get_string(VIK_SETTINGS_LIST_DATE_FORMAT, date_format)) {
-		date_format = WAYPOINT_LIST_DATE_FORMAT;
+	/* Set this member before adding rows to the table. */
+	Qt::DateFormat dt_format;
+	if (ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &dt_format)) {
+		this->date_time_format = dt_format;
 	}
 
 	for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
-		this->add_row(*iter, height_unit, date_format);
+		this->add_row(*iter, height_unit);
 	}
 
 

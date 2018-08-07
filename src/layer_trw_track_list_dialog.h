@@ -76,7 +76,7 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, const QString & date_format);
+		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units);
 		void contextMenuEvent(QContextMenuEvent * event);
 
 		QWidget * parent = NULL;
@@ -88,6 +88,8 @@ namespace SlavGPS {
 
 		/* Track selected in list. */
 		Track * selected_track = NULL;
+
+		Qt::DateFormat date_time_format = Qt::ISODate;
 	};
 
 

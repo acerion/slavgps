@@ -61,12 +61,6 @@ using namespace SlavGPS;
 
 
 
-/* Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here! */
-#define TRACK_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
-
-
-
-
 enum {
 	LAYER_NAME_COLUMN,
 	TRACK_COLUMN,
@@ -297,7 +291,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * Foreach entry we copy the various individual track properties into the tree store
  * formatting & converting the internal values into something for display.
  */
-void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_unit, const QString & date_format) /* TODO: verify that date_format is suitable for QDateTime class. */
+void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_unit)
 {
 	double trk_dist = trk->get_length();
 	/* Store unit converted value. */
@@ -310,7 +304,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 
 		QDateTime date_start;
 		date_start.setTime_t((*trk->trackpoints.begin())->timestamp);
-		start_date = date_start.toString(date_format);
+		start_date = date_start.toString(this->date_time_format);
 	}
 
 	LayerTRW * trw = trk->get_parent_layer_trw();
@@ -544,13 +538,14 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 
-	QString date_format;
-	if (!ApplicationState::get_string(VIK_SETTINGS_LIST_DATE_FORMAT, date_format)) {
-		date_format = TRACK_LIST_DATE_FORMAT;
+	/* Set this member before adding rows to the table. */
+	Qt::DateFormat dt_format;
+	if (ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &dt_format)) {
+		this->date_time_format = dt_format;
 	}
 
 	for (auto iter = this->tracks.begin(); iter != this->tracks.end(); iter++) {
-		this->add_row(*iter, distance_unit, speed_units, height_unit, date_format);
+		this->add_row(*iter, distance_unit, speed_units, height_unit);
 	}
 
 

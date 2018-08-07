@@ -50,7 +50,7 @@
 
 
 
-#define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
+#define VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT "sortable_date_time_format"
 
 
 
