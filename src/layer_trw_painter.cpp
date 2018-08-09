@@ -908,8 +908,7 @@ CachedPixmap LayerTRWPainter::generate_wp_cached_pixmap(const QString & image_fu
 	if (cache_object.pixmap.isNull()) {
 		/* We didn't manage to read the file from thumbnails file.
 		   Either because the expected pixmap size (painter->wp_image_size)
-		   is not equal to thumbnail size, or because there was no thumbnail on disc.
-		   TODO: I'm not sure if the first argument to scale_pixmap() is passed correctly. */
+		   is not equal to thumbnail size, or because there was no thumbnail on disc. */
 
 		QPixmap original_image;
 		if (original_image.load(image_full_path)) {

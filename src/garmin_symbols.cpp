@@ -182,7 +182,7 @@ static struct {
 	/*---------------------------------------------------------------
 	  Land symbols.
 	  ---------------------------------------------------------------*/
-	{ "Interstate Highway",              "is_hwy",            8192,  "interstate hwy symbol",             NULL,                 NULL,                       NULL },   /* TODO: check symbol name */
+	{ "Interstate Highway",              "is_hwy",            8192,  "interstate hwy symbol",             NULL,                 NULL,                       NULL },
 	{ "US hwy",                          "us_hwy",            8193,  "us hwy symbol",                     NULL,                 NULL,                       NULL },
 	{ "State Hwy",                       "st_hwy",            8194,  "state hwy symbol",                  NULL,                 NULL,                       NULL },
 	{ "Mile Marker",                     "mi_mrkr",           8195,  "mile marker symbol",                NULL,                 NULL,                       NULL },

@@ -3434,7 +3434,8 @@ void Track::convert_track_route_cb(void)
 	/* Convert. */
 	trk_copy->type_id = trk_copy->type_id == "sg.trw.route" ? "sg.trw.track": "sg.trw.route";
 
-	/* ATM can't set name to self - so must create temporary copy. TODO: verify this comment. */
+	/* Don't pass Track::name to function setting Track::name.
+	   Create temporary copy to be passed as argument to set_name(). */
 	const QString copy_name = trk_copy->name;
 
 	/* Delete old one and then add new one. */

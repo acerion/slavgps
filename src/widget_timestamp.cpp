@@ -28,6 +28,7 @@
 
 
 #include "widget_timestamp.h"
+#include "globals.h"
 
 
 
@@ -37,6 +38,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Timestamp Widget"
 #define PREFIX " Widget Timestamp: "
 
 
@@ -100,7 +102,10 @@ time_t TimestampWidget::get_timestamp(void) const
 void TimestampWidget::on_timestamp_entry_value_set_cb(void)
 {
 	const time_t new_value = (time_t) this->timestamp_entry->value();
-	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << new_value;
+	qDebug() << SG_PREFIX_SLOT << "New value of timestamp =" << new_value;
+
+	qDebug() << SG_PREFIX_SIGNAL << "Timestamp value in entry field changed to" << new_value << ", emitting signal 'TimestampWidget::value_is_set()";
+	emit this->value_is_set(new_value);
 
 	Coord coord;
 	this->timestamp_button->set_label(new_value, coord /* FIXME: &tp->coord */, NULL);

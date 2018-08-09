@@ -90,14 +90,17 @@ namespace SlavGPS {
 	private slots:
 		void sync_ll_to_tp_cb(void);
 		void sync_alt_to_tp_cb(void);
-		void sync_timestamp_to_tp_cb(void);
-		bool set_name_cb(void);
+		void sync_timestamp_to_tp_cb(time_t new_timestamp);
+		void sync_zero_timestamp_to_tp_cb(void);
+		bool sync_name_to_tp_cb(const QString & new_name);
 
-		void set_timestamp_cb(time_t timestamp);
-		void clear_timestamp_cb(void);
+
+
 
 	private:
-		void update_times(Trackpoint * tp);
+		void update_timestamp_widget(Trackpoint * tp);
+
+		bool set_timestamp_to_tp(time_t timestamp_value);
 
 		Trackpoint * cur_tp = NULL;
 		bool sync_to_tp_block = false;

@@ -23,10 +23,19 @@
 #include "config.h"
 #endif
 
+
+
+
 #include <cstdlib>
 #include <ctime>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "ui_builder.h"
 #include "layer_trw_trackpoint_properties.h"
@@ -37,14 +46,6 @@
 #include "measurements.h"
 #include "preferences.h"
 
-#ifdef K_INCLUDES
-#include "coords.h"
-#include "coord.h"
-#include "layer_trw_waypoint.h"
-#include "dialog.h"
-#include "ui_util.h"
-#endif
-
 
 
 
@@ -53,15 +54,15 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Trackpoint Properties: "
+#define SG_MODULE "Trackpoint Properties"
 
 
 
 
 /**
- *  Update the display for time fields.
- */
-void PropertiesDialogTP::update_times(Trackpoint * tp)
+   Update contents of timestamp widget
+*/
+void PropertiesDialogTP::update_timestamp_widget(Trackpoint * tp)
 {
 	if (tp->has_timestamp) {
 		this->timestamp_widget->set_timestamp(tp->timestamp, tp->coord);
@@ -117,7 +118,7 @@ void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 		break;
 	default:
 		this->cur_tp->altitude = 0;
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
 		break;
 	}
 }
@@ -125,69 +126,50 @@ void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 
 
 
-void PropertiesDialogTP::sync_timestamp_to_tp_cb(void) /* Slot. */
-{
-	if (!this->cur_tp) {
-		return;
-	}
-	if (this->sync_to_tp_block) {
-		return;
-	}
-
-	this->cur_tp->timestamp = this->timestamp_widget->get_timestamp();
-	this->update_times(this->cur_tp);
-}
-
-
-
-
 /* Set timestamp of current trackpoint. */
-void PropertiesDialogTP::set_timestamp_cb(time_t timestamp_value)
+void PropertiesDialogTP::sync_timestamp_to_tp_cb(time_t timestamp_value)
 {
-	qDebug() << "SLOT: Layer TRW Trackpoint Properties: 'Set Timestamp' slot" << timestamp_value;
+	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp_value;
 
-	if (!this->cur_tp) {
-		return;
-	}
-	if (this->sync_to_tp_block) {
-		/* TODO: indicate to user that operation has failed. */
-		return;
-	}
-
-	/* TODO: consider warning about unsorted times? */
-
-	/* TODO: consider saving given timestamp and somehow passing
-	   it to date/time dialog next time a timestamp needs to be
-	   set on non-initialized tp ("last edit time"). */
-
-	this->cur_tp->timestamp = timestamp_value;
-	this->cur_tp->has_timestamp = true;
+	this->set_timestamp_to_tp(timestamp_value);
 }
 
 
 
 
 /* Clear timestamp of current trackpoint. */
-void PropertiesDialogTP::clear_timestamp_cb(void)
+void PropertiesDialogTP::sync_zero_timestamp_to_tp_cb(void)
 {
-	qDebug() << "SLOT: Layer TRW Trackpoint Properties: 'Clear Timestamp' slot";
+	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
 
-	if (!this->cur_tp) {
-		return;
-	}
-	if (this->sync_to_tp_block) {
-		/* TODO: indicate to user that operation has failed. */
-		return;
-	}
-
-	this->cur_tp->timestamp = 0;
-	this->cur_tp->has_timestamp = false;
+	this->set_timestamp_to_tp(0);
 }
 
 
 
 
-bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
+bool PropertiesDialogTP::set_timestamp_to_tp(time_t timestamp_value)
+{
+	if (!this->cur_tp) {
+		return false;
+	}
+	if (this->sync_to_tp_block) {
+		/* TODO: indicate to user that operation has failed. */
+		return false;
+	}
+
+	/* TODO: consider warning about unsorted timestamps in consecutive trackpoints? */
+
+	this->cur_tp->timestamp = timestamp_value;
+	this->cur_tp->has_timestamp = (timestamp_value != 0);
+
+	return true;
+}
+
+
+
+
+bool PropertiesDialogTP::sync_name_to_tp_cb(const QString & new_name) /* Slot. */
 {
 	if (!this->cur_tp) {
 		return false;
@@ -196,7 +178,7 @@ bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
 		return false;
 	}
 
-	this->cur_tp->set_name(this->trkpt_name->text());
+	this->cur_tp->set_name(new_name);
 
 	return true;
 }
@@ -255,7 +237,8 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	Trackpoint * tp = *current_tp_iter;
 
 	this->trkpt_name->setEnabled(true);
-	this->trkpt_name->insert(tp->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous TP?). */
+	qDebug() << "kamil set tp name" << tp->name;
+	this->trkpt_name->setText(tp->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
 
 	/* User can insert only if not at the end of track (otherwise use extend track). */
 	this->button_insert_tp_after->setEnabled(std::next(current_tp_iter) != track->end());
@@ -299,12 +282,12 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		break;
 	default:
 		this->alt->setValue(0);
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
 		break;
 	}
 
 
-	this->update_times(tp);
+	this->update_timestamp_widget(tp);
 
 	this->sync_to_tp_block = false; /* Can now update after setting data. */
 
@@ -409,9 +392,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->trkpt_name = new QLineEdit("", this);
 	this->grid->addWidget(new QLabel(tr("Name:")), 0, 0);
 	this->grid->addWidget(this->trkpt_name, 0, 1);
-#ifdef K_FIXME_RESTORE
-	connect(this->trkpt_name, "focus-out-event", this, SLOT (set_name_cb(void)));
-#endif
+	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_to_tp_cb(const QString &)));
 
 
 
@@ -456,9 +437,8 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 	this->timestamp_widget = new TimestampWidget();
 	this->grid->addWidget(this->timestamp_widget, 5, 0, 2, 2);
-	// TODO: connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_to_tp_cb(time_t)));
-	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (set_timestamp_cb(time_t)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (clear_timestamp_cb(void)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_to_tp_cb(time_t)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_zero_timestamp_to_tp_cb(void)));
 
 
 
