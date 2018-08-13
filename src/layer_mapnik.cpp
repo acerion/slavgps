@@ -64,7 +64,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Layer Mapnik:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Mapnik Layer"
 
 
 
@@ -283,17 +283,17 @@ void SlavGPS::vik_mapnik_layer_uninit()
 /* NB Only performed once per program run. */
 void SlavGPS::layer_mapnik_init(void)
 {
-	const SGVariant pd = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".plugins_directory");
-	const SGVariant fd = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".fonts_directory");
-	const SGVariant rfd = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".recurse_fonts_directory");
+	const SGVariant plugins_dir = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".plugins_directory");
+	const SGVariant fonts_dir = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".fonts_directory");
+	const SGVariant recurse = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK ".recurse_fonts_directory");
 
-	if (pd.type_id != SGVariantType::Empty
-	    && fd.type_id != SGVariantType::Empty
-	    && rfd.type_id != SGVariantType::Empty) {
+	if (plugins_dir.type_id != SGVariantType::Empty
+	    && fonts_dir.type_id != SGVariantType::Empty
+	    && recurse.type_id != SGVariantType::Empty) {
 
-		mapnik_interface_initialize(pd.val_string.toUtf8().constData(), fd.val_string.toUtf8().constData(), rfd.u.val_bool);
+		MapnikInterface::initialize(plugins_dir.val_string, fonts_dir.val_string, recurse.u.val_bool);
 	} else {
-		qDebug() << "EE: Layer Mapnik: Init: Unable to initialize mapnik interface from preferences";
+		qDebug() << SG_PREFIX_E << "Unable to initialize Mapnik interface from preferences";
 	}
 }
 
@@ -343,7 +343,7 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 	layer->tile_size_x = size_default().u.val_uint; /* FUTURE: Is there any use in this being configurable? */
 	layer->loaded = false;
-	layer->mi = mapnik_interface_new();
+	layer->mi = new MapnikInterface();
 	layer->unmarshall_params(pickle);
 
 	return layer;
@@ -557,15 +557,15 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 			return;
 		}
 
-	const QString ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
-	if (!ans.isEmpty()) {
-		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
-	} else {
+	const QString ans = this->mi->load_map_file(this->filename_xml, this->tile_size_x, this->tile_size_x);
+	if (ans.isEmpty()) {
 		this->loaded = true;
 		if (!from_file) {
 			/* TODO: shouldn't we use Window::update_recent_files()? */
 			update_desktop_recent_documents(this->get_window(), this->filename_xml, ""); /* TODO: provide correct mime data type for mapnik data. */
 		}
+	} else {
+		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
 	}
 }
 
@@ -649,7 +649,7 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInfo * ti_ul)
 {
 	int64_t tt1 = g_get_real_time();
-	QPixmap pixmap = mapnik_interface_render(this->mi, coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
+	QPixmap pixmap = this->mi->render_map(coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
 	int64_t tt2 = g_get_real_time();
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
@@ -773,9 +773,9 @@ QPixmap LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 
 	QPixmap pixmap = MapCache::get_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 	if (!pixmap.isNull()) {
-		qDebug() << "II" PREFIX << "MAP CACHE HIT";
+		qDebug() << SG_PREFIX_I << "MAP CACHE HIT";
 	} else {
-		qDebug() << "II" PREFIX << "MAP CACHE MISS";
+		qDebug() << SG_PREFIX_I << "MAP CACHE MISS";
 
 		bool rerender_ = false;
 		if (this->use_file_cache && !this->file_cache_dir.isEmpty()) {
@@ -811,7 +811,7 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	}
 
 	if (this->mi) {
-		const QString copyright = mapnik_interface_get_copyright(this->mi);
+		const QString copyright = this->mi->get_copyright();
 		if (!copyright.isEmpty()) {
 			viewport->add_copyright(copyright);
 		}
@@ -888,7 +888,7 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 LayerMapnik::~LayerMapnik()
 {
-	mapnik_interface_free(this->mi);
+	delete this->mi;
 }
 
 
@@ -928,11 +928,11 @@ void LayerMapnik::run_carto_cb(void)
 	if (!this->carto_load()) {
 		return;
 	}
-	const QString ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
-	if (!ans.isEmpty()) {
-		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
-	} else {
+	const QString ans = this->mi->load_map_file(this->filename_xml, this->tile_size_x, this->tile_size_x);
+	if (ans.isEmpty()) {
 		this->draw_tree_item(viewport, false, false);
+	} else {
+		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
 	}
 }
 
@@ -947,11 +947,10 @@ void LayerMapnik::information_cb(void)
 	if (!this->mi) {
 		return;
 	}
-	QStringList * params = mapnik_interface_get_parameters(this->mi);
-	if (params->size()) {
-		a_dialog_list(QObject::tr("Mapnik Information"), *params, 1, this->get_window());
+	QStringList params = this->mi->get_parameters();
+	if (params.size()) {
+		a_dialog_list(QObject::tr("Mapnik Information"), params, 1, this->get_window());
 	}
-	delete params;
 }
 
 
@@ -959,7 +958,7 @@ void LayerMapnik::information_cb(void)
 
 void LayerMapnik::about_cb(void)
 {
-	Dialog::info(mapnik_interface_about(), this->get_window());
+	Dialog::info(MapnikInterface::about(), this->get_window());
 }
 
 
@@ -1144,7 +1143,7 @@ LayerMapnik::LayerMapnik()
 
 	this->tile_size_x = size_default().u.val_uint; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
-	this->mi = mapnik_interface_new();
+	this->mi = new MapnikInterface();
 
 	/* kamilTODO: initialize this? */
 	//this->rerender_ul;

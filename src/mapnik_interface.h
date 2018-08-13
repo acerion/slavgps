@@ -24,9 +24,13 @@
 
 
 
-#include <cstdint>
 
 #include <QString>
+
+
+
+
+#include <mapnik/map.hpp>
 
 
 
@@ -36,25 +40,28 @@ namespace SlavGPS {
 
 
 
-	class MapnikInterface;
+	class MapnikInterface {
+	public:
+		MapnikInterface();
+		~MapnikInterface();
 
+		QString get_copyright(void) const;
+		void set_copyright(void);
 
+		QStringList get_parameters(void) const;
 
+		QString load_map_file(const QString & filename, unsigned int width, unsigned int height);
 
-	void mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse);
+		QPixmap render_map(double lat_tl, double lon_tl, double lat_br, double lon_br);
 
-	MapnikInterface * mapnik_interface_new();
-	void mapnik_interface_free(MapnikInterface * mi);
+		static void initialize(const QString & plugins_dir, const QString & font_dir, bool font_dir_recurse);
+		static QString about(void);
 
-	QString mapnik_interface_load_map_file(MapnikInterface * mi, const QString & filename, unsigned int width, unsigned int height);
+		mapnik::Map * map = NULL;
 
-	QPixmap mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br);
-
-	QString mapnik_interface_get_copyright(MapnikInterface * mi);
-
-	QStringList * mapnik_interface_get_parameters(MapnikInterface * mi);
-
-	QString mapnik_interface_about(void);
+	private:
+		QString copyright; /* Cached Mapnik parameter to save looking it up each time. */
+	};
 
 
 
