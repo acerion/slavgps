@@ -3102,7 +3102,6 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 		} else {
 			this->add_track(copy);
 		}
-		copy->recalculate_bbox();
 	}
 
 	/* Remove original track and then update the display. */

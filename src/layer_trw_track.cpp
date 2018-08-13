@@ -310,12 +310,44 @@ Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 
 
 
-/* kamilFIXME: parent constructor first copies all trackpoints from 'from', this constructor does ->assign(). Copying in parent constructor is unnecessary. */
-Track::Track(const Track & from, TrackPoints::iterator first, TrackPoints::iterator last) : Track(from)
+/**
+   @from: The Track to copy
+   @begin - iterator to first Trackpoint to be copied to new track
+   @end - iterator to first-after-last Trackpoint to be copied to new track
+
+   The constructor constructs new Trackpoints in range <begin, end)
+   and places them in new Track.
+
+   @return new track with subset of Trackpoints copied from original track
+*/
+Track::Track(const Track & from, const TrackPoints::iterator & begin, const TrackPoints::iterator & end) : Track(from.type_id == "sg.trw.route")
 {
 	this->tree_item_type = TreeItemType::SUBLAYER;
 
-	this->trackpoints.assign(first, last);
+	/* Copy a subset of Trackpoints. */
+	for (auto iter = begin; iter != end; iter++) {
+		Trackpoint * new_tp = new Trackpoint(**iter);
+		this->trackpoints.push_back(new_tp);
+	}
+
+	this->visible = from.visible;
+	this->draw_name_mode = from.draw_name_mode;
+	this->max_number_dist_labels = from.max_number_dist_labels;
+
+	this->set_name(from.name);
+	this->set_comment(from.comment);
+	this->set_description(from.description);
+	this->set_source(from.source);
+
+	/* this->type_id is set by Track::Track(bool is_route) called by this constructor. */
+
+	this->has_color = from.has_color;
+	this->color = from.color;
+
+	/* We can't simply do "this->bbox = from.bbox" because this
+	   new track has received only a subset of Trackpoints from
+	   original track. We have to do this instead: */
+	this->recalculate_bbox();
 }
 
 
@@ -683,14 +715,16 @@ unsigned int Track::get_segment_count() const
 
 
 /* kamilTODO: revisit this function and compare with original. */
-std::list<Track *> * Track::split_into_segments()
+std::list<Track *> Track::split_into_segments(void)
 {
+	std::list<Track *> result;
+
 	unsigned int segs = this->get_segment_count();
 	if (segs < 2) {
-		return NULL;
+		return result;
 	}
 
-	std::list<Track *> * tracks = new std::list<Track *>;
+
 	for (auto first = this->trackpoints.begin(); first != this->trackpoints.end(); ) {
 		if ((*first)->newsegment) {
 
@@ -701,14 +735,10 @@ std::list<Track *> * Track::split_into_segments()
 				last++;
 			}
 
-			/* kamilFIXME: first constructor of new_track
-			   copies all trackpoints from *this, and then
-			   we do new_track->assign(). Copying in
-			   constructor is unnecessary. */
-			Track * new_track = new Track(*this);
-			new_track->trackpoints.assign(first, last);
-			new_track->recalculate_bbox();
-			tracks->push_back(new_track);
+
+			/* The constructor will recalculate bbox of the new track. */
+			Track * new_track = new Track(*this, first, last);
+			result.push_back(new_track);
 
 			/* First will now point at either ->end() or beginning of next segment. */
 			first = last;
@@ -722,7 +752,7 @@ std::list<Track *> * Track::split_into_segments()
 		}
 
 	}
-	return tracks;
+	return result;
 }
 
 
@@ -746,13 +776,13 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 
 	if (tp2.iter == this->begin()) {
 		/* First TP in track. Don't split. This function shouldn't be called at all. */
-		qDebug() << "WW: Layer TRW: attempting to split track on first tp";
+		qDebug() << SG_PREFIX_W << "Attempting to split track on first tp";
 		return NULL;
 	}
 
 	if (tp2.iter == std::prev(this->end())) {
 		/* Last TP in track. Don't split. This function shouldn't be called at all. */
-		qDebug() << "WW: Layer TRW: attempting to split track on last tp";
+		qDebug() << SG_PREFIX_W << "Attempting to split track on last tp";
 		return NULL;
 	}
 
@@ -760,7 +790,7 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 
 	const QString uniq_name = ((LayerTRW *) this->owning_layer)->new_unique_element_name(this->type_id, this->name);
 	if (!uniq_name.size()) {
-		qDebug() << "EE: Layer TRW: failed to get unique track name when splitting" << this->name;
+		qDebug() << SG_PREFIX_E << "Failed to get unique track name when splitting" << this->name;
 		return NULL;
 	}
 
@@ -770,12 +800,12 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 	Track * new_track = new Track(*this, std::next(tp2.iter), this->end());
 	new_track->push_front(selected_);
 	new_track->set_name(uniq_name);
-	new_track->recalculate_bbox();
+	new_track->recalculate_bbox(); /* We have pushed new trackpoint, so we need new bounding box. */
 
 	this->erase(std::next(tp2.iter), this->end());
 	this->recalculate_bbox(); /* Bounds of original track changed due to the split. */
 
-	qDebug() << "II: Layer TRW: split track: uid of new track is" << new_track->uid;
+	qDebug() << SG_PREFIX_I << "uid of new track is" << new_track->uid;
 
 	return new_track;
 }
@@ -3850,8 +3880,8 @@ void Track::split_by_segments_cb(void)
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	QString new_tr_name;
-	std::list<Track *> * tracks_ = this->split_into_segments();
-	for (auto iter = tracks_->begin(); iter != tracks_->end(); iter++) {
+	std::list<Track *> split_tracks = this->split_into_segments();
+	for (auto iter = split_tracks.begin(); iter != split_tracks.end(); iter++) {
 		if (*iter) {
 			new_tr_name = parent_layer->new_unique_element_name(this->type_id, this->name);
 			(*iter)->set_name(new_tr_name);
@@ -3859,13 +3889,13 @@ void Track::split_by_segments_cb(void)
 			parent_layer->add_track(*iter);
 		}
 	}
-	if (tracks_) {
-		delete tracks_;
+
+	if (split_tracks.empty()) {
+		Dialog::error(tr("Can not split track as it has no segments"), g_tree->tree_get_main_window());
+	} else {
 		/* Remove original track. */
 		parent_layer->delete_track(this);
-		parent_layer->emit_layer_changed("TRW - Track - split by segment");
-	} else {
-		Dialog::error(tr("Can not split track as it has no segments"), g_tree->tree_get_main_window());
+		parent_layer->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in callback)");
 	}
 }
 

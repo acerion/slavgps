@@ -96,13 +96,10 @@ void AcquireGetter::on_complete_process(void)
 	    true
 #endif
 	    ) {
-		qDebug() << "II" PREFIX;
 		emit report_status(3);
 
-		qDebug() << "II" PREFIX;
-
 		if (this->acquiring->creating_new_layer) {
-			qDebug() << "II" PREFIX;
+
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO: create function for this operation to hide detail: */
 			if (!this->acquiring->trw->is_empty()) {

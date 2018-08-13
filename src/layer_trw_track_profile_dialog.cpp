@@ -56,6 +56,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Track Profile Dialog"
 #define PREFIX " Track Profile:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -1567,8 +1568,8 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		break;
 	case SG_TRACK_PROFILE_SPLIT_SEGMENTS: {
 		/* Get new tracks, add them and then the delete old one. old can still exist on clipboard. */
-		std::list<Track *> * tracks = this->track_info.trk->split_into_segments();
-		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
+		std::list<Track *> split_tracks = this->track_info.trk->split_into_segments();
+		for (auto iter = split_tracks.begin(); iter != split_tracks.end(); iter++) {
 			if (*iter) {
 				const QString new_tr_name = this->trw->new_unique_element_name(this->track_info.trk->type_id, this->track_info.trk->name);
 				(*iter)->set_name(new_tr_name);
@@ -1578,18 +1579,16 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 				} else {
 					this->trw->add_track(*iter);
 				}
-				(*iter)->recalculate_bbox();
 			}
 		}
-		if (tracks) {
-			delete tracks;
+		if (split_tracks.size()) {
 			/* Don't let track destroy this dialog. */
 			if (this->track_info.trk->type_id == "sg.trw.route") {
 				this->trw->delete_route(this->track_info.trk);
 			} else {
 				this->trw->delete_track(this->track_info.trk);
 			}
-			this->trw->emit_layer_changed("TRW - Track Profile Dialog - Split"); /* Chase thru the hoops. */
+			this->trw->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in track profile dialog)");
 		}
 	}
 		break;
@@ -1607,20 +1606,17 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			break;
 		}
 
-		const QString r_name = this->trw->new_unique_element_name(this->track_info.trk->type_id, this->track_info.trk->name);
-
 
 		/* Notice that here Trackpoint pointed to by iter is moved to new track. */
 		/* kamilTODO: originally the constructor was just Track(). Should we really pass original trk to constructor? */
-		/* TODO: move more copying of the stuff into constructor. */
-		Track * trk_right = new Track(*this->track_info.trk, iter, this->track_info.trk->end());
-		this->track_info.trk->erase(iter, this->track_info.trk->end());
 
-		if (!this->track_info.trk->comment.isEmpty()) {
-			trk_right->set_comment(this->track_info.trk->comment);
-		}
-		trk_right->visible = this->track_info.trk->visible;
-		trk_right->type_id = this->track_info.trk->type_id;
+		/* This constructor recalculates bounding box of new track. */
+		Track * trk_right = new Track(*this->track_info.trk, iter, this->track_info.trk->end());
+
+		this->track_info.trk->erase(iter, this->track_info.trk->end());
+		this->track_info.trk->recalculate_bbox();
+
+		const QString r_name = this->trw->new_unique_element_name(this->track_info.trk->type_id, this->track_info.trk->name);
 		trk_right->set_name(r_name);
 
 		if (this->track_info.trk->type_id == "sg.trw.route") {
@@ -1628,14 +1624,12 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		} else {
 			this->trw->add_track(trk_right);
 		}
-		this->track_info.trk->recalculate_bbox();
-		trk_right->recalculate_bbox();
 
-		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Split At Marker");
+		this->trw->emit_layer_changed("A TRW Track has been split into several tracks (at marker)");
 	}
 		break;
 	default:
-		qDebug() << "EE: Track Profile: dialog response slot: unknown response" << resp;
+		qDebug() << SG_PREFIX_E << "Dialog response slot: unknown response" << resp;
 		return;
 	}
 

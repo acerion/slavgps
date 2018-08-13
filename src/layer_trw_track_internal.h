@@ -166,8 +166,8 @@ namespace SlavGPS {
 		/* Track/Route differentiation is made either explicitly (through 'is_route' argument)
 		   or implicitly (is copied from 'from' argument'). */
 		Track(bool is_route);
-		Track(const Track& from);
-		Track(const Track& from, TrackPoints::iterator first, TrackPoints::iterator last);
+		Track(const Track & from);
+		Track(const Track & from, const TrackPoints::iterator & begin, const TrackPoints::iterator & end);
 		~Track();
 
 
@@ -199,7 +199,7 @@ namespace SlavGPS {
 		double get_length_including_gaps() const;
 		unsigned long get_tp_count() const;
 		unsigned int get_segment_count() const;
-		std::list<Track *> * split_into_segments();
+		std::list<Track *> split_into_segments(void);
 
 		Track * split_at_trackpoint(const TrackpointIter & tp);
 
