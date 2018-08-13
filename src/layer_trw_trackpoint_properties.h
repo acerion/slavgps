@@ -88,14 +88,15 @@ namespace SlavGPS {
 		QSignalMapper * signal_mapper = NULL;
 
 	private slots:
-		void sync_ll_to_tp_cb(void);
-		void sync_alt_to_tp_cb(void);
-		void sync_timestamp_to_tp_cb(time_t new_timestamp);
-		void sync_zero_timestamp_to_tp_cb(void);
-		bool sync_name_to_tp_cb(const QString & new_name);
+		void sync_latlon_entry_to_tp_cb(void);
+		void sync_altitude_entry_to_tp_cb(void);
+		void sync_timestamp_entry_to_tp_cb(time_t new_timestamp);
+		void sync_zero_timestamp_entry_to_tp_cb(void);
+		bool sync_name_entry_to_tp_cb(const QString & new_name);
 
-
-
+	signals:
+		/* Coordinates of one of track's trackpoints has changed its coordinates. */
+		void trackpoint_coordinates_changed(int response);
 
 	private:
 		void update_timestamp_widget(Trackpoint * tp);

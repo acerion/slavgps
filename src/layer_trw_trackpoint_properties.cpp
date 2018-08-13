@@ -74,7 +74,7 @@ void PropertiesDialogTP::update_timestamp_widget(Trackpoint * tp)
 
 
 
-void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
+void PropertiesDialogTP::sync_latlon_entry_to_tp_cb(void) /* Slot. */
 {
 	if (!this->cur_tp) {
 		return;
@@ -84,21 +84,25 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 	}
 
 
-	const Coord coord(LatLon(this->lat->value(), this->lon->value()), this->cur_tp->coord.mode);
+	const Coord new_coord(LatLon(this->lat->value(), this->lon->value()), this->cur_tp->coord.mode);
+
 
 	/* Don't redraw unless we really have to. */
-	if (Coord::distance(this->cur_tp->coord, coord) > 0.05) { /* May not be exact due to rounding. */
-		this->cur_tp->coord = coord;
-#ifdef K_FIXME_RESTORE
-		gtk_dialog_response(GTK_DIALOG(tpwin), SG_TRACK_CHANGED);
-#endif
+	const bool redraw_track = Coord::distance(this->cur_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
+	this->cur_tp->coord = new_coord;
+
+	if (redraw_track) {
+		/* Tell parent code that a track has changed its
+		   coordinates (one of track's trackpoints has changed
+		   its coordinates). */
+		emit this->trackpoint_coordinates_changed(SG_TRACK_CHANGED);
 	}
 }
 
 
 
 
-void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
+void PropertiesDialogTP::sync_altitude_entry_to_tp_cb(void) /* Slot. */
 {
 	if (!this->cur_tp) {
 		return;
@@ -127,7 +131,7 @@ void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 
 
 /* Set timestamp of current trackpoint. */
-void PropertiesDialogTP::sync_timestamp_to_tp_cb(time_t timestamp_value)
+void PropertiesDialogTP::sync_timestamp_entry_to_tp_cb(time_t timestamp_value)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp_value;
 
@@ -138,7 +142,7 @@ void PropertiesDialogTP::sync_timestamp_to_tp_cb(time_t timestamp_value)
 
 
 /* Clear timestamp of current trackpoint. */
-void PropertiesDialogTP::sync_zero_timestamp_to_tp_cb(void)
+void PropertiesDialogTP::sync_zero_timestamp_entry_to_tp_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
 
@@ -169,7 +173,7 @@ bool PropertiesDialogTP::set_timestamp_to_tp(time_t timestamp_value)
 
 
 
-bool PropertiesDialogTP::sync_name_to_tp_cb(const QString & new_name) /* Slot. */
+bool PropertiesDialogTP::sync_name_entry_to_tp_cb(const QString & new_name) /* Slot. */
 {
 	if (!this->cur_tp) {
 		return false;
@@ -237,7 +241,6 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	Trackpoint * tp = *current_tp_iter;
 
 	this->trkpt_name->setEnabled(true);
-	qDebug() << "kamil set tp name" << tp->name;
 	this->trkpt_name->setText(tp->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
 
 	/* User can insert only if not at the end of track (otherwise use extend track). */
@@ -392,7 +395,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->trkpt_name = new QLineEdit("", this);
 	this->grid->addWidget(new QLabel(tr("Name:")), 0, 0);
 	this->grid->addWidget(this->trkpt_name, 0, 1);
-	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_to_tp_cb(const QString &)));
+	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_tp_cb(const QString &)));
 
 
 
@@ -404,7 +407,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->lat->setValue(0);
 	this->grid->addWidget(new QLabel(tr("Latitude:")), 1, 0);
 	this->grid->addWidget(this->lat, 1, 1);
-	connect(this->lat, SIGNAL (valueChanged(double)), this, SLOT (sync_ll_to_tp_cb(void)));
+	connect(this->lat, SIGNAL (valueChanged(double)), this, SLOT (sync_latlon_entry_to_tp_cb(void)));
 
 
 	this->lon = new QDoubleSpinBox(this);
@@ -415,7 +418,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->lon->setValue(0);
 	this->grid->addWidget(new QLabel(tr("Longitude:")), 2, 0);
 	this->grid->addWidget(this->lon, 2, 1);
-	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_ll_to_tp_cb(void)));
+	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_tp_cb(void)));
 
 
 	this->alt = new QDoubleSpinBox(this);
@@ -426,7 +429,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->alt->setValue(0);
 	this->grid->addWidget(new QLabel(tr("Altitude:")), 3, 0);
 	this->grid->addWidget(this->alt, 3, 1);
-	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_alt_to_tp_cb(void)));
+	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_tp_cb(void)));
 
 
 	this->course = new QLabel("", this);
@@ -437,8 +440,8 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 	this->timestamp_widget = new TimestampWidget();
 	this->grid->addWidget(this->timestamp_widget, 5, 0, 2, 2);
-	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_to_tp_cb(time_t)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_zero_timestamp_to_tp_cb(void)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_entry_to_tp_cb(time_t)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_zero_timestamp_entry_to_tp_cb(void)));
 
 
 
