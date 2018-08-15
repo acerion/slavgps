@@ -529,7 +529,9 @@ bool DEM::read_other(const QString & full_path)
 
 	/* 24k scale */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->n_columns >= 2) {
-		this->north_scale = this->east_scale = this->columns[1]->east_west - this->columns[0]->east_west;
+		this->east_scale = this->columns[1]->east_west - this->columns[0]->east_west;
+		this->north_scale = this->east_scale;
+
 	}
 
 	/* FIXME bug in 10m DEM's */
@@ -548,8 +550,7 @@ bool DEM::read_other(const QString & full_path)
 DEM::~DEM()
 {
 	for (int32_t i = 0; i < this->n_columns; i++) {
-		free(this->columns[i]->points);
-		free(this->columns[i]);
+		delete this->columns[i];
 	}
 }
 
