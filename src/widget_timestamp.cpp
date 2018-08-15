@@ -73,10 +73,10 @@ TimestampWidget::TimestampWidget(QWidget * parent)
 
 
 
-void TimestampWidget::set_timestamp(time_t timestamp, const Coord & coord)
+void TimestampWidget::set_timestamp(time_t timestamp, const Coord & new_coord)
 {
 	this->timestamp_entry->setValue(timestamp);
-	this->timestamp_button->set_label(timestamp, coord, NULL);
+	this->timestamp_button->set_label(timestamp, new_coord);
 }
 
 
@@ -107,8 +107,7 @@ void TimestampWidget::on_timestamp_entry_value_set_cb(void)
 	qDebug() << SG_PREFIX_SIGNAL << "Timestamp value in entry field changed to" << new_value << ", emitting signal 'TimestampWidget::value_is_set()";
 	emit this->value_is_set(new_value);
 
-	Coord coord;
-	this->timestamp_button->set_label(new_value, coord /* FIXME: &tp->coord */, NULL);
+	this->timestamp_button->set_label(new_value, this->coord);
 }
 
 
@@ -137,4 +136,16 @@ void TimestampWidget::clear(void)
 {
 	this->timestamp_entry->setValue(0);
 	this->timestamp_button->clear_label();
+}
+
+
+
+
+void TimestampWidget::set_coord(const Coord & new_coord)
+{
+	this->coord = new_coord;
+
+	const time_t current_value = (time_t) this->timestamp_entry->value();
+
+	this->timestamp_button->set_label(current_value, this->coord);
 }

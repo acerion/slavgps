@@ -161,6 +161,15 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	dialog.fill(param_specs, values, empty_parameter_groups);
 
 	dialog.date_time_button = (SGDateTimeButton *) dialog.get_widget(wp_param_specs[SG_WP_PARAM_TIME]);
+	if (wp->has_timestamp) {
+		/* This should force drawing time label on date/time
+		   button.  The label represents timestamp in specific
+		   time reference system.  If the time reference
+		   system (read from preferences) is World, the widget
+		   will infer time zone from waypoint's coordinate and
+		   use the time zone to generate the label. */
+		dialog.date_time_button->set_coord(wp->coord);
+	}
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_reset(void)), &dialog, SLOT (clear_timestamp_cb(void)));
 
@@ -169,6 +178,24 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	GarminSymbols::populate_symbols_list(dialog.symbol_combo, wp->symbol_name);
 
 
+	/*
+	  TODO: changes to coordinates of waypoint need to be
+	  translated "in real time" (without the need to close the
+	  dialog window) to position of waypoint on viewport.
+
+	  See how this is done for Trackpoint in Trackpoint properties
+	  dialog.
+	*/
+
+	/*
+	  TODO: changes in coordinates of waypoint need to be passed
+	  to datetime button, because in some cases (in World time
+	  reference system) the value of button label depends on
+	  coordinates of waypoint.
+
+	  So each change to the coordinates must result in call to
+	  SGDateTimeButton::set_coord().
+	*/
 
 	while (QDialog::Accepted == dialog.exec()) {
 
@@ -273,7 +300,7 @@ PropertiesDialogWaypoint::PropertiesDialogWaypoint(Waypoint * wp_, QString const
 
 void PropertiesDialogWaypoint::set_timestamp_cb(time_t timestamp)
 {
-	this->date_time_button->set_label(timestamp, this->wp->coord, NULL);
+	this->date_time_button->set_label(timestamp, this->wp->coord);
 }
 
 

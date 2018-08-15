@@ -50,6 +50,9 @@ namespace SlavGPS {
 		void reset_timestamp(void);
 		time_t get_timestamp(void) const;
 
+		/* Set coordinate of an object, for which a timestamp is being displayed. */
+		void set_coord(const Coord & coord);
+
 		void clear(void);
 
 	signals:
@@ -72,6 +75,8 @@ namespace SlavGPS {
 		QGridLayout * grid = NULL;
 		QSpinBox * timestamp_entry = NULL;
 		SGDateTimeButton * timestamp_button = NULL;
+
+		Coord coord; /* Coordinates of object, for which a timestamp is being displayed. */
 	};
 
 

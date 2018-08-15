@@ -28,6 +28,7 @@
 #include "clipboard.h"
 #include "vikutils.h"
 #include "layer.h"
+#include "globals.h"
 
 
 
@@ -169,11 +170,13 @@ void SGDateTimeDialog::set_date_time(const QDateTime & date_time)
 
 SGDateTimeButton::SGDateTimeButton(QWidget * parent_widget) : QPushButton(parent_widget)
 {
+	this->timestamp = 0; /* Let's make this explicit that the time is zero in this constructor. */
+	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(this->timestamp), true, parent_widget);
+	this->dialog->setWindowTitle(tr("Edit Date/Time"));
+
 	this->setIcon(QIcon::fromTheme("list-add"));
 	this->setText("");
 
-	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(0), true, parent_widget);
-	this->dialog->setWindowTitle(tr("Edit Date/Time"));
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
 }
 
@@ -182,8 +185,10 @@ SGDateTimeButton::SGDateTimeButton(QWidget * parent_widget) : QPushButton(parent
 
 SGDateTimeButton::SGDateTimeButton(time_t date_time, QWidget * parent_widget) : QPushButton(parent_widget)
 {
-	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(date_time), true, parent_widget);
+	this->timestamp = date_time;
+	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(this->timestamp), true, parent_widget);
 	this->dialog->setWindowTitle(tr("Edit Date/Time"));
+
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
 }
 
@@ -200,22 +205,21 @@ SGDateTimeButton::~SGDateTimeButton()
 
 void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 {
-	qDebug() << "SLOT: Date Time Dialog: 'Open Dialog' slot";
+	qDebug() << SG_PREFIX_SLOT << "Called";
 
 	/* Make sure that the dialog shows the correct date/time - the
 	   value that was last retrieved from the date time dialog. */
 	dialog->set_date_time(QDateTime::fromTime_t(this->timestamp));
 
-	int dialog_code = dialog->exec();
-
-	if (dialog_code == QDialog::Accepted) {
+	if (QDialog::Accepted == dialog->exec()) {
 		this->timestamp = this->dialog->get_timestamp();
-		qDebug() << "II: DateTime: returning timestamp" << this->timestamp;
+		this->set_label(this->timestamp, this->coord);
+		qDebug() << SG_PREFIX_I << "Timestamp selected in dialog =" << this->timestamp;
 
-		qDebug() << "SIGNAL: Date Time Dialog: will emit 'Value is Set' signal for timestamp" << this->timestamp;
+		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'value_is_set' signal for timestamp =" << this->timestamp;
 		emit this->value_is_set(this->timestamp);
 	} else {
-		qDebug() << "II: DateTime: returning zero";
+		qDebug() << SG_PREFIX_I << "Returning zero timestamp";
 		this->timestamp = 0;
 	}
 }
@@ -302,13 +306,14 @@ void SGDateTimeButton::clear_time_cb(void)
 
 
 
-void SGDateTimeButton::set_label(time_t timestamp_value, const Coord & coord, const QTimeZone * tz)
+void SGDateTimeButton::set_label(time_t timestamp_value, const Coord & new_coord)
 {
-	const QString msg = SGUtils::get_time_string(timestamp_value, this->date_time_format, coord, tz);
+	const QString msg = SGUtils::get_time_string(timestamp_value, this->date_time_format, new_coord);
 
-	this->setText(msg);
 	this->setIcon(QIcon()); /* Invalid/null button icon will indicate that a timestamp is set, and is displayed as button label. */
+	this->setText(msg);
 }
+
 
 
 
@@ -316,4 +321,13 @@ void SGDateTimeButton::clear_label(void)
 {
 	this->setText("");
 	this->setIcon(QIcon::fromTheme("list-add")); /* Non-empty/non-null button icon will indicate that no timestamp is set. */
+}
+
+
+
+
+void SGDateTimeButton::set_coord(const Coord & new_coord)
+{
+	this->coord = new_coord;
+	this->set_label(this->timestamp, this->coord);
 }

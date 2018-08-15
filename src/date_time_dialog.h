@@ -82,8 +82,11 @@ namespace SlavGPS {
 		~SGDateTimeButton();
 		time_t get_value(void);
 
-		void set_label(time_t timestamp_value, const Coord & coord, const QTimeZone * tz);
+		void set_label(time_t timestamp_value, const Coord & coord);
 		void clear_label(void);
+
+		/* Set coordinate of an object, for which a timestamp is being displayed. */
+		void set_coord(const Coord & coord);
 
 		void set_date_time_format(Qt::DateFormat date_time_format);
 
@@ -99,6 +102,7 @@ namespace SlavGPS {
 	private:
 		SGDateTimeDialog * dialog = NULL;
 		time_t timestamp = 0;
+		Coord coord; /* Coordinates of object, for which a timestamp is being displayed. */
 
 		Qt::DateFormat date_time_format = Qt::ISODate;
 

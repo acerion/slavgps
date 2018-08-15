@@ -80,6 +80,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "VikUtils"
 #define PREFIX ": VikUtils:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -774,58 +775,98 @@ const QTimeZone * TZLookup::get_tz_at_location(const Coord & coord)
 
 
 /**
- * @time_t: The time of which the string is wanted
- * @format  The format of the time string - such as "%c"
- * @coord:  Position of object for the time output - maybe NULL
- *          (only applicable for SGTimeReference::World)
- * @tz:     TimeZone string - maybe NULL.
- *          (only applicable for SGTimeReference::World)
- *          Useful to pass in the cached value from TZLookup::get_tz_at_location() to save looking it up again for the same position
- *
- * Returns: A string of the time according to the time display property.
- */
+   @timestamp - The time of which the string is wanted
+   @format - The format of the time string
+   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
+   @tz - TimeZone string - maybe NULL (only applicable for SGTimeReference::World). Useful to pass in the cached value from TZLookup::get_tz_at_location() to save looking it up again for the same position.
+
+   @return a string of the time according to the time display property
+*/
 QString SGUtils::get_time_string(time_t timestamp, Qt::DateFormat format, const Coord & coord, const QTimeZone * tz)
 {
-	qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp;
-
 	QString time_string;
 
 	const SGTimeReference ref = Preferences::get_time_ref_frame();
 	switch (ref) {
 	case SGTimeReference::UTC:
 		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "time string from UTC" << time_string;
+		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << timestamp << "-> time string" << time_string;
 		break;
 	case SGTimeReference::World:
-		if (!tz) {
+		if (tz) {
+			/* Use specified timezone. */
+			time_string = time_string_tz(timestamp, format, *tz);
+			qDebug() << SG_PREFIX_D << "World (from timezone): timestamp =" << timestamp << "-> time string" << time_string;
+		} else {
 			/* No timezone specified so work it out. */
 			QTimeZone const * tz_from_location = TZLookup::get_tz_at_location(coord);
 			if (tz_from_location) {
 				time_string = time_string_tz(timestamp, format, *tz_from_location);
-				qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "string with tz from location" << time_string;
+				qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << timestamp << "-> time string" << time_string;
 			} else {
 				/* No results (e.g. could be in the middle of a sea).
 				   Fallback to simplistic method that doesn't take into account Timezones of countries. */
 				const LatLon ll = coord.get_latlon();
 				time_string = time_string_adjusted(&timestamp, round (ll.lon / 15.0) * 3600);
-				qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "time string adjusted" << time_string;
+				qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << timestamp << "-> time string" << time_string;
 			}
-		} else {
-			/* Use specified timezone. */
-			time_string = time_string_tz(timestamp, format, *tz);
-			qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "string with given tz" << time_string;
 		}
 		break;
 	case SGTimeReference::Locale:
 		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "string with time from locale" << time_string;
+		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << timestamp << "-> time string" << time_string;
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unexpected SGTimeReference value" << (int) ref;
+		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
 		break;
 	}
 
-	qDebug() << "DD" PREFIX << "timestamp =" << (unsigned long long) timestamp << "final time string =" << time_string;
+	return time_string;
+}
+
+
+
+
+/**
+   @timestamp - The time of which the string is wanted
+   @format - The format of the time string
+   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
+
+   @return a string of the time according to the time display property
+*/
+QString SGUtils::get_time_string(time_t timestamp, Qt::DateFormat format, const Coord & coord)
+{
+	QString time_string;
+	const QTimeZone * tz_from_location = NULL;
+
+	const SGTimeReference ref = Preferences::get_time_ref_frame();
+	switch (ref) {
+	case SGTimeReference::UTC:
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << timestamp << "-> time string" << time_string;
+		break;
+	case SGTimeReference::World:
+		/* No timezone specified so work it out. */
+		tz_from_location = TZLookup::get_tz_at_location(coord);
+		if (tz_from_location) {
+			time_string = time_string_tz(timestamp, format, *tz_from_location);
+			qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << timestamp << "-> time string" << time_string;
+		} else {
+			/* No results (e.g. could be in the middle of a sea).
+			   Fallback to simplistic method that doesn't take into account Timezones of countries. */
+			const LatLon ll = coord.get_latlon();
+			time_string = time_string_adjusted(&timestamp, round (ll.lon / 15.0) * 3600);
+			qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << timestamp << "-> time string" << time_string;
+		}
+		break;
+	case SGTimeReference::Locale:
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << timestamp << "-> time string" << time_string;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
+		break;
+	}
 
 	return time_string;
 }

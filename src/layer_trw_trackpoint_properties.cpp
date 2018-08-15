@@ -87,10 +87,14 @@ void PropertiesDialogTP::sync_latlon_entry_to_tp_cb(void) /* Slot. */
 	const Coord new_coord(LatLon(this->lat->value(), this->lon->value()), this->cur_tp->coord.mode);
 
 
-	/* Don't redraw unless we really have to. */
 	const bool redraw_track = Coord::distance(this->cur_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
 	this->cur_tp->coord = new_coord;
 
+
+	this->timestamp_widget->set_coord(new_coord);
+
+
+	/* Don't redraw unless we really have to. */
 	if (redraw_track) {
 		/* Tell parent code that a track has changed its
 		   coordinates (one of track's trackpoints has changed
