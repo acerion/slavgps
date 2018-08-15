@@ -1307,7 +1307,7 @@ void DEMDownloadJob::run(void)
 	if (this->source == DEM_SOURCE_SRTM) {
 		srtm_dem_download_thread(this);
 #ifdef VIK_CONFIG_DEM24K
-	} else if (p->source == DEM_SOURCE_DEM24K) {
+	} else if (this->source == DEM_SOURCE_DEM24K) {
 		dem24k_dem_download_thread(this);
 #endif
 	} else {
