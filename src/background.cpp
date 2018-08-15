@@ -55,6 +55,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Background"
 #define PREFIX ": Background:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -141,8 +142,8 @@ bool BackgroundJob::set_progress_state(int new_progress)
 
 bool BackgroundJob::test_termination_condition(void)
 {
-	if (Background::test_termination_condition()) {
-		qDebug() << "II" PREFIX << "background job termination: global stop";
+	if (Background::test_global_termination_condition()) {
+		qDebug() << SG_PREFIX_I << "Background job termination: global stop";
 		return true;
 	}
 
@@ -312,10 +313,10 @@ void Background::update_status_indication(void)
 
 
 
-bool Background::test_termination_condition(void)
+bool Background::test_global_termination_condition(void)
 {
 	if (g_background.stop_all_threads) {
-		qDebug() << "II" PREFIX << "stop all threads";
+		qDebug() << SG_PREFIX_I << "Job termination: global stop condition is present";
 		return true;
 	}
 	return false;

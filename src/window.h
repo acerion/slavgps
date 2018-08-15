@@ -280,8 +280,6 @@ namespace SlavGPS {
 
 		void change_coord_mode_cb(QAction * qa);
 
-		void configure_event_cb(void);
-
 
 		void draw_click_cb(QMouseEvent * ev);
 		void draw_release_cb(QMouseEvent * ev);

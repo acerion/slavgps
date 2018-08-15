@@ -144,7 +144,7 @@ namespace SlavGPS {
 		static void post_init_window(QWidget * parent);
 		static void uninit(void);
 
-		static bool test_termination_condition(void);
+		static bool test_global_termination_condition(void);
 
 		static void show_window();
 		static void add_window(Window * window);

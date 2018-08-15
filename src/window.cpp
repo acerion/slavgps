@@ -3147,24 +3147,6 @@ void Window::simple_map_update(bool only_new)
 
 
 
-
-void Window::configure_event_cb()
-{
-	static int first = 1;
-	this->draw_tree_items();
-	if (first) {
-		/* This is a hack to set the cursor corresponding to the first tool.
-		   FIXME find the correct way to initialize both tool and its cursor. */
-		first = 0;
-
-		this->viewport_cursor = Qt::OpenHandCursor;
-		this->viewport->setCursor(this->viewport_cursor);
-	}
-}
-
-
-
-
 /* Mouse event handlers ************************************************************************/
 
 
