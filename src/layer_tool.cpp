@@ -102,15 +102,6 @@ void LayerTool::remember_selection(const ScreenPos & screen_pos)
 
 	/* We have just clicked the item, we aren't moving the cursor yet. */
 	this->layer_edit_info->moving = false;
-
-	//#ifdef K_FIXME_RESTORE
-	/* What was this supposed to do? */
-	//gdk_gc_set_function(this->layer_edit_info->pen, GDK_INVERT);
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, screen_pos.x - 3, screen_pos.y - 3, 6, 6);
-	this->viewport->sync();
-	//#endif
-
-	this->layer_edit_info->old_screen_pos = screen_pos;
 }
 
 
@@ -122,14 +113,6 @@ void LayerTool::perform_move(const ScreenPos & new_pos)
 
 	/* We are in the process of moving the pressed cursor. */
 	this->layer_edit_info->moving = true;
-
-#ifdef K_FIXME_RESTORE
-	/* What was this supposed to do? */
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->old_screen_pos.x - 3, this->layer_edit_info->old_screen_pos.y - 3, 6, 6);
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, new_pos.x - 3, new_pos.y - 3, 6, 6);
-#endif
-
-	this->layer_edit_info->old_screen_pos = new_pos;
 
 	if (tool_sync_done) {
 		this->viewport->sync();
@@ -144,11 +127,7 @@ bool LayerTool::perform_release(void)
 {
 	assert (this->layer_edit_info);
 
-#ifdef K_FIXME_RESTORE
-	/* What was this supposed to do? */
-	this->viewport->draw_rectangle(this->layer_edit_info->pen, this->layer_edit_info->old_screen_pos.x - 3, this->layer_edit_info->old_screen_pos.y - 3, 6, 6);
-#endif
-
+	/* Did we perform release of cursor after holding cursor down or moving pressed down cursor? */
 	const bool something_released = this->layer_edit_info->holding || this->layer_edit_info->moving;
 
 	this->layer_edit_info->holding = false;
