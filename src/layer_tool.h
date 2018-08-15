@@ -65,8 +65,6 @@ namespace SlavGPS {
 		QString type_id; /* WAYPOINT or TRACK or ROUTE. */
 		QPen pen;
 
-		ScreenPos old_screen_pos;
-
 		bool item_is_right_clicked = false;
 	};
 
