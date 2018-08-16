@@ -30,6 +30,7 @@
 #include "osm.h"
 #include "layer_map.h"
 #include "map_source_slippy.h"
+#include "map_source_mbtiles.h"
 #include "map_source_wmsc.h"
 #include "webtool_center.h"
 #include "webtool_bounds.h"
@@ -47,6 +48,12 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "OSM"
+
 
 
 
@@ -109,12 +116,7 @@ void SlavGPS::osm_init(void)
 	direct_type->set_copyright("© OpenStreetMap contributors"); // probably
 	direct_type->is_direct_file_access_flag = true;
 
-	/* No cache needed for this type. */
-	MapSource * mbtiles_type = new MapSourceSlippy(MapTypeID::MBTiles, QObject::tr("MBTiles File"), NULL, NULL);
-	/* For using your own generated data assumed you know the license already! */
-	mbtiles_type->set_copyright("© OpenStreetMap contributors"); // probably
-	mbtiles_type->is_direct_file_access_flag = true;
-	mbtiles_type->is_mbtiles_flag = true;
+	MapSource * mbtiles_type = new MapSourceMBTiles();
 
 
 	/* No cache needed for this type. */

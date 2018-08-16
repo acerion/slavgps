@@ -43,6 +43,7 @@ SOURCES += main.cpp \
     google.cpp \
     googlesearch.cpp \
     map_source_slippy.cpp \
+    map_source_mbtiles.cpp \
     map_source_bing.cpp \
     map_source_wmsc.cpp \
     map_source_tms.cpp \
@@ -170,6 +171,7 @@ HEADERS += window.h \
     google.h \
     googlesearch.h \
     map_source_slippy.h \
+    map_source_mbtiles.h \
     map_source_bing.h \
     map_source_wmsc.h \
     map_source_tms.h \
@@ -313,4 +315,4 @@ MOC_DIR = ./moc/
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -licuuc -lmapnik -lgps -lexiv2
+QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -licuuc -lmapnik -lgps -lexiv2 -lsqlite3

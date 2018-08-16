@@ -154,7 +154,7 @@ namespace SlavGPS {
 		QString file_full_path;
 
 #ifdef HAVE_SQLITE3_H
-		sqlite3 * mbtiles = NULL;
+		sqlite3 * sqlite_handle = NULL;
 #endif
 
 	private:
@@ -167,7 +167,6 @@ namespace SlavGPS {
 		bool should_start_autodownload(Viewport * viewport);
 
 		QPixmap get_pixmap(const QString & map_type_string, TileInfo * mapcoord, QString & tile_file_full_path, double scale_x, double scale_y);
-		QPixmap create_mbtiles_pixmap(int xx, int yy, int zoom);
 		QPixmap create_pixmap_from_metatile(int xx, int yy, int zz);
 		QPixmap create_pixmap_from_file(const QString & file_full_path);
 

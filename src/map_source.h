@@ -21,6 +21,9 @@
 
 
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <QPixmap>
 #include <QString>
@@ -31,6 +34,9 @@
 #include "download.h"
 #include "viewport.h"
 
+#ifdef HAVE_SQLITE3_H
+#include "sqlite3.h"
+#endif
 
 
 
@@ -85,6 +91,22 @@ namespace SlavGPS {
 
 
 
+	class MapSourceArgs {
+	public:
+		int x = 0;
+		int y = 0;
+		int zoom = 0;
+
+		QString file_full_path;
+
+#ifdef HAVE_SQLITE3_H
+		sqlite3 * sqlite_handle = NULL;
+#endif
+	};
+
+
+
+
 	class MapSource {
 	public:
 		MapSource();
@@ -108,6 +130,9 @@ namespace SlavGPS {
 		uint16_t get_tilesize_x(void) const;
 		uint16_t get_tilesize_y(void) const;
 		ViewportDrawMode get_drawmode(void) const;
+
+		virtual QPixmap get_pixmap(const MapSourceArgs & args) { QPixmap pixmap; return pixmap; }
+		virtual QStringList get_tile_info(const MapSourceArgs & args) const { QStringList result; return result; }
 
 		/* TODO: do these need to be virtual methods? */
 		virtual bool is_direct_file_access(void) const;
