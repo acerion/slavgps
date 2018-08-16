@@ -90,14 +90,6 @@ bool MapSourceTms::is_direct_file_access(void) const
 
 
 
-bool MapSourceTms::is_mbtiles(void) const
-{
-	return false;
-}
-
-
-
-
 bool MapSourceTms::is_osm_meta_tiles(void) const
 {
 	return false;

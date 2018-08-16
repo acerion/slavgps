@@ -38,6 +38,7 @@
 
 #include "map_source_mbtiles.h"
 #include "globals.h"
+#include "dialog.h"
 
 
 
@@ -52,13 +53,22 @@ using namespace SlavGPS;
 
 
 
+/*
+  https://www.gdal.org/frmt_mbtiles.html
+  https://wiki.openstreetmap.org/wiki/MBTiles
+*/
+
+
+
+
 /* No cache needed for this type. */
+/* This map source uses an SQL MBTiles File for the tileset. For now the MBTiles file is read locally (from disc) only. */
+/* http://github.com/mapbox/mbtiles-spec */
 MapSourceMBTiles::MapSourceMBTiles() : MapSourceSlippy(MapTypeID::MBTiles, QObject::tr("MBTiles File"), NULL, NULL)
 {
 	/* For using your own generated data assumed you know the license already! */
 	this->set_copyright("© OpenStreetMap contributors"); // probably
 	this->is_direct_file_access_flag = true;
-	this->is_mbtiles_flag = true;
 }
 
 
@@ -91,7 +101,7 @@ QPixmap MapSourceMBTiles::get_pixmap(const MapSourceArgs & args)
 
 		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
 		   Hence this specific function. */
-		result = create_pixmap_sql_exec(args.sqlite_handle, args.x, args.y, args.zoom);
+		result = create_pixmap_sql_exec(*args.sqlite_handle, args.x, args.y, args.zoom);
 	}
 #endif
 
@@ -184,7 +194,7 @@ QStringList MapSourceMBTiles::get_tile_info(const MapSourceArgs & args) const
 
 	QPixmap pixmap;
 	if (args.sqlite_handle) {
-		pixmap = this->create_pixmap_sql_exec(args.sqlite_handle, args.x, args.y, args.zoom);
+		pixmap = this->create_pixmap_sql_exec(*args.sqlite_handle, args.x, args.y, args.zoom);
 	}
 	QString exists = pixmap.isNull() ? QObject::tr("NO") : QObject::tr("YES");
 
@@ -208,4 +218,36 @@ QStringList MapSourceMBTiles::get_tile_info(const MapSourceArgs & args) const
 	result << source;
 
 	return result;
+}
+
+
+
+
+void MapSourceMBTiles::close_map_source(MapSourceArgs & args)
+{
+	if (args.sqlite_handle) {
+		const int ans = sqlite3_close(*args.sqlite_handle);
+		if (ans != SQLITE_OK) {
+			/* Only to console for information purposes only. */
+			qDebug() << SG_PREFIX_W << "SQL Close problem:" << ans;
+		}
+	}
+}
+
+
+
+
+void MapSourceMBTiles::post_read(MapSourceArgs & args)
+{
+	const int ans = sqlite3_open_v2(args.file_full_path.toUtf8().constData(),
+				  args.sqlite_handle,
+				  SQLITE_OPEN_READONLY,
+				  NULL);
+	if (ans != SQLITE_OK) {
+		/* That didn't work, so here's why: */
+		qDebug() << SG_PREFIX_W << sqlite3_errmsg(*args.sqlite_handle);
+
+		Dialog::error(QObject::tr("Failed to open MBTiles file: %1").arg(args.file_full_path), args.parent_window);
+		*args.sqlite_handle = NULL;
+	}
 }

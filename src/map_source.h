@@ -40,6 +40,7 @@
 
 
 
+
 namespace SlavGPS {
 
 
@@ -99,8 +100,10 @@ namespace SlavGPS {
 
 		QString file_full_path;
 
+		QWidget * parent_window = NULL;
+
 #ifdef HAVE_SQLITE3_H
-		sqlite3 * sqlite_handle = NULL;
+		sqlite3 ** sqlite_handle = NULL;
 #endif
 	};
 
@@ -133,10 +136,11 @@ namespace SlavGPS {
 
 		virtual QPixmap get_pixmap(const MapSourceArgs & args) { QPixmap pixmap; return pixmap; }
 		virtual QStringList get_tile_info(const MapSourceArgs & args) const { QStringList result; return result; }
+		virtual void close_map_source(MapSourceArgs & args) { return; }
+		virtual void post_read(MapSourceArgs & args) { return; }
 
 		/* TODO: do these need to be virtual methods? */
 		virtual bool is_direct_file_access(void) const;
-		virtual bool is_mbtiles(void) const;
 		virtual bool is_osm_meta_tiles(void) const;
 
 		virtual bool supports_download_only_new(void) const;
@@ -201,7 +205,6 @@ namespace SlavGPS {
 		double lon_max; /* Maximum longitude in degrees supported by the map provider. Degrees. */
 
 		bool is_direct_file_access_flag;
-		bool is_mbtiles_flag;
 		bool is_osm_meta_tiles_flag; /* http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd. */
 
 		/* Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html */

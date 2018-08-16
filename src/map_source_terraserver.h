@@ -42,7 +42,6 @@ namespace SlavGPS {
 		bool coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo * dest) const;
 		void tile_to_center_coord(TileInfo * src, Coord & dest_coord) const;
 		bool is_direct_file_access(void) const;
-		bool is_mbtiles(void) const;
 
 		const QString get_server_hostname(void) const;
 		const QString get_server_path(TileInfo * src) const;

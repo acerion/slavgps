@@ -110,7 +110,6 @@ MapSourceSlippy & MapSourceSlippy::operator=(const MapSourceSlippy & other)
 	this->lon_max = other.lon_max;
 
 	this->is_direct_file_access_flag = other.is_direct_file_access_flag;
-	this->is_mbtiles_flag = other.is_mbtiles_flag;
 	this->is_osm_meta_tiles_flag = other.is_osm_meta_tiles_flag;
 
 	this->switch_xy = other.switch_xy;
@@ -145,14 +144,6 @@ MapSourceSlippy::~MapSourceSlippy()
 bool MapSourceSlippy::is_direct_file_access(void) const
 {
 	return this->is_direct_file_access_flag;
-}
-
-
-
-
-bool MapSourceSlippy::is_mbtiles(void) const
-{
-	return is_mbtiles_flag;
 }
 
 

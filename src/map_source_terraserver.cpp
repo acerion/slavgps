@@ -111,14 +111,6 @@ bool MapSourceTerraserver::is_direct_file_access(void) const
 
 
 
-bool MapSourceTerraserver::is_mbtiles(void) const
-{
-	return false;
-}
-
-
-
-
 void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
 {
 	/* FIXME: slowdown here! */

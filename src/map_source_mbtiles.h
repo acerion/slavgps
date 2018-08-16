@@ -50,6 +50,8 @@ namespace SlavGPS {
 
 		QPixmap get_pixmap(const MapSourceArgs & args);
 		QStringList get_tile_info(const MapSourceArgs & args) const;
+		void close_map_source(MapSourceArgs & args);
+		void post_read(MapSourceArgs & args);
 
 		QPixmap create_pixmap_sql_exec(sqlite3 * sqlite_handle, int xx, int yy, int zoom) const;
 	};

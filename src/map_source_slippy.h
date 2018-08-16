@@ -57,7 +57,6 @@ namespace SlavGPS {
 
 
 		bool is_direct_file_access(void) const;
-		bool is_mbtiles(void) const;
 		bool is_osm_meta_tiles(void) const;
 	};
 

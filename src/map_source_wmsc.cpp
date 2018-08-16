@@ -85,14 +85,6 @@ bool MapSourceWmsc::is_direct_file_access(void) const
 
 
 
-bool MapSourceWmsc::is_mbtiles(void) const
-{
-	return false;
-}
-
-
-
-
 bool MapSourceWmsc::is_osm_meta_tiles(void) const
 {
 	return false;

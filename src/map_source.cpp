@@ -76,7 +76,6 @@ MapSource::MapSource()
 	lon_max =  180.0;
 
 	is_direct_file_access_flag = false; /* Use direct file access to OSM like tile images - no need for a webservice. */
-	is_mbtiles_flag = false; /* Use an SQL MBTiles File for the tileset - no need for a webservice. */
 	is_osm_meta_tiles_flag = false; /* Read from OSM Meta Tiles - Should be 'use-direct-file-access' as well. */
 
 	switch_xy = false; /* Switch the order of x,y components in the URL (such as used by ARCGIS Tile Server. */
@@ -131,7 +130,6 @@ MapSource & MapSource::operator=(const MapSource & other)
 	this->lon_max = other.lon_max;
 
 	this->is_direct_file_access_flag = other.is_direct_file_access_flag;
-	this->is_mbtiles_flag = other.is_mbtiles_flag;
 	this->is_osm_meta_tiles_flag = other.is_osm_meta_tiles_flag;
 
 	this->switch_xy = other.switch_xy;
@@ -176,7 +174,6 @@ MapSource::MapSource(MapSource & map)
 	this->lon_max = map.lon_max;
 
 	this->is_direct_file_access_flag = map.is_direct_file_access_flag;
-	this->is_mbtiles_flag = map.is_mbtiles_flag;
 	this->is_osm_meta_tiles_flag = map.is_osm_meta_tiles_flag;
 
 	this->switch_xy = map.switch_xy;
@@ -373,22 +370,6 @@ ViewportDrawMode MapSource::get_drawmode(void) const
 bool MapSource::is_direct_file_access(void) const
 {
 	return this->is_direct_file_access_flag;
-}
-
-
-
-
-/**
- * @self: the MapSource of interest.
- *
- * Return true when the map is in an MB Tiles format.
- * See http://github.com/mapbox/mbtiles-spec
- * (Read Only ATM)
- */
-bool MapSource::is_mbtiles(void) const
-{
-	fprintf(stderr, "MapSource: is_mbtiles\n");
-	return is_mbtiles_flag;
 }
 
 

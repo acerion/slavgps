@@ -49,7 +49,6 @@ namespace SlavGPS {
 		bool supports_download_only_new(void) const;
 
 		bool is_direct_file_access(void) const;
-		bool is_mbtiles(void) const;
 		bool is_osm_meta_tiles(void) const;
 
 		const QString get_server_path(TileInfo * src) const;

@@ -243,7 +243,7 @@ ParameterSpecification maps_layer_param_specs[] = {
 	{ PARAM_MAP_TYPE_ID,   NULL, "mode",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::ComboBox,      &map_types,       id_default,           NULL, NULL },
 	{ PARAM_CACHE_DIR,     NULL, "directory",      SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,   NULL,             directory_default,    NULL, NULL },
 	{ PARAM_CACHE_LAYOUT,  NULL, "cache_type",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::ComboBox,      &cache_types,     cache_layout_default, NULL, N_("This determines the tile storage layout on disk") },
-	{ PARAM_FILE,          NULL, "mapfile",        SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Map File:"),                            WidgetType::FileSelector,  map_file_type,    file_default,         NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'") },
+	{ PARAM_FILE,          NULL, "mapfile",        SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,  map_file_type,    file_default,         NULL, N_("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
 	{ PARAM_ALPHA,         NULL, "alpha",          SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,        &scale_alpha,     NULL,                 NULL, N_("Control the Alpha value for transparency effects") },
 	{ PARAM_AUTO_DOWNLOAD, NULL, "autodownload",   SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,   NULL,             sg_variant_true,      NULL, NULL },
 	{ PARAM_ONLY_MISSING,  NULL, "adlonlymissing", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,   NULL,             sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
@@ -783,18 +783,10 @@ LayerMap::~LayerMap()
 	this->last_center = NULL;
 
 
-#ifdef HAVE_SQLITE3_H
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	if (map_source->is_mbtiles()) {
-		if (this->sqlite_handle) {
-			int ans = sqlite3_close(this->sqlite_handle);
-			if (ans != SQLITE_OK) {
-				/* Only to console for information purposes only. */
-				qDebug() << "WW" PREFIX << "SQL Close problem:" << ans;
-			}
-		}
-	}
-#endif
+	MapSourceArgs args;
+	args.sqlite_handle = &this->sqlite_handle;
+
+	map_source_interfaces[this->map_type_id]->close_map_source(args);
 }
 
 
@@ -802,7 +794,7 @@ LayerMap::~LayerMap()
 
 void LayerMap::post_read(Viewport * viewport, bool from_file)
 {
-	const MapSource * map_source = map_source_interfaces[this->map_type_id];
+	MapSource * map_source = map_source_interfaces[this->map_type_id];
 
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
@@ -815,22 +807,13 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 	}
 
 	/* Performed in post read as we now know the map type. */
-#ifdef HAVE_SQLITE3_H
-	/* Do some SQL stuff. */
-	if (map_source->is_mbtiles()) {
-		int ans = sqlite3_open_v2(this->file_full_path.toUtf8().constData(),
-					  &this->sqlite_handle,
-					  SQLITE_OPEN_READONLY,
-					  NULL);
-		if (ans != SQLITE_OK) {
-			/* That didn't work, so here's why: */
-			qDebug() << "WW" PREFIX << sqlite3_errmsg(this->sqlite_handle);
 
-			Dialog::error(tr("Failed to open MBTiles file: %1").arg(this->file_full_path), this->get_window());
-			this->sqlite_handle = NULL;
-		}
-	}
-#endif
+	MapSourceArgs args;
+	args.file_full_path = this->file_full_path;
+	args.sqlite_handle = &this->sqlite_handle;
+	args.parent_window = this->get_window();
+
+	map_source->post_read(args);
 
 	/* If the on Disk OSM Tile Layout type. */
 	if (map_source->map_type_id == MapTypeID::OSMOnDisk) {
@@ -1035,7 +1018,7 @@ QPixmap LayerMap::get_pixmap(const QString & map_type_string, TileInfo * mapcoor
 	args.x = mapcoord->x;
 	args.y = mapcoord->y;
 	args.zoom = (MAGIC_SEVENTEEN - mapcoord->scale);
-	args.sqlite_handle = this->sqlite_handle;
+	args.sqlite_handle = &this->sqlite_handle;
 
 
 	/* At this moment only MBTiles map source provides usable ::get_pixmap() method.
@@ -1045,31 +1028,28 @@ QPixmap LayerMap::get_pixmap(const QString & map_type_string, TileInfo * mapcoor
 		pixmap = map_source->get_pixmap(args);
 		break;
 
+	case MapTypeID::OSMMetatiles:
+		pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (MAGIC_SEVENTEEN - mapcoord->scale));
+		qDebug() << "II" PREFIX << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
+		break;
+
+	case MapTypeID::OSMOnDisk:
+		tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
+							 this->cache_dir, this->map_type_id, "",
+							 mapcoord,
+							 map_source->get_file_extension());
+		pixmap = this->create_pixmap_from_file(tile_file_full_path);
+		qDebug() << "II" PREFIX << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
+		break;
+
 	default:
-		if (map_source->is_direct_file_access()) {
-			/* ATM MBTiles must be 'a direct access type'. */
-			if (map_source->is_mbtiles()) {
-				/* This map source type should have been handled in first case of switch. */
-				assert (0);
-			} else if (map_source->is_osm_meta_tiles()) {
-				pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (MAGIC_SEVENTEEN - mapcoord->scale));
-				qDebug() << "II" PREFIX << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
-			} else {
-				tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
-									 this->cache_dir, this->map_type_id, "",
-									 mapcoord,
-									 map_source->get_file_extension());
-				pixmap = this->create_pixmap_from_file(tile_file_full_path);
-				qDebug() << "II" PREFIX << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
-			}
-		} else {
-			tile_file_full_path = get_cache_filename(this->cache_layout,
-								 this->cache_dir, this->map_type_id, map_type_string,
-								 mapcoord,
-								 map_source->get_file_extension());
-			pixmap = this->create_pixmap_from_file(tile_file_full_path);
-			qDebug() << "II" PREFIX << "creating pixmap from cache:" << (pixmap.isNull() ? "failure" : "success");
-		}
+		/* Web accessing map sources. */
+		tile_file_full_path = get_cache_filename(this->cache_layout,
+							 this->cache_dir, this->map_type_id, map_type_string,
+							 mapcoord,
+							 map_source->get_file_extension());
+		pixmap = this->create_pixmap_from_file(tile_file_full_path);
+		qDebug() << "II" PREFIX << "creating pixmap from cache:" << (pixmap.isNull() ? "failure" : "success");
 		break;
 	}
 
@@ -1851,7 +1831,7 @@ void LayerMap::tile_info_cb(void)
 	args.x = ulm.x;
 	args.y = ulm.y;
 	args.zoom = MAGIC_SEVENTEEN - ulm.scale;
-	args.sqlite_handle = this->sqlite_handle;
+	args.sqlite_handle = &this->sqlite_handle;
 	args.file_full_path = this->file_full_path;
 
 
@@ -1863,36 +1843,36 @@ void LayerMap::tile_info_cb(void)
 		tile_file_full_path = this->file_full_path;
 		break;
 
-	default:
-		if (map_source->is_direct_file_access()) {
-			if (map_source->is_mbtiles()) {
-				/* This should have been handled in case above. */
-				assert (0);
-			} else if (map_source->is_osm_meta_tiles()) {
-				char path[PATH_MAX];
-				xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, MAGIC_SEVENTEEN - ulm.scale);
-				source = path;
-				tile_file_full_path = path;
-			} else {
-				tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
-									 this->cache_dir,
-									 map_source->map_type_id,
-									 "",
-									 &ulm,
-									 map_source->get_file_extension());
-				source = QObject::tr("Source: file://%1").arg(tile_file_full_path);
-			}
-		} else {
-			tile_file_full_path = get_cache_filename(this->cache_layout,
-								 this->cache_dir,
-								 map_source->map_type_id,
-								 map_source->get_map_type_string(),
-								 &ulm,
-								 map_source->get_file_extension());
-			source = QObject::tr("Source: http://%1%2").arg(map_source->get_server_hostname()).arg(map_source->get_server_path(&ulm));
-		}
-		break;
+	case MapTypeID::OSMMetatiles:
+		char path[PATH_MAX];
+		xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, MAGIC_SEVENTEEN - ulm.scale);
+		source = path;
+		tile_file_full_path = path;
 		items.push_back(source);
+		break;
+
+	case MapTypeID::OSMOnDisk:
+		tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
+							 this->cache_dir,
+							 map_source->map_type_id,
+							 "",
+							 &ulm,
+							 map_source->get_file_extension());
+		source = QObject::tr("Source: file://%1").arg(tile_file_full_path);
+		items.push_back(source);
+		break;
+
+	default:
+		/* Web accessing map sources. */
+		tile_file_full_path = get_cache_filename(this->cache_layout,
+							 this->cache_dir,
+							 map_source->map_type_id,
+							 map_source->get_map_type_string(),
+							 &ulm,
+							 map_source->get_file_extension());
+		source = QObject::tr("Source: http://%1%2").arg(map_source->get_server_hostname()).arg(map_source->get_server_path(&ulm));
+		items.push_back(source);
+		break;
 	}
 
 
