@@ -165,7 +165,7 @@ bool MapSourceSlippy::supports_download_only_new(void) const
 
 
 
-bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const
+bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const
 {
 	bool result = map_utils_coord_to_iTMS(src_coord, xzoom, yzoom, dest);
 	return result;
@@ -174,7 +174,7 @@ bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, doubl
 
 
 
-void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
+void MapSourceSlippy::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	dest_coord = map_utils_iTMS_to_center_coord(src);
 }
@@ -182,15 +182,15 @@ void MapSourceSlippy::tile_to_center_coord(TileInfo * src, Coord & dest_coord) c
 
 
 
-const QString MapSourceSlippy::get_server_path(TileInfo * src) const
+const QString MapSourceSlippy::get_server_path(const TileInfo & src) const
 {
 	QString uri;
 	if (switch_xy) {
 		/* 'ARC GIS' Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src->scale).arg(src->y).arg(src->x);
+		uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src.scale).arg(src.y).arg(src.x);
 	} else {
 		/* (Default) Standard OSM Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src->scale).arg(src->x).arg(src->y);
+		uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src.scale).arg(src.x).arg(src.y);
 	}
 	return uri;
 }
@@ -198,7 +198,7 @@ const QString MapSourceSlippy::get_server_path(TileInfo * src) const
 
 
 
-DownloadResult MapSourceSlippy::download(TileInfo * src, const QString & dest_file_path, DownloadHandle * dl_handle)
+DownloadResult MapSourceSlippy::download(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle)
 {
 	dl_handle->set_options(this->dl_options);
 	DownloadResult result = dl_handle->get_url_http(get_server_hostname(), get_server_path(src), dest_file_path);

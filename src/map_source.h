@@ -98,7 +98,10 @@ namespace SlavGPS {
 		int y = 0;
 		int zoom = 0;
 
+		TileInfo tile_info;
+
 		QString file_full_path;
+		QString cache_dir_full_path;
 
 		QWidget * parent_window = NULL;
 
@@ -124,7 +127,7 @@ namespace SlavGPS {
 		const ViewportLogo & get_logo(void) const;
 
 		const QString get_server_hostname(void) const;
-		virtual const QString get_server_path(TileInfo * src) const;
+		virtual const QString get_server_path(const TileInfo & src) const;
 
 		static bool is_map_type_id_registered(MapTypeID map_type_id);
 		QString get_map_type_string(void) const;
@@ -134,10 +137,11 @@ namespace SlavGPS {
 		uint16_t get_tilesize_y(void) const;
 		ViewportDrawMode get_drawmode(void) const;
 
-		virtual QPixmap get_pixmap(const MapSourceArgs & args) { QPixmap pixmap; return pixmap; }
+		virtual QPixmap get_tile_pixmap(const MapSourceArgs & args) { QPixmap pixmap; return pixmap; }
 		virtual QStringList get_tile_info(const MapSourceArgs & args) const { QStringList result; return result; }
 		virtual void close_map_source(MapSourceArgs & args) { return; }
 		virtual void post_read(MapSourceArgs & args) { return; }
+		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path);
 
 		/* TODO: do these need to be virtual methods? */
 		virtual bool is_direct_file_access(void) const;
@@ -153,10 +157,10 @@ namespace SlavGPS {
 		double get_lon_max(void) const;
 		QString get_file_extension(void) const;
 
-		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const;
-		virtual void tile_to_center_coord(TileInfo * src, Coord & dest_coord) const;
+		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const;
+		virtual void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
 
-		virtual DownloadResult download(TileInfo * src, const QString & dest_file_path, DownloadHandle * dl_handle);
+		virtual DownloadResult download(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
 		DownloadHandle * download_handle_init();
 		void download_handle_cleanup(DownloadHandle * dl_handle);
 

@@ -24,12 +24,38 @@
 
 
 
+#include "map_source_slippy.h"
+
+
+
+
 namespace SlavGPS {
 
 
 
 
 	void osm_init(void);
+
+
+
+
+	class MapSourceOSMMetatiles : public MapSourceSlippy {
+	public:
+		MapSourceOSMMetatiles();
+		~MapSourceOSMMetatiles() {}
+		QPixmap get_tile_pixmap(MapSourceArgs & args);
+	};
+
+
+
+
+	class MapSourceOSMOnDisk : public MapSourceSlippy {
+	public:
+		MapSourceOSMOnDisk();
+		~MapSourceOSMOnDisk() {}
+		QPixmap get_tile_pixmap(MapSourceArgs & args);
+	};
+
 
 
 

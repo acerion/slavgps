@@ -106,7 +106,7 @@ bool MapSourceTms::supports_download_only_new(void) const
 
 
 
-bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const
+bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const
 {
 	assert (src_coord.mode == CoordMode::LATLON);
 
@@ -114,59 +114,58 @@ bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double y
 		return false;
 	}
 
-	dest->scale = map_utils_mpp_to_scale(xzoom);
-	if (dest->scale == 255) {
+	dest.scale = map_utils_mpp_to_scale(xzoom);
+	if (dest.scale == 255) {
 		return false;
 	}
 
 	/* Note : VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2 = number of tile on Y axis */
 	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
 		xzoom, yzoom, VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
-	dest->x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
+	dest.x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
-	dest->y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
-	dest->z = 0;
-	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__,
-		src_coord.ll.lon, src_coord.ll.lat, dest->x, dest->y);
+	dest.y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
+	dest.z = 0;
+	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__, src_coord.ll.lon, src_coord.ll.lat, dest.x, dest.y);
 	return true;
 }
 
 
 
 
-void MapSourceTms::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
+void MapSourceTms::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	double socalled_mpp;
-	if (src->scale >= 0) {
-		socalled_mpp = VIK_GZ(src->scale);
+	if (src.scale >= 0) {
+		socalled_mpp = VIK_GZ(src.scale);
 	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src->scale);
+		socalled_mpp = 1.0/VIK_GZ(-src.scale);
 	}
 	dest_coord.mode = CoordMode::LATLON;
-	dest_coord.ll.lon = (src->x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
+	dest_coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
-	dest_coord.ll.lat = -((src->y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
+	dest_coord.ll.lat = -((src.y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
 	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
-		src->x, src->y, dest_coord.ll.lon, dest_coord.ll.lat);
+		src.x, src.y, dest_coord.ll.lon, dest_coord.ll.lat);
 }
 
 
 
 
-const QString MapSourceTms::get_server_path(TileInfo * src) const
+const QString MapSourceTms::get_server_path(const TileInfo & src) const
 {
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
 
 	/* Note : nb tiles on Y axis */
-	int nb_tiles = VIK_GZ(MAGIC_SEVENTEEN - src->scale - 1);
+	int nb_tiles = VIK_GZ(MAGIC_SEVENTEEN - src.scale - 1);
 
-	const QString uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src->scale - 1).arg(src->x).arg(nb_tiles - src->y - 1);
+	const QString uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src.scale - 1).arg(src.x).arg(nb_tiles - src.y - 1);
 
 	return QString(uri);
 }

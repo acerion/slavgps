@@ -41,8 +41,8 @@ namespace SlavGPS {
 		uint16_t tilesize_x;
 		uint16_t tilesize_y;
 		unsigned int drawmode;
-		bool (*coord_to_tile) (const Coord & src_coord, double xzoom, double yzoom, SlavGPS::TileInfo * dest);
-		void (*tile_to_center_coord) (TileInfo * src, Coord & dest_coord);
+		bool (*coord_to_tile) (const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest);
+		void (*tile_to_center_coord) (const TileInfo & src, Coord & dest_coord);
 		/* TODO: constant size (yay!) */
 	} VikMapsLayer_MapType;
 

@@ -573,7 +573,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 
 /* Free returned string after use. */
-static QString get_filename(const QString dir, unsigned int x, unsigned int y, unsigned int zoom)
+static QString get_filename(const QString dir, int x, int y, int zoom)
 {
 	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg((MAGIC_SEVENTEEN - zoom)).arg(x).arg(y));
 }
@@ -581,7 +581,7 @@ static QString get_filename(const QString dir, unsigned int x, unsigned int y, u
 
 
 
-void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, TileInfo * ti_ul)
+void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ti_ul)
 {
 	if (!this->use_file_cache) {
 		return;
@@ -591,7 +591,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, TileInfo * ti_ul)
 		return;
 	}
 
-	const QString filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
+	const QString filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
 
 	char *dir = g_path_get_dirname(filename.toUtf8().constData());
 	if (0 != access(filename.toUtf8().constData(), F_OK)) {
@@ -611,7 +611,7 @@ void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, TileInfo * ti_ul)
 
 class RenderInfo : public BackgroundJob {
 public:
-	RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul, const QString & new_request);
+	RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, const TileInfo & ti_ul, const QString & new_request);
 
 	void run(void);
 
@@ -627,7 +627,7 @@ public:
 
 
 
-RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, TileInfo * ti_ul_, const QString & new_request)
+RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, const TileInfo & new_ti_ul, const QString & new_request)
 {
 	this->n_items = 1;
 
@@ -635,7 +635,7 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 
 	this->coord_ul = new_coord_ul;
 	this->coord_br = new_coord_br;
-	this->ti_ul = *ti_ul_;
+	this->ti_ul = new_ti_ul;
 
 	this->request = new_request;
 }
@@ -646,7 +646,7 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 /**
  * Common render function which can run in separate thread.
  */
-void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInfo * ti_ul)
+void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, const TileInfo & ti_ul)
 {
 	int64_t tt1 = g_get_real_time();
 	QPixmap pixmap = this->mi->render_map(coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
@@ -666,7 +666,7 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, TileInf
 	}
 	MapCacheItemExtra arg;
 	arg.duration = tt;
-	MapCache::add(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	MapCache::add_tile_pixmap(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 }
 
 
@@ -676,7 +676,7 @@ void RenderInfo::run(void)
 {
 	const bool end_job = this->set_progress_state(0);
 	if (!end_job) {
-		this->lmk->render(this->coord_ul, this->coord_br, &this->ti_ul);
+		this->lmk->render(this->coord_ul, this->coord_br, this->ti_ul);
 	}
 
 	tp_mutex.lock();
@@ -700,7 +700,7 @@ void RenderInfo::run(void)
 /**
  * Thread.
  */
-void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, const QString & file_name)
+void LayerMapnik::thread_add(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, const QString & file_name)
 {
 	/* Create request. */
 	const unsigned int nn = file_name.isEmpty() ? 0 : qHash(file_name, 0);
@@ -731,11 +731,11 @@ void LayerMapnik::thread_add(TileInfo * ti_ul, const Coord & coord_ul, const Coo
  * If function returns QPixmap properly, reference counter to this
  * buffer has to be decreased, when buffer is no longer needed.
  */
-QPixmap LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rerender_) const
+QPixmap LayerMapnik::load_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br, bool * rerender_) const
 {
 	*rerender_ = false;
 	QPixmap pixmap;
-	const QString filename = get_filename(this->file_cache_dir, ti_ul->x, ti_ul->y, ti_ul->scale);
+	const QString filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
 
 	struct stat stat_buf;
 	if (stat(filename.toUtf8().constData(), &stat_buf) == 0) {
@@ -748,7 +748,7 @@ QPixmap LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rere
 			}
 			MapCacheItemExtra arg;
 			arg.duration = -42.0;
-			MapCache::add(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+			MapCache::add_tile_pixmap(pixmap, arg, ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
 		if (g_planet_import_time < stat_buf.st_mtime) {
@@ -766,12 +766,12 @@ QPixmap LayerMapnik::load_pixmap(TileInfo * ti_ul, TileInfo * ti_br, bool * rere
  * Caller has to decrease reference counter of returned QPixmap,
  * when buffer is no longer needed.
  */
-QPixmap LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
+QPixmap LayerMapnik::get_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br)
 {
 	const Coord coord_ul = map_utils_iTMS_to_coord(ti_ul);
 	const Coord coord_br = map_utils_iTMS_to_coord(ti_br);
 
-	QPixmap pixmap = MapCache::get_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	QPixmap pixmap = MapCache::get_tile_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "MAP CACHE HIT";
 	} else {
@@ -784,7 +784,7 @@ QPixmap LayerMapnik::get_pixmap(TileInfo * ti_ul, TileInfo * ti_br)
 
 		if (pixmap.isNull() || rerender_) {
 			if (true) {
-				this->thread_add(ti_ul, coord_ul, coord_br, ti_ul->x, ti_ul->y, ti_ul->z, ti_ul->scale, this->filename_xml.toUtf8().constData());
+				this->thread_add(ti_ul, coord_ul, coord_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml.toUtf8().constData());
 			} else {
 				/* Run in the foreground. */
 				this->render(coord_ul, coord_br, ti_ul);
@@ -830,8 +830,8 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	TileInfo ti_ul, ti_br;
 
-	if (map_utils_coord_to_iTMS(coord_ul, xzoom, yzoom, &ti_ul) &&
-	     map_utils_coord_to_iTMS(coord_br, xzoom, yzoom, &ti_br)) {
+	if (map_utils_coord_to_iTMS(coord_ul, xzoom, yzoom, ti_ul) &&
+	     map_utils_coord_to_iTMS(coord_br, xzoom, yzoom, ti_br)) {
 		/* TODO: Understand if tilesize != 256 does this need to use shrinkfactors? */
 		int xx, yy;
 
@@ -847,9 +847,9 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 				ti_br.x = x+1;
 				ti_br.y = y+1;
 
-				const QPixmap pixmap = this->get_pixmap(&ti_ul, &ti_br);
+				const QPixmap pixmap = this->get_pixmap(ti_ul, ti_br);
 				if (!pixmap.isNull()) {
-					const Coord coord = map_utils_iTMS_to_coord(&ti_ul);
+					const Coord coord = map_utils_iTMS_to_coord(ti_ul);
 					viewport->coord_to_screen_pos(coord, &xx, &yy);
 					viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 				}
@@ -1016,15 +1016,15 @@ void LayerMapnik::rerender()
 {
 	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ti_ul);
+	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, ti_ul);
 	/* Reconvert back - thus getting the coordinate at the tile *ul corner*. */
-	this->rerender_ul = map_utils_iTMS_to_coord(&ti_ul);
+	this->rerender_ul = map_utils_iTMS_to_coord(ti_ul);
 	/* Bottom right bound is simply +1 in TMS coords. */
 	TileInfo ti_br = ti_ul;
 	ti_br.x = ti_br.x+1;
 	ti_br.y = ti_br.y+1;
-	this->rerender_br = map_utils_iTMS_to_coord(&ti_br);
-	this->thread_add(&ti_ul, this->rerender_ul, this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml.toUtf8().constData());
+	this->rerender_br = map_utils_iTMS_to_coord(ti_br);
+	this->thread_add(ti_ul, this->rerender_ul, this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml.toUtf8().constData());
 }
 
 
@@ -1045,11 +1045,11 @@ void LayerMapnik::tile_info()
 {
 	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ti_ul);
+	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, ti_ul);
 
-	MapCacheItemExtra extra = MapCache::get_extra(&ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	MapCacheItemExtra extra = MapCache::get_extra(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 
-	const QString tile_file_full_path = get_filename(this->file_cache_dir.toUtf8().data(), ti_ul.x, ti_ul.y, ti_ul.scale);
+	const QString tile_file_full_path = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
 
 	QStringList items;
 

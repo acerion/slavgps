@@ -58,7 +58,7 @@ namespace SlavGPS {
 		~MapSourceBing();
 
 		void add_copyright(Viewport * viewport, const LatLonBBox & bbox, double zoom);
-		const QString get_server_path(TileInfo * src) const;
+		const QString get_server_path(const TileInfo & src) const;
 
 
 		QString bing_api_key;

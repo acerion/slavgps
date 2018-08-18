@@ -53,14 +53,14 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void add(const QPixmap & pixmap, MapCacheItemExtra & extra, TileInfo * tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
-		static QPixmap get_pixmap(TileInfo * tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
-		static MapCacheItemExtra get_extra(TileInfo * tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+		static void add_tile_pixmap(const QPixmap & pixmap, MapCacheItemExtra & extra, const TileInfo & tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+		static QPixmap get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+		static MapCacheItemExtra get_extra(const TileInfo & tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
 
 		static size_t get_size(void);
 		static int get_count(void);
 
-		static void remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, const QString & file_name);
+		static void remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID map_type, const QString & file_name);
 		static void flush(void);
 		static void flush_type(MapTypeID map_type);
 

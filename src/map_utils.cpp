@@ -128,7 +128,7 @@ int SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
  *
  * Returns: whether the conversion was performed
  */
-bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest)
+bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest)
 {
 	if (src_coord.mode != CoordMode::LATLON) {
 		return false;
@@ -138,14 +138,14 @@ bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, dou
 		return false;
 	}
 
-	dest->scale = map_utils_mpp_to_scale (xzoom);
-	if (dest->scale == 255) {
+	dest.scale = map_utils_mpp_to_scale(xzoom);
+	if (dest.scale == 255) {
 		return false;
 	}
 
-	dest->x = (src_coord.ll.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
-	dest->y = (180 - MERCLAT(src_coord.ll.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
-	dest->z = 0;
+	dest.x = (src_coord.ll.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
+	dest.y = (180 - MERCLAT(src_coord.ll.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
+	dest.z = 0;
 
 	return true;
 }
@@ -154,19 +154,19 @@ bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, dou
 
 
 /* Internal convenience function. */
-static Coord _to_vikcoord_with_offset(const TileInfo * src, double offset)
+static Coord _to_vikcoord_with_offset(const TileInfo & src, double offset)
 {
 	Coord dest_coord;
 
 	double socalled_mpp;
-	if (src->scale >= 0) {
-		socalled_mpp = VIK_GZ(src->scale);
+	if (src.scale >= 0) {
+		socalled_mpp = VIK_GZ(src.scale);
 	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src->scale);
+		socalled_mpp = 1.0/VIK_GZ(-src.scale);
 	}
 	dest_coord.mode = CoordMode::LATLON;
-	dest_coord.ll.lon = ((src->x+offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360) - 180;
-	dest_coord.ll.lat = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360));
+	dest_coord.ll.lon = ((src.x + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360) - 180;
+	dest_coord.ll.lat = DEMERCLAT(180 - ((src.y + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360));
 
 	return dest_coord;
 }
@@ -183,7 +183,7 @@ static Coord _to_vikcoord_with_offset(const TileInfo * src, double offset)
  *
  * Returns: whether the conversion was performed
  */
-Coord SlavGPS::map_utils_iTMS_to_center_coord(const TileInfo * src)
+Coord SlavGPS::map_utils_iTMS_to_center_coord(const TileInfo & src)
 {
 	return _to_vikcoord_with_offset(src, 0.5);
 }
@@ -200,7 +200,7 @@ Coord SlavGPS::map_utils_iTMS_to_center_coord(const TileInfo * src)
  *
  * Returns: whether the conversion was performed
  */
-Coord SlavGPS::map_utils_iTMS_to_coord(const TileInfo * src)
+Coord SlavGPS::map_utils_iTMS_to_coord(const TileInfo & src)
 {
 	return _to_vikcoord_with_offset(src, 0.0);
 }

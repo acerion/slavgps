@@ -81,7 +81,7 @@ MapSourceMBTiles::~MapSourceMBTiles()
 
 
 
-QPixmap MapSourceMBTiles::get_pixmap(const MapSourceArgs & args)
+QPixmap MapSourceMBTiles::get_tile_pixmap(const MapSourceArgs & args)
 {
 	QPixmap result;
 

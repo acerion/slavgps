@@ -79,7 +79,7 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo * dest) const
+bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo & dest) const
 {
 	if (src_coord.mode != CoordMode::UTM) {
 		return false;
@@ -89,14 +89,14 @@ bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, d
 		return false;
 	}
 
-	dest->scale = mpp_to_scale(xmpp, this->map_type_id);
-	if (!dest->scale) {
+	dest.scale = mpp_to_scale(xmpp, this->map_type_id);
+	if (!dest.scale) {
 		return false;
 	}
 
-	dest->x = (int)(((int)(src_coord.utm.easting))/(200*xmpp));
-	dest->y = (int)(((int)(src_coord.utm.northing))/(200*xmpp));
-	dest->z = src_coord.utm.zone;
+	dest.x = (int)(((int)(src_coord.utm.easting))/(200 * xmpp));
+	dest.y = (int)(((int)(src_coord.utm.northing))/(200 * xmpp));
+	dest.z = src_coord.utm.zone;
 	return true;
 }
 
@@ -111,22 +111,22 @@ bool MapSourceTerraserver::is_direct_file_access(void) const
 
 
 
-void MapSourceTerraserver::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
+void MapSourceTerraserver::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	/* FIXME: slowdown here! */
-	double mpp = scale_to_mpp(src->scale);
+	double mpp = scale_to_mpp(src.scale);
 	dest_coord.mode = CoordMode::UTM;
-	dest_coord.utm.zone = src->z;
-	dest_coord.utm.easting = ((src->x * 200) + 100) * mpp;
-	dest_coord.utm.northing = ((src->y * 200) + 100) * mpp;
+	dest_coord.utm.zone = src.z;
+	dest_coord.utm.easting = ((src.x * 200) + 100) * mpp;
+	dest_coord.utm.northing = ((src.y * 200) + 100) * mpp;
 }
 
 
 
 
-const QString MapSourceTerraserver::get_server_path(TileInfo * src) const
+const QString MapSourceTerraserver::get_server_path(const TileInfo & src) const
 {
-	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type_id).arg(src->scale).arg(src->x).arg(src->y).arg(src->z);
+	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type_id).arg(src.scale).arg(src.x).arg(src.y).arg(src.z);
 	return uri;
 }
 

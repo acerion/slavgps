@@ -190,17 +190,17 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void MapCache::add(const QPixmap & pixmap, MapCacheItemExtra & extra, TileInfo * mapcoord, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+void MapCache::add_tile_pixmap(const QPixmap & pixmap, MapCacheItemExtra & extra, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	if (pixmap.isNull()) {
-		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
+		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale);
 		return;
 	}
 
 	static char key_[MC_KEY_SIZE];
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock();
@@ -229,13 +229,13 @@ void MapCache::add(const QPixmap & pixmap, MapCacheItemExtra & extra, TileInfo *
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap MapCache::get_pixmap(TileInfo * mapcoord, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	QPixmap result;
 
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
@@ -251,13 +251,13 @@ QPixmap MapCache::get_pixmap(TileInfo * mapcoord, MapTypeID map_type_id, int alp
 
 
 
-MapCacheItemExtra MapCache::get_extra(TileInfo * mapcoord, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+MapCacheItemExtra MapCache::get_extra(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	MapCacheItemExtra extra;
 
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	auto iter = maps_cache.find(key);
@@ -317,11 +317,11 @@ void flush_matching(std::string & key_part)
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void MapCache::remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type_id, const QString & file_name)
+void MapCache::remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID map_type_id, const QString & file_name)
 {
 	char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn);
 	std::string key(key_);
 
 	flush_matching(key);

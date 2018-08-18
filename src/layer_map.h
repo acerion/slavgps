@@ -126,6 +126,9 @@ namespace SlavGPS {
 		static void set_cache_default(MapsCacheLayout layout);
 
 
+		static QString get_cache_filename(MapsCacheLayout layout, const QString & cache_dir, MapTypeID map_type_id, const QString & map_type_string, const TileInfo & tile_info, const QString & file_extension);
+
+
 		MapTypeID map_type_id = MapTypeID::Initial;
 		QString cache_dir;
 		MapsCacheLayout cache_layout = MapsCacheLayout::Viking;
@@ -166,8 +169,7 @@ namespace SlavGPS {
 
 		bool should_start_autodownload(Viewport * viewport);
 
-		QPixmap get_pixmap(const QString & map_type_string, TileInfo * mapcoord, QString & tile_file_full_path, double scale_x, double scale_y);
-		QPixmap create_pixmap_from_metatile(int xx, int yy, int zz);
+		QPixmap get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, QString & tile_file_full_path, double scale_x, double scale_y);
 		QPixmap create_pixmap_from_file(const QString & file_full_path);
 
 	public slots:

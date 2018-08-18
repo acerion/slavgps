@@ -160,9 +160,9 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 
 
-const QString MapSourceBing::get_server_path(TileInfo * src) const
+const QString MapSourceBing::get_server_path(const TileInfo & src) const
 {
-	const QString quadtree = compute_quad_tree(MAGIC_SEVENTEEN - src->scale, src->x, src->y);
+	const QString quadtree = compute_quad_tree(MAGIC_SEVENTEEN - src.scale, src.x, src.y);
 	const QString uri = QString(this->server_path_format).arg(quadtree);
 
 	return uri;

@@ -43,15 +43,15 @@ namespace SlavGPS {
 		~MapSourceWmsc();
 		MapSourceWmsc(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 
-		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo * dest) const;
-		void tile_to_center_coord(TileInfo * src, Coord & dest_coord) const;
+		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const;
+		void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
 
 		bool supports_download_only_new(void) const;
 
 		bool is_direct_file_access(void) const;
 		bool is_osm_meta_tiles(void) const;
 
-		const QString get_server_path(TileInfo * src) const;
+		const QString get_server_path(const TileInfo & src) const;
 	};
 
 

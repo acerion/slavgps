@@ -43,6 +43,7 @@
 #include "util.h"
 #include "routing.h"
 #include "routing_engine_web.h"
+#include "metatile.h"
 
 
 
@@ -110,30 +111,15 @@ void SlavGPS::osm_init(void)
 	hot_type->set_license("CC-BY-SA");
 	hot_type->set_license_url("http://www.openstreetmap.org/copyright");
 
-	/* No cache needed for this type. */
-	MapSource * direct_type = new MapSourceSlippy(MapTypeID::OSMOnDisk, QObject::tr("On Disk OSM Tile Format"), NULL, NULL);
-	/* For using your own generated data assumed you know the license already! */
-	direct_type->set_copyright("© OpenStreetMap contributors"); // probably
-	direct_type->is_direct_file_access_flag = true;
-
-	MapSource * mbtiles_type = new MapSourceMBTiles();
-
-
-	/* No cache needed for this type. */
-	MapSource * metatiles_type = new MapSourceSlippy(MapTypeID::OSMMetatiles, QObject::tr("OSM Metatiles"), NULL, NULL);
-	/* For using your own generated data assumed you know the license already! */
-	metatiles_type->set_copyright("© OpenStreetMap contributors"); // probably
-	metatiles_type->is_direct_file_access_flag = true;
-	metatiles_type->is_osm_meta_tiles_flag = true;
 
 	MapSources::register_map_source(mapquest_type);
 	MapSources::register_map_source(mapnik_type);
 	MapSources::register_map_source(cycle_type);
 	MapSources::register_map_source(transport_type);
 	MapSources::register_map_source(hot_type);
-	MapSources::register_map_source(direct_type);
-	MapSources::register_map_source(mbtiles_type);
-	MapSources::register_map_source(metatiles_type);
+	MapSources::register_map_source(new MapSourceOSMOnDisk());
+	MapSources::register_map_source(new MapSourceMBTiles());
+	MapSources::register_map_source(new MapSourceOSMMetatiles());
 
 	/* Webtools. */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (view)"), "http://www.openstreetmap.org/?lat=%1&lon=%2&zoom=%3"));
@@ -198,4 +184,85 @@ void SlavGPS::osm_init(void)
 	osrm->url_via_ll_fmt = "&loc=%s,%s";
 
 	Routing::register_engine(osrm);
+}
+
+
+
+
+/* No cache needed for this type. */
+MapSourceOSMMetatiles::MapSourceOSMMetatiles() : MapSourceSlippy(MapTypeID::OSMMetatiles, QObject::tr("OSM Metatiles"), NULL, NULL)
+{
+	/* For using your own generated data assumed you know the license already! */
+	this->set_copyright("© OpenStreetMap contributors"); // probably
+	this->is_direct_file_access_flag = true;
+	this->is_osm_meta_tiles_flag = true;
+}
+
+
+
+
+QPixmap MapSourceOSMMetatiles::get_tile_pixmap(MapSourceArgs & args)
+{
+	const int tile_max = METATILE_MAX_SIZE;
+	char err_msg[PATH_MAX] = { 0 };
+	int compressed;
+	QPixmap pixmap;
+
+	char * buf = (char *) malloc(tile_max);
+	if (!buf) {
+		return pixmap;
+	}
+
+	int len = metatile_read(args.cache_dir_full_path.toUtf8().constData(), args.x, args.y, args.zoom, buf, tile_max, &compressed, err_msg);
+	if (len > 0) {
+		if (compressed) {
+			/* TODO: Not handled yet - I don't think this is used often - so implement later if necessary. */
+			qDebug() << SG_PREFIX_E << "Compressed metatiles not implemented";
+			free(buf);
+			return pixmap;
+		}
+
+		/* Convert these buf bytes into a pixmap via these streaming operations. */
+		if (!pixmap.loadFromData((const unsigned char *)  buf, (unsigned int) len)) {
+			qDebug() << SG_PREFIX_E << "Failed to load pixmap from metatile";
+		}
+
+		free(buf);
+
+	} else {
+		free(buf);
+		qDebug() << SG_PREFIX_E << "Failed:" << err_msg;
+	}
+
+	qDebug() << SG_PREFIX_I << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
+
+	return pixmap;
+}
+
+
+
+
+/* No cache needed for this type. */
+MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk, QObject::tr("On Disk OSM Tile Format"), NULL, NULL)
+{
+	/* For using your own generated data assumed you know the license already! */
+	this->set_copyright("© OpenStreetMap contributors"); // probably
+	this->is_direct_file_access_flag = true;
+
+}
+
+
+
+
+QPixmap MapSourceOSMOnDisk::get_tile_pixmap(MapSourceArgs & args)
+{
+	const QString tile_file_full_path = LayerMap::get_cache_filename(MapsCacheLayout::OSM,
+									 args.cache_dir_full_path, this->map_type_id, "",
+									 args.tile_info,
+									 this->get_file_extension());
+	QPixmap pixmap = this->create_tile_pixmap_from_file(tile_file_full_path);
+
+	qDebug() << SG_PREFIX_I << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
+
+	return pixmap;
 }

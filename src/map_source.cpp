@@ -29,15 +29,24 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <unistd.h>
+
+
+
 
 #include <QDebug>
 
+
+
+
+#include "window.h"
 #include "viewport.h"
 #include "coord.h"
 #include "mapcoord.h"
 #include "download.h"
 #include "map_source.h"
 #include "layer_map.h"
+#include "statusbar.h"
 
 
 
@@ -48,6 +57,11 @@ using namespace SlavGPS;
 
 
 #define PREFIX ": Map Source:" << __FUNCTION__ << __LINE__ << ">"
+
+
+
+
+extern Tree * g_tree;
 
 
 
@@ -460,7 +474,7 @@ QString MapSource::get_file_extension(void) const
 
 
 
-bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoom, TileInfo * dest) const
+bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoom, TileInfo & dest) const
 {
 	fprintf(stderr, "MapSource coord_to_tile() returns false\n");
 	return false;
@@ -469,7 +483,7 @@ bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoo
 
 
 
-void MapSource::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
+void MapSource::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	fprintf(stderr, "MapSource::tile_to_center_coord\n");
 	return;
@@ -486,7 +500,7 @@ void MapSource::tile_to_center_coord(TileInfo * src, Coord & dest_coord) const
  *
  * Returns: How successful the download was as per the type #DownloadResult
  */
-DownloadResult MapSource::download(TileInfo * src, const QString & dest_file_path, DownloadHandle * handle)
+DownloadResult MapSource::download(const TileInfo & src, const QString & dest_file_path, DownloadHandle * handle)
 {
 	qDebug() << "II: Map Source: download to" << dest_file_path;
 	handle->set_options(this->dl_options);
@@ -520,7 +534,7 @@ const QString MapSource::get_server_hostname(void) const
 
 
 
-const QString MapSource::get_server_path(TileInfo * src) const
+const QString MapSource::get_server_path(const TileInfo & src) const
 {
 	return "";
 }
@@ -531,4 +545,25 @@ const QString MapSource::get_server_path(TileInfo * src) const
 const DownloadOptions * MapSource::get_download_options(void) const
 {
 	return &this->dl_options;
+}
+
+
+
+
+QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_path)
+{
+	QPixmap result;
+
+	if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK | R_OK)) {
+		qDebug() << "EE" PREFIX << "can't access file" << tile_file_full_path;
+		return result;
+	}
+
+	if (!result.load(tile_file_full_path)) {
+		Window * window = g_tree->tree_get_main_window();
+		if (window) {
+			window->statusbar_update(StatusBarField::INFO, QString("Couldn't open image file"));
+		}
+	}
+	return result;
 }

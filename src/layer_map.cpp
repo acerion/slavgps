@@ -869,45 +869,6 @@ static void pixmap_scale(QPixmap & pixmap, double scale_x, double scale_y)
 
 
 
-QPixmap LayerMap::create_pixmap_from_metatile(int xx, int yy, int zz)
-{
-	const int tile_max = METATILE_MAX_SIZE;
-	char err_msg[PATH_MAX] = { 0 };
-	int compressed;
-	QPixmap result;
-
-	char * buf = (char *) malloc(tile_max);
-	if (!buf) {
-		return result;
-	}
-
-	int len = metatile_read(this->cache_dir.toUtf8().constData(), xx, yy, zz, buf, tile_max, &compressed, err_msg);
-	if (len > 0) {
-		if (compressed) {
-			/* TODO: Not handled yet - I don't think this is used often - so implement later if necessary. */
-			qDebug() << "EE" PREFIX << "compressed metatiles not implemented";
-			free(buf);
-			return result;
-		}
-
-		/* Convert these buf bytes into a pixmap via these streaming operations. */
-		if (!result.loadFromData((const unsigned char *)  buf, (unsigned int) len)) {
-			qDebug() << SG_PREFIX_E << "Failed to load pixmap from metatile";
-		}
-
-		free(buf);
-
-	} else {
-		free(buf);
-		qDebug() << SG_PREFIX_E << "Failed:" << err_msg;
-	}
-
-	return result;
-}
-
-
-
-
 static void pixmap_apply_settings(QPixmap & pixmap, int alpha, double scale_x, double scale_y)
 {
 	/* Apply alpha setting. */
@@ -925,12 +886,12 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, double scale_x, d
 
 
 
-static QString get_cache_filename(MapsCacheLayout layout,
-				  const QString & cache_dir,
-				  MapTypeID map_type_id,
-				  const QString & map_type_string,
-				  TileInfo const * coord,
-				  const QString & file_extension)
+QString LayerMap::get_cache_filename(MapsCacheLayout layout,
+				     const QString & cache_dir,
+				     MapTypeID map_type_id,
+				     const QString & map_type_string,
+				     const TileInfo & tile_info,
+				     const QString & file_extension)
 {
 	/* TODO: verify format strings: whether they match strings
 	   from Viking, and whether they match directory paths in
@@ -943,22 +904,22 @@ static QString get_cache_filename(MapsCacheLayout layout,
 		if (map_type_string.isEmpty()) {
 			result = QString("%1%2%3%4%5%6%7")
 				.arg(cache_dir)
-				.arg(MAGIC_SEVENTEEN - coord->scale)
+				.arg(MAGIC_SEVENTEEN - tile_info.scale)
 				.arg(QDir::separator())
-				.arg(coord->x)
+				.arg(tile_info.x)
 				.arg(QDir::separator())
-				.arg(coord->y)
+				.arg(tile_info.y)
 				.arg(file_extension);
 		} else {
 			if (cache_dir != MapCache::get_dir()) {
 				/* Cache dir not the default - assume it's been directed somewhere specific. */
 				result = QString("%1%2%3%4%5%6%7")
 					.arg(cache_dir)
-					.arg(MAGIC_SEVENTEEN - coord->scale)
+					.arg(MAGIC_SEVENTEEN - tile_info.scale)
 					.arg(QDir::separator())
-					.arg(coord->x)
+					.arg(tile_info.x)
 					.arg(QDir::separator())
-					.arg(coord->y)
+					.arg(tile_info.y)
 					.arg(file_extension);
 			} else {
 				/* Using default cache - so use the map name in the directory path. */
@@ -966,11 +927,11 @@ static QString get_cache_filename(MapsCacheLayout layout,
 					.arg(cache_dir)
 					.arg(map_type_string)
 					.arg(QDir::separator())
-					.arg(MAGIC_SEVENTEEN - coord->scale)
+					.arg(MAGIC_SEVENTEEN - tile_info.scale)
 					.arg(QDir::separator())
-					.arg(coord->x)
+					.arg(tile_info.x)
 					.arg(QDir::separator())
-					.arg(coord->y)
+					.arg(tile_info.y)
 					.arg(file_extension);
 			}
 		}
@@ -979,12 +940,12 @@ static QString get_cache_filename(MapsCacheLayout layout,
 		result = QString("%1t%2s%3z%4%5%6%7%8")
 			.arg(cache_dir)
 			.arg((int) map_type_id)
-			.arg(coord->scale)
-			.arg(coord->z)
+			.arg(tile_info.scale)
+			.arg(tile_info.z)
 			.arg(QDir::separator())
-			.arg(coord->x)
+			.arg(tile_info.x)
 			.arg(QDir::separator())
-			.arg(coord->y);
+			.arg(tile_info.y);
 		break;
 	}
 
@@ -1000,10 +961,10 @@ static QString get_cache_filename(MapsCacheLayout layout,
    Function returns only a reference (pointer) to pixmap existing in
    pixmap cache.  Don't delete the pointer.
 */
-QPixmap LayerMap::get_pixmap(const QString & map_type_string, TileInfo * mapcoord, QString & tile_file_full_path, double scale_x, double scale_y)
+QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, QString & tile_file_full_path, double scale_x, double scale_y)
 {
 	/* Get the thing. */
-	QPixmap pixmap = MapCache::get_pixmap(mapcoord, this->map_type_id, this->alpha, scale_x, scale_y, this->file_full_path);
+	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->map_type_id, this->alpha, scale_x, scale_y, this->file_full_path);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "CACHE HIT";
 		return pixmap;
@@ -1015,40 +976,31 @@ QPixmap LayerMap::get_pixmap(const QString & map_type_string, TileInfo * mapcoor
 	MapSource * map_source = map_source_interfaces[this->map_type_id]; /* TODO: this variable should be const. */
 
 	MapSourceArgs args;
-	args.x = mapcoord->x;
-	args.y = mapcoord->y;
-	args.zoom = (MAGIC_SEVENTEEN - mapcoord->scale);
+	args.x = tile_info.x;
+	args.y = tile_info.y;
+	args.zoom = (MAGIC_SEVENTEEN - tile_info.scale);
 	args.sqlite_handle = &this->sqlite_handle;
+	args.cache_dir_full_path = this->cache_dir;
+	args.tile_info = tile_info;
 
 
-	/* At this moment only MBTiles map source provides usable ::get_pixmap() method.
+	/* At this moment only MBTiles map source provides usable ::get_tile_pixmap() method.
 	   All the other map sources will have to be called the old way. */
 	switch (map_source->map_type_id) {
 	case MapTypeID::MBTiles:
-		pixmap = map_source->get_pixmap(args);
-		break;
-
 	case MapTypeID::OSMMetatiles:
-		pixmap = this->create_pixmap_from_metatile(mapcoord->x, mapcoord->y, (MAGIC_SEVENTEEN - mapcoord->scale));
-		qDebug() << "II" PREFIX << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
-		break;
-
 	case MapTypeID::OSMOnDisk:
-		tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
-							 this->cache_dir, this->map_type_id, "",
-							 mapcoord,
-							 map_source->get_file_extension());
-		pixmap = this->create_pixmap_from_file(tile_file_full_path);
-		qDebug() << "II" PREFIX << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
+
+		pixmap = map_source->get_tile_pixmap(args);
 		break;
 
 	default:
 		/* Web accessing map sources. */
-		tile_file_full_path = get_cache_filename(this->cache_layout,
-							 this->cache_dir, this->map_type_id, map_type_string,
-							 mapcoord,
-							 map_source->get_file_extension());
-		pixmap = this->create_pixmap_from_file(tile_file_full_path);
+		tile_file_full_path = LayerMap::get_cache_filename(this->cache_layout,
+								   this->cache_dir, this->map_type_id, map_type_string,
+								   tile_info,
+								   map_source->get_file_extension());
+		pixmap = map_source->create_tile_pixmap_from_file(tile_file_full_path);
 		qDebug() << "II" PREFIX << "creating pixmap from cache:" << (pixmap.isNull() ? "failure" : "success");
 		break;
 	}
@@ -1059,32 +1011,11 @@ QPixmap LayerMap::get_pixmap(const QString & map_type_string, TileInfo * mapcoor
 		MapCacheItemExtra extra;
 		extra.duration = 0.0;
 
-		MapCache::add(pixmap, extra, mapcoord, map_source->map_type_id,
-			      this->alpha, scale_x, scale_y, this->file_full_path);
+		MapCache::add_tile_pixmap(pixmap, extra, tile_info, map_source->map_type_id,
+					  this->alpha, scale_x, scale_y, this->file_full_path);
 	}
 
 	return pixmap;
-}
-
-
-
-
-QPixmap LayerMap::create_pixmap_from_file(const QString & tile_file_full_path)
-{
-	QPixmap result;
-
-	if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK | R_OK)) {
-		qDebug() << "EE" PREFIX << "can't access file" << tile_file_full_path;
-		return result;
-	}
-
-	if (!result.load(tile_file_full_path)) {
-		Window * window = this->get_window();
-		if (window) {
-			window->statusbar_update(StatusBarField::INFO, QString("Couldn't open image file"));
-		}
-	}
-	return result;
 }
 
 
@@ -1144,7 +1075,7 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 		ulm2.y = ulm.y / scale_factor;
 		ulm2.scale = ulm.scale + scale_inc;
 
-		const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm2, tile_file_full_path, scale_x * scale_factor, scale_y * scale_factor);
+		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm2, tile_file_full_path, scale_x * scale_factor, scale_y * scale_factor);
 		if (!pixmap.isNull()) {
 			qDebug() << "II" PREFIX << "Pixmap found";
 			const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
@@ -1181,7 +1112,7 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 
-				const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm3, path_buf, scale_x / scale_factor, scale_y / scale_factor);
+				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm3, path_buf, scale_x / scale_factor, scale_y / scale_factor);
 				if (!pixmap.isNull()) {
 					qDebug() << "II" PREFIX << "Pixmap found";
 					int pixmap_x = 0;
@@ -1238,8 +1169,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	/* coord -> ID */
 	TileInfo ulm, brm;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	if (!map_source->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
-	    || !map_source->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
+	if (!map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
+	    || !map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
 
 		return;
 	}
@@ -1280,7 +1211,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				ulm.x = x;
 				ulm.y = y;
 
-				const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm, path_buf, scale_x, scale_y);
+				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, path_buf, scale_x, scale_y);
 				if (!pixmap.isNull()) {
 					qDebug() << "II" PREFIX << "Pixmap found";
 					const int width = pixmap.width();
@@ -1288,7 +1219,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					int viewport_x;
 					int viewport_y;
 
-					map_source->tile_to_center_coord(&ulm, coord);
+					map_source->tile_to_center_coord(ulm, coord);
 					viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
 					viewport_x -= (width/2);
 					viewport_y -= (height/2);
@@ -1316,7 +1247,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 		int viewport_x;
 		int viewport_y;
-		map_source->tile_to_center_coord(&ulm, coord);
+		map_source->tile_to_center_coord(ulm, coord);
 		viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
 
 		const int viewport_x_grid = viewport_x;
@@ -1335,13 +1266,13 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 				if (existence_only) {
 					if (map_source->is_direct_file_access()) {
-						path_buf = get_cache_filename(MapsCacheLayout::OSM,
-									      this->cache_dir, this->map_type_id, map_source->get_map_type_string(),
-									      &ulm, map_source->get_file_extension());
+						path_buf = LayerMap::get_cache_filename(MapsCacheLayout::OSM,
+											this->cache_dir, this->map_type_id, map_source->get_map_type_string(),
+											ulm, map_source->get_file_extension());
 					} else {
-						path_buf = get_cache_filename(this->cache_layout,
-									      this->cache_dir, this->map_type_id, map_source->get_map_type_string(),
-									      &ulm, map_source->get_file_extension());
+						path_buf = LayerMap::get_cache_filename(this->cache_layout,
+											this->cache_dir, this->map_type_id, map_source->get_map_type_string(),
+											ulm, map_source->get_file_extension());
 					}
 
 					if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
@@ -1351,7 +1282,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				} else {
 					/* Try correct scale first. */
 					int scale_factor = 1;
-					const QPixmap pixmap = this->get_pixmap(map_type_string, &ulm, path_buf, scale_x * scale_factor, scale_y * scale_factor);
+					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, path_buf, scale_x * scale_factor, scale_y * scale_factor);
 					if (!pixmap.isNull()) {
 						qDebug() << "II" PREFIX << "Pixmap found";
 						const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
@@ -1508,10 +1439,10 @@ void LayerMap::weak_ref_cb(void * ptr, void * dead_vml)
 
 
 
-static bool is_in_area(const MapSource * map_source, TileInfo * mc)
+static bool is_in_area(const MapSource * map_source, const TileInfo & tile_info)
 {
 	Coord center_coord;
-	map_source->tile_to_center_coord(mc, center_coord);
+	map_source->tile_to_center_coord(tile_info, center_coord);
 
 	const Coord coord_tl(LatLon(map_source->get_lat_max(), map_source->get_lon_min()), CoordMode::LATLON);
 	const Coord coord_br(LatLon(map_source->get_lat_min(), map_source->get_lon_max()), CoordMode::LATLON);
@@ -1536,7 +1467,7 @@ void MapDownloadJob::run(void)
 		for (mcoord.y = this->y0; mcoord.y <= this->yf; mcoord.y++) {
 			/* Only attempt to download a tile from supported areas. */
 
-			if (!is_in_area(map_source, &mcoord)) {
+			if (!is_in_area(map_source, mcoord)) {
 				qDebug() << "II" PREFIX << "map" << (int) this->map_type_id << "not in area, skipping";
 				continue;
 			}
@@ -1544,12 +1475,12 @@ void MapDownloadJob::run(void)
 			bool remove_mem_cache = false;
 			bool need_download = false;
 
-			this->file_full_path = get_cache_filename(this->cache_layout,
-								  this->cache_dir,
-								  map_source->map_type_id,
-								  map_source->get_map_type_string(),
-								  &mcoord,
-								  map_source->get_file_extension());
+			this->file_full_path = LayerMap::get_cache_filename(this->cache_layout,
+									    this->cache_dir,
+									    map_source->map_type_id,
+									    map_source->get_map_type_string(),
+									    mcoord,
+									    map_source->get_file_extension());
 
 			donemaps++;
 
@@ -1612,7 +1543,7 @@ void MapDownloadJob::run(void)
 			this->mapcoord.y = mcoord.y;
 
 			if (need_download) {
-				DownloadResult dr = map_source->download(&(this->mapcoord), this->file_full_path, dl_handle);
+				DownloadResult dr = map_source->download(this->mapcoord, this->file_full_path, dl_handle);
 				switch (dr) {
 				case DownloadResult::HTTPError:
 				case DownloadResult::ContentError: {
@@ -1637,7 +1568,7 @@ void MapDownloadJob::run(void)
 
 			this->mutex.lock();
 			if (remove_mem_cache) {
-				MapCache::remove_all_shrinkfactors(&mcoord, map_source->map_type_id, this->layer->file_full_path);
+				MapCache::remove_all_shrinkfactors(mcoord, map_source->map_type_id, this->layer->file_full_path);
 			}
 
 			if (this->refresh_display && this->map_layer_alive) {
@@ -1667,12 +1598,12 @@ void MapDownloadJob::cleanup_on_cancel(void)
 {
 	if (this->mapcoord.x || this->mapcoord.y) {
 		const MapSource * map_source = map_source_interfaces[this->map_type_id];
-		this->file_full_path = get_cache_filename(this->cache_layout,
-							  this->cache_dir,
-							  map_source->map_type_id,
-							  map_source->get_map_type_string(),
-							  &this->mapcoord,
-							  map_source->get_file_extension());
+		this->file_full_path = LayerMap::get_cache_filename(this->cache_layout,
+								    this->cache_dir,
+								    map_source->map_type_id,
+								    map_source->get_map_type_string(),
+								    this->mapcoord,
+								    map_source->get_file_extension());
 		if (0 == access(this->file_full_path.toUtf8().constData(), F_OK)) {
 			qDebug() << "DD" PREFIX << "Removing file" << this->file_full_path << "(cleanup on cancel)";
 			if (!QDir::root().remove(this->file_full_path)) {
@@ -1700,8 +1631,8 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 		return;
 	}
 
-	if (map_source->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
-	     && map_source->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
+	if (map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
+	     && map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
 
 		qDebug() << "II" PREFIX << "coord to tile succeeded";
 
@@ -1743,8 +1674,8 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
-	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, &ulm)
-	    || !map_source->coord_to_tile(coord_br, zoom, zoom, &brm)) {
+	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, ulm)
+	    || !map_source->coord_to_tile(coord_br, zoom, zoom, brm)) {
 		qDebug() << "WW" PREFIX << "coord_to_tile() failed";
 		return;
 	}
@@ -1819,7 +1750,7 @@ void LayerMap::tile_info_cb(void)
 	double yzoom = this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_map_zoom().get_y();
 	TileInfo ulm;
 
-	if (!map_source->coord_to_tile(this->redownload_ul, xzoom, yzoom, &ulm)) {
+	if (!map_source->coord_to_tile(this->redownload_ul, xzoom, yzoom, ulm)) {
 		return;
 	}
 
@@ -1847,30 +1778,31 @@ void LayerMap::tile_info_cb(void)
 		char path[PATH_MAX];
 		xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, MAGIC_SEVENTEEN - ulm.scale);
 		source = path;
-		tile_file_full_path = path;
 		items.push_back(source);
+
+		tile_file_full_path = path;
 		break;
 
 	case MapTypeID::OSMOnDisk:
-		tile_file_full_path = get_cache_filename(MapsCacheLayout::OSM,
-							 this->cache_dir,
-							 map_source->map_type_id,
-							 "",
-							 &ulm,
-							 map_source->get_file_extension());
+		tile_file_full_path = LayerMap::get_cache_filename(MapsCacheLayout::OSM,
+								   this->cache_dir,
+								   map_source->map_type_id,
+								   "",
+								   ulm,
+								   map_source->get_file_extension());
 		source = QObject::tr("Source: file://%1").arg(tile_file_full_path);
 		items.push_back(source);
 		break;
 
 	default:
 		/* Web accessing map sources. */
-		tile_file_full_path = get_cache_filename(this->cache_layout,
-							 this->cache_dir,
-							 map_source->map_type_id,
-							 map_source->get_map_type_string(),
-							 &ulm,
-							 map_source->get_file_extension());
-		source = QObject::tr("Source: http://%1%2").arg(map_source->get_server_hostname()).arg(map_source->get_server_path(&ulm));
+		tile_file_full_path = LayerMap::get_cache_filename(this->cache_layout,
+								   this->cache_dir,
+								   map_source->map_type_id,
+								   map_source->get_map_type_string(),
+								   ulm,
+								   map_source->get_file_extension());
+		source = QObject::tr("Source: http://%1%2").arg(map_source->get_server_hostname()).arg(map_source->get_server_path(ulm));
 		items.push_back(source);
 		break;
 	}
@@ -1999,7 +1931,7 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 	    && map_source->coord_to_tile(this->viewport->get_center2(),
 				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_map_zoom().get_x(),
 				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_map_zoom().get_y(),
-				  &tmp)) {
+				  tmp)) {
 
 		layer->dl_tool_x = event->x();
 		layer->dl_tool_y = event->y();
@@ -2029,8 +1961,8 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	const ViewportDrawMode vp_draw_mode = viewport->get_drawmode();
 
 	if (map_draw_mode == vp_draw_mode
-	    && map_source->coord_to_tile(coord_ul, xzoom, yzoom, &ulm)
-	    && map_source->coord_to_tile(coord_br, xzoom, yzoom, &brm)) {
+	    && map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
+	    && map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
 
 		this->start_download_thread(viewport, coord_ul, coord_br, map_download_mode);
 
@@ -2096,8 +2028,8 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 	}
 
 	TileInfo ulm, brm;
-	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, &ulm)
-	    || !map_source->coord_to_tile(coord_br, zoom, zoom, &brm)) {
+	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, ulm)
+	    || !map_source->coord_to_tile(coord_br, zoom, zoom, brm)) {
 		qDebug() << "WW" PREFIX << "coord_to_tile() failed";
 		return 0;
 	}
@@ -2375,16 +2307,16 @@ int MapDownloadJob::calculate_maps_to_get(const MapSource * map_source, TileInfo
 	for (mcoord.x = this->x0; mcoord.x <= this->xf; mcoord.x++) {
 		for (mcoord.y = this->y0; mcoord.y <= this->yf; mcoord.y++) {
 			/* Only count tiles from supported areas. */
-			if (!is_in_area(map_source, &mcoord)) {
+			if (!is_in_area(map_source, mcoord)) {
 				continue;
 			}
 
-			this->file_full_path = get_cache_filename(this->cache_layout,
-								  this->cache_dir,
-								  map_source->map_type_id,
-								  map_source->get_map_type_string(),
-								  &mcoord,
-								  map_source->get_file_extension());
+			this->file_full_path = LayerMap::get_cache_filename(this->cache_layout,
+									    this->cache_dir,
+									    map_source->map_type_id,
+									    map_source->get_map_type_string(),
+									    mcoord,
+									    map_source->get_file_extension());
 
 			if (simple) {
 				if (0 != access(this->file_full_path.toUtf8().constData(), F_OK)) {
