@@ -46,6 +46,7 @@ namespace SlavGPS {
 
 
 
+	enum class MapsCacheLayout;
 	enum class ViewportDrawMode;
 	class Viewport;
 
@@ -94,14 +95,12 @@ namespace SlavGPS {
 
 	class MapSourceArgs {
 	public:
-		int x = 0;
-		int y = 0;
-		int zoom = 0;
-
 		TileInfo tile_info;
 
-		QString file_full_path;
+		QString map_type_string; /* May be an empty string, and may be different than source's type string. */
+		QString tile_file_full_path;
 		QString cache_dir_full_path;
+		MapsCacheLayout cache_layout;
 
 		QWidget * parent_window = NULL;
 
@@ -137,11 +136,11 @@ namespace SlavGPS {
 		uint16_t get_tilesize_y(void) const;
 		ViewportDrawMode get_drawmode(void) const;
 
-		virtual QPixmap get_tile_pixmap(const MapSourceArgs & args) { QPixmap pixmap; return pixmap; }
-		virtual QStringList get_tile_info(const MapSourceArgs & args) const { QStringList result; return result; }
+		virtual QPixmap get_tile_pixmap(const MapSourceArgs & args) const;
+		virtual QStringList get_tile_info(const MapSourceArgs & args) const;
 		virtual void close_map_source(MapSourceArgs & args) { return; }
 		virtual void post_read(MapSourceArgs & args) { return; }
-		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path);
+		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path) const;
 
 		/* TODO: do these need to be virtual methods? */
 		virtual bool is_direct_file_access(void) const;

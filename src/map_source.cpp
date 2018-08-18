@@ -56,6 +56,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Map Source"
 #define PREFIX ": Map Source:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -550,7 +551,7 @@ const DownloadOptions * MapSource::get_download_options(void) const
 
 
 
-QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_path)
+QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_path) const
 {
 	QPixmap result;
 
@@ -566,4 +567,45 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 		}
 	}
 	return result;
+}
+
+
+
+/* Default implementation of the method in base class is for web accessing map sources. */
+QStringList MapSource::get_tile_info(const MapSourceArgs & args) const
+{
+	QStringList items;
+
+	const QString tile_file_full_path = LayerMap::get_cache_filename(args.cache_layout,
+									 args.cache_dir_full_path,
+									 this->map_type_id,
+									 this->get_map_type_string(),
+									 args.tile_info,
+									 this->get_file_extension());
+	const QString source = QObject::tr("Source: http://%1%2").arg(this->get_server_hostname()).arg(this->get_server_path(args.tile_info));
+
+	items.push_back(source);
+
+	tile_info_add_file_info_strings(items, tile_file_full_path);
+
+	return items;
+}
+
+
+
+
+/* Default implementation of the method in base class is for web accessing map sources. */
+QPixmap MapSource::get_tile_pixmap(const MapSourceArgs & args) const
+{
+	const QString tile_file_full_path = LayerMap::get_cache_filename(args.cache_layout,
+									 args.cache_dir_full_path,
+									 this->map_type_id,
+									 this->get_map_type_string(),
+									 args.tile_info,
+									 this->get_file_extension());
+
+	QPixmap pixmap = this->create_tile_pixmap_from_file(tile_file_full_path);
+	qDebug() << SG_PREFIX_I << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
+
+	return pixmap;
 }

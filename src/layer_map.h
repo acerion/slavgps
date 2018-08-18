@@ -208,7 +208,7 @@ namespace SlavGPS {
 
 
 
-	void get_tile_file_info_strings(const QString & tile_file_full_path, QString & file_info, QString & timestamp_info);
+	void tile_info_add_file_info_strings(QStringList & items, const QString & tile_file_full_path);
 
 
 

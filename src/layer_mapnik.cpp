@@ -1051,21 +1051,16 @@ void LayerMapnik::tile_info()
 
 	const QString tile_file_full_path = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
 
-	QStringList items;
-
-	QString file_info;
-	QString timestamp_info;
-	get_tile_file_info_strings(tile_file_full_path, file_info, timestamp_info);
-	items.push_back(file_info);
-	items.push_back(timestamp_info);
+	QStringList tile_info_strings;
+	tile_info_add_file_info_strings(tile_info_strings, tile_file_full_path);
 
 	/* Show the info. */
 	if (extra.duration > 0.0) {
 		QString render_message = QObject::tr("Rendering time %1 seconds").arg(extra.duration, 0, 'f', 2);
-		items.push_back(render_message);
+		tile_info_strings.push_back(render_message);
 	}
 
-	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
+	a_dialog_list(tr("Tile Information"), tile_info_strings, 5, this->get_window());
 }
 
 

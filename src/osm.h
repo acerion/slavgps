@@ -44,6 +44,7 @@ namespace SlavGPS {
 		MapSourceOSMMetatiles();
 		~MapSourceOSMMetatiles() {}
 		QPixmap get_tile_pixmap(MapSourceArgs & args);
+		QStringList get_tile_info(const MapSourceArgs & args) const;
 	};
 
 
@@ -54,6 +55,7 @@ namespace SlavGPS {
 		MapSourceOSMOnDisk();
 		~MapSourceOSMOnDisk() {}
 		QPixmap get_tile_pixmap(MapSourceArgs & args);
+		QStringList get_tile_info(const MapSourceArgs & args) const;
 	};
 
 

@@ -73,7 +73,7 @@ struct meta_layout {
  *
  * Returns the path to the meta-tile and the offset within the meta-tile.
  */
-int SlavGPS::xyz_to_meta(char * path, size_t len, char const * dir, int x, int y, int z)
+int SlavGPS::xyz_to_meta(char * path, size_t len, const QString & dir, int x, int y, int z)
 {
 	/* Each meta tile winds up in its own file, with several in each leaf directory
 	   the .meta tile name is based on the sub-tile at (0,0). */
@@ -89,7 +89,7 @@ int SlavGPS::xyz_to_meta(char * path, size_t len, char const * dir, int x, int y
 		y >>= 4;
 	}
 
-	snprintf(path, len, "%s/%d/%u/%u/%u/%u/%u.meta", dir, z, hash[4], hash[3], hash[2], hash[1], hash[0]);
+	snprintf(path, len, "%s/%d/%u/%u/%u/%u/%u.meta", dir.toUtf8().constData(), z, hash[4], hash[3], hash[2], hash[1], hash[0]);
 	return offset;
 }
 
@@ -105,7 +105,7 @@ int SlavGPS::xyz_to_meta(char * path, size_t len, char const * dir, int x, int y
  *
  * Error messages returned in log_msg.
  */
-int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, size_t sz, int * compressed, char * log_msg)
+int SlavGPS::metatile_read(const QString & dir, int x, int y, int z, char * buf, size_t sz, int * compressed, QString & log_msg)
 {
 	char path[PATH_MAX];
 	unsigned int header_len = sizeof(struct meta_layout) + METATILE * METATILE * sizeof (struct entry);
@@ -115,7 +115,7 @@ int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, si
 
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		snprintf(log_msg,PATH_MAX - 1, "Could not open metatile %s. Reason: %s\n", path, strerror(errno));
+		log_msg = QString("Could not open metatile %1. Reason: %2\n").arg(path).arg(strerror(errno));
 		free(meta);
 		return -1;
 	}
@@ -125,7 +125,7 @@ int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, si
 		size_t len = header_len - pos;
 		int got = read(fd, ((unsigned char *) meta) + pos, len);
 		if (got < 0) {
-			snprintf(log_msg,PATH_MAX - 1, "Failed to read complete header for metatile %s Reason: %s\n", path, strerror(errno));
+			log_msg = QString("Failed to read complete header for metatile %1. Reason: %2\n").arg(path).arg(strerror(errno));
 			close(fd);
 			free(meta);
 			return -2;
@@ -136,14 +136,14 @@ int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, si
 		}
 	}
 	if (pos < header_len) {
-		snprintf(log_msg,PATH_MAX - 1, "Meta file %s too small to contain header\n", path);
+		log_msg = QString("Meta file %1 too small to contain header\n").arg(path);
 		close(fd);
 		free(meta);
 		return -3;
 	}
 	if (memcmp(meta->magic, META_MAGIC, strlen(META_MAGIC))) {
 		if (memcmp(meta->magic, META_MAGIC_COMPRESSED, strlen(META_MAGIC_COMPRESSED))) {
-			snprintf(log_msg,PATH_MAX - 1, "Meta file %s header magic mismatch\n", path);
+			log_msg = QString("Meta file %1 header magic mismatch\n").arg(path);
 			close(fd);
 			free(meta);
 			return -4;
@@ -156,7 +156,7 @@ int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, si
 
 	/* Currently this code only works with fixed metatile sizes (due to xyz_to_meta above). */
 	if (meta->count != (METATILE * METATILE)) {
-		snprintf(log_msg, PATH_MAX - 1, "Meta file %s header bad count %d != %d\n", path, meta->count, METATILE * METATILE);
+		log_msg = QString("Meta file %1 header bad count %2 != %3\n").arg(path).arg(meta->count).arg(METATILE * METATILE);
 		free(meta);
 		close(fd);
 		return -5;
@@ -168,14 +168,14 @@ int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, si
 	free(meta);
 
 	if (tile_size > sz) {
-		snprintf(log_msg, PATH_MAX - 1, "Truncating tile %zd to fit buffer of %zd\n", tile_size, sz);
+		log_msg = QString("Truncating tile %1 to fit buffer of %2\n").arg(tile_size).arg(sz);
 		tile_size = sz;
 		close(fd);
 		return -6;
 	}
 
 	if (lseek(fd, file_offset, SEEK_SET) < 0) {
-		snprintf(log_msg, PATH_MAX - 1, "Meta file %s seek error: %s\n", path, strerror(errno));
+		log_msg = QString("Meta file %1 seek error: %2\n").arg(path).arg(strerror(errno));
 		close(fd);
 		return -7;
 	}
@@ -185,7 +185,7 @@ int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, si
 		size_t len = tile_size - pos;
 		int got = read(fd, buf + pos, len);
 		if (got < 0) {
-			snprintf(log_msg, PATH_MAX - 1, "Failed to read data from file %s. Reason: %s\n", path, strerror(errno));
+			log_msg = QString("Failed to read data from file %1. Reason: %2\n").arg(path).arg(strerror(errno));
 			close(fd);
 			return -8;
 		} else if (got > 0) {

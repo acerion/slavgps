@@ -809,7 +809,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 	/* Performed in post read as we now know the map type. */
 
 	MapSourceArgs args;
-	args.file_full_path = this->file_full_path;
+	args.tile_file_full_path = this->file_full_path;
 	args.sqlite_handle = &this->sqlite_handle;
 	args.parent_window = this->get_window();
 
@@ -976,34 +976,12 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & ti
 	MapSource * map_source = map_source_interfaces[this->map_type_id]; /* TODO: this variable should be const. */
 
 	MapSourceArgs args;
-	args.x = tile_info.x;
-	args.y = tile_info.y;
-	args.zoom = (MAGIC_SEVENTEEN - tile_info.scale);
-	args.sqlite_handle = &this->sqlite_handle;
-	args.cache_dir_full_path = this->cache_dir;
 	args.tile_info = tile_info;
-
-
-	/* At this moment only MBTiles map source provides usable ::get_tile_pixmap() method.
-	   All the other map sources will have to be called the old way. */
-	switch (map_source->map_type_id) {
-	case MapTypeID::MBTiles:
-	case MapTypeID::OSMMetatiles:
-	case MapTypeID::OSMOnDisk:
-
-		pixmap = map_source->get_tile_pixmap(args);
-		break;
-
-	default:
-		/* Web accessing map sources. */
-		tile_file_full_path = LayerMap::get_cache_filename(this->cache_layout,
-								   this->cache_dir, this->map_type_id, map_type_string,
-								   tile_info,
-								   map_source->get_file_extension());
-		pixmap = map_source->create_tile_pixmap_from_file(tile_file_full_path);
-		qDebug() << "II" PREFIX << "creating pixmap from cache:" << (pixmap.isNull() ? "failure" : "success");
-		break;
-	}
+	args.cache_dir_full_path = this->cache_dir;
+	args.cache_layout = this->cache_layout;
+	args.sqlite_handle = &this->sqlite_handle;
+	args.map_type_string = map_type_string;
+	pixmap = map_source->get_tile_pixmap(args);
 
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, scale_x, scale_y);
@@ -1267,12 +1245,18 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				if (existence_only) {
 					if (map_source->is_direct_file_access()) {
 						path_buf = LayerMap::get_cache_filename(MapsCacheLayout::OSM,
-											this->cache_dir, this->map_type_id, map_source->get_map_type_string(),
-											ulm, map_source->get_file_extension());
+											this->cache_dir,
+											map_source->map_type_id,
+											map_source->get_map_type_string(),
+											ulm,
+											map_source->get_file_extension());
 					} else {
 						path_buf = LayerMap::get_cache_filename(this->cache_layout,
-											this->cache_dir, this->map_type_id, map_source->get_map_type_string(),
-											ulm, map_source->get_file_extension());
+											this->cache_dir,
+											map_source->map_type_id,
+											map_source->get_map_type_string(),
+											ulm,
+											map_source->get_file_extension());
 					}
 
 					if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
@@ -1754,74 +1738,27 @@ void LayerMap::tile_info_cb(void)
 		return;
 	}
 
-	QString tile_file_full_path;
-	QString source;
-	QStringList items;
-
 	MapSourceArgs args;
-	args.x = ulm.x;
-	args.y = ulm.y;
-	args.zoom = MAGIC_SEVENTEEN - ulm.scale;
 	args.sqlite_handle = &this->sqlite_handle;
-	args.file_full_path = this->file_full_path;
+	args.tile_file_full_path = this->file_full_path;
+	args.cache_dir_full_path = this->cache_dir;
+	args.cache_layout = this->cache_layout;
+	args.tile_info = ulm;
 
 
-	/* At this moment only MBTiles map source provides usable ::get_tile_info() method.
-	   All the other map sources will have to be called the old way. */
-	switch (map_source->map_type_id) {
-	case MapTypeID::MBTiles:
-		items = map_source->get_tile_info(args);
-		tile_file_full_path = this->file_full_path;
-		break;
+	const QStringList tile_info_strings = map_source->get_tile_info(args);
 
-	case MapTypeID::OSMMetatiles:
-		char path[PATH_MAX];
-		xyz_to_meta(path, sizeof (path), this->cache_dir.toUtf8().constData(), ulm.x, ulm.y, MAGIC_SEVENTEEN - ulm.scale);
-		source = path;
-		items.push_back(source);
-
-		tile_file_full_path = path;
-		break;
-
-	case MapTypeID::OSMOnDisk:
-		tile_file_full_path = LayerMap::get_cache_filename(MapsCacheLayout::OSM,
-								   this->cache_dir,
-								   map_source->map_type_id,
-								   "",
-								   ulm,
-								   map_source->get_file_extension());
-		source = QObject::tr("Source: file://%1").arg(tile_file_full_path);
-		items.push_back(source);
-		break;
-
-	default:
-		/* Web accessing map sources. */
-		tile_file_full_path = LayerMap::get_cache_filename(this->cache_layout,
-								   this->cache_dir,
-								   map_source->map_type_id,
-								   map_source->get_map_type_string(),
-								   ulm,
-								   map_source->get_file_extension());
-		source = QObject::tr("Source: http://%1%2").arg(map_source->get_server_hostname()).arg(map_source->get_server_path(ulm));
-		items.push_back(source);
-		break;
-	}
-
-
-	QString file_info;
-	QString timestamp_info;
-	get_tile_file_info_strings(tile_file_full_path, file_info, timestamp_info);
-	items.push_back(file_info);
-	items.push_back(timestamp_info);
-
-	a_dialog_list(tr("Tile Information"), items, 5, this->get_window());
+	a_dialog_list(tr("Tile Information"), tile_info_strings, 5, this->get_window());
 }
 
 
 
 
-void SlavGPS::get_tile_file_info_strings(const QString & tile_file_full_path, QString & file_info, QString & timestamp_info)
+void SlavGPS::tile_info_add_file_info_strings(QStringList & items, const QString & tile_file_full_path)
 {
+	QString file_info;
+	QString timestamp_info;
+
 	if (0 == access(tile_file_full_path.toUtf8().constData(), F_OK)) {
 		file_info = QObject::tr("Tile File: %1").arg(tile_file_full_path);
 		/* Get timestamp information about the tile. */
@@ -1837,6 +1774,9 @@ void SlavGPS::get_tile_file_info_strings(const QString & tile_file_full_path, QS
 		file_info = QObject::tr("Tile File: %1 [Not Available]").arg(tile_file_full_path);
 		timestamp_info = "";
 	}
+
+	items.push_back(file_info);
+	items.push_back(timestamp_info);
 }
 
 

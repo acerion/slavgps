@@ -24,6 +24,11 @@
 
 
 
+#include <QString>
+
+
+
+
 /* MAX_SIZE is the biggest file which we will return to the user. */
 #define METATILE_MAX_SIZE (1 * 1024 * 1024)
 
@@ -35,9 +40,9 @@ namespace SlavGPS {
 
 
 
-	int xyz_to_meta(char * path, size_t len, char const * dir, int x, int y, int z);
+	int xyz_to_meta(char * path, size_t len, const QString & dir, int x, int y, int z);
 
-	int metatile_read(char const * dir, int x, int y, int z, char * buf, size_t sz, int * compressed, char * log_msg);
+	int metatile_read(const QString & dir, int x, int y, int z, char * buf, size_t sz, int * compressed, QString & log_msg);
 
 
 
