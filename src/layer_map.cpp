@@ -32,10 +32,6 @@
 #include <cassert>
 #include <cmath>
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -50,9 +46,9 @@
 #include "vikutils.h"
 #include "map_utils.h"
 #include "map_cache.h"
-#include "background.h"
 #include "preferences.h"
 #include "layer_map.h"
+#include "layer_map_download.h"
 #include "metatile.h"
 #include "ui_util.h"
 #include "layer_defaults.h"
@@ -1284,39 +1280,6 @@ void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 /****** DOWNLOADING ******/
 /*************************/
 
-/* Pass along data to thread, exists even if layer is deleted. */
-class MapDownloadJob : public BackgroundJob {
-public:
-	MapDownloadJob() {};
-	MapDownloadJob(LayerMap * layer, const TileInfo & ulm, const TileInfo & brm, bool refresh_display, MapDownloadMode map_download_mode);
-	~MapDownloadJob();
-
-	void cleanup_on_cancel(void);
-
-	int calculate_maps_to_get(const MapSource * map_source, const TileInfo & ulm, bool simple);
-
-	void run(void); /* Re-implementation of QRunnable::run(). */
-
-	MapCacheObj map_cache;
-
-	QString file_full_path;
-
-	int x_begin = 0;
-	int x_end = 0;
-	int y_begin = 0;
-	int y_end = 0;
-
-	TileInfo tile_info;
-	MapTypeID map_type_id = MapTypeID::Initial;
-	MapDownloadMode map_download_mode = MapDownloadMode::MissingOnly;
-	bool refresh_display = false;
-	LayerMap * layer = NULL;
-	bool map_layer_alive = true;
-	std::mutex mutex;
-};
-
-static QString map_download_mode_message(MapDownloadMode map_download_mode, int maps_to_get, const QString & label);
-
 
 
 
@@ -1326,179 +1289,6 @@ void LayerMap::weak_ref_cb(void * ptr, void * dead_vml)
 	mdj->mutex.lock();
 	mdj->map_layer_alive = false;
 	mdj->mutex.unlock();
-}
-
-
-
-
-static bool is_in_area(const MapSource * map_source, const TileInfo & tile_info)
-{
-	Coord center_coord;
-	map_source->tile_to_center_coord(tile_info, center_coord);
-
-	const Coord coord_tl(LatLon(map_source->get_lat_max(), map_source->get_lon_min()), CoordMode::LATLON);
-	const Coord coord_br(LatLon(map_source->get_lat_min(), map_source->get_lon_max()), CoordMode::LATLON);
-
-	return center_coord.is_inside(&coord_tl, &coord_br);
-}
-
-
-
-
-/* Map download function. */
-void MapDownloadJob::run(void)
-{
-	MapSource * map_source = map_source_interfaces[this->map_type_id];
-	DownloadHandle * dl_handle = map_source->download_handle_init();
-	unsigned int donemaps = 0;
-	TileInfo tile_iter = this->tile_info;
-
-	qDebug() << "II" PREFIX << "called";
-
-	for (tile_iter.x = this->x_begin; tile_iter.x <= this->x_end; tile_iter.x++) {
-		for (tile_iter.y = this->y_begin; tile_iter.y <= this->y_end; tile_iter.y++) {
-			/* Only attempt to download a tile from supported areas. */
-
-			if (!is_in_area(map_source, tile_iter)) {
-				qDebug() << "II" PREFIX << "map" << (int) this->map_type_id << "not in area, skipping";
-				continue;
-			}
-
-			bool remove_mem_cache = false;
-			bool need_download = false;
-
-			this->file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
-											map_source->map_type_id,
-											map_source->get_map_type_string(),
-											map_source->get_file_extension());
-
-			donemaps++;
-
-			const bool end_job = this->set_progress_state(((double) donemaps) / this->n_items); /* this also calls testcancel */
-			if (end_job) {
-				qDebug() << "II" PREFIX << "background thread progress error";
-				map_source->download_handle_cleanup(dl_handle);
-				return;
-			}
-
-			if (0 != access(this->file_full_path.toUtf8().constData(), F_OK)) {
-				need_download = true;
-				remove_mem_cache = true;
-
-			} else {  /* In case map file already exists. */
-				switch (this->map_download_mode) {
-				case MapDownloadMode::MissingOnly:
-					qDebug() << "II" PREFIX << "continue";
-					continue;
-
-				case MapDownloadMode::MissingAndBad: {
-					/* See if this one is bad or what. */
-					QPixmap tmp_pixmap; /* Apparently this will pixmap is only for test of some kind. */
-					if (!tmp_pixmap.load(this->file_full_path)) {
-						qDebug() << "DD" PREFIX << "Removing file" << this->file_full_path << "(redownload bad)";
-						if (!QDir::root().remove(this->file_full_path)) {
-							qDebug() << "WW" PREFIX << "Redownload Bad failed to remove" << this->file_full_path;
-						}
-						need_download = true;
-						remove_mem_cache = true;
-					}
-					break;
-				}
-
-				case MapDownloadMode::New:
-					need_download = true;
-					remove_mem_cache = true;
-					break;
-
-				case MapDownloadMode::All:
-					/* FIXME: need a better way than to erase file in case of server/network problem. */
-					qDebug() << "DD" PREFIX << "Removing file" << this->file_full_path << "(redownload all)";
-					if (!QDir::root().remove(this->file_full_path)) {
-						qDebug() << "WW" PREFIX << "Redownload All failed to remove" << this->file_full_path;
-					}
-					need_download = true;
-					remove_mem_cache = true;
-					break;
-
-				case MapDownloadMode::DownloadAndRefresh:
-					remove_mem_cache = true;
-					break;
-
-				default:
-					qDebug() << "WW" PREFIX << "Redownload mode unknown:" << (int) this->map_download_mode;
-				}
-			}
-
-			this->tile_info.x = tile_iter.x;
-			this->tile_info.y = tile_iter.y;
-
-			if (need_download) {
-				DownloadResult dr = map_source->download(this->tile_info, this->file_full_path, dl_handle);
-				switch (dr) {
-				case DownloadResult::HTTPError:
-				case DownloadResult::ContentError: {
-					/* TODO: ?? count up the number of download errors somehow... */
-					QString msg = QString("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download tile");
-					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
-					break;
-				}
-				case DownloadResult::FileWriteError: {
-					QString msg = QString("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save tile");
-					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
-					break;
-				}
-				case DownloadResult::Success:
-				case DownloadResult::DownloadNotRequired:
-				default:
-					break;
-				}
-			} else {
-				qDebug() << "II" PREFIX << "doesn't need download";
-			}
-
-			this->mutex.lock();
-			if (remove_mem_cache) {
-				MapCache::remove_all_shrinkfactors(tile_iter, map_source->map_type_id, this->layer->file_full_path);
-			}
-
-			if (this->refresh_display && this->map_layer_alive) {
-				/* TODO: check if it's on visible area. */
-				this->layer->emit_layer_changed("Map - map download"); /* NB update display from background. */
-			}
-			this->mutex.unlock();
-
-			/* We're temporarily between downloads. */
-			this->tile_info.x = 0;
-			this->tile_info.y = 0;
-		}
-	}
-	map_source_interfaces[this->map_type_id]->download_handle_cleanup(dl_handle);
-	this->mutex.lock();
-	if (this->map_layer_alive) {
-		this->layer->weak_unref(LayerMap::weak_ref_cb, this);
-	}
-	this->mutex.unlock();
-	return;
-}
-
-
-
-
-void MapDownloadJob::cleanup_on_cancel(void)
-{
-	if (this->tile_info.x || this->tile_info.y) {
-		const MapSource * map_source = map_source_interfaces[this->map_type_id];
-		this->file_full_path = this->map_cache.get_cache_file_full_path(this->tile_info,
-										map_source->map_type_id,
-										map_source->get_map_type_string(),
-										map_source->get_file_extension());
-		if (0 == access(this->file_full_path.toUtf8().constData(), F_OK)) {
-			qDebug() << "DD" PREFIX << "Removing file" << this->file_full_path << "(cleanup on cancel)";
-			if (!QDir::root().remove(this->file_full_path)) {
-				qDebug() << "WW" PREFIX << "Cleanup failed to remove file" << this->file_full_path;
-			}
-		}
-	}
 }
 
 
@@ -1524,22 +1314,20 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 
 		qDebug() << "II" PREFIX << "coord to tile succeeded";
 
-		MapDownloadJob * mdj = new MapDownloadJob(this, ulm, brm, true, map_download_mode);
+		MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
 
 		if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
-			mdj->n_items = mdj->calculate_maps_to_get(map_source, ulm, true);
+			mdj->n_items = mdj->calculate_tile_count_to_download(ulm, true);
 		} else {
-		        mdj->n_items = (mdj->x_end - mdj->x_begin + 1) * (mdj->y_end - mdj->y_begin + 1);
+		        mdj->n_items = mdj->calculate_total_tile_count_to_download();
 		}
 
-		/* For cleanup - no current map. */
-		mdj->tile_info.x = 0;
-		mdj->tile_info.y = 0;
-
 		if (mdj->n_items) {
-			const QString job_description = map_download_mode_message(map_download_mode, mdj->n_items, map_source->get_label());
+			/* For cleanup - no current map. */
+			mdj->reset_internal();
+
 			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
-			mdj->set_description(job_description);
+			mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
 			mdj->run_in_background(ThreadPoolType::Remote);
 		} else {
 			delete mdj;
@@ -1568,17 +1356,15 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, ulm, brm, true, map_download_mode);
-	mdj->n_items = mdj->calculate_maps_to_get(map_source, ulm, true);
-
-	/* For cleanup - no current map. */
-	mdj->tile_info.x = 0;
-	mdj->tile_info.y = 0;
+	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
+	mdj->n_items = mdj->calculate_tile_count_to_download(ulm, true);
 
 	if (mdj->n_items) {
-		const QString job_description = map_download_mode_message(map_download_mode, mdj->n_items, map_source->get_label());
+		/* For cleanup - no current map. */
+		mdj->reset_internal();
+
 		mdj->layer->weak_ref(weak_ref_cb, mdj);
-		mdj->set_description(job_description);
+		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
 		delete mdj;
@@ -1876,13 +1662,13 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 		return 0;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, ulm, brm, false, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, false, map_download_mode);
 	int n_items = 0;
 
 	if (mdj->map_download_mode == MapDownloadMode::All) {
-		n_items = (mdj->x_end - mdj->x_begin + 1) * (mdj->y_end - mdj->y_begin + 1);
+		n_items = mdj->calculate_total_tile_count_to_download();
 	} else {
-		n_items = mdj->calculate_maps_to_get(map_source, ulm, false);
+		n_items = mdj->calculate_tile_count_to_download(ulm, false);
 	}
 
 	delete mdj;
@@ -2133,119 +1919,6 @@ void LayerMap::download(Viewport * viewport, bool only_new)
 		this->redownload_all_onscreen_maps_cb();
 	}
 }
-
-
-
-
-int MapDownloadJob::calculate_maps_to_get(const MapSource * map_source, const TileInfo & ulm, bool simple)
-{
-	QPixmap pixmap; /* Defined on top, to avoid creating this object multiple times in the loop. */
-
-	TileInfo tile_iter = this->tile_info;
-	tile_iter.z = ulm.z;
-	tile_iter.scale = ulm.scale;
-
-	int n_maps = 0;
-
-	for (tile_iter.x = this->x_begin; tile_iter.x <= this->x_end; tile_iter.x++) {
-		for (tile_iter.y = this->y_begin; tile_iter.y <= this->y_end; tile_iter.y++) {
-			/* Only count tiles from supported areas. */
-			if (!is_in_area(map_source, tile_iter)) {
-				continue;
-			}
-
-			this->file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
-											map_source->map_type_id,
-											map_source->get_map_type_string(),
-											map_source->get_file_extension());
-
-			if (simple) {
-				if (0 != access(this->file_full_path.toUtf8().constData(), F_OK)) {
-					n_maps++;
-				}
-
-			} else {
-				if (this->map_download_mode == MapDownloadMode::New) {
-					/* Assume the worst - always a new file.
-					   Absolute value would require a server lookup - but that is too slow. */
-					n_maps++;
-				} else {
-					if (0 != access(this->file_full_path.toUtf8().constData(), F_OK)) {
-						/* Missing. */
-						n_maps++;
-					} else {
-						if (this->map_download_mode == MapDownloadMode::MissingAndBad) {
-							/* See if pixmap specified by path is bad or missing. */
-							if (!pixmap.load(this->file_full_path)) {
-								n_maps++;
-							}
-							break;
-							/* Other download cases already considered or just ignored. */
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return n_maps;
-}
-
-
-
-
-/*
-  Download tiles between @ulm and @brm
-*/
-MapDownloadJob::MapDownloadJob(LayerMap * new_layer, const TileInfo & ulm, const TileInfo & brm, bool new_refresh_display, MapDownloadMode new_map_download_mode)
-{
-	this->layer = new_layer;
-	this->refresh_display = new_refresh_display;
-
-	/* TODO: add assignment operator for MapCacheObj class. */
-	this->map_cache.layout = new_layer->cache_layout;
-	this->map_cache.dir_full_path = new_layer->cache_dir;
-
-	this->map_type_id = layer->map_type_id;
-
-	this->tile_info = ulm;
-	this->map_download_mode = new_map_download_mode;
-
-	this->x_begin = std::min(ulm.x, brm.x);
-	this->x_end   = std::max(ulm.x, brm.x);
-	this->y_begin = std::min(ulm.y, brm.y);
-	this->y_end   = std::max(ulm.y, brm.y);
-}
-
-
-
-
-MapDownloadJob::~MapDownloadJob()
-{
-}
-
-
-
-
-QString map_download_mode_message(MapDownloadMode map_download_mode, int maps_to_get, const QString & label)
-{
-	QString fmt;
-
-	switch (map_download_mode) {
-	case MapDownloadMode::MissingOnly:
-		fmt = QObject::tr("Downloading %n %1 maps...", "", maps_to_get);
-		break;
-	case MapDownloadMode::MissingAndBad:
-		fmt = QObject::tr("Redownloading up to %n %1 maps...", "", maps_to_get);
-		break;
-	default:
-		fmt = QObject::tr("Redownloading %n %1 maps...", "", maps_to_get);
-		break;
-	};
-
-	return QString(fmt).arg(label);
-}
-
 
 
 

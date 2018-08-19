@@ -156,9 +156,9 @@ namespace SlavGPS {
 		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const;
 		virtual void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
 
-		virtual DownloadResult download(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
-		DownloadHandle * download_handle_init();
-		void download_handle_cleanup(DownloadHandle * dl_handle);
+		virtual DownloadResult download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const;
+		DownloadHandle * download_handle_init(void) const;
+		void download_handle_cleanup(DownloadHandle * dl_handle) const;
 
 		const DownloadOptions * get_download_options(void) const;
 

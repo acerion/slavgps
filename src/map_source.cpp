@@ -502,7 +502,7 @@ void MapSource::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) c
  *
  * Returns: How successful the download was as per the type #DownloadResult
  */
-DownloadResult MapSource::download(const TileInfo & src, const QString & dest_file_path, DownloadHandle * handle)
+DownloadResult MapSource::download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * handle) const
 {
 	qDebug() << "II: Map Source: download to" << dest_file_path;
 	handle->set_options(this->dl_options);
@@ -512,7 +512,7 @@ DownloadResult MapSource::download(const TileInfo & src, const QString & dest_fi
 
 
 
-DownloadHandle * MapSource::download_handle_init()
+DownloadHandle * MapSource::download_handle_init(void) const
 {
 	return new DownloadHandle();
 }
@@ -520,7 +520,7 @@ DownloadHandle * MapSource::download_handle_init()
 
 
 
-void MapSource::download_handle_cleanup(DownloadHandle * dl_handle)
+void MapSource::download_handle_cleanup(DownloadHandle * dl_handle) const
 {
 	delete dl_handle;
 }

@@ -69,6 +69,7 @@ SOURCES += main.cpp \
     layer_mapnik.cpp \
     print.cpp \
     layer_map.cpp \
+    layer_map_download.cpp \
     map_source.cpp \
     map_cache.cpp \
     map_utils.cpp \
@@ -207,6 +208,7 @@ HEADERS += window.h \
     layer_mapnik.h \
     print.h \
     layer_map.h \
+    layer_map_download.h \
     map_source.h \
     map_utils.h \
     metatile.h \

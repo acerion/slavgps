@@ -44,7 +44,7 @@
 
 static bool expedia_coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest);
 static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coord);
-static DownloadResult expedia_download(const TileInfo & src, char const * dest_fn, DownloadHandle * dl_handle);
+static DownloadResult expedia_download_tile(const TileInfo & src, char const * dest_fn, DownloadHandle * dl_handle) const;
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
 
@@ -80,7 +80,7 @@ static const unsigned int expedia_altis_count = sizeof(expedia_altis) / sizeof(e
 
 void SlavGPS::expedia_init()
 {
-	VikMapsLayer_MapType map_type = { MapTypeID::Expedia, 0, 0, ViewportDrawMode::EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
+	VikMapsLayer_MapType map_type = { MapTypeID::Expedia, 0, 0, ViewportDrawMode::EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download_tile, expedia_handle_init, expedia_handle_cleanup };
 	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::Expedia, &map_type);
 }
 
@@ -200,11 +200,11 @@ static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coor
 
 
 
-static DownloadResult expedia_download(TileInfo * src, const QString & dest_file_path, DownloadHandle * dl_handle)
+static DownloadResult expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const
 {
-	const LatLon lat_lon = expedia_xy_to_latlon_middle(src->scale, src->x, src->y);
+	const LatLon lat_lon = expedia_xy_to_latlon_middle(src.scale, src.x, src.y);
 
-	int height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src->scale) / (src->scale);
+	int height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src.scale) / (src.scale);
 	int width = height * cos(lat_lon.lat * DEGREES_TO_RADS);
 
 	height += 2 * REAL_HEIGHT_BUFFER;
@@ -214,7 +214,7 @@ static DownloadResult expedia_download(TileInfo * src, const QString & dest_file
 		.arg(lat_lon.lat)
 		.arg(lat_lon.lon)
 		.arg((lat_lon.lon > -30) ? "EUR0809" : "USA0409")
-		.arg(src->scale)
+		.arg(src.scale)
 		.arg(width)
 		.arg(height);
 
