@@ -133,6 +133,29 @@ void SlavGPS::ui_pixmap_set_alpha(QPixmap & pixmap, int alpha)
 
 
 
+void SlavGPS::ui_pixmap_scale_size_by(QPixmap & pixmap, double scale_x, double scale_y)
+{
+	const int width = pixmap.width();
+	const int height = pixmap.height();
+
+	const QPixmap scaled = pixmap.scaled(ceil(width * scale_x), ceil(height * scale_y), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	pixmap = QPixmap(scaled);
+}
+
+
+
+
+void SlavGPS::ui_pixmap_scale_size_to(QPixmap * pixmap, int width, int height)
+{
+	if (pixmap) {
+		const QPixmap scaled = pixmap->scaled(width, height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+		*pixmap = QPixmap(scaled);
+	}
+}
+
+
+
+
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */

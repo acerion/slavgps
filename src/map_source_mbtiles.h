@@ -48,8 +48,8 @@ namespace SlavGPS {
 		MapSourceMBTiles();
 		~MapSourceMBTiles();
 
-		QPixmap get_tile_pixmap(const MapSourceArgs & args);
-		QStringList get_tile_info(const MapSourceArgs & args) const;
+		QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args);
+		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		void close_map_source(MapSourceArgs & args);
 		void post_read(MapSourceArgs & args);
 

@@ -45,6 +45,7 @@
 #include "mapcoord.h"
 #include "download.h"
 #include "map_source.h"
+#include "map_cache.h"
 #include "layer_map.h"
 #include "statusbar.h"
 
@@ -572,17 +573,15 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QStringList MapSource::get_tile_info(const MapSourceArgs & args) const
+QStringList MapSource::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 	QStringList items;
 
-	const QString tile_file_full_path = LayerMap::get_cache_filename(args.cache_layout,
-									 args.cache_dir_full_path,
-									 this->map_type_id,
-									 this->get_map_type_string(),
-									 args.tile_info,
-									 this->get_file_extension());
-	const QString source = QObject::tr("Source: http://%1%2").arg(this->get_server_hostname()).arg(this->get_server_path(args.tile_info));
+	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
+										   this->map_type_id,
+										   this->get_map_type_string(),
+										   this->get_file_extension());
+	const QString source = QObject::tr("Source: http://%1%2").arg(this->get_server_hostname()).arg(this->get_server_path(tile_info));
 
 	items.push_back(source);
 
@@ -595,14 +594,12 @@ QStringList MapSource::get_tile_info(const MapSourceArgs & args) const
 
 
 /* Default implementation of the method in base class is for web accessing map sources. */
-QPixmap MapSource::get_tile_pixmap(const MapSourceArgs & args) const
+QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
-	const QString tile_file_full_path = LayerMap::get_cache_filename(args.cache_layout,
-									 args.cache_dir_full_path,
-									 this->map_type_id,
-									 this->get_map_type_string(),
-									 args.tile_info,
-									 this->get_file_extension());
+	const QString tile_file_full_path = map_cache_obj.get_cache_file_full_path(tile_info,
+										   this->map_type_id,
+										   this->get_map_type_string(),
+										   this->get_file_extension());
 
 	QPixmap pixmap = this->create_tile_pixmap_from_file(tile_file_full_path);
 	qDebug() << SG_PREFIX_I << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");

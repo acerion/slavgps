@@ -40,6 +40,15 @@ namespace SlavGPS {
 
 
 
+	enum class MapCacheLayout {
+		Viking = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout. */
+		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png). */
+		Num         /* Last enum. */
+	};
+
+
+
+
 	class MapCacheItemExtra {
 	public:
 		double duration = 0.0; // Mostly for Mapnik Rendering duration - negative values indicate not rendered(i.e. read from disk)
@@ -67,6 +76,20 @@ namespace SlavGPS {
 		static const QString & get_dir();
 		static const QString & get_default_maps_dir(void);
 	private:
+	};
+
+
+
+
+	class MapCacheObj {
+	public:
+		MapCacheObj() {}
+		MapCacheObj(MapCacheLayout cache_layout, const QString & cache_dir_full_path) : layout(cache_layout), dir_full_path(cache_dir_full_path) {}
+
+		QString get_cache_file_full_path(const TileInfo & tile_info, MapTypeID map_type_id, const QString & map_type_string, const QString & file_extension) const;
+
+		MapCacheLayout layout;
+		QString dir_full_path;
 	};
 
 

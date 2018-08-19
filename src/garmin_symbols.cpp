@@ -37,6 +37,7 @@
 #include "garmin_symbols.h"
 #include "preferences.h"
 #include "util.h"
+#include "ui_util.h"
 
 
 
@@ -385,10 +386,8 @@ static QPixmap * get_wp_sym_from_index(int i)
 				garmin_symbols[i].pixmap = new QPixmap(":/icons/waypoint/" + QString(garmin_symbols[i].icon_large));
 			} else {
 				/* Up sample from small image. */
-				/* TODO: simplify creation of scaled pixmap. */
-				const QPixmap pixmap(":/icons/waypoint/" + QString(garmin_symbols[i].icon_small));
-				const QPixmap pixmap2 = pixmap.scaled(LARGE_SYMBOL_SIZE, LARGE_SYMBOL_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-				garmin_symbols[i].pixmap = new QPixmap(pixmap2);
+				garmin_symbols[i].pixmap = new QPixmap(":/icons/waypoint/" + QString(garmin_symbols[i].icon_small));
+				ui_pixmap_scale_size_to(garmin_symbols[i].pixmap, LARGE_SYMBOL_SIZE, LARGE_SYMBOL_SIZE);
 			}
 		} else {
 			if (garmin_symbols[i].icon_small) {
@@ -396,10 +395,8 @@ static QPixmap * get_wp_sym_from_index(int i)
 				garmin_symbols[i].pixmap = new QPixmap(":/icons/waypoint/" + QString(garmin_symbols[i].icon_small));
 			} else {
 				/* Down size large image. */
-				/* TODO: simplify creation of scaled pixmap. */
-				const QPixmap pixmap(":/icons/waypoint/" + QString(garmin_symbols[i].icon_small));
-				const QPixmap pixmap2 = pixmap.scaled(SMALL_SYMBOL_SIZE, SMALL_SYMBOL_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-				garmin_symbols[i].pixmap = new QPixmap(pixmap2);
+				garmin_symbols[i].pixmap = new QPixmap(":/icons/waypoint/" + QString(garmin_symbols[i].icon_small));
+				ui_pixmap_scale_size_to(garmin_symbols[i].pixmap, SMALL_SYMBOL_SIZE, SMALL_SYMBOL_SIZE);
 			}
 		}
 	}

@@ -46,7 +46,8 @@ namespace SlavGPS {
 
 
 
-	enum class MapsCacheLayout;
+	class MapCacheObj;
+	enum class MapCacheLayout;
 	enum class ViewportDrawMode;
 	class Viewport;
 
@@ -95,12 +96,8 @@ namespace SlavGPS {
 
 	class MapSourceArgs {
 	public:
-		TileInfo tile_info;
-
 		QString map_type_string; /* May be an empty string, and may be different than source's type string. */
 		QString tile_file_full_path;
-		QString cache_dir_full_path;
-		MapsCacheLayout cache_layout;
 
 		QWidget * parent_window = NULL;
 
@@ -136,8 +133,8 @@ namespace SlavGPS {
 		uint16_t get_tilesize_y(void) const;
 		ViewportDrawMode get_drawmode(void) const;
 
-		virtual QPixmap get_tile_pixmap(const MapSourceArgs & args) const;
-		virtual QStringList get_tile_info(const MapSourceArgs & args) const;
+		virtual QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
+		virtual QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		virtual void close_map_source(MapSourceArgs & args) { return; }
 		virtual void post_read(MapSourceArgs & args) { return; }
 		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path) const;

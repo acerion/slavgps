@@ -39,6 +39,7 @@
 #include "map_source_mbtiles.h"
 #include "globals.h"
 #include "dialog.h"
+#include "map_utils.h"
 
 
 
@@ -81,7 +82,7 @@ MapSourceMBTiles::~MapSourceMBTiles()
 
 
 
-QPixmap MapSourceMBTiles::get_tile_pixmap(const MapSourceArgs & args)
+QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args)
 {
 	QPixmap result;
 
@@ -101,7 +102,7 @@ QPixmap MapSourceMBTiles::get_tile_pixmap(const MapSourceArgs & args)
 
 		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
 		   Hence this specific function. */
-		result = create_pixmap_sql_exec(*args.sqlite_handle, args.x, args.y, args.zoom);
+		result = create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale);
 	}
 #endif
 
@@ -188,24 +189,24 @@ QPixmap MapSourceMBTiles::create_pixmap_sql_exec(sqlite3 * sqlite_handle, int xx
 
 
 
-QStringList MapSourceMBTiles::get_tile_info(const MapSourceArgs & args) const
+QStringList MapSourceMBTiles::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 #ifdef HAVE_SQLITE3_H
 
 	QPixmap pixmap;
 	if (args.sqlite_handle) {
-		pixmap = this->create_pixmap_sql_exec(*args.sqlite_handle, args.x, args.y, args.zoom);
+		pixmap = this->create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale);
 	}
 	QString exists = pixmap.isNull() ? QObject::tr("NO") : QObject::tr("YES");
 
 
-	const int flip_y = (int) pow(2, args.zoom) - 1 - args.y;
+	const int flip_y = (int) pow(2, MAGIC_SEVENTEEN - tile_info.scale) - 1 - tile_info.y;
 	/* NB Also handles .jpg automatically due to pixmap_new_from() support - although just print png for now. */
 	QString source = QObject::tr("Source: %1 (%2%3%4%5%6.%7 %8)")
-		.arg(args.file_full_path)
-		.arg(args.zoom)
+		.arg(args.tile_file_full_path)
+		.arg(MAGIC_SEVENTEEN - tile_info.scale)
 		.arg(QDir::separator())
-		.arg(args.x)
+		.arg(tile_info.x)
 		.arg(QDir::separator())
 		.arg(flip_y)
 		.arg("png")
@@ -239,7 +240,7 @@ void MapSourceMBTiles::close_map_source(MapSourceArgs & args)
 
 void MapSourceMBTiles::post_read(MapSourceArgs & args)
 {
-	const int ans = sqlite3_open_v2(args.file_full_path.toUtf8().constData(),
+	const int ans = sqlite3_open_v2(args.tile_file_full_path.toUtf8().constData(),
 				  args.sqlite_handle,
 				  SQLITE_OPEN_READONLY,
 				  NULL);
@@ -247,7 +248,7 @@ void MapSourceMBTiles::post_read(MapSourceArgs & args)
 		/* That didn't work, so here's why: */
 		qDebug() << SG_PREFIX_W << sqlite3_errmsg(*args.sqlite_handle);
 
-		Dialog::error(QObject::tr("Failed to open MBTiles file: %1").arg(args.file_full_path), args.parent_window);
+		Dialog::error(QObject::tr("Failed to open MBTiles file: %1").arg(args.tile_file_full_path), args.parent_window);
 		*args.sqlite_handle = NULL;
 	}
 }

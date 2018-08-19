@@ -503,7 +503,7 @@ void SGUtils::set_auto_features_on_first_run(void)
 		auto_features = Dialog::yes_or_no(QObject::tr("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences."), NULL);
 
 		/* Default to more standard cache layout for new users (well new installs at least). */
-		LayerMap::set_cache_default(MapsCacheLayout::OSM);
+		LayerMap::set_cache_default(MapCacheLayout::OSM);
 		set_defaults = true;
 	}
 

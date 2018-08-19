@@ -32,6 +32,7 @@
 #include "map_source_slippy.h"
 #include "map_source_mbtiles.h"
 #include "map_source_wmsc.h"
+#include "map_cache.h"
 #include "webtool_center.h"
 #include "webtool_bounds.h"
 #include "webtool_format.h"
@@ -202,7 +203,7 @@ MapSourceOSMMetatiles::MapSourceOSMMetatiles() : MapSourceSlippy(MapTypeID::OSMM
 
 
 
-QPixmap MapSourceOSMMetatiles::get_tile_pixmap(MapSourceArgs & args)
+QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, MapSourceArgs & args)
 {
 	const int tile_max = METATILE_MAX_SIZE;
 	QString err_msg;
@@ -214,7 +215,7 @@ QPixmap MapSourceOSMMetatiles::get_tile_pixmap(MapSourceArgs & args)
 		return pixmap;
 	}
 
-	int len = metatile_read(args.cache_dir_full_path, args.tile_info.x, args.tile_info.y, MAGIC_SEVENTEEN - args.tile_info.scale, buf, tile_max, &compressed, err_msg);
+	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale, buf, tile_max, &compressed, err_msg);
 	if (len > 0) {
 		if (compressed) {
 			/* TODO: Not handled yet - I don't think this is used often - so implement later if necessary. */
@@ -242,12 +243,12 @@ QPixmap MapSourceOSMMetatiles::get_tile_pixmap(MapSourceArgs & args)
 
 
 
-QStringList MapSourceOSMMetatiles::get_tile_info(const MapSourceArgs & args) const
+QStringList MapSourceOSMMetatiles::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 	QStringList items;
 
 	char path[PATH_MAX];
-	xyz_to_meta(path, sizeof (path), args.cache_dir_full_path, args.tile_info.x, args.tile_info.y, MAGIC_SEVENTEEN - args.tile_info.scale);
+	xyz_to_meta(path, sizeof (path), map_cache_obj.dir_full_path, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale);
 
 	items.push_back(QString(path));
 	items.push_back(args.tile_file_full_path);
@@ -272,14 +273,13 @@ MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk,
 
 
 
-QPixmap MapSourceOSMOnDisk::get_tile_pixmap(MapSourceArgs & args)
+QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, MapSourceArgs & args)
 {
-	const QString tile_file_full_path = LayerMap::get_cache_filename(MapsCacheLayout::OSM,
-									 args.cache_dir_full_path,
-									 this->map_type_id,
-									 "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
-									 args.tile_info,
-									 this->get_file_extension());
+	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO: why do we need to create the copy with explicit layout? */
+	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info,
+										       this->map_type_id,
+										       "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
+										       this->get_file_extension());
 	QPixmap pixmap = this->create_tile_pixmap_from_file(tile_file_full_path);
 
 	qDebug() << SG_PREFIX_I << "Creating pixmap from file:" << (pixmap.isNull() ? "failure" : "success");
@@ -290,16 +290,16 @@ QPixmap MapSourceOSMOnDisk::get_tile_pixmap(MapSourceArgs & args)
 
 
 
-QStringList MapSourceOSMOnDisk::get_tile_info(const MapSourceArgs & args) const
+QStringList MapSourceOSMOnDisk::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 	QStringList items;
 
-	const QString tile_file_full_path = LayerMap::get_cache_filename(MapsCacheLayout::OSM,
-									 args.cache_dir_full_path,
-									 this->map_type_id,
-									 "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
-									 args.tile_info, /* ulm */
-									 this->get_file_extension());
+	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO: why do we need to create the copy with explicit layout? */
+
+	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info, /* ulm */
+										       this->map_type_id,
+										       "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
+										       this->get_file_extension());
 	const QString source = QObject::tr("Source: file://%1").arg(tile_file_full_path);
 	items.push_back(source);
 

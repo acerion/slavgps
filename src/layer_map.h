@@ -36,6 +36,7 @@
 #include "layer_tool.h"
 #include "layer_interface.h"
 #include "map_source.h"
+#include "map_cache.h"
 #include "mapcoord.h"
 #include "vikmapslayer_compat.h"
 
@@ -52,15 +53,7 @@ namespace SlavGPS {
 
 
 	class Viewport;
-
-
-
-
-	enum class MapsCacheLayout {
-		Viking = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout. */
-		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png). */
-		Num         /* Last enum. */
-	};
+	class MapCacheObj;
 
 
 
@@ -123,15 +116,15 @@ namespace SlavGPS {
 
 
 		static void set_autodownload_default(bool autodownload);
-		static void set_cache_default(MapsCacheLayout layout);
+		static void set_cache_default(MapCacheLayout layout);
 
 
-		static QString get_cache_filename(MapsCacheLayout layout, const QString & cache_dir, MapTypeID map_type_id, const QString & map_type_string, const TileInfo & tile_info, const QString & file_extension);
+		static QString get_cache_filename(const MapCacheObj & map_cache_obj, MapTypeID map_type_id, const QString & map_type_string, const TileInfo & tile_info, const QString & file_extension);
 
 
 		MapTypeID map_type_id = MapTypeID::Initial;
 		QString cache_dir;
-		MapsCacheLayout cache_layout = MapsCacheLayout::Viking;
+		MapCacheLayout cache_layout = MapCacheLayout::Viking;
 		int alpha = 0;
 
 		int mapzoom_id = 0;

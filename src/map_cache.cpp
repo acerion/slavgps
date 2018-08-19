@@ -27,16 +27,21 @@
 #include <cstdlib>
 #include <unistd.h>
 
-#include <glib.h>
+
+
 
 #include <QDebug>
 #include <QDir>
 #include <QPixmap>
 
+
+
+
 #include "ui_builder.h"
 #include "map_cache.h"
 #include "preferences.h"
 #include "util.h"
+#include "map_utils.h"
 
 
 
@@ -46,6 +51,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Map Cache"
 #define PREFIX ": Map Cache:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -447,4 +453,73 @@ const QString & MapCache::get_default_maps_dir(void)
 		qDebug() << "DD: Layer Map: get default dir: dir is" << default_dir;
 	}
 	return default_dir;
+}
+
+
+
+
+QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
+					      MapTypeID map_type_id,
+					      const QString & map_type_string,
+					      const QString & file_extension) const
+{
+	/* TODO: verify format strings: whether they match strings
+	   from Viking, and whether they match directory paths in
+	   Viking's cache. */
+
+	QString result;
+
+	switch (this->layout) {
+	case MapCacheLayout::OSM:
+		if (map_type_string.isEmpty()) {
+			result = QString("%1%2%3%4%5%6%7")
+				.arg(this->dir_full_path)
+				.arg(MAGIC_SEVENTEEN - tile_info.scale)
+				.arg(QDir::separator())
+				.arg(tile_info.x)
+				.arg(QDir::separator())
+				.arg(tile_info.y)
+				.arg(file_extension);
+		} else {
+			if (this->dir_full_path != MapCache::get_dir()) {
+				/* Cache dir not the default - assume it's been directed somewhere specific. */
+				result = QString("%1%2%3%4%5%6%7")
+					.arg(this->dir_full_path)
+					.arg(MAGIC_SEVENTEEN - tile_info.scale)
+					.arg(QDir::separator())
+					.arg(tile_info.x)
+					.arg(QDir::separator())
+					.arg(tile_info.y)
+					.arg(file_extension);
+			} else {
+				/* Using default cache - so use the map name in the directory path. */
+				result = QString("%1%2%3%4%5%6%7%8%9")
+					.arg(this->dir_full_path)
+					.arg(map_type_string)
+					.arg(QDir::separator())
+					.arg(MAGIC_SEVENTEEN - tile_info.scale)
+					.arg(QDir::separator())
+					.arg(tile_info.x)
+					.arg(QDir::separator())
+					.arg(tile_info.y)
+					.arg(file_extension);
+			}
+		}
+		break;
+	default:
+		result = QString("%1t%2s%3z%4%5%6%7%8")
+			.arg(this->dir_full_path)
+			.arg((int) map_type_id)
+			.arg(tile_info.scale)
+			.arg(tile_info.z)
+			.arg(QDir::separator())
+			.arg(tile_info.x)
+			.arg(QDir::separator())
+			.arg(tile_info.y);
+		break;
+	}
+
+	qDebug() << SG_PREFIX_I << "Cache file full path:" << result;
+
+	return result;
 }

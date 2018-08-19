@@ -472,7 +472,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 			type = ClipboardDataType::SUBLAYER;
 			selected->copy_sublayer(item, &data, &len);
 		} else {
-			int ilen;
+			int ilen = 0;
 			type = ClipboardDataType::LAYER;
 #ifdef K
 			Layer::marshall(selected, &data, &ilen);
@@ -602,7 +602,7 @@ static void clip_determine_type(GtkClipboard * c, GdkAtom * a, int n, void * p)
  */
 ClipboardDataType Clipboard::get_current_type()
 {
-	ClipboardDataType answer;
+	ClipboardDataType answer = ClipboardDataType::NONE;
 #ifdef K
 	GtkClipboard * c = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	ClipboardDataType * vcdt = (VikClipboardDataType *) malloc(sizeof (VikClipboardDataType));

@@ -51,6 +51,9 @@ namespace SlavGPS {
 	void ui_pixmap_set_alpha(QPixmap & pixmap, int alpha);
 	void ui_pixmap_scale_alpha(QPixmap & pixmap, int alpha);
 
+	void ui_pixmap_scale_size_by(QPixmap & pixmap, double scale_x, double scale_y);
+	void ui_pixmap_scale_size_to(QPixmap * pixmap, int width, int height);
+
 	void update_desktop_recent_documents(Window * window, const QString & file_full_path, const QString & mime_type);
 
 
