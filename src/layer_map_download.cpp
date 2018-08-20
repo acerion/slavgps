@@ -111,16 +111,21 @@ void MapDownloadJob::run(void)
 {
 	DownloadHandle * dl_handle = this->map_source->download_handle_init();
 	unsigned int donemaps = 0;
+
+	/* The purpose of this call is to set fields in tile_iter
+	   other than x and y.  x and y will be set and incremented in
+	   loops below, but other fields of the iter also need to have
+	   some valid values. These valid values are set here. */
 	TileInfo tile_iter = this->tile_info;
 
 	qDebug() << SG_PREFIX_I << "Called";
 
 	for (tile_iter.x = this->x_begin; tile_iter.x <= this->x_end; tile_iter.x++) {
 		for (tile_iter.y = this->y_begin; tile_iter.y <= this->y_end; tile_iter.y++) {
-			/* Only attempt to download a tile from supported areas. */
 
+			/* Only attempt to download a tile from areas supported by current map source. */
 			if (!is_in_area(this->map_source, tile_iter)) {
-				qDebug() << SG_PREFIX_I << "Map" << (int) this->map_type_id << "not in area, skipping";
+				qDebug() << SG_PREFIX_I << "Tile" << tile_iter.x << tile_iter.y << "is not in area of map id" << (int) this->map_source->map_type_id << ", skipping";
 				continue;
 			}
 
@@ -136,7 +141,7 @@ void MapDownloadJob::run(void)
 
 			const bool end_job = this->set_progress_state(((double) donemaps) / this->n_items); /* this also calls testcancel */
 			if (end_job) {
-				qDebug() << SG_PREFIX_I << "Background thread progress end";
+				qDebug() << SG_PREFIX_I << "Background module informs this thread to end its job";
 				this->map_source->download_handle_cleanup(dl_handle);
 				return;
 			}
@@ -193,17 +198,19 @@ void MapDownloadJob::run(void)
 			this->tile_info.y = tile_iter.y;
 
 			if (need_download) {
-				DownloadResult dr = this->map_source->download_tile(this->tile_info, this->file_full_path, dl_handle);
+				/* tile_iter has obviously x and y fields, but also all other fields
+				   set, thanks to assignment made where tile_iter has been defined. */
+				const DownloadResult dr = this->map_source->download_tile(tile_iter, this->file_full_path, dl_handle);
 				switch (dr) {
 				case DownloadResult::HTTPError:
 				case DownloadResult::ContentError: {
 					/* TODO: ?? count up the number of download errors somehow... */
-					QString msg = QString("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download tile");
+					QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download map tile");
 					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 					break;
 				}
 				case DownloadResult::FileWriteError: {
-					QString msg = QString("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save tile");
+					QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save map tile");
 					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 					break;
 				}
@@ -213,7 +220,7 @@ void MapDownloadJob::run(void)
 					break;
 				}
 			} else {
-				qDebug() << SG_PREFIX_I << "Doesn't need download";
+				qDebug() << SG_PREFIX_I << "This tile doesn't need download";
 			}
 
 			this->mutex.lock();
@@ -222,8 +229,9 @@ void MapDownloadJob::run(void)
 			}
 
 			if (this->refresh_display && this->map_layer_alive) {
-				/* TODO: check if it's on visible area. */
-				this->layer->emit_layer_changed("Map - map download"); /* NB update display from background. */
+				/* TODO: check if downloaded tile is visible in viewport.
+				   Otherwise redraw of viewport is not needed. */
+				this->layer->emit_layer_changed("Set of tiles for Map Layer has been updated after tile download");
 			}
 			this->mutex.unlock();
 
@@ -282,36 +290,70 @@ int MapDownloadJob::calculate_tile_count_to_download(const TileInfo & ulm, bool 
 				continue;
 			}
 
-			tile_file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
-										       this->map_source->map_type_id,
-										       this->map_source->get_map_type_string(),
-										       this->map_source->get_file_extension());
 
-			if (simple) {
+			switch (this->map_download_mode) {
+			case MapDownloadMode::MissingOnly:
+				/* Download only missing tiles.
+				   Checking which tile is missing is easy. */
+				tile_file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
+											       this->map_source->map_type_id,
+											       this->map_source->get_map_type_string(),
+											       this->map_source->get_file_extension());
 				if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK)) {
 					n_maps++;
 				}
+				break;
+			case MapDownloadMode::All:
+				/* Download all tiles.
+				   Deciding which tiles to download is easy: all of them. */
+				n_maps++;
+				break;
 
-			} else {
-				if (this->map_download_mode == MapDownloadMode::New) {
-					/* Assume the worst - always a new file.
-					   Absolute value would require a server lookup - but that is too slow. */
+			case MapDownloadMode::New:
+				/* Download missing tile that are newer on server only.
+
+				   This case is harder. For now assume
+				   that tiles in local cache (if they
+				   exist at all) are older than tiles
+				   on server, and download them.
+
+				   Comparing dates of local tiles and
+				   tiles on server would require a
+				   lookup on server and that would be
+				   slow.
+
+				   TODO: perhaps we could somehow
+				   implement the comparison of dates
+				   of local and remote tiles, even if
+				   it's slow.
+				*/
+				n_maps++;
+				break;
+
+			case MapDownloadMode::MissingAndBad:
+				/* Download missing and bad tiles. */
+				tile_file_full_path = this->map_cache.get_cache_file_full_path(tile_iter,
+											       this->map_source->map_type_id,
+											       this->map_source->get_map_type_string(),
+											       this->map_source->get_file_extension());
+				if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK)) {
+					/* Missing. */
 					n_maps++;
 				} else {
-					if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK)) {
-						/* Missing. */
+					if (!pixmap.load(tile_file_full_path)) {
+						/* Bad. */
 						n_maps++;
-					} else {
-						if (this->map_download_mode == MapDownloadMode::MissingAndBad) {
-							/* See if pixmap specified by path is bad or missing. */
-							if (!pixmap.load(tile_file_full_path)) {
-								n_maps++;
-							}
-							break;
-							/* Other download cases already considered or just ignored. */
-						}
 					}
 				}
+				break;
+
+			case MapDownloadMode::DownloadAndRefresh:
+				/* TODO: unhandled download mode. */
+				break;
+
+			default:
+				qDebug() << SG_PREFIX_E << "Unexpected download mode" << (int) this->map_download_mode;
+				break;
 			}
 		}
 	}

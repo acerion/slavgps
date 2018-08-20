@@ -81,7 +81,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Map Layer"
-#define PREFIX ": Layer Map:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -389,7 +388,7 @@ void MapSources::register_map_source(MapSource * map_source)
 		if (old_map_source) {
 			delete old_map_source;
 		} else {
-			qDebug() << "EE" PREFIX << "Old map source was NULL";
+			qDebug() << SG_PREFIX_E << "Old map source was NULL";
 		}
 
 		/* TODO: the concept of map types, and of updating it,
@@ -422,7 +421,7 @@ MapTypeID LayerMap::get_map_type_id(void) const
 bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 {
 	if (!MapSource::is_map_type_id_registered(new_map_type_id)) {
-		qDebug() << "EE" PREFIX << "Unknown map type" << (int) new_map_type_id;
+		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) new_map_type_id;
 		return false;
 	}
 
@@ -471,7 +470,7 @@ void LayerMap::mkdir_if_default_dir()
 	    && 0 != access(this->cache_dir.toUtf8().constData(), F_OK)) {
 
 		if (mkdir(this->cache_dir.toUtf8().constData(), 0777) != 0) {
-			qDebug() << "WW" PREFIX << "Failed to create directory" << this->cache_dir;
+			qDebug() << SG_PREFIX_W << "Failed to create directory" << this->cache_dir;
 		}
 	}
 }
@@ -560,7 +559,7 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		break;
 	case PARAM_MAP_TYPE_ID:
 		if (!MapSource::is_map_type_id_registered((MapTypeID) data.u.val_int)) {
-			qDebug() << "EE" PREFIX << "Unknown map type" << data.u.val_int;
+			qDebug() << SG_PREFIX_E << "Unknown map type" << data.u.val_int;
 		} else {
 			this->map_type_id = (MapTypeID) data.u.val_int;
 
@@ -599,7 +598,7 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 			this->xmapzoom = __mapzooms_x[data.u.val_int];
 			this->ymapzoom = __mapzooms_y[data.u.val_int];
 		} else {
-			qDebug() << "WW" PREFIX << "Unknown Map Zoom" << data.u.val_int;
+			qDebug() << SG_PREFIX_W << "Unknown Map Zoom" << data.u.val_int;
 		}
 		break;
 	default:
@@ -867,12 +866,7 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, double scale_x, d
 
 
 
-
-/**
-   Function returns only a reference (pointer) to pixmap existing in
-   pixmap cache.  Don't delete the pointer.
-*/
-QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, QString & tile_file_full_path, double scale_x, double scale_y)
+QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, double scale_x, double scale_y)
 {
 	/* Get the thing. */
 	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->map_type_id, this->alpha, scale_x, scale_y, this->file_full_path);
@@ -895,10 +889,7 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & ti
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, scale_x, scale_y);
 
-		MapCacheItemExtra extra;
-		extra.duration = 0.0;
-
-		MapCache::add_tile_pixmap(pixmap, extra, tile_info, map_source->map_type_id,
+		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(0.0), tile_info, map_source->map_type_id,
 					  this->alpha, scale_x, scale_y, this->file_full_path);
 	}
 
@@ -952,7 +943,7 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 				   int viewport_x, int viewport_y,
 				   int tilesize_x_ceil, int tilesize_y_ceil,
 				   double scale_x, double scale_y,
-				   const QString & map_type_string, QString & tile_file_full_path)
+				   const QString & map_type_string)
 {
 	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
 		/* Try with smaller zooms. */
@@ -962,16 +953,16 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 		ulm2.y = ulm.y / scale_factor;
 		ulm2.scale = ulm.scale + scale_inc;
 
-		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm2, tile_file_full_path, scale_x * scale_factor, scale_y * scale_factor);
+		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm2, scale_x * scale_factor, scale_y * scale_factor);
 		if (!pixmap.isNull()) {
-			qDebug() << "II" PREFIX << "Pixmap found";
+			qDebug() << SG_PREFIX_I << "Pixmap found";
 			const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
-			qDebug() << "II" PREFIX << "Calling draw_pixmap";
+			qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
 			viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
 			return true;
 		} else {
-			qDebug() << "II" PREFIX << "Pixmap not found";
+			qDebug() << SG_PREFIX_I << "Pixmap not found";
 		}
 	}
 	return false;
@@ -984,7 +975,7 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 				 int viewport_x, int viewport_y,
 				 int tilesize_x_ceil, int tilesize_y_ceil,
 				 double scale_x, double scale_y,
-				 const QString & map_type_string, QString & path_buf)
+				 const QString & map_type_string)
 {
 	/* Try with bigger zooms. */
 	for (unsigned int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
@@ -999,18 +990,18 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 
-				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm3, path_buf, scale_x / scale_factor, scale_y / scale_factor);
+				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm3, scale_x / scale_factor, scale_y / scale_factor);
 				if (!pixmap.isNull()) {
-					qDebug() << "II" PREFIX << "Pixmap found";
+					qDebug() << SG_PREFIX_I << "Pixmap found";
 					int pixmap_x = 0;
 					int pixmap_y = 0;
 					int dest_x = viewport_x + pict_x * (tilesize_x_ceil / scale_factor);
 					int dest_y = viewport_y + pict_y * (tilesize_y_ceil / scale_factor);
-					qDebug() << "II" PREFIX << "Calling draw_pixmap";
+					qDebug() << SG_PREFIX_I << "Calling draw_pixmap";
 					viewport->draw_pixmap(pixmap, dest_x, dest_y, pixmap_x, pixmap_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
 					return true;
 				} else {
-					qDebug() << "II" PREFIX << "Pixmap not found";
+					qDebug() << SG_PREFIX_I << "Pixmap not found";
 				}
 			}
 		}
@@ -1039,7 +1030,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			scale_y > MIN_SHRINKFACTOR && scale_y < MAX_SHRINKFACTOR)) {
 
 			if (scale_x > REAL_MIN_SHRINKFACTOR && scale_y > REAL_MIN_SHRINKFACTOR) {
-				qDebug() << "DD" PREFIX << "existence_only due to SHRINKFACTORS";
+				qDebug() << SG_PREFIX_D << "existence_only due to SHRINKFACTORS";
 				existence_only = true;
 			} else {
 				/* Report the reason for not drawing. */
@@ -1077,14 +1068,12 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	   Also prevents very large number of tile download requests. */
 	int tiles = (xmax - xmin) * (ymax - ymin);
 	if (tiles > MAX_TILES) {
-		qDebug() << "DD" PREFIX << "existence_only due to wanting too many tiles:" << tiles;
+		qDebug() << SG_PREFIX_D << "existence_only due to wanting too many tiles:" << tiles;
 		existence_only = true;
 	}
 
-	QString path_buf;
-
 	if ((!existence_only) && this->autodownload  && this->should_start_autodownload(viewport)) {
-		qDebug() << "DD" PREFIX << "Starting autodownload";
+		qDebug() << SG_PREFIX_D << "Starting autodownload";
 		if (!this->adl_only_missing && map_source->supports_download_only_new()) {
 			/* Try to download newer tiles. */
 			this->start_download_thread(viewport, coord_ul, coord_br, MapDownloadMode::New);
@@ -1100,24 +1089,25 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				ulm.x = x;
 				ulm.y = y;
 
-				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, path_buf, scale_x, scale_y);
-				if (!pixmap.isNull()) {
-					qDebug() << "II" PREFIX << "Pixmap found";
-					const int width = pixmap.width();
-					const int height = pixmap.height();
-					int viewport_x;
-					int viewport_y;
-
-					map_source->tile_to_center_coord(ulm, coord);
-					viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
-					viewport_x -= (width/2);
-					viewport_y -= (height/2);
-
-					qDebug() << "II" PREFIX << "Calling draw_pixmap";
-					viewport->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, width, height);
-				} else {
-					qDebug() << "II" PREFIX << "Pixmap not found";
+				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, scale_x, scale_y);
+				if (pixmap.isNull()) {
+					qDebug() << SG_PREFIX_W << "Pixmap not found";
+					continue;
 				}
+
+				qDebug() << SG_PREFIX_I << "Pixmap found";
+				const int width = pixmap.width();
+				const int height = pixmap.height();
+				int viewport_x;
+				int viewport_y;
+
+				map_source->tile_to_center_coord(ulm, coord);
+				viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
+				viewport_x -= (width/2);
+				viewport_y -= (height/2);
+
+				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
+				viewport->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, width, height);
 			}
 		}
 	} else { /* tilesize is known, don't have to keep converting coords. */
@@ -1156,10 +1146,10 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				ulm.y = y;
 
 				if (existence_only) {
-					path_buf = map_cache_obj.get_cache_file_full_path(ulm,
-											  map_source->map_type_id,
-											  map_source->get_map_type_string(),
-											  map_source->get_file_extension());
+					const QString path_buf = map_cache_obj.get_cache_file_full_path(ulm,
+													map_source->map_type_id,
+													map_source->get_map_type_string(),
+													map_source->get_file_extension());
 
 					if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 						const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
@@ -1168,23 +1158,23 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				} else {
 					/* Try correct scale first. */
 					int scale_factor = 1;
-					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, path_buf, scale_x * scale_factor, scale_y * scale_factor);
+					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, scale_x * scale_factor, scale_y * scale_factor);
 					if (!pixmap.isNull()) {
-						qDebug() << "II" PREFIX << "Pixmap found";
+						qDebug() << SG_PREFIX_I << "Pixmap found";
 						const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 						const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
-						qDebug() << "II" PREFIX << "Calling draw_pixmap, pixmap_x =" << pixmap_x << "pixmap_y =" << pixmap_y << "viewport_x =" << viewport_x << "viewport_y =" << viewport_y;
+						qDebug() << SG_PREFIX_I << "Calling draw_pixmap, pixmap_x =" << pixmap_x << "pixmap_y =" << pixmap_y << "viewport_x =" << viewport_x << "viewport_y =" << viewport_y;
 						viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
 					} else {
-						qDebug() << "II" PREFIX << "Pixmap not found";
+						qDebug() << SG_PREFIX_I << "Pixmap not found";
 						/* Otherwise try different scales. */
 						if (SCALE_SMALLER_ZOOM_FIRST) {
-							if (!this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf)) {
-								this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf);
+							if (!this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
+								this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
 							}
 						} else {
-							if (!this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf)) {
-								this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string, path_buf);
+							if (!this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
+								this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
 							}
 						}
 					}
@@ -1244,32 +1234,33 @@ void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 {
 	MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-	if (map_source->get_drawmode() == viewport->get_drawmode()) {
+	if (map_source->get_drawmode() != viewport->get_drawmode()) {
+		return;
+	}
 
-		/* Copyright. */
-		double level = viewport->get_zoom();
-		const LatLonBBox bbox = viewport->get_bbox();
-		map_source->add_copyright(viewport, bbox, level);
+	/* Copyright. */
+	double level = viewport->get_zoom();
+	const LatLonBBox bbox = viewport->get_bbox();
+	map_source->add_copyright(viewport, bbox, level);
 
-		viewport->add_logo(map_source->get_logo());
+	viewport->add_logo(map_source->get_logo());
 
-		/* Get corner coords. */
-		if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->get_is_one_utm_zone()) {
-			/* UTM multi-zone stuff by Kit Transue. */
-			const int leftmost_zone = viewport->get_leftmost_zone();
-			const int rightmost_zone = viewport->get_rightmost_zone();
-			Coord coord_ul;
-			Coord coord_br;
-			for (int zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
-				viewport->get_corners_for_zone(coord_ul, coord_br, zone);
-				this->draw_section(viewport, coord_ul, coord_br);
-			}
-		} else {
-			const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
-			const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
-
+	/* Get corner coords. */
+	if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->get_is_one_utm_zone()) {
+		/* UTM multi-zone stuff by Kit Transue. */
+		const int leftmost_zone = viewport->get_leftmost_zone();
+		const int rightmost_zone = viewport->get_rightmost_zone();
+		Coord coord_ul;
+		Coord coord_br;
+		for (int zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
+			viewport->get_corners_for_zone(coord_ul, coord_br, zone);
 			this->draw_section(viewport, coord_ul, coord_br);
 		}
+	} else {
+		const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
+		const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
+
+		this->draw_section(viewport, coord_ul, coord_br);
 	}
 }
 
@@ -1301,39 +1292,36 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 	TileInfo ulm, brm;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-	qDebug() << "II" PREFIX << "map:" << (quintptr) map_source << "map index" << (int) this->map_type_id;
+	qDebug() << SG_PREFIX_I << "Map:" << (quintptr) map_source << "map index" << (int) this->map_type_id;
 
 	/* Don't ever attempt download on direct access. */
 	if (map_source->is_direct_file_access()) {
-		qDebug() << "II" PREFIX << "Not downloading, direct access";
+		qDebug() << SG_PREFIX_I << "Not downloading, direct access";
 		return;
 	}
 
-	if (map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
-	     && map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
+	if (!map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
+	     || !map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
 
-		qDebug() << "II" PREFIX << "coord to tile succeeded";
+		qDebug() << SG_PREFIX_E << "Conversion coord to tile failed";
+		return;
+	}
 
-		MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
 
-		if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
-			mdj->n_items = mdj->calculate_tile_count_to_download(ulm, true);
-		} else {
-		        mdj->n_items = mdj->calculate_total_tile_count_to_download();
-		}
+	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
 
-		if (mdj->n_items) {
-			/* For cleanup - no current map. */
-			mdj->reset_internal();
-
-			mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
-			mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
-			mdj->run_in_background(ThreadPoolType::Remote);
-		} else {
-			delete mdj;
-		}
+	if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
+		mdj->n_items = mdj->calculate_tile_count_to_download(ulm, true);
 	} else {
-		qDebug() << "II" PREFIX << "coord to tile failed";
+		mdj->n_items = mdj->calculate_total_tile_count_to_download();
+	}
+
+	if (mdj->n_items) {
+		mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
+		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
+		mdj->run_in_background(ThreadPoolType::Remote);
+	} else {
+		delete mdj;
 	}
 }
 
@@ -1352,17 +1340,14 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 
 	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, ulm)
 	    || !map_source->coord_to_tile(coord_br, zoom, zoom, brm)) {
-		qDebug() << "WW" PREFIX << "coord_to_tile() failed";
+		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
 		return;
 	}
 
 	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
+
 	mdj->n_items = mdj->calculate_tile_count_to_download(ulm, true);
-
 	if (mdj->n_items) {
-		/* For cleanup - no current map. */
-		mdj->reset_internal();
-
 		mdj->layer->weak_ref(weak_ref_cb, mdj);
 		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
@@ -1658,7 +1643,7 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 	TileInfo ulm, brm;
 	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, ulm)
 	    || !map_source->coord_to_tile(coord_br, zoom, zoom, brm)) {
-		qDebug() << "WW" PREFIX << "coord_to_tile() failed";
+		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
 		return 0;
 	}
 
@@ -1668,7 +1653,7 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 	if (mdj->map_download_mode == MapDownloadMode::All) {
 		n_items = mdj->calculate_total_tile_count_to_download();
 	} else {
-		n_items = mdj->calculate_tile_count_to_download(ulm, false);
+		n_items = mdj->calculate_tile_count_to_download(ulm, true);
 	}
 
 	delete mdj;
@@ -1825,7 +1810,7 @@ void LayerMap::download_all_cb(void)
 		map_count = map_count + this->how_many_maps(coord_ul, coord_br, zoom_vals[zz], selected_download_mode);
 	}
 
-	qDebug() << "DD" PREFIX << "download request map count" << map_count << "for method" << (int) selected_download_mode;
+	qDebug() << SG_PREFIX_D << "Download request map count" << map_count << "for method" << (int) selected_download_mode;
 
 	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
@@ -1924,7 +1909,7 @@ void LayerMap::download(Viewport * viewport, bool only_new)
 
 LayerMap::LayerMap()
 {
-	qDebug() << "DD" PREFIX << "constructor called";
+	qDebug() << SG_PREFIX_D << "Constructor called";
 
 	this->type = LayerType::Map;
 	strcpy(this->debug_string, "MAP");

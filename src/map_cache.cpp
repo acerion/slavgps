@@ -59,13 +59,13 @@ using namespace SlavGPS;
 
 class MapCacheItem {
 public:
-	MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemExtra & new_extra);
+	MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemProperties & properties);
 	~MapCacheItem() {};
 
 	size_t get_size(void) const;
 
 	QPixmap pixmap;
-	MapCacheItemExtra extra;
+	MapCacheItemProperties properties;
 };
 
 
@@ -95,7 +95,7 @@ static ParameterSpecification prefs[] = {
 
 
 
-static void cache_add(std::string & key, const QPixmap pixmap, MapCacheItemExtra & extra);
+static void cache_add(std::string & key, const QPixmap pixmap, const MapCacheItemProperties & properties);
 static void cache_remove(std::string & key);
 static void cache_remove_oldest();
 static void flush_matching(std::string & key_part);
@@ -103,10 +103,10 @@ static void flush_matching(std::string & key_part);
 
 
 
-MapCacheItem::MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemExtra & new_extra)
+MapCacheItem::MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemProperties & new_properties)
 {
 	this->pixmap = new_pixmap;
-	this->extra = new_extra;
+	this->properties = new_properties;
 }
 
 
@@ -118,7 +118,7 @@ size_t MapCacheItem::get_size(void) const
 
 	if (!this->pixmap.isNull()) {
 		size += this->pixmap.width() * this->pixmap.height() * (this->pixmap.depth() / 8);
-		size += sizeof (MapCacheItemExtra);
+		size += sizeof (MapCacheItemProperties);
 		size += 100; /* Not sure what this value represents, probably a guess at an average pixmap metadata size. This value existed in Viking. */
 	}
 
@@ -136,9 +136,9 @@ void MapCache::init(void)
 
 
 
-void cache_add(std::string & key, const QPixmap pixmap, MapCacheItemExtra & extra)
+void cache_add(std::string & key, const QPixmap pixmap, const MapCacheItemProperties & properties)
 {
-	MapCacheItem * ci = new MapCacheItem(pixmap, extra);
+	MapCacheItem * ci = new MapCacheItem(pixmap, properties);
 
 	size_t before = maps_cache.size();
 
@@ -196,7 +196,7 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void MapCache::add_tile_pixmap(const QPixmap & pixmap, MapCacheItemExtra & extra, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	if (pixmap.isNull()) {
 		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale);
@@ -211,7 +211,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, MapCacheItemExtra & extra
 
 	mc_mutex.lock();
 
-	cache_add(key, pixmap, extra);
+	cache_add(key, pixmap, properties);
 
 	/* TODO: that should be done on preference change only... */
 	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".mapcache_size").u.val_uint * 1024 * 1024;
@@ -257,9 +257,9 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 
 
 
-MapCacheItemExtra MapCache::get_extra(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
-	MapCacheItemExtra extra;
+	MapCacheItemProperties properties(0.0);
 
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
@@ -268,12 +268,10 @@ MapCacheItemExtra MapCache::get_extra(const TileInfo & tile_info, MapTypeID map_
 
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end() && iter->second) {
-		extra = iter->second->extra;
-	} else {
-		extra.duration = 0.0;
+		properties = iter->second->properties;
 	}
 
-	return extra;
+	return properties;
 }
 
 

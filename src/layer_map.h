@@ -157,12 +157,12 @@ namespace SlavGPS {
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode);
 
-		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name, QString & tile_file_full_path);
-		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name, QString & path_buf);
+		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name);
+		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name);
 
 		bool should_start_autodownload(Viewport * viewport);
 
-		QPixmap get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, QString & tile_file_full_path, double scale_x, double scale_y);
+		QPixmap get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, double scale_x, double scale_y);
 		QPixmap create_pixmap_from_file(const QString & file_full_path);
 
 	public slots:
