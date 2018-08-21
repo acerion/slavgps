@@ -174,6 +174,7 @@ namespace SlavGPS {
 		void set_file_extension(const QString & file_extension);
 
 
+		bool includes_tile(const TileInfo & tile_info) const;
 
 
 		QString copyright;     /* The copyright of the map source. */

@@ -606,3 +606,17 @@ QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const Tile
 
 	return pixmap;
 }
+
+
+
+
+bool MapSource::includes_tile(const TileInfo & tile_info) const
+{
+	Coord center_coord;
+	this->tile_to_center_coord(tile_info, center_coord);
+
+	const Coord coord_tl(LatLon(this->get_lat_max(), this->get_lon_min()), CoordMode::LATLON);
+	const Coord coord_br(LatLon(this->get_lat_min(), this->get_lon_max()), CoordMode::LATLON);
+
+	return center_coord.is_inside(&coord_tl, &coord_br);
+}

@@ -1055,10 +1055,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 
 	/* Loop & draw. */
-	const int xmin = std::min(ulm.x, brm.x);
-	const int xmax = std::max(ulm.x, brm.x);
-	const int ymin = std::min(ulm.y, brm.y);
-	const int ymax = std::max(ulm.y, brm.y);
+	const TilesRange primary_range = TileInfo::get_tiles_range(ulm, brm);
 	const QString map_type_string = map_source->get_map_type_string();
 
 	Coord coord;
@@ -1066,7 +1063,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	/* Prevent the program grinding to a halt if trying to deal with thousands of tiles
 	   which can happen when using a small fixed zoom level and viewing large areas.
 	   Also prevents very large number of tile download requests. */
-	int tiles = (xmax - xmin) * (ymax - ymin);
+	int tiles = (primary_range.x_end - primary_range.x_begin) * (primary_range.y_end - primary_range.y_begin);
 	if (tiles > MAX_TILES) {
 		qDebug() << SG_PREFIX_D << "existence_only due to wanting too many tiles:" << tiles;
 		existence_only = true;
@@ -1084,12 +1081,17 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	}
 
 	if (map_source->get_tilesize_x() == 0 && !existence_only) {
-		for (int x = xmin; x <= xmax; x++) {
-			for (int y = ymin; y <= ymax; y++) {
-				ulm.x = x;
-				ulm.y = y;
 
-				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, scale_x, scale_y);
+		/* The purpose of this assignment is to set fields in tile_iter
+		   other than x and y.  x and y will be set and incremented in
+		   loops below, but other fields of the iter also need to have
+		   some valid values. These valid values are set here. */
+		TileInfo tile_iter = ulm;
+
+		for (tile_iter.x = primary_range.x_begin; tile_iter.x <= primary_range.x_end; tile_iter.x++) {
+			for (tile_iter.y = primary_range.y_begin; tile_iter.y <= primary_range.y_end; tile_iter.y++) {
+
+				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, scale_x, scale_y);
 				if (pixmap.isNull()) {
 					qDebug() << SG_PREFIX_W << "Pixmap not found";
 					continue;
@@ -1101,7 +1103,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				int viewport_x;
 				int viewport_y;
 
-				map_source->tile_to_center_coord(ulm, coord);
+				map_source->tile_to_center_coord(tile_iter, coord);
 				viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
 				viewport_x -= (width/2);
 				viewport_y -= (height/2);
@@ -1117,12 +1119,15 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		const int tilesize_x_ceil = ceil(tilesize_x);
 		const int tilesize_y_ceil = ceil(tilesize_y);
 
-		const int delta_x = (ulm.x == xmin) ? 1 : -1;
-		const int delta_y = (ulm.y == ymin) ? 1 : -1;
-		const int x_begin = (delta_x == 1) ? xmin : xmax;
-		const int y_begin = (delta_y == 1) ? ymin : ymax;
-		const int x_end   = (delta_x == 1) ? (xmax + 1) : (xmin - 1);
-		const int y_end   = (delta_y == 1) ? (ymax + 1) : (ymin - 1);
+		const int delta_x = (ulm.x == primary_range.x_begin) ? 1 : -1;
+		const int delta_y = (ulm.y == primary_range.y_begin) ? 1 : -1;
+
+
+		TilesRange secondary_range;
+		secondary_range.x_begin = (delta_x == 1) ? primary_range.x_begin : primary_range.x_end;
+		secondary_range.y_begin = (delta_y == 1) ? primary_range.y_begin : primary_range.y_end;
+		secondary_range.x_end   = (delta_x == 1) ? (primary_range.x_end + 1) : (primary_range.x_begin - 1);
+		secondary_range.y_end   = (delta_y == 1) ? (primary_range.y_end + 1) : (primary_range.y_begin - 1);
 
 		int viewport_x;
 		int viewport_y;
@@ -1139,14 +1144,18 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 		const MapCacheObj map_cache_obj(map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
 
-		for (int x = x_begin; x != x_end; x += delta_x) {
+		/* The purpose of this assignment is to set fields in tile_iter
+		   other than x and y.  x and y will be set and incremented in
+		   loops below, but other fields of the iter also need to have
+		   some valid values. These valid values are set here. */
+		TileInfo tile_iter = ulm;
+
+		for (tile_iter.x = secondary_range.x_begin; tile_iter.x != secondary_range.x_end; tile_iter.x += delta_x) {
 			viewport_y = base_viewport_y;
-			for (int y = y_begin; y != y_end; y += delta_y) {
-				ulm.x = x;
-				ulm.y = y;
+			for (tile_iter.y = secondary_range.y_begin; tile_iter.y != secondary_range.y_end; tile_iter.y += delta_y) {
 
 				if (existence_only) {
-					const QString path_buf = map_cache_obj.get_cache_file_full_path(ulm,
+					const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_iter,
 													map_source->map_type_id,
 													map_source->get_map_type_string(),
 													map_source->get_file_extension());
@@ -1158,23 +1167,23 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				} else {
 					/* Try correct scale first. */
 					int scale_factor = 1;
-					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm, scale_x * scale_factor, scale_y * scale_factor);
+					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, scale_x * scale_factor, scale_y * scale_factor);
 					if (!pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Pixmap found";
-						const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
-						const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+						const int pixmap_x = (tile_iter.x % scale_factor) * tilesize_x_ceil;
+						const int pixmap_y = (tile_iter.y % scale_factor) * tilesize_y_ceil;
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap, pixmap_x =" << pixmap_x << "pixmap_y =" << pixmap_y << "viewport_x =" << viewport_x << "viewport_y =" << viewport_y;
 						viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
 					} else {
 						qDebug() << SG_PREFIX_I << "Pixmap not found";
 						/* Otherwise try different scales. */
 						if (SCALE_SMALLER_ZOOM_FIRST) {
-							if (!this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
-								this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
+							if (!this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
+								this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
 							}
 						} else {
-							if (!this->try_draw_scale_up(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
-								this->try_draw_scale_down(viewport, ulm, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
+							if (!this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
+								this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
 							}
 						}
 					}
@@ -1196,7 +1205,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			/* Grid drawing here so it gets drawn on top of the map.
 			   Thus loop around x & y again, but this time separately.
 			   Only showing grid for the current scale */
-			draw_grid(viewport, viewport_x_grid, viewport_y_grid, x_begin, delta_x, x_end, y_begin, delta_y, y_end, tilesize_x, tilesize_y);
+			draw_grid(viewport, viewport_x_grid, viewport_y_grid, secondary_range.x_begin, delta_x, secondary_range.x_end, secondary_range.y_begin, delta_y, secondary_range.y_end, tilesize_x, tilesize_y);
 		}
 	}
 }
@@ -1311,7 +1320,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
 
 	if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
-		mdj->n_items = mdj->calculate_tile_count_to_download(ulm, true);
+		mdj->n_items = mdj->calculate_tile_count_to_download();
 	} else {
 		mdj->n_items = mdj->calculate_total_tile_count_to_download();
 	}
@@ -1346,7 +1355,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 
 	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
 
-	mdj->n_items = mdj->calculate_tile_count_to_download(ulm, true);
+	mdj->n_items = mdj->calculate_tile_count_to_download();
 	if (mdj->n_items) {
 		mdj->layer->weak_ref(weak_ref_cb, mdj);
 		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
@@ -1653,7 +1662,7 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 	if (mdj->map_download_mode == MapDownloadMode::All) {
 		n_items = mdj->calculate_total_tile_count_to_download();
 	} else {
-		n_items = mdj->calculate_tile_count_to_download(ulm, true);
+		n_items = mdj->calculate_tile_count_to_download();
 	}
 
 	delete mdj;

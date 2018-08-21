@@ -27,6 +27,7 @@ SOURCES += main.cpp \
     clipboard.cpp \
     preferences.cpp \
     layer_trw_dialogs.cpp \
+    mapcoord.cpp \
     routing.cpp \
     routing_engine.cpp \
     routing_engine_web.cpp \

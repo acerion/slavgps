@@ -65,21 +65,17 @@ MapDownloadJob::MapDownloadJob(LayerMap * new_layer, const MapSource * new_map_s
 	this->layer = new_layer;
 	this->refresh_display = new_refresh_display;
 
-	/* TODO: add assignment operator for MapCacheObj class. */
-	this->map_cache.layout = new_layer->cache_layout;
-	this->map_cache.dir_full_path = new_layer->cache_dir;
-
-	this->map_type_id = layer->map_type_id;
-
-	this->tile_info = ulm;
-	this->map_download_mode = new_map_download_mode;
+	this->map_cache = MapCacheObj(new_layer->cache_layout, new_layer->cache_dir);
 
 	this->map_source = new_map_source;
 
-	this->x_begin = std::min(ulm.x, brm.x);
-	this->x_end   = std::max(ulm.x, brm.x);
-	this->y_begin = std::min(ulm.y, brm.y);
-	this->y_end   = std::max(ulm.y, brm.y);
+	/* We only need to store tile parameters other than x and y,
+	   that are common for all tiles downloaded by this job. */
+	this->common_tile_info = ulm;
+
+	this->map_download_mode = new_map_download_mode;
+
+	this->range = TileInfo::get_tiles_range(ulm, brm);
 }
 
 
@@ -92,39 +88,25 @@ MapDownloadJob::~MapDownloadJob()
 
 
 
-static bool is_in_area(const MapSource * map_source, const TileInfo & tile_info)
-{
-	Coord center_coord;
-	map_source->tile_to_center_coord(tile_info, center_coord);
-
-	const Coord coord_tl(LatLon(map_source->get_lat_max(), map_source->get_lon_min()), CoordMode::LATLON);
-	const Coord coord_br(LatLon(map_source->get_lat_min(), map_source->get_lon_max()), CoordMode::LATLON);
-
-	return center_coord.is_inside(&coord_tl, &coord_br);
-}
-
-
-
-
 /* Map download function. */
 void MapDownloadJob::run(void)
 {
 	DownloadHandle * dl_handle = this->map_source->download_handle_init();
 	unsigned int donemaps = 0;
 
-	/* The purpose of this call is to set fields in tile_iter
+	/* The purpose of this assignment is to set fields in tile_iter
 	   other than x and y.  x and y will be set and incremented in
 	   loops below, but other fields of the iter also need to have
 	   some valid values. These valid values are set here. */
-	TileInfo tile_iter = this->tile_info;
+	TileInfo tile_iter = this->common_tile_info;
 
 	qDebug() << SG_PREFIX_I << "Called";
 
-	for (tile_iter.x = this->x_begin; tile_iter.x <= this->x_end; tile_iter.x++) {
-		for (tile_iter.y = this->y_begin; tile_iter.y <= this->y_end; tile_iter.y++) {
+	for (tile_iter.x = this->range.x_begin; tile_iter.x <= this->range.x_end; tile_iter.x++) {
+		for (tile_iter.y = this->range.y_begin; tile_iter.y <= this->range.y_end; tile_iter.y++) {
 
 			/* Only attempt to download a tile from areas supported by current map source. */
-			if (!is_in_area(this->map_source, tile_iter)) {
+			if (!this->map_source->includes_tile(tile_iter)) {
 				qDebug() << SG_PREFIX_I << "Tile" << tile_iter.x << tile_iter.y << "is not in area of map id" << (int) this->map_source->map_type_id << ", skipping";
 				continue;
 			}
@@ -194,8 +176,8 @@ void MapDownloadJob::run(void)
 				}
 			}
 
-			this->tile_info.x = tile_iter.x;
-			this->tile_info.y = tile_iter.y;
+			this->tile_info_in_download = tile_iter;
+			this->download_in_progress = true;
 
 			if (need_download) {
 				/* tile_iter has obviously x and y fields, but also all other fields
@@ -236,8 +218,7 @@ void MapDownloadJob::run(void)
 			this->mutex.unlock();
 
 			/* We're temporarily between downloads. */
-			this->tile_info.x = 0;
-			this->tile_info.y = 0;
+			this->download_in_progress = false;
 		}
 	}
 	this->map_source->download_handle_cleanup(dl_handle);
@@ -254,16 +235,20 @@ void MapDownloadJob::run(void)
 
 void MapDownloadJob::cleanup_on_cancel(void)
 {
-	if (this->tile_info.x || this->tile_info.y) {
-		this->file_full_path = this->map_cache.get_cache_file_full_path(this->tile_info,
-										this->map_source->map_type_id,
-										this->map_source->get_map_type_string(),
-										this->map_source->get_file_extension());
-		if (0 == access(this->file_full_path.toUtf8().constData(), F_OK)) {
-			qDebug() << SG_PREFIX_D << "Removing file" << this->file_full_path << "(cleanup on cancel)";
-			if (!QDir::root().remove(this->file_full_path)) {
-				qDebug() << SG_PREFIX_W << "Cleanup failed to remove file" << this->file_full_path;
-			}
+	if (!this->download_in_progress) {
+		return;
+	}
+
+
+	/* Remove file that is being / has been now downloaded. */
+	const QString full_path = this->map_cache.get_cache_file_full_path(this->tile_info_in_download,
+									   this->map_source->map_type_id,
+									   this->map_source->get_map_type_string(),
+									   this->map_source->get_file_extension());
+	if (0 == access(full_path.toUtf8().constData(), F_OK)) {
+		qDebug() << SG_PREFIX_D << "Removing file" << full_path << "(cleanup on cancel)";
+		if (!QDir::root().remove(full_path)) {
+			qDebug() << SG_PREFIX_W << "Cleanup failed to remove file" << full_path;
 		}
 	}
 }
@@ -271,22 +256,24 @@ void MapDownloadJob::cleanup_on_cancel(void)
 
 
 
-int MapDownloadJob::calculate_tile_count_to_download(const TileInfo & ulm, bool simple) const
+int MapDownloadJob::calculate_tile_count_to_download(void) const
 {
-	QPixmap pixmap; /* Defined on top, to avoid creating this object multiple times in the loop. */
-
-	TileInfo tile_iter = this->tile_info;
-	tile_iter.z = ulm.z;
-	tile_iter.scale = ulm.scale;
-
+	/* Defined on top, to avoid creating this object multiple times in the loop. */
+	QPixmap pixmap;
 	QString tile_file_full_path;
+
+	/* The two loops below will iterate over x and y, but the tile
+	   iterator also needs to have other tile info parameters
+	   set. These "other tile parameters" have been saved in
+	   constructor in ::common_tile_info. */
+	TileInfo tile_iter = this->common_tile_info;
 
 	int n_maps = 0;
 
-	for (tile_iter.x = this->x_begin; tile_iter.x <= this->x_end; tile_iter.x++) {
-		for (tile_iter.y = this->y_begin; tile_iter.y <= this->y_end; tile_iter.y++) {
+	for (tile_iter.x = this->range.x_begin; tile_iter.x <= this->range.x_end; tile_iter.x++) {
+		for (tile_iter.y = this->range.y_begin; tile_iter.y <= this->range.y_end; tile_iter.y++) {
 			/* Only count tiles from supported areas. */
-			if (!is_in_area(this->map_source, tile_iter)) {
+			if (!this->map_source->includes_tile(tile_iter)) {
 				continue;
 			}
 
@@ -364,6 +351,14 @@ int MapDownloadJob::calculate_tile_count_to_download(const TileInfo & ulm, bool 
 
 
 
+int MapDownloadJob::calculate_total_tile_count_to_download(void) const
+{
+	return (this->range.x_end - this->range.x_begin + 1) * (this->range.y_end - this->range.y_begin + 1);
+}
+
+
+
+
 void MapDownloadJob::set_description(MapDownloadMode a_map_download_mode, int maps_to_get, const QString & label)
 {
 	QString fmt;
@@ -381,21 +376,4 @@ void MapDownloadJob::set_description(MapDownloadMode a_map_download_mode, int ma
 	};
 
 	BackgroundJob::set_description(QString(fmt).arg(label));
-}
-
-
-
-
-void MapDownloadJob::reset_internal(void)
-{
-	this->tile_info.x = 0;
-	this->tile_info.y = 0;
-}
-
-
-
-
-int MapDownloadJob::calculate_total_tile_count_to_download(void) const
-{
-	return (this->x_end - this->x_begin + 1) * (this->y_end - this->y_begin + 1);
 }

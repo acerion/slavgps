@@ -18,45 +18,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_TILE_INFO_H_
-#define _SG_TILE_INFO_H_
+
+
+
+#include <algorithm> /* std::min(), std::max() */
 
 
 
 
-namespace SlavGPS {
+#include "mapcoord.h"
 
 
 
 
-	class TilesRange {
-	public:
-		int x_begin = 0;
-		int x_end   = 0;
-		int y_begin = 0;
-		int y_end   = 0;
-	};
+using namespace SlavGPS;
 
 
 
 
-	/* Common struct to all map types and map layer, to hold info
-	   about a particular map tile. */
-	class TileInfo {
-	public:
-		static TilesRange get_tiles_range(const TileInfo & ulm, const TileInfo & brm);
+TilesRange TileInfo::get_tiles_range(const TileInfo & ulm, const TileInfo & brm)
+{
+	TilesRange range;
 
-		int x, y;
-		int z;      /* Zone or anything else. */
-		int scale;
-	};
+	range.x_begin = std::min(ulm.x, brm.x);
+	range.x_end   = std::max(ulm.x, brm.x);
+	range.y_begin = std::min(ulm.y, brm.y);
+	range.y_end   = std::max(ulm.y, brm.y);
 
-
-
-
-} /* namespace SlavGPS */
-
-
-
-
-#endif /* #ifndef _SG_TILE_INFO_H_ */
+	return range;
+}

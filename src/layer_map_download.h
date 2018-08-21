@@ -61,14 +61,12 @@ namespace SlavGPS {
 
 		void cleanup_on_cancel(void);
 
-		int calculate_tile_count_to_download(const TileInfo & ulm, bool simple) const;
+		int calculate_tile_count_to_download(void) const;
 		int calculate_total_tile_count_to_download(void) const;
 
 		void run(void); /* Re-implementation of QRunnable::run(). */
 
 		void set_description(MapDownloadMode map_download_mode, int maps_to_get, const QString & label);
-
-		void reset_internal(void);
 
 		QString file_full_path;
 
@@ -84,13 +82,21 @@ namespace SlavGPS {
 	private:
 		MapTypeID map_type_id;
 		MapCacheObj map_cache;
-		TileInfo tile_info;
 
-		int x_begin = 0;
-		int x_end = 0;
-		int y_begin = 0;
-		int y_end = 0;
+		/* Tile info variable holding information common for
+		   all tiles downloaded by this job, across all x/y
+		   values. The variable stores values of fields other
+		   than x/y. */
+		TileInfo common_tile_info;
 
+		/* Tile that is currently being downloaded. */
+		TileInfo tile_info_in_download;
+
+		/* Downloading process (through download module) is
+		   taking place right now. */
+		bool download_in_progress = false;
+
+		TilesRange range;
 	};
 
 
