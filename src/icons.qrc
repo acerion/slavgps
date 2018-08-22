@@ -18,6 +18,8 @@
 
 	<file>icons/layer_tool/dem_download_18.png</file>
 
+	<file>icons/layer_tool/map_download_18.png</file>
+
 	<file>icons/layer_tool/trw_add_route_18.png</file>
 	<file>icons/layer_tool/trw_add_tr_18.png</file>
 	<file>icons/layer_tool/trw_add_wp_18.png</file>

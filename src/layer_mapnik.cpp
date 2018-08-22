@@ -1072,10 +1072,6 @@ LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * view
 	this->action_label       = QObject::tr("&Mapnik Features");
 	this->action_tooltip     = QObject::tr("Mapnik Features");
 	// this->action_accelerator = ...; /* Empty accelerator. */
-#ifdef K_FIXME_RESTORE
-	this->cursor_shape = Qt::ArrowCursor;
-	this->cursor_data = NULL;
-#endif
 }
 
 

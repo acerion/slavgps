@@ -202,11 +202,10 @@ void MapSource::set_map_type_string(const QString & new_map_type_string)
 {
 	this->map_type_string = new_map_type_string;
 
-#ifdef K_FIXME_RESTORE
 	/* Sanitize the name here for file usage.
-	   A simple check just to prevent containing slashes ATM. */
-	g_strdelimit(this->map_type_string, "\\/", 'x' );
-#endif
+	   A simple check just to prevent names containing slashes. */
+	this->map_type_string.replace('\\', 'x');
+	this->map_type_string.replace('/', 'x');
 }
 
 

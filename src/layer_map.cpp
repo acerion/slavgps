@@ -1523,17 +1523,13 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 {
 	this->id_string = "sg.tool.layer_map.maps_download";
 
-	this->action_icon_path   = "vik-icon-Maps Download";
+	this->action_icon_path   = ":/icons/layer_tool/map_download_18.png";
 	this->action_label       = QObject::tr("Maps Download");
 	this->action_tooltip     = QObject::tr("Maps Download");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
 	this->cursor_click = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
 	this->cursor_release = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
-#ifdef K_FIXME_RESTORE
-	this->cursor_shape = Qt::BitmapCursor;
-	this->cursor_data = &cursor_mapdl_pixmap;
-#endif
 }
 
 

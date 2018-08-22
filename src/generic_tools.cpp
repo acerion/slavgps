@@ -120,8 +120,6 @@ GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : Lay
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
-	//shape = Qt::BitmapCursor;
-	//this->cursor_data = &cursor_ruler_pixbuf;
 }
 
 
@@ -283,8 +281,6 @@ GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : Layer
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
-	//this->cursor_shape = Qt::BitmapCursor;
-	//this->cursor_data = &cursor_zoom_pixbuf;
 }
 
 
