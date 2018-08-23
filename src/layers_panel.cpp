@@ -256,7 +256,7 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 		if (!item->add_context_menu_items(menu, true)) {
 			return;
 		}
-		/* TODO: specific things for different types. */
+		/* TODO_LATER: specific things for different types. */
 	}
 
 	menu.exec(QCursor::pos());
@@ -355,7 +355,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	}
 
 
-	/* TODO: add error handling? */
+	/* TODO_LATER: add error handling? */
 	qDebug() << "EE" PREFIX << "Can't find place for new layer";
 
 	return;
@@ -368,7 +368,7 @@ void LayersPanel::move_item(bool up)
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
-		/* TODO: deactivate the buttons and stuff. */
+		/* TODO_LATER: deactivate the buttons and stuff. */
 		return;
 	}
 
@@ -377,7 +377,7 @@ void LayersPanel::move_item(bool up)
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		qDebug() << "II" PREFIX << "Move layer" << selected_item->name << (up ? "up" : "down");
 		/* A layer can be owned only by Aggregate layer.
-		   TODO: what about TRW layers under GPS layer? */
+		   TODO_LATER: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) { /* Selected item is not top level layer. */
 			qDebug() << "-----" PREFIX "step one";
@@ -411,7 +411,7 @@ void LayersPanel::draw_tree_items(Viewport * viewport, bool highlight_selected, 
 	qDebug() << "II" PREFIX "calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
 	this->toplayer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
 
-	/* K_TODO: layers panel or tree view or aggregate layer should
+	/* K_TODO_LATER: layers panel or tree view or aggregate layer should
 	   recognize which layer lays under non-transparent layers,
 	   and don't draw the layer hidden under non-transparent
 	   layer. */
@@ -430,7 +430,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		/* A layer can be owned only by Aggregate layer.
-		   TODO: what about TRW layers under GPS layer? */
+		   TODO_LATER: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
@@ -517,7 +517,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 
 		/* A layer can be owned only by Aggregate layer.
-		   TODO: what about TRW layers under GPS layer? */
+		   TODO_LATER: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
@@ -580,7 +580,7 @@ Layer * LayersPanel::get_selected_layer()
 
 
 
-#ifdef K_TODO
+#ifdef K_TODO_MAYBE
 bool LayersPanel::tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, Viewport * viewport)
 {
 	Layer * layer = this->get_selected_layer();

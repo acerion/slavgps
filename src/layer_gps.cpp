@@ -237,7 +237,7 @@ enum {
 static ParameterSpecification gps_layer_param_specs[] = {
 	/* NB gps_layer_inst_init() is performed after parameter registeration
 	   thus to give the protocols some potential values use the old static list. */
-	/* TODO: find another way to use gps_layer_inst_init()? */
+	/* TODO_LATER: find another way to use gps_layer_inst_init()? */
 	{ PARAM_PROTOCOL,                   NULL, "gps_protocol",              SGVariantType::String,  PARAMETER_GROUP_DATA_MODE,     QObject::tr("GPS Protocol:"),                     WidgetType::ComboBox,      &protocols_args,         gps_protocol_default,        NULL, NULL }, // List reassigned at runtime
 	{ PARAM_PORT,                       NULL, "gps_port",                  SGVariantType::String,  PARAMETER_GROUP_DATA_MODE,     QObject::tr("Serial Port:"),                      WidgetType::ComboBox,      &params_ports,           gps_port_default,            NULL, NULL },
 	{ PARAM_DOWNLOAD_TRACKS,            NULL, "gps_download_tracks",       SGVariantType::Boolean, PARAMETER_GROUP_DATA_MODE,     QObject::tr("Download Tracks:"),                  WidgetType::CheckButton,   NULL,                    sg_variant_true,             NULL, NULL },
@@ -666,7 +666,7 @@ LayerGPS::~LayerGPS()
 
 void LayerGPS::add_children_to_tree(void)
 {
-	/* TODO set to garmin by default.
+	/* TODO_LATER set to garmin by default.
 	   if (Babel::devices)
 	           device = ((BabelDevice*)g_list_nth_data(Babel::devices, last_active))->name;
 	   Need to access uibuild widgets somehow.... */
@@ -679,7 +679,7 @@ void LayerGPS::add_children_to_tree(void)
 	for (int ix = 0; ix < GPS_CHILD_LAYER_MAX; ix++) {
 		LayerTRW * trw = this->trw_children[ix];
 
-		/* TODO: find a way to pass 'above=true' argument to function adding new tree item. */
+		/* TODO_LATER: find a way to pass 'above=true' argument to function adding new tree item. */
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		trw->set_name(trw_names[ix].label);
@@ -872,7 +872,7 @@ void GPSSession::set_gps_device_info(const QString & info)
 */
 void GPSSession::process_line_for_gps_info(const char * line)
 {
-	if (strstr(line, "PRDDAT")) { /* kamilTODO: there is a very similar code in datasource_gps_progress() */
+	if (strstr(line, "PRDDAT")) { /* TODO_LATER: there is a very similar code in datasource_gps_progress() */
 		char **tokens = g_strsplit(line, " ", 0);
 		char info[128];
 		size_t ilen = 0;
@@ -1069,7 +1069,7 @@ void GPSSession::run(void)
 		babel_options.babel_args = this->babel_args;
 		result = babel_options.universal_import_fn(this->trw, NULL, this);
 	} else {
-		BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO: ::FromFile, but not input file specified. */
+		BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but not input file specified. */
 		export_options.output = this->port;
 		export_options.babel_args = this->babel_args;
 		result = export_options.universal_export_fn(this->trw, this->trk, this);
@@ -1108,7 +1108,7 @@ void GPSSession::run(void)
 		this->mutex.unlock();
 	} else {
 		this->mutex.unlock();
-		delete this; /* TODO: is is valid? Can we delete ourselves here? */
+		delete this; /* TODO_REALLY: is is valid? Can we delete ourselves here? */
 	}
 }
 
@@ -1464,7 +1464,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 				     || ((heading > last_heading) && (heading > (last_heading + 3)))
 				     || ((alt != VIK_DEFAULT_ALTITUDE) && (alt != last_alt)))))) {
 
-			/* TODO: check for new segments. */
+			/* TODO_LATER: check for new segments. */
 			Trackpoint * tp_ = new Trackpoint();
 			tp_->newsegment = false;
 			tp_->has_timestamp = true;
@@ -1610,7 +1610,7 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 
 
 
-/* TODO: maybe we could have a common code in LayerTRW for this. */
+/* TODO_MAYBE: maybe we could have a common code in LayerTRW for this. */
 static QString make_track_name(LayerTRW * trw)
 {
 	const QString base_name = "REALTIME";
@@ -1852,7 +1852,7 @@ void LayerGPS::child_layer_changed_cb(const QString & child_layer_name) /* Slot.
 {
 	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
 	if (this->visible) {
-		/* TODO: this can used from the background - e.g. in acquire
+		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
 		emit this->layer_changed(this->get_name());

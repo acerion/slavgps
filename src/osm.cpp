@@ -128,7 +128,7 @@ void SlavGPS::osm_init(void)
 
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%1&lon=%2&zoom=%3"));
 
-#ifdef K_TODO /* Correctly handle %d arguments in the string. */
+#ifdef K_TODO_LATER /* Correctly handle %d arguments in the string. */
 	/* Note the use of positional parameters. */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s"));
 #endif
@@ -176,7 +176,7 @@ void SlavGPS::osm_init(void)
 
 	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
 	RoutingEngineWeb * osrm = new RoutingEngineWeb();
-	/* TODO: review and improve these assignments and format specifiers. */
+	/* TODO_LATER: review and improve these assignments and format specifiers. */
 	osrm->id = "osrm";
 	osrm->label = "OSRM";
 	osrm->format = "gpx";
@@ -218,7 +218,7 @@ QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj
 	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale, buf, tile_max, &compressed, err_msg);
 	if (len > 0) {
 		if (compressed) {
-			/* TODO: Not handled yet - I don't think this is used often - so implement later if necessary. */
+			/* TODO_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
 			qDebug() << SG_PREFIX_E << "Compressed metatiles not implemented";
 			free(buf);
 			return pixmap;
@@ -275,7 +275,7 @@ MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk,
 
 QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, MapSourceArgs & args)
 {
-	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO: why do we need to create the copy with explicit layout? */
+	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO_LATER: why do we need to create the copy with explicit layout? */
 	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info,
 										       this->map_type_id,
 										       "", /* In other map sources it would be this->get_map_type_string(), but not for this map source. */
@@ -294,7 +294,7 @@ QStringList MapSourceOSMOnDisk::get_tile_description(const MapCacheObj & map_cac
 {
 	QStringList items;
 
-	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO: why do we need to create the copy with explicit layout? */
+	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO_LATER: why do we need to create the copy with explicit layout? */
 
 	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info, /* ulm */
 										       this->map_type_id,

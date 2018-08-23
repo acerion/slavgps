@@ -650,7 +650,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 				babel_action.input = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id); /* URL. */
 
 				convert_result = babel_action.import_from_url(target_layer, &local_dl_options);
-				/* TODO investigate using a progress bar:
+				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
 				got_something = got_something || convert_result;

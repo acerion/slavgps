@@ -68,14 +68,14 @@ VersionCheck::~VersionCheck()
 
 void VersionCheck::new_version_available_dialog(const QString & new_version)
 {
-	/* TODO: it would be nice if we could run this in idle time. */
+	/* TODO_MAYBE: it would be nice if we could run this in idle time. */
 
 	/* Only a simple goto website option is offered.
 	   Trying to do an installation update is platform specific. */
 	if (Dialog::yes_or_no(QObject::tr("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(new_version), this->window)) {
 
 		/* 'VIKING_URL' redirects to the Wiki, here we want to go the main site. */
-		open_url("http://sourceforge.net/projects/viking/"); /* TODO: provide correct URL for SlavGPS. */
+		open_url("http://sourceforge.net/projects/viking/"); /* TODO_LATER: provide correct URL for SlavGPS. */
 	}
 
 	return;
@@ -93,7 +93,7 @@ void VersionCheck::run()
 
 	QTemporaryFile tmp_file;
 	// const char *file_full_path = strdup("VERSION");
-	if (!dl_handle.download_to_tmp_file(tmp_file, "http://sourceforge.net/projects/viking/files/VERSION")) { /* TODO: provide correct URL for SlavGPS. */
+	if (!dl_handle.download_to_tmp_file(tmp_file, "http://sourceforge.net/projects/viking/files/VERSION")) { /* TODO_LATER: provide correct URL for SlavGPS. */
 		return;
 	}
 
@@ -105,7 +105,7 @@ void VersionCheck::run()
 	char latest_version_buffer[32 + 1] = { 0 };
 	off_t file_size = tmp_file.size();
 	if (file_size > (off_t) sizeof (latest_version_buffer) - 1) {
-		/* TODO: report very large files - this should never happen and may be a sign of problems. */
+		/* TODO_LATER: report very large files - this should never happen and may be a sign of problems. */
 		file_size = (off_t) sizeof (latest_version_buffer) - 1;
 	}
 	unsigned char * file_contents = tmp_file.map(0, file_size, QFileDevice::MapPrivateOption);

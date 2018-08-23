@@ -350,7 +350,7 @@ void Toolbox::handle_mouse_click(QMouseEvent * event)
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
+	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO_LATER: move this into click() method. */
 	this->active_tool->handle_mouse_click(layer, event);
 
 	return;
@@ -363,7 +363,7 @@ void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 {
 	handle_mouse_event_common();
 
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO: move this into click() method. */
+	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO_LATER: move this into click() method. */
 	this->active_tool->handle_mouse_double_click(layer, event);
 
 	return;
@@ -394,7 +394,7 @@ void Toolbox::handle_mouse_release(QMouseEvent * event)
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release); /* TODO: move this into release() method. */
+	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release); /* TODO_LATER: move this into release() method. */
 	this->active_tool->handle_mouse_release(layer, event);
 
 	return;

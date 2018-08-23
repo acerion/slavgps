@@ -44,7 +44,7 @@ using namespace SlavGPS;
 /* The last file format selected. */
 static int g_last_file_type_index = 0;
 
-/* TODO: verify how to implement "last used directory" here. Look at
+/* TODO_LATER: verify how to implement "last used directory" here. Look at
    g_last_directory_url in datasource_file.cpp. */
 
 
@@ -269,7 +269,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 	}
 	this->grid->addWidget(this->file_selector, 1, 0);
 
-#ifdef K_TODO
+#ifdef K_TODO_MAYBE
 	/* We don't do this because we don't have filename here. */
 	if (!filename.isEmpty()) {
 		this->file_entry->preselect_file(filename);

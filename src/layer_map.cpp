@@ -378,7 +378,7 @@ void MapSources::register_map_source(MapSource * map_source)
 
 		map_types.push_back(SGLabelID(label, (int) map_type_id));
 		map_source_interfaces[map_type_id] = map_source;
-		/* TODO: verify in application that properties dialog sees updated list of map types. */
+		/* TODO_LATER: verify in application that properties dialog sees updated list of map types. */
 	} else {
 
 		/* Update (overwrite) existing entry. */
@@ -391,7 +391,7 @@ void MapSources::register_map_source(MapSource * map_source)
 			qDebug() << SG_PREFIX_E << "Old map source was NULL";
 		}
 
-		/* TODO: the concept of map types, and of updating it,
+		/* TODO_MAYBE: the concept of map types, and of updating it,
 		   could be implemented better. */
 		for (int i = 0; i < (int) map_types.size(); i++) {
 			if (map_types[i].id == (int) map_type_id) {
@@ -400,7 +400,7 @@ void MapSources::register_map_source(MapSource * map_source)
 			}
 		}
 
-		/* TODO: verify in application that properties dialog sees updated entry. */
+		/* TODO_LATER: verify in application that properties dialog sees updated entry. */
 	}
 }
 
@@ -434,8 +434,8 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 
 MapTypeID LayerMap::get_default_map_type_id(void)
 {
-	/* TODO: verify that this function call works as expected. */
-	SGVariant var = LayerDefaults::get(LayerType::Map, "mode", SGVariantType::Int); /* kamilTODO: get the default value from LayerInterface. */
+	/* TODO_LATER: verify that this function call works as expected. */
+	SGVariant var = LayerDefaults::get(LayerType::Map, "mode", SGVariantType::Int); /* TODO_LATER: get the default value from LayerInterface. */
 	if (var.u.val_int == 0) {
 		var = id_default();
 	}
@@ -668,7 +668,7 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 
 
 
-#ifdef K_TODO
+#ifdef K_TODO_LATER
 void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 {
 	switch (values->param_id) {
@@ -878,7 +878,7 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & ti
 	/* Not an error, simply the pixmap was not in a cache. Let's generate the pixmap. */
 	qDebug() << SG_PREFIX_I << "CACHE MISS";
 
-	MapSource * map_source = map_source_interfaces[this->map_type_id]; /* TODO: this variable should be const. */
+	MapSource * map_source = map_source_interfaces[this->map_type_id]; /* TODO_LATER: this variable should be const. */
 
 	MapSourceArgs args;
 	args.sqlite_handle = &this->sqlite_handle;
@@ -925,7 +925,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 	}
 
 
-	if ((*this->last_center == center) /* TODO: perhaps Coord::distance()? */
+	if ((*this->last_center == center) /* TODO_MAYBE: perhaps Coord::distance()? */
 	    && this->last_map_zoom == viewport->get_map_zoom()) {
 
 		return false;

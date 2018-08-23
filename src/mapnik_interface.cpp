@@ -253,10 +253,10 @@ QPixmap MapnikInterface::render_map(double lat_tl, double lon_tl, double lat_br,
 			}
 			memcpy(image_raw_data, image.raw_data(), width * height * 4);
 #ifdef K_FIXME_RESTORE
-			/* TODO: QPixmap::loadFromData() ? */
+			/* TODO_LATER: QPixmap::loadFromData() ? */
 			result = gdk_pixbuf_new_from_data(image_raw_data, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
-			/* TODO: free image_raw_data? */
-			/* TODO: in original application the image_raw_data was not deallocated. */
+			/* TODO_LATER: free image_raw_data? */
+			/* TODO_LATER: in original application the image_raw_data was not deallocated. */
 #endif
 		} else {
 			qDebug() << QObject::tr("Warning: Mapnik: image not rendered");

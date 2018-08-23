@@ -101,7 +101,7 @@ void AcquireGetter::on_complete_process(void)
 		if (this->acquiring->creating_new_layer) {
 
 			/* Only create the layer if it actually contains anything useful. */
-			/* TODO: create function for this operation to hide detail: */
+			/* TODO_LATER: create function for this operation to hide detail: */
 			if (!this->acquiring->trw->is_empty()) {
 				this->acquiring->trw->post_read(this->acquiring->viewport, true);
 				this->acquiring->panel->get_top_layer()->add_layer(this->acquiring->trw, true);
@@ -243,7 +243,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	if (!new_data_source->process_options->is_valid()) {
 		/* This shouldn't happen... */
 		this->progress_dialog->set_status(QObject::tr("Unable to create command\nAcquire method failed."));
-		this->progress_dialog->exec(); /* TODO: improve handling of invalid process options. */
+		this->progress_dialog->exec(); /* TODO_LATER: improve handling of invalid process options. */
 		delete this->progress_dialog;
 		return;
 	}

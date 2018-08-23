@@ -472,7 +472,7 @@ void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 		const QString uniq_name = this->new_unique_element_name(trk->name);
 		trk->set_name(uniq_name);
 
-		/* TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
+		/* TODO_LATER: do we really need to do this? Isn't the name in tree view auto-updated? */
 		if (trk->index.isValid()) {
 			this->tree_view->apply_tree_item_name(trk);
 			this->tree_view->sort_children(this, sort_order);
@@ -793,9 +793,9 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 	QAction * qa = NULL;
 
 
-	/* TODO: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
+	/* TODO_LATER: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	/* TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
+	/* TODO_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::SUBLAYER);
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
 
@@ -940,13 +940,13 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 
 	const bool item_is_selected = parent_is_selected || g_tree->is_in_selected(this);
 
-#ifdef K_TODO
+#ifdef K_TODO_MAYBE
 	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
 #endif
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 			(*iter)->draw_tree_item(viewport, highlight_selected, item_is_selected);
 		}
-#ifdef K_TODO
+#ifdef K_TODO_MAYBE
 	}
 #endif
 }
@@ -1108,7 +1108,7 @@ bool LayerTRWTracks::delete_track(Track * trk)
 	this->children_map.erase(trk->get_uid()); /* Erase by key. */ // zzz
 
 
-	/* TODO: optimize. */
+	/* TODO_LATER: optimize. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		if (TreeItem::the_same_object(*iter, trk)) {
 			this->children_list.erase(iter);

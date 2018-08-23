@@ -105,7 +105,7 @@ QString Measurements::get_distance_string(double value, int precision)
 	case DistanceUnit::Miles:
 		buffer = QObject::tr("%1 miles").arg(value, 0, 'f', precision);
 		break;
-	case DistanceUnit::NauticalMiles: /* TODO: verify this case. */
+	case DistanceUnit::NauticalMiles: /* TODO_LATER: verify this case. */
 		buffer = QObject::tr("%1 NM").arg(value, 0, 'f', precision);
 		break;
 	default:
@@ -132,7 +132,7 @@ QString Measurements::get_distance_string_short(double value, int precision)
 		break;
 	case DistanceUnit::Miles:
 	case DistanceUnit::NauticalMiles:
-		buffer = QObject::tr("%1 yards").arg(value * 1.0936133, 0, 'f', precision); /* Miles -> yards. TODO: verify this calculation. */
+		buffer = QObject::tr("%1 yards").arg(value * 1.0936133, 0, 'f', precision); /* Miles -> yards. TODO_LATER: verify this calculation. */
 		break;
 	default:
 		buffer = "???";

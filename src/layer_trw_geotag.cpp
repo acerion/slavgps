@@ -338,7 +338,7 @@ void GeotagJob::geotag_track(Track * trk2)
 
 		Trackpoint * tp_next = *std::next(iter);
 
-		/* TODO need to use 'has_timestamp' property. */
+		/* TODO_REALLY need to use 'has_timestamp' property. */
 		if (tp->timestamp == tp_next->timestamp) {
 			continue;
 		}
@@ -477,7 +477,7 @@ void GeotagJob::geotag(void)
 			if (!updated_existing_waypoint) {
 				new_wp->set_name(new_wp_name);
 				this->trw->add_waypoint_from_file(new_wp);
-				/* TODO: do we delete the new_wp if we don't add it to layer? How was it done in Viking? */
+				/* TODO_REALLY: do we delete the new_wp if we don't add it to layer? How was it done in Viking? */
 			}
 
 			/* Mark for redraw. */
@@ -568,7 +568,7 @@ void GeotagJob::geotag(void)
 
 GeotagJob::~GeotagJob()
 {
-	/* kamilTODO: is that all that we need to clean up? */
+	/* TODO_LATER: is that all that we need to clean up? */
 }
 
 
@@ -582,7 +582,7 @@ void GeotagJob::run(void)
 	const int n_files = this->selected_files.size();
 	int done = 0;
 
-	/* TODO decide how to report any issues to the user... */
+	/* TODO_LATER decide how to report any issues to the user... */
 
 	for (auto iter = this->selected_files.begin(); iter != this->selected_files.end(); iter++) {
 		/* For each file attempt to geotag it. */
@@ -814,7 +814,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	dialog->exec();
 
 
-	/* TODO: is it safe to delete dialog here? There is a
+	/* TODO_LATER: is it safe to delete dialog here? There is a
 	   background job running, started in ::on_accept_cb(), that
 	   may be using some data from the dialog. */
 	delete dialog;

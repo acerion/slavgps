@@ -394,7 +394,7 @@ static void get_etag(const QString & file_path, CurlOptions * curl_options)
 		curl_options->etag = NULL;
 	}
 
-	/* TODO: should check that etag is a valid string. */
+	/* TODO_LATER: should check that etag is a valid string. */
 }
 
 

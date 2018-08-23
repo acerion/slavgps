@@ -162,11 +162,11 @@ bool PropertiesDialogTP::set_timestamp_to_tp(time_t timestamp_value)
 		return false;
 	}
 	if (this->sync_to_tp_block) {
-		/* TODO: indicate to user that operation has failed. */
+		/* TODO_LATER: indicate to user that operation has failed. */
 		return false;
 	}
 
-	/* TODO: consider warning about unsorted timestamps in consecutive trackpoints? */
+	/* TODO_LATER: consider warning about unsorted timestamps in consecutive trackpoints? */
 
 	this->cur_tp->timestamp = timestamp_value;
 	this->cur_tp->has_timestamp = (timestamp_value != 0);

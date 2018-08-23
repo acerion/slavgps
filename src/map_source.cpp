@@ -72,7 +72,7 @@ MapSource::MapSource()
 {
 	fprintf(stderr, "MapSource regular constructor called\n");
 
-	this->map_type_string = QObject::tr("Unknown"); /* I usually write that it's non-translatable, but this is exception. TODO: maybe this is a sign of bad design. */
+	this->map_type_string = QObject::tr("Unknown"); /* I usually write that it's non-translatable, but this is exception. TODO_LATER: maybe this is a sign of bad design. */
 	this->map_type_id = MapTypeID::Initial;
 	this->label = "<no-set>";
 

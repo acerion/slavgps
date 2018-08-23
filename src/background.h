@@ -78,7 +78,7 @@ namespace SlavGPS {
 		BackgroundJob() {};
 		~BackgroundJob();
 
-		virtual void run() {}; /* Re-implementation of QRunnable::run(). TODO: make this function pure virtual in future. */
+		virtual void run() {}; /* Re-implementation of QRunnable::run(). TODO_LATER: make this function pure virtual in future. */
 
 		virtual void cleanup_on_cancel(void) {};
 

@@ -137,7 +137,7 @@ namespace SlavGPS {
 		*/
 		static void register_group(const QString & group_key, const QString & group_name);
 
-		/* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
+		/* Nothing in pref is copied neither but pref itself is copied. (TODO_LATER: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
 		   so pref key is not copied. default param data IS copied. */
 		/* Group field (integer) will be overwritten. */
 		/* \param param_spec should be persistent through the life of the preference. */

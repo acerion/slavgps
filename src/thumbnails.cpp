@@ -162,7 +162,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 	QString target_full_path = QString("%1%2%3").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR);
 	const QDir thumbs_dir(target_full_path); /* Here we are still using path to a directory, not a final-final path. */
 	/* Create thumbnails directory (with all parent dirs if necessary).
-	   TODO: viking used 0700 permissions for the directory. What should we do? Use umask? */
+	   TODO_LATER: viking used 0700 permissions for the directory. What should we do? Use umask? */
 	if (!thumbs_dir.mkpath(".")) {
 		qDebug() << "EE: Failed to create thumbnails directory" << target_full_path;
 	}

@@ -48,7 +48,7 @@
 
 
 
-/* TODO:
+/* TODO_LATER:
 
    1. the implementation captures only the first result returned by
       server.  If the server returns more than one location of a name,
@@ -295,7 +295,7 @@ QString GotoToolXML::get_url_format(void) const
 
 bool GotoToolXML::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 {
-	QFile file2(file.fileName()); /* TODO: why do we need the intermediate file here? */
+	QFile file2(file.fileName()); /* TODO_LATER: why do we need the intermediate file here? */
 
 	QXmlSimpleReader xml_reader;
 	QXmlInputSource source(&file2);

@@ -115,7 +115,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	{
 		const LatLon lat_lon = wp->coord.get_latlon();
 
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_NAME, SGVariant(default_wp_name))); /* TODO: This should be somehow taken from param_specs->default */
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_NAME, SGVariant(default_wp_name))); /* TODO_LATER: This should be somehow taken from param_specs->default */
 
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_LAT, SGVariant(lat_lon.lat, SGVariantType::Latitude)));
 
@@ -142,13 +142,13 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		}
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_ALT, SGVariant(alt)));
 
-		/* TODO: comment may contain URL. Make the label or input field clickable. */
+		/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_COMMENT, SGVariant(wp->comment)));
 
-		/* TODO: description may contain URL. Make the label or input field clickable. */
+		/* TODO_MAYBE: description may contain URL. Make the label or input field clickable. */
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_DESC, SGVariant(wp->description)));
 
-		/* TODO: perhaps add file filter for image files? */
+		/* TODO_MAYBE: perhaps add file filter for image files? */
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_IMAGE, SGVariant(wp->image_full_path)));
 
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_SYMBOL, SGVariant(wp->symbol_name)));
@@ -179,7 +179,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 
 	/*
-	  TODO: changes to coordinates of waypoint need to be
+	  TODO_LATER: changes to coordinates of waypoint need to be
 	  translated "in real time" (without the need to close the
 	  dialog window) to position of waypoint on viewport.
 
@@ -188,7 +188,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	*/
 
 	/*
-	  TODO: changes in coordinates of waypoint need to be passed
+	  TODO_LATER: changes in coordinates of waypoint need to be passed
 	  to datetime button, because in some cases (in World time
 	  reference system) the value of button label depends on
 	  coordinates of waypoint.
@@ -204,7 +204,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_NAME]);
 		const QString entered_name = param_value.val_string;
 
-		if (entered_name.isEmpty()) { /* TODO: other checks (isalpha or whatever). */
+		if (entered_name.isEmpty()) { /* TODO_LATER: other checks (isalpha or whatever). */
 			Dialog::info(QObject::tr("Please enter a name for the waypoint."), parent);
 			continue;
 		}
@@ -223,7 +223,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_TIME]);
 		wp->timestamp = param_value.get_timestamp();
-		wp->has_timestamp = wp->timestamp != 0; /* TODO: zero value may still be a valid time stamp. */
+		wp->has_timestamp = wp->timestamp != 0; /* TODO_LATER: zero value may still be a valid time stamp. */
 
 
 		/* Always store Altitude in metres. */
@@ -268,7 +268,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 			wp->set_symbol(param_value.val_string);
 		}
 
-#ifdef TODO
+#ifdef TODO_LATER
 		if (wp->source != sourceentry->text()) {
 			wp->set_source(sourceentry->text());
 		}

@@ -87,7 +87,7 @@ QString LayerTool::get_description() const
 
 
 /* Background drawing hook, to be passed the viewport. */
-static bool tool_sync_done = true; /* TODO: get rid of this global variable. */
+static bool tool_sync_done = true; /* TODO_LATER: get rid of this global variable. */
 
 
 

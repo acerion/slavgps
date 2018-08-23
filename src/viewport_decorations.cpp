@@ -144,7 +144,7 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 	QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
 	QRectF bounding_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 300, (int) value_start.y());
 	viewport->draw_text(QFont("Helvetica", 40), pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
-	/* TODO: we need to draw background of the text in some color,
+	/* TODO_LATER: we need to draw background of the text in some color,
 	   so that it's more visible on a map that will be present in the background. */
 
 #if 1

@@ -164,7 +164,7 @@ bool DEM::parse_header(char * buffer)
 	get_double_and_continue(&buffer, &val, true);
 	/* this->orig_vert_units = val; now done below */
 
-	/* TODO: do this for real. these are only for 1:24k and 1:250k USGS */
+	/* TODO_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 		this->east_scale = 10.0; /* meters */
 		this->north_scale = 10.0;
@@ -505,7 +505,7 @@ bool DEM::read_other(const QString & full_path)
 		fclose(f);
 		return false;
 	}
-	/* TODO: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
+	/* TODO_LATER: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
 
 	this->n_columns = 0;
 	/* Use the two variables to record state for ->parse_block(). */
@@ -522,7 +522,7 @@ bool DEM::read_other(const QString & full_path)
 		this->parse_block(buffer, &cur_column, &cur_row);
 	}
 
-	/* TODO - class C records (right now says 'Invalid' and dies) */
+	/* TODO_LATER - class C records (right now says 'Invalid' and dies) */
 
 	fclose(f);
 	f = NULL;
@@ -691,7 +691,7 @@ int16_t DEM::get_shepard_interpol(double east, double north)
 	double t = 0.0;
 	double b = 0.0;
 
-#ifdef K_TODO
+#ifdef K_TODO_MAYBE
 	/* Derived method by Franke & Nielson. Does not seem to work too well here. */
 	for (int i = 0; i < 4; i++) {
 		tmp = pow((1.0 * (max_dist - dists[i]) / max_dist * dists[i]), 2);

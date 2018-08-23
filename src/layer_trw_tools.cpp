@@ -90,7 +90,7 @@ extern LayerTool * trw_layer_tools[];
 
 
 static ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport);
-static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport) { return ToolStatus::Ignored; } /* TODO: implement the function for route finder tool. */
+static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport) { return ToolStatus::Ignored; } /* TODO_LATER: implement the function for route finder tool. */
 
 
 
@@ -555,7 +555,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 			   globally-selected waypoint, and waypoint
 			   selected by this tool.
 
-			   TODO: do we need to verify that
+			   TODO_LATER: do we need to verify that
 			   wp_search.closest_wp != current_wp? */
 
 			trw->tree_view->select_and_expose_tree_item(wp_search.closest_wp);
@@ -1047,7 +1047,7 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 	track->apply_dem_data_last_trackpoint();
 
 
-	/* TODO: I think that in current implementation of handling of double click we don't need these fields. */
+	/* TODO_LATER: I think that in current implementation of handling of double click we don't need these fields. */
 	trw->ct_x1 = trw->ct_x2;
 	trw->ct_y1 = trw->ct_y2;
 	trw->ct_x2 = ev->x();
@@ -1071,7 +1071,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 	if (ev->button() == Qt::MiddleButton) {
 		/* As the display is panning, the new track pixmap is now invalid so don't draw it
 		   otherwise this drawing done results in flickering back to an old image. */
-		/* TODO: implement panning during track creation. */
+		/* TODO_LATER: implement panning during track creation. */
 		trw->draw_sync_do = false;
 		return ToolStatus::Ignored;
 
@@ -1442,7 +1442,7 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 
 ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
-	/* TODO: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
+	/* TODO_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
 	return ToolStatus::Ignored;
 }
 

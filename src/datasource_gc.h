@@ -69,7 +69,7 @@ namespace SlavGPS {
 		BabelOptions * get_process_options_none(void);
 
 		QSpinBox num_spin;
-		QLineEdit center_entry; /* TODO make separate widgets for lat/lon. */
+		QLineEdit center_entry; /* TODO_REALLY make separate widgets for lat/lon. */
 		QDoubleSpinBox miles_radius_spin;
 
 		QPen circle_pen;

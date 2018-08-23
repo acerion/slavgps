@@ -83,6 +83,7 @@ static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_defaul
 
 static ParameterScale<int> scale_alpha(0,  255, SGVariant((int32_t) 255),  5, 0); /* PARAM_ALPHA */
 static ParameterScale<int> scale_timeout(0, 1024, SGVariant((int32_t) 168), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
+static ParameterScale<int> scale_threads(1, 64, SGVariant((int32_t) 1), 1, 0); /* 64 threads should be enough for anyone...; TODO_LATER: verify the hardcoded default value. */
 
 
 enum {
@@ -206,14 +207,14 @@ static SGVariant fonts_default(void)
 
 static ParameterSpecification prefs[] = {
 	/* Changing these values only applies before first mapnik layer is 'created' */
-	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "plugins_directory",       SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Plugins Directory:"),        WidgetType::FolderEntry,   NULL,           plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 1, PREFERENCES_NAMESPACE_MAPNIK, "fonts_directory",         SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Fonts Directory:"),          WidgetType::FolderEntry,   NULL,           fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 2, PREFERENCES_NAMESPACE_MAPNIK, "recurse_fonts_directory", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC,  QObject::tr("Recurse Fonts Directory:"),  WidgetType::CheckButton,   NULL,           sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
-	{ 3, PREFERENCES_NAMESPACE_MAPNIK, "rerender_after",          SGVariantType::Int,     PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout (hours):"), WidgetType::SpinBoxInt,    &scale_timeout, NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "plugins_directory",                   SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Plugins Directory:"),        WidgetType::FolderEntry,   NULL,           plugins_default, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 1, PREFERENCES_NAMESPACE_MAPNIK, "fonts_directory",                     SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("Fonts Directory:"),          WidgetType::FolderEntry,   NULL,           fonts_default,   NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 2, PREFERENCES_NAMESPACE_MAPNIK, "recurse_fonts_directory",             SGVariantType::Boolean, PARAMETER_GROUP_GENERIC,  QObject::tr("Recurse Fonts Directory:"),  WidgetType::CheckButton,   NULL,           sg_variant_true, NULL, N_("You need to restart Viking for a change to this value to be used") },
+	{ 3, PREFERENCES_NAMESPACE_MAPNIK, "rerender_after",                      SGVariantType::Int,     PARAMETER_GROUP_GENERIC,  QObject::tr("Rerender Timeout (hours):"), WidgetType::SpinBoxInt,    &scale_timeout, NULL,            NULL, N_("You need to restart Viking for a change to this value to be used") },
 	/* Changeable any time. */
-	{ 4, PREFERENCES_NAMESPACE_MAPNIK, "carto",                   SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("CartoCSS:"),                 WidgetType::FileSelector,  NULL,           NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
-
-	{ 5, NULL,                         "",                        SGVariantType::Empty,   PARAMETER_GROUP_GENERIC,  QString(""),                              WidgetType::None,          NULL,           NULL,            NULL, NULL } /* Guard. */
+	{ 4, PREFERENCES_NAMESPACE_MAPNIK, "carto",                               SGVariantType::String,  PARAMETER_GROUP_GENERIC,  QObject::tr("CartoCSS:"),                 WidgetType::FileSelector,  NULL,           NULL,            NULL, N_("The program to convert CartoCSS files into Mapnik XML") },
+	{ 5, PREFERENCES_NAMESPACE_MAPNIK, "background_max_threads_local_mapnik", SGVariantType::Int,     PARAMETER_GROUP_GENERIC,  QObject::tr("Threads:"),                  WidgetType::SpinBoxInt,    &scale_threads, NULL,            NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
+	{ 6, NULL,                         "",                                    SGVariantType::Empty,   PARAMETER_GROUP_GENERIC,  QString(""),                              WidgetType::None,          NULL,           NULL,            NULL, NULL } /* Guard. */
 };
 
 
@@ -244,6 +245,9 @@ void SlavGPS::vik_mapnik_layer_init(void)
 	Preferences::register_parameter(prefs[i], scale_timeout.initial);
 	i++;
 	Preferences::register_parameter(prefs[i], SGVariant("carto", prefs[i].type_id));
+	i++;
+	/* Default to 1 thread due to potential crashing issues. */
+	Preferences::register_parameter(prefs[i], SGVariant((int32_t) 1, prefs[i].type_id));
 	i++;
 }
 
@@ -561,8 +565,8 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 	if (ans.isEmpty()) {
 		this->loaded = true;
 		if (!from_file) {
-			/* TODO: shouldn't we use Window::update_recent_files()? */
-			update_desktop_recent_documents(this->get_window(), this->filename_xml, ""); /* TODO: provide correct mime data type for mapnik data. */
+			/* TODO_LATER: shouldn't we use Window::update_recent_files()? */
+			update_desktop_recent_documents(this->get_window(), this->filename_xml, ""); /* TODO_LATER: provide correct mime data type for mapnik data. */
 		}
 	} else {
 		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
@@ -660,7 +664,7 @@ void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, const T
 	}
 	this->possibly_save_pixmap(pixmap, ti_ul);
 
-	/* TODO: Mapnik can apply alpha, but use our own function for now. */
+	/* TODO_MAYBE: Mapnik can apply alpha, but use our own function for now. */
 	if (scale_alpha.is_in_range(this->alpha)) {
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
@@ -815,8 +819,8 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		}
 	}
 
-#ifdef K_TODO
-	/* kamilTODO: this code would be overwritten in screen_pos_to_coord() */
+#ifdef K_TODO_LATER
+	/* TODO_LATER: this code would be overwritten in screen_pos_to_coord() */
 	ul.mode = CoordMode::LATLON;
 	br.mode = CoordMode::LATLON;
 #endif
@@ -830,7 +834,7 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	if (map_utils_coord_to_iTMS(coord_ul, xzoom, yzoom, ti_ul) &&
 	     map_utils_coord_to_iTMS(coord_br, xzoom, yzoom, ti_br)) {
-		/* TODO: Understand if tilesize != 256 does this need to use shrinkfactors? */
+		/* TODO_LATER: Understand if tilesize != 256 does this need to use shrinkfactors? */
 		int xx, yy;
 
 		int xmin = MIN(ti_ul.x, ti_br.x), xmax = MAX(ti_ul.x, ti_br.x);
@@ -1134,7 +1138,7 @@ LayerMapnik::LayerMapnik()
 	this->loaded = false;
 	this->mi = new MapnikInterface();
 
-	/* kamilTODO: initialize this? */
+	/* TODO_LATER: initialize this? */
 	//this->rerender_ul;
 	//this->rerender_br;
 }

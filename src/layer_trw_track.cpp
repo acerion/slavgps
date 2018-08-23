@@ -411,7 +411,7 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 		this->speed = (tp_a.speed + tp_b.speed) / 2;
 	}
 
-	/* TODO - improve interpolation of course, as it may not be correct.
+	/* TODO_LATER - improve interpolation of course, as it may not be correct.
 	   if courses in degrees are 350 + 020, the mid course more likely to be 005 (not 185)
 	   [similar applies if value is in radians] */
 	if (tp_a.course != NAN && tp_b.course != NAN) {
@@ -714,7 +714,7 @@ unsigned int Track::get_segment_count() const
 
 
 
-/* kamilTODO: revisit this function and compare with original. */
+/* TODO_LATER: revisit this function and compare with original. */
 std::list<Track *> Track::split_into_segments(void)
 {
 	std::list<Track *> result;
@@ -786,7 +786,7 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 		return NULL;
 	}
 
-	/* TODO: make sure that tp is a member of this track. */
+	/* TODO_LATER: make sure that tp is a member of this track. */
 
 	const QString uniq_name = ((LayerTRW *) this->owning_layer)->new_unique_element_name(this->type_id, this->name);
 	if (!uniq_name.size()) {
@@ -1128,7 +1128,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 			   Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception) */
 
 			if ((*iter)->altitude > SG_ALTITUDE_RANGE_MAX) {
-				/* TODO: clamp the invalid values, but still generate vector? */
+				/* TODO_LATER: clamp the invalid values, but still generate vector? */
 				qDebug() << "WW" PREFIX << "track altitude" << (*iter)->altitude << "out of range; not generating vector";
 				correct = false;
 				break;
@@ -1181,13 +1181,13 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 				/* Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero). */
 				compressed_ad.y[current_chunk] = altitude1;
 				if (current_chunk > 0) {
-					/* TODO: verify this. */
+					/* TODO_LATER: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 			} else {
 				compressed_ad.y[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (delta_d / 2)) / current_seg_length);
 				if (current_chunk > 0) {
-					/* TODO: verify this. */
+					/* TODO_LATER: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 			}
@@ -1229,14 +1229,14 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 
 				compressed_ad.y[current_chunk] = current_area_under_curve / current_dist;
 				if (current_chunk > 0) {
-					/* TODO: verify this. */
+					/* TODO_LATER: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 				if (std::next(iter) == this->trackpoints.end()) {
 					for (int i = current_chunk + 1; i < compressed_n_points; i++) {
 						compressed_ad.y[i] = compressed_ad.y[current_chunk];
 						if (current_chunk > 0) {
-							/* TODO: verify this. */
+							/* TODO_LATER: verify this. */
 							compressed_ad.x[i] = compressed_ad.x[current_chunk - 1] + delta_d;
 						}
 					}
@@ -1246,7 +1246,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 				current_area_under_curve += dist_along_seg * (altitude1 + (altitude2 - altitude1) * dist_along_seg / current_seg_length);
 				compressed_ad.y[current_chunk] = current_area_under_curve / delta_d;
 				if (current_chunk > 0) {
-					/* TODO: verify this. */
+					/* TODO_LATER: verify this. */
 					compressed_ad.x[current_chunk] = compressed_ad.x[current_chunk - 1] + delta_d;
 				}
 			}
@@ -1372,7 +1372,7 @@ TrackData Track::make_track_data_speed_over_time(void) const
 	for (; i < tp_count; i++) {
 		if (data_dt.x[i] <= data_dt.x[i - 1]) {
 			/* Handle glitch in values of consecutive time stamps.
-			   TODO: improve code that calculates pseudo-values of result when a glitch has been found. */
+			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
 			qDebug() << "WW" PREFIX << "glitch in timestamps:" << i << data_dt.x[i] << data_dt.x[i - 1];
 			result.x[i] = data_dt.x[i - 1];
 			result.y[i] = 0;
@@ -1420,7 +1420,7 @@ TrackData Track::make_track_data_distance_over_time(void) const
 	for (; i < data_dt.n_points; i++) {
 		if (data_dt.x[i] <= data_dt.x[i - 1]) {
 			/* Handle glitch in values of consecutive time stamps.
-			   TODO: improve code that calculates pseudo-values of result when a glitch has been found. */
+			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
 			qDebug() << "WW" PREFIX << "glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
 			result.x[i] = data_dt.x[i - 1];
 			result.y[i] = 0;
@@ -1574,9 +1574,9 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 	for (; i < tp_count; i++) {
 		if (data_dt.x[i] <= data_dt.x[i - 1]) {
 			/* Handle glitch in values of consecutive time stamps.
-			   TODO: improve code that calculates pseudo-values of result when a glitch has been found. */
+			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
 			qDebug() << "WW" PREFIX << "glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
-			result.x[i] = result.x[i - 1]; /* TODO: This won't work for a two or more invalid timestamps in a row. */
+			result.x[i] = result.x[i - 1]; /* TODO_LATER: This won't work for a two or more invalid timestamps in a row. */
 			result.y[i] = 0;
 		} else {
 			/* Iterate over 'n + 1 + n' points of a track to get
@@ -1613,7 +1613,7 @@ TrackData Track::make_track_data_speed_over_distance(void) const
  * @get_next_point:       Since there is a choice of trackpoints, this determines which one to return
  * @tp_metres_from_start: For the returned Trackpoint, returns the distance along the track
  *
- * TODO: Consider changing the boolean get_next_point into an enum with these options PREVIOUS, NEXT, NEAREST
+ * TODO_MAYBE: Consider changing the boolean get_next_point into an enum with these options PREVIOUS, NEXT, NEAREST
  *
  * Returns: The #Trackpoint fitting the criteria or NULL.
  */
@@ -1950,7 +1950,7 @@ void Track::marshall(Pickle & pickle)
 		iter++;
 		ntp++;
 	}
-#if K_TODO
+#if K_TODO_LATER
 	*(unsigned int *)(byte_array->data + intp) = ntp;
 #endif
 
@@ -1958,7 +1958,7 @@ void Track::marshall(Pickle & pickle)
 	pickle.put_string(this->comment);
 	pickle.put_string(this->description);
 	pickle.put_string(this->source);
-	/* kamilTODO: where is ->type? */
+	/* TODO_LATER: where is ->type? */
 }
 
 
@@ -1972,7 +1972,7 @@ Track * Track::unmarshall(Pickle & pickle)
 	const pickle_size_t data_size = pickle.take_size();
 	const QString type_id = pickle.take_string();
 
-#ifdef K_TODO
+#ifdef K_TODO_LATER
 	Track * new_trk = new Track(((Track *)pickle.data)->type_id == "sg.trw.route");
 	/* Basic properties: */
 	new_trk->visible = ((Track *)pickle.data)->visible;
@@ -2001,7 +2001,7 @@ Track * Track::unmarshall(Pickle & pickle)
 	new_trk->comment = pickle.take_string();
 	new_trk->description = pickle.take_string();
 	new_trk->source = pickle.take_string();
-	/* kamilTODO: where is ->type? */
+	/* TODO_LATER: where is ->type? */
 #else
 	Track * new_trk = new Track(false);
 #endif
@@ -2038,7 +2038,7 @@ void Track::recalculate_bbox(void)
 	}
 	this->bbox.validate();
 
-	/* TODO: enable this debug and verify whether it appears only
+	/* TODO_LATER: enable this debug and verify whether it appears only
 	   once for a given track during import ("acquire") of the
 	   track from external file. */
 	// qDebug() << "DD" PREFIX << "Recalculated bounds of track:" << this->bbox;
@@ -2148,7 +2148,7 @@ unsigned long Track::apply_dem_data(bool skip_existing)
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		/* Don't apply if the point already has a value and the overwrite is off. */
 		if (!(skip_existing && (*iter)->altitude != VIK_DEFAULT_ALTITUDE)) {
-			/* TODO: of the 4 possible choices we have for choosing an
+			/* TODO_LATER: of the 4 possible choices we have for choosing an
 			   elevation (trackpoint in between samples), choose the one
 			   with the least elevation change as the last. */
 			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
@@ -2803,7 +2803,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	/* ATM can't upload a single waypoint but can do waypoints to a GPS.
-	   TODO: add this menu item to Waypoints as well? */
+	   TODO_LATER: add this menu item to Waypoints as well? */
 	if (this->type_id != "sg.trw.waypoint") {
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), tr("&Upload to GPS..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_gps_cb()));
@@ -3077,7 +3077,7 @@ void Track::smooth_it(bool flat)
 {
 	unsigned long n_changed = this->smooth_missing_elevation_data(flat);
 	/* Inform user how much was changed. */
-	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, g_tree->tree_get_main_window());
 }
 
@@ -3173,7 +3173,7 @@ void Track::apply_dem_data_common(bool skip_existing_elevations)
 	unsigned long n_changed = this->apply_dem_data(skip_existing_elevations);
 
 	/* Inform user how much was changed. */
-	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, g_tree->tree_get_main_window());
 }
 
@@ -3198,7 +3198,7 @@ void Track::apply_dem_data_only_missing_cb(void)
 
 void Track::export_track_as_gpx_cb(void)
 {
-	if (this->name.isEmpty()) { /* TODO: will track's name be ever empty? */
+	if (this->name.isEmpty()) { /* TODO_LATER: will track's name be ever empty? */
 		return;
 	}
 
@@ -3382,8 +3382,8 @@ bool Track::handle_selection_in_tree(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-#ifdef K_TODO
-	/* TODO: to be implemented? */
+#ifdef K_TODO_MAYBE
+	/* TODO_MAYBE: to be implemented? */
 	parent_layer->set_statusbar_msg_info_trk(this);
 #endif
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
@@ -3540,7 +3540,7 @@ static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradi
 
 static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, LatLon *dist)
 {
-	/* TODO: handle vertical track (to->ll.lon - from->ll.lon == 0). */
+	/* TODO_LATER: handle vertical track (to->ll.lon - from->ll.lon == 0). */
 	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
 
 	Coord * next = from;
@@ -3559,7 +3559,7 @@ static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, Lat
 
 static int get_download_area_width(double zoom_level, LatLon * wh) /* kamilFIXME: viewport is unused, why? */
 {
-	/* TODO: calculating based on current size of viewport. */
+	/* TODO_LATER: calculating based on current size of viewport. */
 	const double w_at_zoom_0_125 = 0.0013;
 	const double h_at_zoom_0_125 = 0.0011;
 	double zoom_factor = zoom_level/0.125;
@@ -3812,7 +3812,7 @@ void Track::refine_route_cb(void)
 	/* Check size of the route */
 	const int nb = this->get_tp_count();
 	if (nb > 100) {
-		/* TODO: make the dialog a Warning dialog. */
+		/* TODO_LATER: make the dialog a Warning dialog. */
 		if (!Dialog::yes_or_no(tr("Refining a track with many points (%d) is unlikely to yield sensible results. Do you want to Continue?").arg(nb))) {
 			return;
 		}
@@ -3917,7 +3917,7 @@ void Track::create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool b
 		return;
 	}
 
-	/* TODO: verify that reference_tp belongs to this track. */
+	/* TODO_LATER: verify that reference_tp belongs to this track. */
 
 	Trackpoint * other_tp = NULL;
 
@@ -4154,7 +4154,7 @@ TrackData & TrackData::operator=(const TrackData & other)
 		return *this;
 	}
 
-	/* TODO: compare size of vectors in both objects to see if
+	/* TODO_LATER: compare size of vectors in both objects to see if
 	   reallocation is necessary? */
 
 	if (other.x) {

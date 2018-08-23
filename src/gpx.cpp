@@ -882,7 +882,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 
 	/* Sanity clause. */
 	if (wp->name.isEmpty()) {
-		fprintf(f, "  <name>%s</name>\n", "waypoint"); /* TODO: localize? */
+		fprintf(f, "  <name>%s</name>\n", "waypoint"); /* TODO_MAYBE: localize? */
 	} else {
 		fprintf(f, "  <name>%s</name>\n", entitize(wp->name).toUtf8().constData());
 	}
@@ -1052,7 +1052,7 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 	QString tmp;
 	/* Sanity clause. */
 	if (trk->name.isEmpty()) {
-		tmp = "track"; /* TODO: localize? */
+		tmp = "track"; /* TODO_MAYBE: localize? */
 	} else {
 		tmp = entitize(trk->name);
 	}

@@ -214,7 +214,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
 
 	if (layer->type == LayerType::GPS) {
-		/* TODO: move this in some reasonable place. Putting it here is just a workaround. */
+		/* TODO_LATER: move this in some reasonable place. Putting it here is just a workaround. */
 		layer->add_children_to_tree();
 	}
 
@@ -514,7 +514,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	if (items_by_date.empty()) {
 		Dialog::info(tr("No items found with the requested date."), this->get_window());
 	} else {
-		; /* TODO: show list of items found. */
+		; /* TODO_REALLY: show list of items found. */
 	}
 }
 
@@ -673,7 +673,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 
 
 
-#ifdef K_TODO
+#ifdef K_TODO_MAYBE
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
 unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
 {
@@ -983,7 +983,7 @@ void LayerAggregate::child_layer_changed_cb(const QString & child_layer_name) /*
 {
 	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
 	if (this->visible) {
-		/* TODO: this can used from the background - e.g. in acquire
+		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
 		emit this->layer_changed(this->get_name());

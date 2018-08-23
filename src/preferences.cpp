@@ -181,9 +181,9 @@ static Preferences preferences;
 
 
 
-/* TODO: STRING_LIST. */
-/* TODO: share code in file reading. */
-/* TODO: remove hackaround in show_window. */
+/* TODO_LATER: STRING_LIST. */
+/* TODO_LATER: share code in file reading. */
+/* TODO_LATER: remove hackaround in show_window. */
 
 
 
@@ -347,7 +347,7 @@ bool Preferences::save_to_file(void)
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	/* Since preferences files saves OSM login credentials, it'll be better to store it in secret. */
 	if (chmod(full_path.toUtf8().constData(), 0600) != 0) {
-		qDebug() << "WW: Preferences: failed to set permissions on" << full_path; /* TODO: shouldn't we abort saving to file? */
+		qDebug() << "WW: Preferences: failed to set permissions on" << full_path; /* TODO_REALLY: shouldn't we abort saving to file? */
 	}
 
 	if (!file) {

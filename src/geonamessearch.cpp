@@ -53,7 +53,7 @@ using namespace SlavGPS;
  */
 /* Translators may wish to change this setting as appropriate to get Wikipedia articles in that language. */
 #define GEONAMES_LANG QObject::tr("en")
-/* TODO - offer configuration of this value somewhere.
+/* TODO_MAYBE - offer configuration of this value somewhere.
    ATM decided it's not essential enough to warrant putting in the preferences. */
 #define GEONAMES_MAX_ENTRIES 20
 
@@ -99,7 +99,7 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 
 
 /*
-  TODO: this function builds a table with three columns, but only one
+  TODO_LATER: this function builds a table with three columns, but only one
   of them (Name) is filled with details from geonames.  Extend/improve
   list selection widget so that it can display properties of items in
   N columns.

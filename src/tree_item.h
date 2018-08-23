@@ -153,7 +153,7 @@ namespace SlavGPS {
 		TreeIndex index;             /* Set in TreeView::push_tree_item_back/push_tree_item_front(). */
 		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::push_tree_item_back/push_tree_item_front(). */
 
-		bool editable = true; /* Is this item is editable? TODO: be more specific: is the data editable, or is the reference visible in the tree editable? */
+		bool editable = true; /* Is this item is editable? TODO_LATER: be more specific: is the data editable, or is the reference visible in the tree editable? */
 		bool visible = true;  /* Is this item is visible in a tree of data items? */
 
 		bool has_properties_dialog = false; /* Does this tree item has dialog, in which you can view or change *configurable* properties? */

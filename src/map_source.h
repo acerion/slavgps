@@ -139,7 +139,7 @@ namespace SlavGPS {
 		virtual void post_read(MapSourceArgs & args) { return; }
 		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path) const;
 
-		/* TODO: do these need to be virtual methods? */
+		/* TODO_LATER: do these need to be virtual methods? */
 		virtual bool is_direct_file_access(void) const;
 		virtual bool is_osm_meta_tiles(void) const;
 

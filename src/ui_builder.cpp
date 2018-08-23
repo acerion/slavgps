@@ -174,7 +174,7 @@ PropertiesDialog::PropertiesDialog(QString const & title, QWidget * parent_widge
 	this->tabs = new QTabWidget();
 	this->vbox = new QVBoxLayout;
 
-	//this->tabs->setTabBarAutoHide(true); /* TODO: enable when this method becomes widely available. */
+	//this->tabs->setTabBarAutoHide(true); /* TODO_LATER: enable when this method becomes widely available. */
 
 	//this->vbox->addLayout(this->form);
 	this->vbox->addWidget(this->tabs);
@@ -534,7 +534,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		break;
 
 	case WidgetType::DateTime:
-		/* TODO: zero timestamp may still be a valid timestamp. */
+		/* TODO_LATER: zero timestamp may still be a valid timestamp. */
 		if (param_value.get_timestamp() != 0) {
 			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.get_timestamp(), this);
 			widget = widget_;
@@ -622,7 +622,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		} else if (param_spec.type_id == SGVariantType::String) {
 			rv = SGVariant(((QComboBox *) widget)->currentText());
 
-			/* TODO: look at old implementation below.
+			/* TODO_LATER: look at old implementation below.
 			   Verify if in places that use SGVariantType::String +
 			   WidgetType::ComboBox this code is still needed. */
 #ifdef K_OLD_IMPLEMENTATION

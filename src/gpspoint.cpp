@@ -270,7 +270,7 @@ void GPSPointParser::reset()
 		this->line_symbol = NULL;
 	}
 
-	/* TODO: add resetting line_latlon. */
+	/* TODO_MAYBE: add resetting line_latlon. */
 
 	this->line_type = GPSPOINT_TYPE_NONE;
 	this->line_visible = true;
@@ -495,7 +495,7 @@ Track * GPSPointParser::create_track(LayerTRW * trw)
 	trk->draw_name_mode = (TrackDrawNameMode) this->line_name_label;
 	trk->max_number_dist_labels = this->line_dist_label;
 
-	/* trk->trackpoints = NULL; */ /* kamilTODO: why it was here? */
+	/* trk->trackpoints = NULL; */ /* TODO_LATER: why it was here? */
 
 
 	return trk;
@@ -714,7 +714,7 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 			this->line_altitude = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "unixtime", key_len)) {
-			this->line_timestamp  = SGUtils::c_to_double(value); /* TODO: is it the best method to use here? */
+			this->line_timestamp  = SGUtils::c_to_double(value); /* TODO_LATER: is it the best method to use here? */
 			if (this->line_timestamp != NAN) {
 				this->line_has_timestamp = true;
 			}
@@ -776,7 +776,7 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 			continue;
 		}
 
-		if (wp->name.isEmpty()) { /* TODO: will this condition ever be true? */
+		if (wp->name.isEmpty()) { /* TODO_LATER: will this condition ever be true? */
 			continue;
 		}
 
@@ -916,7 +916,7 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 			continue;
 		}
 
-		if (trk->name.isEmpty()) { /* TODO: will this condition ever be true? */
+		if (trk->name.isEmpty()) { /* TODO_LATER: will this condition ever be true? */
 			continue;
 		}
 

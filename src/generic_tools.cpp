@@ -666,7 +666,7 @@ ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent
 
 void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * event)
 {
-	/* TODO: the code in this branch visits (in one way or the
+	/* TODO_LATER: the code in this branch visits (in one way or the
 	   other) whole tree of layers, starting with top level
 	   aggregate layer.  Should we really visit all layers?
 	   Shouldn't we visit only selected items and its children? */
@@ -687,7 +687,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 		TreeView * tree_view = this->window->items_tree->get_tree_view();
 		TreeItem * selected_item = tree_view->get_selected_tree_item();
 		if (selected_item) {
-			/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO: improve this condition. */
+			/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO_LATER: improve this condition. */
 			if (selected_item->tree_item_type == TreeItemType::SUBLAYER
 			    || selected_item->to_layer()->type == LayerType::TRW) {
 
@@ -709,7 +709,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	if (layer != this->layer_edit_info->edited_layer) {
-		/* TODO: these two pointers should be the same, so one of them is redundant. */
+		/* TODO_LATER: these two pointers should be the same, so one of them is redundant. */
 		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
 	}
 
@@ -732,7 +732,7 @@ ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event
 ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (layer != this->layer_edit_info->edited_layer) {
-		/* TODO: these two pointers should be the same, so one of them is redundant. */
+		/* TODO_LATER: these two pointers should be the same, so one of them is redundant. */
 		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
 	}
 

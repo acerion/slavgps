@@ -297,7 +297,7 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 	this->tracks.clear();
 
 	/* Get the latest list of items to analyse. */
-	/* kamilTODO: why do we need to get the latest list on checkbox toggle? */
+	/* TODO_LATER: why do we need to get the latest list on checkbox toggle? */
 	if (this->layer->type == LayerType::TRW) {
 		((LayerTRW *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
 	} else if (layer->type == LayerType::Aggregate) {
@@ -325,7 +325,7 @@ TRWStatsDialog::~TRWStatsDialog()
 	bool do_invisible = this->checkbox->isChecked();
 	ApplicationState::set_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible);
 
-	/* TODO: delete this object? */
+	/* TODO_LATER: delete this object? */
 	//free(this->stats_table);
 }
 

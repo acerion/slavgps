@@ -186,7 +186,7 @@ void MapDownloadJob::run(void)
 				switch (dr) {
 				case DownloadResult::HTTPError:
 				case DownloadResult::ContentError: {
-					/* TODO: ?? count up the number of download errors somehow... */
+					/* TODO_LATER: ?? count up the number of download errors somehow... */
 					QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download map tile");
 					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 					break;
@@ -211,7 +211,7 @@ void MapDownloadJob::run(void)
 			}
 
 			if (this->refresh_display && this->map_layer_alive) {
-				/* TODO: check if downloaded tile is visible in viewport.
+				/* TODO_LATER: check if downloaded tile is visible in viewport.
 				   Otherwise redraw of viewport is not needed. */
 				this->layer->emit_layer_changed("Set of tiles for Map Layer has been updated after tile download");
 			}
@@ -309,7 +309,7 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 				   lookup on server and that would be
 				   slow.
 
-				   TODO: perhaps we could somehow
+				   TODO_MAYBE: perhaps we could somehow
 				   implement the comparison of dates
 				   of local and remote tiles, even if
 				   it's slow.
@@ -335,7 +335,7 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 				break;
 
 			case MapDownloadMode::DownloadAndRefresh:
-				/* TODO: unhandled download mode. */
+				/* TODO_LATER: unhandled download mode. */
 				break;
 
 			default:

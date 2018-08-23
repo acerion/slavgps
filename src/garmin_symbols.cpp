@@ -99,7 +99,7 @@ static struct {
 	{ "Fishing Area",                    "fish",                 7,  "white fish symbol",                 "wp_fish",            "wp_fish_large",            NULL },
 	{ "Gas Station",                     "fuel",                 8,  "white fuel symbol",                 "wp_fuel",            "wp_fuel_large",            NULL },
 	{ "Horn",                            "horn",                 9,  "white horn symbol",                 "wp_horn",            "wp_horn_large",            NULL },
-#ifdef K_TODO
+#ifdef K_TODO_LATER
 	{ "Residence",                       "house",               10,  "white house symbol",                "wp_house",           "wp_house_large",           NULL },
 	{ "Restaurant",                      "knife",               11,  "white knife & fork symbol",         "wp_knife",           "wp_knife_large",           NULL },
 	{ "Light",                           "light",               12,  "white light symbol",                "wp_light",           "wp_light_large",           NULL },
@@ -348,7 +348,7 @@ static struct {
 	{ "Glider Area",                     "glider",           16393,  "glider symbol",                     NULL,                 "wp_glider_large",          NULL },
 	{ "Ultralight Area",                 "ultralight",       16394,  "ultralight symbol",                 NULL,                 "wp_ultralight_large",      NULL },
 	{ "Parachute Area",                  "parachute",        16395,  "parachute symbol",                  NULL,                 "wp_parachute_large",       NULL },
-#endif /* #ifdef K_TODO */
+#endif /* #ifdef K_TODO_LATER */
 	{ "VOR/TACAN",                       "vortac",           16396,  "VOR/TACAN symbol",                  NULL,                 NULL,                       NULL },
 	{ "VOR-DME",                         "vordme",           16397,  "VOR-DME symbol",                    NULL,                 NULL,                       NULL },
 	{ "First approach fix",              "faf",              16398,  "first approach fix",                NULL,                 NULL,                       NULL },

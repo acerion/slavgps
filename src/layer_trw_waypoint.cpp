@@ -98,7 +98,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_image_full_path(wp.image_full_path);
 	this->set_symbol(wp.symbol_name);
 
-	/* kamilTODO: what about image_width / image_height? */
+	/* TODO_LATER: what about image_width / image_height? */
 }
 
 
@@ -201,7 +201,7 @@ void Waypoint::set_symbol(const QString & new_symbol_name)
 bool Waypoint::apply_dem_data(bool skip_existing)
 {
 	bool updated = false;
-	if (!(skip_existing && altitude != VIK_DEFAULT_ALTITUDE)) { /* kamilTODO: check this condition. */
+	if (!(skip_existing && altitude != VIK_DEFAULT_ALTITUDE)) { /* TODO_LATER: check this condition. */
 		int16_t elev = DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
 		if (elev != DEM_INVALID_ELEVATION) {
 			altitude = (double) elev;

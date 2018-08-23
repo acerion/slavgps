@@ -137,7 +137,7 @@ namespace SlavGPS {
 		Coord * last_center = NULL;
 		MapZoom last_map_zoom;
 
-		/* TODO: Should this be 0 or -1? */
+		/* TODO_LATER: Should this be 0 or -1? */
 		int dl_tool_x = -1;
 		int dl_tool_y = -1;
 

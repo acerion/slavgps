@@ -603,9 +603,9 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 	QAction * qa = NULL;
 	bool rv = false;
 
-	/* TODO: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
+	/* TODO_LATER: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	/* TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
+	/* TODO_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::SUBLAYER);
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
 
@@ -921,7 +921,7 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	this->children_map.erase(wp->get_uid()); /* Erase by key. */
 
-	/* TODO: optimize. */
+	/* TODO_LATER: optimize. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		if (TreeItem::the_same_object(*iter, wp)) {
 			this->children_list.erase(iter);
@@ -939,7 +939,7 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 int DefaultNameGenerator::name_to_number(const QString & name) const
 {
 	if (name.size() == 3) {
-		int n = name.toInt(); /* TODO: use locale-aware conversion? */
+		int n = name.toInt(); /* TODO_LATER: use locale-aware conversion? */
 		if (n < 100 && name[0] != '0') {
 			return -1;
 		}
@@ -1007,8 +1007,8 @@ QString DefaultNameGenerator::try_new_name(void) const
 {
 	QString result;
 
-	if (this->highest_item_number < 0 /* TODO: handle overflow in different way. */
-	    || this->highest_item_number >= 999) { /* TODO: that's rather limiting, isn't it? */
+	if (this->highest_item_number < 0 /* TODO_LATER: handle overflow in different way. */
+	    || this->highest_item_number >= 999) { /* TODO_LATER: that's rather limiting, isn't it? */
 
 		return result;
 	}

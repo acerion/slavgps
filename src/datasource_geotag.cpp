@@ -123,7 +123,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 
 	this->setMinimumWidth(DIALOG_MIN_WIDTH);
 
-	/* TODO: Comment from Viking:
+	/* TODO_LATER: Comment from Viking:
 	   Could add code to setup a default symbol (see dialog.c for symbol usage).
 	   Store in user_data type and then apply when creating the waypoints.
 	   However not much point since these will have images associated with them! */

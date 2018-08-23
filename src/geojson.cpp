@@ -80,7 +80,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 	argv[4] = NULL;
 
 	GError * error = NULL;
-	/* TODO: monitor stderr? */
+	/* TODO_MAYBE: monitor stderr? */
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 
 		Window * w = trw->get_window();
@@ -181,7 +181,7 @@ QString SlavGPS::geojson_import_to_gpx(const QString & file_full_path)
 
 	FILE * gpxfile = fdopen(fd, "w");
 
-	/* TODO: monitor stderr? */
+	/* TODO_MAYBE: monitor stderr? */
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 		fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
 		g_error_free(error);

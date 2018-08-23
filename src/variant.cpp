@@ -77,7 +77,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->val_string = str;
 		break;
 	case SGVariantType::StringList:
-		this->val_string = str; /* TODO: improve this assignment of string list. */
+		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
 		this->val_timestamp = (time_t) strtoul(str, NULL, 10);
@@ -120,7 +120,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->val_string = str;
 		break;
 	case SGVariantType::StringList:
-		this->val_string = str; /* TODO: improve this assignment of string list. */
+		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
 		this->val_timestamp = (time_t) str.toULong();

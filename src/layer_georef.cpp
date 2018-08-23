@@ -368,7 +368,7 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 
 	/* If image not in viewport bounds - no need to draw it (or bother with any scaling).
-	   TODO: rewrite this section in terms of two rectangles intersecting? */
+	   TODO_LATER: rewrite this section in terms of two rectangles intersecting? */
 	const QRect full_viewport_rect(0, 0, viewport->get_width(), viewport->get_height());
 	if (!(corner_pos.x < 0 || corner_pos.x < full_viewport_rect.width())) {
 		/* Upper-left corner of image is located beyond right border of viewport. */
@@ -752,7 +752,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 {
 	const int current_coord_mode = this->coord_mode_combo->currentData().toInt();
 
-	/* TODO: figure out how to delete widgets that were
+	/* TODO_LATER: figure out how to delete widgets that were
 	   replaced. They are no longer owned by layout, so they have
 	   to be deleted. */
 
@@ -871,7 +871,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	this->map_image_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select image file"), this->layer->get_window());
 	this->map_image_file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Image);
-#ifdef K_TODO /* Handle "maybe_read_world_file" argument in file selector. */
+#ifdef K_TODO_LATER /* Handle "maybe_read_world_file" argument in file selector. */
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
 	this->grid->addWidget(new QLabel(tr("Map Image:")), row, 0);
@@ -1022,7 +1022,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	/* Remember to get alpha value before calling post_read() that uses the alpha value. */
 	this->alpha = dialog.alpha_slider->get_value();
 
-	/* TODO check if image has changed otherwise no need to regenerate pixmap. */
+	/* TODO_LATER check if image has changed otherwise no need to regenerate pixmap. */
 	if (this->image.isNull()) {
 		if (this->image_full_path != dialog.map_image_file_selector->get_selected_file_full_path()) {
 			this->set_image_full_path(dialog.map_image_file_selector->get_selected_file_full_path());

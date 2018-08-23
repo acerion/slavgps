@@ -626,7 +626,7 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 	this->copy_sublayer(item, pickle);
 
 	if (pickle.data_size() > 0) {
-#ifdef K_TODO
+#ifdef K_TODO_LATER
 		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle, item->name);
 #endif
 	}
@@ -741,7 +741,7 @@ void LayerTRW::wp_image_cache_add(CachedPixmap & cached_pixmap)
 
 	/* Keep size of queue under a limit. */
 	if (this->wp_image_cache.size() > this->wp_image_cache_size) {
-		/* TODO: review management of cache and watching its
+		/* TODO_REALLY: review management of cache and watching its
 		   limit. Make sure that it really works. */
 		this->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
 	}
@@ -1119,7 +1119,7 @@ void LayerTRW::marshall(Pickle & pickle)
 	Pickle helper_pickle;
 
 	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1128,7 +1128,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 	for (auto iter = this->tracks.children_list.begin(); iter != this->tracks.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1137,7 +1137,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1195,7 +1195,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 			}
 		}
 		consumed_length += pickle.peek_size() + sizeof_len_and_subtype;
-#ifdef K_TODO
+#ifdef K_TODO_LATER
 		// See marshalling above for order of how this is written  // kamilkamil
 		pickle.data += sizeof_len_and_subtype + pickle.peek_size();
 #endif
@@ -1426,7 +1426,7 @@ QString LayerTRW::get_tooltip(void) const
 
 		QString duration_string;
 
-		if (date_start != date_end) { /* TODO: should we compare dates/times, or only dates? */
+		if (date_start != date_end) { /* TODO_MAYBE: should we compare dates/times, or only dates? */
 			/* Dates differ so print range on separate line. */
 			duration_string = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
 		} else {
@@ -1948,7 +1948,7 @@ void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 	this->acquire_handler(new DataSourceGeoTag());
 
 	/* Re-generate thumbnails as they may have changed.
-	   TODO: move this somewhere else, where we are sure that the acquisition has been completed? */
+	   TODO_MAYBE: move this somewhere else, where we are sure that the acquisition has been completed? */
 	this->has_missing_thumbnails = true;
 	this->generate_missing_thumbnails();
 }
@@ -2047,7 +2047,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 
 void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
-	/* TODO longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
+	/* TODO_LATER longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
 	if (this->new_waypoint(g_tree->tree_get_main_viewport()->get_center2()), this->get_window()) {
 		this->waypoints.recalculate_bbox();
@@ -2389,7 +2389,7 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 	/* When an item is moved the name is checked to see if it clashes with an existing name
 	   in the destination layer and if so then it is allocated a new name. */
 
-	/* TODO reconsider strategy when moving within layer (if anything...). */
+	/* TODO_LATER reconsider strategy when moving within layer (if anything...). */
 	if (trw_src == trw_dest) {
 		return;
 	}
@@ -3013,7 +3013,7 @@ void LayerTRW::merge_by_segment_cb(void)
 	/* Currently no need to redraw as segments not actually shown on the display.
 	   However inform the user of what happened. */
 	const unsigned int n_segments = track->merge_segments();
-	const QString msg = QObject::tr("%n segments merged", "", n_segments); /* TODO: verify that "%n" format correctly handles unsigned int. */
+	const QString msg = QObject::tr("%n segments merged", "", n_segments); /* TODO_LATER: verify that "%n" format correctly handles unsigned int. */
 	Dialog::info(msg, this->get_window());
 }
 
@@ -3057,7 +3057,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		/* Don't try again unless tracks have changed. */
 		attempt_merge = false;
 
-		/* kamilTODO: why call this here? Shouldn't we call this way earlier? */
+		/* TODO_LATER: why call this here? Shouldn't we call this way earlier? */
 		if (orig_track->empty()) {
 			return;
 		}
@@ -3204,7 +3204,7 @@ void LayerTRW::delete_points_same_position_cb(void)
 	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, this->get_window());
 
 	this->emit_layer_changed("TRW - delete points same pos");
@@ -3230,7 +3230,7 @@ void LayerTRW::delete_points_same_time_cb(void)
 	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, this->get_window());
 
 	this->emit_layer_changed("TRW - delete points same time");
@@ -3333,7 +3333,7 @@ void LayerTRW::astro_open(char const * date_str,  char const * time_str, char co
 
 
 /*
-  TODO: move to common file, e.g. to astro.cpp.
+  TODO_MAYBE: move to common file, e.g. to astro.cpp.
 
   Format of stellarium lat & lon seems designed to be particularly awkward
   who uses ' & " in the parameters for the command line?!
@@ -3586,7 +3586,7 @@ void LayerTRW::tpwin_update_dialog_data()
 	Track * track = this->get_edited_track();
 	if (track) {
 		/* Notional center of a track is simply an average of its bounding box extremities. */
-		const LatLon ll_center = track->bbox.get_center_coordinate(); /* TODO: this variable is unused. */
+		const LatLon ll_center = track->bbox.get_center_coordinate(); /* TODO_MAYBE: this variable is unused. */
 		this->tpwin->set_dialog_data(track, track->selected_tp_iter.iter, track->type_id == "sg.trw.route");
 	}
 }
@@ -3664,7 +3664,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 
 		track->selected_tp_iter.iter++;
 		this->tpwin_update_dialog_data();
-		this->emit_layer_changed("TRW - trackpoint properties - go forward"); /* TODO longone: either move or only update if tp is inside drawing window */
+		this->emit_layer_changed("TRW - trackpoint properties - go forward"); /* TODO_LATER longone: either move or only update if tp is inside drawing window */
 
 		break;
 
@@ -3909,7 +3909,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 				/* No time found - so use 'now' for the metadata time. */
 				meta_time = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
 			} else {
-				meta_time.setMSecsSinceEpoch(timestamp * 1000); /* TODO: replace with setSecsSinceEpoch() in future. */
+				meta_time.setMSecsSinceEpoch(timestamp * 1000); /* TODO_LATER: replace with setSecsSinceEpoch() in future. */
 			}
 
 			this->metadata->timestamp = meta_time.toString(Qt::ISODate);
@@ -4309,5 +4309,5 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 	/* "Fire and forget". The viewer will run detached from this application. */
 	QProcess::startDetached(program, args);
 
-	/* TODO: add handling of errors from process. */
+	/* TODO_LATER: add handling of errors from process. */
 }

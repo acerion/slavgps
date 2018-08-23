@@ -146,8 +146,8 @@ static char coords_utm_band_letter(double latitude);
 
 UTM::UTM(const QString & northing_string, const QString & easting_string, int zone_value, char new_band_letter)
 {
-	/* TODO: revisit data types (double or int?) for northing/easting. */
-	/* TODO: add error checking. */
+	/* TODO_REALLY: revisit data types (double or int?) for northing/easting. */
+	/* TODO_REALLY: add error checking. */
 	this->northing = northing_string.toDouble();
 	this->easting  = easting_string.toDouble();
 	this->zone = zone_value;

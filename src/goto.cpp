@@ -517,7 +517,7 @@ int goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Win
 #if 1
 		new_lat_lon = entry.get_value();
 #else
-		/* kamilTODO: what's going on here? Why we use these functions? */
+		/* TODO_LATER: what's going on here? Why we use these functions? */
 		new_lat_lon.lat = convert_dms_to_dec(lat_input.text().toUtf8().constData());
 		new_lat_lon.lon = convert_dms_to_dec(lon_input.text().toUtf8().constData());
 #endif

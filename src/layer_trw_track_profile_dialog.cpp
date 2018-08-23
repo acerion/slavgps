@@ -262,7 +262,7 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 	this->x_max_visible_d = convert_distance_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
 
 	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
-		/* TODO: verify what happens if we return here. */
+		/* TODO_LATER: verify what happens if we return here. */
 		qDebug() << "EE:" PREFIX << "zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
 		return;
 	}
@@ -296,7 +296,7 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 #else
 	/* Instead of x_min/x_max use first and last timestamp.
 
-	   TODO: this is still not perfect solution: the glitch in
+	   TODO_LATER: this is still not perfect solution: the glitch in
 	   timestamp may occur in first or last trackpoint. Find a
 	   good way to find a correct first/last timestamp. */
 	this->x_min_visible_t = this->track_data.x[0];
@@ -304,7 +304,7 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 #endif
 
 	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
-		/* TODO: verify what happens if we return here. */
+		/* TODO_LATER: verify what happens if we return here. */
 		qDebug() << "EE:" PREFIX << "zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
 		return;
 	}
@@ -346,7 +346,7 @@ void ProfileGraph::set_initial_visible_range_y(void)
 		break;
 	default:
 		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
-		/* TODO: see what happens when we return here. */
+		/* TODO_LATER: see what happens when we return here. */
 		return;
 	}
 	this->y_max_visible = this->track_data.y_max + range * over;
@@ -762,7 +762,7 @@ void real_time_label_update(QLabel * label, const Trackpoint * tp)
 {
 	QString result;
 	if (tp->has_timestamp) {
-		result = QDateTime::fromTime_t(tp->timestamp, Qt::LocalTime).toString(Qt::ISODate); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		result = QDateTime::fromTime_t(tp->timestamp, Qt::LocalTime).toString(Qt::ISODate); /* TODO_LATER: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 	} else {
 		result = QObject::tr("No Data");
 	}
@@ -1427,8 +1427,8 @@ QPointF ProfileGraph::get_position_of_tp(TrackInfo & track_info, Trackpoint * tp
 
 void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 {
-#ifdef K_TODO
-	/* TODO: are these assignments necessary in this function?
+#ifdef K_TODO_LATER
+	/* TODO_LATER: are these assignments necessary in this function?
 	   Shouldn't they be done only once, on resize? */
 	graph->width = graph->viewport->get_graph_width();
 	graph->height = graph->viewport->get_graph_height();
@@ -1460,7 +1460,7 @@ bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 {
 	qDebug() << "SLOT:" PREFIX << "reacting to signal from viewport" << viewport->type_string;
 
-	/* TODO: shouldn't we re-allocate the per-viewport table of doubles here? */
+	/* TODO_LATER: shouldn't we re-allocate the per-viewport table of doubles here? */
 
 	this->draw_all_graphs(true);
 
@@ -1608,7 +1608,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 
 
 		/* Notice that here Trackpoint pointed to by iter is moved to new track. */
-		/* kamilTODO: originally the constructor was just Track(). Should we really pass original trk to constructor? */
+		/* TODO_LATER: originally the constructor was just Track(). Should we really pass original trk to constructor? */
 
 		/* This constructor recalculates bounding box of new track. */
 		Track * trk_right = new Track(*this->track_info.trk, iter, this->track_info.trk->end());
@@ -2095,7 +2095,7 @@ QString get_distance_grid_label(DistanceUnit distance_unit, double value)
 
 QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value)
 {
-	/* TODO: improve localization of the strings: don't use get_distance_unit_string() */
+	/* TODO_LATER: improve localization of the strings: don't use get_distance_unit_string() */
 	const QString distance_unit_string = get_distance_unit_string(distance_unit);
 
 	QString label;
@@ -2418,7 +2418,7 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 
 		if (col >= 0 && col < this->width) {
 			qDebug() << "      value (inside) =" << value << ", col =" << col;
-			/* TODO: take into account magnitude of distance_value and adjust units accordingly. Look at get_distance_grid_label_2. */
+			/* TODO_LATER: take into account magnitude of distance_value and adjust units accordingly. Look at get_distance_grid_label_2. */
 			this->draw_grid_vertical_line(col, get_distance_grid_label(this->geocanvas.distance_unit, value));
 		} else {
 			qDebug() << "      value (outside) =" << value << ", col =" << col;

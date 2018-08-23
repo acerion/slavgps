@@ -382,7 +382,7 @@ static QStringList dem_layer_convert_to_relative_filenaming(const QStringList & 
 	}
 
 	if (result.empty()) {
-		/* TODO: is this correct? Should we return original files? Is this condition ever true? */
+		/* TODO_LATER: is this correct? Should we return original files? Is this condition ever true? */
 		result = input_files;
 	}
 
@@ -588,7 +588,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 80); /* TODO: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 80); /* TODO_LATER: smarter calculation. */
 
 	double nscale_deg = dem->north_scale / ((double) 3600);
 	double escale_deg = dem->east_scale / ((double) 3600);
@@ -617,7 +617,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 		this->max_elev = this->min_elev + 1;
 	}
 
-	Coord tmp; /* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+	Coord tmp; /* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
 	LatLon counter;
 	int32_t x;
@@ -758,7 +758,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 
 void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 10); /* TODO: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 10); /* TODO_LATER: smarter calculation. */
 
 	Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
 	Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);
@@ -805,7 +805,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	int32_t start_y;
 	dem->east_north_to_xy(start_eas, start_nor, &start_x, &start_y);
 
-	/* TODO: why start_x and start_y are -1 -- rounding error from above? */
+	/* TODO_LATER: why start_x and start_y are -1 -- rounding error from above? */
 
 	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
 
@@ -815,7 +815,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 	int32_t x;
 	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
-		if (x <= 0 || x >= dem->n_columns) { /* kamilTODO: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
+		if (x <= 0 || x >= dem->n_columns) { /* TODO_LATER: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
 			continue;
 		}
 
@@ -841,7 +841,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 
 			{
-				/* TODO: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+				/* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 				const ScreenPos pos = viewport->coord_to_screen_pos(Coord(counter, viewport_coord_mode));
 
 				int idx = 0; /* Default index for color of 'sea'. */
@@ -862,7 +862,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 void draw_loaded_dem_box(Viewport * viewport)
 {
-#ifdef K_TODO
+#ifdef K_TODO_LATER
 	/* For getting values of dem_northeast and dem_southwest see DEM::intersect(). */
 	const Coord demne(dem_northeast, viewport->get_coord_mode());
 	const Coord demsw(dem_southwest, viewport->get_coord_mode());
@@ -998,7 +998,7 @@ LayerDEM::LayerDEM()
 	this->gradients.reserve(DEM_N_GRADIENT_COLORS);
 
 
-	/* TODO: share ->colors[] between layers. */
+	/* TODO_MAYBE: share ->colors[] between layers. */
 	this->colors[0] = QColor("#0000FF"); /* Ensure the base color is available as soon as possible. */
 	for (int32_t i = 1; i < DEM_N_HEIGHT_COLORS; i++) {
 		this->colors[i] = QColor(dem_height_colors[i]);
@@ -1185,7 +1185,7 @@ void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & 
 
 static void dem24k_dem_download_thread(DEMDownloadJob * dl_job)
 {
-	/* TODO: dest dir. */
+	/* TODO_LATER: dest dir. */
 	const QString cmdline = QString("%1 %2 %3")
 		.arg(DEM24K_DOWNLOAD_SCRIPT)
 		.arg(floor(dl_job->lat * 8) / 8, 0, 'f', 3, '0')  /* "%.03f" */

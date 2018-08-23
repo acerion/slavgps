@@ -121,7 +121,7 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 
 	if (this->vp_coord_mode == CoordMode::UTM && this->vp_is_one_utm_zone) {
 
-		const int outside_margin = 1600; /* TODO: magic number. */
+		const int outside_margin = 1600; /* TODO_LATER: magic number. */
 
 		const int width = this->vp_xmpp * (this->vp_width / 2) + outside_margin / this->vp_xmpp;
 		const int height = this->vp_ympp * (this->vp_height / 2) + outside_margin / this->vp_ympp;
@@ -137,7 +137,7 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
 
-		const int outside_margin = 500; /* TODO: magic number. */
+		const int outside_margin = 500; /* TODO_LATER: magic number. */
 
 		const Coord upperleft = this->viewport->screen_pos_to_coord(-outside_margin, -outside_margin);
 		const Coord bottomright = this->viewport->screen_pos_to_coord(this->vp_width + outside_margin, this->vp_height + outside_margin);
@@ -284,13 +284,13 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			/* Convert for display. */
 			dist_i = convert_distance_meters_to(dist_i, distance_unit);
 
-			/* TODO: Make the precision of the output related to the unit size. Don't we have utility function for that? */
+			/* TODO_LATER: Make the precision of the output related to the unit size. Don't we have utility function for that? */
 			if (index == 0) {
 				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 2).arg(distance_unit_string);
 			} else if (index == 1) {
 				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 1).arg(distance_unit_string);
 			} else {
-				dist_label = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(distance_unit_string); /* TODO single vs plurals. */
+				dist_label = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(distance_unit_string); /* TODO_LATER single vs plurals. */
 			}
 
 
@@ -599,7 +599,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 		/* Check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon. */
 
-		/* kamilTODO: compare this condition with condition in LayerTRWPainter::draw_waypoint_sub(). */
+		/* TODO_LATER: compare this condition with condition in LayerTRWPainter::draw_waypoint_sub(). */
 		bool first_condition = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
 
 		bool second_condition_A = ((!this->vp_is_one_utm_zone) || tp->coord.utm.zone == this->vp_center.utm.zone);  /* Only check zones if UTM & one_utm_zone. */
@@ -764,7 +764,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 		}
 
 
-		/* kamilTODO: compare this condition with condition in LayerTRWPainter::draw_waypoint_sub(). */
+		/* TODO_LATER: compare this condition with condition in LayerTRWPainter::draw_waypoint_sub(). */
 
 #ifdef K_OLD_IMPLEMENTATION
 		if ((!this->vp_is_one_utm_zone && !this->lat_lon) /* UTM & zones; do everything. */
@@ -920,7 +920,7 @@ CachedPixmap LayerTRWPainter::generate_wp_cached_pixmap(const QString & image_fu
 	}
 
 	if (cache_object.pixmap.isNull()) {
-		/* Last resort. TODO: default thumbnail should be
+		/* Last resort. TODO_MAYBE: default thumbnail should be
 		   somehow shared object. We don't want too many
 		   copies of the default thumbnail in memory. */
 		cache_object.pixmap = Thumbnails::get_default_thumbnail();
@@ -989,7 +989,7 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, 
 
 	const QRect target_rect(x - (w / 2), y - (h / 2), w, h);
 
-	/* Always draw within boundaries. TODO: Replace this condition with "rectangles intersect" condition? */
+	/* Always draw within boundaries. TODO_MAYBE: Replace this condition with "rectangles intersect" condition? */
 	if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < this->vp_width && y - (h / 2) < this->vp_height) {
 		if (do_highlight) {
 			/* Highlighted - so draw a little border around selected waypoint's image.

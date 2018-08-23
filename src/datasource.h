@@ -65,7 +65,7 @@ namespace SlavGPS {
 		AutoLayerManagement,
 		ManualLayerManagement,
 	};
-	/* TODO: replace track/layer? */
+	/* TODO_MAYBE: replace track/layer? */
 
 
 

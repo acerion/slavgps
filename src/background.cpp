@@ -61,14 +61,6 @@ using namespace SlavGPS;
 
 
 
-/* TODO: remove this second definition. */
-#ifndef PREFERENCES_NAMESPACE_MAPNIK
-#define PREFERENCES_NAMESPACE_MAPNIK "mapnik."
-#endif
-
-
-
-
 enum {
 	RoleBackgroundData = Qt::UserRole + 1
 };
@@ -226,12 +218,6 @@ void BackgroundJob::detach_from_window(BackgroundWindow * window)
 #define VIK_SETTINGS_BACKGROUND_MAX_THREADS "background_max_threads"
 #define VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL "background_max_threads_local"
 
-#ifdef HAVE_LIBMAPNIK
-static ParameterScale<int> scale_threads(1, 64, SGVariant((int32_t) 1), 1, 0); /* 64 threads should be enough for anyone...; TODO: verify the hardcoded default value. */
-static ParameterSpecification prefs_mapnik[] = {
-	{ 0, PREFERENCES_NAMESPACE_MAPNIK, "background_max_threads_local_mapnik", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Threads:"), WidgetType::SpinBoxInt, &scale_threads, NULL, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used") },
-};
-#endif
 
 
 
@@ -241,12 +227,6 @@ static ParameterSpecification prefs_mapnik[] = {
 */
 void Background::init()
 {
-#ifdef K_MAPNIK
-#ifdef HAVE_LIBMAPNIK
-	/* Default to 1 thread due to potential crashing issues. */
-	Preferences::register_parameter(prefs_mapnik[0], SGVariant((int32_t) 1, prefs_mapnik[0].type_id));
-#endif
-#endif
 }
 
 
@@ -257,7 +237,7 @@ void Background::init()
 */
 void Background::post_init(void)
 {
-	/* Initialize thread pools. TODO: we don't have local/remote pools anymore. Address this fact in this file. */
+	/* Initialize thread pools. TODO_LATER: we don't have local/remote pools anymore. Address this fact in this file. */
 	int max_threads = 10;  /* Limit maximum number of threads running at one time. */
 	int maxt;
 	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS, &maxt)) {

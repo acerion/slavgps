@@ -153,7 +153,7 @@ void DataSourceGCDialog::draw_circle_cb(void)
 		const Coord coord(LatLon(lat, lon), this->viewport->get_coord_mode());
 		const ScreenPos circle_pos = this->viewport->coord_to_screen_pos(coord);
 
-		/* TODO: real calculation. */
+		/* TODO_LATER: real calculation. */
 		if (circle_pos.x > -1000
 		    && circle_pos.y > -1000
 		    && circle_pos.x < (this->viewport->get_width() + 1000)

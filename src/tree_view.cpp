@@ -56,7 +56,7 @@
 
 
 /*
-  TODO: improve handling of 'editable' property.
+  TODO_LATER: improve handling of 'editable' property.
   Non-editable items have e.g limited number of fields in context menu.
 
   The following properties of @tree_item are used to set properties of entry in tree:
@@ -735,7 +735,7 @@ static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreeP
 			assert (layer_source);
 			Layer * layer_dest = layer->tree_view->get_tree_item(dest_parent_index)->to_layer();
 
-			/* TODO: might want to allow different types, and let the clients handle how they want. */
+			/* TODO_LATER: might want to allow different types, and let the clients handle how they want. */
 			layer_dest->drag_drop_request(layer_source, src_index, dest);
 		}
 	}

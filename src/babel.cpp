@@ -73,7 +73,7 @@ extern bool vik_debug;
 
 
 
-/* TODO in the future we could have support for other shells (change command strings), or not use a shell at all. */
+/* TODO_LATER in the future we could have support for other shells (change command strings), or not use a shell at all. */
 #define BASH_LOCATION "/bin/bash"
 
 
@@ -252,7 +252,7 @@ BabelOptions::BabelOptions(const BabelOptions & other)
    supplied \param trw layer
 
    \param cb: callback that is run upon new data from STDOUT (?).
-   (TODO: STDERR would be nice since we usually redirect STDOUT)
+   (TODO_LATER: STDERR would be nice since we usually redirect STDOUT)
 
    \param cb_data: data passed along to \param cb
 
@@ -474,7 +474,7 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 	if (DownloadResult::Success == dl_handle.get_url_http(this->input, "", name_src)) {
 		if (!this->input_data_format.isEmpty() || !this->babel_filters.isEmpty()) {
 
-			BabelOptions opts_local_file(BabelOptionsMode::FromFile); /* TODO: maybe we could reuse 'this->' ? */
+			BabelOptions opts_local_file(BabelOptionsMode::FromFile); /* TODO_MAYBE: maybe we could reuse 'this->' ? */
 			opts_local_file.input = name_src;
 			opts_local_file.babel_args = (!this->input_data_format.isEmpty()) ? QString(" -i %1").arg(this->input_data_format) : "";
 			opts_local_file.babel_filters = this->babel_filters;
@@ -809,7 +809,7 @@ bool BabelProcess::run_process(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+	if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
@@ -864,7 +864,7 @@ bool BabelProcess::run_import(void)
 	qDebug() << "II" PREFIX;
 	this->process->waitForFinished(-1);
 
-	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+	if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
@@ -882,7 +882,7 @@ bool BabelProcess::run_export(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-	if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+	if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->export_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->export_progress_cb(AcquireProgressCode::Completed, NULL);
@@ -945,7 +945,7 @@ void BabelProcess::read_stdout_cb()
 		this->process->readLine(buffer, sizeof (buffer));
 		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
 
-		if (this->progress_indicator) { /* TODO: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+		if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 			this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, buffer);
 		} else {
 			this->import_progress_cb(AcquireProgressCode::Completed, buffer);

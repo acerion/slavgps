@@ -242,7 +242,7 @@ static int osm_traces_upload_file(const QString & user,
 
 	const QString base_url = "http://www.openstreetmap.org/api/0.6/gpx/create";
 
-	/* TODO: why do we pass user and password to this function if we create user_pass here? */
+	/* TODO_LATER: why do we pass user and password to this function if we create user_pass here? */
 	const QString user_pass = osm_get_current_credentials();
 
 	int result = 0; /* Default to it worked! */
@@ -264,7 +264,7 @@ static int osm_traces_upload_file(const QString & user,
 		     CURLFORM_COPYCONTENTS, visibility->apistr, CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "file",
-		     CURLFORM_FILE, file_full_path.toUtf8().constData(), /* TODO: verify whether we can pass string like that. */
+		     CURLFORM_FILE, file_full_path.toUtf8().constData(), /* TODO_LATER: verify whether we can pass string like that. */
 		     CURLFORM_FILENAME, filename,
 		     CURLFORM_CONTENTTYPE, "text/xml", CURLFORM_END);
 
@@ -547,7 +547,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		OSMTracesInfo * info = new OSMTracesInfo(trw, trk);
 		info->name        = name_entry->text();
 		info->description = description_entry->text();
-		/* TODO Normalize tags: they will be used as URL part. */
+		/* TODO_LATER Normalize tags: they will be used as URL part. */
 		info->tags        = tags_entry->text();
 		info->visibility  = &trace_visibilities[visibility_combo->currentIndex()];
 

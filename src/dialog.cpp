@@ -196,7 +196,7 @@ void Dialog::map_license(const QString & map_name, const QString & map_license, 
    Try to reposition a dialog if it's over the specified coord so to
    not obscure the item of interest.
 
-   TODO: the function should accept something else than a Coord variable. Perhaps a screen number and a pixel coordinates.
+   TODO_REALLY: the function should accept something else than a Coord variable. Perhaps a screen number and a pixel coordinates.
 
    @dialog - dialog to move
    @viewport - viewport in which the coordinate exists
@@ -207,7 +207,7 @@ void Dialog::move_dialog(QDialog * dialog, Viewport * viewport, const Coord & ex
 {
 	/* http://doc.qt.io/qt-5/application-windows.html#window-geometry */
 
-	/* TODO: there is one more improvement to be made: take into
+	/* TODO_LATER: there is one more improvement to be made: take into
 	   consideration that available geometry (as returned by
 	   ::availableGeometry()) may be smaller than geometry of full
 	   screen. */

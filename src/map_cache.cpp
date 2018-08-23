@@ -213,7 +213,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 
 	cache_add(key, pixmap, properties);
 
-	/* TODO: that should be done on preference change only... */
+	/* TODO_LATER: that should be done on preference change only... */
 	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".mapcache_size").u.val_uint * 1024 * 1024;
 
 	while (cache_size > max_cache_size && maps_cache.size()) {
@@ -461,7 +461,7 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 					      const QString & map_type_string,
 					      const QString & file_extension) const
 {
-	/* TODO: verify format strings: whether they match strings
+	/* TODO_LATER: verify format strings: whether they match strings
 	   from Viking, and whether they match directory paths in
 	   Viking's cache. */
 

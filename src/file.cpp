@@ -454,7 +454,7 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 		break;
 
 	case SGVariantType::StringList:
-		/* TODO: review this section that creates string list. */
+		/* TODO_LATER: review this section that creates string list. */
 		new_val = SGVariant(line);
 		break;
 
@@ -471,7 +471,7 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 
 void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 {
-	if (!this->stack.first) { /* TODO: verify that this condition is handled correctly inside of this branch. */
+	if (!this->stack.first) { /* TODO_LATER: verify that this condition is handled correctly inside of this branch. */
 		this->successful_read = false;
 		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer\n", this->line_num);
 		this->stack.push(NULL); /* Inside INVALID layer. */
@@ -552,7 +552,7 @@ void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
 				//layer->add_children_to_tree();
 				layer->post_read(viewport, true);
 			} else if (parent_layer->type == LayerType::GPS) {
-				/* TODO: anything else needs to be done here? */
+				/* TODO_LATER: anything else needs to be done here? */
 			} else {
 				this->successful_read = false;
 				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) this->stack.first->type);
@@ -690,7 +690,7 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 		if (!parameter_found) {
 			/* ATM don't flow up this issue because at least one internal parameter has changed from version 1.3
 			   and don't what to worry users about raising such issues.
-			   TODO Maybe hold old values here - compare the line value against them and if a match
+			   TODO_LATER Maybe hold old values here - compare the line value against them and if a match
 			   generate a different style of message in the GUI... */
 			// this->successful_read = false;
 			fprintf(stderr, "WARNING: Line %zd: Unknown parameter. Line:\n%s\n", this->line_num, line);
@@ -712,7 +712,7 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
    ATM this will always work, in that even if there are parsing problems
    then there will be no new values to override the defaults.
 
-   TODO flow up line number(s) / error messages of problems encountered...
+   TODO_LATER flow up line number(s) / error messages of problems encountered...
 */
 bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport)
 {
@@ -1043,7 +1043,7 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
 	bool status = true;
 
-	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO: ::FromFile, but no input file specified. */
+	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified. */
 	export_options.output = file_full_path;
 
 	const KMLExportUnits units = Preferences::get_kml_export_units();
@@ -1134,7 +1134,7 @@ bool VikFile::export_trw(LayerTRW * trw, const QString & file_full_path, SGFileT
 
 bool VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints)
 {
-	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO: ::FromFile, but no input file specified, just output. */
+	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified, just output. */
 	export_options.output = output_file_full_path;
 	export_options.babel_args = QString("%1 %2 %3 -o %4")
 		.arg(tracks ? "-t" : "")
