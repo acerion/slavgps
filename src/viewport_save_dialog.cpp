@@ -71,7 +71,7 @@ void ViewportSaveDialog::calculate_total_area_cb(void)
 {
 	QString label_text;
 	double w = this->width_spin->value() * this->viewport->get_map_zoom().get_x();
-	double h = this->height_spin->value() * this->viewport->get_map_zoom().get_x(); /* TODO: change to get_y(). */
+	double h = this->height_spin->value() * this->viewport->get_map_zoom().get_x(); /* TODO_LATER: change to get_y(). */
 	if (this->tiles_width_spin) { /* save many images; find TOTAL area covered */
 		w *= this->tiles_width_spin->value();
 		h *= this->tiles_height_spin->value();

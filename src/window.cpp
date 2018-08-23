@@ -95,6 +95,8 @@ static std::list<Window *> window_list;
 #define VIEWPORT_SAVE_DEFAULT_HEIGHT   1024
 #define VIEWPORT_SAVE_DEFAULT_FORMAT   ViewportSaveFormat::PNG
 
+#define WIN_MAIN_DOCK_MIN_WIDTH 50  /* Minimal usable width/height of dock. */
+
 
 #define VIKING_ACCELERATOR_KEY_FILE "keys.rc"
 
@@ -285,12 +287,13 @@ Window::Window()
 		}
 
 		int size = 0;
-		if (ApplicationState::get_integer(VIK_SETTINGS_WIN_MAIN_DOCK_SIZE, &size) && size > 30) { /* TODO: magic number, describing some minimal usable width/height of dock. */
+		if (ApplicationState::get_integer(VIK_SETTINGS_WIN_MAIN_DOCK_SIZE, &size) && size > WIN_MAIN_DOCK_MIN_WIDTH) {
 
-			/* Adjust geometry of panel dock. TODO: this
-			   doesn't work. Either setGeometry() doesn't
-			   work, or something overwrites panel's
-			   size. */
+			/* Adjust geometry of panel dock.
+
+			   TODO_REALLY: this doesn't work. Either
+			   setGeometry() doesn't work, or something
+			   overwrites panel's size. */
 
 			QRect geometry = this->panel_dock->geometry();
 			const Qt::DockWidgetArea area = this->dockWidgetArea(this->panel_dock);
@@ -443,7 +446,7 @@ void Window::create_actions(void)
 		this->menu_file->addSeparator();
 
 
-		this->submenu_file_acquire = this->menu_file->addMenu(QIcon::fromTheme("TODO"), QString("A&cquire"));
+		this->submenu_file_acquire = this->menu_file->addMenu(QString("A&cquire"));
 
 		{
 			qa = this->submenu_file_acquire->addAction(tr("From &GPS..."));
@@ -497,7 +500,7 @@ void Window::create_actions(void)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_url_cb(void)));
 
 #ifdef HAVE_ZIP_H
-			qa = this->submenu_file_acquire->addAction(QIcon::fromTheme("TODO-GTK_STOCK_CONVERT"), tr("Import KMZ &Map File..."));
+			qa = this->submenu_file_acquire->addAction(tr("Import KMZ &Map File..."));
 			qa->setToolTip(tr("Import a KMZ file"));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
 #endif
@@ -506,7 +509,7 @@ void Window::create_actions(void)
 		}
 
 
-		QMenu * submenu_file_export = this->menu_file->addMenu(QIcon::fromTheme("TODO GTK_STOCK_CONVERT"), tr("&Export All"));
+		QMenu * submenu_file_export = this->menu_file->addMenu(tr("&Export All"));
 		submenu_file_export->setToolTip(tr("Export All TrackWaypoint Layers"));
 
 		{
@@ -730,14 +733,12 @@ void Window::create_actions(void)
 
 		qa = new QAction(tr("Set &Highlight Color..."), this);
 		qa->setToolTip("Set Highlight Color");
-		qa->setIcon(QIcon::fromTheme("TODO GTK_STOCK_SELECT_COLOR"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_highlight_color_cb(void)));
 
 
 		qa = new QAction(tr("Set Bac&kground Color..."), this);
 		qa->setToolTip("Set Background Color");
-		qa->setIcon(QIcon::fromTheme("TODO GTK_STOCK_SELECT_COLOR"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_bg_color_cb(void)));
 
@@ -1052,7 +1053,7 @@ void Window::draw_tree_items(void)
 void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
 	qDebug() << "SLOT" PREFIX << "layer" << (qulonglong) uid;
-	/* TODO: draw only one layer, not all of them. */
+	/* TODO_REALLY: draw only one layer, not all of them. */
 	this->draw_tree_items();
 }
 
@@ -1120,9 +1121,9 @@ void Window::statusbar_update(StatusBarField field, QString const & message)
 
 void Window::center_changed_cb(void) /* Slot. */
 {
-	qDebug() << "SLOT" PREFIX;
+	qDebug() << SG_PREFIX_SLOT << "Called";
 
-	/* TODO: see if this comment should be implemented or not:
+	/* TODO_LATER: see if this comment should be implemented or not:
 	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
 	this->qa_previous_location->setEnabled(this->viewport->back_available());
 	this->qa_next_location->setEnabled(this->viewport->forward_available());
@@ -2128,7 +2129,7 @@ void Window::update_recent_files(QString const & file_full_path)
 	SlavGPS::update_desktop_recent_documents(this, file_full_path, "text/x-gps-data");
 
 	/*
-	  TODO
+	  TODO_LATER
 	  - add file type filter? gtk_recent_filter_add_group(filter, "viking");
 	  - consider different sorting orders? gtk_recent_chooser_set_sort_type(GTK_RECENT_CHOOSER (menu), GTK_RECENT_SORT_MRU);
 	*/
@@ -2173,7 +2174,7 @@ void Window::set_busy_cursor()
 	this->viewport->setCursor(Qt::WaitCursor);
 
 #ifdef K_FIXME_RESTORE
-	/* Ensure cursor updated before doing stuff. TODO: do we need this? */
+	/* Ensure cursor updated before doing stuff. TODO_LATER: do we need this? */
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
@@ -2687,7 +2688,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	if (save_kmz) {
 		const LatLonBBox bbox = this->viewport->get_bbox();
-		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO: handle returned value. */
+		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_LATER: handle returned value. */
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
 		if (!pixmap.save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
@@ -2736,7 +2737,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	UTM utm;
 	const char * extension = save_format == ViewportSaveFormat::PNG ? "png" : "jpg";
 
-	/* TODO: support non-identical x/y zoom values. */
+	/* TODO_LATER: support non-identical x/y zoom values. */
 	const double xmpp = map_zoom.get_x();
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
@@ -2755,7 +2756,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (image_height * xmpp);
 			}
 
-			/* TODO: move to correct place. */
+			/* TODO_LATER: move to correct place. */
 			this->viewport->set_center_from_utm(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
@@ -3020,7 +3021,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 
 	qDebug() << "DD: Window: Coordinate mode changed to" << qa->text() << (int) drawmode;
 
-	/* kamilTODO: verify that this function changes mode in all the places that need to be updated. */
+	/* TODO_REALLY: verify that this function changes mode in all the places that need to be updated. */
 
 	if (this->only_updating_coord_mode_ui) {
 		return;
@@ -3090,7 +3091,8 @@ void Window::menu_view_pan_cb(void)
 	const int direction = qa->data().toInt();
 	qDebug() << "SLOT: Window: Menu View Pan:" << qa->text() << direction;
 
-	/* TODO: verify how this comment applies to Qt application. */
+	/* TODO_LATER: verify how this comment applies to Qt application. */
+
 	/* Since the tree view cell editting intercepts standard
 	   keyboard handlers, it means we can receive events here.
 	   Thus if currently editting, ensure we don't move the
@@ -3405,7 +3407,7 @@ void Window::import_kmz_file_cb(void)
 	file_selector.setFileMode(QFileDialog::ExistingFile);
 	/* AcceptMode is QFileDialog::AcceptOpen by default. */;
 
-	/* TODO: make sure that "all" is the default filter. */
+	/* TODO_LATER: make sure that "all" is the default filter. */
 	QStringList mime;
 	mime << "application/octet-stream"; /* "All files (*)" */
 	mime << "vnd.google-earth.kmz";     /* "KMZ" / "*.kmz"; */
@@ -3421,9 +3423,9 @@ void Window::import_kmz_file_cb(void)
 	}
 	const QString full_path = selection.at(0);
 
-	/* TODO convert ans value into readable explaination of failure... */
-	int ans = kmz_open_file(full_path, this->viewport, this->items_tree);
-	if (ans) {
+	std::tuple<KMZOpenStatus, int> ret = kmz_open_file(full_path, this->viewport, this->items_tree);
+	if (std::get<SG_KMZ_OPEN_KML>(ret) != KMZOpenStatus::Success) {
+		/* TODO_LATER convert values from tuple into readable explaination of failure... */
 		Dialog::error(tr("Unable to import %1.").arg(full_path), this);
 	}
 
@@ -3609,9 +3611,11 @@ void Window::open_recent_file_cb(void)
 
 	if (this->current_document_full_path.isEmpty()) {
 		/* We don't have any file opened yet. Open this file
-		   in this window.  TODO: what if we don't have any
-		   file open, but we already did some work in this
-		   window without saving it to file? */
+		   in this window.
+
+		   TODO_REALLY: what if we don't have any file open,
+		   but we already did some work in this window without
+		   saving it to file? */
 		this->open_file(file_full_path, true);
 	} else {
 		/* Current window has already some file open. Open the

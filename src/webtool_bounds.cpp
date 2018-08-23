@@ -73,7 +73,7 @@ QString WebToolBounds::get_url_at_current_position(Viewport * a_viewport)
 
 QString WebToolBounds::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	/* TODO: could use zoom level to generate an offset from center lat/lon to get the bounds.
+	/* TODO_LATER: could use zoom level to generate an offset from center lat/lon to get the bounds.
 	   For now simply use the existing function to use bounds from the viewport. */
 	return this->get_url_at_current_position(a_viewport);
 }

@@ -40,9 +40,28 @@ namespace SlavGPS {
 
 
 
+	enum class KMZOpenStatus {
+		KMZNotSupported = -1,    /* KMZ not supported (this shouldn't happen). */
+		Success = 0,
+		ZipError,                /* Problems with zip archive (zip error code returned in second field of tuple). */
+		NoDoc = 128,             /* No doc.kml file in KMZ. */
+		CantUnderstandDoc = 129, /* Couldn't understand the doc.kml file. */
+		NoBounds = 130,          /* Couldn't get bounds from KML (error not detected ATM). */
+		NoImage = 131,           /* No image file in KML. */
+		CantGetImage = 132,      /* Couldn't get image from KML. */
+		ImageFileProblem,        /* Image file problem. */
+	};
+
+
+
+	enum {
+		SG_KMZ_OPEN_KML = 0,
+		SG_KMZ_OPEN_ZIP = 1
+	};
+
 
 	int kmz_save_file(const QPixmap & pixmap, const QString & file_full_path, double north, double east, double south, double west);
-	int kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel);
+	std::tuple<KMZOpenStatus, int> kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel);
 
 
 

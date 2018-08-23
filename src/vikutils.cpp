@@ -112,7 +112,7 @@ static struct kdtree * kd_timezones = NULL;
  * @trk:          The track in which the trackpoints reside.
  * @climb:        Vertical speed (Out of band (i.e. not in a trackpoint) value for display currently only for GPSD usage).
  *
- * TODO: One day replace this cryptic format code with some kind of tokenizer parsing
+ * TODO_LATER: One day replace this cryptic format code with some kind of tokenizer parsing
  * thus would make it more user friendly and maybe even GUI controlable.
  * However for now at least there is some semblance of user control.
  */
@@ -710,7 +710,7 @@ static char * time_string_adjusted(time_t * time, int offset_s)
 
 static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz)
 {
-	QDateTime utc = QDateTime::fromTime_t(time, Qt::OffsetFromUTC, 0);  /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+	QDateTime utc = QDateTime::fromTime_t(time, Qt::OffsetFromUTC, 0);  /* TODO_LATER: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 	QDateTime local = utc.toTimeZone(tz);
 
 	return local.toString(format);
@@ -789,7 +789,7 @@ QString SGUtils::get_time_string(time_t timestamp, Qt::DateFormat format, const 
 	const SGTimeReference ref = Preferences::get_time_ref_frame();
 	switch (ref) {
 	case SGTimeReference::UTC:
-		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::utc()).toString(format); /* TODO_LATER: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << timestamp << "-> time string" << time_string;
 		break;
 	case SGTimeReference::World:
@@ -813,7 +813,7 @@ QString SGUtils::get_time_string(time_t timestamp, Qt::DateFormat format, const 
 		}
 		break;
 	case SGTimeReference::Locale:
-		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::systemTimeZone()).toString(format); /* TODO_LATER: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << timestamp << "-> time string" << time_string;
 		break;
 	default:
@@ -842,7 +842,7 @@ QString SGUtils::get_time_string(time_t timestamp, Qt::DateFormat format, const 
 	const SGTimeReference ref = Preferences::get_time_ref_frame();
 	switch (ref) {
 	case SGTimeReference::UTC:
-		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::utc()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::utc()).toString(format); /* TODO_LATER: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << timestamp << "-> time string" << time_string;
 		break;
 	case SGTimeReference::World:
@@ -860,7 +860,7 @@ QString SGUtils::get_time_string(time_t timestamp, Qt::DateFormat format, const 
 		}
 		break;
 	case SGTimeReference::Locale:
-		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::systemTimeZone()).toString(format); /* TODO: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		time_string = QDateTime::fromTime_t(timestamp, QTimeZone::systemTimeZone()).toString(format); /* TODO_LATER: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << timestamp << "-> time string" << time_string;
 		break;
 	default:

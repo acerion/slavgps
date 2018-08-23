@@ -62,7 +62,6 @@ namespace SlavGPS {
 		bool is_inside(const Coord * coord_tl, const Coord * coord_br) const;
 
 		void change_mode(CoordMode new_mode);
-		Coord copy_change_mode(CoordMode new_mode) const;
 
 		static double distance(const Coord & coord1, const Coord & coord2);
 

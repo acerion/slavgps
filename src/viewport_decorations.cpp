@@ -223,7 +223,7 @@ QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, Distan
 
 void ViewportDecorations::draw_copyrights(Viewport * viewport)
 {
-	/* TODO: how to ensure that these 128 chars fit into bounding rectangle used below? */
+	/* TODO_REALLY: how to ensure that these 128 chars fit into bounding rectangle used below? */
 #define MAX_COPYRIGHTS_LEN 128
 	QString result;
 	int free_space = MAX_COPYRIGHTS_LEN;

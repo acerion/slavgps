@@ -55,27 +55,6 @@ void Coord::change_mode(CoordMode new_mode)
 
 
 
-Coord Coord::copy_change_mode(CoordMode new_mode) const
-{
-	Coord dest;
-
-	if (this->mode == new_mode) {
-		dest = *this;
-	} else {
-		if (new_mode == CoordMode::LATLON) {
-			dest.ll = UTM::to_latlon(this->utm);
-		} else {
-			dest.utm = LatLon::to_utm(this->ll);
-		}
-		dest.mode = new_mode;
-	}
-
-	return dest;
-}
-
-
-
-
 static double distance_safe(const Coord & coord1, const Coord & coord2)
 {
 	const LatLon a = coord1.get_latlon();

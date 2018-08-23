@@ -43,7 +43,7 @@ namespace SlavGPS {
 		unsigned int drawmode;
 		bool (*coord_to_tile) (const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest);
 		void (*tile_to_center_coord) (const TileInfo & src, Coord & dest_coord);
-		/* TODO: constant size (yay!) */
+		/* TODO_UNKNOWN: constant size (yay!) */
 	} VikMapsLayer_MapType;
 
 	void maps_layer_register_type(const QString * label, unsigned int id, VikMapsLayer_MapType * map_type);

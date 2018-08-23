@@ -275,7 +275,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
 	}
 
-	QString zoom((int) zoom_level); /* TODO: add MapZoom::to_string() */
+	QString zoom((int) zoom_level); /* TODO_LATER: add MapZoom::to_string() */
 
 	int len = this->url_format_code.size();
 	if (len == 0) {

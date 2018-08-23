@@ -132,7 +132,7 @@ void AcquireGetter::on_complete_process(void)
 			if (this->data_source && this->data_source->autoview) {
 				this->acquiring->trw->move_viewport_to_show_all(this->acquiring->viewport);
 			}
-			this->acquiring->panel->emit_items_tree_updated_cb("acquire completed");
+			/// this->acquiring->panel->emit_items_tree_updated_cb("acquire completed");
 		}
 	} else {
 		/* Cancelled. */

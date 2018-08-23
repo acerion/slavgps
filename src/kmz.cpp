@@ -363,44 +363,42 @@ static bool parse_kml(const char * buffer, int len, char ** name, char ** image,
 
 
 /**
- * @file_full_path:   The KMZ file to open
- * @viewport:   The #Viewport
- * @panel:      The #LayersPanel that the converted KMZ will be stored in
- *
- * Returns:
- *  -1 if KMZ not supported (this shouldn't happen)
- *  0 on success
- *  >0 <128 ZIP error code
- *  128 - No doc.kml file in KMZ
- *  129 - Couldn't understand the doc.kml file
- *  130 - Couldn't get bounds from KML (error not detected ATM)
- *  131 - No image file in KML
- *  132 - Couldn't get image from KML
- *  133 - Image file problem
- */
-int SlavGPS::kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel)
+   @file_full_path
+   @viewport
+   @panel - the panel that the converted KMZ will be stored in
+
+   @return tuple <KMZOpenStatus::Success, ...> on success,
+   @return tuple <KMZOpenStatus::ZipError, zip-err-code> on zip errors,
+   @return tuple <KMZOpenStatus::some-value, ...> on KMZ errors.
+*/
+std::tuple<KMZOpenStatus, int> SlavGPS::kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel)
 {
-/* Unzip. */
+	std::tuple<KMZOpenStatus, int> ret;
+
 #ifdef HAVE_ZIP_H
-/* Older libzip compatibility: */
+	/* Older libzip compatibility: */
 #ifndef zip_t
-typedef struct zip zip_t;
-typedef struct zip_file zip_file_t;
+	typedef struct zip zip_t;
+	typedef struct zip_file zip_file_t;
 #endif
 #ifndef ZIP_RDONLY
 #define ZIP_RDONLY 0
 #endif
 
-	int ans = ZIP_ER_OK;
-	zip_t * archive = zip_open(file_full_path, ZIP_RDONLY, &ans);
+	/* Unzip. */
+	int zip_status = ZIP_ER_OK;
+	zip_t * archive = zip_open(file_full_path, ZIP_RDONLY, &zip_status);
+	std::get<SG_KMZ_OPEN_ZIP>(ret) = zip_status;
 	if (!archive) {
-		fprintf(stderr, "WARNING: Unable to open archive: '%s' Error code %d\n", file_full_path, ans);
-		return ans;
+		qDebug() << SG_PREFIX_W << "Unable to open archive" << file_full_path << "Error code =" << zip_status;
+		std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::ZipError;
+		return ret;
 	}
 
 	zip_int64_t zindex = zip_name_locate(archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS);
 	if (zindex == -1) {
 		fprintf(stderr, "WARNING: Unable to find doc.kml\n");
+		std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::KMZOpenStatus::NoDoc; /* TODO_LATER: in original viking code we didn't return a "no doc.kml" status here, even though there was a status value defined for this event. */
 		goto kmz_cleanup;
 	}
 
@@ -410,7 +408,7 @@ typedef struct zip_file zip_file_t;
 		char *buffer = (char *) malloc(zs.size);
 		int len = zip_fread(zf, buffer, zs.size);
 		if (len != zs.size) {
-			ans = 128;
+			std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::KMZOpenStatus::NoDoc;
 			free(buffer);
 			fprintf(stderr, "WARNING: Unable to read doc.kml from zip file\n");
 			goto kmz_cleanup;
@@ -435,7 +433,7 @@ typedef struct zip_file zip_file_t;
 					char *ibuffer = (char *) malloc(zs.size);
 					int ilen = zip_fread(zfi, ibuffer, zs.size);
 					if (ilen != zs.size) {
-						ans = 131;
+						std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::NoImage;
 						fprintf(stderr, "WARNING: Unable to read %s from zip file\n", image);
 					} else {
 						const QString image_file = Util::write_tmp_file_from_bytes(ibuffer, ilen);
@@ -444,8 +442,9 @@ typedef struct zip_file zip_file_t;
 							delete pixmap;
 							pixmap = NULL;
 							qDebug() << "WW: KMZ: failed to load pixmap from" << image_file;
-							ans = 133;
+							std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::ImageFileProblem;
 						} else {
+							std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::Success;
 							Util::remove(image_file);
 						}
 					}
@@ -453,10 +452,10 @@ typedef struct zip_file zip_file_t;
 				}
 				free(image);
 			} else {
-				ans = 132;
+				std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::CantGetImage;
 			}
 		} else {
-			ans = 129;
+			std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::CantUnderstandDoc;
 		}
 
 		if (pixmap) {
@@ -477,8 +476,9 @@ typedef struct zip_file zip_file_t;
 kmz_cleanup:
 	zip_discard(archive); /* Close and ensure unchanged. */
  cleanup:
-	return ans;
+	return ret;
 #else
-	return -1;
+	std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::KMZNotSupported;
+	return ret;
 #endif
 }

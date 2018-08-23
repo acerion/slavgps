@@ -27,6 +27,11 @@
 
 
 
+#include <cstdint>
+
+
+
+
 #include "widget_timestamp.h"
 #include "globals.h"
 
@@ -56,7 +61,7 @@ TimestampWidget::TimestampWidget(QWidget * parent)
 
 	this->timestamp_entry = new QSpinBox(this);
 	this->timestamp_entry->setMinimum(0);
-	this->timestamp_entry->setMaximum(2147483647); /* pow(2,31)-1 limit input to ~2038 for now. */ /* TODO: improve this initialization. */
+	this->timestamp_entry->setMaximum(INT32_MAX); /* TODO_LATER: Adjust this limit to support 64-bit integers. */
 	this->timestamp_entry->setSingleStep(1);
 	this->grid->addWidget(new QLabel(tr("Raw Timestamp:")), 0, 0);
 	this->grid->addWidget(this->timestamp_entry, 0, 1);

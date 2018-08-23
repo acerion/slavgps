@@ -371,9 +371,12 @@ QPixmap Viewport::get_pixmap(void) const
 
 void Viewport::set_pixmap(const QPixmap & pixmap)
 {
-	//QPainter painter(this->canvas.pixmap);
-	/* TODO: Add some comparison of pixmap size and buffer size to verify that both have the same size and that pixmap can be safely used. */
-	this->canvas.painter->drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
+	if (this->canvas.pixmap->size() != pixmap.size()) {
+		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: canvas =" << this->canvas.pixmap->size() << ", new pixmap =" << pixmap.size();
+	} else {
+		//QPainter painter(this->canvas.pixmap);
+		this->canvas.painter->drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
+	}
 }
 
 
@@ -555,7 +558,7 @@ double Viewport::get_zoom(void) const
 	if (this->map_zoom.x_y_is_equal()) {
 		return this->map_zoom.x;
 	}
-	return 0.0; /* kamilTODO: why 0.0? */
+	return 0.0; /* TODO_MAYBE: why 0.0? */
 }
 
 
@@ -742,7 +745,7 @@ void Viewport::show_centers(Window * parent_window) const
 							      headers,
 							      parent_window);
 
-	/* TODO: why do we allow any selection and why do we use result here? */
+	/* TODO_MAYBE: why do we allow any selection and why do we use result here? */
 
 	/* Because we have used ListSelectionMode::SingleItem selection
 	   mode, this list has at most one element. */
@@ -1130,8 +1133,6 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
   Since this function is used for every drawn trackpoint - it can get called a lot.
   Thus x & y position factors are calculated once on zoom changes,
   avoiding the need to do it here all the time.
-
-  For good measure the half width and height values are also pre calculated too. TODO: do we really do that here?
 */
 void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y)
 {
@@ -1140,8 +1141,11 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 	const double ympp = this->map_zoom.y;
 
 	if (coord_in.mode != this->coord_mode) {
+		/* TODO_MAYBE: what's going on here? Why this special case even exists? */
 		qDebug() << "WW: Viewport: Have to convert in Viewport::coord_to_screen_pos()! This should never happen!";
-		coord = coord_in.copy_change_mode(this->coord_mode); /* kamilTODO: what's going on here? Why this special case even exists? */
+
+		coord = coord_in;
+		coord.change_mode(this->coord_mode);
 	} else {
 		coord = coord_in;
 	}
@@ -1452,7 +1456,7 @@ void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w
 {
 	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawArc(center_x, center_y, size_w, size_h, angle1, angle2 * 16); /* TODO: handle 'filled' argument. */
+	this->canvas.painter->drawArc(center_x, center_y, size_w, size_h, angle1, angle2 * 16); /* TODO_REALLY: handle 'filled' argument. */
 }
 
 
@@ -1735,7 +1739,7 @@ LatLonBBox Viewport::get_bbox(void) const
 */
 void Viewport::add_copyright(QString const & copyright)
 {
-	/* kamilTODO: make sure that this code is executed. */
+	/* TODO_REALLY: make sure that this code is executed. */
 	if (!this->decorations.copyrights.contains(copyright)) {
 		this->decorations.copyrights.push_front(copyright);
 	}
@@ -2119,8 +2123,8 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	   |                                |
 	   +--------------------------------+
 
-	   TODO: make sure that this works also for target device
-	   smaller than original viewport.
+	   TODO_REALLY: make sure that this works also for target
+	   device smaller than original viewport.
 	*/
 
 	Viewport * scaled_viewport = new Viewport(a_window);
@@ -2151,7 +2155,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 		scaled_viewport->set_map_zoom_x(this->map_zoom.x / scale_factor);
 		scaled_viewport->set_map_zoom_y(this->map_zoom.y / scale_factor);
 	} else {
-		/* TODO: now what? */
+		/* TODO_REALLY: now what? */
 	}
 
 
@@ -2161,7 +2165,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 	strcpy(scaled_viewport->type_string, "Scaled Viewport");
 	if (explicit_set_zoom) {
-		scaled_viewport->set_map_zoom(scaled_map_zoom); /* TODO: why do we even have explicit set zoom and how this interacts with scale_factor arg? */
+		scaled_viewport->set_map_zoom(scaled_map_zoom); /* TODO_MAYBE: why do we even have explicit set zoom and how this interacts with scale_factor arg? */
 	}
 	/* Notice that we configure size of the print viewport using
 	   size of scaled source, not size of target device (i.e. not
@@ -2211,7 +2215,7 @@ bool Viewport::print_cb(QPrinter * printer)
 	const int target_width = target_rect.width();
 	const int target_height = target_rect.height();
 
-	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, MapZoom(0.0, 0.0)); /* TODO: why do we pass 0/0 map zoom here? */
+	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, MapZoom(0.0, 0.0)); /* TODO_REALLY: why do we pass 0/0 map zoom here? */
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print canvas. */
@@ -2467,9 +2471,9 @@ ViewportCanvas::~ViewportCanvas()
 
 void ViewportCanvas::reconfigure(int new_width, int new_height)
 {
-	/* TODO: handle situation when size does not change.
+	/* TODO_REALLY: handle situation when size does not change.
 
-	   TODO: add debug to inform when a canvas is
+	   TODO_MAYBE: add debug to inform when a canvas is
 	   reconfigured. This may help catching unexpected/unwanted
 	   reconfigurations. */
 
@@ -2494,7 +2498,7 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	this->painter = new QPainter(this->pixmap);
 
 
-	/* TODO trigger: only if this is enabled!!! */
+	/* TODO_UNKNOWN trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
 		qDebug() << "DD" PREFIX << "deleting old snapshot buffer";
 		delete this->snapshot_buffer;

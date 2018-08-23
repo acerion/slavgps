@@ -41,7 +41,7 @@ using namespace SlavGPS;
 
 
 
-/* TODO: add copying of text edited in QLineEdit into this->current_file_full_path and this->file_dialog. */
+/* TODO_REALLY: add copying of text edited in QLineEdit into this->current_file_full_path and this->file_dialog. */
 
 
 
