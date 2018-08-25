@@ -11,7 +11,7 @@ SOURCES += main.cpp \
     window.cpp \
     datasource.cpp \
     datasource_bfilter.cpp \
-    datasource_gc.cpp \
+    datasource_geocache.cpp \
     datasource_geojson.cpp \
     datasource_geotag.cpp \
     datasource_gps.cpp \
@@ -186,7 +186,7 @@ HEADERS += window.h \
     thumbnails.h \
     osm.h \
     osm-traces.h \
-    datasource_gc.h \
+    datasource_geocache.h \
     datasource_gps.h \
     datasource_routing.h \
     datasource_osm.h \

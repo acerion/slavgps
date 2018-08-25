@@ -32,7 +32,7 @@
 
 
 #ifdef VIK_CONFIG_GEOCACHES
-#include "datasource_gc.h"
+#include "datasource_geocache.h"
 #endif
 
 #include "datasource_file.h"
@@ -40,7 +40,7 @@
 #include "datasource_osm_my_traces.h"
 #include "datasource_wikipedia.h"
 #include "datasource_url.h"
-#include "datasource_gc.h"
+#include "datasource_geocache.h"
 #include "datasource_geotag.h"
 #include "datasource_geojson.h"
 #include "datasource_routing.h"

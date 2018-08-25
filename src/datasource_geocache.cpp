@@ -47,7 +47,7 @@
 #include "acquire.h"
 #include "preferences.h"
 #include "datasources.h"
-#include "datasource_gc.h"
+#include "datasource_geocache.h"
 #include "viewport_internal.h"
 #include "util.h"
 
