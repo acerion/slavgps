@@ -4,7 +4,7 @@ borrowed from:
 http://acme.com/software/coords/
 I (Evan Battaglia <viking@greentorch.org>) have only made some small changes such as
 renaming functions and defining LatLon and UTM structs.
-2004-02-10 -- I also added a function of my own -- a_coords_utm_diff() -- that I felt belonged in coords.c
+2004-02-10 -- I also added a function of my own -- UTM::utm_diff() (a_coords_utm_diff()) -- that I felt belonged in coords.c
 2004-02-21 -- I also added UTM::is_equal().
 
 */
@@ -70,6 +70,27 @@ using namespace SlavGPS;
 
 
 #define PREFIX " Coords"
+
+
+
+
+static const char * utm_letters = "ABCDEFGH" "JKLM"  "N" "PQRSTUVWXYZ";
+/* UTM "none band" symbol shall be a single letter, just like symbols for valid UTM bands. */
+static const char utm_none_band_symbol = '-';
+
+
+
+bool UTM::is_band_letter(char letter)
+{
+	const int c = toupper(letter);
+	for (size_t i = 0; i < strlen(utm_letters); i++) {
+		if (c == utm_letters[i]) {
+			return true;
+		}
+	}
+
+	return false;
+}
 
 
 
@@ -144,19 +165,39 @@ static char coords_utm_band_letter(double latitude);
 
 
 
-UTM::UTM(const QString & northing_string, const QString & easting_string, int zone_value, char new_band_letter)
+char UTM::get_band_letter(void) const
 {
-	/* TODO_REALLY: revisit data types (double or int?) for northing/easting. */
-	/* TODO_REALLY: add error checking. */
-	this->northing = northing_string.toDouble();
-	this->easting  = easting_string.toDouble();
-	this->zone = zone_value;
-	this->band_letter = new_band_letter; // _string.at(0).toUpper().toLatin1();
+	return this->band_letter;
+}
 
-	qDebug() << "II:" PREFIX << "UTM northing conversion"      << northing_string << "->" << this->northing;
-	qDebug() << "II:" PREFIX << "UTM easting conversion"       << easting_string  << "->" << this->easting;
-	qDebug() << "II:" PREFIX << "UTM zone conversion"          << zone_value      << "->" << this->zone;
-	qDebug() << "II:" PREFIX << "UTM band letter conversion"   << new_band_letter << "->" << this->band_letter;
+
+
+
+bool UTM::set_band_letter(char letter)
+{
+	if (!is_band_letter(letter)) {
+		return false;
+	}
+	this->band_letter = letter;
+	return true;
+}
+
+
+
+
+QStringList UTM::get_band_symbols(void)
+{
+	static QStringList symbols;
+	if (symbols.size() == 0) {
+		int i = 0;
+		while ('\0' != utm_letters[i]) {
+			symbols << QString(utm_letters[i]);
+			i++;
+		}
+		symbols << QString(utm_none_band_symbol);
+	}
+
+	return symbols;
 }
 
 
@@ -193,19 +234,22 @@ QDebug SlavGPS::operator<<(QDebug debug, const UTM & utm)
 
 
 
-double a_coords_utm_diff(const UTM * utm1, const UTM * utm2)
+double UTM::utm_diff(const UTM & utm1, const UTM & utm2)
 {
-  static LatLon tmp1, tmp2;
-  if (utm1->zone == utm2->zone) {
-    return sqrt ( pow ( utm1->easting - utm2->easting, 2 ) + pow ( utm1->northing - utm2->northing, 2 ) );
-  } else {
-	  tmp1 = UTM::to_latlon(*utm1);
-	  tmp2 = UTM::to_latlon(*utm2);
-    return a_coords_latlon_diff(tmp1, tmp2);
-  }
+	static LatLon tmp1, tmp2;
+	if (utm1.zone == utm2.zone) {
+		return sqrt(pow(utm1.easting - utm2.easting, 2) + pow(utm1.northing - utm2.northing, 2));
+	} else {
+		const LatLon tmp1 = UTM::to_latlon(utm1);
+		const LatLon tmp2 = UTM::to_latlon(utm2);
+		return LatLon::latlon_diff(tmp1, tmp2);
+	}
 }
 
-double a_coords_latlon_diff(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
+
+
+
+double LatLon::latlon_diff(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
 {
   static LatLon tmp1, tmp2;
   double tmp3;
@@ -274,7 +318,7 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
     utm.northing = northing;
     utm.easting = easting;
     utm.zone = zone;
-    utm.band_letter = coords_utm_band_letter(latitude);
+    utm.set_band_letter(coords_utm_band_letter(latitude)); /* We don't check result of set_band_letter() here, we assume that the letter has been calculated by coords_utm_band_letter() correctly. */
     return utm;
 }
 

@@ -21,6 +21,11 @@
 
 
 
+#include <cassert>
+
+
+
+
 #include <QLabel>
 #include <QDebug>
 
@@ -28,6 +33,7 @@
 
 
 #include "widget_utm_entry.h"
+#include "globals.h"
 
 
 
@@ -37,6 +43,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Widget UTM Entry"
 #define PREFIX " Widget UTM Entry:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -84,11 +91,11 @@ UTMEntryWidget::UTMEntryWidget(QWidget * parent)
 	this->grid->addWidget(this->zone_spin, row, 1);
 	row++;
 
-	this->band_letter_entry = new QLineEdit();
-	this->band_letter_entry->setMaxLength(1);
-	this->band_letter_entry->setText("N");
+	this->band_letter_combo = new QComboBox();
+	this->band_letter_combo->addItems(UTM::get_band_symbols());
+	this->band_letter_combo->setCurrentText("N");
 	this->grid->addWidget(new QLabel(QObject::tr("Band Letter:")), row, 0);
-	this->grid->addWidget(this->band_letter_entry, row, 1);
+	this->grid->addWidget(this->band_letter_combo, row, 1);
 	row++;
 
 	/* Ensure the first entry field has focus so we can start
@@ -103,10 +110,12 @@ UTMEntryWidget::UTMEntryWidget(QWidget * parent)
 
 void UTMEntryWidget::set_value(const UTM & utm)
 {
+	assert (UTM::is_band_letter(utm.get_band_letter()));
+
 	this->easting_spin->setValue(utm.easting);
 	this->northing_spin->setValue(utm.northing);
 	this->zone_spin->setValue(utm.zone);
-	this->band_letter_entry->setText(QString(utm.band_letter));
+	this->band_letter_combo->setCurrentText(QString(utm.get_band_letter()));
 }
 
 
@@ -120,10 +129,12 @@ UTM UTMEntryWidget::get_value(void) const
 	utm.northing = this->northing_spin->value();
 	utm.zone = this->zone_spin->value();
 
-	const QString text = this->band_letter_entry->text();
-	if (1 == text.size()) {
-		utm.band_letter = text.at(0).toUpper().toLatin1();
-		qDebug() << "II:" PREFIX << "UTM band letter conversion" << text << "->" << utm.band_letter;
+	const QString text = this->band_letter_combo->currentText();
+	if (1 != text.size()) {
+		qDebug() << SG_PREFIX_E << "Unexpectedly long text in combo:" << text;
+	} else {
+		utm.set_band_letter(text.at(0).toUpper().toLatin1());
+		qDebug() << "II:" PREFIX << "UTM band letter conversion" << text << "->" << utm.get_band_letter();
 	}
 
 	return utm;

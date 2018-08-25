@@ -59,7 +59,7 @@ static double distance_safe(const Coord & coord1, const Coord & coord2)
 {
 	const LatLon a = coord1.get_latlon();
 	const LatLon b = coord2.get_latlon();
-	return a_coords_latlon_diff(a, b);
+	return LatLon::latlon_diff(a, b);
 }
 
 
@@ -73,10 +73,10 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 
 	switch (coord1.mode) {
 	case CoordMode::UTM:
-		return a_coords_utm_diff(&coord1.utm, &coord2.utm);
+		return UTM::utm_diff(coord1.utm, coord2.utm);
 
 	case CoordMode::LATLON:
-		return a_coords_latlon_diff(coord1.ll, coord2.ll);
+		return LatLon::latlon_diff(coord1.ll, coord2.ll);
 
 	default:
 		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) coord1.mode;
@@ -330,7 +330,7 @@ void Coord::to_strings(QString & str1, QString & str2) const
 		   format:
 		   ZONE[N|S] EASTING NORTHING */
 
-		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.band_letter);
+		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.get_band_letter());
 		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
 		break;
 	case CoordMode::LATLON:

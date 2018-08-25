@@ -91,6 +91,8 @@ namespace SlavGPS {
 		static LatLon get_average(const LatLon & max, const LatLon & min) { return LatLon((max.lat + min.lat) / 2, (max.lon + min.lon) / 2); };
 
 		static UTM to_utm(const LatLon & lat_lon);
+
+		static double latlon_diff(const LatLon & lat_lon_1, const LatLon & lat_lon_2);
 	};
 	QDebug operator<<(QDebug debug, const LatLon & lat_lon);
 
@@ -124,16 +126,28 @@ namespace SlavGPS {
 	class UTM {
 	public:
 		UTM() {};
-		UTM(const QString & northing_string, const QString & easting_string, int zone, char band_letter);
 
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
 		static LatLon to_latlon(const UTM & utm);
 
 		QString to_string(void) const;
 
+		char get_band_letter(void) const;
+		bool set_band_letter(char character);
+		bool has_band_letter(void) const;
+
+		static QStringList get_band_symbols(void);
+		static bool is_band_letter(char character); /* Is given character a band letter? */
+		static bool is_band_symbol(char character); /* Is given character a band letter or "none band" indicator? */
+
+		static double utm_diff(const UTM & utm1, const UTM & utm2);
+
+		/* TODO_REALLY: revisit data types (double or int?) for northing/easting. */
 		double northing = 0;
 		double easting = 0;
 		int zone = 0;
+
+	private:
 		char band_letter = 0;
 	};
 	QDebug operator<<(QDebug debug, const UTM & utm);
@@ -145,19 +159,6 @@ namespace SlavGPS {
 } /* namespace SlavGPS */
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-
-
-double a_coords_utm_diff(const SlavGPS::UTM * utm1, const SlavGPS::UTM * utm2);
-double a_coords_latlon_diff(const SlavGPS::LatLon & lat_lon_1, const SlavGPS::LatLon & lat_lon_2);
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif /* #ifndef _VIKING_COORDS_H */

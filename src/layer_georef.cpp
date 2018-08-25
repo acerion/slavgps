@@ -56,6 +56,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer Georef"
 #define PREFIX ": Layer Georef: " << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -218,10 +219,10 @@ bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_v
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		/* The parameter is called "corner_letter_as_int", so we have to use .val_int here. */
-		if (param_value.u.val_int >= 'A' || param_value.u.val_int <= 'Z') {
-			this->utm_tl.band_letter = (char) param_value.u.val_int;
+		if (UTM::is_band_letter(param_value.u.val_int)) {
+			this->utm_tl.set_band_letter((char) param_value.u.val_int);
 		} else {
-			qDebug() << "EE" PREFIX << "invalid utm band letter/decimal =" << param_value.u.val_int;
+			qDebug() << SG_PREFIX_E << "Invalid utm band letter/decimal =" << param_value.u.val_int;
 		}
 		break;
 	case PARAM_ALPHA:
@@ -296,7 +297,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		/* The parameter is called "corner_letter_as_int", so we have to cast to int here. */
-		rv = SGVariant((int32_t) this->utm_tl.band_letter);
+		rv = SGVariant((int32_t) this->utm_tl.get_band_letter());
 		break;
 	case PARAM_ALPHA:
 		/* Alpha shall always be int. Cast to int here, to be sure that it's stored in variant correctly. */
@@ -333,10 +334,10 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 		}
 	}
 
-	double diffx = a_coords_latlon_diff(ll_tl, ll_tr);
+	double diffx = LatLon::latlon_diff(ll_tl, ll_tr);
 	*xmpp = (diffx / width) / factor;
 
-	double diffy = a_coords_latlon_diff(ll_tl, ll_bl);
+	double diffy = LatLon::latlon_diff(ll_tl, ll_bl);
 	*ympp = (diffy / height) / factor;
 }
 

@@ -18,15 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+
+
 
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
 #include <mutex>
+#include <cassert>
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -35,10 +42,16 @@
 #include <sys/stat.h>
 #endif
 
+
+
+
 #include <QMenu>
 #include <QDebug>
 #include <QHash>
 #include <QDir>
+
+
+
 
 #include "window.h"
 #include "layer_map.h"
@@ -779,8 +792,8 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	double start_nor = std::max(min_nor, dem->min_north_seconds);
 	double end_nor   = std::min(max_nor, dem->max_north_seconds);
 	if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
-	    && (tleft.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')
-	    && (bleft.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	    && (tleft.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N') /* TODO_LATER: add function checking "is northern hemisphere" */
+	    && (bleft.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		start_eas = std::max(min_eas, dem->min_east_seconds);
 	} else {
@@ -788,8 +801,8 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	}
 
 	if (tright.utm.zone == dem->utm_zone && bright.utm.zone == dem->utm_zone
-	    && (tright.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')
-	    && (bright.utm.band_letter >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	    && (tright.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N') /* TODO_LATER: add function checking "is northern hemisphere" */
+	    && (bright.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		end_eas = std::min(max_eas, dem->max_east_seconds);
 	} else {
@@ -811,7 +824,8 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 	UTM counter;
 	counter.zone = dem->utm_zone;
-	counter.band_letter = dem->utm_band_letter;
+	assert (UTM::is_band_letter(dem->utm_band_letter)); /* TODO_LATER: smarter handling of error value. */
+	counter.set_band_letter(dem->utm_band_letter);
 
 	int32_t x;
 	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {

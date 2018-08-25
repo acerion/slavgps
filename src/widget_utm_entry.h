@@ -28,7 +28,7 @@
 #include <QFrame>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
-#include <QLineEdit>
+#include <QComboBox>
 #include <QGridLayout>
 #include <QLabel>
 
@@ -65,7 +65,7 @@ namespace SlavGPS {
 		QDoubleSpinBox * easting_spin = NULL;
 		QDoubleSpinBox * northing_spin = NULL;
 		QSpinBox * zone_spin = NULL;
-		QLineEdit * band_letter_entry = NULL;
+		QComboBox * band_letter_combo = NULL;
 
 		QLabel * easting_label = NULL;
 		QLabel * northing_label = NULL;

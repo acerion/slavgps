@@ -1085,7 +1085,8 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.mode = CoordMode::UTM;
 
 		coord.utm.zone = this->center.utm.zone;
-		coord.utm.band_letter = this->center.utm.band_letter;
+		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_LATER: handle this in a better way. */
+		coord.utm.set_band_letter(this->center.utm.get_band_letter());
 		coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
 
 		int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
@@ -2047,7 +2048,7 @@ void Viewport::get_location_strings(UTM utm, QString & lat, QString & lon)
 		//  ZONE[N|S] EASTING NORTHING
 		*lat = (char *) malloc(4*sizeof(char));
 		// NB zone is stored in a char but is an actual number
-		snprintf(*lat, 4, "%d%c", utm.zone, utm.band_letter);
+		snprintf(*lat, 4, "%d%c", utm.zone, utm.get_band_letter());
 		*lon = (char *) malloc(16*sizeof(char));
 		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
 	} else {

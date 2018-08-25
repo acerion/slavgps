@@ -17,17 +17,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+
+
+
 #include <cstdio>
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
+#include <cassert>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -35,11 +41,17 @@
 #include <unistd.h>
 #endif
 
+
+
+
 #include <QDebug>
 #include <QFile>
 #include <QString>
 
 #include <glib.h>
+
+
+
 
 #include "compression.h"
 #include "dem.h"
@@ -630,7 +642,7 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 		if ((elevs[i] = this->get_xy(cols[i], rows[i])) == DEM_INVALID_ELEVATION) {
 			return false;
 		}
-		dists[i] = a_coords_latlon_diff(pos, ll[i]);
+		dists[i] = LatLon::latlon_diff(pos, ll[i]);
 	}
 
 #if 0   /* Debug. */
@@ -743,13 +755,15 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 		dem_northeast_utm.northing = this->max_north_seconds;
 		dem_northeast_utm.easting = this->max_east_seconds;
 		dem_northeast_utm.zone = this->utm_zone;
-		dem_northeast_utm.band_letter = this->utm_band_letter;
+		assert (UTM::is_band_letter(this->utm_band_letter)); /* TODO_LATER: add smarter checks. */
+		dem_northeast_utm.set_band_letter(this->utm_band_letter);
 
 		UTM dem_southwest_utm;
 		dem_southwest_utm.northing = this->min_north_seconds;
 		dem_southwest_utm.easting = this->min_east_seconds;
 		dem_southwest_utm.zone = this->utm_zone;
-		dem_southwest_utm.band_letter = this->utm_band_letter;
+		assert (UTM::is_band_letter(this->utm_band_letter)); /* TODO_LATER: add smarter checks. */
+		dem_southwest_utm.set_band_letter(this->utm_band_letter);
 
 		dem_northeast = UTM::to_latlon(dem_northeast_utm);
 		dem_southwest = UTM::to_latlon(dem_southwest_utm);
