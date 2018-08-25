@@ -762,7 +762,7 @@ void real_time_label_update(QLabel * label, const Trackpoint * tp)
 {
 	QString result;
 	if (tp->has_timestamp) {
-		result = QDateTime::fromTime_t(tp->timestamp, Qt::LocalTime).toString(Qt::ISODate); /* TODO_LATER: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		result = QDateTime::fromTime_t(tp->timestamp, Qt::LocalTime).toString(Qt::ISODate); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 	} else {
 		result = QObject::tr("No Data");
 	}
@@ -1427,8 +1427,8 @@ QPointF ProfileGraph::get_position_of_tp(TrackInfo & track_info, Trackpoint * tp
 
 void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 {
-#ifdef K_TODO_LATER
-	/* TODO_LATER: are these assignments necessary in this function?
+#ifdef K_TODO_REALLY
+	/* TODO_REALLY: are these assignments necessary in this function?
 	   Shouldn't they be done only once, on resize? */
 	graph->width = graph->viewport->get_graph_width();
 	graph->height = graph->viewport->get_graph_height();

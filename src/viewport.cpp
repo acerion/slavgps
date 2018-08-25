@@ -109,20 +109,9 @@ static void viewport_init_ra();
 
 
 
-void SlavGPS::viewport_init(void)
+void Viewport::init(void)
 {
 	viewport_init_ra();
-}
-
-
-
-
-void Viewport::init_drawing_area()
-{
-	//connect(this, SIGNAL(resizeEvent(QResizeEvent *)), this, SLOT(reconfigure_drawing_area_cb(void)));
-	//this->qpainter = new QPainter(this);
-
-	this->setFocusPolicy(Qt::ClickFocus);
 }
 
 
@@ -229,7 +218,8 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 	this->set_center_from_latlon(initial_lat_lon, true); /* The function will reject latlon if it's invalid. */
 
 
-	this->init_drawing_area();
+	this->setFocusPolicy(Qt::ClickFocus);
+	//this->qpainter = new QPainter(this);
 
 
 
@@ -1085,7 +1075,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.mode = CoordMode::UTM;
 
 		coord.utm.zone = this->center.utm.zone;
-		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_LATER: handle this in a better way. */
+		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_REALLY: handle this in a better way. */
 		coord.utm.set_band_letter(this->center.utm.get_band_letter());
 		coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
 
@@ -1453,11 +1443,32 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, const QRect & viewport_rect, 
 
 
 
-void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int angle1, int angle2, bool filled)
+void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int start_angle, int span_angle)
 {
-	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawArc(center_x, center_y, size_w, size_h, angle1, angle2 * 16); /* TODO_REALLY: handle 'filled' argument. */
+	this->canvas.painter->drawArc(center_x, center_y, size_w, size_h, start_angle, span_angle * 16);
+}
+
+
+
+
+void Viewport::draw_ellipse(QPen const & pen, const QPoint & ellipse_center, int radius_x, int radius_y, bool filled)
+{
+	/* TODO_LATER: see if there is a difference in outer size of ellipse drawn with and without a filling. */
+
+	if (filled) {
+		/* Set brush to fill ellipse. */
+		this->canvas.painter->setBrush(QBrush(pen.color()));
+	} else {
+		this->canvas.painter->setPen(pen);
+	}
+
+	this->canvas.painter->drawEllipse(ellipse_center, radius_x, radius_y);
+
+	if (filled) {
+		/* Reset brush. */
+		this->canvas.painter->setBrush(QBrush());
+	}
 }
 
 
@@ -2472,11 +2483,16 @@ ViewportCanvas::~ViewportCanvas()
 
 void ViewportCanvas::reconfigure(int new_width, int new_height)
 {
-	/* TODO_REALLY: handle situation when size does not change.
+	/* We don't handle situation when size of the pixmap doesn't
+	   change.  Such situation will occur rarely, and adding a
+	   code path to handle this special case would bring little
+	   gain. */
 
-	   TODO_MAYBE: add debug to inform when a canvas is
+	/*
+	   TODO_LATER: add debug to inform when a canvas is
 	   reconfigured. This may help catching unexpected/unwanted
-	   reconfigurations. */
+	   reconfigurations.
+	*/
 
 	this->width = new_width;
 	this->height = new_height;
@@ -2485,14 +2501,14 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	this->height_2 = this->height / 2;
 
 	if (this->pixmap) {
-		qDebug() << "II" PREFIX << "deleting old canvas pixmap";
+		qDebug() << SG_PREFIX_I << "Deleting old canvas pixmap";
 		/* Painter must be deleted before paint device, otherwise
 		   destructor of the paint device will complain. */
 		delete this->painter;
 		delete this->pixmap;
 	}
 
-	qDebug() << "II" PREFIX << "creating new canvas pixmap with size" << this->width << this->height;
+	qDebug() << SG_PREFIX_I << "Creating new canvas pixmap with size" << this->width << this->height;
 	this->pixmap = new QPixmap(this->width, this->height);
 	this->pixmap->fill();
 
@@ -2501,9 +2517,9 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 
 	/* TODO_UNKNOWN trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
-		qDebug() << "DD" PREFIX << "deleting old snapshot buffer";
+		qDebug() << SG_PREFIX_D << "Deleting old snapshot buffer";
 		delete this->snapshot_buffer;
 	}
-	qDebug() << "II" PREFIX << "creating new snapshot buffer with size" << this->width << this->height;
+	qDebug() << SG_PREFIX_I << "Creating new snapshot buffer with size" << this->width << this->height;
 	this->snapshot_buffer = new QPixmap(this->width, this->height);
 }

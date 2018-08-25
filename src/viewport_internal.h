@@ -87,6 +87,9 @@ namespace SlavGPS {
 		Viewport(Window * parent);
 		~Viewport();
 
+		/* Viewport module initialization function. */
+		static void init(void);
+
 		/* If a viewport widget already has some non-zero geometry,
 		   you can call this method without arguments. */
 		void reconfigure_drawing_area(int width = 0, int height = 0);
@@ -113,7 +116,8 @@ namespace SlavGPS {
 		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
 		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);
 		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
-		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
+		void draw_arc(QPen const & pen, int x, int y, int width, int height, int start_angle, int span_angle);
+		void draw_ellipse(QPen const & pen, const QPoint & center, int radius_x, int radius_y, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 
 		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height);
@@ -330,7 +334,6 @@ namespace SlavGPS {
 
 	private:
 		void free_center(std::list<Coord>::iterator iter);
-		void init_drawing_area(void);
 
 		double calculate_utm_zone_width(void) const;
 		void utm_zone_check(void);
@@ -364,11 +367,6 @@ namespace SlavGPS {
 
 		ViewportCanvas canvas;
 	};
-
-
-
-
-	void viewport_init(void);
 
 
 

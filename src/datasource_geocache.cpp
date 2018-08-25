@@ -136,11 +136,10 @@ bool DataSourceGeoCache::have_programs(void)
 void DataSourceGeoCacheDialog::draw_circle_cb(void)
 {
 	if (this->circle_onscreen) {
-		this->viewport->draw_arc(this->circle_pen,
-					 this->circle_x - this->circle_diameter / 2,
-					 this->circle_y - this->circle_diameter / 2,
-					 this->circle_diameter, this->circle_diameter, 0, 360,
-					 false);
+		this->viewport->draw_ellipse(this->circle_pen,
+					     QPoint(this->circle_x, this->circle_y),
+					     this->circle_radius, this->circle_radius,
+					     false);
 	}
 
 	/* Calculate widgets circle_x and circle_y. */
@@ -164,14 +163,12 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		const double pixels_per_meter = ((double)this->viewport->get_width()) / Coord::distance(coord1, coord2);
 
 		/* This is approximate. */
-		this->circle_diameter = this->miles_radius_spin->value()
-			* METERSPERMILE * pixels_per_meter * 2;
+		this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
 
-		this->viewport->draw_arc(this->circle_pen,
-					 this->circle_x - this->circle_diameter / 2,
-					 this->circle_y - this->circle_diameter / 2,
-					 this->circle_diameter, this->circle_diameter, 0, 360,
-					 false);
+		this->viewport->draw_ellipse(this->circle_pen,
+					     QPoint(this->circle_x, this->circle_y),
+					     this->circle_radius, this->circle_radius,
+					     false);
 
 		this->circle_onscreen = true;
 	} else {
@@ -304,11 +301,10 @@ BabelOptions * DataSourceGeoCacheDialog::get_process_options_none(void)
 DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 {
 	if (this->circle_onscreen) {
-		this->viewport->draw_arc(this->circle_pen,
-					 this->circle_x - this->circle_diameter / 2,
-					 this->circle_y - this->circle_diameter / 2,
-					 this->circle_diameter, this->circle_diameter, 0, 360,
-					 false);
+		this->viewport->draw_ellipse(this->circle_pen,
+					     QPoint(this->circle_x, this->circle_y),
+					     this->circle_radius, this->circle_radius,
+					     false);
 		this->viewport->sync();
 	}
 }

@@ -64,7 +64,7 @@ static int last_goto_idx = -1;
 static QString g_last_location;
 static std::vector<GotoTool *> goto_tools;
 
-static int goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent = NULL);
+static LatLon goto_latlon_dialog(const LatLon & initial_lat_lon, Window * parent = NULL);
 static int goto_utm_dialog(UTM & new_utm, const UTM & initial_utm, Window * parent = NULL);
 static int goto_location_dialog(QString & new_location, const QString & initial_location, Window * parent = NULL);
 
@@ -484,10 +484,10 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
 bool GoTo::goto_latlon(Window * window, Viewport * viewport)
 {
-	LatLon new_lat_lon;
 	const LatLon initial_lat_lon = viewport->get_center()->get_latlon();
+	const LatLon new_lat_lon = goto_latlon_dialog(initial_lat_lon, window);
 
-	if (QDialog::Rejected == goto_latlon_dialog(new_lat_lon, initial_lat_lon, window)) {
+	if (!new_lat_lon.is_valid()) {
 		return false;
 	}
 
@@ -499,12 +499,15 @@ bool GoTo::goto_latlon(Window * window, Viewport * viewport)
 
 
 
+
 /**
-   @return QDialog::Accepted if user entered new lat/lon
-   @return QDialog::Rejected otherwise
+   @return valid LatLon if user entered new lat/lon
+   @return invalid LatLon otherwise
 */
-int goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Window * parent)
+LatLon goto_latlon_dialog(const LatLon & initial_lat_lon, Window * parent)
 {
+	LatLon result;
+
 	BasicDialog dialog(parent);
 	dialog.setWindowTitle(QObject::tr("Go to Lat/Lon"));
 
@@ -514,17 +517,11 @@ int goto_latlon_dialog(LatLon & new_lat_lon, const LatLon & initial_lat_lon, Win
 	entry.setFocus(); /* This will set keyboard focus in first field of entry widget. */
 
 	if (dialog.exec() == QDialog::Accepted) {
-#if 1
-		new_lat_lon = entry.get_value();
-#else
-		/* TODO_LATER: what's going on here? Why we use these functions? */
-		new_lat_lon.lat = convert_dms_to_dec(lat_input.text().toUtf8().constData());
-		new_lat_lon.lon = convert_dms_to_dec(lon_input.text().toUtf8().constData());
-#endif
-		return QDialog::Accepted;
+		result = entry.get_value();
 	} else {
-		return QDialog::Rejected;
+		result.invalidate();
 	}
+	return result;
 }
 
 

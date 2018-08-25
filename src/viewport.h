@@ -108,11 +108,6 @@ namespace SlavGPS {
 
 
 
-	void viewport_init(void);
-
-
-
-
 } /* namespace SlavGPS */
 
 

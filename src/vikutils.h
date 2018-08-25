@@ -136,9 +136,11 @@ namespace SlavGPS {
 
 
 
+	/* Global Coordinates of a x/y position on screens. */
 	class GlobalPoint {
 	public:
 		QPoint point;
+		/* TODO_LATER: add screen number to indicate on which screen this point is present. */
 	};
 
 

@@ -16,15 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <cstdlib>
 
+
+
+#include <cstdlib>
 
 #ifdef K_INCLUDES
 #include <glib.h>
@@ -35,8 +36,9 @@
 #endif
 
 
-#include "modules.h"
 
+
+#include "modules.h"
 #include "geonames.h"
 #include "layer_map.h"
 #include "osm.h"
@@ -50,7 +52,6 @@
 #include "expedia.h"
 #include "bluemarble.h"
 #include "dir.h"
-
 #include "external_tools.h"
 #include "external_tool_datasources.h"
 #include "goto.h"
@@ -65,7 +66,6 @@
 #include "webtool_datasource.h"
 #include "goto_tool_xml.h"
 #include "routing_engine_web.h"
-
 #include "vikgobjectbuilder.h"
 #endif
 
@@ -75,7 +75,7 @@
 
 #include "layer_gps.h"
 #include "layer_trw.h"
-#include "viewport.h"
+#include "viewport_internal.h"
 #include "window.h"
 
 
@@ -328,7 +328,7 @@ void SlavGPS::modules_post_init()
 #ifdef K_FIXME_RESTORE
 	layer_mapnik_init();
 #endif
-	viewport_init();
+	Viewport::init();
 }
 
 

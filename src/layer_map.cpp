@@ -434,8 +434,8 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 
 MapTypeID LayerMap::get_default_map_type_id(void)
 {
-	/* TODO_LATER: verify that this function call works as expected. */
-	SGVariant var = LayerDefaults::get(LayerType::Map, "mode", SGVariantType::Int); /* TODO_LATER: get the default value from LayerInterface. */
+	/* TODO_REALLY: verify that this function call works as expected. */
+	SGVariant var = LayerDefaults::get(LayerType::Map, "mode", SGVariantType::Int);
 	if (var.u.val_int == 0) {
 		var = id_default();
 	}
@@ -878,7 +878,7 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & ti
 	/* Not an error, simply the pixmap was not in a cache. Let's generate the pixmap. */
 	qDebug() << SG_PREFIX_I << "CACHE MISS";
 
-	MapSource * map_source = map_source_interfaces[this->map_type_id]; /* TODO_LATER: this variable should be const. */
+	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
 	MapSourceArgs args;
 	args.sqlite_handle = &this->sqlite_handle;

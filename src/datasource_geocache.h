@@ -85,7 +85,7 @@ namespace SlavGPS {
 		bool circle_onscreen = true;
 		int circle_x = 0;
 		int circle_y = 0;
-		int circle_diameter = 0;
+		int circle_radius = 0;
 
 	private slots:
 		void draw_circle_cb(void);

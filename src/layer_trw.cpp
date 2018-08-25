@@ -3910,7 +3910,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 				/* No time found - so use 'now' for the metadata time. */
 				meta_time = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
 			} else {
-				meta_time.setMSecsSinceEpoch(timestamp * 1000); /* TODO_LATER: replace with setSecsSinceEpoch() in future. */
+				meta_time.setMSecsSinceEpoch(timestamp * 1000); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
 			}
 
 			this->metadata->timestamp = meta_time.toString(Qt::ISODate);

@@ -284,7 +284,7 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			/* Convert for display. */
 			dist_i = convert_distance_meters_to(dist_i, distance_unit);
 
-			/* TODO_LATER: Make the precision of the output related to the unit size. Don't we have utility function for that? */
+			/* TODO_REALLY: Make the precision of the output related to the unit size. Don't we have utility function for that? */
 			if (index == 0) {
 				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 2).arg(distance_unit_string);
 			} else if (index == 1) {
@@ -633,7 +633,10 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			    && std::next(iter) != trk->trackpoints.end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->track_min_stop_length) {
 
-				this->viewport->draw_arc(this->track_pens[(int) LayerTRWTrackGraphics::StopPen], curr_pos.x-(3*tp_size), curr_pos.y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360, true);
+				const int stop_radius = (6 * tp_size) / 2;
+				this->viewport->draw_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen],
+							     QPoint(curr_pos.x, curr_pos.y),
+							     stop_radius, stop_radius, true);
 			}
 
 			if (use_prev_pos && curr_pos == prev_pos) {
@@ -656,7 +659,8 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 					this->viewport->fill_rectangle(main_pen.color(), curr_pos.x-tp_size, curr_pos.y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
 					/* Final point - draw 4x circle. */
-					this->viewport->draw_arc(main_pen, curr_pos.x-(2*tp_size), curr_pos.y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360, true);
+					const int tp_radius = (4 * tp_size) / 2;
+					this->viewport->draw_ellipse(main_pen, QPoint(curr_pos.x, curr_pos.y), tp_radius, tp_radius, true);
 				}
 			}
 
@@ -1020,6 +1024,7 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos,
 		this->viewport->draw_pixmap(*wp->symbol_pixmap, viewport_x, viewport_y);
 
 	} else {
+		/* size - square's width (height), circle's diameter. */
 		int size = do_highlight ? this->wp_marker_size * 2 : this->wp_marker_size;
 		const QPen & pen = this->wp_marker_pen;
 
@@ -1031,7 +1036,8 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos,
 			this->viewport->draw_rectangle(pen, x - size / 2, y - size / 2, size, size);
 			break;
 		case GraphicMarker::Circle:
-			this->viewport->draw_arc(pen, x - size / 2, y - size / 2, size, size, 0, 360, true);
+			size = 50;
+			this->viewport->draw_ellipse(pen, QPoint(pos.x, pos.y), size / 2, size / 2, true);
 			break;
 		case GraphicMarker::X:
 			/* x-markers need additional division of size by two. */

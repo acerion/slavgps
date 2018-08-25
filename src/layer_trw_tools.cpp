@@ -1047,7 +1047,7 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 	track->apply_dem_data_last_trackpoint();
 
 
-	/* TODO_LATER: I think that in current implementation of handling of double click we don't need these fields. */
+	/* TODO_REALLY: I think that in current implementation of handling of double click we don't need these fields. */
 	trw->ct_x1 = trw->ct_x2;
 	trw->ct_y1 = trw->ct_y2;
 	trw->ct_x2 = ev->x();
