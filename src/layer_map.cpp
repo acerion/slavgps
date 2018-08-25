@@ -1803,9 +1803,9 @@ void LayerMap::download_all_cb(void)
 	}
 
 	/* Find out new current positions. */
-	const LatLonMinMax min_max = viewport->get_min_max_lat_lon();
-	const Coord coord_ul(LatLon(min_max.max.lat, min_max.min.lon), viewport->get_coord_mode());
-	const Coord coord_br(LatLon(min_max.min.lat, min_max.max.lon), viewport->get_coord_mode());
+	const LatLonBBox bbox = viewport->get_bbox();
+	const Coord coord_ul(LatLon(bbox.north, bbox.west), viewport->get_coord_mode());
+	const Coord coord_br(LatLon(bbox.south, bbox.east), viewport->get_coord_mode());
 
 	/* Get Maps Count - call for each zoom level (in reverse).
 	   With MapDownloadMode::New this is a possible maximum.
