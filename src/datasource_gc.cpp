@@ -18,6 +18,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -25,20 +29,18 @@
 
 
 
-#if 1 /* Only for testing of compilation. */
-#define VIK_CONFIG_GEOCACHES
-#endif
-
-#ifdef VIK_CONFIG_GEOCACHES
-
-
-
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
 
+
+
+
 #include <QDebug>
 #include <QStandardPaths>
+
+
+
 
 #include "babel.h"
 #include "gpx.h"
@@ -57,6 +59,8 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "DataSource GeoCache"
+
 /* Could have an array of programs instead... */
 #define GC_PROGRAM1 "geo-nearest"
 #define GC_PROGRAM2 "geo-html2gpx"
@@ -66,13 +70,6 @@ using namespace SlavGPS;
 /* Params will be geocaching.username, geocaching.password
    We have to make sure these don't collide. */
 #define PREFERENCES_NAMESPACE_GC "geocaching"
-
-
-
-
-#ifdef VIK_CONFIG_GEOCACHES
-// DataSourceInterface datasource_gc_interface;
-#endif
 
 
 
@@ -89,6 +86,7 @@ DataSourceGeoCache::DataSourceGeoCache(Viewport * new_viewport)
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
 	this->is_thread = true;
 }
+
 
 
 
@@ -135,55 +133,52 @@ bool DataSourceGeoCache::have_programs(void)
 
 
 
-void DataSourceGCDialog::draw_circle_cb(void)
+void DataSourceGeoCacheDialog::draw_circle_cb(void)
 {
-	double lat, lon;
 	if (this->circle_onscreen) {
 		this->viewport->draw_arc(this->circle_pen,
-					 this->circle_x - this->circle_width/2,
-					 this->circle_y - this->circle_width/2,
-					 this->circle_width, this->circle_width, 0, 360,
+					 this->circle_x - this->circle_diameter / 2,
+					 this->circle_y - this->circle_diameter / 2,
+					 this->circle_diameter, this->circle_diameter, 0, 360,
 					 false);
 	}
 
 	/* Calculate widgets circle_x and circle_y. */
-	/* Split up lat,lon into lat and lon. */
-	if (2 == sscanf(this->center_entry.text().toUtf8().constData(), "%lf,%lf", &lat, &lon)) {
-
-		const Coord coord(LatLon(lat, lon), this->viewport->get_coord_mode());
-		const ScreenPos circle_pos = this->viewport->coord_to_screen_pos(coord);
-
-		/* TODO_LATER: real calculation. */
-		if (circle_pos.x > -1000
-		    && circle_pos.y > -1000
-		    && circle_pos.x < (this->viewport->get_width() + 1000)
-		    && circle_pos.y < (this->viewport->get_width() + 1000)) {
-
-			this->circle_x = circle_pos.x;
-			this->circle_y = circle_pos.y;
-
-			/* Determine miles per pixel. */
-			const Coord coord1 = this->viewport->screen_pos_to_coord(0, this->viewport->get_height()/2);
-			const Coord coord2 = this->viewport->screen_pos_to_coord(this->viewport->get_width(), this->viewport->get_height()/2);
-			const double pixels_per_meter = ((double)this->viewport->get_width()) / Coord::distance(coord1, coord2);
-
-			/* This is approximate. */
-			this->circle_width = this->miles_radius_spin.value()
-				* METERSPERMILE * pixels_per_meter * 2;
-
-			this->viewport->draw_arc(this->circle_pen,
-						 this->circle_x - this->circle_width/2,
-						 this->circle_y - this->circle_width/2,
-						 this->circle_width, this->circle_width, 0, 360,
-						 false);
-
-			this->circle_onscreen = true;
-		} else {
-			this->circle_onscreen = false;
-		}
+	const LatLon lat_lon = this->center_entry->get_value();
+	if (!lat_lon.is_valid()) {
+		qDebug() << SG_PREFIX_W << "Invalid lat/lon from center entry" << lat_lon;
+		return;
 	}
 
-	/* See if onscreen. */
+	const Coord circle_center_coord(lat_lon, this->viewport->get_coord_mode());
+	const ScreenPos circle_center = this->viewport->coord_to_screen_pos(circle_center_coord);
+
+	if (this->circle_is_onscreen(circle_center)) {
+
+		this->circle_x = circle_center.x;
+		this->circle_y = circle_center.y;
+
+		/* Determine miles per pixel. */
+		const Coord coord1 = this->viewport->screen_pos_to_coord(0, this->viewport->get_height()/2);
+		const Coord coord2 = this->viewport->screen_pos_to_coord(this->viewport->get_width(), this->viewport->get_height()/2);
+		const double pixels_per_meter = ((double)this->viewport->get_width()) / Coord::distance(coord1, coord2);
+
+		/* This is approximate. */
+		this->circle_diameter = this->miles_radius_spin->value()
+			* METERSPERMILE * pixels_per_meter * 2;
+
+		this->viewport->draw_arc(this->circle_pen,
+					 this->circle_x - this->circle_diameter / 2,
+					 this->circle_y - this->circle_diameter / 2,
+					 this->circle_diameter, this->circle_diameter, 0, 360,
+					 false);
+
+		this->circle_onscreen = true;
+	} else {
+		this->circle_onscreen = false;
+	}
+
+	/* TODO_LATER: See if onscreen. */
 	/* Okay. */
 	this->viewport->sync();
 }
@@ -195,7 +190,7 @@ int DataSourceGeoCache::run_config_dialog(AcquireProcess * acquire_context)
 {
 	assert (!this->config_dialog);
 
-	this->config_dialog = new DataSourceGCDialog(this->window_title, this->viewport);
+	this->config_dialog = new DataSourceGeoCacheDialog(this->window_title, this->viewport);
 
 	int answer = this->config_dialog->exec();
 	if (answer == QDialog::Accepted) {
@@ -209,67 +204,76 @@ int DataSourceGeoCache::run_config_dialog(AcquireProcess * acquire_context)
 
 
 
-DataSourceGCDialog::DataSourceGCDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title)
+DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title)
 {
 	this->viewport = new_viewport;
 
 
 	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"), this);
-	this->num_spin.setMinimum(1);
-	this->num_spin.setMaximum(1000);
-	this->num_spin.setSingleStep(10);
-	this->num_spin.setValue(20);
+	this->num_spin = new QSpinBox();
+	this->num_spin->setMinimum(1);
+	this->num_spin->setMaximum(1000);
+	this->num_spin->setSingleStep(10);
+	this->num_spin->setValue(20);
 
 
 	QLabel * center_label = new QLabel(QObject::tr("Centered around:"), this);
+	const LatLon lat_lon = this->viewport->get_center()->get_latlon();
+	this->center_entry = new LatLonEntryWidget();
+	this->center_entry->set_value(lat_lon);
 
 
 	QLabel * miles_radius_label = new QLabel(QObject::tr("Miles Radius:"), this);
-	this->miles_radius_spin.setMinimum(1);
-	this->miles_radius_spin.setMaximum(1000);
-	this->miles_radius_spin.setSingleStep(1);
-	this->miles_radius_spin.setValue(5);
+	this->miles_radius_spin = new QDoubleSpinBox();
+	this->miles_radius_spin->setMinimum(1);
+	this->miles_radius_spin->setMaximum(1000);
+	this->miles_radius_spin->setSingleStep(1);
+	this->miles_radius_spin->setValue(5);
 
-	const LatLon lat_lon = this->viewport->get_center()->get_latlon();
-	this->center_entry.setText(lat_lon.to_string()); /* "lat,lon" string. */
 
 	this->circle_pen.setColor(QColor("#000000"));
 	this->circle_pen.setWidth(3);
 #ifdef K_FIXME_RESTORE
 	gdk_gc_set_function(this->circle_pen, GDK_INVERT);
 #endif
-	this->circle_onscreen = true;
+
 	this->draw_circle_cb();
 
-	QObject::connect(&this->center_entry, SIGNAL (editingFinished(void)), this, SLOT (draw_circle_cb()));
-	QObject::connect(&this->miles_radius_spin, SIGNAL (valueChanged(double)), this, SLOT (draw_circle_cb()));
+	QObject::connect(this->center_entry, SIGNAL (value_changed(void)), this, SLOT (draw_circle_cb()));
+	QObject::connect(this->miles_radius_spin, SIGNAL (valueChanged(double)), this, SLOT (draw_circle_cb()));
 
 	/* Packing all dialog's widgets */
 	this->grid->addWidget(num_label, 0, 0);
-	this->grid->addWidget(&this->num_spin, 0, 1);
+	this->grid->addWidget(this->num_spin, 0, 1);
 
 	this->grid->addWidget(center_label, 1, 0);
-	this->grid->addWidget(&this->center_entry, 1, 1);
+	this->grid->addWidget(this->center_entry, 1, 1);
 
 	this->grid->addWidget(miles_radius_label, 2, 0);
-	this->grid->addWidget(&this->miles_radius_spin, 2, 1);
+	this->grid->addWidget(this->miles_radius_spin, 2, 1);
 }
 
 
 
 
-BabelOptions * DataSourceGCDialog::get_process_options_none(void)
+BabelOptions * DataSourceGeoCacheDialog::get_process_options_none(void)
 {
 
 	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string);
 	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password").val_string);
 
-	double lat, lon;
-	if (2 != sscanf(this->center_entry.text().toUtf8().constData(), "%lf,%lf", &lat, &lon)) {
-		qDebug() << "WW: Datasource GC: broken input - using some defaults";
-		lat = Preferences::get_default_lat();
-		lon = Preferences::get_default_lon();
+	LatLon lat_lon = this->center_entry->get_value();
+	if (!lat_lon.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Invalid lat/lon from center entry, using default values" << lat_lon;
+		/* TODO_LATER: now what? How to handle invalid lat/lon? */
+
+		lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
+		if (!lat_lon.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Invalid lat/lon from defaults" << lat_lon;
+			/* TODO_LATER: now what? How to handle invalid lat/lon? */
+		}
 	}
+
 
 	/* Unix specific shell commands
 	   1. Remove geocache webpages (maybe be from different location).
@@ -280,12 +284,12 @@ BabelOptions * DataSourceGCDialog::get_process_options_none(void)
 	const QString command1 = "rm -f ~/.geo/caches/*.html; ";
 	const QString command2 = QString("%1 -H ~/.geo/caches -P -n%2 -r%3M -u %4 -p %5 %6 %7; ")
 		.arg(GC_PROGRAM1)
-		.arg(this->num_spin.value())
-		.arg(this->miles_radius_spin.value(), 0, 'f', 1)
+		.arg(this->num_spin->value())
+		.arg(this->miles_radius_spin->value(), 0, 'f', 1)
 		.arg(safe_user)
 		.arg(safe_pass)
-		.arg(SGUtils::double_to_c(lat).toUtf8().constData())
-		.arg(SGUtils::double_to_c(lon).toUtf8().constData());
+		.arg(SGUtils::double_to_c(lat_lon.lat))
+		.arg(SGUtils::double_to_c(lat_lon.lon));
 	const QString command3 = QString("%1 -z ~/.geo/caches/*.html").arg(GC_PROGRAM2);
 
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromShellCommand);
@@ -297,13 +301,13 @@ BabelOptions * DataSourceGCDialog::get_process_options_none(void)
 
 
 
-DataSourceGCDialog::~DataSourceGCDialog()
+DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 {
 	if (this->circle_onscreen) {
 		this->viewport->draw_arc(this->circle_pen,
-					 this->circle_x - this->circle_width/2,
-					 this->circle_y - this->circle_width/2,
-					 this->circle_width, this->circle_width, 0, 360,
+					 this->circle_x - this->circle_diameter / 2,
+					 this->circle_y - this->circle_diameter / 2,
+					 this->circle_diameter, this->circle_diameter, 0, 360,
 					 false);
 		this->viewport->sync();
 	}
@@ -312,4 +316,11 @@ DataSourceGCDialog::~DataSourceGCDialog()
 
 
 
-#endif /* #ifdef VIK_CONFIG_GEOCACHES */
+bool DataSourceGeoCacheDialog::circle_is_onscreen(const ScreenPos & circle_center)
+{
+	/* TODO_LATER: real calculation. */
+	return circle_center.x > -1000
+		&& circle_center.y > -1000
+		&& circle_center.x < (this->viewport->get_width() + 1000)
+		&& circle_center.y < (this->viewport->get_width() + 1000);
+}

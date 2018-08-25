@@ -26,7 +26,6 @@
 
 
 #include <QSpinBox>
-#include <QLineEdit>
 #include <QDoubleSpinBox>
 
 
@@ -34,11 +33,17 @@
 
 #include "datasource.h"
 #include "babel.h"
+#include "widget_lat_lon_entry.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class ScreenPos;
 
 
 
@@ -60,24 +65,27 @@ namespace SlavGPS {
 
 
 
-	class DataSourceGCDialog : public DataSourceDialog {
+	class DataSourceGeoCacheDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceGCDialog(const QString & window_title, Viewport * viewport);
-		~DataSourceGCDialog();
+		DataSourceGeoCacheDialog(const QString & window_title, Viewport * viewport);
+		~DataSourceGeoCacheDialog();
 
 		BabelOptions * get_process_options_none(void);
 
-		QSpinBox num_spin;
-		QLineEdit center_entry; /* TODO_REALLY make separate widgets for lat/lon. */
-		QDoubleSpinBox miles_radius_spin;
+		bool circle_is_onscreen(const ScreenPos & circle_center);
+
+	private:
+		QSpinBox * num_spin = NULL;
+		LatLonEntryWidget * center_entry = NULL;
+		QDoubleSpinBox * miles_radius_spin = NULL;
 
 		QPen circle_pen;
 		Viewport * viewport = NULL;
-		bool circle_onscreen;
-		int circle_x;
-		int circle_y;
-		int circle_width;
+		bool circle_onscreen = true;
+		int circle_x = 0;
+		int circle_y = 0;
+		int circle_diameter = 0;
 
 	private slots:
 		void draw_circle_cb(void);

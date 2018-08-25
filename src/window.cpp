@@ -2496,7 +2496,11 @@ void Window::acquire_from_my_osm_cb(void)
 #ifdef VIK_CONFIG_GEOCACHES
 void Window::acquire_from_gc_cb(void)
 {
-	if (!DataSourceGeoCache::have_program()) {
+	if (false
+#if K_FIXME_RESTORE
+	    && !DataSourceGeoCache::have_programs()
+#endif
+	    ) {
 		return;
 	}
 

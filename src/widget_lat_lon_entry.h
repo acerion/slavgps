@@ -56,8 +56,10 @@ namespace SlavGPS {
 		void set_text(const QString & latitude_label, const QString & latitude_tooltip, const QString & longitude_label, const QString & longitude_tooltip);
 
 	signals:
+		void value_changed(void);
 
 	private slots:
+		void value_changed_cb(void);
 
 	public:
 		QGridLayout * grid = NULL;

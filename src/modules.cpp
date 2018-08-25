@@ -41,6 +41,7 @@
 #include "layer_map.h"
 #include "osm.h"
 #include "osm-traces.h"
+#include "datasources.h"
 
 #ifdef K_INCLUDES
 #include "bing.h"
@@ -49,7 +50,7 @@
 #include "expedia.h"
 #include "bluemarble.h"
 #include "dir.h"
-#include "datasources.h"
+
 #include "external_tools.h"
 #include "external_tool_datasources.h"
 #include "goto.h"

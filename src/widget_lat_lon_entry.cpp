@@ -83,6 +83,10 @@ LatLonEntryWidget::LatLonEntryWidget(QWidget * parent)
 	   LatLonEntryWidget::setFocus() after putting the widget in
 	   layout. */
 	this->setFocusProxy(this->lat_spin);
+
+
+	QObject::connect(this->lat_spin, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
+	QObject::connect(this->lon_spin, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
 }
 
 
@@ -117,4 +121,12 @@ void LatLonEntryWidget::set_text(const QString & latitude_label, const QString &
 
 	this->lon_spin->setToolTip(longitude_tooltip);
 	this->lon_label->setText(longitude_label);
+}
+
+
+
+
+void LatLonEntryWidget::value_changed_cb(void) /* Slot. */
+{
+	emit this->value_changed();
 }
