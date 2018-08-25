@@ -136,6 +136,14 @@ namespace SlavGPS {
 
 
 
+	class GlobalPoint {
+	public:
+		QPoint point;
+	};
+
+
+
+
 	class SGUtils {
 	public:
 		static bool is_very_first_run(void);
@@ -167,6 +175,12 @@ namespace SlavGPS {
 		  separator, not the localized one.
 		*/
 		static QString double_to_c(double d, int precision = 6);
+
+		/**
+		   Convert a geo coordinate @coord of item visible in
+		   given @viewport to x/y coordinate on screen.
+		*/
+		static GlobalPoint coord_to_global_point(const Coord & coord, const Viewport * viewport);
 	};
 
 

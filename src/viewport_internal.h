@@ -179,8 +179,8 @@ namespace SlavGPS {
 		/* Coordinate transformations. */
 		Coord screen_pos_to_coord(int x, int y) const;
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
-		void coord_to_screen_pos(const Coord & coord, int * x, int * y);
-		ScreenPos coord_to_screen_pos(const Coord & coord);
+		void coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
+		ScreenPos coord_to_screen_pos(const Coord & coord) const;
 
 		/* Viewport scale. */
 		void set_map_zoom_x(double new_xmpp);

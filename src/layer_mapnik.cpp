@@ -835,7 +835,6 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	if (map_utils_coord_to_iTMS(coord_ul, xzoom, yzoom, ti_ul) &&
 	     map_utils_coord_to_iTMS(coord_br, xzoom, yzoom, ti_br)) {
 		/* TODO_LATER: Understand if tilesize != 256 does this need to use shrinkfactors? */
-		int xx, yy;
 
 		int xmin = MIN(ti_ul.x, ti_br.x), xmax = MAX(ti_ul.x, ti_br.x);
 		int ymin = MIN(ti_ul.y, ti_br.y), ymax = MAX(ti_ul.y, ti_br.y);
@@ -852,6 +851,7 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 				const QPixmap pixmap = this->get_pixmap(ti_ul, ti_br);
 				if (!pixmap.isNull()) {
 					const Coord coord = map_utils_iTMS_to_coord(ti_ul);
+					int xx, yy;
 					viewport->coord_to_screen_pos(coord, &xx, &yy);
 					viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 				}

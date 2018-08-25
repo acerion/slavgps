@@ -38,6 +38,7 @@
 #include <QCommandLineParser>
 #include <QDir>
 #include <QFileInfo>
+#include <QDesktopWidget>
 
 
 
@@ -1258,4 +1259,25 @@ QString SGUtils::double_to_c(double d, int precision)
 	}
 
 	return result;
+}
+
+
+
+
+GlobalPoint SGUtils::coord_to_global_point(const Coord & coord, const Viewport * viewport)
+{
+	GlobalPoint global_point;
+	const ScreenPos screen_pos = viewport->coord_to_screen_pos(coord); /* In viewport's x/y coordinate system. */
+	global_point.point = viewport->mapToGlobal(QPoint(screen_pos.x, screen_pos.y)); /* In screen's x/y coordinate system. */
+
+	if (1) { /* Debug. */
+		const int primary_screen = QApplication::desktop()->primaryScreen();
+		const QRect primary_screen_geo = QApplication::desktop()->availableGeometry(primary_screen);
+		const QRect containing_screen_geo = QApplication::desktop()->availableGeometry(viewport);
+
+		qDebug() << SG_PREFIX_D << "Available geometry of primary screen:" << primary_screen_geo;
+		qDebug() << SG_PREFIX_D << "Available geometry of screen containing widget:" << containing_screen_geo;
+	}
+
+	return global_point;
 }

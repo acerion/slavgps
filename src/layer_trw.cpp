@@ -3736,7 +3736,8 @@ void LayerTRW::trackpoint_properties_show()
 		Trackpoint * tp = *track->selected_tp_iter.iter;
 
 		/* Shift up/down to try not to obscure the trackpoint. */
-		Dialog::move_dialog(this->tpwin, g_tree->tree_get_main_viewport(), tp->coord, true);
+		const GlobalPoint point_to_expose = SGUtils::coord_to_global_point(tp->coord, g_tree->tree_get_main_viewport());
+		Dialog::move_dialog(this->tpwin, point_to_expose, true);
 
 		this->tpwin_update_dialog_data();
 	}

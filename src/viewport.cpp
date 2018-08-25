@@ -1135,7 +1135,7 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
   Thus x & y position factors are calculated once on zoom changes,
   avoiding the need to do it here all the time.
 */
-void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y)
+void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
 {
 	Coord coord;
 	const double xmpp = this->map_zoom.x;
@@ -1183,7 +1183,7 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 
 
 
-ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in)
+ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in) const
 {
 	ScreenPos pos;
 	this->coord_to_screen_pos(coord_in, &pos.x, &pos.y);
