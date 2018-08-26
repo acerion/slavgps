@@ -193,13 +193,13 @@ bool ViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, Viewp
 	case ZoomOperation::In:
 		viewport->set_center_from_screen_pos(event_pos);
 		viewport->zoom_in();
-		window->contents_modified = true;
+		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
 		viewport->set_center_from_screen_pos(event_pos);
 		viewport->zoom_out();
-		window->contents_modified = true;
+		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	default:
@@ -220,13 +220,13 @@ bool ViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, Viewp
 	case ZoomOperation::In:
 		viewport->set_center_from_screen_pos(center_pos);
 		viewport->zoom_in();
-		window->contents_modified = true;
+		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
 		viewport->set_center_from_screen_pos(center_pos);
 		viewport->zoom_out();
-		window->contents_modified = true;
+		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	default:
@@ -255,7 +255,7 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 		const ScreenPos orig_pos = viewport->coord_to_screen_pos(cursor_coord);
 
 		viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
-		window->contents_modified = true;
+		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	}
@@ -270,7 +270,7 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 		const ScreenPos orig_pos = viewport->coord_to_screen_pos(cursor_coord);
 
 		viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
-		window->contents_modified = true;
+		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	}

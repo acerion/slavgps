@@ -525,8 +525,8 @@ LayerToolPan::~LayerToolPan()
 
 ToolStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Pan: ->handle_mouse_click() called";
-	this->window->contents_modified = true;
+	qDebug() << SG_PREFIX_D << "Called";
+	this->window->set_dirty_flag(true);
 
 	/* Standard pan click. */
 	if (event->button() == Qt::LeftButton) {
@@ -542,8 +542,8 @@ ToolStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 
 ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Pan: ->handle_mouse_double_click() called";
-	this->window->contents_modified = true;
+	qDebug() << SG_PREFIX_D << "Called";
+	this->window->set_dirty_flag(true);
 
 	/* Zoom in / out on double click.
 	   No need to change the center as that has already occurred in the first click of a double click occurrence. */

@@ -877,10 +877,11 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 
 
-FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
+VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
 {
+
 	if (!viewport) {
-		return FileLoadResult::READ_FAILURE;
+		return VikFile::LoadStatus::ReadFailure;
 	}
 
 	QString full_path;
@@ -893,10 +894,10 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "r");
 	if (!file) {
-		return FileLoadResult::READ_FAILURE;
+		return VikFile::LoadStatus::ReadFailure;
 	}
 
-	FileLoadResult load_answer = FileLoadResult::OTHER_SUCCESS;
+	VikFile::LoadStatus load_status = VikFile::LoadStatus::OtherSuccess;
 
 	char * dirpath_ = g_path_get_dirname(full_path.toUtf8().constData());
 	QString dirpath(dirpath_);
@@ -905,13 +906,13 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
 		if (VikFile::read_file(file, parent_layer, dirpath, viewport)) {
-			load_answer = FileLoadResult::VIK_SUCCESS;
+			load_status = VikFile::LoadStatus::Success;
 		} else {
-			load_answer = FileLoadResult::VIK_FAILURE_NON_FATAL;
+			load_status = VikFile::LoadStatus::FailureNonFatal;
 		}
 	} else if (jpg_magic_check(full_path)) {
 		if (!jpg_load_file(parent_layer, viewport, full_path)) {
-			load_answer = FileLoadResult::UNSUPPORTED_FAILURE;
+			load_status = VikFile::LoadStatus::UnsupportedFailure;
 		}
 	} else {
 		/* For all other file types which consist of tracks, routes and/or waypoints,
@@ -930,7 +931,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 			babel_options.babel_args = "-i kml";
 			success = babel_options.import_from_local_file(trw, NULL);
 			if (!success) {
-				load_answer = FileLoadResult::GPSBABEL_FAILURE;
+				load_status = VikFile::LoadStatus::GPSBabelFailure;
 			}
 		}
 		/* NB use a extension check first, as a GPX file
@@ -940,7 +941,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 		else if (FileUtils::has_extension(full_path, ".gpx") || FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			success = GPX::read_file(file, trw);
 			if (!success) {
-				load_answer = FileLoadResult::GPX_FAILURE;
+				load_status = VikFile::LoadStatus::GPXFailure;
 			}
 		} else {
 			/* Try final supported file type. */
@@ -948,7 +949,7 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 			success = (rv == LayerDataReadStatus::Success);
 			if (!success) {
 				/* Failure here means we don't know how to handle the file. */
-				load_answer = FileLoadResult::UNSUPPORTED_FAILURE;
+				load_status = VikFile::LoadStatus::UnsupportedFailure;
 			}
 		}
 
@@ -964,14 +965,16 @@ FileLoadResult VikFile::load(LayerAggregate * parent_layer, Viewport * viewport,
 	}
 
 	fclose(file);
-	return load_answer;
+	return load_status;
 }
 
 
 
 
-bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path)
+VikFile::SaveResult VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path)
 {
+	VikFile::SaveResult save_result;
+
 	QString full_path;
 	if (file_full_path.left(7) == "file://") {
 		full_path = file_full_path.right(file_full_path.size() - 7);
@@ -982,7 +985,8 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	if (!file) {
-		return false;
+		save_result.success = false;
+		return save_result;
 	}
 
 	/* Enable relative paths in .vik files to work. */
@@ -1008,7 +1012,8 @@ bool VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QStrin
 	fclose(file);
 	file = NULL;
 
-	return true;
+	save_result.success = true;
+	return save_result;
 }
 
 

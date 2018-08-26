@@ -2433,7 +2433,9 @@ void Viewport::dropEvent(QDropEvent * event)
 
 	/* If our parent window has enabled dropping, it needs to be able to handle dropped data. */
 	if (text.length()) {
-		this->window->open_file(text, false);
+		if (this->window->save_on_dirty_flag()) {
+			this->window->open_file(text, false);
+		}
 	}
 
 	event->acceptProposedAction();

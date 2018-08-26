@@ -118,7 +118,7 @@ Tree * g_tree = NULL;
 
 
 /* The last used directories. */
-static QUrl last_folder_files_url;
+static QUrl g_last_folder_files_url;
 
 
 
@@ -150,16 +150,14 @@ static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * pa
 
 Window::Window()
 {
-	strcpy(this->type_string, "SG QT WINDOW");
-
-	this->loaded_type = FileLoadResult::READ_FAILURE; /* AKA none. */
+	strcpy(this->type_string, "SlavGPS Main Window");
 
 
 	for (int i = 0; i < QIcon::themeSearchPaths().size(); i++) {
-		qDebug() << "II: Window: XDG DATA FOLDER: " << QIcon::themeSearchPaths().at(i);
+		qDebug() << SG_PREFIX_I << "XDG DATA FOLDER: " << QIcon::themeSearchPaths().at(i);
 	}
 	QIcon::setThemeName("default");
-	qDebug() << "II: Window: Using icon theme " << QIcon::themeName();
+	qDebug() << SG_PREFIX_I << "Using icon theme " << QIcon::themeName();
 
 
 	this->create_layout();
@@ -995,7 +993,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 		qDebug() << "II" PREFIX "call draw_tree_items()";
 		this->draw_tree_items();
-		this->contents_modified = true;
+		this->set_dirty_flag(true);
 	}
 }
 
@@ -1393,7 +1391,7 @@ bool Window::get_pan_move(void)
 void Window::menu_edit_cut_cb(void)
 {
 	this->items_tree->cut_selected_cb();
-	this->contents_modified = true;
+	this->set_dirty_flag(true);
 }
 
 
@@ -1410,7 +1408,7 @@ void Window::menu_edit_copy_cb(void)
 void Window::menu_edit_paste_cb(void)
 {
 	if (this->items_tree->paste_selected_cb()) {
-		this->contents_modified = true;
+		this->set_dirty_flag(true);
 	}
 }
 
@@ -1421,7 +1419,7 @@ void Window::menu_edit_delete_cb(void)
 {
 	if (this->items_tree->get_selected_layer()) {
 		this->items_tree->delete_selected_cb();
-		this->contents_modified = true;
+		this->set_dirty_flag(true);
 	} else {
 		Dialog::info(tr("You must select a layer to delete."), this);
 	}
@@ -1523,23 +1521,48 @@ void Window::preferences_cb(void) /* Slot. */
 
 
 
+/*
+  Return true if:
+  - unsaved changes have been saved because end user has decided to save them,
+  - unsaved changes are to be discarded because end user has decided to discard them,
+  - there were no unsaved changes;
+
+  Return false if:
+  - user decided to cancel action that led to calling of this function
+*/
+bool Window::save_on_dirty_flag(void)
+{
+	if (!this->dirty_flag) {
+		return true;
+	}
+
+	QMessageBox::StandardButton reply;
+	reply = QMessageBox::question(this, "SlavGPS", /* TODO_LATER: remove hardcoded program name */
+				      tr("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
+					 "Do you want to save the changes?").arg(this->get_current_document_file_name()),
+				      QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
+				      QMessageBox::Yes);
+	if (reply == QMessageBox::No) {
+		return true;
+	} else if (reply == QMessageBox::Yes) {
+		this->menu_file_save_cb();
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+
+
 void Window::closeEvent(QCloseEvent * ev)
 {
-	if (this->contents_modified) {
-		QMessageBox::StandardButton reply;
-		reply = QMessageBox::question(this, "SlavGPS",
-					      QString("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
-						      "Do you want to save the changes?").arg(this->get_current_document_file_name()),
-					      QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
-					      QMessageBox::Yes);
-		if (reply == QMessageBox::No) {
-			ev->accept();
-		} else if (reply == QMessageBox::Yes) {
-			//this->menu_file_save_cb();
-			ev->accept();
-		} else {
-			ev->ignore();
-		}
+	const bool proceed = this->save_on_dirty_flag();
+	if (proceed) {
+		ev->accept();
+	} else {
+		ev->ignore();
+		return;
 	}
 
 
@@ -1884,8 +1907,8 @@ void Window::open_file_cb(void)
 
 	QFileDialog file_selector(this, "Select a GPS data file to open");
 
-	if (last_folder_files_url.isValid()) {
-		file_selector.setDirectoryUrl(last_folder_files_url);
+	if (g_last_folder_files_url.isValid()) {
+		file_selector.setDirectoryUrl(g_last_folder_files_url);
 	}
 
 
@@ -1923,9 +1946,9 @@ void Window::open_file_cb(void)
 		return;
 	}
 
-	last_folder_files_url = file_selector.directoryUrl();
+	g_last_folder_files_url = file_selector.directoryUrl();
 
-	if ((this->contents_modified || !this->current_document_full_path.isEmpty()) && new_window) {
+	if ((this->dirty_flag || !this->current_document_full_path.isEmpty()) && new_window) {
 		const QStringList selection = file_selector.selectedFiles();
 		if (!selection.size()) {
 			return;
@@ -1948,6 +1971,7 @@ void Window::open_file_cb(void)
 					/* Load each subsequent .vik file in a separate window. */
 					Window * new_window2 = Window::new_window();
 					if (new_window2) {
+						/* No need to save on dirty flag - this is a brand new window. */
 						new_window2->open_file(file_full_path, true);
 					}
 				}
@@ -1976,28 +2000,28 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 	bool restore_original_filename = false;
 
 	LayerAggregate * agg = this->items_tree->get_top_layer();
-	this->loaded_type = VikFile::load(agg, this->viewport, new_document_full_path);
-	switch (this->loaded_type) {
-	case FileLoadResult::READ_FAILURE:
+	this->file_load_status = VikFile::load(agg, this->viewport, new_document_full_path);
+	switch (this->file_load_status) {
+	case VikFile::LoadStatus::ReadFailure:
 		Dialog::error(tr("The file you requested could not be opened."), this);
 		break;
-	case FileLoadResult::GPSBABEL_FAILURE:
+	case VikFile::LoadStatus::GPSBabelFailure:
 		Dialog::error(tr("GPSBabel is required to load files of this type or GPSBabel encountered problems."), this);
 		break;
-	case FileLoadResult::GPX_FAILURE:
+	case VikFile::LoadStatus::GPXFailure:
 		Dialog::error(tr("Unable to load malformed GPX file %1").arg(new_document_full_path), this);
 		break;
-	case FileLoadResult::UNSUPPORTED_FAILURE:
+	case VikFile::LoadStatus::UnsupportedFailure:
 		Dialog::error(tr("Unsupported file type for %1").arg(new_document_full_path), this);
 		break;
-	case FileLoadResult::VIK_FAILURE_NON_FATAL:
+	case VikFile::LoadStatus::FailureNonFatal:
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
 			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path)));
 		}
 		/* No break, carry on to show any data. */
-	case FileLoadResult::VIK_SUCCESS:
+	case VikFile::LoadStatus::Success:
 		{
 
 			restore_original_filename = true; /* Will actually get inverted by the 'success' component below. */
@@ -2035,10 +2059,10 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 			}
 		}
 		/* No break, carry on to redraw. */
-		//case FileLoadResult::OTHER_SUCCESS:
+		//case VikFile::LoadResult::OTHER_SUCCESS:
 	default:
 		success = true;
-		/* When FileLoadResult::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
+		/* When VikFile::LoadResult::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = !restore_original_filename;
 
 		this->update_recent_files(new_document_full_path);
@@ -2060,10 +2084,15 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 bool Window::menu_file_save_cb(void)
 {
 	if (this->current_document_full_path.isEmpty()) {
+		/* Current workspace hasn't been saved to a file yet.
+		   This function will reset dirty flag if necessary. */
 		return this->menu_file_save_as_cb();
 	} else {
-		this->contents_modified = false;
-		return this->save_current_document();
+		const bool status = this->save_current_document();
+		if (status) {
+			this->set_dirty_flag(false);
+		}
+		return status;
 	}
 }
 
@@ -2072,9 +2101,9 @@ bool Window::menu_file_save_cb(void)
 
 bool Window::menu_file_save_as_cb(void)
 {
-	bool rv = false;
+	bool save_status = false;
 
-	QFileDialog file_selector(this, QObject::tr("Save as Viking File."));
+	QFileDialog file_selector(this, QObject::tr("Save as Viking File"));
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
 
@@ -2083,8 +2112,8 @@ bool Window::menu_file_save_as_cb(void)
 	file_selector.setNameFilters(filter);
 
 
-	if (last_folder_files_url.isValid()) {
-		file_selector.setDirectoryUrl(last_folder_files_url);
+	if (g_last_folder_files_url.isValid()) {
+		file_selector.setDirectoryUrl(g_last_folder_files_url);
 	}
 
 #ifdef K_FIXME_RESTORE
@@ -2108,18 +2137,21 @@ bool Window::menu_file_save_as_cb(void)
 		}
 		const QString full_path = selection.at(0);
 
-		if (0 != access(full_path.toUtf8().constData(), F_OK) || Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(full_path)), this)) {
-			this->set_current_document_full_path(full_path);
-			rv = this->save_current_document();
-			if (rv) {
-				this->contents_modified = false;
-				last_folder_files_url = file_selector.directoryUrl();
-			}
+		/* QT file selector handles "overwrite existing file" question for us. */
+
+		this->set_current_document_full_path(full_path);
+		if (this->save_current_document()) {
+			this->set_dirty_flag(false);
+			g_last_folder_files_url = file_selector.directoryUrl();
+		        save_status = true;
 			break;
+		} else {
+			/* TODO_LATER: handle saving errors. */
+			save_status = false;
 		}
 	}
 
-	return rv;
+	return save_status;
 }
 
 
@@ -2331,6 +2363,7 @@ void Window::finish_new(void)
 	}
 
 	if (Preferences::get_startup_method() == StartupMethod::SpecifiedFile) {
+		/* No need to save on dirty flag - this is brand new window. */
 		this->open_file(Preferences::get_startup_file(), true);
 		if (!this->current_document_full_path.isEmpty()) {
 			return;
@@ -2350,7 +2383,7 @@ void Window::finish_new(void)
 
 
 	/* If not loaded any file, maybe try the location lookup. */
-	if (true || this->loaded_type == FileLoadResult::READ_FAILURE) {
+	if (true || this->file_load_status == VikFile::LoadStatus::ReadFailure) {
 		if (Preferences::get_startup_method() == StartupMethod::AutoLocation) {
 
 			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
@@ -2375,6 +2408,7 @@ void Window::open_window(const QStringList & file_full_paths)
 		if (!this->current_document_full_path.isEmpty() && VikFile::has_vik_file_magic(file_full_path)) {
 			Window * new_window = Window::new_window();
 			if (new_window) {
+				/* No need to save on dirty flag, this is brand new window. */
 				new_window->open_file(file_full_path, true);
 			}
 		} else {
@@ -2994,21 +3028,21 @@ QComboBox * SlavGPS::create_zoom_combo_all_levels(QWidget * parent)
 
 
 
-static int zoom_popup_handler(GtkWidget * widget)
+static int zoom_popup_handler(int * gtk_widget)
 {
 #ifdef K_FIXME_RESTORE
-	if (!widget) {
+	if (!gtk_widget) {
 		return false;
 	}
 
-	if (!GTK_IS_MENU (widget)) {
+	if (!GTK_IS_MENU (gtk_widget)) {
 		return false;
 	}
 
 	/* The "widget" is the menu that was supplied when
 	 * QObject::connect() was called.
 	 */
-	QMenu * menu = GTK_MENU (widget);
+	QMenu * menu = GTK_MENU (gtk_widget);
 
 	menu->exec(QCursor::pos());
 #endif
@@ -3387,19 +3421,23 @@ bool Window::menu_file_save_and_exit_cb(void)
 
 
 
-bool Window::save_current_document()
+/* Save current workspace to file indicated by ::current_document_full_path */
+bool Window::save_current_document(void)
 {
-	this->set_busy_cursor();
-	bool success = true;
+	bool save_status = true;
 
-	if (VikFile::save(this->items_tree->get_top_layer(), this->viewport, this->current_document_full_path)) {
+	this->set_busy_cursor();
+
+	const VikFile::SaveResult save_result = VikFile::save(this->items_tree->get_top_layer(), this->viewport, this->current_document_full_path);
+	if (save_result.success) {
 		this->update_recent_files(this->current_document_full_path);
+		save_status = true;
 	} else {
 		Dialog::error(tr("The filename you requested could not be opened for writing."), this);
-		success = false;
+		save_status = false;
 	}
 	this->clear_busy_cursor();
-	return success;
+	return save_status;
 }
 
 
@@ -3615,12 +3653,11 @@ void Window::open_recent_file_cb(void)
 
 	if (this->current_document_full_path.isEmpty()) {
 		/* We don't have any file opened yet. Open this file
-		   in this window.
+		   in this window. */
 
-		   TODO_REALLY: what if we don't have any file open,
-		   but we already did some work in this window without
-		   saving it to file? */
-		this->open_file(file_full_path, true);
+		if (this->save_on_dirty_flag()) {
+			this->open_file(file_full_path, true);
+		}
 	} else {
 		/* Current window has already some file open. Open the
 		   'recent file' in new window. */
@@ -3637,6 +3674,14 @@ void Window::open_recent_file_cb(void)
 */
 void Window::emit_center_or_zoom_changed(const QString & trigger_name)
 {
-	qDebug() << "SIGNAL" PREFIX << "will emit 'center or zoom changed' signal after" << trigger_name << "event in Window";
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal after" << trigger_name << "event in Window";
 	emit this->center_or_zoom_changed();
+}
+
+
+
+
+void Window::set_dirty_flag(bool dirty)
+{
+	this->dirty_flag = dirty;
 }

@@ -60,15 +60,8 @@ namespace SlavGPS {
 		GEOJSON   = 5
 	};
 
-	enum class FileLoadResult {
-		READ_FAILURE,
-		GPSBABEL_FAILURE,
-		GPX_FAILURE,
-		UNSUPPORTED_FAILURE,
-		VIK_FAILURE_NON_FATAL,
-		VIK_SUCCESS,
-		OTHER_SUCCESS,
-	};
+
+
 
 
 
@@ -83,8 +76,25 @@ namespace SlavGPS {
 
 	class VikFile {
 	public:
-		static bool save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
-		static FileLoadResult load(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
+
+		enum class LoadStatus {
+			ReadFailure,
+			GPSBabelFailure,
+			GPXFailure,
+			UnsupportedFailure,
+			FailureNonFatal,
+			Success,
+			OtherSuccess,
+		};
+
+		class SaveResult {
+		public:
+			bool success = false;
+		};
+
+
+		static SaveResult save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
+		static LoadStatus load(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
 
 		/* Function to determine if a filename is a 'viking' type file. */
 		static bool has_vik_file_magic(const QString & file_full_path);

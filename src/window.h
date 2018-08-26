@@ -38,6 +38,7 @@
 #include "layer_trw_track.h"
 #include "layer_trw_waypoints.h"
 #include "layer_trw_tracks.h"
+#include "file.h"
 
 
 
@@ -56,20 +57,12 @@
 
 
 
-typedef int GtkWidget;
-typedef int GdkDragContext;
-typedef int GtkSelectionData;
-
-
-
-
 namespace SlavGPS {
 
 
 
 
 	enum class SGFileType;
-	enum class FileLoadResult;
 	class MapZoom;
 
 
@@ -121,13 +114,11 @@ namespace SlavGPS {
 		LayersPanel * items_tree = NULL;
 		Viewport * viewport = NULL;
 
-		/* Flag set when contents of project is modified. This
-		   flag is set only in a handful of situations. Adding
-		   new waypoint or track doesn't set this flag, so its
-		   usefulness is questionable. */
-		bool contents_modified = false;
 
 		void statusbar_update(StatusBarField field, QString const & message);
+
+		bool save_on_dirty_flag(void);
+		void set_dirty_flag(bool dirty);
 
 
 		void pan_click(QMouseEvent * event);
@@ -359,7 +350,7 @@ namespace SlavGPS {
 
 		QString current_document_full_path;
 
-		FileLoadResult loaded_type;
+		VikFile::LoadStatus file_load_status = VikFile::LoadStatus::ReadFailure; /* AKA none. */
 
 		/* Tool management state. */
 		LayerType tool_layer_type;
@@ -388,6 +379,12 @@ namespace SlavGPS {
 
 		/* The last used directory for saving viewport to image(s). */
 		QUrl last_folder_images_url;
+
+		/* Flag set when contents of project is modified. This
+		   flag is set only in a handful of situations. Adding
+		   new waypoint or track doesn't set this flag, so its
+		   usefulness is questionable. */
+		bool dirty_flag = false;
 
 	signals:
 		void center_or_zoom_changed(void);
