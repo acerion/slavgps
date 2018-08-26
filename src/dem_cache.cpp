@@ -210,7 +210,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 		lon = ll_tmp.lon * 3600;
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 		static UTM utm_tmp;
-		if (utm_tmp.zone != dem->utm_zone) {
+		if (utm_tmp.zone != dem->utm.zone) {
 			return false;
 		}
 		utm_tmp = ce->coord->get_utm();
@@ -315,7 +315,7 @@ int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coo
 				}
 			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 				utm_tmp = coord->get_utm();
-				if (utm_tmp.zone == dem->utm_zone
+				if (utm_tmp.zone == dem->utm.zone
 				    && (elev = dem->get_east_north(utm_tmp.easting, utm_tmp.northing)) != DEM_INVALID_ELEVATION) {
 
 					return elev;

@@ -157,9 +157,9 @@ bool DEM::parse_header(char * buffer)
 
 	/* zone */
 	get_int_and_continue(&buffer, &int_val, true);
-	this->utm_zone = int_val;
+	this->utm.zone = int_val;
 	/* FIXME: southern or northern hemisphere?! */
-	this->utm_band_letter = 'N';
+	this->utm.set_band_letter('N');
 
 	double val;
 	/* skip numbers 5-19  */
@@ -754,16 +754,18 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 		UTM dem_northeast_utm;
 		dem_northeast_utm.northing = this->max_north_seconds;
 		dem_northeast_utm.easting = this->max_east_seconds;
-		dem_northeast_utm.zone = this->utm_zone;
-		assert (UTM::is_band_letter(this->utm_band_letter)); /* TODO_REALLY: add smarter checks. */
-		dem_northeast_utm.set_band_letter(this->utm_band_letter);
+
+		dem_northeast_utm.zone = this->utm.zone;
+		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_REALLY: add smarter error handling. */
+		dem_northeast_utm.set_band_letter(this->utm.get_band_letter());
 
 		UTM dem_southwest_utm;
 		dem_southwest_utm.northing = this->min_north_seconds;
 		dem_southwest_utm.easting = this->min_east_seconds;
-		dem_southwest_utm.zone = this->utm_zone;
-		assert (UTM::is_band_letter(this->utm_band_letter)); /* TODO_REALLY: add smarter checks. */
-		dem_southwest_utm.set_band_letter(this->utm_band_letter);
+
+		dem_southwest_utm.zone = this->utm.zone;
+		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_REALLY: add smarter error handling. */
+		dem_southwest_utm.set_band_letter(this->utm.get_band_letter());
 
 		dem_northeast = UTM::to_latlon(dem_northeast_utm);
 		dem_southwest = UTM::to_latlon(dem_southwest_utm);

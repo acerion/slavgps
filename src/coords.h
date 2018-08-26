@@ -136,6 +136,7 @@ namespace SlavGPS {
 		bool set_band_letter(char character);
 		bool has_band_letter(void) const;
 
+		static bool is_northern_hemisphere(const UTM & utm);
 		static QStringList get_band_symbols(void);
 		static bool is_band_letter(char character); /* Is given character a band letter? */
 		static bool is_band_symbol(char character); /* Is given character a band letter or "none band" indicator? */

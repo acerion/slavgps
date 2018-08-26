@@ -1047,12 +1047,6 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 	track->apply_dem_data_last_trackpoint();
 
 
-	/* TODO_REALLY: I think that in current implementation of handling of double click we don't need these fields. */
-	trw->ct_x1 = trw->ct_x2;
-	trw->ct_y1 = trw->ct_y2;
-	trw->ct_x2 = ev->x();
-	trw->ct_y2 = ev->y();
-
 	trw->emit_layer_changed("TRW - extend track with mouse click end");
 
 	return ToolStatus::Ack;
@@ -1170,7 +1164,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 			qDebug() << SG_PREFIX_E << "inconsistency A";
 		}
 
-		if (!trw->get_edited_track()->empty() /* && trw->ct_x1 == trw->ct_x2 && trw->ct_y1 == trw->ct_y2 */) {
+		if (!trw->get_edited_track()->empty()) {
 			trw->reset_edited_track();
 			this->creation_in_progress = NULL;
 		}

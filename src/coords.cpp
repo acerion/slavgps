@@ -225,6 +225,14 @@ QString UTM::to_string(void) const
 
 
 
+bool UTM::is_northern_hemisphere(const UTM & utm)
+{
+	return utm.get_band_letter() >= 'N';
+}
+
+
+
+
 QDebug SlavGPS::operator<<(QDebug debug, const UTM & utm)
 {
 	debug << utm.to_string();

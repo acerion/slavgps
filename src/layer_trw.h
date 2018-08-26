@@ -351,10 +351,6 @@ namespace SlavGPS {
 		LayerTRWPainter * painter = NULL;
 
 
-		uint16_t ct_x1;
-		uint16_t ct_y1;
-		uint16_t ct_x2;
-		uint16_t ct_y2;
 		bool draw_sync_done;
 		bool draw_sync_do;
 

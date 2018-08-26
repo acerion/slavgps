@@ -35,6 +35,11 @@
 
 
 
+#include "coords.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -111,8 +116,7 @@ namespace SlavGPS {
 		double max_east_seconds;
 		double max_north_seconds;
 
-		int utm_zone;
-		char utm_band_letter;
+		UTM utm; /* UTM object, but only for storing band letter and zone number. */
 
 		char const type_string[30] = "DEM object";
 

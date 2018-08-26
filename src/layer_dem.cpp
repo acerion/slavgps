@@ -791,18 +791,18 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	double start_eas, end_eas;
 	double start_nor = std::max(min_nor, dem->min_north_seconds);
 	double end_nor   = std::min(max_nor, dem->max_north_seconds);
-	if (tleft.utm.zone == dem->utm_zone && bleft.utm.zone == dem->utm_zone
-	    && (tleft.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N') /* TODO_REALLY: add function checking "is northern hemisphere" */
-	    && (bleft.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	if (tleft.utm.zone == dem->utm.zone && bleft.utm.zone == dem->utm.zone
+	    && UTM::is_northern_hemisphere(tleft.utm) == UTM::is_northern_hemisphere(dem->utm)
+	    && UTM::is_northern_hemisphere(bleft.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		start_eas = std::max(min_eas, dem->min_east_seconds);
 	} else {
 		start_eas = dem->min_east_seconds;
 	}
 
-	if (tright.utm.zone == dem->utm_zone && bright.utm.zone == dem->utm_zone
-	    && (tright.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N') /* TODO_REALLY: add function checking "is northern hemisphere" */
-	    && (bright.utm.get_band_letter() >= 'N') == (dem->utm_band_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	if (tright.utm.zone == dem->utm.zone && bright.utm.zone == dem->utm.zone
+	    && UTM::is_northern_hemisphere(tright.utm) == UTM::is_northern_hemisphere(dem->utm)
+	    && UTM::is_northern_hemisphere(bright.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		end_eas = std::min(max_eas, dem->max_east_seconds);
 	} else {
@@ -823,9 +823,9 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
 
 	UTM counter;
-	counter.zone = dem->utm_zone;
-	assert (UTM::is_band_letter(dem->utm_band_letter)); /* TODO_REALLY: smarter handling of error value. */
-	counter.set_band_letter(dem->utm_band_letter);
+	counter.zone = dem->utm.zone;
+	assert (UTM::is_band_letter(dem->utm.get_band_letter())); /* TODO_REALLY: smarter handling of error value. */
+	counter.set_band_letter(dem->utm.get_band_letter());
 
 	int32_t x;
 	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
