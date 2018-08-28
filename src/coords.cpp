@@ -244,7 +244,6 @@ QDebug SlavGPS::operator<<(QDebug debug, const UTM & utm)
 
 double UTM::utm_diff(const UTM & utm1, const UTM & utm2)
 {
-	static LatLon tmp1, tmp2;
 	if (utm1.zone == utm2.zone) {
 		return sqrt(pow(utm1.easting - utm2.easting, 2) + pow(utm1.northing - utm2.northing, 2));
 	} else {

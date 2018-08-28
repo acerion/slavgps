@@ -143,7 +143,7 @@ namespace SlavGPS {
 
 		static double utm_diff(const UTM & utm1, const UTM & utm2);
 
-		/* TODO_REALLY: revisit data types (double or int?) for northing/easting. */
+		/* TODO_HARD: revisit data types (double or int?) for northing/easting. */
 		double northing = 0;
 		double easting = 0;
 		int zone = 0;

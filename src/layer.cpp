@@ -705,3 +705,12 @@ void Layer::location_info_cb(void) /* Slot. */
 {
 
 }
+
+
+
+
+std::list<TreeItem *> Layer::get_items_by_date(const QDate & search_date) const
+{
+	std::list<TreeItem *> result;
+	return result;
+}

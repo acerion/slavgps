@@ -69,19 +69,23 @@ bool SlavGPS::date_time_dialog(QString const & title, time_t initial_timestamp, 
 
 
 
-bool SlavGPS::date_dialog(QString const & title, time_t initial_timestamp, time_t & result_timestamp, QWidget * parent)
+QDate SGDateTimeDialog::date_dialog(QString const & title, const QDate & initial_date, QWidget * parent)
 {
-	SGDateTimeDialog * dialog = new SGDateTimeDialog(QDateTime::fromTime_t(initial_timestamp), false, parent);
+	QDate result;
+
+	SGDateTimeDialog * dialog = new SGDateTimeDialog(QDateTime(initial_date), false, parent);
 	dialog->setWindowTitle(title);
 
 	if (QDialog::Accepted == dialog->exec()) {
-		result_timestamp = dialog->get_timestamp();
-		qDebug() << "II: Date Dialog: accepted, returning timestamp" << result_timestamp;
-		return true;
+		const QDateTime selected = dialog->get_date_time();
+		result = selected.date();
+		qDebug() << SG_PREFIX_I  << "Accepted, returning date" << result;
 	} else {
-		qDebug() << "II: Date Dialog: cancelled";
-		return false;
+		result = QDate(); /* Invalid date. */
+		qDebug() << SG_PREFIX_I << "Cancelled";
 	}
+
+	return result;
 }
 
 

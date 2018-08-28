@@ -147,8 +147,12 @@ QString LayerTRWTracks::get_tooltip(void) const
 
 
 
-std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(char const * date) const
+std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(const QDate & search_date) const
 {
+	char search_date_str[20] = { 0 };
+	snprintf(search_date_str, sizeof (search_date_str), "%s", search_date.toString("yyyy-MM-dd").toUtf8().constData());
+	qDebug() << "---------------- search date =" << search_date << search_date_str;
+
 	char date_buf[20];
 	std::list<TreeItem *> result;
 
@@ -161,7 +165,7 @@ std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(char const * date) cons
 		    && (*trk->trackpoints.begin())->has_timestamp) {
 
 			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpoints.begin())->timestamp));
-			if (0 == g_strcmp0(date, date_buf)) {
+			if (0 == strcmp(search_date_str, date_buf)) {
 				result.push_back(trk);
 			}
 		}

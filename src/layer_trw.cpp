@@ -568,12 +568,28 @@ void TRWMetadata::set_timestamp(const QString & new_timestamp)
 
 
 
+
+std::list<TreeItem *> LayerTRW::get_items_by_date(const QDate & search_date) const
+{
+	std::list<TreeItem *> result;
+
+	/* Routes don't have date, so we don't search for routes by date. */
+
+	result.splice(result.end(), this->get_tracks_by_date(search_date)); /* Move items from one list to another. */
+	result.splice(result.end(), this->get_waypoints_by_date(search_date)); /* Move items from one list to another. */
+
+	return result;
+}
+
+
+
+
 /**
    Return list of tracks meeting date criterion
 */
-std::list<TreeItem *> LayerTRW::get_tracks_by_date(char const * date_str) const
+std::list<TreeItem *> LayerTRW::get_tracks_by_date(const QDate & search_date) const
 {
-	return this->tracks.get_tracks_by_date(date_str);
+	return this->tracks.get_tracks_by_date(search_date);
 }
 
 
@@ -582,9 +598,9 @@ std::list<TreeItem *> LayerTRW::get_tracks_by_date(char const * date_str) const
 /**
    Return list of waypoints meeting date criterion
 */
-std::list<TreeItem *> LayerTRW::get_waypoints_by_date(char const * date_str) const
+std::list<TreeItem *> LayerTRW::get_waypoints_by_date(const QDate & search_date) const
 {
-	return this->waypoints.get_waypoints_by_date(date_str);
+	return this->waypoints.get_waypoints_by_date(search_date);
 }
 
 

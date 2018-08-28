@@ -34,7 +34,7 @@ using namespace SlavGPS;
 
 LatLonBBox::LatLonBBox(const LatLon & corner1, const LatLon & corner2)
 {
-	/* TODO_REALLY: what happens if corner1/corner2 crosses the boundary of +/- longitude? */
+	/* TODO_HARD: what happens if corner1/corner2 crosses the boundary of +/- longitude? */
 
 	if (corner1.lat > corner2.lat) {
 		this->north = corner1.lat;
@@ -155,7 +155,7 @@ LatLon LatLonBBox::get_center(void) const
 
 bool LatLonBBox::contains_point(const LatLon & point) const
 {
-	/* TODO_REALLY: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
+	/* TODO_HARD: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
 
 	if (point.lat <= this->north
 	    && point.lat >= this->south

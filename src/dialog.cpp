@@ -90,29 +90,6 @@ void Dialog::error(QString const & message, QWidget * parent)
 
 
 
-/**
- * Returns: a date as a string - always in ISO8601 format (YYYY-MM-DD).
- * This string can be NULL (especially when the dialog is cancelled).
- * Free the string after use.
- */
-bool Dialog::get_date(const QString & title, char * buffer, size_t buffer_size, QWidget * parent)
-{
-	time_t new_timestamp;
-	if (!date_dialog(title, time(NULL), new_timestamp, parent)) {
-		return false;
-	}
-
-	struct tm * out = localtime(&new_timestamp);
-	snprintf(buffer, buffer_size, "%04d-%02d-%02d", 1900 + out->tm_year, out->tm_mon + 1, out->tm_mday);
-
-	qDebug() << "II" PREFIX << "entered date:" << buffer;
-
-	return true;
-}
-
-
-
-
 bool Dialog::yes_or_no(QString const & message, QWidget * parent, QString const & title)
 {
 	return QMessageBox::Yes == QMessageBox::question(parent, title, message);

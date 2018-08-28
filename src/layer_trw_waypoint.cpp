@@ -494,6 +494,7 @@ void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 {
 	LayersPanel * panel = g_tree->tree_get_items_tree();
 	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), g_tree->tree_get_main_window());
 		return;
 	}
 

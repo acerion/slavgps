@@ -47,7 +47,7 @@ namespace SlavGPS {
 
 
 	bool date_time_dialog(QString const & title, time_t initial_timestamp, time_t & result_timestamp, QWidget * parent = NULL);
-	bool date_dialog(QString const & title, time_t initial_timestamp, time_t & result_timestamp, QWidget * parent = NULL);
+
 
 
 
@@ -63,6 +63,8 @@ namespace SlavGPS {
 
 		void set_date_time(QDateTime const & date_time);
 		QDateTime get_date_time(void) const;
+
+		static QDate date_dialog(QString const & title, const QDate & initial_date, QWidget * parent = NULL);
 
 	private:
 		QVBoxLayout * vbox = NULL;

@@ -128,8 +128,12 @@ Waypoint * LayerTRWWaypoints::find_waypoint_by_name(const QString & wp_name)
 
 
 
-std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(char const * date) const
+std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(const QDate & search_date) const
 {
+	char search_date_str[20] = { 0 };
+	snprintf(search_date_str, sizeof (search_date_str), "%s", search_date.toString("yyyy-MM-dd").toUtf8().constData());
+	qDebug() << "---------------- search date =" << search_date << search_date_str;
+
 	char date_buf[20];
 	std::list<TreeItem *> result;
 
@@ -143,7 +147,7 @@ std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(char const * date
 
 		/* Might be an easier way to compare dates rather than converting the strings all the time... */
 		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&wp->timestamp));
-		if (0 == g_strcmp0(date, date_buf)) {
+		if (0 == strcmp(search_date_str, date_buf)) {
 			result.push_back(wp);
 		}
 	}
@@ -730,6 +734,7 @@ void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 {
 	LayersPanel * panel = g_tree->tree_get_items_tree();
 	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), g_tree->tree_get_main_window());
 		return;
 	}
 

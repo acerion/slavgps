@@ -162,7 +162,7 @@ namespace SlavGPS {
 		/* Uses a case sensitive find. Finds the first waypoint matching given name. */
 		Waypoint * find_waypoint_by_name(const QString & wp_name);
 
-		std::list<TreeItem *> get_waypoints_by_date(char const * date) const;
+		std::list<TreeItem *> get_waypoints_by_date(const QDate & search_date) const;
 
 
 

@@ -58,7 +58,6 @@ namespace SlavGPS {
 		static void about(QWidget * parent);
 		static void map_license(const QString & map_name, const QString & map_license, const QString & map_license_url, QWidget * parent);
 
-		static bool get_date(const QString & title, char * buffer, size_t buffer_size, QWidget * parent = NULL);
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
 
 		static void move_dialog(QDialog * dialog, const GlobalPoint & exposed_point, bool move_vertically);

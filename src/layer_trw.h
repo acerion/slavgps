@@ -180,8 +180,10 @@ namespace SlavGPS {
 		bool is_empty(void) const;
 
 
-		std::list<TreeItem *> get_tracks_by_date(char const * date) const;
-		std::list<TreeItem *> get_waypoints_by_date(char const * date) const;
+		std::list<TreeItem *> get_tracks_by_date(const QDate & search_date) const;
+		std::list<TreeItem *> get_waypoints_by_date(const QDate & search_date) const;
+		std::list<TreeItem *> get_items_by_date(const QDate & search_date) const;
+
 
 		/* Draw all items of the layer, with highlight. */
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);

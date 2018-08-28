@@ -38,6 +38,7 @@
 #include "viewport_internal.h"
 #include "util.h"
 #include "dialog.h"
+#include "date_time_dialog.h"
 
 
 
@@ -493,10 +494,13 @@ void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 */
 void LayerAggregate::search_date_cb(void) /* Slot. */
 {
-	char date_str[sizeof ("2018-06-30  ")] = { 0 };
-	if (!Dialog::get_date(tr("Search by Date"), date_str, sizeof (date_str), this->get_window())) {
+	static QDate initial_date = QDate::currentDate();
+	QDate search_date = SGDateTimeDialog::date_dialog(tr("Search by Date"), initial_date, this->get_window());
+	if (!search_date.isValid()) {
 		return;
 	}
+	initial_date = search_date;
+
 
 	std::list<const Layer *> layers;
 	this->get_all_layers_of_type(layers, LayerType::TRW, true);
@@ -504,16 +508,18 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 	std::list<TreeItem *> items_by_date;
 	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		items_by_date.splice(items_by_date.end(), ((LayerTRW *) (*iter))->get_tracks_by_date(date_str)); /* Move items from one list to another. */
+		items_by_date.splice(items_by_date.end(), (*iter)->get_items_by_date(search_date)); /* Move items from one list to another. */
 	}
-	/* Routes don't have date, so we don't search for routes by date. */
-	for (auto iter = layers.begin(); iter != layers.end(); iter++) {
-		items_by_date.splice(items_by_date.end(), ((LayerTRW *) (*iter))->get_waypoints_by_date(date_str)); /* Move items from one list to another. */
-	}
+
 
 	if (items_by_date.empty()) {
 		Dialog::info(tr("No items found with the requested date."), this->get_window());
 	} else {
+		QStringList items;
+		for (auto iter = items_by_date.begin(); iter != items_by_date.end(); iter++) {
+			items << (*iter)->name;
+		}
+		a_dialog_list("List of found items", items, 5);
 		; /* TODO_REALLY: show list of items found. */
 	}
 }

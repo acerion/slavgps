@@ -627,12 +627,8 @@ std::list<const Layer *> LayersPanel::get_all_layers_of_type(LayerType layer_typ
 
 bool LayersPanel::has_any_layer_of_type(LayerType type)
 {
-	std::list<const Layer *> dems = this->get_all_layers_of_type(type, true); /* Includes hidden layers. */
-	if (dems.empty()) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), this->window);
-		return false;
-	}
-	return true;
+	std::list<const Layer *> layers = this->get_all_layers_of_type(type, true); /* Includes hidden layers. */
+	return layers.size () > 0;
 }
 
 
