@@ -6,6 +6,7 @@ QT = core gui widgets printsupport xml
 RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc waypoint.qrc
 
 SOURCES += main.cpp \
+    tree_item_list.cpp \
     ruler.cpp \
     acquire.cpp \
     window.cpp \
@@ -255,6 +256,7 @@ HEADERS += window.h \
     layer_trw_waypoint_list.h \
     tree_item.h \
     tree_view.h \
+    tree_item_list.h \
     tree_view_internal.h \
     ui_builder.h \
     widget_color_button.h \

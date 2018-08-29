@@ -36,11 +36,13 @@
 #include "dem_cache.h"
 #include "util.h"
 #include "window.h"
+#include "tree_item_list.h"
 #include "tree_view_internal.h"
 #include "layers_panel.h"
 #include "dialog.h"
 #include "ui_util.h"
 #include "geotag_exif.h"
+#include "preferences.h"
 
 
 
@@ -754,4 +756,128 @@ LayerTRW * Waypoint::get_parent_layer_trw() const
 {
 	return (LayerTRW *) this->owning_layer;
 
+}
+
+
+
+
+QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListFormat & list_format) const
+{
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+	const QString tooltip(this->description);
+	QString date_time_string;
+
+
+	for (const TreeItemListColumn & col : list_format.columns) {
+		switch (col.id) {
+		case TreeItemListColumnID::TheItem:
+			item = new QStandardItem(this->name);
+			item->setToolTip(tooltip);
+			variant = QVariant::fromValue(this);
+			item->setData(variant, RoleLayerData);
+			items << item;
+			break;
+
+		case TreeItemListColumnID::Timestamp:
+			if (this->has_timestamp) {
+				QDateTime date_time;
+				date_time.setTime_t(this->timestamp);
+#ifdef K_TODO
+				date_time_string = date_start.toString(this->date_time_format);
+#else
+				date_time_string = date_time.toString(Qt::ISODate);
+#endif
+			}
+			item = new QStandardItem(date_time_string);
+			item->setToolTip(tooltip);
+			items << item;
+			break;
+
+		default:
+			qDebug() << SG_PREFIX_E << "Unexpected TreeItem Column ID" << (int) col.id;
+			break;
+		}
+	}
+
+
+	return items;
+
+#if 0
+
+	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemListColumnID::Name));
+	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemListColumnID::Timestamp));
+
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const SpeedUnit speed_units = Preferences::get_unit_speed();
+	const HeightUnit height_unit = Preferences::get_unit_height();
+
+
+
+
+	LayerTRW * trw = this->get_parent_layer_trw();
+
+	/* This parameter doesn't include aggegrate visibility. */
+	bool a_visible = trw->visible && this->visible;
+#ifdef K_TODO
+	a_visible = a_visible && trw->get_tree_items_visibility();
+#endif
+
+	double alt = this->altitude;
+	switch (height_unit) {
+	case HeightUnit::Metres: /* No need to convert. */
+		break;
+	case HeightUnit::Feet:
+		alt = VIK_METERS_TO_FEET(alt);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
+		break;
+	}
+
+
+
+
+
+
+
+	/* LayerName */
+	item = new QStandardItem(trw->name);
+	item->setToolTip(tooltip);
+	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
+	items << item;
+
+
+
+	/* Date */
+
+	/* Visibility */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	item->setCheckable(true);
+	item->setCheckState(a_visible ? Qt::Checked : Qt::Unchecked);
+	items << item;
+
+	/* Comment */
+	item = new QStandardItem(this->comment);
+	item->setToolTip(tooltip);
+	items << item;
+
+	/* Elevation */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue((int) round(alt));
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* Icon */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	item->setIcon(get_wp_icon_small(this->symbol_name));
+	item->setEditable(false);
+	items << item;
+
+
+#endif
 }

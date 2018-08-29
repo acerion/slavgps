@@ -220,3 +220,12 @@ void TreeItem::set_menu_operation_ids(TreeItem::MenuOperation new_value)
 {
 	this->menu_operation_ids = new_value;
 }
+
+
+
+
+QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemListFormat & list_format) const
+{
+	QList<QStandardItem *> result;
+	return result;
+}

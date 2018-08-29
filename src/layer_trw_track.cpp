@@ -69,6 +69,7 @@
 #include "viewport_internal.h"
 #include "file.h"
 #include "acquire.h"
+#include "tree_item_list.h"
 
 
 
@@ -4186,4 +4187,177 @@ TrackData & TrackData::operator=(const TrackData & other)
 	this->n_points = other.n_points;
 
 	return *this;
+}
+
+
+
+
+QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat & list_format) const
+{
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+
+
+	for (const TreeItemListColumn & col : list_format.columns) {
+		switch (col.id) {
+		case TreeItemListColumnID::TheItem:
+			break;
+		case TreeItemListColumnID::Timestamp:
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unexpected TreeItem Column ID" << (int) col.id;
+			break;
+		}
+	}
+
+
+	return items;
+
+#if 0
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const SpeedUnit speed_units = Preferences::get_unit_speed();
+	const HeightUnit height_unit = Preferences::get_unit_height();
+
+
+	double trk_dist = this->get_length();
+	/* Store unit converted value. */
+	trk_dist = convert_distance_meters_to(trk_dist, distance_unit);
+
+	/* Get start date. */
+	QString start_date;
+	if (!this->empty()
+	    && (*this->trackpoints.begin())->has_timestamp) {
+
+		QDateTime date_start;
+		date_start.setTime_t((*this->trackpoints.begin())->timestamp);
+#ifdef K_TODO
+		start_date = date_start.toString(dialog->date_time_format);
+#endif
+	}
+
+	LayerTRW * trw = this->get_parent_layer_trw();
+
+	/* 'visible' doesn't include aggegrate visibility. */
+	bool a_visible = trw->visible && this->visible;
+	a_visible = a_visible && (this->type_id == "sg.trw.route" ? trw->get_routes_visibility() : trw->get_tracks_visibility());
+
+	unsigned int trk_duration = 0; /* In minutes. */
+	if (!this->empty()) {
+		time_t t1 = (*this->trackpoints.begin())->timestamp;
+		time_t t2 = (*std::prev(this->trackpoints.end()))->timestamp;
+		trk_duration = (int) round(labs(t2 - t1) / 60.0);
+	}
+
+	double av_speed = this->get_average_speed();
+	av_speed = convert_speed_mps_to(av_speed, speed_units);
+
+	double max_speed = this->get_max_speed();
+	max_speed = convert_speed_mps_to(max_speed, speed_units);
+
+	double max_alt = 0.0;
+	TrackData altitudes = this->make_track_data_altitude_over_distance(500);
+	if (altitudes.valid) {
+		altitudes.calculate_min_max();
+		max_alt = altitudes.y_max;
+	}
+
+	switch (height_unit) {
+	case HeightUnit::Metres: /* No need to convert. */
+		break;
+	case HeightUnit::Feet:
+		max_alt = VIK_METERS_TO_FEET(max_alt);
+		break;
+	default:
+		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		break;
+	}
+
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+
+	QString tooltip("");
+	if (!this->comment.isEmpty()) {
+		tooltip = this->comment;
+	} else if (!this->description.isEmpty()) {
+		tooltip = this->description;
+	} else {
+		;
+	}
+
+
+	/* LAYER_NAME_COLUMN */
+	item = new QStandardItem(trw->name);
+	item->setToolTip(tooltip);
+	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
+	items << item;
+
+	/* TRACK_COLUMN */
+	item = new QStandardItem(this->name);
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(this);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* DATE_COLUMN */
+	item = new QStandardItem(start_date);
+	item->setToolTip(tooltip);
+	items << item;
+
+	/* VISIBLE_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	item->setCheckable(true);
+	item->setCheckState(a_visible ? Qt::Checked : Qt::Unchecked);
+	items << item;
+
+	/* COMMENT_COLUMN */
+	item = new QStandardItem(this->comment);
+	item->setToolTip(tooltip);
+	items << item;
+
+	/* LENGTH_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(trk_dist);
+	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* This dialog is not a good place to edit track length. */
+	items << item;
+
+	/* DURATION_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(trk_duration);
+	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* This dialog is not a good place to edit track duration. */
+	items << item;
+
+	/* AVERAGE_SPEED_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(av_speed);
+	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* 'Average speed' is not an editable parameter. */
+	items << item;
+
+	/* MAXIMUM_SPEED_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(max_speed);
+	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* 'Maximum speed' is not an editable parameter. */
+	items << item;
+
+	/* MAXIMUM_HEIGHT_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(max_alt);
+	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* 'Maximum height' is not an editable parameter. */
+	items << item;
+
+
+	return items;
+#endif
 }

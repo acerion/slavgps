@@ -44,6 +44,8 @@ namespace SlavGPS {
 	class TreeView;
 	class Pickle;
 
+	class TreeItemListFormat;
+
 
 
 
@@ -118,6 +120,8 @@ namespace SlavGPS {
 		virtual void set_visible(bool new_state);
 
 		virtual void marshall(Pickle & pickle) { };
+
+		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format) const;
 
 		/**
 		   \brief The item has been selected in items tree. Do something about it.

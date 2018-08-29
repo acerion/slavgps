@@ -39,6 +39,8 @@
 #include "util.h"
 #include "dialog.h"
 #include "date_time_dialog.h"
+#include "tree_item_list.h"
+#include "preferences.h"
 
 
 
@@ -53,6 +55,7 @@ extern Tree * g_tree;
 
 
 
+#define SG_MODULE "Layer Aggregate"
 #define PREFIX ": Layer Aggregate:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -515,12 +518,24 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	if (items_by_date.empty()) {
 		Dialog::info(tr("No items found with the requested date."), this->get_window());
 	} else {
-		QStringList items;
-		for (auto iter = items_by_date.begin(); iter != items_by_date.end(); iter++) {
-			items << (*iter)->name;
+		const HeightUnit height_unit = Preferences::get_unit_height();
+		TreeItemListFormat list_format;
+		list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::TheItem,  true, tr("Tree Item")));
+		list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::Timestamp, true, tr("Timestamp")));
+		switch (height_unit) {
+		case HeightUnit::Metres:
+			list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::Elevation,  true, tr("Height\n(Metres)")));
+			break;
+		case HeightUnit::Feet:
+			list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::Elevation,  true, tr("Height\n(Feet)")));
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
+			break;
 		}
-		a_dialog_list("List of found items", items, 5);
-		; /* TODO_REALLY: show list of items found. */
+
+
+		TreeItemListDialog::show_dialog(tr("List of matching items"), list_format, items_by_date, this);
 	}
 }
 
