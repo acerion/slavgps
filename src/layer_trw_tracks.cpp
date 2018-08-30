@@ -1071,7 +1071,7 @@ void LayerTRWTracks::add_track(Track * trk)
 
 void LayerTRWTracks::add_track_to_data_structure_only(Track * trk)
 {
-	trk->owning_layer = this->owning_layer;
+	trk->set_owning_layer(this->get_owning_layer());
 	this->children_map.insert({{ trk->get_uid(), trk }});
 	this->children_list.push_back(trk);
 }

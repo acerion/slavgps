@@ -64,6 +64,20 @@ namespace SlavGPS {
 
 
 
+	enum TreeItemPropertyID {
+		ParentLayer,     /* Name of parent layer containing given tree item. */
+		TheItem,        /* Name of given tree item. */
+		Timestamp,       /* Timestamp attribute of given tree item. */
+		Icon,            /* Icon attribute of given tree item (pixmap). */
+		Visibility,      /* Is the tree item visible in tree view (boolean)? */
+		Comment,         /* Comment attribute of given tree item. */
+		Elevation,       /* Elevation attribute of given tree item. */
+		Coordinate,      /* Coordinate attribute of given tree item. */
+	};
+
+
+
+
 	typedef QPersistentModelIndex TreeIndex;
 
 
@@ -121,7 +135,7 @@ namespace SlavGPS {
 
 		virtual void marshall(Pickle & pickle) { };
 
-		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format) const;
+		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format);
 
 		/**
 		   \brief The item has been selected in items tree. Do something about it.
@@ -142,6 +156,9 @@ namespace SlavGPS {
 		   Either the tree item itself is a layer, or a sublayer has its parent/owning layer.
 		   Return one of these. */
 		Layer * to_layer(void) const;
+
+		Layer * get_owning_layer(void) const;
+		void set_owning_layer(Layer * layer);
 
 		TreeItem::MenuOperation get_menu_operation_ids(void) const;
 		void set_menu_operation_ids(TreeItem::MenuOperation new_value);
@@ -167,13 +184,15 @@ namespace SlavGPS {
 		QString type_id;
 		QStringList accepted_child_type_ids;
 
-		Layer * owning_layer = NULL; /* Reference. */
+
 
 		QIcon icon; /* .isNull() may return true for this field (if child class doesn't assign anything to the icon). */
 
 		char debug_string[100] = { 0 };
 
 	protected:
+		Layer * owning_layer = NULL; /* Reference. */
+
 		sg_uid_t uid = SG_UID_INITIAL;
 
 		/* Menu items (actions) to be created and put into a

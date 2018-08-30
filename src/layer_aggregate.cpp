@@ -144,7 +144,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 		this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
 	}
 
-	layer->owning_layer = this;
+	layer->set_owning_layer(this);
 
 	if (sibling_layer->index.isValid()) {
 
@@ -202,7 +202,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		put_above = false;
 	}
 
-	layer->owning_layer = this;
+	layer->set_owning_layer(this);
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
@@ -520,14 +520,14 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	} else {
 		const HeightUnit height_unit = Preferences::get_unit_height();
 		TreeItemListFormat list_format;
-		list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::TheItem,  true, tr("Tree Item")));
-		list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::Timestamp, true, tr("Timestamp")));
+		list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::TheItem,  true, tr("Tree Item")));
+		list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Timestamp, true, tr("Timestamp")));
 		switch (height_unit) {
 		case HeightUnit::Metres:
-			list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::Elevation,  true, tr("Height\n(Metres)")));
+			list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Metres)")));
 			break;
 		case HeightUnit::Feet:
-			list_format.columns.push_back(TreeItemListColumn(TreeItemListColumnID::Elevation,  true, tr("Height\n(Feet)")));
+			list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Feet)")));
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;

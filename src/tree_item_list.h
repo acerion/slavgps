@@ -43,6 +43,7 @@
 
 
 #include "measurements.h"
+#include "tree_item.h"
 
 
 
@@ -60,24 +61,14 @@ namespace SlavGPS {
 
 
 
-	enum TreeItemListColumnID {
-		ParentLayer,     /* Name of parent layer containing given tree item. */
-		TheItem,        /* Name of given tree item. */
-		Timestamp,       /* Timestamp attribute of given tree item. */
-		Icon,            /* Icon attribute of given tree item (pixmap). */
-		Visibility,      /* Is the tree item visible in tree view (boolean)? */
-		Comment,         /* Comment attribute of given tree item. */
-		Elevation,       /* Elevation attribute of given tree item. */
-		Coordinate,      /* Coordinate attribute of given tree item. */
-	};
 
 	class TreeItemListColumn {
 	public:
-		TreeItemListColumn(TreeItemListColumnID new_id, bool new_visible, const QString & new_header_label) :
+		TreeItemListColumn(enum TreeItemPropertyID new_id, bool new_visible, const QString & new_header_label) :
 			id(new_id),
 			visible(new_visible),
 			header_label(new_header_label) {};
-		const TreeItemListColumnID id;
+		const TreeItemPropertyID id;
 		const bool visible;            /* Is the column visible? */
 		const QString header_label;    /* If the column is visible, this is the label of column header. */
 	};
@@ -85,6 +76,7 @@ namespace SlavGPS {
 	class TreeItemListFormat {
 	public:
 		std::vector<TreeItemListColumn> columns;
+		TreeItemListFormat & operator=(const TreeItemListFormat & other);
 	};
 
 
@@ -107,7 +99,7 @@ namespace SlavGPS {
 	public:
 		TreeItemListDialog(QString const & title, QWidget * parent = NULL);
 		~TreeItemListDialog();
-		void build_model(const TreeItemListFormat & list_format, bool hide_layer_names);
+		void build_model(const TreeItemListFormat & new_list_format, bool hide_layer_names);
 
 		static void show_dialog(QString const & title, const TreeItemListFormat & new_list_format, const std::list<TreeItem *> & new_tree_items, Layer * layer);
 
@@ -117,12 +109,13 @@ namespace SlavGPS {
 		void tree_item_view_cb(void);
 		// void tree_item_select_cb(void);
 		void tree_item_properties_cb(void);
-		void show_picture_tree_item_cb(void);
 
 		void accept_cb(void);
 
 	private:
 		void contextMenuEvent(QContextMenuEvent * event);
+
+		int column_id_to_column_idx(TreeItemPropertyID column_id);
 
 		QWidget * parent = NULL;
 		QDialogButtonBox * button_box = NULL;
@@ -132,7 +125,9 @@ namespace SlavGPS {
 		QTableView * view = NULL;
 
 		/* TreeItem selected in list. */
-		TreeItem * selected_wp = NULL;
+		TreeItem * selected_tree_item = NULL;
+
+		TreeItemListFormat list_format;
 
 		Qt::DateFormat date_time_format = Qt::ISODate;
 	};

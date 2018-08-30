@@ -761,7 +761,7 @@ LayerTRW * Waypoint::get_parent_layer_trw() const
 
 
 
-QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListFormat & list_format) const
+QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListFormat & list_format)
 {
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -772,7 +772,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 
 	for (const TreeItemListColumn & col : list_format.columns) {
 		switch (col.id) {
-		case TreeItemListColumnID::TheItem:
+		case TreeItemPropertyID::TheItem:
 			item = new QStandardItem(this->name);
 			item->setToolTip(tooltip);
 			variant = QVariant::fromValue(this);
@@ -780,7 +780,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 			items << item;
 			break;
 
-		case TreeItemListColumnID::Timestamp:
+		case TreeItemPropertyID::Timestamp:
 			if (this->has_timestamp) {
 				QDateTime date_time;
 				date_time.setTime_t(this->timestamp);
@@ -806,8 +806,8 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 
 #if 0
 
-	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemListColumnID::Name));
-	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemListColumnID::Timestamp));
+	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemPropertyID::Name));
+	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemPropertyID::Timestamp));
 
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const SpeedUnit speed_units = Preferences::get_unit_speed();

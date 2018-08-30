@@ -4192,7 +4192,7 @@ TrackData & TrackData::operator=(const TrackData & other)
 
 
 
-QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat & list_format) const
+QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat & list_format)
 {
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -4201,9 +4201,9 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 
 	for (const TreeItemListColumn & col : list_format.columns) {
 		switch (col.id) {
-		case TreeItemListColumnID::TheItem:
+		case TreeItemPropertyID::TheItem:
 			break;
-		case TreeItemListColumnID::Timestamp:
+		case TreeItemPropertyID::Timestamp:
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Unexpected TreeItem Column ID" << (int) col.id;

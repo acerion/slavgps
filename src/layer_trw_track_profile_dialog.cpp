@@ -1733,7 +1733,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 {
 	this->setWindowTitle(tr("%1 - Track Profile").arg(a_trk->name));
 
-	this->trw = (LayerTRW *) a_trk->owning_layer;
+	this->trw = (LayerTRW *) a_trk->get_owning_layer();
 	this->track_info.trk = a_trk;
 	this->main_viewport = main_viewport_;
 	this->parent = a_parent;

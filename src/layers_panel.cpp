@@ -378,7 +378,7 @@ void LayersPanel::move_item(bool up)
 		qDebug() << "II" PREFIX << "Move layer" << selected_item->name << (up ? "up" : "down");
 		/* A layer can be owned only by Aggregate layer.
 		   TODO_LATER: what about TRW layers under GPS layer? */
-		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
+		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
 		if (parent_layer) { /* Selected item is not top level layer. */
 			qDebug() << "-----" PREFIX "step one";
 			if (parent_layer->change_child_item_position(selected_item, up)) {
@@ -431,7 +431,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 	if (selected_item->tree_item_type == TreeItemType::LAYER) {
 		/* A layer can be owned only by Aggregate layer.
 		   TODO_LATER: what about TRW layers under GPS layer? */
-		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
+		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
@@ -518,7 +518,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 		/* A layer can be owned only by Aggregate layer.
 		   TODO_LATER: what about TRW layers under GPS layer? */
-		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->owning_layer;
+		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
@@ -725,8 +725,6 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 		qDebug() << "II: Layers Panel: context menu event: valid tree view index, row =" << ind.row();
 		TreeIndex index = QPersistentModelIndex(ind);
 		TreeItem * item = this->tree_view->get_tree_item(index);
-
-		Layer * layer = item->to_layer();
 
 		this->context_menu_show_for_item(item);
 	} else {

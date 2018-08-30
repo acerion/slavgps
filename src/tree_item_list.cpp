@@ -57,7 +57,7 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "TreeItem List"
-/* TODO: this is a duplicate definition. */
+/* TODO_LATER: this is a duplicate definition. */
 #define VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT "sortable_date_time_format"
 
 
@@ -67,23 +67,23 @@ extern Tree * g_tree;
 
 
 
-#if 0
+#ifdef TODO_LATER
 /* Instead of hooking automatically on table item selection,
    this is performed on demand via the specific context menu request. */
-void TreeItemListDialog::tree_item_select(LayerTRW * layer)
+void TreeItemListDialog::tree_item_select(Layer * layer)
 {
-	if (!this->selected_wp) {
+	if (!this->selected_tree_item) {
 		qDebug() << SG_PREFIX_E << "Encountered NULL TreeItem in callback" << __FUNCTION__;
 		return;
 	}
 
-	TreeItem * wp = this->selected_wp;
-	LayerTRW * trw = wp->get_parent_layer_trw();
+	TreeItem * tree_item = this->selected_tree_item;
+	Layer * parent_layer = tree_item->get_parent_layer();
 
-	if (wp && trw) {
-		trw->tree_view->select_and_expose_tree_item(wp);
+	if (tree_item && parent_layer) {
+		parent_layer->tree_view->select_and_expose_tree_item(tree_item);
 	} else {
-		qDebug() << SG_PREFIX_E << "Selecting either NULL layer or NULL wp:" << (qintptr) trw << (qintptr) wp;
+		qDebug() << SG_PREFIX_E << "Selecting either NULL layer or NULL wp:" << (qintptr) parent_layer << (qintptr) tree_item;
 	}
 }
 #endif
@@ -92,16 +92,16 @@ void TreeItemListDialog::tree_item_select(LayerTRW * layer)
 
 void TreeItemListDialog::tree_item_properties_cb(void) /* Slot. */
 {
-	if (!this->selected_wp) {
+	if (!this->selected_tree_item) {
 		qDebug() << SG_PREFIX_E << "Encountered NULL TreeItem in callback" << __FUNCTION__;
 		return;
 	}
 
-#ifdef K_TODO
-	TreeItem * wp = this->selected_wp;
-	LayerTRW * trw = wp->get_parent_layer_trw();
+#ifdef TODO_LATER
+	TreeItem * tree_item = this->selected_tree_item;
+	Layer * parent_layer = tree_item->get_parent_layer();
 
-	if (wp->name.isEmpty()) {
+	if (tree_item->name.isEmpty()) {
 		return;
 	}
 
@@ -109,18 +109,18 @@ void TreeItemListDialog::tree_item_properties_cb(void) /* Slot. */
 	   Since the properties also allows tree_item manipulations it won't cause conflicts here. */
 	this->accept();
 
-	const std::tuple<bool, bool> result = tree_item_properties_dialog(wp, wp->name, trw->get_coord_mode(), g_tree->tree_get_main_window());
+	const std::tuple<bool, bool> result = tree_item_properties_dialog(tree_item, tree_item->name, parent_layer->get_coord_mode(), g_tree->tree_get_main_window());
 	if (std::get<SG_WP_DIALOG_OK>(result)) { /* "OK" pressed in dialog, tree_item's parameters entered in the dialog are valid. */
 
 		if (std::get<SG_WP_DIALOG_NAME>(result)) {
 			/* TreeItem's name has been changed. */
-			trw->get_tree_items_node().propagate_new_tree_item_name(wp);
+			parent_layer->get_tree_items_node().propagate_new_tree_item_name(tree_item);
 		}
 
-		trw->get_tree_items_node().set_new_tree_item_icon(wp);
+		parent_layer->get_tree_items_node().set_new_tree_item_icon(tree_item);
 
-		if (trw->visible) {
-			trw->emit_layer_changed("TRW - TreeItem List Dialog - properties");
+		if (parent_layer->visible) {
+			parent_layer->emit_layer_changed("TRW - TreeItem List Dialog - properties");
 		}
 	}
 #endif
@@ -131,117 +131,145 @@ void TreeItemListDialog::tree_item_properties_cb(void) /* Slot. */
 
 void TreeItemListDialog::tree_item_view_cb(void) /* Slot. */
 {
-	if (!this->selected_wp) {
+	if (!this->selected_tree_item) {
 		qDebug() << SG_PREFIX_E << "Encountered NULL TreeItem in callback" << __FUNCTION__;
 		return;
 	}
-#ifdef K_TODO
-	TreeItem * wp = this->selected_wp;
-	LayerTRW * trw = wp->get_parent_layer_trw();
+#ifdef TODO_LATER
+	TreeItem * tree_item = this->selected_tree_item;
+	Layer * parent_layer = tree_item->get_parent_layer();
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	viewport->set_center_from_coord(wp->coord, true);
-	///this->tree_item_select(trw);
-	trw->emit_layer_changed("TRW - TreeItem List Dialog - View");
+	viewport->set_center_from_coord(tree_item->coord, true);
+	///this->tree_item_select(parent_layer);
+	parent_layer->emit_layer_changed("TRW - TreeItem List Dialog - View");
 #endif
 }
 
 
 
 
-void TreeItemListDialog::show_picture_tree_item_cb(void) /* Slot. */
+
+
+void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 {
-	if (!this->selected_wp) {
-		qDebug() << SG_PREFIX_E << "Encountered NULL TreeItem in callback" << __FUNCTION__;
+	if (!item) {
+		qDebug() << SG_PREFIX_E << "Show context menu for item: NULL item";
 		return;
 	}
-#ifdef K_TODO
-	TreeItem * wp = this->selected_wp;
-	LayerTRW * trw = wp->get_parent_layer_trw();
 
-	const QString viewer = Preferences::get_image_viewer();
-	const QString quoted_path = Util::shell_quote(wp->image_full_path);
-	const QString command = QString("%1 %2").arg(viewer).arg(quoted_path);
+	QMenu menu;
 
-	if (!QProcess::startDetached(command)) {
-		Dialog::error(QObject::QObject::tr("Could not launch viewer program '%1' to view file '%2'.").arg(viewer).arg(quoted_path), trw->get_window());
+	if (item->tree_item_type == TreeItemType::LAYER) {
+
+		qDebug() << SG_PREFIX_I << "Menu for layer tree item" << item->type_id << item->name;
+
+		/* We don't want a parent layer here. We want item
+		   cast to layer if the item is layer, or item's
+		   parent layer otherwise. */
+		Layer * layer = item->to_layer();
+
+		/* "New layer -> layer types" submenu. */
+		TreeItem::MenuOperation operations = layer->get_menu_operation_ids();
+		operations = operator_bit_or(operations, TreeItem::MenuOperation::New);
+		//this->context_menu_add_standard_items(&menu, operations);
+
+		/* Layer-type-specific menu items. */
+		layer->add_menu_items(menu);
+	} else {
+		qDebug() << SG_PREFIX_I << "Menu for non-layer tree item" << item->type_id << item->name;
+
+
+		if (!item->add_context_menu_items(menu, true)) {
+			return;
+		}
+		/* TODO_LATER: specific things for different types. */
 	}
-#endif
-}
 
+	menu.exec(cursor_position);
+
+	return;
+}
 
 
 
 void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
 {
+	if (!this->view->geometry().contains(ev->pos())) {
+		qDebug() << SG_PREFIX_W << "context menu event outside list view";
+		/* We want to handle only events that happen inside of list view. */
+		return;
+	}
+	qDebug() << SG_PREFIX_I << "context menu event inside list view";
+
 	QPoint orig = ev->pos();
 	QPoint v = this->view->pos();
 	QPoint t = this->view->viewport()->pos();
 
-	orig.setX(orig.x() - v.x() - t.x());
-	orig.setY(orig.y() - v.y() - t.y());
+	qDebug() << SG_PREFIX_D << "Event @" << orig.x() << orig.y();
+	qDebug() << SG_PREFIX_D << "Viewport @" << v;
+	qDebug() << SG_PREFIX_D << "Tree view @" << t;
 
-	QPoint point = orig;
-	QModelIndex index = this->view->indexAt(point);
-	if (!index.isValid()) {
+	QPoint point;
+	point.setX(orig.x() - v.x() - t.x());
+	point.setY(orig.y() - v.y() - t.y());
+
+	QModelIndex item_index = this->view->indexAt(point);
+
+	if (!item_index.isValid()) {
+		/* We have clicked on empty space, not on tree
+		   item. Not an error, user simply missed a row. */
 		qDebug() << SG_PREFIX_I << "INvalid index";
 		return;
-	} else {
-		qDebug() << SG_PREFIX_I << "On index.row =" << index.row() << "index.column =" << index.column();
 	}
 
+	/* We have clicked on some valid tree item. */
+	qDebug() << SG_PREFIX_I << "Item index row =" << item_index.row() << ", item index column =" << item_index.column();
 
-	QStandardItem * parent_item = this->model->invisibleRootItem();
 
-
-	QStandardItem * child = parent_item->child(index.row(), TreeItemListColumnID::TheItem);
-	qDebug() << SG_PREFIX_I << "Selected tree_item" << child->text();
-
-	child = parent_item->child(index.row(), TreeItemListColumnID::TheItem);
-	TreeItem * wp = child->data(RoleLayerData).value<TreeItem *>();
-	if (!wp) {
-		qDebug() << SG_PREFIX_E << "Failed to get non-NULL TreeItem from table";
-		return;
-	}
-#ifdef K_TODO
-	/* If we were able to get list of TreeItems, all of them need to have associated parent layer. */
-	LayerTRW * trw = wp->get_parent_layer_trw();
-	if (!trw) {
-		qDebug() << SG_PREFIX_E << "Failed to get non-NULL parent layer";
+	QStandardItem * root_item = this->model->invisibleRootItem();
+	if (!root_item) {
+		qDebug() << SG_PREFIX_E << "Failed to get root item";
 		return;
 	}
 
-	this->selected_wp = wp;
-
-
-
-	QAction * qa = NULL;
-	QMenu menu(this);
-	/* When multiple rows are selected, the number of applicable operation is lower. */
-	QItemSelectionModel * selection = this->view->selectionModel();
-	if (selection->selectedRows(0).size() == 1) {
-
-		qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), tr("&Zoom onto"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (tree_item_view_cb()));
-
-		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (tree_item_properties_cb()));
-
-		qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), tr("&Show Picture..."));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_tree_item_cb()));
-		qa->setEnabled(!wp->image_full_path.isEmpty());
+	const int column_idx = this->column_id_to_column_idx(TreeItemPropertyID::TheItem);
+	if (column_idx < 0) {
+		qDebug() << SG_PREFIX_E << "Calculated column index is out of range:" << column_idx;
+		return;
 	}
 
-	qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("&Copy Data"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_only_visible_columns_cb()));
 
-	qa = menu.addAction(QIcon::fromTheme("edit-copy"), tr("Copy Data (with &positions)"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_with_position_cb()));
+	QStandardItem * child_item = root_item->child(item_index.row(), column_idx);
+	if (!child_item) {
+		qDebug() << SG_PREFIX_E << "Failed to get child item from column no." << column_idx;
+		return;
+	}
 
+	qDebug() << SG_PREFIX_I << "Selected cell" << child_item->text();
 
-	menu.exec(QCursor::pos());
-#endif
+	TreeItem * tree_item = child_item->data(RoleLayerData).value<TreeItem *>();
+	if (!tree_item) {
+		qDebug() << SG_PREFIX_E << "Failed to get non-NULL TreeItem from item" << child_item->text() << "at column id" << TreeItemPropertyID::TheItem;
+		return;
+	}
+
+	show_context_menu(tree_item, QCursor::pos());
+
 	return;
+}
+
+
+
+
+int TreeItemListDialog::column_id_to_column_idx(TreeItemPropertyID column_id)
+{
+	for (unsigned int i = 0; i < this->list_format.columns.size(); i++) {
+		if (this->list_format.columns[i].id == column_id) {
+			return (int) i;
+		}
+	}
+	return -1;
 }
 
 
@@ -253,18 +281,18 @@ void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * Create a table of tree_items with corresponding tree_item information.
  * This table does not support being actively updated.
  */
-void TreeItemListDialog::build_model(const TreeItemListFormat & list_format, bool hide_layer_names)
+void TreeItemListDialog::build_model(const TreeItemListFormat & new_list_format, bool hide_layer_names)
 {
 	if (this->tree_items.empty()) {
 		return;
 	}
 
-
+	this->list_format = new_list_format;
 
 	this->model = new QStandardItemModel();
 
-	for (unsigned int i = 0; i < list_format.columns.size(); i++) {
-		this->model->setHorizontalHeaderItem(i, new QStandardItem(list_format.columns[i].header_label));
+	for (unsigned int i = 0; i < this->list_format.columns.size(); i++) {
+		this->model->setHorizontalHeaderItem(i, new QStandardItem(this->list_format.columns[i].header_label));
 	}
 
 
@@ -281,12 +309,12 @@ void TreeItemListDialog::build_model(const TreeItemListFormat & list_format, boo
 	this->view->setSortingEnabled(true);
 
 
-	for (unsigned int i = 0; i < list_format.columns.size(); i++) {
-		this->model->setHorizontalHeaderItem(i, new QStandardItem(list_format.columns[i].header_label));
+	for (unsigned int i = 0; i < this->list_format.columns.size(); i++) {
+		this->model->setHorizontalHeaderItem(i, new QStandardItem(this->list_format.columns[i].header_label));
 
-		this->view->horizontalHeader()->setSectionHidden(i, !list_format.columns[i].visible);
+		this->view->horizontalHeader()->setSectionHidden(i, !this->list_format.columns[i].visible);
 		this->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Interactive);
-#ifdef K_TODO
+#ifdef TODO_LATER
 		this->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
 		this->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Stretch);
 #endif
@@ -313,15 +341,15 @@ void TreeItemListDialog::build_model(const TreeItemListFormat & list_format, boo
 
 
 	for (auto iter = tree_items.begin(); iter != tree_items.end(); iter++) {
-		const QList<QStandardItem *> items = (*iter)->get_list_representation(list_format);
+		const QList<QStandardItem *> items = (*iter)->get_list_representation(this->list_format);
 		this->model->invisibleRootItem()->appendRow(items);
 	}
 
-#ifdef K_TODO
+#ifdef TODO_LATER
 	if (hide_layer_names) {
-		this->view->sortByColumn(TreeItemListColumnID::TheItem, Qt::SortOrder::AscendingOrder);
+		this->view->sortByColumn(TreeItemPropertyID::TheItem, Qt::SortOrder::AscendingOrder);
 	} else {
-		this->view->sortByColumn(TreeItemListColumnID::ParentLayer, Qt::SortOrder::AscendingOrder);
+		this->view->sortByColumn(TreeItemPropertyID::ParentLayer, Qt::SortOrder::AscendingOrder);
 	}
 #endif
 
@@ -346,12 +374,12 @@ void TreeItemListDialog::build_model(const TreeItemListFormat & list_format, boo
 
    Common method for showing a list of tree_items with extended information
 */
-void TreeItemListDialog::show_dialog(QString const & title, const TreeItemListFormat & list_format, const std::list<TreeItem *> & items, Layer * layer)
+void TreeItemListDialog::show_dialog(QString const & title, const TreeItemListFormat & new_list_format, const std::list<TreeItem *> & items, Layer * layer)
 {
 	TreeItemListDialog dialog(title, layer->get_window());
 
 	dialog.tree_items.clear();
-#ifdef K_TODO
+#ifdef TODO_LATER
 	if (layer->type == LayerType::TRW) {
 		((LayerTRW *) layer)->get_tree_items_list(dialog.tree_items);
 	} else if (layer->type == LayerType::Aggregate) {
@@ -363,7 +391,7 @@ void TreeItemListDialog::show_dialog(QString const & title, const TreeItemListFo
 	dialog.tree_items = items;
 #endif
 
-	dialog.build_model(list_format, layer->type != LayerType::Aggregate);
+	dialog.build_model(new_list_format, layer->type != LayerType::Aggregate);
 	dialog.exec();
 }
 
@@ -395,11 +423,13 @@ TreeItemListDialog::~TreeItemListDialog()
 void TreeItemListDialog::accept_cb(void) /* Slot. */
 {
 	/* FIXME: check and make sure the tree_item still exists before doing anything to it. */
-#ifdef K_TODO
-	if (this->selected_wp) {
-		LayerTRW * trw = this->selected_wp->get_parent_layer_trw();
-		trw->tree_items.update_tree_view(this->selected_wp);
-		trw->emit_layer_changed("TRW - TreeItem List Dialog - Accept");
+#ifdef TODO_LATER
+	if (this->selected_tree_item) {
+		Layer * parent_layer = this->selected_tree_item->get_parent_layer();
+		if (parent_layer) {
+			parent_layer->tree_items.update_tree_view(this->selected_tree_item);
+			parent_layer->emit_layer_changed("TRW - TreeItem List Dialog - Accept");
+		}
 	}
 #endif
 
@@ -411,9 +441,27 @@ void TreeItemListDialog::accept_cb(void) /* Slot. */
 
 void TreeItemListModel::sort(int column, Qt::SortOrder order)
 {
-	if (column == TreeItemListColumnID::Icon) {
+	if (column == TreeItemPropertyID::Icon) {
 		return;
 	}
 
 	QStandardItemModel::sort(column, order);
+}
+
+
+
+
+TreeItemListFormat & TreeItemListFormat::operator=(const TreeItemListFormat & other)
+{
+	if (&other == this) {
+		return *this;
+	}
+
+	for (unsigned int i = 0; i < other.columns.size(); i++) {
+		this->columns.push_back(TreeItemListColumn(other.columns[i].id,
+							   other.columns[i].visible,
+							   other.columns[i].header_label));
+	}
+
+	return *this;
 }

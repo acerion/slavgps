@@ -128,6 +128,23 @@ Layer * TreeItem::to_layer(void) const
 
 
 
+
+Layer * TreeItem::get_owning_layer(void) const
+{
+	return this->owning_layer;
+}
+
+
+
+
+void TreeItem::set_owning_layer(Layer * layer)
+{
+	this->owning_layer = layer;
+}
+
+
+
+
 bool TreeItem::the_same_object(const TreeItem * item1, const TreeItem * item2)
 {
 	if (NULL == item1 || NULL == item2) {
@@ -224,7 +241,7 @@ void TreeItem::set_menu_operation_ids(TreeItem::MenuOperation new_value)
 
 
 
-QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemListFormat & list_format) const
+QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemListFormat & list_format)
 {
 	QList<QStandardItem *> result;
 	return result;

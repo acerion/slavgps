@@ -78,7 +78,7 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		static Waypoint * unmarshall(Pickle & pickle);
 
-		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format) const;
+		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format);
 
 		void convert(CoordMode dest_mode);
 
@@ -159,7 +159,6 @@ namespace SlavGPS {
 
 
 Q_DECLARE_METATYPE(SlavGPS::Waypoint*)
-Q_DECLARE_METATYPE(const SlavGPS::Waypoint*)
 
 
 

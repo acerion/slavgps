@@ -888,7 +888,7 @@ bool LayerTRWWaypoints::empty(void) const
 
 void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
 {
-	wp->owning_layer = this->owning_layer;
+	wp->set_owning_layer(this->get_owning_layer());
 	this->children_map.insert({{ wp->get_uid(), wp }});
 	this->children_list.push_back(wp);
 

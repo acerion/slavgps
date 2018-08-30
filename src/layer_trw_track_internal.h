@@ -245,7 +245,7 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		static Track * unmarshall(Pickle & pickle);
 
-		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format) const;
+		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format);
 
 
 		void recalculate_bbox(void);
@@ -403,7 +403,6 @@ namespace SlavGPS {
 
 
 Q_DECLARE_METATYPE(SlavGPS::Track*)
-Q_DECLARE_METATYPE(const SlavGPS::Track*)
 
 
 

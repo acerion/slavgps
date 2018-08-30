@@ -364,7 +364,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		const LatLon center((this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2);
-		LayerTRW * parent_layer = (LayerTRW *) this->trk->owning_layer;
+		LayerTRW * parent_layer = (LayerTRW *) this->trk->get_owning_layer();
 		const Coord coord(center, parent_layer->get_coord_mode());
 		this->tz = TZLookup::get_tz_at_location(coord);
 
@@ -427,7 +427,7 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 
 	qDebug() << "II: Track Properties Dialog: selected draw name mode #" << (int) trk->draw_name_mode;
 
-	LayerTRW * parent_layer = (LayerTRW *) this->trk->owning_layer;
+	LayerTRW * parent_layer = (LayerTRW *) this->trk->get_owning_layer();
 	if (this->trk->type_id == "sg.trw.track") {
 		parent_layer->get_tracks_node().update_tree_view(this->trk);
 	} else {
