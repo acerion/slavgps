@@ -6,6 +6,7 @@ QT = core gui widgets printsupport xml
 RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc waypoint.qrc
 
 SOURCES += main.cpp \
+    mem_cache.cpp \
     tree_item_list.cpp \
     ruler.cpp \
     acquire.cpp \
@@ -152,6 +153,7 @@ SOURCES += main.cpp \
 
 
 HEADERS += window.h \
+    mem_cache.h \
     ruler.h \
     datasource.h \
     garmin_symbols.h \

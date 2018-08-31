@@ -164,9 +164,9 @@ static ParameterScale<int> scale_alpha(0, 255, SGVariant((int32_t) 255), 3, 0);
 
 
 
-static SGVariant id_default(void)
+static SGVariant id_hardcoded_default(void)
 {
-	return SGVariant((int32_t) MapTypeID::MapQuestOSM);
+	return SGVariant((int32_t) MapTypeID::OSMCycle);
 }
 
 
@@ -236,7 +236,7 @@ FileSelectorWidget::FileTypeFilter map_file_type[1] = { FileSelectorWidget::File
 
 ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
-	{ PARAM_MAP_TYPE_ID,   NULL, "mode",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::ComboBox,      &map_types,       id_default,           NULL, NULL },
+	{ PARAM_MAP_TYPE_ID,   NULL, "mode",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::ComboBox,      &map_types,       id_hardcoded_default, NULL, NULL },
 	{ PARAM_CACHE_DIR,     NULL, "directory",      SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,   NULL,             directory_default,    NULL, NULL },
 	{ PARAM_CACHE_LAYOUT,  NULL, "cache_type",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::ComboBox,      &cache_types,     cache_layout_default, NULL, N_("This determines the tile storage layout on disk") },
 	{ PARAM_FILE,          NULL, "mapfile",        SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,  map_file_type,    file_default,         NULL, N_("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
@@ -434,10 +434,9 @@ bool LayerMap::set_map_type_id(MapTypeID new_map_type_id)
 
 MapTypeID LayerMap::get_default_map_type_id(void)
 {
-	/* TODO_REALLY: verify that this function call works as expected. */
 	SGVariant var = LayerDefaults::get(LayerType::Map, "mode", SGVariantType::Int);
-	if (var.u.val_int == 0) {
-		var = id_default();
+	if (!var.is_valid() || var.u.val_int == 0) {
+		var = id_hardcoded_default();
 	}
 	return (MapTypeID) var.u.val_int;
 }

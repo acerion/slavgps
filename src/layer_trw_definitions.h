@@ -42,29 +42,6 @@ namespace SlavGPS {
 
 
 
-	/* A cached waypoint image. */
-	/* This data structure probably should be put somewhere else - it could be reused in other modules. */
-	class CachedPixmap {
-	public:
-		CachedPixmap() {};
-		~CachedPixmap();
-		QPixmap pixmap;
-		QString image_file_full_path;
-	};
-
-
-
-
-	/* Binary predicate for searching a pixmap (CachedPixmap) in pixmap cache container. */
-	struct CachedPixmapCompareByPath {
-	CachedPixmapCompareByPath(const QString & new_searched_full_path) : searched_full_path(new_searched_full_path) { }
-		bool operator()(CachedPixmap & item) const { return item.image_file_full_path == this->searched_full_path; }
-	private:
-		const QString searched_full_path;
-	};
-
-
-
 
 	/* Note that using LayerTRWTrackDrawingMode::BySpeed may be slow especially for vast
 	   numbers of trackpoints as we are (re)calculating the color for

@@ -45,6 +45,7 @@
 #include "layer_trw_tracks.h"
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoints.h"
+#include "mem_cache.h"
 //#include "file.h"
 
 
@@ -363,10 +364,8 @@ namespace SlavGPS {
 		bool route_finder_append;
 
 
-		/* Viking has been using queue to be able to easily remove (pop()) oldest images (the ones that
-		   are the longest in queue) when size of cached images goes over cache size limit. */
-		std::deque<CachedPixmap> wp_image_cache;
-		int32_t wp_image_cache_size;
+		/* In-memory cache of waypoint images. */
+		MemCache<CachedPixmap> wp_image_cache;
 
 
 		/* Whether the program needs to generate thumbnails of
@@ -461,11 +460,11 @@ namespace SlavGPS {
 		void insert_point_before_cb(void);
 		void routes_stats_cb();
 
-		void wp_image_cache_add(CachedPixmap & cached_pixmap);
+		void wp_image_cache_add(const CachedPixmap & cached_pixmap);
 
 
 	private:
-		void wp_image_cache_flush();
+		void wp_image_cache_flush(void);
 
 		/* Structure to hold multiple track information for a layer. */
 		class TracksTooltipData {

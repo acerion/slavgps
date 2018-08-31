@@ -751,16 +751,9 @@ void LayerTRW::wp_image_cache_flush(void)
 
 
 
-void LayerTRW::wp_image_cache_add(CachedPixmap & cached_pixmap)
+void LayerTRW::wp_image_cache_add(const CachedPixmap & cached_pixmap)
 {
-	this->wp_image_cache.push_back(cached_pixmap);
-
-	/* Keep size of queue under a limit. */
-	if (this->wp_image_cache.size() > this->wp_image_cache_size) {
-		/* TODO_REALLY: review management of cache and watching its
-		   limit. Make sure that it really works. */
-		this->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
-	}
+	this->wp_image_cache.add(cached_pixmap);
 }
 
 
@@ -887,10 +880,7 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 
 	case PARAM_WP_IMAGE_CACHE_SIZE:
 		if (data.u.val_int >= scale_wp_image_cache_size.min && data.u.val_int <= scale_wp_image_cache_size.max) {
-			this->wp_image_cache_size = data.u.val_int;
-			while (this->wp_image_cache.size() > this->wp_image_cache_size) { /* If shrinking cache_size, free pixbuf ASAP. */
-				this->wp_image_cache.pop_front(); /* Calling .pop_front() removes oldest element and calls its destructor. */
-			}
+			this->wp_image_cache.set_size_limit(data.u.val_int);
 		}
 		break;
 
@@ -1001,7 +991,7 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 	case PARAM_DRAW_WP_IMAGES:          rv = SGVariant(this->painter->draw_wp_images);       break;
 	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->painter->wp_image_size);       break;
 	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->painter->wp_image_alpha);      break;
-	case PARAM_WP_IMAGE_CACHE_SIZE:     rv = SGVariant((int32_t) this->wp_image_cache_size); break;
+	case PARAM_WP_IMAGE_CACHE_SIZE:     rv = SGVariant((int32_t) this->wp_image_cache.get_size_limit()); break;
 
 	case PARAM_WP_MARKER_COLOR:         rv = SGVariant(this->painter->wp_marker_color);      break;
 	case PARAM_WP_LABEL_FG_COLOR:       rv = SGVariant(this->painter->wp_label_fg_color);    break;
@@ -4133,6 +4123,11 @@ LayerTRW::LayerTRW() : Layer()
 	   base. */
 	this->painter->make_track_pens();
 	this->painter->make_wp_pens();
+
+	const SGVariant limit = interface->parameter_default_values[PARAM_WP_IMAGE_CACHE_SIZE];
+	if (limit.is_valid()) {
+		this->wp_image_cache.set_size_limit(limit.u.val_int);
+	}
 }
 
 
