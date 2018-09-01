@@ -31,7 +31,14 @@
 
 
 
+#include <QFileInfo>
+#include <QDebug>
+
+
+
+
 #include "mem_cache.h"
+#include "globals.h"
 
 
 
@@ -42,3 +49,50 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Mem Cache"
+
+
+
+
+CachedPixmap::CachedPixmap(const QPixmap & new_pixmap, const QString & new_full_path)
+{
+	if (!new_pixmap.isNull()) {
+		this->pixmap = new_pixmap;
+		this->image_file_full_path = new_full_path;
+
+		this->size_bytes = this->pixmap.width() * this->pixmap.height() * (this->pixmap.depth() / 8);
+		this->size_bytes += sizeof (QPixmap);
+
+		/* Remember that a valid pixmap may be non-null, but
+		   path may be empty.  This is true e.g. when cached
+		   pixmap is created from
+		   Thumbnails::get_default_thumbnail() pixmap which
+		   doesn't exist on disc. */
+
+#if 1           /* Only for tests and comparison of size of disc file and size of memory object size. */
+		if (!this->image_file_full_path.isEmpty()) {
+			QFileInfo file_info(this->image_file_full_path);
+			qDebug () << SG_PREFIX_I << "In-memory size = " << this->size_bytes << ", on-disc size =" << file_info.size();
+		}
+#endif
+	}
+}
+
+
+
+
+size_t CachedPixmap::get_size_bytes(void) const
+{
+	return this->size_bytes;
+}
+
+
+
+
+bool CachedPixmap::is_valid(void) const
+{
+	/* Remember that a valid pixmap may be non-null even if path
+	   is empty.  This is true e.g. when cached pixmap is created
+	   from Thumbnails::get_default_thumbnail() pixmap which
+	   doesn't exist on disc. */
+	return !this->pixmap.isNull();
+}

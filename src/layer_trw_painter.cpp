@@ -903,32 +903,26 @@ CachedPixmap LayerTRWPainter::generate_wp_cached_pixmap(const QString & image_fu
 	if (this->wp_image_size == PIXMAP_THUMB_SIZE) {
 		/* What a coincidence! Perhaps the image has already been "thumbnailed"
 		   and we can read it from thumbnails dir. */
-		cache_object.pixmap = Thumbnails::get_thumbnail(image_full_path);
-		if (!cache_object.pixmap.isNull()) {
-			cache_object.image_file_full_path = image_full_path;
-		}
+		cache_object = CachedPixmap(Thumbnails::get_thumbnail(image_full_path), image_full_path);
 	}
 
-	if (cache_object.pixmap.isNull()) {
+	if (!cache_object.is_valid()) {
 		/* We didn't manage to read the file from thumbnails file.
 		   Either because the expected pixmap size (painter->wp_image_size)
 		   is not equal to thumbnail size, or because there was no thumbnail on disc. */
 
 		QPixmap original_image;
 		if (original_image.load(image_full_path)) {
-			cache_object.pixmap = Thumbnails::scale_pixmap(original_image, this->wp_image_size, this->wp_image_size);
-			if (!cache_object.pixmap.isNull()) {
-				cache_object.image_file_full_path = image_full_path;
-			}
+			cache_object = CachedPixmap(Thumbnails::scale_pixmap(original_image, this->wp_image_size, this->wp_image_size),
+						    image_full_path);
 		}
 	}
 
-	if (cache_object.pixmap.isNull()) {
+	if (!cache_object.is_valid()) {
 		/* Last resort. TODO_MAYBE: default thumbnail should be
 		   somehow shared object. We don't want too many
 		   copies of the default thumbnail in memory. */
-		cache_object.pixmap = Thumbnails::get_default_thumbnail();
-		cache_object.image_file_full_path = "";
+		cache_object = CachedPixmap(Thumbnails::get_default_thumbnail(), "");
 	}
 
 	return cache_object;

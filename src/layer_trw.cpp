@@ -181,7 +181,7 @@ static ParameterScale<int> scale_track_thickness         (              1,      
 static ParameterScale<int> scale_track_draw_speed_factor (              0,              100,                       SGVariant(30.0),       1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
 static ParameterScale<int> scale_wp_image_size           (             16,              128,               SGVariant((int32_t) 64),       4,        0); /* PARAM_WP_IMAGE_SIZE */
 static ParameterScale<int> scale_wp_image_alpha          (              0,              255,              SGVariant((int32_t) 255),       5,        0); /* PARAM_WP_IMAGE_ALPHA */
-static ParameterScale<int> scale_wp_image_cache_size     (              5,              500,              SGVariant((int32_t) 300),       5,        0); /* PARAM_WP_IMAGE_CACHE_SIZE */
+static ParameterScale<int> scale_wp_image_cache_capacity (              5,              500,              SGVariant((int32_t) 300),       5,        0); /* PARAM_WP_IMAGE_CACHE_CAPACITY, megabytes */
 static ParameterScale<int> scale_track_bg_thickness      (              0,                8,                SGVariant((int32_t) 0),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
 static ParameterScale<int> scale_wp_marker_size          (              1,               64,                SGVariant((int32_t) 4),       1,        0); /* PARAM_WP_MARKER_SIZE */
 static ParameterScale<int> scale_track_min_stop_length   (MIN_STOP_LENGTH,  MAX_STOP_LENGTH,               SGVariant((int32_t) 60),       1,        0); /* PARAM_TRACK_MIN_STOP_LENGTH */
@@ -266,7 +266,7 @@ enum {
 	PARAM_DRAW_WP_IMAGES,
 	PARAM_WP_IMAGE_SIZE,
 	PARAM_WP_IMAGE_ALPHA,
-	PARAM_WP_IMAGE_CACHE_SIZE,
+	PARAM_WP_IMAGE_CACHE_CAPACITY,
 	// Metadata
 	PARAM_MDDESC,
 	PARAM_MDAUTH,
@@ -315,7 +315,7 @@ ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_DRAW_WP_IMAGES,          NULL, "drawimages",        SGVariantType::Boolean, PARAMETER_GROUP_IMAGES,            QObject::tr("Draw Waypoint Images"),             WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WP_IMAGE_SIZE,           NULL, "image_size",        SGVariantType::Int,     PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Image Size (pixels):"),    WidgetType::HScale,       &scale_wp_image_size,        NULL,                       NULL, NULL },
 	{ PARAM_WP_IMAGE_ALPHA,          NULL, "image_alpha",       SGVariantType::Int,     PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Image Alpha:"),            WidgetType::HScale,       &scale_wp_image_alpha,       NULL,                       NULL, NULL },
-	{ PARAM_WP_IMAGE_CACHE_SIZE,     NULL, "image_cache_size",  SGVariantType::Int,     PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Images' Memory Cache Size:"),WidgetType::HScale,     &scale_wp_image_cache_size,  NULL,                       NULL, NULL },
+	{ PARAM_WP_IMAGE_CACHE_CAPACITY, NULL, "image_cache_size",  SGVariantType::Int,     PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Images' Memory Cache Size (MB):"),WidgetType::HScale,&scale_wp_image_cache_capacity,  NULL,                       NULL, NULL },
 
 	{ PARAM_MDDESC,                  NULL, "metadatadesc",      SGVariantType::String,  PARAMETER_GROUP_METADATA,          QObject::tr("Description"),                      WidgetType::Entry,        NULL,                        string_default,             NULL, NULL },
 	{ PARAM_MDAUTH,                  NULL, "metadataauthor",    SGVariantType::String,  PARAMETER_GROUP_METADATA,          QObject::tr("Author"),                           WidgetType::Entry,        NULL,                        string_default,             NULL, NULL },
@@ -878,9 +878,10 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		}
 		break;
 
-	case PARAM_WP_IMAGE_CACHE_SIZE:
-		if (data.u.val_int >= scale_wp_image_cache_size.min && data.u.val_int <= scale_wp_image_cache_size.max) {
-			this->wp_image_cache.set_size_limit(data.u.val_int);
+	case PARAM_WP_IMAGE_CACHE_CAPACITY:
+		if (scale_wp_image_cache_capacity.is_in_range(data.u.val_int)) {
+			qDebug() << SG_PREFIX_I << "Setting new capacity of in-memory waypoint image cache:" << data.u.val_int << "megabytes";
+			this->wp_image_cache.set_capacity_megabytes(data.u.val_int);
 		}
 		break;
 
@@ -991,7 +992,7 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 	case PARAM_DRAW_WP_IMAGES:          rv = SGVariant(this->painter->draw_wp_images);       break;
 	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->painter->wp_image_size);       break;
 	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->painter->wp_image_alpha);      break;
-	case PARAM_WP_IMAGE_CACHE_SIZE:     rv = SGVariant((int32_t) this->wp_image_cache.get_size_limit()); break;
+	case PARAM_WP_IMAGE_CACHE_CAPACITY: rv = SGVariant((int32_t) this->wp_image_cache.get_capacity_megabytes()); break;
 
 	case PARAM_WP_MARKER_COLOR:         rv = SGVariant(this->painter->wp_marker_color);      break;
 	case PARAM_WP_LABEL_FG_COLOR:       rv = SGVariant(this->painter->wp_label_fg_color);    break;
@@ -1051,8 +1052,8 @@ void LayerTRWInterface::change_param(void * gtk_widget, void * ui_change_values)
 		GtkWidget *w2 = ww2[OFFSET + PARAM_WP_IMAGE_SIZE];
 		GtkWidget *w3 = ww1[OFFSET + PARAM_WP_IMAGE_ALPHA];
 		GtkWidget *w4 = ww2[OFFSET + PARAM_WP_IMAGE_ALPHA];
-		GtkWidget *w5 = ww1[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
-		GtkWidget *w6 = ww2[OFFSET + PARAM_WP_IMAGE_CACHE_SIZE];
+		GtkWidget *w5 = ww1[OFFSET + PARAM_WP_IMAGE_CACHE_CAPACITY];
+		GtkWidget *w6 = ww2[OFFSET + PARAM_WP_IMAGE_CACHE_CAPACITY];
 		if (w1) w1->setEnabled(var.b);
 		if (w2) w2->setEnabled(var.b);
 		if (w3) w3->setEnabled(var.b);
@@ -4124,9 +4125,9 @@ LayerTRW::LayerTRW() : Layer()
 	this->painter->make_track_pens();
 	this->painter->make_wp_pens();
 
-	const SGVariant limit = interface->parameter_default_values[PARAM_WP_IMAGE_CACHE_SIZE];
+	const SGVariant limit = interface->parameter_default_values[PARAM_WP_IMAGE_CACHE_CAPACITY];
 	if (limit.is_valid()) {
-		this->wp_image_cache.set_size_limit(limit.u.val_int);
+		this->wp_image_cache.set_capacity_megabytes(limit.u.val_int);
 	}
 }
 
