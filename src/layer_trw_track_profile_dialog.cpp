@@ -1427,13 +1427,6 @@ QPointF ProfileGraph::get_position_of_tp(TrackInfo & track_info, Trackpoint * tp
 
 void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 {
-#ifdef K_TODO_REALLY
-	/* TODO_REALLY: are these assignments necessary in this function?
-	   Shouldn't they be done only once, on resize? */
-	graph->width = graph->viewport->get_graph_width();
-	graph->height = graph->viewport->get_graph_height();
-#endif
-
 	graph->draw_graph(this->track_info);
 
 	/* Ensure markers are redrawn if necessary. */
@@ -2418,7 +2411,7 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 
 		if (col >= 0 && col < this->width) {
 			qDebug() << "      value (inside) =" << value << ", col =" << col;
-			/* TODO_LATER: take into account magnitude of distance_value and adjust units accordingly. Look at get_distance_grid_label_2. */
+			/* TODO_REALLY: take into account magnitude of distance_value and adjust units accordingly. Look at get_distance_grid_label_2. */
 			this->draw_grid_vertical_line(col, get_distance_grid_label(this->geocanvas.distance_unit, value));
 		} else {
 			qDebug() << "      value (outside) =" << value << ", col =" << col;

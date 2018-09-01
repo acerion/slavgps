@@ -83,7 +83,7 @@ static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_defaul
 
 static ParameterScale<int> scale_alpha(0,  255, SGVariant((int32_t) 255),  5, 0); /* PARAM_ALPHA */
 static ParameterScale<int> scale_timeout(0, 1024, SGVariant((int32_t) 168), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
-static ParameterScale<int> scale_threads(1, 64, SGVariant((int32_t) 1), 1, 0); /* 64 threads should be enough for anyone...; TODO_LATER: verify the hardcoded default value. */
+static ParameterScale<int> scale_threads(1, 64, SGVariant((int32_t) 1), 1, 0); /* 64 threads should be enough for anyone... */
 
 
 enum {
@@ -819,11 +819,6 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		}
 	}
 
-#ifdef K_TODO_LATER
-	/* TODO_LATER: this code would be overwritten in screen_pos_to_coord() */
-	ul.mode = CoordMode::LATLON;
-	br.mode = CoordMode::LATLON;
-#endif
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
