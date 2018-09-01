@@ -141,8 +141,6 @@ namespace SlavGPS {
 		bool export_to(const std::list<const Layer *> & layers, SGFileType file_type, const QString & full_dir_path, char const *extension);
 		void export_to_common(SGFileType file_type, char const * extension);
 
-		void import_kmz_file_cb(void);
-
 
 		/* Return indicates if a redraw is necessary. */
 		bool clear_highlight();
@@ -266,6 +264,8 @@ namespace SlavGPS {
 #ifdef HAVE_ZIP_H
 		void draw_viewport_to_kmz_file_cb(void);
 #endif
+		void import_kmz_file_cb(void);
+
 		void print_cb(void);
 
 

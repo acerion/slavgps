@@ -289,7 +289,7 @@ Window::Window()
 
 			/* Adjust geometry of panel dock.
 
-			   TODO_REALLY: this doesn't work. Either
+			   TODO_LATER: this doesn't work. Either
 			   setGeometry() doesn't work, or something
 			   overwrites panel's size. */
 
@@ -1051,7 +1051,7 @@ void Window::draw_tree_items(void)
 void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
 	qDebug() << "SLOT" PREFIX << "layer" << (qulonglong) uid;
-	/* TODO_REALLY: draw only one layer, not all of them. */
+	/* TODO_HARD: draw only one layer, not all of them. */
 	this->draw_tree_items();
 }
 
@@ -1537,7 +1537,7 @@ bool Window::save_on_dirty_flag(void)
 	}
 
 	QMessageBox::StandardButton reply;
-	reply = QMessageBox::question(this, "SlavGPS", /* TODO_LATER: remove hardcoded program name */
+	reply = QMessageBox::question(this, "SlavGPS", /* TODO_REALLY: remove hardcoded program name */
 				      tr("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
 					 "Do you want to save the changes?").arg(this->get_current_document_file_name()),
 				      QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
@@ -3449,10 +3449,9 @@ void Window::import_kmz_file_cb(void)
 	file_selector.setFileMode(QFileDialog::ExistingFile);
 	/* AcceptMode is QFileDialog::AcceptOpen by default. */;
 
-	/* TODO_LATER: make sure that "all" is the default filter. */
 	QStringList mime;
-	mime << "application/octet-stream"; /* "All files (*)" */
-	mime << "vnd.google-earth.kmz";     /* "KMZ" / "*.kmz"; */
+	mime << "application/vnd.google-earth.kmz";  /* "KMZ" / "*.kmz". First in QStringList -> default filter in file selector. */
+	mime << "application/octet-stream";          /* "All files (*)". */
 	file_selector.setMimeTypeFilters(mime);
 
 	if (QDialog::Accepted != file_selector.exec())  {
