@@ -824,7 +824,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 	UTM counter;
 	counter.zone = dem->utm.zone;
-	assert (UTM::is_band_letter(dem->utm.get_band_letter())); /* TODO_REALLY: smarter handling of error value. */
+	assert (UTM::is_band_letter(dem->utm.get_band_letter())); /* TODO_LATER: smarter handling of error value. In theory the source object should be valid and for sure contain valid band letter. */
 	counter.set_band_letter(dem->utm.get_band_letter());
 
 	int32_t x;

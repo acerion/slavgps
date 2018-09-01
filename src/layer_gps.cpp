@@ -1108,7 +1108,7 @@ void GPSSession::run(void)
 		this->mutex.unlock();
 	} else {
 		this->mutex.unlock();
-		delete this; /* TODO_REALLY: is is valid? Can we delete ourselves here? */
+		delete this; /* TODO_LATER: is is valid? Can we delete ourselves here? */
 	}
 }
 

@@ -99,7 +99,7 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 
 
 /*
-  TODO_LATER: this function builds a table with three columns, but only one
+  TODO_REALLY: this function builds a table with three columns, but only one
   of them (Name) is filled with details from geonames.  Extend/improve
   list selection widget so that it can display properties of items in
   N columns.

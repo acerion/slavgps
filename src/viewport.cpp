@@ -1075,7 +1075,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.mode = CoordMode::UTM;
 
 		coord.utm.zone = this->center.utm.zone;
-		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_REALLY: handle this in a better way. */
+		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 		coord.utm.set_band_letter(this->center.utm.get_band_letter());
 		coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
 
@@ -2135,7 +2135,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	   |                                |
 	   +--------------------------------+
 
-	   TODO_REALLY: make sure that this works also for target
+	   TODO_HARD: make sure that this works also for target
 	   device smaller than original viewport.
 	*/
 
@@ -2167,7 +2167,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 		scaled_viewport->set_map_zoom_x(this->map_zoom.x / scale_factor);
 		scaled_viewport->set_map_zoom_y(this->map_zoom.y / scale_factor);
 	} else {
-		/* TODO_REALLY: now what? */
+		/* TODO_HARD: now what? */
 	}
 
 
@@ -2227,7 +2227,7 @@ bool Viewport::print_cb(QPrinter * printer)
 	const int target_width = target_rect.width();
 	const int target_height = target_rect.height();
 
-	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, MapZoom(0.0, 0.0)); /* TODO_REALLY: why do we pass 0/0 map zoom here? */
+	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, MapZoom(0.0, 0.0)); /* TODO_HARD: why do we pass 0/0 map zoom here? */
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print canvas. */

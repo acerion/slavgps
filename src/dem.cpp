@@ -756,7 +756,7 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 		dem_northeast_utm.easting = this->max_east_seconds;
 
 		dem_northeast_utm.zone = this->utm.zone;
-		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_REALLY: add smarter error handling. */
+		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 		dem_northeast_utm.set_band_letter(this->utm.get_band_letter());
 
 		UTM dem_southwest_utm;
@@ -764,7 +764,7 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 		dem_southwest_utm.easting = this->min_east_seconds;
 
 		dem_southwest_utm.zone = this->utm.zone;
-		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_REALLY: add smarter error handling. */
+		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 		dem_southwest_utm.set_band_letter(this->utm.get_band_letter());
 
 		dem_northeast = UTM::to_latlon(dem_northeast_utm);

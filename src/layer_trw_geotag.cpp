@@ -338,7 +338,7 @@ void GeotagJob::geotag_track(Track * trk2)
 
 		Trackpoint * tp_next = *std::next(iter);
 
-		/* TODO_REALLY need to use 'has_timestamp' property. */
+		/* TODO_LATER need to use 'has_timestamp' property. */
 		if (tp->timestamp == tp_next->timestamp) {
 			continue;
 		}

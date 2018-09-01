@@ -325,7 +325,7 @@ TRWStatsDialog::~TRWStatsDialog()
 	bool do_invisible = this->checkbox->isChecked();
 	ApplicationState::set_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible);
 
-	/* TODO_LATER: delete this object? */
+	/* TODO_REALLY: delete this object? */
 	//free(this->stats_table);
 }
 
