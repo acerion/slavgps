@@ -145,7 +145,6 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	if (!file_contents) {
 		/* File errors: http://doc.qt.io/qt-5/qfiledevice.html#FileError-enum */
 		qDebug() << "EE" PREFIX << "Can't map file" << file.fileName() << "with size" << file_size << ", error:" << file.error();
-		exit(0);
 		return found_places;
 	}
 
