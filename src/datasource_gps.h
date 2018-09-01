@@ -68,7 +68,7 @@ namespace SlavGPS {
 		DatasourceGPSSetup(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
 		~DatasourceGPSSetup();
 
-		BabelOptions * get_process_options_none(void);
+		BabelOptions * get_acquire_options_none(void);
 
 		QString get_protocol(void);
 		QString get_port(void);
@@ -111,7 +111,7 @@ namespace SlavGPS {
 		DatasourceGPSProgress(const QString & window_title, QWidget * parent = NULL);
 		~DatasourceGPSProgress();
 
-		BabelOptions * get_process_options_none(void) { return NULL; };
+		BabelOptions * get_acquire_options_none(void) { return NULL; };
 
 	private slots:
 

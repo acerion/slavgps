@@ -202,7 +202,7 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-BabelOptions * DatasourceGPSSetup::get_process_options_none(void)
+BabelOptions * DatasourceGPSSetup::get_acquire_options_none(void)
 {
 	gps_acquire_in_progress = true;
 
@@ -439,18 +439,16 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 
 int DataSourceGPS::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
-
 	/* This function will be created for downloading data from
 	   GPS, so build the dialog with all checkboxes available and
 	   checked - hence second argument to constructor is
 	   "true". */
 	GPSTransferType xfer = GPSTransferType::WPT; /* This doesn't really matter much because second arg to constructor is 'true'. */
-	this->config_dialog = new DatasourceGPSSetup(this->window_title, xfer, true, NULL);
+	DatasourceGPSSetup config_dialog(this->window_title, xfer, true, NULL);
 
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_none();
+		this->acquire_options = config_dialog.create_acquire_options_none();
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 

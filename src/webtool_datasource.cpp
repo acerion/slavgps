@@ -115,7 +115,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, V
 
 
 
-BabelOptions * DataSourceWebToolDialog::get_process_options_none(void)
+BabelOptions * DataSourceWebToolDialog::get_acquire_options_none(void)
 {
 	if (this->web_tool_data_source->webtool_needs_user_string()) {
 		this->web_tool_data_source->user_string = this->input_field.text();
@@ -181,21 +181,18 @@ DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window
 
 int DataSourceWebTool::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
-
 	int answer;
 
 	if (this->search) {
-		this->config_dialog = new DataSourceWebToolDialog(this->window_title, this->viewport, this->web_tool_data_source);
-		answer = this->config_dialog->exec();
-	} else {
-		this->config_dialog = NULL;
-		answer = QDialog::Rejected;
-	}
+		DataSourceWebToolDialog config_dialog(this->window_title, this->viewport, this->web_tool_data_source);
+		answer = config_dialog.exec();
 
-	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_none();
-		this->download_options = new DownloadOptions; /* With default values. */
+		if (answer == QDialog::Accepted) {
+			this->acquire_options = config_dialog.create_acquire_options_none();
+			this->download_options = new DownloadOptions; /* With default values. */
+		}
+	} else {
+		answer = QDialog::Rejected;
 	}
 
 	return answer;

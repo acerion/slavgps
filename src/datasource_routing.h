@@ -60,7 +60,7 @@ namespace SlavGPS {
 		DataSourceRoutingDialog(const QString & window_title);
 		~DataSourceRoutingDialog();
 
-		BabelOptions * get_process_options_none(void);
+		BabelOptions * get_acquire_options_none(void);
 
 		QComboBox * engines_combo;
 		QLineEdit from_entry;

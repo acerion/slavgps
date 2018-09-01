@@ -82,13 +82,11 @@ DataSourceURL::DataSourceURL()
 
 int DataSourceURL::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
+	DataSourceURLDialog config_dialog(this->window_title);
 
-	this->config_dialog = new DataSourceURLDialog(this->window_title);
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_none();
+		this->acquire_options = config_dialog.create_acquire_options_none();
 
 		this->download_options = new DownloadOptions; /* With default values. */
 		/* Support .zip + bzip2 files directly. */
@@ -138,7 +136,7 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-BabelOptions * DataSourceURLDialog::get_process_options_none(void)
+BabelOptions * DataSourceURLDialog::get_acquire_options_none(void)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
 

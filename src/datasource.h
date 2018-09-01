@@ -75,15 +75,15 @@ namespace SlavGPS {
 	public:
 		DataSourceDialog(const QString & window_title) { this->setWindowTitle(window_title); };
 
-		BabelOptions * create_process_options_layer(LayerTRW * trw);
-		BabelOptions * create_process_options_layer_track(LayerTRW * trw, Track * trk);
-		BabelOptions * create_process_options_track(Track * trk);
-		BabelOptions * create_process_options_none(void);
+		BabelOptions * create_acquire_options_layer(LayerTRW * trw);
+		BabelOptions * create_acquire_options_layer_track(LayerTRW * trw, Track * trk);
+		BabelOptions * create_acquire_options_track(Track * trk);
+		BabelOptions * create_acquire_options_none(void);
 
 	private:
-		virtual BabelOptions * get_process_options_none(void) { return NULL; };
-		virtual BabelOptions * get_process_options_layer_track(const QString & input_layer_filename, const QString & input_track_filename) { return NULL; };
-		virtual BabelOptions * get_process_options_layer(const QString & input_layer_filename) { return NULL; };
+		virtual BabelOptions * get_acquire_options_none(void) { return NULL; };
+		virtual BabelOptions * get_acquire_options_layer_track(const QString & input_layer_filename, const QString & input_track_filename) { return NULL; };
+		virtual BabelOptions * get_acquire_options_layer(const QString & input_layer_filename) { return NULL; };
 
 	};
 

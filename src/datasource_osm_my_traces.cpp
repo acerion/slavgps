@@ -102,32 +102,28 @@ DataSourceOSMMyTraces::DataSourceOSMMyTraces(Viewport * new_viewport)
 
 int DataSourceOSMMyTraces::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
-
-	DataSourceOSMMyTracesDialog * dialog = new DataSourceOSMMyTracesDialog(this->window_title, this->viewport);
+	DataSourceOSMMyTracesDialog config_dialog(this->window_title, this->viewport);
 
 	/* Keep reference to viewport. */
-	dialog->viewport = this->viewport;
+	config_dialog.viewport = this->viewport;
 
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
-	dialog->user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
-	dialog->grid->addWidget(user_label, 0, 0);
-	dialog->grid->addWidget(&dialog->user_entry, 0, 1);
+	config_dialog.user_entry.setToolTip(QObject::tr("The email or username used to login to OSM"));
+	config_dialog.grid->addWidget(user_label, 0, 0);
+	config_dialog.grid->addWidget(&config_dialog.user_entry, 0, 1);
 
 
 	QLabel * password_label = new QLabel(QObject::tr("Password:"));
-	dialog->password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
-	dialog->grid->addWidget(password_label, 1, 0);
-	dialog->grid->addWidget(&dialog->password_entry, 1, 1);
+	config_dialog.password_entry.setToolTip(QObject::tr("The password used to login to OSM"));
+	config_dialog.grid->addWidget(password_label, 1, 0);
+	config_dialog.grid->addWidget(&config_dialog.password_entry, 1, 1);
 
-	osm_fill_credentials_widgets(dialog->user_entry, dialog->password_entry);
+	osm_fill_credentials_widgets(config_dialog.user_entry, config_dialog.password_entry);
 
-	this->config_dialog = dialog;
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_none();
+		this->acquire_options = config_dialog.create_acquire_options_none();
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -136,7 +132,7 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireProcess * acquire_context)
 
 
 
-BabelOptions * DataSourceOSMMyTracesDialog::get_process_options_none(void)
+BabelOptions * DataSourceOSMMyTracesDialog::get_acquire_options_none(void)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
 
@@ -644,19 +640,18 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 			bool convert_result = false;
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
-
 				/* Download type is GPX (or a compressed version). */
-				BabelOptions babel_action = *this->process_options;
-				babel_action.input = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id); /* URL. */
+				BabelOptions * babel_action = (BabelOptions *) this->acquire_options; /* FIXME_LATER: casting. */
+				babel_action->input = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id); /* URL. */
 
-				convert_result = babel_action.import_from_url(target_layer, &local_dl_options);
+				convert_result = babel_action->import_from_url(target_layer, &local_dl_options);
 				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
 				got_something = got_something || convert_result;
 				if (!convert_result) {
 					/* Report errors to the status bar. */
-					acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(babel_action.input));
+					acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(babel_action->input));
 				}
 			}
 

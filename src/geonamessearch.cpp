@@ -132,7 +132,10 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	QString wikipedia_url;
 	QString thumbnail_url;
 
+	file.unsetError();
+
 	if (!file.open(QIODevice::ReadOnly)) {
+		/* File errors: http://doc.qt.io/qt-5/qfiledevice.html#FileError-enum */
 		qDebug() << "EE" PREFIX << "Can't open file" << file.fileName() << file.error();
 		return found_places;
 	}
@@ -140,9 +143,13 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
 	if (!file_contents) {
-		qDebug() << "EE" PREFIX << "Can't map file" << file.fileName() << file.error();
+		/* File errors: http://doc.qt.io/qt-5/qfiledevice.html#FileError-enum */
+		qDebug() << "EE" PREFIX << "Can't map file" << file.fileName() << "with size" << file_size << ", error:" << file.error();
+		exit(0);
 		return found_places;
 	}
+
+
 
 	size_t len = file_size;
 	char * text = (char *) file_contents;

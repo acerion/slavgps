@@ -83,13 +83,11 @@ DataSourceOSMTraces::DataSourceOSMTraces(Viewport * new_viewport)
 
 int DataSourceOSMTraces::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
+	DataSourceOSMTracesDialog config_dialog(this->window_title, this->viewport);
 
-	this->config_dialog = new DataSourceOSMTracesDialog(this->window_title, this->viewport);
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_none();
+		this->acquire_options = config_dialog.create_acquire_options_none();
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -99,7 +97,7 @@ int DataSourceOSMTraces::run_config_dialog(AcquireProcess * acquire_context)
 
 
 
-BabelOptions * DataSourceOSMTracesDialog::get_process_options_none(void)
+BabelOptions * DataSourceOSMTracesDialog::get_acquire_options_none(void)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
 

@@ -85,13 +85,11 @@ BFilterSimplify::BFilterSimplify()
 
 int BFilterSimplify::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
+	BFilterSimplifyDialog config_dialog(this->window_title);
 
-	this->config_dialog = new BFilterSimplifyDialog(this->window_title);
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -119,7 +117,7 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 
 
 
-BabelOptions * BFilterSimplifyDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterSimplifyDialog::get_acquire_options_layer(const QString & input_layer_filename)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 	const int32_t value = this->spin->value();
@@ -175,13 +173,11 @@ BFilterCompress::BFilterCompress()
 
 int BFilterCompress::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
+	BFilterCompressDialog config_dialog(this->window_title);
 
-	this->config_dialog = new BFilterCompressDialog(this->window_title);
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -215,7 +211,7 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 /**
    http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
 */
-BabelOptions * BFilterCompressDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterCompressDialog::get_acquire_options_layer(const QString & input_layer_filename)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 	const double value = this->spin->value();
@@ -261,13 +257,11 @@ BFilterDuplicates::BFilterDuplicates()
 
 int BFilterDuplicates::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
+	BFilterDuplicatesDialog config_dialog(this->window_title);
 
-	this->config_dialog = new BFilterDuplicatesDialog(this->window_title);
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -277,7 +271,7 @@ int BFilterDuplicates::run_config_dialog(AcquireProcess * acquire_context)
 
 
 
-BabelOptions * BFilterDuplicatesDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterDuplicatesDialog::get_acquire_options_layer(const QString & input_layer_filename)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 
@@ -317,13 +311,11 @@ BFilterManual::BFilterManual()
 
 int BFilterManual::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
+	BFilterManualDialog config_dialog(this->window_title);
 
-	this->config_dialog = new BFilterManualDialog(this->window_title);
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -345,7 +337,7 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 
 
 
-BabelOptions * BFilterManualDialog::get_process_options_layer(const QString & input_layer_filename)
+BabelOptions * BFilterManualDialog::get_acquire_options_layer(const QString & input_layer_filename)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
 	const QString value = this->entry->text();
@@ -380,7 +372,7 @@ BFilterPolygon::BFilterPolygon()
 
 
 /* FIXME: shell_escape stuff. */
-BabelOptions * BFilterPolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
+BabelOptions * BFilterPolygonDialog::get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromShellCommand);
 
@@ -399,8 +391,8 @@ int BFilterPolygon::run_config_dialog(AcquireProcess * acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
-	this->config_dialog = new DataSourceDialog(this->window_title);
-	this->process_options = this->config_dialog->create_process_options_layer_track(acquire_context->trw, acquire_context->trk);
+	DataSourceDialog config_dialog(this->window_title);
+	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context->trw, acquire_context->trk);
 
 	return QDialog::Accepted;
 }
@@ -429,7 +421,7 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 
 
 /* FIXME: shell_escape stuff */
-BabelOptions * BFilterExcludePolygonDialog::get_process_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
+BabelOptions * BFilterExcludePolygonDialog::get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
 {
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromShellCommand);
 	babel_options->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
@@ -443,8 +435,8 @@ int BFilterExcludePolygon::run_config_dialog(AcquireProcess * acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
-	this->config_dialog = new DataSourceDialog(this->window_title);
-	this->process_options = this->config_dialog->create_process_options_layer_track(acquire_context->trw, acquire_context->trk);
+	DataSourceDialog config_dialog(this->window_title);
+	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context->trw, acquire_context->trk);
 
 	return QDialog::Accepted;
 }

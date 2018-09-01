@@ -114,14 +114,14 @@ void AcquireGetter::on_complete_process(void)
 			}
 		}
 
-		if (this->data_source->config_dialog) {
+		if (this->progress_dialog) {
 			if (this->data_source->keep_dialog_open) {
 				/* Only allow dialog's validation when format selection is done. */
-				this->data_source->config_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
-				this->data_source->config_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+				this->progress_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+				this->progress_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 			} else {
 				/* Call 'accept()' slot to close the dialog. */
-				this->data_source->config_dialog->accept();
+				this->progress_dialog->accept();
 			}
 		}
 
@@ -240,7 +240,7 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	this->progress_dialog->set_status(QObject::tr("Importing data..."));
 
 
-	if (!new_data_source->process_options->is_valid()) {
+	if (NULL == new_data_source->acquire_options || !new_data_source->acquire_options->is_valid()) {
 		/* This shouldn't happen... */
 		this->progress_dialog->set_status(QObject::tr("Unable to create command\nAcquire method failed."));
 		this->progress_dialog->exec(); /* TODO_LATER: improve handling of invalid process options. */
@@ -251,8 +251,8 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	if (new_data_source->is_thread) {
 		getter.run();
 
-		if (progress_dialog) {
-			progress_dialog->exec();
+		if (this->progress_dialog) {
+			this->progress_dialog->exec();
 		}
 
 		if (this->acquire_is_running) {
@@ -289,14 +289,14 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 
 		/* Actually show it if necessary. */
 		if (new_data_source->keep_dialog_open) {
-			if (progress_dialog) {
-				progress_dialog->exec();
+			if (this->progress_dialog) {
+				this->progress_dialog->exec();
 			}
 		}
 	}
 
 
-	delete progress_dialog;
+	delete this->progress_dialog;
 }
 
 
@@ -323,9 +323,8 @@ void AcquireProcess::import_progress_cb(AcquireProgressCode code, void * data)
 
 DataSource::~DataSource()
 {
-	delete this->process_options;
+	delete this->acquire_options;
 	delete this->download_options;
-	delete this->config_dialog;
 }
 
 
@@ -341,14 +340,14 @@ DataProgressDialog * DataSource::create_progress_dialog(const QString & title)
 
 
 
-BabelOptions * DataSourceDialog::create_process_options_layer(LayerTRW * trw)
+BabelOptions * DataSourceDialog::create_acquire_options_layer(LayerTRW * trw)
 {
 	qDebug() << "II" PREFIX << "input type: TRWLayer";
 
 	BabelOptions * process_options = NULL;
 
 	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
-	process_options = this->get_process_options_layer(layer_file_full_path);
+	process_options = this->get_acquire_options_layer(layer_file_full_path);
 	Util::add_to_deletion_list(layer_file_full_path);
 
 	return process_options;
@@ -357,14 +356,14 @@ BabelOptions * DataSourceDialog::create_process_options_layer(LayerTRW * trw)
 
 
 
-BabelOptions * DataSourceDialog::create_process_options_layer_track(LayerTRW * trw, Track * trk)
+BabelOptions * DataSourceDialog::create_acquire_options_layer_track(LayerTRW * trw, Track * trk)
 {
 	qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
 
 	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
 	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
 
-	BabelOptions * process_options = this->get_process_options_layer_track(layer_file_full_path, track_file_full_path);
+	BabelOptions * process_options = this->get_acquire_options_layer_track(layer_file_full_path, track_file_full_path);
 
 	Util::add_to_deletion_list(layer_file_full_path);
 	Util::add_to_deletion_list(track_file_full_path);
@@ -375,12 +374,12 @@ BabelOptions * DataSourceDialog::create_process_options_layer_track(LayerTRW * t
 
 
 
-BabelOptions * DataSourceDialog::create_process_options_track(Track * trk)
+BabelOptions * DataSourceDialog::create_acquire_options_track(Track * trk)
 {
 	qDebug() << "II" PREFIX << "input type: Track";
 
 	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
-	BabelOptions * process_options = this->get_process_options_layer_track("", track_file_full_path);
+	BabelOptions * process_options = this->get_acquire_options_layer_track("", track_file_full_path);
 
 	return process_options;
 }
@@ -388,11 +387,11 @@ BabelOptions * DataSourceDialog::create_process_options_track(Track * trk)
 
 
 
-BabelOptions * DataSourceDialog::create_process_options_none(void)
+BabelOptions * DataSourceDialog::create_acquire_options_none(void)
 {
 	qDebug() << "II" PREFIX << "input type: None";
 
-	BabelOptions * process_options = this->get_process_options_none();
+	BabelOptions * process_options = this->get_acquire_options_none();
 
 	return process_options;
 }
@@ -577,7 +576,7 @@ void Acquire::uninit(void)
 
 bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireTool * progress_indicator)
 {
-	return this->process_options->universal_import_fn(trw, this->download_options, progress_indicator);
+	return ((BabelOptions *) this->acquire_options)->universal_import_fn(trw, this->download_options, progress_indicator);
 }
 
 
@@ -585,8 +584,8 @@ bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireTool * progress_
 
 int DataSourceBabel::kill(const QString & status)
 {
-	if (this->process_options) {
-		return this->process_options->kill(status);
+	if (this->acquire_options) {
+		return ((BabelOptions *) this->acquire_options)->kill(status);
 	} else {
 		return -4;
 	}

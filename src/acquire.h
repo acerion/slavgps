@@ -151,10 +151,8 @@ namespace SlavGPS {
 		bool keep_dialog_open = false; /* ... when done. */
 		bool is_thread = false;
 
-		DataSourceDialog * config_dialog = NULL;
-		BabelOptions * process_options = NULL;
-		DownloadOptions * download_options = NULL;
 		AcquireOptions * acquire_options = NULL;
+		DownloadOptions * download_options = NULL;
 	};
 
 

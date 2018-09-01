@@ -87,18 +87,14 @@ DataSourceGeoTag::DataSourceGeoTag()
 
 int DataSourceGeoTag::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert(!this->config_dialog);
+	DataSourceGeoTagDialog config_dialog(this->window_title);
 
-	DataSourceGeoTagDialog * dialog = new DataSourceGeoTagDialog(this->window_title);
-
-	int answer = dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->selected_files = dialog->file_selector->get_selected_files_full_paths();
-		g_last_directory_url = dialog->file_selector->get_directory_url();
-		g_last_filter = dialog->file_selector->get_selected_name_filter();
+		this->selected_files = config_dialog.file_selector->get_selected_files_full_paths();
+		g_last_directory_url = config_dialog.file_selector->get_directory_url();
+		g_last_filter = config_dialog.file_selector->get_selected_name_filter();
 	}
-
-	this->config_dialog = dialog;
 
 	return answer;
 }

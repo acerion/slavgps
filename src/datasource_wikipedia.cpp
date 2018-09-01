@@ -18,13 +18,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "viewport_internal.h"
 #include "acquire.h"
 #include "geonamessearch.h"
 #include "util.h"
 #include "datasource_wikipedia.h"
+#include "globals.h"
 
 
 
@@ -34,9 +41,15 @@ using namespace SlavGPS;
 
 
 
-#ifdef VIK_CONFIG_GEONAMES
-//DataSourceInterface datasource_wikipedia_interface;
-#endif
+#define SG_MODULE "DataSource Wikipedia"
+
+
+
+
+class AcquireOptionsWikipedia : public AcquireOptions {
+public:
+	bool is_valid(void) const { return true; }
+};
 
 
 
@@ -63,7 +76,7 @@ bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel
 	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
 
 	if (!trw) {
-		qDebug() << "EE: Datasource Wikipedia: missing TRW layer";
+		qDebug() << SG_PREFIX_E << "Missing TRW layer";
 		return false;
 	}
 
@@ -78,5 +91,8 @@ bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel
 
 int DataSourceWikipedia::run_config_dialog(AcquireProcess * acquire_context)
 {
+	/* Fake acquire options, needed by current implementation of acquire.cpp. */
+	this->acquire_options = new AcquireOptionsWikipedia;
+
 	return QDialog::Accepted;
 }

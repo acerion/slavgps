@@ -185,13 +185,11 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 int DataSourceGeoCache::run_config_dialog(AcquireProcess * acquire_context)
 {
-	assert (!this->config_dialog);
+	DataSourceGeoCacheDialog config_dialog(this->window_title, this->viewport);
 
-	this->config_dialog = new DataSourceGeoCacheDialog(this->window_title, this->viewport);
-
-	int answer = this->config_dialog->exec();
+	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->process_options = this->config_dialog->create_process_options_none();
+		this->acquire_options = config_dialog.create_acquire_options_none();
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -253,7 +251,7 @@ DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title,
 
 
 
-BabelOptions * DataSourceGeoCacheDialog::get_process_options_none(void)
+BabelOptions * DataSourceGeoCacheDialog::get_acquire_options_none(void)
 {
 
 	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string);
