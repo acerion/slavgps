@@ -62,6 +62,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer TRW Painter"
 #define PREFIX " Layer TRW Painter:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -234,80 +235,54 @@ void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_c
  */
 void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const DistanceUnit user_distance_unit = Preferences::get_unit_distance();
 	double track_length = trk->get_length_including_gaps();
-	track_length = convert_distance_meters_to(track_length, distance_unit);
+	track_length = convert_distance_meters_to(track_length, user_distance_unit);
 
 	const int n_intervals_max = trk->max_number_dist_labels;
 	GraphIntervalsDistance intervals;
-	const int index = intervals.intervals.get_interval_index(0, track_length, n_intervals_max);
+	const int interval_idx = intervals.intervals.get_interval_index(0, track_length, n_intervals_max);
 
-	const double interval = intervals.intervals.get_interval_value(index);
+	const double interval = intervals.intervals.get_interval_value(interval_idx);
 
 	for (int i = 1; i <= n_intervals_max; i++) {
-		double dist_i = interval * i;
+		const Distance dist_in_user_units(interval * i, user_distance_unit);
 
 		/* Convert distance back into metres for use in finding a trackpoint. */
-		switch (distance_unit) {
-		case DistanceUnit::Kilometres:
-			dist_i = dist_i * 1000.0;
-			break;
-		case DistanceUnit::Miles:
-			dist_i = VIK_MILES_TO_METERS(dist_i);
-			break;
-		case DistanceUnit::NauticalMiles:
-			dist_i = VIK_NAUTICAL_MILES_TO_METERS(dist_i);
-			break;
-		default:
-			qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		const Distance dist_in_meters = dist_in_user_units.to_meters();
+		if (!dist_in_meters.is_valid()) {
+			qDebug() << SG_PREFIX_E << "Conversion to meters failed";
 			break;
 		}
 
 		double dist_current = 0.0;
-		Trackpoint * tp_current = trk->get_tp_by_dist(dist_i, false, &dist_current);
+		Trackpoint * tp_current = trk->get_tp_by_dist(dist_in_meters.value, false, &dist_current);
 		double dist_next = 0.0;
-		Trackpoint * tp_next = trk->get_tp_by_dist(dist_i, true, &dist_next);
+		Trackpoint * tp_next = trk->get_tp_by_dist(dist_in_meters.value, true, &dist_next);
 
 		double dist_between_tps = fabs(dist_next - dist_current);
 		double ratio = 0.0;
 		/* Prevent division by 0 errors. */
 		if (dist_between_tps > 0.0) {
-			ratio = fabs(dist_i-dist_current) / dist_between_tps;
+			ratio = fabs(dist_in_meters.value - dist_current) / dist_between_tps;
 		}
 
 		if (tp_current && tp_next) {
-			/* Construct the name based on the distance value. */
-
-			QString dist_label;
-			const QString distance_unit_string = get_distance_unit_string(distance_unit);
-
-			/* Convert for display. */
-			dist_i = convert_distance_meters_to(dist_i, distance_unit);
-
-			/* TODO_REALLY: Make the precision of the output related to the unit size. Don't we have utility function for that? */
-			if (index == 0) {
-				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 2).arg(distance_unit_string);
-			} else if (index == 1) {
-				dist_label = QObject::tr("%1 %2").arg(dist_i, 0, 'f', 1).arg(distance_unit_string);
-			} else {
-				dist_label = QObject::tr("%1 %2").arg((int) round(dist_i)).arg(distance_unit_string); /* TODO_LATER single vs plurals. */
-			}
-
 
 			const LatLon ll_current = tp_current->coord.get_latlon();
 			const LatLon ll_next = tp_next->coord.get_latlon();
 
 			/* Positional interpolation.
-			   Using a simple ratio - may not be perfectly correct due to lat/long projections
+			   Using a simple ratio - may not be perfectly correct due to lat/lon projections
 			   but should be good enough over the small scale that I anticipate usage on. */
-			const LatLon ll_new(ll_current.lat + (ll_next.lat - ll_current.lat) * ratio,
-					    ll_current.lon + (ll_next.lon - ll_current.lon) * ratio);
-			const Coord coord(ll_new, this->trw->coord_mode);
+			const LatLon ll_middle(ll_current.lat + (ll_next.lat - ll_current.lat) * ratio,
+					       ll_current.lon + (ll_next.lon - ll_current.lon) * ratio);
+			const Coord coord_middle(ll_middle, this->trw->coord_mode);
 
 			const QColor fg_color = this->get_fg_color(trk);
 			const QColor bg_color = this->get_bg_color(do_highlight);
 
-			this->draw_track_label(dist_label, fg_color, bg_color, coord);
+			this->draw_track_label(dist_in_user_units.to_nice_string(), fg_color, bg_color, coord_middle);
 		}
 	}
 }

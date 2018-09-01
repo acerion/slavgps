@@ -121,6 +121,12 @@ namespace SlavGPS {
 
 
 
+	enum class SupplementaryDistanceUnit {
+		Meters,
+	};
+
+
+
 	enum class SpeedUnit {
 		KilometresPerHour,
 		MilesPerHour,
@@ -164,6 +170,32 @@ namespace SlavGPS {
 	};
 
 
+
+
+	class Distance {
+	public:
+		Distance() {};
+		Distance(double value, DistanceUnit distance_unit);
+		Distance(double value, SupplementaryDistanceUnit supplementary_distance_unit);
+
+		Distance to_meters(void) const;
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance may be used to decide how
+		   the string will look like. E.g. "0.1 km" may be
+		   presented as "100 m". */
+		QString to_nice_string(void) const;
+
+		bool is_valid(void) const;
+
+		double value = -1.0;
+	private:
+		bool valid = false;
+
+		DistanceUnit distance_unit;
+		SupplementaryDistanceUnit supplementary_distance_unit;
+		bool use_supplementary_distance_unit = false;
+	};
 
 
 }

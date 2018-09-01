@@ -37,7 +37,9 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Measurements"
 #define PREFIX ": Measurements:" << __FUNCTION__ << __LINE__ << ">"
+#define INVALID_RESULT_STRING "--"
 
 
 
@@ -105,7 +107,7 @@ QString Measurements::get_distance_string(double value, int precision)
 	case DistanceUnit::Miles:
 		buffer = QObject::tr("%1 miles").arg(value, 0, 'f', precision);
 		break;
-	case DistanceUnit::NauticalMiles: /* TODO_LATER: verify this case. */
+	case DistanceUnit::NauticalMiles: /* TODO_REALLY: verify this case. */
 		buffer = QObject::tr("%1 NM").arg(value, 0, 'f', precision);
 		break;
 	default:
@@ -132,7 +134,7 @@ QString Measurements::get_distance_string_short(double value, int precision)
 		break;
 	case DistanceUnit::Miles:
 	case DistanceUnit::NauticalMiles:
-		buffer = QObject::tr("%1 yards").arg(value * 1.0936133, 0, 'f', precision); /* Miles -> yards. TODO_LATER: verify this calculation. */
+		buffer = QObject::tr("%1 yards").arg(value * 1.0936133, 0, 'f', precision); /* Miles -> yards. TODO_REALLY: verify this calculation. */
 		break;
 	default:
 		buffer = "???";
@@ -151,7 +153,7 @@ QString Measurements::get_distance_string_short(double value, int precision)
 QString Measurements::get_speed_string(double value, int precision)
 {
 	if (std::isnan(value)) {
-		return "--";
+		return INVALID_RESULT_STRING;
 	}
 
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
@@ -186,7 +188,7 @@ QString Measurements::get_speed_string(double value, int precision)
 QString Measurements::get_speed_string_dont_recalculate(double value, int precision)
 {
 	if (std::isnan(value)) {
-		return "--";
+		return INVALID_RESULT_STRING;
 	}
 
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
@@ -222,7 +224,7 @@ QString Measurements::get_speed_string_dont_recalculate(double value, int precis
 QString Measurements::get_course_string(double value, int precision)
 {
 	if (std::isnan(value)) {
-		return "--";
+		return INVALID_RESULT_STRING;
 	} else {
 		/* Second arg is a degree symbol. */
 		return QObject::tr("%1%2").arg(value, 5, 'f', precision, '0').arg("\u00b0");
@@ -306,4 +308,142 @@ QString Measurements::get_distance_string_for_ruler(double distance, DistanceUni
 	}
 
 	return distance_label;
+}
+
+
+
+
+Distance::Distance(double new_value, DistanceUnit new_distance_unit)
+{
+	this->distance_unit = new_distance_unit;
+	this->use_supplementary_distance_unit = false;
+
+	this->value = new_value;
+
+	if (!std::isnan(this->value) && this->value >= 0.0) {
+		this->valid = true;
+	}
+}
+
+
+
+
+Distance::Distance(double new_value, SupplementaryDistanceUnit new_supplementary_distance_unit)
+{
+	this->supplementary_distance_unit = new_supplementary_distance_unit;
+	this->use_supplementary_distance_unit = false;
+
+	this->value = new_value;
+
+	if (!std::isnan(this->value) && this->value >= 0.0) {
+		this->valid = true;
+	}
+}
+
+
+
+
+Distance Distance::to_meters(void) const
+{
+	Distance output;
+	output.use_supplementary_distance_unit = true; /* Because we are converting to meters. */
+	output.supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
+
+	if (!this->valid) {
+		return output;
+	}
+
+	if (this->use_supplementary_distance_unit) {
+		switch (this->supplementary_distance_unit) {
+		case SupplementaryDistanceUnit::Meters:
+			output.value = this->value;
+			output.valid = true;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid supplementary distance unit" << (int) this->supplementary_distance_unit;
+			output.value = -1.0;
+			break;
+		}
+	} else {
+		switch (this->distance_unit) {
+		case DistanceUnit::Kilometres:
+			output.value = this->value * 1000.0;
+			output.valid = true;
+			break;
+		case DistanceUnit::Miles:
+			output.value = VIK_MILES_TO_METERS(this->value);
+			output.valid = true;
+			break;
+		case DistanceUnit::NauticalMiles:
+			output.value = VIK_NAUTICAL_MILES_TO_METERS(this->value);
+			output.valid = true;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			output.value = -1.0;
+			break;
+		}
+	}
+
+	return output;
+}
+
+
+
+
+QString Distance::to_nice_string(void) const
+{
+	QString result;
+
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	if (this->use_supplementary_distance_unit) {
+		switch (this->supplementary_distance_unit) {
+		case SupplementaryDistanceUnit::Meters:
+			if (this->value <= 1000.0) {
+				result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			} else {
+				result = QObject::tr("%1 km").arg(this->value / 1000.0, 0, 'f', SG_PRECISION_DISTANCE);
+			}
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			result = INVALID_RESULT_STRING;
+			break;
+		}
+	} else {
+		/* TODO_LATER: Since the result should be "nice"
+		   string, we should check if this->value is above or
+		   below some threshold and either leave the value and
+		   unit string, or convert the value (e.g. multiply by
+		   1000.0) and use sub-unit string (e.g. meters). */
+		switch (this->distance_unit) {
+		case DistanceUnit::Kilometres:
+			result = QObject::tr("%1 km").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			break;
+		case DistanceUnit::Miles:
+			result = QObject::tr("%1 miles").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			break;
+		case DistanceUnit::NauticalMiles:
+			result = QObject::tr("%1 NM").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			result = INVALID_RESULT_STRING;
+			break;
+		}
+	}
+
+	return result;
+}
+
+
+
+
+bool Distance::is_valid(void) const
+{
+	return this->valid;
 }
