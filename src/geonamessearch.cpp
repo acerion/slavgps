@@ -61,14 +61,14 @@ using namespace SlavGPS;
 //#define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%s&south=%s&east=%s&west=%s&lang=%s&maxRows=%d&username=viking"
 #define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%1&south=%2&east=%3&west=%4&lang=%5&maxRows=%6&username=viking"
 
-#define GEONAMES_FEATURE_PATTERN "\"feature\": \""
-#define GEONAMES_LONGITUDE_PATTERN "\"lng\": "
-#define GEONAMES_NAME_PATTERN "\"name\": \""
-#define GEONAMES_LATITUDE_PATTERN "\"lat\": "
-#define GEONAMES_ELEVATION_PATTERN "\"elevation\": "
-#define GEONAMES_TITLE_PATTERN "\"title\": \""
-#define GEONAMES_WIKIPEDIAURL_PATTERN "\"wikipediaUrl\": \""
-#define GEONAMES_THUMBNAILIMG_PATTERN "\"thumbnailImg\": \""
+#define GEONAMES_FEATURE_PATTERN "\"feature\""
+#define GEONAMES_LONGITUDE_PATTERN "\"lng\""
+#define GEONAMES_NAME_PATTERN "\"name\""
+#define GEONAMES_LATITUDE_PATTERN "\"lat\""
+#define GEONAMES_ELEVATION_PATTERN "\"elevation\""
+#define GEONAMES_TITLE_PATTERN "\"title\""
+#define GEONAMES_WIKIPEDIAURL_PATTERN "\"wikipediaUrl\""
+#define GEONAMES_THUMBNAILIMG_PATTERN "\"thumbnailImg\""
 #define GEONAMES_SEARCH_NOT_FOUND "not understand the location"
 
 
@@ -123,6 +123,103 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 
 
 
+/**
+   Get value of this pair from given @entry:
+   "key": "value",
+
+   "quoted" in function name means that we expect the value in the
+   @entry to be in quotes.
+
+   TODO_LATER: add code that ensures that we don't search past newline
+   character.
+
+   @return value string on success (the string won't contain quotes)
+   @return empty string on failure
+*/
+QString get_quoted_value(const QString & entry, const QString & key)
+{
+	QString value;
+
+	int key_pos = entry.indexOf(key);
+	if (key_pos < 0) {
+		/* Can't find key in given JSON entry. */
+		return value;
+	}
+	key_pos += key.length();
+
+	int begin = entry.indexOf("\"", key_pos + 1);
+	if (begin < 0) {
+		/* Can't find opening quote of value string in given JSON entry. */
+		return value;
+	}
+	begin++; /* Don't include opening quote. */
+
+	int end = entry.indexOf("\"", begin + 1);
+	if (end < 0) {
+		/* Can't find closing quote of value string in given JSON entry. */
+		return value;
+	}
+	end--; /* Don't include ending quote. */
+
+	value = entry.mid(begin, end - begin + 1);
+
+	qDebug() << SG_PREFIX_I << key << "=" << value;
+
+	return value;
+}
+
+
+
+
+/**
+   Get value of this pair from given @entry:
+   "key": value,
+
+   "unquoted" in function name means that we expect the value in the
+   @entry to be without quotes.
+
+   TODO_LATER: add code that ensures that we don't search past newline
+   character.
+
+   @return value string on success
+   @return empty string on failure
+*/
+QString get_unquoted_value(const QString & entry, const QString & key)
+{
+	QString value;
+
+	int key_pos = entry.indexOf(key);
+	if (key_pos < 0) {
+		/* Can't find key in given JSON entry. */
+		return value;
+	}
+	key_pos += key.length();
+
+	qDebug() << "looking for unquoted value in" << entry.left(key_pos);
+
+	int begin = entry.indexOf(":", key_pos);
+	if (begin < 0) {
+		/* Can't find separating ":". */
+		return value;
+	}
+	begin++; /* Don't include the ":" character. */
+
+	while (entry[begin].isSpace()) {
+		begin++;
+	}
+
+	while (!entry[begin].isSpace() && entry[begin] != ',') {
+		value.append(entry[begin++]);
+	}
+
+	qDebug() << SG_PREFIX_I << key << "=" << value;
+
+	return value;
+}
+
+
+
+
 /*
   @file passed to this function is an opened QTemporaryFile.
 */
@@ -130,12 +227,8 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 {
 	std::list<Geoname *> found_places;
 
-	char lat_buf[32] = { 0 };
-	char lon_buf[32] = { 0 };
-	char elev_buf[32] = { 0 };
 	QString wikipedia_url;
 	QString thumbnail_url;
-
 
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
@@ -145,130 +238,68 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 		return found_places;
 	}
 
+	const QString text = QString((char *) file_contents);
 
-
-	size_t len = file_size;
-	char * text = (char *) file_contents;
-
-	bool more = true;
-	if (g_strstr_len(text, len, GEONAMES_SEARCH_NOT_FOUND) != NULL) {
-		more = false;
+	if (text.contains(GEONAMES_SEARCH_NOT_FOUND)) {
+		/* This is probably programmer's error. */
+		qDebug() << SG_PREFIX_E << "Don't understand the search term";
+		return found_places;
 	}
 
-	char ** found_entries = g_strsplit(text, "},", 0);
-	int entry_runner = 0;
-	char * entry = found_entries[entry_runner];
-	char * pat = NULL;
-	char * substring = NULL;
-	int fragment_len;
-	while (entry) {
-		more = true;
+	QStringList entries = text.split("},");
+
+	for (int i = 0; i < entries.size(); i++) {
 		Geoname * geoname = new Geoname();
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_FEATURE_PATTERN))) {
-			pat += strlen(GEONAMES_FEATURE_PATTERN);
-			fragment_len = 0;
-			substring = pat;
-			while (*pat != '"') {
-				fragment_len++;
-				pat++;
-			}
-			geoname->feature = QString(substring).left(fragment_len);
-		}
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LONGITUDE_PATTERN)) == NULL) {
-			more = false;
-		} else {
-			pat += strlen(GEONAMES_LONGITUDE_PATTERN);
-			substring = lon_buf;
-			if (*pat == '-')
-				*substring++ = *pat++;
-			while ((substring < (lon_buf + sizeof(lon_buf))) && (pat < (text + len)) &&
-			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
-				*substring++ = *pat++;
-			}
-			*substring = '\0';
-			if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
-				more = false;
-			}
-			geoname->ll.lon = SGUtils::c_to_double(lon_buf);
-		}
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_ELEVATION_PATTERN))) {
-			pat += strlen(GEONAMES_ELEVATION_PATTERN);
-			substring = elev_buf;
-			if (*pat == '-') {
-				*substring++ = *pat++;
-			}
-			while ((substring < (elev_buf + sizeof(elev_buf))) && (pat < (text + len)) &&
-			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
-				*substring++ = *pat++;
-			}
-			*substring = '\0';
-			geoname->elevation = SGUtils::c_to_double(elev_buf);
-		}
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_NAME_PATTERN))) {
-			pat += strlen(GEONAMES_NAME_PATTERN);
-			fragment_len = 0;
-			substring = pat;
-			while (*pat != '"') {
-				fragment_len++;
-				pat++;
-			}
-			geoname->name = QString(substring).left(fragment_len);
-		}
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_TITLE_PATTERN))) {
-			pat += strlen(GEONAMES_TITLE_PATTERN);
-			fragment_len = 0;
-			substring = pat;
-			while (*pat != '"') {
-				fragment_len++;
-				pat++;
-			}
-			geoname->name = QString(substring).left(fragment_len);
-		}
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_WIKIPEDIAURL_PATTERN))) {
-			pat += strlen(GEONAMES_WIKIPEDIAURL_PATTERN);
-			fragment_len = 0;
-			substring = pat;
-			while (*pat != '"') {
-				fragment_len++;
-				pat++;
-			}
-			wikipedia_url = QString(substring).left(fragment_len);
-		}
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_THUMBNAILIMG_PATTERN))) {
-			pat += strlen(GEONAMES_THUMBNAILIMG_PATTERN);
-			fragment_len = 0;
-			substring = pat;
-			while (*pat != '"') {
-				fragment_len++;
-				pat++;
-			}
-			thumbnail_url = QString(substring).left(fragment_len);
-		}
-		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LATITUDE_PATTERN)) == NULL) {
-			more = false;
-		} else {
-			pat += strlen(GEONAMES_LATITUDE_PATTERN);
-			substring = lat_buf;
-			if (*pat == '-') {
-				*substring++ = *pat++;
-			}
+		QString value;
+		double latitude = NAN;
+		double longitude = NAN;
 
-			while ((substring < (lat_buf + sizeof(lat_buf))) && (pat < (text + len)) &&
-			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
-				*substring++ = *pat++;
-			}
-
-			*substring = '\0';
-			if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
-				more = false;
-			}
-			geoname->ll.lat = SGUtils::c_to_double(lat_buf);
+		value = get_quoted_value(entries[i], GEONAMES_FEATURE_PATTERN);
+		if (!value.isEmpty()) {
+			geoname->feature = value;
 		}
-		if (!more) {
-			if (geoname) {
-				free(geoname);
-			}
+
+		value = get_unquoted_value(entries[i], GEONAMES_LATITUDE_PATTERN);
+		if (!value.isEmpty()) {
+			latitude = SGUtils::c_to_double(value.toUtf8().constData());
+		}
+
+		value = get_unquoted_value(entries[i], GEONAMES_LONGITUDE_PATTERN);
+		if (!value.isEmpty()) {
+			longitude = SGUtils::c_to_double(value.toUtf8().constData());
+		}
+
+		value = get_unquoted_value(entries[i], GEONAMES_ELEVATION_PATTERN);
+		if (!value.isEmpty()) {
+			geoname->elevation = SGUtils::c_to_double(value.toUtf8().constData());
+		}
+
+		value = get_quoted_value(entries[i], GEONAMES_NAME_PATTERN);
+		if (!value.isEmpty()) {
+			geoname->name = value;
+		}
+
+		value = get_quoted_value(entries[i], GEONAMES_TITLE_PATTERN);
+		if (!value.isEmpty()) {
+			geoname->name = value;
+		}
+
+		value = get_quoted_value(entries[i], GEONAMES_WIKIPEDIAURL_PATTERN);
+		if (!value.isEmpty()) {
+			wikipedia_url = value;
+		}
+
+		value = get_quoted_value(entries[i], GEONAMES_THUMBNAILIMG_PATTERN);
+		if (!value.isEmpty()) {
+			thumbnail_url = value;
+		}
+
+		geoname->ll = LatLon(latitude, longitude);
+		if (!geoname->ll.is_valid()) {
+			qDebug() << SG_PREFIX_I << "Can't create valid coordinates from" << latitude << longitude << ", skipping the geoname";
+			delete geoname;
 		} else {
+			qDebug() << geoname->ll;
 			if (!wikipedia_url.isEmpty()) {
 				/* Really we should support the GPX URL tag and then put that in there... */
 				geoname->comment = QString("http://%1").arg(wikipedia_url);
@@ -285,10 +316,8 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 
 			found_places.push_front(geoname);
 		}
-		entry_runner++;
-		entry = found_entries[entry_runner];
 	}
-	g_strfreev(found_entries);
+
 	found_places.reverse();
 	file.unmap(file_contents);
 
@@ -315,6 +344,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	}
 
 	std::list<Geoname *> wiki_places = get_entries_from_file(tmp_file);
+	tmp_file.close();
 	Util::remove(tmp_file);
 
 	if (wiki_places.size() == 0) {
