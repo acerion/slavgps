@@ -52,7 +52,6 @@ SOURCES += main.cpp \
     map_source_tms.cpp \
     map_source_terraserver.cpp \
     terraserver.cpp \
-    geonamessearch.cpp \
     geojson.cpp \
     kmz.cpp \
     gpspoint.cpp \
@@ -81,6 +80,7 @@ SOURCES += main.cpp \
     goto_tool.cpp \
     goto_tool_xml.cpp \
     geonames.cpp \
+    geonames_search.cpp \
     babel.cpp \
     babel_dialog.cpp \
     generic_tools.cpp \
@@ -182,7 +182,6 @@ HEADERS += window.h \
     map_source_tms.h \
     map_source_terraserver.h \
     terraserver.h \
-    geonamessearch.h \
     geojson.h \
     kmz.h \
     gpspoint.h \
@@ -221,6 +220,7 @@ HEADERS += window.h \
     goto_tool.h \
     goto_tool_xml.h \
     geonames.h \
+    geonames_search.h \
     generic_tools.h \
     viewport.h \
     viewport_internal.h \

@@ -81,7 +81,7 @@
 
 #include "layer_gps.h"
 #include "layer_trw_stats.h"
-#include "geonamessearch.h"
+#include "geonames_search.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "layer_trw_geotag.h"
 #include "geotag_exif.h"

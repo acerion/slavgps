@@ -29,7 +29,7 @@
 
 #include "window.h"
 #include "dialog.h"
-#include "geonamessearch.h"
+#include "geonames_search.h"
 #include "download.h"
 #include "util.h"
 #include "widget_list_selection.h"

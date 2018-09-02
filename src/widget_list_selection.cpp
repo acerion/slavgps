@@ -27,7 +27,7 @@
 
 #include "widget_list_selection.h"
 #include "tree_view.h"
-#include "geonamessearch.h"
+#include "geonames_search.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_waypoint.h"
 

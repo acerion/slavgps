@@ -28,7 +28,7 @@
 
 #include "viewport_internal.h"
 #include "acquire.h"
-#include "geonamessearch.h"
+#include "geonames_search.h"
 #include "util.h"
 #include "datasource_wikipedia.h"
 #include "globals.h"

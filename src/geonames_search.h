@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_GEONAMESSEARCH_H_
-#define _SG_GEONAMESSEARCH_H_
+#ifndef _SG_GEONAMES_SEARCH_H_
+#define _SG_GEONAMES_SEARCH_H_
 
 
 
@@ -78,4 +78,4 @@ Q_DECLARE_METATYPE(SlavGPS::Geoname*)
 
 
 
-#endif /* #ifndef _SG_GEONAMESSEARCH_H_ */
+#endif /* #ifndef _SG_GEONAMES_SEARCH_H_ */
