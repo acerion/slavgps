@@ -99,30 +99,6 @@ namespace SlavGPS {
 
 
 
-	/*
-	  north = min_max.max.lat
-	  east = min_max.max.lon
-	  south = min_max.min.lat
-	  west = min_max.min.lon
-	*/
-	class LatLonMinMax {
-	public:
-		LatLonMinMax() {};
-		LatLonMinMax(const LatLon & new_min, const LatLon & new_max) : min(new_min), max(new_max) {};
-		LatLonMinMax(const LatLonBBox & bbox);
-
-		static LatLon get_average(const LatLonMinMax & min_max) { return LatLon::get_average(min_max.max, min_max.min); };
-
-		bool is_valid(void) const { return this->min.is_valid() && this->max.is_valid(); };
-		void invalidate(void) { this->min.invalidate(); this->max.invalidate(); };
-
-		LatLon min;
-		LatLon max;
-	};
-
-
-
-
 	class UTM {
 	public:
 		UTM() {};

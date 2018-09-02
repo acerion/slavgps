@@ -82,11 +82,10 @@ void ListSelectionWidget::set_headers(const QStringList & header_labels)
 	for (int i = 0; i < header_labels.size(); i++) {
 		QStandardItem * header_item = new QStandardItem(header_labels.at(i));
 		this->model.setHorizontalHeaderItem(i, header_item);
-	}
 
-	this->horizontalHeader()->setSectionHidden(0, false);
-	/* Call this only after headers have been created in the loop above. */
-	this->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
+		this->horizontalHeader()->setSectionHidden(i, false);
+		this->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Interactive);
+	}
 
 	return;
 }
@@ -162,7 +161,17 @@ ListSelectionRow::ListSelectionRow(Geoname * geoname)
 
 	item = new QStandardItem(geoname->name);
 	item->setData(QVariant::fromValue(geoname), RoleLayerData);
-	item->setToolTip(geoname->name);
+	if (!geoname->comment.isEmpty()) {
+		item->setToolTip(geoname->comment);
+	}
+	item->setEditable(false);
+	this->items << item;
+
+	item = new QStandardItem(geoname->feature);
+	item->setEditable(false);
+	this->items << item;
+
+	item = new QStandardItem(geoname->lat_lon.to_string());
 	item->setEditable(false);
 	this->items << item;
 }

@@ -434,14 +434,3 @@ void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
 	lon = convert_lon_dec_to_ddd(lat_lon.lon);
 #endif
 }
-
-
-
-LatLonMinMax::LatLonMinMax(const LatLonBBox & bbox)
-{
-	this->max.lat = bbox.north;
-	this->max.lon = bbox.east;
-
-	this->min.lat = bbox.south;
-	this->min.lon = bbox.west;
-}

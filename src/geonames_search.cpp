@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2009, Hein Ragas
  * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +18,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+
+
+
 #include <QDebug>
 
-#include <glib.h>
+
+
 
 #include "window.h"
 #include "dialog.h"
@@ -44,7 +52,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "GeoNames Search"
-#define PREFIX ": GeoNames Search:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -58,18 +65,18 @@ using namespace SlavGPS;
    ATM decided it's not essential enough to warrant putting in the preferences. */
 #define GEONAMES_MAX_ENTRIES 20
 
-//#define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%s&south=%s&east=%s&west=%s&lang=%s&maxRows=%d&username=viking"
+/* TODO_LATER: update username in the query string. */
 #define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%1&south=%2&east=%3&west=%4&lang=%5&maxRows=%6&username=viking"
 
-#define GEONAMES_FEATURE_PATTERN "\"feature\""
-#define GEONAMES_LONGITUDE_PATTERN "\"lng\""
-#define GEONAMES_NAME_PATTERN "\"name\""
-#define GEONAMES_LATITUDE_PATTERN "\"lat\""
-#define GEONAMES_ELEVATION_PATTERN "\"elevation\""
-#define GEONAMES_TITLE_PATTERN "\"title\""
+#define GEONAMES_FEATURE_PATTERN      "\"feature\""
+#define GEONAMES_LONGITUDE_PATTERN    "\"lng\""
+#define GEONAMES_NAME_PATTERN         "\"name\""
+#define GEONAMES_LATITUDE_PATTERN     "\"lat\""
+#define GEONAMES_ELEVATION_PATTERN    "\"elevation\""
+#define GEONAMES_TITLE_PATTERN        "\"title\""
 #define GEONAMES_WIKIPEDIAURL_PATTERN "\"wikipediaUrl\""
 #define GEONAMES_THUMBNAILIMG_PATTERN "\"thumbnailImg\""
-#define GEONAMES_SEARCH_NOT_FOUND "not understand the location"
+#define GEONAMES_SEARCH_NOT_FOUND     "not understand the location"
 
 
 
@@ -78,8 +85,7 @@ Geoname::Geoname(const Geoname & geoname) : Geoname()
 {
 	this->name      = geoname.name;
 	this->feature   = geoname.feature;
-	this->ll.lat    = geoname.ll.lat;
-	this->ll.lon    = geoname.ll.lon;
+	this->lat_lon   = geoname.lat_lon;
 	this->elevation = geoname.elevation;
 	this->comment   = geoname.comment;
 	this->desc      = geoname.desc;
@@ -88,10 +94,46 @@ Geoname::Geoname(const Geoname & geoname) : Geoname()
 
 
 
+Waypoint * Geoname::create_waypoint(CoordMode coord_mode) const
+{
+	Waypoint * wp = new Waypoint();
+
+	wp->visible = true;
+	wp->coord = Coord(this->lat_lon, coord_mode);
+	wp->altitude = this->elevation;
+	wp->set_comment(this->comment);
+	wp->set_description(this->desc);
+	wp->set_name(this->name);
+
+	/* Use the featue type to generate a suitable waypoint icon
+	   http://www.geonames.org/wikipedia/wikipedia_features.html
+	   Only a few values supported as only a few symbols make sense. */
+	if (!this->feature.isEmpty()) {
+		if (this->feature == "city") {
+			wp->set_symbol("city (medium)");
+		} else if (this->feature == "edu") {
+			wp->set_symbol("school");
+		} else if (this->feature == "airport") {
+			wp->set_symbol("airport");
+		} else if (this->feature == "mountain") {
+			wp->set_symbol("summit");
+		} else if (this->feature == "forest") {
+			wp->set_symbol("forest");
+		} else {
+			; /* Pass. Feature type for which we can't find suitable symbol. */
+		}
+	}
+
+	return wp;
+}
+
+
+
+
 static void free_geoname_list(std::list<Geoname *> & found_places)
 {
 	for (auto iter = found_places.begin(); iter != found_places.end(); iter++) {
-		qDebug() << "DD: deallocating geoname" << (*iter)->name;
+		qDebug() << SG_PREFIX_D << "Deallocating geoname" << (*iter)->name;
 		delete *iter;
 	}
 }
@@ -99,13 +141,7 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 
 
 
-/*
-  TODO_REALLY: this function builds a table with three columns, but only one
-  of them (Name) is filled with details from geonames.  Extend/improve
-  list selection widget so that it can display properties of items in
-  N columns.
-*/
-std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
+std::list<Geoname *> Geonames::select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
 {
 	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames,
 									   ListSelectionMode::MultipleItems,
@@ -115,6 +151,10 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 
 	if (!selected_geonames.size()) {
 		Dialog::error(QObject::tr("Nothing was selected"), parent);
+	} else {
+		for (auto iter = selected_geonames.begin(); iter != selected_geonames.end(); iter++) {
+			qDebug() << SG_PREFIX_I << "Selected geoname" << (*iter)->name << (*iter)->lat_lon;
+		}
 	}
 
 	return selected_geonames; /* Hopefully Named Return Value Optimization will work here. */
@@ -194,8 +234,6 @@ QString get_unquoted_value(const QString & entry, const QString & key)
 		return value;
 	}
 	key_pos += key.length();
-
-	qDebug() << "looking for unquoted value in" << entry.left(key_pos);
 
 	int begin = entry.indexOf(":", key_pos);
 	if (begin < 0) {
@@ -294,12 +332,12 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 			thumbnail_url = value;
 		}
 
-		geoname->ll = LatLon(latitude, longitude);
-		if (!geoname->ll.is_valid()) {
+		geoname->lat_lon = LatLon(latitude, longitude);
+		if (!geoname->lat_lon.is_valid()) {
 			qDebug() << SG_PREFIX_I << "Can't create valid coordinates from" << latitude << longitude << ", skipping the geoname";
 			delete geoname;
 		} else {
-			qDebug() << geoname->ll;
+			qDebug() << SG_PREFIX_I << "Created geoname with lat/lon" << geoname->lat_lon;
 			if (!wikipedia_url.isEmpty()) {
 				/* Really we should support the GPX URL tag and then put that in there... */
 				geoname->comment = QString("http://%1").arg(wikipedia_url);
@@ -327,12 +365,12 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 
 
 
-void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const LatLonMinMax & min_max)
+void Geonames::wikipedia_box(LayerTRW * trw, const LatLonBBox & bbox, Window * window)
 {
-	QString north = SGUtils::double_to_c(min_max.max.lat);
-	QString south = SGUtils::double_to_c(min_max.min.lat);
-	QString east = SGUtils::double_to_c(min_max.max.lon);
-	QString west = SGUtils::double_to_c(min_max.min.lon);
+	const QString north = SGUtils::double_to_c(bbox.north);
+	const QString south = SGUtils::double_to_c(bbox.south);
+	const QString east = SGUtils::double_to_c(bbox.east);
+	const QString west = SGUtils::double_to_c(bbox.west);
 
 	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
 
@@ -353,53 +391,22 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	}
 
 	const QStringList headers = { QObject::tr("Select the articles you want to add.") };
-	std::list<Geoname *> selected = a_select_geoname_from_list(QObject::tr("Select articles"), headers, wiki_places, window);
+	std::list<Geoname *> selected = Geonames::select_from_list(QObject::tr("Select articles"), headers, wiki_places, window);
 
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
-		const Geoname * wiki_geoname = *iter;
-
-		Waypoint * wiki_wp = new Waypoint();
-		wiki_wp->visible = true;
-		wiki_wp->coord = Coord(wiki_geoname->ll, trw->get_coord_mode());
-		wiki_wp->altitude = wiki_geoname->elevation;
-		wiki_wp->set_comment(wiki_geoname->comment);
-		wiki_wp->set_description(wiki_geoname->desc);
-
-		/* Use the featue type to generate a suitable waypoint icon
-		   http://www.geonames.org/wikipedia/wikipedia_features.html
-		   Only a few values supported as only a few symbols make sense. */
-		if (!wiki_geoname->feature.isEmpty()) {
-			if (wiki_geoname->feature == "city") {
-				wiki_wp->set_symbol("city (medium)");
-			}
-
-			if (wiki_geoname->feature == "edu") {
-				wiki_wp->set_symbol("school");
-			}
-
-			if (wiki_geoname->feature == "airport") {
-				wiki_wp->set_symbol("airport");
-			}
-
-			if (wiki_geoname->feature == "mountain") {
-				wiki_wp->set_symbol("summit");
-			}
-
-			if (wiki_geoname->feature == "forest") {
-				wiki_wp->set_symbol("forest");
-			}
-		}
-
-		wiki_wp->set_name(wiki_geoname->name);
-		trw->add_waypoint_from_file(wiki_wp);
+		const Geoname * geoname = *iter;
+		Waypoint * wp = geoname->create_waypoint(trw->get_coord_mode());
+		trw->add_waypoint_from_file(wp);
 	}
 
 	free_geoname_list(wiki_places);
 
 #if 0
-	/* 'selected' contains pointer to geonames that were
-	   present on 'wiki_places'.  Freeing 'wiki_places' freed also
-	   pointers stored in 'selected', so there is no need to call
+	/* This section of code is not necessary. It is left in place
+	   for explanation: 'selected' contains pointer to geonames
+	   that were present on 'wiki_places'. Deallocating
+	   'wiki_places' also deallocated pointers stored in
+	   'selected', so there is no need to call
 	   free_geoname_list(selected). */
 	free_geoname_list(selected);
 #endif

@@ -41,6 +41,7 @@
 
 
 #include "dialog.h"
+#include "tree_view.h"
 
 
 
@@ -134,9 +135,31 @@ namespace SlavGPS {
 
 		std::list<T> result;
 		if (dialog.exec() == QDialog::Accepted) {
-			QModelIndexList selected = list_widget.selection_model.selectedIndexes();
-			for (auto iter = selected.begin(); iter != selected.end(); iter++) {
-				QVariant variant = list_widget.model.itemFromIndex(*iter)->data();
+
+			/* Don't use selection_model.selectedIndexes(),
+			   because this method would return as many
+			   indexes per row as there are columns. We only
+			   want one item in 'selected_indices' list per row. */
+			QModelIndexList selected_indices = list_widget.selection_model.selectedRows();
+
+			QStandardItem * root_item = list_widget.model.invisibleRootItem();
+			if (!root_item) {
+				qDebug() << "EE   Widget List Selection  >  Failed to get root item";
+				return result;
+			}
+			for (auto iter = selected_indices.begin(); iter != selected_indices.end(); iter++) {
+
+				/* Pointer to the object that we want
+				   to put in result is in zero-th column. */
+
+				QModelIndex item_index = *iter;
+				QStandardItem * child_item = root_item->child(item_index.row(), 0);
+				if (!child_item) {
+					qDebug() << "EE   Widget List Selection  >  Failed to get child item from zero-th column";
+					return result;
+				}
+
+				const QVariant variant = child_item->data(RoleLayerData);
 				result.push_back(variant.value<T>());
 			}
 		}

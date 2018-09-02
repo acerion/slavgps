@@ -80,7 +80,7 @@ bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel
 		return false;
 	}
 
-	a_geonames_wikipedia_box(acquiring_context->window, trw, acquiring_context->viewport->get_min_max_lat_lon());
+	Geonames::wikipedia_box(trw, acquiring_context->viewport->get_bbox(), acquiring_context->window);
 
 	return true;
 }

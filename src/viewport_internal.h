@@ -164,7 +164,6 @@ namespace SlavGPS {
 
 		bool show_bbox(const LatLonBBox & bbox);
 
-		LatLonMinMax get_min_max_lat_lon(void) const;
 		LatLonBBox get_bbox(void) const;
 
 

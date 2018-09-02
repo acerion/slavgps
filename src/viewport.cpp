@@ -1695,31 +1695,6 @@ bool Viewport::get_half_drawn(void) const
 
 
 
-LatLonMinMax Viewport::get_min_max_lat_lon(void) const
-{
-	LatLonMinMax min_max;
-
-	Coord tleft =  this->screen_pos_to_coord(0,                  0);
-	Coord tright = this->screen_pos_to_coord(this->canvas.width, 0);
-	Coord bleft =  this->screen_pos_to_coord(0,                  this->canvas.height);
-	Coord bright = this->screen_pos_to_coord(this->canvas.width, this->canvas.height);
-
-	tleft.change_mode(CoordMode::LATLON);
-	tright.change_mode(CoordMode::LATLON);
-	bleft.change_mode(CoordMode::LATLON);
-	bright.change_mode(CoordMode::LATLON);
-
-	min_max.max.lat = MAX(tleft.ll.lat, tright.ll.lat);
-	min_max.min.lat = MIN(bleft.ll.lat, bright.ll.lat);
-	min_max.max.lon = MAX(tright.ll.lon, bright.ll.lon);
-	min_max.min.lon = MIN(tleft.ll.lon, bleft.ll.lon);
-
-	return min_max;
-}
-
-
-
-
 LatLonBBox Viewport::get_bbox(void) const
 {
 	Coord tleft =  this->screen_pos_to_coord(0,                  0);

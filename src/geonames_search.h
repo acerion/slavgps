@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2009, Hein Ragas
+ * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +27,9 @@
 
 #include <QObject>
 
+
+
+
 #include "coords.h"
 #include "measurements.h"
 
@@ -39,6 +43,8 @@ namespace SlavGPS {
 
 	class Window;
 	class LayerTRW;
+	class Waypoint;
+	enum class CoordMode;
 
 
 
@@ -51,9 +57,11 @@ namespace SlavGPS {
 		Geoname(const Geoname & geoname);
 		~Geoname() {};
 
+		Waypoint * create_waypoint(CoordMode coord_mode) const;
+
 		QString name;
 		QString feature;
-		LatLon ll;
+		LatLon lat_lon;
 		double elevation = VIK_DEFAULT_ALTITUDE;
 		QString comment;
 		QString desc;
@@ -62,8 +70,14 @@ namespace SlavGPS {
 
 
 
-	/* Finding Wikipedia entries within a certain box. */
-	void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const LatLonMinMax & min_max);
+	class Geonames {
+	public:
+		/* Finding Wikipedia entries within a certain box. */
+		static void wikipedia_box(LayerTRW * trw, const LatLonBBox & bbox, Window * window);
+
+	private:
+		static std::list<Geoname *> select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent);
+	};
 
 
 

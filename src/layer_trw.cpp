@@ -1829,7 +1829,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	a_geonames_wikipedia_box(this->get_window(), this, viewport->get_min_max_lat_lon());
+	Geonames::wikipedia_box(this, viewport->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
 	g_tree->emit_items_tree_updated();
 }
@@ -1839,7 +1839,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	a_geonames_wikipedia_box(this->get_window(), this, LatLonMinMax(this->get_bbox()));
+	Geonames::wikipedia_box(this, this->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
 	g_tree->emit_items_tree_updated();
 }
