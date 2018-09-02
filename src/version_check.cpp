@@ -97,11 +97,6 @@ void VersionCheck::run()
 		return;
 	}
 
-	if (!tmp_file.open()) {
-		qDebug() << "EE: Version Check: Couldn't open file" << tmp_file.fileName() << tmp_file.error();
-		return;
-	}
-
 	char latest_version_buffer[32 + 1] = { 0 };
 	off_t file_size = tmp_file.size();
 	if (file_size > (off_t) sizeof (latest_version_buffer) - 1) {

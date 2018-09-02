@@ -182,22 +182,22 @@ void MapDownloadJob::run(void)
 			if (need_download) {
 				/* tile_iter has obviously x and y fields, but also all other fields
 				   set, thanks to assignment made where tile_iter has been defined. */
-				const DownloadResult dr = this->map_source->download_tile(tile_iter, this->file_full_path, dl_handle);
+				const DownloadStatus dr = this->map_source->download_tile(tile_iter, this->file_full_path, dl_handle);
 				switch (dr) {
-				case DownloadResult::HTTPError:
-				case DownloadResult::ContentError: {
+				case DownloadStatus::HTTPError:
+				case DownloadStatus::ContentError: {
 					/* TODO_LATER: ?? count up the number of download errors somehow... */
 					QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download map tile");
 					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 					break;
 				}
-				case DownloadResult::FileWriteError: {
+				case DownloadStatus::FileWriteError: {
 					QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save map tile");
 					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 					break;
 				}
-				case DownloadResult::Success:
-				case DownloadResult::DownloadNotRequired:
+				case DownloadStatus::Success:
+				case DownloadStatus::DownloadNotRequired:
 				default:
 					break;
 				}

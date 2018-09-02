@@ -272,6 +272,9 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 
 
 
+/*
+  @file passed to this function is an opened QTemporaryFile.
+*/
 bool MapSourceBing::parse_file_for_attributions(QFile & tmp_file)
 {
 	GMarkupParser xml_parser;

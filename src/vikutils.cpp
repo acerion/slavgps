@@ -1175,10 +1175,10 @@ bool SGUtils::create_temporary_file(QTemporaryFile & file, const QString & name_
 {
 	file.setFileTemplate(name_pattern);
 	if (!file.open()) {
-		qDebug() << "EE: Utils: create temporary file: failed to create temporary file" << name_pattern << file.error();
+		qDebug() << SG_PREFIX_E << "Failed to create temporary file" << name_pattern << file.error();
 		return false;
 	}
-	qDebug()<< "II: Utils: Utils: create temporary file: file path:" << file.fileName();
+	qDebug() << SG_PREFIX_I << "Successfully created temporary file" << file.fileName();
 	file.close(); /* We have to close it here, otherwise client won't be able to write to it. */
 
 	return true;

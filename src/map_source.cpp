@@ -499,9 +499,9 @@ void MapSource::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) c
  * @dest_file_path: The filename to save the result in
  * @handle:  Potential reusable Curl Handle (may be NULL)
  *
- * Returns: How successful the download was as per the type #DownloadResult
+ * Returns: How successful the download was as per the type #DownloadStatus
  */
-DownloadResult MapSource::download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * handle) const
+DownloadStatus MapSource::download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * handle) const
 {
 	qDebug() << "II: Map Source: download to" << dest_file_path;
 	handle->set_options(this->dl_options);

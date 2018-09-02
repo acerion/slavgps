@@ -73,16 +73,14 @@ GotoToolGoogle::~GotoToolGoogle()
 
 
 
+/*
+  @file passed to this function is an opened QTemporaryFile.
+*/
 bool GotoToolGoogle::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 {
 	char * s = NULL;
 	char lat_buf[32] = { 0 };
 	char lon_buf[32] = { 0 };
-
-	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << "EE" PREFIX << "Can't open file" << file.fileName() << file.error();
-		return false;
-	}
 
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);

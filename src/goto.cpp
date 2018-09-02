@@ -54,6 +54,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "GoTo"
 #define PREFIX ": GoTo:" << __FUNCTION__ << __LINE__ << ">"
 #define VIK_SETTINGS_GOTO_PROVIDER "goto_provider"
 
@@ -336,6 +337,7 @@ bool GoTo::goto_location(Window * window, Viewport * viewport)
 int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 {
 	name = "";
+	lat_lon.invalidate();
 
 	DownloadHandle dl_handle;
 	QTemporaryFile tmp_file;
@@ -344,18 +346,10 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 		return 0;
 	}
 
-	lat_lon.invalidate();
-
-	if (!tmp_file.open()) {
-		qDebug() << "EE" PREFIX << "Can't open file" << tmp_file.fileName() << tmp_file.error();
-		tmp_file.remove();
-		return 0;
-	}
-
 	off_t file_size = tmp_file.size();
 	unsigned char * file_contents = tmp_file.map(0, file_size, QFileDevice::MapPrivateOption);
 	if (!file_contents) {
-		qDebug() << "EE" PREFIX << "Can't map file" << tmp_file.fileName() << tmp_file.error();
+		qDebug() << SG_PREFIX_E << "Can't map file" << tmp_file.fileName() << tmp_file.error();
 		tmp_file.remove();
 		return 0;
 	}

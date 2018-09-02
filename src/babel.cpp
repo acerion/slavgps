@@ -471,7 +471,7 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 
 	DownloadHandle dl_handle(&babel_dl_options);
 
-	if (DownloadResult::Success == dl_handle.get_url_http(this->input, "", name_src)) {
+	if (DownloadStatus::Success == dl_handle.get_url_http(this->input, "", name_src)) {
 		if (!this->input_data_format.isEmpty() || !this->babel_filters.isEmpty()) {
 
 			BabelOptions opts_local_file(BabelOptionsMode::FromFile); /* TODO_MAYBE: maybe we could reuse 'this->' ? */

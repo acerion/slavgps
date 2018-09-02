@@ -19,7 +19,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -55,12 +54,14 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Curl Download:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Curl Download"
 
 
 
 
 static QString curl_download_user_agent;
+static CurlDownloadStatus report_post_download_status(CURL * curl, CURLcode ret, const QString & full_url);
+static void apply_dl_options(CURL * curl, const DownloadOptions * dl_options, const CurlOptions * curl_options, struct curl_slist ** curl_send_headers);
 
 
 
@@ -74,6 +75,15 @@ static QString curl_download_user_agent;
 static size_t curl_write_func(void * ptr, size_t size, size_t nmemb, FILE * stream)
 {
 	return fwrite(ptr, size, nmemb, stream);
+}
+
+
+
+
+static size_t curl_write_tmp_func(void * ptr, size_t size, size_t nmemb, FILE * stream)
+{
+	QTemporaryFile * file = (QTemporaryFile *) stream;
+	return file->write((const char *) ptr, size * nmemb);
 }
 
 
@@ -131,8 +141,9 @@ CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, FILE * fil
 {
 	struct curl_slist * curl_send_headers = NULL;
 
-	qDebug() << "DD: Curl Download: Download URL" << full_url;
+	qDebug() << SG_PREFIX_D << "Download URL" << full_url;
 
+	/* Allocate curl handle locally if necessary. */
 	CURL * curl = (this->curl_handle) ? this->curl_handle : curl_easy_init();
 	if (!curl) {
 		return CurlDownloadStatus::Error;
@@ -154,72 +165,163 @@ CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, FILE * fil
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curl_progress_func);
-	if (dl_options != NULL) {
-		if (!dl_options->referer.isEmpty()) {
-			curl_easy_setopt(curl, CURLOPT_REFERER, dl_options->referer.toUtf8().constData());
-		}
-
-		if (dl_options->follow_location != 0) {
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-			curl_easy_setopt(curl, CURLOPT_MAXREDIRS, dl_options->follow_location);
-		}
-		if (curl_options != NULL) {
-			if (dl_options->check_file_server_time && curl_options->time_condition != 0) {
-				/* If file exists, check against server if file is recent enough. */
-				curl_easy_setopt(curl, CURLOPT_TIMECONDITION, CURL_TIMECOND_IFMODSINCE);
-				curl_easy_setopt(curl, CURLOPT_TIMEVALUE, curl_options->time_condition);
-			}
-			if (dl_options->use_etag) {
-				if (curl_options->etag != NULL) {
-					/* Add an header on the HTTP request. */
-					char str[60];
-					snprintf(str, 60, "If-None-Match: %s", curl_options->etag);
-					curl_send_headers = curl_slist_append(curl_send_headers, str);
-					curl_easy_setopt(curl, CURLOPT_HTTPHEADER , curl_send_headers);
-				}
-				/* Store the new etag from the server in an option value. */
-				curl_easy_setopt(curl, CURLOPT_WRITEHEADER, curl_options);
-				curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_get_etag_func);
-			}
-		}
-	}
+	apply_dl_options(curl, dl_options, curl_options, &curl_send_headers);
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, curl_download_user_agent.toUtf8().constData());
 
-	CurlDownloadStatus status;
+	const CURLcode ret = curl_easy_perform(curl);
+	const CurlDownloadStatus status = report_post_download_status(curl, ret, full_url);
 
-	if (0 == curl_easy_perform(curl)) {
-		long response;
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response);
-		if (response == 304) {         // 304 = Not Modified
-			status = CurlDownloadStatus::NoNewerFile;
-
-		} else if (response == 200        /* http: 200 = Ok */
-			   || response == 226) {  /* ftp:  226 = success */
-			double size;
-			/* Verify if curl sends us any data - this is a workaround on using CURLOPT_TIMECONDITION
-			   when the server has a (incorrect) time earlier than the time on the file we already have. */
-			curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &size);
-			if (size == 0) {
-				status = CurlDownloadStatus::Error;
-			} else {
-				status = CurlDownloadStatus::NoError;
-			}
-		} else {
-			qDebug().nospace() << "WW: Curl Download: Download URL: http response:" << response << "for URL '" << full_url << "'";
-			status = CurlDownloadStatus::Error;
-		}
-	} else {
-		status = CurlDownloadStatus::Error;
-	}
 	if (!this->curl_handle) {
+		/* Deallocate curl handle, but only the one that we have allocated locally. */
 		curl_easy_cleanup(curl);
 	}
 	if (curl_send_headers) {
 		curl_slist_free_all(curl_send_headers);
 		curl_send_headers = NULL;
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER , NULL);
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL); /* TODO_LATER: we may be setting opt on curl handler that we may have cleaned up above. */
 	}
+
 	return status;
+}
+
+
+
+
+CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, QTemporaryFile * file, const DownloadOptions * dl_options, const CurlOptions * curl_options)
+{
+	struct curl_slist * curl_send_headers = NULL;
+
+	qDebug() << SG_PREFIX_D << "Download URL" << full_url;
+
+	/* Allocate curl handle locally if necessary. */
+	CURL * curl = (this->curl_handle) ? this->curl_handle : curl_easy_init();
+	if (!curl) {
+		return CurlDownloadStatus::Error;
+	}
+	if (1 /* vik_verbose */) {
+		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+	}
+	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); /* Yep, we're a multi-threaded program so don't let signals mess it up! */
+	if (dl_options != NULL && !dl_options->user_pass.isEmpty()) {
+		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+		/* "Strings passed to libcurl as 'char *' arguments, are copied by the library;" */
+		curl_easy_setopt(curl, CURLOPT_USERPWD, dl_options->user_pass.toUtf8().constData());
+	}
+
+	/* "Strings passed to libcurl as 'char *' arguments, are copied by the library;" */
+	curl_easy_setopt(curl, CURLOPT_URL, full_url.toUtf8().constData());
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_tmp_func);
+	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
+	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
+	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curl_progress_func);
+	apply_dl_options(curl, dl_options, curl_options, &curl_send_headers);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, curl_download_user_agent.toUtf8().constData());
+
+	const CURLcode ret = curl_easy_perform(curl);
+	const CurlDownloadStatus status = report_post_download_status(curl, ret, full_url);
+
+	file->reset(); /* Reset file position. */
+	file->unsetError();
+
+	if (!this->curl_handle) {
+		/* Deallocate curl handle, but only the one that we have allocated locally. */
+		curl_easy_cleanup(curl);
+	}
+	if (curl_send_headers) {
+		curl_slist_free_all(curl_send_headers);
+		curl_send_headers = NULL;
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL); /* TODO_LATER: we may be setting opt on curl handler that we may have cleaned up above. */
+	}
+
+	return status;
+}
+
+
+
+
+static CurlDownloadStatus report_post_download_status(CURL * curl, CURLcode ret, const QString & full_url)
+{
+	CurlDownloadStatus status;
+
+	long response_code = 0;
+	double content_length = 0.0;
+	double size_download = 0.0;
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+	curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_length);
+	curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &size_download);
+	qDebug() << SG_PREFIX_I << "Full URL =" << full_url;
+	qDebug() << SG_PREFIX_I << "Response code =" << response_code;
+	qDebug() << SG_PREFIX_I << "Content-length =" << content_length;
+	qDebug() << SG_PREFIX_I << "Size download =" << size_download;
+
+	if (CURLE_OK == ret) {
+		qDebug() << SG_PREFIX_I << "Curl operation successful";
+
+		switch (response_code) {
+		case 304: /* Not Modified */
+			status = CurlDownloadStatus::NoNewerFile;
+			break;
+		case 200: /* http OK */
+		case 226: /* ftp Success */
+			/* Verify if curl sends us any data - this is a workaround on using CURLOPT_TIMECONDITION
+			   when the server has a (incorrect) time earlier than the time on the file we already have. */
+			if (content_length < 0.1 && size_download < 0.1) {
+				status = CurlDownloadStatus::Error;
+			} else {
+				status = CurlDownloadStatus::NoError;
+			}
+			break;
+		default:
+			status = CurlDownloadStatus::Error;
+			break;
+		}
+	} else {
+		qDebug() << SG_PREFIX_I << "Curl operation failed";
+		status = CurlDownloadStatus::Error;
+	}
+
+	return status;
+}
+
+
+
+
+static void apply_dl_options(CURL * curl, const DownloadOptions * dl_options, const CurlOptions * curl_options, struct curl_slist ** curl_send_headers)
+{
+	if (dl_options == NULL) {
+		return;
+	}
+
+	if (!dl_options->referer.isEmpty()) {
+		curl_easy_setopt(curl, CURLOPT_REFERER, dl_options->referer.toUtf8().constData());
+	}
+
+	if (dl_options->follow_location != 0) {
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+		curl_easy_setopt(curl, CURLOPT_MAXREDIRS, dl_options->follow_location);
+	}
+	if (curl_options != NULL) {
+		if (dl_options->check_file_server_time && curl_options->time_condition != 0) {
+			/* If file exists, check against server if file is recent enough. */
+			curl_easy_setopt(curl, CURLOPT_TIMECONDITION, CURL_TIMECOND_IFMODSINCE);
+			curl_easy_setopt(curl, CURLOPT_TIMEVALUE, curl_options->time_condition);
+		}
+		if (dl_options->use_etag) {
+			if (curl_options->etag != NULL) {
+				/* Add an header on the HTTP request. */
+				char str[60];
+				snprintf(str, 60, "If-None-Match: %s", curl_options->etag);
+				*curl_send_headers = curl_slist_append(*curl_send_headers, str);
+				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, *curl_send_headers);
+			}
+			/* Store the new etag from the server in an option value. */
+			curl_easy_setopt(curl, CURLOPT_WRITEHEADER, curl_options);
+			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_get_etag_func);
+		}
+	}
+
+	return;
 }
 
 
@@ -249,7 +351,7 @@ CurlDownloadStatus CurlHandle::get_url(const QString & hostname, const QString &
 CurlHandle::CurlHandle()
 {
 	this->curl_handle = curl_easy_init();
-	qDebug() << "DD" PREFIX << "initialized curl handle" << QString("%1").arg((unsigned long) this->curl_handle, 0, 16);
+	qDebug() << SG_PREFIX_D << "Initialized curl handle" << QString("%1").arg((quintptr) this->curl_handle, 0, 16);
 }
 
 
@@ -257,7 +359,7 @@ CurlHandle::CurlHandle()
 
 CurlHandle::~CurlHandle()
 {
-	qDebug() << "DD" PREFIX << "cleaning curl handle" << QString("%1").arg((unsigned long) this->curl_handle, 0, 16);
+	qDebug() << SG_PREFIX_D << "Cleaning curl handle" << QString("%1").arg((quintptr) this->curl_handle, 0, 16);
 	curl_easy_cleanup(this->curl_handle);
 }
 

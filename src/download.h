@@ -46,7 +46,7 @@ namespace SlavGPS {
 
 
 
-	enum class DownloadResult {
+	enum class DownloadStatus {
 		FileWriteError      = -4, /* Can't write downloaded file. */
 		HTTPError           = -2,
 		ContentError        = -1,
@@ -54,7 +54,7 @@ namespace SlavGPS {
 		DownloadNotRequired =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
 	};
 
-	QDebug operator<<(QDebug debug, const DownloadResult result);
+	QDebug operator<<(QDebug debug, const DownloadStatus result);
 
 
 
@@ -117,15 +117,15 @@ namespace SlavGPS {
 		bool is_valid(void) const;
 		void set_options(const DownloadOptions & dl_options);
 
-		DownloadResult get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path);
-		DownloadResult get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path);
+		DownloadStatus get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path);
+		DownloadStatus get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path);
 
 		bool download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri);
 
 		DownloadOptions dl_options;
 
 	private:
-		DownloadResult download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp);
+		DownloadStatus download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp);
 
 		CurlHandle * curl_handle = NULL;
 	};

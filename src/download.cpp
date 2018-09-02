@@ -66,6 +66,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Download"
 #define PREFIX ": Download:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -441,7 +442,7 @@ static void set_etag(const QString & file_path, const QString & tmp_file_path, C
 
 
 
-DownloadResult DownloadHandle::download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp)
+DownloadStatus DownloadHandle::download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp)
 {
 	bool failure = false;
 	CurlOptions curl_options;
@@ -450,7 +451,7 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 	if (0 == access(dest_file_path.toUtf8().constData(), F_OK)) {
 		if ((!this->dl_options.check_file_server_time && !this->dl_options.use_etag)) {
 			/* Nothing to do as file already exists and we don't want to check server. */
-			return DownloadResult::DownloadNotRequired;
+			return DownloadStatus::DownloadNotRequired;
 		}
 
 		time_t tile_age = 365; //Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".download_tile_age").u;
@@ -460,7 +461,7 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 		time_t file_time = buf.st_mtime;
 		if ((time(NULL) - file_time) < tile_age) {
 			/* File cache is too recent, so return. */
-			return DownloadResult::DownloadNotRequired;
+			return DownloadStatus::DownloadNotRequired;
 		}
 
 		if (this->dl_options.check_file_server_time) {
@@ -481,35 +482,35 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 	const QString tmp_file_path = dest_file_path + ".tmp";
 	if (!lock_file(tmp_file_path)) {
 		qDebug() << "WW: Download: Couldn't take lock on temporary file" << tmp_file_path;
-		return DownloadResult::FileWriteError;
+		return DownloadStatus::FileWriteError;
 	}
 
-	FILE * f = fopen(tmp_file_path.toUtf8().constData(), "w+b");  /* Truncate file and open it. */
+	FILE * file = fopen(tmp_file_path.toUtf8().constData(), "w+b");  /* Truncate file and open it. */
 	int e = errno;
-	if (!f) {
+	if (!file) {
 		qDebug() << "WW: Download: Couldn't open temporary file" << tmp_file_path << ":" << strerror(e);
-		return DownloadResult::FileWriteError;
+		return DownloadStatus::FileWriteError;
 	}
 
 	/* Call the backend function */
-	CurlDownloadStatus ret = this->curl_handle->get_url(hostname, uri, f, &this->dl_options, ftp, &curl_options);
+	CurlDownloadStatus ret = this->curl_handle->get_url(hostname, uri, file, &this->dl_options, ftp, &curl_options);
 
-	DownloadResult result = DownloadResult::Success;
+	DownloadStatus result = DownloadStatus::Success;
 
 	if (ret != CurlDownloadStatus::NoError && ret != CurlDownloadStatus::NoNewerFile) {
 		qDebug() << "WW: Download: failed: CurlDownload::get_url = " << (int) ret;
 		failure = true;
-		result = DownloadResult::HTTPError;
+		result = DownloadStatus::HTTPError;
 	}
 
-	if (!failure && this->dl_options.check_file != NULL && ! this->dl_options.check_file(f)) {
+	if (!failure && this->dl_options.check_file != NULL && ! this->dl_options.check_file(file)) {
 		qDebug() << "DD: Download: file content checking failed";
 		failure = true;
-		result = DownloadResult::ContentError;
+		result = DownloadStatus::ContentError;
 	}
 
-	fclose(f);
-	f = NULL;
+	fclose(file);
+	file = NULL;
 
 	if (failure) {
 		qDebug() << "WW: Download: Download error for file:" << dest_file_path;
@@ -546,7 +547,7 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
 	}
 	unlock_file(tmp_file_path);
 
-	return DownloadResult::Success;
+	return DownloadStatus::Success;
 }
 
 
@@ -556,7 +557,7 @@ DownloadResult DownloadHandle::download(const QString & hostname, const QString 
  * uri: like "/uri.html?whatever"
  * Only reason for the "wrapper" is so we can do redirects.
  */
-DownloadResult DownloadHandle::get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path)
+DownloadStatus DownloadHandle::get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path)
 {
 	return this->download(hostname, uri, dest_file_path, false);
 }
@@ -564,7 +565,7 @@ DownloadResult DownloadHandle::get_url_http(const QString & hostname, const QStr
 
 
 
-DownloadResult DownloadHandle::get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path)
+DownloadStatus DownloadHandle::get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path)
 {
 	return this->download(hostname, uri, dest_file_path, true);
 }
@@ -573,43 +574,32 @@ DownloadResult DownloadHandle::get_url_ftp(const QString & hostname, const QStri
 
 
 /**
- * @uri:         The URI (Uniform Resource Identifier)
- * @options:     Download options (maybe NULL)
- *
- * Returns name of the temporary file created - NULL if unsuccessful.
- * This string needs to be freed once used.
- * The file needs to be removed once used.
- */
+   @brief Download URI to temporary file, return opened temporary file
+
+   @tmp_file - uninitialized (unopened) file object
+   @uri - the URI (Uniform Resource Identifier) to download
+
+   @return true on success (@tmp_file will be returned open)
+   @return false otherwise (@tmp_file will be returned closed)
+*/
 bool DownloadHandle::download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri)
 {
-	if (!SGUtils::create_temporary_file(tmp_file, "viking-download.XXXXXX")) {
-		return false;
-	}
+	tmp_file.setFileTemplate("viking-download.XXXXXX");
+	qDebug() << SG_PREFIX_I << "Created temporary file" << tmp_file.fileName();
 
 	if (!tmp_file.open()) {
-		qDebug() << "EE" PREFIX << "failed to open temporary file, error =" << tmp_file.error();
+		qDebug() << SG_PREFIX_E << "Failed to open temporary file, error =" << tmp_file.error();
 		return false;
 	}
 
-	const QString tmp_file_full_path = tmp_file.fileName();
-	qDebug() << "DD" PREFIX << "temporary file:" << tmp_file_full_path << "error:" << tmp_file.error();
+	const CurlDownloadStatus curl_status = this->curl_handle->download_uri(uri, &tmp_file, &this->dl_options, NULL);
 
-	FILE * file = fdopen(tmp_file.handle(), "r+");
-	if (!file) {
-		qDebug() << "EE" PREFIX << "fdopen()" << strerror(errno);
+	if (CurlDownloadStatus::NoError != curl_status) {
+		tmp_file.close();
+		QDir::root().remove(tmp_file.fileName());
+		qDebug() << SG_PREFIX_E << "Downloading failed";
 		return false;
 	}
-
-	tmp_file.close();
-
-	if (CurlDownloadStatus::NoError != this->curl_handle->download_uri(uri, file, &this->dl_options, NULL)) {
-		fclose(file);
-		QDir::root().remove(tmp_file_full_path);
-		qDebug() << "EE" PREFIX << "download_uri()";
-		return false;
-	}
-
-	fclose(file);
 
 	return true;
 }
@@ -675,22 +665,22 @@ DownloadOptions::DownloadOptions(const DownloadOptions & dl_options)
 
 
 
-QDebug SlavGPS::operator<<(QDebug debug, const DownloadResult result)
+QDebug SlavGPS::operator<<(QDebug debug, const DownloadStatus result)
 {
 	switch (result) {
-	case DownloadResult::FileWriteError:
+	case DownloadStatus::FileWriteError:
 		debug << "FileWriteError";
 		break;
-	case DownloadResult::HTTPError:
+	case DownloadStatus::HTTPError:
 		debug << "HTTPError";
 		break;
-	case DownloadResult::ContentError:
+	case DownloadStatus::ContentError:
 		debug << "ContentError";
 		break;
-	case DownloadResult::Success:
+	case DownloadStatus::Success:
 		debug << "Success";
 		break;
-	case DownloadResult::DownloadNotRequired:
+	case DownloadStatus::DownloadNotRequired:
 		debug << "DownloadNotRequired";
 		break;
 	default:

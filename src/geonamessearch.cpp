@@ -43,6 +43,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "GeoNames Search"
 #define PREFIX ": GeoNames Search:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -122,7 +123,10 @@ std::list<Geoname *> a_select_geoname_from_list(const QString & title, const QSt
 
 
 
-static std::list<Geoname *> get_entries_from_file(QFile & file)
+/*
+  @file passed to this function is an opened QTemporaryFile.
+*/
+static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 {
 	std::list<Geoname *> found_places;
 
@@ -132,19 +136,12 @@ static std::list<Geoname *> get_entries_from_file(QFile & file)
 	QString wikipedia_url;
 	QString thumbnail_url;
 
-	file.unsetError();
-
-	if (!file.open(QIODevice::ReadOnly)) {
-		/* File errors: http://doc.qt.io/qt-5/qfiledevice.html#FileError-enum */
-		qDebug() << "EE" PREFIX << "Can't open file" << file.fileName() << file.error();
-		return found_places;
-	}
 
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
 	if (!file_contents) {
 		/* File errors: http://doc.qt.io/qt-5/qfiledevice.html#FileError-enum */
-		qDebug() << "EE" PREFIX << "Can't map file" << file.fileName() << "with size" << file_size << ", error:" << file.error();
+		qDebug() << SG_PREFIX_E << "Can't map file" << file.fileName() << "with size" << file_size << ", error:" << file.error();
 		return found_places;
 	}
 
@@ -313,7 +310,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, const La
 	DownloadHandle dl_handle;
 	QTemporaryFile tmp_file;
 	if (!dl_handle.download_to_tmp_file(tmp_file, uri)) {
-		Dialog::info(QObject::tr("No entries found!"), window);
+		Dialog::info(QObject::tr("Can't download information"), window);
 		return;
 	}
 

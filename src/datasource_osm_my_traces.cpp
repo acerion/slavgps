@@ -370,7 +370,9 @@ static void gpx_meta_data_cdata(xml_data * xd, const XML_Char *s, int len)
 
 
 
-
+/*
+  @file passed to this function is an opened QTemporaryFile.
+*/
 static bool read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 {
 	FILE *ff = fopen(file.fileName().toUtf8().constData(), "r");
