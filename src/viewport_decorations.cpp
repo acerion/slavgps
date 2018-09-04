@@ -55,6 +55,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Viewport Decorations"
 #define PREFIX ": Viewport Decorations:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -137,25 +138,40 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 	this->draw_scale_helper_scale(viewport, pen_bg, len, HEIGHT); /* Bright background. */
 	this->draw_scale_helper_scale(viewport, pen_fg, len, HEIGHT); /* Darker scale on the bright background. */
 
-	const QString scale_value = this->draw_scale_helper_value(viewport, distance_unit, scale_unit);
 
+	/* Draw scale value.  We need to draw the text with outline,
+	   so that it's more visible on a map that will be present in
+	   the background. */
+	{
+		const QString scale_value = this->draw_scale_helper_value(viewport, distance_unit, scale_unit);
 
-	QPointF scale_start(PAD, viewport->canvas.height - PAD); /* Bottom-left corner of scale. */
-	QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
-	QRectF bounding_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 300, (int) value_start.y());
-	viewport->draw_text(QFont("Helvetica", 40), pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
+		const QPointF scale_start(PAD, viewport->canvas.height - PAD); /* Bottom-left corner of scale. */
+		const QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
+		const QRectF bounding_rect = QRectF(value_start.x(), 0, value_start.x() + 300, value_start.y());
 
-	/* TODO_REALLY: we need to draw background of the text in some color,
-	   so that it's more visible on a map that will be present in the background. */
+		const QFont scale_font = QFont("Helvetica", 40);
+
+#if 1           /* Text with outline. */
+		QPen outline_pen;
+		outline_pen.setWidth(1);
+		outline_pen.setColor(pen_bg.color());
+		const QColor fill_color(pen_fg.color());
+		viewport->draw_outlined_text(scale_font, outline_pen, fill_color, value_start, scale_value);
+
+#else           /* Text without outline (old version). */
+		viewport->draw_text(scale_font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
+#endif
+
 
 #if 1
-	/* Debug. */
-	//QPainter painter(viewport->scr_buffer);
-	viewport->canvas.painter->setPen(QColor("red"));
-	viewport->canvas.painter->drawEllipse(scale_start, 3, 3);
-	viewport->canvas.painter->setPen(QColor("blue"));
-	viewport->canvas.painter->drawEllipse(value_start, 3, 3);
+		/* Debug. */
+		//QPainter painter(viewport->scr_buffer);
+		viewport->canvas.painter->setPen(QColor("red"));
+		viewport->canvas.painter->drawEllipse(scale_start, 3, 3);
+		viewport->canvas.painter->setPen(QColor("blue"));
+		viewport->canvas.painter->drawEllipse(value_start, 3, 3);
 #endif
+	}
 }
 
 
@@ -186,9 +202,9 @@ QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, Distan
 	switch (distance_unit) {
 	case DistanceUnit::Kilometres:
 		if (scale_unit >= 1000) {
-			scale_value = QObject::tr("y%1 km").arg((int) scale_unit / 1000);
+			scale_value = QObject::tr("%1 km").arg((int) scale_unit / 1000);
 		} else {
-			scale_value = QObject::tr("y%1 m").arg((int) scale_unit);
+			scale_value = QObject::tr("%1 m").arg((int) scale_unit);
 		}
 		break;
 	case DistanceUnit::Miles:
@@ -212,7 +228,7 @@ QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, Distan
 		}
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
 		break;
 	}
 

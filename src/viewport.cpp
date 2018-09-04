@@ -1328,7 +1328,7 @@ void Viewport::draw_text(QFont const & text_font, QPen const & pen, int pos_x, i
 
 
 
-void Viewport::draw_text(QFont const & text_font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset)
+void Viewport::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
 {
 	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->setFont(text_font);
@@ -1367,6 +1367,26 @@ void Viewport::draw_text(QFont const & text_font, QPen const & pen, QRectF & bou
 
 	this->canvas.painter->setPen(pen);
 	this->canvas.painter->drawText(text_rect, flags, text, NULL);
+}
+
+
+
+
+void Viewport::draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text)
+{
+	/* http://doc.qt.io/qt-5/qpainterpath.html#addText */
+
+	this->canvas.painter->setPen(outline_pen);
+	this->canvas.painter->setBrush(QBrush(fill_color));
+
+	QPainterPath path;
+	path.addText(base_point, text_font, text);
+
+	this->canvas.painter->drawPath(path);
+
+	/* Reset painter. */
+	this->canvas.painter->setPen(QPen());
+	this->canvas.painter->setBrush(QBrush());
 }
 
 

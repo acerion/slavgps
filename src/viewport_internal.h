@@ -113,9 +113,12 @@ namespace SlavGPS {
 		void draw_rectangle(QPen const & pen, int upper_left_x, int upper_left_y, int width, int height);
 		void draw_rectangle(QPen const & pen, const QRect & rect);
 		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
+
 		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
-		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);
+		void draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset);
 		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
+		void draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text);
+
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int start_angle, int span_angle);
 		void draw_ellipse(QPen const & pen, const QPoint & center, int radius_x, int radius_y, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
