@@ -22,11 +22,21 @@
 #include "config.h"
 #endif
 
+
+
+
 #include <cassert>
+#include <vector>
 #include <time.h>
+
+
+
 
 #include <QDateTime>
 #include <QDebug>
+
+
+
 
 #include "window.h"
 #include "layer_aggregate.h"
@@ -47,80 +57,88 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Layer TRW Stats:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Layer TRW Stats"
+#define NONE_TEXT "--"
+
+/* We have here a two-column table. First column is with names of parameters,
+   the second column is with values of parameter. */
+#define NAME_COLUMN   0
+#define VALUE_COLUMN  1
 
 
 
 
-#define N_LABELS 12
-static const char * labels[N_LABELS] = {
-	"Number of Tracks",
-	"Date Range",
-	"Total Length",
-	"Average Length",
-	"Max Speed",
-	"Avg. Speed",
-	"Minimum Altitude",
-	"Maximum Altitude",
-	"Total Elevation Gain/Loss",
-	"Avg. Elevation Gain/Loss",
-	"Total Duration",
-	"Avg. Duration",
+static const std::vector<SGLabelID> labels = {
+	SGLabelID(QObject::tr("Number of Tracks"),             (int) TRWStatsRow::NumOfTracks),
+	SGLabelID(QObject::tr("Date Range"),                   (int) TRWStatsRow::DateChange),
+	SGLabelID(QObject::tr("Total Length"),                 (int) TRWStatsRow::TotalLength),
+	SGLabelID(QObject::tr("Average Length"),               (int) TRWStatsRow::AverageLength),
+	SGLabelID(QObject::tr("Maximum Speed"),                (int) TRWStatsRow::MaximumSpeed),
+	SGLabelID(QObject::tr("Average Speed"),                (int) TRWStatsRow::AverageSpeed),
+	SGLabelID(QObject::tr("Minimum Altitude"),             (int) TRWStatsRow::MininumAltitude),
+	SGLabelID(QObject::tr("Maximum Altitude"),             (int) TRWStatsRow::MaximumAltitude),
+	SGLabelID(QObject::tr("Total Elevation Gain/Loss"),    (int) TRWStatsRow::TotalElevationDelta),
+	SGLabelID(QObject::tr("Average Elevation Gain/Loss"),  (int) TRWStatsRow::AverageElevationDelta),
+	SGLabelID(QObject::tr("Total Duration"),               (int) TRWStatsRow::TotalDuration),
+	SGLabelID(QObject::tr("Average Duration"),             (int) TRWStatsRow::AverageDuration),
 };
 
 
 
 
-/**
- * Return a widget to hold the stats information in a table grid layout
- */
-static QGridLayout * create_stats_table(QDialog * parent)
+StatsTable::StatsTable(QDialog * parent) : QGridLayout(parent)
 {
-	QGridLayout * grid = new QGridLayout(parent);
-
-	for (int row = 0; row < N_LABELS; row++) {
-		QLabel * label = new QLabel(QObject::tr(labels[row]));
-		grid->addWidget(label, row, 0); /* 0 == first column. */
-
+	for (unsigned row = 0; row < labels.size(); row++) {
+		QLabel * name = new QLabel(labels[row].label);
+		this->addWidget(name, row, NAME_COLUMN);
 
 		QLabel * value = new QLabel("");
-		grid->addWidget(value, row, 1); /* 1 == second column. */
+		this->addWidget(value, row, VALUE_COLUMN);
 	}
+}
 
-	return grid;
+
+
+
+StatsTable::~StatsTable()
+{
+	qDebug() << SG_PREFIX_D << "stats table destructor called";
+}
+
+
+
+
+QLabel * StatsTable::get_value_label(TRWStatsRow row)
+{
+	QLabel * label = dynamic_cast<QLabel *>(this->itemAtPosition((int) row, VALUE_COLUMN)->widget());
+	return label;
 }
 
 
 
 
 /**
- * Display given statistics in table widget
- */
+   Display given statistics in table widget
+*/
 void TRWStatsDialog::display_stats(TrackStatistics & stats)
 {
-	QGridLayout * grid = this->stats_table;
-	const int col = 1; /* We will be modifying only column of values. */
-
-
-	int cnt = 0;
 	QString tmp_string;
 
 
-	/* 0: Number of Tracks */
-	((QLabel *) grid->itemAtPosition(0, col)->widget())->setText(QString("%1").arg(stats.count));
-
+	/* Number of Tracks */
+	this->stats_table->get_value_label(TRWStatsRow::NumOfTracks)->setText(QString("%1").arg(stats.count));
 
 	if (stats.count == 0) {
 		/* Blank all other fields. */
-		for (int row = 1; row < N_LABELS; row++) {
-			((QLabel *) grid->itemAtPosition(row, col)->widget())->setText("--");
+		for (int row = 1; row < this->stats_table->rowCount(); row++) {
+			this->stats_table->get_value_label((TRWStatsRow) row)->setText(NONE_TEXT);
 		}
 		return;
 	}
 
 
 
-	/* 1: Date Range */
+	/* Date Range */
 
 	/* Check for potential date range. */
 	/* Test if the same day by comparing the date string of the timestamp. */
@@ -141,37 +159,40 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	} else {
 		tmp_string = time_start;
 	}
-	((QLabel *) grid->itemAtPosition(1, col)->widget())->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::DateChange)->setText(tmp_string);
 
 
 
-	/* 2: Total Length */
+	/* Total Length */
 	tmp_string = get_distance_string(stats.length, Preferences::get_unit_distance());
-	((QLabel *) grid->itemAtPosition(2, col)->widget())->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::TotalLength)->setText(tmp_string);
 
 
-	/* 3: Average Length */
+
+	/* Average Length */
 	tmp_string = get_distance_string(stats.length / stats.count, Preferences::get_unit_distance());
-	((QLabel *) grid->itemAtPosition(3, col)->widget())->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::AverageLength)->setText(tmp_string);
 
 
-	/* 4: Max Speed */
+
+	/* Max Speed */
 	SpeedUnit speed_unit = Preferences::get_unit_speed();
 	if (stats.max_speed > 0) {
 		tmp_string = get_speed_string(stats.max_speed, speed_unit);
 	} else {
-		tmp_string = "--";
+		tmp_string = NONE_TEXT;
 	}
-	((QLabel *) grid->itemAtPosition(4, col)->widget())->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::MaximumSpeed)->setText(tmp_string);
 
 
-	/* 5: Avg. Speed */
+
+	/* Avg. Speed */
 	if (stats.duration > 0) {
 		tmp_string = get_speed_string(stats.length / stats.duration, speed_unit);
 	} else {
-		tmp_string = "--";
+		tmp_string = NONE_TEXT;
 	}
-	((QLabel *) grid->itemAtPosition(5, col)->widget())->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(tmp_string);
 
 
 	const HeightUnit height_unit = Preferences::get_unit_height();
@@ -179,84 +200,91 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 		/* Note always round off height value output since sub unit accuracy is overkill. */
 	case HeightUnit::Metres:
 
-		/* 6: Minimum Altitude */
+		/* Minimum Altitude */
 		if (stats.min_alt != VIK_VAL_MIN_ALT) {
 			tmp_string = tr("%1 m").arg((int) round(stats.min_alt));
 		} else {
-			tmp_string = "--";
+			tmp_string = NONE_TEXT;
 		}
-		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::MininumAltitude)->setText(tmp_string);
 
 
-		/* 7: Maximum Altitude */
+
+		/* Maximum Altitude */
 		if (stats.max_alt != VIK_VAL_MAX_ALT) {
 			tmp_string = tr("%1 m").arg((int) round(stats.max_alt));
 		} else {
-			tmp_string = "--";
+			tmp_string = NONE_TEXT;
 		}
-		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::MaximumAltitude)->setText(tmp_string);
 
 
-		/* 8: Total Elevation Gain/Loss */
+
+		/* Total Elevation Gain/Loss */
 		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain)).arg((int) round(stats.elev_loss));
-		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::TotalElevationDelta)->setText(tmp_string);
 
 
-		/* 9: Avg. Elevation Gain/Loss */
+
+		/* Avg. Elevation Gain/Loss */
 		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain/stats.count)).arg((int) round(stats.elev_loss/stats.count));
-		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::AverageElevationDelta)->setText(tmp_string);
 
 		break;
 	case HeightUnit::Feet:
 
-		/* 6: Minimum Altitude */
+		/* Minimum Altitude */
 		if (stats.min_alt != VIK_VAL_MIN_ALT) {
 			tmp_string = tr("%1 feet").arg((int) round(VIK_METERS_TO_FEET(stats.min_alt)));
 		} else {
-			tmp_string = "--";
+			tmp_string = NONE_TEXT;
 		}
-		((QLabel *) grid->itemAtPosition(6, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::MininumAltitude)->setText(tmp_string);
 
 
-		/* 7: Maximum Altitude */
+
+		/* Maximum Altitude */
 		if (stats.max_alt != VIK_VAL_MAX_ALT) {
 			tmp_string = tr("%1 feet").arg((int) round(VIK_METERS_TO_FEET(stats.max_alt)));
 		} else {
-			tmp_string = "--";
+			tmp_string = NONE_TEXT;
 		}
-		((QLabel *) grid->itemAtPosition(7, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::MaximumAltitude)->setText(tmp_string);
 
 
-		/* 8: Total Elevation Gain/Loss */
+
+		/* Total Elevation Gain/Loss */
 		tmp_string = tr("%1 feet / %2 feet").arg((int) round(VIK_METERS_TO_FEET(stats.elev_gain))).arg((int) round(VIK_METERS_TO_FEET(stats.elev_loss)));
-		((QLabel *) grid->itemAtPosition(8, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::TotalElevationDelta)->setText(tmp_string);
 
 
-		/* 9: Avg. Elevation Gain/Loss */
+
+		/* Avg. Elevation Gain/Loss */
 		tmp_string = tr("%1 feet / %2 feet").arg((int) round(VIK_METERS_TO_FEET(stats.elev_gain/stats.count))).arg((int) round(VIK_METERS_TO_FEET(stats.elev_loss/stats.count)));
-		((QLabel *) grid->itemAtPosition(9, col)->widget())->setText(tmp_string);
+		this->stats_table->get_value_label(TRWStatsRow::AverageElevationDelta)->setText(tmp_string);
 
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
 		break;
 	}
 
 
-	/* 10: Total Duration. */
+	/* Total Duration. */
 	int days    = (int) (stats.duration / (60 * 60 * 24));
 	int hours   = (int) floor((stats.duration - (days * 60 * 60 * 24)) / (60 * 60));
 	int minutes = (int) ((stats.duration - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
 	tmp_string = tr("%1:%2:%3 days:hrs:mins").arg(days).arg(hours, 2, 10, (QChar) '0').arg(minutes, 2, 10, (QChar) '0');
-	((QLabel *) grid->itemAtPosition(10, col)->widget())->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(tmp_string);
 
 
-	/* 11: Average Duration. */
+
+	/* Average Duration. */
 	int avg_dur = stats.duration / stats.count;
 	hours   = (int) floor(avg_dur / (60 * 60));
 	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
 	tmp_string = tr("%1:%2 hrs:mins").arg(hours).arg(minutes, 2, 10, (QChar) '0');
-	((QLabel *) grid->itemAtPosition(11, col)->widget())->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::AverageDuration)->setText(tmp_string);
 }
 
 
@@ -274,7 +302,7 @@ void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisib
 		Track * trk = *iter;
 		LayerTRW * trw = trk->get_parent_layer_trw();
 		assert (trw->type == LayerType::TRW);
-		qDebug() << "II: Layer TRW Stats: collecting stats with layer/tracks/routes/include visibility:"
+		qDebug() << SG_PREFIX_I << "Collecting stats with layer/tracks/routes/include visibility:"
 			 << trw->visible
 			 << trw->get_tracks_visibility()
 			 << trw->get_routes_visibility()
@@ -291,7 +319,7 @@ void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisib
 void TRWStatsDialog::include_invisible_toggled_cb(int state)
 {
 	bool include_invisible = (bool) state;
-	qDebug() << "DD: Layer TRW Stats: include invisible items:" << include_invisible;
+	qDebug() << SG_PREFIX_D << "Include invisible items:" << include_invisible;
 
 	/* Delete old list of items. */
 	this->tracks.clear();
@@ -325,8 +353,7 @@ TRWStatsDialog::~TRWStatsDialog()
 	bool do_invisible = this->checkbox->isChecked();
 	ApplicationState::set_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible);
 
-	/* TODO_REALLY: delete this object? */
-	//free(this->stats_table);
+	delete this->stats_table;
 }
 
 
@@ -370,10 +397,10 @@ void SlavGPS::layer_trw_show_stats(const QString & name, Layer * layer, const QS
 	} else if (layer->type == LayerType::Aggregate) {
 		((LayerAggregate *) layer)->get_tracks_list(dialog->tracks, dialog->type_id_string);
 	} else {
-		qDebug() << "EE: Layer TRW Stats: wrong layer type" << (int) layer->type;
+		qDebug() << SG_PREFIX_E << "Wrong layer type" << (int) layer->type;
 		assert (0);
 	}
-	dialog->stats_table = create_stats_table(dialog);
+	dialog->stats_table = new StatsTable(dialog);
 	vbox->addLayout(dialog->stats_table);
 
 	/* Analysis seems reasonably quick

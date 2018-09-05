@@ -26,11 +26,18 @@
 
 #include <list>
 
+
+
+
 #include <QObject>
 #include <QDialog>
 #include <QWidget>
 #include <QGridLayout>
 #include <QCheckBox>
+#include <QLabel>
+
+
+
 
 #include "layer_trw_track.h"
 #include "layer_trw_track_statistics.h"
@@ -47,6 +54,41 @@ namespace SlavGPS {
 	class Layer;
 
 
+	enum class TRWStatsRow {
+		NumOfTracks,
+		DateChange,
+		TotalLength,
+		AverageLength,
+		MaximumSpeed,
+		AverageSpeed,
+		MininumAltitude,
+		MaximumAltitude,
+		TotalElevationDelta,
+		AverageElevationDelta,
+		TotalDuration,
+		AverageDuration,
+
+		Max
+	};
+
+	enum class TRWStatsRow;
+
+
+
+
+
+	/**
+	   A widget to hold the stats information in a table grid layout
+	*/
+	class StatsTable : public QGridLayout {
+	public:
+		StatsTable(QDialog * parent);
+		~StatsTable();
+
+		QLabel * get_value_label(TRWStatsRow row);
+	};
+
+
 
 
 	class TRWStatsDialog : public QDialog {
@@ -57,7 +99,7 @@ namespace SlavGPS {
 		~TRWStatsDialog();
 
 
-		QGridLayout * stats_table = NULL;
+		StatsTable * stats_table = NULL;
 		QCheckBox * checkbox = NULL;
 		std::list<Track *> tracks;
 		Layer * layer = NULL; /* Just a reference. */
