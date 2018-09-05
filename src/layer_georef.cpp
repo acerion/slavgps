@@ -872,7 +872,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	this->map_image_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select image file"), this->layer->get_window());
 	this->map_image_file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Image);
-#ifdef K_TODO_LATER /* Handle "maybe_read_world_file" argument in file selector. */
+#ifdef TODO_LATER /* Handle "maybe_read_world_file" argument in file selector. */
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
 	this->grid->addWidget(new QLabel(tr("Map Image:")), row, 0);

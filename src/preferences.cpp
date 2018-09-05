@@ -347,7 +347,7 @@ bool Preferences::save_to_file(void)
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	/* Since preferences files saves OSM login credentials, it'll be better to store it in secret. */
 	if (chmod(full_path.toUtf8().constData(), 0600) != 0) {
-		qDebug() << "WW: Preferences: failed to set permissions on" << full_path; /* TODO_REALLY: shouldn't we abort saving to file? */
+		qDebug() << "WW: Preferences: failed to set permissions on" << full_path; /* TODO_2_LATER: shouldn't we abort saving to file? */
 	}
 
 	if (!file) {

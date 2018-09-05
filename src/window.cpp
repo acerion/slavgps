@@ -289,7 +289,7 @@ Window::Window()
 
 			/* Adjust geometry of panel dock.
 
-			   TODO_LATER: this doesn't work. Either
+			   TODO_2_LATER: this doesn't work. Either
 			   setGeometry() doesn't work, or something
 			   overwrites panel's size. */
 
@@ -1121,7 +1121,7 @@ void Window::center_changed_cb(void) /* Slot. */
 {
 	qDebug() << SG_PREFIX_SLOT << "Called";
 
-	/* TODO_LATER: see if this comment should be implemented or not:
+	/* TODO_2_LATER: see if this comment should be implemented or not:
 	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
 	this->qa_previous_location->setEnabled(this->viewport->back_available());
 	this->qa_next_location->setEnabled(this->viewport->forward_available());
@@ -2206,7 +2206,7 @@ void Window::set_busy_cursor()
 	this->viewport->setCursor(Qt::WaitCursor);
 
 #ifdef K_FIXME_RESTORE
-	/* Ensure cursor updated before doing stuff. TODO_LATER: do we need this? */
+	/* Ensure cursor updated before doing stuff. TODO_2_LATER: do we need this? */
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
@@ -2775,7 +2775,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	UTM utm;
 	const char * extension = save_format == ViewportSaveFormat::PNG ? "png" : "jpg";
 
-	/* TODO_LATER: support non-identical x/y zoom values. */
+	/* TODO_2_LATER: support non-identical x/y zoom values. */
 	const double xmpp = map_zoom.get_x();
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
@@ -2794,7 +2794,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (image_height * xmpp);
 			}
 
-			/* TODO_LATER: move to correct place. */
+			/* TODO_2_LATER: move to correct place. */
 			this->viewport->set_center_from_utm(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
@@ -3059,7 +3059,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 
 	qDebug() << "DD: Window: Coordinate mode changed to" << qa->text() << (int) drawmode;
 
-	/* TODO_REALLY: verify that this function changes mode in all the places that need to be updated. */
+	/* TODO_HARD: verify that this function changes mode in all the places that need to be updated. */
 
 	if (this->only_updating_coord_mode_ui) {
 		return;

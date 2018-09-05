@@ -601,7 +601,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 80); /* TODO_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 80); /* TODO_2_LATER: smarter calculation. */
 
 	double nscale_deg = dem->north_scale / ((double) 3600);
 	double escale_deg = dem->east_scale / ((double) 3600);
@@ -630,7 +630,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 		this->max_elev = this->min_elev + 1;
 	}
 
-	Coord tmp; /* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+	Coord tmp; /* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
 	LatLon counter;
 	int32_t x;
@@ -771,7 +771,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 
 void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 10); /* TODO_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_map_zoom().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
 
 	Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
 	Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);
@@ -824,7 +824,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 	UTM counter;
 	counter.zone = dem->utm.zone;
-	assert (UTM::is_band_letter(dem->utm.get_band_letter())); /* TODO_LATER: smarter handling of error value. In theory the source object should be valid and for sure contain valid band letter. */
+	assert (UTM::is_band_letter(dem->utm.get_band_letter())); /* TODO_2_LATER: smarter handling of error value. In theory the source object should be valid and for sure contain valid band letter. */
 	counter.set_band_letter(dem->utm.get_band_letter());
 
 	int32_t x;
@@ -855,7 +855,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 
 			{
-				/* TODO_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
+				/* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 				const ScreenPos pos = viewport->coord_to_screen_pos(Coord(counter, viewport_coord_mode));
 
 				int idx = 0; /* Default index for color of 'sea'. */
@@ -876,7 +876,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 void draw_loaded_dem_box(Viewport * viewport)
 {
-#ifdef K_TODO_LATER
+#ifdef TODO_LATER
 	/* For getting values of dem_northeast and dem_southwest see DEM::intersect(). */
 	const Coord demne(dem_northeast, viewport->get_coord_mode());
 	const Coord demsw(dem_southwest, viewport->get_coord_mode());
@@ -1199,7 +1199,7 @@ void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & 
 
 static void dem24k_dem_download_thread(DEMDownloadJob * dl_job)
 {
-	/* TODO_LATER: dest dir. */
+	/* TODO_2_LATER: dest dir. */
 	const QString cmdline = QString("%1 %2 %3")
 		.arg(DEM24K_DOWNLOAD_SCRIPT)
 		.arg(floor(dl_job->lat * 8) / 8, 0, 'f', 3, '0')  /* "%.03f" */

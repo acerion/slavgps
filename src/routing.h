@@ -53,7 +53,7 @@ namespace SlavGPS {
 	class Routing {
 	public:
 		static void register_engine(RoutingEngine * engine);
-		static void unregister_all_engines(void); /* TODO_LATER: this function is not called anywhere. */
+		static void unregister_all_engines(void); /* TODO_2_LATER: this function is not called anywhere. */
 		static void prefs_init(void);
 
 		static RoutingEngine * get_default_engine(void);

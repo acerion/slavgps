@@ -51,7 +51,7 @@ static QUrl g_last_directory_url;
 
 
 /* The last used file filter. */
-/* TODO_LATER: verify how this overlaps with babel_dialog.cpp:g_last_file_type_index. */
+/* TODO_2_LATER: verify how this overlaps with babel_dialog.cpp:g_last_file_type_index. */
 static QString g_last_filter;
 
 

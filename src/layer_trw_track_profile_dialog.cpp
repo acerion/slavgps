@@ -272,7 +272,7 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 	this->x_max_visible_d = convert_distance_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
 
 	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
-		/* TODO_LATER: verify what happens if we return here. */
+		/* TODO_2_LATER: verify what happens if we return here. */
 		qDebug() << "EE:" PREFIX << "zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
 		return;
 	}
@@ -314,7 +314,7 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 #endif
 
 	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
-		/* TODO_LATER: verify what happens if we return here. */
+		/* TODO_2_LATER: verify what happens if we return here. */
 		qDebug() << "EE:" PREFIX << "zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
 		return;
 	}
@@ -356,7 +356,7 @@ void ProfileGraph::set_initial_visible_range_y(void)
 		break;
 	default:
 		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
-		/* TODO_LATER: see what happens when we return here. */
+		/* TODO_2_LATER: see what happens when we return here. */
 		return;
 	}
 	this->y_max_visible = this->track_data.y_max + range * over;

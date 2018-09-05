@@ -97,7 +97,7 @@ MapSourceBing::MapSourceBing()
 				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 #endif
 	this->logo.logo_pixmap = QPixmap(":/icons/bing_maps.png");
-	this->logo.logo_id = "Bing Maps"; /* TODO_LATER: verify this label, whether it is unique for this map source. */
+	this->logo.logo_id = "Bing Maps"; /* TODO_2_LATER: verify this label, whether it is unique for this map source. */
 }
 
 
@@ -178,7 +178,7 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 	const int scale = map_utils_mpp_to_scale(zoom);
 
 	/* Load attributions. */
-	if (0 == this->attributions.size() && "<no-set>" != this->bing_api_key) { /* TODO_LATER: also check this->bing_api_key.isEmpty()? */
+	if (0 == this->attributions.size() && "<no-set>" != this->bing_api_key) { /* TODO_2_LATER: also check this->bing_api_key.isEmpty()? */
 		if (!this->loading_attributions) {
 			this->async_load_attributions();
 		} else {
@@ -283,7 +283,7 @@ bool MapSourceBing::parse_file_for_attributions(QFile & tmp_file)
 
 	FILE *file = fopen(tmp_file.fileName().toUtf8().constData(), "r");
 	if (file == NULL) {
-		/* TODO_LATER emit warning. */
+		/* TODO_2_LATER emit warning. */
 		return false;
 	}
 #ifdef K_FIXME_RESTORE
@@ -379,7 +379,7 @@ int MapSourceBing::emit_update(void * data)
 {
 #ifdef K_FIXME_RESTORE
 	gdk_threads_enter();
-	/* TODO_LATER
+	/* TODO_2_LATER
 	items_tree_emit_update(VIK_LAYERS_PANEL (data));
 	*/
 	gdk_threads_leave();

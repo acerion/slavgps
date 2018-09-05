@@ -176,7 +176,7 @@ bool DEM::parse_header(char * buffer)
 	get_double_and_continue(&buffer, &val, true);
 	/* this->orig_vert_units = val; now done below */
 
-	/* TODO_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
+	/* TODO_2_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 		this->east_scale = 10.0; /* meters */
 		this->north_scale = 10.0;
@@ -517,7 +517,7 @@ bool DEM::read_other(const QString & full_path)
 		fclose(f);
 		return false;
 	}
-	/* TODO_LATER: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
+	/* TODO_2_LATER: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
 
 	this->n_columns = 0;
 	/* Use the two variables to record state for ->parse_block(). */
@@ -534,7 +534,7 @@ bool DEM::read_other(const QString & full_path)
 		this->parse_block(buffer, &cur_column, &cur_row);
 	}
 
-	/* TODO_LATER - class C records (right now says 'Invalid' and dies) */
+	/* TODO_2_LATER - class C records (right now says 'Invalid' and dies) */
 
 	fclose(f);
 	f = NULL;
@@ -756,7 +756,7 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 		dem_northeast_utm.easting = this->max_east_seconds;
 
 		dem_northeast_utm.zone = this->utm.zone;
-		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 		dem_northeast_utm.set_band_letter(this->utm.get_band_letter());
 
 		UTM dem_southwest_utm;
@@ -764,7 +764,7 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 		dem_southwest_utm.easting = this->min_east_seconds;
 
 		dem_southwest_utm.zone = this->utm.zone;
-		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+		assert (UTM::is_band_letter(this->utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 		dem_southwest_utm.set_band_letter(this->utm.get_band_letter());
 
 		dem_northeast = UTM::to_latlon(dem_northeast_utm);

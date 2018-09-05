@@ -1075,7 +1075,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.mode = CoordMode::UTM;
 
 		coord.utm.zone = this->center.utm.zone;
-		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 		coord.utm.set_band_letter(this->center.utm.get_band_letter());
 		coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
 
@@ -1746,7 +1746,7 @@ LatLonBBox Viewport::get_bbox(void) const
 */
 void Viewport::add_copyright(QString const & copyright)
 {
-	/* TODO_REALLY: make sure that this code is executed. */
+	/* TODO_2_LATER: make sure that this code is executed. */
 	if (!this->decorations.copyrights.contains(copyright)) {
 		this->decorations.copyrights.push_front(copyright);
 	}

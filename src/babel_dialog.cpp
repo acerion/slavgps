@@ -44,7 +44,7 @@ using namespace SlavGPS;
 /* The last file format selected. */
 static int g_last_file_type_index = 0;
 
-/* TODO_LATER: verify how to implement "last used directory" here. Look at
+/* TODO_2_LATER: verify how to implement "last used directory" here. Look at
    g_last_directory_url in datasource_file.cpp. */
 
 

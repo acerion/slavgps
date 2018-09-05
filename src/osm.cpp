@@ -218,7 +218,7 @@ QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj
 	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale, buf, tile_max, &compressed, err_msg);
 	if (len > 0) {
 		if (compressed) {
-			/* TODO_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
+			/* TODO_2_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
 			qDebug() << SG_PREFIX_E << "Compressed metatiles not implemented";
 			free(buf);
 			return pixmap;

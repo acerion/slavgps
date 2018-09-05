@@ -237,7 +237,7 @@ void Background::init()
 */
 void Background::post_init(void)
 {
-	/* Initialize thread pools. TODO_LATER: we don't have local/remote pools anymore. Address this fact in this file. */
+	/* Initialize thread pools. TODO_2_LATER: we don't have local/remote pools anymore. Address this fact in this file. */
 	int max_threads = 10;  /* Limit maximum number of threads running at one time. */
 	int maxt;
 	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS, &maxt)) {

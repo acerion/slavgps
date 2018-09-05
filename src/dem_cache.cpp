@@ -238,7 +238,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 
 
 
-/* TODO_LATER: keep a (sorted) linked list of DEMs and select the best resolution one. */
+/* TODO_2_LATER: keep a (sorted) linked list of DEMs and select the best resolution one. */
 int16_t DEMCache::get_elev_by_coord(const Coord * coord, DemInterpolation method)
 {
 	if (loaded_dems.empty()) {

@@ -552,7 +552,7 @@ void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
 				//layer->add_children_to_tree();
 				layer->post_read(viewport, true);
 			} else if (parent_layer->type == LayerType::GPS) {
-				/* TODO_LATER: anything else needs to be done here? */
+				/* TODO_2_LATER: anything else needs to be done here? */
 			} else {
 				this->successful_read = false;
 				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) this->stack.first->type);

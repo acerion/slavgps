@@ -642,7 +642,7 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 	this->copy_sublayer(item, pickle);
 
 	if (pickle.data_size() > 0) {
-#ifdef K_TODO_LATER
+#ifdef K_TODO_2_LATER
 		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle, item->name);
 #endif
 	}
@@ -1126,7 +1126,7 @@ void LayerTRW::marshall(Pickle & pickle)
 	Pickle helper_pickle;
 
 	for (auto iter = this->waypoints.children_list.begin(); iter != this->waypoints.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_2_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1135,7 +1135,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 	for (auto iter = this->tracks.children_list.begin(); iter != this->tracks.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_2_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1144,7 +1144,7 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
-		(*iter)->marshall(helper_pickle); /* TODO_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
+		(*iter)->marshall(helper_pickle); /* TODO_2_LATER: the marshall() function needs to put sublayer type into helper_pickle. */
 		if (helper_pickle.data_size() > 0) {
 			pickle.put_pickle(helper_pickle);
 		}
@@ -1202,7 +1202,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 			}
 		}
 		consumed_length += pickle.peek_size() + sizeof_len_and_subtype;
-#ifdef K_TODO_LATER
+#ifdef TODO_2_LATER
 		// See marshalling above for order of how this is written  // kamilkamil
 		pickle.data += sizeof_len_and_subtype + pickle.peek_size();
 #endif
@@ -3020,7 +3020,7 @@ void LayerTRW::merge_by_segment_cb(void)
 	/* Currently no need to redraw as segments not actually shown on the display.
 	   However inform the user of what happened. */
 	const unsigned int n_segments = track->merge_segments();
-	const QString msg = QObject::tr("%n segments merged", "", n_segments); /* TODO_LATER: verify that "%n" format correctly handles unsigned int. */
+	const QString msg = QObject::tr("%n segments merged", "", n_segments); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned int. */
 	Dialog::info(msg, this->get_window());
 }
 
@@ -3211,7 +3211,7 @@ void LayerTRW::delete_points_same_position_cb(void)
 	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, this->get_window());
 
 	this->emit_layer_changed("TRW - delete points same pos");
@@ -3237,7 +3237,7 @@ void LayerTRW::delete_points_same_time_cb(void)
 	this->cancel_tps_of_track(track);
 
 	/* Inform user how much was deleted as it's not obvious from the normal view. */
-	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, this->get_window());
 
 	this->emit_layer_changed("TRW - delete points same time");

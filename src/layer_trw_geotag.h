@@ -90,7 +90,7 @@ namespace SlavGPS {
 		QCheckBox * no_change_mtime_cb = NULL;
 
 		QCheckBox * interpolate_segments_cb = NULL;
-		QLineEdit * time_zone_entry = NULL;    /* TODO_LATER consider a more user friendly tz widget eg libtimezonemap or similar. */
+		QLineEdit * time_zone_entry = NULL;    /* TODO_HARD consider a more user friendly tz widget eg libtimezonemap or similar. */
 		QLineEdit * time_offset_entry = NULL;
 	};
 

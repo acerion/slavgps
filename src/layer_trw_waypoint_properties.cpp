@@ -204,7 +204,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_NAME]);
 		const QString entered_name = param_value.val_string;
 
-		if (entered_name.isEmpty()) { /* TODO_LATER: other checks (isalpha or whatever). */
+		if (entered_name.isEmpty()) { /* TODO_2_LATER: other checks (isalpha or whatever). */
 			Dialog::info(QObject::tr("Please enter a name for the waypoint."), parent);
 			continue;
 		}

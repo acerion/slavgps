@@ -90,7 +90,7 @@ extern LayerTool * trw_layer_tools[];
 
 
 static ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport);
-static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport) { return ToolStatus::Ignored; } /* TODO_LATER: implement the function for route finder tool. */
+static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport) { return ToolStatus::Ignored; } /* TODO_2_LATER: implement the function for route finder tool. */
 
 
 
@@ -1436,7 +1436,7 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 
 ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
-	/* TODO_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
+	/* TODO_2_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
 	return ToolStatus::Ignored;
 }
 

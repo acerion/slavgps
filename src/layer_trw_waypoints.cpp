@@ -609,7 +609,7 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 
 	/* TODO_LATER: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
-	/* TODO_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
+	/* TODO_2_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::SUBLAYER);
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
 
@@ -926,7 +926,7 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	this->children_map.erase(wp->get_uid()); /* Erase by key. */
 
-	/* TODO_LATER: optimize. */
+	/* TODO_2_LATER: optimize. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		if (TreeItem::the_same_object(*iter, wp)) {
 			this->children_list.erase(iter);

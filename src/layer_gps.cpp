@@ -872,7 +872,7 @@ void GPSSession::set_gps_device_info(const QString & info)
 */
 void GPSSession::process_line_for_gps_info(const char * line)
 {
-	if (strstr(line, "PRDDAT")) { /* TODO_LATER: there is a very similar code in datasource_gps_progress() */
+	if (strstr(line, "PRDDAT")) { /* TODO_2_LATER: there is a very similar code in datasource_gps_progress() */
 		char **tokens = g_strsplit(line, " ", 0);
 		char info[128];
 		size_t ilen = 0;

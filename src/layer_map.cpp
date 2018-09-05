@@ -667,7 +667,7 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 
 
 
-#ifdef K_TODO_LATER
+#ifdef TODO_LATER
 void LayerMapInterface::change_param(void * gtk_widget, void * ui_change_values)
 {
 	switch (values->param_id) {

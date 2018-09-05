@@ -1951,7 +1951,7 @@ void Track::marshall(Pickle & pickle)
 		iter++;
 		ntp++;
 	}
-#if K_TODO_LATER
+#if TODO_2_LATER
 	*(unsigned int *)(byte_array->data + intp) = ntp;
 #endif
 
@@ -1959,7 +1959,7 @@ void Track::marshall(Pickle & pickle)
 	pickle.put_string(this->comment);
 	pickle.put_string(this->description);
 	pickle.put_string(this->source);
-	/* TODO_LATER: where is ->type? */
+	/* TODO_2_LATER: where is ->type? */
 }
 
 
@@ -2002,7 +2002,7 @@ Track * Track::unmarshall(Pickle & pickle)
 	new_trk->comment = pickle.take_string();
 	new_trk->description = pickle.take_string();
 	new_trk->source = pickle.take_string();
-	/* TODO_LATER: where is ->type? */
+	/* TODO_2_LATER: where is ->type? */
 #else
 	Track * new_trk = new Track(false);
 #endif
@@ -2039,7 +2039,7 @@ void Track::recalculate_bbox(void)
 	}
 	this->bbox.validate();
 
-	/* TODO_LATER: enable this debug and verify whether it appears only
+	/* TODO_2_LATER: enable this debug and verify whether it appears only
 	   once for a given track during import ("acquire") of the
 	   track from external file. */
 	// qDebug() << "DD" PREFIX << "Recalculated bounds of track:" << this->bbox;
@@ -3078,7 +3078,7 @@ void Track::smooth_it(bool flat)
 {
 	unsigned long n_changed = this->smooth_missing_elevation_data(flat);
 	/* Inform user how much was changed. */
-	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, g_tree->tree_get_main_window());
 }
 
@@ -3175,7 +3175,7 @@ void Track::apply_dem_data_common(bool skip_existing_elevations)
 	unsigned long n_changed = this->apply_dem_data(skip_existing_elevations);
 
 	/* Inform user how much was changed. */
-	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_LATER: verify that "%n" format correctly handles unsigned long. */
+	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
 	Dialog::info(msg, g_tree->tree_get_main_window());
 }
 
@@ -3814,7 +3814,7 @@ void Track::refine_route_cb(void)
 	/* Check size of the route */
 	const int nb = this->get_tp_count();
 	if (nb > 100) {
-		/* TODO_LATER: make the dialog a Warning dialog. */
+		/* TODO_2_LATER: make the dialog a Warning dialog. */
 		if (!Dialog::yes_or_no(tr("Refining a track with many points (%d) is unlikely to yield sensible results. Do you want to Continue?").arg(nb))) {
 			return;
 		}

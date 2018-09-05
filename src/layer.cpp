@@ -203,7 +203,7 @@ void Layer::postconfigure_interfaces(void)
 			   don't care about exact source (config file
 			   or hardcoded value) of the value. */
 
-			/* TODO_LATER: make sure that the value read from Layer Defaults is valid.
+			/* TODO_2_LATER: make sure that the value read from Layer Defaults is valid.
 			   What if LayerDefaults doesn't contain value for given parameter? */
 			qDebug() << "II" << PREFIX << "will call LayerDefaults::get() for param" << param_spec->type_id;
 			param_value = LayerDefaults::get(layer_type, param_spec->name, param_spec->type_id);
@@ -349,7 +349,7 @@ Layer * Layer::unmarshall(Pickle & pickle, Viewport * viewport)
 
 void Layer::marshall_params(Pickle & pickle)
 {
-	/* Store the internal properties first. TODO_LATER: why we put these members here, in "marshall params"? */
+	/* Store the internal properties first. TODO_2_LATER: why we put these members here, in "marshall params"? */
 	pickle.put_raw_object((char *) &this->visible, sizeof (this->visible));
 	pickle.put_string(this->name);
 
@@ -445,7 +445,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 	}
 
 
-	bool must_redraw = false; /* TODO_REALLY: why do we need this flag? */
+	bool must_redraw = false; /* TODO_2_LATER: why do we need this flag? */
 	for (auto iter = iface->parameter_specifications.begin(); iter != iface->parameter_specifications.end(); ++iter) {
 
 		const ParameterSpecification & param_spec = *(iter->second);
@@ -509,7 +509,7 @@ Layer::Layer()
 
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 
-	this->tree_item_type = TreeItemType::LAYER; /* TODO_LATER: re-think initializing parent classes of Layer and TreeItem. */
+	this->tree_item_type = TreeItemType::LAYER; /* TODO_2_LATER: re-think initializing parent classes of Layer and TreeItem. */
 }
 
 

@@ -174,7 +174,7 @@ PropertiesDialog::PropertiesDialog(QString const & title, QWidget * parent_widge
 	this->tabs = new QTabWidget();
 	this->vbox = new QVBoxLayout;
 
-	//this->tabs->setTabBarAutoHide(true); /* TODO_LATER: enable when this method becomes widely available. */
+	//this->tabs->setTabBarAutoHide(true); /* TODO_2_LATER: enable when this method becomes widely available. */
 
 	//this->vbox->addLayout(this->form);
 	this->vbox->addWidget(this->tabs);

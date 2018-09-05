@@ -140,7 +140,7 @@ namespace SlavGPS {
 	class GlobalPoint {
 	public:
 		QPoint point;
-		/* TODO_LATER: add screen number to indicate on which screen this point is present. */
+		/* TODO_2_LATER: add screen number to indicate on which screen this point is present. */
 	};
 
 

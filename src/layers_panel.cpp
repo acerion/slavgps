@@ -411,7 +411,7 @@ void LayersPanel::draw_tree_items(Viewport * viewport, bool highlight_selected, 
 	qDebug() << "II" PREFIX "calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
 	this->toplayer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
 
-	/* K_TODO_LATER: layers panel or tree view or aggregate layer should
+	/* TODO_LATER: layers panel or tree view or aggregate layer should
 	   recognize which layer lays under non-transparent layers,
 	   and don't draw the layer hidden under non-transparent
 	   layer. */

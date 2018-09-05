@@ -375,7 +375,7 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 			gps_dialog->progress_type = GPSTransferType::RTE;
 		}
 
-		if (strstr(line, "PRDDAT")) { /* TODO_LATER: there is a very similar code in process_line_for_gps_info() */
+		if (strstr(line, "PRDDAT")) { /* TODO_2_LATER: there is a very similar code in process_line_for_gps_info() */
 			char **tokens = g_strsplit(line, " ", 0);
 			char info[128];
 		        size_t ilen = 0;

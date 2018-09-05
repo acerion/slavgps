@@ -252,7 +252,7 @@ BabelOptions::BabelOptions(const BabelOptions & other)
    supplied \param trw layer
 
    \param cb: callback that is run upon new data from STDOUT (?).
-   (TODO_LATER: STDERR would be nice since we usually redirect STDOUT)
+   (TODO_2_LATER: STDERR would be nice since we usually redirect STDOUT)
 
    \param cb_data: data passed along to \param cb
 
@@ -809,7 +809,7 @@ bool BabelProcess::run_process(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-	if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
@@ -864,7 +864,7 @@ bool BabelProcess::run_import(void)
 	qDebug() << "II" PREFIX;
 	this->process->waitForFinished(-1);
 
-	if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
@@ -882,7 +882,7 @@ bool BabelProcess::run_export(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-	if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->export_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->export_progress_cb(AcquireProgressCode::Completed, NULL);
@@ -945,7 +945,7 @@ void BabelProcess::read_stdout_cb()
 		this->process->readLine(buffer, sizeof (buffer));
 		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
 
-		if (this->progress_indicator) { /* TODO_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
+		if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 			this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, buffer);
 		} else {
 			this->import_progress_cb(AcquireProgressCode::Completed, buffer);
