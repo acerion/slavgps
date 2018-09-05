@@ -391,6 +391,49 @@ Distance Distance::to_meters(void) const
 
 
 
+QString Distance::to_string(void) const
+{
+	QString result;
+
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	if (this->use_supplementary_distance_unit) {
+		switch (this->supplementary_distance_unit) {
+		case SupplementaryDistanceUnit::Meters:
+			result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			result = INVALID_RESULT_STRING;
+			break;
+		}
+	} else {
+		switch (this->distance_unit) {
+		case DistanceUnit::Kilometres:
+			result = QObject::tr("%1 km").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			break;
+		case DistanceUnit::Miles:
+			result = QObject::tr("%1 miles").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			break;
+		case DistanceUnit::NauticalMiles:
+			result = QObject::tr("%1 NM").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			result = INVALID_RESULT_STRING;
+			break;
+		}
+	}
+
+	return result;
+}
+
+
+
+
 QString Distance::to_nice_string(void) const
 {
 	QString result;

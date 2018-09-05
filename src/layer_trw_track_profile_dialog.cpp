@@ -21,9 +21,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+
+
 
 #include <cmath>
 #include <cstdlib>
@@ -31,7 +37,13 @@
 #include <ctime>
 #include <cassert>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "window.h"
 #include "layer_trw.h"
@@ -115,8 +127,6 @@ static void real_time_label_update(QLabel * label, const Trackpoint * tp);
 
 static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
 static QString get_elevation_grid_label(HeightUnit height_unit, double value);
-static QString get_distance_grid_label(DistanceUnit distance_unit, double value);
-static QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value);
 static QString get_time_grid_label(int interval_index, int value);
 static QString get_time_grid_label_2(time_t interval_value, time_t value);
 static QString get_time_grid_label_3(time_t interval_value, time_t value);
@@ -2060,50 +2070,6 @@ QString get_elevation_grid_label(HeightUnit height_unit, double value)
 
 
 
-QString get_distance_grid_label(DistanceUnit distance_unit, double value)
-{
-	QString result;
-
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		result = QObject::tr("%1 km").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
-		break;
-	case DistanceUnit::Miles:
-		result = QObject::tr("%1 miles").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
-		break;
-	case DistanceUnit::NauticalMiles:
-		result = QObject::tr("%1 NM").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
-		break;
-	default:
-		result = QObject::tr("--");
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-QString get_distance_grid_label_2(DistanceUnit distance_unit, int interval_index, double value)
-{
-	/* TODO_LATER: improve localization of the strings: don't use get_distance_unit_string() */
-	const QString distance_unit_string = get_distance_unit_string(distance_unit);
-
-	QString label;
-	if (interval_index > 4) {
-		label = QObject::tr("%1 %2").arg((unsigned int) value).arg(distance_unit_string);
-	} else {
-		label = QObject::tr("%1 %2").arg(value, 0, 'f', SG_PRECISION_DISTANCE).arg(distance_unit_string);
-	}
-
-	return label;
-}
-
-
-
-
 QString get_time_grid_label(int interval_index, int value)
 {
 	QString result;
@@ -2404,17 +2370,16 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 #endif
 
 	for (int i = first_line; i <= last_line; i++) {
-		const double value = i * this->x_interval_d;
+		const Distance value(i * this->x_interval_d, this->geocanvas.distance_unit);
 
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
-		const int col = this->width * ((value - this->x_min_visible_d) / (this->x_max_visible_d - this->x_min_visible_d));
+		const int col = this->width * ((value.value - this->x_min_visible_d) / (this->x_max_visible_d - this->x_min_visible_d));
 
 		if (col >= 0 && col < this->width) {
-			qDebug() << "      value (inside) =" << value << ", col =" << col;
-			/* TODO_REALLY: take into account magnitude of distance_value and adjust units accordingly. Look at get_distance_grid_label_2. */
-			this->draw_grid_vertical_line(col, get_distance_grid_label(this->geocanvas.distance_unit, value));
+			qDebug() << "      value (inside) =" << value.value << ", col =" << col;
+			this->draw_grid_vertical_line(col, value.to_nice_string());
 		} else {
-			qDebug() << "      value (outside) =" << value << ", col =" << col;
+			qDebug() << "      value (outside) =" << value.value << ", col =" << col;
 		}
 	}
 }
@@ -2465,8 +2430,10 @@ QString ProfileGraph::get_y_grid_label(float value)
 	case GeoCanvasDomain::Elevation:
 		return get_elevation_grid_label(this->geocanvas.height_unit, value);
 
-	case GeoCanvasDomain::Distance:
-		return get_distance_grid_label(this->geocanvas.distance_unit, value);
+	case GeoCanvasDomain::Distance: {
+		const Distance distance(value, this->geocanvas.distance_unit);
+		return distance.to_string();
+	}
 
 	case GeoCanvasDomain::Speed:
 		return get_speed_grid_label(this->geocanvas.speed_unit, value);
@@ -2475,7 +2442,7 @@ QString ProfileGraph::get_y_grid_label(float value)
 		return QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
 
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
 		return "";
 	}
 }

@@ -186,6 +186,12 @@ namespace SlavGPS {
 		   presented as "100 m". */
 		QString to_nice_string(void) const;
 
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance does not influence units
+		   used to present the value. E.g. "0.01" km will
+		   always be presented as "0.01 km", never as "10 m". */
+		QString to_string(void) const;
+
 		bool is_valid(void) const;
 
 		double value = -1.0;
