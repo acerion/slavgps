@@ -65,7 +65,7 @@ using namespace SlavGPS;
    ATM decided it's not essential enough to warrant putting in the preferences. */
 #define GEONAMES_MAX_ENTRIES 20
 
-/* TODO_REALLY: update username in the query string. */
+/* TODO_2_LATER: update username in the query string. */
 #define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%1&south=%2&east=%3&west=%4&lang=%5&maxRows=%6&username=viking"
 
 #define GEONAMES_FEATURE_PATTERN      "\"feature\""

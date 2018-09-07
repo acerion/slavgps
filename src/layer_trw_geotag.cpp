@@ -568,7 +568,7 @@ void GeotagJob::geotag(void)
 
 GeotagJob::~GeotagJob()
 {
-	/* TODO_LATER: is that all that we need to clean up? */
+	/* TODO_REALLY: is that all that we need to clean up? */
 }
 
 

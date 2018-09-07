@@ -183,7 +183,7 @@ bool TreeItem::compare_name(const TreeItem * a, const TreeItem * b)
 
 bool TreeItem::compare_name_descending(const TreeItem * a, const TreeItem * b)
 {
-	/* TODO_LATER: is it '>' or '<'? */
+	/* TODO_REALLY: is it '>' or '<'? */
 	return (a->name > b->name);
 }
 

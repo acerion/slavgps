@@ -53,7 +53,6 @@ namespace SlavGPS {
 
 
 
-	class Layer;
 	class TreeItem;
 	class Viewport;
 	class TreeItem;
@@ -99,17 +98,13 @@ namespace SlavGPS {
 	public:
 		TreeItemListDialog(QString const & title, QWidget * parent = NULL);
 		~TreeItemListDialog();
-		void build_model(const TreeItemListFormat & new_list_format, bool hide_layer_names);
+		void build_model(const TreeItemListFormat & new_list_format);
 
-		static void show_dialog(QString const & title, const TreeItemListFormat & new_list_format, const std::list<TreeItem *> & new_tree_items, Layer * layer);
+		static void show_dialog(QString const & title, const TreeItemListFormat & new_list_format, const std::list<TreeItem *> & new_tree_items, QWidget * parent = NULL);
 
 		std::list<TreeItem *> tree_items;
 
 	private slots:
-		void tree_item_view_cb(void);
-		// void tree_item_select_cb(void);
-		void tree_item_properties_cb(void);
-
 		void accept_cb(void);
 
 	private:

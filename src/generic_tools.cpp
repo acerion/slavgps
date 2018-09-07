@@ -709,7 +709,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	if (layer != this->layer_edit_info->edited_layer) {
-		/* TODO_LATER: these two pointers should be the same, so one of them is redundant. */
+		/* TODO_REALLY: these two pointers should be the same, so one of them is redundant. */
 		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
 	}
 
@@ -732,7 +732,7 @@ ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event
 ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (layer != this->layer_edit_info->edited_layer) {
-		/* TODO_LATER: these two pointers should be the same, so one of them is redundant. */
+		/* TODO_REALLY: these two pointers should be the same, so one of them is redundant. */
 		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
 	}
 

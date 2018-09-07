@@ -1537,7 +1537,7 @@ bool Window::save_on_dirty_flag(void)
 	}
 
 	QMessageBox::StandardButton reply;
-	reply = QMessageBox::question(this, "SlavGPS", /* TODO_REALLY: remove hardcoded program name */
+	reply = QMessageBox::question(this, QCoreApplication::applicationName(),
 				      tr("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
 					 "Do you want to save the changes?").arg(this->get_current_document_file_name()),
 				      QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
@@ -1545,8 +1545,7 @@ bool Window::save_on_dirty_flag(void)
 	if (reply == QMessageBox::No) {
 		return true;
 	} else if (reply == QMessageBox::Yes) {
-		this->menu_file_save_cb();
-		return true;
+		return this->menu_file_save_cb();
 	} else {
 		return false;
 	}
@@ -2726,7 +2725,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	if (save_kmz) {
 		const LatLonBBox bbox = this->viewport->get_bbox();
-		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_LATER: handle returned value. */
+		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_REALLY: handle returned value. */
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
 		if (!pixmap.save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
@@ -3464,10 +3463,9 @@ void Window::import_kmz_file_cb(void)
 	}
 	const QString full_path = selection.at(0);
 
-	std::tuple<KMZOpenStatus, int> ret = kmz_open_file(full_path, this->viewport, this->items_tree);
-	if (std::get<SG_KMZ_OPEN_KML>(ret) != KMZOpenStatus::Success) {
-		/* TODO_LATER convert values from tuple into readable explaination of failure... */
-		Dialog::error(tr("Unable to import %1.").arg(full_path), this);
+	const KMZOpenResult ret = kmz_open_file(full_path, this->viewport, this->items_tree);
+	if (ret.kmz_status != KMZOpenStatus::Success) {
+		Dialog::error(tr("Unable to import %1: %2").arg(full_path).arg(ret.to_string()), this);
 	}
 
 	this->draw_tree_items();

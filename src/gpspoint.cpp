@@ -714,7 +714,7 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 			this->line_altitude = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "unixtime", key_len)) {
-			this->line_timestamp  = SGUtils::c_to_double(value); /* TODO_LATER: is it the best method to use here? */
+			this->line_timestamp  = SGUtils::c_to_double(value); /* TODO_REALLY: is it the best method to use here? */
 			if (this->line_timestamp != NAN) {
 				this->line_has_timestamp = true;
 			}

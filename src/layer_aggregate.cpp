@@ -535,7 +535,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 		}
 
 
-		TreeItemListDialog::show_dialog(tr("List of matching items"), list_format, items_by_date, this);
+		TreeItemListDialog::show_dialog(tr("List of matching items"), list_format, items_by_date, this->get_window());
 	}
 }
 

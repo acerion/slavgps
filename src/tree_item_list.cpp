@@ -67,89 +67,6 @@ extern Tree * g_tree;
 
 
 
-#ifdef TODO_LATER
-/* Instead of hooking automatically on table item selection,
-   this is performed on demand via the specific context menu request. */
-void TreeItemListDialog::tree_item_select(Layer * layer)
-{
-	if (!this->selected_tree_item) {
-		qDebug() << SG_PREFIX_E << "Encountered NULL TreeItem in callback" << __FUNCTION__;
-		return;
-	}
-
-	TreeItem * tree_item = this->selected_tree_item;
-	Layer * parent_layer = tree_item->get_parent_layer();
-
-	if (tree_item && parent_layer) {
-		parent_layer->tree_view->select_and_expose_tree_item(tree_item);
-	} else {
-		qDebug() << SG_PREFIX_E << "Selecting either NULL layer or NULL wp:" << (qintptr) parent_layer << (qintptr) tree_item;
-	}
-}
-#endif
-
-
-
-void TreeItemListDialog::tree_item_properties_cb(void) /* Slot. */
-{
-	if (!this->selected_tree_item) {
-		qDebug() << SG_PREFIX_E << "Encountered NULL TreeItem in callback" << __FUNCTION__;
-		return;
-	}
-
-#ifdef TODO_LATER
-	TreeItem * tree_item = this->selected_tree_item;
-	Layer * parent_layer = tree_item->get_parent_layer();
-
-	if (tree_item->name.isEmpty()) {
-		return;
-	}
-
-	/* Close this dialog to allow interaction with properties window.
-	   Since the properties also allows tree_item manipulations it won't cause conflicts here. */
-	this->accept();
-
-	const std::tuple<bool, bool> result = tree_item_properties_dialog(tree_item, tree_item->name, parent_layer->get_coord_mode(), g_tree->tree_get_main_window());
-	if (std::get<SG_WP_DIALOG_OK>(result)) { /* "OK" pressed in dialog, tree_item's parameters entered in the dialog are valid. */
-
-		if (std::get<SG_WP_DIALOG_NAME>(result)) {
-			/* TreeItem's name has been changed. */
-			parent_layer->get_tree_items_node().propagate_new_tree_item_name(tree_item);
-		}
-
-		parent_layer->get_tree_items_node().set_new_tree_item_icon(tree_item);
-
-		if (parent_layer->visible) {
-			parent_layer->emit_layer_changed("TRW - TreeItem List Dialog - properties");
-		}
-	}
-#endif
-}
-
-
-
-
-void TreeItemListDialog::tree_item_view_cb(void) /* Slot. */
-{
-	if (!this->selected_tree_item) {
-		qDebug() << SG_PREFIX_E << "Encountered NULL TreeItem in callback" << __FUNCTION__;
-		return;
-	}
-#ifdef TODO_LATER
-	TreeItem * tree_item = this->selected_tree_item;
-	Layer * parent_layer = tree_item->get_parent_layer();
-	Viewport * viewport = g_tree->tree_get_main_viewport();
-
-	viewport->set_center_from_coord(tree_item->coord, true);
-	///this->tree_item_select(parent_layer);
-	parent_layer->emit_layer_changed("TRW - TreeItem List Dialog - View");
-#endif
-}
-
-
-
-
-
 
 void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 {
@@ -276,12 +193,10 @@ int TreeItemListDialog::column_id_to_column_idx(TreeItemPropertyID column_id)
 
 
 /**
- * @hide_layer_names:  Don't show the layer names (first column of list) that each tree_item belongs to
- *
- * Create a table of tree_items with corresponding tree_item information.
- * This table does not support being actively updated.
- */
-void TreeItemListDialog::build_model(const TreeItemListFormat & new_list_format, bool hide_layer_names)
+   Create a table of tree_items with corresponding tree_item information.
+   This table does not support being actively updated.
+*/
+void TreeItemListDialog::build_model(const TreeItemListFormat & new_list_format)
 {
 	if (this->tree_items.empty()) {
 		return;
@@ -344,14 +259,7 @@ void TreeItemListDialog::build_model(const TreeItemListFormat & new_list_format,
 		const QList<QStandardItem *> items = (*iter)->get_list_representation(this->list_format);
 		this->model->invisibleRootItem()->appendRow(items);
 	}
-
-#ifdef TODO_LATER
-	if (hide_layer_names) {
-		this->view->sortByColumn(TreeItemPropertyID::TheItem, Qt::SortOrder::AscendingOrder);
-	} else {
-		this->view->sortByColumn(TreeItemPropertyID::ParentLayer, Qt::SortOrder::AscendingOrder);
-	}
-#endif
+	this->view->sortByColumn(TreeItemPropertyID::ParentLayer, Qt::SortOrder::AscendingOrder);
 
 
 	this->setMinimumSize(700, 400);
@@ -374,24 +282,13 @@ void TreeItemListDialog::build_model(const TreeItemListFormat & new_list_format,
 
    Common method for showing a list of tree_items with extended information
 */
-void TreeItemListDialog::show_dialog(QString const & title, const TreeItemListFormat & new_list_format, const std::list<TreeItem *> & items, Layer * layer)
+void TreeItemListDialog::show_dialog(QString const & title, const TreeItemListFormat & new_list_format, const std::list<TreeItem *> & items, QWidget * parent)
 {
-	TreeItemListDialog dialog(title, layer->get_window());
+	TreeItemListDialog dialog(title, parent);
 
-	dialog.tree_items.clear();
-#ifdef TODO_LATER
-	if (layer->type == LayerType::TRW) {
-		((LayerTRW *) layer)->get_tree_items_list(dialog.tree_items);
-	} else if (layer->type == LayerType::Aggregate) {
-		((LayerAggregate *) layer)->get_tree_items_list(dialog.tree_items);
-	} else {
-		assert (0);
-	}
-#else
 	dialog.tree_items = items;
-#endif
 
-	dialog.build_model(new_list_format, layer->type != LayerType::Aggregate);
+	dialog.build_model(new_list_format);
 	dialog.exec();
 }
 

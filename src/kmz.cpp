@@ -367,13 +367,13 @@ static bool parse_kml(const char * buffer, int len, char ** name, char ** image,
    @viewport
    @panel - the panel that the converted KMZ will be stored in
 
-   @return tuple <KMZOpenStatus::Success, ...> on success,
-   @return tuple <KMZOpenStatus::ZipError, zip-err-code> on zip errors,
-   @return tuple <KMZOpenStatus::some-value, ...> on KMZ errors.
+   @return <KMZOpenStatus::Success, ...> on success,
+   @return <KMZOpenStatus::ZipError, zip-err-code> on zip errors,
+   @return <KMZOpenStatus::some-value, ...> on KMZ errors.
 */
-std::tuple<KMZOpenStatus, int> SlavGPS::kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel)
+KMZOpenResult SlavGPS::kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel)
 {
-	std::tuple<KMZOpenStatus, int> ret;
+	KMZOpenResult ret;
 
 #ifdef HAVE_ZIP_H
 	/* Older libzip compatibility: */
@@ -388,17 +388,18 @@ std::tuple<KMZOpenStatus, int> SlavGPS::kmz_open_file(const QString & file_full_
 	/* Unzip. */
 	int zip_status = ZIP_ER_OK;
 	zip_t * archive = zip_open(file_full_path, ZIP_RDONLY, &zip_status);
-	std::get<SG_KMZ_OPEN_ZIP>(ret) = zip_status;
+	ret.zip_status = zip_status;
+
 	if (!archive) {
 		qDebug() << SG_PREFIX_W << "Unable to open archive" << file_full_path << "Error code =" << zip_status;
-		std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::ZipError;
+		ret.kmz_status = KMZOpenStatus::ZipError;
 		return ret;
 	}
 
 	zip_int64_t zindex = zip_name_locate(archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS);
 	if (zindex == -1) {
 		fprintf(stderr, "WARNING: Unable to find doc.kml\n");
-		std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::KMZOpenStatus::NoDoc; /* TODO_REALLY: in original viking code we didn't return a "no doc.kml" status here, even though there was a status value defined for this event. */
+		ret.kmz_status = KMZOpenStatus::KMZOpenStatus::NoDoc; /* TODO_REALLY: in original viking code we didn't return a "no doc.kml" status here, even though there was a status value defined for this event. */
 		goto kmz_cleanup;
 	}
 
@@ -408,7 +409,7 @@ std::tuple<KMZOpenStatus, int> SlavGPS::kmz_open_file(const QString & file_full_
 		char *buffer = (char *) malloc(zs.size);
 		int len = zip_fread(zf, buffer, zs.size);
 		if (len != zs.size) {
-			std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::KMZOpenStatus::NoDoc;
+			ret.kmz_status = KMZOpenStatus::KMZOpenStatus::NoDoc;
 			free(buffer);
 			fprintf(stderr, "WARNING: Unable to read doc.kml from zip file\n");
 			goto kmz_cleanup;
@@ -433,7 +434,7 @@ std::tuple<KMZOpenStatus, int> SlavGPS::kmz_open_file(const QString & file_full_
 					char *ibuffer = (char *) malloc(zs.size);
 					int ilen = zip_fread(zfi, ibuffer, zs.size);
 					if (ilen != zs.size) {
-						std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::NoImage;
+						ret.kmz_status = KMZOpenStatus::NoImage;
 						fprintf(stderr, "WARNING: Unable to read %s from zip file\n", image);
 					} else {
 						const QString image_file = Util::write_tmp_file_from_bytes(ibuffer, ilen);
@@ -442,9 +443,9 @@ std::tuple<KMZOpenStatus, int> SlavGPS::kmz_open_file(const QString & file_full_
 							delete pixmap;
 							pixmap = NULL;
 							qDebug() << "WW: KMZ: failed to load pixmap from" << image_file;
-							std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::ImageFileProblem;
+							ret.kmz_status = KMZOpenStatus::ImageFileProblem;
 						} else {
-							std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::Success;
+							ret.kmz_status = KMZOpenStatus::Success;
 							Util::remove(image_file);
 						}
 					}
@@ -452,10 +453,10 @@ std::tuple<KMZOpenStatus, int> SlavGPS::kmz_open_file(const QString & file_full_
 				}
 				free(image);
 			} else {
-				std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::CantGetImage;
+				ret.kmz_status = KMZOpenStatus::CantGetImage;
 			}
 		} else {
-			std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::CantUnderstandDoc;
+			ret.kmz_status = KMZOpenStatus::CantUnderstandDoc;
 		}
 
 		if (pixmap) {
@@ -478,7 +479,50 @@ kmz_cleanup:
  cleanup:
 	return ret;
 #else
-	std::get<SG_KMZ_OPEN_KML>(ret) = KMZOpenStatus::KMZNotSupported;
+	ret.kmz_status = KMZOpenStatus::KMZNotSupported;
 	return ret;
 #endif
+}
+
+
+
+
+QString KMZOpenResult::to_string(void) const
+{
+	QString result;
+
+	switch (this->kmz_status) {
+	case KMZOpenStatus::KMZNotSupported:
+		result = QObject::tr("KMZ file format not supported");
+		break;
+	case KMZOpenStatus::Success:
+		result = QObject::tr("Success");
+		break;
+	case KMZOpenStatus::ZipError:
+		result = QObject::tr("Zip Error: %1").arg(this->zip_status);
+		break;
+	case KMZOpenStatus::NoDoc:
+		result = QObject::tr("Can't find doc.kml in KMZ file");
+		break;
+	case KMZOpenStatus::CantUnderstandDoc:
+		result = QObject::tr("Can't parse doc.kml");
+		break;
+	case KMZOpenStatus::NoBounds:
+		result = QObject::tr("Can't extract bounds from KML file");
+		break;
+	case KMZOpenStatus::NoImage:
+		result = QObject::tr("Can't find image file in KML file");
+		break;
+	case KMZOpenStatus::CantGetImage:
+		result = QObject::tr("Can't extract image file from KML file");
+		break;
+	case KMZOpenStatus::ImageFileProblem:
+		result = QObject::tr("Can't process image file");
+		break;
+	default:
+		result = QObject::tr("Unknown problem");
+		break;
+	}
+
+	return result;
 }

@@ -44,6 +44,7 @@
 
 #include "goto_tool_xml.h"
 #include "vikutils.h"
+#include "globals.h"
 
 
 
@@ -68,6 +69,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "GoTo XML"
 #define PREFIX ": GoTo XML:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -295,10 +297,8 @@ QString GotoToolXML::get_url_format(void) const
 
 bool GotoToolXML::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 {
-	QFile file2(file.fileName()); /* TODO_REALLY: why do we need the intermediate file here? */
-
 	QXmlSimpleReader xml_reader;
-	QXmlInputSource source(&file2);
+	QXmlInputSource source(&file);
 	xml_reader.setContentHandler(this->xml_handler);
 	xml_reader.setErrorHandler(this->xml_handler);
 
@@ -308,7 +308,7 @@ bool GotoToolXML::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 
 
 	if (!xml_reader.parse(&source)) {
-		qDebug() << "EE" PREFIX << "failed to parse xml file";
+		qDebug() << SG_PREFIX_E << "Failed to parse xml file";
 		return false;
 	}
 

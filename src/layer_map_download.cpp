@@ -211,7 +211,7 @@ void MapDownloadJob::run(void)
 			}
 
 			if (this->refresh_display && this->map_layer_alive) {
-				/* TODO_LATER: check if downloaded tile is visible in viewport.
+				/* TODO_REALLY: check if downloaded tile is visible in viewport.
 				   Otherwise redraw of viewport is not needed. */
 				this->layer->emit_layer_changed("Set of tiles for Map Layer has been updated after tile download");
 			}

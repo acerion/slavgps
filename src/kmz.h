@@ -54,14 +54,19 @@ namespace SlavGPS {
 
 
 
-	enum {
-		SG_KMZ_OPEN_KML = 0,
-		SG_KMZ_OPEN_ZIP = 1
+
+	class KMZOpenResult {
+	public:
+		KMZOpenStatus kmz_status;
+		int zip_status = 0;
+		QString to_string(void) const;
 	};
 
 
+
+
 	int kmz_save_file(const QPixmap & pixmap, const QString & file_full_path, double north, double east, double south, double west);
-	std::tuple<KMZOpenStatus, int> kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel);
+	KMZOpenResult kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel);
 
 
 
