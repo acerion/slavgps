@@ -173,7 +173,7 @@ std::list<Waypoint *> LayerTRWWaypoints::get_sorted_by_name(void) const
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		result.push_back(*iter);
 	}
-	result.sort(TreeItem::compare_name);
+	result.sort(TreeItem::compare_name_ascending);
 
 	return result;
 }

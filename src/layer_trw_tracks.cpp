@@ -330,7 +330,7 @@ std::list<Track *> LayerTRWTracks::get_sorted_by_name(const Track * exclude) con
 	}
 
 	/* Sort list of names alphabetically. */
-	result.sort(TreeItem::compare_name);
+	result.sort(TreeItem::compare_name_ascending);
 
 	return result;
 }
@@ -980,7 +980,7 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 	qDebug() << "----" PREFIX "detach items - end";
 
 	qDebug() << "----" PREFIX "sort items - begin";
-	this->children_list.sort(TreeItem::compare_name_descending);
+	this->children_list.sort(TreeItem::compare_name_ascending);
 	qDebug() << "----" PREFIX "sort items - end";
 
 	qDebug() << "----" PREFIX "attach items - begin";

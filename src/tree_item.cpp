@@ -173,9 +173,9 @@ bool TreeItem::is_in_tree(void) const
 
 
 
-bool TreeItem::compare_name(const TreeItem * a, const TreeItem * b)
+bool TreeItem::compare_name_ascending(const TreeItem * a, const TreeItem * b)
 {
-	return a->name < b->name;
+	return (a->name < b->name);
 }
 
 
@@ -183,16 +183,7 @@ bool TreeItem::compare_name(const TreeItem * a, const TreeItem * b)
 
 bool TreeItem::compare_name_descending(const TreeItem * a, const TreeItem * b)
 {
-	/* TODO_REALLY: is it '>' or '<'? */
-	return (a->name > b->name);
-}
-
-
-
-
-bool TreeItem::compare_name_ascending(const TreeItem * a, const TreeItem * b)
-{
-	return !TreeItem::compare_name_descending(a, b);
+	return !TreeItem::compare_name_ascending(a, b);
 }
 
 

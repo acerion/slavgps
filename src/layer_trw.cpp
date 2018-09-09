@@ -2833,7 +2833,7 @@ void LayerTRW::merge_with_other_cb(void)
 		return;
 	}
 	/* Sort alphabetically for user presentation. */
-	merge_candidates.sort(TreeItem::compare_name);
+	merge_candidates.sort(TreeItem::compare_name_ascending);
 
 	std::list<Track *> merge_list = a_dialog_select_from_list(merge_candidates,
 								  ListSelectionMode::MultipleItems,

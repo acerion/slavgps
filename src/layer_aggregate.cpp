@@ -421,7 +421,7 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
 		t_view->detach_tree_item(*iter);
 	}
-	this->children->sort(TreeItem::compare_name_descending);
+	this->children->sort(TreeItem::compare_name_ascending);
 	this->add_children_to_tree();
 
 	this->blockSignals(false);
@@ -441,7 +441,7 @@ void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
 		t_view->detach_tree_item(*iter);
 	}
-	this->children->sort(TreeItem::compare_name_ascending);
+	this->children->sort(TreeItem::compare_name_descending);
 	this->add_children_to_tree();
 
 	this->blockSignals(false);

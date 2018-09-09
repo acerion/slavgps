@@ -207,8 +207,9 @@ namespace SlavGPS {
 		QString get_type_ui_label(void) const;
 
 
-		static bool compare_timestamp_descending(const Layer * first, const Layer * second);
-		static bool compare_timestamp_ascending(const Layer * first, const Layer * second);
+		static bool compare_timestamp_ascending(const Layer * first, const Layer * second);  /* Ascending: 1 -> 10 */
+		static bool compare_timestamp_descending(const Layer * first, const Layer * second); /* Descending: 10 -> 1 */
+
 
 		virtual std::list<TreeItem *> get_items_by_date(const QDate & search_date) const;
 
