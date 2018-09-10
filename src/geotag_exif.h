@@ -29,6 +29,7 @@
 
 
 #include "coord.h"
+#include "measurements.h"
 
 
 
@@ -53,7 +54,7 @@ namespace SlavGPS {
 
 		static LatLon get_position(const QString & file_full_path);
 
-		static int write_exif_gps(const QString & file_full_path, const Coord & coord, double alt, bool no_change_mtime);
+		static int write_exif_gps(const QString & file_full_path, const Coord & coord, const Altitude & alt, bool no_change_mtime);
 	};
 
 

@@ -286,7 +286,7 @@ Waypoint * GeotagExif::create_waypoint_from_file(const QString & file_full_path,
 			/* Location. */
 			wp->coord = Coord(LatLon(lat, lon), coord_mode);
 			/* Altitude. */
-			wp->altitude = alt;
+			wp->altitude = Altitude(alt, HeightUnit::Metres); /* GPS info -> metres. */
 
 			wp->name = geotag_get_exif_name(exif_data);
 
@@ -370,7 +370,7 @@ QString GeotagExif::get_exif_date_from_file(const QString & file_full_path, bool
 
 
 
-static int write_exif_gps_data(const QString & file_full_path, const Coord & coord, double alt)
+static int write_exif_gps_data(const QString & file_full_path, const Coord & coord, const Altitude & alt)
 {
 	int result = 0;
 
@@ -390,7 +390,7 @@ static int write_exif_gps_data(const QString & file_full_path, const Coord & coo
 
 	const LatLon lat_lon = coord.get_latlon();
 
-	if (!geotag_exif_set_gps_info(exif_data, lat_lon.lat, lat_lon.lon, alt)) {
+	if (!geotag_exif_set_gps_info(exif_data, lat_lon.lat, lat_lon.lon, alt.get_value())) {
 		result = 1; /* Failed. */
 		return result;
 	}
@@ -411,7 +411,7 @@ static int write_exif_gps_data(const QString & file_full_path, const Coord & coo
 
    Returns: A value indicating success: 0, or some other value for failure.
 */
-int GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coord, double alt, bool no_change_mtime)
+int GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coord, const Altitude & alt, bool no_change_mtime)
 {
 	/* Save mtime for later use. */
 	struct stat stat_save;

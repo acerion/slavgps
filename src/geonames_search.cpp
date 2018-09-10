@@ -100,7 +100,7 @@ Waypoint * Geoname::create_waypoint(CoordMode coord_mode) const
 
 	wp->visible = true;
 	wp->coord = Coord(this->lat_lon, coord_mode);
-	wp->altitude = this->elevation;
+	wp->altitude = Altitude(this->elevation, HeightUnit::Metres);
 	wp->set_comment(this->comment);
 	wp->set_description(this->desc);
 	wp->set_name(this->name);

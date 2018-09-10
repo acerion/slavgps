@@ -377,17 +377,7 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit)
 	bool visible = trw->visible && wp->visible;
 	visible = visible && trw->get_waypoints_visibility();
 
-	double alt = wp->altitude;
-	switch (height_unit) {
-	case HeightUnit::Metres: /* No need to convert. */
-		break;
-	case HeightUnit::Feet:
-		alt = VIK_METERS_TO_FEET(alt);
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-		break;
-	}
+	const Altitude display_alt = wp->altitude.convert_to_unit(height_unit);
 
 
 	QList<QStandardItem *> items;
@@ -430,7 +420,7 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit)
 	/* Elevation */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue((int) round(alt));
+	variant = QVariant::fromValue(display_alt.value_to_string());
 	item->setData(variant, RoleLayerData);
 	items << item;
 

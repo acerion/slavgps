@@ -413,7 +413,7 @@ Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QStr
 {
 	Waypoint * wp = new Waypoint();
 	wp->visible = this->line_visible;
-	wp->altitude = this->line_altitude;
+	wp->altitude = Altitude(this->line_altitude, HeightUnit::Metres); /* GPS -> metes. */
 	wp->has_timestamp = this->line_has_timestamp;
 	wp->timestamp = this->line_timestamp;
 	wp->name = this->line_name;
@@ -785,8 +785,8 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), tmp_name);
 		free(tmp_name);
 
-		if (wp->altitude != VIK_DEFAULT_ALTITUDE) {
-			fprintf(file, " altitude=\"%s\"", SGUtils::double_to_c(wp->altitude).toUtf8().constData());
+		if (wp->altitude.is_valid()) {
+			fprintf(file, " altitude=\"%s\"", wp->altitude.value_to_string_for_file().toUtf8().constData());
 		}
 		if (wp->has_timestamp) {
 			fprintf(file, " unixtime=\"%ld\"", wp->timestamp);

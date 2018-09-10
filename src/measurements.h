@@ -204,6 +204,43 @@ namespace SlavGPS {
 	};
 
 
+
+
+	class Altitude {
+	public:
+		Altitude() {};
+		Altitude(double value, HeightUnit height_unit);
+
+		void set_value(double value); /* Set value, don't change unit. */
+		double get_value(void) const;
+
+		bool is_valid(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   saving the value in gpx or vik file. */
+		const QString value_to_string_for_file(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   presentation to user. */
+		const QString value_to_string(void) const;
+
+		Altitude convert_to_unit(HeightUnit height_unit) const;
+
+	private:
+		double value = NAN;
+		bool valid = false;
+		HeightUnit unit;
+	};
+
+
+
+
 }
 
 

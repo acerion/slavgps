@@ -462,7 +462,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_wpt_ele:
-		c_wp->altitude = SGUtils::c_to_double(c_cdata->str);
+		c_wp->altitude = Altitude(SGUtils::c_to_double(c_cdata->str), HeightUnit::Metres);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -887,8 +887,8 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 		fprintf(f, "  <name>%s</name>\n", entitize(wp->name).toUtf8().constData());
 	}
 
-	if (wp->altitude != VIK_DEFAULT_ALTITUDE) {
-		fprintf(f, "  <ele>%s</ele>\n", SGUtils::double_to_c(wp->altitude).toUtf8().constData());
+	if (wp->altitude.is_valid()) {
+		fprintf(f, "  <ele>%s</ele>\n", wp->altitude.value_to_string_for_file().toUtf8().constData());
 	}
 
 	if (wp->has_timestamp) {

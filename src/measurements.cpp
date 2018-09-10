@@ -19,15 +19,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <QDebug>
-
 
 
 
 #include <cmath>
 
+
+
+
+#include <QDebug>
+
+
+
+
 #include "measurements.h"
 #include "preferences.h"
+#include "vikutils.h"
 
 
 
@@ -489,4 +496,108 @@ QString Distance::to_nice_string(void) const
 bool Distance::is_valid(void) const
 {
 	return this->valid;
+}
+
+
+
+
+Altitude::Altitude(double new_value, HeightUnit height_unit)
+{
+	this->value = new_value;
+	this->valid = (!std::isnan(new_value)) && new_value != VIK_DEFAULT_ALTITUDE;
+	this->unit = height_unit;
+}
+
+
+
+
+bool Altitude::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+
+const QString Altitude::value_to_string_for_file(void) const
+{
+	return SGUtils::double_to_c(this->value);
+}
+
+
+
+
+const QString Altitude::value_to_string(void) const
+{
+	QString result;
+	if (this->valid) {
+		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+	}
+	return result;
+}
+
+
+
+
+double Altitude::get_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+void Altitude::set_value(double new_value)
+{
+	this->value = new_value;
+	this->valid = (!std::isnan(new_value)) && new_value != VIK_DEFAULT_ALTITUDE;
+	/* Don't change unit. */
+}
+
+
+
+
+Altitude Altitude::convert_to_unit(HeightUnit target_height_unit) const
+{
+	Altitude output;
+	output.unit = target_height_unit;
+
+	switch (this->unit) {
+	case HeightUnit::Metres:
+		switch (target_height_unit) {
+		case HeightUnit::Metres: /* No need to convert. */
+			output.value = this->value;
+			break;
+		case HeightUnit::Feet:
+			output.value = VIK_METERS_TO_FEET(this->value);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_height_unit;
+			output.value = NAN;
+			break;
+		}
+		break;
+	case HeightUnit::Feet:
+		switch (target_height_unit) {
+		case HeightUnit::Metres:
+			output.value = VIK_FEET_TO_METERS(this->value);
+			break;
+		case HeightUnit::Feet:
+			/* No need to convert. */
+			output.value = this->value;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_height_unit;
+			output.value = NAN;
+			break;
+		}
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid source altitude unit" << (int) this->unit;
+		output.value = NAN;
+		break;
+	}
+
+	output.valid = (!std::isnan(output.value)) && output.value != VIK_DEFAULT_ALTITUDE;
+
+	return output;
 }

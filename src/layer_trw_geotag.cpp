@@ -173,7 +173,7 @@ public:
 	/* Store answer from interpolation for an image. */
 	bool found_match = false;
 	Coord coord;
-	double altitude = 0;
+	Altitude altitude;
 	/* If anything has changed. */
 	bool redraw = false;
 };
@@ -319,6 +319,8 @@ void GeotagJob::geotag_track(Track * trk2)
 		return;
 	}
 
+	const HeightUnit height_unit = HeightUnit::Metres;
+
 	for (auto iter = trk2->begin(); iter != trk2->end(); iter++) {
 
 		Trackpoint * tp = *iter;
@@ -326,7 +328,7 @@ void GeotagJob::geotag_track(Track * trk2)
 		/* Is it exactly this point? */
 		if (this->PhotoTime == tp->timestamp) {
 			this->coord = tp->coord;
-			this->altitude = tp->altitude;
+			this->altitude = Altitude(tp->altitude, height_unit);
 			this->found_match = true;
 			break;
 		}
@@ -386,7 +388,7 @@ void GeotagJob::geotag_track(Track * trk2)
 			this->coord = Coord(ll_result, CoordMode::LATLON);
 
 			/* Interpolate elevation. */
-			this->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);
+			this->altitude = Altitude(tp->altitude + ((tp_next->altitude - tp->altitude) * scale), height_unit);
 			break;
 		}
 	}

@@ -127,18 +127,11 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 #endif
 
 		QString alt;
-		const HeightUnit height_unit = Preferences::get_unit_height();
-		switch (height_unit) {
-		case HeightUnit::Metres:
-			alt = QString("%1").arg(wp->altitude);
-			break;
-		case HeightUnit::Feet:
-			alt = QString("%1").arg(VIK_METERS_TO_FEET(wp->altitude));
-			break;
-		default:
-			alt = "???";
-			qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-			break;
+		const HeightUnit user_height_unit = Preferences::get_unit_height();
+		Altitude alt_dialog;
+		if (wp->altitude.is_valid()) {
+			/* Waypoint stored altitude in meters. */
+			alt_dialog = wp->altitude.convert_to_unit(user_height_unit);
 		}
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_ALT, SGVariant(alt)));
 
@@ -228,20 +221,10 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 		/* Always store Altitude in metres. */
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_ALT]);
-		const HeightUnit height_unit = Preferences::get_unit_height();
-		switch (height_unit) {
-		case HeightUnit::Metres:
-			wp->altitude = param_value.get_altitude();
-			break;
-		case HeightUnit::Feet:
-			wp->altitude = VIK_FEET_TO_METERS(param_value.get_altitude());
-			break;
-		default:
-			wp->altitude = 0;
-			qDebug() << SG_PREFIX_E << "invalid height unit" << (int) height_unit;
-			break;
-		}
-
+		const HeightUnit current_height_unit = Preferences::get_unit_height();
+		const HeightUnit target_height_unit = HeightUnit::Metres;
+		const Altitude dialog_alt = Altitude(param_value.get_altitude(), current_height_unit);
+		wp->altitude = dialog_alt.convert_to_unit(target_height_unit);
 
 
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_COMMENT]);

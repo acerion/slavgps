@@ -202,15 +202,18 @@ void Waypoint::set_symbol(const QString & new_symbol_name)
  */
 bool Waypoint::apply_dem_data(bool skip_existing)
 {
-	bool updated = false;
-	if (!(skip_existing && altitude != VIK_DEFAULT_ALTITUDE)) { /* TODO_REALLY: check this condition. */
-		int16_t elev = DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
-		if (elev != DEM_INVALID_ELEVATION) {
-			altitude = (double) elev;
-			updated = true;
-		}
+	if (this->altitude.is_valid() && skip_existing) {
+		return false;
 	}
-	return updated;
+
+	const int16_t elev = DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
+	if (elev == DEM_INVALID_ELEVATION) {
+		return true;
+	}
+
+	this->altitude.set_value((double) elev);
+
+	return true;
 }
 
 
@@ -543,7 +546,7 @@ void Waypoint::open_astro_cb(void)
 		char *lat_str = convert_to_dms(ll.lat);
 		char *lon_str = convert_to_dms(ll.lon);
 		char alt_buf[20];
-		snprintf(alt_buf, sizeof(alt_buf), "%d", (int) round(this->altitude));
+		snprintf(alt_buf, sizeof(alt_buf), "%d", (int) round(this->altitude.get_value()));
 		parent_layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
 		free(lat_str);
 		free(lon_str);
