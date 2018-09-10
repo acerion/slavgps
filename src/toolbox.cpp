@@ -316,37 +316,43 @@ QCursor const * Toolbox::get_cursor_release(QString const & tool_id)
 
 
 
+
 /* A common set of boring tests done before passing a layer to a
    toolbox is possible/valid. */
-#define handle_mouse_event_common()					\
-	if (!this->active_tool) {					\
-		qDebug() << SG_PREFIX_E << "no active tool";		\
-		return;							\
-	}								\
-									\
-	Layer * layer = this->window->items_tree->get_selected_layer();	\
-	if (!layer) {							\
-		qDebug() << SG_PREFIX_E << "no layer";			\
-		return;							\
-	}								\
-									\
-									\
-	LayerType layer_tool_type = this->active_tool->layer_type;	\
-	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */	\
-	    && layer_tool_type != LayerType::Max) {    /* Click received for something other than generic tool. */ \
-									\
-		qDebug() << SG_PREFIX_E << "layer type does not match";	\
-		return;							\
-	}								\
+Layer * Toolbox::handle_mouse_event_common(void)
+{
+	if (!this->active_tool) {
+		qDebug() << SG_PREFIX_E << "No active tool";
+		return NULL;
+	}
+
+	Layer * layer = this->window->items_tree->get_selected_layer();
+	if (!layer) {
+		qDebug() << SG_PREFIX_E << "No layer";
+		return NULL;
+	}
 
 
+	LayerType layer_tool_type = this->active_tool->layer_type;
+	if (layer_tool_type != layer->type             /* Click received for layer other than current layer. */
+	    && layer_tool_type != LayerType::Max) {    /* Click received for something other than generic tool. */
+
+		qDebug() << SG_PREFIX_E << "Layer type does not match";
+		return NULL;
+	}
+
+	return layer;
+}
 
 
 
 
 void Toolbox::handle_mouse_click(QMouseEvent * event)
 {
-	handle_mouse_event_common();
+	Layer * layer = this->handle_mouse_event_common();
+	if (NULL == layer) {
+		return;
+	}
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 
@@ -361,7 +367,10 @@ void Toolbox::handle_mouse_click(QMouseEvent * event)
 
 void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 {
-	handle_mouse_event_common();
+	Layer * layer = this->handle_mouse_event_common();
+	if (NULL == layer) {
+		return;
+	}
 
 	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO_2_LATER: move this into click() method. */
 	this->active_tool->handle_mouse_double_click(layer, event);
@@ -374,7 +383,10 @@ void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 
 void Toolbox::handle_mouse_move(QMouseEvent * event)
 {
-	handle_mouse_event_common();
+	Layer * layer = this->handle_mouse_event_common();
+	if (NULL == layer) {
+		return;
+	}
 
 	if (ToolStatus::AckGrabFocus == this->active_tool->handle_mouse_move(layer, event)) {
 #ifdef K_FIXME_RESTORE
@@ -390,7 +402,10 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 
 void Toolbox::handle_mouse_release(QMouseEvent * event)
 {
-	handle_mouse_event_common();
+	Layer * layer = this->handle_mouse_event_common();
+	if (NULL == layer) {
+		return;
+	}
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 

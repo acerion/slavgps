@@ -815,7 +815,7 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 
 
 
-bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * layer_tool)
+bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)
 {
 	if (this->children->empty()) {
 		return false;
@@ -838,9 +838,9 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 		}
 
 		if (event->flags() & Qt::MouseEventCreatedDoubleClick) {
-			has_been_handled = (*iter)->handle_select_tool_double_click(event, viewport, layer_tool);
+			has_been_handled = (*iter)->handle_select_tool_double_click(event, viewport, select_tool);
 		} else {
-			has_been_handled = (*iter)->handle_select_tool_click(event, viewport, layer_tool);
+			has_been_handled = (*iter)->handle_select_tool_click(event, viewport, select_tool);
 		}
 		if (has_been_handled) {
 			/* A Layer has handled the event. */
@@ -893,10 +893,10 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 
 
 
-bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * layer_tool)
+bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)
 {
 	/* Double-click will be handled by checking event->flags() in the function below, and calling proper handling method. */
-	return this->handle_select_tool_click(event, viewport, layer_tool);
+	return this->handle_select_tool_click(event, viewport, select_tool);
 }
 
 

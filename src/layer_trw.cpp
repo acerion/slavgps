@@ -1490,7 +1490,8 @@ QString LayerTRW::get_tooltip(void) const
 		.arg(tracks_info)
 		.arg(routes_info);
 
-	return result;
+	//return result;
+	return QString("%1 %2").arg(result).arg((long) this);
 }
 
 

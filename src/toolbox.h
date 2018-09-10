@@ -90,6 +90,8 @@ namespace SlavGPS {
 		void handle_mouse_release(QMouseEvent * event);
 
 	private:
+		Layer * handle_mouse_event_common(void);
+
 		LayerToolContainer tools; /* A map: tool's globally-unique ID -> pointer to the tool. */
 		std::vector<QActionGroup *> action_groups;
 

@@ -49,32 +49,6 @@ namespace SlavGPS {
 
 
 	/*
-	  Class holding information about editing process currently happening to a layer.
-
-	  Currently this information is related only to editing of TRW's sublayers.
-	  To be more precise: to moving points constituting TRW's sublayers: waypoints or trackpoint.
-	  The points can be selected by either TRW-specific edit tools, or by generic select tool.
-	*/
-	class LayerEditInfo {
-	public:
-		LayerEditInfo();
-
-		Layer * edited_layer = NULL;
-		bool holding = false;
-		bool moving = false;
-		QString type_id; /* WAYPOINT or TRACK or ROUTE. */
-		QPen pen;
-
-		bool item_is_right_clicked = false;
-	};
-
-
-
-
-
-
-
-	/*
 	  I think most of these are ignored, returning GRAB_FOCUS grabs the
 	  focus for mouse move, mouse click, release always grabs
 	  focus. Focus allows key presses to be handled.
@@ -148,7 +122,17 @@ namespace SlavGPS {
 		Window * window = NULL;
 		Viewport * viewport = NULL;
 
-		LayerEditInfo * layer_edit_info = NULL;
+
+		/*
+		  Fields holding information about editing process currently happening to a layer.
+
+		  Currently this information is related only to editing of TRW's sublayers.
+		  To be more precise: to moving points constituting TRW's sublayers: waypoints or trackpoint.
+		  The points can be selected by either TRW-specific edit tools, or by generic select tool.
+		*/
+		bool layer_edit_moving = false;
+		bool layer_edit_holding = false;
+
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
 

@@ -525,7 +525,7 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 
 QString Layer::get_tooltip(void) const
 {
-	return this->interface->ui_labels.layer_type;
+	return QString("%1 %2").arg(this->interface->ui_labels.layer_type).arg((long) this);
 }
 
 

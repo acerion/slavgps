@@ -94,8 +94,8 @@ namespace SlavGPS {
 
 		Layer * get_top_visible_layer_of_type(LayerType layer_type);
 		void get_all_layers_of_type(std::list<const Layer *> & layers, LayerType layer_type, bool include_invisible);
-		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
-		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
+		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
 
 		int get_child_layers_count(void) const;
 		std::list<Layer const *> get_child_layers(void) const;

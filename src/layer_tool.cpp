@@ -68,8 +68,6 @@ LayerTool::~LayerTool()
 {
 	delete this->cursor_click;
 	delete this->cursor_release;
-
-	delete this->layer_edit_info; /* This may not be the best place to do this delete (::layer_edit_info is alloced in subclasses)... */
 }
 
 
@@ -94,14 +92,12 @@ static bool tool_sync_done = true; /* TODO_LATER: get rid of this global variabl
 
 void LayerTool::remember_selection(const ScreenPos & screen_pos)
 {
-	assert (this->layer_edit_info);
-
 	/* We have clicked on an item, and we are holding it.
 	   We will hold it during move, until we release it. */
-	this->layer_edit_info->holding = true;
+	this->layer_edit_holding = true;
 
 	/* We have just clicked the item, we aren't moving the cursor yet. */
-	this->layer_edit_info->moving = false;
+	this->layer_edit_moving = false;
 }
 
 
@@ -109,10 +105,8 @@ void LayerTool::remember_selection(const ScreenPos & screen_pos)
 
 void LayerTool::perform_move(const ScreenPos & new_pos)
 {
-	assert (this->layer_edit_info);
-
 	/* We are in the process of moving the pressed cursor. */
-	this->layer_edit_info->moving = true;
+	this->layer_edit_moving = true;
 
 	if (tool_sync_done) {
 		this->viewport->sync();
@@ -125,24 +119,13 @@ void LayerTool::perform_move(const ScreenPos & new_pos)
 
 bool LayerTool::perform_release(void)
 {
-	assert (this->layer_edit_info);
-
 	/* Did we perform release of cursor after holding cursor down or moving pressed down cursor? */
-	const bool something_released = this->layer_edit_info->holding || this->layer_edit_info->moving;
+	const bool something_released = this->layer_edit_holding || this->layer_edit_moving;
 
-	this->layer_edit_info->holding = false;
-	this->layer_edit_info->moving = false;
+	this->layer_edit_holding = false;
+	this->layer_edit_moving = false;
 
 	return something_released;
-}
-
-
-
-
-LayerEditInfo::LayerEditInfo()
-{
-	this->pen.setColor(QColor("black"));
-	this->pen.setWidth(2);
 }
 
 

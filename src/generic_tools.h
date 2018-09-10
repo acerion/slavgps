@@ -114,6 +114,8 @@ namespace SlavGPS {
 		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 
+		QString selected_tree_item_type_id;
+
 	private:
 		/* When a mouse click happens and some layer handles the click,
 		   it's possible to start to move the selected item belonging to the layer. */

@@ -600,8 +600,6 @@ LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : Layer
 
 	this->cursor_click = new QCursor(Qt::ArrowCursor);
 	this->cursor_release = new QCursor(Qt::ArrowCursor);
-
-	this->layer_edit_info = new LayerEditInfo;
 }
 
 
@@ -611,8 +609,6 @@ LayerToolSelect::~LayerToolSelect()
 {
 	delete this->cursor_click;
 	delete this->cursor_release;
-
-	delete this->layer_edit_info;
 }
 
 
@@ -708,13 +704,8 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 
 ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	if (layer != this->layer_edit_info->edited_layer) {
-		/* TODO_REALLY: these two pointers should be the same, so one of them is redundant. */
-		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
-	}
-
 	if (this->select_and_move_activated) {
-		if (this->layer_edit_info->edited_layer) {
+		if (layer) {
 			layer->handle_select_tool_move(event, this->viewport, this);
 		}
 	} else {
@@ -731,14 +722,9 @@ ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event
 
 ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	if (layer != this->layer_edit_info->edited_layer) {
-		/* TODO_REALLY: these two pointers should be the same, so one of them is redundant. */
-		qDebug() << "EE" PREFIX << "layer consistency check failed:" << (long) layer << (long) this->layer_edit_info->edited_layer;
-	}
-
 	if (this->select_and_move_activated) {
-		if (this->layer_edit_info->edited_layer) {
-			this->layer_edit_info->edited_layer->handle_select_tool_release(event, this->viewport, this);
+		if (layer) {
+			layer->handle_select_tool_release(event, this->viewport, this);
 		}
 	}
 

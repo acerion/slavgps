@@ -56,11 +56,14 @@ namespace SlavGPS {
 	class Viewport;
 	class Window;
 	class LayerTRW;
-	class LayerTool;
 	class LayerInterface;
 	class LayersPanel;
 	class SGVariant;
 	class ParameterSpecification;
+
+	class LayerTool;
+	class LayerToolSelect;
+
 	enum class LayerDataReadStatus;
 	enum class CoordMode;
 
@@ -148,11 +151,11 @@ namespace SlavGPS {
 		virtual void set_coord_mode(CoordMode mode) { return; };
 
 		/* Methods for generic "Select" tool. */
-		virtual bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)         { return false; };
-		virtual bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)  { return false; };
-		virtual bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)          { return false; };
-		virtual bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool)       { return false; };
-		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)                    { return false; };
+		virtual bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)         { return false; };
+		virtual bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)  { return false; };
+		virtual bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)          { return false; };
+		virtual bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)       { return false; };
+		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)                                 { return false; };
 
 		virtual void cut_sublayer(TreeItem * item) { return; };
 		virtual void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len) { return; };
