@@ -70,7 +70,7 @@ WebToolFormat::~WebToolFormat()
 
 
 
-int WebToolFormat::mpp_to_zoom_level(double mpp)
+MapSourceZoomLevel WebToolFormat::mpp_to_zoom_level(double mpp)
 {
 	return map_utils_mpp_to_zoom_level(mpp);
 }
@@ -78,6 +78,7 @@ int WebToolFormat::mpp_to_zoom_level(double mpp)
 
 
 
+/* TODO_LATER: compare with QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport) */
 QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* Center values. */
@@ -95,13 +96,11 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 	QString point_lon;
 	llpt.to_strings_raw(point_lat, point_lon);
 
-	int zoom_level = MAGIC_SEVENTEEN; // A zoomed in default
-	// zoom - ideally x & y factors need to be the same otherwise use the default
-	if (a_viewport->get_map_zoom().get_x() == a_viewport->get_map_zoom().get_y()) {
-		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
+	MapSourceZoomLevel map_source_zoom(MAGIC_SEVENTEEN); /* Zoomed in by default. */
+	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
+	if (a_viewport->get_map_zoom().x_y_is_equal()) {
+		map_source_zoom = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
 	}
-
-	QString zoom((int) zoom_level); /* TODO_2_LATER: add MapZoom::to_string() */
 
 	int len = this->url_format_code.size();
 	if (len == 0) {
@@ -126,7 +125,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 		case 'T': values[i] = bbox_strings.north; break;
 		case 'A': values[i] = center_lat; break;
 		case 'O': values[i] = center_lon; break;
-		case 'Z': values[i] = zoom; break;
+		case 'Z': values[i] = map_source_zoom.to_string(); break;
 		case 'P': values[i] = point_lat; break;
 		case 'N': values[i] = point_lon; break;
 		default:

@@ -267,12 +267,10 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 	lat_lon.to_strings_raw(center_lat, center_lon);
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
-	int zoom_level = MAGIC_SEVENTEEN; /* A zoomed in default. */
+	MapSourceZoomLevel map_source_zoom(MAGIC_SEVENTEEN); /* Zoomed in by default. */
 	if (a_viewport->get_map_zoom().x_y_is_equal()) {
-		zoom_level = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
+		map_source_zoom = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
 	}
-
-	QString zoom((int) zoom_level); /* TODO_2_LATER: add MapZoom::to_string() */
 
 	int len = this->url_format_code.size();
 	if (len == 0) {
@@ -297,7 +295,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 		case 'T': values[i] = bbox_strings.north; break;
 		case 'A': values[i] = center_lat; break;
 		case 'O': values[i] = center_lon; break;
-		case 'Z': values[i] = zoom; break;
+		case 'Z': values[i] = map_source_zoom.to_string(); break;
 		case 'S': values[i] = this->user_string; break;
 		default:
 			qDebug() << "EE: Web Tool Datasource: invalid URL format code" << this->url_format_code[i];

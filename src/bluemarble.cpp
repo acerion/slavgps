@@ -36,8 +36,7 @@ void SlavGPS::bluemarble_init()
 {
 	MapSource * bluemarble_type = new MapSourceSlippy(MapTypeID::BlueMarble, "BlueMarble", "s3.amazonaws.com", "/com.modestmaps.bluemarble/%d-r%3$d-c%2$d.jpg");
 	bluemarble_type->set_map_type_string("BlueMarble"); /* Non-translatable. */
-	bluemarble_type->zoom_min = 0;
-	bluemarble_type->zoom_max = 9;
+	bluemarble_type->set_supported_zoom_level_range(0, 9);
 	bluemarble_type->set_copyright("© NASA's Earth Observatory");
 	bluemarble_type->set_license("NASA Terms of Use");
 	bluemarble_type->set_license_url("http://visibleearth.nasa.gov/useterms.php");

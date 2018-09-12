@@ -88,16 +88,16 @@ int SlavGPS::map_utils_mpp_to_scale(double mpp)
 /**
  * @mpp: The so called 'mpp'
  *
- * Returns: a Zoom Level.
+ * Returns: a Map Source Zoom Level.
  * See: http://wiki.openstreetmap.org/wiki/Zoom_levels
  */
-int SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
+MapSourceZoomLevel SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
 {
 	int answer = MAGIC_SEVENTEEN - map_utils_mpp_to_scale(mpp);
 	if (answer < 0) {
 		answer = MAGIC_SEVENTEEN;
 	}
-	return answer;
+	return MapSourceZoomLevel(answer);
 }
 
 

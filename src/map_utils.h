@@ -29,6 +29,7 @@
 
 #include "mapcoord.h"
 #include "coord.h"
+#include "map_source.h"
 
 
 
@@ -46,7 +47,7 @@ namespace SlavGPS {
 
 	int map_utils_mpp_to_scale(double mpp);
 
-	int map_utils_mpp_to_zoom_level(double mpp);
+	MapSourceZoomLevel map_utils_mpp_to_zoom_level(double mpp);
 
 	bool map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest);
 

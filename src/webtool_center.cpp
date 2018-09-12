@@ -73,16 +73,16 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 	}
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
-	int zoom_level = MAGIC_SEVENTEEN;
+	MapSourceZoomLevel map_source_zoom(MAGIC_SEVENTEEN);
 	if (a_viewport->get_map_zoom().x_y_is_equal()) {
-		zoom_level = this->mpp_to_zoom_level(a_viewport->get_zoom());
+		map_source_zoom = this->mpp_to_zoom_level(a_viewport->get_zoom());
 	}
 
 	QString string_lat;
 	QString string_lon;
 	lat_lon.to_strings_raw(string_lat, string_lon);
 
-	const QString url = QString(this->url_format).arg(string_lat).arg(string_lon).arg(zoom_level);
+	const QString url = QString(this->url_format).arg(string_lat).arg(string_lon).arg(map_source_zoom.value);
 
 	qDebug() << "II: Web Tool Center: url at position is" << url;
 

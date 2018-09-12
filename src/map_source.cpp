@@ -16,13 +16,6 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- /**
-  * SECTION:map_source
-  * @short_description: the base class to describe map source
-  *
-  * The #MapSource class is both the interface and the base class
-  * for the hierarchie of map source.
-  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -58,7 +51,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Map Source"
-#define PREFIX ": Map Source:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -84,13 +76,6 @@ MapSource::MapSource()
 
 	this->dl_options.check_file = a_check_map_file;
 
-	zoom_min =  0;
-	zoom_max = 18;
-	lat_min =  -90.0;
-	lat_max =   90.0;
-	lon_min = -180.0;
-	lon_max =  180.0;
-
 	is_direct_file_access_flag = false; /* Use direct file access to OSM like tile images - no need for a webservice. */
 	is_osm_meta_tiles_flag = false; /* Read from OSM Meta Tiles - Should be 'use-direct-file-access' as well. */
 
@@ -102,7 +87,7 @@ MapSource::MapSource()
 
 MapSource::~MapSource()
 {
-	qDebug() << "II" PREFIX << "destructor called";
+	qDebug() << SG_PREFIX_I << "Destructor called";
 }
 
 
@@ -110,7 +95,8 @@ MapSource::~MapSource()
 
 MapSource & MapSource::operator=(const MapSource & other)
 {
-	qDebug() << "II" PREFIX << "copy assignment called";
+	qDebug() << SG_PREFIX_I << "Copy assignment called";
+
 	if (&other == this) {
 		/* Self-assignment. */
 		return *this;
@@ -140,6 +126,7 @@ MapSource & MapSource::operator=(const MapSource & other)
 
 	this->zoom_min = other.zoom_min;
 	this->zoom_max = other.zoom_max;
+
 	this->lat_min = other.lat_min;
 	this->lat_max = other.lat_max;
 	this->lon_min = other.lon_min;
@@ -158,7 +145,7 @@ MapSource & MapSource::operator=(const MapSource & other)
 
 MapSource::MapSource(MapSource & map)
 {
-	qDebug() << "II" PREFIX << "copy constructor called";
+	qDebug() << SG_PREFIX_I << "Copy constructor called";
 
 	this->copyright   = map.copyright;
 	this->license     = map.license;
@@ -184,6 +171,7 @@ MapSource::MapSource(MapSource & map)
 
 	this->zoom_min = map.zoom_min;
 	this->zoom_max = map.zoom_max;
+
 	this->lat_min = map.lat_min;
 	this->lat_max = map.lat_max;
 	this->lon_min = map.lon_min;
@@ -214,7 +202,7 @@ void MapSource::set_map_type_string(const QString & new_map_type_string)
 bool MapSource::set_map_type_id(MapTypeID new_map_type_id)
 {
 	if (!MapSource::is_map_type_id_registered(new_map_type_id)) {
-		qDebug() << "EE" PREFIX << "Unknown map type" << (int) new_map_type_id;
+		qDebug() << SG_PREFIX_E << "Unknown map type" << (int) new_map_type_id;
 		return false;
 	}
 
@@ -337,7 +325,7 @@ QString MapSource::get_map_type_string(void) const
 
 MapTypeID MapSource::get_map_type_id(void) const
 {
-	qDebug() << "DD" PREFIX << "returning map type" << (int) this->map_type_id << "for map" << this->label;
+	qDebug() << SG_PREFIX_D << "Returning map type" << (int) this->map_type_id << "for map" << this->label;
 	return this->map_type_id;
 }
 
@@ -407,54 +395,6 @@ bool MapSource::is_osm_meta_tiles(void) const
 bool MapSource::supports_download_only_new(void) const
 {
 	return false;
-}
-
-
-
-
-uint8_t MapSource::get_zoom_min(void) const
-{
-	return zoom_min;
-}
-
-
-
-
-uint8_t MapSource::get_zoom_max(void) const
-{
-	return zoom_max;
-}
-
-
-
-
-double MapSource::get_lat_max(void) const
-{
-	return lat_max;
-}
-
-
-
-
-double MapSource::get_lat_min(void) const
-{
-	return lat_min;
-}
-
-
-
-
-double MapSource::get_lon_max(void) const
-{
-	return lon_max;
-}
-
-
-
-
-double MapSource::get_lon_min(void) const
-{
-	return lon_min;
 }
 
 
@@ -556,7 +496,7 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 	QPixmap result;
 
 	if (0 != access(tile_file_full_path.toUtf8().constData(), F_OK | R_OK)) {
-		qDebug() << "EE" PREFIX << "can't access file" << tile_file_full_path;
+		qDebug() << SG_PREFIX_E << "Can't access file" << tile_file_full_path;
 		return result;
 	}
 
@@ -614,8 +554,33 @@ bool MapSource::includes_tile(const TileInfo & tile_info) const
 	Coord center_coord;
 	this->tile_to_center_coord(tile_info, center_coord);
 
-	const Coord coord_tl(LatLon(this->get_lat_max(), this->get_lon_min()), CoordMode::LATLON);
-	const Coord coord_br(LatLon(this->get_lat_min(), this->get_lon_max()), CoordMode::LATLON);
+	const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LATLON);
+	const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LATLON);
 
 	return center_coord.is_inside(&coord_tl, &coord_br);
+}
+
+
+
+
+QString MapSourceZoomLevel::to_string(void) const
+{
+	return QString(this->value);
+}
+
+
+
+
+void MapSource::set_supported_zoom_level_range(int zoom_level_min, int zoom_level_max)
+{
+	this->zoom_min = MapSourceZoomLevel(zoom_level_min);
+	this->zoom_max = MapSourceZoomLevel(zoom_level_max);
+}
+
+
+
+
+bool MapSource::is_supported_zoom_level(const MapSourceZoomLevel & zoom_level) const
+{
+	return zoom_level.value >= this->zoom_min.value && zoom_level.value <= this->zoom_max.value;
 }

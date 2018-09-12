@@ -109,6 +109,19 @@ namespace SlavGPS {
 
 
 
+	/* https://wiki.openstreetmap.org/wiki/Zoom_levels */
+	class MapSourceZoomLevel {
+	public:
+		MapSourceZoomLevel(int new_value) : value(new_value) {};
+
+		QString to_string(void) const;
+
+		int value = 0;
+	};
+
+
+
+
 	class MapSource {
 	public:
 		MapSource();
@@ -145,12 +158,9 @@ namespace SlavGPS {
 
 		virtual bool supports_download_only_new(void) const;
 
-		uint8_t get_zoom_min(void) const;
-		uint8_t get_zoom_max(void) const;
-		double get_lat_min(void) const;
-		double get_lat_max(void) const;
-		double get_lon_min(void) const;
-		double get_lon_max(void) const;
+		void set_supported_zoom_level_range(int zoom_level_min, int zoom_level_max);
+		bool is_supported_zoom_level(const MapSourceZoomLevel & zoom_level) const;
+
 		QString get_file_extension(void) const;
 
 		virtual bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const;
@@ -197,19 +207,25 @@ namespace SlavGPS {
 		QString server_hostname;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
 		QString server_path_format; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
 
-		// NB Probably best to keep the above fields in same order to be common across Slippy, TMS & WMS map definitions
-		uint8_t zoom_min; /* Minimum Zoom level supported by the map provider.  TMS Zoom level: 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
-		uint8_t zoom_max; /* Maximum Zoom level supported by the map provider. / TMS Zoom level: Often 18 for zoomed in. */
-		double lat_min; /* Minimum latitude in degrees supported by the map provider. Degrees. */
-		double lat_max; /* Maximum latitude in degrees supported by the map provider. Degrees. */
-		double lon_min; /* Minimum longitude in degrees supported by the map provider. Degrees. */
-		double lon_max; /* Maximum longitude in degrees supported by the map provider. Degrees. */
 
 		bool is_direct_file_access_flag;
 		bool is_osm_meta_tiles_flag; /* http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd. */
 
 		/* Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html */
 		bool switch_xy;
+
+	protected:
+		/* This is not private because MapSourceSlippy::operator=() wants to access it.
+		   TODO_LATER: move to private after fixing the operator. */
+
+
+		MapSourceZoomLevel zoom_min = MapSourceZoomLevel(0);  /* Minimum Zoom level supported by the map provider.  TMS Zoom level. 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
+		MapSourceZoomLevel zoom_max = MapSourceZoomLevel(18); /* Maximum Zoom level supported by the map provider. / TMS Zoom level. Often 18 is the upper limit for a map source (maximally zoomed in). */
+
+		double lat_min =  -90.0; /* [degrees] Minimum latitude supported by the map provider. */
+		double lat_max =   90.0; /* [degrees] Maximum latitude supported by the map provider. */
+		double lon_min = -180.0; /* [degrees] Minimum longitude supported by the map provider. */
+		double lon_max =  180.0; /* [degrees] Maximum longitude supported by the map provider. */
 	};
 
 

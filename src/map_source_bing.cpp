@@ -121,8 +121,7 @@ MapSourceBing::MapSourceBing(MapTypeID new_map_type_id, const QString & new_labe
 	this->server_path_format = "/tiles/a%1.jpeg?g=587";
 	this->bing_api_key = new_key;
 	this->dl_options.check_file_server_time = true;
-	zoom_min = 0;
-	zoom_max = 19; /* NB: Might be regionally different rather than the same across the world. */
+	this->set_supported_zoom_level_range(0, 19); /* Maximum zoom level may be regionally different rather than the same across the world. */
 	this->copyright = "© 2011 Microsoft Corporation and/or its suppliers";
 	this->license = "Microsoft Bing Maps Specific";
 	this->license_url = "http://www.microsoft.com/maps/assets/docs/terms.aspx";

@@ -908,10 +908,10 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 	}
 
 	/* Don't attempt to download unsupported zoom levels. */
-	double xzoom = viewport->get_map_zoom().get_x();
+	const double xzoom = viewport->get_map_zoom().get_x();
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	int zl = map_utils_mpp_to_zoom_level(xzoom);
-	if (zl < map_source->get_zoom_min() || zl > map_source->get_zoom_max()) {
+	const MapSourceZoomLevel map_source_zoom = map_utils_mpp_to_zoom_level(xzoom);
+	if (!map_source->is_supported_zoom_level(map_source_zoom)) {
 		return false;
 	}
 

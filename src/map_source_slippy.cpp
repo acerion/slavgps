@@ -44,14 +44,24 @@
 #include "config.h"
 #endif
 
+
+
+
 #include <glib.h>
 #include <cstdlib>
 #include <cstring>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "map_source_slippy.h"
 #include "map_utils.h"
+#include "globals.h"
 
 
 
@@ -61,6 +71,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Map Source Slippy"
 #define PREFIX ": Map Source Slippy:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -74,9 +85,10 @@ MapSourceSlippy::MapSourceSlippy()
 
 
 
+/* TODO_LATER: how many of these operations should be performed by parent class' operator? */
 MapSourceSlippy & MapSourceSlippy::operator=(const MapSourceSlippy & other)
 {
-	qDebug() << "II" PREFIX << "copy assignment called";
+	qDebug() << SG_PREFIX_I << "Copy assignment called";
 	if (&other == this) {
 		/* Self-assignment. */
 		return *this;
@@ -104,6 +116,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(const MapSourceSlippy & other)
 
 	this->zoom_min = other.zoom_min;
 	this->zoom_max = other.zoom_max;
+
 	this->lat_min = other.lat_min;
 	this->lat_max = other.lat_max;
 	this->lon_min = other.lon_min;
