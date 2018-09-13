@@ -576,10 +576,9 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 
 
-/* Free returned string after use. */
-static QString get_filename(const QString dir, int x, int y, int zoom)
+static QString get_filename(const QString dir, int x, int y, const TileScale & scale)
 {
-	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg((MAGIC_SEVENTEEN - zoom)).arg(x).arg(y));
+	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg(scale.get_osm_scale()).arg(x).arg(y));
 }
 
 
@@ -786,7 +785,7 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br)
 
 		if (pixmap.isNull() || rerender_) {
 			if (true) {
-				this->thread_add(ti_ul, coord_ul, coord_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml.toUtf8().constData());
+				this->thread_add(ti_ul, coord_ul, coord_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale.value, this->filename_xml.toUtf8().constData());
 			} else {
 				/* Run in the foreground. */
 				this->render(coord_ul, coord_br, ti_ul);
@@ -1021,7 +1020,7 @@ void LayerMapnik::rerender()
 	ti_br.x = ti_br.x+1;
 	ti_br.y = ti_br.y+1;
 	this->rerender_br = map_utils_iTMS_to_coord(ti_br);
-	this->thread_add(ti_ul, this->rerender_ul, this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale, this->filename_xml.toUtf8().constData());
+	this->thread_add(ti_ul, this->rerender_ul, this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale.value, this->filename_xml.toUtf8().constData());
 }
 
 

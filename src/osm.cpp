@@ -210,7 +210,7 @@ QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj
 		return pixmap;
 	}
 
-	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale, buf, tile_max, &compressed, err_msg);
+	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_osm_scale(), buf, tile_max, &compressed, err_msg);
 	if (len > 0) {
 		if (compressed) {
 			/* TODO_2_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
@@ -243,7 +243,7 @@ QStringList MapSourceOSMMetatiles::get_tile_description(const MapCacheObj & map_
 	QStringList items;
 
 	char path[PATH_MAX];
-	xyz_to_meta(path, sizeof (path), map_cache_obj.dir_full_path, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale);
+	xyz_to_meta(path, sizeof (path), map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_osm_scale());
 
 	items.push_back(QString(path));
 	items.push_back(args.tile_file_full_path);

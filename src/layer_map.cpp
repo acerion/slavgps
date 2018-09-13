@@ -950,7 +950,7 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 		TileInfo ulm2 = ulm;
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
-		ulm2.scale = ulm.scale + scale_inc;
+		ulm2.scale.value = ulm.scale.value + scale_inc;
 
 		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm2, scale_x * scale_factor, scale_y * scale_factor);
 		if (!pixmap.isNull()) {
@@ -982,7 +982,7 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 		TileInfo ulm2 = ulm;
 		ulm2.x = ulm.x * scale_factor;
 		ulm2.y = ulm.y * scale_factor;
-		ulm2.scale = ulm.scale - scale_dec;
+		ulm2.scale.value = ulm.scale.value - scale_dec;
 		for (int pict_x = 0; pict_x < scale_factor; pict_x ++) {
 			for (int pict_y = 0; pict_y < scale_factor; pict_y ++) {
 				TileInfo ulm3 = ulm2;

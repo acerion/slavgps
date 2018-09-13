@@ -161,7 +161,7 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 const QString MapSourceBing::get_server_path(const TileInfo & src) const
 {
-	const QString quadtree = compute_quad_tree(MAGIC_SEVENTEEN - src.scale, src.x, src.y);
+	const QString quadtree = compute_quad_tree(src.scale.get_osm_scale(), src.x, src.y);
 	const QString uri = QString(this->server_path_format).arg(quadtree);
 
 	return uri;
@@ -174,7 +174,7 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 {
 	qDebug() << "DD" PREFIX << "looking for" << bbox << "at zoom" << zoom;
 
-	const int scale = map_utils_mpp_to_scale(zoom);
+	const TileScale tile_scale = map_utils_mpp_to_tile_scale(zoom);
 
 	/* Load attributions. */
 	if (0 == this->attributions.size() && "<no-set>" != this->bing_api_key) { /* TODO_2_LATER: also check this->bing_api_key.isEmpty()? */
@@ -191,8 +191,8 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 		const Attribution * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
-		    (MAGIC_SEVENTEEN - scale) > current->minZoom &&
-		    (MAGIC_SEVENTEEN - scale) < current->maxZoom) {
+		    (tile_scale.get_osm_scale()) > current->minZoom &&
+		    (tile_scale.get_osm_scale()) < current->maxZoom) {
 
 			viewport->add_copyright(current->attribution);
 			qDebug() << "DD: Map Source Bind: get copyright: found match:" << current->attribution;

@@ -199,14 +199,14 @@ void cache_remove_oldest()
 void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
 	if (pixmap.isNull()) {
-		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale);
+		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value);
 		return;
 	}
 
 	static char key_[MC_KEY_SIZE];
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock();
@@ -241,7 +241,7 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
@@ -263,7 +263,7 @@ MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapT
 
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	auto iter = maps_cache.find(key);
@@ -325,7 +325,7 @@ void MapCache::remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID ma
 {
 	char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale, nn);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn);
 	std::string key(key_);
 
 	flush_matching(key);
@@ -466,13 +466,15 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 	   Viking's cache. */
 
 	QString result;
+	int osm_zoom_level = 0;
 
 	switch (this->layout) {
 	case MapCacheLayout::OSM:
+		osm_zoom_level = tile_info.scale.get_osm_scale(); /* OSM map cache layout -> osm zoom level. */
 		if (map_type_string.isEmpty()) {
 			result = QString("%1%2%3%4%5%6%7")
 				.arg(this->dir_full_path)
-				.arg(MAGIC_SEVENTEEN - tile_info.scale)
+				.arg(osm_zoom_level)
 				.arg(QDir::separator())
 				.arg(tile_info.x)
 				.arg(QDir::separator())
@@ -483,7 +485,7 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 				/* Cache dir not the default - assume it's been directed somewhere specific. */
 				result = QString("%1%2%3%4%5%6%7")
 					.arg(this->dir_full_path)
-					.arg(MAGIC_SEVENTEEN - tile_info.scale)
+					.arg(osm_zoom_level)
 					.arg(QDir::separator())
 					.arg(tile_info.x)
 					.arg(QDir::separator())
@@ -495,7 +497,7 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 					.arg(this->dir_full_path)
 					.arg(map_type_string)
 					.arg(QDir::separator())
-					.arg(MAGIC_SEVENTEEN - tile_info.scale)
+					.arg(osm_zoom_level)
 					.arg(QDir::separator())
 					.arg(tile_info.x)
 					.arg(QDir::separator())
@@ -508,7 +510,7 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 		result = QString("%1t%2s%3z%4%5%6%7%8")
 			.arg(this->dir_full_path)
 			.arg((int) map_type_id)
-			.arg(tile_info.scale)
+			.arg(tile_info.scale.get_non_osm_scale())
 			.arg(tile_info.z)
 			.arg(QDir::separator())
 			.arg(tile_info.x)

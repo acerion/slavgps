@@ -198,12 +198,13 @@ void MapSourceSlippy::tile_to_center_coord(const TileInfo & src, Coord & dest_co
 const QString MapSourceSlippy::get_server_path(const TileInfo & src) const
 {
 	QString uri;
-	if (switch_xy) {
+	const int osm_zoom_level = src.scale.get_osm_scale();
+	if (this->switch_xy) {
 		/* 'ARC GIS' Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src.scale).arg(src.y).arg(src.x);
+		uri = QString(this->server_path_format).arg(osm_zoom_level).arg(src.y).arg(src.x);
 	} else {
 		/* (Default) Standard OSM Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src.scale).arg(src.x).arg(src.y);
+		uri = QString(this->server_path_format).arg(osm_zoom_level).arg(src.x).arg(src.y);
 	}
 	return uri;
 }

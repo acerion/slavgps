@@ -114,8 +114,8 @@ bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double y
 		return false;
 	}
 
-	dest.scale = map_utils_mpp_to_scale(xzoom);
-	if (dest.scale == 255) {
+	dest.scale = map_utils_mpp_to_tile_scale(xzoom);
+	if (!dest.scale.is_valid()) {
 		return false;
 	}
 
@@ -138,10 +138,10 @@ bool MapSourceTms::coord_to_tile(const Coord & src_coord, double xzoom, double y
 void MapSourceTms::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	double socalled_mpp;
-	if (src.scale >= 0) {
-		socalled_mpp = VIK_GZ(src.scale);
+	if (src.scale.value >= 0) {
+		socalled_mpp = VIK_GZ(src.scale.value);
 	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src.scale);
+		socalled_mpp = 1.0/VIK_GZ(-src.scale.value);
 	}
 	dest_coord.mode = CoordMode::LATLON;
 	dest_coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
@@ -163,9 +163,9 @@ const QString MapSourceTms::get_server_path(const TileInfo & src) const
 	 */
 
 	/* Note : nb tiles on Y axis */
-	int nb_tiles = VIK_GZ(MAGIC_SEVENTEEN - src.scale - 1);
+	int nb_tiles = VIK_GZ(MAGIC_SEVENTEEN - src.scale.get_non_osm_scale() - 1);
 
-	const QString uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src.scale - 1).arg(src.x).arg(nb_tiles - src.y - 1);
+	const QString uri = QString(this->server_path_format).arg(MAGIC_SEVENTEEN - src.scale.get_non_osm_scale() - 1).arg(src.x).arg(nb_tiles - src.y - 1);
 
 	return QString(uri);
 }

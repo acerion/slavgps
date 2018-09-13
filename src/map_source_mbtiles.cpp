@@ -102,7 +102,7 @@ QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, con
 
 		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
 		   Hence this specific function. */
-		result = create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale);
+		result = create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, tile_info.scale.get_osm_scale());
 	}
 #endif
 
@@ -195,16 +195,17 @@ QStringList MapSourceMBTiles::get_tile_description(const MapCacheObj & map_cache
 
 	QPixmap pixmap;
 	if (args.sqlite_handle) {
-		pixmap = this->create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, MAGIC_SEVENTEEN - tile_info.scale);
+		pixmap = this->create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, tile_info.scale.get_osm_scale());
 	}
 	QString exists = pixmap.isNull() ? QObject::tr("NO") : QObject::tr("YES");
 
 
-	const int flip_y = (int) pow(2, MAGIC_SEVENTEEN - tile_info.scale) - 1 - tile_info.y;
+	const int osm_zoom_level = tile_info.scale.get_osm_scale();
+	const int flip_y = (int) pow(2, osm_zoom_level) - 1 - tile_info.y;
 	/* NB Also handles .jpg automatically due to pixmap_new_from() support - although just print png for now. */
 	QString source = QObject::tr("Source: %1 (%2%3%4%5%6.%7 %8)")
 		.arg(args.tile_file_full_path)
-		.arg(MAGIC_SEVENTEEN - tile_info.scale)
+		.arg(osm_zoom_level)
 		.arg(QDir::separator())
 		.arg(tile_info.x)
 		.arg(QDir::separator())

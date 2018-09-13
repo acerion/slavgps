@@ -66,20 +66,31 @@ static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpp
  *
  * Returns: the zoom scale value which may be negative.
  */
-int SlavGPS::map_utils_mpp_to_scale(double mpp)
+TileScale SlavGPS::map_utils_mpp_to_tile_scale(double mpp)
 {
+	TileScale tile_scale;
+
 	for (int i = 0; i < num_scales; i++) {
 		if (std::abs(scale_mpps[i] - mpp) < ERROR_MARGIN) {
-			return i;
+			tile_scale.value = i;
+			tile_scale.valid = true;
+			return tile_scale;
 		}
 	}
 	for (int i = 0; i < num_scales_neg; i++) {
 		if (std::abs(scale_neg_mpps[i] - mpp) < 0.000001) {
-			return -i;
+			tile_scale.value = -i;
+			tile_scale.valid = true;
+			return tile_scale;
 		}
 	}
 
-	return 255;
+	/* In original implementation of the function '255' was the
+	   value returned when the loops didn't find any valid
+	   value. */
+	tile_scale.value = 255;
+	tile_scale.valid = false;
+	return tile_scale;
 }
 
 
@@ -93,11 +104,12 @@ int SlavGPS::map_utils_mpp_to_scale(double mpp)
  */
 MapSourceZoomLevel SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
 {
-	int answer = MAGIC_SEVENTEEN - map_utils_mpp_to_scale(mpp);
-	if (answer < 0) {
-		answer = MAGIC_SEVENTEEN;
+	const TileScale tile_scale = map_utils_mpp_to_tile_scale(mpp);
+	int osm_zoom_level = tile_scale.value.get_osm_scale();
+	if (osm_zoom_level < 0) {
+		osm_zoom_level = MAGIC_SEVENTEEN;
 	}
-	return MapSourceZoomLevel(answer);
+	return MapSourceZoomLevel(osm_zoom_level);
 }
 
 
@@ -138,8 +150,8 @@ bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, dou
 		return false;
 	}
 
-	dest.scale = map_utils_mpp_to_scale(xzoom);
-	if (dest.scale == 255) {
+	dest.scale = map_utils_mpp_to_tile_scale(xzoom);
+	if (!dest.scale.is_valid()) {
 		return false;
 	}
 
@@ -159,10 +171,10 @@ static Coord _to_vikcoord_with_offset(const TileInfo & src, double offset)
 	Coord dest_coord;
 
 	double socalled_mpp;
-	if (src.scale >= 0) {
-		socalled_mpp = VIK_GZ(src.scale);
+	if (src.scale.value >= 0) {
+		socalled_mpp = VIK_GZ(src.scale.value);
 	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src.scale);
+		socalled_mpp = 1.0/VIK_GZ(-src.scale.value);
 	}
 	dest_coord.mode = CoordMode::LATLON;
 	dest_coord.ll.lon = ((src.x + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360) - 180;

@@ -30,6 +30,7 @@
 #include "mapcoord.h"
 #include "coord.h"
 #include "map_source.h"
+#include "mapcoord.h"
 
 
 
@@ -42,10 +43,11 @@ namespace SlavGPS {
 	/* 1 << (x) is like a 2**(x) */
 	/* Not sure what GZ stands for probably Google Zoom. */
 	#define VIK_GZ(x) ((1<<(x)))
+	#define VIK_GZ2(x) ((1<<(x.value)))
 	#define MAGIC_SEVENTEEN 17
 
 
-	int map_utils_mpp_to_scale(double mpp);
+	TileScale map_utils_mpp_to_tile_scale(double mpp);
 
 	MapSourceZoomLevel map_utils_mpp_to_zoom_level(double mpp);
 

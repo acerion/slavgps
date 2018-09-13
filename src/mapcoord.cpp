@@ -27,6 +27,7 @@
 
 
 #include "mapcoord.h"
+#include "map_utils.h"
 
 
 
@@ -46,4 +47,28 @@ TilesRange TileInfo::get_tiles_range(const TileInfo & ulm, const TileInfo & brm)
 	range.y_end   = std::max(ulm.y, brm.y);
 
 	return range;
+}
+
+
+
+
+int TileScale::get_osm_scale(void) const
+{
+	return MAGIC_SEVENTEEN - this->value;
+}
+
+
+
+
+int TileScale::get_non_osm_scale(void) const
+{
+	return this->value;
+}
+
+
+
+
+bool TileScale::is_valid(void) const
+{
+	return this->valid;
 }

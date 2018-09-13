@@ -40,6 +40,19 @@ namespace SlavGPS {
 
 
 
+	class TileScale {
+	public:
+		int get_osm_scale(void) const;
+		int get_non_osm_scale(void) const;
+		bool is_valid(void) const;
+
+		int value = 0;
+		bool valid = false;
+	};
+
+
+
+
 	/* Common struct to all map types and map layer, to hold info
 	   about a particular map tile. */
 	class TileInfo {
@@ -48,7 +61,7 @@ namespace SlavGPS {
 
 		int x, y;
 		int z;      /* Zone or anything else. */
-		int scale;
+		TileScale scale;
 	};
 
 

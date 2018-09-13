@@ -109,8 +109,8 @@ bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, double xzoom, double 
 		return false;
 	}
 
-	dest.scale = map_utils_mpp_to_scale(xzoom);
-	if (dest.scale == 255) {
+	dest.scale = map_utils_mpp_to_tile_scale(xzoom);
+	if (!dest.scale.is_valid()) {
 		return false;
 	}
 
@@ -133,10 +133,10 @@ bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, double xzoom, double 
 void MapSourceWmsc::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	double socalled_mpp;
-	if (src.scale >= 0) {
-		socalled_mpp = VIK_GZ(src.scale);
+	if (src.scale.value >= 0) {
+		socalled_mpp = VIK_GZ(src.scale.value);
 	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src.scale);
+		socalled_mpp = 1.0/VIK_GZ(-src.scale.value);
 	}
 	dest_coord.mode = CoordMode::LATLON;
 	dest_coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
@@ -153,10 +153,10 @@ void MapSourceWmsc::tile_to_center_coord(const TileInfo & src, Coord & dest_coor
 const QString MapSourceWmsc::get_server_path(const TileInfo & src) const
 {
 	double socalled_mpp;
-	if (src.scale >= 0) {
-		socalled_mpp = VIK_GZ(src.scale);
+	if (src.scale.value >= 0) {
+		socalled_mpp = VIK_GZ(src.scale.value);
 	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src.scale);
+		socalled_mpp = 1.0/VIK_GZ(-src.scale.value);
 	}
 	double minx = (double)src.x * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	double maxx = (double)(src.x + 1) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;

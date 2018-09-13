@@ -89,8 +89,8 @@ bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, d
 		return false;
 	}
 
-	dest.scale = mpp_to_scale(xmpp, this->map_type_id);
-	if (!dest.scale) {
+	dest.scale.value = mpp_to_scale(xmpp, this->map_type_id);
+	if (!dest.scale.value) {
 		return false;
 	}
 
@@ -114,7 +114,7 @@ bool MapSourceTerraserver::is_direct_file_access(void) const
 void MapSourceTerraserver::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	/* FIXME: slowdown here! */
-	double mpp = scale_to_mpp(src.scale);
+	double mpp = scale_to_mpp(src.scale.value);
 	dest_coord.mode = CoordMode::UTM;
 	dest_coord.utm.zone = src.z;
 	dest_coord.utm.easting = ((src.x * 200) + 100) * mpp;
@@ -126,7 +126,7 @@ void MapSourceTerraserver::tile_to_center_coord(const TileInfo & src, Coord & de
 
 const QString MapSourceTerraserver::get_server_path(const TileInfo & src) const
 {
-	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type_id).arg(src.scale).arg(src.x).arg(src.y).arg(src.z);
+	const QString uri = QString("/tile.ashx?T=%1&S=%2&X=%3&Y=%4&Z=%5").arg((int) this->map_type_id).arg(src.scale.value).arg(src.x).arg(src.y).arg(src.z);
 	return uri;
 }
 
