@@ -178,9 +178,9 @@ bool MapSourceSlippy::supports_download_only_new(void) const
 
 
 
-bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const
+bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
-	bool result = map_utils_coord_to_iTMS(src_coord, xzoom, yzoom, dest);
+	bool result = map_utils_coord_to_iTMS(src_coord, viking_zoom_level, dest);
 	return result;
 }
 

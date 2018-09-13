@@ -893,7 +893,7 @@ void CommandLineOptions::apply(Window * window)
 		if (map_zoom > 1.0) {
 			map_zoom = round(map_zoom);
 		}
-		viewport->set_map_zoom(map_zoom);
+		viewport->set_viking_zoom_level(map_zoom);
 	}
 
 	if (this->map_type_id != MapTypeID::Initial) {
@@ -1078,7 +1078,7 @@ void SlavGPS::vu_zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, c
 
 	/* Never zoom in too far - generally not that useful, as too close! */
 	/* Always recalculate the 'best' zoom level. */
-	viewport->set_map_zoom(zoom);
+	viewport->set_viking_zoom_level(zoom);
 
 
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels. */
@@ -1100,7 +1100,7 @@ void SlavGPS::vu_zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, c
 
 		/* Try next. */
 		zoom = zoom * 2;
-		viewport->set_map_zoom(zoom);
+		viewport->set_viking_zoom_level(zoom);
 	}
 }
 

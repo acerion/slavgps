@@ -98,7 +98,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 	MapSourceZoomLevel map_source_zoom(MAGIC_SEVENTEEN); /* Zoomed in by default. */
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
-	if (a_viewport->get_map_zoom().x_y_is_equal()) {
+	if (a_viewport->get_viking_zoom_level().x_y_is_equal()) {
 		map_source_zoom = map_utils_mpp_to_zoom_level(a_viewport->get_zoom());
 	}
 

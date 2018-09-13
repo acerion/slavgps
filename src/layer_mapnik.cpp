@@ -821,13 +821,12 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
-	double xzoom = viewport->get_map_zoom().get_x();
-	double yzoom = viewport->get_map_zoom().get_y();
+	const VikingZoomLevel viking_zoom_level = viewport->get_viking_zoom_level();
 
 	TileInfo ti_ul, ti_br;
 
-	if (map_utils_coord_to_iTMS(coord_ul, xzoom, yzoom, ti_ul) &&
-	     map_utils_coord_to_iTMS(coord_br, xzoom, yzoom, ti_br)) {
+	if (map_utils_coord_to_iTMS(coord_ul, viking_zoom_level, ti_ul) &&
+	     map_utils_coord_to_iTMS(coord_br, viking_zoom_level, ti_br)) {
 		/* TODO_LATER: Understand if tilesize != 256 does this need to use shrinkfactors? */
 
 		int xmin = MIN(ti_ul.x, ti_br.x), xmax = MAX(ti_ul.x, ti_br.x);
@@ -1012,7 +1011,8 @@ void LayerMapnik::rerender()
 {
 	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, ti_ul);
+	const VikingZoomLevel viking_zoom_level(this->rerender_zoom, this->rerender_zoom);
+	map_utils_coord_to_iTMS(this->rerender_ul, viking_zoom_level, ti_ul);
 	/* Reconvert back - thus getting the coordinate at the tile *ul corner*. */
 	this->rerender_ul = map_utils_iTMS_to_coord(ti_ul);
 	/* Bottom right bound is simply +1 in TMS coords. */
@@ -1041,7 +1041,8 @@ void LayerMapnik::tile_info()
 {
 	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	map_utils_coord_to_iTMS(this->rerender_ul, this->rerender_zoom, this->rerender_zoom, ti_ul);
+	const VikingZoomLevel viking_zoom_level(this->rerender_zoom, this->rerender_zoom);
+	map_utils_coord_to_iTMS(this->rerender_ul, viking_zoom_level, ti_ul);
 
 	MapCacheItemProperties properties = MapCache::get_properties(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 

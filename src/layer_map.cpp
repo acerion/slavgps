@@ -908,7 +908,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 	}
 
 	/* Don't attempt to download unsupported zoom levels. */
-	const double xzoom = viewport->get_map_zoom().get_x();
+	const double xzoom = viewport->get_viking_zoom_level().get_x();
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 	const MapSourceZoomLevel map_source_zoom = map_utils_mpp_to_zoom_level(xzoom);
 	if (!map_source->is_supported_zoom_level(map_source_zoom)) {
@@ -919,19 +919,19 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 		Coord * new_center = new Coord();
 		*new_center = center;
 		this->last_center = new_center;
-		this->last_map_zoom = viewport->get_map_zoom();
+		this->last_map_zoom = viewport->get_viking_zoom_level();
 		return true;
 	}
 
 
 	if ((*this->last_center == center) /* TODO_MAYBE: perhaps Coord::distance()? */
-	    && this->last_map_zoom == viewport->get_map_zoom()) {
+	    && this->last_map_zoom == viewport->get_viking_zoom_level()) {
 
 		return false;
 	}
 
 	*this->last_center = center;
-	this->last_map_zoom = viewport->get_map_zoom();
+	this->last_map_zoom = viewport->get_viking_zoom_level();
 	return true;
 }
 
@@ -1013,8 +1013,8 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 
 void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
 {
-	double xzoom = viewport->get_map_zoom().get_x();
-	double yzoom = viewport->get_map_zoom().get_y();
+	double xzoom = viewport->get_viking_zoom_level().get_x();
+	double yzoom = viewport->get_viking_zoom_level().get_y();
 
 	double scale_x = 1.0;
 	double scale_y = 1.0;
@@ -1046,8 +1046,9 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	/* coord -> ID */
 	TileInfo ulm, brm;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	if (!map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
-	    || !map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
+	const VikingZoomLevel viking_zoom_level(xzoom, yzoom);
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
 
 		return;
 	}
@@ -1295,8 +1296,8 @@ void LayerMap::weak_ref_cb(void * ptr, void * dead_vml)
 
 void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode)
 {
-	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_map_zoom().get_x();
-	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_map_zoom().get_y();
+	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_viking_zoom_level().get_x();
+	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_viking_zoom_level().get_y();
 	TileInfo ulm, brm;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
@@ -1308,8 +1309,9 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 		return;
 	}
 
-	if (!map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
-	     || !map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
+	const VikingZoomLevel viking_zoom_level(xzoom, yzoom);
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
 
 		qDebug() << SG_PREFIX_E << "Conversion coord to tile failed";
 		return;
@@ -1346,8 +1348,9 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
-	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, ulm)
-	    || !map_source->coord_to_tile(coord_br, zoom, zoom, brm)) {
+	const VikingZoomLevel viking_zoom_level(zoom, zoom);
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
 		return;
 	}
@@ -1413,11 +1416,11 @@ void LayerMap::tile_info_cb(void)
 {
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-	double xzoom = this->xmapzoom ? this->xmapzoom : this->redownload_viewport->get_map_zoom().get_x();
-	double yzoom = this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_map_zoom().get_y();
+        const VikingZoomLevel viking_zoom_level(this->xmapzoom ? this->xmapzoom : this->redownload_viewport->get_viking_zoom_level().get_x(),
+						this->ymapzoom ? this->ymapzoom : this->redownload_viewport->get_viking_zoom_level().get_y());
 	TileInfo ulm;
 
-	if (!map_source->coord_to_tile(this->redownload_ul, xzoom, yzoom, ulm)) {
+	if (!map_source->coord_to_tile(this->redownload_ul, viking_zoom_level, ulm)) {
 		return;
 	}
 
@@ -1544,11 +1547,12 @@ ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent
 	LayerMap * layer = (LayerMap *) _layer;
 
 	const MapSource * map_source = map_source_interfaces[layer->map_type_id];
+	const VikingZoomLevel viking_zoom_level(layer->xmapzoom ? layer->xmapzoom : this->viewport->get_viking_zoom_level().get_x(),
+						layer->ymapzoom ? layer->ymapzoom : this->viewport->get_viking_zoom_level().get_y());
 	if (map_source->get_drawmode() == this->viewport->get_drawmode()
 	    && map_source->coord_to_tile(this->viewport->get_center2(),
-				  layer->xmapzoom ? layer->xmapzoom : this->viewport->get_map_zoom().get_x(),
-				  layer->ymapzoom ? layer->ymapzoom : this->viewport->get_map_zoom().get_y(),
-				  tmp)) {
+					 viking_zoom_level,
+					 tmp)) {
 
 		layer->dl_tool_x = event->x();
 		layer->dl_tool_y = event->y();
@@ -1564,8 +1568,8 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 {
 	Viewport * viewport = this->get_window()->get_viewport();
 
-	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_map_zoom().get_x();
-	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_map_zoom().get_y();
+	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_viking_zoom_level().get_x();
+	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_viking_zoom_level().get_y();
 
 	TileInfo ulm, brm;
 
@@ -1577,9 +1581,11 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	const ViewportDrawMode map_draw_mode = map_source->get_drawmode();
 	const ViewportDrawMode vp_draw_mode = viewport->get_drawmode();
 
+	const VikingZoomLevel viking_zoom_level(xzoom, yzoom);
+
 	if (map_draw_mode == vp_draw_mode
-	    && map_source->coord_to_tile(coord_ul, xzoom, yzoom, ulm)
-	    && map_source->coord_to_tile(coord_br, xzoom, yzoom, brm)) {
+	    && map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
+	    && map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
 
 		this->start_download_thread(viewport, coord_ul, coord_br, map_download_mode);
 
@@ -1645,8 +1651,9 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 	}
 
 	TileInfo ulm, brm;
-	if (!map_source->coord_to_tile(coord_ul, zoom, zoom, ulm)
-	    || !map_source->coord_to_tile(coord_br, zoom, zoom, brm)) {
+	const VikingZoomLevel viking_zoom_level(zoom, zoom);
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
 		return 0;
 	}

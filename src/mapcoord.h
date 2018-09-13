@@ -45,6 +45,7 @@ namespace SlavGPS {
 		int get_osm_scale(void) const;
 		int get_non_osm_scale(void) const;
 		bool is_valid(void) const;
+		double to_so_called_mpp(void) const;
 
 		int value = 0;
 		bool valid = false;

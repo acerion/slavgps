@@ -965,7 +965,7 @@ void Window::draw_sync()
 
 void Window::update_status_bar_on_redraw(void)
 {
-	const QString zoom_level = this->viewport->get_map_zoom().pretty_print(this->viewport->get_coord_mode());
+	const QString zoom_level = this->viewport->get_viking_zoom_level().pretty_print(this->viewport->get_coord_mode());
 
 	qDebug() << "II" PREFIX << "zoom level is" << zoom_level;
 	this->status_bar->set_message(StatusBarField::ZOOM, zoom_level);
@@ -1811,10 +1811,10 @@ void Window::zoom_cb(void)
 
 void Window::zoom_to_cb(void)
 {
-	MapZoom zoom = this->viewport->get_map_zoom();
+	VikingZoomLevel viking_zoom_level = this->viewport->get_viking_zoom_level();
 
-	if (ViewportZoomDialog::custom_zoom_dialog(/* in/out */ zoom, this)) {
-		this->viewport->set_map_zoom(zoom);
+	if (ViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_zoom_level, this)) {
+		this->viewport->set_viking_zoom_level(viking_zoom_level);
 		this->emit_center_or_zoom_changed("zoom to...");
 	}
 }
@@ -2335,7 +2335,7 @@ void LocatorJob::run(void)
 			zoom = 2048.0;
 		}
 
-		this->window->viewport->set_map_zoom(zoom);
+		this->window->viewport->set_viking_zoom_level(zoom);
 		this->window->viewport->set_center_from_latlon(lat_lon, false);
 
 		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Location found: %1").arg(name));
@@ -2592,7 +2592,7 @@ void Window::draw_viewport_to_image_file_cb(void)
 	this->save_viewport_to_image(file_full_path,
 				     this->viewport_save_width,
 				     this->viewport_save_height,
-				     this->viewport->get_map_zoom(),
+				     this->viewport->get_viking_zoom_level(),
 				     this->viewport_save_format,
 				     false);
 }
@@ -2621,7 +2621,7 @@ void Window::draw_viewport_to_image_dir_cb(void)
 	this->save_viewport_to_dir(dir_full_path,
 				   this->viewport_save_width,
 				   this->viewport_save_height,
-				   this->viewport->get_map_zoom(),
+				   this->viewport->get_viking_zoom_level(),
 				   this->viewport_save_format,
 				   dialog.tiles_width_spin->value(),
 				   dialog.tiles_height_spin->value());
@@ -2698,7 +2698,7 @@ void Window::print_cb(void)
 
 
 
-void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const MapZoom & target_map_zoom, ViewportSaveFormat save_format, bool save_kmz)
+void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const VikingZoomLevel & target_map_zoom, ViewportSaveFormat save_format, bool save_kmz)
 {
 	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
 
@@ -2747,7 +2747,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 
 
-bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, const MapZoom & map_zoom, ViewportSaveFormat save_format, unsigned int tiles_w, unsigned int tiles_h)
+bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, const VikingZoomLevel & target_viking_zoom_level, ViewportSaveFormat save_format, unsigned int tiles_w, unsigned int tiles_h)
 {
 	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
 		Dialog::error(tr("You must be in UTM mode to use this feature"), this);
@@ -2762,10 +2762,10 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 		}
 	}
 
-	const MapZoom orig_map_zoom = this->viewport->get_map_zoom();
+	const VikingZoomLevel orig_viking_zoom_level = this->viewport->get_viking_zoom_level();
 	const UTM utm_orig = this->viewport->get_center()->utm;
 
-	this->viewport->set_map_zoom(map_zoom);
+	this->viewport->set_viking_zoom_level(target_viking_zoom_level);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
 	this->viewport->reconfigure_drawing_area(image_width, image_height);
@@ -2775,7 +2775,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 	const char * extension = save_format == ViewportSaveFormat::PNG ? "png" : "jpg";
 
 	/* TODO_2_LATER: support non-identical x/y zoom values. */
-	const double xmpp = map_zoom.get_x();
+	const double xmpp = target_viking_zoom_level.get_x();
 
 	for (unsigned int y = 1; y <= tiles_h; y++) {
 		for (unsigned int x = 1; x <= tiles_w; x++) {
@@ -2815,7 +2815,7 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 
 	this->viewport->set_center_from_utm(utm_orig, false);
 
-	this->viewport->set_map_zoom(orig_map_zoom);
+	this->viewport->set_viking_zoom_level(orig_viking_zoom_level);
 
 	this->viewport->reconfigure_drawing_area();
 	this->draw_tree_items();
@@ -2916,7 +2916,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	/* But has it really changed? */
 	double current_zoom = this->viewport->get_zoom();
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
-		this->viewport->set_map_zoom(zoom_request);
+		this->viewport->set_viking_zoom_level(zoom_request);
 
 		/* Ask to draw updated viewport. */
 		this->emit_center_or_zoom_changed("zoom level selected");

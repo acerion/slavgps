@@ -38,11 +38,17 @@
 #include "map_source_wmsc.h"
 #include "map_utils.h"
 #include "viewport_internal.h"
+#include "viewport_zoom.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Map Source WMSC"
 
 
 
@@ -101,13 +107,17 @@ bool MapSourceWmsc::supports_download_only_new(void) const
 
 
 
-bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const
+bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
 	assert (src_coord.mode == CoordMode::LATLON);
 
-	if (xzoom != yzoom) {
+	if (!viking_zoom_level.x_y_is_equal()) {
 		return false;
 	}
+
+	/* Convenience variables. */
+	const double xzoom = viking_zoom_level.get_x();
+	const double yzoom = viking_zoom_level.get_y();
 
 	dest.scale = map_utils_mpp_to_tile_scale(xzoom);
 	if (!dest.scale.is_valid()) {
@@ -132,19 +142,13 @@ bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, double xzoom, double 
 
 void MapSourceWmsc::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
-	double socalled_mpp;
-	if (src.scale.value >= 0) {
-		socalled_mpp = VIK_GZ(src.scale.value);
-	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src.scale.value);
-	}
+	const double socalled_mpp = src.scale.to_so_called_mpp();
 	dest_coord.mode = CoordMode::LATLON;
 	dest_coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
 	dest_coord.ll.lat = -((src.y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
-	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
-		src.x, src.y, dest_coord.ll.lon, dest_coord.ll.lat);
+	qDebug() << SG_PREFIX_D << "Converting:" << src.x << src.y << "->" << dest_coord.ll.lon << dest_coord.ll.lat;
 }
 
 
@@ -152,12 +156,7 @@ void MapSourceWmsc::tile_to_center_coord(const TileInfo & src, Coord & dest_coor
 
 const QString MapSourceWmsc::get_server_path(const TileInfo & src) const
 {
-	double socalled_mpp;
-	if (src.scale.value >= 0) {
-		socalled_mpp = VIK_GZ(src.scale.value);
-	} else {
-		socalled_mpp = 1.0/VIK_GZ(-src.scale.value);
-	}
+	const double socalled_mpp = src.scale.to_so_called_mpp();
 	double minx = (double)src.x * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	double maxx = (double)(src.x + 1) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:

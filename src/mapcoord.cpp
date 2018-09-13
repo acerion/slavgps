@@ -72,3 +72,19 @@ bool TileScale::is_valid(void) const
 {
 	return this->valid;
 }
+
+
+
+
+double TileScale::to_so_called_mpp(void) const
+{
+	double result;
+
+	if (this->value >= 0) {
+		result = VIK_GZ(this->value);
+	} else {
+		result = 1.0/VIK_GZ(-this->value);
+	}
+
+	return result;
+}

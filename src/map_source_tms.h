@@ -49,7 +49,7 @@ namespace SlavGPS {
 
 		bool supports_download_only_new(void) const;
 
-		bool coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest) const;
+		bool coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
 		void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
 
 		const QString get_server_path(const TileInfo & src) const;

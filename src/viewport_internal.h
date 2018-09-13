@@ -188,17 +188,18 @@ namespace SlavGPS {
 		void coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
 		ScreenPos coord_to_screen_pos(const Coord & coord) const;
 
-		/* Viewport scale. */
-		void set_map_zoom_x(double new_xmpp);
-		void set_map_zoom_y(double new_ympp);
-		void set_map_zoom(double new_mpp);
 
+
+		/* Viewport scale. */
 		double get_zoom(void) const;
 		void zoom_in();
 		void zoom_out();
 
-		void set_map_zoom(const MapZoom & other);
-		const MapZoom & get_map_zoom(void) const;
+		void set_viking_zoom_level(double new_value);
+		void set_viking_zoom_level_x(double new_value);
+		void set_viking_zoom_level_y(double new_value);
+		void set_viking_zoom_level(const VikingZoomLevel & new_value);
+		const VikingZoomLevel & get_viking_zoom_level(void) const;
 
 
 
@@ -275,7 +276,7 @@ namespace SlavGPS {
 		bool is_ready(void) const;
 
 
-		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, bool explicit_set_zoom, const MapZoom & scaled_map_zoom);
+		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, bool explicit_set_zoom, const VikingZoomLevel & scaled_viking_zoom_level);
 
 
 		void emit_center_or_zoom_changed(const QString & trigger_name);
@@ -345,7 +346,7 @@ namespace SlavGPS {
 		void save_current_center(void);
 
 
-		MapZoom map_zoom;
+		VikingZoomLevel viking_zoom_level;
 		double xmfactor = 0.0f;
 		double ymfactor = 0.0f;
 

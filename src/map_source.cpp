@@ -415,7 +415,7 @@ QString MapSource::get_file_extension(void) const
 
 
 
-bool MapSource::coord_to_tile(const Coord & scr_coord, double xzoom, double yzoom, TileInfo & dest) const
+bool MapSource::coord_to_tile(const Coord & scr_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
 	fprintf(stderr, "MapSource coord_to_tile() returns false\n");
 	return false;

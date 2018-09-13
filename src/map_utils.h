@@ -51,7 +51,7 @@ namespace SlavGPS {
 
 	MapSourceZoomLevel map_utils_mpp_to_zoom_level(double mpp);
 
-	bool map_utils_coord_to_iTMS(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest);
+	bool map_utils_coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
 
 	Coord map_utils_iTMS_to_center_coord(const TileInfo & src);
 

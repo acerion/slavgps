@@ -48,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-bool ViewportZoomDialog::custom_zoom_dialog(MapZoom & zoom, QWidget * parent)
+bool ViewportZoomDialog::custom_zoom_dialog(VikingZoomLevel & zoom, QWidget * parent)
 {
 	ViewportZoomDialog dialog(zoom, parent);
 
@@ -67,7 +67,7 @@ bool ViewportZoomDialog::custom_zoom_dialog(MapZoom & zoom, QWidget * parent)
 
 
 
-ViewportZoomDialog::ViewportZoomDialog(MapZoom & zoom, QWidget * parent)
+ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
 {
 	this->setWindowTitle(QObject::tr("Zoom Factors..."));
 
@@ -121,9 +121,9 @@ ViewportZoomDialog::ViewportZoomDialog(MapZoom & zoom, QWidget * parent)
 
 
 
-MapZoom ViewportZoomDialog::get_value(void) const
+VikingZoomLevel ViewportZoomDialog::get_value(void) const
 {
-	return MapZoom(this->xspin.value(), this->yspin.value());
+	return VikingZoomLevel(this->xspin.value(), this->yspin.value());
 }
 
 
@@ -284,7 +284,7 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 
 
 
-MapZoom::MapZoom(const MapZoom & other)
+VikingZoomLevel::VikingZoomLevel(const VikingZoomLevel & other)
 {
 	this->x = other.x;
 	this->y = other.y;
@@ -293,7 +293,7 @@ MapZoom::MapZoom(const MapZoom & other)
 
 
 
-bool MapZoom::x_y_is_equal(void) const
+bool VikingZoomLevel::x_y_is_equal(void) const
 {
 	return this->x == this->y;
 }
@@ -301,7 +301,7 @@ bool MapZoom::x_y_is_equal(void) const
 
 
 
-double MapZoom::get_x(void) const
+double VikingZoomLevel::get_x(void) const
 {
 	return this->x;
 }
@@ -309,7 +309,7 @@ double MapZoom::get_x(void) const
 
 
 
-double MapZoom::get_y(void) const
+double VikingZoomLevel::get_y(void) const
 {
 	return this->y;
 }
@@ -317,7 +317,7 @@ double MapZoom::get_y(void) const
 
 
 
-bool MapZoom::set(double new_x, double new_y)
+bool VikingZoomLevel::set(double new_x, double new_y)
 {
 	if (new_x >= SG_VIEWPORT_ZOOM_MIN
 	    && new_x <= SG_VIEWPORT_ZOOM_MAX
@@ -334,7 +334,7 @@ bool MapZoom::set(double new_x, double new_y)
 }
 
 
-bool MapZoom::zoom_in(int factor)
+bool VikingZoomLevel::zoom_in(int factor)
 {
 	if (this->x >= (SG_VIEWPORT_ZOOM_MIN * factor) && this->y >= (SG_VIEWPORT_ZOOM_MIN * factor)) {
 		this->x /= factor;
@@ -348,7 +348,7 @@ bool MapZoom::zoom_in(int factor)
 
 
 
-bool MapZoom::zoom_out(int factor)
+bool VikingZoomLevel::zoom_out(int factor)
 {
 	if (this->x <= (SG_VIEWPORT_ZOOM_MAX / factor) && this->y <= (SG_VIEWPORT_ZOOM_MAX / factor)) {
 		this->x *= factor;
@@ -363,7 +363,7 @@ bool MapZoom::zoom_out(int factor)
 
 
 
-QString MapZoom::pretty_print(CoordMode coord_mode) const
+QString VikingZoomLevel::pretty_print(CoordMode coord_mode) const
 {
 	QString result;
 
@@ -390,16 +390,16 @@ QString MapZoom::pretty_print(CoordMode coord_mode) const
 
 
 
-QDebug SlavGPS::operator<<(QDebug debug, const MapZoom & map_zoom)
+QDebug SlavGPS::operator<<(QDebug debug, const VikingZoomLevel & viking_zoom_level)
 {
-	debug << "MapZoom" << map_zoom.get_x() << map_zoom.get_y();
+	debug << "VikingZoomLevel" << viking_zoom_level.get_x() << viking_zoom_level.get_y();
 	return debug;
 }
 
 
 
 
-bool MapZoom::operator==(const MapZoom & other) const
+bool VikingZoomLevel::operator==(const VikingZoomLevel & other) const
 {
 	return this->x == other.x && this->y == other.y;
 }
@@ -407,7 +407,15 @@ bool MapZoom::operator==(const MapZoom & other) const
 
 
 
-bool MapZoom::value_is_valid(double zoom)
+bool VikingZoomLevel::value_is_valid(double zoom)
 {
 	return zoom >= SG_VIEWPORT_ZOOM_MIN && zoom <= SG_VIEWPORT_ZOOM_MAX;
+}
+
+
+
+
+bool VikingZoomLevel::is_valid(void) const
+{
+	return VikingZoomLevel::value_is_valid(this->x) && VikingZoomLevel::value_is_valid(this->y);
 }

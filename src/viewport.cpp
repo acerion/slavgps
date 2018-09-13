@@ -124,7 +124,7 @@ double Viewport::calculate_utm_zone_width(void) const
 
 		/* Get latitude of screen bottom. */
 		UTM utm = this->center.utm;
-		utm.northing -= this->canvas.height * this->map_zoom.y / 2;
+		utm.northing -= this->canvas.height * this->viking_zoom_level.y / 2;
 		LatLon ll = UTM::to_latlon(utm);
 
 		/* Boundary. */
@@ -194,9 +194,9 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 		}
 	}
 
-	this->map_zoom.set(zoom_x, zoom_y);
-	this->xmfactor = MERCATOR_FACTOR(this->map_zoom.x);
-	this->ymfactor = MERCATOR_FACTOR(this->map_zoom.y);
+	this->viking_zoom_level.set(zoom_x, zoom_y);
+	this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
+	this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
 
 
 
@@ -259,8 +259,8 @@ Viewport::~Viewport()
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon);
 
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->map_zoom.x);
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->map_zoom.y);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->viking_zoom_level.x);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->viking_zoom_level.y);
 	}
 
 	delete this->centers;
@@ -502,11 +502,11 @@ void Viewport::pan_sync(int x_off, int y_off)
 
 
 
-void Viewport::set_map_zoom(double zoom)
+void Viewport::set_viking_zoom_level(double new_value)
 {
-	if (this->map_zoom.set(zoom, zoom)) {
-		this->xmfactor = MERCATOR_FACTOR(this->map_zoom.x);
-		this->ymfactor = MERCATOR_FACTOR(this->map_zoom.y);
+	if (this->viking_zoom_level.set(new_value, new_value)) {
+		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
+		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
 	}
 
 	if (this->drawmode == ViewportDrawMode::UTM) {
@@ -519,9 +519,9 @@ void Viewport::set_map_zoom(double zoom)
 
 void Viewport::zoom_in(void)
 {
-	if (this->map_zoom.zoom_in(2)) {
-		this->xmfactor = MERCATOR_FACTOR(this->map_zoom.x);
-		this->ymfactor = MERCATOR_FACTOR(this->map_zoom.y);
+	if (this->viking_zoom_level.zoom_in(2)) {
+		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
+		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
 
 		this->utm_zone_check();
 	}
@@ -532,9 +532,9 @@ void Viewport::zoom_in(void)
 
 void Viewport::zoom_out(void)
 {
-	if (this->map_zoom.zoom_out(2)) {
-		this->xmfactor = MERCATOR_FACTOR(this->map_zoom.x);
-		this->ymfactor = MERCATOR_FACTOR(this->map_zoom.y);
+	if (this->viking_zoom_level.zoom_out(2)) {
+		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
+		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
 
 		this->utm_zone_check();
 	}
@@ -545,35 +545,35 @@ void Viewport::zoom_out(void)
 
 double Viewport::get_zoom(void) const
 {
-	if (this->map_zoom.x_y_is_equal()) {
-		return this->map_zoom.x;
+	if (this->viking_zoom_level.x_y_is_equal()) {
+		return this->viking_zoom_level.x;
 	}
 	return 0.0; /* TODO_MAYBE: why 0.0? */
 }
 
 
 
-const MapZoom & Viewport::get_map_zoom(void) const
+const VikingZoomLevel & Viewport::get_viking_zoom_level(void) const
 {
-	return this->map_zoom;
+	return this->viking_zoom_level;
 }
 
 
 
 
-void Viewport::set_map_zoom(const MapZoom & other)
+void Viewport::set_viking_zoom_level(const VikingZoomLevel & new_value)
 {
-	this->map_zoom = other;
+	this->viking_zoom_level = new_value;
 }
 
 
 
 
-void Viewport::set_map_zoom_x(double new_xmpp)
+void Viewport::set_viking_zoom_level_x(double new_value)
 {
-	if (new_xmpp >= SG_VIEWPORT_ZOOM_MIN && new_xmpp <= SG_VIEWPORT_ZOOM_MAX) {
-		this->map_zoom.x = new_xmpp;
-		this->xmfactor = MERCATOR_FACTOR(this->map_zoom.x);
+	if (new_value >= SG_VIEWPORT_ZOOM_MIN && new_value <= SG_VIEWPORT_ZOOM_MAX) {
+		this->viking_zoom_level.x = new_value;
+		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
 		if (this->drawmode == ViewportDrawMode::UTM) {
 			this->utm_zone_check();
 		}
@@ -583,11 +583,11 @@ void Viewport::set_map_zoom_x(double new_xmpp)
 
 
 
-void Viewport::set_map_zoom_y(double new_ympp)
+void Viewport::set_viking_zoom_level_y(double new_value)
 {
-	if (new_ympp >= SG_VIEWPORT_ZOOM_MIN && new_ympp <= SG_VIEWPORT_ZOOM_MAX) {
-		this->map_zoom.y = new_ympp;
-		this->ymfactor = MERCATOR_FACTOR(this->map_zoom.y);
+	if (new_value >= SG_VIEWPORT_ZOOM_MIN && new_value <= SG_VIEWPORT_ZOOM_MAX) {
+		this->viking_zoom_level.y = new_value;
+		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
 		if (this->drawmode == ViewportDrawMode::UTM) {
 			this->utm_zone_check();
 		}
@@ -928,10 +928,10 @@ void Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone
 
 	/* And now we offset the two coordinates:
 	   we move the coordinates from center to one of the two corners. */
-	coord_ul.utm.northing += (this->map_zoom.y * this->canvas.height / 2);
-	coord_ul.utm.easting  -= (this->map_zoom.x * this->canvas.width / 2);
-	coord_br.utm.northing -= (this->map_zoom.y * this->canvas.height / 2);
-	coord_br.utm.easting  += (this->map_zoom.x * this->canvas.width / 2);
+	coord_ul.utm.northing += (this->viking_zoom_level.y * this->canvas.height / 2);
+	coord_ul.utm.easting  -= (this->viking_zoom_level.x * this->canvas.width / 2);
+	coord_br.utm.northing -= (this->viking_zoom_level.y * this->canvas.height / 2);
+	coord_br.utm.easting  += (this->viking_zoom_level.x * this->canvas.width / 2);
 }
 
 
@@ -981,8 +981,8 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 {
 	if (coord_mode == CoordMode::UTM) {
 		/* Slightly optimized. */
-		this->center.utm.easting += this->map_zoom.x * (x1 - (this->canvas.width / 2));
-		this->center.utm.northing += map_zoom.y * ((this->canvas.height / 2) - y1);
+		this->center.utm.easting += this->viking_zoom_level.x * (x1 - (this->canvas.width / 2));
+		this->center.utm.northing += this->viking_zoom_level.y * ((this->canvas.height / 2) - y1);
 		this->utm_zone_check();
 	} else {
 		const Coord coord = this->screen_pos_to_coord(x1, y1);
@@ -1068,8 +1068,8 @@ int Viewport::get_graph_right_edge(void) const
 Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 {
 	Coord coord;
-	const double xmpp = this->map_zoom.x;
-	const double ympp = this->map_zoom.y;
+	const double xmpp = this->viking_zoom_level.x;
+	const double ympp = this->viking_zoom_level.y;
 
 	if (this->coord_mode == CoordMode::UTM) {
 		coord.mode = CoordMode::UTM;
@@ -1128,8 +1128,8 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
 void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
 {
 	Coord coord;
-	const double xmpp = this->map_zoom.x;
-	const double ympp = this->map_zoom.y;
+	const double xmpp = this->viking_zoom_level.x;
+	const double ympp = this->viking_zoom_level.y;
 
 	if (coord_in.mode != this->coord_mode) {
 		/* TODO_MAYBE: what's going on here? Why this special case even exists? */
@@ -1801,7 +1801,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon ll = test.get_latlon();
-		ll.lat += this->get_map_zoom().y * this->canvas.height / 11000.0; // about 11km per degree latitude
+		ll.lat += this->get_viking_zoom_level().y * this->canvas.height / 11000.0; // about 11km per degree latitude
 
 		test = Coord(LatLon::to_utm(ll), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
@@ -2101,7 +2101,7 @@ void Viewport::draw_border(void)
 
 
 
-Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, bool explicit_set_zoom, const MapZoom & scaled_map_zoom)
+Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, bool explicit_set_zoom, const VikingZoomLevel & scaled_viking_zoom_level)
 {
 	/*
 	  We always want to print original viewport in its
@@ -2158,9 +2158,12 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	scaled_viewport->set_coord_mode(this->get_coord_mode());
 	scaled_viewport->set_center_from_coord(this->center, false);
 
-	if (MapZoom::value_is_valid(this->map_zoom.x / scale_factor) && MapZoom::value_is_valid(this->map_zoom.y / scale_factor)) {
-		scaled_viewport->set_map_zoom_x(this->map_zoom.x / scale_factor);
-		scaled_viewport->set_map_zoom_y(this->map_zoom.y / scale_factor);
+
+
+	/* TODO: how is after_scaling different than scaled_viking_zoom_level? */
+	const VikingZoomLevel after_scaling(this->viking_zoom_level.x / scale_factor, this->viking_zoom_level.y / scale_factor);
+	if (after_scaling.is_valid()) {
+		scaled_viewport->set_viking_zoom_level(after_scaling);
 	} else {
 		/* TODO_HARD: now what? */
 	}
@@ -2172,7 +2175,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 	strcpy(scaled_viewport->type_string, "Scaled Viewport");
 	if (explicit_set_zoom) {
-		scaled_viewport->set_map_zoom(scaled_map_zoom); /* TODO_MAYBE: why do we even have explicit set zoom and how this interacts with scale_factor arg? */
+		scaled_viewport->set_viking_zoom_level(scaled_viking_zoom_level); /* TODO_MAYBE: why do we even have explicit set zoom and how this interacts with scale_factor arg? */
 	}
 	/* Notice that we configure size of the print viewport using
 	   size of scaled source, not size of target device (i.e. not
@@ -2222,7 +2225,7 @@ bool Viewport::print_cb(QPrinter * printer)
 	const int target_width = target_rect.width();
 	const int target_height = target_rect.height();
 
-	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, MapZoom(0.0, 0.0)); /* TODO_HARD: why do we pass 0/0 map zoom here? */
+	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, VikingZoomLevel(0.0, 0.0)); /* TODO_HARD: why do we pass 0/0 map zoom here? */
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print canvas. */

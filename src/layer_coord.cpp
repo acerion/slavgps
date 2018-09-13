@@ -446,8 +446,8 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	pen.setWidth(this->line_thickness);
 
 	const UTM center = viewport->get_center()->get_utm();
-	const double xmpp = viewport->get_map_zoom().get_x();
-	const double ympp = viewport->get_map_zoom().get_y();
+	const double xmpp = viewport->get_viking_zoom_level().get_x();
+	const double ympp = viewport->get_viking_zoom_level().get_y();
 	const int width = viewport->get_width();
 	const int height = viewport->get_height();
 	LatLon ll, ll2, min, max;

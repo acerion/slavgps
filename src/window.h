@@ -63,7 +63,7 @@ namespace SlavGPS {
 
 
 	enum class SGFileType;
-	class MapZoom;
+	class VikingZoomLevel;
 
 
 
@@ -148,8 +148,8 @@ namespace SlavGPS {
 		void finish_new(void);
 
 		QString save_viewport_get_full_path(ViewportSaveMode mode);
-		void save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const MapZoom & map_zoom, ViewportSaveFormat viewport_save_format, bool save_kmz);
-		bool save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, const MapZoom & map_zoom, ViewportSaveFormat viewport_save_format, unsigned int tiles_w, unsigned int tiles_h);
+		void save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const VikingZoomLevel & viking_zoom_level, ViewportSaveFormat viewport_save_format, bool save_kmz);
+		bool save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, const VikingZoomLevel & viking_zoom_level, ViewportSaveFormat viewport_save_format, unsigned int tiles_w, unsigned int tiles_h);
 
 		/* Set full path to current document. */
 		void set_current_document_full_path(const QString & document_full_path);

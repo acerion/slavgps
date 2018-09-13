@@ -28,6 +28,7 @@
 #include "coord.h"
 #include "mapcoord.h"
 #include "viewport_internal.h"
+#include "viewport_zoom.h"
 
 
 
@@ -79,15 +80,18 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, double xmpp, double ympp, TileInfo & dest) const
+bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
 	if (src_coord.mode != CoordMode::UTM) {
 		return false;
 	}
 
-	if (xmpp != ympp) {
+	if (!viking_zoom_level.x_y_is_equal()) {
 		return false;
 	}
+
+	const double xmpp = viking_zoom_level.get_x();
+	const double ympp = viking_zoom_level.get_y();
 
 	dest.scale.value = mpp_to_scale(xmpp, this->map_type_id);
 	if (!dest.scale.value) {
