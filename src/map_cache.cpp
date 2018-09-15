@@ -198,15 +198,21 @@ void cache_remove_oldest()
  */
 void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
 {
+	/* It doesn't matter much which type of zoom we get here from
+	   ::scale, as long as we use the same type in all functions
+	   in this file. But let's use plain 'value' as the most
+	   universal, the common denominator for all map types. */
+	const int the_scale = tile_info.scale.get_scale_value();
+
 	if (pixmap.isNull()) {
-		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value);
+		qDebug("EE: Map Cache: not caching corrupt pixmap for maptype %d at %d %d %d %d\n", (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale);
 		return;
 	}
 
 	static char key_[MC_KEY_SIZE];
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock();
@@ -239,9 +245,15 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 {
 	QPixmap result;
 
+	/* It doesn't matter much which type of zoom we get here from
+	   ::scale, as long as we use the same type in all functions
+	   in this file. But let's use plain 'value' as the most
+	   universal, the common denominator for all map types. */
+	const int the_scale = tile_info.scale.get_scale_value();
+
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	mc_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
@@ -261,9 +273,15 @@ MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapT
 {
 	MapCacheItemProperties properties(0.0);
 
+	/* It doesn't matter much which type of zoom we get here from
+	   ::scale, as long as we use the same type in all functions
+	   in this file. But let's use plain 'value' as the most
+	   universal, the common denominator for all map types. */
+	const int the_scale = tile_info.scale.get_scale_value();
+
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 	std::string key(key_);
 
 	auto iter = maps_cache.find(key);
@@ -323,9 +341,15 @@ void flush_matching(std::string & key_part)
  */
 void MapCache::remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID map_type_id, const QString & file_name)
 {
+	/* It doesn't matter much which type of zoom we get here from
+	   ::scale, as long as we use the same type in all functions
+	   in this file. But let's use plain 'value' as the most
+	   universal, the common denominator for all map types. */
+	const int the_scale = tile_info.scale.get_scale_value();
+
 	char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, tile_info.scale.value, nn);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn);
 	std::string key(key_);
 
 	flush_matching(key);

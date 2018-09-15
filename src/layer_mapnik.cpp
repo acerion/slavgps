@@ -649,7 +649,7 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 /**
  * Common render function which can run in separate thread.
  */
-void LayerMapnik::render(const Coord & coord_ul, const Coord & coord_br, const TileInfo & ti_ul)
+void LayerMapnik::render(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br)
 {
 	int64_t tt1 = g_get_real_time();
 	QPixmap pixmap = this->mi->render_map(coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
@@ -678,7 +678,7 @@ void RenderInfo::run(void)
 {
 	const bool end_job = this->set_progress_state(0);
 	if (!end_job) {
-		this->lmk->render(this->coord_ul, this->coord_br, this->ti_ul);
+		this->lmk->render(this->ti_ul, this->coord_ul, this->coord_br);
 	}
 
 	tp_mutex.lock();
@@ -702,11 +702,11 @@ void RenderInfo::run(void)
 /**
  * Thread.
  */
-void LayerMapnik::thread_add(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, const QString & file_name)
+void LayerMapnik::thread_add(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br, const QString & file_name)
 {
 	/* Create request. */
 	const unsigned int nn = file_name.isEmpty() ? 0 : qHash(file_name, 0);
-	const QString request = QString(REQUEST_HASHKEY_FORMAT).arg(x).arg(y).arg(z).arg(zoom).arg(nn);
+	const QString request = QString(REQUEST_HASHKEY_FORMAT).arg(ti_ul.x).arg(ti_ul.y).arg(ti_ul.z).arg(ti_ul.scale.get_scale_value()).arg(nn);
 
 	tp_mutex.lock();
 
@@ -721,7 +721,7 @@ void LayerMapnik::thread_add(const TileInfo & ti_ul, const Coord & coord_ul, con
 	tp_mutex.unlock();
 
 	const QString base_name = FileUtils::get_base_name(file_name);
-	const QString job_description = QObject::tr("Mapnik Render %1:%2:%3 %4").arg(zoom).arg(x).arg(y).arg(base_name);
+	const QString job_description = QObject::tr("Mapnik Render %1:%2:%3 %4").arg(ti_ul.scale.get_scale_value()).arg(ti_ul.x).arg(ti_ul.y).arg(base_name);
 	ri->set_description(job_description);
 	ri->run_in_background(ThreadPoolType::LocalMapnik);
 }
@@ -785,10 +785,10 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br)
 
 		if (pixmap.isNull() || rerender_) {
 			if (true) {
-				this->thread_add(ti_ul, coord_ul, coord_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale.value, this->filename_xml.toUtf8().constData());
+				this->thread_add(ti_ul, coord_ul, coord_br, this->filename_xml);
 			} else {
 				/* Run in the foreground. */
-				this->render(coord_ul, coord_br, ti_ul);
+				this->render(ti_ul, coord_ul, coord_br);
 				this->emit_layer_changed("Mapnik - get pixmap");
 			}
 		}
@@ -1020,7 +1020,7 @@ void LayerMapnik::rerender()
 	ti_br.x = ti_br.x+1;
 	ti_br.y = ti_br.y+1;
 	this->rerender_br = map_utils_iTMS_to_coord(ti_br);
-	this->thread_add(ti_ul, this->rerender_ul, this->rerender_br, ti_ul.x, ti_ul.y, ti_ul.z, ti_ul.scale.value, this->filename_xml.toUtf8().constData());
+	this->thread_add(ti_ul, this->rerender_ul, this->rerender_br, this->filename_xml);
 }
 
 

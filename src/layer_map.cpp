@@ -908,9 +908,8 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 	}
 
 	/* Don't attempt to download unsupported zoom levels. */
-	const double xzoom = viewport->get_viking_zoom_level().get_x();
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	const MapSourceZoomLevel map_source_zoom = map_utils_mpp_to_zoom_level(xzoom);
+	const MapSourceZoomLevel map_source_zoom = viewport->get_viking_zoom_level().to_zoom_level();
 	if (!map_source->is_supported_zoom_level(map_source_zoom)) {
 		return false;
 	}
@@ -950,7 +949,7 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 		TileInfo ulm2 = ulm;
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
-		ulm2.scale.value = ulm.scale.value + scale_inc;
+		ulm2.scale.set_scale_value(ulm.scale.get_scale_value() + scale_inc); /* TODO_LATER: should it be "+ scale_inc" or "* scale_inc"? */
 
 		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm2, scale_x * scale_factor, scale_y * scale_factor);
 		if (!pixmap.isNull()) {
@@ -982,7 +981,7 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 		TileInfo ulm2 = ulm;
 		ulm2.x = ulm.x * scale_factor;
 		ulm2.y = ulm.y * scale_factor;
-		ulm2.scale.value = ulm.scale.value - scale_dec;
+		ulm2.scale.set_scale_value(ulm.scale.get_scale_value() - scale_dec); /* TODO_LATER: should it be "- scale_dec" or "/ scale_dec"? */
 		for (int pict_x = 0; pict_x < scale_factor; pict_x ++) {
 			for (int pict_y = 0; pict_y < scale_factor; pict_y ++) {
 				TileInfo ulm3 = ulm2;
@@ -1248,9 +1247,8 @@ void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 	}
 
 	/* Copyright. */
-	double level = viewport->get_zoom();
 	const LatLonBBox bbox = viewport->get_bbox();
-	map_source->add_copyright(viewport, bbox, level);
+	map_source->add_copyright(viewport, bbox, viewport->get_viking_zoom_level());
 
 	viewport->add_logo(map_source->get_logo());
 

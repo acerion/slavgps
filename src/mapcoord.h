@@ -47,6 +47,15 @@ namespace SlavGPS {
 		bool is_valid(void) const;
 		double to_so_called_mpp(void) const;
 
+		void set_scale_value(int new_value);
+		int get_scale_value(void) const;
+
+		void set_scale_valid(bool new_value);
+		bool get_scale_valid(void) const;
+
+		bool from_viking_zoom_level = false;
+
+	private:
 		int value = 0;
 		bool valid = false;
 	};

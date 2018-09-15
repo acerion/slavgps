@@ -44,8 +44,6 @@ namespace SlavGPS {
 		WebToolFormat(const QString & label, const QString & url_format, const QString & url_format_code);
 		~WebToolFormat();
 
-		MapSourceZoomLevel mpp_to_zoom_level(double mpp);
-
 		QString get_url_at_current_position(Viewport * viewport);
 		QString get_url_at_position(Viewport * viewport, const Coord * a_coord);
 

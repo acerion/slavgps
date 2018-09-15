@@ -63,9 +63,6 @@ namespace SlavGPS {
 		virtual QString get_url_at_current_position(Viewport * viewport) = 0;
 		virtual QString get_url_at_position(Viewport * viewport, const Coord * coord) = 0;
 
-		virtual MapSourceZoomLevel mpp_to_zoom_level(double mpp);
-
-
 
 	protected:
 		QString url_format;

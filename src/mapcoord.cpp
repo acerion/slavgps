@@ -88,3 +88,35 @@ double TileScale::to_so_called_mpp(void) const
 
 	return result;
 }
+
+
+
+
+void TileScale::set_scale_value(int new_value)
+{
+	this->value = new_value;
+}
+
+
+
+
+int TileScale::get_scale_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+void TileScale::set_scale_valid(bool new_value)
+{
+	this->valid = new_value;
+}
+
+
+
+
+bool TileScale::get_scale_valid(void) const
+{
+	return this->valid;
+}

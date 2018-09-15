@@ -283,7 +283,7 @@ void MapSource::set_file_extension(const QString & new_file_extension)
    @bbox: bounding box of interest
    @zoom: the zoom level of interest
 */
-void MapSource::add_copyright(Viewport * viewport, const LatLonBBox &  bbox, double zoom)
+void MapSource::add_copyright(Viewport * viewport, const LatLonBBox &  bbox, const VikingZoomLevel & viking_zoom_level)
 {
 	return;
 }

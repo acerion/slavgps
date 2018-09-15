@@ -131,7 +131,7 @@ namespace SlavGPS {
 
 		virtual MapSource & operator=(const MapSource & other);
 
-		virtual void add_copyright(Viewport * viewport, const LatLonBBox & bbox, double zoom);
+		virtual void add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingZoomLevel & viking_zoom_level);
 		QString get_license(void) const;
 		QString get_license_url(void) const;
 		const ViewportLogo & get_logo(void) const;

@@ -71,6 +71,9 @@ namespace SlavGPS {
 		VikingZoomLevel(double new_x = 0.0f, double new_y = 0.0f) : x(new_x), y(new_y) {};
 		VikingZoomLevel(const VikingZoomLevel & other);
 
+		TileScale to_tile_scale(void) const;
+		MapSourceZoomLevel to_zoom_level(void) const;
+
 		bool set(double x, double y);
 		double get_x(void) const;
 		double get_y(void) const;

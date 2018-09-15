@@ -39,6 +39,7 @@
 #include "viewport.h"
 #include "viewport_zoom.h"
 #include "viewport_internal.h"
+#include "map_utils.h"
 
 
 
@@ -418,4 +419,22 @@ bool VikingZoomLevel::value_is_valid(double zoom)
 bool VikingZoomLevel::is_valid(void) const
 {
 	return VikingZoomLevel::value_is_valid(this->x) && VikingZoomLevel::value_is_valid(this->y);
+}
+
+
+
+
+TileScale VikingZoomLevel::to_tile_scale(void) const
+{
+	TileScale tile_scale = SlavGPS::map_utils_mpp_to_tile_scale(this->x);
+	return tile_scale;
+}
+
+
+
+
+MapSourceZoomLevel VikingZoomLevel::to_zoom_level(void) const
+{
+	MapSourceZoomLevel slippy_zoom_level = SlavGPS::map_utils_mpp_to_zoom_level(this->x);
+	return slippy_zoom_level;
 }

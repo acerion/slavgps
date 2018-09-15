@@ -119,7 +119,7 @@ bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, const VikingZoomLevel
 	const double xzoom = viking_zoom_level.get_x();
 	const double yzoom = viking_zoom_level.get_y();
 
-	dest.scale = map_utils_mpp_to_tile_scale(xzoom);
+	dest.scale = viking_zoom_level.to_tile_scale();
 	if (!dest.scale.is_valid()) {
 		return false;
 	}

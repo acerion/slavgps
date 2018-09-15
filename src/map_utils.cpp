@@ -73,15 +73,15 @@ TileScale SlavGPS::map_utils_mpp_to_tile_scale(double mpp)
 
 	for (int i = 0; i < num_scales; i++) {
 		if (std::abs(scale_mpps[i] - mpp) < ERROR_MARGIN) {
-			tile_scale.value = i;
-			tile_scale.valid = true;
+			tile_scale.set_scale_value(i);
+			tile_scale.set_scale_valid(true);
 			return tile_scale;
 		}
 	}
 	for (int i = 0; i < num_scales_neg; i++) {
 		if (std::abs(scale_neg_mpps[i] - mpp) < 0.000001) {
-			tile_scale.value = -i;
-			tile_scale.valid = true;
+			tile_scale.set_scale_value(-i);
+			tile_scale.set_scale_valid(true);
 			return tile_scale;
 		}
 	}
@@ -89,8 +89,8 @@ TileScale SlavGPS::map_utils_mpp_to_tile_scale(double mpp)
 	/* In original implementation of the function '255' was the
 	   value returned when the loops didn't find any valid
 	   value. */
-	tile_scale.value = 255;
-	tile_scale.valid = false;
+	tile_scale.set_scale_value(255);
+	tile_scale.set_scale_valid(false);
 	return tile_scale;
 }
 
@@ -154,7 +154,7 @@ bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, const VikingZoomL
 	/* Convenience variable. */
 	const double xzoom = viking_zoom_level.get_x();
 
-	dest.scale = map_utils_mpp_to_tile_scale(xzoom);
+	dest.scale = viking_zoom_level.to_tile_scale();
 	if (!dest.scale.is_valid()) {
 		return false;
 	}

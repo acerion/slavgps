@@ -87,8 +87,8 @@ namespace SlavGPS {
 
 		bool carto_load(void);
 		void possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ulm);
-		void render(const Coord & coord_ul, const Coord & coord_br, const TileInfo & ti_ul);
-		void thread_add(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br, int x, int y, int z, int zoom, const QString & file_name);
+		void render(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br);
+		void thread_add(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br, const QString & file_name);
 		QPixmap load_pixmap(const TileInfo & ulm, const TileInfo & brm, bool * rerender) const;
 		QPixmap get_pixmap(const TileInfo & ulm, const TileInfo & brm);
 		void rerender();

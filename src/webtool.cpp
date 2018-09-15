@@ -71,11 +71,3 @@ void WebTool::set_url_format(const QString & new_url_format)
 {
 	this->url_format = new_url_format;
 }
-
-
-
-
-MapSourceZoomLevel WebTool::mpp_to_zoom_level(double mpp)
-{
-	return map_utils_mpp_to_zoom_level(mpp);
-}
