@@ -60,7 +60,7 @@ bool LayerDefaults::loaded = false;
 
 
 
-SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const char * name, SGVariantType type_id)
+SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString & param_name, SGVariantType type_id)
 {
 	SGVariant value;
 	QString group = Layer::get_type_id_string(layer_type);
@@ -73,7 +73,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const char * 
 	}
 
 
-	QString key(group + QString("/") + QString(name));
+	QString key(group + QString("/") + param_name);
 	QVariant variant = LayerDefaults::keyfile->value(key);
 
 	if (!variant.isValid()) {
@@ -127,7 +127,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const char * 
 
 
 
-void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype)
+void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType layer_type, const QString & param_name, SGVariantType ptype)
 {
 	QVariant variant;
 
@@ -156,7 +156,7 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 	}
 
 	const QString group = Layer::get_type_id_string(layer_type);
-	QString key(group + QString("/") + QString(name));
+	QString key(group + QString("/") + param_name);
 	LayerDefaults::keyfile->setValue(key, variant);
 }
 
@@ -350,7 +350,7 @@ void LayerDefaults::uninit(void)
 
    Call this function to get the default value for the parameter requested.
 */
-SGVariant LayerDefaults::get(LayerType layer_type, const char * param_name, SGVariantType param_type)
+SGVariant LayerDefaults::get(LayerType layer_type, const QString & param_name, SGVariantType param_type)
 {
 	return LayerDefaults::get_parameter_value(layer_type, param_name, param_type);
 }

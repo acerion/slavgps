@@ -1487,8 +1487,8 @@ void Window::set_default_location_cb(void)
 	const LatLon current_center_ll = this->viewport->get_center()->get_latlon();
 
 	/* Push center coordinate values to Preferences */
-	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL ".default_latitude"), SGVariant((double) current_center_ll.lat));
-	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL ".default_longitude"), SGVariant((double) current_center_ll.lon));
+	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_ll.lat));
+	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_longitude"), SGVariant((double) current_center_ll.lon));
 	Preferences::save_to_file();
 }
 

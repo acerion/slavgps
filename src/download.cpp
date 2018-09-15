@@ -176,7 +176,7 @@ static SGVariant convert_to_internal(SGVariant value)
 /* FIXME: verify that users of the two functions operate on signed int. */
 static ParameterExtra prefs_extra = { convert_to_display, convert_to_internal, NULL };
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL, "download_tile_age", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age (days):"), WidgetType::SpinBoxInt, &scale_age, NULL, &prefs_extra, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "download_tile_age", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Tile age (days):"), WidgetType::SpinBoxInt, &scale_age, NULL, &prefs_extra, NULL },
 };
 
 
@@ -185,7 +185,7 @@ static ParameterSpecification prefs[] = {
 void Download::init(void)
 {
 	CurlDownload::init();
-	Preferences::register_parameter(prefs[0], scale_age.initial);
+	Preferences::register_parameter_instance(prefs[0], scale_age.initial);
 }
 
 
@@ -454,7 +454,7 @@ DownloadStatus DownloadHandle::download(const QString & hostname, const QString 
 			return DownloadStatus::DownloadNotRequired;
 		}
 
-		time_t tile_age = 365; //Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".download_tile_age").u;
+		time_t tile_age = 365; //Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "download_tile_age").u;
 		/* Get the modified time of this file. */
 		struct stat buf;
 		(void) stat(dest_file_path.toUtf8().constData(), &buf);

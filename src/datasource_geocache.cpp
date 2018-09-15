@@ -69,7 +69,7 @@ using namespace SlavGPS;
 
 /* Params will be geocaching.username, geocaching.password
    We have to make sure these don't collide. */
-#define PREFERENCES_NAMESPACE_GC "geocaching"
+#define PREFERENCES_NAMESPACE_GC "geocaching."
 
 
 
@@ -91,8 +91,8 @@ DataSourceGeoCache::DataSourceGeoCache(Viewport * new_viewport)
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GC, "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::Entry, NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_GC, "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::Entry, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GC "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::Entry, NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GC "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::Entry, NULL, NULL, NULL, NULL },
 };
 
 
@@ -101,11 +101,11 @@ static ParameterSpecification prefs[] = {
 void DataSourceGeoCache::init(void)
 {
 	int i = 0;
-	Preferences::register_group(PREFERENCES_NAMESPACE_GC, QObject::tr("Geocaching"));
+	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_GC, QObject::tr("Geocaching"));
 
-	Preferences::register_parameter(prefs[i], SGVariant("username", prefs[i].type_id));
+	Preferences::register_parameter_instance(prefs[i], SGVariant("username", prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs[i], SGVariant("password", prefs[i].type_id));
+	Preferences::register_parameter_instance(prefs[i], SGVariant("password", prefs[i].type_id));
 	i++;
 }
 
@@ -254,8 +254,8 @@ DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title,
 BabelOptions * DataSourceGeoCacheDialog::get_acquire_options_none(void)
 {
 
-	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".username").val_string);
-	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC ".password").val_string);
+	const QString safe_user = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC "username").val_string);
+	const QString safe_pass = Util::shell_quote(Preferences::get_param_value(PREFERENCES_NAMESPACE_GC "password").val_string);
 
 	LatLon lat_lon = this->center_entry->get_value();
 	if (!lat_lon.is_valid()) {

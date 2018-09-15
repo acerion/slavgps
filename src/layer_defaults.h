@@ -53,7 +53,7 @@ namespace SlavGPS {
 		static void uninit(void);
 
 		static void set(LayerType layer_type, const ParameterSpecification & layer_param_spec, const SGVariant & default_value);
-		static SGVariant get(LayerType layer_type, const char * param_name, SGVariantType param_type);
+		static SGVariant get(LayerType layer_type, const QString & param_name, SGVariantType param_type);
 
 		static bool show_window(LayerType layer_type, QWidget * parent);
 
@@ -68,9 +68,9 @@ namespace SlavGPS {
 
 		/* Check value of ::is_valid() of returned variant to
 		   see whether lookup of parameter has succeeded. */
-		static SGVariant get_parameter_value(LayerType layer_type, const char * name, SGVariantType type_id);
+		static SGVariant get_parameter_value(LayerType layer_type, const QString & param_name, SGVariantType type_id);
 
-		static void save_parameter_value(const SGVariant & value, LayerType layer_type, const char * name, SGVariantType ptype);
+		static void save_parameter_value(const SGVariant & value, LayerType layer_type, const QString & param_name, SGVariantType ptype);
 
 		static QSettings * keyfile;
 		static bool loaded;

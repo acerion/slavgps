@@ -87,10 +87,7 @@ ParameterSpecification & ParameterSpecification::operator=(const ParameterSpecif
 	}
 
 	this->id = other.id;
-	if (other.name_space) { /* .name_space may be NULL. */
-		this->name_space = strdup(other.name_space);
-	}
-	this->name = strdup(other.name);
+	this->name = other.name;
 	this->type_id = other.type_id;
 	this->group_id = other.group_id;
 	this->ui_label = other.ui_label;

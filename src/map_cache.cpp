@@ -89,7 +89,7 @@ static std::mutex mc_mutex;
 static ParameterScale<int> scale_cache_size(1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0);
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL, "mapcache_size", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Map cache memory size (MB):"), WidgetType::HScale, &scale_cache_size, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Map cache memory size (MB):"), WidgetType::HScale, &scale_cache_size, NULL, NULL, NULL },
 };
 
 
@@ -130,7 +130,7 @@ size_t MapCacheItem::get_size(void) const
 
 void MapCache::init(void)
 {
-	Preferences::register_parameter(prefs[0], scale_cache_size.initial);
+	Preferences::register_parameter_instance(prefs[0], scale_cache_size.initial);
 }
 
 
@@ -220,7 +220,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 	cache_add(key, pixmap, properties);
 
 	/* TODO_LATER: that should be done on preference change only... */
-	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".mapcache_size").u.val_uint * 1024 * 1024;
+	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "mapcache_size").u.val_uint * 1024 * 1024;
 
 	while (cache_size > max_cache_size && maps_cache.size()) {
 		cache_remove_oldest();

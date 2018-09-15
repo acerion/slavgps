@@ -63,7 +63,7 @@ extern bool vik_verbose;
 
 /* Params will be osm_traces.username, osm_traces.password */
 /* We have to make sure these don't collide. */
-#define PREFERENCES_NAMESPACE_OSM_TRACES "osm_traces"
+#define PREFERENCES_NAMESPACE_OSM_TRACES "osm_traces."
 
 #define VIK_SETTINGS_OSM_TRACE_VIS "osm_trace_visibility"
 
@@ -135,9 +135,9 @@ public:
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES, "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM username:"), WidgetType::Entry,    NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES, "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM password:"), WidgetType::Password, NULL, NULL, NULL, NULL },
-	{ 2, NULL,                             NULL,       SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, QString(""),                  WidgetType::None,     NULL, NULL, NULL, NULL } /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM username:"), WidgetType::Entry,    NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM password:"), WidgetType::Password, NULL, NULL, NULL, NULL },
+	{ 2,                                  "",         SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                           WidgetType::None,     NULL, NULL, NULL, NULL } /* Guard. */
 };
 
 
@@ -200,11 +200,11 @@ void SlavGPS::osm_traces_init()
 {
 	int i = 0;
 
-	Preferences::register_group(PREFERENCES_NAMESPACE_OSM_TRACES, QObject::tr("OpenStreetMap Traces"));
+	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_OSM_TRACES, QObject::tr("OpenStreetMap Traces"));
 
-	Preferences::register_parameter(prefs[i], SGVariant("", prefs[i].type_id));
+	Preferences::register_parameter_instance(prefs[i], SGVariant("", prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs[i], SGVariant("", prefs[i].type_id));
+	Preferences::register_parameter_instance(prefs[i], SGVariant("", prefs[i].type_id));
 	i++;
 }
 
@@ -392,8 +392,8 @@ void OSMTracesInfo::run(void)
 void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const QString default_user = get_default_user();
-	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".username").val_string;
-	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES ".password").val_string;
+	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES "username").val_string;
+	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES "password").val_string;
 
 
 	if (!osm_user.isEmpty()) {

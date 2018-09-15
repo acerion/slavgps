@@ -37,18 +37,18 @@
 
 
 /* Group for global preferences */
-#define PREFERENCES_NAMESPACE_GENERAL "viking.globals"
+#define PREFERENCES_NAMESPACE_GENERAL "viking.globals."
 
 /* Another group of global preferences,
    but in a separate section to try to keep things organized */
 /* AKA Export/External Prefs */
-#define PREFERENCES_NAMESPACE_IO "viking.io"
+#define PREFERENCES_NAMESPACE_IO "viking.io."
 
 /* Group for global preferences - but 'advanced'
    User changeable but only for those that need it */
-#define PREFERENCES_NAMESPACE_ADVANCED "viking.advanced"
+#define PREFERENCES_NAMESPACE_ADVANCED "viking.advanced."
 
-#define PREFERENCES_NAMESPACE_STARTUP "viking.startup"
+#define PREFERENCES_NAMESPACE_STARTUP "viking.startup."
 
 
 
@@ -130,18 +130,18 @@ namespace SlavGPS {
 		static bool save_to_file(void);
 
 		/*
-		  Must be called first, before calling Preferences::register_parameter().
+		  Must be called first, before calling Preferences::register_parameter_instance().
 
-		  \param group_key is key string in preferences file
-		  \param group_name is a pretty name for presentation in UI
+		  \param group_key is a namespace ("something.other.") - a prefix of parameter name
+		  \param group_ui_label is a pretty name for presentation in UI
 		*/
-		static void register_group(const QString & group_key, const QString & group_name);
+		static void register_parameter_group(const QString & group_key, const QString & group_ui_label);
 
 		/* Nothing in pref is copied neither but pref itself is copied. (TODO_LATER: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
 		   so pref key is not copied. default param data IS copied. */
 		/* Group field (integer) will be overwritten. */
 		/* \param param_spec should be persistent through the life of the preference. */
-		static void register_parameter(const ParameterSpecification & param_spec, const SGVariant & default_param_value);
+		static void register_parameter_instance(const ParameterSpecification & param_spec, const SGVariant & default_param_value);
 
 		/* Set value of a single parameter. */
 		static bool set_param_value(const QString & param_name, const SGVariant & param_value);

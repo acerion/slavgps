@@ -161,7 +161,7 @@ void Layer::preconfigure_interfaces(void)
 			continue;
 		}
 
-		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->name; param_spec++) {
+		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->type_id != SGVariantType::Empty; param_spec++) {
 			qDebug() << "II" PREFIX << "param spec name is" << param_spec->name << "type is" << param_spec->type_id << "id is" << param_spec->id;
 			interface->parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_spec->id, param_spec));
 		}
@@ -186,7 +186,7 @@ void Layer::postconfigure_interfaces(void)
 			continue;
 		}
 
-		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->name; param_spec++) {
+		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->type_id != SGVariantType::Empty; param_spec++) {
 
 			/* Read and store default values of layer's
 			   parameters.

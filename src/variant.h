@@ -113,7 +113,7 @@ namespace SlavGPS {
 
 		QString to_string() const;
 
-		void write(FILE * file, char const * param_name) const;
+		void write(FILE * file, const QString & param_name) const;
 
 		SGVariant & operator=(const SGVariant & other);
 

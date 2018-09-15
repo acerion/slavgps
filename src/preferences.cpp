@@ -47,34 +47,33 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Preferences"
-#define PREFIX ": Preferences:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
 
 static std::vector<SGLabelID> params_degree_formats = {
-	SGLabelID("DDD", (int) DegreeFormat::DDD),
-	SGLabelID("DMM", (int) DegreeFormat::DMM),
-	SGLabelID("DMS", (int) DegreeFormat::DMS),
-	SGLabelID("Raw", (int) DegreeFormat::RAW),
+	SGLabelID(QObject::tr("DDD"), (int) DegreeFormat::DDD),
+	SGLabelID(QObject::tr("DMM"), (int) DegreeFormat::DMM),
+	SGLabelID(QObject::tr("DMS"), (int) DegreeFormat::DMS),
+	SGLabelID(QObject::tr("Raw"), (int) DegreeFormat::RAW),
 };
 
 static std::vector<SGLabelID> params_units_distance = {
-	SGLabelID("Kilometres",     (int) DistanceUnit::Kilometres),
-	SGLabelID("Miles",          (int) DistanceUnit::Miles),
-	SGLabelID("Nautical Miles", (int) DistanceUnit::NauticalMiles),
+	SGLabelID(QObject::tr("Kilometres"),     (int) DistanceUnit::Kilometres),
+	SGLabelID(QObject::tr("Miles"),          (int) DistanceUnit::Miles),
+	SGLabelID(QObject::tr("Nautical Miles"), (int) DistanceUnit::NauticalMiles),
 };
 
 static std::vector<SGLabelID> params_units_speed = {
-	SGLabelID("km/h",  (int) SpeedUnit::KilometresPerHour),
-	SGLabelID("mph",   (int) SpeedUnit::MilesPerHour),
-	SGLabelID("m/s",   (int) SpeedUnit::MetresPerSecond),
-	SGLabelID("knots", (int) SpeedUnit::Knots)
+	SGLabelID(QObject::tr("km/h"),  (int) SpeedUnit::KilometresPerHour),
+	SGLabelID(QObject::tr("mph"),   (int) SpeedUnit::MilesPerHour),
+	SGLabelID(QObject::tr("m/s"),   (int) SpeedUnit::MetresPerSecond),
+	SGLabelID(QObject::tr("knots"), (int) SpeedUnit::Knots)
 };
 
 static std::vector<SGLabelID> params_units_height = {
-	SGLabelID("Metres", (int) HeightUnit::Metres),
-	SGLabelID("Feet",   (int) HeightUnit::Feet),
+	SGLabelID(QObject::tr("Metres"), (int) HeightUnit::Metres),
+	SGLabelID(QObject::tr("Feet"),   (int) HeightUnit::Feet),
 };
 
 
@@ -83,92 +82,91 @@ static ParameterScale<double> scale_lat( -90.0,  90.0, SGVariant(40.714490),  0.
 static ParameterScale<double> scale_lon(-180.0, 180.0, SGVariant(-74.007130), 0.05, 2);
 
 static std::vector<SGLabelID> params_time_ref_frame = {
-	SGLabelID("Locale", 0),
-	SGLabelID("World",  1),
-	SGLabelID("UTC",    2),
+	SGLabelID(QObject::tr("Locale"), 0),
+	SGLabelID(QObject::tr("World"),  1),
+	SGLabelID(QObject::tr("UTC"),    2),
 };
 
 static ParameterSpecification general_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GENERAL, "degree_format",            SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Degree format:"),            WidgetType::ComboBox,        &params_degree_formats, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_GENERAL, "units_distance",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Distance units:"),           WidgetType::ComboBox,        &params_units_distance, NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_GENERAL, "units_speed",              SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Speed units:"),              WidgetType::ComboBox,        &params_units_speed,    NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_GENERAL, "units_height",             SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Height units:"),             WidgetType::ComboBox,        &params_units_height,   NULL, NULL, NULL },
-	{ 4, PREFERENCES_NAMESPACE_GENERAL, "use_large_waypoint_icons", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Use large waypoint icons:"), WidgetType::CheckButton,     NULL,                   NULL, NULL, NULL },
-	{ 5, PREFERENCES_NAMESPACE_GENERAL, "default_latitude",         SGVariantType::Double,  PARAMETER_GROUP_GENERIC, QObject::tr("Default latitude:"),         WidgetType::SpinBoxDouble,   &scale_lat,             NULL, NULL, NULL },
-	{ 6, PREFERENCES_NAMESPACE_GENERAL, "default_longitude",        SGVariantType::Double,  PARAMETER_GROUP_GENERIC, QObject::tr("Default longitude:"),        WidgetType::SpinBoxDouble,   &scale_lon,             NULL, NULL, NULL },
-	{ 7, PREFERENCES_NAMESPACE_GENERAL, "time_reference_frame",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Time Display:"),             WidgetType::ComboBox,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
-
-	{ 8, NULL,                          NULL,                       SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                              WidgetType::None,            NULL,                   NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GENERAL "degree_format",            SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Degree format:"),            WidgetType::ComboBox,        &params_degree_formats, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GENERAL "units_distance",           SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Distance units:"),           WidgetType::ComboBox,        &params_units_distance, NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Speed units:"),              WidgetType::ComboBox,        &params_units_speed,    NULL, NULL, NULL },
+	{ 3, PREFERENCES_NAMESPACE_GENERAL "units_height",             SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Height units:"),             WidgetType::ComboBox,        &params_units_height,   NULL, NULL, NULL },
+	{ 4, PREFERENCES_NAMESPACE_GENERAL "use_large_waypoint_icons", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Use large waypoint icons:"), WidgetType::CheckButton,     NULL,                   NULL, NULL, NULL },
+	{ 5, PREFERENCES_NAMESPACE_GENERAL "default_latitude",         SGVariantType::Double,  PARAMETER_GROUP_GENERIC, QObject::tr("Default latitude:"),         WidgetType::SpinBoxDouble,   &scale_lat,             NULL, NULL, NULL },
+	{ 6, PREFERENCES_NAMESPACE_GENERAL "default_longitude",        SGVariantType::Double,  PARAMETER_GROUP_GENERIC, QObject::tr("Default longitude:"),        WidgetType::SpinBoxDouble,   &scale_lon,             NULL, NULL, NULL },
+	{ 7, PREFERENCES_NAMESPACE_GENERAL "time_reference_frame",     SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Time Display:"),             WidgetType::ComboBox,        &params_time_ref_frame, NULL, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
+	{ 8,                               "",                         SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, "",                                       WidgetType::None,            NULL,                   NULL, NULL, NULL },
 };
 
 /* External/Export Options */
 
 static std::vector<SGLabelID> params_kml_export_units = {
-	SGLabelID("Metric",   0),
-	SGLabelID("Statute",  1),
-	SGLabelID("Nautical", 2),
+	SGLabelID(QObject::tr("Metric"),   0),
+	SGLabelID(QObject::tr("Statute"),  1),
+	SGLabelID(QObject::tr("Nautical"), 2),
 };
 
 static std::vector<SGLabelID> params_gpx_export_trk_sort = {
-	SGLabelID("Alphabetical", 0),
-	SGLabelID("Time",         1),
-	SGLabelID("Creation",     2),
+	SGLabelID(QObject::tr("Alphabetical"), 0),
+	SGLabelID(QObject::tr("Time"),         1),
+	SGLabelID(QObject::tr("Creation"),     2),
 };
 
 static std::vector<SGLabelID> params_gpx_export_wpt_symbols = {
-	SGLabelID("Title Case", 0),
-	SGLabelID("Lowercase",  1),
+	SGLabelID(QObject::tr("Title Case"), 0),
+	SGLabelID(QObject::tr("Lowercase"),  1),
 };
 
 static ParameterSpecification io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "kml_export_units",         SGVariantType::Int, PARAMETER_GROUP_GENERIC,    QObject::tr("KML File Export Units:"),  WidgetType::ComboBox, &params_kml_export_units,       NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_IO, "gpx_export_track_sort",    SGVariantType::Int, PARAMETER_GROUP_GENERIC,    QObject::tr("GPX Track Order:"),        WidgetType::ComboBox, &params_gpx_export_trk_sort,    NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_IO, "gpx_export_wpt_sym_names", SGVariantType::Int, PARAMETER_GROUP_GENERIC,    QObject::tr("GPX Waypoint Symbols:"),   WidgetType::ComboBox, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
-	{ 3, NULL,                     NULL,                       SGVariantType::Empty, PARAMETER_GROUP_GENERIC,  QString(""),                            WidgetType::None,     NULL,                           NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_IO "kml_export_units",         SGVariantType::Int,   PARAMETER_GROUP_GENERIC,  QObject::tr("KML File Export Units:"),  WidgetType::ComboBox, &params_kml_export_units,       NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_IO "gpx_export_track_sort",    SGVariantType::Int,   PARAMETER_GROUP_GENERIC,  QObject::tr("GPX Track Order:"),        WidgetType::ComboBox, &params_gpx_export_trk_sort,    NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names", SGVariantType::Int,   PARAMETER_GROUP_GENERIC,  QObject::tr("GPX Waypoint Symbols:"),   WidgetType::ComboBox, &params_gpx_export_wpt_symbols, NULL, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices") },
+	{ 3,                          "",                         SGVariantType::Empty, PARAMETER_GROUP_GENERIC,  "",                                     WidgetType::None,     NULL,                           NULL, NULL, NULL }, /* Guard. */
 };
 
 #ifndef WINDOWS
 static ParameterSpecification io_prefs_non_windows[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "image_viewer", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Image Viewer:"), WidgetType::FileSelector, NULL, NULL, NULL, NULL },
-	{ 1, NULL,                     NULL,           SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, QString(""),                  WidgetType::None,         NULL, NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_IO "image_viewer", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Image Viewer:"), WidgetType::FileSelector, NULL, NULL, NULL, NULL },
+	{ 1,                          "",             SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                           WidgetType::None,         NULL, NULL, NULL, NULL }, /* Guard. */
 };
 #endif
 
 static ParameterSpecification io_prefs_external_gpx[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO, "external_gpx_1", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("External GPX Program 1:"), WidgetType::FileSelector, NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_IO, "external_gpx_2", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("External GPX Program 2:"), WidgetType::FileSelector, NULL, NULL, NULL, NULL },
-	{ 2, NULL,                     NULL,             SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, QString(""),                            WidgetType::None,         NULL, NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_IO "external_gpx_1", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("External GPX Program 1:"), WidgetType::FileSelector, NULL, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_IO "external_gpx_2", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("External GPX Program 2:"), WidgetType::FileSelector, NULL, NULL, NULL, NULL },
+	{ 2,                          "",               SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                                     WidgetType::None,         NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 static std::vector<SGLabelID> params_vik_fileref = {
-	SGLabelID("Absolute", 0),
-	SGLabelID("Relative", 1),
+	SGLabelID(QObject::tr("Absolute"), 0),
+	SGLabelID(QObject::tr("Relative"), 1),
 };
 
 static ParameterScale<int> scale_recent_files(-1, 25, SGVariant((int32_t) 10), 1, 0); /* Viking's comment about value of hardcoded default: "Seemingly GTK's default for the number of recent files.". */
 
 static ParameterSpecification prefs_advanced[] = {
-	{ 0, PREFERENCES_NAMESPACE_ADVANCED, "save_file_reference_mode",  SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::ComboBox,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
-	{ 1, PREFERENCES_NAMESPACE_ADVANCED, "ask_for_create_track_name", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Ask for Name before Track Creation:"), WidgetType::CheckButton, NULL,                 NULL, NULL, NULL },
-	{ 2, PREFERENCES_NAMESPACE_ADVANCED, "create_track_tooltip",      SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Show Tooltip during Track Creation:"), WidgetType::CheckButton, NULL,                 NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_ADVANCED, "number_recent_files",       SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("The number of recent files:"),         WidgetType::SpinBoxInt,  &scale_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
-	{ 4, NULL,                           NULL,                        SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                                        WidgetType::None,        NULL,                 NULL, NULL, NULL },  /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::ComboBox,    &params_vik_fileref,  NULL, NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },
+	{ 1, PREFERENCES_NAMESPACE_ADVANCED "ask_for_create_track_name", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Ask for Name before Track Creation:"), WidgetType::CheckButton, NULL,                 NULL, NULL, NULL },
+	{ 2, PREFERENCES_NAMESPACE_ADVANCED "create_track_tooltip",      SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Show Tooltip during Track Creation:"), WidgetType::CheckButton, NULL,                 NULL, NULL, NULL },
+	{ 3, PREFERENCES_NAMESPACE_ADVANCED "number_recent_files",       SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("The number of recent files:"),         WidgetType::SpinBoxInt,  &scale_recent_files,  NULL, NULL, N_("Only applies to new windows or on application restart. -1 means all available files.") },
+	{ 4,                                "",                          SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, "",                                                 WidgetType::None,        NULL,                 NULL, NULL, NULL },  /* Guard. */
 };
 
 static std::vector<SGLabelID> params_startup_methods = {
-	SGLabelID("Home Location",  0),
-	SGLabelID("Last Location",  1),
-	SGLabelID("Specified File", 2),
-	SGLabelID("Auto Location",  3),
+	SGLabelID(QObject::tr("Home Location"),  0),
+	SGLabelID(QObject::tr("Last Location"),  1),
+	SGLabelID(QObject::tr("Specified File"), 2),
+	SGLabelID(QObject::tr("Auto Location"),  3),
 };
 
 static ParameterSpecification startup_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_STARTUP, "restore_window_state",  SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Restore Window Setup:"),    WidgetType::CheckButton,   NULL,                    NULL, NULL, N_("Restore window size and layout") },
-	{ 1, PREFERENCES_NAMESPACE_STARTUP, "add_default_map_layer", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Add a Default Map Layer:"), WidgetType::CheckButton,   NULL,                    NULL, NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values.") },
-	{ 2, PREFERENCES_NAMESPACE_STARTUP, "startup_method",        SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Startup Method:"),          WidgetType::ComboBox,      &params_startup_methods, NULL, NULL, NULL },
-	{ 3, PREFERENCES_NAMESPACE_STARTUP, "startup_file",          SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Startup File:"),            WidgetType::FileSelector,  NULL,                    NULL, NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'") },
-	{ 4, PREFERENCES_NAMESPACE_STARTUP, "check_version",         SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Check For New Version:"),   WidgetType::CheckButton,   NULL,                    NULL, NULL, N_("Periodically check to see if a new version of Viking is available") },
-	{ 5, NULL,                          NULL,                    SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, QString(""),                             WidgetType::None,          NULL,                    NULL, NULL, NULL }, /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_STARTUP "restore_window_state",  SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Restore Window Setup:"),    WidgetType::CheckButton,   NULL,                    NULL, NULL, N_("Restore window size and layout") },
+	{ 1, PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Add a Default Map Layer:"), WidgetType::CheckButton,   NULL,                    NULL, NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values.") },
+	{ 2, PREFERENCES_NAMESPACE_STARTUP "startup_method",        SGVariantType::Int,     PARAMETER_GROUP_GENERIC, QObject::tr("Startup Method:"),          WidgetType::ComboBox,      &params_startup_methods, NULL, NULL, NULL },
+	{ 3, PREFERENCES_NAMESPACE_STARTUP "startup_file",          SGVariantType::String,  PARAMETER_GROUP_GENERIC, QObject::tr("Startup File:"),            WidgetType::FileSelector,  NULL,                    NULL, NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'") },
+	{ 4, PREFERENCES_NAMESPACE_STARTUP "check_version",         SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Check For New Version:"),   WidgetType::CheckButton,   NULL,                    NULL, NULL, N_("Periodically check to see if a new version of Viking is available") },
+	{ 5,                               "",                      SGVariantType::Empty,   PARAMETER_GROUP_GENERIC, "",                                      WidgetType::None,          NULL,                    NULL, NULL, NULL }, /* Guard. */
 };
 /* End of Options static stuff. */
 
@@ -217,14 +215,14 @@ static QHash<QString, param_id_t> groups_keys_to_indices;
 
 
 
-void Preferences::register_group(const QString & group_key, const QString & group_name)
+void Preferences::register_parameter_group(const QString & group_key, const QString & group_ui_label)
 {
 	static param_id_t group_id = 1;
 
 	if (groups_keys_to_indices.contains(group_key)) {
-		qDebug() << "EE: Preferences: duplicate preferences group key" << group_key;
+		qDebug() << SG_PREFIX_E << "Duplicate preferences group key" << group_key;
 	} else {
-		preferences.group_names.insert(group_id, group_name);
+		preferences.group_names.insert(group_id, group_ui_label);
 		groups_keys_to_indices.insert(group_key, group_id);
 		group_id++;
 	}
@@ -234,9 +232,16 @@ void Preferences::register_group(const QString & group_key, const QString & grou
 
 
 /* Returns -1 if not found. */
-static param_id_t preferences_group_key_to_group_id(const QString & key)
+static param_id_t preferences_param_key_to_group_id(const QString & key)
 {
-	int index = groups_keys_to_indices[key];
+	const int last_dot = key.lastIndexOf(".");
+	if (-1 == last_dot || 0 == last_dot) {
+		return -1;
+	}
+
+	qDebug() << "kamil" << key << "<-" << key.left(last_dot + 1);
+
+	const int index = groups_keys_to_indices[key.left(last_dot + 1)];
 	if (0 == index) {
 		/* "default-constructed value" of QT container for situations when there is no key-value pair in the container. */
 		return PARAMETER_GROUP_GENERIC; /* Which should be -1 anyway. */
@@ -257,11 +262,11 @@ static bool preferences_load_from_file()
 	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_PREFERENCES_FILE);
 	QFile file(full_path);
 	if (!file.exists()) {
-		qDebug() << "EE" PREFIX << "failed to create file" << full_path << file.error();
+		qDebug() << SG_PREFIX_E << "Failed to create file" << full_path << file.error();
 		return false;
 	}
 	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << "EE" PREFIX << "failed to open file" << full_path << file.error();
+		qDebug() << SG_PREFIX_E << "Failed to open file" << full_path << file.error();
 		return false;
 	}
 
@@ -338,36 +343,38 @@ bool Preferences::set_param_value(const QString & param_name, const SGVariant & 
 
 
 /**
- * Returns: true on success.
- */
+   Returns: true on success.
+
+   TODO_2_LATER: report errors to end user.
+*/
 bool Preferences::save_to_file(void)
 {
 	const QString full_path = SlavGPSLocations::get_file_full_path(VIKING_PREFERENCES_FILE);
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
-	/* Since preferences files saves OSM login credentials, it'll be better to store it in secret. */
-	if (chmod(full_path.toUtf8().constData(), 0600) != 0) {
-		qDebug() << "WW: Preferences: failed to set permissions on" << full_path; /* TODO_2_LATER: shouldn't we abort saving to file? */
-	}
-
 	if (!file) {
 		return false;
 	}
+	/* Since preferences files saves OSM login credentials, it'll be better to store it in secret. */
+	if (chmod(full_path.toUtf8().constData(), 0600) != 0) {
+		qDebug() << SG_PREFIX_E << "Failed to set permissions on" << full_path;
+		fclose(file);
+		return false;
+	}
 
-	qDebug() << "II: Preferences: saving to file" << full_path;
+
+	qDebug() << SG_PREFIX_I << "Saving to file" << full_path;
 
 	for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
 		const ParameterSpecification & param_spec = *iter;
 
-		const QString param_name = QString(param_spec.name_space) + "." + QString(param_spec.name);
-
-		auto val_iter = registered_parameter_values.find(param_name);
+		auto val_iter = registered_parameter_values.find(param_spec.name);
 		if (val_iter != registered_parameter_values.end()) {
 
 			const SGVariant param_value = val_iter.value();
 			if (param_value.type_id != SGVariantType::Pointer) {
-				qDebug() << "II: Preferences: saving param" << param_name << "=" << param_value.type_id << param_value;
-				param_value.write(file, param_name.toUtf8().constData());
+				qDebug() << SG_PREFIX_I << "Saving param" << param_spec.name << "=" << param_value;
+				param_value.write(file, param_spec.name);
 			}
 		}
 	}
@@ -392,13 +399,11 @@ void Preferences::show_window(QWidget * parent)
 		for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
 
 			const ParameterSpecification & param_spec = iter.value();
-
-			const QString param_name(param_spec.name);
+			const QString & param_name = param_spec.name;
 			assert (param_name == iter.key());
-
 			const SGVariant param_value = dialog.get_param_value(param_spec);
 
-			qDebug() << SG_PREFIX_I << "extracted from dialog parameter" << param_name << "=" << param_value;
+			qDebug() << SG_PREFIX_I << "Parameter from preferences dialog:" << param_name << "=" << param_value;
 
 			Preferences::set_param_value(param_name, param_value);
 		}
@@ -409,26 +414,27 @@ void Preferences::show_window(QWidget * parent)
 
 
 
-void SlavGPS::Preferences::register_parameter(const ParameterSpecification & param_spec, const SGVariant & default_value)
+void SlavGPS::Preferences::register_parameter_instance(const ParameterSpecification & param_spec, const SGVariant & default_value)
 {
 	/* In the debug message print name and name space separately, to improve debugging. */
-	qDebug() << "II: Preferences: registering preference" << param_spec.name_space << param_spec.name << "=" << default_value;
+	qDebug() << SG_PREFIX_I << "Registering preference" << param_spec.name << "=" << default_value;
 
-	const QString key = QString(param_spec.name_space) + "." + QString(param_spec.name);
+	const QString & key = param_spec.name;
 
 	/* All preferences should be registered before loading. */
 	if (preferences.loaded) {
-		qDebug() << "EE: Preferences: registering preference" << key << "after loading preferences from" << VIKING_PREFERENCES_FILE;
+		qDebug() << SG_PREFIX_E << "Registering preference" << key << "after loading preferences from" << VIKING_PREFERENCES_FILE;
 	}
 
 	/* Copy value. */
         ParameterSpecification new_param_spec = ParameterSpecification(param_spec);
 
 	if (default_value.type_id != new_param_spec.type_id) {
-		qDebug() << "EE: Preferences: Register Parameter: mismatch of type id for parameter" << key << default_value.type_id << new_param_spec.type_id;
+		qDebug() << SG_PREFIX_E << "Mismatch of type id for parameter" << key << default_value.type_id << new_param_spec.type_id;
 	}
-	if (new_param_spec.name_space) {
-		new_param_spec.group_id = preferences_group_key_to_group_id(QString(new_param_spec.name_space));
+	new_param_spec.group_id = preferences_param_key_to_group_id(new_param_spec.name);
+	if (new_param_spec.group_id == -1) {
+		qDebug() << SG_PREFIX_E << "Failed to find group id for param name" << new_param_spec.name;
 	}
 
 	registered_parameter_specifications.insert(key, new_param_spec);
@@ -452,7 +458,7 @@ SGVariant Preferences::get_param_value(const QString & param_name)
 	SGVariant empty; /* Will have type id == Empty */
 
 	if (!preferences.loaded) {
-		qDebug() << "DD" PREFIX << "calling _get() for the first time (param name is" << param_name << ")";
+		qDebug() << SG_PREFIX_D << "The function has been called for the first time (param name is" << param_name << ")";
 
 		/* Since we can't load the file in Preferences::init() (no params registered yet),
 		   do it once before we get the first param name. */
@@ -489,7 +495,7 @@ QHash<QString, ParameterSpecification>::iterator Preferences::end()
 
 bool Preferences::get_restore_window_state(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".restore_window_state").u.val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "restore_window_state").u.val_bool;
 }
 
 
@@ -503,76 +509,76 @@ void Preferences::register_default_values()
 	int i = 0;
 
 	/* New tab. */
-	Preferences::register_group(PREFERENCES_NAMESPACE_GENERAL, QObject::tr("General"));
+	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_GENERAL, QObject::tr("General"));
 
 	i = 0;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DegreeFormat::DMS, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) DegreeFormat::DMS, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) DistanceUnit::Kilometres, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) DistanceUnit::Kilometres, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) SpeedUnit::KilometresPerHour, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) SpeedUnit::KilometresPerHour, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) HeightUnit::Metres, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) HeightUnit::Metres, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant(true, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant(true, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(general_prefs[i], scale_lat.initial);
+	Preferences::register_parameter_instance(general_prefs[i], scale_lat.initial);
 	i++;
-	Preferences::register_parameter(general_prefs[i], scale_lon.initial);
+	Preferences::register_parameter_instance(general_prefs[i], scale_lon.initial);
 	i++;
-	Preferences::register_parameter(general_prefs[i], SGVariant((int32_t) SGTimeReference::Locale, general_prefs[i].type_id));
+	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) SGTimeReference::Locale, general_prefs[i].type_id));
 
 
 	/* New Tab. */
-	Preferences::register_group(PREFERENCES_NAMESPACE_STARTUP, QObject::tr("Startup"));
+	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_STARTUP, QObject::tr("Startup"));
 
 	i = 0;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
+	Preferences::register_parameter_instance(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
+	Preferences::register_parameter_instance(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant((int32_t) StartupMethod::HomeLocation, startup_prefs[i].type_id));
+	Preferences::register_parameter_instance(startup_prefs[i], SGVariant((int32_t) StartupMethod::HomeLocation, startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant("", startup_prefs[i].type_id));
+	Preferences::register_parameter_instance(startup_prefs[i], SGVariant("", startup_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
+	Preferences::register_parameter_instance(startup_prefs[i], SGVariant(false, startup_prefs[i].type_id));
 
 
 	/* New Tab. */
-	Preferences::register_group(PREFERENCES_NAMESPACE_IO, QObject::tr("Export/External"));
+	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_IO, QObject::tr("Export/External"));
 
 	i = 0;
-	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) KMLExportUnits::Metric, io_prefs[i].type_id));
+	Preferences::register_parameter_instance(io_prefs[i], SGVariant((int32_t) KMLExportUnits::Metric, io_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) GPXExportTrackSort::Time, io_prefs[i].type_id));
+	Preferences::register_parameter_instance(io_prefs[i], SGVariant((int32_t) GPXExportTrackSort::Time, io_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter(io_prefs[i], SGVariant((int32_t) GPXExportWptSymName::Titlecase, io_prefs[i].type_id));
+	Preferences::register_parameter_instance(io_prefs[i], SGVariant((int32_t) GPXExportWptSymName::Titlecase, io_prefs[i].type_id));
 	i++;
 
 #ifndef WINDOWS
-	Preferences::register_parameter(io_prefs_non_windows[0], SGVariant("xdg-open", io_prefs_non_windows[0].type_id));
+	Preferences::register_parameter_instance(io_prefs_non_windows[0], SGVariant("xdg-open", io_prefs_non_windows[0].type_id));
 #endif
 
 	i = 0;
 	/* JOSM for OSM editing around a GPX track. */
-	Preferences::register_parameter(io_prefs_external_gpx[i], SGVariant("josm", io_prefs_external_gpx[i].type_id));
+	Preferences::register_parameter_instance(io_prefs_external_gpx[i], SGVariant("josm", io_prefs_external_gpx[i].type_id));
 	i++;
 	/* Add a second external program - another OSM editor by default. */
-	Preferences::register_parameter(io_prefs_external_gpx[i], SGVariant("merkaartor", io_prefs_external_gpx[i].type_id));
+	Preferences::register_parameter_instance(io_prefs_external_gpx[i], SGVariant("merkaartor", io_prefs_external_gpx[i].type_id));
 	i++;
 
 
 	/* New tab. */
-	Preferences::register_group(PREFERENCES_NAMESPACE_ADVANCED, QObject::tr("Advanced"));
+	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_ADVANCED, QObject::tr("Advanced"));
 
 	i = 0;
-	Preferences::register_parameter(prefs_advanced[i], SGVariant((int32_t) FilePathFormat::Absolute, prefs_advanced[i].type_id));
+	Preferences::register_parameter_instance(prefs_advanced[i], SGVariant((int32_t) FilePathFormat::Absolute, prefs_advanced[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs_advanced[i], SGVariant(true, prefs_advanced[i].type_id));
+	Preferences::register_parameter_instance(prefs_advanced[i], SGVariant(true, prefs_advanced[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs_advanced[i], SGVariant(true, prefs_advanced[i].type_id));
+	Preferences::register_parameter_instance(prefs_advanced[i], SGVariant(true, prefs_advanced[i].type_id));
 	i++;
-	Preferences::register_parameter(prefs_advanced[i], scale_recent_files.initial);
+	Preferences::register_parameter_instance(prefs_advanced[i], scale_recent_files.initial);
 	i++;
 }
 
@@ -581,7 +587,7 @@ void Preferences::register_default_values()
 
 DegreeFormat Preferences::get_degree_format(void)
 {
-	return (DegreeFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".degree_format").u.val_int;
+	return (DegreeFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "degree_format").u.val_int;
 }
 
 
@@ -589,7 +595,7 @@ DegreeFormat Preferences::get_degree_format(void)
 
 DistanceUnit Preferences::get_unit_distance()
 {
-	return (DistanceUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_distance").u.val_int;
+	return (DistanceUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_distance").u.val_int;
 }
 
 
@@ -597,7 +603,7 @@ DistanceUnit Preferences::get_unit_distance()
 
 SpeedUnit Preferences::get_unit_speed(void)
 {
-	return (SpeedUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_speed").u.val_int;
+	return (SpeedUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_speed").u.val_int;
 }
 
 
@@ -605,7 +611,7 @@ SpeedUnit Preferences::get_unit_speed(void)
 
 HeightUnit Preferences::get_unit_height(void)
 {
-	return (HeightUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".units_height").u.val_int;
+	return (HeightUnit) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "units_height").u.val_int;
 }
 
 
@@ -613,7 +619,7 @@ HeightUnit Preferences::get_unit_height(void)
 
 bool Preferences::get_use_large_waypoint_icons()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".use_large_waypoint_icons").u.val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "use_large_waypoint_icons").u.val_bool;
 }
 
 
@@ -621,7 +627,7 @@ bool Preferences::get_use_large_waypoint_icons()
 
 double Preferences::get_default_lat()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".default_latitude").u.val_double;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude").u.val_double;
 }
 
 
@@ -629,7 +635,7 @@ double Preferences::get_default_lat()
 
 double Preferences::get_default_lon()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".default_longitude").u.val_double;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude").u.val_double;
 }
 
 
@@ -637,7 +643,7 @@ double Preferences::get_default_lon()
 
 SGTimeReference Preferences::get_time_ref_frame()
 {
-	return (SGTimeReference) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL ".time_reference_frame").u.val_int;
+	return (SGTimeReference) Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "time_reference_frame").u.val_int;
 }
 
 
@@ -647,7 +653,7 @@ SGTimeReference Preferences::get_time_ref_frame()
 
 KMLExportUnits Preferences::get_kml_export_units()
 {
-	return (KMLExportUnits) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".kml_export_units").u.val_int;
+	return (KMLExportUnits) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "kml_export_units").u.val_int;
 }
 
 
@@ -655,7 +661,7 @@ KMLExportUnits Preferences::get_kml_export_units()
 
 GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 {
-	return (GPXExportTrackSort) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_track_sort").u.val_int;
+	return (GPXExportTrackSort) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "gpx_export_track_sort").u.val_int;
 }
 
 
@@ -663,7 +669,7 @@ GPXExportTrackSort Preferences::get_gpx_export_trk_sort()
 
 GPXExportWptSymName Preferences::get_gpx_export_wpt_sym_name()
 {
-	return (GPXExportWptSymName) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".gpx_export_wpt_sym_names").u.val_int;
+	return (GPXExportWptSymName) Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "gpx_export_wpt_sym_names").u.val_int;
 }
 
 
@@ -672,7 +678,7 @@ GPXExportWptSymName Preferences::get_gpx_export_wpt_sym_name()
 #ifndef WINDOWS
 QString Preferences::get_image_viewer(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".image_viewer").val_string;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "image_viewer").val_string;
 }
 #endif
 
@@ -681,12 +687,12 @@ QString Preferences::get_image_viewer(void)
 
 QString Preferences::get_external_gpx_program_1(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".external_gpx_1").val_string;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "external_gpx_1").val_string;
 }
 
 QString Preferences::get_external_gpx_program_2(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_IO ".external_gpx_2").val_string;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_IO "external_gpx_2").val_string;
 }
 
 
@@ -696,7 +702,7 @@ QString Preferences::get_external_gpx_program_2(void)
 
 FilePathFormat Preferences::get_file_path_format()
 {
-	return (FilePathFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".save_file_reference_mode").u.val_int;
+	return (FilePathFormat) Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode").u.val_int;
 }
 
 
@@ -704,7 +710,7 @@ FilePathFormat Preferences::get_file_path_format()
 
 bool Preferences::get_ask_for_create_track_name()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".ask_for_create_track_name").u.val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED "ask_for_create_track_name").u.val_bool;
 }
 
 
@@ -712,7 +718,7 @@ bool Preferences::get_ask_for_create_track_name()
 
 bool Preferences::get_create_track_tooltip()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".create_track_tooltip").u.val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED "create_track_tooltip").u.val_bool;
 }
 
 
@@ -720,7 +726,7 @@ bool Preferences::get_create_track_tooltip()
 
 int Preferences::get_recent_number_files()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED ".number_recent_files").u.val_int;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_ADVANCED "number_recent_files").u.val_int;
 }
 
 
@@ -728,7 +734,7 @@ int Preferences::get_recent_number_files()
 
 bool Preferences::get_add_default_map_layer()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".add_default_map_layer").u.val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer").u.val_bool;
 }
 
 
@@ -736,7 +742,7 @@ bool Preferences::get_add_default_map_layer()
 
 StartupMethod Preferences::get_startup_method()
 {
-	return (StartupMethod) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".startup_method").u.val_int;
+	return (StartupMethod) Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "startup_method").u.val_int;
 }
 
 
@@ -744,7 +750,7 @@ StartupMethod Preferences::get_startup_method()
 
 QString Preferences::get_startup_file(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".startup_file").val_string;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "startup_file").val_string;
 }
 
 
@@ -752,5 +758,5 @@ QString Preferences::get_startup_file(void)
 
 bool Preferences::get_check_version()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP ".check_version").u.val_bool;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_STARTUP "check_version").u.val_bool;
 }

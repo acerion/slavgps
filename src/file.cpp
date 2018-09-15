@@ -658,10 +658,10 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 
 			const ParameterSpecification * param_spec = &this->param_specs[param_id];
 
-			if (name_len != strlen(param_spec->name)) {
+			if (name_len != param_spec->name.length()) {
 				continue;
 			}
-			if (0 != strncasecmp(line, param_spec->name, name_len)) {
+			if (0 != strncasecmp(line, param_spec->name.toUtf8().constData(), name_len)) {
 				continue;
 			}
 

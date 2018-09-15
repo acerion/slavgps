@@ -659,7 +659,7 @@ SGVariant SGVariant::unmarshall(Pickle & pickle, SGVariantType expected_type_id)
 
 
 
-void SGVariant::write(FILE * file, char const * param_name) const
+void SGVariant::write(FILE * file, const QString & param_name) const
 {
 	if (this->type_id == SGVariantType::StringList) {
 		/*
@@ -677,11 +677,11 @@ void SGVariant::write(FILE * file, char const * param_name) const
 		  files=/mnt/viking/test_data/srtm_hgt/version2_1/SRTM3/South_America/S04W042.hgt.zip
 		*/
 		for (auto iter = this->val_string_list.constBegin(); iter != this->val_string_list.constEnd(); iter++) {
-			fprintf(file, "%s=", param_name);
+			fprintf(file, "%s=", param_name.toUtf8().constData());
 			fprintf(file, "%s\n", (*iter).toUtf8().constData());
 		}
 	} else {
-		fprintf(file, "%s=", param_name);
+		fprintf(file, "%s=", param_name.toUtf8().constData());
 		switch (this->type_id) {
 		case SGVariantType::Double: {
 			// char buf[15]; /* Locale independent. */
