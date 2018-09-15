@@ -88,10 +88,10 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 	QString point_lon;
 	llpt.to_strings_raw(point_lat, point_lon);
 
-	MapSourceZoomLevel map_source_zoom(MAGIC_SEVENTEEN); /* Zoomed in by default. */
+	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	if (a_viewport->get_viking_zoom_level().x_y_is_equal()) {
-		map_source_zoom = a_viewport->get_viking_zoom_level().to_zoom_level();
+		tile_zoom_level = a_viewport->get_viking_zoom_level().to_tile_zoom_level();
 	}
 
 	int len = this->url_format_code.size();
@@ -117,7 +117,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 		case 'T': values[i] = bbox_strings.north; break;
 		case 'A': values[i] = center_lat; break;
 		case 'O': values[i] = center_lon; break;
-		case 'Z': values[i] = map_source_zoom.to_string(); break;
+		case 'Z': values[i] = tile_zoom_level.to_string(); break;
 		case 'P': values[i] = point_lat; break;
 		case 'N': values[i] = point_lon; break;
 		default:

@@ -42,7 +42,7 @@ namespace SlavGPS {
 
 	class TileScale {
 	public:
-		int get_osm_scale(void) const;
+		int get_tile_zoom_level(void) const;
 		int get_non_osm_scale(void) const;
 		bool is_valid(void) const;
 		double to_so_called_mpp(void) const;
@@ -69,7 +69,10 @@ namespace SlavGPS {
 	public:
 		static TilesRange get_tiles_range(const TileInfo & ulm, const TileInfo & brm);
 
-		int x, y;
+		/* https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#X_and_Y */
+		int x = 0;
+		int y = 0;
+
 		int z;      /* Zone or anything else. */
 		TileScale scale;
 	};

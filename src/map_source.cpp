@@ -124,8 +124,8 @@ MapSource & MapSource::operator=(const MapSource & other)
 	this->server_hostname    = other.server_hostname;
 	this->server_path_format = other.server_path_format;
 
-	this->zoom_min = other.zoom_min;
-	this->zoom_max = other.zoom_max;
+	this->tile_zoom_level_min = other.tile_zoom_level_min;
+	this->tile_zoom_level_max = other.tile_zoom_level_max;
 
 	this->lat_min = other.lat_min;
 	this->lat_max = other.lat_max;
@@ -169,8 +169,8 @@ MapSource::MapSource(MapSource & map)
 	this->server_hostname    = map.server_hostname;
 	this->server_path_format = map.server_path_format;
 
-	this->zoom_min = map.zoom_min;
-	this->zoom_max = map.zoom_max;
+	this->tile_zoom_level_min = map.tile_zoom_level_min;
+	this->tile_zoom_level_max = map.tile_zoom_level_max;
 
 	this->lat_min = map.lat_min;
 	this->lat_max = map.lat_max;
@@ -563,7 +563,7 @@ bool MapSource::includes_tile(const TileInfo & tile_info) const
 
 
 
-QString MapSourceZoomLevel::to_string(void) const
+QString TileZoomLevel::to_string(void) const
 {
 	return QString(this->value);
 }
@@ -571,16 +571,17 @@ QString MapSourceZoomLevel::to_string(void) const
 
 
 
-void MapSource::set_supported_zoom_level_range(int zoom_level_min, int zoom_level_max)
+void MapSource::set_supported_tile_zoom_level_range(int new_tile_zoom_level_min, int new_tile_zoom_level_max)
 {
-	this->zoom_min = MapSourceZoomLevel(zoom_level_min);
-	this->zoom_max = MapSourceZoomLevel(zoom_level_max);
+	this->tile_zoom_level_min = TileZoomLevel(new_tile_zoom_level_min);
+	this->tile_zoom_level_max = TileZoomLevel(new_tile_zoom_level_max);
 }
 
 
 
 
-bool MapSource::is_supported_zoom_level(const MapSourceZoomLevel & zoom_level) const
+bool MapSource::is_supported_tile_zoom_level(const TileZoomLevel & tile_zoom_level) const
 {
-	return zoom_level.value >= this->zoom_min.value && zoom_level.value <= this->zoom_max.value;
+	return tile_zoom_level.get_value() >= this->tile_zoom_level_min.get_value()
+		&& tile_zoom_level.get_value() <= this->tile_zoom_level_max.get_value();
 }

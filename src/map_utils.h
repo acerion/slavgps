@@ -47,15 +47,15 @@ namespace SlavGPS {
 	#define MAGIC_SEVENTEEN 17
 
 
-	TileScale map_utils_mpp_to_tile_scale(double mpp);
 
-	MapSourceZoomLevel map_utils_mpp_to_zoom_level(double mpp);
-
-	bool map_utils_coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
-
-	Coord map_utils_iTMS_to_center_coord(const TileInfo & src);
-
-	Coord map_utils_iTMS_to_coord(const TileInfo & src);
+	class MapUtils {
+	public:
+		static TileScale mpp_to_tile_scale(double mpp);
+		static TileZoomLevel mpp_to_tile_zoom_level(double mpp);
+		static bool coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
+		static Coord iTMS_to_center_coord(const TileInfo & src);
+		static Coord iTMS_to_coord(const TileInfo & src);
+	};
 
 
 

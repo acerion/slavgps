@@ -143,7 +143,7 @@ enum WindowPan {
 
 
 
-static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * parent);
+static QMenu * create_zoom_submenu(const VikingZoomLevel & viking_zoom_level, QString const & label, QMenu * parent);
 
 
 
@@ -842,7 +842,7 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_to);
 
 
-		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->get_zoom(), tr("&Zoom"), this->menu_view);
+		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->get_viking_zoom_level(), tr("&Zoom"), this->menu_view);
 		this->menu_view->addMenu(zoom_submenu);
 		connect(zoom_submenu, SIGNAL(triggered (QAction *)), this, SLOT (zoom_level_selected_cb(QAction *)));
 
@@ -2914,7 +2914,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	double zoom_request = pow(2, level - 5);
 
 	/* But has it really changed? */
-	double current_zoom = this->viewport->get_zoom();
+	double current_zoom = this->viewport->get_viking_zoom_level().get_x();
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
 		this->viewport->set_viking_zoom_level(zoom_request);
 
@@ -2972,9 +2972,9 @@ bool create_zoom_actions(void)
 
 
 /**
- * @mpp: The initial zoom level.
+ * @viking_zoom_level: The initial zoom level.
  */
-static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * parent)
+static QMenu * create_zoom_submenu(const VikingZoomLevel & viking_zoom_level, QString const & label, QMenu * parent)
 {
 	QMenu * menu = NULL;
 	if (parent) {
@@ -2993,7 +2993,7 @@ static QMenu * create_zoom_submenu(double mpp, QString const & label, QMenu * pa
 
 
 
-	int active = 5 + round(log(mpp) / log(2));
+	int active = 5 + round(log(viking_zoom_level.get_x()) / log(2));
 	/* Ensure value derived from mpp is in bounds of the menu. */
 	if (active >= (int) zoom_actions.size()) {
 		active = zoom_actions.size() - 1;

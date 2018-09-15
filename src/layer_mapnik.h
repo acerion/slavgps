@@ -112,7 +112,7 @@ namespace SlavGPS {
 
 		Coord rerender_ul;
 		Coord rerender_br;
-		double rerender_zoom = 0;
+		VikingZoomLevel rerender_viking_zoom_level;
 
 		void flush_memory_cb(void);
 		void reload_cb(void);

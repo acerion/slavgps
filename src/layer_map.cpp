@@ -909,8 +909,8 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 
 	/* Don't attempt to download unsupported zoom levels. */
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	const MapSourceZoomLevel map_source_zoom = viewport->get_viking_zoom_level().to_zoom_level();
-	if (!map_source->is_supported_zoom_level(map_source_zoom)) {
+	const TileZoomLevel tile_zoom_level = viewport->get_viking_zoom_level().to_tile_zoom_level();
+	if (!map_source->is_supported_tile_zoom_level(tile_zoom_level)) {
 		return false;
 	}
 
@@ -1774,8 +1774,10 @@ void LayerMap::download_all_cb(void)
 	int selected_zoom1, selected_zoom2, default_zoom, lower_zoom;
 	MapDownloadMode selected_download_mode;
 
-	double cur_zoom = viewport->get_zoom();
+	const double cur_zoom = viewport->get_viking_zoom_level().get_x();
 
+	/* TODO_LATER: there is a similar code in layer_trw.cpp,
+	   search for "cur_zoom == zoom_values[default_zoom_idx]". */
 	for (default_zoom = 0; default_zoom < n_zoom_vals; default_zoom++) {
 		if (cur_zoom == zoom_vals[default_zoom]) {
 			break;

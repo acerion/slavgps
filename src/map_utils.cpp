@@ -67,7 +67,7 @@ static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpp
  *
  * Returns: the zoom scale value which may be negative.
  */
-TileScale SlavGPS::map_utils_mpp_to_tile_scale(double mpp)
+TileScale MapUtils::mpp_to_tile_scale(double mpp)
 {
 	TileScale tile_scale;
 
@@ -103,14 +103,14 @@ TileScale SlavGPS::map_utils_mpp_to_tile_scale(double mpp)
  * Returns: a Map Source Zoom Level.
  * See: http://wiki.openstreetmap.org/wiki/Zoom_levels
  */
-MapSourceZoomLevel SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
+TileZoomLevel MapUtils::mpp_to_tile_zoom_level(double mpp)
 {
-	const TileScale tile_scale = map_utils_mpp_to_tile_scale(mpp);
-	int osm_zoom_level = tile_scale.get_osm_scale();
-	if (osm_zoom_level < 0) {
-		osm_zoom_level = MAGIC_SEVENTEEN;
+	const TileScale tile_scale = MapUtils::mpp_to_tile_scale(mpp);
+	int tile_zoom_level = tile_scale.get_tile_zoom_level();
+	if (tile_zoom_level < (int) TileZoomLevels::MaxZoomOut) {
+		tile_zoom_level = (int) TileZoomLevels::Default;
 	}
-	return MapSourceZoomLevel(osm_zoom_level);
+	return TileZoomLevel(tile_zoom_level);
 }
 
 
@@ -141,7 +141,7 @@ MapSourceZoomLevel SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
  *
  * Returns: whether the conversion was performed
  */
-bool SlavGPS::map_utils_coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
+bool MapUtils::coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
 {
 	if (src_coord.mode != CoordMode::LATLON) {
 		return false;
@@ -194,7 +194,7 @@ static Coord _to_coord_with_offset(const TileInfo & src, double offset)
  *
  * Returns: whether the conversion was performed
  */
-Coord SlavGPS::map_utils_iTMS_to_center_coord(const TileInfo & src)
+Coord SlavGPS::MapUtils::iTMS_to_center_coord(const TileInfo & src)
 {
 	return _to_coord_with_offset(src, 0.5);
 }
@@ -211,7 +211,7 @@ Coord SlavGPS::map_utils_iTMS_to_center_coord(const TileInfo & src)
  *
  * Returns: whether the conversion was performed
  */
-Coord SlavGPS::map_utils_iTMS_to_coord(const TileInfo & src)
+Coord SlavGPS::MapUtils::iTMS_to_coord(const TileInfo & src)
 {
 	return _to_coord_with_offset(src, 0.0);
 }

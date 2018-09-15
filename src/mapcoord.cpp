@@ -52,7 +52,7 @@ TilesRange TileInfo::get_tiles_range(const TileInfo & ulm, const TileInfo & brm)
 
 
 
-int TileScale::get_osm_scale(void) const
+int TileScale::get_tile_zoom_level(void) const
 {
 	return MAGIC_SEVENTEEN - this->value;
 }

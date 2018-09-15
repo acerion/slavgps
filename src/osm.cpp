@@ -67,7 +67,7 @@ void SlavGPS::osm_init(void)
 	mapnik_type->set_map_type_string("OSM-Mapnik"); /* Non-translatable. */
 	mapnik_type->dl_options.check_file_server_time = false;
 	mapnik_type->dl_options.use_etag = true;
-	mapnik_type->set_supported_zoom_level_range(0, 19);
+	mapnik_type->set_supported_tile_zoom_level_range(0, 19);
 	mapnik_type->set_copyright("© OpenStreetMap contributors");
 	mapnik_type->set_license("CC-BY-SA");
 	mapnik_type->set_license_url("http://www.openstreetmap.org/copyright");
@@ -76,7 +76,7 @@ void SlavGPS::osm_init(void)
 	cycle_type->set_map_type_string("OSM-Cycle"); /* Non-translatable. */
 	cycle_type->dl_options.check_file_server_time = true;
 	cycle_type->dl_options.use_etag = false;
-	cycle_type->set_supported_zoom_level_range(0, 18);
+	cycle_type->set_supported_tile_zoom_level_range(0, 18);
 	cycle_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
 	cycle_type->set_license("CC-BY-SA");
 	cycle_type->set_license_url("http://www.openstreetmap.org/copyright");
@@ -85,7 +85,7 @@ void SlavGPS::osm_init(void)
 	transport_type->set_map_type_string("OSM-Transport"); /* Non-translatable. */
 	transport_type->dl_options.check_file_server_time = true;
 	transport_type->dl_options.use_etag = false;
-	transport_type->set_supported_zoom_level_range(0, 18);
+	transport_type->set_supported_tile_zoom_level_range(0, 18);
 	transport_type->set_copyright("Tiles courtesy of Andy Allan © OpenStreetMap contributors");
 	transport_type->set_license("CC-BY-SA");
 	transport_type->set_license_url("http://www.openstreetmap.org/copyright");
@@ -94,7 +94,7 @@ void SlavGPS::osm_init(void)
 	mapquest_type->set_map_type_string("OSM-MapQuest"); /* Non-translatable. */
 	mapquest_type->dl_options.check_file_server_time = true;
 	mapquest_type->dl_options.use_etag = false;
-	mapquest_type->set_supported_zoom_level_range(0, 19);
+	mapquest_type->set_supported_tile_zoom_level_range(0, 19);
 	mapquest_type->set_copyright("Tiles Courtesy of MapQuest © OpenStreetMap contributors");
 	mapquest_type->set_license("MapQuest Specific");
 	mapquest_type->set_license_url("http://developer.mapquest.com/web/info/terms-of-use");
@@ -103,7 +103,7 @@ void SlavGPS::osm_init(void)
 	hot_type->set_map_type_string("OSM-Humanitarian"); /* Non-translatable. */
 	hot_type->dl_options.check_file_server_time = true;
 	hot_type->dl_options.use_etag = false;
-	hot_type->set_supported_zoom_level_range(0, 20); /* Super detail! */
+	hot_type->set_supported_tile_zoom_level_range(0, 20); /* Super detail! */
 	hot_type->set_copyright("© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");
 	hot_type->set_license("CC-BY-SA");
 	hot_type->set_license_url("http://www.openstreetmap.org/copyright");
@@ -210,7 +210,7 @@ QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj
 		return pixmap;
 	}
 
-	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_osm_scale(), buf, tile_max, &compressed, err_msg);
+	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_tile_zoom_level(), buf, tile_max, &compressed, err_msg);
 	if (len > 0) {
 		if (compressed) {
 			/* TODO_2_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
@@ -243,7 +243,7 @@ QStringList MapSourceOSMMetatiles::get_tile_description(const MapCacheObj & map_
 	QStringList items;
 
 	char path[PATH_MAX];
-	xyz_to_meta(path, sizeof (path), map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_osm_scale());
+	xyz_to_meta(path, sizeof (path), map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_tile_zoom_level());
 
 	items.push_back(QString(path));
 	items.push_back(args.tile_file_full_path);

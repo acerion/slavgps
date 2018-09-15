@@ -426,15 +426,15 @@ bool VikingZoomLevel::is_valid(void) const
 
 TileScale VikingZoomLevel::to_tile_scale(void) const
 {
-	TileScale tile_scale = SlavGPS::map_utils_mpp_to_tile_scale(this->x);
+	TileScale tile_scale = MapUtils::mpp_to_tile_scale(this->x);
 	return tile_scale;
 }
 
 
 
 
-MapSourceZoomLevel VikingZoomLevel::to_zoom_level(void) const
+TileZoomLevel VikingZoomLevel::to_tile_zoom_level(void) const
 {
-	MapSourceZoomLevel slippy_zoom_level = SlavGPS::map_utils_mpp_to_zoom_level(this->x);
-	return slippy_zoom_level;
+	TileZoomLevel tile_zoom_level = MapUtils::mpp_to_tile_zoom_level(this->x);
+	return tile_zoom_level;
 }

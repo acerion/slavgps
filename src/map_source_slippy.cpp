@@ -114,8 +114,8 @@ MapSourceSlippy & MapSourceSlippy::operator=(const MapSourceSlippy & other)
 	this->server_hostname    = other.server_hostname;
 	this->server_path_format = other.server_path_format;
 
-	this->zoom_min = other.zoom_min;
-	this->zoom_max = other.zoom_max;
+	this->tile_zoom_level_min = other.tile_zoom_level_min;
+	this->tile_zoom_level_max = other.tile_zoom_level_max;
 
 	this->lat_min = other.lat_min;
 	this->lat_max = other.lat_max;
@@ -180,7 +180,7 @@ bool MapSourceSlippy::supports_download_only_new(void) const
 
 bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
-	bool result = map_utils_coord_to_iTMS(src_coord, viking_zoom_level, dest);
+	bool result = MapUtils::coord_to_iTMS(src_coord, viking_zoom_level, dest);
 	return result;
 }
 
@@ -189,7 +189,7 @@ bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, const VikingZoomLev
 
 void MapSourceSlippy::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
-	dest_coord = map_utils_iTMS_to_center_coord(src);
+	dest_coord = MapUtils::iTMS_to_center_coord(src);
 }
 
 
@@ -198,13 +198,13 @@ void MapSourceSlippy::tile_to_center_coord(const TileInfo & src, Coord & dest_co
 const QString MapSourceSlippy::get_server_path(const TileInfo & src) const
 {
 	QString uri;
-	const int osm_zoom_level = src.scale.get_osm_scale();
+	const int tile_zoom_level = src.scale.get_tile_zoom_level();
 	if (this->switch_xy) {
 		/* 'ARC GIS' Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(osm_zoom_level).arg(src.y).arg(src.x);
+		uri = QString(this->server_path_format).arg(tile_zoom_level).arg(src.y).arg(src.x);
 	} else {
 		/* (Default) Standard OSM Tile Server layout ordering. */
-		uri = QString(this->server_path_format).arg(osm_zoom_level).arg(src.x).arg(src.y);
+		uri = QString(this->server_path_format).arg(tile_zoom_level).arg(src.x).arg(src.y);
 	}
 	return uri;
 }

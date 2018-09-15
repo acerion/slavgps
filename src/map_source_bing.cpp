@@ -121,7 +121,7 @@ MapSourceBing::MapSourceBing(MapTypeID new_map_type_id, const QString & new_labe
 	this->server_path_format = "/tiles/a%1.jpeg?g=587";
 	this->bing_api_key = new_key;
 	this->dl_options.check_file_server_time = true;
-	this->set_supported_zoom_level_range(0, 19); /* Maximum zoom level may be regionally different rather than the same across the world. */
+	this->set_supported_tile_zoom_level_range(0, 19); /* Maximum zoom level may be regionally different rather than the same across the world. */
 	this->copyright = "© 2011 Microsoft Corporation and/or its suppliers";
 	this->license = "Microsoft Bing Maps Specific";
 	this->license_url = "http://www.microsoft.com/maps/assets/docs/terms.aspx";
@@ -161,7 +161,7 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 const QString MapSourceBing::get_server_path(const TileInfo & src) const
 {
-	const QString quadtree = compute_quad_tree(src.scale.get_osm_scale(), src.x, src.y);
+	const QString quadtree = compute_quad_tree(src.scale.get_tile_zoom_level(), src.x, src.y);
 	const QString uri = QString(this->server_path_format).arg(quadtree);
 
 	return uri;
@@ -191,8 +191,8 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 		const Attribution * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
-		    (tile_scale.get_osm_scale()) > current->minZoom &&
-		    (tile_scale.get_osm_scale()) < current->maxZoom) {
+		    (tile_scale.get_tile_zoom_level()) > current->minZoom &&
+		    (tile_scale.get_tile_zoom_level()) < current->maxZoom) {
 
 			viewport->add_copyright(current->attribution);
 			qDebug() << "DD: Map Source Bind: get copyright: found match:" << current->attribution;

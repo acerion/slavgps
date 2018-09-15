@@ -2002,7 +2002,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 #endif
 
 	/* Change interpolate method according to scale. */
-	double zoom = this->get_zoom();
+	double zoom = this->get_viking_zoom_level().get_x();
 	DemInterpolation interpol_method;
 	if (zoom > 2.0) {
 		interpol_method = DemInterpolation::NONE;

@@ -4028,8 +4028,10 @@ void LayerTRW::download_map_along_track_cb(void)
 		map_labels << ((LayerMap *) *iter)->get_map_label();
 	}
 
-	double cur_zoom = viewport->get_zoom();
+	double cur_zoom = viewport->get_viking_zoom_level().get_x();
 	unsigned int default_zoom_idx;
+	/* TODO_LATER: there is a similar code in layer_map.cpp,
+	   search for "cur_zoom == zoom_vals[default_zoom]". */
 	for (default_zoom_idx = 0; default_zoom_idx < zoom_values.size(); default_zoom_idx++) {
 		if (cur_zoom == zoom_values[default_zoom_idx]) {
 			break;
