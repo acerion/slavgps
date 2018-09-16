@@ -24,8 +24,12 @@
 #include <QDebug>
 #include <QLocale>
 
+
+
+
 #include "coords.h"
 #include "coord.h"
+#include "globals.h"
 
 
 
@@ -35,6 +39,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Coord"
 #define PREFIX " Coord: "
 
 
@@ -81,6 +86,35 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 	default:
 		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) coord1.mode;
 		return 0.0;
+	}
+}
+
+
+
+
+Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
+{
+	/* Re-implementing Coord::distance() to have better control over Distance::valid. */
+	const SupplementaryDistanceUnit distance_unit = SupplementaryDistanceUnit::Meters; /* Using meters - the most basic and common unit. */
+	Distance result;
+
+	if (coord1.mode == coord2.mode) {
+		result = Distance(distance_safe(coord1, coord2), distance_unit);
+		return result;
+	}
+
+	switch (coord1.mode) {
+	case CoordMode::UTM:
+		result = Distance(UTM::utm_diff(coord1.utm, coord2.utm), distance_unit);
+		return result;
+
+	case CoordMode::LATLON:
+		result = Distance(LatLon::latlon_diff(coord1.ll, coord2.ll), distance_unit);
+		return result;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) coord1.mode;
+		return result;
 	}
 }
 

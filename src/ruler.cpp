@@ -93,7 +93,7 @@ void Ruler::set_end(int end_x, int end_y)
 
 	this->viewport->compute_bearing(this->x1, this->y1, this->x2, this->y2, &this->angle, &this->base_angle);
 
-	this->line_distance = Coord::distance(this->end_coord, this->begin_coord);
+	this->line_distance = Coord::distance_2(this->end_coord, this->begin_coord);
 }
 
 
@@ -192,14 +192,14 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 	if (1 && paint_tooltips) {
 
 		QString distance_label;
-		if (this->line_distance > -0.5 && this->total_distance > -0.5) {
+		if (this->line_distance.is_valid() && this->total_distance.is_valid()) {
 			distance_label = QString("%1\n%2")
-				.arg(Measurements::get_distance_string_for_ruler(this->line_distance, this->distance_unit))
-				.arg(Measurements::get_distance_string_for_ruler(this->total_distance, this->distance_unit));
-		} else if (this->line_distance > -0.5) {
-			distance_label = Measurements::get_distance_string_for_ruler(this->line_distance, this->distance_unit);
-		} else if (this->total_distance > -0.5) {
-			distance_label = Measurements::get_distance_string_for_ruler(this->total_distance, this->distance_unit);
+				.arg(this->line_distance.convert_to_unit(this->distance_unit).to_nice_string())
+				.arg(this->total_distance.convert_to_unit(this->distance_unit).to_nice_string());
+		} else if (this->line_distance.is_valid()) {
+			distance_label = this->line_distance.convert_to_unit(this->distance_unit).to_nice_string();
+		} else if (this->total_distance.is_valid()) {
+			distance_label = this->total_distance.convert_to_unit(this->distance_unit).to_nice_string();
 		} else {
 			; /* NOOP */
 		}
@@ -253,26 +253,14 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 QString Ruler::get_msg(void) const
 {
-	QString msg;
-
 	QString lat;
 	QString lon;
 	this->end_coord.get_latlon().to_strings_raw(lat, lon);
 
-	switch (this->distance_unit) {
-	case DistanceUnit::Kilometres:
-		msg = QObject::tr("%1 %2 DIFF %3 meters").arg(lat).arg(lon).arg(this->line_distance);
-		break;
-	case DistanceUnit::Miles:
-		msg = QObject::tr("%1 %2 DIFF %3 miles").arg(lat).arg(lon).arg(VIK_METERS_TO_MILES (this->line_distance));
-		break;
-	case DistanceUnit::NauticalMiles:
-		msg = QObject::tr("%1 %2 DIFF %3 NM").arg(lat).arg(lon).arg(VIK_METERS_TO_NAUTICAL_MILES (this->line_distance));
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
+	const QString msg = QObject::tr("%1 %2 DIFF %3")
+		.arg(lat)
+		.arg(lon)
+		.arg(this->line_distance.convert_to_unit(this->distance_unit).to_string());
 
 	return msg;
 }

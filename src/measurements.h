@@ -154,7 +154,7 @@ namespace SlavGPS {
 
 		static QString get_distance_string_short(double value, int precision = SG_PRECISION_DISTANCE);
 		static QString get_distance_string(double value, int precision = SG_PRECISION_DISTANCE);
-		static QString get_distance_string_for_ruler(double value, DistanceUnit distance_unit);
+
 
 		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
 		static QString get_speed_string_dont_recalculate(double value, int precision = SG_PRECISION_SPEED);
@@ -174,9 +174,11 @@ namespace SlavGPS {
 
 	class Distance {
 	public:
-		Distance() {};
+		Distance(double new_value = 0.0, SupplementaryDistanceUnit new_supplementary_distance_unit = SupplementaryDistanceUnit::Meters);
 		Distance(double value, DistanceUnit distance_unit);
-		Distance(double value, SupplementaryDistanceUnit supplementary_distance_unit);
+
+
+		Distance convert_to_unit(DistanceUnit distance_unit) const;
 
 		Distance to_meters(void) const;
 
@@ -192,9 +194,14 @@ namespace SlavGPS {
 		   always be presented as "0.01 km", never as "10 m". */
 		QString to_string(void) const;
 
+		QString to_string(DistanceUnit distance_unit) const;
+
+		Distance & operator+=(const Distance & rhs);
+		Distance operator+(const Distance & rhs);
+
 		bool is_valid(void) const;
 
-		double value = -1.0;
+		double value = 0.0;
 	private:
 		bool valid = false;
 

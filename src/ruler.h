@@ -52,14 +52,14 @@ namespace SlavGPS {
 
 		void set_begin(int begin_x, int begin_y);
 		void set_end(int end_x, int end_y);
-		void set_total_distance(double new_total_distance) { this->total_distance = new_total_distance; }
+		void set_total_distance(const Distance & new_total_distance) { this->total_distance = new_total_distance; }
 		void set_line_pen(const QPen & pen) { this->line_pen = pen; }
 
 		void paint_ruler(QPainter & painter, bool paint_tooltips);
 
 		QString get_msg(void) const;
 		double get_angle(void) const { return this->angle; }
-		double get_line_distance(void) const { return this->line_distance; }
+		Distance get_line_distance(void) const { return this->line_distance; }
 
 	private:
 		void draw_line(QPainter & painter);
@@ -78,8 +78,8 @@ namespace SlavGPS {
 		double base_angle = 0;
 
 		DistanceUnit distance_unit;
-		double line_distance = 0.0;
-		double total_distance = 0.0;
+		Distance line_distance;
+		Distance total_distance;
 
 		Viewport * viewport = NULL;
 

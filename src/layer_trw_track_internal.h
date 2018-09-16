@@ -195,8 +195,14 @@ namespace SlavGPS {
 
 		void add_trackpoint(Trackpoint * tp, bool recalculate);
 		double get_length_to_trackpoint(const Trackpoint * tp) const;
-		double get_length() const;
-		double get_length_including_gaps() const;
+
+		/* Get total length along a track in meters. */
+		double get_length(void) const;
+		Distance get_length_2(void) const;
+		double get_length_including_gaps(void) const;
+		Distance get_length_including_gaps_2(void) const;
+
+
 		unsigned long get_tp_count() const;
 		unsigned int get_segment_count() const;
 		std::list<Track *> split_into_segments(void);

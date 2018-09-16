@@ -27,6 +27,7 @@
 #include <QString>
 
 #include "coords.h"
+#include "measurements.h"
 
 
 
@@ -63,7 +64,8 @@ namespace SlavGPS {
 
 		void change_mode(CoordMode new_mode);
 
-		static double distance(const Coord & coord1, const Coord & coord2);
+		static double distance(const Coord & coord1, const Coord & coord2); /* Result is in meters. */
+		static Distance distance_2(const Coord & coord1, const Coord & coord2); /* Result is in meters. */
 
 		void to_strings(QString & str1, QString & str2) const;
 

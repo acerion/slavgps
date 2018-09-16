@@ -45,7 +45,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Measurements"
-#define PREFIX ": Measurements:" << __FUNCTION__ << __LINE__ << ">"
 #define INVALID_RESULT_STRING "--"
 
 
@@ -66,7 +65,7 @@ QString Measurements::get_altitude_string(double value, int precision)
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
 		break;
 	}
 
@@ -91,7 +90,7 @@ QString Measurements::get_altitude_string_recalculate(double value, int precisio
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
 		break;
 	}
 
@@ -119,7 +118,7 @@ QString Measurements::get_distance_string(double value, int precision)
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
 		break;
 	}
 
@@ -145,7 +144,7 @@ QString Measurements::get_distance_string_short(double value, int precision)
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
 		break;
 	}
 
@@ -182,7 +181,7 @@ QString Measurements::get_speed_string(double value, int precision)
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
 		break;
 	}
 
@@ -217,7 +216,7 @@ QString Measurements::get_speed_string_dont_recalculate(double value, int precis
 		break;
 	default:
 		buffer = "???";
-		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
 		break;
 	}
 
@@ -277,53 +276,67 @@ QString Measurements::get_duration_string(time_t duration)
 
 
 
-QString Measurements::get_distance_string_for_ruler(double distance, DistanceUnit distance_unit)
+Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
 {
-	QString distance_label;
+	Distance result;
+	result.distance_unit = target_distance_unit;
+	result.use_supplementary_distance_unit = false;
+	result.valid = false;
 
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		if (distance >= 1000 && distance < 100000) {
-			distance_label = QObject::tr("%1 km").arg(distance/1000.0, 0, 'f', 2);
-		} else if (distance < 1000) {
-			distance_label = QObject::tr("%1 m").arg((int) distance);
-		} else {
-			distance_label = QObject::tr("%1 km").arg((int) distance/1000);
+	if (this->use_supplementary_distance_unit) {
+		switch (this->supplementary_distance_unit) {
+		case SupplementaryDistanceUnit::Meters:
+			switch (target_distance_unit) {
+			case DistanceUnit::Kilometres:
+				result.value = this->value / 1000.0;
+				break;
+			case DistanceUnit::Miles:
+				result.value = VIK_METERS_TO_MILES(this->value);
+				break;
+			case DistanceUnit::NauticalMiles:
+				result.value = VIK_METERS_TO_NAUTICAL_MILES(this->value);
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
+				break;
+			}
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->supplementary_distance_unit;
+			break;
 		}
-		break;
-	case DistanceUnit::Miles:
-		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
-			distance_label = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 0, 'f', 2);
-		} else if (distance < VIK_MILES_TO_METERS(1)) {
-			distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-		} else {
-			distance_label = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
+	} else {
+		qDebug() << SG_PREFIX_E << "Unhandled situation" << (int) this->distance_unit << this->value; /* TODO_LATER: implement */
+#if 0
+		switch (this->distance_unit) {
+		case DistanceUnit::Kilometres:
+			result.value = ;
+			break;
+		case DistanceUnit::Miles:
+			result.value = ;
+			break;
+		case DistanceUnit::NauticalMiles:
+			result.value = ;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			break;
 		}
-		break;
-	case DistanceUnit::NauticalMiles:
-		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
-			distance_label = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 0, 'f', 2);
-		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
-			distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-		} else {
-			distance_label = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
-		}
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
+#endif
 	}
 
-	return distance_label;
+	result.valid = (!std::isnan(result.value)) && result.value >= 0.0;
+
+	return result;
 }
 
 
 
 
-Distance::Distance(double new_value, DistanceUnit new_distance_unit)
+Distance::Distance(double new_value, SupplementaryDistanceUnit new_supplementary_distance_unit)
 {
-	this->distance_unit = new_distance_unit;
-	this->use_supplementary_distance_unit = false;
+	this->supplementary_distance_unit = new_supplementary_distance_unit;
+	this->use_supplementary_distance_unit = true;
 
 	this->value = new_value;
 
@@ -335,9 +348,9 @@ Distance::Distance(double new_value, DistanceUnit new_distance_unit)
 
 
 
-Distance::Distance(double new_value, SupplementaryDistanceUnit new_supplementary_distance_unit)
+Distance::Distance(double new_value, DistanceUnit new_distance_unit)
 {
-	this->supplementary_distance_unit = new_supplementary_distance_unit;
+	this->distance_unit = new_distance_unit;
 	this->use_supplementary_distance_unit = false;
 
 	this->value = new_value;
@@ -393,6 +406,42 @@ Distance Distance::to_meters(void) const
 	}
 
 	return output;
+}
+
+
+
+QString Distance::to_string(DistanceUnit target_distance_unit) const
+{
+	QString result;
+
+	if (this->use_supplementary_distance_unit) {
+		switch (this->supplementary_distance_unit) {
+		case SupplementaryDistanceUnit::Meters:
+			switch (target_distance_unit) {
+			case DistanceUnit::Kilometres:
+				result = QObject::tr("%1 km").arg(this->value / 1000.0, 0, 'f', SG_PRECISION_DISTANCE);
+				break;
+			case DistanceUnit::Miles:
+				result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(this->value), 0, 'f', SG_PRECISION_DISTANCE);
+				break;
+			case DistanceUnit::NauticalMiles:
+				result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(this->value), 0, 'f', SG_PRECISION_DISTANCE);
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
+				break;
+			}
+
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			result = INVALID_RESULT_STRING;
+			break;
+		}
+	} else {
+		qDebug() << SG_PREFIX_E << "Unhandled situation"; /* TODO_LATER: implement */
+	}
+
+	return result;
 }
 
 
@@ -501,6 +550,81 @@ bool Distance::is_valid(void) const
 
 
 
+Distance & Distance::operator+=(const Distance & rhs)
+{
+	if (!rhs.valid) {
+		return *this;
+	}
+
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return *this;
+	}
+	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return *this;
+	}
+	if (this->use_supplementary_distance_unit) {
+		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
+			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			return *this;
+		}
+	} else {
+		if (this->distance_unit != rhs.distance_unit) {
+			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			return *this;
+		}
+	}
+
+
+	this->value += rhs.value;
+	this->valid = !std::isnan(this->value) && this->value >= 0.0;
+	return *this;
+}
+
+
+
+
+Distance Distance::operator+(const Distance & rhs)
+{
+	/* TODO_LATER: make operator work for arguments with different units. */
+	Distance result;
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+	if (this->use_supplementary_distance_unit) {
+		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
+			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			return result;
+		}
+	} else {
+		if (this->distance_unit != rhs.distance_unit) {
+			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			return result;
+		}
+	}
+
+
+	result.use_supplementary_distance_unit = this->use_supplementary_distance_unit;
+	result.supplementary_distance_unit = this->supplementary_distance_unit;
+	result.distance_unit = this->distance_unit;
+
+	result.value = this->value + rhs.value;
+	result.valid = !std::isnan(result.value) && result.value >= 0.0;
+
+	return result;
+}
+
+
+
+
 Altitude::Altitude(double new_value, HeightUnit height_unit)
 {
 	this->value = new_value;
@@ -601,3 +725,95 @@ Altitude Altitude::convert_to_unit(HeightUnit target_height_unit) const
 
 	return output;
 }
+
+
+
+#if 0
+			case DistanceUnit::Kilometres:
+				if (distance >= 1000 && distance < 100000) {
+					distance_label = QObject::tr("%1 km").arg(distance/1000.0, 0, 'f', 2);
+				} else if (distance < 1000) {
+					distance_label = QObject::tr("%1 m").arg((int) distance);
+				} else {
+					distance_label = QObject::tr("%1 km").arg((int) distance/1000);
+				}
+				break;
+			case DistanceUnit::Miles:
+				if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
+					distance_label = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 0, 'f', 2);
+				} else if (distance < VIK_MILES_TO_METERS(1)) {
+					distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+				} else {
+					distance_label = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
+				}
+				break;
+			case DistanceUnit::NauticalMiles:
+				if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
+					distance_label = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 0, 'f', 2);
+				} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
+					distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+				} else {
+					distance_label = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
+				}
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
+				break;
+			}
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unhandled situation"; /* TODO_LATER: implement */
+			break;
+
+
+
+
+static QString distance_string(double distance)
+{
+	QString result;
+	char str[128];
+
+	/* Draw label with distance. */
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		if (distance >= 1000 && distance < 100000) {
+			result = QObject::tr("%1 km").arg(distance/1000.0, 6, 'f', 2); /* ""%3.2f" */
+		} else if (distance < 1000) {
+			result = QObject::tr("%1 m").arg((int) distance);
+		} else {
+			result = QObject::tr("%1 km").arg((int) distance/1000);
+		}
+		break;
+	case DistanceUnit::Miles:
+		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
+			result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 6, 'f', 2); /* "%3.2f" */
+		} else if (distance < 1609.4) {
+			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+		} else {
+			result = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
+		}
+		break;
+	case DistanceUnit::NauticalMiles:
+		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
+			result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 6, 'f', 2); /* "%3.2f" */
+		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
+			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+		} else {
+			result = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
+		break;
+	}
+	return result;
+}
+
+
+
+
+
+
+
+#endif

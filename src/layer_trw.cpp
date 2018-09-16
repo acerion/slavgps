@@ -1345,11 +1345,11 @@ int LayerTRW::get_track_thickness()
 /*
   Build up multiple routes information
 */
-double LayerTRW::get_routes_tooltip_data(void) const
+Distance LayerTRW::get_routes_tooltip_data(void) const
 {
-	double result = 0;
+	Distance result;
 	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
-		result += (*iter)->get_length();
+		result += (*iter)->get_length_2();
 	}
 
 	return result;
@@ -1369,7 +1369,7 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 
 		Track * trk = *iter;
 
-		result.length += trk->get_length();
+		result.length += trk->get_length_2();
 
 		/* Ensure times are available. */
 		if (trk->empty() || !trk->get_tp_first()->has_timestamp) {
@@ -1443,25 +1443,21 @@ QString LayerTRW::get_tooltip(void) const
 			}
 		}
 
-		if (ttd.length > 0.0) {
-			/* Setup info dependent on distance units. */
-			const DistanceUnit distance_unit = Preferences::get_unit_distance();
-			const QString distance_unit_string = get_distance_unit_string(distance_unit);
-			const double distance_in_units = convert_distance_meters_to(ttd.length, distance_unit);
+		if (ttd.length.is_valid()) {
+			/* Prepare info string dependent on distance units. */
+			const QString distance_string = ttd.length.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
 
-			/* Timing information if available. */
-
+			/* Use timing information if available. */
 			if (ttd.duration > 0) {
-				tracks_info = QObject::tr("\n%1Total Length %2 %3 in %4 %5")
+				tracks_info = QObject::tr("\n%1Total Length %2 in %3 %4")
 					.arg(duration_string)
-					.arg(distance_in_units, 0, 'f', 1)
-					.arg(distance_unit_string)
+					.arg(distance_string)
 					.arg((int)(ttd.duration/3600))
 					.arg((int) round(ttd.duration / 60.0) % 60, 2, 10, (QChar) '0');
 			} else {
-				tracks_info = QObject::tr("\n%1Total Length %2 %3")
+				tracks_info = QObject::tr("\n%1Total Length %2")
 					.arg(duration_string)
-					.arg(distance_in_units, 0, 'f', 1).arg(distance_unit_string);
+					.arg(distance_string);
 			}
 		}
 	}
@@ -1469,13 +1465,11 @@ QString LayerTRW::get_tooltip(void) const
 
 	QString routes_info;
 	if (!this->routes.empty()) {
-		const double rlength = this->get_routes_tooltip_data();
-		if (rlength > 0.0) {
-			/* Setup info dependent on distance units. */
-			const DistanceUnit distance_unit = Preferences::get_unit_distance();
-			const QString distance_unit_string = get_distance_unit_string(distance_unit);
-			const double distance_in_units = convert_distance_meters_to(rlength, distance_unit);
-			routes_info = QObject::tr("\nTotal route length %.1f %s").arg(distance_in_units).arg(distance_unit_string);
+		const Distance rlength = this->get_routes_tooltip_data(); /* [meters] */
+		if (rlength.is_valid()) {
+			/* Prepare track info dependent on distance units. */
+			const QString distance_string = rlength.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
+			routes_info = QObject::tr("\nTotal route length %1").arg(distance_string);
 		}
 	}
 

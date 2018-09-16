@@ -469,14 +469,14 @@ namespace SlavGPS {
 		/* Structure to hold multiple track information for a layer. */
 		class TracksTooltipData {
 		public:
-			double length = 0;
+			Distance length;
 			time_t start_time = 0;
 			time_t end_time = 0;
 			int    duration = 0;
 		};
 
 		TracksTooltipData get_tracks_tooltip_data(void) const;
-		double get_routes_tooltip_data(void) const;
+		Distance get_routes_tooltip_data(void) const;
 
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */

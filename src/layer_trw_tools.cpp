@@ -782,62 +782,15 @@ static int draw_sync(LayerTRW * trw, Viewport * viewport, const QPixmap & pixmap
 }
 
 
-
-
-static QString distance_string(double distance)
-{
-	QString result;
-	char str[128];
-
-	/* Draw label with distance. */
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		if (distance >= 1000 && distance < 100000) {
-			result = QObject::tr("%1 km").arg(distance/1000.0, 6, 'f', 2); /* ""%3.2f" */
-		} else if (distance < 1000) {
-			result = QObject::tr("%1 m").arg((int) distance);
-		} else {
-			result = QObject::tr("%1 km").arg((int) distance/1000);
-		}
-		break;
-	case DistanceUnit::Miles:
-		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
-			result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 6, 'f', 2); /* "%3.2f" */
-		} else if (distance < 1609.4) {
-			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-		} else {
-			result = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
-		}
-		break;
-	case DistanceUnit::NauticalMiles:
-		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
-			result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 6, 'f', 2); /* "%3.2f" */
-		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
-			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-		} else {
-			result = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
-		}
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
-	return result;
-}
-
-
-
-
 /*
  * Actually set the message in statusbar.
  */
-static void statusbar_write(double distance, double elev_gain, double elev_loss, double last_step, double angle, LayerTRW * layer)
+static void statusbar_write(const Distance & total_distance, const Distance & last_step_distance, double elev_gain, double elev_loss, double angle, LayerTRW * layer)
 {
 	/* Only show elevation data when track has some elevation properties. */
 	QString str_gain_loss;
 	QString str_last_step;
-	const QString str_total = distance_string(distance);
+	const QString total_distance_string = total_distance.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
 
 	if ((elev_gain > 0.1) || (elev_loss > 0.1)) {
 
@@ -855,13 +808,13 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 		}
 	}
 
-	if (last_step > 0) {
-		const QString dist = distance_string(last_step);
-		str_last_step = QObject::tr(" - Bearing %1° - Step %2").arg(RAD2DEG(angle), 4, 'f', 1).arg(dist); /* "%3.1f" */
+	if (last_step_distance.is_valid()) {
+		const QString last_step_distance_string = last_step_distance.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
+		str_last_step = QObject::tr(" - Bearing %1° - Step %2").arg(RAD2DEG(angle), 4, 'f', 1).arg(last_step_distance_string); /* "%3.1f" */
 	}
 
 	/* Write with full gain/loss information. */
-	const QString msg = QObject::tr("Total %1%2%3").arg(str_total).arg(str_last_step).arg(str_gain_loss);
+	const QString msg = QObject::tr("Total %1%2%3").arg(total_distance_string).arg(str_last_step).arg(str_gain_loss);
 	layer->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 }
 
@@ -878,9 +831,9 @@ void LayerTRW::update_statusbar()
 	this->get_edited_track()->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 	/* Find out actual distance of current track. */
-	double distance = this->get_edited_track()->get_length();
+	const Distance total_distance = this->get_edited_track()->get_length_2();
 
-	statusbar_write(distance, elev_gain, elev_loss, 0, 0, this);
+	statusbar_write(total_distance, Distance(), elev_gain, elev_loss, 0, this);
 }
 
 
@@ -910,7 +863,8 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 		/* We didn't actually create the new track fragment
 		   yet, so track->get_length() returns length without
 		   this last, non-existent, work-in-progress fragment. */
-		const double total_distance = track->get_length() + ruler->get_line_distance();
+		const Distance total_distance = track->get_length_2() + ruler->get_line_distance();
+
 		this->ruler->set_total_distance(total_distance);
 		this->ruler->paint_ruler(painter, Preferences::get_create_track_tooltip());
 
@@ -943,7 +897,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 		}
 
 		/* Update statusbar with full gain/loss information. */
-		statusbar_write(total_distance, elev_gain, elev_loss, ruler->get_line_distance(), this->ruler->get_angle(), trw);
+		statusbar_write(total_distance, ruler->get_line_distance(), elev_gain, elev_loss, this->ruler->get_angle(), trw);
 
 		return ToolStatus::AckGrabFocus;
 	}

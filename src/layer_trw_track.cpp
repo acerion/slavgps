@@ -511,8 +511,7 @@ double Track::get_length_to_trackpoint(const Trackpoint * tp) const
 
 
 
-/* Get total length along a track. */
-double Track::get_length() const
+double Track::get_length(void) const
 {
 	double len = 0.0;
 	if (this->trackpoints.empty()) {
@@ -531,8 +530,15 @@ double Track::get_length() const
 
 
 
-/* Get total length along a track. */
-double Track::get_length_including_gaps() const
+Distance Track::get_length_2(void) const
+{
+	return Distance(this->get_length(), SupplementaryDistanceUnit::Meters);
+}
+
+
+
+
+double Track::get_length_including_gaps(void) const
 {
 	double len = 0.0;
 	if (this->trackpoints.empty()) {
@@ -543,6 +549,14 @@ double Track::get_length_including_gaps() const
 		len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 	}
 	return len;
+}
+
+
+
+
+Distance Track::get_length_including_gaps_2(void) const
+{
+	return Distance(this->get_length_including_gaps(), SupplementaryDistanceUnit::Meters);
 }
 
 
@@ -3125,8 +3139,6 @@ QString Track::get_tooltip(void) const
 	char timestamp_string[20] = { 0 };
 	QString duration_string;
 
-	QString result; static char tmp_buf[100];
-
 	/* Compact info: Short date eg (11/20/99), duration and length.
 	   Hopefully these are the things that are most useful and so promoted into the tooltip. */
 	if (!this->empty() && this->get_tp_first()->has_timestamp) {
@@ -3137,23 +3149,11 @@ QString Track::get_tooltip(void) const
 			duration_string = QObject::tr("- %1").arg(Measurements::get_duration_string(duration));
 		}
 	}
+
 	/* Get length and consider the appropriate distance units. */
-	double tr_len = this->get_length();
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		result = QObject::tr("%1%2 km %3").arg(timestamp_string).arg(tr_len/1000.0, 0, 'f', 1).arg(duration_string);
-		break;
-	case DistanceUnit::Miles:
-		result = QObject::tr("%1%2 miles %3").arg(timestamp_string).arg(VIK_METERS_TO_MILES(tr_len), 0, 'f', 1).arg(duration_string);
-		break;
-	case DistanceUnit::NauticalMiles:
-		result = QObject::tr("%1%2 NM %3").arg(timestamp_string).arg(VIK_METERS_TO_NAUTICAL_MILES(tr_len), 0, 'f', 1).arg(duration_string);
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
+	const QString distance_string = this->get_length_2().convert_to_unit(Preferences::get_unit_distance()).to_string();
+	const QString result = QObject::tr("%1%2 km %3").arg(timestamp_string).arg(distance_string).arg(duration_string); /* FIXME: hardcoded unit, also in viking? */
+
 
 	return result;
 }
