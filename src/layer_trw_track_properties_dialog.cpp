@@ -200,15 +200,14 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	QString tmp_string;
 	int row = 0;
 
-	/* NB This value not shown yet - but is used by internal calculations. */
-	this->track_length = this->trk->get_length();
-	this->track_length_inc_gaps = this->trk->get_length_including_gaps();
-	DistanceUnit distance_unit = Preferences::get_unit_distance();
 
-
-	const double tr_len = this->track_length;
-	tmp_string = get_distance_string(tr_len, distance_unit);
-	this->w_track_length = ui_label_new_selectable(tmp_string, this);
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const Distance track_length = this->trk->get_length();
+#if 0
+	/* Unused at the moment. */
+	const Distance track_length_inc_gaps = this->trk->get_length_including_gaps().convert_to_unit(distance_unit);
+#endif
+	this->w_track_length = ui_label_new_selectable(track_length.convert_to_unit(distance_unit).to_nice_string(), this);
 	this->grid->addWidget(new QLabel(tr("Track Length:")), row, 0);
 	this->grid->addWidget(this->w_track_length, row, 1);
 	row++;
@@ -278,23 +277,15 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	row++;
 
 
-	QString result;
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		/* Even though kilometres, the average distance between points is going to be quite small so keep in metres. */
-		result = tr("%1 m").arg((tp_count - seg_count) == 0 ? 0 : tr_len / (tp_count - seg_count), 0, 'f', 2);
-		break;
-	case DistanceUnit::Miles:
-		result = tr("%1 miles").arg((tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / (tp_count - seg_count)), 0, 'f', 3);
-		break;
-	case DistanceUnit::NauticalMiles:
-		result = tr("%1 NM").arg((tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)), 0, 'f', 3);
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
+	Distance average_dist_between_tp;
+	if (tp_count - seg_count == 0) {
+		average_dist_between_tp = Distance(0, SupplementaryDistanceUnit::Meters);
+	} else {
+		average_dist_between_tp = track_length;
+		average_dist_between_tp.value /= (tp_count - seg_count);
 	}
-	this->w_avg_dist = ui_label_new_selectable(result, this);
+
+	this->w_avg_dist = ui_label_new_selectable(average_dist_between_tp.convert_to_unit(distance_unit).to_nice_string(), this);
 	this->grid->addWidget(new QLabel(tr("Average Distance Between Trackpoints:")), row, 0);
 	this->grid->addWidget(this->w_avg_dist, row, 1);
 	row++;
@@ -309,7 +300,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		altitudes.calculate_min_max();
 	}
 
-	result = "";
+	QString result;
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	if (altitudes.y_min == VIK_DEFAULT_ALTITUDE) {
 		result = tr("No Data");

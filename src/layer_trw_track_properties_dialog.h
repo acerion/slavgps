@@ -108,9 +108,6 @@ namespace SlavGPS {
 		QLabel * w_time_end = NULL;
 		QLabel * w_time_dur = NULL;
 
-		double   track_length;
-		double   track_length_inc_gaps;
-
 		QTimeZone const * tz = NULL; /* Time zone at track's location. */
 	};
 

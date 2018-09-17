@@ -831,7 +831,7 @@ void LayerTRW::update_statusbar()
 	this->get_edited_track()->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 	/* Find out actual distance of current track. */
-	const Distance total_distance = this->get_edited_track()->get_length_2();
+	const Distance total_distance = this->get_edited_track()->get_length();
 
 	statusbar_write(total_distance, Distance(), elev_gain, elev_loss, 0, this);
 }
@@ -863,7 +863,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 		/* We didn't actually create the new track fragment
 		   yet, so track->get_length() returns length without
 		   this last, non-existent, work-in-progress fragment. */
-		const Distance total_distance = track->get_length_2() + ruler->get_line_distance();
+		const Distance total_distance = track->get_length() + ruler->get_line_distance();
 
 		this->ruler->set_total_distance(total_distance);
 		this->ruler->paint_ruler(painter, Preferences::get_create_track_tooltip());

@@ -293,9 +293,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
  */
 void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_unit)
 {
-	double trk_dist = trk->get_length();
-	/* Store unit converted value. */
-	trk_dist = convert_distance_meters_to(trk_dist, distance_unit);
+	const Distance trk_dist = trk->get_length().convert_to_unit(distance_unit);
 
 	/* Get start date. */
 	QString start_date;
@@ -391,7 +389,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	/* LENGTH_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(trk_dist);
+	variant = QVariant::fromValue(trk_dist.value);
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* This dialog is not a good place to edit track length. */
 	items << item;

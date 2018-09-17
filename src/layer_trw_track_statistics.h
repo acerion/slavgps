@@ -26,7 +26,12 @@
 
 #include <time.h>
 
+
+
+
 #include "layer_trw_track.h"
+#include "measurements.h"
+
 
 
 
@@ -47,8 +52,8 @@ namespace SlavGPS {
 		double max_alt            = VIK_VAL_MAX_ALT;
 		double elev_gain          = 0.0;
 		double elev_loss          = 0.0;
-		double length             = 0.0;
-		double length_gaps        = 0.0;
+		Distance length;
+		Distance length_with_gaps;
 		double max_speed          = 0.0;
 		unsigned long trackpoints = 0;
 		unsigned int segments     = 0;

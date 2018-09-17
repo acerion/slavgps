@@ -218,7 +218,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 
 #ifdef K_FIXME_RESTORE
 		this->track_data.y_min = 0;
-		this->track_data.y_max = convert_distance_meters_to(trk->get_length_including_gaps(), this->geocanvas.distance_unit);
+		this->track_data.y_max = convert_distance_meters_to(trk->get_length_value_including_gaps(), this->geocanvas.distance_unit);
 #endif
 
 		this->track_data.calculate_min_max();
@@ -962,7 +962,7 @@ int ProfileGraph::get_cursor_pos_x(QMouseEvent * ev) const
  */
 void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, double max_speed_in, bool do_dem, bool do_speed)
 {
-	double max_function_arg = trk->get_length_including_gaps();
+	double max_function_arg = trk->get_length_value_including_gaps();
 	double max_function_value_speed = 0;
 
 	/* Calculate the max speed factor. */
@@ -1137,7 +1137,7 @@ void ProfileGraphSD::draw_additional_indicators(TrackInfo & track_info)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		const double max_function_arg = track_info.trk->get_length_including_gaps();
+		const double max_function_arg = track_info.trk->get_length_value_including_gaps();
 		const double max_function_value = this->y_max_visible;
 		double current_function_arg = 0.0;
 		double current_function_value = 0.0;
@@ -1352,7 +1352,7 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
 void ProfileGraph::draw_speed_dist(Track * trk, double max_speed_in, bool do_speed)
 {
 	double max_function_value = 0;
-	double max_function_arg = trk->get_length_including_gaps();
+	double max_function_arg = trk->get_length_value_including_gaps();
 
 	/* Calculate the max speed factor. */
 	if (do_speed) {
@@ -1772,7 +1772,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 
 
 	/* NB This value not shown yet - but is used by internal calculations. */
-	this->track_info.track_length_including_gaps = this->track_info.trk->get_length_including_gaps();
+	this->track_info.track_length_including_gaps = this->track_info.trk->get_length_value_including_gaps();
 
 
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {

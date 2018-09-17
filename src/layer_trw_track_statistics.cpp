@@ -18,15 +18,27 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_statistics.h"
+#include "globals.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Layer TRW Track Statistics"
 
 
 
@@ -38,14 +50,14 @@ using namespace SlavGPS;
 */
 void TrackStatistics::add_track(Track * trk)
 {
-	qDebug() << "II: Track Statistics: add track" << trk->name;
+	qDebug() << SG_PREFIX_I << "Adding track" << trk->name;
 
 	this->count++;
 
 	this->trackpoints += trk->get_tp_count();;
 	this->segments    += trk->get_segment_count();
 	this->length      += trk->get_length();
-	this->length_gaps += trk->get_length_including_gaps();
+	this->length_with_gaps += trk->get_length_including_gaps();
 
 	double ms = trk->get_max_speed();
 	if (ms > this->max_speed) {

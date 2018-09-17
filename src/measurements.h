@@ -179,8 +179,7 @@ namespace SlavGPS {
 
 
 		Distance convert_to_unit(DistanceUnit distance_unit) const;
-
-		Distance to_meters(void) const;
+		Distance convert_to_unit(SupplementaryDistanceUnit supplementary_distance_unit) const;
 
 		/* Generate string with value and unit. Value
 		   (magnitude) of distance may be used to decide how
@@ -198,6 +197,7 @@ namespace SlavGPS {
 
 		Distance & operator+=(const Distance & rhs);
 		Distance operator+(const Distance & rhs);
+		Distance operator-(const Distance & rhs);
 
 		bool is_valid(void) const;
 

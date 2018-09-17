@@ -236,12 +236,11 @@ void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_c
 void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
 	const DistanceUnit user_distance_unit = Preferences::get_unit_distance();
-	double track_length = trk->get_length_including_gaps();
-	track_length = convert_distance_meters_to(track_length, user_distance_unit);
+	const Distance track_length = trk->get_length_including_gaps().convert_to_unit(user_distance_unit);
 
 	const int n_intervals_max = trk->max_number_dist_labels;
 	GraphIntervalsDistance intervals;
-	const int interval_idx = intervals.intervals.get_interval_index(0, track_length, n_intervals_max);
+	const int interval_idx = intervals.intervals.get_interval_index(0, track_length.value, n_intervals_max);
 
 	const double interval = intervals.intervals.get_interval_value(interval_idx);
 
@@ -249,7 +248,7 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 		const Distance dist_in_user_units(interval * i, user_distance_unit);
 
 		/* Convert distance back into metres for use in finding a trackpoint. */
-		const Distance dist_in_meters = dist_in_user_units.to_meters();
+		const Distance dist_in_meters = dist_in_user_units.convert_to_unit(SupplementaryDistanceUnit::Meters);
 		if (!dist_in_meters.is_valid()) {
 			qDebug() << SG_PREFIX_E << "Conversion to meters failed";
 			break;

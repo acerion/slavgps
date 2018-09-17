@@ -1349,7 +1349,7 @@ Distance LayerTRW::get_routes_tooltip_data(void) const
 {
 	Distance result;
 	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
-		result += (*iter)->get_length_2();
+		result += (*iter)->get_length();
 	}
 
 	return result;
@@ -1369,7 +1369,7 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 
 		Track * trk = *iter;
 
-		result.length += trk->get_length_2();
+		result.length += trk->get_length();
 
 		/* Ensure times are available. */
 		if (trk->empty() || !trk->get_tp_first()->has_timestamp) {

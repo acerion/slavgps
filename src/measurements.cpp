@@ -363,11 +363,12 @@ Distance::Distance(double new_value, DistanceUnit new_distance_unit)
 
 
 
-Distance Distance::to_meters(void) const
+Distance Distance::convert_to_unit(SupplementaryDistanceUnit target_supplementary_distance_unit) const
 {
 	Distance output;
-	output.use_supplementary_distance_unit = true; /* Because we are converting to meters. */
-	output.supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
+	output.use_supplementary_distance_unit = true; /* Because we are converting to supplementary unit. */
+	output.supplementary_distance_unit = target_supplementary_distance_unit;
+	output.valid = false;
 
 	if (!this->valid) {
 		return output;
@@ -376,37 +377,60 @@ Distance Distance::to_meters(void) const
 	if (this->use_supplementary_distance_unit) {
 		switch (this->supplementary_distance_unit) {
 		case SupplementaryDistanceUnit::Meters:
-			output.value = this->value;
-			output.valid = true;
-			break;
+			switch (target_supplementary_distance_unit) {
+			case SupplementaryDistanceUnit::Meters:
+				output.value = this->value;
+				output.valid = true;
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
+				break;
+			}
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid supplementary distance unit" << (int) this->supplementary_distance_unit;
-			output.value = -1.0;
 			break;
 		}
 	} else {
 		switch (this->distance_unit) {
 		case DistanceUnit::Kilometres:
-			output.value = this->value * 1000.0;
-			output.valid = true;
-			break;
+			switch (target_supplementary_distance_unit) {
+			case SupplementaryDistanceUnit::Meters:
+				output.value = this->value * 1000.0;
+				output.valid = true;
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
+				break;
+			}
 		case DistanceUnit::Miles:
-			output.value = VIK_MILES_TO_METERS(this->value);
-			output.valid = true;
-			break;
+			switch (target_supplementary_distance_unit) {
+			case SupplementaryDistanceUnit::Meters:
+				output.value = VIK_MILES_TO_METERS(this->value);
+				output.valid = true;
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
+				break;
+			}
 		case DistanceUnit::NauticalMiles:
-			output.value = VIK_NAUTICAL_MILES_TO_METERS(this->value);
-			output.valid = true;
-			break;
+			switch (target_supplementary_distance_unit) {
+			case SupplementaryDistanceUnit::Meters:
+				output.value = VIK_NAUTICAL_MILES_TO_METERS(this->value);
+				output.valid = true;
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
+				break;
+			}
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			output.value = -1.0;
 			break;
 		}
 	}
 
 	return output;
 }
+
 
 
 
@@ -429,6 +453,7 @@ QString Distance::to_string(DistanceUnit target_distance_unit) const
 				break;
 			default:
 				qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
+				result = INVALID_RESULT_STRING;
 				break;
 			}
 
@@ -439,6 +464,7 @@ QString Distance::to_string(DistanceUnit target_distance_unit) const
 		}
 	} else {
 		qDebug() << SG_PREFIX_E << "Unhandled situation"; /* TODO_LATER: implement */
+		result = INVALID_RESULT_STRING;
 	}
 
 	return result;
@@ -617,6 +643,45 @@ Distance Distance::operator+(const Distance & rhs)
 	result.distance_unit = this->distance_unit;
 
 	result.value = this->value + rhs.value;
+	result.valid = !std::isnan(result.value) && result.value >= 0.0;
+
+	return result;
+}
+
+
+
+
+Distance Distance::operator-(const Distance & rhs)
+{
+	/* TODO_LATER: make operator work for arguments with different units. */
+	Distance result;
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+	if (this->use_supplementary_distance_unit) {
+		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
+			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			return result;
+		}
+	} else {
+		if (this->distance_unit != rhs.distance_unit) {
+			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			return result;
+		}
+	}
+
+
+	result.use_supplementary_distance_unit = this->use_supplementary_distance_unit;
+	result.supplementary_distance_unit = this->supplementary_distance_unit;
+	result.distance_unit = this->distance_unit;
+
+	result.value = this->value - rhs.value;
 	result.valid = !std::isnan(result.value) && result.value >= 0.0;
 
 	return result;

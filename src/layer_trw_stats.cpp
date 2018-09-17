@@ -164,14 +164,15 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Total Length */
-	tmp_string = get_distance_string(stats.length, Preferences::get_unit_distance());
-	this->stats_table->get_value_label(TRWStatsRow::TotalLength)->setText(tmp_string);
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	this->stats_table->get_value_label(TRWStatsRow::TotalLength)->setText(stats.length.convert_to_unit(distance_unit).to_nice_string());
 
 
 
-	/* Average Length */
-	tmp_string = get_distance_string(stats.length / stats.count, Preferences::get_unit_distance());
-	this->stats_table->get_value_label(TRWStatsRow::AverageLength)->setText(tmp_string);
+	/* Average Length of all tracks. */
+	Distance avg_distance = stats.length.convert_to_unit(distance_unit);
+	avg_distance.value /= stats.count; /* Average of all tracks. */
+	this->stats_table->get_value_label(TRWStatsRow::AverageLength)->setText(avg_distance.to_nice_string());
 
 
 
@@ -188,7 +189,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 	/* Avg. Speed */
 	if (stats.duration > 0) {
-		tmp_string = get_speed_string(stats.length / stats.duration, speed_unit);
+		tmp_string = get_speed_string(stats.length.value / stats.duration, speed_unit);
 	} else {
 		tmp_string = NONE_TEXT;
 	}

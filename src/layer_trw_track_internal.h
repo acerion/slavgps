@@ -194,13 +194,18 @@ namespace SlavGPS {
 		void sort(compare_trackpoints_t compare_function);
 
 		void add_trackpoint(Trackpoint * tp, bool recalculate);
-		double get_length_to_trackpoint(const Trackpoint * tp) const;
+
 
 		/* Get total length along a track in meters. */
-		double get_length(void) const;
-		Distance get_length_2(void) const;
-		double get_length_including_gaps(void) const;
-		Distance get_length_including_gaps_2(void) const;
+		double get_length_value(void) const;
+		Distance get_length(void) const;
+		double get_length_value_including_gaps(void) const;
+		Distance get_length_including_gaps(void) const;
+
+		/* Get a length of a track up to a specified trackpoint (in meters). */
+		double get_length_value_to_trackpoint(const Trackpoint * tp) const;
+		Distance get_length_to_trackpoint(const Trackpoint * tp) const;
+
 
 
 		unsigned long get_tp_count() const;

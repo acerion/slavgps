@@ -480,7 +480,7 @@ void Track::add_trackpoint(Trackpoint * tp, bool recalculate)
 
 
 
-double Track::get_length_to_trackpoint(const Trackpoint * tp) const
+double Track::get_length_value_to_trackpoint(const Trackpoint * tp) const
 {
 	double len = 0.0;
 	if (this->trackpoints.empty()) {
@@ -511,7 +511,15 @@ double Track::get_length_to_trackpoint(const Trackpoint * tp) const
 
 
 
-double Track::get_length(void) const
+Distance Track::get_length_to_trackpoint(const Trackpoint * tp) const
+{
+	return Distance(this->get_length_value_to_trackpoint(tp), SupplementaryDistanceUnit::Meters);
+}
+
+
+
+
+double Track::get_length_value(void) const
 {
 	double len = 0.0;
 	if (this->trackpoints.empty()) {
@@ -530,15 +538,15 @@ double Track::get_length(void) const
 
 
 
-Distance Track::get_length_2(void) const
+Distance Track::get_length(void) const
 {
-	return Distance(this->get_length(), SupplementaryDistanceUnit::Meters);
+	return Distance(this->get_length_value(), SupplementaryDistanceUnit::Meters);
 }
 
 
 
 
-double Track::get_length_including_gaps(void) const
+double Track::get_length_value_including_gaps(void) const
 {
 	double len = 0.0;
 	if (this->trackpoints.empty()) {
@@ -554,9 +562,9 @@ double Track::get_length_including_gaps(void) const
 
 
 
-Distance Track::get_length_including_gaps_2(void) const
+Distance Track::get_length_including_gaps(void) const
 {
-	return Distance(this->get_length_including_gaps(), SupplementaryDistanceUnit::Meters);
+	return Distance(this->get_length_value_including_gaps(), SupplementaryDistanceUnit::Meters);
 }
 
 
@@ -1154,7 +1162,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 		}
 	}
 
-	double total_length = this->get_length_including_gaps();
+	double total_length = this->get_length_value_including_gaps();
 	const double delta_d = total_length / (compressed_n_points - 1);
 
 	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash */
@@ -1322,7 +1330,7 @@ TrackData Track::make_track_data_gradient_over_distance(int compressed_n_points)
 
 	assert (compressed_n_points < 16000);
 
-	const double total_length = this->get_length_including_gaps();
+	const double total_length = this->get_length_value_including_gaps();
 	const double delta_d = total_length / (compressed_n_points - 1);
 
 	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash. */
@@ -1571,7 +1579,7 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 {
 	TrackData result;
 
-	double total_length = this->get_length_including_gaps();
+	double total_length = this->get_length_value_including_gaps();
 	if (total_length <= 0) {
 		return result;
 	}
@@ -1598,7 +1606,7 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 			   an average speed for that part.  This will
 			   essentially interpolate between segments, which I
 			   think is right given the usage of
-			   'get_length_including_gaps'. n == 0 is no averaging. */
+			   'get_length_value_including_gaps'. n == 0 is no averaging. */
 			const int n = 0;
 			double delta_d = 0.0;
 			double delta_t = 0.0;
@@ -1684,7 +1692,7 @@ Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *me
 		return NULL;
 	}
 
-	double dist = this->get_length_including_gaps() * reldist;
+	double dist = this->get_length_value_including_gaps() * reldist;
 	double current_dist = 0.0;
 	double current_inc = 0.0;
 
@@ -2127,7 +2135,7 @@ void Track::interpolate_times()
 	if (tp->has_timestamp) {
 		time_t tsdiff = tp->timestamp - tsfirst;
 
-		double tr_dist = this->get_length_including_gaps();
+		double tr_dist = this->get_length_value_including_gaps();
 		double cur_dist = 0.0;
 
 		if (tr_dist > 0) {
@@ -3151,7 +3159,7 @@ QString Track::get_tooltip(void) const
 	}
 
 	/* Get length and consider the appropriate distance units. */
-	const QString distance_string = this->get_length_2().convert_to_unit(Preferences::get_unit_distance()).to_string();
+	const QString distance_string = this->get_length().convert_to_unit(Preferences::get_unit_distance()).to_string();
 	const QString result = QObject::tr("%1%2 km %3").arg(timestamp_string).arg(distance_string).arg(duration_string); /* FIXME: hardcoded unit, also in viking? */
 
 
@@ -4220,9 +4228,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	const HeightUnit height_unit = Preferences::get_unit_height();
 
 
-	double trk_dist = this->get_length();
-	/* Store unit converted value. */
-	trk_dist = convert_distance_meters_to(trk_dist, distance_unit);
+	const Distance trk_dist = this->get_length().convert_to_unit(distance_unit);
 
 	/* Get start date. */
 	QString start_date;
@@ -4320,7 +4326,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	/* LENGTH_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(trk_dist);
+	variant = QVariant::fromValue(trk_dist.value);
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* This dialog is not a good place to edit track length. */
 	items << item;

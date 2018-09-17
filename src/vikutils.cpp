@@ -277,30 +277,26 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 			values[i] = QObject::tr("%1No. of Sats %2").arg(separator).arg(tp->nsats);
 			break;
 
-		case 'F': {
+		case 'F': { /* Distance from tp to the end 'Finish' (along the track). */
 			if (trk) {
-				/* Distance to the end 'Finish' (along the track). */
-				double distd = trk->get_length_to_trackpoint(tp);
-				double diste = trk->get_length_including_gaps();
-				double dist = diste - distd;
+				Distance begin_to_tp = trk->get_length_to_trackpoint(tp);
+				Distance total = trk->get_length_including_gaps();
+				Distance tp_to_end = total - begin_to_tp;
 
-				const DistanceUnit distance_unit = Preferences::get_unit_distance();
-				const QString distance_unit_string = get_distance_unit_string(distance_unit);
-				dist = convert_distance_meters_to(dist, distance_unit);
-				values[i] = QObject::tr("%1To End %2%3").arg(separator).arg(dist, 0, 'f', 2).arg(distance_unit_string);
+				values[i] = QObject::tr("%1To End %2")
+					.arg(separator)
+					.arg(tp_to_end.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 			}
 			break;
 		}
 
-		case 'D': {
+		case 'D': { /* Distance from start (along the track). */
 			if (trk) {
-				/* Distance from start (along the track). */
-				double distd = trk->get_length_to_trackpoint(tp);
+				const Distance begin_to_tp = trk->get_length_to_trackpoint(tp);
 
-				const DistanceUnit distance_unit = Preferences::get_unit_distance();
-				const QString distance_unit_string = get_distance_unit_string(distance_unit);
-				distd = convert_distance_meters_to(distd, distance_unit);
-				values[i] = QObject::tr("%1Distance along %2%3").arg(separator).arg(distd, 0, 'f', 2).arg(distance_unit_string);
+				values[i] = QObject::tr("%1Distance along %2")
+					.arg(separator)
+					.arg(begin_to_tp.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 			}
 			break;
 		}
