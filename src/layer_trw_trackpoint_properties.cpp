@@ -300,7 +300,8 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 
 	if (this->cur_tp) {
-		this->diff_dist->setText(Measurements::get_distance_string_short(Coord::distance(tp->coord, this->cur_tp->coord)));
+		const Distance diff = Coord::distance_2(tp->coord, this->cur_tp->coord);
+		this->diff_dist->setText(diff.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 
 		if (tp->has_timestamp && this->cur_tp->has_timestamp) {
 			this->diff_time->setText(tr("%1 s").arg((long) (tp->timestamp - this->cur_tp->timestamp)));
@@ -320,7 +321,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->course->setText(Measurements::get_course_string(tp->course));
 	this->speed->setText(Measurements::get_speed_string(tp->speed));
 	this->hdop->setText(Measurements::get_distance_string(tp->hdop, 5));
-	this->pdop->setText(Measurements::get_distance_string(tp->pdop * 1.0936133, 5));
+	this->pdop->setText(Measurements::get_distance_string(tp->pdop * 1.0936133, 5)); /* TODO_LATER: why the hardcoded value 1.09...? */
 	this->vdop->setText(Measurements::get_altitude_string(tp->vdop, 5));
 	this->sat->setText(tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode));
 

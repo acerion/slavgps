@@ -850,7 +850,8 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 			return;
 		}
 		if (graph->labels.x_value) {
-			graph->labels.x_value->setText(get_distance_string(meters_from_start, Preferences::get_unit_distance()));
+			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
+			graph->labels.x_value->setText(distance.convert_to_unit(Preferences::get_unit_distance()).to_string());
 		}
 		break;
 
@@ -888,7 +889,8 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		break;
 	case GeoCanvasDomain::Distance:
 		if (graph->labels.y_value) {
-			graph->labels.y_value->setText(Measurements::get_distance_string(y));
+			const Distance distance_uu(y, Preferences::get_unit_distance()); /* 'y' is already recalculated to user unit, so this constructor must use user unit as well. */
+			graph->labels.y_value->setText(distance_uu.to_string());
 		}
 		break;
 	case GeoCanvasDomain::Gradient:

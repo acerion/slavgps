@@ -123,6 +123,7 @@ namespace SlavGPS {
 
 	enum class SupplementaryDistanceUnit {
 		Meters,
+		Yards,
 	};
 
 
@@ -152,7 +153,6 @@ namespace SlavGPS {
 		/* Use preferred measurements unit, and recalculate value to the preferred unit. */
 		static QString get_altitude_string_recalculate(double value, int precision = SG_PRECISION_ALTITUDE);
 
-		static QString get_distance_string_short(double value, int precision = SG_PRECISION_DISTANCE);
 		static QString get_distance_string(double value, int precision = SG_PRECISION_DISTANCE);
 
 
@@ -180,6 +180,9 @@ namespace SlavGPS {
 
 		Distance convert_to_unit(DistanceUnit distance_unit) const;
 		Distance convert_to_unit(SupplementaryDistanceUnit supplementary_distance_unit) const;
+		/* Recalculate to supplementary distance unit. Choose
+		   the supplementary distance unit based on @distance_unit. */
+		Distance convert_to_supplementary_unit(DistanceUnit distance_unit) const;
 
 		/* Generate string with value and unit. Value
 		   (magnitude) of distance may be used to decide how
@@ -192,8 +195,6 @@ namespace SlavGPS {
 		   used to present the value. E.g. "0.01" km will
 		   always be presented as "0.01 km", never as "10 m". */
 		QString to_string(void) const;
-
-		QString to_string(DistanceUnit distance_unit) const;
 
 		Distance & operator+=(const Distance & rhs);
 		Distance operator+(const Distance & rhs);

@@ -228,25 +228,11 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 
 		case 'P': {
 			if (tp_prev) {
-				int diff = (int) round(Coord::distance(tp->coord, tp_prev->coord));
-
-				QString dist_units_str;
-				const DistanceUnit distance_unit = Preferences::get_unit_distance();
-				/* Expect the difference between track points to be small hence use metres or yards. */
-				switch (distance_unit) {
-				case DistanceUnit::Kilometres:
-					dist_units_str = QObject::tr("m");
-					break;
-				case DistanceUnit::Miles:
-				case DistanceUnit::NauticalMiles:
-					dist_units_str = QObject::tr("yards");
-					break;
-				default:
-					qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-					break;
-				}
-
-				values[i] = QObject::tr("%1Distance diff %2%3").arg(separator).arg(diff).arg(dist_units_str);
+				const Distance diff = Coord::distance_2(tp->coord, tp_prev->coord);
+				values[i] = QObject::tr("%1Distance diff %2")
+					.arg(separator)
+					/* Supplementary unit (meters or yards) will be chosen based on selection of main distance units. */
+					.arg(diff.convert_to_supplementary_unit(Preferences::get_unit_distance()).to_string());
 			}
 			break;
 		}
@@ -413,54 +399,6 @@ QString SlavGPS::get_speed_string(double speed, SpeedUnit speed_unit)
 	default:
 		result = "--";
 		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-QString SlavGPS::get_distance_unit_string(DistanceUnit distance_unit)
-{
-	QString result;
-
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		result = QObject::tr("km");
-	case DistanceUnit::Miles:
-		result = QObject::tr("miles");
-	case DistanceUnit::NauticalMiles:
-		result = QObject::tr("NM");
-	default:
-		result = "";
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
-	return result;
-}
-
-
-
-
-QString SlavGPS::get_distance_string(double distance, DistanceUnit distance_unit)
-{
-	QString result;
-	const int fract = 2; /* Number of digits after decimal point. */
-
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		result = QObject::tr("%1 km").arg(distance / 1000.0, 0, 'f', fract);
-		break;
-	case DistanceUnit::Miles:
-		result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES (distance), 0, 'f', fract);
-		break;
-	case DistanceUnit::NauticalMiles:
-		result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES (distance), 0, 'f', fract);
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
 		break;
 	}
 

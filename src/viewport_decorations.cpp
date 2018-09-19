@@ -104,17 +104,18 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 	const Coord right = viewport->screen_pos_to_coord(viewport->canvas.width * RELATIVE_WIDTH, viewport->canvas.height / 2);
 
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const double l2r = Coord::distance(left, right);
 	switch (distance_unit) {
 	case DistanceUnit::Kilometres:
-		base_distance = Coord::distance(left, right); /* In meters. */
+		base_distance = l2r; /* In meters. */
 		break;
 	case DistanceUnit::Miles:
 		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
-		base_distance = VIK_METERS_TO_MILES (Coord::distance(left, right)) * 10.0;
+		base_distance = VIK_METERS_TO_MILES (l2r) * 10.0;
 		break;
 	case DistanceUnit::NauticalMiles:
 		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
-		base_distance = VIK_METERS_TO_NAUTICAL_MILES (Coord::distance(left, right)) * 10.0;
+		base_distance = VIK_METERS_TO_NAUTICAL_MILES (l2r) * 10.0;
 		break;
 	default:
 		base_distance = 1; /* Keep the compiler happy. */

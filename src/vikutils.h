@@ -103,8 +103,6 @@ namespace SlavGPS {
 	double convert_speed_mps_to(double speed, SpeedUnit speed_units);
 	QString get_speed_string(double speed, SpeedUnit speed_unit);
 
-	QString get_distance_unit_string(DistanceUnit distance_unit);
-	QString get_distance_string(double distance, DistanceUnit distance_unit);
 	double convert_distance_meters_to(double distance, DistanceUnit distance_unit);
 
 	QString vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);

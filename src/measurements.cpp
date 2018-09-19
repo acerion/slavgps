@@ -128,34 +128,6 @@ QString Measurements::get_distance_string(double value, int precision)
 
 
 
-QString Measurements::get_distance_string_short(double value, int precision)
-{
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-
-	QString buffer;
-
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
-		break;
-	case DistanceUnit::Miles:
-	case DistanceUnit::NauticalMiles:
-		buffer = QObject::tr("%1 yards").arg(value * 1.0936133, 0, 'f', precision); /* Miles -> yards. TODO_REALLY: verify this calculation. */
-		break;
-	default:
-		buffer = "???";
-		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
-		break;
-	}
-
-	return buffer;
-}
-
-
-
-
-
-
 QString Measurements::get_speed_string(double value, int precision)
 {
 	if (std::isnan(value)) {
@@ -333,6 +305,30 @@ Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
 
 
 
+
+Distance Distance::convert_to_supplementary_unit(DistanceUnit target_distance_unit) const
+{
+	Distance result;
+
+	switch (target_distance_unit) {
+	case DistanceUnit::Kilometres:
+		result = this->convert_to_unit(SupplementaryDistanceUnit::Meters);
+		break;
+	case DistanceUnit::Miles:
+	case DistanceUnit::NauticalMiles:
+		result = this->convert_to_unit(SupplementaryDistanceUnit::Yards);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) target_distance_unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
 Distance::Distance(double new_value, SupplementaryDistanceUnit new_supplementary_distance_unit)
 {
 	this->supplementary_distance_unit = new_supplementary_distance_unit;
@@ -374,13 +370,32 @@ Distance Distance::convert_to_unit(SupplementaryDistanceUnit target_supplementar
 		return output;
 	}
 
-	if (this->use_supplementary_distance_unit) {
+
+	if (this->use_supplementary_distance_unit) { /* This variable is in meters or yards, to be converted into yards or meters. */
 		switch (this->supplementary_distance_unit) {
 		case SupplementaryDistanceUnit::Meters:
 			switch (target_supplementary_distance_unit) {
 			case SupplementaryDistanceUnit::Meters:
+				/* Meters to meters. */
 				output.value = this->value;
-				output.valid = true;
+				break;
+			case SupplementaryDistanceUnit::Yards:
+				/* Meters to yards. */
+				output.value = this->value * 1.0936133;
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
+				break;
+			}
+		case SupplementaryDistanceUnit::Yards:
+			switch (target_supplementary_distance_unit) {
+			case SupplementaryDistanceUnit::Meters:
+				/* Yards to meters. */
+				output.value = this->value * 0.9144;
+				break;
+			case SupplementaryDistanceUnit::Yards:
+				/* Yards to yards. */
+				output.value = this->value;
 				break;
 			default:
 				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
@@ -395,8 +410,12 @@ Distance Distance::convert_to_unit(SupplementaryDistanceUnit target_supplementar
 		case DistanceUnit::Kilometres:
 			switch (target_supplementary_distance_unit) {
 			case SupplementaryDistanceUnit::Meters:
+				/* Kilometers to meters. */
 				output.value = this->value * 1000.0;
-				output.valid = true;
+				break;
+			case SupplementaryDistanceUnit::Yards:
+				/* Kilometers to yards. */
+				output.value = this->value * 1000 * 1.0936133;
 				break;
 			default:
 				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
@@ -405,8 +424,12 @@ Distance Distance::convert_to_unit(SupplementaryDistanceUnit target_supplementar
 		case DistanceUnit::Miles:
 			switch (target_supplementary_distance_unit) {
 			case SupplementaryDistanceUnit::Meters:
+				/* Miles to meters. */
 				output.value = VIK_MILES_TO_METERS(this->value);
-				output.valid = true;
+				break;
+			case SupplementaryDistanceUnit::Yards:
+				/* Miles to yards. */
+				output.value = this->value * 1760;
 				break;
 			default:
 				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
@@ -415,8 +438,12 @@ Distance Distance::convert_to_unit(SupplementaryDistanceUnit target_supplementar
 		case DistanceUnit::NauticalMiles:
 			switch (target_supplementary_distance_unit) {
 			case SupplementaryDistanceUnit::Meters:
+				/* Nautical Miles to meters. */
 				output.value = VIK_NAUTICAL_MILES_TO_METERS(this->value);
-				output.valid = true;
+				break;
+			case SupplementaryDistanceUnit::Yards:
+				/* Nautical Miles to yards. */
+				output.value = this->value * 2025.37183;
 				break;
 			default:
 				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
@@ -428,46 +455,9 @@ Distance Distance::convert_to_unit(SupplementaryDistanceUnit target_supplementar
 		}
 	}
 
+	output.valid = !std::isnan(output.value) && output.value >= 0.0;
+
 	return output;
-}
-
-
-
-
-QString Distance::to_string(DistanceUnit target_distance_unit) const
-{
-	QString result;
-
-	if (this->use_supplementary_distance_unit) {
-		switch (this->supplementary_distance_unit) {
-		case SupplementaryDistanceUnit::Meters:
-			switch (target_distance_unit) {
-			case DistanceUnit::Kilometres:
-				result = QObject::tr("%1 km").arg(this->value / 1000.0, 0, 'f', SG_PRECISION_DISTANCE);
-				break;
-			case DistanceUnit::Miles:
-				result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(this->value), 0, 'f', SG_PRECISION_DISTANCE);
-				break;
-			case DistanceUnit::NauticalMiles:
-				result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(this->value), 0, 'f', SG_PRECISION_DISTANCE);
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
-				result = INVALID_RESULT_STRING;
-				break;
-			}
-
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = INVALID_RESULT_STRING;
-			break;
-		}
-	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled situation"; /* TODO_LATER: implement */
-		result = INVALID_RESULT_STRING;
-	}
-
-	return result;
 }
 
 
