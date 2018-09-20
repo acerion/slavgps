@@ -234,7 +234,7 @@ namespace SlavGPS {
 
 		void convert(CoordMode dest_mode);
 
-		bool get_total_elevation_gain(double * up, double * down) const;
+		bool get_total_elevation_gain(Altitude & delta_up, Altitude & down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
 		Trackpoint * get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start);
 		Trackpoint * get_closest_tp_by_percentage_time(double reldist, time_t *seconds_from_start);

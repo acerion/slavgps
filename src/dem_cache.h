@@ -62,7 +62,7 @@ namespace SlavGPS {
 
 		static DEM * get(const QString & file_path);
 
-		static int16_t get_elev_by_coord(const Coord * coord, DemInterpolation method);
+		static Altitude get_elev_by_coord(const Coord & coord, DemInterpolation method);
 	};
 
 

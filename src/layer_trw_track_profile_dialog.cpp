@@ -982,19 +982,15 @@ void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, double max_speed_in, boo
 
 		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		if (do_dem) {
-			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
-			if (elev != DEM_INVALID_ELEVATION) {
-				/* Convert into height units. */
-				if (this->geocanvas.height_unit == HeightUnit::Feet) {
-					elev = VIK_METERS_TO_FEET(elev);
-				}
-				/* No conversion needed if already in metres. */
+			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::BEST);
+			if (elev.is_valid()) {
+				const double elev_value_uu = elev.convert_to_unit(this->geocanvas.height_unit).get_value();
 
 				/* offset is in current height units. */
-				const double current_function_value = elev - this->y_min_visible;
+				const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
 				const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
-				const int y = this->bottom_edge - this->height * current_function_value / max_function_value_dem;
+				const int y = this->bottom_edge - this->height * current_function_value_uu / max_function_value_dem;
 				this->viewport->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
 			}
 		}
@@ -1092,19 +1088,16 @@ void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
 			/* This could be slow doing this each time... */
 			Trackpoint * tp = track_info.trk->get_closest_tp_by_percentage_time(((double) i / (double) this->width), NULL);
 			if (tp) {
-				int16_t elev = DEMCache::get_elev_by_coord(&tp->coord, DemInterpolation::SIMPLE);
-				if (elev != DEM_INVALID_ELEVATION) {
-					/* Convert into height units. */
-					if (Preferences::get_unit_height() == HeightUnit::Feet) {
-						elev = VIK_METERS_TO_FEET(elev);
-					}
-					/* No conversion needed if already in metres. */
+				const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::SIMPLE);
+				if (elev.is_valid()) {
+
+					const double elev_value_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
 
 					/* offset is in current height units. */
-					const double current_function_value = elev - this->y_min_visible;
+					const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
 					const int x = this->left_edge + i;
-					const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+					const int y = this->bottom_edge - this->height * current_function_value_uu / max_function_value;
 					this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 				}
 			}

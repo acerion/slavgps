@@ -709,9 +709,38 @@ const QString Altitude::value_to_string_for_file(void) const
 const QString Altitude::value_to_string(void) const
 {
 	QString result;
-	if (this->valid) {
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+	} else {
 		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
 	}
+
+	return result;
+}
+
+
+
+
+QString Altitude::to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	switch (this->unit) {
+	case HeightUnit::Metres:
+		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	case HeightUnit::Feet:
+		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
+		break;
+	}
+
 	return result;
 }
 
@@ -780,6 +809,91 @@ Altitude Altitude::convert_to_unit(HeightUnit target_height_unit) const
 
 	return output;
 }
+
+
+
+
+Altitude & Altitude::operator+=(const Altitude & rhs)
+{
+	if (!rhs.valid) {
+		return *this;
+	}
+
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return *this;
+	}
+	if (this->unit != rhs.unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return *this;
+	}
+
+	this->value += rhs.value;
+	this->valid = !std::isnan(this->value) && this->value >= 0.0;
+	return *this;
+}
+
+
+
+
+Altitude Altitude::operator+(const Altitude & rhs)
+{
+	/* TODO_LATER: make operator work for arguments with different units. */
+	Altitude result;
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+	if (this->unit != rhs.unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+
+	result.value = this->value + rhs.value;
+	result.unit = this->unit;
+	result.valid = !std::isnan(result.value) && result.value >= 0.0;
+
+	return result;
+}
+
+
+
+
+Altitude Altitude::operator-(const Altitude & rhs)
+{
+	/* TODO_LATER: make operator work for arguments with different units. */
+	Altitude result;
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+	if (this->unit != rhs.unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+
+	result.value = this->value - rhs.value;
+	result.unit = this->unit;
+	result.valid = !std::isnan(result.value) && result.value >= 0.0;
+
+	return result;
+}
+
+
+
+
+QString Angle::to_string(void) const
+{
+	return QObject::tr("%1°").arg(RAD2DEG(this->value), 0, 'f', 1);
+}
+
 
 
 

@@ -785,32 +785,23 @@ static int draw_sync(LayerTRW * trw, Viewport * viewport, const QPixmap & pixmap
 /*
  * Actually set the message in statusbar.
  */
-static void statusbar_write(const Distance & total_distance, const Distance & last_step_distance, double elev_gain, double elev_loss, double angle, LayerTRW * layer)
+static void statusbar_write(const Distance & total_distance, const Distance & last_step_distance, const Altitude & elev_gain, const Altitude & elev_loss, const Angle & angle, LayerTRW * layer)
 {
 	/* Only show elevation data when track has some elevation properties. */
 	QString str_gain_loss;
 	QString str_last_step;
 	const QString total_distance_string = total_distance.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
 
-	if ((elev_gain > 0.1) || (elev_loss > 0.1)) {
-
+	if (elev_gain.is_valid() || elev_loss.is_valid()) {
 		const HeightUnit height_unit = Preferences::get_unit_height();
-		switch (height_unit) {
-		case HeightUnit::Metres:
-			str_gain_loss = QObject::tr(" - Gain %1m:Loss %2m").arg((int) elev_gain).arg((int) elev_loss);
-			break;
-		case HeightUnit::Feet:
-			str_gain_loss = QObject::tr(" - Gain %1ft:Loss %2ft").arg((int) VIK_METERS_TO_FEET(elev_gain)).arg((int)VIK_METERS_TO_FEET(elev_loss));
-			break;
-		default:
-			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-			break;
-		}
+		str_gain_loss = QObject::tr(" - Gain %1 / Loss %2")
+			.arg(elev_gain.convert_to_unit(height_unit).to_string())
+			.arg(elev_loss.convert_to_unit(height_unit).to_string());
 	}
 
 	if (last_step_distance.is_valid()) {
 		const QString last_step_distance_string = last_step_distance.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
-		str_last_step = QObject::tr(" - Bearing %1° - Step %2").arg(RAD2DEG(angle), 4, 'f', 1).arg(last_step_distance_string); /* "%3.1f" */
+		str_last_step = QObject::tr(" - Bearing %1 - Step %2").arg(angle.to_string()).arg(last_step_distance_string);
 	}
 
 	/* Write with full gain/loss information. */
@@ -827,13 +818,14 @@ static void statusbar_write(const Distance & total_distance, const Distance & la
 void LayerTRW::update_statusbar()
 {
 	/* Get elevation data. */
-	double elev_gain, elev_loss;
-	this->get_edited_track()->get_total_elevation_gain(&elev_gain, &elev_loss);
+	Altitude elev_gain;
+	Altitude elev_loss;
+	this->get_edited_track()->get_total_elevation_gain(elev_gain, elev_loss);
 
 	/* Find out actual distance of current track. */
 	const Distance total_distance = this->get_edited_track()->get_length();
 
-	statusbar_write(total_distance, Distance(), elev_gain, elev_loss, 0, this);
+	statusbar_write(total_distance, Distance(), elev_gain, elev_loss, Angle(), this);
 }
 
 
@@ -875,23 +867,26 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 
 
 		/* Get elevation data. */
-		double elev_gain, elev_loss;
-		track->get_total_elevation_gain(&elev_gain, &elev_loss);
+		Altitude elev_gain;
+		Altitude elev_loss;
+		track->get_total_elevation_gain(elev_gain, elev_loss);
 
 
 		/* Adjust elevation data (if available) for the current pointer position. */
 		const Coord cursor_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
-		const double elev_new = (double) DEMCache::get_elev_by_coord(&cursor_coord, DemInterpolation::BEST);
+		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DemInterpolation::BEST);
 		const Trackpoint * last_tpt = track->get_tp_last();
-		if (elev_new != DEM_INVALID_ELEVATION) {
+		if (elev_new.is_valid()) {
 			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
 				/* Adjust elevation of last track point. */
-				if (elev_new > last_tpt->altitude) {
+				if (elev_new.get_value() > last_tpt->altitude) {
 					/* Going up. */
-					elev_gain += elev_new - last_tpt->altitude;
+					const double new_value = elev_gain.get_value() + (elev_new.get_value() - last_tpt->altitude);
+					elev_gain.set_value(new_value);
 				} else {
 					/* Going down. */
-					elev_loss += last_tpt->altitude - elev_new;
+					const double new_value = elev_loss.get_value() + (last_tpt->altitude - elev_new.get_value());
+					elev_loss.set_value(new_value);
 				}
 			}
 		}

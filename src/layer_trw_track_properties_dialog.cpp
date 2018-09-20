@@ -323,8 +323,12 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	this->grid->addWidget(this->w_elev_range, row, 1);
 	row++;
 
+	Altitude delta_up;
+	Altitude delta_down;
+	this->trk->get_total_elevation_gain(delta_up, delta_down);
+	altitudes.y_max = delta_up.get_value();
+	altitudes.y_min = delta_down.get_value();
 
-	this->trk->get_total_elevation_gain(&altitudes.y_max, &altitudes.y_min);
 	if (altitudes.y_min == VIK_DEFAULT_ALTITUDE) {
 		result = tr("No Data");
 	} else {

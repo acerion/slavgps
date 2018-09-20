@@ -146,6 +146,16 @@ namespace SlavGPS {
 
 
 
+	class Angle {
+	public:
+		QString to_string(void) const;
+
+		double value = 0.0;
+	};
+
+
+
+
 	class Measurements {
 	public:
 		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
@@ -238,7 +248,20 @@ namespace SlavGPS {
 		   presentation to user. */
 		const QString value_to_string(void) const;
 
+		/* Generate string containing value and unit, without
+		   unit and without magnitude-dependent conversions of
+		   value.
+
+		   Locale of the value in string is suitable for
+		   presentation to user. */
+		QString to_string(void) const;
+
 		Altitude convert_to_unit(HeightUnit height_unit) const;
+
+		Altitude & operator+=(const Altitude & rhs);
+	        Altitude operator+(const Altitude & rhs);
+		Altitude operator-(const Altitude & rhs);
+
 
 	private:
 		double value = NAN;

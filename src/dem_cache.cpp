@@ -239,24 +239,28 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 
 
 /* TODO_2_LATER: keep a (sorted) linked list of DEMs and select the best resolution one. */
-int16_t DEMCache::get_elev_by_coord(const Coord * coord, DemInterpolation method)
+Altitude DEMCache::get_elev_by_coord(const Coord & coord, DemInterpolation method)
 {
+	Altitude result;
+	result.set_value(NAN); /* Invalidate. */
+
 	if (loaded_dems.empty()) {
-		return DEM_INVALID_ELEVATION;
+		result;
 	}
 
 	CoordElev ce;
-	ce.coord = coord;
+	ce.coord = &coord;
 	ce.method = method;
 	ce.elev = DEM_INVALID_ELEVATION;
 
 	for (auto iter = loaded_dems.begin(); iter != loaded_dems.end(); ++iter) {
 		if (calculate_elev_by_coord((*iter).second, &ce)) {
-			return ce.elev;
+			result = Altitude(ce.elev, HeightUnit::Metres); /* This is DEM, so meters. */
+			break;
 		}
 	}
 
-	return DEM_INVALID_ELEVATION;
+	return result;
 }
 
 

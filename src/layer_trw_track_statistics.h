@@ -48,10 +48,12 @@ namespace SlavGPS {
 		/* Units of each item are in SI Units (as returned by
 		   the appropriate internal Track functions). */
 
-		double min_alt            = VIK_VAL_MIN_ALT;
-		double max_alt            = VIK_VAL_MAX_ALT;
-		double elev_gain          = 0.0;
-		double elev_loss          = 0.0;
+		Altitude min_alt = Altitude(VIK_VAL_MIN_ALT, HeightUnit::Metres);
+		Altitude max_alt = Altitude(VIK_VAL_MAX_ALT, HeightUnit::Metres);
+
+		Altitude elev_gain;
+		Altitude elev_loss;
+
 		Distance length;
 		Distance length_with_gaps;
 		double max_speed          = 0.0;

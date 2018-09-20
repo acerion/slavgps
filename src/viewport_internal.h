@@ -255,7 +255,7 @@ namespace SlavGPS {
 
 
 		/* Utilities. */
-		void compute_bearing(int x1, int y1, int x2, int y2, double *angle, double *baseangle);
+		void compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle);
 
 
 		void set_margin(int top, int bottom, int left, int right);

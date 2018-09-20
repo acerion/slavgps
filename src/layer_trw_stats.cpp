@@ -137,6 +137,8 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	}
 
 
+	const HeightUnit height_unit = Preferences::get_unit_height();
+
 
 	/* Date Range */
 
@@ -196,79 +198,54 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(tmp_string);
 
 
-	const HeightUnit height_unit = Preferences::get_unit_height();
-	switch (height_unit) {
-		/* Note always round off height value output since sub unit accuracy is overkill. */
-	case HeightUnit::Metres:
-
-		/* Minimum Altitude */
-		if (stats.min_alt != VIK_VAL_MIN_ALT) {
-			tmp_string = tr("%1 m").arg((int) round(stats.min_alt));
-		} else {
-			tmp_string = NONE_TEXT;
-		}
-		this->stats_table->get_value_label(TRWStatsRow::MininumAltitude)->setText(tmp_string);
+	/* TODO_LATER: always round off height value output since sub unit accuracy is overkill. */
 
 
 
-		/* Maximum Altitude */
-		if (stats.max_alt != VIK_VAL_MAX_ALT) {
-			tmp_string = tr("%1 m").arg((int) round(stats.max_alt));
-		} else {
-			tmp_string = NONE_TEXT;
-		}
-		this->stats_table->get_value_label(TRWStatsRow::MaximumAltitude)->setText(tmp_string);
-
-
-
-		/* Total Elevation Gain/Loss */
-		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain)).arg((int) round(stats.elev_loss));
-		this->stats_table->get_value_label(TRWStatsRow::TotalElevationDelta)->setText(tmp_string);
-
-
-
-		/* Avg. Elevation Gain/Loss */
-		tmp_string = tr("%1 m / %2 m").arg((int) round(stats.elev_gain/stats.count)).arg((int) round(stats.elev_loss/stats.count));
-		this->stats_table->get_value_label(TRWStatsRow::AverageElevationDelta)->setText(tmp_string);
-
-		break;
-	case HeightUnit::Feet:
-
-		/* Minimum Altitude */
-		if (stats.min_alt != VIK_VAL_MIN_ALT) {
-			tmp_string = tr("%1 feet").arg((int) round(VIK_METERS_TO_FEET(stats.min_alt)));
-		} else {
-			tmp_string = NONE_TEXT;
-		}
-		this->stats_table->get_value_label(TRWStatsRow::MininumAltitude)->setText(tmp_string);
-
-
-
-		/* Maximum Altitude */
-		if (stats.max_alt != VIK_VAL_MAX_ALT) {
-			tmp_string = tr("%1 feet").arg((int) round(VIK_METERS_TO_FEET(stats.max_alt)));
-		} else {
-			tmp_string = NONE_TEXT;
-		}
-		this->stats_table->get_value_label(TRWStatsRow::MaximumAltitude)->setText(tmp_string);
-
-
-
-		/* Total Elevation Gain/Loss */
-		tmp_string = tr("%1 feet / %2 feet").arg((int) round(VIK_METERS_TO_FEET(stats.elev_gain))).arg((int) round(VIK_METERS_TO_FEET(stats.elev_loss)));
-		this->stats_table->get_value_label(TRWStatsRow::TotalElevationDelta)->setText(tmp_string);
-
-
-
-		/* Avg. Elevation Gain/Loss */
-		tmp_string = tr("%1 feet / %2 feet").arg((int) round(VIK_METERS_TO_FEET(stats.elev_gain/stats.count))).arg((int) round(VIK_METERS_TO_FEET(stats.elev_loss/stats.count)));
-		this->stats_table->get_value_label(TRWStatsRow::AverageElevationDelta)->setText(tmp_string);
-
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		break;
+	/* Minimum Altitude */
+	if (stats.min_alt.get_value() != VIK_VAL_MIN_ALT) {
+		tmp_string = stats.min_alt.convert_to_unit(height_unit).to_string();
+	} else {
+		tmp_string = NONE_TEXT;
 	}
+	this->stats_table->get_value_label(TRWStatsRow::MininumAltitude)->setText(tmp_string);
+
+
+
+	/* Maximum Altitude */
+	if (stats.max_alt.get_value() != VIK_VAL_MAX_ALT) {
+		tmp_string = stats.max_alt.convert_to_unit(height_unit).to_string();
+	} else {
+		tmp_string = NONE_TEXT;
+	}
+	this->stats_table->get_value_label(TRWStatsRow::MaximumAltitude)->setText(tmp_string);
+
+
+
+	/* Total Elevation Gain/Loss */
+	tmp_string = tr("%1 / %2")
+		.arg(stats.elev_gain.convert_to_unit(height_unit).to_string())
+		.arg(stats.elev_loss.convert_to_unit(height_unit).to_string());
+	this->stats_table->get_value_label(TRWStatsRow::TotalElevationDelta)->setText(tmp_string);
+
+
+	/* Avg. Elevation Gain/Loss */
+	/* TODO: simplify by introducing '/' operator in Altitude class. */
+	double tmp;
+
+	tmp = stats.elev_gain.get_value();
+	Altitude avg_gain = stats.elev_gain;
+	avg_gain.set_value(tmp / stats.count);
+
+	tmp = stats.elev_loss.get_value();
+	Altitude avg_loss = stats.elev_loss;
+	avg_loss.set_value(tmp / stats.count);
+
+	tmp_string = tr("%1 / %2")
+		.arg(avg_gain.convert_to_unit(height_unit).to_string())
+		.arg(avg_loss.convert_to_unit(height_unit).to_string());
+	this->stats_table->get_value_label(TRWStatsRow::AverageElevationDelta)->setText(tmp_string);
+
 
 
 	/* Total Duration. */

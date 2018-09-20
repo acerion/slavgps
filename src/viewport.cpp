@@ -1785,17 +1785,17 @@ void Viewport::add_logo(const ViewportLogo & logo)
  * @x2: screen coord
  * @y2: screen coord
  * @angle: bearing in Radian (output)
- * @baseangle: UTM base angle in Radian (output)
+ * @base_angle: UTM base angle in Radian (output)
  *
  * Compute bearing.
  */
-void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, double * baseangle)
+void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle)
 {
 	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	double dx = (x2 - x1) / len * 10;
 	double dy = (y2 - y1) / len * 10;
 
-	*angle = atan2(dy, dx) + M_PI_2;
+	angle.value = atan2(dy, dx) + M_PI_2;
 
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 
@@ -1806,16 +1806,16 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		test = Coord(LatLon::to_utm(ll), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
 
-		*baseangle = M_PI - atan2(test_pos.x - x1, test_pos.y - y1);
-		*angle -= *baseangle;
+		base_angle.value = M_PI - atan2(test_pos.x - x1, test_pos.y - y1);
+		angle.value -= base_angle.value;
 	}
 
-	if (*angle < 0) {
-		*angle += 2 * M_PI;
+	if (angle.value < 0) {
+		angle.value += 2 * M_PI;
 	}
 
-	if (*angle > 2 * M_PI) {
-		*angle -= 2 * M_PI;
+	if (angle.value > 2 * M_PI) {
+		angle.value -= 2 * M_PI;
 	}
 }
 
@@ -1980,25 +1980,22 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	QPoint position = this->mapFromGlobal(QCursor::pos());
 
 #if 0   /* Verbose debug. */
-	qDebug() << "II: Viewport: difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
+	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
 #endif
 
-	int pos_x = position.x();
-	int pos_y = position.y();
+	const int pos_x = position.x();
+	const int pos_y = position.y();
 
 #ifdef K_FIXME_RESTORE
 	this->window->tb->move(ev);
 #endif
 
-	/* Get coordinates in viewport's coordinates mode. Get them as strings, just for presentation purposes. */
-	static Coord coord;
-	coord = this->screen_pos_to_coord(pos_x, pos_y);
-	QString first;
-	QString second;
-	coord.to_strings(first, second);
+	/* Get coordinates in viewport's coordinates mode. */
+	Coord coord = this->screen_pos_to_coord(pos_x, pos_y);
+	const QString coord_string = coord.to_string();
 
 #if 0   /* Verbose debug. */
-	qDebug() << "DD: Viewport: mouse motion: cursor pos:" << position << ", coordinates:" << first << second;
+	qDebug() << SG_PREFIX_D << "Mouse motion: cursor pos:" << position << ", coordinates:" << first << second;
 #endif
 
 	/* Change interpolate method according to scale. */
@@ -2012,23 +2009,13 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 		interpol_method = DemInterpolation::BEST;
 	}
 
-	int16_t alt;
+	const Altitude altitude = DEMCache::get_elev_by_coord(coord, interpol_method);
+
 	QString message;
-	if ((alt = DEMCache::get_elev_by_coord(&coord, interpol_method)) != DEM_INVALID_ELEVATION) {
-		const HeightUnit height_unit = Preferences::get_unit_height();
-		switch (height_unit) {
-		case HeightUnit::Metres:
-			message = QString("%1 %2 %3m").arg(first).arg(second).arg(alt);
-			break;
-		case HeightUnit::Feet:
-			message = QString("%1 %2 %3ft").arg(first).arg(second).arg((int) VIK_METERS_TO_FEET(alt));
-			break;
-		default:
-			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-			break;
-		}
+	if (altitude.is_valid()) {
+		message = QObject::tr("%1 %2").arg(coord_string).arg(altitude.convert_to_unit(Preferences::get_unit_height()).to_string());
 	} else {
-		message = QString("%1 %2").arg(first).arg(second);
+		message = coord_string;
 	}
 
 	this->window->get_statusbar()->set_message(StatusBarField::POSITION, message);

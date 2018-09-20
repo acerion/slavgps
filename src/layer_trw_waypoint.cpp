@@ -206,12 +206,12 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 		return false;
 	}
 
-	const int16_t elev = DEMCache::get_elev_by_coord(&coord, DemInterpolation::BEST);
-	if (elev == DEM_INVALID_ELEVATION) {
+	const Altitude elev = DEMCache::get_elev_by_coord(this->coord, DemInterpolation::BEST);
+	if (!elev.is_valid()) {
 		return true;
 	}
 
-	this->altitude.set_value((double) elev);
+	this->altitude = elev;
 
 	return true;
 }

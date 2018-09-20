@@ -1291,7 +1291,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 
 
 
-bool Track::get_total_elevation_gain(double * up, double * down) const
+bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down) const
 {
 	if (this->trackpoints.empty()) {
 		return false;
@@ -1300,20 +1300,22 @@ bool Track::get_total_elevation_gain(double * up, double * down) const
 	auto iter = this->trackpoints.begin();
 
 	if ((*iter)->altitude == VIK_DEFAULT_ALTITUDE) {
-		*up = VIK_DEFAULT_ALTITUDE;
-		*down = VIK_DEFAULT_ALTITUDE;
+		delta_up.set_value(VIK_DEFAULT_ALTITUDE);
+		delta_down.set_value(VIK_DEFAULT_ALTITUDE);
 	} else {
-		*up = 0;
-		*down = 0;
+		delta_up.set_value(0);
+		delta_down.set_value(0);
 
 		iter++;
 
 		for (; iter != this->trackpoints.end(); iter++) {
 			double diff = (*iter)->altitude - (*std::prev(iter))->altitude;
+
+			/* TODO_MAYBE: simplify by adding Altitude::operator+=(double rhs)? */
 			if (diff > 0) {
-				*up += diff;
+				delta_up.set_value(delta_up.get_value() + diff);
 			} else {
-				*down -= diff;
+				delta_down.set_value(delta_down.get_value() + diff);
 			}
 		}
 	}
@@ -2174,9 +2176,9 @@ unsigned long Track::apply_dem_data(bool skip_existing)
 			/* TODO_LATER: of the 4 possible choices we have for choosing an
 			   elevation (trackpoint in between samples), choose the one
 			   with the least elevation change as the last. */
-			int16_t elev = DEMCache::get_elev_by_coord(&(*iter)->coord, DemInterpolation::BEST);
-			if (elev != DEM_INVALID_ELEVATION) {
-				(*iter)->altitude = elev;
+			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::BEST);
+			if (elev.is_valid()) {
+				(*iter)->altitude = elev.get_value();
 				num++;
 			}
 		}
@@ -2199,9 +2201,9 @@ void Track::apply_dem_data_last_trackpoint()
 
 	/* As in apply_dem_data() - use 'best' interpolation method. */
 	auto last = std::prev(this->trackpoints.end());
-	int16_t elev = DEMCache::get_elev_by_coord(&(*last)->coord, DemInterpolation::BEST);
-	if (elev != DEM_INVALID_ELEVATION) {
-		(*last)->altitude = elev;
+	const Altitude elev = DEMCache::get_elev_by_coord((*last)->coord, DemInterpolation::BEST);
+	if (elev.is_valid()) {
+		(*last)->altitude = elev.get_value();
 	}
 }
 

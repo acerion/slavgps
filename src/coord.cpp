@@ -372,9 +372,45 @@ void Coord::to_strings(QString & str1, QString & str2) const
 		break;
 
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unrecognized coord mode" << (int) this->mode;
+		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << (int) this->mode;
 		break;
 	}
 
 	return;
+}
+
+
+
+
+QString Coord::to_string(void) const
+{
+	QString result;
+
+	 /* TODO_LATER: improve: get rid of intermediate strings. */
+	QString str1;
+	QString str2;
+
+	switch (this->mode) {
+	case CoordMode::UTM:
+		/* First string will contain "zone + N/S", second
+		   string will contain easting and northing of a UTM
+		   format:
+		   ZONE[N|S] EASTING NORTHING */
+
+		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.get_band_letter());
+		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
+		result = QObject::tr("%1 %2").arg(str1).arg(str2);
+		break;
+
+	case CoordMode::LATLON:
+		LatLon::to_strings(this->ll, str1, str2);
+		result = QObject::tr("%1 %2").arg(str1).arg(str2);
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << (int) this->mode;
+		break;
+	}
+
+	return result;
 }

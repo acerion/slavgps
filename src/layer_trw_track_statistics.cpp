@@ -67,19 +67,19 @@ void TrackStatistics::add_track(Track * trk)
 	double min_altitude;
 	double max_altitude;
 	if (trk->get_minmax_alt(&min_altitude, &max_altitude)) {
-		if (min_altitude < this->min_alt) {
-			this->min_alt = min_altitude;
+		if (min_altitude < this->min_alt.get_value()) {
+			this->min_alt.set_value(min_altitude);
 		}
-		if (max_altitude > this->max_alt) {
-			this->max_alt = max_altitude;
+		if (max_altitude > this->max_alt.get_value()) {
+			this->max_alt.set_value(max_altitude);
 		}
 	}
 
-	double up;
-	double down;
-	if (trk->get_total_elevation_gain(&up, &down)) {
-		this->elev_gain += up;
-		this->elev_loss += down;
+	Altitude delta_up;
+	Altitude delta_down;
+	if (trk->get_total_elevation_gain(delta_up, delta_down)) {
+		this->elev_gain += delta_up;
+		this->elev_loss += delta_down;
 	}
 
 	if (!trk->empty()

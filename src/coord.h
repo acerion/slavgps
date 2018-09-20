@@ -69,6 +69,8 @@ namespace SlavGPS {
 
 		void to_strings(QString & str1, QString & str2) const;
 
+		QString to_string(void) const;
+
 		bool operator==(const Coord & coord) const;
 		bool operator!=(const Coord & coord) const;
 		Coord & operator=(const Coord & other);

@@ -58,7 +58,7 @@ namespace SlavGPS {
 		void paint_ruler(QPainter & painter, bool paint_tooltips);
 
 		QString get_msg(void) const;
-		double get_angle(void) const { return this->angle; }
+		Angle get_angle(void) const { return this->angle; }
 		Distance get_line_distance(void) const { return this->line_distance; }
 
 	private:
@@ -74,8 +74,9 @@ namespace SlavGPS {
 		double dy = 0;
 		double c = 0;
 		double s = 0;
-		double angle = 0;
-		double base_angle = 0;
+
+		Angle angle;
+		Angle base_angle;
 
 		DistanceUnit distance_unit;
 		Distance line_distance;
