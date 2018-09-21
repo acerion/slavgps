@@ -305,50 +305,40 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	if (altitudes.y_min == VIK_DEFAULT_ALTITUDE) {
 		result = tr("No Data");
 	} else {
-		switch (height_unit) {
-		case HeightUnit::Metres:
-			result = tr("%1 m - %2 m").arg(altitudes.y_min, 0, 'f', 0).arg(altitudes.y_max, 0, 'f', 0);
-			break;
-		case HeightUnit::Feet:
-			result = tr("%1 feet - %2 feet").arg(VIK_METERS_TO_FEET(altitudes.y_min), 0, 'f', 0).arg(VIK_METERS_TO_FEET(altitudes.y_max), 0, 'f', 0);
-			break;
-		default:
-			result = tr("--");
-			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-			break;
-		}
+		Altitude alti_min = Altitude(altitudes.y_min, HeightUnit::Metres);
+		Altitude alti_max = Altitude(altitudes.y_max, HeightUnit::Metres);
+		result = tr("%1 - %2")
+			.arg(alti_min.convert_to_unit(height_unit).to_string())
+			.arg(alti_max.convert_to_unit(height_unit).to_string());
 	}
 	this->w_elev_range = ui_label_new_selectable(result, this);
 	this->grid->addWidget(new QLabel(tr("Elevation Range:")), row, 0);
 	this->grid->addWidget(this->w_elev_range, row, 1);
 	row++;
 
+
+
 	Altitude delta_up;
 	Altitude delta_down;
-	this->trk->get_total_elevation_gain(delta_up, delta_down);
-	altitudes.y_max = delta_up.get_value();
-	altitudes.y_min = delta_down.get_value();
+	if (this->trk->get_total_elevation_gain(delta_up, delta_down)) {
+		/* true == function collected some data. */
 
-	if (altitudes.y_min == VIK_DEFAULT_ALTITUDE) {
-		result = tr("No Data");
+		/* TODO_LATER: are these two lines valid? Don't we overwrite valid range values with deltas? */
+		altitudes.y_max = delta_up.get_value();
+		altitudes.y_min = delta_down.get_value();
+
+		result = tr("%1 / %2")
+			.arg(delta_up.convert_to_unit(height_unit).to_string())
+			.arg(delta_down.convert_to_unit(height_unit).to_string());
 	} else {
-		switch (height_unit) {
-		case HeightUnit::Metres:
-			result = tr("%1 m / %2 m").arg(altitudes.y_max, 0, 'f', 0).arg(altitudes.y_min, 0, 'f', 0);
-			break;
-		case HeightUnit::Feet:
-			result = tr("%1 feet / %2 feet").arg(VIK_METERS_TO_FEET(altitudes.y_max), 0, 'f', 0).arg(VIK_METERS_TO_FEET(altitudes.y_min), 0, 'f', 0);
-			break;
-		default:
-			result = tr("--");
-			qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-			break;
-		}
+		/* false == function collected no data. */
+		result = tr("No Data");
 	}
 	this->w_elev_gain = ui_label_new_selectable(result, this);
 	this->grid->addWidget(new QLabel(tr("Total Elevation Gain/Loss:")), row, 0);
 	this->grid->addWidget(this->w_elev_gain, row, 1);
 	row++;
+
 
 
 	if (!this->trk->empty()

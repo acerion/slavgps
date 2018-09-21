@@ -163,8 +163,6 @@ namespace SlavGPS {
 		/* Use preferred measurements unit, and recalculate value to the preferred unit. */
 		static QString get_altitude_string_recalculate(double value, int precision = SG_PRECISION_ALTITUDE);
 
-		static QString get_distance_string(double value, int precision = SG_PRECISION_DISTANCE);
-
 
 		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
 		static QString get_speed_string_dont_recalculate(double value, int precision = SG_PRECISION_SPEED);
@@ -195,16 +193,16 @@ namespace SlavGPS {
 		Distance convert_to_supplementary_unit(DistanceUnit distance_unit) const;
 
 		/* Generate string with value and unit. Value
-		   (magnitude) of distance may be used to decide how
-		   the string will look like. E.g. "0.1 km" may be
-		   presented as "100 m". */
-		QString to_nice_string(void) const;
-
-		/* Generate string with value and unit. Value
 		   (magnitude) of distance does not influence units
 		   used to present the value. E.g. "0.01" km will
 		   always be presented as "0.01 km", never as "10 m". */
 		QString to_string(void) const;
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance may be used to decide how
+		   the string will look like. E.g. "0.1 km" may be
+		   presented as "100 m". */
+		QString to_nice_string(void) const;
 
 		Distance & operator+=(const Distance & rhs);
 		Distance operator+(const Distance & rhs);
@@ -248,13 +246,17 @@ namespace SlavGPS {
 		   presentation to user. */
 		const QString value_to_string(void) const;
 
-		/* Generate string containing value and unit, without
-		   unit and without magnitude-dependent conversions of
-		   value.
-
-		   Locale of the value in string is suitable for
-		   presentation to user. */
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance does not influence units
+		   used to present the value. E.g. "0.01" km will
+		   always be presented as "0.01 km", never as "10 m". */
 		QString to_string(void) const;
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance may be used to decide how
+		   the string will look like. E.g. "0.1 km" may be
+		   presented as "100 m". */
+		QString to_nice_string(void) const;
 
 		Altitude convert_to_unit(HeightUnit height_unit) const;
 

@@ -1302,6 +1302,7 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 	if ((*iter)->altitude == VIK_DEFAULT_ALTITUDE) {
 		delta_up.set_value(VIK_DEFAULT_ALTITUDE);
 		delta_down.set_value(VIK_DEFAULT_ALTITUDE);
+		return false;
 	} else {
 		delta_up.set_value(0);
 		delta_down.set_value(0);
@@ -1318,9 +1319,8 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 				delta_down.set_value(delta_down.get_value() + diff);
 			}
 		}
+		return true;
 	}
-
-	return true;
 }
 
 
@@ -1925,11 +1925,8 @@ Trackpoint * Track::get_tp_prev(Trackpoint * tp) const
 
 
 
-bool Track::get_minmax_alt(double * min_alt, double * max_alt) const
+bool Track::get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const
 {
-	*min_alt = VIK_VAL_MIN_ALT;
-	*max_alt = VIK_VAL_MAX_ALT;
-
 	if (this->trackpoints.empty()) {
 		return false;
 	}
@@ -1940,15 +1937,19 @@ bool Track::get_minmax_alt(double * min_alt, double * max_alt) const
 	}
 	iter++;
 
+
+	min_alt = Altitude(VIK_VAL_MIN_ALT, HeightUnit::Metres);
+	max_alt = Altitude(VIK_VAL_MAX_ALT, HeightUnit::Metres);
+
 	double tmp_alt;
 	for (; iter != this->trackpoints.end(); iter++) {
 		tmp_alt = (*iter)->altitude;
-		if (tmp_alt > *max_alt) {
-			*max_alt = tmp_alt;
+		if (tmp_alt > max_alt.get_value()) {
+			max_alt.set_value(tmp_alt);
 		}
 
-		if (tmp_alt < *min_alt) {
-			*min_alt = tmp_alt;
+		if (tmp_alt < min_alt.get_value()) {
+			min_alt.set_value(tmp_alt);
 		}
 	}
 	return true;

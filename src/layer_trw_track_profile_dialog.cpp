@@ -126,7 +126,6 @@ static void time_label_update(QLabel * label, time_t seconds_from_start);
 static void real_time_label_update(QLabel * label, const Trackpoint * tp);
 
 static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
-static QString get_elevation_grid_label(HeightUnit height_unit, double value);
 static QString get_time_grid_label(int interval_index, int value);
 static QString get_time_grid_label_2(time_t interval_value, time_t value);
 static QString get_time_grid_label_3(time_t interval_value, time_t value);
@@ -884,7 +883,9 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 	case GeoCanvasDomain::Elevation:
 		if (this->current_tp && graph->labels.y_value) {
 			/* Recalculate value into target unit. */
-			graph->labels.y_value->setText(Measurements::get_altitude_string(this->current_tp->altitude));
+			graph->labels.y_value->setText(Altitude(this->current_tp->altitude, HeightUnit::Metres)
+						       .convert_to_unit(Preferences::get_unit_height())
+						       .to_string());
 		}
 		break;
 	case GeoCanvasDomain::Distance:
@@ -2042,29 +2043,6 @@ QString get_speed_grid_label(SpeedUnit speed_unit, double value)
 
 
 
-QString get_elevation_grid_label(HeightUnit height_unit, double value)
-{
-	QString result;
-
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		result = QObject::tr("%1 m").arg(value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	case HeightUnit::Feet:
-		result = QObject::tr("%1 ft").arg(value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	default:
-		result = QObject::tr("--");
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
 QString get_time_grid_label(int interval_index, int value)
 {
 	QString result;
@@ -2423,12 +2401,10 @@ QString ProfileGraph::get_y_grid_label(float value)
 {
 	switch (this->geocanvas.y_domain) {
 	case GeoCanvasDomain::Elevation:
-		return get_elevation_grid_label(this->geocanvas.height_unit, value);
+		return Altitude(value, this->geocanvas.height_unit).to_string(); /* TODO_LATER: here we assume that 'value' is in user units. */
 
-	case GeoCanvasDomain::Distance: {
-		const Distance distance(value, this->geocanvas.distance_unit);
-		return distance.to_string();
-	}
+	case GeoCanvasDomain::Distance:
+		return Distance(value, this->geocanvas.distance_unit).to_string();
 
 	case GeoCanvasDomain::Speed:
 		return get_speed_grid_label(this->geocanvas.speed_unit, value);

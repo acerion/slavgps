@@ -204,21 +204,9 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 			break;
 		}
 
-		case 'A': {
-			const HeightUnit height_unit = Preferences::get_unit_height();
-			switch (height_unit) {
-			case HeightUnit::Metres:
-				values[i] = QObject::tr("%1Alt %2m").arg(separator).arg((int)round(tp->altitude));
-				break;
-			case HeightUnit::Feet:
-				values[i] = QObject::tr("%1Alt %2feet").arg(separator).arg((int)round(VIK_METERS_TO_FEET(tp->altitude)));
-				break;
-			default:
-				qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-				break;
-			}
+		case 'A':
+			values[i] = QObject::tr("%1Alt %2").arg(separator).arg(Altitude(tp->altitude, HeightUnit::Metres).convert_to_unit(Preferences::get_unit_height()).to_string());
 			break;
-		}
 
 		case 'C': {
 			int heading = std::isnan(tp->course) ? 0 : (int)round(tp->course);

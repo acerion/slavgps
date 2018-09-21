@@ -1524,19 +1524,8 @@ void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track 
  */
 void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
-	QString tmp_buf1;
 	const HeightUnit height_unit = Preferences::get_unit_height();
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		tmp_buf1 = QObject::tr("Wpt: Alt %1m").arg((int) round(wp->altitude.get_value()));
-		break;
-	case HeightUnit::Feet:
-		tmp_buf1 = QObject::tr("Wpt: Alt %1ft").arg((int) round(VIK_METERS_TO_FEET(wp->altitude.get_value())));
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-		break;
-	}
+	const QString alti_string_uu = QObject::tr("Wpt: Alt %1").arg(wp->altitude.convert_to_unit(height_unit).to_string());
 
 	/* Position part.
 	   Position is put last, as this bit is most likely not to be seen if the display is not big enough,
@@ -1550,9 +1539,9 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	QString msg;
 	if (!wp->comment.isEmpty()) {
 		/* Add comment if available. */
-		msg = tr("%1 | %2 %3 | Comment: %4").arg(tmp_buf1).arg(lat).arg(lon).arg(wp->comment);
+		msg = tr("%1 | %2 %3 | Comment: %4").arg(alti_string_uu).arg(lat).arg(lon).arg(wp->comment);
 	} else {
-		msg = tr("%1 | %2 %3").arg(tmp_buf1).arg(lat).arg(lon);
+		msg = tr("%1 | %2 %3").arg(alti_string_uu).arg(lat).arg(lon);
 	}
 	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 }

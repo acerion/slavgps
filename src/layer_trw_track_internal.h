@@ -244,7 +244,7 @@ namespace SlavGPS {
 		Trackpoint * get_tp_first() const;
 		Trackpoint * get_tp_last() const;
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
-		bool get_minmax_alt(double * min_alt, double * max_alt) const;
+		bool get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const;
 
 		TrackData make_track_data_altitude_over_distance(int compressed_n_points) const;
 		TrackData make_track_data_gradient_over_distance(int compressed_n_points) const;

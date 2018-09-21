@@ -51,8 +51,8 @@ namespace SlavGPS {
 		Altitude min_alt = Altitude(VIK_VAL_MIN_ALT, HeightUnit::Metres);
 		Altitude max_alt = Altitude(VIK_VAL_MAX_ALT, HeightUnit::Metres);
 
-		Altitude elev_gain;
-		Altitude elev_loss;
+		Altitude elev_gain = Altitude(0, HeightUnit::Metres);
+		Altitude elev_loss = Altitude(0, HeightUnit::Metres);
 
 		Distance length;
 		Distance length_with_gaps;

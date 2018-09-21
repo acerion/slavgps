@@ -303,7 +303,7 @@ void TRWStatsDialog::include_invisible_toggled_cb(int state)
 	this->tracks.clear();
 
 	/* Get the latest list of items to analyse. */
-	/* TODO_REALLY: why do we need to get the latest list on checkbox toggle? */
+	/* TODO_2_LATER: why do we need to get the latest list on checkbox toggle? */
 	if (this->layer->type == LayerType::TRW) {
 		((LayerTRW *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
 	} else if (layer->type == LayerType::Aggregate) {

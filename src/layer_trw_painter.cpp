@@ -497,11 +497,13 @@ QPen LayerTRWPainter::get_track_fg_pen(Track * trk, bool do_highlight)
 
 void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 {
-	double min_alt, max_alt, alt_diff = 0;
+	Altitude min_alt;
+	Altitude max_alt;
+	double alt_diff = 0;
 	if (this->draw_track_elevation) {
 		/* Assume if it has elevation at the beginning, it has it throughout. not ness a true good assumption. */
-		if (trk->get_minmax_alt(&min_alt, &max_alt)) {
-			alt_diff = max_alt - min_alt;
+		if (trk->get_minmax_alt(min_alt, max_alt)) {
+			alt_diff = max_alt.get_value() - min_alt.get_value();
 		}
 	}
 
@@ -655,7 +657,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 				    && std::next(iter) != trk->trackpoints.end()
 				    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
 
-					this->draw_track_draw_something(prev_pos, curr_pos, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
+					this->draw_track_draw_something(prev_pos, curr_pos, main_pen, *iter, *std::next(iter), min_alt.get_value(), alt_diff);
 				}
 			}
 

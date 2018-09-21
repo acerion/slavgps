@@ -827,22 +827,6 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 	a_visible = a_visible && trw->get_tree_items_visibility();
 #endif
 
-	double alt = this->altitude;
-	switch (height_unit) {
-	case HeightUnit::Metres: /* No need to convert. */
-		break;
-	case HeightUnit::Feet:
-		alt = VIK_METERS_TO_FEET(alt);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		break;
-	}
-
-
-
-
-
 
 
 	/* LayerName */
@@ -870,7 +854,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 	/* Elevation */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue((int) round(alt));
+	variant = QVariant::fromValue(this->altitude.convert_to_unit(height_unit).to_string());
 	item->setData(variant, RoleLayerData);
 	items << item;
 

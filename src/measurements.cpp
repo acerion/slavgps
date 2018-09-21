@@ -100,34 +100,6 @@ QString Measurements::get_altitude_string_recalculate(double value, int precisio
 
 
 
-QString Measurements::get_distance_string(double value, int precision)
-{
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-
-	QString buffer;
-
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
-		break;
-	case DistanceUnit::Miles:
-		buffer = QObject::tr("%1 miles").arg(value, 0, 'f', precision);
-		break;
-	case DistanceUnit::NauticalMiles: /* TODO_REALLY: verify this case. */
-		buffer = QObject::tr("%1 NM").arg(value, 0, 'f', precision);
-		break;
-	default:
-		buffer = "???";
-		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
-		break;
-	}
-
-	return buffer;
-}
-
-
-
-
 QString Measurements::get_speed_string(double value, int precision)
 {
 	if (std::isnan(value)) {
@@ -728,6 +700,34 @@ QString Altitude::to_string(void) const
 		result = INVALID_RESULT_STRING;
 		return result;
 	}
+
+	switch (this->unit) {
+	case HeightUnit::Metres:
+		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	case HeightUnit::Feet:
+		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+QString Altitude::to_nice_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	/* TODO_LATER: implement magnitude-dependent recalculations. */
 
 	switch (this->unit) {
 	case HeightUnit::Metres:

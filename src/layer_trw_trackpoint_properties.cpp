@@ -242,6 +242,9 @@ void PropertiesDialogTP::reset_dialog_data(void)
  */
 void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route)
 {
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+
 	Trackpoint * tp = *current_tp_iter;
 
 	this->trkpt_name->setEnabled(true);
@@ -279,7 +282,6 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 
 
-	const HeightUnit height_unit = Preferences::get_unit_height();
 	switch (height_unit) {
 	case HeightUnit::Metres:
 		this->alt->setValue(tp->altitude);
@@ -320,9 +322,9 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->course->setText(Measurements::get_course_string(tp->course));
 	this->speed->setText(Measurements::get_speed_string(tp->speed));
-	this->hdop->setText(Measurements::get_distance_string(tp->hdop, 5));
-	this->pdop->setText(Measurements::get_distance_string(tp->pdop * 1.0936133, 5)); /* TODO_LATER: why the hardcoded value 1.09...? */
-	this->vdop->setText(Measurements::get_altitude_string(tp->vdop, 5));
+	this->hdop->setText(Distance(tp->hdop, SupplementaryDistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->pdop->setText(Distance(tp->pdop, SupplementaryDistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->vdop->setText(Altitude(tp->vdop, HeightUnit::Metres).convert_to_unit(height_unit).to_nice_string());
 	this->sat->setText(tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode));
 
 

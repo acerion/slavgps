@@ -2725,7 +2725,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	if (save_kmz) {
 		const LatLonBBox bbox = this->viewport->get_bbox();
-		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_REALLY: handle returned value. */
+		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_2_LATER: handle returned value. */
 	} else {
 		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
 		if (!pixmap.save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
