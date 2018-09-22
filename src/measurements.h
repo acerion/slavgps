@@ -149,6 +149,7 @@ namespace SlavGPS {
 	class Angle {
 	public:
 		QString to_string(void) const;
+		static QString get_course_string(double value, int precision = SG_PRECISION_COURSE);
 
 		double value = 0.0;
 	};
@@ -158,20 +159,6 @@ namespace SlavGPS {
 
 	class Measurements {
 	public:
-		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
-		static QString get_altitude_string(double value, int precision = SG_PRECISION_ALTITUDE);
-		/* Use preferred measurements unit, and recalculate value to the preferred unit. */
-		static QString get_altitude_string_recalculate(double value, int precision = SG_PRECISION_ALTITUDE);
-
-
-		/* Use preferred measurements unit, but don't recalculate value to the preferred unit. */
-		static QString get_speed_string_dont_recalculate(double value, int precision = SG_PRECISION_SPEED);
-		/* Use preferred measurements unit, and recalculate value to the preferred unit. */
-		static QString get_speed_string(double value, int precision = SG_PRECISION_SPEED);
-
-
-		static QString get_course_string(double value, int precision = SG_PRECISION_COURSE);
-
 		static QString get_file_size_string(size_t file_size);
 
 		static QString get_duration_string(time_t duration);
@@ -207,6 +194,12 @@ namespace SlavGPS {
 		Distance & operator+=(const Distance & rhs);
 		Distance operator+(const Distance & rhs);
 		Distance operator-(const Distance & rhs);
+
+		/* Return "kilometers" or "miles" string.
+		   This is a full string, not "km" or "mi". */
+		static QString get_unit_full_string(DistanceUnit distance_unit);
+
+		static double convert_meters_to(double distance, DistanceUnit distance_unit);
 
 		bool is_valid(void) const;
 
@@ -264,11 +257,85 @@ namespace SlavGPS {
 	        Altitude operator+(const Altitude & rhs);
 		Altitude operator-(const Altitude & rhs);
 
+		/* Return "meters" or "feet" string.
+		   This is a full string, not "m" or "ft". */
+		static QString get_unit_full_string(HeightUnit height_unit);
 
 	private:
 		double value = NAN;
 		bool valid = false;
 		HeightUnit unit;
+	};
+
+
+
+
+	class Speed {
+	public:
+		Speed() {};
+		Speed(double value, SpeedUnit speed_unit);
+
+		void set_value(double value); /* Set value, don't change unit. */
+		double get_value(void) const;
+
+		bool is_valid(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   saving the value in gpx or vik file. */
+		//const QString value_to_string_for_file(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   presentation to user. */
+		const QString value_to_string(void) const;
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance does not influence units
+		   used to present the value. E.g. "0.01" km/h will
+		   always be presented as "0.01 km/h", never as "10
+		   m/h". */
+		QString to_string(void) const;
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance may be used to decide how
+		   the string will look like. E.g. "0.1 km/h" may be
+		   presented as "100 m/h". */
+		//QString to_nice_string(void) const;
+
+		Speed convert_to_unit(SpeedUnit speed_unit) const;
+
+		Speed & operator+=(const Speed & rhs);
+	        Speed operator+(const Speed & rhs);
+		Speed operator-(const Speed & rhs);
+
+		/* Return "meters" or "feet" string.
+		   This is a full string, not "m" or "ft". */
+		//static QString get_unit_full_string(SpeedUnit speed_unit);
+
+		/* Get string representing speed unit in abbreviated
+		   form, e.g. "km/h". */
+		static QString get_unit_string(SpeedUnit speed_unit);
+		static double convert_mps_to(double speed_value, SpeedUnit speed_units);
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance does not influence units
+		   used to present the value. E.g. "0.01" km/h will
+		   always be presented as "0.01 km/h", never as "10
+		   m/h".
+
+		   Unit is taken from global preferences. There is no
+		   conversion of value from one unit to another. */
+		static QString to_string(double value, int precision = SG_PRECISION_SPEED);
+
+	private:
+		double value = NAN;
+		bool valid = false;
+		SpeedUnit unit;
 	};
 
 

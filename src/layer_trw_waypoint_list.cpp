@@ -452,22 +452,12 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	const HeightUnit height_unit = Preferences::get_unit_height();
 
 	this->model = new QStandardItemModel();
-	this->model->setHorizontalHeaderItem(WaypointListModel::LayerName, new QStandardItem("Layer"));
-	this->model->setHorizontalHeaderItem(WaypointListModel::Waypoint, new QStandardItem("Name"));
-	this->model->setHorizontalHeaderItem(WaypointListModel::Date, new QStandardItem("Date"));
-	this->model->setHorizontalHeaderItem(WaypointListModel::Visibility, new QStandardItem("Visibility"));
-	this->model->setHorizontalHeaderItem(WaypointListModel::Comment, new QStandardItem("Comment"));
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		this->model->setHorizontalHeaderItem(WaypointListModel::Elevation, new QStandardItem("Height\n(Metres)"));
-		break;
-	case HeightUnit::Feet:
-		this->model->setHorizontalHeaderItem(WaypointListModel::Elevation, new QStandardItem("Height\n(Feet)"));
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-		break;
-	}
+	this->model->setHorizontalHeaderItem(WaypointListModel::LayerName, new QStandardItem(tr("Layer")));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Waypoint, new QStandardItem(tr("Name")));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Date, new QStandardItem(tr("Date")));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Visibility, new QStandardItem(tr("Visibility")));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Comment, new QStandardItem(tr("Comment")));
+	this->model->setHorizontalHeaderItem(WaypointListModel::Elevation, new QStandardItem(tr("Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit))));
 	this->model->setHorizontalHeaderItem(WaypointListModel::Icon, new QStandardItem("Symbol"));
 
 

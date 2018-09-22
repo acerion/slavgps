@@ -19,14 +19,23 @@
  */
 
 
+
+
 #include <cassert>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "variant.h"
 #include "vikutils.h"
 #include "measurements.h"
 #include "clipboard.h"
+#include "globals.h"
 
 
 
@@ -36,6 +45,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Variant"
 #define PREFIX ": Variant:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -84,8 +94,10 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		break;
 	case SGVariantType::Latitude:
 	case SGVariantType::Longitude:
+		this->val_lat_lon = strtod(str, NULL);
+		break;
 	case SGVariantType::Altitude:
-		this->val_lat_lon_alt = strtod(str, NULL);
+		this->altitude = Altitude(strtod(str, NULL), HeightUnit::Metres);
 		break;
 	default:
 		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) this->type_id;
@@ -127,8 +139,10 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		break;
 	case SGVariantType::Latitude:
 	case SGVariantType::Longitude:
+		this->val_lat_lon = str.toDouble();
+		break;
 	case SGVariantType::Altitude:
-		this->val_lat_lon_alt = str.toDouble();
+		this->altitude = Altitude(str.toDouble(), HeightUnit::Metres);
 		break;
 	default:
 		qDebug() << "EE" PREFIX "unsupported variant type id" << (int) this->type_id;
@@ -154,8 +168,10 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 		break;
 	case SGVariantType::Latitude:
 	case SGVariantType::Longitude:
+		this->val_lat_lon = d;
+		break;
 	case SGVariantType::Altitude:
-		this->val_lat_lon_alt = d;
+		this->altitude = Altitude(d, HeightUnit::Metres);
 		break;
 	default:
 		assert (0);
@@ -246,6 +262,16 @@ SGVariant::SGVariant(const QStringList & string_list, SGVariantType type_id_)
 
 
 
+SGVariant::SGVariant(const Altitude & a, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Altitude);
+	this->type_id = type_id_;
+	this->altitude = a;
+}
+
+
+
+
 SGVariant::SGVariant(time_t timestamp, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Timestamp);
@@ -323,10 +349,10 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 		break;
 	case SGVariantType::Altitude:
 		/* This is for debug, so we don't apply any format specifiers. */
-		debug << value.get_altitude();
+		debug << value.get_altitude().to_string();
 		break;
 	default:
-		debug << "EE" PREFIX << "unsupported variant type id" << (int) value.type_id;
+		debug << SG_PREFIX_E << "Unsupported variant type id" << (int) value.type_id;
 		break;
 	};
 
@@ -429,9 +455,10 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 		break;
 	case SGVariantType::Latitude:
 	case SGVariantType::Longitude:
+		this->val_lat_lon = other.val_lat_lon;
+		break;
 	case SGVariantType::Altitude:
-		/* This is for debug, so we don't apply any format specifiers. */
-		this->val_lat_lon_alt = other.val_lat_lon_alt;
+		this->altitude = other.altitude;
 		break;
 	default:
 		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) other.type_id;
@@ -456,7 +483,7 @@ double SGVariant::get_latitude() const
 {
 	assert (this->type_id == SGVariantType::Latitude);
 
-	return this->val_lat_lon_alt;
+	return this->val_lat_lon;
 }
 
 
@@ -465,16 +492,16 @@ double SGVariant::get_latitude() const
 double SGVariant::get_longitude() const
 {
 	assert (this->type_id == SGVariantType::Longitude);
-	return this->val_lat_lon_alt;
+	return this->val_lat_lon;
 }
 
 
 
 
-double SGVariant::get_altitude() const
+Altitude SGVariant::get_altitude(void) const
 {
 	assert (this->type_id == SGVariantType::Altitude);
-	return this->val_lat_lon_alt;
+	return this->altitude;
 }
 
 
@@ -522,7 +549,7 @@ QString SGVariant::to_string() const
 		return c_locale.toString(this->get_longitude(), 'f', SG_PRECISION_LONGITUDE);
 
 	case SGVariantType::Altitude:
-		return c_locale.toString(this->get_altitude(), 'f', SG_PRECISION_ALTITUDE);
+		return this->altitude.to_string();
 
 	default:
 		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) this->type_id;

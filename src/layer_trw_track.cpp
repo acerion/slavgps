@@ -966,14 +966,16 @@ double Track::get_duration() const
 
 
 
-double Track::get_average_speed() const
+Speed Track::get_average_speed(void) const
 {
+	Speed result(NAN, SpeedUnit::MetresPerSecond); /* Invalid by default. */
+
 	if (this->trackpoints.empty()) {
-		return 0.0;
+		return result;
 	}
 
 	double len = 0.0;
-	uint32_t time = 0;
+	time_t time = 0;
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 
@@ -986,7 +988,11 @@ double Track::get_average_speed() const
 		}
 	}
 
-	return (time == 0) ? 0 : std::abs(len/time);
+	if (time > 0) {
+		result.set_value(std::abs(len/time));
+	}
+
+	return result;
 }
 
 
@@ -1002,14 +1008,16 @@ double Track::get_average_speed() const
  *
  * Suggest to use 60 seconds as the stop length (as the default used in the TrackWaypoint draw stops factor).
  */
-double Track::get_average_speed_moving(int track_min_stop_length_seconds) const
+Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 {
+	Speed result(NAN, SpeedUnit::MetresPerSecond); /* Invalid by default. */
+
 	if (this->trackpoints.empty()) {
-		return 0.0;
+		return result;
 	}
 
 	double len = 0.0;
-	uint32_t time = 0;
+	time_t time = 0;
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->has_timestamp
@@ -1024,27 +1032,32 @@ double Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 		}
 	}
 
-	return (time == 0) ? 0 : std::abs(len / time);
+	if (time > 0) {
+		result.set_value(std::abs(len / time));
+	}
+
+	return result;
 }
 
 
 
 
-double Track::get_max_speed() const
+Speed Track::get_max_speed(void) const
 {
+	Speed result(NAN, SpeedUnit::MetresPerSecond); /* Initially invalid. */
+
 	if (this->trackpoints.empty()) {
-		return 0.0;
+		return result;
 	}
 
 	double maxspeed = 0.0;
-	double speed = 0.0;
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->has_timestamp
 		    && (*std::prev(iter))->has_timestamp
 		    && (!(*iter)->newsegment)) {
 
-			speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
+			const double speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
 				/ std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
 
 			if (speed > maxspeed) {
@@ -1053,7 +1066,9 @@ double Track::get_max_speed() const
 		}
 	}
 
-	return maxspeed;
+	result.set_value(maxspeed); /* Set the value even if detected max speed is zero. */
+
+	return result;
 }
 
 
@@ -3460,12 +3475,15 @@ void Track::convert_track_route_cb(void)
 {
 	/* Converting a track to a route can be a bit more complicated,
 	   so give a chance to change our minds: */
-	if (this->type_id == "sg.trw.track"
-	    && ((this->get_segment_count() > 1)
-		|| (this->get_average_speed() > 0.0))) {
+	if (this->type_id == "sg.trw.track") {
 
-		if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), g_tree->tree_get_main_window())) {
-			return;
+		const Speed avg = this->get_average_speed();
+		if (this->get_segment_count() > 1
+		    || (avg.is_valid() && avg.get_value() > 0.0)) {
+
+			if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), g_tree->tree_get_main_window())) {
+				return;
+			}
 		}
 	}
 
@@ -4227,8 +4245,8 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 
 #if 0
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	const SpeedUnit speed_units = Preferences::get_unit_speed();
-	const HeightUnit height_unit = Preferences::get_unit_height();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const HeightUnit height_unit = ;
 
 
 	const Distance trk_dist = this->get_length().convert_to_unit(distance_unit);
@@ -4258,29 +4276,15 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 		trk_duration = (int) round(labs(t2 - t1) / 60.0);
 	}
 
-	double av_speed = this->get_average_speed();
-	av_speed = convert_speed_mps_to(av_speed, speed_units);
 
-	double max_speed = this->get_max_speed();
-	max_speed = convert_speed_mps_to(max_speed, speed_units);
 
-	double max_alt = 0.0;
-	TrackData altitudes = this->make_track_data_altitude_over_distance(500);
+	Altitude max_alt(0.0, HeightUnit::Metres);
+	TrackData altitudes = this->make_track_data_altitude_over_distance(500); /* TODO_LATER: magic number. */
 	if (altitudes.valid) {
 		altitudes.calculate_min_max();
-		max_alt = altitudes.y_max;
+		max_alt.set_value(altitudes.y_max);
 	}
 
-	switch (height_unit) {
-	case HeightUnit::Metres: /* No need to convert. */
-		break;
-	case HeightUnit::Feet:
-		max_alt = VIK_METERS_TO_FEET(max_alt);
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-		break;
-	}
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -4345,7 +4349,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	/* AVERAGE_SPEED_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(av_speed);
+	variant = QVariant::fromValue(this->get_average_speed().convert_to_unit(speed_unit).to_string());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* 'Average speed' is not an editable parameter. */
 	items << item;
@@ -4353,7 +4357,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	/* MAXIMUM_SPEED_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(max_speed);
+	variant = QVariant::fromValue(this->get_max_speed().convert_to_unit(speed_unit).to_string());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* 'Maximum speed' is not an editable parameter. */
 	items << item;
@@ -4361,7 +4365,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	/* MAXIMUM_HEIGHT_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(max_alt);
+	variant = QVariant::fromValue(max_alt.convert_to_unit(Preferences::get_unit_height()).to_string());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* 'Maximum height' is not an editable parameter. */
 	items << item;

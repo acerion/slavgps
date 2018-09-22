@@ -135,8 +135,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 
 	std::vector<QString> values(FMT_MAX_NUMBER_CODES);
 
-	SpeedUnit speed_units = Preferences::get_unit_speed();
-	const QString speed_units_str = get_speed_unit_string(speed_units);
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
 	const QString separator = " | ";
 
@@ -150,69 +149,65 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 			break;
 
 		case 'S': {
-			double speed = 0.0;
-			char * speedtype = NULL;
+			double speed_value = 0.0;
+			QString speed_type;
+
 			if (std::isnan(tp->speed) && tp_prev) {
 				if (tp->has_timestamp && tp_prev->has_timestamp) {
 					if (tp->timestamp != tp_prev->timestamp) {
 
 						/* Work out from previous trackpoint location and time difference. */
-						speed = Coord::distance(tp->coord, tp_prev->coord) / std::abs(tp->timestamp - tp_prev->timestamp);
-						speedtype = strdup("*"); // Interpolated
+						speed_value = Coord::distance(tp->coord, tp_prev->coord) / std::abs(tp->timestamp - tp_prev->timestamp);
+						speed_type = "*"; // Interpolated
 					} else {
-						speedtype = strdup("**");
+						speed_type = "**";
 					}
 				} else {
-					speedtype = strdup("**");
+					speed_type = "**";
 				}
 			} else {
-				speed = tp->speed;
-				speedtype = strdup("");
+				speed_value = tp->speed;
+				speed_type = "";
 			}
-			speed = convert_speed_mps_to(speed, speed_units);
+			const Speed speed(speed_value, SpeedUnit::MetresPerSecond);
 
-			values[i] = QObject::tr("%1Speed%2 %3%4").arg(separator).arg(speedtype).arg(speed, 0, 'f', 1).arg(speed_units_str);
-			free(speedtype);
+			values[i] = QObject::tr("%1Speed%2 %3").arg(separator).arg(speed_type).arg(speed.convert_to_unit(speed_unit).to_string());
 			break;
 		}
 
 		case 'B': {
-			double speed = 0.0;
-			char * speedtype = NULL;
+			double speed_value = 0.0;
+			QString speed_type;
 			if (std::isnan(climb) && tp_prev) {
 				if (tp->has_timestamp && tp_prev->has_timestamp) {
 					if (tp->timestamp != tp_prev->timestamp) {
 						/* Work out from previous trackpoint altitudes and time difference.
 						   'speed' can be negative if going downhill. */
-						speed = (tp->altitude - tp_prev->altitude) / std::abs(tp->timestamp - tp_prev->timestamp);
-						speedtype = strdup("*"); // Interpolated
+						speed_value = (tp->altitude - tp_prev->altitude) / std::abs(tp->timestamp - tp_prev->timestamp);
+						speed_type = "*"; // Interpolated
 					} else {
-						speedtype = strdup("**"); // Unavailable
+						speed_type = "**"; // Unavailable
 					}
 				} else {
-					speedtype = strdup("**");
+					speed_type = "**";
 				}
 			} else {
-				speed = climb;
-				speedtype = strdup("");
+				speed_value = climb;
+				speed_type = "";
 			}
-			speed = convert_speed_mps_to(speed, speed_units);
+			const Speed speed(speed_value, SpeedUnit::MetresPerSecond);
 
-			/* Go for 2dp as expect low values for vertical speeds. */
-			values[i] = QObject::tr("%1Climb%2 %3%4").arg(separator).arg(speedtype).arg(speed, 0, 'f', 2).arg(speed_units_str);
-			free(speedtype);
+			values[i] = QObject::tr("%1Climb%2 %3").arg(separator).arg(speed.convert_to_unit(speed_unit).to_string());
 			break;
 		}
 
 		case 'A':
-			values[i] = QObject::tr("%1Alt %2").arg(separator).arg(Altitude(tp->altitude, HeightUnit::Metres).convert_to_unit(Preferences::get_unit_height()).to_string());
+			values[i] = QObject::tr("%1Alti %2").arg(separator).arg(Altitude(tp->altitude, HeightUnit::Metres).convert_to_unit(Preferences::get_unit_height()).to_string());
 			break;
 
-		case 'C': {
-			int heading = std::isnan(tp->course) ? 0 : (int)round(tp->course);
-			values[i] = QObject::tr("%1Course %2%3").arg(separator).arg(heading, 3, 10, (QChar) '0').arg(DEGREE_SYMBOL);
+		case 'C':
+			values[i] = QObject::tr("%1Course %2").arg(separator).arg(Angle::get_course_string(tp->course));
 			break;
-		}
 
 		case 'P': {
 			if (tp_prev) {
@@ -307,108 +302,6 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 
 	msg = values[0] + values[1] + values[2] + values[3] + values[4] + values[5] + values[6] + values[7] + values[8];
 	return msg;
-}
-
-
-
-
-double SlavGPS::convert_speed_mps_to(double speed, SpeedUnit speed_unit)
-{
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		speed = VIK_MPS_TO_KPH(speed);
-		break;
-	case SpeedUnit::MilesPerHour:
-		speed = VIK_MPS_TO_MPH(speed);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		/* Already in m/s so nothing to do. */
-		break;
-	case SpeedUnit::Knots:
-		speed = VIK_MPS_TO_KNOTS(speed);
-		break;
-	default:
-		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return speed;
-}
-
-
-
-
-QString SlavGPS::get_speed_unit_string(SpeedUnit speed_unit)
-{
-	QString result;
-
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("km/h");
-		break;
-	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("mph");
-		break;
-	case SpeedUnit::MetresPerSecond:
-		result = QObject::tr("m/s");
-		break;
-	case SpeedUnit::Knots:
-		result = QObject::tr("knots");
-		break;
-	default:
-		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-QString SlavGPS::get_speed_string(double speed, SpeedUnit speed_unit)
-{
-	QString result;
-	const int fract = 2; /* Number of digits after decimal point. */
-
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (speed), 0, 'f', fract);
-		break;
-	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (speed), 0, 'f', fract);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		result = QObject::tr("%1 m/s").arg(speed, 0, 'f', fract);
-		break;
-	case SpeedUnit::Knots:
-		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (speed), 0, 'f', fract);
-		break;
-	default:
-		result = "--";
-		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-double SlavGPS::convert_distance_meters_to(double distance, DistanceUnit distance_unit)
-{
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		return distance / 1000.0;
-	case DistanceUnit::Miles:
-		return VIK_METERS_TO_MILES(distance);
-	case DistanceUnit::NauticalMiles:
-		return VIK_METERS_TO_NAUTICAL_MILES(distance);
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		return distance;
-	}
 }
 
 

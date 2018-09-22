@@ -543,8 +543,9 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	SpeedColoring speed_coloring;
 	/* If necessary calculate these values - which is done only once per track redraw. */
 	if (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed) {
-		/* The percentage factor away from the average speed determines transistions between the levels. */
-		const double average_speed = trk->get_average_speed_moving(this->track_min_stop_length);
+		/* The percentage factor away from the average speed determines transistions between the levels.
+		   TODO_LATER: what if average speed is invalid? */
+		const double average_speed = trk->get_average_speed_moving(this->track_min_stop_length).get_value();
 		const double low_speed = average_speed - (average_speed * (this->track_draw_speed_factor/100.0));
 		const double high_speed = average_speed + (average_speed * (this->track_draw_speed_factor/100.0));
 		speed_coloring.set(low_speed, average_speed, high_speed);

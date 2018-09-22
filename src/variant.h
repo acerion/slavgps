@@ -33,6 +33,11 @@
 
 
 
+#include "measurements.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -100,6 +105,7 @@ namespace SlavGPS {
 		SGVariant(int r, int g, int b, int a, SGVariantType type_id = SGVariantType::Color);
 		SGVariant(const QColor & color,       SGVariantType type_id = SGVariantType::Color);
 		SGVariant(const QStringList & sl,     SGVariantType type_id = SGVariantType::StringList);
+		SGVariant(const Altitude & a,         SGVariantType type_id = SGVariantType::Altitude);
 		SGVariant(time_t timestamp,           SGVariantType type_id); /* Just to be sure that a proper constructor has been selected, you have provide value of second arg explicitly. */
 		/* Notice that there is no separate one-argument constructor for Timestamp data type.
 		   It would be too similar to SGVariant(uint32_t u). Use SGVariant(time_t, SGVariantType) instead. */
@@ -109,7 +115,7 @@ namespace SlavGPS {
 		time_t get_timestamp() const;
 		double get_latitude() const;
 		double get_longitude() const;
-		double get_altitude() const;
+		Altitude get_altitude(void) const;
 
 		QString to_string() const;
 
@@ -127,7 +133,8 @@ namespace SlavGPS {
 		QStringList val_string_list;
 	private:
 		time_t val_timestamp;    /* SGVariantType::TIMESTAMP */
-		double val_lat_lon_alt;  /* SGVariantType::LATITUDE/LONGITUDE/ALTITUDE */
+		double val_lat_lon;  /* SGVariantType::LATITUDE/LONGITUDE */
+		Altitude altitude;
 	};
 
 

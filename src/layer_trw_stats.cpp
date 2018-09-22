@@ -123,6 +123,7 @@ QLabel * StatsTable::get_value_label(TRWStatsRow row)
 void TRWStatsDialog::display_stats(TrackStatistics & stats)
 {
 	QString tmp_string;
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
 
 	/* Number of Tracks */
@@ -179,23 +180,13 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Max Speed */
-	SpeedUnit speed_unit = Preferences::get_unit_speed();
-	if (stats.max_speed > 0) {
-		tmp_string = get_speed_string(stats.max_speed, speed_unit);
-	} else {
-		tmp_string = NONE_TEXT;
-	}
-	this->stats_table->get_value_label(TRWStatsRow::MaximumSpeed)->setText(tmp_string);
+	this->stats_table->get_value_label(TRWStatsRow::MaximumSpeed)->setText(stats.max_speed.convert_to_unit(speed_unit).to_string());
 
 
 
 	/* Avg. Speed */
-	if (stats.duration > 0) {
-		tmp_string = get_speed_string(stats.length.value / stats.duration, speed_unit);
-	} else {
-		tmp_string = NONE_TEXT;
-	}
-	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(tmp_string);
+	const Speed avg_speed = Speed(stats.duration > 0 ? stats.length.value / stats.duration : NAN, SpeedUnit::MetresPerSecond); /* Constructing speed value from values in basic units, therefore MetersPerSecond. */
+	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(avg_speed.convert_to_unit(speed_unit).to_string());
 
 
 	/* TODO_LATER: always round off height value output since sub unit accuracy is overkill. */

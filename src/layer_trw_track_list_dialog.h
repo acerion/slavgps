@@ -76,7 +76,7 @@ namespace SlavGPS {
 		void accept_cb(void);
 
 	private:
-		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units);
+		void add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_unit, HeightUnit height_unit);
 		void contextMenuEvent(QContextMenuEvent * event);
 
 		QWidget * parent = NULL;

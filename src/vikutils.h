@@ -43,7 +43,6 @@
 
 #include "map_source.h"
 #include "coord.h"
-#include "measurements.h"
 
 
 
@@ -98,12 +97,6 @@ namespace SlavGPS {
 
 
 
-
-	QString get_speed_unit_string(SpeedUnit speed_unit);
-	double convert_speed_mps_to(double speed, SpeedUnit speed_units);
-	QString get_speed_string(double speed, SpeedUnit speed_unit);
-
-	double convert_distance_meters_to(double distance, DistanceUnit distance_unit);
 
 	QString vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb);
 

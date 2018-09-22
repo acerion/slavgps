@@ -244,6 +244,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 {
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
 	Trackpoint * tp = *current_tp_iter;
 
@@ -310,8 +311,8 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 			if (tp->timestamp == this->cur_tp->timestamp) {
 				this->diff_speed->setText("--");
 			} else {
-				const double tmp_speed = Coord::distance(tp->coord, this->cur_tp->coord) / (std::abs(tp->timestamp - this->cur_tp->timestamp));
-				this->diff_speed->setText(Measurements::get_speed_string(tmp_speed));
+				const Speed tmp_speed(Coord::distance(tp->coord, this->cur_tp->coord) / (std::abs(tp->timestamp - this->cur_tp->timestamp)), SpeedUnit::MetresPerSecond);
+				this->diff_speed->setText(tmp_speed.to_string());
 			}
 		} else {
 			this->diff_time->setText("");
@@ -320,8 +321,8 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	}
 
 
-	this->course->setText(Measurements::get_course_string(tp->course));
-	this->speed->setText(Measurements::get_speed_string(tp->speed));
+	this->course->setText(Angle::get_course_string(tp->course));
+	this->speed->setText(Speed(tp->speed, SpeedUnit::MetresPerSecond).convert_to_unit(speed_unit).to_string());
 	this->hdop->setText(Distance(tp->hdop, SupplementaryDistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
 	this->pdop->setText(Distance(tp->pdop, SupplementaryDistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
 	this->vdop->setText(Altitude(tp->vdop, HeightUnit::Metres).convert_to_unit(height_unit).to_nice_string());

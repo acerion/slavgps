@@ -236,25 +236,15 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	row++;
 
 
-	SpeedUnit speed_units = Preferences::get_unit_speed();
-	double tmp_speed = this->trk->get_max_speed();
-	if (tmp_speed == 0) {
-		tmp_string = QObject::tr("No Data");
-	} else {
-		tmp_string = get_speed_string(tmp_speed, speed_units);
-	}
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	tmp_string = this->trk->get_max_speed().convert_to_unit(speed_unit).to_string();
 	this->w_max_speed = ui_label_new_selectable(tmp_string, this);
 	this->grid->addWidget(new QLabel(QObject::tr("Max Speed:")), row, 0);
 	this->grid->addWidget(this->w_max_speed, row, 1);
 	row++;
 
 
-	tmp_speed = this->trk->get_average_speed();
-	if (tmp_speed == 0) {
-		tmp_string = tr("No Data");
-	} else {
-		tmp_string = get_speed_string(tmp_speed, speed_units);
-	}
+	tmp_string = this->trk->get_average_speed().convert_to_unit(speed_unit).to_string();
 	this->w_avg_speed = ui_label_new_selectable(tmp_string, this);
 	this->grid->addWidget(new QLabel(tr("Average Speed:")), row, 0);
 	this->grid->addWidget(this->w_avg_speed, row, 1);
@@ -265,12 +255,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	   This is the TrackWaypoint draw stops default value 'LayerTRWPainter::track_min_stop_length'.
 	   However this variable is not directly accessible - and I don't expect it's often changed from the default
 	   so ATM just put in the number. */
-	tmp_speed = this->trk->get_average_speed_moving(60);
-	if (tmp_speed == 0) {
-		tmp_string = tr("No Data");
-	} else {
-		tmp_string = get_speed_string(tmp_speed, speed_units);
-	}
+	tmp_string = this->trk->get_average_speed_moving(60).convert_to_unit(speed_unit).to_string();
 	this->w_mvg_speed = ui_label_new_selectable(tmp_string, this);
 	this->grid->addWidget(new QLabel(tr("Moving Average Speed:")), row, 0);
 	this->grid->addWidget(this->w_mvg_speed, row, 1);

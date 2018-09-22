@@ -127,7 +127,7 @@ namespace SlavGPS {
 	class TrackInfo {
 	public:
 		Track * trk = NULL;
-		double max_speed = 0.0;
+		Speed max_speed = Speed(0.0, SpeedUnit::MetresPerSecond);
 		double track_length_including_gaps = 0.0;
 		time_t duration = 0;
 	};
@@ -257,8 +257,8 @@ namespace SlavGPS {
 
 		void draw_function_values(void);
 
-		void draw_dem_alt_speed_dist(Track * trk, double max_speed_in, bool do_dem, bool do_speed);
-		void draw_speed_dist(Track * trk, double max_speed_in, bool do_speed);
+		void draw_dem_alt_speed_dist(Track * trk, const Speed & max_speed_in, bool do_dem, bool do_speed);
+		void draw_speed_dist(Track * trk, const Speed & max_speed_in, bool do_speed);
 
 		void draw_grid_horizontal_line(int pos_y, const QString & label);
 		void draw_grid_vertical_line(int pos_x, const QString & label);

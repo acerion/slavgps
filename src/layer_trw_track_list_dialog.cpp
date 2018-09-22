@@ -291,7 +291,7 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
  * Foreach entry we copy the various individual track properties into the tree store
  * formatting & converting the internal values into something for display.
  */
-void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_unit)
+void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit speed_unit, HeightUnit height_unit)
 {
 	const Distance trk_dist = trk->get_length().convert_to_unit(distance_unit);
 
@@ -318,29 +318,14 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 		trk_duration = (int) round(labs(t2 - t1) / 60.0);
 	}
 
-	double av_speed = trk->get_average_speed();
-	av_speed = convert_speed_mps_to(av_speed, speed_units);
 
-	double max_speed = trk->get_max_speed();
-	max_speed = convert_speed_mps_to(max_speed, speed_units);
-
-	double max_alt = 0.0;
+	Altitude max_alt(0.0, HeightUnit::Metres);
 	TrackData altitudes = trk->make_track_data_altitude_over_distance(500);
 	if (altitudes.valid) {
 		altitudes.calculate_min_max();
-		max_alt = altitudes.y_max;
+		max_alt.set_value(altitudes.y_max);
 	}
 
-	switch (height_unit) {
-	case HeightUnit::Metres: /* No need to convert. */
-		break;
-	case HeightUnit::Feet:
-		max_alt = VIK_METERS_TO_FEET(max_alt);
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-		break;
-	}
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -405,7 +390,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	/* AVERAGE_SPEED_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(av_speed);
+	variant = QVariant::fromValue(trk->get_average_speed().convert_to_unit(speed_unit).to_string());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* 'Average speed' is not an editable parameter. */
 	items << item;
@@ -413,7 +398,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	/* MAXIMUM_SPEED_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(max_speed);
+	variant = QVariant::fromValue(trk->get_max_speed().convert_to_unit(speed_unit).to_string());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* 'Maximum speed' is not an editable parameter. */
 	items << item;
@@ -421,7 +406,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	/* MAXIMUM_HEIGHT_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(max_alt);
+	variant = QVariant::fromValue(max_alt.convert_to_unit(height_unit).to_string());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* 'Maximum height' is not an editable parameter. */
 	items << item;
@@ -435,49 +420,21 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 void TrackListDialog::build_model(bool hide_layer_names)
 {
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	const SpeedUnit speed_units = Preferences::get_unit_speed();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 	const HeightUnit height_unit = Preferences::get_unit_height();
 
 
 	this->model = new QStandardItemModel();
-	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
-	this->model->setHorizontalHeaderItem(TRACK_COLUMN, new QStandardItem("Track Name"));
-	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
-	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
-	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
-
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(km)"));
-		break;
-	case DistanceUnit::Miles:
-		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(miles)"));
-		break;
-	case DistanceUnit::NauticalMiles:
-		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(nautical miles)"));
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
-		break;
-	}
-
-	this->model->setHorizontalHeaderItem(DURATION_COLUMN, new QStandardItem("Duration\n(minutes)"));
-
-	const QString speed_units_string = get_speed_unit_string(speed_units);
-	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(tr("Average Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
-	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(tr("Maximum Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
-
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Metres)"));
-		break;
-	case HeightUnit::Feet:
-		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Feet)"));
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "invalid height unit" << (int) height_unit;
-		break;
-	}
+	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN,     new QStandardItem(tr("Layer")));
+	this->model->setHorizontalHeaderItem(TRACK_COLUMN,          new QStandardItem(tr("Track Name")));
+	this->model->setHorizontalHeaderItem(DATE_COLUMN,           new QStandardItem(tr("Date")));
+	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN,        new QStandardItem(tr("Visible")));
+	this->model->setHorizontalHeaderItem(COMMENT_COLUMN,        new QStandardItem(tr("Comment")));
+	this->model->setHorizontalHeaderItem(LENGTH_COLUMN,         new QStandardItem(tr("Length\n(%1)").arg(Distance::get_unit_full_string(distance_unit))));
+	this->model->setHorizontalHeaderItem(DURATION_COLUMN,       new QStandardItem(tr("Duration\n(minutes)")));
+	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN,  new QStandardItem(tr("Average Speed\n(%1)").arg(Speed::get_unit_string(speed_unit))));
+	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN,  new QStandardItem(tr("Maximum Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); /* Viking was using %.1f printf() format. */
+	this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem(tr("Maximum Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit))));
 
 
 	this->view = new QTableView();
@@ -543,7 +500,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	}
 
 	for (auto iter = this->tracks.begin(); iter != this->tracks.end(); iter++) {
-		this->add_row(*iter, distance_unit, speed_units, height_unit);
+		this->add_row(*iter, distance_unit, speed_unit, height_unit);
 	}
 
 

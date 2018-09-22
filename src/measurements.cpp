@@ -46,140 +46,7 @@ using namespace SlavGPS;
 
 #define SG_MODULE "Measurements"
 #define INVALID_RESULT_STRING "--"
-
-
-
-
-QString Measurements::get_altitude_string(double value, int precision)
-{
-	const HeightUnit height_unit = Preferences::get_unit_height();
-
-	QString buffer;
-
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
-		break;
-	case HeightUnit::Feet:
-		buffer = QObject::tr("%1 feet").arg(value, 0, 'f', precision);
-		break;
-	default:
-		buffer = "???";
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		break;
-	}
-
-	return buffer;
-}
-
-
-
-
-QString Measurements::get_altitude_string_recalculate(double value, int precision)
-{
-	const HeightUnit height_unit = Preferences::get_unit_height();
-
-	QString buffer;
-
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		buffer = QObject::tr("%1 m").arg(value, 0, 'f', precision);
-		break;
-	case HeightUnit::Feet:
-		buffer = QObject::tr("%1 feet").arg(VIK_METERS_TO_FEET(value), 0, 'f', precision);
-		break;
-	default:
-		buffer = "???";
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		break;
-	}
-
-	return buffer;
-}
-
-
-
-
-QString Measurements::get_speed_string(double value, int precision)
-{
-	if (std::isnan(value)) {
-		return INVALID_RESULT_STRING;
-	}
-
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-
-	QString buffer;
-
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		buffer = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (value), 0, 'f', precision);
-		break;
-	case SpeedUnit::MilesPerHour:
-		buffer = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (value), 0, 'f', precision);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::Knots:
-		buffer = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (value), 0, 'f', precision);
-		break;
-	default:
-		buffer = "???";
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return buffer;
-}
-
-
-
-
-QString Measurements::get_speed_string_dont_recalculate(double value, int precision)
-{
-	if (std::isnan(value)) {
-		return INVALID_RESULT_STRING;
-	}
-
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-
-	QString buffer;
-
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		buffer = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::MilesPerHour:
-		buffer = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::Knots:
-		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
-		break;
-	default:
-		buffer = "???";
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return buffer;
-}
-
-
-
-
-
-QString Measurements::get_course_string(double value, int precision)
-{
-	if (std::isnan(value)) {
-		return INVALID_RESULT_STRING;
-	} else {
-		/* Second arg is a degree symbol. */
-		return QObject::tr("%1%2").arg(value, 5, 'f', precision, '0').arg("\u00b0");
-	}
-}
+#define INVALID_UNIT_STRING   "??"
 
 
 
@@ -652,6 +519,50 @@ Distance Distance::operator-(const Distance & rhs)
 
 
 
+QString Distance::get_unit_full_string(DistanceUnit distance_unit)
+{
+	QString result;
+
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		result = QObject::tr("kilometers");
+		break;
+	case DistanceUnit::Miles:
+		result = QObject::tr("miles)");
+		break;
+	case DistanceUnit::NauticalMiles:
+		result = QObject::tr("nautical miles)");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
+		result = INVALID_UNIT_STRING;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+double Distance::convert_meters_to(double distance, DistanceUnit distance_unit)
+{
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		return distance / 1000.0;
+	case DistanceUnit::Miles:
+		return VIK_METERS_TO_MILES(distance);
+	case DistanceUnit::NauticalMiles:
+		return VIK_METERS_TO_NAUTICAL_MILES(distance);
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
+		return distance;
+	}
+}
+
+
+
+
 Altitude::Altitude(double new_value, HeightUnit height_unit)
 {
 	this->value = new_value;
@@ -889,9 +800,402 @@ Altitude Altitude::operator-(const Altitude & rhs)
 
 
 
+QString Altitude::get_unit_full_string(HeightUnit height_unit)
+{
+	QString result;
+
+	switch (height_unit) {
+	case HeightUnit::Metres:
+		result = QObject::tr("meters");
+		break;
+	case HeightUnit::Feet:
+		result = QObject::tr("feet");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
+		result = INVALID_UNIT_STRING;
+		break;
+	}
+
+	return result;
+}
+
+
+
+Speed::Speed(double new_value, SpeedUnit speed_unit)
+{
+	this->value = new_value;
+	this->valid = !std::isnan(new_value); /* We don't test if value is less than zero, because in some contexts the speed can be negative. */
+	this->unit = speed_unit;
+}
+
+
+
+
+bool Speed::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+#if 0
+const QString Speed::value_to_string_for_file(void) const
+{
+	return SGUtils::double_to_c(this->value);
+}
+#endif
+
+
+
+const QString Speed::value_to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+	} else {
+		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+	}
+
+	return result;
+}
+
+
+
+
+QString Speed::to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	switch (this->unit) {
+	case SpeedUnit::KilometresPerHour:
+		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (value), 0, 'f', SG_PRECISION_SPEED);
+		break;
+	case SpeedUnit::MilesPerHour:
+		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (value), 0, 'f', SG_PRECISION_SPEED);
+		break;
+	case SpeedUnit::MetresPerSecond:
+		result = QObject::tr("%1 m/s").arg(value, 0, 'f', SG_PRECISION_SPEED);
+		break;
+	case SpeedUnit::Knots:
+		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (value), 0, 'f', SG_PRECISION_SPEED);
+		break;
+	default:
+		result = INVALID_RESULT_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+#if 0
+QString Speed::to_nice_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	/* TODO_LATER: implement magnitude-dependent recalculations. */
+
+	switch (this->unit) {
+	case SpeedUnit::Metres:
+		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	case SpeedUnit::Feet:
+		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
+		break;
+	}
+
+	return result;
+}
+#endif
+
+
+
+
+QString Speed::to_string(double value, int precision)
+{
+	if (std::isnan(value)) {
+		return INVALID_RESULT_STRING;
+	}
+
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+
+	QString buffer;
+
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
+		buffer = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::MilesPerHour:
+		buffer = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::MetresPerSecond:
+		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::Knots:
+		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
+		break;
+	default:
+		buffer = "???";
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
+		break;
+	}
+
+	return buffer;
+}
+
+
+
+
+double Speed::get_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+void Speed::set_value(double new_value)
+{
+	this->value = new_value;
+	this->valid = !std::isnan(new_value);
+	/* Don't change unit. */
+}
+
+
+
+
+Speed Speed::convert_to_unit(SpeedUnit target_speed_unit) const
+{
+	Speed output;
+	output.unit = target_speed_unit;
+
+	 /* TODO_LATER: implement missing calculations. */
+
+	switch (this->unit) {
+	case SpeedUnit::KilometresPerHour:
+		qDebug() << SG_PREFIX_E << "Unhandled case";
+		break;
+	case SpeedUnit::MilesPerHour:
+		qDebug() << SG_PREFIX_E << "Unhandled case";
+		break;
+	case SpeedUnit::MetresPerSecond:
+		switch (target_speed_unit) {
+		case SpeedUnit::KilometresPerHour:
+			output.value = VIK_MPS_TO_KPH(this->value);
+			break;
+		case SpeedUnit::MilesPerHour:
+			output.value = VIK_MPS_TO_MPH(this->value);
+			break;
+		case SpeedUnit::MetresPerSecond:
+			output.value = this->value;
+			break;
+		case SpeedUnit::Knots:
+			output.value = VIK_MPS_TO_KNOTS(this->value);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target speed unit" << (int) target_speed_unit;
+			break;
+		}
+
+	case SpeedUnit::Knots:
+		qDebug() << SG_PREFIX_E << "Unhandled case";
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
+		break;
+	}
+
+	output.valid = !std::isnan(this->value);
+
+	return output;
+}
+
+
+
+
+Speed & Speed::operator+=(const Speed & rhs)
+{
+	if (!rhs.valid) {
+		return *this;
+	}
+
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return *this;
+	}
+	if (this->unit != rhs.unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return *this;
+	}
+
+	this->value += rhs.value;
+	this->valid = !std::isnan(this->value);
+	return *this;
+}
+
+
+
+
+Speed Speed::operator+(const Speed & rhs)
+{
+	/* TODO_LATER: make operator work for arguments with different units. */
+	Speed result;
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+	if (this->unit != rhs.unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+
+	result.value = this->value + rhs.value;
+	result.unit = this->unit;
+	result.valid = !std::isnan(result.value);
+
+	return result;
+}
+
+
+
+
+Speed Speed::operator-(const Speed & rhs)
+{
+	/* TODO_LATER: make operator work for arguments with different units. */
+	Speed result;
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+	if (this->unit != rhs.unit) {
+		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		return result;
+	}
+
+
+	result.value = this->value - rhs.value;
+	result.unit = this->unit;
+	result.valid = !std::isnan(result.value);
+
+	return result;
+}
+
+
+
+#if 0
+QString Speed::get_unit_full_string(SpeedUnit speed_unit)
+{
+	QString result;
+
+	switch (speed_unit) {
+	case SpeedUnit::Metres:
+		result = QObject::tr("meters");
+		break;
+	case SpeedUnit::Feet:
+		result = QObject::tr("feet");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
+		result = INVALID_UNIT_STRING;
+		break;
+	}
+
+	return result;
+}
+#endif
+
+
+
+QString Speed::get_unit_string(SpeedUnit speed_unit)
+{
+	QString result;
+
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
+		result = QObject::tr("km/h");
+		break;
+	case SpeedUnit::MilesPerHour:
+		result = QObject::tr("mph");
+		break;
+	case SpeedUnit::MetresPerSecond:
+		result = QObject::tr("m/s");
+		break;
+	case SpeedUnit::Knots:
+		result = QObject::tr("knots");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+double Speed::convert_mps_to(double speed, SpeedUnit speed_unit)
+{
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
+		speed = VIK_MPS_TO_KPH(speed);
+		break;
+	case SpeedUnit::MilesPerHour:
+		speed = VIK_MPS_TO_MPH(speed);
+		break;
+	case SpeedUnit::MetresPerSecond:
+		/* Already in m/s so nothing to do. */
+		break;
+	case SpeedUnit::Knots:
+		speed = VIK_MPS_TO_KNOTS(speed);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
+		break;
+	}
+
+	return speed;
+}
+
+
+
+
 QString Angle::to_string(void) const
 {
 	return QObject::tr("%1°").arg(RAD2DEG(this->value), 0, 'f', 1);
+}
+
+
+
+
+QString Angle::get_course_string(double value, int precision)
+{
+	if (std::isnan(value)) {
+		return INVALID_RESULT_STRING;
+	} else {
+		/* Second arg is a degree symbol. */
+		return QObject::tr("%1%2").arg(value, 5, 'f', precision, '0').arg("\u00b0");
+	}
 }
 
 
@@ -978,9 +1282,6 @@ static QString distance_string(double distance)
 	}
 	return result;
 }
-
-
-
 
 
 

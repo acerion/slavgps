@@ -2960,15 +2960,17 @@ void LayerTRW::append_other_cb(void)
 	}
 
 
-	if (source_track->type_id != "sg.trw.route"
-	    && ((source_track->get_segment_count() > 1)
-		|| (source_track->get_average_speed() > 0.0))) {
+	if (source_track->type_id != "sg.trw.route") {
+		const Speed avg = source_track->get_average_speed();
+		if (source_track->get_segment_count() > 1
+		    || (avg.is_valid() && avg.get_value() > 0.0)) {
 
-		if (Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), this->get_window())) {
-			source_track->merge_segments();
-			source_track->to_routepoints();
-		} else {
-			return;
+			if (Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), this->get_window())) {
+				source_track->merge_segments();
+				source_track->to_routepoints();
+			} else {
+				return;
+			}
 		}
 	}
 

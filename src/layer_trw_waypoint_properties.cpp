@@ -133,7 +133,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 			/* Waypoint stores altitude in meters; for presentation in dialog recalculate to user units (uu). */
 			alti_uu = wp->altitude.convert_to_unit(user_height_unit);
 		}
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_ALT, SGVariant(alti_uu.get_value())));
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_ALT, SGVariant(alti_uu)));
 
 		/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_COMMENT, SGVariant(wp->comment)));
@@ -220,7 +220,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_ALT]);
-		const Altitude alti_uu = Altitude(param_value.get_altitude(), Preferences::get_unit_height());
+		const Altitude alti_uu = param_value.get_altitude(); /* Value read back from dialog window. For presentation to user in the dialog window, the altitude must have been in User Units (uu). */
 		/* Always store Altitude in wp in in metres:
 		   recalculate altitude from user units (as presented
 		   in dialog) to altitude unit that is used by

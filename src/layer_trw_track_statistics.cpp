@@ -59,9 +59,9 @@ void TrackStatistics::add_track(Track * trk)
 	this->length      += trk->get_length();
 	this->length_with_gaps += trk->get_length_including_gaps();
 
-	double ms = trk->get_max_speed();
-	if (ms > this->max_speed) {
-		this->max_speed = ms;
+	const Speed incoming_track_max_speed = trk->get_max_speed();
+	if (incoming_track_max_speed.get_value() > this->max_speed.get_value()) {
+		this->max_speed = incoming_track_max_speed;
 	}
 
 	Altitude min_altitude;

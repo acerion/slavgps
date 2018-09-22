@@ -56,7 +56,7 @@ namespace SlavGPS {
 
 		Distance length;
 		Distance length_with_gaps;
-		double max_speed          = 0.0;
+		Speed max_speed = Speed(0.0, SpeedUnit::MetresPerSecond);
 		unsigned long trackpoints = 0;
 		unsigned int segments     = 0;
 		int duration              = 0;

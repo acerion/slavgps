@@ -125,7 +125,6 @@ static GraphIntervalsSpeed    speed_intervals;
 static void time_label_update(QLabel * label, time_t seconds_from_start);
 static void real_time_label_update(QLabel * label, const Trackpoint * tp);
 
-static QString get_speed_grid_label(SpeedUnit speed_unit, double value);
 static QString get_time_grid_label(int interval_index, int value);
 static QString get_time_grid_label_2(time_t interval_value, time_t value);
 static QString get_time_grid_label_3(time_t interval_value, time_t value);
@@ -188,7 +187,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 	case GeoCanvasDomain::Speed:
 		/* Convert into appropriate units. */
 		for (int i = 0; i < this->width; i++) {
-			this->track_data.y[i] = convert_speed_mps_to(this->track_data.y[i], this->geocanvas.speed_unit);
+			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->geocanvas.speed_unit);
 		}
 
 		qDebug() << "kamil calculating min/max y speed for" << this->get_graph_title();
@@ -212,12 +211,12 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 	case GeoCanvasDomain::Distance:
 		/* Convert into appropriate units. */
 		for (int i = 0; i < this->width; i++) {
-			this->track_data.y[i] = convert_distance_meters_to(this->track_data.y[i], this->geocanvas.distance_unit);
+			this->track_data.y[i] = Distance::convert_meters_to(this->track_data.y[i], this->geocanvas.distance_unit);
 		}
 
 #ifdef K_FIXME_RESTORE
 		this->track_data.y_min = 0;
-		this->track_data.y_max = convert_distance_meters_to(trk->get_length_value_including_gaps(), this->geocanvas.distance_unit);
+		this->track_data.y_max = Distance::convert_meters_to(trk->get_length_value_including_gaps(), this->geocanvas.distance_unit);
 #endif
 
 		this->track_data.calculate_min_max();
@@ -267,8 +266,8 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 	/* We won't display any x values outside of
 	   track_data.x_min/max. We will never be able to zoom out to
 	   show e.g. negative distances. */
-	this->x_min_visible_d = convert_distance_meters_to(this->track_data.x_min, this->geocanvas.distance_unit);
-	this->x_max_visible_d = convert_distance_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
+	this->x_min_visible_d = Distance::convert_meters_to(this->track_data.x_min, this->geocanvas.distance_unit);
+	this->x_max_visible_d = Distance::convert_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
 
 	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
 		/* TODO_2_LATER: verify what happens if we return here. */
@@ -877,7 +876,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		if (graph->labels.y_value) {
 			/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
 			   No conversions needed as already in appropriate units. */
-			graph->labels.y_value->setText(Measurements::get_speed_string_dont_recalculate(y));
+			graph->labels.y_value->setText(Speed::to_string(y));
 		}
 		break;
 	case GeoCanvasDomain::Elevation:
@@ -963,14 +962,14 @@ int ProfileGraph::get_cursor_pos_x(QMouseEvent * ev) const
  * Draws DEM points and a respresentative speed on the supplied pixmap
  * (which is the elevations graph).
  */
-void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, double max_speed_in, bool do_dem, bool do_speed)
+void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, const Speed & max_speed_in, bool do_dem, bool do_speed)
 {
 	double max_function_arg = trk->get_length_value_including_gaps();
 	double max_function_value_speed = 0;
 
 	/* Calculate the max speed factor. */
 	if (do_speed) {
-		max_function_value_speed = max_speed_in * 110 / 100;
+		max_function_value_speed = max_speed_in.get_value() * 110 / 100;
 	}
 
 	double current_function_arg = 0.0;
@@ -1110,7 +1109,7 @@ void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
 	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 		/* This is just an indicator - no actual values can be inferred by user. */
 
-		const double max_function_value = track_info.max_speed * 110 / 100;
+		const double max_function_value = track_info.max_speed.get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
 		for (int i = 0; i < this->width; i++) {
@@ -1145,7 +1144,7 @@ void ProfileGraphSD::draw_additional_indicators(TrackInfo & track_info)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, this->geocanvas.speed_unit);
+			gps_speed = Speed::convert_mps_to(gps_speed, this->geocanvas.speed_unit);
 
 			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			current_function_value = gps_speed - this->y_min_visible;
@@ -1168,7 +1167,7 @@ void ProfileGraphED::draw_additional_indicators(TrackInfo & track_info)
 	if (do_show_dem || do_show_gps_speed) {
 
 		/* Ensure somekind of max speed when not set. */
-		if (track_info.max_speed < 0.01) {
+		if (!track_info.max_speed.is_valid() || track_info.max_speed.get_value() < 0.01) {
 			track_info.max_speed = track_info.trk->get_max_speed();
 		}
 
@@ -1184,7 +1183,7 @@ void ProfileGraphGD::draw_additional_indicators(TrackInfo & track_info)
 	const bool do_show_gps_speed = this->show_gps_speed_cb && this->show_gps_speed_cb->checkState();
 	if (do_show_gps_speed) {
 		/* Ensure some kind of max speed when not set. */
-		if (track_info.max_speed < 0.01) {
+		if (!track_info.max_speed.is_valid() || track_info.max_speed.get_value() < 0.01) {
 			track_info.max_speed = track_info.trk->get_max_speed();
 		}
 	}
@@ -1210,7 +1209,7 @@ void ProfileGraphST::draw_additional_indicators(TrackInfo & track_info)
 				continue;
 			}
 
-			gps_speed = convert_speed_mps_to(gps_speed, this->geocanvas.speed_unit);
+			gps_speed = Speed::convert_mps_to(gps_speed, this->geocanvas.speed_unit);
 
 			const time_t current_function_arg = (*iter)->timestamp - beg_time;
 			const double current_function_value = gps_speed - this->y_min_visible;
@@ -1230,7 +1229,7 @@ void ProfileGraphDT::draw_additional_indicators(TrackInfo & track_info)
 	/* Show speed indicator. */
 	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 
-		const double max_function_value = track_info.max_speed * 110 / 100;
+		const double max_function_value = track_info.max_speed.get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
 		/* This is just an indicator - no actual values can be inferred by user. */
@@ -1345,14 +1344,14 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
    Draws representative speed on the supplied pixmap
    (which is the gradients graph).
 */
-void ProfileGraph::draw_speed_dist(Track * trk, double max_speed_in, bool do_speed)
+void ProfileGraph::draw_speed_dist(Track * trk, const Speed & max_speed_in, bool do_speed)
 {
 	double max_function_value = 0;
 	double max_function_arg = trk->get_length_value_including_gaps();
 
 	/* Calculate the max speed factor. */
 	if (do_speed) {
-		max_function_value = max_speed_in * 110 / 100;
+		max_function_value = max_speed_in.get_value() * 110 / 100;
 	}
 
 	const QColor color = this->gps_speed_pen.color();
@@ -2014,35 +2013,6 @@ void ProfileGraphDT::configure_controls(TrackProfileDialog * dialog)
 
 
 
-QString get_speed_grid_label(SpeedUnit speed_unit, double value)
-{
-	QString result;
-
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("%1 km/h").arg(value, 0, 'f', SG_PRECISION_SPEED);
-		break;
-	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("%1 mph").arg(value, 0, 'f', SG_PRECISION_SPEED);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		result = QObject::tr("%1 m/s").arg(value, 0, 'f', SG_PRECISION_SPEED);
-		break;
-	case SpeedUnit::Knots:
-		result = QObject::tr("%1 knots").arg(value, 0, 'f', SG_PRECISION_SPEED);
-		break;
-	default:
-		result = QObject::tr("--");
-		qDebug() << "EE:" PREFIX << "invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
 QString get_time_grid_label(int interval_index, int value)
 {
 	QString result;
@@ -2407,7 +2377,7 @@ QString ProfileGraph::get_y_grid_label(float value)
 		return Distance(value, this->geocanvas.distance_unit).to_string();
 
 	case GeoCanvasDomain::Speed:
-		return get_speed_grid_label(this->geocanvas.speed_unit, value);
+		return Speed(value, this->geocanvas.speed_unit).to_string();
 
 	case GeoCanvasDomain::Gradient:
 		return QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
