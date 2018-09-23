@@ -82,7 +82,7 @@ MapSourceMBTiles::~MapSourceMBTiles()
 
 
 
-QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args)
+QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 	QPixmap result;
 
@@ -102,7 +102,7 @@ QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, con
 
 		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
 		   Hence this specific function. */
-		result = create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, tile_info.scale.get_tile_zoom_level());
+		result = create_pixmap_sql_exec(*args.sqlite_handle, tile_info);
 	}
 #endif
 
@@ -128,8 +128,12 @@ static int sql_select_tile_dump_cb(void * data, int cols, char ** fields, char *
 
 
 
-QPixmap MapSourceMBTiles::create_pixmap_sql_exec(sqlite3 * sqlite_handle, int xx, int yy, int zoom) const
+QPixmap MapSourceMBTiles::create_pixmap_sql_exec(sqlite3 * sqlite_handle, const TileInfo & tile_info) const
 {
+	const int xx = tile_info.x;
+	const int yy = tile_info.y;
+	const int zoom = tile_info.get_tile_zoom_level(); /* This is OSM MBTile, so use method that returns OSM-like zoom level. */
+
 	QPixmap pixmap;
 
 	/* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
@@ -195,7 +199,7 @@ QStringList MapSourceMBTiles::get_tile_description(const MapCacheObj & map_cache
 
 	QPixmap pixmap;
 	if (args.sqlite_handle) {
-		pixmap = this->create_pixmap_sql_exec(*args.sqlite_handle, tile_info.x, tile_info.y, tile_info.scale.get_tile_zoom_level());
+		pixmap = this->create_pixmap_sql_exec(*args.sqlite_handle, tile_info);
 	}
 	QString exists = pixmap.isNull() ? QObject::tr("NO") : QObject::tr("YES");
 

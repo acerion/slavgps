@@ -48,12 +48,13 @@ namespace SlavGPS {
 		MapSourceMBTiles();
 		~MapSourceMBTiles();
 
-		QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args);
+		QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		void close_map_source(MapSourceArgs & args);
 		void post_read(MapSourceArgs & args);
 
-		QPixmap create_pixmap_sql_exec(sqlite3 * sqlite_handle, int xx, int yy, int zoom) const;
+	private:
+		QPixmap create_pixmap_sql_exec(sqlite3 * sqlite_handle, const TileInfo & tile_info) const;
 	};
 
 

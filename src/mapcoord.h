@@ -73,6 +73,9 @@ namespace SlavGPS {
 		int x = 0;
 		int y = 0;
 
+		/* For use in OSM-like context only (0 = max zoomed out; ~18 = max zoomed in). */
+		int get_tile_zoom_level(void) const { return this->scale.get_tile_zoom_level(); }
+
 		int z;      /* Zone or anything else. */
 		TileScale scale;
 	};

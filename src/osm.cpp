@@ -198,54 +198,44 @@ MapSourceOSMMetatiles::MapSourceOSMMetatiles() : MapSourceSlippy(MapTypeID::OSMM
 
 
 
-QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, MapSourceArgs & args)
+QPixmap MapSourceOSMMetatiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
-	const int tile_max = METATILE_MAX_SIZE;
 	QString err_msg;
-	int compressed;
 	QPixmap pixmap;
 
-	char * buf = (char *) malloc(tile_max);
-	if (!buf) {
+	Metatile metatile(map_cache_obj.dir_full_path, tile_info);
+
+	if (0 != metatile.read_metatile(err_msg)) {
+		qDebug() << SG_PREFIX_E << "Failed to read metatile file:" << err_msg;
 		return pixmap;
 	}
 
-	int len = metatile_read(map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_tile_zoom_level(), buf, tile_max, &compressed, err_msg);
-	if (len > 0) {
-		if (compressed) {
-			/* TODO_2_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
-			qDebug() << SG_PREFIX_E << "Compressed metatiles not implemented";
-			free(buf);
-			return pixmap;
-		}
-
-		/* Convert these buf bytes into a pixmap via these streaming operations. */
-		if (!pixmap.loadFromData((const unsigned char *)  buf, (unsigned int) len)) {
-			qDebug() << SG_PREFIX_E << "Failed to load pixmap from metatile";
-		}
-
-		free(buf);
-
-	} else {
-		free(buf);
-		qDebug() << SG_PREFIX_E << "Failed:" << err_msg;
+	if (metatile.is_compressed) {
+		/* TODO_2_LATER: Not handled yet - I don't think this is used often - so implement later if necessary. */
+		qDebug() << SG_PREFIX_E << "Handling of compressed metatile not implemented";
+		return pixmap;
 	}
 
-	qDebug() << SG_PREFIX_I << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
+	/* Convert bytes stored in Metatile::buffer into a pixmap. */
+	if (!pixmap.loadFromData(metatile.buffer, metatile.read_bytes)) {
+		qDebug() << SG_PREFIX_E << "Failed to load pixmap from metatile";
+		return pixmap;
+	} else {
+		qDebug() << SG_PREFIX_I << "Creating pixmap from metatile:" << (pixmap.isNull() ? "failure" : "success");
+	}
 
 	return pixmap;
 }
 
 
 
+
 QStringList MapSourceOSMMetatiles::get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 	QStringList items;
+	Metatile metatile(map_cache_obj.dir_full_path, tile_info);
 
-	char path[PATH_MAX];
-	xyz_to_meta(path, sizeof (path), map_cache_obj.dir_full_path, tile_info.x, tile_info.y, tile_info.scale.get_tile_zoom_level());
-
-	items.push_back(QString(path));
+	items.push_back(metatile.file_full_path);
 	items.push_back(args.tile_file_full_path);
 
 	tile_info_add_file_info_strings(items, args.tile_file_full_path);
@@ -268,7 +258,7 @@ MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk,
 
 
 
-QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, MapSourceArgs & args)
+QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
 	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO_LATER: why do we need to create the copy with explicit layout? */
 	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info,

@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2014, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,9 +41,24 @@ namespace SlavGPS {
 
 
 
-	int xyz_to_meta(char * path, size_t len, const QString & dir, int x, int y, int z);
+	class TileInfo;
 
-	int metatile_read(const QString & dir, int x, int y, int z, char * buf, size_t sz, int * compressed, QString & log_msg);
+
+
+
+	class Metatile {
+	public:
+		Metatile(const QString & dir, const TileInfo & tile_info);
+
+		int read_metatile(QString & log_msg);
+
+		QString file_full_path;
+		unsigned char offset = 0;
+		bool is_compressed = false;
+
+		unsigned char buffer[METATILE_MAX_SIZE];
+		size_t read_bytes = 0;
+	};
 
 
 
