@@ -53,7 +53,7 @@
 
 
 
-#include "metatile.h"
+#include "osm_metatile.h"
 #include "globals.h"
 #include "mapcoord.h"
 
@@ -71,7 +71,6 @@ using namespace SlavGPS;
 
 
 
-/* metatile.h */
 #define META_MAGIC "META"
 #define META_MAGIC_COMPRESSED "METZ"
 

@@ -44,7 +44,7 @@
 #include "util.h"
 #include "routing.h"
 #include "routing_engine_web.h"
-#include "metatile.h"
+#include "osm_metatile.h"
 #include "map_utils.h"
 
 

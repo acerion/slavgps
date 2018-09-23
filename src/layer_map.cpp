@@ -49,7 +49,7 @@
 #include "preferences.h"
 #include "layer_map.h"
 #include "layer_map_download.h"
-#include "metatile.h"
+#include "osm_metatile.h"
 #include "ui_util.h"
 #include "layer_defaults.h"
 #include "widget_file_entry.h"

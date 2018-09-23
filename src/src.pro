@@ -75,7 +75,7 @@ SOURCES += main.cpp \
     map_source.cpp \
     map_cache.cpp \
     map_utils.cpp \
-    metatile.cpp \
+    osm_metatile.cpp \
     goto.cpp \
     goto_tool.cpp \
     goto_tool_xml.cpp \
@@ -214,7 +214,7 @@ HEADERS += window.h \
     layer_map_download.h \
     map_source.h \
     map_utils.h \
-    metatile.h \
+    osm_metatile.h \
     map_cache.h \
     goto.h \
     goto_tool.h \
