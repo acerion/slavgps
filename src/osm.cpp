@@ -169,11 +169,15 @@ void SlavGPS::osm_init(void)
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
 
 
-	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
+	/*
+	  See API references:
+	   https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api
+	   https://github.com/Project-OSRM/osrm-backend/wiki/Server-api/d3df08ef7fc4dbe4d1960bc6df92f441e1343b82#server-api-4x
+	*/
 	RoutingEngineWeb * osrm = new RoutingEngineWeb();
 	/* TODO_LATER: review and improve these assignments and format specifiers. */
 	osrm->id = "osrm";
-	osrm->label = "OSRM";
+	osrm->label = "OSRM v4";
 	osrm->format = "gpx";
 	osrm->url_base = "http://router.project-osrm.org/viaroute?output=gpx";
 	osrm->url_start_ll_fmt = "&loc=%s,%s";

@@ -65,6 +65,7 @@
 #include "ruler.h"
 #include "globals.h"
 #include "generic_tools.h"
+#include "toolbox.h"
 
 
 
@@ -1490,8 +1491,14 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 	} else {
 		trw->reset_edited_track();
 
+		LayerTool * new_route_tool = trw->get_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+		if (NULL == new_route_tool) {
+			qDebug() << SG_PREFIX_E << "Failed to get 'new route' tool";
+			return ToolStatus::Ignored;
+		}
+
 		/* Create a new route where we will add the planned route to. */
-		ToolStatus ret = this->handle_mouse_click(trw, ev);
+		ToolStatus ret = new_route_tool->handle_mouse_click(trw, ev);
 
 		trw->route_finder_started = true;
 
