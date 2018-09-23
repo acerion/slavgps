@@ -558,10 +558,10 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 	for (; iter != trk->trackpoints.end(); iter++) {
 		Trackpoint * tp = *iter;
+		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 
 		tp_size = (selected_track && selected_track->selected_tp_iter.valid && tp == *selected_track->selected_tp_iter.iter) ? tp_size_cur : tp_size_reg;
 
-		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 
 		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary

@@ -3178,7 +3178,7 @@ QString Track::get_tooltip(void) const
 
 	/* Get length and consider the appropriate distance units. */
 	const QString distance_string = this->get_length().convert_to_unit(Preferences::get_unit_distance()).to_string();
-	const QString result = QObject::tr("%1%2 km %3").arg(timestamp_string).arg(distance_string).arg(duration_string); /* FIXME: hardcoded unit, also in viking? */
+	const QString result = QObject::tr("%1%2 %3").arg(timestamp_string).arg(distance_string).arg(duration_string);
 
 
 	return result;
