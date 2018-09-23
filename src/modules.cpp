@@ -42,7 +42,7 @@
 #include "geonames.h"
 #include "layer_map.h"
 #include "osm.h"
-#include "osm-traces.h"
+#include "osm_traces.h"
 #include "datasources.h"
 
 #ifdef K_INCLUDES

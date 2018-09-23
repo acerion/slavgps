@@ -50,7 +50,7 @@
 #include "dem_cache.h"
 #include "application_state.h"
 #include "util.h"
-#include "osm-traces.h"
+#include "osm_traces.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_profile_dialog.h"
 #include "layer_trw_track_properties_dialog.h"

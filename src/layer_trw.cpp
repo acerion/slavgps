@@ -88,7 +88,7 @@
 #endif
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
-#include "osm-traces.h"
+#include "osm_traces.h"
 #endif
 
 #ifdef K_INCLUDES

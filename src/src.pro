@@ -58,7 +58,7 @@ SOURCES += main.cpp \
     thumbnails.cpp \
     bbox.cpp \
     osm.cpp \
-    osm-traces.cpp \
+    osm_traces.cpp \
     layer_trw_stats.cpp \
     layer_trw_export.cpp \
     layer_trw_geotag.cpp \
@@ -187,7 +187,7 @@ HEADERS += window.h \
     gpspoint.h \
     thumbnails.h \
     osm.h \
-    osm-traces.h \
+    osm_traces.h \
     datasource_geocache.h \
     datasource_gps.h \
     datasource_routing.h \

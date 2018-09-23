@@ -38,7 +38,7 @@
 #include "viewport_internal.h"
 #include "gpx.h"
 #include "acquire.h"
-#include "osm-traces.h"
+#include "osm_traces.h"
 #include "datasource_gps.h"
 #include "bbox.h"
 #include "dialog.h"
