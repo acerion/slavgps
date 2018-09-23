@@ -306,6 +306,17 @@ HEADERS += window.h \
 # expedia.cpp
 
 
+# Pre-compile-time tests.
+# http://doc.qt.io/qt-5/qmake-test-function-reference.html#qtcompiletest-test
+load(configure)
+
+
+qtCompileTest(libmagic) {
+    DEFINES += HAVE_MAGIC_H
+    QMAKE_LFLAGS += -lmagic
+}
+
+
 # For glib library.
 CONFIG += link_pkgconfig debug
 PKGCONFIG += glib-2.0 zlib gio-2.0
@@ -320,7 +331,9 @@ DEFINES += VIK_CONFIG_GEOCACHES
 
 # Put moc_*.cpp files in a subdirectory.
 MOC_DIR = ./moc/
+UI_DIR = ./
+OBJECTS_DIR = ./
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat -licuuc -lmapnik -lgps -lexiv2 -lsqlite3
+QMAKE_LFLAGS += -lm -lbz2 -lcurl -lexpat -licuuc -lmapnik -lgps -lexiv2 -lsqlite3
