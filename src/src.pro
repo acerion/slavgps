@@ -306,15 +306,27 @@ HEADERS += window.h \
 # expedia.cpp
 
 
+
+
 # Pre-compile-time tests.
 # http://doc.qt.io/qt-5/qmake-test-function-reference.html#qtcompiletest-test
 load(configure)
-
 
 qtCompileTest(libmagic) {
     DEFINES += HAVE_MAGIC_H
     QMAKE_LFLAGS += -lmagic
 }
+
+
+
+
+# For some reason the package name must be lower case
+packagesExist(x11) {
+    DEFINES += HAVE_X11_XLIB_H
+    QMAKE_LFLAGS += -lX11
+}
+
+
 
 
 # For glib library.

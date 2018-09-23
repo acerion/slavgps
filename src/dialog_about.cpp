@@ -181,7 +181,7 @@ void Dialog::about(QWidget * parent)
 #ifdef HAVE_LIBX11
 	libs += "libX11<br/>";
 #endif
-#ifdef HAVE_LIBMAGIC
+#ifdef HAVE_MAGIC_H
 	libs += "libmagic<br/>";
 #endif
 #ifdef HAVE_LIBBZ2

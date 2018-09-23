@@ -52,6 +52,10 @@
 #include "clipboard.h"
 #include "file.h"
 
+#ifdef HAVE_X11_XLIB_H
+#include "X11/Xlib.h"
+#endif
+
 
 
 
@@ -60,24 +64,7 @@ using namespace SlavGPS;
 
 
 
-#ifdef K_FIXME_RESTORE
-
-
-/* FIXME LOCALEDIR must be configured by ./configure --localedir */
-/* But something does not work actually. */
-/* So, we need to redefine this variable on windows. */
-#ifdef WINDOWS
-#undef LOCALEDIR
-#define LOCALEDIR "locale"
-#endif
-
 #ifdef HAVE_X11_XLIB_H
-#include "X11/Xlib.h"
-#endif
-
-
-
-#if HAVE_X11_XLIB_H
 static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
 {
 	qDebug() << QObject::tr("Ignoring Xlib error: error code %1 request code %2")
@@ -89,7 +76,7 @@ static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
 	return 0;
 }
 #endif
-#endif
+
 
 
 
@@ -181,10 +168,8 @@ int main(int argc, char ** argv)
 	}
 
 
-#ifdef K_FIXME_RESTORE
-#if HAVE_X11_XLIB_H
+#ifdef HAVE_X11_XLIB_H
 	XSetErrorHandler(myXErrorHandler);
-#endif
 #endif
 
 
@@ -253,17 +238,17 @@ int main(int argc, char ** argv)
 
 
 	/* Create the first window. */
-	Window * first_window = Window::new_window();
+	SlavGPS::Window * first_window = SlavGPS::Window::new_window();
 
 	for (int i = 0; i < command_line_options.files.size(); i++) {
 		const QString & file_path = command_line_options.files.at(i);
 
-		Window * new_window = first_window;
+		SlavGPS::Window * new_window = first_window;
 		bool set_as_current_document = (i == 1);
 
 		/* Open any subsequent .vik files in their own window. */
 		if (i > 1 && VikFile::has_vik_file_magic(file_path)) {
-			new_window = Window::new_window();
+			new_window = SlavGPS::Window::new_window();
 			set_as_current_document = true;
 		}
 
