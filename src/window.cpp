@@ -2203,13 +2203,6 @@ void Window::set_busy_cursor()
 {
 	this->setCursor(Qt::WaitCursor);
 	this->viewport->setCursor(Qt::WaitCursor);
-
-#ifdef K_FIXME_RESTORE
-	/* Ensure cursor updated before doing stuff. TODO_2_LATER: do we need this? */
-	while (gtk_events_pending()) {
-		gtk_main_iteration();
-	}
-#endif
 }
 
 
@@ -3318,11 +3311,6 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 			if (this_success) {
 				export_count++;
 				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(file_full_path));
-#ifdef K_FIXME_RESTORE
-				while (gtk_events_pending()) {
-					gtk_main_iteration();
-				}
-#endif
 			}
 
 			success = success && this_success;
