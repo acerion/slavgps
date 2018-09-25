@@ -59,7 +59,6 @@ extern Tree * g_tree;
 
 
 
-#define VIK_CONFIG_OPENSTREETMAP
 #define VIK_CONFIG_GEONAMES
 #define VIK_CONFIG_GEOTAG
 
@@ -195,13 +194,11 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		qa = acquire_submenu->addAction(tr("From &Directions..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_routing_cb()));
 
-#ifdef VIK_CONFIG_OPENSTREETMAP
 		qa = acquire_submenu->addAction(tr("From &OSM Traces..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_osm_cb()));
 
 		qa = acquire_submenu->addAction(tr("From &My OSM Traces..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_osm_my_traces_cb()));
-#endif
 
 		qa = acquire_submenu->addAction(tr("From &URL..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_url_cb()));
@@ -244,10 +241,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-next"), tr("Upload Layer to &GPS..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_gps_cb()));
 
-#ifdef VIK_CONFIG_OPENSTREETMAP
 		qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload Layer to &OSM..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_osm_traces_cb()));
-#endif
 	}
 
 

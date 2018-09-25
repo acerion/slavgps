@@ -78,7 +78,7 @@
 #include "thumbnails.h"
 #include "datasources.h"
 #include "statusbar.h"
-
+#include "osm_traces.h"
 #include "layer_gps.h"
 #include "layer_trw_stats.h"
 #include "geonames_search.h"
@@ -87,9 +87,6 @@
 #include "geotag_exif.h"
 #endif
 
-#ifdef VIK_CONFIG_OPENSTREETMAP
-#include "osm_traces.h"
-#endif
 
 #ifdef K_INCLUDES
 #include "garmin_symbols.h"
@@ -1893,7 +1890,6 @@ void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 
 
 
-#ifdef VIK_CONFIG_OPENSTREETMAP
 /*
  * Acquire into this TRW Layer from OSM.
  */
@@ -1912,7 +1908,6 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
 {
 	this->acquire_handler(new DataSourceOSMMyTraces());
 }
-#endif
 
 
 
@@ -2156,7 +2151,7 @@ void LayerTRW::finish_route_cb(void) /* Slot. */
 
 void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 {
-	osm_traces_upload_viktrwlayer(this, NULL);
+	OSMTraces::upload_trw_layer(this, NULL);
 }
 
 

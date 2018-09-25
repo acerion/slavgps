@@ -34,7 +34,10 @@ namespace SlavGPS {
 
 
 
-	void osm_init(void);
+	class OSM {
+	public:
+		static void init(void);
+	};
 
 
 

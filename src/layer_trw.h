@@ -407,10 +407,8 @@ namespace SlavGPS {
 
 		void acquire_from_gps_cb(void);
 		void acquire_from_routing_cb(void);
-#ifdef VIK_CONFIG_OPENSTREETMAP
 		void acquire_from_osm_cb(void);
 		void acquire_from_osm_my_traces_cb(void);
-#endif
 		void acquire_from_url_cb(void);
 
 		void acquire_from_wikipedia_waypoints_viewport_cb(void);

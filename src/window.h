@@ -239,10 +239,8 @@ namespace SlavGPS {
 		void acquire_from_file_cb(void);
 		void acquire_from_geojson_cb(void);
 		void acquire_from_routing_cb(void);
-#ifdef VIK_CONFIG_OPENSTREETMAP
 		void acquire_from_osm_cb(void);
 		void acquire_from_my_osm_cb(void);
-#endif
 
 #ifdef VIK_CONFIG_GEOCACHES
 		void acquire_from_gc_cb(void);

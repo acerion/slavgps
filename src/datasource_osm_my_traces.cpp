@@ -62,13 +62,6 @@ using namespace SlavGPS;
 
 
 
-#ifdef VIK_CONFIG_OPENSTREETMAP
-// DataSourceInterface datasource_osm_my_traces_interface;
-#endif
-
-
-
-
 DataSourceOSMMyTraces::DataSourceOSMMyTraces(Viewport * new_viewport)
 {
 	this->viewport = new_viewport;
@@ -119,7 +112,7 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireProcess * acquire_context)
 	config_dialog.grid->addWidget(password_label, 1, 0);
 	config_dialog.grid->addWidget(&config_dialog.password_entry, 1, 1);
 
-	osm_fill_credentials_widgets(config_dialog.user_entry, config_dialog.password_entry);
+	OSMTraces::fill_credentials_widgets(config_dialog.user_entry, config_dialog.password_entry);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -137,7 +130,7 @@ BabelOptions * DataSourceOSMMyTracesDialog::get_acquire_options_none(void)
 	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
 
 	/* Overwrite authentication info. */
-	osm_save_current_credentials(this->user_entry.text(), this->password_entry.text());
+	OSMTraces::save_current_credentials(this->user_entry.text(), this->password_entry.text());
 
 	/* If going to use the values passed back into the process function parameters then they need to be set.
 	   But ATM we aren't. */
@@ -565,7 +558,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 	/* Support .zip + bzip2 files directly. */
 	DownloadOptions local_dl_options(2); /* Allow a couple of redirects. */
 	local_dl_options.convert_file = a_try_decompress_file;
-	local_dl_options.user_pass = osm_get_current_credentials();
+	local_dl_options.user_pass = OSMTraces::get_current_credentials();
 
 	DownloadHandle dl_handle(&local_dl_options);
 

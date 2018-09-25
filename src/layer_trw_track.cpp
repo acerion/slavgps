@@ -2586,14 +2586,8 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 {
 	QAction * qa = NULL;
 
-#ifdef VIK_CONFIG_OPENSTREETMAP
-#ifdef K_FIXME_RESTORE
 	qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), tr("Upload to &OSM..."));
-	/* Convert internal pointer into track. */
-	parent_layer_->menu_data->misc = this;
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (upload_to_osm_traces_cb()));
-#endif
-#endif
 
 	/* Currently filter with functions all use shellcommands and thus don't work in Windows. */
 #ifndef WINDOWS
@@ -2616,7 +2610,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	}
 
 #ifdef VIK_CONFIG_GEOTAG
-	qa = menu.addAction(tr("Geotag _Images..."));
+	qa = menu.addAction(tr("Geotag &Images..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_track_cb()));
 #endif
 }
@@ -3465,7 +3459,7 @@ void Track::upload_to_gps_cb(void)
 
 void Track::upload_to_osm_traces_cb(void)
 {
-	osm_traces_upload_viktrwlayer((LayerTRW *) this->owning_layer, this);
+	OSMTraces::upload_trw_layer((LayerTRW *) this->owning_layer, this);
 }
 
 

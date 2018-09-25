@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
+
 
 #include <mutex>
 #include <cstdio>
@@ -29,13 +28,19 @@
 #include <errno.h>
 #include <time.h>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include <curl/curl.h>
 #include <curl/easy.h>
 
-#include <glib.h>
-#include <glib/gstdio.h>
+
+
 
 #include "window.h"
 #include "layer_trw.h"
@@ -56,6 +61,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "OSM Traces"
+
+
+
+
 extern bool vik_verbose;
 
 
@@ -69,22 +79,22 @@ extern bool vik_verbose;
 
 #define INVALID_ENTRY_INDEX -1
 
+/* Notice the https protocol. */
+#define OSM_TRACES_SERVICE_URL   "https://www.openstreetmap.org/api/0.6/gpx/create"
+
+
+
+
 /* Index of the last visibility selected. */
 static int g_last_visibility_index = -1;
 
-/**
-   Login to use for OSM uploading.
-*/
+/* Login to use for OSM uploading. */
 static QString osm_user;
 
-/**
-   Password to use for OSM uploading.
-*/
+/* Password to use for OSM uploading. */
 static QString osm_password;
 
-/**
- * Mutex to protect auth. token
- */
+/* Mutex to protect authentication token. */
 static std::mutex login_mutex;
 
 
@@ -95,16 +105,16 @@ static std::mutex login_mutex;
 */
 class OsmTraceVisibility {
 public:
+	OsmTraceVisibility(const QString & c, const QString & a) : combostr(c), apistr(a) {};
 	const QString combostr;
 	const QString apistr;
 };
 
-static const OsmTraceVisibility trace_visibilities[] = {
-	{ QObject::tr("Identifiable (public w/ timestamps)"), "identifiable" },
-	{ QObject::tr("Trackable (private w/ timestamps)"),   "trackable"    },
-	{ QObject::tr("Public"),                              "public"       },
-	{ QObject::tr("Private"),                             "private"      },
-	{ "", "" },
+static const std::vector<OsmTraceVisibility> trace_visibilities = {
+	OsmTraceVisibility(QObject::tr("Identifiable (public w/ timestamps)"), "identifiable"),
+	OsmTraceVisibility(QObject::tr("Trackable (private w/ timestamps)"),   "trackable"),
+	OsmTraceVisibility(QObject::tr("Public"),                              "public"),
+	OsmTraceVisibility(QObject::tr("Private"),                             "private")
 };
 
 
@@ -122,11 +132,11 @@ public:
 
 	void run(void);
 
-	QString name;
+	QString file_name;
 	QString description;
 	QString tags;
 	bool anonymize_times = false; /* ATM only available on a single track. */
-	const OsmTraceVisibility * visibility = NULL;
+	QString visibility_apistr;
 	LayerTRW * trw = NULL;
 	Track * trk = NULL;
 };
@@ -171,7 +181,7 @@ static QString get_default_user(void)
 
 
 
-void SlavGPS::osm_save_current_credentials(const QString & user, const QString & password)
+void OSMTraces::save_current_credentials(const QString & user, const QString & password)
 {
 	login_mutex.lock();
 
@@ -183,7 +193,8 @@ void SlavGPS::osm_save_current_credentials(const QString & user, const QString &
 
 
 
-QString SlavGPS::osm_get_current_credentials()
+
+QString OSMTraces::get_current_credentials(void)
 {
 	QString user_pass;
 	login_mutex.lock();
@@ -195,8 +206,8 @@ QString SlavGPS::osm_get_current_credentials()
 
 
 
-/* Initialization. */
-void SlavGPS::osm_traces_init()
+/* Module initialization. */
+void OSMTraces::init(void)
 {
 	int i = 0;
 
@@ -211,7 +222,7 @@ void SlavGPS::osm_traces_init()
 
 
 
-void SlavGPS::osm_traces_uninit()
+void OSMTraces::uninit(void)
 {
 }
 
@@ -228,49 +239,44 @@ void SlavGPS::osm_traces_uninit()
 static int osm_traces_upload_file(const QString & user,
 				  const QString & password,
 				  const QString & file_full_path,
-				  const char *filename,
-				  const char *description,
-				  const char *tags,
-				  const OsmTraceVisibility * visibility)
+				  const QString & filename,
+				  const QString & description,
+				  const QString & tags,
+				  const QString & visibility_apistr)
 {
-	CURL *curl;
-	CURLcode res;
-	char curl_error_buffer[CURL_ERROR_SIZE];
-	struct curl_slist *headers = NULL;
-	struct curl_httppost *post=NULL;
-	struct curl_httppost *last=NULL;
-
-	const QString base_url = "http://www.openstreetmap.org/api/0.6/gpx/create";
+	const QString base_url = OSM_TRACES_SERVICE_URL;
 
 	/* TODO_LATER: why do we pass user and password to this function if we create user_pass here? */
-	const QString user_pass = osm_get_current_credentials();
+	const QString user_pass = OSMTraces::get_current_credentials();
 
-	int result = 0; /* Default to it worked! */
+	qDebug() << SG_PREFIX_D << user << file_full_path << filename << description << tags;
 
-	qDebug() << "DD: OSM Traces:" << __FUNCTION__ << user << password << file_full_path << filename << description << tags;
-
-	/* Init CURL. */
-	curl = curl_easy_init();
+	/* Initialize CURL. */
+	CURL * curl = curl_easy_init();
+	struct curl_httppost *post=NULL;
+	struct curl_httppost *last=NULL;
 
 	/* Filling the form. */
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "description",
-		     CURLFORM_COPYCONTENTS, description, CURLFORM_END);
+		     CURLFORM_COPYCONTENTS, description.toUtf8().constData(), CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "tags",
-		     CURLFORM_COPYCONTENTS, tags, CURLFORM_END);
+		     CURLFORM_COPYCONTENTS, tags.toUtf8().constData(), CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "visibility",
-		     CURLFORM_COPYCONTENTS, visibility->apistr, CURLFORM_END);
+		     CURLFORM_COPYCONTENTS, visibility_apistr, CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "file",
 		     CURLFORM_FILE, file_full_path.toUtf8().constData(), /* TODO_LATER: verify whether we can pass string like that. */
-		     CURLFORM_FILENAME, filename,
+		     CURLFORM_FILENAME, filename.toUtf8().constData(),
 		     CURLFORM_CONTENTTYPE, "text/xml", CURLFORM_END);
 
 	/* Prepare request. */
 	/* As explained in http://wiki.openstreetmap.org/index.php/User:LA2 */
 	/* Expect: header seems to produce incompatibilites between curl and httpd. */
+	char curl_error_buffer[CURL_ERROR_SIZE];
+	struct curl_slist * headers = NULL;
 	headers = curl_slist_append(headers, "Expect: ");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
@@ -283,22 +289,23 @@ static int osm_traces_upload_file(const QString & user,
 	}
 
 	/* Execute request. */
-	res = curl_easy_perform(curl);
+	int result = 0; /* Default to it worked! */
+	CURLcode res = curl_easy_perform(curl);
 	if (res == CURLE_OK) {
 		long code;
 		res = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 		if (res == CURLE_OK){
-			qDebug() << "DD: OSM Traces: received valid curl response:" << code;
+			qDebug() << SG_PREFIX_D << "Received valid curl response:" << code;
 			if (code != 200) {
-				qDebug() << "WW: OSM Traces: failed to upload data: HTTP response is" << code;
+				qDebug() << SG_PREFIX_W << "Failed to upload data: HTTP response is" << code;
 				result = code;
 			}
 		} else {
-			qDebug() << "EE: OSM Traces: curl_easy_getinfo failed:" << res;
+			qDebug() << SG_PREFIX_E << "curl_easy_getinfo failed:" << res;
 			result = -1;
 		}
 	} else {
-		qDebug() << "WW: OSM Traces: curl request failed:" << curl_error_buffer;
+		qDebug() << SG_PREFIX_W << "curl request failed:" << curl_error_buffer;
 		result = -2;
 	}
 
@@ -321,7 +328,7 @@ void OSMTracesInfo::run(void)
 	   also don't upload invisible tracks. */
 	static GPXWriteOptions options(true, true, false, false);
 
-	QString filename;
+	QString file_full_path;
 
 	/* Writing gpx file. */
 	if (this->trk != NULL) {
@@ -329,22 +336,22 @@ void OSMTracesInfo::run(void)
 		if (this->anonymize_times) {
 			Track * trk2 = new Track(*this->trk);
 			trk2->anonymize_times();
-			filename = GPX::write_track_tmp_file(trk2, &options);
+			file_full_path = GPX::write_track_tmp_file(trk2, &options);
 			trk2->free();
 		} else {
-			filename = GPX::write_track_tmp_file(this->trk, &options);
+			file_full_path = GPX::write_track_tmp_file(this->trk, &options);
 		}
 	} else {
 		/* Upload the whole LayerTRW. */
-		filename = GPX::write_tmp_file(this->trw, &options);
+		file_full_path = GPX::write_tmp_file(this->trw, &options);
 	}
 
-	if (filename.isEmpty()) {
+	if (file_full_path.isEmpty()) {
 		return;
 	}
 
 	/* Finally, upload it. */
-	int ans = osm_traces_upload_file(osm_user, osm_password, filename, this->name.toUtf8().constData(), this->description.toUtf8().constData(), this->tags.toUtf8().constData(), this->visibility);
+	int ans = osm_traces_upload_file(osm_user, osm_password, file_full_path, this->file_name, this->description, this->tags, this->visibility_apistr);
 
 	/* Show result in statusbar or failure in dialog for user feedback. */
 
@@ -379,8 +386,8 @@ void OSMTracesInfo::run(void)
 
 	/* Removing temporary file. */
 	int ret = 0;
-	if (!QFile::remove(filename)) {
-		qDebug() << "EE: OSM Traces: failed to remove temporary file" << filename;
+	if (!QFile::remove(file_full_path)) {
+		qDebug() << SG_PREFIX_E << "Failed to remove temporary file" << file_full_path;
 		ret = -1;
 	}
 	return;
@@ -389,7 +396,7 @@ void OSMTracesInfo::run(void)
 
 
 
-void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
+void OSMTraces::fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry)
 {
 	const QString default_user = get_default_user();
 	const QString pref_user = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES "username").val_string;
@@ -415,12 +422,12 @@ void SlavGPS::osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & p
 
 
 /**
- * Uploading a LayerTRW.
- *
- * @param trw LayerTRW
- * @param trk if not null, the track to upload
- */
-void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
+   @brief Upload a TTRW layer or a track from TRW layer
+
+   @param trw - TRW layer to upload
+   @param trk - if not NULL, the track to upload
+*/
+void OSMTraces::upload_trw_layer(LayerTRW * trw, Track * trk)
 {
 	BasicDialog dialog(trw->get_window());
 	dialog.setWindowTitle(QObject::tr("OSM upload"));
@@ -434,7 +441,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	QLabel  * user_label = new QLabel(QObject::tr("Email:"), &dialog);
 	QLineEdit * user_entry = new QLineEdit(&dialog);
 	user_entry->setToolTip(QObject::tr("The email used as login\n"
-					   "<small>Enter the email you use to login into www.openstreetmap.org.</small>"));
+					   "Enter the email you use to login into www.openstreetmap.org"));
 	dialog.grid->addWidget(user_label, row, 0);
 	dialog.grid->addWidget(user_entry, row, 1);
 	row++;
@@ -444,7 +451,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	QLabel * password_label = new QLabel(QObject::tr("Password:"), &dialog);
 	QLineEdit * password_entry = new QLineEdit(&dialog);
 	password_entry->setToolTip(QObject::tr("The password used to login\n"
-					       "Enter the password you use to login into www.openstreetmap.org."));
+					       "Enter the password you use to login into www.openstreetmap.org"));
 	password_entry->setEchoMode(QLineEdit::Password);
 	dialog.grid->addWidget(password_label, row, 0);
 	dialog.grid->addWidget(password_entry, row, 1);
@@ -452,7 +459,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 
 
-	osm_fill_credentials_widgets(*user_entry, *password_entry);
+	OSMTraces::fill_credentials_widgets(*user_entry, *password_entry);
 
 
 
@@ -462,8 +469,8 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 	name_entry->setText(name);
 	name_entry->setToolTip(QObject::tr("The name of the file on OSM\n"
-					   "<small>This is the name of the file created on the server."
-					   "This is not the name of the local file.</small>"));
+					   "This is the name of the file created on the server\n"
+					   "This is not the name of the local file"));
 	dialog.grid->addWidget(name_label, row, 0);
 	dialog.grid->addWidget(name_entry, row, 1);
 	row++;
@@ -477,7 +484,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		description = trk->description;
 	} else {
 		TRWMetadata * md = trw->get_metadata();
-		description = md ? md->description : NULL;
+		description = md ? md->description : "";
 	}
 	if (!description.isEmpty()) {
 		description_entry->setText(description);
@@ -493,8 +500,8 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	if (trk != NULL) {
 		QLabel * label = new QLabel(QObject::tr("Anonymize Times:"));
 		anonymize_checkbutton = new QCheckBox();
-		anonymize_checkbutton->setToolTip(QObject::tr("Anonymize times of the trace.\n"
-							      "<small>You may choose to make the trace identifiable, yet mask the actual real time values</small>"));
+		anonymize_checkbutton->setToolTip(QObject::tr("Anonymize times of the trace\n"
+							      "You may choose to make the trace identifiable, yet mask the actual real time values"));
 		dialog.grid->addWidget(label, row, 0);
 		dialog.grid->addWidget(anonymize_checkbutton, row, 1);
 		row++;
@@ -517,8 +524,9 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 	QLabel * visibility_label = new QLabel(QObject::tr("Visibility:"));
 	visibility_combo = new QComboBox();
-	for (const OsmTraceVisibility * vis = trace_visibilities; !vis->combostr.isEmpty(); vis++) {
-		visibility_combo->addItem(vis->combostr);
+	for (auto iter = trace_visibilities.begin(); iter != trace_visibilities.end(); iter++) {
+		const OsmTraceVisibility & vis = *iter;
+		visibility_combo->addItem(vis.combostr);
 	}
 
 	if (g_last_visibility_index == INVALID_ENTRY_INDEX) {
@@ -541,15 +549,15 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	if (dialog.exec() == QDialog::Accepted) {
 
 		/* Overwrite authentication info. */
-		osm_save_current_credentials(user_entry->text(), password_entry->text());
+		OSMTraces::save_current_credentials(user_entry->text(), password_entry->text());
 
 		/* Storing data for the future thread. */
 		OSMTracesInfo * info = new OSMTracesInfo(trw, trk);
-		info->name        = name_entry->text();
-		info->description = description_entry->text();
+		info->file_name         = name_entry->text();
+		info->description       = description_entry->text();
 		/* TODO_LATER Normalize tags: they will be used as URL part. */
-		info->tags        = tags_entry->text();
-		info->visibility  = &trace_visibilities[visibility_combo->currentIndex()];
+		info->tags              = tags_entry->text();
+		info->visibility_apistr = trace_visibilities[visibility_combo->currentIndex()].apistr;
 
 		if (trk != NULL && anonymize_checkbutton != NULL) {
 			info->anonymize_times = anonymize_checkbutton->isChecked();
@@ -561,7 +569,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		g_last_visibility_index = visibility_combo->currentIndex();
 		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, trace_visibilities[g_last_visibility_index].apistr);
 
-		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->name);
+		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->file_name);
 		info->set_description(job_description);
 
 		info->run_in_background(ThreadPoolType::Remote);
@@ -573,27 +581,26 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 int find_initial_visibility_index(void)
 {
-	QString visibility;
-	if (ApplicationState::get_string(VIK_SETTINGS_OSM_TRACE_VIS, visibility)) {
-		/* Use setting. */
+	QString initial_visibility;
+	if (ApplicationState::get_string(VIK_SETTINGS_OSM_TRACE_VIS, initial_visibility)) {
+		/* Use setting read from ApplicationState. */
 	} else {
 		/* Default to this value if necessary. */
-		visibility = "identifiable";
+		initial_visibility = "identifiable";
 	}
 
 	int entry_index = INVALID_ENTRY_INDEX;
-	bool found = false;
-	if (!visibility.isEmpty()) {
-		for (const OsmTraceVisibility * vis = trace_visibilities; !vis->apistr.isEmpty(); vis++) {
+	if (!initial_visibility.isEmpty()) {
+		for (auto iter = trace_visibilities.begin(); iter != trace_visibilities.end(); iter++) {
+			const OsmTraceVisibility & vis = *iter;
 			entry_index++;
-			if (QString(vis->apistr) == visibility) {
-				found = true;
+			if (vis.apistr == initial_visibility) {
 				break;
 			}
 		}
 	}
 
-	if (!found) {
+	if (entry_index == INVALID_ENTRY_INDEX) {
 		/* First entry in trace_visibilities. */
 		entry_index = 0;
 	}

@@ -41,13 +41,16 @@ namespace SlavGPS {
 
 
 
-	void osm_traces_init();
-	void osm_traces_uninit();
-	void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk);
+	class OSMTraces {
+	public:
+		static void init(void);
+		static void uninit(void);
+		static void upload_trw_layer(LayerTRW * trw, Track * trk);
 
-	void osm_save_current_credentials(const QString & user, const QString & password);
-	QString osm_get_current_credentials();
-	void osm_fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry);
+		static void save_current_credentials(const QString & user, const QString & password);
+		static QString get_current_credentials(void);
+		static void fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & password_entry);
+	};
 
 
 
