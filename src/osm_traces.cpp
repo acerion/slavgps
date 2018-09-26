@@ -77,7 +77,7 @@ extern bool vik_verbose;
 
 #define VIK_SETTINGS_OSM_TRACE_VIS "osm_trace_visibility"
 
-#define INVALID_ENTRY_INDEX -1
+#define INVALID_VISIBILITY_INDEX -1
 
 /* Notice the https protocol. */
 #define OSM_TRACES_SERVICE_URL   "https://www.openstreetmap.org/api/0.6/gpx/create"
@@ -86,16 +86,16 @@ extern bool vik_verbose;
 
 
 /* Index of the last visibility selected. */
-static int g_last_visibility_index = -1;
+static int g_last_visibility_index = INVALID_VISIBILITY_INDEX;
 
 /* Login to use for OSM uploading. */
-static QString osm_user;
+static QString g_osm_user;
 
 /* Password to use for OSM uploading. */
-static QString osm_password;
+static QString g_osm_password;
 
 /* Mutex to protect authentication token. */
-static std::mutex login_mutex;
+static std::mutex g_login_mutex;
 
 
 
@@ -125,20 +125,23 @@ static int find_initial_visibility_index(void);
 
 
 
-class OSMTracesInfo : public BackgroundJob {
+class OSMTracesUpload : public BackgroundJob {
 public:
-	OSMTracesInfo(LayerTRW * trw, Track * trk);
-	~OSMTracesInfo();
+	OSMTracesUpload(LayerTRW * trw, Track * trk);
+	~OSMTracesUpload();
 
 	void run(void);
 
 	QString file_name;
 	QString description;
 	QString tags;
-	bool anonymize_times = false; /* ATM only available on a single track. */
 	QString visibility_apistr;
+	bool anonymize_times = false; /* ATM only available on a single track. */
+
 	LayerTRW * trw = NULL;
 	Track * trk = NULL;
+private:
+	int upload_file(const QString & file_full_path);
 };
 
 
@@ -153,7 +156,7 @@ static ParameterSpecification prefs[] = {
 
 
 
-OSMTracesInfo::OSMTracesInfo(LayerTRW * new_trw, Track * new_trk)
+OSMTracesUpload::OSMTracesUpload(LayerTRW * new_trw, Track * new_trk)
 {
 	this->n_items = 1;
 
@@ -164,7 +167,7 @@ OSMTracesInfo::OSMTracesInfo(LayerTRW * new_trw, Track * new_trk)
 
 
 
-OSMTracesInfo::~OSMTracesInfo()
+OSMTracesUpload::~OSMTracesUpload()
 {
 	this->trw->unref();
 	this->trw = NULL;
@@ -183,12 +186,12 @@ static QString get_default_user(void)
 
 void OSMTraces::save_current_credentials(const QString & user, const QString & password)
 {
-	login_mutex.lock();
+	g_login_mutex.lock();
 
-	osm_user = user;
-	osm_password = password;
+	g_osm_user = user;
+	g_osm_password = password;
 
-	login_mutex.unlock();
+	g_login_mutex.unlock();
 }
 
 
@@ -197,9 +200,9 @@ void OSMTraces::save_current_credentials(const QString & user, const QString & p
 QString OSMTraces::get_current_credentials(void)
 {
 	QString user_pass;
-	login_mutex.lock();
-	user_pass = QString("%1:%2").arg(osm_user).arg(osm_password);
-	login_mutex.unlock();
+	g_login_mutex.lock();
+	user_pass = QString("%1:%2").arg(g_osm_user).arg(g_osm_password);
+	g_login_mutex.unlock();
 	return user_pass;
 }
 
@@ -230,46 +233,36 @@ void OSMTraces::uninit(void)
 
 
 /*
- * Upload a file.
- * Returns a basic status:
- *   < 0  : curl error
- *   == 0 : OK
- *   > 0  : HTTP error
-  */
-static int osm_traces_upload_file(const QString & user,
-				  const QString & password,
-				  const QString & file_full_path,
-				  const QString & filename,
-				  const QString & description,
-				  const QString & tags,
-				  const QString & visibility_apistr)
+  Upload a file.
+  Returns a basic status:
+  < 0  : curl error
+  == 0 : OK
+  > 0  : HTTP error
+*/
+int OSMTracesUpload::upload_file(const QString & file_full_path)
 {
-	const QString base_url = OSM_TRACES_SERVICE_URL;
-
-	/* TODO_LATER: why do we pass user and password to this function if we create user_pass here? */
 	const QString user_pass = OSMTraces::get_current_credentials();
 
-	qDebug() << SG_PREFIX_D << user << file_full_path << filename << description << tags;
+	qDebug() << SG_PREFIX_D << file_full_path << this->file_name << this->description << this->tags;
 
-	/* Initialize CURL. */
 	CURL * curl = curl_easy_init();
-	struct curl_httppost *post=NULL;
-	struct curl_httppost *last=NULL;
+	struct curl_httppost * post = NULL;
+	struct curl_httppost * last = NULL;
 
 	/* Filling the form. */
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "description",
-		     CURLFORM_COPYCONTENTS, description.toUtf8().constData(), CURLFORM_END);
+		     CURLFORM_COPYCONTENTS, this->description.toUtf8().constData(), CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "tags",
-		     CURLFORM_COPYCONTENTS, tags.toUtf8().constData(), CURLFORM_END);
+		     CURLFORM_COPYCONTENTS, this->tags.toUtf8().constData(), CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "visibility",
-		     CURLFORM_COPYCONTENTS, visibility_apistr, CURLFORM_END);
+		     CURLFORM_COPYCONTENTS, this->visibility_apistr, CURLFORM_END);
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "file",
 		     CURLFORM_FILE, file_full_path.toUtf8().constData(), /* TODO_LATER: verify whether we can pass string like that. */
-		     CURLFORM_FILENAME, filename.toUtf8().constData(),
+		     CURLFORM_FILENAME, this->file_name.toUtf8().constData(),
 		     CURLFORM_CONTENTTYPE, "text/xml", CURLFORM_END);
 
 	/* Prepare request. */
@@ -280,7 +273,7 @@ static int osm_traces_upload_file(const QString & user,
 	headers = curl_slist_append(headers, "Expect: ");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-	curl_easy_setopt(curl, CURLOPT_URL, base_url.toUtf8().constData());
+	curl_easy_setopt(curl, CURLOPT_URL, OSM_TRACES_SERVICE_URL);
 	curl_easy_setopt(curl, CURLOPT_USERPWD, user_pass.toUtf8().constData());
 	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_error_buffer);
@@ -320,9 +313,9 @@ static int osm_traces_upload_file(const QString & user,
 
 
 /**
-   Uploading function executed by the background" thread.
+   Uploading function executed in the background thread
 */
-void OSMTracesInfo::run(void)
+void OSMTracesUpload::run(void)
 {
 	/* Due to OSM limits, we have to enforce ele and time fields
 	   also don't upload invisible tracks. */
@@ -351,7 +344,7 @@ void OSMTracesInfo::run(void)
 	}
 
 	/* Finally, upload it. */
-	int ans = osm_traces_upload_file(osm_user, osm_password, file_full_path, this->file_name, this->description, this->tags, this->visibility_apistr);
+	int ans = this->upload_file(file_full_path);
 
 	/* Show result in statusbar or failure in dialog for user feedback. */
 
@@ -359,29 +352,26 @@ void OSMTracesInfo::run(void)
 	   since need to show difference between operations (when displayed on statusbar).
 	   NB If on dialog then don't need time. */
 	time_t timenow;
-	struct tm* timeinfo;
 	time(&timenow);
-	timeinfo = localtime(&timenow);
+	struct tm * timeinfo = localtime(&timenow);
 	char timestr[80];
 	/* Compact time only - as days/date isn't very useful here. */
 	strftime(timestr, sizeof(timestr), "%X)", timeinfo);
 
 	/* Test to see if window it was invoked on is still valid.
 	   Not sure if this test really works! (i.e. if the window was closed in the mean time). */
-	Window * w = this->trw->get_window();
-	if (w) {
+	Window * window = this->trw->get_window();
+	if (window) {
 		QString msg;
 		if (ans == 0) {
 			/* Success. */
-			msg = QString("%1 (@%2)").arg("Uploaded to OSM").arg(timestr);
+			msg = tr("Uploaded to OSM (@%1)").arg(timestr);
 		} else if (ans < 0) {
-			/* Use UPPER CASE for bad news. */
-			msg = QString("%1 (@%2)").arg("FAILED TO UPLOAD DATA TO OSM - CURL PROBLEM").arg(timestr);
+			msg = tr("Failed to upload data to OSM: curl problem (@%1)").arg(timestr);
 		} else {
-			/* Use UPPER CASE for bad news. */
-			msg = QString("%1 : %2 %3 (@%4)").arg("FAILED TO UPLOAD DATA TO OSM").arg("HTTP response code").arg(ans).arg(timestr);
+			msg = tr("Failed to upload data to OSM: HTTP response code %3 (@%4)").arg(ans).arg(timestr);
 		}
-		w->statusbar_update(StatusBarField::INFO, msg);
+		window->statusbar_update(StatusBarField::INFO, msg);
 	}
 
 	/* Removing temporary file. */
@@ -403,16 +393,16 @@ void OSMTraces::fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & pas
 	const QString pref_password = Preferences::get_param_value(PREFERENCES_NAMESPACE_OSM_TRACES "password").val_string;
 
 
-	if (!osm_user.isEmpty()) {
-		user_entry.setText(osm_user);
+	if (!g_osm_user.isEmpty()) {
+		user_entry.setText(g_osm_user);
 	} else if (!pref_user.isEmpty()) {
 		user_entry.setText(pref_user);
 	} else if (!default_user.isEmpty()) {
 		user_entry.setText(default_user);
 	}
 
-	if (!osm_password.isEmpty()) {
-		password_entry.setText(osm_password);
+	if (!g_osm_password.isEmpty()) {
+		password_entry.setText(g_osm_password);
 	} else if (!pref_password.isEmpty()) {
 		password_entry.setText(pref_password);
 	}
@@ -422,7 +412,7 @@ void OSMTraces::fill_credentials_widgets(QLineEdit & user_entry, QLineEdit & pas
 
 
 /**
-   @brief Upload a TTRW layer or a track from TRW layer
+   @brief Upload a TRW layer or a track from TRW layer
 
    @param trw - TRW layer to upload
    @param trk - if not NULL, the track to upload
@@ -434,8 +424,6 @@ void OSMTraces::upload_trw_layer(LayerTRW * trw, Track * trk)
 
 
 	int row = 0;
-	QCheckBox * anonymize_checkbutton = NULL;
-	QComboBox * visibility_combo = NULL;
 
 
 	QLabel  * user_label = new QLabel(QObject::tr("Email:"), &dialog);
@@ -460,7 +448,6 @@ void OSMTraces::upload_trw_layer(LayerTRW * trw, Track * trk)
 
 
 	OSMTraces::fill_credentials_widgets(*user_entry, *password_entry);
-
 
 
 	QLabel * name_label = new QLabel(QObject::tr("File's name:"), &dialog);
@@ -497,6 +484,7 @@ void OSMTraces::upload_trw_layer(LayerTRW * trw, Track * trk)
 
 
 
+	QCheckBox * anonymize_checkbutton = NULL;
 	if (trk != NULL) {
 		QLabel * label = new QLabel(QObject::tr("Anonymize Times:"));
 		anonymize_checkbutton = new QCheckBox();
@@ -523,13 +511,13 @@ void OSMTraces::upload_trw_layer(LayerTRW * trw, Track * trk)
 
 
 	QLabel * visibility_label = new QLabel(QObject::tr("Visibility:"));
-	visibility_combo = new QComboBox();
+	QComboBox * visibility_combo = new QComboBox();
 	for (auto iter = trace_visibilities.begin(); iter != trace_visibilities.end(); iter++) {
 		const OsmTraceVisibility & vis = *iter;
 		visibility_combo->addItem(vis.combostr);
 	}
 
-	if (g_last_visibility_index == INVALID_ENTRY_INDEX) {
+	if (g_last_visibility_index == INVALID_VISIBILITY_INDEX) {
 		g_last_visibility_index = find_initial_visibility_index();
 	}
 	/* After this the index is valid. */
@@ -548,31 +536,27 @@ void OSMTraces::upload_trw_layer(LayerTRW * trw, Track * trk)
 
 	if (dialog.exec() == QDialog::Accepted) {
 
-		/* Overwrite authentication info. */
 		OSMTraces::save_current_credentials(user_entry->text(), password_entry->text());
 
-		/* Storing data for the future thread. */
-		OSMTracesInfo * info = new OSMTracesInfo(trw, trk);
-		info->file_name         = name_entry->text();
-		info->description       = description_entry->text();
-		/* TODO_LATER Normalize tags: they will be used as URL part. */
-		info->tags              = tags_entry->text();
-		info->visibility_apistr = trace_visibilities[visibility_combo->currentIndex()].apistr;
-
+		OSMTracesUpload * job = new OSMTracesUpload(trw, trk);
+		job->file_name         = name_entry->text();
+		job->description       = description_entry->text();
+		job->tags              = tags_entry->text(); /* TODO_LATER Normalize tags: they will be used as URL part. */
+		job->visibility_apistr = trace_visibilities[visibility_combo->currentIndex()].apistr;
 		if (trk != NULL && anonymize_checkbutton != NULL) {
-			info->anonymize_times = anonymize_checkbutton->isChecked();
+			job->anonymize_times = anonymize_checkbutton->isChecked();
 		} else {
-			info->anonymize_times = false;
+			job->anonymize_times = false;
 		}
 
 		/* Save visibility value for default reuse. */
 		g_last_visibility_index = visibility_combo->currentIndex();
 		ApplicationState::set_string(VIK_SETTINGS_OSM_TRACE_VIS, trace_visibilities[g_last_visibility_index].apistr);
 
-		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(info->file_name);
-		info->set_description(job_description);
+		const QString job_description = QObject::tr("Uploading %1 to OSM").arg(job->file_name);
+		job->set_description(job_description);
 
-		info->run_in_background(ThreadPoolType::Remote);
+		job->run_in_background(ThreadPoolType::Remote);
 	}
 }
 
@@ -589,7 +573,7 @@ int find_initial_visibility_index(void)
 		initial_visibility = "identifiable";
 	}
 
-	int entry_index = INVALID_ENTRY_INDEX;
+	int entry_index = INVALID_VISIBILITY_INDEX;
 	if (!initial_visibility.isEmpty()) {
 		for (auto iter = trace_visibilities.begin(); iter != trace_visibilities.end(); iter++) {
 			const OsmTraceVisibility & vis = *iter;
@@ -600,7 +584,7 @@ int find_initial_visibility_index(void)
 		}
 	}
 
-	if (entry_index == INVALID_ENTRY_INDEX) {
+	if (entry_index == INVALID_VISIBILITY_INDEX) {
 		/* First entry in trace_visibilities. */
 		entry_index = 0;
 	}
