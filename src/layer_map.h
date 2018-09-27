@@ -38,7 +38,6 @@
 #include "map_source.h"
 #include "map_cache.h"
 #include "mapcoord.h"
-#include "vikmapslayer_compat.h"
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"

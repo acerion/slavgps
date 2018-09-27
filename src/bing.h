@@ -29,7 +29,10 @@ namespace SlavGPS {
 
 
 
-	void bing_init();
+	class Bing {
+	public:
+		static void init(void);
+	};
 
 
 

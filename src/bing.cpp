@@ -16,12 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include "variant.h"
 #include "bing.h"
@@ -46,10 +44,12 @@ using namespace SlavGPS;
 
 
 /* Initialization. */
-void SlavGPS::bing_init()
+void Bing::init(void)
 {
+#ifdef VIK_CONFIG_BING
 	MapSources::register_map_source(new MapSourceBing(MapTypeID::BingAerial, QObject::tr("Bing Aerial"), API_KEY));
 
 	/* Allow opening web location. */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Bing"), "http://www.bing.com/maps/?v=2&cp=%1~%2&lvl=%3"));
+#endif
 }

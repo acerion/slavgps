@@ -112,6 +112,9 @@ namespace SlavGPS {
 		LayerTRW();
 		~LayerTRW();
 
+		/* Module initialization. */
+		static void init(void);
+
 
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
@@ -488,7 +491,7 @@ namespace SlavGPS {
 
 
 
-	void layer_trw_init(void);
+
 	char * convert_to_dms(double dec);
 
 	bool is_valid_geocache_name(const char * str);

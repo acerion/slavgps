@@ -29,7 +29,10 @@ namespace SlavGPS {
 
 
 
-	void terraserver_init();
+	class Terraserver {
+	public:
+		static void init(void);
+	};
 
 
 

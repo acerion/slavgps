@@ -37,7 +37,7 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::maps_layer_register_type(const QString & label, unsigned int id, VikMapsLayer_MapType * map_type)
+void SlavGPS::maps_layer_register_type(const QString & label, MapTypeID id, VikMapsLayer_MapType * map_type)
 {
 	assert (id == map_type->uniq_id);
 	VikMapType * object = new VikMapType(*map_type, label.toUtf8().constData());

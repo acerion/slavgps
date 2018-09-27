@@ -229,8 +229,9 @@ static QHash<QString, bool> mapnik_requests; /* Just for storing of QStrings. */
 /**
  * Just initialize preferences.
  */
-void SlavGPS::vik_mapnik_layer_init(void)
+void LayerMapnik::init(void)
 {
+#ifdef HAVE_LIBMAPNIK
 	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_MAPNIK, QObject::tr("Mapnik"));
 
 	unsigned int i = 0;
@@ -248,17 +249,17 @@ void SlavGPS::vik_mapnik_layer_init(void)
 	/* Default to 1 thread due to potential crashing issues. */
 	Preferences::register_parameter_instance(prefs[i], SGVariant((int32_t) 1, prefs[i].type_id));
 	i++;
+#endif
 }
 
 
 
 
 /**
- * Initialize data structures - now that reading preferences is OK to perform.
- */
-void SlavGPS::vik_mapnik_layer_post_init(void)
+   Initialize data structures - now that reading preferences is OK to perform.
+*/
+void LayerMapnik::post_init(void)
 {
-
 	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").u.val_uint;
 	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * hours * 60 * 60).toTime_t(); /* In local time zone. */
 
@@ -276,7 +277,7 @@ void SlavGPS::vik_mapnik_layer_post_init(void)
 
 
 
-void SlavGPS::vik_mapnik_layer_uninit()
+void LayerMapnik::uninit(void)
 {
 }
 
@@ -286,6 +287,7 @@ void SlavGPS::vik_mapnik_layer_uninit()
 /* NB Only performed once per program run. */
 void SlavGPS::layer_mapnik_init(void)
 {
+#ifdef HAVE_LIBMAPNIK
 	const SGVariant plugins_dir = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "plugins_directory");
 	const SGVariant fonts_dir = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "fonts_directory");
 	const SGVariant recurse = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "recurse_fonts_directory");
@@ -298,6 +300,7 @@ void SlavGPS::layer_mapnik_init(void)
 	} else {
 		qDebug() << SG_PREFIX_E << "Unable to initialize Mapnik interface from preferences";
 	}
+#endif
 }
 
 

@@ -29,7 +29,11 @@ namespace SlavGPS {
 
 
 
-	void expedia_init();
+	class Expedia {
+	public:
+		static void init(void);
+	};
+
 
 
 

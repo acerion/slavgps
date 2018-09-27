@@ -32,13 +32,15 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::geonames_init()
+void Geonames::init(void)
 {
-	/* Goto */
+#ifdef VIK_CONFIG_GEONAMES
 
+	/* Goto */
 	GotoToolXML * geonames = new GotoToolXML(QObject::tr("Geonames"),
 						 "http://api.geonames.org/search?q=%1&maxRows=1&lang=en&style=short&username=viking", /* TODO_2_LATER: update username value. */
 						 "geonames/geoname/lat",
 						 "geonames/geoname/lng");
 	GoTo::register_tool(geonames);
+#endif
 }

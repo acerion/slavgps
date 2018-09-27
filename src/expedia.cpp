@@ -19,39 +19,53 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
+
 
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
 
-#include <gtk/gtk.h>
+
+
 
 #include "coords.h"
 #include "coord.h"
 #include "mapcoord.h"
 #include "download.h"
 #include "layer_map.h"
-
 #include "expedia.h"
+#include "globals.h"
+#include "vikmapslayer_compat.h"
+
+
+
+
+using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Expedia"
 
 
 
 
 static bool expedia_coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest);
 static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coord);
-static DownloadStatus expedia_download_tile(const TileInfo & src, char const * dest_fn, DownloadHandle * dl_handle) const;
+static DownloadStatus expedia_download_tile(const TileInfo & src, char const * dest_fn, DownloadHandle * dl_handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
 
 
 
-
+#ifdef TODO_2_LATER
 static DownloadOptions expedia_options = { false, false, NULL, 2, a_check_map_file, NULL };
+#else
+static DownloadOptions expedia_options;
+#endif
 
 
 
@@ -72,16 +86,24 @@ static DownloadOptions expedia_options = { false, false, NULL, 2, a_check_map_fi
 /* First buffer is to cut off the expedia/microsoft logo. Annoying little buggers ;) */
 /* Second is to allow for a 1-pixel overlap on each side. this is a good thing (tm). */
 
-static const unsigned int expedia_altis[]              = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
+static const int expedia_altis[]              = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
 /* square this number to find out how many per square degree. */
 static const double expedia_altis_degree_freq[]  = { 120, 60, 30, 15, 8, 4, 2, 1, 1, 1 };
 static const unsigned int expedia_altis_count = sizeof(expedia_altis) / sizeof(expedia_altis[0]);
 
 
-void SlavGPS::expedia_init()
+
+
+void Expedia::init(void)
 {
+#ifdef VIK_CONFIG_EXPEDIA
+#ifdef TODO_2_LATER
 	VikMapsLayer_MapType map_type = { MapTypeID::Expedia, 0, 0, ViewportDrawMode::EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download_tile, expedia_handle_init, expedia_handle_cleanup };
 	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::Expedia, &map_type);
+#else
+	VikMapsLayer_MapType map_type;
+#endif
+#endif
 }
 
 
@@ -89,7 +111,7 @@ void SlavGPS::expedia_init()
 
 double expedia_altis_freq(int alti)
 {
-	for (int i = 0; i < expedia_altis_count; i++) {
+	for (unsigned int i = 0; i < expedia_altis_count; i++) {
 		if (expedia_altis[i] == alti) {
 			return expedia_altis_degree_freq[i];
 		}
@@ -103,10 +125,10 @@ double expedia_altis_freq(int alti)
 
 
 /* Returns -1 if none of the above. */
-int expedia_zoom_to_alti(double zoom)
+int expedia_zoom_to_alti(double viking_zoom_level)
 {
 	for (unsigned int i = 0; i < expedia_altis_count; i++) {
-		if (fabs(expedia_altis[i] - zoom) / zoom < MPP_MARGIN_OF_ERROR) {
+		if (fabs(expedia_altis[i] - viking_zoom_level) / viking_zoom_level < MPP_MARGIN_OF_ERROR) {
 			return expedia_altis[i];
 		}
 	}
@@ -126,22 +148,25 @@ int expedia_pseudo_zone(int alti, int x, int y)
 
 
 
-void expedia_snip(char const * file)
+void expedia_snip(const QString & file)
 {
 	/* Load the pixbuf. */
 	QPixmap old;
-	if (!old.load(QString(file))) {
+	if (!old.load(file)) {
 		qDebug() << "WW: Expedia: Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!)";
 		return;
 	}
 
 	int width = old.width();
-	int height = old.heigth();
+	int height = old.height();
 
-	QPixmap * cropped = gdk_pixbuf_new_subpixbuf(old, WIDTH_BUFFER, HEIGHT_BUFFER,
-						     width - 2 * WIDTH_BUFFER, height - 2 * HEIGHT_BUFFER);
+	QPixmap * cropped = NULL;
+#ifdef TODO_2_LATER
+	cropped = gdk_pixbuf_new_subpixbuf(old, WIDTH_BUFFER, HEIGHT_BUFFER,
+					   width - 2 * WIDTH_BUFFER, height - 2 * HEIGHT_BUFFER);
+#endif
 
-	if (!cropped->save(QString(file))) {
+	if (!cropped->save(file)) {
 		qDebug() << "WW: Expedia: Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!)";
 	}
 	delete cropped;
@@ -152,17 +177,17 @@ void expedia_snip(char const * file)
 
 /* If degree_freeq = 60 -> nearest minute (in middle).
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
-static bool expedia_coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest)
+static bool expedia_coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
 {
 	assert (src_coord.mode == CoordMode::LATLON);
 
-	if (xzoom != yzoom) {
+	if (!viking_zoom_level.x_y_is_equal()) {
 		return false;
 	}
 
-	int alti = expedia_zoom_to_alti(xzoom);
+	int alti = expedia_zoom_to_alti(viking_zoom_level.get_x());
 	if (alti != -1) {
-		dest.scale = alti;
+		dest.scale.set_scale_value(alti);
 		dest.x = (int) (((src_coord.ll.lon + 180) * expedia_altis_freq(alti))+0.5);
 		dest.y = (int) (((src_coord.ll.lat + 90) * expedia_altis_freq(alti))+0.5);
 		/* + 0.5 to round off and not floor. */
@@ -193,18 +218,18 @@ LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coord)
 {
 	dest_coord.mode = CoordMode::LATLON;
-	dest_coord.ll.lon = (((double) src->x) / expedia_altis_freq(src->scale)) - 180;
-	dest_coord.ll.lat = (((double) src->y) / expedia_altis_freq(src->scale)) - 90;
+	dest_coord.ll.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
+	dest_coord.ll.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
 }
 
 
 
 
-static DownloadStatus expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const
+static DownloadStatus expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle)
 {
-	const LatLon lat_lon = expedia_xy_to_latlon_middle(src.scale, src.x, src.y);
+	const LatLon lat_lon = expedia_xy_to_latlon_middle(src.scale.get_scale_value(), src.x, src.y);
 
-	int height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src.scale) / (src.scale);
+	int height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src.scale.get_scale_value()) / (src.scale.get_scale_value());
 	int width = height * cos(lat_lon.lat * DEGREES_TO_RADS);
 
 	height += 2 * REAL_HEIGHT_BUFFER;
@@ -214,7 +239,7 @@ static DownloadStatus expedia_download_tile(const TileInfo & src, const QString 
 		.arg(lat_lon.lat)
 		.arg(lat_lon.lon)
 		.arg((lat_lon.lon > -30) ? "EUR0809" : "USA0409")
-		.arg(src.scale)
+		.arg(src.scale.get_scale_value()) /* This should be an integer value. TODO_2_LATER: verify whether we get correct member of scale object. */
 		.arg(width)
 		.arg(height);
 

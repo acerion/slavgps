@@ -307,7 +307,7 @@ LayerGPSInterface::LayerGPSInterface()
 /**
    Overwrite the static setup with dynamically generated GPS Babel device list.
 */
-void SlavGPS::layer_gps_init(void)
+void LayerGPS::init(void)
 {
 	protocols_args.clear();
 

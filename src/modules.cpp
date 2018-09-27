@@ -44,13 +44,13 @@
 #include "osm.h"
 #include "osm_traces.h"
 #include "datasources.h"
-
-#ifdef K_INCLUDES
 #include "bing.h"
 #include "google.h"
 #include "terraserver.h"
 #include "expedia.h"
 #include "bluemarble.h"
+
+#ifdef K_INCLUDES
 #include "dir.h"
 #include "external_tools.h"
 #include "external_tool_datasources.h"
@@ -82,6 +82,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Modules"
 
 
 
@@ -146,7 +151,7 @@ static void modules_register_routing_engine(VikGobjectBuilder * self, void * obj
 
 
 
-static void modules_load_config_dir(const QString & dir)
+static void modules_load_config_from_dir(const QString & dir)
 {
 	qDebug() << "DD: Modules: Loading configurations from directory" << dir;
 
@@ -190,12 +195,14 @@ static void modules_load_config_dir(const QString & dir)
 		vik_gobject_builder_parse(builder, routing);
 	}
 }
+#endif
 
 
 
 
 static void modules_load_config(void)
 {
+#ifdef K_FIXME_RESTORE
 	/* Look in the directories of data path. */
 	const QString data_dirs = SlavGPSLocations::get_data_dirs();
 
@@ -206,26 +213,29 @@ static void modules_load_config(void)
 	   So, we have to process directories in reverse order. */
 	const int n_data_dirs = data_dirs.size();
 	for (int i = n_data_dirs - 1; i >= 0; i--) {
-		modules_load_config_dir(data_dirs.at(i));
+		modules_load_config_from_dir(data_dirs.at(i));
 	}
 
 	/* Check if system config is set. */
-	modules_load_config_dir(VIKING_SYSCONFDIR);
+	modules_load_config_from_dir(VIKING_SYSCONFDIR);
 
 	QString data_home = SlavGPSLocations::get_data_home();
 	if (!data_home.isEmpty()) {
-		modules_load_config_dir(data_home);
+		modules_load_config_from_dir(data_home);
 	}
 
 	/* Check user's home config. */
-	modules_load_config_dir(get_viking_dir());
+	modules_load_config_from_dir(get_viking_dir());
+#endif
 }
+
 
 
 
 typedef int GType;
 static void register_loadable_types(void)
 {
+#ifdef K_FIXME_RESTORE
 	/* Force registering of loadable types. */
 	volatile GType types[] = {
 		/* Maps */
@@ -249,10 +259,10 @@ static void register_loadable_types(void)
 
 	/* Kill 'unused variable' + argument type warnings. */
 	fprintf(stderr, "DEBUG: %d types loaded\n", (int)sizeof(types)/(int)sizeof(GType));
+#endif
 }
 
 
-#endif
 
 
 /**
@@ -266,67 +276,39 @@ void SlavGPS::modules_init()
 	OSM::init();
 	OSMTraces::init();
 
-
-#ifdef K_FIXME_RESTORE
-#ifdef VIK_CONFIG_BING
-	bing_init();
-#endif
-#ifdef VIK_CONFIG_GOOGLE
-	google_init();
-#endif
-#ifdef VIK_CONFIG_EXPEDIA
-	expedia_init();
-#endif
-#ifdef VIK_CONFIG_TERRASERVER
-	terraserver_init();
-#endif
-#ifdef VIK_CONFIG_BLUEMARBLE
-	bluemarble_init();
-#endif
-#endif
-#if 1 //#ifdef VIK_CONFIG_GEONAMES
-	geonames_init();
-#endif
-
-#ifdef VIK_CONFIG_GEOCACHES
+	Bing::init();
+	Google::init();
+	Expedia::init();
+	Terraserver::init();
+	BlueMarble::init();
+	Geonames::init();
 	DataSourceGeoCache::init();
-#endif
 
-#ifdef K_FIXME_RESTORE
-#ifdef HAVE_LIBMAPNIK
-	vik_mapnik_layer_init();
-#endif
+	LayerMapnik::init();
 
 	register_loadable_types();
 
 	/* As modules are loaded, we can load configuration files. */
 	modules_load_config();
-#endif
 }
 
 
 
 
 /**
- * Secondary stage initialization.
- * Can now use a_get_preferences() and Babel::is_available().
- */
+   Second stage of initialization
+
+   We can now use a_get_preferences() and Babel::is_available().
+*/
 void SlavGPS::modules_post_init()
 {
-#ifdef K_FIXME_RESTORE
-#ifdef VIK_CONFIG_GOOGLE
-	google_post_init();
-#endif
-#ifdef HAVE_LIBMAPNIK
-	vik_mapnik_layer_post_init();
-#endif
-#endif
-	layer_trw_init();
+	Google::post_init();
 
-	layer_gps_init();
-#ifdef K_FIXME_RESTORE
-	layer_mapnik_init();
-#endif
+	LayerMapnik::post_init();
+	LayerTRW::init();
+	LayerGPS::init();
+	LayerMapnik::init();
+
 	Viewport::init();
 }
 
@@ -337,9 +319,5 @@ void SlavGPS::modules_uninit()
 {
 	OSMTraces::uninit();
 
-#ifdef K_FIXME_RESTORE
-#ifdef HAVE_LIBMAPNIK
-	vik_mapnik_layer_uninit();
-#endif
-#endif
+	LayerMapnik::uninit();
 }

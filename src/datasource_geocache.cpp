@@ -100,6 +100,7 @@ static ParameterSpecification prefs[] = {
 
 void DataSourceGeoCache::init(void)
 {
+#ifdef VIK_CONFIG_GEOCACHES
 	int i = 0;
 	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_GC, QObject::tr("Geocaching"));
 
@@ -107,6 +108,7 @@ void DataSourceGeoCache::init(void)
 	i++;
 	Preferences::register_parameter_instance(prefs[i], SGVariant("password", prefs[i].type_id));
 	i++;
+#endif
 }
 
 

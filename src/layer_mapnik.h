@@ -46,13 +46,6 @@ namespace SlavGPS {
 
 
 
-	void vik_mapnik_layer_init(void);
-	void vik_mapnik_layer_post_init(void);
-	void vik_mapnik_layer_uninit(void);
-
-
-
-
 	class LayerMapnikInterface : public LayerInterface {
 	public:
 		LayerMapnikInterface();
@@ -68,6 +61,11 @@ namespace SlavGPS {
 	public:
 		LayerMapnik();
 		~LayerMapnik();
+
+		/* Module initialization/deinitialization. */
+		static void init(void);
+		static void post_init(void);
+		static void uninit(void);
 
 
 		/* Layer interface methods. */

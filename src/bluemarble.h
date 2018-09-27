@@ -30,7 +30,10 @@ namespace SlavGPS {
 
 
 
-	void bluemarble_init();
+	class BlueMarble {
+	public:
+		static void init(void);
+	};
 
 
 

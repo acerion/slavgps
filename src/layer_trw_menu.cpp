@@ -59,7 +59,6 @@ extern Tree * g_tree;
 
 
 
-#define VIK_CONFIG_GEONAMES
 #define VIK_CONFIG_GEOTAG
 
 

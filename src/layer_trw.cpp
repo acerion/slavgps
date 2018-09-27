@@ -415,7 +415,7 @@ static QString astro_program;
 
 
 
-void SlavGPS::layer_trw_init(void)
+void LayerTRW::init(void)
 {
 	if (!ApplicationState::get_string(VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM, diary_program)) {
 #ifdef WINDOWS

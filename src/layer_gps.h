@@ -159,6 +159,10 @@ namespace SlavGPS {
 		LayerGPS();
 		~LayerGPS();
 
+		/* Module initialization. */
+		static void init(void);
+
+
 		/* Layer interface methods. */
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
@@ -244,11 +248,6 @@ namespace SlavGPS {
 		/* GPS Layer can contain other layers and should be notified about changes in them. */
 		void child_layer_changed_cb(const QString & child_layer_name);
 	};
-
-
-
-
-	void layer_gps_init(void);
 
 
 

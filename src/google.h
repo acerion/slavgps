@@ -29,8 +29,11 @@ namespace SlavGPS {
 
 
 
-	void google_init();
-	void google_post_init();
+	class Google {
+	public:
+		static void init(void);
+		static void post_init(void);
+	};
 
 
 

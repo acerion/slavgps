@@ -16,13 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
+
 
 #include <cstdlib>
+
+
+
+
 
 #include "google.h"
 #include "external_tools.h"
@@ -41,8 +44,10 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::google_init()
+void Google::init(void)
 {
+#ifdef VIK_CONFIG_GOOGLE
+
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%1,%2,%3z"));
 
 	/* Goto. */
@@ -53,16 +58,19 @@ void SlavGPS::google_init()
 	GoTo::register_tool(gototool);
 	g_object_unref(gototool);
 #endif
+#endif
 }
 
 
 
 
 /**
- * Delayed initialization part as the check for gpsbabel availability needs to have been performed
- */
-void SlavGPS::google_post_init()
+   Delayed initialization part as the check for gpsbabel availability needs to have been performed
+*/
+void Google::post_init(void)
 {
+#ifdef VIK_CONFIG_GOOGLE
+
 	// Routing
 	/* Google Directions service as routing engine.
 	 *
@@ -89,5 +97,6 @@ void SlavGPS::google_post_init()
 							   NULL);
 		 Routing::register_engine(engine);
 	 }
+#endif
 #endif
 }

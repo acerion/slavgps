@@ -28,7 +28,11 @@ namespace SlavGPS {
 
 
 
-	void geonames_init();
+
+	class Geonames {
+	public:
+		static void init(void);
+	};
 
 
 

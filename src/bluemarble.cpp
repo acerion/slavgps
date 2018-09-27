@@ -32,8 +32,9 @@ using namespace SlavGPS;
 
 
 /* Initialization. */
-void SlavGPS::bluemarble_init()
+void BlueMarble::init(void)
 {
+#ifdef VIK_CONFIG_BLUEMARBLE
 	MapSource * bluemarble_type = new MapSourceSlippy(MapTypeID::BlueMarble, "BlueMarble", "s3.amazonaws.com", "/com.modestmaps.bluemarble/%d-r%3$d-c%2$d.jpg");
 	bluemarble_type->set_map_type_string("BlueMarble"); /* Non-translatable. */
 	bluemarble_type->set_supported_tile_zoom_level_range(0, 9);
@@ -45,4 +46,5 @@ void SlavGPS::bluemarble_init()
 	/* BlueMarble image hosting is courtesy of the Modest Maps project: http://modestmaps.com/ */
 
 	MapSources::register_map_source(bluemarble_type);
+#endif
 }

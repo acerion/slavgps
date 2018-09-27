@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
+
 
 #include "variant.h"
 #include "terraserver.h"
@@ -35,9 +34,11 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::terraserver_init()
+void Terraserver::init(void)
 {
+#ifdef VIK_CONFIG_TERRASERVER
 	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverTopo, "Terraserver Topos"));
 	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverAerial, "Terraserver Aerials"));
 	MapSources::register_map_source(new MapSourceTerraserver(MapTypeID::TerraserverUrban, "Terraserver Urban Areas"));
+#endif
 }
