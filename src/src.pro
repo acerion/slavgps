@@ -149,7 +149,8 @@ SOURCES += main.cpp \
     statusbar.cpp \
     modules.cpp \
     variant.cpp \
-    graph_intervals.cpp
+    graph_intervals.cpp \
+    expedia.cpp
 
 
 HEADERS += window.h \
@@ -296,14 +297,15 @@ HEADERS += window.h \
     babel.h \
     babel_dialog.h \
     variant.h \
-    graph_intervals.h
+    graph_intervals.h \
+    expedia.h
 
 
 
 
 # vikmaptype.cpp
 # vikmapslayer_compat.cpp
-# expedia.cpp
+
 
 
 
@@ -317,10 +319,15 @@ qtCompileTest(libmagic) {
     QMAKE_LFLAGS += -lmagic
 }
 
+qtCompileTest(libmapnik) {
+    DEFINES += HAVE_LIBMAPNIK
+    QMAKE_LFLAGS += -lmapnik
+}
 
 
 
-# For some reason the package name must be lower case
+
+# For some reason the X11 package name must be lower case
 packagesExist(x11) {
     DEFINES += HAVE_X11_XLIB_H
     QMAKE_LFLAGS += -lX11
@@ -338,8 +345,19 @@ PKGCONFIG += glib-2.0 zlib gio-2.0
 # https://wiki.qt.io/Undocumented_QMake#Config_features
 CONFIG += object_parallel_to_source
 
+
+
+
 DEFINES += HAVE_CONFIG_H
 DEFINES += VIK_CONFIG_GEOCACHES
+DEFINES += VIK_CONFIG_BING
+DEFINES += VIK_CONFIG_GOOGLE
+DEFINES += VIK_CONFIG_EXPEDIA
+DEFINES += VIK_CONFIG_TERRASERVER
+DEFINES += VIK_CONFIG_GEONAMES
+
+
+
 
 # Put moc_*.cpp files in a subdirectory.
 MOC_DIR = ./moc/
@@ -347,5 +365,7 @@ UI_DIR = ./
 OBJECTS_DIR = ./
 
 
+
+
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lcurl -lexpat -licuuc -lmapnik -lgps -lexiv2 -lsqlite3
+QMAKE_LFLAGS += -lm -lbz2 -lcurl -lexpat -licuuc -lgps -lexiv2 -lsqlite3
