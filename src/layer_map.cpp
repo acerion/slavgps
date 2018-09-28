@@ -1042,19 +1042,20 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		}
 	}
 
-	/* coord -> ID */
-	TileInfo ulm, brm;
+
+	/* Viewport's corner coordinates -> tiles info. */
+	TileInfo tile_ul;
+	TileInfo tile_br;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 	const VikingZoomLevel viking_zoom_level(xzoom, yzoom);
-	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
-	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, tile_ul)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, tile_br)) {
 
 		return;
 	}
 
 
-	/* Loop & draw. */
-	const TilesRange primary_range = TileInfo::get_tiles_range(ulm, brm);
+	const TilesRange primary_tiles_range = TileInfo::get_tiles_range(tile_ul, tile_br);
 	const QString map_type_string = map_source->get_map_type_string();
 
 	Coord coord;
@@ -1062,9 +1063,9 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	/* Prevent the program grinding to a halt if trying to deal with thousands of tiles
 	   which can happen when using a small fixed zoom level and viewing large areas.
 	   Also prevents very large number of tile download requests. */
-	int tiles = (primary_range.x_end - primary_range.x_begin) * (primary_range.y_end - primary_range.y_begin);
-	if (tiles > MAX_TILES) {
-		qDebug() << SG_PREFIX_D << "existence_only due to wanting too many tiles:" << tiles;
+	const int n_tiles = (primary_tiles_range.x_end - primary_tiles_range.x_begin) * (primary_tiles_range.y_end - primary_tiles_range.y_begin);
+	if (n_tiles > MAX_TILES) {
+		qDebug() << SG_PREFIX_D << "existence_only due to wanting too many tiles:" << n_tiles;
 		existence_only = true;
 	}
 
@@ -1085,10 +1086,10 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		   other than x and y.  x and y will be set and incremented in
 		   loops below, but other fields of the iter also need to have
 		   some valid values. These valid values are set here. */
-		TileInfo tile_iter = ulm;
+		TileInfo tile_iter = tile_ul;
 
-		for (tile_iter.x = primary_range.x_begin; tile_iter.x <= primary_range.x_end; tile_iter.x++) {
-			for (tile_iter.y = primary_range.y_begin; tile_iter.y <= primary_range.y_end; tile_iter.y++) {
+		for (tile_iter.x = primary_tiles_range.x_begin; tile_iter.x <= primary_tiles_range.x_end; tile_iter.x++) {
+			for (tile_iter.y = primary_tiles_range.y_begin; tile_iter.y <= primary_tiles_range.y_end; tile_iter.y++) {
 
 				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, scale_x, scale_y);
 				if (pixmap.isNull()) {
@@ -1118,19 +1119,19 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		const int tilesize_x_ceil = ceil(tilesize_x);
 		const int tilesize_y_ceil = ceil(tilesize_y);
 
-		const int delta_x = (ulm.x == primary_range.x_begin) ? 1 : -1;
-		const int delta_y = (ulm.y == primary_range.y_begin) ? 1 : -1;
 
+		const int delta_x = (tile_ul.x == primary_tiles_range.x_begin) ? 1 : -1;
+		const int delta_y = (tile_ul.y == primary_tiles_range.y_begin) ? 1 : -1;
+		TilesRange ordered_tiles_range;
+		ordered_tiles_range.x_begin = (delta_x == 1) ? primary_tiles_range.x_begin : primary_tiles_range.x_end;
+		ordered_tiles_range.y_begin = (delta_y == 1) ? primary_tiles_range.y_begin : primary_tiles_range.y_end;
+		ordered_tiles_range.x_end   = (delta_x == 1) ? (primary_tiles_range.x_end + 1) : (primary_tiles_range.x_begin - 1);
+		ordered_tiles_range.y_end   = (delta_y == 1) ? (primary_tiles_range.y_end + 1) : (primary_tiles_range.y_begin - 1);
 
-		TilesRange secondary_range;
-		secondary_range.x_begin = (delta_x == 1) ? primary_range.x_begin : primary_range.x_end;
-		secondary_range.y_begin = (delta_y == 1) ? primary_range.y_begin : primary_range.y_end;
-		secondary_range.x_end   = (delta_x == 1) ? (primary_range.x_end + 1) : (primary_range.x_begin - 1);
-		secondary_range.y_end   = (delta_y == 1) ? (primary_range.y_end + 1) : (primary_range.y_begin - 1);
 
 		int viewport_x;
 		int viewport_y;
-		map_source->tile_to_center_coord(ulm, coord);
+		map_source->tile_to_center_coord(tile_ul, coord);
 		viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
 
 		const int viewport_x_grid = viewport_x;
@@ -1147,11 +1148,11 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		   other than x and y.  x and y will be set and incremented in
 		   loops below, but other fields of the iter also need to have
 		   some valid values. These valid values are set here. */
-		TileInfo tile_iter = ulm;
+		TileInfo tile_iter = tile_ul;
 
-		for (tile_iter.x = secondary_range.x_begin; tile_iter.x != secondary_range.x_end; tile_iter.x += delta_x) {
+		for (tile_iter.x = ordered_tiles_range.x_begin; tile_iter.x != ordered_tiles_range.x_end; tile_iter.x += delta_x) {
 			viewport_y = base_viewport_y;
-			for (tile_iter.y = secondary_range.y_begin; tile_iter.y != secondary_range.y_end; tile_iter.y += delta_y) {
+			for (tile_iter.y = ordered_tiles_range.y_begin; tile_iter.y != ordered_tiles_range.y_end; tile_iter.y += delta_y) {
 
 				if (existence_only) {
 					const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_iter,
@@ -1204,7 +1205,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			/* Grid drawing here so it gets drawn on top of the map.
 			   Thus loop around x & y again, but this time separately.
 			   Only showing grid for the current scale */
-			draw_grid(viewport, viewport_x_grid, viewport_y_grid, secondary_range.x_begin, delta_x, secondary_range.x_end, secondary_range.y_begin, delta_y, secondary_range.y_end, tilesize_x, tilesize_y);
+			draw_grid(viewport, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_begin, delta_x, ordered_tiles_range.x_end, ordered_tiles_range.y_begin, delta_y, ordered_tiles_range.y_end, tilesize_x, tilesize_y);
 		}
 	}
 }
@@ -1296,7 +1297,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 {
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_viking_zoom_level().get_x();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_viking_zoom_level().get_y();
-	TileInfo ulm, brm;
+
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
 	qDebug() << SG_PREFIX_I << "Map:" << (quintptr) map_source << "map index" << (int) this->map_type_id;
@@ -1307,16 +1308,18 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 		return;
 	}
 
+	TileInfo tile_ul;
+	TileInfo tile_br;
 	const VikingZoomLevel viking_zoom_level(xzoom, yzoom);
-	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
-	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, tile_ul)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, tile_br)) {
 
 		qDebug() << SG_PREFIX_E << "Conversion coord to tile failed";
 		return;
 	}
 
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, tile_ul, tile_br, true, map_download_mode);
 
 	if (mdj->map_download_mode == MapDownloadMode::MissingOnly) {
 		mdj->n_items = mdj->calculate_tile_count_to_download();
@@ -1338,7 +1341,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 
 void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode)
 {
-	TileInfo ulm, brm;
+
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
 	/* Don't ever attempt download on direct access. */
@@ -1346,14 +1349,16 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
+	TileInfo tile_ul;
+	TileInfo tile_br;
 	const VikingZoomLevel viking_zoom_level(zoom, zoom);
-	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
-	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, tile_ul)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
 		return;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, true, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, tile_ul, tile_br, true, map_download_mode);
 
 	mdj->n_items = mdj->calculate_tile_count_to_download();
 	if (mdj->n_items) {
@@ -1569,8 +1574,6 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_viking_zoom_level().get_x();
 	double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_viking_zoom_level().get_y();
 
-	TileInfo ulm, brm;
-
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
@@ -1581,9 +1584,11 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 
 	const VikingZoomLevel viking_zoom_level(xzoom, yzoom);
 
+	TileInfo tile_ul;
+	TileInfo tile_br;
 	if (map_draw_mode == vp_draw_mode
-	    && map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
-	    && map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
+	    && map_source->coord_to_tile(coord_ul, viking_zoom_level, tile_ul)
+	    && map_source->coord_to_tile(coord_br, viking_zoom_level, tile_br)) {
 
 		this->start_download_thread(viewport, coord_ul, coord_br, map_download_mode);
 
@@ -1648,15 +1653,16 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 		return 0;
 	}
 
-	TileInfo ulm, brm;
+	TileInfo tile_ul;
+	TileInfo tile_br;
 	const VikingZoomLevel viking_zoom_level(zoom, zoom);
-	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, ulm)
-	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, brm)) {
+	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, tile_ul)
+	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
 		return 0;
 	}
 
-	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, ulm, brm, false, map_download_mode);
+	MapDownloadJob * mdj = new MapDownloadJob(this, map_source, tile_ul, tile_br, false, map_download_mode);
 	int n_items = 0;
 
 	if (mdj->map_download_mode == MapDownloadMode::All) {

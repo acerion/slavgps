@@ -45,13 +45,36 @@ using namespace SlavGPS;
    No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that. */
 
 
-static const double scale_mpps[] = { VIK_GZ(0), VIK_GZ(1), VIK_GZ(2), VIK_GZ(3), VIK_GZ(4), VIK_GZ(5),
-				     VIK_GZ(6), VIK_GZ(7), VIK_GZ(8), VIK_GZ(9), VIK_GZ(10), VIK_GZ(11),
-				     VIK_GZ(12), VIK_GZ(13), VIK_GZ(14), VIK_GZ(15), VIK_GZ(16), VIK_GZ(17) };
+static const double scale_mpps[] = {
+	VIK_GZ(0),    /*       1 */
+	VIK_GZ(1),    /*       2 */
+	VIK_GZ(2),    /*       4 */
+	VIK_GZ(3),    /*       8 */
+	VIK_GZ(4),    /*      16 */
+	VIK_GZ(5),    /*      32 */
+	VIK_GZ(6),    /*      64 */
+	VIK_GZ(7),    /*     128 */
+	VIK_GZ(8),    /*     256 */
+	VIK_GZ(9),    /*     512 */
+	VIK_GZ(10),   /*    1024 */
+	VIK_GZ(11),   /*    2048 */
+	VIK_GZ(12),   /*    4096 */
+	VIK_GZ(13),   /*    8192 */
+	VIK_GZ(14),   /*   16384 */
+	VIK_GZ(15),   /*   32768 */
+	VIK_GZ(16),
+	VIK_GZ(17) };
+
 static const int num_scales = (sizeof(scale_mpps) / sizeof(scale_mpps[0]));
 
-static const double scale_neg_mpps[] = { 1.0/VIK_GZ(0), 1.0/VIK_GZ(1), 1.0/VIK_GZ(2),
-					 1.0/VIK_GZ(3), 1.0/VIK_GZ(4), 1.0/VIK_GZ(5) };
+static const double scale_neg_mpps[] = {
+	1.0/VIK_GZ(0),    /*   1   */
+	1.0/VIK_GZ(1),    /*   0.5 */
+	1.0/VIK_GZ(2),    /*   0.25 */
+	1.0/VIK_GZ(3),    /*   0.125 */
+	1.0/VIK_GZ(4),    /*   0.0625 */
+	1.0/VIK_GZ(5) };  /*   0.03125 */
+
 static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpps[0]));
 
 

@@ -82,8 +82,10 @@ double TileScale::to_so_called_mpp(void) const
 
 	if (this->value >= 0) {
 		result = VIK_GZ(this->value);
+		qDebug() << "ZZZ" << this->value << result << "pos";
 	} else {
 		result = 1.0/VIK_GZ(-this->value);
+		qDebug() << "ZZZ" << this->value << result << "neg";
 	}
 
 	return result;

@@ -93,7 +93,8 @@ public:
 
 BackgroundJob::~BackgroundJob()
 {
-	qDebug() << "II" PREFIX "destructing job" << this->description << ", job index" << (this->index->isValid() ? "is valid" : "is invalid");
+	qDebug() << "II" PREFIX "destructing job" << this->description << ", job index"
+		 << ((this->index && this->index->isValid()) ? "is valid" : "is invalid");
 
 	this->detach_from_window(g_background.bgwindow);
 
