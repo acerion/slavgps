@@ -74,6 +74,7 @@ namespace SlavGPS {
 		All,                /* Download all maps. */
 		DownloadAndRefresh  /* Download missing maps and refresh cache. */
 	};
+	QString to_string(MapDownloadMode download_mode);
 
 
 
@@ -214,13 +215,16 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		DownloadMethodsAndZoomsDialog() {};
-		DownloadMethodsAndZoomsDialog(const QString & title, const std::vector<VikingZoomLevel> & viking_zoom_levels, const QStringList & download_mode_labels, QWidget * parent = NULL);
+		DownloadMethodsAndZoomsDialog(const QString & title,
+					      const std::vector<VikingZoomLevel> & viking_zoom_levels,
+					      const std::vector<MapDownloadMode> & download_modes,
+					      QWidget * parent = NULL);
 
-		void preselect(unsigned int smaller_zoom_idx, unsigned int larger_zoom_idx, MapDownloadMode download_mode);
+		void preselect(int smaller_zoom_idx, int larger_zoom_idx, int download_mode_idx);
 
-		unsigned int get_smaller_zoom_idx(void) const; /* Smaller zoom - closer to totally zoomed out. */
-		unsigned int get_larger_zoom_idx(void) const;  /* Larger zoom - closer to totally zoomed in. */
-		MapDownloadMode get_download_mode_idx(void) const;
+		int get_smaller_zoom_idx(void) const; /* Smaller zoom - closer to totally zoomed out. */
+		int get_larger_zoom_idx(void) const;  /* Larger zoom - closer to totally zoomed in. */
+		int get_download_mode_idx(void) const;
 
 	private:
 		QComboBox * smaller_zoom_combo = NULL;

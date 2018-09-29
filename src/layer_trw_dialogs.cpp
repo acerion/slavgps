@@ -200,7 +200,7 @@ MapAndZoomDialog::MapAndZoomDialog(const QString & title, const QStringList & ma
 
 
 
-void MapAndZoomDialog::preselect(unsigned int map_idx, unsigned int zoom_idx)
+void MapAndZoomDialog::preselect(int map_idx, int zoom_idx)
 {
 	this->map_combo->setCurrentIndex(map_idx);
 	this->zoom_combo->setCurrentIndex(zoom_idx);
@@ -209,7 +209,7 @@ void MapAndZoomDialog::preselect(unsigned int map_idx, unsigned int zoom_idx)
 
 
 
-unsigned int MapAndZoomDialog::get_map_idx(void) const
+int MapAndZoomDialog::get_map_idx(void) const
 {
 	return this->map_combo->currentIndex();
 }
@@ -217,7 +217,7 @@ unsigned int MapAndZoomDialog::get_map_idx(void) const
 
 
 
-unsigned int MapAndZoomDialog::get_zoom_idx(void) const
+int MapAndZoomDialog::get_zoom_idx(void) const
 {
 	return this->zoom_combo->currentIndex();
 }

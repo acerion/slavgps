@@ -479,3 +479,18 @@ VikingZoomLevel::VikingZoomLevel(double new_x, double new_y)
 	this->x = new_x;
 	this->y = new_y;
 }
+
+
+
+
+int VikingZoomLevel::get_closest_index(int & result, const std::vector<VikingZoomLevel> & viking_zooms, const VikingZoomLevel & viking_zoom_level)
+{
+	for (unsigned int idx = 0; idx < viking_zooms.size(); idx++) {
+		if (viking_zoom_level.get_x() == viking_zooms[idx].get_x()) {
+			result = idx;
+			return 0;
+		}
+	}
+
+	return -1;
+}

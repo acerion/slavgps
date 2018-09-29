@@ -67,9 +67,9 @@ namespace SlavGPS {
 		MapAndZoomDialog() {};
 		MapAndZoomDialog(const QString & title, const QStringList & map_labels, const std::vector<VikingZoomLevel> & viking_zoom_levels, QWidget * parent = NULL);
 
-		void preselect(unsigned int map_idx, unsigned int zoom_idx);
-		unsigned int get_map_idx(void) const;
-		unsigned int get_zoom_idx(void) const;
+		void preselect(int map_idx, int zoom_idx);
+		int get_map_idx(void) const;
+		int get_zoom_idx(void) const;
 
 	private:
 		QComboBox * map_combo = NULL;

@@ -4021,16 +4021,14 @@ void LayerTRW::download_map_along_track_cb(void)
 		map_labels << ((LayerMap *) *iter)->get_map_label();
 	}
 
+
+
 	const VikingZoomLevel current_viking_zoom(viewport->get_viking_zoom_level().get_x());
-	unsigned int default_zoom_idx;
-	/* TODO_LATER: there is a similar code in layer_map.cpp,
-	   search for "const VikingZoomLevel current_viking_zoom". */
-	for (default_zoom_idx = 0; default_zoom_idx < viking_zooms.size(); default_zoom_idx++) {
-		if (current_viking_zoom.get_x() == viking_zooms[default_zoom_idx].get_x()) {
-			break;
-		}
+	int default_zoom_idx = 0;
+	if (0 != VikingZoomLevel::get_closest_index(default_zoom_idx, viking_zooms, current_viking_zoom)) {
+		qDebug() << SG_PREFIX_W << "Failed to get the closest viking zoom level";
+		default_zoom_idx = viking_zooms.size() - 1;
 	}
-	default_zoom_idx = default_zoom_idx == viking_zooms.size() ? (viking_zooms.size() - 1) : default_zoom_idx;
 
 
 
@@ -4039,13 +4037,13 @@ void LayerTRW::download_map_along_track_cb(void)
 	if (QDialog::Accepted != dialog.exec()) {
 		return;
 	}
-	const unsigned int selected_map_idx = dialog.get_map_idx();
-	const unsigned int selected_zoom_idx = dialog.get_zoom_idx();
+	const int selected_map_idx = dialog.get_map_idx();
+	const int selected_zoom_idx = dialog.get_zoom_idx();
 
 
 
 	auto iter = map_layers.begin();
-	for (unsigned int i = 0; i < selected_map_idx; i++) {
+	for (int i = 0; i < selected_map_idx; i++) {
 		iter++;
 	}
 
