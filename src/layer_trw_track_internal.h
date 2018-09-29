@@ -303,7 +303,7 @@ namespace SlavGPS {
 
 		QString sublayer_rename_request(const QString & new_name);
 
-		std::list<Rect *> * get_map_rectangles(double zoom_level);
+		std::list<Rect *> * get_map_rectangles(const VikingZoomLevel & viking_zoom_level);
 
 		void create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool before);
 

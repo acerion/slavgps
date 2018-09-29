@@ -390,6 +390,22 @@ QString VikingZoomLevel::pretty_print(CoordMode coord_mode) const
 
 
 
+QString VikingZoomLevel::to_string(void) const
+{
+	QString result;
+
+	if ((int) this->x - this->x < 0.0) {
+		result = QObject::tr("%1").arg(this->x, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION);
+	} else {
+		/* xmpp should be a whole number so don't show useless .000 bit. */
+		result = QObject::tr("%1").arg((int) this->x);
+	}
+
+	return result;
+}
+
+
+
 
 QDebug SlavGPS::operator<<(QDebug debug, const VikingZoomLevel & viking_zoom_level)
 {
@@ -437,4 +453,29 @@ TileZoomLevel VikingZoomLevel::to_tile_zoom_level(void) const
 {
 	TileZoomLevel tile_zoom_level = MapUtils::mpp_to_tile_zoom_level(this->x);
 	return tile_zoom_level;
+}
+
+
+
+
+VikingZoomLevel::VikingZoomLevel(void)
+{
+}
+
+
+
+
+VikingZoomLevel::VikingZoomLevel(double zoom)
+{
+	this->x = zoom;
+	this->y = zoom;
+}
+
+
+
+
+VikingZoomLevel::VikingZoomLevel(double new_x, double new_y)
+{
+	this->x = new_x;
+	this->y = new_y;
 }

@@ -1339,9 +1339,8 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 
 
 
-void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode)
+void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode)
 {
-
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
 	/* Don't ever attempt download on direct access. */
@@ -1349,9 +1348,14 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
+	if (!viking_zoom_level.x_y_is_equal()) {
+		qDebug() << SG_PREFIX_E << "Unequal zoom levels";
+		return;
+	}
+
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	const VikingZoomLevel viking_zoom_level(zoom, zoom);
+
 	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, tile_ul)
 	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
@@ -1380,9 +1384,9 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
  *
  * Download a specified map area at a certain zoom level
  */
-void LayerMap::download_section(const Coord & coord_ul, const Coord & coord_br, double zoom)
+void LayerMap::download_section(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level)
 {
-	this->download_section_sub(coord_ul, coord_br, zoom, MapDownloadMode::MissingOnly);
+	this->download_section_sub(coord_ul, coord_br, viking_zoom_level, MapDownloadMode::MissingOnly);
 }
 
 
@@ -1645,7 +1649,7 @@ void LayerMap::about_cb(void)
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
  */
-int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode)
+int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode)
 {
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
@@ -1653,9 +1657,13 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 		return 0;
 	}
 
+	if (!viking_zoom_level.x_y_is_equal()) {
+		qDebug() << SG_PREFIX_E << "Unequal zoom levels";
+		return 0;
+	}
+
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	const VikingZoomLevel viking_zoom_level(zoom, zoom);
 	if (!map_source->coord_to_tile(coord_ul, viking_zoom_level, tile_ul)
 	    || !map_source->coord_to_tile(coord_br, viking_zoom_level, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile() failed";
@@ -1679,69 +1687,73 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, doub
 
 
 
-/**
- * This dialog is specific to the map layer, so it's here rather than in dialog.c
- */
-bool maps_dialog_zoom_between(Window * parent,
-			      const QString & title,
-			      const QStringList & zoom_list,
-			      const QStringList & download_list,
-			      int default_zoom1,
-			      int default_zoom2,
-			      MapDownloadMode default_download_mode,
-			      int * selected_zoom1,
-			      int * selected_zoom2,
-			      MapDownloadMode * selected_download_mode)
+DownloadMethodsAndZoomsDialog::DownloadMethodsAndZoomsDialog(const QString & title, const std::vector<VikingZoomLevel> & viking_zoom_levels, const QStringList & download_mode_labels, QWidget * parent) : BasicDialog(parent)
 {
-
-	BasicDialog dialog(parent);
-	dialog.setWindowTitle(title);
+	this->setWindowTitle(title);
 
 
 	int row = 0;
 
 
-	dialog.grid->addWidget(new QLabel(QObject::tr("Zoom Start:")), row, 0);
-	QComboBox zoom_combo1;
-	for (int i = 0; i < zoom_list.size(); i++) {
-		zoom_combo1.addItem(zoom_list.at(i), i);
+	this->grid->addWidget(new QLabel(QObject::tr("Zoom Start:")), row, 0);
+	this->smaller_zoom_combo = new QComboBox();
+	for (unsigned int i = 0; i < viking_zoom_levels.size(); i++) {
+		this->smaller_zoom_combo->addItem(viking_zoom_levels.at(i).to_string(), i);
 	}
-	zoom_combo1.setCurrentIndex(default_zoom1);
-	dialog.grid->addWidget(&zoom_combo1, row, 1);
+	this->grid->addWidget(this->smaller_zoom_combo, row, 1);
 	row++;
 
 
-	dialog.grid->addWidget(new QLabel(QObject::tr("Zoom End:")), row, 0);
-	QComboBox zoom_combo2;
-	for (int i = 0; i < zoom_list.size(); i++) {
-		zoom_combo2.addItem(zoom_list.at(i), i);
+	this->grid->addWidget(new QLabel(QObject::tr("Zoom End:")), row, 0);
+	this->larger_zoom_combo = new QComboBox();
+	for (unsigned int i = 0; i < viking_zoom_levels.size(); i++) {
+		this->larger_zoom_combo->addItem(viking_zoom_levels.at(i).to_string(), i);
 	}
-	zoom_combo2.setCurrentIndex(default_zoom2);
-	dialog.grid->addWidget(&zoom_combo2, row, 1);
+	this->grid->addWidget(this->larger_zoom_combo, row, 1);
 	row++;
 
 
-	dialog.grid->addWidget(new QLabel(QObject::tr("Download Maps Method:")), row, 0);
-	QComboBox download_combo;
-	for (int i = 0; i < download_list.size(); i++) {
-		download_combo.addItem(download_list.at(i), i);
+	this->grid->addWidget(new QLabel(QObject::tr("Download Maps Method:")), row, 0);
+	this->download_mode_combo = new QComboBox();
+	for (int i = 0; i < download_mode_labels.size(); i++) {
+		this->download_mode_combo->addItem(download_mode_labels.at(i), i);
 	}
-	download_combo.setCurrentIndex((int) default_download_mode);
-	dialog.grid->addWidget(&download_combo, row, 1);
+	this->grid->addWidget(this->download_mode_combo, row, 1);
+	row++;
+}
 
 
-	if (dialog.exec() != QDialog::Accepted) {
-		return false;
-	}
 
 
-	/* Return selected options. */
-	*selected_zoom1 = zoom_combo1.currentIndex();
-	*selected_zoom2 = zoom_combo2.currentIndex();
-	*selected_download_mode = (MapDownloadMode) download_combo.currentIndex();
+void DownloadMethodsAndZoomsDialog::preselect(unsigned int smaller_zoom_idx, unsigned int larger_zoom_idx, MapDownloadMode download_mode)
+{
+	this->smaller_zoom_combo->setCurrentIndex(smaller_zoom_idx);
+	this->larger_zoom_combo->setCurrentIndex(larger_zoom_idx);
+	this->download_mode_combo->setCurrentIndex((unsigned int) download_mode);
+}
 
 
-	return true;
+
+
+MapDownloadMode DownloadMethodsAndZoomsDialog::get_download_mode_idx(void) const
+{
+	return (MapDownloadMode) this->download_mode_combo->currentIndex();
+}
+
+
+
+
+unsigned int DownloadMethodsAndZoomsDialog::get_smaller_zoom_idx(void) const
+{
+	return this->smaller_zoom_combo->currentIndex();
+}
+
+
+
+
+unsigned int DownloadMethodsAndZoomsDialog::get_larger_zoom_idx(void) const
+{
+	return this->larger_zoom_combo->currentIndex();
 }
 
 
@@ -1764,55 +1776,60 @@ void LayerMap::download_all_cb(void)
 	   Still can give massive numbers to download.
 	   A screen size of 1600x1200 gives around 300,000 tiles between 1..128 when none exist before!! */
 
-	double zoom_vals[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
-	int n_zoom_vals = (int) (sizeof (zoom_vals) / sizeof (zoom_vals[0]));
-	QStringList zoom_list;
-	for (int i = 0; i < n_zoom_vals; i++) {
-		char buffer[6];
-		snprintf(buffer, sizeof (buffer), "%d", (int) zoom_vals[i]);
-		zoom_list << buffer;
-	}
+	const std::vector<VikingZoomLevel> viking_zooms = {
+		VikingZoomLevel(1),
+		VikingZoomLevel(2),
+		VikingZoomLevel(4),
+		VikingZoomLevel(8),
+		VikingZoomLevel(16),
+		VikingZoomLevel(32),
+		VikingZoomLevel(64),
+		VikingZoomLevel(128),
+		VikingZoomLevel(256),
+		VikingZoomLevel(512),
+		VikingZoomLevel(1024) };
 
 	/* Redownload method - needs to align with REDOWNLOAD* macro values. */
-	QStringList download_list;
-	download_list << QObject::tr("Only Missing") << QObject::tr("Missing and Bad") << QObject::tr("New") << QObject::tr("Re-download All");
+	QStringList download_modes;
+	download_modes << QObject::tr("Only Missing") << QObject::tr("Missing and Bad") << QObject::tr("New") << QObject::tr("Re-download All");
 
-	int selected_zoom1, selected_zoom2, default_zoom, lower_zoom;
-	MapDownloadMode selected_download_mode;
+	unsigned int default_zoom_idx;
+	int lower_zoom;
 
-	const double cur_zoom = viewport->get_viking_zoom_level().get_x();
+	const VikingZoomLevel current_viking_zoom = viewport->get_viking_zoom_level().get_x();
 
 	/* TODO_LATER: there is a similar code in layer_trw.cpp,
-	   search for "cur_zoom == zoom_values[default_zoom_idx]". */
-	for (default_zoom = 0; default_zoom < n_zoom_vals; default_zoom++) {
-		if (cur_zoom == zoom_vals[default_zoom]) {
+	   search for "const VikingZoomLevel current_viking_zoom". */
+	for (default_zoom_idx = 0; default_zoom_idx < viking_zooms.size(); default_zoom_idx++) {
+		if (current_viking_zoom.get_x() == viking_zooms[default_zoom_idx].get_x()) {
 			break;
 		}
 	}
-	default_zoom = (default_zoom == n_zoom_vals) ? n_zoom_vals - 1 : default_zoom;
+	default_zoom_idx = (default_zoom_idx == viking_zooms.size()) ? viking_zooms.size() - 1 : default_zoom_idx;
 
 	/* Default to only 2 zoom levels below the current one/ */
-	if (default_zoom > 1) {
-		lower_zoom = default_zoom - 2;
+	if (default_zoom_idx > 1) {
+		lower_zoom = default_zoom_idx - 2;
 	} else {
-		lower_zoom = default_zoom;
+		lower_zoom = default_zoom_idx;
 	}
 
 
 	const QString title = QString(QObject::tr("%1: %2")).arg(this->get_map_label()).arg(QObject::tr("Download for Zoom Levels"));
-	if (!maps_dialog_zoom_between(this->get_window(),
-				      title,
-				      zoom_list,
-				      download_list,
-				      lower_zoom,
-				      default_zoom,
-				      MapDownloadMode::MissingOnly,
-				      &selected_zoom1,
-				      &selected_zoom2,
-				      &selected_download_mode)) {
+	DownloadMethodsAndZoomsDialog dialog(title, viking_zooms, download_modes, this->get_window());
+	dialog.preselect(lower_zoom, default_zoom_idx, MapDownloadMode::MissingOnly);
+
+
+	const int selected_smaller_zoom = dialog.get_smaller_zoom_idx();
+	const int selected_larger_zoom = dialog.get_larger_zoom_idx();
+	const MapDownloadMode selected_download_mode = dialog.get_download_mode_idx();;
+
+	if (dialog.exec() != QDialog::Accepted) {
 		/* Cancelled. */
 		return;
 	}
+
+
 
 	/* Find out new current positions. */
 	const LatLonBBox bbox = viewport->get_bbox();
@@ -1823,8 +1840,8 @@ void LayerMap::download_all_cb(void)
 	   With MapDownloadMode::New this is a possible maximum.
 	   With MapDownloadMode::MisingOnly this only missing ones - however still has a server lookup per tile. */
 	int map_count = 0;
-	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		map_count = map_count + this->how_many_maps(coord_ul, coord_br, zoom_vals[zz], selected_download_mode);
+	for (int zz = selected_larger_zoom; zz >= selected_smaller_zoom; zz--) {
+		map_count = map_count + this->how_many_maps(coord_ul, coord_br, viking_zooms[zz], selected_download_mode);
 	}
 
 	qDebug() << SG_PREFIX_D << "Download request map count" << map_count << "for method" << (int) selected_download_mode;
@@ -1845,8 +1862,8 @@ void LayerMap::download_all_cb(void)
 	}
 
 	/* Get Maps - call for each zoom level (in reverse). */
-	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		this->download_section_sub(coord_ul, coord_br, zoom_vals[zz], selected_download_mode);
+	for (int zz = selected_larger_zoom; zz >= selected_smaller_zoom; zz--) {
+		this->download_section_sub(coord_ul, coord_br, viking_zooms[zz], selected_download_mode);
 	}
 }
 

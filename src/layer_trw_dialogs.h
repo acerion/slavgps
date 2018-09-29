@@ -25,13 +25,21 @@
 
 #include <cstdint>
 
+
+
+
 #include <QDialog>
 #include <QString>
 #include <QDialogButtonBox>
 #include <QSpinBox>
 #include <QVBoxLayout>
+#include <QComboBox>
+
+
+
 
 #include "widget_radio_group.h"
+#include "dialog.h"
 
 
 
@@ -41,9 +49,32 @@ namespace SlavGPS {
 
 
 
+	class VikingZoomLevel;
+
+
+
+
 	QString a_dialog_new_track(const QString & default_name, bool is_route, QWidget * parent);
 	bool a_dialog_time_threshold(const QString & title, const QString & label, uint32_t * thr, QWidget * parent = NULL);
-	bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const QStringList & zoom_labels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent);
+	bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const std::vector<VikingZoomLevel> & viking_zoom_levels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent);
+
+
+
+
+	class MapAndZoomDialog : public BasicDialog {
+		Q_OBJECT
+	public:
+		MapAndZoomDialog() {};
+		MapAndZoomDialog(const QString & title, const QStringList & map_labels, const std::vector<VikingZoomLevel> & viking_zoom_levels, QWidget * parent = NULL);
+
+		void preselect(unsigned int map_idx, unsigned int zoom_idx);
+		unsigned int get_map_idx(void) const;
+		unsigned int get_zoom_idx(void) const;
+
+	private:
+		QComboBox * map_combo = NULL;
+		QComboBox * zoom_combo = NULL;
+	};
 
 
 

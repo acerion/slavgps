@@ -31,8 +31,12 @@
 #include <QLabel>
 #include <QComboBox>
 
+
+
+
 #include "layer_trw_dialogs.h"
 #include "dialog.h"
+#include "viewport_zoom.h"
 
 
 
@@ -163,41 +167,57 @@ bool SlavGPS::a_dialog_time_threshold(const QString & title, const QString & lab
 
 
 
-bool SlavGPS::a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const QStringList & zoom_labels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent)
+
+
+MapAndZoomDialog::MapAndZoomDialog(const QString & title, const QStringList & map_labels, const std::vector<VikingZoomLevel> & viking_zoom_levels, QWidget * parent) : BasicDialog(parent)
 {
-	BasicDialog dialog(parent);
-	dialog.setWindowTitle(QObject::tr("Download along track"));
+	this->setWindowTitle(title);
 
 
-	QLabel map_label(QObject::tr("Map type:"));
-	QComboBox map_combo;
+
+	QLabel * map_label = new QLabel(tr("Map type:"));
+	this->map_combo = new QComboBox();
 	for (int i = 0; i < map_labels.size(); i++) {
-		map_combo.addItem(map_labels.at(i));
+		this->map_combo->addItem(map_labels.at(i));
 	}
-	map_combo.setCurrentIndex(default_map_idx);
 
-	QLabel zoom_label(QObject::tr("Zoom level:"));
-	QComboBox zoom_combo;
-	for (int i = 0; i < zoom_labels.size(); i++) {
-		zoom_combo.addItem(zoom_labels.at(i));
+
+
+	QLabel * zoom_label = new QLabel(tr("Zoom level:"));
+	this->zoom_combo = new QComboBox();
+	for (unsigned int i = 0; i < viking_zoom_levels.size(); i++) {
+		this->zoom_combo->addItem(viking_zoom_levels[i].to_string());
 	}
-	zoom_combo.setCurrentIndex(default_zoom_idx);
 
 
-	dialog.grid->addWidget(&map_label, 0, 0);
-	dialog.grid->addWidget(&map_combo, 0, 1);
-	dialog.grid->addWidget(&zoom_label, 1, 0);
-	dialog.grid->addWidget(&zoom_combo, 1, 1);
+
+	this->grid->addWidget(map_label, 0, 0);
+	this->grid->addWidget(this->map_combo, 0, 1);
+	this->grid->addWidget(zoom_label, 1, 0);
+	this->grid->addWidget(this->zoom_combo, 1, 1);
+}
 
 
-	if (QDialog::Accepted == dialog.exec()) {
-		*selected_map_idx = map_combo.currentIndex();
-		*selected_zoom_idx = zoom_combo.currentIndex();
-		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
-		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
-		qDebug() << "DD: Dialog: Map and Zoom: map index:" << *selected_map_idx << "zoom index:" << *selected_zoom_idx;
-		return true;
-	} else {
-		return false;
-	}
+
+
+void MapAndZoomDialog::preselect(unsigned int map_idx, unsigned int zoom_idx)
+{
+	this->map_combo->setCurrentIndex(map_idx);
+	this->zoom_combo->setCurrentIndex(zoom_idx);
+}
+
+
+
+
+unsigned int MapAndZoomDialog::get_map_idx(void) const
+{
+	return this->map_combo->currentIndex();
+}
+
+
+
+
+unsigned int MapAndZoomDialog::get_zoom_idx(void) const
+{
+	return this->zoom_combo->currentIndex();
 }

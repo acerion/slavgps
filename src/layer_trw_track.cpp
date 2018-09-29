@@ -3582,12 +3582,12 @@ static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, Lat
 
 
 
-static int get_download_area_width(double zoom_level, LatLon * wh) /* kamilFIXME: viewport is unused, why? */
+static int get_download_area_width(const VikingZoomLevel & viking_zoom_level, LatLon * wh) /* kamilFIXME: viewport is unused, why? */
 {
 	/* TODO_LATER: calculating based on current size of viewport. */
 	const double w_at_zoom_0_125 = 0.0013;
 	const double h_at_zoom_0_125 = 0.0011;
-	double zoom_factor = zoom_level/0.125;
+	const double zoom_factor = viking_zoom_level.get_x() / 0.125;
 
 	wh->lat = h_at_zoom_0_125 * zoom_factor;
 	wh->lon = w_at_zoom_0_125 * zoom_factor;
@@ -3598,14 +3598,14 @@ static int get_download_area_width(double zoom_level, LatLon * wh) /* kamilFIXME
 
 
 
-std::list<Rect *> * Track::get_map_rectangles(double zoom_level)
+std::list<Rect *> * Track::get_map_rectangles(const VikingZoomLevel & viking_zoom_level)
 {
 	if (this->empty()) {
 		return NULL;
 	}
 
 	LatLon wh;
-	if (get_download_area_width(zoom_level, &wh)) {
+	if (get_download_area_width(viking_zoom_level, &wh)) {
 		return NULL;
 	}
 

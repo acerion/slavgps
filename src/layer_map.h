@@ -28,8 +28,18 @@
 #include "config.h"
 #endif
 
-#include <string>
+
+
+
 #include <cstdint>
+
+
+
+
+#include <QComboBox>
+
+
+
 
 #include "coord.h"
 #include "layer.h"
@@ -107,7 +117,7 @@ namespace SlavGPS {
 
 		void start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode);
 		void download(Viewport * viewport, bool only_new);
-		void download_section(const Coord & coord_ul, const Coord & coord_br, double zoom);
+		void download_section(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level);
 
 		void download_onscreen_maps(MapDownloadMode map_download_mode);
 
@@ -153,8 +163,8 @@ namespace SlavGPS {
 #endif
 
 	private:
-		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode);
-		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, double zoom, MapDownloadMode map_download_mode);
+		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode);
+		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode);
 
 		bool try_draw_scale_down(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name);
 		bool try_draw_scale_up(Viewport * viewport, TileInfo ulm, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, double xshrinkfactor, double yshrinkfactor, const QString & map_name);
@@ -195,6 +205,27 @@ namespace SlavGPS {
 	class MapSources {
 	public:
 		static void register_map_source(MapSource * map_source);
+	};
+
+
+
+
+	class DownloadMethodsAndZoomsDialog : public BasicDialog {
+		Q_OBJECT
+	public:
+		DownloadMethodsAndZoomsDialog() {};
+		DownloadMethodsAndZoomsDialog(const QString & title, const std::vector<VikingZoomLevel> & viking_zoom_levels, const QStringList & download_mode_labels, QWidget * parent = NULL);
+
+		void preselect(unsigned int smaller_zoom_idx, unsigned int larger_zoom_idx, MapDownloadMode download_mode);
+
+		unsigned int get_smaller_zoom_idx(void) const; /* Smaller zoom - closer to totally zoomed out. */
+		unsigned int get_larger_zoom_idx(void) const;  /* Larger zoom - closer to totally zoomed in. */
+		MapDownloadMode get_download_mode_idx(void) const;
+
+	private:
+		QComboBox * smaller_zoom_combo = NULL;
+		QComboBox * larger_zoom_combo = NULL;
+		QComboBox * download_mode_combo = NULL;
 	};
 
 

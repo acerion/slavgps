@@ -68,7 +68,9 @@ namespace SlavGPS {
 	class VikingZoomLevel {
 		friend class Viewport;
 	public:
-		VikingZoomLevel(double new_x = 0.0f, double new_y = 0.0f) : x(new_x), y(new_y) {};
+		VikingZoomLevel(void);
+		VikingZoomLevel(double zoom);
+		VikingZoomLevel(double x, double y);
 		VikingZoomLevel(const VikingZoomLevel & other);
 
 		TileScale to_tile_scale(void) const;
@@ -86,6 +88,7 @@ namespace SlavGPS {
 		bool zoom_out(int factor);
 
 		QString pretty_print(CoordMode coord_mode) const;
+		QString to_string(void) const;
 
 		bool operator==(const VikingZoomLevel & other) const;
 	private:

@@ -3956,15 +3956,15 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 
 /* ----------- Downloading maps along tracks --------------- */
 
-void vik_track_download_map(Track * trk, LayerMap * layer_map, double zoom_level)
+void vik_track_download_map(Track * trk, LayerMap * layer_map, const VikingZoomLevel & viking_zoom_level)
 {
-	std::list<Rect *> * rects_to_download = trk->get_map_rectangles(zoom_level);
+	std::list<Rect *> * rects_to_download = trk->get_map_rectangles(viking_zoom_level);
 	if (!rects_to_download) {
 		return;
 	}
 
 	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-		layer_map->download_section((*rect_iter)->tl, (*rect_iter)->br, zoom_level);
+		layer_map->download_section((*rect_iter)->tl, (*rect_iter)->br, viking_zoom_level);
 	}
 
 	if (rects_to_download) {
@@ -3980,8 +3980,21 @@ void vik_track_download_map(Track * trk, LayerMap * layer_map, double zoom_level
 
 void LayerTRW::download_map_along_track_cb(void)
 {
-	const QStringList zoom_labels = { "0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024" };
-	std::vector<double> zoom_values = { 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+	std::vector<VikingZoomLevel> viking_zooms = {
+		VikingZoomLevel(0.125),
+		VikingZoomLevel(0.25),
+		VikingZoomLevel(0.5),
+		VikingZoomLevel(1),
+		VikingZoomLevel(2),
+		VikingZoomLevel(4),
+		VikingZoomLevel(8),
+		VikingZoomLevel(16),
+		VikingZoomLevel(32),
+		VikingZoomLevel(64),
+		VikingZoomLevel(128),
+		VikingZoomLevel(256),
+		VikingZoomLevel(512),
+		VikingZoomLevel(1024) };
 
 	LayersPanel * panel = g_tree->tree_get_items_tree();
 	const Viewport * viewport = g_tree->tree_get_main_viewport();
@@ -4008,29 +4021,35 @@ void LayerTRW::download_map_along_track_cb(void)
 		map_labels << ((LayerMap *) *iter)->get_map_label();
 	}
 
-	double cur_zoom = viewport->get_viking_zoom_level().get_x();
+	const VikingZoomLevel current_viking_zoom(viewport->get_viking_zoom_level().get_x());
 	unsigned int default_zoom_idx;
 	/* TODO_LATER: there is a similar code in layer_map.cpp,
-	   search for "cur_zoom == zoom_vals[default_zoom]". */
-	for (default_zoom_idx = 0; default_zoom_idx < zoom_values.size(); default_zoom_idx++) {
-		if (cur_zoom == zoom_values[default_zoom_idx]) {
+	   search for "const VikingZoomLevel current_viking_zoom". */
+	for (default_zoom_idx = 0; default_zoom_idx < viking_zooms.size(); default_zoom_idx++) {
+		if (current_viking_zoom.get_x() == viking_zooms[default_zoom_idx].get_x()) {
 			break;
 		}
 	}
-	default_zoom_idx = default_zoom_idx == zoom_values.size() ? (zoom_values.size() - 1) : default_zoom_idx;
+	default_zoom_idx = default_zoom_idx == viking_zooms.size() ? (viking_zooms.size() - 1) : default_zoom_idx;
 
-	unsigned int selected_map_idx = 0;
-	unsigned int selected_zoom_idx = 0;
-	if (!a_dialog_map_and_zoom(map_labels, 0, zoom_labels, default_zoom_idx, &selected_map_idx, &selected_zoom_idx, this->get_window())) {
+
+
+	MapAndZoomDialog dialog(QObject::tr("Download along track"), map_labels, viking_zooms, this->get_window());
+	dialog.preselect(0, default_zoom_idx);
+	if (QDialog::Accepted != dialog.exec()) {
 		return;
 	}
+	const unsigned int selected_map_idx = dialog.get_map_idx();
+	const unsigned int selected_zoom_idx = dialog.get_zoom_idx();
+
+
 
 	auto iter = map_layers.begin();
 	for (unsigned int i = 0; i < selected_map_idx; i++) {
 		iter++;
 	}
 
-	vik_track_download_map(track, *iter, zoom_values[selected_zoom_idx]);
+	vik_track_download_map(track, *iter, viking_zooms[selected_zoom_idx]);
 
 	return;
 }
