@@ -322,7 +322,7 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 
 	/* UTM mode should be exact MPP. */
 	double factor = 1.0;
-	if (mode == CoordMode::LATLON) {
+	if (mode == CoordMode::LatLon) {
 		/* NB the 1.193 - is at the Equator.
 		   http://wiki.openstreetmap.org/wiki/Zoom_levels */
 
@@ -735,7 +735,7 @@ void GeorefConfigDialog::sync_coords_in_entries(void)
 		this->sync_from_lat_lon_to_utm();
 		break;
 
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		qDebug() << "II" PREFIX << "current coordinate mode is LatLon";
 		break;
 
@@ -776,7 +776,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 
 		break;
 
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		qDebug() << "II" PREFIX << "current coordinate mode is LatLon";
 		this->sync_from_lat_lon_to_utm();
 
@@ -841,7 +841,7 @@ void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 		this->sync_coords_in_entries();
 
 		double xmpp, ympp;
-		georef_layer_mpp_from_coords(CoordMode::LATLON, this->get_ll_tl(), this->get_ll_br(), img_width, img_height, &xmpp, &ympp);
+		georef_layer_mpp_from_coords(CoordMode::LatLon, this->get_ll_tl(), this->get_ll_br(), img_width, img_height, &xmpp, &ympp);
 
 		this->x_scale_spin->setValue(xmpp);
 		this->y_scale_spin->setValue(ympp);
@@ -906,7 +906,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	this->coord_mode_combo = new QComboBox();
 	this->coord_mode_combo->addItem(tr("UTM"), (int) CoordMode::UTM);
-	this->coord_mode_combo->addItem(tr("Latitude/Longitude"), (int) CoordMode::LATLON);
+	this->coord_mode_combo->addItem(tr("Latitude/Longitude"), (int) CoordMode::LatLon);
 	this->grid->addWidget(new QLabel(tr("Coordinate Mode")), row, 0);
 	this->grid->addWidget(this->coord_mode_combo, row, 1);
 	row++;
@@ -947,7 +947,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 		   after coord mode is changed to LatLon (replacing
 		   entry widgets for UTM).  */
 
-		const Coord coord(this->layer->utm_tl, CoordMode::LATLON);
+		const Coord coord(this->layer->utm_tl, CoordMode::LatLon);
 
 		this->lat_lon_tl_entry = new LatLonEntryWidget();
 		this->lat_lon_tl_entry->set_text(tr("Upper left latitude:"),
@@ -990,7 +990,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	/* Remember that selecting coord mode must be done after the widget is visible. */
 	int coord_mode = 0;
 	if (ApplicationState::get_integer(VIK_SETTINGS_GEOREF_TAB, &coord_mode)) {
-		if (coord_mode != (int) CoordMode::UTM && coord_mode != (int) CoordMode::LATLON) {
+		if (coord_mode != (int) CoordMode::UTM && coord_mode != (int) CoordMode::LatLon) {
 			coord_mode = (int) CoordMode::UTM;
 		}
 	}

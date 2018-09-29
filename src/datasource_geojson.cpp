@@ -125,7 +125,7 @@ bool DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_s
 			/* Delete the temporary file. */
 			QDir::root().remove(gpx_filename);
 		} else {
-			acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(file_full_path));
+			acquiring_context->window->statusbar_update(StatusBarField::Info, QString("Unable to import from: %1").arg(file_full_path));
 		}
 	}
 

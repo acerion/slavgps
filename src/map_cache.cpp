@@ -229,7 +229,11 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 
 	static int tmp = 0;
 	if ((++tmp == 20)) {
-		qDebug() << QString("DD: Map Cache: keys count = %1, cache count = %2, cache size = %3, max cache size = %4").arg(keys_list.size()).arg(maps_cache.size()).arg(cache_size).arg(max_cache_size);
+		qDebug() << SG_PREFIX_D
+			 << "keys count =" << keys_list.size()
+			 << "cache count =" << maps_cache.size()
+			 << "cache size =" << cache_size
+			 << "max cache size =" << max_cache_size;
 		tmp = 0;
 	}
 }

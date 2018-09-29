@@ -53,11 +53,11 @@ namespace SlavGPS {
 
 
 	enum class SGFileType {
-		GPSPOINT  = 1,
-		GPSMAPPER = 2,
+		GPSPoint  = 1,
+		GPSMapper = 2,
 		GPX       = 3,
 		KML       = 4,
-		GEOJSON   = 5
+		GeoJSON   = 5
 	};
 
 

@@ -265,7 +265,7 @@ static ParameterSpecification gps_layer_param_specs[] = {
 GPSSession::GPSSession(GPSDirection dir, LayerTRW * new_trw, Track * new_trk, const QString & new_port, Viewport * new_viewport, bool new_in_progress)
 {
 	this->direction = dir;
-	this->window_title = (this->direction == GPSDirection::DOWN) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
+	this->window_title = (this->direction == GPSDirection::Down) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
 	this->trw = new_trw;
 	this->trk = new_trk;
 	this->port = new_port;
@@ -739,7 +739,7 @@ void GPSSession::set_total_count(int cnt)
 	this->mutex.lock();
 	if (this->in_progress) {
 		QString msg;
-		if (this->direction == GPSDirection::DOWN) {
+		if (this->direction == GPSDirection::Down) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloading %n waypoints...", "", cnt);
@@ -793,7 +793,7 @@ void GPSSession::set_current_count(int cnt)
 
 	if (cnt < this->total_count) {
 		QString fmt;
-		if (this->direction == GPSDirection::DOWN) {
+		if (this->direction == GPSDirection::Down) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				fmt = QObject::tr("Downloaded %1 out of %2 waypoints...", "", this->total_count);
@@ -820,7 +820,7 @@ void GPSSession::set_current_count(int cnt)
 		}
 		msg = QString(fmt).arg(cnt).arg(this->total_count);
 	} else {
-		if (this->direction == GPSDirection::DOWN) {
+		if (this->direction == GPSDirection::Down) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloaded %n waypoints", "", cnt);
@@ -1063,7 +1063,7 @@ void GPSSession::run(void)
 {
 	bool result;
 
-	if (this->direction == GPSDirection::DOWN) {
+	if (this->direction == GPSDirection::Down) {
 		BabelOptions babel_options(BabelOptionsMode::FromFile);
 		babel_options.input = this->port;
 		babel_options.babel_args = this->babel_args;
@@ -1089,7 +1089,7 @@ void GPSSession::run(void)
 			if (!this->realtime_tracking_in_progress)
 #endif
 			{
-				if (this->viewport && this->direction == GPSDirection::DOWN) {
+				if (this->viewport && this->direction == GPSDirection::Down) {
 					this->trw->post_read(this->viewport, true);
 					/* View the data available. */
 					this->trw->move_viewport_to_show_all(this->viewport) ;
@@ -1149,12 +1149,12 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 
 	/* This must be done inside the main thread as the uniquify causes screen updates
 	   (originally performed this nearer the point of upload in the thread). */
-	if (dir == GPSDirection::UP) {
+	if (dir == GPSDirection::Up) {
 		/* Enforce unique names in the layer upload to the GPS device.
 		   NB this may only be a Garmin device restriction (and may be not every Garmin device either...).
 		   Thus this maintains the older code in built restriction. */
 		if (!sess->trw->uniquify(panel)) {
-			sess->trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO,
+			sess->trw->get_window()->get_statusbar()->set_message(StatusBarField::Info,
 									      QObject::tr("Warning - GPS Upload items may overwrite each other"));
 		}
 	}
@@ -1171,7 +1171,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		.arg(tracks_arg)
 		.arg(routes_arg)
 		.arg(waypoints_arg)
-		.arg((dir == GPSDirection::DOWN) ? "i" : "o")
+		.arg((dir == GPSDirection::Down) ? "i" : "o")
 		.arg(protocol);
 
 	/* Only create dialog if we're going to do some transferring. */
@@ -1262,7 +1262,7 @@ void LayerGPS::gps_upload_cb(void)
 
 	SlavGPS::vik_gps_comm(trw,
 			      NULL,
-			      GPSDirection::UP,
+			      GPSDirection::Up,
 			      this->protocol,
 			      this->serial_port,
 			      false,
@@ -1284,7 +1284,7 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 
 	SlavGPS::vik_gps_comm(trw,
 			      NULL,
-			      GPSDirection::DOWN,
+			      GPSDirection::Down,
 			      this->protocol,
 			      this->serial_port,
 
@@ -1503,7 +1503,7 @@ void LayerGPS::update_statusbar(Window * window_)
 	}
 
 	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code.toUtf8().constData(), this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
-	window_->get_statusbar()->set_message(StatusBarField::INFO, msg);
+	window_->get_statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -1693,8 +1693,8 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 
 bool LayerGPS::rt_ask_retry()
 {
-	const QString message = QString(tr("Failed to connect to gpsd at %1 (port %2)\n"
-					   "Should Viking keep trying (every %3 seconds)?"))
+	const QString message = tr("Failed to connect to gpsd at %1 (port %2)\n"
+				   "Should Viking keep trying (every %3 seconds)?")
 		.arg(this->gpsd_host)
 		.arg(this->gpsd_port)
 		.arg(this->gpsd_retry_interval);

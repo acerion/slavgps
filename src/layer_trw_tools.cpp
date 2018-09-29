@@ -322,7 +322,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	this->cancel_current_tp(false);
 
 	/* Blank info. */
-	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "");
+	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
 
 	return false;
 }
@@ -807,7 +807,7 @@ static void statusbar_write(const Distance & total_distance, const Distance & la
 
 	/* Write with full gain/loss information. */
 	const QString msg = QObject::tr("Total %1%2%3").arg(total_distance_string).arg(str_last_step).arg(str_gain_loss);
-	layer->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
+	layer->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -875,7 +875,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 
 		/* Adjust elevation data (if available) for the current pointer position. */
 		const Coord cursor_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
-		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DemInterpolation::BEST);
+		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DemInterpolation::Best);
 		const Trackpoint * last_tpt = track->get_tp_last();
 		if (elev_new.is_valid()) {
 			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
@@ -1458,7 +1458,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		StatusBar * sb = trw->get_window()->get_statusbar();
 		RoutingEngine * engine = Routing::get_default_engine();
 		if (!engine) {
-			trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
+			trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Cannot plan route without a default routing engine."));
 			return ToolStatus::Ack;
 		}
 		const QString msg1 = QObject::tr("Querying %1 for route between (%2, %3) and (%4, %5).")
@@ -1467,7 +1467,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 			.arg(start.lon, 0, 'f', 3)
 			.arg(end.lat, 0, 'f', 3)
 			.arg(end.lon, 0, 'f', 3);
-		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg1);
+		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg1);
 		trw->get_window()->set_busy_cursor();
 
 #ifdef K_FIXME_RESTORE
@@ -1484,7 +1484,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine->get_label()).arg(start.lat, 0, 'f', 3).arg(start.lon, 0, 'f', 3).arg(end.lat, 0, 'f', 3).arg(end.lon, 0, 'f', 3) /* ".3f" */
 			: QObject::tr("Error getting route from %1.").arg(engine->get_label());
 
-		trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg2);
+		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg2);
 
 
 		trw->emit_layer_changed("TRW - extended route finder - handle mouse click - route");

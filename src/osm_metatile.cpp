@@ -212,7 +212,7 @@ int Metatile::read_metatile(QString & log_msg)
 	free(header);
 
 	if (tile_size > sizeof (this->buffer)) {
-		log_msg = QString("Truncating tile %1 to fit buffer of %2\n").arg(tile_size).arg(sizeof (this->buffer));
+		log_msg = QObject::tr("Truncating tile %1 to fit buffer of %2\n").arg(tile_size).arg(sizeof (this->buffer));
 		tile_size = sizeof (this->buffer);
 		close(fd);
 		return -6;

@@ -211,7 +211,7 @@ void TrackListDialog::copy_selected_cb(void)
 	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
 #endif
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::Aggregate, "", dummy, cd.str);
+	Clipboard::copy(ClipboardDataType::Text, LayerType::Aggregate, "", dummy, cd.str);
 }
 
 

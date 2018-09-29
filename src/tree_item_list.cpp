@@ -77,7 +77,7 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 
 	QMenu menu;
 
-	if (item->tree_item_type == TreeItemType::LAYER) {
+	if (item->tree_item_type == TreeItemType::Layer) {
 
 		qDebug() << SG_PREFIX_I << "Menu for layer tree item" << item->type_id << item->name;
 

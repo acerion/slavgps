@@ -509,7 +509,7 @@ Layer::Layer()
 
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 
-	this->tree_item_type = TreeItemType::LAYER; /* TODO_2_LATER: re-think initializing parent classes of Layer and TreeItem. */
+	this->tree_item_type = TreeItemType::Layer; /* TODO_2_LATER: re-think initializing parent classes of Layer and TreeItem. */
 }
 
 
@@ -525,7 +525,7 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 
 QString Layer::get_tooltip(void) const
 {
-	return QString("%1 %2").arg(this->interface->ui_labels.layer_type).arg((long) this);
+	return tr("%1 %2").arg(this->interface->ui_labels.layer_type).arg((long) this);
 }
 
 

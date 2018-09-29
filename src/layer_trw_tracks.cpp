@@ -85,7 +85,7 @@ extern Tree * g_tree;
 
 LayerTRWTracks::LayerTRWTracks()
 {
-	this->tree_item_type = TreeItemType::SUBLAYER;
+	this->tree_item_type = TreeItemType::Sublayer;
 
 	/* Default values, may be changed by caller's code. */
 	this->type_id = "sg.trw.routes";
@@ -800,7 +800,7 @@ bool LayerTRWTracks::add_context_menu_items(QMenu & menu, bool tree_view_context
 	/* TODO_LATER: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
 	/* TODO_2_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
-	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::SUBLAYER);
+	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::Sublayer);
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
 
 

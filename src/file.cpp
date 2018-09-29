@@ -852,11 +852,11 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 	case SGFileType::KML:
 		ext = ".kml";
 		break;
-	case SGFileType::GEOJSON:
+	case SGFileType::GeoJSON:
 		ext = ".geojson";
 		break;
-	case SGFileType::GPSMAPPER:
-	case SGFileType::GPSPOINT:
+	case SGFileType::GPSMapper:
+	case SGFileType::GPSPoint:
 	default:
 		/* Do nothing, ext will be empty. */
 		break;
@@ -1090,16 +1090,16 @@ bool VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, S
 	bool result = true;
 
 	switch (file_type) {
-	case SGFileType::GPSMAPPER:
+	case SGFileType::GPSMapper:
 		gpsmapper_write_file(file, trw);
 		break;
 	case SGFileType::GPX:
 		GPX::write_file(file, trw, &options);
 		break;
-	case SGFileType::GPSPOINT:
+	case SGFileType::GPSPoint:
 		GPSPoint::write_layer(file, trw);
 		break;
-	case SGFileType::GEOJSON:
+	case SGFileType::GeoJSON:
 		result = geojson_write_file(file, trw);
 		break;
 	case SGFileType::KML:

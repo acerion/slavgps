@@ -187,13 +187,13 @@ void MapDownloadJob::run(void)
 				case DownloadStatus::HTTPError:
 				case DownloadStatus::ContentError: {
 					/* TODO_LATER: ?? count up the number of download errors somehow... */
-					QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download map tile");
-					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
+					const QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download map tile");
+					this->layer->get_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
 				}
 				case DownloadStatus::FileWriteError: {
-					QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save map tile");
-					this->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
+					const QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save map tile");
+					this->layer->get_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
 				}
 				case DownloadStatus::Success:

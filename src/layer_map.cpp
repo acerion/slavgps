@@ -796,7 +796,7 @@ void LayerMap::post_read(Viewport * viewport, bool from_file)
 		   So, we can check if we have to inform the user about inconsistency. */
 		if (map_source->get_drawmode() != viewport->get_drawmode()) {
 			const QString drawmode_name = ViewportDrawModes::get_name(map_source->get_drawmode());
-			const QString msg = QString(QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.")).arg(drawmode_name);
+			const QString msg = QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.").arg(drawmode_name);
 			Dialog::warning(msg, this->get_window());
 		}
 	}
@@ -1034,8 +1034,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				/* Report the reason for not drawing. */
 				Window * window = this->get_window();
 				if (window) {
-					QString msg = QString("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
-					window->statusbar_update(StatusBarField::INFO, msg);
+					QString msg = tr("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
+					window->statusbar_update(StatusBarField::Info, msg);
 				}
 				return;
 			}
@@ -1598,7 +1598,7 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 
 	} else if (map_draw_mode != vp_draw_mode) {
 		const QString drawmode_name = ViewportDrawModes::get_name(map_draw_mode);
-		const QString err = QString(QObject::tr("Wrong drawmode for this map.\nSelect \"%1\" from View menu and try again.")).arg(drawmode_name);
+		const QString err = QObject::tr("Wrong drawmode for this map.\nSelect \"%1\" from View menu and try again.").arg(drawmode_name);
 		Dialog::error(err, this->get_window());
 	} else {
 		Dialog::error(QObject::tr("Wrong zoom level for this map."), this->get_window());

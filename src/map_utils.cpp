@@ -143,7 +143,7 @@ TileZoomLevel MapUtils::mpp_to_tile_zoom_level(double mpp)
  * SECTION:map_utils
  * @short_description: Notes about TMS / Spherical Mercator conversion
  *
- * Coords are in Spherical Mercator projection (#CoordMode::LATLON)
+ * Coords are in Spherical Mercator projection (#CoordMode::LatLon)
  * TileInfo are in Inverse TMS
  *
  * See: http://docs.openlayers.org/library/spherical_mercator.html
@@ -155,18 +155,18 @@ TileZoomLevel MapUtils::mpp_to_tile_zoom_level(double mpp)
 
 
 /**
- * @src:   Original #Coord in #CoordMode::LATLON format
+ * @src:   Original #Coord in #CoordMode::LatLon format
  * @xzoom: Viking zoom level in x direction
  * @yzoom: Viking zoom level in y direction (actually needs to be same as xzoom)
  * @dest:  The resulting Inverse TMS coordinates in #TileInfo
  *
- * Convert a #Coord in CoordMode::LATLON format into Inverse TMS coordinates.
+ * Convert a #Coord in CoordMode::LatLon format into Inverse TMS coordinates.
  *
  * Returns: whether the conversion was performed
  */
 bool MapUtils::coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
 {
-	if (src_coord.mode != CoordMode::LATLON) {
+	if (src_coord.mode != CoordMode::LatLon) {
 		return false;
 	}
 
@@ -198,7 +198,7 @@ static Coord _to_coord_with_offset(const TileInfo & src, double offset)
 	Coord dest_coord;
 
 	const double socalled_mpp = src.scale.to_so_called_mpp();
-	dest_coord.mode = CoordMode::LATLON;
+	dest_coord.mode = CoordMode::LatLon;
 	dest_coord.ll.lon = ((src.x + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360) - 180;
 	dest_coord.ll.lat = DEMERCLAT(180 - ((src.y + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360));
 

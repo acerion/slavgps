@@ -48,7 +48,7 @@ using namespace SlavGPS;
 void Coord::change_mode(CoordMode new_mode)
 {
 	if (this->mode != new_mode) {
-		if (new_mode == CoordMode::LATLON) {
+		if (new_mode == CoordMode::LatLon) {
 			this->ll = UTM::to_latlon(this->utm);
 		} else {
 			this->utm = LatLon::to_utm(this->ll);
@@ -80,7 +80,7 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 	case CoordMode::UTM:
 		return UTM::utm_diff(coord1.utm, coord2.utm);
 
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		return LatLon::latlon_diff(coord1.ll, coord2.ll);
 
 	default:
@@ -108,7 +108,7 @@ Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 		result = Distance(UTM::utm_diff(coord1.utm, coord2.utm), distance_unit);
 		return result;
 
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		result = Distance(LatLon::latlon_diff(coord1.ll, coord2.ll), distance_unit);
 		return result;
 
@@ -127,7 +127,7 @@ Coord::Coord(const LatLon & new_lat_lon, CoordMode new_mode)
 	case CoordMode::UTM:
 		this->utm = LatLon::to_utm(new_lat_lon);
 		break;
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		this->ll = new_lat_lon;
 		break;
 	default:
@@ -147,7 +147,7 @@ Coord::Coord(const UTM & new_utm, CoordMode new_mode)
 	case CoordMode::UTM:
 		this->utm = new_utm;
 		break;
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		this->ll = UTM::to_latlon(new_utm);
 		break;
 	default:
@@ -175,7 +175,7 @@ LatLon Coord::get_latlon(void) const
 	LatLon ret;
 
 	switch (this->mode) {
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		ret = this->ll;
 		break;
 	case CoordMode::UTM:
@@ -200,7 +200,7 @@ UTM Coord::get_utm(void) const
 	case CoordMode::UTM:
 		ret = this->utm;
 		break;
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		ret = LatLon::to_utm(this->ll);
 		break;
 	default:
@@ -224,7 +224,7 @@ bool Coord::operator==(const Coord & coord) const
 	case CoordMode::UTM:
 		return UTM::is_equal(this->utm, coord.utm);
 
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		return this->ll.lat == coord.ll.lat && this->ll.lon == coord.ll.lon;
 
 	default:
@@ -246,7 +246,7 @@ bool Coord::operator!=(const Coord & coord) const
 
 Coord & Coord::operator=(const Coord & other)
 {
-	if (other.mode == CoordMode::LATLON) {
+	if (other.mode == CoordMode::LatLon) {
 		this->ll = other.ll;
 	} else {
 		this->utm = other.utm;
@@ -265,7 +265,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
 	case CoordMode::UTM:
 		debug << "Coordinate UTM:" << coord.utm;
 		break;
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		debug << "Coordinate LatLon:" << coord.ll;
 		break;
 	default:
@@ -327,10 +327,10 @@ void Coord::get_area_coordinates(const LatLon * area_span, Coord * coord_tl, Coo
 	const LatLon distance_from_center(area_span->lat / 2, area_span->lon / 2);
 
 	coord_tl->ll = get_north_west_corner(center, distance_from_center);
-	coord_tl->mode = CoordMode::LATLON;
+	coord_tl->mode = CoordMode::LatLon;
 
 	coord_br->ll = get_south_east_corner(center, distance_from_center);
-	coord_br->mode = CoordMode::LATLON;
+	coord_br->mode = CoordMode::LatLon;
 }
 
 
@@ -367,7 +367,7 @@ void Coord::to_strings(QString & str1, QString & str2) const
 		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.get_band_letter());
 		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
 		break;
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		LatLon::to_strings(this->ll, str1, str2);
 		break;
 
@@ -386,25 +386,17 @@ QString Coord::to_string(void) const
 {
 	QString result;
 
-	 /* TODO_LATER: improve: get rid of intermediate strings. */
-	QString str1;
-	QString str2;
-
 	switch (this->mode) {
 	case CoordMode::UTM:
 		/* First string will contain "zone + N/S", second
 		   string will contain easting and northing of a UTM
 		   format:
 		   ZONE[N|S] EASTING NORTHING */
-
-		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.get_band_letter());
-		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
-		result = QObject::tr("%1 %2").arg(str1).arg(str2);
+		result = QObject::tr("%1%2 %3 %4").arg((int) utm.zone).arg(utm.get_band_letter()).arg((int) utm.easting).arg((int) utm.northing);
 		break;
 
-	case CoordMode::LATLON:
-		LatLon::to_strings(this->ll, str1, str2);
-		result = QObject::tr("%1 %2").arg(str1).arg(str2);
+	case CoordMode::LatLon:
+		result = this->ll.to_string();
 		break;
 
 	default:

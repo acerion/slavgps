@@ -85,7 +85,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 
 		Window * w = trw->get_window();
 		if (w) {
-			w->statusbar_update(StatusBarField::INFO, QString("%s command failed: %1").arg(error->message));
+			w->statusbar_update(StatusBarField::Info, QObject::tr("%s command failed: %1").arg(error->message));
 		} else {
 			fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
 		}

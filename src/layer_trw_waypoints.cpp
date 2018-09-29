@@ -76,7 +76,7 @@ extern Tree * g_tree;
 
 LayerTRWWaypoints::LayerTRWWaypoints()
 {
-	this->tree_item_type = TreeItemType::SUBLAYER;
+	this->tree_item_type = TreeItemType::Sublayer;
 	this->type_id = "sg.trw.waypoints";
 	this->accepted_child_type_ids << "sg.trw.waypoint";
 	this->editable = false;
@@ -610,7 +610,7 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 	/* TODO_LATER: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
 	/* TODO_2_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
-	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::SUBLAYER);
+	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::Sublayer);
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
 
 

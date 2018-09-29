@@ -119,7 +119,7 @@ QString TreeItem::get_tooltip(void) const
 
 Layer * TreeItem::to_layer(void) const
 {
-	if (this->tree_item_type == TreeItemType::LAYER) {
+	if (this->tree_item_type == TreeItemType::Layer) {
 		return (Layer *) this;
 	} else {
 		return this->owning_layer;

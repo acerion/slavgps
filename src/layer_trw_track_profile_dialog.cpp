@@ -982,7 +982,7 @@ void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, const Speed & max_speed_
 
 		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		if (do_dem) {
-			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::BEST);
+			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
 			if (elev.is_valid()) {
 				const double elev_value_uu = elev.convert_to_unit(this->geocanvas.height_unit).get_value();
 
@@ -1088,7 +1088,7 @@ void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
 			/* This could be slow doing this each time... */
 			Trackpoint * tp = track_info.trk->get_closest_tp_by_percentage_time(((double) i / (double) this->width), NULL);
 			if (tp) {
-				const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::SIMPLE);
+				const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
 				if (elev.is_valid()) {
 
 					const double elev_value_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();

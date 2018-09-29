@@ -168,7 +168,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 		this->ruler->set_begin(event->x(), event->y());
 	}
 
-	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
+	this->window->get_statusbar()->set_message(StatusBarField::Info, msg);
 
 	return ToolStatus::Ack;
 }
@@ -202,7 +202,7 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 
 
 	const QString msg = ruler->get_msg();
-	this->window->get_statusbar()->set_message(StatusBarField::INFO, msg);
+	this->window->get_statusbar()->set_message(StatusBarField::Info, msg);
 
 
 	return ToolStatus::Ack;
@@ -684,7 +684,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 		TreeItem * selected_item = tree_view->get_selected_tree_item();
 		if (selected_item) {
 			/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO_LATER: improve this condition. */
-			if (selected_item->tree_item_type == TreeItemType::SUBLAYER
+			if (selected_item->tree_item_type == TreeItemType::Sublayer
 			    || selected_item->to_layer()->type == LayerType::TRW) {
 
 				tree_view->deselect_tree_item(selected_item);

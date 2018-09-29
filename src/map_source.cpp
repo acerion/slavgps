@@ -71,7 +71,7 @@ MapSource::MapSource()
 	tilesize_x = 256;
 	tilesize_y = 256;
 
-	drawmode = ViewportDrawMode::MERCATOR; /* ViewportDrawMode::UTM */
+	drawmode = ViewportDrawMode::Mercator; /* ViewportDrawMode::UTM */
 	this->file_extension = ".png";
 
 	this->dl_options.check_file = a_check_map_file;
@@ -503,7 +503,7 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 	if (!result.load(tile_file_full_path)) {
 		Window * window = g_tree->tree_get_main_window();
 		if (window) {
-			window->statusbar_update(StatusBarField::INFO, QString("Couldn't open image file"));
+			window->statusbar_update(StatusBarField::Info, QString("Couldn't open image file"));
 		}
 	}
 	return result;
@@ -554,8 +554,8 @@ bool MapSource::includes_tile(const TileInfo & tile_info) const
 	Coord center_coord;
 	this->tile_to_center_coord(tile_info, center_coord);
 
-	const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LATLON);
-	const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LATLON);
+	const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LatLon);
+	const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LatLon);
 
 	return center_coord.is_inside(&coord_tl, &coord_br);
 }

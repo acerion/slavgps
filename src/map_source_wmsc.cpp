@@ -56,7 +56,7 @@ using namespace SlavGPS;
 MapSourceWmsc::MapSourceWmsc()
 {
 	fprintf(stderr, "MapSourceWmsc constructor start\n");
-	drawmode = ViewportDrawMode::LATLON;
+	drawmode = ViewportDrawMode::LatLon;
 	fprintf(stderr, "MapSourceWmsc constructor end\n");
 }
 
@@ -109,7 +109,7 @@ bool MapSourceWmsc::supports_download_only_new(void) const
 
 bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
-	assert (src_coord.mode == CoordMode::LATLON);
+	assert (src_coord.mode == CoordMode::LatLon);
 
 	if (!viking_zoom_level.x_y_is_equal()) {
 		return false;
@@ -143,7 +143,7 @@ bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, const VikingZoomLevel
 void MapSourceWmsc::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	const double socalled_mpp = src.scale.to_so_called_mpp();
-	dest_coord.mode = CoordMode::LATLON;
+	dest_coord.mode = CoordMode::LatLon;
 	dest_coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */

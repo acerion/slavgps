@@ -55,7 +55,7 @@ static std::vector<SGLabelID> params_degree_formats = {
 	SGLabelID(QObject::tr("DDD"), (int) DegreeFormat::DDD),
 	SGLabelID(QObject::tr("DMM"), (int) DegreeFormat::DMM),
 	SGLabelID(QObject::tr("DMS"), (int) DegreeFormat::DMS),
-	SGLabelID(QObject::tr("Raw"), (int) DegreeFormat::RAW),
+	SGLabelID(QObject::tr("Raw"), (int) DegreeFormat::Raw),
 };
 
 static std::vector<SGLabelID> params_units_distance = {

@@ -385,7 +385,7 @@ void GeotagJob::geotag_track(Track * trk2)
 			ll_result.lon = ll1.lon + ((ll2.lon - ll1.lon) * scale);
 
 			/* Set coord. */
-			this->coord = Coord(ll_result, CoordMode::LATLON);
+			this->coord = Coord(ll_result, CoordMode::LatLon);
 
 			/* Interpolate elevation. */
 			this->altitude = Altitude(tp->altitude + ((tp_next->altitude - tp->altitude) * scale), height_unit);
@@ -411,7 +411,7 @@ void GeotagJob::geotag_waypoint(void)
 		if (this->values.overwrite_gps_exif || !has_gps_exif) {
 			int ans = GeotagExif::write_exif_gps(this->current_file, this->wp->coord, this->wp->altitude, this->values.no_change_mtime);
 			if (ans != 0) {
-				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->current_file));
+				this->trw->get_window()->statusbar_update(StatusBarField::Info, tr("Failed updating EXIF on %1").arg(this->current_file));
 			}
 		}
 	}
@@ -559,7 +559,7 @@ void GeotagJob::geotag(void)
 		if (this->values.write_exif) {
 			int ans = GeotagExif::write_exif_gps(this->current_file, this->coord, this->altitude, this->values.no_change_mtime);
 			if (ans != 0) {
-				this->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(this->current_file));
+				this->trw->get_window()->statusbar_update(StatusBarField::Info, tr("Failed updating EXIF on %1").arg(this->current_file));
 			}
 		}
 	}

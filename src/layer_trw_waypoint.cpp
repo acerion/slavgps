@@ -68,7 +68,7 @@ extern bool g_have_diary_program;
 
 Waypoint::Waypoint()
 {
-	this->tree_item_type = TreeItemType::SUBLAYER;
+	this->tree_item_type = TreeItemType::Sublayer;
 
 	this->name = tr("Waypoint");
 
@@ -83,7 +83,7 @@ Waypoint::Waypoint()
 /* Copy constructor. */
 Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 {
-	this->tree_item_type = TreeItemType::SUBLAYER;
+	this->tree_item_type = TreeItemType::Sublayer;
 
 	this->coord = wp.coord;
 	this->visible = wp.visible;
@@ -206,7 +206,7 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 		return false;
 	}
 
-	const Altitude elev = DEMCache::get_elev_by_coord(this->coord, DemInterpolation::BEST);
+	const Altitude elev = DEMCache::get_elev_by_coord(this->coord, DemInterpolation::Best);
 	if (!elev.is_valid()) {
 		return true;
 	}

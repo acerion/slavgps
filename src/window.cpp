@@ -643,21 +643,21 @@ void Window::create_actions(void)
 		this->menu_view->addAction(this->qa_drawmode_utm);
 
 #ifdef VIK_CONFIG_EXPEDIA
-		this->qa_drawmode_expedia = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::EXPEDIA), this);
-		this->qa_drawmode_expedia->setData(QVariant((int) ViewportDrawMode::EXPEDIA));
+		this->qa_drawmode_expedia = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::Expedia), this);
+		this->qa_drawmode_expedia->setData(QVariant((int) ViewportDrawMode::Expedia));
 		this->qa_drawmode_expedia->setCheckable(true);
 		group->addAction(this->qa_drawmode_expedia);
 		this->menu_view->addAction(this->qa_drawmode_expedia);
 #endif
 
-		this->qa_drawmode_mercator = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::MERCATOR), this);
-		this->qa_drawmode_mercator->setData(QVariant((int) ViewportDrawMode::MERCATOR));
+		this->qa_drawmode_mercator = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::Mercator), this);
+		this->qa_drawmode_mercator->setData(QVariant((int) ViewportDrawMode::Mercator));
 		this->qa_drawmode_mercator->setCheckable(true);
 		group->addAction(this->qa_drawmode_mercator);
 		this->menu_view->addAction(this->qa_drawmode_mercator);
 
-		this->qa_drawmode_latlon = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::LATLON), this);
-		this->qa_drawmode_latlon->setData(QVariant((int) ViewportDrawMode::LATLON));
+		this->qa_drawmode_latlon = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::LatLon), this);
+		this->qa_drawmode_latlon->setData(QVariant((int) ViewportDrawMode::LatLon));
 		this->qa_drawmode_latlon->setCheckable(true);
 		group->addAction(this->qa_drawmode_latlon);
 		this->menu_view->addAction(this->qa_drawmode_latlon);
@@ -965,7 +965,7 @@ void Window::update_status_bar_on_redraw(void)
 	const QString zoom_level = this->viewport->get_viking_zoom_level().pretty_print(this->viewport->get_coord_mode());
 
 	qDebug() << "II" PREFIX << "zoom level is" << zoom_level;
-	this->status_bar->set_message(StatusBarField::ZOOM, zoom_level);
+	this->status_bar->set_message(StatusBarField::Zoom, zoom_level);
 	this->display_tool_name();
 }
 
@@ -1465,7 +1465,7 @@ void Window::menu_copy_centre_cb(void)
 	const QString message = QString("%1 %2").arg(first).arg(second);
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::Aggregate, "", dummy, message);
+	Clipboard::copy(ClipboardDataType::Text, LayerType::Aggregate, "", dummy, message);
 }
 
 
@@ -1835,7 +1835,7 @@ void Window::display_tool_name(void)
 {
 	const LayerTool * tool = this->toolbox->get_current_tool();
 	if (tool) {
-		this->status_bar->set_message(StatusBarField::TOOL, tool->get_description());
+		this->status_bar->set_message(StatusBarField::Tool, tool->get_description());
 	}
 }
 
@@ -2014,7 +2014,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
-			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path)));
+			this->get_statusbar()->set_message(StatusBarField::Info, tr("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path)));
 		}
 		/* No break, carry on to show any data. */
 	case VikFile::LoadStatus::Success:
@@ -2247,14 +2247,14 @@ QAction * Window::get_drawmode_action(ViewportDrawMode mode)
 	QAction * qa = NULL;
 	switch (mode) {
 #ifdef VIK_CONFIG_EXPEDIA
-	case ViewportDrawMode::EXPEDIA:
+	case ViewportDrawMode::Expedia:
 		qa = this->qa_drawmode_expedia;
 		break;
 #endif
-	case ViewportDrawMode::MERCATOR:
+	case ViewportDrawMode::Mercator:
 		qa = this->qa_drawmode_mercator;
 		break;
-	case ViewportDrawMode::LATLON:
+	case ViewportDrawMode::LatLon:
 		qa = this->qa_drawmode_latlon;
 		break;
 	case ViewportDrawMode::UTM:
@@ -2309,7 +2309,7 @@ void LocatorJob::run(void)
 
 	const bool end_job = this->set_progress_state(1.0);
 	if (end_job) {
-		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Location lookup aborted"));
+		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location lookup aborted"));
 		return; /* Abort thread */
 	}
 
@@ -2328,11 +2328,11 @@ void LocatorJob::run(void)
 		this->window->viewport->set_viking_zoom_level(zoom);
 		this->window->viewport->set_center_from_latlon(lat_lon, false);
 
-		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Location found: %1").arg(name));
+		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location found: %1").arg(name));
 
 		this->window->emit_center_or_zoom_changed("determine location");
 	} else {
-		this->window->statusbar_update(StatusBarField::INFO, QObject::tr("Unable to determine location"));
+		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to determine location"));
 	}
 
 	return;
@@ -2375,7 +2375,7 @@ void Window::finish_new(void)
 	if (true || this->file_load_status == VikFile::LoadStatus::ReadFailure) {
 		if (Preferences::get_startup_method() == StartupMethod::AutoLocation) {
 
-			this->status_bar->set_message(StatusBarField::INFO, tr("Trying to determine location..."));
+			this->status_bar->set_message(StatusBarField::Info, tr("Trying to determine location..."));
 			LocatorJob * locator = new LocatorJob(this);
 			locator->set_description(tr("Determining location"));
 			locator->run_in_background(ThreadPoolType::Remote);
@@ -2688,7 +2688,7 @@ void Window::print_cb(void)
 
 void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const VikingZoomLevel & target_map_zoom, ViewportSaveFormat save_format, bool save_kmz)
 {
-	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
+	this->status_bar->set_message(StatusBarField::Info, tr("Generating image file..."));
 
 	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, false, target_map_zoom);
 
@@ -2701,7 +2701,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 	if (pixmap.isNull()) {
 		qDebug() << "EE" PREFIX << "Failed to get viewport pixmap of size" << image_width << image_height;
 
-		this->status_bar->set_message(StatusBarField::INFO, QString(""));
+		this->status_bar->set_message(StatusBarField::Info, "");
 		Dialog::error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
 
 		delete scaled_viewport;
@@ -2728,7 +2728,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	/* Cleanup. */
 
-	this->status_bar->set_message(StatusBarField::INFO, QString(""));
+	this->status_bar->set_message(StatusBarField::Info, "");
 	Dialog::info(message, this);
 }
 
@@ -2791,10 +2791,10 @@ bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width
 			const QPixmap pixmap = this->viewport->get_pixmap();
 			if (pixmap.isNull()) {
 				qDebug() << "EE" PREFIX << "Unable to create viewport pixmap" << file_full_path;
-				this->status_bar->set_message(StatusBarField::INFO, QObject::tr("Unable to create viewport's image"));
+				this->status_bar->set_message(StatusBarField::Info, QObject::tr("Unable to create viewport's image"));
 			} else if (!pixmap.save(file_full_path, extension)) {
 				qDebug() << "EE" PREFIX << "Unable to write to file" << file_full_path;
-				this->status_bar->set_message(StatusBarField::INFO, QObject::tr("Unable to write to file %1").arg(file_full_path));
+				this->status_bar->set_message(StatusBarField::Info, QObject::tr("Unable to write to file %1").arg(file_full_path));
 			} else {
 				; /* Pixmap is valid and has been saved. */
 			}
@@ -3059,7 +3059,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 		if (drawmode == ViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::UTM);
 		} else if (olddrawmode == ViewportDrawMode::UTM) {
-			this->items_tree->change_coord_mode(CoordMode::LATLON);
+			this->items_tree->change_coord_mode(CoordMode::LatLon);
 		}
 		this->draw_tree_items();
 	}
@@ -3305,7 +3305,7 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 			/* Show some progress. */
 			if (this_success) {
 				export_count++;
-				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(file_full_path));
+				this->status_bar->set_message(StatusBarField::Info, tr("Exporting to file: %1").arg(file_full_path));
 			}
 
 			success = success && this_success;
@@ -3315,7 +3315,7 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 	this->clear_busy_cursor();
 
 	/* Confirm what happened. */
-	this->status_bar->set_message(StatusBarField::INFO, QString("Exported files: %1").arg(export_count));
+	this->status_bar->set_message(StatusBarField::Info, tr("Exported files: %1").arg(export_count));
 
 	return success;
 }
@@ -3511,7 +3511,7 @@ void Window::menu_view_cache_info_cb(void)
 {
 	const size_t bytes = MapCache::get_size();
 	const QString size_string = Measurements::get_file_size_string(bytes);
-	const QString msg = QString("Map Cache size is %1 with %2 items").arg(size_string).arg(MapCache::get_count());
+	const QString msg = tr("Map Cache size is %1 with %2 items").arg(size_string).arg(MapCache::get_count());
 
 	Dialog::info(msg, this);
 }

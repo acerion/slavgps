@@ -337,8 +337,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 void PropertiesDialogTP::set_dialog_title(const QString & track_name)
 {
-	const QString title = tr("%1: %2").arg(track_name).arg(tr("Trackpoint"));
-	this->setWindowTitle(title);
+	this->setWindowTitle(QObject::tr("%1: Trackpoint").arg(track_name));
 }
 
 

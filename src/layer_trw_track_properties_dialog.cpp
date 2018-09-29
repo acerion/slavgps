@@ -239,7 +239,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 	tmp_string = this->trk->get_max_speed().convert_to_unit(speed_unit).to_string();
 	this->w_max_speed = ui_label_new_selectable(tmp_string, this);
-	this->grid->addWidget(new QLabel(QObject::tr("Max Speed:")), row, 0);
+	this->grid->addWidget(new QLabel(tr("Max Speed:")), row, 0);
 	this->grid->addWidget(this->w_max_speed, row, 1);
 	row++;
 

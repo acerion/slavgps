@@ -371,7 +371,7 @@ void OSMTracesUpload::run(void)
 		} else {
 			msg = tr("Failed to upload data to OSM: HTTP response code %3 (@%4)").arg(ans).arg(timestr);
 		}
-		window->statusbar_update(StatusBarField::INFO, msg);
+		window->statusbar_update(StatusBarField::Info, msg);
 	}
 
 	/* Removing temporary file. */

@@ -221,13 +221,13 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 	}
 
 	switch (ce->method) {
-	case DemInterpolation::NONE:
+	case DemInterpolation::None:
 		ce->elev = dem->get_east_north(lon, lat);
 		break;
-	case DemInterpolation::SIMPLE:
+	case DemInterpolation::Simple:
 		ce->elev = dem->get_simple_interpol(lon, lat);
 		break;
-	case DemInterpolation::BEST:
+	case DemInterpolation::Best:
 		ce->elev = dem->get_shepard_interpol(lon, lat);
 		break;
 	default: break;

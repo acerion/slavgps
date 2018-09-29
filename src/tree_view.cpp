@@ -166,9 +166,9 @@ void TreeView::select_cb(void) /* Slot. */
 	Window * main_window = g_tree->tree_get_main_window();
 
 	/* Clear statusbar. */
-	main_window->get_statusbar()->set_message(StatusBarField::INFO, "");
+	main_window->get_statusbar()->set_message(StatusBarField::Info, "");
 
-	qDebug() << "II" PREFIX << "selected item is" << (selected_item->tree_item_type == TreeItemType::LAYER ? "layer" : "sublayer");
+	qDebug() << "II" PREFIX << "selected item is" << (selected_item->tree_item_type == TreeItemType::Layer ? "layer" : "sublayer");
 
 	/* Either the selected layer itself, or an owner/parent of selected sublayer item. */
 	const Layer * layer = selected_item->to_layer();
@@ -188,7 +188,7 @@ void TreeView::select_cb(void) /* Slot. */
 
 bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 {
-	if (!tree_item || tree_item->tree_item_type != TreeItemType::LAYER) {
+	if (!tree_item || tree_item->tree_item_type != TreeItemType::Layer) {
 		return false;
 	}
 
@@ -727,7 +727,7 @@ static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreeP
 				gtk_tree_model_get_iter(src_model, &dest_parent_index, dest_cp);
 
 				tree_item = layer->tree_view->get_tree_item(dest_parent_index);
-			} while (gtk_tree_path_get_depth(dest_cp) > 1 && tree_item->tree_item_type != TreeItemType::LAYER);
+			} while (gtk_tree_path_get_depth(dest_cp) > 1 && tree_item->tree_item_type != TreeItemType::Layer);
 
 
 			tree_item = layer->tree_view->get_tree_item(&src_item);
@@ -1006,10 +1006,10 @@ bool TreeModel::canDropMimeData(const QMimeData * data_, Qt::DropAction action, 
 		return false;
 	}
 
-	if (parent_item->tree_item_type == TreeItemType::LAYER) {
+	if (parent_item->tree_item_type == TreeItemType::Layer) {
 		qDebug() << "EE" PREFIX << "can drop on Layer";
 		return true;
-	} else if (parent_item->tree_item_type == TreeItemType::SUBLAYER) {
+	} else if (parent_item->tree_item_type == TreeItemType::Sublayer) {
 		qDebug() << "EE" PREFIX << "can drop on Sublayer";
 		return true;
 	} else {
@@ -1151,7 +1151,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 	bool result = selected_item->properties_dialog();
 	if (result) {
-		if (selected_item->tree_item_type == TreeItemType::LAYER) {
+		if (selected_item->tree_item_type == TreeItemType::Layer) {
 			selected_item->to_layer()->emit_layer_changed("Tree View - Item Properties");
 		}
 		return true;

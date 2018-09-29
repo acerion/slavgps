@@ -75,17 +75,17 @@ namespace SlavGPS {
 		bool is_valid(void) const { return !std::isnan(this->lat) && !std::isnan(this->lon); };
 		void invalidate(void) { this->lat = NAN; this->lon = NAN; };
 
-		/* Convert value to string with DegreeFormat::RAW format. */
+		/* Convert value to string with DegreeFormat::Raw format. */
 		static QString lat_to_string_raw(const LatLon & lat_lon);
 		static QString lon_to_string_raw(const LatLon & lat_lon);
 
-		/* Convert value to "lat,lon" string with DegreeFormat::RAW format for each token in the string. */
+		/* Convert value to "lat,lon" string with DegreeFormat::Raw format for each token in the string. */
 		QString to_string(void) const;
 
 		/* Convert value to pair of strings using preferred representation. */
 		static void to_strings(const LatLon & lat_lon, QString & lat, QString & lon);
 
-		/* Convert value to strings with DegreeFormat::RAW format. */
+		/* Convert value to strings with DegreeFormat::Raw format. */
 		void to_strings_raw(QString & lat, QString & lon) const;
 
 		static LatLon get_average(const LatLon & max, const LatLon & min) { return LatLon((max.lat + min.lat) / 2, (max.lon + min.lon) / 2); };

@@ -150,7 +150,7 @@ QString DatasourceGPSSetup::get_port(void)
 bool DatasourceGPSSetup::get_do_tracks(void)
 {
 	bool get_tracks = this->get_tracks_b->isChecked();
-	if (this->direction == GPSDirection::DOWN) {
+	if (this->direction == GPSDirection::Down) {
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, get_tracks);
 	}
 	return get_tracks;
@@ -165,7 +165,7 @@ bool DatasourceGPSSetup::get_do_tracks(void)
 bool DatasourceGPSSetup::get_do_routes(void)
 {
 	bool get_routes = this->get_routes_b->isChecked();
-	if (this->direction == GPSDirection::DOWN) {
+	if (this->direction == GPSDirection::Down) {
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, get_routes);
 	}
 	return get_routes;
@@ -180,7 +180,7 @@ bool DatasourceGPSSetup::get_do_routes(void)
 bool DatasourceGPSSetup::get_do_waypoints(void)
 {
 	bool get_waypoints = this->get_waypoints_b->isChecked();
-	if (this->direction == GPSDirection::DOWN) {
+	if (this->direction == GPSDirection::Down) {
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, get_waypoints);
 	}
 	return get_waypoints;
@@ -336,7 +336,7 @@ static void set_current_count(int cnt, AcquireProcess * acquiring)
 static void set_gps_info(const char * info, AcquireProcess * acquiring)
 {
 	if (acquiring->acquire_is_running) {
-		((DatasourceGPSProgress *) acquiring->parent_data_source_dialog)->gps_label->setText(QObject::tr("GPS Device: %s").arg(info));
+		((DatasourceGPSProgress *) acquiring->parent_data_source_dialog)->gps_label->setText(QObject::tr("GPS Device: %1").arg(info));
 	}
 }
 
@@ -599,7 +599,7 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSS
 */
 DatasourceGPSSetup::DatasourceGPSSetup(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent) : DataSourceDialog(window_title)
 {
-	this->direction = GPSDirection::UP;
+	this->direction = GPSDirection::Up;
 	this->setWindowTitle(QObject::tr("GPS Upload"));
 
 	datasource_gps_setup_dialog_add_widgets(this);

@@ -133,7 +133,7 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 		this->coord_bottommost = this->vp_center.utm.northing - height;
 		this->coord_topmost = this->vp_center.utm.northing + height;
 
-	} else if (this->vp_coord_mode == CoordMode::LATLON) {
+	} else if (this->vp_coord_mode == CoordMode::LatLon) {
 
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
@@ -357,7 +357,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 			const ScreenPos end_pos = this->viewport->coord_to_screen_pos(end_coord);
 			const Coord av_coord = this->viewport->screen_pos_to_coord(ScreenPos::get_average(begin_pos, end_pos));
 
-			QString name = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("start/end"));
+			QString name = QObject::tr("%1: start/end").arg(ename);
 			this->draw_track_label(name, fg_color, bg_color, av_coord);
 
 			done_start_end = true;
@@ -369,7 +369,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 		    || trk->draw_name_mode == TrackDrawNameMode::StartEnd
 		    || trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd) {
 
-			const QString name_start = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("start"));
+			const QString name_start = QObject::tr("%1: start").arg(ename);
 			this->draw_track_label(name_start, fg_color, bg_color, begin_coord);
 		}
 		/* Don't draw end label if this is the one being created. */
@@ -378,7 +378,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 			    || trk->draw_name_mode == TrackDrawNameMode::StartEnd
 			    || trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd) {
 
-				const QString name_end = QObject::tr("%1: %2").arg(ename).arg(QObject::tr("end"));
+				const QString name_end = QObject::tr("%1: end").arg(ename);
 				this->draw_track_label(name_end, fg_color, bg_color, end_coord);
 			}
 		}
@@ -566,7 +566,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
-		if (this->vp_coord_mode == CoordMode::LATLON
+		if (this->vp_coord_mode == CoordMode::LatLon
 		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
 			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
 
@@ -736,7 +736,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
-		if (this->vp_coord_mode == CoordMode::LATLON
+		if (this->vp_coord_mode == CoordMode::LatLon
 		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
 			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
 
@@ -845,7 +845,7 @@ void LayerTRWPainter::draw_track(Track * trk, Viewport * a_viewport, bool do_hig
 void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 {
 	const bool cond = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone)
-		|| ((this->vp_coord_mode == CoordMode::LATLON || wp->coord.utm.zone == this->vp_center.utm.zone) &&
+		|| ((this->vp_coord_mode == CoordMode::LatLon || wp->coord.utm.zone == this->vp_center.utm.zone) &&
 		    this->coord_fits_in_viewport(wp->coord));
 
 
@@ -1200,7 +1200,7 @@ inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
 		fits_horizontally = coord.utm.easting < this->coord_rightmost && coord.utm.easting > this->coord_leftmost;
 		fits_vertically = coord.utm.northing > this->coord_bottommost && coord.utm.northing < this->coord_topmost;
 		break;
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		fits_horizontally = coord.ll.lon < this->coord_rightmost && coord.ll.lon > this->coord_leftmost;
 		fits_vertically = coord.ll.lat > this->coord_bottommost && coord.ll.lat < this->coord_topmost;
 		break;

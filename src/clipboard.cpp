@@ -157,7 +157,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	if (vc->type == ClipboardDataType::LAYER) {
 		Layer * new_layer = Layer::unmarshall(vc->data, panel->get_viewport());
 		panel->add_layer(new_layer, viewport->get_coord_mode());
-	} else if (vc->type == ClipboardDataType::SUBLAYER) {
+	} else if (vc->type == ClipboardDataType::Sublayer) {
 		Layer * selected = panel->get_selected_layer();
 		if (selected && selected->type == vc->layer_type) {
 			selected->paste_sublayer(vc->sublayer, vc->data, vc->len);
@@ -302,7 +302,7 @@ static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 	Layer * selected = panel->get_selected_layer();
 
 	if (selected && selected->type == LayerType::TRW) {
-		((LayerTRW *) selected)->new_waypoint(Coord(lat_lon, CoordMode::LATLON), selected->get_window());
+		((LayerTRW *) selected)->new_waypoint(Coord(lat_lon, CoordMode::LatLon), selected->get_window());
 		((LayerTRW *) selected)->get_waypoints_node().recalculate_bbox();
 		selected->emit_layer_changed("Clipboard - add wp");
 	} else {
@@ -445,7 +445,7 @@ void Clipboard::copy_selected(LayersPanel * panel)
 
 	Layer * selected = panel->get_selected_layer();
 	TreeIndex index;
-	ClipboardDataType type = ClipboardDataType::NONE;
+	ClipboardDataType type = ClipboardDataType::None;
 	LayerType layer_type = LayerType::Aggregate;
 	QString type_id; /* Type ID of copied tree item. */
 	unsigned char * data = NULL;
@@ -461,19 +461,19 @@ void Clipboard::copy_selected(LayersPanel * panel)
 
 	/* Since we intercept copy and paste keyboard operations, this is called even when a cell is being edited. */
 	if (selected->tree_view->is_editing_in_progress()) {
-		type = ClipboardDataType::TEXT;
+		type = ClipboardDataType::Text;
 
 		/* I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item.
 		   At least this is better than copying the layer data - which is even further away from what the user would be expecting... */
 		len = 0;
 	} else {
 		TreeItem * item = selected->tree_view->get_tree_item(selected->index);
-		if (item->tree_item_type == TreeItemType::SUBLAYER) {
-			type = ClipboardDataType::SUBLAYER;
+		if (item->tree_item_type == TreeItemType::Sublayer) {
+			type = ClipboardDataType::Sublayer;
 			selected->copy_sublayer(item, &data, &len);
 		} else {
 			int ilen = 0;
-			type = ClipboardDataType::LAYER;
+			type = ClipboardDataType::Layer;
 #ifdef K
 			Layer::marshall(selected, &data, &ilen);
 #endif
@@ -511,7 +511,7 @@ void Clipboard::copy(ClipboardDataType type, LayerType layer_type, const QString
 
 	/* Simple clipboard copy when necessary. */
 #ifdef K
-	if (type == ClipboardDataType::TEXT) {
+	if (type == ClipboardDataType::Text) {
 		gtk_clipboard_set_text(c, text, -1);
 	} else {
 		gtk_clipboard_set_with_data(c, target_table, G_N_ELEMENTS(target_table), clip_get, clip_clear, vc);
@@ -547,7 +547,7 @@ static void clip_determine_viking_type(GtkClipboard * c, GtkSelectionData * sd, 
 #ifdef K
 	ClipboardDataType * vdct = (ClipboardDataType *) p;
 	/* Default value. */
-	*vdct = ClipboardDataType::NONE;
+	*vdct = ClipboardDataType::None;
 
 	if (gtk_selection_data_get_length(sd) == -1) {
 		fprintf(stderr, "WARNING: DETERMINING TYPE: length failure\n");
@@ -562,8 +562,8 @@ static void clip_determine_viking_type(GtkClipboard * c, GtkSelectionData * sd, 
 
 	if (vc->type == ClipboardDataType::LAYER) {
 		*vdct = ClipboardDataType::LAYER;
-	} else if (vc->type == ClipboardDataType::SUBLAYER) {
-		*vdct = ClipboardDataType::SUBLAYER;
+	} else if (vc->type == ClipboardDataType::Sublayer) {
+		*vdct = ClipboardDataType::Sublayer;
 	} else {
 		fprintf(stderr, "WARNING: DETERMINING TYPE: THIS SHOULD NEVER HAPPEN\n");
 	}
@@ -602,7 +602,7 @@ static void clip_determine_type(GtkClipboard * c, GdkAtom * a, int n, void * p)
  */
 ClipboardDataType Clipboard::get_current_type()
 {
-	ClipboardDataType answer = ClipboardDataType::NONE;
+	ClipboardDataType answer = ClipboardDataType::None;
 #ifdef K
 	GtkClipboard * c = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	ClipboardDataType * vcdt = (VikClipboardDataType *) malloc(sizeof (VikClipboardDataType));

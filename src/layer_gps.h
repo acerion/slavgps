@@ -86,8 +86,8 @@ namespace SlavGPS {
 
 
 	enum class GPSDirection {
-		DOWN = 0,
-		UP
+		Down = 0,
+		Up
 	};
 
 	enum class GPSTransferType {

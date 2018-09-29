@@ -257,7 +257,7 @@ void Track::free()
 
 Track::Track(bool is_route)
 {
-	this->tree_item_type = TreeItemType::SUBLAYER;
+	this->tree_item_type = TreeItemType::Sublayer;
 
 	if (is_route) {
 		this->type_id = "sg.trw.route";
@@ -284,7 +284,7 @@ Track::Track(bool is_route)
  */
 Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 {
-	this->tree_item_type = TreeItemType::SUBLAYER;
+	this->tree_item_type = TreeItemType::Sublayer;
 
 	/* Copy points. */
 	for (auto iter = from.trackpoints.begin(); iter != from.trackpoints.end(); iter++) {
@@ -323,7 +323,7 @@ Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 */
 Track::Track(const Track & from, const TrackPoints::iterator & begin, const TrackPoints::iterator & end) : Track(from.type_id == "sg.trw.route")
 {
-	this->tree_item_type = TreeItemType::SUBLAYER;
+	this->tree_item_type = TreeItemType::Sublayer;
 
 	/* Copy a subset of Trackpoints. */
 	for (auto iter = begin; iter != end; iter++) {
@@ -2192,7 +2192,7 @@ unsigned long Track::apply_dem_data(bool skip_existing)
 			/* TODO_LATER: of the 4 possible choices we have for choosing an
 			   elevation (trackpoint in between samples), choose the one
 			   with the least elevation change as the last. */
-			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::BEST);
+			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
 			if (elev.is_valid()) {
 				(*iter)->altitude = elev.get_value();
 				num++;
@@ -2217,7 +2217,7 @@ void Track::apply_dem_data_last_trackpoint()
 
 	/* As in apply_dem_data() - use 'best' interpolation method. */
 	auto last = std::prev(this->trackpoints.end());
-	const Altitude elev = DEMCache::get_elev_by_coord((*last)->coord, DemInterpolation::BEST);
+	const Altitude elev = DEMCache::get_elev_by_coord((*last)->coord, DemInterpolation::Best);
 	if (elev.is_valid()) {
 		(*last)->altitude = elev.get_value();
 	}
@@ -3539,7 +3539,7 @@ static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradi
 	}
 
 	Coord * coord = new Coord();
-	coord->mode = CoordMode::LATLON;
+	coord->mode = CoordMode::LatLon;
 
 	if (std::abs(gradient) < 1) {
 		if (from->ll.lon > to->ll.lon) {
@@ -3613,8 +3613,8 @@ std::list<Rect *> * Track::get_map_rectangles(const VikingZoomLevel & viking_zoo
 	std::list<Coord *> fillins;
 
 	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
-	/* Seems that ATM the function get_next_coord works only for LATLON. */
-	if (((LayerTRW *) this->owning_layer)->get_coord_mode() == CoordMode::LATLON) {
+	/* Seems that ATM the function get_next_coord works only for LatLon. */
+	if (((LayerTRW *) this->owning_layer)->get_coord_mode() == CoordMode::LatLon) {
 
 		/* Fill-ins for far apart points. */
 		std::list<Rect *>::iterator cur_rect;

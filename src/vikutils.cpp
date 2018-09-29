@@ -202,7 +202,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 		}
 
 		case 'A':
-			values[i] = QObject::tr("%1Alti %2").arg(separator).arg(Altitude(tp->altitude, HeightUnit::Metres).convert_to_unit(Preferences::get_unit_height()).to_string());
+			values[i] = QObject::tr("%1Altitude %2").arg(separator).arg(Altitude(tp->altitude, HeightUnit::Metres).convert_to_unit(Preferences::get_unit_height()).to_string());
 			break;
 
 		case 'C':

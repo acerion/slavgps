@@ -45,9 +45,9 @@ namespace SlavGPS {
 
 
 	enum class DemInterpolation {
-		NONE = 0,
-		SIMPLE,
-		BEST,
+		None = 0,
+		Simple,
+		Best,
 	};
 
 

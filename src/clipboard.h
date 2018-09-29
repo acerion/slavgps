@@ -51,10 +51,10 @@ namespace SlavGPS {
 
 
 	enum class ClipboardDataType {
-		NONE = 0,
-		LAYER,
-		SUBLAYER,
-		TEXT,
+		None = 0,
+		Layer,
+		Sublayer,
+		Text,
 	};
 
 

@@ -133,7 +133,7 @@ double Viewport::calculate_utm_zone_width(void) const
 		return fabs(utm.easting - EASTING_OFFSET) * 2;
 	}
 
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		return 0.0;
 
 	default:
@@ -200,8 +200,8 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 
 
 
-	this->coord_mode = CoordMode::LATLON;
-	this->drawmode = ViewportDrawMode::MERCATOR;
+	this->coord_mode = CoordMode::LatLon;
+	this->drawmode = ViewportDrawMode::Mercator;
 
 
 
@@ -1085,17 +1085,17 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.utm.easting -= zone_delta * this->utm_zone_width;
 		coord.utm.northing = (((this->canvas.height_2) - pos_y) * ympp) + this->center.utm.northing;
 
-	} else if (this->coord_mode == CoordMode::LATLON) {
-		coord.mode = CoordMode::LATLON;
+	} else if (this->coord_mode == CoordMode::LatLon) {
+		coord.mode = CoordMode::LatLon;
 
-		if (this->drawmode == ViewportDrawMode::LATLON) {
+		if (this->drawmode == ViewportDrawMode::LatLon) {
 			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
 			coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y));
 
-		} else if (this->drawmode == ViewportDrawMode::EXPEDIA) {
+		} else if (this->drawmode == ViewportDrawMode::Expedia) {
 			calcxy_rev(&coord.ll.lon, &coord.ll.lat, pos_x, pos_y, center.ll.lon, this->center.ll.lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
 
-		} else if (this->drawmode == ViewportDrawMode::MERCATOR) {
+		} else if (this->drawmode == ViewportDrawMode::Mercator) {
 			/* This isn't called with a high frequently so less need to optimize. */
 			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
 			coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y)));
@@ -1152,18 +1152,18 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 		*pos_x = ((utm->easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
 			(utm_center->zone - utm->zone) * this->utm_zone_width / xmpp;
 		*pos_y = (this->canvas.height_2) - ((utm->northing - utm_center->northing) / ympp);
-	} else if (this->coord_mode == CoordMode::LATLON) {
+	} else if (this->coord_mode == CoordMode::LatLon) {
 		const LatLon * ll_center = &this->center.ll;
 		const LatLon * ll = &coord.ll;
-		if (this->drawmode == ViewportDrawMode::LATLON) {
+		if (this->drawmode == ViewportDrawMode::LatLon) {
 			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (ll->lon - ll_center->lon));
 			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (ll_center->lat - ll->lat));
-		} else if (this->drawmode == ViewportDrawMode::EXPEDIA) {
+		} else if (this->drawmode == ViewportDrawMode::Expedia) {
 			double xx,yy;
 			calcxy(&xx, &yy, ll_center->lon, ll_center->lat, ll->lon, ll->lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
 			*pos_x = xx;
 			*pos_y = yy;
-		} else if (this->drawmode == ViewportDrawMode::MERCATOR) {
+		} else if (this->drawmode == ViewportDrawMode::Mercator) {
 			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (ll->lon - ll_center->lon));
 			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(ll_center->lat) - MERCLAT(ll->lat)));
 		}
@@ -1649,7 +1649,7 @@ void Viewport::set_drawmode(ViewportDrawMode new_drawmode)
 	if (new_drawmode == ViewportDrawMode::UTM) {
 		this->set_coord_mode(CoordMode::UTM);
 	} else {
-		this->set_coord_mode(CoordMode::LATLON);
+		this->set_coord_mode(CoordMode::LatLon);
 	}
 }
 
@@ -1722,10 +1722,10 @@ LatLonBBox Viewport::get_bbox(void) const
 	Coord bleft =  this->screen_pos_to_coord(0,                  this->canvas.height);
 	Coord bright = this->screen_pos_to_coord(this->canvas.width, this->canvas.height);
 
-	tleft.change_mode(CoordMode::LATLON);
-	tright.change_mode(CoordMode::LATLON);
-	bleft.change_mode(CoordMode::LATLON);
-	bright.change_mode(CoordMode::LATLON);
+	tleft.change_mode(CoordMode::LatLon);
+	tright.change_mode(CoordMode::LatLon);
+	bleft.change_mode(CoordMode::LatLon);
+	bright.change_mode(CoordMode::LatLon);
 
 	LatLonBBox bbox;
 	bbox.north = MAX(tleft.ll.lat, tright.ll.lat);
@@ -2002,11 +2002,11 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	double zoom = this->get_viking_zoom_level().get_x();
 	DemInterpolation interpol_method;
 	if (zoom > 2.0) {
-		interpol_method = DemInterpolation::NONE;
+		interpol_method = DemInterpolation::None;
 	} else if (zoom >= 1.0) {
-		interpol_method = DemInterpolation::SIMPLE;
+		interpol_method = DemInterpolation::Simple;
 	} else {
-		interpol_method = DemInterpolation::BEST;
+		interpol_method = DemInterpolation::Best;
 	}
 
 	const Altitude altitude = DEMCache::get_elev_by_coord(coord, interpol_method);
@@ -2018,7 +2018,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 		message = coord_string;
 	}
 
-	this->window->get_statusbar()->set_message(StatusBarField::POSITION, message);
+	this->window->get_statusbar()->set_message(StatusBarField::Position, message);
 
 #ifdef K_FIXME_RESTORE
 	this->window->pan_move(ev);
@@ -2312,11 +2312,11 @@ QString ViewportDrawModes::get_name(ViewportDrawMode mode)
 	switch (mode) {
 	case ViewportDrawMode::UTM:
 		return QObject::tr("&UTM Mode");
-	case ViewportDrawMode::EXPEDIA:
+	case ViewportDrawMode::Expedia:
 		return QObject::tr("&Expedia Mode");
-	case ViewportDrawMode::MERCATOR:
+	case ViewportDrawMode::Mercator:
 		return QObject::tr("&Mercator Mode");
-	case ViewportDrawMode::LATLON:
+	case ViewportDrawMode::LatLon:
 		return QObject::tr("&Lat/Lon Mode");
 	default:
 		qDebug() << "EE" PREFIX << "unexpected draw mode" << (int) mode;
@@ -2334,13 +2334,13 @@ QString ViewportDrawModes::get_id_string(ViewportDrawMode mode)
 	case ViewportDrawMode::UTM:
 		mode_id_string = "utm";
 		break;
-	case ViewportDrawMode::EXPEDIA:
+	case ViewportDrawMode::Expedia:
 		mode_id_string = "expedia";
 		break;
-	case ViewportDrawMode::MERCATOR:
+	case ViewportDrawMode::Mercator:
 		mode_id_string = "mercator";
 		break;
-	case ViewportDrawMode::LATLON:
+	case ViewportDrawMode::LatLon:
 		mode_id_string = "latlon";
 		break;
 	default:
@@ -2362,7 +2362,7 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 		viewport->set_drawmode(ViewportDrawMode::UTM);
 
 	} else if (0 == strcasecmp(line, "expedia")) {
-		viewport->set_drawmode(ViewportDrawMode::EXPEDIA);
+		viewport->set_drawmode(ViewportDrawMode::Expedia);
 
 	} else if (0 == strcasecmp(line, "google")) {
 		success = false;
@@ -2373,10 +2373,10 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 		qDebug() << "WW" PREFIX << QObject::tr("Read file: draw mode 'kh' no more supported");
 
 	} else if (0 == strcasecmp(line, "mercator")) {
-		viewport->set_drawmode(ViewportDrawMode::MERCATOR);
+		viewport->set_drawmode(ViewportDrawMode::Mercator);
 
 	} else if (0 == strcasecmp(line, "latlon")) {
-		viewport->set_drawmode(ViewportDrawMode::LATLON);
+		viewport->set_drawmode(ViewportDrawMode::LatLon);
 	} else {
 		qDebug() << "EE" PREFIX << QObject::tr("Read file: unexpected draw mode") << line;
 		success = false;

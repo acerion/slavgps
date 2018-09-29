@@ -469,7 +469,7 @@ bool LayerMapnik::carto_load(void)
 	Window * window_ = this->get_window();
 	if (window_) {
 		// char *msg = g_strdup_printf(); // kamil kamil
-		window_->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command));
+		window_->statusbar_update(StatusBarField::Info, tr("Running: %2").arg(command));
 		window_->set_busy_cursor();
 	}
 
@@ -519,8 +519,8 @@ bool LayerMapnik::carto_load(void)
 	}
 
 	if (window_) {
-		const QString msg = tr("%1 completed in %.1f seconds").arg(pref_value.val_string).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
-		window_->statusbar_update(StatusBarField::INFO, msg);
+		const QString msg = tr("%1 completed in %2 seconds").arg(pref_value.val_string).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
+		window_->statusbar_update(StatusBarField::Info, msg);
 		window_->clear_busy_cursor();
 	}
 	return answer;
@@ -808,8 +808,8 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		return;
 	}
 
-	if (viewport->get_drawmode() != ViewportDrawMode::MERCATOR) {
-		this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, tr("Mapnik Rendering must be in Mercator mode"));
+	if (viewport->get_drawmode() != ViewportDrawMode::Mercator) {
+		this->get_window()->get_statusbar()->set_message(StatusBarField::Info, tr("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}
 

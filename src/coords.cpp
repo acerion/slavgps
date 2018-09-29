@@ -421,7 +421,7 @@ void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
 		lat = convert_lat_dec_to_dms(lat_lon.lat);
 		lon = convert_lon_dec_to_dms(lat_lon.lon);
 		break;
-	case DegreeFormat::RAW:
+	case DegreeFormat::Raw:
 		lat = LatLon::lat_to_string_raw(lat_lon);
 		lon = LatLon::lon_to_string_raw(lat_lon);
 		break;

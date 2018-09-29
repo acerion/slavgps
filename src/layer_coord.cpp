@@ -183,7 +183,7 @@ void LayerCoord::draw_tree_item(Viewport * viewport, bool highlight_selected, bo
 {
 	const CoordMode mode = viewport->get_coord_mode();
 	switch (mode) {
-	case CoordMode::LATLON:
+	case CoordMode::LatLon:
 		this->draw_latlon(viewport);
 		break;
 	case CoordMode::UTM:

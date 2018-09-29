@@ -40,7 +40,7 @@ namespace SlavGPS {
 	/* Possible more modes to come? xy? We'll leave that as an option. */
 	enum class CoordMode {
 		UTM     = 0,
-		LATLON  = 1
+		LatLon  = 1
 	};
 
 

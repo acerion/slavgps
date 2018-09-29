@@ -640,7 +640,7 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 
 	if (pickle.data_size() > 0) {
 #ifdef K_TODO_2_LATER
-		Clipboard::copy(ClipboardDataType::SUBLAYER, LayerType::TRW, item->type_id, pickle, item->name);
+		Clipboard::copy(ClipboardDataType::Sublayer, LayerType::TRW, item->type_id, pickle, item->name);
 #endif
 	}
 }
@@ -1481,8 +1481,7 @@ QString LayerTRW::get_tooltip(void) const
 		.arg(tracks_info)
 		.arg(routes_info);
 
-	//return result;
-	return QString("%1 %2").arg(result).arg((long) this);
+	return result;
 }
 
 
@@ -1510,7 +1509,7 @@ void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track 
 
 	Trackpoint * tp = tp_iter == track->end() ? NULL : *tp_iter;
 	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code.toUtf8().constData(), tp, tp_prev, track, NAN);
-	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
+	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -1540,7 +1539,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	} else {
 		msg = tr("%1 | %2 %3").arg(alti_string_uu).arg(lat).arg(lon);
 	}
-	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
+	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
@@ -1679,8 +1678,8 @@ void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpspoint_cb(void) /* Slot. */
 {
-	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GPSPOINT);
-	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GPSPOINT);
+	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GPSPoint);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GPSPoint);
 }
 
 
@@ -1688,8 +1687,8 @@ void LayerTRW::export_as_gpspoint_cb(void) /* Slot. */
 
 void LayerTRW::export_as_gpsmapper_cb(void) /* Slot. */
 {
-	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GPSMAPPER);
-	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GPSMAPPER);
+	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GPSMapper);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GPSMapper);
 }
 
 
@@ -1715,8 +1714,8 @@ void LayerTRW::export_as_kml_cb(void) /* Slot. */
 
 void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 {
-	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GEOJSON);
-	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GEOJSON);
+	const QString auto_save_name = append_file_ext(this->get_name(), SGFileType::GeoJSON);
+	this->export_layer(tr("Export Layer"), auto_save_name, NULL, SGFileType::GeoJSON);
 }
 
 
@@ -2016,7 +2015,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	/* Apply settings to transfer to the GPS device. */
 	vik_gps_comm(this,
 		     trk,
-		     GPSDirection::UP,
+		     GPSDirection::Up,
 		     gps_upload_setup.get_protocol(),
 		     gps_upload_setup.get_port(),
 		     false,
@@ -4057,7 +4056,7 @@ void LayerTRW::download_map_along_track_cb(void)
 
 void LayerTRW::track_list_dialog_cb(void)
 {
-	QString title = tr("%1: Track and Route List").arg(this->name);
+	const QString title = tr("%1: Track and Route List").arg(this->name);
 	track_list_dialog(title, this, "");
 }
 
@@ -4066,7 +4065,7 @@ void LayerTRW::track_list_dialog_cb(void)
 
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
-	QString title = tr("%1: Waypoint List").arg(this->name);
+	const QString title = tr("%1: Waypoint List").arg(this->name);
 	waypoint_list_dialog(title, this);
 }
 

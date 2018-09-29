@@ -106,7 +106,7 @@ namespace SlavGPS {
 		DDD,
 		DMM,
 		DMS,
-		RAW,
+		Raw,
 	};
 
 

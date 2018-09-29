@@ -163,7 +163,7 @@ void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 	const QString command = QString("%1 %2").arg(viewer).arg(quoted_path);
 
 	if (!QProcess::startDetached(command)) {
-		Dialog::error(QObject::QObject::tr("Could not launch viewer program '%1' to view file '%2'.").arg(viewer).arg(quoted_path), trw->get_window());
+		Dialog::error(QObject::tr("Could not launch viewer program '%1' to view file '%2'.").arg(viewer).arg(quoted_path), trw->get_window());
 	}
 }
 
@@ -259,7 +259,7 @@ void WaypointListDialog::copy_selected(bool include_positions)
 #endif
 
 	Pickle dummy;
-	Clipboard::copy(ClipboardDataType::TEXT, LayerType::Aggregate, "", dummy, cd.str);
+	Clipboard::copy(ClipboardDataType::Text, LayerType::Aggregate, "", dummy, cd.str);
 }
 
 

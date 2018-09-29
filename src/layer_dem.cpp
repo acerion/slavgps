@@ -1080,7 +1080,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	QString continent_dir;
 	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
 		if (dl_job->layer) {
-			dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("No SRTM data available for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float */
+			dl_job->layer->get_window()->statusbar_update(StatusBarField::Info, QObject::tr("No SRTM data available for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float */
 		}
 		return;
 	}
@@ -1097,10 +1097,10 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	switch (result) {
 	case DownloadStatus::ContentError:
 	case DownloadStatus::HTTPError:
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
 		break;
 	case DownloadStatus::FileWriteError:
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::INFO, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
+		dl_job->layer->get_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
 		break;
 	case DownloadStatus::Success:
 	case DownloadStatus::DownloadNotRequired:
@@ -1160,11 +1160,11 @@ static void srtm_draw_existence(Viewport * viewport)
 
 			coord_sw.ll.lat = lat;
 			coord_sw.ll.lon = lon;
-			coord_sw.mode = CoordMode::LATLON;
+			coord_sw.mode = CoordMode::LatLon;
 
 			coord_ne.ll.lat = lat + 1;
 			coord_ne.ll.lon = lon + 1;
-			coord_ne.mode = CoordMode::LATLON;
+			coord_ne.mode = CoordMode::LatLon;
 
 			draw_existence_common(viewport, pen, coord_sw, coord_ne, cache_file_path);
 		}
@@ -1259,11 +1259,11 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 			coord_sw.ll.lat = lat;
 			coord_sw.ll.lon = lon - 0.125;
-			coord_sw.mode = CoordMode::LATLON;
+			coord_sw.mode = CoordMode::LatLon;
 
 			coord_ne.ll.lat = lat + 0.125;
 			coord_ne.ll.lon = lon;
-			coord_ne.mode = CoordMode::LATLON;
+			coord_ne.mode = CoordMode::LatLon;
 
 			draw_existence_common(viewport, pen, coord_sw, coord_ne, cache_file_path);
 		}
@@ -1427,12 +1427,12 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 		if (stat(cache_file_path.toUtf8().constData(), &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(time_buf);
+			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(time_buf);
 		} else {
-			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);
+			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);
 		}
 	} else {
-		message = QString("Source: %1\n\nNo local DEM File!").arg(remote_location);
+		message = tr("Source: %1\n\nNo local DEM File!").arg(remote_location);
 	}
 
 	/* Show the info. */

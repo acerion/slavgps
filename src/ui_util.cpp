@@ -217,7 +217,7 @@ void SlavGPS::update_desktop_recent_documents(Window * window, const QString & f
 	recent_data->groups         = groups;
 	recent_data->is_private     = false;
 	if (!gtk_recent_manager_add_full(manager, uri, recent_data)) {
-		this->get_statusbar()->set_message(StatusBarField::INFO, QString("Unable to add '%s' to the list of recently used documents").arg(uri));
+		this->get_statusbar()->set_message(StatusBarField::Info, tr("Unable to add '%s' to the list of recently used documents").arg(uri));
 	}
 
 	free(uri);

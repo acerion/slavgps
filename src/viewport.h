@@ -65,9 +65,9 @@ namespace SlavGPS {
 	/* Drawmode management. */
 	enum class ViewportDrawMode {
 		UTM = 0,
-		EXPEDIA,
-		MERCATOR,
-		LATLON
+		Expedia,
+		Mercator,
+		LatLon
 	};
 
 

@@ -38,12 +38,12 @@ namespace SlavGPS {
 
 
 	enum class StatusBarField {
-		TOOL,
-		ITEMS,
-		ZOOM,
-		INFO,
-		POSITION,
-		NUM_FIELDS
+		Tool,
+		Items,
+		Zoom,
+		Info,
+		Position,
+		Max
 	};
 
 

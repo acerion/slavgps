@@ -144,8 +144,8 @@ void a_dialog_list(const QString & title, const QStringList & items, int padding
  */
 void Dialog::map_license(const QString & map_name, const QString & map_license, const QString & map_license_url, QWidget * parent)
 {
-	const QString primary_text = QString(QObject::tr("The map data is licensed: %1.")).arg(map_license);
-	const QString secondary_text = QString(QObject::tr("The data provided by '<b>%1</b>' are licensed under the following license: <b>%1</b>."))
+	const QString primary_text = QObject::tr("The map data is licensed: %1.").arg(map_license);
+	const QString secondary_text = QObject::tr("The data provided by '<b>%1</b>' are licensed under the following license: <b>%1</b>.")
 		.arg(map_name)
 		.arg(map_license);
 

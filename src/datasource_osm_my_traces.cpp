@@ -646,7 +646,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 				got_something = got_something || convert_result;
 				if (!convert_result) {
 					/* Report errors to the status bar. */
-					acquiring_context->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(babel_action->input));
+					acquiring_context->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->input));
 				}
 			}
 

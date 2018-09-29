@@ -57,8 +57,8 @@ namespace SlavGPS {
 
 
 	enum class TreeItemType {
-		LAYER,
-		SUBLAYER
+		Layer,
+		Sublayer
 	};
 
 
@@ -170,7 +170,7 @@ namespace SlavGPS {
 		static bool the_same_object(const TreeItem * item1, const TreeItem * item2);
 
 	//protected:
-		TreeItemType tree_item_type = TreeItemType::LAYER;
+		TreeItemType tree_item_type = TreeItemType::Layer;
 		TreeIndex index;             /* Set in TreeView::push_tree_item_back/push_tree_item_front(). */
 		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::push_tree_item_back/push_tree_item_front(). */
 

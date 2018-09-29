@@ -98,7 +98,7 @@ void Expedia::init(void)
 {
 #ifdef VIK_CONFIG_EXPEDIA
 #ifdef TODO_2_LATER
-	VikMapsLayer_MapType map_type = { MapTypeID::Expedia, 0, 0, ViewportDrawMode::EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download_tile, expedia_handle_init, expedia_handle_cleanup };
+	VikMapsLayer_MapType map_type = { MapTypeID::Expedia, 0, 0, ViewportDrawMode::Expedia, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download_tile, expedia_handle_init, expedia_handle_cleanup };
 	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::Expedia, &map_type);
 #else
 	VikMapsLayer_MapType map_type;
@@ -179,7 +179,7 @@ void expedia_snip(const QString & file)
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
 static bool expedia_coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
 {
-	assert (src_coord.mode == CoordMode::LATLON);
+	assert (src_coord.mode == CoordMode::LatLon);
 
 	if (!viking_zoom_level.x_y_is_equal()) {
 		return false;
@@ -217,7 +217,7 @@ LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 
 static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coord)
 {
-	dest_coord.mode = CoordMode::LATLON;
+	dest_coord.mode = CoordMode::LatLon;
 	dest_coord.ll.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
 	dest_coord.ll.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
 }

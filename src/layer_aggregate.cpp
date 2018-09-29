@@ -242,7 +242,7 @@ bool LayerAggregate::change_child_item_position(TreeItem * child_item, bool up)
 	//this->tree_view->change_tree_item_position(child_item->index, up);
 
 	/* We are in aggregate layer, so the child must be a layer as well. */
-	assert (child_item->tree_item_type == TreeItemType::LAYER);
+	assert (child_item->tree_item_type == TreeItemType::Layer);
 	Layer * child_layer = child_item->to_layer();
 
 	/* Find container iterator of given tree item.
