@@ -29,24 +29,32 @@
  *  one can use shell_command option but this will be OS platform specific
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
 
-#ifdef HAVE_UNISTD_H
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+
+
 
 #include <QTemporaryFile>
 #include <QDebug>
 #include <QStandardPaths>
 
+
+
+
 #include <glib.h>
 #include <glib/gstdio.h>
+
+
+
 
 #include "gpx.h"
 #include "babel.h"

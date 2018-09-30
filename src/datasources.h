@@ -24,13 +24,6 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-
-
-
 #ifdef VIK_CONFIG_GEOCACHES
 #include "datasource_geocache.h"
 #endif

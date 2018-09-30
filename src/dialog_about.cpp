@@ -20,10 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 
 
 
@@ -98,11 +94,11 @@ void Dialog::about(QWidget * parent)
 	static const QString copyright = QObject::tr("<b>Copyright:</b><br/>"
 						     "2017, Kamil Ignacak<br/>"
 						     "2003-2008, Evan Battaglia<br/>"
-						     "2008-" THEYEAR", Viking's contributors<br/><br/><br/>");
+						     "2008-" CURRENT_YEAR", Viking's contributors<br/><br/><br/>");
 
 	static const QString copyright_viking = QObject::tr("<b>Copyright:</b><br/>"
 							    "2003-2008, Evan Battaglia<br/>"
-							    "2008-" THEYEAR", Viking's contributors<br/><br/><br/>");
+							    "2008-" CURRENT_YEAR", Viking's contributors<br/><br/><br/>");
 
 	static const QString short_description_viking = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.<br/><br/><br/>");
 	static const QString short_description = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.<br/><br/><br/>");
@@ -178,19 +174,19 @@ void Dialog::about(QWidget * parent)
 #ifdef HAVE_LIBEXIF
 	libs += "libexif<br/>";
 #endif
-#ifdef HAVE_LIBX11
+#ifdef HAVE_X11_XLIB_H
 	libs += "libX11<br/>";
 #endif
 #ifdef HAVE_MAGIC_H
 	libs += "libmagic<br/>";
 #endif
-#ifdef HAVE_LIBBZ2
+#ifdef HAVE_BZLIB_H
 	libs += "libbz2<br/>";
 #endif
 #ifdef HAVE_LIBZIP
 	libs += "libzip<br/>";
 #endif
-#ifdef HAVE_LIBSQLITE3
+#ifdef HAVE_SQLITE3_H
 	libs += "libsqlite3<br/>";
 #endif
 #ifdef HAVE_LIBMAPNIK

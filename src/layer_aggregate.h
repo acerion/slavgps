@@ -26,7 +26,13 @@
 
 #include <list>
 
+
+
+
 #include <QDialog>
+
+
+
 
 #include "variant.h"
 #include "layer.h"

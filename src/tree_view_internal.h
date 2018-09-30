@@ -38,7 +38,6 @@
 
 
 #include "tree_view.h"
-#include "config.h"
 #include "ui_builder.h"
 
 

@@ -32,13 +32,15 @@
   * follows the global-geodetic profile.
   */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
+
+
+
 
 #include "map_source_tms.h"
 #include "map_utils.h"

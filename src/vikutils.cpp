@@ -28,7 +28,10 @@
 
 
 #include <cstdlib>
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 
 
@@ -67,11 +70,6 @@
 #include "preferences.h"
 #include "map_utils.h"
 #include "viewport_internal.h"
-
-#ifdef K_INCLUDES
-#include "download.h"
-#include "file.h"
-#endif
 
 
 

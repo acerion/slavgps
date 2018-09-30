@@ -26,7 +26,13 @@
 
 #include <cstdint>
 
+
+
+
 #include <QString>
+
+
+
 
 #include "coords.h"
 #include "download.h"

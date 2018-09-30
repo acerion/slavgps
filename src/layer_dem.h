@@ -33,6 +33,9 @@
 #include <QColor>
 #include <QObject>
 
+
+
+
 #include "layer.h"
 #include "layer_interface.h"
 #include "layer_tool.h"

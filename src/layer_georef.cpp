@@ -22,18 +22,20 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
 #include <cctype>
 #include <cassert>
 
+
+
+
 #include <QDebug>
 #include <QDir>
+
+
+
 
 #include "window.h"
 #include "vikutils.h"
@@ -44,7 +46,6 @@
 #include "map_cache.h"
 #include "layer_georef.h"
 #include "widget_file_entry.h"
-//#include "file.h"
 #include "viewport_zoom.h"
 #include "viewport_internal.h"
 

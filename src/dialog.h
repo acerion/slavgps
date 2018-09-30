@@ -26,6 +26,9 @@
 
 #include <cstdint>
 
+
+
+
 #include <QObject>
 #include <QString>
 #include <QMessageBox>
@@ -35,6 +38,8 @@
 #include <QGridLayout>
 #include <QCheckBox>
 #include <QDialog>
+
+
 
 
 #include "globals.h"

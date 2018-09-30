@@ -25,6 +25,9 @@
 
 #include <QHeaderView>
 
+
+
+
 #include "widget_list_selection.h"
 #include "tree_view.h"
 #include "geonames_search.h"

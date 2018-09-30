@@ -24,7 +24,13 @@
 
 #include <cstdint>
 
+
+
+
 #include <QString>
+
+
+
 
 #include "coord.h"
 #include "mapcoord.h"

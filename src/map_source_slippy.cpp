@@ -40,14 +40,9 @@
   * http://wiki.openstreetmap.org/wiki/Setting_up_TMS
   */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 
 
-
-#include <glib.h>
 #include <cstdlib>
 #include <cstring>
 
@@ -55,6 +50,11 @@
 
 
 #include <QDebug>
+
+
+
+
+#include <glib.h>
 
 
 

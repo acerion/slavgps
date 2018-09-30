@@ -29,9 +29,15 @@
 #include <map>
 #include <vector>
 
+
+
+
 #include <QObject>
 #include <QProcess>
 #include <QStringList>
+
+
+
 
 #include "download.h"
 #include "acquire.h"

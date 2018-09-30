@@ -20,26 +20,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <cassert>
 
-#ifdef HAVE_UNISTD_H
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef WINDOWS
-#define realpath(X,Y) _fullpath(Y,X,MAX_PATH)
-#endif
+
+
+
+
 #include <glib.h>
 #include <glib/gstdio.h>
 
+
+
+
 #include <QDebug>
 #include <QHash>
+
+
+
 
 #include "viewport_internal.h"
 #include "layer_aggregate.h"
@@ -63,6 +69,10 @@
 
 
 
+
+#ifdef WINDOWS
+#define realpath(X,Y) _fullpath(Y,X,MAX_PATH)
+#endif
 
 #ifndef MAXPATHLEN
 #define MAXPATHLEN 1024

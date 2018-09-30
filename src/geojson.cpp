@@ -18,13 +18,27 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * See http://geojson.org/ for the specification
- *
  */
+
+
+
 
 #include <cstdlib>
 
+
+
+
 #include <QDebug>
 #include <QDir>
+
+
+
+
+#include <glib.h>
+#include <glib/gstdio.h>
+
+
+
 
 #include "geojson.h"
 #include "gpx.h"
@@ -32,9 +46,6 @@
 #include "util.h"
 #include "layer_trw.h"
 #include "statusbar.h"
-
-#include <glib.h>
-#include <glib/gstdio.h>
 
 
 

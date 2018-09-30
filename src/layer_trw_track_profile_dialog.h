@@ -27,6 +27,9 @@
 #include <cstdint>
 #include <vector>
 
+
+
+
 #include <QObject>
 #include <QDialog>
 #include <QTabWidget>
@@ -39,6 +42,9 @@
 #include <QSignalMapper>
 #include <QDialogButtonBox>
 #include <QGridLayout>
+
+
+
 
 #include "layer_trw_track_internal.h"
 #include "measurements.h"

@@ -29,19 +29,27 @@
   * http://msdn.microsoft.com/en-us/library/dd877180.aspx
   */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <list>
 #include <cmath>
 #include <cstdlib>
 
+
+
+
 #include <QDebug>
 #include <QDir>
 
+
+
+
 #include <glib.h>
 #include <glib/gstdio.h>
+
+
+
 
 #include "vikutils.h"
 #include "map_source_bing.h"

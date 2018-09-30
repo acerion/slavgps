@@ -324,6 +324,11 @@ qtCompileTest(libmapnik) {
     QMAKE_LFLAGS += -lmapnik
 }
 
+qtCompileTest(libbz) {
+    DEFINES += HAVE_BZLIB_H
+    QMAKE_LFLAGS += -lbz2
+}
+
 
 
 
@@ -331,7 +336,60 @@ qtCompileTest(libmapnik) {
 packagesExist(x11) {
     DEFINES += HAVE_X11_XLIB_H
     QMAKE_LFLAGS += -lX11
+    message("libX11 found")
+} else {
+    message("libX11 not found")
 }
+
+packagesExist(sqlite3) {
+    DEFINES += HAVE_SQLITE3_H
+    QMAKE_LFLAGS += -lsqlite3
+    message("libsqlite3 found")
+} else {
+    message("libsqlite3 not found")
+}
+
+packagesExist(libcurl) {
+    DEFINES += HAVE_LIBCURL
+    QMAKE_LFLAGS += -lcurl
+    message("libcurl found")
+} else {
+    error("libcurl not found")
+}
+
+packagesExist(libgps) {
+    DEFINES += HAVE_LIBGPS
+    QMAKE_LFLAGS += -lgps
+    message("libgps found")
+} else {
+    message("libgps not found")
+}
+
+packagesExist(expat) {
+    DEFINES += HAVE_EXPAT_H
+    QMAKE_LFLAGS += -lexpat
+    message("libexpat found")
+} else {
+    message("libexpat not found")
+}
+
+packagesExist(zlib) {
+    DEFINES += HAVE_LIBZ
+    QMAKE_LFLAGS += -lz
+    message("libz found")
+} else {
+    message("libz not found")
+}
+
+packagesExist(icu-uc) {
+    DEFINES += HAVE_LIBICUUC
+    QMAKE_LFLAGS += -licuuc
+    message("libicu-uc found")
+} else {
+    error("libicu-uc library not found")
+}
+
+
 
 
 
@@ -355,6 +413,41 @@ DEFINES += VIK_CONFIG_GOOGLE
 DEFINES += VIK_CONFIG_EXPEDIA
 DEFINES += VIK_CONFIG_TERRASERVER
 DEFINES += VIK_CONFIG_GEONAMES
+DEFINES += VIK_CONFIG_GEOTAG
+# DEFINES += VIK_CONFIG_GEOCACHES
+# DEFINES += VIK_CONFIG_DEM24K
+DEFINES += VIK_CONFIG_REALTIME_GPS_TRACKING
+
+DEFINES += "PACKAGE=\"\\\"slavgps\\\"\""
+DEFINES += "PACKAGE_NAME=\"\\\"slavgps\\\"\""
+DEFINES += "PACKAGE_STRING=\"\\\"slavgps 1.0.0\\\"\""
+DEFINES += "PACKAGE_VERSION=\"\\\"1.0.0\\\"\""
+DEFINES += "PACKAGE_URL=\"\\\"https://to_be_done\\\"\""
+DEFINES += "CURRENT_YEAR=\"\\\"2018\\\"\""
+
+# DEFINES += "HAVE_LIBGEXIV2=0"
+# DEFINES += "HAVE_LIBEXIF=0"
+
+# Define to 1 if you have the <zip.h> header file.
+# DEFINES += HAVE_ZIP_H=0
+
+# TODO: add tests that set these flags
+DEFINES += HAVE_UTIME_H
+DEFINES += HAVE_SYS_TYPES_H
+DEFINES += HAVE_SYS_STAT_H
+DEFINES += "HAVE_UNISTD_H=1"
+
+# Enable Viking specifics in otherwise reusable code
+DEFINES += "HAVE_VIKING=1"
+
+# Size of the map cache
+DEFINES += "VIK_CONFIG_MAPCACHE_SIZE=128"
+
+# Age of tiles before checking it (in seconds)
+DEFINES += "VIK_CONFIG_DEFAULT_TILE_AGE=604800"
+
+# Define to 1 if lstat dereferences a symlink specified with a trailing slash
+DEFINES += "LSTAT_FOLLOWS_SLASHED_SYMLINK=1"
 
 
 
@@ -368,4 +461,7 @@ OBJECTS_DIR = ./
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -Wshadow -Wall -pedantic -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lcurl -lexpat -licuuc -lgps -lexiv2 -lsqlite3
+QMAKE_LFLAGS += -lm
+
+# TODO: this lib needs to be added only if lib is present on build machine. Write test for the flag.
+QMAKE_LFLAGS += -lexiv2

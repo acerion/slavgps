@@ -24,24 +24,24 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <list>
 #include <cstdint>
 #include <cmath>
 #include <time.h>
 
+
+
+
 #include <QColor>
 #include <QMenu>
+
+
+
 
 #include "coord.h"
 #include "bbox.h"
 #include "tree_view.h"
-//#include "layer.h"
 #include "layer_trw_track.h"
-//#include "file.h"
 #include "dialog.h"
 #include "measurements.h"
 

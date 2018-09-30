@@ -24,14 +24,10 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-
-
-
 #include <cstdint>
+
+
+
 
 #include <QObject>
 #include <QIcon>
@@ -40,6 +36,9 @@
 #include <QString>
 #include <QPen>
 #include <QDebug>
+
+
+
 
 #include "tree_view.h"
 #include "globals.h"

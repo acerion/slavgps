@@ -18,18 +18,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
+
+
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
+
+
+
 
 #include "googlesearch.h"
 #include "util.h"

@@ -18,12 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstdio>
 #include <cstdlib>
@@ -32,23 +30,38 @@
 #include <string>
 #include <cerrno>
 
+
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
+
+
+
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <gio/gio.h>
+
+
+
 
 #include <QDebug>
 #include <QDir>
 #include <QTemporaryFile>
 
+
+
+
 #ifdef HAVE_MAGIC_H
 #include <magic.h>
 #endif
+
+
+
 
 #include "compression.h"
 #include "download.h"

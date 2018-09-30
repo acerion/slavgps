@@ -16,25 +16,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <mutex>
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
 #include <cctype>
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+
+
 
 #include <glib.h>
 #include <glib/gstdio.h>
 
+
+
+
 #include <QDebug>
 #include <QDir>
+
+
+
 
 #include "window.h"
 #include "vikutils.h"

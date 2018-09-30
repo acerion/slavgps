@@ -26,6 +26,9 @@
 
 #include <QString>
 
+
+
+
 #include "coords.h"
 #include "measurements.h"
 

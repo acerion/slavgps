@@ -19,10 +19,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 
 
 
@@ -30,15 +26,6 @@
 
 
 
-
-#ifdef K_INCLUDES
-#ifdef VIK_CONFIG_GEOTAG
-#include "geotag_exif.h"
-#endif
-#include "goto.h"
-#include "vikutils.h"
-#include "widget_file_entry.h"
-#endif
 
 #include "layer_trw_waypoint_properties.h"
 #include "layer_trw_waypoint.h"

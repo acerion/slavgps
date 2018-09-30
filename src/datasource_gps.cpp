@@ -18,27 +18,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
+
 
 #include <vector>
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
 
-#ifdef HAVE_UNISTD_H
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+
+
 
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDebug>
 
+
+
+
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
+
+
+
 
 #include "layer_gps.h"
 #include "datasource_gps.h"

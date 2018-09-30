@@ -39,6 +39,11 @@
 
 #include <glib.h>
 
+#ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
+#include <gps.h>
+#endif
+
+
 
 
 #include "layer.h"
@@ -55,16 +60,6 @@
 #define REALTIME_GPS_TRACKING_ENABLED 1
 #else
 #define REALTIME_GPS_TRACKING_ENABLED 0
-#endif
-
-#ifdef REALTIME_GPS_TRACKING_ENABLED
-#undef REALTIME_GPS_TRACKING_ENABLED
-#endif
-#define REALTIME_GPS_TRACKING_ENABLED 1
-
-
-#ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
-#include <gps.h>
 #endif
 
 

@@ -19,16 +19,23 @@
  */
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
 
 #include <cmath>
+
+
+
 
 #include <QPen>
 #include <QDebug>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "ui_builder.h"
 #include "viewport_internal.h"

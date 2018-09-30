@@ -29,16 +29,21 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cassert>
 #include <cmath>
 
+
+
+
 #include <QDebug>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "thumbnails.h"
 #include "ui_util.h"

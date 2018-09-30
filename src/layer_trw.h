@@ -25,16 +25,18 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstdint>
 #include <list>
 #include <deque>
 
+
+
+
 #include <QStandardItem>
 #include <QDialog>
+
+
+
 
 #include "layer.h"
 #include "layer_tool.h"
@@ -46,7 +48,6 @@
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoints.h"
 #include "mem_cache.h"
-//#include "file.h"
 
 
 

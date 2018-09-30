@@ -24,16 +24,13 @@
 
 
 
-//#include <cstdlib>
-//#include <cstring>
-//#include <cctype>
-
-//#include <QDialog>
-//#include <QInputDialog>
 #include <QObject>
 #include <QDebug>
 #include <QMouseEvent>
 #include <QWheelEvent>
+
+
+
 
 #include "window.h"
 #include "viewport.h"

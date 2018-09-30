@@ -21,25 +21,36 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
 
-#ifdef HAVE_UNISTD_H
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+
+
 
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 
+
+
+
 #include <curl/curl.h>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "background.h"
 #include "dir.h"
@@ -122,7 +133,7 @@ static int curl_progress_func(void * clientp, double dltotal, double dlnow, doub
 void CurlDownload::init(void)
 {
 	curl_global_init(CURL_GLOBAL_ALL);
-	curl_download_user_agent = QString("%1/%2 %3").arg(PACKAGE).arg(VERSION).arg(curl_version());
+	curl_download_user_agent = QString("%1/%2 %3").arg(PACKAGE).arg(PACKAGE_VERSION).arg(curl_version());
 }
 
 

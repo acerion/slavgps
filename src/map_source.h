@@ -21,12 +21,12 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <QPixmap>
 #include <QString>
+
+
+
 
 #include "coord.h"
 #include "mapcoord.h"

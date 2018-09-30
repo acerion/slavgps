@@ -27,8 +27,14 @@
 #include <list>
 #include <cstdint>
 
+
+
+
 #include <QString>
 #include <QPixmap>
+
+
+
 
 #include "coord.h"
 

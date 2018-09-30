@@ -26,11 +26,13 @@
  * for the hierarchie of routing engines.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstdlib>
+
+
+
 
 #include "layer_trw.h"
 #include "babel.h"

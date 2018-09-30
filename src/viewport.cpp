@@ -24,14 +24,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
+
+
+
 
 #include <QMouseEvent>
 #include <QWheelEvent>
@@ -39,7 +41,13 @@
 #include <QPainter>
 #include <QMimeData>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "generic_tools.h"
 #include "viewport.h"

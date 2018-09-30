@@ -29,19 +29,21 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <unordered_map>
-
-#ifdef HAVE_STRING_H
 #include <cstring>
-#endif
+
+
+
 
 #include <QDebug>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
@@ -54,7 +56,6 @@
 #include "statusbar.h"
 #include "window.h"
 #include "layers_panel.h"
-//#include "thumbnails.h"
 
 
 

@@ -25,15 +25,20 @@
   * http://wiki.osgeo.org/wiki/WMS_Tile_Caching
   */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "map_source_wmsc.h"
 #include "map_utils.h"

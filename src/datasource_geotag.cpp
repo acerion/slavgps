@@ -26,10 +26,6 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "datasource.h"
 #include "acquire.h"
 #include "geotag_exif.h"

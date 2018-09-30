@@ -26,13 +26,6 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-
-
-
 #include <cmath>
 #include <cstring>
 #include <cstdlib>

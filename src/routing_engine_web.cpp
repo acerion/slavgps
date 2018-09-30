@@ -27,17 +27,25 @@
  * routing engine.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstring>
 #include <cstdlib>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include <glib.h>
 #include <glib/gstdio.h>
+
+
+
 
 #include "babel.h"
 #include "routing_engine_web.h"

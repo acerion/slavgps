@@ -79,7 +79,7 @@ help/C/*html
 /src/Makefile
 /src/*.o
 /src/authors.h
-/src/config.h
+# /src/config.h
 /src/config.h.in
 /src/libviking.a
 /src/stamp-h1

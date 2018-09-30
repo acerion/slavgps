@@ -26,11 +26,17 @@
 
 #include <cstdint>
 
+
+
+
 #include <QPixmap>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QLineEdit>
 #include <QComboBox>
+
+
+
 
 #include "dialog.h"
 #include "layer.h"

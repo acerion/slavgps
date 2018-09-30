@@ -29,11 +29,10 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #define _XOPEN_SOURCE /* glibc2 needs this */
+
+
+
 
 #include <cstdlib>
 #include <cassert>
@@ -43,12 +42,24 @@
 #include <cmath>
 #include <time.h>
 
+
+
+
 #include <glib.h>
 #include <glib/gstdio.h>
 
+
+
+
 #include <expat.h>
 
+
+
+
 #include <QDebug>
+
+
+
 
 #include "gpx.h"
 #include "preferences.h"

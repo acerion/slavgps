@@ -22,9 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <mutex>
 #include <map>
@@ -32,12 +31,24 @@
 #include <cassert>
 #include <cmath>
 
+
+
+
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+
+
 
 #include <QDebug>
 #include <QDir>
+
+
+
 
 #include "window.h"
 #include "map_source.h"
@@ -60,13 +71,6 @@
 #include "util.h"
 #include "statusbar.h"
 #include "viewport_internal.h"
-
-
-
-
-#ifdef HAVE_SQLITE3_H
-//#undef HAVE_SQLITE3_H
-#endif
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"

@@ -26,12 +26,18 @@
 
 #include <vector>
 
+
+
+
 #include <QObject>
 #include <QString>
 #include <QWidget>
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QButtonGroup>
+
+
+
 
 #include "ui_builder.h"
 

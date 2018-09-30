@@ -21,15 +21,20 @@
  * See: http://www.gpsbabel.org/htmldoc-development/Data_Filters.html
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "datasource_bfilter.h"
 #include "babel.h"

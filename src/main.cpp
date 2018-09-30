@@ -52,8 +52,11 @@
 #include "clipboard.h"
 #include "file.h"
 
+
+
+
 #ifdef HAVE_X11_XLIB_H
-#include "X11/Xlib.h"
+#include <X11/Xlib.h>
 #endif
 
 
@@ -163,7 +166,7 @@ int main(int argc, char ** argv)
 	}
 	if (command_line_options.version) {
 		qDebug() << QObject::tr("%1 %2\nCopyright (c) 2003-2008 Evan Battaglia\nCopyright (c) 2008-%3 Viking's contributors\n")
-			.arg(PACKAGE_NAME).arg(PACKAGE_VERSION).arg(THEYEAR);
+			.arg(PACKAGE_NAME).arg(PACKAGE_VERSION).arg(CURRENT_YEAR);
 		return EXIT_SUCCESS;
 	}
 

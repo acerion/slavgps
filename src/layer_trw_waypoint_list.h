@@ -25,6 +25,9 @@
 
 #include <list>
 
+
+
+
 #include <QWidget>
 #include <QDialog>
 #include <QPushButton>
@@ -33,6 +36,9 @@
 #include <QStandardItemModel>
 #include <QTableView>
 #include <QContextMenuEvent>
+
+
+
 
 #include "measurements.h"
 

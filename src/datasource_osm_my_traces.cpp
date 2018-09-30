@@ -16,19 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
+
 
 #include <cstdlib>
 #include <cassert>
 
+
+
+
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
+
+
+
+#ifdef HAVE_EXPAT_H
 #include <expat.h>
+#endif
+
+
+
 
 #include "window.h"
 #include "datasource_osm_my_traces.h"

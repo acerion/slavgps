@@ -18,9 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-
-
 #ifndef _SG_VERSION_CHECK_
 #define _SG_VERSION_CHECK_
 

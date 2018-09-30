@@ -24,7 +24,13 @@
   * old map source (see #VikMapsLayer_MapType).
   */
 
+
+
+
 #include <cstdlib>
+
+
+
 
 #include "vikmaptype.h"
 #include "vikmapslayer_compat.h"

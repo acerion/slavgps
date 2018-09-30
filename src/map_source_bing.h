@@ -25,7 +25,13 @@
 #include <list>
 #include <cstdint>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "coord.h"
 #include "mapcoord.h"

@@ -18,22 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 
 
 
 #include <cstdlib>
-
-#ifdef K_INCLUDES
-#include <glib.h>
-#include <glib/gstdio.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#endif
 
 
 

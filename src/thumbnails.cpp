@@ -27,26 +27,31 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstdlib>
 #include <cstring>
 #include <cstdlib>
+#include <errno.h>
 
-#ifdef HAVE_UNISTD_H
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <errno.h>
+
+
+
 
 #include <QDebug>
 #include <QDir>
 
+
+
+
 #include <glib.h>
 #include <glib/gstdio.h>
+
+
+
+
 #include "thumbnails.h"
-//#include "file.h"
 #include "vikutils.h"
 
 

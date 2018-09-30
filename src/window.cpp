@@ -20,18 +20,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <vector>
 
+
+
+#include <vector>
 #include <cassert>
+
+
+
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 /* stat() */
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+
+
+
 
 #include <QtWidgets>
 #include <QFileDialog>
+
+
+
 
 #include "generic_tools.h"
 #include "window.h"

@@ -26,13 +26,6 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-
-
-
 #include <cstring>
 #include <cstdlib>
 #include <ctype.h>
@@ -62,7 +55,6 @@
 
 
 #include "geotag_exif.h"
-#include "config.h"
 #include "file.h"
 #include "layer_trw_waypoint.h"
 

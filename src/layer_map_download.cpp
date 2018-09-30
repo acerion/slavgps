@@ -26,7 +26,10 @@
 
 
 #include <mutex>
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 
 

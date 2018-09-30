@@ -18,21 +18,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+
+
 
 #include <glib.h>
 #include <glib/gstdio.h>
 
+
+
+
 #include <QDebug>
 #include <QFileDialog>
 #include <QDir>
+
+
+
 
 #include "babel.h"
 #include "babel_dialog.h"

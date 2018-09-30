@@ -25,9 +25,15 @@
 
 #include <cmath>
 
+
+
+
 #include <QDebug>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+
+
+
 
 #include "widget_slider.h"
 

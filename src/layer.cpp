@@ -20,16 +20,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
 
+
+
+
 #include <QString>
 #include <QDebug>
+
+
+
 
 #include "layers_panel.h"
 #include "layer_defaults.h"

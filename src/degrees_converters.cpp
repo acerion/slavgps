@@ -19,15 +19,19 @@
  */
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
 
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
 
+
+
+
 #include <glib.h>
+
+
+
 
 #include "degrees_converters.h"
 #include "measurements.h"

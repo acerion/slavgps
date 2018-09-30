@@ -22,22 +22,18 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-
-
-
 #include <cstdio>
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
 
+
+
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -47,6 +43,9 @@
 #include <QDebug>
 #include <QFile>
 #include <QString>
+
+
+
 
 #include <glib.h>
 

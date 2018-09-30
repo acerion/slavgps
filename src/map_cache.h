@@ -26,8 +26,14 @@
 
 #include <cstdint>
 
+
+
+
 #include <QPixmap>
 #include <QString>
+
+
+
 
 #include "mapcoord.h"
 #include "map_source.h"

@@ -26,7 +26,13 @@
 
 #include <cstdint>
 
+
+
+
 #include <QString>
+
+
+
 
 #include "dem.h"
 #include "coord.h"

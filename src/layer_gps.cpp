@@ -19,9 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
 
 
 #include <vector>
@@ -31,14 +29,17 @@
 #include <cmath>
 #include <cstring>
 
-#ifdef HAVE_UNISTD_H
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+
+
+
 #include <QDebug>
 
-//#include <glib/gstdio.h>
-//#include <glib/gprintf.h>
+
+
 
 #ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
 #include "vikutils.h"

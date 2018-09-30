@@ -18,24 +18,35 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstdlib>
+
+
+
 
 #include <QDesktopServices>
 #include <QUrl>
 #include <QDebug>
 #include <QPainter>
 
+
+
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 
+
+
+
 #include "util.h"
 #include "ui_util.h"
 #include "dialog.h"
+
+
+
 
 #ifdef WINDOWS
 #include <windows.h>

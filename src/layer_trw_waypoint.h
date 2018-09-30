@@ -24,21 +24,24 @@
 
 
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstdint>
+
+
+
 
 #include <time.h>
 
+
+
+
 #include <QPixmap>
+
+
+
 
 #include "coord.h"
 #include "measurements.h"
 #include "tree_view.h"
-//#include "layer.h"
-//#include "file.h"
 
 
 

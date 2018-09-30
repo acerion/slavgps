@@ -18,12 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+
 
 #include <cstring>
 #include <cstdlib>
@@ -37,12 +35,25 @@
 #include <bzlib.h>
 #endif
 
-#include "compression.h"
+
+
 
 #include <gio/gio.h>
 #include <glib/gstdio.h>
 
+
+
+
 #include <QDebug>
+
+
+
+
+#include "compression.h"
+
+
+
+
 
 
 
