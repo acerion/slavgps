@@ -87,7 +87,7 @@ static const int g_secs_per_degree = 60 * 60;
 static bool get_double_and_continue(char ** buffer, double * tmp, bool warn)
 {
 	char * endptr;
-	*tmp = g_strtod(*buffer, &endptr);
+	*tmp = strtod(*buffer, &endptr);
 	if (endptr == NULL || endptr == *buffer) {
 		if (warn) {
 			qDebug() << "WW: DEM: invalid DEM";

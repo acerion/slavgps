@@ -30,12 +30,6 @@
 
 
 
-#include <glib.h>
-#include <glib/gstdio.h>
-
-
-
-
 #include "map_source_mbtiles.h"
 #include "globals.h"
 #include "dialog.h"
@@ -88,17 +82,17 @@ QPixmap MapSourceMBTiles::get_tile_pixmap(const MapCacheObj & map_cache_obj, con
 
 #ifdef HAVE_SQLITE3_H
 	if (args.sqlite_handle) {
-		/*
-		  char *statement = g_strdup_printf("SELECT name FROM sqlite_master WHERE type='table';");
-		  char *errMsg = NULL;
-		  int ans = sqlite3_exec(this->sqlite_handle, statement, sql_select_tile_dump_cb, pixmap, &errMsg);
-		  if (ans != SQLITE_OK) {
-		  // Only to console for information purposes only
-		  qDebug() << SG_PREFIX_W << "SQL problem:" << ans << "for" << statement << "- error:" << errMsg;
-		  sqlite3_free(errMsg);
-		  }
-		  free(statement);
-		*/
+
+#if 0
+		const QString statement = QString("SELECT name FROM sqlite_master WHERE type='table';");
+		char *errMsg = NULL;
+		int ans = sqlite3_exec(this->sqlite_handle, statement.toUtf8().constData(), sql_select_tile_dump_cb, pixmap, &errMsg);
+		if (ans != SQLITE_OK) {
+			// Only to console for information purposes only
+			qDebug() << SG_PREFIX_W << "SQL problem:" << ans << "for" << statement << "- error:" << errMsg;
+			sqlite3_free(errMsg);
+		}
+#endif
 
 		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
 		   Hence this specific function. */
@@ -132,18 +126,19 @@ QPixmap MapSourceMBTiles::create_pixmap_sql_exec(sqlite3 * sqlite_handle, const 
 {
 	const int xx = tile_info.x;
 	const int yy = tile_info.y;
-	const int zoom = tile_info.get_tile_zoom_level(); /* This is OSM MBTile, so use method that returns OSM-like zoom level. */
+	const int tile_zoom_level = tile_info.get_tile_zoom_level(); /* This is OSM MBTile, so use method that returns OSM-like zoom level. */
 
 	QPixmap pixmap;
 
 	/* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
-	int flip_y = (int) pow(2, zoom)-1 - yy;
-	char * statement = g_strdup_printf("SELECT tile_data FROM tiles WHERE zoom_level=%d AND tile_column=%d AND tile_row=%d;", zoom, xx, flip_y);
+	const int flip_y = (int) pow(2, tile_zoom_level) - 1 - yy;
+	const QString statement = QString("SELECT tile_data FROM tiles WHERE zoom_level=%1 AND tile_column=%2 AND tile_row=%3;").arg(tile_zoom_level).arg(xx).arg(flip_y);
+	qDebug() << "STATEMENT = kamil" << statement;
 
 	bool finished = false;
 
 	sqlite3_stmt *sql_stmt = NULL;
-	int ans = sqlite3_prepare_v2(sqlite_handle, statement, -1, &sql_stmt, NULL);
+	int ans = sqlite3_prepare_v2(sqlite_handle, statement.toUtf8().constData(), -1, &sql_stmt, NULL);
 	if (ans != SQLITE_OK) {
 		qDebug() << SG_PREFIX_W << "prepare() failure -" << ans << "-" << statement;
 		finished = true;
@@ -183,8 +178,6 @@ QPixmap MapSourceMBTiles::create_pixmap_sql_exec(sqlite3 * sqlite_handle, const 
 		}
 	}
 	(void)sqlite3_finalize(sql_stmt);
-
-	free(statement);
 
 	return pixmap;
 }

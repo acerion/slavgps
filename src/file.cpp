@@ -35,14 +35,15 @@
 
 
 
-#include <glib.h>
-#include <glib/gstdio.h>
+//#include <glib.h>
+//#include <glib/gstdio.h>
 
 
 
 
 #include <QDebug>
 #include <QHash>
+#include <QDir>
 
 
 
@@ -86,6 +87,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "File"
 #define PREFIX ": File:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -268,7 +270,7 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, View
 	char hl_color_string[8] = { 0 };
 	SGUtils::color_to_string(hl_color_string, sizeof (hl_color_string), viewport->get_highlight_color());
 
-	fprintf(file, "#VIKING GPS Data file " VIKING_URL "\n");
+	fprintf(file, "#VIKING GPS Data file " PACKAGE_URL "\n");
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
 	fprintf(file, "\nxmpp=%f\n", viewport->get_viking_zoom_level().get_x());
 	fprintf(file, "ympp=%f\n", viewport->get_viking_zoom_level().get_y());
@@ -1000,23 +1002,22 @@ VikFile::SaveResult VikFile::save(LayerAggregate * top_layer, Viewport * viewpor
 	}
 
 	/* Enable relative paths in .vik files to work. */
-	char * cwd = g_get_current_dir();
+	const QString cwd = QDir::currentPath();
 	char * dir = g_path_get_dirname(full_path.toUtf8().constData());
 	if (dir) {
-		if (g_chdir(dir)) {
-			qDebug() << "WW: VikFile: save: could not change directory to" << dir;
+		if (!QDir::setCurrent(QString(dir))) {
+			qDebug() << SG_PREFIX_W << "Could not change directory to" << dir;
+			/* TODO_LATER: better error handling here. */
 		}
+
 		free(dir);
 	}
 
 	file_write(file, top_layer, viewport);
 
 	/* Restore previous working directory. */
-	if (cwd) {
-		if (g_chdir(cwd)) {
-			qDebug() << "WW: VikFile: save: could not return to directory" << dir;
-		}
-		free(cwd);
+	if (!QDir::setCurrent(cwd)) {
+		qDebug() << SG_PREFIX_W << "Could not return to directory" << dir; /* KAMIL_FIXME: this should be 'cwd', not 'dir' - check this in Viking. */
 	}
 
 	fclose(file);

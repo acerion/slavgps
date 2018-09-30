@@ -39,11 +39,6 @@
 
 
 
-#include <glib.h>
-
-
-
-
 #include "coords.h"
 #include "coord.h"
 #include "dem_cache.h"
@@ -2088,37 +2083,44 @@ void Track::recalculate_bbox(void)
 
 
 /**
- * Shift all timestamps to be relatively offset from 1901-01-01.
- */
-void Track::anonymize_times()
+   Shift all timestamps to be relatively offset from 1901-01-01.
+
+   @return sg_ret::err_arg if track is empty
+   @return sg_reg::err_algo on function errors
+   @return sg_ret::ok on success
+*/
+sg_ret Track::anonymize_times(void)
 {
 	if (this->trackpoints.empty()) {
-		return;
+		return sg_ret::err_arg;
 	}
 
-	GTimeVal gtv;
-	/* Check result just to please Coverity - even though it shouldn't fail as it's a hard coded value here! */
-	if (!g_time_val_from_iso8601 ("1901-01-01T00:00:00Z", &gtv)) {
-		fprintf(stderr, "CRITICAL: Calendar time value failure\n");
-		return;
+	const QDateTime century = QDateTime::fromString("1901-01-01T00:00:00Z", Qt::ISODate);
+	if (century.isNull() || !century.isValid()) {
+		/* This should be fixed during development and fixed. */
+		qDebug() << SG_PREFIX_E << "Failed to convert date";
+		return sg_ret::err_algo;
 	}
+	/* This will be a negative value */
+	qint64 century_secs = century.toMSecsSinceEpoch() / MSECS_PER_SEC; /* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
 
-	time_t anon_timestamp = gtv.tv_sec;
+
 	time_t offset = 0;
-
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		Trackpoint * tp = *iter;
 		if (tp->has_timestamp) {
 			/* Calculate an offset in time using the first available timestamp. */
 			if (offset == 0) {
-				offset = tp->timestamp - anon_timestamp;
+				offset = tp->timestamp - century_secs;
 			}
 
 			/* Apply this offset to shift all timestamps towards 1901 & hence anonymising the time.
 			   Note that the relative difference between timestamps is kept - thus calculating speeds will still work. */
-			tp->timestamp = tp->timestamp - offset;
+			tp->timestamp -= offset;
 		}
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -3042,7 +3044,14 @@ void Track::goto_min_alt_cb(void)
 
 void Track::anonymize_times_cb(void)
 {
-	this->anonymize_times();
+	const sg_ret ret = this->anonymize_times();
+	switch (ret) {
+	case sg_ret::ok:
+		break;
+	default:
+		Dialog::warning(QObject::tr("Failed to anonymize timestamps"), NULL);
+		break;
+	}
 }
 
 

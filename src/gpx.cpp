@@ -46,7 +46,7 @@
 
 
 #include <glib.h>
-#include <glib/gstdio.h>
+//#include <glib/gstdio.h>
 
 
 
@@ -434,7 +434,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_gpx_time:
-		c_md->set_timestamp(c_cdata->str);
+		c_md->set_iso8601_timestamp(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -590,17 +590,17 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_hdop:
-		c_tp->hdop = g_strtod(c_cdata->str, NULL);
+		c_tp->hdop = strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_vdop:
-		c_tp->vdop = g_strtod(c_cdata->str, NULL);
+		c_tp->vdop = strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_pdop:
-		c_tp->pdop = g_strtod(c_cdata->str, NULL);
+		c_tp->pdop = strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -1169,8 +1169,8 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 		if (!md->description.isEmpty()) {
 			fprintf(file, "  <desc>%s</desc>\n", entitize(md->description).toUtf8().constData());
 		}
-		if (!md->timestamp.isEmpty()) {
-			fprintf(file, "  <time>%s</time>\n", entitize(md->timestamp).toUtf8().constData());
+		if (!md->iso8601_timestamp.isEmpty()) {
+			fprintf(file, "  <time>%s</time>\n", entitize(md->iso8601_timestamp).toUtf8().constData());
 		}
 		if (!md->keywords.isEmpty()) {
 			fprintf(file, "  <keywords>%s</keywords>\n", entitize(md->keywords).toUtf8().constData());

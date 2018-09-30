@@ -84,14 +84,14 @@ namespace SlavGPS {
 		void set_author(const QString & new_author);
 		void set_description(const QString & new_description);
 		void set_keywords(const QString & new_keywords);
-		void set_timestamp(const QString & new_timestamp);
+		void set_iso8601_timestamp(const QString & new_timestamp);
 
 		QString description;
 		QString author;
 		QString keywords;  /* TODO_LATER: handling/storing a list of individual tags? */
 		/* TODO_LATER: verify how the timestamp should work: when and how it should be set. */
 		bool has_timestamp;
-		QString timestamp; /* TODO_MAYBE: Consider storing as proper time_t. */
+		QString iso8601_timestamp; /* TODO_MAYBE: Consider storing as proper time_t. */
 	};
 
 

@@ -54,7 +54,7 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
-#include <glib.h>
+//#include <glib.h>
 
 
 

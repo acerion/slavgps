@@ -44,7 +44,7 @@
 
 
 
-#include <glib.h>
+//#include <glib.h>
 
 
 
@@ -1736,10 +1736,10 @@ LatLonBBox Viewport::get_bbox(void) const
 	bright.change_mode(CoordMode::LatLon);
 
 	LatLonBBox bbox;
-	bbox.north = MAX(tleft.ll.lat, tright.ll.lat);
-	bbox.south = MIN(bleft.ll.lat, bright.ll.lat);
-	bbox.east  = MAX(tright.ll.lon, bright.ll.lon);
-	bbox.west  = MIN(tleft.ll.lon, bleft.ll.lon);
+	bbox.north = std::max(tleft.ll.lat, tright.ll.lat);
+	bbox.south = std::min(bleft.ll.lat, bright.ll.lat);
+	bbox.east  = std::max(tright.ll.lon, bright.ll.lon);
+	bbox.west  = std::min(tleft.ll.lon, bleft.ll.lon);
 
 	return bbox;
 }

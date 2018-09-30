@@ -418,6 +418,7 @@ DEFINES += VIK_CONFIG_GEOTAG
 # DEFINES += VIK_CONFIG_DEM24K
 DEFINES += VIK_CONFIG_REALTIME_GPS_TRACKING
 
+DEFINES += "PROJECT=\"\\\"SlavGPS\\\"\""
 DEFINES += "PACKAGE=\"\\\"slavgps\\\"\""
 DEFINES += "PACKAGE_NAME=\"\\\"slavgps\\\"\""
 DEFINES += "PACKAGE_STRING=\"\\\"slavgps 1.0.0\\\"\""
@@ -433,8 +434,8 @@ DEFINES += "CURRENT_YEAR=\"\\\"2018\\\"\""
 
 # TODO: add tests that set these flags
 DEFINES += HAVE_UTIME_H
-DEFINES += HAVE_SYS_TYPES_H
-DEFINES += HAVE_SYS_STAT_H
+DEFINES += "HAVE_SYS_TYPES_H=1"
+DEFINES += "HAVE_SYS_STAT_H=1"
 DEFINES += "HAVE_UNISTD_H=1"
 
 # Enable Viking specifics in otherwise reusable code

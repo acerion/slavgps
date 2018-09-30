@@ -215,3 +215,11 @@ QStringList SlavGPSLocations::get_data_dirs(void)
 #endif
 	return data_dirs;
 }
+
+
+
+
+QString SlavGPSLocations::get_home_dir(void)
+{
+	return QDir::homePath();
+}

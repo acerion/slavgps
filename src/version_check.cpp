@@ -42,6 +42,8 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Version Check"
+
 #define VIK_SETTINGS_VERSION_CHECKED_DATE "version_checked_date"
 #define VIK_SETTINGS_VERSION_CHECK_PERIOD "version_check_period_days"
 
@@ -109,14 +111,14 @@ void VersionCheck::run()
 	}
 
 	int latest_version = viking_version_to_number(latest_version_buffer);
-	int my_version = viking_version_to_number((char *) VIKING_VERSION);
+	int my_version = viking_version_to_number((char *) PACKAGE_VERSION);
 
-	qDebug() << "II: Version Check: this version =" << VIKING_VERSION << ", most recent version = " << latest_version_buffer;
+	qDebug() << SG_PREFIX_I << "This version =" << PACKAGE_VERSION << ", most recent version = " << latest_version_buffer;
 
 	if (my_version < latest_version) {
 		this->new_version_available_dialog(latest_version_buffer);
 	} else {
-		qDebug() << "II: Version Check: Running the lastest version:" << VIKING_VERSION;
+		qDebug() << SG_PREFIX_I << "Running the lastest version:" << PACKAGE_VERSION;
 	}
 
 	tmp_file.unmap(file_contents);

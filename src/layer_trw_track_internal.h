@@ -262,7 +262,7 @@ namespace SlavGPS {
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const;
 
-		void anonymize_times();
+		sg_ret anonymize_times(void);
 		void interpolate_times();
 		void apply_dem_data_common(bool skip_existing_elevations);
 		unsigned long apply_dem_data(bool skip_existing);

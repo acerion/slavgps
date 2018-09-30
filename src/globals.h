@@ -40,23 +40,32 @@ namespace SlavGPS {
 
 
 
+	/* Function return value. */
+	enum class sg_ret : int {
+		err_algo,  /* Function algorithm error. */
+		err_arg,   /* Function arguments error. */
+		err,       /* General error. */
+		ok = 0,
+	};
 
-#define SG_APPLICATION_NAME "slavgps"
-#define PROJECT "SlavGPS"
-#define VIKING_VERSION PACKAGE_VERSION
-#define VIKING_VERSION_NAME "This Name For Rent"
-#define VIKING_URL PACKAGE_URL
+
+
+
+#ifndef MSECS_PER_SEC
+#define MSECS_PER_SEC 1000
+#endif
+
 
 
 
 #define SG_NAMESPACE_PREFIX "SlavGPS::"
 
-#define SG_PREFIX_D      "DD  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_I      "II  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_W      "WW  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_E      "EE  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_SLOT   "SLT " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
-#define SG_PREFIX_SIGNAL "SIG " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "") << __LINE__ << " > "
+#define SG_PREFIX_D      "DD  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_I      "II  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_W      "WW  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_E      "EE  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_SLOT   "SLT " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_SIGNAL "SIG " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
 
 
 

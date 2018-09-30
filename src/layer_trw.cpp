@@ -43,9 +43,8 @@
 
 
 
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
+//#include <glib.h>
+//#include <glib/gstdio.h>
 
 
 
@@ -555,9 +554,9 @@ void TRWMetadata::set_keywords(const QString & new_keywords)
 
 
 
-void TRWMetadata::set_timestamp(const QString & new_timestamp)
+void TRWMetadata::set_iso8601_timestamp(const QString & new_timestamp)
 {
-	this->timestamp = new_timestamp;
+	this->iso8601_timestamp = new_timestamp;
 	this->has_timestamp = true;
 }
 
@@ -942,7 +941,7 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		break;
 	case PARAM_MDTIME:
 		if (!data.val_string.isEmpty() && this->metadata) {
-			this->metadata->set_timestamp(data.val_string);
+			this->metadata->set_iso8601_timestamp(data.val_string);
 		}
 		break;
 	case PARAM_MDKEYS:
@@ -1013,7 +1012,7 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 		break;
 	case PARAM_MDTIME:
 		if (this->metadata) {
-			rv = SGVariant(this->metadata->timestamp);
+			rv = SGVariant(this->metadata->iso8601_timestamp);
 		}
 		break;
 	case PARAM_MDKEYS:
@@ -3826,20 +3825,24 @@ void LayerTRW::sort_all()
 /**
  * Get the earliest timestamp available for this layer.
  */
-time_t LayerTRW::get_timestamp()
+time_t LayerTRW::get_timestamp(void)
 {
-	time_t timestamp_tracks = this->tracks.get_earliest_timestamp();
-	time_t timestamp_waypoints = this->waypoints.get_earliest_timestamp();
+	const time_t timestamp_tracks = this->tracks.get_earliest_timestamp();
+	const time_t timestamp_waypoints = this->waypoints.get_earliest_timestamp();
 	/* NB routes don't have timestamps - hence they are not considered. */
 
 	if (!timestamp_tracks && !timestamp_waypoints) {
 		/* Fallback to get time from the metadata when no other timestamps available. */
-		GTimeVal gtv;
 		if (this->metadata
 		    && this->metadata->has_timestamp
-		    && !this->metadata->timestamp.isEmpty()
-		    && g_time_val_from_iso8601(this->metadata->timestamp.toUtf8().constData(), &gtv)) {
-			return gtv.tv_sec;
+		    && !this->metadata->iso8601_timestamp.isEmpty()) {
+
+			const QDateTime ts = QDateTime::fromString(this->metadata->iso8601_timestamp, Qt::ISODate);
+			if (!ts.isNull() && ts.isValid()) {
+				return ts.toMSecsSinceEpoch() / MSECS_PER_SEC; /* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
+			} else {
+				qDebug() << SG_PREFIX_E << "Failed to convert ISO8601 metadata timestamp" << this->metadata->iso8601_timestamp;
+			}
 		}
 	}
 	if (timestamp_tracks && !timestamp_waypoints) {
@@ -3884,7 +3887,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 		bool need_to_set_time = true;
 		if (this->metadata->has_timestamp) {
 			need_to_set_time = false;
-			if (!this->metadata->timestamp.isEmpty()) {
+			if (!this->metadata->iso8601_timestamp.isEmpty()) {
 				need_to_set_time = true;
 			}
 		}
@@ -3896,10 +3899,10 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 				/* No time found - so use 'now' for the metadata time. */
 				meta_time = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
 			} else {
-				meta_time.setMSecsSinceEpoch(timestamp * 1000); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
+				meta_time.setMSecsSinceEpoch(timestamp * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
 			}
 
-			this->metadata->timestamp = meta_time.toString(Qt::ISODate);
+			this->metadata->iso8601_timestamp = meta_time.toString(Qt::ISODate);
 		}
 	}
 }

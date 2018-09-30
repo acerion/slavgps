@@ -46,6 +46,11 @@ namespace SlavGPS {
 		static QString get_config_dir(void);
 
 		/**
+		   \brief Get full path to user's home dir
+		*/
+		static QString get_home_dir(void);
+
+		/**
 		   \brief Get path to specific file in SlavGPS's config directory
 		*/
 		static QString get_file_full_path(const QString & file_name);

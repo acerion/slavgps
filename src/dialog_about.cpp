@@ -39,11 +39,10 @@ using namespace SlavGPS;
 
 
 
-#define SLAVGPS_PACKAGE_NAME "SlavGPS"
-#define SLAVGPS_VERSION      "0.0.1"
-#define SLAVGPS_URL          "url-todo"
-
-#define VIKING_PACKAGE_NAME  PACKAGE_NAME
+/* Needed to indicate parent project. */
+#define VIKING_PACKAGE  "Viking"
+#define VIKING_VERSION  "1.6.1"
+#define VIKING_URL      "http://viking.sf.net/"
 
 
 
@@ -74,7 +73,7 @@ void Dialog::about(QWidget * parent)
 	BasicMessage dialog(parent);
 
 	dialog.setMinimumSize(500, 300);
-	dialog.setWindowTitle(QObject::tr("About %1").arg(SLAVGPS_PACKAGE_NAME));
+	dialog.setWindowTitle(QObject::tr("About %1").arg(PROJECT));
 
 	QTabWidget * tabs = new QTabWidget(parent);
 	dialog.grid->addWidget(tabs, 0, 0);
@@ -92,13 +91,13 @@ void Dialog::about(QWidget * parent)
 	tabs->addTab(text_about_viking, QObject::tr("About Viking"));
 
 	static const QString copyright = QObject::tr("<b>Copyright:</b><br/>"
-						     "2017, Kamil Ignacak<br/>"
+						     "2016-" CURRENT_YEAR", Kamil Ignacak<br/>"
 						     "2003-2008, Evan Battaglia<br/>"
-						     "2008-" CURRENT_YEAR", Viking's contributors<br/><br/><br/>");
+						     "2008-2016, Viking's contributors<br/><br/><br/>"); /* 2016: year of forking of SlavGPS. */
 
 	static const QString copyright_viking = QObject::tr("<b>Copyright:</b><br/>"
 							    "2003-2008, Evan Battaglia<br/>"
-							    "2008-" CURRENT_YEAR", Viking's contributors<br/><br/><br/>");
+							    "2008-2016, Viking's contributors<br/><br/><br/>"); /* 2016: year of forking of SlavGPS. */
 
 	static const QString short_description_viking = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.<br/><br/><br/>");
 	static const QString short_description = QObject::tr("GPS Data and Topo Analyzer, Explorer, and Manager.<br/><br/><br/>");
@@ -116,11 +115,11 @@ void Dialog::about(QWidget * parent)
 						   "along with this program; if not, write to the Free Software "
 						   "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA");
 
-	text_about_this_program->insertPlainText(QString("%1 %2\n").arg(SLAVGPS_PACKAGE_NAME).arg(SLAVGPS_VERSION));
+	text_about_this_program->insertPlainText(QString("%1 %2\n").arg(PROJECT).arg(PACKAGE_VERSION));
 	text_about_this_program->insertHtml(short_description);
-	text_about_this_program->insertHtml(QString("<a href=\"%1\">%2</a><br/><br/><br/>").arg(SLAVGPS_URL).arg(SLAVGPS_URL));
+	text_about_this_program->insertHtml(QString("<a href=\"%1\">%2</a><br/><br/><br/>").arg(PACKAGE_URL).arg(PACKAGE_URL));
 	text_about_this_program->insertHtml(copyright);
-	text_about_this_program->insertPlainText(QObject::tr("%1 is a fork of %2 %3. The fork has been made in year 2017").arg(SLAVGPS_PACKAGE_NAME).arg(VIKING_PACKAGE_NAME).arg(VIKING_VERSION));
+	text_about_this_program->insertPlainText(QObject::tr("%1 is a fork of %2 %3. The fork has been made in April 2016.").arg(PROJECT).arg(VIKING_PACKAGE).arg(VIKING_VERSION));
 	text_about_this_program->setOpenExternalLinks(true); /* Open with system's default browser. */
 	text_about_this_program->setReadOnly(true);
 	text_about_this_program->moveCursor(QTextCursor::Start); /* Scroll to top of page. */
@@ -129,7 +128,7 @@ void Dialog::about(QWidget * parent)
 	text_license->setReadOnly(true);
 	text_license->moveCursor(QTextCursor::Start); /* Scroll to top of page. */
 
-	text_about_viking->insertPlainText(QString("%1 %2\n").arg(PACKAGE_NAME).arg(VIKING_VERSION));
+	text_about_viking->insertPlainText(QString("%1 %2\n").arg(VIKING_PACKAGE).arg(VIKING_VERSION));
 	text_about_viking->insertHtml(short_description_viking);
 	text_about_viking->insertHtml(QString("<a href=\"%1\">%2</a><br/><br/></br/>").arg(VIKING_URL).arg(VIKING_URL));
 	text_about_viking->insertHtml(copyright_viking);

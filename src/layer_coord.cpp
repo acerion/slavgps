@@ -32,7 +32,7 @@
 
 
 
-#include <glib.h>
+//#include <glib.h>
 
 
 
@@ -254,9 +254,9 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 	QPen degrees_pen(this->color_deg);
 	degrees_pen.setWidth(this->line_thickness);
 	QPen minutes_pen(this->color_min);
-	minutes_pen.setWidth(MAX(this->line_thickness / 2, 1));
+	minutes_pen.setWidth(std::max(this->line_thickness / 2, 1));
 	QPen seconds_pen(this->color_sec);
-	seconds_pen.setWidth(MAX(this->line_thickness / 5, 1));
+	seconds_pen.setWidth(std::max(this->line_thickness / 5, 1));
 
 	QPen text_pen(QColor("black"));
 	QFont text_font("Helvetica", 10);

@@ -36,6 +36,14 @@
 #include <unistd.h>
 #endif
 
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 
 
 
@@ -45,14 +53,15 @@
 
 
 
-#include <glib.h>
-#include <glib/gstdio.h>
+//#include <glib.h>
+//#include <glib/gstdio.h>
 
 
 
 
 #include "thumbnails.h"
 #include "vikutils.h"
+#include "dir.h"
 
 
 
@@ -74,7 +83,6 @@ using namespace SlavGPS;
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #endif
 
-#define HOME_DIR g_get_home_dir()
 
 #ifdef WINDOWS
 #define THUMB_DIR "\\THUMBNAILS\\" /* viking maps default viking\maps */
@@ -164,7 +172,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 	const QString md5 = md5_hash(original_uri.toUtf8().constData());
 
 
-	QString target_full_path = QString("%1%2%3").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR);
+	QString target_full_path = QString("%1%2%3").arg(SlavGPSLocations::get_home_dir()).arg(THUMB_DIR).arg(THUMB_SUB_DIR);
 	const QDir thumbs_dir(target_full_path); /* Here we are still using path to a directory, not a final-final path. */
 	/* Create thumbnails directory (with all parent dirs if necessary).
 	   TODO_LATER: viking used 0700 permissions for the directory. What should we do? Use umask? */
@@ -238,7 +246,7 @@ QPixmap Thumbnails::get_thumbnail(const QString & original_file_full_path)
 	const QString original_uri = QString("file://%1").arg(canonical_path);
 	const QString md5 = md5_hash(original_uri.toUtf8().constData());
 
-	const QString thumb_path = QString("%1%2%3%4.png").arg(HOME_DIR).arg(THUMB_DIR).arg(THUMB_SUB_DIR).arg(md5);
+	const QString thumb_path = QString("%1%2%3%4.png").arg(SlavGPSLocations::get_home_dir()).arg(THUMB_DIR).arg(THUMB_SUB_DIR).arg(md5);
 
 
 	QPixmap thumbnail;

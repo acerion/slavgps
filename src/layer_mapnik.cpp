@@ -31,11 +31,19 @@
 #include <unistd.h>
 #endif
 
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 
 
 
 #include <glib.h>
-#include <glib/gstdio.h>
+//#include <glib/gstdio.h>
 
 
 
@@ -841,8 +849,10 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	     MapUtils::coord_to_iTMS(coord_br, viking_zoom_level, ti_br)) {
 		/* TODO_LATER: Understand if tilesize != 256 does this need to use shrinkfactors? */
 
-		int xmin = MIN(ti_ul.x, ti_br.x), xmax = MAX(ti_ul.x, ti_br.x);
-		int ymin = MIN(ti_ul.y, ti_br.y), ymax = MAX(ti_ul.y, ti_br.y);
+		const int xmin = std::min(ti_ul.x, ti_br.x);
+		const int xmax = std::max(ti_ul.x, ti_br.x);
+		const int ymin = std::min(ti_ul.y, ti_br.y);
+		const int ymax = std::max(ti_ul.y, ti_br.y);
 
 		/* Split rendering into a grid for the current viewport
 		   thus each individual 'tile' can then be stored in the map cache. */

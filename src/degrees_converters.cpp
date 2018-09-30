@@ -221,7 +221,8 @@ double SlavGPS::convert_dms_to_dec(char const * dms)
 
 	if (dms != NULL) {
 		int nbFloat = 0;
-		const char * ptr, * endptr;
+		const char * ptr = NULL;
+		const char * endptr = NULL;
 
 		/* Compute the sign.
 		   It is negative if:
@@ -235,10 +236,10 @@ double SlavGPS::convert_dms_to_dec(char const * dms)
 		endptr = dms;
 		do {
 			double value;
-			ptr = strpbrk (endptr, "0123456789,.");
+			ptr = strpbrk(endptr, "0123456789,.");
 			if (ptr != NULL) {
 				const char * tmpptr = endptr;
-				value = g_strtod((const char *) ptr, (char **) &endptr);
+				value = strtod((const char *) ptr, (char **) &endptr); /* KAMIL_TODO: remove casting. */
 				/* Detect when endptr hasn't changed (which may occur if no conversion took place),
 				   particularly if the last character is a ',' or there are multiple '.'s like '5.5.'. */
 				if (endptr == tmpptr) {

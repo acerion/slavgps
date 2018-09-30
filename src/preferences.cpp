@@ -513,7 +513,7 @@ bool Preferences::get_restore_window_state(void)
 /* Defaults for preferences are setup here. */
 void Preferences::register_default_values()
 {
-	qDebug() << "DD: Preferences: VIKING VERSION as number:" << viking_version_to_number(VIKING_VERSION);
+	qDebug() << "DD: Preferences: VIKING VERSION as number:" << viking_version_to_number(PACKAGE_VERSION);
 
 	int i = 0;
 
