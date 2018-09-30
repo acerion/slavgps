@@ -250,39 +250,44 @@ static void unlock_file(const QString & file_path)
 /**
  * Unzip a file - replacing the file with the unzipped contents of the self.
  */
-static void uncompress_zip(const QString & file_full_path)
+static sg_ret uncompress_zip(const QString & file_full_path)
 {
-	GError * error = NULL;
-	GMappedFile * mf;
-
 	QFile file(file_full_path);
 	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << "EE" PREFIX << "Can't open file" << file_full_path << file.error();
-		return;
+		qDebug() << SG_PREFIX_E << "Can't open file" << file_full_path << file.error();
+		return sg_ret::err_arg;
 	}
 
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
 	if (!file_contents) {
-		qDebug() << "EE" PREFIX << "Can't map file" << file_full_path << file.error();
-		return;
+		qDebug() << SG_PREFIX_E << "Can't map file" << file_full_path << file.error();
+		return sg_ret::err_algo;
 	}
 
 
-	unsigned long ucsize;
-	void * unzip_mem = unzip_file((char *) file_contents, &ucsize);
+	size_t unzip_size;
+	void * unzip_mem = unzip_file((char *) file_contents, &unzip_size);
 	file.unmap(file_contents);
-	file.close();
 
 	if (unzip_mem == NULL) {
-		return;
+		return sg_ret::err_algo;
 	}
 
-	/* This overwrites any previous file contents. */
-	if (!g_file_set_contents(file.fileName().toUtf8().constData(), (char const *) unzip_mem, ucsize, &error)) {
-		qDebug() << "EE: Download: Couldn't write file" << file.fileName() << "because of" << error->message;
-		g_error_free(error);
+	/* Overwrite any previous file contents. */
+	if (!file.seek(0)) {
+		qDebug() << SG_PREFIX_E << "seek(0) failed" << file.error();
+		return sg_ret::err_algo;
 	}
+	const size_t written = file.write((const char *) unzip_mem, unzip_size);
+	if (written != unzip_size) {
+		qDebug() << SG_PREFIX_E << "Short write for" << file.fileName() << "expected bytes:" << unzip_size << "written bytes:" << written << file.error();;
+		return sg_ret::err_algo;
+	}
+
+	file.close();
+
+	return sg_ret::ok;
 }
 
 
@@ -314,17 +319,21 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 #endif
 		if (ml == 0) {
 			char const * magic = magic_file(myt, file_path.toUtf8().constData());
-			qDebug() << "DD: Download: magic output:" << magic;
+			if (NULL == magic || '\0' == magic[0]) {
+				qDebug() << SG_PREFIX_W << "Empty magic in file" << file_path;
+			} else {
+				qDebug() << SG_PREFIX_D << "Magic in file:" << magic;
 
-			if (g_ascii_strncasecmp(magic, "application/zip", 15) == 0) {
-				zip = true;
-			}
+				if (0 == strncasecmp(magic, "application/zip", strlen("application/zip"))) {
+					zip = true;
+				}
 
-			if (g_ascii_strncasecmp(magic, "application/x-bzip2", 19) == 0) {
-				bzip2 = true;
+				if (0 == strncasecmp(magic, "application/x-bzip2", strlen("application/x-bzip2"))) {
+					bzip2 = true;
+				}
 			}
 		} else {
-			qDebug() << "EE: Download: magic load database failure";
+			qDebug() << SG_PREFIX_E << "Failed to load magic database";
 		}
 
 		magic_close(myt);
@@ -335,14 +344,14 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 	}
 
 	if (zip) {
-		uncompress_zip(file_path.toUtf8().constData());
+		uncompress_zip(file_path);
 	} else if (bzip2) {
 		char* bz2_name = uncompress_bzip2(file_path);
 		if (bz2_name) {
 			if (!QDir::root().remove(file_path)) {
 				qDebug() << "EE: Download: remove file failed (" << file_path << ")";
 			}
-			if (g_rename (bz2_name, file_path.toUtf8().constData())) {
+			if (g_rename(bz2_name, file_path.toUtf8().constData())) {
 				qDebug() << "EE: Download: file rename failed [" << bz2_name << "] to [" << file_path << "]";
 			}
 		}
@@ -462,7 +471,7 @@ static void set_etag(const QString & file_path, const QString & tmp_file_path, C
 
 
 
-DownloadStatus DownloadHandle::download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp)
+DownloadStatus DownloadHandle::perform_download(const QString & hostname, const QString & uri, const QString & dest_file_path, DownloadProtocol protocol)
 {
 	bool failure = false;
 	CurlOptions curl_options;
@@ -513,18 +522,18 @@ DownloadStatus DownloadHandle::download(const QString & hostname, const QString 
 	}
 
 	/* Call the backend function */
-	CurlDownloadStatus ret = this->curl_handle->get_url(hostname, uri, file, &this->dl_options, ftp, &curl_options);
+	CurlDownloadStatus ret = this->curl_handle->get_url(hostname, uri, file, &this->dl_options, protocol, &curl_options);
 
 	DownloadStatus result = DownloadStatus::Success;
 
 	if (ret != CurlDownloadStatus::NoError && ret != CurlDownloadStatus::NoNewerFile) {
-		qDebug() << "WW: Download: failed: CurlDownload::get_url = " << (int) ret;
+		qDebug() << SG_PREFIX_E << "Failed: CurlDownload::get_url = " << (int) ret;
 		failure = true;
 		result = DownloadStatus::HTTPError;
 	}
 
 	if (!failure && this->dl_options.check_file != NULL && ! this->dl_options.check_file(file)) {
-		qDebug() << "DD: Download: file content checking failed";
+		qDebug() << SG_PREFIX_E << "File content checking failed";
 		failure = true;
 		result = DownloadStatus::ContentError;
 	}
@@ -573,21 +582,14 @@ DownloadStatus DownloadHandle::download(const QString & hostname, const QString 
 
 
 
-/**
- * uri: like "/uri.html?whatever"
- * Only reason for the "wrapper" is so we can do redirects.
- */
-DownloadStatus DownloadHandle::get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path)
+DownloadStatus DownloadHandle::perform_download(const QString & url, const QString & dest_file_path)
 {
-	return this->download(hostname, uri, dest_file_path, false);
-}
+	const DownloadProtocol protocol = SlavGPS::from_url(url);
+	if (protocol == DownloadProtocol::Unknown) {
+		qDebug() << SG_PREFIX_W << "Unsupported protocol in" << url;
+	}
 
-
-
-
-DownloadStatus DownloadHandle::get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path)
-{
-	return this->download(hostname, uri, dest_file_path, true);
+	return DownloadHandle::perform_download(url, "", dest_file_path, protocol);
 }
 
 
@@ -710,4 +712,61 @@ QDebug SlavGPS::operator<<(QDebug debug, const DownloadStatus result)
 	};
 
 	return debug;
+}
+
+
+
+
+
+QString SlavGPS::to_string(DownloadProtocol protocol)
+{
+	QString result;
+
+	switch (protocol) {
+	case DownloadProtocol::FTP:
+		result = "ftp://";
+		break;
+	case DownloadProtocol::HTTP:
+		result = "http://";
+		break;
+	case DownloadProtocol::HTTPS:
+		result = "https://";
+		break;
+	case DownloadProtocol::File:
+		result = "file://";
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected download protocol" << (int) protocol;
+		result = "";
+	}
+
+	return result;
+}
+
+
+
+
+
+DownloadProtocol SlavGPS::from_url(const QString & url)
+{
+	DownloadProtocol protocol;
+
+	if (url.left(strlen("http://")) == "http://") {
+		protocol = DownloadProtocol::HTTP;
+
+	} else if (url.left(strlen("https://")) == "https://") {
+		protocol = DownloadProtocol::HTTPS;
+
+	} else if (url.left(strlen("ftp://")) == "ftp://") {
+		protocol == DownloadProtocol::FTP;
+
+	} else if (url.left(strlen("file://")) == "file://") {
+		protocol == DownloadProtocol::File;
+
+	} else {
+		qDebug() << SG_PREFIX_E << "Unsupported protocol in" << url;
+		protocol = DownloadProtocol::Unknown;
+	}
+
+	return protocol;
 }

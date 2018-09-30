@@ -99,7 +99,7 @@ static unsigned int uncompress_data(void * uncompressed_buffer, unsigned int unc
  *
  * Returns a pointer to uncompressed data (maybe NULL).
  */
-void * SlavGPS::unzip_file(char * zip_file, unsigned long * unzip_size)
+void * SlavGPS::unzip_file(char * zip_file, size_t * unzip_size)
 {
 	void * unzip_data = NULL;
 #ifndef HAVE_LIBZ
@@ -123,14 +123,14 @@ void * SlavGPS::unzip_file(char * zip_file, unsigned long * unzip_size)
 
 	if (sizeof(struct _lfh) != 30) {
 		fprintf(stderr, "CRITICAL: Incorrect internal zip header size, should be 30 but is %zd\n", sizeof(struct _lfh));
-		return(unzip_data);
+		return unzip_data;
 	}
 
 	local_file_header = (struct _lfh *) zip_file;
 	if (GUINT32_FROM_LE(local_file_header->sig) != 0x04034b50) {
 		fprintf(stderr, "WARNING: %s(): wrong format (%d)\n", __PRETTY_FUNCTION__, GUINT32_FROM_LE(local_file_header->sig));
-		free(unzip_data);
-		return (unzip_data); // kamil: shouldn't we NULL it first?
+		free(unzip_data); /* FIXME: this free() is too early, there is nothing to free yet. */
+		return unzip_data; // kamil: shouldn't we NULL it first?
 	}
 
 	zip_data = zip_file + sizeof(struct _lfh)
@@ -164,7 +164,7 @@ void * SlavGPS::unzip_file(char * zip_file, unsigned long * unzip_size)
 
 #endif
 end:
-	return(unzip_data);
+	return unzip_data;
 }
 
 

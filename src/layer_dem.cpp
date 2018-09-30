@@ -1085,7 +1085,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 
 	DownloadHandle dl_handle(&dl_options);
 
-	const DownloadStatus result = dl_handle.get_url_http(SRTM_HTTP_SITE, source_file, dl_job->dest_file_path);
+	const DownloadStatus result = dl_handle.perform_download(SRTM_HTTP_SITE, source_file, dl_job->dest_file_path, DownloadProtocol::HTTP);
 	switch (result) {
 	case DownloadStatus::ContentError:
 	case DownloadStatus::HTTPError:

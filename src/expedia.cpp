@@ -244,7 +244,7 @@ static DownloadStatus expedia_download_tile(const TileInfo & src, const QString 
 		.arg(height);
 
 	dl_handle->set_options(expedia_options);
-	DownloadStatus res = dl_handle->get_url_http(EXPEDIA_SITE, uri, dest_file_path);
+	DownloadStatus res = dl_handle->perform_download(EXPEDIA_SITE, uri, dest_file_path, DownloadProtocol::HTTP);
 	if (res == DownloadStatus::Success) {
 		expedia_snip(dest_file_path);
 	}

@@ -50,12 +50,6 @@
 
 
 
-#include <glib.h>
-//#include <glib/gstdio.h>
-
-
-
-
 #include "gpx.h"
 #include "babel.h"
 #include "file.h"
@@ -76,6 +70,7 @@ extern bool vik_debug;
 
 
 
+#define SG_MODULE "Babel"
 #define PREFIX ": Babel:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -210,7 +205,7 @@ bool a_babel_convert(LayerTRW * trw, const QString & babel_args, AcquireTool * p
 
 	return ret;
 }
-#endif
+
 
 
 
@@ -221,6 +216,7 @@ static void babel_watch(GPid pid, int status, void * cb_data)
 {
 	g_spawn_close_pid(pid);
 }
+#endif
 
 
 
@@ -473,25 +469,26 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
 		return false;
 	}
-	const QString name_src = tmp_file.fileName();
-	qDebug() << "DD: Babel: Convert from url filter: temporary file:" << name_src;
+	const QString target_file_full_path = tmp_file.fileName();
+	qDebug() << SG_PREFIX_D << "Temporary file:" << target_file_full_path;
 	tmp_file.remove(); /* Because we only needed to confirm that a path to temporary file is "available"? */
 
 	DownloadHandle dl_handle(&babel_dl_options);
+	const DownloadStatus download_status = dl_handle.perform_download(this->input, target_file_full_path);
 
-	if (DownloadStatus::Success == dl_handle.get_url_http(this->input, "", name_src)) {
+	if (DownloadStatus::Success == download_status) {
 		if (!this->input_data_format.isEmpty() || !this->babel_filters.isEmpty()) {
 
 			BabelOptions opts_local_file(BabelOptionsMode::FromFile); /* TODO_MAYBE: maybe we could reuse 'this->' ? */
-			opts_local_file.input = name_src;
+			opts_local_file.input = target_file_full_path;
 			opts_local_file.babel_args = (!this->input_data_format.isEmpty()) ? QString(" -i %1").arg(this->input_data_format) : "";
 			opts_local_file.babel_filters = this->babel_filters;
 
 			ret = opts_local_file.import_from_local_file(trw, NULL);
 		} else {
 			/* Process directly the retrieved file. */
-			qDebug() << "DD: Babel: directly read GPX file" << name_src;
-			FILE * file = fopen(name_src.toUtf8().constData(), "r");
+			qDebug() << SG_PREFIX_D << "Directly read GPX file" << target_file_full_path;
+			FILE * file = fopen(target_file_full_path.toUtf8().constData(), "r");
 			if (file) {
 				ret = GPX::read_file(file, trw);
 				fclose(file);
@@ -499,7 +496,7 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 			}
 		}
 	}
-	Util::remove(name_src);
+	Util::remove(target_file_full_path);
 
 
 	return ret;

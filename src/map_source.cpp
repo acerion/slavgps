@@ -447,7 +447,7 @@ DownloadStatus MapSource::download_tile(const TileInfo & src, const QString & de
 {
 	qDebug() << "II: Map Source: download to" << dest_file_path;
 	handle->set_options(this->dl_options);
-	return handle->get_url_http(get_server_hostname(), get_server_path(src), dest_file_path);
+	return handle->perform_download(get_server_hostname(), get_server_path(src), dest_file_path, DownloadProtocol::HTTP);
 }
 
 

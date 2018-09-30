@@ -402,10 +402,10 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 	}
 
 	int16_t * dem_contents = NULL;
-	unsigned long dem_size = 0;
+	size_t dem_size = 0;
 	if (zip) {
 		void * uncompressed_contents = NULL;
-		unsigned long uncompressed_size;
+		size_t uncompressed_size = 0;
 
 		if ((uncompressed_contents = unzip_file((char *) file_contents, &uncompressed_size)) == NULL) {
 			file.unmap(file_contents);

@@ -79,7 +79,7 @@ namespace SlavGPS {
 		CurlHandle();
 		~CurlHandle();
 
-		CurlDownloadStatus get_url(const QString & hostname, const QString & uri, FILE * file, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options);
+		CurlDownloadStatus get_url(const QString & hostname, const QString & uri, FILE * file, const DownloadOptions * dl_options, DownloadProtocol protocol, CurlOptions * curl_options);
 		CurlDownloadStatus download_uri(const QString & full_url, FILE * file, const DownloadOptions * dl_options, CurlOptions * curl_options);
 		CurlDownloadStatus download_uri(const QString & full_url, QTemporaryFile * file, const DownloadOptions * dl_options, const CurlOptions * curl_options);
 	private:

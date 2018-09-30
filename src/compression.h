@@ -34,7 +34,7 @@ namespace SlavGPS {
 
 
 
-	void * unzip_file(char * zip_file, unsigned long * unzip_size);
+	void * unzip_file(char * zip_file, size_t * unzip_size);
 	char * uncompress_bzip2(const QString & file_path);
 
 

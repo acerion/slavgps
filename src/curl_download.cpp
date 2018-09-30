@@ -270,6 +270,9 @@ static CurlDownloadStatus report_post_download_status(CURL * curl, CURLcode ret,
 		qDebug() << SG_PREFIX_I << "Curl operation successful";
 
 		switch (response_code) {
+		case 0: /* TODO: this may be true only for FILE protocol. */
+			status = CurlDownloadStatus::NoError;
+			break;
 		case 304: /* Not Modified */
 			status = CurlDownloadStatus::NoNewerFile;
 			break;
@@ -338,7 +341,7 @@ static void apply_dl_options(CURL * curl, const DownloadOptions * dl_options, co
 
 
 
-CurlDownloadStatus CurlHandle::get_url(const QString & hostname, const QString & uri, FILE * file, const DownloadOptions * dl_options, bool ftp, CurlOptions * curl_options)
+CurlDownloadStatus CurlHandle::get_url(const QString & hostname, const QString & uri, FILE * file, const DownloadOptions * dl_options, DownloadProtocol protocol, CurlOptions * curl_options)
 {
 	QString full_url;
 
@@ -350,7 +353,8 @@ CurlDownloadStatus CurlHandle::get_url(const QString & hostname, const QString &
 		full_url = uri;
 	} else {
 		/* Compose the full url. */
-		full_url = QString("%1://%2%3").arg(ftp ? "ftp" : "http").arg(hostname).arg(uri);
+		const QString proto_string = SlavGPS::to_string(protocol);
+		full_url = QString("%1://%2%3").arg(proto_string).arg(hostname).arg(uri);
 	}
 
 	return this->download_uri(full_url, file, dl_options, curl_options);

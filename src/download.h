@@ -49,6 +49,19 @@ namespace SlavGPS {
 
 
 
+	enum class DownloadProtocol {
+		FTP,
+		HTTP,
+		HTTPS,
+		File,
+		Unknown
+	};
+	QString to_string(DownloadProtocol protocol);
+	DownloadProtocol from_url(const QString & url);
+
+
+
+
 	enum class DownloadStatus {
 		FileWriteError      = -4, /* Can't write downloaded file. */
 		HTTPError           = -2,
@@ -120,16 +133,15 @@ namespace SlavGPS {
 		bool is_valid(void) const;
 		void set_options(const DownloadOptions & dl_options);
 
-		DownloadStatus get_url_http(const QString & hostname, const QString & uri, const QString & dest_file_path);
-		DownloadStatus get_url_ftp(const QString & hostname, const QString & uri, const QString & dest_file_path);
+		/* uri: like "/uri.html?whatever" */
+		DownloadStatus perform_download(const QString & hostname, const QString & uri, const QString & dest_file_path, DownloadProtocol protocol);
+		DownloadStatus perform_download(const QString & url, const QString & dest_file_path);
 
 		bool download_to_tmp_file(QTemporaryFile & tmp_file, const QString & uri);
 
 		DownloadOptions dl_options;
 
 	private:
-		DownloadStatus download(const QString & hostname, const QString & uri, const QString & dest_file_path, bool ftp);
-
 		CurlHandle * curl_handle = NULL;
 	};
 
