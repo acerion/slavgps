@@ -40,6 +40,8 @@ viking-*tar.bz2
 viking-*tar.gz
 viking-*zip
 
+TAGS
+
 # data/
 data/Makefile
 data/Makefile.in
@@ -79,12 +81,9 @@ help/C/*html
 /src/Makefile
 /src/*.o
 /src/authors.h
-# /src/config.h
-/src/config.h.in
 /src/libviking.a
 /src/stamp-h1
-/src/viking
-/src/viking.exe
+/src/slavgps
 /src/viking.desktop
 /src/vikenumtypes.h
 /src/vikenumtypes.c
@@ -94,6 +93,25 @@ help/C/*html
 /src/libjpeg/*.o
 /src/libjpeg/.deps
 /src/libjpeg/.dirstamp
+
+# /src/config.tests
+/src/config.tests/libmagic/Makefile
+/src/config.tests/libmagic/main.o
+/src/config.tests/libmagic/libmagic
+
+/src/config.tests/libmapnik/Makefile
+/src/config.tests/libmapnik/main.o
+/src/config.tests/libmapnik/libmapnik
+
+/src/config.tests/libbz/Makefile
+/src/config.tests/libbz/main.o
+/src/config.tests/libbz/libbz
+
+/src/config.log
+/src/.qmake.cache
+/src/.qmake.stash
+.qmake.stash
+
 
 # /src/icons/
 /src/icons/.deps
