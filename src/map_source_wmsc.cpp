@@ -35,11 +35,6 @@
 
 
 
-#include <glib.h>
-
-
-
-
 #include "map_source_wmsc.h"
 #include "map_utils.h"
 #include "viewport_internal.h"
@@ -162,23 +157,19 @@ void MapSourceWmsc::tile_to_center_coord(const TileInfo & src, Coord & dest_coor
 const QString MapSourceWmsc::get_server_path(const TileInfo & src) const
 {
 	const double socalled_mpp = src.scale.to_so_called_mpp();
-	double minx = (double)src.x * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
-	double maxx = (double)(src.x + 1) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
+	const double minx = (double)src.x * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
+	const double maxx = (double)(src.x + 1) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
-	double miny = -((double)(src.y + 1) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
-	double maxy = -((double)(src.y) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
+	const double miny = -((double)(src.y + 1) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
+	const double maxy = -((double)(src.y) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
 
-	char sminx[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxx[G_ASCII_DTOSTR_BUF_SIZE];
-	char sminy[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxy[G_ASCII_DTOSTR_BUF_SIZE];
-
-	g_ascii_dtostr(sminx, G_ASCII_DTOSTR_BUF_SIZE, minx);
-	g_ascii_dtostr(smaxx, G_ASCII_DTOSTR_BUF_SIZE, maxx);
-	g_ascii_dtostr(sminy, G_ASCII_DTOSTR_BUF_SIZE, miny);
-	g_ascii_dtostr(smaxy, G_ASCII_DTOSTR_BUF_SIZE, maxy);
-
-	const QString uri = QString(this->server_path_format).arg(sminx).arg(sminy).arg(smaxx).arg(smaxy);
+	/* This is very similar to how LatLonBBoxStrings variable is created in bbox.cpp. */
+	QLocale c_locale = QLocale::c();
+	const QString uri = QString(this->server_path_format)
+		.arg(c_locale.toString(minx))
+		.arg(c_locale.toString(miny))
+		.arg(c_locale.toString(maxx))
+		.arg(c_locale.toString(maxy));
 	return uri;
 }

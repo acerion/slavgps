@@ -361,7 +361,7 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 {
 	QString canonical;
 
-	if (g_path_is_absolute(path.toUtf8().constData())) {
+	if (QDir::isAbsolutePath(path)) {
 		canonical = path;
 	} else {
 		char * dirpath = NULL;
@@ -374,10 +374,10 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 
 		QString subpath = QString("%1%2%3").arg(dirpath).arg(QDir::separator()).arg(path);
 		QString full_path;
-		if (g_path_is_absolute(dirpath)) {
+		if (QDir::isAbsolutePath(dirpath)) {
 			full_path = subpath;
 		} else {
-			full_path = QString("%1%2%3").arg(g_get_current_dir()).arg(QDir::separator()).arg(subpath);
+			full_path = QString("%1%2%3").arg(QDir::currentPath()).arg(QDir::separator()).arg(subpath);
 		}
 
 		canonical = SGUtils::get_canonical_path(full_path);
@@ -921,27 +921,26 @@ void SlavGPS::vu_zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, c
 
 
 /**
- * @version:  The string of the Viking version.
- *            This should be in the form of N.N.N.N, where the 3rd + 4th numbers are optional
- *            Often you'll want to pass in VIKING_VERSION
- *
- * Returns: a single number useful for comparison.
- */
-int SlavGPS::viking_version_to_number(char const * version)
+   @version:  The string of a program version.
+   This should be in the form of N.N.N.N, where the 3rd + 4th numbers are optional
+   Often you'll want to pass in PACKAGE_VERSION
+
+   Returns: a single number useful for comparison.
+*/
+int SGUtils::version_to_number(const QString & version)
 {
 	/* Basic method, probably can be improved. */
 	int version_number = 0;
-	char** parts = g_strsplit(version, ".", 0);
-	int part_num = 0;
-	char *part = parts[part_num];
+
+	const QStringList parts = version.split(".", QString::SkipEmptyParts);
+
 	/* Allow upto 4 parts to the version number. */
-	while (part && part_num < 4) {
-		/* Allow each part to have upto 100. */
-		version_number = version_number + (atol(part) * pow(100, 3-part_num));
-		part_num++;
-		part = parts[part_num];
+	const int parts_max = 4;
+	for (int i = 0; i < parts.size() && i < parts_max; i++) {
+		const QString part = parts.at(i);
+		version_number += (part.toInt() * pow(100, (parts_max - 1) - i));
 	}
-	g_strfreev(parts);
+
 	return version_number;
 }
 

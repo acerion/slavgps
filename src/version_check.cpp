@@ -110,8 +110,8 @@ void VersionCheck::run()
 		latest_version_buffer[i] = (char) file_contents[i];
 	}
 
-	int latest_version = viking_version_to_number(latest_version_buffer);
-	int my_version = viking_version_to_number((char *) PACKAGE_VERSION);
+	const int latest_version = SGUtils::version_to_number(latest_version_buffer);
+	const int my_version = SGUtils::version_to_number(PACKAGE_VERSION);
 
 	qDebug() << SG_PREFIX_I << "This version =" << PACKAGE_VERSION << ", most recent version = " << latest_version_buffer;
 

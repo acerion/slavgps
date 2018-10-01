@@ -40,11 +40,6 @@
 
 
 
-//#include <glib.h>
-
-
-
-
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
 #include "layer_trw_menu.h"

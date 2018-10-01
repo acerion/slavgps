@@ -27,12 +27,6 @@
 
 
 
-#include <glib/gprintf.h>
-#include <glib/gstdio.h>
-
-
-
-
 #ifdef HAVE_EXPAT_H
 #include <expat.h>
 #endif

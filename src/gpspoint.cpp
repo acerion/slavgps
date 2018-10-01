@@ -37,11 +37,6 @@
 
 
 
-#include <glib.h>
-
-
-
-
 #include "gpspoint.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_waypoint.h"
@@ -99,7 +94,7 @@ public:
 	char * line_color = NULL;
 	int line_name_label = 0;
 	int line_dist_label = 0;
-	char * line_image = NULL;
+	QString line_image;
 	char * line_symbol = NULL;
 
 	bool line_visible = true;
@@ -253,10 +248,7 @@ void GPSPointParser::reset()
 		this->line_color = NULL;
 	}
 
-	if (this->line_image) {
-		free(this->line_image);
-		this->line_image = NULL;
-	}
+	this->line_image = "";
 
 	if (this->line_symbol) {
 		free(this->line_symbol);
@@ -429,9 +421,9 @@ Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QStr
 		wp->set_type(this->line_xtype);
 	}
 
-	if (this->line_image) {
+	if (!this->line_image.isEmpty()) {
 		/* Ensure the filename is absolute. */
-		if (g_path_is_absolute(this->line_image)) {
+		if (QDir::isAbsolutePath(this->line_image)) {
 			wp->set_image_full_path(this->line_image);
 		} else {
 			/* Otherwise create the absolute filename from the directory of the .vik file & and the relative filename. */
@@ -668,8 +660,10 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 			}
 
 		} else if (0 == strncasecmp(key, "image", key_len)) {
-			if (this->line_image == NULL) {
-				this->line_image = deslashndup(value, value_len);
+			if (this->line_image.isEmpty()) {
+				char * line = deslashndup(value, value_len);
+				this->line_image = QString(line);
+				free(line);
 			}
 		}
 		break;

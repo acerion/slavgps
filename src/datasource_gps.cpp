@@ -42,12 +42,6 @@
 
 
 
-#include <glib/gstdio.h>
-#include <glib/gprintf.h>
-
-
-
-
 #include "layer_gps.h"
 #include "datasource_gps.h"
 #include "babel.h"

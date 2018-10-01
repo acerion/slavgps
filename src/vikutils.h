@@ -106,8 +106,6 @@ namespace SlavGPS {
 	void vu_zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position);
 
 
-	/* Allow comparing versions. */
-	int viking_version_to_number(char const * version);
 
 
 	QString file_base_name(const QString & full_path);
@@ -174,6 +172,10 @@ namespace SlavGPS {
 		   given @viewport to x/y coordinate on screen.
 		*/
 		static GlobalPoint coord_to_global_point(const Coord & coord, const Viewport * viewport);
+
+
+		/* Generate an integer suitable for comparison of version numbers. */
+		static int version_to_number(const QString & version);
 	};
 
 

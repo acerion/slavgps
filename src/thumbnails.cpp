@@ -53,12 +53,6 @@
 
 
 
-//#include <glib.h>
-//#include <glib/gstdio.h>
-
-
-
-
 #include "thumbnails.h"
 #include "vikutils.h"
 #include "dir.h"

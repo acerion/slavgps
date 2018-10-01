@@ -34,11 +34,6 @@
 
 
 
-#include <glib.h>
-
-
-
-
 #include "jpg.h"
 #include "file.h"
 #include "file_utils.h"
@@ -56,6 +51,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "JPEG"
 
 
 
@@ -85,9 +85,11 @@ bool SlavGPS::jpg_magic_check(const QString & file_full_path)
 		magic_load(myt, NULL);
 #endif
 		char const * magic = magic_file(myt, file_full_path.toUtf8().constData());
-		fprintf(stderr, "DEBUG: %s:%s\n", __FUNCTION__, magic);
-		if (g_ascii_strncasecmp(magic, "image/jpeg", 10) == 0) {
-			is_jpg = true;
+		qDebug() << SG_PREFIX_D << "magic =" << magic;
+		if (NULL != magic && '\0' != magic[0]) {
+			if (0 == strncasecmp(magic, "image/jpeg", strlen("image/jpeg"))) {
+				is_jpg = true;
+			}
 		}
 
 		magic_close(myt);

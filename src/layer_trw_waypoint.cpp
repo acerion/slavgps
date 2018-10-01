@@ -28,11 +28,6 @@
 
 
 
-//#include <glib.h>
-
-
-
-
 #include "coords.h"
 #include "coord.h"
 #include "layer_trw.h"

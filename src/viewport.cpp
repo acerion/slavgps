@@ -44,11 +44,6 @@
 
 
 
-//#include <glib.h>
-
-
-
-
 #include "generic_tools.h"
 #include "viewport.h"
 #include "viewport_internal.h"

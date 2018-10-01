@@ -31,11 +31,6 @@
 
 
 
-//#include <glib.h>
-
-
-
-
 #include "datasource_bfilter.h"
 #include "babel.h"
 #include "gpx.h"

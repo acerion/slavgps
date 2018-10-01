@@ -43,12 +43,6 @@
 
 
 
-//#include <glib.h>
-//#include <glib/gstdio.h>
-
-
-
-
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
 #include "layer_trw_tools.h"
@@ -454,7 +448,7 @@ void LayerTRW::init(void)
 				char *token = tokens[num];
 				while (token && num < 2) {
 					if (num == 1) {
-						if (viking_version_to_number(token) >= viking_version_to_number((char *) "1.7.3")) {
+						if (SGUtils::version_to_number(token) >= SGUtils::version_to_number("1.7.3")) {
 							g_have_diary_program = true;
 						}
 					}

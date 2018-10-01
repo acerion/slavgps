@@ -54,11 +54,6 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
-//#include <glib.h>
-
-
-
-
 #include "measurements.h"
 #include "coords.h"
 #ifdef HAVE_VIKING

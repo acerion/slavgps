@@ -54,11 +54,6 @@
 
 
 
-//#include <glib.h>
-
-
-
-
 #include "map_source_slippy.h"
 #include "map_utils.h"
 #include "globals.h"

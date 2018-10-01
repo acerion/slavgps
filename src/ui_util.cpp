@@ -34,13 +34,6 @@
 
 
 
-//#include <glib.h>
-//#include <glib/gstdio.h>
-//#include <glib/gprintf.h>
-
-
-
-
 #include "util.h"
 #include "ui_util.h"
 #include "dialog.h"
