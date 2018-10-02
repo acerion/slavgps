@@ -53,6 +53,7 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class GPXImporter;
+	class BabelFeatureParser;
 
 
 
@@ -72,7 +73,8 @@ namespace SlavGPS {
 		BabelProcess();
 		~BabelProcess();
 
-		void set_parameters(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator);
+		void set_args(const QString & program, const QStringList & args);
+		void set_auxiliary_parameters(AcquireTool * new_progress_indicator, DataProgressDialog * progr_dialog);
 
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
 		bool convert_through_gpx(LayerTRW * trw);
@@ -85,6 +87,9 @@ namespace SlavGPS {
 		QProcess * process = NULL;
 
 		GPXImporter * importer = NULL;
+		BabelFeatureParser * feature_parser = NULL;
+		DataProgressDialog * babel_progr_indicator = NULL;
+
 	public slots:
 		void started_cb(void);
 		void error_occurred_cb(QProcess::ProcessError error);
@@ -107,14 +112,14 @@ namespace SlavGPS {
 		BabelOptions(BabelOptionsMode new_mode) : mode(new_mode) { };
 		virtual ~BabelOptions() {};
 
-		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator);
-		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options);
-		bool import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator);
-		bool import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator);
+		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog);
+		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog);
+		bool import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog);
+		bool import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog);
 
 		bool is_valid(void) const;
 
-		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * babel_something);
+		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * babel_something, DataProgressDialog * progr_dialog);
 
 		bool turn_off_device(void);
 
@@ -216,11 +221,20 @@ namespace SlavGPS {
 
 
 
+	/*
+	  A special case of gpsbabel process.
+	  Not used for import or export of geodata, but for loading of gpsbabel program features.
+	*/
 	class BabelFeatureLoader : public BabelProcess {
 	public:
-		BabelFeatureLoader() {};
-		void import_progress_cb(AcquireProgressCode code, void * data);
-		void export_progress_cb(AcquireProgressCode code, void * data) { return; };
+		BabelFeatureLoader();
+		~BabelFeatureLoader();
+	};
+
+	class BabelFeatureParser : public BabelProcess {
+	public:
+		BabelFeatureParser() {};
+		size_t write(const char * data, size_t size);
 	};
 
 
@@ -234,7 +248,7 @@ namespace SlavGPS {
 		DataSourceBabel() {};
 		~DataSourceBabel() {};
 
-		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something);
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog);
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status);
 

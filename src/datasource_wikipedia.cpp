@@ -71,7 +71,7 @@ DataSourceWikipedia::DataSourceWikipedia()
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
+bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog)
 {
 	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
 

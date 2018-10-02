@@ -129,7 +129,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
+bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog)
 {
 	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
 

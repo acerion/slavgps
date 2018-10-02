@@ -95,9 +95,11 @@ namespace SlavGPS {
 	public:
 		DataProgressDialog(const QString & window_title, QWidget * parent = NULL);
 
-		void set_status(const QString & text);
+		void set_headline(const QString & text);
+		void set_current_status(const QString & text);
 	private:
-		QLabel * status = NULL;
+		QLabel * headline = NULL;
+		QLabel * current_status = NULL;
 	};
 
 

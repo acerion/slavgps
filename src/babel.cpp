@@ -271,6 +271,9 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
 	this->importer->write("", 0); /* Just to ensure proper termination by GPX parser. */
 	sleep(3);
 
+	this->babel_progr_indicator->set_headline(tr("Import completed"));
+	this->babel_progr_indicator->set_current_status("");
+
 	if (trw == NULL) {
 		/* No data actually required but still need to have run gpsbabel anyway
 		   - eg using the device power command_off. */
@@ -318,7 +321,7 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
  *
  * Returns: %true on success.
  */
-bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator)
+bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Importing from local file" << this->input;
 
@@ -360,7 +363,8 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
 
 
 	this->babel_process = new BabelProcess();
-	this->babel_process->set_parameters(program, args, progress_indicator);
+	this->babel_process->set_args(program, args);
+	this->babel_process->set_auxiliary_parameters(progress_indicator, progr_dialog);
 	const bool ret = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 
@@ -385,7 +389,7 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator)
+bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -405,7 +409,8 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progr
 	const QStringList args(QStringList() << "-c" << full_shell_command);
 
 	this->babel_process = new BabelProcess();
-	this->babel_process->set_parameters(program, args, progress_indicator);
+	this->babel_process->set_args(program, args);
+	this->babel_process->set_auxiliary_parameters(progress_indicator, progr_dialog);
 	bool rv = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 	return rv;
@@ -440,7 +445,7 @@ int BabelOptions::kill(const QString & status)
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
+bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog)
 {
 	qDebug() << "II" PREFIX << "importing from URL" << this->input;
 
@@ -474,7 +479,7 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
 			opts_local_file.babel_args = (!this->input_data_format.isEmpty()) ? QString(" -i %1").arg(this->input_data_format) : "";
 			opts_local_file.babel_filters = this->babel_filters;
 
-			ret = opts_local_file.import_from_local_file(trw, NULL);
+			ret = opts_local_file.import_from_local_file(trw, NULL, NULL);
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << SG_PREFIX_D << "Directly read GPX file" << target_file_full_path;
@@ -508,17 +513,17 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options)
  *
  * Returns: %true on success.
  */
-bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator)
+bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
 {
 	switch (this->mode) {
 	case BabelOptionsMode::FromURL:
-		return this->import_from_url(trw, dl_options);
+		return this->import_from_url(trw, dl_options, progr_dialog);
 
 	case BabelOptionsMode::FromFile:
-		return this->import_from_local_file(trw, progress_indicator);
+		return this->import_from_local_file(trw, progress_indicator, progr_dialog);
 
 	case BabelOptionsMode::FromShellCommand:
-		return this->import_with_shell_command(trw, progress_indicator);
+		return this->import_with_shell_command(trw, progress_indicator, progr_dialog);
 
 	default:
 		qDebug() << "EE" PREFIX << "unexpected babel options mode" << (int) this->mode;
@@ -531,7 +536,7 @@ bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_opti
 
 bool BabelOptions::turn_off_device()
 {
-	return this->universal_import_fn(NULL, NULL, NULL);
+	return this->universal_import_fn(NULL, NULL, NULL, NULL);
 }
 
 
@@ -551,10 +556,10 @@ bool BabelOptions::turn_off_device()
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * progress_indicator)
+bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
 {
 	if (!babel.is_detected) {
-		qDebug() << "EE: Babel: gpsbabel not found in PATH";
+		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
 		return false;
 	}
 
@@ -564,7 +569,7 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool 
 		return false;
 	}
 	const QString tmp_file_full_path = tmp_file.fileName();
-	qDebug() << "DD: Babel: Convert to: temporary file:" << tmp_file_full_path;
+	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file_full_path;
 
 
 	QString program;
@@ -590,12 +595,14 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool 
 
 	/* Now strips out invisible tracks and waypoints. */
 	if (!VikFile::export_trw(trw, tmp_file_full_path, SGFileType::GPX, trk, false)) {
-		qDebug() << "EE: Babel: Convert to: Error exporting to" << tmp_file_full_path;
+		qDebug() << SG_PREFIX_E << "Error exporting to" << tmp_file_full_path;
 		return false;
 	}
 
+
 	BabelProcess converter;
-	converter.set_parameters(program, args, progress_indicator);
+	converter.set_args(program, args);
+	converter.set_auxiliary_parameters(progress_indicator, progr_dialog);
 	return converter.run_export();
 }
 
@@ -626,24 +633,25 @@ static void set_mode(BabelMode * mode, const QString & mode_string)
 
 
 /**
-   Load a single feature stored in the given line.
+   Load a single feature stored in the given line
 */
-void BabelFeatureLoader::import_progress_cb(AcquireProgressCode code, void * data)
+size_t BabelFeatureParser::write(const char * data, size_t size)
 {
 	if (!data) {
-		return;
+		qDebug() << SG_PREFIX_E << "NULL argument pointer";
+		return 0;
 	}
-	const QString line = QString((char *) data);
+	const QString line = QString(data);
 
 	QStringList tokens = line.split('\t', QString::KeepEmptyParts);
 	if (tokens.size() == 0) {
-		qDebug() << "WW" PREFIX << "Unexpected gpsbabel feature string" << line;
-		return;
+		qDebug() << SG_PREFIX_W << "Unexpected gpsbabel feature string" << line;
+		return 0;
 	}
 
 	if ("serial" == tokens.at(0)) {
 		if (tokens.size() != 6) {
-			qDebug() << "WW" PREFIX << "Unexpected gpsbabel feature string" << line;
+			qDebug() << SG_PREFIX_W << "Unexpected gpsbabel feature string" << line;
 		} else {
 			BabelDevice * device = new BabelDevice(tokens.at(1), tokens.at(2), tokens.at(4));
 			Babel::devices.push_back(device);
@@ -651,7 +659,7 @@ void BabelFeatureLoader::import_progress_cb(AcquireProgressCode code, void * dat
 
 	} else if ("file" == tokens.at(0)) {
 		if (tokens.size() != 6) {
-			qDebug() << "WW" PREFIX << "Unexpected gpsbabel format string" << line;
+			qDebug() << SG_PREFIX_W << "Unexpected gpsbabel format string" << line;
 		} else {
 			BabelFileType * file_type = new BabelFileType(tokens.at(1), tokens.at(2), tokens.at(3), tokens.at(4));
 			Babel::file_types.insert({{ file_type_id, file_type }});
@@ -662,7 +670,23 @@ void BabelFeatureLoader::import_progress_cb(AcquireProgressCode code, void * dat
 		/* Ignore. */
 	}
 
-	return;
+	return size;
+}
+
+
+
+
+BabelFeatureLoader::BabelFeatureLoader()
+{
+	this->feature_parser = new BabelFeatureParser();
+}
+
+
+
+
+BabelFeatureLoader::~BabelFeatureLoader()
+{
+	delete this->feature_parser;
 }
 
 
@@ -682,7 +706,7 @@ static bool load_babel_features(void)
 	args << QString("-^3");
 
 	BabelFeatureLoader feature_loader;
-	feature_loader.set_parameters(program, args, NULL);
+	feature_loader.set_args(program, args);
 	return feature_loader.run_process();
 }
 
@@ -773,18 +797,26 @@ BabelProcess::BabelProcess()
 
 
 
-void BabelProcess::set_parameters(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator)
+void BabelProcess::set_args(const QString & program, const QStringList & args)
 {
 	this->process->setProgram(program);
 	this->process->setArguments(args);
-	this->progress_indicator = new_progress_indicator;
 
 	if (true || vik_debug) {
-		qDebug() << "DD" PREFIX << "program is" << program;
+		qDebug() << SG_PREFIX_D << "Program is" << program;
 		for (int i = 0; i < args.size(); i++) {
-			qDebug() << "DD" PREFIX << "arg no." << i << "=" << args.at(i);
+			qDebug() << SG_PREFIX_D << "Arg no." << i << "=" << args.at(i);
 		}
 	}
+}
+
+
+
+
+void BabelProcess::set_auxiliary_parameters(AcquireTool * new_progress_indicator, DataProgressDialog * progr_dialog)
+{
+	this->progress_indicator = new_progress_indicator;
+	this->babel_progr_indicator = progr_dialog;
 }
 
 
@@ -800,64 +832,21 @@ BabelProcess::~BabelProcess()
 
 bool BabelProcess::run_process(void)
 {
-	bool success = true;
+	qDebug() << SG_PREFIX_I;
+
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
-		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
-	} else {
-		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
-	}
-
-
-#ifdef K_OLD_IMPLEMENTATION
-	/* Old implementation. New implementation uses QProcess and signal sent on new data appearing on stdout. */
-
-	GPid pid;
-	GError *error = NULL;
-	int babel_stdout;
-
-
-	if (!g_spawn_async_with_pipes(NULL, args, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &babel_stdout, NULL, &error)) {
-		fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
-		g_error_free(error);
-		ret = false;
-	} else {
-
-		char line[512];
-		FILE * diag = fdopen(babel_stdout, "r");
-		setvbuf(diag, NULL, _IONBF, 0);
-
-		while (fgets(line, sizeof(line), diag)) {
-			if (cb) {
-				cb(AcquireProgressCode::DiagOutput, line, cb_data);
-			}
-		}
-		if (cb) {
-			cb(AcquireProgressCode::Completed, NULL, cb_data);
-		}
-		fclose(diag);
-		diag = NULL;
-
-		g_child_watch_add(pid, (GChildWatchFunc) babel_watch, NULL);
-
-		ret = true;
-	}
-#endif
-
-
-	return success;
+	return true;
 }
 
 
 bool BabelProcess::run_import(void)
 {
-	qDebug() << "II" PREFIX;
+	qDebug() << SG_PREFIX_I;
 
 	bool success = true;
 	this->process->start();
-
 	this->process->waitForFinished(-1);
 
 	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
@@ -938,17 +927,32 @@ void BabelProcess::read_stdout_cb()
  	char buffer[512];
 
 	while (this->process->canReadLine()) {
-		qint64 read_size = this->process->readLine(buffer, sizeof (buffer));
-		qDebug() << "DD: Babel: Converter: read stdout" << buffer;
+		const qint64 read_size = this->process->readLine(buffer, sizeof (buffer));
+
+		if (read_size < 0) {
+			qDebug() << SG_PREFIX_E << "Negative read from gpsbabel's stdout";
+			continue;
+		}
+
+		//qDebug() << SG_PREFIX_D << "Read gpsbabel stdout" << buffer;
 
 		if (this->importer) {
 			this->importer->write(buffer, read_size);
+		} else if (this->feature_parser) {
+			this->feature_parser->write(buffer, read_size);
+		} else {
+			; /* No next step in chain. */
 		}
 
-		if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
-			this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, buffer);
-		} else {
-			this->import_progress_cb(AcquireProgressCode::Completed, buffer);
+		if (this->babel_progr_indicator) {
+			static int i = 0;
+			if (i % 200 == 0) {
+				char current_status[20];
+				snprintf(current_status, std::min(sizeof (current_status), (size_t) read_size), "%s", buffer);
+				this->babel_progr_indicator->set_current_status(QString(current_status).replace('\n', ' '));
+				usleep(1000);
+			}
+			i++;
 		}
 	}
 }

@@ -1352,15 +1352,22 @@ GPXImporter::~GPXImporter()
 
 size_t GPXImporter::write(const char * data, size_t size)
 {
+#if 0
 	char buf_a[512];
 	snprintf(buf_a, std::min(sizeof (buf_a), size), "%s", data);
-	qDebug() << "writing to importer" << buf_a;
+	qDebug() << SG_PREFIX_D << "Writing to importer" << buf_a;
+#endif
 
 	const int finish = (size <= 0);
-
 	this->status = XML_Parse(this->parser, data, size, finish);
 
-	qDebug() << SG_PREFIX_I << "Finish =" << finish << ", success =" << (this->status != XML_STATUS_ERROR);
+	if (this->status != XML_STATUS_OK) {
+		qDebug() << SG_PREFIX_E << "XML parsing returns non-ok:" << this->status;
+	}
+
+#if 0
+	qDebug() << SG_PREFIX_I << "Finish =" << finish << ", success =" << ();
+#endif
 
 	return this->status != XML_STATUS_ERROR;
 }

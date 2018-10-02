@@ -134,7 +134,7 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something) { return false; };
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog) { return false; };
 		virtual void progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring) { return; };
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status) { return -1; };

@@ -935,7 +935,7 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 			BabelOptions babel_options(BabelOptionsMode::FromFile);
 			babel_options.input = full_path;
 			babel_options.babel_args = "-i kml";
-			success = babel_options.import_from_local_file(trw, NULL);
+			success = babel_options.import_from_local_file(trw, NULL, NULL);
 			if (!success) {
 				load_status = VikFile::LoadStatus::GPSBabelFailure;
 			}
@@ -1074,7 +1074,7 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 	}
 
 	if (status) {
-		status = export_options.universal_export_fn(trw, NULL, NULL);
+		status = export_options.universal_export_fn(trw, NULL, NULL, NULL);
 	}
 
 	return status;
@@ -1152,7 +1152,7 @@ bool VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full
 		.arg(waypoints ? "-w" : "")
 		.arg(output_data_format);;
 
-	return export_options.universal_export_fn(trw, NULL, NULL);
+	return export_options.universal_export_fn(trw, NULL, NULL, NULL);
 }
 
 

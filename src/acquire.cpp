@@ -33,6 +33,7 @@
 
 
 #include <QRunnable>
+#include <QThreadPool>
 
 
 
@@ -58,6 +59,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Acquire"
 #define PREFIX ": Acquire:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -192,10 +194,10 @@ void AcquireGetter::run(void)
 {
 	assert (this->data_source);
 
-	this->result = this->data_source->acquire_into_layer(this->acquiring->trw, this->acquiring);
+	this->result = this->data_source->acquire_into_layer(this->acquiring->trw, this->acquiring, this->progress_dialog);
 
 	if (this->acquiring->acquire_is_running && !this->result) {
-		this->acquiring->progress_dialog->set_status(QObject::tr("Error: acquisition failed."));
+		this->acquiring->progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
 		if (this->acquiring->creating_new_layer) {
 			this->acquiring->trw->unref();
 		}
@@ -221,11 +223,10 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		return;
 	}
 
-	AcquireGetter getter;
-	getter.acquiring = this;
-	getter.data_source = new_data_source;
-	getter.acquiring->creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
-
+	AcquireGetter * getter = new AcquireGetter(); /* TODO_LATER: this needs to be deleted. */
+	getter->acquiring = this;
+	getter->data_source = new_data_source;
+	getter->acquiring->creating_new_layer = (!this->trw); /* Default if Auto Layer Management is passed in. */
 
 
 
@@ -233,23 +234,31 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 	this->configure_target_layer(mode);
 	this->acquire_is_running = true;
 	this->progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
-	this->progress_dialog->set_status(QObject::tr("Importing data..."));
+	this->progress_dialog->set_headline(QObject::tr("Importing data..."));
+
 
 
 	if (NULL == new_data_source->acquire_options || !new_data_source->acquire_options->is_valid()) {
 		/* This shouldn't happen... */
-		this->progress_dialog->set_status(QObject::tr("Unable to create command\nAcquire method failed."));
+		this->progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
 		this->progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
 		delete this->progress_dialog;
+		delete getter;
 		return;
 	}
 
+
 	if (new_data_source->is_thread) {
-		getter.run();
+		getter->progress_dialog = this->progress_dialog;
+
+		QThreadPool::globalInstance()->start(getter);
+
+		/* Start the task in a background task and then block this task by showing a dialog. */
 
 		if (this->progress_dialog) {
 			this->progress_dialog->exec();
 		}
+
 
 		if (this->acquire_is_running) {
 			/* Cancel and mark for thread to finish. */
@@ -275,13 +284,14 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		}
 	} else {
 		/* Bypass thread method malarkly - you'll just have to wait... */
+		qDebug() << SG_PREFIX_I << "Ready to run acquire process, non-thread method";
 
-		bool success = new_data_source->acquire_into_layer(getter.acquiring->trw, this);
+		bool success = new_data_source->acquire_into_layer(getter->acquiring->trw, this, this->progress_dialog);
 		if (!success) {
 			Dialog::error(QObject::tr("Error: acquisition failed."), this->window);
 		}
 
-		getter.on_complete_process();
+		getter->on_complete_process();
 
 		/* Actually show it if necessary. */
 		if (new_data_source->keep_dialog_open) {
@@ -420,24 +430,24 @@ void AcquireProcess::handle_getter_status_cb(int status)
 	case AcquireProcess::Success:
 		qDebug() << "II" PREFIX << "Success";
 		if (this->progress_dialog) {
-			this->progress_dialog->set_status(QObject::tr("Import completed successfully"));
+			this->progress_dialog->set_headline(QObject::tr("Import completed successfully"));
 		}
 		break;
 	case AcquireProcess::Failure:
 		qDebug() << "II" PREFIX << "Failure";
 		if (this->progress_dialog) {
-			this->progress_dialog->set_status(QObject::tr("Failed to import data"));
+			this->progress_dialog->set_headline(QObject::tr("Failed to import data"));
 		}
 	case 3:
 		qDebug() << "II" PREFIX << "Done";
 		if (this->progress_dialog) {
-			this->progress_dialog->set_status(QObject::tr("Done"));
+			this->progress_dialog->set_headline(QObject::tr("Done"));
 		}
 		break;
 	case 4:
 		qDebug() << "II" PREFIX << "No Data";
 		if (this->progress_dialog) {
-			this->progress_dialog->set_status(QObject::tr("No Data"));
+			this->progress_dialog->set_headline(QObject::tr("No Data"));
 		}
 		break;
 	default:
@@ -570,9 +580,9 @@ void Acquire::uninit(void)
 
 
 
-bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireTool * progress_indicator)
+bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
 {
-	return ((BabelOptions *) this->acquire_options)->universal_import_fn(trw, this->download_options, progress_indicator);
+	return ((BabelOptions *) this->acquire_options)->universal_import_fn(trw, this->download_options, progress_indicator, progr_dialog);
 }
 
 

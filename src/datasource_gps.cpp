@@ -360,7 +360,7 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 		line = (char *)data;
 
 		if (acquiring->acquire_is_running) {
-			acquiring->progress_dialog->set_status(QObject::tr("Status: Working..."));
+			acquiring->progress_dialog->set_headline(QObject::tr("Status: Working..."));
 		}
 
 		/* Tells us the type of items that will follow. */

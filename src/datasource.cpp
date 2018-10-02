@@ -42,8 +42,12 @@ using namespace SlavGPS;
 DataProgressDialog::DataProgressDialog(const QString & window_title, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(window_title);
-	this->status = new QLabel(QObject::tr("Working..."));
-	this->grid->addWidget(status, 0, 0);
+
+	this->headline = new QLabel(QObject::tr("Working..."));
+	this->current_status = new QLabel("");
+
+	this->grid->addWidget(this->headline, 0, 0);
+	this->grid->addWidget(this->current_status, 1, 0);
 
 	/* There will be nothing to confirm with OK button when data
 	   source is importing data, so the OK button needs to be
@@ -54,7 +58,14 @@ DataProgressDialog::DataProgressDialog(const QString & window_title, QWidget * p
 
 
 
-void DataProgressDialog::set_status(const QString & text)
+void DataProgressDialog::set_headline(const QString & text)
 {
-	this->status->setText(text);
+	this->headline->setText(text);
+}
+
+
+
+void DataProgressDialog::set_current_status(const QString & text)
+{
+	this->current_status->setText(text);
 }

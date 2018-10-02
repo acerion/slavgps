@@ -551,7 +551,7 @@ void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMeta
 
 
 
-bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something)
+bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog)
 {
 	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
 
@@ -643,7 +643,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 				BabelOptions * babel_action = (BabelOptions *) this->acquire_options; /* FIXME_LATER: casting. */
 				babel_action->input = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id); /* URL. */
 
-				convert_result = babel_action->import_from_url(target_layer, &local_dl_options);
+				convert_result = babel_action->import_from_url(target_layer, &local_dl_options, NULL);
 				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
