@@ -52,6 +52,7 @@ namespace SlavGPS {
 
 	class LayerTRW;
 	class Track;
+	class GPXImporter;
 
 
 
@@ -73,7 +74,8 @@ namespace SlavGPS {
 
 		void set_parameters(const QString & program, const QStringList & args, AcquireTool * new_progress_indicator);
 
-		bool convert_through_intermediate_file(LayerTRW * trw, const QString & intermediate_file_path);
+		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
+		bool convert_through_gpx(LayerTRW * trw);
 
 		bool run_import(void);
 		bool run_export(void);
@@ -82,6 +84,7 @@ namespace SlavGPS {
 
 		QProcess * process = NULL;
 
+		GPXImporter * importer = NULL;
 	public slots:
 		void started_cb(void);
 		void error_occurred_cb(QProcess::ProcessError error);

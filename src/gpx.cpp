@@ -50,11 +50,6 @@
 
 
 
-#include <expat.h>
-
-
-
-
 #include <QDebug>
 
 
@@ -74,6 +69,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "GPX"
 #define PREFIX ": GPX:" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -692,6 +688,10 @@ bool GPX::read_file(FILE * file, LayerTRW * trw)
 
 	return status != XML_STATUS_ERROR;
 }
+
+
+
+
 
 
 
@@ -1314,4 +1314,53 @@ QString GPX::write_tmp_file(LayerTRW * trw, GPXWriteOptions * options)
 QString GPX::write_track_tmp_file(Track * trk, GPXWriteOptions * options)
 {
 	return GPX::write_tmp_file(NULL, trk, options);
+}
+
+
+
+
+GPXImporter::GPXImporter(LayerTRW * new_trw)
+{
+	this->trw = new_trw;
+
+	this->parser = XML_ParserCreate(NULL);
+
+	XML_SetElementHandler(this->parser, (XML_StartElementHandler) gpx_start, (XML_EndElementHandler) gpx_end);
+	XML_SetUserData(this->parser, this->trw); /* In the future we could remove all global variables. */
+	XML_SetCharacterDataHandler(this->parser, (XML_CharacterDataHandler) gpx_cdata);
+
+	xpath = g_string_new("");
+	c_cdata = g_string_new("");
+
+	unnamed_waypoints = 1;
+	unnamed_tracks = 1;
+	unnamed_routes = 1;
+}
+
+
+
+
+GPXImporter::~GPXImporter()
+{
+	XML_ParserFree(this->parser);
+	g_string_free(xpath, true);
+	g_string_free(c_cdata, true);
+}
+
+
+
+
+size_t GPXImporter::write(const char * data, size_t size)
+{
+	char buf_a[512];
+	snprintf(buf_a, std::min(sizeof (buf_a), size), "%s", data);
+	qDebug() << "writing to importer" << buf_a;
+
+	const int finish = (size <= 0);
+
+	this->status = XML_Parse(this->parser, data, size, finish);
+
+	qDebug() << SG_PREFIX_I << "Finish =" << finish << ", success =" << (this->status != XML_STATUS_ERROR);
+
+	return this->status != XML_STATUS_ERROR;
 }

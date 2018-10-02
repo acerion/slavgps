@@ -238,9 +238,7 @@ BabelOptions::BabelOptions(const BabelOptions & other)
 
 /**
    Runs gpsbabel program with the \param args and uses the GPX module to
-   import the GPX data into \param trw layer. Assumes that upon
-   running the command, the data will appear in the (usually
-   temporary) file \param intermediate_file_path.
+   import the GPX data into \param trw layer.
 
    \param trw: The TrackWaypoint Layer to save the data into.  If it
    is null it signifies that no data is to be processed, however the
@@ -251,10 +249,6 @@ BabelOptions::BabelOptions(const BabelOptions & other)
 
    \param args: list of program's arguments (program's name is not on that list)
 
-   \param intermediate_file_path: path to temporary file, to which
-   babel should save data; data from that file will be then read into
-   supplied \param trw layer
-
    \param cb: callback that is run upon new data from STDOUT (?).
    (TODO_2_LATER: STDERR would be nice since we usually redirect STDOUT)
 
@@ -263,21 +257,30 @@ BabelOptions::BabelOptions(const BabelOptions & other)
    \return true on success
    \return false otherwise
 */
-bool BabelProcess::convert_through_intermediate_file(LayerTRW * trw, const QString & intermediate_file_path)
+bool BabelProcess::convert_through_gpx(LayerTRW * trw)
 {
-	qDebug() << "II" PREFIX << "will write to intermediate file" << intermediate_file_path;
+	qDebug() << SG_PREFIX_I;
+
+	this->importer = new GPXImporter(trw);
 
 
 	if (!this->run_import()) {
-		qDebug() << "EE: Babel: convert through intermediate file: conversion failed";
+		qDebug() << SG_PREFIX_E << "Conversion failed";
 		return false;
 	}
+	this->importer->write("", 0); /* Just to ensure proper termination by GPX parser. */
+	sleep(3);
 
 	if (trw == NULL) {
 		/* No data actually required but still need to have run gpsbabel anyway
 		   - eg using the device power command_off. */
 		return true;
 	}
+
+	bool read_success = this->importer->status != XML_STATUS_ERROR;
+
+	delete this->importer;
+#if 0
 
 	FILE * file = fopen(intermediate_file_path.toUtf8().constData(), "r");
 	if (!file) {
@@ -292,6 +295,7 @@ bool BabelProcess::convert_through_intermediate_file(LayerTRW * trw, const QStri
 
 	fclose(file);
 	file = NULL;
+#endif
 
 	return read_success;
 }
@@ -316,19 +320,12 @@ bool BabelProcess::convert_through_intermediate_file(LayerTRW * trw, const QStri
  */
 bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator)
 {
-	qDebug() << "II" PREFIX << "importing from local file" << this->input;
+	qDebug() << SG_PREFIX_I << "Importing from local file" << this->input;
 
 	if (!babel.is_detected) {
-		qDebug() << "EE: Babel: gpsbabel not found in PATH";
+		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
 		return false;
 	}
-
-	QTemporaryFile intermediate_file;
-	if (!SGUtils::create_temporary_file(intermediate_file, "tmp-viking.XXXXXX")) {
-		return false;
-	}
-	const QString intermediate_file_path = intermediate_file.fileName();
-	qDebug() << "DD: Babel: Convert from filter: temporary file:" << intermediate_file_path;
 
 
 	QString program;
@@ -359,15 +356,14 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
 
 
 	args << QString("-F");
-	args << intermediate_file_path;
+	args << "-"; /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
 
 
 	this->babel_process = new BabelProcess();
 	this->babel_process->set_parameters(program, args, progress_indicator);
-	const bool ret = this->babel_process->convert_through_intermediate_file(trw, intermediate_file_path);
+	const bool ret = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 
-	intermediate_file.remove(); /* Close and remove. */
 
 	return ret;
 }
@@ -386,29 +382,23 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
  * Runs the input command in a shell (bash) and optionally uses GPSBabel to convert from input_file_type.
  * If input_file_type is %NULL, doesn't use GPSBabel. Input must be GPX (or Geocaching *.loc)
  *
- * Uses Babel::convert_through_intermediate_file() to actually run the command. This function
+ * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
 bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator)
 {
-	qDebug() << "II" PREFIX << "using shell command" << this->shell_command;
-
-	QTemporaryFile intermediate_file;
-	if (!SGUtils::create_temporary_file(intermediate_file, "tmp-viking.XXXXXX")) {
-		return false;
-	}
-	const QString intermediate_file_fullpath = intermediate_file.fileName();
-	qDebug() << "DD: Babel: Convert from shell command: intermediate file" << intermediate_file_fullpath;
-
+	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
 	QString full_shell_command;
 	if (this->input_data_format.isEmpty()) {
-		full_shell_command = QString("%s > %s").arg(shell_command).arg(intermediate_file_fullpath);
+		/* Output of command will be redirected to GPX importer through read_stdout_cb(). */
+		full_shell_command = this->shell_command;
 	} else {
-		full_shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F %4").arg(this->shell_command).arg(babel.gpsbabel_path).arg(this->input_data_format).arg(intermediate_file_fullpath);
+		/* "-" indicates output to stdout; stdout will be redirected to GPX importer through read_stdout_cb(). */
+		full_shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F -").arg(this->shell_command).arg(babel.gpsbabel_path).arg(this->input_data_format);
 
 	}
-	qDebug() << "DD: Babel: Convert from shell command: shell command" << full_shell_command;
+	qDebug() << SG_PREFIX_I << "Final form of shell command" << full_shell_command;
 
 
 	const QString program(BASH_LOCATION);
@@ -416,7 +406,7 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progr
 
 	this->babel_process = new BabelProcess();
 	this->babel_process->set_parameters(program, args, progress_indicator);
-	bool rv = this->babel_process->convert_through_intermediate_file(trw, intermediate_file_fullpath);
+	bool rv = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 	return rv;
 }
@@ -863,10 +853,11 @@ bool BabelProcess::run_process(void)
 
 bool BabelProcess::run_import(void)
 {
+	qDebug() << "II" PREFIX;
+
 	bool success = true;
-	qDebug() << "II" PREFIX;
 	this->process->start();
-	qDebug() << "II" PREFIX;
+
 	this->process->waitForFinished(-1);
 
 	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
@@ -944,11 +935,15 @@ void BabelProcess::finished_cb(int exit_code, QProcess::ExitStatus exitStatus)
 
 void BabelProcess::read_stdout_cb()
 {
-	char buffer[512];
+ 	char buffer[512];
 
 	while (this->process->canReadLine()) {
-		this->process->readLine(buffer, sizeof (buffer));
-		//qDebug() << "DD: Babel: Converter: read stdout" << buffer;
+		qint64 read_size = this->process->readLine(buffer, sizeof (buffer));
+		qDebug() << "DD: Babel: Converter: read stdout" << buffer;
+
+		if (this->importer) {
+			this->importer->write(buffer, read_size);
+		}
 
 		if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 			this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, buffer);

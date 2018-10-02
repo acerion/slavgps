@@ -29,6 +29,11 @@
 
 
 
+#include <expat.h>
+
+
+
+
 namespace SlavGPS {
 
 
@@ -50,6 +55,21 @@ namespace SlavGPS {
 		bool force_time = false; /* Force time field. */
 		bool hidden = false;     /* Write invisible tracks/waypoints (default is yes). */
 		bool is_route = false;   /* For internal convience. */
+	};
+
+
+
+
+	class GPXImporter {
+	public:
+		GPXImporter(LayerTRW * trw);
+		~GPXImporter();
+		size_t write(const char * data, size_t size);
+
+		LayerTRW * trw = NULL;
+
+		XML_Parser parser;
+		enum XML_Status status = XML_STATUS_ERROR;
 	};
 
 
