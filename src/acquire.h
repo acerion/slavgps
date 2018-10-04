@@ -51,6 +51,7 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class DataSource;
+	class AcquireGetter;
 
 
 
@@ -82,6 +83,19 @@ namespace SlavGPS {
 
 
 
+	class AcquireContext {
+	public:
+		void set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk);
+
+		Window * window = NULL;
+		LayersPanel * panel = NULL;
+		Viewport * viewport = NULL;
+		LayerTRW * trw = NULL;
+		Track * trk = NULL;
+	};
+
+
+
 
 	/**
 	   Global data structure used to expose the progress dialog to the worker thread.
@@ -90,36 +104,29 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		AcquireProcess() {};
-		AcquireProcess(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport) : window(new_window), panel(new_panel), viewport(new_viewport) {};
+		AcquireProcess(const AcquireContext & new_acquire_context) : acquire_context(new_acquire_context) {};
 
 		void acquire_from_source(DataSource * data_source, DataSourceMode mode);
-		void set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk);
 
 		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
 
 		void import_progress_cb(AcquireProgressCode code, void * data);
 
-		void configure_target_layer(DataSourceMode mode);
+		void configure_target_layer(AcquireGetter * getter, DataSourceMode mode);
 
 		enum {
 			Success,
 			Failure
 		};
 
-		Window * window = NULL;
-		LayersPanel * panel = NULL;
-		Viewport * viewport = NULL;
-		LayerTRW * trw = NULL;
-		Track * trk = NULL;
 
+		AcquireContext acquire_context;
 		bool acquire_is_running = false;
-
-		bool creating_new_layer = false;
 
 		DataSource * data_source = NULL;
 		DataSourceDialog * config_dialog = NULL;
 		DataSourceDialog * parent_data_source_dialog = NULL;
-		DataProgressDialog * progress_dialog = NULL;
+		DataProgressDialog * acquire_process_progress_dialog = NULL;
 
 	public slots:
 		void filter_trwlayer_cb(void);
@@ -139,7 +146,7 @@ namespace SlavGPS {
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status) { return -1; };
 
-		virtual int run_config_dialog(AcquireProcess * acquire_context) { return QDialog::Rejected; };
+		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
 
 		virtual DataProgressDialog * create_progress_dialog(const QString & title);
 
@@ -170,11 +177,16 @@ namespace SlavGPS {
 		void run(); /* Re-implementation of QRunnable::run(). */
 		void on_complete_process(void);
 
+		AcquireContext acquire_context;
 
 		bool result = false;
 		DataSource * data_source = NULL;
 		AcquireProcess * acquiring = NULL;
-		DataProgressDialog * progress_dialog = NULL;
+		DataProgressDialog * acquire_getter_progress_dialog = NULL;
+
+		/* Whether a target trw layer has been freshly
+		   created, or it already existed in tree view. */
+		bool creating_new_layer = false;
 	signals:
 		void report_status(int status);
 	};

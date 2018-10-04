@@ -252,7 +252,7 @@ namespace SlavGPS {
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status);
 
-		virtual int run_config_dialog(AcquireProcess * acquire_context) { return QDialog::Rejected; };
+		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
 	};
 
 

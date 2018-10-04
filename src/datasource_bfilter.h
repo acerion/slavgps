@@ -49,7 +49,7 @@ namespace SlavGPS {
 	public:
 		BFilterSimplify();
 
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 	};
 
 	class BFilterSimplifyDialog : public DataSourceDialog {
@@ -67,7 +67,7 @@ namespace SlavGPS {
 	public:
 		BFilterCompress();
 
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 	};
 
 	class BFilterCompressDialog : public DataSourceDialog {
@@ -85,7 +85,7 @@ namespace SlavGPS {
 	public:
 		BFilterDuplicates();
 
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 	};
 
 	class BFilterDuplicatesDialog : public DataSourceDialog {
@@ -102,7 +102,7 @@ namespace SlavGPS {
 	public:
 		BFilterManual();
 
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 	};
 
 	class BFilterManualDialog : public DataSourceDialog {
@@ -119,7 +119,7 @@ namespace SlavGPS {
 	class BFilterPolygon : public DataSourceBabel {
 	public:
 		BFilterPolygon();
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 	};
 
 	class BFilterPolygonDialog : public DataSourceDialog {
@@ -135,7 +135,7 @@ namespace SlavGPS {
 	class BFilterExcludePolygon : public DataSourceBabel {
 	public:
 		BFilterExcludePolygon();
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 	};
 
 	class BFilterExcludePolygonDialog : public DataSourceDialog {

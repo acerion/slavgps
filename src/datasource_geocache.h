@@ -57,7 +57,7 @@ namespace SlavGPS {
 		static void init(void);
 		static bool have_programs(void); /* Check if programs necessary for using GeoCaches data source are available. */
 
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 
 		Viewport * viewport = NULL;
 	};

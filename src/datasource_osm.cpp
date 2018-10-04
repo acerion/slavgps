@@ -77,7 +77,7 @@ DataSourceOSMTraces::DataSourceOSMTraces(Viewport * new_viewport)
 
 
 
-int DataSourceOSMTraces::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceOSMTracesDialog config_dialog(this->window_title, this->viewport);
 

@@ -80,7 +80,7 @@ DataSourceURL::DataSourceURL()
 
 
 
-int DataSourceURL::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceURL::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceURLDialog config_dialog(this->window_title);
 

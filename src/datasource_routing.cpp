@@ -71,7 +71,7 @@ DataSourceRouting::DataSourceRouting()
 
 
 
-int DataSourceRouting::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceRouting::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceRoutingDialog config_dialog(this->window_title);
 

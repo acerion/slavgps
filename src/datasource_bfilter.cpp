@@ -83,13 +83,13 @@ BFilterSimplify::BFilterSimplify()
 
 
 
-int BFilterSimplify::run_config_dialog(AcquireProcess * acquire_context)
+int BFilterSimplify::run_config_dialog(AcquireContext & acquire_context)
 {
 	BFilterSimplifyDialog config_dialog(this->window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -171,13 +171,13 @@ BFilterCompress::BFilterCompress()
 
 
 
-int BFilterCompress::run_config_dialog(AcquireProcess * acquire_context)
+int BFilterCompress::run_config_dialog(AcquireContext & acquire_context)
 {
 	BFilterCompressDialog config_dialog(this->window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -255,13 +255,13 @@ BFilterDuplicates::BFilterDuplicates()
 
 
 
-int BFilterDuplicates::run_config_dialog(AcquireProcess * acquire_context)
+int BFilterDuplicates::run_config_dialog(AcquireContext & acquire_context)
 {
 	BFilterDuplicatesDialog config_dialog(this->window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -309,13 +309,13 @@ BFilterManual::BFilterManual()
 
 
 
-int BFilterManual::run_config_dialog(AcquireProcess * acquire_context)
+int BFilterManual::run_config_dialog(AcquireContext & acquire_context)
 {
 	BFilterManualDialog config_dialog(this->window_title);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context->trw);
+		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.trw);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -387,12 +387,12 @@ BabelOptions * BFilterPolygonDialog::get_acquire_options_layer_track(const QStri
 
 
 
-int BFilterPolygon::run_config_dialog(AcquireProcess * acquire_context)
+int BFilterPolygon::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
 	DataSourceDialog config_dialog(this->window_title);
-	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context->trw, acquire_context->trk);
+	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context.trw, acquire_context.trk);
 
 	return QDialog::Accepted;
 }
@@ -431,12 +431,12 @@ BabelOptions * BFilterExcludePolygonDialog::get_acquire_options_layer_track(cons
 
 
 
-int BFilterExcludePolygon::run_config_dialog(AcquireProcess * acquire_context)
+int BFilterExcludePolygon::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
 	DataSourceDialog config_dialog(this->window_title);
-	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context->trw, acquire_context->trk);
+	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context.trw, acquire_context.trk);
 
 	return QDialog::Accepted;
 }

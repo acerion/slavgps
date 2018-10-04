@@ -76,7 +76,7 @@ DataSourceFile::DataSourceFile()
 
 
 
-int DataSourceFile::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceFile::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceFileDialog config_dialog("");
 

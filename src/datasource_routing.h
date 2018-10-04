@@ -48,7 +48,7 @@ namespace SlavGPS {
 		DataSourceRouting();
 		~DataSourceRouting() {};
 
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 	};
 
 

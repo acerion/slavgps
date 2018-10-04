@@ -360,7 +360,7 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 		line = (char *)data;
 
 		if (acquiring->acquire_is_running) {
-			acquiring->progress_dialog->set_headline(QObject::tr("Status: Working..."));
+			acquiring->acquire_process_progress_dialog->set_headline(QObject::tr("Status: Working..."));
 		}
 
 		/* Tells us the type of items that will follow. */
@@ -439,7 +439,7 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 
 
 
-int DataSourceGPS::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceGPS::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* This function will be created for downloading data from
 	   GPS, so build the dialog with all checkboxes available and

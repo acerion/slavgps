@@ -172,7 +172,7 @@ DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window
 
 
 
-int DataSourceWebTool::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceWebTool::run_config_dialog(AcquireContext & acquire_context)
 {
 	int answer;
 
@@ -200,11 +200,15 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 
 	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label(), a_window->get_viewport(), this);
 
-	AcquireProcess acquiring(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport());
+	AcquireContext acquire_context;
+	acquire_context.set_context(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport(), NULL, NULL);
+
+	AcquireProcess acquiring(acquire_context);
 	acquiring.acquire(data_source, data_source->mode, this);
 
-	if (acquiring.trw) {
-		acquiring.trw->add_children_to_tree();
+	/* TODO: I think that this is already done in AcquireGetter::on_complete_process() */
+	if (acquire_context.trw) {
+		acquire_context.trw->add_children_to_tree();
 	}
 }
 

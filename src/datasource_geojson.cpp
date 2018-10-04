@@ -71,7 +71,7 @@ DataSourceGeoJSON::DataSourceGeoJSON()
 
 
 
-int DataSourceGeoJSON::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceGeoJSON::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceGeoJSONDialog config_dialog(this->window_title);
 
@@ -116,10 +116,8 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) :
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog)
+bool DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
-	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
-
 	/* Process selected files. */
 	for (int i = 0; i < this->selected_files.size(); i++) {
 		const QString file_full_path = this->selected_files.at(i);
@@ -127,11 +125,11 @@ bool DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_s
 		const QString gpx_filename = geojson_import_to_gpx(file_full_path);
 		if (!gpx_filename.isEmpty()) {
 			/* Important that this process is run in the main thread. */
-			acquiring_context->window->open_file(gpx_filename, false);
+			acquire_context.window->open_file(gpx_filename, false);
 			/* Delete the temporary file. */
 			QDir::root().remove(gpx_filename);
 		} else {
-			acquiring_context->window->statusbar_update(StatusBarField::Info, QString("Unable to import from: %1").arg(file_full_path));
+			acquire_context.window->statusbar_update(StatusBarField::Info, QString("Unable to import from: %1").arg(file_full_path));
 		}
 	}
 

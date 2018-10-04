@@ -97,7 +97,7 @@ DataSourceOSMMyTraces::DataSourceOSMMyTraces(Viewport * new_viewport)
 
 
 
-int DataSourceOSMMyTraces::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceOSMMyTraces::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceOSMMyTracesDialog config_dialog(this->window_title, this->viewport);
 
@@ -551,10 +551,8 @@ void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMeta
 
 
 
-bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog)
+bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
-	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
-
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 
 	bool result = false;
@@ -590,21 +588,22 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
 		if (!this->is_thread) {
-			Dialog::info(QObject::tr("No GPS Traces found"), acquiring_context->window);
+			Dialog::info(QObject::tr("No GPS Traces found"), acquire_context.window);
 		}
 		free(xd);
 		return false;
 	}
 
 	xd->list_of_gpx_meta_data.reverse();
-
+#ifdef K_TODO
 	((DataSourceOSMMyTracesDialog *) acquiring_context->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
+#endif
 
-	std::list<GPXMetaData *> * selected = select_from_list(acquiring_context->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	std::list<GPXMetaData *> * selected = select_from_list(acquire_context.window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 
 	/* If non thread - show program is 'doing something...' */
 	if (!this->is_thread) {
-		acquiring_context->window->set_busy_cursor();
+		acquire_context.window->set_busy_cursor();
 	}
 
 	/* If passed in on an existing layer - we will create everything into that.
@@ -626,7 +625,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 			if (create_new_layer) {
 				/* Have data but no layer - so create one. */
 				target_layer = new LayerTRW();
-				target_layer->set_coord_mode(acquiring_context->viewport->get_coord_mode());
+				target_layer->set_coord_mode(acquire_context.viewport->get_coord_mode());
 				if (!(*iter)->name.isEmpty()) {
 					target_layer->set_name((*iter)->name);
 				} else {
@@ -650,16 +649,16 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 				got_something = got_something || convert_result;
 				if (!convert_result) {
 					/* Report errors to the status bar. */
-					acquiring_context->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->input));
+					acquire_context.window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->input));
 				}
 			}
 
 			if (convert_result) {
 				/* Can use the layer. */
-				acquiring_context->panel->get_top_layer()->add_layer(target_layer, true);
+				acquire_context.panel->get_top_layer()->add_layer(target_layer, true);
 				/* Move to area of the track. */
-				target_layer->post_read(acquiring_context->window->get_viewport(), true);
-				target_layer->move_viewport_to_show_all(acquiring_context->window->get_viewport());
+				target_layer->post_read(acquire_context.window->get_viewport(), true);
+				target_layer->move_viewport_to_show_all(acquire_context.window->get_viewport());
 				vtl_last = target_layer;
 			} else {
 				if (create_new_layer) {
@@ -698,7 +697,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireTool * bab
 	}
 
 	if (!this->is_thread) {
-		acquiring_context->window->clear_busy_cursor();
+		acquire_context.window->clear_busy_cursor();
 	}
 
 	return result;

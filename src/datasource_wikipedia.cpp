@@ -71,16 +71,14 @@ DataSourceWikipedia::DataSourceWikipedia()
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog)
+bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
-	AcquireProcess * acquiring_context = (AcquireProcess *) babel_something;
-
 	if (!trw) {
 		qDebug() << SG_PREFIX_E << "Missing TRW layer";
 		return false;
 	}
 
-	Geonames::wikipedia_box(trw, acquiring_context->viewport->get_bbox(), acquiring_context->window);
+	Geonames::wikipedia_box(trw, acquire_context.viewport->get_bbox(), acquire_context.window);
 
 	return true;
 }
@@ -89,7 +87,7 @@ bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireTool * babel
 
 
 
-int DataSourceWikipedia::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceWikipedia::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* Fake acquire options, needed by current implementation of acquire.cpp. */
 	this->acquire_options = new AcquireOptionsWikipedia;

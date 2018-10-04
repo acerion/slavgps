@@ -178,7 +178,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 
 
-int DataSourceGeoCache::run_config_dialog(AcquireProcess * acquire_context)
+int DataSourceGeoCache::run_config_dialog(AcquireContext & acquire_context)
 {
 	DataSourceGeoCacheDialog config_dialog(this->window_title, this->viewport);
 

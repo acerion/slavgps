@@ -41,9 +41,9 @@ namespace SlavGPS {
 		DataSourceGeoTag();
 		~DataSourceGeoTag() {};
 
-		bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog);
+		bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 
-		int run_config_dialog(AcquireProcess * acquire_context);
+		int run_config_dialog(AcquireContext & acquire_context);
 
 	private:
 		QStringList selected_files;
