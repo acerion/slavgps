@@ -12,6 +12,7 @@ SOURCES += main.cpp \
     acquire.cpp \
     window.cpp \
     datasource.cpp \
+    datasource_babel.cpp \
     datasource_bfilter.cpp \
     datasource_geocache.cpp \
     datasource_geojson.cpp \
@@ -189,6 +190,7 @@ HEADERS += window.h \
     thumbnails.h \
     osm.h \
     osm_traces.h \
+    datasource_babel.h \
     datasource_geocache.h \
     datasource_gps.h \
     datasource_routing.h \

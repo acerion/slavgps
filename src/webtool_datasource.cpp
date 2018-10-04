@@ -35,6 +35,7 @@
 
 
 #include "window.h"
+#include "layers_panel.h"
 #include "viewport_internal.h"
 #include "webtool_datasource.h"
 #include "acquire.h"
@@ -200,16 +201,15 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 
 	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label(), a_window->get_viewport(), this);
 
-	AcquireContext acquire_context;
-	acquire_context.set_context(a_window, g_tree->tree_get_items_tree(), a_window->get_viewport(), NULL, NULL);
+	AcquireContext acquire_context(a_window, a_window->get_viewport(), g_tree->tree_get_items_tree()->get_top_layer(), g_tree->tree_get_items_tree()->get_selected_layer());
+	Acquire::acquire_from_source(data_source, data_source->mode, &acquire_context);
 
-	AcquireProcess acquiring(acquire_context);
-	acquiring.acquire(data_source, data_source->mode, this);
-
+#ifdef K_TODO
 	/* TODO: I think that this is already done in AcquireGetter::on_complete_process() */
 	if (acquire_context.trw) {
 		acquire_context.trw->add_children_to_tree();
 	}
+#endif
 }
 
 

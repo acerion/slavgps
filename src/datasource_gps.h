@@ -36,6 +36,7 @@
 #include "babel.h"
 #include "datasource.h"
 #include "layer_gps.h"
+#include "datasource_babel.h"
 
 
 
@@ -54,7 +55,7 @@ namespace SlavGPS {
 
 		/* FIXME: these are most probably unused after changes in acquire. Make them used again. */
 		void off(void * user_data, QString & babel_args, QString & file_path);
-		void progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring);
+		void progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context);
 		DataSourceDialog * create_progress_dialog(void * user_data);
 	};
 

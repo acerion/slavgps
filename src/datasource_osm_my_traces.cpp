@@ -655,10 +655,10 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 
 			if (convert_result) {
 				/* Can use the layer. */
-				acquire_context.panel->get_top_layer()->add_layer(target_layer, true);
+				acquire_context.top_level_layer->add_layer(target_layer, true);
 				/* Move to area of the track. */
-				target_layer->post_read(acquire_context.window->get_viewport(), true);
-				target_layer->move_viewport_to_show_all(acquire_context.window->get_viewport());
+				target_layer->post_read(acquire_context.viewport, true);
+				target_layer->move_viewport_to_show_all(acquire_context.viewport);
 				vtl_last = target_layer;
 			} else {
 				if (create_new_layer) {

@@ -74,7 +74,7 @@ namespace SlavGPS {
 		~BabelProcess();
 
 		void set_args(const QString & program, const QStringList & args);
-		void set_auxiliary_parameters(AcquireTool * new_progress_indicator, DataProgressDialog * progr_dialog);
+		void set_auxiliary_parameters(AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
 		bool convert_through_gpx(LayerTRW * trw);
@@ -97,7 +97,7 @@ namespace SlavGPS {
 		void read_stdout_cb(void);
 
 	private:
-		AcquireTool * progress_indicator = NULL;
+		AcquireContext acquire_context;
 	};
 
 
@@ -112,14 +112,14 @@ namespace SlavGPS {
 		BabelOptions(BabelOptionsMode new_mode) : mode(new_mode) { };
 		virtual ~BabelOptions() {};
 
-		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog);
+		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog);
-		bool import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog);
-		bool import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog);
+		bool import_from_local_file(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
+		bool import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 
 		bool is_valid(void) const;
 
-		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * babel_something, DataProgressDialog * progr_dialog);
+		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 
 		bool turn_off_device(void);
 
@@ -235,24 +235,6 @@ namespace SlavGPS {
 	public:
 		BabelFeatureParser() {};
 		size_t write(const char * data, size_t size);
-	};
-
-
-
-
-	/* Parent class for data sources that have the same process
-	   function: universal_import_fn(), called either directly or
-	   indirectly. */
-	class DataSourceBabel : public DataSource {
-	public:
-		DataSourceBabel() {};
-		~DataSourceBabel() {};
-
-		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog);
-		virtual void cleanup(void * data) { return; };
-		virtual int kill(const QString & status);
-
-		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
 	};
 
 

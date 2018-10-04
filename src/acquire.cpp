@@ -67,7 +67,7 @@ using namespace SlavGPS;
 
 static std::vector<DataSource *> g_bfilters;
 static Track * bfilter_track = NULL;
-static AcquireProcess * g_acquiring = NULL;
+static AcquireContext * g_acquire_context = NULL;
 
 
 
@@ -89,24 +89,24 @@ void AcquireGetter::on_complete_process(void)
 {
 	if (
 #ifdef K_FIXME_RESTORE
-	    this->acquiring->running
+	    this->acquire_is_running
 #else
 	    true
 #endif
 	    ) {
 		emit report_status(3);
 
-		if (this->creating_new_layer) {
+		if (this->acquire_context.target_trw_allocated) {
 
 			/* Only create the layer if it actually contains anything useful. */
 			/* TODO_2_LATER: create function for this operation to hide detail: */
-			if (!this->acquire_context.trw->is_empty()) {
-				this->acquire_context.trw->post_read(this->acquire_context.viewport, true);
-				this->acquire_context.panel->get_top_layer()->add_layer(this->acquire_context.trw, true);
+			if (!this->acquire_context.target_trw->is_empty()) {
+				this->acquire_context.target_trw->post_read(this->acquire_context.viewport, true);
+				this->acquire_context.top_level_layer->add_layer(this->acquire_context.target_trw, true);
 
 				/* Add any acquired tracks/routes/waypoints to tree view
 				   so that they can be displayed on "tree updated" event. */
-				this->acquire_context.trw->add_children_to_tree();
+				this->acquire_context.target_trw->add_children_to_tree();
 			} else {
 				emit report_status(4);
 			}
@@ -124,18 +124,18 @@ void AcquireGetter::on_complete_process(void)
 		}
 
 		/* Main display update. */
-		if (this->acquire_context.trw) {
-			this->acquire_context.trw->post_read(this->acquire_context.viewport, true);
+		if (this->acquire_context.target_trw) {
+			this->acquire_context.target_trw->post_read(this->acquire_context.viewport, true);
 			/* View this data if desired - must be done after post read (so that the bounds are known). */
 			if (this->data_source && this->data_source->autoview) {
-				this->acquire_context.trw->move_viewport_to_show_all(this->acquire_context.viewport);
+				this->acquire_context.target_trw->move_viewport_to_show_all(this->acquire_context.viewport);
 			}
 			/// this->acquire_context->panel->emit_items_tree_updated_cb("acquire completed");
 		}
 	} else {
 		/* Cancelled. */
-		if (this->creating_new_layer) {
-			this->acquire_context.trw->unref();
+		if (this->acquire_context.target_trw_allocated) {
+			this->acquire_context.target_trw->unref();
 		}
 	}
 }
@@ -143,18 +143,20 @@ void AcquireGetter::on_complete_process(void)
 
 
 
-void AcquireProcess::configure_target_layer(AcquireGetter * getter, DataSourceMode mode)
+void AcquireGetter::configure_target_layer(DataSourceMode mode)
 {
 	switch (mode) {
 	case DataSourceMode::CreateNewLayer:
-		getter->creating_new_layer = true;
+		this->acquire_context.target_trw_allocated = true;
 		break;
 
 	case DataSourceMode::AddToLayer: {
-		Layer * selected_layer = this->acquire_context.panel->get_selected_layer();
-		if (selected_layer->type == LayerType::TRW) {
-			getter->acquire_context.trw = (LayerTRW *) selected_layer;
-			getter->creating_new_layer = false;
+		Layer * selected_layer = this->acquire_context.selected_layer;
+		if (selected_layer && selected_layer->type == LayerType::TRW) {
+			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
+			this->acquire_context.target_trw_allocated = false;
+		} else {
+			/* TODO */
 		}
 		}
 		break;
@@ -165,10 +167,12 @@ void AcquireProcess::configure_target_layer(AcquireGetter * getter, DataSourceMo
 
 	case DataSourceMode::ManualLayerManagement: {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		getter->creating_new_layer = false;
-		Layer * selected_layer = this->acquire_context.panel->get_selected_layer();
-		if (selected_layer->type == LayerType::TRW) {
-			getter->acquire_context.trw = (LayerTRW *) selected_layer;
+		this->acquire_context.target_trw_allocated = false;
+		Layer * selected_layer = this->acquire_context.selected_layer;
+		if (selected_layer && selected_layer->type == LayerType::TRW) {
+			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
+		} else {
+			/* TODO */
 		}
 		}
 		break;
@@ -178,13 +182,11 @@ void AcquireProcess::configure_target_layer(AcquireGetter * getter, DataSourceMo
 	};
 
 
-	if (getter->creating_new_layer) {
-		getter->acquire_context.trw = new LayerTRW();
-		getter->acquire_context.trw->set_coord_mode(this->acquire_context.viewport->get_coord_mode());
-		getter->acquire_context.trw->set_name(this->data_source->layer_title);
+	if (this->acquire_context.target_trw_allocated) {
+		this->acquire_context.target_trw = new LayerTRW();
+		this->acquire_context.target_trw->set_coord_mode(this->acquire_context.viewport->get_coord_mode());
+		this->acquire_context.target_trw->set_name(this->data_source->layer_title);
 	}
-
-	this->acquire_context.trw = getter->acquire_context.trw;
 }
 
 
@@ -196,85 +198,91 @@ void AcquireGetter::run(void)
 {
 	assert (this->data_source);
 
-	qDebug() << SG_PREFIX_I << "------------------------------- begin";
+	this->result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, this->acquire_context, this->acquire_getter_progress_dialog);
 
-	this->result = this->data_source->acquire_into_layer(this->acquire_context.trw, this->acquiring, this->acquire_getter_progress_dialog);
-
-	qDebug() << SG_PREFIX_I << "------------------------------- end";
-
-	if (this->acquiring->acquire_is_running && !this->result) {
-		this->acquiring->acquire_process_progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
-		if (this->creating_new_layer) {
-			this->acquire_context.trw->unref();
+	if (this->acquire_is_running && !this->result) {
+		this->acquire_getter_progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
+		if (this->acquire_context.target_trw_allocated) {
+			this->acquire_context.target_trw->unref();
 		}
 	} else {
 		this->on_complete_process();
 	}
 
-	this->data_source->cleanup(this->acquiring->parent_data_source_dialog);
-
-	this->acquiring->acquire_is_running = false;
+	this->acquire_is_running = false;
 }
 
 
 
 
-void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, void * new_parent_data_source_dialog)
+void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode mode, AcquireContext * new_acquire_context)
 {
-	this->parent_data_source_dialog = (DataSourceDialog *) new_parent_data_source_dialog;
-	this->data_source = new_data_source;
+	AcquireGetter * getter = new AcquireGetter(); /* TODO_LATER: this needs to be deleted. */
 
-	if (QDialog::Accepted != new_data_source->run_config_dialog(this->acquire_context)) {
-		qDebug() << "II" PREFIX << "Data source config dialog returned !Accepted";
+	getter->data_source = new_data_source;
+	if (new_acquire_context) {
+		getter->acquire_context.window = new_acquire_context->window;
+		getter->acquire_context.viewport = new_acquire_context->viewport;
+		getter->acquire_context.top_level_layer = new_acquire_context->top_level_layer;
+		getter->acquire_context.selected_layer = new_acquire_context->selected_layer;
+		getter->acquire_context.target_trw = new_acquire_context->target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
+		getter->acquire_context.target_trk = new_acquire_context->target_trk;
+		getter->acquire_context.target_trw_allocated = new_acquire_context->target_trw_allocated;
+	}
+
+	if (QDialog::Accepted != new_data_source->run_config_dialog(getter->acquire_context)) {
+		qDebug() << SG_PREFIX_I << "Data source config dialog returned !Accepted";
+		delete getter;
 		return;
 	}
 
-	AcquireGetter * getter = new AcquireGetter(); /* TODO_LATER: this needs to be deleted. */
-
-	getter->acquire_context = this->acquire_context; /* TODO: call to configure_target_layer() may overwrite ::trw. */
-	this->configure_target_layer(getter, mode);
-
-	getter->acquiring = this;
-	getter->data_source = new_data_source;
-
-
-
-	this->acquire_is_running = true;
-	this->acquire_process_progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
-	this->acquire_process_progress_dialog->set_headline(QObject::tr("Importing data..."));
-
-
-
-	if (NULL == new_data_source->acquire_options || !new_data_source->acquire_options->is_valid()) {
+	if (NULL == getter->data_source->acquire_options || !getter->data_source->acquire_options->is_valid()) {
 		/* This shouldn't happen... */
-		this->acquire_process_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
-		this->acquire_process_progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
-		delete this->acquire_process_progress_dialog;
+		getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
+		getter->acquire_getter_progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
 		delete getter;
 		return;
 	}
 
 
-	if (new_data_source->is_thread) {
-		getter->acquire_getter_progress_dialog = this->acquire_process_progress_dialog;
+	getter->configure_target_layer(mode);
+	getter->acquire_is_running = true;
+
+
+	DataProgressDialog * progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
+	getter->acquire_getter_progress_dialog = progress_dialog;
+	getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Importing data..."));
+
+
+	if (getter->data_source->is_thread) {
+
+		/* Start the acquire task in a background thread and
+		   then block this foreground (UI) thread by showing a
+		   dialog. We need to block this tread to prevent the
+		   UI focus from going back to main window.
+
+		   Until a background acquire thread is in progress,
+		   its progress window must be in foreground. */
 
 		QThreadPool::globalInstance()->start(getter);
 
-		/* Start the task in a background task and then block this task by showing a dialog. */
-
-		if (this->acquire_process_progress_dialog) {
-			this->acquire_process_progress_dialog->exec();
+		if (getter->acquire_getter_progress_dialog) {
+			getter->acquire_getter_progress_dialog->exec();
 		}
 
 
-		if (this->acquire_is_running) {
+		/* We get here if user closed a dialog window.  The
+		   window was either closed through "Cancel" button
+		   when the acquire process was still in progress, or
+		   through "OK" button that became active when acquire
+		   process has been completed. */
+		if (getter->acquire_is_running) {
 			/* Cancel and mark for thread to finish. */
-				this->acquire_is_running = false;
-				/* NB Thread will free memory. */
+			getter->acquire_is_running = false;
 		} else {
 #ifdef K_FIXME_RESTORE
 			/* Get data for Off command. */
-			if (new_data_source->off_func) {
+			if (getter->data_source->off_func) {
 				QString babel_args_off;
 				QString file_path_off;
 				interface->off_func(pass_along_data, babel_args_off, file_path_off);
@@ -293,42 +301,23 @@ void AcquireProcess::acquire(DataSource * new_data_source, DataSourceMode mode, 
 		/* Bypass thread method malarkly - you'll just have to wait... */
 		qDebug() << SG_PREFIX_I << "Ready to run acquire process, non-thread method";
 
-		bool success = new_data_source->acquire_into_layer(getter->acquire_context.trw, this, this->acquire_process_progress_dialog);
+		bool success = getter->data_source->acquire_into_layer(getter->acquire_context.target_trw, getter->acquire_context, getter->acquire_getter_progress_dialog);
 		if (!success) {
-			Dialog::error(QObject::tr("Error: acquisition failed."), this->acquire_context.window);
+			Dialog::error(QObject::tr("Error: acquisition failed."), getter->acquire_context.window);
 		}
 
 		getter->on_complete_process();
 
 		/* Actually show it if necessary. */
-		if (new_data_source->keep_dialog_open) {
-			if (this->acquire_process_progress_dialog) {
-				this->acquire_process_progress_dialog->exec();
+		if (getter->data_source->keep_dialog_open) {
+			if (getter->acquire_getter_progress_dialog) {
+				getter->acquire_getter_progress_dialog->exec();
 			}
 		}
 	}
 
 
-	delete this->acquire_process_progress_dialog;
-}
-
-
-
-
-void AcquireProcess::import_progress_cb(AcquireProgressCode code, void * data)
-{
-	assert (this->data_source);
-
-	if (this->data_source->is_thread) {
-		if (!this->acquire_is_running) {
-			this->data_source->cleanup(this->parent_data_source_dialog);
-		}
-	}
-
-#ifdef K_FIXME_RESTORE
-	/* See DataSourceGPS::progress_func(). */
-	this->data_source->progress_func(code, data, this);
-#endif
+	delete progress_dialog;
 }
 
 
@@ -412,55 +401,12 @@ BabelOptions * DataSourceDialog::create_acquire_options_none(void)
 
 
 
-void AcquireProcess::acquire_from_source(DataSource * new_data_source, DataSourceMode mode)
-{
-	this->acquire(new_data_source, mode, NULL);
-}
-
-
-
-
-void AcquireProcess::filter_trwlayer_cb(void)
+void AcquireContext::filter_trwlayer_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
 	const int filter_idx = qa->data().toInt();
 
-	this->acquire(g_bfilters[filter_idx], g_bfilters[filter_idx]->mode, NULL);
-}
-
-
-
-
-void AcquireProcess::handle_getter_status_cb(int status)
-{
-	switch (status) {
-	case AcquireProcess::Success:
-		qDebug() << "II" PREFIX << "Success";
-		if (this->acquire_process_progress_dialog) {
-			this->acquire_process_progress_dialog->set_headline(QObject::tr("Import completed successfully"));
-		}
-		break;
-	case AcquireProcess::Failure:
-		qDebug() << "II" PREFIX << "Failure";
-		if (this->acquire_process_progress_dialog) {
-			this->acquire_process_progress_dialog->set_headline(QObject::tr("Failed to import data"));
-		}
-	case 3:
-		qDebug() << "II" PREFIX << "Done";
-		if (this->acquire_process_progress_dialog) {
-			this->acquire_process_progress_dialog->set_headline(QObject::tr("Done"));
-		}
-		break;
-	case 4:
-		qDebug() << "II" PREFIX << "No Data";
-		if (this->acquire_process_progress_dialog) {
-			this->acquire_process_progress_dialog->set_headline(QObject::tr("No Data"));
-		}
-		break;
-	default:
-		qDebug() << "EE" PREFIX << "Unhandled getter status" << status;
-		break;
-	};
+	Acquire::acquire_from_source(g_bfilters[filter_idx], g_bfilters[filter_idx]->mode, NULL);
 }
 
 
@@ -479,9 +425,9 @@ QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInput
 				menu = new QMenu(menu_label);
 			}
 
-			QAction * action = new QAction(filter->window_title, g_acquiring);
+			QAction * action = new QAction(filter->window_title, g_acquire_context);
 			action->setData(i);
-			QObject::connect(action, SIGNAL (triggered(bool)), g_acquiring, SLOT (filter_trwlayer_cb(void)));
+			QObject::connect(action, SIGNAL (triggered(bool)), g_acquire_context, SLOT (filter_trwlayer_cb(void)));
 			menu->addAction(action);
 		}
 		i++;
@@ -518,7 +464,7 @@ QMenu * Acquire::create_bfilter_layer_track_menu(void)
 	if (bfilter_track == NULL) {
 		return NULL;
 	} else {
-		g_acquiring->acquire_context.trk = bfilter_track;
+		g_acquire_context->target_trk = bfilter_track;
 
 		const QString menu_label = QObject::tr("Filter with %1").arg(bfilter_track->name);
 		return Acquire::create_bfilter_menu(menu_label, DataSourceInputType::TRWLayerTrack);
@@ -569,7 +515,7 @@ void Acquire::init(void)
 	g_bfilters.push_back(new BFilterPolygon());
 	g_bfilters.push_back(new BFilterExcludePolygon());
 
-	g_acquiring = new AcquireProcess();
+	g_acquire_context = new AcquireContext();
 }
 
 
@@ -577,7 +523,7 @@ void Acquire::init(void)
 
 void Acquire::uninit(void)
 {
-	delete g_acquiring;
+	delete g_acquire_context;
 
 	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
 		delete *iter;
@@ -587,40 +533,19 @@ void Acquire::uninit(void)
 
 
 
-bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
+void Acquire::set_context(Window * new_window, Viewport * new_viewport, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
 {
-	qDebug() << SG_PREFIX_I << "---------------------- data source";
-	return ((BabelOptions *) this->acquire_options)->universal_import_fn(trw, this->download_options, progress_indicator, progr_dialog);
+	g_acquire_context->window = new_window;
+	g_acquire_context->viewport = new_viewport;
+	g_acquire_context->top_level_layer = new_top_level_layer;
+	g_acquire_context->selected_layer = new_selected_layer;
 }
 
 
 
 
-int DataSourceBabel::kill(const QString & status)
+void Acquire::set_target(LayerTRW * trw, Track * trk)
 {
-	if (this->acquire_options) {
-		return ((BabelOptions *) this->acquire_options)->kill(status);
-	} else {
-		return -4;
-	}
-}
-
-
-
-
-void Acquire::set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk)
-{
-	g_acquiring->acquire_context.set_context(window, panel, viewport, trw, trk);;
-}
-
-
-
-
-void AcquireContext::set_context(Window * new_window, LayersPanel * new_panel, Viewport * new_viewport, LayerTRW * new_trw, Track * new_trk)
-{
-	this->window = new_window;
-	this->panel = new_panel;
-	this->viewport = new_viewport;
-	this->trw = new_trw;
-	this->trk = new_trk;
+	g_acquire_context->target_trw = trw;
+	g_acquire_context->target_trk = trk;
 }

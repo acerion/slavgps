@@ -49,6 +49,7 @@ namespace SlavGPS {
 	class Viewport;
 	class Window;
 	class LayerTRW;
+	class LayerAggregate;
 	class Track;
 	class DataSource;
 	class AcquireGetter;
@@ -83,54 +84,31 @@ namespace SlavGPS {
 
 
 
-	class AcquireContext {
-	public:
-		void set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk);
 
-		Window * window = NULL;
-		LayersPanel * panel = NULL;
-		Viewport * viewport = NULL;
-		LayerTRW * trw = NULL;
-		Track * trk = NULL;
-	};
-
-
-
-
-	/**
-	   Global data structure used to expose the progress dialog to the worker thread.
-	*/
-	class AcquireProcess : public AcquireTool {
+	class AcquireContext : public QObject {
 		Q_OBJECT
 	public:
-		AcquireProcess() {};
-		AcquireProcess(const AcquireContext & new_acquire_context) : acquire_context(new_acquire_context) {};
+		AcquireContext() {};
+		AcquireContext(Window * new_window, Viewport * new_viewport, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
+			: window(new_window), viewport(new_viewport), top_level_layer(new_top_level_layer), selected_layer(new_selected_layer) {};
 
-		void acquire_from_source(DataSource * data_source, DataSourceMode mode);
+		void set_target(LayerTRW * new_trw, Track * new_track);
 
-		void acquire(DataSource * new_data_source, DataSourceMode mode, void * parent_data_source_dialog);
-
-		void import_progress_cb(AcquireProgressCode code, void * data);
-
-		void configure_target_layer(AcquireGetter * getter, DataSourceMode mode);
-
-		enum {
-			Success,
-			Failure
-		};
+		Window * window = NULL;
+		Viewport * viewport = NULL;
+		LayerAggregate * top_level_layer = NULL;
+		Layer * selected_layer = NULL;
 
 
-		AcquireContext acquire_context;
-		bool acquire_is_running = false;
+		LayerTRW * target_trw = NULL;
+		Track * target_trk = NULL;
 
-		DataSource * data_source = NULL;
-		DataSourceDialog * config_dialog = NULL;
-		DataSourceDialog * parent_data_source_dialog = NULL;
-		DataProgressDialog * acquire_process_progress_dialog = NULL;
+		/* Whether a target trw layer has been freshly
+		   created, or it already existed in tree view. */
+		bool target_trw_allocated = false;
 
 	public slots:
 		void filter_trwlayer_cb(void);
-		void handle_getter_status_cb(int status);
 	};
 
 
@@ -141,8 +119,8 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		virtual bool acquire_into_layer(LayerTRW * trw, AcquireTool * babel_something, DataProgressDialog * progr_dialog) { return false; };
-		virtual void progress_func(AcquireProgressCode code, void * data, AcquireProcess * acquiring) { return; };
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog) { return false; };
+		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context) { return; };
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status) { return -1; };
 
@@ -176,17 +154,15 @@ namespace SlavGPS {
 		~AcquireGetter();
 		void run(); /* Re-implementation of QRunnable::run(). */
 		void on_complete_process(void);
+		void configure_target_layer(DataSourceMode mode);
 
 		AcquireContext acquire_context;
 
 		bool result = false;
+		bool acquire_is_running = false;
 		DataSource * data_source = NULL;
-		AcquireProcess * acquiring = NULL;
 		DataProgressDialog * acquire_getter_progress_dialog = NULL;
 
-		/* Whether a target trw layer has been freshly
-		   created, or it already existed in tree view. */
-		bool creating_new_layer = false;
 	signals:
 		void report_status(int status);
 	};
@@ -199,7 +175,15 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void set_context(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw, Track * trk);
+		enum {
+			Success,
+			Failure
+		};
+
+
+		static void acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext * new_acquire_context);
+		static void set_context(Window * window, Viewport * viewport, LayerAggregate * top_level_layer, Layer * selected_layer);
+		static void set_target(LayerTRW * trw, Track * trk);
 
 		static QMenu * create_bfilter_layer_menu(void);
 		static QMenu * create_bfilter_layer_track_menu(void);

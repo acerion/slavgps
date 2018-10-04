@@ -1834,17 +1834,7 @@ void LayerTRW::geotag_images_cb(void) /* Slot. */
 /* 'Acquires' - Same as in File Menu -> Acquire - applies into the selected TRW Layer */
 void LayerTRW::acquire_handler(DataSource * data_source)
 {
-	/* Override mode. */
-	DataSourceMode mode = data_source->mode;
-	if (mode == DataSourceMode::AutoLayerManagement) {
-		mode = DataSourceMode::CreateNewLayer;
-	}
-
-	AcquireContext acquire_context;
-	acquire_context.set_context(this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), NULL, NULL);
-
-	AcquireProcess acquire(acquire_context);
-	acquire.acquire_from_source(data_source, mode);
+	this->get_window()->acquire_handler(data_source);
 }
 
 

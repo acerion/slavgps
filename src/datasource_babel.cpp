@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2006, Quy Tonthat <qtonthat@gmail.com>
  * Copyright (C) 2013, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
  * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
  *
@@ -20,65 +21,47 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DATASOURCE_OSM_H_
-#define _SG_DATASOURCE_OSM_H_
+/**
+ * SECTION:babel
+ * @short_description: running external programs and redirecting to TRWLayers.
+ *
+ * GPSBabel may not be necessary for everything,
+ *  one can use shell_command option but this will be OS platform specific
+ */
 
 
 
 
-#include <QSpinBox>
-
-
-
-
-#include "babel.h"
-#include "datasource.h"
 #include "datasource_babel.h"
+#include "babel.h"
 
 
 
 
-namespace SlavGPS {
+using namespace SlavGPS;
 
 
 
 
-	class DataSourceOSMTraces : public DataSourceBabel {
-	public:
-		DataSourceOSMTraces() {};
-		DataSourceOSMTraces(Viewport * viewport);
-		~DataSourceOSMTraces() {};
-
-		int run_config_dialog(AcquireContext & acquire_context);
-
-		Viewport * viewport = NULL;
-	};
+#define SG_MODULE "DataSource Babel"
 
 
 
 
-	class DataSourceOSMTracesDialog : public DataSourceDialog {
-		Q_OBJECT
-	public:
-		DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport);
-		~DataSourceOSMTracesDialog();
-
-		BabelOptions * get_acquire_options_none(void);
-
-	public slots:
-		void accept_cb(void);
-
-	private:
-		QSpinBox spin_box;
-		Viewport * viewport = NULL;
-	};
+bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
+{
+	qDebug() << SG_PREFIX_I;
+	return ((BabelOptions *) this->acquire_options)->universal_import_fn(trw, this->download_options, acquire_context, progr_dialog);
+}
 
 
 
 
-} /* namespace SlavGPS */
-
-
-
-
-#endif /* #ifndef _SG_DATASOURCE_ROUTING_H_ */
+int DataSourceBabel::kill(const QString & status)
+{
+	if (this->acquire_options) {
+		return ((BabelOptions *) this->acquire_options)->kill(status);
+	} else {
+		return -4;
+	}
+}

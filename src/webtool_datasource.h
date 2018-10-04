@@ -33,6 +33,7 @@
 #include "babel.h"
 #include "datasource.h"
 #include "webtool.h"
+#include "datasource_babel.h"
 
 
 

@@ -34,6 +34,7 @@
 #include "datasource.h"
 #include "babel.h"
 #include "widget_lat_lon_entry.h"
+#include "datasource_babel.h"
 
 
 

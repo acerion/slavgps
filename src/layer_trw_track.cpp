@@ -2600,9 +2600,10 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	/* ATM This function is only available via the layers panel, due to needing a panel. */
 	if (g_tree->tree_get_items_tree()) {
 		Acquire::set_context(g_tree->tree_get_main_window(),
-				     g_tree->tree_get_items_tree(),
 				     g_tree->tree_get_main_viewport(),
-				     parent_layer_, this);
+				     g_tree->tree_get_items_tree()->get_top_layer(),
+				     g_tree->tree_get_items_tree()->get_selected_layer());
+		Acquire::set_target(parent_layer_, this);
 		QMenu * submenu = Acquire::create_bfilter_track_menu();
 		if (submenu) {
 			/* kamilFIXME: .addMenu() does not make menu take ownership of submenu. */

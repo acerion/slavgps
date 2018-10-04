@@ -269,7 +269,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 
 
-	Acquire::set_context(this->get_window(), g_tree->tree_get_items_tree(), g_tree->tree_get_main_viewport(), this, NULL);
+	Acquire::set_context(this->get_window(), g_tree->tree_get_main_viewport(), g_tree->tree_get_items_tree()->get_top_layer(), g_tree->tree_get_items_tree()->get_selected_layer());
+	Acquire::set_target(this, NULL);
 
 	/* kamilFIXME: .addMenu() does not make menu take ownership of the submenu. */
 

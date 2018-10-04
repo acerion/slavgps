@@ -2,7 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
- * Copyright (C) 2013, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright (C) 2005, Alex Foobarian <foobarian@gmail.com>
  * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,20 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_DATASOURCE_OSM_H_
-#define _SG_DATASOURCE_OSM_H_
+#ifndef _SG_DATASOURCE_BABEL_H_
+#define _SG_DATASOURCE_BABEL_H_
 
 
 
 
-#include <QSpinBox>
-
-
-
-
-#include "babel.h"
-#include "datasource.h"
-#include "datasource_babel.h"
+#include "acquire.h"
 
 
 
@@ -43,34 +36,19 @@ namespace SlavGPS {
 
 
 
-	class DataSourceOSMTraces : public DataSourceBabel {
+	/* Parent class for data sources that have the same process
+	   function: universal_import_fn(), called either directly or
+	   indirectly. */
+	class DataSourceBabel : public DataSource {
 	public:
-		DataSourceOSMTraces() {};
-		DataSourceOSMTraces(Viewport * viewport);
-		~DataSourceOSMTraces() {};
+		DataSourceBabel() {};
+		~DataSourceBabel() {};
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
+		virtual void cleanup(void * data) { return; };
+		virtual int kill(const QString & status);
 
-		Viewport * viewport = NULL;
-	};
-
-
-
-
-	class DataSourceOSMTracesDialog : public DataSourceDialog {
-		Q_OBJECT
-	public:
-		DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport);
-		~DataSourceOSMTracesDialog();
-
-		BabelOptions * get_acquire_options_none(void);
-
-	public slots:
-		void accept_cb(void);
-
-	private:
-		QSpinBox spin_box;
-		Viewport * viewport = NULL;
+		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
 	};
 
 
@@ -81,4 +59,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_DATASOURCE_ROUTING_H_ */
+#endif /* #ifndef _SG_DATASOURCE_BABEL_H_ */

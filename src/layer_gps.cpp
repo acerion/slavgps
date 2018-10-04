@@ -1068,12 +1068,16 @@ void GPSSession::run(void)
 		BabelOptions babel_options(BabelOptionsMode::FromFile);
 		babel_options.input = this->port;
 		babel_options.babel_args = this->babel_args;
-		result = babel_options.universal_import_fn(this->trw, NULL, this, NULL);
+#ifdef K_TODO_
+		result = babel_options.universal_import_fn(this->trw, NULL, this->acquire_context, NULL);
+#endif
 	} else {
 		BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but not input file specified. */
 		export_options.output = this->port;
 		export_options.babel_args = this->babel_args;
+#ifdef K_TODO
 		result = export_options.universal_export_fn(this->trw, this->trk, this, NULL);
+#endif
 	}
 
 	if (!result) {

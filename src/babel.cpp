@@ -321,7 +321,7 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
  *
  * Returns: %true on success.
  */
-bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
+bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Importing from local file" << this->input;
 
@@ -364,7 +364,7 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
 
 	this->babel_process = new BabelProcess();
 	this->babel_process->set_args(program, args);
-	this->babel_process->set_auxiliary_parameters(progress_indicator, progr_dialog);
+	this->babel_process->set_auxiliary_parameters(acquire_context, progr_dialog);
 	const bool ret = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 
@@ -389,7 +389,7 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireTool * progress
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
+bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -410,7 +410,7 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireTool * progr
 
 	this->babel_process = new BabelProcess();
 	this->babel_process->set_args(program, args);
-	this->babel_process->set_auxiliary_parameters(progress_indicator, progr_dialog);
+	this->babel_process->set_auxiliary_parameters(acquire_context, progr_dialog);
 	bool rv = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 	return rv;
@@ -479,7 +479,8 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options,
 			opts_local_file.babel_args = (!this->input_data_format.isEmpty()) ? QString(" -i %1").arg(this->input_data_format) : "";
 			opts_local_file.babel_filters = this->babel_filters;
 
-			ret = opts_local_file.import_from_local_file(trw, NULL, NULL);
+			AcquireContext acquire_context;
+			ret = opts_local_file.import_from_local_file(trw, acquire_context, NULL);
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << SG_PREFIX_D << "Directly read GPX file" << target_file_full_path;
@@ -513,17 +514,17 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options,
  *
  * Returns: %true on success.
  */
-bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
+bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
 	switch (this->mode) {
 	case BabelOptionsMode::FromURL:
 		return this->import_from_url(trw, dl_options, progr_dialog);
 
 	case BabelOptionsMode::FromFile:
-		return this->import_from_local_file(trw, progress_indicator, progr_dialog);
+		return this->import_from_local_file(trw, acquire_context, progr_dialog);
 
 	case BabelOptionsMode::FromShellCommand:
-		return this->import_with_shell_command(trw, progress_indicator, progr_dialog);
+		return this->import_with_shell_command(trw, acquire_context, progr_dialog);
 
 	default:
 		qDebug() << "EE" PREFIX << "unexpected babel options mode" << (int) this->mode;
@@ -536,7 +537,8 @@ bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_opti
 
 bool BabelOptions::turn_off_device()
 {
-	return this->universal_import_fn(NULL, NULL, NULL, NULL);
+	AcquireContext acquire_context;
+	return this->universal_import_fn(NULL, NULL, acquire_context, NULL);
 }
 
 
@@ -556,7 +558,7 @@ bool BabelOptions::turn_off_device()
  *
  * Returns: %true on successful invocation of GPSBabel command.
  */
-bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool * progress_indicator, DataProgressDialog * progr_dialog)
+bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
 	if (!babel.is_detected) {
 		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
@@ -602,7 +604,7 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireTool 
 
 	BabelProcess converter;
 	converter.set_args(program, args);
-	converter.set_auxiliary_parameters(progress_indicator, progr_dialog);
+	converter.set_auxiliary_parameters(acquire_context, progr_dialog);
 	return converter.run_export();
 }
 
@@ -813,9 +815,16 @@ void BabelProcess::set_args(const QString & program, const QStringList & args)
 
 
 
-void BabelProcess::set_auxiliary_parameters(AcquireTool * new_progress_indicator, DataProgressDialog * progr_dialog)
+void BabelProcess::set_auxiliary_parameters(AcquireContext & new_acquire_context, DataProgressDialog * progr_dialog)
 {
-	this->progress_indicator = new_progress_indicator;
+	this->acquire_context.window = new_acquire_context.window;
+	this->acquire_context.viewport = new_acquire_context.viewport;
+	this->acquire_context.top_level_layer = new_acquire_context.top_level_layer;
+	this->acquire_context.selected_layer = new_acquire_context.selected_layer;
+	this->acquire_context.target_trw = new_acquire_context.target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
+	this->acquire_context.target_trk = new_acquire_context.target_trk;
+	this->acquire_context.target_trw_allocated = new_acquire_context.target_trw_allocated;
+
 	this->babel_progr_indicator = progr_dialog;
 }
 
@@ -849,11 +858,13 @@ bool BabelProcess::run_import(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
+#ifdef K_TODO
 	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	}
+#endif
 
 	return success;
 }
@@ -867,11 +878,13 @@ bool BabelProcess::run_export(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
+#ifdef K_TODO
 	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->export_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {
 		this->export_progress_cb(AcquireProgressCode::Completed, NULL);
 	}
+#endif
 
 	return success;
 }
