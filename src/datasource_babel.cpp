@@ -51,7 +51,7 @@ using namespace SlavGPS;
 bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I;
-	return ((BabelOptions *) this->acquire_options)->universal_import_fn(trw, this->download_options, acquire_context, progr_dialog);
+	return this->acquire_options->universal_import_fn(trw, this->download_options, acquire_context, progr_dialog);
 }
 
 
@@ -60,7 +60,7 @@ bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext & acquir
 int DataSourceBabel::kill(const QString & status)
 {
 	if (this->acquire_options) {
-		return ((BabelOptions *) this->acquire_options)->kill(status);
+		return this->acquire_options->kill_babel_process(status);
 	} else {
 		return -4;
 	}

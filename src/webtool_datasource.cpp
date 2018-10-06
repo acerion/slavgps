@@ -53,6 +53,8 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "DataSource Webtool"
+
 #define MAX_NUMBER_CODES 7
 
 
@@ -109,7 +111,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, V
 
 
 
-BabelOptions * DataSourceWebToolDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceWebToolDialog::get_acquire_options_none(void)
 {
 	if (this->web_tool_data_source->webtool_needs_user_string()) {
 		this->web_tool_data_source->user_string = this->input_field.text();
@@ -121,9 +123,9 @@ BabelOptions * DataSourceWebToolDialog::get_acquire_options_none(void)
 	}
 
 
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
-	babel_options->input = this->web_tool_data_source->get_url_at_current_position(this->viewport);
-	qDebug() << "DD: Web Tool Datasource: url =" << babel_options->input;
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
+	babel_options->source_url = this->web_tool_data_source->get_url_at_current_position(this->viewport);
+	qDebug() << SG_PREFIX_D << "Source URL =" << babel_options->source_url;
 
 	/* Only use first section of the file_type string.
 	   One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things

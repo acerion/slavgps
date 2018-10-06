@@ -241,7 +241,10 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 	getter->acquire_getter_progress_dialog = progress_dialog;
 	getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Importing data..."));
 
-	if (NULL == getter->data_source->acquire_options || !getter->data_source->acquire_options->is_valid()) {
+	if (false) {
+#if 0
+	    NULL == getter->data_source->acquire_options || !getter->data_source->acquire_options->is_valid()) {
+#endif
 
 		/* This shouldn't happen... */
 
@@ -305,11 +308,10 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 				interface->off_func(pass_along_data, babel_args_off, file_path_off);
 
 				if (!babel_args_off.isEmpty()) {
+
 					/* Turn off. */
-					BabelOptions off_options;
-					off_options.input = file_path_off;
-					off_options.babel_args = babel_args_off;
-					off_options.turn_off_device();
+					BabelTurnOffDevice turn_off(file_path_off, babel_args_off);
+					turn_off.run_process();
 				}
 			}
 #endif
@@ -359,11 +361,11 @@ DataProgressDialog * DataSource::create_progress_dialog(const QString & title)
 
 
 
-BabelOptions * DataSourceDialog::create_acquire_options_layer(LayerTRW * trw)
+AcquireOptions * DataSourceDialog::create_acquire_options_layer(LayerTRW * trw)
 {
 	qDebug() << "II" PREFIX << "input type: TRWLayer";
 
-	BabelOptions * process_options = NULL;
+	AcquireOptions * process_options = NULL;
 
 	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
 	process_options = this->get_acquire_options_layer(layer_file_full_path);
@@ -375,14 +377,14 @@ BabelOptions * DataSourceDialog::create_acquire_options_layer(LayerTRW * trw)
 
 
 
-BabelOptions * DataSourceDialog::create_acquire_options_layer_track(LayerTRW * trw, Track * trk)
+AcquireOptions * DataSourceDialog::create_acquire_options_layer_track(LayerTRW * trw, Track * trk)
 {
 	qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
 
 	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
 	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
 
-	BabelOptions * process_options = this->get_acquire_options_layer_track(layer_file_full_path, track_file_full_path);
+	AcquireOptions * process_options = this->get_acquire_options_layer_track(layer_file_full_path, track_file_full_path);
 
 	Util::add_to_deletion_list(layer_file_full_path);
 	Util::add_to_deletion_list(track_file_full_path);
@@ -393,12 +395,12 @@ BabelOptions * DataSourceDialog::create_acquire_options_layer_track(LayerTRW * t
 
 
 
-BabelOptions * DataSourceDialog::create_acquire_options_track(Track * trk)
+AcquireOptions * DataSourceDialog::create_acquire_options_track(Track * trk)
 {
 	qDebug() << "II" PREFIX << "input type: Track";
 
 	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
-	BabelOptions * process_options = this->get_acquire_options_layer_track("", track_file_full_path);
+	AcquireOptions * process_options = this->get_acquire_options_layer_track("", track_file_full_path);
 
 	return process_options;
 }
@@ -406,11 +408,11 @@ BabelOptions * DataSourceDialog::create_acquire_options_track(Track * trk)
 
 
 
-BabelOptions * DataSourceDialog::create_acquire_options_none(void)
+AcquireOptions * DataSourceDialog::create_acquire_options_none(void)
 {
 	qDebug() << "II" PREFIX << "input type: None";
 
-	BabelOptions * process_options = this->get_acquire_options_none();
+	AcquireOptions * process_options = this->get_acquire_options_none();
 
 	return process_options;
 }

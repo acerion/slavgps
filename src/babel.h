@@ -54,12 +54,11 @@ namespace SlavGPS {
 	class Track;
 	class GPXImporter;
 	class BabelFeatureParser;
-	class BabelLocalFileImporter;
 
 
 
 
-	enum class BabelOptionsMode {
+	enum class AcquireOptionsMode {
 		None,
 		FromURL,
 		FromFile,
@@ -81,19 +80,29 @@ namespace SlavGPS {
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
 		bool convert_through_gpx(LayerTRW * trw);
 
-		bool run_process(void);
-		bool run_export(void);
+		virtual bool run_process(void);
 		int kill(const QString & status);
 
 		QProcess * process = NULL;
 
-		GPXImporter * importer = NULL;
+		GPXImporter * gpx_importer = NULL;
 		BabelFeatureParser * feature_parser = NULL;
 		DataProgressDialog * babel_progr_indicator = NULL;
 
-		QString program_name;
-		QStringList args;
 
+		void set_options(const QString & babel_options);
+		void set_input(const QString & file_type, const QString & file_full_path);
+		void set_filters(const QString & babel_filters);
+		void set_output(const QString & file_type, const QString & file_full_path);
+
+		QString program_name;
+		QString first_arg; /* TODO: A hack used by Babel::set_program_name(). */
+		QString options;
+		QString input_type;
+		QString input_file;
+		QString filters;
+		QString output_type;
+		QString output_file;
 
 	public slots:
 		void started_cb(void);
@@ -111,11 +120,12 @@ namespace SlavGPS {
 	/**
 	   Need to specify at least one of babel_args, URL or shell_command.
 	*/
-	struct BabelOptions : public AcquireOptions {
+	class AcquireOptions {
 	public:
-		BabelOptions(const BabelOptions & other);
-		BabelOptions(BabelOptionsMode new_mode) : mode(new_mode) { };
-		virtual ~BabelOptions() {};
+		AcquireOptions();
+		AcquireOptions(const AcquireOptions & other);
+		AcquireOptions(AcquireOptionsMode new_mode) : mode(new_mode) { };
+		virtual ~AcquireOptions() {};
 
 		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog);
@@ -126,11 +136,11 @@ namespace SlavGPS {
 
 		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 
-		bool turn_off_device(void);
+		int kill_babel_process(const QString & status);
 
-		int kill(const QString & status);
+		QString source_url;        /* If first step in acquiring is getting a data from URL, this is the field to save the source URL. */
 
-		QString input;             /* Full path to input file, or input device (e.g. /dev/ttyS0), or URL. */
+		QString input;        /* Full path to input file, or input device (e.g. /dev/ttyS0), or URL. */
 		QString input_data_format; /* If empty, then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
 		QString output;
 
@@ -138,10 +148,10 @@ namespace SlavGPS {
 		QString babel_filters;   /* Optional filter arguments to gpsbabel. */
 		QString shell_command;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
 
-		BabelOptionsMode mode;
+		AcquireOptionsMode mode;
 		BabelProcess * babel_process = NULL;
 
-		BabelLocalFileImporter * importer = NULL;
+		BabelProcess * babel_importer = NULL;
 	};
 
 
@@ -211,7 +221,7 @@ namespace SlavGPS {
 		void get_gpsbabel_path_from_system(void);
 		void get_gpsbabel_path_from_preferences(void);
 
-		bool set_program_name(QString & program, QStringList & args);
+		bool set_program_name(QString & program_name, QString & first_arg);
 
 		QString gpsbabel_path; /* Path to gpsbabel. */
 		QString unbuffer_path; /* Path to unbuffer. */
@@ -236,6 +246,8 @@ namespace SlavGPS {
 	public:
 		BabelFeatureLoader();
 		~BabelFeatureLoader();
+
+		bool run_process(void);
 	};
 
 	class BabelFeatureParser : public BabelProcess {
@@ -247,12 +259,16 @@ namespace SlavGPS {
 
 
 
-	class BabelLocalFileImporter : public BabelProcess {
+	class BabelTurnOffDevice : public BabelProcess {
 	public:
-		BabelLocalFileImporter();
-		BabelLocalFileImporter(const QString & file_full_path);
-		BabelLocalFileImporter(const QString & file_full_path, const QString & file_type);
-		~BabelLocalFileImporter();
+		BabelTurnOffDevice(const QString & new_protocol, const QString & new_port)
+			: protocol(new_protocol), port(new_port) {};
+
+		bool run_process(void);
+
+	private:
+		const QString protocol;
+		const QString port;
 	};
 
 

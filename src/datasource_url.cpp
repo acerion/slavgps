@@ -136,9 +136,9 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-BabelOptions * DataSourceURLDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceURLDialog::get_acquire_options_none(void)
 {
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
 
 	g_last_file_type_index = this->file_type_combo.currentIndex();
 
@@ -148,7 +148,7 @@ BabelOptions * DataSourceURLDialog::get_acquire_options_none(void)
 		babel_options->input_data_format = ""; /* Default to gpx. */
 	}
 
-	babel_options->input = this->url_input.text();
+	babel_options->source_url = this->url_input.text();
 
 	return babel_options;
 }

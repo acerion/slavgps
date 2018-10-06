@@ -129,9 +129,9 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-BabelOptions * DataSourceOSMMyTracesDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceOSMMyTracesDialog::get_acquire_options_none(void)
 {
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
 
 	/* Overwrite authentication info. */
 	OSMTraces::save_current_credentials(this->user_entry.text(), this->password_entry.text());
@@ -639,8 +639,8 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
 				/* Download type is GPX (or a compressed version). */
-				BabelOptions * babel_action = (BabelOptions *) this->acquire_options; /* FIXME_LATER: casting. */
-				babel_action->input = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id); /* URL. */
+				AcquireOptions * babel_action = (AcquireOptions *) this->acquire_options; /* FIXME_LATER: casting. */
+				babel_action->source_url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
 				convert_result = babel_action->import_from_url(target_layer, &local_dl_options, NULL);
 				/* TODO_MAYBE investigate using a progress bar:
@@ -649,7 +649,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 				got_something = got_something || convert_result;
 				if (!convert_result) {
 					/* Report errors to the status bar. */
-					acquire_context.window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->input));
+					acquire_context.window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->source_url));
 				}
 			}
 

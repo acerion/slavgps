@@ -932,21 +932,14 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (FileUtils::has_extension(full_path, ".kml") && FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 
-#if 0
 			qDebug() << SG_PREFIX_I << "Explicit import of kml file";
-			BabelLocalFileImporter * importer = new BabelLocalFileImporter(full_path, "kml");
-			QStringList args = { "-o", "gpx", "-F", "-" };
-			importer->set_args(args);
+
+			BabelProcess * importer = new BabelProcess();
+			importer->set_input("kml", full_path);
+			importer->set_output("gpx", "-");
 			success = importer->convert_through_gpx(trw);
 			delete importer;
-#else
-			/* Implicit Conversion. */
-			BabelOptions babel_options(BabelOptionsMode::FromFile);
-			babel_options.input = full_path;
-			babel_options.babel_args = "-i kml";
-			AcquireContext acquire_context;
-			success = babel_options.import_from_local_file(trw, acquire_context, NULL);
-#endif
+
 			if (!success) {
 				load_status = VikFile::LoadStatus::GPSBabelFailure;
 			}
@@ -1064,7 +1057,7 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
 	bool status = true;
 
-	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified. */
+	AcquireOptions export_options(AcquireOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified. */
 	export_options.output = file_full_path;
 
 	const KMLExportUnits units = Preferences::get_kml_export_units();
@@ -1156,7 +1149,7 @@ bool VikFile::export_trw(LayerTRW * trw, const QString & file_full_path, SGFileT
 
 bool VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints)
 {
-	BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified, just output. */
+	AcquireOptions export_options(AcquireOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified, just output. */
 	export_options.output = output_file_full_path;
 	export_options.babel_args = QString("%1 %2 %3 -o %4")
 		.arg(tracks ? "-t" : "")

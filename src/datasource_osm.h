@@ -63,7 +63,7 @@ namespace SlavGPS {
 		DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport);
 		~DataSourceOSMTracesDialog();
 
-		BabelOptions * get_acquire_options_none(void);
+		AcquireOptions * get_acquire_options_none(void);
 
 	public slots:
 		void accept_cb(void);

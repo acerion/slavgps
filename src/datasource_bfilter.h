@@ -57,7 +57,7 @@ namespace SlavGPS {
 	public:
 		BFilterSimplifyDialog(const QString & window_title);
 
-		BabelOptions * get_acquire_options_layer(const QString & input_layer_filename);
+		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
 		QSpinBox * spin = NULL;
 	};
 
@@ -75,7 +75,7 @@ namespace SlavGPS {
 	public:
 		BFilterCompressDialog(const QString & window_title);
 
-		BabelOptions * get_acquire_options_layer(const QString & input_layer_filename);
+		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
 		QDoubleSpinBox * spin = NULL;
 	};
 
@@ -93,7 +93,7 @@ namespace SlavGPS {
 	public:
 		BFilterDuplicatesDialog(const QString & window_title) : DataSourceDialog(window_title) {};
 
-		BabelOptions * get_acquire_options_layer(const QString & input_layer_filename);
+		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
 	};
 
 
@@ -110,7 +110,7 @@ namespace SlavGPS {
 	public:
 		BFilterManualDialog(const QString & window_title);
 
-		BabelOptions * get_acquire_options_layer(const QString & input_layer_filename);
+		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
 		QLineEdit * entry = NULL;
 	};
 
@@ -127,7 +127,7 @@ namespace SlavGPS {
 	public:
 		BFilterPolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
 
-		BabelOptions * get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
+		AcquireOptions * get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
 	};
 
 
@@ -143,7 +143,7 @@ namespace SlavGPS {
 	public:
 		BFilterExcludePolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
 
-		BabelOptions * get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
+		AcquireOptions * get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
 	};
 
 

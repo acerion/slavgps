@@ -204,7 +204,7 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-BabelOptions * DatasourceGPSSetup::get_acquire_options_none(void)
+AcquireOptions * DatasourceGPSSetup::get_acquire_options_none(void)
 {
 	gps_acquire_in_progress = true;
 
@@ -213,12 +213,11 @@ BabelOptions * DatasourceGPSSetup::get_acquire_options_none(void)
 	const char * routes = this->get_do_routes() ? "-r" : "";
 	const char * waypoints = this->get_do_waypoints() ? "-w" : "";
 
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::None);
 
-	babel_options->input = this->get_port();
-	babel_options->babel_args = QString("-D 9 %1 %2 %3 -i %4").arg(tracks).arg(routes).arg(waypoints).arg(device);
-
-	qDebug() << "DD: Datasource GPS: Get process options: using Babel args" << babel_options->babel_args << "and input file" << babel_options->input;
+	babel_options->babel_importer = new BabelProcess();
+	babel_options->babel_importer->set_options(QString("-D 9 %1 %2 %3").arg(tracks).arg(routes).arg(waypoints));
+	babel_options->babel_importer->set_input(device, this->get_port());
 
 	return babel_options;
 }

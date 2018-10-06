@@ -211,8 +211,8 @@ QString RoutingEngineWeb::get_url_for_coords(const LatLon & start, const LatLon 
 
 bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon & end)
 {
-	BabelOptions babel_options(BabelOptionsMode::FromURL);
-	babel_options.input = this->get_url_for_coords(start, end);
+	AcquireOptions babel_options(AcquireOptionsMode::FromURL);
+	babel_options.source_url = this->get_url_for_coords(start, end);
 	babel_options.input_data_format = this->get_format();
 
 	bool ret = babel_options.import_from_url(trw, &this->dl_options, NULL);
@@ -323,8 +323,8 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk)
 
 bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 {
-	BabelOptions babel_options(BabelOptionsMode::FromURL);
-	babel_options.input = this->get_url_for_track(trk);
+	AcquireOptions babel_options(AcquireOptionsMode::FromURL);
+	babel_options.source_url = this->get_url_for_track(trk);
 	babel_options.input_data_format = this->get_format();
 
 	/* Convert and insert data in model. */

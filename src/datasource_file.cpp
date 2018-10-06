@@ -117,18 +117,18 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-BabelOptions * DataSourceFileDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceFileDialog::get_acquire_options_none(void)
 {
 	g_last_directory_url = this->file_selector->get_directory_url();
 	g_last_filter = this->file_selector->get_selected_name_filter();
 
 
 	/* Generate the process options. */
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::None);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::None);
 
 	/* TODO_LATER: this needs to be deleted. */
-	babel_options->importer = new BabelLocalFileImporter(this->file_selector->get_selected_file_full_path(),
-							     this->get_file_type_selection()->identifier);
+	babel_options->babel_importer = new BabelProcess();
+	babel_options->babel_importer->set_input(this->get_file_type_selection()->identifier, this->file_selector->get_selected_file_full_path());
 
 	return babel_options;
 }

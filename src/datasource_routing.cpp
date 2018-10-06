@@ -121,7 +121,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) :
 
 
 
-BabelOptions * DataSourceRoutingDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceRoutingDialog::get_acquire_options_none(void)
 {
 	/* Retrieve directions. */
 	const QString from = this->from_entry.text();
@@ -135,9 +135,9 @@ BabelOptions * DataSourceRoutingDialog::get_acquire_options_none(void)
 		return NULL; /* FIXME: this needs to be handled in caller. */
 	}
 
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
 
-	babel_options->input = engine->get_url_from_directions(from, to);
+	babel_options->source_url = engine->get_url_from_directions(from, to);
 	babel_options->input_data_format = QString(engine->get_format());
 	/* Don't modify dl_options, i.e. use the default download settings. */
 

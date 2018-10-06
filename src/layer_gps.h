@@ -262,14 +262,17 @@ namespace SlavGPS {
 		void run();
 
 		std::mutex mutex;
+
 		GPSDirection direction;
 		QString port;
+		QString protocol;
+		QString babel_opts;
+
 		bool in_progress = false;
 		int total_count = 0;
 		int count = 0;
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
-		QString babel_args;
 		QString window_title;
 		BasicDialog * dialog = NULL;
 		QLabel * status_label = NULL;
@@ -285,6 +288,7 @@ namespace SlavGPS {
 #if REALTIME_GPS_TRACKING_ENABLED
 		bool realtime_tracking_in_progress = false;
 #endif
+
 };
 
 

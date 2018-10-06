@@ -1064,19 +1064,28 @@ void GPSSession::run(void)
 {
 	bool result;
 
+	AcquireContext acquire_context;
+
 	if (this->direction == GPSDirection::Down) {
-		BabelOptions babel_options(BabelOptionsMode::FromFile);
-		babel_options.input = this->port;
-		babel_options.babel_args = this->babel_args;
-#ifdef K_TODO_
-		result = babel_options.universal_import_fn(this->trw, NULL, this->acquire_context, NULL);
-#endif
+		BabelProcess * importer = new BabelProcess();
+		importer->set_options(this->babel_opts);
+		importer->set_input("", this->port); /* TODO: type of input? */
+
+		acquire_context.target_trw = this->trw;
+		importer->set_auxiliary_parameters(acquire_context, NULL /* TODO: progr_dialog */);
+
+		result = importer->run_process();
 	} else {
-		BabelOptions export_options(BabelOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but not input file specified. */
-		export_options.output = this->port;
-		export_options.babel_args = this->babel_args;
+		BabelProcess * exporter = new BabelProcess();
+		exporter->set_options(this->babel_opts);
+		exporter->set_output("", this->port); /* TODO: type of output? */
+
+		acquire_context.target_trw = this->trw;
+		acquire_context.target_trk = this->trk;
+		exporter->set_auxiliary_parameters(acquire_context, NULL /* TODO: progr_dialog */);
+
 #ifdef K_TODO
-		result = export_options.universal_export_fn(this->trw, this->trk, this, NULL);
+		result = exporter.universal_export_fn(this->trw, this->trk, this, NULL);
 #endif
 	}
 
@@ -1171,13 +1180,9 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	const QString tracks_arg = do_tracks ? "-t" : "";
 	const QString routes_arg = do_routes ? "-r" : "";
 	const QString waypoints_arg = do_waypoints ? "-w" : "";
-
-	sess->babel_args = QString("-D 9 %1 %2 %3 -%4 %5")
-		.arg(tracks_arg)
-		.arg(routes_arg)
-		.arg(waypoints_arg)
-		.arg((dir == GPSDirection::Down) ? "i" : "o")
-		.arg(protocol);
+	sess->babel_opts = QString("-D 9 %1 %2 %3").arg(tracks_arg).arg(routes_arg).arg(waypoints_arg);
+	sess->protocol = protocol;
+	sess->port = port;
 
 	/* Only create dialog if we're going to do some transferring. */
 	if (do_tracks || do_waypoints || do_routes) {
@@ -1241,11 +1246,8 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	} else {
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
-			BabelOptions off_options(BabelOptionsMode::FromFile);
-			off_options.input = port;
-			off_options.babel_args = QString("-i %1,%2").arg(protocol).arg("power_off");
-
-			if (!off_options.turn_off_device()) {
+			BabelTurnOffDevice turn_off_process(protocol, port);
+			if (!turn_off_process.run_process()) {
 				Dialog::error(QObject::tr("Could not turn off device."), layer->get_window());
 			}
 		}

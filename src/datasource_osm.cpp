@@ -48,6 +48,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "DataSource OSM"
+
+
+
+
 /**
    See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
 */
@@ -93,9 +98,9 @@ int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-BabelOptions * DataSourceOSMTracesDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceOSMTracesDialog::get_acquire_options_none(void)
 {
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
 
 	const LatLonBBoxStrings bbox_strings = this->viewport->get_bbox().to_strings();
 
@@ -103,10 +108,10 @@ BabelOptions * DataSourceOSMTracesDialog::get_acquire_options_none(void)
 	const int page = this->spin_box.value();
 
 	/* Download is of GPX type. */
-	babel_options->input = QString(DOWNLOAD_URL_FMT).arg(bbox_strings.west).arg(bbox_strings.south).arg(bbox_strings.east).arg(bbox_strings.north).arg(page);
+	babel_options->source_url = QString(DOWNLOAD_URL_FMT).arg(bbox_strings.west).arg(bbox_strings.south).arg(bbox_strings.east).arg(bbox_strings.north).arg(page);
 	/* Don't modify dl_options, use the default download settings. */
 
-	qDebug() << "DD: Datasource OSM: URL =" << babel_options->input;
+	qDebug() << SG_PREFIX_D << "Source URL =" << babel_options->source_url;
 
 	return babel_options;
 }

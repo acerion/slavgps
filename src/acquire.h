@@ -53,6 +53,7 @@ namespace SlavGPS {
 	class Track;
 	class DataSource;
 	class AcquireGetter;
+	class AcquireOptions;
 
 
 
@@ -72,14 +73,6 @@ namespace SlavGPS {
 		virtual int kill(const QString & status) { return -1; };
 		virtual void import_progress_cb(AcquireProgressCode code, void * data) { return; };
 		virtual void export_progress_cb(AcquireProgressCode code, void * data) { return; };
-	};
-
-
-
-
-	class AcquireOptions {
-	public:
-		virtual bool is_valid(void) const = 0;
 	};
 
 

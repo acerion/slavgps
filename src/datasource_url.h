@@ -59,7 +59,7 @@ namespace SlavGPS {
 		DataSourceURLDialog(const QString & window_title);
 		~DataSourceURLDialog();
 
-		BabelOptions * get_acquire_options_none(void);
+		AcquireOptions * get_acquire_options_none(void);
 
 	private:
 		QLineEdit url_input;

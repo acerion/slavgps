@@ -31,6 +31,7 @@
 #include "geonames_search.h"
 #include "util.h"
 #include "datasource_wikipedia.h"
+#include "babel.h"
 #include "globals.h"
 
 
