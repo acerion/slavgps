@@ -123,14 +123,12 @@ BabelOptions * DataSourceFileDialog::get_acquire_options_none(void)
 	g_last_filter = this->file_selector->get_selected_name_filter();
 
 
-	const QString selected = this->get_file_type_selection()->identifier;
-
 	/* Generate the process options. */
-	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::FromFile);
-	babel_options->input = this->file_selector->get_selected_file_full_path();
-	babel_options->babel_args = QString("-i %1").arg(selected);
+	BabelOptions * babel_options = new BabelOptions(BabelOptionsMode::None);
 
-	qDebug() << "II: Datasource File: using Babel args" << babel_options->babel_args << "and input file" << babel_options->input;
+	/* TODO_LATER: this needs to be deleted. */
+	babel_options->importer = new BabelLocalFileImporter(this->file_selector->get_selected_file_full_path(),
+							     this->get_file_type_selection()->identifier);
 
 	return babel_options;
 }

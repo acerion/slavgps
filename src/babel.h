@@ -54,11 +54,13 @@ namespace SlavGPS {
 	class Track;
 	class GPXImporter;
 	class BabelFeatureParser;
+	class BabelLocalFileImporter;
 
 
 
 
 	enum class BabelOptionsMode {
+		None,
 		FromURL,
 		FromFile,
 		FromShellCommand
@@ -73,15 +75,14 @@ namespace SlavGPS {
 		BabelProcess();
 		~BabelProcess();
 
-		void set_args(const QString & program, const QStringList & args);
+		void set_args(const QStringList & args);
 		void set_auxiliary_parameters(AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
 
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
 		bool convert_through_gpx(LayerTRW * trw);
 
-		bool run_import(void);
-		bool run_export(void);
 		bool run_process(void);
+		bool run_export(void);
 		int kill(const QString & status);
 
 		QProcess * process = NULL;
@@ -89,6 +90,10 @@ namespace SlavGPS {
 		GPXImporter * importer = NULL;
 		BabelFeatureParser * feature_parser = NULL;
 		DataProgressDialog * babel_progr_indicator = NULL;
+
+		QString program_name;
+		QStringList args;
+
 
 	public slots:
 		void started_cb(void);
@@ -135,6 +140,8 @@ namespace SlavGPS {
 
 		BabelOptionsMode mode;
 		BabelProcess * babel_process = NULL;
+
+		BabelLocalFileImporter * importer = NULL;
 	};
 
 
@@ -235,6 +242,17 @@ namespace SlavGPS {
 	public:
 		BabelFeatureParser() {};
 		size_t write(const char * data, size_t size);
+	};
+
+
+
+
+	class BabelLocalFileImporter : public BabelProcess {
+	public:
+		BabelLocalFileImporter();
+		BabelLocalFileImporter(const QString & file_full_path);
+		BabelLocalFileImporter(const QString & file_full_path, const QString & file_type);
+		~BabelLocalFileImporter();
 	};
 
 

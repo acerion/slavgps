@@ -6,6 +6,7 @@ QT = core gui widgets printsupport xml
 RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc waypoint.qrc
 
 SOURCES += main.cpp \
+    babel.cpp \
     mem_cache.cpp \
     tree_item_list.cpp \
     ruler.cpp \
@@ -82,7 +83,6 @@ SOURCES += main.cpp \
     goto_tool_xml.cpp \
     geonames.cpp \
     geonames_search.cpp \
-    babel.cpp \
     babel_dialog.cpp \
     generic_tools.cpp \
     viewport.cpp \

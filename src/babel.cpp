@@ -176,50 +176,6 @@ bool Babel::set_program_name(QString & program, QStringList & args)
 
 
 
-#ifdef K_OLD_IMPLEMENTATION
-/**
- * @trw:        The TRW layer to modify. All data will be deleted, and replaced by what gpsbabel outputs.
- * @babel_args: A string containing gpsbabel command line filter options. No file types or names should
- *             be specified.
- * @cb:        A callback function.
- * @cb_data: passed along to cb
- * @not_used:  Must use NULL
- *
- * This function modifies data in a trw layer using gpsbabel filters.  This routine is synchronous;
- * that is, it will block the calling program until the conversion is done. To avoid blocking, call
- * this routine from a worker thread.
- *
- * Returns: %true on success.
- */
-bool a_babel_convert(LayerTRW * trw, const QString & babel_args, AcquireTool * progress_indicator)
-{
-	bool ret = false;
-	const QString bargs = babel_args + " -i gpx";
-	const QString name_src = GPX::write_tmp_file(trw, NULL);
-
-	if (!name_src.isEmpty()) {
-		BabelOptions babel_action(bargs, name_src, NULL, NULL);
-		ret = babel_action.universal_import_fn(trw, (DownloadOptions *) unused, progress_indicator);
-		QDir::root().remove(name_src);
-	}
-
-	return ret;
-}
-
-
-
-
-/**
- * Perform any cleanup actions once GPSBabel has completed running.
- */
-static void babel_watch(GPid pid, int status, void * cb_data)
-{
-	g_spawn_close_pid(pid);
-}
-#endif
-
-
-
 
 BabelOptions::BabelOptions(const BabelOptions & other)
 {
@@ -264,15 +220,17 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
 	this->importer = new GPXImporter(trw);
 
 
-	if (!this->run_import()) {
+	if (!this->run_process()) {
 		qDebug() << SG_PREFIX_E << "Conversion failed";
 		return false;
 	}
 	this->importer->write("", 0); /* Just to ensure proper termination by GPX parser. */
 	sleep(3);
 
-	this->babel_progr_indicator->set_headline(tr("Import completed"));
-	this->babel_progr_indicator->set_current_status("");
+	if (this->babel_progr_indicator) {
+		this->babel_progr_indicator->set_headline(tr("Import completed"));
+		this->babel_progr_indicator->set_current_status("");
+	}
 
 	if (trw == NULL) {
 		/* No data actually required but still need to have run gpsbabel anyway
@@ -283,22 +241,6 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
 	bool read_success = this->importer->status != XML_STATUS_ERROR;
 
 	delete this->importer;
-#if 0
-
-	FILE * file = fopen(intermediate_file_path.toUtf8().constData(), "r");
-	if (!file) {
-		qDebug().nospace() << "EE: Babel: convert through intermediate file: can't open intermediate file '" << intermediate_file_path << "'";
-		return false;
-	}
-
-	bool read_success = GPX::read_file(file, trw);
-	if (!read_success) {
-		qDebug() << "EE: Babel: convert through intermediate file: failed to read intermediate gpx file" << intermediate_file_path;
-	}
-
-	fclose(file);
-	file = NULL;
-#endif
 
 	return read_success;
 }
@@ -331,9 +273,7 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireContext & acqui
 	}
 
 
-	QString program;
 	QStringList args; /* Args list won't contain main application's name. */
-	babel.set_program_name(program, args);
 
 
 	const QStringList sub_args = this->babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
@@ -363,7 +303,7 @@ bool BabelOptions::import_from_local_file(LayerTRW * trw, AcquireContext & acqui
 
 
 	this->babel_process = new BabelProcess();
-	this->babel_process->set_args(program, args);
+	this->babel_process->set_args(args);
 	this->babel_process->set_auxiliary_parameters(acquire_context, progr_dialog);
 	const bool ret = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
@@ -404,7 +344,7 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & ac
 	}
 	qDebug() << SG_PREFIX_I << "Final form of shell command" << full_shell_command;
 
-
+#ifdef K_TODO
 	const QString program(BASH_LOCATION);
 	const QStringList args(QStringList() << "-c" << full_shell_command);
 
@@ -414,6 +354,9 @@ bool BabelOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & ac
 	bool rv = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 	return rv;
+#else
+	return true;
+#endif
 }
 
 
@@ -516,6 +459,44 @@ bool BabelOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options,
  */
 bool BabelOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
+	if (this->importer) {
+		BabelLocalFileImporter * importer2 = new BabelLocalFileImporter();
+		importer2->program_name = importer->program_name;
+		importer2->args = importer->args;
+
+		QStringList args;
+
+#if 0
+		const QStringList sub_args = this->babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
+		if (sub_args.size()) {
+			args << sub_args;
+		}
+#endif
+
+
+		if (!this->babel_filters.isEmpty()) {
+			const QStringList sub_filters = this->babel_filters.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
+			if (sub_filters.size()) {
+				args << sub_filters;
+			}
+		}
+
+		args << QString("-o");
+		args << QString("gpx");
+
+		args << QString("-F");
+		args << "-"; /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
+
+		importer2->set_args(args);
+		importer2->set_auxiliary_parameters(acquire_context, progr_dialog);
+		const bool result = importer2->convert_through_gpx(trw);
+
+		delete importer2;
+
+		return result;
+	}
+
+
 	switch (this->mode) {
 	case BabelOptionsMode::FromURL:
 		return this->import_from_url(trw, dl_options, progr_dialog);
@@ -574,9 +555,7 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireConte
 	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file_full_path;
 
 
-	QString program;
 	QStringList args;
-	babel.set_program_name(program, args);
 
 
 	args << "-i";
@@ -603,7 +582,7 @@ bool BabelOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireConte
 
 
 	BabelProcess converter;
-	converter.set_args(program, args);
+	converter.set_args(args);
 	converter.set_auxiliary_parameters(acquire_context, progr_dialog);
 	return converter.run_export();
 }
@@ -697,18 +676,14 @@ BabelFeatureLoader::~BabelFeatureLoader()
 static bool load_babel_features(void)
 {
 	if (!babel.is_detected) {
-		qDebug() << "EE" PREFIX << "gpsbabel not found in PATH";
+		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
 		return false;
 	}
 
-	QString program;
-	QStringList args;
-	babel.set_program_name(program, args);
-
-	args << QString("-^3");
+	QStringList args = { QString("-^3") };
 
 	BabelFeatureLoader feature_loader;
-	feature_loader.set_args(program, args);
+	feature_loader.set_args(args);
 	return feature_loader.run_process();
 }
 
@@ -794,20 +769,24 @@ BabelProcess::BabelProcess()
 	QObject::connect(this->process, SIGNAL (errorOccurred(QProcess::ProcessError)), this, SLOT (error_occurred_cb(QProcess::ProcessError)));
 	QObject::connect(this->process, SIGNAL (readyReadStandardOutput()), this, SLOT (read_stdout_cb()));
 
+	babel.set_program_name(this->program_name, this->args);
+
+	this->process->setProgram(this->program_name);
 }
 
 
 
 
-void BabelProcess::set_args(const QString & program, const QStringList & args)
+void BabelProcess::set_args(const QStringList & more_args)
 {
-	this->process->setProgram(program);
-	this->process->setArguments(args);
+	this->args += more_args; /* Babel::set_program_name() may have already added one arg to the list. */
+
+	this->process->setArguments(this->args);
 
 	if (true || vik_debug) {
-		qDebug() << SG_PREFIX_D << "Program is" << program;
-		for (int i = 0; i < args.size(); i++) {
-			qDebug() << SG_PREFIX_D << "Arg no." << i << "=" << args.at(i);
+		qDebug() << SG_PREFIX_D << "Program is" << this->program_name;
+		for (int i = 0; i < this->args.size(); i++) {
+			qDebug() << SG_PREFIX_D << "Arg no." << i << "=" << this->args.at(i);
 		}
 	}
 }
@@ -843,20 +822,16 @@ bool BabelProcess::run_process(void)
 {
 	qDebug() << SG_PREFIX_I;
 
-	this->process->start();
-	this->process->waitForFinished(-1);
+	qDebug() << SG_PREFIX_I << "    " << this->program_name;
+	for (int i = 0; i < this->args.size(); i++) {
+		qDebug() << SG_PREFIX_I << "    " << this->args.at(i);
+	}
 
-	return true;
-}
-
-
-bool BabelProcess::run_import(void)
-{
 	qDebug() << SG_PREFIX_I;
-
-	bool success = true;
 	this->process->start();
+	qDebug() << SG_PREFIX_I;
 	this->process->waitForFinished(-1);
+	qDebug() << SG_PREFIX_I;
 
 #ifdef K_TODO
 	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
@@ -866,7 +841,7 @@ bool BabelProcess::run_import(void)
 	}
 #endif
 
-	return success;
+	return true;
 }
 
 
@@ -874,7 +849,6 @@ bool BabelProcess::run_import(void)
 
 bool BabelProcess::run_export(void)
 {
-	bool success = true;
 	this->process->start();
 	this->process->waitForFinished(-1);
 
@@ -886,8 +860,9 @@ bool BabelProcess::run_export(void)
 	}
 #endif
 
-	return success;
+	return true;
 }
+
 
 
 
@@ -902,6 +877,7 @@ int BabelProcess::kill(const QString & status)
 		return -2;
 	}
 }
+
 
 
 
@@ -938,6 +914,8 @@ void BabelProcess::finished_cb(int exit_code, QProcess::ExitStatus exitStatus)
 void BabelProcess::read_stdout_cb()
 {
  	char buffer[512];
+
+	qDebug() << SG_PREFIX_E;
 
 	while (this->process->canReadLine()) {
 		const qint64 read_size = this->process->readLine(buffer, sizeof (buffer));
@@ -1033,4 +1011,32 @@ BabelDevice::BabelDevice(const QString & new_mode, const QString & new_identifie
 BabelDevice::~BabelDevice()
 {
 	qDebug() << "DD: Babel: freeing device" << this->identifier << "/" << this->label;
+}
+
+
+
+
+
+BabelLocalFileImporter::BabelLocalFileImporter() {}
+BabelLocalFileImporter::~BabelLocalFileImporter() {}
+
+
+BabelLocalFileImporter::BabelLocalFileImporter(const QString & file_full_path)
+{
+	this->args << "-f";
+	this->args << file_full_path;
+}
+
+
+
+
+BabelLocalFileImporter::BabelLocalFileImporter(const QString & file_full_path, const QString & file_type)
+{
+	/* Input file type must be before input file path. */
+
+	this->args << "-i";
+	this->args << file_type;
+
+	this->args << "-f";
+	this->args << file_full_path;
 }

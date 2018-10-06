@@ -198,6 +198,7 @@ void AcquireGetter::run(void)
 {
 	assert (this->data_source);
 
+
 	this->result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, this->acquire_context, this->acquire_getter_progress_dialog);
 
 	if (this->acquire_is_running && !this->result) {
@@ -236,10 +237,28 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 		return;
 	}
 
+	DataProgressDialog * progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
+	getter->acquire_getter_progress_dialog = progress_dialog;
+	getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Importing data..."));
+
 	if (NULL == getter->data_source->acquire_options || !getter->data_source->acquire_options->is_valid()) {
+
 		/* This shouldn't happen... */
-		getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
-		getter->acquire_getter_progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
+
+		if (NULL == getter->data_source->acquire_options) {
+			qDebug() << SG_PREFIX_E << "Acquire options are NULL";
+		} else {
+			if (!getter->data_source->acquire_options->is_valid()) {
+				qDebug() << SG_PREFIX_E << "Acquire options are invalid";
+			}
+		}
+
+		if (getter->acquire_getter_progress_dialog) {
+			getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
+			getter->acquire_getter_progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
+			delete getter->acquire_getter_progress_dialog; /* TODO: move this to destructor. */
+		}
+
 		delete getter;
 		return;
 	}
@@ -249,9 +268,7 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 	getter->acquire_is_running = true;
 
 
-	DataProgressDialog * progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
-	getter->acquire_getter_progress_dialog = progress_dialog;
-	getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Importing data..."));
+
 
 
 	if (getter->data_source->is_thread) {

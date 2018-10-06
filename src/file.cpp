@@ -931,12 +931,22 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (FileUtils::has_extension(full_path, ".kml") && FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
+
+#if 0
+			qDebug() << SG_PREFIX_I << "Explicit import of kml file";
+			BabelLocalFileImporter * importer = new BabelLocalFileImporter(full_path, "kml");
+			QStringList args = { "-o", "gpx", "-F", "-" };
+			importer->set_args(args);
+			success = importer->convert_through_gpx(trw);
+			delete importer;
+#else
 			/* Implicit Conversion. */
 			BabelOptions babel_options(BabelOptionsMode::FromFile);
 			babel_options.input = full_path;
 			babel_options.babel_args = "-i kml";
 			AcquireContext acquire_context;
 			success = babel_options.import_from_local_file(trw, acquire_context, NULL);
+#endif
 			if (!success) {
 				load_status = VikFile::LoadStatus::GPSBabelFailure;
 			}
