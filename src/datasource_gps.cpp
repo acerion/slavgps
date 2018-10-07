@@ -258,7 +258,7 @@ void DataSourceGPS::off(void * user_data, QString & babel_args, QString & file_p
 
 
 
-static void set_total_count(unsigned int cnt, AcquireGetter & getter)
+static void set_total_count(unsigned int cnt, AcquireWorker & getter)
 {
 #ifdef K_TODO
 	if (acquiring->acquire_is_running) {
@@ -292,7 +292,7 @@ static void set_total_count(unsigned int cnt, AcquireGetter & getter)
 
 
 /* Compare this function with GPSSession::set_current_count(int cnt) */
-static void set_current_count(int cnt, AcquireGetter * getter)
+static void set_current_count(int cnt, AcquireWorker * getter)
 {
 #ifdef K_TODO
 	if (acquiring->acquire_is_running) {
@@ -335,7 +335,7 @@ static void set_current_count(int cnt, AcquireGetter * getter)
 
 
 
-static void set_gps_info(const char * info, AcquireGetter * getter)
+static void set_gps_info(const char * info, AcquireWorker * getter)
 {
 #ifdef K_TODO
 	if (acquiring->acquire_is_running) {

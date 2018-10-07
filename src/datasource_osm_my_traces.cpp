@@ -551,7 +551,7 @@ void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMeta
 
 
 
-bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
+bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 

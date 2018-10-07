@@ -48,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
+bool DataSourceBabel::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I;
 	return this->acquire_options->universal_import_fn(trw, this->download_options, acquire_context, progr_dialog);

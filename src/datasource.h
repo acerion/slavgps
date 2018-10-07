@@ -44,6 +44,9 @@ namespace SlavGPS {
 	class DownloadOptions;
 	class LayerTRW;
 	class Track;
+	class AcquireContext;
+	class AcquireProgressDialog;
+	enum class AcquireProgressCode;
 
 
 
@@ -70,6 +73,38 @@ namespace SlavGPS {
 
 
 
+	class DataSource {
+	public:
+		DataSource() {};
+		virtual ~DataSource();
+
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) { return false; };
+		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context) { return; };
+		virtual void cleanup(void * data) { return; };
+		virtual int kill(const QString & status) { return -1; };
+
+		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
+
+		virtual AcquireProgressDialog * create_progress_dialog(const QString & title);
+
+		QString window_title;
+		QString layer_title;
+
+
+		DataSourceMode mode;
+		DataSourceInputType input_type;
+
+		bool autoview = false;
+		bool keep_dialog_open = false; /* ... when done. */
+		bool is_thread = false;
+
+		AcquireOptions * acquire_options = NULL;
+		DownloadOptions * download_options = NULL;
+	};
+
+
+
+
 	class DataSourceDialog : public BasicDialog {
 		Q_OBJECT
 	public:
@@ -90,10 +125,10 @@ namespace SlavGPS {
 
 
 
-	class DataProgressDialog : public BasicDialog {
+	class AcquireProgressDialog : public BasicDialog {
 		Q_OBJECT
 	public:
-		DataProgressDialog(const QString & window_title, QWidget * parent = NULL);
+		AcquireProgressDialog(const QString & window_title, QWidget * parent = NULL);
 
 		void set_headline(const QString & text);
 		void set_current_status(const QString & text);

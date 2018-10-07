@@ -52,7 +52,7 @@ namespace SlavGPS {
 	class LayerAggregate;
 	class Track;
 	class DataSource;
-	class AcquireGetter;
+	class AcquireWorker;
 	class AcquireOptions;
 	class BabelProcess;
 
@@ -108,44 +108,12 @@ namespace SlavGPS {
 
 
 
-	class DataSource {
-	public:
-		DataSource() {};
-		virtual ~DataSource();
-
-		virtual bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog) { return false; };
-		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context) { return; };
-		virtual void cleanup(void * data) { return; };
-		virtual int kill(const QString & status) { return -1; };
-
-		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
-
-		virtual DataProgressDialog * create_progress_dialog(const QString & title);
-
-		QString window_title;
-		QString layer_title;
-
-
-		DataSourceMode mode;
-		DataSourceInputType input_type;
-
-		bool autoview = false;
-		bool keep_dialog_open = false; /* ... when done. */
-		bool is_thread = false;
-
-		AcquireOptions * acquire_options = NULL;
-		DownloadOptions * download_options = NULL;
-	};
-
-
-
-
 	/* Remember that by default QRunnable is auto-deleted on thread exit. */
-	class AcquireGetter : public QObject, public QRunnable {
+	class AcquireWorker : public QObject, public QRunnable {
 		Q_OBJECT
 	public:
-		AcquireGetter() {};
-		~AcquireGetter();
+		AcquireWorker() {};
+		~AcquireWorker();
 		void run(); /* Re-implementation of QRunnable::run(). */
 		void on_complete_process(void);
 		void configure_target_layer(DataSourceMode mode);
@@ -155,7 +123,7 @@ namespace SlavGPS {
 		bool result = false;
 		bool acquire_is_running = false;
 		DataSource * data_source = NULL;
-		DataProgressDialog * acquire_getter_progress_dialog = NULL;
+		AcquireProgressDialog * acquire_worker_progress_dialog = NULL;
 
 	signals:
 		void report_status(int status);
@@ -203,9 +171,9 @@ namespace SlavGPS {
 		AcquireOptions(AcquireOptions::Mode new_mode) : mode(new_mode) { };
 		virtual ~AcquireOptions() {};
 
-		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
-		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog);
-		bool import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
+		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
+		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
+		bool import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
 
 		int kill_babel_process(const QString & status);
 

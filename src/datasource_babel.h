@@ -44,7 +44,7 @@ namespace SlavGPS {
 		DataSourceBabel() {};
 		~DataSourceBabel() {};
 
-		virtual bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
+		virtual bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status);
 

@@ -205,7 +205,7 @@ void WebToolDatasource::run_at_current_position(Window * a_window)
 	Acquire::acquire_from_source(data_source, data_source->mode, &acquire_context);
 
 #ifdef K_TODO
-	/* TODO: I think that this is already done in AcquireGetter::on_complete_process() */
+	/* TODO: I think that this is already done in AcquireWorker::on_complete_process() */
 	if (acquire_context.trw) {
 		acquire_context.trw->add_children_to_tree();
 	}

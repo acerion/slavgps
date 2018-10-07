@@ -72,7 +72,7 @@ static AcquireContext * g_acquire_context = NULL;
 
 
 
-AcquireGetter::~AcquireGetter()
+AcquireWorker::~AcquireWorker()
 {
 }
 
@@ -85,7 +85,7 @@ AcquireGetter::~AcquireGetter()
  *  . Update dialog info
  *  . Update main viewport
  */
-void AcquireGetter::on_complete_process(void)
+void AcquireWorker::on_complete_process(void)
 {
 	if (
 #ifdef K_FIXME_RESTORE
@@ -112,14 +112,14 @@ void AcquireGetter::on_complete_process(void)
 			}
 		}
 
-		if (this->acquire_getter_progress_dialog) {
+		if (this->acquire_worker_progress_dialog) {
 			if (this->data_source->keep_dialog_open) {
 				/* Only allow dialog's validation when format selection is done. */
-				this->acquire_getter_progress_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
-				this->acquire_getter_progress_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+				this->acquire_worker_progress_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+				this->acquire_worker_progress_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
 			} else {
 				/* Call 'accept()' slot to close the dialog. */
-				this->acquire_getter_progress_dialog->accept();
+				this->acquire_worker_progress_dialog->accept();
 			}
 		}
 
@@ -143,7 +143,7 @@ void AcquireGetter::on_complete_process(void)
 
 
 
-void AcquireGetter::configure_target_layer(DataSourceMode mode)
+void AcquireWorker::configure_target_layer(DataSourceMode mode)
 {
 	switch (mode) {
 	case DataSourceMode::CreateNewLayer:
@@ -194,15 +194,15 @@ void AcquireGetter::configure_target_layer(DataSourceMode mode)
 
 /* This routine is the worker thread. There is only one simultaneous download allowed. */
 /* Re-implementation of QRunnable::run() */
-void AcquireGetter::run(void)
+void AcquireWorker::run(void)
 {
 	assert (this->data_source);
 
 
-	this->result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, this->acquire_context, this->acquire_getter_progress_dialog);
+	this->result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, this->acquire_context, this->acquire_worker_progress_dialog);
 
 	if (this->acquire_is_running && !this->result) {
-		this->acquire_getter_progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
+		this->acquire_worker_progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
 		if (this->acquire_context.target_trw_allocated) {
 			this->acquire_context.target_trw->unref();
 		}
@@ -218,62 +218,59 @@ void AcquireGetter::run(void)
 
 void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode mode, AcquireContext * new_acquire_context)
 {
-	AcquireGetter * getter = new AcquireGetter(); /* TODO_LATER: this needs to be deleted. */
+	AcquireWorker * worker = new AcquireWorker(); /* TODO_LATER: this needs to be deleted. */
 
-	getter->data_source = new_data_source;
+	worker->data_source = new_data_source;
 	if (new_acquire_context) {
-		getter->acquire_context.window = new_acquire_context->window;
-		getter->acquire_context.viewport = new_acquire_context->viewport;
-		getter->acquire_context.top_level_layer = new_acquire_context->top_level_layer;
-		getter->acquire_context.selected_layer = new_acquire_context->selected_layer;
-		getter->acquire_context.target_trw = new_acquire_context->target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
-		getter->acquire_context.target_trk = new_acquire_context->target_trk;
-		getter->acquire_context.target_trw_allocated = new_acquire_context->target_trw_allocated;
+		worker->acquire_context.window               = new_acquire_context->window;
+		worker->acquire_context.viewport             = new_acquire_context->viewport;
+		worker->acquire_context.top_level_layer      = new_acquire_context->top_level_layer;
+		worker->acquire_context.selected_layer       = new_acquire_context->selected_layer;
+		worker->acquire_context.target_trw           = new_acquire_context->target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
+		worker->acquire_context.target_trk           = new_acquire_context->target_trk;
+		worker->acquire_context.target_trw_allocated = new_acquire_context->target_trw_allocated;
 	}
 
-	if (QDialog::Accepted != new_data_source->run_config_dialog(getter->acquire_context)) {
+	if (QDialog::Accepted != new_data_source->run_config_dialog(worker->acquire_context)) {
 		qDebug() << SG_PREFIX_I << "Data source config dialog returned !Accepted";
-		delete getter;
+		delete worker;
 		return;
 	}
 
-	DataProgressDialog * progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
-	getter->acquire_getter_progress_dialog = progress_dialog;
-	getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Importing data..."));
+	AcquireProgressDialog * progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
+	worker->acquire_worker_progress_dialog = progress_dialog;
+	worker->acquire_worker_progress_dialog->set_headline(QObject::tr("Importing data..."));
 
 	if (false) {
 #if 0
-	    NULL == getter->data_source->acquire_options || !getter->data_source->acquire_options->is_valid()) {
+	    NULL == worker->data_source->acquire_options || !worker->data_source->acquire_options->is_valid()) {
 		/* This shouldn't happen... */
 
-		if (NULL == getter->data_source->acquire_options) {
+		if (NULL == worker->data_source->acquire_options) {
 			qDebug() << SG_PREFIX_E << "Acquire options are NULL";
 		} else {
-			if (!getter->data_source->acquire_options->is_valid()) {
+			if (!worker->data_source->acquire_options->is_valid()) {
 				qDebug() << SG_PREFIX_E << "Acquire options are invalid";
 			}
 		}
 #endif
 
-		if (getter->acquire_getter_progress_dialog) {
-			getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
-			getter->acquire_getter_progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
-			delete getter->acquire_getter_progress_dialog; /* TODO: move this to destructor. */
+		if (worker->acquire_worker_progress_dialog) {
+			worker->acquire_worker_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
+			worker->acquire_worker_progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
+			delete worker->acquire_worker_progress_dialog; /* TODO: move this to destructor. */
 		}
 
-		delete getter;
+		delete worker;
 		return;
 	}
 
 
-	getter->configure_target_layer(mode);
-	getter->acquire_is_running = true;
+	worker->configure_target_layer(mode);
+	worker->acquire_is_running = true;
 
 
-
-
-
-	if (getter->data_source->is_thread) {
+	if (worker->data_source->is_thread) {
 
 		/* Start the acquire task in a background thread and
 		   then block this foreground (UI) thread by showing a
@@ -283,10 +280,10 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 		   Until a background acquire thread is in progress,
 		   its progress window must be in foreground. */
 
-		QThreadPool::globalInstance()->start(getter);
+		QThreadPool::globalInstance()->start(worker);
 
-		if (getter->acquire_getter_progress_dialog) {
-			getter->acquire_getter_progress_dialog->exec();
+		if (worker->acquire_worker_progress_dialog) {
+			worker->acquire_worker_progress_dialog->exec();
 		}
 
 
@@ -295,13 +292,13 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 		   when the acquire process was still in progress, or
 		   through "OK" button that became active when acquire
 		   process has been completed. */
-		if (getter->acquire_is_running) {
+		if (worker->acquire_is_running) {
 			/* Cancel and mark for thread to finish. */
-			getter->acquire_is_running = false;
+			worker->acquire_is_running = false;
 		} else {
 #ifdef K_FIXME_RESTORE
 			/* Get data for Off command. */
-			if (getter->data_source->off_func) {
+			if (worker->data_source->off_func) {
 				QString babel_args_off;
 				QString file_path_off;
 				interface->off_func(pass_along_data, babel_args_off, file_path_off);
@@ -319,101 +316,23 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 		/* Bypass thread method malarkly - you'll just have to wait... */
 		qDebug() << SG_PREFIX_I << "Ready to run acquire process, non-thread method";
 
-		bool success = getter->data_source->acquire_into_layer(getter->acquire_context.target_trw, getter->acquire_context, getter->acquire_getter_progress_dialog);
+		bool success = worker->data_source->acquire_into_layer(worker->acquire_context.target_trw, worker->acquire_context, worker->acquire_worker_progress_dialog);
 		if (!success) {
-			Dialog::error(QObject::tr("Error: acquisition failed."), getter->acquire_context.window);
+			Dialog::error(QObject::tr("Error: acquisition failed."), worker->acquire_context.window);
 		}
 
-		getter->on_complete_process();
+		worker->on_complete_process();
 
 		/* Actually show it if necessary. */
-		if (getter->data_source->keep_dialog_open) {
-			if (getter->acquire_getter_progress_dialog) {
-				getter->acquire_getter_progress_dialog->exec();
+		if (worker->data_source->keep_dialog_open) {
+			if (worker->acquire_worker_progress_dialog) {
+				worker->acquire_worker_progress_dialog->exec();
 			}
 		}
 	}
 
 
 	delete progress_dialog;
-}
-
-
-
-
-DataSource::~DataSource()
-{
-	delete this->acquire_options;
-	delete this->download_options;
-}
-
-
-
-
-DataProgressDialog * DataSource::create_progress_dialog(const QString & title)
-{
-	DataProgressDialog * dialog = new DataProgressDialog(title);
-
-	return dialog;
-}
-
-
-
-
-AcquireOptions * DataSourceDialog::create_acquire_options_layer(LayerTRW * trw)
-{
-	qDebug() << "II" PREFIX << "input type: TRWLayer";
-
-	AcquireOptions * process_options = NULL;
-
-	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
-	process_options = this->get_acquire_options_layer(layer_file_full_path);
-	Util::add_to_deletion_list(layer_file_full_path);
-
-	return process_options;
-}
-
-
-
-
-AcquireOptions * DataSourceDialog::create_acquire_options_layer_track(LayerTRW * trw, Track * trk)
-{
-	qDebug() << "II" PREFIX << "input type: TRWLayerTrack";
-
-	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
-	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
-
-	AcquireOptions * process_options = this->get_acquire_options_layer_track(layer_file_full_path, track_file_full_path);
-
-	Util::add_to_deletion_list(layer_file_full_path);
-	Util::add_to_deletion_list(track_file_full_path);
-
-	return process_options;
-}
-
-
-
-
-AcquireOptions * DataSourceDialog::create_acquire_options_track(Track * trk)
-{
-	qDebug() << "II" PREFIX << "input type: Track";
-
-	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
-	AcquireOptions * process_options = this->get_acquire_options_layer_track("", track_file_full_path);
-
-	return process_options;
-}
-
-
-
-
-AcquireOptions * DataSourceDialog::create_acquire_options_none(void)
-{
-	qDebug() << "II" PREFIX << "input type: None";
-
-	AcquireOptions * process_options = this->get_acquire_options_none();
-
-	return process_options;
 }
 
 

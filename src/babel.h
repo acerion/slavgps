@@ -65,7 +65,7 @@ namespace SlavGPS {
 		~BabelProcess();
 
 		void set_acquire_context(AcquireContext & acquire_context);
-		void set_progress_dialog(DataProgressDialog * progr_dialog);
+		void set_progress_dialog(AcquireProgressDialog * progr_dialog);
 
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
 		bool convert_through_gpx(LayerTRW * trw);
@@ -80,7 +80,7 @@ namespace SlavGPS {
 
 		GPXImporter * gpx_importer = NULL;
 		BabelFeatureParser * feature_parser = NULL;
-		DataProgressDialog * babel_progr_indicator = NULL;
+		AcquireProgressDialog * babel_progr_indicator = NULL;
 
 		static QString get_trw_string(bool do_tracks, bool do_routes, bool do_waypoints);
 

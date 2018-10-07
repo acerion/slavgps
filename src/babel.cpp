@@ -283,7 +283,7 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
+bool AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -340,7 +340,7 @@ int AcquireOptions::kill_babel_process(const QString & status)
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog)
+bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
@@ -407,7 +407,7 @@ bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
  *
  * Returns: %true on success.
  */
-bool AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
+bool AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (this->babel_process) {
 		BabelProcess * importer = new BabelProcess();
@@ -672,7 +672,7 @@ void BabelProcess::set_acquire_context(AcquireContext & new_acquire_context)
 
 
 
-void BabelProcess::set_progress_dialog(DataProgressDialog * progr_dialog)
+void BabelProcess::set_progress_dialog(AcquireProgressDialog * progr_dialog)
 {
 	this->babel_progr_indicator = progr_dialog;
 }

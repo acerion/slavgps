@@ -116,7 +116,7 @@ DataSourceGeoJSONDialog::DataSourceGeoJSONDialog(const QString & window_title) :
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
+bool DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	/* Process selected files. */
 	for (int i = 0; i < this->selected_files.size(); i++) {

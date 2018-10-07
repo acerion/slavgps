@@ -30,6 +30,10 @@
 
 #include "datasource.h"
 #include "dialog.h"
+#include "globals.h"
+#include "acquire.h"
+#include "gpx.h"
+#include "util.h"
 
 
 
@@ -39,7 +43,90 @@ using namespace SlavGPS;
 
 
 
-DataProgressDialog::DataProgressDialog(const QString & window_title, QWidget * parent) : BasicDialog(parent)
+#define SG_MODULE "DataSource"
+
+
+
+
+DataSource::~DataSource()
+{
+	delete this->acquire_options;
+	delete this->download_options;
+}
+
+
+
+
+AcquireProgressDialog * DataSource::create_progress_dialog(const QString & title)
+{
+	AcquireProgressDialog * dialog = new AcquireProgressDialog(title);
+
+	return dialog;
+}
+
+
+
+
+AcquireOptions * DataSourceDialog::create_acquire_options_layer(LayerTRW * trw)
+{
+	qDebug() << SG_PREFIX_I << "Input type: TRWLayer";
+
+	AcquireOptions * process_options = NULL;
+
+	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
+	process_options = this->get_acquire_options_layer(layer_file_full_path);
+	Util::add_to_deletion_list(layer_file_full_path);
+
+	return process_options;
+}
+
+
+
+
+AcquireOptions * DataSourceDialog::create_acquire_options_layer_track(LayerTRW * trw, Track * trk)
+{
+	qDebug() << SG_PREFIX_I << "Input type: TRWLayerTrack";
+
+	const QString layer_file_full_path = GPX::write_tmp_file(trw, NULL);
+	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
+
+	AcquireOptions * process_options = this->get_acquire_options_layer_track(layer_file_full_path, track_file_full_path);
+
+	Util::add_to_deletion_list(layer_file_full_path);
+	Util::add_to_deletion_list(track_file_full_path);
+
+	return process_options;
+}
+
+
+
+
+AcquireOptions * DataSourceDialog::create_acquire_options_track(Track * trk)
+{
+	qDebug() << SG_PREFIX_I << "Input type: Track";
+
+	const QString track_file_full_path = GPX::write_track_tmp_file(trk, NULL);
+	AcquireOptions * process_options = this->get_acquire_options_layer_track("", track_file_full_path);
+
+	return process_options;
+}
+
+
+
+
+AcquireOptions * DataSourceDialog::create_acquire_options_none(void)
+{
+	qDebug() << SG_PREFIX_I << "Input type: None";
+
+	AcquireOptions * process_options = this->get_acquire_options_none();
+
+	return process_options;
+}
+
+
+
+
+AcquireProgressDialog::AcquireProgressDialog(const QString & window_title, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(window_title);
 
@@ -58,14 +145,14 @@ DataProgressDialog::DataProgressDialog(const QString & window_title, QWidget * p
 
 
 
-void DataProgressDialog::set_headline(const QString & text)
+void AcquireProgressDialog::set_headline(const QString & text)
 {
 	this->headline->setText(text);
 }
 
 
 
-void DataProgressDialog::set_current_status(const QString & text)
+void AcquireProgressDialog::set_current_status(const QString & text)
 {
 	this->current_status->setText(text);
 }
