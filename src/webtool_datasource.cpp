@@ -123,7 +123,7 @@ AcquireOptions * DataSourceWebToolDialog::get_acquire_options_none(void)
 	}
 
 
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 	babel_options->source_url = this->web_tool_data_source->get_url_at_current_position(this->viewport);
 	qDebug() << SG_PREFIX_D << "Source URL =" << babel_options->source_url;
 
@@ -139,8 +139,6 @@ AcquireOptions * DataSourceWebToolDialog::get_acquire_options_none(void)
 		}
 	}
 
-
-	babel_options->babel_filters = this->web_tool_data_source->babel_filter_args;
 
 	return babel_options;
 
@@ -221,7 +219,6 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 				     const QString & new_url_format,
 				     const QString & new_url_format_code,
 				     const QString & new_file_type,
-				     const QString & new_babel_filter_args,
 				     const QString & new_input_field_label_text) : WebTool(new_tool_name)
 {
 	qDebug() << "II: Web Tool Datasource created with tool name" << new_tool_name;
@@ -232,9 +229,6 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 
 	if (!new_file_type.isEmpty()) {
 		this->file_type = new_file_type;
-	}
-	if (!new_babel_filter_args.isEmpty()) {
-		this->babel_filter_args = new_babel_filter_args;
 	}
 	if (!new_input_field_label_text.isEmpty()) {
 		this->input_field_label_text = new_input_field_label_text;

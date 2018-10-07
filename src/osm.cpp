@@ -141,7 +141,7 @@ void OSM::init(void)
 
 
 	/* Datasource. */
-	ExternalToolDataSource::register_tool(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", NULL, NULL, NULL));
+	ExternalToolDataSource::register_tool(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", "", ""));
 
 
 

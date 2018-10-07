@@ -211,7 +211,7 @@ QString RoutingEngineWeb::get_url_for_coords(const LatLon & start, const LatLon 
 
 bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon & end)
 {
-	AcquireOptions babel_options(AcquireOptionsMode::FromURL);
+	AcquireOptions babel_options(AcquireOptions::Mode::FromURL);
 	babel_options.source_url = this->get_url_for_coords(start, end);
 	babel_options.input_data_format = this->get_format();
 
@@ -323,7 +323,7 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk)
 
 bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 {
-	AcquireOptions babel_options(AcquireOptionsMode::FromURL);
+	AcquireOptions babel_options(AcquireOptions::Mode::FromURL);
 	babel_options.source_url = this->get_url_for_track(trk);
 	babel_options.input_data_format = this->get_format();
 

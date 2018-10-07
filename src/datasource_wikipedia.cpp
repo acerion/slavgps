@@ -47,14 +47,6 @@ using namespace SlavGPS;
 
 
 
-class AcquireOptionsWikipedia : public AcquireOptions {
-public:
-	bool is_valid(void) const { return true; }
-};
-
-
-
-
 DataSourceWikipedia::DataSourceWikipedia()
 {
 	this->window_title = QObject::tr("Create Waypoints from Wikipedia Articles");
@@ -91,7 +83,7 @@ bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & ac
 int DataSourceWikipedia::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* Fake acquire options, needed by current implementation of acquire.cpp. */
-	this->acquire_options = new AcquireOptionsWikipedia;
+	this->acquire_options = new AcquireOptions;
 
 	return QDialog::Accepted;
 }

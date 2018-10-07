@@ -244,8 +244,6 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 	if (false) {
 #if 0
 	    NULL == getter->data_source->acquire_options || !getter->data_source->acquire_options->is_valid()) {
-#endif
-
 		/* This shouldn't happen... */
 
 		if (NULL == getter->data_source->acquire_options) {
@@ -255,6 +253,7 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 				qDebug() << SG_PREFIX_E << "Acquire options are invalid";
 			}
 		}
+#endif
 
 		if (getter->acquire_getter_progress_dialog) {
 			getter->acquire_getter_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));

@@ -135,7 +135,7 @@ AcquireOptions * DataSourceRoutingDialog::get_acquire_options_none(void)
 		return NULL; /* FIXME: this needs to be handled in caller. */
 	}
 
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
 	babel_options->source_url = engine->get_url_from_directions(from, to);
 	babel_options->input_data_format = QString(engine->get_format());

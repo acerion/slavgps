@@ -54,6 +54,7 @@ namespace SlavGPS {
 	class DataSource;
 	class AcquireGetter;
 	class AcquireOptions;
+	class BabelProcess;
 
 
 
@@ -186,6 +187,34 @@ namespace SlavGPS {
 
 	private:
 		static QMenu * create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type);
+	};
+
+
+
+
+	class AcquireOptions {
+	public:
+		enum Mode {
+			FromURL,
+			FromShellCommand
+		};
+
+		AcquireOptions();
+		AcquireOptions(AcquireOptions::Mode new_mode) : mode(new_mode) { };
+		virtual ~AcquireOptions() {};
+
+		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
+		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog);
+		bool import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
+
+		int kill_babel_process(const QString & status);
+
+		QString source_url;        /* If first step in acquiring is getting a data from URL, this is the field to save the source URL. */
+		QString input_data_format; /* If empty, then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
+		QString shell_command;     /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
+		AcquireOptions::Mode mode;
+
+		BabelProcess * babel_process = NULL;
 	};
 
 

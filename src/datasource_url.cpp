@@ -138,7 +138,7 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 AcquireOptions * DataSourceURLDialog::get_acquire_options_none(void)
 {
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
 	g_last_file_type_index = this->file_type_combo.currentIndex();
 

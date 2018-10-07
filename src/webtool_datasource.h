@@ -71,7 +71,6 @@ namespace SlavGPS {
 				  const QString & url_format,
 				  const QString & url_format_code,
 				  const QString & file_type,
-				  const QString & babel_filter_args,
 				  const QString & new_input_field_label);
 		~WebToolDatasource();
 
@@ -90,7 +89,6 @@ namespace SlavGPS {
 		QString url_format_code;
 
 		QString file_type;               /* Default value NULL equates to internal GPX reading. */
-		QString babel_filter_args;       /* Command line filter options for gpsbabel. */
 		QString input_field_label_text;  /* Label to be shown next to the user input field if an input term is required. */
 		QString user_string;
 

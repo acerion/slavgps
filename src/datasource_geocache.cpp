@@ -282,7 +282,7 @@ AcquireOptions * DataSourceGeoCacheDialog::get_acquire_options_none(void)
 		.arg(SGUtils::double_to_c(lat_lon.lon));
 	const QString command3 = QString("%1 -z ~/.geo/caches/*.html").arg(GC_PROGRAM2);
 
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromShellCommand);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromShellCommand);
 	babel_options->shell_command = command1 + command2 + command3;
 
 	return babel_options;

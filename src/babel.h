@@ -58,27 +58,20 @@ namespace SlavGPS {
 
 
 
-	enum class AcquireOptionsMode {
-		None,
-		FromURL,
-		FromFile,
-		FromShellCommand
-	};
-
-
-
-
 	class BabelProcess : public AcquireTool {
 		Q_OBJECT
 	public:
 		BabelProcess();
 		~BabelProcess();
 
-		void set_args(const QStringList & args);
-		void set_auxiliary_parameters(AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
+		void set_acquire_context(AcquireContext & acquire_context);
+		void set_progress_dialog(DataProgressDialog * progr_dialog);
 
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
 		bool convert_through_gpx(LayerTRW * trw);
+
+		/* TRW layer -> gpx temporary file -> stdin -> gpsbabel -> gpx format -> output file in output format. */
+		bool export_through_gpx(LayerTRW * trw, Track * trk);
 
 		virtual bool run_process(void);
 		int kill(const QString & status);
@@ -89,6 +82,7 @@ namespace SlavGPS {
 		BabelFeatureParser * feature_parser = NULL;
 		DataProgressDialog * babel_progr_indicator = NULL;
 
+		static QString get_trw_string(bool do_tracks, bool do_routes, bool do_waypoints);
 
 		void set_options(const QString & babel_options);
 		void set_input(const QString & file_type, const QString & file_full_path);
@@ -112,46 +106,6 @@ namespace SlavGPS {
 
 	private:
 		AcquireContext acquire_context;
-	};
-
-
-
-
-	/**
-	   Need to specify at least one of babel_args, URL or shell_command.
-	*/
-	class AcquireOptions {
-	public:
-		AcquireOptions();
-		AcquireOptions(const AcquireOptions & other);
-		AcquireOptions(AcquireOptionsMode new_mode) : mode(new_mode) { };
-		virtual ~AcquireOptions() {};
-
-		bool universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
-		bool import_from_url(LayerTRW * trw, DownloadOptions * dl_options, DataProgressDialog * progr_dialog);
-		bool import_from_local_file(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
-		bool import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
-
-		bool is_valid(void) const;
-
-		bool universal_export_fn(LayerTRW * trw, Track * trk, AcquireContext & acquire_context, DataProgressDialog * progr_dialog);
-
-		int kill_babel_process(const QString & status);
-
-		QString source_url;        /* If first step in acquiring is getting a data from URL, this is the field to save the source URL. */
-
-		QString input;        /* Full path to input file, or input device (e.g. /dev/ttyS0), or URL. */
-		QString input_data_format; /* If empty, then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
-		QString output;
-
-		QString babel_args;      /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
-		QString babel_filters;   /* Optional filter arguments to gpsbabel. */
-		QString shell_command;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
-
-		AcquireOptionsMode mode;
-		BabelProcess * babel_process = NULL;
-
-		BabelProcess * babel_importer = NULL;
 	};
 
 
@@ -259,6 +213,10 @@ namespace SlavGPS {
 
 
 
+	/*
+	  A special case of gpsbabel process.
+	  Used to turn off gps device.
+	*/
 	class BabelTurnOffDevice : public BabelProcess {
 	public:
 		BabelTurnOffDevice(const QString & new_protocol, const QString & new_port)

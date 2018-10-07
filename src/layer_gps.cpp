@@ -1072,7 +1072,8 @@ void GPSSession::run(void)
 		importer->set_input("", this->port); /* TODO: type of input? */
 
 		acquire_context.target_trw = this->trw;
-		importer->set_auxiliary_parameters(acquire_context, NULL /* TODO: progr_dialog */);
+		importer->set_acquire_context(acquire_context);
+		importer->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
 		result = importer->run_process();
 	} else {
@@ -1082,11 +1083,10 @@ void GPSSession::run(void)
 
 		acquire_context.target_trw = this->trw;
 		acquire_context.target_trk = this->trk;
-		exporter->set_auxiliary_parameters(acquire_context, NULL /* TODO: progr_dialog */);
+		exporter->set_acquire_context(acquire_context);
+		exporter->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
-#ifdef K_TODO
-		result = exporter.universal_export_fn(this->trw, this->trk, this, NULL);
-#endif
+		result = exporter->export_through_gpx(this->trw, this->trk);
 	}
 
 	if (!result) {
@@ -1177,10 +1177,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	sess->realtime_tracking_in_progress = tracking;
 #endif
 
-	const QString tracks_arg = do_tracks ? "-t" : "";
-	const QString routes_arg = do_routes ? "-r" : "";
-	const QString waypoints_arg = do_waypoints ? "-w" : "";
-	sess->babel_opts = QString("-D 9 %1 %2 %3").arg(tracks_arg).arg(routes_arg).arg(waypoints_arg);
+	sess->babel_opts = QString("-D 9 %1").arg(BabelProcess::get_trw_string(do_tracks, do_routes, do_waypoints));
 	sess->protocol = protocol;
 	sess->port = port;
 

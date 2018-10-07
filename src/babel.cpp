@@ -179,24 +179,6 @@ bool Babel::set_program_name(QString & program_name, QString & first_arg)
 AcquireOptions::AcquireOptions() {}
 
 
-AcquireOptions::AcquireOptions(const AcquireOptions & other)
-{
-	this->input             = other.input;
-	this->input_data_format = other.input_data_format;
-	this->output            = other.output;
-	this->babel_args        = other.babel_args;
-	this->babel_filters     = other.babel_filters;
-	this->shell_command     = other.shell_command;
-	this->mode              = other.mode;
-
-	this->source_url        = other.source_url;
-
-	/* Ignore babel_process field. */
-}
-
-
-
-
 void BabelProcess::set_options(const QString & new_options)
 {
 	this->options = new_options;
@@ -288,47 +270,6 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
 
 
 /**
- * @trw: The TRW layer to place data into. Duplicate items will be overwritten.
- * @babel_args: A string containing gpsbabel command line options. This string must include the input file type (-i) option.
- * @input_file_path: the file name to convert from
- * @babel_filters: A string containing gpsbabel filter command line options
- * @cb: Optional callback function.
- * @cb_data: Passed along to cb
- * @not_used: Must use NULL
- *
- * Loads data into a trw layer from a file, using gpsbabel.  This routine is synchronous;
- * that is, it will block the calling program until the conversion is done. To avoid blocking, call
- * this routine from a worker thread.
- *
- * Returns: %true on success.
- */
-bool AcquireOptions::import_from_local_file(LayerTRW * trw, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
-{
-	qDebug() << SG_PREFIX_I << "Importing from local file" << this->input;
-
-	if (!babel.is_detected) {
-		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
-		return false;
-	}
-
-
-	this->babel_process = new BabelProcess();
-	this->babel_process->set_options(this->babel_args);
-	this->babel_process->set_input("", this->input);
-	this->babel_process->set_filters(this->babel_filters);
-	this->babel_process->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
-	this->babel_process->set_auxiliary_parameters(acquire_context, progr_dialog);
-
-	const bool ret = this->babel_process->convert_through_gpx(trw);
-	delete this->babel_process;
-
-	return ret;
-}
-
-
-
-
-/**
  * @trw: The #LayerTRW where to insert the collected data
  * @shell_command: the command to run
  * @input_file_type:
@@ -363,7 +304,8 @@ bool AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & 
 
 	this->babel_process = new BabelProcess();
 	this->babel_process->set_args(program, args);
-	this->babel_process->set_auxiliary_parameters(acquire_context, progr_dialog);
+	this->babel_process->set_acquire_context(acquire_context);
+	this->babel_process->set_progress_dialog(progr_dialog);
 	bool rv = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 	return rv;
@@ -391,10 +333,7 @@ int AcquireOptions::kill_babel_process(const QString & status)
  * @trw: The #LayerTRW where to insert the collected data.
  * @url: The URL to fetch.
  * @input_file_type: If input_file_type is empty, input must be GPX.
- * @babel_filters: The filter arguments to pass to gpsbabel.
- * @cb: Optional callback function.
- * @cb_data: Passed along to cb.
- * @options: Download options. If %NULL then default download options will be used.
+ * @dl_options: Download options. If %NULL then default download options will be used.
  *
  * Download the file pointed by the URL and optionally uses GPSBabel to convert from input_type.
  * If input_file_type and babel_filters are empty, gpsbabel is not used.
@@ -426,12 +365,11 @@ bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
 	const DownloadStatus download_status = dl_handle.perform_download(this->source_url, target_file_full_path);
 
 	if (DownloadStatus::Success == download_status) {
-		if (!this->input_data_format.isEmpty() || !this->babel_filters.isEmpty()) {
+		if (!this->input_data_format.isEmpty()) {
 
 			BabelProcess * file_importer = new BabelProcess();
 
 			file_importer->set_input(this->input_data_format, target_file_full_path);
-			file_importer->set_filters(this->babel_filters);
 			file_importer->set_output("gpx", "-");
 
 			ret = file_importer->convert_through_gpx(trw);
@@ -471,107 +409,40 @@ bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
  */
 bool AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
 {
-	if (this->babel_importer) {
-		BabelProcess * importer2 = new BabelProcess();
+	if (this->babel_process) {
+		BabelProcess * importer = new BabelProcess();
 
-		importer2->program_name = this->babel_importer->program_name;
-		importer2->options      = this->babel_importer->options;
-		importer2->input_type   = this->babel_importer->input_type;
-		importer2->input_file   = this->babel_importer->input_file;
-		importer2->filters      = this->babel_importer->filters;
-		importer2->output_type  = this->babel_importer->output_type;
-		importer2->output_file  = this->babel_importer->output_file;
+		importer->program_name = this->babel_process->program_name;
+		importer->options      = this->babel_process->options;
+		importer->input_type   = this->babel_process->input_type;
+		importer->input_file   = this->babel_process->input_file;
+		importer->filters      = this->babel_process->filters;
+		importer->output_type  = this->babel_process->output_type;
+		importer->output_file  = this->babel_process->output_file;
 
-#if 0
-		const QStringList sub_args = this->babel_args.split(" ", QString::SkipEmptyParts); /* Some version of gpsbabel can not take extra blank arg. */
-		if (sub_args.size()) {
-			args << sub_args;
-		}
-#endif
 
-		importer2->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
-		importer2->set_auxiliary_parameters(acquire_context, progr_dialog);
-		const bool result = importer2->convert_through_gpx(trw);
+		importer->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
+		importer->set_acquire_context(acquire_context);
+		importer->set_progress_dialog(progr_dialog);
+		const bool result = importer->convert_through_gpx(trw);
 
-		delete importer2;
+		delete importer;
 
 		return result;
 	}
 
 
 	switch (this->mode) {
-	case AcquireOptionsMode::FromURL:
+	case AcquireOptions::Mode::FromURL:
 		return this->import_from_url(trw, dl_options, progr_dialog);
 
-	case AcquireOptionsMode::FromFile:
-		return this->import_from_local_file(trw, acquire_context, progr_dialog);
-
-	case AcquireOptionsMode::FromShellCommand:
+	case AcquireOptions::Mode::FromShellCommand:
 		return this->import_with_shell_command(trw, acquire_context, progr_dialog);
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected babel options mode" << (int) this->mode;
 		return false;
 	}
-}
-
-
-
-
-/**
- * @trw: The TRW layer from which data is taken.
- * @track: Operate on the individual track if specified. Use NULL when operating on a TRW layer.
- * @babel_args: A string containing gpsbabel command line options.  In addition to any filters, this string must include the input file type (-i) option.
- * @target_file_full_path: Filename or device the data is written to.
- * @cb:	Optional callback function.
- * @cb_data: passed along to cb.
- *
- * Exports data using gpsbabel.  This routine is synchronous;
- * that is, it will block the calling program until the conversion is done. To avoid blocking, call
- * this routine from a worker thread.
- *
- * Returns: %true on successful invocation of GPSBabel command.
- */
-bool AcquireOptions::universal_export_fn(LayerTRW * trw, Track * trk, AcquireContext & acquire_context, DataProgressDialog * progr_dialog)
-{
-	if (!babel.is_detected) {
-		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
-		return false;
-	}
-
-
-	QTemporaryFile tmp_file;
-	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
-		return false;
-	}
-	const QString tmp_file_full_path = tmp_file.fileName();
-	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file_full_path;
-
-
-	BabelProcess exporter;
-	exporter.set_options(this->babel_args);
-	exporter.set_input("gpx", "");
-	exporter.set_output(tmp_file_full_path, this->output);
-
-
-	/* Now strips out invisible tracks and waypoints. */
-	if (!VikFile::export_trw(trw, tmp_file_full_path, SGFileType::GPX, trk, false)) {
-		qDebug() << SG_PREFIX_E << "Error exporting to" << tmp_file_full_path;
-		return false;
-	}
-
-	exporter.set_auxiliary_parameters(acquire_context, progr_dialog);
-	return exporter.run_process();
-}
-
-
-
-
-bool AcquireOptions::is_valid(void) const
-{
-	return !this->babel_args.isEmpty()
-		|| !this->input.isEmpty()
-		|| !this->shell_command.isEmpty();
 }
 
 
@@ -787,16 +658,22 @@ BabelProcess::BabelProcess()
 
 
 
-void BabelProcess::set_auxiliary_parameters(AcquireContext & new_acquire_context, DataProgressDialog * progr_dialog)
+void BabelProcess::set_acquire_context(AcquireContext & new_acquire_context)
 {
-	this->acquire_context.window = new_acquire_context.window;
-	this->acquire_context.viewport = new_acquire_context.viewport;
-	this->acquire_context.top_level_layer = new_acquire_context.top_level_layer;
-	this->acquire_context.selected_layer = new_acquire_context.selected_layer;
-	this->acquire_context.target_trw = new_acquire_context.target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
-	this->acquire_context.target_trk = new_acquire_context.target_trk;
+	this->acquire_context.window               = new_acquire_context.window;
+	this->acquire_context.viewport             = new_acquire_context.viewport;
+	this->acquire_context.top_level_layer      = new_acquire_context.top_level_layer;
+	this->acquire_context.selected_layer       = new_acquire_context.selected_layer;
+	this->acquire_context.target_trw           = new_acquire_context.target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
+	this->acquire_context.target_trk           = new_acquire_context.target_trk;
 	this->acquire_context.target_trw_allocated = new_acquire_context.target_trw_allocated;
+}
 
+
+
+
+void BabelProcess::set_progress_dialog(DataProgressDialog * progr_dialog)
+{
 	this->babel_progr_indicator = progr_dialog;
 }
 
@@ -954,6 +831,54 @@ void BabelProcess::read_stdout_cb()
 			i++;
 		}
 	}
+}
+
+
+
+
+/**
+   @brief Export data using gpsbabel
+
+   @trw: The TRW layer from which data is taken.
+   @trk: Operate on the individual track if specified. Use NULL when operating on a TRW layer.
+
+   @return true on successful invocation of GPSBabel command
+   @return false otherwise
+*/
+bool BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
+{
+	if (!babel.is_detected) {
+		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
+		return false;
+	}
+
+
+	QTemporaryFile tmp_file;
+	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
+		return false;
+	}
+	const QString tmp_file_full_path = tmp_file.fileName();
+	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file_full_path;
+
+
+	/* Now strips out invisible tracks and waypoints. */
+	if (!VikFile::export_trw(trw, tmp_file_full_path, SGFileType::GPX, trk, false)) {
+		qDebug() << SG_PREFIX_E << "Error exporting to" << tmp_file_full_path;
+		return false;
+	}
+
+	this->set_input("gpx", tmp_file_full_path);
+
+	return this->run_process();
+}
+
+
+
+
+QString BabelProcess::get_trw_string(bool do_tracks, bool do_routes, bool do_waypoints)
+{
+	const QString result = QString("%1 %2 %3").arg(do_tracks ? "-t" : "").arg(do_routes ? "-r" : "").arg(do_waypoints ? "-w" : "");
+	return result;
 }
 
 

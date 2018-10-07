@@ -208,16 +208,11 @@ AcquireOptions * DatasourceGPSSetup::get_acquire_options_none(void)
 {
 	gps_acquire_in_progress = true;
 
-	const QString device = this->get_protocol();
-	const char * tracks = this->get_do_tracks() ? "-t" : "";
-	const char * routes = this->get_do_routes() ? "-r" : "";
-	const char * waypoints = this->get_do_waypoints() ? "-w" : "";
+	AcquireOptions * babel_options = new AcquireOptions();
 
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::None);
-
-	babel_options->babel_importer = new BabelProcess();
-	babel_options->babel_importer->set_options(QString("-D 9 %1 %2 %3").arg(tracks).arg(routes).arg(waypoints));
-	babel_options->babel_importer->set_input(device, this->get_port());
+	babel_options->babel_process = new BabelProcess();
+	babel_options->babel_process->set_options(QString("-D 9 %1").arg(BabelProcess::get_trw_string(this->get_do_tracks(), this->get_do_routes(), this->get_do_waypoints())));
+	babel_options->babel_process->set_input(this->get_protocol(), this->get_port());
 
 	return babel_options;
 }

@@ -124,11 +124,11 @@ AcquireOptions * DataSourceFileDialog::get_acquire_options_none(void)
 
 
 	/* Generate the process options. */
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::None);
+	AcquireOptions * babel_options = new AcquireOptions();
 
 	/* TODO_LATER: this needs to be deleted. */
-	babel_options->babel_importer = new BabelProcess();
-	babel_options->babel_importer->set_input(this->get_file_type_selection()->identifier, this->file_selector->get_selected_file_full_path());
+	babel_options->babel_process = new BabelProcess();
+	babel_options->babel_process->set_input(this->get_file_type_selection()->identifier, this->file_selector->get_selected_file_full_path());
 
 	return babel_options;
 }

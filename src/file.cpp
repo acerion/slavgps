@@ -1057,30 +1057,31 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
 	bool status = true;
 
-	AcquireOptions export_options(AcquireOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified. */
-	export_options.output = file_full_path;
+	BabelProcess * exporter = new BabelProcess();
 
 	const KMLExportUnits units = Preferences::get_kml_export_units();
 	switch (units) {
 	case KMLExportUnits::Metric:
-		export_options.babel_args = "-o kml,units=m";
+		exporter->set_output("kml,units=m", file_full_path);
 		break;
 	case KMLExportUnits::Statute:
-		export_options.babel_args = "-o kml";
+		exporter->set_output("kml", file_full_path);
 		break;
 	case KMLExportUnits::Nautical:
-		export_options.babel_args = "-o kml,units=n";
+		exporter->set_output("kml,units=n", file_full_path);
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "invalid KML Export units" << (int) units;
+		qDebug() << SG_PREFIX_E << "Invalid KML Export units" << (int) units;
 		status = false;
 		break;
 	}
 
+
 	if (status) {
-		AcquireContext acquire_context;
-		status = export_options.universal_export_fn(trw, NULL, acquire_context, NULL);
+		status = exporter->export_through_gpx(trw, NULL);
 	}
+
+	delete exporter;
 
 	return status;
 }
@@ -1149,16 +1150,16 @@ bool VikFile::export_trw(LayerTRW * trw, const QString & file_full_path, SGFileT
 
 bool VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints)
 {
-	AcquireOptions export_options(AcquireOptionsMode::FromFile); /* TODO_MAYBE: ::FromFile, but no input file specified, just output. */
-	export_options.output = output_file_full_path;
-	export_options.babel_args = QString("%1 %2 %3 -o %4")
-		.arg(tracks ? "-t" : "")
-		.arg(routes ? "-r" : "")
-		.arg(waypoints ? "-w" : "")
-		.arg(output_data_format);;
+	BabelProcess * exporter = new BabelProcess();
 
-	AcquireContext acquire_context;
-	return export_options.universal_export_fn(trw, NULL, acquire_context, NULL);
+	exporter->set_options(BabelProcess::get_trw_string(tracks, routes, waypoints));
+	exporter->set_output(output_data_format, output_file_full_path);
+
+	const bool status = exporter->export_through_gpx(trw, NULL);
+
+	delete exporter;
+
+	return status;
 }
 
 

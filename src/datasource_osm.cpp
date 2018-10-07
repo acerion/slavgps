@@ -100,7 +100,7 @@ int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
 
 AcquireOptions * DataSourceOSMTracesDialog::get_acquire_options_none(void)
 {
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
 	const LatLonBBoxStrings bbox_strings = this->viewport->get_bbox().to_strings();
 

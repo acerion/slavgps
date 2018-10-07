@@ -131,7 +131,7 @@ int DataSourceOSMMyTraces::run_config_dialog(AcquireContext & acquire_context)
 
 AcquireOptions * DataSourceOSMMyTracesDialog::get_acquire_options_none(void)
 {
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptionsMode::FromURL);
+	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
 	/* Overwrite authentication info. */
 	OSMTraces::save_current_credentials(this->user_entry.text(), this->password_entry.text());
