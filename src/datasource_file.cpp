@@ -82,7 +82,7 @@ int DataSourceFile::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_none();
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -117,7 +117,7 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-AcquireOptions * DataSourceFileDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	g_last_directory_url = this->file_selector->get_directory_url();
 	g_last_filter = this->file_selector->get_selected_name_filter();

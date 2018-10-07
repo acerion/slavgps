@@ -55,6 +55,7 @@ namespace SlavGPS {
 	class DataSourceGeoTagDialog : public DataSourceDialog {
 	public:
 		DataSourceGeoTagDialog(const QString & window_title);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) { return NULL; }
 
 		FileSelectorWidget * file_selector = NULL;
 	};

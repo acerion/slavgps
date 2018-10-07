@@ -56,8 +56,8 @@ namespace SlavGPS {
 	class BFilterSimplifyDialog : public DataSourceDialog {
 	public:
 		BFilterSimplifyDialog(const QString & window_title);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 
-		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
 		QSpinBox * spin = NULL;
 	};
 
@@ -74,8 +74,8 @@ namespace SlavGPS {
 	class BFilterCompressDialog : public DataSourceDialog {
 	public:
 		BFilterCompressDialog(const QString & window_title);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 
-		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
 		QDoubleSpinBox * spin = NULL;
 	};
 
@@ -92,8 +92,7 @@ namespace SlavGPS {
 	class BFilterDuplicatesDialog : public DataSourceDialog {
 	public:
 		BFilterDuplicatesDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-
-		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 	};
 
 
@@ -109,8 +108,8 @@ namespace SlavGPS {
 	class BFilterManualDialog : public DataSourceDialog {
 	public:
 		BFilterManualDialog(const QString & window_title);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 
-		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename);
 		QLineEdit * entry = NULL;
 	};
 
@@ -126,8 +125,7 @@ namespace SlavGPS {
 	class BFilterPolygonDialog : public DataSourceDialog {
 	public:
 		BFilterPolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-
-		AcquireOptions * get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 	};
 
 
@@ -142,8 +140,7 @@ namespace SlavGPS {
 	class BFilterExcludePolygonDialog : public DataSourceDialog {
 	public:
 		BFilterExcludePolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-
-		AcquireOptions * get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 	};
 
 

@@ -86,7 +86,7 @@ int DataSourceURL::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_none();
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 
 		this->download_options = new DownloadOptions; /* With default values. */
 		/* Support .zip + bzip2 files directly. */
@@ -136,7 +136,7 @@ DataSourceURLDialog::~DataSourceURLDialog()
 
 
 
-AcquireOptions * DataSourceURLDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceURLDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 

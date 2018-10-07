@@ -72,7 +72,7 @@ namespace SlavGPS {
 		DataSourceGeoCacheDialog(const QString & window_title, Viewport * viewport);
 		~DataSourceGeoCacheDialog();
 
-		AcquireOptions * get_acquire_options_none(void);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 
 		bool circle_is_onscreen(const ScreenPos & circle_center);
 

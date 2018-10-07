@@ -77,7 +77,7 @@ int DataSourceRouting::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_none();
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -121,7 +121,7 @@ DataSourceRoutingDialog::DataSourceRoutingDialog(const QString & window_title) :
 
 
 
-AcquireOptions * DataSourceRoutingDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceRoutingDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	/* Retrieve directions. */
 	const QString from = this->from_entry.text();

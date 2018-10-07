@@ -111,7 +111,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, V
 
 
 
-AcquireOptions * DataSourceWebToolDialog::get_acquire_options_none(void)
+AcquireOptions * DataSourceWebToolDialog::create_acquire_options(AcquireContext & acquire_context)
 {
 	if (this->web_tool_data_source->webtool_needs_user_string()) {
 		this->web_tool_data_source->user_string = this->input_field.text();
@@ -182,7 +182,7 @@ int DataSourceWebTool::run_config_dialog(AcquireContext & acquire_context)
 		answer = config_dialog.exec();
 
 		if (answer == QDialog::Accepted) {
-			this->acquire_options = config_dialog.create_acquire_options_none();
+			this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 			this->download_options = new DownloadOptions; /* With default values. */
 		}
 	} else {

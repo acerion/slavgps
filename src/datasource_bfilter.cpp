@@ -89,7 +89,7 @@ int BFilterSimplify::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.target_trw);
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -117,19 +117,22 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 
 
 
-AcquireOptions * BFilterSimplifyDialog::get_acquire_options_layer(const QString & input_layer_filename)
+AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	AcquireOptions * babel_options = new AcquireOptions();
+	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
 	const int32_t value = this->spin->value();
 
-	babel_options->babel_process = new BabelProcess();
-	babel_options->babel_process->set_input("gpx", input_layer_filename);
-	babel_options->babel_process->set_filters(QString("-x simplify,count=%1").arg(value));
+	AcquireOptions * options = new AcquireOptions();
+	options->babel_process = new BabelProcess();
+	options->babel_process->set_input("gpx", layer_file_full_path);
+	options->babel_process->set_filters(QString("-x simplify,count=%1").arg(value));
 
 	/* Store for subsequent default use. */
 	bfilter_simplify_params_defaults[0] = SGVariant(value);
 
-	return babel_options;
+	Util::add_to_deletion_list(layer_file_full_path);
+
+	return options;
 }
 
 
@@ -177,7 +180,7 @@ int BFilterCompress::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.target_trw);
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -208,12 +211,11 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 
 
 
-/**
-   http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
-*/
-AcquireOptions * BFilterCompressDialog::get_acquire_options_layer(const QString & input_layer_filename)
+/* http://www.gpsbabel.org/htmldoc-development/filter_simplify.html */
+AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	AcquireOptions * babel_options = new AcquireOptions();
+	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
+
 	const double value = this->spin->value();
 
 	const char units = Preferences::get_unit_distance() == DistanceUnit::Kilometres ? 'k' : ' ';
@@ -224,14 +226,17 @@ AcquireOptions * BFilterCompressDialog::get_acquire_options_layer(const QString 
 	   - options make this more complicated to use - is even that useful to be allowed to change the error value?
 	   NB units not applicable if relative method used - defaults to Miles when not specified. */
 
-	babel_options->babel_process = new BabelProcess();
-	babel_options->babel_process->set_input("gpx", input_layer_filename);
-	babel_options->babel_process->set_filters(QString("-x simplify,crosstrack,error=%1%2").arg(value, -1, 'f', 5).arg(units)); /* '-1' for left-align. */
+	AcquireOptions * options = new AcquireOptions();
+	options->babel_process = new BabelProcess();
+	options->babel_process->set_input("gpx", layer_file_full_path);
+	options->babel_process->set_filters(QString("-x simplify,crosstrack,error=%1%2").arg(value, -1, 'f', 5).arg(units)); /* '-1' for left-align. */
 
 	/* Store for subsequent default use. */
 	bfilter_compress_params_defaults[0] = SGVariant(value);
 
-	return babel_options;
+	Util::add_to_deletion_list(layer_file_full_path);
+
+	return options;
 }
 
 
@@ -262,7 +267,7 @@ int BFilterDuplicates::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.target_trw);
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -272,15 +277,18 @@ int BFilterDuplicates::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions * BFilterDuplicatesDialog::get_acquire_options_layer(const QString & input_layer_filename)
+AcquireOptions * BFilterDuplicatesDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	AcquireOptions * babel_options = new AcquireOptions();
+	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
 
-	babel_options->babel_process = new BabelProcess();
-	babel_options->babel_process->set_input("gpx", input_layer_filename);
-	babel_options->babel_process->set_filters("-x duplicate,location");
+	AcquireOptions * options = new AcquireOptions();
+	options->babel_process = new BabelProcess();
+	options->babel_process->set_input("gpx", layer_file_full_path);
+	options->babel_process->set_filters("-x duplicate,location");
 
-	return babel_options;
+	Util::add_to_deletion_list(layer_file_full_path);
+
+	return options;
 }
 
 
@@ -316,7 +324,7 @@ int BFilterManual::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_layer(acquire_context.target_trw);
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 
@@ -338,16 +346,19 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 
 
 
-AcquireOptions * BFilterManualDialog::get_acquire_options_layer(const QString & input_layer_filename)
+AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	AcquireOptions * babel_options = new AcquireOptions();
+	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
 	const QString value = this->entry->text();
 
-	babel_options->babel_process = new BabelProcess();
-	babel_options->babel_process->set_input("gpx", input_layer_filename);
-	babel_options->babel_process->set_filters(QString("-x %1").arg(value));
+	AcquireOptions * options = new AcquireOptions();
+	options->babel_process = new BabelProcess();
+	options->babel_process->set_input("gpx", layer_file_full_path);
+	options->babel_process->set_filters(QString("-x %1").arg(value));
 
-	return babel_options;
+	Util::add_to_deletion_list(layer_file_full_path);
+
+	return options;
 }
 
 
@@ -372,30 +383,37 @@ BFilterPolygon::BFilterPolygon()
 
 
 
-/* FIXME: shell_escape stuff. */
-AcquireOptions * BFilterPolygonDialog::get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
+int BFilterPolygon::run_config_dialog(AcquireContext & acquire_context)
 {
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromShellCommand);
+	/* There is no *real* dialog for which to call ::exec(). */
 
-	const QString command1 = QString("gpsbabel -i gpx -f %1 -o arc -F - ").arg(track_input_file_full_path);
-	const QString command2 = QString("gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(layer_input_file_full_path);
+	BFilterPolygonDialog config_dialog(this->window_title);
 
-	babel_options->shell_command = command1 + " | " + command2;
+	this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 
-	return babel_options;
+	return QDialog::Accepted;
 }
 
 
 
 
-int BFilterPolygon::run_config_dialog(AcquireContext & acquire_context)
+AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	/* There is no *real* dialog for which to call ::exec(). */
+	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
+	const QString track_file_full_path = GPX::write_track_tmp_file(acquire_context.target_trk, NULL);
 
-	DataSourceDialog config_dialog(this->window_title);
-	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context.target_trw, acquire_context.target_trk);
 
-	return QDialog::Accepted;
+	/* FIXME: shell_escape stuff. */
+	const QString command1 = QString("gpsbabel -i gpx -f %1 -o arc -F - ").arg(track_file_full_path);
+	const QString command2 = QString("gpsbabel -i gpx -f %2 -x polygon,file=- -o gpx -F -").arg(layer_file_full_path);
+	AcquireOptions * acquire_options = new AcquireOptions(AcquireOptions::Mode::FromShellCommand);
+	acquire_options->shell_command = command1 + " | " + command2;
+
+
+	Util::add_to_deletion_list(layer_file_full_path);
+	Util::add_to_deletion_list(track_file_full_path);
+
+	return acquire_options;
 }
 
 
@@ -420,24 +438,35 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 
 
 
-
-/* FIXME: shell_escape stuff */
-AcquireOptions * BFilterExcludePolygonDialog::get_acquire_options_layer_track(const QString & layer_input_file_full_path, const QString & track_input_file_full_path)
-{
-	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromShellCommand);
-	babel_options->shell_command = QString("gpsbabel -i gpx -f %1 -o arc -F - | gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(track_input_file_full_path).arg(layer_input_file_full_path);
-
-	return babel_options;
-}
-
-
-
 int BFilterExcludePolygon::run_config_dialog(AcquireContext & acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
-	DataSourceDialog config_dialog(this->window_title);
-	this->acquire_options = config_dialog.create_acquire_options_layer_track(acquire_context.target_trw, acquire_context.target_trk);
+	BFilterExcludePolygonDialog config_dialog(this->window_title);
+
+	this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 
 	return QDialog::Accepted;
+}
+
+
+
+
+AcquireOptions* BFilterExcludePolygonDialog::create_acquire_options(AcquireContext & acquire_context)
+{
+	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
+	const QString track_file_full_path = GPX::write_track_tmp_file(acquire_context.target_trk, NULL);
+
+
+	/* FIXME: shell_escape stuff. */
+	const QString command1 = QString("gpsbabel -i gpx -f %1 -o arc -F -").arg(track_file_full_path);
+	const QString command2 = QString("gpsbabel -i gpx -f %2 -x polygon,exclude,file=- -o gpx -F -").arg(layer_file_full_path);
+	AcquireOptions * options = new AcquireOptions(AcquireOptions::Mode::FromShellCommand);
+	options->shell_command = command1 + "|" + command2;
+
+
+	Util::add_to_deletion_list(layer_file_full_path);
+	Util::add_to_deletion_list(track_file_full_path);
+
+	return options;
 }

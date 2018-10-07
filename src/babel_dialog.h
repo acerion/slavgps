@@ -51,7 +51,7 @@ namespace SlavGPS {
 
 
 
-	class BabelDialog : public DataSourceDialog {
+	class BabelDialog : public BasicDialog {
 		Q_OBJECT
 	public:
 		BabelDialog(const QString & window_title, QWidget * parent = NULL);
@@ -60,10 +60,6 @@ namespace SlavGPS {
 		void build_ui(const BabelMode * mode = NULL);
 
 		void get_write_mode(BabelMode & mode);
-
-		AcquireOptions * get_acquire_options_none(void) { return NULL; };
-		AcquireOptions * get_acquire_options_layer(const QString & input_layer_filename) { return NULL; };
-		AcquireOptions * get_acquire_options_layer_track(const QString & input_layer_filename) { return NULL; };
 
 		BabelFileType * get_file_type_selection(void);
 

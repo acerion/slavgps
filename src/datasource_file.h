@@ -55,7 +55,7 @@ namespace SlavGPS {
 		DataSourceFileDialog(const QString & title);
 		~DataSourceFileDialog();
 
-		AcquireOptions * get_acquire_options_none(void);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
 
 	public slots:
 		void accept_cb(void);

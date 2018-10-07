@@ -204,7 +204,7 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-AcquireOptions * DatasourceGPSSetup::get_acquire_options_none(void)
+AcquireOptions * DatasourceGPSSetup::create_acquire_options(AcquireContext & acquire_context)
 {
 	gps_acquire_in_progress = true;
 
@@ -454,7 +454,7 @@ int DataSourceGPS::run_config_dialog(AcquireContext & acquire_context)
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
-		this->acquire_options = config_dialog.create_acquire_options_none();
+		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
 	}
 

@@ -54,6 +54,7 @@ namespace SlavGPS {
 	class DataSourceGeoJSONDialog : public DataSourceDialog {
 	public:
 		DataSourceGeoJSONDialog(const QString & window_title);
+		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) { return NULL; }
 
 		FileSelectorWidget * file_selector = NULL;
 	};

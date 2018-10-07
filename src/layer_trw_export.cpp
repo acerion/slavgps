@@ -58,6 +58,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer TRW Export"
+
+
+
+
 static QUrl last_folder_url;
 
 
@@ -134,30 +139,30 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 
 	bool failed = false;
 
-	BabelDialog * dialog = new BabelDialog(title);
-	dialog->build_ui(&mode);
+	BabelDialog dialog(title);
+	dialog.build_ui(&mode);
 
 	const QString cwd = QDir::currentPath();
 	if (!cwd.isEmpty()) {
-		dialog->file_selector->set_directory_url(QUrl(cwd));
+		dialog.file_selector->set_directory_url(QUrl(cwd));
 	}
 
 	/* Set possible name of the file. */
-	dialog->file_selector->preselect_file_full_path(default_file_full_path);
+	dialog.file_selector->preselect_file_full_path(default_file_full_path);
 
-	int rv = dialog->exec();
+	const int rv = dialog.exec();
 	if (rv == QDialog::Accepted) {
-		const BabelFileType * file_type = dialog->get_file_type_selection();
-		const QString output_file_full_path = dialog->file_selector->get_selected_file_full_path();
+		const BabelFileType * file_type = dialog.get_file_type_selection();
+		const QString output_file_full_path = dialog.file_selector->get_selected_file_full_path();
 
-		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: accepted";
-		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type identifier:" << file_type->identifier;
-		qDebug() << "II: Layer TRW Export via gpsbabel: selected format type label:" << file_type->label;
-		qDebug() << "II: Layer TRW Export via gpsbabel: selected file path:" << output_file_full_path;
+		qDebug() << SG_PREFIX_I << "Dialog result: accepted";
+		qDebug() << SG_PREFIX_I << "Selected format type identifier:" << file_type->identifier;
+		qDebug() << SG_PREFIX_I << "Selected format type label:" << file_type->label;
+		qDebug() << SG_PREFIX_I << "Selected file path:" << output_file_full_path;
 
 
 		this->get_window()->set_busy_cursor();
-		dialog->get_write_mode(mode); /* We overwrite the old values of the struct, but that's ok. */
+		dialog.get_write_mode(mode); /* We overwrite the old values of the struct, but that's ok. */
 
 		if (file_type == NULL) {
 			Dialog::error(QObject::tr("You did not select a valid file format."), this->get_window());
@@ -170,9 +175,9 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 		this->get_window()->clear_busy_cursor();
 
 	} else if (rv == QDialog::Rejected) {
-		qDebug() << "II: Layer TRW Export via gpsbabel: dialog result: rejected";
+		qDebug() << SG_PREFIX_I << "Dialog result: rejected";
 	} else {
-		qDebug() << "EE: Layer TRW Export via gpsbabel: dialog result: unknown:" << rv;
+		qDebug() << SG_PREFIX_E << "Dialog result: unknown:" << rv;
 	}
 
 	if (failed) {
