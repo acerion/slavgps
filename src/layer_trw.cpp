@@ -4060,20 +4060,22 @@ void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 
 
 
-LayerDataReadStatus LayerTRW::read_layer_data(FILE * file, const QString & dirpath)
+LayerDataReadStatus LayerTRW::read_layer_data(QFile & file, const QString & dirpath)
 {
-	qDebug() << "DD: Layer TRW: Read Layer Data from File: will call gpspoint_read_file() to read Layer Data";
-	return GPSPoint::read_layer(file, this, dirpath);
+	qDebug() << SG_PREFIX_D << "Will call gpspoint_read_file() to read Layer Data";
+	return GPSPoint::read_layer_from_file(file, this, dirpath);
 }
 
 
 
 
-void LayerTRW::write_layer_data(FILE * file) const
+sg_ret LayerTRW::write_layer_data(QFile & file) const
 {
-	fprintf(file, "\n\n~LayerData\n");
-	GPSPoint::write_layer(file, this);
-	fprintf(file, "~EndLayerData\n");
+	file.write("\n\n~LayerData\n");
+	const sg_ret rv = GPSPoint::write_layer_to_file(file, this);
+	file.write("~EndLayerData\n");
+
+	return rv;
 }
 
 

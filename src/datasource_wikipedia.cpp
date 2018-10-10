@@ -64,16 +64,16 @@ DataSourceWikipedia::DataSourceWikipedia()
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (!trw) {
 		qDebug() << SG_PREFIX_E << "Missing TRW layer";
-		return false;
+		return sg_ret::err;
 	}
 
 	Geonames::wikipedia_box(trw, acquire_context.viewport->get_bbox(), acquire_context.window);
 
-	return true;
+	return sg_ret::ok;
 }
 
 

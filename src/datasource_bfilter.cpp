@@ -47,6 +47,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "DataSource BFilter"
+
+
+
+
 /************************************ Simplify (Count) *****************************/
 
 
@@ -119,7 +124,11 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 
 AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
+	QString layer_file_full_path;
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
+		return NULL;
+	}
 	const int32_t value = this->spin->value();
 
 	AcquireOptions * options = new AcquireOptions();
@@ -214,8 +223,11 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 /* http://www.gpsbabel.org/htmldoc-development/filter_simplify.html */
 AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
-
+	QString layer_file_full_path;
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
+		return NULL;
+	}
 	const double value = this->spin->value();
 
 	const char units = Preferences::get_unit_distance() == DistanceUnit::Kilometres ? 'k' : ' ';
@@ -279,7 +291,11 @@ int BFilterDuplicates::run_config_dialog(AcquireContext & acquire_context)
 
 AcquireOptions * BFilterDuplicatesDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
+	QString layer_file_full_path;
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
+		return NULL;
+	}
 
 	AcquireOptions * options = new AcquireOptions();
 	options->babel_process = new BabelProcess();
@@ -348,7 +364,12 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 
 AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
+	QString layer_file_full_path;
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
+		return NULL;
+	}
+
 	const QString value = this->entry->text();
 
 	AcquireOptions * options = new AcquireOptions();
@@ -399,8 +420,16 @@ int BFilterPolygon::run_config_dialog(AcquireContext & acquire_context)
 
 AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
-	const QString track_file_full_path = GPX::write_track_tmp_file(acquire_context.target_trk, NULL);
+	QString layer_file_full_path;
+	QString track_file_full_path;
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
+		return NULL;
+	}
+	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context.target_trk, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
+		return NULL;
+	}
 
 
 	/* FIXME: shell_escape stuff. */
@@ -454,8 +483,14 @@ int BFilterExcludePolygon::run_config_dialog(AcquireContext & acquire_context)
 
 AcquireOptions* BFilterExcludePolygonDialog::create_acquire_options(AcquireContext & acquire_context)
 {
-	const QString layer_file_full_path = GPX::write_tmp_file(acquire_context.target_trw, NULL);
-	const QString track_file_full_path = GPX::write_track_tmp_file(acquire_context.target_trk, NULL);
+	QString layer_file_full_path;
+	QString track_file_full_path;
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
+	}
+	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context.target_trk, NULL)) {
+		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
+	}
 
 
 	/* FIXME: shell_escape stuff. */

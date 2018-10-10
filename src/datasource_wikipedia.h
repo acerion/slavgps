@@ -41,7 +41,7 @@ namespace SlavGPS {
 		~DataSourceWikipedia() {};
 
 		/* This data source does not provide configuration dialog. */
-		bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
+		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
 
 		int run_config_dialog(AcquireContext & acquire_context);
 	};

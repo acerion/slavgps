@@ -24,12 +24,13 @@
 
 
 
-#include <cstdio>
-
-
-
-
 #include <QString>
+#include <QFile>
+
+
+
+
+#include "globals.h"
 
 
 
@@ -44,7 +45,14 @@ namespace SlavGPS {
 
 
 
-	bool geojson_write_file(FILE * file, LayerTRW * trw);
+	class GeoJSON {
+	public:
+		static sg_ret write_layer_to_file(QFile & file, LayerTRW * trw);
+	};
+
+
+
+
 
 	QString geojson_program_export(void);
 	QString geojson_program_import(void);

@@ -1086,7 +1086,7 @@ void GPSSession::run(void)
 		exporter->set_acquire_context(acquire_context);
 		exporter->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
-		result = exporter->export_through_gpx(this->trw, this->trk);
+		result = sg_ret::ok == exporter->export_through_gpx(this->trw, this->trk);
 	}
 
 	if (!result) {

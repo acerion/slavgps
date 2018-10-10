@@ -551,11 +551,11 @@ void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMeta
 
 
 
-bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 
-	bool result = false;
+	sg_ret result = sg_ret::err;
 
 	/* Support .zip + bzip2 files directly. */
 	DownloadOptions local_dl_options(2); /* Allow a couple of redirects. */
@@ -566,7 +566,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 
 	QTemporaryFile tmp_file;
 	if (!dl_handle.download_to_tmp_file(tmp_file, DS_OSM_TRACES_GPX_FILES)) {
-		return false;
+		return sg_ret::err;
 	}
 
 	xml_data *xd = (xml_data *) malloc(sizeof (xml_data));
@@ -583,7 +583,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 
 	if (!read_result) {
 		free(xd);
-		return false;
+		return sg_ret::err;
 	}
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
@@ -591,7 +591,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 			Dialog::info(QObject::tr("No GPS Traces found"), acquire_context.window);
 		}
 		free(xd);
-		return false;
+		return sg_ret::err;
 	}
 
 	xd->list_of_gpx_meta_data.reverse();
@@ -635,7 +635,7 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 				target_layer = trw;
 			}
 
-			bool convert_result = false;
+			sg_ret convert_result = sg_ret::err;
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
 				/* Download type is GPX (or a compressed version). */
@@ -646,14 +646,14 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
-				got_something = got_something || convert_result;
-				if (!convert_result) {
+				got_something = got_something || (convert_result == sg_ret::ok);
+				if (convert_result != sg_ret::ok) {
 					/* Report errors to the status bar. */
 					acquire_context.window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->source_url));
 				}
 			}
 
-			if (convert_result) {
+			if (convert_result == sg_ret::ok) {
 				/* Can use the layer. */
 				acquire_context.top_level_layer->add_layer(target_layer, true);
 				/* Move to area of the track. */
@@ -690,10 +690,10 @@ bool DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 
 	/* ATM The user is only informed if all getting *all* of the traces failed. */
 	if (selected) {
-		result = got_something;
+		result = got_something ? sg_ret::ok : sg_ret::err;
 	} else {
 		/* Process was cancelled but need to return that it proceeded as expected. */
-		result = true;
+		result = sg_ret::ok;
 	}
 
 	if (!this->is_thread) {

@@ -78,7 +78,7 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		virtual bool acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) { return false; };
+		virtual sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) { return sg_ret::err; };
 		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context) { return; };
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status) { return -1; };
@@ -109,9 +109,6 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		DataSourceDialog(const QString & window_title) { this->setWindowTitle(window_title); };
-
-	private:
-		virtual AcquireOptions * create_acquire_options(AcquireContext & acquire_context) = 0;
 	};
 
 

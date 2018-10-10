@@ -40,6 +40,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "GPSMapper"
+
+
+
+
 /*
   Name of layer -> RGN type and Type.
   format: Name RGN40 0x40
@@ -112,7 +117,7 @@ static unsigned int print_rgn_stuff(FILE * file, char const * nm)
 
 
 
-static void write_waypoints(FILE * file, const std::list<Waypoint *> & waypoints)
+sg_ret GPSMapper::write_waypoints_to_file(FILE * file, const std::list<Waypoint *> & waypoints)
 {
 	for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
 		Waypoint * wp = *iter;
@@ -122,6 +127,8 @@ static void write_waypoints(FILE * file, const std::list<Waypoint *> & waypoints
 			fprintf(file, "[END-%.5s]\n\n", wp->comment.toUtf8().constData() + len + 1);
 		}
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -135,7 +142,7 @@ static void write_trackpoint(FILE * file, Trackpoint * tp)
 
 
 
-static void write_tracks(FILE * file, const std::list<Track *> & tracks)
+sg_ret GPSMapper::write_tracks_to_file(FILE * file, const std::list<Track *> & tracks)
 {
 	for (auto tracks_iter = tracks.begin(); tracks_iter != tracks.end(); tracks_iter++) {
 		Track * trk = *tracks_iter;
@@ -149,19 +156,36 @@ static void write_tracks(FILE * file, const std::list<Track *> & tracks)
 			fprintf(file, "\n[END-%.5s]\n\n", trk->comment.toUtf8().constData() + len + 1);
 		}
 	}
+
+	return sg_ret::ok;
 }
 
 
 
 
-void SlavGPS::gpsmapper_write_file(FILE * file, LayerTRW * trw)
+sg_ret GPSMapper::write_layer_to_file(QFile & file, LayerTRW * trw)
 {
-	const std::list<Track *> & tracks = trw->get_tracks();
-	const std::list<Waypoint *> & waypoints = trw->get_waypoints();
+	FILE * file2 = fdopen(file.handle(), "w"); /* TODO: close this file? */
 
-	fprintf(file, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
-		trw->name.toUtf8().constData(), trw->name.toUtf8().constData());
+	const QString line = QString("[IMG ID]\n"
+				     "ID=%1\n"
+				     "Name=%2\n"
+				     "TreSize=1000\n"
+				     "RgnLimit=700\n"
+				     "Levels=2\n"
+				     "Level0=22\n"
+				     "Level1=18\n"
+				     "Zoom0=0\n"
+				     "Zoom1=1\n"
+				     "[END-IMG ID]\n\n").arg(trw->name).arg(trw->name);
+	fprintf(file2, "%s", line.toUtf8().constData());
 
-	write_waypoints(file, waypoints);
-	write_tracks(file, tracks);
+	if (sg_ret::ok != GPSMapper::write_waypoints_to_file(file2, trw->get_waypoints())) {
+		qDebug() << SG_PREFIX_E << "Failed to write waypoints";
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != GPSMapper::write_tracks_to_file(file2, trw->get_tracks())) {
+		qDebug() << SG_PREFIX_E << "Failed to write tracks";
+		return sg_ret::err;
+	}
 }

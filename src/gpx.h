@@ -29,7 +29,17 @@
 
 
 
+#include <QFile>
+
+
+
+
 #include <expat.h>
+
+
+
+
+#include "globals.h"
 
 
 
@@ -77,15 +87,15 @@ namespace SlavGPS {
 
 	class GPX {
 	public:
-		static bool read_file(FILE * file, LayerTRW * trw);
-		static void write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options);
-		static void write_track_file(FILE * file, Track * trk, GPXWriteOptions * options);
+		static sg_ret read_layer_from_file(QFile & file, LayerTRW * trw);
+		static sg_ret write_layer_to_file(QFile & file, LayerTRW * trw, GPXWriteOptions * options);
+		static sg_ret write_track_to_file(QFile & file, Track * trk, GPXWriteOptions * options);
 
-		static QString write_tmp_file(LayerTRW * trw, GPXWriteOptions * options);
-		static QString write_track_tmp_file(Track * trk, GPXWriteOptions * options);
+		static sg_ret write_layer_to_tmp_file(QString & file_full_path, LayerTRW * trw, GPXWriteOptions * options);
+		static sg_ret write_track_to_tmp_file(QString & file_full_path, Track * trk, GPXWriteOptions * options);
 
 	private:
-		static QString write_tmp_file(LayerTRW * trw, Track * trk, GPXWriteOptions * options);
+		static sg_ret write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * trw, Track * trk, GPXWriteOptions * options);
 	};
 
 

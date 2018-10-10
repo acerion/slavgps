@@ -29,6 +29,7 @@
 
 
 #include "file_utils.h"
+#include "globals.h"
 
 
 
@@ -47,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": File Utils:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "File Utils"
 
 
 
@@ -98,18 +99,22 @@ bool FileUtils::has_extension(const QString & file_name, const QString & file_ex
 
 
 
-bool FileUtils::file_has_magic(FILE * file, char const * magic, size_t size)
+bool FileUtils::file_has_magic(QFile & file, char const * magic, size_t size)
 {
 	char buffer[16] = { 0 }; /* There should be no magic longer than few (3-4) characters. */
 	if (size > sizeof (buffer)) {
-		qDebug() << "EE" PREFIX << "expected magic length too large:" << size;
+		qDebug() << SG_PREFIX_E << "Expected magic length too large:" << size;
 		return false;
 	}
 
-	const bool result = (size == fread(buffer, 1, size, file) && 0 == strncmp(buffer, magic, size));
-
-	for (int i = size - 1; i >= 0; i--) { /* The ol' pushback. */
-		ungetc(buffer[i], file);
+	if ((int) size != file.peek(buffer, size)) {
+		/* Too little data in file to read magic. */
+		return false;
 	}
-	return result;
+
+	if (0 != strncmp(buffer, magic, size)) {
+		return false;
+	}
+
+	return true;
 }

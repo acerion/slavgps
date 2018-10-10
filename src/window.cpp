@@ -3312,7 +3312,7 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 
 		/* We allow exporting empty layers. */
 		if (safe) {
-			bool this_success = VikFile::export_trw_layer((LayerTRW *) layer, file_full_path, file_type, true);
+			bool this_success = sg_ret::ok == VikFile::export_trw_layer((LayerTRW *) layer, file_full_path, file_type, true);
 
 			/* Show some progress. */
 			if (this_success) {

@@ -68,13 +68,13 @@ static void my_watch(GPid pid, int status, void * user_data)
 /**
  * Returns true if successfully written.
  */
-bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
+sg_ret GeoJSON::write_layer_to_file(QFile & file, LayerTRW * trw)
 {
-	bool result = false;
+	sg_ret result = sg_ret::err;
 
-	const QString tmp_filename = GPX::write_tmp_file(trw, NULL);
-	if (tmp_filename.isEmpty()) {
-		return result;
+	QString tmp_file_full_path;
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(tmp_file_full_path, trw, NULL)) {
+		return sg_ret::err;
 	}
 
 	GPid pid;
@@ -86,7 +86,7 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 	argv[0] = g_strdup(geojson_program_export().toUtf8().constData());
 	argv[1] = strdup("-f");
 	argv[2] = strdup("gpx");
-	argv[3] = g_strdup(tmp_filename.toUtf8().constData());
+	argv[3] = g_strdup(tmp_file_full_path.toUtf8().constData());
 	argv[4] = NULL;
 
 	GError * error = NULL;
@@ -108,19 +108,19 @@ bool SlavGPS::geojson_write_file(FILE * file, LayerTRW * trw)
 		setvbuf(fout, NULL, _IONBF, 0);
 
 		while (fgets(line, sizeof(line), fout)) {
-			fprintf(file, "%s", line);
+			file.write(line);
 		}
 
 		fclose(fout);
 
 		g_child_watch_add(pid, (GChildWatchFunc) my_watch, NULL);
-		result = true;
+		result = sg_ret::ok;
 	}
 
 	g_strfreev(argv);
 
 	/* Delete the temporary file. */
-	QDir::root().remove(tmp_filename);
+	QDir::root().remove(tmp_file_full_path);
 
 	return result;
 }

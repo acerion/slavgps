@@ -42,6 +42,7 @@
 
 
 #include <QString>
+#include <QFile>
 
 
 
@@ -54,7 +55,7 @@ namespace SlavGPS {
 	public:
 		static QString get_base_name(const QString & file_name);
 		static bool has_extension(const QString & file_name, const QString & file_extension);
-		static bool file_has_magic(FILE * file, char const * magic, size_t size);
+		static bool file_has_magic(QFile &, char const * magic, size_t size);
 	};
 
 

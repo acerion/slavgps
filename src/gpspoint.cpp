@@ -293,9 +293,9 @@ void GPSPointParser::reset()
  * No obvious way to test for a 'gpspoint' file,
  * thus set a flag if any actual tag found during processing of the file.
  */
-LayerDataReadStatus GPSPoint::read_layer(FILE * file, LayerTRW * trw, const QString & dirpath)
+LayerDataReadStatus GPSPoint::read_layer_from_file(QFile & file, LayerTRW * trw, const QString & dirpath)
 {
-	assert (file != NULL && trw != NULL);
+	assert (trw != NULL);
 
 	const CoordMode coord_mode = trw->get_coord_mode();
 
@@ -304,7 +304,7 @@ LayerDataReadStatus GPSPoint::read_layer(FILE * file, LayerTRW * trw, const QStr
 
 	bool have_read_something = false;
 
-	while (fgets(line_buffer, sizeof (line_buffer), file)) {
+	while (0 < file.readLine(line_buffer, sizeof (line_buffer))) {
 		bool inside_quote = 0;
 		bool backslash = 0;
 
@@ -963,16 +963,20 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 
 
 
-void GPSPoint::write_layer(FILE * file, const LayerTRW * trw)
+sg_ret GPSPoint::write_layer_to_file(QFile & file, const LayerTRW * trw)
 {
+	FILE * file2 = fdopen(file.handle(), "w"); /* TODO: close the file? */
+
 	const std::list<Track *> & tracks = trw->get_tracks();
 	const std::list<Track *> & routes = trw->get_routes();
 	const std::list<Waypoint *> & waypoints = trw->get_waypoints();
 
-	fprintf(file, "type=\"waypointlist\"\n");
-	a_gpspoint_write_waypoints(file, waypoints);
-	fprintf(file, "type=\"waypointlistend\"\n");
+	fprintf(file2, "type=\"waypointlist\"\n");
+	a_gpspoint_write_waypoints(file2, waypoints);
+	fprintf(file2, "type=\"waypointlistend\"\n");
 
-	a_gpspoint_write_tracks(file, tracks);
-	a_gpspoint_write_tracks(file, routes);
+	a_gpspoint_write_tracks(file2, tracks);
+	a_gpspoint_write_tracks(file2, routes);
+
+	return sg_ret::ok;
 }

@@ -129,7 +129,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	/* Process selected files.
 	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */
@@ -151,5 +151,5 @@ bool DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acqui
 	this->selected_files.clear();
 
 	/* No failure. */
-	return true;
+	return sg_ret::ok;
 }

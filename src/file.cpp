@@ -132,14 +132,14 @@ void LayerStack<T>::push(T data)
 
 class ReadParser {
 public:
-	ReadParser(FILE * new_file) : file(new_file) {};
+	ReadParser(QFile * new_file) : file(new_file) {};
 
 	void handle_layer_begin(const char * line, Viewport * viewport);
 	void handle_layer_end(const char * line, Viewport * viewport);
 	void handle_layer_data_begin(const QString & dirpath);
 	void handle_layer_parameters(const char * line, size_t line_len);
 
-	bool read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon);
+	sg_ret read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon);
 
 	LayerStack<Layer *> stack;
 	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
@@ -149,12 +149,12 @@ public:
 
 	QHash<param_id_t, QStringList> string_lists; /* Parameter id -> value of parameter (value of parameter is of type QStringList). */
 
-	bool successful_read = true;
+	sg_ret parse_status = sg_ret::ok;
 
 	char buffer[4096];
 	const size_t buffer_size = sizeof (ReadParser::buffer);
 
-	FILE * file = NULL;
+	QFile * file = NULL;
 };
 
 
@@ -208,8 +208,9 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 		}
 		param_value.write(file, iter->second->name);
 	}
-
+#ifdef K_TODO /* TODO: restore after fixing function argument type. */
 	layer->write_layer_data(file);
+#endif
 }
 
 
@@ -287,17 +288,17 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, View
 
 
 
-bool ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon)
+sg_ret ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon)
 {
-	bool success = true;
+	sg_ret read_status = sg_ret::ok;
 
-	while (fgets(this->buffer, this->buffer_size, this->file))  {
+	while (0 < this->file->readLine(this->buffer, this->buffer_size))  {
 
 		if (this->buffer[0] == '~') {
 			/* Beginning of first layer. Stop reading
 			   header, return the buffer through function
 			   argument. */
-			return success;
+			return sg_ret::ok;
 		}
 
 		this->line_num++;
@@ -320,10 +321,12 @@ bool ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & la
 
 
 		if (name_len == 12 && strncasecmp(line, "FILE_VERSION", name_len) == 0) {
-			int version = strtol(value_start, NULL, 10);
-			fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version);
-			if (version > VIKING_FILE_VERSION) {
-				success = false;
+			const int version = strtol(value_start, NULL, 10);
+			if (version <= VIKING_FILE_VERSION) {
+				qDebug() << SG_PREFIX_D << "File version" << version;
+			} else {
+				qDebug() << SG_PREFIX_E << "Invalid file version" << version;
+				read_status = sg_ret::err;
 			}
 			/* However we'll still carry and attempt to read whatever we can. */
 		} else if (name_len == 4 && strncasecmp(line, "xmpp", name_len) == 0) { /* "hard coded" params: global & for all layer-types */
@@ -340,7 +343,8 @@ bool ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & la
 
 		} else if (name_len == 4 && strncasecmp(line, "mode", name_len) == 0) {
 			if (!ViewportDrawModes::set_draw_mode_from_file(viewport, value_start)) {
-				success = false;
+				qDebug() << SG_PREFIX_E << "Failed to set draw mode";
+				read_status = sg_ret::err;
 			}
 
 		} else if (name_len == 5 && strncasecmp(line, "color", name_len) == 0) {
@@ -363,12 +367,12 @@ bool ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & la
 			top_layer->visible = TEST_BOOLEAN(value_start);
 
 		} else {
-			success = false;
+			read_status = sg_ret::err;
 			fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer (%s).\n", this->line_num, line);
 		}
 	}
 
-	return success;
+	return read_status;
 }
 
 
@@ -478,7 +482,7 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 {
 	if (!this->stack.first) { /* TODO_LATER: verify that this condition is handled correctly inside of this branch. */
-		this->successful_read = false;
+		this->parse_status = sg_ret::err;
 		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer\n", this->line_num);
 		this->stack.push(NULL); /* Inside INVALID layer. */
 		return;
@@ -487,7 +491,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 
 	const LayerType parent_type = this->stack.first->type;
 	if (parent_type != LayerType::Aggregate && parent_type != LayerType::GPS) {
-		this->successful_read = false;
+		this->parse_status = sg_ret::err;
 		fprintf(stderr, "WARNING: Line %zd: Layer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) parent_type);
 		this->stack.push(NULL); /* Inside INVALID layer. */
 		return;
@@ -497,7 +501,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 	TreeView * tree_view = NULL;
 
 	if (layer_type == LayerType::Max) {
-		this->successful_read = false;
+		this->parse_status = sg_ret::err;
 		fprintf(stderr, "WARNING: Line %zd: Unknown type %s\n", this->line_num, line + 6);
 		this->stack.push(NULL);
 	} else if (parent_type == LayerType::GPS) {
@@ -534,7 +538,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
 {
 	if (this->stack.second == NULL) {
-		this->successful_read = false;
+		this->parse_status = sg_ret::err;
 		fprintf(stderr, "WARNING: Line %zd: Mismatched ~EndLayer command\n", this->line_num);
 	} else {
 		Layer * parent_layer = this->stack.second;
@@ -560,7 +564,7 @@ void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
 			} else if (parent_layer->type == LayerType::GPS) {
 				/* TODO_2_LATER: anything else needs to be done here? */
 			} else {
-				this->successful_read = false;
+				this->parse_status = sg_ret::err;
 				fprintf(stderr, "WARNING: Line %zd: EndLayer command inside non-Aggregate Layer (type %d)\n", this->line_num, (int) this->stack.first->type);
 			}
 		}
@@ -577,21 +581,20 @@ void ReadParser::handle_layer_data_begin(const QString & dirpath)
 {
 	Layer * layer = this->stack.first;
 
-	const LayerDataReadStatus read_status = layer->read_layer_data(this->file, dirpath);
+	const LayerDataReadStatus read_status = layer->read_layer_data(*this->file, dirpath);
 	switch (read_status) {
 	case LayerDataReadStatus::Error:
-		qDebug() << "EE" PREFIX << "LayerData for layer named" << layer->name << "read unsuccessfully";
-		this->successful_read = false;
+		qDebug() << SG_PREFIX_E << "LayerData for layer named" << layer->name << "read unsuccessfully";
+		this->parse_status = sg_ret::err;
 		break;
 	case LayerDataReadStatus::Success:
-		qDebug() << "DD" PREFIX << "LayerData for layer named" << layer->name << "read successfully";
+		qDebug() << SG_PREFIX_D << "LayerData for layer named" << layer->name << "read successfully";
 		/* Success, pass. */
 		break;
 	case LayerDataReadStatus::Unrecognized:
 		/* Simply skip layer data over. */
-
-		while (fgets(this->buffer, this->buffer_size, this->file)) {
-			qDebug() << "DD" PREFIX "skipping over unrecognized layer data:" << QString(this->buffer).left(30);
+		while (0 < this->file->readLine(this->buffer, this->buffer_size)) {
+			qDebug() << SG_PREFIX_D << "Skipping over unrecognized layer data in line" << this->line_num << QString(this->buffer).left(30);
 			this->line_num++;
 
 			char * line = this->buffer;
@@ -602,13 +605,13 @@ void ReadParser::handle_layer_data_begin(const QString & dirpath)
 			}
 
 			if (strcasecmp(line, "~EndLayerData") == 0) {
-				qDebug() << "DD" PREFIX << "encountered end of LayerData:" << line;
+				qDebug() << SG_PREFIX_D << "encountered end of LayerData in line" << this->line_num << line;
 				break;
 			}
 		}
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "invalid layer data read status" << (int) read_status;
+		qDebug() << SG_PREFIX_E << "Invalid layer data read status" << (int) read_status;
 		break;
 	}
 
@@ -654,7 +657,7 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 		/* Also got to check for name and visible. */
 
 		if (!this->param_specs) {
-			this->successful_read = false;
+			this->parse_status = sg_ret::err;
 			fprintf(stderr, "WARNING: Line %zd: No options for this kind of layer\n", this->line_num);
 			return;
 		}
@@ -698,12 +701,12 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 			   and don't what to worry users about raising such issues.
 			   TODO_LATER Maybe hold old values here - compare the line value against them and if a match
 			   generate a different style of message in the GUI... */
-			// this->successful_read = false;
+			// this->parse_status = sg_ret::err;
 			fprintf(stderr, "WARNING: Line %zd: Unknown parameter. Line:\n%s\n", this->line_num, line);
 		}
 
 	} else {
-		this->successful_read = false;
+		this->parse_status = sg_ret::err;
 		fprintf(stderr, "WARNING: Line %zd: Invalid parameter or parameter outside of layer.\n", this->line_num);
 	}
 
@@ -720,15 +723,15 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 
    TODO_LATER flow up line number(s) / error messages of problems encountered...
 */
-bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport)
+sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport)
 {
 	LatLon lat_lon;
 
-	ReadParser read_parser(file);
+	ReadParser read_parser(&file);
 	read_parser.stack.push(top_layer);
 
-	if (!read_parser.read_header(top_layer, viewport, lat_lon)) {
-		return false;
+	if (sg_ret::ok != read_parser.read_header(top_layer, viewport, lat_lon)) {
+		return sg_ret::err;
 	}
 
 	/* First interesting line after header is already in
@@ -751,19 +754,19 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const QString &
 				continue;
 
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
-				qDebug() << "DD: File: Read: encountered begin of Layer:" << line;
+				qDebug() << SG_PREFIX_D << "Encountered begin of Layer in line" << read_parser.line_num << line;
 				read_parser.handle_layer_begin(line, viewport);
 
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
-				qDebug() << "DD: File: Read: encountered end of Layer:" << line;
+				qDebug() << SG_PREFIX_D << "Encountered end of Layer in line" << read_parser.line_num << line;
 				read_parser.handle_layer_end(line, viewport);
 
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
-				qDebug() << "DD" PREFIX << "encountered begin of LayerData:" << line;
+				qDebug() << SG_PREFIX_D << "Encountered begin of LayerData in line" << read_parser.line_num << line;
 				read_parser.handle_layer_data_begin(dirpath);
 
 			} else {
-				read_parser.successful_read = false;
+				read_parser.parse_status = sg_ret::err;
 				fprintf(stderr, "WARNING: Line %zd: Unknown tilde command\n", read_parser.line_num);
 			}
 		} else {
@@ -779,7 +782,7 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const QString &
 		   name=this
 		   #comment
 		*/
-	} while (fgets(read_parser.buffer, read_parser.buffer_size, file));
+	} while (0 < file.readLine(read_parser.buffer, read_parser.buffer_size));
 
 	while (!read_parser.stack.empty()) {
 		if (read_parser.stack.second && read_parser.stack.first){
@@ -802,8 +805,7 @@ bool VikFile::read_file(FILE * file, LayerAggregate * top_layer, const QString &
 		top_layer->tree_view->apply_tree_item_visibility(top_layer);
 	}
 
-	const bool result = read_parser.successful_read;
-	return result;
+	return read_parser.parse_status;
 }
 
 
@@ -831,10 +833,13 @@ if "[LayerData]"
 bool VikFile::has_vik_file_magic(const QString & file_full_path)
 {
 	bool result = false;
-	FILE * file = fopen(file_full_path.toUtf8().constData(), "r");
-	if (file) {
+
+	QFile file(file_full_path);
+	if (file.open(QIODevice::ReadOnly)) {
 		result = FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN);
-		fclose(file);
+	} else {
+		result = false;
+		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path << "as read only:" << file.error();
 	}
 	return result;
 }
@@ -885,7 +890,6 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
 {
-
 	if (!viewport) {
 		return VikFile::LoadStatus::ReadFailure;
 	}
@@ -898,8 +902,9 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 	}
 	qDebug() << "DD: VikFile: load: reading from file" << full_path;
 
-	FILE * file = fopen(full_path.toUtf8().constData(), "r");
-	if (!file) {
+	QFile file(full_path);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << SG_PREFIX_E << "Failed to open file" << full_path << "as read only:" << file.error();
 		return VikFile::LoadStatus::ReadFailure;
 	}
 
@@ -911,7 +916,7 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
-		if (VikFile::read_file(file, parent_layer, dirpath, viewport)) {
+		if (sg_ret::ok == VikFile::read_file(file, parent_layer, dirpath, viewport)) {
 			load_status = VikFile::LoadStatus::Success;
 		} else {
 			load_status = VikFile::LoadStatus::FailureNonFatal;
@@ -923,7 +928,7 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 	} else {
 		/* For all other file types which consist of tracks, routes and/or waypoints,
 		   must be loaded into a new TrackWaypoint layer (hence it be created). */
-		bool success = true; /* Detect load failures - mainly to remove the layer created as it's not required. */
+		sg_ret convert_status = sg_ret::ok; /* Detect load failures - mainly to remove the layer created as it's not required. */
 
 		LayerTRW * trw = new LayerTRW();
 		trw->set_coord_mode(viewport->get_coord_mode());
@@ -937,10 +942,10 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 			BabelProcess * importer = new BabelProcess();
 			importer->set_input("kml", full_path);
 			importer->set_output("gpx", "-");
-			success = importer->convert_through_gpx(trw);
+			convert_status = importer->convert_through_gpx(trw);
 			delete importer;
 
-			if (!success) {
+			if (convert_status != sg_ret::ok) {
 				load_status = VikFile::LoadStatus::GPSBabelFailure;
 			}
 		}
@@ -949,22 +954,22 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 		   which currently confuses our
 		   FileUtils::file_has_magic() function. */
 		else if (FileUtils::has_extension(full_path, ".gpx") || FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			success = GPX::read_file(file, trw);
-			if (!success) {
+			convert_status = GPX::read_layer_from_file(file, trw);
+			if (convert_status != sg_ret::ok) {
 				load_status = VikFile::LoadStatus::GPXFailure;
 			}
 		} else {
 			/* Try final supported file type. */
-			const LayerDataReadStatus rv = GPSPoint::read_layer(file, trw, dirpath);
-			success = (rv == LayerDataReadStatus::Success);
-			if (!success) {
+			const LayerDataReadStatus rv = GPSPoint::read_layer_from_file(file, trw, dirpath);
+			convert_status = (rv == LayerDataReadStatus::Success ? sg_ret::ok : sg_ret::err);
+			if (convert_status != sg_ret::ok) {
 				/* Failure here means we don't know how to handle the file. */
 				load_status = VikFile::LoadStatus::UnsupportedFailure;
 			}
 		}
 
 		/* Clean up when we can't handle the file. */
-		if (!success) {
+		if (convert_status != sg_ret::ok) {
 			delete trw;
 		} else {
 			/* Complete the setup from the successful load. */
@@ -974,7 +979,6 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 		}
 	}
 
-	fclose(file);
 	return load_status;
 }
 
@@ -1028,34 +1032,33 @@ VikFile::SaveResult VikFile::save(LayerAggregate * top_layer, Viewport * viewpor
 
 
 
-bool VikFile::export_trw_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
+sg_ret VikFile::export_trw_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
-	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
-	if (!file) {
-		return false;
+
+	QFile file(file_full_path);
+	if (!file.open(QIODevice::WriteOnly)) {
+		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path << "as write only:" << file.error();
+		return sg_ret::err;
 	}
 
 	switch (file_type) {
 	case SGFileType::GPX:
 		/* trk defined so can set the option. */
 		options.is_route = trk->type_id == "sg.trw.route";
-		GPX::write_track_file(file, trk, &options);
-		fclose(file);
-		return true;
+		return GPX::write_track_to_file(file, trk, &options);
 	default:
-		qDebug() << "EE: File: Export: unexpected file type for track" << (int) file_type;
-		fclose(file);
-		return false;
+		qDebug() << SG_PREFIX_E << "Unexpected file type for track" << (int) file_type;
+		return sg_ret::err;
 	}
 }
 
 
 
 
-static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
+static sg_ret export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
-	bool status = true;
+	sg_ret status = sg_ret::ok;
 
 	BabelProcess * exporter = new BabelProcess();
 
@@ -1072,12 +1075,12 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid KML Export units" << (int) units;
-		status = false;
+		status = sg_ret::err;
 		break;
 	}
 
 
-	if (status) {
+	if (status == sg_ret::ok) {
 		status = exporter->export_through_gpx(trw, NULL);
 	}
 
@@ -1090,28 +1093,30 @@ static bool export_to_kml(const QString & file_full_path, LayerTRW * trw)
 
 
 /* Call it when @trk argument to VikFile::export() is NULL. */
-bool VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
+sg_ret VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
-	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
-	if (!file) {
-		return false;
+
+	QFile file(file_full_path);
+	if (!file.open(QIODevice::WriteOnly)) {
+		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path;
+		return sg_ret::err;
 	}
 
-	bool result = true;
+	sg_ret result = sg_ret::ok;
 
 	switch (file_type) {
 	case SGFileType::GPSMapper:
-		gpsmapper_write_file(file, trw);
+		result = GPSMapper::write_layer_to_file(file, trw);
 		break;
 	case SGFileType::GPX:
-		GPX::write_file(file, trw, &options);
+		result = GPX::write_layer_to_file(file, trw, &options);
 		break;
 	case SGFileType::GPSPoint:
-		GPSPoint::write_layer(file, trw);
+		result = GPSPoint::write_layer_to_file(file, trw);
 		break;
 	case SGFileType::GeoJSON:
-		result = geojson_write_file(file, trw);
+		result = GeoJSON::write_layer_to_file(file, trw);
 		break;
 	case SGFileType::KML:
 		result = export_to_kml(file_full_path, trw);
@@ -1120,7 +1125,6 @@ bool VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, S
 		qDebug() << "EE" PREFIX << "invalid file type for non-track" << (int) file_type;
 	}
 
-	fclose(file);
 	return result;
 }
 
@@ -1139,9 +1143,9 @@ bool VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, S
 bool VikFile::export_trw(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden)
 {
 	if (trk) {
-		return VikFile::export_trw_track(trk, file_full_path, file_type, write_hidden);
+		return sg_ret::ok == VikFile::export_trw_track(trk, file_full_path, file_type, write_hidden);
 	} else {
-		return VikFile::export_trw_layer(trw, file_full_path, file_type, write_hidden);
+		return sg_ret::ok == VikFile::export_trw_layer(trw, file_full_path, file_type, write_hidden);
 	}
 }
 
@@ -1155,7 +1159,7 @@ bool VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full
 	exporter->set_options(BabelProcess::get_trw_string(tracks, routes, waypoints));
 	exporter->set_output(output_data_format, output_file_full_path);
 
-	const bool status = exporter->export_through_gpx(trw, NULL);
+	const bool status = sg_ret::ok == exporter->export_through_gpx(trw, NULL);
 
 	delete exporter;
 

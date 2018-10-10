@@ -322,6 +322,7 @@ void OSMTracesUpload::run(void)
 	static GPXWriteOptions options(true, true, false, false);
 
 	QString file_full_path;
+	sg_ret rv;
 
 	/* Writing gpx file. */
 	if (this->trk != NULL) {
@@ -329,17 +330,17 @@ void OSMTracesUpload::run(void)
 		if (this->anonymize_times) {
 			Track * trk2 = new Track(*this->trk);
 			trk2->anonymize_times();
-			file_full_path = GPX::write_track_tmp_file(trk2, &options);
+			rv = GPX::write_track_to_tmp_file(file_full_path, trk2, &options);
 			trk2->free();
 		} else {
-			file_full_path = GPX::write_track_tmp_file(this->trk, &options);
+			rv = GPX::write_track_to_tmp_file(file_full_path, this->trk, &options);
 		}
 	} else {
 		/* Upload the whole LayerTRW. */
-		file_full_path = GPX::write_tmp_file(this->trw, &options);
+		rv = GPX::write_layer_to_tmp_file(file_full_path, this->trw, &options);
 	}
 
-	if (file_full_path.isEmpty()) {
+	if (rv != sg_ret::ok) {
 		return;
 	}
 

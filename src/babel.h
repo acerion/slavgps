@@ -68,10 +68,10 @@ namespace SlavGPS {
 		void set_progress_dialog(AcquireProgressDialog * progr_dialog);
 
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */
-		bool convert_through_gpx(LayerTRW * trw);
+		sg_ret convert_through_gpx(LayerTRW * trw);
 
 		/* TRW layer -> gpx temporary file -> stdin -> gpsbabel -> gpx format -> output file in output format. */
-		bool export_through_gpx(LayerTRW * trw, Track * trk);
+		sg_ret export_through_gpx(LayerTRW * trw, Track * trk);
 
 		virtual bool run_process(void);
 		int kill(const QString & status);

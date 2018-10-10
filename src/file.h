@@ -25,6 +25,11 @@
 
 
 
+#include <QFile>
+
+
+
+
 #include "ui_builder.h"
 
 
@@ -106,13 +111,13 @@ namespace SlavGPS {
 
 		/* Only need to define Track if the file type is SGFileType::GPX_TRACK. */
 		static bool export_trw(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden);
-		static bool export_trw_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden);
-		static bool export_trw_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden);
+		static sg_ret export_trw_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden);
+		static sg_ret export_trw_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden);
 
 		static bool export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints);
 
 	private:
-		static bool read_file(FILE * file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport);
+		static sg_ret read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport);
 	};
 
 

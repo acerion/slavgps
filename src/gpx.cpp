@@ -654,9 +654,9 @@ static void gpx_cdata(void * dta, const XML_Char * s, int len)
 
 /* Make like a "stack" of tag names like gpspoint's separated like /gpx/wpt/whatever. */
 
-bool GPX::read_file(FILE * file, LayerTRW * trw)
+sg_ret GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
 {
-	assert (file != NULL && trw != NULL);
+	assert (trw != NULL);
 
 	XML_Parser parser = XML_ParserCreate(NULL);
 	int done = 0;
@@ -676,9 +676,11 @@ bool GPX::read_file(FILE * file, LayerTRW * trw)
 	unnamed_tracks = 1;
 	unnamed_routes = 1;
 
+	FILE * file2 = fdopen(file.handle(), "r"); /* TODO: close the file? */
+
 	while (!done) {
-		len = fread(buf, 1, sizeof(buf)-7, file);
-		done = feof(file) || !len;
+		len = fread(buf, 1, sizeof(buf)-7, file2);
+		done = feof(file2) || !len;
 		status = XML_Parse(parser, buf, len, done);
 	}
 
@@ -686,7 +688,7 @@ bool GPX::read_file(FILE * file, LayerTRW * trw)
 	g_string_free(xpath, true);
 	g_string_free(c_cdata, true);
 
-	return status != XML_STATUS_ERROR;
+	return status != XML_STATUS_ERROR ? sg_ret::ok : sg_ret::err;
 }
 
 
@@ -1119,21 +1121,21 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 
 
 
-static void gpx_write_header(FILE * f)
+static void gpx_write_header(QFile & file)
 {
-	fprintf(f, "<?xml version=\"1.0\"?>\n"
-		"<gpx version=\"1.0\" creator=\"Viking -- http://viking.sf.net/\"\n"
-		"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-		"xmlns=\"http://www.topografix.com/GPX/1/0\"\n"
-		"xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n");
+	file.write("<?xml version=\"1.0\"?>\n"
+		   "<gpx version=\"1.0\" creator=\"Viking -- http://viking.sf.net/\"\n"
+		   "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+		   "xmlns=\"http://www.topografix.com/GPX/1/0\"\n"
+		   "xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n");
 }
 
 
 
 
-static void gpx_write_footer(FILE * f)
+static void gpx_write_footer(QFile & file)
 {
-	fprintf(f, "</gpx>\n");
+	file.write("</gpx>\n");
 }
 
 
@@ -1149,30 +1151,31 @@ static int gpx_waypoint_compare(const void * x, const void * y)
 
 
 
-void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
+sg_ret GPX::write_layer_to_file(QFile & file, LayerTRW * trw, GPXWriteOptions * options)
 {
-	GPXWriteContext context(options, file);
+	FILE * file2 = fdopen(file.handle(), "w"); /* TODO: close the file? */
+	GPXWriteContext context(options, file2);
 
 	gpx_write_header(file);
 
 	const QString name = trw->get_name();
 	if (!name.isEmpty()) {
-		fprintf(file, "  <name>%s</name>\n", entitize(name).toUtf8().constData());
+		fprintf(file2, "  <name>%s</name>\n", entitize(name).toUtf8().constData());
 	}
 
 	TRWMetadata * md = trw->get_metadata();
 	if (md) {
 		if (!md->author.isEmpty()) {
-			fprintf(file, "  <author>%s</author>\n", entitize(md->author).toUtf8().constData());
+			fprintf(file2, "  <author>%s</author>\n", entitize(md->author).toUtf8().constData());
 		}
 		if (!md->description.isEmpty()) {
-			fprintf(file, "  <desc>%s</desc>\n", entitize(md->description).toUtf8().constData());
+			fprintf(file2, "  <desc>%s</desc>\n", entitize(md->description).toUtf8().constData());
 		}
 		if (!md->iso8601_timestamp.isEmpty()) {
-			fprintf(file, "  <time>%s</time>\n", entitize(md->iso8601_timestamp).toUtf8().constData());
+			fprintf(file2, "  <time>%s</time>\n", entitize(md->iso8601_timestamp).toUtf8().constData());
 		}
 		if (!md->keywords.isEmpty()) {
-			fprintf(file, "  <keywords>%s</keywords>\n", entitize(md->keywords).toUtf8().constData());
+			fprintf(file2, "  <keywords>%s</keywords>\n", entitize(md->keywords).toUtf8().constData());
 		}
 	}
 
@@ -1238,17 +1241,23 @@ void GPX::write_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 
 
 	gpx_write_footer(file);
+
+	return sg_ret::ok;
 }
 
 
 
 
-void GPX::write_track_file(FILE * file, Track * trk, GPXWriteOptions * options)
+sg_ret GPX::write_track_to_file(QFile & file, Track * trk, GPXWriteOptions * options)
 {
-	GPXWriteContext context(options, file);
+	FILE * file2 = fdopen(file.handle(), "w"); /* TODO: close file? */
+
+	GPXWriteContext context(options, file2);
 	gpx_write_header(file);
 	gpx_write_track(trk, &context);
 	gpx_write_footer(file);
+
+	return sg_ret::ok;
 }
 
 
@@ -1257,31 +1266,28 @@ void GPX::write_track_file(FILE * file, Track * trk, GPXWriteOptions * options)
 /**
  * Common write of a temporary GPX file.
  */
-QString GPX::write_tmp_file(LayerTRW * trw, Track * trk, GPXWriteOptions * options)
+sg_ret GPX::write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * trw, Track * trk, GPXWriteOptions * options)
 {
-	char * tmp_filename = NULL;
-	GError * error = NULL;
-	/* Opening temporary file. */
-	int fd = g_file_open_tmp("viking_XXXXXX.gpx", &tmp_filename, &error);
-	if (fd < 0) {
-		qDebug() << QObject::tr("WARNING: failed to open temporary file: %1").arg(error->message);
-		g_clear_error(&error);
-		return NULL;
+	QTemporaryFile tmp_file;
+	tmp_file.setFileTemplate("viking_XXXXXX.gpx");
+	if (!tmp_file.open()) {
+		qDebug() << SG_PREFIX_E << "Failed to open temporary file, error =" << tmp_file.error();
+		return sg_ret::err;
 	}
-	fprintf(stderr, "DEBUG: %s: temporary file = %s\n", __FUNCTION__, tmp_filename);
+	tmp_file.setAutoRemove(false);
+	file_full_path = tmp_file.fileName();
+	qDebug() << SG_PREFIX_D << "Temporary file =" << file_full_path;
 
-	FILE * file = fdopen(fd, "w");
+	sg_ret rv;
 	if (trk) {
-		GPX::write_track_file(file, trk, options);
+		rv = GPX::write_track_to_file(tmp_file, trk, options);
 	} else {
-		GPX::write_file(file, trw, options);
+		rv = GPX::write_layer_to_file(tmp_file, trw, options);
 	}
-	fclose(file);
 
-	QString result(tmp_filename);
-	free(tmp_filename);
+	tmp_file.close();
 
-	return result;
+	return rv;
 }
 
 
@@ -1295,9 +1301,9 @@ QString GPX::write_tmp_file(LayerTRW * trw, Track * trk, GPXWriteOptions * optio
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-QString GPX::write_tmp_file(LayerTRW * trw, GPXWriteOptions * options)
+sg_ret GPX::write_layer_to_tmp_file(QString & file_full_path, LayerTRW * trw, GPXWriteOptions * options)
 {
-	return GPX::write_tmp_file(trw, NULL, options);
+	return GPX::write_layer_track_to_tmp_file(file_full_path, trw, NULL, options);
 }
 
 
@@ -1311,9 +1317,9 @@ QString GPX::write_tmp_file(LayerTRW * trw, GPXWriteOptions * options)
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-QString GPX::write_track_tmp_file(Track * trk, GPXWriteOptions * options)
+sg_ret GPX::write_track_to_tmp_file(QString & file_full_path, Track * trk, GPXWriteOptions * options)
 {
-	return GPX::write_tmp_file(NULL, trk, options);
+	return GPX::write_layer_track_to_tmp_file(file_full_path, NULL, trk, options);
 }
 
 

@@ -24,7 +24,17 @@
 
 
 
-#include <cstdio>
+#include <list>
+
+
+
+
+#include <QFile>
+
+
+
+
+#include "globals.h"
 
 
 
@@ -35,11 +45,20 @@ namespace SlavGPS {
 
 
 	class LayerTRW;
+	class Track;
+	class Waypoint;
 
 
 
 
-	void gpsmapper_write_file(FILE * f, LayerTRW * trw);
+	class GPSMapper {
+	public:
+		static sg_ret write_layer_to_file(QFile & file, LayerTRW * trw);
+
+	private:
+		static sg_ret write_tracks_to_file(FILE * file, const std::list<Track *> & tracks);
+		static sg_ret write_waypoints_to_file(FILE * file, const std::list<Waypoint *> & waypoints);
+	};
 
 
 

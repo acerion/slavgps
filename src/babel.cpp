@@ -234,7 +234,7 @@ void BabelProcess::set_output(const QString & file_type, const QString & file_fu
    \return true on success
    \return false otherwise
 */
-bool BabelProcess::convert_through_gpx(LayerTRW * trw)
+sg_ret BabelProcess::convert_through_gpx(LayerTRW * trw)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -243,7 +243,7 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
 
 	if (!this->run_process()) {
 		qDebug() << SG_PREFIX_E << "Conversion failed";
-		return false;
+		return sg_ret::err;
 	}
 	this->gpx_importer->write("", 0); /* Just to ensure proper termination by GPX parser. */
 	sleep(3);
@@ -256,10 +256,10 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
 	if (trw == NULL) {
 		/* No data actually required but still need to have run gpsbabel anyway
 		   - eg using the device power command_off. */
-		return true;
+		return sg_ret::ok;
 	}
 
-	bool read_success = this->gpx_importer->status != XML_STATUS_ERROR;
+	const sg_ret read_success = this->gpx_importer->status != XML_STATUS_ERROR ? sg_ret::ok : sg_ret::err;
 
 	delete this->gpx_importer;
 
@@ -283,7 +283,7 @@ bool BabelProcess::convert_through_gpx(LayerTRW * trw)
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -306,11 +306,11 @@ bool AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & 
 	this->babel_process->set_args(program, args);
 	this->babel_process->set_acquire_context(acquire_context);
 	this->babel_process->set_progress_dialog(progr_dialog);
-	bool rv = this->babel_process->convert_through_gpx(trw);
+	const sg_ret rv = this->babel_process->convert_through_gpx(trw);
 	delete this->babel_process;
 	return rv;
 #else
-	return true;
+	return sg_ret::ok;
 #endif
 }
 
@@ -340,7 +340,7 @@ int AcquireOptions::kill_babel_process(const QString & status)
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
+sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
@@ -348,14 +348,14 @@ bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
 		babel_dl_options = *dl_options;
 	}
 
-	bool ret = false;
+	sg_ret ret = sg_ret::err;
 
 	qDebug() << SG_PREFIX_D << "Input data format =" << this->input_data_format << ", url =" << this->source_url;
 
 
 	QTemporaryFile tmp_file;
 	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
-		return false;
+		return sg_ret::err;
 	}
 	const QString target_file_full_path = tmp_file.fileName();
 	qDebug() << SG_PREFIX_D << "Temporary file:" << target_file_full_path;
@@ -377,11 +377,13 @@ bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
 		} else {
 			/* Process directly the retrieved file. */
 			qDebug() << SG_PREFIX_D << "Directly read GPX file" << target_file_full_path;
-			FILE * file = fopen(target_file_full_path.toUtf8().constData(), "r");
-			if (file) {
-				ret = GPX::read_file(file, trw);
-				fclose(file);
-				file = NULL;
+
+			QFile file(target_file_full_path);
+			if (file.open(QIODevice::ReadOnly)) {
+				ret = GPX::read_layer_from_file(file, trw);
+			} else {
+				ret = sg_ret::err;
+				qDebug() << SG_PREFIX_E << "Failed to open file" << target_file_full_path << "for reading:" << file.error();
 			}
 		}
 	}
@@ -407,7 +409,7 @@ bool AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_option
  *
  * Returns: %true on success.
  */
-bool AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (this->babel_process) {
 		BabelProcess * importer = new BabelProcess();
@@ -424,7 +426,7 @@ bool AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_op
 		importer->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
 		importer->set_acquire_context(acquire_context);
 		importer->set_progress_dialog(progr_dialog);
-		const bool result = importer->convert_through_gpx(trw);
+		const sg_ret result = importer->convert_through_gpx(trw);
 
 		delete importer;
 
@@ -441,7 +443,7 @@ bool AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_op
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected babel options mode" << (int) this->mode;
-		return false;
+		return sg_ret::err;
 	}
 }
 
@@ -845,17 +847,17 @@ void BabelProcess::read_stdout_cb()
    @return true on successful invocation of GPSBabel command
    @return false otherwise
 */
-bool BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
+sg_ret BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
 {
 	if (!babel.is_detected) {
 		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
-		return false;
+		return sg_ret::err;
 	}
 
 
 	QTemporaryFile tmp_file;
 	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
-		return false;
+		return sg_ret::err;
 	}
 	const QString tmp_file_full_path = tmp_file.fileName();
 	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file_full_path;
@@ -864,12 +866,12 @@ bool BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
 	/* Now strips out invisible tracks and waypoints. */
 	if (!VikFile::export_trw(trw, tmp_file_full_path, SGFileType::GPX, trk, false)) {
 		qDebug() << SG_PREFIX_E << "Error exporting to" << tmp_file_full_path;
-		return false;
+		return sg_ret::err;
 	}
 
 	this->set_input("gpx", tmp_file_full_path);
 
-	return this->run_process();
+	return this->run_process() ? sg_ret::ok : sg_ret::err;
 }
 
 

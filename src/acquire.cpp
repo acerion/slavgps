@@ -199,7 +199,7 @@ void AcquireWorker::run(void)
 	assert (this->data_source);
 
 
-	this->result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, this->acquire_context, this->acquire_worker_progress_dialog);
+	this->result = sg_ret::ok == this->data_source->acquire_into_layer(this->acquire_context.target_trw, this->acquire_context, this->acquire_worker_progress_dialog);
 
 	if (this->acquire_is_running && !this->result) {
 		this->acquire_worker_progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
@@ -316,8 +316,7 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 		/* Bypass thread method malarkly - you'll just have to wait... */
 		qDebug() << SG_PREFIX_I << "Ready to run acquire process, non-thread method";
 
-		bool success = worker->data_source->acquire_into_layer(worker->acquire_context.target_trw, worker->acquire_context, worker->acquire_worker_progress_dialog);
-		if (!success) {
+		if (sg_ret::ok != worker->data_source->acquire_into_layer(worker->acquire_context.target_trw, worker->acquire_context, worker->acquire_worker_progress_dialog)) {
 			Dialog::error(QObject::tr("Error: acquisition failed."), worker->acquire_context.window);
 		}
 

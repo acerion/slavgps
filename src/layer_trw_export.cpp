@@ -106,9 +106,9 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 {
 	/* Don't Export invisible items. */
 	static GPXWriteOptions options(true, true, false, false);
-	const QString name_used = GPX::write_tmp_file(this, &options);
+	QString name_used;
 
-	if (!name_used.isEmpty()) {
+	if (sg_ret::ok == GPX::write_layer_to_tmp_file(name_used, this, &options)) {
 		const QString quoted_file = Util::shell_quote(name_used);
 		const QString command = QString("%1 %2").arg(external_program).arg(quoted_file);
 

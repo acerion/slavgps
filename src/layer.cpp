@@ -544,7 +544,7 @@ void Layer::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * Gt
 
 
 
-LayerDataReadStatus Layer::read_layer_data(FILE * file, const QString & dirpath)
+LayerDataReadStatus Layer::read_layer_data(QFile & file, const QString & dirpath)
 {
 	/* Value that indicates call of base class method. */
 	return LayerDataReadStatus::Unrecognized;
@@ -553,9 +553,9 @@ LayerDataReadStatus Layer::read_layer_data(FILE * file, const QString & dirpath)
 
 
 
-void Layer::write_layer_data(FILE * file) const
+sg_ret Layer::write_layer_data(QFile & file) const
 {
-	return;
+	return sg_ret::ok;
 }
 
 
