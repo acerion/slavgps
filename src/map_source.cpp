@@ -505,7 +505,7 @@ QPixmap MapSource::create_tile_pixmap_from_file(const QString & tile_file_full_p
 	if (!result.load(tile_file_full_path)) {
 		Window * window = g_tree->tree_get_main_window();
 		if (window) {
-			window->statusbar_update(StatusBarField::Info, QString("Couldn't open image file"));
+			window->statusbar_update(StatusBarField::Info, QObject::tr("Couldn't open image file"));
 		}
 	}
 	return result;

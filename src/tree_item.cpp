@@ -62,7 +62,7 @@ TreeItem::TreeItem()
 
 TreeItem::~TreeItem()
 {
-	g_tree->remove_from_selected(this);
+	g_tree->remove_from_set_of_selected(this);
 }
 
 

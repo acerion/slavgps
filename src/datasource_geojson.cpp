@@ -129,7 +129,7 @@ sg_ret DataSourceGeoJSON::acquire_into_layer(LayerTRW * trw, AcquireContext & ac
 			/* Delete the temporary file. */
 			QDir::root().remove(gpx_filename);
 		} else {
-			acquire_context.window->statusbar_update(StatusBarField::Info, QString("Unable to import from: %1").arg(file_full_path));
+			acquire_context.window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to import from: %1").arg(file_full_path));
 		}
 	}
 

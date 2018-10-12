@@ -52,15 +52,15 @@ QString SlavGPS::a_dialog_new_track(QString const & default_name, bool is_route,
 	bool ok;
 	do {
 		text = QInputDialog::getText(parent,
-					     is_route ? QString("Add Route") : QString("Add Track"),
-					     is_route ? QString("Route Name:") : QString("Track Name:"),
+					     is_route ? QObject::tr("Add Route") : QObject::tr("Add Track"),
+					     is_route ? QObject::tr("Route Name:") : QObject::tr("Track Name:"),
 					     QLineEdit::Normal,
 					     QString(default_name), &ok);
 
 		if (ok && text.isEmpty()) {
 			QMessageBox::information(parent,
-						 is_route ? QString("Route Name") : QString("Track Name"),
-						 is_route ? QString("Please enter a name for the route.") : QString("Please enter a name for the track."));
+						 is_route ? QObject::tr("Route Name") : QObject::tr("Track Name"),
+						 is_route ? QObject::tr("Please enter a name for the route.") : QObject::tr("Please enter a name for the track."));
 		}
 
 	} while (ok && text.isEmpty());

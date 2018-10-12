@@ -118,13 +118,12 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	this->fields.assign((int) StatusBarField::Max, NULL);
 
 	QLabel * label = NULL;
-	QString tooltip;
 
 	label = new QLabel("tool");
 	label->minimumSize().rwidth() = 120;
 	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
 	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	label->setToolTip("Currently selected tool");
+	label->setToolTip(tr("Currently selected tool"));
 	this->fields[(int) StatusBarField::Tool] = label;
 	this->addPermanentWidget(label);
 
@@ -132,8 +131,7 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	label->minimumSize().rwidth() = 100;
 	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
 	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	tooltip = QString("Current zoom level. Click to select a new one.");
-	label->setToolTip(tooltip);
+	label->setToolTip(tr("Current zoom level. Click to select a new one."));
 	this->fields[(int) StatusBarField::Zoom] = label;
 	this->addPermanentWidget(label);
 
@@ -141,8 +139,7 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	label->minimumSize().rwidth() = 100;
 	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
 	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	tooltip = QString("Current number of background tasks. Click to see the background jobs.");
-	label->setToolTip(tooltip);
+	label->setToolTip(tr("Current number of background tasks. Click to see the background jobs."));
 	this->fields[(int) StatusBarField::Items] = label;
 	this->addPermanentWidget(label);
 
@@ -150,8 +147,7 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	label->minimumSize().rwidth() = 275;
 	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
 	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	tooltip = QString("Current position");
-	label->setToolTip(tooltip);
+	label->setToolTip(tr("Current position"));
 	this->fields[(int) StatusBarField::Position] = label;
 	this->addPermanentWidget(label);
 
@@ -159,8 +155,7 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	label->minimumSize().rwidth() = 275;
 	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
 	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	tooltip = QString("Left click to clear the message. Right click to copy the message.");
-	label->setToolTip(tooltip);
+	label->setToolTip(tr("Left click to clear the message. Right click to copy the message."));
 	this->fields[(int) StatusBarField::Info] = label;
 	this->addPermanentWidget(label);
 

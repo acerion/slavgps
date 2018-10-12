@@ -1651,7 +1651,7 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 #else
 		/* Delibrately break compilation... */
 #endif
-		qDebug() << QString("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2). Will retry in %3 seconds")
+		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2). Will retry in %3 seconds")
 			.arg(layer->gpsd_host).arg(layer->gpsd_port).arg(layer->gpsd_retry_interval);
 		return true;   /* Keep timer running. */
 	}

@@ -100,9 +100,9 @@ namespace SlavGPS {
 		LayersPanel * tree_get_items_tree() { return this->items_tree; };
 		Viewport * tree_get_main_viewport() { return this->viewport; };
 
-		void add_to_selected(TreeItem * tree_item);
-		bool remove_from_selected(const TreeItem * tree_item);
-		bool is_in_selected(const TreeItem * tree_item) const;
+		void add_to_set_of_selected(TreeItem * tree_item);
+		bool remove_from_set_of_selected(const TreeItem * tree_item);
+		bool is_in_set_of_selected(const TreeItem * tree_item) const;
 
 		TreeView * tree_view = NULL; /* Reference. */
 		Window * window = NULL;

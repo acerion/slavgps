@@ -1242,7 +1242,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		return;
 	}
 
-	const bool item_is_selected = parent_is_selected || g_tree->is_in_selected(this);
+	const bool item_is_selected = parent_is_selected || g_tree->is_in_set_of_selected(this);
 
 	/* This will copy viewport's parameters (size, coords, etc.)
 	   to painter, so that painter knows whether, what and how to
@@ -1273,17 +1273,16 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 void LayerTRW::add_children_to_tree(void)
 {
-	qDebug() << "DD: Layer TRW: Add Children to Tree";
+	qDebug() << SG_PREFIX_D;
 
 	if (!this->is_in_tree()) {
-		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
 		return;
 	}
 
 	if (this->tracks.size() > 0) {
-		qDebug() << "DD: Layer TRW: Add Children to Tree: Tracks";
+		qDebug() << SG_PREFIX_D << "Handling Tracks node";
 
-		assert (!this->tracks.is_in_tree());
 		if (!this->tracks.is_in_tree()) {
 			this->tree_view->push_tree_item_back(this, &this->tracks);
 		}
@@ -1291,9 +1290,8 @@ void LayerTRW::add_children_to_tree(void)
 	}
 
 	if (this->routes.size() > 0) {
-		qDebug() << "DD: Layer TRW: Add Children to Tree: Routes";
+		qDebug() << SG_PREFIX_D << "Handling Routes node";
 
-		assert (!this->routes.is_in_tree());
 		if (!this->routes.is_in_tree()) {
 			this->tree_view->push_tree_item_back(this, &this->routes);
 		}
@@ -1302,9 +1300,8 @@ void LayerTRW::add_children_to_tree(void)
 	}
 
 	if (this->waypoints.size() > 0) {
-		qDebug() << "DD: Layer TRW: Add Children to Tree: Waypoints";
+		qDebug() << SG_PREFIX_D << "Handling Waypoints node";
 
-		assert (!this->waypoints.is_in_tree());
 		if (!this->waypoints.is_in_tree()) {
 			this->tree_view->push_tree_item_back(this, &this->waypoints);
 		}
@@ -2143,7 +2140,7 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
 		return;
 	}
 
@@ -2152,7 +2149,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		   That's because we start showing the node only after first waypoint is added. */
 
 		if (0 != this->waypoints.size()) {
-			qDebug() << "EE: Layer TRW: add waypoint: 'Waypoints' node not connected, but has non-zero items already.";
+			qDebug() << SG_PREFIX_E << "'Waypoints' node not connected, but has non-zero items already.";
 			return;
 		}
 
@@ -2179,7 +2176,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 void LayerTRW::add_track(Track * trk)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
 		return;
 	}
 
@@ -2188,7 +2185,7 @@ void LayerTRW::add_track(Track * trk)
 		   That's because we start showing the node only after first track is added. */
 
 		if (0 != this->tracks.size()) {
-			qDebug() << "EE: Layer TRW: add track: 'Tracks' node not connected, but has non-zero items already.";
+			qDebug() << SG_PREFIX_E << "'Tracks' node not connected, but has non-zero items already.";
 			return;
 		}
 
@@ -2220,7 +2217,7 @@ void LayerTRW::add_track(Track * trk)
 void LayerTRW::add_route(Track * trk)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
 		return;
 	}
 
@@ -2229,7 +2226,7 @@ void LayerTRW::add_route(Track * trk)
 		   That's because we start showing the node only after first route is added. */
 
 		if (0 != this->routes.size()) {
-			qDebug() << "EE: Layer TRW: add route: 'Routes' node not connected, but has non-zero items already.";
+			qDebug() << SG_PREFIX_E << "'Routes' node not connected, but has non-zero items already.";
 			return;
 		}
 
@@ -4150,7 +4147,7 @@ bool LayerTRW::handle_selection_in_tree(void)
 
 	/* Set info about current selection. */
 
-	g_tree->add_to_selected(this);
+	g_tree->add_to_set_of_selected(this);
 
 	/* Set highlight thickness. */
 	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_track_thickness());

@@ -1156,7 +1156,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 
 
-void Tree::add_to_selected(TreeItem * tree_item)
+void Tree::add_to_set_of_selected(TreeItem * tree_item)
 {
 	/* At this moment we support selection of only one item at a
 	   time. So if anyone selects a new item, all other (old) selected
@@ -1169,7 +1169,7 @@ void Tree::add_to_selected(TreeItem * tree_item)
 
 
 
-bool Tree::remove_from_selected(const TreeItem * tree_item)
+bool Tree::remove_from_set_of_selected(const TreeItem * tree_item)
 {
 	if (!tree_item) {
 		return 0;
@@ -1182,7 +1182,7 @@ bool Tree::remove_from_selected(const TreeItem * tree_item)
 
 
 
-bool Tree::is_in_selected(const TreeItem * tree_item) const
+bool Tree::is_in_set_of_selected(const TreeItem * tree_item) const
 {
 	if (!tree_item) {
 		return false;

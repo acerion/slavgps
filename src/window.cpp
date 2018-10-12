@@ -457,7 +457,7 @@ void Window::create_actions(void)
 		this->menu_file->addSeparator();
 
 
-		this->submenu_file_acquire = this->menu_file->addMenu(QString("A&cquire"));
+		this->submenu_file_acquire = this->menu_file->addMenu(tr("A&cquire"));
 
 		{
 			qa = this->submenu_file_acquire->addAction(tr("From &GPS..."));
@@ -625,7 +625,7 @@ void Window::create_actions(void)
 		this->menu_edit->addAction(qa);
 
 		{
-			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), QString("&Layer Defaults"));
+			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), tr("&Layer Defaults"));
 
 			for (LayerType type = LayerType::Aggregate; type < LayerType::Max; ++type) {
 				qa = defaults_submenu->addAction("&" + Layer::get_type_ui_label(type) + "...");
@@ -1475,7 +1475,7 @@ void Window::menu_copy_centre_cb(void)
 		second = LatLon::lon_to_string_raw(lat_lon);
 	}
 
-	const QString message = QString("%1 %2").arg(first).arg(second);
+	const QString message = QString("%1 %2").arg(first).arg(second); /* TODO: use latlon/coord to_string() method? */
 
 	Pickle dummy;
 	Clipboard::copy(ClipboardDataType::Text, LayerType::Aggregate, "", dummy, message);

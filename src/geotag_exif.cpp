@@ -66,7 +66,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Geotag Exif:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Geotag Exif"
 
 
 
@@ -107,35 +107,31 @@ static bool geotag_exif_get_string(Exiv2::ExifData & exif_data, QString & val, c
 
 
 
-static bool geotag_exif_get_gps_info(Exiv2::ExifData & exif_data, double & lat, double & lon, double & alt)
+static bool geotag_exif_get_gps_info(Exiv2::ExifData & exif_data, LatLon & lat_lon, Altitude & alti)
 {
 	float tmp_lat;
 	float tmp_lon;
-	float tmp_alt;
-
+	float tmp_alti;
 
 	if (!geotag_exif_get_float(exif_data, tmp_lat, "Exif.GPSInfo.GPSLatitude")) {
-		qDebug() << "WW" PREFIX << "Can't find GPS Latitude";
+		qDebug() << SG_PREFIX_W << "Can't find GPS Latitude";
 		return false;
 	}
 
 	if (!geotag_exif_get_float(exif_data, tmp_lon, "Exif.GPSInfo.GPSLongitude")) {
-		qDebug() << "WW" PREFIX << "Can't find GPS Longitude";
+		qDebug() << SG_PREFIX_W << "Can't find GPS Longitude";
 		return false;
 	}
 
-	if (!geotag_exif_get_float(exif_data, tmp_alt, "Exif.GPSInfo.GPSAltitude")) {
-		qDebug() << "WW" PREFIX << "Can't find GPS Altitude";
+	if (!geotag_exif_get_float(exif_data, tmp_alti, "Exif.GPSInfo.GPSAltitude")) {
+		qDebug() << SG_PREFIX_W << "Can't find GPS Altitude";
 		return false;
 	}
 
 
-	lat = tmp_lat;
-	lon = tmp_lon;
-	alt = tmp_alt;
+	lat_lon = LatLon(tmp_lat, tmp_lon);
+	alti = Altitude(tmp_alti, HeightUnit::Metres); /* GPS info, hence metres. */
 
-
-	qDebug() << "II" PREFIX << "lat =" << lat << "lon =" << lon << "alt =" << alt;
 
 	return true;
 }
@@ -146,17 +142,17 @@ static bool geotag_exif_get_gps_info(Exiv2::ExifData & exif_data, double & lat, 
 static bool geotag_exif_set_gps_info(Exiv2::ExifData & exif_data, double lat, double lon, double alt)
 {
 	if (!geotag_exif_set_float(exif_data, lat, "Exif.GPSInfo.GPSLatitude")) {
-		qDebug() << "WW" PREFIX << "Can't set GPS Latitude";
+		qDebug() << SG_PREFIX_W << "Can't set GPS Latitude";
 		return false;
 	}
 
 	if (!geotag_exif_set_float(exif_data, lon, "Exif.GPSInfo.GPSLongitude")) {
-		qDebug() << "WW" PREFIX << "Can't set GPS Longitude";
+		qDebug() << SG_PREFIX_W << "Can't set GPS Longitude";
 		return false;
 	}
 
 	if (!geotag_exif_set_float(exif_data, alt, "Exif.GPSInfo.GPSAltitude")) {
-		qDebug() << "WW" PREFIX << "Can't set GPS Altitude";
+		qDebug() << SG_PREFIX_W << "Can't set GPS Altitude";
 		return false;
 	}
 
@@ -226,17 +222,18 @@ LatLon GeotagExif::get_position(const QString & file_full_path)
 {
 	LatLon lat_lon;
 
+
 	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
 	assert(image.get() != 0);
 	image->readMetadata();
 	Exiv2::ExifData &exif_data = image->exifData();
 
 	if (!exif_data.empty()) {
-		double lat;
-		double lon;
-		double alt;
-		if (geotag_exif_get_gps_info(exif_data, lat, lon, alt)) {
-			lat_lon = LatLon(lat, lon);
+		LatLon tmp_lat_lon;
+		Altitude alti;
+		if (geotag_exif_get_gps_info(exif_data, tmp_lat_lon, alti)) {
+			lat_lon = tmp_lat_lon;
+			qDebug() << SG_PREFIX_I << "Lat/Lon =" << lat_lon.to_string() << "altitude =" << alti.to_string();
 		}
 	}
 
@@ -265,25 +262,18 @@ Waypoint * GeotagExif::create_waypoint_from_file(const QString & file_full_path,
 	Exiv2::ExifData &exif_data = image->exifData();
 
 	if (!exif_data.empty()) {
-		double lat;
-		double lon;
-		double alt;
 
-		if (geotag_exif_get_gps_info(exif_data, lat, lon, alt)) {
+		LatLon tmp_lat_lon;
+		Altitude alti;
 
+		if (geotag_exif_get_gps_info(exif_data, tmp_lat_lon, alti)) {
 			/* Now create Waypoint with acquired information. */
 			wp = new Waypoint();
 			wp->visible = true;
-			/* Set info from exif values. */
-			/* Location. */
-			wp->coord = Coord(LatLon(lat, lon), coord_mode);
-			/* Altitude. */
-			wp->altitude = Altitude(alt, HeightUnit::Metres); /* GPS info -> metres. */
-
+			wp->coord = Coord(tmp_lat_lon, coord_mode);
+			wp->altitude = alti;
 			wp->name = geotag_get_exif_name(exif_data);
-
 			wp->comment = geotag_get_exif_comment(exif_data);
-
 			wp->set_image_full_path(file_full_path);
 		}
 	}
@@ -348,9 +338,9 @@ QString GeotagExif::get_exif_date_from_file(const QString & file_full_path, bool
 
 		/* Prefer 'Photo' version over 'Image'. */
 		if (!geotag_exif_get_string(exif_data, date_time, "Exif.Photo.DateTimeOriginal")) {
-			qDebug() << "WW" PREFIX << "Failed to get Photo Date Time Original";
+			qDebug() << SG_PREFIX_W << "Failed to get Photo Date Time Original";
 			if (!geotag_exif_get_string(exif_data, date_time, "Exif.Image.DateTimeOriginal")) {
-				qDebug() << "WW" PREFIX << "Failed to get Image Date Time Original";
+				qDebug() << SG_PREFIX_W << "Failed to get Image Date Time Original";
 				/* We can't do anything more. */
 			}
 		}
@@ -368,7 +358,7 @@ static int write_exif_gps_data(const QString & file_full_path, const Coord & coo
 
 	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
 	if (NULL == image.get()) {
-		qDebug() << "EE" PREFIX << "get() failed on pointer to" << file_full_path << "after open()";
+		qDebug() << SG_PREFIX_E << "get() failed on pointer to" << file_full_path << "after open()";
 		result = 4;
 		return result;
 	}
@@ -409,7 +399,7 @@ int GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coo
 	struct stat stat_save;
 	if (no_change_mtime) {
 		if (stat(file_full_path.toUtf8().constData(), &stat_save) != 0) {
-			qDebug() << "WW: Geotag Exif" << __FUNCTION__ << "couldn't read file" << file_full_path;
+			qDebug() << SG_PREFIX_W << "Couldn't read file" << file_full_path;
 		}
 	}
 
@@ -427,7 +417,7 @@ int GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coo
 		/* Not security critical, thus potential Time of Check Time of Use race condition is not bad. */
 		/* coverity[toctou] */
 		if (0 != utime(file_full_path.toUtf8().constData(), &utb)) {
-			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, file_full_path.toUtf8().constData());
+			qDebug() << SG_PREFIX_W << "Couldn't set time on file" << file_full_path;
 		}
 	}
 

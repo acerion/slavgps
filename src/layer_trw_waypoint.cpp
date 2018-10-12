@@ -635,7 +635,7 @@ bool Waypoint::handle_selection_in_tree(void)
 	parent_layer->set_edited_wp(this); /* But this tree item is selected. */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
-	g_tree->add_to_selected(this);
+	g_tree->add_to_set_of_selected(this);
 
 	return true;
 }
@@ -655,7 +655,7 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 	}
 
 	if (1) {
-		if (g_tree->is_in_selected(this)) {
+		if (g_tree->is_in_set_of_selected(this)) {
 			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
 		} else if (parent_is_selected) {
 			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
@@ -664,7 +664,7 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		}
 	}
 
-	const bool item_is_selected = parent_is_selected || g_tree->is_in_selected(this);
+	const bool item_is_selected = parent_is_selected || g_tree->is_in_set_of_selected(this);
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	parent_layer->painter->draw_waypoint(this, viewport, item_is_selected && highlight_selected);
 }

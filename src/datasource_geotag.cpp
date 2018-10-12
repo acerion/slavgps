@@ -33,6 +33,7 @@
 #include "util.h"
 #include "vikutils.h"
 #include "layer_trw.h"
+#include "layer_aggregate.h"
 #include "window.h"
 #include "statusbar.h"
 #include "viewport_internal.h"
@@ -42,6 +43,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "DataSource Geotag"
 
 
 
@@ -56,13 +62,6 @@ static QString g_last_filter;
 
 
 #define DIALOG_MIN_WIDTH 400
-
-
-
-
-#ifdef VIK_CONFIG_GEOTAG
-// DataSourceInterface datasource_geotag_interface;
-#endif
 
 
 
@@ -114,12 +113,6 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 	}
 
 	this->setMinimumWidth(DIALOG_MIN_WIDTH);
-
-	/* TODO_2_LATER: Comment from Viking:
-	   Could add code to setup a default symbol (see dialog.c for symbol usage).
-	   Store in user_data type and then apply when creating the waypoints.
-	   However not much point since these will have images associated with them! */
-
 	this->grid->addWidget(this->file_selector, 0, 0);
 }
 
@@ -127,25 +120,44 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
 
 
 /**
-   Process selected files and try to generate waypoints storing them in the given trw.
+   Process selected files and try to generate waypoints storing them
+   in the given trw
+
+   In prinicple this loading should be quite fast and so don't need to
+   have any progress monitoring.
 */
 sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
-	/* Process selected files.
-	   In prinicple this loading should be quite fast and so don't need to have any progress monitoring. */
 	for (int i = 0; i < this->selected_files.size(); i++) {
 		const QString file_full_path = this->selected_files.at(0);
 
+		qDebug() << SG_PREFIX_I << "Trying to acquire waypoints from" << file_full_path;
+
 		Waypoint * wp = GeotagExif::create_waypoint_from_file(file_full_path, acquire_context.viewport->get_coord_mode());
-		if (wp) {
-			if (wp->name.isEmpty()) {
-				/* GeotagExif method doesn't guarantee setting waypoints name. */
-				wp->set_name(file_base_name(file_full_path));
-			}
-			trw->add_waypoint_from_file(wp);
-		} else {
-			acquire_context.window->statusbar_update(StatusBarField::Info, QString("Unable to create waypoint from %1").arg(file_full_path));
+		if (!wp) {
+			qDebug() << SG_PREFIX_W << "Failed to create waypoint from file" << file_full_path;
+			acquire_context.window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to create waypoint from %1").arg(file_full_path));
+			continue;
 		}
+
+		/* Only at this point we know that there will be some
+		   valid data (new valid waypoint) added to target trw
+		   layer.
+
+		   If the target trw layer has been just created
+		   (during acquire process) and thus isn't connected
+		   to tree yet, we have to do this here. */
+		if (!trw->is_in_tree()) {
+			acquire_context.top_level_layer->add_layer(trw, true);
+		}
+
+		if (wp->name.isEmpty()) {
+			/* GeotagExif method doesn't guarantee setting waypoints name. */
+			wp->set_name(file_base_name(file_full_path));
+		}
+
+		qDebug() << SG_PREFIX_I << "Adding waypoint" << wp->name << "to layer" << trw->get_name();
+		trw->add_waypoint(wp);
 	}
 
 	this->selected_files.clear();
