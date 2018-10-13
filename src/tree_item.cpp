@@ -237,3 +237,11 @@ QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemListForma
 	QList<QStandardItem *> result;
 	return result;
 }
+
+
+
+
+void TreeItem::display_debug_info(const QString & reference) const
+{
+	return;
+}

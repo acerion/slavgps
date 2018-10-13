@@ -72,7 +72,6 @@ BFilterSimplify::BFilterSimplify()
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
-	this->is_thread = true;
 
 	if (!bfilter_simplify_default_set) {
 		int32_t tmp;
@@ -167,7 +166,6 @@ BFilterCompress::BFilterCompress()
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
-	this->is_thread = true;
 
 	if (!bfilter_compress_default_set) {
 		double tmp;
@@ -267,7 +265,6 @@ BFilterDuplicates::BFilterDuplicates()
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
-	this->is_thread = true;
 }
 
 
@@ -328,7 +325,6 @@ BFilterManual::BFilterManual()
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
 	this->keep_dialog_open = false;
-	this->is_thread = true;
 }
 
 
@@ -398,7 +394,6 @@ BFilterPolygon::BFilterPolygon()
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;
-	this->is_thread = true;
 }
 
 
@@ -461,7 +456,6 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;
 	this->keep_dialog_open = false;
-	this->is_thread = true;
 }
 
 

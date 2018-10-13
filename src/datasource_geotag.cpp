@@ -74,7 +74,6 @@ DataSourceGeoTag::DataSourceGeoTag()
 	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = false; /* false = don't keep dialog open after success. We should be able to see the data on the screen so no point in keeping the dialog open. */
-	this->is_thread = true;
 }
 
 
@@ -140,6 +139,12 @@ sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acq
 			continue;
 		}
 
+		if (wp->name.isEmpty()) {
+			/* GeotagExif method doesn't guarantee setting waypoints name. */
+			wp->set_name(file_base_name(file_full_path));
+		}
+
+#if 1
 		/* Only at this point we know that there will be some
 		   valid data (new valid waypoint) added to target trw
 		   layer.
@@ -147,17 +152,17 @@ sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acq
 		   If the target trw layer has been just created
 		   (during acquire process) and thus isn't connected
 		   to tree yet, we have to do this here. */
-		if (!trw->is_in_tree()) {
+		if (acquire_context.target_trw_allocated && !trw->is_in_tree()) {
 			acquire_context.top_level_layer->add_layer(trw, true);
 		}
-
-		if (wp->name.isEmpty()) {
-			/* GeotagExif method doesn't guarantee setting waypoints name. */
-			wp->set_name(file_base_name(file_full_path));
-		}
-
+#endif
 		qDebug() << SG_PREFIX_I << "Adding waypoint" << wp->name << "to layer" << trw->get_name();
+
+		/* http://doc.qt.io/archives/qt-4.8/threads-qobject.html */
+		wp->moveToThread(QApplication::instance()->thread());
+
 		trw->add_waypoint(wp);
+
 	}
 
 	this->selected_files.clear();

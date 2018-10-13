@@ -80,7 +80,6 @@ DataSourceGPS::DataSourceGPS()
 	this->input_type = DataSourceInputType::None;
 	this->autoview = true;
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
-	this->is_thread = true;
 }
 
 

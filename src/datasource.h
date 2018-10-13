@@ -96,7 +96,6 @@ namespace SlavGPS {
 
 		bool autoview = false;
 		bool keep_dialog_open = false; /* ... when done. */
-		bool is_thread = false;
 
 		AcquireOptions * acquire_options = NULL;
 		DownloadOptions * download_options = NULL;

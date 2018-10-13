@@ -106,6 +106,9 @@ namespace SlavGPS {
 
 		LayerTRW * get_parent_layer_trw() const;
 
+		void display_debug_info(const QString & reference) const;
+
+
 		Coord coord;
 		/* bool visible = true; */ /* Inherited from TreeItem. */
 		bool has_timestamp = false;

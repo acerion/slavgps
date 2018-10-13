@@ -363,7 +363,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	bool context_menu_in_items_tree = false;
 
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-	connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this, SLOT (properties_dialog_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_dialog_cb()));
 
 
 	/* Common "Edit" items. */
@@ -637,6 +637,8 @@ bool Waypoint::handle_selection_in_tree(void)
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
 	g_tree->add_to_set_of_selected(this);
 
+	this->display_debug_info("At selection in tree view");
+
 	return true;
 }
 
@@ -868,7 +870,30 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 	item->setIcon(get_wp_icon_small(this->symbol_name));
 	item->setEditable(false);
 	items << item;
-
-
 #endif
+}
+
+
+
+
+void Waypoint::display_debug_info(const QString & reference) const
+{
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	qDebug() << SG_PREFIX_D << "@" << reference;
+	qDebug() << SG_PREFIX_D << "               Type ID =" << this->type_id;
+
+	qDebug() << SG_PREFIX_D << "               Pointer =" << (quintptr) this;
+	qDebug() << SG_PREFIX_D << "                  Name =" << this->name;
+	qDebug() << SG_PREFIX_D << "                   UID =" << this->uid;
+
+	qDebug() << SG_PREFIX_D << "  Parent layer pointer =" << (quintptr) parent_layer;
+	qDebug() << SG_PREFIX_D << "     Parent layer name =" << (parent_layer ? parent_layer->name : "<no parent layer>");
+	//qDebug() << SG_PREFIX_D << "      Parent layer UID =" << (parent_layer ? parent_layer->uid : "<no parent layer>");
+
+	qDebug() << SG_PREFIX_D << "            Is in tree =" << this->is_in_tree();
+	qDebug() << SG_PREFIX_D << "      Tree index valid =" << this->index.isValid();
+	qDebug() << SG_PREFIX_D << "          Debug string =" << this->debug_string;
+
+	return;
 }

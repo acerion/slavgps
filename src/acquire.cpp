@@ -72,72 +72,20 @@ static AcquireContext * g_acquire_context = NULL;
 
 
 
-AcquireWorker::~AcquireWorker()
+static void finalize(AcquireContext & acquire_context, DataSource * data_source, AcquireProgressDialog * progress_dialog);
+
+
+
+
+AcquireWorker::AcquireWorker()
 {
 }
 
 
 
 
-/**
- * Some common things to do on completion of a datasource process
- *  . Update layer
- *  . Update dialog info
- *  . Update main viewport
- */
-void AcquireWorker::on_complete_process(void)
+AcquireWorker::~AcquireWorker()
 {
-	if (
-#ifdef K_FIXME_RESTORE
-	    this->acquire_is_running
-#else
-	    true
-#endif
-	    ) {
-		emit report_status(3);
-
-		if (this->acquire_context.target_trw_allocated) {
-
-			/* Only create the layer if it actually contains anything useful. */
-			/* TODO_2_LATER: create function for this operation to hide detail: */
-			if (!this->acquire_context.target_trw->is_empty()) {
-				this->acquire_context.target_trw->post_read(this->acquire_context.viewport, true);
-				this->acquire_context.top_level_layer->add_layer(this->acquire_context.target_trw, true);
-
-				/* Add any acquired tracks/routes/waypoints to tree view
-				   so that they can be displayed on "tree updated" event. */
-				this->acquire_context.target_trw->add_children_to_tree();
-			} else {
-				emit report_status(4);
-			}
-		}
-
-		if (this->acquire_worker_progress_dialog) {
-			if (this->data_source->keep_dialog_open) {
-				/* Only allow dialog's validation when format selection is done. */
-				this->acquire_worker_progress_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
-				this->acquire_worker_progress_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
-			} else {
-				/* Call 'accept()' slot to close the dialog. */
-				this->acquire_worker_progress_dialog->accept();
-			}
-		}
-
-		/* Main display update. */
-		if (this->acquire_context.target_trw) {
-			this->acquire_context.target_trw->post_read(this->acquire_context.viewport, true);
-			/* View this data if desired - must be done after post read (so that the bounds are known). */
-			if (this->data_source && this->data_source->autoview) {
-				this->acquire_context.target_trw->move_viewport_to_show_all(this->acquire_context.viewport);
-			}
-			/// this->acquire_context->panel->emit_items_tree_updated_cb("acquire completed");
-		}
-	} else {
-		/* Cancelled. */
-		if (this->acquire_context.target_trw_allocated) {
-			this->acquire_context.target_trw->unref();
-		}
-	}
 }
 
 
@@ -147,14 +95,14 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 {
 	switch (mode) {
 	case DataSourceMode::CreateNewLayer:
-		this->acquire_context.target_trw_allocated = true;
+		this->acquire_context->target_trw_allocated = true;
 		break;
 
 	case DataSourceMode::AddToLayer: {
-		Layer * selected_layer = this->acquire_context.selected_layer;
+		Layer * selected_layer = this->acquire_context->selected_layer;
 		if (selected_layer && selected_layer->type == LayerType::TRW) {
-			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
-			this->acquire_context.target_trw_allocated = false;
+			this->acquire_context->target_trw = (LayerTRW *) selected_layer;
+			this->acquire_context->target_trw_allocated = false;
 		} else {
 			/* TODO */
 		}
@@ -167,10 +115,10 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 
 	case DataSourceMode::ManualLayerManagement: {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		this->acquire_context.target_trw_allocated = false;
-		Layer * selected_layer = this->acquire_context.selected_layer;
+		this->acquire_context->target_trw_allocated = false;
+		Layer * selected_layer = this->acquire_context->selected_layer;
 		if (selected_layer && selected_layer->type == LayerType::TRW) {
-			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
+			this->acquire_context->target_trw = (LayerTRW *) selected_layer;
 		} else {
 			/* TODO */
 		}
@@ -182,35 +130,104 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 	};
 
 
-	if (this->acquire_context.target_trw_allocated) {
-		this->acquire_context.target_trw = new LayerTRW();
-		this->acquire_context.target_trw->set_coord_mode(this->acquire_context.viewport->get_coord_mode());
-		this->acquire_context.target_trw->set_name(this->data_source->layer_title);
+	if (this->acquire_context->target_trw_allocated) {
+		this->acquire_context->target_trw = new LayerTRW();
+		this->acquire_context->target_trw->set_coord_mode(this->acquire_context->viewport->get_coord_mode());
+		this->acquire_context->target_trw->set_name(this->data_source->layer_title);
 	}
 }
 
 
 
 
-/* This routine is the worker thread. There is only one simultaneous download allowed. */
+
+/* Call the function when acquire process has been completed without
+   termination or errors. */
+void AcquireWorker::finalize_after_completion(void)
+{
+	if (this->acquire_context->target_trw_allocated) {
+		qDebug() << SG_PREFIX_I << "Layer has been freshly allocated";
+
+		if (NULL == this->acquire_context->target_trw) {
+			qDebug() << SG_PREFIX_E << "Layer marked as allocated, but is NULL";
+			return;
+		}
+
+		if (this->acquire_context->target_trw->is_empty()) {
+			/* Acquire process ended without errors, but
+			   zero new items were acquired. */
+			qDebug() << SG_PREFIX_I << "Layer is empty, delete the layer";
+
+			/* TODO: verify that the layer is not attached to tree yet. */
+
+			delete this->acquire_context->target_trw;
+			this->acquire_context->target_trw = NULL;
+			return;
+		}
+
+
+		qDebug() << SG_PREFIX_I << "New layer is non-empty, will now process the layer";
+		//this->acquire_context->top_level_layer->add_layer(this->acquire_context->target_trw, true);
+		//this->acquire_context->top_level_layer->add_children_to_tree();
+	}
+
+
+	this->acquire_context->target_trw->post_read(this->acquire_context->viewport, true);
+	/* View this data if desired - must be done after post read (so that the bounds are known). */
+	if (this->data_source && this->data_source->autoview) {
+		this->acquire_context->target_trw->move_viewport_to_show_all(this->acquire_context->viewport);
+		// this->acquire_context->panel->emit_items_tree_updated_cb("acquire completed");
+	}
+
+
+	if (this->progress_dialog) {
+		if (this->data_source->keep_dialog_open) {
+			this->progress_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+			this->progress_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+		} else {
+			/* Call 'accept()' slot to close the dialog. */
+			qDebug() << SG_PREFIX_I << "Will close the dialog by clicking OK";
+			this->progress_dialog->accept();
+		}
+	}
+}
+
+
+
+
+/* Call the function when acquire process has been terminated - either
+   because of errors or because user cancelled it. */
+void AcquireWorker::finalize_after_termination(void)
+{
+	if (this->acquire_context->target_trw_allocated) {
+		this->acquire_context->target_trw->unref();
+	}
+
+	this->progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
+
+	return;
+}
+
+
+
+
+/* This routine is the worker thread. There is only one simultaneous acquire allowed. */
 /* Re-implementation of QRunnable::run() */
 void AcquireWorker::run(void)
 {
-	assert (this->data_source);
+	sleep(1); /* Time for progress dialog to open and block main UI thread. */
 
-
-	this->result = sg_ret::ok == this->data_source->acquire_into_layer(this->acquire_context.target_trw, this->acquire_context, this->acquire_worker_progress_dialog);
-
-	if (this->acquire_is_running && !this->result) {
-		this->acquire_worker_progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
-		if (this->acquire_context.target_trw_allocated) {
-			this->acquire_context.target_trw->unref();
-		}
-	} else {
-		this->on_complete_process();
-	}
-
+	this->acquire_is_running = true;
+	const sg_ret acquire_result = this->data_source->acquire_into_layer(this->acquire_context->target_trw, *this->acquire_context, this->progress_dialog);
 	this->acquire_is_running = false;
+
+	if (acquire_result == sg_ret::ok) {
+		qDebug() << SG_PREFIX_I << "Acquire process ended with success";
+		this->finalize_after_completion();
+	} else {
+		qDebug() << SG_PREFIX_W << "Acquire process ended with error";
+		this->finalize_after_termination();
+	}
 }
 
 
@@ -218,120 +235,87 @@ void AcquireWorker::run(void)
 
 void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode mode, AcquireContext * new_acquire_context)
 {
-	AcquireWorker * worker = new AcquireWorker(); /* TODO_LATER: this needs to be deleted. */
-
-	worker->data_source = new_data_source;
-	if (new_acquire_context) {
-		worker->acquire_context.window               = new_acquire_context->window;
-		worker->acquire_context.viewport             = new_acquire_context->viewport;
-		worker->acquire_context.top_level_layer      = new_acquire_context->top_level_layer;
-		worker->acquire_context.selected_layer       = new_acquire_context->selected_layer;
-		worker->acquire_context.target_trw           = new_acquire_context->target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
-		worker->acquire_context.target_trk           = new_acquire_context->target_trk;
-		worker->acquire_context.target_trw_allocated = new_acquire_context->target_trw_allocated;
-	}
-
-	if (QDialog::Accepted != new_data_source->run_config_dialog(worker->acquire_context)) {
+	if (QDialog::Accepted != new_data_source->run_config_dialog(*new_acquire_context)) {
 		qDebug() << SG_PREFIX_I << "Data source config dialog returned !Accepted";
-		delete worker;
 		return;
 	}
+
 
 	AcquireProgressDialog * progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
-	worker->acquire_worker_progress_dialog = progress_dialog;
-	worker->acquire_worker_progress_dialog->set_headline(QObject::tr("Importing data..."));
+	progress_dialog->set_headline(QObject::tr("Importing data..."));
 
-	if (false) {
-#if 0
-	    NULL == worker->data_source->acquire_options || !worker->data_source->acquire_options->is_valid()) {
+
+	if (false && NULL == new_data_source->acquire_options) {
 		/* This shouldn't happen... */
+		qDebug() << SG_PREFIX_E << "Acquire options are NULL";
 
-		if (NULL == worker->data_source->acquire_options) {
-			qDebug() << SG_PREFIX_E << "Acquire options are NULL";
-		} else {
-			if (!worker->data_source->acquire_options->is_valid()) {
-				qDebug() << SG_PREFIX_E << "Acquire options are invalid";
-			}
-		}
-#endif
-
-		if (worker->acquire_worker_progress_dialog) {
-			worker->acquire_worker_progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
-			worker->acquire_worker_progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
-			delete worker->acquire_worker_progress_dialog; /* TODO: move this to destructor. */
+		if (progress_dialog) {
+			progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
+			progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
+			delete progress_dialog; /* TODO: move this to destructor. */
 		}
 
-		delete worker;
 		return;
 	}
 
 
+	AcquireWorker * worker = new AcquireWorker(); /* TODO_LATER: this needs to be deleted. */
+	worker->data_source = new_data_source;
+	worker->acquire_context = new_acquire_context;
 	worker->configure_target_layer(mode);
-	worker->acquire_is_running = true;
+	worker->progress_dialog = progress_dialog;
 
 
-	if (worker->data_source->is_thread) {
+	/* Start the acquire task in a background thread and then
+	   block this foreground (UI) thread by showing a dialog. We
+	   need to block this tread to prevent the UI focus from going
+	   back to main window.
 
-		/* Start the acquire task in a background thread and
-		   then block this foreground (UI) thread by showing a
-		   dialog. We need to block this tread to prevent the
-		   UI focus from going back to main window.
+	   Until a background acquire thread is in progress, its
+	   progress window must be in foreground. */
 
-		   Until a background acquire thread is in progress,
-		   its progress window must be in foreground. */
+	QThreadPool::globalInstance()->start(worker);
 
-		QThreadPool::globalInstance()->start(worker);
+	if (worker->progress_dialog) {
+		worker->progress_dialog->exec();
+	}
 
-		if (worker->acquire_worker_progress_dialog) {
-			worker->acquire_worker_progress_dialog->exec();
-		}
-
-
-		/* We get here if user closed a dialog window.  The
-		   window was either closed through "Cancel" button
-		   when the acquire process was still in progress, or
-		   through "OK" button that became active when acquire
-		   process has been completed. */
-		if (worker->acquire_is_running) {
-			/* Cancel and mark for thread to finish. */
-			worker->acquire_is_running = false;
-		} else {
 #ifdef K_FIXME_RESTORE
-			/* Get data for Off command. */
-			if (worker->data_source->off_func) {
-				QString babel_args_off;
-				QString file_path_off;
-				interface->off_func(pass_along_data, babel_args_off, file_path_off);
-
-				if (!babel_args_off.isEmpty()) {
-
-					/* Turn off. */
-					BabelTurnOffDevice turn_off(file_path_off, babel_args_off);
-					turn_off.run_process();
-				}
-			}
-#endif
-		}
+	/* We get here if user closed a dialog window.  The window was
+	   either closed through "Cancel" button when the acquire
+	   process was still in progress, or through "OK" button that
+	   became active when acquire process has been completed. */
+	if (worker->acquire_is_running) {
+		/* Cancel and mark for thread to finish. */
+		worker->acquire_is_running = false;
 	} else {
-		/* Bypass thread method malarkly - you'll just have to wait... */
-		qDebug() << SG_PREFIX_I << "Ready to run acquire process, non-thread method";
 
-		if (sg_ret::ok != worker->data_source->acquire_into_layer(worker->acquire_context.target_trw, worker->acquire_context, worker->acquire_worker_progress_dialog)) {
-			Dialog::error(QObject::tr("Error: acquisition failed."), worker->acquire_context.window);
-		}
+		/* Get data for Off command. */
+		if (data_source->off_func) {
+			QString babel_args_off;
+			QString file_path_off;
+			interface->off_func(pass_along_data, babel_args_off, file_path_off);
 
-		worker->on_complete_process();
+			if (!babel_args_off.isEmpty()) {
 
-		/* Actually show it if necessary. */
-		if (worker->data_source->keep_dialog_open) {
-			if (worker->acquire_worker_progress_dialog) {
-				worker->acquire_worker_progress_dialog->exec();
+				/* Turn off. */
+				BabelTurnOffDevice turn_off(file_path_off, babel_args_off);
+				turn_off.run_process();
 			}
 		}
 	}
+
+#endif
 
 
 	delete progress_dialog;
+}
+
+
+
+
+AcquireContext::AcquireContext()
+{
 }
 
 

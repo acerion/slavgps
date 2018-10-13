@@ -82,7 +82,7 @@ namespace SlavGPS {
 	class AcquireContext : public QObject {
 		Q_OBJECT
 	public:
-		AcquireContext() {};
+		AcquireContext();
 		AcquireContext(Window * new_window, Viewport * new_viewport, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
 			: window(new_window), viewport(new_viewport), top_level_layer(new_top_level_layer), selected_layer(new_selected_layer) {};
 
@@ -112,18 +112,19 @@ namespace SlavGPS {
 	class AcquireWorker : public QObject, public QRunnable {
 		Q_OBJECT
 	public:
-		AcquireWorker() {};
+		AcquireWorker();
 		~AcquireWorker();
 		void run(); /* Re-implementation of QRunnable::run(). */
-		void on_complete_process(void);
 		void configure_target_layer(DataSourceMode mode);
 
-		AcquireContext acquire_context;
+		void finalize_after_completion(void);
+		void finalize_after_termination(void);
 
-		bool result = false;
+		AcquireContext * acquire_context = NULL;
+
 		bool acquire_is_running = false;
 		DataSource * data_source = NULL;
-		AcquireProgressDialog * acquire_worker_progress_dialog = NULL;
+		AcquireProgressDialog * progress_dialog = NULL;
 
 	signals:
 		void report_status(int status);

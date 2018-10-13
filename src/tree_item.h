@@ -172,6 +172,9 @@ namespace SlavGPS {
 		   Return false if any of the pointers is NULL. */
 		static bool the_same_object(const TreeItem * item1, const TreeItem * item2);
 
+
+		virtual void display_debug_info(const QString & reference) const;
+
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::Layer;
 		TreeIndex index;             /* Set in TreeView::push_tree_item_back/push_tree_item_front(). */

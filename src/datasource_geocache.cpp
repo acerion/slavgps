@@ -77,7 +77,6 @@ DataSourceGeoCache::DataSourceGeoCache(Viewport * new_viewport)
 	this->input_type = DataSourceInputType::None;
 	this->autoview = true;         /* true = automatically update the display - otherwise we won't see the geocache waypoints! */
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
-	this->is_thread = true;
 }
 
 

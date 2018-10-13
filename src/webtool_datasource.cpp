@@ -165,7 +165,6 @@ DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window
 	this->input_type = DataSourceInputType::None;
 	this->autoview = false; /* false = maintain current view rather than setting it to the acquired points. */
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
-	this->is_thread = true;
 
 	this->search = new_search;
 }
