@@ -45,12 +45,12 @@
 
 
 
-#include <glib.h>
-
-
-
-
 #include <QDebug>
+
+
+
+
+#include <glib.h>
 
 
 
@@ -70,65 +70,14 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "GPX"
-#define PREFIX ": GPX:" << __FUNCTION__ << __LINE__ << ">"
+#define GPX_BUFFER_SIZE 4096
 
 
 
-
-typedef enum {
-        tt_unknown = 0,
-
-        tt_gpx,
-        tt_gpx_name,
-        tt_gpx_desc,
-        tt_gpx_author,
-        tt_gpx_time,
-        tt_gpx_keywords,
-
-        tt_wpt,
-        tt_wpt_cmt,
-        tt_wpt_desc,
-        tt_wpt_src,
-        tt_wpt_type,
-        tt_wpt_name,
-        tt_wpt_ele,
-        tt_wpt_sym,
-        tt_wpt_time,
-        tt_wpt_url,
-        tt_wpt_link,            /* New in GPX 1.1 */
-
-        tt_trk,
-        tt_trk_cmt,
-        tt_trk_desc,
-        tt_trk_src,
-        tt_trk_type,
-        tt_trk_name,
-
-        tt_rte,
-
-        tt_trk_trkseg,
-        tt_trk_trkseg_trkpt,
-        tt_trk_trkseg_trkpt_ele,
-        tt_trk_trkseg_trkpt_time,
-        tt_trk_trkseg_trkpt_name,
-        /* extended */
-        tt_trk_trkseg_trkpt_course,
-        tt_trk_trkseg_trkpt_speed,
-        tt_trk_trkseg_trkpt_fix,
-        tt_trk_trkseg_trkpt_sat,
-
-        tt_trk_trkseg_trkpt_hdop,
-        tt_trk_trkseg_trkpt_vdop,
-        tt_trk_trkseg_trkpt_pdop,
-
-        tt_waypoint,
-        tt_waypoint_coord,
-        tt_waypoint_name,
-} tag_type_t;
 
 typedef struct tag_mapping {
         tag_type_t tag_type;              /* Enum from above for this tag. */
-        const char *tag_name;             /* xpath-ish tag name. */
+        const char * tag_name;            /* xpath-ish tag name. */
 } tag_mapping;
 
 
@@ -220,45 +169,15 @@ tag_mapping tag_path_map[] = {
 
 
 
-static tag_type_t get_tag(const char *t)
+static tag_type_t get_tag_type(const QString & tag)
 {
         for (tag_mapping * tm = tag_path_map; tm->tag_type != 0; tm++) {
-                if (0 == strcmp(tm->tag_name, t)) {
+                if (QString(tm->tag_name) == tag) {
                         return tm->tag_type;
 		}
 	}
         return tt_unknown;
 }
-
-
-
-/******************************************/
-
-
-
-tag_type_t current_tag = tt_unknown;
-GString * xpath = NULL;
-GString * c_cdata = NULL;
-
-/* Current ("c_") objects. */
-Trackpoint * c_tp = NULL;
-Waypoint * c_wp = NULL;
-Track * c_tr = NULL;
-TRWMetadata * c_md = NULL;
-
-static QString c_wp_name;
-static QString c_tr_name;
-
-/* Temporary things so we don't have to create them lots of times. */
-static QString g_slat;
-static QString g_slon;
-static LatLon g_lat_lon;
-
-/* Specialty flags / etc. */
-bool f_tr_newseg;
-unsigned int unnamed_waypoints = 0;
-unsigned int unnamed_tracks = 0;
-unsigned int unnamed_routes = 0;
 
 
 
@@ -277,20 +196,20 @@ static QString get_attr(char const ** attributes, char const * key)
 
 
 
-static bool set_g_lat_lon(char const ** attributes)
+bool GPXImporter::set_lat_lon(char const ** attributes)
 {
-	g_slat = get_attr(attributes, "lat");
-	if (g_slat.isEmpty()) {
+	this->slat = get_attr(attributes, "lat");
+	if (this->slat.isEmpty()) {
 		return false;
 	}
 
-	g_slon = get_attr(attributes, "lon");
-	if (g_slon.isEmpty()) {
+	this->slon = get_attr(attributes, "lon");
+	if (this->slon.isEmpty()) {
 		return false;
 	}
 
-	g_lat_lon.lat = SGUtils::c_to_double(g_slat);
-	g_lat_lon.lon = SGUtils::c_to_double(g_slon);
+	this->lat_lon.lat = SGUtils::c_to_double(this->slat);
+	this->lat_lon.lon = SGUtils::c_to_double(this->slon);
 
 	return true;
 }
@@ -298,48 +217,49 @@ static bool set_g_lat_lon(char const ** attributes)
 
 
 
-static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
+static void gpx_start(GPXImporter * importer, char const * el, char const ** attributes)
 {
-	QString tmp;
+	/* Expand current xpath. */
+	//fprintf(stderr, "++++++++ before append of '%s', xpath = '%s'\n", el, importer->xpath.toUtf8().constData());
+	importer->xpath.append('/');
+	importer->xpath.append(QString(el));
+	importer->current_tag_type = get_tag_type(importer->xpath);
+	//fprintf(stderr, "++++++++ after append, xpath = '%s'\n", importer->xpath.toUtf8().constData());
 
-	g_string_append_c(xpath, '/');
-	g_string_append(xpath, el);
-	current_tag = get_tag(xpath->str);
 
-	switch (current_tag) {
-
+	switch (importer->current_tag_type) {
 	case tt_gpx:
-		c_md = new TRWMetadata();
+		importer->md = new TRWMetadata();
 		break;
 
 	case tt_wpt:
-		if (set_g_lat_lon(attributes)) {
-			c_wp = new Waypoint();
-			c_wp->visible = get_attr(attributes, "hidden").isEmpty();
-			c_wp->coord = Coord(g_lat_lon, trw->get_coord_mode());
+		if (importer->set_lat_lon(attributes)) {
+			importer->wp = new Waypoint();
+			importer->wp->visible = get_attr(attributes, "hidden").isEmpty();
+			importer->wp->coord = Coord(importer->lat_lon, importer->trw->get_coord_mode());
 		}
 		break;
 
 	case tt_trk:
 	case tt_rte:
-		c_tr = new Track(current_tag == tt_rte);
-		c_tr->set_defaults();
-		c_tr->visible = get_attr(attributes, "hidden").isEmpty();
+		importer->trk = new Track(importer->current_tag_type == tt_rte);
+		importer->trk->set_defaults();
+		importer->trk->visible = get_attr(attributes, "hidden").isEmpty();
 		break;
 
 	case tt_trk_trkseg:
-		f_tr_newseg = true;
+		importer->f_tr_newseg = true;
 		break;
 
 	case tt_trk_trkseg_trkpt:
-		if (set_g_lat_lon(attributes)) {
-			c_tp = new Trackpoint();
-			c_tp->coord = Coord(g_lat_lon, trw->get_coord_mode());
-			if (f_tr_newseg) {
-				c_tp->newsegment = true;
-				f_tr_newseg = false;
+		if (importer->set_lat_lon(attributes)) {
+			importer->tp = new Trackpoint();
+			importer->tp->coord = Coord(importer->lat_lon, importer->trw->get_coord_mode());
+			if (importer->f_tr_newseg) {
+				importer->tp->newsegment = true;
+				importer->f_tr_newseg = false;
 			}
-			c_tr->trackpoints.push_back(c_tp);
+			importer->trk->trackpoints.push_back(importer->tp);
 		}
 		break;
 
@@ -365,26 +285,28 @@ static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 	case tt_trk_src:
 	case tt_trk_type:
 	case tt_trk_name:
-		g_string_erase(c_cdata, 0, -1); /* Clear the cdata buffer. */
+		importer->cdata.clear();
 		break;
 
 	case tt_waypoint:
-		c_wp = new Waypoint();
-		c_wp->visible = true;
+		importer->wp = new Waypoint();
+		importer->wp->visible = true;
 		break;
 
 	case tt_waypoint_coord:
-		if (set_g_lat_lon(attributes)) {
-			c_wp->coord = Coord(g_lat_lon, trw->get_coord_mode());
+		if (importer->set_lat_lon(attributes)) {
+			importer->wp->coord = Coord(importer->lat_lon, importer->trw->get_coord_mode());
 		}
 		break;
 
 	case tt_waypoint_name:
-		tmp = get_attr(attributes, "id");
-		if (!tmp.isEmpty()) {
-			c_wp_name = tmp;
+		{
+			QString tmp = get_attr(attributes, "id");
+			if (!tmp.isEmpty()) {
+				importer->wp_name = tmp;
+			}
+			importer->cdata.clear();
 		}
-		g_string_erase(c_cdata, 0, -1); /* Clear the cdata buffer for description. */
 		break;
 
 	default: break;
@@ -394,223 +316,229 @@ static void gpx_start(LayerTRW * trw, char const * el, char const ** attributes)
 
 
 
-static void gpx_end(LayerTRW * trw, char const * el)
+static void gpx_end(GPXImporter * importer, char const * el)
 {
-	static GTimeVal tp_time;
-	static GTimeVal wp_time;
+	/* Truncate current xpath by removing last tag from it (+1 to remove slash too). */
+	//fprintf(stderr, "-------- before chop of '%s' xpath ='%s'\n", el, importer->xpath.toUtf8().constData());
+	importer->xpath.chop(strlen(el) + 1);
+	//fprintf(stderr, "-------- after chop, xpath = '%s'\n", importer->xpath.toUtf8().constData());;
 
-	g_string_truncate(xpath, xpath->len - strlen(el) - 1);
 
-	switch (current_tag) {
-
+	switch (importer->current_tag_type) {
 	case tt_gpx:
-		trw->set_metadata(c_md);
-		c_md = NULL;
+		importer->trw->set_metadata(importer->md);
+		importer->md = NULL;
 		break;
 
 	case tt_gpx_name:
-		trw->set_name(QString(c_cdata->str));
-		g_string_erase(c_cdata, 0, -1);
+		importer->trw->set_name(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_gpx_author:
-		c_md->set_author(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->md->set_author(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_gpx_desc:
-		c_md->set_description(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->md->set_description(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_gpx_keywords:
-		c_md->set_keywords(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->md->set_keywords(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_gpx_time:
-		c_md->set_iso8601_timestamp(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->md->set_iso8601_timestamp(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_waypoint:
 	case tt_wpt:
-		if (c_wp_name.isEmpty()) {
-			c_wp_name = QString("VIKING_WP%1").arg(unnamed_waypoints++, 4, 10, (QChar) '0');
+		if (importer->wp_name.isEmpty()) {
+			importer->wp_name = QString("VIKING_WP%1").arg(importer->unnamed_waypoints++, 4, 10, (QChar) '0');
 		}
-		c_wp->set_name(c_wp_name);
-		trw->add_waypoint_from_file(c_wp);
-		c_wp = NULL;
+		importer->wp->set_name(importer->wp_name);
+		importer->trw->add_waypoint_from_file(importer->wp);
+		importer->wp = NULL;
 		break;
 
 	case tt_trk:
-		if (c_tr_name.isEmpty()) {
-			c_tr_name = QString("VIKING_TR%1").arg(unnamed_tracks++, 3, 10, (QChar) '0');
+		if (importer->trk_name.isEmpty()) {
+			importer->trk_name = QString("VIKING_TR%1").arg(importer->unnamed_tracks++, 3, 10, (QChar) '0');
 		}
 		/* Delibrate fall through. */
 	case tt_rte:
-		if (c_tr_name.isEmpty()) {
-			c_tr_name = QString("VIKING_RT%1").arg(unnamed_routes++, 3, 10, (QChar) '0');
+		if (importer->trk_name.isEmpty()) {
+			importer->trk_name = QString("VIKING_RT%1").arg(importer->unnamed_routes++, 3, 10, (QChar) '0');
 		}
-		c_tr->set_name(c_tr_name);
-		trw->add_track_from_file(c_tr);
-		c_tr = NULL;
+		importer->trk->set_name(importer->trk_name);
+		importer->trw->add_track_from_file(importer->trk);
+		importer->trk = NULL;
 		break;
 
 	case tt_wpt_name:
-		c_wp_name = c_cdata->str;
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp_name = importer->cdata;
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_name:
-		c_tr_name = c_cdata->str;
-		g_string_erase(c_cdata, 0, -1);
+		importer->trk_name = importer->cdata;
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_ele:
-		c_wp->altitude = Altitude(SGUtils::c_to_double(c_cdata->str), HeightUnit::Metres);
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->altitude = Altitude(SGUtils::c_to_double(importer->cdata.toUtf8().constData()), HeightUnit::Metres);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_ele:
-		c_tp->altitude = SGUtils::c_to_double(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->altitude = SGUtils::c_to_double(importer->cdata.toUtf8().constData());
+		importer->cdata.clear();
 		break;
 
 	case tt_waypoint_name: /* .loc name is really description. */
 	case tt_wpt_desc:
-		c_wp->set_description(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->set_description(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_cmt:
-		c_wp->set_comment(QString(c_cdata->str));
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->set_comment(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_src:
-		c_wp->set_source(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->set_source(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_type:
-		c_wp->set_type(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->set_type(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_url:
-		c_wp->set_url(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->set_url(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_link:
-		c_wp->set_image_full_path(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->set_image_full_path(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_sym:
-		c_wp->set_symbol(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->wp->set_symbol(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_desc:
-		c_tr->set_description(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->trk->set_description(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_src:
-		c_tr->set_source(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->trk->set_source(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_type:
-		c_tr->set_type(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->trk->set_type(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_cmt:
-		c_tr->set_comment(QString(c_cdata->str));
-		g_string_erase(c_cdata, 0, -1);
+		importer->trk->set_comment(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_wpt_time:
-		if (g_time_val_from_iso8601(c_cdata->str, &wp_time)) {
-			c_wp->timestamp = wp_time.tv_sec;
-			c_wp->has_timestamp = true;
+		{
+			GTimeVal wp_time;
+			if (g_time_val_from_iso8601(importer->cdata.toUtf8().constData(), &wp_time)) {
+				importer->wp->timestamp = wp_time.tv_sec;
+				importer->wp->has_timestamp = true;
+			}
+			importer->cdata.clear();
 		}
-		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_name:
-		c_tp->set_name(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->set_name(importer->cdata);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_time:
-		if (g_time_val_from_iso8601(c_cdata->str, &tp_time)) {
-			c_tp->timestamp = tp_time.tv_sec;
-			c_tp->has_timestamp = true;
+		{
+			GTimeVal tp_time;
+			if (g_time_val_from_iso8601(importer->cdata.toUtf8().constData(), &tp_time)) {
+				importer->tp->timestamp = tp_time.tv_sec;
+				importer->tp->has_timestamp = true;
+			}
+			importer->cdata.clear();
 		}
-		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_course:
-		c_tp->course = SGUtils::c_to_double(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->course = SGUtils::c_to_double(importer->cdata.toUtf8().constData());
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_speed:
-		c_tp->speed = SGUtils::c_to_double(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->speed = SGUtils::c_to_double(importer->cdata.toUtf8().constData());
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_fix:
-		if (!strcmp("2d", c_cdata->str)) {
-			c_tp->fix_mode = GPSFixMode::Fix2D;
-		} else if (!strcmp("3d", c_cdata->str)) {
-			c_tp->fix_mode = GPSFixMode::Fix3D;
-		} else if (!strcmp("dgps", c_cdata->str)) {
-			c_tp->fix_mode = GPSFixMode::DGPS;
-		} else if (!strcmp("pps", c_cdata->str)) {
-			c_tp->fix_mode = GPSFixMode::PPS;
+		if ("2d" == importer->cdata) {
+			importer->tp->fix_mode = GPSFixMode::Fix2D;
+		} else if ("3d" == importer->cdata) {
+			importer->tp->fix_mode = GPSFixMode::Fix3D;
+		} else if ("dgps" == importer->cdata) {
+			importer->tp->fix_mode = GPSFixMode::DGPS;
+		} else if ("pps" == importer->cdata) {
+			importer->tp->fix_mode = GPSFixMode::PPS;
 		} else {
-			c_tp->fix_mode = GPSFixMode::NotSeen;
+			importer->tp->fix_mode = GPSFixMode::NotSeen;
 		}
-		g_string_erase(c_cdata, 0, -1);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_sat:
-		c_tp->nsats = atoi(c_cdata->str);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->nsats = importer->cdata.toInt();
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_hdop:
-		c_tp->hdop = strtod(c_cdata->str, NULL);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->hdop = strtod(importer->cdata.toUtf8().constData(), NULL);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_vdop:
-		c_tp->vdop = strtod(c_cdata->str, NULL);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->vdop = strtod(importer->cdata.toUtf8().constData(), NULL);
+		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_pdop:
-		c_tp->pdop = strtod(c_cdata->str, NULL);
-		g_string_erase(c_cdata, 0, -1);
+		importer->tp->pdop = strtod(importer->cdata.toUtf8().constData(), NULL);
+		importer->cdata.clear();
 		break;
 
 	default: break;
 	}
 
-	current_tag = get_tag(xpath->str);
+	importer->current_tag_type = get_tag_type(importer->xpath);
 }
 
 
 
 
-static void gpx_cdata(void * dta, const XML_Char * s, int len)
+static void gpx_cdata(GPXImporter * importer, const XML_Char * s, int len)
 {
-	switch (current_tag) {
+	switch (importer->current_tag_type) {
 	case tt_gpx_name:
 	case tt_gpx_author:
 	case tt_gpx_desc:
@@ -642,19 +570,42 @@ static void gpx_cdata(void * dta, const XML_Char * s, int len)
 	case tt_trk_trkseg_trkpt_vdop:
 	case tt_trk_trkseg_trkpt_pdop:
 	case tt_waypoint_name: /* .loc name is really description. */
-		g_string_append_len(c_cdata, s, len);
+		importer->cdata.append(QString(s).left(len));
 		break;
 
-	default: break;  /* Ignore cdata from other things. */
+	default:
+		break;  /* Ignore cdata from other things. */
 	}
 }
 
 
 
+sg_ret GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
+{
+	GPXImporter importer(trw);
+	char buf[GPX_BUFFER_SIZE];
+	bool finish = false;
 
+	while (!finish) {
+		const size_t n_read = file.read(buf, sizeof (buf));
+		finish = file.atEnd() || 0 == n_read;
+
+		if (sg_ret::ok != importer.write(buf, n_read)) {
+			qDebug() << SG_PREFIX_E << "Failed to write" << n_read << "bytes of data to GPX importer";
+			return sg_ret::err;
+		}
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+#if 0 /* Keeping as reference. */
 /* Make like a "stack" of tag names like gpspoint's separated like /gpx/wpt/whatever. */
 
-sg_ret GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
+sg_ret GPX::read_layer_from_file2(QFile & file, LayerTRW * trw)
 {
 	assert (trw != NULL);
 
@@ -667,16 +618,16 @@ sg_ret GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
 	XML_SetUserData(parser, trw); /* In the future we could remove all global variables. */
 	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) gpx_cdata);
 
-	char buf[4096];
+	char buf[GPX_BUFFER_SIZE];
 
-	xpath = g_string_new("");
-	c_cdata = g_string_new("");
+	importer->xpath = g_string_new("");
+	importer->cdata = g_string_new("");
 
-	unnamed_waypoints = 1;
-	unnamed_tracks = 1;
-	unnamed_routes = 1;
+	importer->unnamed_waypoints = 1;
+	importer->unnamed_tracks = 1;
+	importer->unnamed_routes = 1;
 
-	FILE * file2 = fdopen(file.handle(), "r"); /* TODO: close the file? */
+	FILE * file2 = fdopen(file.handle(), "r"); /* OLD_TODO: close the file? */
 
 	while (!done) {
 		len = fread(buf, 1, sizeof(buf)-7, file2);
@@ -685,12 +636,12 @@ sg_ret GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
 	}
 
 	XML_ParserFree(parser);
-	g_string_free(xpath, true);
-	g_string_free(c_cdata, true);
+	g_string_free(importer->xpath, true);
+	g_string_free(importer->cdata, true);
 
 	return status != XML_STATUS_ERROR ? sg_ret::ok : sg_ret::err;
 }
-
+#endif
 
 
 
@@ -835,7 +786,7 @@ static QString entitize(const QString & input)
                         while ((p = strstr(p, ep->text)) != NULL) {
                                 elen = strlen(ep->entity);
 
-                                xstr = g_strdup(p + strlen(ep->text));
+                                xstr = strdup(p + strlen(ep->text));
 
                                 strcpy(p, ep->entity);
                                 strcpy(p + elen, xstr);
@@ -853,7 +804,7 @@ static QString entitize(const QString & input)
                         if (*p & 0x80) {
                                 utf8_to_int(p, &bytes, &value);
                                 if (p[bytes]) {
-                                        xstr = g_strdup(p + bytes);
+                                        xstr = strdup(p + bytes);
                                 } else {
                                         xstr = NULL;
                                 }
@@ -943,7 +894,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toLower().toUtf8().constData());
 			break;
 		default:
-			qDebug() << "EE:" PREFIX << "invalid GPX Export Waypoint Symbol Name preference" << (int) pref;
+			qDebug() << SG_PREFIX_E << "Invalid GPX Export Waypoint Symbol Name preference" << (int) pref;
 			break;
 		}
 	}
@@ -1332,15 +1283,14 @@ GPXImporter::GPXImporter(LayerTRW * new_trw)
 	this->parser = XML_ParserCreate(NULL);
 
 	XML_SetElementHandler(this->parser, (XML_StartElementHandler) gpx_start, (XML_EndElementHandler) gpx_end);
-	XML_SetUserData(this->parser, this->trw); /* In the future we could remove all global variables. */
+	XML_SetUserData(this->parser, this);
 	XML_SetCharacterDataHandler(this->parser, (XML_CharacterDataHandler) gpx_cdata);
 
-	xpath = g_string_new("");
-	c_cdata = g_string_new("");
+	this->unnamed_waypoints = 1;
+	this->unnamed_tracks = 1;
+	this->unnamed_routes = 1;
 
-	unnamed_waypoints = 1;
-	unnamed_tracks = 1;
-	unnamed_routes = 1;
+	qDebug() << SG_PREFIX_I << "Importer for TRW layer" << this->trw->name << "created";
 }
 
 
@@ -1349,19 +1299,19 @@ GPXImporter::GPXImporter(LayerTRW * new_trw)
 GPXImporter::~GPXImporter()
 {
 	XML_ParserFree(this->parser);
-	g_string_free(xpath, true);
-	g_string_free(c_cdata, true);
+
+	qDebug() << SG_PREFIX_I << "Importer for TRW layer" << this->trw->name << "deleted," << this->n_bytes << "bytes processed";
 }
 
 
 
 
-size_t GPXImporter::write(const char * data, size_t size)
+sg_ret GPXImporter::write(const char * data, size_t size)
 {
 #if 0
-	char buf_a[512];
-	snprintf(buf_a, std::min(sizeof (buf_a), size), "%s", data);
-	qDebug() << SG_PREFIX_D << "Writing to importer" << buf_a;
+	char buffer[GPX_BUFFER_SIZE];
+	snprintf(buffer, std::min(sizeof (buffer), size), "%s", data);
+	qDebug() << SG_PREFIX_D << "Writing to importer" << buffer;
 #endif
 
 	const int finish = (size <= 0);
@@ -1371,9 +1321,10 @@ size_t GPXImporter::write(const char * data, size_t size)
 		qDebug() << SG_PREFIX_E << "XML parsing returns non-ok:" << this->status;
 	}
 
+	this->n_bytes += size;
 #if 0
 	qDebug() << SG_PREFIX_I << "Finish =" << finish << ", success =" << ();
 #endif
 
-	return this->status != XML_STATUS_ERROR;
+	return this->status != XML_STATUS_ERROR ? sg_ret::ok : sg_ret::err;
 }
