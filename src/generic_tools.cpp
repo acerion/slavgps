@@ -569,7 +569,7 @@ ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * 
 
 ToolStatus LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Layer Tools: Pan: calling window->pan_move()";
+	//qDebug() << "DD: Layer Tools: Pan: calling window->pan_move()";
 	this->window->pan_move(event);
 
 	return ToolStatus::Ack;

@@ -1322,7 +1322,7 @@ void Window::pan_click(QMouseEvent * ev)
 
 void Window::pan_move(QMouseEvent * ev)
 {
-	qDebug() << "II" PREFIX;
+	//qDebug() << "II" PREFIX;
 	if (this->pan_pos.x != -1) {
 		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
 							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
