@@ -77,16 +77,22 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		bool push_tree_item_front(const TreeItem * parent_tree_item, TreeItem * tree_item);
-		bool push_tree_item_back(const TreeItem * parent_tree_item, TreeItem * tree_item);
-		bool insert_tree_item(const TreeItem * parent_tree_index, const TreeItem * sibling_tree_item, TreeItem * tree_item, bool above);
-		TreeItem * get_tree_item(TreeIndex const & item_index) const;
 
+		enum class AttachMode {
+			Front,
+			Back,
+			Before,
+			After
+		};
+
+
+		sg_ret attach_to_tree(const TreeItem * parent_tree_item, TreeItem * tree_item, TreeView::AttachMode attachMode = TreeView::AttachMode::Back, const TreeItem * sibling = NULL);
+		TreeItem * get_tree_item(TreeIndex const & item_index) const;
 		TreeItem * get_selected_tree_item(void) const;
 
 		void apply_tree_item_name(const TreeItem * tree_item);
 		void apply_tree_item_icon(const TreeItem * tree_item);
-		void apply_tree_item_timestamp(const TreeItem * tree_item, time_t timestamp);
+		void apply_tree_item_timestamp(const TreeItem * tree_item);
 		void apply_tree_item_tooltip(const TreeItem * tree_item);
 
 		bool get_tree_item_visibility(const TreeItem * tree_item);
@@ -118,7 +124,7 @@ namespace SlavGPS {
 		void tree_item_needs_redraw(sg_uid_t uid);
 
 	private:
-		bool insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row);
+		sg_ret insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row);
 		QList<QStandardItem *> create_new_row(TreeItem * tree_item, const QString & name);
 
 		bool editing = false;

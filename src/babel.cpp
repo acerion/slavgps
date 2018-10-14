@@ -56,6 +56,8 @@
 #include "util.h"
 #include "vikutils.h"
 #include "preferences.h"
+#include "layer_trw.h"
+#include "layer_aggregate.h"
 
 
 
@@ -412,6 +414,15 @@ sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_opti
 sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (this->babel_process) {
+
+
+#if 1
+		if (!trw->is_in_tree()) {
+			acquire_context.top_level_layer->add_layer(trw, true);
+		}
+#endif
+
+
 		BabelProcess * importer = new BabelProcess();
 
 		importer->program_name = this->babel_process->program_name;

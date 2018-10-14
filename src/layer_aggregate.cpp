@@ -135,36 +135,31 @@ bool is_base_type(LayerType layer_type)
 
 void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 {
-	/* By default layers are inserted above the selected layer. */
-	bool put_above = true;
+	/* By default layers are inserted before the selected layer. */
+	TreeView::AttachMode attach_mode = TreeView::AttachMode::Before;
 
 	/* These types are 'base' types in that you what other information on top. */
 	if (is_base_type(layer->type)) {
-		put_above = false;
+		attach_mode = TreeView::AttachMode::After;
 	}
 
-	if (this->tree_view) {
-		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->insert_tree_item(this, sibling_layer, layer, put_above);
-		this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
-	}
 
 	layer->set_owning_layer(this);
 
 	if (sibling_layer->index.isValid()) {
 
-		auto theone = this->children->end();
-		for (auto i = this->children->begin(); i != this->children->end(); i++) {
-			if (TreeItem::the_same_object(sibling_layer, *i)) {
-				theone = i;
+		auto sibling_iter = this->children->end();
+		for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+			if (TreeItem::the_same_object(sibling_layer, *iter)) {
+				sibling_iter = iter;
 			}
 		}
 
-		if (put_above) {
-			this->children->insert(std::next(theone), layer);
+		/* ::insert() inserts before given iterator. */
+		if (TreeView::AttachMode::Before == attach_mode) {
+			this->children->insert(sibling_iter, layer);
 		} else {
-			/* Thus insert 'here' (so don't add 1). */
-			this->children->insert(theone, layer);
+			this->children->insert(std::next(sibling_iter), layer);
 		}
 	} else {
 		/* Effectively insert at 'end' of the list to match how displayed in the tree view
@@ -175,13 +170,17 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 		this->children->push_back(layer);
 	}
 
-	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+	if (this->tree_view) {
+		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		this->tree_view->attach_to_tree(this, layer, attach_mode, sibling_layer);
+		QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
-	/* Update our own tooltip. */
-	this->tree_view->apply_tree_item_tooltip(this);
+		/* Update our own tooltip. */
+		this->tree_view->apply_tree_item_tooltip(this);
 
-	if (!this->children->empty()) {
-		this->tree_view->expand(this->index);
+		if (!this->children->empty()) {
+			this->tree_view->expand(this->index);
+		}
 	}
 }
 
@@ -211,20 +210,20 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->push_tree_item_front(this, layer);
+		this->tree_view->attach_to_tree(this, layer, TreeView::AttachMode::Front);
 
 		this->children->push_front(layer);
 	} else {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->push_tree_item_back(this, layer);
+		this->tree_view->attach_to_tree(this, layer);
 
 		this->children->push_back(layer);
 	}
-	this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
+	this->tree_view->apply_tree_item_timestamp(layer);
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO_2_LATER: move this in some reasonable place. Putting it here is just a workaround. */
-		layer->add_children_to_tree();
+		layer->attach_children_to_tree();
 	}
 
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
@@ -427,7 +426,7 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 		t_view->detach_tree_item(*iter);
 	}
 	this->children->sort(TreeItem::compare_name_ascending);
-	this->add_children_to_tree();
+	this->attach_children_to_tree();
 
 	this->blockSignals(false);
 	t_view->blockSignals(false);
@@ -447,7 +446,7 @@ void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 		t_view->detach_tree_item(*iter);
 	}
 	this->children->sort(TreeItem::compare_name_descending);
-	this->add_children_to_tree();
+	this->attach_children_to_tree();
 
 	this->blockSignals(false);
 	t_view->blockSignals(false);
@@ -907,7 +906,7 @@ bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, Viewpo
 
 
 
-void LayerAggregate::add_children_to_tree(void)
+void LayerAggregate::attach_children_to_tree(void)
 {
 	if (this->children->empty()) {
 		return;
@@ -917,8 +916,7 @@ void LayerAggregate::add_children_to_tree(void)
 		Layer * layer = *iter;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		this->tree_view->push_tree_item_back(this, layer);
-		this->tree_view->apply_tree_item_timestamp(layer, layer->get_timestamp());
+		this->tree_view->attach_to_tree(this, layer);
 	}
 
 	/* Update our own tooltip. */

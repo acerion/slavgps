@@ -79,7 +79,7 @@ namespace SlavGPS {
 		void change_coord_mode(CoordMode mode);
 		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 		void add_menu_items(QMenu & menu);
-		void add_children_to_tree(void);
+		void attach_children_to_tree(void);
 
 
 		void add_layer(Layer * layer, bool allow_reordering);

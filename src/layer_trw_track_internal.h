@@ -180,6 +180,13 @@ namespace SlavGPS {
 		void ref();
 		void free();
 
+
+		/* Generate an icon for itself. */
+		void self_assign_icon(void);
+		/* Generate a timestamp for itself. */
+		void self_assign_timestamp(void);
+
+
 		QString get_tooltip(void) const;
 
 

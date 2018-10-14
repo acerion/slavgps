@@ -43,6 +43,7 @@
 
 
 
+#include "layer_aggregate.h"
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
 #include "layer_trw_tools.h"
@@ -1271,7 +1272,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 
 
-void LayerTRW::add_children_to_tree(void)
+void LayerTRW::attach_children_to_tree(void)
 {
 	qDebug() << SG_PREFIX_D;
 
@@ -1284,29 +1285,29 @@ void LayerTRW::add_children_to_tree(void)
 		qDebug() << SG_PREFIX_D << "Handling Tracks node";
 
 		if (!this->tracks.is_in_tree()) {
-			this->tree_view->push_tree_item_back(this, &this->tracks);
+			this->tree_view->attach_to_tree(this, &this->tracks);
 		}
-		this->tracks.add_children_to_tree();
+		this->tracks.attach_children_to_tree();
 	}
 
 	if (this->routes.size() > 0) {
 		qDebug() << SG_PREFIX_D << "Handling Routes node";
 
 		if (!this->routes.is_in_tree()) {
-			this->tree_view->push_tree_item_back(this, &this->routes);
+			this->tree_view->attach_to_tree(this, &this->routes);
 		}
 
-		this->routes.add_children_to_tree();
+		this->routes.attach_children_to_tree();
 	}
 
 	if (this->waypoints.size() > 0) {
 		qDebug() << SG_PREFIX_D << "Handling Waypoints node";
 
 		if (!this->waypoints.is_in_tree()) {
-			this->tree_view->push_tree_item_back(this, &this->waypoints);
+			this->tree_view->attach_to_tree(this, &this->waypoints);
 		}
 
-		this->waypoints.add_children_to_tree();
+		this->waypoints.attach_children_to_tree();
 	}
 
 	this->generate_missing_thumbnails();
@@ -2139,9 +2140,12 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
+	bool can_attach_to_tree = false;
+
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
-		return;
+		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
+		g_tree->tree_get_items_tree()->get_top_layer()->add_layer(this, true);
+		can_attach_to_tree = true;
 	}
 
 	if (!this->waypoints.is_in_tree()) {
@@ -2153,21 +2157,21 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 			return;
 		}
 
-		this->tree_view->push_tree_item_back(this, &this->waypoints);
+		this->tree_view->attach_to_tree(this, &this->waypoints);
+		can_attach_to_tree = true;
 	}
 
-	/* Now we can proceed with adding a waypoint to Waypoints node. */
 
+	/* Add to layer's data structure. */
 	this->waypoints.add_waypoint(wp);
 
-	this->tree_view->push_tree_item_back(&this->waypoints, wp);
 
-	this->tree_view->apply_tree_item_timestamp(wp, wp->has_timestamp ? wp->timestamp : 0);
-
-	/* Sort now as post_read is not called on a waypoint connected to tree. */
-	this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
-
-	this->waypoints.name_generator.add_name(wp->name);
+	/* Attach to tree. */
+	if (can_attach_to_tree) {
+		this->tree_view->attach_to_tree(&this->waypoints, wp); /* push item to the end of parent nodes. */
+		/* Sort now as post_read is not called on a waypoint connected to tree. */
+		this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
+	}
 }
 
 
@@ -2175,6 +2179,8 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 void LayerTRW::add_track(Track * trk)
 {
+	bool can_attach_to_tree = false;
+
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
 		return;
@@ -2189,26 +2195,30 @@ void LayerTRW::add_track(Track * trk)
 			return;
 		}
 
-		this->tree_view->push_tree_item_back(this, &this->tracks);
+		this->tree_view->attach_to_tree(this, &this->tracks);
 	}
 
-	/* Now we can proceed with adding a track to Tracks node. */
+	can_attach_to_tree = true;
 
-	this->tracks.add_track(trk);
-
-	time_t timestamp = 0;
 	Trackpoint * tp = trk->get_tp_first();
 	if (tp && tp->has_timestamp) {
-		timestamp = tp->timestamp;
+		trk->timestamp = tp->timestamp;
+		trk->has_timestamp = true;
 	}
 
-	this->tree_view->push_tree_item_back(&this->tracks, trk);
-	this->tree_view->apply_tree_item_timestamp(trk, timestamp);
 
-	/* Sort now as post_read is not called on a track connected to tree. */
-	this->tree_view->sort_children(&this->tracks, this->track_sort_order);
 
-	this->tracks.update_tree_view(trk);
+	/* Add to layer's data structure. */
+	this->tracks.add_track(trk);
+
+
+	/* Attach to tree. */
+	if (can_attach_to_tree) {
+		this->tree_view->attach_to_tree(&this->tracks, trk); /* push item to the end of parent nodes. */
+		/* Sort now as post_read is not called on a track connected to tree. */
+		this->tree_view->sort_children(&this->tracks, this->track_sort_order);
+		this->tracks.update_tree_view(trk);
+	}
 }
 
 
@@ -2230,14 +2240,14 @@ void LayerTRW::add_route(Track * trk)
 			return;
 		}
 
-		this->tree_view->push_tree_item_back(this, &this->routes);
+		this->tree_view->attach_to_tree(this, &this->routes);
 	}
 
 	/* Now we can proceed with adding a route to Routes node. */
 
 	this->routes.add_track(trk);
 
-	this->tree_view->push_tree_item_back(&this->routes, trk);
+	this->tree_view->attach_to_tree(&this->routes, trk);
 
 	/* Sort now as post_read is not called on a route connected to tree. */
 	this->tree_view->sort_children(&this->routes, this->track_sort_order);
@@ -2371,8 +2381,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		this->delete_track(trk);
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
-		trw_src->tree_view->apply_tree_item_timestamp(trw_src, trw_src->get_timestamp());
+		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest);
+		trw_src->tree_view->apply_tree_item_timestamp(trw_src);
 	}
 
 	if (item_type_id == "sg.trw.route") {
@@ -2402,8 +2412,8 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 		trw_dest->waypoints.recalculate_bbox();
 		trw_src->waypoints.recalculate_bbox();
 		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest, trw_dest->get_timestamp());
-		trw_src->tree_view->apply_tree_item_timestamp(trw_src, trw_src->get_timestamp());
+		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest);
+		trw_src->tree_view->apply_tree_item_timestamp(trw_src);
 	}
 }
 
@@ -3372,7 +3382,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	}
 
 	/* Reset layer timestamps in case they have now changed. */
-	this->tree_view->apply_tree_item_timestamp(this, this->get_timestamp());
+	this->tree_view->apply_tree_item_timestamp(this);
 
 	this->emit_layer_changed("TRW - delete selected tracks");
 }
@@ -3453,7 +3463,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 	this->waypoints.recalculate_bbox();
 	/* Reset layer timestamp in case it has now changed. */
-	this->tree_view->apply_tree_item_timestamp(this, this->get_timestamp());
+	this->tree_view->apply_tree_item_timestamp(this);
 	this->emit_layer_changed("TRW - delete selected waypoints");
 
 }
@@ -3877,12 +3887,12 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 
 		if (need_to_set_time) {
 			QDateTime meta_time;
-			const time_t timestamp = this->get_timestamp();
-			if (timestamp == 0) {
+			const time_t local_timestamp = this->get_timestamp();
+			if (local_timestamp == 0) {
 				/* No time found - so use 'now' for the metadata time. */
 				meta_time = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
 			} else {
-				meta_time.setMSecsSinceEpoch(timestamp * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
+				meta_time.setMSecsSinceEpoch(local_timestamp * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
 			}
 
 			this->metadata->iso8601_timestamp = meta_time.toString(Qt::ISODate);

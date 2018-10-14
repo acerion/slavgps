@@ -496,41 +496,37 @@ QIcon SlavGPS::get_wp_icon_small(const QString & symbol_name)
  */
 time_t LayerTRWWaypoints::get_earliest_timestamp()
 {
-	time_t timestamp = 0;
+	time_t result = 0;
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Waypoint * wp = *iter;
 		if (wp->has_timestamp) {
 			/* When timestamp not set yet - use the first value encountered. */
-			if (timestamp == 0) {
-				timestamp = wp->timestamp;
-			} else if (timestamp > wp->timestamp) {
-				timestamp = wp->timestamp;
+			if (result == 0) {
+				result = wp->timestamp;
+			} else if (result > wp->timestamp) {
+				result = wp->timestamp;
 			} else {
 
 			}
 		}
 	}
 
-	return timestamp;
+	return result;
 }
 
 
 
 
-void LayerTRWWaypoints::add_children_to_tree(void)
+void LayerTRWWaypoints::attach_children_to_tree(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		time_t timestamp = 0;
 		Waypoint * wp = *iter;
-		if (wp->has_timestamp) {
-			timestamp = wp->timestamp;
+		if (wp->is_in_tree()) {
+			continue;
 		}
 
-		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
-
-		this->tree_view->push_tree_item_back(this, wp);
-		this->tree_view->apply_tree_item_timestamp(wp, timestamp);
+		this->tree_view->attach_to_tree(this, wp);
 	}
 }
 
@@ -888,6 +884,8 @@ void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
 	this->children_list.push_back(wp);
 
 	this->set_new_waypoint_icon(wp);
+
+	this->name_generator.add_name(wp->name);
 
 	return;
 }

@@ -725,7 +725,7 @@ void Waypoint::delete_sublayer(bool confirm)
 	parent_layer->waypoints.recalculate_bbox();
 
 	/* Reset layer timestamp in case it has now changed. */
-	parent_layer->tree_view->apply_tree_item_timestamp(parent_layer, parent_layer->get_timestamp());
+	parent_layer->tree_view->apply_tree_item_timestamp(parent_layer);
 
 	if (was_visible) {
 		parent_layer->emit_layer_changed("TRW - Waypoint - delete");

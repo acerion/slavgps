@@ -117,6 +117,7 @@ namespace SlavGPS {
 		static bool compare_name_descending(const TreeItem * a, const TreeItem * b);  /* Descending: ZZZ -> AAA */
 
 
+		virtual time_t get_timestamp(void) const { return this->has_timestamp ? this->timestamp : 0; };
 
 		virtual QString get_tooltip(void) const;
 
@@ -124,9 +125,9 @@ namespace SlavGPS {
 		   parent of) any items/children that need to be added to application's tree
 		   of items.
 
-		   This method should call push_tree_item_back() on any such
+		   This method should call attach_to_tree() on any such
 		   child that needs to be added to the tree. */
-		virtual void add_children_to_tree(void) {};
+		virtual void attach_children_to_tree(void) {};
 
 		virtual bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu) { return false; };
 
@@ -177,8 +178,8 @@ namespace SlavGPS {
 
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::Layer;
-		TreeIndex index;             /* Set in TreeView::push_tree_item_back/push_tree_item_front(). */
-		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::push_tree_item_back/push_tree_item_front(). */
+		TreeIndex index;             /* Set in TreeView::attach_to_tree(). */
+		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::insert_tree_item_at_row(). */
 
 		bool editable = true; /* Is this item is editable? TODO_LATER: be more specific: is the data editable, or is the reference visible in the tree editable? */
 		bool visible = true;  /* Is this item is visible in a tree of data items? */
@@ -190,7 +191,8 @@ namespace SlavGPS {
 		QString type_id;
 		QStringList accepted_child_type_ids;
 
-
+		bool has_timestamp = false;
+		time_t timestamp = 0;
 
 		QIcon icon; /* .isNull() may return true for this field (if child class doesn't assign anything to the icon). */
 

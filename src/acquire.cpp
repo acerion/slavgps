@@ -168,10 +168,11 @@ void AcquireWorker::finalize_after_completion(void)
 
 		qDebug() << SG_PREFIX_I << "New layer is non-empty, will now process the layer";
 		//this->acquire_context->top_level_layer->add_layer(this->acquire_context->target_trw, true);
-		//this->acquire_context->top_level_layer->add_children_to_tree();
+		//this->acquire_context->top_level_layer->attach_children_to_tree();
 	}
 
 
+	this->acquire_context->target_trw->attach_children_to_tree();
 	this->acquire_context->target_trw->post_read(this->acquire_context->viewport, true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
 	if (this->data_source && this->data_source->autoview) {

@@ -511,7 +511,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 		this->param_specs = Layer::get_interface(layer_type)->parameters_c;
 		this->param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
 
-		parent->tree_view->push_tree_item_back(parent, child);
+		parent->tree_view->attach_to_tree(parent, child);
 
 	} else { /* Any other LayerType::X type. */
 
@@ -527,7 +527,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 
 		//LayerAggregate * agg = (LayerAggregate *) stack.second;
 		//qDebug() << "II" PREFIX << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
-		//agg->tree_view->push_tree_item_back(agg, layer);
+		//agg->tree_view->attach_to_tree(agg, layer);
 	}
 
 	return;
@@ -559,7 +559,7 @@ void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
 
 		if (layer && parent_layer) {
 			if (parent_layer->type == LayerType::Aggregate) {
-				//layer->add_children_to_tree();
+				//layer->attach_children_to_tree();
 				layer->post_read(viewport, true);
 			} else if (parent_layer->type == LayerType::GPS) {
 				/* TODO_2_LATER: anything else needs to be done here? */

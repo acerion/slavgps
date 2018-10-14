@@ -590,7 +590,7 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
  */
 time_t LayerTRWTracks::get_earliest_timestamp()
 {
-	time_t timestamp = 0;
+	time_t earlnest_timestamp = 0;
 	std::list<Track *> tracks_;
 	this->get_tracks_list(tracks_);
 
@@ -602,10 +602,10 @@ time_t LayerTRWTracks::get_earliest_timestamp()
 		/* Assume trackpoints already sorted by time. */
 		Trackpoint * tpt = trk->get_tp_first();
 		if (tpt && tpt->has_timestamp) {
-			timestamp = tpt->timestamp;
+			earlnest_timestamp = tpt->timestamp;
 		}
 	}
-	return timestamp;
+	return earlnest_timestamp;
 }
 
 
@@ -617,13 +617,11 @@ time_t LayerTRWTracks::get_earliest_timestamp()
 void LayerTRWTracks::update_tree_view(Track * trk)
 {
 	if (trk && trk->index.isValid()) {
-		if (trk->has_color) {
-			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
-			pixmap.fill(trk->color);
-			trk->icon = QIcon(pixmap);
-		} else {
-			trk->icon = QIcon(); /* Invalidate icon. */
-		}
+
+		trk->self_assign_timestamp();
+		this->tree_view->apply_tree_item_timestamp(trk);
+
+		trk->self_assign_icon();
 		this->tree_view->apply_tree_item_icon(trk);
 	}
 }
@@ -631,30 +629,19 @@ void LayerTRWTracks::update_tree_view(Track * trk)
 
 
 
-void LayerTRWTracks::add_children_to_tree(void)
+void LayerTRWTracks::attach_children_to_tree(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
 
-		if (trk->has_color) {
-			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
-			pixmap.fill(trk->color);
-			trk->icon = QIcon(pixmap);
-		} else {
-			trk->icon = QIcon(); /* Invalidate icon. */
+		if (trk->is_in_tree()) {
+			continue;
 		}
 
-		time_t timestamp = 0;
-		Trackpoint * tpt = trk->get_tp_first();
-		if (tpt && tpt->has_timestamp) {
-			timestamp = tpt->timestamp;
-		}
+		trk->self_assign_icon();
+		trk->self_assign_timestamp();
 
-		/* At this point each item is expected to have ::owning_layer member set to enclosing TRW layer. */
-
-		this->tree_view->push_tree_item_back(this, trk);
-		this->tree_view->apply_tree_item_icon(trk);
-		this->tree_view->apply_tree_item_timestamp(trk, timestamp);
+		this->tree_view->attach_to_tree(this, trk);
 	}
 }
 
@@ -980,7 +967,7 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 	qDebug() << "----" PREFIX "sort items - end";
 
 	qDebug() << "----" PREFIX "attach items - begin";
-	this->add_children_to_tree();
+	this->attach_children_to_tree();
 	qDebug() << "----" PREFIX "attach items - end";
 
 	this->blockSignals(false);

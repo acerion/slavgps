@@ -164,7 +164,7 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);
-		void add_children_to_tree(void);
+		void attach_children_to_tree(void);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 

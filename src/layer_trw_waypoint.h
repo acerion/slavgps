@@ -111,8 +111,6 @@ namespace SlavGPS {
 
 		Coord coord;
 		/* bool visible = true; */ /* Inherited from TreeItem. */
-		bool has_timestamp = false;
-		time_t timestamp = 0;
 		Altitude altitude;
 
 		/* QString name; */ /* Inherited from TreeItem. */

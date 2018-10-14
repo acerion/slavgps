@@ -142,7 +142,7 @@ namespace SlavGPS {
 		QString get_tooltip(void) const;
 
 
-		void add_children_to_tree(void);
+		void attach_children_to_tree(void);
 
 
 		void uniquify(TreeViewSortOrder sort_order);

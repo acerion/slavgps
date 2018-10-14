@@ -144,25 +144,8 @@ sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acq
 			wp->set_name(file_base_name(file_full_path));
 		}
 
-#if 1
-		/* Only at this point we know that there will be some
-		   valid data (new valid waypoint) added to target trw
-		   layer.
-
-		   If the target trw layer has been just created
-		   (during acquire process) and thus isn't connected
-		   to tree yet, we have to do this here. */
-		if (acquire_context.target_trw_allocated && !trw->is_in_tree()) {
-			acquire_context.top_level_layer->add_layer(trw, true);
-		}
-#endif
 		qDebug() << SG_PREFIX_I << "Adding waypoint" << wp->name << "to layer" << trw->get_name();
-
-		/* http://doc.qt.io/archives/qt-4.8/threads-qobject.html */
-		wp->moveToThread(QApplication::instance()->thread());
-
 		trw->add_waypoint(wp);
-
 	}
 
 	this->selected_files.clear();

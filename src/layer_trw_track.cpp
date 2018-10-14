@@ -159,6 +159,32 @@ void Track::set_type(const QString & new_type)
 
 
 
+void Track::self_assign_icon(void)
+{
+	if (this->has_color) {
+		QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
+		pixmap.fill(this->color);
+		this->icon = QIcon(pixmap);
+	} else {
+		this->icon = QIcon(); /* Invalidate icon. */
+	}
+}
+
+
+
+
+void Track::self_assign_timestamp(void)
+{
+	Trackpoint * tpt = this->get_tp_first();
+	if (tpt && tpt->has_timestamp) {
+		this->timestamp = tpt->timestamp;
+		this->has_timestamp = true;
+	}
+}
+
+
+
+
 void Track::ref()
 {
 	ref_count++;
@@ -4007,7 +4033,7 @@ void Track::delete_sublayer(bool confirm)
 		was_visible = parent_layer->delete_track(this);
 
 		/* Reset layer timestamp in case it has now changed. */
-		parent_layer->tree_view->apply_tree_item_timestamp(parent_layer, parent_layer->get_timestamp());
+		parent_layer->tree_view->apply_tree_item_timestamp(parent_layer);
 	} else {
 		if (confirm) {
 			/* Get confirmation from the user. */

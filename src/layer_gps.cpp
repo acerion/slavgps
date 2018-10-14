@@ -364,7 +364,7 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* NB no need to attach signal update handler here
-			   as this will always be performed later on in LayerGPS::add_children_to_tree(). */
+			   as this will always be performed later on in LayerGPS::attach_children_to_tree(). */
 		}
 	}
 
@@ -665,7 +665,7 @@ LayerGPS::~LayerGPS()
 
 
 
-void LayerGPS::add_children_to_tree(void)
+void LayerGPS::attach_children_to_tree(void)
 {
 	/* TODO_LATER set to garmin by default.
 	   if (Babel::devices)
@@ -684,9 +684,7 @@ void LayerGPS::add_children_to_tree(void)
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		trw->set_name(trw_names[ix].label);
-		this->tree_view->push_tree_item_back(this, trw);
-
-		this->tree_view->apply_tree_item_timestamp(trw, trw->get_timestamp());
+		this->tree_view->attach_to_tree(this, trw);
 
 		QObject::connect(trw, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 	}
