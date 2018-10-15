@@ -136,11 +136,8 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 
 std::list<Geoname *> Geonames::select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
 {
-	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(geonames,
-									   ListSelectionMode::MultipleItems,
-									   title,
-									   ListSelectionWidget::get_headers_for_geoname(),
-									   parent);
+	BasicDialog dialog(title, parent);
+	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(dialog, geonames, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_geoname());
 
 	if (!selected_geonames.size()) {
 		Dialog::error(QObject::tr("Nothing was selected"), parent);
@@ -358,7 +355,7 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 
 
 
-void Geonames::wikipedia_box(LayerTRW * trw, const LatLonBBox & bbox, Window * window)
+void Geonames::create_wikipedia_waypoints(LayerTRW * trw, const LatLonBBox & bbox, Window * window)
 {
 	const QString north = SGUtils::double_to_c(bbox.north);
 	const QString south = SGUtils::double_to_c(bbox.south);

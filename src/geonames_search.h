@@ -72,8 +72,8 @@ namespace SlavGPS {
 
 	class Geonames {
 	public:
-		/* Finding Wikipedia entries within a certain box. */
-		static void wikipedia_box(LayerTRW * trw, const LatLonBBox & bbox, Window * window);
+		/* Create waypoints from Wikipedia entries within a certain box. */
+		static void create_wikipedia_waypoints(LayerTRW * trw, const LatLonBBox & bbox, Window * window);
 
 	private:
 		static std::list<Geoname *> select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent);

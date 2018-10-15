@@ -316,6 +316,14 @@ BasicMessage::BasicMessage(QWidget * parent)
 
 
 
+BasicDialog::BasicDialog(const QString & title, QWidget * parent) : BasicDialog(parent)
+{
+	this->setWindowTitle(title);
+}
+
+
+
+
 BasicMessage::~BasicMessage()
 {
 }

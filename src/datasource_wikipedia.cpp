@@ -70,7 +70,7 @@ sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 		return sg_ret::err;
 	}
 
-	Geonames::wikipedia_box(trw, acquire_context.viewport->get_bbox(), acquire_context.window);
+	Geonames::create_wikipedia_waypoints(trw, acquire_context.viewport->get_bbox(), acquire_context.window);
 
 	return sg_ret::ok;
 }

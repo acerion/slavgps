@@ -75,7 +75,6 @@ namespace SlavGPS {
 		void set_headers(const QStringList & header_labels);
 
 		QStandardItemModel model;
-		QItemSelectionModel selection_model;
 
 		static QStringList get_headers_for_track(void);
 		static QStringList get_headers_for_waypoint(void);
@@ -111,15 +110,12 @@ namespace SlavGPS {
 
 
 	template <typename T>
-	std::list<T> a_dialog_select_from_list(const std::list<T> & elements, ListSelectionMode selection_mode, const QString & title, const QStringList & header_labels, QWidget * parent)
+	std::list<T> a_dialog_select_from_list(BasicDialog & dialog, const std::list<T> & elements, ListSelectionMode selection_mode, const QStringList & header_labels)
 	{
-		BasicDialog dialog(parent);
 		ListSelectionWidget list_widget(selection_mode, &dialog);
 		list_widget.set_headers(header_labels);
 
-		dialog.setWindowTitle(title);
 		dialog.setMinimumHeight(400);
-
 		dialog.grid->addWidget(&list_widget, 0, 0);
 
 		for (auto iter = elements.begin(); iter != elements.end(); iter++) {
@@ -136,11 +132,11 @@ namespace SlavGPS {
 		std::list<T> result;
 		if (dialog.exec() == QDialog::Accepted) {
 
-			/* Don't use selection_model.selectedIndexes(),
+			/* Don't use selectedIndexes(),
 			   because this method would return as many
 			   indexes per row as there are columns. We only
 			   want one item in 'selected_indices' list per row. */
-			QModelIndexList selected_indices = list_widget.selection_model.selectedRows();
+			QModelIndexList selected_indices = list_widget.selectionModel()->selectedRows();
 
 			QStandardItem * root_item = list_widget.model.invisibleRootItem();
 			if (!root_item) {

@@ -33,6 +33,7 @@
 #include "geonames_search.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_waypoint.h"
+#include "globals.h"
 
 
 
@@ -42,7 +43,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": List Selection Widget:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "List Selection Widget"
 
 
 
@@ -57,10 +58,9 @@ ListSelectionWidget::ListSelectionWidget(ListSelectionMode selection_mode, QWidg
 		this->setSelectionMode(QAbstractItemView::ExtendedSelection);
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unhandled selection mode" << (int) selection_mode;
+		qDebug() << SG_PREFIX_E << "Unhandled selection mode" << (int) selection_mode;
 		break;
 	};
-
 
 	this->horizontalHeader()->setStretchLastSection(true);
 	this->verticalHeader()->setVisible(false);
@@ -71,8 +71,8 @@ ListSelectionWidget::ListSelectionWidget(ListSelectionMode selection_mode, QWidg
 	this->setShowGrid(false);
 	this->setModel(&this->model);
 
-	this->selection_model.setModel(&this->model);
-	this->setSelectionModel(&this->selection_model);
+	this->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	this->setSelectionBehavior(QAbstractItemView::SelectRows);
 }
 
 

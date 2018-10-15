@@ -1799,7 +1799,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
 	Viewport * viewport = g_tree->tree_get_main_viewport();
 
-	Geonames::wikipedia_box(this, viewport->get_bbox(), this->get_window());
+	Geonames::create_wikipedia_waypoints(this, viewport->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
 	g_tree->emit_items_tree_updated();
 }
@@ -1809,7 +1809,7 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-	Geonames::wikipedia_box(this, this->get_bbox(), this->get_window());
+	Geonames::create_wikipedia_waypoints(this, this->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
 	g_tree->emit_items_tree_updated();
 }
@@ -2804,11 +2804,8 @@ void LayerTRW::merge_with_other_cb(void)
 	/* Sort alphabetically for user presentation. */
 	merge_candidates.sort(TreeItem::compare_name_ascending);
 
-	std::list<Track *> merge_list = a_dialog_select_from_list(merge_candidates,
-								  ListSelectionMode::MultipleItems,
-								  is_route ? tr("Select route to merge with") : tr("Select track to merge with"),
-								  ListSelectionWidget::get_headers_for_track(),
-								  this->get_window());
+	BasicDialog dialog(is_route ? tr("Select route to merge with") : tr("Select track to merge with"), this->get_window());
+	std::list<Track *> merge_list = a_dialog_select_from_list(dialog, merge_candidates, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_track());
 
 	if (merge_list.empty()) {
 		qDebug() << "II: Layer TRW: merge track is empty";
@@ -2859,11 +2856,8 @@ void LayerTRW::append_track_cb(void)
 	/* Note the limit to selecting one track only.
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
-								    ListSelectionMode::SingleItem,
-								    is_route ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track"),
-								    ListSelectionWidget::get_headers_for_track(),
-								    this->get_window());
+	BasicDialog dialog(is_route ? tr("Select the route to append after the current route") : tr("Select the track to append after the current track"), this->get_window());
+	std::list<Track *> sources_list = a_dialog_select_from_list(dialog, source_tracks, ListSelectionMode::SingleItem, ListSelectionWidget::get_headers_for_track());
 	/* It's a list, but shouldn't contain more than one other track! */
 	if (sources_list.empty()) {
 		return;
@@ -2924,11 +2918,8 @@ void LayerTRW::append_other_cb(void)
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	std::list<Track *> sources_list = a_dialog_select_from_list(source_tracks,
-								    ListSelectionMode::SingleItem,
-								    target_is_route ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track"),
-								    ListSelectionWidget::get_headers_for_track(),
-								    this->get_window());
+	BasicDialog dialog(target_is_route ? tr("Select the track to append after the current route") : tr("Select the route to append after the current track"), this->get_window());
+	std::list<Track *> sources_list = a_dialog_select_from_list(dialog, source_tracks, ListSelectionMode::SingleItem, ListSelectionWidget::get_headers_for_track());
 	if (sources_list.empty()) {
 		return;
 	}
@@ -3364,11 +3355,8 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	}
 
 	/* Get list of items to delete from the user. */
-	std::list<Track *> delete_list = a_dialog_select_from_list(all_tracks,
-								   ListSelectionMode::MultipleItems,
-								   tr("Select tracks to delete"),
-								   ListSelectionWidget::get_headers_for_track(),
-								   this->get_window());
+	BasicDialog dialog(tr("Select tracks to delete"), this->get_window());
+	std::list<Track *> delete_list = a_dialog_select_from_list(dialog, all_tracks, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_track());
 
 	if (delete_list.empty()) {
 		return;
@@ -3407,11 +3395,8 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 
 	/* Get list of items to delete from the user. */
 
-	std::list<Track *> delete_list = a_dialog_select_from_list(all_routes,
-								   ListSelectionMode::MultipleItems,
-								   tr("Select routes to delete"),
-								   ListSelectionWidget::get_headers_for_track(),
-								   this->get_window());
+	BasicDialog dialog(tr("Select routes to delete"), this->get_window());
+	std::list<Track *> delete_list = a_dialog_select_from_list(dialog, all_routes, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_track());
 
 	/* Delete requested routes.
 	   Since specifically requested, IMHO no need for extra confirmation. */
@@ -3444,11 +3429,8 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	}
 
 	/* Get list of items to delete from the user. */
-	std::list<Waypoint *> delete_list = a_dialog_select_from_list(all_waypoints,
-								      ListSelectionMode::MultipleItems,
-								      tr("Select waypoints to delete"),
-								      ListSelectionWidget::get_headers_for_waypoint(),
-								      this->get_window());
+	BasicDialog dialog(tr("Select waypoints to delete"), this->get_window());
+	std::list<Waypoint *> delete_list = a_dialog_select_from_list(dialog, all_waypoints, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_waypoint());
 
 	if (delete_list.empty()) {
 		return;

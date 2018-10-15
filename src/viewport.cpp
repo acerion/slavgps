@@ -732,11 +732,8 @@ void Viewport::show_centers(Window * parent_window) const
 	/* Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
 	const QStringList headers = { tr("Back/Forward Locations") };
-	std::list<QString> result = a_dialog_select_from_list(texts,
-							      ListSelectionMode::SingleItem,
-							      tr("Back/Forward Locations"),
-							      headers,
-							      parent_window);
+	BasicDialog dialog(tr("Back/Forward Locations"), parent_window);
+	std::list<QString> result = a_dialog_select_from_list(dialog, texts, ListSelectionMode::SingleItem, headers);
 
 	/* TODO_MAYBE: why do we allow any selection and why do we use result here? */
 

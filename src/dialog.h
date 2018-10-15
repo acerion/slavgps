@@ -76,6 +76,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		BasicDialog(QWidget * parent = NULL);
+		BasicDialog(const QString & title, QWidget * parent = NULL);
 		~BasicDialog();
 
 	/* protected: */
