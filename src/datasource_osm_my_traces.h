@@ -59,9 +59,9 @@ namespace SlavGPS {
 		DataSourceOSMMyTraces(Viewport * viewport);
 		~DataSourceOSMMyTraces() {};
 
-		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
+		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 
 		Viewport * viewport = NULL;
 	};
@@ -73,7 +73,7 @@ namespace SlavGPS {
 	public:
 		DataSourceOSMMyTracesDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title) { this->viewport = new_viewport; };
 
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 		void set_in_current_view_property(std::list<GPXMetaData *> & list);
 

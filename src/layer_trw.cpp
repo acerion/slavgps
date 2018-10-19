@@ -1305,6 +1305,7 @@ void LayerTRW::attach_children_to_tree(void)
 
 		if (!this->waypoints.is_in_tree()) {
 			this->tree_view->attach_to_tree(this, &this->waypoints);
+			qDebug() << SG_PREFIX_I;
 		}
 
 		this->waypoints.attach_children_to_tree();
@@ -2148,6 +2149,8 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		can_attach_to_tree = true;
 	}
 
+#if 1
+
 	if (!this->waypoints.is_in_tree()) {
 		/* "Waypoints" node has not been shown in tree view.
 		   That's because we start showing the node only after first waypoint is added. */
@@ -2158,6 +2161,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		}
 
 		this->tree_view->attach_to_tree(this, &this->waypoints);
+		qDebug() << SG_PREFIX_I;
 		can_attach_to_tree = true;
 	}
 
@@ -2169,9 +2173,12 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 	/* Attach to tree. */
 	if (can_attach_to_tree) {
 		this->tree_view->attach_to_tree(&this->waypoints, wp); /* push item to the end of parent nodes. */
+		qDebug() << SG_PREFIX_I;
 		/* Sort now as post_read is not called on a waypoint connected to tree. */
+		/* TODO: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
 		this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
 	}
+#endif
 }
 
 

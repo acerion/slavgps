@@ -41,9 +41,9 @@ namespace SlavGPS {
 		DataSourceGeoTag();
 		~DataSourceGeoTag() {};
 
-		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
+		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 
 	private:
 		QStringList selected_files;
@@ -55,7 +55,7 @@ namespace SlavGPS {
 	class DataSourceGeoTagDialog : public DataSourceDialog {
 	public:
 		DataSourceGeoTagDialog(const QString & window_title);
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) { return NULL; }
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context) { return NULL; }
 
 		FileSelectorWidget * file_selector = NULL;
 	};

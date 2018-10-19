@@ -25,6 +25,7 @@
 
 
 #include <list>
+#include <unistd.h>
 
 
 
@@ -71,8 +72,15 @@ namespace SlavGPS {
 	public:
 		ListSelectionWidget() {};
 		ListSelectionWidget(ListSelectionMode selection_mode, QWidget * a_parent = NULL);
+		~ListSelectionWidget();
 
 		void set_headers(const QStringList & header_labels);
+
+		template <typename T>
+		sg_ret add_elements(const std::list<T> & elements);
+
+		template <typename T>
+		std::list<T> get_selection(T dummy);
 
 		QStandardItemModel model;
 
@@ -105,6 +113,86 @@ namespace SlavGPS {
 
 		QList<QStandardItem *> items;
 	};
+
+
+
+	template <typename T>
+	sg_ret ListSelectionWidget::add_elements(const std::list<T> & elements)
+	{
+		qDebug() << __FILE__ << __LINE__;
+
+		for (auto iter = elements.begin(); iter != elements.end(); iter++) {
+			SlavGPS::ListSelectionRow row(*iter);
+			this->model.invisibleRootItem()->appendRow(row.items);
+		}
+#if 0
+		qDebug() << __FILE__ << __LINE__;
+		this->setVisible(false);
+		qDebug() << __FILE__ << __LINE__;
+		this->resizeRowsToContents();
+		qDebug() << __FILE__ << __LINE__;
+		this->resizeColumnsToContents();
+		qDebug() << __FILE__ << __LINE__;
+		this->setVisible(true);
+		qDebug() << __FILE__ << __LINE__;
+		this->show();
+		qDebug() << __FILE__ << __LINE__;
+#endif
+
+		return sg_ret::ok;
+	}
+
+
+
+	template <typename T>
+	std::list<T> ListSelectionWidget::get_selection(T dummy)
+	{
+		qDebug() << __FILE__ << __LINE__;
+
+		std::list<T> result;
+
+
+		/* Don't use selectedIndexes(), because this method
+		   would return as many indexes per row as there are
+		   columns. We only want one item in
+		   'selected_indices' list per row. */
+		QModelIndexList selected_indices = this->selectionModel()->selectedRows();
+
+		qDebug() << __FILE__ << __LINE__;
+
+		QStandardItem * root_item = this->model.invisibleRootItem();
+		if (!root_item) {
+			qDebug() << "EE   Widget List Selection  >  Failed to get root item";
+			return result;
+		}
+
+		qDebug() << __FILE__ << __LINE__;
+
+		for (auto iter = selected_indices.begin(); iter != selected_indices.end(); iter++) {
+
+			qDebug() << __FILE__ << __LINE__ << "adding new item to list of selected items";
+
+			/* Pointer to the object that we want to put
+			   in result is in zero-th column. */
+
+			QModelIndex item_index = *iter;
+			QStandardItem * child_item = root_item->child(item_index.row(), 0);
+			if (!child_item) {
+				qDebug() << "EE   Widget List Selection  >  Failed to get child item from zero-th column";
+				return result;
+			}
+
+			const QVariant variant = child_item->data(RoleLayerData);
+			result.push_back(variant.value<T>());
+		}
+
+
+		qDebug() << __FILE__ << __LINE__;
+
+		return result;
+	}
+
+
 
 
 

@@ -75,7 +75,7 @@ DataSourceFile::DataSourceFile()
 
 
 
-int DataSourceFile::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceFile::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceFileDialog config_dialog("");
 
@@ -116,7 +116,7 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 
 
-AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	g_last_directory_url = this->file_selector->get_directory_url();
 	g_last_filter = this->file_selector->get_selected_name_filter();

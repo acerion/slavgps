@@ -1070,7 +1070,7 @@ void GPSSession::run(void)
 		importer->set_input("", this->port); /* TODO: type of input? */
 
 		acquire_context.target_trw = this->trw;
-		importer->set_acquire_context(acquire_context);
+		importer->set_acquire_context(&acquire_context);
 		importer->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
 		result = importer->run_process();
@@ -1081,7 +1081,7 @@ void GPSSession::run(void)
 
 		acquire_context.target_trw = this->trw;
 		acquire_context.target_trk = this->trk;
-		exporter->set_acquire_context(acquire_context);
+		exporter->set_acquire_context(&acquire_context);
 		exporter->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
 		result = sg_ret::ok == exporter->export_through_gpx(this->trw, this->trk);

@@ -203,7 +203,7 @@ bool DatasourceGPSSetup::get_do_turn_off(void)
 
 
 
-AcquireOptions * DatasourceGPSSetup::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DatasourceGPSSetup::create_acquire_options(AcquireContext * acquire_context)
 {
 	gps_acquire_in_progress = true;
 
@@ -351,7 +351,7 @@ static void set_gps_info(const char * info, AcquireWorker * getter)
  * These outputs differ when different GPS devices are used, so we will need to test
  * them on several and add the corresponding support.
  */
-void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context)
+void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context)
 {
 	char *line;
 #ifdef K_TODO
@@ -442,7 +442,7 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 
 
 
-int DataSourceGPS::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceGPS::run_config_dialog(AcquireContext * acquire_context)
 {
 	/* This function will be created for downloading data from
 	   GPS, so build the dialog with all checkboxes available and
@@ -645,9 +645,9 @@ DatasourceGPSSetup::DatasourceGPSSetup(const QString & window_title, GPSTransfer
 
 
 
-DataSourceDialog * DataSourceGPS::create_progress_dialog(void * user_data)
+AcquireProgressDialog * DataSourceGPS::create_progress_dialog(void * user_data)
 {
-	DataSourceDialog * progress_dialog = NULL;
+	AcquireProgressDialog * progress_dialog = NULL;
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) user_data;
 
 	QLabel * gpslabel = new QLabel(QObject::tr("GPS device: N/A"));

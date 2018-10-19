@@ -50,13 +50,13 @@ namespace SlavGPS {
 	public:
 		BFilterSimplify();
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 	class BFilterSimplifyDialog : public DataSourceDialog {
 	public:
 		BFilterSimplifyDialog(const QString & window_title);
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 		QSpinBox * spin = NULL;
 	};
@@ -68,13 +68,13 @@ namespace SlavGPS {
 	public:
 		BFilterCompress();
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 	class BFilterCompressDialog : public DataSourceDialog {
 	public:
 		BFilterCompressDialog(const QString & window_title);
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 		QDoubleSpinBox * spin = NULL;
 	};
@@ -86,13 +86,13 @@ namespace SlavGPS {
 	public:
 		BFilterDuplicates();
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 	class BFilterDuplicatesDialog : public DataSourceDialog {
 	public:
 		BFilterDuplicatesDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 	};
 
 
@@ -102,13 +102,13 @@ namespace SlavGPS {
 	public:
 		BFilterManual();
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 	class BFilterManualDialog : public DataSourceDialog {
 	public:
 		BFilterManualDialog(const QString & window_title);
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 		QLineEdit * entry = NULL;
 	};
@@ -119,13 +119,13 @@ namespace SlavGPS {
 	class BFilterPolygon : public DataSourceBabel {
 	public:
 		BFilterPolygon();
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 	class BFilterPolygonDialog : public DataSourceDialog {
 	public:
 		BFilterPolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 	};
 
 
@@ -134,13 +134,13 @@ namespace SlavGPS {
 	class BFilterExcludePolygon : public DataSourceBabel {
 	public:
 		BFilterExcludePolygon();
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 	class BFilterExcludePolygonDialog : public DataSourceDialog {
 	public:
 		BFilterExcludePolygonDialog(const QString & window_title) : DataSourceDialog(window_title) {};
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 	};
 
 

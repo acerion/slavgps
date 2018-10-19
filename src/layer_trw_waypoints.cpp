@@ -527,6 +527,7 @@ void LayerTRWWaypoints::attach_children_to_tree(void)
 		}
 
 		this->tree_view->attach_to_tree(this, wp);
+		qDebug() << SG_PREFIX_I;
 	}
 }
 

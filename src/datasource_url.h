@@ -47,7 +47,7 @@ namespace SlavGPS {
 		DataSourceURL();
 		~DataSourceURL() {};
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 
@@ -59,7 +59,7 @@ namespace SlavGPS {
 		DataSourceURLDialog(const QString & window_title);
 		~DataSourceURLDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 	private:
 		QLineEdit url_input;

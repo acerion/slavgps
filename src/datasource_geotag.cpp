@@ -79,7 +79,7 @@ DataSourceGeoTag::DataSourceGeoTag()
 
 
 
-int DataSourceGeoTag::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceGeoTag::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceGeoTagDialog config_dialog(this->window_title);
 
@@ -125,17 +125,17 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
    In prinicple this loading should be quite fast and so don't need to
    have any progress monitoring.
 */
-sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	for (int i = 0; i < this->selected_files.size(); i++) {
 		const QString file_full_path = this->selected_files.at(0);
 
 		qDebug() << SG_PREFIX_I << "Trying to acquire waypoints from" << file_full_path;
 
-		Waypoint * wp = GeotagExif::create_waypoint_from_file(file_full_path, acquire_context.viewport->get_coord_mode());
+		Waypoint * wp = GeotagExif::create_waypoint_from_file(file_full_path, acquire_context->viewport->get_coord_mode());
 		if (!wp) {
 			qDebug() << SG_PREFIX_W << "Failed to create waypoint from file" << file_full_path;
-			acquire_context.window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to create waypoint from %1").arg(file_full_path));
+			acquire_context->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to create waypoint from %1").arg(file_full_path));
 			continue;
 		}
 

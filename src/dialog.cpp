@@ -35,6 +35,7 @@
 #include <QInputDialog>
 #include <QDebug>
 #include <QDesktopWidget>
+#include <QThread>
 
 
 
@@ -283,6 +284,8 @@ BasicDialog::BasicDialog(QWidget * parent)
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
 	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 	this->vbox->addWidget(this->button_box);
+
+	connect(this, SIGNAL (set_central_widget(QWidget *)), this, SLOT (set_central_widget_cb(QWidget *)));
 }
 
 
@@ -290,6 +293,7 @@ BasicDialog::BasicDialog(QWidget * parent)
 
 BasicDialog::~BasicDialog()
 {
+	qDebug() << SG_PREFIX_I;
 }
 
 
@@ -319,6 +323,37 @@ BasicMessage::BasicMessage(QWidget * parent)
 BasicDialog::BasicDialog(const QString & title, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(title);
+}
+
+
+
+
+void BasicDialog::set_central_widget_cb(QWidget * widget)
+{
+	qDebug() << __FILE__ << __LINE__;
+	QLayoutItem * child;
+	while ((child = this->grid->takeAt(0)) != 0) {
+		delete child->widget();
+		delete child;
+	}
+
+	qDebug() << SG_PREFIX_I << "Current thread    =" << QThread::currentThread();
+	qDebug() << SG_PREFIX_I << "Main thread       =" << QApplication::instance()->thread();
+	qDebug() << SG_PREFIX_I << "Widget thread     =" << widget->thread();
+	qDebug() << SG_PREFIX_I << "this-> thread     =" << this->thread();
+	qDebug() << SG_PREFIX_I << "this->grid thread =" << this->grid->thread();
+
+	qDebug() << __FILE__ << __LINE__;
+	//widget->moveToThread(QApplication::instance()->thread());
+	qDebug() << __FILE__ << __LINE__;
+	//this->moveToThread(QApplication::instance()->thread());
+	qDebug() << __FILE__ << __LINE__;
+	//this->grid->moveToThread(QApplication::instance()->thread());
+	qDebug() << __FILE__ << __LINE__;
+	this->grid->addWidget(widget, 0, 0);
+	qDebug() << __FILE__ << __LINE__;
+
+	return;
 }
 
 

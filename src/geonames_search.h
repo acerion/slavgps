@@ -44,6 +44,9 @@ namespace SlavGPS {
 	class Window;
 	class LayerTRW;
 	class Waypoint;
+	class AcquireProgressDialog;
+	class BasicDialog;
+	class ListSelectionWidget;
 	enum class CoordMode;
 
 
@@ -75,8 +78,11 @@ namespace SlavGPS {
 		/* Create waypoints from Wikipedia entries within a certain box. */
 		static void create_wikipedia_waypoints(LayerTRW * trw, const LatLonBBox & bbox, Window * window);
 
+		static std::list<Geoname *> generate_geonames(const LatLonBBox & bbox, AcquireProgressDialog * progress_dialog);
+		static std::list<Geoname *> select_geonames(const std::list<Geoname *> & all_geonames, AcquireProgressDialog * progress_dialog, ListSelectionWidget & list_widget);
+
 	private:
-		static std::list<Geoname *> select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent);
+		static std::list<Geoname *> select_from_list(BasicDialog & dialog, const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent);
 	};
 
 

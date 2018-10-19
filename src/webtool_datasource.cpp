@@ -111,7 +111,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, V
 
 
 
-AcquireOptions * DataSourceWebToolDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceWebToolDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	if (this->web_tool_data_source->webtool_needs_user_string()) {
 		this->web_tool_data_source->user_string = this->input_field.text();
@@ -172,7 +172,7 @@ DataSourceWebTool::DataSourceWebTool(bool new_search, const QString & new_window
 
 
 
-int DataSourceWebTool::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceWebTool::run_config_dialog(AcquireContext * acquire_context)
 {
 	int answer;
 

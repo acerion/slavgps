@@ -285,7 +285,7 @@ sg_ret BabelProcess::convert_through_gpx(LayerTRW * trw)
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-sg_ret AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -411,14 +411,14 @@ sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_opti
  *
  * Returns: %true on success.
  */
-sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (this->babel_process) {
 
 
 #if 1
 		if (!trw->is_in_tree()) {
-			acquire_context.top_level_layer->add_layer(trw, true);
+			acquire_context->top_level_layer->add_layer(trw, true);
 		}
 #endif
 
@@ -671,15 +671,15 @@ BabelProcess::BabelProcess()
 
 
 
-void BabelProcess::set_acquire_context(AcquireContext & new_acquire_context)
+void BabelProcess::set_acquire_context(AcquireContext * new_acquire_context)
 {
-	this->acquire_context.window               = new_acquire_context.window;
-	this->acquire_context.viewport             = new_acquire_context.viewport;
-	this->acquire_context.top_level_layer      = new_acquire_context.top_level_layer;
-	this->acquire_context.selected_layer       = new_acquire_context.selected_layer;
-	this->acquire_context.target_trw           = new_acquire_context.target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
-	this->acquire_context.target_trk           = new_acquire_context.target_trk;
-	this->acquire_context.target_trw_allocated = new_acquire_context.target_trw_allocated;
+	this->acquire_context.window               = new_acquire_context->window;
+	this->acquire_context.viewport             = new_acquire_context->viewport;
+	this->acquire_context.top_level_layer      = new_acquire_context->top_level_layer;
+	this->acquire_context.selected_layer       = new_acquire_context->selected_layer;
+	this->acquire_context.target_trw           = new_acquire_context->target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
+	this->acquire_context.target_trk           = new_acquire_context->target_trk;
+	this->acquire_context.target_trw_allocated = new_acquire_context->target_trw_allocated;
 }
 
 

@@ -87,7 +87,7 @@ BFilterSimplify::BFilterSimplify()
 
 
 
-int BFilterSimplify::run_config_dialog(AcquireContext & acquire_context)
+int BFilterSimplify::run_config_dialog(AcquireContext * acquire_context)
 {
 	BFilterSimplifyDialog config_dialog(this->window_title);
 
@@ -121,10 +121,10 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 
 
 
-AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -181,7 +181,7 @@ BFilterCompress::BFilterCompress()
 
 
 
-int BFilterCompress::run_config_dialog(AcquireContext & acquire_context)
+int BFilterCompress::run_config_dialog(AcquireContext * acquire_context)
 {
 	BFilterCompressDialog config_dialog(this->window_title);
 
@@ -219,10 +219,10 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 
 
 /* http://www.gpsbabel.org/htmldoc-development/filter_simplify.html */
-AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -270,7 +270,7 @@ BFilterDuplicates::BFilterDuplicates()
 
 
 
-int BFilterDuplicates::run_config_dialog(AcquireContext & acquire_context)
+int BFilterDuplicates::run_config_dialog(AcquireContext * acquire_context)
 {
 	BFilterDuplicatesDialog config_dialog(this->window_title);
 
@@ -286,10 +286,10 @@ int BFilterDuplicates::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions * BFilterDuplicatesDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * BFilterDuplicatesDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -330,7 +330,7 @@ BFilterManual::BFilterManual()
 
 
 
-int BFilterManual::run_config_dialog(AcquireContext & acquire_context)
+int BFilterManual::run_config_dialog(AcquireContext * acquire_context)
 {
 	BFilterManualDialog config_dialog(this->window_title);
 
@@ -358,10 +358,10 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 
 
 
-AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -399,7 +399,7 @@ BFilterPolygon::BFilterPolygon()
 
 
 
-int BFilterPolygon::run_config_dialog(AcquireContext & acquire_context)
+int BFilterPolygon::run_config_dialog(AcquireContext * acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
@@ -413,15 +413,15 @@ int BFilterPolygon::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
 	QString track_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
 		return NULL;
 	}
-	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context.target_trk, NULL)) {
+	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->target_trk, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
 		return NULL;
 	}
@@ -461,7 +461,7 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 
 
 
-int BFilterExcludePolygon::run_config_dialog(AcquireContext & acquire_context)
+int BFilterExcludePolygon::run_config_dialog(AcquireContext * acquire_context)
 {
 	/* There is no *real* dialog for which to call ::exec(). */
 
@@ -475,14 +475,14 @@ int BFilterExcludePolygon::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions* BFilterExcludePolygonDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions* BFilterExcludePolygonDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
 	QString track_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context.target_trw, NULL)) {
+	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
 	}
-	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context.target_trk, NULL)) {
+	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->target_trk, NULL)) {
 		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
 	}
 

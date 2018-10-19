@@ -49,7 +49,7 @@ namespace SlavGPS {
 		DataSourceRouting();
 		~DataSourceRouting() {};
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 	};
 
 
@@ -61,7 +61,7 @@ namespace SlavGPS {
 		DataSourceRoutingDialog(const QString & window_title);
 		~DataSourceRoutingDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 		QComboBox * engines_combo;
 		QLineEdit from_entry;

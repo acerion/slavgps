@@ -642,6 +642,7 @@ void LayerTRWTracks::attach_children_to_tree(void)
 		trk->self_assign_timestamp();
 
 		this->tree_view->attach_to_tree(this, trk);
+		qDebug() << SG_PREFIX_I;
 	}
 }
 

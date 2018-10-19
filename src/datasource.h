@@ -47,6 +47,7 @@ namespace SlavGPS {
 	class AcquireContext;
 	class AcquireProgressDialog;
 	enum class AcquireProgressCode;
+	class ListSelectionWidget;
 
 
 
@@ -78,12 +79,12 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		virtual sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog) { return sg_ret::err; };
-		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context) { return; };
+		virtual sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) { return sg_ret::err; };
+		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context) { return; };
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status) { return -1; };
 
-		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
+		virtual int run_config_dialog(AcquireContext * acquire_context) { return QDialog::Rejected; };
 
 		virtual AcquireProgressDialog * create_progress_dialog(const QString & title);
 
@@ -117,9 +118,12 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		AcquireProgressDialog(const QString & window_title, QWidget * parent = NULL);
+		~AcquireProgressDialog();
 
 		void set_headline(const QString & text);
 		void set_current_status(const QString & text);
+
+		ListSelectionWidget * list_selection_widget = NULL;
 	private:
 		QLabel * headline = NULL;
 		QLabel * current_status = NULL;

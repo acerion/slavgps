@@ -64,7 +64,7 @@ namespace SlavGPS {
 		BabelProcess();
 		~BabelProcess();
 
-		void set_acquire_context(AcquireContext & acquire_context);
+		void set_acquire_context(AcquireContext * acquire_context);
 		void set_progress_dialog(AcquireProgressDialog * progr_dialog);
 
 		/* Input file -> gpsbabel -> gpx format -> gpx importer -> trw layer. */

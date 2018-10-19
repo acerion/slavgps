@@ -78,6 +78,14 @@ ListSelectionWidget::ListSelectionWidget(ListSelectionMode selection_mode, QWidg
 
 
 
+ListSelectionWidget::~ListSelectionWidget()
+{
+	qDebug() << SG_PREFIX_I;
+}
+
+
+
+
 void ListSelectionWidget::set_headers(const QStringList & header_labels)
 {
 	//this->model.setItemPrototype(new SGItem());

@@ -79,7 +79,13 @@ namespace SlavGPS {
 		BasicDialog(const QString & title, QWidget * parent = NULL);
 		~BasicDialog();
 
-	/* protected: */
+	public slots:
+		void set_central_widget_cb(QWidget * widget);
+
+	signals:
+		void set_central_widget(QWidget * widget);
+
+	public:
 		QVBoxLayout * vbox = NULL;
 		QGridLayout * grid = NULL;
 		QDialogButtonBox * button_box = NULL;

@@ -51,12 +51,12 @@ namespace SlavGPS {
 		DataSourceGPS();
 		~DataSourceGPS() {};
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 
 		/* FIXME: these are most probably unused after changes in acquire. Make them used again. */
 		void off(void * user_data, QString & babel_args, QString & file_path);
-		void progress_func(AcquireProgressCode code, void * data, AcquireContext & acquire_context);
-		DataSourceDialog * create_progress_dialog(void * user_data);
+		void progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context);
+		AcquireProgressDialog * create_progress_dialog(void * user_data);
 	};
 
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 		DatasourceGPSSetup(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
 		~DatasourceGPSSetup();
 
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 		QString get_protocol(void);
 		QString get_port(void);
@@ -112,7 +112,7 @@ namespace SlavGPS {
 		DatasourceGPSProgress(const QString & window_title, QWidget * parent = NULL);
 		~DatasourceGPSProgress();
 
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context) { return NULL; };
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context) { return NULL; };
 
 	private slots:
 

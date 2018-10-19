@@ -22,6 +22,7 @@
 
 
 #include <QDebug>
+#include <QHeaderView>
 
 
 
@@ -33,6 +34,8 @@
 #include "datasource_wikipedia.h"
 #include "babel.h"
 #include "globals.h"
+#include "layer_trw.h"
+#include "widget_list_selection.h"
 
 
 
@@ -47,14 +50,54 @@ using namespace SlavGPS;
 
 
 
+
 DataSourceWikipedia::DataSourceWikipedia()
 {
+	qDebug() << SG_PREFIX_I;
+
 	this->window_title = QObject::tr("Create Waypoints from Wikipedia Articles");
 	this->layer_title = QObject::tr("Wikipedia Waypoints");
 	this->mode = DataSourceMode::AutoLayerManagement;
 	this->input_type = DataSourceInputType::None;
 	this->autoview = false;
 	this->keep_dialog_open = false; /* false = don't keep dialog open after success. Not even using the dialog. */
+
+	qDebug() << SG_PREFIX_I;
+
+
+	this->list_selection_widget = new ListSelectionWidget(ListSelectionMode::SingleItem, NULL);
+	this->list_selection_widget->set_headers(ListSelectionWidget::get_headers_for_geoname());
+#if 0
+
+
+
+	ListSelectionMode selection_mode = ListSelectionMode::SingleItem;
+	switch (selection_mode) {
+	case ListSelectionMode::SingleItem:
+		this->list_selection_widget->setSelectionMode(QAbstractItemView::SingleSelection);
+		break;
+	case ListSelectionMode::MultipleItems:
+		this->list_selection_widget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled selection mode" << (int) selection_mode;
+		break;
+	};
+
+	this->list_selection_widget->horizontalHeader()->setStretchLastSection(true);
+	this->list_selection_widget->verticalHeader()->setVisible(false);
+	this->list_selection_widget->setWordWrap(false);
+	this->list_selection_widget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	this->list_selection_widget->setTextElideMode(Qt::ElideRight);
+
+	this->list_selection_widget->setShowGrid(false);
+	this->list_selection_widget->setModel(&this->list_selection_widget->model);
+
+	this->list_selection_widget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	this->list_selection_widget->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+	qDebug() << SG_PREFIX_I;
+#endif
 }
 
 
@@ -63,14 +106,49 @@ DataSourceWikipedia::DataSourceWikipedia()
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog)
+sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (!trw) {
 		qDebug() << SG_PREFIX_E << "Missing TRW layer";
 		return sg_ret::err;
 	}
 
-	Geonames::create_wikipedia_waypoints(trw, acquire_context.viewport->get_bbox(), acquire_context.window);
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+
+
+	qDebug() << "---- will generate all geonames list";
+	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context->viewport->get_bbox(), progr_dialog);
+	if (0 == all_geonames.size()) {
+		/* Not an error situation. Info for user has been displayed in progr_dialog. */
+		return sg_ret::ok;
+	}
+
+	emit progr_dialog->set_central_widget(this->list_selection_widget);
+	sleep(1);
+
+	qDebug() << "---- will show all geonames list for selection";
+	qDebug() << SG_PREFIX_I;
+	//const QStringList headers = { QObject::tr("Select the articles you want to add.") };
+	std::list<Geoname *> selected = Geonames::select_geonames(all_geonames, progr_dialog, *this->list_selection_widget);
+
+	qDebug() << "---- returned with selected geonames";
+
+	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
+
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+
+		const Geoname * geoname = *iter;
+		Waypoint * wp = geoname->create_waypoint(trw->get_coord_mode());
+		trw->add_waypoint(wp);
+
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+	}
 
 	return sg_ret::ok;
 }
@@ -79,10 +157,21 @@ sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext & 
 
 
 
-int DataSourceWikipedia::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceWikipedia::run_config_dialog(AcquireContext * acquire_context)
 {
 	/* Fake acquire options, needed by current implementation of acquire.cpp. */
 	this->acquire_options = new AcquireOptions;
 
 	return QDialog::Accepted;
+}
+
+
+
+
+AcquireProgressDialog * DataSourceWikipedia::create_progress_dialog(const QString & title)
+{
+	AcquireProgressDialog * progress_dialog = DataSource::create_progress_dialog("hello world" /* title */);
+	progress_dialog->list_selection_widget = this->list_selection_widget;
+
+	return progress_dialog;
 }

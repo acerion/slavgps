@@ -81,7 +81,7 @@ DataSourceOSMTraces::DataSourceOSMTraces(Viewport * new_viewport)
 
 
 
-int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
+int DataSourceOSMTraces::run_config_dialog(AcquireContext * acquire_context)
 {
 	DataSourceOSMTracesDialog config_dialog(this->window_title, this->viewport);
 
@@ -97,7 +97,7 @@ int DataSourceOSMTraces::run_config_dialog(AcquireContext & acquire_context)
 
 
 
-AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContext & acquire_context)
+AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 

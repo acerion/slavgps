@@ -173,6 +173,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->attach_to_tree(this, layer, attach_mode, sibling_layer);
+		qDebug() << SG_PREFIX_I;
 		QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
 		/* Update our own tooltip. */
@@ -198,6 +199,8 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		return;
 	}
 
+	qDebug() << SG_PREFIX_I;
+
 
 	/* By default layers go to the top. */
 	bool put_above = true;
@@ -208,32 +211,46 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	layer->set_owning_layer(this);
 
+	qDebug() << SG_PREFIX_I;
+
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->attach_to_tree(this, layer, TreeView::AttachMode::Front);
-
+		qDebug() << SG_PREFIX_I;
 		this->children->push_front(layer);
 	} else {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->attach_to_tree(this, layer);
-
+		qDebug() << SG_PREFIX_I;
 		this->children->push_back(layer);
 	}
 	this->tree_view->apply_tree_item_timestamp(layer);
+
+	qDebug() << SG_PREFIX_I;
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO_2_LATER: move this in some reasonable place. Putting it here is just a workaround. */
 		layer->attach_children_to_tree();
 	}
 
+	qDebug() << SG_PREFIX_I;
+
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+
+	qDebug() << SG_PREFIX_I;
 
 	/* Update our own tooltip. */
 	this->tree_view->apply_tree_item_tooltip(this);
 
+	qDebug() << SG_PREFIX_I;
+
+#if 0
 	if (!this->children->empty()) {
 		this->tree_view->expand(this->index);
 	}
+#endif
+
+	qDebug() << SG_PREFIX_I;
 }
 
 
@@ -917,6 +934,7 @@ void LayerAggregate::attach_children_to_tree(void)
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		this->tree_view->attach_to_tree(this, layer);
+		qDebug() << SG_PREFIX_I;
 	}
 
 	/* Update our own tooltip. */

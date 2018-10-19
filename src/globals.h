@@ -60,12 +60,12 @@ namespace SlavGPS {
 
 #define SG_NAMESPACE_PREFIX "SlavGPS::"
 
-#define SG_PREFIX_D      "DD  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
-#define SG_PREFIX_I      "II  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
-#define SG_PREFIX_W      "WW  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
-#define SG_PREFIX_E      "EE  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
-#define SG_PREFIX_SLOT   "SLT " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
-#define SG_PREFIX_SIGNAL "SIG " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_D      "DD  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("std::__cxx11::", "").replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_I      "II  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("std::__cxx11::", "").replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_W      "WW  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("std::__cxx11::", "").replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_E      "EE  " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("std::__cxx11::", "").replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_SLOT   "SLT " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("std::__cxx11::", "").replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
+#define SG_PREFIX_SIGNAL "SIG " << SG_MODULE <<  " > " << QString(__PRETTY_FUNCTION__).replace("std::__cxx11::", "").replace(SG_NAMESPACE_PREFIX, "").replace("virtual ", "").replace("const ", "") << __LINE__ << " > "
 
 
 

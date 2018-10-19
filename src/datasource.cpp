@@ -34,6 +34,8 @@
 #include "acquire.h"
 #include "gpx.h"
 #include "util.h"
+#include "widget_list_selection.h"
+#include "viewport_internal.h"
 
 
 
@@ -44,6 +46,11 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "DataSource"
+
+
+
+
+extern Tree * g_tree;
 
 
 
@@ -81,6 +88,21 @@ AcquireProgressDialog::AcquireProgressDialog(const QString & window_title, QWidg
 	   source is importing data, so the OK button needs to be
 	   blocked. */
 	this->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
+}
+
+
+
+
+AcquireProgressDialog::~AcquireProgressDialog()
+{
+	if (this->list_selection_widget) {
+		qDebug() << SG_PREFIX_I << "Removing list selection widget from Acquire Progress Dialog";
+		this->grid->removeWidget(this->list_selection_widget);
+
+		/* By making the widget a child of viewport, we make sure that
+		   it won't be deleted by destructor of acquire progress dialog. */
+		this->list_selection_widget->setParent(g_tree->tree_get_main_viewport());
+	}
 }
 
 

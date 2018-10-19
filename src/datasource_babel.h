@@ -44,11 +44,11 @@ namespace SlavGPS {
 		DataSourceBabel() {};
 		~DataSourceBabel() {};
 
-		virtual sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
+		virtual sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status);
 
-		virtual int run_config_dialog(AcquireContext & acquire_context) { return QDialog::Rejected; };
+		virtual int run_config_dialog(AcquireContext * acquire_context) { return QDialog::Rejected; };
 	};
 
 

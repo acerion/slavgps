@@ -49,7 +49,7 @@ namespace SlavGPS {
 		DataSourceOSMTraces(Viewport * viewport);
 		~DataSourceOSMTraces() {};
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
 
 		Viewport * viewport = NULL;
 	};
@@ -63,7 +63,7 @@ namespace SlavGPS {
 		DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport);
 		~DataSourceOSMTracesDialog();
 
-		AcquireOptions * create_acquire_options(AcquireContext & acquire_context);
+		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 	public slots:
 		void accept_cb(void);

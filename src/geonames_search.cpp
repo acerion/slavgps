@@ -24,6 +24,7 @@
 
 
 #include <QDebug>
+#include <QEventLoop>
 
 
 
@@ -35,6 +36,7 @@
 #include "util.h"
 #include "widget_list_selection.h"
 #include "layer_trw.h"
+#include "datasource.h"
 
 
 
@@ -134,9 +136,9 @@ static void free_geoname_list(std::list<Geoname *> & found_places)
 
 
 
-std::list<Geoname *> Geonames::select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
+static std::list<Geoname *> select_from_list(const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent);
+std::list<Geoname *> Geonames::select_from_list(BasicDialog & dialog, const QString & title, const QStringList & headers, std::list<Geoname *> & geonames, Window * parent)
 {
-	BasicDialog dialog(title, parent);
 	std::list<Geoname *> selected_geonames = a_dialog_select_from_list(dialog, geonames, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_geoname());
 
 	if (!selected_geonames.size()) {
@@ -355,6 +357,72 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 
 
 
+std::list<Geoname *> Geonames::generate_geonames(const LatLonBBox & bbox, AcquireProgressDialog * progress_dialog)
+{
+	std::list<Geoname *> wiki_places;
+
+	const QString north = SGUtils::double_to_c(bbox.north);
+	const QString south = SGUtils::double_to_c(bbox.south);
+	const QString east = SGUtils::double_to_c(bbox.east);
+	const QString west = SGUtils::double_to_c(bbox.west);
+
+	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
+
+	DownloadHandle dl_handle;
+	QTemporaryFile tmp_file;
+	if (!dl_handle.download_to_tmp_file(tmp_file, uri)) {
+		progress_dialog->set_current_status(QObject::tr("Can't download information"));
+		return wiki_places;
+	}
+
+	wiki_places = get_entries_from_file(tmp_file);
+	tmp_file.close();
+	Util::remove(tmp_file);
+
+	if (wiki_places.size() == 0) {
+		progress_dialog->set_current_status(QObject::tr("No entries found!"));
+	}
+
+	return wiki_places;
+}
+
+
+
+std::list<Geoname *> Geonames::select_geonames(const std::list<Geoname *> & all_geonames, AcquireProgressDialog * progress_dialog, ListSelectionWidget & list_widget)
+{
+	//BasicDialog dialog(title, window);
+	//const QStringList headers = { QObject::tr("Select the articles you want to add.") };
+	//std::list<Geoname *> selected = Geonames::select_from_list(*progress_dialog, QObject::tr("Select articles"), headers, all_geonames, window);
+
+	// TODO: Dialog::error(QObject::tr("Nothing was selected"), parent);
+
+
+	list_widget.add_elements(all_geonames);
+
+	progress_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+	progress_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(true);
+
+	qDebug() << "---- before wait loop" << (quintptr) &list_widget;
+
+	QEventLoop loop;
+	QObject::connect(progress_dialog, SIGNAL(destroyed()), &loop, SLOT(quit()));
+	loop.exec();
+
+	qDebug() << "---- after wait loop";
+
+	std::list<Geoname *> selected_geonames = list_widget.get_selection((Geoname *) NULL);
+
+	qDebug() << "---- got list of selected from widget";
+
+	for (auto iter = selected_geonames.begin(); iter != selected_geonames.end(); iter++) {
+		qDebug() << SG_PREFIX_I << "Selected geoname" << (*iter)->name << (*iter)->lat_lon;
+	}
+
+
+	return selected_geonames; /* Hopefully Named Return Value Optimization will work here. */
+}
+
+
 void Geonames::create_wikipedia_waypoints(LayerTRW * trw, const LatLonBBox & bbox, Window * window)
 {
 	const QString north = SGUtils::double_to_c(bbox.north);
@@ -380,8 +448,9 @@ void Geonames::create_wikipedia_waypoints(LayerTRW * trw, const LatLonBBox & bbo
 		return;
 	}
 
+	BasicDialog dialog("Some title", window);
 	const QStringList headers = { QObject::tr("Select the articles you want to add.") };
-	std::list<Geoname *> selected = Geonames::select_from_list(QObject::tr("Select articles"), headers, wiki_places, window);
+	std::list<Geoname *> selected = Geonames::select_from_list(dialog, QObject::tr("Select articles"), headers, wiki_places, window);
 
 	for (auto iter = selected.begin(); iter != selected.end(); iter++) {
 		const Geoname * geoname = *iter;

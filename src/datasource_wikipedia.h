@@ -35,15 +35,24 @@ namespace SlavGPS {
 
 
 
+	class ListSelectionWidget;
+
+
+
+
 	class DataSourceWikipedia : public DataSource {
 	public:
 		DataSourceWikipedia();
 		~DataSourceWikipedia() {};
 
 		/* This data source does not provide configuration dialog. */
-		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext & acquire_context, AcquireProgressDialog * progr_dialog);
+		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
 
-		int run_config_dialog(AcquireContext & acquire_context);
+		int run_config_dialog(AcquireContext * acquire_context);
+
+		AcquireProgressDialog * create_progress_dialog(const QString & title);
+
+		ListSelectionWidget * list_selection_widget = NULL;
 	};
 
 

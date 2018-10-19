@@ -119,6 +119,9 @@ TreeItem * TreeView::get_tree_item(const TreeIndex & item_index) const
 
 void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 {
+
+	return;
+
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
 		/* "tree_item->index" points at the top tree item. */
@@ -127,8 +130,12 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 	}
 	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Timestamp);
 
+	qDebug() << SG_PREFIX_I;
+
 	QVariant variant = QVariant::fromValue((qlonglong) tree_item->get_timestamp());
 	this->tree_model->setData(ch->index(), variant, RoleLayerData);
+
+	qDebug() << SG_PREFIX_I;
 }
 
 
@@ -136,6 +143,8 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 
 void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 {
+	return;
+
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
 		/* "tree_item->index" points at the top tree item. */
@@ -277,6 +286,7 @@ void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 		return;
 	}
 
+	qDebug() << SG_PREFIX_I;
 	/* Icon is a property of TreeViewColumn::Name column. */
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
@@ -285,8 +295,11 @@ void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 		qDebug() << SG_PREFIX_I << "Querying Top Level Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
+	qDebug() << SG_PREFIX_I;
 	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Name);
 	ch->setIcon(icon);
+
+	qDebug() << SG_PREFIX_I;
 }
 
 
@@ -464,30 +477,35 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
 	if (!tree_item->icon.isNull()) { /* Icon can be set with ::apply_tree_item_icon(). */
 		item->setIcon(tree_item->icon);
 	}
+	//item->moveToThread(QApplication::instance()->thread())
 	items << item;
 
 	/* TreeViewColumn::Visible */
 	item = new QStandardItem();
 	item->setCheckable(true);
 	item->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
+	//item->moveToThread(QApplication::instance()->thread())
 	items << item;
 
 	/* TreeViewColumn::TreeItem */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(tree_item);
 	item->setData(variant, RoleLayerData);
+	//item->moveToThread(QApplication::instance()->thread())
 	items << item;
 
 	/* TreeViewColumn::Editable */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(tree_item->editable);
 	item->setData(variant, RoleLayerData);
+	//item->moveToThread(QApplication::instance()->thread())
 	items << item;
 
 	/* TreeViewColumn::Timestamp */
 	/* Value in this column can be set with ::apply_tree_item_timestamp(). */
 	qlonglong timestamp = 0;
 	item = new QStandardItem((qlonglong) timestamp);
+	//item->moveToThread(QApplication::instance()->thread())
 	items << item;
 
 
@@ -525,12 +543,14 @@ sg_ret TreeView::attach_to_tree(const TreeItem * parent_tree_item, TreeItem * tr
 		row = 0;
 		qDebug() << SG_PREFIX_I << "Pushing front tree item named" << tree_item->name << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
+		qDebug() << SG_PREFIX_I;
 		break;
 
 	case TreeView::AttachMode::Back:
 		row = this->tree_model->itemFromIndex(parent_tree_item->index)->rowCount();
 		qDebug() << SG_PREFIX_I << "Pushing back tree item named" << tree_item->name << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
+		qDebug() << SG_PREFIX_I;
 		break;
 
 	case TreeView::AttachMode::Before:
@@ -550,6 +570,7 @@ sg_ret TreeView::attach_to_tree(const TreeItem * parent_tree_item, TreeItem * tr
 		row = sibling_tree_item->index.row() + (attach_mode == TreeView::AttachMode::Before ? 0 : 1);
 		qDebug() << SG_PREFIX_I << "Pushing tree item named" << tree_item->name << "next to sibling named" << sibling_tree_item->name << "into row" << row;
 		result = this->insert_tree_item_at_row(parent_tree_item, tree_item, row);
+		qDebug() << SG_PREFIX_I;
 		break;
 
 	default:
@@ -566,7 +587,10 @@ sg_ret TreeView::attach_to_tree(const TreeItem * parent_tree_item, TreeItem * tr
 
 
 	this->apply_tree_item_timestamp(tree_item);
+	qDebug() << SG_PREFIX_I;
 	this->apply_tree_item_icon(tree_item);
+
+	qDebug() << SG_PREFIX_I;
 
 	return sg_ret::ok;
 }
@@ -814,6 +838,8 @@ sg_ret TreeView::insert_tree_item_at_row(const TreeItem * parent_tree_item, Tree
 
 	//connect(this->tree_model, SIGNAL(itemChanged(QStandardItem*)), item, SLOT(visibility_toggled_cb(QStandardItem *)));
 
+	qDebug() << SG_PREFIX_I;
+
 	return sg_ret::ok;
 }
 
@@ -884,6 +910,7 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 	const int row = 0;
 	qDebug() << SG_PREFIX_I << "Inserting top level layer in row" << row;
 	this->insert_tree_item_at_row(invalid_parent_tree_item, top_level_layer, row);
+	qDebug() << SG_PREFIX_I;
 }
 
 
