@@ -27,6 +27,7 @@
 
 
 #include "external_tools.h"
+#include "window.h"
 
 
 
@@ -67,7 +68,7 @@ void ExternalTools::add_action_items(QActionGroup * action_group, Window * windo
 		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
-		ext_tool->set_window(window);
+		ext_tool->set_viewport(window->get_viewport());
 
 		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		action_group->addAction(qa);
@@ -86,7 +87,7 @@ void ExternalTools::add_menu_items(QMenu * menu, Window * window, const Coord * 
 		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
-		ext_tool->set_window(window);
+		ext_tool->set_viewport(window->get_viewport());
 		if (coord) {
 			ext_tool->set_coord(*coord);
 			QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_position_cb(void)));

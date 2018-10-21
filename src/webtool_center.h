@@ -45,7 +45,7 @@ namespace SlavGPS {
 		WebToolCenter(const QString & label, const QString & url_format);
 		~WebToolCenter();
 
-		QString get_url_at_current_position(Viewport * viewport);
+		QString get_url_for_viewport(Viewport * viewport);
 		QString get_url_at_position(Viewport * viewport, const Coord * coord);
 
 	}; /* class WebToolCenter */

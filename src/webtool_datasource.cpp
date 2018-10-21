@@ -124,7 +124,7 @@ AcquireOptions * DataSourceWebToolDialog::create_acquire_options(AcquireContext 
 
 
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
-	babel_options->source_url = this->web_tool_data_source->get_url_at_current_position(this->viewport);
+	babel_options->source_url = this->web_tool_data_source->get_url_for_viewport(this->viewport);
 	qDebug() << SG_PREFIX_D << "Source URL =" << babel_options->source_url;
 
 	/* Only use first section of the file_type string.
@@ -194,13 +194,13 @@ int DataSourceWebTool::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-void WebToolDatasource::run_at_current_position(Window * a_window)
+void WebToolDatasource::run_at_current_position(Viewport * a_viewport)
 {
 	bool search = this->webtool_needs_user_string();
 
-	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label(), a_window->get_viewport(), this);
+	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label(), a_viewport, this);
 
-	AcquireContext acquire_context(a_window, a_window->get_viewport(), g_tree->tree_get_items_tree()->get_top_layer(), g_tree->tree_get_items_tree()->get_selected_layer());
+	AcquireContext acquire_context(a_viewport->get_window(), a_viewport, g_tree->tree_get_items_tree()->get_top_layer(), g_tree->tree_get_items_tree()->get_selected_layer());
 	Acquire::acquire_from_source(data_source, data_source->mode, &acquire_context);
 
 #ifdef K_TODO
@@ -220,7 +220,7 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 				     const QString & new_file_type,
 				     const QString & new_input_field_label_text) : WebTool(new_tool_name)
 {
-	qDebug() << "II: Web Tool Datasource created with tool name" << new_tool_name;
+	qDebug() << SG_PREFIX_I << "Created with tool name" << new_tool_name;
 
 	this->label = new_tool_name;
 	this->url_format = new_url_format;
@@ -239,7 +239,7 @@ WebToolDatasource::WebToolDatasource(const QString & new_tool_name,
 
 WebToolDatasource::~WebToolDatasource()
 {
-	qDebug() << "II: Web Tool Datasource: delete tool with label" << this->label;
+	qDebug() << SG_PREFIX_I << "Delete tool with label" << this->label;
 }
 
 
@@ -249,7 +249,7 @@ WebToolDatasource::~WebToolDatasource()
  * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values.
  * Then only values specified by the URL format are used in parameterizing the URL.
  */
-QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
+QString WebToolDatasource::get_url_for_viewport(Viewport * a_viewport)
 {
 	/* Center values. */
 	const LatLon lat_lon = a_viewport->get_center()->get_latlon();
@@ -266,10 +266,10 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 
 	int len = this->url_format_code.size();
 	if (len == 0) {
-		qDebug() << "EE: Web Tool Datasource: url format code is empty";
+		qDebug() << SG_PREFIX_E << "url format code is empty";
 		return QString("");
 	} else if (len > MAX_NUMBER_CODES) {
-		qDebug() << "WW: Web Tool Datasource: url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
+		qDebug() << SG_PREFIX_W << "url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
 		len = MAX_NUMBER_CODES;
 	} else {
 		;
@@ -290,7 +290,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 		case 'Z': values[i] = tile_zoom_level.to_string(); break;
 		case 'S': values[i] = this->user_string; break;
 		default:
-			qDebug() << "EE: Web Tool Datasource: invalid URL format code" << this->url_format_code[i];
+			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i];
 			return QString("");
 		}
 	}
@@ -304,7 +304,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 		.arg(values[5])
 		.arg(values[6]);
 
-	qDebug() << "II: Web Tool Datasource: url at current position is" << url;
+	qDebug() << SG_PREFIX_I << "url at current position is" << url;
 
 	return url;
 }
@@ -314,7 +314,7 @@ QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport)
 
 QString WebToolDatasource::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	return this->get_url_at_current_position(a_viewport);
+	return this->get_url_for_viewport(a_viewport);
 }
 
 

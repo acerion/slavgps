@@ -288,6 +288,9 @@ namespace SlavGPS {
 		void emit_center_or_zoom_changed(const QString & trigger_name);
 
 
+		Window * get_window(void) const;
+
+
 		/* Whether or not to display some decorations. */
 		bool scale_visibility = true;
 		bool center_mark_visibility = true;

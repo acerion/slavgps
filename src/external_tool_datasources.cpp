@@ -28,6 +28,7 @@
 
 #include "external_tools.h"
 #include "external_tool_datasources.h"
+#include "window.h"
 
 
 
@@ -71,7 +72,7 @@ void ExternalToolDataSource::add_menu_items(QMenu * menu, Window * window)
 		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
-		ext_tool->set_window(window);
+		ext_tool->set_viewport(window->get_viewport());
 
 		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		menu->addAction(qa);

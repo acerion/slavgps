@@ -41,6 +41,7 @@ namespace SlavGPS {
 
 
 	class Window;
+	class Viewport;
 
 
 
@@ -51,17 +52,18 @@ namespace SlavGPS {
 		ExternalTool(const QString & new_label);
 		~ExternalTool();
 
-		void set_window(Window * window);
+		void set_viewport(Viewport * viewport);
 		void set_coord(const Coord & coord);
 
 		const QString & get_label(void) const;
 
-		virtual void run_at_current_position(Window * a_window) = 0;
-		virtual void run_at_position(Window * a_window, const Coord * a_coord) = 0;
+		virtual void run_at_current_position(Viewport * viewport) = 0;
+		virtual void run_at_position(Viewport * viewport, const Coord * a_coord) = 0;
 
 	protected:
 		QString label;
-		Window * window = NULL; /* Just a reference. */
+
+		Viewport * viewport = NULL; /* Just a reference. */
 		Coord coord;
 
 	public slots:

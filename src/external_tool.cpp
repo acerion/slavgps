@@ -27,6 +27,7 @@
 
 
 #include "external_tool.h"
+#include "globals.h"
 
 
 
@@ -36,11 +37,16 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "External Tool"
+
+
+
+
 ExternalTool::ExternalTool(const QString & new_label)
 {
 	this->label = new_label;
 
-	qDebug() << "II: External Tool: new external tool" << this->label;
+	qDebug() << SG_PREFIX_I << "New external tool" << this->label;
 }
 
 
@@ -48,7 +54,7 @@ ExternalTool::ExternalTool(const QString & new_label)
 
 ExternalTool::~ExternalTool()
 {
-	qDebug() << "II: External Tool: delete external tool" << this->label;
+	qDebug() << SG_PREFIX_I << "Delete external tool" << this->label;
 }
 
 
@@ -64,7 +70,7 @@ const QString & ExternalTool::get_label(void) const
 
 void ExternalTool::run_at_current_position_cb(void)
 {
-	this->run_at_current_position(this->window);
+	this->run_at_current_position(this->viewport);
 }
 
 
@@ -72,15 +78,15 @@ void ExternalTool::run_at_current_position_cb(void)
 
 void ExternalTool::run_at_position_cb(void)
 {
-	this->run_at_position(this->window, &this->coord);
+	this->run_at_position(this->viewport, &this->coord);
 }
 
 
 
 
-void ExternalTool::set_window(Window * new_window)
+void ExternalTool::set_viewport(Viewport * new_viewport)
 {
-	this->window = new_window;
+	this->viewport = new_viewport;
 }
 
 

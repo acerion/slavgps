@@ -38,9 +38,14 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "WebTool Bounds"
+
+
+
+
 WebToolBounds::WebToolBounds(const QString & new_label, const char * new_url_format) : WebTool(new_label)
 {
-	qDebug() << "II: Web Tool Bounds created with label" << new_label;
+	qDebug() << SG_PREFIX_I << "Created tool with label" << new_label;
 
 	this->label = new_label;
 	this->url_format = strdup(new_url_format);
@@ -51,19 +56,19 @@ WebToolBounds::WebToolBounds(const QString & new_label, const char * new_url_for
 
 WebToolBounds::~WebToolBounds()
 {
-	qDebug() << "II: Web Tool Bounds: delete tool with label" << this->label;
+	qDebug() << SG_PREFIX_I << "Delete tool with label" << this->label;
 }
 
 
 
 
-QString WebToolBounds::get_url_at_current_position(Viewport * a_viewport)
+QString WebToolBounds::get_url_for_viewport(Viewport * a_viewport)
 {
 	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
 
 	const QString url = QString(this->url_format).arg(bbox_strings.west).arg(bbox_strings.east).arg(bbox_strings.south).arg(bbox_strings.north);
 
-	qDebug() << "II: Web Tool Bounds: url at current position is" << url;
+	qDebug() << SG_PREFIX_I << "url at current position is" << url;
 
 	return url;
 }
@@ -75,5 +80,5 @@ QString WebToolBounds::get_url_at_position(Viewport * a_viewport, const Coord * 
 {
 	/* TODO_2_LATER: could use zoom level to generate an offset from center lat/lon to get the bounds.
 	   For now simply use the existing function to use bounds from the viewport. */
-	return this->get_url_at_current_position(a_viewport);
+	return this->get_url_for_viewport(a_viewport);
 }

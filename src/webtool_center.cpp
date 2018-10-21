@@ -40,9 +40,14 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "WebTool Center"
+
+
+
+
 WebToolCenter::WebToolCenter(const QString & new_label, const QString & new_url_format) : WebTool(new_label)
 {
-	qDebug() << "II: Web Tool Center created with label" << new_label;
+	qDebug() << SG_PREFIX_I << "Created tool with label" << new_label;
 
 	this->label = new_label;
 	this->url_format = new_url_format;
@@ -53,7 +58,7 @@ WebToolCenter::WebToolCenter(const QString & new_label, const QString & new_url_
 
 WebToolCenter::~WebToolCenter()
 {
-	qDebug() << "II: Web Tool Center: delete tool with" << this->label;
+	qDebug() << SG_PREFIX_I << "delete tool" << this->label;
 }
 
 
@@ -61,7 +66,6 @@ WebToolCenter::~WebToolCenter()
 
 QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-
 	LatLon lat_lon;
 
 	/* Coords.
@@ -84,7 +88,11 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 	const QString url = QString(this->url_format).arg(string_lat).arg(string_lon).arg(tile_zoom_level.get_value());
 
-	qDebug() << "II: Web Tool Center: url at position is" << url;
+	if (a_coord) {
+		qDebug() << SG_PREFIX_I << "url at position" << lat_lon << "is" << url;
+	} else {
+		qDebug() << SG_PREFIX_I << "url at center position" << lat_lon << "is" << url;
+	}
 
 	return url;
 }
@@ -92,7 +100,7 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 
 
-QString WebToolCenter::get_url_at_current_position(Viewport * viewport)
+QString WebToolCenter::get_url_for_viewport(Viewport * a_viewport)
 {
-	return this->get_url_at_position(viewport, NULL);
+	return this->get_url_at_position(a_viewport, NULL);
 }

@@ -2510,3 +2510,11 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	qDebug() << SG_PREFIX_I << "Creating new snapshot buffer with size" << this->width << this->height;
 	this->snapshot_buffer = new QPixmap(this->width, this->height);
 }
+
+
+
+
+Window * Viewport::get_window(void) const
+{
+	return this->window;
+}

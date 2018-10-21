@@ -27,9 +27,10 @@
 
 
 #include "ui_util.h"
+#include "globals.h"
 #include "webtool.h"
-#include "map_utils.h"
-#include "window.h"
+//#include "map_utils.h"
+//#include "window.h"
 
 
 
@@ -39,26 +40,31 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "WebTool"
+
+
+
+
 WebTool::~WebTool()
 {
-	qDebug() << "II: Web Tool deleted with label" << this->label;
+	qDebug() << SG_PREFIX_I << "Deleted tool with label" << this->label;
 }
 
 
 
 
-void WebTool::run_at_current_position(Window * a_window)
+void WebTool::run_at_current_position(Viewport * a_viewport)
 {
-	const QString url = this->get_url_at_current_position(a_window->get_viewport());
+	const QString url = this->get_url_for_viewport(a_viewport);
 	open_url(url);
 }
 
 
 
 
-void WebTool::run_at_position(Window * a_window, const Coord * a_coord)
+void WebTool::run_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	QString url = this->get_url_at_position(a_window->get_viewport(), a_coord);
+	QString url = this->get_url_at_position(a_viewport, a_coord);
 	if (url.size()) {
 		open_url(url);
 	}

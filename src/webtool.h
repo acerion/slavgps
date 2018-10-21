@@ -40,7 +40,6 @@ namespace SlavGPS {
 
 
 
-	class Window;
 	class Viewport;
 
 
@@ -52,12 +51,12 @@ namespace SlavGPS {
 		WebTool(const QString & new_tool_name) : ExternalTool(new_tool_name) {};
 		~WebTool();
 
-		void run_at_current_position(Window * a_window);
-		void run_at_position(Window * a_window, const Coord * a_coord);
+		void run_at_current_position(Viewport * viewport);
+		void run_at_position(Viewport * viewport, const Coord * a_coord);
 
 		void set_url_format(const QString & new_url_format);
 
-		virtual QString get_url_at_current_position(Viewport * viewport) = 0;
+		virtual QString get_url_for_viewport(Viewport * viewport) = 0;
 		virtual QString get_url_at_position(Viewport * viewport, const Coord * coord) = 0;
 
 

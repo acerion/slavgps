@@ -74,9 +74,9 @@ namespace SlavGPS {
 				  const QString & new_input_field_label);
 		~WebToolDatasource();
 
-		void run_at_current_position(Window * window);
+		void run_at_current_position(Viewport * viewport);
 
-		QString get_url_at_current_position(Viewport * viewport);
+		QString get_url_for_viewport(Viewport * viewport);
 		QString get_url_at_position(Viewport * viewport, const Coord * a_coord);
 
 

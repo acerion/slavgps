@@ -50,9 +50,14 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "WebTool Format"
+
+
+
+
 WebToolFormat::WebToolFormat(const QString & new_label, const QString & new_url_format, const QString & new_url_format_code) : WebTool(new_label)
 {
-	qDebug() << "II: Web Tool Format tool created with label" << new_label;
+	qDebug() << SG_PREFIX_I << "Created tool with label" << new_label;
 
 	this->label = new_label;
 	this->url_format = new_url_format;
@@ -64,13 +69,13 @@ WebToolFormat::WebToolFormat(const QString & new_label, const QString & new_url_
 
 WebToolFormat::~WebToolFormat()
 {
-	qDebug() << "II: Web Tool Format: delete tool with label" << this->label;
+	qDebug() << SG_PREFIX_I << "Delete tool with label" << this->label;
 }
 
 
 
 
-/* TODO_LATER: compare with QString WebToolDatasource::get_url_at_current_position(Viewport * a_viewport) */
+/* TODO_LATER: compare with QString WebToolDatasource::get_url_for_viewport(Viewport * viewport) */
 QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* Center values. */
@@ -96,10 +101,10 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 	int len = this->url_format_code.size();
 	if (len == 0) {
-		qDebug() << "EE: Web Tool Format: url format code is empty";
+		qDebug() << SG_PREFIX_E << "url format code is empty";
 		return QString("");
 	} else if (len > MAX_NUMBER_CODES) {
-		qDebug() << "WW: Web Tool Format: url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
+		qDebug() << SG_PREFIX_W << "url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
 		len = MAX_NUMBER_CODES;
 	} else {
 		;
@@ -121,7 +126,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 		case 'P': values[i] = point_lat; break;
 		case 'N': values[i] = point_lon; break;
 		default:
-			qDebug() << "EE: Web Tool Format: invalid URL format code" << this->url_format_code[i];
+			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i];
 			return QString("");
 		}
 	}
@@ -131,14 +136,14 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 		.arg(values[3]).arg(values[4]).arg(values[5])
 		.arg(values[6]).arg(values[7]).arg(values[8]);
 
-	qDebug() << "DD: Web Tool Format: url at position is" << url;
+	qDebug() << SG_PREFIX_D << "url at position is" << url;
 	return url;
 }
 
 
 
 
-QString WebToolFormat::get_url_at_current_position(Viewport * a_viewport)
+QString WebToolFormat::get_url_for_viewport(Viewport * a_viewport)
 {
 	return this->get_url_at_position(a_viewport, NULL);
 }
