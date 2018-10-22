@@ -38,7 +38,7 @@ namespace SlavGPS {
 	public:
 		static void register_tool(ExternalTool * ext_tool);
 		static void unregister_all(void);
-		static void add_menu_items(QMenu * menu, Window * window);
+		static void add_menu_items(QMenu * menu, Viewport * viewport);
 	};
 
 

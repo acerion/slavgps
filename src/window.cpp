@@ -513,7 +513,7 @@ void Window::create_actions(void)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
 #endif
 
-			ExternalToolDataSource::add_menu_items(this->submenu_file_acquire, this);
+			ExternalToolDataSource::add_menu_items(this->submenu_file_acquire, this->get_viewport());
 		}
 
 
@@ -1176,7 +1176,7 @@ void Window::create_ui(void)
 	{
 		QActionGroup * group = new QActionGroup(this);
 		group->setObjectName("webtools");
-		ExternalTools::add_action_items(group, this);
+		ExternalTools::add_action_items(group, this->get_viewport());
 
 		QMenu * submenu_webtools = this->menu_tools->addMenu(tr("&Webtools"));
 		submenu_webtools->addActions(group->actions());

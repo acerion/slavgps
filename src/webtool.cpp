@@ -29,8 +29,6 @@
 #include "ui_util.h"
 #include "globals.h"
 #include "webtool.h"
-//#include "map_utils.h"
-//#include "window.h"
 
 
 

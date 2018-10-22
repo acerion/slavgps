@@ -51,7 +51,7 @@ namespace SlavGPS {
 
 
 
-	class Window;
+	class Viewport;
 
 
 
@@ -60,8 +60,8 @@ namespace SlavGPS {
 		static void uninit(void);
 
 		static void register_tool(ExternalTool * ext_tool);
-		static void add_action_items(QActionGroup * action_group, Window * window);
-		static void add_menu_items(QMenu * menu, Window * window, const Coord * coord);
+		static void add_action_items(QActionGroup * action_group, Viewport * viewport);
+		static void add_menu_items(QMenu * menu, Viewport * viewport, const Coord * coord);
 	};
 
 

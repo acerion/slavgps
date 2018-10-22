@@ -58,7 +58,7 @@ WebToolCenter::WebToolCenter(const QString & new_label, const QString & new_url_
 
 WebToolCenter::~WebToolCenter()
 {
-	qDebug() << SG_PREFIX_I << "delete tool" << this->label;
+	qDebug() << SG_PREFIX_I << "Delete tool" << this->label;
 }
 
 
@@ -66,20 +66,40 @@ WebToolCenter::~WebToolCenter()
 
 QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	LatLon lat_lon;
+	QString result;
+	const VikingZoomLevel viking_zoom_level = a_viewport->get_viking_zoom_level();
 
-	/* Coords.
-	   Use the provided position otherwise use center of the viewport. */
+	/* Use the provided position otherwise use center of the viewport. */
 	if (a_coord) {
-		lat_lon = a_coord->get_latlon();
+		qDebug() << SG_PREFIX_I << "Getting URL for specific coordinate";
+		result = this->get_url_for_coord(*a_coord, viking_zoom_level);
 	} else {
-		lat_lon = a_viewport->get_center()->get_latlon();
+		qDebug() << SG_PREFIX_I << "Getting URL for center of viewport";
+		result = this->get_url_for_coord(*a_viewport->get_center(), viking_zoom_level);
 	}
+
+	return result;
+}
+
+
+
+
+QString WebToolCenter::get_url_for_viewport(Viewport * a_viewport)
+{
+	return this->get_url_for_coord(*a_viewport->get_center(), a_viewport->get_viking_zoom_level());
+}
+
+
+
+
+QString WebToolCenter::get_url_for_coord(const Coord & a_coord, const VikingZoomLevel & viking_zoom_level)
+{
+	const LatLon lat_lon = a_coord.get_latlon();
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	TileZoomLevel tile_zoom_level(TileZoomLevels::Default);
-	if (a_viewport->get_viking_zoom_level().x_y_is_equal()) {
-		tile_zoom_level = a_viewport->get_viking_zoom_level().to_tile_zoom_level();
+	if (viking_zoom_level.x_y_is_equal()) {
+		tile_zoom_level = viking_zoom_level.to_tile_zoom_level();
 	}
 
 	QString string_lat;
@@ -88,19 +108,7 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 	const QString url = QString(this->url_format).arg(string_lat).arg(string_lon).arg(tile_zoom_level.get_value());
 
-	if (a_coord) {
-		qDebug() << SG_PREFIX_I << "url at position" << lat_lon << "is" << url;
-	} else {
-		qDebug() << SG_PREFIX_I << "url at center position" << lat_lon << "is" << url;
-	}
+	qDebug() << SG_PREFIX_I << "Result URL is" << url;
 
 	return url;
-}
-
-
-
-
-QString WebToolCenter::get_url_for_viewport(Viewport * a_viewport)
-{
-	return this->get_url_at_position(a_viewport, NULL);
 }

@@ -120,6 +120,7 @@ void OSM::init(void)
 	MapSources::register_map_source(new MapSourceMBTiles());
 	MapSources::register_map_source(new MapSourceOSMMetatiles());
 
+
 	/* Webtools. */
 	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (view)"), "http://www.openstreetmap.org/?lat=%1&lon=%2&zoom=%3"));
 
@@ -138,37 +139,18 @@ void OSM::init(void)
 
 	ExternalTools::register_tool(new WebToolFormat(QObject::tr("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%1/%2/%3", "ZAO"));
 
+	/* Not really OSM but can't be bothered to create somewhere else to put it... */
+	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
 
 
 	/* Datasource. */
 	ExternalToolDataSource::register_tool(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", "", ""));
 
 
-
-
 	/* Goto */
+	GoTo::register_tool(new GotoToolXML(QObject::tr("OSM Nominatim"), "http://nominatim.openstreetmap.org/search?q=%1&format=xml", "searchresults/place", "lat", "searchresults/place", "lon"));
 
-	GotoToolXML * nominatim = new GotoToolXML(QObject::tr("OSM Nominatim"),
-						  "http://nominatim.openstreetmap.org/search?q=%1&format=xml",
-						  "searchresults/place",
-						  "lat",
-						  "searchresults/place",
-						  "lon");
-	GoTo::register_tool(nominatim);
-	//g_object_unref ( nominatim );
-
-	GotoToolXML * namefinder = new GotoToolXML(QObject::tr("OSM Name finder"),
-						   "http://gazetteer.openstreetmap.org/namefinder/search.xml?find=%1&max=1",
-						   "/searchresults/named",
-						   "lat",
-						   "/searchresults/named",
-						   "lon");
-	GoTo::register_tool(namefinder);
-	//g_object_unref ( namefinder );
-
-
-	/* Not really OSM but can't be bothered to create somewhere else to put it... */
-	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
+	GoTo::register_tool(new GotoToolXML(QObject::tr("OSM Name finder"), "http://gazetteer.openstreetmap.org/namefinder/search.xml?find=%1&max=1", "/searchresults/named", "lat", "/searchresults/named", "lon"));
 
 
 	/*

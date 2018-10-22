@@ -64,13 +64,7 @@ WebToolBounds::~WebToolBounds()
 
 QString WebToolBounds::get_url_for_viewport(Viewport * a_viewport)
 {
-	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
-
-	const QString url = QString(this->url_format).arg(bbox_strings.west).arg(bbox_strings.east).arg(bbox_strings.south).arg(bbox_strings.north);
-
-	qDebug() << SG_PREFIX_I << "url at current position is" << url;
-
-	return url;
+	return this->get_url_for_bbox(a_viewport->get_bbox());
 }
 
 
@@ -80,5 +74,19 @@ QString WebToolBounds::get_url_at_position(Viewport * a_viewport, const Coord * 
 {
 	/* TODO_2_LATER: could use zoom level to generate an offset from center lat/lon to get the bounds.
 	   For now simply use the existing function to use bounds from the viewport. */
-	return this->get_url_for_viewport(a_viewport);
+	return this->get_url_for_bbox(a_viewport->get_bbox());
+}
+
+
+
+
+QString WebToolBounds::get_url_for_bbox(const LatLonBBox & bbox)
+{
+	const LatLonBBoxStrings bbox_strings = bbox.to_strings();
+
+	const QString url = QString(this->url_format).arg(bbox_strings.west).arg(bbox_strings.east).arg(bbox_strings.south).arg(bbox_strings.north);
+
+	qDebug() << SG_PREFIX_I << "URL for bbox is" << url;
+
+	return url;
 }

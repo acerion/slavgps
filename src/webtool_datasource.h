@@ -77,8 +77,9 @@ namespace SlavGPS {
 		void run_at_current_position(Viewport * viewport);
 
 		QString get_url_for_viewport(Viewport * viewport);
-		QString get_url_at_position(Viewport * viewport, const Coord * a_coord);
+		QString get_url_at_position(Viewport * viewport, const Coord * coord);
 
+		QString get_last_user_string(void) const;
 
 
 

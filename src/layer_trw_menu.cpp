@@ -227,7 +227,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb()));
 		qa->setToolTip(tr("Import File With GPS_Babel..."));
 
-		ExternalToolDataSource::add_menu_items(acquire_submenu, this->get_window());
+		ExternalToolDataSource::add_menu_items(acquire_submenu, this->get_window()->get_viewport());
 	}
 
 
@@ -295,7 +295,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO_LATER: Should use selected layer's centre - rather than implicitly using the current viewport. */
-	ExternalTools::add_menu_items(external_submenu, this->get_window(), NULL);
+	ExternalTools::add_menu_items(external_submenu, this->get_window()->get_viewport(), NULL);
 }
 
 
@@ -303,27 +303,37 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu * external_submenu)
 {
-	/* Try adding submenu items with external tools pre-configured for selected Trackpoint. */
+	Viewport * viewport = parent_layer->get_window()->get_viewport();
+
+
+	/* Try adding submenu items with external tools pre-configured
+	   for selected Trackpoint. */
 	const Track * track = parent_layer->get_edited_track();
 	if (track && track->selected_tp_iter.valid) {
-		/* For the selected Trackpoint. */
 		const Coord * coord = &(*track->selected_tp_iter.iter)->coord;
-		ExternalTools::add_menu_items(external_submenu, parent_layer->get_window(), coord);
+		ExternalTools::add_menu_items(external_submenu, viewport, coord);
 		return;
 	}
 
-	/* Try adding submenu items with external tools pre-configured for selected Waypoint. */
+
+	/* There were no selected tracks (or at least no tracks, for
+	   which we can get coordinates). Try adding submenu items
+	   with external tools pre-configured for selected
+	   Waypoint. */
 	const Waypoint * wp = parent_layer->get_edited_wp();
 	if (wp) {
-		/* For the selected Waypoint. */
 		const Coord * coord = &wp->coord;
-		ExternalTools::add_menu_items(external_submenu, parent_layer->get_window(), coord);
+		ExternalTools::add_menu_items(external_submenu, viewport, coord);
 		return;
 	}
 
-	/* Otherwise add submenu items with external tools pre-configured for selected sublayer.
-	   TODO_LATER: Should use selected items centre - rather than implicitly using the current viewport. */
-	ExternalTools::add_menu_items(external_submenu, parent_layer->get_window(), NULL);
+
+	/* There were no selected waypoints. Add submenu items with
+	   external tools pre-configured for selected sublayer.
+
+	   TODO_LATER: Should use selected items centre - rather than
+	   implicitly using the current viewport. */
+	ExternalTools::add_menu_items(external_submenu, viewport, NULL);
 }
 
 

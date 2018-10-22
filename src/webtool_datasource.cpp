@@ -70,10 +70,9 @@ static QHash<QString, QString> last_user_strings;
 
 
 
-static QString get_last_user_string(const WebToolDatasource * web_tool_datasource)
+QString WebToolDatasource::get_last_user_string(void) const
 {
-	const QString tool_label = web_tool_datasource->get_label();
-	auto iter = last_user_strings.find(tool_label);
+	auto iter = last_user_strings.find(this->get_label());
 	if (iter == last_user_strings.end()) {
 		return "";
 	} else {
@@ -92,7 +91,7 @@ DataSourceWebToolDialog::DataSourceWebToolDialog(const QString & window_title, V
 
 	QLabel * user_string_label = new QLabel(tr("%1:").arg(this->web_tool_data_source->input_field_label_text), this);
 
-	this->input_field.setText(get_last_user_string(this->web_tool_data_source));
+	this->input_field.setText(this->web_tool_data_source->get_last_user_string());
 
 #ifdef K_FIXME_RESTORE
 	/* 'ok' when press return in the entry. */
@@ -196,7 +195,7 @@ int DataSourceWebTool::run_config_dialog(AcquireContext * acquire_context)
 
 void WebToolDatasource::run_at_current_position(Viewport * a_viewport)
 {
-	bool search = this->webtool_needs_user_string();
+	const bool search = this->webtool_needs_user_string();
 
 	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label(), a_viewport, this);
 

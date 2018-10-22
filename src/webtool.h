@@ -48,7 +48,7 @@ namespace SlavGPS {
 	class WebTool : public ExternalTool {
 		Q_OBJECT
 	public:
-		WebTool(const QString & new_tool_name) : ExternalTool(new_tool_name) {};
+		WebTool(const QString & tool_label) : ExternalTool(tool_label) {};
 		~WebTool();
 
 		void run_at_current_position(Viewport * viewport);

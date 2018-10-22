@@ -93,8 +93,8 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 	QString point_lon;
 	llpt.to_strings_raw(point_lat, point_lon);
 
-	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
+	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
 	if (a_viewport->get_viking_zoom_level().x_y_is_equal()) {
 		tile_zoom_level = a_viewport->get_viking_zoom_level().to_tile_zoom_level();
 	}
@@ -132,11 +132,18 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 	}
 
 	QString url = QString(this->url_format)
-		.arg(values[0]).arg(values[1]).arg(values[2])
-		.arg(values[3]).arg(values[4]).arg(values[5])
-		.arg(values[6]).arg(values[7]).arg(values[8]);
+		.arg(values[0])
+		.arg(values[1])
+		.arg(values[2])
+		.arg(values[3])
+		.arg(values[4])
+		.arg(values[5])
+		.arg(values[6])
+		.arg(values[7])
+		.arg(values[8]);
 
 	qDebug() << SG_PREFIX_D << "url at position is" << url;
+
 	return url;
 }
 

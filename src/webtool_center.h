@@ -34,7 +34,7 @@ namespace SlavGPS {
 
 
 
-	class Window;
+	class Viewport;
 
 
 
@@ -42,11 +42,13 @@ namespace SlavGPS {
 	class WebToolCenter : public WebTool {
 		Q_OBJECT
 	public:
-		WebToolCenter(const QString & label, const QString & url_format);
+		WebToolCenter(const QString & tool_label, const QString & url_format);
 		~WebToolCenter();
 
 		QString get_url_for_viewport(Viewport * viewport);
 		QString get_url_at_position(Viewport * viewport, const Coord * coord);
+
+		QString get_url_for_coord(const Coord & a_coord, const VikingZoomLevel & viking_zoom_level);
 
 	}; /* class WebToolCenter */
 

@@ -40,8 +40,9 @@ namespace SlavGPS {
 
 
 	class WebToolFormat : public WebTool {
+		Q_OBJECT
 	public:
-		WebToolFormat(const QString & label, const QString & url_format, const QString & url_format_code);
+		WebToolFormat(const QString & tool_label, const QString & url_format, const QString & url_format_code);
 		~WebToolFormat();
 
 		QString get_url_for_viewport(Viewport * viewport);
