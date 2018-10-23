@@ -253,6 +253,10 @@ void AcquireWorker::run(void)
 		qDebug() << SG_PREFIX_W << "Acquire process ended with error";
 		this->finalize_after_termination();
 	}
+
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) this->acquire_context;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) this->acquire_context->target_trw;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) this->acquire_context->viewport;
 }
 
 
@@ -309,9 +313,9 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 
 	QThreadPool::globalInstance()->start(worker);
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) worker->acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) worker->acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) worker->acquire_context->viewport;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) new_acquire_context;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
 
@@ -319,9 +323,9 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 		worker->progress_dialog->exec();
 	}
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) worker->acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) worker->acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) worker->acquire_context->viewport;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) new_acquire_context;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
 

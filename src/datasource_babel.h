@@ -42,7 +42,7 @@ namespace SlavGPS {
 	class DataSourceBabel : public DataSource {
 	public:
 		DataSourceBabel() {};
-		~DataSourceBabel() {};
+		~DataSourceBabel();
 
 		virtual sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
 		virtual void cleanup(void * data) { return; };

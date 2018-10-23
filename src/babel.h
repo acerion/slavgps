@@ -105,7 +105,7 @@ namespace SlavGPS {
 		void read_stdout_cb(void);
 
 	private:
-		AcquireContext acquire_context;
+		AcquireContext * acquire_context = NULL;
 	};
 
 
@@ -168,8 +168,16 @@ namespace SlavGPS {
 		static void post_init();
 		static void uninit();
 
+		/**
+		   \brief Indicates if gpsbabel binary is available
+
+		   This function says nothing about number of supported devices or number of supported file types.
+
+		   @return true if gpsbabel available
+		   @return false otherwise
+		*/
 		static bool is_available(void);
-		bool is_detected = false; /* Has gpsbabel been detected in the system and is available for operation? */
+
 
 		void get_unbuffer_path_from_system(void);
 		void get_gpsbabel_path_from_system(void);
@@ -187,6 +195,9 @@ namespace SlavGPS {
 
 		/* List of devices supported by gpsbabel. */
 		static std::vector<BabelDevice *> devices;
+
+	private:
+		bool gpsbabel_is_available = false; /* Has gpsbabel been detected in the system and is available for operation? */
 	};
 
 

@@ -149,7 +149,7 @@ void Babel::get_gpsbabel_path_from_preferences(void)
 	}
 
 	if (!this->gpsbabel_path.isEmpty()) {
-		this->is_detected = true;
+		this->gpsbabel_is_available = true;
 		qDebug() << SG_PREFIX_I << "gpsbabel detected as" << this->gpsbabel_path;
 	} else {
 		qDebug() << SG_PREFIX_W << "gpsbabel not detected";
@@ -415,6 +415,12 @@ sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_
 {
 	if (this->babel_process) {
 
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+
 
 #if 1
 		if (!trw->is_in_tree()) {
@@ -440,6 +446,12 @@ sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_
 		const sg_ret result = importer->convert_through_gpx(trw);
 
 		delete importer;
+
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
 
 		return result;
 	}
@@ -569,16 +581,15 @@ bool BabelFeatureLoader::run_process(void)
 
 
 
-
 static bool load_babel_features(void)
 {
-	if (!babel.is_detected) {
-		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
+	if (Babel::is_available()) {
+		BabelFeatureLoader feature_loader;
+		return feature_loader.run_process();
+	} else {
+		qDebug() << SG_PREFIX_W << "Can't load features, gpsbabel not found";
 		return false;
 	}
-
-	BabelFeatureLoader feature_loader;
-	return feature_loader.run_process();
 }
 
 
@@ -639,16 +650,9 @@ void Babel::uninit()
 
 
 
-/**
-   \brief Indicates if babel is available or not.
-
-   FIXME: what about Babel::is_detected?
-
-   Returns: true if babel available.
-*/
 bool Babel::is_available(void)
 {
-	return !Babel::devices.empty();
+	return babel.gpsbabel_is_available;
 }
 
 
@@ -673,13 +677,7 @@ BabelProcess::BabelProcess()
 
 void BabelProcess::set_acquire_context(AcquireContext * new_acquire_context)
 {
-	this->acquire_context.window               = new_acquire_context->window;
-	this->acquire_context.viewport             = new_acquire_context->viewport;
-	this->acquire_context.top_level_layer      = new_acquire_context->top_level_layer;
-	this->acquire_context.selected_layer       = new_acquire_context->selected_layer;
-	this->acquire_context.target_trw           = new_acquire_context->target_trw; /* TODO: call to configure_target_layer() may overwrite ::target_trw. */
-	this->acquire_context.target_trk           = new_acquire_context->target_trk;
-	this->acquire_context.target_trw_allocated = new_acquire_context->target_trw_allocated;
+	this->acquire_context = new_acquire_context;
 }
 
 
@@ -811,9 +809,9 @@ void BabelProcess::finished_cb(int exit_code, QProcess::ExitStatus exitStatus)
 
 void BabelProcess::read_stdout_cb()
 {
- 	char buffer[512];
+	qDebug() << SG_PREFIX_D;
 
-	qDebug() << SG_PREFIX_E;
+ 	char buffer[512];
 
 	while (this->process->canReadLine()) {
 		const qint64 read_size = this->process->readLine(buffer, sizeof (buffer));
@@ -860,7 +858,7 @@ void BabelProcess::read_stdout_cb()
 */
 sg_ret BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
 {
-	if (!babel.is_detected) {
+	if (!Babel::is_available()) {
 		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
 		return sg_ret::err;
 	}
