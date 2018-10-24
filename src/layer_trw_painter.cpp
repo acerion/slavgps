@@ -693,7 +693,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
-					if (curr_pos.x != prev_pos.x && curr_pos.y != prev_pos.y) { /* kamilFIXME: is && a correct condition? */
+					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
 						curr_pos = this->viewport->coord_to_screen_pos(prev_tp->coord);
 						draw_utm_skip_insignia(this->viewport, main_pen, curr_pos.x, curr_pos.y);
 					}
@@ -794,7 +794,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
-					if (curr_pos.x != prev_pos.x && curr_pos.y != prev_pos.y) { /* kamilFIXME: is && a correct condition? */
+					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
 						curr_pos = this->viewport->coord_to_screen_pos(prev_tp->coord);
 						draw_utm_skip_insignia(this->viewport, main_pen, curr_pos.x, curr_pos.y);
 					}
