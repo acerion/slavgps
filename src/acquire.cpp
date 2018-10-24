@@ -339,21 +339,8 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 		worker->acquire_is_running = false;
 	} else {
 
-		/* Get data for Off command. */
-		if (data_source->off_func) {
-			QString babel_args_off;
-			QString file_path_off;
-			interface->off_func(pass_along_data, babel_args_off, file_path_off);
-
-			if (!babel_args_off.isEmpty()) {
-
-				/* Turn off. */
-				BabelTurnOffDevice turn_off(file_path_off, babel_args_off);
-				turn_off.run_process();
-			}
-		}
+		data_source->on_complete();
 	}
-
 #endif
 
 

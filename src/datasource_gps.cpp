@@ -59,6 +59,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "DataSource GPS"
+
+
+
+
 static bool gps_acquire_in_progress = false;
 
 #define INVALID_ENTRY_INDEX -1
@@ -219,40 +224,6 @@ AcquireOptions * DatasourceGPSSetup::create_acquire_options(AcquireContext * acq
 
 
 
-void DataSourceGPS::off(void * user_data, QString & babel_args, QString & file_path)
-{
-	DatasourceGPSSetup * gps_dialog = (DatasourceGPSSetup *) user_data;
-
-	if (gps_acquire_in_progress) {
-		babel_args = "";
-		file_path = "";
-	}
-
-	/* See if we should turn off the device. */
-	if (!gps_dialog->get_do_turn_off()){
-		return;
-	}
-
-	if (Babel::devices.empty()) {
-		return;
-	}
-
-	g_last_device_index = gps_dialog->proto_combo->currentIndex();
-
-	QString device = Babel::devices[g_last_device_index]->identifier;
-	qDebug() << "II: Datasource GPS: GPS off: last active device:" << device;
-
-	if (device == "garmin") {
-		device = "garmin,power_off";
-	} else if (device == "navilink") {
-		device = "navilink,power_off";
-	} else {
-		return;
-	}
-
-	babel_args = QString("-i %1").arg(device);
-	file_path = QString(gps_dialog->serial_port_combo->currentText());
-}
 
 
 
@@ -455,6 +426,10 @@ int DataSourceGPS::run_config_dialog(AcquireContext * acquire_context)
 	if (answer == QDialog::Accepted) {
 		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
+
+		this->device_path = config_dialog.serial_port_combo->currentText();
+		this->do_turn_off = config_dialog.get_do_turn_off();
+		g_last_device_index = config_dialog.proto_combo->currentIndex();
 	}
 
 	return answer;
@@ -718,4 +693,41 @@ int find_initial_device_index(void)
 	}
 
 	return entry_index;
+}
+
+
+
+
+sg_ret DataSourceGPS::on_complete(void)
+{
+	if (!this->do_turn_off) {
+		qDebug() << SG_PREFIX_I << "Not turning off device, 'turn off' option not selected";
+		return sg_ret::ok;
+	}
+
+	if (gps_acquire_in_progress) {
+		qDebug() << SG_PREFIX_W << "Not turning off device, acquire in progress";
+		return sg_ret::err;
+	}
+
+	if (Babel::devices.empty()) {
+		qDebug() << SG_PREFIX_W << "Not turning off device, no supported devices";
+		return sg_ret::err;
+	}
+
+
+	const QString command = "power_off";
+	const QString device = Babel::devices[g_last_device_index]->identifier;
+	if (device != "garmin" && device != "navilink") {
+		qDebug() << SG_PREFIX_W << "Unrecognized last active device" << device;
+		sg_ret::err;
+	}
+	qDebug() << SG_PREFIX_I << "Last active device:" << device;
+
+
+	const QString babel_args = QString("-i %1,%2").arg(device).arg(command);
+	BabelTurnOffDevice turn_off(this->device_path, babel_args);
+	turn_off.run_process();
+
+	return sg_ret::ok;
 }

@@ -53,10 +53,16 @@ namespace SlavGPS {
 
 		int run_config_dialog(AcquireContext * acquire_context);
 
-		/* FIXME: these are most probably unused after changes in acquire. Make them used again. */
-		void off(void * user_data, QString & babel_args, QString & file_path);
-		void progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context);
 		AcquireProgressDialog * create_progress_dialog(void * user_data);
+
+		sg_ret on_complete(void);
+
+		/* FIXME: this is most probably unused after changes in acquire. Make it used again. */
+		void progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context);
+
+	private:
+		QString device_path;
+		bool do_turn_off = false; /* Turn off device after completing the task. */
 	};
 
 

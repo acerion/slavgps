@@ -84,6 +84,8 @@ namespace SlavGPS {
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status) { return -1; };
 
+		virtual sg_ret on_complete(void) { return sg_ret::ok; };
+
 		virtual int run_config_dialog(AcquireContext * acquire_context) { return QDialog::Rejected; };
 
 		virtual AcquireProgressDialog * create_progress_dialog(const QString & title);
