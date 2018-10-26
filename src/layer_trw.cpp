@@ -2141,15 +2141,13 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 
 void LayerTRW::add_waypoint(Waypoint * wp)
 {
-	bool can_attach_to_tree = false;
+	bool can_attach_to_tree = true;
 
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
 		g_tree->tree_get_items_tree()->get_top_layer()->add_layer(this, true);
-		can_attach_to_tree = true;
 	}
 
-#if 1
 
 	if (!this->waypoints.is_in_tree()) {
 		/* "Waypoints" node has not been shown in tree view.
@@ -2162,7 +2160,6 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 		this->tree_view->attach_to_tree(this, &this->waypoints);
 		qDebug() << SG_PREFIX_I;
-		can_attach_to_tree = true;
 	}
 
 
@@ -2178,7 +2175,6 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 		/* TODO: when adding multiple waypoints (e.g. during acquire), sorting children here will make acquire take more time. */
 		this->tree_view->sort_children(&this->waypoints, this->wp_sort_order);
 	}
-#endif
 }
 
 
@@ -2186,7 +2182,7 @@ void LayerTRW::add_waypoint(Waypoint * wp)
 
 void LayerTRW::add_track(Track * trk)
 {
-	bool can_attach_to_tree = false;
+	bool can_attach_to_tree = true;
 
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
@@ -2205,7 +2201,6 @@ void LayerTRW::add_track(Track * trk)
 		this->tree_view->attach_to_tree(this, &this->tracks);
 	}
 
-	can_attach_to_tree = true;
 
 	Trackpoint * tp = trk->get_tp_first();
 	if (tp && tp->has_timestamp) {
