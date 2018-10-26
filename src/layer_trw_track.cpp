@@ -2602,7 +2602,7 @@ CoordMode Track::get_coord_mode(void) const
 /* Comparison function used to sort trackpoints. */
 bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
 {
-	/* kamilFIXME: shouldn't this be difftime()? */
+	/* TODO: shouldn't this be difftime()? */
 	return a->timestamp < b->timestamp;
 }
 
