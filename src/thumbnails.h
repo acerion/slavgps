@@ -29,6 +29,11 @@
 
 
 
+#include "geotag_exif.h"
+
+
+
+
 #define PIXMAP_THUMB_SIZE  128
 
 
@@ -52,6 +57,8 @@ namespace SlavGPS {
 		static QPixmap get_default_thumbnail(void);
 
 		static QPixmap scale_pixmap(const QPixmap & src, int max_w, int max_h);
+
+		static bool apply_image_orientation(QPixmap & image, sg_exif_image_orientation orientation);
 
 	private:
 		/* Unconditionally generate a thumbnail. */

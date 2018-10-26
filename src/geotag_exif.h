@@ -24,7 +24,17 @@
 
 
 
+#include <cstdint>
+
+
+
+
 #include <QString>
+
+
+
+
+#include <exiv2/exiv2.hpp>
 
 
 
@@ -44,6 +54,13 @@ namespace SlavGPS {
 
 
 
+
+
+	typedef uint16_t sg_exif_image_orientation;
+
+
+
+
 	class GeotagExif {
 
 	public:
@@ -56,6 +73,25 @@ namespace SlavGPS {
 		static LatLon get_position(const QString & file_full_path);
 
 		static int write_exif_gps(const QString & file_full_path, const Coord & coord, const Altitude & alt, bool no_change_mtime);
+	};
+
+
+
+
+	class SGExif {
+	public:
+		static Exiv2::ExifData get_exif_data(const QString & file_full_path);
+
+		static bool get_string(Exiv2::ExifData & exif_data, QString & val, const char * key);
+
+		static bool get_float(Exiv2::ExifData & exif_data, float & val, const char * key);
+		static bool set_float(Exiv2::ExifData & exif_data, float val, const char * key);
+
+		/* http://www.exiv2.org/doc/namespaceExiv2.html -> enum TypeId:
+		   "unsignedShort / Exif SHORT type, 16-bit (2-byte) unsigned integer." */
+		static bool get_uint16(Exiv2::ExifData & exif_data, uint16_t & val, const char * key);
+
+		static bool get_image_orientation(sg_exif_image_orientation & result, const QString & file_full_path);
 	};
 
 

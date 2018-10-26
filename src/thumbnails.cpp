@@ -56,6 +56,8 @@
 #include "thumbnails.h"
 #include "vikutils.h"
 #include "dir.h"
+#include "geotag_exif.h"
+#include "globals.h"
 
 
 
@@ -65,7 +67,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Thumbnails:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Thumbnails"
 
 
 
@@ -146,16 +148,18 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 {
 	QPixmap original_image;
 	if (!original_image.load(original_file_full_path)) {
+		qDebug() << SG_PREFIX_E << "Failed to load image" << original_file_full_path;
 		return false;
 	}
 
-#ifdef K_FIXME_RESTORE
-	QPixmap * tmpbuf = gdk_pixbuf_apply_embedded_orientation(original_image);
-	original_image = tmpbuf;
-#endif
+	sg_exif_image_orientation image_orientation;
+	if (true == SGExif::get_image_orientation(image_orientation, original_file_full_path)) {
+		Thumbnails::apply_image_orientation(original_image, image_orientation);
+	}
 
 	struct stat info;
 	if (stat(original_file_full_path.toUtf8().constData(), &info) != 0) {
+		qDebug() << SG_PREFIX_E << "Failed to stat image" << original_file_full_path;
 		return false;
 	}
 
@@ -171,7 +175,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 	/* Create thumbnails directory (with all parent dirs if necessary).
 	   TODO_LATER: viking used 0700 permissions for the directory. What should we do? Use umask? */
 	if (!thumbs_dir.mkpath(".")) {
-		qDebug() << "EE: Failed to create thumbnails directory" << target_full_path;
+		qDebug() << SG_PREFIX_E << "Failed to create thumbnails directory" << target_full_path;
 	}
 
 	target_full_path += QString("%1.png").arg(md5);
@@ -192,7 +196,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 	const bool success = thumb.save(target_full_path, "png");
 	umask(old_mask);
 	if (!success) {
-		qDebug() << "EE:" PREFIX << "failed to save thumbnail";
+		qDebug() << SG_PREFIX_E << "Failed to save thumbnail as" << target_full_path;
 		return false;
 	}
 
@@ -224,7 +228,7 @@ bool Thumbnails::generate_thumbnail(const QString & original_file_full_path)
 	const QString final_full_path = target_full_path.left(final_path_len);
 	if (rename(target_full_path.toUtf8().constData(), final_full_path.toUtf8().constData())) {
 		int e = errno;
-		qDebug() << "EE:" PREFIX "failed to rename" << target_full_path << "to" << final_full_path << ":" << strerror(e);
+		qDebug() << SG_PREFIX_E << "Failed to rename" << target_full_path << "to" << final_full_path << ":" << strerror(e);
 		return false;
 	}
 
@@ -558,4 +562,40 @@ static QString md5_hash(const char * message)
 	free(md5);
 
 	return md5hash;
+}
+
+
+
+
+bool Thumbnails::apply_image_orientation(QPixmap & image, sg_exif_image_orientation orientation)
+{
+	/* TODO: handle all orientations, apply them to image. */
+
+	QTransform transform;
+	bool result = true;
+
+	/* See CIPA's "Exchangeable image file format for digital still cameras: Exif Version 2.3" reference document. */
+
+	switch (orientation) {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+		break;
+	case 6:
+		/* Image needs to be rotated 90 degrees clockwise. */
+		transform.rotate(90);
+		image = image.transformed(transform);
+		qDebug() << SG_PREFIX_I << "Rotated image 90 degrees clockwise:" << !image.isNull();
+		break;
+	case 7:
+	case 8:
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected orientation value" << orientation;
+		break;
+	}
+
+	return result;
 }

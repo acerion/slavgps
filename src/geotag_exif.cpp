@@ -71,7 +71,7 @@ using namespace SlavGPS;
 
 
 
-static bool geotag_exif_get_float(Exiv2::ExifData & exif_data, float & val, const char * key)
+bool SGExif::get_float(Exiv2::ExifData & exif_data, float & val, const char * key)
 {
 	Exiv2::ExifData::iterator iter = exif_data.findKey(Exiv2::ExifKey(key));
 	if (iter == exif_data.end()) {
@@ -84,7 +84,7 @@ static bool geotag_exif_get_float(Exiv2::ExifData & exif_data, float & val, cons
 
 
 
-static bool geotag_exif_set_float(Exiv2::ExifData & exif_data, float val, const char * key)
+bool SGExif::set_float(Exiv2::ExifData & exif_data, float val, const char * key)
 {
 	exif_data[key] = Exiv2::floatToRationalCast(val);
 
@@ -94,7 +94,7 @@ static bool geotag_exif_set_float(Exiv2::ExifData & exif_data, float val, const 
 
 
 
-static bool geotag_exif_get_string(Exiv2::ExifData & exif_data, QString & val, const char * key)
+bool SGExif::get_string(Exiv2::ExifData & exif_data, QString & val, const char * key)
 {
 	Exiv2::ExifData::iterator iter = exif_data.findKey(Exiv2::ExifKey(key));
 	if (iter == exif_data.end()) {
@@ -107,23 +107,38 @@ static bool geotag_exif_get_string(Exiv2::ExifData & exif_data, QString & val, c
 
 
 
+bool SGExif::get_uint16(Exiv2::ExifData & exif_data, uint16_t & val, const char * key)
+{
+	Exiv2::ExifData::iterator iter = exif_data.findKey(Exiv2::ExifKey(key));
+	if (iter == exif_data.end()) {
+		return false;
+	}
+
+	val = (uint16_t) iter->getValue()->toLong();
+	qDebug() << SG_PREFIX_I << "Read value" << val;
+	return true;
+}
+
+
+
+
 static bool geotag_exif_get_gps_info(Exiv2::ExifData & exif_data, LatLon & lat_lon, Altitude & alti)
 {
 	float tmp_lat;
 	float tmp_lon;
 	float tmp_alti;
 
-	if (!geotag_exif_get_float(exif_data, tmp_lat, "Exif.GPSInfo.GPSLatitude")) {
+	if (false == SGExif::get_float(exif_data, tmp_lat, "Exif.GPSInfo.GPSLatitude")) {
 		qDebug() << SG_PREFIX_W << "Can't find GPS Latitude";
 		return false;
 	}
 
-	if (!geotag_exif_get_float(exif_data, tmp_lon, "Exif.GPSInfo.GPSLongitude")) {
+	if (false == SGExif::get_float(exif_data, tmp_lon, "Exif.GPSInfo.GPSLongitude")) {
 		qDebug() << SG_PREFIX_W << "Can't find GPS Longitude";
 		return false;
 	}
 
-	if (!geotag_exif_get_float(exif_data, tmp_alti, "Exif.GPSInfo.GPSAltitude")) {
+	if (false == SGExif::get_float(exif_data, tmp_alti, "Exif.GPSInfo.GPSAltitude")) {
 		qDebug() << SG_PREFIX_W << "Can't find GPS Altitude";
 		return false;
 	}
@@ -141,17 +156,17 @@ static bool geotag_exif_get_gps_info(Exiv2::ExifData & exif_data, LatLon & lat_l
 
 static bool geotag_exif_set_gps_info(Exiv2::ExifData & exif_data, double lat, double lon, double alt)
 {
-	if (!geotag_exif_set_float(exif_data, lat, "Exif.GPSInfo.GPSLatitude")) {
+	if (false == SGExif::set_float(exif_data, lat, "Exif.GPSInfo.GPSLatitude")) {
 		qDebug() << SG_PREFIX_W << "Can't set GPS Latitude";
 		return false;
 	}
 
-	if (!geotag_exif_set_float(exif_data, lon, "Exif.GPSInfo.GPSLongitude")) {
+	if (false == SGExif::set_float(exif_data, lon, "Exif.GPSInfo.GPSLongitude")) {
 		qDebug() << SG_PREFIX_W << "Can't set GPS Longitude";
 		return false;
 	}
 
-	if (!geotag_exif_set_float(exif_data, alt, "Exif.GPSInfo.GPSAltitude")) {
+	if (false == SGExif::set_float(exif_data, alt, "Exif.GPSInfo.GPSAltitude")) {
 		qDebug() << SG_PREFIX_W << "Can't set GPS Altitude";
 		return false;
 	}
@@ -334,12 +349,12 @@ QString GeotagExif::get_exif_date_from_file(const QString & file_full_path, bool
 	if (!exif_data.empty()) {
 		float lat;
 		float lon;
-		*has_GPS_info = (geotag_exif_get_float(exif_data, lat, "Exif.GPSInfo.GPSLatitude") && geotag_exif_get_float(exif_data, lon, "Exif.GPSInfo.GPSLongitude"));
+		*has_GPS_info = (SGExif::get_float(exif_data, lat, "Exif.GPSInfo.GPSLatitude") && SGExif::get_float(exif_data, lon, "Exif.GPSInfo.GPSLongitude"));
 
 		/* Prefer 'Photo' version over 'Image'. */
-		if (!geotag_exif_get_string(exif_data, date_time, "Exif.Photo.DateTimeOriginal")) {
+		if (false == SGExif::get_string(exif_data, date_time, "Exif.Photo.DateTimeOriginal")) {
 			qDebug() << SG_PREFIX_W << "Failed to get Photo Date Time Original";
-			if (!geotag_exif_get_string(exif_data, date_time, "Exif.Image.DateTimeOriginal")) {
+			if (false == SGExif::get_string(exif_data, date_time, "Exif.Image.DateTimeOriginal")) {
 				qDebug() << SG_PREFIX_W << "Failed to get Image Date Time Original";
 				/* We can't do anything more. */
 			}
@@ -422,4 +437,34 @@ int GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coo
 	}
 
 	return result;
+}
+
+
+
+
+Exiv2::ExifData SGExif::get_exif_data(const QString & file_full_path)
+{
+	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
+	assert(image.get() != 0);
+	image->readMetadata();
+	return image->exifData();
+}
+
+
+
+
+bool SGExif::get_image_orientation(sg_exif_image_orientation & result, const QString & file_full_path)
+{
+        uint16_t orientation;
+
+	Exiv2::ExifData exif_data = SGExif::get_exif_data(file_full_path);
+	if (false == SGExif::get_uint16(exif_data, orientation, "Exif.Image.Orientation")) {
+		/* Not an error. Maybe there is no orientation info in the file. */
+		return false;
+	}
+
+	result = orientation;
+	qDebug() << SG_PREFIX_I << "Orientation of image" << file_full_path << "is" << result;
+
+	return true;
 }
