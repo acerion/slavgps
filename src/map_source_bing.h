@@ -23,12 +23,11 @@
 
 
 #include <list>
-#include <cstdint>
 
 
 
 
-#include <glib.h>
+#include <QFile>
 
 
 
@@ -37,6 +36,7 @@
 #include "mapcoord.h"
 #include "map_source_slippy.h"
 #include "background.h"
+#include "globals.h"
 
 
 
@@ -46,12 +46,12 @@ namespace SlavGPS {
 
 
 
-	class Attribution {
+	class BingImageryProvider {
 	public:
 		QString attribution;
-		int minZoom = 0;
-		int maxZoom = 0;
-		LatLonBBox bounds;
+		int zoom_min = 0;
+		int zoom_max = 0;
+		LatLonBBox bbox;
 	};
 
 
@@ -65,36 +65,17 @@ namespace SlavGPS {
 
 		void add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingZoomLevel & viking_zoom_level);
 		const QString get_server_path(const TileInfo & src) const;
+		sg_ret load_providers(void);
 
+		QString bing_api_key; /* The API key to access Bing. */
 
-		QString bing_api_key;
-
-		std::list<Attribution *> attributions;
-		/* Current attribution, when parsing. */
-		QString attribution;
-		bool loading_attributions = false;
-
-		int load_attributions();
+		std::list<BingImageryProvider *> providers;
+		bool loading_providers = false;
 
 	private:
-
-		void async_load_attributions();
+		void async_load_providers(void);
 		QString compute_quad_tree(int zoom, int tilex, int tiley) const;
-		static void bstart_element(GMarkupParseContext * context,
-					   const char          * element_name,
-					   const char         ** attribute_names,
-					   const char         ** attribute_values,
-					   void                * user_data,
-					   GError             ** error);
-
-		void btext(GMarkupParseContext * context,
-			   const char          * text,
-			   size_t                text_len,
-			   void                * user_data,
-			   GError             ** error);
-
-		bool parse_file_for_attributions(QFile & file);
-		int emit_update(void * data);
+		sg_ret parse_file_for_providers(QFile & file);
 	};
 
 

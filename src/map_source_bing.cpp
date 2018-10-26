@@ -41,6 +41,7 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QXmlDefaultHandler>
 
 
 
@@ -51,6 +52,8 @@
 #include "bbox.h"
 #include "background.h"
 #include "viewport_internal.h"
+#include "tree_view.h"
+#include "layers_panel.h"
 
 
 
@@ -60,7 +63,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " MapSourceBing:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "MapSource Bing"
 
 
 
@@ -72,14 +75,36 @@ using namespace SlavGPS;
 
 
 extern bool vik_debug;
+extern Tree * g_tree;
 
 
 
 
-class MapSourceBingAttributions : public BackgroundJob {
+class XMLHandlerBing : public QXmlDefaultHandler {
+
 public:
-	MapSourceBingAttributions(MapSourceBing * new_map_source) : map_source(new_map_source) {};
-	~MapSourceBingAttributions() {};
+	XMLHandlerBing(MapSourceBing * new_map_source) : map_source(new_map_source) {};
+
+	bool startDocument(void);
+	bool endDocument(void);
+	bool startElement(const QString &namespaceURI, const QString &localName, const QString &qName, const QXmlAttributes &atts);
+	bool endElement(const QString &namespaceURI, const QString &localName, const QString &qName);
+	bool characters(const QString & ch);
+
+	bool fatalError(const QXmlParseException & exception);
+private:
+	MapSourceBing * map_source = NULL;
+	BingImageryProvider * current_provider = NULL;
+	QStringList stack;
+};
+
+
+
+
+class MapSourceBingProviders : public BackgroundJob {
+public:
+	MapSourceBingProviders(MapSourceBing * new_map_source) : map_source(new_map_source) {};
+	~MapSourceBingProviders() {};
 
 	void run(void);
 private:
@@ -91,13 +116,7 @@ private:
 
 MapSourceBing::MapSourceBing()
 {
-#ifdef K_FIXME_RESTORE
-	pspec = g_param_spec_string("api-key",
-				    "API key",
-				    "The API key to access Bing",
-                                     "<no-set>" /* default value */,
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-#endif
+	this->bing_api_key = "<no-set>";
 	this->logo.logo_pixmap = QPixmap(":/icons/bing_maps.png");
 	this->logo.logo_id = "Bing Maps"; /* TODO_2_LATER: verify this label, whether it is unique for this map source. */
 }
@@ -161,6 +180,7 @@ QString MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley) const
 
 
 
+
 const QString MapSourceBing::get_server_path(const TileInfo & src) const
 {
 	const QString quadtree = compute_quad_tree(src.scale.get_tile_zoom_level(), src.x, src.y);
@@ -174,30 +194,30 @@ const QString MapSourceBing::get_server_path(const TileInfo & src) const
 
 void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingZoomLevel & viking_zoom_level)
 {
-	qDebug() << "DD" PREFIX << "looking for" << bbox << "at zoom" << viking_zoom_level.get_x();
+	qDebug() << SG_PREFIX_D << "Looking for" << bbox << "at zoom" << viking_zoom_level.get_x();
 
 	const TileScale tile_scale = viking_zoom_level.to_tile_scale();
 
-	/* Load attributions. */
-	if (0 == this->attributions.size() && "<no-set>" != this->bing_api_key) { /* TODO_2_LATER: also check this->bing_api_key.isEmpty()? */
-		if (!this->loading_attributions) {
-			this->async_load_attributions();
-		} else {
-			/* Wait until attributions loaded before processing them. */
+	/* Load imagery providers. */
+	if (0 == this->providers.size() && "<no-set>" != this->bing_api_key) { /* TODO_2_LATER: also check this->bing_api_key.isEmpty()? */
+		if (this->loading_providers) {
+			/* Wait until providers are loaded before processing them. */
 			return;
+		} else {
+			this->async_load_providers();
 		}
 	}
 
-	/* Loop over all known attributions. */
-	for (auto iter = this->attributions.begin(); iter != this->attributions.end(); iter++) {
-		const Attribution * current = *iter;
-		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
-		if (BBOX_INTERSECT(bbox, current->bounds) &&
-		    (tile_scale.get_tile_zoom_level()) > current->minZoom &&
-		    (tile_scale.get_tile_zoom_level()) < current->maxZoom) {
+	/* Loop over all known providers. */
+	for (auto iter = this->providers.begin(); iter != this->providers.end(); iter++) {
+		const BingImageryProvider * current = *iter;
+		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bbox.south, current->bbox.north, current->bbox.east, current->bbox.west, current->zoom_min, current->zoom_max); */
+		if (BBOX_INTERSECT(bbox, current->bbox) &&
+		    (tile_scale.get_tile_zoom_level()) > current->zoom_min &&
+		    (tile_scale.get_tile_zoom_level()) < current->zoom_max) {
 
 			viewport->add_copyright(current->attribution);
-			qDebug() << "DD: Map Source Bind: get copyright: found match:" << current->attribution;
+			qDebug() << SG_PREFIX_D << "Found match:" << current->attribution;
 		}
 	}
 }
@@ -205,139 +225,49 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 
 
 
-/* Called for open tags <foo bar="baz">. */
-void MapSourceBing::bstart_element(GMarkupParseContext * context,
-				   const char          * element_name,
-				   const char         ** attribute_names,
-				   const char         ** attribute_values,
-				   void                * user_data,
-				   GError             ** error)
+bool XMLHandlerBing::startDocument(void)
 {
-	MapSourceBing * self = (MapSourceBing *) user_data;
-
-	const char *element = g_markup_parse_context_get_element(context);
-	if (strcmp (element, "CoverageArea") == 0) {
-		/* New Attribution. */
-		Attribution * attribution = new Attribution;
-
-		self->attributions.push_back(attribution);
-		attribution->attribution = self->attribution;
-	}
+	qDebug() << SG_PREFIX_I;
+	return true;
 }
 
 
 
 
-/* Called for character data. */
-/* Text is not nul-terminated. */
-void MapSourceBing::btext(GMarkupParseContext * context,
-			  const char          * text,
-			  size_t                text_len,
-			  void                * user_data,
-			  GError             ** error)
+bool XMLHandlerBing::endDocument(void)
 {
-	MapSourceBing * self = (MapSourceBing *) user_data;
-
-	Attribution * attr = self->attributions.size() == 0  ? NULL : self->attributions.back();
-	const char * element = g_markup_parse_context_get_element(context);
-	const QString textl = QString(text).left(text_len);
-	const GSList *stack = g_markup_parse_context_get_element_stack(context);
-	int len = g_slist_length((GSList *)stack);
-
-	const char *parent = len > 1 ? (const char *) g_slist_nth_data((GSList *)stack, 1) : (const char *) NULL;
-	if (strcmp(element, "Attribution") == 0) {
-		self->attribution = textl;
-	} else {
-		if (attr) {
-			if (parent != NULL && strcmp(parent, "CoverageArea") == 0) {
-				if (strcmp (element, "ZoomMin") == 0) {
-					attr->minZoom = atoi(textl.toUtf8().constData());
-				} else if (strcmp (element, "ZoomMax") == 0) {
-					attr->maxZoom = atoi(textl.toUtf8().constData());
-				}
-			} else if (parent != NULL && strcmp(parent, "BoundingBox") == 0) {
-				if (strcmp(element, "SouthLatitude") == 0) {
-					attr->bounds.south = SGUtils::c_to_double(textl);
-				} else if (strcmp(element, "WestLongitude") == 0) {
-					attr->bounds.west = SGUtils::c_to_double(textl);
-				} else if (strcmp(element, "NorthLatitude") == 0) {
-					attr->bounds.north = SGUtils::c_to_double(textl);
-				} else if (strcmp(element, "EastLongitude") == 0) {
-					attr->bounds.east = SGUtils::c_to_double(textl);
-				}
-			}
-		}
-	}
+	qDebug() << SG_PREFIX_I;
+	return true;
 }
 
 
 
 
-/*
-  @file passed to this function is an opened QTemporaryFile.
-*/
-bool MapSourceBing::parse_file_for_attributions(QFile & tmp_file)
+bool XMLHandlerBing::startElement(const QString &namespaceURI, const QString &localName, const QString &qName, const QXmlAttributes &atts)
 {
-	GMarkupParser xml_parser;
-	GMarkupParseContext *xml_context = NULL;
-	GError *error = NULL;
+	qDebug() << SG_PREFIX_I << "Opening tag for" << localName;
+	this->stack.push_back(localName);
 
-	FILE *file = fopen(tmp_file.fileName().toUtf8().constData(), "r");
-	if (file == NULL) {
-		/* TODO_2_LATER emit warning. */
-		return false;
+	if (localName == "ImageryProvider") {
+		this->current_provider = new BingImageryProvider;
 	}
-#ifdef K_FIXME_RESTORE
-	/* Setup context parse (i.e. callbacks). */
-	xml_parser.start_element = &bstart_element;
-	xml_parser.end_element = NULL;
-	xml_parser.text = &btext;
-	xml_parser.passthrough = NULL;
-	xml_parser.error = NULL;
-#endif
+	return true;
+}
 
-	xml_context = g_markup_parse_context_new(&xml_parser, (GMarkupParseFlags) 0, this, NULL);
 
-	char buff[BUFSIZ];
-	size_t nb;
-	size_t offset = -1;
-	while (xml_context &&
-	       (nb = fread(buff, sizeof(char), BUFSIZ, file)) > 0) {
-		if (offset == (size_t) -1) {
-			/* First run. */
-			/* Avoid possible BOM at begining of the file. */
-			offset = buff[0] == '<' ? 0 : 3;
+
+
+bool XMLHandlerBing::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
+{
+	qDebug() << SG_PREFIX_I << "Closing tag for" << localName;
+	this->stack.pop_back();
+
+	if (localName == "ImageryProvider") {
+		if (this->current_provider) {
+			this->map_source->providers.push_back(this->current_provider);
+			this->current_provider = NULL;
 		} else {
-			/* Reset offset. */
-			offset = 0;
-		}
-
-		if (!g_markup_parse_context_parse(xml_context, buff+offset, nb-offset, &error)) {
-			fprintf(stderr, "%s: parsing error: %s.\n",
-				__FUNCTION__, error->message);
-			g_markup_parse_context_free(xml_context);
-			xml_context = NULL;
-		}
-		g_clear_error(&error);
-	}
-	/* Cleanup. */
-	if (xml_context &&
-	    !g_markup_parse_context_end_parse(xml_context, &error)) {
-		fprintf(stderr, "%s: errors occurred while reading file: %s.\n", __FUNCTION__, error->message);
-	}
-
-	g_clear_error(&error);
-
-	if (xml_context) {
-		g_markup_parse_context_free(xml_context);
-	}
-	xml_context = NULL;
-	fclose(file);
-
-	if (vik_debug) {
-		for (auto iter = this->attributions.begin(); iter != this->attributions.end(); iter++) {
-			const Attribution * aa = *iter;
-			fprintf(stderr, "DD: Map Source Bing: Bing Attribution: %s from %d to %d %g %g %g %g\n", aa->attribution.toUtf8().constData(), aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
+			qDebug() << SG_PREFIX_E << "No 'current provider' object found when handling closing ImageryProvider tag";
 		}
 	}
 
@@ -347,63 +277,148 @@ bool MapSourceBing::parse_file_for_attributions(QFile & tmp_file)
 
 
 
-int MapSourceBing::load_attributions()
+/* Called for character data. */
+/* Text is not nul-terminated. */
+bool XMLHandlerBing::characters(const QString & ch)
 {
-	int ret = 0;  /* OK. */
+	const int stack_size = this->stack.size();
+	if (0 == stack_size) {
+		qDebug() << SG_PREFIX_E << "Characters outside of xml tree:" << ch;
+		return false;
+	}
 
-	this->loading_attributions = true;
+	if (stack_size < 2) {
+		/* We aren't interested in xml tags at this low level of nesting. */
+		return true;
+	}
+
+	QString current = this->stack.at(stack_size - 1);
+	QString parent = this->stack.at(stack_size - 2);
+
+
+	if (parent == "ImageryProvider" && current == "Attribution") {
+		this->current_provider->attribution = ch;
+		qDebug() << SG_PREFIX_I << "Attribution =" << this->current_provider->attribution;
+
+	} else if (parent == "CoverageArea") {
+		if (current == "ZoomMin") {
+			this->current_provider->zoom_min = ch.toInt();
+			qDebug() << SG_PREFIX_I << "Zoom Min =" << this->current_provider->zoom_min;
+		} else if (current == "ZoomMax") {
+			this->current_provider->zoom_max = ch.toInt();
+			qDebug() << SG_PREFIX_I << "Zoom Max =" << this->current_provider->zoom_max;
+		} else {
+			qDebug() << SG_PREFIX_W << "Unexpected tag inside CoverageArea:" << current;
+		}
+	} else if (parent == "BoundingBox") {
+		if (current == "SouthLatitude") {
+			this->current_provider->bbox.south = SGUtils::c_to_double(ch);
+			qDebug() << SG_PREFIX_I << "South =" << this->current_provider->bbox.south;
+
+		} else if (current, "WestLongitude") {
+			this->current_provider->bbox.west = SGUtils::c_to_double(ch);
+			qDebug() << SG_PREFIX_I << "West =" << this->current_provider->bbox.west;
+
+		} else if (current, "NorthLatitude") {
+			this->current_provider->bbox.north = SGUtils::c_to_double(ch);
+			qDebug() << SG_PREFIX_I << "North =" << this->current_provider->bbox.north;
+
+		} else if (current, "EastLongitude") {
+			this->current_provider->bbox.east = SGUtils::c_to_double(ch);
+			qDebug() << SG_PREFIX_I << "East =" << this->current_provider->bbox.east;
+
+		} else {
+			qDebug() << SG_PREFIX_W << "Unexpected tag inside BoundingBox:" << current;
+		}
+	} else {
+		;
+	}
+
+	return true;
+}
+
+
+
+
+bool XMLHandlerBing::fatalError(const QXmlParseException & exception)
+{
+	qDebug() << SG_PREFIX_E << exception.message() << exception.lineNumber() << exception.columnNumber();
+	return true;
+}
+
+
+
+
+/*
+  @file passed to this function is an opened QTemporaryFile.
+*/
+sg_ret MapSourceBing::parse_file_for_providers(QFile & tmp_file)
+{
+	XMLHandlerBing handler(this);
+	QXmlSimpleReader xml_reader;
+	QXmlInputSource source(&tmp_file);
+	xml_reader.setContentHandler(&handler);
+	xml_reader.setErrorHandler(&handler);
+	if (!xml_reader.parse(&source)) {
+		qDebug() << SG_PREFIX_E << "Failed to parse xml file";
+		return sg_ret::err;
+	}
+
+	if (true && vik_debug) {
+		for (auto iter = this->providers.begin(); iter != this->providers.end(); iter++) {
+			const BingImageryProvider * p = *iter;
+			fprintf(stderr, "DD: Map Source Bing: Bing Imagery Provider: %s from %d to %d %g %g %g %g\n", p->attribution.toUtf8().constData(), p->zoom_min, p->zoom_max, p->bbox.south, p->bbox.north, p->bbox.east, p->bbox.west);
+		}
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret MapSourceBing::load_providers(void)
+{
+	sg_ret ret = sg_ret::ok;
+
+	this->loading_providers = true;
 	const QString uri = QString(URL_ATTR_FMT).arg(this->bing_api_key);
 
 	DownloadHandle dl_handle(this->get_download_options());
 	QTemporaryFile tmp_file;
 	if (!dl_handle.download_to_tmp_file(tmp_file, uri)) {
-		ret = -1;
+		ret = sg_ret::err;
 		goto done;
 	}
 
-	qDebug() << "DD:" PREFIX << "load attributions from" << tmp_file.fileName();
-	if (!this->parse_file_for_attributions(tmp_file)) {
-		ret = -1;
+	qDebug() << SG_PREFIX_D << "Load imagery providers from" << tmp_file.fileName();
+	if (sg_ret::ok != this->parse_file_for_providers(tmp_file)) {
+		ret = sg_ret::err;
 	}
 
 	tmp_file.remove();
 
 done:
-	this->loading_attributions = false;
+	this->loading_providers = false;
 	return ret;
 }
 
 
 
 
-int MapSourceBing::emit_update(void * data)
+/* Function for loading imagery providers. */
+void MapSourceBingProviders::run(void)
 {
-#ifdef K_FIXME_RESTORE
-	gdk_threads_enter();
-	/* TODO_2_LATER
-	items_tree_emit_update(VIK_LAYERS_PANEL (data));
-	*/
-	gdk_threads_leave();
-#endif
-	return 0;
-}
-
-
-
-/* Function for loading attributions. */
-void MapSourceBingAttributions::run(void)
-{
-	this->map_source->load_attributions();
+	this->map_source->load_providers();
 
 	const bool end_job = this->set_progress_state(1);
 	if (end_job) {
 		return; /* Abort thread. */
 	}
-#ifdef K_FIXME_RESTORE
-	/* Emit update. */
-	/* As we are on a download thread, it's better to fire the update from the main loop. */
-	g_idle_add((GSourceFunc)_emit_update, NULL /* FIXME */);
-#endif
+
+	/* Emit update. As we are on a download thread, it's better to
+	   fire the update from the main loop. */
+	emit g_tree->tree_get_items_tree()->items_tree_updated();
 
 	return;
 }
@@ -411,11 +426,11 @@ void MapSourceBingAttributions::run(void)
 
 
 
-void MapSourceBing::async_load_attributions()
+void MapSourceBing::async_load_providers(void)
 {
-	MapSourceBingAttributions * bg_job = new MapSourceBingAttributions(this);
+	MapSourceBingProviders * bg_job = new MapSourceBingProviders(this);
 	bg_job->n_items = 1;
-	bg_job->set_description(QObject::tr("Bing attribution Loading"));
+	bg_job->set_description(QObject::tr("Bing Image Providers Loading"));
 
 	bg_job->run_in_background(ThreadPoolType::Remote);
 }
