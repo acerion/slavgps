@@ -50,7 +50,7 @@ namespace SlavGPS {
 	class GPSPoint {
 	public:
 		static LayerDataReadStatus read_layer_from_file(QFile & file, LayerTRW * trw, const QString & dirpath);
-		static sg_ret write_layer_to_file(QFile & file, const LayerTRW * trw);
+		static sg_ret write_layer_to_file(FILE * file, const LayerTRW * trw);
 	};
 
 

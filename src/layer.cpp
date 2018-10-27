@@ -553,7 +553,7 @@ LayerDataReadStatus Layer::read_layer_data(QFile & file, const QString & dirpath
 
 
 
-sg_ret Layer::write_layer_data(QFile & file) const
+sg_ret Layer::write_layer_data(FILE * file) const
 {
 	return sg_ret::ok;
 }

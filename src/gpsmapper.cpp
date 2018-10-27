@@ -163,9 +163,8 @@ sg_ret GPSMapper::write_tracks_to_file(FILE * file, const std::list<Track *> & t
 
 
 
-sg_ret GPSMapper::write_layer_to_file(QFile & file, LayerTRW * trw)
+sg_ret GPSMapper::write_layer_to_file(FILE * file, LayerTRW * trw)
 {
-	FILE * file2 = fdopen(file.handle(), "w"); /* TODO: close this file? */
 
 	const QString line = QString("[IMG ID]\n"
 				     "ID=%1\n"
@@ -178,13 +177,13 @@ sg_ret GPSMapper::write_layer_to_file(QFile & file, LayerTRW * trw)
 				     "Zoom0=0\n"
 				     "Zoom1=1\n"
 				     "[END-IMG ID]\n\n").arg(trw->name).arg(trw->name);
-	fprintf(file2, "%s", line.toUtf8().constData());
+	fprintf(file, "%s", line.toUtf8().constData());
 
-	if (sg_ret::ok != GPSMapper::write_waypoints_to_file(file2, trw->get_waypoints())) {
+	if (sg_ret::ok != GPSMapper::write_waypoints_to_file(file, trw->get_waypoints())) {
 		qDebug() << SG_PREFIX_E << "Failed to write waypoints";
 		return sg_ret::err;
 	}
-	if (sg_ret::ok != GPSMapper::write_tracks_to_file(file2, trw->get_tracks())) {
+	if (sg_ret::ok != GPSMapper::write_tracks_to_file(file, trw->get_tracks())) {
 		qDebug() << SG_PREFIX_E << "Failed to write tracks";
 		return sg_ret::err;
 	}

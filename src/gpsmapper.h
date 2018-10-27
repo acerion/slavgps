@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 	class GPSMapper {
 	public:
-		static sg_ret write_layer_to_file(QFile & file, LayerTRW * trw);
+		static sg_ret write_layer_to_file(FILE * file, LayerTRW * trw);
 
 	private:
 		static sg_ret write_tracks_to_file(FILE * file, const std::list<Track *> & tracks);

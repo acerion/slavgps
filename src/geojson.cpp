@@ -68,7 +68,7 @@ static void my_watch(GPid pid, int status, void * user_data)
 /**
  * Returns true if successfully written.
  */
-sg_ret GeoJSON::write_layer_to_file(QFile & file, LayerTRW * trw)
+sg_ret GeoJSON::write_layer_to_file(FILE * file, LayerTRW * trw)
 {
 	sg_ret result = sg_ret::err;
 
@@ -108,7 +108,7 @@ sg_ret GeoJSON::write_layer_to_file(QFile & file, LayerTRW * trw)
 		setvbuf(fout, NULL, _IONBF, 0);
 
 		while (fgets(line, sizeof(line), fout)) {
-			file.write(line);
+			fprintf(file, "%s", line);
 		}
 
 		fclose(fout);

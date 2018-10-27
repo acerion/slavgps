@@ -203,14 +203,13 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
 		const SGVariant param_value = layer->get_param_value(iter->first, true);
 		if (iter->second->type_id != param_value.type_id) {
-			qDebug() << "EE" PREFIX << "type id mismatch for parameter named" << iter->second->name << ":" << iter->second->type_id << param_value.type_id;
+			qDebug() << SG_PREFIX_E << "type id mismatch for parameter named" << iter->second->name << ":" << iter->second->type_id << param_value.type_id;
 			assert (iter->second->type_id == param_value.type_id);
 		}
 		param_value.write(file, iter->second->name);
 	}
-#ifdef K_TODO /* TODO: restore after fixing function argument type. */
+
 	layer->write_layer_data(file);
-#endif
 }
 
 
@@ -1036,21 +1035,26 @@ sg_ret VikFile::export_trw_track(Track * trk, const QString & file_full_path, SG
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
 
-	QFile file(file_full_path);
-	if (!file.open(QIODevice::WriteOnly)) {
-		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path << "as write only:" << file.error();
+	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
+	if (NULL == file) {
+		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path << "as write only";
 		return sg_ret::err;
 	}
+
+	sg_ret result = sg_ret::err;
 
 	switch (file_type) {
 	case SGFileType::GPX:
 		/* trk defined so can set the option. */
 		options.is_route = trk->type_id == "sg.trw.route";
-		return GPX::write_track_to_file(file, trk, &options);
+		result = GPX::write_track_to_file(file, trk, &options);
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected file type for track" << (int) file_type;
-		return sg_ret::err;
+		result = sg_ret::err;
 	}
+
+	fclose(file);
+	return result;
 }
 
 
@@ -1097,8 +1101,8 @@ sg_ret VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path,
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
 
-	QFile file(file_full_path);
-	if (!file.open(QIODevice::WriteOnly)) {
+	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
+	if (NULL == file) {
 		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path;
 		return sg_ret::err;
 	}
@@ -1122,8 +1126,10 @@ sg_ret VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path,
 		result = export_to_kml(file_full_path, trw);
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "invalid file type for non-track" << (int) file_type;
+		qDebug() << SG_PREFIX_E << "Invalid file type for non-track" << (int) file_type;
 	}
+
+	fclose(file);
 
 	return result;
 }

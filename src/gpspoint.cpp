@@ -218,6 +218,9 @@ static char * deslashndup(char const * str, uint16_t len)
 
 void GPSPointParser::reset()
 {
+	this->line_type = GPSPOINT_TYPE_NONE;
+	this->line_latlon.invalidate();
+
 	if (this->line_name) {
 		free(this->line_name);
 		this->line_name = NULL;
@@ -248,6 +251,9 @@ void GPSPointParser::reset()
 		this->line_color = NULL;
 	}
 
+	this->line_name_label = 0;
+	this->line_dist_label = 0;
+
 	this->line_image = "";
 
 	if (this->line_symbol) {
@@ -255,9 +261,6 @@ void GPSPointParser::reset()
 		this->line_symbol = NULL;
 	}
 
-	/* TODO_MAYBE: add resetting line_latlon. */
-
-	this->line_type = GPSPOINT_TYPE_NONE;
 	this->line_visible = true;
 
 	this->line_newsegment = false;
@@ -266,7 +269,6 @@ void GPSPointParser::reset()
 	this->line_altitude = VIK_DEFAULT_ALTITUDE;
 
 	this->line_symbol = NULL;
-
 
 	/* Trackpoint's extended attributes. */
 	this->line_extended = false;
@@ -277,10 +279,6 @@ void GPSPointParser::reset()
 	this->line_hdop = VIK_DEFAULT_DOP;
 	this->line_vdop = VIK_DEFAULT_DOP;
 	this->line_pdop = VIK_DEFAULT_DOP;
-
-
-	this->line_name_label = 0;
-	this->line_dist_label = 0;
 
 	return;
 }
@@ -963,20 +961,18 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 
 
 
-sg_ret GPSPoint::write_layer_to_file(QFile & file, const LayerTRW * trw)
+sg_ret GPSPoint::write_layer_to_file(FILE * file, const LayerTRW * trw)
 {
-	FILE * file2 = fdopen(file.handle(), "w"); /* TODO: close the file? */
-
 	const std::list<Track *> & tracks = trw->get_tracks();
 	const std::list<Track *> & routes = trw->get_routes();
 	const std::list<Waypoint *> & waypoints = trw->get_waypoints();
 
-	fprintf(file2, "type=\"waypointlist\"\n");
-	a_gpspoint_write_waypoints(file2, waypoints);
-	fprintf(file2, "type=\"waypointlistend\"\n");
+	fprintf(file, "type=\"waypointlist\"\n");
+	a_gpspoint_write_waypoints(file, waypoints);
+	fprintf(file, "type=\"waypointlistend\"\n");
 
-	a_gpspoint_write_tracks(file2, tracks);
-	a_gpspoint_write_tracks(file2, routes);
+	a_gpspoint_write_tracks(file, tracks);
+	a_gpspoint_write_tracks(file, routes);
 
 	return sg_ret::ok;
 }

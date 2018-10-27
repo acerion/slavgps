@@ -175,7 +175,7 @@ namespace SlavGPS {
 		/* Read layer-specific data from Vik file. */
 		virtual LayerDataReadStatus read_layer_data(QFile & file, const QString & dirpath);
 		/* Write layer-specific data to Vik file. */
-		virtual sg_ret write_layer_data(QFile & file) const;
+		virtual sg_ret write_layer_data(FILE * file) const;
 
 		virtual void add_menu_items(QMenu & menu);
 
