@@ -505,15 +505,15 @@ bool DEM::read(const QString & file_full_path)
 bool DEM::read_other(const QString & full_path)
 {
 	/* Header */
-	FILE * f = fopen(full_path.toUtf8().constData(), "r");
-	if (!f) {
+	FILE * file = fopen(full_path.toUtf8().constData(), "r");
+	if (!file) {
 		return false;
 	}
 
 	char buffer[DEM_BLOCK_SIZE + 1];
-	buffer[fread(buffer, 1, DEM_BLOCK_SIZE, f)] = '\0';
+	buffer[fread(buffer, 1, DEM_BLOCK_SIZE, file)] = '\0';
 	if (!this->parse_header(buffer)) {
-		fclose(f);
+		fclose(file);
 		return false;
 	}
 	/* TODO_2_LATER: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
@@ -524,9 +524,9 @@ bool DEM::read_other(const QString & full_path)
 	int32_t cur_row = -1;
 
 	/* Column -- Data */
-	while (!feof(f)) {
+	while (!feof(file)) {
 		/* read block */
-		buffer[fread(buffer, 1, DEM_BLOCK_SIZE, f)] = '\0';
+		buffer[fread(buffer, 1, DEM_BLOCK_SIZE, file)] = '\0';
 
 		fix_exponentiation(buffer);
 
@@ -535,8 +535,8 @@ bool DEM::read_other(const QString & full_path)
 
 	/* TODO_2_LATER - class C records (right now says 'Invalid' and dies) */
 
-	fclose(f);
-	f = NULL;
+	fclose(file);
+	file = NULL;
 
 	/* 24k scale */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->n_columns >= 2) {

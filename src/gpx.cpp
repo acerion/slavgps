@@ -627,7 +627,7 @@ sg_ret GPX::read_layer_from_file2(QFile & file, LayerTRW * trw)
 	importer->unnamed_tracks = 1;
 	importer->unnamed_routes = 1;
 
-	FILE * file2 = fdopen(file.handle(), "r"); /* OLD_TODO: close the file? */
+	FILE * file2 = fdopen(file.handle(), "r");
 
 	while (!done) {
 		len = fread(buf, 1, sizeof(buf)-7, file2);
@@ -837,21 +837,21 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 		return;
 	}
 
-	FILE * f = context->file;
+	FILE * file = context->file;
 	static LatLon lat_lon = wp->coord.get_latlon();
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
-	fprintf(f, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->visible ? "" : " hidden=\"hidden\"");
+	fprintf(file, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->visible ? "" : " hidden=\"hidden\"");
 
 	/* Sanity clause. */
 	if (wp->name.isEmpty()) {
-		fprintf(f, "  <name>%s</name>\n", "waypoint"); /* TODO_MAYBE: localize? */
+		fprintf(file, "  <name>%s</name>\n", "waypoint"); /* TODO_MAYBE: localize? */
 	} else {
-		fprintf(f, "  <name>%s</name>\n", entitize(wp->name).toUtf8().constData());
+		fprintf(file, "  <name>%s</name>\n", entitize(wp->name).toUtf8().constData());
 	}
 
 	if (wp->altitude.is_valid()) {
-		fprintf(f, "  <ele>%s</ele>\n", wp->altitude.value_to_string_for_file().toUtf8().constData());
+		fprintf(file, "  <ele>%s</ele>\n", wp->altitude.value_to_string_for_file().toUtf8().constData());
 	}
 
 	if (wp->has_timestamp) {
@@ -861,37 +861,37 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 
 		char * time_iso8601 = g_time_val_to_iso8601(&timestamp);
 		if (time_iso8601 != NULL) {
-			fprintf(f, "  <time>%s</time>\n", time_iso8601);
+			fprintf(file, "  <time>%s</time>\n", time_iso8601);
 		}
 		free(time_iso8601);
 	}
 
 	if (!wp->comment.isEmpty()) {
-		fprintf(f, "  <cmt>%s</cmt>\n", entitize(wp->comment).toUtf8().constData());
+		fprintf(file, "  <cmt>%s</cmt>\n", entitize(wp->comment).toUtf8().constData());
 	}
 	if (!wp->description.isEmpty()) {
-		fprintf(f, "  <desc>%s</desc>\n", entitize(wp->description).toUtf8().constData());
+		fprintf(file, "  <desc>%s</desc>\n", entitize(wp->description).toUtf8().constData());
 	}
 	if (wp->source.isEmpty()) {
-		fprintf(f, "  <src>%s</src>\n", entitize(wp->source).toUtf8().constData());
+		fprintf(file, "  <src>%s</src>\n", entitize(wp->source).toUtf8().constData());
 	}
 	if (wp->type.isEmpty()) {
-		fprintf(f, "  <type>%s</type>\n", entitize(wp->type).toUtf8().constData());
+		fprintf(file, "  <type>%s</type>\n", entitize(wp->type).toUtf8().constData());
 	}
 	if (wp->url.isEmpty()) {
-		fprintf(f, "  <url>%s</url>\n", entitize(wp->url).toUtf8().constData());
+		fprintf(file, "  <url>%s</url>\n", entitize(wp->url).toUtf8().constData());
 	}
 	if (wp->image_full_path.isEmpty()) {
-		fprintf(f, "  <link>%s</link>\n", entitize(wp->image_full_path).toUtf8().constData());
+		fprintf(file, "  <link>%s</link>\n", entitize(wp->image_full_path).toUtf8().constData());
 	}
 	if (!wp->symbol_name.isEmpty()) {
 		const GPXExportWptSymName pref = Preferences::get_gpx_export_wpt_sym_name();
 		switch (pref) {
 		case GPXExportWptSymName::Titlecase:
-			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toUtf8().constData());
+			fprintf(file, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toUtf8().constData());
 			break;
 		case GPXExportWptSymName::Lowercase:
-			fprintf(f, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toLower().toUtf8().constData());
+			fprintf(file, "  <sym>%s</sym>\n", entitize(wp->symbol_name).toLower().toUtf8().constData());
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid GPX Export Waypoint Symbol Name preference" << (int) pref;
@@ -899,7 +899,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 		}
 	}
 
-	fprintf(f, "</wpt>\n");
+	fprintf(file, "</wpt>\n");
 }
 
 
@@ -907,20 +907,20 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 
 static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 {
-	FILE * f = context->file;
+	FILE * file = context->file;
 
 	char *time_iso8601;
 
 	/* No such thing as a rteseg! So make sure we don't put them in. */
 	if (context->options && !context->options->is_route && tp->newsegment) {
-		fprintf(f, "  </trkseg>\n  <trkseg>\n");
+		fprintf(file, "  </trkseg>\n  <trkseg>\n");
 	}
 
 	static LatLon lat_lon = tp->coord.get_latlon();
-	fprintf(f, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
+	fprintf(file, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {
-		fprintf(f, "    <name>%s</name>\n", entitize(tp->name).toUtf8().constData());
+		fprintf(file, "    <name>%s</name>\n", entitize(tp->name).toUtf8().constData());
 	}
 
 	QString s_alt;
@@ -930,7 +930,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 		s_alt = SGUtils::double_to_c(0);
 	}
 	if (!s_alt.isEmpty()) {
-		fprintf(f, "    <ele>%s</ele>\n", s_alt.toUtf8().constData());
+		fprintf(file, "    <ele>%s</ele>\n", s_alt.toUtf8().constData());
 	}
 
 	time_iso8601 = NULL;
@@ -947,31 +947,31 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 		time_iso8601 = g_time_val_to_iso8601(&current);
 	}
 	if (time_iso8601 != NULL) {
-		fprintf(f, "    <time>%s</time>\n", time_iso8601);
+		fprintf(file, "    <time>%s</time>\n", time_iso8601);
 	}
 	free(time_iso8601);
 	time_iso8601 = NULL;
 
 	if (!std::isnan(tp->course)) {
-		fprintf(f, "    <course>%s</course>\n", SGUtils::double_to_c(tp->course).toUtf8().constData());
+		fprintf(file, "    <course>%s</course>\n", SGUtils::double_to_c(tp->course).toUtf8().constData());
 	}
 	if (!std::isnan(tp->speed)) {
-		fprintf(f, "    <speed>%s</speed>\n", SGUtils::double_to_c(tp->speed).toUtf8().constData());
+		fprintf(file, "    <speed>%s</speed>\n", SGUtils::double_to_c(tp->speed).toUtf8().constData());
 	}
 	if (tp->fix_mode == GPSFixMode::Fix2D) {
-		fprintf(f, "    <fix>2d</fix>\n");
+		fprintf(file, "    <fix>2d</fix>\n");
 	}
 	if (tp->fix_mode == GPSFixMode::Fix3D) {
-		fprintf(f, "    <fix>3d</fix>\n");
+		fprintf(file, "    <fix>3d</fix>\n");
 	}
 	if (tp->fix_mode == GPSFixMode::DGPS) {
-		fprintf(f, "    <fix>dgps</fix>\n");
+		fprintf(file, "    <fix>dgps</fix>\n");
 	}
 	if (tp->fix_mode == GPSFixMode::PPS) {
-		fprintf(f, "    <fix>pps</fix>\n");
+		fprintf(file, "    <fix>pps</fix>\n");
 	}
 	if (tp->nsats > 0) {
-		fprintf(f, "    <sat>%d</sat>\n", tp->nsats);
+		fprintf(file, "    <sat>%d</sat>\n", tp->nsats);
 	}
 
 	QString s_dop;
@@ -979,25 +979,25 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	if (tp->hdop != VIK_DEFAULT_DOP) {
 		s_dop = SGUtils::double_to_c(tp->hdop);
 		if (!s_dop.isEmpty()) {
-			fprintf(f, "    <hdop>%s</hdop>\n", s_dop.toUtf8().constData());
+			fprintf(file, "    <hdop>%s</hdop>\n", s_dop.toUtf8().constData());
 		}
 	}
 
 	if (tp->vdop != VIK_DEFAULT_DOP) {
 		s_dop = SGUtils::double_to_c(tp->vdop);
 		if (!s_dop.isEmpty()) {
-			fprintf(f, "    <vdop>%s</vdop>\n", s_dop.toUtf8().constData());
+			fprintf(file, "    <vdop>%s</vdop>\n", s_dop.toUtf8().constData());
 		}
 	}
 
 	if (tp->pdop != VIK_DEFAULT_DOP) {
 		s_dop = SGUtils::double_to_c(tp->pdop);
 		if (!s_dop.isEmpty()) {
-			fprintf(f, "    <pdop>%s</pdop>\n", s_dop.toUtf8().constData());
+			fprintf(file, "    <pdop>%s</pdop>\n", s_dop.toUtf8().constData());
 		}
 	}
 
-	fprintf(f, "  </%spt>\n", (context->options && context->options->is_route) ? "rte" : "trk");
+	fprintf(file, "  </%spt>\n", (context->options && context->options->is_route) ? "rte" : "trk");
 }
 
 
@@ -1010,7 +1010,7 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 		return;
 	}
 
-	FILE * f = context->file;
+	FILE * file = context->file;
 
 	QString tmp;
 	/* Sanity clause. */
@@ -1022,30 +1022,30 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
-	fprintf(f, "<%s%s>\n  <name>%s</name>\n",
+	fprintf(file, "<%s%s>\n  <name>%s</name>\n",
 		trk->type_id == "sg.trw.route" ? "rte" : "trk",
 		trk->visible ? "" : " hidden=\"hidden\"",
 		tmp.toUtf8().constData());
 
 	if (!trk->comment.isEmpty()) {
-		fprintf(f, "  <cmt>%s</cmt>\n", entitize(trk->comment).toUtf8().constData());
+		fprintf(file, "  <cmt>%s</cmt>\n", entitize(trk->comment).toUtf8().constData());
 	}
 
 	if (!trk->description.isEmpty()) {
-		fprintf(f, "  <desc>%s</desc>\n", entitize(trk->description).toUtf8().constData());
+		fprintf(file, "  <desc>%s</desc>\n", entitize(trk->description).toUtf8().constData());
 	}
 
 	if (!trk->source.isEmpty()) {
-		fprintf(f, "  <src>%s</src>\n", entitize(trk->source).toUtf8().constData());
+		fprintf(file, "  <src>%s</src>\n", entitize(trk->source).toUtf8().constData());
 	}
 
 	if (!trk->type.isEmpty()) {
-		fprintf(f, "  <type>%s</type>\n", entitize(trk->type).toUtf8().constData());
+		fprintf(file, "  <type>%s</type>\n", entitize(trk->type).toUtf8().constData());
 	}
 
 	/* No such thing as a rteseg! */
 	if (trk->type_id == "sg.trw.track") {
-		fprintf(f, "  <trkseg>\n");
+		fprintf(file, "  <trkseg>\n");
 	}
 
 	if (!trk->empty()) {
@@ -1063,10 +1063,10 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 
 	/* NB apparently no such thing as a rteseg! */
 	if (trk->type_id == "sg.trw.track") {
-		fprintf(f, "  </trkseg>\n");
+		fprintf(file, "  </trkseg>\n");
 	}
 
-	fprintf(f, "</%s>\n", trk->type_id == "sg.trw.route" ? "rte" : "trk");
+	fprintf(file, "</%s>\n", trk->type_id == "sg.trw.route" ? "rte" : "trk");
 }
 
 

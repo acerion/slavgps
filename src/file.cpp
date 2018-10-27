@@ -820,7 +820,7 @@ if "[EndLayer]"
   pop(&stack);
   vik_aggregate_layer_add_layer(stack.first, layer);
 if "[LayerData]"
-  vik_layer_data (VIK_LAYER_DATA(stack.first), f, viewport);
+  vik_layer_data (VIK_LAYER_DATA(stack.first), file, viewport);
 
 */
 

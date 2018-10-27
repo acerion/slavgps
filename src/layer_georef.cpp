@@ -621,15 +621,15 @@ void LayerGeoref::export_params_cb(void)
 	}
 
 
-	FILE * f = fopen(selection.at(0).toUtf8().constData(), "w");
-	if (!f) {
+	FILE * file = fopen(selection.at(0).toUtf8().constData(), "w");
+	if (!file) {
 		Dialog::error(QObject::tr("The file you requested could not be opened for writing."), window);
 		return;
 	}
 
-	fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", this->mpp_easting, this->mpp_northing, 0.0, 0.0, this->utm_tl.easting, this->utm_tl.northing);
-	fclose(f);
-	f = NULL;
+	fprintf(file, "%f\n%f\n%f\n%f\n%f\n%f\n", this->mpp_easting, this->mpp_northing, 0.0, 0.0, this->utm_tl.easting, this->utm_tl.northing);
+	fclose(file);
+	file = NULL;
 }
 
 
