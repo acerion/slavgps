@@ -227,11 +227,7 @@ namespace SlavGPS {
 		/* Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html */
 		bool switch_xy;
 
-	protected:
-		/* This is not private because MapSourceSlippy::operator=() wants to access it.
-		   TODO_LATER: move to private after fixing the operator. */
-
-
+	private:
 		TileZoomLevel tile_zoom_level_min = TileZoomLevel(0);  /* Minimum Zoom level supported by the map provider.  TMS Zoom level. 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
 		TileZoomLevel tile_zoom_level_max = TileZoomLevel(18); /* Maximum Zoom level supported by the map provider. / TMS Zoom level. Often 18 is the upper limit for a map source (maximally zoomed in). */
 

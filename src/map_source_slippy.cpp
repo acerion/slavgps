@@ -80,54 +80,6 @@ MapSourceSlippy::MapSourceSlippy()
 
 
 
-/* TODO_LATER: how many of these operations should be performed by parent class' operator? */
-MapSourceSlippy & MapSourceSlippy::operator=(const MapSourceSlippy & other)
-{
-	qDebug() << SG_PREFIX_I << "Copy assignment called";
-	if (&other == this) {
-		/* Self-assignment. */
-		return *this;
-	}
-
-	this->set_copyright(other.copyright);
-	this->set_license(other.license);
-	this->set_license_url(other.license_url);
-
-	this->logo.logo_pixmap = other.logo.logo_pixmap;
-	this->logo.logo_id     = other.logo.logo_id;
-
-	this->set_map_type_string(other.map_type_string); /* Non-translatable. */
-	this->map_type_id = other.map_type_id;
-	this->set_label(other.label);
-	this->tilesize_x = other.tilesize_x;
-	this->tilesize_y = other.tilesize_y;
-	this->drawmode = other.drawmode;
-	this->set_file_extension(other.file_extension);
-
-	memcpy(&this->dl_options, &other.dl_options, sizeof (DownloadOptions));
-
-	this->server_hostname    = other.server_hostname;
-	this->server_path_format = other.server_path_format;
-
-	this->tile_zoom_level_min = other.tile_zoom_level_min;
-	this->tile_zoom_level_max = other.tile_zoom_level_max;
-
-	this->lat_min = other.lat_min;
-	this->lat_max = other.lat_max;
-	this->lon_min = other.lon_min;
-	this->lon_max = other.lon_max;
-
-	this->is_direct_file_access_flag = other.is_direct_file_access_flag;
-	this->is_osm_meta_tiles_flag = other.is_osm_meta_tiles_flag;
-
-	this->switch_xy = other.switch_xy;
-
-        return *this;
-}
-
-
-
-
 MapSourceSlippy::MapSourceSlippy(MapTypeID new_map_type_id, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
 	qDebug() << "II" PREFIX << "called VikSlippy constructor with id" << (int) new_map_type_id;
