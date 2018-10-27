@@ -86,23 +86,23 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Download"
-#define PREFIX ": Download:" << __FUNCTION__ << __LINE__ << ">"
+#define ETAG_VALUE_LEN_MAX 100
 
 
 
 
-static bool check_file_first_line(FILE * f, const char * patterns[])
+static bool check_file_first_line(FILE * file, const char * patterns[])
 {
 	fpos_t pos;
 	char buf[33];
 
 	memset(buf, 0, sizeof (buf));
-	if (!fgetpos(f, &pos)) {
+	if (!fgetpos(file, &pos)) {
 		return false;
 	}
-	rewind(f);
-	size_t nr = fread(buf, 1, sizeof(buf) - 1, f);
-	if (!fgetpos(f, &pos)) {
+	rewind(file);
+	size_t nr = fread(buf, 1, sizeof(buf) - 1, file);
+	if (!fgetpos(file, &pos)) {
 		return false;
 	}
 
@@ -126,7 +126,7 @@ static bool check_file_first_line(FILE * f, const char * patterns[])
 
 
 
-bool SlavGPS::a_check_html_file(FILE * f)
+bool SlavGPS::a_check_html_file(FILE * file)
 {
 	const char * html_str[] = {
 		"<html",
@@ -136,7 +136,7 @@ bool SlavGPS::a_check_html_file(FILE * f)
 		NULL
 	};
 
-	return check_file_first_line(f, html_str);
+	return check_file_first_line(file, html_str);
 }
 
 
@@ -151,14 +151,14 @@ bool SlavGPS::a_check_map_file(FILE * f)
 
 
 
-bool a_check_kml_file(FILE * f)
+bool a_check_kml_file(FILE * file)
 {
 	const char * kml_str[] = {
 		"<?xml",
 		NULL
 	};
 
-	return check_file_first_line(f, kml_str);
+	return check_file_first_line(file, kml_str);
 }
 
 
@@ -302,7 +302,7 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 #ifdef MAGIC_VERSION
 	/* Or magic_version() if available - probably need libmagic 5.18 or so
 	   (can't determine exactly which version the versioning became available). */
-	qDebug() << "DD: Download: magic version:" << MAGIC_VERSION;
+	qDebug() << SG_PREFIX_D << "Magic version:" << MAGIC_VERSION;
 #endif
 	magic_t myt = magic_open(MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME);
 	bool zip = false;
@@ -348,10 +348,10 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 		char* bz2_name = uncompress_bzip2(file_path);
 		if (bz2_name) {
 			if (!QDir::root().remove(file_path)) {
-				qDebug() << "EE: Download: remove file failed (" << file_path << ")";
+				qDebug() << SG_PREFIX_E << "Remove file failed (" << file_path << ")";
 			}
 			if (g_rename(bz2_name, file_path.toUtf8().constData())) {
-				qDebug() << "EE: Download: file rename failed [" << bz2_name << "] to [" << file_path << "]";
+				qDebug() << SG_PREFIX_E << "File rename failed [" << bz2_name << "] to [" << file_path << "]";
 			}
 		}
 	}
@@ -363,108 +363,142 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 
 
 
+/* https://developer.gnome.org/gio/stable/GFile.html, "Entity Tags" */
 #define VIKING_ETAG_XATTR "xattr::viking.etag"
 
 
 
 
-static bool get_etag_xattr(const QString & file_path, CurlOptions * curl_options)
+static sg_ret get_etag_via_xattr(const QString & file_path, QString & etag)
 {
-	bool result = false;
+	sg_ret retv = sg_ret::err;
 
 	GFile * file = g_file_new_for_path(file_path.toUtf8().constData());
 	GFileInfo * fileinfo = g_file_query_info(file, VIKING_ETAG_XATTR, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 	if (fileinfo) {
-		char const * etag = g_file_info_get_attribute_string(fileinfo, VIKING_ETAG_XATTR);
-		if (etag) {
-			curl_options->etag = g_strdup(etag);
-			result = !!curl_options->etag;
+		char const * attr_value = g_file_info_get_attribute_string(fileinfo, VIKING_ETAG_XATTR);
+		if (attr_value) {
+			char * tag = g_strdup(attr_value);
+			retv = tag ? sg_ret::ok : sg_ret::err;
+			etag = QString(tag);
+			free(tag);
+
 		}
 		g_object_unref(fileinfo);
 	}
 	g_object_unref(file);
 
-	if (result) {
-		qDebug() << "DD: Download: Get etag (xattr) from" << file_path << ":" << curl_options->etag;
+	if (retv == sg_ret::ok) {
+		qDebug() << SG_PREFIX_D << "etag value for file" << file_path << ":" << etag;
 	}
 
-	return result;
+	return retv;
 }
 
 
 
 
-static bool get_etag_file(const QString & file_path, CurlOptions * curl_options)
+static sg_ret get_etag_via_file(const QString & file_full_path, QString & etag)
 {
-	const QString etag_filename = QString("%1.etag").arg(file_path);
-	bool result = g_file_get_contents(etag_filename.toUtf8().constData(), &curl_options->etag, NULL, NULL);
+	const QString etag_file_full_path = QString("%1.etag").arg(file_full_path);
 
-	if (result) {
-		qDebug() << "DD: Download: Get etag (file) from" << file_path << ":" << curl_options->etag;
+	QFile file(etag_file_full_path);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << SG_PREFIX_E << "Failed to open etag file" << etag_file_full_path << ":" << file.error();
+		return sg_ret::err;
 	}
 
-	return result;
+	char buf[ETAG_VALUE_LEN_MAX + 1] = { 0 };
+	const qint64 r = file.readLine(buf, sizeof (buf));
+	if (r <= 0) {
+		qDebug() << SG_PREFIX_W << "Failed to read etag value from file" << etag_file_full_path << file.error();
+		return sg_ret::err;
+	}
+
+	etag = QString(buf);
+	qDebug() << SG_PREFIX_D << "etag value for file" << file_full_path << ":" << etag;
+
+	return sg_ret::ok;
 }
 
 
 
 
-static void get_etag(const QString & file_path, CurlOptions * curl_options)
+static sg_ret get_etag(const QString & file_full_path, QString & etag)
 {
 	/* First try to get etag from xattr, then fall back to plain file. */
-	if (!get_etag_xattr(file_path, curl_options) && !get_etag_file(file_path, curl_options)) {
-		qDebug() << "DD: Download: Failed to get etag from" << file_path;
-		return;
+	if (sg_ret::ok != get_etag_via_xattr(file_full_path, etag)
+	    && sg_ret::ok != get_etag_via_file(file_full_path, etag)) {
+
+		qDebug() << SG_PREFIX_W << "Failed to get etag for" << file_full_path;
+		return sg_ret::err;
 	}
 
 	/* Check if etag is short enough. */
-	if (strlen(curl_options->etag) > 100) {
-		free(curl_options->etag);
-		curl_options->etag = NULL;
+	if (etag.length() > ETAG_VALUE_LEN_MAX) {
+		qDebug() << SG_PREFIX_W << "Failed to get etag for" << file_full_path << ": value too long:" << etag.length();
+		etag = "";
+		return sg_ret::err;
 	}
 
-	/* TODO_LATER: should check that etag is a valid string. */
+	/* TODO_LATER: validate the value of etag (do more checks than just test of length) */
+
+	return sg_ret::ok;
 }
 
 
 
 
-static bool set_etag_xattr(const QString & file_path, CurlOptions * curl_options)
+static sg_ret set_etag_xattr(const QString & file_full_path, const QString & etag)
 {
-	GFile * file = g_file_new_for_path(file_path.toUtf8().constData());
-	bool result = g_file_set_attribute_string(file, VIKING_ETAG_XATTR, curl_options->new_etag, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+	GFile * file = g_file_new_for_path(file_full_path.toUtf8().constData());
+	const sg_ret retv = g_file_set_attribute_string(file, VIKING_ETAG_XATTR, etag.toUtf8().constData(), G_FILE_QUERY_INFO_NONE, NULL, NULL) ? sg_ret::ok : sg_ret::err;
 	g_object_unref(file);
 
-	if (result) {
-		qDebug() << "DD: Download: Set etag (xattr) on" << file_path << ":" << curl_options->new_etag;
-	}
-
-	return result;
-}
-
-
-
-
-static bool set_etag_file(const QString & file_path, CurlOptions * curl_options)
-{
-	const QString etag_filename = file_path + ".etag";
-	if (g_file_set_contents(etag_filename.toUtf8().constData(), curl_options->new_etag, -1, NULL)) {
-		qDebug() << "DD: Download: Set etag (file) on" << file_path << ":" << curl_options->new_etag;
-		return true;
+	if (sg_ret::ok == retv) {
+		qDebug() << SG_PREFIX_D << "Set etag" << etag << "for file" << file_full_path;
 	} else {
-		return false;
+		qDebug() << SG_PREFIX_W << "Failed to set etag" << etag << "for file" << file_full_path;
 	}
+
+	return retv;
 }
 
 
 
 
-static void set_etag(const QString & file_path, const QString & tmp_file_path, CurlOptions * curl_options)
+static sg_ret set_etag_file(const QString & file_full_path, const QString & etag)
+{
+	const QString etag_filename = file_full_path + ".etag";
+
+	QFile file(file_full_path);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+		qDebug() << SG_PREFIX_E << "Can't open file" << file_full_path << file.error();
+		return sg_ret::err;
+	}
+
+	if (-1 == file.write(etag.toUtf8().constData())) {
+		qDebug() << SG_PREFIX_E << "Failed to write etag" << etag << "to file" << file_full_path << ":" << file.error();
+		return sg_ret::err;
+	}
+
+	qDebug() << SG_PREFIX_D << "Set etag for" << file_full_path << ":" << etag;
+	return sg_ret::ok;
+}
+
+
+
+
+static sg_ret set_etag(const QString & file_full_path, const QString & tmp_file_path, const QString & etag)
 {
 	/* First try to store etag in extended attribute, then fall back to plain file. */
-	if (!set_etag_xattr(tmp_file_path, curl_options) && !set_etag_file(file_path, curl_options)) {
-		qDebug() << "DD: Download: Failed to set etag on" << file_path;
+	if (sg_ret::ok != set_etag_xattr(tmp_file_path, etag)
+	    && sg_ret::ok != set_etag_file(file_full_path, etag)) {
+
+		qDebug() << SG_PREFIX_W << "Failed to set etag for" << file_full_path;
+		return sg_ret::err;
 	}
+	return sg_ret::ok;
 }
 
 
@@ -496,27 +530,27 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 			curl_options.time_condition = file_time;
 		}
 		if (this->dl_options.use_etag) {
-			get_etag(dest_file_path, &curl_options);
+			get_etag(dest_file_path, curl_options.etag);
 		}
 
 	} else {
 		char *dir = g_path_get_dirname(dest_file_path.toUtf8().constData());
 		if (g_mkdir_with_parents(dir , 0777) != 0) {
-			qDebug() << "WW: Download: Failed to mkdir" << dir;
+			qDebug() << SG_PREFIX_W << "Failed to mkdir" << dir;
 		}
 		free(dir);
 	}
 
 	const QString tmp_file_path = dest_file_path + ".tmp";
 	if (!lock_file(tmp_file_path)) {
-		qDebug() << "WW: Download: Couldn't take lock on temporary file" << tmp_file_path;
+		qDebug() << SG_PREFIX_W << "Couldn't take lock on temporary file" << tmp_file_path;
 		return DownloadStatus::FileWriteError;
 	}
 
 	FILE * file = fopen(tmp_file_path.toUtf8().constData(), "w+b");  /* Truncate file and open it. */
 	int e = errno;
 	if (!file) {
-		qDebug() << "WW: Download: Couldn't open temporary file" << tmp_file_path << ":" << strerror(e);
+		qDebug() << SG_PREFIX_W << "Couldn't open temporary file" << tmp_file_path << ":" << strerror(e);
 		return DownloadStatus::FileWriteError;
 	}
 
@@ -541,9 +575,9 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 	file = NULL;
 
 	if (failure) {
-		qDebug() << "WW: Download: Download error for file:" << dest_file_path;
+		qDebug() << SG_PREFIX_W << "Download error for file:" << dest_file_path;
 		if (!QDir::root().remove(tmp_file_path)) {
-			qDebug() << "WW: Download: Failed to remove" << tmp_file_path;
+			qDebug() << SG_PREFIX_W << "Failed to remove" << tmp_file_path;
 		}
 		unlock_file(tmp_file_path);
 		return result;
@@ -555,22 +589,22 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 		   Not security critical, thus potential Time of Check Time of Use race condition is not bad.
 		   coverity[toctou] */
 		if (g_utime(dest_file_path.toUtf8().constData(), NULL) != 0)
-			qDebug() << "WW: Download: couldn't set time on" << dest_file_path;
+			qDebug() << SG_PREFIX_W << "Couldn't set time on" << dest_file_path;
 	} else {
 		if (this->dl_options.convert_file) {
 			this->dl_options.convert_file(tmp_file_path);
 		}
 
 		if (this->dl_options.use_etag) {
-			if (curl_options.new_etag) {
+			if (!curl_options.new_etag.isEmpty()) {
 				/* Server returned an etag value. */
-				set_etag(dest_file_path, tmp_file_path, &curl_options);
+				set_etag(dest_file_path, tmp_file_path, curl_options.new_etag);
 			}
 		}
 
 		/* Move completely-downloaded file to permanent location. */
 		if (g_rename(tmp_file_path.toUtf8().constData(), dest_file_path.toUtf8().constData())) {
-			qDebug() << "WW: Download: file rename failed" << tmp_file_path << "to" << dest_file_path;
+			qDebug() << SG_PREFIX_W << "File rename failed" << tmp_file_path << "to" << dest_file_path;
 		}
 	}
 	unlock_file(tmp_file_path);
@@ -706,7 +740,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const DownloadStatus result)
 		break;
 	default:
 		debug << "Unknown";
-		qDebug() << "EE" PREFIX << "invalid download result" << (int) result;
+		qDebug() << SG_PREFIX_E << "Invalid download result" << (int) result;
 		break;
 	};
 
@@ -723,16 +757,16 @@ QString SlavGPS::to_string(DownloadProtocol protocol)
 
 	switch (protocol) {
 	case DownloadProtocol::FTP:
-		result = "ftp://";
+		result = "ftp";
 		break;
 	case DownloadProtocol::HTTP:
-		result = "http://";
+		result = "http";
 		break;
 	case DownloadProtocol::HTTPS:
-		result = "https://";
+		result = "https";
 		break;
 	case DownloadProtocol::File:
-		result = "file://";
+		result = "file";
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected download protocol" << (int) protocol;

@@ -109,8 +109,10 @@ static size_t curl_get_etag_func(void * ptr, size_t size, size_t nmemb, void * s
 		char * etag_str = str + ETAG_LEN;
 		char * end_str = g_strstr_len(etag_str, len - ETAG_LEN, "\r\n");
 		if (etag_str && end_str) {
-			curl_options->new_etag = g_strndup(etag_str, end_str - etag_str);
-			qDebug().nospace() << "DD: Curl Download: Get Etag: ETAG found: '" << curl_options->new_etag << "'";
+			char * tag = g_strndup(etag_str, end_str - etag_str);
+			curl_options->new_etag = QString(tag);
+			free(tag);
+			qDebug() << SG_PREFIX_D << "ETAG found:" << curl_options->new_etag;
 		}
 	}
 	return nmemb;
@@ -320,10 +322,10 @@ static void apply_dl_options(CURL * curl, const DownloadOptions * dl_options, co
 			curl_easy_setopt(curl, CURLOPT_TIMEVALUE, curl_options->time_condition);
 		}
 		if (dl_options->use_etag) {
-			if (curl_options->etag != NULL) {
+			if (!curl_options->etag.isEmpty()) {
 				/* Add an header on the HTTP request. */
 				char str[60];
-				snprintf(str, 60, "If-None-Match: %s", curl_options->etag);
+				snprintf(str, 60, "If-None-Match: %s", curl_options->etag.toUtf8().constData());
 				*curl_send_headers = curl_slist_append(*curl_send_headers, str);
 				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, *curl_send_headers);
 			}
@@ -381,12 +383,4 @@ CurlHandle::~CurlHandle()
 
 CurlOptions::~CurlOptions()
 {
-	if (this->etag) {
-		free(this->etag);
-		this->etag = NULL;
-	}
-	if (this->new_etag) {
-		free(this->new_etag);
-		this->etag = NULL;
-	}
 }

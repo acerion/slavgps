@@ -64,11 +64,9 @@ namespace SlavGPS {
 		/* Time sent to server on header If-Modified-Since. */
 		time_t time_condition = 0;
 
-		/* Etag sent by server on previous download. */
-		char * etag = NULL;
-
-		/* Etag sent by server on this download. */
-		char * new_etag = NULL;
+		/* https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.19: ETag */
+		QString etag;      /* Etag sent by server on previous download. */
+		QString new_etag;  /* Etag sent by server on this download. */
 	};
 
 
