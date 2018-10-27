@@ -546,16 +546,6 @@ void Viewport::zoom_out(void)
 
 
 
-double Viewport::get_zoom(void) const
-{
-	if (this->viking_zoom_level.x_y_is_equal()) {
-		return this->viking_zoom_level.x;
-	}
-	return 0.0; /* TODO_MAYBE: why 0.0? */
-}
-
-
-
 const VikingZoomLevel & Viewport::get_viking_zoom_level(void) const
 {
 	return this->viking_zoom_level;

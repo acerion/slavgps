@@ -196,10 +196,9 @@ namespace SlavGPS {
 
 
 
-		/* Viewport scale. */
-		double get_zoom(void) const;
-		void zoom_in();
-		void zoom_out();
+		/* Viewport's zoom. */
+		void zoom_in(void);
+		void zoom_out(void);
 
 		void set_viking_zoom_level(double new_value);
 		void set_viking_zoom_level_x(double new_value);
