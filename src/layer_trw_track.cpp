@@ -757,7 +757,7 @@ unsigned int Track::get_segment_count() const
 
 
 
-/* TODO_LATER: revisit this function and compare with original. */
+/* TODO_LATER: revisit this function and compare with original from viking. */
 std::list<Track *> Track::split_into_segments(void)
 {
 	std::list<Track *> result;
@@ -1345,13 +1345,11 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 		iter++;
 
 		for (; iter != this->trackpoints.end(); iter++) {
-			double diff = (*iter)->altitude - (*std::prev(iter))->altitude;
-
-			/* TODO_MAYBE: simplify by adding Altitude::operator+=(double rhs)? */
+			const double diff = (*iter)->altitude - (*std::prev(iter))->altitude;
 			if (diff > 0) {
-				delta_up.set_value(delta_up.get_value() + diff);
+				delta_up += diff;
 			} else {
-				delta_down.set_value(delta_down.get_value() + diff);
+				delta_down += diff;
 			}
 		}
 		return true;

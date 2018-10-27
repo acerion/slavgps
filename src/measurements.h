@@ -253,6 +253,7 @@ namespace SlavGPS {
 
 		Altitude convert_to_unit(HeightUnit height_unit) const;
 
+		Altitude & operator+=(double rhs);
 		Altitude & operator+=(const Altitude & rhs);
 	        Altitude operator+(const Altitude & rhs);
 		Altitude operator-(const Altitude & rhs);

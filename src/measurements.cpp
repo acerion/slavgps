@@ -724,6 +724,23 @@ Altitude Altitude::convert_to_unit(HeightUnit target_height_unit) const
 
 
 
+Altitude & Altitude::operator+=(double rhs)
+{
+	if (this->valid) {
+		this->value += rhs;
+		this->valid = !std::isnan(this->value);
+	} else {
+		this->value = rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	}
+
+	return *this;
+}
+
+
+
+
 Altitude & Altitude::operator+=(const Altitude & rhs)
 {
 	if (!rhs.valid) {
