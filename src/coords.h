@@ -89,6 +89,7 @@ namespace SlavGPS {
 		void to_strings_raw(QString & lat, QString & lon) const;
 
 		static LatLon get_average(const LatLon & max, const LatLon & min) { return LatLon((max.lat + min.lat) / 2, (max.lon + min.lon) / 2); };
+		static LatLon get_interpolated(const LatLon & lat_lon_1, const LatLon & lat_lon_2, double scale);
 
 		static UTM to_utm(const LatLon & lat_lon);
 

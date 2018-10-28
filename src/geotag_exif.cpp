@@ -233,7 +233,7 @@ static QString geotag_get_exif_comment(Exiv2::ExifData & exif_data)
    Returns: The position in LatLon format.
    On errors the returned value will be invalid (LatLon::is_valid() will return false).
 */
-LatLon GeotagExif::get_position(const QString & file_full_path)
+LatLon GeotagExif::get_object_lat_lon(const QString & file_full_path)
 {
 	LatLon lat_lon;
 
@@ -300,16 +300,17 @@ Waypoint * GeotagExif::create_waypoint_from_file(const QString & file_full_path,
 
 
 /**
+   @brief Extract a name from exif data of given image
+
    @file_full_path: The image file to process
-   @wp:             An existing waypoint to update
 
-   Returns: string with waypoint's name
+   Returns: string with name
 
-   Here EXIF processing is used to get non position related information (i.e. just the comment and name).
+   Here EXIF processing is used to get non position related information.
 */
-QString GeotagExif::waypoint_set_comment_get_name(const QString & file_full_path, Waypoint * wp)
+QString GeotagExif::get_object_name(const QString & file_full_path)
 {
-	QString name = "";
+	QString result;
 
 	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
 	assert(image.get() != 0);
@@ -317,11 +318,38 @@ QString GeotagExif::waypoint_set_comment_get_name(const QString & file_full_path
 	Exiv2::ExifData &exif_data = image->exifData();
 
 	if (!exif_data.empty()) {
-		name = geotag_get_exif_name(exif_data);
-		wp->comment = geotag_get_exif_comment(exif_data);
+		result = geotag_get_exif_name(exif_data);
 	}
 
-	return name;
+	return result;
+}
+
+
+
+
+/**
+   @brief Extract a comment from exif data of given image
+
+   @file_full_path: The image file to process
+
+   Returns: string with comment
+
+   Here EXIF processing is used to get non position related information.
+*/
+QString GeotagExif::get_object_comment(const QString & file_full_path)
+{
+	QString result;
+
+	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
+	assert(image.get() != 0);
+	image->readMetadata();
+	Exiv2::ExifData &exif_data = image->exifData();
+
+	if (!exif_data.empty()) {
+		result = geotag_get_exif_comment(exif_data);
+	}
+
+	return result;
 }
 
 
@@ -329,17 +357,14 @@ QString GeotagExif::waypoint_set_comment_get_name(const QString & file_full_path
 
 /**
    @file_full_path: The image file to process
-   @has_GPS_info: Returns whether the file has existing GPS information
 
    Returns: A string with the date and time in EXIF_DATE_FORMAT, otherwise empty string on some kind of failure.
 
    Here EXIF processing is used to get time information.
 */
-QString GeotagExif::get_exif_date_from_file(const QString & file_full_path, bool * has_GPS_info)
+QString GeotagExif::get_object_datetime(const QString & file_full_path)
 {
 	QString date_time;
-	*has_GPS_info = false;
-
 
 	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
 	assert(image.get() != 0);
@@ -347,10 +372,6 @@ QString GeotagExif::get_exif_date_from_file(const QString & file_full_path, bool
 	Exiv2::ExifData &exif_data = image->exifData();
 
 	if (!exif_data.empty()) {
-		float lat;
-		float lon;
-		*has_GPS_info = (SGExif::get_float(exif_data, lat, "Exif.GPSInfo.GPSLatitude") && SGExif::get_float(exif_data, lon, "Exif.GPSInfo.GPSLongitude"));
-
 		/* Prefer 'Photo' version over 'Image'. */
 		if (false == SGExif::get_string(exif_data, date_time, "Exif.Photo.DateTimeOriginal")) {
 			qDebug() << SG_PREFIX_W << "Failed to get Photo Date Time Original";
@@ -367,35 +388,59 @@ QString GeotagExif::get_exif_date_from_file(const QString & file_full_path, bool
 
 
 
-static int write_exif_gps_data(const QString & file_full_path, const Coord & coord, const Altitude & alt)
+/**
+   @file_full_path: The image file to process
+   @has_GPS_info: Returns whether the file has existing GPS information
+
+   Returns: true if file has GPS latitude/longitude, false otherwise
+*/
+bool GeotagExif::object_has_gps_info(const QString & file_full_path)
 {
-	int result = 0;
+	bool result = false;
+
+	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
+	assert(image.get() != 0);
+	image->readMetadata();
+	Exiv2::ExifData &exif_data = image->exifData();
+
+	if (!exif_data.empty()) {
+		float lat;
+		float lon;
+		result = (SGExif::get_float(exif_data, lat, "Exif.GPSInfo.GPSLatitude") && SGExif::get_float(exif_data, lon, "Exif.GPSInfo.GPSLongitude"));
+	}
+
+	return result;
+}
+
+
+
+
+static sg_ret write_exif_gps_data(const QString & file_full_path, const Coord & coord, const Altitude & alt)
+{
+	sg_ret retv = sg_ret::ok;
 
 	Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(file_full_path.toUtf8().constData());
 	if (NULL == image.get()) {
 		qDebug() << SG_PREFIX_E << "get() failed on pointer to" << file_full_path << "after open()";
-		result = 4;
-		return result;
+		return sg_ret::err;
 	}
 
 	image->readMetadata();
 	Exiv2::ExifData &exif_data = image->exifData();
 	if (exif_data.empty()) {
-		result = 0;
-		return result;
+		return sg_ret::err;
 	}
 
 	const LatLon lat_lon = coord.get_latlon();
 
 	if (!geotag_exif_set_gps_info(exif_data, lat_lon.lat, lat_lon.lon, alt.get_value())) {
-		result = 1; /* Failed. */
-		return result;
+		return sg_ret::err;
 	}
 
 	image->setExifData(exif_data);
 	image->writeMetadata();
 
-	return result;
+	return sg_ret::ok;
 }
 
 
@@ -405,21 +450,20 @@ static int write_exif_gps_data(const QString & file_full_path, const Coord & coo
    @file_full_path: The image file to save information in
    @coord:          The location
    @alt:            The elevation
-
-   Returns: A value indicating success: 0, or some other value for failure.
 */
-int GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coord, const Altitude & alt, bool no_change_mtime)
+sg_ret GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coord, const Altitude & alt, bool no_change_mtime)
 {
 	/* Save mtime for later use. */
 	struct stat stat_save;
 	if (no_change_mtime) {
 		if (stat(file_full_path.toUtf8().constData(), &stat_save) != 0) {
-			qDebug() << SG_PREFIX_W << "Couldn't read file" << file_full_path;
+			qDebug() << SG_PREFIX_E << "Couldn't read file" << file_full_path;
+			return sg_ret::err;
 		}
 	}
 
 
-	const int result = write_exif_gps_data(file_full_path, coord, alt);
+	const sg_ret result = write_exif_gps_data(file_full_path, coord, alt);
 
 
 	if (no_change_mtime) {
@@ -432,7 +476,8 @@ int GeotagExif::write_exif_gps(const QString & file_full_path, const Coord & coo
 		/* Not security critical, thus potential Time of Check Time of Use race condition is not bad. */
 		/* coverity[toctou] */
 		if (0 != utime(file_full_path.toUtf8().constData(), &utb)) {
-			qDebug() << SG_PREFIX_W << "Couldn't set time on file" << file_full_path;
+			qDebug() << SG_PREFIX_E << "Couldn't set time on file" << file_full_path;
+			return sg_ret::err; /* TODO: some kind of rollback? */
 		}
 	}
 

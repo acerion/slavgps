@@ -41,6 +41,7 @@
 
 #include "coord.h"
 #include "measurements.h"
+#include "globals.h"
 
 
 
@@ -66,13 +67,14 @@ namespace SlavGPS {
 	public:
 		static Waypoint * create_waypoint_from_file(const QString & file_full_path, CoordMode coord_mode);
 
-		static QString waypoint_set_comment_get_name(const QString & file_full_path, Waypoint * wp);
+		static QString get_object_name(const QString & file_full_path);
+		static QString get_object_comment(const QString & file_full_path);
+		static LatLon get_object_lat_lon(const QString & file_full_path);
+		static QString get_object_datetime(const QString & file_full_path);
 
-		static QString get_exif_date_from_file(const QString & file_full_path, bool * has_GPS_info);
+		static bool object_has_gps_info(const QString & file_full_path);
 
-		static LatLon get_position(const QString & file_full_path);
-
-		static int write_exif_gps(const QString & file_full_path, const Coord & coord, const Altitude & alt, bool no_change_mtime);
+		static sg_ret write_exif_gps(const QString & file_full_path, const Coord & coord, const Altitude & alt, bool no_change_mtime);
 	};
 
 

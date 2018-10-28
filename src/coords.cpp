@@ -438,3 +438,18 @@ void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
 	lon = convert_lon_dec_to_ddd(lat_lon.lon);
 #endif
 }
+
+
+
+
+LatLon LatLon::get_interpolated(const LatLon & lat_lon_1, const LatLon & lat_lon_2, double scale)
+{
+	LatLon result;
+
+	result.lat = lat_lon_1.lat + ((lat_lon_2.lat - lat_lon_1.lat) * scale);
+
+	/* FIXME: This won't cope with going over the 180 degrees longitude boundary. */
+	result.lon = lat_lon_1.lon + ((lat_lon_2.lon - lat_lon_1.lon) * scale);
+
+	return result;
+}

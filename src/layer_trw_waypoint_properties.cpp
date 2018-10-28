@@ -361,16 +361,15 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 
 #ifdef VIK_CONFIG_GEOTAG
 	/* Geotag Info [readonly]. */
+	const bool has_gps_info = GeotagExif::object_has_gps_info(wp->image);;
 	hasGeotagCB = new QCheckBox(QObject::tr("Has Geotag"));
 	hasGeotagCB->setEnabled(false);
-	bool hasGeotag;
-	GeotagExif::get_exif_date_from_file(wp->image, &hasGeotag);
-	hasGeotagCB->setChecked(hasGeotag);
+	hasGeotagCB->setChecked(has_gps_info);
 
 	consistentGeotagCB = new QCheckBox(QObject::tr("Consistent Position"));
 	consistentGeotagCB->setEnabled(false);
-	if (hasGeotag) {
-		const Coord coord(GeotagExif::get_position(wp->image), coord_mode);
+	if (has_gps_info) {
+		const Coord coord(GeotagExif::get_object_lat_lon(wp->image), coord_mode);
 		consistentGeotagCB->setChecked(coord == wp->coord);
 	}
 #endif
