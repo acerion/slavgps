@@ -68,6 +68,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer DEM"
 #define PREFIX " Layer DEM" << __FUNCTION__ << __LINE__ << ">"
 
 
@@ -545,7 +546,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	   (moved or re-zoomed). */
 	const LatLonBBox viewport_bbox = viewport->get_bbox();
 	if (!dem->intersect(viewport_bbox)) {
-		qDebug() << "II" PREFIX << "DEM does not overlap viewport, not drawing the DEM";
+		qDebug() << SG_PREFIX_I << "DEM does not overlap with viewport, not drawing the DEM";
 		return;
 	}
 
@@ -872,8 +873,8 @@ void draw_loaded_dem_box(Viewport * viewport)
 	const Coord demne(dem_northeast, viewport->get_coord_mode());
 	const Coord demsw(dem_southwest, viewport->get_coord_mode());
 
-	const ScreenPos sp_ne = viewport->coord_to_screen_pos(demne);
-	const ScreenPos sp_sw = viewport->coord_to_screen_pos(demsw);
+	ScreenPos sp_ne = viewport->coord_to_screen_pos(demne);
+	ScreenPos sp_sw = viewport->coord_to_screen_pos(demsw);
 
 	if (sp_ne.x > viewport->get_width()) {
 		sp_ne.x = viewport->get_width();
@@ -891,11 +892,11 @@ void draw_loaded_dem_box(Viewport * viewport)
 		sp_ne.y = 0;
 	}
 
-	qDebug() << "II" PREFIX << "drawing loaded DEM box";
+	qDebug() << SG_PREFIX_I << "drawing loaded DEM box";
 
 	viewport->draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
-
 #endif
+
 	return;
 }
 
