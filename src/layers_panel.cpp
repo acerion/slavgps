@@ -224,7 +224,7 @@ void LayersPanel::context_menu_add_standard_items(QMenu * menu, TreeItem::MenuOp
 
 void LayersPanel::context_menu_add_new_layer_submenu(QMenu * menu)
 {
-	QMenu * layers_submenu = new QMenu(tr("New Layer"));
+	QMenu * layers_submenu = new QMenu(tr("New Layer"), menu);
 	menu->addMenu(layers_submenu);
 	this->window->new_layers_submenu_add_actions(layers_submenu);
 }

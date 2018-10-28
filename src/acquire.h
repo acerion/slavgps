@@ -148,14 +148,14 @@ namespace SlavGPS {
 		static void set_context(Window * window, Viewport * viewport, LayerAggregate * top_level_layer, Layer * selected_layer);
 		static void set_target(LayerTRW * trw, Track * trk);
 
-		static QMenu * create_bfilter_layer_menu(void);
-		static QMenu * create_bfilter_layer_track_menu(void);
-		static QMenu * create_bfilter_track_menu(void);
+		static QMenu * create_bfilter_layer_menu(QWidget * parent);
+		static QMenu * create_bfilter_layer_track_menu(QWidget * parent);
+		static QMenu * create_bfilter_track_menu(QWidget * parent);
 
 		static void set_bfilter_track(Track * trk);
 
 	private:
-		static QMenu * create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type);
+		static QMenu * create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type, QWidget * parent);
 	};
 
 

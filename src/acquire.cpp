@@ -368,25 +368,29 @@ void AcquireContext::filter_trwlayer_cb(void)
 
 
 
-QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type)
+QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type, QWidget * parent)
 {
 	QMenu * menu = NULL;
-	int i = 0;
 
+	int i = -1;
 	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
 		DataSource * filter = *iter;
-
-		if (filter->input_type == input_type) {
-			if (!menu) { /* Do this just once, but return NULL if no filters. */
-				menu = new QMenu(menu_label);
-			}
-
-			QAction * action = new QAction(filter->window_title, g_acquire_context);
-			action->setData(i);
-			QObject::connect(action, SIGNAL (triggered(bool)), g_acquire_context, SLOT (filter_trwlayer_cb(void)));
-			menu->addAction(action);
-		}
 		i++;
+
+		if (filter->input_type != input_type) {
+			qDebug() << SG_PREFIX_I << "Not adding filter" << filter->window_title << "to menu" << menu_label << ", type not matched";
+			continue;
+		}
+		qDebug() << SG_PREFIX_I << "Adding filter" << filter->window_title << "to menu" << menu_label;
+
+		if (!menu) { /* Do this just once, but return NULL if no filters. */
+			menu = new QMenu(menu_label, parent);
+		}
+
+		QAction * action = new QAction(filter->window_title, g_acquire_context);
+		action->setData(i);
+		QObject::connect(action, SIGNAL (triggered(bool)), g_acquire_context, SLOT (filter_trwlayer_cb(void)));
+		menu->addAction(action);
 	}
 
 	return menu;
@@ -401,9 +405,9 @@ QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInput
    @return NULL if no filters are available for a TRW layer
    @return new menu otherwise
 */
-QMenu * Acquire::create_bfilter_layer_menu(void)
+QMenu * Acquire::create_bfilter_layer_menu(QWidget * parent)
 {
-	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::TRWLayer);
+	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::TRWLayer, parent);
 }
 
 
@@ -415,7 +419,7 @@ QMenu * Acquire::create_bfilter_layer_menu(void)
    @return NULL if no filters or no filter track has been set
    @return menu otherwise
 */
-QMenu * Acquire::create_bfilter_layer_track_menu(void)
+QMenu * Acquire::create_bfilter_layer_track_menu(QWidget * parent)
 {
 	if (bfilter_track == NULL) {
 		return NULL;
@@ -423,7 +427,7 @@ QMenu * Acquire::create_bfilter_layer_track_menu(void)
 		g_acquire_context->target_trk = bfilter_track;
 
 		const QString menu_label = QObject::tr("Filter with %1").arg(bfilter_track->name);
-		return Acquire::create_bfilter_menu(menu_label, DataSourceInputType::TRWLayerTrack);
+		return Acquire::create_bfilter_menu(menu_label, DataSourceInputType::TRWLayerTrack, parent);
 	}
 }
 
@@ -436,9 +440,9 @@ QMenu * Acquire::create_bfilter_layer_track_menu(void)
    @return NULL if no filters are available for a TRW track
    @return new menu otherwise
 */
-QMenu * Acquire::create_bfilter_track_menu(void)
+QMenu * Acquire::create_bfilter_track_menu(QWidget * parent)
 {
-	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::Track);
+	return Acquire::create_bfilter_menu(QObject::tr("&Filter"), DataSourceInputType::Track, parent);
 }
 
 

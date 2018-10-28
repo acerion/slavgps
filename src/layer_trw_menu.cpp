@@ -272,14 +272,13 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	Acquire::set_context(this->get_window(), g_tree->tree_get_main_viewport(), g_tree->tree_get_items_tree()->get_top_layer(), g_tree->tree_get_items_tree()->get_selected_layer());
 	Acquire::set_target(this, NULL);
 
-	/* kamilFIXME: .addMenu() does not make menu take ownership of the submenu. */
 
-	QMenu * submenu = Acquire::create_bfilter_layer_menu();
+	QMenu * submenu = Acquire::create_bfilter_layer_menu(&menu);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}
 
-	submenu = Acquire::create_bfilter_layer_track_menu();
+	submenu = Acquire::create_bfilter_layer_track_menu(&menu);
 	if (submenu) {
 		menu.addMenu(submenu);
 	}
