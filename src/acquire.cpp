@@ -61,7 +61,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Acquire"
-#define PREFIX ": Acquire:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -71,7 +70,7 @@ extern Tree * g_tree;
 
 
 
-static std::vector<DataSource *> g_bfilters;
+static QMap<QString, DataSource *> g_bfilters;
 static Track * bfilter_track = NULL;
 static AcquireContext * g_acquire_context = NULL;
 
@@ -360,9 +359,17 @@ AcquireContext::AcquireContext()
 void AcquireContext::filter_trwlayer_cb(void)
 {
 	QAction * qa = (QAction *) QObject::sender();
-	const int filter_idx = qa->data().toInt();
+	const QString filter_id = qa->data().toString();
 
-	Acquire::acquire_from_source(g_bfilters[filter_idx], g_bfilters[filter_idx]->mode, NULL);
+	auto iter = g_bfilters.find(filter_id);
+	if (iter == g_bfilters.end()) {
+		qDebug() << SG_PREFIX_E << "Can't find bfilter with id" << filter_id;
+		return;
+	}
+
+	Acquire::acquire_from_source(iter.value(), iter.value()->mode, g_acquire_context);
+
+	return;
 }
 
 
@@ -372,10 +379,9 @@ QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInput
 {
 	QMenu * menu = NULL;
 
-	int i = -1;
 	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
-		DataSource * filter = *iter;
-		i++;
+		const QString filter_id = iter.key();
+		DataSource * filter = iter.value();
 
 		if (filter->input_type != input_type) {
 			qDebug() << SG_PREFIX_I << "Not adding filter" << filter->window_title << "to menu" << menu_label << ", type not matched";
@@ -388,7 +394,7 @@ QMenu * Acquire::create_bfilter_menu(const QString & menu_label, DataSourceInput
 		}
 
 		QAction * action = new QAction(filter->window_title, g_acquire_context);
-		action->setData(i);
+		action->setData(filter_id);
 		QObject::connect(action, SIGNAL (triggered(bool)), g_acquire_context, SLOT (filter_trwlayer_cb(void)));
 		menu->addAction(action);
 	}
@@ -466,14 +472,19 @@ void Acquire::set_bfilter_track(Track * trk)
 
 void Acquire::init(void)
 {
+	DataSource * filter = NULL;
+
+
 	/*** Input is LayerTRW. ***/
-	g_bfilters.push_back(new BFilterSimplify());
-	g_bfilters.push_back(new BFilterCompress());
-	g_bfilters.push_back(new BFilterDuplicates());
-	g_bfilters.push_back(new BFilterManual());
-	/*** Input is a track and a LayerTRW. ***/
-	g_bfilters.push_back(new BFilterPolygon());
-	g_bfilters.push_back(new BFilterExcludePolygon());
+	Acquire::register_bfilter(new BFilterSimplify());
+	Acquire::register_bfilter(new BFilterCompress());
+	Acquire::register_bfilter(new BFilterDuplicates());
+	Acquire::register_bfilter(new BFilterManual());
+
+	/*** Input is a Track and a LayerTRW. ***/
+	Acquire::register_bfilter(new BFilterPolygon());
+	Acquire::register_bfilter(new BFilterExcludePolygon());
+
 
 	g_acquire_context = new AcquireContext();
 }
@@ -486,8 +497,29 @@ void Acquire::uninit(void)
 	delete g_acquire_context;
 
 	for (auto iter = g_bfilters.begin(); iter != g_bfilters.end(); iter++) {
-		delete *iter;
+		delete iter.value();
 	}
+}
+
+
+
+
+sg_ret Acquire::register_bfilter(DataSource * bfilter)
+{
+	if (bfilter->type_id == "") {
+		qDebug() << SG_PREFIX_E << "bfilter with empty id";
+		return sg_ret::err;
+	}
+
+	auto iter = g_bfilters.find(bfilter->type_id);
+	if (iter != g_bfilters.end()) {
+		qDebug() << SG_PREFIX_E << "Duplicate bfilter with id" << bfilter->type_id;
+		return sg_ret::err;
+	}
+
+	g_bfilters.insert(bfilter->type_id, bfilter);
+
+	return sg_ret::err;
 }
 
 

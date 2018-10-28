@@ -68,6 +68,7 @@ BFilterSimplify::BFilterSimplify()
 {
 	this->window_title = QObject::tr("Simplify All Tracks...");
 	this->layer_title = QObject::tr("Simplified Tracks");
+	this->type_id = "sg.datasource.bfilter.simplify";
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
@@ -162,6 +163,7 @@ BFilterCompress::BFilterCompress()
 {
 	this->window_title = QObject::tr("Compress Tracks...");
 	this->layer_title = QObject::tr("Compressed Tracks");
+	this->type_id = "sg.datasource.bfilter.compress";
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
@@ -261,6 +263,7 @@ BFilterDuplicates::BFilterDuplicates()
 {
 	this->window_title = QObject::tr("Remove Duplicate Waypoints");
 	this->layer_title = QObject::tr("Remove Duplicate Waypoints");
+	this->type_id = "sg.datasource.bfilter.remove_duplicated_wp";
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
@@ -321,6 +324,7 @@ BFilterManual::BFilterManual()
 {
 	this->window_title = QObject::tr("Manual filter");
 	this->layer_title = QObject::tr("Manual filter");
+	this->type_id = "sg.datasource.bfilter.manual";
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayer;
 	this->autoview = true;
@@ -390,6 +394,7 @@ BFilterPolygon::BFilterPolygon()
 {
 	this->window_title = QObject::tr("Waypoints Inside This");
 	this->layer_title = QObject::tr("Polygonized Layer");
+	this->type_id = "sg.datasource.bfilter.polygon";
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;
@@ -452,6 +457,7 @@ BFilterExcludePolygon::BFilterExcludePolygon()
 {
 	this->window_title = QObject::tr("Waypoints Outside This");
 	this->layer_title = QObject::tr("Polygonzied Layer");
+	this->type_id = "sg.datasource.bfilter.exclude_polygon";
 	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::TRWLayerTrack;
 	this->autoview = true;

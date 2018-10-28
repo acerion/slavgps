@@ -92,6 +92,7 @@ namespace SlavGPS {
 
 		QString window_title;
 		QString layer_title;
+		QString type_id; /* Internal identifier. */
 
 
 		DataSourceMode mode;

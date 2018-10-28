@@ -156,6 +156,7 @@ namespace SlavGPS {
 
 	private:
 		static QMenu * create_bfilter_menu(const QString & menu_label, DataSourceInputType input_type, QWidget * parent);
+		static sg_ret register_bfilter(DataSource * bfilter);
 	};
 
 
