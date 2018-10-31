@@ -61,6 +61,10 @@ namespace SlavGPS {
 		bool canDropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent);
 		bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent);
 		Qt::DropActions supportedDropActions() const;
+		QMimeData * mimeData(const QModelIndexList & indexes) const;
+
+		/* Will return list of mime types supplied by the model. */
+		QStringList mimeTypes(void) const;
 
 	private:
 		TreeView * view = NULL;
