@@ -52,6 +52,7 @@
 #include "preferences.h"
 #include "measurements.h"
 #include "graph_intervals.h"
+#include "tree_view_internal.h"
 
 
 
@@ -1574,11 +1575,10 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		}
 		if (split_tracks.size()) {
 			/* Don't let track destroy this dialog. */
-			if (this->track_info.trk->type_id == "sg.trw.route") {
-				this->trw->delete_route(this->track_info.trk);
-			} else {
-				this->trw->delete_track(this->track_info.trk);
-			}
+			this->trw->detach_track(this->track_info.trk);
+			this->trw->tree_view->detach_tree_item(this->track_info.trk);
+			delete this->track_info.trk;
+
 			this->trw->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in track profile dialog)");
 		}
 	}

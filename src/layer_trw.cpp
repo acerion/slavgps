@@ -2381,7 +2381,10 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		trw_dest->add_track(trk2);
 
-		this->delete_track(trk);
+		this->detach_track(trk);
+		this->tree_view->detach_tree_item(trk);
+		delete trk;
+
 		/* Reset layer timestamps in case they have now changed. */
 		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest);
 		trw_src->tree_view->apply_tree_item_timestamp(trw_src);
@@ -2396,7 +2399,9 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		trw_dest->add_route(trk2);
 
-		this->delete_route(trk);
+		this->detach_track(trk);
+		this->tree_view->detach_tree_item(trk);
+		delete trk;
 	}
 
 	if (item_type_id == "sg.trw.waypoint") {
@@ -2408,7 +2413,9 @@ void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QStri
 
 		trw_dest->add_waypoint(wp2);
 
-		this->delete_waypoint(wp);
+		this->detach_waypoint(wp);
+		this->tree_view->detach_tree_item(wp);
+		delete wp;
 
 		/* Recalculate bounds even if not renamed as maybe dragged between layers. */
 		trw_dest->waypoints.recalculate_bbox();
@@ -2496,69 +2503,59 @@ sg_ret LayerTRW::dropped_item_is_acceptable(TreeItem * tree_item, bool * result)
 
 
 
-bool LayerTRW::delete_track(Track * trk)
+sg_ret LayerTRW::detach_track(Track * trk, bool * was_visible)
 {
 	if (!trk) {
-		qDebug() << "EE" PREFIX << "NULL pointer to track";
-		return false;
+		qDebug() << SG_PREFIX_E << "NULL pointer to track";
+		return sg_ret::err;
 	}
 
-	const bool was_visible = this->tracks.delete_track(trk);
-
-	/* If last sublayer, then remove sublayer container. */
-	if (this->tracks.size() == 0) {
-		this->tree_view->detach_tree_item(&this->tracks);
-	}
-	/* In case it was selected (no item delete signal ATM). */
-	this->get_window()->clear_highlight();
-
-	return was_visible;
-}
-
-
-
-
-bool LayerTRW::delete_route(Track * trk)
-{
-	if (!trk) {
-		qDebug() << "EE" PREFIX << "NULL pointer to route";
-		return false;
-	}
-
-	const bool was_visible = this->routes.delete_track(trk);
-
-	/* If last sublayer, then remove sublayer container. */
-	if (this->routes.size() == 0) {
-		this->tree_view->detach_tree_item(&this->routes);
+	if (trk->type_id == "sg.trw.route") {
+		if (sg_ret::ok != this->routes.detach_track(trk, was_visible)) {
+			return sg_ret::err;
+		}
+#if 0
+		/* If last sublayer, then remove sublayer container. */
+		if (this->routes.size() == 0) {
+			this->tree_view->detach_tree_item(&this->routes);
+		}
+#endif
+	} else {
+		if (sg_ret::ok != this->tracks.detach_track(trk, was_visible)) {
+			return sg_ret::err;
+		}
+#if 0
+		/* If last sublayer, then remove sublayer container. */
+		if (this->tracks.size() == 0) {
+			this->tree_view->detach_tree_item(&this->tracks);
+		}
+#endif
 	}
 
 	/* In case it was selected (no item delete signal ATM). */
 	this->get_window()->clear_highlight();
 
-	return was_visible;
+	return sg_ret::ok;
 }
 
 
 
 
-bool LayerTRW::delete_waypoint(Waypoint * wp)
+sg_ret LayerTRW::detach_waypoint(Waypoint * wp, bool * was_visible)
 {
 	if (!wp) {
-		qDebug() << "EE" PREFIX << "NULL pointer to waypoint";
-		return false;
+		qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
+		return sg_ret::err;
 	}
 
-	const bool was_visible = this->waypoints.delete_waypoint(wp);
-
-	/* If last sublayer, then remove sublayer container. */
-	if (this->waypoints.size() == 0) {
-		this->tree_view->detach_tree_item(&this->waypoints);
+	if (sg_ret::ok != this->waypoints.detach_waypoint(wp, was_visible)) {
+		return sg_ret::err;
 	}
 
 	/* In case it was selected (no item delete signal ATM). */
 	this->get_window()->clear_highlight();
 
-	return was_visible;
+	return sg_ret::ok;
 }
 
 
@@ -2852,13 +2849,13 @@ void LayerTRW::merge_with_other_cb(void)
 		Track * source_track = *iter;
 
 		if (source_track) {
-			qDebug() << "II: Layer TRW: we have a merge track";
+			qDebug() << SG_PREFIX_I << "We have a merge track";
 			track->steal_and_append_trackpoints(source_track);
-			if (is_route) {
-				this->delete_route(source_track);
-			} else {
-				this->delete_track(source_track);
-			}
+
+			this->detach_track(source_track);
+			this->tree_view->detach_tree_item(source_track);
+			delete source_track;
+
 			track->sort(Trackpoint::compare_timestamps);
 		}
 	}
@@ -2915,11 +2912,9 @@ void LayerTRW::append_track_cb(void)
 
 	/* All trackpoints have been moved from source_track to
 	   target_track. We don't need source_track anymore. */
-	if (source_track->type_id == "sg.trw.route") {
-		this->delete_route(source_track);
-	} else {
-		this->delete_track(source_track);
-	}
+	this->detach_track(source_track);
+	this->tree_view->detach_tree_item(source_track);
+	delete source_track;
 
 
 	this->emit_layer_changed("TRW - append track");
@@ -2993,11 +2988,9 @@ void LayerTRW::append_other_cb(void)
 	/* All trackpoints have been moved from
 	   source_track to target_track. We don't need
 	   source_track anymore. */
-	if (source_track->type_id == "sg.trw.route") {
-		this->delete_route(source_track);
-	} else {
-		this->delete_track(source_track);
-	}
+	this->detach_track(source_track);
+	this->tree_view->detach_tree_item(source_track);
+	delete source_track;
 
 
 	this->emit_layer_changed("TRW - append other");
@@ -3075,7 +3068,10 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		for (auto iter = nearby_tracks.begin(); iter != nearby_tracks.end(); iter++) {
 			/* Remove trackpoints from merged track, delete track. */
 			orig_track->steal_and_append_trackpoints(*iter);
-			this->delete_track(*iter);
+
+			this->detach_track(*iter);
+			this->tree_view->detach_tree_item(*iter);
+			delete *iter;
 
 			/* Tracks have changed, therefore retry again against all the remaining tracks. */
 			attempt_merge = true;
@@ -3110,11 +3106,10 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 	}
 
 	/* Remove original track and then update the display. */
-	if (orig->type_id == "sg.trw.route") {
-		this->delete_route(orig);
-	} else {
-		this->delete_track(orig);
-	}
+	this->detach_track(orig);
+	this->tree_view->detach_tree_item(orig);
+	delete orig;
+
 	this->emit_layer_changed("TRW create new tracks");
 
 	return true;
@@ -3402,7 +3397,9 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	   Since specificly requested, IMHO no need for extra confirmation. */
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->delete_track(*iter);
+		this->detach_track(*iter);
+		this->tree_view->detach_tree_item(*iter);
+		delete *iter;
 	}
 
 	/* Reset layer timestamps in case they have now changed. */
@@ -3441,7 +3438,9 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	}
 
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		this->delete_route(*iter);
+		this->detach_track(*iter);
+		this->tree_view->detach_tree_item(*iter);
+		delete *iter;
 	}
 
 	this->emit_layer_changed("TRW - delete selected routes");
@@ -3476,7 +3475,9 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	   Since specifically requested, IMHO no need for extra confirmation. */
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
 		/* This deletes first waypoint it finds of that name (but uniqueness is enforced above). */
-		this->delete_waypoint(*iter);
+		this->detach_waypoint(*iter);
+		this->tree_view->detach_tree_item(*iter);
+		delete *iter;
 	}
 
 	this->waypoints.recalculate_bbox();

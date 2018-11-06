@@ -226,19 +226,15 @@ namespace SlavGPS {
 		void add_track_from_file(Track * trk);
 
 
-
-
 		void move_item(LayerTRW * vtl_dest, sg_uid_t sublayer_uid, const QString & type_id);
 
-
-
-		bool delete_track(Track * trk);
-		bool delete_route(Track * trk);
-		bool delete_waypoint(Waypoint * wp);
 
 		void delete_all_routes();
 		void delete_all_tracks();
 		void delete_all_waypoints();
+
+		sg_ret detach_track(Track * trk, bool * was_visible = NULL);
+		sg_ret detach_waypoint(Waypoint * wp, bool * was_visible = NULL);
 
 
 		void smooth_it(Track * trk, bool flat);

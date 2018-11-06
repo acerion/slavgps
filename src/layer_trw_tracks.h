@@ -192,11 +192,10 @@ namespace SlavGPS {
 		void add_track_to_data_structure_only(Track * trk);
 
 		/*
-		  Delete a single track from container and from main items tree.
-		  Delete the passed object as well.
+		  Delete a single track from container (but not from main items tree).
 		  Return value of track's "visible" property before it was deleted.
 		*/
-		bool delete_track(Track * trk);
+		sg_ret detach_track(Track * trk, bool * was_visible);
 
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };

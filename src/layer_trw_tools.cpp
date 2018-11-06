@@ -919,18 +919,12 @@ ToolStatus LayerToolTRWNewTrack::handle_key_press(Layer * layer, QKeyEvent * ev)
 
 	switch (ev->key()) {
 	case Qt::Key_Escape:
-		if (track->type_id == "sg.trw.route") {
-			this->creation_in_progress = NULL;
-			if (track->get_tp_count() == 1) {
-				/* Bin track if only one point as it's not very useful. */
-				trw->delete_route(track);
-			}
-		} else {
-			this->creation_in_progress = NULL;
-			if (track->get_tp_count() == 1) {
-				/* Bin track if only one point as it's not very useful. */
-				trw->delete_track(track);
-			}
+		this->creation_in_progress = NULL;
+		/* Bin track if only one point as it's not very useful. */
+		if (track->get_tp_count() == 1) {
+			trw->detach_track(track);
+			trw->tree_view->detach_tree_item(track);
+			delete track;
 		}
 
 		trw->reset_edited_track();

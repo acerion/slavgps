@@ -1063,18 +1063,17 @@ void LayerTRWTracks::add_track_to_data_structure_only(Track * trk)
 
 
 
-
-bool LayerTRWTracks::delete_track(Track * trk)
+sg_ret LayerTRWTracks::detach_track(Track * trk, bool * was_visible)
 {
 	if (!trk) {
-		qDebug() << "EE" PREFIX << "NULL pointer to route";
-		return false;
+		qDebug() << SG_PREFIX_E << "NULL pointer to track";
+		return sg_ret::err;
 	}
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	if (trk->name.isEmpty()) {
-		qDebug() << "WW" PREFIX << "route with empty name, deleting anyway";
+		qDebug() << SG_PREFIX_W << "Track with empty name, deleting anyway";
 	}
 
 	if (trk == parent_layer->get_edited_track()) {
@@ -1083,7 +1082,9 @@ bool LayerTRWTracks::delete_track(Track * trk)
 		parent_layer->route_finder_started = false;
 	}
 
-	const bool was_visible = trk->visible;
+	if (NULL != was_visible) {
+		*was_visible = trk->visible;
+	}
 
 	if (trk == parent_layer->route_finder_added_track) {
 		parent_layer->route_finder_added_track = NULL;
@@ -1100,13 +1101,11 @@ bool LayerTRWTracks::delete_track(Track * trk)
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		if (TreeItem::the_same_object(*iter, trk)) {
 			this->children_list.erase(iter);
+			break;
 		}
 	}
 
-
-	delete trk;
-
-	return was_visible;
+	return sg_ret::ok;
 }
 
 

@@ -894,17 +894,17 @@ void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
 
 
 
-bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
+sg_ret LayerTRWWaypoints::detach_waypoint(Waypoint * wp, bool * was_visible)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	if (!wp) {
-		qDebug() << "EE" PREFIX << "NULL pointer to waypoint";
-		return false;
+		qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
+		return sg_ret::err;
 	}
 
 	if (wp->name.isEmpty()) {
-		qDebug() << "WW" PREFIX << "waypoint with empty name, deleting anyway";
+		qDebug() << SG_PREFIX_W << "Waypoint with empty name, deleting anyway";
 	}
 
 	if (wp == parent_layer->get_edited_wp()) {
@@ -912,9 +912,9 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 		parent_layer->moving_wp = false;
 	}
 
-	const bool was_visible = wp->visible;
-
-	parent_layer->tree_view->detach_tree_item(wp);
+	if (NULL != was_visible) {
+		*was_visible = wp->visible;
+	}
 
 	this->name_generator.remove_name(wp->name);
 
@@ -922,14 +922,14 @@ bool LayerTRWWaypoints::delete_waypoint(Waypoint * wp)
 
 	/* TODO_2_LATER: optimize. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		qDebug() << SG_PREFIX_I << "Will compare waypoints" << (*iter)->name << "and" << wp->name;
 		if (TreeItem::the_same_object(*iter, wp)) {
 			this->children_list.erase(iter);
+			break;
 		}
 	}
 
-	delete wp;
-
-	return was_visible;
+	return sg_ret::ok;
 }
 
 
@@ -1035,8 +1035,20 @@ void LayerTRWWaypoints::update_tree_view(Waypoint * wp)
 
 sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
-	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into Waypoints container";
-	return sg_ret::err;
+	/* Handle item in old location. */
+	{
+		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
+		trw->detach_waypoint((Waypoint *) tree_item);
+		/* Detaching of tree item from tree view will be handled by QT. */
+	}
+
+	/* Handle item in new location. */
+	{
+		this->add_waypoint((Waypoint *) tree_item);
+		this->tree_view->attach_to_tree(this, tree_item);
+	}
+
+	return sg_ret::ok;
 }
 
 

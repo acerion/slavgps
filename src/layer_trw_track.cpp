@@ -3527,7 +3527,10 @@ void Track::convert_track_route_cb(void)
 
 	/* Delete old one and then add new one. */
 	if (this->type_id == "sg.trw.route") {
-		parent_layer->delete_route(this);
+		parent_layer->detach_track(this);
+		parent_layer->tree_view->detach_tree_item(this);
+		delete this; /* FIXME: deleting self. */
+
 		trk_copy->set_name(copy_name);
 		parent_layer->add_track(trk_copy);
 	} else {
@@ -3535,7 +3538,11 @@ void Track::convert_track_route_cb(void)
 		trk_copy->merge_segments();
 		trk_copy->to_routepoints();
 
-		parent_layer->delete_track(this);
+		parent_layer->detach_track(this);
+		parent_layer->tree_view->detach_tree_item(this);
+		delete this; /* FIXME: deleting self. */
+
+
 		trk_copy->set_name(copy_name);
 		parent_layer->add_route(trk_copy);
 	}
@@ -3951,7 +3958,10 @@ void Track::split_by_segments_cb(void)
 		Dialog::error(tr("Can not split track as it has no segments"), g_tree->tree_get_main_window());
 	} else {
 		/* Remove original track. */
-		parent_layer->delete_track(this);
+		parent_layer->detach_track(this);
+		parent_layer->tree_view->detach_tree_item(this);
+		delete this; /* FIXME: deleting self. */
+
 		parent_layer->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in callback)");
 	}
 }
@@ -4009,36 +4019,36 @@ void Track::create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool b
 
 void Track::delete_sublayer(bool confirm)
 {
-	bool was_visible = false;
-
 	if (this->name.isEmpty()) {
 		return;
 	}
 
 
-       Window * main_window = g_tree->tree_get_main_window();
-       LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	Window * main_window = g_tree->tree_get_main_window();
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	const bool is_track = this->type_id == "sg.trw.track";
 
-	if (this->type_id == "sg.trw.track") {
-		if (confirm) {
-			/* Get confirmation from the user. */
-			if (!Dialog::yes_or_no(tr("Are you sure you want to delete the track \"%1\"?").arg(this->name)), main_window) {
-				return;
-			}
+
+	if (confirm) {
+		/* Get confirmation from the user. */
+		if (!Dialog::yes_or_no(is_track
+				       ? tr("Are you sure you want to delete the track \"%1\"?")
+				       : tr("Are you sure you want to delete the route \"%1\"?")
+				       .arg(this->name)), main_window) {
+			return;
 		}
+	}
 
-		was_visible = parent_layer->delete_track(this);
 
+	bool was_visible = false;
+	parent_layer->detach_track(this, &was_visible);
+	parent_layer->tree_view->detach_tree_item(this);
+	delete this; /* FIXME: deleting self. */
+
+
+	if (is_track) {
 		/* Reset layer timestamp in case it has now changed. */
 		parent_layer->tree_view->apply_tree_item_timestamp(parent_layer);
-	} else {
-		if (confirm) {
-			/* Get confirmation from the user. */
-			if (!Dialog::yes_or_no(tr("Are you sure you want to delete the route \"%1\"?").arg(this->name)), main_window) {
-				return;
-			}
-		}
-		was_visible = parent_layer->delete_route(this);
 	}
 
 	if (was_visible) {
