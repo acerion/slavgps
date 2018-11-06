@@ -58,8 +58,8 @@ namespace SlavGPS {
 	public:
 		TreeModel(TreeView * view_, QObject * parent_) : QStandardItemModel(parent_) { view = view_; };
 		Qt::ItemFlags flags(const QModelIndex & index) const;
-		bool canDropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent);
-		bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent);
+		bool canDropMimeData(const QMimeData * mime_data, Qt::DropAction action, int row, int column, const QModelIndex & parent_index);
+		bool dropMimeData(const QMimeData * mime_data, Qt::DropAction action, int row, int column, const QModelIndex & parent_index);
 		Qt::DropActions supportedDropActions() const;
 		QMimeData * mimeData(const QModelIndexList & indexes) const;
 

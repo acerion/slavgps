@@ -27,6 +27,11 @@
 
 
 
+#include <QDebug>
+
+
+
+
 #include "tree_item.h"
 #include "tree_view.h"
 
@@ -34,6 +39,11 @@
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Tree Item"
 
 
 
@@ -244,4 +254,26 @@ QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemListForma
 void TreeItem::display_debug_info(const QString & reference) const
 {
 	return;
+}
+
+
+
+
+sg_ret TreeItem::drag_drop_request(TreeItem * tree_item, int row, int col)
+{
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "here";
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret TreeItem::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
+{
+	if (NULL == result) {
+		return sg_ret::err;
+	}
+
+	*result = false;
+	return sg_ret::ok;
 }

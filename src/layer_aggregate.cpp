@@ -991,6 +991,35 @@ void LayerAggregate::drag_drop_request(Layer * src, TreeIndex & src_item_index, 
 
 
 
+sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, int row, int col)
+{
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into this Layer";
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret LayerAggregate::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
+{
+	if (NULL == result) {
+		return sg_ret::err;
+	}
+
+	/* Aggregate layer can contain only other layers, nothing more
+	   (at least at this time). */
+	if (TreeItemType::Layer == tree_item->tree_item_type) {
+		*result = true;
+		return sg_ret::ok;
+	}
+
+	*result = false;
+	return sg_ret::ok;
+}
+
+
+
+
 /**
    @brief Generate tooltip text for the layer
 */

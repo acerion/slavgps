@@ -2462,6 +2462,40 @@ void LayerTRW::drag_drop_request(Layer * src, TreeIndex & src_item_index, void *
 
 
 
+sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
+{
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into Layer TRW";
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret LayerTRW::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
+{
+	if (NULL == result) {
+		return sg_ret::err;
+	}
+
+	if (TreeItemType::Sublayer != tree_item->tree_item_type) {
+		*result = false;
+		return sg_ret::ok;
+	}
+
+	if ("sg.layer.trw.track" == tree_item->type_id
+	    || "sg.layer.trw.route" == tree_item->type_id
+	    || "sg.layer.trw.waypoint" == tree_item->type_id) {
+		*result = true;
+		return sg_ret::ok;
+	}
+
+	*result = false;
+	return sg_ret::ok;
+}
+
+
+
+
 bool LayerTRW::delete_track(Track * trk)
 {
 	if (!trk) {

@@ -1108,3 +1108,35 @@ bool LayerTRWTracks::delete_track(Track * trk)
 
 	return was_visible;
 }
+
+
+
+
+sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
+{
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into Tracks container";
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret LayerTRWTracks::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
+{
+	if (NULL == result) {
+		return sg_ret::err;
+	}
+
+	if (TreeItemType::Sublayer != tree_item->tree_item_type) {
+		*result = false;
+		return sg_ret::ok;
+	}
+
+	if (this->accepted_child_type_ids.contains(tree_item->type_id)) {
+		*result = true;
+		return sg_ret::ok;
+	}
+
+	*result = false;
+	return sg_ret::ok;
+}

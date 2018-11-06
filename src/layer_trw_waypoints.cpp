@@ -1029,3 +1029,37 @@ void LayerTRWWaypoints::update_tree_view(Waypoint * wp)
 		this->set_new_waypoint_icon(wp);
 	}
 }
+
+
+
+
+sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, int row, int col)
+{
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into Waypoints container";
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
+{
+	if (NULL == result) {
+		qDebug() << SG_PREFIX_E << "Invalid result argument";
+		return sg_ret::err;
+	}
+
+	if (TreeItemType::Sublayer != tree_item->tree_item_type) {
+		qDebug() << SG_PREFIX_D << "Item" << tree_item->name << "is not a sublayer";
+		*result = false;
+		return sg_ret::ok;
+	}
+
+	if (this->accepted_child_type_ids.contains(tree_item->type_id)) {
+		*result = true;
+		return sg_ret::ok;
+	}
+
+	*result = false;
+	return sg_ret::ok;
+}

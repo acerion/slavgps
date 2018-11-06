@@ -37,6 +37,11 @@
 
 
 
+#include "globals.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -130,6 +135,9 @@ namespace SlavGPS {
 		virtual void attach_children_to_tree(void) {};
 
 		virtual bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu) { return false; };
+
+		virtual sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
+		virtual sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 
 
 		/* Change visibility of tree item.

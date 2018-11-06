@@ -544,6 +544,28 @@ void Layer::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * Gt
 
 
 
+sg_ret Layer::drag_drop_request(TreeItem * tree_item, int row, int col)
+{
+	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into this Layer";
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret Layer::dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const
+{
+	if (NULL == result) {
+		return sg_ret::err;
+	}
+
+	*result = false;
+	return sg_ret::ok;
+}
+
+
+
+
 LayerDataReadStatus Layer::read_layer_data(QFile & file, const QString & dirpath)
 {
 	/* Value that indicates call of base class method. */

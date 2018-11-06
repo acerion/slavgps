@@ -89,8 +89,27 @@ typedef int GtkTreePath;
 
 
 
+QDataStream & operator<<(QDataStream & stream, const TreeItem * tree_item)
+{
+	qulonglong pointer(*reinterpret_cast<qulonglong *>(&tree_item));
+	return stream << pointer;
+}
+
+
+
+
+QDataStream & operator>>(QDataStream & stream, TreeItem *& tree_item)
+{
+    qulonglong ptrval;
+    stream >> ptrval;
+    tree_item = *reinterpret_cast<TreeItem **>(&ptrval);
+    return stream;
+}
+
+
+
+
 static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data);
-static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path);
 
 
 
@@ -715,20 +734,18 @@ static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreeP
 {
 	bool retval = false;
 #ifdef K_FIXME_RESTORE
-	QStandardItemModel *tree_model;
-	QStandardItemModel *src_model = NULL;
-	GtkTreePath *src_path = NULL, *dest_cp = NULL;
-	TreeIndex src_index;
-	GtkTreeIter root_iter;
-	TreeIndex dest_parent_index;
-	Layer * layer = NULL;
+
+
+
 
 	if (!GTK_IS_TREE_STORE (drag_dest)) {
 		return false;
 	}
 
-	tree_model = GTK_TREE_MODEL(drag_dest);
+	QStandardItemModel * tree_model = GTK_TREE_MODEL(drag_dest);
 
+	GtkTreePath * src_path = NULL;
+	QStandardItemModel *src_model = NULL;
 	if (gtk_tree_get_row_drag_data(selection_data, &src_model, &src_path) && src_model == tree_model) {
 		/*
 		 * Copy src_path to dest.  There are two subcases here, depending on what
@@ -744,21 +761,30 @@ static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreeP
 		 *    and call the move method of that layer type.
 		 *
 		 */
-		if (!gtk_tree_model_get_iter(src_model, src_index, src_path)) {
+
+		TreeItem src_tree_item = this->get_tree_item(src_index);
+		if (!src_tree_item.isValid()) {
+			qDebug() << SG_PREFIX_E << "Can't get valid tree item";
 			goto out;
 		}
+
+#if 0
 		if (!gtk_tree_path_compare(src_path, dest)) {
 			goto out;
 		}
+#endif
 
-		dest_cp = gtk_tree_path_copy(dest);
+		GtkTreePath * dest_cp = gtk_tree_path_copy(dest);
 
+		GtkTreeIter root_iter;
+		Layer * layer = NULL;
 		gtk_tree_model_get_iter_first(tree_model, &root_iter);
 		TREEVIEW_GET(tree_model, &root_iter, COLUMN_ITEM, &layer);
 
 		if (gtk_tree_path_get_depth(dest_cp) > 1) { /* Can't be sibling of top layer. */
 
 			TreeItem * tree_item = NULL;
+			TreeIndex dest_parent_index;
 
 			/* Find the first ancestor that is a full layer, and store in dest_parent_index. */
 			do {
@@ -770,41 +796,18 @@ static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreeP
 
 
 			tree_item = layer->tree_view->get_tree_item(&src_item);
-			Layer * layer_source  = (Layer *) tree_item->owning_layer;
-			assert (layer_source);
-			Layer * layer_dest = layer->tree_view->get_tree_item(dest_parent_index)->to_layer();
+			Layer * source_layer  = (Layer *) tree_item->owning_layer;
+			assert (source_layer);
+			Layer * dest_layer = layer->tree_view->get_tree_item(dest_parent_index)->to_layer();
 
 			/* TODO_LATER: might want to allow different types, and let the clients handle how they want. */
-			layer_dest->drag_drop_request(layer_source, src_index, dest);
+			dest_layer->drag_drop_request(source_layer, src_tree_item, dest);
 		}
 	}
 
  out:
-	if (dest_cp) {
-		gtk_tree_path_free(dest_cp);
-	}
-
-	if (src_path) {
-		gtk_tree_path_free(src_path);
-	}
 #endif
 	return retval;
-}
-
-
-
-
-/*
- * This may not be necessary.
- */
-static int vik_tree_view_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path)
-{
-#ifdef K_FIXME_RESTORE
-	char *s_dest = gtk_tree_path_to_string(path);
-	fprintf(stdout, QObject::tr("delete data from %1\n").arg(s_dest));
-	free(s_dest);
-#endif
-	return false;
 }
 
 
@@ -1016,13 +1019,39 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex & idx) const
 
 
 
-bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction action, int row, int column, const QModelIndex & parent_)
+QList<TreeItem *> get_tree_items(const QMimeData * mime_data)
+{
+	QList<TreeItem *> result;
+
+	QByteArray mime_bytes = mime_data->data("application/vnd.text.list");
+        QDataStream data_stream(&mime_bytes, QIODevice::ReadOnly);
+	quint32 n_items;
+
+        data_stream >> n_items;
+
+
+	qDebug() << SG_PREFIX_I << "Mime formats" << mime_data->formats();
+	qDebug() << SG_PREFIX_I << "Number of drag'n'drop items =" << n_items;
+	for (quint32 i = 0; i < n_items; i++) {
+		TreeItem * tree_item = NULL;
+		data_stream >> tree_item;
+		qDebug() << SG_PREFIX_I << "Dragged item's name =" << tree_item->name;
+		result.push_back(tree_item);
+	}
+
+	return result;
+}
+
+
+
+
+bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction action, int row, int column, const QModelIndex & parent_index)
 {
 	Q_UNUSED(action);
 
 	/*
-	  When dropping an item onto an existing TreeItem, @parent_
-	  will be the TreeItem's index.
+	  When dropping an item onto an existing TreeItem,
+	  @parent_index will be the TreeItem's index.
 	  Example: dropping a Waypoint on another Waypoint.
 	  Example: dropping a Waypoint on Waypoints node.
 	  Example: dropping a Waypoint on LayerTRW node.
@@ -1032,9 +1061,9 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 
 
 	  When dropping an item between two equally-nested siblings,
-	  @parent_ will be the siblings' parent's index.  Call
-	  parent_.child(row, 0); to get index of sibling before which
-	  the item will be dropped.
+	  @parent_index will be the siblings' parent's index.  Call
+	  parent_index.child(row, 0); to get index of sibling before
+	  which the item will be dropped.
 
 	  In this case @row is a zero-based index of target row, and
 	  column indicates on which of view's column the item was
@@ -1045,10 +1074,10 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 	      sibling1
 
 	      sibling2
-	                <--- dropping here will result in @parent_
-	                     pointing to 'parent node' and
-	                     @parent_->child(row, 0) will return index
-	                     of sibling3. @row == 2.
+	                <--- dropping here will result in
+	                     @parent_index pointing to 'parent node'
+	                     and @parent_->child(row, 0) will return
+	                     index of sibling3. @row == 2.
 	      sibling3
 	*/
 
@@ -1065,13 +1094,13 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 	}
 #endif
 
-	if (!parent_.isValid()) {
+	if (!parent_index.isValid()) {
 		/* Don't let dropping items on top level. */
 		return false;
 	}
 
 
-	TreeItem * parent_item = this->view->get_tree_item(parent_);
+	TreeItem * parent_item = this->view->get_tree_item(parent_index);
 	if (!parent_item) {
 		qDebug() << SG_PREFIX_E << "Can't find parent item";
 		return false;
@@ -1079,23 +1108,89 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 
 
 
-	QByteArray mime_bytes = mime_data->data("application/vnd.text.list");
-        QDataStream data_stream(&mime_bytes, QIODevice::ReadOnly);
-        quint64 payload;
-        data_stream >> payload;
 	qDebug() << SG_PREFIX_I << "Row =" << row << "col =" << column << "parent's name =" << parent_item->name;
-	qDebug() << SG_PREFIX_I << "Mime formats" << mime_data->formats() << "mime data contents =" << payload << mime_bytes;
+	QList<TreeItem *> list = get_tree_items(mime_data);
 
-	if (-1 == row || -1 == column) {
-		/* Append at the end of parent's list of children. */
-		qDebug() << SG_PREFIX_I << "Appending dropped item at the end";
-	} else {
-		/* Insert at specific position of parent's list of children. */
-		qDebug() << SG_PREFIX_I << "Inserting dropped item in row" << row;
+	bool accepts_all = false; /* It's important to start from 'false'. */
+	for (int i = 0; i < list.size(); i++) {
+		TreeItem * tree_item = list.at(i);
+		bool accepts = false;
+		const sg_ret retv = parent_item->dropped_item_is_acceptable(tree_item, &accepts);
+		if (sg_ret::ok != retv) {
+			qDebug() << SG_PREFIX_I << "Can't drop MIME data: tree item doesn't accept child no." << i << "(error)";
+			accepts_all = false;
+			break;
+		}
+		if (false == accepts) {
+			qDebug() << SG_PREFIX_I << "Can't drop MIME data: tree item doesn't accept child no." << i << "(type id mismatch)";
+			accepts_all = false;
+			break;
+		}
+		accepts_all = true;
 	}
 
+	if (!accepts_all) {
+		qDebug() << SG_PREFIX_I << "Can't drop MIME data: not all items accepted";
+		return false;
+	}
 
-	QModelIndex drop_target_index = parent_.child(row, 0);
+	return true;
+}
+
+
+
+
+/*
+  http://doc.qt.io/qt-5/qabstractitemmodel.html#dropMimeData
+*/
+bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action, int row, int column, const QModelIndex & parent_index)
+{
+	if (!canDropMimeData(mime_data, action, row, column, parent_index)) {
+		qDebug() << SG_PREFIX_D << "Dropping this item on given target is not supported";
+		return false;
+	}
+
+	if (action == Qt::IgnoreAction) {
+		qDebug() << SG_PREFIX_D << "Ignore action";
+		return true;
+	}
+
+	if (!parent_index.isValid()) {
+		qDebug() << SG_PREFIX_E << "Invalid parent index";
+		return false;
+	}
+
+	TreeItem * parent_item = this->view->get_tree_item(parent_index);
+	if (NULL == parent_item) {
+		qDebug() << SG_PREFIX_E << "Can't find parent item";
+		return false;
+	}
+
+	QList<TreeItem *> list = get_tree_items(mime_data);
+
+	if (row == -1 && column == -1) {
+		/* Drop onto an item: push back to end of item's list of children. */
+
+		for (int i = 0; i < list.size(); i++) {
+			TreeItem * tree_item = list.at(i);
+			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->name << "at the end of parent item" << parent_item->name;
+			parent_item->drag_drop_request(tree_item, row, column);
+		}
+
+		return true;
+	} else {
+		/* Drop between some items: insert at position specified by row. */
+
+		for (int i = 0; i < list.size(); i++) {
+			TreeItem * tree_item = list.at(i);
+			qDebug() << SG_PREFIX_I << "Dropping item" << tree_item->name << "as sibling with parent item" << parent_item->name;
+			parent_item->drag_drop_request(tree_item, row, column);
+		}
+		return true;
+	}
+
+#if 0
+	QModelIndex drop_target_index = parent_index.child(row, 0);
 	if (!drop_target_index.isValid()) {
 		qDebug() << SG_PREFIX_W << "Can't get valid drop target index";
 		return false;
@@ -1120,51 +1215,7 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 		return false;
 	}
 
-
-	return true;
-}
-
-
-
-
-/*
-  http://doc.qt.io/qt-5/qabstractitemmodel.html#dropMimeData
-*/
-bool TreeModel::dropMimeData(const QMimeData * data_, Qt::DropAction action, int row, int column, const QModelIndex & parent_)
-{
-	if (!canDropMimeData(data_, action, row, column, parent_)) {
-		qDebug() << SG_PREFIX_D << "Dropping this item on given target is not supported";
-		return false;
-	}
-
-	if (action == Qt::IgnoreAction) {
-		qDebug() << SG_PREFIX_D << "Ignore action";
-		return true;
-	}
-
-	if (row == -1 && column == -1) {
-		/* Drop onto an existing item. */
-		if (parent_.isValid()) {
-			TreeItem * parent_item = this->view->get_tree_item(parent_);
-			if (!parent_item) {
-				qDebug() << SG_PREFIX_I << "Can't find parent item";
-				return false;
-			} else {
-				qDebug() << SG_PREFIX_I << "Dropping onto existing item, parent =" << parent_.row() << parent_.column() << parent_item->name << (int) parent_item->tree_item_type;
-				return true;
-			}
-		} else {
-			return false;
-		}
-	} else {
-		qDebug() << SG_PREFIX_I << "Dropping as sibling, parent =" << parent_.row() << parent_.column() << row << column;
-		if (parent_.isValid()) {
-			return true;
-		} else {
-			qDebug() << SG_PREFIX_I << "Invalid parent";
-			return false;
-		}
-	}
+#endif
 }
 
 
@@ -1180,23 +1231,32 @@ Qt::DropActions TreeModel::supportedDropActions() const
 
 QMimeData * TreeModel::mimeData(const QModelIndexList & indexes) const
 {
+	QList<TreeItem *> list;
+
+	foreach (const QModelIndex &index, indexes) {
+		if (!index.isValid()) {
+			continue;
+		}
+
+		TreeItem * tree_item = this->view->get_tree_item(index);
+		if (list.contains(tree_item)) {
+			/* TODO: verify why when dragging a single
+			   item the @indexes contains two copies of
+			   index of dragged item.. */
+			continue;
+		}
+
+		qDebug() << SG_PREFIX_I << "Pushing to list item with name =" << tree_item->name;
+		list.push_back(tree_item);
+	}
+
+
 	QMimeData * mime_data = new QMimeData();
 	QByteArray encoded_data;
-
 	QDataStream stream(&encoded_data, QIODevice::WriteOnly);
-	quint64 payload = 917;
-	stream << payload;
-#if 0
-	foreach (const QModelIndex &index, indexes) {
-		if (index.isValid()) {
-			QString text = this->data(index, Qt::DisplayRole).toString();
-			stream << text;
-		}
-	}
-#endif
+	stream << list;
 
 	qDebug() << SG_PREFIX_I << "Preparing mime data";
-
 	mime_data->setData("application/vnd.text.list", encoded_data);
 	return mime_data;
 }
