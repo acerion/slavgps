@@ -1126,6 +1126,8 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 			accepts_all = false;
 			break;
 		}
+
+		qDebug() << SG_PREFIX_I << "Can drop" << tree_item->type_id << "onto" << parent_item->type_id;
 		accepts_all = true;
 	}
 
@@ -1170,6 +1172,7 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 
 	if (row == -1 && column == -1) {
 		/* Drop onto an item: push back to end of item's list of children. */
+		qDebug() << SG_PREFIX_I << "Dropping items at the end of parent item" << parent_item->name;
 
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);
@@ -1180,6 +1183,7 @@ bool TreeModel::dropMimeData(const QMimeData * mime_data, Qt::DropAction action,
 		return true;
 	} else {
 		/* Drop between some items: insert at position specified by row. */
+		qDebug() << SG_PREFIX_I << "Dropping items as siblings with parent item" << parent_item->name;
 
 		for (int i = 0; i < list.size(); i++) {
 			TreeItem * tree_item = list.at(i);

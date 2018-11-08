@@ -510,6 +510,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 		this->param_specs = Layer::get_interface(layer_type)->parameters_c;
 		this->param_specs_count = Layer::get_interface(layer_type)->parameter_specifications.size();
 
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << child->name << "under" << parent->name;
 		parent->tree_view->attach_to_tree(parent, child);
 
 	} else { /* Any other LayerType::X type. */

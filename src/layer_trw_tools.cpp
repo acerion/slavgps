@@ -922,8 +922,8 @@ ToolStatus LayerToolTRWNewTrack::handle_key_press(Layer * layer, QKeyEvent * ev)
 		this->creation_in_progress = NULL;
 		/* Bin track if only one point as it's not very useful. */
 		if (track->get_tp_count() == 1) {
-			trw->detach_track(track);
-			trw->tree_view->detach_tree_item(track);
+			trw->detach_from_layer(track);
+			trw->detach_from_tree(track);
 			delete track;
 		}
 

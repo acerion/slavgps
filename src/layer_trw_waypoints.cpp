@@ -53,7 +53,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer TRW Waypoints"
-#define PREFIX ": Layer TRW Waypoints:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -334,7 +333,7 @@ void LayerTRWWaypoints::change_coord_mode(CoordMode new_mode)
 void LayerTRWWaypoints::uniquify(TreeViewSortOrder sort_order)
 {
 	if (this->empty()) {
-		qDebug() << "EE" PREFIX << "called for empty waypoints set";
+		qDebug() << SG_PREFIX_E << "Called for empty waypoints set";
 		return;
 	}
 
@@ -416,7 +415,7 @@ void LayerTRWWaypoints::set_new_waypoint_icon(Waypoint * wp)
 		wp->icon = get_wp_icon_small(wp->symbol_name);
 		this->tree_view->apply_tree_item_icon(wp);
 	} else {
-		qDebug() << "EE" PREFIX << "Invalid index of a waypoint";
+		qDebug() << SG_PREFIX_E << "Invalid index of a waypoint";
 	}
 }
 
@@ -443,7 +442,7 @@ void LayerTRWWaypoints::recalculate_bbox(void)
 	}
 	this->bbox.validate();
 
-	qDebug() << "DD" PREFIX << "Recalculated bounds of waypoints:" << this->bbox;
+	qDebug() << SG_PREFIX_D << "Recalculated bounds of waypoints:" << this->bbox;
 
 	return;
 }
@@ -466,22 +465,22 @@ QIcon SlavGPS::get_wp_icon_small(const QString & symbol_name)
 	/* ATM GarminSymbols::get_wp_symbol() returns a cached icon, with the size dependent on the preferences.
 	   So needing a small icon for the tree view may need some resizing. */
 	if (!wp_symbol) {
-		qDebug() << PREFIX << "No symbol from garmin symbols";
+		qDebug() << SG_PREFIX_W << "No symbol from garmin symbols";
 		return result;
 	}
 
 	if (wp_symbol->width() == SMALL_ICON_SIZE) {
 		/* Symbol from GarminSymbols has just the right size. */
-		qDebug() << PREFIX << "Symbol from garmin symbols has correct size";
+		qDebug() << SG_PREFIX_I << "Symbol from garmin symbols has correct size";
 		result = QIcon(*wp_symbol);
 	} else {
 		const QPixmap scaled = wp_symbol->scaled(SMALL_ICON_SIZE, SMALL_ICON_SIZE, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 		if (!scaled.isNull()) {
-			qDebug() << PREFIX << "Scaled symbol is non-empty";
+			qDebug() << SG_PREFIX_I << "Scaled symbol is non-empty";
 			result = QIcon(scaled);
 		} else {
 			/* Too bad, we will return empty icon. */
-			qDebug() << PREFIX << "Scaled symbol is empty";
+			qDebug() << SG_PREFIX_W << "Scaled symbol is empty";
 		}
 	}
 
@@ -526,6 +525,7 @@ void LayerTRWWaypoints::attach_children_to_tree(void)
 			continue;
 		}
 
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, wp);
 		qDebug() << SG_PREFIX_I;
 	}
@@ -878,7 +878,7 @@ bool LayerTRWWaypoints::empty(void) const
 
 
 
-void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
+sg_ret LayerTRWWaypoints::attach_to_container(Waypoint * wp)
 {
 	wp->set_owning_layer(this->get_owning_layer());
 	this->children_map.insert({{ wp->get_uid(), wp }});
@@ -888,20 +888,20 @@ void LayerTRWWaypoints::add_waypoint(Waypoint * wp)
 
 	this->name_generator.add_name(wp->name);
 
-	return;
+	return sg_ret::ok;
 }
 
 
 
 
-sg_ret LayerTRWWaypoints::detach_waypoint(Waypoint * wp, bool * was_visible)
+sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visible)
 {
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-
 	if (!wp) {
 		qDebug() << SG_PREFIX_E << "NULL pointer to waypoint";
 		return sg_ret::err;
 	}
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	if (wp->name.isEmpty()) {
 		qDebug() << SG_PREFIX_W << "Waypoint with empty name, deleting anyway";
@@ -1038,13 +1038,14 @@ sg_ret LayerTRWWaypoints::drag_drop_request(TreeItem * tree_item, int row, int c
 	/* Handle item in old location. */
 	{
 		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
-		trw->detach_waypoint((Waypoint *) tree_item);
+		trw->detach_from_layer((Waypoint *) tree_item);
 		/* Detaching of tree item from tree view will be handled by QT. */
 	}
 
 	/* Handle item in new location. */
 	{
-		this->add_waypoint((Waypoint *) tree_item);
+		this->attach_to_container((Waypoint *) tree_item);
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, tree_item);
 	}
 

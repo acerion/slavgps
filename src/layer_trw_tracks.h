@@ -112,7 +112,6 @@ namespace SlavGPS {
 
 		friend class LayerTRW;
 	public:
-		LayerTRWTracks();
 		LayerTRWTracks(bool is_routes);
 		LayerTRWTracks(TreeView * ref_tree_view);
 		LayerTRWTracks(bool is_routes, TreeView * ref_tree_view);
@@ -188,14 +187,11 @@ namespace SlavGPS {
 		bool empty(void) const;
 
 
-		void add_track(Track * trk);
-		void add_track_to_data_structure_only(Track * trk);
+		sg_ret attach_to_container(Track * trk);
 
-		/*
-		  Delete a single track from container (but not from main items tree).
-		  Return value of track's "visible" property before it was deleted.
-		*/
-		sg_ret detach_track(Track * trk, bool * was_visible);
+		/* Delete a single track from container (but not from main items tree).
+		   Return value of track's "visible" property before it was deleted. */
+		sg_ret detach_from_container(Track * trk, bool * was_visible);
 
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };
@@ -221,6 +217,8 @@ namespace SlavGPS {
 
 		std::list<Track *> children_list;
 		TracksMap children_map;
+
+		void init_item(void);
 	};
 
 

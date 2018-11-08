@@ -1575,8 +1575,8 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		}
 		if (split_tracks.size()) {
 			/* Don't let track destroy this dialog. */
-			this->trw->detach_track(this->track_info.trk);
-			this->trw->tree_view->detach_tree_item(this->track_info.trk);
+			this->trw->detach_from_layer(this->track_info.trk);
+			this->trw->detach_from_tree(this->track_info.trk);
 			delete this->track_info.trk;
 
 			this->trw->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in track profile dialog)");

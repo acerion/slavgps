@@ -172,6 +172,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 
 	if (this->tree_view) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer, attach_mode, sibling_layer);
 		qDebug() << SG_PREFIX_I;
 		QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
@@ -215,11 +216,13 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer, TreeView::AttachMode::Front);
 		qDebug() << SG_PREFIX_I;
 		this->children->push_front(layer);
 	} else {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer);
 		qDebug() << SG_PREFIX_I;
 		this->children->push_back(layer);
@@ -933,6 +936,7 @@ void LayerAggregate::attach_children_to_tree(void)
 		Layer * layer = *iter;
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer);
 		qDebug() << SG_PREFIX_I;
 	}

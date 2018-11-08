@@ -233,8 +233,9 @@ namespace SlavGPS {
 		void delete_all_tracks();
 		void delete_all_waypoints();
 
-		sg_ret detach_track(Track * trk, bool * was_visible = NULL);
-		sg_ret detach_waypoint(Waypoint * wp, bool * was_visible = NULL);
+		sg_ret detach_from_layer(Track * trk, bool * was_visible = NULL);
+		sg_ret detach_from_layer(Waypoint * wp, bool * was_visible = NULL);
+		sg_ret detach_from_tree(TreeItem * tree_item);
 
 
 		void smooth_it(Track * trk, bool flat);

@@ -61,7 +61,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer TRW Tracks"
-#define PREFIX ": Layer TRW Tracks:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -79,13 +78,9 @@ extern Tree * g_tree;
 
 
 
-LayerTRWTracks::LayerTRWTracks()
+void LayerTRWTracks::init_item(void)
 {
 	this->tree_item_type = TreeItemType::Sublayer;
-
-	/* Default values, may be changed by caller's code. */
-	this->type_id = "sg.trw.routes";
-	this->accepted_child_type_ids << "sg.trw.route";
 	this->editable = false;
 	this->menu_operation_ids = TreeItem::MenuOperation::None;
 }
@@ -93,8 +88,10 @@ LayerTRWTracks::LayerTRWTracks()
 
 
 
-LayerTRWTracks::LayerTRWTracks(bool is_routes) : LayerTRWTracks()
+LayerTRWTracks::LayerTRWTracks(bool is_routes)
 {
+	this->init_item();
+
 	if (is_routes) {
 		this->type_id = "sg.trw.routes";
 		this->accepted_child_type_ids << "sg.trw.route";
@@ -208,7 +205,7 @@ void LayerTRWTracks::recalculate_bbox(void)
 
 
 
-void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list) // zzz
+void LayerTRWTracks::list_trk_uids(std::list<sg_uid_t> & list)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		list.push_back((*iter)->get_uid());
@@ -454,7 +451,7 @@ void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 {
 	if (this->children_list.empty()) {
-		qDebug() << "EE" PREFIX << "called for empty tracks/routes set";
+		qDebug() << SG_PREFIX_E << "Called for empty tracks/routes set";
 		return;
 	}
 
@@ -641,6 +638,7 @@ void LayerTRWTracks::attach_children_to_tree(void)
 		trk->self_assign_icon();
 		trk->self_assign_timestamp();
 
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, trk);
 		qDebug() << SG_PREFIX_I;
 	}
@@ -825,10 +823,10 @@ void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 
 	if (n_items > 0) {
 
-		qDebug() << "II" PREFIX << "re-zooming to show all items (" << n_items << "items)";
+		qDebug() << SG_PREFIX_I << "Re-zooming to show all items (" << n_items << "items)";
 		g_tree->tree_get_main_viewport()->show_bbox(this->get_bbox());
 
-		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated()'";
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated()'";
 		g_tree->emit_items_tree_updated();
 	}
 }
@@ -959,17 +957,9 @@ void LayerTRWTracks::sort_order_a2z_cb(void)
 	this->blockSignals(true);
 	t_view->blockSignals(true);
 
-	qDebug() << "----" PREFIX << "detach items - begin";
 	t_view->detach_children(this);
-	qDebug() << "----" PREFIX "detach items - end";
-
-	qDebug() << "----" PREFIX "sort items - begin";
 	this->children_list.sort(TreeItem::compare_name_ascending);
-	qDebug() << "----" PREFIX "sort items - end";
-
-	qDebug() << "----" PREFIX "attach items - begin";
 	this->attach_children_to_tree();
-	qDebug() << "----" PREFIX "attach items - end";
 
 	this->blockSignals(false);
 	t_view->blockSignals(false);
@@ -1046,24 +1036,19 @@ bool LayerTRWTracks::empty(void) const
 
 
 
-void LayerTRWTracks::add_track(Track * trk)
-{
-	this->add_track_to_data_structure_only(trk);
-}
-
-
-
-void LayerTRWTracks::add_track_to_data_structure_only(Track * trk)
+sg_ret LayerTRWTracks::attach_to_container(Track * trk)
 {
 	trk->set_owning_layer(this->get_owning_layer());
 	this->children_map.insert({{ trk->get_uid(), trk }});
 	this->children_list.push_back(trk);
+
+	return sg_ret::ok;
 }
 
 
 
 
-sg_ret LayerTRWTracks::detach_track(Track * trk, bool * was_visible)
+sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 {
 	if (!trk) {
 		qDebug() << SG_PREFIX_E << "NULL pointer to track";
@@ -1093,12 +1078,12 @@ sg_ret LayerTRWTracks::detach_track(Track * trk, bool * was_visible)
 	/* Could be current_tp, so we have to check. */
 	parent_layer->cancel_tps_of_track(trk);
 
-	this->tree_view->detach_tree_item(trk);
-	this->children_map.erase(trk->get_uid()); /* Erase by key. */ // zzz
+	this->children_map.erase(trk->get_uid()); /* Erase by key. */
 
 
 	/* TODO_2_LATER: optimize. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
+		qDebug() << SG_PREFIX_I << "Will compare tracks" << (*iter)->name << "and" << trk->name;
 		if (TreeItem::the_same_object(*iter, trk)) {
 			this->children_list.erase(iter);
 			break;
@@ -1113,8 +1098,21 @@ sg_ret LayerTRWTracks::detach_track(Track * trk, bool * was_visible)
 
 sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
-	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into Tracks container";
-	return sg_ret::err;
+	/* Handle item in old location. */
+	{
+		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
+		trw->detach_from_layer((Track *) tree_item);
+		/* Detaching of tree item from tree view will be handled by QT. */
+	}
+
+	/* Handle item in new location. */
+	{
+		this->attach_to_container((Track *) tree_item);
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << tree_item->name << "under" << this->name;
+		this->tree_view->attach_to_tree(this, tree_item);
+	}
+
+	return sg_ret::ok;
 }
 
 
@@ -1132,6 +1130,7 @@ sg_ret LayerTRWTracks::dropped_item_is_acceptable(TreeItem * tree_item, bool * r
 	}
 
 	if (this->accepted_child_type_ids.contains(tree_item->type_id)) {
+		qDebug() << SG_PREFIX_I << "Accepted child type ids =" << this->accepted_child_type_ids << ", dropped item type id =" << tree_item->type_id;
 		*result = true;
 		return sg_ret::ok;
 	}

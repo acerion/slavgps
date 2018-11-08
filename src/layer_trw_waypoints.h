@@ -202,13 +202,11 @@ namespace SlavGPS {
 		bool empty(void) const;
 
 
-		void add_waypoint(Waypoint * wp);
+		sg_ret attach_to_container(Waypoint * wp);
 
-		/*
-		  Delete a single waypoint from container (but not from items tree)..
-		  Return value of waypoint's "visible" property before it was deleted.
-		*/
-		sg_ret detach_waypoint(Waypoint * wp, bool * was_visible);
+		/*  Delete a single waypoint from container (but not from items tree)..
+		    Return value of waypoint's "visible" property before it was deleted. */
+		sg_ret detach_from_container(Waypoint * wp, bool * was_visible);
 
 		void recalculate_bbox(void);
 		LatLonBBox get_bbox(void) const { return this->bbox; };

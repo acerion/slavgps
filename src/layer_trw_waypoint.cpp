@@ -722,8 +722,8 @@ void Waypoint::delete_sublayer(bool confirm)
 	}
 
 	bool was_visible;
-	parent_layer->detach_waypoint(this, &was_visible);
-	parent_layer->tree_view->detach_tree_item(this);
+	parent_layer->detach_from_layer(this, &was_visible);
+	parent_layer->detach_from_tree(this);
 	delete this; /* FIXME: deleting self. */
 
 	parent_layer->waypoints.recalculate_bbox();

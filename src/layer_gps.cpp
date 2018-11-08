@@ -684,6 +684,7 @@ void LayerGPS::attach_children_to_tree(void)
 
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		trw->set_name(trw_names[ix].label);
+		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trw->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, trw);
 
 		QObject::connect(trw, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
@@ -1761,8 +1762,8 @@ void LayerGPS::rt_gpsd_disconnect()
 
 	if (this->realtime_record && this->realtime_track) {
 		if (!this->realtime_track->empty()) {
-			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_track(this->realtime_track);
-			this->tree_view->detach_tree_item(this->realtime_track);
+			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_layer(this->realtime_track);
+			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_tree(this->realtime_track);
 			delete this->realtime_track;
 		}
 		this->realtime_track = NULL;
