@@ -1575,7 +1575,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		}
 		if (split_tracks.size()) {
 			/* Don't let track destroy this dialog. */
-			this->trw->detach_from_layer(this->track_info.trk);
+			this->trw->detach_from_container(this->track_info.trk);
 			this->trw->detach_from_tree(this->track_info.trk);
 			delete this->track_info.trk;
 

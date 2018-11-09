@@ -163,9 +163,9 @@ namespace SlavGPS {
 
 		bool create_new_tracks(Track * orig, std::list<TrackPoints *> * tracks_data);
 
-		void add_track(Track * trk);
-		void add_route(Track * trk);
-		void add_waypoint(Waypoint * wp);
+		sg_ret add_track(Track * trk);
+		sg_ret add_route(Track * trk);
+		sg_ret add_waypoint(Waypoint * wp);
 
 		const std::list<Track *> & get_tracks(void) const { return this->tracks.children_list; };
 		const std::list<Track *> & get_routes(void) const { return this->routes.children_list; };
@@ -233,9 +233,21 @@ namespace SlavGPS {
 		void delete_all_tracks();
 		void delete_all_waypoints();
 
-		sg_ret detach_from_layer(Track * trk, bool * was_visible = NULL);
-		sg_ret detach_from_layer(Waypoint * wp, bool * was_visible = NULL);
+
+
+		/* Add to layer's data structure. */
+		sg_ret attach_to_container(Track * trk);
+		sg_ret attach_to_container(Waypoint * wp);
+
+		/* Remove from layer's data structure. */
+		sg_ret detach_from_container(Track * trk, bool * was_visible = NULL);
+		sg_ret detach_from_container(Waypoint * wp, bool * was_visible = NULL);
+
+		sg_ret attach_to_tree(Track * trk);
+		sg_ret attach_to_tree(Waypoint * wp);
+
 		sg_ret detach_from_tree(TreeItem * tree_item);
+
 
 
 		void smooth_it(Track * trk, bool flat);

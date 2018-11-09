@@ -3527,7 +3527,7 @@ void Track::convert_track_route_cb(void)
 
 	/* Delete old one and then add new one. */
 	if (this->type_id == "sg.trw.route") {
-		parent_layer->detach_from_layer(this);
+		parent_layer->detach_from_container(this);
 		parent_layer->detach_from_tree(this);
 		delete this; /* FIXME: deleting self. */
 
@@ -3538,7 +3538,7 @@ void Track::convert_track_route_cb(void)
 		trk_copy->merge_segments();
 		trk_copy->to_routepoints();
 
-		parent_layer->detach_from_layer(this);
+		parent_layer->detach_from_container(this);
 		parent_layer->detach_from_tree(this);
 		delete this; /* FIXME: deleting self. */
 
@@ -3958,7 +3958,7 @@ void Track::split_by_segments_cb(void)
 		Dialog::error(tr("Can not split track as it has no segments"), g_tree->tree_get_main_window());
 	} else {
 		/* Remove original track. */
-		parent_layer->detach_from_layer(this);
+		parent_layer->detach_from_container(this);
 		parent_layer->detach_from_tree(this);
 		delete this; /* FIXME: deleting self. */
 
@@ -4041,7 +4041,7 @@ void Track::delete_sublayer(bool confirm)
 
 
 	bool was_visible = false;
-	parent_layer->detach_from_layer(this, &was_visible);
+	parent_layer->detach_from_container(this, &was_visible);
 	parent_layer->detach_from_tree(this);
 	delete this; /* FIXME: deleting self. */
 

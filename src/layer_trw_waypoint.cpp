@@ -722,7 +722,7 @@ void Waypoint::delete_sublayer(bool confirm)
 	}
 
 	bool was_visible;
-	parent_layer->detach_from_layer(this, &was_visible);
+	parent_layer->detach_from_container(this, &was_visible);
 	parent_layer->detach_from_tree(this);
 	delete this; /* FIXME: deleting self. */
 

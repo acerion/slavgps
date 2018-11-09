@@ -1101,7 +1101,7 @@ sg_ret LayerTRWTracks::drag_drop_request(TreeItem * tree_item, int row, int col)
 	/* Handle item in old location. */
 	{
 		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
-		trw->detach_from_layer((Track *) tree_item);
+		trw->detach_from_container((Track *) tree_item);
 		/* Detaching of tree item from tree view will be handled by QT. */
 	}
 
