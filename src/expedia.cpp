@@ -61,11 +61,8 @@ static void expedia_handle_cleanup(void * handle);
 
 
 
-#ifdef TODO_2_LATER
-static DownloadOptions expedia_options = { false, false, NULL, 2, a_check_map_file, NULL };
-#else
+
 static DownloadOptions expedia_options;
-#endif
 
 
 
@@ -97,6 +94,9 @@ static const unsigned int expedia_altis_count = sizeof(expedia_altis) / sizeof(e
 void Expedia::init(void)
 {
 #ifdef VIK_CONFIG_EXPEDIA
+	expedia_options.follow_location = 2;
+	expedia_options.check_file = a_check_map_file;
+
 #ifdef TODO_2_LATER
 	VikMapsLayer_MapType map_type = { MapTypeID::Expedia, 0, 0, ViewportDrawMode::Expedia, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download_tile, expedia_handle_init, expedia_handle_cleanup };
 	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::Expedia, &map_type);
@@ -148,28 +148,25 @@ int expedia_pseudo_zone(int alti, int x, int y)
 
 
 
-void expedia_snip(const QString & file)
+sg_ret expedia_crop(const QString & file)
 {
-	/* Load the pixbuf. */
-	QPixmap old;
-	if (!old.load(file)) {
-		qDebug() << "WW: Expedia: Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!)";
-		return;
+	QPixmap orig;
+	if (!orig.load(file)) {
+		qDebug() << SG_PREFIX_E << "Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!)";
+		return sg_ret::err;
 	}
 
-	int width = old.width();
-	int height = old.height();
+	const int width = orig.width();
+	const int height = orig.height();
 
-	QPixmap * cropped = NULL;
-#ifdef TODO_2_LATER
-	cropped = gdk_pixbuf_new_subpixbuf(old, WIDTH_BUFFER, HEIGHT_BUFFER,
-					   width - 2 * WIDTH_BUFFER, height - 2 * HEIGHT_BUFFER);
-#endif
-
-	if (!cropped->save(file)) {
-		qDebug() << "WW: Expedia: Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!)";
+	/* Let's hope that implicit sharing works: http://doc.qt.io/qt-5/implicit-sharing.html */
+	QPixmap cropped = orig.copy(WIDTH_BUFFER, HEIGHT_BUFFER, width - 2 * WIDTH_BUFFER, height - 2 * HEIGHT_BUFFER);
+	if (!cropped.save(file)) {
+		qDebug() << SG_PREFIX_W << "Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!)";
+		return sg_ret::err;
+	} else {
+		return sg_ret::ok;
 	}
-	delete cropped;
 }
 
 
@@ -246,7 +243,7 @@ static DownloadStatus expedia_download_tile(const TileInfo & src, const QString 
 	dl_handle->set_options(expedia_options);
 	DownloadStatus res = dl_handle->perform_download(EXPEDIA_SITE, uri, dest_file_path, DownloadProtocol::HTTP);
 	if (res == DownloadStatus::Success) {
-		expedia_snip(dest_file_path);
+		expedia_crop(dest_file_path);
 	}
 	return res;
 }

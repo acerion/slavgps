@@ -253,7 +253,8 @@ AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext
 	LatLon lat_lon = this->center_entry->get_value();
 	if (!lat_lon.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Invalid lat/lon from center entry, using default values" << lat_lon;
-		/* TODO_2_LATER: now what? How to handle invalid lat/lon? */
+
+		/* LatLon from entry is invalid, but we still have a chance to get a valid value: */
 
 		lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
 		if (!lat_lon.is_valid()) {
