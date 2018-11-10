@@ -517,7 +517,7 @@ time_t LayerTRWWaypoints::get_earliest_timestamp()
 
 
 
-void LayerTRWWaypoints::attach_children_to_tree(void)
+sg_ret LayerTRWWaypoints::attach_children_to_tree(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Waypoint * wp = *iter;
@@ -527,8 +527,9 @@ void LayerTRWWaypoints::attach_children_to_tree(void)
 
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << wp->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, wp);
-		qDebug() << SG_PREFIX_I;
 	}
+
+	return sg_ret::ok;
 }
 
 

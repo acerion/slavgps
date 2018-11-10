@@ -77,14 +77,10 @@ extern Tree * g_tree;
 
 
 
-typedef int GtkTreeDragSource;
-typedef int GtkTreeDragDest;
 typedef int GtkCellRenderer;
 typedef int GtkCellRendererToggle;
 typedef int GtkCellRendererText;
 typedef int GtkCellEditable;
-typedef int GtkSelectionData;
-typedef int GtkTreePath;
 
 
 
@@ -100,16 +96,11 @@ QDataStream & operator<<(QDataStream & stream, const TreeItem * tree_item)
 
 QDataStream & operator>>(QDataStream & stream, TreeItem *& tree_item)
 {
-    qulonglong ptrval;
-    stream >> ptrval;
-    tree_item = *reinterpret_cast<TreeItem **>(&ptrval);
-    return stream;
+	qulonglong ptrval;
+	stream >> ptrval;
+	tree_item = *reinterpret_cast<TreeItem **>(&ptrval);
+	return stream;
 }
-
-
-
-
-static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data);
 
 
 
@@ -139,8 +130,7 @@ TreeItem * TreeView::get_tree_item(const TreeIndex & item_index) const
 
 void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 {
-
-	return;
+	return; /* TODO: remove early return. */
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
@@ -163,7 +153,7 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 
 void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 {
-	return;
+	return; /* TODO: remove early return. */
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
@@ -730,89 +720,6 @@ void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrde
 
 
 
-static int vik_tree_view_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
-{
-	bool retval = false;
-#ifdef K_FIXME_RESTORE
-
-
-
-
-	if (!GTK_IS_TREE_STORE (drag_dest)) {
-		return false;
-	}
-
-	QStandardItemModel * tree_model = GTK_TREE_MODEL(drag_dest);
-
-	GtkTreePath * src_path = NULL;
-	QStandardItemModel *src_model = NULL;
-	if (gtk_tree_get_row_drag_data(selection_data, &src_model, &src_path) && src_model == tree_model) {
-		/*
-		 * Copy src_path to dest.  There are two subcases here, depending on what
-		 * is being dragged.
-		 *
-		 * 1. src_path is a layer. In this case, interpret the drop
-		 *    as a request to move the layer to a different aggregate layer.
-		 *    If the destination is not an aggregate layer, use the first
-		 *    ancestor that is.
-		 *
-		 * 2. src_path is a sublayer.  In this case, find ancestors of
-		 *    both source and destination nodes who are full layers,
-		 *    and call the move method of that layer type.
-		 *
-		 */
-
-		TreeItem src_tree_item = this->get_tree_item(src_index);
-		if (!src_tree_item.isValid()) {
-			qDebug() << SG_PREFIX_E << "Can't get valid tree item";
-			goto out;
-		}
-
-#if 0
-		if (!gtk_tree_path_compare(src_path, dest)) {
-			goto out;
-		}
-#endif
-
-		GtkTreePath * dest_cp = gtk_tree_path_copy(dest);
-
-		GtkTreeIter root_iter;
-		Layer * layer = NULL;
-		gtk_tree_model_get_iter_first(tree_model, &root_iter);
-		TREEVIEW_GET(tree_model, &root_iter, COLUMN_ITEM, &layer);
-
-		if (gtk_tree_path_get_depth(dest_cp) > 1) { /* Can't be sibling of top layer. */
-
-			TreeItem * tree_item = NULL;
-			TreeIndex dest_parent_index;
-
-			/* Find the first ancestor that is a full layer, and store in dest_parent_index. */
-			do {
-				gtk_tree_path_up(dest_cp);
-				gtk_tree_model_get_iter(src_model, &dest_parent_index, dest_cp);
-
-				tree_item = layer->tree_view->get_tree_item(dest_parent_index);
-			} while (gtk_tree_path_get_depth(dest_cp) > 1 && tree_item->tree_item_type != TreeItemType::Layer);
-
-
-			tree_item = layer->tree_view->get_tree_item(&src_item);
-			Layer * source_layer  = (Layer *) tree_item->owning_layer;
-			assert (source_layer);
-			Layer * dest_layer = layer->tree_view->get_tree_item(dest_parent_index)->to_layer();
-
-			/* TODO_LATER: might want to allow different types, and let the clients handle how they want. */
-			dest_layer->drag_drop_request(source_layer, src_tree_item, dest);
-		}
-	}
-
- out:
-#endif
-	return retval;
-}
-
-
-
-
 sg_ret TreeView::insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row)
 {
 	if (parent_tree_item) {
@@ -1286,6 +1193,17 @@ static void vik_tree_view_edited_cb(GtkCellRendererText *cell, char *path_str, c
 	/* Get type and data. */
 	TreeIndex * index = tree_view->get_index_from_path_str(path_str);
 
+#if 0
+	TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
+	{
+		TreeIndex * index = NULL;
+
+		return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->tree_model), iter, path_str);
+
+		return index;
+	}
+#endif
+
 	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[VT_ITEM_EDITED_SIGNAL], 0, index, new_name);
 #endif
 }
@@ -1314,14 +1232,6 @@ static void vik_tree_view_edit_stop_cb(GtkCellRenderer *cell, TreeView * tree_vi
 
 
 #ifdef K_OLD_IMPLEMENTATION
-TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
-{
-	TreeIndex * index = NULL;
-
-	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->tree_model), iter, path_str);
-
-	return index;
-}
 #endif
 
 

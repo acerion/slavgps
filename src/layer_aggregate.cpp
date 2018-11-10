@@ -61,7 +61,6 @@ extern Tree * g_tree;
 
 
 #define SG_MODULE "Layer Aggregate"
-#define PREFIX ": Layer Aggregate:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -115,7 +114,7 @@ Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, Viewport * viewport
 			QObject::connect(child_layer, SIGNAL (layer_changed(const QString &)), aggregate, SLOT(child_layer_changed_cb(const QString &)));
 		}
 	}
-	// qDebug() << "II: Layer Aggregate: unmarshall() ended with len =" << pickle.data_size;
+	// qDebug() << SG_PREFIX_I << "unmarshall() ended with len =" << pickle.data_size;
 	return aggregate;
 }
 
@@ -174,7 +173,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer, attach_mode, sibling_layer);
-		qDebug() << SG_PREFIX_I;
+
 		QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 
 		/* Update our own tooltip. */
@@ -196,11 +195,9 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 {
 	if (!this->is_in_tree()) {
-		qDebug() << "EE" PREFIX "Aggregate Layer" << this->name << "is not connected to tree";
+		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->name << "is not connected to tree";
 		return;
 	}
-
-	qDebug() << SG_PREFIX_I;
 
 
 	/* By default layers go to the top. */
@@ -212,40 +209,78 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	layer->set_owning_layer(this);
 
-	qDebug() << SG_PREFIX_I;
 
 	if (put_above) {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer, TreeView::AttachMode::Front);
-		qDebug() << SG_PREFIX_I;
 		this->children->push_front(layer);
 	} else {
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer);
-		qDebug() << SG_PREFIX_I;
 		this->children->push_back(layer);
 	}
 	this->tree_view->apply_tree_item_timestamp(layer);
 
-	qDebug() << SG_PREFIX_I;
+
 
 	if (layer->type == LayerType::GPS) {
 		/* TODO_2_LATER: move this in some reasonable place. Putting it here is just a workaround. */
 		layer->attach_children_to_tree();
 	}
 
-	qDebug() << SG_PREFIX_I;
-
 	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
-
-	qDebug() << SG_PREFIX_I;
 
 	/* Update our own tooltip. */
 	this->tree_view->apply_tree_item_tooltip(this);
 
-	qDebug() << SG_PREFIX_I;
+#if 0
+	if (!this->children->empty()) {
+		this->tree_view->expand(this->index);
+	}
+#endif
+}
+
+
+
+
+sg_ret LayerAggregate::attach_to_container(Layer * layer)
+{
+	layer->set_owning_layer(this);
+	this->children->push_back(layer);
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret LayerAggregate::attach_to_tree(Layer * layer)
+{
+	if (!this->is_in_tree()) {
+		qDebug() << SG_PREFIX_E << "Aggregate Layer" << this->name << "is not connected to tree";
+		return sg_ret::err;
+	}
+
+	/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
+	qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
+	this->tree_view->attach_to_tree(this, layer);
+
+
+
+	/* Make sure that attached item's children have proper parent. */
+	layer->attach_children_to_tree();
+
+
+	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+
+
+	this->tree_view->apply_tree_item_timestamp(layer);
+
+	/* Update our own tooltip. */
+	this->tree_view->apply_tree_item_tooltip(this);
+
 
 #if 0
 	if (!this->children->empty()) {
@@ -253,7 +288,8 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 #endif
 
-	qDebug() << SG_PREFIX_I;
+
+	return sg_ret::ok;
 }
 
 
@@ -278,24 +314,24 @@ bool LayerAggregate::change_child_item_position(TreeItem * child_item, bool up)
 	}
 
 	if (child_iter == this->children->end()) {
-		qDebug() << "EE" PREFIX << "Failed to find iterator of child item";
+		qDebug() << SG_PREFIX_E << "Failed to find iterator of child item";
 		return false;
 	}
 
 	bool result = false;
 	if (up) {
 		if (child_iter == this->children->begin()) {
-			qDebug() << "WW" PREFIX << "Not moving child" << child_layer->name << "up, already at the beginning";
+			qDebug() << SG_PREFIX_W << "Not moving child" << child_layer->name << "up, already at the beginning";
 		} else {
-			qDebug() << "II" PREFIX << "Moving child" << child_layer->name << "up in list of" << this->name << "children";
+			qDebug() << SG_PREFIX_I << "Moving child" << child_layer->name << "up in list of" << this->name << "children";
 			std::swap(*child_iter, *std::prev(child_iter));
 			result = true;
 		}
 	} else {
 		if (std::next(child_iter) == this->children->end()) {
-			qDebug() << "WW" PREFIX << "Not moving child" << child_layer->name << "down, already at the end";
+			qDebug() << SG_PREFIX_W << "Not moving child" << child_layer->name << "down, already at the end";
 		} else {
-			qDebug() << "II" PREFIX << "Moving child" << child_layer->name << "down in list of" << this->name << "children";
+			qDebug() << SG_PREFIX_I << "Moving child" << child_layer->name << "down in list of" << this->name << "children";
 			std::swap(*child_iter, *std::next(child_iter));
 			result = true;
 		}
@@ -358,11 +394,11 @@ void LayerAggregate::draw_tree_item(Viewport * viewport, bool highlight_selected
 		    || layer->type == LayerType::GPS
 		    || !viewport->get_half_drawn()) {
 
-			qDebug() << "II: Layer Aggregate: calling draw_if_visible() for" << layer->name;
+			qDebug() << SG_PREFIX_I << "Calling draw_if_visible() for" << layer->name;
 			layer->draw_tree_item(viewport, false, false);
 		}
 #else
-		qDebug() << "II" PREFIX "calling draw_tree_item(" << highlight_selected << parent_is_selected << ") for" << layer->name;
+		qDebug() << SG_PREFIX_I << "Calling draw_tree_item(" << highlight_selected << parent_is_selected << ") for" << layer->name;
 		layer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
 #endif
 	}
@@ -692,6 +728,49 @@ void LayerAggregate::clear()
    @return true if layer was visible before being deleted
    @return false otherwise
 */
+sg_ret LayerAggregate::detach_from_container(Layer * layer, bool * was_visible)
+{
+	assert (layer->is_in_tree());
+	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->to_layer(), layer));
+
+	if (NULL != was_visible) {
+		*was_visible = layer->visible;
+	}
+
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		if (TreeItem::the_same_object(layer, *iter)) {
+			this->children->erase(iter);
+			break;
+		}
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret LayerAggregate::detach_from_tree(Layer * layer)
+{
+	this->tree_view->detach_tree_item(layer);
+
+	/* Update our own tooltip. */
+	this->tree_view->apply_tree_item_tooltip(this);
+
+	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @brief Delete a layer specified by \p index
+
+   This method also calls destructor of \p layer.
+
+   @return true if layer was visible before being deleted
+   @return false otherwise
+*/
 bool LayerAggregate::delete_layer(Layer * layer)
 {
 	assert (layer->is_in_tree());
@@ -926,10 +1005,10 @@ bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, Viewpo
 
 
 
-void LayerAggregate::attach_children_to_tree(void)
+sg_ret LayerAggregate::attach_children_to_tree(void)
 {
 	if (this->children->empty()) {
-		return;
+		return sg_ret::ok;
 	}
 
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
@@ -938,11 +1017,12 @@ void LayerAggregate::attach_children_to_tree(void)
 		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer);
-		qDebug() << SG_PREFIX_I;
 	}
 
 	/* Update our own tooltip. */
 	this->tree_view->apply_tree_item_tooltip(this);
+
+	return sg_ret::ok;
 }
 
 
@@ -954,7 +1034,7 @@ std::list<Layer const *> LayerAggregate::get_child_layers(void) const
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
 		result.push_back(*iter);
 	}
-	qDebug() << "II: Layer Aggregate: returning" << result.size() << "children";
+	qDebug() << SG_PREFIX_I << "Returning" << result.size() << "children";
 	return result;
 }
 
@@ -969,36 +1049,28 @@ int LayerAggregate::get_child_layers_count(void) const
 
 
 
-void LayerAggregate::drag_drop_request(Layer * src, TreeIndex & src_item_index, void *GtkTreePath_dest_path)
-{
-
-	Layer * layer = src->tree_view->get_tree_item(src_item_index)->to_layer();
-
-#ifdef K_FIXME_RESTORE
-	char * dp = gtk_tree_path_to_string(dest_path);
-	TreeIndex * dest_index = src->tree_view->get_index_from_path_str(dp);
-
-	/* LayerAggregate::delete_layer unrefs, but we don't want that here.
-	   We're still using the layer. */
-	layer->ref();
-	((LayerAggregate *) src)->delete_layer(src_item_index);
-
-	if (dest_index && dest_index->isValid()) {
-		this->insert_layer(layer, dest_index);
-	} else {
-		this->insert_layer(layer, NULL); /* Append. */
-	}
-	free(dp);
-#endif
-}
-
-
-
-
 sg_ret LayerAggregate::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
-	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into this Layer";
-	return sg_ret::err;
+	/* Handle item in old location. */
+	{
+		Layer * layer = tree_item->get_owning_layer();
+		if (layer->type != LayerType::Aggregate) {
+			qDebug() << SG_PREFIX_E << "Moving item from layer owned by layer type" << layer->type;
+			/* TODO: what about drag and drop of TRW layers from GPS layer? */
+			return sg_ret::err;
+		}
+
+		((LayerAggregate *) layer)->detach_from_container((LayerAggregate *) tree_item, NULL);
+		/* Detaching of tree item from tree view will be handled by QT. */
+	}
+
+	/* Handle item in new location. */
+	{
+		this->attach_to_container((Layer *) tree_item);
+		this->attach_to_tree((Layer *) tree_item);
+	}
+
+	return sg_ret::ok;
 }
 
 
@@ -1040,7 +1112,7 @@ QString LayerAggregate::get_tooltip(void) const
 
 LayerAggregate::LayerAggregate()
 {
-	qDebug() << "II: LayerAggregate::LayerAggregate()";
+	qDebug() << SG_PREFIX_I;
 
 	this->type = LayerType::Aggregate;
 	strcpy(this->debug_string, "LayerType::AGGREGATE");
@@ -1056,11 +1128,11 @@ LayerAggregate::LayerAggregate()
 
 void LayerAggregate::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
 {
-	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
+	qDebug() << SG_PREFIX_SLOT << this->name << "received 'child layer changed' signal from" << child_layer_name;
 	if (this->visible) {
 		/* TODO_2_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
+		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
 		emit this->layer_changed(this->get_name());
 	}
 }

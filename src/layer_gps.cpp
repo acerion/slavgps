@@ -665,7 +665,7 @@ LayerGPS::~LayerGPS()
 
 
 
-void LayerGPS::attach_children_to_tree(void)
+sg_ret LayerGPS::attach_children_to_tree(void)
 {
 	/* TODO_LATER set to garmin by default.
 	   if (Babel::devices)
@@ -673,8 +673,8 @@ void LayerGPS::attach_children_to_tree(void)
 	   Need to access uibuild widgets somehow.... */
 
 	if (!this->is_in_tree()) {
-		qDebug() << "EE" PREFIX << "this layer" << this->name << "is not connected to tree";
-		return;
+		qDebug() << SG_PREFIX_E << "GPS Layer" << this->name << "is not connected to tree";
+		return sg_ret::err;
 	}
 
 	for (int ix = 0; ix < GPS_CHILD_LAYER_MAX; ix++) {
@@ -689,6 +689,8 @@ void LayerGPS::attach_children_to_tree(void)
 
 		QObject::connect(trw, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
 	}
+
+	return sg_ret::ok;
 }
 
 

@@ -170,7 +170,6 @@ namespace SlavGPS {
 		   destination layer. it is given a source and
 		   destination layer, and the source and destination
 		   iters in the tree view. */
-		virtual void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 		virtual sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		virtual sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 

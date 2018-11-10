@@ -626,7 +626,7 @@ void LayerTRWTracks::update_tree_view(Track * trk)
 
 
 
-void LayerTRWTracks::attach_children_to_tree(void)
+sg_ret LayerTRWTracks::attach_children_to_tree(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
@@ -640,8 +640,9 @@ void LayerTRWTracks::attach_children_to_tree(void)
 
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, trk);
-		qDebug() << SG_PREFIX_I;
 	}
+
+	return sg_ret::ok;
 }
 
 

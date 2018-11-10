@@ -78,9 +78,8 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
 		void add_menu_items(QMenu & menu);
-		void attach_children_to_tree(void);
+		sg_ret attach_children_to_tree(void);
 
-		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 
@@ -95,6 +94,14 @@ namespace SlavGPS {
 
 		bool delete_layer(Layer * layer);
 		void clear();
+
+
+
+		sg_ret attach_to_container(Layer * layer);
+		sg_ret attach_to_tree(Layer * layer);
+
+		sg_ret detach_from_container(Layer * layer, bool * was_visible);
+		sg_ret detach_from_tree(Layer * layer);
 
 
 		void get_waypoints_list(std::list<Waypoint *> & list);

@@ -119,7 +119,7 @@ namespace SlavGPS {
 
 		QString get_tooltip(void) const;
 
-		void attach_children_to_tree(void);
+		sg_ret attach_children_to_tree(void);
 
 
 		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */

@@ -144,7 +144,6 @@ namespace SlavGPS {
 
 		time_t get_timestamp();
 
-		void drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path);
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 
@@ -153,7 +152,7 @@ namespace SlavGPS {
 
 		void add_menu_items(QMenu & menu);
 
-		void attach_children_to_tree(void);
+		sg_ret attach_children_to_tree(void);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
@@ -224,9 +223,6 @@ namespace SlavGPS {
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc). */
 		void add_waypoint_from_file(Waypoint * wp);
 		void add_track_from_file(Track * trk);
-
-
-		void move_item(LayerTRW * vtl_dest, sg_uid_t sublayer_uid, const QString & type_id);
 
 
 		void delete_all_routes();

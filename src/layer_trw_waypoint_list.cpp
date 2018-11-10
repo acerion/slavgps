@@ -60,7 +60,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Layer TRW Waypoint List:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Layer TRW Waypoint List"
 
 
 
@@ -75,7 +75,7 @@ extern Tree * g_tree;
 void WaypointListDialog::waypoint_select(LayerTRW * layer)
 {
 	if (!this->selected_wp) {
-		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Encountered NULL Waypoint in callback" << __FUNCTION__;
 		return;
 	}
 
@@ -85,7 +85,7 @@ void WaypointListDialog::waypoint_select(LayerTRW * layer)
 	if (wp && trw) {
 		trw->tree_view->select_and_expose_tree_item(wp);
 	} else {
-		qDebug() << "EE: Waypoint List Dialog: selecting either NULL layer or NULL wp:" << (qintptr) trw << (qintptr) wp;
+		qDebug() << SG_PREFIX_E << "Selecting either NULL layer or NULL wp:" << (qintptr) trw << (qintptr) wp;
 	}
 }
 
@@ -95,7 +95,7 @@ void WaypointListDialog::waypoint_select(LayerTRW * layer)
 void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 {
 	if (!this->selected_wp) {
-		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Encountered NULL Waypoint in callback" << __FUNCTION__;
 		return;
 	}
 
@@ -132,7 +132,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 {
 	if (!this->selected_wp) {
-		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Encountered NULL Waypoint in callback" << __FUNCTION__;
 		return;
 	}
 
@@ -151,7 +151,7 @@ void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 {
 	if (!this->selected_wp) {
-		qDebug() << "EE: Waypoint List: encountered NULL Waypoint in callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Encountered NULL Waypoint in callback" << __FUNCTION__;
 		return;
 	}
 
@@ -294,10 +294,10 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QPoint point = orig;
 	QModelIndex index = this->view->indexAt(point);
 	if (!index.isValid()) {
-		qDebug() << "II" PREFIX << "context menu event: INvalid index";
+		qDebug() << SG_PREFIX_I << "INvalid index";
 		return;
 	} else {
-		qDebug() << "II" PREFIX << "context menu event: on index.row =" << index.row() << "index.column =" << index.column();
+		qDebug() << SG_PREFIX_I << "On index.row =" << index.row() << "index.column =" << index.column();
 	}
 
 
@@ -305,19 +305,19 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 
 
 	QStandardItem * child = parent_item->child(index.row(), WaypointListModel::Waypoint);
-	qDebug() << "II" PREFIX << "selected waypoint" << child->text();
+	qDebug() << SG_PREFIX_I << "Selected waypoint" << child->text();
 
 	child = parent_item->child(index.row(), WaypointListModel::Waypoint);
 	Waypoint * wp = child->data(RoleLayerData).value<Waypoint *>();
 	if (!wp) {
-		qDebug() << "EE" PREFIX << "failed to get non-NULL Waypoint from table";
+		qDebug() << SG_PREFIX_E << "Failed to get non-NULL Waypoint from table";
 		return;
 	}
 
 	/* If we were able to get list of Waypoints, all of them need to have associated parent layer. */
 	LayerTRW * trw = wp->get_parent_layer_trw();
 	if (!trw) {
-		qDebug() << "EE" PREFIX << "failed to get non-NULL parent layer";
+		qDebug() << SG_PREFIX_E << "Failed to get non-NULL parent layer";
 		return;
 	}
 

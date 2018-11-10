@@ -536,14 +536,6 @@ QString Layer::get_tooltip(void) const
 
 
 
-void Layer::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path)
-{
-	return;
-}
-
-
-
-
 sg_ret Layer::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
 	qDebug() << SG_PREFIX_E << "Can't drop tree item" << tree_item->name << "into this Layer";

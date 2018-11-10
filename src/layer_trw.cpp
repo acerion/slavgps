@@ -121,7 +121,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer TRW"
-#define PREFIX ": Layer TRW:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -599,7 +598,7 @@ std::list<TreeItem *> LayerTRW::get_waypoints_by_date(const QDate & search_date)
 void LayerTRW::delete_sublayer(TreeItem * sublayer)
 {
 	if (!sublayer) {
-		qDebug() << "WW: Layer TRW: 'delete sublayer' received NULL sublayer";
+		qDebug() << SG_PREFIX_W << "Argument is NULL";
 		return;
 	}
 
@@ -613,7 +612,7 @@ void LayerTRW::delete_sublayer(TreeItem * sublayer)
 void LayerTRW::cut_sublayer(TreeItem * sublayer)
 {
 	if (!sublayer) {
-		qDebug() << "WW: Layer TRW: 'cut sublayer' received NULL sublayer";
+		qDebug() << SG_PREFIX_W << "Argument is NULL";
 		return;
 	}
 
@@ -653,7 +652,7 @@ void LayerTRW::cut_sublayer_common(TreeItem * item, bool confirm)
 void LayerTRW::copy_sublayer(TreeItem * item, Pickle & pickle)
 {
 	if (!item) {
-		qDebug() << "WW" PREFIX << "function received NULL sublayer";
+		qDebug() << SG_PREFIX_W << "Argument is NULL";
 		return;
 	}
 
@@ -670,7 +669,7 @@ void LayerTRW::copy_sublayer(TreeItem * item, Pickle & pickle)
 bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 {
 	if (!item) {
-		qDebug() << "WW: Layer TRW: 'paste sublayer' received NULL item";
+		qDebug() << SG_PREFIX_W << "Argument is NULL";
 		return false;
 	}
 
@@ -842,7 +841,7 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		if (data.u.val_int < (int) TreeViewSortOrder::Last) {
 			this->track_sort_order = (TreeViewSortOrder) data.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid Track Sort Order" << data.u.val_int;
+			qDebug() << SG_PREFIX_E << "Invalid Track Sort Order" << data.u.val_int;
 		}
 		break;
 	case PARAM_WP_LABELS:
@@ -920,7 +919,7 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		if (data.u.val_int < (int) TreeViewSortOrder::Last) {
 			this->wp_sort_order = (TreeViewSortOrder) data.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid Waypoint Sort Order" << data.u.val_int;
+			qDebug() << SG_PREFIX_E << "Invalid Waypoint Sort Order" << data.u.val_int;
 		}
 		break;
 		// Metadata
@@ -1188,7 +1187,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 				trw->add_route(trk);
 				trk->convert(trw->coord_mode);
 			} else {
-				qDebug() << "EE" PREFIX << "Invalid sublayer type id" << type_id;
+				qDebug() << SG_PREFIX_E << "Invalid sublayer type id" << type_id;
 			}
 		}
 		consumed_length += pickle.peek_size() + sizeof_len_and_subtype;
@@ -1251,17 +1250,17 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 	this->painter->set_viewport(viewport);
 
 	if (this->tracks.visible) {
-		qDebug() << "II: Layer TRW: calling function to draw tracks, highlight:" << highlight_selected << item_is_selected;
+		qDebug() << SG_PREFIX_I << "Calling function to draw tracks, highlight:" << highlight_selected << item_is_selected;
 		this->tracks.draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
 	if (this->routes.visible) {
-		qDebug() << "II: Layer TRW: calling function to draw routes, highlight:" << highlight_selected << item_is_selected;
+		qDebug() << SG_PREFIX_I << "Calling function to draw routes, highlight:" << highlight_selected << item_is_selected;
 		this->routes.draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
 	if (this->waypoints.visible) {
-		qDebug() << "II: Layer TRW: calling function to draw waypoints, highlight:" << highlight_selected << item_is_selected;
+		qDebug() << SG_PREFIX_I << "Calling function to draw waypoints, highlight:" << highlight_selected << item_is_selected;
 		this->waypoints.draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
@@ -1272,13 +1271,13 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 
 
-void LayerTRW::attach_children_to_tree(void)
+sg_ret LayerTRW::attach_children_to_tree(void)
 {
 	qDebug() << SG_PREFIX_D;
 
 	if (!this->is_in_tree()) {
-		qDebug() << SG_PREFIX_E << "This layer" << this->name << "is not connected to tree";
-		return;
+		qDebug() << SG_PREFIX_E << "TRW Layer" << this->name << "is not connected to tree";
+		return sg_ret::err;
 	}
 
 	if (this->tracks.size() > 0) {
@@ -1317,6 +1316,8 @@ void LayerTRW::attach_children_to_tree(void)
 	this->generate_missing_thumbnails();
 
 	this->sort_all();
+
+	return sg_ret::ok;
 }
 
 
@@ -1662,7 +1663,7 @@ void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 	}
 
 	if (this->move_viewport_to_show_all(g_tree->tree_get_main_viewport())) {
-		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << this->get_name();
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb() for" << this->get_name();
 		g_tree->tree_get_items_tree()->emit_items_tree_updated_cb(this->get_name());
 	}
 }
@@ -1790,7 +1791,7 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, Window * parent_window)
 		this->add_waypoint(wp);
 		return true;
 	} else {
-		qDebug() << "II: LayerTRW:" << __FUNCTION__ << "failed to create new waypoint in dialog, rejecting";
+		qDebug() << SG_PREFIX_I << "Failed to create new waypoint in dialog, rejecting";
 		delete wp;
 		return false;
 	}
@@ -2033,7 +2034,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 
 Track * LayerTRW::new_track_create_common(const QString & new_name)
 {
-	qDebug() << "II: Layer TRW: new track create common, track name" << new_name;
+	qDebug() << SG_PREFIX_I << "Track name" << new_name;
 
 	Track * track = new Track(false);
 	track->set_defaults();
@@ -2372,119 +2373,11 @@ void LayerTRW::add_track_from_file(Track * trk)
 
 
 
-/*
- * Move an item from one TRW layer to another TRW layer.
- */
-void LayerTRW::move_item(LayerTRW * trw_dest, sg_uid_t sublayer_uid, const QString & item_type_id)
-{
-	LayerTRW * trw_src = this;
-	/* When an item is moved the name is checked to see if it clashes with an existing name
-	   in the destination layer and if so then it is allocated a new name. */
-
-	/* TODO_LATER reconsider strategy when moving within layer (if anything...). */
-	if (trw_src == trw_dest) {
-		return;
-	}
-
-	if (item_type_id == "sg.trw.track") {
-		Track * trk = this->tracks.children_map.at(sublayer_uid); // zzz
-		Track * trk2 = new Track(*trk);
-
-		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name);
-		trk2->set_name(uniq_name);
-
-		trw_dest->add_track(trk2);
-
-		this->detach_from_container(trk);
-		this->detach_from_tree(trk);
-		delete trk;
-
-		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest);
-		trw_src->tree_view->apply_tree_item_timestamp(trw_src);
-	}
-
-	if (item_type_id == "sg.trw.route") {
-		Track * trk = this->routes.children_map.at(sublayer_uid);
-		Track * trk2 = new Track(*trk);
-
-		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, trk->name);
-		trk2->set_name(uniq_name);
-
-		trw_dest->add_route(trk2);
-
-		this->detach_from_container(trk);
-		this->detach_from_tree(trk);
-		delete trk;
-	}
-
-	if (item_type_id == "sg.trw.waypoint") {
-		Waypoint * wp = this->waypoints.children_map.at(sublayer_uid);
-		Waypoint * wp2 = new Waypoint(*wp);
-
-		const QString uniq_name = trw_dest->new_unique_element_name(item_type_id, wp->name);
-		wp2->set_name(uniq_name);
-
-		trw_dest->add_waypoint(wp2);
-
-		this->detach_from_container(wp);
-		this->detach_from_tree(wp);
-		delete wp;
-
-		/* Recalculate bounds even if not renamed as maybe dragged between layers. */
-		trw_dest->waypoints.recalculate_bbox();
-		trw_src->waypoints.recalculate_bbox();
-		/* Reset layer timestamps in case they have now changed. */
-		trw_dest->tree_view->apply_tree_item_timestamp(trw_dest);
-		trw_src->tree_view->apply_tree_item_timestamp(trw_src);
-	}
-}
-
-
-
-
-void LayerTRW::drag_drop_request(Layer * src, TreeIndex & src_item_index, void * GtkTreePath_dest_path)
-{
-	LayerTRW * trw_dest = this;
-	LayerTRW * trw_src = (LayerTRW *) src;
-
-	TreeItem * sublayer = trw_src->tree_view->get_tree_item(src_item_index);
-
-
-	if (sublayer->name.isEmpty()) {
-		std::list<sg_uid_t> items;
-
-		if (sublayer->type_id == "sg.trw.tracks") {
-			trw_src->tracks.list_trk_uids(items);
-		}
-		if (sublayer->type_id == "sg.trw.routes") {
-			trw_src->routes.list_trk_uids(items);
-		}
-		if (sublayer->type_id == "sg.trw.waypoints") {
-			trw_src->waypoints.list_wp_uids(items);
-		}
-
-		for (auto iter = items.begin(); iter != items.end(); iter++) {
-			if (sublayer->type_id == "sg.trw.tracks") {
-				trw_src->move_item(trw_dest, *iter, "sg.trw.track");
-			} else if (sublayer->type_id == "sg.trw.routes") {
-				trw_src->move_item(trw_dest, *iter, "sg.trw.route");
-			} else {
-				trw_src->move_item(trw_dest, *iter, "sg.trw.waypoint");
-			}
-		}
-	} else {
-#ifdef K_FIXME_RESTORE
-		trw_src->move_item(trw_dest, sublayer->name, sublayer->type_id);
-#endif
-	}
-}
-
-
-
-
 sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
+	/* TODO: Reset layer timestamps in case they have now changed. */
+	/* TODO: Recalculate bounds. */
+
 	/* Handle item in old location. */
 	{
 		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
@@ -2764,7 +2657,7 @@ void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 		Track * trk = (Track *) item;
 		trk->delete_sublayer(confirm);
 	} else {
-		qDebug() << "EE: Layer TRW: unknown sublayer type" << item->type_id;
+		qDebug() << SG_PREFIX_E << "Unexpected sublayer type" << item->type_id;
 	}
 }
 
@@ -2886,7 +2779,7 @@ void LayerTRW::merge_with_other_cb(void)
 {
 	Track * track = this->get_edited_track();
 	if (!track) {
-		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
 	}
 	if (track->empty()) {
@@ -2917,7 +2810,7 @@ void LayerTRW::merge_with_other_cb(void)
 	std::list<Track *> merge_list = a_dialog_select_from_list(dialog, merge_candidates, ListSelectionMode::MultipleItems, ListSelectionWidget::get_headers_for_track());
 
 	if (merge_list.empty()) {
-		qDebug() << "II: Layer TRW: merge track is empty";
+		qDebug() << SG_PREFIX_I << "Merge track is empty";
 		return;
 	}
 
@@ -2950,7 +2843,7 @@ void LayerTRW::append_track_cb(void)
 {
 	Track * track = this->get_edited_track();
 	if (!track) {
-		qDebug() << "EE" PREFIX << "can't get edited track in track-related function";
+		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function";
 		return;
 	}
 
@@ -2978,7 +2871,7 @@ void LayerTRW::append_track_cb(void)
 
 	Track * source_track = *sources_list.begin();
 	if (!source_track) {
-		qDebug() << "EE" PREFIX << "pointer to source track from tracks container is NULL";
+		qDebug() << SG_PREFIX_E << "Pointer to source track from tracks container is NULL";
 		return;
 	}
 
@@ -3009,7 +2902,7 @@ void LayerTRW::append_other_cb(void)
 {
 	Track * track = this->get_edited_track();
 	if (!track) {
-		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
 	}
 
@@ -3038,7 +2931,7 @@ void LayerTRW::append_other_cb(void)
 	Track * source_track = *sources_list.begin();
 	if (!source_track) {
 		/* Very unlikely, but to be sure... */
-		qDebug() << "EE" PREFIX << "pointer to source track from tracks container is NULL";
+		qDebug() << SG_PREFIX_E << "Pointer to source track from tracks container is NULL";
 		return;
 	}
 
@@ -3080,7 +2973,7 @@ void LayerTRW::merge_by_segment_cb(void)
 {
 	Track * track = this->get_edited_track();
 	if (!track) {
-		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
 	}
 
@@ -3099,7 +2992,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 {
 	Track * orig_track = this->get_edited_track();
 	if (!orig_track) {
-		qDebug() << "EE: Layer TRW: can't get edited track in track-related function" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
 	}
 
@@ -3243,7 +3136,7 @@ void LayerTRW::delete_point_selected_cb(void)
 {
 	Track * selected_track = this->get_edited_track();
 	if (!selected_track) {
-		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Can't get selected track in track callback" << __FUNCTION__;
 		return;
 	}
 
@@ -3322,7 +3215,7 @@ void LayerTRW::insert_point_after_cb(void)
 {
 	Track * selected_track = this->get_edited_track();
 	if (!selected_track) {
-		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Can't get selected track in track callback" << __FUNCTION__;
 		return;
 	}
 
@@ -3338,7 +3231,7 @@ void LayerTRW::insert_point_before_cb(void)
 {
 	Track * selected_track = this->get_edited_track();
 	if (!selected_track) {
-		qDebug() << "EE: LayerTRW: can't get selected track in track callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Can't get selected track in track callback" << __FUNCTION__;
 		return;
 	}
 
@@ -3394,7 +3287,7 @@ void LayerTRW::astro_open(char const * date_str,  char const * time_str, char co
 		.arg(lon_str)
 		.arg(alt_str);
 
-	qDebug() << "II" PREFIX << "command is " << cmd;
+	qDebug() << SG_PREFIX_I << "Command is " << cmd;
 
 	if (!g_spawn_command_line_async(cmd.toUtf8().constData(), &err)) {
 		Dialog::error(tr("Could not launch %1").arg(astro_program), this->get_window());
@@ -3784,7 +3677,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		break;
 
 	default:
-		qDebug() << "EE: LayerTRW: Trackpoint Properties Dialog: unhandled dialog response" << response;
+		qDebug() << SG_PREFIX_E << "Unexpected dialog response" << response;
 	}
 }
 
@@ -4019,7 +3912,7 @@ bool LayerTRW::uniquify(LayersPanel * panel)
 		this->waypoints.uniquify(this->wp_sort_order);
 
 		/* Update. */
-		qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb() for" << this->get_name();
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb() for" << this->get_name();
 		panel->emit_items_tree_updated_cb(this->get_name());
 
 		return true;
@@ -4280,13 +4173,14 @@ Track * LayerTRW::get_edited_track()
 
 void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_iter)
 {
-	if (track) {
-		this->current_track_ = track;
-		this->current_track_->selected_tp_iter.iter = tp_iter;
-		this->current_track_->selected_tp_iter.valid = true;
-	} else {
-		qDebug() << "EE: Layer TRW: Set Current Track (1): NULL track";
+	if (!track) {
+		qDebug() << SG_PREFIX_E << "NULL track";
+		return;
 	}
+
+	this->current_track_ = track;
+	this->current_track_->selected_tp_iter.iter = tp_iter;
+	this->current_track_->selected_tp_iter.valid = true;
 }
 
 
@@ -4295,12 +4189,13 @@ void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_
 
 void LayerTRW::set_edited_track(Track * track)
 {
-	if (track) {
-		this->current_track_ = track;
-		this->current_track_->selected_tp_iter.valid = false;
-	} else {
-		qDebug() << "EE: Layer TRW: Set Current Track (2): NULL track";
+	if (!track) {
+		qDebug() << SG_PREFIX_E << "NULL track";
+		return;
 	}
+
+	this->current_track_ = track;
+	this->current_track_->selected_tp_iter.valid = false;
 }
 
 
@@ -4331,11 +4226,12 @@ Waypoint * LayerTRW::get_edited_wp()
 
 void LayerTRW::set_edited_wp(Waypoint * wp)
 {
-	if (wp) {
-		this->current_wp_ = wp;
-	} else {
-		qDebug() << "EE: Layer TRW: Set Current Waypoint: null waypoint";
+	if (!wp) {
+		qDebug() << SG_PREFIX_E << "NULL waypoint";
+		return;
 	}
+
+	this->current_wp_ = wp;
 }
 
 
@@ -4397,7 +4293,7 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 {
 	Waypoint * wp = this->get_edited_wp();
 	if (!wp) {
-		qDebug() << "EE: Layer TRW: no waypoint in waypoint-related callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "No waypoint in waypoint-related callback" << __FUNCTION__;
 		return;
 	}
 
@@ -4408,7 +4304,7 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 	QStringList args;
 	args << quoted_image_full_path;
 
-	qDebug() << "II: Layer TRW: Show WP picture:" << program << quoted_image_full_path;
+	qDebug() << SG_PREFIX_I << program << quoted_image_full_path;
 
 	/* "Fire and forget". The viewer will run detached from this application. */
 	QProcess::startDetached(program, args);

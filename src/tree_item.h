@@ -132,7 +132,7 @@ namespace SlavGPS {
 
 		   This method should call attach_to_tree() on any such
 		   child that needs to be added to the tree. */
-		virtual void attach_children_to_tree(void) {};
+		virtual sg_ret attach_children_to_tree(void);
 
 		virtual bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu) { return false; };
 

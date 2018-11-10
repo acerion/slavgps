@@ -277,3 +277,11 @@ sg_ret TreeItem::dropped_item_is_acceptable(TreeItem * tree_item, bool * result)
 	*result = false;
 	return sg_ret::ok;
 }
+
+
+
+
+sg_ret TreeItem::attach_children_to_tree(void)
+{
+	return sg_ret::ok;
+}
