@@ -662,14 +662,13 @@ void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
-		viewport->show_bbox(this->bbox);
+		viewport->set_bbox(this->bbox);
 	} else {
 		return; /* Zero items. */
 	}
 
-	/* We have re-zoomed main viewport. Ask main application window to redraw the viewport. */
-	qDebug() << "SIGNAL: Layer TRW Waypoints: re-zoom to show all items (" << n_items << "item(s))";
-	g_tree->emit_items_tree_updated();
+	/* We have re-aligned main viewport. Ask main application window to redraw the viewport. */
+	viewport->request_redraw("Re-align viewport to show to show all TRW Waypoints");
 
 	return;
 }

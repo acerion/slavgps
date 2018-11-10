@@ -171,8 +171,7 @@ namespace SlavGPS {
 		int get_leftmost_zone(void) const;
 		int get_rightmost_zone(void) const;
 
-		bool show_bbox(const LatLonBBox & bbox);
-
+		sg_ret set_bbox(const LatLonBBox & bbox);
 		LatLonBBox get_bbox(void) const;
 
 
@@ -248,6 +247,9 @@ namespace SlavGPS {
 
 		void set_drawmode(ViewportDrawMode drawmode);
 		ViewportDrawMode get_drawmode(void) const;
+
+
+		void request_redraw(const QString & trigger);
 
 
 

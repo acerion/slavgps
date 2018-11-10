@@ -56,7 +56,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Layer TRW Track List Dialog:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Layer TRW Track List Dialog"
 
 
 
@@ -81,7 +81,7 @@ enum {
 void TrackListDialog::track_properties_cb(void)
 {
 	if (!this->selected_track) {
-		qDebug() << "EE" PREFIX "encountered NULL Track in callback";
+		qDebug() << SG_PREFIX_E << "Encountered NULL Track in callback";
 		return;
 	}
 
@@ -103,7 +103,7 @@ void TrackListDialog::track_properties_cb(void)
 void TrackListDialog::track_statistics_cb(void)
 {
 	if (!this->selected_track) {
-		qDebug() << "EE" PREFIX << "encountered NULL Track in callback";
+		qDebug() << SG_PREFIX_E << "Encountered NULL Track in callback";
 		return;
 	}
 
@@ -125,7 +125,7 @@ void TrackListDialog::track_statistics_cb(void)
 void TrackListDialog::track_view_cb(void)
 {
 	if (!this->selected_track) {
-		qDebug() << "EE" PREFIX << "encountered NULL selected Track in callback";
+		qDebug() << SG_PREFIX_E << "Encountered NULL selected Track in callback";
 		return;
 	}
 
@@ -133,8 +133,9 @@ void TrackListDialog::track_view_cb(void)
 	LayerTRW * trw = trk->get_parent_layer_trw();
 	Viewport * viewport = trw->get_window()->get_viewport();
 
-	viewport->show_bbox(trk->get_bbox());
+	viewport->set_bbox(trk->get_bbox());
 	trw->tree_view->select_and_expose_tree_item(trk);
+	viewport->request_redraw("Re-align viewport to show whole contents of Track");
 }
 
 
@@ -229,10 +230,10 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QPoint point = orig;
 	QModelIndex index = this->view->indexAt(point);
 	if (!index.isValid()) {
-		qDebug() << "II" PREFIX << "context menu event: INvalid index";
+		qDebug() << SG_PREFIX_I << "context menu event: INvalid index";
 		return;
 	} else {
-		qDebug() << "II" PREFIX << "context menu event: on index.row =" << index.row() << "index.column =" << index.column();
+		qDebug() << SG_PREFIX_I << "context menu event: on index.row =" << index.row() << "index.column =" << index.column();
 	}
 
 
@@ -240,19 +241,19 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 
 
 	QStandardItem * child = parent_item->child(index.row(), TRACK_COLUMN);
-	qDebug() << "II" PREFIX << "selected track" << child->text();
+	qDebug() << SG_PREFIX_I << "selected track" << child->text();
 
 	child = parent_item->child(index.row(), TRACK_COLUMN);
 	Track * trk = child->data(RoleLayerData).value<Track *>();
 	if (!trk) {
-		qDebug() << "EE" PREFIX << "null track in context menu handler";
+		qDebug() << SG_PREFIX_E << "NULL track in context menu handler";
 		return;
 	}
 
 	/* If we were able to get list of Tracks, all of them need to have associated parent layer. */
 	LayerTRW * trw = trk->get_parent_layer_trw();
 	if (!trw) {
-		qDebug() << "EE" PREFIX << "failed to get non-NULL parent layer @" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_E << "Failed to get non-NULL parent layer @" << __FUNCTION__ << __LINE__;
 		return;
 	}
 

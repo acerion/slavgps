@@ -48,6 +48,7 @@
 #include "widget_file_entry.h"
 #include "viewport_zoom.h"
 #include "viewport_internal.h"
+#include "layers_panel.h"
 
 
 
@@ -58,7 +59,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer Georef"
-#define PREFIX ": Layer Georef: " << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -215,7 +215,7 @@ bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_v
 		if (param_value.u.val_int <= UTM_ZONES) {
 			this->utm_tl.zone = param_value.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid utm zone" << param_value.u.val_int;
+			qDebug() << SG_PREFIX_E << "Invalid utm zone" << param_value.u.val_int;
 		}
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
@@ -231,7 +231,7 @@ bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_v
 		if (alpha_scale.is_in_range(param_value.u.val_int)) {
 			this->alpha = param_value.u.val_int;
 		} else {
-			qDebug() << "EE" PREFIX << "invalid alpha value" << param_value.u.val_int;
+			qDebug() << SG_PREFIX_E << "Invalid alpha value" << param_value.u.val_int;
 		}
 		break;
 	default:
@@ -248,7 +248,7 @@ void LayerGeoref::create_image_file()
 	/* Create in .viking-maps. */
 	const QString path = MapCache::get_default_maps_dir() + this->get_name() + ".jpg"; /* LayerMap::get_default_maps_dir() should return string with trailing separator. */
 	if (!this->image.save(path, "jpeg")) {
-		qDebug() << "WW: Layer Georef: failed to save pixmap to" << path;
+		qDebug() << SG_PREFIX_W << "Failed to save pixmap to" << path;
 	} else {
 		this->image_full_path = path;
 	}
@@ -542,7 +542,7 @@ static bool world_file_read_line(FILE * file, double * value)
  */
 static int world_file_read_file(const QString & full_path, double values[4])
 {
-	qDebug() << "II: Layer Georef: Read World File: file" << full_path;
+	qDebug() << SG_PREFIX_I << "Read World File: file" << full_path;
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "r");
 	if (!file) {
@@ -559,7 +559,7 @@ static int world_file_read_file(const QString & full_path, double values[4])
 		    )
 			{
 				/* Success. */
-				qDebug() << "II: Layer Georef: Read World File: success";
+				qDebug() << SG_PREFIX_I << "Read World File: success";
 				answer = 0;
 			}
 		fclose(file);
@@ -733,16 +733,16 @@ void GeorefConfigDialog::sync_coords_in_entries(void)
 
 	switch ((CoordMode) current_coord_mode) {
 	case CoordMode::UTM:
-		qDebug() << "II" PREFIX << "current coordinate mode is UTM";
+		qDebug() << SG_PREFIX_I << "Current coordinate mode is UTM";
 		this->sync_from_lat_lon_to_utm();
 		break;
 
 	case CoordMode::LatLon:
-		qDebug() << "II" PREFIX << "current coordinate mode is LatLon";
+		qDebug() << SG_PREFIX_I << "Current coordinate mode is LatLon";
 		break;
 
 	default:
-		qDebug() << "EE" PREFIX << "unexpected coordinate mode" << current_coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected coordinate mode" << current_coord_mode;
 		this->sync_from_utm_to_lat_lon();
 		break;
 	}
@@ -761,7 +761,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 
 	switch ((CoordMode) current_coord_mode) {
 	case CoordMode::UTM:
-		qDebug() << "II" PREFIX << "current coordinate mode is UTM";
+		qDebug() << SG_PREFIX_I << "Current coordinate mode is UTM";
 		this->sync_from_utm_to_lat_lon();
 
 		this->grid->replaceWidget(this->lat_lon_tl_entry, this->utm_entry);
@@ -779,7 +779,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 		break;
 
 	case CoordMode::LatLon:
-		qDebug() << "II" PREFIX << "current coordinate mode is LatLon";
+		qDebug() << SG_PREFIX_I << "Current coordinate mode is LatLon";
 		this->sync_from_lat_lon_to_utm();
 
 		this->grid->replaceWidget(this->utm_entry, this->lat_lon_tl_entry);
@@ -797,7 +797,7 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 		break;
 
 	default:
-		qDebug() << "EE" PREFIX << "unexpected coordinate mode" << current_coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected coordinate mode" << current_coord_mode;
 		break;
 	}
 }
@@ -1056,8 +1056,7 @@ void LayerGeoref::zoom_to_fit_cb(void)
 	Viewport * viewport = ThisApp::get_main_viewport();
 	viewport->set_viking_zoom_level_x(this->mpp_easting);
 	viewport->set_viking_zoom_level_y(this->mpp_northing);
-
-	g_tree->emit_items_tree_updated();
+	viewport->request_redraw("Redrawing items after setting new zoom level in viewport");
 }
 
 
@@ -1072,8 +1071,7 @@ void LayerGeoref::goto_center_cb(void)
 	utm.northing = this->utm_tl.northing - (this->image_height * this->mpp_northing / 2);
 
 	viewport->set_center_from_coord(Coord(utm, viewport->get_coord_mode()), true);
-
-	g_tree->emit_items_tree_updated();
+	viewport->request_redraw("Redrawing items after setting new center coord in viewport");
 }
 
 
@@ -1129,7 +1127,7 @@ ToolStatus LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent 
 ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::Georef) {
-		qDebug() << "EE" PREFIX << "Unexpected layer type" << this->type;
+		qDebug() << SG_PREFIX_E << "Unexpected layer type" << this->type;
 		return ToolStatus::Ignored;
 	}
 
@@ -1172,7 +1170,7 @@ ToolStatus LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * 
 ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::Georef) {
-		qDebug() << "EE" PREFIX << "Unexpected layer type" << this->type;
+		qDebug() << SG_PREFIX_E << "Unexpected layer type" << this->type;
 		return ToolStatus::Ignored;
 	}
 
@@ -1207,7 +1205,7 @@ ToolStatus LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * 
 ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 {
 	if (this->type != LayerType::Georef) {
-		qDebug() << "EE" PREFIX << "Unexpected layer type" << this->type;
+		qDebug() << SG_PREFIX_E << "Unexpected layer type" << this->type;
 		return ToolStatus::Ignored;
 	}
 	this->click_x = ev->x();
@@ -1222,13 +1220,13 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 {
 	if (!pixmap || pixmap->isNull()) {
 		/* Bad image */
-		qDebug() << "EE" PREFIX << "trying to create layer with invalid image";
+		qDebug() << SG_PREFIX_E << "Trying to create layer with invalid image";
 		return NULL;
 	}
 
 	if (pixmap->width() <= 0 || pixmap->width() <= 0) {
 		/* Bad image */
-		qDebug() << "EE" PREFIX << "trying to create layer with invalid image";
+		qDebug() << SG_PREFIX_E << "Trying to create layer with invalid image";
 		return NULL;
 	}
 
@@ -1256,7 +1254,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	viewport->set_center_from_coord(new_center, true);
 
 	/* Set best zoom level. */
-	vu_zoom_to_show_bbox(viewport, viewport->get_coord_mode(), bbox);
+	viewport->set_bbox(bbox);
 
 	return layer;
 }

@@ -823,12 +823,8 @@ void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 	this->recalculate_bbox();
 
 	if (n_items > 0) {
-
-		qDebug() << SG_PREFIX_I << "Re-zooming to show all items (" << n_items << "items)";
-		ThisApp::get_main_viewport()->show_bbox(this->get_bbox());
-
-		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated()'";
-		g_tree->emit_items_tree_updated();
+		ThisApp::get_main_viewport()->set_bbox(this->get_bbox());
+		ThisApp::get_main_viewport()->request_redraw("Re-align viewport to show all tracks or routes");
 	}
 }
 

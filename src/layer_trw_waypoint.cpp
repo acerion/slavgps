@@ -617,7 +617,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 	parent_layer->tree_view->apply_tree_item_name(this);
 	parent_layer->tree_view->sort_children(&parent_layer->waypoints, parent_layer->wp_sort_order);
 
-	g_tree->emit_items_tree_updated();
+	ThisApp::get_layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming waypoint");
 
 	return new_name;
 }

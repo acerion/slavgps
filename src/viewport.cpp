@@ -70,7 +70,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Viewport"
-#define PREFIX ": Viewport: " << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -135,7 +134,7 @@ double Viewport::calculate_utm_zone_width(void) const
 		return 0.0;
 
 	default:
-		qDebug() << "EE" PREFIX << "unexpected coord mode" << (int) this->coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) this->coord_mode;
 		return 0.0;
 	}
 }
@@ -251,7 +250,7 @@ Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
 
 Viewport::~Viewport()
 {
-	qDebug() << "II: Viewport: ~Viewport called";
+	qDebug() << SG_PREFIX_I;
 	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
 		const LatLon lat_lon = this->center.get_latlon();
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
@@ -342,7 +341,7 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 		this->canvas.reconfigure(new_width, new_height);
 	}
 
-	qDebug() << "SIGNAL" PREFIX << "sending \"drawing area reconfigured\" from" << this->type_string;
+	qDebug() << SG_PREFIX_SIGNAL << "Sending \"drawing area reconfigured\" from" << this->type_string;
 	emit this->drawing_area_reconfigured(this);
 }
 
@@ -372,7 +371,7 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 
 bool Viewport::reconfigure_drawing_area_cb(void)
 {
-	qDebug() << "SLOT" PREFIX;
+	qDebug() << SG_PREFIX_SLOT;
 	this->reconfigure_drawing_area();
 	return true;
 }
@@ -385,7 +384,7 @@ bool Viewport::reconfigure_drawing_area_cb(void)
 */
 void Viewport::clear(void)
 {
-	qDebug() << "II" PREFIX << "clear whole viewport" << this->type_string << this->canvas.width << this->canvas.height;
+	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->type_string << this->canvas.width << this->canvas.height;
 	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->eraseRect(0, 0, this->canvas.width, this->canvas.height);
 
@@ -461,7 +460,7 @@ bool Viewport::get_scale_visibility(void) const
 
 void Viewport::sync(void)
 {
-	qDebug() << "II" PREFIX << "sync (will call ->render())";
+	qDebug() << SG_PREFIX_I << "sync (will call ->render())";
 	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->canvas.pixmap), 0, 0, 0, 0, this->canvas.width, this->canvas.height);
 	this->render(this->canvas.pixmap);
 }
@@ -471,7 +470,7 @@ void Viewport::sync(void)
 
 void Viewport::pan_sync(int x_off, int y_off)
 {
-	qDebug() << "II: Viewport: Pan Sync";
+	qDebug() << SG_PREFIX_I;
 #ifdef K_FIXME_RESTORE
 	int x, y, wid, hei;
 
@@ -667,7 +666,7 @@ void Viewport::save_current_center(void)
 
 	this->print_centers("Viewport::save_current_center()");
 
-	qDebug() << "SIGNAL" PREFIX << "emitting center_updated()";
+	qDebug() << SG_PREFIX_SIGNAL << "Emitting center_updated()";
 	emit this->center_updated();
 }
 
@@ -725,7 +724,7 @@ void Viewport::show_centers(Window * parent_window) const
 	/* Because we have used ListSelectionMode::SingleItem selection
 	   mode, this list has at most one element. */
 	if (!result.empty()) {
-		qDebug() << "DD: Viewport: history center item:" << *result.begin();
+		qDebug() << SG_PREFIX_D << "History center item:" << *result.begin();
 	}
 }
 
@@ -737,7 +736,7 @@ void Viewport::print_centers(const QString & label) const
 	const std::list<QString> texts = this->get_centers_list();
 
 	for (auto iter = texts.begin(); iter != texts.end(); iter++) {
-		qDebug() << "II: Viewport: centers:" << label << *iter;
+		qDebug() << SG_PREFIX_I << "Centers:" << label << *iter;
 	}
 
 	return;
@@ -839,7 +838,7 @@ bool Viewport::forward_available(void) const
 bool Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position)
 {
 	if (!lat_lon.is_valid()) {
-		qDebug() << "EE" PREFIX << "not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
+		qDebug() << SG_PREFIX_E << "Not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
 		return false;
 	}
 
@@ -1085,10 +1084,10 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
 			coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y)));
 		} else {
-			qDebug() << "EE: Viewport: Screen to coord: unrecognized draw mode" << (int) this->drawmode;
+			qDebug() << SG_PREFIX_E << "Unrecognized draw mode" << (int) this->drawmode;
 		}
 	} else {
-		qDebug() << "EE: Viewport: Screen to coord: unrecognized coord mode" << (int) this->coord_mode;
+		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << (int) this->coord_mode;
 	}
 
 	return coord; /* Named Return Value Optimization. */
@@ -1118,7 +1117,7 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 
 	if (coord_in.mode != this->coord_mode) {
 		/* TODO_MAYBE: what's going on here? Why this special case even exists? */
-		qDebug() << "WW: Viewport: Have to convert in Viewport::coord_to_screen_pos()! This should never happen!";
+		qDebug() << SG_PREFIX_W << "Have to convert in Viewport::coord_to_screen_pos()! This should never happen!";
 
 		coord = coord_in;
 		coord.change_mode(this->coord_mode);
@@ -1668,7 +1667,7 @@ Layer * Viewport::get_trigger(void) const
 
 void Viewport::snapshot_save(void)
 {
-	qDebug() << "II" PREFIX << "save snapshot";
+	qDebug() << SG_PREFIX_I << "Save snapshot";
 	*this->canvas.snapshot_buffer = *this->canvas.pixmap;
 }
 
@@ -1677,7 +1676,7 @@ void Viewport::snapshot_save(void)
 
 void Viewport::snapshot_load(void)
 {
-	qDebug() << "II" PREFIX << "load snapshot";
+	qDebug() << SG_PREFIX_I << "Load snapshot";
 	*this->canvas.pixmap = *this->canvas.snapshot_buffer;
 }
 
@@ -1743,7 +1742,7 @@ void Viewport::add_copyright(QString const & copyright)
 void Viewport::add_logo(const ViewportLogo & logo)
 {
 	if (logo.logo_id == "") {
-		qDebug() << "WW" PREFIX << "trying to add empty logo";
+		qDebug() << SG_PREFIX_W << "Trying to add empty logo";
 		return;
 	}
 
@@ -1809,7 +1808,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 
 void Viewport::paintEvent(QPaintEvent * ev)
 {
-	qDebug() << "II" PREFIX;
+	qDebug() << SG_PREFIX_I;
 
 	QPainter painter(this);
 
@@ -1827,7 +1826,8 @@ void Viewport::paintEvent(QPaintEvent * ev)
 
 void Viewport::resizeEvent(QResizeEvent * ev)
 {
-	qDebug() << "II" PREFIX << "resize event";
+	qDebug() << SG_PREFIX_I;
+
 	this->reconfigure_drawing_area();
 	ThisApp::get_main_window()->draw_tree_items();
 	//this->draw_scale();
@@ -1841,7 +1841,7 @@ void Viewport::resizeEvent(QResizeEvent * ev)
 
 void Viewport::mousePressEvent(QMouseEvent * ev)
 {
-	qDebug() << "II: Viewport: mouse press event, button" << (int) ev->button();
+	qDebug() << SG_PREFIX_I << "Mouse CLICK event, button" << (int) ev->button();
 
 	this->window->get_toolbox()->handle_mouse_click(ev);
 
@@ -1855,7 +1855,7 @@ bool Viewport::eventFilter(QObject * object, QEvent * ev)
 {
 	if (ev->type() == QEvent::MouseButtonDblClick) {
 		QMouseEvent * m = (QMouseEvent *) ev;
-		qDebug() << "II: Viewport: mouse DOUBLE CLICK event, button" << (int) m->button();
+		qDebug() << SG_PREFIX_I << "Mouse DOUBLE CLICK event, button" << (int) m->button();
 
 		if (m->button() == Qt::LeftButton) {
 			this->window->get_toolbox()->handle_mouse_double_click(m);
@@ -1900,7 +1900,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent * ev)
 void Viewport::wheelEvent(QWheelEvent * ev)
 {
 	QPoint angle = ev->angleDelta();
-	qDebug() << "II: Viewport: wheel event, buttons =" << (int) ev->buttons() << "angle =" << angle.y();
+	qDebug() << SG_PREFIX_I << "Wheel event, buttons =" << (int) ev->buttons() << "angle =" << angle.y();
 	ev->accept();
 
 	const Qt::KeyboardModifiers modifiers = ev->modifiers();
@@ -1953,7 +1953,7 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		break;
 	};
 
-	qDebug() << "II" PREFIX "call Window::draw_tree_items()";
+	qDebug() << SG_PREFIX_I << "Will call Window::draw_tree_items()";
 	this->window->draw_tree_items();
 }
 
@@ -2141,7 +2141,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	}
 
 
-	qDebug() << "II" PREFIX << "scaled viewport's bounding box set to" << scaled_viewport->get_bbox();
+	qDebug() << SG_PREFIX_I << "Scaled viewport's bounding box set to" << scaled_viewport->get_bbox();
 
 
 
@@ -2167,29 +2167,29 @@ bool Viewport::print_cb(QPrinter * printer)
 	const QRectF page_rect = printer->pageRect(QPrinter::DevicePixel);
 	const QRectF paper_rect = printer->paperRect(QPrinter::DevicePixel);
 
-	qDebug() << "II" PREFIX << "---- Printer Info ----";
-	qDebug() << "II" PREFIX << "printer name:" << printer->printerName();
-	qDebug() << "II" PREFIX << "page rectangle:" << printer->pageRect(QPrinter::DevicePixel);
-	qDebug() << "II" PREFIX << "paper rectangle:" << printer->paperRect(QPrinter::DevicePixel);
-	qDebug() << "II" PREFIX << "resolution:" << printer->resolution();
-	qDebug() << "II" PREFIX << "supported resolutions:" << printer->supportedResolutions();
+	qDebug() << SG_PREFIX_I << "---- Printer Info ----";
+	qDebug() << SG_PREFIX_I << "printer name:" << printer->printerName();
+	qDebug() << SG_PREFIX_I << "page rectangle:" << printer->pageRect(QPrinter::DevicePixel);
+	qDebug() << SG_PREFIX_I << "paper rectangle:" << printer->paperRect(QPrinter::DevicePixel);
+	qDebug() << SG_PREFIX_I << "resolution:" << printer->resolution();
+	qDebug() << SG_PREFIX_I << "supported resolutions:" << printer->supportedResolutions();
 
-	qDebug() << "II" PREFIX << "---- Page Layout ----";
+	qDebug() << SG_PREFIX_I << "---- Page Layout ----";
 	QPageLayout layout = printer->pageLayout();
-	qDebug() << "II" PREFIX << "full rectangle (points):" << layout.fullRect(QPageLayout::Point);
-	qDebug() << "II" PREFIX << "paint rectangle (points):" << layout.paintRect(QPageLayout::Point);
-	qDebug() << "II" PREFIX << "margins (points):" << layout.margins(QPageLayout::Point);
+	qDebug() << SG_PREFIX_I << "full rectangle (points):" << layout.fullRect(QPageLayout::Point);
+	qDebug() << SG_PREFIX_I << "paint rectangle (points):" << layout.paintRect(QPageLayout::Point);
+	qDebug() << SG_PREFIX_I << "margins (points):" << layout.margins(QPageLayout::Point);
 
 	QPageLayout::Orientation orientation = layout.orientation();
 	switch (orientation) {
 	case QPrinter::Portrait:
-		qDebug() << "II" PREFIX << "orientation: Portrait";
+		qDebug() << SG_PREFIX_I << "orientation: Portrait";
 		break;
 	case QPrinter::Landscape:
-		qDebug() << "II" PREFIX << "orientation: Landscape";
+		qDebug() << SG_PREFIX_I << "orientation: Landscape";
 		break;
 	default:
-		qDebug() << "II" PREFIX << "orientation: unknown";
+		qDebug() << SG_PREFIX_I << "orientation: unknown";
 		break;
 	}
 
@@ -2217,8 +2217,8 @@ bool Viewport::print_cb(QPrinter * printer)
 
 	delete scaled_viewport;
 
-	qDebug() << "II" PREFIX << "target rectangle:" << target_rect;
-	qDebug() << "II" PREFIX << "paint_begin:" << paint_begin;
+	qDebug() << SG_PREFIX_I << "target rectangle:" << target_rect;
+	qDebug() << SG_PREFIX_I << "paint_begin:" << paint_begin;
 
 
 	return true;
@@ -2240,7 +2240,7 @@ void Viewport::draw_simple_crosshair(const ScreenPos & pos)
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-	qDebug() << "II" PREFIX << "crosshair at" << pos.x << pos.y;
+	qDebug() << SG_PREFIX_I << "crosshair at" << pos.x << pos.y;
 
 	if (pos.x < this->margin_left || pos.x > this->margin_left + graph_width) {
 		/* Position outside of graph area. */
@@ -2304,7 +2304,7 @@ QString ViewportDrawModes::get_name(ViewportDrawMode mode)
 	case ViewportDrawMode::LatLon:
 		return QObject::tr("&Lat/Lon Mode");
 	default:
-		qDebug() << "EE" PREFIX << "unexpected draw mode" << (int) mode;
+		qDebug() << SG_PREFIX_E << "Unexpected draw mode" << (int) mode;
 		return "";
 	}
 }
@@ -2329,7 +2329,7 @@ QString ViewportDrawModes::get_id_string(ViewportDrawMode mode)
 		mode_id_string = "latlon";
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unexpected draw mode" << (int) mode;
+		qDebug() << SG_PREFIX_E << "Unexpected draw mode" << (int) mode;
 		break;
 	}
 
@@ -2351,11 +2351,11 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 
 	} else if (0 == strcasecmp(line, "google")) {
 		success = false;
-		qDebug() << "WW" PREFIX << QObject::tr("Read file: draw mode 'google' no longer supported");
+		qDebug() << SG_PREFIX_W << QObject::tr("Read file: draw mode 'google' no longer supported");
 
 	} else if (0 == strcasecmp(line, "kh")) {
 		success = false;
-		qDebug() << "WW" PREFIX << QObject::tr("Read file: draw mode 'kh' no more supported");
+		qDebug() << SG_PREFIX_W << QObject::tr("Read file: draw mode 'kh' no more supported");
 
 	} else if (0 == strcasecmp(line, "mercator")) {
 		viewport->set_drawmode(ViewportDrawMode::Mercator);
@@ -2363,7 +2363,7 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 	} else if (0 == strcasecmp(line, "latlon")) {
 		viewport->set_drawmode(ViewportDrawMode::LatLon);
 	} else {
-		qDebug() << "EE" PREFIX << QObject::tr("Read file: unexpected draw mode") << line;
+		qDebug() << SG_PREFIX_E << QObject::tr("Read file: unexpected draw mode") << line;
 		success = false;
 	}
 
@@ -2373,11 +2373,18 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 
 
 
-bool Viewport::show_bbox(const LatLonBBox & a_bbox)
+sg_ret Viewport::set_bbox(const LatLonBBox & new_bbox)
 {
-	vu_zoom_to_show_bbox(this, this->get_coord_mode(), a_bbox);
-	this->emit_center_or_zoom_changed("show bbox");
-	return true;
+	vu_zoom_to_show_bbox(this, this->get_coord_mode(), new_bbox);
+	return sg_ret::ok;
+}
+
+
+
+
+void Viewport::request_redraw(const QString & trigger)
+{
+	this->emit_center_or_zoom_changed(trigger);
 }
 
 
@@ -2399,7 +2406,7 @@ void Viewport::dropEvent(QDropEvent * event)
 {
 	const QString & text = event->mimeData()->text();
 
-	qDebug() << "II" PREFIX << "--------- drop event with text" << text;
+	qDebug() << SG_PREFIX_I << "--------- drop event with text" << text;
 
 	/* If our parent window has enabled dropping, it needs to be able to handle dropped data. */
 	if (text.length()) {
@@ -2428,7 +2435,7 @@ bool Viewport::is_ready(void) const
 */
 void Viewport::emit_center_or_zoom_changed(const QString & trigger_name)
 {
-	qDebug() << "SIGNAL" PREFIX << "will emit 'center or zoom changed' signal after" << trigger_name << "event in Viewport";
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal triggered by" << trigger_name;
 	emit this->center_or_zoom_changed();
 }
 

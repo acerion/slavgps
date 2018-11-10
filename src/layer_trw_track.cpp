@@ -74,7 +74,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer TRW Track"
-#define PREFIX ": Layer TRW Track:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -1114,7 +1113,7 @@ TrackData Track::make_values_distance_over_time_helper(void) const
 		data.y[i] = data.y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 
 		if (data.x[i] <= data.x[i - 1]) {
-			qDebug() << "WW" PREFIX << "inconsistent time data at index" << i << ":" << data.x[i] << data.x[i - 1];
+			qDebug() << SG_PREFIX_W << "Inconsistent time data at index" << i << ":" << data.x[i] << data.x[i - 1];
 		}
 		i++;
 		iter++;
@@ -1187,7 +1186,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 
 			if ((*iter)->altitude > SG_ALTITUDE_RANGE_MAX) {
 				/* TODO_LATER: clamp the invalid values, but still generate vector? */
-				qDebug() << "WW" PREFIX << "track altitude" << (*iter)->altitude << "out of range; not generating vector";
+				qDebug() << SG_PREFIX_W << "Track altitude" << (*iter)->altitude << "out of range; not generating vector";
 				correct = false;
 				break;
 			}
@@ -1431,7 +1430,7 @@ TrackData Track::make_track_data_speed_over_time(void) const
 		if (data_dt.x[i] <= data_dt.x[i - 1]) {
 			/* Handle glitch in values of consecutive time stamps.
 			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
-			qDebug() << "WW" PREFIX << "glitch in timestamps:" << i << data_dt.x[i] << data_dt.x[i - 1];
+			qDebug() << SG_PREFIX_W << "Glitch in timestamps:" << i << data_dt.x[i] << data_dt.x[i - 1];
 			result.x[i] = data_dt.x[i - 1];
 			result.y[i] = 0;
 		} else {
@@ -1479,7 +1478,7 @@ TrackData Track::make_track_data_distance_over_time(void) const
 		if (data_dt.x[i] <= data_dt.x[i - 1]) {
 			/* Handle glitch in values of consecutive time stamps.
 			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
-			qDebug() << "WW" PREFIX << "glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
+			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
 			result.x[i] = data_dt.x[i - 1];
 			result.y[i] = 0;
 		} else {
@@ -1501,7 +1500,7 @@ void do_compress(TrackData & compressed_data, const TrackData & raw_data)
 	const int ceil_ = ceil(tps_per_data_point);
 	int n_tps_compressed = 0;
 
-	qDebug() << "-----------------------" << floor_ << tps_per_data_point << ceil_ << raw_data.n_points << compressed_data.n_points;
+	//qDebug() << "-----------------------" << floor_ << tps_per_data_point << ceil_ << raw_data.n_points << compressed_data.n_points;
 
 	/* In the following computation, we iterate through periods of time of duration delta_t.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
@@ -1633,7 +1632,7 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 		if (data_dt.x[i] <= data_dt.x[i - 1]) {
 			/* Handle glitch in values of consecutive time stamps.
 			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
-			qDebug() << "WW" PREFIX << "glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
+			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
 			result.x[i] = result.x[i - 1]; /* TODO_LATER: This won't work for a two or more invalid timestamps in a row. */
 			result.y[i] = 0;
 		} else {
@@ -2100,7 +2099,7 @@ void Track::recalculate_bbox(void)
 	/* TODO_2_LATER: enable this debug and verify whether it appears only
 	   once for a given track during import ("acquire") of the
 	   track from external file. */
-	// qDebug() << "DD" PREFIX << "Recalculated bounds of track:" << this->bbox;
+	// qDebug() << SG_PREFIX_D << "Recalculated bounds of track:" << this->bbox;
 }
 
 
@@ -2521,7 +2520,7 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 {
 	TrackPoints::iterator iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), tp_at);
 	if (iter == this->trackpoints.end()) {
-		qDebug() << "EE: Track: failed to find existing trackpoint in track" << this->name << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_E << "Failed to find existing trackpoint in track" << this->name << "in" << __FUNCTION__ << __LINE__;
 		return;
 	}
 
@@ -2658,13 +2657,13 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 #if 1
 		/* Consistency check. */
 		if (!track) {
-			qDebug() << "EE: Track: menu: inconsistency 1";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 1";
 		}
 		if (track->type_id != "sg.trw.track") {
-			qDebug() << "EE: Track: menu: inconsistency 2";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 2";
 		}
 		if (this->type_id != "sg.trw.track") {
-			qDebug() << "EE: Track: menu: inconsistency 3";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 3";
 		}
 #endif
 
@@ -2676,13 +2675,13 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 #if 1
 		/* Consistency check. */
 		if (!track) {
-			qDebug() << "EE: Track: menu: inconsistency 4";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 4";
 		}
 		if (track->type_id != "sg.trw.route") {
-			qDebug() << "EE: Track: menu: inconsistency 5";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 5";
 		}
 		if (this->type_id != "sg.trw.route") {
-			qDebug() << "EE: Track: menu: inconsistency 6";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 6";
 		}
 #endif
 
@@ -3173,9 +3172,8 @@ void Track::rezoom_to_show_full_cb(void)
 		return;
 	}
 
-	ThisApp::get_main_viewport()->show_bbox(this->get_bbox());
-
-	g_tree->emit_items_tree_updated();
+	ThisApp::get_main_viewport()->set_bbox(this->get_bbox());
+	ThisApp::get_main_viewport()->request_redraw("Re-align viewport to show whole contents of TRW Track");
 }
 
 
@@ -3420,8 +3418,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	parent_layer->tree_view->apply_tree_item_name(this);
 	parent_layer->tree_view->sort_children(tracks, parent_layer->track_sort_order);
 
-
-	g_tree->emit_items_tree_updated();
+	ThisApp::get_layers_panel()->emit_items_tree_updated_cb("Redrawing items after renaming track");
 
 	return new_name;
 }
@@ -3667,7 +3664,7 @@ std::list<Rect *> * Track::get_map_rectangles(const VikingZoomLevel & viking_zoo
 			}
 		}
 	} else {
-		qDebug() << "WW: Track: 'download map' feature works only in Mercator mode";
+		qDebug() << SG_PREFIX_W << "'download map' feature works only in Mercator mode";
 	}
 
 	Coord coord_tl;

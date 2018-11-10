@@ -1645,7 +1645,8 @@ void LayerTRW::centerize_cb(void)
 bool LayerTRW::move_viewport_to_show_all(Viewport * viewport)
 {
 	if (this->get_bbox().is_valid()) {
-		viewport->show_bbox(this->get_bbox());
+		viewport->set_bbox(this->get_bbox());
+		viewport->request_redraw("Re-align viewport to show whole contents of TRW Layer");
 		return true;
 	} else {
 		return false;
@@ -1662,9 +1663,9 @@ void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 		return;
 	}
 
-	if (this->move_viewport_to_show_all(ThisApp::get_main_viewport())) {
-		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb() for" << this->get_name();
-		ThisApp::get_layers_panel()->emit_items_tree_updated_cb(this->get_name());
+	Viewport * viewport = ThisApp::get_main_viewport();
+	if (this->move_viewport_to_show_all(viewport)) {
+		viewport->request_redraw("Redrawing viewport after re-aligning it to show all of TRW Layer");
 	}
 }
 
@@ -1758,8 +1759,8 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
 			ThisApp::get_main_viewport()->set_center_from_coord(wp->coord, true);
-			g_tree->emit_items_tree_updated();
 			this->tree_view->select_and_expose_tree_item(wp);
+			ThisApp::get_main_viewport()->request_redraw("Redrawing items after setting new center in viewport");
 
 			break;
 		}
@@ -1806,7 +1807,8 @@ void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 
 	Geonames::create_wikipedia_waypoints(this, viewport->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
-	g_tree->emit_items_tree_updated();
+
+	this->emit_layer_changed("Redrawing items after adding wikipedia waypoints");
 }
 
 
@@ -1816,7 +1818,8 @@ void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
 	Geonames::create_wikipedia_waypoints(this, this->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
-	g_tree->emit_items_tree_updated();
+
+	this->emit_layer_changed("Redrawing items after adding wikipedia waypoints");
 }
 
 
@@ -2024,7 +2027,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center2()), this->get_window()) {
 		this->waypoints.recalculate_bbox();
 		if (this->visible) {
-			g_tree->emit_items_tree_updated();
+			this->emit_layer_changed("Redrawing items after adding waypoint");
 		}
 	}
 }
