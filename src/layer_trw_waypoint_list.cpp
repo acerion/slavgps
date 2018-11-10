@@ -65,11 +65,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 /* Instead of hooking automatically on table item selection,
    this is performed on demand via the specific context menu request. */
 void WaypointListDialog::waypoint_select(LayerTRW * layer)
@@ -110,7 +105,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 	   Since the properties also allows waypoint manipulations it won't cause conflicts here. */
 	this->accept();
 
-	const std::tuple<bool, bool> result = waypoint_properties_dialog(wp, wp->name, trw->get_coord_mode(), g_tree->tree_get_main_window());
+	const std::tuple<bool, bool> result = waypoint_properties_dialog(wp, wp->name, trw->get_coord_mode(), ThisApp::get_main_window());
 	if (std::get<SG_WP_DIALOG_OK>(result)) { /* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
 
 		if (std::get<SG_WP_DIALOG_NAME>(result)) {
@@ -138,7 +133,7 @@ void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 
 	Waypoint * wp = this->selected_wp;
 	LayerTRW * trw = wp->get_parent_layer_trw();
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 
 	viewport->set_center_from_coord(wp->coord, true);
 	this->waypoint_select(trw);

@@ -189,9 +189,8 @@ Window::Window()
 	connect(this, SIGNAL (center_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
 
 	g_tree = new Tree();
-	g_tree->tree_view = this->get_items_tree()->get_tree_view();
 	g_tree->window = this;
-	g_tree->items_tree = this->items_tree;
+	g_tree->layers_panel = this->items_tree;
 	g_tree->viewport = this->viewport;
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
@@ -2537,7 +2536,7 @@ void Window::acquire_from_gc_cb(void)
 		return;
 	}
 
-	this->acquire_handler(new DataSourceGeoCache(g_tree->tree_get_main_viewport()));
+	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_viewport()));
 }
 #endif
 
@@ -2706,7 +2705,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 
 	/* Redraw all layers at current position and zoom.
 	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
-	g_tree->tree_get_items_tree()->draw_tree_items(scaled_viewport, true, false);
+	ThisApp::get_layers_panel()->draw_tree_items(scaled_viewport, true, false);
 
 	/* Save buffer as file. */
 	const QPixmap pixmap = scaled_viewport->get_pixmap();
@@ -3676,4 +3675,37 @@ void Window::emit_center_or_zoom_changed(const QString & trigger_name)
 void Window::set_dirty_flag(bool dirty)
 {
 	this->dirty_flag = dirty;
+}
+
+
+
+
+Window * ThisApp::get_main_window(void)
+{
+	assert (g_tree);
+	assert (g_tree->window);
+
+	return g_tree->window;
+}
+
+
+
+
+LayersPanel * ThisApp::get_layers_panel(void)
+{
+	assert (g_tree);
+	assert (g_tree->window);
+
+	return g_tree->layers_panel;
+}
+
+
+
+
+Viewport * ThisApp::get_main_viewport(void)
+{
+	assert (g_tree);
+	assert (g_tree->window);
+
+	return g_tree->viewport;
 }

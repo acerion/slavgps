@@ -58,11 +58,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 {
 	this->panel_box = new QVBoxLayout;
@@ -440,8 +435,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
-			if (TreeItem::the_same_object(this->get_selected_layer(), g_tree->tree_get_main_viewport()->get_trigger())) {
-				g_tree->tree_get_main_viewport()->set_trigger(NULL);
+			if (TreeItem::the_same_object(this->get_selected_layer(), ThisApp::get_main_viewport()->get_trigger())) {
+				ThisApp::get_main_viewport()->set_trigger(NULL);
 			}
 
 			Clipboard::copy_selected(this);
@@ -527,8 +522,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		if (parent_layer) {
 #ifdef K_FIXME_RESTORE
 			/* Reset trigger if trigger deleted. */
-			if (TreeItem::the_same_object(this->get_selected_layer(), g_tree->tree_get_main_viewport()->get_trigger())) {
-				g_tree->tree_get_main_viewport()->set_trigger(NULL);
+			if (TreeItem::the_same_object(this->get_selected_layer(), ThisApp::get_main_viewport()->get_trigger())) {
+				ThisApp::get_main_viewport()->set_trigger(NULL);
 			}
 
 			if (parent_layer->type == LayerType::AGGREGATE) {

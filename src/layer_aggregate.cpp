@@ -55,11 +55,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 #define SG_MODULE "Layer Aggregate"
 
 
@@ -418,17 +413,15 @@ void LayerAggregate::change_coord_mode(CoordMode mode)
 
 
 
-void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
+void LayerAggregate::children_visibility_toggle_cb(void) /* Slot. */
 {
-	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
-
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		/* Also set checkbox on/off in tree view. */
-		t_view->apply_tree_item_visibility(layer);
+		this->tree_view->apply_tree_item_visibility(layer);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_layer_changed("Aggregate - child visible toggle");
@@ -437,7 +430,7 @@ void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 
 
 
-void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
+void LayerAggregate::children_visibility_set(bool on_off)
 {
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
@@ -445,7 +438,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 		Layer * layer = *child;
 		layer->visible = on_off;
 		/* Also set checkbox on_off in tree view. */
-		panel->get_tree_view()->apply_tree_item_visibility(layer);
+		this->tree_view->apply_tree_item_visibility(layer);
 	}
 
 	/* Redraw as view may have changed. */
@@ -455,17 +448,17 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 
 
 
-void LayerAggregate::child_visible_on_cb(void) /* Slot. */
+void LayerAggregate::children_visibility_on_cb(void) /* Slot. */
 {
-	this->child_visible_set(g_tree->tree_get_items_tree(), true);
+	this->children_visibility_set(true);
 }
 
 
 
 
-void LayerAggregate::child_visible_off_cb(void) /* Slot. */
+void LayerAggregate::children_visibility_off_cb(void) /* Slot. */
 {
-	this->child_visible_set(g_tree->tree_get_items_tree(), false);
+	this->children_visibility_set(false);
 }
 
 
@@ -473,19 +466,17 @@ void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 
 void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 {
-	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
-
 	this->blockSignals(true);
-	t_view->blockSignals(true);
+	this->tree_view->blockSignals(true);
 
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		t_view->detach_tree_item(*iter);
+		this->tree_view->detach_tree_item(*iter);
 	}
 	this->children->sort(TreeItem::compare_name_ascending);
 	this->attach_children_to_tree();
 
 	this->blockSignals(false);
-	t_view->blockSignals(false);
+	this->tree_view->blockSignals(false);
 }
 
 
@@ -493,19 +484,17 @@ void LayerAggregate::sort_a2z_cb(void) /* Slot. */
 
 void LayerAggregate::sort_z2a_cb(void) /* Slot. */
 {
-	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
-
 	this->blockSignals(true);
-	t_view->blockSignals(true);
+	this->tree_view->blockSignals(true);
 
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		t_view->detach_tree_item(*iter);
+		this->tree_view->detach_tree_item(*iter);
 	}
 	this->children->sort(TreeItem::compare_name_descending);
 	this->attach_children_to_tree();
 
 	this->blockSignals(false);
-	t_view->blockSignals(false);
+	this->tree_view->blockSignals(false);
 }
 
 
@@ -642,13 +631,13 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 		QMenu * vis_submenu = menu.addMenu(tr("&Visibility"));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("APPLY"), tr("&Show All Layers"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_on_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_on_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("CLEAR"), tr("&Hide All Layers"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_off_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_off_cb()));
 
 		qa = vis_submenu->addAction(QIcon::fromTheme("REFRESH"), tr("&Toggle Visibility of All Layers"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_toggle_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (children_visibility_toggle_cb()));
 	}
 
 

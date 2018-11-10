@@ -65,11 +65,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 static QMap<QString, DataSource *> g_bfilters;
 static Track * bfilter_track = NULL;
 static AcquireContext * g_acquire_context = NULL;
@@ -187,7 +182,7 @@ void AcquireWorker::finalize_after_completion(void)
 
 
 	this->acquire_context->target_trw->attach_children_to_tree();
-	//this->acquire_context->viewport = g_tree->tree_get_main_viewport();
+	//this->acquire_context->viewport = ThisApp::get_main_viewport();
 	this->acquire_context->target_trw->post_read(this->acquire_context->viewport, true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
 	if (this->data_source && this->data_source->autoview) {

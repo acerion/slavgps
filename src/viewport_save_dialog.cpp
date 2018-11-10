@@ -51,11 +51,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 {
 	this->width_spin->setValue(this->viewport->get_width());
@@ -174,7 +169,7 @@ void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
 		items.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportSaveFormat::JPEG));
 
 		this->output_format_radios = new RadioGroupWidget(tr("Output format"), &items, this);
-		this->output_format_radios->set_id_of_selected((int) g_tree->tree_get_main_window()->viewport_save_format);
+		this->output_format_radios->set_id_of_selected((int) ThisApp::get_main_window()->viewport_save_format);
 
 		this->grid->addWidget(this->output_format_radios, row, 0, 1, 2);
 		row++;

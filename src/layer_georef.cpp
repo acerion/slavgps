@@ -572,7 +572,8 @@ static int world_file_read_file(const QString & full_path, double values[4])
 
 void GeorefConfigDialog::load_cb(void)
 {
-	Window * window = g_tree->tree_get_main_window();
+	Window * window = ThisApp::get_main_window();
+
 	QFileDialog file_selector(window, tr("Choose World file"));
 	file_selector.setFileMode(QFileDialog::ExistingFile);
 	/* AcceptMode is QFileDialog::AcceptOpen by default. */;
@@ -603,7 +604,7 @@ void GeorefConfigDialog::load_cb(void)
 
 void LayerGeoref::export_params_cb(void)
 {
-	Window * window = g_tree->tree_get_main_window();
+	Window * window = ThisApp::get_main_window();
 
 	QFileDialog file_selector(window, QObject::tr("Choose World file"));
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
@@ -1052,7 +1053,7 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 
 void LayerGeoref::zoom_to_fit_cb(void)
 {
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 	viewport->set_viking_zoom_level_x(this->mpp_easting);
 	viewport->set_viking_zoom_level_y(this->mpp_northing);
 
@@ -1064,7 +1065,7 @@ void LayerGeoref::zoom_to_fit_cb(void)
 
 void LayerGeoref::goto_center_cb(void)
 {
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 	UTM utm = viewport->get_center()->get_utm();
 
 	utm.easting = this->utm_tl.easting + (this->image_width * this->mpp_easting / 2); /* Only an approximation. */

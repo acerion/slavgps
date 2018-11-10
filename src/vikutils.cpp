@@ -85,11 +85,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 bool vik_debug = false;
 bool vik_verbose = false;
 bool vik_version = false;
@@ -718,7 +713,7 @@ void CommandLineOptions::apply(Window * window)
 		}
 
 		/* Don't add map layer if one already exists. */
-		const std::list<const Layer *> map_layers = g_tree->tree_get_items_tree()->get_all_layers_of_type(LayerType::Map, true);
+		const std::list<const Layer *> map_layers = ThisApp::get_layers_panel()->get_all_layers_of_type(LayerType::Map, true);
 		bool add_map = true;
 
 		for (auto iter = map_layers.begin(); iter != map_layers.end(); iter++) {
@@ -737,7 +732,7 @@ void CommandLineOptions::apply(Window * window)
 			layer->set_map_type_id(the_type_id);
 			layer->set_name(Layer::get_type_ui_label(layer->type));
 
-			g_tree->tree_get_items_tree()->get_top_layer()->add_layer(layer, true);
+			ThisApp::get_layers_panel()->get_top_layer()->add_layer(layer, true);
 			layer->emit_layer_changed("Command Line Options - Apply");
 		}
 	}

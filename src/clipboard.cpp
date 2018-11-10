@@ -64,11 +64,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 typedef struct {
 	void * clipboard;
 	int pid;
@@ -312,7 +307,7 @@ static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 		((LayerTRW *) selected)->get_waypoints_node().recalculate_bbox();
 		selected->emit_layer_changed("Clipboard - add wp");
 	} else {
-		Dialog::error(QObject::tr("In order to paste a waypoint, please select an appropriate layer to paste into."), g_tree->tree_get_main_window());
+		Dialog::error(QObject::tr("In order to paste a waypoint, please select an appropriate layer to paste into."), ThisApp::get_main_window());
 	}
 
 }

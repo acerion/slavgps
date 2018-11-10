@@ -403,7 +403,7 @@ bool Layer::handle_selection_in_tree(void)
 	g_tree->selected_tree_item = this;
 #endif
 
-	return g_tree->tree_get_main_window()->clear_highlight();
+	return ThisApp::get_main_window()->clear_highlight();
 }
 
 
@@ -420,7 +420,7 @@ QIcon Layer::get_icon(void)
 /* Returns true if OK was pressed. */
 bool Layer::properties_dialog()
 {
-	return this->properties_dialog(g_tree->tree_get_main_viewport());
+	return this->properties_dialog(ThisApp::get_main_viewport());
 }
 
 
@@ -617,7 +617,7 @@ bool Layer::compare_timestamp_descending(const Layer * first, const Layer * seco
 
 Window * Layer::get_window(void)
 {
-	return g_tree->tree_get_main_window();
+	return ThisApp::get_main_window();
 }
 
 

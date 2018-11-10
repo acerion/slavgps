@@ -610,7 +610,7 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 	menu.addSeparator();
 
 
-	if (g_tree->tree_get_items_tree()) {
+	if (ThisApp::get_layers_panel()) {
 		rv = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
@@ -652,7 +652,7 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 */
 void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 	const unsigned int n_items = this->children_list.size();
 
 	if (1 == n_items) {
@@ -725,9 +725,9 @@ void LayerTRWWaypoints::apply_dem_data_only_missing_cb(void)
 
 void LayerTRWWaypoints::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = g_tree->tree_get_items_tree();
+	LayersPanel * panel = ThisApp::get_layers_panel();
 	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), g_tree->tree_get_main_window());
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
 		return;
 	}
 
@@ -807,7 +807,7 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 void LayerTRWWaypoints::paste_sublayer_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
-	Clipboard::paste(g_tree->tree_get_items_tree());
+	Clipboard::paste(ThisApp::get_layers_panel());
 }
 
 

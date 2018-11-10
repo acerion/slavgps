@@ -385,7 +385,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	this->sublayer_menu_waypoint_misc((LayerTRW *) this->owning_layer, menu, tree_view_context_menu);
 
 
-	if (g_tree->tree_get_items_tree()) {
+	if (ThisApp::get_layers_panel()) {
 		context_menu_in_items_tree = true;
 		qa = menu.addAction(QIcon::fromTheme("document-new"), tr("&New Waypoint..."));
 		connect(qa, SIGNAL (triggered(bool)), (LayerTRW *) this->owning_layer, SLOT (new_waypoint_cb()));
@@ -450,7 +450,7 @@ void Waypoint::properties_dialog_cb(void)
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 
-	const std::tuple<bool, bool> result = waypoint_properties_dialog(this, this->name, parent_layer_->coord_mode, g_tree->tree_get_main_window());
+	const std::tuple<bool, bool> result = waypoint_properties_dialog(this, this->name, parent_layer_->coord_mode, ThisApp::get_main_window());
 
 	if (std::get<SG_WP_DIALOG_OK>(result)) {
 		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
@@ -501,9 +501,9 @@ void Waypoint::apply_dem_data_only_missing_cb(void)
 
 void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = g_tree->tree_get_items_tree();
+	LayersPanel * panel = ThisApp::get_layers_panel();
 	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), g_tree->tree_get_main_window());
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
 		return;
 	}
 
@@ -527,7 +527,7 @@ void Waypoint::open_diary_cb(void)
 		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&this->timestamp));
 		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
 	} else {
-		Dialog::info(tr("This waypoint has no date information."), g_tree->tree_get_main_window());
+		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());
 	}
 }
 
@@ -555,7 +555,7 @@ void Waypoint::open_astro_cb(void)
 		free(lat_str);
 		free(lon_str);
 	} else {
-		Dialog::info(tr("This waypoint has no date information."), g_tree->tree_get_main_window());
+		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());
 	}
 }
 
@@ -564,7 +564,7 @@ void Waypoint::open_astro_cb(void)
 
 void Waypoint::show_in_viewport_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->goto_coord(g_tree->tree_get_main_viewport(), this->coord);
+	((LayerTRW *) this->owning_layer)->goto_coord(ThisApp::get_main_viewport(), this->coord);
 }
 
 
@@ -606,7 +606,7 @@ QString Waypoint::sublayer_rename_request(const QString & new_name)
 
 	if (parent_layer->waypoints.find_waypoint_by_name(new_name)) {
 		/* An existing waypoint has been found with the requested name. */
-		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), g_tree->tree_get_main_window())) {
+		if (!Dialog::yes_or_no(tr("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(new_name), ThisApp::get_main_window())) {
 			return empty_string;
 		}
 	}
@@ -695,7 +695,7 @@ void Waypoint::geotagging_waypoint_mtime_update_cb(void)
 
 void Waypoint::geotagging_waypoint_cb(void)
 {
-	trw_layer_geotag_dialog(g_tree->tree_get_main_window(), (LayerTRW *) this->owning_layer, this, NULL);
+	trw_layer_geotag_dialog(ThisApp::get_main_window(), (LayerTRW *) this->owning_layer, this, NULL);
 }
 #endif
 
@@ -711,7 +711,7 @@ void Waypoint::delete_sublayer(bool confirm)
 	}
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	Window * main_window = g_tree->tree_get_main_window();
+	Window * main_window = ThisApp::get_main_window();
 
 	if (confirm) {
 		/* Get confirmation from the user. */

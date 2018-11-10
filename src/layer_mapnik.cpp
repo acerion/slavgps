@@ -86,7 +86,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
 extern bool vik_debug;
 extern bool vik_verbose;
 
@@ -920,7 +919,7 @@ void LayerMapnik::flush_memory_cb(void)
 
 void LayerMapnik::reload_cb(void)
 {
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 
 	this->post_read(viewport, false);
 	this->draw_tree_item(viewport, false, false);
@@ -938,7 +937,7 @@ void LayerMapnik::reload_cb(void)
 */
 void LayerMapnik::run_carto_cb(void)
 {
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 
 	/* Don't load the XML config if carto load fails. */
 	if (!this->carto_load()) {

@@ -54,6 +54,7 @@
 #include "viewport_internal.h"
 #include "tree_view.h"
 #include "layers_panel.h"
+#include "window.h"
 
 
 
@@ -75,7 +76,6 @@ using namespace SlavGPS;
 
 
 extern bool vik_debug;
-extern Tree * g_tree;
 
 
 
@@ -418,7 +418,7 @@ void MapSourceBingProviders::run(void)
 
 	/* Emit update. As we are on a download thread, it's better to
 	   fire the update from the main loop. */
-	emit g_tree->tree_get_items_tree()->items_tree_updated();
+	emit ThisApp::get_layers_panel()->items_tree_updated();
 
 	return;
 }

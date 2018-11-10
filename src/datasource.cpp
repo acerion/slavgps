@@ -36,6 +36,7 @@
 #include "util.h"
 #include "widget_list_selection.h"
 #include "viewport_internal.h"
+#include "window.h"
 
 
 
@@ -46,11 +47,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "DataSource"
-
-
-
-
-extern Tree * g_tree;
 
 
 
@@ -101,7 +97,7 @@ AcquireProgressDialog::~AcquireProgressDialog()
 
 		/* By making the widget a child of viewport, we make sure that
 		   it won't be deleted by destructor of acquire progress dialog. */
-		this->list_selection_widget->setParent(g_tree->tree_get_main_viewport());
+		this->list_selection_widget->setParent(ThisApp::get_main_viewport());
 	}
 }
 

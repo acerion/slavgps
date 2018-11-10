@@ -66,17 +66,13 @@ namespace SlavGPS {
 
 
 
-	enum class SGFileType;
-	class VikingZoomLevel;
-
-
-
-
 	QComboBox * create_zoom_combo_all_levels(QWidget * parent);
 
 
 
 
+	enum class SGFileType;
+	class VikingZoomLevel;
 	class Layer;
 	class LayerTRW;
 	class Toolbox;
@@ -390,6 +386,16 @@ namespace SlavGPS {
 
 	signals:
 		void center_or_zoom_changed(void);
+	};
+
+
+
+
+	class ThisApp {
+	public:
+		static Window * get_main_window(void);
+		static LayersPanel * get_layers_panel(void);
+		static Viewport * get_main_viewport(void);
 	};
 
 

@@ -60,11 +60,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 static QHash<QString, QString> last_user_strings;
 
 
@@ -199,7 +194,7 @@ void WebToolDatasource::run_at_current_position(Viewport * a_viewport)
 
 	DataSource * data_source = new DataSourceWebTool(search, this->get_label(), this->get_label(), a_viewport, this);
 
-	AcquireContext acquire_context(a_viewport->get_window(), a_viewport, g_tree->tree_get_items_tree()->get_top_layer(), g_tree->tree_get_items_tree()->get_selected_layer());
+	AcquireContext acquire_context(a_viewport->get_window(), a_viewport, ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
 	Acquire::acquire_from_source(data_source, data_source->mode, &acquire_context);
 
 #ifdef K_TODO

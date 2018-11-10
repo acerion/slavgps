@@ -70,11 +70,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 ParameterSpecification & ParameterSpecification::operator=(const ParameterSpecification & other)
 {
 	if (&other == this) {

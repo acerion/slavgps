@@ -825,7 +825,7 @@ void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 	if (n_items > 0) {
 
 		qDebug() << SG_PREFIX_I << "Re-zooming to show all items (" << n_items << "items)";
-		g_tree->tree_get_main_viewport()->show_bbox(this->get_bbox());
+		ThisApp::get_main_viewport()->show_bbox(this->get_bbox());
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated()'";
 		g_tree->emit_items_tree_updated();
@@ -944,7 +944,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 void LayerTRWTracks::paste_sublayer_cb(void)
 {
 	/* Slightly cheating method, routing via the panels capability. */
-	Clipboard::paste(g_tree->tree_get_items_tree());
+	Clipboard::paste(ThisApp::get_layers_panel());
 }
 
 
@@ -952,18 +952,15 @@ void LayerTRWTracks::paste_sublayer_cb(void)
 
 void LayerTRWTracks::sort_order_a2z_cb(void)
 {
-
-	TreeView * t_view = g_tree->tree_get_items_tree()->get_tree_view();
-
 	this->blockSignals(true);
-	t_view->blockSignals(true);
+	this->tree_view->blockSignals(true);
 
-	t_view->detach_children(this);
+	this->tree_view->detach_children(this);
 	this->children_list.sort(TreeItem::compare_name_ascending);
 	this->attach_children_to_tree();
 
 	this->blockSignals(false);
-	t_view->blockSignals(false);
+	this->tree_view->blockSignals(false);
 }
 
 

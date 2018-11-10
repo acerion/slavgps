@@ -72,11 +72,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 /* Shouldn't need to use these much any more as the protocol is now saved as a string.
    They are kept for compatibility loading old .vik files */
 typedef enum {
@@ -1261,7 +1256,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 
 void LayerGPS::gps_upload_cb(void)
 {
-	LayersPanel * panel = g_tree->tree_get_items_tree();
+	LayersPanel * panel = ThisApp::get_layers_panel();
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
@@ -1313,7 +1308,7 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 void LayerGPS::gps_empty_upload_cb(void)
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Upload data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Upload data?"), ThisApp::get_main_window())) {
 		return;
 	}
 
@@ -1328,7 +1323,7 @@ void LayerGPS::gps_empty_upload_cb(void)
 void LayerGPS::gps_empty_download_cb(void)
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Download data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Download data?"), ThisApp::get_main_window())) {
 		return;
 	}
 
@@ -1344,7 +1339,7 @@ void LayerGPS::gps_empty_download_cb(void)
 void LayerGPS::gps_empty_realtime_cb(void)
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), ThisApp::get_main_window())) {
 		return;
 	}
 
@@ -1359,7 +1354,7 @@ void LayerGPS::gps_empty_realtime_cb(void)
 void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(tr("Are you sure you want to delete all GPS data?"), g_tree->tree_get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete all GPS data?"), ThisApp::get_main_window())) {
 		return;
 	}
 

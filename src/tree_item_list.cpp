@@ -63,11 +63,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 {
 	if (!item) {

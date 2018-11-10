@@ -79,7 +79,6 @@ namespace SlavGPS {
 
 
 
-	class TreeView;
 	class Layer;
 	class Window;
 	class LayersPanel;
@@ -95,19 +94,10 @@ namespace SlavGPS {
 		Tree() {};
 		~Tree() {};
 
-		TreeView * tree_get_tree_view() { return this->tree_view; };
-		Window * tree_get_main_window() { return this->window; };
-		LayersPanel * tree_get_items_tree() { return this->items_tree; };
-		Viewport * tree_get_main_viewport() { return this->viewport; };
 
 		void add_to_set_of_selected(TreeItem * tree_item);
 		bool remove_from_set_of_selected(const TreeItem * tree_item);
 		bool is_in_set_of_selected(const TreeItem * tree_item) const;
-
-		TreeView * tree_view = NULL; /* Reference. */
-		Window * window = NULL;
-		LayersPanel * items_tree = NULL;
-		Viewport * viewport = NULL;
 
 		/* Set in TreeItem::handle_selection_in_tree(). Used to draw selected tree items with highlight in viewport. */
 		std::map<sg_uid_t, TreeItem *> selected_tree_items;
@@ -117,7 +107,10 @@ namespace SlavGPS {
 	signals:
 		void items_tree_updated(void);
 
-
+	public:
+		Window * window = NULL;
+		LayersPanel * layers_panel = NULL;
+		Viewport * viewport = NULL;
 	};
 
 

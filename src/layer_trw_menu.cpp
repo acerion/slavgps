@@ -55,11 +55,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 #define POINTS 1
 #define LINES 2
 
@@ -269,7 +264,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 
 
-	Acquire::set_context(this->get_window(), g_tree->tree_get_main_viewport(), g_tree->tree_get_items_tree()->get_top_layer(), g_tree->tree_get_items_tree()->get_selected_layer());
+	Acquire::set_context(this->get_window(), ThisApp::get_main_viewport(), ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
 	Acquire::set_target(this, NULL);
 
 
@@ -382,7 +377,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 	}
 
 
-	if (g_tree->tree_get_items_tree() && (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
+	if (ThisApp::get_layers_panel() && (this->menu_data->sublayer->type_id == "sg.trw.waypoints" || this->menu_data->sublayer->type_id == "sg.trw.waypoint")) {
 		rv = true;
 		layer_trw_sublayer_menu_waypoints_waypoint_new(this, menu);
 	}

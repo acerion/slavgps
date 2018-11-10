@@ -60,11 +60,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 /**
    Returns: Whether the file is a JPG.
    Uses Magic library if available to determine the jpgness.
@@ -123,7 +118,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 {
 	bool auto_zoom = true;
 	/* Auto load into TrackWaypoint layer if one is selected. */
-	Layer * layer = g_tree->tree_get_items_tree()->get_selected_layer();
+	Layer * layer = ThisApp::get_layers_panel()->get_selected_layer();
 	LayerTRW * trw = NULL;
 
 	bool create_layer = false;

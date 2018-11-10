@@ -1632,7 +1632,7 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		Viewport * viewport = g_tree->tree_get_main_viewport();
+		Viewport * viewport = ThisApp::get_main_viewport();
 		this->goto_coord(viewport, coord);
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
@@ -1662,9 +1662,9 @@ void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 		return;
 	}
 
-	if (this->move_viewport_to_show_all(g_tree->tree_get_main_viewport())) {
+	if (this->move_viewport_to_show_all(ThisApp::get_main_viewport())) {
 		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb() for" << this->get_name();
-		g_tree->tree_get_items_tree()->emit_items_tree_updated_cb(this->get_name());
+		ThisApp::get_layers_panel()->emit_items_tree_updated_cb(this->get_name());
 	}
 }
 
@@ -1757,7 +1757,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			g_tree->tree_get_main_viewport()->set_center_from_coord(wp->coord, true);
+			ThisApp::get_main_viewport()->set_center_from_coord(wp->coord, true);
 			g_tree->emit_items_tree_updated();
 			this->tree_view->select_and_expose_tree_item(wp);
 
@@ -1802,7 +1802,7 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, Window * parent_window)
 
 void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 
 	Geonames::create_wikipedia_waypoints(this, viewport->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
@@ -1904,7 +1904,7 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
-	this->acquire_handler(new DataSourceGeoCache(g_tree->tree_get_main_viewport()));
+	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_viewport()));
 }
 #endif
 
@@ -1956,7 +1956,7 @@ void LayerTRW::upload_to_gps_cb()
  */
 void LayerTRW::upload_to_gps(TreeItem * sublayer)
 {
-	LayersPanel * panel = g_tree->tree_get_items_tree();
+	LayersPanel * panel = ThisApp::get_layers_panel();
 	Track * trk = NULL;
 	GPSTransferType xfer_type = GPSTransferType::TRK; /* "sg.trw.tracks" = 0 so hard to test different from NULL! */
 	bool xfer_all = false;
@@ -1996,7 +1996,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 
 	/* When called from the viewport - work the corresponding layers panel: */
 	if (!panel) {
-		panel = g_tree->tree_get_items_tree();
+		panel = ThisApp::get_layers_panel();
 	}
 
 	/* Apply settings to transfer to the GPS device. */
@@ -2006,7 +2006,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 		     gps_upload_setup.get_protocol(),
 		     gps_upload_setup.get_port(),
 		     false,
-		     g_tree->tree_get_main_viewport(),
+		     ThisApp::get_main_viewport(),
 		     panel,
 		     gps_upload_setup.get_do_tracks(),
 		     gps_upload_setup.get_do_routes(),
@@ -2021,7 +2021,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	/* TODO_LATER longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
-	if (this->new_waypoint(g_tree->tree_get_main_viewport()->get_center2()), this->get_window()) {
+	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center2()), this->get_window()) {
 		this->waypoints.recalculate_bbox();
 		if (this->visible) {
 			g_tree->emit_items_tree_updated();
@@ -2169,7 +2169,7 @@ sg_ret LayerTRW::attach_to_tree(Waypoint * wp)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
-		g_tree->tree_get_items_tree()->get_top_layer()->add_layer(this, true);
+		ThisApp::get_layers_panel()->get_top_layer()->add_layer(this, true);
 	}
 
 	if (!this->waypoints.is_in_tree()) {
@@ -2207,7 +2207,7 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 {
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_W << "This layer" << this->name << "is not connected to tree, will now connect it";
-		g_tree->tree_get_items_tree()->get_top_layer()->add_layer(this, true);
+		ThisApp::get_layers_panel()->get_top_layer()->add_layer(this, true);
 	}
 
 	if (trk->type_id == "sg.trw.route") {
@@ -2685,7 +2685,7 @@ void LayerTRW::extend_track_end_cb(void)
 	this->get_window()->activate_tool_by_id(track->type_id == "sg.trw.route" ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!track->empty()) {
-		Viewport * viewport = g_tree->tree_get_main_viewport();
+		Viewport * viewport = ThisApp::get_main_viewport();
 		this->goto_coord(viewport, track->get_tp_last()->coord);
 	}
 }
@@ -2708,7 +2708,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 	this->route_finder_started = true;
 
 	if (!track->empty()) {
-		Viewport * viewport = g_tree->tree_get_main_viewport();
+		Viewport * viewport = ThisApp::get_main_viewport();
 		this->goto_coord(viewport, track->get_tp_last()->coord);
 	}
 }
@@ -3702,7 +3702,7 @@ void LayerTRW::trackpoint_properties_show()
 		Trackpoint * tp = *track->selected_tp_iter.iter;
 
 		/* Shift up/down to try not to obscure the trackpoint. */
-		const GlobalPoint point_to_expose = SGUtils::coord_to_global_point(tp->coord, g_tree->tree_get_main_viewport());
+		const GlobalPoint point_to_expose = SGUtils::coord_to_global_point(tp->coord, ThisApp::get_main_viewport());
 		Dialog::move_dialog(this->tpwin, point_to_expose, true);
 
 		this->tpwin_update_dialog_data();
@@ -3978,8 +3978,8 @@ void LayerTRW::download_map_along_track_cb(void)
 		VikingZoomLevel(512),
 		VikingZoomLevel(1024) };
 
-	LayersPanel * panel = g_tree->tree_get_items_tree();
-	const Viewport * viewport = g_tree->tree_get_main_viewport();
+	LayersPanel * panel = ThisApp::get_layers_panel();
+	const Viewport * viewport = ThisApp::get_main_viewport();
 
 	Track * track = this->get_edited_track();
 	if (!track) {
@@ -4148,7 +4148,7 @@ bool LayerTRW::handle_selection_in_tree(void)
 	g_tree->add_to_set_of_selected(this);
 
 	/* Set highlight thickness. */
-	g_tree->tree_get_main_viewport()->set_highlight_thickness(this->get_track_thickness());
+	ThisApp::get_main_viewport()->set_highlight_thickness(this->get_track_thickness());
 
 	/* Mark for redraw. */
 	return true;
@@ -4251,7 +4251,7 @@ bool LayerTRW::reset_edited_wp(void)
 
 bool LayerTRW::get_track_creation_in_progress() const
 {
-	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
 	return new_track_tool->creation_in_progress == this;
 }
 
@@ -4260,7 +4260,7 @@ bool LayerTRW::get_track_creation_in_progress() const
 
 void LayerTRW::reset_track_creation_in_progress()
 {
-	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
 	if (new_track_tool->creation_in_progress == this) {
 		new_track_tool->creation_in_progress = NULL;
 	}
@@ -4271,7 +4271,7 @@ void LayerTRW::reset_track_creation_in_progress()
 
 bool LayerTRW::get_route_creation_in_progress() const
 {
-	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
 	return new_route_tool->creation_in_progress == this;
 }
 
@@ -4280,7 +4280,7 @@ bool LayerTRW::get_route_creation_in_progress() const
 
 void LayerTRW::reset_route_creation_in_progress()
 {
-	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) g_tree->tree_get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
 	if (new_route_tool->creation_in_progress == this) {
 		new_route_tool->creation_in_progress = NULL;
 	}

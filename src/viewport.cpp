@@ -94,11 +94,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 static double EASTING_OFFSET = 500000.0;
 
 static bool calcxy(double * pos_x, double * pos_y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
@@ -1834,7 +1829,7 @@ void Viewport::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << "II" PREFIX << "resize event";
 	this->reconfigure_drawing_area();
-	g_tree->tree_get_main_window()->draw_tree_items();
+	ThisApp::get_main_window()->draw_tree_items();
 	//this->draw_scale();
 
 	return;
@@ -2206,7 +2201,7 @@ bool Viewport::print_cb(QPrinter * printer)
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print canvas. */
-	g_tree->tree_get_items_tree()->draw_tree_items(scaled_viewport, true, false);
+	ThisApp::get_layers_panel()->draw_tree_items(scaled_viewport, true, false);
 
 
 	QPainter printer_painter;

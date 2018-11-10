@@ -118,16 +118,16 @@ namespace SlavGPS {
 		std::list<Layer *> * children = NULL;
 
 	private:
-		void child_visible_set(LayersPanel * panel, bool visible);
+		void children_visibility_set(bool visible);
 
 	public slots:
 		/* Aggregate Layer can contain other layers and should be notified about changes in them. */
 		void child_layer_changed_cb(const QString & child_layer_name);
 
 	private slots:
-		void child_visible_on_cb(void);
-		void child_visible_off_cb(void);
-		void child_visible_toggle_cb(void);
+		void children_visibility_on_cb(void);
+		void children_visibility_off_cb(void);
+		void children_visibility_toggle_cb(void);
 		void sort_a2z_cb(void);
 		void sort_z2a_cb(void);
 		void sort_timestamp_ascend_cb(void);

@@ -2621,12 +2621,12 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 #endif
 
 	/* ATM This function is only available via the layers panel, due to needing a panel. */
-	if (g_tree->tree_get_items_tree()) {
+	if (ThisApp::get_layers_panel()) {
 
-		Acquire::set_context(g_tree->tree_get_main_window(),
-				     g_tree->tree_get_main_viewport(),
-				     g_tree->tree_get_items_tree()->get_top_layer(),
-				     g_tree->tree_get_items_tree()->get_selected_layer());
+		Acquire::set_context(ThisApp::get_main_window(),
+				     ThisApp::get_main_viewport(),
+				     ThisApp::get_layers_panel()->get_top_layer(),
+				     ThisApp::get_layers_panel()->get_selected_layer());
 		Acquire::set_target(parent_layer_, this);
 		QMenu * submenu = Acquire::create_bfilter_track_menu(&menu);
 		if (submenu) {
@@ -2846,7 +2846,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 	/* ATM Parent_Layer_ function is only available via the layers panel, due to the method in finding out the maps in use. */
-	if (g_tree->tree_get_items_tree()) {
+	if (ThisApp::get_layers_panel()) {
 		qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), this->type_id == "sg.trw.track" ? tr("Down&load Maps Along Track...") : tr("Down&load Maps Along Route..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (download_map_along_track_cb()));
 	}
@@ -2983,7 +2983,7 @@ void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
 		LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-		Viewport * viewport = g_tree->tree_get_main_viewport();
+		Viewport * viewport = ThisApp::get_main_viewport();
 		parent_layer_->goto_coord(viewport, this->get_tp_first()->coord);
 	}
 }
@@ -2998,7 +2998,7 @@ void Track::goto_center_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 
 	const Coord coord(this->get_bbox().get_center(), parent_layer_->coord_mode);
 	parent_layer_->goto_coord(viewport, coord);
@@ -3014,7 +3014,7 @@ void Track::goto_endpoint_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 	parent_layer_->goto_coord(viewport, this->get_tp_last()->coord);
 }
 
@@ -3029,7 +3029,7 @@ void Track::goto_max_speed_cb()
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
 
@@ -3044,7 +3044,7 @@ void Track::goto_max_alt_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
 
@@ -3059,7 +3059,7 @@ void Track::goto_min_alt_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = g_tree->tree_get_main_viewport();
+	Viewport * viewport = ThisApp::get_main_viewport();
 	parent_layer_->goto_coord(viewport, tp->coord);
 }
 
@@ -3104,7 +3104,7 @@ void Track::properties_dialog_cb(void)
 		return;
 	}
 
-	track_properties_dialog(this, g_tree->tree_get_main_window());
+	track_properties_dialog(this, ThisApp::get_main_window());
 }
 
 
@@ -3116,7 +3116,7 @@ void Track::statistics_dialog_cb(void)
 		return;
 	}
 
-	track_statistics_dialog(this, g_tree->tree_get_main_window());
+	track_statistics_dialog(this, ThisApp::get_main_window());
 }
 
 
@@ -3128,10 +3128,7 @@ void Track::profile_dialog_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-
-	Viewport * viewport = g_tree->tree_get_main_viewport();
-	track_profile_dialog(g_tree->tree_get_main_window(), this, viewport);
+	track_profile_dialog(ThisApp::get_main_window(), this, ThisApp::get_main_viewport());
 }
 
 
@@ -3145,7 +3142,7 @@ void Track::smooth_it(bool flat)
 	unsigned long n_changed = this->smooth_missing_elevation_data(flat);
 	/* Inform user how much was changed. */
 	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
-	Dialog::info(msg, g_tree->tree_get_main_window());
+	Dialog::info(msg, ThisApp::get_main_window());
 }
 
 
@@ -3176,7 +3173,7 @@ void Track::rezoom_to_show_full_cb(void)
 		return;
 	}
 
-	g_tree->tree_get_main_viewport()->show_bbox(this->get_bbox());
+	ThisApp::get_main_viewport()->show_bbox(this->get_bbox());
 
 	g_tree->emit_items_tree_updated();
 }
@@ -3218,9 +3215,9 @@ QString Track::get_tooltip(void) const
 */
 void Track::apply_dem_data_common(bool skip_existing_elevations)
 {
-	LayersPanel * panel = g_tree->tree_get_items_tree();
+	LayersPanel * panel = ThisApp::get_layers_panel();
 	if (!panel->has_any_layer_of_type(LayerType::DEM)) {
-		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), g_tree->tree_get_main_window());
+		Dialog::error(tr("No DEM layers available, thus no DEM values can be applied."), ThisApp::get_main_window());
 		return;
 	}
 
@@ -3228,7 +3225,7 @@ void Track::apply_dem_data_common(bool skip_existing_elevations)
 
 	/* Inform user how much was changed. */
 	const QString msg = QObject::tr("%n points adjusted", "", n_changed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
-	Dialog::info(msg, g_tree->tree_get_main_window());
+	Dialog::info(msg, ThisApp::get_main_window());
 }
 
 
@@ -3267,7 +3264,7 @@ void Track::export_track_as_gpx_cb(void)
 
 void Track::export_track(const QString & title, const QString & default_file_name, SGFileType file_type)
 {
-	QFileDialog file_selector(g_tree->tree_get_main_window(), title);
+	QFileDialog file_selector(ThisApp::get_main_window(), title);
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
 
@@ -3282,12 +3279,12 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 
 		last_directory_url = file_selector.directoryUrl();
 
-		g_tree->tree_get_main_window()->set_busy_cursor();
+		ThisApp::get_main_window()->set_busy_cursor();
 		const sg_ret export_status = VikFile::export_trw_track(this, output_file_full_path, file_type, true);
-		g_tree->tree_get_main_window()->clear_busy_cursor();
+		ThisApp::get_main_window()->clear_busy_cursor();
 
 		if (export_status != sg_ret::ok) {
-			Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), g_tree->tree_get_main_window());
+			Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), ThisApp::get_main_window());
 		}
 	}
 }
@@ -3308,7 +3305,7 @@ void Track::open_diary_cb(void)
 		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*this->trackpoints.begin())->timestamp));
 		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
 	} else {
-		Dialog::info(tr("This track has no date information."), g_tree->tree_get_main_window());
+		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
 	}
 }
 
@@ -3351,7 +3348,7 @@ void Track::open_astro_cb(void)
 		std::free(lat_str);
 		std::free(lon_str);
 	} else {
-		Dialog::info(tr("This track has no date information."), g_tree->tree_get_main_window());
+		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
 	}
 }
 
@@ -3396,7 +3393,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 
 	if (tracks->find_track_by_name(new_name)) {
 		/* An existing track/route has been found with the requested name. */
-		if (!Dialog::yes_or_no(message, g_tree->tree_get_main_window())) {
+		if (!Dialog::yes_or_no(message, ThisApp::get_main_window())) {
 			return empty_string;
 		}
 	}
@@ -3507,7 +3504,7 @@ void Track::convert_track_route_cb(void)
 		if (this->get_segment_count() > 1
 		    || (avg.is_valid() && avg.get_value() > 0.0)) {
 
-			if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), g_tree->tree_get_main_window())) {
+			if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), ThisApp::get_main_window())) {
 				return;
 			}
 		}
@@ -3563,7 +3560,7 @@ void Track::geotagging_track_cb(void)
 
 	/* Set to true so that thumbnails are generate later if necessary. */
 	parent_layer->has_missing_thumbnails = true;
-	trw_layer_geotag_dialog(g_tree->tree_get_main_window(), parent_layer, NULL, this);
+	trw_layer_geotag_dialog(ThisApp::get_main_window(), parent_layer, NULL, this);
 }
 
 
@@ -3735,7 +3732,7 @@ void Track::split_by_timestamp_cb(void)
 		return;
 	}
 
-	Window * main_window = g_tree->tree_get_main_window();
+	Window * main_window = ThisApp::get_main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	if (!a_dialog_time_threshold(tr("Split Threshold..."),
@@ -3761,8 +3758,7 @@ void Track::split_by_timestamp_cb(void)
 			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
 
 			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(QString(tmp_str))), main_window) {
-				Viewport * viewport = g_tree->tree_get_main_viewport();
-				parent_layer->goto_coord(viewport, (*iter)->coord);
+				parent_layer->goto_coord(ThisApp::get_main_viewport(), (*iter)->coord); /* TODO: this method should not be in a layer. Perhaps in viewport? */
 			}
 			return;
 		}
@@ -3813,7 +3809,7 @@ void Track::split_by_n_points_cb(void)
 				       65536, /* Max */
 				       5,     /* Step */
 				       NULL,  /* ok */
-				       g_tree->tree_get_main_window());
+				       ThisApp::get_main_window());
 	/* Was a valid number returned? */
 	if (!n_points) {
 		return;
@@ -3870,7 +3866,7 @@ void Track::refine_route_cb(void)
 		return;
 	}
 
-	Window * main_window = g_tree->tree_get_main_window();
+	Window * main_window = ThisApp::get_main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	/* Check size of the route */
@@ -3955,7 +3951,7 @@ void Track::split_by_segments_cb(void)
 	}
 
 	if (split_tracks.empty()) {
-		Dialog::error(tr("Can not split track as it has no segments"), g_tree->tree_get_main_window());
+		Dialog::error(tr("Can not split track as it has no segments"), ThisApp::get_main_window());
 	} else {
 		/* Remove original track. */
 		parent_layer->detach_from_container(this);
@@ -4024,7 +4020,7 @@ void Track::delete_sublayer(bool confirm)
 	}
 
 
-	Window * main_window = g_tree->tree_get_main_window();
+	Window * main_window = ThisApp::get_main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	const bool is_track = this->type_id == "sg.trw.track";
 
