@@ -90,7 +90,7 @@ public:
 
 BackgroundJob::~BackgroundJob()
 {
-	qDebug() << "II" PREFIX "destructing job" << this->description << ", job index"
+	qDebug() << SG_PREFIX_I "destructing job" << this->description << ", job index"
 		 << ((this->index && this->index->isValid()) ? "is valid" : "is invalid");
 
 	this->detach_from_window(g_background.bgwindow);
@@ -159,7 +159,7 @@ bool BackgroundJob::test_termination_condition(void)
 */
 void BackgroundJob::run_in_background(ThreadPoolType pool_type)
 {
-	qDebug() << "II" PREFIX << "creating background thread for job" << this->description;
+	qDebug() << SG_PREFIX_I << "creating background thread for job" << this->description;
 
 	this->remove_from_list = true;
 
@@ -169,7 +169,7 @@ void BackgroundJob::run_in_background(ThreadPoolType pool_type)
 	g_background.n_items += this->n_items;
 
 	/* Run the thread in the background. */
-	qDebug() << "II" PREFIX << "adding job" << this->description << "to thread pool";
+	qDebug() << SG_PREFIX_I << "adding job" << this->description << "to thread pool";
 	QThreadPool::globalInstance()->start(this);
 }
 
@@ -196,7 +196,7 @@ void BackgroundJob::detach_from_window(BackgroundWindow * window)
 	this->mutex.lock();
 	if (this->remove_from_list && this->index) {
 
-		qDebug() << "II" PREFIX << "detaching job" << this->description << "from list of jobs";
+		qDebug() << SG_PREFIX_I << "detaching job" << this->description << "from list of jobs";
 
 		if (this->index->isValid()) {
 			window->remove_job(this->index);
@@ -249,7 +249,7 @@ void Background::post_init(void)
 		max_threads = threads > 1 ? threads - 1 : 1; /* Don't use all available CPUs! */
 	}
 
-	qDebug() << "II" PREFIX << "setting threads limit to" << max_threads;
+	qDebug() << SG_PREFIX_I << "setting threads limit to" << max_threads;
 	QThreadPool::globalInstance()->setMaxThreadCount(max_threads);
 	QThreadPool::globalInstance()->setExpiryTimeout(-1); /* No expiry. */
 }
@@ -384,13 +384,13 @@ BackgroundWindow::BackgroundWindow(QWidget * parent_widget) : QDialog(parent_wid
 
 	for (auto iter = job_list.begin(); iter != job_list.end(); ++iter) {
 
-		qDebug() << "II" PREFIX << "adding to initial list:" << (*iter);
+		qDebug() << SG_PREFIX_I << "adding to initial list:" << (*iter);
 
 		BackgroundJob * bg_job = new BackgroundJob();
 		bg_job->set_description(*iter);
 		bg_job->progress = value;
 		this->append_job(bg_job);
-		qDebug() << "II" PREFIX << "added to list an item with index" << bg_job->index->isValid();
+		qDebug() << SG_PREFIX_I << "added to list an item with index" << bg_job->index->isValid();
 
 		value += 10;
 	}
@@ -449,7 +449,7 @@ void BackgroundWindow::remove_all_cb()
 	for (int r = this->model->rowCount(parent_index) - 1; r >= 0; --r) {
 		QModelIndex index = this->model->index(r, 0, parent_index);
 		QVariant name = model->data(index);
-		qDebug() << "II" PREFIX << "removing job" << name;
+		qDebug() << SG_PREFIX_I << "removing job" << name;
 
 		QStandardItem * item = this->model->itemFromIndex(index);
 		this->remove_job(item);
@@ -479,7 +479,7 @@ void BackgroundWindow::show_window(void)
 	QItemSelectionModel * selection_model = this->view->selectionModel();
 	QModelIndex index = selection_model->currentIndex();
 	if (index.isValid()) {
-		qDebug() << "II" PREFIX << "clearing current selection";
+		qDebug() << SG_PREFIX_I << "clearing current selection";
 		selection_model->select(index, QItemSelectionModel::Clear | QItemSelectionModel::Deselect);
 	}
 

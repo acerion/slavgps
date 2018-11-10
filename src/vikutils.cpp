@@ -80,7 +80,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "VikUtils"
-#define PREFIX ": VikUtils:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -395,14 +394,14 @@ int TZLookup::load_from_dir(const QString & dir)
 	int inserted = 0;
 	const QString path = dir + QDir::separator() + "latlontz.txt";
 	if (0 != access(path.toUtf8().constData(), R_OK)) {
-		qDebug() << "WW" PREFIX << "Could not access time zones file" << path;
+		qDebug() << SG_PREFIX_W << "Could not access time zones file" << path;
 		return inserted;
 	}
 
 	long line_num = 0;
 	FILE * file = fopen(path.toUtf8().constData(), "r");
 	if (!file) {
-		qDebug() << "WW" PREFIX << "Could not open time zones file" << path;
+		qDebug() << SG_PREFIX_W << "Could not open time zones file" << path;
 		return inserted;
 	}
 
@@ -414,19 +413,19 @@ int TZLookup::load_from_dir(const QString & dir)
 			double pt[2] = { SGUtils::c_to_double(components.at(0)), SGUtils::c_to_double(components.at(1)) };
 			QTimeZone * time_zone = new QTimeZone(QByteArray(components.at(2).trimmed().toUtf8().constData()));
 			if (kd_insert(kd_timezones, pt, time_zone)) {
-				qDebug() << "EE" PREFIX << "Insertion problem for tz" << time_zone <<  "created from line" << line_num << buffer;
+				qDebug() << SG_PREFIX_E << "Insertion problem for tz" << time_zone <<  "created from line" << line_num << buffer;
 			} else {
 				inserted++;
 			}
 			/* Don't free time_zone as it's part of the kdtree data now. */
 		} else {
-			qDebug() << "WW" PREFIX << "Line" << line_num << "in time zones file does not have 3 parts:" << buffer;
+			qDebug() << SG_PREFIX_W << "Line" << line_num << "in time zones file does not have 3 parts:" << buffer;
 		}
 	}
 
 	fclose(file);
 
-	qDebug() << "II" PREFIX << "Loaded" << inserted << "time zones";
+	qDebug() << SG_PREFIX_I << "Loaded" << inserted << "time zones";
 	return inserted;
 }
 
@@ -455,9 +454,9 @@ void TZLookup::init()
 		loaded += TZLookup::load_from_dir(data_dirs.at(i));
 	}
 
-	qDebug() << "DD" PREFIX << "Loaded" << loaded << "elements";
+	qDebug() << SG_PREFIX_D << "Loaded" << loaded << "elements";
 	if (loaded == 0) {
-		qDebug() << "EE" PREFIX << "No lat/lon/timezones loaded";
+		qDebug() << SG_PREFIX_E << "No lat/lon/timezones loaded";
 	}
 }
 
@@ -468,7 +467,7 @@ static void tz_destructor(void * data)
 {
 	if (data) {
 		QTimeZone * time_zone = (QTimeZone *) data;
-		qDebug() << "DD" PREFIX << "Will delete time zone" << time_zone;
+		qDebug() << SG_PREFIX_D << "Will delete time zone" << time_zone;
 		delete time_zone;
 	}
 }
@@ -571,9 +570,9 @@ const QTimeZone * TZLookup::get_tz_at_location(const Coord & coord)
 	}
 
 	if (tz) {
-		qDebug() << "DD" PREFIX << "time zone lookup found" << kd_res_size(presults) << "results - picked" << tz->displayName(QDateTime::currentDateTime());
+		qDebug() << SG_PREFIX_D << "Time zone lookup found" << kd_res_size(presults) << "results - picked" << tz->displayName(QDateTime::currentDateTime());
 	} else {
-		qDebug() << "WW" PREFIX << "time zone lookup NOT found";
+		qDebug() << SG_PREFIX_W << "Time zone lookup NOT found";
 	}
 	kd_res_free(presults);
 
@@ -771,7 +770,7 @@ bool CommandLineOptions::parse(QCoreApplication & app)
 
 
 	this->debug = parser.isSet(opt_debug);
-	qDebug() << "DD" PREFIX << "debug is" << this->debug;
+	qDebug() << SG_PREFIX_D << "'debug' is" << this->debug;
 	if (this->debug) {
 #ifdef K_FIXME_RESTORE
 		g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_debug, NULL);
@@ -780,15 +779,15 @@ bool CommandLineOptions::parse(QCoreApplication & app)
 
 
 	this->verbose = parser.isSet(opt_verbose);
-	qDebug() << "DD" PREFIX << "verbose is" << this->verbose;
+	qDebug() << SG_PREFIX_D << "'verbose' is" << this->verbose;
 
 	this->version = parser.isSet(opt_version);
-	qDebug() << "DD" PREFIX << "version is" << this->version;
+	qDebug() << SG_PREFIX_D << "'version' is" << this->version;
 
 
 
 	if (parser.isSet(opt_latitude) != parser.isSet(opt_longitude)) {
-		qDebug() << "EE" PREFIX << "you need to specify both latitude and longitude";
+		qDebug() << SG_PREFIX_E << "You need to specify both latitude and longitude";
 		return false;
 	}
 
@@ -801,10 +800,10 @@ bool CommandLineOptions::parse(QCoreApplication & app)
 		}
 
 		if (parse_ok && this->lat_lon.is_valid()) {
-			qDebug() << "DD" PREFIX << "lat/lon is" << this->lat_lon.lat << this->lat_lon.lon;
+			qDebug() << SG_PREFIX_D << "lat/lon is" << this->lat_lon.lat << this->lat_lon.lon;
 		} else {
 			this->lat_lon.invalidate();
-			qDebug() << "EE" PREFIX << "Failed to parse lat/lon values from command line:" << parser.value(opt_latitude) << parser.value(opt_longitude);
+			qDebug() << SG_PREFIX_E << "Failed to parse lat/lon values from command line:" << parser.value(opt_latitude) << parser.value(opt_longitude);
 			return false;
 		}
 	}
@@ -813,16 +812,16 @@ bool CommandLineOptions::parse(QCoreApplication & app)
 
 	if (parser.isSet(opt_zoom)) {
 		this->zoom_level_osm = parser.value(opt_zoom).toInt();
-		qDebug() << "DD" PREFIX << "zoom is" << this->zoom_level_osm;
+		qDebug() << SG_PREFIX_D << "zoom is" << this->zoom_level_osm;
 	}
 
 	if (parser.isSet(opt_map)) {
 		this->map_type_id = (MapTypeID) parser.value(opt_map).toInt();
-		qDebug() << "DD" PREFIX << "map type id is" << (int) this->map_type_id;
+		qDebug() << SG_PREFIX_D << "map type id is" << (int) this->map_type_id;
 	}
 
 	this->files = parser.positionalArguments(); /* Possibly .vik files passed in command line, to be opened by application. */
-	qDebug() << "DD" PREFIX << "list of files is" << this->files;
+	qDebug() << SG_PREFIX_D << "list of files is" << this->files;
 
 	return true;
 }

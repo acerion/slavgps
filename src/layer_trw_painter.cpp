@@ -935,7 +935,7 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, 
 		pixmap = (*iter).pixmap;
 	} else {
 		/* WP Image Cache miss. */
-		qDebug() << "II" PREFIX << "Waypoint image" << wp->image_full_path << "not found in cache, generating new cached image";
+		qDebug() << SG_PREFIX_I << "Waypoint image" << wp->image_full_path << "not found in cache, generating new cached image";
 
 		CachedPixmap cache_object = this->generate_wp_cached_pixmap(wp->image_full_path);
 

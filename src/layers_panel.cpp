@@ -53,7 +53,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Layers Panel:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Layers Panel"
 
 
 
@@ -139,7 +139,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 LayersPanel::~LayersPanel()
 {
-	qDebug() << "II: Layers Panel: ~LayersPanel() called";
+	qDebug() << SG_PREFIX_I;
 
 	delete this->toplayer;
 	delete this->tree_view;
@@ -153,7 +153,7 @@ LayersPanel::~LayersPanel()
 void LayersPanel::emit_items_tree_updated_cb(const QString & trigger_name)
 {
 	qDebug() << "SLOT?: Layers Panel received 'changed' signal from top level layer?" << trigger_name;
-	qDebug() << "SIGNAL: Layers Panel emits 'update' signal";
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'items_tree_updated' signal";
 	emit this->items_tree_updated();
 }
 
@@ -230,7 +230,7 @@ void LayersPanel::context_menu_add_new_layer_submenu(QMenu * menu)
 void LayersPanel::context_menu_show_for_item(TreeItem * item)
 {
 	if (!item) {
-		qDebug() << "EE: Layers Panel: show context menu for item: NULL item";
+		qDebug() << SG_PREFIX_E << "Show context menu for item: NULL item";
 		return;
 	}
 
@@ -238,7 +238,7 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 
 	if (item->tree_item_type == TreeItemType::Layer) {
 
-		qDebug() << "II: Layers Panel: context menu event: menu for layer" << item->type_id << item->name;
+		qDebug() << SG_PREFIX_I << "Context menu event: menu for layer" << item->type_id << item->name;
 
 		Layer * layer = item->to_layer();
 
@@ -250,7 +250,7 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 		/* Layer-type-specific menu items. */
 		layer->add_menu_items(menu);
 	} else {
-		qDebug() << "II: Layers Panel: context menu event: menu for sublayer" << item->type_id << item->name;
+		qDebug() << SG_PREFIX_I << "Context menu event: menu for sublayer" << item->type_id << item->name;
 
 
 		if (!item->add_context_menu_items(menu, true)) {
@@ -289,7 +289,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	/* Could be something different so we have to do this. */
 	layer->change_coord_mode(viewport_coord_mode);
 
-	qDebug() << "II" PREFIX << "attempting to add layer named" << layer->get_name();
+	qDebug() << SG_PREFIX_I << "attempting to add layer named" << layer->get_name();
 
 
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
@@ -297,10 +297,10 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
-		qDebug() << "II" PREFIX << "No selected layer, adding layer named" << layer->get_name() << "under Top Level Layer";
+		qDebug() << SG_PREFIX_I << "No selected layer, adding layer named" << layer->get_name() << "under Top Level Layer";
 		this->toplayer->add_layer(layer, true);
 
-		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
 
 		return;
@@ -314,7 +314,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	assert (selected_layer->tree_view);
 	assert (selected_layer->index.isValid());
 	TreeIndex selected_layer_index = selected_layer->index;
-	qDebug() << "II" PREFIX << "Selected layer is named" << selected_layer->get_name();
+	qDebug() << SG_PREFIX_I << "Selected layer is named" << selected_layer->get_name();
 
 
 	if (selected_layer->type == LayerType::Aggregate) {
@@ -324,11 +324,11 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 		   Notice that this case also covers situation when
 		   selected Aggregate layer is Top Level Layer. */
 
-		qDebug() << "II" PREFIX << "Selected layer is Aggregate layer named" << selected_layer->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
+		qDebug() << SG_PREFIX_I << "Selected layer is Aggregate layer named" << selected_layer->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
 		((LayerAggregate *) selected_layer)->add_layer(layer, true);
 
-		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
 
 		return;
@@ -338,17 +338,17 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 	/* Some non-Aggregate layer is selected. Since we can insert
 	   layers only under Aggregate layer, let's find the Aggregate
 	   layer by going up in hierarchy. */
-	qDebug() << "II" PREFIX << "Selected layer is non-Aggregate layer named" << selected_layer->get_name() << ", looking for Aggregate layer";
+	qDebug() << SG_PREFIX_I << "Selected layer is non-Aggregate layer named" << selected_layer->get_name() << ", looking for Aggregate layer";
 	Layer * aggregate_candidate = this->go_up_to_layer(selected_layer, LayerType::Aggregate);
 	if (aggregate_candidate) {
 		LayerAggregate * aggregate = (LayerAggregate *) aggregate_candidate;
 		assert (aggregate->tree_view);
 
-		qDebug() << "II" PREFIX << "Found closest Aggregate layer named" << aggregate->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
+		qDebug() << SG_PREFIX_I << "Found closest Aggregate layer named" << aggregate->get_name() << ", adding layer named" << layer->get_name() << "under that Aggregate layer";
 
 		aggregate->insert_layer(layer, selected_layer); /* Insert layer next to selected layer. */
 
-		qDebug() << "SIGNAL" PREFIX << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' after adding layer named" << layer->get_name();
 		this->emit_items_tree_updated_cb(layer->get_name());
 
 		return;
@@ -356,7 +356,7 @@ void LayersPanel::add_layer(Layer * layer, const CoordMode & viewport_coord_mode
 
 
 	/* TODO_LATER: add error handling? */
-	qDebug() << "EE" PREFIX << "Can't find place for new layer";
+	qDebug() << SG_PREFIX_E << "Can't find place for new layer";
 
 	return;
 }
@@ -375,23 +375,20 @@ void LayersPanel::move_item(bool up)
 	this->tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
 	if (selected_item->tree_item_type == TreeItemType::Layer) {
-		qDebug() << "II" PREFIX << "Move layer" << selected_item->name << (up ? "up" : "down");
+		qDebug() << SG_PREFIX_I << "Move layer" << selected_item->name << (up ? "up" : "down");
 		/* A layer can be owned only by Aggregate layer.
 		   TODO_LATER: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
 		if (parent_layer) { /* Selected item is not top level layer. */
-			qDebug() << "-----" PREFIX "step one";
 			if (parent_layer->change_child_item_position(selected_item, up)) {
-				qDebug() << "-----" PREFIX "step two";
 				this->tree_view->change_tree_item_position(selected_item, up);
-				qDebug() << "-----" PREFIX "step tree";
 
-				qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
+				qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
 				this->emit_items_tree_updated_cb(parent_layer->get_name());
 			}
 		}
 	} else {
-		qDebug() << "II" PREFIX << "Move sublayer" << selected_item->name << (up ? "up" : "down");
+		qDebug() << SG_PREFIX_I << "Move sublayer" << selected_item->name << (up ? "up" : "down");
 	}
 }
 
@@ -408,7 +405,7 @@ void LayersPanel::draw_tree_items(Viewport * viewport, bool highlight_selected, 
 	   so that all layer items can use this information and don't
 	   have to call ::get_highlight_usage() themselves. */
 	highlight_selected = highlight_selected && viewport->get_highlight_usage();
-	qDebug() << "II" PREFIX "calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
+	qDebug() << SG_PREFIX_I << "Calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
 	this->toplayer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
 
 	/* TODO_LATER: layers panel or tree view or aggregate layer should
@@ -445,7 +442,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(selected_item)) {
-					qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
+					qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
 					this->emit_items_tree_updated_cb(parent_layer->get_name());
 				}
 			}
@@ -531,7 +528,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 				g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent_layer->delete_layer(selected_item)) {
-					qDebug() << "SIGNAL" PREFIX << "will call 'emit_items_tree_updated_cb()' for" << layer->get_name();
+					qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << layer->get_name();
 					this->emit_items_tree_updated_cb(parent_layer->get_name());
 				}
 			}
@@ -637,7 +634,7 @@ bool LayersPanel::has_any_layer_of_type(LayerType type)
 LayerAggregate * LayersPanel::get_top_layer()
 {
 	if (NULL == this->toplayer) {
-		qDebug() << "EE" PREFIX << "Top layer is NULL";
+		qDebug() << SG_PREFIX_E << "Top layer is NULL";
 	}
 
 	return this->toplayer;
@@ -698,20 +695,20 @@ TreeView * LayersPanel::get_tree_view()
 void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 {
 	if (!this->tree_view->geometry().contains(ev->pos())) {
-		qDebug() << "II: Layers Panel: context menu event outside tree view";
+		qDebug() << SG_PREFIX_I << "Context menu event outside tree view";
 		/* We want to handle only events that happen inside of tree view. */
 		return;
 	}
 
-	qDebug() << "II: Layers Panel: context menu event inside tree view";
+	qDebug() << SG_PREFIX_I << "Context menu event inside tree view";
 
 	QPoint orig = ev->pos();
 	QPoint v = this->tree_view->pos();
 	QPoint t = this->tree_view->viewport()->pos();
 
-	qDebug() << "DD: Layers Panel: context menu event: event @" << orig.x() << orig.y();
-	qDebug() << "DD: Layers Panel: context menu event: viewport @" << v;
-	qDebug() << "DD: Layers Panel: context menu event: tree view @" << t;
+	qDebug() << SG_PREFIX_D << "Context menu event: event @" << orig.x() << orig.y();
+	qDebug() << SG_PREFIX_D << "Context menu event: viewport @" << v;
+	qDebug() << SG_PREFIX_D << "Context menu event: tree view @" << t;
 
 	QPoint point;
 	point.setX(orig.x() - v.x() - t.x());
@@ -722,7 +719,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 	if (ind.isValid()) {
 		/* We have clicked on some valid item in tree view. */
 
-		qDebug() << "II: Layers Panel: context menu event: valid tree view index, row =" << ind.row();
+		qDebug() << SG_PREFIX_I << "Context menu event: valid tree view index, row =" << ind.row();
 		TreeIndex index = QPersistentModelIndex(ind);
 		TreeItem * item = this->tree_view->get_tree_item(index);
 
@@ -730,12 +727,12 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * ev)
 	} else {
 		/* We have clicked on empty space, not on tree item.  */
 
-		qDebug() << "II: Layers Panel: context menu event: tree view not hit";
+		qDebug() << SG_PREFIX_I << "Context menu event: tree view not hit";
 		if (!this->tree_view->viewport()->geometry().contains(ev->pos())) {
-			qDebug() << "II: Layers Panel: context menu event outside of tree view's viewport";
+			qDebug() << SG_PREFIX_I << "Context menu event outside of tree view's viewport";
 			return;
 		} else {
-			qDebug() << "II: Layers Panel: context menu event inside of tree view's viewport";
+			qDebug() << SG_PREFIX_I << "Context menu event inside of tree view's viewport";
 		}
 
 		this->context_menu_show_for_new_layer();

@@ -311,13 +311,13 @@ Window::Window()
 			case Qt::LeftDockWidgetArea:
 			case Qt::RightDockWidgetArea:
 				geometry.setWidth(size);
-				qDebug() << "II" PREFIX << "Restoring window panel width" << size;
+				qDebug() << SG_PREFIX_I << "Restoring window panel width" << size;
 				this->panel_dock->setGeometry(geometry);
 				break;
 			case Qt::TopDockWidgetArea:
 			case Qt::BottomDockWidgetArea:
 				geometry.setHeight(size);
-				qDebug() << "II" PREFIX << "Restoring window panel height" << size;
+				qDebug() << SG_PREFIX_I << "Restoring window panel height" << size;
 				this->panel_dock->setGeometry(geometry);
 				break;
 			default:
@@ -338,7 +338,7 @@ Window::Window()
 	this->setWindowIcon(QIcon(":/icons/application.png"));
 
 
-	qDebug() << "II" PREFIX << "final panel geometry" << this->panel_dock->geometry();
+	qDebug() << SG_PREFIX_I << "final panel geometry" << this->panel_dock->geometry();
 }
 
 
@@ -946,7 +946,7 @@ void Window::create_actions(void)
 
 void Window::draw_tree_items_cb()
 {
-	qDebug() << "SLOT" PREFIX;
+	qDebug() << SG_PREFIX_SLOT;
 	this->draw_tree_items();
 }
 
@@ -976,7 +976,7 @@ void Window::update_status_bar_on_redraw(void)
 {
 	const QString zoom_level = this->viewport->get_viking_zoom_level().pretty_print(this->viewport->get_coord_mode());
 
-	qDebug() << "II" PREFIX << "zoom level is" << zoom_level;
+	qDebug() << SG_PREFIX_I << "zoom level is" << zoom_level;
 	this->status_bar->set_message(StatusBarField::Zoom, zoom_level);
 	this->display_tool_name();
 }
@@ -1000,7 +1000,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 		qDebug() << "II: Layers Panel: calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
 		layer->draw_tree_item(this->viewport, false, false);
 
-		qDebug() << "II" PREFIX "call draw_tree_items()";
+		qDebug() << SG_PREFIX_I "call draw_tree_items()";
 		this->draw_tree_items();
 		this->set_dirty_flag(true);
 	}
@@ -1321,7 +1321,7 @@ void Window::pan_click(QMouseEvent * ev)
 
 void Window::pan_move(QMouseEvent * ev)
 {
-	//qDebug() << "II" PREFIX;
+	//qDebug() << SG_PREFIX_I;
 	if (this->pan_pos.x != -1) {
 		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
 							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
@@ -1336,7 +1336,7 @@ void Window::pan_move(QMouseEvent * ev)
 
 void Window::pan_release(QMouseEvent * ev)
 {
-	qDebug() << "II" PREFIX;
+	qDebug() << SG_PREFIX_I;
 	bool do_draw = true;
 
 	if (this->pan_move_flag == false) {
@@ -1614,7 +1614,7 @@ void Window::closeEvent(QCloseEvent * ev)
 			}
 
 			if (size > 0) {
-				qDebug() << "II" PREFIX << "Saving window's panel size" << size;
+				qDebug() << SG_PREFIX_I << "Saving window's panel size" << size;
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_MAIN_DOCK_SIZE, size);
 			}
 		}
@@ -1756,7 +1756,7 @@ void Window::set_highlight_usage_cb(bool new_state)
 void Window::set_side_panel_visibility_cb(bool new_state)
 {
 	if (this->panel_dock->isVisible() != new_state) {
-		qDebug() << "II" PREFIX << "setting side panel visibility to" << new_state;
+		qDebug() << SG_PREFIX_I << "setting side panel visibility to" << new_state;
 
 		this->panel_dock->setVisible(new_state);
 

@@ -526,7 +526,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 		   in the stack. */
 
 		//LayerAggregate * agg = (LayerAggregate *) stack.second;
-		//qDebug() << "II" PREFIX << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
+		//qDebug() << SG_PREFIX_I << "Appending to tree a child layer named" << layer->name << "under aggregate named" << agg->name;
 		//agg->tree_view->attach_to_tree(agg, layer);
 	}
 
@@ -643,7 +643,7 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 
 		layer->set_name(QString(value_start));
 
-		qDebug() << "II" PREFIX << "calling add_layer(), parent / child = " << parent_layer->name << "->" << layer->name;
+		qDebug() << SG_PREFIX_I << "calling add_layer(), parent / child = " << parent_layer->name << "->" << layer->name;
 		parent_layer->add_layer(layer, false);
 
 	} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {

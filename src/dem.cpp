@@ -59,6 +59,7 @@
 #include "util.h"
 #include "vikutils.h"
 #include "bbox.h"
+#include "globals.h"
 
 
 
@@ -68,7 +69,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": DEM:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "DEM"
 
 
 
@@ -90,7 +91,7 @@ static bool get_double_and_continue(char ** buffer, double * tmp, bool warn)
 	*tmp = strtod(*buffer, &endptr);
 	if (endptr == NULL || endptr == *buffer) {
 		if (warn) {
-			qDebug() << "WW: DEM: invalid DEM";
+			qDebug() << SG_PREFIX_W << "Invalid DEM";
 		}
 		return false;
 	}
@@ -108,7 +109,7 @@ static bool get_int_and_continue(char ** buffer, int * tmp, bool warn)
 	*tmp = strtol(*buffer, &endptr, 10);
 	if (endptr == NULL || endptr == *buffer) {
 		if (warn) {
-			qDebug() << "WW: DEM: invalid DEM";
+			qDebug() << SG_PREFIX_W << "Invalid DEM";
 		}
 		return false;
 	}
@@ -164,7 +165,7 @@ bool DEM::parse_header(char * buffer)
 	/* skip numbers 5-19  */
 	for (int i = 0; i < 15; i++) {
 		if (!get_double_and_continue(&buffer, &val, false)) {
-			qDebug() << "WW: DEM: invalid DEM header";
+			qDebug() << SG_PREFIX_W << "Invalid DEM header";
 			return false;
 		}
 	}
@@ -250,7 +251,7 @@ void DEM::parse_block_as_header(char * buffer, int32_t * cur_column, int32_t * c
 
 	double tmp;
 	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
-		qDebug() << "WW: DEM: Parse Block: Incorrect DEM Class B record: expected 1";
+		qDebug() << SG_PREFIX_W << "Parse Block: Incorrect DEM Class B record: expected 1";
 		return;
 	}
 
@@ -266,7 +267,7 @@ void DEM::parse_block_as_header(char * buffer, int32_t * cur_column, int32_t * c
 	int32_t n_rows = (int32_t) tmp;
 
 	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
-		qDebug() << "WW: DEM: Parse Block: Incorrect DEM Class B record: expected 1";
+		qDebug() << SG_PREFIX_W << "Parse Block: Incorrect DEM Class B record: expected 1";
 		return;
 	}
 
@@ -348,7 +349,7 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 	*/
 
 	if (file_name.length() < (int) strlen("S01E006")) {
-		qDebug() << "EE" PREFIX << "Invalid file name" << file_name;
+		qDebug() << SG_PREFIX_E << "Invalid file name" << file_name;
 		return false;
 	}
 
@@ -363,7 +364,7 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 	bool ok;
 	this->min_north_seconds = file_name.midRef(1, 2).toInt(&ok) * g_secs_per_degree;
 	if (!ok) {
-		qDebug() << "EE" PREFIX << "Failed to convert northing value";
+		qDebug() << SG_PREFIX_E << "Failed to convert northing value";
 		return false;
 	}
 	if (file_name[0] == 'S') {
@@ -373,7 +374,7 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 
 	this->min_east_seconds = file_name.midRef(4, 3).toInt(&ok) * g_secs_per_degree;
 	if (!ok) {
-		qDebug() << "EE" PREFIX << "Failed to convert easting value";
+		qDebug() << SG_PREFIX_E << "Failed to convert easting value";
 		return false;
 	}
 	if (file_name[3] == 'W') {
@@ -390,14 +391,14 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 
 	QFile file(file_full_path);
 	if (!file.open(QIODevice::ReadOnly)) {
-		qDebug() << "EE" PREFIX << "Can't open file" << file_full_path << file.error();
+		qDebug() << SG_PREFIX_E << "Can't open file" << file_full_path << file.error();
 		return false;
 	}
 
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
 	if (!file_contents) {
-		qDebug() << "EE" PREFIX << "Can't map file" << file_full_path << file.error();
+		qDebug() << SG_PREFIX_E << "Can't map file" << file_full_path << file.error();
 		return false;
 	}
 
@@ -426,7 +427,7 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 	} else if (dem_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
 		arcsec = 1;
 	} else {
-		qDebug() << "WW" PREFIX << "file" << file_name << "does not have right size";
+		qDebug() << SG_PREFIX_W << "File" << file_name << "does not have right size";
 		file.unmap(file_contents);
 		file.close();
 		return false;
@@ -646,9 +647,9 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 
 #if 0   /* Debug. */
 	for (int i = 0; i < 4; i++) {
-		qDebug() << "DD: DEM:" << i << ":" << ll[i].lat << ll[i].lon << dists[i] << elevs[i];
+		qDebug() << SG_PREFIX_D << i << ":" << ll[i].lat << ll[i].lon << dists[i] << elevs[i];
 	}
-	qDebug() << "DD: DEM:   north_scale =" this->north_scale;
+	qDebug() << SG_PREFIX_D << "north_scale =" this->north_scale;
 #endif
 
 	return true;  /* all OK */
@@ -717,7 +718,7 @@ int16_t DEM::get_shepard_interpol(double east, double north)
 		b += tmp;
 	}
 
-	qDebug() << "DD: DEM: Shepard Interpolation: tmp =" << tmp << "t =" << t << "b =" << b << "t/b =" << t/b;
+	qDebug() << SG_PREFIX_D << "Shepard Interpolation: tmp =" << tmp << "t =" << t << "b =" << b << "t/b =" << t/b;
 
 	return (t/b);
 
@@ -780,9 +781,9 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 	bbox.east = dem_northeast.lon;
 	bbox.west = dem_southwest.lon;
 
-	qDebug() << "II" PREFIX << "Viewport:" << other_bbox;
-	qDebug() << "II" PREFIX << "DEM:     " << bbox;
-	qDebug() << "II" PREFIX << "Overlap: " << (BBOX_INTERSECT(bbox, other_bbox) ? "true" : "false");
+	qDebug() << SG_PREFIX_I << "Viewport:" << other_bbox;
+	qDebug() << SG_PREFIX_I << "DEM:     " << bbox;
+	qDebug() << SG_PREFIX_I << "Overlap: " << (BBOX_INTERSECT(bbox, other_bbox) ? "true" : "false");
 
 	return BBOX_INTERSECT(bbox, other_bbox);
 }

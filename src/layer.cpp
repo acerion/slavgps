@@ -64,7 +64,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer"
-#define PREFIX ": Layer:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -94,7 +93,7 @@ void Layer::emit_layer_changed(const QString & where)
 {
 	if (this->visible && this->tree_view) {
 		Window::set_redraw_trigger(this);
-		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'layer changed' signal @" << where;
+		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'layer changed' signal @" << where;
 		emit this->layer_changed(this->get_name());
 	}
 }
@@ -109,7 +108,7 @@ void Layer::emit_layer_changed(const QString & where)
 void Layer::emit_layer_changed_although_invisible(const QString & where)
 {
 	Window::set_redraw_trigger(this);
-	qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal @" << where;
+	qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal @" << where;
 	emit this->layer_changed(this->get_name());
 }
 
@@ -154,7 +153,7 @@ void Layer::preconfigure_interfaces(void)
 
 	for (SlavGPS::LayerType layer_type = SlavGPS::LayerType::Aggregate; layer_type < SlavGPS::LayerType::Max; ++layer_type) {
 
-		qDebug() << "II" PREFIX << "preconfiguring interface for layer type" << layer_type;
+		qDebug() << SG_PREFIX_I << "Preconfiguring interface for layer type" << layer_type;
 
 		LayerInterface * interface = Layer::get_interface(layer_type);
 
@@ -167,7 +166,7 @@ void Layer::preconfigure_interfaces(void)
 		}
 
 		for (ParameterSpecification * param_spec = interface->parameters_c; param_spec->type_id != SGVariantType::Empty; param_spec++) {
-			qDebug() << "II" PREFIX << "param spec name is" << param_spec->name << "type is" << param_spec->type_id << "id is" << param_spec->id;
+			qDebug() << SG_PREFIX_I << "Param spec name is" << param_spec->name << "type is" << param_spec->type_id << "id is" << param_spec->id;
 			interface->parameter_specifications.insert(std::pair<param_id_t, ParameterSpecification *>(param_spec->id, param_spec));
 		}
 	}
@@ -182,7 +181,7 @@ void Layer::postconfigure_interfaces(void)
 
 	for (SlavGPS::LayerType layer_type = SlavGPS::LayerType::Aggregate; layer_type < SlavGPS::LayerType::Max; ++layer_type) {
 
-		qDebug() << "II" PREFIX << "postconfiguring interface for layer type" << layer_type;
+		qDebug() << SG_PREFIX_I << "Postconfiguring interface for layer type" << layer_type;
 
 		LayerInterface * interface = Layer::get_interface(layer_type);
 
@@ -210,7 +209,7 @@ void Layer::postconfigure_interfaces(void)
 
 			/* TODO_2_LATER: make sure that the value read from Layer Defaults is valid.
 			   What if LayerDefaults doesn't contain value for given parameter? */
-			qDebug() << "II" << PREFIX << "will call LayerDefaults::get() for param" << param_spec->type_id;
+			qDebug() << SG_PREFIX_I << "Wwill call LayerDefaults::get() for param" << param_spec->type_id;
 			param_value = LayerDefaults::get(layer_type, param_spec->name, param_spec->type_id);
 			interface->parameter_default_values[param_spec->id] = param_value;
 		}
@@ -270,7 +269,7 @@ QString Layer::get_type_ui_label(LayerType type)
 
 Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool interactive)
 {
-	qDebug() << "II" PREFIX << "will create new" << Layer::get_type_ui_label(layer_type) << "layer";
+	qDebug() << SG_PREFIX_I << "Will create new" << Layer::get_type_ui_label(layer_type) << "layer";
 
 	Layer * layer = NULL;
 
@@ -304,7 +303,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 		break;
 	case LayerType::Max:
 	default:
-		qDebug() << "EE" PREFIX << "unhandled layer type" << layer_type;
+		qDebug() << SG_PREFIX_E << "Unhandled layer type" << layer_type;
 		break;
 	}
 
@@ -360,7 +359,7 @@ void Layer::marshall_params(Pickle & pickle)
 
 	/* Now the actual parameters. */
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
-		qDebug() << "DD" PREFIX << "Marshalling parameter" << iter->second->name;
+		qDebug() << SG_PREFIX_D << "Marshalling parameter" << iter->second->name;
 
 		const SGVariant param_value = this->get_param_value(iter->first, false);
 		param_value.marshall(pickle, iter->second->type_id);
@@ -377,7 +376,7 @@ void Layer::unmarshall_params(Pickle & pickle)
 	this->set_name(pickle.take_string());
 
 	for (auto iter = this->get_interface().parameter_specifications.begin(); iter != this->get_interface().parameter_specifications.end(); iter++) {
-		qDebug() << "DD" PREFIX << "Unmarshalling parameter" << iter->second->name;
+		qDebug() << SG_PREFIX_D << "Unmarshalling parameter" << iter->second->name;
 		const SGVariant param_value = SGVariant::unmarshall(pickle, iter->second->type_id);
 		this->set_param_value(iter->first, param_value, false);
 	}
@@ -510,7 +509,7 @@ void Layer::set_initial_parameter_values(void)
 
 Layer::Layer()
 {
-	qDebug() << "II" PREFIX << "Layer::Layer()";
+	qDebug() << SG_PREFIX_I;
 
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 
@@ -705,12 +704,12 @@ QDebug SlavGPS::operator<<(QDebug debug, const LayerType & layer_type)
 		break;
 #endif
 	case LayerType::Max:
-		qDebug() << "EE" PREFIX << "unexpectedly handling NUM_TYPES layer type";
+		qDebug() << SG_PREFIX_E << "Unexpectedly handling NUM_TYPES layer type";
 		debug << "(layer-type-last)";
 		break;
 	default:
 		debug << "layer-type-unknown";
-		qDebug() << "EE" PREFIX << "invalid layer type" << (int) layer_type;
+		qDebug() << SG_PREFIX_E << "Invalid layer type" << (int) layer_type;
 		break;
 	};
 

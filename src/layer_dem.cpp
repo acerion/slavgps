@@ -475,7 +475,7 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 	switch (param_id) {
 
 	case PARAM_FILES:
-		qDebug() << "II" PREFIX << "string list (" << this->files.size() << " elements):";
+		qDebug() << SG_PREFIX_I << "string list (" << this->files.size() << " elements):";
 		qDebug() << this->files;
 
 		/* Save in relative format if necessary. */
@@ -979,7 +979,7 @@ void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		const QString dem_file_path = *iter;
 		DEM * dem = DEMCache::get(dem_file_path);
 		if (dem) {
-			qDebug() << "II" PREFIX << "got file" << dem_file_path << "from cache, will now draw it";
+			qDebug() << SG_PREFIX_I << "got file" << dem_file_path << "from cache, will now draw it";
 			this->draw_dem(viewport, dem);
 		} else {
 			qDebug() << "EE" PREFIX << "failed to get file" << dem_file_path << "from cache, not drawing";
@@ -992,7 +992,7 @@ void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 LayerDEM::LayerDEM()
 {
-	qDebug() << "II" PREFIX << "LayerDEM::LayerDEM()";
+	qDebug() << SG_PREFIX_I << "LayerDEM::LayerDEM()";
 
 	this->type = LayerType::DEM;
 	strcpy(this->debug_string, "LayerType::DEM");
@@ -1098,7 +1098,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	case DownloadStatus::Success:
 	case DownloadStatus::DownloadNotRequired:
 	default:
-		qDebug() << "II" PREFIX << "layer download progress = 100";
+		qDebug() << SG_PREFIX_I << "layer download progress = 100";
 		dl_job->progress = 100;
 		break;
 	}
@@ -1294,11 +1294,11 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 			qDebug () << "II" PREFIX << "will now load file" << dem_file_path << "from cache";
 			DEMCache::load_file_into_cache(dem_file_path);
 		} else {
-			qDebug() << "II" PREFIX << dem_file_path << ": file size is zero";
+			qDebug() << SG_PREFIX_I << dem_file_path << ": file size is zero";
 		}
 		return true;
 	} else {
-		qDebug() << "II" PREFIX << dem_file_path << ": file does not exist";
+		qDebug() << SG_PREFIX_I << dem_file_path << ": file does not exist";
 		return false;
 	}
 }
@@ -1308,7 +1308,7 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 
 void DEMDownloadJob::run(void)
 {
-	qDebug() << "II" PREFIX << "download thread";
+	qDebug() << SG_PREFIX_I << "download thread";
 
 	if (this->source == DEM_SOURCE_SRTM) {
 		srtm_dem_download_thread(this);
@@ -1391,7 +1391,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	QMenu * menu = (QMenu *) qa->parentWidget();
 
 	const LatLon ll(menu->property("lat").toDouble(), menu->property("lon").toDouble());
-	qDebug() << "II" PREFIX << "will display file info for coordinates" << ll;
+	qDebug() << SG_PREFIX_I << "will display file info for coordinates" << ll;
 
 	int intlat = (int) floor(ll.lat);
 	int intlon = (int) floor(ll.lon);
@@ -1441,12 +1441,12 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	const Coord coord = tool->viewport->screen_pos_to_coord(ev->x(), ev->y());
 	const LatLon ll = coord.get_latlon();
 
-	qDebug() << "II" PREFIX << "received event, processing (coord" << ll.lat << ll.lon << ")";
+	qDebug() << SG_PREFIX_I << "received event, processing (coord" << ll.lat << ll.lon << ")";
 
 	QString cache_file_name;
 	if (this->source == DEM_SOURCE_SRTM) {
 		cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
-		qDebug() << "II" PREFIX << "cache file name" << cache_file_name;
+		qDebug() << SG_PREFIX_I << "cache file name" << cache_file_name;
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
 		cache_file_name = dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon);
@@ -1460,24 +1460,24 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 
 	if (ev->button() == Qt::LeftButton) {
 		const QString dem_full_path = MapCache::get_dir() + cache_file_name;
-		qDebug() << "II" PREFIX << "released left button, path is" << dem_full_path;
+		qDebug() << SG_PREFIX_I << "released left button, path is" << dem_full_path;
 
 		if (this->files.contains(dem_full_path)) {
-			qDebug() << "II" PREFIX << "path already on list of files:" << dem_full_path;
+			qDebug() << SG_PREFIX_I << "path already on list of files:" << dem_full_path;
 
 		} else if (!this->add_file(dem_full_path)) {
-			qDebug() << "II" PREFIX << "released left button, failed to add the file, downloading it";
+			qDebug() << SG_PREFIX_I << "released left button, failed to add the file, downloading it";
 			const QString job_description = QObject::tr("Downloading DEM %1").arg(cache_file_name);
 			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
 			job->set_description(job_description);
 			job->run_in_background(ThreadPoolType::Remote);
 		} else {
-			qDebug() << "II" PREFIX << "released left button, successfully added the file, emitting 'changed'";
+			qDebug() << SG_PREFIX_I << "released left button, successfully added the file, emitting 'changed'";
 			this->emit_layer_changed("DEM - released left button");
 		}
 
 	} else if (ev->button() == Qt::RightButton) {
-		qDebug() << "II" PREFIX << "release right button";
+		qDebug() << SG_PREFIX_I << "release right button";
 		if (!this->right_click_menu) {
 
 			this->right_click_menu = new QMenu();
@@ -1509,7 +1509,7 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * 
 	/* Choose & keep track of cache dir.
 	 * Download in background thread.
 	 * Download over area. */
-	qDebug() << "II" PREFIX << "received click event, ignoring";
+	qDebug() << SG_PREFIX_I << "received click event, ignoring";
 	return true;
 }
 

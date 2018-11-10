@@ -76,8 +76,8 @@ MyHandler::MyHandler(const QString & new_lat_path, const QString & new_lon_path)
 	this->lat_path = QString(new_lat_path).split('/');
 	this->lon_path = QString(new_lon_path).split('/');
 
-	qDebug() << "II" PREFIX << "latitude path =" << this->lat_path;
-	qDebug() << "II" PREFIX << "longitude path =" << this->lon_path;
+	qDebug() << SG_PREFIX_I << "latitude path =" << this->lat_path;
+	qDebug() << SG_PREFIX_I << "longitude path =" << this->lon_path;
 
 	this->use_attributes = false;
 
@@ -96,8 +96,8 @@ MyHandler::MyHandler(const QString & new_lat_path, const QString & new_lat_attr,
 	this->lat_path = QString(new_lat_path).split('/');
 	this->lon_path = QString(new_lon_path).split('/');
 
-	qDebug() << "II" PREFIX << "latitude path =" << this->lat_path;
-	qDebug() << "II" PREFIX << "longitude path =" << this->lon_path;
+	qDebug() << SG_PREFIX_I << "latitude path =" << this->lat_path;
+	qDebug() << SG_PREFIX_I << "longitude path =" << this->lon_path;
 
 	this->lat_attr = new_lat_attr;
 	this->lon_attr = new_lon_attr;
@@ -112,7 +112,7 @@ MyHandler::MyHandler(const QString & new_lat_path, const QString & new_lat_attr,
 
 bool MyHandler::startDocument(void)
 {
-	qDebug() << "II" PREFIX;
+	qDebug() << SG_PREFIX_I;
 	return true;
 }
 
@@ -121,7 +121,7 @@ bool MyHandler::startDocument(void)
 
 bool MyHandler::endDocument(void)
 {
-	qDebug() << "II" PREFIX;
+	qDebug() << SG_PREFIX_I;
 	return true;
 }
 
@@ -136,14 +136,14 @@ bool MyHandler::startElement(const QString &namespaceURI, const QString &localNa
 {
 	this->stack.push_back(localName);
 
-	qDebug() << "II" PREFIX << "localName =" << localName << "qName =" << qName;
-	qDebug() << "II" PREFIX << "stack after pushing =" << this->stack;
+	qDebug() << SG_PREFIX_I << "localName =" << localName << "qName =" << qName;
+	qDebug() << SG_PREFIX_I << "stack after pushing =" << this->stack;
 
 	if (this->use_attributes) {
 #if 1 /* Debug. */
 		if (this->stack == this->lat_path || this->stack == this->lon_path) {
 			for (int i = 0; i < atts.count(); i++) {
-				qDebug() << "II" PREFIX << "         attribute" << i << atts.localName(i) << atts.value(i);
+				qDebug() << SG_PREFIX_I << "         attribute" << i << atts.localName(i) << atts.value(i);
 			}
 		}
 #endif
@@ -163,14 +163,14 @@ bool MyHandler::startElement(const QString &namespaceURI, const QString &localNa
 			if (std::isnan(this->ll.lat)) {
 				this->ll.lat = SGUtils::c_to_double(atts.value("", this->lat_attr));
 			}
-			qDebug() << "II" PREFIX << "---- found latitude =" << this->ll.lat;
+			qDebug() << SG_PREFIX_I << "---- found latitude =" << this->ll.lat;
 
 		}
 		if (this->stack == this->lon_path) {
 			if (std::isnan(this->ll.lon)) {
 				this->ll.lon = SGUtils::c_to_double(atts.value("", this->lon_attr));
 			}
-			qDebug() << "II" PREFIX << "---- found longitude =" << this->ll.lon;
+			qDebug() << SG_PREFIX_I << "---- found longitude =" << this->ll.lon;
 		}
 	}
 
@@ -182,7 +182,7 @@ bool MyHandler::startElement(const QString &namespaceURI, const QString &localNa
 
 bool MyHandler::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
 {
-	qDebug() << "II" PREFIX << "localName =" << localName << "qName =" << qName;
+	qDebug() << SG_PREFIX_I << "localName =" << localName << "qName =" << qName;
 	this->stack.pop_back();
 	qDebug() << "DD" PREFIX << "stack after popping =" << this->stack;
 	return true;
@@ -208,15 +208,15 @@ bool MyHandler::characters(const QString & ch)
 		if (std::isnan(this->ll.lat)) {
 			this->ll.lat = SGUtils::c_to_double(ch);
 		}
-		qDebug() << "II" PREFIX << "---- found latitude =" << this->ll.lat;
+		qDebug() << SG_PREFIX_I << "---- found latitude =" << this->ll.lat;
 
 	} else if (this->stack == this->lon_path) {
 		if (std::isnan(this->ll.lon)) {
 			this->ll.lon = SGUtils::c_to_double(ch);
 		}
-		qDebug() << "II" PREFIX << "---- found longitude =" << this->ll.lat;
+		qDebug() << SG_PREFIX_I << "---- found longitude =" << this->ll.lat;
 	} else {
-		qDebug() << "II" PREFIX << "found other characters string =" << ch;
+		qDebug() << SG_PREFIX_I << "found other characters string =" << ch;
 	}
 
 	return true;

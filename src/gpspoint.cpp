@@ -52,7 +52,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": GPSPoint:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "GPSPoint"
 
 
 
@@ -509,7 +509,7 @@ Trackpoint * GPSPointParser::create_trackpoint(CoordMode coordinate_mode)
 		tp->pdop = this->line_pdop;
 	}
 
-	qDebug() << "II" PREFIX << "new trackpoint at" << tp->coord << "(" << this->line_latlon << ")";
+	qDebug() << SG_PREFIX_I << "new trackpoint at" << tp->coord << "(" << this->line_latlon << ")";
 
 	return tp;
 }
@@ -742,7 +742,7 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 		break;
 
 	default:
-		qDebug() << "EE" PREFIX "process key and value: unhandled key" << key << "of length" << key_len;
+		qDebug() << SG_PREFIX_E << "Process key and value: unhandled key" << key << "of length" << key_len;
 		break;
 	}
 }
