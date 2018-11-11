@@ -72,11 +72,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 typedef int GtkCellRenderer;
 typedef int GtkCellRendererToggle;
 typedef int GtkCellRendererText;
@@ -1276,37 +1271,53 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 
 
-void Tree::add_to_set_of_selected(TreeItem * tree_item)
+void SelectedTreeItems::add_to_set(TreeItem * tree_item)
 {
 	/* At this moment we support selection of only one item at a
 	   time. So if anyone selects a new item, all other (old) selected
 	   items must be forgotten. */
 	this->selected_tree_items.clear();
 
-	this->selected_tree_items.insert(std::pair<sg_uid_t, TreeItem *>(tree_item->uid, tree_item));
+	this->selected_tree_items.insert(std::pair<sg_uid_t, TreeItem *>(tree_item->get_uid(), tree_item));
 }
 
 
 
 
-bool Tree::remove_from_set_of_selected(const TreeItem * tree_item)
+bool SelectedTreeItems::remove_from_set(const TreeItem * tree_item)
 {
 	if (!tree_item) {
 		return 0;
 	}
 
 	/* erase() returns number of removed items. */
-	return 0 != this->selected_tree_items.erase(tree_item->uid);
+	return 0 != this->selected_tree_items.erase(tree_item->get_uid());
 }
 
 
 
 
-bool Tree::is_in_set_of_selected(const TreeItem * tree_item) const
+bool SelectedTreeItems::is_in_set(const TreeItem * tree_item) const
 {
 	if (!tree_item) {
 		return false;
 	}
 
-	return this->selected_tree_items.end() != this->selected_tree_items.find(tree_item->uid);
+	return this->selected_tree_items.end() != this->selected_tree_items.find(tree_item->get_uid());
+}
+
+
+
+
+void SelectedTreeItems::clear(void)
+{
+	this->selected_tree_items.clear();
+}
+
+
+
+
+int SelectedTreeItems::size(void) const
+{
+	return this->selected_tree_items.size();
 }

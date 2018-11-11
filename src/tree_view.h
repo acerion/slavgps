@@ -24,7 +24,6 @@
 
 
 
-#include <cstdint>
 #include <map>
 
 
@@ -54,6 +53,8 @@ namespace SlavGPS {
 	};
 
 
+
+
 	enum class TreeViewColumn {
 		Name      = 0, /* From item's name and icon. This column should be somehow sortable. */
 		Visible   = 1, /* From item's visibility. */
@@ -79,38 +80,22 @@ namespace SlavGPS {
 
 
 
-	class Layer;
-	class Window;
-	class LayersPanel;
-	class Viewport;
 	class TreeItem;
 
 
 
 
-	class Tree : public QObject {
-		Q_OBJECT
+	class SelectedTreeItems {
 	public:
-		Tree() {};
-		~Tree() {};
+		void add_to_set(TreeItem * tree_item);
+		bool remove_from_set(const TreeItem * tree_item);
+		bool is_in_set(const TreeItem * tree_item) const;
+		void clear(void);
+		int size(void) const;
 
-
-		void add_to_set_of_selected(TreeItem * tree_item);
-		bool remove_from_set_of_selected(const TreeItem * tree_item);
-		bool is_in_set_of_selected(const TreeItem * tree_item) const;
-
+	private:
 		/* Set in TreeItem::handle_selection_in_tree(). Used to draw selected tree items with highlight in viewport. */
 		std::map<sg_uid_t, TreeItem *> selected_tree_items;
-
-		void emit_items_tree_updated(void) { emit this->items_tree_updated(); };
-
-	signals:
-		void items_tree_updated(void);
-
-	public:
-		Window * window = NULL;
-		LayersPanel * layers_panel = NULL;
-		Viewport * viewport = NULL;
 	};
 
 

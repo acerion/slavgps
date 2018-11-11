@@ -63,11 +63,6 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
-
-
-
-
 enum {
 	PARAM_IMAGE_FULL_PATH = 0,
 	PARAM_CORNER_UTM_EASTING,

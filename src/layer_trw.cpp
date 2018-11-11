@@ -125,7 +125,7 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
+extern SelectedTreeItems g_selected;
 
 
 
@@ -1242,7 +1242,7 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		return;
 	}
 
-	const bool item_is_selected = parent_is_selected || g_tree->is_in_set_of_selected(this);
+	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 
 	/* This will copy viewport's parameters (size, coords, etc.)
 	   to painter, so that painter knows whether, what and how to
@@ -2551,7 +2551,7 @@ void LayerTRW::delete_all_routes()
 	   set to this item or any of its children, or to anything
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
-	g_tree->selected_tree_items.clear();
+	g_selected.clear();
 
 	this->routes.clear();
 
@@ -2579,7 +2579,7 @@ void LayerTRW::delete_all_tracks()
 	   set to this item or any of its children, or to anything
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
-	g_tree->selected_tree_items.clear();
+	g_selected.clear();
 
 	this->tracks.clear();
 
@@ -2606,7 +2606,7 @@ void LayerTRW::delete_all_waypoints()
 	   set to this item or any of its children, or to anything
 	   else. Just clear the selection when deleting any item from
 	   the tree. */
-	g_tree->selected_tree_items.clear();
+	g_selected.clear();
 
 	this->waypoints.clear();
 
@@ -4148,7 +4148,7 @@ bool LayerTRW::handle_selection_in_tree(void)
 
 	/* Set info about current selection. */
 
-	g_tree->add_to_set_of_selected(this);
+	g_selected.add_to_set(this);
 
 	/* Set highlight thickness. */
 	ThisApp::get_main_viewport()->set_highlight_thickness(this->get_track_thickness());

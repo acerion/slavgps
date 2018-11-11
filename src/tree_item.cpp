@@ -48,7 +48,7 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
+extern SelectedTreeItems g_selected;
 
 
 
@@ -72,7 +72,7 @@ TreeItem::TreeItem()
 
 TreeItem::~TreeItem()
 {
-	g_tree->remove_from_set_of_selected(this);
+	g_selected.remove_from_set(this);
 }
 
 

@@ -81,7 +81,7 @@ extern LayerMapnikInterface vik_mapnik_layer_interface;
 
 
 
-extern Tree * g_tree;
+extern SelectedTreeItems g_selected;
 
 
 
@@ -399,7 +399,7 @@ bool Layer::handle_selection_in_tree(void)
 	/* A generic layer doesn't want anyone know that it is
 	   selected - no one would be interested in knowing that.
 	   So we don't set it here. */
-	g_tree->selected_tree_item = this;
+	g_selected.selected_tree_item = this;
 #endif
 
 	return ThisApp::get_main_window()->clear_highlight();

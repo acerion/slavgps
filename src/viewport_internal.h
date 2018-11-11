@@ -249,7 +249,7 @@ namespace SlavGPS {
 		ViewportDrawMode get_drawmode(void) const;
 
 
-		void request_redraw(const QString & trigger);
+		void request_redraw(const QString & trigger_descr);
 
 
 

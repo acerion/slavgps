@@ -125,7 +125,8 @@ enum {
 
 
 
-Tree * g_tree = NULL;
+SelectedTreeItems g_selected;
+static ThisApp g_this_app;
 
 
 
@@ -188,15 +189,11 @@ Window::Window()
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
 	connect(this, SIGNAL (center_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
 
-	g_tree = new Tree();
-	g_tree->window = this;
-	g_tree->layers_panel = this->items_tree;
-	g_tree->viewport = this->viewport;
+
+	g_this_app.set(this, this->items_tree, viewport);
+
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
-
-
-
 	this->set_current_document_full_path("");
 
 
@@ -1867,10 +1864,10 @@ bool vik_window_clear_highlight_cb(Window * window)
 */
 bool Window::clear_highlight(void)
 {
-	const bool need_redraw = (0 != g_tree->selected_tree_items.size());
+	const bool need_redraw = (0 != g_selected.size());
 
 	/* Clearing highlight means that there are no selected items. */
-	g_tree->selected_tree_items.clear();
+	g_selected.clear();
 
 	return need_redraw;
 }
@@ -3682,10 +3679,9 @@ void Window::set_dirty_flag(bool dirty)
 
 Window * ThisApp::get_main_window(void)
 {
-	assert (g_tree);
-	assert (g_tree->window);
+	assert (g_this_app.window);
 
-	return g_tree->window;
+	return g_this_app.window;
 }
 
 
@@ -3693,10 +3689,9 @@ Window * ThisApp::get_main_window(void)
 
 LayersPanel * ThisApp::get_layers_panel(void)
 {
-	assert (g_tree);
-	assert (g_tree->window);
+	assert (g_this_app.layers_panel);
 
-	return g_tree->layers_panel;
+	return g_this_app.layers_panel;
 }
 
 
@@ -3704,8 +3699,7 @@ LayersPanel * ThisApp::get_layers_panel(void)
 
 Viewport * ThisApp::get_main_viewport(void)
 {
-	assert (g_tree);
-	assert (g_tree->window);
+	assert (g_this_app.viewport);
 
-	return g_tree->viewport;
+	return g_this_app.viewport;
 }

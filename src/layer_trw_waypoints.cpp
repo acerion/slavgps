@@ -57,7 +57,7 @@ using namespace SlavGPS;
 
 
 
-extern Tree * g_tree;
+extern SelectedTreeItems g_selected;
 
 
 
@@ -750,7 +750,7 @@ bool LayerTRWWaypoints::handle_selection_in_tree(void)
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
-	g_tree->add_to_set_of_selected(this);
+	g_selected.add_to_set(this);
 
 	return true;
 }
@@ -780,7 +780,7 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 	}
 
 	if (1) {
-		if (g_tree->is_in_set_of_selected(this)) {
+		if (g_selected.is_in_set(this)) {
 			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected directly)";
 		} else if (parent_is_selected) {
 			qDebug() << SG_PREFIX_I << "Drawing tree item" << this->name << "as selected (selected through parent)";
@@ -789,7 +789,7 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 		}
 	}
 
-	const bool item_is_selected = parent_is_selected || g_tree->is_in_set_of_selected(this);
+	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 	const LatLonBBox viewport_bbox = viewport->get_bbox();
 
 	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {

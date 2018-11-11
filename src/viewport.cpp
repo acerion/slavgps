@@ -2382,9 +2382,9 @@ sg_ret Viewport::set_bbox(const LatLonBBox & new_bbox)
 
 
 
-void Viewport::request_redraw(const QString & trigger)
+void Viewport::request_redraw(const QString & trigger_descr)
 {
-	this->emit_center_or_zoom_changed(trigger);
+	this->emit_center_or_zoom_changed(trigger_descr);
 }
 
 

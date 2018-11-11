@@ -393,9 +393,21 @@ namespace SlavGPS {
 
 	class ThisApp {
 	public:
+		void set(Window * new_window, LayersPanel * new_layers_panel, Viewport * new_viewport)
+		{
+			this->window = new_window;
+			this->layers_panel = new_layers_panel;
+			this->viewport = new_viewport;
+		}
+
 		static Window * get_main_window(void);
 		static LayersPanel * get_layers_panel(void);
 		static Viewport * get_main_viewport(void);
+
+	private:
+		Window * window = NULL;
+		LayersPanel * layers_panel = NULL;
+		Viewport * viewport = NULL;
 	};
 
 
