@@ -396,31 +396,12 @@ bool TreeView::apply_tree_item_visibility(const TreeItem * tree_item)
 		return false;
 	}
 
-	/* kamilFIXME: this does not take into account third state. */
+	/* FIXME: this does not take into account third state. */
 	QModelIndex visible_index = tree_item->index.sibling(tree_item->index.row(), (int) TreeViewColumn::Visible);
 	this->tree_model->itemFromIndex(visible_index)->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
 
 	return true;
 }
-
-
-
-
-#if 0
-void TreeView::toggle_tree_item_visibility(TreeIndex const & item_index)
-{
-	if (!item_index.isValid()) {
-		qDebug() << SG_PREFIX_E << "Invalid item index";
-		return;
-	}
-
-	/* kamilFIXME: this does not take into account third state. */
-	QModelIndex visible_index = item_index.sibling(item_index.row(), (int) TreeViewColumn::Visible);
-	QStandardItem * item = this->tree_model->itemFromIndex(visible_index);
-	bool visible = item->checkState() == Qt::Checked;
-	item->setCheckState(!visible ? Qt::Checked : Qt::Unchecked);
-}
-#endif
 
 
 
@@ -1176,58 +1157,6 @@ QStringList TreeModel::mimeTypes(void) const
 	types << "application/vnd.text.list";
 	return types;
 }
-
-
-
-
-static void vik_tree_view_edited_cb(GtkCellRendererText *cell, char *path_str, const char *new_name, TreeView * tree_view)
-{
-#ifdef K_FIXME_RESTORE
-	tree_view->editing = false;
-
-	/* Get type and data. */
-	TreeIndex * index = tree_view->get_index_from_path_str(path_str);
-
-#if 0
-	TreeIndex * TreeView::get_index_from_path_str(char const * path_str)
-	{
-		TreeIndex * index = NULL;
-
-		return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->tree_model), iter, path_str);
-
-		return index;
-	}
-#endif
-
-	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[VT_ITEM_EDITED_SIGNAL], 0, index, new_name);
-#endif
-}
-
-
-
-
-static void vik_tree_view_edit_start_cb(GtkCellRenderer *cell, GtkCellEditable *editable, char *path, TreeView * tree_view)
-{
-#ifdef K_FIXME_RESTORE
-	tree_view->editing = true;
-#endif
-}
-
-
-
-
-static void vik_tree_view_edit_stop_cb(GtkCellRenderer *cell, TreeView * tree_view)
-{
-#ifdef K_FIXME_RESTORE
-	tree_view->editing = false;
-#endif
-}
-
-
-
-
-#ifdef K_OLD_IMPLEMENTATION
-#endif
 
 
 

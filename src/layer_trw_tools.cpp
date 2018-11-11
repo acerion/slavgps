@@ -1457,12 +1457,6 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg1);
 		trw->get_window()->set_busy_cursor();
 
-#ifdef K_FIXME_RESTORE
-		/* Give GTK a change to display the new status bar before querying the web. */
-		while (gtk_events_pending()) {
-			gtk_main_iteration();
-		}
-#endif
 		bool find_status = Routing::find_route_with_default_engine(trw, start, end);
 
 		/* Update UI to say we're done. */

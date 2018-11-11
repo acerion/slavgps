@@ -2525,11 +2525,7 @@ void Window::acquire_from_my_osm_cb(void)
 #ifdef VIK_CONFIG_GEOCACHES
 void Window::acquire_from_gc_cb(void)
 {
-	if (false
-#if K_FIXME_RESTORE
-	    && !DataSourceGeoCache::have_programs()
-#endif
-	    ) {
+	if (!DataSourceGeoCache::have_programs()) {
 		return;
 	}
 
@@ -3018,30 +3014,6 @@ QComboBox * SlavGPS::create_zoom_combo_all_levels(QWidget * parent)
 	combo->setToolTip(QObject::tr("Select zoom level"));
 
 	return combo;
-}
-
-
-
-
-static int zoom_popup_handler(int * gtk_widget)
-{
-#ifdef K_FIXME_RESTORE
-	if (!gtk_widget) {
-		return false;
-	}
-
-	if (!GTK_IS_MENU (gtk_widget)) {
-		return false;
-	}
-
-	/* The "widget" is the menu that was supplied when
-	 * QObject::connect() was called.
-	 */
-	QMenu * menu = GTK_MENU (gtk_widget);
-
-	menu->exec(QCursor::pos());
-#endif
-	return true;
 }
 
 

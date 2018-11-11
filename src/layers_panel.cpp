@@ -643,16 +643,11 @@ LayerAggregate * LayersPanel::get_top_layer()
 
 
 
-/**
- * Remove all layers.
- */
-void LayersPanel::clear()
+void LayersPanel::clear(void)
 {
 	if (0 != this->toplayer->get_child_layers_count()) {
-#ifdef K_FIXME_RESTORE
-		g_signal_emit(G_OBJECT(this->panel_box), items_tree_signals[VLP_DELETE_LAYER_SIGNAL], 0);
-#endif
-		this->toplayer->clear(); /* simply deletes all layers */
+		this->toplayer->clear(); /* Delete all layers. */
+		this->emit_items_tree_updated_cb("Delete all layers through layers panel");
 	}
 }
 
