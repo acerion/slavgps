@@ -100,7 +100,6 @@ namespace SlavGPS {
 
 		QString sublayer_rename_request(const QString & new_name);
 
-		void delete_sublayer(bool confirm);
 
 		bool properties_dialog();
 
@@ -151,7 +150,6 @@ namespace SlavGPS {
 
 		void cut_sublayer_cb(void);
 		void copy_sublayer_cb(void);
-		void delete_sublayer_cb(void);
 	};
 
 

@@ -189,6 +189,20 @@ Track * LayerTRWTracks::find_track_by_name(const QString & trk_name)
 
 
 
+Track * LayerTRWTracks::find_child_by_uid(sg_uid_t child_uid) const
+{
+	auto iter = this->children_map.find(child_uid);
+	if (iter == this->children_map.end()) {
+		qDebug() << SG_PREFIX_W << "Can't find track with specified UID" << child_uid;
+		return NULL;
+	} else {
+		return iter->second;
+	}
+}
+
+
+
+
 void LayerTRWTracks::recalculate_bbox(void)
 {
 	this->bbox.invalidate();

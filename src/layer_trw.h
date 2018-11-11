@@ -325,6 +325,9 @@ namespace SlavGPS {
 		void copy_sublayer_common(TreeItem * item);
 		void cut_sublayer_common(TreeItem * item, bool confirm);
 
+		sg_ret delete_track(Track * trk, bool confirm);
+		sg_ret delete_waypoint(Waypoint * wp, bool confirm);
+
 		bool handle_selection_in_tree();
 
 		void reset_internal_selections(void);
@@ -442,6 +445,10 @@ namespace SlavGPS {
 		void delete_selected_routes_cb();
 		void delete_all_waypoints_cb(void);
 		void delete_selected_waypoints_cb(void);
+
+		void delete_track_cb(void);
+		void delete_route_cb(void);
+		void delete_waypoint_cb(void);
 
 		void waypoint_list_dialog_cb(void);
 

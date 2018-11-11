@@ -126,6 +126,8 @@ namespace SlavGPS {
 		Track * find_track_by_name(const QString & trk_name);
 		std::list<TreeItem *> get_tracks_by_date(const QDate & search_date) const;
 
+		Track * find_child_by_uid(sg_uid_t uid) const;
+
 		void uniquify(TreeViewSortOrder sort_order);
 		QString new_unique_element_name(const QString & old_name);
 

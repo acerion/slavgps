@@ -2584,17 +2584,6 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 
 
 
-#if 0
-/* kamilFIXME: this assumes that there are any trackpoints on the list. */
-CoordMode Track::get_coord_mode(void) const
-{
-	assert (!this->trackpoints.empty());
-
-	return (*this->trackpoints.begin())->coord.mode;
-}
-#endif
-
-
 
 /* Comparison function used to sort trackpoints. */
 bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
@@ -2876,6 +2865,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 {
 	QAction * qa = NULL;
 	bool rv = false;
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 
 	rv = true;
@@ -2911,7 +2901,12 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
 
 		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
-		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_sublayer_cb()));
+		qa->setData((unsigned int) this->get_uid());
+		if (this->type_id == "sg.trw.track") {
+			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_track_cb()));
+		} else {
+			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_route_cb()));
+		}
 	}
 
 
@@ -3493,15 +3488,16 @@ void Track::upload_to_osm_traces_cb(void)
 
 void Track::convert_track_route_cb(void)
 {
-	/* Converting a track to a route can be a bit more complicated,
-	   so give a chance to change our minds: */
 	if (this->type_id == "sg.trw.track") {
+		/* Converting a track to a route may lead to a data
+		   loss, so give user a chance to change his mind. */
 
 		const Speed avg = this->get_average_speed();
 		if (this->get_segment_count() > 1
 		    || (avg.is_valid() && avg.get_value() > 0.0)) {
 
-			if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), ThisApp::get_main_window())) {
+			if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\n"
+						  "Do you want to continue?"), ThisApp::get_main_window())) {
 				return;
 			}
 		}
@@ -3509,40 +3505,27 @@ void Track::convert_track_route_cb(void)
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	/* Copy it. */
-	Track * trk_copy = new Track(*this);
 
-	/* Convert. */
-	trk_copy->type_id = trk_copy->type_id == "sg.trw.route" ? "sg.trw.track": "sg.trw.route";
+	/* Detach from old location. */
+	parent_layer->detach_from_container(this);
+	parent_layer->detach_from_tree(this);
 
-	/* Don't pass Track::name to function setting Track::name.
-	   Create temporary copy to be passed as argument to set_name(). */
-	const QString copy_name = trk_copy->name;
 
-	/* Delete old one and then add new one. */
-	if (this->type_id == "sg.trw.route") {
-		parent_layer->detach_from_container(this);
-		parent_layer->detach_from_tree(this);
-		delete this; /* FIXME: deleting self. */
-
-		trk_copy->set_name(copy_name);
-		parent_layer->add_track(trk_copy);
+	/* Convert and attach to new location. */
+	this->type_id = this->type_id == "sg.trw.route" ? "sg.trw.track": "sg.trw.route";
+	if (this->type_id == "sg.trw.track") {
+		parent_layer->add_track(this);
 	} else {
-		/* Extra route conversion bits... */
-		trk_copy->merge_segments();
-		trk_copy->to_routepoints();
+		/* Extra steps when converting to route. */
+		this->merge_segments();
+		this->to_routepoints();
 
-		parent_layer->detach_from_container(this);
-		parent_layer->detach_from_tree(this);
-		delete this; /* FIXME: deleting self. */
-
-
-		trk_copy->set_name(copy_name);
-		parent_layer->add_route(trk_copy);
+		parent_layer->add_route(this);
 	}
 
-	/* Update in case color of track / route changes when moving between sublayers. */
-	parent_layer->emit_layer_changed("TRW - Track - convert track route");
+
+	/* Redraw. */
+	parent_layer->emit_layer_changed("Indicating change to TRW Layer after converting track <--> route");
 }
 
 
@@ -4010,48 +3993,6 @@ void Track::create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool b
 
 
 
-void Track::delete_sublayer(bool confirm)
-{
-	if (this->name.isEmpty()) {
-		return;
-	}
-
-
-	Window * main_window = ThisApp::get_main_window();
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	const bool is_track = this->type_id == "sg.trw.track";
-
-
-	if (confirm) {
-		/* Get confirmation from the user. */
-		if (!Dialog::yes_or_no(is_track
-				       ? tr("Are you sure you want to delete the track \"%1\"?")
-				       : tr("Are you sure you want to delete the route \"%1\"?")
-				       .arg(this->name)), main_window) {
-			return;
-		}
-	}
-
-
-	bool was_visible = false;
-	parent_layer->detach_from_container(this, &was_visible);
-	parent_layer->detach_from_tree(this);
-	delete this; /* FIXME: deleting self. */
-
-
-	if (is_track) {
-		/* Reset layer timestamp in case it has now changed. */
-		parent_layer->tree_view->apply_tree_item_timestamp(parent_layer);
-	}
-
-	if (was_visible) {
-		parent_layer->emit_layer_changed("TRW - delete sublayer");
-	}
-}
-
-
-
-
 void Track::cut_sublayer_cb(void)
 {
 	/* false: don't require confirmation in callbacks. */
@@ -4062,15 +4003,6 @@ void Track::copy_sublayer_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->copy_sublayer_common(this);
 }
-
-void Track::delete_sublayer_cb(void)
-{
-	/* false: don't require confirmation in callbacks. */
-	this->delete_sublayer(false);
-}
-
-
-
 
 void Track::remove_last_trackpoint(void)
 {

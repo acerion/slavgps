@@ -122,11 +122,25 @@ Waypoint * LayerTRWWaypoints::find_waypoint_by_name(const QString & wp_name)
 
 
 
+Waypoint * LayerTRWWaypoints::find_child_by_uid(sg_uid_t child_uid) const
+{
+	auto iter = this->children_map.find(child_uid);
+	if (iter == this->children_map.end()) {
+		qDebug() << SG_PREFIX_W << "Can't find waypoint with specified UID" << child_uid;
+		return NULL;
+	} else {
+		return iter->second;
+	}
+}
+
+
+
+
 std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(const QDate & search_date) const
 {
 	char search_date_str[20] = { 0 };
 	snprintf(search_date_str, sizeof (search_date_str), "%s", search_date.toString("yyyy-MM-dd").toUtf8().constData());
-	qDebug() << "---------------- search date =" << search_date << search_date_str;
+	qDebug() << SG_PREFIX_I << "Search date =" << search_date << search_date_str;
 
 	char date_buf[20];
 	std::list<TreeItem *> result;

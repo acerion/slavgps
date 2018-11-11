@@ -314,8 +314,6 @@ namespace SlavGPS {
 
 		void create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool before);
 
-		void delete_sublayer(bool confirm);
-
 		void remove_last_trackpoint(void);
 
 #ifdef VIK_CONFIG_GOOGLE
@@ -409,7 +407,6 @@ namespace SlavGPS {
 
 		void cut_sublayer_cb(void);
 		void copy_sublayer_cb(void);
-		void delete_sublayer_cb(void);
 	};
 
 

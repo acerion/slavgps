@@ -2651,14 +2651,12 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 {
-	bool was_visible = false;
-
 	if (item->type_id == "sg.trw.waypoint") {
 		Waypoint * wp = (Waypoint *) item;
-		wp->delete_sublayer(confirm);
+		this->delete_waypoint(wp, confirm);
 	} else if (item->type_id == "sg.trw.track" || item->type_id == "sg.trw.route") {
 		Track * trk = (Track *) item;
-		trk->delete_sublayer(confirm);
+		this->delete_track(trk, confirm);
 	} else {
 		qDebug() << SG_PREFIX_E << "Unexpected sublayer type" << item->type_id;
 	}
@@ -4313,4 +4311,115 @@ void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 	QProcess::startDetached(program, args);
 
 	/* TODO_LATER: add handling of errors from process. */
+}
+
+
+
+
+void LayerTRW::delete_track_cb(void)
+{
+	QAction * qa = (QAction *) QObject::sender();
+	const sg_uid_t child_uid = qa->data().toUInt();
+
+	Track * trk = this->tracks.find_child_by_uid(child_uid);
+	if (trk) {
+		/* false: don't require confirmation in callbacks. */
+		this->delete_track(trk, false);
+	}
+}
+
+
+
+
+void LayerTRW::delete_route_cb(void)
+{
+	QAction * qa = (QAction *) QObject::sender();
+	const sg_uid_t child_uid = qa->data().toUInt();
+
+	Track * trk = this->routes.find_child_by_uid(child_uid);
+	if (trk) {
+		/* false: don't require confirmation in callbacks. */
+		this->delete_track(trk, false);
+	}
+}
+
+
+
+
+void LayerTRW::delete_waypoint_cb(void)
+{
+	QAction * qa = (QAction *) QObject::sender();
+	const sg_uid_t child_uid = qa->data().toUInt();
+
+	Waypoint * wp = this->waypoints.find_child_by_uid(child_uid);
+	if (wp) {
+		/* false: don't require confirmation in callbacks. */
+		this->delete_waypoint(wp, false);
+	}
+}
+
+
+
+
+sg_ret LayerTRW::delete_track(Track * trk, bool confirm)
+{
+	const bool is_track = trk->type_id == "sg.trw.track";
+
+	if (confirm) {
+		/* Get confirmation from the user. */
+		if (!Dialog::yes_or_no(is_track
+				       ? tr("Are you sure you want to delete the track \"%1\"?")
+				       : tr("Are you sure you want to delete the route \"%1\"?")
+				       .arg(trk->name)), ThisApp::get_main_window()) {
+			return sg_ret::ok;
+		}
+	}
+
+
+	bool was_visible = false;
+	this->detach_from_container(trk, &was_visible);
+	this->detach_from_tree(trk);
+	delete trk;
+
+
+	if (is_track) {
+		/* Reset layer timestamp in case it has now changed. */
+		this->tree_view->apply_tree_item_timestamp(this);
+	}
+
+	if (was_visible) {
+		this->emit_layer_changed("Indicating change in Layer TRW after deleting Track or Route");
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret LayerTRW::delete_waypoint(Waypoint * wp, bool confirm)
+{
+	if (confirm) {
+		/* Get confirmation from the user. */
+		/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
+		if (!Dialog::yes_or_no(tr("Are you sure you want to delete the waypoint \"%1\"?").arg(wp->name)), ThisApp::get_main_window()) {
+			return sg_ret::ok;
+		}
+	}
+
+	bool was_visible;
+	this->detach_from_container(wp, &was_visible);
+	this->detach_from_tree(wp);
+	delete wp;
+
+	this->waypoints.recalculate_bbox();
+
+	/* Reset layer timestamp in case it has now changed. */
+	this->tree_view->apply_tree_item_timestamp(this);
+
+	if (was_visible) {
+		this->emit_layer_changed("Indicating change in Layer TRW after deleting Waypoint");
+	}
+
+	return sg_ret::ok;
 }
