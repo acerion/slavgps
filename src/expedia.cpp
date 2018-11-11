@@ -53,9 +53,9 @@ using namespace SlavGPS;
 
 
 
-static bool expedia_coord_to_tile(const Coord & src_coord, double xzoom, double yzoom, TileInfo & dest);
+static bool expedia_coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
 static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coord);
-static DownloadStatus expedia_download_tile(const TileInfo & src, char const * dest_fn, DownloadHandle * dl_handle);
+static DownloadStatus expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
 
@@ -97,11 +97,19 @@ void Expedia::init(void)
 	expedia_options.follow_location = 2;
 	expedia_options.check_file = a_check_map_file;
 
-#ifdef TODO_2_LATER
-	VikMapsLayer_MapType map_type = { MapTypeID::Expedia, 0, 0, ViewportDrawMode::Expedia, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download_tile, expedia_handle_init, expedia_handle_cleanup };
-	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::Expedia, &map_type);
-#else
 	VikMapsLayer_MapType map_type;
+
+	map_type.uniq_id = MapTypeID::Expedia;
+	map_type.tilesize_x = 0;
+	map_type.tilesize_y = 0;
+	map_type.drawmode = ViewportDrawMode::Expedia;
+	map_type.coord_to_tile = expedia_coord_to_tile;
+	map_type.tile_to_center_coord = expedia_tile_to_center_coord;
+	map_type.download = expedia_download_tile;
+	map_type.download_handle_init = expedia_handle_init;
+	map_type.download_handle_cleanup = expedia_handle_cleanup;
+#ifdef K_TODO
+	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::Expedia, &map_type);
 #endif
 #endif
 }

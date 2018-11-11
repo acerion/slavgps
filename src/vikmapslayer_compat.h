@@ -44,15 +44,21 @@ namespace SlavGPS {
 
 
 
+
 	typedef struct {
 		MapTypeID uniq_id;
 		uint16_t tilesize_x;
 		uint16_t tilesize_y;
 		ViewportDrawMode drawmode;
-		bool (*coord_to_tile) (const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
-		void (*tile_to_center_coord) (const TileInfo & src, Coord & dest_coord);
-		/* TODO_UNKNOWN: constant size (yay!) */
+		bool (* coord_to_tile) (const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
+		void (* tile_to_center_coord) (const TileInfo & src, Coord & dest_coord);
+		DownloadStatus (* download) (const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
+		void *(* download_handle_init) ();
+		void (* download_handle_cleanup) (void * handle);
 	} VikMapsLayer_MapType;
+
+
+
 
 	void maps_layer_register_type(const QString & label, MapTypeID id, VikMapsLayer_MapType * map_type);
 

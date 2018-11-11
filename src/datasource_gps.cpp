@@ -224,10 +224,6 @@ AcquireOptions * DatasourceGPSSetup::create_acquire_options(AcquireContext * acq
 
 
 
-
-
-
-
 static void set_total_count(unsigned int cnt, AcquireWorker & getter)
 {
 #ifdef K_TODO
@@ -258,6 +254,7 @@ static void set_total_count(unsigned int cnt, AcquireWorker & getter)
 	}
 #endif
 }
+
 
 
 

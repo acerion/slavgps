@@ -123,13 +123,12 @@ AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext * a
 
 
 	/* Generate the process options. */
-	AcquireOptions * babel_options = new AcquireOptions();
+	AcquireOptions * acquire_options = new AcquireOptions();
 
-	/* TODO_LATER: this needs to be deleted. */
-	babel_options->babel_process = new BabelProcess();
-	babel_options->babel_process->set_input(this->get_file_type_selection()->identifier, this->file_selector->get_selected_file_full_path());
+	acquire_options->babel_process = new BabelProcess();
+	acquire_options->babel_process->set_input(this->get_file_type_selection()->identifier, this->file_selector->get_selected_file_full_path());
 
-	return babel_options;
+	return acquire_options;
 }
 
 

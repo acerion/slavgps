@@ -65,6 +65,11 @@ using namespace SlavGPS;
 
 
 
+extern Babel babel;
+
+
+
+
 static QMap<QString, DataSource *> g_bfilters;
 static Track * bfilter_track = NULL;
 static AcquireContext * g_acquire_context = NULL;
@@ -539,4 +544,224 @@ void Acquire::set_target(LayerTRW * trw, Track * trk)
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) g_acquire_context;
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) g_acquire_context->target_trw;
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) g_acquire_context->viewport;
+}
+
+
+
+
+AcquireOptions::AcquireOptions()
+{
+}
+
+
+
+
+AcquireOptions::~AcquireOptions()
+{
+	if (this->babel_process) {
+		delete this->babel_process;
+		this->babel_process = NULL;
+	}
+}
+
+
+
+
+/**
+ * @trw: The #LayerTRW where to insert the collected data
+ * @shell_command: the command to run
+ * @input_file_type:
+ * @cb:	Optional callback function.
+ * @cb_data: Passed along to cb
+ * @not_used: Must use NULL
+ *
+ * Runs the input command in a shell (bash) and optionally uses GPSBabel to convert from input_file_type.
+ * If input_file_type is %NULL, doesn't use GPSBabel. Input must be GPX (or Geocaching *.loc)
+ *
+ * Uses Babel::convert_through_gpx() to actually run the command. This function
+ * prepares the command and temporary file, and sets up the arguments for bash.
+ */
+sg_ret AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+{
+	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
+
+	QString full_shell_command;
+	if (this->input_data_format.isEmpty()) {
+		/* Output of command will be redirected to GPX importer through read_stdout_cb(). */
+		full_shell_command = this->shell_command;
+	} else {
+		/* "-" indicates output to stdout; stdout will be redirected to GPX importer through read_stdout_cb(). */
+		full_shell_command = QString("%1 | %2 -i %3 -f - -o gpx -F -").arg(this->shell_command).arg(babel.gpsbabel_path).arg(this->input_data_format);
+
+	}
+	qDebug() << SG_PREFIX_I << "Final form of shell command" << full_shell_command;
+
+#ifdef K_TODO
+	const QString program(BASH_LOCATION);
+	const QStringList args(QStringList() << "-c" << full_shell_command);
+
+	this->babel_process = new BabelProcess();
+	this->babel_process->set_args(program, args);
+	this->babel_process->set_acquire_context(acquire_context);
+	this->babel_process->set_progress_dialog(progr_dialog);
+	const sg_ret rv = this->babel_process->convert_through_gpx(trw);
+	delete this->babel_process;
+	return rv;
+#else
+	return sg_ret::ok;
+#endif
+}
+
+
+
+
+int AcquireOptions::kill_babel_process(const QString & status)
+{
+	if (this->babel_process && QProcess::NotRunning != this->babel_process->process->state()) {
+		return this->babel_process->kill(status);
+	} else {
+		return -3;
+	}
+}
+
+
+
+
+/**
+ * @trw: The #LayerTRW where to insert the collected data.
+ * @url: The URL to fetch.
+ * @input_file_type: If input_file_type is empty, input must be GPX.
+ * @dl_options: Download options. If %NULL then default download options will be used.
+ *
+ * Download the file pointed by the URL and optionally uses GPSBabel to convert from input_type.
+ * If input_file_type and babel_filters are empty, gpsbabel is not used.
+ *
+ * Returns: %true on successful invocation of GPSBabel or read of the GPX.
+ */
+sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
+{
+	/* If no download options specified, use defaults: */
+	DownloadOptions babel_dl_options(2);
+	if (dl_options) {
+		babel_dl_options = *dl_options;
+	}
+
+	sg_ret ret = sg_ret::err;
+
+	qDebug() << SG_PREFIX_D << "Input data format =" << this->input_data_format << ", url =" << this->source_url;
+
+
+	QTemporaryFile tmp_file;
+	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
+		return sg_ret::err;
+	}
+	const QString target_file_full_path = tmp_file.fileName();
+	qDebug() << SG_PREFIX_D << "Temporary file:" << target_file_full_path;
+	tmp_file.remove(); /* Because we only needed to confirm that a path to temporary file is "available"? */
+
+	DownloadHandle dl_handle(&babel_dl_options);
+	const DownloadStatus download_status = dl_handle.perform_download(this->source_url, target_file_full_path);
+
+	if (DownloadStatus::Success == download_status) {
+		if (!this->input_data_format.isEmpty()) {
+
+			BabelProcess * file_importer = new BabelProcess();
+
+			file_importer->set_input(this->input_data_format, target_file_full_path);
+			file_importer->set_output("gpx", "-");
+
+			ret = file_importer->convert_through_gpx(trw);
+			delete file_importer;
+		} else {
+			/* Process directly the retrieved file. */
+			qDebug() << SG_PREFIX_D << "Directly read GPX file" << target_file_full_path;
+
+			QFile file(target_file_full_path);
+			if (file.open(QIODevice::ReadOnly)) {
+				ret = GPX::read_layer_from_file(file, trw);
+			} else {
+				ret = sg_ret::err;
+				qDebug() << SG_PREFIX_E << "Failed to open file" << target_file_full_path << "for reading:" << file.error();
+			}
+		}
+	}
+	Util::remove(target_file_full_path);
+
+
+	return ret;
+}
+
+
+
+
+/**
+ * @trw: The TRW layer to place data into. Duplicate items will be overwritten.
+ * @process_options: The options to control the appropriate processing function. See #AcquireOptions for more detail.
+ * @cb: Optional callback function.
+ * @cb_data: Passed along to cb.
+ * @dl_options: If downloading from a URL use these options (may be NULL).
+ *
+ * Loads data into a trw layer from a file, using gpsbabel.  This routine is synchronous;
+ * that is, it will block the calling program until the conversion is done. To avoid blocking, call
+ * this routine from a worker thread.
+ *
+ * Returns: %true on success.
+ */
+sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+{
+	if (this->babel_process) {
+
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+
+
+#if 1
+		if (!trw->is_in_tree()) {
+			acquire_context->top_level_layer->add_layer(trw, true);
+		}
+#endif
+
+
+		BabelProcess * importer = new BabelProcess();
+
+		importer->program_name = this->babel_process->program_name;
+		importer->options      = this->babel_process->options;
+		importer->input_type   = this->babel_process->input_type;
+		importer->input_file   = this->babel_process->input_file;
+		importer->filters      = this->babel_process->filters;
+		importer->output_type  = this->babel_process->output_type;
+		importer->output_file  = this->babel_process->output_file;
+
+
+		importer->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
+		importer->set_acquire_context(acquire_context);
+		importer->set_progress_dialog(progr_dialog);
+		const sg_ret result = importer->convert_through_gpx(trw);
+
+		delete importer;
+
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+
+		return result;
+	}
+
+
+	switch (this->mode) {
+	case AcquireOptions::Mode::FromURL:
+		return this->import_from_url(trw, dl_options, progr_dialog);
+
+	case AcquireOptions::Mode::FromShellCommand:
+		return this->import_with_shell_command(trw, acquire_context, progr_dialog);
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected babel options mode" << (int) this->mode;
+		return sg_ret::err;
+	}
 }
