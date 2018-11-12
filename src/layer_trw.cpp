@@ -2224,11 +2224,11 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->routes.name;
 		this->tree_view->attach_to_tree(&this->routes, trk);
 
+		/* Update tree item properties of this item before sorting of all sibling tree items. */
+		trk->update_tree_item_properties();
+
 		/* Sort now as post_read is not called on a route connected to tree. */
 		this->tree_view->sort_children(&this->routes, this->track_sort_order);
-
-		this->routes.update_tree_view(trk);
-
 	} else {
 		if (!this->tracks.is_in_tree()) {
 			qDebug() << SG_PREFIX_I << "Attaching to tree item" << this->tracks.name << "under" << this->name;
@@ -2245,9 +2245,11 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->tracks.name;
 		this->tree_view->attach_to_tree(&this->tracks, trk); /* push item to the end of parent nodes. */
 
+		/* Update tree item properties of this item before sorting of all sibling tree items. */
+		trk->update_tree_item_properties();
+
 		/* Sort now as post_read is not called on a track connected to tree. */
 		this->tree_view->sort_children(&this->tracks, this->track_sort_order);
-		this->tracks.update_tree_view(trk);
 	}
 
 	return sg_ret::ok;
@@ -4422,4 +4424,70 @@ sg_ret LayerTRW::delete_waypoint(Waypoint * wp, bool confirm)
 	}
 
 	return sg_ret::ok;
+}
+
+
+
+
+
+sg_ret LayerTRW::has_child(const Track * trk, bool * result) const
+{
+	if (NULL == trk) {
+		qDebug() << SG_PREFIX_E << "Invalid argument 1";
+		return sg_ret::err;
+	}
+	if (NULL == result) {
+		qDebug() << SG_PREFIX_E << "Invalid argument 2";
+		return sg_ret::err;
+	}
+
+
+	Track * found = NULL;
+	if (trk->type_id == "sg.trw.track") {
+		found = this->tracks.find_child_by_uid(trk->get_uid());
+	} else {
+		found = this->routes.find_child_by_uid(trk->get_uid());
+	}
+
+	*result = (NULL != found);
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret LayerTRW::has_child(const Waypoint * wp, bool * result) const
+{
+	if (NULL == wp) {
+		qDebug() << SG_PREFIX_E << "Invalid argument 1";
+		return sg_ret::err;
+	}
+	if (NULL == result) {
+		qDebug() << SG_PREFIX_E << "Invalid argument 2";
+		return sg_ret::err;
+	}
+
+
+	Waypoint * found = this->waypoints.find_child_by_uid(wp->get_uid());
+
+	*result = NULL != found;
+
+	return sg_ret::ok;
+}
+
+
+
+
+void LayerTRW::lock_remove(void)
+{
+	/* TODO: implement */
+}
+
+
+
+
+void LayerTRW::unlock_remove(void)
+{
+	/* TODO: implement */
 }

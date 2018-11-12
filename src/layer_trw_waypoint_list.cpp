@@ -90,7 +90,7 @@ void WaypointListDialog::waypoint_select(LayerTRW * layer)
 void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 {
 	if (!this->selected_wp) {
-		qDebug() << SG_PREFIX_E << "Encountered NULL Waypoint in callback" << __FUNCTION__;
+		qDebug() << SG_PREFIX_E << "Encountered NULL Waypoint in callback";
 		return;
 	}
 
@@ -110,10 +110,10 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 
 		if (std::get<SG_WP_DIALOG_NAME>(result)) {
 			/* Waypoint's name has been changed. */
-			trw->get_waypoints_node().propagate_new_waypoint_name(wp);
+			wp->propagate_new_waypoint_name();
 		}
 
-		trw->get_waypoints_node().set_new_waypoint_icon(wp);
+		wp->set_new_waypoint_icon();
 
 		if (trw->visible) {
 			trw->emit_layer_changed("TRW - Waypoint List Dialog - properties");
@@ -589,7 +589,7 @@ void WaypointListDialog::accept_cb(void) /* Slot. */
 
 	if (this->selected_wp) {
 		LayerTRW * trw = this->selected_wp->get_parent_layer_trw();
-		trw->waypoints.update_tree_view(this->selected_wp);
+		this->selected_wp->update_tree_item_properties();
 		trw->emit_layer_changed("TRW - Waypoint List Dialog - Accept");
 	}
 

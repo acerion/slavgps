@@ -561,7 +561,7 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 				trk->has_color = true;
 			}
 
-			this->update_tree_view(trk);
+			trk->update_tree_item_properties();
 
 			color_i++;
 			if (color_i > LAYER_TRW_TRACK_COLORS_MAX) {
@@ -586,7 +586,7 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 				route->has_color = true;
 			}
 
-			this->update_tree_view(route);
+			route->update_tree_item_properties();
 
 			use_dark = !use_dark;
 		}
@@ -617,24 +617,6 @@ time_t LayerTRWTracks::get_earliest_timestamp()
 		}
 	}
 	return earlnest_timestamp;
-}
-
-
-
-
-/**
-   Update how track is displayed in tree view - primarily update track's icon
-*/
-void LayerTRWTracks::update_tree_view(Track * trk)
-{
-	if (trk && trk->index.isValid()) {
-
-		trk->self_assign_timestamp();
-		this->tree_view->apply_tree_item_timestamp(trk);
-
-		trk->self_assign_icon();
-		this->tree_view->apply_tree_item_icon(trk);
-	}
 }
 
 

@@ -100,6 +100,13 @@ namespace SlavGPS {
 
 		QString sublayer_rename_request(const QString & new_name);
 
+		sg_ret update_tree_item_properties(void) override;
+
+		void self_assign_icon(void);
+		sg_ret set_new_waypoint_icon(void); /* Wrapper. */
+
+		sg_ret propagate_new_waypoint_name(void);
+
 
 		bool properties_dialog();
 

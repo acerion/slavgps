@@ -364,11 +364,14 @@ void LayerTRWWaypoints::uniquify(TreeViewSortOrder sort_order)
 		/* Rename it. */
 		const QString uniqe_name = this->new_unique_element_name(wp->name);
 		wp->set_name(uniqe_name);
-		this->propagate_new_waypoint_name(wp);
+		this->tree_view->apply_tree_item_name(wp);
 
 		/* Try to find duplicate names again in the updated set of waypoints. */
 		wp = this->find_waypoint_with_duplicate_name();
 	}
+
+	/* Sort waypoints only after completing uniquify-ing operation. */
+	this->tree_view->sort_children(this, sort_order);
 
 	return;
 }
@@ -395,42 +398,6 @@ QString LayerTRWWaypoints::new_unique_element_name(const QString & old_name)
 	} while (existing != NULL);
 
 	return new_name;
-}
-
-
-
-
-/**
- *  Rename waypoint and maintain corresponding name of waypoint in the tree view.
- */
-void LayerTRWWaypoints::propagate_new_waypoint_name(const Waypoint * wp)
-{
-	/* Update the tree view. */
-	if (wp->index.isValid()) {
-		this->tree_view->apply_tree_item_name(wp);
-		this->tree_view->sort_children(this, ((LayerTRW *) this->owning_layer)->wp_sort_order);
-	} else {
-		qDebug() << "EE: Layer TRW: trying to rename waypoint with invalid index";
-	}
-}
-
-
-
-
-/**
-   Use waypoint's ::symbol_name to set waypoint's icon. Make sure that
-   new icon of a waypoint (or lack of the icon) is shown wherever it
-   needs to be shown.
-*/
-void LayerTRWWaypoints::set_new_waypoint_icon(Waypoint * wp)
-{
-	/* Update the tree view. */
-	if (wp->index.isValid()) {
-		wp->icon = get_wp_icon_small(wp->symbol_name);
-		this->tree_view->apply_tree_item_icon(wp);
-	} else {
-		qDebug() << SG_PREFIX_E << "Invalid index of a waypoint";
-	}
 }
 
 
@@ -898,7 +865,7 @@ sg_ret LayerTRWWaypoints::attach_to_container(Waypoint * wp)
 	this->children_map.insert({{ wp->get_uid(), wp }});
 	this->children_list.push_back(wp);
 
-	this->set_new_waypoint_icon(wp);
+	wp->set_new_waypoint_icon();
 
 	this->name_generator.add_name(wp->name);
 
@@ -1028,20 +995,6 @@ QString DefaultNameGenerator::try_new_name(void) const
 	result = this->number_to_name(this->highest_item_number);
 
 	return result;
-}
-
-
-
-
-/**
-   Update how track is displayed in tree view - primarily update track's icon
-*/
-void LayerTRWWaypoints::update_tree_view(Waypoint * wp)
-{
-	if (wp && index.isValid()) {
-		this->propagate_new_waypoint_name(wp);
-		this->set_new_waypoint_icon(wp);
-	}
 }
 
 

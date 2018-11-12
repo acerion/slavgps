@@ -319,7 +319,7 @@ void TreeItemListDialog::accept_cb(void) /* Slot. */
 	if (this->selected_tree_item) {
 		Layer * parent_layer = this->selected_tree_item->get_parent_layer();
 		if (parent_layer) {
-			parent_layer->tree_items.update_tree_view(this->selected_tree_item);
+			this->selected_tree_item->update_tree_item_properties();
 			parent_layer->emit_layer_changed("TRW - TreeItem List Dialog - Accept");
 		}
 	}

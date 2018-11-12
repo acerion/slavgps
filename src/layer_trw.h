@@ -190,6 +190,15 @@ namespace SlavGPS {
 		std::list<TreeItem *> get_waypoints_by_date(const QDate & search_date) const;
 		std::list<TreeItem *> get_items_by_date(const QDate & search_date) const;
 
+		sg_ret has_child(const Track * trk, bool * result) const;
+		sg_ret has_child(const Waypoint * wpt, bool * result) const;
+
+
+		/* Block removing of child items from TRW layer when
+		   lock is activated. */
+		void lock_remove(void);
+		void unlock_remove(void);
+
 
 		/* Draw all items of the layer, with highlight. */
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);

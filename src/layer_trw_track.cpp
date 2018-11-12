@@ -4335,3 +4335,27 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	return items;
 #endif
 }
+
+
+
+
+/**
+   Update how track is displayed in tree view - primarily update track's icon
+*/
+sg_ret Track::update_tree_item_properties(void)
+{
+	if (!this->index.isValid()) {
+		qDebug() << SG_PREFIX_E << "Invalid index of tree item";
+		return sg_ret::err;
+	}
+
+
+	this->self_assign_timestamp();
+	this->tree_view->apply_tree_item_timestamp(this);
+
+	this->self_assign_icon();
+	this->tree_view->apply_tree_item_icon(this);
+
+
+	return sg_ret::ok;
+}

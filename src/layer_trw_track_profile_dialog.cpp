@@ -1549,7 +1549,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		this->reject();
 		break;
 	case SG_TRACK_PROFILE_OK:
-		this->trw->get_tracks_node().update_tree_view(this->track_info.trk);
+		this->track_info.trk->update_tree_item_properties();
 		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Profile OK");
 		this->accept();
 		break;

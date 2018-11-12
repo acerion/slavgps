@@ -58,7 +58,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Layer TRW Track Properties:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Layer TRW Track Properties"
 
 
 
@@ -375,25 +375,61 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 {
-	/* FIXME: check and make sure the track still exists before doing anything to it. */
-
-	trk->set_comment(this->w_comment->text().toUtf8().data());
-	trk->set_description(this->w_description->text().toUtf8().data());
-	trk->set_source(this->w_source->text().toUtf8().data());
-	trk->set_type(this->w_type->text().toUtf8().data());
-	trk->color = this->w_color->get_color();
-	trk->draw_name_mode = (TrackDrawNameMode) this->w_namelabel->currentIndex();
-	trk->max_number_dist_labels = this->w_number_distlabels->value();
-
-	qDebug() << "II: Track Properties Dialog: selected draw name mode #" << (int) trk->draw_name_mode;
-
 	LayerTRW * parent_layer = (LayerTRW *) this->trk->get_owning_layer();
-	if (this->trk->type_id == "sg.trw.track") {
-		parent_layer->get_tracks_node().update_tree_view(this->trk);
-	} else {
-		parent_layer->get_routes_node().update_tree_view(this->trk);
+	parent_layer->lock_remove();
+
+
+	bool has_child = false;
+	if (sg_ret::ok != parent_layer->has_child(this->trk, &has_child)) {
+		parent_layer->unlock_remove();
+		return;
 	}
-	parent_layer->emit_layer_changed("TRW - Track Properties Dialog");
+	if (!has_child) {
+		qDebug() << SG_PREFIX_W << "Can't find edited Track in TRW layer";
+		parent_layer->unlock_remove();
+		return;
+	}
+
+
+	bool changed = false;
+	if (trk->comment != this->w_comment->text()) {
+		trk->set_comment(this->w_comment->text());
+		changed = true;
+	}
+	if (trk->description != this->w_description->text()) {
+		trk->set_description(this->w_description->text());
+		changed = true;
+	}
+	if (trk->source != this->w_source->text()) {
+		trk->set_source(this->w_source->text());
+		changed = true;
+	}
+	if (trk->type != this->w_type->text()) {
+		trk->set_type(this->w_type->text());
+		changed = true;
+	}
+	if (trk->color != this->w_color->get_color()) {
+		trk->color = this->w_color->get_color();
+		changed = true;
+	}
+	if (trk->draw_name_mode != (TrackDrawNameMode) this->w_namelabel->currentIndex()) {
+		trk->draw_name_mode = (TrackDrawNameMode) this->w_namelabel->currentIndex();
+		changed = true;
+	}
+	if (trk->max_number_dist_labels != this->w_number_distlabels->value()) {
+		trk->max_number_dist_labels = this->w_number_distlabels->value();
+		changed = true;
+	}
+
+
+	if (changed) {
+		trk->update_tree_item_properties();
+		parent_layer->emit_layer_changed("Indicating change to TRW Layer after changing properties of Track");
+	}
+
+
+	parent_layer->unlock_remove();
+
 
 	this->accept();
 }

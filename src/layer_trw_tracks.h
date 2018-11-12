@@ -131,9 +131,6 @@ namespace SlavGPS {
 		void uniquify(TreeViewSortOrder sort_order);
 		QString new_unique_element_name(const QString & old_name);
 
-		/* Update the tree view of the track id - primarily to update the icon. */
-		void update_tree_view(Track * trk);
-
 		void assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, const QColor & track_color_common);
 
 

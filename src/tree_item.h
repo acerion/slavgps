@@ -149,6 +149,9 @@ namespace SlavGPS {
 
 		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format);
 
+		/* Update visible properties of tree item in tree view. */
+		virtual sg_ret update_tree_item_properties(void) { return sg_ret::ok; };
+
 		/**
 		   \brief The item has been selected in items tree. Do something about it.
 

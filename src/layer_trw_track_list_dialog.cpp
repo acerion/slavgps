@@ -243,7 +243,6 @@ void TrackListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QStandardItem * child = parent_item->child(index.row(), TRACK_COLUMN);
 	qDebug() << SG_PREFIX_I << "selected track" << child->text();
 
-	child = parent_item->child(index.row(), TRACK_COLUMN);
 	Track * trk = child->data(RoleLayerData).value<Track *>();
 	if (!trk) {
 		qDebug() << SG_PREFIX_E << "NULL track in context menu handler";
@@ -583,16 +582,72 @@ TrackListDialog::~TrackListDialog()
 
 void TrackListDialog::accept_cb(void) /* Slot. */
 {
-	/* FIXME: check and make sure the track still exists before doing anything to it. */
-#ifdef K_FIXME_RESTORE
+	/* Here we are iterating over all rows in the table, saving
+	   all tracks. We access the tracks through this->model, so
+	   don't even think about using this->selected_track. */
 
-	/* Here we save in track objects changes made in the dialog. */
 
-	trk->set_comment(this->w_comment->text());
+	bool changed = false;
 
-	this->trw->update_tree_view(this->trk);
-	this->trw->emit_layer_changed("TRW - Track List Dialog - accept");
+
+	const int n_rows = this->model->rowCount(this->model->invisibleRootItem()->index());
+	for (int row = 0; row < n_rows; row++) {
+		QStandardItem * item = NULL;
+
+		item = this->model->item(row, TRACK_COLUMN);
+		assert (NULL != item);
+		Track * trk = item->data(RoleLayerData).value<Track *>();
+		if (!trk) {
+			qDebug() << SG_PREFIX_E << "NULL track in 'accept' handler";
+			return;
+		}
+
+
+		LayerTRW * parent_layer = (LayerTRW *) trk->get_owning_layer();
+		parent_layer->lock_remove();
+
+
+		/* Make sure that the track really is in parent layer. */
+		bool has_child = false;
+		if (sg_ret::ok != parent_layer->has_child(trk, &has_child)) {
+			parent_layer->unlock_remove();
+			return;
+		}
+		if (!has_child) {
+			qDebug() << SG_PREFIX_W << "Can't find edited Track in TRW layer";
+			parent_layer->unlock_remove();
+			return;
+		}
+
+
+		/* Save all edited properties of given track. */
+
+		item = this->model->item(row, COMMENT_COLUMN);
+		assert (NULL != item);
+		QString comment = item->text();
+		if (trk->comment != comment) {
+			trk->set_comment(comment);
+			changed = true;
+		}
+
+
+		parent_layer->unlock_remove();
+	}
+
+#if K_TODO  /* The dialog may be invoked from LayerAggregate's context
+	       menu, which means that there may be multiple TRW
+	       layers.  For each of them we need to call
+	       trw->udpate_tree_item(), but we must be sure that this
+	       doesn't trigger few redraws in a row. There must be
+	       only one redraw, final one. Most probably triggered
+	       from a layer (either TRW layer or Aggregate layer), for
+	       which a context menu item has been triggered. */
+	if (changed) {
+		trk->update_tree_item_properties();
+		parent_layer->emit_layer_changed("Indicating change to TRW Layer after changing properties of Track in Track list dialog");
+	}
 #endif
+
 
 	this->accept();
 }

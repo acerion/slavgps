@@ -450,22 +450,22 @@ void Waypoint::properties_dialog_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	const std::tuple<bool, bool> result = waypoint_properties_dialog(this, this->name, parent_layer_->coord_mode, ThisApp::get_main_window());
+	const std::tuple<bool, bool> result = waypoint_properties_dialog(this, this->name, parent_layer->coord_mode, ThisApp::get_main_window());
 
 	if (std::get<SG_WP_DIALOG_OK>(result)) {
 		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
 
 		if (std::get<SG_WP_DIALOG_NAME>(result)) {
 			/* Waypoint's name has been changed. */
-			parent_layer_->waypoints.propagate_new_waypoint_name(this);
+			this->propagate_new_waypoint_name();
 		}
 
-		parent_layer_->get_waypoints_node().set_new_waypoint_icon(this);
+		this->set_new_waypoint_icon();
 
-		if (parent_layer_->visible) {
-			parent_layer_->emit_layer_changed("TRW - Waypoint - properties");
+		if (parent_layer->visible) {
+			parent_layer->emit_layer_changed("TRW - Waypoint - properties");
 		}
 	}
 }
@@ -860,4 +860,80 @@ void Waypoint::display_debug_info(const QString & reference) const
 	qDebug() << SG_PREFIX_D << "          Debug string =" << this->debug_string;
 
 	return;
+}
+
+
+
+
+/**
+   Update how track is displayed in tree view - primarily update track's icon
+*/
+sg_ret Waypoint::update_tree_item_properties(void)
+{
+	if (!this->index.isValid()) {
+		qDebug() << SG_PREFIX_E << "Invalid index of tree item";
+		return sg_ret::err;
+	}
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	this->propagate_new_waypoint_name();
+	this->set_new_waypoint_icon();
+
+
+	return sg_ret::ok;
+}
+
+
+
+
+void Waypoint::self_assign_icon(void)
+{
+	this->icon = get_wp_icon_small(this->symbol_name);
+}
+
+
+
+
+
+/**
+   Use waypoint's ::symbol_name to set waypoint's icon. Make sure that
+   new icon of a waypoint (or lack of the icon) is shown wherever it
+   needs to be shown.
+*/
+sg_ret Waypoint::set_new_waypoint_icon(void)
+{
+	/* Update the tree view. */
+	if (!this->index.isValid()) {
+		qDebug() << SG_PREFIX_E << "Invalid index of a waypoint";
+		return sg_ret::err;
+	}
+
+	this->self_assign_icon();
+	this->tree_view->apply_tree_item_icon(this);
+
+	return sg_ret::ok;
+}
+
+
+
+
+/**
+   Make sure that new name of waypoint is update in all relevant places
+*/
+sg_ret Waypoint::propagate_new_waypoint_name(void)
+{
+	/* Update the tree view. */
+	if (!this->index.isValid()) {
+		qDebug() << SG_PREFIX_E << "Invalid index of a waypoint";
+		return sg_ret::err;
+	}
+
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+	this->tree_view->apply_tree_item_name(this);
+	this->tree_view->sort_children(&parent_layer->waypoints, parent_layer->wp_sort_order);
+
+	return sg_ret::ok;
 }

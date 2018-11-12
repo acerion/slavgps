@@ -214,6 +214,9 @@ namespace SlavGPS {
 		Distance get_length_to_trackpoint(const Trackpoint * tp) const;
 
 
+		/* Update the tree view's item of the track - primarily to update the icon. */
+		sg_ret update_tree_item_properties(void) override;
+
 
 		unsigned long get_tp_count() const;
 		unsigned int get_segment_count() const;
