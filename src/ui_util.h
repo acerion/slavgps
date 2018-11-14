@@ -43,7 +43,6 @@ namespace SlavGPS {
 
 
 	void open_url(const QString & url);
-	void new_email(const QString & address, Window * parent);
 
 	QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 

@@ -41,14 +41,12 @@
 
 
 
-#ifdef WINDOWS
-#include <windows.h>
-#endif
-
-
-
-
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Dialog"
 
 
 
@@ -78,32 +76,8 @@ static bool spawn_command_line_async(const char * cmd,
 
 void SlavGPS::open_url(const QString & url)
 {
-	qDebug() << "II: Open URL" << url;
+	qDebug() << SG_PREFIX_I << "Open URL" << url;
 	QDesktopServices::openUrl(QUrl(url));
-}
-
-
-
-
-void SlavGPS::new_email(const QString & address, Window * parent)
-{
-#ifdef K_FIXME_RESTORE
-	const QString uri = QString("mailto:%1").arg(address);
-	GError *error = NULL;
-	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri.toUtf8().constData(), GDK_CURRENT_TIME, &error);
-	if (error) {
-		Dialog::error(tr("Could not create new email. %1").arg(QString(error->message)), parent);
-		g_error_free(error);
-	}
-	/*
-	  #ifdef WINDOWS
-	  ShellExecute(NULL, NULL, (char *) uri, NULL, ".\\", 0);
-	  #else
-	  if (!spawn_command_line_async("xdg-email", uri))
-	  Dialog::error(tr("Could not create new email."), parent);
-	  #endif
-	*/
-#endif
 }
 
 

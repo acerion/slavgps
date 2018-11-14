@@ -68,6 +68,7 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Tree View"
+#define MY_MIME_TYPE "application/vnd.text.list"
 
 
 
@@ -396,7 +397,6 @@ bool TreeView::apply_tree_item_visibility(const TreeItem * tree_item)
 		return false;
 	}
 
-	/* FIXME: this does not take into account third state. */
 	QModelIndex visible_index = tree_item->index.sibling(tree_item->index.row(), (int) TreeViewColumn::Visible);
 	this->tree_model->itemFromIndex(visible_index)->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
 
@@ -906,7 +906,7 @@ QList<TreeItem *> get_tree_items(const QMimeData * mime_data)
 {
 	QList<TreeItem *> result;
 
-	QByteArray mime_bytes = mime_data->data("application/vnd.text.list");
+	QByteArray mime_bytes = mime_data->data(MY_MIME_TYPE);
         QDataStream data_stream(&mime_bytes, QIODevice::ReadOnly);
 	quint32 n_items;
 
@@ -966,17 +966,9 @@ bool TreeModel::canDropMimeData(const QMimeData * mime_data, Qt::DropAction acti
 
 
 
-
-#ifdef K_FIXME_RESTORE
-	if (!mime_data->hasFormat("application/vnd.text.list")) {
+	if (!mime_data->hasFormat(MY_MIME_TYPE)) {
 		return false;
 	}
-
-	if (column > 0) {
-		return false;
-	}
-#endif
-
 	if (!parent_index.isValid()) {
 		/* Don't let dropping items on top level. */
 		return false;
@@ -1144,7 +1136,7 @@ QMimeData * TreeModel::mimeData(const QModelIndexList & indexes) const
 	stream << list;
 
 	qDebug() << SG_PREFIX_I << "Preparing mime data";
-	mime_data->setData("application/vnd.text.list", encoded_data);
+	mime_data->setData(MY_MIME_TYPE, encoded_data);
 	return mime_data;
 }
 
@@ -1154,7 +1146,7 @@ QMimeData * TreeModel::mimeData(const QModelIndexList & indexes) const
 QStringList TreeModel::mimeTypes(void) const
 {
 	QStringList types;
-	types << "application/vnd.text.list";
+	types << MY_MIME_TYPE;
 	return types;
 }
 

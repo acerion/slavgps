@@ -47,15 +47,15 @@ using namespace SlavGPS;
 
 
 
-static const QString viking_author("Evan Battaglia &lt;gtoevan@gmx.net&gt;");
-static const QString viking_contributors("Alex Foobarian &lt;foobarian@gmail.com&gt;<br/></br>"
-					 "Bernd Zeimetz &lt;bernd@bzed.de&gt;<br/></br>"
-					 "Guilhem Bonnefille &lt;guilhem.bonnefille@gmail.com&gt;<br/></br>"
-					 "Jocelyn Jaubert &lt;jocelyn.jaubert@gmail.com&gt;<br/></br>"
-					 "Mark Coulter &lt;i_offroad@yahoo.com&gt;<br/></br>"
-					 "Mathieu Albinet &lt;mathieu17@gmail.com&gt;<br/></br>"
-					 "Quy Tonthat &lt;qtonthat@gmail.com&gt;<br/></br>"
-					 "Robert Norris &lt;rw_norris@hotmail.com&gt;<br/></br>"
+static const QString viking_author("Evan Battaglia           <a href=\"mailto:gtoevan@gmx.net\">gtoevan@gmx.net</a>");
+static const QString viking_contributors("Alex Foobarian     <a href=\"mailto:foobarian@gmail.com\">foobarian@gmail.com</a><br/></br>"
+					 "Bernd Zeimetz      <a href=\"mailto:bernd@bzed.de\">bernd@bzed.de</a><br/></br>"
+					 "Guilhem Bonnefille <a href=\"mailto:guilhem.bonnefille@gmail.com\">guilhem.bonnefille@gmail.com</a><br/></br>"
+					 "Jocelyn Jaubert    <a href=\"mailto:jocelyn.jaubert@gmail.com\">jocelyn.jaubert@gmail.com</a><br/></br>"
+					 "Mark Coulter       <a href=\"mailto:i_offroad@yahoo.com\">i_offroad@yahoo.com</a><br/></br>"
+					 "Mathieu Albinet    <a href=\"mailto:mathieu17@gmail.com\">mathieu17@gmail.com</a><br/></br>"
+					 "Quy Tonthat        <a href=\"mailto:qtonthat@gmail.com\">qtonthat@gmail.com</a><br/></br>"
+					 "Robert Norris      <a href=\"mailto:rw_norris@hotmail.com\">rw_norris@hotmail.com</a><br/></br>"
 					 "<br/></br>");
 static const QString viking_documenters("Guilhem Bonnefille<br/></br>"
 					"Rob Norris<br/></br>"
@@ -115,11 +115,11 @@ void Dialog::about(QWidget * parent)
 						   "along with this program; if not, write to the Free Software "
 						   "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA");
 
-	text_about_this_program->insertPlainText(QString("%1 %2\n").arg(PROJECT).arg(PACKAGE_VERSION));
+	text_about_this_program->insertHtml(QString("%1 %2\n").arg(PROJECT).arg(PACKAGE_VERSION));
 	text_about_this_program->insertHtml(short_description);
 	text_about_this_program->insertHtml(QString("<a href=\"%1\">%2</a><br/><br/><br/>").arg(PACKAGE_URL).arg(PACKAGE_URL));
 	text_about_this_program->insertHtml(copyright);
-	text_about_this_program->insertPlainText(QObject::tr("%1 is a fork of %2 %3. The fork has been made in April 2016.").arg(PROJECT).arg(VIKING_PACKAGE).arg(VIKING_VERSION));
+	text_about_this_program->insertHtml(QObject::tr("%1 is a fork of %2 %3. The fork has been made in April 2016.").arg(PROJECT).arg(VIKING_PACKAGE).arg(VIKING_VERSION));
 	text_about_this_program->setOpenExternalLinks(true); /* Open with system's default browser. */
 	text_about_this_program->setReadOnly(true);
 	text_about_this_program->moveCursor(QTextCursor::Start); /* Scroll to top of page. */
@@ -128,7 +128,7 @@ void Dialog::about(QWidget * parent)
 	text_license->setReadOnly(true);
 	text_license->moveCursor(QTextCursor::Start); /* Scroll to top of page. */
 
-	text_about_viking->insertPlainText(QString("%1 %2\n").arg(VIKING_PACKAGE).arg(VIKING_VERSION));
+	text_about_viking->insertHtml(QString("%1 %2\n").arg(VIKING_PACKAGE).arg(VIKING_VERSION));
 	text_about_viking->insertHtml(short_description_viking);
 	text_about_viking->insertHtml(QString("<a href=\"%1\">%2</a><br/><br/></br/>").arg(VIKING_URL).arg(VIKING_URL));
 	text_about_viking->insertHtml(copyright_viking);

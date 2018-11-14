@@ -389,9 +389,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 	}
 
 	if (ToolStatus::AckGrabFocus == this->active_tool->handle_mouse_move(layer, event)) {
-#ifdef K_FIXME_RESTORE
 		this->window->viewport->setFocus();
-#endif
 	}
 
 	return;

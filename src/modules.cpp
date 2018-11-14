@@ -37,9 +37,11 @@
 #include "terraserver.h"
 #include "expedia.h"
 #include "bluemarble.h"
+#include "globals.h"
+#include "dir.h"
 
 #ifdef K_INCLUDES
-#include "dir.h"
+
 #include "external_tools.h"
 #include "external_tool_datasources.h"
 #include "goto.h"
@@ -91,8 +93,7 @@ using namespace SlavGPS;
 
 static void modules_register_map_source(VikGobjectBuilder * self, MapSource * map_source)
 {
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	/* FIXME label should be hosted by object. */
+	qDebug() << SG_PREFIX_D;
 	MapSources::register_map_source(map_source);
 }
 
@@ -101,8 +102,7 @@ static void modules_register_map_source(VikGobjectBuilder * self, MapSource * ma
 
 static void modules_register_exttools(VikGobjectBuilder * self, void * object)
 {
-	/* kamilFIXME: I think that this no longer works. */
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	qDebug() << SG_PREFIX_D;
 	ExternalTools::register_tool((ExternalTool *) object);
 }
 
@@ -111,8 +111,7 @@ static void modules_register_exttools(VikGobjectBuilder * self, void * object)
 
 static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, void * object)
 {
-	/* kamilFIXME: I think that this no longer works. */
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	qDebug() << SG_PREFIX_D;
 	ExternalToolDataSource::register_tool((ExternalTool *) object);
 }
 
@@ -121,7 +120,7 @@ static void SlavGPS::modules_register_datasources(VikGobjectBuilder * self, void
 
 static void modules_register_gototools(VikGobjectBuilder * self, void * object)
 {
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	qDebug() << SG_PREFIX_D;
 	GotoTool * goto_tool = (GotoTool *) object;
 	GoTo::register_tool(goto_tool);
 }
@@ -131,68 +130,77 @@ static void modules_register_gototools(VikGobjectBuilder * self, void * object)
 
 static void modules_register_routing_engine(VikGobjectBuilder * self, void * object)
 {
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	RoutingEngine *engine = VIK_ROUTING_ENGINE (object);
+	qDebug() << SG_PREFIX_D;
+	RoutingEngine * engine = VIK_ROUTING_ENGINE (object);
 	Routing::register_engine(engine);
-}
-
-
-
-
-static void modules_load_config_from_dir(const QString & dir)
-{
-	qDebug() << "DD: Modules: Loading configurations from directory" << dir;
-
-	/* Maps sources. */
-	const QString maps = dir + QDir::separator() + VIKING_MAPS_FILE;
-	if (access(maps.toUtf8().constData(), R_OK) == 0) {
-		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_map_source));
-		vik_gobject_builder_parse(builder, maps);
-		g_object_unref(builder);
-	}
-
-	/* External tools. */
-	const QString tools = dir + QDir::separator() + VIKING_EXTTOOLS_FILE;
-	if (access(tools.toUtf8().constData(), R_OK) == 0) {
-		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_exttools));
-		vik_gobject_builder_parse(builder, tools);
-	}
-
-	const QString datasources = dir + QDir::separator() + VIKING_DATASOURCES_FILE;
-	if (access(datasources.toUtf8().constData(), R_OK) == 0) {
-		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_datasources));
-		vik_gobject_builder_parse(builder, datasources);
-	}
-
-	/* Go-to search engines. */
-	const QString go_to = dir + QDir::separator() + VIKING_GOTOTOOLS_FILE;
-	if (access(go_to.toUtf8().constData(), R_OK) == 0) {
-		VikGobjectBuilder * builder = vik_gobject_builder_new();
-		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_gototools));
-		vik_gobject_builder_parse(builder, go_to);
-	}
-
-	/* Routing engines. */
-	const QString routing = dir + QDir::separator() + VIKING_ROUTING_FILE;
-	if (access(routing.toUtf8().constData(), R_OK) == 0) {
-		VikGobjectBuilder *builder = vik_gobject_builder_new();
-		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_routing_engine));
-		vik_gobject_builder_parse(builder, routing);
-	}
 }
 #endif
 
 
 
 
+static void modules_load_config_from_dir(const QString & dir)
+{
+	qDebug() << SG_PREFIX_D << "Loading configurations from directory" << dir;
+
+	/* Maps sources. */
+	const QString maps = dir + QDir::separator() + VIKING_MAPS_FILE;
+	if (access(maps.toUtf8().constData(), R_OK) == 0) {
+#if 0
+		VikGobjectBuilder *builder = vik_gobject_builder_new();
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_map_source));
+		vik_gobject_builder_parse(builder, maps);
+		g_object_unref(builder);
+#endif
+	}
+
+	/* External tools. */
+	const QString tools = dir + QDir::separator() + VIKING_EXTTOOLS_FILE;
+	if (access(tools.toUtf8().constData(), R_OK) == 0) {
+#if 0
+		VikGobjectBuilder *builder = vik_gobject_builder_new();
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_exttools));
+		vik_gobject_builder_parse(builder, tools);
+#endif
+	}
+
+	const QString datasources = dir + QDir::separator() + VIKING_DATASOURCES_FILE;
+	if (access(datasources.toUtf8().constData(), R_OK) == 0) {
+#if 0
+		VikGobjectBuilder *builder = vik_gobject_builder_new();
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_datasources));
+		vik_gobject_builder_parse(builder, datasources);
+#endif
+	}
+
+	/* Go-to search engines. */
+	const QString go_to = dir + QDir::separator() + VIKING_GOTOTOOLS_FILE;
+	if (access(go_to.toUtf8().constData(), R_OK) == 0) {
+#if 0
+		VikGobjectBuilder * builder = vik_gobject_builder_new();
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_gototools));
+		vik_gobject_builder_parse(builder, go_to);
+#endif
+	}
+
+	/* Routing engines. */
+	const QString routing = dir + QDir::separator() + VIKING_ROUTING_FILE;
+	if (access(routing.toUtf8().constData(), R_OK) == 0) {
+#if 0
+		VikGobjectBuilder *builder = vik_gobject_builder_new();
+		QObject::connect(builder, SIGNAL("new-object"), NULL, SLOT (modules_register_routing_engine));
+		vik_gobject_builder_parse(builder, routing);
+#endif
+	}
+}
+
+
+
+
 static void modules_load_config(void)
 {
-#ifdef K_FIXME_RESTORE
 	/* Look in the directories of data path. */
-	const QString data_dirs = SlavGPSLocations::get_data_dirs();
+	const QStringList data_dirs = SlavGPSLocations::get_data_dirs();
 
 	/* Priority is standard one:
 	   left element is more important than right one.
@@ -204,8 +212,10 @@ static void modules_load_config(void)
 		modules_load_config_from_dir(data_dirs.at(i));
 	}
 
+#ifdef K_TODO
 	/* Check if system config is set. */
 	modules_load_config_from_dir(VIKING_SYSCONFDIR);
+#endif
 
 	QString data_home = SlavGPSLocations::get_data_home();
 	if (!data_home.isEmpty()) {
@@ -213,8 +223,7 @@ static void modules_load_config(void)
 	}
 
 	/* Check user's home config. */
-	modules_load_config_from_dir(get_viking_dir());
-#endif
+	modules_load_config_from_dir(SlavGPSLocations::get_config_dir());
 }
 
 
