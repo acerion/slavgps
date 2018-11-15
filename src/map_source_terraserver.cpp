@@ -35,6 +35,7 @@
 #include "mapcoord.h"
 #include "viewport_internal.h"
 #include "viewport_zoom.h"
+#include "globals.h"
 
 
 
@@ -44,6 +45,7 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Map Source Terraserver"
 #define TERRASERVER_SITE "msrmaps.com"
 #define MARGIN_OF_ERROR 0.001
 
@@ -164,7 +166,7 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString 
 		this->copyright = "© DigitalGlobe";
 		break;
 	default:
-		qDebug() << "EE: Map Source Terraserver: unknown type" << (int) new_type_id;
+		qDebug() << SG_PREFIX_E << "Unknown type" << (int) new_type_id;
 	}
 
 	this->label = new_label;
@@ -174,5 +176,5 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString 
 	this->tilesize_y = 200;
 	this->drawmode = ViewportDrawMode::UTM;
 
-	this->dl_options.check_file = a_check_map_file;
+	this->dl_options.file_validator_fn = map_file_validator_fn;
 }

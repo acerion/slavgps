@@ -1082,7 +1082,7 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	const QString source_file = QString("%1%2/").arg(SRTM_HTTP_URI_PREFIX).arg(continent_dir) + srtm_file_name(intlat, intlon);
 
 	static DownloadOptions dl_options(1); /* Follow redirect from http to https. */
-	dl_options.check_file = a_check_map_file;
+	dl_options.file_validator_fn = map_file_validator_fn;
 
 	DownloadHandle dl_handle(&dl_options);
 

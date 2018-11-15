@@ -95,7 +95,7 @@ void Expedia::init(void)
 {
 #ifdef VIK_CONFIG_EXPEDIA
 	expedia_options.follow_location = 2;
-	expedia_options.check_file = a_check_map_file;
+	expedia_options.file_validator_fn = map_file_validator_fn;
 
 	VikMapsLayer_MapType map_type;
 

@@ -91,7 +91,7 @@ using namespace SlavGPS;
 
 
 
-static bool check_file_first_line(FILE * file, const char * patterns[])
+static bool file_first_line_matches(FILE * file, const char * patterns[])
 {
 	fpos_t pos;
 	char buf[33];
@@ -126,7 +126,7 @@ static bool check_file_first_line(FILE * file, const char * patterns[])
 
 
 
-bool SlavGPS::a_check_html_file(FILE * file)
+sg_ret SlavGPS::html_file_validator_fn(FILE * file, bool * is_valid)
 {
 	const char * html_str[] = {
 		"<html",
@@ -136,29 +136,53 @@ bool SlavGPS::a_check_html_file(FILE * file)
 		NULL
 	};
 
-	return check_file_first_line(file, html_str);
+	*is_valid = file_first_line_matches(file, html_str);
+
+	return sg_ret::ok;
 }
 
 
 
 
-bool SlavGPS::a_check_map_file(FILE * f)
+sg_ret SlavGPS::map_file_validator_fn(FILE * file, bool * is_valid)
 {
-	/* FIXME no more true since a_check_kml_file. */
-	return !a_check_html_file(f);
+	bool is_html = false;
+	if (sg_ret::ok != SlavGPS::html_file_validator_fn(file, &is_html)) {
+		return sg_ret::err;
+	}
+	if (is_html) {
+		*is_valid = false;
+		return sg_ret::ok;
+	}
+
+
+	bool is_kml = false;
+	if (sg_ret::ok != SlavGPS::kml_file_validator_fn(file, &is_kml)) {
+		return sg_ret::err;
+	}
+	if (is_kml) {
+		*is_valid = false;
+		return sg_ret::ok;
+	}
+
+
+	*is_valid = true;
+	return sg_ret::ok;
 }
 
 
 
 
-bool a_check_kml_file(FILE * file)
+sg_ret SlavGPS::kml_file_validator_fn(FILE * file, bool * is_valid)
 {
 	const char * kml_str[] = {
 		"<?xml",
 		NULL
 	};
 
-	return check_file_first_line(file, kml_str);
+	*is_valid = file_first_line_matches(file, kml_str);
+
+	return sg_ret::ok;
 }
 
 
@@ -565,10 +589,14 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 		result = DownloadStatus::HTTPError;
 	}
 
-	if (!failure && this->dl_options.check_file != NULL && ! this->dl_options.check_file(file)) {
-		qDebug() << SG_PREFIX_E << "File content checking failed";
-		failure = true;
-		result = DownloadStatus::ContentError;
+	if (!failure && this->dl_options.file_validator_fn) {
+		bool file_is_valid = false;
+		this->dl_options.file_validator_fn(file, &file_is_valid);
+		if (!file_is_valid) {
+			qDebug() << SG_PREFIX_E << "File content checking failed";
+			failure = true;
+			result = DownloadStatus::ContentError;
+		}
 	}
 
 	fclose(file);
@@ -712,7 +740,7 @@ DownloadOptions::DownloadOptions(const DownloadOptions & dl_options)
 	this->use_etag               = dl_options.use_etag;
 	this->referer                = dl_options.referer;
 	this->follow_location        = dl_options.follow_location;
-	this->check_file             = dl_options.check_file;
+	this->file_validator_fn      = dl_options.file_validator_fn;
 	this->user_pass              = dl_options.user_pass;
 	this->convert_file           = dl_options.convert_file;
 }

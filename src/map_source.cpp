@@ -71,7 +71,7 @@ MapSource::MapSource()
 	drawmode = ViewportDrawMode::Mercator; /* ViewportDrawMode::UTM */
 	this->file_extension = ".png";
 
-	this->dl_options.check_file = a_check_map_file;
+	this->dl_options.file_validator_fn = map_file_validator_fn;
 
 	is_direct_file_access_flag = false; /* Use direct file access to OSM like tile images - no need for a webservice. */
 	is_osm_meta_tiles_flag = false; /* Read from OSM Meta Tiles - Should be 'use-direct-file-access' as well. */

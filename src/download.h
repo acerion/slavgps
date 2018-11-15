@@ -39,6 +39,11 @@
 
 
 
+#include "globals.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -76,10 +81,10 @@ namespace SlavGPS {
 
 
 	/* File content check. */
-	typedef bool (* VikFileContentCheckerFunc) (FILE *);
-	bool a_check_map_file(FILE *);
-	bool a_check_html_file(FILE *);
-	bool a_check_kml_file(FILE *);
+	typedef sg_ret (* VikFileContentCheckerFunc) (FILE *, bool *);
+	sg_ret map_file_validator_fn(FILE * file, bool * is_valid);
+	sg_ret html_file_validator_fn(FILE * file, bool * is_valid);
+	sg_ret kml_file_validator_fn(FILE * file, bool * is_valid);
 
 	/* Convert. */
 	void a_try_decompress_file(const QString & file_path);
@@ -111,7 +116,7 @@ namespace SlavGPS {
 		long follow_location = 0;
 
 		/* File content checker. */
-		VikFileContentCheckerFunc check_file = NULL;
+		VikFileContentCheckerFunc file_validator_fn = NULL;
 
 		/* If need to authenticate on download. Format: 'username:password' */
 		QString user_pass;

@@ -68,7 +68,7 @@ GotoToolGoogle::GotoToolGoogle() : GotoTool("Google")
 {
 	this->dl_options.referer = "http://maps.google.com/";
 	this->dl_options.follow_location = 2;
-	this->dl_options.check_file = a_check_map_file;
+	this->dl_options.file_validator_fn = map_file_validator_fn;
 }
 
 
