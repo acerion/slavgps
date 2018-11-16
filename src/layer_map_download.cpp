@@ -25,8 +25,6 @@
 
 
 
-#include <mutex>
-
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -79,6 +77,8 @@ MapDownloadJob::MapDownloadJob(LayerMap * new_layer, const MapSource * new_map_s
 	this->map_download_mode = new_map_download_mode;
 
 	this->range = TileInfo::get_tiles_range(ulm, brm);
+
+	connect(this, SIGNAL (download_job_completed(void)), new_layer, SLOT (handle_downloaded_tile_cb(void)));
 }
 
 
@@ -191,12 +191,12 @@ void MapDownloadJob::run(void)
 				case DownloadStatus::ContentError: {
 					/* TODO_LATER: ?? count up the number of download errors somehow... */
 					const QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download map tile");
-					this->layer->get_window()->statusbar_update(StatusBarField::Info, msg);
+					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
 				}
 				case DownloadStatus::FileWriteError: {
 					const QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save map tile");
-					this->layer->get_window()->statusbar_update(StatusBarField::Info, msg);
+					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
 				}
 				case DownloadStatus::Success:
@@ -208,28 +208,23 @@ void MapDownloadJob::run(void)
 				qDebug() << SG_PREFIX_I << "This tile doesn't need download";
 			}
 
-			this->mutex.lock();
 			if (remove_mem_cache) {
 				MapCache::remove_all_shrinkfactors(tile_iter, this->map_source->map_type_id, this->layer->file_full_path);
 			}
 
-			if (this->refresh_display && this->map_layer_alive) {
+			if (this->refresh_display) {
 				/* TODO_2_LATER: check if downloaded tile is visible in viewport.
 				   Otherwise redraw of viewport is not needed. */
-				this->layer->emit_layer_changed("Set of tiles for Map Layer has been updated after tile download");
+				qDebug() << SG_PREFIX_SIGNAL << "Will emit 'download job completed' signal to indicate completion of tile download job";
+				emit this->download_job_completed();
 			}
-			this->mutex.unlock();
 
 			/* We're temporarily between downloads. */
 			this->download_in_progress = false;
 		}
 	}
 	this->map_source->download_handle_cleanup(dl_handle);
-	this->mutex.lock();
-	if (this->map_layer_alive) {
-		this->layer->weak_unref(LayerMap::weak_ref_cb, this);
-	}
-	this->mutex.unlock();
+
 	return;
 }
 

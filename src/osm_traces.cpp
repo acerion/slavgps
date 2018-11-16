@@ -169,7 +169,7 @@ OSMTracesUpload::OSMTracesUpload(LayerTRW * new_trw, Track * new_trk)
 
 OSMTracesUpload::~OSMTracesUpload()
 {
-	this->trw->unref();
+	this->trw->unref_layer();
 	this->trw = NULL;
 }
 

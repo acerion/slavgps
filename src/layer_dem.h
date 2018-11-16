@@ -91,8 +91,6 @@ namespace SlavGPS {
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
-		static void weak_ref_cb(void * ptr, void * dead_vdl);
-
 		std::vector<QColor> colors;
 		std::vector<QColor> gradients;
 
@@ -103,6 +101,9 @@ namespace SlavGPS {
 		int source = DEM_SOURCE_SRTM;    /* Signed int because this is a generic enum ID. */
 		int dem_type = DEM_TYPE_HEIGHT;  /* Signed int because this is a generic enum ID. */
 
+
+	public slots:
+		sg_ret handle_downloaded_file_cb(const QString & file_full_path);
 
 	private slots:
 		void location_info_cb(void);
@@ -134,6 +135,26 @@ namespace SlavGPS {
 		QStringList file_paths;
 	signals:
 		void loading_to_cache_completed();
+	};
+
+
+
+
+	class DEMDownloadJob : public BackgroundJob {
+		Q_OBJECT
+	public:
+		DEMDownloadJob(const QString & dest_file_path, const LatLon & lat_lon, LayerDEM * layer);
+		~DEMDownloadJob();
+
+		void run(void);
+
+		QString dest_file_path;
+		LatLon lat_lon;
+
+		unsigned int source;
+
+	signals:
+		void download_job_completed(const QString & file_full_path);
 	};
 
 

@@ -1286,17 +1286,6 @@ void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 
 
-void LayerMap::weak_ref_cb(void * ptr, void * dead_vml)
-{
-	MapDownloadJob * mdj = (MapDownloadJob *) ptr;
-	mdj->mutex.lock();
-	mdj->map_layer_alive = false;
-	mdj->mutex.unlock();
-}
-
-
-
-
 void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode)
 {
 	double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_viking_zoom_level().get_x();
@@ -1332,7 +1321,6 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 	}
 
 	if (mdj->n_items) {
-		mdj->layer->weak_ref(LayerMap::weak_ref_cb, mdj);
 		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
@@ -1370,7 +1358,6 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 
 	mdj->n_items = mdj->calculate_tile_count_to_download();
 	if (mdj->n_items) {
-		mdj->layer->weak_ref(weak_ref_cb, mdj);
 		mdj->set_description(map_download_mode, mdj->n_items, map_source->get_label());
 		mdj->run_in_background(ThreadPoolType::Remote);
 	} else {
@@ -1987,4 +1974,14 @@ QString SlavGPS::to_string(MapDownloadMode download_mode)
 	}
 
 	return result;
+}
+
+
+
+
+
+sg_ret LayerMap::handle_downloaded_tile_cb(void)
+{
+	this->emit_layer_changed("Indicating change to layer in response to downloading new map tile");
+	return sg_ret::ok;
 }

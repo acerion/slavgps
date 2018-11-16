@@ -226,10 +226,8 @@ namespace SlavGPS {
 
 		Window * get_window(void);
 
-		void ref();
-		void unref();
-		void weak_ref(LayerRefCB cb, void * obj);
-		void weak_unref(LayerRefCB cb, void * obj);
+		void ref_layer(void);
+		void unref_layer(void);
 
 
 		/* GUI. */

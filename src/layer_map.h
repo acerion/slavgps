@@ -115,8 +115,6 @@ namespace SlavGPS {
 
 		void download_onscreen_maps(MapDownloadMode map_download_mode);
 
-		static void weak_ref_cb(void * ptr, void * dead_vml);
-
 
 		static void set_autodownload_default(bool autodownload);
 		static void set_cache_default(MapCacheLayout layout);
@@ -180,6 +178,8 @@ namespace SlavGPS {
 
 		void about_cb(void);
 		void flush_cb(void);
+
+		sg_ret handle_downloaded_tile_cb(void);
 	};
 
 

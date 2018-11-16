@@ -220,7 +220,7 @@ void AcquireWorker::finalize_after_completion(void)
 void AcquireWorker::finalize_after_termination(void)
 {
 	if (this->acquire_context->target_trw_allocated) {
-		this->acquire_context->target_trw->unref();
+		this->acquire_context->target_trw->unref_layer();
 	}
 
 	this->progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));

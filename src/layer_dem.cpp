@@ -24,7 +24,6 @@
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
-#include <mutex>
 #include <cassert>
 
 #include <sys/types.h>
@@ -69,31 +68,11 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer DEM"
-#define PREFIX " Layer DEM" << __FUNCTION__ << __LINE__ << ">"
 
 
 
 
 void draw_loaded_dem_box(Viewport * viewport);
-
-
-
-
-class DEMDownloadJob : public BackgroundJob {
-public:
-	DEMDownloadJob(const QString & dest_file_path, const LatLon & lat_lon, LayerDEM * layer);
-	~DEMDownloadJob();
-
-	void run(void);
-
-	QString dest_file_path;
-	double lat, lon;
-
-	std::mutex mutex;
-	LayerDEM * layer; /* NULL if not alive. */
-
-	unsigned int source;
-};
 
 
 
@@ -342,7 +321,7 @@ bool DEMLoadJob::load_files_into_cache(void)
 
 	for (auto iter = this->file_paths.begin(); iter != this->file_paths.end(); iter++) {
 		if (!DEMCache::load_file_into_cache(*iter)) {
-			qDebug() << "EE" PREFIX << "Failed to load into cache file" << *iter;
+			qDebug() << SG_PREFIX_E << "Failed to load into cache file" << *iter;
 		}
 
 		dem_count++;
@@ -438,13 +417,13 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 		/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
 		this->files = param_value.val_string_list;
 
-		qDebug() << "DD" PREFIX << "list of files:";
+		qDebug() << SG_PREFIX_D << "List of files:";
 		if (!this->files.empty()) {
 			for (auto iter = this->files.begin(); iter != this->files.end(); ++iter) {
-				qDebug() << "DD" PREFIX << "file:" << *iter;
+				qDebug() << SG_PREFIX_D << "File:" << *iter;
 			}
 		} else {
-			qDebug() << "DD" PREFIX << "no files";
+			qDebug() << SG_PREFIX_D << "No files";
 		}
 		/* No need for thread if no files. */
 		if (!this->files.empty()) {
@@ -573,7 +552,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		this->draw_dem_utm(viewport, dem);
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unexpected DEM horiz units" << (int) dem->horiz_units;
+		qDebug() << SG_PREFIX_E << "Unexpected DEM horiz units" << (int) dem->horiz_units;
 		break;
 	}
 
@@ -979,10 +958,10 @@ void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		const QString dem_file_path = *iter;
 		DEM * dem = DEMCache::get(dem_file_path);
 		if (dem) {
-			qDebug() << SG_PREFIX_I << "got file" << dem_file_path << "from cache, will now draw it";
+			qDebug() << SG_PREFIX_I << "Got file" << dem_file_path << "from cache, will now draw it";
 			this->draw_dem(viewport, dem);
 		} else {
-			qDebug() << "EE" PREFIX << "failed to get file" << dem_file_path << "from cache, not drawing";
+			qDebug() << SG_PREFIX_E << "Failed to get file" << dem_file_path << "from cache, not drawing";
 		}
 	}
 }
@@ -1037,16 +1016,15 @@ LayerDEM::~LayerDEM()
 
 
 
-DEMDownloadJob::DEMDownloadJob(const QString & new_dest_file_path, const LatLon & lat_lon, LayerDEM * layer_dem)
+DEMDownloadJob::DEMDownloadJob(const QString & new_dest_file_path, const LatLon & new_lat_lon, LayerDEM * layer_dem)
 {
 	this->n_items = 1; /* We are downloading one DEM tile at a time. */
 
 	this->dest_file_path = new_dest_file_path;
-	this->lat = lat_lon.lat;
-	this->lon = lat_lon.lon;
-	this->layer = layer_dem;
+	this->lat_lon = new_lat_lon;
 	this->source = layer_dem->source;
-	this->layer->weak_ref(LayerDEM::weak_ref_cb, this);
+
+	connect(this, SIGNAL (download_job_completed(const QString &)), layer_dem, SLOT (handle_downloaded_file_cb(const QString &)));
 }
 
 
@@ -1054,6 +1032,8 @@ DEMDownloadJob::DEMDownloadJob(const QString & new_dest_file_path, const LatLon 
 
 DEMDownloadJob::~DEMDownloadJob()
 {
+	/* TODO: make DEMDownloadJob a QT child of a DEM layer, so
+	   that the job is destroyed when a layer is destroyed. */
 }
 
 
@@ -1067,14 +1047,12 @@ DEMDownloadJob::~DEMDownloadJob()
    background thread). */
 static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 {
-	int intlat = (int) floor(dl_job->lat);
-	int intlon = (int) floor(dl_job->lon);
+	const int intlat = (int) floor(dl_job->lat_lon.lat);
+	const int intlon = (int) floor(dl_job->lat_lon.lon);
 
 	QString continent_dir;
 	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
-		if (dl_job->layer) {
-			dl_job->layer->get_window()->statusbar_update(StatusBarField::Info, QObject::tr("No SRTM data available for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float */
-		}
+		ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, QObject::tr("No SRTM data available for %1").arg(dl_job->lat_lon.to_string()));
 		return;
 	}
 
@@ -1090,10 +1068,10 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 	switch (result) {
 	case DownloadStatus::ContentError:
 	case DownloadStatus::HTTPError:
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM download failure for %1, %2").arg(dl_job->lat).arg(dl_job->lon)); /* Float + float. */
+		ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM download failure for %1").arg(dl_job->lat_lon.to_string()));
 		break;
 	case DownloadStatus::FileWriteError:
-		dl_job->layer->get_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
+		ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, QObject::tr("DEM write failure for %s").arg(dl_job->dest_file_path));
 		break;
 	case DownloadStatus::Success:
 	case DownloadStatus::DownloadNotRequired:
@@ -1107,14 +1085,14 @@ static void srtm_dem_download_thread(DEMDownloadJob * dl_job)
 
 
 
-static const QString srtm_lat_lon_to_cache_file_name(double lat, double lon)
+static const QString srtm_lat_lon_to_cache_file_name(const LatLon & lat_lon)
 {
-	int intlat = (int) floor(lat);
-	int intlon = (int) floor(lon);
+	const int intlat = (int) floor(lat_lon.lat);
+	const int intlon = (int) floor(lat_lon.lon);
 	QString continent_dir;
 
 	if (!srtm_get_continent_dir(continent_dir, intlat, intlon)) {
-		qDebug() << "NN: Layer DEM: didn't hit any continent and coordinates" << lat << lon;
+		qDebug() << SG_PREFIX_N << "Didn't hit any continent and coordinates" << lat_lon;
 		continent_dir = "nowhere";
 	}
 
@@ -1134,7 +1112,7 @@ static void srtm_draw_existence(Viewport * viewport)
 	const LatLonBBox bbox = viewport->get_bbox();
 	QPen pen("black");
 
-	qDebug() << "DD" PREFIX << "viewport bounding box:" << bbox;
+	qDebug() << SG_PREFIX_D << "Viewport bounding box:" << bbox;
 
 	for (int lat = floor(bbox.south); lat <= floor(bbox.north); lat++) {
 		for (int lon = floor(bbox.west); lon <= floor(bbox.east); lon++) {
@@ -1178,7 +1156,7 @@ void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & 
 		sp_ne.y = 0;
 	}
 
-	qDebug() << "DD" PREFIX << "drawing existence rectangle for" << cache_file_path;
+	qDebug() << SG_PREFIX_D << "Drawing existence rectangle for" << cache_file_path;
 	viewport->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 }
 
@@ -1204,11 +1182,11 @@ static void dem24k_dem_download_thread(DEMDownloadJob * dl_job)
 
 
 
-static QString dem24k_lat_lon_to_cache_file_name(double lat, double lon)
+static QString dem24k_lat_lon_to_cache_file_name(const LatLon & lat_lon)
 {
 	return QString("dem24k/%1/%2/%3,%4.dem")
-		.arg((int) lat)
-		.arg((int) lon)
+		.arg((int) lat_lon.lat)
+		.arg((int) lat_lon.lon)
 		.arg(floor(lat * 8) / 8, 0, 'f', 3, '0')
 		.arg(ceil(lon * 8) / 8, 0, 'f', 3, '0');
 }
@@ -1272,14 +1250,6 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 
 
-void LayerDEM::weak_ref_cb(void * ptr, void * dead_vdl)
-{
-	DEMDownloadJob * p = (DEMDownloadJob *) ptr;
-	p->mutex.lock();
-	p->layer = NULL;
-	p->mutex.unlock();
-}
-
 /* Try to add file full_path.
  * Returns false if file does not exists, true otherwise.
  */
@@ -1291,7 +1261,7 @@ bool LayerDEM::add_file(const QString & dem_file_path)
 		stat(dem_file_path.toUtf8().constData(), &sb);
 		if (sb.st_size) {
 			this->files.push_front(dem_file_path);
-			qDebug () << "II" PREFIX << "will now load file" << dem_file_path << "from cache";
+			qDebug () << SG_PREFIX_I << "Will now load file" << dem_file_path << "from cache";
 			DEMCache::load_file_into_cache(dem_file_path);
 		} else {
 			qDebug() << SG_PREFIX_I << dem_file_path << ": file size is zero";
@@ -1320,16 +1290,7 @@ void DEMDownloadJob::run(void)
 		return;
 	}
 
-	this->mutex.lock();
-	if (this->layer) {
-		this->layer->weak_unref(LayerDEM::weak_ref_cb, this);
-
-		if (this->layer->add_file(this->dest_file_path)) {
-			qDebug() << "SIGNAL" PREFIX << "will emit 'layer changed' on downloading file";
-			this->layer->emit_layer_changed("DEM - downloaded file"); /* NB update from background thread. */
-		}
-	}
-	this->mutex.unlock();
+	emit this->download_job_completed(this->dest_file_path);
 
 	return;
 }
@@ -1393,8 +1354,8 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	const LatLon ll(menu->property("lat").toDouble(), menu->property("lon").toDouble());
 	qDebug() << SG_PREFIX_I << "will display file info for coordinates" << ll;
 
-	int intlat = (int) floor(ll.lat);
-	int intlon = (int) floor(ll.lon);
+	const int intlat = (int) floor(ll.lat);
+	const int intlon = (int) floor(ll.lon);
 
 	QString remote_location; /* Remote address where this file has been downloaded from. */
 	QString continent_dir;
@@ -1407,9 +1368,9 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	}
 
 #ifdef VIK_CONFIG_DEM24K
-	QString cache_file_name = dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon);
+	QString cache_file_name = dem24k_lat_lon_to_cache_file_name(ll);
 #else
-	QString cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
+	QString cache_file_name = srtm_lat_lon_to_cache_file_name(ll);
 #endif
 	QString cache_file_path = MapCache::get_dir() + cache_file_name;
 
@@ -1441,20 +1402,20 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 	const Coord coord = tool->viewport->screen_pos_to_coord(ev->x(), ev->y());
 	const LatLon ll = coord.get_latlon();
 
-	qDebug() << SG_PREFIX_I << "received event, processing (coord" << ll.lat << ll.lon << ")";
+	qDebug() << SG_PREFIX_I << "received event, processing, coord =" << ll;
 
 	QString cache_file_name;
 	if (this->source == DEM_SOURCE_SRTM) {
-		cache_file_name = srtm_lat_lon_to_cache_file_name(ll.lat, ll.lon);
+		cache_file_name = srtm_lat_lon_to_cache_file_name(ll);
 		qDebug() << SG_PREFIX_I << "cache file name" << cache_file_name;
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
-		cache_file_name = dem24k_lat_lon_to_cache_file_name(ll.lat, ll.lon);
+		cache_file_name = dem24k_lat_lon_to_cache_file_name(ll);
 #endif
 	}
 
 	if (!cache_file_name.length()) {
-		qDebug() << "WW" PREFIX << "received click, but no DEM file";
+		qDebug() << SG_PREFIX_W << "Received click, but no DEM file";
 		return true;
 	}
 
@@ -1518,6 +1479,21 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * 
 
 void LayerDEM::on_loading_to_cache_completed_cb(void)
 {
-	qDebug() << "SIGNAL" PREFIX << "will emit 'layer changed' after loading list of files";
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'layer changed' after loading list of files";
 	this->emit_layer_changed("DEM - loading to cache completed");
+}
+
+
+
+
+sg_ret LayerDEM::handle_downloaded_file_cb(const QString & file_full_path)
+{
+	qDebug() << SG_PREFIX_SLOT << "Received notification about downloaded file" << file_full_path;
+
+	if (this->add_file(file_full_path)) {
+		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'layer changed' after downloading file";
+		this->emit_layer_changed("Indicating change to DEM Layer after downloading a file");
+	}
+
+	return sg_ret::ok;
 }

@@ -24,11 +24,6 @@
 
 
 
-#include <mutex>
-
-
-
-
 #include <QString>
 
 
@@ -54,6 +49,7 @@ namespace SlavGPS {
 
 
 	class MapDownloadJob : public BackgroundJob {
+		Q_OBJECT
 	public:
 		MapDownloadJob() {};
 		MapDownloadJob(LayerMap * layer, const MapSource * map_source, const TileInfo & ulm, const TileInfo & brm, bool refresh_display, MapDownloadMode map_download_mode);
@@ -76,8 +72,9 @@ namespace SlavGPS {
 		MapDownloadMode map_download_mode;
 		bool refresh_display = false;
 		LayerMap * layer = NULL;
-		bool map_layer_alive = true;
-		std::mutex mutex;
+
+	signals:
+		void download_job_completed(void);
 
 	private:
 		MapTypeID map_type_id;

@@ -650,7 +650,7 @@ LayerGPS::~LayerGPS()
 		if (this->tree_view) {
 			//this->disconnect_layer_signal(this->trw_children[i]);
 		}
-		this->trw_children[i]->unref();
+		this->trw_children[i]->unref_layer();
 	}
 #if REALTIME_GPS_TRACKING_ENABLED
 	this->rt_gpsd_disconnect();

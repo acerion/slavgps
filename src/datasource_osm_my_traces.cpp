@@ -666,7 +666,7 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 			} else {
 				if (create_new_layer) {
 					/* Layer not needed as no data has been acquired. */
-					target_layer->unref();
+					target_layer->unref_layer();
 				}
 			}
 		}
