@@ -5,6 +5,7 @@
  * Copyright (C) 2005-2007, Alex Foobarian <foobarian@gmail.com>
  * Copyright (C) 2007-2008, Quy Tonthat <qtonthat@gmail.com>
  * Copyright (C) 2012-2014, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,7 +64,8 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Track Profile Dialog"
-#define PREFIX " Track Profile:" << __FUNCTION__ << __LINE__ << ">"
+#define SELECTED 0
+#define CURRENT 1
 
 
 
@@ -117,7 +119,7 @@ static GraphIntervalsSpeed    speed_intervals;
 
 
 static void time_label_update(QLabel * label, time_t seconds_from_start);
-static void real_time_label_update(QLabel * label, const Trackpoint * tp);
+static void real_time_label_update(ProfileGraph * graph, const Trackpoint * tp);
 
 static QString get_time_grid_label(int interval_index, int value);
 static QString get_time_grid_label_2(time_t interval_value, time_t value);
@@ -164,7 +166,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 		this->track_data_raw = trk->make_track_data_speed_over_distance();
 		this->track_data = this->track_data_raw.compress(this->width);
 	} else {
-		qDebug() << "EE:" PREFIX << "unhandled x/y domain" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
 	}
 
 	if (!this->track_data.valid) {
@@ -172,7 +174,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 	}
 
 
-	qDebug() << "II:" PREFIX << "generated value vector for" << this->get_graph_title() << ", will now adjust y values";
+	qDebug() << SG_PREFIX_I << "Generated value vector for" << this->get_graph_title() << ", will now adjust y values";
 
 
 	/* Do necessary adjustments to y values. */
@@ -184,7 +186,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->geocanvas.speed_unit);
 		}
 
-		qDebug() << "kamil calculating min/max y speed for" << this->get_graph_title();
+		qDebug() << SG_PREFIX_D << "Calculating min/max y speed for" << this->get_graph_title();
 		this->track_data.calculate_min_max();
 		if (this->track_data.y_min < 0.0) {
 			this->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
@@ -220,13 +222,13 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 		this->track_data.calculate_min_max();
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
 		break;
 	};
 
 
 
-	qDebug() << "II:" PREFIX << "after calling calculate_min_max; x_min/x_max =" << this->track_data.x_min << this->track_data.x_max << this->get_graph_title();
+	qDebug() << SG_PREFIX_I << "After calling calculate_min_max; x_min/x_max =" << this->track_data.x_min << this->track_data.x_max << this->get_graph_title();
 
 
 
@@ -240,13 +242,13 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 		this->set_initial_visible_range_x_time();
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) this->geocanvas.x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->geocanvas.x_domain;
 		break;
 	};
 
 	this->set_initial_visible_range_y();
 
-	qDebug() << "II:" PREFIX << "return";
+	qDebug() << SG_PREFIX_I << "Return";
 
 
 	return true;
@@ -265,7 +267,7 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 
 	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
 		/* TODO_2_LATER: verify what happens if we return here. */
-		qDebug() << "EE:" PREFIX << "zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
+		qDebug() << SG_PREFIX_E << "Zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
 		return;
 	}
 
@@ -307,7 +309,7 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 
 	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
 		/* TODO_2_LATER: verify what happens if we return here. */
-		qDebug() << "EE:" PREFIX << "zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
+		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
 		return;
 	}
 
@@ -347,7 +349,7 @@ void ProfileGraph::set_initial_visible_range_y(void)
 		this->y_min_visible = this->track_data.y_min - range * over;
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
 		/* TODO_2_LATER: see what happens when we return here. */
 		return;
 	}
@@ -375,7 +377,7 @@ void ProfileGraph::set_initial_visible_range_y(void)
 		intervals = &gradient_intervals.intervals;
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
 		return;
 	};
 
@@ -387,41 +389,42 @@ void ProfileGraph::set_initial_visible_range_y(void)
 
 
 /* Change what is displayed in main viewport in reaction to click event in one of Profile Dialog viewports. */
-static Trackpoint * set_center_at_graph_position(int event_x,
-						 LayerTRW * trw,
-						 Viewport * main_viewport,
-						 TrackInfo & track_info,
-						 GeoCanvasDomain x_domain,
-						 int graph_width)
+static bool set_center_at_graph_position(int event_x,
+					 LayerTRW * trw,
+					 Viewport * main_viewport,
+					 Track * trk,
+					 GeoCanvasDomain x_domain,
+					 int graph_width)
 {
 	int x = event_x;
 	if (x >= graph_width) {
-		qDebug() << "EE: Track Profile: set center: condition 1 error:" << x << graph_width;
+		qDebug() << SG_PREFIX_E << "Condition 1 error:" << x << graph_width;
 		x = graph_width; /* Notice that it's not 'x = graph_width - 1'. Current assignment will put mark at the border of graph. */
 	}
 	if (x < 0) {
-		qDebug() << "EE: Track Profile: set center: condition 2 error:" << x;
+		qDebug() << SG_PREFIX_E << "Condition 2 error:" << x;
 		x = 0;
 	}
 
-	Trackpoint * tp = NULL;
+	bool found = false;
 	switch (x_domain) {
 	case GeoCanvasDomain::Time:
-		tp = track_info.trk->get_closest_tp_by_percentage_time((double) x / graph_width, NULL);
+		found = trk->set_tp_by_percentage_time((double) x / graph_width, NULL, SELECTED);
 		break;
 	case GeoCanvasDomain::Distance:
-		tp = track_info.trk->get_closest_tp_by_percentage_dist((double) x / graph_width, NULL);
+		found = trk->set_tp_by_percentage_dist((double) x / graph_width, NULL, SELECTED);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) x_domain;
 		break;
 	}
 
-	if (tp) {
+	if (found) {
+		Trackpoint * tp = trk->get_tp(SELECTED);
 		main_viewport->set_center_from_coord(tp->coord, true);
-		trw->emit_layer_changed("TRw - Track Profile Dialog - set center");
+		trw->emit_layer_changed("TRW - Track Profile Dialog - set center");
 	}
-	return tp;
+	return found;
 }
 
 
@@ -440,10 +443,10 @@ void ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos & 
 	/* Restore previously saved image that has no marks on it, just the graph, grids, borders and margins. */
 	if (this->saved_img.valid) {
 		/* Debug code. */
-		//D qDebug() << "II:" PREFIX << "restoring saved image";
+		// qDebug() << SG_PREFIX_I << "Restoring saved image";
 		this->viewport->set_pixmap(this->saved_img.img);
 	} else {
-		qDebug() << "WW:" PREFIX << "NOT restoring saved image";
+		qDebug() << SG_PREFIX_W << "NOT restoring saved image";
 	}
 
 
@@ -451,7 +454,7 @@ void ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos & 
 	/* Now draw marks on this fresh (restored from saved) image. */
 
 	if (current_pos.x > 0 && current_pos.y > 0) {
-		qDebug() << "DD:" PREFIX << "++++++ crosshair pos =" << current_pos.x << current_pos.y;
+		//qDebug() << SG_PREFIX_D << "Crosshair pos =" << current_pos.x << current_pos.y;
 
 		/* Here we convert point's position from graph's
 		   coordinate system (beginning in bottom-left corner)
@@ -486,54 +489,6 @@ void ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos & 
 
 
 /**
-   Return the percentage of how far a trackpoint is along a track via the time method.
-*/
-static double tp_percentage_by_time(TrackInfo & track_info, Trackpoint * tp)
-{
-	if (tp == NULL) {
-		return NAN;
-	}
-
-	const time_t t_start = (*track_info.trk->trackpoints.begin())->timestamp;
-	const time_t t_end = (*std::prev(track_info.trk->trackpoints.end()))->timestamp;
-	const time_t t_total = t_end - t_start;
-
-	return (double) (tp->timestamp - t_start) / t_total;
-}
-
-
-
-
-/**
-   Return the percentage of how far a trackpoint is a long a track via the distance method.
-*/
-static double tp_percentage_by_distance(TrackInfo & track_info, Trackpoint * tp)
-{
-	if (tp == NULL) {
-		return NAN;
-	}
-
-	double dist = 0.0;
-	auto iter = std::next(track_info.trk->trackpoints.begin());
-	for (; iter != track_info.trk->trackpoints.end(); iter++) {
-		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		/* FIXME: This condition assumes that trackpoint variable is not a copy. */
-		if (tp == *iter) {
-			break;
-		}
-	}
-
-	double pc = NAN;
-	if (iter != track_info.trk->trackpoints.end()) {
-		pc = dist / track_info.track_length_including_gaps;
-	}
-	return pc;
-}
-
-
-
-
-/**
    React to mouse button release
 
    Find a trackpoint corresponding to cursor position when button was released.
@@ -544,8 +499,8 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 	assert (graph->viewport == viewport);
 
 	const int current_pos_x = graph->get_cursor_pos_x(ev);
-	this->selected_tp = set_center_at_graph_position(current_pos_x, this->trw, this->main_viewport, this->track_info, graph->geocanvas.x_domain, graph->width);
-	if (this->selected_tp == NULL) {
+	const bool found_tp = set_center_at_graph_position(current_pos_x, this->trw, this->main_viewport, this->trk, graph->geocanvas.x_domain, graph->width);
+	if (!found_tp) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
 		return;
@@ -565,7 +520,7 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 			continue;
 		}
 
-		QPointF selected_pos = a_graph->get_position_of_tp(this->track_info, this->selected_tp);
+		QPointF selected_pos = a_graph->get_position_of_tp(this->trk, SELECTED);
 		if (selected_pos.x() == -1 || selected_pos.y() == -1) {
 			continue;
 		}
@@ -577,6 +532,8 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 	}
 
 	this->button_split_at_marker->setEnabled(this->is_selected_drawn);
+
+	return;
 }
 
 
@@ -584,7 +541,7 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 
 bool TrackProfileDialog::track_ed_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ED]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::ED]);
 	return true;
 }
 
@@ -593,7 +550,7 @@ bool TrackProfileDialog::track_ed_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_gd_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_GD]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::GD]);
 	return true;
 }
 
@@ -602,7 +559,7 @@ bool TrackProfileDialog::track_gd_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_st_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ST]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::ST]);
 	return true;
 }
 
@@ -611,7 +568,7 @@ bool TrackProfileDialog::track_st_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_dt_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_DT]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::DT]);
 	return true;
 }
 
@@ -620,7 +577,7 @@ bool TrackProfileDialog::track_dt_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_et_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_ET]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::ET]);
 	return true;
 }
 
@@ -629,7 +586,7 @@ bool TrackProfileDialog::track_et_release_cb(Viewport * viewport, QMouseEvent * 
 
 bool TrackProfileDialog::track_sd_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
 {
-	this->handle_mouse_button_release(viewport, ev, this->graphs[SG_TRACK_PROFILE_TYPE_SD]);
+	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::SD]);
 	return true;
 }
 
@@ -665,14 +622,14 @@ bool TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph 
 		return false;
 	}
 
-	this->current_tp = this->track_info.trk->get_closest_tp_by_percentage_dist((double) current_pos_x / graph->width, &meters_from_start);
+	this->trk->set_tp_by_percentage_dist((double) current_pos_x / graph->width, &meters_from_start, CURRENT);
 
 	double current_pos_y = graph->get_pos_y(current_pos_x);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
-		double pc = tp_percentage_by_distance(this->track_info, this->selected_tp);
+		const double pc = this->trk->get_tp_distance_percent(SELECTED);
 		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph->width;
 			selected_pos_y = graph->get_pos_y(selected_pos_x);
@@ -699,14 +656,14 @@ bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * gr
 		return false;
 	}
 
-	this->current_tp = this->track_info.trk->get_closest_tp_by_percentage_time((double) current_pos_x / graph->width, &seconds_from_start);
+	this->trk->set_tp_by_percentage_time((double) current_pos_x / graph->width, &seconds_from_start, CURRENT);
 
 	double current_pos_y = graph->get_pos_y(current_pos_x);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
 	if (true || this->is_selected_drawn) {
-		double pc = tp_percentage_by_time(this->track_info, this->selected_tp);
+		const double pc = this->trk->get_tp_time_percent(SELECTED);
 		if (!std::isnan(pc)) {
 			selected_pos_x = pc * graph->width;
 			selected_pos_y = graph->get_pos_y(selected_pos_x);
@@ -723,7 +680,7 @@ bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * gr
 
 void TrackProfileDialog::handle_cursor_move_ed_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_ED;
+	const int index = (int) TrackProfileType::ED;
 	assert (this->graphs[index]->viewport == viewport);
 
 	this->handle_cursor_move(this->graphs[index], ev);
@@ -735,7 +692,7 @@ void TrackProfileDialog::handle_cursor_move_ed_cb(Viewport * viewport, QMouseEve
 
 void TrackProfileDialog::handle_cursor_move_gd_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_GD;
+	const int index = (int) TrackProfileType::GD;
 	assert (this->graphs[index]->viewport == viewport);
 
 	this->handle_cursor_move(this->graphs[index], ev);
@@ -760,15 +717,26 @@ void time_label_update(QLabel * label, time_t seconds_from_start)
 
 
 
-void real_time_label_update(QLabel * label, const Trackpoint * tp)
+void real_time_label_update(ProfileGraph * graph, Track * trk)
 {
+	if (NULL == graph->labels.t_value) {
+		/* This function shouldn't be called for graphs that don't have the T label. */
+		qDebug() << SG_PREFIX_W << "Called the function, but label is NULL";
+		return;
+	}
+
+	const Trackpoint * tp = trk->get_tp(CURRENT);
+	if (NULL == tp) {
+		return;
+	}
+
 	QString result;
 	if (tp->has_timestamp) {
 		result = QDateTime::fromTime_t(tp->timestamp, Qt::LocalTime).toString(Qt::ISODate); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
 	} else {
 		result = QObject::tr("No Data");
 	}
-	label->setText(result);
+	graph->labels.t_value->setText(result);
 
 	return;
 }
@@ -778,7 +746,7 @@ void real_time_label_update(QLabel * label, const Trackpoint * tp)
 
 void TrackProfileDialog::handle_cursor_move_st_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_ST;
+	const int index = (int) TrackProfileType::ST;
 	assert (this->graphs[index]->viewport == viewport);
 
 	this->handle_cursor_move(this->graphs[index], ev);
@@ -793,7 +761,7 @@ void TrackProfileDialog::handle_cursor_move_st_cb(Viewport * viewport, QMouseEve
  */
 void TrackProfileDialog::handle_cursor_move_dt_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_DT;
+	const int index = (int) TrackProfileType::DT;
 	assert (this->graphs[index]->viewport == viewport);
 
 	this->handle_cursor_move(this->graphs[index], ev);
@@ -808,7 +776,7 @@ void TrackProfileDialog::handle_cursor_move_dt_cb(Viewport * viewport, QMouseEve
  */
 void TrackProfileDialog::handle_cursor_move_et_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_ET;
+	const int index = (int) TrackProfileType::ET;
 	assert (this->graphs[index]->viewport == viewport);
 
 	this->handle_cursor_move(this->graphs[index], ev);
@@ -820,7 +788,7 @@ void TrackProfileDialog::handle_cursor_move_et_cb(Viewport * viewport, QMouseEve
 
 void TrackProfileDialog::handle_cursor_move_sd_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int index = SG_TRACK_PROFILE_TYPE_SD;
+	const int index = (int) TrackProfileType::SD;
 	assert (this->graphs[index]->viewport == viewport);
 
 	this->handle_cursor_move(this->graphs[index], ev);
@@ -854,12 +822,11 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		if (graph->labels.x_value) {
 			time_label_update(graph->labels.x_value, seconds_from_start);
 		}
-		if (this->current_tp && graph->labels.t_value) {
-			real_time_label_update(graph->labels.t_value, this->current_tp);
-		}
+
+		real_time_label_update(graph, this->trk);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) graph->geocanvas.x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) graph->geocanvas.x_domain;
 		break;
 	};
 
@@ -874,9 +841,9 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		}
 		break;
 	case GeoCanvasDomain::Elevation:
-		if (this->current_tp && graph->labels.y_value) {
+		if (graph->labels.y_value && NULL != this->trk->get_tp(CURRENT)) {
 			/* Recalculate value into target unit. */
-			graph->labels.y_value->setText(Altitude(this->current_tp->altitude, HeightUnit::Metres)
+			graph->labels.y_value->setText(Altitude(this->trk->get_tp(CURRENT)->altitude, HeightUnit::Metres)
 						       .convert_to_unit(Preferences::get_unit_height())
 						       .to_string());
 		}
@@ -893,7 +860,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		}
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) graph->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) graph->geocanvas.y_domain;
 		break;
 	};
 
@@ -912,10 +879,10 @@ int ProfileGraph::get_cursor_pos_x(QMouseEvent * ev) const
 
 	QPoint position = this->viewport->mapFromGlobal(QCursor::pos());
 
-	//qDebug() << "II:" PREFIX << "x =" << ev->x() << "y =" << ev->y();
+	//qDebug() << SG_PREFIX_I << "x =" << ev->x() << "y =" << ev->y();
 
 #if 0   /* Verbose debug. */
-	qDebug() << "II:" PREFIX << "difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
+	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
 #endif
 
 #if 0
@@ -937,12 +904,12 @@ int ProfileGraph::get_cursor_pos_x(QMouseEvent * ev) const
 
 	int x = mouse_x - graph_left_edge;
 	if (x < 0) {
-		qDebug() << "EE: Track Profile: condition 1 for mouse movement failed:" << x << mouse_x << graph_left_edge;
+		qDebug() << SG_PREFIX_E << "Condition 1 for mouse movement failed:" << x << mouse_x << graph_left_edge;
 		x = 0;
 	}
 
 	if (x > graph_width) {
-		qDebug() << "EE: Track Profile: condition 2 for mouse movement failed:" << x << mouse_x << graph_width;
+		qDebug() << SG_PREFIX_E << "Condition 2 for mouse movement failed:" << x << mouse_x << graph_width;
 		x = graph_width;
 	}
 
@@ -956,14 +923,14 @@ int ProfileGraph::get_cursor_pos_x(QMouseEvent * ev) const
  * Draws DEM points and a respresentative speed on the supplied pixmap
  * (which is the elevations graph).
  */
-void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, const Speed & max_speed_in, bool do_dem, bool do_speed)
+void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed)
 {
 	double max_function_arg = trk->get_length_value_including_gaps();
 	double max_function_value_speed = 0;
 
 	/* Calculate the max speed factor. */
 	if (do_speed) {
-		max_function_value_speed = max_speed_in.get_value() * 110 / 100;
+		max_function_value_speed = trk->get_max_speed().get_value() * 110 / 100;
 	}
 
 	double current_function_arg = 0.0;
@@ -977,27 +944,31 @@ void ProfileGraph::draw_dem_alt_speed_dist(Track * trk, const Speed & max_speed_
 		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 		if (do_dem) {
 			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
-			if (elev.is_valid()) {
-				const double elev_value_uu = elev.convert_to_unit(this->geocanvas.height_unit).get_value();
-
-				/* offset is in current height units. */
-				const double current_function_value_uu = elev_value_uu - this->y_min_visible;
-
-				const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
-				const int y = this->bottom_edge - this->height * current_function_value_uu / max_function_value_dem;
-				this->viewport->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
+			if (!elev.is_valid()) {
+				continue;
 			}
+
+			const double elev_value_uu = elev.convert_to_unit(this->geocanvas.height_unit).get_value();
+
+			/* offset is in current height units. */
+			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
+
+			const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
+			const int y = this->bottom_edge - this->height * current_function_value_uu / max_function_value_dem;
+			this->viewport->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
 		}
+
 		if (do_speed) {
-			/* This is just a speed indicator - no actual values can be inferred by user. */
-			if (!std::isnan((*iter)->speed)) {
-
-				const double current_function_value = (*iter)->speed;
-
-				const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
-				const int y = this->bottom_edge - this->height * current_function_value / max_function_value_speed;
-				this->viewport->fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
+			if (std::isnan((*iter)->speed)) {
+				continue;
 			}
+
+			const double current_function_value = (*iter)->speed;
+
+			/* This is just a speed indicator - no actual values can be inferred by user. */
+			const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
+			const int y = this->bottom_edge - this->height * current_function_value / max_function_value_speed;
+			this->viewport->fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -1071,7 +1042,7 @@ void ProfileGraph::draw_function_values(void)
 
 
 
-void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
+void ProfileGraphET::draw_additional_indicators(Track * trk)
 {
 	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
 		const double max_function_value = this->y_max_visible;
@@ -1080,8 +1051,9 @@ void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
 
 		for (int i = 0; i < this->width; i++) {
 			/* This could be slow doing this each time... */
-			Trackpoint * tp = track_info.trk->get_closest_tp_by_percentage_time(((double) i / (double) this->width), NULL);
-			if (tp) {
+			const bool found_tp = trk->set_tp_by_percentage_time(((double) i / (double) this->width), NULL, CURRENT);
+			if (found_tp) {
+				const Trackpoint * tp = trk->get_tp(CURRENT);
 				const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
 				if (elev.is_valid()) {
 
@@ -1103,7 +1075,7 @@ void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
 	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 		/* This is just an indicator - no actual values can be inferred by user. */
 
-		const double max_function_value = track_info.max_speed.get_value() * 110 / 100;
+		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
 		for (int i = 0; i < this->width; i++) {
@@ -1122,17 +1094,17 @@ void ProfileGraphET::draw_additional_indicators(TrackInfo & track_info)
 
 
 
-void ProfileGraphSD::draw_additional_indicators(TrackInfo & track_info)
+void ProfileGraphSD::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		const double max_function_arg = track_info.trk->get_length_value_including_gaps();
+		const double max_function_arg = trk->get_length_value_including_gaps();
 		const double max_function_value = this->y_max_visible;
 		double current_function_arg = 0.0;
 		double current_function_value = 0.0;
 
 		const QColor color = this->gps_speed_pen.color();
-		for (auto iter = std::next(track_info.trk->trackpoints.begin()); iter != track_info.trk->trackpoints.end(); iter++) {
+		for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 			double gps_speed = (*iter)->speed;
 			if (std::isnan(gps_speed)) {
 				continue;
@@ -1153,7 +1125,7 @@ void ProfileGraphSD::draw_additional_indicators(TrackInfo & track_info)
 
 
 
-void ProfileGraphED::draw_additional_indicators(TrackInfo & track_info)
+void ProfileGraphED::draw_additional_indicators(Track * trk)
 {
 	const bool do_show_dem = this->show_dem_cb && this->show_dem_cb->checkState();
 	const bool do_show_gps_speed = this->show_gps_speed_cb && this->show_gps_speed_cb->checkState();
@@ -1161,43 +1133,44 @@ void ProfileGraphED::draw_additional_indicators(TrackInfo & track_info)
 	if (do_show_dem || do_show_gps_speed) {
 
 		/* Ensure somekind of max speed when not set. */
-		if (!track_info.max_speed.is_valid() || track_info.max_speed.get_value() < 0.01) {
-			track_info.max_speed = track_info.trk->get_max_speed();
+		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_value() < 0.01) {
+			trk->calculate_max_speed();
 		}
 
-		this->draw_dem_alt_speed_dist(track_info.trk, track_info.max_speed, do_show_dem, do_show_gps_speed);
+		this->draw_dem_alt_speed_dist(trk, do_show_dem, do_show_gps_speed);
 	}
 }
 
 
 
 
-void ProfileGraphGD::draw_additional_indicators(TrackInfo & track_info)
+void ProfileGraphGD::draw_additional_indicators(Track * trk)
 {
 	const bool do_show_gps_speed = this->show_gps_speed_cb && this->show_gps_speed_cb->checkState();
 	if (do_show_gps_speed) {
 		/* Ensure some kind of max speed when not set. */
-		if (!track_info.max_speed.is_valid() || track_info.max_speed.get_value() < 0.01) {
-			track_info.max_speed = track_info.trk->get_max_speed();
+		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_value() < 0.01) {
+			trk->calculate_max_speed();
 		}
+
+		this->draw_speed_dist(trk);
 	}
-	this->draw_speed_dist(track_info.trk, track_info.max_speed, do_show_gps_speed);
 }
 
 
 
 
-void ProfileGraphST::draw_additional_indicators(TrackInfo & track_info)
+void ProfileGraphST::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		time_t beg_time = (*track_info.trk->trackpoints.begin())->timestamp;
-		const time_t max_function_arg = (*std::prev(track_info.trk->trackpoints.end()))->timestamp - beg_time;
+		time_t beg_time = (*trk->trackpoints.begin())->timestamp;
+		const time_t max_function_arg = (*std::prev(trk->trackpoints.end()))->timestamp - beg_time;
 		const double max_function_value = this->y_max_visible;
 
 		const QColor color = this->gps_speed_pen.color();
 
-		for (auto iter = track_info.trk->trackpoints.begin(); iter != track_info.trk->trackpoints.end(); iter++) {
+		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 			double gps_speed = (*iter)->speed;
 			if (std::isnan(gps_speed)) {
 				continue;
@@ -1218,12 +1191,12 @@ void ProfileGraphST::draw_additional_indicators(TrackInfo & track_info)
 
 
 
-void ProfileGraphDT::draw_additional_indicators(TrackInfo & track_info)
+void ProfileGraphDT::draw_additional_indicators(Track * trk)
 {
 	/* Show speed indicator. */
 	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 
-		const double max_function_value = track_info.max_speed.get_value() * 110 / 100;
+		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
 		/* This is just an indicator - no actual values can be inferred by user. */
@@ -1294,18 +1267,17 @@ void ProfileGraphDT::save_values(void)
 /**
    \brief Draw the y = f(x) graph
 */
-void ProfileGraph::draw_graph(TrackInfo & track_info)
+void ProfileGraph::draw_graph(Track * trk)
 {
 	if (this->geocanvas.x_domain == GeoCanvasDomain::Time) {
-		track_info.duration = track_info.trk->get_duration(true);
-		if (track_info.duration <= 0) {
+		if (trk->get_duration(true) <= 0) {
 			return;
 		}
 	}
 
 	this->regenerate_sizes();
 
-	if (!this->regenerate_data(track_info.trk)) {
+	if (!this->regenerate_data(trk)) {
 		return;
 	}
 
@@ -1315,10 +1287,10 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
 	this->draw_function_values();
 
 	/* Draw grid on top of graph of values. */
-	this->draw_x_grid(track_info);
+	this->draw_x_grid(trk);
 	this->draw_y_grid();
 
-	this->draw_additional_indicators(track_info);
+	this->draw_additional_indicators(trk);
 
 	this->viewport->draw_border();
 
@@ -1326,7 +1298,7 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
 	this->viewport->update();
 
 	/* The pixmap = margin + graph area. */
-	qDebug() << "II: Track Profile: saving viewport" << this->viewport->type_string;
+	qDebug() << SG_PREFIX_I << "Saving viewport" << this->viewport->type_string;
 	this->saved_img.img = this->viewport->get_pixmap();
 	this->saved_img.valid = true;
 }
@@ -1335,36 +1307,29 @@ void ProfileGraph::draw_graph(TrackInfo & track_info)
 
 
 /**
-   Draws representative speed on the supplied pixmap
+   Draws representative speed on a graph
    (which is the gradients graph).
 */
-void ProfileGraph::draw_speed_dist(Track * trk, const Speed & max_speed_in, bool do_speed)
+void ProfileGraph::draw_speed_dist(Track * trk)
 {
-	double max_function_value = 0;
-	double max_function_arg = trk->get_length_value_including_gaps();
-
-	/* Calculate the max speed factor. */
-	if (do_speed) {
-		max_function_value = max_speed_in.get_value() * 110 / 100;
-	}
+	const double max_function_value = trk->get_max_speed().get_value() * 110 / 100; /* Calculate the max speed factor. */
+	const double max_function_arg = trk->get_length_value_including_gaps();
 
 	const QColor color = this->gps_speed_pen.color();
 	double current_function_arg = 0.0;
 	double current_function_value = 0.0;
 	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
-
-		if (do_speed) {
-			/* This is just a speed indicator - no actual values can be inferred by user. */
-			if (!std::isnan((*iter)->speed)) {
-
-				current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-				current_function_value = (*iter)->speed;
-
-				const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
-				const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
-				this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
-			}
+		if (std::isnan((*iter)->speed)) {
+			continue;
 		}
+
+		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
+		current_function_value = (*iter)->speed;
+
+		/* This is just a speed indicator - no actual values can be inferred by user. */
+		const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
+		const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+		this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 	}
 }
 
@@ -1392,21 +1357,26 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 
 
 
-QPointF ProfileGraph::get_position_of_tp(TrackInfo & track_info, Trackpoint * tp)
+QPointF ProfileGraph::get_position_of_tp(Track * trk, int idx)
 {
 	QPointF pos(-1.0, -1.0);
 
 	double pc = NAN;
 
+	Trackpoint * tp = trk->get_tp(idx);
+	if (NULL == tp) {
+		return pos;
+	}
+
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Time:
-		pc = tp_percentage_by_time(track_info, tp);
+		pc = trk->get_tp_time_percent(idx);
 		break;
 	case GeoCanvasDomain::Distance:
-		pc = tp_percentage_by_distance(track_info, tp);
+		pc = trk->get_tp_distance_percent(idx);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) this->geocanvas.x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->geocanvas.x_domain;
 		/* pc = NAN */
 		break;
 	}
@@ -1418,6 +1388,8 @@ QPointF ProfileGraph::get_position_of_tp(TrackInfo & track_info, Trackpoint * tp
 		pos.setY(this->get_pos_y(x));
 	}
 
+	qDebug() << "returning pos of tp idx" << idx;
+
 	return pos;
 }
 
@@ -1426,17 +1398,17 @@ QPointF ProfileGraph::get_position_of_tp(TrackInfo & track_info, Trackpoint * tp
 
 void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 {
-	graph->draw_graph(this->track_info);
+	graph->draw_graph(this->trk);
 
 	/* Ensure markers are redrawn if necessary. */
 	if (this->is_selected_drawn || this->is_current_drawn) {
 
 		QPointF current_pos(-1.0, -1.0);
 		if (this->is_current_drawn) {
-			current_pos = graph->get_position_of_tp(this->track_info, this->current_tp);
+			current_pos = graph->get_position_of_tp(this->trk, CURRENT);
 		}
 
-		QPointF selected_pos = graph->get_position_of_tp(this->track_info, this->selected_tp);
+		QPointF selected_pos = graph->get_position_of_tp(this->trk, SELECTED);
 
 		graph->draw_marks(ScreenPos(selected_pos.x(), selected_pos.y()), ScreenPos(current_pos.x(), current_pos.y()), this->is_selected_drawn, this->is_current_drawn);
 	}
@@ -1450,7 +1422,7 @@ void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 */
 bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 {
-	qDebug() << "SLOT:" PREFIX << "reacting to signal from viewport" << viewport->type_string;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->type_string;
 
 	/* TODO_LATER: shouldn't we re-allocate the per-viewport table of doubles here? */
 
@@ -1462,50 +1434,50 @@ bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
 
 
 
-void ProfileGraph::create_viewport(int index, TrackProfileDialog * dialog)
+void ProfileGraph::create_viewport(TrackProfileDialog * dialog)
 {
 	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
 	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
 	this->viewport = new Viewport(dialog->parent);
-	strcpy(this->viewport->type_string, this->get_graph_title().toUtf8().constData());
+	snprintf(this->viewport->type_string, sizeof (this->viewport->type_string), "%s", this->get_graph_title().toUtf8().constData());
 	this->viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	this->viewport->resize(initial_width, initial_height);
 	this->viewport->reconfigure_drawing_area(initial_width, initial_height);
 
-	switch (index) {
-	case SG_TRACK_PROFILE_TYPE_ED:
+	switch (this->profile_type) {
+	case TrackProfileType::ED:
 		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
 		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_ed_cb(Viewport *, QMouseEvent *)));
 		break;
 
-	case SG_TRACK_PROFILE_TYPE_GD:
+	case TrackProfileType::GD:
 		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
 		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_gd_cb(Viewport *, QMouseEvent *)));
 		break;
 
-	case SG_TRACK_PROFILE_TYPE_ST:
+	case TrackProfileType::ST:
 		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
 		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_st_cb(Viewport *, QMouseEvent *)));
 		break;
 
-	case SG_TRACK_PROFILE_TYPE_DT:
+	case TrackProfileType::DT:
 		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
 		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_dt_cb(Viewport *, QMouseEvent *)));
 		break;
 
-	case SG_TRACK_PROFILE_TYPE_ET:
+	case TrackProfileType::ET:
 		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
 		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_et_cb(Viewport *, QMouseEvent *)));
 		break;
 
-	case SG_TRACK_PROFILE_TYPE_SD:
+	case TrackProfileType::SD:
 		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
 		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_sd_cb(Viewport *, QMouseEvent *)));
 		break;
 
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled index" << index;
+		qDebug() << SG_PREFIX_E << "Unhandled track profile type" << (int) this->profile_type;
 		break;
 	}
 
@@ -1549,24 +1521,24 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		this->reject();
 		break;
 	case SG_TRACK_PROFILE_OK:
-		this->track_info.trk->update_tree_item_properties();
+		this->trk->update_tree_item_properties();
 		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Profile OK");
 		this->accept();
 		break;
 	case SG_TRACK_PROFILE_REVERSE:
-		this->track_info.trk->reverse();
+		this->trk->reverse();
 		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Reverse");
 		keep_dialog = true;
 		break;
 	case SG_TRACK_PROFILE_SPLIT_SEGMENTS: {
 		/* Get new tracks, add them and then the delete old one. old can still exist on clipboard. */
-		std::list<Track *> split_tracks = this->track_info.trk->split_into_segments();
+		std::list<Track *> split_tracks = this->trk->split_into_segments();
 		for (auto iter = split_tracks.begin(); iter != split_tracks.end(); iter++) {
 			if (*iter) {
-				const QString new_tr_name = this->trw->new_unique_element_name(this->track_info.trk->type_id, this->track_info.trk->name);
+				const QString new_tr_name = this->trw->new_unique_element_name(this->trk->type_id, this->trk->name);
 				(*iter)->set_name(new_tr_name);
 
-				if (this->track_info.trk->type_id == "sg.trw.route") {
+				if (this->trk->type_id == "sg.trw.route") {
 					this->trw->add_route(*iter);
 				} else {
 					this->trw->add_track(*iter);
@@ -1575,23 +1547,23 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		}
 		if (split_tracks.size()) {
 			/* Don't let track destroy this dialog. */
-			this->trw->detach_from_container(this->track_info.trk);
-			this->trw->detach_from_tree(this->track_info.trk);
-			delete this->track_info.trk;
+			this->trw->detach_from_container(this->trk);
+			this->trw->detach_from_tree(this->trk);
+			delete this->trk;
 
 			this->trw->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in track profile dialog)");
 		}
 	}
 		break;
 	case SG_TRACK_PROFILE_SPLIT_AT_MARKER: {
-		auto iter = std::next(this->track_info.trk->begin());
-		while (iter != this->track_info.trk->end()) {
-			if (this->selected_tp == *iter) {
+		auto iter = std::next(this->trk->begin());
+		while (iter != this->trk->end()) {
+			if (this->trk->get_tp(SELECTED) == *iter) {
 				break;
 			}
 			iter++;
 		}
-		if (iter == this->track_info.trk->end()) {
+		if (iter == this->trk->end()) {
 			Dialog::error(tr("Failed to split track. Track unchanged"), this->trw->get_window());
 			keep_dialog = true;
 			break;
@@ -1602,15 +1574,15 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		/* TODO_LATER: originally the constructor was just Track(). Should we really pass original trk to constructor? */
 
 		/* This constructor recalculates bounding box of new track. */
-		Track * trk_right = new Track(*this->track_info.trk, iter, this->track_info.trk->end());
+		Track * trk_right = new Track(*this->trk, iter, this->trk->end());
 
-		this->track_info.trk->erase(iter, this->track_info.trk->end());
-		this->track_info.trk->recalculate_bbox();
+		this->trk->erase(iter, this->trk->end());
+		this->trk->recalculate_bbox();
 
-		const QString r_name = this->trw->new_unique_element_name(this->track_info.trk->type_id, this->track_info.trk->name);
+		const QString r_name = this->trw->new_unique_element_name(this->trk->type_id, this->trk->name);
 		trk_right->set_name(r_name);
 
-		if (this->track_info.trk->type_id == "sg.trw.route") {
+		if (this->trk->type_id == "sg.trw.route") {
 			this->trw->add_route(trk_right);
 		} else {
 			this->trw->add_track(trk_right);
@@ -1711,7 +1683,7 @@ QString ProfileGraph::get_graph_title(void) const
 		result = QObject::tr("Speed over distance");
 
 	} else {
-		qDebug() << "EE:" PREFIX << "unhandled x/y domain" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
 	}
 
 	return result;
@@ -1725,7 +1697,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	this->setWindowTitle(tr("%1 - Track Profile").arg(a_trk->name));
 
 	this->trw = (LayerTRW *) a_trk->get_owning_layer();
-	this->track_info.trk = a_trk;
+	this->trk = a_trk;
 	this->main_viewport = main_viewport_;
 	this->parent = a_parent;
 
@@ -1760,7 +1732,8 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 
 
 	/* NB This value not shown yet - but is used by internal calculations. */
-	this->track_info.track_length_including_gaps = this->track_info.trk->get_length_value_including_gaps();
+	/* TODO: move this calculation into Track class. */
+	this->trk->track_length_including_gaps = this->trk->get_length_value_including_gaps();
 
 
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
@@ -1789,8 +1762,8 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Vie
 	this->button_reverse = this->button_box->addButton(tr("&Reverse"), QDialogButtonBox::ActionRole);
 	this->button_ok = this->button_box->addButton(tr("&OK"), QDialogButtonBox::AcceptRole);
 
-	this->button_split_segments->setEnabled(this->track_info.trk->get_segment_count() > 1);
-	this->button_split_at_marker->setEnabled(this->selected_tp); /* Initially no trackpoint is selected. */
+	this->button_split_segments->setEnabled(this->trk->get_segment_count() > 1);
+	this->button_split_at_marker->setEnabled(this->trk->get_tp(SELECTED) != NULL); /* Initially no trackpoint is selected. */
 
 	this->signal_mapper = new QSignalMapper(this);
 	connect(this->button_cancel,          SIGNAL (released()), signal_mapper, SLOT (map()));
@@ -1838,7 +1811,7 @@ void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) this->geocanvas.x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->geocanvas.x_domain;
 		break;
 	}
 
@@ -1868,7 +1841,7 @@ void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled y domain" << (int) this->geocanvas.y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
 		break;
 	}
 
@@ -2041,7 +2014,7 @@ QString get_time_grid_label(int interval_index, int value)
 		result = QObject::tr("%1 M").arg(((double) value / (60 * 60 * 24 * 28)), 0, 'f', 1);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled time interval index" << interval_index;
+		qDebug() << SG_PREFIX_E << "Unhandled time interval index" << interval_index;
 		break;
 	}
 
@@ -2086,7 +2059,7 @@ QString get_time_grid_label_2(time_t interval_value, time_t value)
 		result = QObject::tr("%1 M").arg(((double) value / (60 * 60 * 24 * 28)), 0, 'f', 1);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled time interval value" << interval_value;
+		qDebug() << SG_PREFIX_E << "Unhandled time interval value" << interval_value;
 		break;
 	}
 
@@ -2128,7 +2101,7 @@ QString get_time_grid_label_3(time_t interval_value, time_t value)
 		result = QString(date_time.date().toString(Qt::ISODate));
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled time interval value" << interval_value;
+		qDebug() << SG_PREFIX_E << "Unhandled time interval value" << interval_value;
 		break;
 	}
 
@@ -2138,10 +2111,11 @@ QString get_time_grid_label_3(time_t interval_value, time_t value)
 
 
 
-ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, int index, TrackProfileDialog * dialog)
+ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileType new_profile_type, TrackProfileDialog * dialog)
 {
 	this->geocanvas.x_domain = x_domain;
 	this->geocanvas.y_domain = y_domain;
+	this->profile_type = new_profile_type;
 
 
 	if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Elevation) {
@@ -2151,29 +2125,29 @@ ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, i
 	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Elevation) {
 	} else if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Speed) {
 	} else {
-		qDebug() << "EE" PREFIX << "unhandled combination of x/y domains:" << (int) x_domain << (int) y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled combination of x/y domains:" << (int) x_domain << (int) y_domain;
 	}
 
 
 	this->main_pen.setColor("lightsteelblue");
 	this->main_pen.setWidth(1);
 
-	this->gps_speed_pen.setColor(QColor("red"));
-	this->dem_alt_pen.setColor(QColor("green"));
-	this->no_alt_info_pen.setColor(QColor("yellow"));
+	this->gps_speed_pen.setColor("red");
+	this->dem_alt_pen.setColor("green");
+	this->no_alt_info_pen.setColor("yellow");
 
-	this->create_viewport(index, dialog);
+	this->create_viewport(dialog);
 }
 
 
 
 
-ProfileGraphET::ProfileGraphET(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ET, dialog) {}
-ProfileGraphSD::ProfileGraphSD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_SD, dialog) {}
-ProfileGraphED::ProfileGraphED(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, SG_TRACK_PROFILE_TYPE_ED, dialog) {}
-ProfileGraphGD::ProfileGraphGD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  SG_TRACK_PROFILE_TYPE_GD, dialog) {}
-ProfileGraphST::ProfileGraphST(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     SG_TRACK_PROFILE_TYPE_ST, dialog) {}
-ProfileGraphDT::ProfileGraphDT(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  SG_TRACK_PROFILE_TYPE_DT, dialog) {}
+ProfileGraphET::ProfileGraphET(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, TrackProfileType::ET, dialog) {}
+ProfileGraphSD::ProfileGraphSD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     TrackProfileType::SD, dialog) {}
+ProfileGraphED::ProfileGraphED(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, TrackProfileType::ED, dialog) {}
+ProfileGraphGD::ProfileGraphGD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  TrackProfileType::GD, dialog) {}
+ProfileGraphST::ProfileGraphST(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     TrackProfileType::ST, dialog) {}
+ProfileGraphDT::ProfileGraphDT(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  TrackProfileType::DT, dialog) {}
 
 
 
@@ -2256,7 +2230,7 @@ void find_grid_line_indices(T min_visible, T max_visible, T interval, int * firs
 void ProfileGraph::draw_y_grid(void)
 {
 	if (this->y_max_visible - this->y_min_visible == 0) {
-		qDebug() << "EE:" PREFIX << "zero visible range:" << this->y_min_visible << this->y_max_visible;
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_min_visible << this->y_max_visible;
 		return;
 	}
 
@@ -2277,10 +2251,10 @@ void ProfileGraph::draw_y_grid(void)
 		const int row = this->height * ((value - this->y_min_visible) / (this->y_max_visible - this->y_min_visible));
 
 		if (row >= 0 && row < this->height) {
-			//qDebug() << "      value (inside) =" << value << ", row =" << row;
+			//qDebug() << SG_PREFIX_D << "      value (inside) =" << value << ", row =" << row;
 			this->draw_grid_horizontal_line(row, this->get_y_grid_label(value));
 		} else {
-			//qDebug() << "      value (outside) =" << value << ", row =" << row;
+			//qDebug() << SG_PREFIX_D << "      value (outside) =" << value << ", row =" << row;
 		}
 	}
 }
@@ -2291,7 +2265,7 @@ void ProfileGraph::draw_y_grid(void)
 void ProfileGraph::draw_x_grid_sub_d(void)
 {
 	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
-		qDebug() << "EE:" PREFIX << "zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
 		return;
 	}
 
@@ -2312,10 +2286,10 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 		const int col = this->width * ((value.value - this->x_min_visible_d) / (this->x_max_visible_d - this->x_min_visible_d));
 
 		if (col >= 0 && col < this->width) {
-			qDebug() << "      value (inside) =" << value.value << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << value.value << ", col =" << col;
 			this->draw_grid_vertical_line(col, value.to_nice_string());
 		} else {
-			qDebug() << "      value (outside) =" << value.value << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (outside) =" << value.value << ", col =" << col;
 		}
 	}
 }
@@ -2326,7 +2300,7 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 void ProfileGraph::draw_x_grid_sub_t(void)
 {
 	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
-		qDebug() << "EE:" PREFIX << "zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
 		return;
 	}
 
@@ -2349,10 +2323,10 @@ void ProfileGraph::draw_x_grid_sub_t(void)
 		const int col = 1.0 * this->width * (value - this->x_min_visible_t) / (1.0 * (this->x_max_visible_t - this->x_min_visible_t));
 
 		if (col >= 0 && col < this->width) {
-			qDebug() << "      value (inside) =" << value << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << value << ", col =" << col;
 			this->draw_grid_vertical_line(col, get_time_grid_label_2(this->x_interval_t, value));
 		} else {
-			qDebug() << "      value (outside) =" << value << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (outside) =" << value << ", col =" << col;
 		}
 	}
 }
@@ -2384,7 +2358,7 @@ QString ProfileGraph::get_y_grid_label(float value)
 
 
 
-void ProfileGraph::draw_x_grid(const TrackInfo & track_info)
+void ProfileGraph::draw_x_grid(const Track * trk)
 {
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Time:
@@ -2396,7 +2370,7 @@ void ProfileGraph::draw_x_grid(const TrackInfo & track_info)
 		break;
 
 	default:
-		qDebug() << "EE:" PREFIX << "unhandled x domain" << (int) this->geocanvas.x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->geocanvas.x_domain;
 		break;
 	}
 }

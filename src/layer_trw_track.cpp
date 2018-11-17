@@ -1061,12 +1061,12 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 
 
 
-Speed Track::get_max_speed(void) const
+sg_ret Track::calculate_max_speed(void)
 {
-	Speed result(NAN, SpeedUnit::MetresPerSecond); /* Initially invalid. */
+	this->max_speed = Speed(NAN, SpeedUnit::MetresPerSecond); /* Initially invalid. */
 
 	if (this->trackpoints.empty()) {
-		return result;
+		return sg_ret::ok;
 	}
 
 	double maxspeed = 0.0;
@@ -1085,9 +1085,17 @@ Speed Track::get_max_speed(void) const
 		}
 	}
 
-	result.set_value(maxspeed); /* Set the value even if detected max speed is zero. */
+	this->max_speed.set_value(maxspeed); /* Set the value even if detected max speed is zero. */
 
-	return result;
+	return sg_ret::ok;
+}
+
+
+
+
+const Speed & Track::get_max_speed(void) const
+{
+	return this->max_speed;
 }
 
 
@@ -1720,10 +1728,11 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 
 
 /* By Alex Foobarian. */
-Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start)
+bool Track::set_tp_by_percentage_dist(double reldist, double *meters_from_start, int idx)
 {
+	this->tps[idx] = NULL;
 	if (this->trackpoints.empty()) {
-		return NULL;
+		return false;
 	}
 
 	double dist = this->get_length_value_including_gaps() * reldist;
@@ -1749,9 +1758,10 @@ Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *me
 			if (meters_from_start) {
 				*meters_from_start = last_dist;
 			}
-			return *last_iter;
+			this->tps[idx] = *last_iter;
+			return true;
 		} else {
-			return NULL;
+			return false;
 		}
 	}
 
@@ -1769,16 +1779,18 @@ Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *me
 		}
 	}
 
-	return *iter;
+	this->tps[idx] = *iter;
+	return true;
 }
 
 
 
 
-Trackpoint * Track::get_closest_tp_by_percentage_time(double reltime, time_t *seconds_from_start)
+bool Track::set_tp_by_percentage_time(double reltime, time_t *seconds_from_start, int idx)
 {
+	this->tps[idx] = NULL;
 	if (this->trackpoints.empty()) {
-		return NULL;
+		return false;
 	}
 
 	time_t t_start = (*this->trackpoints.begin())->timestamp;
@@ -1812,14 +1824,15 @@ Trackpoint * Track::get_closest_tp_by_percentage_time(double reltime, time_t *se
 	}
 
 	if (iter == this->trackpoints.end()) {
-		return NULL;
+		return false;
 	}
 
 	if (seconds_from_start) {
 		*seconds_from_start = (*iter)->timestamp - (*this->trackpoints.begin())->timestamp;
 	}
 
-	return *iter;
+	this->tps[idx] = *iter;
+	return true;
 }
 
 
@@ -4358,4 +4371,58 @@ sg_ret Track::update_tree_item_properties(void)
 
 
 	return sg_ret::ok;
+}
+
+
+
+
+double Track::get_tp_distance_percent(int idx) const
+{
+	Trackpoint * tp = this->tps[idx];
+	if (tp == NULL) {
+		return NAN;
+	}
+
+	double dist = 0.0;
+	auto iter = std::next(this->trackpoints.begin());
+	for (; iter != this->trackpoints.end(); iter++) {
+		dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
+		/* Since tp is private member, it will be either NULL
+		   (which would be caught by condition above) or will
+		   match this comparison. */
+		if (tp == *iter) {
+			break;
+		}
+	}
+
+	double pc = NAN;
+	if (iter != this->trackpoints.end()) {
+		pc = dist / this->track_length_including_gaps;
+	}
+	return pc;
+}
+
+
+
+
+double Track::get_tp_time_percent(int idx) const
+{
+	const Trackpoint * tp = this->tps[idx];
+	if (tp == NULL) {
+		return NAN;
+	}
+
+	const time_t t_start = (*this->trackpoints.begin())->timestamp;
+	const time_t t_end = (*std::prev(this->trackpoints.end()))->timestamp;
+	const time_t t_total = t_end - t_start;
+
+	return (double) (tp->timestamp - t_start) / t_total;
+}
+
+
+
+
+Trackpoint * Track::get_tp(int idx) const
+{
+	return this->tps[idx];
 }

@@ -197,6 +197,9 @@ namespace SlavGPS {
 		TrackPoints::iterator erase(TrackPoints::iterator first, TrackPoints::iterator last);
 		void push_front(Trackpoint * tp);
 
+		/* May return ::end(). */
+	        Trackpoint * get_current_tp(void) const;
+
 
 		void sort(compare_trackpoints_t compare_function);
 
@@ -238,7 +241,9 @@ namespace SlavGPS {
 
 		void to_routepoints();
 
-		Speed get_max_speed(void) const;
+		sg_ret calculate_max_speed(void);
+		const Speed & get_max_speed(void) const;
+
 		Speed get_average_speed(void) const;
 		Speed get_average_speed_moving(int track_min_stop_length_seconds) const;
 
@@ -246,14 +251,15 @@ namespace SlavGPS {
 
 		bool get_total_elevation_gain(Altitude & delta_up, Altitude & down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
-		Trackpoint * get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start);
-		Trackpoint * get_closest_tp_by_percentage_time(double reldist, time_t *seconds_from_start);
+		bool set_tp_by_percentage_dist(double reldist, double *meters_from_start, int index);
+		bool set_tp_by_percentage_time(double reldist, time_t *seconds_from_start, int index);
 		Trackpoint * get_tp_by_max_speed() const;
 		Trackpoint * get_tp_by_max_alt() const;
 		Trackpoint * get_tp_by_min_alt() const;
 		Trackpoint * get_tp_first() const;
 		Trackpoint * get_tp_last() const;
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
+		Trackpoint * get_tp(int idx) const;
 		bool get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const;
 
 		TrackData make_track_data_altitude_over_distance(int compressed_n_points) const;
@@ -294,6 +300,20 @@ namespace SlavGPS {
 		void clear_profile_dialog();
 
 		void export_track(const QString & title, const QString & default_file_name, SGFileType file_type);
+
+
+		/**
+		   @brief Return the percentage of how far a trackpoint is a long a track by distance
+
+		   @return NAN on problems
+		*/
+		double get_tp_distance_percent(int idx) const;
+		/**
+		   @brief Return the percentage of how far a current trackpoint is along a track by time
+
+		   @return NAN on problems
+		*/
+		double get_tp_time_percent(int idx) const;
 
 
 		TrackPoints::iterator erase_trackpoint(TrackPoints::iterator iter);
@@ -348,12 +368,17 @@ namespace SlavGPS {
 
 		TrackPropertiesDialog * props_dialog = NULL;
 		TrackProfileDialog * profile_dialog = NULL;
+		double track_length_including_gaps = 0.0;
 
 	private:
 		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bbox_last_tp();
 		TrackData make_values_distance_over_time_helper(void) const;
 		TrackData make_values_altitude_over_time_helper(void) const;
+
+		Trackpoint * tps[2] = { NULL, NULL };
+
+		Speed max_speed;
 
 	public slots:
 		void goto_startpoint_cb(void);
