@@ -3135,7 +3135,7 @@ void Track::profile_dialog_cb(void)
 		return;
 	}
 
-	track_profile_dialog(ThisApp::get_main_window(), this, ThisApp::get_main_viewport());
+	track_profile_dialog(this, ThisApp::get_main_viewport(), ThisApp::get_main_window());
 }
 
 

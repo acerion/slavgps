@@ -150,9 +150,9 @@ const QColor & Viewport::get_background_color(void) const
 
 
 
-Viewport::Viewport(Window * parent_window) : QWidget(parent_window)
+Viewport::Viewport(QWidget * parent) : QWidget(parent)
 {
-	this->window = parent_window;
+	this->window = ThisApp::get_main_window();
 
 
 

@@ -165,6 +165,7 @@ static QMenu * create_zoom_submenu(const VikingZoomLevel & viking_zoom_level, QS
 Window::Window()
 {
 	strcpy(this->type_string, "SlavGPS Main Window");
+	g_this_app.set(this, this->items_tree, this->viewport);
 
 
 	for (int i = 0; i < QIcon::themeSearchPaths().size(); i++) {
@@ -176,11 +177,9 @@ Window::Window()
 
 	this->create_layout();
 	this->create_actions();
-
-
 	this->toolbox = new Toolbox(this);
-
 	this->create_ui();
+	g_this_app.set(this, this->items_tree, this->viewport); /* Calling it again, this time with non-NULL layers panel and viewport. */
 
 
 	/* Own signals. */
@@ -188,9 +187,6 @@ Window::Window()
 	connect(this->viewport, SIGNAL (center_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
 	connect(this, SIGNAL (center_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
-
-
-	g_this_app.set(this, this->items_tree, viewport);
 
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */

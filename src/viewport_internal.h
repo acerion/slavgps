@@ -90,7 +90,7 @@ namespace SlavGPS {
 
 		friend class ViewportDecorations;
 	public:
-		Viewport(Window * parent);
+		Viewport(QWidget * parent = NULL);
 		~Viewport();
 
 		/* Viewport module initialization function. */

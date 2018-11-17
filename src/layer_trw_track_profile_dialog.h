@@ -136,7 +136,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackProfileDialog() {};
-		TrackProfileDialog(QString const & title, Track * a_trk, Viewport * main_viewport_, Window * a_parent = NULL);
+		TrackProfileDialog(QString const & title, Track * trk, Viewport * main_viewport, QWidget * parent = NULL);
 		~TrackProfileDialog();
 
 		void handle_mouse_button_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
@@ -150,7 +150,6 @@ namespace SlavGPS {
 		void draw_single_graph(ProfileGraph * graph);
 
 
-		Window * parent = NULL;
 		LayerTRW * trw = NULL;
 		Viewport * main_viewport = NULL;
 		Track * trk = NULL;
@@ -389,7 +388,7 @@ namespace SlavGPS {
 
 
 
-	void track_profile_dialog(Window * parent, Track * trk, Viewport * main_viewport);
+	void track_profile_dialog(Track * trk, Viewport * main_viewport, QWidget * parent);
 
 
 

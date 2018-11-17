@@ -1439,7 +1439,7 @@ void ProfileGraph::create_viewport(TrackProfileDialog * dialog)
 	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
 	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
 
-	this->viewport = new Viewport(dialog->parent);
+	this->viewport = new Viewport(dialog);
 	snprintf(this->viewport->type_string, sizeof (this->viewport->type_string), "%s", this->get_graph_title().toUtf8().constData());
 	this->viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	this->viewport->resize(initial_width, initial_height);
@@ -1649,7 +1649,7 @@ QWidget * ProfileGraph::create_widgets_layout(TrackProfileDialog * dialog)
 
 
 
-void SlavGPS::track_profile_dialog(Window * parent, Track * trk, Viewport * main_viewport)
+void SlavGPS::track_profile_dialog(Track * trk, Viewport * main_viewport, QWidget * parent)
 {
 	TrackProfileDialog dialog(QObject::tr("Track Profile"), trk, main_viewport, parent);
 	trk->set_profile_dialog(&dialog);
@@ -1692,14 +1692,13 @@ QString ProfileGraph::get_graph_title(void) const
 
 
 
-TrackProfileDialog::TrackProfileDialog(QString const & title, Track * a_trk, Viewport * main_viewport_, Window * a_parent) : QDialog(a_parent)
+TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, Viewport * new_main_viewport, QWidget * parent) : QDialog(parent)
 {
-	this->setWindowTitle(tr("%1 - Track Profile").arg(a_trk->name));
+	this->setWindowTitle(tr("%1 - Track Profile").arg(new_trk->name));
 
-	this->trw = (LayerTRW *) a_trk->get_owning_layer();
-	this->trk = a_trk;
-	this->main_viewport = main_viewport_;
-	this->parent = a_parent;
+	this->trw = (LayerTRW *) new_trk->get_owning_layer();
+	this->trk = new_trk;
+	this->main_viewport = new_main_viewport;
 
 
 	int profile_size_value;
