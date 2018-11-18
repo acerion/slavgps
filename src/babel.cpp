@@ -513,7 +513,12 @@ bool BabelProcess::run_process(void)
 	}
 
 	args << "-i";
-	args << this->input_type; /* TODO: handle empty input type: default to gpx. */
+	if (this->input_type.isEmpty()) {
+		qDebug() << SG_PREFIX_N << "Empty input type. Defaulting to 'gpx'";
+		args << "gpx";
+	} else {
+		args << this->input_type;
+	}
 	args << "-f";
 	args << this->input_file;
 
