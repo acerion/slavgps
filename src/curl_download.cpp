@@ -270,7 +270,7 @@ static CurlDownloadStatus report_post_download_status(CURL * curl, CURLcode ret,
 		qDebug() << SG_PREFIX_I << "Curl operation successful";
 
 		switch (response_code) {
-		case 0: /* TODO: this may be true only for FILE protocol. */
+		case 0: /* TODO_2_LATER: this may be true only for FILE protocol. */
 			status = CurlDownloadStatus::NoError;
 			break;
 		case 304: /* Not Modified */
