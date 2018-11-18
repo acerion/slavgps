@@ -1913,6 +1913,13 @@ void Window::open_file_cb(void)
 	}
 
 
+	/* A trick to convert kml-as-MIME to list of non-MIME-file-types. */
+	QStringList mime;
+	mime << "application/vnd.google-earth.kml+xml";
+	file_selector.setMimeTypeFilters(mime);
+	const QStringList kml_name_filters = file_selector.nameFilters();
+
+
 	/* Order of adding of the file types will match order of
 	   appearance on filters list.
 
@@ -1921,26 +1928,20 @@ void Window::open_file_cb(void)
 	   barely used and thus not worthy of inclusion as they'll
 	   just make the options too many and have no clear file
 	   pattern.  One can always use the all option. */
-	QStringList filter;
-	filter << QObject::tr("All (*)");
-	filter << QObject::tr("Viking (*.vik *.viking)");
-	filter << QObject::tr("JPEG (*.jpg, *.jpeg *.JPG *.JPEG)");
-	filter << QObject::tr("GPX (*.gpx)");
-
-#ifdef K_FIXME_RESTORE
-	gtk_file_filter_set_name(filter, QObject::tr("Google Earth"));
-	gtk_file_filter_add_mime_type(filter, "application/vnd.google-earth.kml+xml");
-#endif
-
+	QStringList filters;
+	filters << QObject::tr("All (*)");
+	filters << QObject::tr("Viking (*.vik *.viking)");
+	filters << QObject::tr("JPEG (*.jpg, *.jpeg *.JPG *.JPEG)");
+	filters << QObject::tr("GPX (*.gpx)");
 #ifdef VIK_CONFIG_GEOCACHES
-	filter << QObject::tr("Geocaching (*.loc)");
+	filters << QObject::tr("Geocaching (*.loc)");
 #endif
+	filters << kml_name_filters;
+	file_selector.setNameFilters(filters); /* This will overwrite file_selector.setMimeTypeFilters(mime) done above. */
 
-
-
-	file_selector.setNameFilters(filter);
 
 	file_selector.setFileMode(QFileDialog::ExistingFiles); /* Zero or more existing files. */
+
 
 	int dialog_code = file_selector.exec();
 	if (dialog_code != QDialog::Accepted) {
