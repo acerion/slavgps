@@ -161,7 +161,7 @@ void MapDownloadJob::run(void)
 					break;
 
 				case MapDownloadMode::All:
-					/* FIXME: need a better way than to erase file in case of server/network problem. */
+					/* TODO_2_LATER: need a better way than to erase file in case of server/network problem. */
 					qDebug() << SG_PREFIX_D << "Removing file" << this->file_full_path << "(redownload all)";
 					if (!QDir::root().remove(this->file_full_path)) {
 						qDebug() << SG_PREFIX_W << "Redownload All failed to remove" << this->file_full_path;

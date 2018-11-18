@@ -125,7 +125,7 @@ bool MapSourceTerraserver::is_direct_file_access(void) const
 
 void MapSourceTerraserver::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
-	/* FIXME: slowdown here! */
+	/* TODO_2_LATER: slowdown here! */
 	double mpp = scale_to_mpp(src.scale.get_scale_value());
 	dest_coord.mode = CoordMode::UTM;
 	dest_coord.utm.zone = src.z;
