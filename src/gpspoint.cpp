@@ -478,8 +478,6 @@ Track * GPSPointParser::create_track(LayerTRW * trw)
 	trk->draw_name_mode = (TrackDrawNameMode) this->line_name_label;
 	trk->max_number_dist_labels = this->line_dist_label;
 
-	/* trk->trackpoints = NULL; */ /* TODO_LATER: why it was here? */
-
 
 	return trk;
 }
