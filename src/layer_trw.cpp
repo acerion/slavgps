@@ -631,9 +631,7 @@ void LayerTRW::copy_sublayer_common(TreeItem * item)
 	this->copy_sublayer(item, pickle);
 
 	if (pickle.data_size() > 0) {
-#ifdef K_TODO_2_LATER
 		Clipboard::copy(ClipboardDataType::Sublayer, LayerType::TRW, item->type_id, pickle, item->name);
-#endif
 	}
 }
 
@@ -4479,9 +4477,9 @@ sg_ret LayerTRW::has_child(const Waypoint * wp, bool * result) const
 
 
 
-void LayerTRW::lock_remove(void)
+void LayerTRW::lock_removeo(void)
 {
-	/* TODO: implement */
+	/* TODO: implement code for locking mutex that prevents from removing items from TRW layer. */
 }
 
 
@@ -4489,5 +4487,5 @@ void LayerTRW::lock_remove(void)
 
 void LayerTRW::unlock_remove(void)
 {
-	/* TODO: implement */
+	/* TODO: implement code for unlocking mutex that prevents from removing items from TRW layer. */
 }
