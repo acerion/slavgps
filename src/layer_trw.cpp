@@ -2379,18 +2379,18 @@ void LayerTRW::add_track_from_file(Track * trk)
 sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
 	/* TODO: Reset layer timestamps in case they have now changed. */
-	/* TODO: Recalculate bounds. */
+
+	LayerTRW * source_trw = (LayerTRW *) tree_item->get_owning_layer();
+	const bool the_same_parent = TreeItem::the_same_object(this, source_trw);
 
 	/* Handle item in old location. */
 	{
-		LayerTRW * trw = (LayerTRW *) tree_item->get_owning_layer();
-
 		if (tree_item->type_id == "sg.trw.track") {
-			trw->detach_from_container((Track *) tree_item);
+			source_trw->detach_from_container((Track *) tree_item);
 		} else if (tree_item->type_id == "sg.trw.route") {
-			trw->detach_from_container((Track *) tree_item);
+			source_trw->detach_from_container((Track *) tree_item);
 		} else if (tree_item->type_id == "sg.trw.waypoint") {
-			trw->detach_from_container((Waypoint *) tree_item);
+			source_trw->detach_from_container((Waypoint *) tree_item);
 		} else {
 			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->type_id << "of item" << tree_item->name;
 			return sg_ret::err;
@@ -2409,13 +2409,28 @@ sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 			this->attach_to_container((Track *) tree_item);
 			this->attach_to_tree((Track *) tree_item);
 
+			this->tracks.recalculate_bbox();
+			if (!the_same_parent) {
+				source_trw->tracks.recalculate_bbox();
+			}
+
 		} else if (tree_item->type_id == "sg.trw.route") {
 			this->attach_to_container((Track *) tree_item);
 			this->attach_to_tree((Track *) tree_item);
 
+			this->routes.recalculate_bbox();
+			if (!the_same_parent) {
+				source_trw->routes.recalculate_bbox();
+			}
+
 		} else if (tree_item->type_id == "sg.trw.waypoint") {
 			this->attach_to_container((Waypoint *) tree_item);
 			this->attach_to_tree((Waypoint *) tree_item);
+
+			this->waypoints.recalculate_bbox();
+			if (!the_same_parent) {
+				source_trw->waypoints.recalculate_bbox();
+			}
 		} else {
 			qDebug() << SG_PREFIX_E << "Unexpected type id" << tree_item->type_id << "of item" << tree_item->name;
 			return sg_ret::err;
@@ -4477,7 +4492,7 @@ sg_ret LayerTRW::has_child(const Waypoint * wp, bool * result) const
 
 
 
-void LayerTRW::lock_removeo(void)
+void LayerTRW::lock_remove(void)
 {
 	/* TODO: implement code for locking mutex that prevents from removing items from TRW layer. */
 }

@@ -413,21 +413,21 @@ Distance & Distance::operator+=(const Distance & rhs)
 
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Operands invalid";
 		return *this;
 	}
 	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return *this;
 	}
 	if (this->use_supplementary_distance_unit) {
 		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
-			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			qDebug() << SG_PREFIX_E << "Unit mismatch";
 			return *this;
 		}
 	} else {
 		if (this->distance_unit != rhs.distance_unit) {
-			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			qDebug() << SG_PREFIX_E << "Unit mismatch";
 			return *this;
 		}
 	}
@@ -447,21 +447,21 @@ Distance Distance::operator+(const Distance & rhs)
 	Distance result;
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Operands invalid";
 		return result;
 	}
 	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
 	if (this->use_supplementary_distance_unit) {
 		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
-			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			qDebug() << SG_PREFIX_E << "Unit mismatch";
 			return result;
 		}
 	} else {
 		if (this->distance_unit != rhs.distance_unit) {
-			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			qDebug() << SG_PREFIX_E << "Unit mismatch";
 			return result;
 		}
 	}
@@ -486,21 +486,21 @@ Distance Distance::operator-(const Distance & rhs)
 	Distance result;
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Operands invalid";
 		return result;
 	}
 	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
 	if (this->use_supplementary_distance_unit) {
 		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
-			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			qDebug() << SG_PREFIX_E << "Unit mismatch";
 			return result;
 		}
 	} else {
 		if (this->distance_unit != rhs.distance_unit) {
-			qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+			qDebug() << SG_PREFIX_E << "Unit mismatch";
 			return result;
 		}
 	}
@@ -749,11 +749,11 @@ Altitude & Altitude::operator+=(const Altitude & rhs)
 
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Invalid operands";
 		return *this;
 	}
 	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return *this;
 	}
 
@@ -771,12 +771,12 @@ Altitude Altitude::operator+(const Altitude & rhs)
 	Altitude result;
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Invalid operands";
 		return result;
 	}
 
 	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
 
@@ -797,17 +797,40 @@ Altitude Altitude::operator-(const Altitude & rhs)
 	Altitude result;
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Invalid operands";
 		return result;
 	}
 
 	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
 
 
 	result.value = this->value - rhs.value;
+	result.unit = this->unit;
+	result.valid = !std::isnan(result.value) && result.value >= 0.0;
+
+	return result;
+}
+
+
+
+
+Altitude Altitude::operator/(int rhs)
+{
+	Altitude result;
+
+	if (0 == rhs) {
+		qDebug() << SG_PREFIX_E << "Attempting to divide by zero";
+		return result;
+	}
+
+	if (!this->valid) {
+		return result;
+	}
+
+	result.value = this->value / rhs;
 	result.unit = this->unit;
 	result.valid = !std::isnan(result.value) && result.value >= 0.0;
 
@@ -1052,11 +1075,11 @@ Speed & Speed::operator+=(const Speed & rhs)
 
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Operands invalid";
 		return *this;
 	}
 	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return *this;
 	}
 
@@ -1074,12 +1097,12 @@ Speed Speed::operator+(const Speed & rhs)
 	Speed result;
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Operands invalid";
 		return result;
 	}
 
 	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
 
@@ -1100,12 +1123,12 @@ Speed Speed::operator-(const Speed & rhs)
 	Speed result;
 
 	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_W << "Operands invalid";
 		return result;
 	}
 
 	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Error" << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
 

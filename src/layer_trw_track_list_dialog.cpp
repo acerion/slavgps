@@ -494,7 +494,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 	/* Set this member before adding rows to the table. */
-	Qt::DateFormat dt_format;
+	Qt::DateFormat dt_format = Qt::ISODate;
 	if (ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &dt_format)) {
 		this->date_time_format = dt_format;
 	}

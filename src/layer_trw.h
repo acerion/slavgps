@@ -52,11 +52,6 @@
 
 
 
-#define VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT "sortable_date_time_format"
-
-
-
-
 namespace SlavGPS {
 
 

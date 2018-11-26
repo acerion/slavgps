@@ -216,18 +216,10 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	this->stats_table->get_value_label(TRWStatsRow::TotalElevationDelta)->setText(tmp_string);
 
 
-	/* Avg. Elevation Gain/Loss */
-	/* TODO: simplify by introducing '/' operator in Altitude class. */
-	double tmp;
 
-	tmp = stats.elev_gain.get_value();
-	Altitude avg_gain = stats.elev_gain;
-	avg_gain.set_value(tmp / stats.count);
-
-	tmp = stats.elev_loss.get_value();
-	Altitude avg_loss = stats.elev_loss;
-	avg_loss.set_value(tmp / stats.count);
-
+	/* Average. Elevation Gain/Loss */
+	const Altitude avg_gain = stats.elev_gain / stats.count;
+	const Altitude avg_loss = stats.elev_loss / stats.count;
 	tmp_string = tr("%1 / %2")
 		.arg(avg_gain.convert_to_unit(height_unit).to_string())
 		.arg(avg_loss.convert_to_unit(height_unit).to_string());

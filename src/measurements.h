@@ -257,6 +257,7 @@ namespace SlavGPS {
 		Altitude & operator+=(const Altitude & rhs);
 	        Altitude operator+(const Altitude & rhs);
 		Altitude operator-(const Altitude & rhs);
+		Altitude operator/(int rhs);
 
 		/* Return "meters" or "feet" string.
 		   This is a full string, not "m" or "ft". */

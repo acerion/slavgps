@@ -359,11 +359,11 @@ void WaypointListDialog::contextMenuEvent(QContextMenuEvent * ev)
 void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit)
 {
 	/* Get start date. */
-	QString start_date;
+	QString start_date_str;
 	if (wp->has_timestamp) {
-		QDateTime date_start;
-		date_start.setTime_t(wp->timestamp);
-		start_date = date_start.toString(this->date_time_format);
+		QDateTime start_date;
+		start_date.setTime_t(wp->timestamp);
+		start_date_str = start_date.toString(this->date_time_format);
 	}
 
 	LayerTRW * trw = wp->get_parent_layer_trw();
@@ -396,7 +396,7 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit)
 	items << item;
 
 	/* Date */
-	item = new QStandardItem(start_date);
+	item = new QStandardItem(start_date_str);
 	item->setToolTip(tooltip);
 	items << item;
 

@@ -150,12 +150,13 @@ void CurlDownload::uninit(void)
 
 CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, FILE * file, const DownloadOptions * dl_options, CurlOptions * curl_options)
 {
-	struct curl_slist * curl_send_headers = NULL;
-
 	qDebug() << SG_PREFIX_D << "Download URL" << full_url;
 
+	struct curl_slist * curl_send_headers = NULL;
+	const bool local_curl = NULL == this->curl_handle;
+
 	/* Allocate curl handle locally if necessary. */
-	CURL * curl = (this->curl_handle) ? this->curl_handle : curl_easy_init();
+	CURL * curl = local_curl ? curl_easy_init() : this->curl_handle;
 	if (!curl) {
 		return CurlDownloadStatus::Error;
 	}
@@ -182,14 +183,15 @@ CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, FILE * fil
 	const CURLcode ret = curl_easy_perform(curl);
 	const CurlDownloadStatus status = report_post_download_status(curl, ret, full_url);
 
-	if (!this->curl_handle) {
-		/* Deallocate curl handle, but only the one that we have allocated locally. */
-		curl_easy_cleanup(curl);
-	}
 	if (curl_send_headers) {
 		curl_slist_free_all(curl_send_headers);
 		curl_send_headers = NULL;
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL); /* TODO_LATER: we may be setting opt on curl handler that we may have cleaned up above. */
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL);
+	}
+
+	if (local_curl) {
+		/* Deallocate curl handle, but only the one that we have allocated locally. */
+		curl_easy_cleanup(curl);
 	}
 
 	return status;
@@ -200,12 +202,13 @@ CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, FILE * fil
 
 CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, QTemporaryFile * file, const DownloadOptions * dl_options, const CurlOptions * curl_options)
 {
-	struct curl_slist * curl_send_headers = NULL;
-
 	qDebug() << SG_PREFIX_D << "Download URL" << full_url;
 
+	struct curl_slist * curl_send_headers = NULL;
+	const bool local_curl = NULL == this->curl_handle;
+
 	/* Allocate curl handle locally if necessary. */
-	CURL * curl = (this->curl_handle) ? this->curl_handle : curl_easy_init();
+	CURL * curl = local_curl ? curl_easy_init() : this->curl_handle;
 	if (!curl) {
 		return CurlDownloadStatus::Error;
 	}
@@ -235,14 +238,16 @@ CurlDownloadStatus CurlHandle::download_uri(const QString & full_url, QTemporary
 	file->reset(); /* Reset file position. */
 	file->unsetError();
 
-	if (!this->curl_handle) {
-		/* Deallocate curl handle, but only the one that we have allocated locally. */
-		curl_easy_cleanup(curl);
-	}
+
 	if (curl_send_headers) {
 		curl_slist_free_all(curl_send_headers);
 		curl_send_headers = NULL;
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL); /* TODO_LATER: we may be setting opt on curl handler that we may have cleaned up above. */
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, NULL);
+	}
+
+	if (local_curl) {
+		/* Deallocate curl handle, but only the one that we have allocated locally. */
+		curl_easy_cleanup(curl);
 	}
 
 	return status;

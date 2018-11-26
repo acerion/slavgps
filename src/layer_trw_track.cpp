@@ -4226,15 +4226,13 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	const Distance trk_dist = this->get_length().convert_to_unit(distance_unit);
 
 	/* Get start date. */
-	QString start_date;
+	QString start_date_str;
 	if (!this->empty()
 	    && (*this->trackpoints.begin())->has_timestamp) {
 
-		QDateTime date_start;
-		date_start.setTime_t((*this->trackpoints.begin())->timestamp);
-#ifdef K_TODO
-		start_date = date_start.toString(dialog->date_time_format);
-#endif
+		QDateTime start_date;
+		start_date.setTime_t((*this->trackpoints.begin())->timestamp);
+		start_date_str = date_start.toString(dialog->date_time_format);
 	}
 
 	LayerTRW * trw = this->get_parent_layer_trw();
@@ -4288,7 +4286,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	items << item;
 
 	/* DATE_COLUMN */
-	item = new QStandardItem(start_date);
+	item = new QStandardItem(start_date_str);
 	item->setToolTip(tooltip);
 	items << item;
 

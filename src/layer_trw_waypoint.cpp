@@ -47,6 +47,7 @@
 #include "ui_util.h"
 #include "geotag_exif.h"
 #include "preferences.h"
+#include "application_state.h"
 
 
 
@@ -104,7 +105,8 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_image_full_path(wp.image_full_path);
 	this->set_symbol(wp.symbol_name);
 
-	/* TODO_LATER: what about image_width / image_height? */
+	this->image_width = wp.image_width;
+	this->image_height = wp.image_height;
 }
 
 
@@ -743,6 +745,10 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 	QString date_time_string;
 
 
+	Qt::DateFormat date_time_format = Qt::ISODate;
+	ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &date_time_format);
+
+
 	for (const TreeItemListColumn & col : list_format.columns) {
 		switch (col.id) {
 		case TreeItemPropertyID::TheItem:
@@ -757,11 +763,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 			if (this->has_timestamp) {
 				QDateTime date_time;
 				date_time.setTime_t(this->timestamp);
-#ifdef K_TODO
-				date_time_string = date_start.toString(this->date_time_format);
-#else
-				date_time_string = date_time.toString(Qt::ISODate);
-#endif
+				date_time_string = date_time.toString(date_time_format);
 			}
 			item = new QStandardItem(date_time_string);
 			item->setToolTip(tooltip);
