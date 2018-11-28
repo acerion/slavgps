@@ -3865,8 +3865,7 @@ void Track::refine_route_cb(void)
 	/* Check size of the route */
 	const int nb = this->get_tp_count();
 	if (nb > 100) {
-		/* TODO_2_LATER: make the dialog a Warning dialog. */
-		if (!Dialog::yes_or_no(tr("Refining a track with many points (%d) is unlikely to yield sensible results. Do you want to Continue?").arg(nb))) {
+		if (!Dialog::yes_or_no(tr("Refining a track with many points (%1) is unlikely to yield sensible results. Do you want to continue?").arg(nb))) {
 			return;
 		}
 	}
