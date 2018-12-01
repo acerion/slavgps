@@ -60,7 +60,7 @@ using namespace SlavGPS;
 */
 void PropertiesDialogTP::update_timestamp_widget(Trackpoint * tp)
 {
-	if (tp->has_timestamp) {
+	if (tp->timestamp.is_valid()) {
 		this->timestamp_widget->set_timestamp(tp->timestamp, tp->coord);
 	} else {
 		this->timestamp_widget->reset_timestamp();
@@ -164,8 +164,8 @@ bool PropertiesDialogTP::set_timestamp_to_tp(time_t timestamp_value)
 
 	/* TODO_LATER: consider warning about unsorted timestamps in consecutive trackpoints? */
 
-	this->cur_tp->timestamp = timestamp_value;
-	this->cur_tp->has_timestamp = (timestamp_value != 0);
+	/* TODO: evaluate timestamp_value here and decide if it's valid or not. In old code value != 0 was valid. */
+	this->cur_tp->set_timestamp(timestamp_value);
 
 	return true;
 }
@@ -261,7 +261,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->lat->setEnabled(true);
 	this->lon->setEnabled(true);
 	this->alt->setEnabled(true);
-	this->timestamp_widget->setEnabled(tp->has_timestamp);
+	this->timestamp_widget->setEnabled(tp->timestamp.is_valid());
 
 	this->set_dialog_title(track->name);
 
@@ -302,12 +302,14 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		const Distance diff = Coord::distance_2(tp->coord, this->cur_tp->coord);
 		this->diff_dist->setText(diff.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 
-		if (tp->has_timestamp && this->cur_tp->has_timestamp) {
-			this->diff_time->setText(tr("%1 s").arg((long) (tp->timestamp - this->cur_tp->timestamp)));
+		if (tp->timestamp.is_valid() && this->cur_tp->timestamp.is_valid()) {
+			this->diff_time->setText(tr("%1 s").arg((long) (tp->timestamp.get_value() - this->cur_tp->timestamp.get_value())));
 			if (tp->timestamp == this->cur_tp->timestamp) {
 				this->diff_speed->setText("--");
 			} else {
-				const Speed tmp_speed(Coord::distance(tp->coord, this->cur_tp->coord) / (std::abs(tp->timestamp - this->cur_tp->timestamp)), SpeedUnit::MetresPerSecond);
+				const double dist = Coord::distance(tp->coord, this->cur_tp->coord);
+				const Time duration = Time::get_abs_diff(tp->timestamp, this->cur_tp->timestamp);
+				const Speed tmp_speed(dist / duration.get_value(), SpeedUnit::MetresPerSecond);
 				this->diff_speed->setText(tmp_speed.to_string());
 			}
 		} else {

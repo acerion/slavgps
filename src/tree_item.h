@@ -38,6 +38,7 @@
 
 
 #include "globals.h"
+#include "measurements.h"
 
 
 
@@ -79,7 +80,7 @@ namespace SlavGPS {
 
 	enum TreeItemPropertyID {
 		ParentLayer,     /* Name of parent layer containing given tree item. */
-		TheItem,        /* Name of given tree item. */
+		TheItem,         /* Name of given tree item. */
 		Timestamp,       /* Timestamp attribute of given tree item. */
 		Icon,            /* Icon attribute of given tree item (pixmap). */
 		Visibility,      /* Is the tree item visible in tree view (boolean)? */
@@ -127,7 +128,9 @@ namespace SlavGPS {
 		static bool compare_name_descending(const TreeItem * a, const TreeItem * b);  /* Descending: ZZZ -> AAA */
 
 
-		virtual time_t get_timestamp(void) const { return this->has_timestamp ? this->timestamp : 0; };
+		virtual Time get_timestamp(void) const;
+		virtual void set_timestamp(const Time & value);
+		virtual void set_timestamp(time_t value);
 
 		virtual QString get_tooltip(void) const;
 
@@ -207,9 +210,6 @@ namespace SlavGPS {
 		QString type_id;
 		QStringList accepted_child_type_ids;
 
-		bool has_timestamp = false;
-		time_t timestamp = 0;
-
 		QIcon icon; /* .isNull() may return true for this field (if child class doesn't assign anything to the icon). */
 
 		char debug_string[100] = { 0 };
@@ -222,6 +222,8 @@ namespace SlavGPS {
 		/* Menu items (actions) to be created and put into a
 		   context menu for given tree item type. */
 		TreeItem::MenuOperation menu_operation_ids = TreeItem::MenuOperation::All;
+
+		Time timestamp; /* Invalid by default. */
 	};
 
 	/* These silly names are a workaroud for clash of operator definitions.

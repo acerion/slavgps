@@ -78,9 +78,14 @@ TimestampWidget::TimestampWidget(QWidget * parent)
 
 
 
-void TimestampWidget::set_timestamp(time_t timestamp, const Coord & new_coord)
+void TimestampWidget::set_timestamp(const Time & timestamp, const Coord & new_coord)
 {
-	this->timestamp_entry->setValue(timestamp);
+	if (!timestamp.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Trying to set invalid timestamp";
+		return;
+	}
+
+	this->timestamp_entry->setValue(timestamp.get_value());
 	this->timestamp_button->set_label(timestamp, new_coord);
 }
 
@@ -96,9 +101,9 @@ void TimestampWidget::reset_timestamp(void)
 
 
 
-time_t TimestampWidget::get_timestamp(void) const
+Time TimestampWidget::get_timestamp(void) const
 {
-	return (time_t) this->timestamp_entry->value();
+	return Time((time_t) this->timestamp_entry->value());
 }
 
 
@@ -120,9 +125,9 @@ void TimestampWidget::on_timestamp_entry_value_set_cb(void)
 
 void TimestampWidget::on_timestamp_button_value_set_cb(void)
 {
-	const time_t new_value = (time_t) this->timestamp_button->get_value();
-	qDebug() << "SLOT:" PREFIX << __FUNCTION__ << new_value;
-	this->timestamp_entry->setValue(new_value);
+	const Time new_value = this->timestamp_button->get_value();
+	qDebug() << SG_PREFIX_SLOT << "New value =" << new_value;
+	this->timestamp_entry->setValue(new_value.get_value());
 }
 
 
@@ -130,7 +135,7 @@ void TimestampWidget::on_timestamp_button_value_set_cb(void)
 
 void TimestampWidget::on_timestamp_button_value_reset_cb(void)
 {
-	qDebug() << "SLOT:" PREFIX << __FUNCTION__;
+	qDebug() << SG_PREFIX_SLOT;
 	this->clear();
 }
 

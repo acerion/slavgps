@@ -184,14 +184,15 @@ private:
 
 LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoint * tp2)
 {
-	if (!tp1->has_timestamp || !tp2->has_timestamp) {
+	if (!tp1->timestamp.is_valid() || !tp2->timestamp.is_valid()) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
 	if (average_speed <= 0) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
 
-	const double speed = (Coord::distance(tp1->coord, tp2->coord) / (tp1->timestamp - tp2->timestamp));
+	const Time time_diff = tp1->timestamp - tp2->timestamp;
+	const double speed = (Coord::distance(tp1->coord, tp2->coord) / time_diff.get_value());
 	if (speed < low_speed) {
 		return LayerTRWTrackGraphics::Speed1;
 	} else if (speed > high_speed) {

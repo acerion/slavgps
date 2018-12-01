@@ -137,7 +137,7 @@ namespace SlavGPS {
 
 		void change_coord_mode(CoordMode dest_mode);
 
-		time_t get_timestamp();
+		Time get_timestamp(void) const override;
 
 		sg_ret drag_drop_request(TreeItem * tree_item, int row, int col);
 		sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
@@ -257,13 +257,13 @@ namespace SlavGPS {
 
 		void delete_selected_tp(Track * trk);
 
-		void diary_open(char const * date_str);
-		void astro_open(char const * date_str,  char const * time_str, char const * lat_str, char const * lon_str, char const * alt_str);
+		void diary_open(const QString & date_str);
+		void astro_open(const QString & date_str, const QString & time_str, char const * lat_str, char const * lon_str, char const * alt_str);
 
 
 
 		void get_waypoints_list(std::list<Waypoint *> & list);
-		void get_tracks_list(std::list<Track *> & list, const QString & type_id_string);
+		void get_tracks_list(std::list<Track *> & list, const QString & type_id_string) const;
 
 
 		void trackpoint_properties_show();
@@ -490,9 +490,9 @@ namespace SlavGPS {
 		class TracksTooltipData {
 		public:
 			Distance length;
-			time_t start_time = 0;
-			time_t end_time = 0;
-			int    duration = 0;
+			Time start_time;
+			Time end_time;
+			Time duration;
 		};
 
 		TracksTooltipData get_tracks_tooltip_data(void) const;

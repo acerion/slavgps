@@ -3356,10 +3356,9 @@ void Window::menu_file_properties_cb(void)
 		return;
 	}
 
-	char time_buf[64];
-	strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
+	const Time timestamp(stat_buf.st_mtime);
 	const QString size_string = Measurements::get_file_size_string(stat_buf.st_size);
-	const QString message = QObject::tr("%1\n\n%2\n\n%3").arg(this->current_document_full_path).arg(time_buf).arg(size_string);
+	const QString message = QObject::tr("%1\n\n%2\n\n%3").arg(this->current_document_full_path).arg(timestamp.strftime_utc("%c")).arg(size_string);
 
 	Dialog::info(message, this);
 }

@@ -35,6 +35,7 @@
 
 
 
+#include "measurements.h"
 #include "layer_trw_definitions.h"
 #include "layer_trw_track.h"
 #include "tree_view.h"
@@ -134,7 +135,7 @@ namespace SlavGPS {
 		void assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, const QColor & track_color_common);
 
 
-		time_t get_earliest_timestamp();
+		Time get_earliest_timestamp(void) const;
 
 
 
@@ -154,7 +155,7 @@ namespace SlavGPS {
 		void set_items_visibility(bool on_off);
 		void toggle_items_visibility();
 
-		void get_tracks_list(std::list<Track *> & list);
+		void get_tracks_list(std::list<Track *> & list) const;
 		void track_search_closest_tp(TrackpointSearch * search);
 
  		void change_coord_mode(CoordMode dest_mode);

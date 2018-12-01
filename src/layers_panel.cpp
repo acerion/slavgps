@@ -612,7 +612,7 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 
 
 
-std::list<const Layer *> LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
+std::list<const Layer *> LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible) const
 {
 	std::list<const Layer *> layers;
 	this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);

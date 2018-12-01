@@ -285,3 +285,27 @@ sg_ret TreeItem::attach_children_to_tree(void)
 {
 	return sg_ret::ok;
 }
+
+
+
+
+Time TreeItem::get_timestamp(void) const
+{
+	return this->timestamp; /* Returned value may be invalid. */
+}
+
+
+
+
+void TreeItem::set_timestamp(const Time & value)
+{
+	this->timestamp = value;
+}
+
+
+
+
+void TreeItem::set_timestamp(time_t value)
+{
+	this->timestamp = Time(value);
+}

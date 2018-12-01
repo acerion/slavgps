@@ -141,15 +141,9 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 	/* Check for potential date range. */
 	/* Test if the same day by comparing the date string of the timestamp. */
-	QDateTime date_start;
-	date_start.setTime_t(stats.start_time);
 	/* Viking's C code used strftime()'s %x specifier: "The preferred date representation for current locale without the time". */
-	const QString time_start = date_start.toString(Qt::SystemLocaleLongDate);
-
-	QDateTime date_end;
-	date_end.setTime_t(stats.end_time);
-	/* Viking's C code used strftime()'s %x specifier: "The preferred date representation for current locale without the time". */
-	const QString time_end = date_end.toString(Qt::SystemLocaleLongDate);
+	const QString time_start = stats.start_time.get_time_string(Qt::SystemLocaleLongDate);
+	const QString time_end = stats.end_time.get_time_string(Qt::SystemLocaleLongDate);
 
 	if (stats.start_time == stats.end_time) {
 		tmp_string = tr("No Data");
@@ -181,7 +175,8 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Avg. Speed */
-	const Speed avg_speed = Speed(stats.duration > 0 ? stats.length.value / stats.duration : NAN, SpeedUnit::MetresPerSecond); /* Constructing speed value from values in basic units, therefore MetersPerSecond. */
+	const bool valid = stats.duration.is_valid() && stats.duration > 0;
+	const Speed avg_speed = Speed(valid ? stats.length.value / stats.duration.get_value() : NAN, SpeedUnit::MetresPerSecond); /* Constructing speed value from values in basic units, therefore MetersPerSecond. */
 	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(avg_speed.convert_to_unit(speed_unit).to_string());
 
 
@@ -228,16 +223,16 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Total Duration. */
-	int days    = (int) (stats.duration / (60 * 60 * 24));
-	int hours   = (int) floor((stats.duration - (days * 60 * 60 * 24)) / (60 * 60));
-	int minutes = (int) ((stats.duration - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
+	int days    = (int) (stats.duration.get_value() / (60 * 60 * 24));
+	int hours   = (int) floor((stats.duration.get_value() - (days * 60 * 60 * 24)) / (60 * 60));
+	int minutes = (int) ((stats.duration.get_value() - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
 	tmp_string = tr("%1:%2:%3 days:hrs:mins").arg(days).arg(hours, 2, 10, (QChar) '0').arg(minutes, 2, 10, (QChar) '0');
 	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(tmp_string);
 
 
 
 	/* Average Duration. */
-	int avg_dur = stats.duration / stats.count;
+	int avg_dur = stats.duration.get_value() / stats.count;
 	hours   = (int) floor(avg_dur / (60 * 60));
 	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
 	tmp_string = tr("%1:%2 hrs:mins").arg(hours).arg(minutes, 2, 10, (QChar) '0');

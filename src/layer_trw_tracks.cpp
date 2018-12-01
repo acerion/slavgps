@@ -142,23 +142,20 @@ QString LayerTRWTracks::get_tooltip(void) const
 
 std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(const QDate & search_date) const
 {
-	char search_date_str[20] = { 0 };
-	snprintf(search_date_str, sizeof (search_date_str), "%s", search_date.toString("yyyy-MM-dd").toUtf8().constData());
-	qDebug() << "---------------- search date =" << search_date << search_date_str;
+	const QString search_date_string = search_date.toString("yyyy-MM-dd");
+	qDebug() << SG_PREFIX_I << "Search date =" << search_date << search_date_string;
 
-	char date_buf[20];
 	std::list<TreeItem *> result;
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		date_buf[0] = '\0';
 		Track * trk = *iter;
 
 		/* Might be an easier way to compare dates rather than converting the strings all the time... */
 		if (!trk->empty()
-		    && (*trk->trackpoints.begin())->has_timestamp) {
+		    && (*trk->trackpoints.begin())->timestamp.is_valid()) {
 
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpoints.begin())->timestamp));
-			if (0 == strcmp(search_date_str, date_buf)) {
+			const QString trk_date_string = (*trk->trackpoints.begin())->timestamp.strftime_utc("%Y-%m-%d");
+			if (search_date_string == trk_date_string) {
 				result.push_back(trk);
 			}
 		}
@@ -247,12 +244,12 @@ std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_tim
 			p2 = trk->get_tp_last();
 
 			if (with_timestamps) {
-				if (!p1->has_timestamp || !p2->has_timestamp) {
+				if (!p1->timestamp.is_valid() || !p2->timestamp.is_valid()) {
 					continue;
 				}
 			} else {
 				/* Don't add tracks with timestamps when getting non timestamp tracks. */
-				if (p1->has_timestamp || p2->has_timestamp) {
+				if (p1->timestamp.is_valid() || p2->timestamp.is_valid()) {
 					continue;
 				}
 			}
@@ -293,23 +290,32 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, 
 			continue;
 		}
 
-		time_t t1 = orig_trk->get_tp_first()->timestamp;
-		time_t t2 = orig_trk->get_tp_last()->timestamp;
+		const Time t1 = orig_trk->get_tp_first()->timestamp;
+		const Time t2 = orig_trk->get_tp_last()->timestamp;
 
 		if (!trk->empty()) {
 
 			Trackpoint * p1 = trk->get_tp_first();
 			Trackpoint * p2 = trk->get_tp_last();
 
-			if (!p1->has_timestamp || !p2->has_timestamp) {
+			if (!p1->timestamp.is_valid() || !p2->timestamp.is_valid()) {
 				//fprintf(stdout, "no timestamp\n");
 				continue;
 			}
 
+			/* FIXME: this code is apparently fine with
+			   negative values of time diffs, but
+			   Time class doesn't handle them well
+			   make sure that negative values of Time
+			   are considered as valid. */
+
+			const Time diff1 = t1 - p2->timestamp;
+			const Time diff2 = p1->timestamp - t2;
+
 			//fprintf(stdout, "Got track named %s, times %d, %d\n", trk->name, p1->timestamp, p2->timestamp);
-			if (! (labs(t1 - p2->timestamp) < threshold
+			if (! (labs(diff1.get_value()) < threshold
 			       /*  p1 p2      t1 t2 */
-			       || labs(p1->timestamp - t2) < threshold)
+			       || labs(diff2.get_value()) < threshold)
 			    /*  t1 t2      p1 p2 */
 			    ) {
 				continue;
@@ -398,7 +404,7 @@ void LayerTRWTracks::toggle_items_visibility(void)
 
 
 
-void LayerTRWTracks::get_tracks_list(std::list<Track *> & list)
+void LayerTRWTracks::get_tracks_list(std::list<Track *> & list) const
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		list.push_back(*iter);
@@ -599,11 +605,13 @@ void LayerTRWTracks::assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, 
 /**
  * Get the earliest timestamp available from all tracks.
  */
-time_t LayerTRWTracks::get_earliest_timestamp()
+Time LayerTRWTracks::get_earliest_timestamp(void) const
 {
-	time_t earlnest_timestamp = 0;
+	Time result;
 	std::list<Track *> tracks_;
 	this->get_tracks_list(tracks_);
+
+	/* TODO: we assume here that all tracks have timestamps. */
 
 	if (!tracks_.empty()) {
 		tracks_.sort(Track::compare_timestamp);
@@ -612,11 +620,11 @@ time_t LayerTRWTracks::get_earliest_timestamp()
 		Track * trk = *(tracks_.begin());
 		/* Assume trackpoints already sorted by time. */
 		Trackpoint * tpt = trk->get_tp_first();
-		if (tpt && tpt->has_timestamp) {
-			earlnest_timestamp = tpt->timestamp;
+		if (tpt && tpt->timestamp.is_valid()) {
+			result = tpt->timestamp;
 		}
 	}
-	return earlnest_timestamp;
+	return result;
 }
 
 

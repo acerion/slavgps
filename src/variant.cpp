@@ -90,7 +90,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
-		this->val_timestamp = (time_t) strtoul(str, NULL, 10);
+		this->val_timestamp.set_from_unix_timestamp(str);
 		break;
 	case SGVariantType::Latitude:
 	case SGVariantType::Longitude:
@@ -100,7 +100,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->altitude = Altitude(strtod(str, NULL), HeightUnit::Metres);
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) this->type_id;
+		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) this->type_id;
 		break;
 	}
 }
@@ -135,7 +135,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
-		this->val_timestamp = (time_t) str.toULong();
+		this->val_timestamp.set_from_unix_timestamp(str);
 		break;
 	case SGVariantType::Latitude:
 	case SGVariantType::Longitude:
@@ -145,7 +145,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->altitude = Altitude(str.toDouble(), HeightUnit::Metres);
 		break;
 	default:
-		qDebug() << "EE" PREFIX "unsupported variant type id" << (int) this->type_id;
+		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) this->type_id;
 		break;
 	}
 }
@@ -272,7 +272,7 @@ SGVariant::SGVariant(const Altitude & a, SGVariantType type_id_)
 
 
 
-SGVariant::SGVariant(time_t timestamp, SGVariantType type_id_)
+SGVariant::SGVariant(const Time & timestamp, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Timestamp);
 	this->type_id = type_id_;
@@ -471,7 +471,7 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 
 
 
-time_t SGVariant::get_timestamp() const
+Time SGVariant::get_timestamp(void) const
 {
 	return this->val_timestamp;
 }
@@ -540,7 +540,7 @@ QString SGVariant::to_string() const
 		return QString("0x%1").arg((qintptr) this->u.val_pointer);
 
 	case SGVariantType::Timestamp:
-		return QString("%1").arg(this->get_timestamp());
+		return QString("%1").arg(this->get_timestamp().to_timestamp_string());
 
 	case SGVariantType::Latitude:
 		return c_locale.toString(this->get_latitude(), 'f', SG_PRECISION_LATITUDE);

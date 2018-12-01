@@ -174,10 +174,9 @@ void Track::self_assign_icon(void)
 
 void Track::self_assign_timestamp(void)
 {
-	Trackpoint * tpt = this->get_tp_first();
-	if (tpt && tpt->has_timestamp) {
-		this->timestamp = tpt->timestamp;
-		this->has_timestamp = true;
+	Trackpoint * tp = this->get_tp_first();
+	if (tp) {
+		this->set_timestamp(tp->timestamp);
 	}
 }
 
@@ -391,8 +390,7 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 	this->coord = tp.coord;
 
 	this->newsegment = tp.newsegment;
-	this->has_timestamp = tp.has_timestamp;
-	this->timestamp = tp.timestamp;
+	this->set_timestamp(tp.timestamp);
 	this->altitude = tp.altitude;
 	this->speed = tp.speed;
 	this->course = tp.course;
@@ -419,12 +417,11 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 	/* Now other properties that can be interpolated. */
 	this->altitude = (tp_a.altitude + tp_b.altitude) / 2;
 
-	if (tp_a.has_timestamp && tp_b.has_timestamp) {
+	if (tp_a.timestamp.is_valid() && tp_b.timestamp.is_valid()) {
 		/* Note here the division is applied to each part, then added
 		   This is to avoid potential overflow issues with a 32 time_t for
 		   dates after midpoint of this Unix time on 2004/01/04. */
-		this->timestamp = (tp_a.timestamp / 2) + (tp_b.timestamp / 2);
-		this->has_timestamp = true;
+		this->set_timestamp((tp_a.timestamp.get_value() / 2) + (tp_b.timestamp.get_value() / 2));
 	}
 
 	if (tp_a.speed != NAN && tp_b.speed != NAN) {
@@ -661,7 +658,7 @@ unsigned long Track::get_same_time_point_count() const
 
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		if (std::next(iter) != this->trackpoints.end()
-		    && ((*iter)->has_timestamp && (*std::next(iter))->has_timestamp)
+		    && ((*iter)->timestamp.is_valid() && (*std::next(iter))->timestamp.is_valid())
 		    && ((*iter)->timestamp == (*std::next(iter))->timestamp)) {
 
 			num++;
@@ -683,7 +680,7 @@ unsigned long Track::remove_same_time_points()
 	auto iter = this->trackpoints.begin();
 	while (iter != this->trackpoints.end()) {
 		if (std::next(iter) != this->trackpoints.end()
-		    && ((*iter)->has_timestamp && (*std::next(iter))->has_timestamp)
+		    && ((*iter)->timestamp.is_valid() && (*std::next(iter))->timestamp.is_valid())
 		    && ((*iter)->timestamp == (*std::next(iter))->timestamp)) {
 
 			num++;
@@ -720,8 +717,7 @@ void Track::to_routepoints(void)
 
 		/* c.f. with vik_trackpoint_new(). */
 
-		(*iter)->has_timestamp = false;
-		(*iter)->timestamp = 0;
+		(*iter)->timestamp.set_valid(false);
 		(*iter)->speed = NAN;
 		(*iter)->course = NAN;
 		(*iter)->hdop = VIK_DEFAULT_DOP;
@@ -921,65 +917,70 @@ void Track::reverse(void)
  * Returns: The time in seconds.
  * NB this may be negative particularly if the track has been reversed.
  */
-time_t Track::get_duration(bool segment_gaps) const
+Time Track::get_duration(bool segment_gaps) const
 {
+	Time result(0);
+
 	if (this->trackpoints.empty()) {
-		return 0;
+		return result;
 	}
 
-	time_t duration = 0;
-
 	/* Ensure times are available. */
-	if (this->get_tp_first()->has_timestamp) {
+	if (this->get_tp_first()->timestamp.is_valid()) {
 		/* Get trkpt only once - as using vik_track_get_tp_last() iterates whole track each time. */
 		if (segment_gaps) {
 			// Simple duration
 			Trackpoint * tp_last = this->get_tp_last();
-			if (tp_last->has_timestamp) {
-				time_t t1 = this->get_tp_first()->timestamp;
-				time_t t2 = tp_last->timestamp;
-				duration = t2 - t1;
+			if (tp_last->timestamp.is_valid()) {
+				result = tp_last->timestamp - this->get_tp_first()->timestamp;
 			}
 		} else {
 			/* Total within segments. */
 			for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
-				if ((*iter)->has_timestamp
-				    && (*std::prev(iter))->has_timestamp
+				if ((*iter)->timestamp.is_valid()
+				    && (*std::prev(iter))->timestamp.is_valid()
 				    && !(*iter)->newsegment) {
 
-					duration += std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
+					result += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
 				}
 			}
 		}
 	}
 
-	return duration;
+	return result;
 }
 
 
 
 
 /* Code extracted from make_track_data_speed_over_time() and similar functions. */
-double Track::get_duration() const
+Time Track::get_duration(void) const
 {
+	Time result(0);
+
 	if (this->trackpoints.empty()) {
-		return 0.0;
+		return result;
 	}
 
-	time_t t1 = (*this->trackpoints.begin())->timestamp;
-	time_t t2 = (*std::prev(this->trackpoints.end()))->timestamp;
-	double duration = t2 - t1;
-
-	if (!t1 || !t2 || !duration) {
-		return 0.0;
+	const Time t1 = (*this->trackpoints.begin())->timestamp;
+	const Time t2 = (*std::prev(this->trackpoints.end()))->timestamp;
+	if (!t1.is_valid() || !t2.is_valid()) {
+		return result;
 	}
 
-	if (duration < 0) {
-		fprintf(stderr, "WARNING: negative duration: unsorted trackpoint timestamps?\n");
-		return 0.0;
+	const Time duration = t2 - t1;
+	if (!duration.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Invalid duration";
+		return result;
 	}
 
-	return duration;
+	if (duration.get_value() < 0) {
+		qDebug() << SG_PREFIX_W << "Negative duration: unsorted trackpoint timestamps?";
+		return result;
+	}
+
+	result = duration;
+	return result;
 }
 
 
@@ -994,21 +995,21 @@ Speed Track::get_average_speed(void) const
 	}
 
 	double len = 0.0;
-	time_t time = 0;
+	Time duration(0);
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 
-		if ((*iter)->has_timestamp
-		    && (*std::prev(iter))->has_timestamp
+		if ((*iter)->timestamp.is_valid()
+		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
 			len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			time += std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
+			duration += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
 		}
 	}
 
-	if (time > 0) {
-		result.set_value(std::abs(len/time));
+	if (duration.is_valid() && duration.get_value() > 0) {
+		result.set_value(std::abs(len / duration.get_value()));
 	}
 
 	return result;
@@ -1036,23 +1037,23 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 	}
 
 	double len = 0.0;
-	time_t time = 0;
+	Time duration(0);
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
-		if ((*iter)->has_timestamp
-		    && (*std::prev(iter))->has_timestamp
+		if ((*iter)->timestamp.is_valid()
+		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			if (((*iter)->timestamp - (*std::prev(iter))->timestamp) < track_min_stop_length_seconds) {
+			if (((*iter)->timestamp.get_value() - (*std::prev(iter))->timestamp.get_value()) < track_min_stop_length_seconds) {
 				len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
-				time += std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
+				duration += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			}
 		}
 	}
 
-	if (time > 0) {
-		result.set_value(std::abs(len / time));
+	if (duration.is_valid() && duration.get_value() > 0) {
+		result.set_value(std::abs(len / duration.get_value()));
 	}
 
 	return result;
@@ -1072,12 +1073,12 @@ sg_ret Track::calculate_max_speed(void)
 	double maxspeed = 0.0;
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
-		if ((*iter)->has_timestamp
-		    && (*std::prev(iter))->has_timestamp
-		    && (!(*iter)->newsegment)) {
+		if ((*iter)->timestamp.is_valid()
+		    && (*std::prev(iter))->timestamp.is_valid()
+		    && !(*iter)->newsegment) {
 
 			const double speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
-				/ std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
+				/ Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp).get_value();
 
 			if (speed > maxspeed) {
 				maxspeed = speed;
@@ -1111,13 +1112,13 @@ TrackData Track::make_values_distance_over_time_helper(void) const
 	auto iter = this->trackpoints.begin();
 
 	int i = 0;
-	data.x[i] = (*iter)->timestamp;
+	data.x[i] = (*iter)->timestamp.get_value();
 	data.y[i] = 0;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp;
+		data.x[i] = (*iter)->timestamp.get_value();
 		data.y[i] = data.y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 
 		if (data.x[i] <= data.x[i - 1]) {
@@ -1142,13 +1143,13 @@ TrackData Track::make_values_altitude_over_time_helper(void) const
 	int i = 0;
 	auto iter = this->trackpoints.begin();
 
-	data.x[i] = (*iter)->timestamp;
+	data.x[i] = (*iter)->timestamp.get_value();
 	data.y[i] = (*iter)->altitude;
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
-		data.x[i] = (*iter)->timestamp;
+		data.x[i] = (*iter)->timestamp.get_value();
 		data.y[i] = (*iter)->altitude;
 		i++;
 		iter++;
@@ -1418,8 +1419,8 @@ TrackData Track::make_track_data_speed_over_time(void) const
 {
 	TrackData result;
 
-	double duration = this->get_duration();
-	if (duration < 0) {
+	const Time duration = this->get_duration();
+	if (!duration.is_valid() || duration.get_value() < 0) {
 		return result;
 	}
 
@@ -1465,8 +1466,8 @@ TrackData Track::make_track_data_distance_over_time(void) const
 {
 	TrackData result;
 
-	double duration = this->get_duration();
-	if (duration < 0) {
+	const Time duration = this->get_duration();
+	if (!duration.is_valid() || duration.get_value() < 0) {
 		return result;
 	}
 
@@ -1583,8 +1584,8 @@ TrackData Track::make_track_data_altitude_over_time(void) const
 {
 	TrackData result;
 
-	double duration = this->get_duration();
-	if (duration < 0) {
+	const Time duration = this->get_duration();
+	if (!duration.is_valid() || duration.get_value() < 0) {
 		return result;
 	}
 
@@ -1793,29 +1794,29 @@ bool Track::set_tp_by_percentage_time(double reltime, time_t *seconds_from_start
 		return false;
 	}
 
-	time_t t_start = (*this->trackpoints.begin())->timestamp;
-	time_t t_end = (*std::prev(this->trackpoints.end()))->timestamp;
+	time_t t_start = (*this->trackpoints.begin())->timestamp.get_value();
+	time_t t_end = (*std::prev(this->trackpoints.end()))->timestamp.get_value();
 	time_t t_total = t_end - t_start;
 	time_t t_pos = t_start + t_total * reltime;
 
 	auto iter = this->trackpoints.begin();
 	while (iter != this->trackpoints.end()) {
-		if ((*iter)->timestamp == t_pos) {
+		if ((*iter)->timestamp.get_value() == t_pos) {
 			break;
 		}
 
-		if ((*iter)->timestamp > t_pos) {
+		if ((*iter)->timestamp.get_value() > t_pos) {
 			if (iter == this->trackpoints.begin()) { /* First trackpoint. */
 				break;
 			}
-			time_t t_before = t_pos - (*std::prev(iter))->timestamp;
-			time_t t_after = (*iter)->timestamp - t_pos;
+			time_t t_before = t_pos - (*std::prev(iter))->timestamp.get_value();
+			time_t t_after = (*iter)->timestamp.get_value() - t_pos;
 			if (t_before <= t_after) {
 				iter--;
 			}
 			break;
 		} else if (std::next(iter) == this->trackpoints.end()
-			   && (t_pos < ((*iter)->timestamp + 3))) { /* Last trackpoint: accommodate for round-off. */
+			   && (t_pos < ((*iter)->timestamp.get_value() + 3))) { /* Last trackpoint: accommodate for round-off. */
 			break;
 		} else {
 			;
@@ -1828,7 +1829,7 @@ bool Track::set_tp_by_percentage_time(double reltime, time_t *seconds_from_start
 	}
 
 	if (seconds_from_start) {
-		*seconds_from_start = (*iter)->timestamp - (*this->trackpoints.begin())->timestamp;
+		*seconds_from_start = (*iter)->timestamp.get_value() - (*this->trackpoints.begin())->timestamp.get_value();
 	}
 
 	this->tps[idx] = *iter;
@@ -1849,12 +1850,12 @@ Trackpoint * Track::get_tp_by_max_speed() const
 	double speed = 0.0;
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
-		if ((*iter)->has_timestamp
-		    && (*std::prev(iter))->has_timestamp
+		if ((*iter)->timestamp.is_valid()
+		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
 			speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
-				/ std::abs((*iter)->timestamp - (*std::prev(iter))->timestamp);
+				/ Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp).get_value();
 
 			if (speed > maxspeed) {
 				maxspeed = speed;
@@ -2144,15 +2145,15 @@ sg_ret Track::anonymize_times(void)
 	time_t offset = 0;
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		Trackpoint * tp = *iter;
-		if (tp->has_timestamp) {
+		if (tp->timestamp.is_valid()) {
 			/* Calculate an offset in time using the first available timestamp. */
 			if (offset == 0) {
-				offset = tp->timestamp - century_secs;
+				offset = tp->timestamp.get_value() - century_secs;
 			}
 
 			/* Apply this offset to shift all timestamps towards 1901 & hence anonymising the time.
 			   Note that the relative difference between timestamps is kept - thus calculating speeds will still work. */
-			tp->timestamp -= offset;
+			tp->timestamp.value -= offset;
 		}
 	}
 
@@ -2177,18 +2178,18 @@ void Track::interpolate_times()
 
 	auto iter = this->trackpoints.begin();
 	Trackpoint * tp = *iter;
-	if (!tp->has_timestamp) {
+	if (!tp->timestamp.is_valid()) {
 		return;
 	}
 
-	time_t tsfirst = tp->timestamp;
+	time_t tsfirst = tp->timestamp.get_value();
 
 	/* Find the end of the track and the last timestamp. */
 	iter = prev(this->trackpoints.end());
 
 	tp = *iter;
-	if (tp->has_timestamp) {
-		time_t tsdiff = tp->timestamp - tsfirst;
+	if (tp->timestamp.is_valid()) {
+		time_t tsdiff = tp->timestamp.get_value() - tsfirst;
 
 		double tr_dist = this->get_length_value_including_gaps();
 		double cur_dist = 0.0;
@@ -2202,8 +2203,8 @@ void Track::interpolate_times()
 				iter++;
 				cur_dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
-				(*iter)->timestamp = (cur_dist / tr_dist) * tsdiff + tsfirst;
-				(*iter)->has_timestamp = true;
+				(*iter)->timestamp.value = (cur_dist / tr_dist) * tsdiff + tsfirst;
+				(*iter)->timestamp.set_valid(true);
 			}
 			/* Some points may now have the same time so remove them. */
 			this->remove_same_time_points();
@@ -3191,17 +3192,17 @@ void Track::rezoom_to_show_full_cb(void)
 QString Track::get_tooltip(void) const
 {
 	/* Could be a better way of handling strings - but this works. */
-	char timestamp_string[20] = { 0 };
+	QString timestamp_string;
 	QString duration_string;
 
 	/* Compact info: Short date eg (11/20/99), duration and length.
 	   Hopefully these are the things that are most useful and so promoted into the tooltip. */
-	if (!this->empty() && this->get_tp_first()->has_timestamp) {
+	if (!this->empty() && this->get_tp_first()->timestamp.is_valid()) {
 		/* %x     The preferred date representation for the current locale without the time. */
-		strftime(timestamp_string, sizeof(timestamp_string), "%x: ", gmtime(&(this->get_tp_first()->timestamp)));
-		time_t duration = this->get_duration(true);
-		if (duration > 0) {
-			duration_string = QObject::tr("- %1").arg(Measurements::get_duration_string(duration));
+		timestamp_string = this->get_tp_first()->timestamp.strftime_utc("%x: ");
+		const Time duration = this->get_duration(true);
+		if (duration.is_valid() && duration.get_value() > 0) {
+			duration_string = QObject::tr("- %1").arg(duration.to_duration_string());
 		}
 	}
 
@@ -3305,10 +3306,8 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 */
 void Track::open_diary_cb(void)
 {
-	char date_buf[20];
-	date_buf[0] = '\0';
-	if (!this->empty() && (*this->trackpoints.begin())->has_timestamp) {
-		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*this->trackpoints.begin())->timestamp));
+	if (!this->empty() && (*this->trackpoints.begin())->timestamp.is_valid()) {
+		const QString date_buf = (*this->trackpoints.begin())->timestamp.strftime_utc("%Y-%m-%d");
 		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
 	} else {
 		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
@@ -3338,13 +3337,12 @@ void Track::open_astro_cb(void)
 		return;
 	}
 
-	if (tp->has_timestamp) {
+	if (tp->timestamp.is_valid()) {
 		LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-		char date_buf[20];
-		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&tp->timestamp));
-		char time_buf[20];
-		strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&tp->timestamp));
+		const QString date_buf = tp->timestamp.strftime_utc("%Y%m%d");
+		const QString time_buf = tp->timestamp.strftime_utc("%H:%M:%S");
+
 		const LatLon ll = tp->coord.get_latlon();
 		char *lat_str = convert_to_dms(ll.lat);
 		char *lon_str = convert_to_dms(ll.lon);
@@ -3737,20 +3735,18 @@ void Track::split_by_timestamp_cb(void)
 
 	/* Iterate through trackpoints, and copy them into new lists without touching original list. */
 	auto iter = this->trackpoints.begin();
-	time_t prev_ts = (*iter)->timestamp;
+	time_t prev_ts = (*iter)->timestamp.get_value();
 
 	TrackPoints * newtps = new TrackPoints;
 	std::list<TrackPoints *> points;
 
 	for (; iter != this->trackpoints.end(); iter++) {
-		time_t ts = (*iter)->timestamp;
+		time_t ts = (*iter)->timestamp.get_value();
 
 		/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
 		if (ts < prev_ts) {
-			char tmp_str[64];
-			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
-
-			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(QString(tmp_str))), main_window) {
+			const Time tstamp(ts);
+			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(tstamp.strftime_local("%c"))), main_window) {
 				parent_layer->goto_coord(ThisApp::get_main_viewport(), (*iter)->coord); /* TODO: this method should not be in a layer. Perhaps in viewport? */
 			}
 			return;
@@ -4227,11 +4223,9 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	/* Get start date. */
 	QString start_date_str;
 	if (!this->empty()
-	    && (*this->trackpoints.begin())->has_timestamp) {
+	    && (*this->trackpoints.begin())->timestamp.is_valid()) {
 
-		QDateTime start_date;
-		start_date.setTime_t((*this->trackpoints.begin())->timestamp);
-		start_date_str = date_start.toString(dialog->date_time_format);
+		start_date_str = (*this->trackpoints.begin())->timestamp.get_time_string(dialog->date_time_format);
 	}
 
 	LayerTRW * trw = this->get_parent_layer_trw();
@@ -4409,11 +4403,11 @@ double Track::get_tp_time_percent(int idx) const
 		return NAN;
 	}
 
-	const time_t t_start = (*this->trackpoints.begin())->timestamp;
-	const time_t t_end = (*std::prev(this->trackpoints.end()))->timestamp;
+	const time_t t_start = (*this->trackpoints.begin())->timestamp.get_value();
+	const time_t t_end = (*std::prev(this->trackpoints.end()))->timestamp.get_value();
 	const time_t t_total = t_end - t_start;
 
-	return (double) (tp->timestamp - t_start) / t_total;
+	return (double) (tp->timestamp.get_value() - t_start) / t_total; /* TODO: is casting the last operation in this expression? If so, then we lose precision. */
 }
 
 
@@ -4422,4 +4416,19 @@ double Track::get_tp_time_percent(int idx) const
 Trackpoint * Track::get_tp(int idx) const
 {
 	return this->tps[idx];
+}
+
+
+
+
+void Trackpoint::set_timestamp(const Time & value)
+{
+	this->timestamp = value;
+}
+
+
+
+void Trackpoint::set_timestamp(time_t value)
+{
+	this->timestamp = Time(value);
 }

@@ -37,6 +37,7 @@
 
 
 
+#include "measurements.h"
 #include "tree_view.h"
 #include "bbox.h"
 #include "coord.h"
@@ -158,7 +159,7 @@ namespace SlavGPS {
 
 
 
-		time_t get_earliest_timestamp();
+		Time get_earliest_timestamp(void) const;
 
 		void apply_dem_data_common(bool skip_existing_elevations);
 

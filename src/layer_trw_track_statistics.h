@@ -42,6 +42,8 @@ namespace SlavGPS {
 
 	class TrackStatistics {
 	public:
+		TrackStatistics();
+
 		void add_track_maybe(Track * trk, bool layer_is_visible, bool tracks_are_visible, bool routes_are_visible, bool include_invisible);
 		void add_track(Track * trk);
 
@@ -59,9 +61,9 @@ namespace SlavGPS {
 		Speed max_speed = Speed(0.0, SpeedUnit::MetresPerSecond);
 		unsigned long trackpoints = 0;
 		unsigned int segments     = 0;
-		int duration              = 0;
-		time_t start_time         = 0;
-		time_t end_time           = 0;
+		Time duration;
+		Time start_time;
+		Time end_time;
 		int count                 = 0;
 	};
 

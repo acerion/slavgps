@@ -108,7 +108,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_LON, SGVariant(lat_lon.lon, SGVariantType::Longitude)));
 
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_TIME, SGVariant(wp->timestamp, SGVariantType::Timestamp)));
+		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_TIME, SGVariant(wp->get_timestamp())));
 #ifdef K_FIXME_RESTORE
 		QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
 #endif
@@ -141,7 +141,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	dialog.fill(param_specs, values, empty_parameter_groups);
 
 	dialog.date_time_button = (SGDateTimeButton *) dialog.get_widget(wp_param_specs[SG_WP_PARAM_TIME]);
-	if (wp->has_timestamp) {
+	if (wp->get_timestamp().is_valid()) {
 		/* This should force drawing time label on date/time
 		   button.  The label represents timestamp in specific
 		   time reference system.  If the time reference
@@ -202,8 +202,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_TIME]);
-		wp->timestamp = param_value.get_timestamp();
-		wp->has_timestamp = wp->timestamp != 0; /* TODO_LATER: zero value may still be a valid time stamp. */
+		wp->set_timestamp(param_value.get_timestamp());
 
 
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_ALT]);

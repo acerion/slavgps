@@ -360,10 +360,8 @@ void WaypointListDialog::add_row(Waypoint * wp, HeightUnit height_unit)
 {
 	/* Get start date. */
 	QString start_date_str;
-	if (wp->has_timestamp) {
-		QDateTime start_date;
-		start_date.setTime_t(wp->timestamp);
-		start_date_str = start_date.toString(this->date_time_format);
+	if (wp->get_timestamp().is_valid()) {
+		start_date_str = wp->get_timestamp().get_time_string(this->date_time_format);
 	}
 
 	LayerTRW * trw = wp->get_parent_layer_trw();

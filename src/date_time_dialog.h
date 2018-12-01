@@ -59,7 +59,7 @@ namespace SlavGPS {
 	public:
 		SGDateTimeDialog(QDateTime const & date_time, bool show_clock, QWidget * parent = NULL);
 		~SGDateTimeDialog();
-		time_t get_timestamp(void) const;
+		Time get_timestamp(void) const;
 
 		void set_date_time(QDateTime const & date_time);
 		QDateTime get_date_time(void) const;
@@ -79,12 +79,12 @@ namespace SlavGPS {
 	class SGDateTimeButton : public QPushButton {
 		Q_OBJECT
 	public:
-		SGDateTimeButton(QWidget * parent_widget);
-		SGDateTimeButton(time_t date_time, QWidget * parent);
+		SGDateTimeButton(QWidget * parent);
+		SGDateTimeButton(const Time & date_time, QWidget * parent);
 		~SGDateTimeButton();
-		time_t get_value(void);
+		Time get_value(void);
 
-		void set_label(time_t timestamp_value, const Coord & coord);
+		void set_label(const Time & value, const Coord & coord);
 		void clear_label(void);
 
 		/* Set coordinate of an object, for which a timestamp is being displayed. */
@@ -103,7 +103,7 @@ namespace SlavGPS {
 
 	private:
 		SGDateTimeDialog * dialog = NULL;
-		time_t timestamp = 0;
+		Time timestamp;
 		Coord coord; /* Coordinates of object, for which a timestamp is being displayed. */
 
 		Qt::DateFormat date_time_format = Qt::ISODate;

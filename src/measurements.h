@@ -30,6 +30,12 @@
 
 
 #include <QString>
+#include <QTimeZone>
+
+
+
+
+#include "globals.h"
 
 
 
@@ -101,6 +107,11 @@ namespace SlavGPS {
 
 
 
+	class Coord;
+
+
+
+
 	/* Coord display format. */
 	enum class DegreeFormat {
 		DDD,
@@ -160,8 +171,6 @@ namespace SlavGPS {
 	class Measurements {
 	public:
 		static QString get_file_size_string(size_t file_size);
-
-		static QString get_duration_string(time_t duration);
 	};
 
 
@@ -339,6 +348,56 @@ namespace SlavGPS {
 		bool valid = false;
 		SpeedUnit unit;
 	};
+
+
+
+
+	class Time {
+	public:
+		Time();
+		Time(time_t value);
+
+		time_t get_value(void) const;
+
+		QString to_duration_string(void) const;
+		QString to_timestamp_string(Qt::TimeSpec time_spec = Qt::LocalTime) const;
+		QString get_time_string(Qt::DateFormat format) const;
+		QString get_time_string(Qt::DateFormat format, const Coord & coord) const;
+		QString get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const;
+
+		bool is_valid(void) const;
+		void invalidate(void);
+		void set_valid(bool value);
+		sg_ret set_from_unix_timestamp(const char * str);
+		sg_ret set_from_unix_timestamp(const QString & str);
+
+
+		static Time get_abs_diff(const Time & t1, const Time & t2);
+
+		QString strftime_local(const char * format) const;
+		QString strftime_utc(const char * format) const;
+
+		time_t value = 0;
+
+		friend Time operator+(const Time & lhs, const Time & rhs);
+		friend Time operator-(const Time & lhs, const Time & rhs);
+		friend bool operator<(const Time & lhs, const Time & rhs);
+		friend bool operator>(const Time & lhs, const Time & rhs);
+		friend QDebug operator<<(QDebug debug, const Time & timestamp);
+
+		bool operator==(const Time & timestamp) const;
+		bool operator!=(const Time & timestamp) const;
+
+		Time & operator+=(const Time & rhs);
+
+	private:
+		bool valid = false;
+	};
+	Time operator+(const Time & lhs, const Time & rhs);
+	Time operator-(const Time & lhs, const Time & rhs);
+	bool operator<(const Time & lhs, const Time & rhs);
+	bool operator>(const Time & lhs, const Time & rhs);
+	QDebug operator<<(QDebug debug, const Time & timestamp);
 
 
 

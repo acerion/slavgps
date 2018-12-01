@@ -43,6 +43,14 @@ using namespace SlavGPS;
 
 
 
+TrackStatistics::TrackStatistics()
+{
+	this->duration = Time(0); /* Set some valid initial value. */
+}
+
+
+
+
 /**
    Accumulate statistics from given track.
 
@@ -83,20 +91,22 @@ void TrackStatistics::add_track(Track * trk)
 	}
 
 	if (!trk->empty()
-	    && (*trk->trackpoints.begin())->timestamp) {
+	    && (*trk->trackpoints.begin())->timestamp.is_valid()) {
 
-		time_t t1 = (*trk->trackpoints.begin())->timestamp;
-		time_t t2 = (*std::prev(trk->trackpoints.end()))->timestamp;
+		/* TODO: there already is a similar code elsewhere,
+		   look for "const Time t1". */
+	        const Time t1 = (*trk->trackpoints.begin())->timestamp;
+		const Time t2 = (*std::prev(trk->trackpoints.end()))->timestamp;
 
-		/* Assume never actually have a track with a time of 0 (1st Jan 1970). */
-		if (this->start_time == 0) {
+		/* Initialize if necessary. */
+		if (!this->start_time.is_valid()) {
 			this->start_time = t1;
 		}
-		if (this->end_time == 0) {
+		if (!this->end_time.is_valid()) {
 			this->end_time = t2;
 		}
 
-		/* Initialize to the first value. */
+		/* Update min/max value. */
 		if (t1 < this->start_time) {
 			this->start_time = t1;
 		}
@@ -104,7 +114,7 @@ void TrackStatistics::add_track(Track * trk)
 			this->end_time = t2;
 		}
 
-		this->duration = this->duration + (int) (t2 - t1);
+		this->duration = this->duration + (t2 - t1);
 	}
 }
 

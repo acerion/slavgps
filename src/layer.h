@@ -164,7 +164,7 @@ namespace SlavGPS {
 
 		virtual void change_coord_mode(CoordMode dest_mode) { return; };
 
-		virtual time_t get_timestamp(void) const { return 0; };
+		virtual Time get_timestamp(void) const override;
 
 		/* Treeview drag and drop method. called on the
 		   destination layer. it is given a source and

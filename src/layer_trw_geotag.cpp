@@ -87,7 +87,7 @@ static GeoTagValues get_default_values(void);
 
 #define EXIF_DATE_FORMAT "%d:%d:%d %d:%d:%d"
 
-time_t ConvertToUnixTime(char * StringTime, char * Format, int TZOffsetHours, int TZOffsetMinutes)
+time_t ConvertToUnixTime(const char * StringTime, const char * Format, int TZOffsetHours, int TZOffsetMinutes)
 {
 	/* Read the time using the specified format.  The format and
 	   string being read from must have the most significant time
@@ -100,19 +100,19 @@ time_t ConvertToUnixTime(char * StringTime, char * Format, int TZOffsetHours, in
 	}
 
 	/* Define and set up our structure. */
-	struct tm Time;
-	Time.tm_wday = 0;
-	Time.tm_yday = 0;
-	Time.tm_isdst = -1;
+	struct tm result;
+	result.tm_wday = 0;
+	result.tm_yday = 0;
+	result.tm_isdst = -1;
 
 	/* Read out the time from the string using our format. */
-	sscanf(StringTime, Format, &Time.tm_year, &Time.tm_mon,
-	       &Time.tm_mday, &Time.tm_hour,
-	       &Time.tm_min, &Time.tm_sec);
+	sscanf(StringTime, Format, &result.tm_year, &result.tm_mon,
+	       &result.tm_mday, &result.tm_hour,
+	       &result.tm_min, &result.tm_sec);
 
 	/* Adjust the years for the mktime function to work. */
-	Time.tm_year -= 1900;
-	Time.tm_mon  -= 1;
+	result.tm_year -= 1900;
+	result.tm_mon  -= 1;
 
 	/* Add our timezone offset to the time.  We don't check to see
 	   if it overflowed anything; mktime does this and fixes it
@@ -120,11 +120,11 @@ time_t ConvertToUnixTime(char * StringTime, char * Format, int TZOffsetHours, in
 	/* Note also that we SUBTRACT these times. We want the result
 	   to be in UTC. */
 
-	Time.tm_hour -= TZOffsetHours;
-	Time.tm_min  -= TZOffsetMinutes;
+	result.tm_hour -= TZOffsetHours;
+	result.tm_min  -= TZOffsetMinutes;
 
 	/* Calculate and return the unix time. */
-	return mktime(&Time);
+	return mktime(&result);
 }
 /* GPSCorrelate END */
 
@@ -165,7 +165,7 @@ public:
 	/* User options... */
 	GeoTagValues values;
 
-	time_t photo_time = 0;
+	Time photo_time;
 	/* Store answer from interpolation for an image. */
 	bool found_match = false;
 	Coord coord;
@@ -226,6 +226,8 @@ GeotagJob::GeotagJob(GeoTagDialog * dialog)
 	this->selected_images = dialog->files_selection->get_list();
 
 	this->n_items = this->selected_images.size();
+
+	this->photo_time = Time(0); /* This will set timestamp as valid. */
 }
 
 
@@ -367,8 +369,9 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 			   points. Ie, a number between 0 and 1 - 0 is
 			   the first point, 1 is the next point, and
 			   0.5 would be half way. */
-			double scale = (double)tp_next->timestamp - (double)tp->timestamp;
-			scale = ((double) this->photo_time - (double) tp->timestamp) / scale;
+			const Time up = this->photo_time - tp->timestamp;
+			const Time down = tp_next->timestamp - tp->timestamp;
+			const double scale = up.get_value() / (1.0 * down.get_value());
 
 			/* Interpolate coordinate. */
 			const LatLon interpolated = LatLon::get_interpolated(tp->coord.get_latlon(), tp_next->coord.get_latlon(), scale);
@@ -483,10 +486,10 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 		return;
 	}
 
-	this->photo_time = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, this->values.TimeZoneHours, this->values.TimeZoneMins);
+	this->photo_time.value = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, this->values.TimeZoneHours, this->values.TimeZoneMins);
 
 	/* Apply any offset. */
-	this->photo_time += this->values.time_offset;
+	this->photo_time.value += this->values.time_offset;
 
 	this->found_match = false;
 

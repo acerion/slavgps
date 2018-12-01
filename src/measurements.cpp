@@ -2,6 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
  * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +24,7 @@
 
 
 #include <cmath>
+#include <ctime>
 
 
 
@@ -51,6 +53,12 @@ using namespace SlavGPS;
 
 
 
+static char * time_string_adjusted(time_t time, int offset_s);
+static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz);
+
+
+
+
 QString Measurements::get_file_size_string(size_t file_size)
 {
 	float size = (float) file_size;
@@ -68,20 +76,6 @@ QString Measurements::get_file_size_string(size_t file_size)
 	}
 
 	return QObject::tr("%1%2").arg(size, 0, 'f', show_fractional * 2).arg(unit);
-}
-
-
-
-
-QString Measurements::get_duration_string(time_t duration)
-{
-	QString result;
-
-	const int seconds = duration % 60;
-	const int minutes = (duration / 60) % 60;
-	const int hours   = (duration / (60 * 60)) % 60;
-
-	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
 }
 
 
@@ -989,7 +983,7 @@ QString Speed::to_string(double value, int precision)
 		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
 		break;
 	default:
-		buffer = "???";
+		buffer = INVALID_RESULT_STRING;
 		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
 		break;
 	}
@@ -1327,3 +1321,397 @@ static QString distance_string(double distance)
 
 
 #endif
+
+
+
+
+Time::Time()
+{
+}
+
+
+
+
+Time::Time(time_t new_value)
+{
+	this->value = new_value;
+	this->valid = !std::isnan(this->value);
+}
+
+
+
+
+bool Time::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+
+time_t Time::get_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+Time SlavGPS::operator+(const Time & lhs, const Time & rhs)
+{
+	Time result;
+
+	if (!lhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
+		return result;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
+		return result;
+	}
+
+	result.value = lhs.value + rhs.value;
+	result.valid = result.value >= 0;
+
+	return result;
+}
+
+
+
+
+Time SlavGPS::operator-(const Time & lhs, const Time & rhs)
+{
+	Time result;
+
+	if (!lhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
+		return result;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
+		return result;
+	}
+
+	result.value = lhs.value - rhs.value;
+	result.valid = result.value >= 0;
+	return result;
+}
+
+
+
+
+bool SlavGPS::operator<(const Time & lhs, const Time & rhs)
+{
+	return lhs.value < rhs.value;
+}
+
+
+
+
+bool SlavGPS::operator>(const Time & lhs, const Time & rhs)
+{
+	return rhs < lhs;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const Time & timestamp)
+{
+	debug << "Time:" << timestamp.value;
+	return debug;
+}
+
+
+
+
+bool Time::operator==(const Time & rhs) const
+{
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		return false;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		return false;
+	}
+
+	return this->value == rhs.value;
+}
+
+
+
+
+bool Time::operator!=(const Time & rhs) const
+{
+	return *this != rhs;
+}
+
+
+
+
+Time & Time::operator+=(const Time & rhs)
+{
+	if (!rhs.valid) {
+		return *this;
+	}
+
+	if (!this->valid) {
+		return *this;
+	}
+
+	this->value += rhs.value;
+	this->valid = !std::isnan(this->value);
+	return *this;
+}
+
+
+
+
+Time Time::get_abs_diff(const Time & t1, const Time & t2)
+{
+	Time result;
+	result.value = std::abs(t1.value - t2.value);
+	result.valid = true;
+
+	return result;
+}
+
+
+
+
+QString Time::strftime_utc(const char * format) const
+{
+	char timestamp_string[32] = { 0 };
+	struct tm tm;
+	std::strftime(timestamp_string, sizeof (timestamp_string), format, gmtime_r(&this->value, &tm));
+
+	return QString(timestamp_string);
+}
+
+
+
+
+QString Time::strftime_local(const char * format) const
+{
+	char timestamp_string[32] = { 0 };
+	struct tm tm;
+	std::strftime(timestamp_string, sizeof (timestamp_string), format, localtime_r(&this->value, &tm));
+
+	return QString(timestamp_string);
+}
+
+
+
+
+QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
+{
+	QString result;
+	if (this->is_valid()) {
+		 /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		result = QDateTime::fromTime_t(this->get_value(), time_spec).toString(Qt::ISODate);
+	} else {
+		result = QObject::tr("No Data");
+	}
+	return result;
+}
+
+
+
+
+QString Time::to_duration_string(void) const
+{
+	QString result;
+
+	const int seconds = this->value % 60;
+	const int minutes = (this->value / 60) % 60;
+	const int hours   = (this->value / (60 * 60)) % 60;
+
+	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
+}
+
+
+
+
+void Time::set_valid(bool new_value)
+{
+	this->valid = new_value;
+}
+
+
+
+
+QString Time::get_time_string(Qt::DateFormat format) const
+{
+	QDateTime date_time;
+	date_time.setTime_t(this->value);
+	const QString result = date_time.toString(format);
+
+	return result;
+}
+
+
+
+
+/**
+   @timestamp - The time of which the string is wanted
+   @format - The format of the time string
+   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
+
+   @return a string of the time according to the time display property
+*/
+QString Time::get_time_string(Qt::DateFormat format, const Coord & coord) const
+{
+	QString result;
+
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	const QTimeZone * tz_from_location = NULL;
+
+	const SGTimeReference ref = Preferences::get_time_ref_frame();
+	switch (ref) {
+	case SGTimeReference::UTC:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::utc()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << this->value << "-> time string" << result;
+		break;
+	case SGTimeReference::World:
+		/* No timezone specified so work it out. */
+		tz_from_location = TZLookup::get_tz_at_location(coord);
+		if (tz_from_location) {
+			result = time_string_tz(this->value, format, *tz_from_location);
+			qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << this->value << "-> time string" << result;
+		} else {
+			/* No results (e.g. could be in the middle of a sea).
+			   Fallback to simplistic method that doesn't take into account Timezones of countries. */
+			const LatLon ll = coord.get_latlon();
+			result = time_string_adjusted(this->value, round (ll.lon / 15.0) * 3600);
+			qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
+		}
+		break;
+	case SGTimeReference::Locale:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::systemTimeZone()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << this->value << "-> time string" << result;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+/**
+   @timestamp - The time of which the string is wanted
+   @format - The format of the time string
+   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
+   @tz - TimeZone string - maybe NULL (only applicable for SGTimeReference::World). Useful to pass in the cached value from TZLookup::get_tz_at_location() to save looking it up again for the same position.
+
+   @return a string of the time according to the time display property
+*/
+QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const
+{
+	QString result;
+
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+		return result;
+	}
+
+	const SGTimeReference ref = Preferences::get_time_ref_frame();
+	switch (ref) {
+	case SGTimeReference::UTC:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::utc()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << this->value << "-> time string" << result;
+		break;
+	case SGTimeReference::World:
+		if (tz) {
+			/* Use specified timezone. */
+			result = time_string_tz(this->value, format, *tz);
+			qDebug() << SG_PREFIX_D << "World (from timezone): timestamp =" << this->value << "-> time string" << result;
+		} else {
+			/* No timezone specified so work it out. */
+			QTimeZone const * tz_from_location = TZLookup::get_tz_at_location(coord);
+			if (tz_from_location) {
+			        result = time_string_tz(this->value, format, *tz_from_location);
+				qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << this->value << "-> time string" << result;
+			} else {
+				/* No results (e.g. could be in the middle of a sea).
+				   Fallback to simplistic method that doesn't take into account Timezones of countries. */
+				const LatLon ll = coord.get_latlon();
+			        result = time_string_adjusted(this->value, round (ll.lon / 15.0) * 3600);
+				qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
+			}
+		}
+		break;
+	case SGTimeReference::Locale:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::systemTimeZone()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << this->value << "-> time string" << result;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+static char * time_string_adjusted(time_t time, int offset_s)
+{
+	time_t mytime = time + offset_s;
+	char * str = (char *) malloc(64); /* TODO: where do we deallocate this? */
+	struct tm tm;
+	/* Append asterisks to indicate use of simplistic model (i.e. no TZ). */
+	strftime(str, 64, "%a %X %x **", gmtime_r(&mytime, &tm));
+	return str;
+}
+
+
+
+
+static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz)
+{
+	QDateTime utc = QDateTime::fromTime_t(time, Qt::OffsetFromUTC, 0);  /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+	QDateTime local = utc.toTimeZone(tz);
+
+	return local.toString(format);
+}
+
+
+
+
+sg_ret Time::set_from_unix_timestamp(const char * str)
+{
+	if (NULL == str) {
+		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of timestamp from NULL string";
+		this->valid = false;
+		return sg_ret::err_arg;
+	} else {
+		return this->set_from_unix_timestamp(QString(str));
+	}
+}
+
+
+
+
+sg_ret Time::set_from_unix_timestamp(const QString & str)
+{
+	this->value = (time_t) str.toULong(&this->valid);
+
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_W << "Setting invalid value of timestamp from string" << str;
+	}
+
+	return this->valid ? sg_ret::ok : sg_ret::err;
+}

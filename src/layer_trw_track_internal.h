@@ -80,13 +80,13 @@ namespace SlavGPS {
 		void set_name(const QString & new_name);
 		static bool compare_timestamps(const Trackpoint * a, const Trackpoint * b); /* compare_trackpoints_t */
 
-
+		void set_timestamp(const Time & value);
+		void set_timestamp(time_t value);
 
 		QString name;
 		Coord coord;
 		bool newsegment = false;
-		bool has_timestamp = false;
-		time_t timestamp = 0;
+		Time timestamp; /* Invalid by default (trackpoint doesn't have a timestamp). */
 
 		double altitude = VIK_DEFAULT_ALTITUDE; /* VIK_DEFAULT_ALTITUDE if data unavailable. */
 		double speed = NAN;  	                /* NAN if data unavailable. */
@@ -105,7 +105,7 @@ namespace SlavGPS {
 
 	/*
 	  Convenience class for pair of vectors representing track's
-	  Speed/Timestamp or Altitude/Timestamp information.
+	  Speed/Time or Altitude/Timestamp information.
 
 	  The two vectors are put in one data structure because
 	  values in the vectors are calculated during one iteration
@@ -231,13 +231,13 @@ namespace SlavGPS {
 
 		unsigned int merge_segments(void);
 		void reverse(void);
-		time_t get_duration(bool include_segments) const;
-		double get_duration() const; /* private. */
+		Time get_duration(bool include_segments) const;
+		Time get_duration(void) const; /* private. */
 
-		unsigned long get_dup_point_count() const;
-		unsigned long remove_dup_points();
-		unsigned long get_same_time_point_count() const;
-		unsigned long remove_same_time_points();
+		unsigned long get_dup_point_count(void) const;
+		unsigned long remove_dup_points(void);
+		unsigned long get_same_time_point_count(void) const;
+		unsigned long remove_same_time_points(void);
 
 		void to_routepoints();
 

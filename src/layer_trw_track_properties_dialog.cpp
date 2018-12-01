@@ -317,10 +317,10 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 
 	if (!this->trk->empty()
-	    && (*this->trk->trackpoints.begin())->timestamp) {
+	    && (*this->trk->trackpoints.begin())->timestamp.is_valid()) {
 
-		time_t t1 = (*this->trk->trackpoints.begin())->timestamp;
-		time_t t2 = (*std::prev(this->trk->trackpoints.end()))->timestamp;
+		const Time t1 = (*this->trk->trackpoints.begin())->timestamp;
+		const Time t2 = (*std::prev(this->trk->trackpoints.end()))->timestamp;
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		const LatLon center((this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2);
@@ -329,25 +329,25 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		this->tz = TZLookup::get_tz_at_location(coord);
 
 
-		QString msg = SGUtils::get_time_string(t1, Qt::TextDate, coord, this->tz);
+		QString msg = t1.get_time_string(Qt::TextDate, coord, this->tz);
 		this->w_time_start = ui_label_new_selectable(msg, this);
 		this->grid->addWidget(new QLabel(tr("Start:")), row, 0);
 		this->grid->addWidget(this->w_time_start, row, 1);
 		row++;
 
 
-		msg = SGUtils::get_time_string(t2, Qt::TextDate, coord, this->tz);
+		msg = t2.get_time_string(Qt::TextDate, coord, this->tz);
 		this->w_time_end = ui_label_new_selectable(msg, this);
 		this->grid->addWidget(new QLabel(tr("End:")), row, 0);
 		this->grid->addWidget(this->w_time_end, row, 1);
 		row++;
 
 
-		const int total_duration_s = (int) (t2 - t1);
-		const int segments_duration_s = (int) this->trk->get_duration(false);
+		const Time total_duration_s = (t2 - t1);
+		const Time segments_duration_s = this->trk->get_duration(false);
 		result = tr("%1 total - %2 in segments")
-			.arg(Measurements::get_duration_string(total_duration_s))
-			.arg(Measurements::get_duration_string(segments_duration_s));
+			.arg(total_duration_s.to_duration_string())
+			.arg(segments_duration_s.to_duration_string());
 		this->w_time_dur = ui_label_new_selectable(result, this);
 		this->grid->addWidget(new QLabel(tr("Duration:")), row, 0);
 		this->grid->addWidget(this->w_time_dur, row, 1);

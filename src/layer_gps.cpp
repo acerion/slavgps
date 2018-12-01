@@ -1433,8 +1433,8 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 {
 	/* Note that fix.time is a double, but it should not affect
 	   the precision for most GPS. */
-	time_t cur_timestamp = this->realtime_fix.fix.time;
-	time_t last_timestamp = this->last_fix.fix.time;
+	const time_t cur_timestamp = this->realtime_fix.fix.time;
+	const time_t last_timestamp = this->last_fix.fix.time;
 
 	if (cur_timestamp < last_timestamp) {
 		return NULL;
@@ -1467,8 +1467,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 			/* TODO_LATER: check for new segments. */
 			Trackpoint * tp_ = new Trackpoint();
 			tp_->newsegment = false;
-			tp_->has_timestamp = true;
-			tp_->timestamp = this->realtime_fix.fix.time;
+			tp_->set_timestamp(this->realtime_fix.fix.time);
 			tp_->altitude = alt;
 			/* Speed only available for 3D fix. Check for NAN when use this speed. */
 			tp_->speed = this->realtime_fix.fix.speed;

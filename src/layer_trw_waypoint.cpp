@@ -92,8 +92,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 
 	this->coord = wp.coord;
 	this->visible = wp.visible;
-	this->has_timestamp = wp.has_timestamp;
-	this->timestamp = wp.timestamp;
+	this->set_timestamp(wp.timestamp);
 	this->altitude = wp.altitude;
 
 	this->set_name(wp.name);
@@ -525,10 +524,8 @@ void Waypoint::apply_dem_data_common(bool skip_existing_elevations)
 */
 void Waypoint::open_diary_cb(void)
 {
-	char date_buf[20];
-	date_buf[0] = '\0';
-	if (this->has_timestamp) {
-		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&this->timestamp));
+	if (this->timestamp.is_valid()) {
+		const QString date_buf = this->timestamp.strftime_utc("%Y-%m-%d");
 		((LayerTRW *) this->owning_layer)->diary_open(date_buf);
 	} else {
 		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());
@@ -545,11 +542,11 @@ void Waypoint::open_astro_cb(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	if (this->has_timestamp) {
-		char date_buf[20];
-		strftime(date_buf, sizeof(date_buf), "%Y%m%d", gmtime(&this->timestamp));
-		char time_buf[20];
-		strftime(time_buf, sizeof(time_buf), "%H:%M:%S", gmtime(&this->timestamp));
+	if (this->timestamp.is_valid()) {
+
+		const QString date_buf = this->timestamp.strftime_utc("%Y%m%d");
+		const QString time_buf = this->timestamp.strftime_utc("%H:%M:%S");
+
 		const LatLon ll = this->coord.get_latlon();
 		char *lat_str = convert_to_dms(ll.lat);
 		char *lon_str = convert_to_dms(ll.lon);
@@ -760,10 +757,8 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 			break;
 
 		case TreeItemPropertyID::Timestamp:
-			if (this->has_timestamp) {
-				QDateTime date_time;
-				date_time.setTime_t(this->timestamp);
-				date_time_string = date_time.toString(date_time_format);
+			if (this->timestamp.is_valid()) {
+				date_time_string = this->timestamp.get_time_string(date_time_format);
 			}
 			item = new QStandardItem(date_time_string);
 			item->setToolTip(tooltip);

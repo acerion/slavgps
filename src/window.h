@@ -37,6 +37,7 @@
 
 
 
+#include "measurements.h"
 #include "viewport.h"
 #include "viewport_save_dialog.h"
 #include "layer_trw_track.h"

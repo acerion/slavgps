@@ -710,3 +710,11 @@ std::list<TreeItem *> Layer::get_items_by_date(const QDate & search_date) const
 	std::list<TreeItem *> result;
 	return result;
 }
+
+
+
+
+Time Layer::get_timestamp(void) const
+{
+	return Time(0);
+}

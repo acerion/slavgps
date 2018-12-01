@@ -1362,26 +1362,27 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 		result.length += trk->get_length();
 
 		/* Ensure times are available. */
-		if (trk->empty() || !trk->get_tp_first()->has_timestamp) {
+		if (trk->empty() || !trk->get_tp_first()->timestamp.is_valid()) {
 			continue;
 		}
 
 		/* Get trkpt only once - as using get_tp_last() iterates whole track each time. */
 		Trackpoint * trkpt_last = trk->get_tp_last();
-		if (!trkpt_last->has_timestamp) {
+		if (!trkpt_last->timestamp.is_valid()) {
 			continue;
 		}
 
 
-		time_t t1 = trk->get_tp_first()->timestamp;
-		time_t t2 = trkpt_last->timestamp;
+		/* TODO: there already is a similar code elsewhere,
+		   look for "const Time t1". */
+		const Time t1 = trk->get_tp_first()->timestamp;
+		const Time t2 = trkpt_last->timestamp;
 
-		/* Assume never actually have a track with a time of 0 (1st Jan 1970).
-		   Hence initialize to the first 'proper' value. */
-		if (result.start_time == 0) {
+		/* Initialize if necessary. */
+		if (!result.start_time.is_valid()) {
 			result.start_time = t1;
 		}
-		if (result.end_time == 0) {
+		if (!result.end_time.is_valid()) {
 			result.end_time = t2;
 		}
 
@@ -1397,7 +1398,7 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 		/* Keep track of total time.
 		   There maybe gaps within a track (eg segments)
 		   but this should be generally good enough for a simple indicator. */
-		result.duration = result.duration + (int) (t2 - t1);
+		result.duration = result.duration + (t2 - t1);
 	}
 
 	return result;
@@ -1416,10 +1417,10 @@ QString LayerTRW::get_tooltip(void) const
 		TracksTooltipData ttd = this->get_tracks_tooltip_data();
 
 		QDateTime date_start;
-		date_start.setTime_t(ttd.start_time);
+		date_start.setTime_t(ttd.start_time.get_value());
 
 		QDateTime date_end;
-		date_end.setTime_t(ttd.end_time);
+		date_end.setTime_t(ttd.end_time.get_value());
 
 		QString duration_string;
 
@@ -1442,8 +1443,8 @@ QString LayerTRW::get_tooltip(void) const
 				tracks_info = QObject::tr("\n%1Total Length %2 in %3 %4")
 					.arg(duration_string)
 					.arg(distance_string)
-					.arg((int)(ttd.duration/3600))
-					.arg((int) round(ttd.duration / 60.0) % 60, 2, 10, (QChar) '0');
+					.arg((int)(ttd.duration.get_value()/3600))
+					.arg((int) round(ttd.duration.get_value() / 60.0) % 60, 2, 10, (QChar) '0');
 			} else {
 				tracks_info = QObject::tr("\n%1Total Length %2")
 					.arg(duration_string)
@@ -2235,9 +2236,8 @@ sg_ret LayerTRW::attach_to_tree(Track * trk)
 
 
 		Trackpoint * tp = trk->get_tp_first();
-		if (tp && tp->has_timestamp) {
-			trk->timestamp = tp->timestamp;
-			trk->has_timestamp = true;
+		if (tp && tp->timestamp.is_valid()) {
+			trk->set_timestamp(tp->timestamp);
 		}
 
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trk->name << "under" << this->tracks.name;
@@ -2767,25 +2767,6 @@ void LayerTRW::edit_trackpoint_cb(void)
 
 
 
-/* comparison function used to sort tracks; a and b are hash table keys */
-/* Not actively used - can be restored if needed. */
-#ifdef K_OLD_IMPLEMENTATION
-static int track_compare(gconstpointer a, gconstpointer b, void * user_data)
-{
-	GHashTable *tracks = user_data;
-
-	time_t t1 = ((Trackpoint *) ((Track *) g_hash_table_lookup(tracks, a))->trackpoints->data)->timestamp;
-	time_t t2 = ((Trackpoint *) ((Track *) g_hash_table_lookup(tracks, b))->trackpoints->data)->timestamp;
-
-	if (t1 < t2) return -1;
-	if (t1 > t2) return 1;
-	return 0;
-}
-#endif
-
-
-
-
 /**
  * Attempt to merge selected track with other tracks specified by the user
  * Tracks to merge with must be of the same 'type' as the selected track -
@@ -2808,7 +2789,7 @@ void LayerTRW::merge_with_other_cb(void)
 
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
-	bool with_timestamps = track->get_tp_first()->has_timestamp;
+	const bool with_timestamps = track->get_tp_first()->timestamp.is_valid();
 	std::list<Track *> merge_candidates = source_sublayer.find_tracks_with_timestamp_type(with_timestamps, track);
 
 	if (merge_candidates.empty()) {
@@ -3013,7 +2994,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 	}
 
 	if (!orig_track->empty()
-	    && !orig_track->get_tp_first()->has_timestamp) {
+	    && !orig_track->get_tp_first()->timestamp.is_valid()) {
 		Dialog::error(tr("Failed. This track does not have timestamp"), this->get_window());
 		return;
 	}
@@ -3265,7 +3246,7 @@ void LayerTRW::insert_point_before_cb(void)
  * But could work with any program that accepts a command line of --date=<date>
  * FUTURE: Allow configuring of command line options + date format
  */
-void LayerTRW::diary_open(char const * date_str)
+void LayerTRW::diary_open(const QString & date_str)
 {
 	GError *err = NULL;
 	const QString cmd = QString("%1 %2%3").arg(diary_program).arg("--date=").arg(date_str);
@@ -3284,7 +3265,7 @@ void LayerTRW::diary_open(char const * date_str)
  * But could work with any program that accepts the same command line options...
  * FUTURE: Allow configuring of command line options + format or parameters
  */
-void LayerTRW::astro_open(char const * date_str,  char const * time_str, char const * lat_str, char const * lon_str, char const * alt_str)
+void LayerTRW::astro_open(const QString & date_str, const QString & time_str, char const * lat_str, char const * lon_str, char const * alt_str)
 {
 	GError *err = NULL;
 	char * ini_file_path;
@@ -3493,7 +3474,7 @@ void LayerTRW::get_waypoints_list(std::list<SlavGPS::Waypoint *> & list)
 /**
    Fill the list with tracks and/or routes from the layer.
 */
-void LayerTRW::get_tracks_list(std::list<Track *> & list, const QString & type_id_string)
+void LayerTRW::get_tracks_list(std::list<Track *> & list, const QString & type_id_string) const
 {
 	if (type_id_string == "" || type_id_string == "sg.trw.tracks") {
 		this->tracks.get_tracks_list(list);
@@ -3822,13 +3803,13 @@ void LayerTRW::sort_all()
 /**
  * Get the earliest timestamp available for this layer.
  */
-time_t LayerTRW::get_timestamp(void)
+Time LayerTRW::get_timestamp(void) const
 {
-	const time_t timestamp_tracks = this->tracks.get_earliest_timestamp();
-	const time_t timestamp_waypoints = this->waypoints.get_earliest_timestamp();
+	const Time timestamp_tracks = this->tracks.get_earliest_timestamp();
+	const Time timestamp_waypoints = this->waypoints.get_earliest_timestamp();
 	/* NB routes don't have timestamps - hence they are not considered. */
 
-	if (!timestamp_tracks && !timestamp_waypoints) {
+	if (!timestamp_tracks.is_valid() && !timestamp_waypoints.is_valid()) {
 		/* Fallback to get time from the metadata when no other timestamps available. */
 		if (this->metadata
 		    && this->metadata->has_timestamp
@@ -3836,16 +3817,16 @@ time_t LayerTRW::get_timestamp(void)
 
 			const QDateTime ts = QDateTime::fromString(this->metadata->iso8601_timestamp, Qt::ISODate);
 			if (!ts.isNull() && ts.isValid()) {
-				return ts.toMSecsSinceEpoch() / MSECS_PER_SEC; /* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
+				return Time(ts.toMSecsSinceEpoch() / MSECS_PER_SEC); /* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
 			} else {
 				qDebug() << SG_PREFIX_E << "Failed to convert ISO8601 metadata timestamp" << this->metadata->iso8601_timestamp;
 			}
 		}
 	}
-	if (timestamp_tracks && !timestamp_waypoints) {
+	if (timestamp_tracks.is_valid() && !timestamp_waypoints.is_valid()) {
 		return timestamp_tracks;
 	}
-	if (timestamp_tracks && timestamp_waypoints && (timestamp_tracks < timestamp_waypoints)) {
+	if (timestamp_tracks.is_valid() && timestamp_waypoints.is_valid() && (timestamp_tracks < timestamp_waypoints)) {
 		return timestamp_tracks;
 	}
 	return timestamp_waypoints;
@@ -3891,12 +3872,12 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 
 		if (need_to_set_time) {
 			QDateTime meta_time;
-			const time_t local_timestamp = this->get_timestamp();
-			if (local_timestamp == 0) {
+			const Time local_timestamp = this->get_timestamp();
+			if (!local_timestamp.is_valid()) {
 				/* No time found - so use 'now' for the metadata time. */
 				meta_time = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
 			} else {
-				meta_time.setMSecsSinceEpoch(local_timestamp * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
+				meta_time.setMSecsSinceEpoch(local_timestamp.get_value() * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
 			}
 
 			this->metadata->iso8601_timestamp = meta_time.toString(Qt::ISODate);

@@ -459,8 +459,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		{
 			GTimeVal wp_time;
 			if (g_time_val_from_iso8601(importer->cdata.toUtf8().constData(), &wp_time)) {
-				importer->wp->timestamp = wp_time.tv_sec;
-				importer->wp->has_timestamp = true;
+				importer->wp->set_timestamp(wp_time.tv_sec);
 			}
 			importer->cdata.clear();
 		}
@@ -475,8 +474,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		{
 			GTimeVal tp_time;
 			if (g_time_val_from_iso8601(importer->cdata.toUtf8().constData(), &tp_time)) {
-				importer->tp->timestamp = tp_time.tv_sec;
-				importer->tp->has_timestamp = true;
+				importer->tp->set_timestamp(tp_time.tv_sec);
 			}
 			importer->cdata.clear();
 		}
@@ -854,9 +852,9 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 		fprintf(file, "  <ele>%s</ele>\n", wp->altitude.value_to_string_for_file().toUtf8().constData());
 	}
 
-	if (wp->has_timestamp) {
+	if (wp->get_timestamp().is_valid()) {
 		GTimeVal timestamp;
-		timestamp.tv_sec = wp->timestamp;
+		timestamp.tv_sec = wp->get_timestamp().get_value();
 		timestamp.tv_usec = 0;
 
 		char * time_iso8601 = g_time_val_to_iso8601(&timestamp);
@@ -934,9 +932,9 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	}
 
 	time_iso8601 = NULL;
-	if (tp->has_timestamp) {
+	if (tp->timestamp.is_valid()) {
 		GTimeVal timestamp;
-		timestamp.tv_sec = tp->timestamp;
+		timestamp.tv_sec = tp->timestamp.get_value();
 		timestamp.tv_usec = 0;
 
 		time_iso8601 = g_time_val_to_iso8601(&timestamp);

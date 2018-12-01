@@ -591,7 +591,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 
-void LayerAggregate::get_tracks_list(std::list<Track *> & list, const QString & type_id_string)
+void LayerAggregate::get_tracks_list(std::list<Track *> & list, const QString & type_id_string) const
 {
 	std::list<Layer const *> layers;
 	this->get_all_layers_of_type(layers, LayerType::TRW, true);
@@ -860,7 +860,7 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 
 
 
-void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, LayerType expected_layer_type, bool include_invisible)
+void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, LayerType expected_layer_type, bool include_invisible) const
 {
 	if (this->children->empty()) {
 		return;

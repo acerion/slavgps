@@ -730,13 +730,7 @@ void real_time_label_update(ProfileGraph * graph, Track * trk)
 		return;
 	}
 
-	QString result;
-	if (tp->has_timestamp) {
-		result = QDateTime::fromTime_t(tp->timestamp, Qt::LocalTime).toString(Qt::ISODate); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-	} else {
-		result = QObject::tr("No Data");
-	}
-	graph->labels.t_value->setText(result);
+	graph->labels.t_value->setText(tp->timestamp.to_timestamp_string(Qt::LocalTime));
 
 	return;
 }
@@ -1164,8 +1158,8 @@ void ProfileGraphST::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		time_t beg_time = (*trk->trackpoints.begin())->timestamp;
-		const time_t max_function_arg = (*std::prev(trk->trackpoints.end()))->timestamp - beg_time;
+		time_t beg_time = (*trk->trackpoints.begin())->timestamp.get_value();
+		const time_t max_function_arg = (*std::prev(trk->trackpoints.end()))->timestamp.get_value() - beg_time;
 		const double max_function_value = this->y_max_visible;
 
 		const QColor color = this->gps_speed_pen.color();
@@ -1178,7 +1172,7 @@ void ProfileGraphST::draw_additional_indicators(Track * trk)
 
 			gps_speed = Speed::convert_mps_to(gps_speed, this->geocanvas.speed_unit);
 
-			const time_t current_function_arg = (*iter)->timestamp - beg_time;
+			const time_t current_function_arg = (*iter)->timestamp.get_value() - beg_time;
 			const double current_function_value = gps_speed - this->y_min_visible;
 
 			const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
@@ -1270,7 +1264,8 @@ void ProfileGraphDT::save_values(void)
 void ProfileGraph::draw_graph(Track * trk)
 {
 	if (this->geocanvas.x_domain == GeoCanvasDomain::Time) {
-		if (trk->get_duration(true) <= 0) {
+		const Time duration = trk->get_duration(true);
+		if (!duration.is_valid() || duration.get_value() <= 0) {
 			return;
 		}
 	}

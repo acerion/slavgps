@@ -138,24 +138,21 @@ Waypoint * LayerTRWWaypoints::find_child_by_uid(sg_uid_t child_uid) const
 
 std::list<TreeItem *> LayerTRWWaypoints::get_waypoints_by_date(const QDate & search_date) const
 {
-	char search_date_str[20] = { 0 };
-	snprintf(search_date_str, sizeof (search_date_str), "%s", search_date.toString("yyyy-MM-dd").toUtf8().constData());
+	const QString search_date_str = search_date.toString("yyyy-MM-dd");
 	qDebug() << SG_PREFIX_I << "Search date =" << search_date << search_date_str;
 
-	char date_buf[20];
 	std::list<TreeItem *> result;
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		date_buf[0] = '\0';
 		Waypoint * wp = *iter;
 
-		if (!wp->has_timestamp) {
+		if (!wp->get_timestamp().is_valid()) {
 			continue;
 		}
 
 		/* Might be an easier way to compare dates rather than converting the strings all the time... */
-		strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&wp->timestamp));
-		if (0 == strcmp(search_date_str, date_buf)) {
+		const QString wp_date_str = wp->get_timestamp().strftime_utc("%Y-%m-%d");
+		if (search_date_str == wp_date_str) {
 			result.push_back(wp);
 		}
 	}
@@ -474,21 +471,23 @@ QIcon SlavGPS::get_wp_icon_small(const QString & symbol_name)
 /**
  * Get the earliest timestamp available from all waypoints.
  */
-time_t LayerTRWWaypoints::get_earliest_timestamp()
+Time LayerTRWWaypoints::get_earliest_timestamp(void) const
 {
-	time_t result = 0;
+	Time result;
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		Waypoint * wp = *iter;
-		if (wp->has_timestamp) {
-			/* When timestamp not set yet - use the first value encountered. */
-			if (result == 0) {
-				result = wp->timestamp;
-			} else if (result > wp->timestamp) {
-				result = wp->timestamp;
-			} else {
+		const Waypoint * wp = *iter;
+		if (!wp->get_timestamp().is_valid()) {
+			continue;
+		}
 
-			}
+		/* When timestamp not set yet - use the first value encountered. */
+		if (!result.is_valid()) {
+			result = wp->get_timestamp();
+		} else if (result > wp->get_timestamp()) {
+			result = wp->get_timestamp();
+		} else {
+			; /* NOOP */
 		}
 	}
 

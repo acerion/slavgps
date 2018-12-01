@@ -298,11 +298,9 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	/* Get start date. */
 	QString start_date;
 	if (!trk->empty()
-	    && (*trk->trackpoints.begin())->has_timestamp) {
+	    && (*trk->trackpoints.begin())->timestamp.is_valid()) {
 
-		QDateTime date_start;
-		date_start.setTime_t((*trk->trackpoints.begin())->timestamp);
-		start_date = date_start.toString(this->date_time_format);
+		start_date = (*trk->trackpoints.begin())->timestamp.get_time_string(this->date_time_format);
 	}
 
 	LayerTRW * trw = trk->get_parent_layer_trw();
@@ -311,12 +309,8 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	bool visible = trw->visible && trk->visible;
 	visible = visible && (trk->type_id == "sg.trw.route" ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
-	unsigned int trk_duration = 0; /* In minutes. */
-	if (!trk->empty()) {
-		time_t t1 = (*trk->trackpoints.begin())->timestamp;
-		time_t t2 = (*std::prev(trk->trackpoints.end()))->timestamp;
-		trk_duration = (int) round(labs(t2 - t1) / 60.0);
-	}
+
+	const Time trk_duration = trk->get_duration();
 
 
 	Altitude max_alt(0.0, HeightUnit::Metres);
@@ -382,7 +376,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 	/* DURATION_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(trk_duration);
+	variant = QVariant::fromValue(trk_duration.to_duration_string());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* This dialog is not a good place to edit track duration. */
 	items << item;

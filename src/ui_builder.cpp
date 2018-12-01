@@ -522,14 +522,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		break;
 
 	case WidgetType::DateTime:
-		/* TODO_LATER: zero timestamp may still be a valid timestamp. */
-		if (param_value.get_timestamp() != 0) {
-			SGDateTimeButton * widget_ = new SGDateTimeButton(param_value.get_timestamp(), this);
-			widget = widget_;
-		} else {
-			SGDateTimeButton * widget_ = new SGDateTimeButton(this);
-			widget = widget_;
-		}
+		widget = new SGDateTimeButton(param_value.get_timestamp(), this);
 		break;
 	default:
 		break;
@@ -680,7 +673,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		}
 		break;
 	case WidgetType::DateTime:
-		rv = SGVariant(((SGDateTimeButton *) widget)->get_value(), SGVariantType::Timestamp);
+		rv = SGVariant(((SGDateTimeButton *) widget)->get_value());
 		break;
 	default:
 		break;

@@ -75,7 +75,7 @@ namespace SlavGPS {
 		void clear(void);
 
 		void change_coord_mode(CoordMode mode);
-		std::list<const Layer *> get_all_layers_of_type(LayerType type, bool include_invisible);
+		std::list<const Layer *> get_all_layers_of_type(LayerType type, bool include_invisible) const;
 		bool has_any_layer_of_type(LayerType type);
 
 		void set_visible(bool visible);

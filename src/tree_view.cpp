@@ -138,7 +138,7 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 
 	qDebug() << SG_PREFIX_I;
 
-	QVariant variant = QVariant::fromValue((qlonglong) tree_item->get_timestamp());
+	QVariant variant = QVariant::fromValue((qlonglong) tree_item->get_timestamp().get_value());
 	this->tree_model->setData(ch->index(), variant, RoleLayerData);
 
 	qDebug() << SG_PREFIX_I;
