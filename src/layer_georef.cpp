@@ -379,12 +379,16 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	qDebug() << SG_PREFIX_I << "Viewport bbox" << viewport_bbox;
 	qDebug() << SG_PREFIX_I << "Image bbox   " << image_bbox;
 
-	if (BBOX_INTERSECT (viewport_bbox, image_bbox)) {
-		qDebug() << SG_PREFIX_I << "BBoxes intersect";
-		viewport->draw_bbox(image_bbox);
-	} else {
+	if (!BBOX_INTERSECT (viewport_bbox, image_bbox)) {
 		qDebug() << SG_PREFIX_I << "BBoxes don't intersect";
+		return;
 	}
+
+	qDebug() << SG_PREFIX_I << "BBoxes intersect";
+	QPen pen;
+	pen.setColor("red");
+	pen.setWidth(1);
+	viewport->draw_bbox(image_bbox, pen);
 
 
 	const Coord coord_tl(this->utm_tl, viewport->get_coord_mode());
@@ -402,27 +406,6 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		scale_mismatch = true;
 		sub_viewport_rect.setWidth(round(this->image_width * this->mpp_easting / xmpp));
 		sub_viewport_rect.setHeight(round(this->image_height * this->mpp_northing / ympp));
-	}
-
-
-	/* If image not in viewport bounds - no need to draw it (or bother with any scaling).
-	   TODO_LATER: rewrite this section in terms of two rectangles intersecting? */
-	const QRect full_viewport_rect(0, 0, viewport->get_width(), viewport->get_height());
-	if (!(pos_tl.x < 0 || pos_tl.x < full_viewport_rect.width())) {
-		/* Upper-left corner of image is located beyond right border of viewport. */
-		return;
-	}
-	if (!(pos_tl.y < 0 || pos_tl.y < full_viewport_rect.height())) {
-		/* Upper-left corner of image is located below bottom border of viewport. */
-		return;
-	}
-	if (!(pos_tl.x + sub_viewport_rect.width() > 0)) {
-		/* Upper-right corner of image is located beyond left border of viewport. */
-		return;
-	}
-	if (!(pos_tl.y + sub_viewport_rect.height() > 0)) {
-		/* Upper-right corner of image is located above upper border of viewport. */
-		return;
 	}
 
 

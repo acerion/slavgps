@@ -1126,6 +1126,13 @@ static void srtm_draw_existence(Viewport * viewport)
 				continue;
 			}
 
+			const LatLon lat_lon_sw(lat, lon);
+			const LatLon lat_lon_ne(lat + 1, lon + 1);
+			const LatLonBBox dem_bbox(lat_lon_sw, lat_lon_ne);
+
+			viewport->draw_bbox(dem_bbox, pen);
+
+#if 0
 			Coord coord_ne;
 			Coord coord_sw;
 
@@ -1138,6 +1145,7 @@ static void srtm_draw_existence(Viewport * viewport)
 			coord_ne.mode = CoordMode::LatLon;
 
 			draw_existence_common(viewport, pen, coord_sw, coord_ne, cache_file_path);
+#endif
 		}
 	}
 }

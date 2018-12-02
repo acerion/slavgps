@@ -1447,7 +1447,7 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, const QRect & viewport_rect, 
 
 
 
-void Viewport::draw_bbox(const LatLonBBox & bbox)
+void Viewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 {
 	if (!BBOX_INTERSECT(bbox, this->get_bbox())) {
 		qDebug() << SG_PREFIX_I << "Not drawing bbox" << bbox << ", does not intersects with viewport bbox" << this->get_bbox();
@@ -1457,10 +1457,6 @@ void Viewport::draw_bbox(const LatLonBBox & bbox)
 
 	ScreenPos sp_sw = this->coord_to_screen_pos(Coord(LatLon(bbox.south, bbox.west), this->coord_mode));
 	ScreenPos sp_ne = this->coord_to_screen_pos(Coord(LatLon(bbox.north, bbox.east), this->coord_mode));
-
-	QPen pen;
-	pen.setColor("red");
-	pen.setWidth(1);
 
 	if (sp_sw.x < 0) {
 		sp_sw.x = 0;
