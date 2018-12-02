@@ -4399,7 +4399,7 @@ double Track::get_tp_time_percent(int idx) const
 	const time_t t_end = (*std::prev(this->trackpoints.end()))->timestamp.get_value();
 	const time_t t_total = t_end - t_start;
 
-	return (double) (tp->timestamp.get_value() - t_start) / t_total; /* TODO: is casting the last operation in this expression? If so, then we lose precision. */
+	return (tp->timestamp.get_value() - t_start) / (1.0 * t_total);
 }
 
 

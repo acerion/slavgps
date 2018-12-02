@@ -548,12 +548,20 @@ void TRWMetadata::set_keywords(const QString & new_keywords)
 
 
 
-void TRWMetadata::set_iso8601_timestamp(const QString & new_timestamp)
+sg_ret TRWMetadata::set_iso8601_timestamp(const QString & value)
 {
-	this->iso8601_timestamp = new_timestamp;
-	this->has_timestamp = true;
-}
+	/* QDateTime::fromString():
+	   "Returns the QDateTime represented by the string, using the format given, or an invalid datetime if this is not possible."
+	   So we only have to check .isValid(). We don't need to check .isNull() of the timestamp. */
 
+	this->iso8601_timestamp = QDateTime::fromString(value, Qt::ISODate);
+	if (this->iso8601_timestamp.isValid()) {
+		return sg_ret::ok;
+	} else {
+		qDebug() << SG_PREFIX_E << "Failed to convert ISO8601 metadata timestamp" << value;
+		return sg_ret::err;
+	}
+}
 
 
 
@@ -1004,7 +1012,7 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 		break;
 	case PARAM_MDTIME:
 		if (this->metadata) {
-			rv = SGVariant(this->metadata->iso8601_timestamp);
+			rv = SGVariant(this->metadata->iso8601_timestamp.toString(Qt::ISODate));
 		}
 		break;
 	case PARAM_MDKEYS:
@@ -3801,16 +3809,10 @@ Time LayerTRW::get_timestamp(void) const
 
 	if (!timestamp_tracks.is_valid() && !timestamp_waypoints.is_valid()) {
 		/* Fallback to get time from the metadata when no other timestamps available. */
-		if (this->metadata
-		    && this->metadata->has_timestamp
-		    && !this->metadata->iso8601_timestamp.isEmpty()) {
+		if (this->metadata && this->metadata->iso8601_timestamp.isValid()) {
 
-			const QDateTime ts = QDateTime::fromString(this->metadata->iso8601_timestamp, Qt::ISODate);
-			if (!ts.isNull() && ts.isValid()) {
-				return Time(ts.toMSecsSinceEpoch() / MSECS_PER_SEC); /* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
-			} else {
-				qDebug() << SG_PREFIX_E << "Failed to convert ISO8601 metadata timestamp" << this->metadata->iso8601_timestamp;
-			}
+			/* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
+			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC);
 		}
 	}
 	if (timestamp_tracks.is_valid() && !timestamp_waypoints.is_valid()) {
@@ -3850,27 +3852,13 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 	this->sort_all();
 
 	/* Setting metadata time if not otherwise set. */
-	if (this->metadata) {
-
-		bool need_to_set_time = true;
-		if (this->metadata->has_timestamp) {
-			need_to_set_time = false;
-			if (!this->metadata->iso8601_timestamp.isEmpty()) {
-				need_to_set_time = true;
-			}
-		}
-
-		if (need_to_set_time) {
-			QDateTime meta_time;
-			const Time local_timestamp = this->get_timestamp();
-			if (!local_timestamp.is_valid()) {
-				/* No time found - so use 'now' for the metadata time. */
-				meta_time = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
-			} else {
-				meta_time.setMSecsSinceEpoch(local_timestamp.get_value() * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
-			}
-
-			this->metadata->iso8601_timestamp = meta_time.toString(Qt::ISODate);
+	if (this->metadata && !this->metadata->iso8601_timestamp.isValid()) {
+		const Time local_timestamp = this->get_timestamp();
+		if (local_timestamp.is_valid()) {
+			this->metadata->iso8601_timestamp.setMSecsSinceEpoch(local_timestamp.get_value() * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
+		} else {
+			/* No time found - so use 'now' for the metadata time. */
+			this->metadata->iso8601_timestamp = QDateTime::currentDateTime(); /* The method returns time in local time zone. */
 		}
 	}
 }

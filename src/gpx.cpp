@@ -1119,8 +1119,9 @@ sg_ret GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions * o
 		if (!md->description.isEmpty()) {
 			fprintf(file, "  <desc>%s</desc>\n", entitize(md->description).toUtf8().constData());
 		}
-		if (!md->iso8601_timestamp.isEmpty()) {
-			fprintf(file, "  <time>%s</time>\n", entitize(md->iso8601_timestamp).toUtf8().constData());
+		if (!md->iso8601_timestamp.isValid()) {
+			const QString val = md->iso8601_timestamp.toString(Qt::ISODate);
+			fprintf(file, "  <time>%s</time>\n", entitize(val).toUtf8().constData());
 		}
 		if (!md->keywords.isEmpty()) {
 			fprintf(file, "  <keywords>%s</keywords>\n", entitize(md->keywords).toUtf8().constData());

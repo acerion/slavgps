@@ -70,12 +70,12 @@ void PropertiesDialogTP::update_timestamp_widget(Trackpoint * tp)
 
 
 
-void PropertiesDialogTP::sync_latlon_entry_to_tp_cb(void) /* Slot. */
+void PropertiesDialogTP::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
 {
 	if (!this->cur_tp) {
 		return;
 	}
-	if (this->sync_to_tp_block) {
+	if (this->sync_to_current_tp_block) {
 		return;
 	}
 
@@ -102,12 +102,12 @@ void PropertiesDialogTP::sync_latlon_entry_to_tp_cb(void) /* Slot. */
 
 
 
-void PropertiesDialogTP::sync_altitude_entry_to_tp_cb(void) /* Slot. */
+void PropertiesDialogTP::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 {
 	if (!this->cur_tp) {
 		return;
 	}
-	if (this->sync_to_tp_block) {
+	if (this->sync_to_current_tp_block) {
 		return;
 	}
 
@@ -131,41 +131,43 @@ void PropertiesDialogTP::sync_altitude_entry_to_tp_cb(void) /* Slot. */
 
 
 /* Set timestamp of current trackpoint. */
-void PropertiesDialogTP::sync_timestamp_entry_to_tp_cb(time_t timestamp_value)
+void PropertiesDialogTP::sync_timestamp_entry_to_current_tp_cb(time_t timestamp_value)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp_value;
 
-	this->set_timestamp_to_tp(timestamp_value);
+	this->set_timestamp_of_current_tp(Time(timestamp_value));
 }
 
 
 
 
 /* Clear timestamp of current trackpoint. */
-void PropertiesDialogTP::sync_zero_timestamp_entry_to_tp_cb(void)
+void PropertiesDialogTP::sync_empty_timestamp_entry_to_current_tp_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
 
-	this->set_timestamp_to_tp(0);
+	this->set_timestamp_of_current_tp(Time()); /* Invalid value - this should indicate that timestamp is cleared from the tp. */
 }
 
 
 
 
-bool PropertiesDialogTP::set_timestamp_to_tp(time_t timestamp_value)
+bool PropertiesDialogTP::set_timestamp_of_current_tp(const Time & timestamp)
 {
 	if (!this->cur_tp) {
 		return false;
 	}
-	if (this->sync_to_tp_block) {
+	if (this->sync_to_current_tp_block) {
 		/* TODO_LATER: indicate to user that operation has failed. */
 		return false;
 	}
 
-	/* TODO_LATER: consider warning about unsorted timestamps in consecutive trackpoints? */
+	/* TODO_LATER: we are changing a timestamp of tp somewhere in
+	   the middle of a track, so the timestamps may now not have
+	   consecutive values.  Should we now warn user about unsorted
+	   timestamps in consecutive trackpoints? */
 
-	/* TODO: evaluate timestamp_value here and decide if it's valid or not. In old code value != 0 was valid. */
-	this->cur_tp->set_timestamp(timestamp_value);
+	this->cur_tp->set_timestamp(timestamp);
 
 	return true;
 }
@@ -173,12 +175,12 @@ bool PropertiesDialogTP::set_timestamp_to_tp(time_t timestamp_value)
 
 
 
-bool PropertiesDialogTP::sync_name_entry_to_tp_cb(const QString & new_name) /* Slot. */
+bool PropertiesDialogTP::sync_name_entry_to_current_tp_cb(const QString & new_name) /* Slot. */
 {
 	if (!this->cur_tp) {
 		return false;
 	}
-	if (this->sync_to_tp_block) {
+	if (this->sync_to_current_tp_block) {
 		return false;
 	}
 
@@ -271,7 +273,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 		this->timestamp_widget->clear();
 	}
 
-	this->sync_to_tp_block = true; /* Don't update while setting data. */
+	this->sync_to_current_tp_block = true; /* Don't update while setting data. */
 
 	const LatLon lat_lon = tp->coord.get_latlon();
 	this->lat->setValue(lat_lon.lat);
@@ -295,7 +297,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->update_timestamp_widget(tp);
 
-	this->sync_to_tp_block = false; /* Can now update after setting data. */
+	this->sync_to_current_tp_block = false; /* Can now update after setting data. */
 
 
 	if (this->cur_tp) {
@@ -353,7 +355,6 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->setWindowTitle(tr("Trackpoint"));
 
 	this->button_box = new QDialogButtonBox();
-	this->parent = parent_widget;
 
 	this->button_close_dialog = this->button_box->addButton(tr("&Close"), QDialogButtonBox::ActionRole);
 	this->button_insert_tp_after = this->button_box->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
@@ -400,7 +401,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->trkpt_name = new QLineEdit("", this);
 	this->grid->addWidget(new QLabel(tr("Name:")), 0, 0);
 	this->grid->addWidget(this->trkpt_name, 0, 1);
-	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_tp_cb(const QString &)));
+	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_tp_cb(const QString &)));
 
 
 
@@ -412,7 +413,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->lat->setValue(0);
 	this->grid->addWidget(new QLabel(tr("Latitude:")), 1, 0);
 	this->grid->addWidget(this->lat, 1, 1);
-	connect(this->lat, SIGNAL (valueChanged(double)), this, SLOT (sync_latlon_entry_to_tp_cb(void)));
+	connect(this->lat, SIGNAL (valueChanged(double)), this, SLOT (sync_latlon_entry_to_current_tp_cb(void)));
 
 
 	this->lon = new QDoubleSpinBox(this);
@@ -423,7 +424,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->lon->setValue(0);
 	this->grid->addWidget(new QLabel(tr("Longitude:")), 2, 0);
 	this->grid->addWidget(this->lon, 2, 1);
-	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_tp_cb(void)));
+	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_current_tp_cb(void)));
 
 
 	this->alt = new QDoubleSpinBox(this);
@@ -434,7 +435,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->alt->setValue(0);
 	this->grid->addWidget(new QLabel(tr("Altitude:")), 3, 0);
 	this->grid->addWidget(this->alt, 3, 1);
-	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_tp_cb(void)));
+	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_tp_cb(void)));
 
 
 	this->course = new QLabel("", this);
@@ -445,8 +446,8 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 	this->timestamp_widget = new TimestampWidget();
 	this->grid->addWidget(this->timestamp_widget, 5, 0, 2, 2);
-	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_entry_to_tp_cb(time_t)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_zero_timestamp_entry_to_tp_cb(void)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_entry_to_current_tp_cb(time_t)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_tp_cb(void)));
 
 
 

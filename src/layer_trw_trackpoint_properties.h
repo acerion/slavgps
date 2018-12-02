@@ -91,11 +91,11 @@ namespace SlavGPS {
 		QSignalMapper * signal_mapper = NULL;
 
 	private slots:
-		void sync_latlon_entry_to_tp_cb(void);
-		void sync_altitude_entry_to_tp_cb(void);
-		void sync_timestamp_entry_to_tp_cb(time_t new_timestamp);
-		void sync_zero_timestamp_entry_to_tp_cb(void);
-		bool sync_name_entry_to_tp_cb(const QString & new_name);
+		void sync_latlon_entry_to_current_tp_cb(void);
+		void sync_altitude_entry_to_current_tp_cb(void);
+		void sync_timestamp_entry_to_current_tp_cb(time_t new_timestamp);
+		void sync_empty_timestamp_entry_to_current_tp_cb(void);
+		bool sync_name_entry_to_current_tp_cb(const QString & new_name);
 
 	signals:
 		/* Coordinates of one of track's trackpoints has changed its coordinates. */
@@ -104,11 +104,10 @@ namespace SlavGPS {
 	private:
 		void update_timestamp_widget(Trackpoint * tp);
 
-		bool set_timestamp_to_tp(time_t timestamp_value);
+		bool set_timestamp_of_current_tp(const Time & timestamp);
 
 		Trackpoint * cur_tp = NULL;
-		bool sync_to_tp_block = false;
-		QWidget * parent = NULL;
+		bool sync_to_current_tp_block = false;
 
 		QDialogButtonBox * button_box = NULL;
 
