@@ -1447,6 +1447,36 @@ void Viewport::draw_pixmap(QPixmap const & pixmap, const QRect & viewport_rect, 
 
 
 
+void Viewport::draw_bbox(const LatLonBBox & bbox)
+{
+	if (!BBOX_INTERSECT(bbox, this->get_bbox())) {
+		qDebug() << SG_PREFIX_I << "Not drawing bbox" << bbox << ", does not intersects with viewport bbox" << this->get_bbox();
+		return;
+	}
+
+
+	ScreenPos sp_sw = this->coord_to_screen_pos(Coord(LatLon(bbox.south, bbox.west), this->coord_mode));
+	ScreenPos sp_ne = this->coord_to_screen_pos(Coord(LatLon(bbox.north, bbox.east), this->coord_mode));
+
+	QPen pen;
+	pen.setColor("red");
+	pen.setWidth(1);
+
+	if (sp_sw.x < 0) {
+		sp_sw.x = 0;
+	}
+
+	if (sp_ne.y < 0) {
+		sp_ne.y = 0;
+	}
+
+	this->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+
+	return;
+}
+
+
+
 void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int start_angle, int span_angle)
 {
 	this->canvas.painter->setPen(pen);

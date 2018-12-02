@@ -79,6 +79,9 @@ namespace SlavGPS {
 
 		static bool get_file_filter_string(FileTypeFilter file_type_filter, QStringList & filter_list);
 
+	signals:
+		void selection_is_made(void);
+
 	private slots:
 		void open_browser_cb();
 

@@ -163,7 +163,7 @@ void FileSelectorWidget::open_browser_cb(void) /* Slot. */
 		this->current_file_full_path = this->file_dialog->selectedFiles().at(0);
 		this->line->insert(this->current_file_full_path);
 		qDebug() << "II: Widget File Entry: clicking OK results in this file:" << this->current_file_full_path;
-
+		emit this->selection_is_made();
 	}
 }
 

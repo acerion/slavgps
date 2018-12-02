@@ -64,7 +64,7 @@ using namespace SlavGPS;
 
 
 enum {
-	PARAM_IMAGE_FULL_PATH = 0,
+	PARAM_IMAGE_FILE_FULL_PATH = 0,
 	PARAM_CORNER_UTM_EASTING,
 	PARAM_CORNER_UTM_NORTHING,
 	PARAM_MPP_EASTING,
@@ -78,6 +78,32 @@ enum {
 
 
 
+/* https://en.wikipedia.org/wiki/World_file */
+class SlavGPS::WorldFile {
+public:
+	enum class ReadStatus {
+		Success = 0,
+		OpenError = 1,
+		ReadError = 2,
+	};
+
+	ReadStatus read_file(const QString & file_full_path);
+
+	/* We do not handle 'skew' values ATM - normally they are a value of 0 anyway to align with the UTM grid. */
+	double a = 0.0; /* "A: pixel size in the x-direction in map units/pixel (x-component of the pixel width (x-scale))" */
+	double d = 0.0; /* "D: rotation about y-axis (y-component of the pixel width (y-skew))" */
+	double b = 0.0; /* "B: rotation about x-axis (x-component of the pixel height (x-skew))" */
+	double e = 0.0; /* "E: pixel size in the y-direction in map units, almost always negative (y-component of the pixel height (y-scale))" */
+	double c = 0.0; /* "C: x-coordinate of the center of the upper left pixel" */
+	double f = 0.0; /* "F: y-coordinate of the center of the upper left pixel" */
+
+private:
+	bool read_line(QFile & file, double & value);
+};
+
+
+
+
 /* Properties dialog for Georef Layer is too complicated
    (non-standard) to be built with standard UI builder based on
    parameter specifications. Therefore all parameters are marked as
@@ -85,7 +111,7 @@ enum {
    dialog itself) will not be built using parameters specification. */
 
 static ParameterSpecification georef_layer_param_specs[] = {
-	{ PARAM_IMAGE_FULL_PATH,         "image",                SGVariantType::String, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
+	{ PARAM_IMAGE_FILE_FULL_PATH,    "image",                SGVariantType::String, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
 	{ PARAM_CORNER_UTM_EASTING,      "corner_easting",       SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
 	{ PARAM_CORNER_UTM_NORTHING,     "corner_northing",      SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
 	{ PARAM_MPP_EASTING,             "mpp_easting",          SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
@@ -166,7 +192,7 @@ void SlavGPS::layer_georef_init(void)
 
 QString LayerGeoref::get_tooltip(void) const
 {
-	return this->image_full_path;
+	return this->image_file_full_path;
 }
 
 
@@ -179,7 +205,7 @@ Layer * LayerGeorefInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 	layer->unmarshall_params(pickle);
 
-	if (!layer->image_full_path.isEmpty()) {
+	if (!layer->image_file_full_path.isEmpty()) {
 		layer->post_read(viewport, true);
 	}
 	return layer;
@@ -191,8 +217,9 @@ Layer * LayerGeorefInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
 {
 	switch (param_id) {
-	case PARAM_IMAGE_FULL_PATH:
-		this->set_image_full_path(param_value.val_string);
+	case PARAM_IMAGE_FILE_FULL_PATH:
+		this->reset_pixmaps();
+		this->set_image_file_full_path(param_value.val_string);
 		break;
 	case PARAM_CORNER_UTM_EASTING:
 		this->utm_tl.easting = param_value.u.val_double;
@@ -245,7 +272,7 @@ void LayerGeoref::create_image_file()
 	if (!this->image.save(path, "jpeg")) {
 		qDebug() << SG_PREFIX_W << "Failed to save pixmap to" << path;
 	} else {
-		this->image_full_path = path;
+		this->image_file_full_path = path;
 	}
 }
 
@@ -256,23 +283,23 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 {
 	SGVariant rv;
 	switch (param_id) {
-	case PARAM_IMAGE_FULL_PATH: {
+	case PARAM_IMAGE_FILE_FULL_PATH: {
 		bool is_set = false;
 		if (is_file_operation) {
-			if (!this->image.isNull() && this->image_full_path.isEmpty()) {
+			if (!this->image.isNull() && this->image_file_full_path.isEmpty()) {
 				/* Force creation of image file. */
 				((LayerGeoref *) this)->create_image_file();
 			}
 			if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
 				const QString cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
-					rv = SGVariant(file_GetRelativeFilename(cwd, this->image_full_path));
+					rv = SGVariant(file_GetRelativeFilename(cwd, this->image_file_full_path));
 					is_set = true;
 				}
 			}
 		}
 		if (!is_set) {
-			rv = SGVariant(this->image_full_path);
+			rv = SGVariant(this->image_file_full_path);
 		}
 		break;
 	}
@@ -311,10 +338,10 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 /**
    Return mpp for the given coords, coord mode and image size.
 */
-static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, const LatLon & ll_br, int width, int height, double * xmpp, double * ympp)
+static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & lat_lon_tl, const LatLon & lat_lon_br, int width, int height, double * xmpp, double * ympp)
 {
-	const LatLon ll_tr(ll_tl.lat, ll_br.lon);
-	const LatLon ll_bl(ll_br.lat, ll_tl.lon);
+	const LatLon lat_lon_tr(lat_lon_tl.lat, lat_lon_br.lon);
+	const LatLon lat_lon_bl(lat_lon_br.lat, lat_lon_tl.lon);
 
 	/* UTM mode should be exact MPP. */
 	double factor = 1.0;
@@ -323,17 +350,17 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 		   http://wiki.openstreetmap.org/wiki/Zoom_levels */
 
 		/* Convert from actual image MPP to Viking 'pixelfact'. */
-		double mid_lat = (ll_bl.lat + ll_tr.lat) / 2.0;
+		double mid_lat = (lat_lon_bl.lat + lat_lon_tr.lat) / 2.0;
 		/* Protect against div by zero (but shouldn't have 90 degrees for mid latitude...). */
 		if (fabs(mid_lat) < 89.9) {
 			factor = cos(DEG2RAD(mid_lat)) * 1.193;
 		}
 	}
 
-	double diffx = LatLon::latlon_diff(ll_tl, ll_tr);
+	double diffx = LatLon::latlon_diff(lat_lon_tl, lat_lon_tr);
 	*xmpp = (diffx / width) / factor;
 
-	double diffy = LatLon::latlon_diff(ll_tl, ll_bl);
+	double diffy = LatLon::latlon_diff(lat_lon_tl, lat_lon_bl);
 	*ympp = (diffy / height) / factor;
 }
 
@@ -342,15 +369,29 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & ll_tl, c
 
 void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
-	if (!this->image) {
+	if (this->image.isNull()) {
+		qDebug() << SG_PREFIX_I << "Not drawing the layer, no image";
 		return;
 	}
 
-	const Coord corner_coord(this->utm_tl, viewport->get_coord_mode());
-	const ScreenPos corner_pos = viewport->coord_to_screen_pos(corner_coord);
+	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	const LatLonBBox image_bbox(this->lat_lon_tl, this->lat_lon_br);
+	qDebug() << SG_PREFIX_I << "Viewport bbox" << viewport_bbox;
+	qDebug() << SG_PREFIX_I << "Image bbox   " << image_bbox;
+
+	if (BBOX_INTERSECT (viewport_bbox, image_bbox)) {
+		qDebug() << SG_PREFIX_I << "BBoxes intersect";
+		viewport->draw_bbox(image_bbox);
+	} else {
+		qDebug() << SG_PREFIX_I << "BBoxes don't intersect";
+	}
+
+
+	const Coord coord_tl(this->utm_tl, viewport->get_coord_mode());
+	const ScreenPos pos_tl = viewport->coord_to_screen_pos(coord_tl);
 
 	QRect sub_viewport_rect;
-	sub_viewport_rect.setTopLeft(QPoint(corner_pos.x, corner_pos.y));
+	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x, pos_tl.y));
 	sub_viewport_rect.setWidth(this->image_width);
 	sub_viewport_rect.setHeight(this->image_height);
 
@@ -367,19 +408,19 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	/* If image not in viewport bounds - no need to draw it (or bother with any scaling).
 	   TODO_LATER: rewrite this section in terms of two rectangles intersecting? */
 	const QRect full_viewport_rect(0, 0, viewport->get_width(), viewport->get_height());
-	if (!(corner_pos.x < 0 || corner_pos.x < full_viewport_rect.width())) {
+	if (!(pos_tl.x < 0 || pos_tl.x < full_viewport_rect.width())) {
 		/* Upper-left corner of image is located beyond right border of viewport. */
 		return;
 	}
-	if (!(corner_pos.y < 0 || corner_pos.y < full_viewport_rect.height())) {
+	if (!(pos_tl.y < 0 || pos_tl.y < full_viewport_rect.height())) {
 		/* Upper-left corner of image is located below bottom border of viewport. */
 		return;
 	}
-	if (!(corner_pos.x + sub_viewport_rect.width() > 0)) {
+	if (!(pos_tl.x + sub_viewport_rect.width() > 0)) {
 		/* Upper-right corner of image is located beyond left border of viewport. */
 		return;
 	}
-	if (!(corner_pos.y + sub_viewport_rect.height() > 0)) {
+	if (!(pos_tl.y + sub_viewport_rect.height() > 0)) {
 		/* Upper-right corner of image is located above upper border of viewport. */
 		return;
 	}
@@ -387,7 +428,7 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	QPixmap image_to_draw = this->image;
 
-	if (scale_mismatch) {
+	if (false && scale_mismatch) {
 		/* Rescale image only if really necessary, i.e. if we don't have a valid copy of scaled image. */
 
 		const int intended_width = sub_viewport_rect.width();
@@ -427,7 +468,7 @@ LayerGeoref::~LayerGeoref()
 
 bool LayerGeoref::properties_dialog(Viewport * viewport)
 {
-	return this->dialog(viewport, this->get_window());
+	return this->run_dialog(viewport, this->get_window());
 }
 
 
@@ -436,33 +477,31 @@ bool LayerGeoref::properties_dialog(Viewport * viewport)
 /* Also known as LayerGeoref::load_image(). */
 void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 {
-	if (this->image_full_path.isEmpty()) {
+	if (this->image_file_full_path.isEmpty()) {
+		qDebug() << SG_PREFIX_I << "Not loading image, file path is empty";
 		return;
 	}
+	qDebug() << SG_PREFIX_I << "Will try to load image from" << this->image_file_full_path;
 
-	if (!this->image.isNull()) {
-		this->image = QPixmap();
-		assert (this->image.isNull());
-	}
 
-	if (!this->scaled_image.isNull()) {
-		this->scaled_image = QPixmap();
-		assert (this->scaled_image.isNull());
-	}
+	this->reset_pixmaps();
 
-	if (!this->image.load(this->image_full_path)) {
-		this->image = QPixmap();
-		assert (this->image.isNull());
 
-		if (!from_file) {
-			Dialog::error(tr("Couldn't open image file %1").arg(this->image_full_path), this->get_window());
-		}
-	} else {
+	if (this->image.load(this->image_file_full_path)) {
 		this->image_width = this->image.width();
 		this->image_height = this->image.height();
 
 		if (!this->image.isNull() && alpha_scale.is_in_range(this->alpha)) {
 			ui_pixmap_set_alpha(this->image, this->alpha);
+		}
+	} else {
+		qDebug() << SG_PREFIX_E << "Failed to load image from" << this->image_file_full_path;
+
+		this->image = QPixmap();
+		assert (this->image.isNull());
+
+		if (!from_file) {
+			Dialog::error(tr("Couldn't open image file %1").arg(this->image_file_full_path), this->get_window());
 		}
 	}
 
@@ -472,17 +511,28 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 
 
 
-void LayerGeoref::set_image_full_path(const QString & image_path)
+void LayerGeoref::reset_pixmaps(void)
 {
+	if (!this->image.isNull()) {
+		this->image = QPixmap();
+		assert (this->image.isNull());
+	}
+
 	if (!this->scaled_image.isNull()) {
 		this->scaled_image = QPixmap();
 		assert (this->scaled_image.isNull());
 	}
+}
 
-	if (image_path != "") {
-		this->image_full_path = image_path;
+
+
+
+void LayerGeoref::set_image_file_full_path(const QString & value)
+{
+	if (!value.isEmpty()) {
+		this->image_file_full_path = value;
 	} else {
-		this->image_full_path = vu_get_canonical_filename(this, image_path, this->get_window()->get_current_document_full_path());
+		this->image_file_full_path = vu_get_canonical_filename(this, value, this->get_window()->get_current_document_full_path());
 	}
 }
 
@@ -498,30 +548,34 @@ static void double2spinwidget(QDoubleSpinBox * spinbox, double val)
 
 
 
-void GeorefConfigDialog::set_widget_values(double values[4])
+void GeorefConfigDialog::set_widget_values(const WorldFile & wfile)
 {
-	double2spinwidget(this->x_scale_spin, values[0]);
-	double2spinwidget(this->y_scale_spin, values[1]);
-	double2spinwidget(this->utm_entry->easting_spin, values[2]);
-	double2spinwidget(this->utm_entry->northing_spin, values[3]);
+	double2spinwidget(this->x_scale_spin, wfile.a);
+	double2spinwidget(this->y_scale_spin, wfile.e);
+
+	this->lat_lon_tl_entry->set_value(LatLon(wfile.f, wfile.c));
 }
 
 
 
 
-static bool world_file_read_line(FILE * file, double * value)
+bool WorldFile::read_line(QFile & file, double & value)
 {
-	bool success = true;
-
-	char buffer[1024];
-	if (!fgets(buffer, 1024, file)) {
-		success = false;
-	}
-	if (success && value) {
-		*value = strtod(buffer, NULL);
+	char buffer[256];
+	if (-1 == file.readLine(buffer, sizeof (buffer))) {
+		qDebug() << SG_PREFIX_E << "Failed to read line from file" << file.errorString();
+		return false;
 	}
 
-	return success;
+	bool ok = false;
+	value = QString(buffer).toDouble(&ok);
+	if (!ok) {
+		qDebug() << SG_PREFIX_E << "Failed to convert" << buffer << "to double";
+		return false;
+	}
+
+	qDebug() << SG_PREFIX_I << "Read value" << value;
+	return true;
 }
 
 
@@ -535,62 +589,62 @@ static bool world_file_read_line(FILE * file, double * value)
  *  x&y scale as meters per pixel
  *  x&y coords as UTM eastings and northings respectively.
  */
-static int world_file_read_file(const QString & full_path, double values[4])
+WorldFile::ReadStatus WorldFile::read_file(const QString & full_path)
 {
-	qDebug() << SG_PREFIX_I << "Read World File: file" << full_path;
+	qDebug() << SG_PREFIX_I << "Opening World file" << full_path;
 
-	FILE * file = fopen(full_path.toUtf8().constData(), "r");
-	if (!file) {
-		return 1;
-	} else {
-		int answer = 2; /* Not enough info read yet. */
-		/* **We do not handle 'skew' values ATM - normally they are a value of 0 anyway to align with the UTM grid. */
-		if (world_file_read_line(file, &values[0]) /* x scale. */
-		    && world_file_read_line(file, NULL) /* Ignore value in y-skew line**. */
-		    && world_file_read_line(file, NULL) /* Ignore value in x-skew line**. */
-		    && world_file_read_line(file, &values[1]) /* y scale. */
-		    && world_file_read_line(file, &values[2]) /* x-coordinate of the upper left pixel. */
-		    && world_file_read_line(file, &values[3]) /* y-coordinate of the upper left pixel. */
-		    )
-			{
-				/* Success. */
-				qDebug() << SG_PREFIX_I << "Read World File: success";
-				answer = 0;
-			}
-		fclose(file);
-		return answer;
+	QFile file(full_path);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qDebug() << SG_PREFIX_E << "Failed to open file" << full_path << file.errorString();
+		return WorldFile::ReadStatus::OpenError;
 	}
+
+	WorldFile::ReadStatus answer;
+
+	if (this->read_line(file, this->a)
+	    && this->read_line(file, this->d)
+	    && this->read_line(file, this->b)
+	    && this->read_line(file, this->e)
+	    && this->read_line(file, this->c)
+	    && this->read_line(file, this->f)) {
+
+		qDebug() << SG_PREFIX_I << "Successful read of all values from World File";
+		answer = WorldFile::ReadStatus::Success;
+	} else {
+		qDebug() << SG_PREFIX_E << "Failed to read from World File";
+		answer = WorldFile::ReadStatus::ReadError;
+	}
+
+	file.close();
+	return answer;
 }
 
 
 
 
-void GeorefConfigDialog::load_cb(void)
+void GeorefConfigDialog::load_world_file_cb(void)
 {
-	Window * window = ThisApp::get_main_window();
-
-	QFileDialog file_selector(window, tr("Choose World file"));
-	file_selector.setFileMode(QFileDialog::ExistingFile);
-	/* AcceptMode is QFileDialog::AcceptOpen by default. */;
-
-	if (QDialog::Accepted != file_selector.exec()) {
+	const QStringList selection = this->world_file_selector->get_selected_files_full_paths();
+	if (0 == selection.size()) {
 		return;
 	}
 
-	QStringList selection = file_selector.selectedFiles();
-	if (!selection.size()) {
-		return;
-	}
+	WorldFile wfile;
+	const WorldFile::ReadStatus answer = wfile.read_file(selection.at(0));
 
-	double values[4];
-	int answer = world_file_read_file(selection.at(0), values);
-	if (answer == 1) {
-		Dialog::error(tr("The World file you requested could not be opened for reading."), window);
-	} else if (answer == 2) {
-		Dialog::error(tr("Unexpected end of file reading World file."), window);
-	} else {
-		/* NB answer should == 0 for success. */
-		this->set_widget_values(values);
+	switch (answer) {
+	case WorldFile::ReadStatus::OpenError:
+		Dialog::error(tr("The World file you requested could not be opened for reading."), this);
+		break;
+	case WorldFile::ReadStatus::ReadError:
+		Dialog::error(tr("Unexpected end of file reading World file."), this);
+		break;
+	case WorldFile::ReadStatus::Success:
+		this->set_widget_values(wfile);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled read status" << (int) answer;
+		break;
 	}
 }
 
@@ -654,17 +708,16 @@ static void maybe_read_world_file(FileSelectorWidget * file_selector, void * use
 
 #ifdef K_FIXME_RESTORE
 	bool upper = g_ascii_isupper(filename[strlen(filename) - 1]);
-	const QString filew = filename + (upper ? "W" : "w");
+	const QString file_full_path_w = filename + (upper ? "W" : "w");
 
-	double values[4];
-	if (world_file_read_file(filew, values) == 0) {
-		dialog->set_widget_values(values);
+	if (WorldFile::ReadStatus::Success == wfile.read_file(file_full_path_w)) {
+		dialog->set_widget_values(wfile);
 	} else {
 		if (strlen(filename) > 3) {
 			char* file0 = g_strndup(filename, strlen(filename)-2);
 			char* file1 = g_strdup_printf("%s%c%c", file0, filename[strlen(filename)-1], (upper ? 'W' : 'w') );
-			if (world_file_read_file(file1, values) == 0) {
-				dialog->set_widget_values(values);
+			if (WorldFile::ReadStatus::Success == wfile.read_file(file1)) {
+				dialog->set_widget_values(wfile);
 			}
 			free(file1);
 			free(file0);
@@ -676,7 +729,7 @@ static void maybe_read_world_file(FileSelectorWidget * file_selector, void * use
 
 
 
-LatLon GeorefConfigDialog::get_ll_tl(void) const
+LatLon GeorefConfigDialog::get_lat_lon_tl(void) const
 {
 	return this->lat_lon_tl_entry->get_value();
 }
@@ -684,7 +737,7 @@ LatLon GeorefConfigDialog::get_ll_tl(void) const
 
 
 
-LatLon GeorefConfigDialog::get_ll_br(void) const
+LatLon GeorefConfigDialog::get_lat_lon_br(void) const
 {
 	return this->lat_lon_br_entry->get_value();
 }
@@ -695,7 +748,7 @@ LatLon GeorefConfigDialog::get_ll_br(void) const
 /* Align displayed UTM values with displayed Lat/Lon values. */
 void GeorefConfigDialog::sync_from_utm_to_lat_lon(void)
 {
-	const UTM utm = LatLon::to_utm(this->get_ll_tl());
+	const UTM utm = LatLon::to_utm(this->get_lat_lon_tl());
 	this->utm_entry->set_value(utm);
 }
 
@@ -803,12 +856,12 @@ void GeorefConfigDialog::coord_mode_changed_cb(int combo_index)
 void GeorefConfigDialog::check_br_is_good_or_msg_user(void)
 {
 	/* If a 'blank' lat/lon value that's alright. */
-	if (!this->layer->ll_br.is_valid()) {
+	if (!this->layer->lat_lon_br.is_valid()) {
 		return;
 	}
 
-	const LatLon ll_tl = this->get_ll_tl();
-	if (ll_tl.lat < this->layer->ll_br.lat || ll_tl.lon > this->layer->ll_br.lon) {
+	const LatLon lat_lon_tl = this->get_lat_lon_tl();
+	if (lat_lon_tl.lat < this->layer->lat_lon_br.lat || lat_lon_tl.lon > this->layer->lat_lon_br.lon) {
 		Dialog::warning(tr("Lower right corner values may not be consistent with upper right values"), this->layer->get_window());
 	}
 }
@@ -838,7 +891,7 @@ void GeorefConfigDialog::calculate_mpp_from_coords_cb(void)
 		this->sync_coords_in_entries();
 
 		double xmpp, ympp;
-		georef_layer_mpp_from_coords(CoordMode::LatLon, this->get_ll_tl(), this->get_ll_br(), img_width, img_height, &xmpp, &ympp);
+		georef_layer_mpp_from_coords(CoordMode::LatLon, this->get_lat_lon_tl(), this->get_lat_lon_br(), img_width, img_height, &xmpp, &ympp);
 
 		this->x_scale_spin->setValue(xmpp);
 		this->y_scale_spin->setValue(ympp);
@@ -869,6 +922,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	this->map_image_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select image file"), this->layer->get_window());
 	this->map_image_file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Image);
+	this->map_image_file_selector->preselect_file_full_path(this->layer->image_file_full_path);
 #ifdef TODO_LATER /* Handle "maybe_read_world_file" argument in file selector. */
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
@@ -876,10 +930,13 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->grid->addWidget(this->map_image_file_selector, row, 1);
 	row++;
 
+
 	this->world_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select world file"), this->layer->get_window());
+	this->world_file_selector->preselect_file_full_path(this->layer->world_file_full_path);
 	this->grid->addWidget(new QLabel(tr("World File Parameters:")), row, 0);
 	this->grid->addWidget(this->world_file_selector, row, 1);
 	row++;
+
 
 	this->x_scale_spin = new QDoubleSpinBox();
 	this->x_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
@@ -891,6 +948,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->grid->addWidget(this->x_scale_spin, row, 1);
 	row++;
 
+
 	this->y_scale_spin = new QDoubleSpinBox();
 	this->y_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
 	this->y_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
@@ -900,6 +958,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->grid->addWidget(new QLabel(tr("Y (northing) scale (mpp): ")), row, 0);
 	this->grid->addWidget(this->y_scale_spin, row, 1);
 	row++;
+
 
 	this->coord_mode_combo = new QComboBox();
 	this->coord_mode_combo->addItem(tr("UTM"), (int) CoordMode::UTM);
@@ -931,8 +990,8 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 	this->x_scale_spin->setValue(this->layer->mpp_easting);
 	this->y_scale_spin->setValue(this->layer->mpp_northing);
-	if (!this->layer->image_full_path.isEmpty()) {
-		this->map_image_file_selector->preselect_file_full_path(this->layer->image_full_path);
+	if (!this->layer->image_file_full_path.isEmpty()) {
+		this->map_image_file_selector->preselect_file_full_path(this->layer->image_file_full_path);
 	}
 
 
@@ -958,7 +1017,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 						 tr("Lower right latitude"),
 						 tr("Lower right longitude:"),
 						 tr("Lower right longitude"));
-		this->lat_lon_br_entry->set_value(this->layer->ll_br);
+		this->lat_lon_br_entry->set_value(this->layer->lat_lon_br);
 
 		this->calc_mpp_button = new QPushButton(tr("Calculate MPP values from coordinates"));
 		this->calc_mpp_button->setToolTip(tr("Enter all corner coordinates before calculating the MPP values from the image size"));
@@ -973,9 +1032,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 	QObject::connect(this->calc_mpp_button, SIGNAL (released(void)), this, SLOT (calculate_mpp_from_coords_cb(void)));
-#ifdef K_FIXME_RESTORE
-	QObject::connect(world_file_entry_button, SIGNAL (triggered(bool)), this, SLOT (load_cb));
-#endif
+	QObject::connect(this->world_file_selector, SIGNAL (selection_is_made(void)), this, SLOT (load_world_file_cb(void)));
 	QObject::connect(this->coord_mode_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (coord_mode_changed_cb(int)));
 
 	if (cancel_button) {
@@ -1001,32 +1058,24 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 /* Returns true if OK was pressed. */
-bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
+bool LayerGeoref::run_dialog(Viewport * viewport, QWidget * parent)
 {
-	GeorefConfigDialog dialog(this, window_);
+	GeorefConfigDialog dialog(this, parent);
 	if (dialog.exec() != QDialog::Accepted) {
 		return false;
 	}
 
+
 	dialog.sync_coords_in_entries();
-
-	this->utm_tl = dialog.utm_entry->get_value();
-
-	this->mpp_easting = dialog.x_scale_spin->value();
-	this->mpp_northing = dialog.y_scale_spin->value();
-	this->ll_br = dialog.get_ll_br();
+	this->get_values_from_dialog(dialog);
 	dialog.check_br_is_good_or_msg_user();
 
-	/* Remember to get alpha value before calling post_read() that uses the alpha value. */
-	this->alpha = dialog.alpha_slider->get_value();
 
-	/* TODO_LATER check if image has changed otherwise no need to regenerate pixmap. */
-	if (this->image.isNull()) {
-		if (this->image_full_path != dialog.map_image_file_selector->get_selected_file_full_path()) {
-			this->set_image_full_path(dialog.map_image_file_selector->get_selected_file_full_path());
-			this->post_read(viewport, false);
-		}
-	}
+	/* TODO_MAYBE: we could check whether the parameters have
+	   changed or if image file or world file have been changed on
+	   disc and only then re-generate pixmap. */
+	this->post_read(viewport, false);
+
 
 	if (alpha_scale.is_in_range(this->alpha)) {
 		if (!this->image.isNull()) {
@@ -1043,6 +1092,24 @@ bool LayerGeoref::dialog(Viewport * viewport, Window * window_)
 	return true;
 }
 
+
+
+
+sg_ret LayerGeoref::get_values_from_dialog(const GeorefConfigDialog & dialog)
+{
+	this->set_image_file_full_path(dialog.map_image_file_selector->get_selected_file_full_path());
+	this->world_file_full_path = dialog.world_file_selector->get_selected_file_full_path();
+	this->alpha = dialog.alpha_slider->get_value();
+
+	this->utm_tl = dialog.utm_entry->get_value();
+	this->mpp_easting = dialog.x_scale_spin->value();
+	this->mpp_northing = dialog.y_scale_spin->value();
+
+	this->lat_lon_tl = dialog.get_lat_lon_tl();
+	this->lat_lon_br = dialog.get_lat_lon_br();
+
+	return sg_ret::ok;
+}
 
 
 
@@ -1230,20 +1297,20 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	layer->set_name(name);
 	layer->image = *pixmap;
 	layer->utm_tl = coord_tl.get_utm();
-	layer->ll_br = coord_br.get_latlon();
+	layer->lat_lon_br = coord_br.get_latlon();
 	layer->image_width = layer->image.width();
 	layer->image_height = layer->image.height();
 
-	const LatLon ll_tl = coord_tl.get_latlon();
-	const LatLon ll_br = coord_br.get_latlon();
+	const LatLon lat_lon_tl = coord_tl.get_latlon();
+	const LatLon lat_lon_br = coord_br.get_latlon();
 	const CoordMode coord_mode = viewport->get_coord_mode();
 
 	double xmpp, ympp;
-	georef_layer_mpp_from_coords(coord_mode, ll_tl, ll_br, layer->image_width, layer->image_height, &xmpp, &ympp);
+	georef_layer_mpp_from_coords(coord_mode, lat_lon_tl, lat_lon_br, layer->image_width, layer->image_height, &xmpp, &ympp);
 	layer->mpp_easting = xmpp;
 	layer->mpp_northing = ympp;
 
-	const LatLonBBox bbox(ll_tl, ll_br);
+	const LatLonBBox bbox(lat_lon_tl, lat_lon_br);
 
 	const Coord new_center(bbox.get_center(), viewport->get_coord_mode());
 	viewport->set_center_from_coord(new_center, true);

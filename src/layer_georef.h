@@ -57,6 +57,7 @@ namespace SlavGPS {
 	class Viewport;
 	class FileSelectorWidget;
 	class LayerGeoref;
+	class WorldFile;
 
 
 
@@ -72,8 +73,8 @@ namespace SlavGPS {
 		GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent = NULL);
 
 		void sync_coords_in_entries(void);
-		LatLon get_ll_tl(void) const;
-		LatLon get_ll_br(void) const;
+		LatLon get_lat_lon_tl(void) const;
+		LatLon get_lat_lon_br(void) const;
 		void check_br_is_good_or_msg_user(void);
 
 		FileSelectorWidget * map_image_file_selector = NULL;
@@ -101,12 +102,12 @@ namespace SlavGPS {
 		SliderWidget * alpha_slider = NULL; /* alpha is represented by int type. */
 
 	public slots:
-		void load_cb(void);
+		void load_world_file_cb(void);
 		void coord_mode_changed_cb(int combo_index);
 		void calculate_mpp_from_coords_cb(void);
 
 	private:
-		void set_widget_values(double values[4]);
+		void set_widget_values(const WorldFile & wfile);
 		void sync_from_utm_to_lat_lon(void);
 		void sync_from_lat_lon_to_utm(void);
 
@@ -144,15 +145,17 @@ namespace SlavGPS {
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
+		sg_ret get_values_from_dialog(const GeorefConfigDialog & dialog);
+		void reset_pixmaps(void);
 
 
 		void configure_from_viewport(Viewport const * viewport);
 
 
-		void create_image_file();
-		void set_image_full_path(const QString & full_path);
+		void create_image_file(void);
+		void set_image_file_full_path(const QString & full_path);
 
-		bool dialog(Viewport * viewport, Window * window);
+		bool run_dialog(Viewport * viewport, QWidget * parent);
 
 		ToolStatus move_release(QMouseEvent * event, LayerTool * tool);
 		ToolStatus zoom_press(QMouseEvent * event, LayerTool * tool);
@@ -168,14 +171,18 @@ namespace SlavGPS {
 		QPixmap image;
 		int image_width = 0;
 		int image_height = 0;
-		QString image_full_path;
+		QString image_file_full_path;
+
+		QString world_file_full_path;
 
 		int alpha = 255;
 
 		UTM utm_tl; /* Top Left. */
 		double mpp_easting = 0.0;
 		double mpp_northing = 0.0;
-		LatLon ll_br; /* Bottom Right. */
+
+		LatLon lat_lon_tl; /* Top Left. */
+		LatLon lat_lon_br; /* Bottom Right. */
 
 
 		QPixmap scaled_image;

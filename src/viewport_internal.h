@@ -133,6 +133,8 @@ namespace SlavGPS {
 		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y);
 		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
 
+		void draw_bbox(const LatLonBBox & bbox);
+
 		void draw_simple_crosshair(const ScreenPos & pos);
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
