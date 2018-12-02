@@ -1158,26 +1158,35 @@ void ProfileGraphST::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		time_t beg_time = (*trk->trackpoints.begin())->timestamp.get_value();
-		const time_t max_function_arg = (*std::prev(trk->trackpoints.end()))->timestamp.get_value() - beg_time;
-		const double max_function_value = this->y_max_visible;
+		Time ts_begin;
+		Time ts_end;
+		if (sg_ret::ok == trk->get_timestamps(ts_begin, ts_end)) {
 
-		const QColor color = this->gps_speed_pen.color();
+			const time_t time_begin = ts_begin.get_value();
+			const time_t time_end = ts_end.get_value();
 
-		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-			double gps_speed = (*iter)->speed;
-			if (std::isnan(gps_speed)) {
-				continue;
+			const time_t max_function_arg = time_end - time_begin;
+			const double max_function_value = this->y_max_visible;
+
+			const QColor color = this->gps_speed_pen.color();
+
+			for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
+				double gps_speed = (*iter)->speed;
+				if (std::isnan(gps_speed)) {
+					continue;
+				}
+
+				gps_speed = Speed::convert_mps_to(gps_speed, this->geocanvas.speed_unit);
+
+				const time_t current_function_arg = (*iter)->timestamp.get_value() - time_begin;
+				const double current_function_value = gps_speed - this->y_min_visible;
+
+				const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
+				const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
+				this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 			}
-
-			gps_speed = Speed::convert_mps_to(gps_speed, this->geocanvas.speed_unit);
-
-			const time_t current_function_arg = (*iter)->timestamp.get_value() - beg_time;
-			const double current_function_value = gps_speed - this->y_min_visible;
-
-			const int x = this->left_edge + this->width * current_function_arg / max_function_arg;
-			const int y = this->bottom_edge - this->height * current_function_value / max_function_value;
-			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		} else {
+			qDebug() << SG_PREFIX_W << "Not drawing additional indicators: can't get timestamps";
 		}
 	}
 }

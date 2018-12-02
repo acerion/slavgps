@@ -90,31 +90,31 @@ void TrackStatistics::add_track(Track * trk)
 		this->elev_loss += delta_down;
 	}
 
-	if (!trk->empty()
-	    && (*trk->trackpoints.begin())->timestamp.is_valid()) {
+
+	Time ts_first;
+	Time ts_last;
+	if (sg_ret::ok == trk->get_timestamps(ts_first, ts_last)) {
 
 		/* TODO: there already is a similar code elsewhere,
 		   look for "const Time t1". */
-	        const Time t1 = (*trk->trackpoints.begin())->timestamp;
-		const Time t2 = (*std::prev(trk->trackpoints.end()))->timestamp;
 
 		/* Initialize if necessary. */
 		if (!this->start_time.is_valid()) {
-			this->start_time = t1;
+			this->start_time = ts_first;
 		}
 		if (!this->end_time.is_valid()) {
-			this->end_time = t2;
+			this->end_time = ts_last;
 		}
 
 		/* Update min/max value. */
-		if (t1 < this->start_time) {
-			this->start_time = t1;
+		if (ts_first < this->start_time) {
+			this->start_time = ts_first;
 		}
-		if (t2 > this->end_time) {
-			this->end_time = t2;
+		if (ts_last > this->end_time) {
+			this->end_time = ts_last;
 		}
 
-		this->duration = this->duration + (t2 - t1);
+		this->duration = this->duration + (ts_last - ts_first);
 	}
 }
 

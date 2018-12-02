@@ -316,11 +316,9 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 
 
-	if (!this->trk->empty()
-	    && (*this->trk->trackpoints.begin())->timestamp.is_valid()) {
-
-		const Time t1 = (*this->trk->trackpoints.begin())->timestamp;
-		const Time t2 = (*std::prev(this->trk->trackpoints.end()))->timestamp;
+	Time ts1;
+	Time ts2;
+	if (sg_ret::ok == this->trk->get_timestamps(ts1, ts2)) {
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
 		const LatLon center((this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2);
@@ -329,21 +327,21 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		this->tz = TZLookup::get_tz_at_location(coord);
 
 
-		QString msg = t1.get_time_string(Qt::TextDate, coord, this->tz);
+		QString msg = ts1.get_time_string(Qt::TextDate, coord, this->tz);
 		this->w_time_start = ui_label_new_selectable(msg, this);
 		this->grid->addWidget(new QLabel(tr("Start:")), row, 0);
 		this->grid->addWidget(this->w_time_start, row, 1);
 		row++;
 
 
-		msg = t2.get_time_string(Qt::TextDate, coord, this->tz);
+		msg = ts2.get_time_string(Qt::TextDate, coord, this->tz);
 		this->w_time_end = ui_label_new_selectable(msg, this);
 		this->grid->addWidget(new QLabel(tr("End:")), row, 0);
 		this->grid->addWidget(this->w_time_end, row, 1);
 		row++;
 
 
-		const Time total_duration_s = (t2 - t1);
+		const Time total_duration_s = (ts2 - ts1);
 		const Time segments_duration_s = this->trk->get_duration(false);
 		result = tr("%1 total - %2 in segments")
 			.arg(total_duration_s.to_duration_string())

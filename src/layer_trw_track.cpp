@@ -958,17 +958,14 @@ Time Track::get_duration(void) const
 {
 	Time result(0);
 
-	if (this->trackpoints.empty()) {
+	Time ts_begin;
+	Time ts_end;
+	if (sg_ret::ok != this->get_timestamps(ts_begin, ts_end)) {
+		qDebug() << SG_PREFIX_W << "Can't get track's timestamps";
 		return result;
 	}
 
-	const Time t1 = (*this->trackpoints.begin())->timestamp;
-	const Time t2 = (*std::prev(this->trackpoints.end()))->timestamp;
-	if (!t1.is_valid() || !t2.is_valid()) {
-		return result;
-	}
-
-	const Time duration = t2 - t1;
+	const Time duration = ts_end - ts_begin;
 	if (!duration.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Invalid duration";
 		return result;
@@ -4234,13 +4231,8 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	bool a_visible = trw->visible && this->visible;
 	a_visible = a_visible && (this->type_id == "sg.trw.route" ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
-	unsigned int trk_duration = 0; /* In minutes. */
-	if (!this->empty()) {
-		time_t t1 = (*this->trackpoints.begin())->timestamp;
-		time_t t2 = (*std::prev(this->trackpoints.end()))->timestamp;
-		trk_duration = (int) round(labs(t2 - t1) / 60.0);
-	}
 
+	const Time trk_duration = this->get_duration();
 
 
 	Altitude max_alt(0.0, HeightUnit::Metres);
@@ -4306,7 +4298,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	/* DURATION_COLUMN */
 	item = new QStandardItem();
 	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(trk_duration);
+	variant = QVariant::fromValue(trk_duration.get_value());
 	item->setData(variant, Qt::DisplayRole);
 	item->setEditable(false); /* This dialog is not a good place to edit track duration. */
 	items << item;
@@ -4431,4 +4423,23 @@ void Trackpoint::set_timestamp(const Time & value)
 void Trackpoint::set_timestamp(time_t value)
 {
 	this->timestamp = Time(value);
+}
+
+
+
+
+sg_ret Track::get_timestamps(Time & ts_first, Time & ts_last) const
+{
+	if (this->trackpoints.size() < 2) {
+		return sg_ret::err;
+	}
+
+        ts_first = (*this->trackpoints.begin())->timestamp;
+	ts_last = (*std::prev(this->trackpoints.end()))->timestamp;
+
+	if (!ts_first.is_valid() || !ts_last.is_valid()) {
+		return sg_ret::err;
+	}
+
+	return sg_ret::ok;
 }

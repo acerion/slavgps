@@ -249,6 +249,15 @@ namespace SlavGPS {
 
 		void convert(CoordMode dest_mode);
 
+		/**
+		   @brief Get timestamps of first and last trackpoint
+
+		   @return sg_ret::err if track has less than two
+		   trackpoints or if first or last trackpoint doesn't
+		   have a timestamp.
+		*/
+		sg_ret get_timestamps(Time & ts_first, Time & ts_last) const;
+
 		bool get_total_elevation_gain(Altitude & delta_up, Altitude & down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
 		bool set_tp_by_percentage_dist(double reldist, double *meters_from_start, int index);

@@ -150,14 +150,17 @@ std::list<TreeItem *> LayerTRWTracks::get_tracks_by_date(const QDate & search_da
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
 
-		/* Might be an easier way to compare dates rather than converting the strings all the time... */
-		if (!trk->empty()
-		    && (*trk->trackpoints.begin())->timestamp.is_valid()) {
+		if (trk->empty()) {
+			continue;
+		}
+		if (!(*trk->trackpoints.begin())->timestamp.is_valid()) {
+			continue;
+		}
 
-			const QString trk_date_string = (*trk->trackpoints.begin())->timestamp.strftime_utc("%Y-%m-%d");
-			if (search_date_string == trk_date_string) {
-				result.push_back(trk);
-			}
+		/* Might be an easier way to compare dates rather than converting the strings all the time... */
+		const QString trk_date_string = (*trk->trackpoints.begin())->timestamp.strftime_utc("%Y-%m-%d");
+		if (search_date_string == trk_date_string) {
+			result.push_back(trk);
 		}
 	}
 	return result;
@@ -231,8 +234,6 @@ std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_tim
 	std::list<Track *> result;
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		Trackpoint * p1 = NULL;
-		Trackpoint * p2 = NULL;
 		Track * trk = *iter;
 
 		if (trk == exclude) {
@@ -240,8 +241,8 @@ std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_tim
 		}
 
 		if (!trk->empty()) {
-			p1 = trk->get_tp_first();
-			p2 = trk->get_tp_last();
+			Trackpoint * p1 = trk->get_tp_first();
+			Trackpoint * p2 = trk->get_tp_last();
 
 			if (with_timestamps) {
 				if (!p1->timestamp.is_valid() || !p2->timestamp.is_valid()) {
@@ -265,61 +266,52 @@ std::list<Track *> LayerTRWTracks::find_tracks_with_timestamp_type(bool with_tim
 
 
 /**
- * Called for each track in track hash table.
- * If the original track orig_trk is close enough (threshold)
+ * Called for each track in tracks container.
+ * If the main track is close enough (threshold)
  * to given track, then the given track is added to returned list.
  */
-std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * orig_trk, unsigned int threshold)
+std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, unsigned int threshold)
 {
 	std::list<Track *> result;
 
-	if (!orig_trk || orig_trk->empty()) {
+	if (!main_trk || main_trk->empty()) {
 		return result;
 	}
+
+	Time main_ts_begin;
+	Time main_ts_end;
+	if (sg_ret::ok  != main_trk->get_timestamps(main_ts_begin, main_ts_end)) {
+		qDebug() << SG_PREFIX_W << "Main track has no timestamps, not searching from nearby tracks";
+		return result;
+	}
+
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Track * trk = *iter;
 
-		/* Outline:
-		 * Detect reasons for not merging, and return.
-		 * If no reason is found not to merge, then do it.
-		 */
-
-		/* Exclude the original track from the compiled list. */
-		if (trk == orig_trk) { /* kamilFIXME: originally it was "if (trk == udata->exclude)" */
+		/* Skip self. */
+		if (TreeItem::the_same_object(trk, main_trk)) {
 			continue;
 		}
 
-		const Time t1 = orig_trk->get_tp_first()->timestamp;
-		const Time t2 = orig_trk->get_tp_last()->timestamp;
+		Time ts_begin;
+		Time ts_end;
+		if (sg_ret::ok != trk->get_timestamps(ts_begin, ts_end)) {
+			continue;
+		}
 
-		if (!trk->empty()) {
 
-			Trackpoint * p1 = trk->get_tp_first();
-			Trackpoint * p2 = trk->get_tp_last();
+		/* FIXME: this code is apparently fine with negative
+		   values of time diffs, but Time class doesn't handle
+		   them well make sure that negative values of Time
+		   are considered as valid. */
 
-			if (!p1->timestamp.is_valid() || !p2->timestamp.is_valid()) {
-				//fprintf(stdout, "no timestamp\n");
-				continue;
-			}
+		const Time diff1 = main_ts_begin - ts_end;
+		const Time diff2 = ts_begin - main_ts_end;
 
-			/* FIXME: this code is apparently fine with
-			   negative values of time diffs, but
-			   Time class doesn't handle them well
-			   make sure that negative values of Time
-			   are considered as valid. */
-
-			const Time diff1 = t1 - p2->timestamp;
-			const Time diff2 = p1->timestamp - t2;
-
-			//fprintf(stdout, "Got track named %s, times %d, %d\n", trk->name, p1->timestamp, p2->timestamp);
-			if (! (labs(diff1.get_value()) < threshold
-			       /*  p1 p2      t1 t2 */
-			       || labs(diff2.get_value()) < threshold)
-			    /*  t1 t2      p1 p2 */
-			    ) {
-				continue;
-			}
+		if (!(labs(diff1.get_value()) < threshold          /* ts_begin ts_end                 main_ts_begin main_ts_end */
+		      || labs(diff2.get_value()) < threshold)) {   /* main_ts_begin main_ts_end       ts_begin ts_end */
+			continue;
 		}
 
 		result.push_front(*iter);

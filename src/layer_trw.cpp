@@ -1361,44 +1361,34 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 
 		result.length += trk->get_length();
 
-		/* Ensure times are available. */
-		if (trk->empty() || !trk->get_tp_first()->timestamp.is_valid()) {
-			continue;
-		}
-
-		/* Get trkpt only once - as using get_tp_last() iterates whole track each time. */
-		Trackpoint * trkpt_last = trk->get_tp_last();
-		if (!trkpt_last->timestamp.is_valid()) {
-			continue;
-		}
-
 
 		/* TODO: there already is a similar code elsewhere,
 		   look for "const Time t1". */
-		const Time t1 = trk->get_tp_first()->timestamp;
-		const Time t2 = trkpt_last->timestamp;
+		Time ts_first;
+		Time ts_last;
+		if (sg_ret::ok == trk->get_timestamps(ts_first, ts_last)) {
+			/* Initialize if necessary. */
+			if (!result.start_time.is_valid()) {
+				result.start_time = ts_first;
+			}
+			if (!result.end_time.is_valid()) {
+				result.end_time = ts_last;
+			}
 
-		/* Initialize if necessary. */
-		if (!result.start_time.is_valid()) {
-			result.start_time = t1;
-		}
-		if (!result.end_time.is_valid()) {
-			result.end_time = t2;
-		}
+			/* Update find the earliest / last times. */
+			if (ts_first < result.start_time) {
+				result.start_time = ts_first;
+			}
 
-		/* Update find the earliest / last times. */
-		if (t1 < result.start_time) {
-			result.start_time = t1;
-		}
+			if (ts_last > result.end_time) {
+				result.end_time = ts_last;
+			}
 
-		if (t2 > result.end_time) {
-			result.end_time = t2;
+			/* Keep track of total time.
+			   There maybe gaps within a track (eg segments)
+			   but this should be generally good enough for a simple indicator. */
+			result.duration = result.duration + (ts_last - ts_first);
 		}
-
-		/* Keep track of total time.
-		   There maybe gaps within a track (eg segments)
-		   but this should be generally good enough for a simple indicator. */
-		result.duration = result.duration + (t2 - t1);
 	}
 
 	return result;
