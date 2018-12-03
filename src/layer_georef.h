@@ -76,6 +76,7 @@ namespace SlavGPS {
 		LatLon get_lat_lon_tl(void) const;
 		LatLon get_lat_lon_br(void) const;
 		void check_br_is_good_or_msg_user(void);
+		void set_widget_values(const WorldFile & wfile);
 
 		FileSelectorWidget * map_image_file_selector = NULL;
 		FileSelectorWidget * world_file_selector = NULL;
@@ -107,7 +108,6 @@ namespace SlavGPS {
 		void calculate_mpp_from_coords_cb(void);
 
 	private:
-		void set_widget_values(const WorldFile & wfile);
 		void sync_from_utm_to_lat_lon(void);
 		void sync_from_lat_lon_to_utm(void);
 

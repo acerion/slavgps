@@ -390,7 +390,9 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	pen.setWidth(1);
 	viewport->draw_bbox(image_bbox, pen);
 
+	QPixmap transformed_image = this->image;
 
+#if 0
 	const Coord coord_tl(this->utm_tl, viewport->get_coord_mode());
 	const ScreenPos pos_tl = viewport->coord_to_screen_pos(coord_tl);
 
@@ -408,9 +410,6 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		sub_viewport_rect.setHeight(round(this->image_height * this->mpp_northing / ympp));
 	}
 
-
-	QPixmap image_to_draw = this->image;
-
 	if (false && scale_mismatch) {
 		/* Rescale image only if really necessary, i.e. if we don't have a valid copy of scaled image. */
 
@@ -419,24 +418,37 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 		if (intended_width == this->scaled_image_width && intended_heigth == this->scaled_image_height && !this->scaled_image.isNull()) {
 			/* Reuse existing scaled image. */
-			image_to_draw = this->scaled_image;
+			transformed_image = this->scaled_image;
 		} else {
-			image_to_draw = this->image.scaled(intended_width, intended_heigth, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+			transformed_image = this->image.scaled(intended_width, intended_heigth, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
-			this->scaled_image = image_to_draw;
+			this->scaled_image = transformed_image;
 			this->scaled_image_width = intended_width;
 			this->scaled_image_height = intended_heigth;
 		}
 	}
+#else
+	const Coord coord_tl(this->lat_lon_tl, viewport->get_coord_mode());
+	const ScreenPos pos_tl = viewport->coord_to_screen_pos(coord_tl);
+
+	const Coord coord_br(this->lat_lon_br, viewport->get_coord_mode());
+	const ScreenPos pos_br = viewport->coord_to_screen_pos(coord_br);
+
+	QRect sub_viewport_rect;
+	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x, pos_tl.y));
+	sub_viewport_rect.setWidth(pos_br.x - pos_tl.x + 1);
+	sub_viewport_rect.setHeight(pos_br.y - pos_tl.y + 1);
+	qDebug() << SG_PREFIX_I << "Viewport rectangle =" << sub_viewport_rect;
+#endif
 
 	QRect image_rect;
 	image_rect.setTopLeft(QPoint(0, 0));
-	image_rect.setWidth(image_to_draw.width());
-	image_rect.setHeight(image_to_draw.height());
+	image_rect.setWidth(transformed_image.width());
+	image_rect.setHeight(transformed_image.height());
 
-	qDebug() << "++++++++ EXPECT 0 0:" << (image_to_draw.width() - sub_viewport_rect.width()) << (image_to_draw.height() - sub_viewport_rect.height());
+	qDebug() << "++++++++ EXPECT 0 0:" << (transformed_image.width() - sub_viewport_rect.width()) << (transformed_image.height() - sub_viewport_rect.height());
 
-	viewport->draw_pixmap(image_to_draw, sub_viewport_rect, image_rect);
+	viewport->draw_pixmap(transformed_image, sub_viewport_rect, image_rect);
 }
 
 
@@ -684,29 +696,66 @@ static void maybe_read_world_file(FileSelectorWidget * file_selector, void * use
 		return;
 	}
 
-	const QString filename = file_selector->get_selected_file_full_path();
-	if (filename.isEmpty()) {
+	const QString file_full_path = file_selector->get_selected_file_full_path();
+	if (file_full_path.isEmpty()) {
 		return;
 	}
 
-#ifdef K_FIXME_RESTORE
-	bool upper = g_ascii_isupper(filename[strlen(filename) - 1]);
-	const QString file_full_path_w = filename + (upper ? "W" : "w");
 
-	if (WorldFile::ReadStatus::Success == wfile.read_file(file_full_path_w)) {
-		dialog->set_widget_values(wfile);
-	} else {
-		if (strlen(filename) > 3) {
-			char* file0 = g_strndup(filename, strlen(filename)-2);
-			char* file1 = g_strdup_printf("%s%c%c", file0, filename[strlen(filename)-1], (upper ? 'W' : 'w') );
-			if (WorldFile::ReadStatus::Success == wfile.read_file(file1)) {
-				dialog->set_widget_values(wfile);
-			}
-			free(file1);
-			free(file0);
+	const int len = file_full_path.length();
+	const bool upper = file_full_path[len - 1].isUpper();
+	WorldFile wfile;
+
+
+	/* Naming convention 1: .jpg -> .jpgw */
+	{
+		const QString world_file_full_path = file_full_path + (upper ? "W" : "w");
+		qDebug() << SG_PREFIX_I << "Trying to open file with naming convention 1:" << world_file_full_path;
+
+		if (WorldFile::ReadStatus::Success == wfile.read_file(world_file_full_path)) {
+			dialog->set_widget_values(wfile);
+			qDebug() << SG_PREFIX_I << "Trying to open file with naming convention 1: success";
+			return;
 		}
 	}
-#endif
+
+	/* Naming convention 2: .jpg -> .jgw */
+	{
+		if (len > 3) {
+			QString world_file_full_path = file_full_path;
+			const QChar last_char = file_full_path[len - 1];
+
+			world_file_full_path[len - 2] = last_char;
+			world_file_full_path[len - 1] = upper ? 'W' : 'w';
+			qDebug() << SG_PREFIX_I << "Trying to open file with naming convention 2:" << world_file_full_path;
+
+			if (WorldFile::ReadStatus::Success == wfile.read_file(world_file_full_path)) {
+				dialog->set_widget_values(wfile);
+				qDebug() << SG_PREFIX_I << "Trying to open file with naming convention 2: success";
+				return;
+			}
+		}
+	}
+
+	/* Naming convention 3: always .wld */
+	{
+		if (len > 3) {
+			QString world_file_full_path = file_full_path;
+			world_file_full_path.chop(3);
+			if (upper) {
+				world_file_full_path.append("WLD");
+			} else {
+				world_file_full_path.append("wld");
+			}
+			qDebug() << SG_PREFIX_I << "Trying to open file with naming convention 3:" << world_file_full_path;
+
+			if (WorldFile::ReadStatus::Success == wfile.read_file(world_file_full_path)) {
+				dialog->set_widget_values(wfile);
+				qDebug() << SG_PREFIX_I << "Trying to open file with naming convention 3: success";
+				return;
+			}
+		}
+	}
 }
 
 
