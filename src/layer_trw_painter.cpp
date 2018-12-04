@@ -169,14 +169,14 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 */
 class SpeedColoring {
 public:
-	SpeedColoring(double low, double average, double high) : low_speed(low), average_speed(average), high_speed(high) {};
+	SpeedColoring(const Speed & low, const Speed & average, const Speed & high) : low_speed(low), average_speed(average), high_speed(high) {};
 	SpeedColoring() {};
-	void set(double low, double average, double high) { low_speed = low; average_speed = average; high_speed = high; };
+	void set(const Speed & low, const Speed & average, const Speed & high) { low_speed = low; average_speed = average; high_speed = high; };
 	LayerTRWTrackGraphics get(const Trackpoint * tp1, const Trackpoint * tp2);
 private:
-	double low_speed = 0.0;
-	double average_speed = 0.0;
-	double high_speed = 0.0;
+	Speed low_speed;
+	Speed average_speed;
+	Speed high_speed;
 };
 
 
@@ -187,15 +187,15 @@ LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoin
 	if (!tp1->timestamp.is_valid() || !tp2->timestamp.is_valid()) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
-	if (average_speed <= 0) {
+	if (average_speed.get_value() <= 0) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
 
 	const Time time_diff = tp1->timestamp - tp2->timestamp;
 	const double speed = (Coord::distance(tp1->coord, tp2->coord) / time_diff.get_value());
-	if (speed < low_speed) {
+	if (speed < low_speed.get_value()) {
 		return LayerTRWTrackGraphics::Speed1;
-	} else if (speed > high_speed) {
+	} else if (speed > high_speed.get_value()) {
 		return LayerTRWTrackGraphics::Speed3;
 	} else {
 		return LayerTRWTrackGraphics::Speed2;
@@ -549,12 +549,14 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	SpeedColoring speed_coloring;
 	/* If necessary calculate these values - which is done only once per track redraw. */
 	if (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed) {
-		/* The percentage factor away from the average speed determines transistions between the levels.
-		   TODO_LATER: what if average speed is invalid? */
-		const double average_speed = trk->get_average_speed_moving(this->track_min_stop_length).get_value();
-		const double low_speed = average_speed - (average_speed * (this->track_draw_speed_factor/100.0));
-		const double high_speed = average_speed + (average_speed * (this->track_draw_speed_factor/100.0));
-		speed_coloring.set(low_speed, average_speed, high_speed);
+		/* The percentage factor away from the average speed
+		   determines transistions between the levels. */
+		Speed average_speed = trk->get_average_speed_moving(this->track_min_stop_length);
+		if (average_speed.is_valid()) {
+			const Speed low_speed = average_speed - (average_speed * (this->track_draw_speed_factor / 100.0));
+			const Speed high_speed = average_speed + (average_speed * (this->track_draw_speed_factor / 100.0));
+			speed_coloring.set(low_speed, average_speed, high_speed);
+		}
 	}
 
 	ScreenPos prev_pos = curr_pos;

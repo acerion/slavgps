@@ -1060,20 +1060,27 @@ Speed Speed::convert_to_unit(SpeedUnit target_speed_unit) const
 
 
 
+bool Speed::operator_args_valid(const Speed & lhs, const Speed & rhs)
+{
+	if (!lhs.valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operands invalid";
+		return false;
+	}
+	if (lhs.unit != rhs.unit) {
+		/* TODO_LATER: make operator work for arguments with different units. */
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
+		return false;
+	}
+
+	return true;
+}
+
+
+
 
 Speed & Speed::operator+=(const Speed & rhs)
 {
-	if (!rhs.valid) {
-		return *this;
-	}
-
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operands invalid";
-		return *this;
-	}
-	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
+	if (!Speed::operator_args_valid(*this, rhs)) {
 		return *this;
 	}
 
@@ -1085,54 +1092,47 @@ Speed & Speed::operator+=(const Speed & rhs)
 
 
 
-Speed Speed::operator+(const Speed & rhs)
+Speed & Speed::operator-=(const Speed & rhs)
 {
-	/* TODO_LATER: make operator work for arguments with different units. */
-	Speed result;
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operands invalid";
-		return result;
+	if (!Speed::operator_args_valid(*this, rhs)) {
+		return *this;
 	}
 
-	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return result;
-	}
-
-
-	result.value = this->value + rhs.value;
-	result.unit = this->unit;
-	result.valid = !std::isnan(result.value);
-
-	return result;
+	this->value -= rhs.value;
+	this->valid = !std::isnan(this->value);
+	return *this;
 }
 
 
 
 
-Speed Speed::operator-(const Speed & rhs)
+Speed & Speed::operator*=(double x)
 {
-	/* TODO_LATER: make operator work for arguments with different units. */
-	Speed result;
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operands invalid";
-		return result;
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_E << "Operation on invalid arg";
+		return *this;
 	}
 
-	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return result;
-	}
-
-
-	result.value = this->value - rhs.value;
-	result.unit = this->unit;
-	result.valid = !std::isnan(result.value);
-
-	return result;
+	this->value *= x;
+	this->valid = !std::isnan(this->value);
+	return *this;
 }
+
+
+
+
+Speed & Speed::operator/=(double x)
+{
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_E << "Operation on invalid arg";
+		return *this;
+	}
+
+	this->value /= x;
+	this->valid = !std::isnan(this->value);
+	return *this;
+}
+
 
 
 
@@ -1404,6 +1404,7 @@ Time SlavGPS::operator-(const Time & lhs, const Time & rhs)
 
 bool SlavGPS::operator<(const Time & lhs, const Time & rhs)
 {
+	/* TODO: shouldn't this be difftime()? */
 	return lhs.value < rhs.value;
 }
 

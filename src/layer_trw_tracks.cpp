@@ -1071,7 +1071,14 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 	this->children_map.erase(trk->get_uid()); /* Erase by key. */
 
 
-	/* TODO_2_LATER: optimize. */
+	TreeItemIdentityPredicate pred(trk);
+	auto iter = std::find_if(this->children_list.begin(), this->children_list.end(), pred);
+	if (iter != this->children_list.end()) {
+		qDebug() << SG_PREFIX_I << "Will remove" << (*iter)->name << "from list" << this->name;
+		this->children_list.erase(iter);
+	}
+
+#if 0   /* Old code. */
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		qDebug() << SG_PREFIX_I << "Will compare tracks" << (*iter)->name << "and" << trk->name;
 		if (TreeItem::the_same_object(*iter, trk)) {
@@ -1079,6 +1086,7 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 			break;
 		}
 	}
+#endif
 
 	return sg_ret::ok;
 }

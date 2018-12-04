@@ -59,6 +59,7 @@ namespace SlavGPS {
 	class Pickle;
 
 	class TreeItemListFormat;
+	class TreeItemIdentityPredicate;
 
 
 
@@ -101,6 +102,7 @@ namespace SlavGPS {
 		Q_OBJECT
 
 		friend class Tree;
+		friend class TreeItemIdentityPredicate;
 	public:
 		TreeItem();
 		~TreeItem();
@@ -231,6 +233,25 @@ namespace SlavGPS {
 	TreeItem::MenuOperation operator_bit_and(const TreeItem::MenuOperation arg1, const TreeItem::MenuOperation arg2);
 	TreeItem::MenuOperation operator_bit_or(const TreeItem::MenuOperation arg1, const TreeItem::MenuOperation arg2);
 	TreeItem::MenuOperation operator_bit_not(const TreeItem::MenuOperation arg);
+
+
+
+
+	/* c++ UnaryPredicate. Can be passed to find_if() or remove_if().
+	   Similar to TreeItem::the_same_object(). */
+	class TreeItemIdentityPredicate {
+
+	public:
+		TreeItemIdentityPredicate(const TreeItem * item) : uid_(item->get_uid()) {};
+
+		bool operator()(const TreeItem * x) const
+		{
+			return x->uid == this->uid_;
+		}
+	private:
+		const sg_uid_t uid_;
+	};
+
 
 
 

@@ -2599,7 +2599,6 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 /* Comparison function used to sort trackpoints. */
 bool Trackpoint::compare_timestamps(const Trackpoint * a, const Trackpoint * b)
 {
-	/* TODO: shouldn't this be difftime()? */
 	return a->timestamp < b->timestamp;
 }
 
@@ -3253,10 +3252,6 @@ void Track::apply_dem_data_only_missing_cb(void)
 
 void Track::export_track_as_gpx_cb(void)
 {
-	if (this->name.isEmpty()) { /* TODO_LATER: will track's name be ever empty? */
-		return;
-	}
-
 	const QString title = this->type_id == "sg.trw.route" ? tr("Export Route as GPX") : tr("Export Track as GPX");
 	const QString auto_save_name = append_file_ext(this->name, SGFileType::GPX);
 

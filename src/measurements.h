@@ -321,8 +321,14 @@ namespace SlavGPS {
 		Speed convert_to_unit(SpeedUnit speed_unit) const;
 
 		Speed & operator+=(const Speed & rhs);
-	        Speed operator+(const Speed & rhs);
-		Speed operator-(const Speed & rhs);
+		Speed & operator-=(const Speed & rhs);
+	        friend Speed operator+(Speed & lhs, const Speed & rhs) { lhs += rhs; return lhs; }
+		friend Speed operator-(Speed & lhs, const Speed & rhs) { lhs -= rhs; return lhs; }
+
+		Speed & operator/=(double x);
+		Speed & operator*=(double x);
+	        friend Speed operator*(Speed & lhs, double x) { lhs *= x; return lhs; }
+		friend Speed operator/(Speed & lhs, double x) { lhs /= x; return lhs; }
 
 		/* Return "meters" or "feet" string.
 		   This is a full string, not "m" or "ft". */
@@ -344,6 +350,8 @@ namespace SlavGPS {
 		static QString to_string(double value, int precision = SG_PRECISION_SPEED);
 
 	private:
+		static bool operator_args_valid(const Speed & lhs, const Speed & rhs);
+
 		double value = NAN;
 		bool valid = false;
 		SpeedUnit unit;
