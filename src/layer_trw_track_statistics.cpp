@@ -95,22 +95,12 @@ void TrackStatistics::add_track(Track * trk)
 	Time ts_last;
 	if (sg_ret::ok == trk->get_timestamps(ts_first, ts_last)) {
 
-		/* TODO: there already is a similar code elsewhere,
-		   look for "const Time t1". */
-
-		/* Initialize if necessary. */
-		if (!this->start_time.is_valid()) {
+		/* Update the earliest / the latest timestamps
+		   (initialize if necessary). */
+		if ((!this->start_time.is_valid()) || ts_first < this->start_time) {
 			this->start_time = ts_first;
 		}
-		if (!this->end_time.is_valid()) {
-			this->end_time = ts_last;
-		}
-
-		/* Update min/max value. */
-		if (ts_first < this->start_time) {
-			this->start_time = ts_first;
-		}
-		if (ts_last > this->end_time) {
+		if ((!this->end_time.is_valid()) || ts_last > this->end_time) {
 			this->end_time = ts_last;
 		}
 

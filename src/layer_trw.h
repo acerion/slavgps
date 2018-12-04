@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <list>
 #include <deque>
+#include <mutex>
 
 
 
@@ -505,6 +506,9 @@ namespace SlavGPS {
 		/* Waypoint that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::waypoints. */
 		Waypoint * current_wp_ = NULL;
+
+		/* Mutex that prevents removing items from TRW layer. */
+		std::mutex remove_mutex;
 	};
 
 

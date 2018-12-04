@@ -322,6 +322,9 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 	for (auto iter = trk2->begin(); iter != trk2->end(); iter++) {
 
 		Trackpoint * tp = *iter;
+		if (!tp->timestamp.is_valid()) {
+			continue;
+		}
 
 		/* Is it exactly this point? */
 		if (this->photo_time == tp->timestamp) {
@@ -337,12 +340,17 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 		}
 
 		Trackpoint * tp_next = *std::next(iter);
+		if (!tp_next->timestamp.is_valid()) {
+			continue;
+		}
 
-		/* TODO_LATER need to use 'has_timestamp' property. */
 		if (tp->timestamp == tp_next->timestamp) {
+			/* Skip this timestamp, we have already
+			   compared against this value. */
 			continue;
 		}
 		if (tp->timestamp > tp_next->timestamp) {
+			/* Skip this out-of-order timestamp. */
 			continue;
 		}
 

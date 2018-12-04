@@ -1369,26 +1369,17 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 
 		result.length += trk->get_length();
 
-
-		/* TODO: there already is a similar code elsewhere,
-		   look for "const Time t1". */
 		Time ts_first;
 		Time ts_last;
 		if (sg_ret::ok == trk->get_timestamps(ts_first, ts_last)) {
-			/* Initialize if necessary. */
-			if (!result.start_time.is_valid()) {
-				result.start_time = ts_first;
-			}
-			if (!result.end_time.is_valid()) {
-				result.end_time = ts_last;
-			}
 
-			/* Update find the earliest / last times. */
-			if (ts_first < result.start_time) {
+			/* Update the earliest / the latest timestamps
+			   (initialize if necessary). */
+			if ((!result.start_time.is_valid()) || ts_first < result.start_time) {
 				result.start_time = ts_first;
 			}
 
-			if (ts_last > result.end_time) {
+			if ((!result.end_time.is_valid()) || ts_last > result.end_time) {
 				result.end_time = ts_last;
 			}
 
@@ -4453,7 +4444,9 @@ sg_ret LayerTRW::has_child(const Waypoint * wp, bool * result) const
 
 void LayerTRW::lock_remove(void)
 {
-	/* TODO: implement code for locking mutex that prevents from removing items from TRW layer. */
+	qDebug() << SG_PREFIX_D << "Lock - before";
+	this->remove_mutex.lock();
+	qDebug() << SG_PREFIX_D << "Lock - after";
 }
 
 
@@ -4461,5 +4454,7 @@ void LayerTRW::lock_remove(void)
 
 void LayerTRW::unlock_remove(void)
 {
-	/* TODO: implement code for unlocking mutex that prevents from removing items from TRW layer. */
+	qDebug() << SG_PREFIX_D << "Unlock - before";
+	this->remove_mutex.unlock();
+	qDebug() << SG_PREFIX_D << "Unlock - after";
 }
