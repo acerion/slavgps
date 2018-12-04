@@ -1387,8 +1387,8 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 		/* Get some timestamp information of the file. */
 		struct stat stat_buf;
 		if (stat(cache_file_path.toUtf8().constData(), &stat_buf) == 0) {
-			const Time timestamp(stat_buf.st_mtime);
-			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(timestamp.strftime_utc("%c"));
+			const Time ts(stat_buf.st_mtime);
+			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(ts.strftime_utc("%c"));
 		} else {
 			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);
 		}
