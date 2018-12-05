@@ -53,7 +53,7 @@ using namespace SlavGPS;
 
 
 
-static char * time_string_adjusted(time_t time, int offset_s);
+static QString time_string_adjusted(time_t time, int offset_s);
 static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz);
 
 
@@ -1668,14 +1668,17 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const 
 
 
 
-static char * time_string_adjusted(time_t time, int offset_s)
+static QString time_string_adjusted(time_t time, int offset_s)
 {
 	time_t mytime = time + offset_s;
-	char * str = (char *) malloc(64); /* TODO: where do we deallocate this? */
+	char * str = (char *) malloc(64);
 	struct tm tm;
 	/* Append asterisks to indicate use of simplistic model (i.e. no TZ). */
 	strftime(str, 64, "%a %X %x **", gmtime_r(&mytime, &tm));
-	return str;
+
+	QString result(str);
+	free(str);
+	return result;
 }
 
 

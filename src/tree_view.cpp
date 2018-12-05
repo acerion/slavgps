@@ -126,8 +126,6 @@ TreeItem * TreeView::get_tree_item(const TreeIndex & item_index) const
 
 void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 {
-	return; /* TODO: remove early return. */
-
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
 		/* "tree_item->index" points at the top tree item. */
@@ -149,8 +147,6 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 
 void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 {
-	return; /* TODO: remove early return. */
-
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
 		/* "tree_item->index" points at the top tree item. */

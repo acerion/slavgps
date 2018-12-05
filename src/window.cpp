@@ -1457,17 +1457,14 @@ void Window::menu_copy_centre_cb(void)
 	bool full_format = false;
 	(void) ApplicationState::get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
 
+	QString message;
 	if (full_format) {
 		/* Bells & Whistles - may include degrees, minutes and second symbols. */
-		coord.to_strings(first, second);
+		message = coord.to_string();
 	} else {
 		/* Simple x.xx y.yy format. */
-		const LatLon lat_lon = UTM::to_latlon(coord.get_utm());
-		first = LatLon::lat_to_string_raw(lat_lon);
-		second = LatLon::lon_to_string_raw(lat_lon);
+		message = coord.get_latlon().to_string();
 	}
-
-	const QString message = QString("%1 %2").arg(first).arg(second); /* TODO: use latlon/coord to_string() method? */
 
 	Pickle dummy;
 	Clipboard::copy(ClipboardDataType::Text, LayerType::Aggregate, "", dummy, message);
