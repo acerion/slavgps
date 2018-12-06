@@ -290,71 +290,28 @@ sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 
 
 
-bool LayerAggregate::change_child_item_position(TreeItem * child_item, bool up)
+bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
 {
-	auto child_iter = this->children->end();
-
-	//this->tree_view->change_tree_item_position(child_item->index, up);
-
 	/* We are in aggregate layer, so the child must be a layer as well. */
-	assert (child_item->tree_item_type == TreeItemType::Layer);
-	Layer * child_layer = child_item->to_layer();
-
-	/* Find container iterator of given tree item.
-	   This is not the same as tree item index. */
-	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		if (TreeItem::the_same_object(child_layer, *iter)) {
-			child_iter = iter;
-		}
+	if (child_tree_item.tree_item_type != TreeItemType::Layer) {
+		qDebug() << SG_PREFIX_E << "Attempting to move non-layer child" << child_tree_item.name;
+		return false;
 	}
-
-	if (child_iter == this->children->end()) {
-		qDebug() << SG_PREFIX_E << "Failed to find iterator of child item";
+	if (NULL == this->children) {
+		qDebug() << SG_PREFIX_E << "Attempting to move child when children container is NULL";
 		return false;
 	}
 
-	bool result = false;
-	if (up) {
-		if (child_iter == this->children->begin()) {
-			qDebug() << SG_PREFIX_W << "Not moving child" << child_layer->name << "up, already at the beginning";
-		} else {
-			qDebug() << SG_PREFIX_I << "Moving child" << child_layer->name << "up in list of" << this->name << "children";
-			std::swap(*child_iter, *std::prev(child_iter));
-			result = true;
-		}
-	} else {
-		if (std::next(child_iter) == this->children->end()) {
-			qDebug() << SG_PREFIX_W << "Not moving child" << child_layer->name << "down, already at the end";
-		} else {
-			qDebug() << SG_PREFIX_I << "Moving child" << child_layer->name << "down in list of" << this->name << "children";
-			std::swap(*child_iter, *std::next(child_iter));
-			result = true;
-		}
-	}
+	Layer * layer = child_tree_item.to_layer();
 
-	/* In this function we only move children in aggregate's container.
+	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->name << (up ? "up" : "down");
+	const bool result = move_tree_item_child_algo(*this->children, layer, up);
+	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
+
+	/* In this function we only move children in container of tree items.
 	   Movement in tree widget is handled elsewhere. */
 
 	return result;
-
-#ifdef K_OLD_IMPLEMENTATION
-	/* the old switcheroo */
-	if (up && child_iter + 1 != val->children->end()) {
-
-		Layer * tmp = *(child_iter + 1);
-		*(child_iter + 1) = *(child_iter);
-		*(child_iter) = tmp;
-	} else if (!up && child_iter - 1 != val->children->end()) {
-
-		Layer * tmp = *(child_iter - 1);
-		*(child_iter - 1) = *(child_iter);
-
-		first = child_iter->prev;
-		second = child_iter;
-	} else {
-		return;
-	}
-#endif
 }
 
 

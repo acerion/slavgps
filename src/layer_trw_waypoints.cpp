@@ -1051,3 +1051,25 @@ sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool 
 	*result = false;
 	return sg_ret::ok;
 }
+
+
+
+
+bool LayerTRWWaypoints::move_child(TreeItem & child_tree_item, bool up)
+{
+	if (child_tree_item.type_id != "sg.trw.waypoint") {
+		qDebug() << SG_PREFIX_E << "Attempting to move non-waypoint child" << child_tree_item.type_id;
+		return false;
+	}
+
+	Waypoint * wp = (Waypoint *) &child_tree_item;
+
+	qDebug() << SG_PREFIX_I << "Will now try to move child item of" << this->name << (up ? "up" : "down");
+	const bool result = move_tree_item_child_algo(this->children_list, wp, up);
+	qDebug() << SG_PREFIX_I << "Result of attempt to move child item" << (up ? "up" : "down") << ":" << (result ? "success" : "failure");
+
+	/* In this function we only move children in container of tree items.
+	   Movement in tree widget is handled elsewhere. */
+
+	return result;
+}

@@ -4458,3 +4458,12 @@ void LayerTRW::unlock_remove(void)
 	this->remove_mutex.unlock();
 	qDebug() << SG_PREFIX_D << "Unlock - after";
 }
+
+
+
+
+bool LayerTRW::move_child(TreeItem & child_tree_item, bool up)
+{
+	/* Let's not allow moving Tracks/Routes/Waypoints nodes. */
+	return false;
+}

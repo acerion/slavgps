@@ -174,6 +174,8 @@ namespace SlavGPS {
 
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
 
+		bool move_child(TreeItem & child_tree_item, bool up) override;
+
 		/* Similar to C++ container's ::clear() method: call
 		   destructor for all elements of this container,
 		   remove the elements, leaving zero elements in the

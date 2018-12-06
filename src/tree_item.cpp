@@ -155,6 +155,14 @@ void TreeItem::set_owning_layer(Layer * layer)
 
 
 
+TreeItem * TreeItem::get_parent(void) const
+{
+	return this->parent;
+}
+
+
+
+
 bool TreeItem::the_same_object(const TreeItem * item1, const TreeItem * item2)
 {
 	if (NULL == item1 || NULL == item2) {
@@ -308,4 +316,12 @@ void TreeItem::set_timestamp(const Time & value)
 void TreeItem::set_timestamp(time_t value)
 {
 	this->timestamp = Time(value);
+}
+
+
+
+
+bool TreeItem::move_child(TreeItem & child_tree_item, bool up)
+{
+	return false;
 }

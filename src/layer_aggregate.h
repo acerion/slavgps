@@ -90,7 +90,7 @@ namespace SlavGPS {
 		   aggregate layer) up or down in list of the child
 		   item's peers. This change is made only to aggregate
 		   layer's container of child items. */
-		bool change_child_item_position(TreeItem * child_tree_index, bool up);
+		bool move_child(TreeItem & child_tree_item, bool up) override;
 
 		bool delete_layer(Layer * layer);
 		void clear();

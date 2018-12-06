@@ -192,7 +192,8 @@ void TreeView::select_cb(void) /* Slot. */
 
 bool TreeView::change_tree_item_position(TreeItem * tree_item, bool up)
 {
-	if (!tree_item || tree_item->tree_item_type != TreeItemType::Layer) {
+	if (!tree_item) {
+		qDebug() << SG_PREFIX_E << "Trying to move NULL tree item";
 		return false;
 	}
 
@@ -260,6 +261,7 @@ void TreeView::detach_tree_item(TreeItem * tree_item)
 {
 	this->tree_model->removeRow(tree_item->index.row(), tree_item->index.parent());
 	tree_item->tree_view = NULL;
+	tree_item->parent = NULL;
 }
 
 
@@ -506,7 +508,7 @@ QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QStr
    @return sg_ret::ok on success
    @return error value on failure
 */
-sg_ret TreeView::attach_to_tree(const TreeItem * parent_tree_item, TreeItem * tree_item, TreeView::AttachMode attach_mode, const TreeItem * sibling_tree_item)
+sg_ret TreeView::attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, TreeView::AttachMode attach_mode, const TreeItem * sibling_tree_item)
 {
 	if (!parent_tree_item->index.isValid()) {
 		/* Parent index must always be valid. The only
@@ -692,7 +694,7 @@ void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrde
 
 
 
-sg_ret TreeView::insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row)
+sg_ret TreeView::insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem * tree_item, int row)
 {
 	if (parent_tree_item) {
 		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->name << "under parent tree item" << parent_tree_item->name;
@@ -711,6 +713,7 @@ sg_ret TreeView::insert_tree_item_at_row(const TreeItem * parent_tree_item, Tree
 
 	tree_item->index = QPersistentModelIndex(items.at(0)->index());
 	tree_item->tree_view = this;
+	tree_item->parent = parent_tree_item;
 
 	/* Some tree items may have been created in other thread
 	   (e.g. during acquire process). Signal connections for such

@@ -157,6 +157,7 @@ namespace SlavGPS {
 		std::list<TreeItem *> get_waypoints_by_date(const QDate & search_date) const;
 
 
+		bool move_child(TreeItem & child_tree_item, bool up) override;
 
 
 		Time get_earliest_timestamp(void) const;

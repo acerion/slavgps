@@ -90,7 +90,7 @@ namespace SlavGPS {
 		};
 
 
-		sg_ret attach_to_tree(const TreeItem * parent_tree_item, TreeItem * tree_item, TreeView::AttachMode attachMode = TreeView::AttachMode::Back, const TreeItem * sibling = NULL);
+		sg_ret attach_to_tree(TreeItem * parent_tree_item, TreeItem * tree_item, TreeView::AttachMode attachMode = TreeView::AttachMode::Back, const TreeItem * sibling = NULL);
 		TreeItem * get_tree_item(TreeIndex const & item_index) const;
 		TreeItem * get_selected_tree_item(void) const;
 
@@ -128,7 +128,7 @@ namespace SlavGPS {
 		void tree_item_needs_redraw(sg_uid_t uid);
 
 	private:
-		sg_ret insert_tree_item_at_row(const TreeItem * parent_tree_item, TreeItem * tree_item, int row);
+		sg_ret insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem * tree_item, int row);
 		QList<QStandardItem *> create_new_row(TreeItem * tree_item, const QString & name);
 
 		bool editing = false;

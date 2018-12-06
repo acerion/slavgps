@@ -234,6 +234,8 @@ namespace SlavGPS {
 		void delete_all_tracks();
 		void delete_all_waypoints();
 
+		bool move_child(TreeItem & child_tree_item, bool up) override;
+
 
 
 		/* Add to layer's data structure. */

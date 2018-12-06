@@ -372,23 +372,20 @@ void LayersPanel::move_item(bool up)
 		return;
 	}
 
+	if (TreeItem::the_same_object(selected_item, this->toplayer)) {
+		/* We shouldn't even get here. "Move up/down" buttons
+		   should be disabled for Top Level Layer. */
+		qDebug() << SG_PREFIX_W << "Ignoring attempt to move Top Level Layer";
+		return;
+	}
+
 	this->tree_view->select_tree_item(selected_item); /* Cancel any layer-name editing going on... */
 
-	if (selected_item->tree_item_type == TreeItemType::Layer) {
-		qDebug() << SG_PREFIX_I << "Move layer" << selected_item->name << (up ? "up" : "down");
-		/* A layer can be owned only by Aggregate layer.
-		   TODO_LATER: what about TRW layers under GPS layer? */
-		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
-		if (parent_layer) { /* Selected item is not top level layer. */
-			if (parent_layer->change_child_item_position(selected_item, up)) {
-				this->tree_view->change_tree_item_position(selected_item, up);
+	if (selected_item->get_parent()->move_child(*selected_item, up)) {          /* This moves child item in parent item's container. */
+		this->tree_view->change_tree_item_position(selected_item, up);      /* This moves child item in tree. */
 
-				qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << parent_layer->get_name();
-				this->emit_items_tree_updated_cb(parent_layer->get_name());
-			}
-		}
-	} else {
-		qDebug() << SG_PREFIX_I << "Move sublayer" << selected_item->name << (up ? "up" : "down");
+		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb()' for" << selected_item->get_parent()->name;
+		this->emit_items_tree_updated_cb(selected_item->get_parent()->name);
 	}
 }
 

@@ -33,6 +33,7 @@
 #include <QObject>
 #include <QString>
 #include <QMenu>
+#include <QDebug>
 
 
 
@@ -103,6 +104,7 @@ namespace SlavGPS {
 
 		friend class Tree;
 		friend class TreeItemIdentityPredicate;
+		friend class TreeView;
 	public:
 		TreeItem();
 		~TreeItem();
@@ -185,6 +187,10 @@ namespace SlavGPS {
 		Layer * get_owning_layer(void) const;
 		void set_owning_layer(Layer * layer);
 
+		/* Get parent tree item. Parent tree item and owning layer may be two different tree items. */
+		TreeItem * get_parent(void) const;
+
+
 		TreeItem::MenuOperation get_menu_operation_ids(void) const;
 		void set_menu_operation_ids(TreeItem::MenuOperation new_value);
 
@@ -196,6 +202,14 @@ namespace SlavGPS {
 
 
 		virtual void display_debug_info(const QString & reference) const;
+
+		/**
+		   @brief Move child tree item up (closer to beginning of container) or down (closer to end of container)
+
+		   @return true if move was successful
+		   @return false otherwise (e.g. because child item is already at the beginning or end of container
+		*/
+		virtual bool move_child(TreeItem & child_tree_item, bool up);
 
 	//protected:
 		TreeItemType tree_item_type = TreeItemType::Layer;
@@ -226,6 +240,9 @@ namespace SlavGPS {
 		TreeItem::MenuOperation menu_operation_ids = TreeItem::MenuOperation::All;
 
 		Time timestamp; /* Invalid by default. */
+
+	private:
+		TreeItem * parent = NULL; /* Parent tree item. Direct parent, may be different than owning layer. */
 	};
 
 	/* These silly names are a workaroud for clash of operator definitions.
@@ -240,9 +257,9 @@ namespace SlavGPS {
 	/* c++ UnaryPredicate. Can be passed to find_if() or remove_if().
 	   Similar to TreeItem::the_same_object(). */
 	class TreeItemIdentityPredicate {
-
 	public:
 		TreeItemIdentityPredicate(const TreeItem * item) : uid_(item->get_uid()) {};
+		TreeItemIdentityPredicate(const TreeItem & item) : uid_(item.get_uid()) {};
 
 		bool operator()(const TreeItem * x) const
 		{
@@ -251,6 +268,41 @@ namespace SlavGPS {
 	private:
 		const sg_uid_t uid_;
 	};
+
+
+
+
+	template <typename T>
+	bool move_tree_item_child_algo(std::list<T> & children, const T child_tree_item, bool up)
+	{
+		TreeItemIdentityPredicate pred(child_tree_item);
+		auto child_iter = std::find_if(children.begin(), children.end(), pred);
+		if (child_iter == children.end()) {
+			qDebug() << "EE   Move TreeItem Child algo: failed to find iterator of child item" << child_tree_item->name;
+			return false;
+		}
+
+		bool result = false;
+		if (up) {
+			if (child_iter == children.begin()) {
+				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->name << "up, already at the beginning";
+			} else {
+				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->name << "up in list of children";
+				std::swap(*child_iter, *std::prev(child_iter));
+				result = true;
+			}
+		} else {
+			if (std::next(child_iter) == children.end()) {
+				qDebug() << "NN   Move TreeItem Child algo: not moving child" << child_tree_item->name << "down, already at the end";
+			} else {
+				qDebug() << "II   Move TreeItem Child algo: moving child" << child_tree_item->name << "down in list of children";
+				std::swap(*child_iter, *std::next(child_iter));
+				result = true;
+			}
+		}
+
+		return result;
+	}
 
 
 
