@@ -81,38 +81,38 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 		this->panel_box->addWidget(this->tool_bar);
 
 
-		this->qa_layer_add = new QAction("Add", this);
-		this->qa_layer_add->setToolTip("Add new layer");
+		this->qa_layer_add = new QAction(tr("Add"), this);
+		this->qa_layer_add->setToolTip(tr("Add new layer"));
 		this->qa_layer_add->setIcon(QIcon::fromTheme("list-add"));
 		connect(this->qa_layer_add, SIGNAL (triggered(bool)), this, SLOT (add_layer_cb()));
 
-		this->qa_layer_remove = new QAction("Remove", this);
-		this->qa_layer_remove->setToolTip("Remove selected layer");
+		this->qa_layer_remove = new QAction(tr("Remove"), this);
+		this->qa_layer_remove->setToolTip(tr("Remove selected item"));
 		this->qa_layer_remove->setIcon(QIcon::fromTheme("list-remove"));
 		connect(this->qa_layer_remove, SIGNAL (triggered(bool)), this, SLOT (delete_selected_cb()));
 
-		this->qa_layer_move_up = new QAction("Up", this);
-		this->qa_layer_move_up->setToolTip("Move selected layer up");
+		this->qa_layer_move_up = new QAction(tr("Up"), this);
+		this->qa_layer_move_up->setToolTip(tr("Move selected item up"));
 		this->qa_layer_move_up->setIcon(QIcon::fromTheme("go-up"));
 		connect(this->qa_layer_move_up, SIGNAL (triggered(bool)), this, SLOT (move_item_up_cb()));
 
-		this->qa_layer_move_down = new QAction("Down", this);
-		this->qa_layer_move_down->setToolTip("Move selected layer down");
+		this->qa_layer_move_down = new QAction(tr("Down"), this);
+		this->qa_layer_move_down->setToolTip(tr("Move selected item down"));
 		this->qa_layer_move_down->setIcon(QIcon::fromTheme("go-down"));
 		connect(this->qa_layer_move_down, SIGNAL (triggered(bool)), this, SLOT (move_item_down_cb()));
 
-		this->qa_layer_cut = new QAction("Cut", this);
-		this->qa_layer_cut->setToolTip("Cut selected layer");
+		this->qa_layer_cut = new QAction(tr("Cut"), this);
+		this->qa_layer_cut->setToolTip(tr("Cut selected item"));
 		this->qa_layer_cut->setIcon(QIcon::fromTheme("edit-cut"));
 		connect(this->qa_layer_cut, SIGNAL (triggered(bool)), this, SLOT (cut_selected_cb()));
 
-		this->qa_layer_copy = new QAction("Copy", this);
-		this->qa_layer_copy->setToolTip("Copy selected layer");
+		this->qa_layer_copy = new QAction(tr("Copy"), this);
+		this->qa_layer_copy->setToolTip(tr("Copy selected item"));
 		this->qa_layer_copy->setIcon(QIcon::fromTheme("edit-copy"));
 		connect(this->qa_layer_copy, SIGNAL (triggered(bool)), this, SLOT (copy_selected_cb()));
 
-		this->qa_layer_paste = new QAction("Paste", this);
-		this->qa_layer_paste->setToolTip("Paste layer into selected container layer or otherwise above selected layer");
+		this->qa_layer_paste = new QAction(tr("Paste"), this);
+		this->qa_layer_paste->setToolTip(tr("Paste item into selected container"));
 		this->qa_layer_paste->setIcon(QIcon::fromTheme("edit-paste"));
 		connect(this->qa_layer_paste, SIGNAL (triggered(bool)), this, SLOT (paste_selected_cb()));
 
@@ -132,6 +132,10 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(layer_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
+	connect(this->tree_view, SIGNAL (tree_item_selected(void)), this, SLOT (activate_buttons_cb(void)));
+
+
+	this->activate_buttons_cb();
 }
 
 
@@ -368,7 +372,7 @@ void LayersPanel::move_item(bool up)
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
-		/* TODO_LATER: deactivate the buttons and stuff. */
+		this->activate_buttons_cb();
 		return;
 	}
 
@@ -418,6 +422,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
+		this->activate_buttons_cb();
 		/* Nothing to do. */
 		return;
 	}
@@ -460,6 +465,7 @@ void LayersPanel::copy_selected_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
+		this->activate_buttons_cb();
 		/* Nothing to do. */
 		return;
 	}
@@ -475,6 +481,7 @@ bool LayersPanel::paste_selected_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
+		this->activate_buttons_cb();
 		/* Nothing to do. */
 		return false;
 	}
@@ -497,6 +504,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
 	if (!selected_item) {
+		this->activate_buttons_cb();
 		/* Nothing to do. */
 		return;
 	}
@@ -538,6 +546,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		Layer * parent_layer = this->get_selected_layer();
 		parent_layer->delete_sublayer(selected_item);
 	}
+
+	this->activate_buttons_cb();
 }
 
 
@@ -774,4 +784,72 @@ Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerType expect
 
 		this_index = parent_index;
 	}
+}
+
+
+
+
+void LayersPanel::activate_buttons_cb(void)
+{
+	/* Deactivate all buttons now and activate them only if necessary below. */
+	this->qa_layer_add->setEnabled(false);
+	this->qa_layer_remove->setEnabled(false);
+	this->qa_layer_move_up->setEnabled(false);
+	this->qa_layer_move_down->setEnabled(false);
+	this->qa_layer_cut->setEnabled(false);
+	this->qa_layer_copy->setEnabled(false);
+	this->qa_layer_paste->setEnabled(false);
+
+
+
+	TreeItem * selected_item = this->tree_view->get_selected_tree_item();
+	if (NULL == selected_item) {
+		qDebug() << SG_PREFIX_I << "Leaving all buttons disabled.";
+		return;
+	}
+
+
+	if (TreeItem::the_same_object(selected_item, this->toplayer)) {
+		/* Not an error. Simply don't enable buttons for Top Level Layer. */
+		return;
+	}
+
+
+	/* Get position among selected item's siblings */
+	bool is_first = false;
+	bool is_last = false;
+	if (sg_ret::ok != this->tree_view->get_position(*selected_item, is_first, is_last)) {
+		qDebug() << SG_PREFIX_E << "Failed to get position of tree item" << selected_item->name;
+		return;
+	}
+
+
+	/* OK, we have some item selected and we've got its position,
+	   so now we can enable its 'edit' buttons. */
+	this->qa_layer_add->setEnabled(true);
+	this->qa_layer_remove->setEnabled(true);
+	this->qa_layer_cut->setEnabled(true);
+	this->qa_layer_copy->setEnabled(true);
+	this->qa_layer_paste->setEnabled(true);
+
+
+	/* Now see what we can do to "move up"/"move down" buttons. */
+
+
+	if (is_first && is_last) {
+		/* This may happen if the item doesn't have any
+		   siblings. We can't move such item up nor down. */
+		return;
+	}
+
+	if (is_first) {
+		this->qa_layer_move_down->setEnabled(true);
+	} else if (is_last) {
+		this->qa_layer_move_up->setEnabled(true);
+	} else {
+		this->qa_layer_move_up->setEnabled(true);
+		this->qa_layer_move_down->setEnabled(true);
+	}
+
+	return;
 }

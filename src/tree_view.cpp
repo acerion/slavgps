@@ -160,25 +160,24 @@ void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 
 
 
-void TreeView::select_cb(void) /* Slot. */
+void TreeView::tree_item_selected_cb(void) /* Slot. */
 {
 	TreeItem * selected_item = this->get_selected_tree_item();
 	if (!selected_item) {
 		return;
 	}
+	qDebug() << SG_PREFIX_I << "Selected tree item" << selected_item->name;
 
 	Window * main_window = ThisApp::get_main_window();
 
 	/* Clear statusbar. */
 	main_window->get_statusbar()->set_message(StatusBarField::Info, "");
 
-	qDebug() << SG_PREFIX_I << "Selected item is" << (selected_item->tree_item_type == TreeItemType::Layer ? "layer" : "sublayer");
+	/* Activate set of tools relevant to selected item's type. */
+	main_window->handle_selection_of_tree_item(*selected_item);
 
-	/* Either the selected layer itself, or an owner/parent of selected sublayer item. */
-	const Layer * layer = selected_item->to_layer();
-
-	/* This should activate toolbox relevant to selected layer's type. */
-	main_window->handle_selection_of_layer(layer);
+	qDebug() << SG_PREFIX_SIGNAL << "Will now emit signal TreeView::tree_item_selected()";
+	emit this->tree_item_selected();
 
 	const bool redraw_required = selected_item->handle_selection_in_tree();
 	if (redraw_required) {
@@ -249,6 +248,7 @@ TreeItem * TreeView::get_selected_tree_item(void) const
 	TreeItem * tree_item = this->get_tree_item(selected);
 	if (!tree_item) {
 		qDebug() << SG_PREFIX_E << "Can't get item for valid index";
+		return NULL;
 	}
 
 	return tree_item;
@@ -769,9 +769,9 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 	this->header()->setSectionHidden((int) TreeViewColumn::Timestamp, true);
 
 
-	//connect(this, SIGNAL(activated(const QModelIndex &)), this, SLOT(select_cb(void)));
-	connect(this, SIGNAL(clicked(const QModelIndex &)), this, SLOT(select_cb(void)));
-	//connect(this, SIGNAL(pressed(const QModelIndex &)), this, SLOT(select_cb(void)));
+	//connect(this, SIGNAL (activated(const QModelIndex &)), this, SLOT (tree_item_selected_cb(void)));
+	connect(this, SIGNAL (clicked(const QModelIndex &)), this, SLOT (tree_item_selected_cb(void)));
+	//connect(this, SIGNAL (pressed(const QModelIndex &)), this, SLOT (tree_item_selected_cb(void)));
 	connect(this->tree_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(data_changed_cb(const QModelIndex&, const QModelIndex&)));
 
 
@@ -789,7 +789,7 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 	   See vik_tree_view_sort_children(). */
 
 	gtk_tree_view_set_reorderable(this, true);
-	QObject::connect(this->selectionModel(), SIGNAL("changed"), this, SLOT (select_cb));
+	QObject::connect(this->selectionModel(), SIGNAL("changed"), this, SLOT (tree_item_selected_cb(void)));
 #endif
 
 
@@ -882,6 +882,39 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 	}
 
 	return;
+}
+
+
+
+
+sg_ret TreeView::get_position(const TreeItem & item, bool & is_first, bool & is_last)
+{
+	QModelIndex parent_index = item.index.parent();
+	if (!parent_index.isValid()) {
+		qDebug() << SG_PREFIX_W << "Parent index is invalid. Function called for top level item?";
+		return sg_ret::err;
+	}
+
+	QStandardItem * parent_item = this->tree_model->itemFromIndex(parent_index);
+
+	const int n_rows = parent_item->rowCount();
+	const int row = item.index.row();
+
+
+	is_first = false;
+	is_last = false;
+	if (row == 0) {
+		is_first = true;
+	}
+	if (row == n_rows - 1) {
+		is_last = true;
+	}
+
+	/* Item may be first and last at the same time if it doesn't have any siblings. */
+
+	qDebug() << SG_PREFIX_I << item.name << "row =" << row << ", n_rows =" << n_rows << ", is_first =" << is_first << ", is_last =" << is_last;
+
+	return sg_ret::ok;
 }
 
 

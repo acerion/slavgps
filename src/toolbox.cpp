@@ -196,10 +196,11 @@ const LayerTool * Toolbox::get_current_tool(void) const
 
 
 
-/* Called when user selects a layer in tree view.
-   A new layer is selected. Update state of tool
-   groups in tool box accordingly. */
-void Toolbox::handle_selection_of_layer(QString const & group_name)
+/* Called when user selects a tree item in tree view.  A new tree item
+   is selected. Update state of tool groups in tool box accordingly so
+   that tools relevant to this tree item are active, and all other
+   tree items are inactive. */
+void Toolbox::activate_tools_group(QString const & group_name)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 

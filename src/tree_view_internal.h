@@ -119,13 +119,17 @@ namespace SlavGPS {
 
 		bool is_editing_in_progress(void) const;
 
+		/* Get position of given tree item among its siblings. */
+		sg_ret get_position(const TreeItem & item, bool & is_first, bool & is_last);
+
 	private slots:
-		void select_cb(void);
+		void tree_item_selected_cb(void);
 		void data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right);
 		bool tree_item_properties_cb(void);
 
 	signals:
 		void tree_item_needs_redraw(sg_uid_t uid);
+		void tree_item_selected(void);
 
 	private:
 		sg_ret insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem * tree_item, int row);

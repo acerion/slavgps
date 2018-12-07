@@ -103,7 +103,7 @@ namespace SlavGPS {
 
 		void update_status_bar_on_redraw();
 
-		void handle_selection_of_layer(const Layer * layer);
+		void handle_selection_of_tree_item(const TreeItem & tree_item);
 
 		Viewport * get_viewport(void);
 		LayersPanel * get_items_tree(void);

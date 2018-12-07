@@ -80,7 +80,7 @@ namespace SlavGPS {
 		void deactivate_current_tool(void);
 
 
-		void handle_selection_of_layer(const QString & group_name);
+		void activate_tools_group(const QString & group_name);
 
 		QAction * set_group_enabled(const QString & group_name);
 		QActionGroup * get_group(const QString & group_name);

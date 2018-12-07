@@ -125,6 +125,8 @@ namespace SlavGPS {
 		void move_item_up_cb(void);
 		void move_item_down_cb(void);
 
+		void activate_buttons_cb(void);
+
 	signals:
 		void items_tree_updated(void);
 	};

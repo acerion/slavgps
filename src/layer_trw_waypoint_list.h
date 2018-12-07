@@ -95,7 +95,6 @@ namespace SlavGPS {
 
 	private slots:
 		void waypoint_view_cb(void);
-		// void waypoint_select_cb(void);
 		void waypoint_properties_cb(void);
 		void show_picture_waypoint_cb(void);
 

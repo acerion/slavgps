@@ -1060,11 +1060,12 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 
 
 
-void Window::handle_selection_of_layer(const Layer * layer)
+void Window::handle_selection_of_tree_item(const TreeItem & tree_item)
 {
-	qDebug() << "II: Window: selected layer type" << layer->get_type_ui_label();
-
-	this->toolbox->handle_selection_of_layer(layer->get_type_id_string());
+	/* Get either the selected layer itself, or an owner/parent of selected sublayer item. */
+	Layer * layer = tree_item.to_layer();
+	qDebug() << SG_PREFIX_I << "Selected layer type" << layer->get_type_ui_label();
+	this->toolbox->activate_tools_group(layer->get_type_id_string());
 }
 
 
