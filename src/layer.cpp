@@ -498,7 +498,13 @@ void Layer::set_initial_parameter_values(void)
 	std::map<param_id_t, SGVariant> & defaults = this->interface->parameter_default_values;
 
 	for (auto iter = this->interface->parameter_specifications.begin(); iter != this->interface->parameter_specifications.end(); iter++) {
-		this->set_param_value(iter->first, defaults.at(iter->first), true); /* true = parameter value possibly comes from a file. TODO_LATER: verify the comment. */
+
+		/* The last argument is is_file_operation=true. In
+		   this function of course we don't pass parameters
+		   from file to layer (at least not directly), so why
+		   this is 'true' is a bit of mystery. TODO_LATER:
+		   explain this mystery. */
+		this->set_param_value(iter->first, defaults.at(iter->first), true);
 	}
 
 	this->has_properties_dialog = this->interface->has_properties_dialog();

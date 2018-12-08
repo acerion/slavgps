@@ -41,6 +41,7 @@
 #include "layer_tool.h"
 #include "dem.h"
 #include "background.h"
+#include "measurements.h"
 
 
 
@@ -95,8 +96,11 @@ namespace SlavGPS {
 		std::vector<QColor> gradients;
 
 		QStringList files;
-		double min_elev = 0;
-		double max_elev = 0;
+
+		/* Always in meters, even if units selected by user are different. */
+		Altitude min_elev{0.0, HeightUnit::Metres};
+		Altitude max_elev{0.0, HeightUnit::Metres};
+
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */
 		int source = DEM_SOURCE_SRTM;    /* Signed int because this is a generic enum ID. */
 		int dem_type = DEM_TYPE_HEIGHT;  /* Signed int because this is a generic enum ID. */

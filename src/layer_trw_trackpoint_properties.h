@@ -46,6 +46,7 @@
 
 
 #include "widget_timestamp.h"
+#include "widget_measurement_entry.h"
 #include "layer_trw_track.h"
 
 
@@ -124,7 +125,7 @@ namespace SlavGPS {
 		QLineEdit * trkpt_name = NULL;
 		QDoubleSpinBox * lat = NULL;
 		QDoubleSpinBox * lon = NULL;
-		QDoubleSpinBox * alt = NULL;
+		MeasurementEntryWidget * alt = NULL;
 		QLabel * course = NULL;
 
 		TimestampWidget * timestamp_widget = NULL;

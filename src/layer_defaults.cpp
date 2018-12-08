@@ -47,7 +47,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Layer Defaults:" << __FUNCTION__ << __LINE__ << ">>"
+#define SG_MODULE "Layer Defaults"
 #define VIKING_LAYER_DEFAULTS_INI_FILE "viking_layer_defaults.ini"
 
 
@@ -68,7 +68,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 
 	if (!LayerDefaults::keyfile) { /* Don't use LayerDefaults::loaded, it may be set to false during initialization stage. */
 		/* We shouldn't be even able to call this function. */
-		qDebug() << "EE" PREFIX << "Trying to get parameter value when layer defaults aren't initialized";
+		qDebug() << SG_PREFIX_E << "Trying to get parameter value when layer defaults aren't initialized";
 		return value;
 	}
 
@@ -79,7 +79,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 	if (!variant.isValid()) {
 		/* Not necessarily an error. Maybe this value simply
 		   doesn't exist in config file. */
-		qDebug() << "WW" PREFIX << "failed to read key" << key;
+		qDebug() << SG_PREFIX_W << "Failed to read key" << key;
 		return value; /* Here the value is invalid. */
 	}
 
@@ -112,13 +112,18 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 		value = SGVariant(variant.value<QColor>());
 		break;
 
+	case SGVariantType::Altitude:
+		/* Meters, because that's program's internal/default unit. */
+		value = SGVariant(Altitude(variant.toDouble(), HeightUnit::Metres));
+		break;
+
 	default:
-		qDebug() << "EE" PREFIX << "unhandled value type" << (int) type_id;
+		qDebug() << SG_PREFIX_E << "Unhandled value type" << (int) type_id;
 		/* We don't set value using constructor, so the value will be invalid. */
 		break;
 	}
 
-	qDebug() << "II" PREFIX << "read value" << value;
+	qDebug() << SG_PREFIX_I << "Read value" << value;
 
 	return value;
 
@@ -127,11 +132,11 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 
 
 
-void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType layer_type, const QString & param_name, SGVariantType ptype)
+void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType layer_type, const QString & param_name, SGVariantType type_id)
 {
 	QVariant variant;
 
-	switch (ptype) {
+	switch (type_id) {
 	case SGVariantType::Double:
 		variant = QVariant((double) value.u.val_double);
 		break;
@@ -150,9 +155,12 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 	case SGVariantType::Color:
 		variant = value.val_color;
 		break;
+	case SGVariantType::Altitude:
+		variant = QVariant(value.get_altitude().get_value());
+		break;
 	default:
-		qDebug() << "EE" PREFIX << "unhandled parameter type" << (int) ptype;
-		return;
+		qDebug() << SG_PREFIX_E << "Unhandled parameter type" << (int) type_id;
+		break;
 	}
 
 	const QString group = Layer::get_type_id_string(layer_type);
@@ -171,7 +179,7 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 	for (auto iter = interface->parameter_specifications.begin(); iter != interface->parameter_specifications.end(); iter++) {
 		const ParameterSpecification * param_spec = iter->second;
 		if (param_spec->group_id == PARAMETER_GROUP_HIDDEN) {
-			qDebug() << "II" PREFIX << "Parameter" << param_spec->name << "is hidden, skipping";
+			qDebug() << SG_PREFIX_I << "Parameter" << param_spec->name << "is hidden, skipping";
 			continue;
 		}
 
@@ -189,7 +197,7 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 			/* The parameter has already been read from
 			   config file. No need to set the parameter
 			   and its value using hardcoded value. */
-			qDebug() << "II" PREFIX << "Parameter" << param_spec->name << "already existed with value" << value_from_file;
+			qDebug() << SG_PREFIX_I << "Parameter" << param_spec->name << "already existed with value" << value_from_file;
 			continue;
 		}
 
@@ -197,14 +205,14 @@ void LayerDefaults::fill_missing_from_hardcoded_defaults(LayerType layer_type)
 		/* Value of this parameter has not been read from
 		   config file. Try to find it in program's hardcoded
 		   values. */
-		qDebug() << "II" PREFIX << "Getting hardcoded value of parameter" << layer_type << param_spec->name;
+		qDebug() << SG_PREFIX_I << "Getting hardcoded value of parameter" << layer_type << param_spec->name;
 		SGVariant hardcoded_value = param_spec->get_hardcoded_value();
 		if (!hardcoded_value.is_valid()) {
-			qDebug() << "II" PREFIX << "Parameter" << param_spec->name << "doesn't have hardcoded value";
+			qDebug() << SG_PREFIX_I << "Parameter" << param_spec->name << "doesn't have hardcoded value";
 			continue;
 		}
 
-		qDebug() << "II" PREFIX << "Using" << hardcoded_value << "for parameter named" << param_spec->name;
+		qDebug() << SG_PREFIX_I << "Using" << hardcoded_value << "for parameter named" << param_spec->name;
 		save_parameter_value(hardcoded_value, layer_type, param_spec->name, param_spec->type_id);
 	}
 }
@@ -302,21 +310,21 @@ bool LayerDefaults::init(void)
 	   path, the object still may be created and serve as a
 	   storage in memory. */
 	if (!keyfile) {
-		qDebug() << "EE" PREFIX << "Failed to create storage for layer defaults using file" << full_path;
+		qDebug() << SG_PREFIX_E << "Failed to create storage for layer defaults using file" << full_path;
 		return false;
 	}
 
 
 	const enum QSettings::Status status = LayerDefaults::keyfile->status();
 	if (status != QSettings::NoError) {
-		qDebug() << "EE" PREFIX << "Invalid status of storage for layer defaults:" << status;
+		qDebug() << SG_PREFIX_E << "Invalid status of storage for layer defaults:" << status;
 		return false;
 	}
 
 
 	/* Set any missing values from the program's internal/hardcoded defaults. */
 	for (LayerType layer_type = LayerType::Aggregate; layer_type < LayerType::Max; ++layer_type) {
-		qDebug() << "II" PREFIX << "Loading default values from hardcoded values for layer type" << layer_type;
+		qDebug() << SG_PREFIX_I << "Loading default values from hardcoded values for layer type" << layer_type;
 		LayerDefaults::fill_missing_from_hardcoded_defaults(layer_type);
 	}
 

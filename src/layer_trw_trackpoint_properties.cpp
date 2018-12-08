@@ -112,19 +112,7 @@ void PropertiesDialogTP::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 	/* Always store internally in metres. */
-	const HeightUnit height_unit = Preferences::get_unit_height();
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		this->cur_tp->altitude = this->alt->value();
-		break;
-	case HeightUnit::Feet:
-		this->cur_tp->altitude = VIK_FEET_TO_METERS(this->alt->value());
-		break;
-	default:
-		this->cur_tp->altitude = 0;
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		break;
-	}
+	this->cur_tp->altitude = this->alt->get_value_uu().get_altitude().convert_to_unit(HeightUnit::Metres).get_value();
 }
 
 
@@ -280,19 +268,9 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->lon->setValue(lat_lon.lon);
 
 
-
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		this->alt->setValue(tp->altitude);
-		break;
-	case HeightUnit::Feet:
-		this->alt->setValue(VIK_METERS_TO_FEET(tp->altitude));
-		break;
-	default:
-		this->alt->setValue(0);
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		break;
-	}
+	const Altitude altitude(tp->altitude, HeightUnit::Metres); /* Internally (in trackpoint) the value of altitude is in meters. */
+	const Altitude altitude_uu = altitude.convert_to_unit(height_unit); /* Altitude to be presented to user, in user units. */
+	this->alt->set_value_uu(SGVariant(altitude_uu));
 
 
 	this->update_timestamp_widget(tp);
@@ -427,12 +405,8 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_current_tp_cb(void)));
 
 
-	this->alt = new QDoubleSpinBox(this);
-	this->alt->setDecimals(SG_ALTITUDE_PRECISION);
-	this->alt->setMinimum(SG_ALTITUDE_RANGE_MIN);
-	this->alt->setMaximum(SG_ALTITUDE_RANGE_MAX);
-	this->alt->setSingleStep(1);
-	this->alt->setValue(0);
+	ParameterScale<double> scale_alti(SG_ALTITUDE_RANGE_MIN, SG_ALTITUDE_RANGE_MAX, SGVariant(0.0), 1, SG_ALTITUDE_PRECISION);
+	this->alt = new MeasurementEntryWidget(this->alt, &scale_alti, this);
 	this->grid->addWidget(new QLabel(tr("Altitude:")), 3, 0);
 	this->grid->addWidget(this->alt, 3, 1);
 	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_tp_cb(void)));

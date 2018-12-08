@@ -233,6 +233,7 @@ namespace SlavGPS {
 		double get_value(void) const;
 
 		bool is_valid(void) const;
+		void set_valid(bool valid);
 
 		/* Generate string containing only value, without unit
 		   and without magnitude-dependent conversions of value.
@@ -263,10 +264,22 @@ namespace SlavGPS {
 		Altitude convert_to_unit(HeightUnit height_unit) const;
 
 		Altitude & operator+=(double rhs);
+		Altitude & operator-=(double rhs);
 		Altitude & operator+=(const Altitude & rhs);
-	        Altitude operator+(const Altitude & rhs);
-		Altitude operator-(const Altitude & rhs);
+		Altitude & operator-=(const Altitude & rhs);
+		friend Altitude operator+(Altitude & lhs, double rhs) { lhs += rhs; return lhs; }
+		friend Altitude operator-(Altitude & lhs, double rhs) { lhs -= rhs; return lhs; }
+		friend Altitude operator+(Altitude & lhs, const Altitude & rhs) { lhs += rhs; return lhs; }
+		friend Altitude operator-(Altitude & lhs, const Altitude & rhs) { lhs -= rhs; return lhs; }
+
 		Altitude operator/(int rhs);
+
+		friend bool operator<(const Altitude & lhs, const Altitude & rhs);
+		friend bool operator>(const Altitude & lhs, const Altitude & rhs);
+		friend bool operator<=(const Altitude & lhs, const Altitude & rhs);
+		friend bool operator>=(const Altitude & lhs, const Altitude & rhs);
+
+		HeightUnit get_unit(void) const { return this->unit; };
 
 		/* Return "meters" or "feet" string.
 		   This is a full string, not "m" or "ft". */
@@ -277,6 +290,10 @@ namespace SlavGPS {
 		bool valid = false;
 		HeightUnit unit;
 	};
+	bool operator<(const Altitude & lhs, const Altitude & rhs);
+	bool operator>(const Altitude & lhs, const Altitude & rhs);
+	bool operator<=(const Altitude & lhs, const Altitude & rhs);
+	bool operator>=(const Altitude & lhs, const Altitude & rhs);
 
 
 
@@ -325,10 +342,10 @@ namespace SlavGPS {
 	        friend Speed operator+(Speed & lhs, const Speed & rhs) { lhs += rhs; return lhs; }
 		friend Speed operator-(Speed & lhs, const Speed & rhs) { lhs -= rhs; return lhs; }
 
-		Speed & operator/=(double x);
-		Speed & operator*=(double x);
-	        friend Speed operator*(Speed & lhs, double x) { lhs *= x; return lhs; }
-		friend Speed operator/(Speed & lhs, double x) { lhs /= x; return lhs; }
+		Speed & operator/=(double rhs);
+		Speed & operator*=(double rhs);
+	        friend Speed operator*(Speed & lhs, double rhs) { lhs *= rhs; return lhs; }
+		friend Speed operator/(Speed & lhs, double rhs) { lhs /= rhs; return lhs; }
 
 		/* Return "meters" or "feet" string.
 		   This is a full string, not "m" or "ft". */

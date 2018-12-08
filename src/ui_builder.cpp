@@ -53,6 +53,7 @@
 #include "widget_file_entry.h"
 #include "widget_radio_group.h"
 #include "widget_slider.h"
+#include "widget_measurement_entry.h"
 #include "date_time_dialog.h"
 #include "preferences.h"
 #include "goto.h"
@@ -139,6 +140,9 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 	case WidgetType::DateTime:
 		result = "DateTime";
 		break;
+	case WidgetType::Altitude:
+		result = "Altitude";
+		break;
 	case WidgetType::None:
 	default:
 		result = "None/Unknown";
@@ -162,7 +166,7 @@ PropertiesDialog::PropertiesDialog(QString const & title, QWidget * parent_widge
 	this->tabs = new QTabWidget();
 	this->vbox = new QVBoxLayout;
 
-	//this->tabs->setTabBarAutoHide(true); /* TODO_2_LATER: enable when this method becomes widely available. */
+	//this->tabs->setTabBarAutoHide(true); /* TODO_MAYBE: enable when this method becomes widely available. */
 
 	//this->vbox->addLayout(this->form);
 	this->vbox->addWidget(this->tabs);
@@ -432,12 +436,13 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 	case WidgetType::SpinBoxDouble:
 
 		assert (param_spec.type_id == SGVariantType::Double);
+
 		if (param_spec.type_id == SGVariantType::Double && param_spec.widget_data) {
 
 			const double init_val = value.u.val_double;
 			ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data;
 			QDoubleSpinBox * widget_ = new QDoubleSpinBox();
-			/* Order of fields is important. Use setDecimals() before using setValue(). */
+			/* Order of calls is important. Use setDecimals() before using setValue(). */
 			widget_->setDecimals(scale->n_digits);
 			widget_->setMinimum(scale->min);
 			widget_->setMaximum(scale->max);
@@ -524,6 +529,18 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 	case WidgetType::DateTime:
 		widget = new SGDateTimeButton(param_value.get_timestamp(), this);
 		break;
+
+	case WidgetType::Altitude:
+		assert (param_spec.type_id == SGVariantType::Altitude);
+		if (param_spec.type_id == SGVariantType::Altitude) {
+			const ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data; /* May be NULL. */
+			MeasurementEntryWidget * widget_ = new MeasurementEntryWidget(value, scale, this);
+			qDebug() << SG_PREFIX_I << "New MeasurementEntryWidget with initial value" << value.get_altitude();
+
+			widget = widget_;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -672,9 +689,16 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 			qDebug() << SG_PREFIX_E << "Unexpected param spec type" << param_spec.type_id;
 		}
 		break;
+
 	case WidgetType::DateTime:
 		rv = SGVariant(((SGDateTimeButton *) widget)->get_value());
 		break;
+
+	case WidgetType::Altitude:
+		assert (param_spec.type_id == SGVariantType::Altitude);
+		rv = ((MeasurementEntryWidget *) widget)->get_value_uu();
+		break;
+
 	default:
 		break;
 	}
@@ -705,18 +729,29 @@ SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
 SGVariant ParameterSpecification::get_hardcoded_value(void) const
 {
 	SGVariant param_value;
-	if (this->widget_type == WidgetType::SpinBoxDouble) {
-		ParameterScale<double> * scale = (ParameterScale<double> *) this->widget_data;
-		param_value = scale->initial;
 
-	} else if (this->widget_type == WidgetType::SpinBoxInt || this->widget_type == WidgetType::HScale) {
-		ParameterScale<int> * scale = (ParameterScale<int> *) this->widget_data;
-		param_value = scale->initial;
+	switch (this->widget_type) {
+	case WidgetType::SpinBoxDouble:
+	case WidgetType::Altitude:
+		if (this->widget_data) {
+			const ParameterScale<double> * scale = (ParameterScale<double> *) this->widget_data;
+			param_value = scale->initial;
+		}
+		break;
 
-	} else {
+	case WidgetType::SpinBoxInt:
+	case WidgetType::HScale:
+		if (this->widget_data) {
+			const ParameterScale<int> * scale = (ParameterScale<int> *) this->widget_data;
+			param_value = scale->initial;
+		}
+		break;
+
+	default:
 		if (this->hardcoded_default_value) {
 			param_value = this->hardcoded_default_value();
 		}
+		break;
 	}
 
 	return param_value; /* param_value.is_valid() may or may not return true. */

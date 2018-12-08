@@ -152,8 +152,8 @@ static ParameterSpecification dem_layer_param_specs[] = {
 	{ PARAM_SOURCE,     "source",   SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::RadioGroup,      &params_source,   source_default,   NULL, NULL },
 	{ PARAM_COLOR,      "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,             color_default,    NULL, NULL },
 	{ PARAM_TYPE,       "type",     SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::RadioGroup,      &params_type,     type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::SpinBoxDouble,   &scale_min_elev,  NULL,             NULL, NULL },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::Double,      PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::SpinBoxDouble,   &scale_max_elev,  NULL,             NULL, NULL },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::Altitude,        &scale_min_elev,  NULL,             NULL, NULL },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::Altitude,        &scale_max_elev,  NULL,             NULL, NULL },
 	{ NUM_PARAMS,       "",         SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,             NULL,             NULL, NULL }, /* Guard. */
 };
 
@@ -393,23 +393,47 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 		break;
 
 	case PARAM_MIN_ELEV:
-		/* Convert to store internally.
-		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
-			this->min_elev = VIK_FEET_TO_METERS(param_value.u.val_double);
+		if (is_file_operation) {
+			/* Value stored in .vik file is always in
+			   meters, and class member always stores
+			   value in meters, so this branch is simple.
+
+			   At this point I think that code reading
+			   value from file doesn't know that it's an
+			   altitude, and has sent us a simple double.
+			   Therefore use param_value.u.val_double.
+			*/
+			this->min_elev = Altitude(param_value.u.val_double, HeightUnit::Metres);
 		} else {
-			this->min_elev = param_value.u.val_double;
+			/* Convert from value that was presented in
+			   user interface with user units into value
+			   in internal units (meters) */
+			this->min_elev = param_value.get_altitude().convert_to_unit(HeightUnit::Metres);
 		}
+		qDebug() << SG_PREFIX_I << "Saved min elev to layer:" << this->min_elev;
 		break;
+
 	case PARAM_MAX_ELEV:
-		/* Convert to store internally.
-		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
-			this->max_elev = VIK_FEET_TO_METERS(param_value.u.val_double);
+		if (is_file_operation) {
+			/* Value stored in .vik file is always in
+			   meters, and class member always stores
+			   value in meters, so this branch is simple.
+
+			   At this point I think that code reading
+			   value from file doesn't know that it's an
+			   altitude, and has sent us a simple double.
+			   Therefore use param_value.u.val_double.
+			*/
+			this->max_elev = Altitude(param_value.u.val_double, HeightUnit::Metres);
 		} else {
-			this->max_elev = param_value.u.val_double;
+			/* Convert from value that was presented in
+			   user interface with user units into value
+			   in internal units (meters) */
+			this->max_elev = param_value.get_altitude().convert_to_unit(HeightUnit::Metres);
 		}
+		qDebug() << SG_PREFIX_I << "Saved max elev to layer:" << this->max_elev;
 		break;
+
 	case PARAM_FILES: {
 		/* Clear out old settings - if any commonalities with new settings they will have to be read again. */
 		DEMCache::unload_from_cache(this->files);
@@ -479,23 +503,43 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 		break;
 
 	case PARAM_MIN_ELEV:
-		/* Convert for display in desired units.
-		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
-			rv = SGVariant((double) VIK_METERS_TO_FEET(this->min_elev));
+		if (is_file_operation) {
+			/* Value stored in .vik file is always in
+			   meters, and class member always stores
+			   value in meters, so this branch is simple.
+
+			   Code saving value in file only knows how to
+			   save a double, so pass a variant/double to
+			   the code. */
+			rv = SGVariant(this->min_elev.get_value(), SGVariantType::Double);
 		} else {
-			rv = SGVariant(this->min_elev);
+			/* Build value for presentation in user
+			   interface - convert from internal unit
+			   (meters) into current user's unit. */
+			rv = this->min_elev.convert_to_unit(Preferences::get_unit_height());
 		}
+		qDebug() << SG_PREFIX_I << "Read min elev from layer:" << this->min_elev;
 		break;
+
 	case PARAM_MAX_ELEV:
-		/* Convert for display in desired units.
-		   NB file operation always in internal units (metres). */
-		if (!is_file_operation && Preferences::get_unit_height() == HeightUnit::Feet) {
-			rv = SGVariant(VIK_METERS_TO_FEET(this->max_elev));
+		if (is_file_operation) {
+			/* Value stored in .vik file is always in
+			   meters, and class member always stores
+			   value in meters, so this branch is simple.
+
+			   Code saving value in file only knows how to
+			   save a double, so pass a variant/double to
+			   the code. */
+			rv = SGVariant(this->max_elev.get_value(), SGVariantType::Double);
 		} else {
-			rv = SGVariant(this->max_elev);
+			/* Build value for presentation in user
+			   interface - convert from internal unit
+			   (meters) into current user's unit. */
+			rv = this->max_elev.convert_to_unit(Preferences::get_unit_height());
 		}
+		qDebug() << SG_PREFIX_I << "Read max elev from layer:" << this->max_elev;
 		break;
+
 	default:
 		break;
 	}
@@ -600,6 +644,8 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 	if (this->max_elev <= this->min_elev) {
 		this->max_elev = this->min_elev + 1;
 	}
+	const double min_elevation = this->min_elev.get_value();
+	const double max_elevation = this->max_elev.get_value();
 
 	Coord tmp; /* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
@@ -672,13 +718,13 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 
 			bool below_minimum = false;
 			if (this->dem_type == DEM_TYPE_HEIGHT) {
-				if (elev < this->min_elev) {
+				if (elev < min_elevation) {
 					/* Prevent 'elev - this->min_elev' from being negative so can safely use as array index. */
-					elev = ceil(this->min_elev);
+					elev = ceil(min_elevation);
 					below_minimum = true;
 				}
-				if (elev > this->max_elev) {
-					elev = this->max_elev;
+				if (elev > max_elevation) {
+					elev = max_elevation;
 				}
 			}
 
@@ -710,22 +756,22 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 
 				change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); /* FIXME: better calc. */
 
-				if (change < this->min_elev) {
+				if (change < min_elevation) {
 					/* Prevent 'change - this->min_elev' from being negative so can safely use as array index. */
-					change = ceil(this->min_elev);
+					change = ceil(min_elevation);
 				}
 
-				if (change > this->max_elev) {
-					change = this->max_elev;
+				if (change > max_elevation) {
+					change = max_elevation;
 				}
 
-				int idx = GET_INDEX(change, this->min_elev, this->max_elev, DEM_N_GRADIENT_COLORS);
+				int idx = GET_INDEX(change, min_elevation, max_elevation, DEM_N_GRADIENT_COLORS);
 				viewport->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
 
 			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 				if (elev > 0 && !below_minimum) {
-					idx = GET_INDEX(elev, this->min_elev, this->max_elev, DEM_N_HEIGHT_COLORS);
+					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				viewport->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
 			} else {
@@ -798,6 +844,9 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	assert (UTM::is_band_letter(dem->utm.get_band_letter())); /* TODO_2_LATER: smarter handling of error value. In theory the source object should be valid and for sure contain valid band letter. */
 	counter.set_band_letter(dem->utm.get_band_letter());
 
+	const double min_elevation = this->min_elev.get_value();
+	const double max_elevation = this->max_elev.get_value();
+
 	int32_t x;
 	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
 		if (x <= 0 || x >= dem->n_columns) { /* TODO_LATER: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
@@ -817,11 +866,11 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 			}
 
 
-			if (elev < this->min_elev) {
-				elev = this->min_elev;
+			if (elev < min_elevation) {
+				elev = min_elevation;
 			}
-			if (elev > this->max_elev) {
-				elev = this->max_elev;
+			if (elev > max_elevation) {
+				elev = max_elevation;
 			}
 
 
@@ -831,7 +880,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 				int idx = 0; /* Default index for color of 'sea'. */
 				if (elev > 0) {
-					idx = GET_INDEX(elev, this->min_elev, this->max_elev, DEM_N_HEIGHT_COLORS);
+					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
 				viewport->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
