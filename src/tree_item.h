@@ -188,7 +188,7 @@ namespace SlavGPS {
 		void set_owning_layer(Layer * layer);
 
 		/* Get parent tree item. Parent tree item and owning layer may be two different tree items. */
-		TreeItem * get_parent(void) const;
+		TreeItem * get_parent_tree_item(void) const;
 
 
 		TreeItem::MenuOperation get_menu_operation_ids(void) const;
@@ -242,7 +242,7 @@ namespace SlavGPS {
 		Time timestamp; /* Invalid by default. */
 
 	private:
-		TreeItem * parent = NULL; /* Parent tree item. Direct parent, may be different than owning layer. */
+		TreeItem * parent_tree_item = NULL; /* Direct parent, may be different than owning layer. */
 	};
 
 	/* These silly names are a workaroud for clash of operator definitions.

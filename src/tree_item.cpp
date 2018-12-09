@@ -155,9 +155,9 @@ void TreeItem::set_owning_layer(Layer * layer)
 
 
 
-TreeItem * TreeItem::get_parent(void) const
+TreeItem * TreeItem::get_parent_tree_item(void) const
 {
-	return this->parent;
+	return this->parent_tree_item;
 }
 
 

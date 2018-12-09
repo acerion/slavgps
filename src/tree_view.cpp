@@ -261,7 +261,7 @@ void TreeView::detach_tree_item(TreeItem * tree_item)
 {
 	this->tree_model->removeRow(tree_item->index.row(), tree_item->index.parent());
 	tree_item->tree_view = NULL;
-	tree_item->parent = NULL;
+	tree_item->parent_tree_item = NULL;
 }
 
 
@@ -694,18 +694,18 @@ void TreeView::sort_children(const TreeItem * parent_tree_item, TreeViewSortOrde
 
 
 
-sg_ret TreeView::insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem * tree_item, int row)
+sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeItem * tree_item, int row)
 {
-	if (parent_tree_item) {
-		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->name << "under parent tree item" << parent_tree_item->name;
+	if (new_parent_tree_item) {
+		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->name << "under parent tree item" << new_parent_tree_item->name;
 	} else {
 		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->name << "on top of tree";
 	}
 
 	QList<QStandardItem *> items = this->create_new_row(tree_item, tree_item->name);
 
-	if (parent_tree_item && parent_tree_item->index.isValid()) {
-		this->tree_model->itemFromIndex(parent_tree_item->index)->insertRow(row, items);
+	if (new_parent_tree_item && new_parent_tree_item->index.isValid()) {
+		this->tree_model->itemFromIndex(new_parent_tree_item->index)->insertRow(row, items);
 	} else {
 		/* Adding tree item just right under top-level item. */
 		this->tree_model->invisibleRootItem()->insertRow(row, items);
@@ -713,7 +713,7 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem *
 
 	tree_item->index = QPersistentModelIndex(items.at(0)->index());
 	tree_item->tree_view = this;
-	tree_item->parent = parent_tree_item;
+	tree_item->parent_tree_item = new_parent_tree_item;
 
 	/* Some tree items may have been created in other thread
 	   (e.g. during acquire process). Signal connections for such
