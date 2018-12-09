@@ -885,6 +885,17 @@ bool SlavGPS::operator>=(const Altitude & lhs, const Altitude & rhs)
 
 
 
+int Altitude::floor(void) const
+{
+	if (!this->valid) {
+		return INT_MIN;
+	}
+	return std::floor(this->value);
+}
+
+
+
+
 QString Altitude::get_unit_full_string(HeightUnit height_unit)
 {
 	QString result;
@@ -1525,7 +1536,7 @@ bool Time::operator==(const Time & rhs) const
 
 bool Time::operator!=(const Time & rhs) const
 {
-	return *this != rhs;
+	return !(*this == rhs);
 }
 
 

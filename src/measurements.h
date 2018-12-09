@@ -25,6 +25,7 @@
 
 
 #include <cmath>
+#include <climits>
 
 
 
@@ -262,6 +263,9 @@ namespace SlavGPS {
 		QString to_nice_string(void) const;
 
 		Altitude convert_to_unit(HeightUnit height_unit) const;
+
+		/* Will return INT_MIN if altitude is invalid. */
+		int floor(void) const;
 
 		Altitude & operator=(const Altitude & rhs);
 

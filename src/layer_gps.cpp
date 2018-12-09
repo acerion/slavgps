@@ -1444,8 +1444,8 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 		bool replace = false;
 		int heading = std::isnan(this->realtime_fix.fix.track) ? 0 : (int)floor(this->realtime_fix.fix.track);
 		int last_heading = std::isnan(this->last_fix.fix.track) ? 0 : (int)floor(this->last_fix.fix.track);
-		int alt = std::isnan(this->realtime_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->realtime_fix.fix.altitude);
-		int last_alt = std::isnan(this->last_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->last_fix.fix.altitude);
+		const Altitude alt = std::isnan(this->realtime_fix.fix.altitude) ? Altitude() : Altitude(this->realtime_fix.fix.altitude, HeightUnit::Metres);
+		const Altitude last_alt = std::isnan(this->last_fix.fix.altitude) ? Altitude() : Altitude(this->last_fix.fix.altitude, HeightUnit::Metres);
 
 		if (!this->realtime_track->empty()
 		    && this->realtime_fix.fix.mode > MODE_2D
@@ -1462,13 +1462,13 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 				&& ((forced
 				     || ((heading < last_heading) && (heading < (last_heading - 3)))
 				     || ((heading > last_heading) && (heading > (last_heading + 3)))
-				     || ((alt != VIK_DEFAULT_ALTITUDE) && (alt != last_alt)))))) {
+				     || (alt.is_valid() && (alt.floor() != last_alt.floor())))))) {
 
 			/* TODO_LATER: check for new segments. */
 			Trackpoint * tp_ = new Trackpoint();
 			tp_->newsegment = false;
 			tp_->set_timestamp(this->realtime_fix.fix.time);
-			tp_->altitude = Altitude(alt, HeightUnit::Metres);
+			tp_->altitude = alt;
 			/* Speed only available for 3D fix. Check for NAN when use this speed. */
 			tp_->speed = this->realtime_fix.fix.speed;
 			tp_->course = this->realtime_fix.fix.track;
