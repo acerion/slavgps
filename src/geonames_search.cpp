@@ -95,7 +95,7 @@ Waypoint * Geoname::create_waypoint(CoordMode coord_mode) const
 
 	wp->visible = true;
 	wp->coord = Coord(this->lat_lon, coord_mode);
-	wp->altitude = Altitude(this->elevation, HeightUnit::Metres);
+	wp->altitude = this->elevation;
 	wp->set_comment(this->comment);
 	wp->set_description(this->desc);
 	wp->set_name(this->name);
@@ -301,7 +301,7 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 
 		value = get_unquoted_value(entries[i], GEONAMES_ELEVATION_PATTERN);
 		if (!value.isEmpty()) {
-			geoname->elevation = SGUtils::c_to_double(value.toUtf8().constData());
+			geoname->elevation.set_from_string(value);
 		}
 
 		value = get_quoted_value(entries[i], GEONAMES_NAME_PATTERN);

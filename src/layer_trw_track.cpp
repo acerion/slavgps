@@ -1141,13 +1141,13 @@ TrackData Track::make_values_altitude_over_time_helper(void) const
 	auto iter = this->trackpoints.begin();
 
 	data.x[i] = (*iter)->timestamp.get_value();
-	data.y[i] = (*iter)->altitude;
+	data.y[i] = (*iter)->altitude.get_value();
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
 		data.x[i] = (*iter)->timestamp.get_value();
-		data.y[i] = (*iter)->altitude;
+		data.y[i] = (*iter)->altitude.get_value();
 		i++;
 		iter++;
 	}
@@ -1190,7 +1190,7 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 			   This can happen when a track (with no elevations) is uploaded to a GPS device and then redownloaded (e.g. using a Garmin Legend EtrexHCx).
 			   Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception) */
 
-			if ((*iter)->altitude > SG_ALTITUDE_RANGE_MAX) {
+			if ((*iter)->altitude.get_value() > SG_ALTITUDE_RANGE_MAX) {
 				/* TODO_LATER: clamp the invalid values, but still generate vector? */
 				qDebug() << SG_PREFIX_W << "Track altitude" << (*iter)->altitude << "out of range; not generating vector";
 				correct = false;
@@ -1219,8 +1219,8 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 	auto iter = this->trackpoints.begin();
 	double current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
 
-	double altitude1 = (*iter)->altitude;
-	double altitude2 = (*std::next(iter))->altitude;
+	double altitude1 = (*iter)->altitude.get_value();
+	double altitude2 = (*std::next(iter))->altitude.get_value();
 	double dist_along_seg = 0;
 
 	bool ignore_it = false;
@@ -1271,8 +1271,8 @@ TrackData Track::make_track_data_altitude_over_distance(int compressed_n_points)
 			       && std::next(iter) != this->trackpoints.end()) {
 
 				current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
-				altitude1 = (*iter)->altitude;
-				altitude2 = (*std::next(iter))->altitude;
+				altitude1 = (*iter)->altitude.get_value();
+				altitude2 = (*std::next(iter))->altitude.get_value();
 				ignore_it = (*std::next(iter))->newsegment;
 
 				if (delta_d - current_dist >= current_seg_length) {
@@ -1339,9 +1339,9 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 
 	auto iter = this->trackpoints.begin();
 
-	if ((*iter)->altitude == VIK_DEFAULT_ALTITUDE) {
-		delta_up.set_value(VIK_DEFAULT_ALTITUDE);
-		delta_down.set_value(VIK_DEFAULT_ALTITUDE);
+	if (!(*iter)->altitude.is_valid()) {
+		delta_up.set_valid(false);
+		delta_down.set_valid(false);
 		return false;
 	} else {
 		delta_up.set_value(0);
@@ -1350,8 +1350,8 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 		iter++;
 
 		for (; iter != this->trackpoints.end(); iter++) {
-			const double diff = (*iter)->altitude - (*std::prev(iter))->altitude;
-			if (diff > 0) {
+			const Altitude diff = (*iter)->altitude - (*std::prev(iter))->altitude;
+			if (diff.get_value() > 0.0) {
 				delta_up += diff;
 			} else {
 				delta_down += diff;
@@ -1593,7 +1593,7 @@ TrackData Track::make_track_data_altitude_over_time(void) const
 	/* Test if there's anything worth calculating. */
 	bool okay = false;
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
-		if ((*iter)->altitude != VIK_DEFAULT_ALTITUDE) {
+		if ((*iter)->altitude.is_valid()) {
 			okay = true;
 			break;
 		}
@@ -1878,7 +1878,7 @@ Trackpoint * Track::get_tp_by_max_alt() const
 	}
 
 	Trackpoint * max_alt_tp = NULL;
-	double max_alt = VIK_VAL_MAX_ALT;
+	Altitude max_alt(VIK_VAL_MAX_ALT, HeightUnit::Metres);
 
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->altitude > max_alt) {
@@ -1904,11 +1904,11 @@ Trackpoint * Track::get_tp_by_min_alt() const
 	}
 
 	Trackpoint * min_alt_tp = NULL;
-	double minalt = VIK_VAL_MIN_ALT;
+	Altitude min_alt(VIK_VAL_MIN_ALT, HeightUnit::Metres);
 
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
-		if ((*iter)->altitude < minalt) {
-			minalt = (*iter)->altitude;
+		if ((*iter)->altitude < min_alt) {
+			min_alt = (*iter)->altitude;
 			min_alt_tp = *iter;
 		}
 	}
@@ -1975,7 +1975,7 @@ bool Track::get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const
 	}
 
 	auto iter = this->trackpoints.begin();
-	if ((*iter)->altitude == VIK_DEFAULT_ALTITUDE) {
+	if (!(*iter)->altitude.is_valid()) {
 		return false;
 	}
 	iter++;
@@ -1984,15 +1984,14 @@ bool Track::get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const
 	min_alt = Altitude(VIK_VAL_MIN_ALT, HeightUnit::Metres);
 	max_alt = Altitude(VIK_VAL_MAX_ALT, HeightUnit::Metres);
 
-	double tmp_alt;
 	for (; iter != this->trackpoints.end(); iter++) {
-		tmp_alt = (*iter)->altitude;
-		if (tmp_alt > max_alt.get_value()) {
-			max_alt.set_value(tmp_alt);
+		const Altitude & tmp_alt = (*iter)->altitude;
+		if (tmp_alt > max_alt) {
+			max_alt = tmp_alt;
 		}
 
-		if (tmp_alt < min_alt.get_value()) {
-			min_alt.set_value(tmp_alt);
+		if (tmp_alt < min_alt) {
+			min_alt = tmp_alt;
 		}
 	}
 	return true;
@@ -2223,13 +2222,13 @@ unsigned long Track::apply_dem_data(bool skip_existing)
 
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		/* Don't apply if the point already has a value and the overwrite is off. */
-		if (!(skip_existing && (*iter)->altitude != VIK_DEFAULT_ALTITUDE)) {
+		if (!(skip_existing && (*iter)->altitude.is_valid())) {
 			/* TODO_LATER: of the 4 possible choices we have for choosing an
 			   elevation (trackpoint in between samples), choose the one
 			   with the least elevation change as the last. */
 			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
 			if (elev.is_valid()) {
-				(*iter)->altitude = elev.get_value();
+				(*iter)->altitude = elev;
 				num++;
 			}
 		}
@@ -2254,7 +2253,7 @@ void Track::apply_dem_data_last_trackpoint()
 	auto last = std::prev(this->trackpoints.end());
 	const Altitude elev = DEMCache::get_elev_by_coord((*last)->coord, DemInterpolation::Best);
 	if (elev.is_valid()) {
-		(*last)->altitude = elev.get_value();
+		(*last)->altitude = elev;
 	}
 }
 
@@ -2264,11 +2263,11 @@ void Track::apply_dem_data_last_trackpoint()
 /**
  * Apply elevation smoothing over range of trackpoints between the list start and end points.
  */
-void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points)
+void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, const Altitude & elev1, const Altitude & elev2, unsigned int points)
 {
 	/* If was really clever could try and weigh interpolation according to the distance between trackpoints somehow.
 	   Instead a simple average interpolation for the number of points given. */
-	double change = (elev2 - elev1) / (points + 1);
+	double change = (elev2 - elev1).get_value() / (points + 1);
 	int count = 1;
 	auto iter = start;
 	while (iter != stop) {
@@ -2298,7 +2297,7 @@ void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, do
 unsigned long Track::smooth_missing_elevation_data(bool flat)
 {
 	unsigned long num = 0;
-	double elev = VIK_DEFAULT_ALTITUDE;
+	Altitude elev; /* Initially invalid. */
 
 	Trackpoint * tp_missing = NULL;
 	auto iter_first = this->trackpoints.end();;
@@ -2307,10 +2306,10 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		Trackpoint * tp = *iter;
 
-		if (VIK_DEFAULT_ALTITUDE == tp->altitude) {
+		if (!tp->altitude.is_valid()) {
 			if (flat) {
 				/* Simply assign to last known value. */
-				if (elev != VIK_DEFAULT_ALTITUDE) {
+				if (elev.is_valid()) {
 					tp->altitude = elev;
 					num++;
 				}
@@ -2329,7 +2328,7 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 			/* Altitude available (maybe again!).
 			   If this marks the end of a section of altitude-less points
 			   then apply smoothing for that section of points. */
-			if (points > 0 && elev != VIK_DEFAULT_ALTITUDE) {
+			if (points > 0 && elev.is_valid()) {
 				if (!flat && iter_first != this->trackpoints.end()) {
 					this->smoothie(iter_first, iter, elev, tp->altitude, points);
 					num = num + points;
@@ -3339,7 +3338,7 @@ void Track::open_astro_cb(void)
 		char *lat_str = convert_to_dms(ll.lat);
 		char *lon_str = convert_to_dms(ll.lon);
 		char alt_buf[20];
-		snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(tp->altitude));
+		snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(tp->altitude.get_value()));
 		parent_layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
 		std::free(lat_str);
 		std::free(lon_str);

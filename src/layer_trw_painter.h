@@ -102,7 +102,7 @@ namespace SlavGPS {
 		void draw_track_dist_labels(Track * trk, bool do_highlight);
 		void draw_track_point_names(Track * trk, bool do_highlight);
 		void draw_track_name_labels(Track * trk, bool do_highlight);
-		void draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff);
+		void draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, const Altitude & min_alt, double alt_diff);
 		void draw_track_draw_midarrow(const ScreenPos & begin, const ScreenPos & end, QPen & pen);
 
 		QPen get_track_fg_pen(Track * trk, bool do_highlight);

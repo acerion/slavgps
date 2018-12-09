@@ -263,16 +263,21 @@ namespace SlavGPS {
 
 		Altitude convert_to_unit(HeightUnit height_unit) const;
 
+		Altitude & operator=(const Altitude & rhs);
+
 		Altitude & operator+=(double rhs);
 		Altitude & operator-=(double rhs);
 		Altitude & operator+=(const Altitude & rhs);
 		Altitude & operator-=(const Altitude & rhs);
-		friend Altitude operator+(Altitude & lhs, double rhs) { lhs += rhs; return lhs; }
-		friend Altitude operator-(Altitude & lhs, double rhs) { lhs -= rhs; return lhs; }
-		friend Altitude operator+(Altitude & lhs, const Altitude & rhs) { lhs += rhs; return lhs; }
-		friend Altitude operator-(Altitude & lhs, const Altitude & rhs) { lhs -= rhs; return lhs; }
+		Altitude operator+(double rhs) const { Altitude result = *this; result += rhs; return result; }
+		Altitude operator-(double rhs) const { Altitude result = *this; result -= rhs; return result; }
+		Altitude operator+(const Altitude & rhs) const { Altitude result = *this; result += rhs; return result; }
+		Altitude operator-(const Altitude & rhs) const { Altitude result = *this; result -= rhs; return result; }
 
-		Altitude operator/(int rhs);
+		Altitude & operator*=(double rhs);
+		Altitude & operator/=(double rhs);
+		Altitude operator*(double rhs) const { Altitude result = *this; result *= rhs; return result; }
+		Altitude operator/(double rhs) const { Altitude result = *this; result /= rhs; return result; }
 
 		friend bool operator<(const Altitude & lhs, const Altitude & rhs);
 		friend bool operator>(const Altitude & lhs, const Altitude & rhs);
@@ -284,6 +289,9 @@ namespace SlavGPS {
 		/* Return "meters" or "feet" string.
 		   This is a full string, not "m" or "ft". */
 		static QString get_unit_full_string(HeightUnit height_unit);
+
+		sg_ret set_from_string(const char * str);
+		sg_ret set_from_string(const QString & str);
 
 	private:
 		double value = NAN;

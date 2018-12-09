@@ -65,7 +65,7 @@ namespace SlavGPS {
 		QString name;
 		QString feature;
 		LatLon lat_lon;
-		double elevation = VIK_DEFAULT_ALTITUDE;
+		Altitude elevation;
 		QString comment;
 		QString desc;
 	};

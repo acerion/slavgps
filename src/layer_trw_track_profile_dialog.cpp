@@ -837,7 +837,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 	case GeoCanvasDomain::Elevation:
 		if (graph->labels.y_value && NULL != this->trk->get_tp(CURRENT)) {
 			/* Recalculate value into target unit. */
-			graph->labels.y_value->setText(Altitude(this->trk->get_tp(CURRENT)->altitude, HeightUnit::Metres)
+			graph->labels.y_value->setText(this->trk->get_tp(CURRENT)->altitude
 						       .convert_to_unit(Preferences::get_unit_height())
 						       .to_string());
 		}

@@ -101,7 +101,7 @@ public:
 
 	bool line_newsegment = false;
 	Time line_timestamp; /* Invalid by default. */
-	double line_altitude = VIK_DEFAULT_ALTITUDE;
+	Altitude line_altitude; /* Invalid by default. */
 
 	/* Trackpoint's extended attributes. */
 	bool line_extended = false;
@@ -264,7 +264,7 @@ void GPSPointParser::reset()
 
 	this->line_newsegment = false;
 	this->line_timestamp.set_valid(false);
-	this->line_altitude = VIK_DEFAULT_ALTITUDE;
+	this->line_altitude.set_valid(false);
 
 	this->line_symbol = NULL;
 
@@ -394,7 +394,7 @@ Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QStr
 {
 	Waypoint * wp = new Waypoint();
 	wp->visible = this->line_visible;
-	wp->altitude = Altitude(this->line_altitude, HeightUnit::Metres); /* GPS -> metes. */
+	wp->altitude = this->line_altitude;
 	wp->set_name(this->line_name);
 	wp->set_timestamp(this->line_timestamp);
 
@@ -690,7 +690,7 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 			this->line_latlon.lat = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "altitude", key_len)) {
-			this->line_altitude = SGUtils::c_to_double(value);
+			this->line_altitude.set_from_string(value);
 
 		} else if (0 == strncasecmp(key, "unixtime", key_len)) {
 			this->line_timestamp.set_from_unix_timestamp(value);
@@ -838,13 +838,12 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 		free(name);
 	}
 
-	if (tp->altitude != VIK_DEFAULT_ALTITUDE) {
-		fprintf(file, " altitude=\"%s\"", SGUtils::double_to_c(tp->altitude).toUtf8().constData());
+	if (tp->altitude.is_valid()) {
+		fprintf(file, " altitude=\"%s\"", tp->altitude.value_to_string_for_file().toUtf8().constData());
 	}
 	if (tp->timestamp.is_valid()) {
 		fprintf(file, " unixtime=\"%ld\"", tp->timestamp.get_value());
 	}
-
 	if (tp->newsegment) {
 		fprintf(file, " newsegment=\"yes\"");
 	}

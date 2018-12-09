@@ -88,9 +88,9 @@ namespace SlavGPS {
 		bool newsegment = false;
 		Time timestamp; /* Invalid by default (trackpoint doesn't have a timestamp). */
 
-		double altitude = VIK_DEFAULT_ALTITUDE; /* VIK_DEFAULT_ALTITUDE if data unavailable. */
-		double speed = NAN;  	                /* NAN if data unavailable. */
-		double course = NAN;                    /* NAN if data unavailable. */
+		Altitude altitude;      /* Invalid/unavailable by default. */
+		double speed = NAN;  	/* NAN if data unavailable. */
+		double course = NAN;    /* NAN if data unavailable. */
 
 		unsigned int nsats = 0;     /* Number of satellites used. 0 if data unavailable. */
 
@@ -380,7 +380,7 @@ namespace SlavGPS {
 		double track_length_including_gaps = 0.0;
 
 	private:
-		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);
+		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, const Altitude & elev1, const Altitude & elev2, unsigned int points);
 		void recalculate_bbox_last_tp();
 		TrackData make_values_distance_over_time_helper(void) const;
 		TrackData make_values_altitude_over_time_helper(void) const;

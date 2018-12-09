@@ -871,16 +871,16 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DemInterpolation::Best);
 		const Trackpoint * last_tpt = track->get_tp_last();
 		if (elev_new.is_valid()) {
-			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
+			if (last_tpt->altitude.is_valid()) {
 				/* Adjust elevation of last track point. */
-				if (elev_new.get_value() > last_tpt->altitude) {
+				if (elev_new > last_tpt->altitude) {
 					/* Going up. */
-					const double new_value = elev_gain.get_value() + (elev_new.get_value() - last_tpt->altitude);
-					elev_gain.set_value(new_value);
+					const Altitude new_value = elev_gain + (elev_new - last_tpt->altitude);
+					elev_gain = new_value;
 				} else {
 					/* Going down. */
-					const double new_value = elev_loss.get_value() + (last_tpt->altitude - elev_new.get_value());
-					elev_loss.set_value(new_value);
+					const Altitude new_value = elev_loss + (last_tpt->altitude - elev_new);
+					elev_loss = new_value;
 				}
 			}
 		}

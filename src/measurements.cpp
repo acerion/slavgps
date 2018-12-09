@@ -560,7 +560,7 @@ double Distance::convert_meters_to(double distance, DistanceUnit distance_unit)
 Altitude::Altitude(double new_value, HeightUnit height_unit)
 {
 	this->value = new_value;
-	this->valid = (!std::isnan(new_value)) && new_value != VIK_DEFAULT_ALTITUDE;
+	this->valid = !std::isnan(new_value);
 	this->unit = height_unit;
 }
 
@@ -578,6 +578,9 @@ bool Altitude::is_valid(void) const
 void Altitude::set_valid(bool new_valid)
 {
 	this->valid = new_valid;
+	if (!this->valid) {
+		this->value = NAN;
+	}
 }
 
 
@@ -671,7 +674,7 @@ double Altitude::get_value(void) const
 void Altitude::set_value(double new_value)
 {
 	this->value = new_value;
-	this->valid = (!std::isnan(new_value)) && new_value != VIK_DEFAULT_ALTITUDE;
+	this->valid = !std::isnan(new_value);
 	/* Don't change unit. */
 }
 
@@ -718,11 +721,25 @@ Altitude Altitude::convert_to_unit(HeightUnit target_height_unit) const
 		break;
 	}
 
-	output.valid = (!std::isnan(output.value)) && output.value != VIK_DEFAULT_ALTITUDE;
+	output.valid = !std::isnan(output.value);
 
 	return output;
 }
 
+
+
+Altitude & Altitude::operator=(const Altitude & rhs)
+{
+	if (this == &rhs) {
+		return *this;
+	}
+
+	this->value = rhs.value;
+	this->valid = rhs.valid;
+	this->unit = rhs.unit;
+
+	return *this;
+}
 
 
 
@@ -808,25 +825,31 @@ Altitude & Altitude::operator-=(const Altitude & rhs)
 
 
 
-Altitude Altitude::operator/(int rhs)
+Altitude & Altitude::operator*=(double rhs)
 {
-	Altitude result;
-
-	if (0 == rhs) {
-		qDebug() << SG_PREFIX_E << "Attempting to divide by zero";
-		return result;
+	if (this->valid) {
+		this->value *= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
 	}
-
-	if (!this->valid) {
-		return result;
-	}
-
-	result.value = this->value / rhs;
-	result.unit = this->unit;
-	result.valid = !std::isnan(result.value) && result.value >= 0.0;
-
-	return result;
 }
+
+
+
+
+Altitude & Altitude::operator/=(double rhs)
+{
+	if (this->valid) {
+		this->value /= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
+	}
+}
+
 
 
 
@@ -881,6 +904,32 @@ QString Altitude::get_unit_full_string(HeightUnit height_unit)
 
 	return result;
 }
+
+
+
+sg_ret Altitude::set_from_string(const char * str)
+{
+	if (NULL == str) {
+		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of altitude from NULL string";
+		this->valid = false;
+		return sg_ret::err_arg;
+	} else {
+		return this->set_from_string(QString(str));
+	}
+}
+
+
+
+
+sg_ret Altitude::set_from_string(const QString & str)
+{
+	this->value = SGUtils::c_to_double(str);
+	this->valid = !std::isnan(this->value);
+	this->unit = HeightUnit::Metres;
+
+	return this->valid ? sg_ret::ok : sg_ret::err;
+}
+
 
 
 

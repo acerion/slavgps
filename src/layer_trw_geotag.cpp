@@ -329,7 +329,7 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 		/* Is it exactly this point? */
 		if (this->photo_time == tp->timestamp) {
 			this->coord = tp->coord;
-			this->altitude = Altitude(tp->altitude, height_unit);
+			this->altitude = tp->altitude;
 			this->found_match = true;
 			break;
 		}
@@ -386,7 +386,7 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 			this->coord = Coord(interpolated, CoordMode::LatLon);
 
 			/* Interpolate elevation. */
-			this->altitude = Altitude(tp->altitude + ((tp_next->altitude - tp->altitude) * scale), height_unit);
+			this->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);
 			break;
 		}
 	}

@@ -1468,7 +1468,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 			Trackpoint * tp_ = new Trackpoint();
 			tp_->newsegment = false;
 			tp_->set_timestamp(this->realtime_fix.fix.time);
-			tp_->altitude = alt;
+			tp_->altitude = Altitude(alt, HeightUnit::Metres);
 			/* Speed only available for 3D fix. Check for NAN when use this speed. */
 			tp_->speed = this->realtime_fix.fix.speed;
 			tp_->course = this->realtime_fix.fix.track;

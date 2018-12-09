@@ -437,10 +437,10 @@ void LayerTRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const Sc
 
 
 
-void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
+void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, const Altitude & min_alt, double alt_diff)
 {
-#define FIXALTITUDE(what) \
-	((((Trackpoint *) (what))->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * this->track_elevation_factor / this->vp_xmpp)
+#define FIXALTITUDE(m_tp) \
+	((m_tp->altitude.get_value() - min_alt.get_value()) / alt_diff * DRAW_ELEVATION_FACTOR * this->track_elevation_factor / this->vp_xmpp)
 
 
 	QPoint points[4];
@@ -664,9 +664,9 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 				if (this->draw_track_elevation
 				    && std::next(iter) != trk->trackpoints.end()
-				    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
+				    && (*std::next(iter))->altitude.is_valid()) {
 
-					this->draw_track_draw_something(prev_pos, curr_pos, main_pen, *iter, *std::next(iter), min_alt.get_value(), alt_diff);
+					this->draw_track_draw_something(prev_pos, curr_pos, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
 				}
 			}
 
