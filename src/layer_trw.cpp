@@ -1621,7 +1621,7 @@ void LayerTRW::centerize_cb(void)
 	Coord coord;
 	if (this->find_center(&coord)) {
 		Viewport * viewport = ThisApp::get_main_viewport();
-		this->goto_coord(viewport, coord);
+		this->request_new_viewport_center(viewport, coord);
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -1746,7 +1746,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			ThisApp::get_main_viewport()->set_center_from_coord(wp->coord, true);
+			ThisApp::get_main_viewport()->set_center_from_coord(wp->coord);
 			this->tree_view->select_and_expose_tree_item(wp);
 			ThisApp::get_main_viewport()->request_redraw("Redrawing items after setting new center in viewport");
 
@@ -2367,8 +2367,6 @@ void LayerTRW::add_track_from_file(Track * trk)
 
 sg_ret LayerTRW::drag_drop_request(TreeItem * tree_item, int row, int col)
 {
-	/* TODO: Reset layer timestamps in case they have now changed. */
-
 	LayerTRW * source_trw = (LayerTRW *) tree_item->get_owning_layer();
 	const bool the_same_parent = TreeItem::the_same_object(this, source_trw);
 
@@ -2669,17 +2667,6 @@ void LayerTRW::delete_sublayer_common(TreeItem * item, bool confirm)
 
 
 
-void LayerTRW::goto_coord(Viewport * viewport, const Coord & coord)
-{
-	if (viewport) {
-		viewport->set_center_from_coord(coord, true);
-		this->emit_layer_changed("TRW - goto coord");
-	}
-}
-
-
-
-
 void LayerTRW::extend_track_end_cb(void)
 {
 	Track * track = this->get_edited_track();
@@ -2691,7 +2678,7 @@ void LayerTRW::extend_track_end_cb(void)
 
 	if (!track->empty()) {
 		Viewport * viewport = ThisApp::get_main_viewport();
-		this->goto_coord(viewport, track->get_tp_last()->coord);
+		this->request_new_viewport_center(viewport, track->get_tp_last()->coord);
 	}
 }
 
@@ -2714,7 +2701,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 
 	if (!track->empty()) {
 		Viewport * viewport = ThisApp::get_main_viewport();
-		this->goto_coord(viewport, track->get_tp_last()->coord);
+		this->request_new_viewport_center(viewport, track->get_tp_last()->coord);
 	}
 }
 
@@ -3802,7 +3789,7 @@ Time LayerTRW::get_timestamp(void) const
 		/* Fallback to get time from the metadata when no other timestamps available. */
 		if (this->metadata && this->metadata->iso8601_timestamp.isValid()) {
 
-			/* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
+			/* TODO_MAYBE: use toSecsSinceEpoch() when new version of QT library becomes more available. */
 			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC);
 		}
 	}

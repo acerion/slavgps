@@ -212,7 +212,7 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 	}
 
 
-	this->set_center_from_latlon(initial_lat_lon, true); /* The function will reject latlon if it's invalid. */
+	this->set_center_from_lat_lon(initial_lat_lon); /* The function will reject latlon if it's invalid. */
 
 
 	this->setFocusPolicy(Qt::ClickFocus);
@@ -835,7 +835,7 @@ bool Viewport::forward_available(void) const
    @save_position: Whether this new position should be saved into the history of positions
                    Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
 */
-bool Viewport::set_center_from_latlon(const LatLon & lat_lon, bool save_position)
+bool Viewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_position)
 {
 	if (!lat_lon.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
@@ -2493,11 +2493,7 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	   code path to handle this special case would bring little
 	   gain. */
 
-	/*
-	   TODO_LATER: add debug to inform when a canvas is
-	   reconfigured. This may help catching unexpected/unwanted
-	   reconfigurations.
-	*/
+	qDebug() << SG_PREFIX_N << "--- Canvas is being reconfigured ---";
 
 	this->width = new_width;
 	this->height = new_height;

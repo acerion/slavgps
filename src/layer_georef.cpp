@@ -955,7 +955,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	this->map_image_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::AnyFile, tr("Select image file"), this->layer->get_window());
 	this->map_image_file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Image);
 	this->map_image_file_selector->preselect_file_full_path(this->layer->image_file_full_path);
-#ifdef TODO_LATER /* Handle "maybe_read_world_file" argument in file selector. */
+#ifdef FIXME_RESTORE /* Handle "maybe_read_world_file" argument in file selector. */
 	vik_file_entry_new (GTK_FILE_CHOOSER_ACTION_OPEN, SGFileTypeFilter::IMAGE, maybe_read_world_file, this);
 #endif
 	this->grid->addWidget(new QLabel(tr("Map Image:")), row, 0);
@@ -1164,7 +1164,7 @@ void LayerGeoref::goto_center_cb(void)
 	utm.easting = this->utm_tl.easting + (this->image_width * this->mpp_easting / 2); /* Only an approximation. */
 	utm.northing = this->utm_tl.northing - (this->image_height * this->mpp_northing / 2);
 
-	viewport->set_center_from_coord(Coord(utm, viewport->get_coord_mode()), true);
+	viewport->set_center_from_utm(utm);
 	viewport->request_redraw("Redrawing items after setting new center coord in viewport");
 }
 
@@ -1343,9 +1343,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	layer->mpp_northing = ympp;
 
 	const LatLonBBox bbox(lat_lon_tl, lat_lon_br);
-
-	const Coord new_center(bbox.get_center(), viewport->get_coord_mode());
-	viewport->set_center_from_coord(new_center, true);
+	viewport->set_center_from_lat_lon(bbox.get_center()); /* TODO: is this call necessary if we call ::set_bbox() below? */
 
 	/* Set best zoom level. */
 	viewport->set_bbox(bbox);

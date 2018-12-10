@@ -172,7 +172,9 @@ void AcquireWorker::finalize_after_completion(void)
 			   zero new items were acquired. */
 			qDebug() << SG_PREFIX_I << "Layer is empty, delete the layer";
 
-			/* TODO: verify that the layer is not attached to tree yet. */
+			if (this->acquire_context->target_trw->is_in_tree()) {
+				qDebug() << SG_PREFIX_W << "Target TRW layer is attached to tree, perhaps it should be disconnected from the tree";
+			}
 
 			delete this->acquire_context->target_trw;
 			this->acquire_context->target_trw = NULL;
@@ -204,7 +206,7 @@ void AcquireWorker::finalize_after_completion(void)
 			/* Call 'accept()' slot to close the dialog. */
 			qDebug() << SG_PREFIX_I << "Will close the dialog by clicking OK";
 
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 			/* We can't call this method directly. For datasource wikipedia this causes crash because dialog doesn't exist anymore. */
 			this->progress_dialog->accept();
 #endif
@@ -596,7 +598,7 @@ sg_ret AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext 
 	}
 	qDebug() << SG_PREFIX_I << "Final form of shell command" << full_shell_command;
 
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	const QString program(BASH_LOCATION);
 	const QStringList args(QStringList() << "-c" << full_shell_command);
 

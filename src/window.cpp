@@ -1621,7 +1621,7 @@ void Window::closeEvent(QCloseEvent * ev)
 
 void Window::goto_default_location_cb(void)
 {
-	this->viewport->set_center_from_latlon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()), true);
+	this->viewport->set_center_from_lat_lon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()));
 	this->emit_center_or_zoom_changed("go to default location");
 }
 
@@ -2330,7 +2330,7 @@ void LocatorJob::run(void)
 		}
 
 		this->window->viewport->set_viking_zoom_level(zoom);
-		this->window->viewport->set_center_from_latlon(lat_lon, false);
+		this->window->viewport->set_center_from_lat_lon(lat_lon, false);
 
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location found: %1").arg(name));
 

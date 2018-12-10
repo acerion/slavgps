@@ -724,3 +724,14 @@ Time Layer::get_timestamp(void) const
 {
 	return Time(0);
 }
+
+
+
+
+void Layer::request_new_viewport_center(Viewport * viewport, const Coord & coord)
+{
+	if (viewport) {
+		viewport->set_center_from_coord(coord);
+		this->emit_layer_changed("Requesting change of center coordinate of viewport");
+	}
+}

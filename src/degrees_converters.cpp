@@ -239,7 +239,7 @@ double SlavGPS::convert_dms_to_dec(char const * dms)
 			ptr = strpbrk(endptr, "0123456789,.");
 			if (ptr != NULL) {
 				const char * tmpptr = endptr;
-				value = strtod((const char *) ptr, (char **) &endptr); /* KAMIL_TODO: remove casting. */
+				value = strtod((const char *) ptr, (char **) &endptr); /* TODO_LATER: remove casting. */
 				/* Detect when endptr hasn't changed (which may occur if no conversion took place),
 				   particularly if the last character is a ',' or there are multiple '.'s like '5.5.'. */
 				if (endptr == tmpptr) {

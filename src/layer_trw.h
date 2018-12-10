@@ -293,8 +293,6 @@ namespace SlavGPS {
 
 		bool uniquify(LayersPanel * panel);
 
-		void goto_coord(Viewport * viewport, const Coord & coord);
-
 		void tpwin_update_dialog_data();
 
 

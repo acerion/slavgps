@@ -586,7 +586,7 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 	}
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 		if (!this->is_thread) {
 			Dialog::info(QObject::tr("No GPS Traces found"), acquire_context->window);
 		}
@@ -596,13 +596,13 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 	}
 
 	xd->list_of_gpx_meta_data.reverse();
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	((DataSourceOSMMyTracesDialog *) acquiring_context->parent_data_source_dialog)->set_in_current_view_property(xd->list_of_gpx_meta_data);
 #endif
 
 	std::list<GPXMetaData *> * selected = select_from_list(acquire_context->window, xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	/* If non thread - show program is 'doing something...' */
 	if (!this->is_thread) {
 		acquire_context->window->set_busy_cursor();
@@ -699,7 +699,7 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 		result = sg_ret::ok;
 	}
 
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	if (!this->is_thread) {
 		acquire_context->window->clear_busy_cursor();
 	}

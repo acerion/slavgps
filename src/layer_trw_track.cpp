@@ -2135,7 +2135,7 @@ sg_ret Track::anonymize_times(void)
 		return sg_ret::err_algo;
 	}
 	/* This will be a negative value */
-	qint64 century_secs = century.toMSecsSinceEpoch() / MSECS_PER_SEC; /* TODO_2_LATER: use toSecsSinceEpoch() when new version of QT library becomes more available. */
+	qint64 century_secs = century.toMSecsSinceEpoch() / MSECS_PER_SEC; /* TODO_MAYBE: use toSecsSinceEpoch() when new version of QT library becomes more available. */
 
 
 	time_t offset = 0;
@@ -2985,9 +2985,8 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 		Viewport * viewport = ThisApp::get_main_viewport();
-		parent_layer_->goto_coord(viewport, this->get_tp_first()->coord);
+		this->owning_layer->request_new_viewport_center(viewport, this->get_tp_first()->coord);
 	}
 }
 
@@ -3004,7 +3003,7 @@ void Track::goto_center_cb(void)
 	Viewport * viewport = ThisApp::get_main_viewport();
 
 	const Coord coord(this->get_bbox().get_center(), parent_layer_->coord_mode);
-	parent_layer_->goto_coord(viewport, coord);
+	parent_layer_->request_new_viewport_center(viewport, coord);
 }
 
 
@@ -3016,9 +3015,8 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = ThisApp::get_main_viewport();
-	parent_layer_->goto_coord(viewport, this->get_tp_last()->coord);
+	this->owning_layer->request_new_viewport_center(viewport, this->get_tp_last()->coord);
 }
 
 
@@ -3031,9 +3029,8 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = ThisApp::get_main_viewport();
-	parent_layer_->goto_coord(viewport, tp->coord);
+	this->owning_layer->request_new_viewport_center(viewport, tp->coord);
 }
 
 
@@ -3046,9 +3043,8 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = ThisApp::get_main_viewport();
-	parent_layer_->goto_coord(viewport, tp->coord);
+	this->owning_layer->request_new_viewport_center(viewport, tp->coord);
 }
 
 
@@ -3061,9 +3057,8 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = ThisApp::get_main_viewport();
-	parent_layer_->goto_coord(viewport, tp->coord);
+	this->owning_layer->request_new_viewport_center(viewport, tp->coord);
 }
 
 
@@ -3738,7 +3733,7 @@ void Track::split_by_timestamp_cb(void)
 		if (ts < prev_ts) {
 			const Time tstamp(ts);
 			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(tstamp.strftime_local("%c"))), main_window) {
-				parent_layer->goto_coord(ThisApp::get_main_viewport(), (*iter)->coord); /* TODO: this method should not be in a layer. Perhaps in viewport? */
+				parent_layer->request_new_viewport_center(ThisApp::get_main_viewport(), (*iter)->coord);
 			}
 			return;
 		}

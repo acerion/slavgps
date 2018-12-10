@@ -226,7 +226,7 @@ AcquireOptions * DatasourceGPSSetup::create_acquire_options(AcquireContext * acq
 
 static void set_total_count(unsigned int cnt, AcquireWorker & getter)
 {
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	if (acquiring->acquire_is_running) {
 
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
@@ -261,7 +261,7 @@ static void set_total_count(unsigned int cnt, AcquireWorker & getter)
 /* Compare this function with GPSSession::set_current_count(int cnt) */
 static void set_current_count(int cnt, AcquireWorker * getter)
 {
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	if (acquiring->acquire_is_running) {
 		DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) acquiring->parent_data_source_dialog;
 
@@ -304,7 +304,7 @@ static void set_current_count(int cnt, AcquireWorker * getter)
 
 static void set_gps_info(const char * info, AcquireWorker * getter)
 {
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	if (acquiring->acquire_is_running) {
 		((DatasourceGPSProgress *) acquiring->parent_data_source_dialog)->gps_label->setText(QObject::tr("GPS Device: %1").arg(info));
 	}
@@ -322,7 +322,7 @@ static void set_gps_info(const char * info, AcquireWorker * getter)
 void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context)
 {
 	char *line;
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	DatasourceGPSProgress * gps_dialog = (DatasourceGPSProgress *) getter->parent_data_source_dialog;
 
 	switch (code) {

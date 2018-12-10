@@ -164,6 +164,8 @@ namespace SlavGPS {
 
 		virtual void change_coord_mode(CoordMode dest_mode) { return; };
 
+		void request_new_viewport_center(Viewport * viewport, const Coord & coord);
+
 		virtual Time get_timestamp(void) const override;
 
 		/* Treeview drag and drop method. called on the

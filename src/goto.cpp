@@ -298,7 +298,7 @@ bool GoTo::goto_location(Window * window, Viewport * viewport)
 			GotoToolResult ans = goto_tools[last_goto_idx]->get_coord(viewport, location.toUtf8().data(), &location_coord);
 			switch (ans) {
 			case GotoToolResult::Found:
-				viewport->set_center_from_coord(location_coord, true);
+				viewport->set_center_from_coord(location_coord);
 				ask_again = false;
 				moved_to_new_position = true;
 				g_last_location = location;
@@ -493,8 +493,7 @@ bool GoTo::goto_latlon(Window * window, Viewport * viewport)
 		return false;
 	}
 
-	const Coord new_center = Coord(new_lat_lon, viewport->get_coord_mode());
-	viewport->set_center_from_coord(new_center, true);
+	viewport->set_center_from_lat_lon(new_lat_lon);
 
 	return true;
 }
@@ -538,8 +537,7 @@ bool GoTo::goto_utm(Window * window, Viewport * viewport)
 		return false;
 	}
 
-	const Coord new_center = Coord(new_utm, viewport->get_coord_mode());
-	viewport->set_center_from_coord(new_center, true);
+	viewport->set_center_from_utm(new_utm);
 
 	return true;
 }

@@ -108,7 +108,7 @@ void Expedia::init(void)
 	map_type.download = expedia_download_tile;
 	map_type.download_handle_init = expedia_handle_init;
 	map_type.download_handle_cleanup = expedia_handle_cleanup;
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	maps_layer_register_type(QObject::tr("Expedia Street Maps"), MapTypeID::Expedia, &map_type);
 #endif
 #endif

@@ -565,7 +565,7 @@ void Waypoint::open_astro_cb(void)
 
 void Waypoint::show_in_viewport_cb(void)
 {
-	((LayerTRW *) this->owning_layer)->goto_coord(ThisApp::get_main_viewport(), this->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::get_main_viewport(), this->coord);
 }
 
 

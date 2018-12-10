@@ -799,7 +799,7 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 		read_parser.stack.pop();
 	}
 
-	viewport->set_center_from_latlon(lat_lon, true); /* The function will reject lat_lon if it's invalid. */
+	viewport->set_center_from_lat_lon(lat_lon); /* The function will reject lat_lon if it's invalid. */
 
 	if (top_layer->tree_view && !top_layer->visible) {
 		top_layer->tree_view->apply_tree_item_visibility(top_layer);

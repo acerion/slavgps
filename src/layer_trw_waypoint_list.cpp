@@ -135,7 +135,7 @@ void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 	LayerTRW * trw = wp->get_parent_layer_trw();
 	Viewport * viewport = ThisApp::get_main_viewport();
 
-	viewport->set_center_from_coord(wp->coord, true);
+	viewport->set_center_from_coord(wp->coord);
 	this->waypoint_select(trw);
 	trw->emit_layer_changed("TRW - Waypoint List Dialog - View");
 }

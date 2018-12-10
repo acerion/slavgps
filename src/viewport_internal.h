@@ -160,9 +160,9 @@ namespace SlavGPS {
 
 
 		/* Viewport position. */
-		void set_center_from_coord(const Coord & coord, bool save_position);
-		void set_center_from_utm(const UTM & utm, bool save_position);
-		bool set_center_from_latlon(const LatLon & lat_lon, bool save_position);
+		void set_center_from_coord(const Coord & coord, bool save_position = true);
+		void set_center_from_utm(const UTM & utm, bool save_position = true);
+		bool set_center_from_lat_lon(const LatLon & lat_lon, bool save_position = true);
 
 		void set_center_from_screen_pos(int x, int y);
 		void set_center_from_screen_pos(const ScreenPos & pos);

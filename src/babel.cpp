@@ -548,7 +548,7 @@ bool BabelProcess::run_process(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-#ifdef K_TODO
+#ifdef FIXME_RESTORE
 	if (this->progress_indicator) { /* TODO_2_LATER: in final version there will be no 'progress_indicator' member, we will simply use import/export_progress_cb() methods. */
 		this->progress_indicator->import_progress_cb(AcquireProgressCode::Completed, NULL);
 	} else {

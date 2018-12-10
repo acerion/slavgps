@@ -421,7 +421,7 @@ static bool set_center_at_graph_position(int event_x,
 
 	if (found) {
 		Trackpoint * tp = trk->get_tp(SELECTED);
-		main_viewport->set_center_from_coord(tp->coord, true);
+		main_viewport->set_center_from_coord(tp->coord);
 		trw->emit_layer_changed("TRW - Track Profile Dialog - set center");
 	}
 	return found;

@@ -561,7 +561,7 @@ void CommandLineOptions::apply(Window * window)
 	Viewport * viewport = window->get_viewport();
 
 	if (this->lat_lon.is_valid()) {
-		viewport->set_center_from_latlon(this->lat_lon, true);
+		viewport->set_center_from_lat_lon(this->lat_lon);
 	}
 
 	if (this->zoom_level_osm >= 0) {
