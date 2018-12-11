@@ -147,7 +147,7 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		void draw_single_graph(ProfileGraph * graph);
+		sg_ret draw_single_graph(ProfileGraph * graph);
 
 
 		LayerTRW * trw = NULL;
@@ -178,8 +178,8 @@ namespace SlavGPS {
 
 
 	private:
-		bool draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x);
-		bool draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x);
+		sg_ret draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x);
+		sg_ret draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x);
 
 		void handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev);
 
@@ -228,19 +228,19 @@ namespace SlavGPS {
 
 		double get_pos_y(double pos_x);
 
-		void set_initial_visible_range_x_distance(void);
-		void set_initial_visible_range_x_time(void);
-		void set_initial_visible_range_y(void);
+		sg_ret set_initial_visible_range_x_distance(void);
+		sg_ret set_initial_visible_range_x_time(void);
+		sg_ret set_initial_visible_range_y(void);
 
 		int get_cursor_pos_x(QMouseEvent * ev) const;
 
 		QPointF get_position_of_tp(Track * trk, int idx);
 
-		bool regenerate_data(Track * trk);
-		void regenerate_sizes(void);
+		sg_ret regenerate_data(Track * trk);
+		sg_ret regenerate_sizes(void);
 
-		void draw_graph(Track * trk);
-		void draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn);
+		sg_ret draw_graph(Track * trk);
+		sg_ret draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn);
 
 		void draw_function_values(void);
 
@@ -300,7 +300,7 @@ namespace SlavGPS {
 		QVBoxLayout * controls_vbox = NULL;
 
 	private:
-		bool regenerate_data_from_scratch(Track * trk);
+		sg_ret regenerate_data_from_scratch(Track * trk);
 	};
 
 

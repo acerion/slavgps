@@ -140,7 +140,7 @@ TrackProfileDialog::~TrackProfileDialog()
 
 
 
-bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
+sg_ret ProfileGraph::regenerate_data_from_scratch(Track * trk)
 {
 	/* First create track data using appropriate Track method. */
 
@@ -170,7 +170,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 	}
 
 	if (!this->track_data.valid) {
-		return false;
+		return sg_ret::err;
 	}
 
 
@@ -223,7 +223,7 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
-		break;
+		return sg_ret::err;
 	};
 
 
@@ -233,42 +233,48 @@ bool ProfileGraph::regenerate_data_from_scratch(Track * trk)
 
 
 	/* Do necessary adjustments to x values. */
-
+	sg_ret result = sg_ret::err;
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Distance:
-		this->set_initial_visible_range_x_distance();
+		result = this->set_initial_visible_range_x_distance();
 		break;
 	case GeoCanvasDomain::Time:
-		this->set_initial_visible_range_x_time();
+		result = this->set_initial_visible_range_x_time();
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->geocanvas.x_domain;
+		result = sg_ret::err;
 		break;
-	};
+	}
+	if (sg_ret::ok != result) {
+		qDebug() << SG_PREFIX_E << "Failed to set initial visible x range";
+		return result;
+	}
 
-	this->set_initial_visible_range_y();
 
-	qDebug() << SG_PREFIX_I << "Return";
+	result = this->set_initial_visible_range_y();
+	if (sg_ret::ok != result) {
+		qDebug() << SG_PREFIX_E << "Failed to set initial visible u range";
+		return result;
+	}
 
 
-	return true;
+	return sg_ret::ok;
 }
 
 
 
 
-void ProfileGraph::set_initial_visible_range_x_distance(void)
+sg_ret ProfileGraph::set_initial_visible_range_x_distance(void)
 {
 	/* We won't display any x values outside of
 	   track_data.x_min/max. We will never be able to zoom out to
 	   show e.g. negative distances. */
 	this->x_min_visible_d = Distance::convert_meters_to(this->track_data.x_min, this->geocanvas.distance_unit);
 	this->x_max_visible_d = Distance::convert_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
-
-	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
-		/* TODO_2_LATER: verify what happens if we return here. */
+	if (this->x_max_visible_d == this->x_min_visible_d) {
 		qDebug() << SG_PREFIX_E << "Zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
-		return;
+		return sg_ret::err;
 	}
 
 	/* Now, given the n_intervals value, find a suitable interval
@@ -279,12 +285,14 @@ void ProfileGraph::set_initial_visible_range_x_distance(void)
 
 	int interval_index = distance_intervals.intervals.get_interval_index(this->x_min_visible_d, this->x_max_visible_d, n_intervals);
 	this->x_interval_d = distance_intervals.intervals.values[interval_index];
+
+	return sg_ret::ok;
 }
 
 
 
 
-void ProfileGraph::set_initial_visible_range_x_time(void)
+sg_ret ProfileGraph::set_initial_visible_range_x_time(void)
 {
 	/* We won't display any x values outside of
 	   track_data.x_min/max. We will never be able to zoom out to
@@ -307,10 +315,9 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 	this->x_max_visible_t = this->track_data.x[this->track_data.n_points - 1];
 #endif
 
-	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
-		/* TODO_2_LATER: verify what happens if we return here. */
+	if (this->x_max_visible_t == this->x_min_visible_t) {
 		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
-		return;
+		return sg_ret::err;
 	}
 
 	/* Now, given the n_intervals value, find a suitable interval
@@ -321,12 +328,14 @@ void ProfileGraph::set_initial_visible_range_x_time(void)
 
 	int interval_index = time_intervals.intervals.get_interval_index(this->x_min_visible_t, this->x_max_visible_t, n_intervals);
 	this->x_interval_t = time_intervals.intervals.values[interval_index];
+
+	return sg_ret::ok;
 }
 
 
 
 
-void ProfileGraph::set_initial_visible_range_y(void)
+sg_ret ProfileGraph::set_initial_visible_range_y(void)
 {
 	/* When user will be zooming in and out, and (in particular)
 	   moving graph up and down, the y_min/max_visible values will
@@ -350,8 +359,7 @@ void ProfileGraph::set_initial_visible_range_y(void)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
-		/* TODO_2_LATER: see what happens when we return here. */
-		return;
+		return sg_ret::err;
 	}
 	this->y_max_visible = this->track_data.y_max + range * over;
 
@@ -378,11 +386,13 @@ void ProfileGraph::set_initial_visible_range_y(void)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
-		return;
+		return sg_ret::err;
 	};
 
 	const int interval_index = intervals->get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
 	this->y_interval = intervals->values[interval_index];
+
+	return sg_ret::ok;
 }
 
 
@@ -438,7 +448,7 @@ static bool set_center_at_graph_position(int event_x,
 
    Both "pos" arguments should indicate position in graph's coordinate system.
 */
-void ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn)
+sg_ret ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn)
 {
 	/* Restore previously saved image that has no marks on it, just the graph, grids, borders and margins. */
 	if (this->saved_img.valid) {
@@ -483,6 +493,8 @@ void ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos & 
 		/* This will call Viewport::paintEvent(), triggering final render to screen. */
 		this->viewport->update();
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -611,15 +623,17 @@ double ProfileGraph::get_pos_y(double pos_x)
 
 
 /* Draw cursor marks on a graph that is a function of distance. */
-bool TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x)
+sg_ret TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x)
 {
 	if (!graph->track_data.valid) {
-		return false;
+		qDebug() << SG_PREFIX_E << "Not drawing cursor, data invalid";
+		return sg_ret::err;
 	}
 
 	current_pos_x = graph->get_cursor_pos_x(ev);
 	if (current_pos_x < 0) {
-		return false;
+		/* Not an error? */
+		return sg_ret::ok;
 	}
 
 	this->trk->set_tp_by_percentage_dist((double) current_pos_x / graph->width, &meters_from_start, CURRENT);
@@ -638,22 +652,24 @@ bool TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph 
 
 	graph->draw_marks(ScreenPos(selected_pos_x, selected_pos_y), ScreenPos(current_pos_x, current_pos_y), this->is_selected_drawn, this->is_current_drawn);
 
-	return true;
+	return sg_ret::ok;
 }
 
 
 
 
 /* Draw cursor marks on a graph that is a function of time. */
-bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x)
+sg_ret TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x)
 {
 	if (!graph->track_data.valid) {
-		return false;
+		qDebug() << SG_PREFIX_E << "Not drawing cursor, data invalid";
+		return sg_ret::err;
 	}
 
 	current_pos_x = graph->get_cursor_pos_x(ev);
 	if (current_pos_x < 0) {
-		return false;
+		/* Not an error? */
+		return sg_ret::ok;
 	}
 
 	this->trk->set_tp_by_percentage_time((double) current_pos_x / graph->width, &seconds_from_start, CURRENT);
@@ -672,7 +688,7 @@ bool TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * gr
 
 	graph->draw_marks(ScreenPos(selected_pos_x, selected_pos_y), ScreenPos(current_pos_x, current_pos_y), this->is_selected_drawn, this->is_current_drawn);
 
-	return true;
+	return sg_ret::ok;
 }
 
 
@@ -800,7 +816,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 
 	switch (graph->geocanvas.x_domain) {
 	case GeoCanvasDomain::Distance:
-		if (!this->draw_cursor_by_distance(ev, graph, meters_from_start, current_pos_x)) {
+		if (sg_ret::ok != this->draw_cursor_by_distance(ev, graph, meters_from_start, current_pos_x)) {
 			return;
 		}
 		if (graph->labels.x_value) {
@@ -810,7 +826,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		break;
 
 	case GeoCanvasDomain::Time:
-		if (!this->draw_cursor_by_time(ev, graph, seconds_from_start, current_pos_x)) {
+		if (sg_ret::ok != this->draw_cursor_by_time(ev, graph, seconds_from_start, current_pos_x)) {
 			return;
 		}
 		if (graph->labels.x_value) {
@@ -1270,19 +1286,19 @@ void ProfileGraphDT::save_values(void)
 /**
    \brief Draw the y = f(x) graph
 */
-void ProfileGraph::draw_graph(Track * trk)
+sg_ret ProfileGraph::draw_graph(Track * trk)
 {
 	if (this->geocanvas.x_domain == GeoCanvasDomain::Time) {
 		const Time duration = trk->get_duration(true);
 		if (!duration.is_valid() || duration.get_value() <= 0) {
-			return;
+			return sg_ret::err;
 		}
 	}
 
 	this->regenerate_sizes();
 
-	if (!this->regenerate_data(trk)) {
-		return;
+	if (sg_ret::ok != this->regenerate_data(trk)) {
+		return sg_ret::err;
 	}
 
 	/* Clear before redrawing. */
@@ -1305,6 +1321,8 @@ void ProfileGraph::draw_graph(Track * trk)
 	qDebug() << SG_PREFIX_I << "Saving viewport" << this->viewport->type_string;
 	this->saved_img.img = this->viewport->get_pixmap();
 	this->saved_img.valid = true;
+
+	return sg_ret::ok;
 }
 
 
@@ -1400,9 +1418,13 @@ QPointF ProfileGraph::get_position_of_tp(Track * trk, int idx)
 
 
 
-void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
+sg_ret TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 {
-	graph->draw_graph(this->trk);
+	sg_ret ret = graph->draw_graph(this->trk);
+	if (sg_ret::ok != ret) {
+		qDebug() << SG_PREFIX_E << "Failed to draw single graph";
+		return ret;
+	}
 
 	/* Ensure markers are redrawn if necessary. */
 	if (this->is_selected_drawn || this->is_current_drawn) {
@@ -1414,8 +1436,14 @@ void TrackProfileDialog::draw_single_graph(ProfileGraph * graph)
 
 		QPointF selected_pos = graph->get_position_of_tp(this->trk, SELECTED);
 
-		graph->draw_marks(ScreenPos(selected_pos.x(), selected_pos.y()), ScreenPos(current_pos.x(), current_pos.y()), this->is_selected_drawn, this->is_current_drawn);
+		ret = graph->draw_marks(ScreenPos(selected_pos.x(), selected_pos.y()), ScreenPos(current_pos.x(), current_pos.y()), this->is_selected_drawn, this->is_current_drawn);
+		if (sg_ret::ok != ret) {
+			qDebug() << SG_PREFIX_E << "Failed to draw marks";
+			return ret;
+		}
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -2162,7 +2190,7 @@ ProfileGraph::~ProfileGraph()
 
 
 
-bool ProfileGraph::regenerate_data(Track * trk)
+sg_ret ProfileGraph::regenerate_data(Track * trk)
 {
 	this->track_data.invalidate();
 
@@ -2174,12 +2202,14 @@ bool ProfileGraph::regenerate_data(Track * trk)
 
 
 
-void ProfileGraph::regenerate_sizes(void)
+sg_ret ProfileGraph::regenerate_sizes(void)
 {
 	this->width = this->viewport->get_graph_width();
 	this->height = this->viewport->get_graph_height();
 	this->bottom_edge = this->viewport->get_graph_bottom_edge();
 	this->left_edge = this->viewport->get_graph_left_edge();
+
+	return sg_ret::ok;
 }
 
 
@@ -2232,7 +2262,7 @@ void find_grid_line_indices(T min_visible, T max_visible, T interval, int * firs
 
 void ProfileGraph::draw_y_grid(void)
 {
-	if (this->y_max_visible - this->y_min_visible == 0) {
+	if (this->y_max_visible == this->y_min_visible) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_min_visible << this->y_max_visible;
 		return;
 	}
@@ -2267,7 +2297,7 @@ void ProfileGraph::draw_y_grid(void)
 
 void ProfileGraph::draw_x_grid_sub_d(void)
 {
-	if (this->x_max_visible_d - this->x_min_visible_d == 0) {
+	if (this->x_max_visible_d == this->x_min_visible_d) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
 		return;
 	}
@@ -2302,7 +2332,7 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 
 void ProfileGraph::draw_x_grid_sub_t(void)
 {
-	if (this->x_max_visible_t - this->x_min_visible_t == 0) {
+	if (this->x_max_visible_t == this->x_min_visible_t) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
 		return;
 	}
