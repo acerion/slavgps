@@ -369,28 +369,30 @@ sg_ret ProfileGraph::set_initial_visible_range_y(void)
 	   index and value that will nicely cover visible range of
 	   data. */
 	const int n_intervals = GRAPH_Y_INTERVALS;
-	GraphIntervals<double> * intervals = NULL;
+	int interval_index = 0;
 
 	switch (this->geocanvas.y_domain) {
 	case GeoCanvasDomain::Speed:
-		intervals = &speed_intervals.intervals;
+		interval_index = speed_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		this->y_interval = speed_intervals.intervals.values[interval_index];
 		break;
 	case GeoCanvasDomain::Elevation:
-		intervals = &altitude_intervals.intervals;
+		interval_index = altitude_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		this->y_interval = altitude_intervals.intervals.values[interval_index];
 		break;
 	case GeoCanvasDomain::Distance:
-		intervals = &distance_intervals.intervals;
+		interval_index = distance_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		this->y_interval = distance_intervals.intervals.values[interval_index].value;
 		break;
 	case GeoCanvasDomain::Gradient:
-		intervals = &gradient_intervals.intervals;
+		interval_index = gradient_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		this->y_interval = gradient_intervals.intervals.values[interval_index];
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->geocanvas.y_domain;
 		return sg_ret::err;
 	};
 
-	const int interval_index = intervals->get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
-	this->y_interval = intervals->values[interval_index];
 
 	return sg_ret::ok;
 }
@@ -2304,7 +2306,7 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 
 	int first_line = 0;
 	int last_line = 0;
-	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, &first_line, &last_line);
+	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d.value, &first_line, &last_line);
 
 #if 1
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;
@@ -2313,16 +2315,16 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 #endif
 
 	for (int i = first_line; i <= last_line; i++) {
-		const Distance value(i * this->x_interval_d, this->geocanvas.distance_unit);
+		const Distance axis_mark_uu = this->x_interval_d * i;
 
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
-		const int col = this->width * ((value.value - this->x_min_visible_d) / (this->x_max_visible_d - this->x_min_visible_d));
+		const int col = this->width * ((axis_mark_uu.value - this->x_min_visible_d) / (this->x_max_visible_d - this->x_min_visible_d));
 
 		if (col >= 0 && col < this->width) {
-			qDebug() << SG_PREFIX_D << "      value (inside) =" << value.value << ", col =" << col;
-			this->draw_grid_vertical_line(col, value.to_nice_string());
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu.value << ", col =" << col;
+			this->draw_grid_vertical_line(col, axis_mark_uu.to_nice_string());
 		} else {
-			qDebug() << SG_PREFIX_D << "      value (outside) =" << value.value << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu.value << ", col =" << col;
 		}
 	}
 }
@@ -2339,16 +2341,17 @@ void ProfileGraph::draw_x_grid_sub_t(void)
 
 	int first_line = 0;
 	int last_line = 0;
-	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, &first_line, &last_line);
+	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t.get_value(), &first_line, &last_line);
 
 #if 1
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
-	qDebug() << "      interval =" << this->x_interval_t << ", first_line/last_line =" << first_line << last_line;
+	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_line/last_line =" << first_line << last_line;
 #endif
 
+	const time_t interval_value = this->x_interval_t.get_value();
 	for (int i = first_line; i <= last_line; i++) {
-		const time_t value = i * this->x_interval_t;
+		const time_t value = i * interval_value;
 
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
@@ -2357,7 +2360,7 @@ void ProfileGraph::draw_x_grid_sub_t(void)
 
 		if (col >= 0 && col < this->width) {
 			qDebug() << SG_PREFIX_D << "      value (inside) =" << value << ", col =" << col;
-			this->draw_grid_vertical_line(col, get_time_grid_label_2(this->x_interval_t, value));
+			this->draw_grid_vertical_line(col, get_time_grid_label_2(interval_value, value));
 		} else {
 			qDebug() << SG_PREFIX_D << "      value (outside) =" << value << ", col =" << col;
 		}

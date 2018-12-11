@@ -269,12 +269,12 @@ namespace SlavGPS {
 		int left_edge = 0;
 
 		/* For distance-based graphs. */
-		double x_interval_d = 0.0;
+		Distance x_interval_d = { 0.0 };
 		double x_min_visible_d = 0.0;
 		double x_max_visible_d = 0.0;
 
 		/* For time-based graphs. */
-		time_t x_interval_t = 0;
+		Time x_interval_t = { 0 };
 		time_t x_min_visible_t = 0;
 		time_t x_max_visible_t = 0;
 

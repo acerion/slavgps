@@ -513,6 +513,100 @@ Distance Distance::operator-(const Distance & rhs)
 
 
 
+Distance & Distance::operator*=(double rhs)
+{
+	if (this->valid) {
+		this->value *= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
+	}
+}
+
+
+
+
+Distance & Distance::operator/=(double rhs)
+{
+	if (this->valid) {
+		this->value /= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
+	}
+}
+
+
+
+
+bool SlavGPS::operator<(const Distance & lhs, const Distance & rhs)
+{
+	return lhs.value < rhs.value;
+}
+
+
+
+
+bool SlavGPS::operator>(const Distance & lhs, const Distance & rhs)
+{
+	return rhs < lhs;
+}
+
+
+
+
+bool SlavGPS::operator<=(const Distance & lhs, const Distance & rhs)
+{
+	return !(lhs > rhs);
+}
+
+
+
+
+bool SlavGPS::operator>=(const Distance & lhs, const Distance & rhs)
+{
+	return !(lhs < rhs);
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const Distance & distance)
+{
+	debug << "Distance:" << distance.value;
+	return debug;
+}
+
+
+
+bool Distance::operator==(const Distance & rhs) const
+{
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		return false;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		return false;
+	}
+
+	return this->value == rhs.value;
+}
+
+
+
+
+bool Distance::operator!=(const Distance & rhs) const
+{
+	return !(*this == rhs);
+}
+
+
+
+
 QString Distance::get_unit_full_string(DistanceUnit distance_unit)
 {
 	QString result;
@@ -1555,6 +1649,34 @@ Time & Time::operator+=(const Time & rhs)
 	this->value += rhs.value;
 	this->valid = !std::isnan(this->value);
 	return *this;
+}
+
+
+
+
+Time & Time::operator*=(double rhs)
+{
+	if (this->valid) {
+		this->value *= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
+	}
+}
+
+
+
+
+Time & Time::operator/=(double rhs)
+{
+	if (this->valid) {
+		this->value /= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
+	}
 }
 
 

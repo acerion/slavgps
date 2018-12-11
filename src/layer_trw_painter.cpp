@@ -248,28 +248,28 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 	GraphIntervalsDistance intervals;
 	const int interval_idx = intervals.intervals.get_interval_index(0, track_length.value, n_intervals_max);
 
-	const double interval = intervals.intervals.get_interval_value(interval_idx);
+	const Distance interval = intervals.intervals.get_interval_value(interval_idx);
 
 	for (int i = 1; i <= n_intervals_max; i++) {
-		const Distance dist_in_user_units(interval * i, user_distance_unit);
+		const Distance axis_mark_uu = interval * i;
 
-		/* Convert distance back into metres for use in finding a trackpoint. */
-		const Distance dist_in_meters = dist_in_user_units.convert_to_unit(SupplementaryDistanceUnit::Meters);
-		if (!dist_in_meters.is_valid()) {
+		/* Convert distance into metres for use in finding a trackpoint. */
+		const Distance axis_mark_iu = axis_mark_uu.convert_to_unit(SupplementaryDistanceUnit::Meters);
+		if (!axis_mark_iu.is_valid()) {
 			qDebug() << SG_PREFIX_E << "Conversion to meters failed";
 			break;
 		}
 
 		double dist_current = 0.0;
-		Trackpoint * tp_current = trk->get_tp_by_dist(dist_in_meters.value, false, &dist_current);
+		Trackpoint * tp_current = trk->get_tp_by_dist(axis_mark_iu.value, false, &dist_current);
 		double dist_next = 0.0;
-		Trackpoint * tp_next = trk->get_tp_by_dist(dist_in_meters.value, true, &dist_next);
+		Trackpoint * tp_next = trk->get_tp_by_dist(axis_mark_iu.value, true, &dist_next);
 
 		double dist_between_tps = fabs(dist_next - dist_current);
 		double ratio = 0.0;
 		/* Prevent division by 0 errors. */
 		if (dist_between_tps > 0.0) {
-			ratio = fabs(dist_in_meters.value - dist_current) / dist_between_tps;
+			ratio = fabs(axis_mark_iu.value - dist_current) / dist_between_tps;
 		}
 
 		if (tp_current && tp_next) {
@@ -287,7 +287,7 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 			const QColor fg_color = this->get_fg_color(trk);
 			const QColor bg_color = this->get_bg_color(do_highlight);
 
-			this->draw_track_label(dist_in_user_units.to_nice_string(), fg_color, bg_color, coord_middle);
+			this->draw_track_label(axis_mark_uu.to_nice_string(), fg_color, bg_color, coord_middle);
 		}
 	}
 }

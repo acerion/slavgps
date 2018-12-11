@@ -24,16 +24,25 @@
 
 
 
+#include "measurements.h"
+
+
+
+
 namespace SlavGPS {
 
 
 
 
-	template <class T>
 	class GraphIntervals {
+	};
+
+
+	template <class T>
+	class GraphIntervalsTyped : public GraphIntervals {
 	public:
-		GraphIntervals() {};
-		GraphIntervals(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
+		GraphIntervalsTyped() {};
+		GraphIntervalsTyped(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
 
 		int get_interval_index(T min, T max, int n_intervals);
 		T get_interval_value(int index);
@@ -50,7 +59,7 @@ namespace SlavGPS {
 	   range into n_intervals. Then there will be n_interval grid lines
 	   drawn on a graph, each spaced at interval. */
 	template <class T>
-	int GraphIntervals<T>::get_interval_index(T min, T max, int n_intervals)
+	int GraphIntervalsTyped<T>::get_interval_index(T min, T max, int n_intervals)
 	{
 		const T interval_upper_limit = (max - min) / n_intervals;
 		qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "min/max/n_intervals/interval upper limit:" << min << max << n_intervals << interval_upper_limit;
@@ -82,7 +91,7 @@ namespace SlavGPS {
 
 
 	template <class T>
-	T GraphIntervals<T>::get_interval_value(int index)
+	T GraphIntervalsTyped<T>::get_interval_value(int index)
 	{
 		return this->values[index];
 	}
@@ -93,31 +102,31 @@ namespace SlavGPS {
 	class GraphIntervalsTime {
 	public:
 		GraphIntervalsTime();
-		GraphIntervals <time_t> intervals;
+		GraphIntervalsTyped<Time> intervals;
 	};
 
 	class GraphIntervalsDistance {
 	public:
 		GraphIntervalsDistance();
-		GraphIntervals <double> intervals;
+		GraphIntervalsTyped<Distance> intervals;
 	};
 
 	class GraphIntervalsAltitude {
 	public:
 		GraphIntervalsAltitude();
-		GraphIntervals <double> intervals;
+		GraphIntervalsTyped <double> intervals;
 	};
 
 	class GraphIntervalsGradient {
 	public:
 		GraphIntervalsGradient();
-		GraphIntervals <double> intervals;
+		GraphIntervalsTyped <double> intervals;
 	};
 
 	class GraphIntervalsSpeed {
 	public:
 		GraphIntervalsSpeed();
-		GraphIntervals <double> intervals;
+		GraphIntervalsTyped <double> intervals;
 	};
 
 

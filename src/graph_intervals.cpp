@@ -39,7 +39,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " GraphIntervals:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Graph Intervals"
 
 
 
@@ -67,28 +67,49 @@ static const double interval_values_speed[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.
 					       750.0, 1000.0, 10000.0};
 
 /* (Hopefully!) Human friendly distance grid sizes - note no fixed 'ratio' just numbers that look nice... */
-static const double interval_values_distance[] = {0.1, 0.2, 0.5,
-						  1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0,
-						  15.0, 20.0, 25.0, 40.0, 50.0, 75.0,
-						  100.0, 150.0, 200.0, 250.0, 375.0, 500.0,
-						  750.0, 1000.0, 10000.0};
+static const Distance interval_values_distance[] = {
+	Distance(0.1),
+	Distance(0.2),
+	Distance(0.5),
+	Distance(1.0),
+	Distance(2.0),
+	Distance(3.0),
+	Distance(4.0),
+	Distance(5.0),
+	Distance(8.0),
+	Distance(10.0),
+	Distance(15.0),
+	Distance(20.0),
+	Distance(25.0),
+	Distance(40.0),
+	Distance(50.0),
+	Distance(75.0),
+	Distance(100.0),
+	Distance(150.0),
+	Distance(200.0),
+	Distance(250.0),
+	Distance(375.0),
+	Distance(500.0),
+	Distance(750.0),
+	Distance(1000.0),
+	Distance(10000.0) };
 
 /* Time intervals in seconds. */
-static const time_t interval_values_time[] = {
-	60,     /* 1 minute. */
-	120,    /* 2 minutes. */
-	300,    /* 5 minutes. */
-	900,    /* 15 minutes. */
-	1800,   /* half hour. */
-	3600,   /* 1 hour. */
-	10800,  /* 3 hours. */
-	21600,  /* 6 hours. */
-	43200,  /* 12 hours. */
-	86400,  /* 1 day. */
-	172800, /* 2 days. */
-	604800, /* 1 week. */
-	1209600,/* 2 weeks. */
-	2419200,/* 4 weeks. */
+static const Time interval_values_time[] = {
+	Time(60),     /* 1 minute. */
+	Time(120),    /* 2 minutes. */
+	Time(300),    /* 5 minutes. */
+	Time(900),    /* 15 minutes. */
+	Time(1800),   /* half hour. */
+	Time(3600),   /* 1 hour. */
+	Time(10800),  /* 3 hours. */
+	Time(21600),  /* 6 hours. */
+	Time(43200),  /* 12 hours. */
+	Time(86400),  /* 1 day. */
+	Time(172800), /* 2 days. */
+	Time(604800), /* 1 week. */
+	Time(1209600),/* 2 weeks. */
+	Time(2419200),/* 4 weeks. */
 };
 
 
@@ -96,25 +117,25 @@ static const time_t interval_values_time[] = {
 
 GraphIntervalsTime::GraphIntervalsTime()
 {
-	this->intervals = GraphIntervals<time_t>(interval_values_time, sizeof (interval_values_time) / sizeof (interval_values_time[0]));
+	this->intervals = GraphIntervalsTyped<Time>(interval_values_time, sizeof (interval_values_time) / sizeof (interval_values_time[0]));
 }
 
 GraphIntervalsDistance::GraphIntervalsDistance()
 {
-	this->intervals = GraphIntervals<double>(interval_values_distance, sizeof (interval_values_distance) / sizeof (interval_values_distance[0]));
+	this->intervals = GraphIntervalsTyped<Distance>(interval_values_distance, sizeof (interval_values_distance) / sizeof (interval_values_distance[0]));
 }
 
 GraphIntervalsAltitude::GraphIntervalsAltitude()
 {
-	this->intervals = GraphIntervals<double>(interval_values_altitude, sizeof (interval_values_altitude) / sizeof (interval_values_altitude[0]));
+	this->intervals = GraphIntervalsTyped<double>(interval_values_altitude, sizeof (interval_values_altitude) / sizeof (interval_values_altitude[0]));
 }
 
 GraphIntervalsGradient::GraphIntervalsGradient()
 {
-	this->intervals = GraphIntervals<double>(interval_values_gradient, sizeof (interval_values_gradient) / sizeof (interval_values_gradient[0]));
+	this->intervals = GraphIntervalsTyped<double>(interval_values_gradient, sizeof (interval_values_gradient) / sizeof (interval_values_gradient[0]));
 }
 
 GraphIntervalsSpeed::GraphIntervalsSpeed()
 {
-	this->intervals = GraphIntervals<double>(interval_values_speed, sizeof (interval_values_speed) / sizeof (interval_values_speed[0]));
+	this->intervals = GraphIntervalsTyped<double>(interval_values_speed, sizeof (interval_values_speed) / sizeof (interval_values_speed[0]));
 }

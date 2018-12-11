@@ -205,6 +205,19 @@ namespace SlavGPS {
 		Distance operator+(const Distance & rhs);
 		Distance operator-(const Distance & rhs);
 
+		Distance & operator*=(double rhs);
+		Distance & operator/=(double rhs);
+		Distance operator*(double rhs) const { Distance result = *this; result *= rhs; return result; }
+		Distance operator/(double rhs) const { Distance result = *this; result /= rhs; return result; }
+
+		bool operator==(const Distance & rhs) const;
+		bool operator!=(const Distance & rhs) const;
+
+		friend bool operator<(const Distance & lhs, const Distance & rhs);
+		friend bool operator>(const Distance & lhs, const Distance & rhs);
+		friend bool operator<=(const Distance & lhs, const Distance & rhs);
+		friend bool operator>=(const Distance & lhs, const Distance & rhs);
+
 		/* Return "kilometers" or "miles" string.
 		   This is a full string, not "km" or "mi". */
 		static QString get_unit_full_string(DistanceUnit distance_unit);
@@ -212,6 +225,8 @@ namespace SlavGPS {
 		static double convert_meters_to(double distance, DistanceUnit distance_unit);
 
 		bool is_valid(void) const;
+
+		friend QDebug operator<<(QDebug debug, const Distance & distance);
 
 		double value = 0.0;
 	private:
@@ -221,6 +236,11 @@ namespace SlavGPS {
 		SupplementaryDistanceUnit supplementary_distance_unit;
 		bool use_supplementary_distance_unit = false;
 	};
+	QDebug operator<<(QDebug debug, const Distance & distance);
+	bool operator<(const Distance & lhs, const Distance & rhs);
+	bool operator>(const Distance & lhs, const Distance & rhs);
+	bool operator<=(const Distance & lhs, const Distance & rhs);
+	bool operator>=(const Distance & lhs, const Distance & rhs);
 
 
 
@@ -424,6 +444,11 @@ namespace SlavGPS {
 
 		bool operator==(const Time & timestamp) const;
 		bool operator!=(const Time & timestamp) const;
+
+		Time & operator*=(double rhs);
+		Time & operator/=(double rhs);
+		Time operator*(double rhs) const { Time result = *this; result *= rhs; return result; }
+		Time operator/(double rhs) const { Time result = *this; result /= rhs; return result; }
 
 		Time & operator+=(const Time & rhs);
 
