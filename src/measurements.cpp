@@ -1721,6 +1721,21 @@ bool SlavGPS::operator>(const Time & lhs, const Time & rhs)
 
 
 
+bool SlavGPS::operator<=(const Time & lhs, const Time & rhs)
+{
+	return !(lhs > rhs);
+}
+
+
+
+
+bool SlavGPS::operator>=(const Time & lhs, const Time & rhs)
+{
+	return !(lhs < rhs);
+}
+
+
+
 
 QDebug SlavGPS::operator<<(QDebug debug, const Time & timestamp)
 {

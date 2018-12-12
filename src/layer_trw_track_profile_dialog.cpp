@@ -252,7 +252,7 @@ sg_ret ProfileGraph::regenerate_data_from_scratch(Track * trk)
 
 	result = this->set_initial_visible_range_y();
 	if (sg_ret::ok != result) {
-		qDebug() << SG_PREFIX_E << "Failed to set initial visible u range";
+		qDebug() << SG_PREFIX_E << "Failed to set initial visible y range";
 		return result;
 	}
 
@@ -268,8 +268,10 @@ sg_ret ProfileGraph::set_initial_visible_range_x_distance(void)
 	/* We won't display any x values outside of
 	   track_data.x_min/max. We will never be able to zoom out to
 	   show e.g. negative distances. */
-	this->x_min_visible_d = Distance::convert_meters_to(this->track_data.x_min, this->geocanvas.distance_unit);
-	this->x_max_visible_d = Distance::convert_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
+	const Distance x_min = Distance(this->track_data.x_min);
+	const Distance x_max = Distance(this->track_data.x_max);
+	this->x_min_visible_d = x_min.convert_to_unit(this->geocanvas.distance_unit);
+	this->x_max_visible_d = x_max.convert_to_unit(this->geocanvas.distance_unit);
 
 	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
 	if (visible_range.is_zero()) {
@@ -302,7 +304,7 @@ sg_ret ProfileGraph::set_initial_visible_range_x_time(void)
 	   min/max visible range.  I've seen track data with glitches
 	   in timestamps, where in the middle of a track, in a row of
 	   correctly incrementing timestamps there was suddenly one
-	   smaller timestamp. */
+	   smaller timestamp from a long time ago. */
 	this->x_min_visible_t = this->track_data.x_min;
 	this->x_max_visible_t = this->track_data.x_max;
 #else
@@ -2151,27 +2153,27 @@ sg_ret ProfileGraph::regenerate_sizes(void)
    will fall within graph's main area).
 */
 template <typename T>
-void find_grid_line_indices(T min_visible, T max_visible, T interval, int * first_mark, int * last_mark)
+void find_grid_line_indices(const T & min_visible, const T & max_visible, const T & interval, int & first_mark, int & last_mark)
 {
 	/* 'first_mark * y_interval' will be below y_min_visible. */
 	if (min_visible <= 0) {
-		while ((*first_mark) * interval > min_visible) {
-			(*first_mark)--;
+		while (interval * first_mark > min_visible) {
+			first_mark--;
 		}
 	} else {
-		while ((*first_mark) * interval + interval < min_visible) {
-			(*first_mark)++;
+		while (interval * first_mark + interval < min_visible) {
+			first_mark++;
 		}
 	}
 
 	/* 'last_mark * y_interval' will be above y_max_visible. */
 	if (max_visible <= 0) {
-		while ((*last_mark) * interval - interval > max_visible) {
-			(*last_mark)--;
+		while (interval * last_mark - interval > max_visible) {
+			last_mark--;
 		}
 	} else {
-		while ((*last_mark) * interval < max_visible) {
-			(*last_mark)++;
+		while (interval * last_mark < max_visible) {
+			last_mark++;
 		}
 	}
 }
@@ -2189,7 +2191,7 @@ void ProfileGraph::draw_y_grid(void)
 
 	int first_mark = 0;
 	int last_mark = 0;
-	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, &first_mark, &last_mark);
+	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
 
 #if 0   /* Debug. */
 	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << this->height;
@@ -2227,7 +2229,7 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 
 	int first_mark = 0;
 	int last_mark = 0;
-	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d.value, &first_mark, &last_mark);
+	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
 #if 1   /* Debug. */
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;
@@ -2265,7 +2267,7 @@ void ProfileGraph::draw_x_grid_sub_t(void)
 
 	int first_mark = 0;
 	int last_mark = 0;
-	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t.get_value(), &first_mark, &last_mark);
+	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
 
 #if 1
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;

@@ -270,13 +270,13 @@ namespace SlavGPS {
 
 		/* For distance-based graphs. */
 		Distance x_interval_d = { 0.0 };
-		double x_min_visible_d = 0.0;
-		double x_max_visible_d = 0.0;
+		Distance x_min_visible_d = { 0.0 };
+		Distance x_max_visible_d = { 0.0 };
 
 		/* For time-based graphs. */
 		Time x_interval_t = { 0 };
-		time_t x_min_visible_t = 0;
-		time_t x_max_visible_t = 0;
+		Time x_min_visible_t = { 0 };
+		Time x_max_visible_t = { 0 };
 
 		double y_interval = 0.0;
 		double y_min_visible = 0.0;

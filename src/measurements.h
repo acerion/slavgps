@@ -396,6 +396,11 @@ namespace SlavGPS {
 	        friend Speed operator*(Speed & lhs, double rhs) { lhs *= rhs; return lhs; }
 		friend Speed operator/(Speed & lhs, double rhs) { lhs /= rhs; return lhs; }
 
+		friend bool operator<(const Speed & lhs, const Speed & rhs);
+		friend bool operator>(const Speed & lhs, const Speed & rhs);
+		friend bool operator<=(const Speed & lhs, const Speed & rhs);
+		friend bool operator>=(const Speed & lhs, const Speed & rhs);
+
 		/* For calculating proportion of values. */
 		friend double operator/(const Speed & rhs, const Speed & lhs);
 
@@ -429,6 +434,10 @@ namespace SlavGPS {
 		SpeedUnit unit;
 	};
 	double operator/(const Speed & rhs, const Speed & lhs);
+	bool operator<(const Speed & lhs, const Speed & rhs);
+	bool operator>(const Speed & lhs, const Speed & rhs);
+	bool operator<=(const Speed & lhs, const Speed & rhs);
+	bool operator>=(const Speed & lhs, const Speed & rhs);
 
 
 
@@ -469,6 +478,8 @@ namespace SlavGPS {
 		friend Time operator-(const Time & lhs, const Time & rhs);
 		friend bool operator<(const Time & lhs, const Time & rhs);
 		friend bool operator>(const Time & lhs, const Time & rhs);
+		friend bool operator<=(const Time & lhs, const Time & rhs);
+		friend bool operator>=(const Time & lhs, const Time & rhs);
 		friend QDebug operator<<(QDebug debug, const Time & timestamp);
 
 		bool operator==(const Time & timestamp) const;
@@ -491,6 +502,8 @@ namespace SlavGPS {
 	Time operator-(const Time & lhs, const Time & rhs);
 	bool operator<(const Time & lhs, const Time & rhs);
 	bool operator>(const Time & lhs, const Time & rhs);
+	bool operator<=(const Time & lhs, const Time & rhs);
+	bool operator>=(const Time & lhs, const Time & rhs);
 	QDebug operator<<(QDebug debug, const Time & timestamp);
 	double operator/(const Time & rhs, const Time & lhs);
 
