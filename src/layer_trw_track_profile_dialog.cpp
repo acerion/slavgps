@@ -121,9 +121,7 @@ static GraphIntervalsSpeed    speed_intervals;
 static void time_label_update(QLabel * label, time_t seconds_from_start);
 static void real_time_label_update(ProfileGraph * graph, const Trackpoint * tp);
 
-static QString get_time_grid_label(int interval_index, int value);
-static QString get_time_grid_label_2(time_t interval_value, time_t value);
-static QString get_time_grid_label_3(time_t interval_value, time_t value);
+static QString get_time_grid_label(const Time & interval_value, const Time & value);
 
 static QString get_graph_title(void);
 
@@ -272,7 +270,9 @@ sg_ret ProfileGraph::set_initial_visible_range_x_distance(void)
 	   show e.g. negative distances. */
 	this->x_min_visible_d = Distance::convert_meters_to(this->track_data.x_min, this->geocanvas.distance_unit);
 	this->x_max_visible_d = Distance::convert_meters_to(this->track_data.x_max, this->geocanvas.distance_unit);
-	if (this->x_max_visible_d == this->x_min_visible_d) {
+
+	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
+	if (visible_range.is_zero()) {
 		qDebug() << SG_PREFIX_E << "Zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
 		return sg_ret::err;
 	}
@@ -315,7 +315,8 @@ sg_ret ProfileGraph::set_initial_visible_range_x_time(void)
 	this->x_max_visible_t = this->track_data.x[this->track_data.n_points - 1];
 #endif
 
-	if (this->x_max_visible_t == this->x_min_visible_t) {
+	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
+	if (visible_range.is_zero()) {
 		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
 		return sg_ret::err;
 	}
@@ -1029,7 +1030,7 @@ void ProfileGraph::draw_grid_vertical_line(int pos_x, const QString & label)
 
 void ProfileGraph::draw_function_values(void)
 {
-	const double total = this->y_max_visible - this->y_min_visible;
+	const double visible_range = this->y_max_visible - this->y_min_visible;
 
 	if (this->geocanvas.y_domain == GeoCanvasDomain::Elevation) {
 		for (int i = 0; i < this->width; i++) {
@@ -1040,14 +1041,14 @@ void ProfileGraph::draw_function_values(void)
 			} else {
 				this->viewport->draw_line(this->main_pen,
 							   i, this->height,
-							   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / total);
+							   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / visible_range);
 			}
 		}
 	} else {
 		for (int i = 0; i < this->width; i++) {
 			this->viewport->draw_line(this->main_pen,
 						   i, this->height,
-						   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / total);
+						   i, this->height - this->height * (this->track_data.y[i] - this->y_min_visible) / visible_range);
 		}
 	}
 }
@@ -2012,129 +2013,45 @@ void ProfileGraphDT::configure_controls(TrackProfileDialog * dialog)
 
 
 
-QString get_time_grid_label(int interval_index, int value)
+QString get_time_grid_label(const Time & interval_value, const Time & value)
 {
 	QString result;
 
-	switch (interval_index) {
-	case 0:
-	case 1:
-	case 2:
-	case 3:
-		/* Minutes. */
-		result = QObject::tr("%1 m").arg((int) (value / 60));
-		break;
-	case 4:
-	case 5:
-	case 6:
-	case 7:
-		/* Hours. */
-		result = QObject::tr("%1 h").arg(((double) (value / (60 * 60))), 0, 'f', 1);
-		break;
-	case 8:
-	case 9:
-	case 10:
-		/* Days. */
-		result = QObject::tr("%1 d").arg(((double) value / (60 *60 * 24)), 0, 'f', 1);
-		break;
-	case 11:
-	case 12:
-		/* Weeks. */
-		result = QObject::tr("%1 w").arg(((double) value / (60 * 60 * 24 * 7)), 0, 'f', 1);
-		break;
-	case 13:
-		/* Months. */
-		result = QObject::tr("%1 M").arg(((double) value / (60 * 60 * 24 * 28)), 0, 'f', 1);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled time interval index" << interval_index;
-		break;
-	}
+	const time_t val = value.get_value();
+	const time_t interval = interval_value.get_value();
 
-	return result;
-}
-
-
-
-
-QString get_time_grid_label_2(time_t interval_value, time_t value)
-{
-	QString result;
-
-	switch (interval_value) {
+	switch (interval) {
 	case 60:
 	case 120:
 	case 300:
 	case 900:
 		/* Minutes. */
-		result = QObject::tr("%1 m").arg((int) (value / 60));
+		result = QObject::tr("%1 m").arg((int) (val / 60));
 		break;
 	case 1800:
 	case 3600:
 	case 10800:
 	case 21600:
 		/* Hours. */
-		result = QObject::tr("%1 h").arg(((double) (value / (60 * 60))), 0, 'f', 1);
+		result = QObject::tr("%1 h").arg(((double) (val / (60 * 60))), 0, 'f', 1);
 		break;
 	case 43200:
 	case 86400:
 	case 172800:
 		/* Days. */
-		result = QObject::tr("%1 d").arg(((double) value / (60 *60 * 24)), 0, 'f', 1);
+		result = QObject::tr("%1 d").arg(((double) val / (60 *60 * 24)), 0, 'f', 1);
 		break;
 	case 604800:
 	case 1209600:
 		/* Weeks. */
-		result = QObject::tr("%1 w").arg(((double) value / (60 * 60 * 24 * 7)), 0, 'f', 1);
+		result = QObject::tr("%1 w").arg(((double) val / (60 * 60 * 24 * 7)), 0, 'f', 1);
 		break;
 	case 2419200:
 		/* Months. */
-		result = QObject::tr("%1 M").arg(((double) value / (60 * 60 * 24 * 28)), 0, 'f', 1);
+		result = QObject::tr("%1 M").arg(((double) val / (60 * 60 * 24 * 28)), 0, 'f', 1);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled time interval value" << interval_value;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-QString get_time_grid_label_3(time_t interval_value, time_t value)
-{
-	QString result;
-
-	const QDateTime date_time = QDateTime::fromTime_t(value, Qt::LocalTime);
-
-	switch (interval_value) {
-	case 60:
-	case 120:
-	case 300:
-	case 900:
-		/* Minutes. */
-	case 1800:
-	case 3600:
-	case 10800:
-	case 21600:
-		/* Hours. */
-		result = QString(date_time.time().toString());
-		break;
-
-	case 43200:
-	case 86400:
-	case 172800:
-		/* Days. */
-	case 604800:
-	case 1209600:
-		/* Weeks. */
-	case 2419200:
-		/* Months. */
-		result = QString(date_time.date().toString(Qt::ISODate));
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled time interval value" << interval_value;
+		qDebug() << SG_PREFIX_E << "Unhandled time interval value" << val;
 		break;
 	}
 
@@ -2234,27 +2151,27 @@ sg_ret ProfileGraph::regenerate_sizes(void)
    will fall within graph's main area).
 */
 template <typename T>
-void find_grid_line_indices(T min_visible, T max_visible, T interval, int * first_line, int * last_line)
+void find_grid_line_indices(T min_visible, T max_visible, T interval, int * first_mark, int * last_mark)
 {
-	/* 'first_line * y_interval' will be below y_min_visible. */
+	/* 'first_mark * y_interval' will be below y_min_visible. */
 	if (min_visible <= 0) {
-		while ((*first_line) * interval > min_visible) {
-			(*first_line)--;
+		while ((*first_mark) * interval > min_visible) {
+			(*first_mark)--;
 		}
 	} else {
-		while ((*first_line) * interval + interval < min_visible) {
-			(*first_line)++;
+		while ((*first_mark) * interval + interval < min_visible) {
+			(*first_mark)++;
 		}
 	}
 
-	/* 'last_line * y_interval' will be above y_max_visible. */
+	/* 'last_mark * y_interval' will be above y_max_visible. */
 	if (max_visible <= 0) {
-		while ((*last_line) * interval - interval > max_visible) {
-			(*last_line)--;
+		while ((*last_mark) * interval - interval > max_visible) {
+			(*last_mark)--;
 		}
 	} else {
-		while ((*last_line) * interval < max_visible) {
-			(*last_line)++;
+		while ((*last_mark) * interval < max_visible) {
+			(*last_mark)++;
 		}
 	}
 }
@@ -2264,32 +2181,35 @@ void find_grid_line_indices(T min_visible, T max_visible, T interval, int * firs
 
 void ProfileGraph::draw_y_grid(void)
 {
-	if (this->y_max_visible == this->y_min_visible) {
+	const double visible_range = this->y_max_visible - this->y_min_visible;
+	if (visible_range < 0.000001) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_min_visible << this->y_max_visible;
 		return;
 	}
 
-	int first_line = 0;
-	int last_line = 0;
-	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, &first_line, &last_line);
+	int first_mark = 0;
+	int last_mark = 0;
+	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, &first_mark, &last_mark);
 
 #if 0   /* Debug. */
 	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << this->height;
 	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
-	qDebug() << "      interval =" << this->y_interval << ", first_line/last_line =" << first_line << last_line;
+	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
 
-	for (int i = first_line; i <= last_line; i++) {
-		const double value = i * this->y_interval;
+	for (int i = first_mark; i <= last_mark; i++) {
+		const double axis_mark_uu = this->y_interval * i;
 
 		/* 'row' is in "beginning in bottom-left corner" coordinate system. */
-		const int row = this->height * ((value - this->y_min_visible) / (this->y_max_visible - this->y_min_visible));
+		/* Purposefully use "1.0 *" to enforce conversion to
+		   float, to avoid losing data during integer division. */
+		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * this->height / (visible_range * 1.0);
 
 		if (row >= 0 && row < this->height) {
-			//qDebug() << SG_PREFIX_D << "      value (inside) =" << value << ", row =" << row;
-			this->draw_grid_horizontal_line(row, this->get_y_grid_label(value));
+			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", row =" << row;
+			this->draw_grid_horizontal_line(row, this->get_y_grid_label(axis_mark_uu));
 		} else {
-			//qDebug() << SG_PREFIX_D << "      value (outside) =" << value << ", row =" << row;
+			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", row =" << row;
 		}
 	}
 }
@@ -2299,32 +2219,35 @@ void ProfileGraph::draw_y_grid(void)
 
 void ProfileGraph::draw_x_grid_sub_d(void)
 {
-	if (this->x_max_visible_d == this->x_min_visible_d) {
+	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
+	if (visible_range.is_zero()) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
 		return;
 	}
 
-	int first_line = 0;
-	int last_line = 0;
-	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d.value, &first_line, &last_line);
+	int first_mark = 0;
+	int last_mark = 0;
+	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d.value, &first_mark, &last_mark);
 
-#if 1
+#if 1   /* Debug. */
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
-	qDebug() << "      interval =" << this->x_interval_d << ", first_line/last_line =" << first_line << last_line;
+	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
 
-	for (int i = first_line; i <= last_line; i++) {
+	for (int i = first_mark; i <= last_mark; i++) {
 		const Distance axis_mark_uu = this->x_interval_d * i;
 
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
-		const int col = this->width * ((axis_mark_uu.value - this->x_min_visible_d) / (this->x_max_visible_d - this->x_min_visible_d));
+		/* Purposefully use "1.0 *" to enforce conversion to
+		   float, to avoid losing data during integer division. */
+		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * this->width / (visible_range * 1.0);
 
 		if (col >= 0 && col < this->width) {
-			qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu.value << ", col =" << col;
+			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
 			this->draw_grid_vertical_line(col, axis_mark_uu.to_nice_string());
 		} else {
-			qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu.value << ", col =" << col;
+			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
 		}
 	}
 }
@@ -2334,35 +2257,35 @@ void ProfileGraph::draw_x_grid_sub_d(void)
 
 void ProfileGraph::draw_x_grid_sub_t(void)
 {
-	if (this->x_max_visible_t == this->x_min_visible_t) {
+	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
+	if (visible_range.is_zero()) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
 		return;
 	}
 
-	int first_line = 0;
-	int last_line = 0;
-	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t.get_value(), &first_line, &last_line);
+	int first_mark = 0;
+	int last_mark = 0;
+	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t.get_value(), &first_mark, &last_mark);
 
 #if 1
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->width;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
-	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_line/last_line =" << first_line << last_line;
+	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
 
-	const time_t interval_value = this->x_interval_t.get_value();
-	for (int i = first_line; i <= last_line; i++) {
-		const time_t value = i * interval_value;
+	for (int i = first_mark; i <= last_mark; i++) {
+		const Time axis_mark_uu = this->x_interval_t * i;
 
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int col = 1.0 * this->width * (value - this->x_min_visible_t) / (1.0 * (this->x_max_visible_t - this->x_min_visible_t));
+		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * this->width / (visible_range * 1.0);
 
 		if (col >= 0 && col < this->width) {
-			qDebug() << SG_PREFIX_D << "      value (inside) =" << value << ", col =" << col;
-			this->draw_grid_vertical_line(col, get_time_grid_label_2(interval_value, value));
+			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
+			this->draw_grid_vertical_line(col, get_time_grid_label(this->x_interval_t, axis_mark_uu));
 		} else {
-			qDebug() << SG_PREFIX_D << "      value (outside) =" << value << ", col =" << col;
+			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
 		}
 	}
 }

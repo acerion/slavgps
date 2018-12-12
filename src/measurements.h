@@ -202,13 +202,17 @@ namespace SlavGPS {
 		QString to_nice_string(void) const;
 
 		Distance & operator+=(const Distance & rhs);
-		Distance operator+(const Distance & rhs);
-		Distance operator-(const Distance & rhs);
+
+		friend Distance operator+(const Distance & lhs, const Distance & rhs);
+		friend Distance operator-(const Distance & lhs, const Distance & rhs);
 
 		Distance & operator*=(double rhs);
 		Distance & operator/=(double rhs);
 		Distance operator*(double rhs) const { Distance result = *this; result *= rhs; return result; }
 		Distance operator/(double rhs) const { Distance result = *this; result /= rhs; return result; }
+
+		/* For calculating proportion of values. */
+		friend double operator/(const Distance & rhs, const Distance & lhs);
 
 		bool operator==(const Distance & rhs) const;
 		bool operator!=(const Distance & rhs) const;
@@ -226,6 +230,9 @@ namespace SlavGPS {
 
 		bool is_valid(void) const;
 
+		/* Is this measurement so small that it can be treated as zero? */
+		bool is_zero(void) const;
+
 		friend QDebug operator<<(QDebug debug, const Distance & distance);
 
 		double value = 0.0;
@@ -241,6 +248,9 @@ namespace SlavGPS {
 	bool operator>(const Distance & lhs, const Distance & rhs);
 	bool operator<=(const Distance & lhs, const Distance & rhs);
 	bool operator>=(const Distance & lhs, const Distance & rhs);
+	Distance operator+(const Distance & lhs, const Distance & rhs);
+	Distance operator-(const Distance & lhs, const Distance & rhs);
+	double operator/(const Distance & rhs, const Distance & lhs);
 
 
 
@@ -303,6 +313,9 @@ namespace SlavGPS {
 		Altitude operator*(double rhs) const { Altitude result = *this; result *= rhs; return result; }
 		Altitude operator/(double rhs) const { Altitude result = *this; result /= rhs; return result; }
 
+		/* For calculating proportion of values. */
+		friend double operator/(const Altitude & rhs, const Altitude & lhs);
+
 		friend bool operator<(const Altitude & lhs, const Altitude & rhs);
 		friend bool operator>(const Altitude & lhs, const Altitude & rhs);
 		friend bool operator<=(const Altitude & lhs, const Altitude & rhs);
@@ -317,6 +330,9 @@ namespace SlavGPS {
 		sg_ret set_from_string(const char * str);
 		sg_ret set_from_string(const QString & str);
 
+		/* Is this measurement so small that it can be treated as zero? */
+		bool is_zero(void) const;
+
 	private:
 		double value = NAN;
 		bool valid = false;
@@ -326,6 +342,7 @@ namespace SlavGPS {
 	bool operator>(const Altitude & lhs, const Altitude & rhs);
 	bool operator<=(const Altitude & lhs, const Altitude & rhs);
 	bool operator>=(const Altitude & lhs, const Altitude & rhs);
+	double operator/(const Altitude & rhs, const Altitude & lhs);
 
 
 
@@ -379,6 +396,9 @@ namespace SlavGPS {
 	        friend Speed operator*(Speed & lhs, double rhs) { lhs *= rhs; return lhs; }
 		friend Speed operator/(Speed & lhs, double rhs) { lhs /= rhs; return lhs; }
 
+		/* For calculating proportion of values. */
+		friend double operator/(const Speed & rhs, const Speed & lhs);
+
 		/* Return "meters" or "feet" string.
 		   This is a full string, not "m" or "ft". */
 		//static QString get_unit_full_string(SpeedUnit speed_unit);
@@ -398,6 +418,9 @@ namespace SlavGPS {
 		   conversion of value from one unit to another. */
 		static QString to_string(double value, int precision = SG_PRECISION_SPEED);
 
+		/* Is this measurement so small that it can be treated as zero? */
+		bool is_zero(void) const;
+
 	private:
 		static bool operator_args_valid(const Speed & lhs, const Speed & rhs);
 
@@ -405,6 +428,7 @@ namespace SlavGPS {
 		bool valid = false;
 		SpeedUnit unit;
 	};
+	double operator/(const Speed & rhs, const Speed & lhs);
 
 
 
@@ -434,6 +458,11 @@ namespace SlavGPS {
 		QString strftime_local(const char * format) const;
 		QString strftime_utc(const char * format) const;
 
+		/* Is this measurement so small that it can be treated as zero?
+		   For Time class using this method has sense only if value of type Time represents duration.
+		   There is no much sense to see whether a date is zero. */
+		bool is_zero(void) const;
+
 		time_t value = 0;
 
 		friend Time operator+(const Time & lhs, const Time & rhs);
@@ -450,6 +479,9 @@ namespace SlavGPS {
 		Time operator*(double rhs) const { Time result = *this; result *= rhs; return result; }
 		Time operator/(double rhs) const { Time result = *this; result /= rhs; return result; }
 
+		/* For calculating proportion of values. */
+		friend double operator/(const Time & rhs, const Time & lhs);
+
 		Time & operator+=(const Time & rhs);
 
 	private:
@@ -460,6 +492,7 @@ namespace SlavGPS {
 	bool operator<(const Time & lhs, const Time & rhs);
 	bool operator>(const Time & lhs, const Time & rhs);
 	QDebug operator<<(QDebug debug, const Time & timestamp);
+	double operator/(const Time & rhs, const Time & lhs);
 
 
 

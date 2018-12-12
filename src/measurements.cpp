@@ -435,6 +435,7 @@ Distance & Distance::operator+=(const Distance & rhs)
 
 
 
+#if 0
 Distance Distance::operator+(const Distance & rhs)
 {
 	/* TODO_LATER: make operator work for arguments with different units. */
@@ -470,10 +471,57 @@ Distance Distance::operator+(const Distance & rhs)
 
 	return result;
 }
+#endif
 
 
 
 
+Distance SlavGPS::operator+(const Distance & lhs, const Distance & rhs)
+{
+	Distance result;
+
+	if (!lhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
+		return result;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
+		return result;
+	}
+
+	result.value = lhs.value + rhs.value;
+	result.valid = result.value >= 0;
+
+	return result;
+}
+
+
+
+
+Distance SlavGPS::operator-(const Distance & lhs, const Distance & rhs)
+{
+	Distance result;
+
+	if (!lhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
+		return result;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
+		return result;
+	}
+
+	result.value = lhs.value - rhs.value;
+	result.valid = result.value >= 0;
+	return result;
+}
+
+
+
+
+#if 0
 Distance Distance::operator-(const Distance & rhs)
 {
 	/* TODO_LATER: make operator work for arguments with different units. */
@@ -509,7 +557,7 @@ Distance Distance::operator-(const Distance & rhs)
 
 	return result;
 }
-
+#endif
 
 
 
@@ -535,6 +583,18 @@ Distance & Distance::operator/=(double rhs)
 		return *this;
 	} else {
 		return *this;
+	}
+}
+
+
+
+
+double SlavGPS::operator/(const Distance & lhs, const Distance & rhs)
+{
+	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
+		return lhs.value / rhs.value;
+	} else {
+		return NAN;
 	}
 }
 
@@ -651,6 +711,18 @@ double Distance::convert_meters_to(double distance, DistanceUnit distance_unit)
 
 
 
+bool Distance::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
+}
+
+
+
+
 Altitude::Altitude(double new_value, HeightUnit height_unit)
 {
 	this->value = new_value;
@@ -677,6 +749,17 @@ void Altitude::set_valid(bool new_valid)
 	}
 }
 
+
+
+
+bool Altitude::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
+}
 
 
 
@@ -947,6 +1030,18 @@ Altitude & Altitude::operator/=(double rhs)
 
 
 
+double SlavGPS::operator/(const Altitude & lhs, const Altitude & rhs)
+{
+	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
+		return lhs.value / rhs.value;
+	} else {
+		return NAN;
+	}
+}
+
+
+
+
 bool SlavGPS::operator<(const Altitude & lhs, const Altitude & rhs)
 {
 	return lhs.value < rhs.value;
@@ -1055,12 +1150,26 @@ bool Speed::is_valid(void) const
 
 
 
+
+bool Speed::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
+}
+
+
+
+
 #if 0
 const QString Speed::value_to_string_for_file(void) const
 {
 	return SGUtils::double_to_c(this->value);
 }
 #endif
+
 
 
 
@@ -1313,6 +1422,18 @@ Speed & Speed::operator/=(double x)
 	this->value /= x;
 	this->valid = !std::isnan(this->value);
 	return *this;
+}
+
+
+
+
+double SlavGPS::operator/(const Speed & lhs, const Speed & rhs)
+{
+	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
+		return lhs.value / rhs.value;
+	} else {
+		return NAN;
+	}
 }
 
 
@@ -1682,6 +1803,18 @@ Time & Time::operator/=(double rhs)
 
 
 
+double SlavGPS::operator/(const Time & lhs, const Time & rhs)
+{
+	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
+		return lhs.value / rhs.value;
+	} else {
+		return NAN;
+	}
+}
+
+
+
+
 Time Time::get_abs_diff(const Time & t1, const Time & t2)
 {
 	Time result;
@@ -1928,4 +2061,15 @@ sg_ret Time::set_from_unix_timestamp(const QString & str)
 	}
 
 	return this->valid ? sg_ret::ok : sg_ret::err;
+}
+
+
+
+
+bool Time::is_zero(void) const
+{
+	if (!this->valid) {
+		return true;
+	}
+	return this->value == 0;
 }
