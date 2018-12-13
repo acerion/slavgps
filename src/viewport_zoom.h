@@ -103,8 +103,9 @@ namespace SlavGPS {
 		static int get_closest_index(int & result, const std::vector<VikingZoomLevel> & viking_zooms, const VikingZoomLevel & viking_zoom_level);
 
 	private:
-		double x = 0.0f;
-		double y = 0.0f;
+		/* Invalid values. */
+		double x = SG_VIEWPORT_ZOOM_MIN - 1;
+		double y = SG_VIEWPORT_ZOOM_MIN - 1;
 	};
 	QDebug operator<<(QDebug debug, const VikingZoomLevel & viking_zoom_level);
 

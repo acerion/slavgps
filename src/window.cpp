@@ -2689,7 +2689,9 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 {
 	this->status_bar->set_message(StatusBarField::Info, tr("Generating image file..."));
 
-	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, false, target_map_zoom);
+	qDebug() << SG_PREFIX_I << "Will save viewport to image of size" << image_width << image_height;
+
+	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, target_map_zoom);
 
 	/* Redraw all layers at current position and zoom.
 	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
@@ -2698,7 +2700,7 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 	/* Save buffer as file. */
 	const QPixmap pixmap = scaled_viewport->get_pixmap();
 	if (pixmap.isNull()) {
-		qDebug() << "EE" PREFIX << "Failed to get viewport pixmap of size" << image_width << image_height;
+		qDebug() << SG_PREFIX_E << "Failed to get viewport pixmap";
 
 		this->status_bar->set_message(StatusBarField::Info, "");
 		Dialog::error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
@@ -2714,9 +2716,9 @@ void Window::save_viewport_to_image(const QString & file_full_path, int image_wi
 		const LatLonBBox bbox = this->viewport->get_bbox();
 		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_2_LATER: handle returned value. */
 	} else {
-		qDebug() << "II: Viewport: Save to Image: Saving pixmap";
+		qDebug() << SG_PREFIX_I << "Saving pixmap to file" << file_full_path;
 		if (!pixmap.save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
-			qDebug() << "WW: Viewport: Save to Image: Unable to write to file" << file_full_path;
+			qDebug() << SG_PREFIX_E << "Unable to write to file" << file_full_path;
 			success = false;
 		}
 	}

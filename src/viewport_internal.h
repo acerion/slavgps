@@ -285,7 +285,11 @@ namespace SlavGPS {
 		bool is_ready(void) const;
 
 
-		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, bool explicit_set_zoom, const VikingZoomLevel & scaled_viking_zoom_level);
+		/* Last arg may be invalid (::is_valid() returns
+		   false) - the function will then use its standard
+		   algorithm for determining expected zoom of scaled
+		   viewport. */
+		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, const VikingZoomLevel & expected_viking_zoom_level);
 
 
 		void emit_center_or_zoom_changed(const QString & trigger_name);

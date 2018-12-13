@@ -2099,7 +2099,7 @@ void Viewport::draw_border(void)
 
 
 
-Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, bool explicit_set_zoom, const VikingZoomLevel & scaled_viking_zoom_level)
+Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, const VikingZoomLevel & expected_viking_zoom_level)
 {
 	/*
 	  We always want to print original viewport in its
@@ -2132,12 +2132,14 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	   device smaller than original viewport.
 	*/
 
+	qDebug() << SG_PREFIX_I << "Expected image size =" << target_width << target_height;
+
 	Viewport * scaled_viewport = new Viewport(a_window);
 
 	const int orig_width = this->canvas.width;
 	const int orig_height = this->canvas.height;
-	const double orig_factor = 1.0 * orig_width / orig_height;
 
+	const double orig_factor = 1.0 * orig_width / orig_height;
 	const double target_factor = 1.0 * target_width / target_height;
 
 	double scale_factor = 0.0;
@@ -2151,36 +2153,38 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 
 
-	/* Copy selected properties of viewport. */
+	/* Copy/set selected properties of viewport. */
 	scaled_viewport->set_drawmode(this->get_drawmode());
 	scaled_viewport->set_coord_mode(this->get_coord_mode());
 	scaled_viewport->set_center_from_coord(this->center, false);
 
 
 
-	/* TODO: how is after_scaling different than scaled_viking_zoom_level? */
-	const VikingZoomLevel after_scaling(this->viking_zoom_level.x / scale_factor, this->viking_zoom_level.y / scale_factor);
-	if (after_scaling.is_valid()) {
-		scaled_viewport->set_viking_zoom_level(after_scaling);
+	/* Set zoom - either explicitly passed to the function, or
+	   calculated implicitly. */
+	if (expected_viking_zoom_level.is_valid()) {
+		scaled_viewport->set_viking_zoom_level(expected_viking_zoom_level);
 	} else {
-		/* TODO_HARD: now what? */
+		const VikingZoomLevel calculated_viking_zoom_level(this->viking_zoom_level.x / scale_factor, this->viking_zoom_level.y / scale_factor);
+		if (calculated_viking_zoom_level.is_valid()) {
+			scaled_viewport->set_viking_zoom_level(calculated_viking_zoom_level);
+		} else {
+			/* TODO_HARD: now what? */
+		}
 	}
-
-
-	qDebug() << SG_PREFIX_I << "Scaled viewport's bounding box set to" << scaled_viewport->get_bbox();
 
 
 
 	strcpy(scaled_viewport->type_string, "Scaled Viewport");
-	if (explicit_set_zoom) {
-		scaled_viewport->set_viking_zoom_level(scaled_viking_zoom_level); /* TODO_MAYBE: why do we even have explicit set zoom and how this interacts with scale_factor arg? */
-	}
+
 	/* Notice that we configure size of the print viewport using
 	   size of scaled source, not size of target device (i.e. not
 	   of target paper or target image). The image that we will
 	   print to target device should cover the same area
 	   (i.e. have the same bounding box) as original viewport. */
 	scaled_viewport->reconfigure_drawing_area(orig_width * scale_factor, orig_height * scale_factor);
+
+	qDebug() << SG_PREFIX_I << "Scaled viewport's bounding box set to" << scaled_viewport->get_bbox();
 
 	return scaled_viewport;
 }
@@ -2223,7 +2227,7 @@ bool Viewport::print_cb(QPrinter * printer)
 	const int target_width = target_rect.width();
 	const int target_height = target_rect.height();
 
-	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, false, VikingZoomLevel(0.0, 0.0)); /* TODO_HARD: why do we pass 0/0 map zoom here? */
+	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, VikingZoomLevel());
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print canvas. */

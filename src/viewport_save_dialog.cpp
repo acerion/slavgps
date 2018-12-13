@@ -46,7 +46,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Viewport Save:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Viewport Save Dialog"
 
 
 
@@ -83,7 +83,7 @@ void ViewportSaveDialog::calculate_total_area_cb(void)
 		label_text = tr("Total area: %1m x %2m (%3 sq. NM)").arg((long) w).arg((long) h).arg((w * h / (1852.0 * 1852.0), 0, 'f', 3)); /* "%.3f" */
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		qDebug() << SG_PREFIX_E << "Unexpected distance unit" << (int) distance_unit;
 		break;
 	}
 

@@ -46,6 +46,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Viewport Zoom"
+
+
+
+
 bool ViewportZoomDialog::custom_zoom_dialog(VikingZoomLevel & zoom, QWidget * parent)
 {
 	ViewportZoomDialog dialog(zoom, parent);
@@ -55,7 +60,7 @@ bool ViewportZoomDialog::custom_zoom_dialog(VikingZoomLevel & zoom, QWidget * pa
 
 		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
 		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
-		qDebug() << qSetRealNumberPrecision(5 + 1 + SG_VIEWPORT_ZOOM_PRECISION) << "DD: Dialog: Saving custom zoom as" << zoom;
+		qDebug() << SG_PREFIX_I << "Saving custom zoom as" << zoom;
 		return true;
 	} else {
 		return false;
