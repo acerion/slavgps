@@ -124,11 +124,13 @@ void ViewportSaveDialog::calculate_total_area_cb(void)
 
 
 
-ViewportSaveDialog::ViewportSaveDialog(QString const & title, Viewport * vp, QWidget * parent_widget) : BasicDialog(NULL)
+ViewportSaveDialog::ViewportSaveDialog(QString const & title, Viewport * new_viewport, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(title);
-	this->parent = parent;
-	this->viewport = vp;
+	this->viewport = new_viewport;
+
+	this->original_width = this->viewport->get_width();
+	this->original_viking_zoom_level = this->viewport->get_viking_zoom_level();
 
 	this->proportion = 1.0 * this->viewport->get_width() / this->viewport->get_height();
 }
@@ -252,21 +254,16 @@ void ViewportSaveDialog::build_ui(ViewportToImage::SaveMode save_mode, ViewportT
 
 
 
-int ViewportSaveDialog::get_width(void) const
+void ViewportSaveDialog::get_scaled_parameters(int & width, int & height, VikingZoomLevel & viking_zoom_level) const
 {
-	const int w = this->width_spin->value();
-	qDebug() << SG_PREFIX_I << "Returning width" << w;
-	return w;
-}
+	width = this->width_spin->value();
+	height = this->height_spin->value();
 
+	const double scale = 1.0 * width / this->original_width;
+	viking_zoom_level = this->original_viking_zoom_level * scale;
 
-
-
-int ViewportSaveDialog::get_height(void) const
-{
-	const int h = this->height_spin->value();
-	qDebug() << SG_PREFIX_I << "Returning height" << h;
-	return h;
+	qDebug() << SG_PREFIX_I << "Returning width" << width << "height" << height << "viking zoom level" << viking_zoom_level << "scale" << scale;
+	return;
 }
 
 
@@ -304,18 +301,36 @@ void ViewportSaveDialog::handle_changed_height_cb(int h)
 
 
 
+int ViewportSaveDialog::get_n_tiles_x(void) const
+{
+	return this->tiles_width_spin->value();
+}
+
+
+
+
+int ViewportSaveDialog::get_n_tiles_y(void) const
+{
+	return this->tiles_height_spin->value();
+}
+
+
+
+
 ViewportToImage::ViewportToImage(Viewport * new_viewport, ViewportToImage::SaveMode new_save_mode, Window * new_window)
 {
 	this->viewport = new_viewport;
 	this->save_mode = new_save_mode;
 	this->window = new_window;
+	this->original_viking_zoom_level = this->viewport->get_viking_zoom_level();
+	this->scaled_viking_zoom_level = this->viewport->get_viking_zoom_level(); /* TODO: this value must be calculated based on value of re-scaling of viewport. */
 
-	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, &this->viewport_save_width)) {
-		this->viewport_save_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, &this->scaled_width)) {
+		this->scaled_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
 	}
 
-	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT, &this->viewport_save_height)) {
-		this->viewport_save_height = VIEWPORT_SAVE_DEFAULT_HEIGHT;
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT, &this->scaled_height)) {
+		this->scaled_height = VIEWPORT_SAVE_DEFAULT_HEIGHT;
 	}
 
 	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_FORMAT, (int *) &this->file_format)) {
@@ -329,8 +344,8 @@ ViewportToImage::ViewportToImage(Viewport * new_viewport, ViewportToImage::SaveM
 
 ViewportToImage::~ViewportToImage()
 {
-	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, this->viewport_save_width);
-	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT, this->viewport_save_height);
+	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, this->scaled_width);
+	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT, this->scaled_height);
 	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_FORMAT, (int) this->file_format);
 }
 
@@ -345,13 +360,12 @@ bool ViewportToImage::run_dialog(const QString & title)
 		return false;
 	}
 
-	this->viewport_save_width = dialog.get_width();
-	this->viewport_save_height = dialog.get_height();
+	dialog.get_scaled_parameters(this->scaled_width, this->scaled_height, this->scaled_viking_zoom_level);
 	this->file_format = dialog.get_image_format();
 
 	if (this->save_mode == ViewportToImage::SaveMode::Directory) {
-		this->viewport_save_n_tiles_x = dialog.tiles_width_spin->value();
-		this->viewport_save_n_tiles_y = dialog.tiles_height_spin->value();
+		this->n_tiles_x = dialog.get_n_tiles_x();
+		this->n_tiles_y = dialog.get_n_tiles_y();
 	}
 
 	return true;
@@ -360,15 +374,30 @@ bool ViewportToImage::run_dialog(const QString & title)
 
 
 
-
-void ViewportToImage::save_to_image(const QString & file_full_path, const VikingZoomLevel & target_map_zoom)
+sg_ret ViewportToImage::save_to_destination(const QString & full_path)
 {
+	switch (this->save_mode) {
+	case ViewportToImage::SaveMode::File:
+	case ViewportToImage::SaveMode::FileKMZ:
+		return this->save_to_image(full_path);
+	case ViewportToImage::SaveMode::Directory:
+		return this->save_to_dir(full_path);
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected save mode" << (int) this->save_mode;
+		return sg_ret::err;
+	}
+}
 
+
+
+
+sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
+{
 	this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Generating image file..."));
 
-	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->viewport_save_width << this->viewport_save_height;
+	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->scaled_width << this->scaled_height << this->scaled_viking_zoom_level;
 
-	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->viewport_save_width, this->viewport_save_height, target_map_zoom);
+	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_zoom_level);
 
 	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->get_width() << scaled_viewport->get_height();
 
@@ -386,7 +415,7 @@ void ViewportToImage::save_to_image(const QString & file_full_path, const Viking
 
 		delete scaled_viewport;
 
-		return;
+		return sg_ret::err;
 	}
 	qDebug() << SG_PREFIX_I << "Generated pixmap from scaled viewport, pixmap size =" << pixmap.width() << pixmap.height();
 
@@ -419,55 +448,57 @@ void ViewportToImage::save_to_image(const QString & file_full_path, const Viking
 
 	this->window->get_statusbar()->set_message(StatusBarField::Info, "");
 	Dialog::info(message, this->window);
+
+	return sg_ret::ok;
 }
 
 
 
 
-bool ViewportToImage::save_to_dir(const QString & dir_full_path, const VikingZoomLevel & target_viking_zoom_level)
+sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 {
 	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
 		Dialog::error(QObject::tr("You must be in UTM mode to use this feature"), this->window);
-		return false;
+		return sg_ret::err;
 	}
 
 	QDir dir(dir_full_path);
 	if (!dir.exists()) {
 		if (!dir.mkpath(dir_full_path)) {
-			qDebug() << "EE: Window: failed to create directory" << dir_full_path << "in" << __FUNCTION__ << __LINE__;
-			return false;
+			qDebug() << SG_PREFIX_E << "Failed to create directory" << dir_full_path;
+			return sg_ret::err;
 		}
 	}
 
 	const VikingZoomLevel orig_viking_zoom_level = this->viewport->get_viking_zoom_level();
 	const UTM utm_orig = this->viewport->get_center()->utm;
 
-	this->viewport->set_viking_zoom_level(target_viking_zoom_level);
+	this->viewport->set_viking_zoom_level(this->scaled_viking_zoom_level);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
-	this->viewport->reconfigure_drawing_area(this->viewport_save_width, this->viewport_save_height);
+	this->viewport->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
 
 
 	UTM utm;
 	const char * extension = this->file_format == ViewportToImage::FileFormat::PNG ? "png" : "jpg";
 
 	/* TODO_2_LATER: support non-identical x/y zoom values. */
-	const double xmpp = target_viking_zoom_level.get_x();
+	const double xmpp = this->scaled_viking_zoom_level.get_x();
 
-	for (int y = 1; y <= this->viewport_save_n_tiles_y; y++) {
-		for (int x = 1; x <= this->viewport_save_n_tiles_x; x++) {
+	for (int y = 1; y <= this->n_tiles_y; y++) {
+		for (int x = 1; x <= this->n_tiles_x; x++) {
 			QString file_full_path = QString("%1%2y%3-x%4.%5").arg(dir_full_path).arg(QDir::separator()).arg(y).arg(x).arg(extension);
 			utm = utm_orig;
-			if (this->viewport_save_n_tiles_x & 0x1) {
-				utm.easting += ((double) x - ceil(((double) this->viewport_save_n_tiles_x)/2)) * (this->viewport_save_width * xmpp);
+			if (this->n_tiles_x & 0x1) {
+				utm.easting += ((double) x - ceil(((double) this->n_tiles_x)/2)) * (this->scaled_width * xmpp);
 			} else {
-				utm.easting += ((double) x - (((double) this->viewport_save_n_tiles_x)+1)/2) * (this->viewport_save_width * xmpp);
+				utm.easting += ((double) x - (((double) this->n_tiles_x)+1)/2) * (this->scaled_width * xmpp);
 			}
 
-			if (this->viewport_save_n_tiles_y & 0x1) {/* odd */
-				utm.northing -= ((double)y - ceil(((double) this->viewport_save_n_tiles_y)/2)) * (this->viewport_save_height * xmpp);
+			if (this->n_tiles_y & 0x1) {/* odd */
+				utm.northing -= ((double)y - ceil(((double) this->n_tiles_y)/2)) * (this->scaled_height * xmpp);
 			} else { /* even */
-				utm.northing -= ((double)y - (((double) this->viewport_save_n_tiles_y)+1)/2) * (this->viewport_save_height * xmpp);
+				utm.northing -= ((double)y - (((double) this->n_tiles_y)+1)/2) * (this->scaled_height * xmpp);
 			}
 
 			/* TODO_2_LATER: move to correct place. */
@@ -497,7 +528,7 @@ bool ViewportToImage::save_to_dir(const QString & dir_full_path, const VikingZoo
 	this->viewport->reconfigure_drawing_area();
 	this->window->draw_tree_items();
 
-	return true;
+	return sg_ret::ok;
 }
 
 
@@ -506,7 +537,7 @@ bool ViewportToImage::save_to_dir(const QString & dir_full_path, const VikingZoo
 /**
    Get full path to either single file or to directory, to which to save a viewport image(s).
 */
-QString ViewportToImage::get_full_path(void)
+QString ViewportToImage::get_destination_full_path(void)
 {
 	QString result;
 	QStringList mime;

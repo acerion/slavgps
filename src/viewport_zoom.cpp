@@ -496,3 +496,36 @@ int VikingZoomLevel::get_closest_index(int & result, const std::vector<VikingZoo
 
 	return -1;
 }
+
+
+
+
+VikingZoomLevel & VikingZoomLevel::operator*=(double rhs)
+{
+	if (this->is_valid()) {
+		this->x *= rhs;
+		this->y *= rhs;
+		return *this; /* Notice that returned value may be invalid. */
+	} else {
+		return *this;
+	}
+}
+
+
+
+
+VikingZoomLevel & VikingZoomLevel::operator/=(double rhs)
+{
+	if (0.0 == rhs) {
+		qDebug() << SG_PREFIX_E << "Can't divide by zero";
+		return *this;
+	}
+
+	if (this->is_valid()) {
+		this->x /= rhs;
+		this->y /= rhs;
+		return *this; /* Notice that returned value may be invalid. */
+	} else {
+		return *this;
+	}
+}

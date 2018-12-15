@@ -92,6 +92,11 @@ namespace SlavGPS {
 
 		bool operator==(const VikingZoomLevel & other) const;
 
+		VikingZoomLevel & operator*=(double rhs);
+		VikingZoomLevel & operator/=(double rhs);
+		VikingZoomLevel operator*(double rhs) const { VikingZoomLevel result = *this; result *= rhs; return result; }
+		VikingZoomLevel operator/(double rhs) const { VikingZoomLevel result = *this; result /= rhs; return result; }
+
 		/**
 		   Find in @viking_zooms the a zoom value that is the
 		   closest to @viking_zoom_level.  On success return

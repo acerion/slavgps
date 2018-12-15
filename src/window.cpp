@@ -2547,12 +2547,12 @@ void Window::draw_viewport_to_image_file_cb(void)
 		return;
 	}
 
-	const QString file_full_path = vti.get_full_path();
-	if (file_full_path.isEmpty()) {
+	const QString destination_full_path = vti.get_destination_full_path();
+	if (destination_full_path.isEmpty()) {
 		return;
 	}
 
-	vti.save_to_image(file_full_path, this->viewport->get_viking_zoom_level());
+	vti.save_to_destination(destination_full_path);
 }
 
 
@@ -2565,13 +2565,13 @@ void Window::draw_viewport_to_image_dir_cb(void)
 		return;
 	}
 
-	const QString dir_full_path = vti.get_full_path();
-	if (dir_full_path.isEmpty()) {
+	const QString destination_full_path = vti.get_destination_full_path();
+	if (destination_full_path.isEmpty()) {
 		return;
 	}
 
 	/* UTM mode ATM. */
-	vti.save_to_dir(dir_full_path, this->viewport->get_viking_zoom_level());
+	vti.save_to_destination(destination_full_path);
 }
 
 
@@ -2591,8 +2591,8 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 		return;
 	}
 
-	const QString file_full_path = vti.get_full_path();
-	if (file_full_path.isEmpty()) {
+	const QString destination_full_path = vti.get_destination_full_path();
+	if (destination_full_path.isEmpty()) {
 		return;
 	}
 
@@ -2613,7 +2613,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 		this->viewport->set_scale_visibility(false);
 	}
 
-	vti.save_to_image(file_full_path, this->viewport->get_map_zoom());
+	vti.save_to_destination(destination_full_path);
 
 	if (has_xhair) {
 		this->viewport->set_center_mark_visibility(true);

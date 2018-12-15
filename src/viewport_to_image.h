@@ -13,6 +13,7 @@
 
 #include "dialog.h"
 #include "widget_radio_group.h"
+#include "viewport_zoom.h"
 
 
 
@@ -30,7 +31,6 @@ namespace SlavGPS {
 
 	class ViewportToImage {
 	public:
-
 		enum class FileFormat {
 			PNG  = 0,
 			JPEG = 1
@@ -47,21 +47,26 @@ namespace SlavGPS {
 
 		bool run_dialog(const QString & title);
 
-		void save_to_image(const QString & full_path, const VikingZoomLevel & viking_zoom_level);
-		bool save_to_dir(const QString & full_path, const VikingZoomLevel & viking_zoom_level);
-		QString get_full_path(void);
+		QString get_destination_full_path(void);
+		sg_ret save_to_destination(const QString & full_path);
 
+	private:
+		sg_ret save_to_image(const QString & full_path);
+		sg_ret save_to_dir(const QString & full_path);
 
 		Viewport * viewport = NULL;
 		ViewportToImage::SaveMode save_mode;
 		Window * window = NULL;
 
 		/* For storing last selections. */
-		int viewport_save_width = 0;
-		int viewport_save_height = 0;
+		int scaled_width = 0;    /* Width of target image. */
+		int scaled_height = 0;   /* Height of target image. */
 		ViewportToImage::FileFormat file_format = ViewportToImage::FileFormat::JPEG;
-		int viewport_save_n_tiles_x = 0;
-		int viewport_save_n_tiles_y = 0;
+		int n_tiles_x = 0;
+		int n_tiles_y = 0;
+
+		VikingZoomLevel original_viking_zoom_level;  /* Viking zoom level of original viewport. */
+		VikingZoomLevel scaled_viking_zoom_level;    /* Viking zoom level of scaled viewport. */
 	};
 
 
@@ -74,9 +79,12 @@ namespace SlavGPS {
 		~ViewportSaveDialog();
 
 		void build_ui(ViewportToImage::SaveMode save_mode, ViewportToImage::FileFormat file_format);
-		int get_width(void) const;
-		int get_height(void) const;
+		void get_scaled_parameters(int & width, int & height, VikingZoomLevel & zoom_level) const;
 		ViewportToImage::FileFormat get_image_format(void) const;
+
+		int get_n_tiles_x(void) const;
+		int get_n_tiles_y(void) const;
+
 
 	private slots:
 		void accept_cb(void);
@@ -88,16 +96,22 @@ namespace SlavGPS {
 
 	private:
 		Viewport * viewport = NULL;
-		QWidget * parent = NULL;
 
 		QSpinBox * width_spin = NULL;
 		QSpinBox * height_spin = NULL;
 		QLabel * total_area_label = NULL;
 		RadioGroupWidget * output_format_radios = NULL;
 
-		double proportion = 0.0; /* Proportion of width/height dimensions of viewport and of target pixmap. */
+		/* Proportion of width/height dimensions of viewport
+		   (original viewport and scaled viewport).
+		   p = w/h. */
+		double proportion = 0.0;
 
-	public:
+		/* Width of original viewport. */
+		int original_width = 0;
+
+		VikingZoomLevel original_viking_zoom_level;  /* Viking zoom level of original viewport. */
+
 		/* Only used for ViewportToImage::SaveMode::Directory. */
 		QSpinBox * tiles_width_spin = NULL;
 		QSpinBox * tiles_height_spin = NULL;
