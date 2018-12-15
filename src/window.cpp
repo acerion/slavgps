@@ -1601,7 +1601,11 @@ void Window::closeEvent(QCloseEvent * ev)
 
 void Window::goto_default_location_cb(void)
 {
-	this->viewport->set_center_from_lat_lon(LatLon(Preferences::get_default_lat(), Preferences::get_default_lon()));
+	const LatLon lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
+	if (sg_ret::ok != this->viewport->set_center_from_lat_lon(lat_lon)) {
+		qDebug() << SG_PREFIX_E << "Failed to set center location from" << lat_lon;
+		return;
+	}
 	this->emit_center_or_zoom_changed("go to default location");
 }
 
@@ -1620,9 +1624,11 @@ void Window::goto_location_cb()
 
 void Window::goto_latlon_cb(void)
 {
-	if (GoTo::goto_latlon(this, this->viewport)) {
-		this->emit_center_or_zoom_changed("go to latlon");
+	if (sg_ret::ok != GoTo::goto_latlon(this, this->viewport)) {
+		qDebug() << SG_PREFIX_E << "Failed to go to lat/lon";
+		return;
 	}
+	this->emit_center_or_zoom_changed("go to latlon");
 }
 
 

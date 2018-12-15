@@ -76,7 +76,7 @@ namespace SlavGPS {
 		TileScale to_tile_scale(void) const;
 		TileZoomLevel to_tile_zoom_level(void) const;
 
-		bool set(double x, double y);
+		sg_ret set(double x, double y);
 		double get_x(void) const;
 		double get_y(void) const;
 		bool x_y_is_equal(void) const;
@@ -151,6 +151,9 @@ namespace SlavGPS {
 		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
 		static bool keep_coordinate_under_cursor(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos);
+
+		static sg_ret zoom_to_show_bbox(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox);
+		static sg_ret zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position);
 	};
 
 

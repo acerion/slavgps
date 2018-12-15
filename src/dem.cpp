@@ -780,6 +780,7 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 	bbox.south = dem_southwest.lat;
 	bbox.east = dem_northeast.lon;
 	bbox.west = dem_southwest.lon;
+	bbox.validate();
 
 	qDebug() << SG_PREFIX_I << "Viewport:" << other_bbox;
 	qDebug() << SG_PREFIX_I << "DEM:     " << bbox;

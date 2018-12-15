@@ -501,16 +501,25 @@ void Viewport::pan_sync(int x_off, int y_off)
 
 
 
-void Viewport::set_viking_zoom_level(double new_value)
+sg_ret Viewport::set_viking_zoom_level(double new_value)
 {
-	if (this->viking_zoom_level.set(new_value, new_value)) {
-		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
-		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
+	if (!VikingZoomLevel::value_is_valid(new_value)) {
+		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
+		return sg_ret::err;
 	}
+
+	if (sg_ret::ok != this->viking_zoom_level.set(new_value, new_value)) {
+		return sg_ret::err;
+	}
+
+	this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
+	this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
 
 	if (this->drawmode == ViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -550,37 +559,48 @@ const VikingZoomLevel & Viewport::get_viking_zoom_level(void) const
 
 
 
-void Viewport::set_viking_zoom_level(const VikingZoomLevel & new_value)
+sg_ret Viewport::set_viking_zoom_level(const VikingZoomLevel & new_value)
 {
 	this->viking_zoom_level = new_value;
+	return sg_ret::ok;
 }
 
 
 
 
-void Viewport::set_viking_zoom_level_x(double new_value)
+sg_ret Viewport::set_viking_zoom_level_x(double new_value)
 {
-	if (new_value >= SG_VIEWPORT_ZOOM_MIN && new_value <= SG_VIEWPORT_ZOOM_MAX) {
-		this->viking_zoom_level.x = new_value;
-		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
-		if (this->drawmode == ViewportDrawMode::UTM) {
-			this->utm_zone_check();
-		}
+	if (!VikingZoomLevel::value_is_valid(new_value)) {
+		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
+		return sg_ret::err;
 	}
+
+	this->viking_zoom_level.x = new_value;
+	this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
+	if (this->drawmode == ViewportDrawMode::UTM) {
+		this->utm_zone_check();
+	}
+
+	return sg_ret::ok;
 }
 
 
 
 
-void Viewport::set_viking_zoom_level_y(double new_value)
+sg_ret Viewport::set_viking_zoom_level_y(double new_value)
 {
-	if (new_value >= SG_VIEWPORT_ZOOM_MIN && new_value <= SG_VIEWPORT_ZOOM_MAX) {
-		this->viking_zoom_level.y = new_value;
-		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
-		if (this->drawmode == ViewportDrawMode::UTM) {
-			this->utm_zone_check();
-		}
+	if (!VikingZoomLevel::value_is_valid(new_value)) {
+		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
+		return sg_ret::err;
 	}
+
+	this->viking_zoom_level.y = new_value;
+	this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
+	if (this->drawmode == ViewportDrawMode::UTM) {
+		this->utm_zone_check();
+	}
+
+	return sg_ret::ok;
 }
 
 
@@ -837,11 +857,11 @@ bool Viewport::forward_available(void) const
    @save_position: Whether this new position should be saved into the history of positions
                    Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
 */
-bool Viewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_position)
+sg_ret Viewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_position)
 {
 	if (!lat_lon.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
-		return false;
+		return sg_ret::err;
 	}
 
 	this->center = Coord(lat_lon, this->coord_mode);
@@ -853,7 +873,7 @@ bool Viewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_positio
 		this->utm_zone_check();
 	}
 
-	return true;
+	return sg_ret::ok;
 }
 
 
@@ -1744,6 +1764,7 @@ LatLonBBox Viewport::get_bbox(void) const
 	bbox.south = std::min(bleft.ll.lat, bright.ll.lat);
 	bbox.east  = std::max(tright.ll.lon, bright.ll.lon);
 	bbox.west  = std::min(tleft.ll.lon, bleft.ll.lon);
+	bbox.validate();
 
 	return bbox;
 }
@@ -2186,7 +2207,10 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 	   (i.e. have the same bounding box) as original viewport. */
 	scaled_viewport->reconfigure_drawing_area(orig_width * scale_factor, orig_height * scale_factor);
 
-	qDebug() << SG_PREFIX_I << "Scaled viewport's bounding box set to" << scaled_viewport->get_bbox();
+	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->get_bbox();
+	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
+	scaled_viewport->set_bbox(this->get_bbox());
+	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
 
 	return scaled_viewport;
 }
@@ -2407,8 +2431,7 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 
 sg_ret Viewport::set_bbox(const LatLonBBox & new_bbox)
 {
-	vu_zoom_to_show_bbox(this, this->get_coord_mode(), new_bbox);
-	return sg_ret::ok;
+	return ViewportZoom::zoom_to_show_bbox(this, this->get_coord_mode(), new_bbox);
 }
 
 

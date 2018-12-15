@@ -485,18 +485,17 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
 
 
-bool GoTo::goto_latlon(Window * window, Viewport * viewport)
+sg_ret GoTo::goto_latlon(Window * window, Viewport * viewport)
 {
 	const LatLon initial_lat_lon = viewport->get_center()->get_latlon();
 	const LatLon new_lat_lon = goto_latlon_dialog(initial_lat_lon, window);
 
 	if (!new_lat_lon.is_valid()) {
-		return false;
+		/* User has cancelled the dialog. Not an error. */
+		return sg_ret::ok;
 	}
 
-	viewport->set_center_from_lat_lon(new_lat_lon);
-
-	return true;
+	return viewport->set_center_from_lat_lon(new_lat_lon); /* This function will return error on invalid argument. */
 }
 
 

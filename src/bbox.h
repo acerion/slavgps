@@ -85,7 +85,7 @@ namespace SlavGPS {
 
 		/**
 		   +--------------+
-		   |box           |
+		   |this          |
 		   |              |
 		   |    . point   |
 		   |              |
@@ -93,6 +93,19 @@ namespace SlavGPS {
 		   +--------------+
 		*/
 		bool contains_point(const LatLon & point) const;
+
+
+		/**
+		   +--------------+
+		   |this          |
+		   |              |
+		   | +-------+    |
+		   | |  bbox |    |
+		   | +-------+    |
+		   +--------------+
+		*/
+		bool contains_bbox(const LatLonBBox & bbox) const;
+
 
 
 		/* Get coordinate of a point that is a simple

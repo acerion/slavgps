@@ -59,7 +59,7 @@ namespace SlavGPS {
 		static void register_tool(GotoTool * tool);
 
 		static bool goto_location(Window * window, Viewport * viewport);
-		static bool goto_latlon(Window * window, Viewport * viewport);
+		static sg_ret goto_latlon(Window * window, Viewport * viewport);
 		static bool goto_utm(Window * window, Viewport * viewport);
 
 		static int where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name);

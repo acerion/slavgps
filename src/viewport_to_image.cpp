@@ -396,8 +396,33 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Generating image file..."));
 
 	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->scaled_width << this->scaled_height << this->scaled_viking_zoom_level;
-
+#if 0
 	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_zoom_level);
+#else
+	Viewport * scaled_viewport = new Viewport(this->window);
+
+
+	/* Copy/set selected properties of viewport. */
+	scaled_viewport->set_drawmode(this->viewport->get_drawmode());
+	scaled_viewport->set_coord_mode(this->viewport->get_coord_mode());
+	scaled_viewport->set_center_from_coord(this->viewport->center, false);
+	scaled_viewport->set_viking_zoom_level(this->scaled_viking_zoom_level);
+
+	strcpy(scaled_viewport->type_string, "Scaled Viewport");
+
+	/* Notice that we configure size of the print viewport using
+	   size of scaled source, not size of target device (i.e. not
+	   of target paper or target image). The image that we will
+	   print to target device should cover the same area
+	   (i.e. have the same bounding box) as original viewport. */
+	scaled_viewport->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
+	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->viewport->get_bbox();
+	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
+	scaled_viewport->set_bbox(this->viewport->get_bbox());
+	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
+#endif
+
+	//scaled_viewport->set_bbox(this->viewport->get_bbox());
 
 	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->get_width() << scaled_viewport->get_height();
 

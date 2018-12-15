@@ -51,6 +51,8 @@ LatLonBBox::LatLonBBox(const LatLon & corner1, const LatLon & corner2)
 		this->east = corner2.lon;
 		this->west = corner1.lon;
 	}
+
+	this->validate();
 }
 
 
@@ -87,10 +89,11 @@ void LatLonBBox::invalidate(void)
 
 bool LatLonBBox::validate(void)
 {
-	if (this->north    != NAN
-	    && this->east  != NAN
-	    && this->south != NAN
-	    && this->west  != NAN) {
+	if (!std::isnan(this->north) && !std::isnan(this->east) && !std::isnan(this->south) && !std::isnan(this->west)
+	    && this->north >= -90.0 && this->north <= +90.0
+	    && this->south >= -90.0 && this->south <= +90.0
+	    && this->east >= -180.0 && this->east <= +180.0
+	    && this->west >= -180.0 && this->west <= +180.0) {
 
 		this->valid = true;
 	} else {
@@ -161,6 +164,40 @@ bool LatLonBBox::contains_point(const LatLon & point) const
 	    && point.lat >= this->south
 	    && point.lon <= this->east
 	    && point.lon >= this->west) {
+
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+
+
+bool LatLonBBox::contains_bbox(const LatLonBBox & bbox) const
+{
+	/* TODO_HARD: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
+
+	/* Convert into definite 'smallest' and 'largest' positions. */
+	double lowest_latitude = 0.0;
+	if (bbox.north < bbox.south) {
+		lowest_latitude = bbox.north;
+	} else {
+		lowest_latitude = bbox.south;
+	}
+
+	double maximal_longitude = 0.0;
+	if (bbox.east > bbox.west) {
+	        maximal_longitude = bbox.east;
+	} else {
+		maximal_longitude = bbox.west;
+	}
+
+
+	if (this->south <= lowest_latitude
+	    && this->north >= lowest_latitude
+	    && this->west <= maximal_longitude
+	    && this->east >= maximal_longitude) {
 
 		return true;
 	} else {

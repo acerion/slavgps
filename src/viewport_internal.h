@@ -161,7 +161,7 @@ namespace SlavGPS {
 		/* Viewport position. */
 		void set_center_from_coord(const Coord & coord, bool save_position = true);
 		void set_center_from_utm(const UTM & utm, bool save_position = true);
-		bool set_center_from_lat_lon(const LatLon & lat_lon, bool save_position = true);
+		sg_ret set_center_from_lat_lon(const LatLon & lat_lon, bool save_position = true);
 
 		void set_center_from_screen_pos(int x, int y);
 		void set_center_from_screen_pos(const ScreenPos & pos);
@@ -200,10 +200,10 @@ namespace SlavGPS {
 		void zoom_in(void);
 		void zoom_out(void);
 
-		void set_viking_zoom_level(double new_value);
-		void set_viking_zoom_level_x(double new_value);
-		void set_viking_zoom_level_y(double new_value);
-		void set_viking_zoom_level(const VikingZoomLevel & new_value);
+		sg_ret set_viking_zoom_level(double new_value);
+		sg_ret set_viking_zoom_level_x(double new_value);
+		sg_ret set_viking_zoom_level_y(double new_value);
+		sg_ret set_viking_zoom_level(const VikingZoomLevel & new_value);
 		const VikingZoomLevel & get_viking_zoom_level(void) const;
 
 

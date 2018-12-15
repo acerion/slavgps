@@ -320,7 +320,7 @@ double VikingZoomLevel::get_y(void) const
 
 
 
-bool VikingZoomLevel::set(double new_x, double new_y)
+sg_ret VikingZoomLevel::set(double new_x, double new_y)
 {
 	if (new_x >= SG_VIEWPORT_ZOOM_MIN
 	    && new_x <= SG_VIEWPORT_ZOOM_MAX
@@ -330,9 +330,9 @@ bool VikingZoomLevel::set(double new_x, double new_y)
 		this->x = new_x;
 		this->y = new_y;
 
-		return true;
+		return sg_ret::ok;
 	} else {
-		return false;
+		return sg_ret::err;
 	}
 }
 
@@ -528,4 +528,72 @@ VikingZoomLevel & VikingZoomLevel::operator/=(double rhs)
 	} else {
 		return *this;
 	}
+}
+
+
+
+
+/**
+ * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
+ */
+sg_ret ViewportZoom::zoom_to_show_bbox(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox)
+{
+	return ViewportZoom::zoom_to_show_bbox_common(viewport, mode, bbox, 1.0, true);
+}
+
+
+
+
+/**
+ * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
+ */
+sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position)
+{
+	/* First set the center [in case previously viewing from elsewhere]. */
+	/* Then loop through zoom levels until provided positions are in view. */
+	/* This method is not particularly fast - but should work well enough. */
+
+	if (!bbox.is_valid()) {
+		qDebug() << SG_PREFIX_E << "bbox is invalid:" << bbox;
+		return sg_ret::err;
+	}
+	if (!bbox.get_center().is_valid()) {
+		qDebug() << SG_PREFIX_E << "bbox's center is invalid:" << bbox.get_center();
+		return sg_ret::err;
+	}
+	if (!VikingZoomLevel::value_is_valid(zoom)) {
+		qDebug() << SG_PREFIX_E << "zoom is invalid:" << zoom;
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != viewport->set_center_from_lat_lon(bbox.get_center(), save_position)) {
+		qDebug() << SG_PREFIX_E << "Failed to set center from coordinate" << bbox.get_center();
+		return sg_ret::err;
+	}
+
+	/* Never zoom in too far - generally not that useful, as too close! */
+	/* Always recalculate the 'best' zoom level. */
+
+	if (sg_ret::ok != viewport->set_viking_zoom_level(zoom)) {
+		qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
+		return sg_ret::err;
+	}
+
+
+	/* Should only be a maximum of about 18 iterations from min to max zoom levels. */
+	while (zoom <= SG_VIEWPORT_ZOOM_MAX) {
+		const LatLonBBox current_bbox = viewport->get_bbox();
+		if (current_bbox.contains_bbox(bbox)) {
+			/* Found within zoom level. */
+			break;
+		}
+
+		/* Try next zoom level. */
+		zoom = zoom * 2;
+		if (sg_ret::ok != viewport->set_viking_zoom_level(zoom)) {
+			qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
+			return sg_ret::err;
+		}
+	}
+
+	return sg_ret::ok;
 }
