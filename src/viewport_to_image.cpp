@@ -40,7 +40,7 @@
 
 #include "window.h"
 #include "viewport_internal.h"
-#include "viewport_save_dialog.h"
+#include "viewport_to_image.h"
 #include "preferences.h"
 #include "util.h"
 #include "application_state.h"
@@ -56,7 +56,7 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "Viewport Save Dialog"
+#define SG_MODULE "Viewport To Image"
 
 #define VIK_SETTINGS_VIEWPORT_SAVE_WIDTH     "window_save_image_width"
 #define VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT    "window_save_image_height"

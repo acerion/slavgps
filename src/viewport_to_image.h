@@ -1,5 +1,5 @@
-#ifndef _SG_VIEWPORT_SAVE_DIALOG_H_
-#define _SG_VIEWPORT_SAVE_DIALOG_H_
+#ifndef _SG_VIEWPORT_TO_IMAGE_H_
+#define _SG_VIEWPORT_TO_IMAGE_H_
 
 
 
@@ -111,4 +111,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_VIEWPORT_SAVE_DIALOG_H_ */
+#endif /* #ifndef _SG_VIEWPORT_TO_IMAGE_H_ */

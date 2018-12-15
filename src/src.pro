@@ -86,7 +86,7 @@ SOURCES += main.cpp \
     babel_dialog.cpp \
     generic_tools.cpp \
     viewport.cpp \
-    viewport_save_dialog.cpp \
+    viewport_to_image.cpp \
     viewport_decorations.cpp \
     viewport_zoom.cpp \
     coord.cpp \
@@ -228,7 +228,7 @@ HEADERS += window.h \
     generic_tools.h \
     viewport.h \
     viewport_internal.h \
-    viewport_save_dialog.h \
+    viewport_to_image.h \
     viewport_decorations.h \
     viewport_zoom.h \
     coord.h \

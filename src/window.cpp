@@ -51,7 +51,7 @@
 #include "viewport.h"
 #include "viewport_zoom.h"
 #include "viewport_internal.h"
-#include "viewport_save_dialog.h"
+#include "viewport_to_image.h"
 #include "layer.h"
 #include "layer_defaults.h"
 #include "layers_panel.h"
