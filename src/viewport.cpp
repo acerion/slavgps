@@ -336,8 +336,10 @@ void Viewport::set_highlight_thickness(int w)
 void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 {
 	if (new_width == 0 && new_height == 0) {
+		qDebug() << SG_PREFIX_I << "Will reconfigure canvas with geometry sizes" << this->geometry().width() << this->geometry().height();
 		this->canvas.reconfigure(this->geometry().width(), this->geometry().height());
 	} else {
+		qDebug() << SG_PREFIX_I << "Will reconfigure canvas with specified sizes" << new_width << new_height;
 		this->canvas.reconfigure(new_width, new_height);
 	}
 
@@ -2497,7 +2499,7 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	   code path to handle this special case would bring little
 	   gain. */
 
-	qDebug() << SG_PREFIX_N << "--- Canvas is being reconfigured ---";
+	qDebug() << SG_PREFIX_N << "--- Canvas is being reconfigured with size ---";
 
 	this->width = new_width;
 	this->height = new_height;

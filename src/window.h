@@ -39,7 +39,6 @@
 
 #include "measurements.h"
 #include "viewport.h"
-#include "viewport_save_dialog.h"
 #include "layer_trw_track.h"
 #include "layer_trw_waypoints.h"
 #include "layer_trw_tracks.h"
@@ -54,10 +53,6 @@
 #define VIK_SETTINGS_WIN_HEIGHT                  "window_height"
 #define VIK_SETTINGS_WIN_MAIN_DOCK_SIZE          "window_horizontal_pane_position"
 #define VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT "window_copy_centre_full_format"
-
-#define VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH     "window_save_image_width"
-#define VIK_SETTINGS_WIN_VIEWPORT_SAVE_HEIGHT    "window_save_image_height"
-#define VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT    "window_viewport_save_format"
 
 
 
@@ -148,9 +143,6 @@ namespace SlavGPS {
 
 		void finish_new(void);
 
-		QString save_viewport_get_full_path(ViewportSaveMode mode);
-		void save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const VikingZoomLevel & viking_zoom_level, ViewportSaveFormat viewport_save_format, bool save_kmz);
-		bool save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, const VikingZoomLevel & viking_zoom_level, ViewportSaveFormat viewport_save_format, unsigned int tiles_w, unsigned int tiles_h);
 
 		/* Set full path to current document. */
 		void set_current_document_full_path(const QString & document_full_path);
@@ -179,12 +171,6 @@ namespace SlavGPS {
 
 
 		QAction * qa_tree_item_properties = NULL;
-
-
-		/* For storing last selections. */
-		int viewport_save_width;
-		int viewport_save_height;
-		ViewportSaveFormat viewport_save_format = ViewportSaveFormat::JPEG;
 
 	public slots:
 		Window * new_window_cb(void);
@@ -375,9 +361,6 @@ namespace SlavGPS {
 		QAction * qa_next_location = NULL;
 
 		std::list<QString> recent_files;
-
-		/* The last used directory for saving viewport to image(s). */
-		QUrl last_folder_images_url;
 
 		/* Flag set when contents of project is modified. This
 		   flag is set only in a handful of situations. Adding

@@ -35,6 +35,7 @@
 
 
 #include <QDebug>
+#include <QPushButton>
 
 
 

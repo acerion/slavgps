@@ -51,6 +51,7 @@
 #include "viewport.h"
 #include "viewport_zoom.h"
 #include "viewport_internal.h"
+#include "viewport_save_dialog.h"
 #include "layer.h"
 #include "layer_defaults.h"
 #include "layers_panel.h"
@@ -103,10 +104,6 @@ static std::list<Window *> window_list;
 
 #define VIKING_WINDOW_WIDTH      400
 #define VIKING_WINDOW_HEIGHT     300
-
-#define VIEWPORT_SAVE_DEFAULT_WIDTH    1280
-#define VIEWPORT_SAVE_DEFAULT_HEIGHT   1024
-#define VIEWPORT_SAVE_DEFAULT_FORMAT   ViewportSaveFormat::PNG
 
 #define WIN_MAIN_DOCK_MIN_WIDTH 50  /* Minimal usable width/height of dock. */
 
@@ -191,19 +188,6 @@ Window::Window()
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
 	this->set_current_document_full_path("");
-
-
-	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH, &this->viewport_save_width)) {
-		this->viewport_save_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
-	}
-
-	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_HEIGHT, &this->viewport_save_height)) {
-		this->viewport_save_height = VIEWPORT_SAVE_DEFAULT_HEIGHT;
-	}
-
-	if (!ApplicationState::get_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT, (int *) &this->viewport_save_format)) {
-		this->viewport_save_format = VIEWPORT_SAVE_DEFAULT_FORMAT;
-	}
 
 
 
@@ -1609,10 +1593,6 @@ void Window::closeEvent(QCloseEvent * ev)
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_MAIN_DOCK_SIZE, size);
 			}
 		}
-
-		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_WIDTH, this->viewport_save_width);
-		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_HEIGHT, this->viewport_save_height);
-		ApplicationState::set_integer(VIK_SETTINGS_WIN_VIEWPORT_SAVE_FORMAT, (int) this->viewport_save_format);
 	}
 }
 
@@ -2561,27 +2541,18 @@ void Window::acquire_from_url_cb(void)
 
 void Window::draw_viewport_to_image_file_cb(void)
 {
-	ViewportSaveDialog dialog(tr("Save Viewport to Image File"), this->get_viewport(), NULL);
-	dialog.build_ui(ViewportSaveMode::File);
-	if (QDialog::Accepted != dialog.exec()) {
+	ViewportToImage vti(this->get_viewport(), ViewportToImage::SaveMode::File, this);
+
+	if (!vti.run_dialog(tr("Save Viewport to Image File"))) {
 		return;
 	}
 
-	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::File);
+	const QString file_full_path = vti.get_full_path();
 	if (file_full_path.isEmpty()) {
 		return;
 	}
 
-	this->viewport_save_width = dialog.get_width();
-	this->viewport_save_height = dialog.get_height();
-	this->viewport_save_format = dialog.get_image_format();
-
-	this->save_viewport_to_image(file_full_path,
-				     this->viewport_save_width,
-				     this->viewport_save_height,
-				     this->viewport->get_viking_zoom_level(),
-				     this->viewport_save_format,
-				     false);
+	vti.save_to_image(file_full_path, this->viewport->get_viking_zoom_level());
 }
 
 
@@ -2589,29 +2560,18 @@ void Window::draw_viewport_to_image_file_cb(void)
 
 void Window::draw_viewport_to_image_dir_cb(void)
 {
-	ViewportSaveDialog dialog(tr("Save Viewport to Images in Directory"), this->get_viewport(), NULL);
-	dialog.build_ui(ViewportSaveMode::Directory);
-	if (QDialog::Accepted != dialog.exec()) {
+	ViewportToImage vti(this->get_viewport(), ViewportToImage::SaveMode::Directory, this);
+	if (!vti.run_dialog(tr("Save Viewport to Images in Directory"))) {
 		return;
 	}
 
-	QString dir_full_path = this->save_viewport_get_full_path(ViewportSaveMode::Directory);
+	const QString dir_full_path = vti.get_full_path();
 	if (dir_full_path.isEmpty()) {
 		return;
 	}
 
-	this->viewport_save_width = dialog.get_width();
-	this->viewport_save_height = dialog.get_height();
-	this->viewport_save_format = dialog.get_image_format();
-
 	/* UTM mode ATM. */
-	this->save_viewport_to_dir(dir_full_path,
-				   this->viewport_save_width,
-				   this->viewport_save_height,
-				   this->viewport->get_viking_zoom_level(),
-				   this->viewport_save_format,
-				   dialog.tiles_width_spin->value(),
-				   dialog.tiles_height_spin->value());
+	vti.save_to_dir(dir_full_path, this->viewport->get_viking_zoom_level());
 }
 
 
@@ -2625,13 +2585,13 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 		return;
 	}
 
-	ViewportSaveDialog dialog(tr("Save Viewport to KMZ File"), this->get_viewport(), NULL);
-	dialog.build_ui(mode);
-	if (QDialog::Accepted != dialog.exec()) {
+	ViewportToImage vti(this->get_viewport, ViewportToImage::SaveMode::FileKMZ, this);
+
+	if (!vti.run_dialog(tr("Save Viewport to KMZ File"))) {
 		return;
 	}
 
-	QString file_full_path = this->save_viewport_get_full_path(ViewportSaveMode::FileKMZ);
+	const QString file_full_path = vti.get_full_path();
 	if (file_full_path.isEmpty()) {
 		return;
 	}
@@ -2653,12 +2613,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 		this->viewport->set_scale_visibility(false);
 	}
 
-	this->save_viewport_to_image(file_full_path,
-				     dialog.width_spin->value(),
-				     dialog.height_spin->value(),
-				     this->viewport->get_map_zoom(),
-				     ViewportSaveFromat::JPEG,
-				     true);
+	vti.save_to_image(file_full_path, this->viewport->get_map_zoom());
 
 	if (has_xhair) {
 		this->viewport->set_center_mark_visibility(true);
@@ -2680,215 +2635,6 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 void Window::print_cb(void)
 {
 	a_print(this, this->viewport);
-}
-
-
-
-
-void Window::save_viewport_to_image(const QString & file_full_path, int image_width, int image_height, const VikingZoomLevel & target_map_zoom, ViewportSaveFormat save_format, bool save_kmz)
-{
-	this->status_bar->set_message(StatusBarField::Info, tr("Generating image file..."));
-
-	qDebug() << SG_PREFIX_I << "Will save viewport to image of size" << image_width << image_height;
-
-	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this, image_width, image_height, target_map_zoom);
-
-	/* Redraw all layers at current position and zoom.
-	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
-	ThisApp::get_layers_panel()->draw_tree_items(scaled_viewport, true, false);
-
-	/* Save buffer as file. */
-	const QPixmap pixmap = scaled_viewport->get_pixmap();
-	if (pixmap.isNull()) {
-		qDebug() << SG_PREFIX_E << "Failed to get viewport pixmap";
-
-		this->status_bar->set_message(StatusBarField::Info, "");
-		Dialog::error(tr("Failed to generate internal image.\n\nTry creating a smaller image."), this);
-
-		delete scaled_viewport;
-
-		return;
-	}
-
-	bool success = true;
-
-	if (save_kmz) {
-		const LatLonBBox bbox = this->viewport->get_bbox();
-		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_2_LATER: handle returned value. */
-	} else {
-		qDebug() << SG_PREFIX_I << "Saving pixmap to file" << file_full_path;
-		if (!pixmap.save(file_full_path, save_format == ViewportSaveFormat::PNG ? "png" : "jpeg")) {
-			qDebug() << SG_PREFIX_E << "Unable to write to file" << file_full_path;
-			success = false;
-		}
-	}
-
-	delete scaled_viewport;
-
-	const QString message = success ? tr("Image file generated.") : tr("Failed to generate image file.");
-
-	/* Cleanup. */
-
-	this->status_bar->set_message(StatusBarField::Info, "");
-	Dialog::info(message, this);
-}
-
-
-
-
-bool Window::save_viewport_to_dir(const QString & dir_full_path, int image_width, int image_height, const VikingZoomLevel & target_viking_zoom_level, ViewportSaveFormat save_format, unsigned int tiles_w, unsigned int tiles_h)
-{
-	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
-		Dialog::error(tr("You must be in UTM mode to use this feature"), this);
-		return false;
-	}
-
-	QDir dir(dir_full_path);
-	if (!dir.exists()) {
-		if (!dir.mkpath(dir_full_path)) {
-			qDebug() << "EE: Window: failed to create directory" << dir_full_path << "in" << __FUNCTION__ << __LINE__;
-			return false;
-		}
-	}
-
-	const VikingZoomLevel orig_viking_zoom_level = this->viewport->get_viking_zoom_level();
-	const UTM utm_orig = this->viewport->get_center()->utm;
-
-	this->viewport->set_viking_zoom_level(target_viking_zoom_level);
-
-	/* Set expected width and height. Do this only once for all images (all images have the same size). */
-	this->viewport->reconfigure_drawing_area(image_width, image_height);
-
-
-	UTM utm;
-	const char * extension = save_format == ViewportSaveFormat::PNG ? "png" : "jpg";
-
-	/* TODO_2_LATER: support non-identical x/y zoom values. */
-	const double xmpp = target_viking_zoom_level.get_x();
-
-	for (unsigned int y = 1; y <= tiles_h; y++) {
-		for (unsigned int x = 1; x <= tiles_w; x++) {
-			QString file_full_path = QString("%1%2y%3-x%4.%5").arg(dir_full_path).arg(QDir::separator()).arg(y).arg(x).arg(extension);
-			utm = utm_orig;
-			if (tiles_w & 0x1) {
-				utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (image_width * xmpp);
-			} else {
-				utm.easting += ((double)x - (((double)tiles_w)+1)/2) * (image_width * xmpp);
-			}
-
-			if (tiles_h & 0x1) {/* odd */
-				utm.northing -= ((double)y - ceil(((double)tiles_h)/2)) * (image_height * xmpp);
-			} else { /* even */
-				utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (image_height * xmpp);
-			}
-
-			/* TODO_2_LATER: move to correct place. */
-			this->viewport->set_center_from_utm(utm, false);
-
-			/* Redraw all layers at current position and zoom. */
-			this->draw_tree_items();
-
-			/* Save buffer as file. */
-			const QPixmap pixmap = this->viewport->get_pixmap();
-			if (pixmap.isNull()) {
-				qDebug() << "EE" PREFIX << "Unable to create viewport pixmap" << file_full_path;
-				this->status_bar->set_message(StatusBarField::Info, QObject::tr("Unable to create viewport's image"));
-			} else if (!pixmap.save(file_full_path, extension)) {
-				qDebug() << "EE" PREFIX << "Unable to write to file" << file_full_path;
-				this->status_bar->set_message(StatusBarField::Info, QObject::tr("Unable to write to file %1").arg(file_full_path));
-			} else {
-				; /* Pixmap is valid and has been saved. */
-			}
-		}
-	}
-
-	this->viewport->set_center_from_utm(utm_orig, false);
-
-	this->viewport->set_viking_zoom_level(orig_viking_zoom_level);
-
-	this->viewport->reconfigure_drawing_area();
-	this->draw_tree_items();
-
-	return true;
-}
-
-
-
-
-/**
-   Get full path to either single file or to directory, to which to save a viewport image(s).
-*/
-QString Window::save_viewport_get_full_path(ViewportSaveMode mode)
-{
-	QString result;
-	QStringList mime;
-
-	QFileDialog file_selector(this);
-	file_selector.setAcceptMode(QFileDialog::AcceptSave);
-	if (last_folder_images_url.isValid()) {
-		file_selector.setDirectoryUrl(last_folder_images_url);
-	}
-
-	switch (mode) {
-	case ViewportSaveMode::Directory:
-
-		file_selector.setWindowTitle(tr("Select directory to save Viewport to"));
-		file_selector.setFileMode(QFileDialog::Directory);
-		file_selector.setOption(QFileDialog::ShowDirsOnly);
-
-		break;
-
-	case ViewportSaveMode::FileKMZ:
-	case ViewportSaveMode::File: /* png or jpeg. */
-
-		file_selector.setWindowTitle(tr("Select file to save Viewport to"));
-		file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
-
-		mime << "application/octet-stream"; /* "All files (*)" */
-		if (mode == ViewportSaveMode::FileKMZ) {
-			mime << "vnd.google-earth.kmz"; /* "KMZ" / "*.kmz"; */
-		} else {
-			switch (this->viewport_save_format) {
-			case ViewportSaveFormat::PNG:
-				mime << "image/png";
-				break;
-			case ViewportSaveFormat::JPEG:
-				mime << "image/jpeg";
-				break;
-			default:
-				qDebug() << "EE" PREFIX << "unhandled viewport save format" << (int) this->viewport_save_format;
-				break;
-			};
-		}
-		file_selector.setMimeTypeFilters(mime);
-		break;
-	default:
-		qDebug() << "EE: Window: Save Viewport / get full path: unsupported mode" << (int) mode;
-		return result; /* Empty string. */
-	}
-
-
-	if (QDialog::Accepted == file_selector.exec()) {
-		last_folder_images_url = file_selector.directoryUrl();
-		qDebug() << "II: Viewport: Save to Image: last directory saved as:" << last_folder_images_url;
-
-		result = file_selector.selectedFiles().at(0);
-		qDebug() << "II: Viewport: Save to Image: target file:" << result;
-
-		if (0 == access(result.toUtf8().constData(), F_OK)) {
-			if (!Dialog::yes_or_no(tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(result)), this, "")) {
-				result.resize(0);
-			}
-		}
-	}
-
-
-	qDebug() << "DD: Viewport: Save to Image: result: '" << result << "'";
-	if (result.isEmpty()) {
-		qDebug() << "DD: Viewport: Save to Image: returning NULL\n";
-	}
-
-	return result;
 }
 
 

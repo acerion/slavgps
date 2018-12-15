@@ -34,6 +34,11 @@
 
 
 
+#include <QPushButton>
+
+
+
+
 #include "window.h"
 #include "datasource_osm_my_traces.h"
 #include "layer_trw.h"

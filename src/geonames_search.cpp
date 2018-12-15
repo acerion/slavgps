@@ -25,6 +25,7 @@
 
 #include <QDebug>
 #include <QEventLoop>
+#include <QPushButton>
 
 
 

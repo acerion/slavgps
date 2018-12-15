@@ -24,10 +24,16 @@
 
 #include <cmath>
 
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 
 
 
 #include <QDebug>
+#include <QDir>
+#include <QFileDialog>
 
 
 
@@ -37,6 +43,10 @@
 #include "viewport_save_dialog.h"
 #include "preferences.h"
 #include "util.h"
+#include "application_state.h"
+#include "statusbar.h"
+#include "layers_panel.h"
+#include "kmz.h"
 
 
 
@@ -48,13 +58,34 @@ using namespace SlavGPS;
 
 #define SG_MODULE "Viewport Save Dialog"
 
+#define VIK_SETTINGS_VIEWPORT_SAVE_WIDTH     "window_save_image_width"
+#define VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT    "window_save_image_height"
+#define VIK_SETTINGS_VIEWPORT_SAVE_FORMAT    "window_viewport_save_format"
+
+#define VIEWPORT_SAVE_DEFAULT_WIDTH    1280
+#define VIEWPORT_SAVE_DEFAULT_HEIGHT   1024
+#define VIEWPORT_SAVE_DEFAULT_FORMAT   ViewportToImage::FileFormat::PNG
+
+
+
+
+/* The last used directory for saving viewport to image(s). */
+static QUrl g_last_folder_images_url;
+
 
 
 
 void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 {
+	/* Temporarily block signals sent by spinboxes. */
+	this->width_spin->blockSignals(true);
+	this->height_spin->blockSignals(true);
+
 	this->width_spin->setValue(this->viewport->get_width());
 	this->height_spin->setValue(this->viewport->get_height());
+
+	this->width_spin->blockSignals(false);
+	this->height_spin->blockSignals(false);
 
 	return;
 }
@@ -98,6 +129,8 @@ ViewportSaveDialog::ViewportSaveDialog(QString const & title, Viewport * vp, QWi
 	this->setWindowTitle(title);
 	this->parent = parent;
 	this->viewport = vp;
+
+	this->proportion = 1.0 * this->viewport->get_width() / this->viewport->get_height();
 }
 
 
@@ -118,7 +151,7 @@ void ViewportSaveDialog::accept_cb(void) /* Slot. */
 
 
 
-void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
+void ViewportSaveDialog::build_ui(ViewportToImage::SaveMode save_mode, ViewportToImage::FileFormat file_format)
 {
 	int row = 0;
 
@@ -126,7 +159,7 @@ void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
 	this->grid->addWidget(new QLabel(tr("Width (pixels):")), row, 0);
 
 	this->width_spin = new QSpinBox();
-	this->width_spin->setMinimum(0);
+	this->width_spin->setMinimum(1);
 	this->width_spin->setMaximum(10 * 1024);
 	this->width_spin->setSingleStep(1);
 	this->grid->addWidget(this->width_spin, row, 1);
@@ -137,7 +170,7 @@ void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
 	this->grid->addWidget(new QLabel(tr("Height (pixels):")), row, 0);
 
 	this->height_spin = new QSpinBox();
-	this->height_spin->setMinimum(0);
+	this->height_spin->setMinimum(1);
 	this->height_spin->setMaximum(10 * 1024);
 	this->height_spin->setSingleStep(1);
 	this->grid->addWidget(this->height_spin, row, 1);
@@ -148,7 +181,7 @@ void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
 	/* Right below width/height spinboxes. */
 	QPushButton * use_current_area_button = new QPushButton("Copy size from Viewport");
 	this->grid->addWidget(use_current_area_button, row, 1);
-	connect(use_current_area_button, SIGNAL(clicked()), this, SLOT(get_size_from_viewport_cb()));
+	connect(use_current_area_button, SIGNAL (clicked()), this, SLOT (get_size_from_viewport_cb()));
 	row++;
 
 
@@ -159,23 +192,23 @@ void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
 
 
 
-	if (mode == ViewportSaveMode::FileKMZ) {
-		/* Don't show image type selection if creating a KMZ (always JPG internally).
-		   Start with viewable area by default. */
-		this->get_size_from_viewport_cb();
+	std::vector<SGLabelID> file_format_items;
+	if (save_mode == ViewportToImage::SaveMode::FileKMZ) {
+		/* Only one file format. */
+		file_format_items.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
 	} else {
-		std::vector<SGLabelID> items;
-		items.push_back(SGLabelID(tr("Save as PNG"), (int) ViewportSaveFormat::PNG));
-		items.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportSaveFormat::JPEG));
-
-		this->output_format_radios = new RadioGroupWidget(tr("Output format"), &items, this);
-		this->output_format_radios->set_id_of_selected((int) ThisApp::get_main_window()->viewport_save_format);
-
-		this->grid->addWidget(this->output_format_radios, row, 0, 1, 2);
-		row++;
+		file_format_items.push_back(SGLabelID(tr("Save as PNG"), (int) ViewportToImage::FileFormat::PNG));
+		file_format_items.push_back(SGLabelID(tr("Save as JPEG"), (int) ViewportToImage::FileFormat::JPEG));
 	}
+	this->output_format_radios = new RadioGroupWidget(tr("Output format"), &file_format_items, this);
+	this->output_format_radios->set_id_of_selected((int) file_format);
 
-	if (mode == ViewportSaveMode::Directory) {
+	this->grid->addWidget(this->output_format_radios, row, 0, 1, 2);
+	row++;
+
+
+
+	if (save_mode == ViewportToImage::SaveMode::Directory) {
 
 		this->grid->addWidget(new QLabel(tr("East-west image tiles:")), row, 0);
 
@@ -202,8 +235,10 @@ void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
 	}
 
 
-	connect(this->width_spin, SIGNAL(valueChanged(int)), this, SLOT(calculate_total_area_cb()));
-	connect(this->height_spin, SIGNAL(valueChanged(int)), this, SLOT(calculate_total_area_cb()));
+	connect(this->width_spin, SIGNAL (valueChanged(int)), this, SLOT (calculate_total_area_cb()));
+	connect(this->height_spin, SIGNAL (valueChanged(int)), this, SLOT (calculate_total_area_cb()));
+	connect(this->width_spin, SIGNAL (valueChanged(int)), this, SLOT (handle_changed_width_cb(int)));
+	connect(this->height_spin, SIGNAL (valueChanged(int)), this, SLOT (handle_changed_height_cb(int)));
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &ViewportSaveDialog::accept_cb);
 	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
@@ -219,7 +254,9 @@ void ViewportSaveDialog::build_ui(ViewportSaveMode mode)
 
 int ViewportSaveDialog::get_width(void) const
 {
-	return this->width_spin->value();
+	const int w = this->width_spin->value();
+	qDebug() << SG_PREFIX_I << "Returning width" << w;
+	return w;
 }
 
 
@@ -227,13 +264,317 @@ int ViewportSaveDialog::get_width(void) const
 
 int ViewportSaveDialog::get_height(void) const
 {
-	return this->height_spin->value();
+	const int h = this->height_spin->value();
+	qDebug() << SG_PREFIX_I << "Returning height" << h;
+	return h;
 }
 
 
 
 
-ViewportSaveFormat ViewportSaveDialog::get_image_format(void) const
+ViewportToImage::FileFormat ViewportSaveDialog::get_image_format(void) const
 {
-	return (ViewportSaveFormat) this->output_format_radios->get_id_of_selected();
+	return (ViewportToImage::FileFormat) this->output_format_radios->get_id_of_selected();
+}
+
+
+
+
+void ViewportSaveDialog::handle_changed_width_cb(int w)
+{
+	/* proportion = w/h */
+	this->height_spin->blockSignals(true); /* Temporarily block signals sent by this object. */
+	this->height_spin->setValue(w / this->proportion);
+	this->height_spin->blockSignals(false);
+	qDebug() << SG_PREFIX_I << "Set new height" << (w / this->proportion);
+}
+
+
+
+
+void ViewportSaveDialog::handle_changed_height_cb(int h)
+{
+	/* proportion = w/h */
+	this->width_spin->blockSignals(true); /* Temporarily block signals sent by this object. */
+	this->width_spin->setValue(h * this->proportion);
+	this->width_spin->blockSignals(false);
+	qDebug() << SG_PREFIX_I << "Set new width" << (h * this->proportion);
+}
+
+
+
+
+ViewportToImage::ViewportToImage(Viewport * new_viewport, ViewportToImage::SaveMode new_save_mode, Window * new_window)
+{
+	this->viewport = new_viewport;
+	this->save_mode = new_save_mode;
+	this->window = new_window;
+
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, &this->viewport_save_width)) {
+		this->viewport_save_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
+	}
+
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT, &this->viewport_save_height)) {
+		this->viewport_save_height = VIEWPORT_SAVE_DEFAULT_HEIGHT;
+	}
+
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_FORMAT, (int *) &this->file_format)) {
+		this->file_format = VIEWPORT_SAVE_DEFAULT_FORMAT;
+	}
+
+}
+
+
+
+
+ViewportToImage::~ViewportToImage()
+{
+	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, this->viewport_save_width);
+	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_HEIGHT, this->viewport_save_height);
+	ApplicationState::set_integer(VIK_SETTINGS_VIEWPORT_SAVE_FORMAT, (int) this->file_format);
+}
+
+
+
+
+bool ViewportToImage::run_dialog(const QString & title)
+{
+	ViewportSaveDialog dialog(QObject::tr("Save Viewport to Image File"), this->viewport, NULL);
+	dialog.build_ui(this->save_mode, this->file_format);
+	if (QDialog::Accepted != dialog.exec()) {
+		return false;
+	}
+
+	this->viewport_save_width = dialog.get_width();
+	this->viewport_save_height = dialog.get_height();
+	this->file_format = dialog.get_image_format();
+
+	if (this->save_mode == ViewportToImage::SaveMode::Directory) {
+		this->viewport_save_n_tiles_x = dialog.tiles_width_spin->value();
+		this->viewport_save_n_tiles_y = dialog.tiles_height_spin->value();
+	}
+
+	return true;
+}
+
+
+
+
+
+void ViewportToImage::save_to_image(const QString & file_full_path, const VikingZoomLevel & target_map_zoom)
+{
+
+	this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Generating image file..."));
+
+	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->viewport_save_width << this->viewport_save_height;
+
+	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->viewport_save_width, this->viewport_save_height, target_map_zoom);
+
+	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->get_width() << scaled_viewport->get_height();
+
+	/* Redraw all layers at current position and zoom.
+	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
+	ThisApp::get_layers_panel()->draw_tree_items(scaled_viewport, true, false);
+
+	/* Save buffer as file. */
+	const QPixmap pixmap = scaled_viewport->get_pixmap();
+	if (pixmap.isNull()) {
+		qDebug() << SG_PREFIX_E << "Failed to get viewport pixmap";
+
+		this->window->get_statusbar()->set_message(StatusBarField::Info, "");
+		Dialog::error(QObject::tr("Failed to generate internal image.\n\nTry creating a smaller image."), this->window);
+
+		delete scaled_viewport;
+
+		return;
+	}
+	qDebug() << SG_PREFIX_I << "Generated pixmap from scaled viewport, pixmap size =" << pixmap.width() << pixmap.height();
+
+	bool success = true;
+
+	if (this->save_mode == ViewportToImage::SaveMode::FileKMZ) {
+
+		/* For saving to KMZ the file format must always be
+		   ViewportToImage::FileFormat::JPEG. */
+		if (this->file_format != ViewportToImage::FileFormat::JPEG) {
+			qDebug() << SG_PREFIX_E << "Unexpected non-JPEG file mode for KMZ save mode:" << (int) this->file_format;
+			this->file_format = ViewportToImage::FileFormat::JPEG;
+		}
+
+		const LatLonBBox bbox = this->viewport->get_bbox();
+		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_2_LATER: handle returned value. */
+	} else {
+		qDebug() << SG_PREFIX_I << "Saving pixmap to file" << file_full_path;
+		if (!pixmap.save(file_full_path, this->file_format == ViewportToImage::FileFormat::PNG ? "png" : "jpeg")) {
+			qDebug() << SG_PREFIX_E << "Unable to write to file" << file_full_path;
+			success = false;
+		}
+	}
+
+	delete scaled_viewport;
+
+	const QString message = success ? QObject::tr("Image file generated.") : QObject::tr("Failed to generate image file.");
+
+	/* Cleanup. */
+
+	this->window->get_statusbar()->set_message(StatusBarField::Info, "");
+	Dialog::info(message, this->window);
+}
+
+
+
+
+bool ViewportToImage::save_to_dir(const QString & dir_full_path, const VikingZoomLevel & target_viking_zoom_level)
+{
+	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
+		Dialog::error(QObject::tr("You must be in UTM mode to use this feature"), this->window);
+		return false;
+	}
+
+	QDir dir(dir_full_path);
+	if (!dir.exists()) {
+		if (!dir.mkpath(dir_full_path)) {
+			qDebug() << "EE: Window: failed to create directory" << dir_full_path << "in" << __FUNCTION__ << __LINE__;
+			return false;
+		}
+	}
+
+	const VikingZoomLevel orig_viking_zoom_level = this->viewport->get_viking_zoom_level();
+	const UTM utm_orig = this->viewport->get_center()->utm;
+
+	this->viewport->set_viking_zoom_level(target_viking_zoom_level);
+
+	/* Set expected width and height. Do this only once for all images (all images have the same size). */
+	this->viewport->reconfigure_drawing_area(this->viewport_save_width, this->viewport_save_height);
+
+
+	UTM utm;
+	const char * extension = this->file_format == ViewportToImage::FileFormat::PNG ? "png" : "jpg";
+
+	/* TODO_2_LATER: support non-identical x/y zoom values. */
+	const double xmpp = target_viking_zoom_level.get_x();
+
+	for (int y = 1; y <= this->viewport_save_n_tiles_y; y++) {
+		for (int x = 1; x <= this->viewport_save_n_tiles_x; x++) {
+			QString file_full_path = QString("%1%2y%3-x%4.%5").arg(dir_full_path).arg(QDir::separator()).arg(y).arg(x).arg(extension);
+			utm = utm_orig;
+			if (this->viewport_save_n_tiles_x & 0x1) {
+				utm.easting += ((double) x - ceil(((double) this->viewport_save_n_tiles_x)/2)) * (this->viewport_save_width * xmpp);
+			} else {
+				utm.easting += ((double) x - (((double) this->viewport_save_n_tiles_x)+1)/2) * (this->viewport_save_width * xmpp);
+			}
+
+			if (this->viewport_save_n_tiles_y & 0x1) {/* odd */
+				utm.northing -= ((double)y - ceil(((double) this->viewport_save_n_tiles_y)/2)) * (this->viewport_save_height * xmpp);
+			} else { /* even */
+				utm.northing -= ((double)y - (((double) this->viewport_save_n_tiles_y)+1)/2) * (this->viewport_save_height * xmpp);
+			}
+
+			/* TODO_2_LATER: move to correct place. */
+			this->viewport->set_center_from_utm(utm, false);
+
+			/* Redraw all layers at current position and zoom. */
+			this->window->draw_tree_items();
+
+			/* Save buffer as file. */
+			const QPixmap pixmap = this->viewport->get_pixmap();
+			if (pixmap.isNull()) {
+				qDebug() << SG_PREFIX_E << "Unable to create viewport pixmap" << file_full_path;
+				this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to create viewport's image"));
+			} else if (!pixmap.save(file_full_path, extension)) {
+				qDebug() << SG_PREFIX_E << "Unable to write to file" << file_full_path;
+				this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to write to file %1").arg(file_full_path));
+			} else {
+				; /* Pixmap is valid and has been saved. */
+			}
+		}
+	}
+
+	this->viewport->set_center_from_utm(utm_orig, false);
+
+	this->viewport->set_viking_zoom_level(orig_viking_zoom_level);
+
+	this->viewport->reconfigure_drawing_area();
+	this->window->draw_tree_items();
+
+	return true;
+}
+
+
+
+
+/**
+   Get full path to either single file or to directory, to which to save a viewport image(s).
+*/
+QString ViewportToImage::get_full_path(void)
+{
+	QString result;
+	QStringList mime;
+
+	QFileDialog file_selector(this->window);
+	file_selector.setAcceptMode(QFileDialog::AcceptSave);
+	if (g_last_folder_images_url.isValid()) {
+		file_selector.setDirectoryUrl(g_last_folder_images_url);
+	}
+
+	switch (this->save_mode) {
+	case ViewportToImage::SaveMode::Directory:
+
+		file_selector.setWindowTitle(QObject::tr("Select directory to save Viewport to"));
+		file_selector.setFileMode(QFileDialog::Directory);
+		file_selector.setOption(QFileDialog::ShowDirsOnly);
+
+		break;
+
+	case ViewportToImage::SaveMode::FileKMZ:
+	case ViewportToImage::SaveMode::File: /* png or jpeg. */
+
+		file_selector.setWindowTitle(QObject::tr("Select file to save Viewport to"));
+		file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
+
+		mime << "application/octet-stream"; /* "All files (*)" */
+		if (this->save_mode == ViewportToImage::SaveMode::FileKMZ) {
+			mime << "vnd.google-earth.kmz"; /* "KMZ" / "*.kmz"; */
+		} else {
+			switch (this->file_format) {
+			case ViewportToImage::FileFormat::PNG:
+				mime << "image/png";
+				break;
+			case ViewportToImage::FileFormat::JPEG:
+				mime << "image/jpeg";
+				break;
+			default:
+				qDebug() << SG_PREFIX_E << "Unhandled viewport save format" << (int) this->file_format;
+				break;
+			};
+		}
+		file_selector.setMimeTypeFilters(mime);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unsupported mode" << (int) this->save_mode;
+		return result; /* Empty string. */
+	}
+
+
+	if (QDialog::Accepted == file_selector.exec()) {
+		g_last_folder_images_url = file_selector.directoryUrl();
+		qDebug() << SG_PREFIX_I << "Last directory saved as:" << g_last_folder_images_url;
+
+		result = file_selector.selectedFiles().at(0);
+		qDebug() << SG_PREFIX_I << "Target file:" << result;
+
+		if (0 == access(result.toUtf8().constData(), F_OK)) {
+			if (!Dialog::yes_or_no(QObject::tr("The file \"%1\" exists, do you wish to overwrite it?").arg(file_base_name(result)), this->window, "")) {
+				result.resize(0);
+			}
+		}
+	}
+
+
+	qDebug() << SG_PREFIX_D << "Obtained file full path =" << result;
+	if (result.isEmpty()) {
+		qDebug() << SG_PREFIX_N << "Obtained file full path is empty";
+	}
+
+	return result;
 }
