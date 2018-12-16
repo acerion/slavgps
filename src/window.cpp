@@ -90,7 +90,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Window"
-#define PREFIX ": Window:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -335,12 +334,12 @@ Window::~Window()
 
 void Window::create_layout()
 {
-	this->toolbar = new QToolBar("Main Toolbar");
+	this->toolbar = new QToolBar(tr("Main Toolbar"));
 	this->addToolBar(this->toolbar);
 
 
 	this->viewport = new Viewport(this);
-	qDebug() << "II: Window: created Viewport with size:" << this->viewport->height() << this->viewport->width();
+	qDebug() << SG_PREFIX_I << "Created Viewport with size:" << this->viewport->height() << this->viewport->width();
 
 
 	this->setCentralWidget(viewport);
@@ -370,12 +369,12 @@ void Window::create_layout()
 
 void Window::create_actions(void)
 {
-	this->menu_file = new QMenu("&File");
-	this->menu_edit = new QMenu("&Edit");
-	this->menu_view = new QMenu("&View");
-	this->menu_layers = new QMenu("&Layers");
-	this->menu_tools = new QMenu("&Tools");
-	this->menu_help = new QMenu("&Help");
+	this->menu_file = new QMenu(tr("&File"));
+	this->menu_edit = new QMenu(tr("&Edit"));
+	this->menu_view = new QMenu(tr("&View"));
+	this->menu_layers = new QMenu(tr("&Layers"));
+	this->menu_tools = new QMenu(tr("&Tools"));
+	this->menu_help = new QMenu(tr("&Help"));
 
 	this->menu_bar = new QMenuBar();
 	this->menu_bar->addMenu(this->menu_file);
@@ -397,7 +396,7 @@ void Window::create_actions(void)
 		qa_file_new = this->menu_file->addAction(QIcon::fromTheme("document-new"), tr("&New file..."));
 		qa_file_new->setShortcut(Qt::CTRL + Qt::Key_N);
 		qa_file_new->setIcon(QIcon::fromTheme("document-new"));
-		qa_file_new->setToolTip("Open a file");
+		qa_file_new->setToolTip(tr("Open a file"));
 		connect(qa_file_open, SIGNAL (triggered(bool)), this, SLOT (new_window_cb()));
 
 		qa_file_open = this->menu_file->addAction(QIcon::fromTheme("document-open"), tr("&Open..."));
@@ -410,23 +409,23 @@ void Window::create_actions(void)
 
 		qa = this->menu_file->addAction(QIcon::fromTheme("list-add"), tr("Append &File..."));
 		qa->setData(QVariant((int) OPEN_FILE_IN_THE_SAME_WINDOW));
-		qa->setToolTip("Append data from a different file");
+		qa->setToolTip(tr("Append data from a different file"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
 
 		qa = this->menu_file->addAction(tr("&Save"));
 		qa->setIcon(QIcon::fromTheme("document-save"));
-		qa->setToolTip("Save the file");
+		qa->setToolTip(tr("Save the file"));
 		qa->setShortcut(Qt::CTRL + Qt::Key_S);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_cb()));
 
 		qa = this->menu_file->addAction(tr("Save &As..."));
 		qa->setIcon(QIcon::fromTheme("document-save-as"));
-		qa->setToolTip("Save the file under different name");
+		qa->setToolTip(tr("Save the file under different name"));
 		qa->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_S);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_save_as_cb()));
 
 		qa = this->menu_file->addAction(tr("Properties..."));
-		qa->setToolTip("Properties of current file");
+		qa->setToolTip(tr("Properties of current file"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_file_properties_cb()));
 
 
@@ -526,7 +525,7 @@ void Window::create_actions(void)
 
 		qa = this->menu_file->addAction(tr("&Print..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (print_cb()));
-		qa->setToolTip("Print");
+		qa->setToolTip(tr("Print"));
 
 
 		this->menu_file->addSeparator();
@@ -578,23 +577,23 @@ void Window::create_actions(void)
 		this->menu_edit->addSeparator();
 
 
-		qa = new QAction("Copy Centre &Location", this);
+		qa = new QAction(tr("Copy Centre &Location"), this);
 		qa->setIcon(QIcon::fromTheme(""));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_copy_centre_cb(void)));
 		qa->setShortcut(Qt::CTRL + Qt::Key_H);
 		this->menu_edit->addAction(qa);
 
-		qa = new QAction("&Flush Map Cache", this);
+		qa = new QAction(tr("&Flush Map Cache"), this);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (map_cache_flush_cb(void)));
 		this->menu_edit->addAction(qa);
 
-		qa = new QAction("&Set Current as the Default Location", this);
+		qa = new QAction(tr("&Set Current as the Default Location"), this);
 		qa->setIcon(QIcon::fromTheme("go-next"));
 		qa->setToolTip(tr("Save current position as the Default Location"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_default_location_cb(void)));
 		this->menu_edit->addAction(qa);
 
-		qa = new QAction("&Preferences", this);
+		qa = new QAction(tr("&Preferences"), this);
 		qa->setIcon(QIcon::fromTheme("preferences-other"));
 		qa->setToolTip(tr("Program Preferences"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (preferences_cb(void)));
@@ -658,35 +657,35 @@ void Window::create_actions(void)
 
 
 		qa = new QAction(tr("Go to the &Default Location"), this);
-		qa->setToolTip("Go to the default location");
+		qa->setToolTip(tr("Go to the default location"));
 		qa->setIcon(QIcon::fromTheme("go-home"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_default_location_cb(void)));
 
 
 		qa = new QAction(tr("Go to &Location..."), this);
-		qa->setToolTip("Go to address/place using text search");
+		qa->setToolTip(tr("Go to address/place using text search"));
 		qa->setIcon(QIcon::fromTheme("go-jump"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_location_cb(void)));
 
 
 		qa = new QAction(tr("&Go to Lat/Lon..."), this);
-		qa->setToolTip("Go to arbitrary lat/lon coordinate");
+		qa->setToolTip(tr("Go to arbitrary lat/lon coordinate"));
 		qa->setIcon(QIcon::fromTheme("go-jump"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_latlon_cb(void)));
 
 
 		qa = new QAction(tr("Go to UTM..."), this);
-		qa->setToolTip("Go to arbitrary UTM coordinate");
+		qa->setToolTip(tr("Go to arbitrary UTM coordinate"));
 		qa->setIcon(QIcon::fromTheme("go-jump"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(goto_utm_cb(void)));
 
 
 		this->qa_previous_location = new QAction(tr("Go to the Pre&vious Location"), this);
-		this->qa_previous_location->setToolTip("Go to the previous location");
+		this->qa_previous_location->setToolTip(tr("Go to the previous location"));
 		this->qa_previous_location->setIcon(QIcon::fromTheme("go-previous"));
 		this->qa_previous_location->setEnabled(false); /* At the beginning there is no "previous location" to go to. */
 		this->menu_view->addAction(this->qa_previous_location);
@@ -694,7 +693,7 @@ void Window::create_actions(void)
 
 
 		this->qa_next_location = new QAction(tr("Go to the &Next Location"), this);
-		this->qa_next_location->setToolTip("Go to the next location");
+		this->qa_next_location->setToolTip(tr("Go to the next location"));
 		this->qa_next_location->setIcon(QIcon::fromTheme("go-next"));
 		this->qa_next_location->setEnabled(false); /* At the beginning there is no "next location" to go to. */
 		this->menu_view->addAction(this->qa_next_location);
@@ -706,7 +705,7 @@ void Window::create_actions(void)
 
 		qa = new QAction(tr("&Refresh"), this);
 		qa->setShortcut(Qt::Key_F5);
-		qa->setToolTip("Refresh any maps displayed");
+		qa->setToolTip(tr("Refresh any maps displayed"));
 		qa->setIcon(QIcon::fromTheme("view-refresh"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_refresh_cb(void)));
@@ -716,22 +715,22 @@ void Window::create_actions(void)
 
 
 		qa = new QAction(tr("Set &Highlight Color..."), this);
-		qa->setToolTip("Set Highlight Color");
+		qa->setToolTip(tr("Set Highlight Color"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_highlight_color_cb(void)));
 
 
 		qa = new QAction(tr("Set Bac&kground Color..."), this);
-		qa->setToolTip("Set Background Color");
+		qa->setToolTip(tr("Set Background Color"));
 		this->menu_view->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_set_bg_color_cb(void)));
 
 
-		this->qa_view_full_screen_state = new QAction("&Full Screen", this);
+		this->qa_view_full_screen_state = new QAction(tr("&Full Screen"), this);
 		this->qa_view_full_screen_state->setShortcut(Qt::Key_F11);
 		this->qa_view_full_screen_state->setCheckable(true);
 		this->qa_view_full_screen_state->setChecked(false); /* Final value of this checkbox will be set by code restoring window state. */
-		this->qa_view_full_screen_state->setToolTip("Activate full screen mode");
+		this->qa_view_full_screen_state->setToolTip(tr("Activate full screen mode"));
 		this->qa_view_full_screen_state->setIcon(QIcon::fromTheme("view-fullscreen"));
 		this->menu_view->addAction(this->qa_view_full_screen_state);
 		connect(this->qa_view_full_screen_state, SIGNAL (triggered(bool)), this, SLOT (set_full_screen_state_cb(bool)));
@@ -809,19 +808,19 @@ void Window::create_actions(void)
 		this->menu_view->addSeparator();
 
 
-		qa_view_zoom_in = new QAction("Zoom &In", this);
+		qa_view_zoom_in = new QAction(tr("Zoom &In"), this);
 		qa_view_zoom_in->setShortcut(Qt::CTRL + Qt::Key_Plus);
 		qa_view_zoom_in->setIcon(QIcon::fromTheme("zoom-in"));
 		connect(qa_view_zoom_in, SIGNAL (triggered(bool)), this, SLOT (zoom_cb(void)));
 		this->menu_view->addAction(qa_view_zoom_in);
 
-		qa_view_zoom_out = new QAction("Zoom &Out", this);
+		qa_view_zoom_out = new QAction(tr("Zoom &Out"), this);
 		qa_view_zoom_out->setShortcut(Qt::CTRL + Qt::Key_Minus);
 		qa_view_zoom_out->setIcon(QIcon::fromTheme("zoom-out"));
 		connect(qa_view_zoom_out, SIGNAL (triggered(bool)), this, SLOT (zoom_cb(void)));
 		this->menu_view->addAction(qa_view_zoom_out);
 
-		qa_view_zoom_to = new QAction("Zoom &To...", this);
+		qa_view_zoom_to = new QAction(tr("Zoom &To..."), this);
 		qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Z);
 		qa_view_zoom_to->setIcon(QIcon::fromTheme("zoom-fit-best"));
 		connect(qa_view_zoom_to, SIGNAL (triggered(bool)), this, SLOT (zoom_to_cb(void)));
@@ -868,17 +867,17 @@ void Window::create_actions(void)
 		this->menu_view->addSeparator();
 
 
-		qa = new QAction("Background &Jobs", this);
+		qa = new QAction(tr("Background &Jobs"), this);
 		qa->setIcon(QIcon::fromTheme("emblem-system"));
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_background_jobs_window_cb(void)));
 		this->menu_view->addAction(qa);
 
 #if 1           /* This is only for debugging purposes (or is it not?). */
-		qa = new QAction("Show Centers", this);
+		qa = new QAction(tr("Show Centers"), this);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_centers_cb(void)));
 		this->menu_view->addAction(qa);
 
-		qa = new QAction("&Map Cache Info", this);
+		qa = new QAction(tr("&Map Cache Info"), this);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (menu_view_cache_info_cb(void)));
 		this->menu_view->addAction(qa);
 #endif
@@ -888,7 +887,7 @@ void Window::create_actions(void)
 
 	/* "Layers" menu. */
 	{
-		this->qa_tree_item_properties = new QAction("Properties...", this);
+		this->qa_tree_item_properties = new QAction(tr("Properties..."), this);
 		this->menu_layers->addAction(this->qa_tree_item_properties);
 		connect(this->qa_tree_item_properties, SIGNAL (triggered(bool)), this->items_tree->get_tree_view(), SLOT (tree_item_properties_cb(void)));
 
@@ -898,12 +897,12 @@ void Window::create_actions(void)
 
 	/* "Help" menu. */
 	{
-		QAction * qa_help_help = new QAction("&Help", this);
+		QAction * qa_help_help = new QAction(tr("&Help"), this);
 		qa_help_help->setIcon(QIcon::fromTheme("help-contents"));
 		qa_help_help->setShortcut(Qt::Key_F1);
 		connect(qa_help_help, SIGNAL (triggered(bool)), this, SLOT (help_help_cb(void)));
 
-		QAction * qa_help_about = new QAction("&About", this);
+		QAction * qa_help_about = new QAction(tr("&About"), this);
 		qa_help_about->setIcon(QIcon::fromTheme("help-about"));
 		connect(qa_help_about, SIGNAL (triggered(bool)), this, SLOT (help_about_cb(void)));
 
@@ -940,9 +939,9 @@ static void draw_sync_cb(Window * window)
 
 void Window::draw_sync()
 {
-	qDebug() << "II: Window: sync begin" << __FUNCTION__ << __LINE__;
+	qDebug() << SG_PREFIX_I << "Sync begin";
 	//this->viewport->sync();
-	qDebug() << "II: Window: sync end" << __FUNCTION__ << __LINE__;
+	qDebug() << SG_PREFIX_I << "Sync end";
 	this->update_status_bar_on_redraw();
 }
 
@@ -953,7 +952,7 @@ void Window::update_status_bar_on_redraw(void)
 {
 	const QString zoom_level = this->viewport->get_viking_zoom_level().pretty_print(this->viewport->get_coord_mode());
 
-	qDebug() << SG_PREFIX_I << "zoom level is" << zoom_level;
+	qDebug() << SG_PREFIX_I << "Zoom level is" << zoom_level;
 	this->status_bar->set_message(StatusBarField::Zoom, zoom_level);
 	this->display_tool_name();
 }
@@ -966,7 +965,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	LayerType layer_type = (LayerType) qa->data().toInt();
 
-	qDebug() << "II: Window: clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
+	qDebug() << SG_PREFIX_I << "Clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
 
 
 	Layer * layer = Layer::construct_layer(layer_type, this->viewport, true);
@@ -974,10 +973,10 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 		this->items_tree->add_layer(layer, this->viewport->get_coord_mode());
 
 		//this->viewport->reconfigure_drawing_area();
-		qDebug() << "II: Layers Panel: calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
+		qDebug() << SG_PREFIX_I << "Calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
 		layer->draw_tree_item(this->viewport, false, false);
 
-		qDebug() << SG_PREFIX_I "call draw_tree_items()";
+		qDebug() << SG_PREFIX_I << "Will call draw_tree_items()";
 		this->draw_tree_items();
 		this->set_dirty_flag(true);
 	}
@@ -988,7 +987,8 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 void Window::draw_tree_items(void)
 {
-	qDebug() << "\nII" PREFIX;
+	qDebug() << "\n";
+	qDebug() << SG_PREFIX_I;
 
 	if (!this->viewport->is_ready()) {
 		/* Viewport may not be ready during early stages of application's life. */
@@ -1036,7 +1036,7 @@ void Window::draw_tree_items(void)
 
 void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
-	qDebug() << "SLOT" PREFIX << "layer" << (qulonglong) uid;
+	qDebug() << SG_PREFIX_SLOT << "Draw layer with uid" << (qulonglong) uid;
 	/* TODO_HARD: draw only one layer, not all of them. */
 	this->draw_tree_items();
 }
@@ -1197,7 +1197,7 @@ void Window::create_ui(void)
 				this->toolbox->activate_tool_by_id(default_tool_id);
 			}
 		} else {
-			qDebug() << "EE: Window: Create UI: NULL generic tools group";
+			qDebug() << SG_PREFIX_E << "NULL generic tools group";
 		}
 	}
 
@@ -1225,7 +1225,7 @@ void Window::create_ui(void)
 			delete tools;
 
 			if (!tools_group) {
-				qDebug() << "EE: Window: Create UI: NULL layer tools group";
+				qDebug() << SG_PREFIX_E << "NULL layer tools group";
 				continue;
 			}
 
@@ -1264,7 +1264,7 @@ void Window::layer_tool_cb(QAction * qa)
 	/* Now handle newly selected tool. */
 	if (qa) {
 		const QString new_tool_id = qa->objectName();
-		qDebug() << SG_PREFIX_I << "setting 'release' cursor for tool" << new_tool_id;
+		qDebug() << SG_PREFIX_I << "Setting 'release' cursor for tool" << new_tool_id;
 
 		this->toolbox->activate_tool_by_id(new_tool_id);
 		this->viewport->setCursor(*this->toolbox->get_cursor_release(new_tool_id));
@@ -1288,7 +1288,7 @@ void Window::activate_tool_by_id(const QString & tool_id)
 
 void Window::pan_click(QMouseEvent * ev)
 {
-	qDebug() << "II: Window: pan click";
+	qDebug() << SG_PREFIX_I;
 	/* Set panning origin. */
 	this->pan_move_flag = false;
 	this->pan_pos = ScreenPos(ev->x(), ev->y());
@@ -1567,7 +1567,7 @@ void Window::closeEvent(QCloseEvent * ev)
 
 			/* If supersized - no need to save the enlarged width+height values. */
 			if (!(state_fullscreen || state_max)) {
-				qDebug() << "II: Window: Close Event: not saving window size";
+				qDebug() << SG_PREFIX_I << "Not saving window size";
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_WIDTH, this->width());
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
@@ -1733,7 +1733,7 @@ void Window::set_highlight_usage_cb(bool new_state)
 void Window::set_side_panel_visibility_cb(bool new_state)
 {
 	if (this->panel_dock->isVisible() != new_state) {
-		qDebug() << SG_PREFIX_I << "setting side panel visibility to" << new_state;
+		qDebug() << SG_PREFIX_I << "Setting side panel visibility to" << new_state;
 
 		this->panel_dock->setVisible(new_state);
 
@@ -1777,15 +1777,15 @@ void Window::zoom_cb(void)
 	QString debug_msg;
 
 	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
-		qDebug() << "DD" PREFIX << "Zoom In";
+		qDebug() << SG_PREFIX_D << "Zoom In";
 		debug_msg = "zoom in";
 		this->viewport->zoom_in();
 	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
-		qDebug() << "DD" PREFIX << "Zoom Out";
+		qDebug() << SG_PREFIX_D << "Zoom Out";
 		debug_msg = "zoom out";
 		this->viewport->zoom_out();
 	} else {
-		qDebug() << "EE" PREFIX << "invalid zoom key sequence" << seq;
+		qDebug() << SG_PREFIX_E << "Invalid zoom key sequence" << seq;
 		return;
 	}
 
@@ -1871,7 +1871,7 @@ void Window::show_layer_defaults_cb(void)
 	QAction * qa = (QAction *) QObject::sender();
 	LayerType layer_type = (LayerType) qa->data().toInt();
 
-	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << Layer::get_type_ui_label(layer_type);
+	qDebug() << SG_PREFIX_I << "Clicked \"layer defaults\" for layer type" << Layer::get_type_ui_label(layer_type);
 
 	if (Layer::get_interface(layer_type)->has_properties_dialog()) {
 		LayerDefaults::show_window(layer_type, this);
@@ -1890,7 +1890,7 @@ void Window::open_file_cb(void)
 	QAction * qa = (QAction *) QObject::sender();
 	const bool new_window = qa->data().toInt() == OPEN_FILE_IN_NEW_WINDOW;
 
-	QFileDialog file_selector(this, "Select a GPS data file to open");
+	QFileDialog file_selector(this, tr("Select a GPS data file to open"));
 
 	if (g_last_folder_files_url.isValid()) {
 		file_selector.setDirectoryUrl(g_last_folder_files_url);
@@ -2147,7 +2147,7 @@ void Window::update_recent_files(QString const & file_full_path)
 	SlavGPS::update_desktop_recent_documents(this, file_full_path, "text/x-gps-data");
 
 	/*
-	  TODO_LATER
+	  TODO_MAYBE
 	  - add file type filter? gtk_recent_filter_add_group(filter, "viking");
 	  - consider different sorting orders? gtk_recent_chooser_set_sort_type(GTK_RECENT_CHOOSER (menu), GTK_RECENT_SORT_MRU);
 	*/
@@ -2251,7 +2251,7 @@ QAction * Window::get_drawmode_action(ViewportDrawMode mode)
 		qa = this->qa_drawmode_utm;
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unexpected draw mode" << (int) mode;
+		qDebug() << SG_PREFIX_E << "Unexpected draw mode" << (int) mode;
 		break;
 	}
 
@@ -2650,7 +2650,7 @@ void Window::print_cb(void)
 void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 {
 	int level = qa->data().toInt();
-	qDebug() << "SLOT: Window: 'Zoom Changed' callback" << qa->text() << level;
+	qDebug() << SG_PREFIX_SLOT << "'Zoom Changed' callback" << qa->text() << level;
 
 	double zoom_request = pow(2, level - 5);
 
@@ -2773,7 +2773,7 @@ void Window::change_coord_mode_cb(QAction * qa)
 {
 	ViewportDrawMode drawmode = (ViewportDrawMode) qa->data().toInt();
 
-	qDebug() << "DD: Window: Coordinate mode changed to" << qa->text() << (int) drawmode;
+	qDebug() << SG_PREFIX_D << "Coordinate mode changed to" << qa->text() << (int) drawmode;
 
 	/* TODO_HARD: verify that this function changes mode in all the places that need to be updated. */
 
@@ -2843,7 +2843,7 @@ void Window::menu_view_pan_cb(void)
 {
 	const QAction * qa = (QAction *) QObject::sender();
 	const int direction = qa->data().toInt();
-	qDebug() << "SLOT: Window: Menu View Pan:" << qa->text() << direction;
+	qDebug() << SG_PREFIX_SLOT << "Menu View Pan:" << qa->text() << direction;
 
 	/* TODO_LATER: verify how this comment applies to Qt application. */
 
@@ -2853,7 +2853,7 @@ void Window::menu_view_pan_cb(void)
 	   viewport when Ctrl+<arrow> is received. */
 	Layer * layer = this->items_tree->get_selected_layer();
 	if (layer && layer->tree_view->is_editing_in_progress()) {
-		qDebug() << "SLOT: Window: Menu View Pan: editing in progress";
+		qDebug() << SG_PREFIX_SLOT << "Menu View Pan: editing in progress";
 		return;
 	}
 
@@ -2873,7 +2873,7 @@ void Window::menu_view_pan_cb(void)
 		v->set_center_from_screen_pos(0, v->get_height() / 2);
 		break;
 	default:
-		qDebug() << "EE: Window: unknown direction" << direction << "in" << __FUNCTION__ << __LINE__;
+		qDebug() << SG_PREFIX_E << "Unknown direction" << direction;;
 		break;
 	}
 
@@ -3355,7 +3355,7 @@ void Window::open_recent_file_cb(void)
 	const QString file_full_path = qa->data().toString();
 
 	if (file_full_path.isEmpty()) {
-		qDebug() << "EE" PREFIX << "file path from 'recent file' action is empty";
+		qDebug() << SG_PREFIX_E << "File path from 'recent file' action is empty";
 		return;
 	}
 
