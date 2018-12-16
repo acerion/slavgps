@@ -59,7 +59,7 @@ namespace SlavGPS {
 			Last
 		};
 
-		FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent);
+		FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent = NULL);
 		~FileSelectorWidget();
 
 		void preselect_file_full_path(const QString & file_path);
@@ -85,13 +85,14 @@ namespace SlavGPS {
 	private slots:
 		void open_browser_cb();
 
+		/* Handle new contents of input line, entered/edited manually by user. */
+		void handle_user_edit_in_input_line_cb(void);
+
 	private:
 		QFileDialog * file_dialog = NULL;
 		QLineEdit * line = NULL;
 		QPushButton * browse = NULL;
 		QHBoxLayout * hbox = NULL;
-
-		QString current_file_full_path;
 
 		FileTypeFilter file_type_filter = FileTypeFilter::Any;
 	};

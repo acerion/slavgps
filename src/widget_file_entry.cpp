@@ -21,17 +21,13 @@
 
 
 
-#include <cstring>
-
-
-
-
 #include <QDebug>
 
 
 
 
 #include "widget_file_entry.h"
+#include "globals.h"
 
 
 
@@ -41,20 +37,31 @@ using namespace SlavGPS;
 
 
 
-/* TODO_2_LATER: add copying of text edited in QLineEdit into this->current_file_full_path and this->file_dialog. */
+#define SG_MODULE "Widget File Entry"
+
+
+
+/*
+  https://www.qtcentre.org/threads/49434-QFileDialog-set-default-name
+  QFileDialog::selectFile(const QString &) only works with Qt's non-native file selection dialog.
+*/
+#define SG_SUPPORT_SELECT_FILE 1
 
 
 
 
-FileSelectorWidget::FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent_widget) : QWidget(parent_widget)
+FileSelectorWidget::FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent) : QWidget(parent)
 {
 	this->file_dialog = new QFileDialog();
 	this->file_dialog->setFileMode(mode);
 	this->file_dialog->setOptions(options);
 	this->file_dialog->setWindowTitle(title);
+#if SG_SUPPORT_SELECT_FILE
+	this->file_dialog->setOptions(QFileDialog::DontUseNativeDialog);
+#endif
 
 	this->line = new QLineEdit(this);
-	this->browse = new QPushButton("Browse", this);
+	this->browse = new QPushButton(tr("Browse"), this);
 
 
 	this->hbox = new QHBoxLayout;
@@ -68,6 +75,7 @@ FileSelectorWidget::FileSelectorWidget(enum QFileDialog::Option options, enum QF
 	this->setLayout(this->hbox);
 
 	connect(this->browse, SIGNAL(clicked()), this, SLOT(open_browser_cb()));
+	connect(this->line, SIGNAL (textEdited(const QString&)), this, SLOT (handle_user_edit_in_input_line_cb(void))); /* textEdited() - text edited only manually, not programmatically. */
 
 	/* Input line should be primary "focus receiver" because cursor
 	   blinking in input line has a good visibility. */
@@ -160,9 +168,9 @@ bool FileSelectorWidget::get_file_filter_string(FileTypeFilter file_type_filter,
 void FileSelectorWidget::open_browser_cb(void) /* Slot. */
 {
 	if (QDialog::Accepted == this->file_dialog->exec()) {
-		this->current_file_full_path = this->file_dialog->selectedFiles().at(0);
-		this->line->insert(this->current_file_full_path);
-		qDebug() << "II: Widget File Entry: clicking OK results in this file:" << this->current_file_full_path;
+		const QString selected_full_path = this->file_dialog->selectedFiles().at(0);
+		this->line->setText(selected_full_path);
+		qDebug() << SG_PREFIX_I << "Clicking OK results in this file:" << selected_full_path;
 		emit this->selection_is_made();
 	}
 }
@@ -170,13 +178,30 @@ void FileSelectorWidget::open_browser_cb(void) /* Slot. */
 
 
 
-void FileSelectorWidget::preselect_file_full_path(const QString & filename)
+void FileSelectorWidget::handle_user_edit_in_input_line_cb(void)
 {
-	this->current_file_full_path = filename;
+	const QString new_text = this->line->text();
+	qDebug() << SG_PREFIX_SLOT << "Handling new text edited by user:" << new_text;
+
 	if (this->file_dialog) {
-		this->file_dialog->selectFile(this->current_file_full_path);
+		this->file_dialog->selectFile(new_text);
+	} else {
+		qDebug() << SG_PREFIX_W << "No file dialog at this point!";
 	}
-	this->line->insert(this->current_file_full_path);
+}
+
+
+
+
+void FileSelectorWidget::preselect_file_full_path(const QString & full_path)
+{
+	qDebug() << SG_PREFIX_SLOT << "Preselecting path" << full_path;
+	if (this->file_dialog) {
+		this->file_dialog->selectFile(full_path);
+	} else {
+		qDebug() << SG_PREFIX_W << "No file dialog at this point!";
+	}
+	this->line->setText(full_path);
 }
 
 
@@ -184,16 +209,13 @@ void FileSelectorWidget::preselect_file_full_path(const QString & filename)
 
 QString FileSelectorWidget::get_selected_file_full_path(void) const
 {
-	QStringList selection = this->file_dialog->selectedFiles();
-	static QString empty("");
-
-	if (selection.size()) {
-		qDebug() << "II: Widget File Entry: will return" << selection.at(0) << "to caller";
-		return selection.at(0);
+	const QString result = this->line->text();
+	if (result.size()) {
+		qDebug() << SG_PREFIX_I << "Will return" << result << "to caller";
 	} else {
-		qDebug() << "II: Widget File Entry: will return empty string";
-		return empty;
+		qDebug() << SG_PREFIX_I << "Will return empty string";
 	}
+	return result;
 }
 
 
