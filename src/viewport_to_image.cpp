@@ -323,7 +323,7 @@ ViewportToImage::ViewportToImage(Viewport * new_viewport, ViewportToImage::SaveM
 	this->save_mode = new_save_mode;
 	this->window = new_window;
 	this->original_viking_zoom_level = this->viewport->get_viking_zoom_level();
-	this->scaled_viking_zoom_level = this->viewport->get_viking_zoom_level(); /* TODO: this value must be calculated based on value of re-scaling of viewport. */
+	this->scaled_viking_zoom_level = this->viewport->get_viking_zoom_level(); /* This value will be re-calculated by function called in ::run_dialog((), */
 
 	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, &this->scaled_width)) {
 		this->scaled_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
@@ -444,6 +444,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	}
 	qDebug() << SG_PREFIX_I << "Generated pixmap from scaled viewport, pixmap size =" << pixmap.width() << pixmap.height();
 
+
 	bool success = true;
 
 	if (this->save_mode == ViewportToImage::SaveMode::FileKMZ) {
@@ -456,7 +457,11 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 		}
 
 		const LatLonBBox bbox = this->viewport->get_bbox();
-		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west); /* TODO_2_LATER: handle returned value. */
+		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north, bbox.east, bbox.south, bbox.west);
+		if (0 != ans) {
+			qDebug() << SG_PREFIX_E << "Saving to kmz file failed with code" << ans;
+			success = false;
+		}
 	} else {
 		qDebug() << SG_PREFIX_I << "Saving pixmap to file" << file_full_path;
 		if (!pixmap.save(file_full_path, this->file_format == ViewportToImage::FileFormat::PNG ? "png" : "jpeg")) {
@@ -467,14 +472,14 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 	delete scaled_viewport;
 
-	const QString message = success ? QObject::tr("Image file generated.") : QObject::tr("Failed to generate image file.");
-
-	/* Cleanup. */
-
 	this->window->get_statusbar()->set_message(StatusBarField::Info, "");
-	Dialog::info(message, this->window);
-
-	return sg_ret::ok;
+	if (success) {
+		Dialog::info(QObject::tr("Image file generated."), this->window);
+		return sg_ret::ok;
+	} else {
+		Dialog::info(QObject::tr("Failed to generate image file."), this->window);
+		return sg_ret::err;
+	}
 }
 
 

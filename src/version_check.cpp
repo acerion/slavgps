@@ -77,7 +77,7 @@ void VersionCheck::new_version_available_dialog(const QString & new_version)
 	if (Dialog::yes_or_no(QObject::tr("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(new_version), this->window)) {
 
 		/* 'VIKING_URL' redirects to the Wiki, here we want to go the main site. */
-		open_url("http://sourceforge.net/projects/viking/"); /* TODO_LATER: provide correct URL for SlavGPS. */
+		open_url(SG_URL_MAIN_PAGE);
 	}
 
 	return;
@@ -95,7 +95,7 @@ void VersionCheck::run()
 
 	QTemporaryFile tmp_file;
 	// const char *file_full_path = strdup("VERSION");
-	if (!dl_handle.download_to_tmp_file(tmp_file, "http://sourceforge.net/projects/viking/files/VERSION")) { /* TODO_2_LATER: provide correct URL for SlavGPS. */
+	if (!dl_handle.download_to_tmp_file(tmp_file, SG_URL_VERSION_FILE)) {
 		return;
 	}
 

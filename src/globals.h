@@ -71,6 +71,13 @@ namespace SlavGPS {
 
 
 
+/* TODO_2_LATER: provide correct URLs for SlavGPS. */
+#define SG_URL_VERSION_FILE     "http://sourceforge.net/projects/viking/files/VERSION"
+#define SG_URL_MAIN_PAGE        "http://sourceforge.net/projects/viking/"
+
+
+
+
 } /* namespace SlavGPS */
 
 
