@@ -1662,23 +1662,25 @@ void TrackProfileDialog::checkbutton_toggle_cb(void)
 */
 QWidget * ProfileGraph::create_widgets_layout(TrackProfileDialog * dialog)
 {
+	QWidget * widget = new QWidget();
+	widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	widget->setMinimumSize(500, 300);
+	QLayout * old = widget->layout();
+	delete old;
+	qDeleteAll(widget->children());
+
+
 	this->main_vbox = new QVBoxLayout();
 	this->labels_grid = new QGridLayout();
 	this->controls_vbox = new QVBoxLayout();
 
-	this->viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	widget->setLayout(this->main_vbox);
 
 	this->main_vbox->addWidget(this->viewport);
 	this->main_vbox->addLayout(this->labels_grid);
 	this->main_vbox->addLayout(this->controls_vbox);
 
-
-	QWidget * widget = new QWidget(dialog);
-	widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	widget->setMinimumSize(500, 300);
-	QLayout * old = widget->layout();
-	delete old;
-	widget->setLayout(this->main_vbox);
+	this->viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	return widget;
 
@@ -1737,6 +1739,13 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 	this->trw = (LayerTRW *) new_trk->get_owning_layer();
 	this->trk = new_trk;
 	this->main_viewport = new_main_viewport;
+
+
+	QLayout * old = this->layout();
+	delete old;
+	qDeleteAll(this->children());
+	QVBoxLayout * vbox = new QVBoxLayout;
+	this->setLayout(vbox);
 
 
 	int profile_size_value;
@@ -1818,10 +1827,6 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 	connect(this->signal_mapper, SIGNAL (mapped(int)), this, SLOT (dialog_response_cb(int)));
 
 
-	QLayout * old = this->layout();
-	delete old;
-	QVBoxLayout * vbox = new QVBoxLayout;
-	this->setLayout(vbox);
 	vbox->addWidget(this->tabs);
 	vbox->addWidget(this->button_box);
 }
@@ -1834,17 +1839,17 @@ void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 	switch (this->geocanvas.x_domain) {
 	case GeoCanvasDomain::Distance:
 		this->labels.x_label = new QLabel(QObject::tr("Track Distance:"));
-		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
+		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
 	case GeoCanvasDomain::Time:
 		this->labels.x_label = new QLabel(QObject::tr("Time From Start:"));
-		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
+		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		/* Additional timestamp to provide more information in UI. */
 		this->labels.t_label = new QLabel(QObject::tr("Time/Date:"));
-		this->labels.t_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
+		this->labels.t_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 	default:
@@ -1856,25 +1861,25 @@ void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 	switch (this->geocanvas.y_domain) {
 	case GeoCanvasDomain::Elevation:
 		this->labels.y_label = new QLabel(QObject::tr("Track Height:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
 	case GeoCanvasDomain::Gradient:
 		this->labels.y_label = new QLabel(QObject::tr("Track Gradient:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
 	case GeoCanvasDomain::Speed:
 		this->labels.y_label = new QLabel(QObject::tr("Track Speed:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
 	case GeoCanvasDomain::Distance:
 		this->labels.y_label = new QLabel(QObject::tr("Track Distance:"));
-		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), dialog);
+		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 	default:
@@ -1886,23 +1891,22 @@ void ProfileGraph::configure_labels(TrackProfileDialog * dialog)
 	/* Use spacer item in last column to bring first two columns
 	   (with parameter's name and parameter's value) close
 	   together. */
-	QSpacerItem * spacer = new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum); /* Maximum horizontal stretch. */
 
 	int row = 0;
 	this->labels_grid->addWidget(this->labels.x_label, row, 0, Qt::AlignLeft);
 	this->labels_grid->addWidget(this->labels.x_value, row, 1, Qt::AlignRight);
-	this->labels_grid->addItem(spacer, row, 3);
+	this->labels_grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum), row, 3);
 	row++;
 
 	this->labels_grid->addWidget(this->labels.y_label, row, 0, Qt::AlignLeft);
 	this->labels_grid->addWidget(this->labels.y_value, row, 1, Qt::AlignRight);
-	this->labels_grid->addItem(spacer, row, 3);
+	this->labels_grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum), row, 3);
 	row++;
 
 	if (this->labels.t_value) {
 		this->labels_grid->addWidget(this->labels.t_label, row, 0, Qt::AlignLeft);
 		this->labels_grid->addWidget(this->labels.t_value, row, 1, Qt::AlignRight);
-		this->labels_grid->addItem(spacer, row, 3);
+		this->labels_grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum), row, 3);
 		row++;
 	}
 
