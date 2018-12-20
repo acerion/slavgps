@@ -1999,6 +1999,69 @@ bool Track::get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const
 
 
 
+
+bool Track::get_distances(std::vector<double> & distances) const
+{
+	if (this->trackpoints.empty()) {
+		return false;
+	}
+
+	qDebug() << SG_PREFIX_D << "Will reserve" << this->trackpoints.size() << "cells for distances";
+	distances.reserve(this->trackpoints.size());
+
+	double acc = 0.0;
+	int i = 0;
+
+	distances.push_back(acc);
+	i++;
+
+	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
+		const double delta = Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
+		acc += delta;
+
+		distances.push_back(acc);
+		i++;
+	}
+	qDebug() << SG_PREFIX_D << "Filled" << i << distances.size() << "cells with distances";
+
+	return true;
+}
+
+
+
+
+bool Track::get_speeds(std::vector<double> & speeds) const
+{
+	if (this->trackpoints.empty()) {
+		return false;
+	}
+
+	qDebug() << SG_PREFIX_D << "Will reserve" << this->trackpoints.size() << "cells for speeds";
+	speeds.reserve(this->trackpoints.size());
+
+	int i = 0;
+
+	speeds.push_back(0.0);
+	i++;
+
+	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
+		const double delta_d = Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
+		const time_t delta_t = (*iter)->timestamp.get_value() - (*std::prev(iter))->timestamp.get_value();
+		if (delta_t) {
+			speeds.push_back(delta_d/delta_t);
+		} else {
+			speeds.push_back(0.0);
+		}
+		i++;
+	}
+	qDebug() << SG_PREFIX_D << "Filled" << i << speeds.size() << "cells with speeds";
+
+	return true;
+}
+
+
+
+
 void Track::marshall(Pickle & pickle)
 {
 	pickle.put_raw_object((char *) this, sizeof (Track));
@@ -3462,6 +3525,218 @@ void Track::draw_tree_item(Viewport * viewport, bool highlight_selected, bool pa
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	parent_layer->painter->draw_track(this, viewport, item_is_selected && highlight_selected);
+}
+
+
+
+
+typedef struct screen_pos {
+	double x = 0.0;
+	double y = 0.0;
+} screen_pos;
+
+
+
+
+sg_ret Track::draw_e_ft(Viewport * viewport, struct my_data * data)
+{
+	QPen pen;
+	pen.setColor(this->has_color ? this->color : "blue");
+	pen.setWidth(1);
+
+
+	Altitude min_alt;
+	Altitude max_alt;
+	if (!this->get_minmax_alt(min_alt, max_alt)) {
+		qDebug() << SG_PREFIX_N << "Can't get altitudes";
+		return sg_ret::err;
+	}
+	if (!(min_alt.is_valid() && max_alt.is_valid())) {
+		qDebug() << SG_PREFIX_N << "Altitudes are invalid";
+		return sg_ret::err;
+	}
+
+
+	const double margin = 0.05;
+	const double alt_min = min_alt.get_value() - margin * min_alt.get_value();
+	const double alt_max = max_alt.get_value() + margin * max_alt.get_value();
+	const double visible_range = alt_max - alt_min;
+
+#if 0
+	const int bottom = viewport->get_graph_bottom_edge();
+#else
+	const int bottom = data->height;
+#endif
+
+	const double x_scale = 1.0 * this->trackpoints.size() / data->width;
+
+	qDebug() << __FUNCTION__ << "+++++++++++++++++++";
+
+	screen_pos cur_pos;
+	screen_pos last_pos;
+
+	last_pos.x = 0.0;
+	last_pos.y = bottom;
+
+	double col = 0.0;
+	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
+		const double value = (*iter)->altitude.is_valid() ? (*iter)->altitude.get_value() : 0.0;
+
+		cur_pos.x = col;
+		cur_pos.y = bottom - bottom * (value - alt_min) / visible_range;
+
+		viewport->draw_line(pen,
+				    last_pos.x, last_pos.y,
+				    cur_pos.x, cur_pos.y);
+
+		last_pos = cur_pos;
+		col = col + (1 / x_scale);
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret Track::draw_d_ft(Viewport * viewport, struct my_data * data)
+{
+	QPen pen;
+	pen.setColor(this->has_color ? this->color : "blue");
+	pen.setWidth(1);
+
+
+	std::vector<double> distances;
+	if (!this->get_distances(distances) || 0 == distances.size()) {
+		qDebug() << SG_PREFIX_N << "Can't get distances";
+		return sg_ret::err;
+	}
+
+	const double margin = 0.05;
+	const double dist_min = distances[0] - margin * distances[0];
+	const double dist_max = distances[distances.size() - 1] + margin * distances[distances.size() - 1];
+	const double visible_range = dist_max - dist_min;
+
+#if 0
+	const int bottom = viewport->get_graph_bottom_edge();
+#else
+	const int bottom = data->height;
+#endif
+
+	const double x_scale = 1.0 * distances.size() / data->width;
+
+	qDebug() << __FUNCTION__ << "+++++++++++++++++++";
+
+	screen_pos cur_pos;
+	screen_pos last_pos;
+
+	last_pos.x = 0.0;
+	last_pos.y = bottom;
+
+	double col = 0.0;
+	for (auto iter = distances.begin(); iter != distances.end(); iter++) {
+		const double value = *iter;
+
+		cur_pos.x = col;
+		cur_pos.y = bottom - bottom * (value - dist_min) / visible_range;
+
+		viewport->draw_line(pen,
+				    last_pos.x, last_pos.y,
+				    cur_pos.x, cur_pos.y);
+
+		last_pos = cur_pos;
+		col = col + (1 / x_scale);
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+sg_ret Track::draw_v_ft(Viewport * viewport, struct my_data * data)
+{
+	QPen pen;
+	pen.setColor(this->has_color ? this->color : "blue");
+	pen.setWidth(1);
+
+
+	std::vector<double> values_uu;
+	if (!this->get_speeds(values_uu)) {
+		qDebug() << SG_PREFIX_N << "Can't get speeds";
+		return sg_ret::err;
+	}
+
+	const size_t n_values = values_uu.size();
+	if (0 == n_values) {
+		qDebug() << SG_PREFIX_N << "There were zero speeds";
+		return sg_ret::err;
+	}
+
+
+	const double margin = 0.05;
+	const double min_value_uu = 0; // TODO: correct calculation
+	const double max_value_uu = 6; // TODO: correct calculation
+	const double visible_values_range_uu = max_value_uu - min_value_uu;
+
+
+#if 0
+	const int bottom = viewport->get_graph_bottom_edge();
+#else
+	const int bottom = data->height;
+#endif
+
+	const double x_scale = 1.0 * n_values / data->width;
+
+	qDebug() << __FUNCTION__ << "+++++++++++++++++++";
+
+	screen_pos cur_pos;
+	screen_pos last_pos;
+
+	last_pos.x = 0.0;
+	last_pos.y = bottom;
+
+	double col = 0.0;
+	for (auto iter = values_uu.begin(); iter != values_uu.end(); iter++) {
+		const auto current_value_uu = *iter;
+
+		cur_pos.x = col;
+		cur_pos.y = bottom - bottom * (current_value_uu - min_value_uu) / visible_values_range_uu;
+
+		viewport->draw_line(pen,
+				    last_pos.x, last_pos.y,
+				    cur_pos.x, cur_pos.y);
+
+		last_pos = cur_pos;
+		col = col + (1 / x_scale);
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret Track::draw_tree_item(Viewport * viewport, struct my_data * in_data, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain)
+{
+	if (x_domain != GeoCanvasDomain::Time) {
+		qDebug() << SG_PREFIX_W << "Can't draw non-time based graph";
+		return sg_ret::err;
+	}
+
+	switch (y_domain) {
+	case GeoCanvasDomain::Elevation:
+		return this->draw_e_ft(viewport, in_data);
+		break;
+	case GeoCanvasDomain::Distance:
+		return this->draw_d_ft(viewport, in_data);
+		break;
+	case GeoCanvasDomain::Speed:
+		return this->draw_v_ft(viewport, in_data);
+		break;
+	default:
+		qDebug() << SG_PREFIX_W << "Can't draw graphs of this y-domain";
+		return sg_ret::err;
+	}
 }
 
 

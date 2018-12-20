@@ -1310,7 +1310,15 @@ sg_ret ProfileGraph::draw_graph(Track * trk)
 	/* Clear before redrawing. */
 	this->viewport->clear();
 
-	this->draw_function_values();
+
+
+     	struct my_data data;
+	data.height = this->height;
+	data.width = this->width;
+
+	if (sg_ret::err == trk->draw_tree_item(this->viewport, &data, this->geocanvas.x_domain, this->geocanvas.y_domain)) {
+		this->draw_function_values();
+	}
 
 	/* Draw grid on top of graph of values. */
 	this->draw_x_grid(trk);

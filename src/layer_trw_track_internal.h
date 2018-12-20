@@ -62,8 +62,18 @@ namespace SlavGPS {
 	class TrackProfileDialog;
 
 	enum class SGFileType;
+	enum class GeoCanvasDomain;
 
 	class LayerTRW;
+
+
+
+
+	/* Temporary. */
+	struct my_data {
+		int height;
+		int width;
+	};
 
 
 
@@ -269,7 +279,10 @@ namespace SlavGPS {
 		Trackpoint * get_tp_last() const;
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
 		Trackpoint * get_tp(int idx) const;
+
 		bool get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const;
+		bool get_distances(std::vector<double> & distances) const;
+		bool get_speeds(std::vector<double> & speeds) const;
 
 		TrackData make_track_data_altitude_over_distance(int compressed_n_points) const;
 		TrackData make_track_data_gradient_over_distance(int compressed_n_points) const;
@@ -339,6 +352,7 @@ namespace SlavGPS {
 		bool handle_selection_in_tree(void);
 
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		sg_ret draw_tree_item(Viewport * viewport, struct my_data * data, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
 
 		QString sublayer_rename_request(const QString & new_name);
 
@@ -384,6 +398,10 @@ namespace SlavGPS {
 		void recalculate_bbox_last_tp();
 		TrackData make_values_distance_over_time_helper(void) const;
 		TrackData make_values_altitude_over_time_helper(void) const;
+
+		sg_ret draw_e_ft(Viewport * viewport, struct my_data * in_data);
+		sg_ret draw_d_ft(Viewport * viewport, struct my_data * in_data);
+		sg_ret draw_v_ft(Viewport * viewport, struct my_data * in_data);
 
 		Trackpoint * tps[2] = { NULL, NULL };
 
