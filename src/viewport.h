@@ -96,6 +96,9 @@ namespace SlavGPS {
 		int x = 0;
 		int y = 0;
 
+		void set(int new_x, int new_y);
+		void set(double new_x, double new_y);
+
 		bool operator==(const ScreenPos & pos) const;
 
 		static ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);

@@ -178,8 +178,8 @@ namespace SlavGPS {
 
 
 	private:
-		sg_ret draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x);
-		sg_ret draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x);
+		sg_ret get_cursor_pos_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, ScreenPos & selected_pos, ScreenPos & current_pos);
+		sg_ret get_cursor_pos_by_time(QMouseEvent * ev, ProfileGraph * graph, ScreenPos & selected_pos, ScreenPos & current_pos);
 
 		void handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev);
 

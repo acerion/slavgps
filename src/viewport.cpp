@@ -2324,6 +2324,24 @@ void Viewport::draw_simple_crosshair(const ScreenPos & pos)
 
 
 
+void ScreenPos::set(int new_x, int new_y)
+{
+	this->x = new_x;
+	this->y = new_y;
+}
+
+
+
+
+void ScreenPos::set(double new_x, double new_y)
+{
+	this->x = new_x;
+	this->y = new_y;
+}
+
+
+
+
 ScreenPos ScreenPos::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
 {
 	return ScreenPos((pos1.x + pos2.x) / 2, (pos1.y + pos2.y) / 2);

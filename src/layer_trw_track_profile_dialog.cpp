@@ -425,10 +425,10 @@ static bool set_center_at_graph_position(int event_x,
 	bool found = false;
 	switch (x_domain) {
 	case GeoCanvasDomain::Time:
-		found = trk->set_tp_by_percentage_time((double) x / graph_width, NULL, SELECTED);
+		found = trk->select_tp_by_percentage_time((double) x / graph_width, SELECTED);
 		break;
 	case GeoCanvasDomain::Distance:
-		found = trk->set_tp_by_percentage_dist((double) x / graph_width, NULL, SELECTED);
+		found = trk->select_tp_by_percentage_dist((double) x / graph_width, NULL, SELECTED);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) x_domain;
@@ -525,6 +525,10 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 	}
 
 	this->button_split_at_marker->setEnabled(true);
+
+
+
+
 
 
 	/* Attempt to redraw marker on all graphs. Notice that this
@@ -629,34 +633,43 @@ double ProfileGraph::get_pos_y(double pos_x)
 
 
 /* Draw cursor marks on a graph that is a function of distance. */
-sg_ret TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, int & current_pos_x)
+sg_ret TrackProfileDialog::get_cursor_pos_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, ScreenPos & selected_pos, ScreenPos & current_pos)
 {
 	if (!graph->track_data.valid) {
 		qDebug() << SG_PREFIX_E << "Not drawing cursor, data invalid";
 		return sg_ret::err;
 	}
 
-	current_pos_x = graph->get_cursor_pos_x(ev);
-	if (current_pos_x < 0) {
-		/* Not an error? */
-		return sg_ret::ok;
+	{
+		const int current_pos_x = graph->get_cursor_pos_x(ev);
+		if (current_pos_x < 0) {
+			/* Not an error? */
+			return sg_ret::ok;
+		}
+
+		this->trk->select_tp_by_percentage_dist((double) current_pos_x / graph->width, &meters_from_start, CURRENT);
+
+		const double current_pos_y = graph->get_pos_y(current_pos_x);
+
+		current_pos.set(current_pos_x, (int) current_pos_y);
 	}
 
-	this->trk->set_tp_by_percentage_dist((double) current_pos_x / graph->width, &meters_from_start, CURRENT);
+	{
+		/* TODO: there is no need to find a selected
+		   trackpoint every time a cursor moves. Only current
+		   trackpoint (trackpoint under moving cursor mouse)
+		   is changing. The trackpoint selected by previous
+		   cursor click is does not change. */
+		if (true || this->is_selected_drawn) {
+			const double pc = this->trk->get_tp_distance_percent(SELECTED);
+			if (!std::isnan(pc)) {
+				const double selected_pos_x = pc * graph->width;
+				const double selected_pos_y = graph->get_pos_y(selected_pos_x);
 
-	double current_pos_y = graph->get_pos_y(current_pos_x);
-
-	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
-	double selected_pos_y = -1.0;
-	if (true || this->is_selected_drawn) {
-		const double pc = this->trk->get_tp_distance_percent(SELECTED);
-		if (!std::isnan(pc)) {
-			selected_pos_x = pc * graph->width;
-			selected_pos_y = graph->get_pos_y(selected_pos_x);
+				selected_pos.set(selected_pos_x, selected_pos_y);
+			}
 		}
 	}
-
-	graph->draw_marks(ScreenPos(selected_pos_x, selected_pos_y), ScreenPos(current_pos_x, current_pos_y), this->is_selected_drawn, this->is_current_drawn);
 
 	return sg_ret::ok;
 }
@@ -664,35 +677,45 @@ sg_ret TrackProfileDialog::draw_cursor_by_distance(QMouseEvent * ev, ProfileGrap
 
 
 
-/* Draw cursor marks on a graph that is a function of time. */
-sg_ret TrackProfileDialog::draw_cursor_by_time(QMouseEvent * ev, ProfileGraph * graph, time_t & seconds_from_start, int & current_pos_x)
+/* Get cursor positions on a graph that is a function of time. */
+sg_ret TrackProfileDialog::get_cursor_pos_by_time(QMouseEvent * ev, ProfileGraph * graph, ScreenPos & selected_pos, ScreenPos & current_pos)
 {
 	if (!graph->track_data.valid) {
 		qDebug() << SG_PREFIX_E << "Not drawing cursor, data invalid";
 		return sg_ret::err;
 	}
 
-	current_pos_x = graph->get_cursor_pos_x(ev);
-	if (current_pos_x < 0) {
-		/* Not an error? */
-		return sg_ret::ok;
+	{
+		const int current_pos_x = graph->get_cursor_pos_x(ev);
+		if (current_pos_x < 0) {
+			/* Not an error? */
+			return sg_ret::ok;
+		}
+
+		this->trk->select_tp_by_percentage_time((double) current_pos_x / graph->width, CURRENT);
+
+
+		const double current_pos_y = graph->get_pos_y(current_pos_x);
+
+		current_pos.set(current_pos_x, (int) current_pos_y);
 	}
 
-	this->trk->set_tp_by_percentage_time((double) current_pos_x / graph->width, &seconds_from_start, CURRENT);
 
-	double current_pos_y = graph->get_pos_y(current_pos_x);
-
-	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
-	double selected_pos_y = -1.0;
-	if (true || this->is_selected_drawn) {
-		const double pc = this->trk->get_tp_time_percent(SELECTED);
-		if (!std::isnan(pc)) {
-			selected_pos_x = pc * graph->width;
-			selected_pos_y = graph->get_pos_y(selected_pos_x);
+	{
+		/* TODO: there is no need to find a selected
+		   trackpoint every time a cursor moves. Only current
+		   trackpoint (trackpoint under moving cursor mouse)
+		   is changing. The trackpoint selected by previous
+		   cursor click is does not change. */
+		if (true || this->is_selected_drawn) {
+			const double pc = this->trk->get_tp_time_percent(SELECTED);
+			if (!std::isnan(pc)) {
+				const double selected_pos_x = pc * graph->width;
+				const double selected_pos_y = graph->get_pos_y(selected_pos_x);
+				selected_pos.set(selected_pos_x, selected_pos_y);
+			}
 		}
 	}
-
-	graph->draw_marks(ScreenPos(selected_pos_x, selected_pos_y), ScreenPos(current_pos_x, current_pos_y), this->is_selected_drawn, this->is_current_drawn);
 
 	return sg_ret::ok;
 }
@@ -817,14 +840,17 @@ void TrackProfileDialog::handle_cursor_move_sd_cb(Viewport * viewport, QMouseEve
 void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev)
 {
 	double meters_from_start = 0.0;
-	time_t seconds_from_start = 0;
-	int current_pos_x = 0;
+	ScreenPos selected_pos;
+	ScreenPos current_pos;
+
 
 	switch (graph->geocanvas.x_domain) {
 	case GeoCanvasDomain::Distance:
-		if (sg_ret::ok != this->draw_cursor_by_distance(ev, graph, meters_from_start, current_pos_x)) {
+		if (sg_ret::ok != this->get_cursor_pos_by_distance(ev, graph, meters_from_start, selected_pos, current_pos)) {
 			return;
 		}
+		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
+
 		if (graph->labels.x_value) {
 			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
 			graph->labels.x_value->setText(distance.convert_to_unit(Preferences::get_unit_distance()).to_string());
@@ -832,10 +858,15 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 		break;
 
 	case GeoCanvasDomain::Time:
-		if (sg_ret::ok != this->draw_cursor_by_time(ev, graph, seconds_from_start, current_pos_x)) {
+		if (sg_ret::ok != this->get_cursor_pos_by_time(ev, graph, selected_pos, current_pos)) {
 			return;
 		}
+		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
+
+
 		if (graph->labels.x_value) {
+			time_t seconds_from_start = 0;
+			this->trk->get_tp_relative_timestamp(seconds_from_start, CURRENT);
 			time_label_update(graph->labels.x_value, seconds_from_start);
 		}
 
@@ -847,7 +878,7 @@ void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * 
 	};
 
 
-	double y = graph->track_data.y[current_pos_x];
+	double y = graph->track_data.y[current_pos.x];
 	switch (graph->geocanvas.y_domain) {
 	case GeoCanvasDomain::Speed:
 		if (graph->labels.y_value) {
@@ -1067,7 +1098,7 @@ void ProfileGraphET::draw_additional_indicators(Track * trk)
 
 		for (int i = 0; i < this->width; i++) {
 			/* This could be slow doing this each time... */
-			const bool found_tp = trk->set_tp_by_percentage_time(((double) i / (double) this->width), NULL, CURRENT);
+			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) this->width), CURRENT);
 			if (found_tp) {
 				const Trackpoint * tp = trk->get_tp(CURRENT);
 				const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);

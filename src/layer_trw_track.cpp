@@ -1726,9 +1726,9 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 
 
 /* By Alex Foobarian. */
-bool Track::set_tp_by_percentage_dist(double reldist, double *meters_from_start, int idx)
+bool Track::select_tp_by_percentage_dist(double reldist, double *meters_from_start, int tp_index)
 {
-	this->tps[idx] = NULL;
+	this->tps[tp_index] = NULL;
 	if (this->trackpoints.empty()) {
 		return false;
 	}
@@ -1756,7 +1756,7 @@ bool Track::set_tp_by_percentage_dist(double reldist, double *meters_from_start,
 			if (meters_from_start) {
 				*meters_from_start = last_dist;
 			}
-			this->tps[idx] = *last_iter;
+			this->tps[tp_index] = *last_iter;
 			return true;
 		} else {
 			return false;
@@ -1777,16 +1777,16 @@ bool Track::set_tp_by_percentage_dist(double reldist, double *meters_from_start,
 		}
 	}
 
-	this->tps[idx] = *iter;
+	this->tps[tp_index] = *iter;
 	return true;
 }
 
 
 
 
-bool Track::set_tp_by_percentage_time(double reltime, time_t *seconds_from_start, int idx)
+bool Track::select_tp_by_percentage_time(double reltime, int tp_index)
 {
-	this->tps[idx] = NULL;
+	this->tps[tp_index] = NULL;
 	if (this->trackpoints.empty()) {
 		return false;
 	}
@@ -1825,12 +1825,25 @@ bool Track::set_tp_by_percentage_time(double reltime, time_t *seconds_from_start
 		return false;
 	}
 
-	if (seconds_from_start) {
-		*seconds_from_start = (*iter)->timestamp.get_value() - (*this->trackpoints.begin())->timestamp.get_value();
+
+
+	this->tps[tp_index] = *iter;
+	return true;
+}
+
+
+
+
+sg_ret Track::get_tp_relative_timestamp(time_t & seconds_from_start, int tp_index)
+{
+	Trackpoint * tp = this->tps[tp_index];
+	if (NULL == tp) {
+		return sg_ret::err;
 	}
 
-	this->tps[idx] = *iter;
-	return true;
+	seconds_from_start = tp->timestamp.get_value() - (*this->trackpoints.begin())->timestamp.get_value();
+
+	return sg_ret::ok;
 }
 
 

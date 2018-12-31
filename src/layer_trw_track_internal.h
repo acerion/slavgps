@@ -270,8 +270,12 @@ namespace SlavGPS {
 
 		bool get_total_elevation_gain(Altitude & delta_up, Altitude & down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
-		bool set_tp_by_percentage_dist(double reldist, double *meters_from_start, int index);
-		bool set_tp_by_percentage_time(double reldist, time_t *seconds_from_start, int index);
+
+		bool select_tp_by_percentage_dist(double reldist, double *meters_from_start, int tp_index);
+		bool select_tp_by_percentage_time(double reldist, int tp_index);
+
+		sg_ret get_tp_relative_timestamp(time_t & seconds_from_start, int tp_index);
+
 		Trackpoint * get_tp_by_max_speed() const;
 		Trackpoint * get_tp_by_max_alt() const;
 		Trackpoint * get_tp_by_min_alt() const;
