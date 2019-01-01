@@ -78,26 +78,13 @@ namespace SlavGPS {
 
 
 
-	enum class TrackProfileType {
-		ED, /* ed = elevation as a function of distance. */
-		GD, /* gd = gradient as a function of distance. */
-		ST, /* st = speed as a function of time. */
-		DT, /* dt = distance as a function of time. */
-		ET, /* et = elevation as a function of time. */
-		SD, /* sd = speed as a function of distance. */
-
-		MAX,
-	};
-
-
-
-
 	enum class GeoCanvasDomain {
-		Time,
+		Time = 0,
 		Elevation,
 		Distance,
 		Speed,
 		Gradient,
+		Max
 	};
 
 
@@ -139,8 +126,6 @@ namespace SlavGPS {
 		TrackProfileDialog(QString const & title, Track * trk, Viewport * main_viewport, QWidget * parent = NULL);
 		~TrackProfileDialog();
 
-		void handle_mouse_button_release(Viewport * viewport, QMouseEvent * event, ProfileGraph * graph);
-
 		void clear_image(QPixmap * pix);
 
 		void draw_all_graphs(bool resized);
@@ -149,11 +134,16 @@ namespace SlavGPS {
 
 		sg_ret draw_single_graph(ProfileGraph * graph);
 
+		ProfileGraph * get_current_graph(void) const;
+
 
 		LayerTRW * trw = NULL;
 		Viewport * main_viewport = NULL;
 		Track * trk = NULL;
 
+		/* 1D array to be used as (sparse) 2D array.  With 2D
+		   array, indexed by x/y domains, we can have all
+		   kinds of graphs. */
 		std::vector<ProfileGraph *> graphs;
 
 	private slots:
@@ -162,26 +152,14 @@ namespace SlavGPS {
 		void destroy_cb(void);
 		bool paint_to_viewport_cb(Viewport * viewport);
 
-		void handle_cursor_move_ed_cb(Viewport * viewport, QMouseEvent * event);
-		void handle_cursor_move_gd_cb(Viewport * viewport, QMouseEvent * event);
-		void handle_cursor_move_st_cb(Viewport * viewport, QMouseEvent * event);
-		void handle_cursor_move_dt_cb(Viewport * viewport, QMouseEvent * event);
-		void handle_cursor_move_et_cb(Viewport * viewport, QMouseEvent * event);
-		void handle_cursor_move_sd_cb(Viewport * viewport, QMouseEvent * event);
-
-		bool track_ed_release_cb(Viewport * viewport, QMouseEvent * event);
-		bool track_gd_release_cb(Viewport * viewport, QMouseEvent * event);
-		bool track_st_release_cb(Viewport * viewport, QMouseEvent * event);
-		bool track_dt_release_cb(Viewport * viewport, QMouseEvent * event);
-		bool track_et_release_cb(Viewport * viewport, QMouseEvent * event);
-		bool track_sd_release_cb(Viewport * viewport, QMouseEvent * event);
-
+		void handle_cursor_move_cb(Viewport * viewport, QMouseEvent * ev);
+		void handle_mouse_button_release_cb(Viewport * viewport, QMouseEvent * event);
 
 	private:
 		sg_ret get_cursor_pos_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, ScreenPos & selected_pos, ScreenPos & current_pos);
 		sg_ret get_cursor_pos_by_time(QMouseEvent * ev, ProfileGraph * graph, ScreenPos & selected_pos, ScreenPos & current_pos);
 
-		void handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev);
+
 
 		/* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
 		bool is_selected_drawn = false;
@@ -213,7 +191,7 @@ namespace SlavGPS {
 
 	class ProfileGraph {
 	public:
-		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileType profile_type, TrackProfileDialog * dialog);
+		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileDialog * dialog);
 		virtual ~ProfileGraph();
 
 		virtual void draw_additional_indicators(Track * trk) {};
@@ -250,6 +228,8 @@ namespace SlavGPS {
 		void draw_grid_horizontal_line(int pos_y, const QString & label);
 		void draw_grid_vertical_line(int pos_x, const QString & label);
 
+		bool has_supported_domains(void) const;
+
 
 		void draw_x_grid(const Track * trk);
 		void draw_y_grid(void);
@@ -259,7 +239,6 @@ namespace SlavGPS {
 
 		QString get_y_grid_label(float value);
 
-		TrackProfileType profile_type = TrackProfileType::MAX;
 		Viewport * viewport = NULL;
 		PropSaved saved_img;
 
@@ -306,81 +285,87 @@ namespace SlavGPS {
 
 
 
+	/* ET = elevation as a function of time. */
 	class ProfileGraphET : public ProfileGraph {
 	public:
 		ProfileGraphET(TrackProfileDialog * dialog);
 		~ProfileGraphET() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog);
-		void save_values(void);
+		void configure_controls(TrackProfileDialog * dialog) override;
+		void save_values(void) override;
 	private:
 		QCheckBox * show_dem_cb = NULL;
 		QCheckBox * show_speed_cb = NULL;
 	};
 
 
+	/* SD = speed as a function of distance. */
 	class ProfileGraphSD : public ProfileGraph {
 	public:
 		ProfileGraphSD(TrackProfileDialog * dialog);
 		~ProfileGraphSD() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog);
-		void save_values(void);
+		void configure_controls(TrackProfileDialog * dialog) override;
+		void save_values(void) override;
 	private:
 		QCheckBox * show_gps_speed_cb = NULL;
 	};
 
 
+	/* ED = elevation as a function of distance. */
 	class ProfileGraphED : public ProfileGraph {
 	public:
 		ProfileGraphED(TrackProfileDialog * dialog);
 		~ProfileGraphED() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog);
-		void save_values(void);
+		void configure_controls(TrackProfileDialog * dialog) override;
+		void save_values(void) override;
 	private:
 		QCheckBox * show_dem_cb = NULL;
 		QCheckBox * show_gps_speed_cb = NULL;
 	};
 
 
+	/* GD = gradient as a function of distance. */
 	class ProfileGraphGD : public ProfileGraph {
 	public:
 		ProfileGraphGD(TrackProfileDialog * dialog);
 		~ProfileGraphGD() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog);
-		void save_values(void);
+		void configure_controls(TrackProfileDialog * dialog) override;
+		void save_values(void) override;
 	private:
 		QCheckBox * show_gps_speed_cb = NULL;
 	};
 
 
+	/* ST = speed as a function of time. */
 	class ProfileGraphST : public ProfileGraph {
 	public:
 		ProfileGraphST(TrackProfileDialog * dialog);
 		~ProfileGraphST() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog);
-		void save_values(void);
+		void configure_controls(TrackProfileDialog * dialog) override;
+		void save_values(void) override;
 	private:
 		QCheckBox * show_gps_speed_cb = NULL;
 	};
 
 
+	/* DT = distance as a function of time. */
 	class ProfileGraphDT : public ProfileGraph {
 	public:
 		ProfileGraphDT(TrackProfileDialog * dialog);
 		~ProfileGraphDT() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog);
-		void save_values(void);
+		void configure_controls(TrackProfileDialog * dialog) override;
+		void save_values(void) override;
 	private:
 		QCheckBox * show_speed_cb = NULL;
 	};

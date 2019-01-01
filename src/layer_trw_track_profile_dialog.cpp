@@ -132,7 +132,9 @@ static QString get_graph_title(void);
 TrackProfileDialog::~TrackProfileDialog()
 {
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
-		delete *iter;
+		if (*iter) {
+			delete *iter;
+		}
 	}
 }
 
@@ -506,15 +508,32 @@ sg_ret ProfileGraph::draw_marks(const ScreenPos & selected_pos, const ScreenPos 
 
 
 
+ProfileGraph * TrackProfileDialog::get_current_graph(void) const
+{
+	const int tab_idx = this->tabs->currentIndex();
+	QWidget * page = this->tabs->widget(tab_idx);
+	const int x_domain = page->property("x_domain").toInt();
+	const int y_domain = page->property("y_domain").toInt();
+	ProfileGraph * graph = this->graphs[(y_domain * (int) GeoCanvasDomain::Max) + x_domain];
+	assert (NULL != graph);
+
+	return graph;
+}
+
+
+
+
 /**
    React to mouse button release
 
    Find a trackpoint corresponding to cursor position when button was released.
    Draw marking for this trackpoint.
 */
-void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouseEvent * ev, ProfileGraph * graph)
+void TrackProfileDialog::handle_mouse_button_release_cb(Viewport * viewport, QMouseEvent * ev)
 {
+	ProfileGraph * graph = this->get_current_graph();
 	assert (graph->viewport == viewport);
+
 
 	const int current_pos_x = graph->get_cursor_pos_x(ev);
 	const bool found_tp = set_center_at_graph_position(current_pos_x, this->trw, this->main_viewport, this->trk, graph->geocanvas.x_domain, graph->width);
@@ -527,10 +546,6 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 	this->button_split_at_marker->setEnabled(true);
 
 
-
-
-
-
 	/* Attempt to redraw marker on all graphs. Notice that this
 	   does not redraw full graphs, just marks.
 
@@ -538,6 +553,9 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 	   release' event reflected in all graphs. */
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
 		ProfileGraph * a_graph = *iter;
+		if (!a_graph) {
+			continue;
+		}
 		if (!a_graph->viewport) {
 			continue;
 		}
@@ -556,60 +574,6 @@ void TrackProfileDialog::handle_mouse_button_release(Viewport * viewport, QMouse
 	this->button_split_at_marker->setEnabled(this->is_selected_drawn);
 
 	return;
-}
-
-
-
-
-bool TrackProfileDialog::track_ed_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
-{
-	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::ED]);
-	return true;
-}
-
-
-
-
-bool TrackProfileDialog::track_gd_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
-{
-	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::GD]);
-	return true;
-}
-
-
-
-
-bool TrackProfileDialog::track_st_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
-{
-	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::ST]);
-	return true;
-}
-
-
-
-
-bool TrackProfileDialog::track_dt_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
-{
-	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::DT]);
-	return true;
-}
-
-
-
-
-bool TrackProfileDialog::track_et_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
-{
-	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::ET]);
-	return true;
-}
-
-
-
-
-bool TrackProfileDialog::track_sd_release_cb(Viewport * viewport, QMouseEvent * ev) /* Slot. */
-{
-	this->handle_mouse_button_release(viewport, ev, this->graphs[(int) TrackProfileType::SD]);
-	return true;
 }
 
 
@@ -723,30 +687,6 @@ sg_ret TrackProfileDialog::get_cursor_pos_by_time(QMouseEvent * ev, ProfileGraph
 
 
 
-void TrackProfileDialog::handle_cursor_move_ed_cb(Viewport * viewport, QMouseEvent * ev)
-{
-	const int index = (int) TrackProfileType::ED;
-	assert (this->graphs[index]->viewport == viewport);
-
-	this->handle_cursor_move(this->graphs[index], ev);
-	return;
-}
-
-
-
-
-void TrackProfileDialog::handle_cursor_move_gd_cb(Viewport * viewport, QMouseEvent * ev)
-{
-	const int index = (int) TrackProfileType::GD;
-	assert (this->graphs[index]->viewport == viewport);
-
-	this->handle_cursor_move(this->graphs[index], ev);
-	return;
-}
-
-
-
-
 void time_label_update(QLabel * label, time_t seconds_from_start)
 {
 	unsigned int h = seconds_from_start/3600;
@@ -783,62 +723,12 @@ void real_time_label_update(ProfileGraph * graph, Track * trk)
 
 
 
-void TrackProfileDialog::handle_cursor_move_st_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	const int index = (int) TrackProfileType::ST;
-	assert (this->graphs[index]->viewport == viewport);
-
-	this->handle_cursor_move(this->graphs[index], ev);
-	return;
-}
+	ProfileGraph * graph = this->get_current_graph();
+	assert (graph->viewport == viewport);
 
 
-
-
-/**
- * Update labels and marker on mouse moves in the distance/time graph.
- */
-void TrackProfileDialog::handle_cursor_move_dt_cb(Viewport * viewport, QMouseEvent * ev)
-{
-	const int index = (int) TrackProfileType::DT;
-	assert (this->graphs[index]->viewport == viewport);
-
-	this->handle_cursor_move(this->graphs[index], ev);
-	return;
-}
-
-
-
-
-/**
- * Update labels and marker on mouse moves in the elevation/time graph.
- */
-void TrackProfileDialog::handle_cursor_move_et_cb(Viewport * viewport, QMouseEvent * ev)
-{
-	const int index = (int) TrackProfileType::ET;
-	assert (this->graphs[index]->viewport == viewport);
-
-	this->handle_cursor_move(this->graphs[index], ev);
-	return;
-}
-
-
-
-
-void TrackProfileDialog::handle_cursor_move_sd_cb(Viewport * viewport, QMouseEvent * ev)
-{
-	const int index = (int) TrackProfileType::SD;
-	assert (this->graphs[index]->viewport == viewport);
-
-	this->handle_cursor_move(this->graphs[index], ev);
-	return;
-}
-
-
-
-
-void TrackProfileDialog::handle_cursor_move(ProfileGraph * graph, QMouseEvent * ev)
-{
 	double meters_from_start = 0.0;
 	ScreenPos selected_pos;
 	ScreenPos current_pos;
@@ -1410,7 +1300,9 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 {
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
 		ProfileGraph * graph = *iter;
-
+		if (!graph) {
+			continue;
+		}
 		if (!graph->viewport) {
 			continue;
 		}
@@ -1522,43 +1414,15 @@ void ProfileGraph::create_viewport(TrackProfileDialog * dialog)
 	this->viewport->resize(initial_width, initial_height);
 	this->viewport->reconfigure_drawing_area(initial_width, initial_height);
 
-	switch (this->profile_type) {
-	case TrackProfileType::ED:
-		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_ed_release_cb(Viewport *, QMouseEvent *)));
-		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_ed_cb(Viewport *, QMouseEvent *)));
-		break;
 
-	case TrackProfileType::GD:
-		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_gd_release_cb(Viewport *, QMouseEvent *)));
-		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_gd_cb(Viewport *, QMouseEvent *)));
-		break;
-
-	case TrackProfileType::ST:
-		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_st_release_cb(Viewport *, QMouseEvent *)));
-		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_st_cb(Viewport *, QMouseEvent *)));
-		break;
-
-	case TrackProfileType::DT:
-		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
-		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_dt_cb(Viewport *, QMouseEvent *)));
-		break;
-
-	case TrackProfileType::ET:
-		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
-		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_et_cb(Viewport *, QMouseEvent *)));
-		break;
-
-	case TrackProfileType::SD:
-		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
-		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_sd_cb(Viewport *, QMouseEvent *)));
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled track profile type" << (int) this->profile_type;
-		break;
+	if (this->has_supported_domains()) {
+		QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_cb(Viewport *, QMouseEvent *)));
+		QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (handle_mouse_button_release_cb(Viewport *, QMouseEvent *)));
+		return;
+	} else {
+		qDebug() << SG_PREFIX_E << "Unhandled domains" << (int) this->geocanvas.x_domain << (int) this->geocanvas.y_domain;
+		return;
 	}
-
-	return;
 }
 
 
@@ -1572,7 +1436,9 @@ void TrackProfileDialog::save_values(void)
 
 	/* Just for this session. */
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
-		(*iter)->save_values();
+		if (NULL != *iter) {
+			(*iter)->save_values();
+		}
 	}
 }
 
@@ -1721,6 +1587,9 @@ QWidget * ProfileGraph::create_widgets_layout(TrackProfileDialog * dialog)
 
 	this->viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+	widget->setProperty("x_domain", (int) this->geocanvas.x_domain);
+	widget->setProperty("y_domain", (int) this->geocanvas.y_domain);
+
 	return widget;
 
 }
@@ -1803,14 +1672,14 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 		}
 	}
 
-
-	this->graphs.push_back(new ProfileGraphED(this));
-	this->graphs.push_back(new ProfileGraphGD(this));
-	this->graphs.push_back(new ProfileGraphST(this));
-	this->graphs.push_back(new ProfileGraphDT(this));
-	this->graphs.push_back(new ProfileGraphET(this));
-	this->graphs.push_back(new ProfileGraphSD(this));
-
+	/* This will be a sparse 2D matrix. */
+	this->graphs.resize(((int) GeoCanvasDomain::Max) * ((int) GeoCanvasDomain::Max));
+	this->graphs[((int) GeoCanvasDomain::Elevation * (int) GeoCanvasDomain::Max) + (int) GeoCanvasDomain::Distance] = new ProfileGraphED(this);
+	this->graphs[((int) GeoCanvasDomain::Gradient  * (int) GeoCanvasDomain::Max) + (int) GeoCanvasDomain::Distance] = new ProfileGraphGD(this);
+	this->graphs[((int) GeoCanvasDomain::Speed     * (int) GeoCanvasDomain::Max) + (int) GeoCanvasDomain::Time]     = new ProfileGraphST(this);
+	this->graphs[((int) GeoCanvasDomain::Distance  * (int) GeoCanvasDomain::Max) + (int) GeoCanvasDomain::Time]     = new ProfileGraphDT(this);
+	this->graphs[((int) GeoCanvasDomain::Elevation * (int) GeoCanvasDomain::Max) + (int) GeoCanvasDomain::Time]     = new ProfileGraphET(this);
+	this->graphs[((int) GeoCanvasDomain::Speed     * (int) GeoCanvasDomain::Max) + (int) GeoCanvasDomain::Distance] = new ProfileGraphSD(this);
 
 	this->tabs = new QTabWidget();
 	this->tabs->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -1823,7 +1692,9 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
 		ProfileGraph * graph = *iter;
-
+		if (!graph) {
+			continue;
+		}
 		if (!graph->viewport) {
 			continue;
 		}
@@ -2107,23 +1978,14 @@ QString get_time_grid_label(const Time & interval_value, const Time & value)
 
 
 
-ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileType new_profile_type, TrackProfileDialog * dialog)
+ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileDialog * dialog)
 {
 	this->geocanvas.x_domain = x_domain;
 	this->geocanvas.y_domain = y_domain;
-	this->profile_type = new_profile_type;
 
-
-	if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Elevation) {
-	} else if (x_domain == GeoCanvasDomain::Distance&& y_domain == GeoCanvasDomain::Gradient) {
-	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Speed) {
-	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Distance) {
-	} else if (x_domain == GeoCanvasDomain::Time && y_domain == GeoCanvasDomain::Elevation) {
-	} else if (x_domain == GeoCanvasDomain::Distance && y_domain == GeoCanvasDomain::Speed) {
-	} else {
+	if (!this->has_supported_domains()) {
 		qDebug() << SG_PREFIX_E << "Unhandled combination of x/y domains:" << (int) x_domain << (int) y_domain;
 	}
-
 
 	this->main_pen.setColor("lightsteelblue");
 	this->main_pen.setWidth(1);
@@ -2138,12 +2000,12 @@ ProfileGraph::ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, T
 
 
 
-ProfileGraphET::ProfileGraphET(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, TrackProfileType::ET, dialog) {}
-ProfileGraphSD::ProfileGraphSD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     TrackProfileType::SD, dialog) {}
-ProfileGraphED::ProfileGraphED(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, TrackProfileType::ED, dialog) {}
-ProfileGraphGD::ProfileGraphGD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  TrackProfileType::GD, dialog) {}
-ProfileGraphST::ProfileGraphST(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     TrackProfileType::ST, dialog) {}
-ProfileGraphDT::ProfileGraphDT(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  TrackProfileType::DT, dialog) {}
+ProfileGraphET::ProfileGraphET(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, dialog) {}
+ProfileGraphSD::ProfileGraphSD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     dialog) {}
+ProfileGraphED::ProfileGraphED(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, dialog) {}
+ProfileGraphGD::ProfileGraphGD(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  dialog) {}
+ProfileGraphST::ProfileGraphST(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     dialog) {}
+ProfileGraphDT::ProfileGraphDT(TrackProfileDialog * dialog) : ProfileGraph(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  dialog) {}
 
 
 
@@ -2382,9 +2244,40 @@ void ProfileGraph::draw_x_grid(const Track * trk)
 
 
 
+
 GeoCanvas::GeoCanvas()
 {
 	this->height_unit = Preferences::get_unit_height();
 	this->distance_unit = Preferences::get_unit_distance();
 	this->speed_unit = Preferences::get_unit_speed();
+}
+
+
+
+
+bool ProfileGraph::has_supported_domains(void) const
+{
+	switch (this->geocanvas.x_domain) {
+	case GeoCanvasDomain::Distance:
+		switch (this->geocanvas.y_domain) {
+		case GeoCanvasDomain::Elevation:
+		case GeoCanvasDomain::Gradient:
+		case GeoCanvasDomain::Speed:
+			return true;
+		default:
+			return false;
+		}
+	case GeoCanvasDomain::Time:
+		switch (this->geocanvas.y_domain) {
+		case GeoCanvasDomain::Speed:
+		case GeoCanvasDomain::Distance:
+		case GeoCanvasDomain::Elevation:
+			return true;
+
+		default:
+			return false;
+		}
+	default:
+		return false;
+	}
 }
