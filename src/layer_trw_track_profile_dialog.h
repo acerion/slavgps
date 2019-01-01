@@ -156,11 +156,6 @@ namespace SlavGPS {
 		void handle_mouse_button_release_cb(Viewport * viewport, QMouseEvent * event);
 
 	private:
-		sg_ret get_cursor_pos_by_distance(QMouseEvent * ev, ProfileGraph * graph, double & meters_from_start, ScreenPos & selected_pos, ScreenPos & current_pos);
-		sg_ret get_cursor_pos_by_time(QMouseEvent * ev, ProfileGraph * graph, ScreenPos & selected_pos, ScreenPos & current_pos);
-
-
-
 		/* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
 		bool is_selected_drawn = false;
 		/* Trackpoint that is closest to current position of *hovering* cursor. */
@@ -204,15 +199,25 @@ namespace SlavGPS {
 		void create_viewport(TrackProfileDialog * dialog);
 		QString get_graph_title(void) const;
 
-		double get_pos_y(double pos_x);
+		sg_ret set_pos_y(ScreenPos & screen_pos);
+
+		/* Get position of cursor on a graph. 'x' coordinate
+		   will match current 'x' position of cursor, and 'y'
+		   coordinate will be on a graph line that corresponds
+		   with the 'x' position. */
+		sg_ret get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos);
 
 		sg_ret set_initial_visible_range_x_distance(void);
 		sg_ret set_initial_visible_range_x_time(void);
 		sg_ret set_initial_visible_range_y(void);
 
-		int get_cursor_pos_x(QMouseEvent * ev) const;
+		/* Get position of a cursor within a graph. This
+		   function doesn't care if 'x' or 'y' coordinate is
+		   on a graph line. It just reports cursor
+		   position. */
+		sg_ret get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
 
-		QPointF get_position_of_tp(Track * trk, int idx);
+		sg_ret get_position_of_tp(Track * trk, int idx, ScreenPos & screen_pos);
 
 		sg_ret regenerate_data(Track * trk);
 		sg_ret regenerate_sizes(void);
