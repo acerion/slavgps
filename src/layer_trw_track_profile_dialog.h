@@ -63,29 +63,9 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
-	class ProfileGraph;
+	class ProfileView;
 	class ScreenPos;
-
-
-
-
-	class PropSaved {
-	public:
-		bool valid;
-		QPixmap img;
-	};
-
-
-
-
-	enum class GeoCanvasDomain {
-		Time = 0,
-		Elevation,
-		Distance,
-		Speed,
-		Gradient,
-		Max
-	};
+	enum class GeoCanvasDomain;
 
 
 
@@ -94,8 +74,16 @@ namespace SlavGPS {
 	public:
 		GeoCanvas();
 
-		GeoCanvasDomain x_domain;
-		GeoCanvasDomain y_domain;
+		Viewport * viewport = NULL;
+
+		int width = 0;
+		int height = 0;
+		int bottom_edge = 0;
+		int left_edge = 0;
+
+
+		QPixmap saved_img;
+		bool saved_img_valid;
 
 		HeightUnit height_unit;
 		DistanceUnit distance_unit;
@@ -132,19 +120,16 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		sg_ret draw_single_graph(ProfileGraph * graph);
+		sg_ret draw_single_graph(ProfileView * graph);
 
-		ProfileGraph * get_current_graph(void) const;
+		ProfileView * get_current_graph(void) const;
 
 
 		LayerTRW * trw = NULL;
 		Viewport * main_viewport = NULL;
 		Track * trk = NULL;
 
-		/* 1D array to be used as (sparse) 2D array.  With 2D
-		   array, indexed by x/y domains, we can have all
-		   kinds of graphs. */
-		std::vector<ProfileGraph *> graphs;
+		std::vector<ProfileView *> graphs;
 
 	private slots:
 		void checkbutton_toggle_cb(void);
@@ -184,19 +169,20 @@ namespace SlavGPS {
 
 
 
-	class ProfileGraph {
+	class ProfileView : public QWidget {
+		Q_OBJECT
 	public:
-		ProfileGraph(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileDialog * dialog);
-		virtual ~ProfileGraph();
+		ProfileView(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
+		virtual ~ProfileView();
 
 		virtual void draw_additional_indicators(Track * trk) {};
 		virtual void configure_controls(TrackProfileDialog * dialog) {};
 		virtual void save_values(void) {};
 
 		void configure_labels(TrackProfileDialog * dialog);
-		QWidget * create_widgets_layout(TrackProfileDialog * dialog);
+		void create_widgets_layout(TrackProfileDialog * dialog);
 
-		void create_viewport(TrackProfileDialog * dialog);
+		void create_viewport(TrackProfileDialog * dialog, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
 		QString get_graph_title(void) const;
 
 		sg_ret set_pos_y(ScreenPos & screen_pos);
@@ -233,8 +219,8 @@ namespace SlavGPS {
 		void draw_grid_horizontal_line(int pos_y, const QString & label);
 		void draw_grid_vertical_line(int pos_x, const QString & label);
 
-		bool has_supported_domains(void) const;
-
+		/* Check whether given combination of x/y domains is supported by ProfileView. */
+		static bool supported_domains(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
 
 		void draw_x_grid(const Track * trk);
 		void draw_y_grid(void);
@@ -244,13 +230,6 @@ namespace SlavGPS {
 
 		QString get_y_grid_label(float value);
 
-		Viewport * viewport = NULL;
-		PropSaved saved_img;
-
-		int width = 0;
-		int height = 0;
-		int bottom_edge = 0;
-		int left_edge = 0;
 
 		/* For distance-based graphs. */
 		Distance x_interval_d = { 0.0 };
@@ -291,10 +270,10 @@ namespace SlavGPS {
 
 
 	/* ET = elevation as a function of time. */
-	class ProfileGraphET : public ProfileGraph {
+	class ProfileViewET : public ProfileView {
 	public:
-		ProfileGraphET(TrackProfileDialog * dialog);
-		~ProfileGraphET() {};
+		ProfileViewET(TrackProfileDialog * dialog);
+		~ProfileViewET() {};
 
 		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(TrackProfileDialog * dialog) override;
@@ -306,10 +285,10 @@ namespace SlavGPS {
 
 
 	/* SD = speed as a function of distance. */
-	class ProfileGraphSD : public ProfileGraph {
+	class ProfileViewSD : public ProfileView {
 	public:
-		ProfileGraphSD(TrackProfileDialog * dialog);
-		~ProfileGraphSD() {};
+		ProfileViewSD(TrackProfileDialog * dialog);
+		~ProfileViewSD() {};
 
 		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(TrackProfileDialog * dialog) override;
@@ -320,10 +299,10 @@ namespace SlavGPS {
 
 
 	/* ED = elevation as a function of distance. */
-	class ProfileGraphED : public ProfileGraph {
+	class ProfileViewED : public ProfileView {
 	public:
-		ProfileGraphED(TrackProfileDialog * dialog);
-		~ProfileGraphED() {};
+		ProfileViewED(TrackProfileDialog * dialog);
+		~ProfileViewED() {};
 
 		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(TrackProfileDialog * dialog) override;
@@ -335,10 +314,10 @@ namespace SlavGPS {
 
 
 	/* GD = gradient as a function of distance. */
-	class ProfileGraphGD : public ProfileGraph {
+	class ProfileViewGD : public ProfileView {
 	public:
-		ProfileGraphGD(TrackProfileDialog * dialog);
-		~ProfileGraphGD() {};
+		ProfileViewGD(TrackProfileDialog * dialog);
+		~ProfileViewGD() {};
 
 		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(TrackProfileDialog * dialog) override;
@@ -349,10 +328,10 @@ namespace SlavGPS {
 
 
 	/* ST = speed as a function of time. */
-	class ProfileGraphST : public ProfileGraph {
+	class ProfileViewST : public ProfileView {
 	public:
-		ProfileGraphST(TrackProfileDialog * dialog);
-		~ProfileGraphST() {};
+		ProfileViewST(TrackProfileDialog * dialog);
+		~ProfileViewST() {};
 
 		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(TrackProfileDialog * dialog) override;
@@ -363,10 +342,10 @@ namespace SlavGPS {
 
 
 	/* DT = distance as a function of time. */
-	class ProfileGraphDT : public ProfileGraph {
+	class ProfileViewDT : public ProfileView {
 	public:
-		ProfileGraphDT(TrackProfileDialog * dialog);
-		~ProfileGraphDT() {};
+		ProfileViewDT(TrackProfileDialog * dialog);
+		~ProfileViewDT() {};
 
 		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(TrackProfileDialog * dialog) override;

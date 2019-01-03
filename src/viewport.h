@@ -59,6 +59,18 @@ namespace SlavGPS {
 
 
 
+	enum class GeoCanvasDomain {
+		Time = 0,
+		Elevation,
+		Distance,
+		Speed,
+		Gradient,
+		Max
+	};
+
+
+
+
 	class ViewportLogo {
 	public:
 		QPixmap logo_pixmap;

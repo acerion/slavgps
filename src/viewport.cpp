@@ -1280,6 +1280,36 @@ void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, 
 
 
 
+
+void Viewport::center_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
+{
+	if ((begin_x < 0 && end_x < 0) || (begin_y < 0 && end_y < 0)) {
+		return;
+	}
+	if (begin_x > this->canvas.width && end_x > this->canvas.width) {
+		return;
+	}
+	if (begin_y > this->canvas.height && end_y > this->canvas.height) {
+		return;
+	}
+
+	// fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d) (margin_top = %d, canvas height = %d)\n", begin_x, begin_y, end_x, end_y, this->margin_top, this->canvas.height);
+
+	/*** Clipping, yeah! ***/
+	//Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
+
+	/* x/y coordinates are converted here from "beginning in
+	   bottom-left corner" to "beginning in upper-left corner"
+	   coordinate system. */
+	const int graph_height = this->canvas.height - this->margin_top - this->margin_bottom;
+	this->canvas.painter->setPen(pen);
+	this->canvas.painter->drawLine(this->margin_left + begin_x, this->margin_top + graph_height - begin_y,
+				       this->margin_left + end_x,   this->margin_top + graph_height - end_y);
+}
+
+
+
+
 void Viewport::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left_y, int rect_width, int rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */

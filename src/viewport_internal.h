@@ -136,6 +136,9 @@ namespace SlavGPS {
 
 		void draw_simple_crosshair(const ScreenPos & pos);
 
+		/* Draw a line in central part of viewport (i.e. in geocanvas area). */
+		void center_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y);
+
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
@@ -349,6 +352,9 @@ namespace SlavGPS {
 		int margin_bottom = 0;
 		int margin_left = 0;
 		int margin_right = 0;
+
+		GeoCanvasDomain x_domain = GeoCanvasDomain::Max;
+		GeoCanvasDomain y_domain = GeoCanvasDomain::Max;
 
 	private:
 		void free_center(std::list<Coord>::iterator iter);
