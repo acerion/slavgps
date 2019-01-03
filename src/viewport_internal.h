@@ -84,6 +84,27 @@ namespace SlavGPS {
 
 
 
+	class GeoCanvas {
+	public:
+		GeoCanvas();
+
+		int width = 0;
+		int height = 0;
+		int bottom_edge = 0;
+		int left_edge = 0;
+
+
+		QPixmap saved_img;
+		bool saved_img_valid;
+
+		HeightUnit height_unit;
+		DistanceUnit distance_unit;
+		SpeedUnit speed_unit;
+	};
+
+
+
+
 	class Viewport : public QWidget {
 	Q_OBJECT
 
@@ -134,10 +155,22 @@ namespace SlavGPS {
 
 		void draw_bbox(const LatLonBBox & bbox, const QPen & pen);
 
-		void draw_simple_crosshair(const ScreenPos & pos);
 
-		/* Draw a line in central part of viewport (i.e. in geocanvas area). */
+		/* Draw a line in central part of viewport (i.e. in
+		   geocanvas area).  x/y coordinates should be in
+		   "beginning is in bottom-left corner" coordinates
+		   system. */
 		void center_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y);
+
+		/* Draw a crosshair in central part of viewport
+		   (i.e. in geocanvas area).  x/y coordinates should
+		   be in "beginning is in bottom left corner"
+		   coordinates system.
+
+		   "Simple" means one horizontal and one vertical line
+		   crossing at given viewport position. */
+		void center_draw_simple_crosshair(const ScreenPos & pos);
+
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
@@ -353,6 +386,7 @@ namespace SlavGPS {
 		int margin_left = 0;
 		int margin_right = 0;
 
+		GeoCanvas geocanvas;
 		GeoCanvasDomain x_domain = GeoCanvasDomain::Max;
 		GeoCanvasDomain y_domain = GeoCanvasDomain::Max;
 

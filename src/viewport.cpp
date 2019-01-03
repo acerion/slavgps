@@ -2314,17 +2314,19 @@ bool Viewport::print_cb(QPrinter * printer)
 
 
 /*
-  "Simple" means one horizontal and one vertical line crossing at given viewport position.
+
   @pos should indicate position in viewport's canvas.
   The function makes sure that the crosshair is drawn only inside of graph area.
 */
-void Viewport::draw_simple_crosshair(const ScreenPos & pos)
+void Viewport::center_draw_simple_crosshair(const ScreenPos & pos)
 {
+	//ScreenPos(GRAPH_MARGIN_LEFT + current_pos.x, GRAPH_MARGIN_TOP + this->viewport->geocanvas.height - current_pos.y)
+
 	const int graph_width = this->canvas.width - this->margin_left - this->margin_right;
 	const int graph_height = this->canvas.height - this->margin_top - this->margin_bottom;
+	const int x = pos.x + this->margin_left;
+	const int y = pos.y;
 
-	/* Small optimization: use QT's drawing primitives directly.
-	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
 	qDebug() << SG_PREFIX_I << "crosshair at" << pos.x << pos.y;
 
@@ -2337,18 +2339,19 @@ void Viewport::draw_simple_crosshair(const ScreenPos & pos)
 		return;
 	}
 
-	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->setPen(this->marker_pen);
 
-	const int y = pos.y;
+	/* Small optimization: use QT's drawing primitives directly.
+	   Remember that (0,0) screen position is in upper-left corner of viewport. */
+
 
 	/* Horizontal line. */
 	this->canvas.painter->drawLine(this->margin_left + 0,           y,
 				       this->margin_left + graph_width, y);
 
 	/* Vertical line. */
-	this->canvas.painter->drawLine(pos.x, this->margin_top + 0,
-				       pos.x, this->margin_top + graph_height);
+	this->canvas.painter->drawLine(x, this->margin_top + 0,
+				       x, this->margin_top + graph_height);
 }
 
 

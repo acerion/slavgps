@@ -65,30 +65,6 @@ namespace SlavGPS {
 	class Trackpoint;
 	class ProfileView;
 	class ScreenPos;
-	enum class GeoCanvasDomain;
-
-
-
-
-	class GeoCanvas {
-	public:
-		GeoCanvas();
-
-		Viewport * viewport = NULL;
-
-		int width = 0;
-		int height = 0;
-		int bottom_edge = 0;
-		int left_edge = 0;
-
-
-		QPixmap saved_img;
-		bool saved_img_valid;
-
-		HeightUnit height_unit;
-		DistanceUnit distance_unit;
-		SpeedUnit speed_unit;
-	};
 
 
 
@@ -249,13 +225,12 @@ namespace SlavGPS {
 		TrackData track_data_raw; /* Raw = uncompressed. */
 
 
-		GeoCanvas geocanvas;
-
 		QPen main_pen;
 		QPen gps_speed_pen;
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;
 
+		Viewport * viewport = NULL;
 		GeoCanvasLabels labels;
 
 		QGridLayout * labels_grid = NULL;
