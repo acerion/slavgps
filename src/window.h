@@ -72,7 +72,7 @@ namespace SlavGPS {
 	class Layer;
 	class LayerTRW;
 	class Toolbox;
-	class Viewport;
+	class Viewport2D;
 	class LayersPanel;
 	class ScreenPos;
 	class DataSource;
@@ -108,7 +108,7 @@ namespace SlavGPS {
 		StatusBar * get_statusbar(void);
 
 		LayersPanel * items_tree = NULL;
-		Viewport * viewport = NULL;
+		Viewport2D * viewport = NULL;
 
 
 		void statusbar_update(StatusBarField field, QString const & message);

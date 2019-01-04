@@ -549,12 +549,12 @@ ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * 
 	   No need to change the center as that has already occurred in the first click of a double click occurrence. */
 	if (event->button() == Qt::LeftButton) {
 		if (event->modifiers() & Qt::ShiftModifier) {
-			this->window->viewport->zoom_out();
+			this->window->viewport->viewport->zoom_out();
 		} else {
-			this->window->viewport->zoom_in();
+			this->window->viewport->viewport->zoom_in();
 		}
 	} else if (event->button() == Qt::RightButton) {
-		this->window->viewport->zoom_out();
+		this->window->viewport->viewport->zoom_out();
 	} else {
 		/* Ignore other mouse buttons. */
 	}
@@ -670,10 +670,10 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 	bool handled = false;
 	if (event->type() == QEvent::MouseButtonDblClick) {
 		qDebug() << "DD" PREFIX << this->id_string << "handling double click, looking for layer";
-		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->viewport, this);
+		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->viewport->viewport, this);
 	} else {
 		qDebug() << "DD" PREFIX << this->id_string << "handle single click, looking for layer";
-		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->viewport, this);
+		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->viewport->viewport, this);
 	}
 
 	if (!handled) {
@@ -741,7 +741,7 @@ ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * ev
 	if (event->button() == Qt::RightButton) {
 		if (layer && layer->type == LayerType::TRW && layer->visible) {
 			/* See if a TRW item is selected, and show menu for the item. */
-			layer->handle_select_tool_context_menu(event, this->window->viewport);
+			layer->handle_select_tool_context_menu(event, this->window->viewport->viewport);
 		}
 	}
 

@@ -161,7 +161,7 @@ static QMenu * create_zoom_submenu(const VikingZoomLevel & viking_zoom_level, QS
 Window::Window()
 {
 	strcpy(this->type_string, "SlavGPS Main Window");
-	g_this_app.set(this, this->items_tree, this->viewport);
+	g_this_app.set(this, this->items_tree, NULL);
 
 
 	for (int i = 0; i < QIcon::themeSearchPaths().size(); i++) {
@@ -175,7 +175,7 @@ Window::Window()
 	this->create_actions();
 	this->toolbox = new Toolbox(this);
 	this->create_ui();
-	g_this_app.set(this, this->items_tree, this->viewport); /* Calling it again, this time with non-NULL layers panel and viewport. */
+	g_this_app.set(this, this->items_tree, this->viewport->viewport); /* Calling it again, this time with non-NULL layers panel and viewport. */
 
 
 	/* Own signals. */
@@ -338,11 +338,9 @@ void Window::create_layout()
 	this->addToolBar(this->toolbar);
 
 
-	this->viewport = new Viewport(this);
-	qDebug() << SG_PREFIX_I << "Created Viewport with size:" << this->viewport->height() << this->viewport->width();
-
-
-	this->setCentralWidget(viewport);
+	this->viewport = new Viewport2D(this);
+	qDebug() << SG_PREFIX_I << "Created Viewport with size:" << this->viewport->viewport->height() << this->viewport->viewport->width();
+	this->setCentralWidget(this->viewport);
 
 
 	this->panel_dock = new QDockWidget(tr("Layers"), this);
@@ -827,7 +825,7 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_to);
 
 
-		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->get_viking_zoom_level(), tr("&Zoom"), this->menu_view);
+		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->viewport->get_viking_zoom_level(), tr("&Zoom"), this->menu_view);
 		this->menu_view->addMenu(zoom_submenu);
 		connect(zoom_submenu, SIGNAL(triggered (QAction *)), this, SLOT (zoom_level_selected_cb(QAction *)));
 
@@ -950,7 +948,7 @@ void Window::draw_sync()
 
 void Window::update_status_bar_on_redraw(void)
 {
-	const QString zoom_level = this->viewport->get_viking_zoom_level().pretty_print(this->viewport->get_coord_mode());
+	const QString zoom_level = this->viewport->viewport->get_viking_zoom_level().pretty_print(this->viewport->viewport->get_coord_mode());
 
 	qDebug() << SG_PREFIX_I << "Zoom level is" << zoom_level;
 	this->status_bar->set_message(StatusBarField::Zoom, zoom_level);
@@ -968,13 +966,13 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	qDebug() << SG_PREFIX_I << "Clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
 
 
-	Layer * layer = Layer::construct_layer(layer_type, this->viewport, true);
+	Layer * layer = Layer::construct_layer(layer_type, this->viewport->viewport, true);
 	if (layer) {
-		this->items_tree->add_layer(layer, this->viewport->get_coord_mode());
+		this->items_tree->add_layer(layer, this->viewport->viewport->get_coord_mode());
 
-		//this->viewport->reconfigure_drawing_area();
+		//this->viewport->viewport->reconfigure_drawing_area();
 		qDebug() << SG_PREFIX_I << "Calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
-		layer->draw_tree_item(this->viewport, false, false);
+		layer->draw_tree_item(this->viewport->viewport, false, false);
 
 		qDebug() << SG_PREFIX_I << "Will call draw_tree_items()";
 		this->draw_tree_items();
@@ -990,43 +988,43 @@ void Window::draw_tree_items(void)
 	qDebug() << "\n";
 	qDebug() << SG_PREFIX_I;
 
-	if (!this->viewport->is_ready()) {
+	if (!this->viewport->viewport->is_ready()) {
 		/* Viewport may not be ready during early stages of application's life. */
 		return;
 	}
 
 #ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
-	this->trigger_center = this->viewport->get_center2();
+	this->trigger_center = this->viewport->viewport->get_center2();
 	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
-	Layer * old_trigger = this->viewport->get_trigger();
+	Layer * old_trigger = this->viewport->viewport->get_trigger();
 
 	if (!new_trigger) {
 		; /* Do nothing -- have to redraw everything. */
 	} else if ((old_trigger != new_trigger)
 		   || (old_center != this->trigger_center)
 		   || (new_trigger->type == LayerType::Aggregate)) {
-		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
+		this->viewport->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
-		this->viewport->set_half_drawn(true);
+		this->viewport->viewport->set_half_drawn(true);
 	}
 #endif
 
 
-	this->viewport->clear();
+	this->viewport->viewport->clear();
 
 	/* Main layer drawing.  This is a standard drawing of items in
 	   main viewport, so allow highlight. */
-	this->items_tree->draw_tree_items(this->viewport, true, false);
+	this->items_tree->draw_tree_items(this->viewport->viewport, true, false);
 
 	/* Other viewport decoration items on top if they are enabled/in use. */
-	this->viewport->draw_decorations();
+	this->viewport->viewport->draw_decorations();
 
 	/* This will call Viewport::paintEvent(), triggering final render to screen. */
-	this->viewport->update();
+	this->viewport->viewport->update();
 
-	this->viewport->set_half_drawn(false); /* Just in case. */
+	this->viewport->viewport->set_half_drawn(false); /* Just in case. */
 
 	this->draw_sync();
 }
@@ -1057,7 +1055,7 @@ void Window::handle_selection_of_tree_item(const TreeItem & tree_item)
 
 Viewport * Window::get_viewport()
 {
-	return this->viewport;
+	return this->viewport->viewport;
 }
 
 
@@ -1110,8 +1108,8 @@ void Window::center_changed_cb(void) /* Slot. */
 
 	/* TODO_2_LATER: see if this comment should be implemented or not:
 	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
-	this->qa_previous_location->setEnabled(this->viewport->back_available());
-	this->qa_next_location->setEnabled(this->viewport->forward_available());
+	this->qa_previous_location->setEnabled(this->viewport->viewport->back_available());
+	this->qa_next_location->setEnabled(this->viewport->viewport->forward_available());
 }
 
 
@@ -1163,7 +1161,7 @@ void Window::create_ui(void)
 	/* Menu Tools -> Generic tools;
 	   Toolbar -> Generic Tools. */
 	{
-		LayerToolContainer * tools = GenericTools::create_tools(this, this->viewport);
+		LayerToolContainer * tools = GenericTools::create_tools(this, this->viewport->viewport);
 
 		QActionGroup * tools_group = this->toolbox->add_tools(tools);
 
@@ -1212,7 +1210,7 @@ void Window::create_ui(void)
 			   tools require Window and Viewport
 			   variables, which may not be available at that time. */
 
-			LayerToolContainer * tools = Layer::get_interface(type)->create_tools(this, this->viewport);
+			LayerToolContainer * tools = Layer::get_interface(type)->create_tools(this, this->viewport->viewport);
 			if (!tools) {
 				/* Either error, or given layer type has no layer-specific tools. */
 				continue;
@@ -1267,7 +1265,7 @@ void Window::layer_tool_cb(QAction * qa)
 		qDebug() << SG_PREFIX_I << "Setting 'release' cursor for tool" << new_tool_id;
 
 		this->toolbox->activate_tool_by_id(new_tool_id);
-		this->viewport->setCursor(*this->toolbox->get_cursor_release(new_tool_id));
+		this->viewport->viewport->setCursor(*this->toolbox->get_cursor_release(new_tool_id));
 		this->display_tool_name();
 	}
 }
@@ -1301,8 +1299,8 @@ void Window::pan_move(QMouseEvent * ev)
 {
 	//qDebug() << SG_PREFIX_I;
 	if (this->pan_pos.x != -1) {
-		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
-							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
+		this->viewport->viewport->set_center_from_screen_pos(this->viewport->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
+							   this->viewport->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
 		this->pan_move_flag = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
 		this->emit_center_or_zoom_changed("pan move");
@@ -1334,11 +1332,11 @@ void Window::pan_release(QMouseEvent * ev)
 #endif
 			do_draw = false;
 		} else {
-			this->viewport->set_center_from_screen_pos(this->pan_pos);
+			this->viewport->viewport->set_center_from_screen_pos(this->pan_pos);
 		}
 	} else {
-		this->viewport->set_center_from_screen_pos(this->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
-							   this->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
+		this->viewport->viewport->set_center_from_screen_pos(this->viewport->viewport->get_width() / 2 - ev->x() + this->pan_pos.x,
+							   this->viewport->viewport->get_height() / 2 - ev->y() + this->pan_pos.y);
 	}
 
 	this->pan_off();
@@ -1437,7 +1435,7 @@ void Window::menu_copy_centre_cb(void)
 	QString first;
 	QString second;
 
-	const Coord coord = this->viewport->get_center2();
+	const Coord coord = this->viewport->viewport->get_center2();
 
 	bool full_format = false;
 	(void) ApplicationState::get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
@@ -1468,7 +1466,7 @@ void Window::map_cache_flush_cb(void)
 
 void Window::set_default_location_cb(void)
 {
-	const LatLon current_center_ll = this->viewport->get_center()->get_latlon();
+	const LatLon current_center_ll = this->viewport->viewport->get_center()->get_latlon();
 
 	/* Push center coordinate values to Preferences */
 	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_ll.lat));
@@ -1602,7 +1600,7 @@ void Window::closeEvent(QCloseEvent * ev)
 void Window::goto_default_location_cb(void)
 {
 	const LatLon lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
-	if (sg_ret::ok != this->viewport->set_center_from_lat_lon(lat_lon)) {
+	if (sg_ret::ok != this->viewport->viewport->set_center_from_lat_lon(lat_lon)) {
 		qDebug() << SG_PREFIX_E << "Failed to set center location from" << lat_lon;
 		return;
 	}
@@ -1614,7 +1612,7 @@ void Window::goto_default_location_cb(void)
 
 void Window::goto_location_cb()
 {
-	if (GoTo::goto_location(this, this->viewport)) {
+	if (GoTo::goto_location(this, this->viewport->viewport)) {
 		this->emit_center_or_zoom_changed("go to location");
 	}
 }
@@ -1624,7 +1622,7 @@ void Window::goto_location_cb()
 
 void Window::goto_latlon_cb(void)
 {
-	if (sg_ret::ok != GoTo::goto_latlon(this, this->viewport)) {
+	if (sg_ret::ok != GoTo::goto_latlon(this, this->viewport->viewport)) {
 		qDebug() << SG_PREFIX_E << "Failed to go to lat/lon";
 		return;
 	}
@@ -1636,7 +1634,7 @@ void Window::goto_latlon_cb(void)
 
 void Window::goto_utm_cb(void)
 {
-	if (GoTo::goto_utm(this, this->viewport)) {
+	if (GoTo::goto_utm(this, this->viewport->viewport)) {
 		this->emit_center_or_zoom_changed("go to utm");
 	}
 }
@@ -1646,7 +1644,7 @@ void Window::goto_utm_cb(void)
 
 void Window::goto_previous_location_cb(void)
 {
-	bool changed = this->viewport->go_back();
+	bool changed = this->viewport->viewport->go_back();
 
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
@@ -1663,7 +1661,7 @@ void Window::goto_previous_location_cb(void)
 
 void Window::goto_next_location_cb(void)
 {
-	bool changed = this->viewport->go_forward();
+	bool changed = this->viewport->viewport->go_forward();
 
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
@@ -1700,7 +1698,7 @@ void Window::set_scale_visibility_cb(bool new_state)
 {
 	if (this->qa_view_scale_visibility->isChecked() != new_state) {
 		this->qa_view_scale_visibility->setChecked(new_state);
-		this->viewport->set_scale_visibility(new_state);
+		this->viewport->viewport->set_scale_visibility(new_state);
 		this->draw_tree_items();
 	}
 }
@@ -1712,7 +1710,7 @@ void Window::set_center_mark_visibility_cb(bool new_state)
 {
 	if (this->qa_view_center_mark_visibility->isChecked() != new_state) {
 		this->qa_view_center_mark_visibility->setChecked(new_state);
-		this->viewport->set_center_mark_visibility(new_state);
+		this->viewport->viewport->set_center_mark_visibility(new_state);
 		this->draw_tree_items();
 	}
 }
@@ -1723,7 +1721,7 @@ void Window::set_highlight_usage_cb(bool new_state)
 {
 	if (this->qa_view_highlight_usage->isChecked() != new_state) {
 		this->qa_view_highlight_usage->setChecked(new_state);
-		this->viewport->set_highlight_usage(new_state);
+		this->viewport->viewport->set_highlight_usage(new_state);
 		this->draw_tree_items();
 	}
 }
@@ -1779,11 +1777,11 @@ void Window::zoom_cb(void)
 	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
 		qDebug() << SG_PREFIX_D << "Zoom In";
 		debug_msg = "zoom in";
-		this->viewport->zoom_in();
+		this->viewport->viewport->zoom_in();
 	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
 		qDebug() << SG_PREFIX_D << "Zoom Out";
 		debug_msg = "zoom out";
-		this->viewport->zoom_out();
+		this->viewport->viewport->zoom_out();
 	} else {
 		qDebug() << SG_PREFIX_E << "Invalid zoom key sequence" << seq;
 		return;
@@ -1797,10 +1795,10 @@ void Window::zoom_cb(void)
 
 void Window::zoom_to_cb(void)
 {
-	VikingZoomLevel viking_zoom_level = this->viewport->get_viking_zoom_level();
+	VikingZoomLevel viking_zoom_level = this->viewport->viewport->get_viking_zoom_level();
 
 	if (ViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_zoom_level, this)) {
-		this->viewport->set_viking_zoom_level(viking_zoom_level);
+		this->viewport->viewport->set_viking_zoom_level(viking_zoom_level);
 		this->emit_center_or_zoom_changed("zoom to...");
 	}
 }
@@ -1986,7 +1984,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 	bool restore_original_filename = false;
 
 	LayerAggregate * agg = this->items_tree->get_top_layer();
-	this->file_load_status = VikFile::load(agg, this->viewport, new_document_full_path);
+	this->file_load_status = VikFile::load(agg, this->viewport->viewport, new_document_full_path);
 	switch (this->file_load_status) {
 	case VikFile::LoadStatus::ReadFailure:
 		Dialog::error(tr("The file you requested could not be opened."), this);
@@ -2016,31 +2014,31 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 				this->set_current_document_full_path(new_document_full_path);
 			}
 
-			QAction * drawmode_action = this->get_drawmode_action(this->viewport->get_drawmode());
+			QAction * drawmode_action = this->get_drawmode_action(this->viewport->viewport->get_drawmode());
 			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
 			drawmode_action->setChecked(true);
 			this->only_updating_coord_mode_ui = false;
 
 
-			this->items_tree->change_coord_mode(this->viewport->get_coord_mode());
+			this->items_tree->change_coord_mode(this->viewport->viewport->get_coord_mode());
 
 			/* Slightly long winded methods to align loaded viewport settings with the UI. */
-			bool vp_state_scale = this->viewport->get_scale_visibility();
+			bool vp_state_scale = this->viewport->viewport->get_scale_visibility();
 			bool ui_state_scale = this->qa_view_scale_visibility->isChecked();
 			if (vp_state_scale != ui_state_scale) {
-				this->viewport->set_scale_visibility(!vp_state_scale);
+				this->viewport->viewport->set_scale_visibility(!vp_state_scale);
 				this->set_scale_visibility_cb(!vp_state_scale);
 			}
-			bool vp_state_centermark = this->viewport->get_center_mark_visibility();
+			bool vp_state_centermark = this->viewport->viewport->get_center_mark_visibility();
 			bool ui_state_centermark = this->qa_view_center_mark_visibility->isChecked();
 			if (vp_state_centermark != ui_state_centermark) {
-				this->viewport->set_center_mark_visibility(!vp_state_centermark);
+				this->viewport->viewport->set_center_mark_visibility(!vp_state_centermark);
 				this->set_center_mark_visibility_cb(!vp_state_centermark);
 			}
-			bool vp_state_highlight = this->viewport->get_highlight_usage();
+			bool vp_state_highlight = this->viewport->viewport->get_highlight_usage();
 			bool ui_state_highlight = this->qa_view_highlight_usage->isChecked();
 			if (vp_state_highlight != ui_state_highlight) {
-				this->viewport->set_highlight_usage(!vp_state_highlight);
+				this->viewport->viewport->set_highlight_usage(!vp_state_highlight);
 				this->set_highlight_usage_cb(!vp_state_highlight);
 			}
 		}
@@ -2189,7 +2187,7 @@ void Window::update_recent_files(QString const & file_full_path)
 void Window::set_busy_cursor()
 {
 	this->setCursor(Qt::WaitCursor);
-	this->viewport->setCursor(Qt::WaitCursor);
+	this->viewport->viewport->setCursor(Qt::WaitCursor);
 }
 
 
@@ -2199,7 +2197,7 @@ void Window::clear_busy_cursor()
 {
 	this->setCursor(Qt::ArrowCursor);
 	/* Viewport has a separate cursor. */
-	this->viewport->setCursor(this->viewport_cursor);
+	//this->viewport->viewport->setCursor(this->viewport->viewport->viewport_cursor);
 }
 
 
@@ -2295,7 +2293,7 @@ void LocatorJob::run(void)
 {
 	LatLon lat_lon;
 	QString name;
-	int ans = GoTo::where_am_i(this->window->viewport, lat_lon, name);
+	int ans = GoTo::where_am_i(this->window->viewport->viewport, lat_lon, name);
 
 	const bool end_job = this->set_progress_state(1.0);
 	if (end_job) {
@@ -2315,8 +2313,8 @@ void LocatorJob::run(void)
 			zoom = 2048.0;
 		}
 
-		this->window->viewport->set_viking_zoom_level(zoom);
-		this->window->viewport->set_center_from_lat_lon(lat_lon, false);
+		this->window->viewport->viewport->set_viking_zoom_level(zoom);
+		this->window->viewport->viewport->set_center_from_lat_lon(lat_lon, false);
 
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location found: %1").arg(name));
 
@@ -2401,7 +2399,7 @@ void Window::open_window(const QStringList & file_full_paths)
 
 void Window::show_centers_cb() /* Slot. */
 {
-	this->viewport->show_centers(this);
+	this->viewport->viewport->show_centers(this);
 }
 
 
@@ -2448,7 +2446,7 @@ void Window::acquire_handler(DataSource * data_source)
 		mode = DataSourceMode::CreateNewLayer;
 	}
 
-	AcquireContext acquire_context(this, this->viewport, this->items_tree->get_top_layer(), this->items_tree->get_selected_layer());
+	AcquireContext acquire_context(this, this->viewport->viewport, this->items_tree->get_top_layer(), this->items_tree->get_selected_layer());
 	Acquire::acquire_from_source(data_source, mode, &acquire_context);
 }
 
@@ -2586,7 +2584,7 @@ void Window::draw_viewport_to_image_dir_cb(void)
 #ifdef HAVE_ZIP_H
 void Window::draw_viewport_to_kmz_file_cb(void)
 {
-	if (this->viewport->get_coord_mode() == CoordMode::UTM) {
+	if (this->viewport->viewport->get_coord_mode() == CoordMode::UTM) {
 		Dialog::error(tr("This feature is not available in UTM mode"));
 		return;
 	}
@@ -2610,23 +2608,23 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	   track, waypoint etc...). */
 
 	/* Remove some viewport overlays as these aren't useful in KMZ file. */
-	bool has_xhair = this->viewport->get_center_mark_visibility();
+	bool has_xhair = this->viewport->viewport->get_center_mark_visibility();
 	if (has_xhair) {
-		this->viewport->set_center_mark_visibility(false);
+		this->viewport->viewport->set_center_mark_visibility(false);
 	}
-	bool has_scale = this->viewport->get_scale_visibility();
+	bool has_scale = this->viewport->viewport->get_scale_visibility();
 	if (has_scale) {
-		this->viewport->set_scale_visibility(false);
+		this->viewport->viewport->set_scale_visibility(false);
 	}
 
 	vti.save_to_destination(destination_full_path);
 
 	if (has_xhair) {
-		this->viewport->set_center_mark_visibility(true);
+		this->viewport->viewport->set_center_mark_visibility(true);
 	}
 
 	if (has_scale) {
-		this->viewport->set_scale_visibility(true);
+		this->viewport->viewport->set_scale_visibility(true);
 	}
 
 	if (has_xhair || has_scale) {
@@ -2640,7 +2638,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 
 void Window::print_cb(void)
 {
-	a_print(this, this->viewport);
+	a_print(this, this->viewport->viewport);
 }
 
 
@@ -2655,9 +2653,9 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	double zoom_request = pow(2, level - 5);
 
 	/* But has it really changed? */
-	double current_zoom = this->viewport->get_viking_zoom_level().get_x();
+	double current_zoom = this->viewport->viewport->get_viking_zoom_level().get_x();
 	if (current_zoom != 0.0 && zoom_request != current_zoom) {
-		this->viewport->set_viking_zoom_level(zoom_request);
+		this->viewport->viewport->set_viking_zoom_level(zoom_request);
 
 		/* Ask to draw updated viewport. */
 		this->emit_center_or_zoom_changed("zoom level selected");
@@ -2781,10 +2779,10 @@ void Window::change_coord_mode_cb(QAction * qa)
 		return;
 	}
 
-	const ViewportDrawMode olddrawmode = this->viewport->get_drawmode();
+	const ViewportDrawMode olddrawmode = this->viewport->viewport->get_drawmode();
 	if (olddrawmode != drawmode) {
 		/* This takes care of coord mode too. */
-		this->viewport->set_drawmode(drawmode);
+		this->viewport->viewport->set_drawmode(drawmode);
 		if (drawmode == ViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::UTM);
 		} else if (olddrawmode == ViewportDrawMode::UTM) {
@@ -2812,11 +2810,11 @@ void Window::menu_view_refresh_cb(void)
 void Window::menu_view_set_highlight_color_cb(void)
 {
 	QColorDialog color_dialog(this);
-	color_dialog.setCurrentColor(this->viewport->get_highlight_color());
+	color_dialog.setCurrentColor(this->viewport->viewport->get_highlight_color());
 	color_dialog.setWindowTitle(tr("Choose a highlight color"));
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
-		this->viewport->set_highlight_color(selected_color);
+		this->viewport->viewport->set_highlight_color(selected_color);
 		this->draw_tree_items();
 	}
 }
@@ -2827,11 +2825,11 @@ void Window::menu_view_set_highlight_color_cb(void)
 void Window::menu_view_set_bg_color_cb(void)
 {
 	QColorDialog color_dialog(this);
-	color_dialog.setCurrentColor(this->viewport->get_background_color());
+	color_dialog.setCurrentColor(this->viewport->viewport->get_background_color());
 	color_dialog.setWindowTitle(tr("Choose a background color"));
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
-		this->viewport->set_background_color(selected_color);
+		this->viewport->viewport->set_background_color(selected_color);
 		this->draw_tree_items();
 	}
 }
@@ -2857,7 +2855,7 @@ void Window::menu_view_pan_cb(void)
 		return;
 	}
 
-	Viewport * v = this->viewport;
+	Viewport * v = this->viewport->viewport;
 
 	switch (direction) {
 	case PAN_NORTH:
@@ -2896,7 +2894,7 @@ void Window::simple_map_update(bool only_new)
 	/* Find the most relevent single map layer to operate on. */
 	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerType::Map);
 	if (layer) {
-		((LayerMap *) layer)->download(this->viewport, only_new);
+		((LayerMap *) layer)->download(this->viewport->viewport, only_new);
 	}
 }
 
@@ -2909,7 +2907,7 @@ void Window::simple_map_update(bool only_new)
 void Window::draw_click_cb(QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
-	this->viewport->setFocus();
+	this->viewport->viewport->setFocus();
 
 	/* middle button pressed.  we reserve all middle button and scroll events
 	 * for panning and zooming; tools only get left/right/movement
@@ -2959,7 +2957,7 @@ static bool window_pan_timeout(Window * window)
 void Window::draw_release_cb(QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
-	this->viewport->setFocus();
+	this->viewport->viewport->setFocus();
 
 	if (ev->button() == Qt::MiddleButton) {  /* move / pan */
 		if (this->tb->active_tool->pan_handler) {
@@ -3138,7 +3136,7 @@ bool Window::save_current_document(void)
 
 	this->set_busy_cursor();
 
-	const VikFile::SaveResult save_result = VikFile::save(this->items_tree->get_top_layer(), this->viewport, this->current_document_full_path);
+	const VikFile::SaveResult save_result = VikFile::save(this->items_tree->get_top_layer(), this->viewport->viewport, this->current_document_full_path);
 	if (save_result.success) {
 		this->update_recent_files(this->current_document_full_path);
 		save_status = true;
@@ -3174,7 +3172,7 @@ void Window::import_kmz_file_cb(void)
 	}
 	const QString full_path = selection.at(0);
 
-	const KMZOpenResult ret = kmz_open_file(full_path, this->viewport, this->items_tree);
+	const KMZOpenResult ret = kmz_open_file(full_path, this->viewport->viewport, this->items_tree);
 	if (ret.kmz_status != KMZOpenStatus::Success) {
 		Dialog::error(tr("Unable to import %1: %2").arg(full_path).arg(ret.to_string()), this);
 	}

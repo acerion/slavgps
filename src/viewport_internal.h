@@ -55,13 +55,17 @@ namespace SlavGPS {
 
 	class Window;
 	class Layer;
+	class Viewport2D;
+	class ViewportMargin;
 
 
 
 
 	class ViewportCanvas {
 		friend class Viewport;
+		friend class Viewport2D;
 		friend class ViewportDecorations;
+		friend class ViewportMargin;
 	public:
 		ViewportCanvas();
 		~ViewportCanvas();
@@ -109,6 +113,7 @@ namespace SlavGPS {
 	Q_OBJECT
 
 		friend class ViewportDecorations;
+		friend class Viewport2D;
 	public:
 		Viewport(QWidget * parent = NULL);
 		~Viewport();
@@ -215,15 +220,6 @@ namespace SlavGPS {
 		int get_width(void) const;
 		int get_height(void) const;
 
-		int get_graph_width(void) const;
-		int get_graph_height(void) const;
-		int get_graph_top_edge(void) const;
-		int get_graph_bottom_edge(void) const;
-		int get_graph_left_edge(void) const;
-		int get_graph_right_edge(void) const;
-
-
-
 		/* Coordinate transformations. */
 		Coord screen_pos_to_coord(int x, int y) const;
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
@@ -302,10 +298,6 @@ namespace SlavGPS {
 		void compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle);
 
 
-		void set_margin(int top, int bottom, int left, int right);
-		void draw_border(void);
-
-
 
 		/* Trigger stuff. */
 		void set_trigger(Layer * trigger);
@@ -367,8 +359,6 @@ namespace SlavGPS {
 
 		bool highlight_usage = true;
 
-		/* The border around main area of viewport. It's specified by margin sizes. */
-		QPen border_pen;
 		/* x/y mark lines indicating e.g. current position of cursor in viewport (sort of a crosshair indicator). */
 		QPen marker_pen;
 		/* Generic pen for a generic (other than geographical coordinates) grid. */
@@ -381,14 +371,11 @@ namespace SlavGPS {
 
 		char type_string[100] = { 0 };
 
-		int margin_top = 0;
-		int margin_bottom = 0;
-		int margin_left = 0;
-		int margin_right = 0;
-
 		GeoCanvas geocanvas;
 		GeoCanvasDomain x_domain = GeoCanvasDomain::Max;
 		GeoCanvasDomain y_domain = GeoCanvasDomain::Max;
+
+		Viewport2D * v2d = NULL;
 
 	private:
 		void free_center(std::list<Coord>::iterator iter);
@@ -417,13 +404,75 @@ namespace SlavGPS {
 
 
 	public slots:
-		bool reconfigure_drawing_area_cb(void);
 		bool print_cb(QPrinter *);
 
 	protected:
 		bool eventFilter(QObject * object, QEvent * event);
 
 		ViewportCanvas canvas;
+	};
+
+
+
+
+	class ViewportMargin : public QWidget {
+		Q_OBJECT
+	public:
+
+		enum class Position {
+			Left,
+			Right,
+			Top,
+			Bottom
+		};
+
+		ViewportMargin(ViewportMargin::Position pos, int main_size, QWidget * parent = NULL);
+
+		void paintEvent(QPaintEvent * event);
+		void resizeEvent(QResizeEvent * event);
+
+		ViewportCanvas canvas;
+		ViewportMargin::Position position;
+
+		/* The border around main area of viewport. It's specified by margin sizes. */
+		QPen border_pen;
+
+		/* For left/right margin this is width.
+		   For top/bottom margin this is height. */
+		int size = 0;
+	};
+
+
+
+
+	class Viewport2D : public QWidget {
+		Q_OBJECT
+	public:
+		Viewport2D(QWidget * parent = NULL);
+
+		void set_margin(int top, int bottom, int left, int right);
+		void draw_border(void);
+
+		int get_graph_width(void) const;
+		int get_graph_height(void) const;
+		int get_graph_top_edge(void) const;
+		int get_graph_bottom_edge(void) const;
+		int get_graph_left_edge(void) const;
+		int get_graph_right_edge(void) const;
+
+		ViewportMargin * left = NULL;
+		ViewportMargin * right = NULL;
+		ViewportMargin * top = NULL;
+		ViewportMargin * bottom = NULL;
+
+		int top_height = 0;
+		int bottom_height = 0;
+		int left_width = 0;
+		int right_width = 0;
+
+		Viewport * viewport = NULL;
+
+		QGridLayout * grid = NULL;
 	};
 
 

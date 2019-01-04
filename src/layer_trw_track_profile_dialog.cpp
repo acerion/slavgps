@@ -743,10 +743,10 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 
 sg_ret ProfileView::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 {
-	const int graph_width = this->viewport->get_graph_width();
-	const int graph_height = this->viewport->get_graph_height();
-	const int graph_left_edge = this->viewport->get_graph_left_edge();
-	const int graph_top_edge = this->viewport->get_graph_top_edge();
+	const int graph_width = this->viewport->v2d->get_graph_width();
+	const int graph_height = this->viewport->v2d->get_graph_height();
+	const int graph_left_edge = this->viewport->v2d->get_graph_left_edge();
+	const int graph_top_edge = this->viewport->v2d->get_graph_top_edge();
 
 	QPoint position = this->viewport->mapFromGlobal(QCursor::pos());
 
@@ -867,7 +867,7 @@ void ProfileView::draw_grid_horizontal_line(int pos_y, const QString & label)
 {
 	const float y_interval_px = 1.0 * this->viewport->geocanvas.height;
 
-	QPointF text_anchor(0, this->viewport->get_graph_top_edge() + this->viewport->geocanvas.height - pos_y);
+	QPointF text_anchor(0, this->viewport->v2d->get_graph_top_edge() + this->viewport->geocanvas.height - pos_y);
 	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + this->viewport->geocanvas.left_edge - 10, y_interval_px - 3);
 	this->viewport->draw_text(this->viewport->labels_font, this->viewport->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
 
@@ -884,8 +884,8 @@ void ProfileView::draw_grid_horizontal_line(int pos_y, const QString & label)
 
 void ProfileView::draw_grid_vertical_line(int pos_x, const QString & label)
 {
-	const QPointF text_anchor(this->viewport->geocanvas.left_edge + pos_x, this->viewport->margin_top + this->viewport->geocanvas.height);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), this->viewport->geocanvas.width, this->viewport->margin_bottom - 10);
+	const QPointF text_anchor(this->viewport->geocanvas.left_edge + pos_x, this->viewport->v2d->top_height + this->viewport->geocanvas.height);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), this->viewport->geocanvas.width, this->viewport->v2d->bottom_height - 10);
 	this->viewport->draw_text(this->viewport->labels_font, this->viewport->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
 
 	this->viewport->center_draw_line(this->viewport->grid_pen,
@@ -1192,7 +1192,7 @@ sg_ret ProfileView::draw_graph(Track * trk)
 
 	this->draw_additional_indicators(trk);
 
-	this->viewport->draw_border();
+	this->viewport->v2d->draw_border();
 
 	/* This will call Viewport::paintEvent(), triggering final render to screen. */
 	this->viewport->update();
@@ -1349,7 +1349,7 @@ void ProfileView::create_viewport(TrackProfileDialog * dialog, GeoCanvasDomain x
 
 	this->viewport = new Viewport(dialog);
 	snprintf(this->viewport->type_string, sizeof (this->viewport->type_string), "%s", this->get_graph_title().toUtf8().constData());
-	this->viewport->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
+	this->viewport->v2d->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	this->viewport->resize(initial_width, initial_height);
 	this->viewport->reconfigure_drawing_area(initial_width, initial_height);
 
@@ -1952,10 +1952,10 @@ sg_ret ProfileView::regenerate_data(Track * trk)
 
 sg_ret ProfileView::regenerate_sizes(void)
 {
-	this->viewport->geocanvas.width = this->viewport->get_graph_width();
-	this->viewport->geocanvas.height = this->viewport->get_graph_height();
-	this->viewport->geocanvas.bottom_edge = this->viewport->get_graph_bottom_edge();
-	this->viewport->geocanvas.left_edge = this->viewport->get_graph_left_edge();
+	this->viewport->geocanvas.width = this->viewport->v2d->get_graph_width();
+	this->viewport->geocanvas.height = this->viewport->v2d->get_graph_height();
+	this->viewport->geocanvas.bottom_edge = this->viewport->v2d->get_graph_bottom_edge();
+	this->viewport->geocanvas.left_edge = this->viewport->v2d->get_graph_left_edge();
 
 	return sg_ret::ok;
 }

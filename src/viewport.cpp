@@ -227,9 +227,6 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 	this->labels_font.setFamily("Helvetica");
 	this->labels_font.setPointSize(11);
 
-	this->border_pen.setColor(QColor("black"));
-	this->border_pen.setWidth(2);
-
 	this->marker_pen.setColor(QColor("brown"));
 	this->marker_pen.setWidth(1);
 
@@ -366,16 +363,6 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 		//QPainter painter(this->canvas.pixmap);
 		this->canvas.painter->drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
 	}
-}
-
-
-
-
-bool Viewport::reconfigure_drawing_area_cb(void)
-{
-	qDebug() << SG_PREFIX_SLOT;
-	this->reconfigure_drawing_area();
-	return true;
 }
 
 
@@ -1023,49 +1010,49 @@ int Viewport::get_height(void) const
 
 
 
-int Viewport::get_graph_width(void) const
+int Viewport2D::get_graph_width(void) const
 {
-	return this->canvas.width - this->margin_left - this->margin_right;
+	return this->viewport->canvas.width - this->left_width - this->right_width;
 }
 
 
 
 
-int Viewport::get_graph_height(void) const
+int Viewport2D::get_graph_height(void) const
 {
-	return this->canvas.height - this->margin_top - this->margin_bottom;
+	return this->viewport->canvas.height - this->top_height - this->bottom_height;
 }
 
 
 
 
-int Viewport::get_graph_top_edge(void) const
+int Viewport2D::get_graph_top_edge(void) const
 {
-	return this->margin_top;
+	return this->top_height;
 }
 
 
 
 
-int Viewport::get_graph_bottom_edge(void) const
+int Viewport2D::get_graph_bottom_edge(void) const
 {
-	return this->canvas.height - this->margin_bottom;
+	return this->viewport->canvas.height - this->bottom_height;
 }
 
 
 
 
-int Viewport::get_graph_left_edge(void) const
+int Viewport2D::get_graph_left_edge(void) const
 {
-	return this->margin_left;
+	return this->left_width;
 }
 
 
 
 
-int Viewport::get_graph_right_edge(void) const
+int Viewport2D::get_graph_right_edge(void) const
 {
-	return this->canvas.width - this->margin_right;
+	return this->viewport->canvas.width - this->right_width;
 }
 
 
@@ -1273,8 +1260,8 @@ void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, 
 
 	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawLine(this->margin_left + begin_x, this->margin_top + begin_y,
-				       this->margin_left + end_x, this->margin_top + end_y);
+	this->canvas.painter->drawLine(this->v2d->left_width + begin_x, this->v2d->top_height + begin_y,
+				       this->v2d->left_width + end_x, this->v2d->top_height + end_y);
 }
 
 
@@ -1293,7 +1280,7 @@ void Viewport::center_draw_line(const QPen & pen, int begin_x, int begin_y, int 
 		return;
 	}
 
-	// fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d) (margin_top = %d, canvas height = %d)\n", begin_x, begin_y, end_x, end_y, this->margin_top, this->canvas.height);
+	// fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d) (top_height = %d, canvas height = %d)\n", begin_x, begin_y, end_x, end_y, this->top_height, this->canvas.height);
 
 	/*** Clipping, yeah! ***/
 	//Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
@@ -1301,10 +1288,10 @@ void Viewport::center_draw_line(const QPen & pen, int begin_x, int begin_y, int 
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to "beginning in upper-left corner"
 	   coordinate system. */
-	const int graph_height = this->canvas.height - this->margin_top - this->margin_bottom;
+	const int graph_height = this->canvas.height - this->v2d->top_height - this->v2d->bottom_height;
 	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawLine(this->margin_left + begin_x, this->margin_top + graph_height - begin_y,
-				       this->margin_left + end_x,   this->margin_top + graph_height - end_y);
+	this->canvas.painter->drawLine(this->v2d->left_width + begin_x, this->v2d->top_height + graph_height - begin_y,
+				       this->v2d->left_width + end_x,   this->v2d->top_height + graph_height - end_y);
 }
 
 
@@ -1911,6 +1898,8 @@ void Viewport::resizeEvent(QResizeEvent * ev)
 	ThisApp::get_main_window()->draw_tree_items();
 	//this->draw_scale();
 
+	this->v2d->draw_border();
+
 	return;
 }
 
@@ -2118,12 +2107,12 @@ void Viewport::get_location_strings(UTM utm, QString & lat, QString & lon)
 
 
 
-void Viewport::set_margin(int top, int bottom, int left, int right)
+void Viewport2D::set_margin(int top_h, int bottom_h, int left_w, int right_w)
 {
-	this->margin_top = top;
-	this->margin_bottom = bottom;
-	this->margin_left = left;
-	this->margin_right = right;
+	this->top_height = top_h;
+	this->bottom_height = bottom_h;
+	this->left_width = left_w;
+	this->right_width = right_w;
 }
 
 
@@ -2133,20 +2122,8 @@ void Viewport::set_margin(int top, int bottom, int left, int right)
   Draw border between margins of viewport and main (central) area of viewport.
   Don't draw anything if all margins have zero width.
 */
-void Viewport::draw_border(void)
+void Viewport2D::draw_border(void)
 {
-	if (this->margin_top > 0
-	    || this->margin_bottom > 0
-	    || this->margin_left > 0
-	    || this->margin_right > 0) {
-
-		this->draw_rectangle(this->border_pen,
-				     this->margin_left,
-				     this->margin_top,
-				     this->canvas.width - this->margin_left - this->margin_right, /* Width of main area inside margins. */
-				     this->canvas.height - this->margin_top - this->margin_bottom); /* Height of main area inside margins. */
-
-	}
 }
 
 
@@ -2320,21 +2297,21 @@ bool Viewport::print_cb(QPrinter * printer)
 */
 void Viewport::center_draw_simple_crosshair(const ScreenPos & pos)
 {
-	//ScreenPos(GRAPH_MARGIN_LEFT + current_pos.x, GRAPH_MARGIN_TOP + this->viewport->geocanvas.height - current_pos.y)
+	//ScreenPos(GRAPH_LEFT_WIDTH + current_pos.x, GRAPH_TOP_HEIGHT + this->viewport->geocanvas.height - current_pos.y)
 
-	const int graph_width = this->canvas.width - this->margin_left - this->margin_right;
-	const int graph_height = this->canvas.height - this->margin_top - this->margin_bottom;
-	const int x = pos.x + this->margin_left;
+	const int graph_width = this->canvas.width - this->v2d->left_width - this->v2d->right_width;
+	const int graph_height = this->canvas.height - this->v2d->top_height - this->v2d->bottom_height;
+	const int x = pos.x + this->v2d->left_width;
 	const int y = pos.y;
 
 
 	qDebug() << SG_PREFIX_I << "crosshair at" << pos.x << pos.y;
 
-	if (pos.x < this->margin_left || pos.x > this->margin_left + graph_width) {
+	if (pos.x < this->v2d->left_width || pos.x > this->v2d->left_width + graph_width) {
 		/* Position outside of graph area. */
 		return;
 	}
-	if (pos.y < this->margin_top || pos.y > this->margin_top + graph_height) {
+	if (pos.y < this->v2d->top_height || pos.y > this->v2d->top_height + graph_height) {
 		/* Position outside of graph area. */
 		return;
 	}
@@ -2346,12 +2323,12 @@ void Viewport::center_draw_simple_crosshair(const ScreenPos & pos)
 
 
 	/* Horizontal line. */
-	this->canvas.painter->drawLine(this->margin_left + 0,           y,
-				       this->margin_left + graph_width, y);
+	this->canvas.painter->drawLine(this->v2d->left_width + 0,           y,
+				       this->v2d->left_width + graph_width, y);
 
 	/* Vertical line. */
-	this->canvas.painter->drawLine(x, this->margin_top + 0,
-				       x, this->margin_top + graph_height);
+	this->canvas.painter->drawLine(x, this->v2d->top_height + 0,
+				       x, this->v2d->top_height + graph_height);
 }
 
 
@@ -2611,4 +2588,123 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 Window * Viewport::get_window(void) const
 {
 	return this->window;
+}
+
+
+
+
+Viewport2D::Viewport2D(QWidget * parent) : QWidget(parent)
+{
+	this->grid = new QGridLayout();
+	this->grid->setSpacing(0); /* Space between contents of grid. */
+	this->grid->setContentsMargins(0, 0, 0, 0); /* Outermost margins of a grid. */
+
+	this->set_margin(10, 20, 30, 40);
+
+	QLayout * old = this->layout();
+	delete old;
+	qDeleteAll(this->children());
+	this->setLayout(this->grid);
+
+	this->left   = new ViewportMargin(ViewportMargin::Position::Left,   10);
+	this->right  = new ViewportMargin(ViewportMargin::Position::Right,  20);
+	this->top    = new ViewportMargin(ViewportMargin::Position::Top,    30);
+	this->bottom = new ViewportMargin(ViewportMargin::Position::Bottom, 40);
+
+
+	this->viewport = new Viewport(this);
+	this->viewport->v2d = this;
+
+	this->grid->addWidget(this->left,   1, 0);
+	this->grid->addWidget(this->right,  1, 2);
+	this->grid->addWidget(this->top,    0, 1);
+	this->grid->addWidget(this->bottom, 2, 1);
+
+	this->grid->addWidget(this->viewport, 1, 1);
+}
+
+
+
+
+void ViewportMargin::paintEvent(QPaintEvent * ev)
+{
+	qDebug() << SG_PREFIX_I;
+
+	QPainter painter(this);
+	painter.drawPixmap(0, 0, *this->canvas.pixmap);
+
+	return;
+}
+
+
+
+
+void ViewportMargin::resizeEvent(QResizeEvent * ev)
+{
+	qDebug() << SG_PREFIX_I;
+
+	this->canvas.reconfigure(this->geometry().width(), this->geometry().height());
+	this->canvas.painter->setPen(this->border_pen);
+
+	switch (this->position) {
+	case ViewportMargin::Position::Left:
+		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "left");
+		this->canvas.painter->drawLine(this->geometry().width() - 1, 0,
+					       this->geometry().width() - 1, this->geometry().height() - 1);
+		break;
+	case ViewportMargin::Position::Right:
+		this->canvas.painter->drawLine(1, 1,
+					       1, this->geometry().height() - 1);
+		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "right");
+		break;
+	case ViewportMargin::Position::Top:
+		this->canvas.painter->drawLine(0,                            this->geometry().height() - 1,
+					       this->geometry().width() - 1, this->geometry().height() - 1);
+		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "top");
+		break;
+	case ViewportMargin::Position::Bottom:
+		this->canvas.painter->drawLine(1,                            1,
+					       this->geometry().width() - 1, 1);
+		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "bottom");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled margin position";
+		break;
+	}
+
+	return;
+}
+
+
+
+
+ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWidget * parent) : QWidget(parent)
+{
+	this->position = pos;
+	this->size = main_size;
+
+	this->border_pen.setColor(QColor("black"));
+	this->border_pen.setWidth(2);
+
+	switch (this->position) {
+	case ViewportMargin::Position::Left:
+		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+		this->setMinimumSize(size, 10);
+		break;
+	case ViewportMargin::Position::Right:
+		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+		this->setMinimumSize(size, 10);
+		break;
+	case ViewportMargin::Position::Top:
+		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+		this->setMinimumSize(10, size);
+		break;
+	case ViewportMargin::Position::Bottom:
+		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+		this->setMinimumSize(10, size);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled margin position";
+		break;
+	}
 }
