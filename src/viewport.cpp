@@ -160,6 +160,7 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	this->setMinimumSize(200, 300);
+	snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "center");
 	//this->setMaximumSize(2700, 2700);
 
 	/* We want to constantly update cursor position in
@@ -220,7 +221,6 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 
 
 
-	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
 	this->scale_visibility = true;
 
 	this->labels_pen.setColor("black");
@@ -240,6 +240,8 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
 	this->highlight_pen.setWidth(1);
 	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
+
+	this->canvas.viewport = this->v2d;
 }
 
 
@@ -339,9 +341,6 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 		qDebug() << SG_PREFIX_I << "Will reconfigure canvas with specified sizes" << new_width << new_height;
 		this->canvas.reconfigure(new_width, new_height);
 	}
-
-	qDebug() << SG_PREFIX_SIGNAL << "Sending \"drawing area reconfigured\" from" << this->type_string;
-	emit this->drawing_area_reconfigured(this);
 }
 
 
@@ -373,7 +372,7 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 */
 void Viewport::clear(void)
 {
-	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->type_string << this->canvas.width << this->canvas.height;
+	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->canvas.debug << this->canvas.width << this->canvas.height;
 	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->eraseRect(0, 0, this->canvas.width, this->canvas.height);
 
@@ -1010,49 +1009,17 @@ int Viewport::get_height(void) const
 
 
 
-int Viewport2D::get_graph_width(void) const
+int Viewport2D::center_get_width(void) const
 {
-	return this->viewport->canvas.width - this->left_width - this->right_width;
+	return this->viewport->canvas.width;
 }
 
 
 
 
-int Viewport2D::get_graph_height(void) const
+int Viewport2D::center_get_height(void) const
 {
-	return this->viewport->canvas.height - this->top_height - this->bottom_height;
-}
-
-
-
-
-int Viewport2D::get_graph_top_edge(void) const
-{
-	return this->top_height;
-}
-
-
-
-
-int Viewport2D::get_graph_bottom_edge(void) const
-{
-	return this->viewport->canvas.height - this->bottom_height;
-}
-
-
-
-
-int Viewport2D::get_graph_left_edge(void) const
-{
-	return this->left_width;
-}
-
-
-
-
-int Viewport2D::get_graph_right_edge(void) const
-{
-	return this->viewport->canvas.width - this->right_width;
+	return this->viewport->canvas.height;
 }
 
 
@@ -1260,8 +1227,8 @@ void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, 
 
 	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawLine(this->v2d->left_width + begin_x, this->v2d->top_height + begin_y,
-				       this->v2d->left_width + end_x, this->v2d->top_height + end_y);
+	this->canvas.painter->drawLine(begin_x, begin_y,
+				       end_x,   end_y);
 }
 
 
@@ -1280,7 +1247,7 @@ void Viewport::center_draw_line(const QPen & pen, int begin_x, int begin_y, int 
 		return;
 	}
 
-	// fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d) (top_height = %d, canvas height = %d)\n", begin_x, begin_y, end_x, end_y, this->top_height, this->canvas.height);
+	// fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d) (canvas height = %d)\n", begin_x, begin_y, end_x, end_y, this->canvas.height);
 
 	/*** Clipping, yeah! ***/
 	//Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
@@ -1288,10 +1255,10 @@ void Viewport::center_draw_line(const QPen & pen, int begin_x, int begin_y, int 
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to "beginning in upper-left corner"
 	   coordinate system. */
-	const int graph_height = this->canvas.height - this->v2d->top_height - this->v2d->bottom_height;
+	const int graph_height = this->canvas.height;
 	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawLine(this->v2d->left_width + begin_x, this->v2d->top_height + graph_height - begin_y,
-				       this->v2d->left_width + end_x,   this->v2d->top_height + graph_height - end_y);
+	this->canvas.painter->drawLine(begin_x, graph_height - begin_y,
+				       end_x,   graph_height - end_y);
 }
 
 
@@ -1393,6 +1360,80 @@ void Viewport::draw_text(const QFont & text_font, const QPen & pen, const QRectF
 }
 
 
+
+
+void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+{
+	qDebug() << SG_PREFIX_I << "Will draw label" << text;
+	ViewportCanvas * canv = NULL;
+
+	switch (pos) {
+	case ViewportMargin::Position::Left:
+		canv = &this->left->canvas;
+		break;
+	case ViewportMargin::Position::Right:
+		canv = &this->right->canvas;
+		break;
+	case ViewportMargin::Position::Top:
+		canv = &this->top->canvas;
+		break;
+	case ViewportMargin::Position::Bottom:
+		canv = &this->bottom->canvas;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled margin position";
+		break;
+	}
+
+	if (!canv) {
+		qDebug() << SG_PREFIX_E << "No margin canvas selected";
+		return;
+	}
+	if (!canv->painter) {
+		qDebug() << SG_PREFIX_W << "Canvas has no painter (yet?)";
+		return;
+	}
+
+
+	canv->painter->setFont(text_font);
+
+	/* "Normalize" bounding rectangles that have negative width or height.
+	   Otherwise the text will be outside of the bounding rectangle. */
+	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
+
+	QRectF text_rect = canv->painter->boundingRect(final_bounding_rect, flags, text);
+	if (text_offset & SG_TEXT_OFFSET_UP) {
+		/* Move boxes a bit up, so that text is right against grid line, not below it. */
+		qreal new_top = text_rect.top() - (text_rect.height() / 2);
+		final_bounding_rect.moveTop(new_top);
+		text_rect.moveTop(new_top);
+	}
+
+	if (text_offset & SG_TEXT_OFFSET_LEFT) {
+		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
+		qreal new_left = text_rect.left() - (text_rect.width() / 2);
+		final_bounding_rect.moveLeft(new_left);
+		text_rect.moveLeft(new_left);
+	}
+
+
+
+#if 1
+	/* Debug. */
+	canv->painter->setPen(QColor("red"));
+	canv->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
+
+	canv->painter->setPen(QColor("darkgreen"));
+	canv->painter->drawRect(bounding_rect);
+
+	canv->painter->setPen(QColor("red"));
+	canv->painter->drawRect(text_rect);
+#endif
+
+	canv->painter->setPen(pen);
+	canv->painter->drawText(text_rect, flags, text, NULL);
+
+}
 
 
 void Viewport::draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text)
@@ -1898,8 +1939,6 @@ void Viewport::resizeEvent(QResizeEvent * ev)
 	ThisApp::get_main_window()->draw_tree_items();
 	//this->draw_scale();
 
-	this->v2d->draw_border();
-
 	return;
 }
 
@@ -2113,17 +2152,23 @@ void Viewport2D::set_margin(int top_h, int bottom_h, int left_w, int right_w)
 	this->bottom_height = bottom_h;
 	this->left_width = left_w;
 	this->right_width = right_w;
-}
 
-
-
-
-/*
-  Draw border between margins of viewport and main (central) area of viewport.
-  Don't draw anything if all margins have zero width.
-*/
-void Viewport2D::draw_border(void)
-{
+	if (this->left) {
+		this->left->setFixedWidth(left_w);
+		this->left->canvas.reconfigure(this->left->geometry().width(), this->left->geometry().height());
+	}
+	if (this->right) {
+		this->right->setFixedWidth(right_w);
+		this->right->canvas.reconfigure(this->right->geometry().width(), this->right->geometry().height());
+	}
+	if (this->top) {
+		this->top->setFixedHeight(top_h);
+		this->top->canvas.reconfigure(this->top->geometry().width(), this->top->geometry().height());
+	}
+	if (this->bottom) {
+		this->bottom->setFixedHeight(bottom_h);
+		this->bottom->canvas.reconfigure(this->bottom->geometry().width(), this->bottom->geometry().height());
+	}
 }
 
 
@@ -2205,7 +2250,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 
 
-	strcpy(scaled_viewport->type_string, "Scaled Viewport");
+	snprintf(scaled_viewport->canvas.debug, sizeof (scaled_viewport->canvas.debug), "%s", "Scaled Viewport");
 
 	/* Notice that we configure size of the print viewport using
 	   size of scaled source, not size of target device (i.e. not
@@ -2299,19 +2344,19 @@ void Viewport::center_draw_simple_crosshair(const ScreenPos & pos)
 {
 	//ScreenPos(GRAPH_LEFT_WIDTH + current_pos.x, GRAPH_TOP_HEIGHT + this->viewport->geocanvas.height - current_pos.y)
 
-	const int graph_width = this->canvas.width - this->v2d->left_width - this->v2d->right_width;
-	const int graph_height = this->canvas.height - this->v2d->top_height - this->v2d->bottom_height;
-	const int x = pos.x + this->v2d->left_width;
+	const int graph_width = this->canvas.width;
+	const int graph_height = this->canvas.height;
+	const int x = pos.x;
 	const int y = pos.y;
 
 
 	qDebug() << SG_PREFIX_I << "crosshair at" << pos.x << pos.y;
 
-	if (pos.x < this->v2d->left_width || pos.x > this->v2d->left_width + graph_width) {
+	if (pos.x > graph_width) {
 		/* Position outside of graph area. */
 		return;
 	}
-	if (pos.y < this->v2d->top_height || pos.y > this->v2d->top_height + graph_height) {
+	if (pos.y > graph_height) {
 		/* Position outside of graph area. */
 		return;
 	}
@@ -2323,12 +2368,12 @@ void Viewport::center_draw_simple_crosshair(const ScreenPos & pos)
 
 
 	/* Horizontal line. */
-	this->canvas.painter->drawLine(this->v2d->left_width + 0,           y,
-				       this->v2d->left_width + graph_width, y);
+	this->canvas.painter->drawLine(0,           y,
+				       graph_width, y);
 
 	/* Vertical line. */
-	this->canvas.painter->drawLine(x, this->v2d->top_height + 0,
-				       x, this->v2d->top_height + graph_height);
+	this->canvas.painter->drawLine(x, 0,
+				       x, graph_height);
 }
 
 
@@ -2550,7 +2595,12 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	   code path to handle this special case would bring little
 	   gain. */
 
-	qDebug() << SG_PREFIX_N << "--- Canvas is being reconfigured with size ---";
+	qDebug() << SG_PREFIX_N << this->debug << "*** Canvas is being reconfigured with size" << new_width << new_height << "***";
+
+	if (this->width == new_width && this->height == new_height) {
+		qDebug() << SG_PREFIX_I << this->debug << "Canvas not reconfigured: size didn't change";
+		return;
+	}
 
 	this->width = new_width;
 	this->height = new_height;
@@ -2559,14 +2609,14 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	this->height_2 = this->height / 2;
 
 	if (this->pixmap) {
-		qDebug() << SG_PREFIX_I << "Deleting old canvas pixmap";
+		qDebug() << SG_PREFIX_I << this->debug << "Deleting old canvas pixmap";
 		/* Painter must be deleted before paint device, otherwise
 		   destructor of the paint device will complain. */
 		delete this->painter;
 		delete this->pixmap;
 	}
 
-	qDebug() << SG_PREFIX_I << "Creating new canvas pixmap with size" << this->width << this->height;
+	qDebug() << SG_PREFIX_I << this->debug << "Creating new canvas pixmap with size" << this->width << this->height;
 	this->pixmap = new QPixmap(this->width, this->height);
 	this->pixmap->fill();
 
@@ -2575,11 +2625,14 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 
 	/* TODO_UNKNOWN trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
-		qDebug() << SG_PREFIX_D << "Deleting old snapshot buffer";
+		qDebug() << SG_PREFIX_D << this->debug << "Deleting old snapshot buffer";
 		delete this->snapshot_buffer;
 	}
-	qDebug() << SG_PREFIX_I << "Creating new snapshot buffer with size" << this->width << this->height;
+	qDebug() << SG_PREFIX_I << this->debug << "Creating new snapshot buffer with size" << this->width << this->height;
 	this->snapshot_buffer = new QPixmap(this->width, this->height);
+
+	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
+	emit this->reconfigured(this->viewport);
 }
 
 
@@ -2595,6 +2648,8 @@ Window * Viewport::get_window(void) const
 
 Viewport2D::Viewport2D(QWidget * parent) : QWidget(parent)
 {
+	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
 	this->grid = new QGridLayout();
 	this->grid->setSpacing(0); /* Space between contents of grid. */
 	this->grid->setContentsMargins(0, 0, 0, 0); /* Outermost margins of a grid. */
@@ -2606,14 +2661,18 @@ Viewport2D::Viewport2D(QWidget * parent) : QWidget(parent)
 	qDeleteAll(this->children());
 	this->setLayout(this->grid);
 
-	this->left   = new ViewportMargin(ViewportMargin::Position::Left,   10);
-	this->right  = new ViewportMargin(ViewportMargin::Position::Right,  20);
-	this->top    = new ViewportMargin(ViewportMargin::Position::Top,    30);
-	this->bottom = new ViewportMargin(ViewportMargin::Position::Bottom, 40);
-
+	this->left   = new ViewportMargin(ViewportMargin::Position::Left,   this->left_width);
+	this->right  = new ViewportMargin(ViewportMargin::Position::Right,  this->right_width);
+	this->top    = new ViewportMargin(ViewportMargin::Position::Top,    this->top_height);
+	this->bottom = new ViewportMargin(ViewportMargin::Position::Bottom, this->bottom_height);
+	this->left->canvas.viewport = this;
+	this->right->canvas.viewport = this;
+	this->top->canvas.viewport = this;
+	this->bottom->canvas.viewport = this;
 
 	this->viewport = new Viewport(this);
 	this->viewport->v2d = this;
+	this->viewport->canvas.viewport = this;
 
 	this->grid->addWidget(this->left,   1, 0);
 	this->grid->addWidget(this->right,  1, 2);
@@ -2690,18 +2749,25 @@ ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWid
 	case ViewportMargin::Position::Left:
 		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 		this->setMinimumSize(size, 10);
+		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "left");
 		break;
+
 	case ViewportMargin::Position::Right:
 		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 		this->setMinimumSize(size, 10);
+		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "right");
 		break;
+
 	case ViewportMargin::Position::Top:
 		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 		this->setMinimumSize(10, size);
+		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "top");
 		break;
+
 	case ViewportMargin::Position::Bottom:
 		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 		this->setMinimumSize(10, size);
+		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "bottom");
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";

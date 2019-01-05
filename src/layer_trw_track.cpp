@@ -3575,11 +3575,7 @@ sg_ret Track::draw_e_ft(Viewport * viewport, struct my_data * data)
 	const double alt_max = max_alt.get_value() + margin * max_alt.get_value();
 	const double visible_range = alt_max - alt_min;
 
-#if 0
-	const int bottom = viewport->get_graph_bottom_edge();
-#else
 	const int bottom = data->height;
-#endif
 
 	const double x_scale = 1.0 * this->trackpoints.size() / data->width;
 
@@ -3630,11 +3626,7 @@ sg_ret Track::draw_d_ft(Viewport * viewport, struct my_data * data)
 	const double dist_max = distances[distances.size() - 1] + margin * distances[distances.size() - 1];
 	const double visible_range = dist_max - dist_min;
 
-#if 0
-	const int bottom = viewport->get_graph_bottom_edge();
-#else
 	const int bottom = data->height;
-#endif
 
 	const double x_scale = 1.0 * distances.size() / data->width;
 
@@ -3691,12 +3683,7 @@ sg_ret Track::draw_v_ft(Viewport * viewport, struct my_data * data)
 	const double max_value_uu = 6; // TODO: correct calculation
 	const double visible_values_range_uu = max_value_uu - min_value_uu;
 
-
-#if 0
-	const int bottom = viewport->get_graph_bottom_edge();
-#else
 	const int bottom = data->height;
-#endif
 
 	const double x_scale = 1.0 * n_values / data->width;
 

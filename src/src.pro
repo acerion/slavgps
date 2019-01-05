@@ -7,6 +7,7 @@ RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc waypoint.qrc
 
 SOURCES += main.cpp \
     viewport.cpp \
+    layer_trw_track_profile_dialog.cpp \
     babel.cpp \
     mem_cache.cpp \
     tree_item_list.cpp \
@@ -108,7 +109,6 @@ SOURCES += main.cpp \
     toolbox.cpp \
     layer_trw_track.cpp \
     layer_trw_track_properties_dialog.cpp \
-    layer_trw_track_profile_dialog.cpp \
     layer_trw_track_list_dialog.cpp \
     layer_trw_trackpoint_properties.cpp \
     layer_trw_waypoint.cpp \

@@ -57,11 +57,14 @@ namespace SlavGPS {
 	class Layer;
 	class Viewport2D;
 	class ViewportMargin;
+	class ViewportCanvas;
 
 
 
 
-	class ViewportCanvas {
+	class ViewportCanvas : public QObject {
+		Q_OBJECT
+
 		friend class Viewport;
 		friend class Viewport2D;
 		friend class ViewportDecorations;
@@ -72,10 +75,8 @@ namespace SlavGPS {
 
 		void reconfigure(int width, int height);
 
-	protected:
-		QPainter * painter = NULL;
-		QPixmap * pixmap = NULL;
-		QPixmap * snapshot_buffer = NULL;
+		char debug[100] = { 0 };
+		Viewport2D * viewport = NULL;
 
 		int width = 0;
 		int height = 0;
@@ -83,6 +84,15 @@ namespace SlavGPS {
 		/* Half of the normal width and height. */
 		int width_2 = 0;
 		int height_2 = 0;
+
+	protected:
+		QPainter * painter = NULL;
+		QPixmap * pixmap = NULL;
+		QPixmap * snapshot_buffer = NULL;
+
+
+	signals:
+		void reconfigured(Viewport2D * viewport);
 	};
 
 
@@ -94,8 +104,6 @@ namespace SlavGPS {
 
 		int width = 0;
 		int height = 0;
-		int bottom_edge = 0;
-		int left_edge = 0;
 
 
 		QPixmap saved_img;
@@ -110,7 +118,7 @@ namespace SlavGPS {
 
 
 	class Viewport : public QWidget {
-	Q_OBJECT
+		Q_OBJECT
 
 		friend class ViewportDecorations;
 		friend class Viewport2D;
@@ -175,7 +183,6 @@ namespace SlavGPS {
 		   "Simple" means one horizontal and one vertical line
 		   crossing at given viewport position. */
 		void center_draw_simple_crosshair(const ScreenPos & pos);
-
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
@@ -369,13 +376,12 @@ namespace SlavGPS {
 		Layer * trigger = NULL;
 		bool half_drawn = false;
 
-		char type_string[100] = { 0 };
+		char debug[100] = { 0 };
 
 		GeoCanvas geocanvas;
-		GeoCanvasDomain x_domain = GeoCanvasDomain::Max;
-		GeoCanvasDomain y_domain = GeoCanvasDomain::Max;
 
 		Viewport2D * v2d = NULL;
+		ViewportCanvas canvas;
 
 	private:
 		void free_center(std::list<Coord>::iterator iter);
@@ -395,11 +401,11 @@ namespace SlavGPS {
 		Window * window = NULL;
 		ViewportDecorations decorations;
 
+
 	signals:
 		void cursor_moved(Viewport * viewport, QMouseEvent * event);
 		void button_released(Viewport * viewport, QMouseEvent * event);
 		void center_updated(void);
-		void drawing_area_reconfigured(Viewport * viewport);
 		void center_or_zoom_changed(void);
 
 
@@ -409,7 +415,6 @@ namespace SlavGPS {
 	protected:
 		bool eventFilter(QObject * object, QEvent * event);
 
-		ViewportCanvas canvas;
 	};
 
 
@@ -451,28 +456,28 @@ namespace SlavGPS {
 		Viewport2D(QWidget * parent = NULL);
 
 		void set_margin(int top, int bottom, int left, int right);
-		void draw_border(void);
 
-		int get_graph_width(void) const;
-		int get_graph_height(void) const;
-		int get_graph_top_edge(void) const;
-		int get_graph_bottom_edge(void) const;
-		int get_graph_left_edge(void) const;
-		int get_graph_right_edge(void) const;
+		int center_get_width(void) const;
+		int center_get_height(void) const;
+
+		void margin_draw_text(ViewportMargin::Position pos, QFont const & text_font, QPen const & pen, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
 
 		ViewportMargin * left = NULL;
 		ViewportMargin * right = NULL;
 		ViewportMargin * top = NULL;
 		ViewportMargin * bottom = NULL;
 
-		int top_height = 0;
-		int bottom_height = 0;
-		int left_width = 0;
-		int right_width = 0;
+		GeoCanvasDomain x_domain = GeoCanvasDomain::Max;
+		GeoCanvasDomain y_domain = GeoCanvasDomain::Max;
 
 		Viewport * viewport = NULL;
 
 		QGridLayout * grid = NULL;
+
+		int top_height = 0;
+		int bottom_height = 0;
+		int left_width = 0;
+		int right_width = 0;
 	};
 
 

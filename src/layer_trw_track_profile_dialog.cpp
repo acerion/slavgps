@@ -143,46 +143,47 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 {
 	/* First create track data using appropriate Track method. */
 
-	if (this->viewport->y_domain == GeoCanvasDomain::Elevation && this->viewport->x_domain == GeoCanvasDomain::Distance) {
-		this->track_data = trk->make_track_data_altitude_over_distance(this->viewport->geocanvas.width);
+	const int w = this->viewport2d->center_get_width();
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Gradient && this->viewport->x_domain == GeoCanvasDomain::Distance) {
-		this->track_data = trk->make_track_data_gradient_over_distance(this->viewport->geocanvas.width);
+	if (this->viewport2d->y_domain == GeoCanvasDomain::Elevation && this->viewport2d->x_domain == GeoCanvasDomain::Distance) {
+		this->track_data = trk->make_track_data_altitude_over_distance(w);
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Speed && this->viewport->x_domain == GeoCanvasDomain::Time) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Gradient && this->viewport2d->x_domain == GeoCanvasDomain::Distance) {
+		this->track_data = trk->make_track_data_gradient_over_distance(w);
+
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Speed && this->viewport2d->x_domain == GeoCanvasDomain::Time) {
 		this->track_data_raw = trk->make_track_data_speed_over_time();
-		this->track_data = this->track_data_raw.compress(this->viewport->geocanvas.width);
+		this->track_data = this->track_data_raw.compress(w);
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Distance && this->viewport->x_domain == GeoCanvasDomain::Time) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Distance && this->viewport2d->x_domain == GeoCanvasDomain::Time) {
 		this->track_data_raw = trk->make_track_data_distance_over_time();
-		this->track_data = this->track_data_raw.compress(this->viewport->geocanvas.width);
+		this->track_data = this->track_data_raw.compress(w);
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Elevation && this->viewport->x_domain == GeoCanvasDomain::Time) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Elevation && this->viewport2d->x_domain == GeoCanvasDomain::Time) {
 		this->track_data_raw = trk->make_track_data_altitude_over_time();
-		this->track_data = this->track_data_raw.compress(this->viewport->geocanvas.width);
+		this->track_data = this->track_data_raw.compress(w);
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Speed && this->viewport->x_domain == GeoCanvasDomain::Distance) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Speed && this->viewport2d->x_domain == GeoCanvasDomain::Distance) {
 		this->track_data_raw = trk->make_track_data_speed_over_distance();
-		this->track_data = this->track_data_raw.compress(this->viewport->geocanvas.width);
+		this->track_data = this->track_data_raw.compress(w);
 	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->viewport->x_domain << (int) this->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->viewport2d->x_domain << (int) this->viewport2d->y_domain;
 	}
 
 	if (!this->track_data.valid) {
+		qDebug() << SG_PREFIX_E << "Value vector for" << this->get_graph_title() << "is invalid";
 		return sg_ret::err;
 	}
-
-
 	qDebug() << SG_PREFIX_I << "Generated value vector for" << this->get_graph_title() << ", will now adjust y values";
 
 
 	/* Do necessary adjustments to y values. */
 
-	switch (this->viewport->y_domain) {
+	switch (this->viewport2d->y_domain) {
 	case GeoCanvasDomain::Speed:
 		/* Convert into appropriate units. */
-		for (int i = 0; i < this->viewport->geocanvas.width; i++) {
-			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->viewport->geocanvas.speed_unit);
+		for (int i = 0; i < this->viewport2d->viewport->geocanvas.width; i++) {
+			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->viewport2d->viewport->geocanvas.speed_unit);
 		}
 
 		qDebug() << SG_PREFIX_D << "Calculating min/max y speed for" << this->get_graph_title();
@@ -193,9 +194,9 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		break;
 	case GeoCanvasDomain::Elevation:
 		/* Convert into appropriate units. */
-		if (this->viewport->geocanvas.height_unit == HeightUnit::Feet) {
+		if (this->viewport2d->viewport->geocanvas.height_unit == HeightUnit::Feet) {
 			/* Convert altitudes into feet units. */
-			for (int i = 0; i < this->viewport->geocanvas.width; i++) {
+			for (int i = 0; i < this->viewport2d->viewport->geocanvas.width; i++) {
 				this->track_data.y[i] = VIK_METERS_TO_FEET(this->track_data.y[i]);
 			}
 		}
@@ -205,13 +206,13 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		break;
 	case GeoCanvasDomain::Distance:
 		/* Convert into appropriate units. */
-		for (int i = 0; i < this->viewport->geocanvas.width; i++) {
-			this->track_data.y[i] = Distance::convert_meters_to(this->track_data.y[i], this->viewport->geocanvas.distance_unit);
+		for (int i = 0; i < this->viewport2d->viewport->geocanvas.width; i++) {
+			this->track_data.y[i] = Distance::convert_meters_to(this->track_data.y[i], this->viewport2d->viewport->geocanvas.distance_unit);
 		}
 
 #ifdef K_FIXME_RESTORE
 		this->track_data.y_min = 0;
-		this->track_data.y_max = Distance::convert_meters_to(trk->get_length_value_including_gaps(), this->viewport->geocanvas.distance_unit);
+		this->track_data.y_max = Distance::convert_meters_to(trk->get_length_value_including_gaps(), this->viewport2d->viewport->geocanvas.distance_unit);
 #endif
 
 		this->track_data.calculate_min_max();
@@ -221,7 +222,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		this->track_data.calculate_min_max();
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport2d->y_domain;
 		return sg_ret::err;
 	};
 
@@ -233,7 +234,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 
 	/* Do necessary adjustments to x values. */
 	sg_ret result = sg_ret::err;
-	switch (this->viewport->x_domain) {
+	switch (this->viewport2d->x_domain) {
 	case GeoCanvasDomain::Distance:
 		result = this->set_initial_visible_range_x_distance();
 		break;
@@ -241,7 +242,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		result = this->set_initial_visible_range_x_time();
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport->x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport2d->x_domain;
 		result = sg_ret::err;
 		break;
 	}
@@ -257,8 +258,13 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		return result;
 	}
 
-
-	return sg_ret::ok;
+	if (!this->track_data.valid || NULL == this->track_data.x || NULL == this->track_data.y) {
+		qDebug() << SG_PREFIX_E << "Final test of track data: failure";
+		return sg_ret::err;
+	} else {
+		qDebug() << SG_PREFIX_I << "Final test of track data: success";
+		return sg_ret::ok;
+	}
 }
 
 
@@ -271,8 +277,8 @@ sg_ret ProfileView::set_initial_visible_range_x_distance(void)
 	   show e.g. negative distances. */
 	const Distance x_min = Distance(this->track_data.x_min);
 	const Distance x_max = Distance(this->track_data.x_max);
-	this->x_min_visible_d = x_min.convert_to_unit(this->viewport->geocanvas.distance_unit);
-	this->x_max_visible_d = x_max.convert_to_unit(this->viewport->geocanvas.distance_unit);
+	this->x_min_visible_d = x_min.convert_to_unit(this->viewport2d->viewport->geocanvas.distance_unit);
+	this->x_max_visible_d = x_max.convert_to_unit(this->viewport2d->viewport->geocanvas.distance_unit);
 
 	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
 	if (visible_range.is_zero()) {
@@ -349,7 +355,7 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 	const double over = 0.05; /* There is no deep reasoning behind this particular value. */
 	const double range = abs(this->track_data.y_max - this->track_data.y_min);
 
-	switch (this->viewport->y_domain) {
+	switch (this->viewport2d->y_domain) {
 	case GeoCanvasDomain::Speed:
 	case GeoCanvasDomain::Distance:
 		/* Some graphs better start at zero, e.g. speed graph
@@ -362,7 +368,7 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 		this->y_min_visible = this->track_data.y_min - range * over;
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport2d->y_domain;
 		return sg_ret::err;
 	}
 	this->y_max_visible = this->track_data.y_max + range * over;
@@ -375,7 +381,7 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 	const int n_intervals = GRAPH_Y_INTERVALS;
 	int interval_index = 0;
 
-	switch (this->viewport->y_domain) {
+	switch (this->viewport2d->y_domain) {
 	case GeoCanvasDomain::Speed:
 		interval_index = speed_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
 		this->y_interval = speed_intervals.intervals.values[interval_index];
@@ -393,7 +399,7 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 		this->y_interval = gradient_intervals.intervals.values[interval_index];
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport2d->y_domain;
 		return sg_ret::err;
 	};
 
@@ -457,10 +463,10 @@ static bool set_center_at_graph_position(int event_x,
 sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn)
 {
 	/* Restore previously saved image that has no marks on it, just the graph, grids, borders and margins. */
-	if (this->viewport->geocanvas.saved_img_valid) {
+	if (this->viewport2d->viewport->geocanvas.saved_img_valid) {
 		/* Debug code. */
 		// qDebug() << SG_PREFIX_I << "Restoring saved image";
-		this->viewport->set_pixmap(this->viewport->geocanvas.saved_img);
+		this->viewport2d->viewport->set_pixmap(this->viewport2d->viewport->geocanvas.saved_img);
 	} else {
 		qDebug() << SG_PREFIX_W << "NOT restoring saved image";
 	}
@@ -476,8 +482,7 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 		   coordinate system (beginning in bottom-left corner)
 		   to viewport coordinates (beginning in upper-left
 		   corner + viewport's active area margins). */
-		this->viewport->center_draw_simple_crosshair(current_pos);
-		//this->viewport->center_draw_simple_crosshair(ScreenPos(GRAPH_MARGIN_LEFT + current_pos.x, GRAPH_MARGIN_TOP + this->viewport->geocanvas.height - current_pos.y));
+		this->viewport2d->viewport->center_draw_simple_crosshair(current_pos);
 		is_current_drawn = true;
 	} else {
 		is_current_drawn = false;
@@ -488,8 +493,7 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 		   coordinate system (beginning in bottom-left corner)
 		   to viewport coordinates (beginning in upper-left
 		   corner + viewport's active area margins). */
-		this->viewport->center_draw_simple_crosshair(selected_pos);
-		//this->viewport->center_draw_simple_crosshair(ScreenPos(GRAPH_MARGIN_LEFT + selected_pos.x, GRAPH_MARGIN_TOP + this->viewport->geocanvas.height - selected_pos.y));
+		this->viewport2d->viewport->center_draw_simple_crosshair(selected_pos);
 		is_selected_drawn = true;
 	} else {
 		is_selected_drawn = false;
@@ -499,7 +503,7 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 
 	if (is_selected_drawn || is_current_drawn) {
 		/* This will call Viewport::paintEvent(), triggering final render to screen. */
-		this->viewport->update();
+		this->viewport2d->viewport->update();
 	}
 
 	return sg_ret::ok;
@@ -508,7 +512,7 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 
 
 
-ProfileView * TrackProfileDialog::get_current_graph(void) const
+ProfileView * TrackProfileDialog::get_current_view(void) const
 {
 	const int tab_idx = this->tabs->currentIndex();
 	ProfileView * profile_view = (ProfileView *) this->tabs->widget(tab_idx);
@@ -526,13 +530,13 @@ ProfileView * TrackProfileDialog::get_current_graph(void) const
 */
 void TrackProfileDialog::handle_mouse_button_release_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileView * graph = this->get_current_graph();
-	assert (graph->viewport == viewport);
+	ProfileView * graph = this->get_current_view();
+	assert (graph->viewport2d->viewport == viewport);
 
 
 	ScreenPos current_pos;
 	graph->get_cursor_pos(ev, current_pos);
-	const bool found_tp = set_center_at_graph_position(current_pos.x, this->trw, this->main_viewport, this->trk, graph->viewport->x_domain, graph->viewport->geocanvas.width);
+	const bool found_tp = set_center_at_graph_position(current_pos.x, this->trw, this->main_viewport, this->trk, graph->viewport2d->x_domain, graph->viewport2d->viewport->geocanvas.width);
 	if (!found_tp) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
@@ -550,9 +554,19 @@ void TrackProfileDialog::handle_mouse_button_release_cb(Viewport * viewport, QMo
 	current_pos.set(-1.0, -1.0); /* Don't draw current position on clicks. */
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
 		ProfileView * a_graph = *iter;
-		if (!a_graph->viewport) {
+		if (!a_graph->viewport2d->viewport) {
 			continue;
 		}
+
+		if (!a_graph->track_data.valid) {
+			/* We didn't visit that tab yet, so track data
+			   hasn't been generated for current graph
+			   width. */
+			/* FIXME: generate the track data so that we
+			   can set a mark over there. */
+			continue;
+		}
+
 
 	        ScreenPos selected_pos;
 		if (sg_ret::ok != a_graph->get_position_of_tp(this->trk, SELECTED, selected_pos)) {
@@ -578,11 +592,11 @@ sg_ret ProfileView::set_pos_y(ScreenPos & screen_pos)
 {
 	int ix = (int) screen_pos.x;
 	/* Ensure ix is inside of graph. */
-	if (ix == this->viewport->geocanvas.width) {
+	if (ix == this->viewport2d->viewport->geocanvas.width) {
 		ix--;
 	}
 
-	const double y = this->viewport->geocanvas.height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
+	const double y = this->viewport2d->viewport->geocanvas.height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
 	screen_pos.set(screen_pos.x, (int) y);
 
 	return sg_ret::ok;
@@ -644,8 +658,8 @@ void real_time_label_update(ProfileView * graph, Track * trk)
 
 void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent * ev)
 {
-	ProfileView * graph = this->get_current_graph();
-	assert (graph->viewport == viewport);
+	ProfileView * graph = this->get_current_view();
+	assert (graph->viewport2d->viewport == viewport);
 
 	if (!graph->track_data.valid) {
 		qDebug() << SG_PREFIX_E << "Not handling cursor move, track data invalid";
@@ -657,6 +671,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 	ScreenPos current_pos;  /* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
 
 	if (sg_ret::ok != graph->get_cursor_pos_on_line(ev, current_pos)) {
+		qDebug() << SG_PREFIX_E << "Failed to get cursor position on line";
 		return;
 	}
 	if (true || this->is_selected_drawn) {
@@ -673,9 +688,9 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		graph->get_position_of_tp(this->trk, SELECTED, selected_pos);
 	}
 
-	switch (graph->viewport->x_domain) {
+	switch (graph->viewport2d->x_domain) {
 	case GeoCanvasDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport->geocanvas.width, &meters_from_start, CURRENT);
+		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport2d->viewport->geocanvas.width, &meters_from_start, CURRENT);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
@@ -685,7 +700,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		break;
 
 	case GeoCanvasDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport->geocanvas.width, CURRENT);
+		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport2d->viewport->geocanvas.width, CURRENT);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
@@ -697,13 +712,13 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		real_time_label_update(graph, this->trk);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) graph->viewport->x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) graph->viewport2d->x_domain;
 		break;
 	};
 
 
 	double y = graph->track_data.y[current_pos.x];
-	switch (graph->viewport->y_domain) {
+	switch (graph->viewport2d->y_domain) {
 	case GeoCanvasDomain::Speed:
 		if (graph->labels.y_value) {
 			/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
@@ -731,7 +746,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) graph->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) graph->viewport2d->y_domain;
 		break;
 	};
 
@@ -743,12 +758,10 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 
 sg_ret ProfileView::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 {
-	const int graph_width = this->viewport->v2d->get_graph_width();
-	const int graph_height = this->viewport->v2d->get_graph_height();
-	const int graph_left_edge = this->viewport->v2d->get_graph_left_edge();
-	const int graph_top_edge = this->viewport->v2d->get_graph_top_edge();
+	const int graph_width = this->viewport2d->center_get_width();
+	const int graph_height = this->viewport2d->center_get_height();
 
-	QPoint position = this->viewport->mapFromGlobal(QCursor::pos());
+	QPoint position = this->viewport2d->viewport->mapFromGlobal(QCursor::pos());
 
 	//qDebug() << SG_PREFIX_I << "x =" << ev->x() << "y =" << ev->y();
 
@@ -764,18 +777,18 @@ sg_ret ProfileView::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) con
 	const int mouse_y = ev->y();
 #endif
 
-	if (mouse_x < graph_left_edge || mouse_x > graph_left_edge + graph_width) {
+	if (mouse_x > graph_width) {
 		/* Cursor outside of chart area. */
 		return sg_ret::err;
 	}
-	if (mouse_y < graph_top_edge || mouse_y > graph_top_edge + graph_height) {
+	if (mouse_y > graph_height) {
 		/* Cursor outside of chart area. */
 		return sg_ret::err;
 	}
 
-	screen_pos.x = mouse_x - graph_left_edge;
+	screen_pos.x = mouse_x;
 	if (screen_pos.x < 0) {
-		qDebug() << SG_PREFIX_E << "Condition 1 for mouse movement failed:" << screen_pos.x << mouse_x << graph_left_edge;
+		qDebug() << SG_PREFIX_E << "Condition 1 for mouse movement failed:" << screen_pos.x << mouse_x;
 		screen_pos.x = 0;
 	}
 	if (screen_pos.x > graph_width) {
@@ -784,9 +797,9 @@ sg_ret ProfileView::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) con
 	}
 
 
-	screen_pos.y = mouse_y - graph_top_edge;
+	screen_pos.y = mouse_y;
 	if (screen_pos.y < 0) {
-		qDebug() << SG_PREFIX_E << "Condition 3 for mouse movement failed:" << screen_pos.y << mouse_y << graph_top_edge;
+		qDebug() << SG_PREFIX_E << "Condition 3 for mouse movement failed:" << screen_pos.y << mouse_y;
 		screen_pos.y = 0;
 	}
 	if (screen_pos.y > graph_height) {
@@ -820,6 +833,9 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 	const QColor dem_color = this->dem_alt_pen.color();
 	const QColor speed_color = this->gps_speed_pen.color();
 
+	const int w = this->viewport2d->viewport->geocanvas.width;
+	const int h = this->viewport2d->viewport->geocanvas.height;
+
 	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 
 		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
@@ -829,14 +845,14 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 				continue;
 			}
 
-			const double elev_value_uu = elev.convert_to_unit(this->viewport->geocanvas.height_unit).get_value();
+			const double elev_value_uu = elev.convert_to_unit(this->viewport2d->viewport->geocanvas.height_unit).get_value();
 
 			/* offset is in current height units. */
 			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
-			const int x = this->viewport->geocanvas.left_edge + this->viewport->geocanvas.width * current_function_arg / max_function_arg;
-			const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value_uu / max_function_value_dem;
-			this->viewport->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
+			const int x = w * current_function_arg / max_function_arg;
+			const int y = 0 - h * current_function_value_uu / max_function_value_dem;
+			this->viewport2d->viewport->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
 		}
 
 		if (do_speed) {
@@ -847,9 +863,9 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 			const double current_function_value = (*iter)->speed;
 
 			/* This is just a speed indicator - no actual values can be inferred by user. */
-			const int x = this->viewport->geocanvas.left_edge + this->viewport->geocanvas.width * current_function_arg / max_function_arg;
-			const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value / max_function_value_speed;
-			this->viewport->fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
+			const int x = w * current_function_arg / max_function_arg;
+			const int y = 0 - h * current_function_value / max_function_value_speed;
+			this->viewport2d->viewport->fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -865,18 +881,6 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
  */
 void ProfileView::draw_grid_horizontal_line(int pos_y, const QString & label)
 {
-	const float y_interval_px = 1.0 * this->viewport->geocanvas.height;
-
-	QPointF text_anchor(0, this->viewport->v2d->get_graph_top_edge() + this->viewport->geocanvas.height - pos_y);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + this->viewport->geocanvas.left_edge - 10, y_interval_px - 3);
-	this->viewport->draw_text(this->viewport->labels_font, this->viewport->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
-
-	/* x/y coordinates are converted here from "beginning in
-	   bottom-left corner" to "beginning in upper-left corner"
-	   coordinate system. */
-	this->viewport->center_draw_line(this->viewport->grid_pen,
-					 0,                               pos_y,
-					 this->viewport->geocanvas.width, pos_y);
 }
 
 
@@ -884,13 +888,6 @@ void ProfileView::draw_grid_horizontal_line(int pos_y, const QString & label)
 
 void ProfileView::draw_grid_vertical_line(int pos_x, const QString & label)
 {
-	const QPointF text_anchor(this->viewport->geocanvas.left_edge + pos_x, this->viewport->v2d->top_height + this->viewport->geocanvas.height);
-	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), this->viewport->geocanvas.width, this->viewport->v2d->bottom_height - 10);
-	this->viewport->draw_text(this->viewport->labels_font, this->viewport->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
-
-	this->viewport->center_draw_line(this->viewport->grid_pen,
-					 pos_x, 0,
-					 pos_x, 0 + this->viewport->geocanvas.height);
 }
 
 
@@ -899,23 +896,24 @@ void ProfileView::draw_grid_vertical_line(int pos_x, const QString & label)
 void ProfileView::draw_function_values(void)
 {
 	const double visible_range = this->y_max_visible - this->y_min_visible;
-	const int h = this->viewport->geocanvas.height;
+	const int w = this->viewport2d->center_get_width();
+	const int h = this->viewport2d->viewport->geocanvas.height;
 
-	if (this->viewport->y_domain == GeoCanvasDomain::Elevation) {
-		for (int i = 0; i < this->viewport->geocanvas.width; i++) {
+	if (this->viewport2d->y_domain == GeoCanvasDomain::Elevation) {
+		for (int i = 0; i < w; i++) {
 			if (this->track_data.y[i] == VIK_DEFAULT_ALTITUDE) {
-				this->viewport->center_draw_line(this->no_alt_info_pen,
+				this->viewport2d->viewport->center_draw_line(this->no_alt_info_pen,
 								 i, 0,
 								 i, 0 + h);
 			} else {
-				this->viewport->center_draw_line(this->main_pen,
+				this->viewport2d->viewport->center_draw_line(this->main_pen,
 								 i, 0,
 								 i, 0 + h * (this->track_data.y[i] - this->y_min_visible) / visible_range);
 			}
 		}
 	} else {
-		for (int i = 0; i < this->viewport->geocanvas.width; i++) {
-			this->viewport->center_draw_line(this->main_pen,
+		for (int i = 0; i < w; i++) {
+			this->viewport2d->viewport->center_draw_line(this->main_pen,
 							 i, 0,
 							 i, 0 + h * (this->track_data.y[i] - this->y_min_visible) / visible_range);
 		}
@@ -926,14 +924,17 @@ void ProfileView::draw_function_values(void)
 
 void ProfileViewET::draw_additional_indicators(Track * trk)
 {
+	const int w = this->viewport2d->center_get_width();
+	const int h = this->viewport2d->center_get_height();
+
 	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
 		const double max_function_value = this->y_max_visible;
 
 		const QColor color = this->dem_alt_pen.color();
 
-		for (int i = 0; i < this->viewport->geocanvas.width; i++) {
+		for (int i = 0; i < w; i++) {
 			/* This could be slow doing this each time... */
-			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) this->viewport->geocanvas.width), CURRENT);
+			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) this->viewport2d->viewport->geocanvas.width), CURRENT);
 			if (found_tp) {
 				const Trackpoint * tp = trk->get_tp(CURRENT);
 				const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
@@ -944,9 +945,9 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 					/* offset is in current height units. */
 					const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
-					const int x = this->viewport->geocanvas.left_edge + i;
-					const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value_uu / max_function_value;
-					this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+					const int x = i;
+					const int y = 0 - h * current_function_value_uu / max_function_value;
+					this->viewport2d->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 				}
 			}
 		}
@@ -960,13 +961,13 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
-		for (int i = 0; i < this->viewport->geocanvas.width; i++) {
+		for (int i = 0; i < w; i++) {
 
 			const double current_function_value = this->track_data.y[i];
 
-			const int x = this->viewport->geocanvas.left_edge + i;
-			const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value / max_function_value;
-			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x = i;
+			const int y = 0 - h * current_function_value / max_function_value;
+			this->viewport2d->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 
@@ -980,6 +981,9 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
+		const int w = this->viewport2d->center_get_width();
+		const int h = this->viewport2d->center_get_height();
+
 		const double max_function_arg = trk->get_length_value_including_gaps();
 		const double max_function_value = this->y_max_visible;
 		double current_function_arg = 0.0;
@@ -992,14 +996,14 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 				continue;
 			}
 
-			gps_speed = Speed::convert_mps_to(gps_speed, this->viewport->geocanvas.speed_unit);
+			gps_speed = Speed::convert_mps_to(gps_speed, this->viewport2d->viewport->geocanvas.speed_unit);
 
 			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			current_function_value = gps_speed - this->y_min_visible;
 
-			const int x = this->viewport->geocanvas.left_edge + this->viewport->geocanvas.width * current_function_arg / max_function_arg;
-			const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value / max_function_value;
-			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x = w * current_function_arg / max_function_arg;
+			const int y = 0 - h * current_function_value / max_function_value;
+			this->viewport2d->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -1046,6 +1050,9 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
+		const int w = this->viewport2d->center_get_width();
+		const int h = this->viewport2d->center_get_height();
+
 		Time ts_begin;
 		Time ts_end;
 		if (sg_ret::ok == trk->get_timestamps(ts_begin, ts_end)) {
@@ -1064,14 +1071,14 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 					continue;
 				}
 
-				gps_speed = Speed::convert_mps_to(gps_speed, this->viewport->geocanvas.speed_unit);
+				gps_speed = Speed::convert_mps_to(gps_speed, this->viewport2d->viewport->geocanvas.speed_unit);
 
 				const time_t current_function_arg = (*iter)->timestamp.get_value() - time_begin;
 				const double current_function_value = gps_speed - this->y_min_visible;
 
-				const int x = this->viewport->geocanvas.left_edge + this->viewport->geocanvas.width * current_function_arg / max_function_arg;
-				const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value / max_function_value;
-				this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+				const int x = w * current_function_arg / max_function_arg;
+				const int y = 0 - h * current_function_value / max_function_value;
+				this->viewport2d->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 			}
 		} else {
 			qDebug() << SG_PREFIX_W << "Not drawing additional indicators: can't get timestamps";
@@ -1088,16 +1095,18 @@ void ProfileViewDT::draw_additional_indicators(Track * trk)
 	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
+		const int w = this->viewport2d->center_get_width();
+		const int h = this->viewport2d->center_get_height();
 
 		const QColor color = this->gps_speed_pen.color();
 		/* This is just an indicator - no actual values can be inferred by user. */
-		for (int i = 0; i < this->viewport->geocanvas.width; i++) {
+		for (int i = 0; i < w; i++) {
 
 			const double current_function_value = this->track_data.y[i];
 
-			const int x = this->viewport->geocanvas.left_edge + i;
-			const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value / max_function_value;
-			this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x = i;
+			const int y = 0 - h * current_function_value / max_function_value;
+			this->viewport2d->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -1160,7 +1169,7 @@ void ProfileViewDT::save_values(void)
 */
 sg_ret ProfileView::draw_graph(Track * trk)
 {
-	if (this->viewport->x_domain == GeoCanvasDomain::Time) {
+	if (this->viewport2d->x_domain == GeoCanvasDomain::Time) {
 		const Time duration = trk->get_duration(true);
 		if (!duration.is_valid() || duration.get_value() <= 0) {
 			return sg_ret::err;
@@ -1174,33 +1183,31 @@ sg_ret ProfileView::draw_graph(Track * trk)
 	}
 
 	/* Clear before redrawing. */
-	this->viewport->clear();
+	this->viewport2d->viewport->clear();
 
 
 
      	struct my_data data2;
-	data2.height = this->viewport->geocanvas.height;
-	data2.width = this->viewport->geocanvas.width;
+	data2.width = this->viewport2d->center_get_width();
+	data2.height = this->viewport2d->center_get_height();
 
-	if (sg_ret::err == trk->draw_tree_item(this->viewport, &data2, this->viewport->x_domain, this->viewport->y_domain)) {
+	if (sg_ret::err == trk->draw_tree_item(this->viewport2d->viewport, &data2, this->viewport2d->x_domain, this->viewport2d->y_domain)) {
 		this->draw_function_values();
 	}
 
 	/* Draw grid on top of graph of values. */
-	this->draw_x_grid(trk);
-	this->draw_y_grid();
+	this->draw_x_grid_inside(trk);
+	this->draw_y_grid_inside();
 
 	this->draw_additional_indicators(trk);
 
-	this->viewport->v2d->draw_border();
-
 	/* This will call Viewport::paintEvent(), triggering final render to screen. */
-	this->viewport->update();
+	this->viewport2d->viewport->update();
 
 	/* The pixmap = margin + graph area. */
-	qDebug() << SG_PREFIX_I << "Saving viewport" << this->viewport->type_string;
-	this->viewport->geocanvas.saved_img = this->viewport->get_pixmap();
-	this->viewport->geocanvas.saved_img_valid = true;
+	qDebug() << SG_PREFIX_I << "Saving viewport" << this->viewport2d->viewport->debug;
+	this->viewport2d->viewport->geocanvas.saved_img = this->viewport2d->viewport->get_pixmap();
+	this->viewport2d->viewport->geocanvas.saved_img_valid = true;
 
 	return sg_ret::ok;
 }
@@ -1217,6 +1224,9 @@ void ProfileView::draw_speed_dist(Track * trk)
 	const double max_function_value = trk->get_max_speed().get_value() * 110 / 100; /* Calculate the max speed factor. */
 	const double max_function_arg = trk->get_length_value_including_gaps();
 
+	const int w = this->viewport2d->center_get_width();
+	const int h = this->viewport2d->center_get_height();
+
 	const QColor color = this->gps_speed_pen.color();
 	double current_function_arg = 0.0;
 	double current_function_value = 0.0;
@@ -1229,10 +1239,27 @@ void ProfileView::draw_speed_dist(Track * trk)
 		current_function_value = (*iter)->speed;
 
 		/* This is just a speed indicator - no actual values can be inferred by user. */
-		const int x = this->viewport->geocanvas.left_edge + this->viewport->geocanvas.width * current_function_arg / max_function_arg;
-		const int y = this->viewport->geocanvas.bottom_edge - this->viewport->geocanvas.height * current_function_value / max_function_value;
-		this->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		const int x = w * current_function_arg / max_function_arg;
+		const int y = 0 - h * current_function_value / max_function_value;
+		this->viewport2d->viewport->fill_rectangle(color, x - 2, y - 2, 4, 4);
 	}
+}
+
+
+
+
+/**
+   Look up view
+*/
+ProfileView * TrackProfileDialog::find_view(Viewport2D * viewport) const
+{
+	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+		ProfileView * view = *iter;
+		if (view->viewport2d == viewport) {
+			return view;
+		}
+	}
+	return NULL;
 }
 
 
@@ -1244,14 +1271,16 @@ void ProfileView::draw_speed_dist(Track * trk)
 void TrackProfileDialog::draw_all_graphs(bool resized)
 {
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
-		ProfileView * graph = *iter;
-		if (!graph->viewport) {
+		ProfileView * view = *iter;
+		if (!view->viewport2d->viewport) {
 			continue;
 		}
 
 		/* If dialog window is resized then saved image is no longer valid. */
-		graph->viewport->geocanvas.saved_img_valid = !resized;
-		this->draw_single_graph(graph);
+		view->viewport2d->viewport->geocanvas.saved_img_valid = !resized;
+		this->draw_center(view);
+
+		/* TODO: what about drawing margins? */
 	}
 }
 
@@ -1267,7 +1296,7 @@ sg_ret ProfileView::get_position_of_tp(Track * trk, int tp_idx, ScreenPos & scre
 		return sg_ret::err;
 	}
 
-	switch (this->viewport->x_domain) {
+	switch (this->viewport2d->x_domain) {
 	case GeoCanvasDomain::Time:
 		pc = trk->get_tp_time_percent(tp_idx);
 		break;
@@ -1275,13 +1304,13 @@ sg_ret ProfileView::get_position_of_tp(Track * trk, int tp_idx, ScreenPos & scre
 		pc = trk->get_tp_distance_percent(tp_idx);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport->x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport2d->x_domain;
 		/* pc = NAN */
 		break;
 	}
 
 	if (!std::isnan(pc)) {
-		screen_pos.set(pc * this->viewport->geocanvas.width, 0.0); /* Set x.*/
+		screen_pos.set(pc * this->viewport2d->center_get_width(), 0.0); /* Set x.*/
 		this->set_pos_y(screen_pos); /* Find y. */
 	}
 
@@ -1293,7 +1322,7 @@ sg_ret ProfileView::get_position_of_tp(Track * trk, int tp_idx, ScreenPos & scre
 
 
 
-sg_ret TrackProfileDialog::draw_single_graph(ProfileView * graph)
+sg_ret TrackProfileDialog::draw_center(ProfileView * graph)
 {
 	sg_ret ret = graph->draw_graph(this->trk);
 	if (sg_ret::ok != ret) {
@@ -1325,39 +1354,100 @@ sg_ret TrackProfileDialog::draw_single_graph(ProfileView * graph)
 
 
 
-/**
-   Configure/Resize the profile & speed/time images
-*/
-bool TrackProfileDialog::paint_to_viewport_cb(Viewport * viewport)
+sg_ret TrackProfileDialog::draw_left(ProfileView * graph)
 {
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->type_string;
+	graph->draw_y_grid_outside();
 
-	/* TODO_UNKNOWN: shouldn't we re-allocate the per-viewport table of doubles here? */
-
-	this->draw_all_graphs(true);
-
-	return false;
+	return sg_ret::ok;
 }
 
 
 
 
-void ProfileView::create_viewport(TrackProfileDialog * dialog, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain)
+sg_ret TrackProfileDialog::draw_bottom(ProfileView * graph)
 {
-	const int initial_width = GRAPH_MARGIN_LEFT + GRAPH_INITIAL_WIDTH + GRAPH_MARGIN_RIGHT;
-	const int initial_height = GRAPH_MARGIN_TOP + GRAPH_INITIAL_HEIGHT + GRAPH_MARGIN_BOTTOM;
+	graph->draw_x_grid_outside(graph->dialog->trk);
 
-	this->viewport = new Viewport(dialog);
-	snprintf(this->viewport->type_string, sizeof (this->viewport->type_string), "%s", this->get_graph_title().toUtf8().constData());
-	this->viewport->v2d->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
-	this->viewport->resize(initial_width, initial_height);
-	this->viewport->reconfigure_drawing_area(initial_width, initial_height);
+	return sg_ret::ok;
+}
 
-	this->viewport->x_domain = x_domain;
-	this->viewport->y_domain = y_domain;
 
-	QObject::connect(this->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_cb(Viewport *, QMouseEvent *)));
-	QObject::connect(this->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (handle_mouse_button_release_cb(Viewport *, QMouseEvent *)));
+
+
+
+sg_ret TrackProfileDialog::paint_center_cb(Viewport2D * viewport)
+{
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from canvas" << viewport->viewport->canvas.debug;
+
+	ProfileView * view = this->find_view(viewport);
+	if (!view) {
+		qDebug() << SG_PREFIX_E << "Can't find view";
+		return sg_ret::err;
+	}
+
+	view->viewport2d->viewport->geocanvas.saved_img_valid = true;
+	this->draw_center(view);
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TrackProfileDialog::paint_left_cb(Viewport2D * viewport)
+{
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from canvas" << viewport->left->canvas.debug;
+
+	ProfileView * view = this->find_view(viewport);
+	if (!view) {
+		qDebug() << SG_PREFIX_E << "Can't find view";
+		return sg_ret::err;
+	}
+
+	//view->viewport2d->left->canvas.saved_img_valid = true;
+	this->draw_left(view);
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TrackProfileDialog::paint_bottom_cb(Viewport2D * viewport)
+{
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from canvas" << viewport->bottom->canvas.debug;
+
+	ProfileView * view = this->find_view(viewport);
+	if (!view) {
+		qDebug() << SG_PREFIX_E << "Can't find view";
+		return sg_ret::err;
+	}
+
+	//view->viewport2d->bottom->ocanvas.saved_img_valid = true;
+	this->draw_bottom(view);
+
+	return sg_ret::ok;
+}
+
+
+
+
+void ProfileView::create_viewport(TrackProfileDialog * new_dialog, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain)
+{
+	const int initial_width = GRAPH_INITIAL_WIDTH;
+	const int initial_height = GRAPH_INITIAL_HEIGHT;
+
+	this->viewport2d = new Viewport2D(dialog);
+	snprintf(this->viewport2d->viewport->debug, sizeof (this->viewport2d->viewport->debug), "%s", this->get_graph_title().toUtf8().constData());
+	this->viewport2d->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
+	this->viewport2d->viewport->resize(initial_width, initial_height);
+	this->viewport2d->viewport->reconfigure_drawing_area(initial_width, initial_height);
+
+	this->viewport2d->x_domain = x_domain;
+	this->viewport2d->y_domain = y_domain;
+
+	QObject::connect(this->viewport2d->viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_cb(Viewport *, QMouseEvent *)));
+	QObject::connect(this->viewport2d->viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (handle_mouse_button_release_cb(Viewport *, QMouseEvent *)));
 
 	return;
 }
@@ -1500,7 +1590,7 @@ void TrackProfileDialog::checkbutton_toggle_cb(void)
 /**
    Create the widgets for the given graph tab
 */
-void ProfileView::create_widgets_layout(TrackProfileDialog * dialog)
+void ProfileView::create_widgets_layout(void)
 {
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	this->setMinimumSize(500, 300);
@@ -1514,11 +1604,9 @@ void ProfileView::create_widgets_layout(TrackProfileDialog * dialog)
 	qDeleteAll(this->children());
 	this->setLayout(this->main_vbox);
 
-	this->main_vbox->addWidget(this->viewport);
+	this->main_vbox->addWidget(this->viewport2d);
 	this->main_vbox->addLayout(this->labels_grid);
 	this->main_vbox->addLayout(this->controls_vbox);
-
-	this->viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	return;
 }
@@ -1541,26 +1629,26 @@ QString ProfileView::get_graph_title(void) const
 {
 	QString result;
 
-	if (this->viewport->y_domain == GeoCanvasDomain::Elevation && this->viewport->x_domain == GeoCanvasDomain::Distance) {
+	if (this->viewport2d->y_domain == GeoCanvasDomain::Elevation && this->viewport2d->x_domain == GeoCanvasDomain::Distance) {
 		result = QObject::tr("Elevation over distance");
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Gradient && this->viewport->x_domain == GeoCanvasDomain::Distance) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Gradient && this->viewport2d->x_domain == GeoCanvasDomain::Distance) {
 		result = QObject::tr("Gradient over distance");
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Speed && this->viewport->x_domain == GeoCanvasDomain::Time) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Speed && this->viewport2d->x_domain == GeoCanvasDomain::Time) {
 		result = QObject::tr("Speed over time");
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Distance && this->viewport->x_domain == GeoCanvasDomain::Time) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Distance && this->viewport2d->x_domain == GeoCanvasDomain::Time) {
 		result = QObject::tr("Distance over time");
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Elevation && this->viewport->x_domain == GeoCanvasDomain::Time) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Elevation && this->viewport2d->x_domain == GeoCanvasDomain::Time) {
 		result = QObject::tr("Elevation over time");
 
-	} else if (this->viewport->y_domain == GeoCanvasDomain::Speed && this->viewport->x_domain == GeoCanvasDomain::Distance) {
+	} else if (this->viewport2d->y_domain == GeoCanvasDomain::Speed && this->viewport2d->x_domain == GeoCanvasDomain::Distance) {
 		result = QObject::tr("Speed over distance");
 
 	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->viewport->x_domain << (int) this->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->viewport2d->x_domain << (int) this->viewport2d->y_domain;
 	}
 
 	return result;
@@ -1619,17 +1707,19 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
 		ProfileView * graph = *iter;
-		if (!graph->viewport) {
+		if (!graph->viewport2d->viewport) {
 			continue;
 		}
 
-		graph->create_widgets_layout(this);
-		graph->configure_labels(this);
-		graph->configure_controls(this);
+		graph->create_widgets_layout();
+		graph->configure_labels();
+		graph->configure_controls();
 
 		this->tabs->addTab(graph, graph->get_graph_title());
 
-		connect(graph->viewport, SIGNAL (drawing_area_reconfigured(Viewport *)), this, SLOT (paint_to_viewport_cb(Viewport *)));
+		connect(&graph->viewport2d->viewport->canvas, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_center_cb(Viewport2D *)));
+		connect(&graph->viewport2d->left->canvas, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_left_cb(Viewport2D *)));
+		connect(&graph->viewport2d->bottom->canvas, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_bottom_cb(Viewport2D *)));
 	}
 
 
@@ -1668,9 +1758,9 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 
 
 
-void ProfileView::configure_labels(TrackProfileDialog * dialog)
+void ProfileView::configure_labels(void)
 {
-	switch (this->viewport->x_domain) {
+	switch (this->viewport2d->x_domain) {
 	case GeoCanvasDomain::Distance:
 		this->labels.x_label = new QLabel(QObject::tr("Track Distance:"));
 		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
@@ -1687,12 +1777,12 @@ void ProfileView::configure_labels(TrackProfileDialog * dialog)
 
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport->x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport2d->x_domain;
 		break;
 	}
 
 
-	switch (this->viewport->y_domain) {
+	switch (this->viewport2d->y_domain) {
 	case GeoCanvasDomain::Elevation:
 		this->labels.y_label = new QLabel(QObject::tr("Track Height:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
@@ -1717,7 +1807,7 @@ void ProfileView::configure_labels(TrackProfileDialog * dialog)
 
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport2d->y_domain;
 		break;
 	}
 
@@ -1750,105 +1840,105 @@ void ProfileView::configure_labels(TrackProfileDialog * dialog)
 
 
 
-void ProfileViewET::configure_controls(TrackProfileDialog * dialog)
+void ProfileViewET::configure_controls(void)
 {
 	bool value;
 
-	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), dialog);
+	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM, &value)) {
 		this->show_dem_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_dem_cb);
-	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 
 	this->show_speed_cb = new QCheckBox(QObject::tr("Show Speed"), dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_SPEED, &value)) {
 		this->show_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_speed_cb);
-	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
 
 
-void ProfileViewSD::configure_controls(TrackProfileDialog * dialog)
+void ProfileViewSD::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_gps_speed_cb);
-	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
 
 
-void ProfileViewED::configure_controls(TrackProfileDialog * dialog)
+void ProfileViewED::configure_controls(void)
 {
 	bool value;
 
-	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), dialog);
+	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM, &value)) {
 		this->show_dem_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_dem_cb);
-	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_gps_speed_cb);
-	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
 
 
-void ProfileViewGD::configure_controls(TrackProfileDialog * dialog)
+void ProfileViewGD::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_gps_speed_cb);
-	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
 
 
-void ProfileViewST::configure_controls(TrackProfileDialog * dialog)
+void ProfileViewST::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_gps_speed_cb);
-	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
 
 
-void ProfileViewDT::configure_controls(TrackProfileDialog * dialog)
+void ProfileViewDT::configure_controls(void)
 {
 	bool value;
 
-	this->show_speed_cb = new QCheckBox(QObject::tr("Show S&peed"), dialog);
+	this->show_speed_cb = new QCheckBox(QObject::tr("Show S&peed"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_SPEED, &value)) {
 		this->show_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_speed_cb);
-	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), dialog, SLOT (checkbutton_toggle_cb()));
+	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
@@ -1902,8 +1992,10 @@ QString get_time_grid_label(const Time & interval_value, const Time & value)
 
 
 
-ProfileView::ProfileView(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileDialog * dialog, QWidget * parent) : QWidget(parent)
+ProfileView::ProfileView(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileDialog * new_dialog, QWidget * parent) : QWidget(parent)
 {
+	this->dialog = new_dialog;
+
 	if (!ProfileView::supported_domains(x_domain, y_domain)) {
 		qDebug() << SG_PREFIX_E << "Unhandled combination of x/y domains:" << (int) x_domain << (int) y_domain;
 	}
@@ -1915,24 +2007,24 @@ ProfileView::ProfileView(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, Tra
 	this->dem_alt_pen.setColor("green");
 	this->no_alt_info_pen.setColor("yellow");
 
-	this->create_viewport(dialog, x_domain, y_domain);
+	this->create_viewport(new_dialog, x_domain, y_domain);
 }
 
 
 
 
-ProfileViewET::ProfileViewET(TrackProfileDialog * dialog) : ProfileView(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, dialog) {}
-ProfileViewSD::ProfileViewSD(TrackProfileDialog * dialog) : ProfileView(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     dialog) {}
-ProfileViewED::ProfileViewED(TrackProfileDialog * dialog) : ProfileView(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, dialog) {}
-ProfileViewGD::ProfileViewGD(TrackProfileDialog * dialog) : ProfileView(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  dialog) {}
-ProfileViewST::ProfileViewST(TrackProfileDialog * dialog) : ProfileView(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     dialog) {}
-ProfileViewDT::ProfileViewDT(TrackProfileDialog * dialog) : ProfileView(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  dialog) {}
+ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView(GeoCanvasDomain::Time,     GeoCanvasDomain::Elevation, new_dialog) {}
+ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView(GeoCanvasDomain::Distance, GeoCanvasDomain::Speed,     new_dialog) {}
+ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView(GeoCanvasDomain::Distance, GeoCanvasDomain::Elevation, new_dialog) {}
+ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView(GeoCanvasDomain::Distance, GeoCanvasDomain::Gradient,  new_dialog) {}
+ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView(GeoCanvasDomain::Time,     GeoCanvasDomain::Speed,     new_dialog) {}
+ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView(GeoCanvasDomain::Time,     GeoCanvasDomain::Distance,  new_dialog) {}
 
 
 
 ProfileView::~ProfileView()
 {
-	delete this->viewport;
+	delete this->viewport2d;
 }
 
 
@@ -1952,10 +2044,8 @@ sg_ret ProfileView::regenerate_data(Track * trk)
 
 sg_ret ProfileView::regenerate_sizes(void)
 {
-	this->viewport->geocanvas.width = this->viewport->v2d->get_graph_width();
-	this->viewport->geocanvas.height = this->viewport->v2d->get_graph_height();
-	this->viewport->geocanvas.bottom_edge = this->viewport->v2d->get_graph_bottom_edge();
-	this->viewport->geocanvas.left_edge = this->viewport->v2d->get_graph_left_edge();
+	this->viewport2d->viewport->geocanvas.width = this->viewport2d->center_get_width();
+	this->viewport2d->viewport->geocanvas.height = this->viewport2d->center_get_height();
 
 	return sg_ret::ok;
 }
@@ -2008,8 +2098,11 @@ void find_grid_line_indices(const T & min_visible, const T & max_visible, const 
 
 
 
-void ProfileView::draw_y_grid(void)
+void ProfileView::draw_y_grid_inside(void)
 {
+	const int w = this->viewport2d->center_get_width();
+	const int h = this->viewport2d->center_get_height();
+
 	const double visible_range = this->y_max_visible - this->y_min_visible;
 	if (visible_range < 0.000001) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_min_visible << this->y_max_visible;
@@ -2021,7 +2114,7 @@ void ProfileView::draw_y_grid(void)
 	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
 
 #if 0   /* Debug. */
-	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << this->viewport->geocanvas.height;
+	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << h;
 	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
 	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2032,11 +2125,15 @@ void ProfileView::draw_y_grid(void)
 		/* 'row' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * this->viewport->geocanvas.height / (visible_range * 1.0);
+		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * h / (visible_range * 1.0);
 
-		if (row >= 0 && row < this->viewport->geocanvas.height) {
-			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", row =" << row;
-			this->draw_grid_horizontal_line(row, this->get_y_grid_label(axis_mark_uu));
+		if (row >= 0 && row < h) {
+			/* x/y coordinates are converted here from "beginning in
+			   bottom-left corner" to "beginning in upper-left corner"
+			   coordinate system. */
+			this->viewport2d->viewport->center_draw_line(this->viewport2d->viewport->grid_pen,
+								     0, row,
+								     w, row);
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", row =" << row;
 		}
@@ -2046,8 +2143,59 @@ void ProfileView::draw_y_grid(void)
 
 
 
-void ProfileView::draw_x_grid_sub_d(void)
+void ProfileView::draw_y_grid_outside(void)
 {
+	const int w = this->viewport2d->left->canvas.width;
+	const int h = this->viewport2d->left->canvas.height;
+
+	const double visible_range = this->y_max_visible - this->y_min_visible;
+	if (visible_range < 0.000001) {
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_min_visible << this->y_max_visible;
+		return;
+	}
+
+	int first_mark = 0;
+	int last_mark = 0;
+	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
+
+#if 0   /* Debug. */
+	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << h;
+	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
+	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
+#endif
+
+	for (int i = first_mark; i <= last_mark; i++) {
+		const double axis_mark_uu = this->y_interval * i;
+
+		/* 'row' is in "beginning in bottom-left corner" coordinate system. */
+		/* Purposefully use "1.0 *" to enforce conversion to
+		   float, to avoid losing data during integer division. */
+		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * h / (visible_range * 1.0);
+
+		if (row >= 0 && row < h) {
+			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", row =" << row;
+
+			const float y_interval_px = 1.0 * h;
+
+			const QPointF text_anchor(0, h - row);
+			const QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), w - 3, y_interval_px - 3);
+			const QString label = this->get_y_grid_label(axis_mark_uu);
+			this->viewport2d->margin_draw_text(ViewportMargin::Position::Left, this->viewport2d->viewport->labels_font, this->viewport2d->viewport->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
+
+		} else {
+			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", row =" << row;
+		}
+	}
+}
+
+
+
+
+void ProfileView::draw_x_grid_sub_d_inside(void)
+{
+	const int w = this->viewport2d->center_get_width();
+	const int h = this->viewport2d->center_get_height();
+
 	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
 	if (visible_range.is_zero()) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
@@ -2059,7 +2207,7 @@ void ProfileView::draw_x_grid_sub_d(void)
 	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->viewport->geocanvas.width;
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2070,11 +2218,14 @@ void ProfileView::draw_x_grid_sub_d(void)
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * this->viewport->geocanvas.width / (visible_range * 1.0);
+		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * w / (visible_range * 1.0);
 
-		if (col >= 0 && col < this->viewport->geocanvas.width) {
+		if (col >= 0 && col < w) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
-			this->draw_grid_vertical_line(col, axis_mark_uu.to_nice_string());
+			this->viewport2d->viewport->center_draw_line(this->viewport2d->viewport->grid_pen,
+								     col, 0,
+								     col, 0 + h);
+
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
 		}
@@ -2084,8 +2235,55 @@ void ProfileView::draw_x_grid_sub_d(void)
 
 
 
-void ProfileView::draw_x_grid_sub_t(void)
+void ProfileView::draw_x_grid_sub_d_outside(void)
 {
+	const int w = this->viewport2d->bottom->canvas.width;
+	const int h = this->viewport2d->bottom->canvas.height;
+
+	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
+	if (visible_range.is_zero()) {
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
+		return;
+	}
+
+	int first_mark = 0;
+	int last_mark = 0;
+	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
+
+#if 1   /* Debug. */
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
+	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
+	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
+#endif
+
+	for (int i = first_mark; i <= last_mark; i++) {
+		const Distance axis_mark_uu = this->x_interval_d * i;
+
+		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
+		/* Purposefully use "1.0 *" to enforce conversion to
+		   float, to avoid losing data during integer division. */
+		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * w / (visible_range * 1.0);
+
+		if (col >= 0 && col < w) {
+			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
+			const QPointF text_anchor(col, 0);
+			const QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), w - 3, h - 3);
+			const QString label = axis_mark_uu.to_nice_string();
+			this->viewport2d->margin_draw_text(ViewportMargin::Position::Bottom, this->viewport2d->viewport->labels_font, this->viewport2d->viewport->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
+		} else {
+			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
+		}
+	}
+}
+
+
+
+
+void ProfileView::draw_x_grid_sub_t_inside(void)
+{
+	const int w = this->viewport2d->center_get_width();
+	const int h = this->viewport2d->center_get_height();
+
 	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
 	if (visible_range.is_zero()) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
@@ -2097,7 +2295,7 @@ void ProfileView::draw_x_grid_sub_t(void)
 	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << this->viewport->geocanvas.width;
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
 	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2108,11 +2306,59 @@ void ProfileView::draw_x_grid_sub_t(void)
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * this->viewport->geocanvas.width / (visible_range * 1.0);
+		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * w / (visible_range * 1.0);
 
-		if (col >= 0 && col < this->viewport->geocanvas.width) {
+		if (col >= 0 && col < w) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
-			this->draw_grid_vertical_line(col, get_time_grid_label(this->x_interval_t, axis_mark_uu));
+			this->viewport2d->viewport->center_draw_line(this->viewport2d->viewport->grid_pen,
+								     col, 0,
+								     col, 0 + h);
+
+		} else {
+			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
+		}
+	}
+}
+
+
+
+
+void ProfileView::draw_x_grid_sub_t_outside(void)
+{
+	const int w = this->viewport2d->bottom->canvas.width;
+	const int h = this->viewport2d->bottom->canvas.height;
+
+	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
+	if (visible_range.is_zero()) {
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
+		return;
+	}
+
+	int first_mark = 0;
+	int last_mark = 0;
+	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
+
+#if 1
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
+	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
+	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
+#endif
+
+	for (int i = first_mark; i <= last_mark; i++) {
+		const Time axis_mark_uu = this->x_interval_t * i;
+
+		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
+		/* Purposefully use "1.0 *" to enforce conversion to
+		   float, to avoid losing data during integer division. */
+		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * w / (visible_range * 1.0);
+
+		if (col >= 0 && col < w) {
+			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
+			const QPointF text_anchor(col, 0);
+			const QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), w - 3, h - 3);
+			const QString label = get_time_grid_label(this->x_interval_t, axis_mark_uu);
+			this->viewport2d->margin_draw_text(ViewportMargin::Position::Bottom, this->viewport2d->viewport->labels_font, this->viewport2d->viewport->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
+
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
 		}
@@ -2124,21 +2370,21 @@ void ProfileView::draw_x_grid_sub_t(void)
 
 QString ProfileView::get_y_grid_label(float value)
 {
-	switch (this->viewport->y_domain) {
+	switch (this->viewport2d->y_domain) {
 	case GeoCanvasDomain::Elevation:
-		return Altitude(value, this->viewport->geocanvas.height_unit).to_string(); /* TODO_UNKNOWN: here we assume that 'value' is in user units. */
+		return Altitude(value, this->viewport2d->viewport->geocanvas.height_unit).to_string(); /* TODO_UNKNOWN: here we assume that 'value' is in user units. */
 
 	case GeoCanvasDomain::Distance:
-		return Distance(value, this->viewport->geocanvas.distance_unit).to_string();
+		return Distance(value, this->viewport2d->viewport->geocanvas.distance_unit).to_string();
 
 	case GeoCanvasDomain::Speed:
-		return Speed(value, this->viewport->geocanvas.speed_unit).to_string();
+		return Speed(value, this->viewport2d->viewport->geocanvas.speed_unit).to_string();
 
 	case GeoCanvasDomain::Gradient:
 		return QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
 
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport2d->y_domain;
 		return "";
 	}
 }
@@ -2146,19 +2392,39 @@ QString ProfileView::get_y_grid_label(float value)
 
 
 
-void ProfileView::draw_x_grid(const Track * trk)
+void ProfileView::draw_x_grid_inside(const Track * trk)
 {
-	switch (this->viewport->x_domain) {
+	switch (this->viewport2d->x_domain) {
 	case GeoCanvasDomain::Time:
-		this->draw_x_grid_sub_t();
+		this->draw_x_grid_sub_t_inside();
 		break;
 
 	case GeoCanvasDomain::Distance:
-		this->draw_x_grid_sub_d();
+		this->draw_x_grid_sub_d_inside();
 		break;
 
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport->x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport2d->x_domain;
+		break;
+	}
+}
+
+
+
+
+void ProfileView::draw_x_grid_outside(const Track * trk)
+{
+	switch (this->viewport2d->x_domain) {
+	case GeoCanvasDomain::Time:
+		this->draw_x_grid_sub_t_outside();
+		break;
+
+	case GeoCanvasDomain::Distance:
+		this->draw_x_grid_sub_d_outside();
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->viewport2d->x_domain;
 		break;
 	}
 }

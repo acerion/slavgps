@@ -60,6 +60,8 @@ namespace SlavGPS {
 
 	class Window;
 	class Viewport;
+	class Viewport2D;
+	class ViewportCanvas;
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
@@ -96,9 +98,12 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		sg_ret draw_single_graph(ProfileView * graph);
+		sg_ret draw_center(ProfileView * graph);
+		sg_ret draw_left(ProfileView * graph);
+		sg_ret draw_bottom(ProfileView * graph);
 
-		ProfileView * get_current_graph(void) const;
+		ProfileView * find_view(Viewport2D * viewport) const;
+		ProfileView * get_current_view(void) const;
 
 
 		LayerTRW * trw = NULL;
@@ -111,7 +116,10 @@ namespace SlavGPS {
 		void checkbutton_toggle_cb(void);
 		void dialog_response_cb(int resp);
 		void destroy_cb(void);
-		bool paint_to_viewport_cb(Viewport * viewport);
+
+		sg_ret paint_center_cb(Viewport2D * viewport);
+		sg_ret paint_left_cb(Viewport2D * viewport);
+		sg_ret paint_bottom_cb(Viewport2D * viewport);
 
 		void handle_cursor_move_cb(Viewport * viewport, QMouseEvent * ev);
 		void handle_mouse_button_release_cb(Viewport * viewport, QMouseEvent * event);
@@ -152,11 +160,11 @@ namespace SlavGPS {
 		virtual ~ProfileView();
 
 		virtual void draw_additional_indicators(Track * trk) {};
-		virtual void configure_controls(TrackProfileDialog * dialog) {};
+		virtual void configure_controls(void) {};
 		virtual void save_values(void) {};
 
-		void configure_labels(TrackProfileDialog * dialog);
-		void create_widgets_layout(TrackProfileDialog * dialog);
+		void configure_labels(void);
+		void create_widgets_layout(void);
 
 		void create_viewport(TrackProfileDialog * dialog, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
 		QString get_graph_title(void) const;
@@ -198,11 +206,15 @@ namespace SlavGPS {
 		/* Check whether given combination of x/y domains is supported by ProfileView. */
 		static bool supported_domains(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
 
-		void draw_x_grid(const Track * trk);
-		void draw_y_grid(void);
+		void draw_x_grid_inside(const Track * trk);
+		void draw_x_grid_outside(const Track * trk);
+		void draw_y_grid_inside(void);
+		void draw_y_grid_outside(void);
 
-		void draw_x_grid_sub_d(void);
-		void draw_x_grid_sub_t(void);
+		void draw_x_grid_sub_d_inside(void);
+		void draw_x_grid_sub_d_outside(void);
+		void draw_x_grid_sub_t_inside(void);
+		void draw_x_grid_sub_t_outside(void);
 
 		QString get_y_grid_label(float value);
 
@@ -224,13 +236,15 @@ namespace SlavGPS {
 		TrackData track_data;     /* Compressed. */
 		TrackData track_data_raw; /* Raw = uncompressed. */
 
+		TrackProfileDialog * dialog = NULL;
+
 
 		QPen main_pen;
 		QPen gps_speed_pen;
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;
 
-		Viewport * viewport = NULL;
+		Viewport2D * viewport2d = NULL;
 		GeoCanvasLabels labels;
 
 		QGridLayout * labels_grid = NULL;
@@ -251,7 +265,7 @@ namespace SlavGPS {
 		~ProfileViewET() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog) override;
+		void configure_controls(void) override;
 		void save_values(void) override;
 	private:
 		QCheckBox * show_dem_cb = NULL;
@@ -266,7 +280,7 @@ namespace SlavGPS {
 		~ProfileViewSD() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog) override;
+		void configure_controls(void) override;
 		void save_values(void) override;
 	private:
 		QCheckBox * show_gps_speed_cb = NULL;
@@ -280,7 +294,7 @@ namespace SlavGPS {
 		~ProfileViewED() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog) override;
+		void configure_controls(void) override;
 		void save_values(void) override;
 	private:
 		QCheckBox * show_dem_cb = NULL;
@@ -295,7 +309,7 @@ namespace SlavGPS {
 		~ProfileViewGD() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog) override;
+		void configure_controls(void) override;
 		void save_values(void) override;
 	private:
 		QCheckBox * show_gps_speed_cb = NULL;
@@ -309,7 +323,7 @@ namespace SlavGPS {
 		~ProfileViewST() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog) override;
+		void configure_controls(void) override;
 		void save_values(void) override;
 	private:
 		QCheckBox * show_gps_speed_cb = NULL;
@@ -323,7 +337,7 @@ namespace SlavGPS {
 		~ProfileViewDT() {};
 
 		void draw_additional_indicators(Track * trk) override;
-		void configure_controls(TrackProfileDialog * dialog) override;
+		void configure_controls(void) override;
 		void save_values(void) override;
 	private:
 		QCheckBox * show_speed_cb = NULL;

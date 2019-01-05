@@ -408,7 +408,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	scaled_viewport->set_center_from_coord(this->viewport->center, false);
 	scaled_viewport->set_viking_zoom_level(this->scaled_viking_zoom_level);
 
-	strcpy(scaled_viewport->type_string, "Scaled Viewport");
+	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled Viewport");
 
 	/* Notice that we configure size of the print viewport using
 	   size of scaled source, not size of target device (i.e. not
