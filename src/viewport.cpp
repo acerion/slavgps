@@ -240,8 +240,6 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
 	this->highlight_pen.setWidth(1);
 	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
-
-	this->canvas.viewport = this->v2d;
 }
 
 
@@ -1009,22 +1007,6 @@ int Viewport::get_height(void) const
 
 
 
-int Viewport2D::center_get_width(void) const
-{
-	return this->viewport->canvas.width;
-}
-
-
-
-
-int Viewport2D::center_get_height(void) const
-{
-	return this->viewport->canvas.height;
-}
-
-
-
-
 Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 {
 	Coord coord;
@@ -1235,15 +1217,15 @@ void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, 
 
 
 
-void Viewport::center_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
+void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
 {
 	if ((begin_x < 0 && end_x < 0) || (begin_y < 0 && end_y < 0)) {
 		return;
 	}
-	if (begin_x > this->canvas.width && end_x > this->canvas.width) {
+	if (begin_x > this->central->canvas.width && end_x > this->central->canvas.width) {
 		return;
 	}
-	if (begin_y > this->canvas.height && end_y > this->canvas.height) {
+	if (begin_y > this->central->canvas.height && end_y > this->central->canvas.height) {
 		return;
 	}
 
@@ -1255,10 +1237,10 @@ void Viewport::center_draw_line(const QPen & pen, int begin_x, int begin_y, int 
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to "beginning in upper-left corner"
 	   coordinate system. */
-	const int graph_height = this->canvas.height;
-	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawLine(begin_x, graph_height - begin_y,
-				       end_x,   graph_height - end_y);
+	const int graph_height = this->central->canvas.height;
+	this->central->canvas.painter->setPen(pen);
+	this->central->canvas.painter->drawLine(begin_x, graph_height - begin_y,
+					       end_x,   graph_height - end_y);
 }
 
 
@@ -2336,44 +2318,30 @@ bool Viewport::print_cb(QPrinter * printer)
 
 
 /*
-
-  @pos should indicate position in viewport's canvas.
+  @pos is a position in viewport's canvas.
   The function makes sure that the crosshair is drawn only inside of graph area.
 */
-void Viewport::center_draw_simple_crosshair(const ScreenPos & pos)
+void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 {
-	//ScreenPos(GRAPH_LEFT_WIDTH + current_pos.x, GRAPH_TOP_HEIGHT + this->viewport->geocanvas.height - current_pos.y)
-
-	const int graph_width = this->canvas.width;
-	const int graph_height = this->canvas.height;
+	const int w = this->central->canvas.width;
+	const int h = this->central->canvas.height;
 	const int x = pos.x;
 	const int y = pos.y;
 
+	qDebug() << SG_PREFIX_I << "Crosshair at" << x << y;
 
-	qDebug() << SG_PREFIX_I << "crosshair at" << pos.x << pos.y;
-
-	if (pos.x > graph_width) {
-		/* Position outside of graph area. */
-		return;
-	}
-	if (pos.y > graph_height) {
+	if (x > w || y > h) {
 		/* Position outside of graph area. */
 		return;
 	}
 
-	this->canvas.painter->setPen(this->marker_pen);
+	this->central->canvas.painter->setPen(this->central->marker_pen);
 
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-
-	/* Horizontal line. */
-	this->canvas.painter->drawLine(0,           y,
-				       graph_width, y);
-
-	/* Vertical line. */
-	this->canvas.painter->drawLine(x, 0,
-				       x, graph_height);
+	this->central->canvas.painter->drawLine(0, y, w, y); /* Horizontal line. */
+	this->central->canvas.painter->drawLine(x, 0, x, h); /* Vertical line. */
 }
 
 
@@ -2650,6 +2618,10 @@ Viewport2D::Viewport2D(QWidget * parent) : QWidget(parent)
 {
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+	this->height_unit = Preferences::get_unit_height();
+	this->distance_unit = Preferences::get_unit_distance();
+	this->speed_unit = Preferences::get_unit_speed();
+
 	this->grid = new QGridLayout();
 	this->grid->setSpacing(0); /* Space between contents of grid. */
 	this->grid->setContentsMargins(0, 0, 0, 0); /* Outermost margins of a grid. */
@@ -2670,16 +2642,14 @@ Viewport2D::Viewport2D(QWidget * parent) : QWidget(parent)
 	this->top->canvas.viewport = this;
 	this->bottom->canvas.viewport = this;
 
-	this->viewport = new Viewport(this);
-	this->viewport->v2d = this;
-	this->viewport->canvas.viewport = this;
+	this->central = new Viewport(this);
+	this->central->canvas.viewport = this;
 
-	this->grid->addWidget(this->left,   1, 0);
-	this->grid->addWidget(this->right,  1, 2);
-	this->grid->addWidget(this->top,    0, 1);
-	this->grid->addWidget(this->bottom, 2, 1);
-
-	this->grid->addWidget(this->viewport, 1, 1);
+	this->grid->addWidget(this->left,    1, 0);
+	this->grid->addWidget(this->right,   1, 2);
+	this->grid->addWidget(this->top,     0, 1);
+	this->grid->addWidget(this->bottom,  2, 1);
+	this->grid->addWidget(this->central, 1, 1);
 }
 
 
@@ -2773,4 +2743,57 @@ ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWid
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";
 		break;
 	}
+}
+
+
+
+
+int Viewport2D::central_get_width(void) const
+{
+	return this->central ? this->central->canvas.width : 0;
+}
+
+int Viewport2D::central_get_height(void) const
+{
+	return this->central ? this->central->canvas.height : 0;
+}
+
+int Viewport2D::left_get_width(void) const
+{
+	return this->left ? this->left->canvas.width : 0;
+}
+
+int Viewport2D::left_get_height(void) const
+{
+	return this->left ? this->left->canvas.height : 0;
+}
+
+int Viewport2D::right_get_width(void) const
+{
+	return this->right ? this->right->canvas.width : 0;
+}
+
+int Viewport2D::right_get_height(void) const
+{
+	return this->right ? this->right->canvas.height : 0;
+}
+
+int Viewport2D::top_get_width(void) const
+{
+	return this->top ? this->top->canvas.width : 0;
+}
+
+int Viewport2D::top_get_height(void) const
+{
+	return this->top ? this->top->canvas.height : 0;
+}
+
+int Viewport2D::bottom_get_width(void) const
+{
+	return this->bottom ? this->bottom->canvas.width : 0;
+}
+
+int Viewport2D::bottom_get_height(void) const
+{
+	return this->bottom ? this->bottom->canvas.height : 0;
 }

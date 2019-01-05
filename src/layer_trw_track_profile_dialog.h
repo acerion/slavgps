@@ -71,7 +71,7 @@ namespace SlavGPS {
 
 
 
-	class GeoCanvasLabels {
+	class TrackViewLabels {
 	public:
 		QLabel * x_value = NULL;
 		QLabel * y_value = NULL;
@@ -156,7 +156,7 @@ namespace SlavGPS {
 	class ProfileView : public QWidget {
 		Q_OBJECT
 	public:
-		ProfileView(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
+		ProfileView(ViewportDomain x_domain, ViewportDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
 		virtual ~ProfileView();
 
 		virtual void draw_additional_indicators(Track * trk) {};
@@ -166,7 +166,7 @@ namespace SlavGPS {
 		void configure_labels(void);
 		void create_widgets_layout(void);
 
-		void create_viewport(TrackProfileDialog * dialog, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
+		void create_viewport(TrackProfileDialog * dialog, ViewportDomain x_domain, ViewportDomain y_domain);
 		QString get_graph_title(void) const;
 
 		sg_ret set_pos_y(ScreenPos & screen_pos);
@@ -200,11 +200,8 @@ namespace SlavGPS {
 		void draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed);
 		void draw_speed_dist(Track * trk);
 
-		void draw_grid_horizontal_line(int pos_y, const QString & label);
-		void draw_grid_vertical_line(int pos_x, const QString & label);
-
 		/* Check whether given combination of x/y domains is supported by ProfileView. */
-		static bool supported_domains(GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
+		static bool supported_domains(ViewportDomain x_domain, ViewportDomain y_domain);
 
 		void draw_x_grid_inside(const Track * trk);
 		void draw_x_grid_outside(const Track * trk);
@@ -245,7 +242,7 @@ namespace SlavGPS {
 		QPen no_alt_info_pen;
 
 		Viewport2D * viewport2d = NULL;
-		GeoCanvasLabels labels;
+		TrackViewLabels labels;
 
 		QGridLayout * labels_grid = NULL;
 		QVBoxLayout * main_vbox = NULL;

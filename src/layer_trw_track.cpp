@@ -3716,21 +3716,21 @@ sg_ret Track::draw_v_ft(Viewport * viewport, struct my_data * data)
 
 
 
-sg_ret Track::draw_tree_item(Viewport * viewport, struct my_data * in_data, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain)
+sg_ret Track::draw_tree_item(Viewport * viewport, struct my_data * in_data, ViewportDomain x_domain, ViewportDomain y_domain)
 {
-	if (x_domain != GeoCanvasDomain::Time) {
+	if (x_domain != ViewportDomain::Time) {
 		qDebug() << SG_PREFIX_W << "Can't draw non-time based graph";
 		return sg_ret::err;
 	}
 
 	switch (y_domain) {
-	case GeoCanvasDomain::Elevation:
+	case ViewportDomain::Elevation:
 		return this->draw_e_ft(viewport, in_data);
 		break;
-	case GeoCanvasDomain::Distance:
+	case ViewportDomain::Distance:
 		return this->draw_d_ft(viewport, in_data);
 		break;
-	case GeoCanvasDomain::Speed:
+	case ViewportDomain::Speed:
 		return this->draw_v_ft(viewport, in_data);
 		break;
 	default:

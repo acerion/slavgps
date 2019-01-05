@@ -62,7 +62,7 @@ namespace SlavGPS {
 	class TrackProfileDialog;
 
 	enum class SGFileType;
-	enum class GeoCanvasDomain;
+	enum class ViewportDomain;
 
 	class LayerTRW;
 
@@ -356,7 +356,7 @@ namespace SlavGPS {
 		bool handle_selection_in_tree(void);
 
 		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
-		sg_ret draw_tree_item(Viewport * viewport, struct my_data * data, GeoCanvasDomain x_domain, GeoCanvasDomain y_domain);
+		sg_ret draw_tree_item(Viewport * viewport, struct my_data * data, ViewportDomain x_domain, ViewportDomain y_domain);
 
 		QString sublayer_rename_request(const QString & new_name);
 

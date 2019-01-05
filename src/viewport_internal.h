@@ -85,6 +85,9 @@ namespace SlavGPS {
 		int width_2 = 0;
 		int height_2 = 0;
 
+		QPixmap saved_pixmap;
+		bool saved_pixmap_valid;
+
 	protected:
 		QPainter * painter = NULL;
 		QPixmap * pixmap = NULL;
@@ -93,25 +96,6 @@ namespace SlavGPS {
 
 	signals:
 		void reconfigured(Viewport2D * viewport);
-	};
-
-
-
-
-	class GeoCanvas {
-	public:
-		GeoCanvas();
-
-		int width = 0;
-		int height = 0;
-
-
-		QPixmap saved_img;
-		bool saved_img_valid;
-
-		HeightUnit height_unit;
-		DistanceUnit distance_unit;
-		SpeedUnit speed_unit;
 	};
 
 
@@ -167,22 +151,6 @@ namespace SlavGPS {
 		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
 
 		void draw_bbox(const LatLonBBox & bbox, const QPen & pen);
-
-
-		/* Draw a line in central part of viewport (i.e. in
-		   geocanvas area).  x/y coordinates should be in
-		   "beginning is in bottom-left corner" coordinates
-		   system. */
-		void center_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y);
-
-		/* Draw a crosshair in central part of viewport
-		   (i.e. in geocanvas area).  x/y coordinates should
-		   be in "beginning is in bottom left corner"
-		   coordinates system.
-
-		   "Simple" means one horizontal and one vertical line
-		   crossing at given viewport position. */
-		void center_draw_simple_crosshair(const ScreenPos & pos);
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
@@ -378,10 +346,10 @@ namespace SlavGPS {
 
 		char debug[100] = { 0 };
 
-		GeoCanvas geocanvas;
-
-		Viewport2D * v2d = NULL;
 		ViewportCanvas canvas;
+
+		int saved_width = 0;
+		int saved_height = 0;
 
 	private:
 		void free_center(std::list<Coord>::iterator iter);
@@ -414,7 +382,6 @@ namespace SlavGPS {
 
 	protected:
 		bool eventFilter(QObject * object, QEvent * event);
-
 	};
 
 
@@ -457,20 +424,47 @@ namespace SlavGPS {
 
 		void set_margin(int top, int bottom, int left, int right);
 
-		int center_get_width(void) const;
-		int center_get_height(void) const;
+
+		int central_get_width(void) const;
+		int central_get_height(void) const;
+		int left_get_width(void) const;
+		int left_get_height(void) const;
+		int right_get_width(void) const;
+		int right_get_height(void) const;
+		int top_get_width(void) const;
+		int top_get_height(void) const;
+		int bottom_get_width(void) const;
+		int bottom_get_height(void) const;
+
+
+		/* Draw a line in central part of viewport.  x/y
+		   coordinates should be in "beginning is in
+		   bottom-left corner" coordinates system. */
+		void central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y);
+
+		/* Draw a crosshair in central part of viewport.  x/y
+		   coordinates should be in "beginning is in bottom
+		   left corner" coordinates system.
+
+		   "Simple" means one horizontal and one vertical line
+		   crossing at given viewport position. */
+		void central_draw_simple_crosshair(const ScreenPos & pos);
 
 		void margin_draw_text(ViewportMargin::Position pos, QFont const & text_font, QPen const & pen, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
+
 
 		ViewportMargin * left = NULL;
 		ViewportMargin * right = NULL;
 		ViewportMargin * top = NULL;
 		ViewportMargin * bottom = NULL;
+		Viewport * central = NULL;
 
-		GeoCanvasDomain x_domain = GeoCanvasDomain::Max;
-		GeoCanvasDomain y_domain = GeoCanvasDomain::Max;
+		ViewportDomain x_domain = ViewportDomain::Max;
+		ViewportDomain y_domain = ViewportDomain::Max;
 
-		Viewport * viewport = NULL;
+		HeightUnit height_unit;
+		DistanceUnit distance_unit;
+		SpeedUnit speed_unit;
 
 		QGridLayout * grid = NULL;
 

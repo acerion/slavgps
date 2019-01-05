@@ -59,7 +59,7 @@ namespace SlavGPS {
 
 
 
-	enum class GeoCanvasDomain {
+	enum class ViewportDomain {
 		Time = 0,
 		Elevation,
 		Distance,
