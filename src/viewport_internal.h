@@ -426,10 +426,12 @@ namespace SlavGPS {
 	class Viewport2D : public QWidget {
 		Q_OBJECT
 	public:
-		Viewport2D(QWidget * parent = NULL);
+		Viewport2D(int l, int r, int t, int b, QWidget * parent = NULL);
 
-		void set_margin(int top, int bottom, int left, int right);
-
+		/* (Re-)create central widget. */
+		void create_central(void);
+		/* (Re-)create margins with given sizes. */
+		void create_margins(int l, int r, int t, int b);
 
 		int central_get_width(void) const;
 		int central_get_height(void) const;
@@ -453,7 +455,7 @@ namespace SlavGPS {
 		   left corner" coordinates system.
 
 		   "Simple" means one horizontal and one vertical line
-		   crossing at given viewport position. */
+		   crossing at given position. */
 		void central_draw_simple_crosshair(const ScreenPos & pos);
 
 		void margin_draw_text(ViewportMargin::Position pos, QFont const & text_font, QPen const & pen, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
@@ -473,11 +475,6 @@ namespace SlavGPS {
 		SpeedUnit speed_unit;
 
 		QGridLayout * grid = NULL;
-
-		int top_height = 0;
-		int bottom_height = 0;
-		int left_width = 0;
-		int right_width = 0;
 	};
 
 

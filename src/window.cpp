@@ -338,7 +338,7 @@ void Window::create_layout()
 	this->addToolBar(this->toolbar);
 
 
-	this->viewport = new Viewport2D(this);
+	this->viewport = new Viewport2D(10, 20, 30, 40, this);
 	qDebug() << SG_PREFIX_I << "Created Viewport with center's size:" << this->viewport->central_get_height() << this->viewport->central_get_width();
 	this->setCentralWidget(this->viewport);
 

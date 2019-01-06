@@ -2129,34 +2129,6 @@ void Viewport::get_location_strings(UTM utm, QString & lat, QString & lon)
 
 
 
-void Viewport2D::set_margin(int top_h, int bottom_h, int left_w, int right_w)
-{
-	this->top_height = top_h;
-	this->bottom_height = bottom_h;
-	this->left_width = left_w;
-	this->right_width = right_w;
-
-	if (this->left) {
-		this->left->setFixedWidth(left_w);
-		this->left->canvas.reconfigure(this->left->geometry().width(), this->left->geometry().height());
-	}
-	if (this->right) {
-		this->right->setFixedWidth(right_w);
-		this->right->canvas.reconfigure(this->right->geometry().width(), this->right->geometry().height());
-	}
-	if (this->top) {
-		this->top->setFixedHeight(top_h);
-		this->top->canvas.reconfigure(this->top->geometry().width(), this->top->geometry().height());
-	}
-	if (this->bottom) {
-		this->bottom->setFixedHeight(bottom_h);
-		this->bottom->canvas.reconfigure(this->bottom->geometry().width(), this->bottom->geometry().height());
-	}
-}
-
-
-
-
 Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, const VikingZoomLevel & expected_viking_zoom_level)
 {
 	/*
@@ -2615,7 +2587,7 @@ Window * Viewport::get_window(void) const
 
 
 
-Viewport2D::Viewport2D(QWidget * parent) : QWidget(parent)
+Viewport2D::Viewport2D(int l, int r, int t, int b, QWidget * parent) : QWidget(parent)
 {
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -2627,30 +2599,74 @@ Viewport2D::Viewport2D(QWidget * parent) : QWidget(parent)
 	this->grid->setSpacing(0); /* Space between contents of grid. */
 	this->grid->setContentsMargins(0, 0, 0, 0); /* Outermost margins of a grid. */
 
-	this->set_margin(10, 20, 30, 40);
-
 	QLayout * old = this->layout();
 	delete old;
 	qDeleteAll(this->children());
 	this->setLayout(this->grid);
 
-	this->left   = new ViewportMargin(ViewportMargin::Position::Left,   this->left_width);
-	this->right  = new ViewportMargin(ViewportMargin::Position::Right,  this->right_width);
-	this->top    = new ViewportMargin(ViewportMargin::Position::Top,    this->top_height);
-	this->bottom = new ViewportMargin(ViewportMargin::Position::Bottom, this->bottom_height);
-	this->left->canvas.viewport = this;
-	this->right->canvas.viewport = this;
-	this->top->canvas.viewport = this;
-	this->bottom->canvas.viewport = this;
+	this->create_central();
+	this->create_margins(l, r, t, b);
+}
+
+
+
+
+void Viewport2D::create_central(void)
+{
+	if (this->central) {
+		qDebug() << SG_PREFIX_I << "Removing old central widget";
+		this->grid->removeWidget(this->central);
+		delete this->central;
+	}
 
 	this->central = new Viewport(this);
 	this->central->canvas.viewport = this;
+
+	this->grid->addWidget(this->central, 1, 1);
+}
+
+
+
+
+void Viewport2D::create_margins(int l, int r, int t, int b)
+{
+	if (this->left) {
+		qDebug() << SG_PREFIX_I << "Removing old left margin";
+		this->grid->removeWidget(this->left);
+		delete this->left;
+	}
+	if (this->right) {
+		qDebug() << SG_PREFIX_I << "Removing old right margin";
+		this->grid->removeWidget(this->right);
+		delete this->right;
+	}
+	if (this->top) {
+		qDebug() << SG_PREFIX_I << "Removing old top margin";
+		this->grid->removeWidget(this->top);
+		delete this->top;
+	}
+	if (this->bottom) {
+		qDebug() << SG_PREFIX_I << "Removing old bottom margin";
+		this->grid->removeWidget(this->bottom);
+		delete this->bottom;
+	}
+
+	this->left   = new ViewportMargin(ViewportMargin::Position::Left,   l);
+	this->right  = new ViewportMargin(ViewportMargin::Position::Right,  r);
+	this->top    = new ViewportMargin(ViewportMargin::Position::Top,    t);
+	this->bottom = new ViewportMargin(ViewportMargin::Position::Bottom, b);
 
 	this->grid->addWidget(this->left,    1, 0);
 	this->grid->addWidget(this->right,   1, 2);
 	this->grid->addWidget(this->top,     0, 1);
 	this->grid->addWidget(this->bottom,  2, 1);
-	this->grid->addWidget(this->central, 1, 1);
+
+	this->left->canvas.viewport = this;
+	this->right->canvas.viewport = this;
+	this->top->canvas.viewport = this;
+	this->bottom->canvas.viewport = this;
+
+	return;
 }
 
 

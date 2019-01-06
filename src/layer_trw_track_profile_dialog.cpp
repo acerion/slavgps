@@ -1357,9 +1357,8 @@ void ProfileView::create_viewport(TrackProfileDialog * new_dialog, ViewportDomai
 	const int initial_width = GRAPH_INITIAL_WIDTH;
 	const int initial_height = GRAPH_INITIAL_HEIGHT;
 
-	this->viewport2d = new Viewport2D(dialog);
+	this->viewport2d = new Viewport2D(GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT, GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, dialog);
 	snprintf(this->viewport2d->central->debug, sizeof (this->viewport2d->central->debug), "%s", this->get_graph_title().toUtf8().constData());
-	this->viewport2d->set_margin(GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT);
 	this->viewport2d->central->resize(initial_width, initial_height);
 	this->viewport2d->central->reconfigure_drawing_area(initial_width, initial_height);
 
