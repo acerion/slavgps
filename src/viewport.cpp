@@ -1237,10 +1237,11 @@ void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, i
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to "beginning in upper-left corner"
 	   coordinate system. */
-	const int graph_height = this->central->canvas.height;
+	const int h = this->central->canvas.height;
+
 	this->central->canvas.painter->setPen(pen);
-	this->central->canvas.painter->drawLine(begin_x, graph_height - begin_y,
-					       end_x,   graph_height - end_y);
+	this->central->canvas.painter->drawLine(begin_x, h - begin_y - 1,
+						end_x,   h - end_y - 1);
 }
 
 
@@ -2326,7 +2327,7 @@ void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 	const int w = this->central->canvas.width;
 	const int h = this->central->canvas.height;
 	const int x = pos.x;
-	const int y = pos.y;
+	const int y = h - pos.y - 1; /* Convert from "beginning in bottom-left corner" to "beginning in top-left corner" coordinate system. */
 
 	qDebug() << SG_PREFIX_I << "Crosshair at" << x << y;
 
@@ -2796,4 +2797,59 @@ int Viewport2D::bottom_get_width(void) const
 int Viewport2D::bottom_get_height(void) const
 {
 	return this->bottom ? this->bottom->canvas.height : 0;
+}
+
+
+
+
+sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
+{
+	const int w = this->canvas.width;
+	const int h = this->canvas.height;
+
+	const QPoint position = this->mapFromGlobal(QCursor::pos());
+
+#if 0   /* Verbose debug. */
+	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
+#endif
+
+#if 0
+	const int x = position.x();
+	const int y = position.y();
+#else
+	const int x = ev->x();
+	const int y = ev->y();
+#endif
+
+	if (x > w) {
+		/* Cursor outside of chart area. */
+		return sg_ret::err;
+	}
+	if (y > h) {
+		/* Cursor outside of chart area. */
+		return sg_ret::err;
+	}
+
+	screen_pos.x = x;
+	if (screen_pos.x < 0) {
+		qDebug() << SG_PREFIX_E << "Condition 1 for mouse movement failed:" << screen_pos.x << x;
+		screen_pos.x = 0;
+	}
+	if (screen_pos.x > w) {
+		qDebug() << SG_PREFIX_E << "Condition 2 for mouse movement failed:" << screen_pos.x << x << w;
+		screen_pos.x = w;
+	}
+
+
+	screen_pos.y = h - y - 1; /* Converting from QT's "beginning is in upper-left" into "beginning is in bottom-left" coordinate system. */
+	if (screen_pos.y < 0) {
+		qDebug() << SG_PREFIX_E << "Condition 3 for mouse movement failed:" << screen_pos.y << y;
+		screen_pos.y = 0;
+	}
+	if (screen_pos.y > h) {
+		qDebug() << SG_PREFIX_E << "Condition 4 for mouse movement failed:" << screen_pos.y << x << h;
+		screen_pos.y = h;
+	}
+
+	return sg_ret::ok;
 }

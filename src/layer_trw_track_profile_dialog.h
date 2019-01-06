@@ -181,12 +181,6 @@ namespace SlavGPS {
 		sg_ret set_initial_visible_range_x_time(void);
 		sg_ret set_initial_visible_range_y(void);
 
-		/* Get position of a cursor within a graph. This
-		   function doesn't care if 'x' or 'y' coordinate is
-		   on a graph line. It just reports cursor
-		   position. */
-		sg_ret get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
-
 		sg_ret get_position_of_tp(Track * trk, int idx, ScreenPos & screen_pos);
 
 		sg_ret regenerate_data(Track * trk);

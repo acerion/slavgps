@@ -165,6 +165,12 @@ namespace SlavGPS {
 		bool forward_available(void) const;
 
 
+		/* Get cursor position of a mouse event.  Returned
+		   position is in "beginning is in bottom-left corner"
+		   coordinate system. */
+		sg_ret get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
+
+
 		const Coord * get_center() const;
 		Coord get_center2() const;
 		std::list<QString> get_centers_list(void) const;

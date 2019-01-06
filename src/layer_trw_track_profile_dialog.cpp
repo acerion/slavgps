@@ -476,12 +476,6 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 	/* Now draw marks on this fresh (restored from saved) image. */
 
 	if (current_pos.x > 0 && current_pos.y > 0) {
-		//qDebug() << SG_PREFIX_D << "Crosshair pos =" << current_pos.x << current_pos.y;
-
-		/* Here we convert point's position from graph's
-		   coordinate system (beginning in bottom-left corner)
-		   to viewport coordinates (beginning in upper-left
-		   corner + viewport's active area margins). */
 		this->viewport2d->central_draw_simple_crosshair(current_pos);
 		is_current_drawn = true;
 	} else {
@@ -489,10 +483,6 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 	}
 
 	if (selected_pos.x > 0 && selected_pos.y > 0) {
-		/* Here we convert point's position from graph's
-		   coordinate system (beginning in bottom-left corner)
-		   to viewport coordinates (beginning in upper-left
-		   corner + viewport's active area margins). */
 		this->viewport2d->central_draw_simple_crosshair(selected_pos);
 		is_selected_drawn = true;
 	} else {
@@ -535,7 +525,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(Viewport * viewport, QMo
 
 
 	ScreenPos current_pos;
-	graph->get_cursor_pos(ev, current_pos);
+	viewport->get_cursor_pos(ev, current_pos);
 	const bool found_tp = set_center_at_graph_position(current_pos.x, this->trw, this->main_viewport, this->trk, graph->viewport2d->x_domain, graph->viewport2d->central_get_width());
 	if (!found_tp) {
 		/* Unable to get the point so give up. */
@@ -591,14 +581,17 @@ void TrackProfileDialog::handle_mouse_button_release_cb(Viewport * viewport, QMo
 sg_ret ProfileView::set_pos_y(ScreenPos & screen_pos)
 {
 	/* Using saved width/saved height for performance reasons. */
+	const int w = this->viewport2d->central->saved_width;
+	const int h = this->viewport2d->central->saved_height;
+
 	int ix = (int) screen_pos.x;
 	/* Ensure ix is inside of graph. */
-	if (ix == this->viewport2d->central->saved_width) {
+	if (ix == w) {
 		ix--;
 	}
 
-	const double y = this->viewport2d->central->saved_height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
-	screen_pos.set(screen_pos.x, (int) y);
+	const int y = h * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
+	screen_pos.set(screen_pos.x, y);
 
 	return sg_ret::ok;
 }
@@ -609,7 +602,7 @@ sg_ret ProfileView::set_pos_y(ScreenPos & screen_pos)
 sg_ret ProfileView::get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos)
 {
 	/* Get exact cursor position. 'y' may not be on a graph line. */
-	if (sg_ret::ok != this->get_cursor_pos(ev, screen_pos)) {
+	if (sg_ret::ok != this->viewport2d->central->get_cursor_pos(ev, screen_pos)) {
 		/* Not an error? */
 		return sg_ret::ok;
 	}
@@ -752,63 +745,6 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 	};
 
 	return;
-}
-
-
-
-
-sg_ret ProfileView::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
-{
-	const int graph_width = this->viewport2d->central_get_width();
-	const int graph_height = this->viewport2d->central_get_height();
-
-	QPoint position = this->viewport2d->central->mapFromGlobal(QCursor::pos());
-
-	//qDebug() << SG_PREFIX_I << "x =" << ev->x() << "y =" << ev->y();
-
-#if 0   /* Verbose debug. */
-	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
-#endif
-
-#if 0
-	const int mouse_x = position.x();
-	const int mouse_y = position.y();
-#else
-	const int mouse_x = ev->x();
-	const int mouse_y = ev->y();
-#endif
-
-	if (mouse_x > graph_width) {
-		/* Cursor outside of chart area. */
-		return sg_ret::err;
-	}
-	if (mouse_y > graph_height) {
-		/* Cursor outside of chart area. */
-		return sg_ret::err;
-	}
-
-	screen_pos.x = mouse_x;
-	if (screen_pos.x < 0) {
-		qDebug() << SG_PREFIX_E << "Condition 1 for mouse movement failed:" << screen_pos.x << mouse_x;
-		screen_pos.x = 0;
-	}
-	if (screen_pos.x > graph_width) {
-		qDebug() << SG_PREFIX_E << "Condition 2 for mouse movement failed:" << screen_pos.x << mouse_x << graph_width;
-		screen_pos.x = graph_width;
-	}
-
-
-	screen_pos.y = mouse_y;
-	if (screen_pos.y < 0) {
-		qDebug() << SG_PREFIX_E << "Condition 3 for mouse movement failed:" << screen_pos.y << mouse_y;
-		screen_pos.y = 0;
-	}
-	if (screen_pos.y > graph_height) {
-		qDebug() << SG_PREFIX_E << "Condition 4 for mouse movement failed:" << screen_pos.y << mouse_x << graph_height;
-		screen_pos.y = graph_height;
-	}
-
-	return sg_ret::ok;
 }
 
 
@@ -2112,9 +2048,6 @@ void ProfileView::draw_y_grid_inside(void)
 		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * h / (visible_range * 1.0);
 
 		if (row >= 0 && row < h) {
-			/* x/y coordinates are converted here from "beginning in
-			   bottom-left corner" to "beginning in upper-left corner"
-			   coordinate system. */
 			this->viewport2d->central_draw_line(this->viewport2d->central->grid_pen,
 							    0, row,
 							    w, row);
@@ -2142,7 +2075,7 @@ void ProfileView::draw_y_grid_outside(void)
 	int last_mark = 0;
 	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
 
-#if 0   /* Debug. */
+#if 1
 	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << h;
 	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
 	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
@@ -2158,14 +2091,9 @@ void ProfileView::draw_y_grid_outside(void)
 
 		if (row >= 0 && row < h) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", row =" << row;
-
-			const float y_interval_px = 1.0 * h;
-
-			const QPointF text_anchor(0, h - row);
-			const QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), w - 3, y_interval_px - 3);
+			const QRectF bounding_rect = QRectF(0, h - row, w - 3, h - 3);
 			const QString label = this->get_y_grid_label(axis_mark_uu);
 			this->viewport2d->margin_draw_text(ViewportMargin::Position::Left, this->viewport2d->central->labels_font, this->viewport2d->central->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
-
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", row =" << row;
 		}
@@ -2234,7 +2162,7 @@ void ProfileView::draw_x_grid_sub_d_outside(void)
 	int last_mark = 0;
 	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
-#if 1   /* Debug. */
+#if 1
 	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
@@ -2250,8 +2178,7 @@ void ProfileView::draw_x_grid_sub_d_outside(void)
 
 		if (col >= 0 && col < w) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
-			const QPointF text_anchor(col, 0);
-			const QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), w - 3, h - 3);
+			const QRectF bounding_rect = QRectF(col, 0, w - 3, h - 3);
 			const QString label = axis_mark_uu.to_nice_string();
 			this->viewport2d->margin_draw_text(ViewportMargin::Position::Bottom, this->viewport2d->central->labels_font, this->viewport2d->central->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
 		} else {
@@ -2338,11 +2265,9 @@ void ProfileView::draw_x_grid_sub_t_outside(void)
 
 		if (col >= 0 && col < w) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
-			const QPointF text_anchor(col, 0);
-			const QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), w - 3, h - 3);
+			const QRectF bounding_rect = QRectF(col, 0, w - 3, h - 3);
 			const QString label = get_time_grid_label(this->x_interval_t, axis_mark_uu);
 			this->viewport2d->margin_draw_text(ViewportMargin::Position::Bottom, this->viewport2d->central->labels_font, this->viewport2d->central->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
-
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
 		}
