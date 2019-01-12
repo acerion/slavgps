@@ -79,19 +79,23 @@ WebToolFormat::~WebToolFormat()
 QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* Center values. */
-	LatLon lat_lon = a_viewport->get_center()->get_latlon();
-
+	LatLon center_lat_lon = a_viewport->get_center()->get_latlon();
 	QString center_lat;
 	QString center_lon;
-	lat_lon.to_strings_raw(center_lat, center_lon);
+	center_lat_lon.to_strings_raw(center_lat, center_lon);
 
-	LatLon llpt(0.0, 0.0);
+
+	LatLon position_lat_lon;
 	if (a_coord) {
-		lat_lon = a_coord->get_latlon(); /* kamilFIXME: shouldn't this be "llpt = "? */
+		position_lat_lon = a_coord->get_latlon();
+	} else {
+		/* Coordinate not provided to function, so fall back to center of viewport. */
+		position_lat_lon = center_lat_lon;
 	}
-	QString point_lat;
-	QString point_lon;
-	llpt.to_strings_raw(point_lat, point_lon);
+	QString position_lat;
+	QString position_lon;
+	position_lat_lon.to_strings_raw(position_lat, position_lon);
+
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
@@ -123,8 +127,8 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 		case 'A': values[i] = center_lat; break;
 		case 'O': values[i] = center_lon; break;
 		case 'Z': values[i] = tile_zoom_level.to_string(); break;
-		case 'P': values[i] = point_lat; break;
-		case 'N': values[i] = point_lon; break;
+		case 'P': values[i] = position_lat; break;
+		case 'N': values[i] = position_lon; break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i];
 			return QString("");
