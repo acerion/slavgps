@@ -156,7 +156,7 @@ namespace SlavGPS {
 		void toggle_items_visibility();
 
 		void get_tracks_list(std::list<Track *> & list) const;
-		void track_search_closest_tp(TrackpointSearch * search);
+		void track_search_closest_tp(TrackpointSearch & search);
 
  		void change_coord_mode(CoordMode dest_mode);
 

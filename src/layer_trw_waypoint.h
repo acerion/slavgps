@@ -128,9 +128,13 @@ namespace SlavGPS {
 		QString image_full_path;
 		QString symbol_name;
 
-		/* A rather misleading, ugly hack needed for trwlayer's click image. */
-		int image_width = 0;
-		int image_height = 0;
+		/* Rectangle in viewport, in which waypoints' image is
+		   painted.  Needed by "select waypoint by clicking on
+		   it in viewport" code.
+
+		   If the ::isNull() returns true, waypoint's image
+		   was not drawn. */
+		QRect drawn_image_rect;
 
 
 		/* For display in viewport. This is only reference. */

@@ -1007,6 +1007,14 @@ int Viewport::get_height(void) const
 
 
 
+QRect Viewport::get_rect(void) const
+{
+	return QRect(0, 0, this->canvas.width, this->canvas.height);
+}
+
+
+
+
 Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 {
 	Coord coord;

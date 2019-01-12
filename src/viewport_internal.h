@@ -200,6 +200,7 @@ namespace SlavGPS {
 
 		int get_width(void) const;
 		int get_height(void) const;
+		QRect get_rect(void) const;
 
 		/* Coordinate transformations. */
 		Coord screen_pos_to_coord(int x, int y) const;

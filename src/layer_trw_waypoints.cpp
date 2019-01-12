@@ -238,7 +238,7 @@ void LayerTRWWaypoints::toggle_items_visibility(void)
 
 
 
-void LayerTRWWaypoints::search_closest_wp(WaypointSearch * search)
+void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Waypoint * wp = *iter;
@@ -246,34 +246,39 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch * search)
 			continue;
 		}
 
-		const ScreenPos wp_pos = search->viewport->coord_to_screen_pos(wp->coord);
+		const ScreenPos wp_pos = search.viewport->coord_to_screen_pos(wp->coord);
+		bool found = false;
 
-		/* If waypoint has an image then use the image size to select. */
-		if (search->draw_images && !wp->image_full_path.isEmpty()) {
+		/* If waypoint has non-empty image then use the image size to select. */
+		if (!wp->drawn_image_rect.isNull()) {
 
-			int slackx = wp->image_width / 2;
-			int slacky = wp->image_height / 2;
+			int slackx = wp->drawn_image_rect.width() / 2;
+			int slacky = wp->drawn_image_rect.height() / 2;
 
-			if (wp_pos.x <= search->x + slackx && wp_pos.x >= search->x - slackx
-			    && wp_pos.y <= search->y + slacky && wp_pos.y >= search->y - slacky) {
+			if (wp_pos.x <= search.x + slackx
+			    && wp_pos.x >= search.x - slackx
+			    && wp_pos.y <= search.y + slacky
+			    && wp_pos.y >= search.y - slacky) {
 
-				search->closest_wp = wp;
-				search->closest_x = wp_pos.x;
-				search->closest_y = wp_pos.y;
+				found = true;
 			}
 		} else {
-			const int dist_x = abs(wp_pos.x - search->x);
-			const int dist_y = abs(wp_pos.y - search->y);
+			const int dist_x = abs(wp_pos.x - search.x);
+			const int dist_y = abs(wp_pos.y - search.y);
 
 			if (dist_x <= WAYPOINT_SIZE_APPROX && dist_y <= WAYPOINT_SIZE_APPROX
-			    && ((!search->closest_wp)
+			    && ((!search.closest_wp)
 				/* Was the old waypoint we already found closer than this one? */
-				|| dist_x + dist_y < abs(wp_pos.x - search->closest_x) + abs(wp_pos.y - search->closest_y))) {
+				|| dist_x + dist_y < abs(wp_pos.x - search.closest_x) + abs(wp_pos.y - search.closest_y))) {
 
-				search->closest_wp = wp;
-				search->closest_x = wp_pos.x;
-				search->closest_y = wp_pos.y;
+				found = true;
 			}
+		}
+
+		if (found) {
+			search.closest_wp = wp;
+			search.closest_x = wp_pos.x;
+			search.closest_y = wp_pos.y;
 		}
 
 	}
@@ -289,18 +294,23 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewpo
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 
 		Waypoint * wp = *iter;
-		if (!wp->image_full_path.isEmpty() && wp->visible) {
-			const ScreenPos wp_pos = viewport->coord_to_screen_pos(wp->coord);
-			int slackx = wp->image_width / 2;
-			int slacky = wp->image_height / 2;
-			if (wp_pos.x <= event_x + slackx && wp_pos.x >= event_x - slackx
-			    && wp_pos.y <= event_y + slacky && wp_pos.y >= event_y - slacky) {
+		if (wp->drawn_image_rect.isNull()) {
+			/* Waypoint with empty 'drawn image rectangle'
+			   is not shown in viewport so it couldn't
+			   have been clicked. */
+			continue;
+		}
 
-				found = wp->image_full_path;
-				/* We've found a match. However continue searching
-				   since we want to find the last match -- that
-				   is, the match that was drawn last. */
-			}
+		const ScreenPos wp_pos = viewport->coord_to_screen_pos(wp->coord);
+		int slackx = wp->drawn_image_rect.width() / 2;
+		int slacky = wp->drawn_image_rect.height() / 2;
+		if (wp_pos.x <= event_x + slackx && wp_pos.x >= event_x - slackx
+		    && wp_pos.y <= event_y + slacky && wp_pos.y >= event_y - slacky) {
+
+			found = wp->image_full_path;
+			/* We've found a match. However continue searching
+			   since we want to find the last match -- that
+			   is, the match that was drawn last. */
 		}
 
 	}

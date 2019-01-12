@@ -116,8 +116,7 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 	this->vp_xmpp = this->viewport->get_viking_zoom_level().get_x();
 	this->vp_ympp = this->viewport->get_viking_zoom_level().get_y();
 
-	this->vp_width = this->viewport->get_width();
-	this->vp_height = this->viewport->get_height();
+	this->vp_rect = this->viewport->get_rect();
 	this->vp_center = this->viewport->get_center2();
 	this->vp_coord_mode = this->viewport->get_coord_mode();
 	this->vp_is_one_utm_zone = this->viewport->get_is_one_utm_zone(); /* False if some other projection besides UTM. */
@@ -129,8 +128,8 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 
 		const int outside_margin = 1600; /* TODO_LATER: magic number. */
 
-		const int width = this->vp_xmpp * (this->vp_width / 2) + outside_margin / this->vp_xmpp;
-		const int height = this->vp_ympp * (this->vp_height / 2) + outside_margin / this->vp_ympp;
+		const int width = this->vp_xmpp * (this->vp_rect.width() / 2) + outside_margin / this->vp_xmpp;
+		const int height = this->vp_ympp * (this->vp_rect.height() / 2) + outside_margin / this->vp_ympp;
 		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
 
 		this->coord_leftmost = this->vp_center.utm.easting - width;
@@ -146,7 +145,7 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 		const int outside_margin = 500; /* TODO_LATER: magic number. */
 
 		const Coord upperleft = this->viewport->screen_pos_to_coord(-outside_margin, -outside_margin);
-		const Coord bottomright = this->viewport->screen_pos_to_coord(this->vp_width + outside_margin, this->vp_height + outside_margin);
+		const Coord bottomright = this->viewport->screen_pos_to_coord(this->vp_rect.width() + outside_margin, this->vp_rect.height() + outside_margin);
 
 		this->coord_leftmost = upperleft.ll.lon;
 		this->coord_rightmost = bottomright.ll.lon;
@@ -921,10 +920,12 @@ CachedPixmap LayerTRWPainter::generate_wp_cached_pixmap(const QString & image_fu
 
    Draw waypoint's image specified by wp->image.
 
-   @return true on success
-   @return false on failure
+   @wp_pos - position of waypoint on screen
+
+   @return true if image has been drawn
+   @return false if image has not been drawn for whatever reason (due to error or due to non-error situation)
 */
-bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, bool do_highlight)
+bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & wp_pos, bool do_highlight)
 {
 	if (this->wp_image_alpha == 0) {
 		return false;
@@ -943,13 +944,6 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, 
 		CachedPixmap cache_object = this->generate_wp_cached_pixmap(wp->image_full_path);
 
 		if (!cache_object.pixmap.isNull()) {
-			/* Needed so 'click picture' tool knows how
-			   big the pic is; we don't store it in
-			   cache_object because they may have been
-			   freed already. */
-			wp->image_width = cache_object.pixmap.width();
-			wp->image_height = cache_object.pixmap.height();
-
 			/* Apply alpha setting to the image before the pixmap gets stored in the cache. */
 			if (this->wp_image_alpha <= 255) {
 				ui_pixmap_set_alpha(cache_object.pixmap, this->wp_image_alpha);
@@ -961,41 +955,57 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, 
 	}
 
 	if (pixmap.isNull()) {
-		qDebug() << "EE" PREFIX << "failed to get wp pixmap from any source";
+		qDebug() << SG_PREFIX_E << "Failed to get wp pixmap from any source";
 		return false;
 	}
 
 	const int w = pixmap.width();
 	const int h = pixmap.height();
-	const int x = pos.x;
-	const int y = pos.y;
+	const int x = wp_pos.x;
+	const int y = wp_pos.y;
 
-	const QRect target_rect(x - (w / 2), y - (h / 2), w, h);
-
-	/* Always draw within boundaries. TODO_MAYBE: Replace this condition with "rectangles intersect" condition? */
-	if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < this->vp_width && y - (h / 2) < this->vp_height) {
-		if (do_highlight) {
-			/* Highlighted - so draw a little border around selected waypoint's image.
-			   Single width seems a little weak so draw 2 times wider. */
-			QPen pen = this->viewport->get_highlight_pen();
-			const int pen_width = pen.width() * 2;
-			const int delta = pen_width / 2;
-			pen.setWidth(pen_width);
-
-			this->viewport->draw_rectangle(pen, target_rect.adjusted(-delta, -delta, delta, delta));
-		}
-		this->viewport->draw_pixmap(pixmap, target_rect, QRect(0, 0, w, h));
+	bool centered = true;
+	QRect target_rect;
+	if (centered) {
+		target_rect = QRect(x - (w / 2), y - (h / 2), w, h);
+	} else {
+		target_rect = QRect(x, y, w, h);
 	}
+
+	/* Draw only those waypoints that are visible in viewport. */
+	if (!this->vp_rect.intersects(target_rect)) {
+		return false;
+	}
+
+
+	wp->drawn_image_rect = target_rect;
+	if (do_highlight) {
+		/* Highlighted - so draw a little border around selected waypoint's image.
+		   Single width seems a little weak so draw 2 times wider. */
+		QPen pen = this->viewport->get_highlight_pen();
+		const int pen_width = pen.width() * 2;
+		const int delta = pen_width / 2;
+		pen.setWidth(pen_width);
+
+		this->viewport->draw_rectangle(pen, wp->drawn_image_rect.adjusted(-delta, -delta, delta, delta));
+	}
+	this->viewport->draw_pixmap(pixmap, wp->drawn_image_rect, QRect(0, 0, w, h));
+
 	return true;
 }
 
 
 
 
-void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos, bool do_highlight)
+/**
+   @brief Draw waypoint's symbol
+
+   @wp_pos - position of waypoint on screen
+*/
+void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & wp_pos, bool do_highlight)
 {
-	const int x = pos.x;
-	const int y = pos.y;
+	const int x = wp_pos.x;
+	const int y = wp_pos.y;
 
 	if (this->draw_wp_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
 		const int viewport_x = x - wp->symbol_pixmap->width() / 2;
@@ -1016,7 +1026,7 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos,
 			break;
 		case GraphicMarker::Circle:
 			size = 50;
-			this->viewport->draw_ellipse(pen, QPoint(pos.x, pos.y), size / 2, size / 2, true);
+			this->viewport->draw_ellipse(pen, QPoint(wp_pos.x, wp_pos.y), size / 2, size / 2, true);
 			break;
 		case GraphicMarker::X:
 			/* x-markers need additional division of size by two. */
@@ -1034,15 +1044,19 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos,
 
 
 
-void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, bool do_highlight)
+/**
+   @brief Draw waypoint's label
+
+   @wp_pos - position of waypoint on screen
+*/
+void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & wp_pos, bool do_highlight)
 {
 	/* Could this be stored in the waypoint rather than recreating each pass? */
 
-	const int label_x = pos.x;
-	const int label_y = pos.y;
+	const int label_x = wp_pos.x;
+	const int label_y = wp_pos.y;
 	int label_width = 100;
 	int label_height = 50;
-	this->wp_label_fg_pen = QPen(this->wp_label_fg_color);
 
 	if (do_highlight) {
 
@@ -1074,6 +1088,8 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, 
 
 void LayerTRWPainter::draw_waypoint(Waypoint * wp, Viewport * a_viewport, bool do_highlight)
 {
+	wp->drawn_image_rect = QRect(); /* Null-ify/invalidate. */
+
 	if (!wp->visible) {
 		return;
 	}

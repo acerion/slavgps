@@ -104,8 +104,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_image_full_path(wp.image_full_path);
 	this->set_symbol(wp.symbol_name);
 
-	this->image_width = wp.image_width;
-	this->image_height = wp.image_height;
+	this->drawn_image_rect = wp.drawn_image_rect;
 }
 
 
@@ -255,7 +254,7 @@ Waypoint * Waypoint::unmarshall(Pickle & pickle)
 
 	Waypoint * wp = new Waypoint();
 
-	/* This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...). */
+	/* This copies the fixed sized elements (i.e. visibility, altitude, image_rect, etc...). */
 	pickle.take_object(wp);
 
 	wp->name = pickle.take_string();

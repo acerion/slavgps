@@ -98,7 +98,7 @@ Trackpoint * LayerTRW::search_nearby_tp(Viewport * viewport, int x, int y)
 {
 	TrackpointSearch search(x, y, viewport);
 
-	this->tracks.track_search_closest_tp(&search);
+	this->tracks.track_search_closest_tp(search);
 
 	return search.closest_tp;
 }
@@ -108,9 +108,9 @@ Trackpoint * LayerTRW::search_nearby_tp(Viewport * viewport, int x, int y)
 
 Waypoint * LayerTRW::search_nearby_wp(Viewport * viewport, int x, int y)
 {
-	WaypointSearch search(x, y, viewport, this->painter->draw_wp_images);
+	WaypointSearch search(x, y, viewport);
 
-	this->waypoints.search_closest_wp(&search);
+	this->waypoints.search_closest_wp(search);
 
 	return search.closest_wp;
 }
@@ -235,8 +235,8 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 
 	if (this->waypoints.visible && BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Waypoints present in viewport, trying to catch waypoint";
-		WaypointSearch wp_search(ev->x(), ev->y(), viewport, this->painter->draw_wp_images);
-		this->waypoints.search_closest_wp(&wp_search);
+		WaypointSearch wp_search(ev->x(), ev->y(), viewport);
+		this->waypoints.search_closest_wp(wp_search);
 
 		if (wp_search.closest_wp) {
 
@@ -265,7 +265,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 
 	if (this->tracks.visible && BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Tracks present in viewport, trying to catch track";
-		this->tracks.track_search_closest_tp(&tp_search);
+		this->tracks.track_search_closest_tp(tp_search);
 		if (tp_search.closest_tp) {
 
 			qDebug() << SG_PREFIX_I << "Selection process found track" << tp_search.closest_track->name;
@@ -289,7 +289,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	/* Try again for routes. */
 	if (this->routes.visible && BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Routes present in viewport, trying to catch route";
-		this->routes.track_search_closest_tp(&tp_search);
+		this->routes.track_search_closest_tp(tp_search);
 		if (tp_search.closest_tp) {
 
 			qDebug() << SG_PREFIX_I << "Selection process found route" << tp_search.closest_track->name;
@@ -536,8 +536,8 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 		   have any waypoint to operate on - yet. Try to find
 		   one close to click coordinates. */
 
-		WaypointSearch wp_search(ev->x(), ev->y(), viewport, trw->painter->draw_wp_images);
-		trw->get_waypoints_node().search_closest_wp(&wp_search);
+		WaypointSearch wp_search(ev->x(), ev->y(), viewport);
+		trw->get_waypoints_node().search_closest_wp(wp_search);
 
 		if (wp_search.closest_wp) {
 
@@ -1229,7 +1229,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	}
 
 	if (trw->get_tracks_node().visible) {
-		trw->get_tracks_node().track_search_closest_tp(&tp_search);
+		trw->get_tracks_node().track_search_closest_tp(tp_search);
 
 		if (tp_search.closest_tp) {
 			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);
@@ -1243,7 +1243,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 	}
 
 	if (trw->get_routes_node().visible) {
-		trw->get_routes_node().track_search_closest_tp(&tp_search);
+		trw->get_routes_node().track_search_closest_tp(tp_search);
 
 		if (tp_search.closest_tp) {
 			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);

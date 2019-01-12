@@ -109,16 +109,14 @@ namespace SlavGPS {
 
 	class WaypointSearch {
 	public:
-		WaypointSearch(int ev_x, int ev_y, Viewport * viewport_, bool draw_images_) :
+		WaypointSearch(int ev_x, int ev_y, Viewport * viewport_) :
 			x(ev_x),
 			y(ev_y),
-			draw_images(draw_images_),
 			viewport(viewport_) {};
 
 		/* Input. */
 		int x = 0;
 		int y = 0;
-		bool draw_images = false;
 		Viewport * viewport = NULL;
 
 		/* Output. */
@@ -170,7 +168,7 @@ namespace SlavGPS {
 		Waypoint * find_waypoint_with_duplicate_name(void) const;
 		void set_items_visibility(bool on_off);
 		void toggle_items_visibility();
-		void search_closest_wp(WaypointSearch * search);
+		void search_closest_wp(WaypointSearch & search);
 		QString tool_show_picture_wp(int event_x, int event_y, Viewport * viewport);
 		QStringList get_list_of_missing_thumbnails(void) const;
 		void change_coord_mode(CoordMode new_mode);

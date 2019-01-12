@@ -92,9 +92,9 @@ namespace SlavGPS {
 		CachedPixmap generate_wp_cached_pixmap(const QString & image_full_path) const;
 
 		void draw_waypoint_sub(Waypoint * wp, bool do_hightlight);
-		void draw_waypoint_symbol(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
-		bool draw_waypoint_image(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
-		void draw_waypoint_label(Waypoint * wp, const ScreenPos & pos, bool do_highlight);
+		void draw_waypoint_symbol(Waypoint * wp, const ScreenPos & wp_pos, bool do_highlight);
+		bool draw_waypoint_image(Waypoint * wp, const ScreenPos & wp_pos, bool do_highlight);
+		void draw_waypoint_label(Waypoint * wp, const ScreenPos & wp_pos, bool do_highlight);
 
 		void draw_track_fg_sub(Track * trk, bool do_highlight);
 		void draw_track_bg_sub(Track * trk, bool do_highlight);
@@ -112,8 +112,7 @@ namespace SlavGPS {
 		Window * window = NULL;
 
 		/* Properties of viewport (copied from viewport). */
-		int vp_width = 0;
-		int vp_height = 0;
+		QRect vp_rect;
 		double vp_xmpp = 0.0;
 		double vp_ympp = 0.0;
 		Coord vp_center;
