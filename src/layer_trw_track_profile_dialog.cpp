@@ -736,7 +736,8 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		break;
 	case ViewportDomain::Gradient:
 		if (graph->labels.y_value) {
-			graph->labels.y_value->setText(QObject::tr("%1").arg((int) y));
+			const Gradient gradient_uu(y);
+			graph->labels.y_value->setText(gradient_uu.to_string());
 		}
 		break;
 	default:
@@ -2276,20 +2277,20 @@ void ProfileView::draw_x_grid_sub_t_outside(void)
 
 
 
-QString ProfileView::get_y_grid_label(float value)
+QString ProfileView::get_y_grid_label(float value_uu)
 {
 	switch (this->viewport2d->y_domain) {
 	case ViewportDomain::Elevation:
-		return Altitude(value, this->viewport2d->height_unit).to_string(); /* TODO_UNKNOWN: here we assume that 'value' is in user units. */
+		return Altitude(value_uu, this->viewport2d->height_unit).to_string();
 
 	case ViewportDomain::Distance:
-		return Distance(value, this->viewport2d->distance_unit).to_string();
+		return Distance(value_uu, this->viewport2d->distance_unit).to_string();
 
 	case ViewportDomain::Speed:
-		return Speed(value, this->viewport2d->speed_unit).to_string();
+		return Speed(value_uu, this->viewport2d->speed_unit).to_string();
 
 	case ViewportDomain::Gradient:
-		return QObject::tr("%1%").arg(value, 8, 'f', SG_PRECISION_GRADIENT);
+		return Gradient(value_uu).to_string();
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->viewport2d->y_domain;
