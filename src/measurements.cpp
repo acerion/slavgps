@@ -1198,16 +1198,16 @@ QString Speed::to_string(void) const
 
 	switch (this->unit) {
 	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (this->value), 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (this->value), 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MetresPerSecond:
-		result = QObject::tr("%1 m/s").arg(value, 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 m/s").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::Knots:
-		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (this->value), 0, 'f', SG_PRECISION_SPEED);
 		break;
 	default:
 		result = INVALID_RESULT_STRING;
@@ -2087,4 +2087,101 @@ bool Time::is_zero(void) const
 		return true;
 	}
 	return this->value == 0;
+}
+
+
+
+
+Gradient::Gradient(double new_value)
+{
+	this->value = new_value;
+	this->valid = !std::isnan(new_value);
+}
+
+
+
+
+void Gradient::set_value(double new_value)
+{
+	this->value = new_value;
+	this->valid = !std::isnan(new_value);
+}
+
+
+
+
+double Gradient::get_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+bool Gradient::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+
+const QString Gradient::value_to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+	} else {
+		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
+	}
+
+	return result;
+}
+
+
+
+
+QString Gradient::to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = INVALID_RESULT_STRING;
+	} else {
+		result = QObject::tr("%1%").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
+	}
+	return result;
+}
+
+
+
+
+QString Gradient::get_unit_string(void)
+{
+	return QString("%");
+}
+
+
+
+
+QString Gradient::to_string(double value, int precision)
+{
+	QString result;
+	if (std::isnan(value)) {
+		result = INVALID_RESULT_STRING;
+	} else {
+		result = QObject::tr("%1%").arg(value, 0, 'f', SG_PRECISION_GRADIENT);
+	}
+	return result;
+}
+
+
+
+
+bool Gradient::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
 }

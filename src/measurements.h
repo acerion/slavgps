@@ -510,6 +510,61 @@ namespace SlavGPS {
 
 
 
+	class Gradient {
+	public:
+		Gradient() {};
+		Gradient(double value);
+
+		void set_value(double value); /* Set value, don't change unit. */
+		double get_value(void) const;
+
+		bool is_valid(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   saving the value in gpx or vik file. */
+		//const QString value_to_string_for_file(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   presentation to user. */
+		const QString value_to_string(void) const;
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance does not influence units
+		   used to present the value. E.g. "0.01" km/h will
+		   always be presented as "0.01 km/h", never as "10
+		   m/h". */
+		QString to_string(void) const;
+
+		/* Get string representing speed unit in abbreviated
+		   form. */
+		static QString get_unit_string(void);
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance does not influence units
+		   used to present the value. E.g. "0.01" km/h will
+		   always be presented as "0.01 km/h", never as "10
+		   m/h".
+
+		   Unit is taken from global preferences. There is no
+		   conversion of value from one unit to another. */
+		static QString to_string(double value, int precision = SG_PRECISION_GRADIENT);
+
+		/* Is this measurement so small that it can be treated as zero? */
+		bool is_zero(void) const;
+
+	private:
+		double value = NAN;
+		bool valid = false;
+	};
+
+
+
 }
 
 
