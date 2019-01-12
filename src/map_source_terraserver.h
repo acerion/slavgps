@@ -22,11 +22,6 @@
 
 
 
-#include <cstdint>
-
-
-
-
 #include "map_source.h"
 
 
@@ -44,7 +39,6 @@ namespace SlavGPS {
 
 		bool coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
 		void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
-		bool is_direct_file_access(void) const;
 
 		const QString get_server_hostname(void) const;
 		const QString get_server_path(const TileInfo & src) const;

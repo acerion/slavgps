@@ -22,11 +22,6 @@
 
 
 
-#include <cstdint>
-
-
-
-
 #include "coord.h"
 #include "mapcoord.h"
 #include "map_source.h"
@@ -47,10 +42,7 @@ namespace SlavGPS {
 		MapSourceTms(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 		~MapSourceTms();
 
-		bool is_direct_file_access(void) const;
-		bool is_osm_meta_tiles(void) const;
-
-		bool supports_download_only_new(void) const;
+		bool supports_download_only_new(void) const override;
 
 		bool coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
 		void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;

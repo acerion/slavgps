@@ -73,8 +73,8 @@ MapSource::MapSource()
 
 	this->dl_options.file_validator_fn = map_file_validator_fn;
 
-	is_direct_file_access_flag = false; /* Use direct file access to OSM like tile images - no need for a webservice. */
-	is_osm_meta_tiles_flag = false; /* Read from OSM Meta Tiles - Should be 'use-direct-file-access' as well. */
+	this->is_direct_file_access_flag = false; /* Use direct file access to OSM like tile images? No, not for a webservice. */
+	this->is_osm_meta_tiles_flag = false; /* Read from OSM Meta Tiles? Should be 'use-direct-file-access' as well. */
 
 	switch_xy = false; /* Switch the order of x,y components in the URL (such as used by ARCGIS Tile Server. */
 }
@@ -375,15 +375,9 @@ bool MapSource::is_direct_file_access(void) const
 
 
 
-/**
- * @self: the MapSource of interest.
- *
- * Treat the files as a pre generated data set directly by tirex or renderd
- * tiledir/Z/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy].meta
- */
 bool MapSource::is_osm_meta_tiles(void) const
 {
-	return is_osm_meta_tiles_flag;
+	return this->is_osm_meta_tiles_flag;
 }
 
 

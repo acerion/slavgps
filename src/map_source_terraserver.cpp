@@ -115,14 +115,6 @@ bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, const VikingZo
 
 
 
-bool MapSourceTerraserver::is_direct_file_access(void) const
-{
-	return false;
-}
-
-
-
-
 void MapSourceTerraserver::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	/* TODO_2_LATER: slowdown here! */
@@ -177,4 +169,6 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString 
 	this->drawmode = ViewportDrawMode::UTM;
 
 	this->dl_options.file_validator_fn = map_file_validator_fn;
+
+	this->is_direct_file_access_flag = false;
 }

@@ -84,22 +84,9 @@ MapSourceTms::MapSourceTms(MapTypeID new_map_type_id, const QString & new_label,
 	this->label = new_label;
 	this->server_hostname = new_server_hostname;
 	this->server_path_format = new_server_path_format;
-}
 
-
-
-
-bool MapSourceTms::is_direct_file_access(void) const
-{
-	return false;
-}
-
-
-
-
-bool MapSourceTms::is_osm_meta_tiles(void) const
-{
-	return false;
+	this->is_direct_file_access_flag = false;
+	this->is_osm_meta_tiles_flag = false;
 }
 
 

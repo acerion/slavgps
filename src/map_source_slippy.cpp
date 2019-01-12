@@ -101,22 +101,6 @@ MapSourceSlippy::~MapSourceSlippy()
 
 
 
-bool MapSourceSlippy::is_direct_file_access(void) const
-{
-	return this->is_direct_file_access_flag;
-}
-
-
-
-
-bool MapSourceSlippy::is_osm_meta_tiles(void) const
-{
-	return is_osm_meta_tiles_flag;
-}
-
-
-
-
 bool MapSourceSlippy::supports_download_only_new(void) const
 {
 	return this->dl_options.check_file_server_time || this->dl_options.use_etag;

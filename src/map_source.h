@@ -22,6 +22,11 @@
 
 
 
+#include <cstdint>
+
+
+
+
 #include <QPixmap>
 #include <QString>
 
@@ -165,9 +170,8 @@ namespace SlavGPS {
 		virtual void post_read(MapSourceArgs & args) { return; }
 		QPixmap create_tile_pixmap_from_file(const QString & tile_file_full_path) const;
 
-		/* TODO_LATER: do these need to be virtual methods? */
-		virtual bool is_direct_file_access(void) const;
-		virtual bool is_osm_meta_tiles(void) const;
+		bool is_direct_file_access(void) const;
+		bool is_osm_meta_tiles(void) const;
 
 		virtual bool supports_download_only_new(void) const;
 
@@ -220,12 +224,12 @@ namespace SlavGPS {
 		QString server_hostname;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
 		QString server_path_format; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
 
-
-		bool is_direct_file_access_flag;
-		bool is_osm_meta_tiles_flag; /* http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd. */
-
 		/* Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html */
 		bool switch_xy;
+
+	protected:
+		bool is_direct_file_access_flag;
+		bool is_osm_meta_tiles_flag; /* http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd. */
 
 	private:
 		TileZoomLevel tile_zoom_level_min = TileZoomLevel(0);  /* Minimum Zoom level supported by the map provider.  TMS Zoom level. 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */

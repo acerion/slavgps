@@ -22,11 +22,6 @@
 
 
 
-#include <cstdint>
-
-
-
-
 #include <QString>
 
 
@@ -53,15 +48,11 @@ namespace SlavGPS {
 		bool coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
 		void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
 
-		bool supports_download_only_new(void) const;
+		bool supports_download_only_new(void) const override;
 
 		const QString get_server_path(const TileInfo & src) const;
 
 		DownloadStatus download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const;
-
-
-		bool is_direct_file_access(void) const;
-		bool is_osm_meta_tiles(void) const;
 	};
 
 
