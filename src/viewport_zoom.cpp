@@ -83,7 +83,6 @@ ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
 
 	QLabel * xlabel = new QLabel(QObject::tr("X (easting):"), this);
 
-	/* TODO_MAYBE: add some kind of validation and indication for values out of range. */
 	this->xspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
 	this->xspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->xspin.setSingleStep(1);
@@ -97,7 +96,6 @@ ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
 
 	QLabel * ylabel = new QLabel(QObject::tr("Y (northing):"), this);
 
-	/* TODO_MAYBE: add some kind of validation and indication for values out of range. */
 	this->yspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
 	this->yspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->yspin.setSingleStep(1);
