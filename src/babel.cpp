@@ -77,7 +77,7 @@ extern bool vik_debug;
 
 
 
-/* TODO_MAYBE in the future we could have support for other shells (change command strings), or not use a shell at all. */
+/* TODO_IMPROVEMENT in the future we could have support for other shells (change command strings), or not use a shell at all. */
 #define BASH_LOCATION "/bin/bash"
 
 
