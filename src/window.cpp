@@ -2447,7 +2447,7 @@ void Window::acquire_handler(DataSource * data_source)
 	}
 
 	AcquireContext acquire_context(this, this->viewport->central, this->items_tree->get_top_layer(), this->items_tree->get_selected_layer());
-	Acquire::acquire_from_source(data_source, mode, &acquire_context);
+	Acquire::acquire_from_source(data_source, mode, acquire_context);
 }
 
 

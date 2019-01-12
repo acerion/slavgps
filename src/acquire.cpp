@@ -77,8 +77,20 @@ static AcquireContext * g_acquire_context = NULL;
 
 
 
-AcquireWorker::AcquireWorker()
+AcquireWorker::AcquireWorker(DataSource * new_data_source, const AcquireContext & new_acquire_context)
 {
+	this->data_source = new_data_source;
+
+
+
+	this->acquire_context.window               = new_acquire_context.window;
+	this->acquire_context.viewport             = new_acquire_context.viewport;
+	this->acquire_context.top_level_layer      = new_acquire_context.top_level_layer;
+	this->acquire_context.selected_layer       = new_acquire_context.selected_layer;
+	this->acquire_context.target_trw           = new_acquire_context.target_trw;
+	this->acquire_context.target_trk           = new_acquire_context.target_trk;
+	this->acquire_context.target_trw_allocated = new_acquire_context.target_trw_allocated;
+
 }
 
 
@@ -94,23 +106,20 @@ AcquireWorker::~AcquireWorker()
 
 void AcquireWorker::configure_target_layer(DataSourceMode mode)
 {
-
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) this->acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) this->acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) this->acquire_context->viewport;
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 	switch (mode) {
 	case DataSourceMode::CreateNewLayer:
-		this->acquire_context->target_trw_allocated = true;
+		this->acquire_context.target_trw_allocated = true;
 		break;
 
 	case DataSourceMode::AddToLayer: {
-		Layer * selected_layer = this->acquire_context->selected_layer;
+		Layer * selected_layer = this->acquire_context.selected_layer;
 		if (selected_layer && selected_layer->type == LayerType::TRW) {
-			this->acquire_context->target_trw = (LayerTRW *) selected_layer;
-			this->acquire_context->target_trw_allocated = false;
+			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
+			this->acquire_context.target_trw_allocated = false;
 		} else {
-			/* TODO */
+			/* TODO_UNKNOWN: now what? */
 		}
 		}
 		break;
@@ -121,12 +130,12 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 
 	case DataSourceMode::ManualLayerManagement: {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
-		this->acquire_context->target_trw_allocated = false;
-		Layer * selected_layer = this->acquire_context->selected_layer;
+		this->acquire_context.target_trw_allocated = false;
+		Layer * selected_layer = this->acquire_context.selected_layer;
 		if (selected_layer && selected_layer->type == LayerType::TRW) {
-			this->acquire_context->target_trw = (LayerTRW *) selected_layer;
+			this->acquire_context.target_trw = (LayerTRW *) selected_layer;
 		} else {
-			/* TODO */
+			/* TODO_UNKNOWN: now what? */
 		}
 		}
 		break;
@@ -136,15 +145,13 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 	};
 
 
-	if (this->acquire_context->target_trw_allocated) {
-		this->acquire_context->target_trw = new LayerTRW();
-		this->acquire_context->target_trw->set_coord_mode(this->acquire_context->viewport->get_coord_mode());
-		this->acquire_context->target_trw->set_name(this->data_source->layer_title);
+	if (this->acquire_context.target_trw_allocated) {
+		this->acquire_context.target_trw = new LayerTRW();
+		this->acquire_context.target_trw->set_coord_mode(this->acquire_context.viewport->get_coord_mode());
+		this->acquire_context.target_trw->set_name(this->data_source->layer_title);
 	}
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) this->acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) this->acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) this->acquire_context->viewport;
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 }
 
 
@@ -155,62 +162,44 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
    termination or errors. */
 void AcquireWorker::finalize_after_completion(void)
 {
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) this->acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) this->acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) this->acquire_context->viewport;
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	if (this->acquire_context->target_trw_allocated) {
+	if (this->acquire_context.target_trw_allocated) {
 		qDebug() << SG_PREFIX_I << "Layer has been freshly allocated";
 
-		if (NULL == this->acquire_context->target_trw) {
+		if (NULL == this->acquire_context.target_trw) {
 			qDebug() << SG_PREFIX_E << "Layer marked as allocated, but is NULL";
 			return;
 		}
 
-		if (this->acquire_context->target_trw->is_empty()) {
+		if (this->acquire_context.target_trw->is_empty()) {
 			/* Acquire process ended without errors, but
 			   zero new items were acquired. */
 			qDebug() << SG_PREFIX_I << "Layer is empty, delete the layer";
 
-			if (this->acquire_context->target_trw->is_in_tree()) {
+			if (this->acquire_context.target_trw->is_in_tree()) {
 				qDebug() << SG_PREFIX_W << "Target TRW layer is attached to tree, perhaps it should be disconnected from the tree";
 			}
 
-			delete this->acquire_context->target_trw;
-			this->acquire_context->target_trw = NULL;
+			qDebug() << SG_PREFIX_I << "Will now delete target trw";
+			delete this->acquire_context.target_trw;
+			this->acquire_context.target_trw = NULL;
 			return;
 		}
 
 
 		qDebug() << SG_PREFIX_I << "New layer is non-empty, will now process the layer";
-		//this->acquire_context->top_level_layer->add_layer(this->acquire_context->target_trw, true);
-		//this->acquire_context->top_level_layer->attach_children_to_tree();
+		//this->acquire_context.top_level_layer->add_layer(this->acquire_context.target_trw, true);
+		//this->acquire_context.top_level_layer->attach_children_to_tree();
 	}
 
 
-	this->acquire_context->target_trw->attach_children_to_tree();
-	//this->acquire_context->viewport = ThisApp::get_main_viewport();
-	this->acquire_context->target_trw->post_read(this->acquire_context->viewport, true);
+	this->acquire_context.target_trw->attach_children_to_tree();
+	this->acquire_context.target_trw->post_read(this->acquire_context.viewport, true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
 	if (this->data_source && this->data_source->autoview) {
-		this->acquire_context->target_trw->move_viewport_to_show_all(this->acquire_context->viewport);
-		// this->acquire_context->panel->emit_items_tree_updated_cb("acquire completed");
-	}
-
-
-	if (this->progress_dialog) {
-		if (this->data_source->keep_dialog_open) {
-			this->progress_dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
-			this->progress_dialog->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
-		} else {
-			/* Call 'accept()' slot to close the dialog. */
-			qDebug() << SG_PREFIX_I << "Will close the dialog by clicking OK";
-
-#ifdef FIXME_RESTORE
-			/* We can't call this method directly. For datasource wikipedia this causes crash because dialog doesn't exist anymore. */
-			this->progress_dialog->accept();
-#endif
-		}
+		this->acquire_context.target_trw->move_viewport_to_show_all(this->acquire_context.viewport);
+		// this->acquire_context.panel->emit_items_tree_updated_cb("acquire completed");
 	}
 }
 
@@ -221,11 +210,11 @@ void AcquireWorker::finalize_after_completion(void)
    because of errors or because user cancelled it. */
 void AcquireWorker::finalize_after_termination(void)
 {
-	if (this->acquire_context->target_trw_allocated) {
-		this->acquire_context->target_trw->unref_layer();
-	}
+	qDebug() << SG_PREFIX_I;
 
-	this->progress_dialog->set_headline(QObject::tr("Error: acquisition failed."));
+	if (this->acquire_context.target_trw_allocated) {
+		this->acquire_context.target_trw->unref_layer();
+	}
 
 	return;
 }
@@ -237,71 +226,86 @@ void AcquireWorker::finalize_after_termination(void)
 /* Re-implementation of QRunnable::run() */
 void AcquireWorker::run(void)
 {
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 	sleep(1); /* Time for progress dialog to open and block main UI thread. */
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+
 
 	this->acquire_is_running = true;
-	const sg_ret acquire_result = this->data_source->acquire_into_layer(this->acquire_context->target_trw, this->acquire_context, this->progress_dialog);
+	const sg_ret acquire_result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, &this->acquire_context, this->progress_dialog);
 	this->acquire_is_running = false;
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) this->acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) this->acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) this->acquire_context->viewport;
+
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 	if (acquire_result == sg_ret::ok) {
 		qDebug() << SG_PREFIX_I << "Acquire process ended with success";
 		this->finalize_after_completion();
+
+		qDebug() << SG_PREFIX_SIGNAL << "Will now signal successful completion of acquire";
+		emit this->completed_with_success();
 	} else {
 		qDebug() << SG_PREFIX_W << "Acquire process ended with error";
 		this->finalize_after_termination();
+
+		qDebug() << SG_PREFIX_SIGNAL << "Will now signal unsuccessful completion of acquire";
+		emit this->completed_with_failure();
 	}
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) this->acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) this->acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) this->acquire_context->viewport;
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+
+	this->data_source->on_complete();
 }
 
 
 
 
-void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode mode, AcquireContext * new_acquire_context)
+sg_ret AcquireWorker::build_progress_dialog(void)
 {
-	if (QDialog::Accepted != new_data_source->run_config_dialog(new_acquire_context)) {
+	/* The dialog has Qt::WA_DeleteOnClose flag set. */
+	this->progress_dialog = this->data_source->create_progress_dialog(QObject::tr("Acquiring"));
+
+	if (false && NULL == this->data_source->acquire_options) {
+		/* This shouldn't happen... */
+		qDebug() << SG_PREFIX_E << "Acquire options are NULL";
+
+		this->progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
+		this->progress_dialog->exec(); /* FIXME: improve handling of invalid process options. */
+		delete this->progress_dialog;
+
+		return sg_ret::err;
+	}
+
+	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
+
+	connect(this, SIGNAL (completed_with_success(void)), this->progress_dialog, SLOT (handle_acquire_completed_with_success_cb(void)));
+	connect(this, SIGNAL (completed_with_failure(void)), this->progress_dialog, SLOT (handle_acquire_completed_with_failure_cb(void)));
+
+	return sg_ret::ok;
+}
+
+
+
+
+void Acquire::acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context)
+{
+	if (QDialog::Accepted != data_source->run_config_dialog(&acquire_context)) {
 		qDebug() << SG_PREFIX_I << "Data source config dialog returned !Accepted";
 		return;
 	}
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) new_acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
+	acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 
-	AcquireProgressDialog * progress_dialog = new_data_source->create_progress_dialog(QObject::tr("Acquiring"));
-	progress_dialog->set_headline(QObject::tr("Importing data..."));
-	progress_dialog->setMinimumHeight(400);
 
-	if (false && NULL == new_data_source->acquire_options) {
-		/* This shouldn't happen... */
-		qDebug() << SG_PREFIX_E << "Acquire options are NULL";
-
-		if (progress_dialog) {
-			progress_dialog->set_headline(QObject::tr("Unable to create command\nAcquire method failed."));
-			progress_dialog->exec(); /* TODO_2_LATER: improve handling of invalid process options. */
-			delete progress_dialog; /* TODO: move this to destructor. */
-		}
-
+	AcquireWorker * worker = new AcquireWorker(data_source, acquire_context); /* FIXME: worker needs to be deleted. */
+	if (sg_ret::ok != worker->build_progress_dialog()) {
 		return;
 	}
-
-
-	AcquireWorker * worker = new AcquireWorker(); /* TODO_LATER: this needs to be deleted. */
-	worker->data_source = new_data_source;
-	worker->acquire_context = new_acquire_context;
 	worker->configure_target_layer(mode);
-	worker->progress_dialog = progress_dialog;
+	sleep(1);
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) new_acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
+	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 
 	/* Start the acquire task in a background thread and then
@@ -312,40 +316,19 @@ void Acquire::acquire_from_source(DataSource * new_data_source, DataSourceMode m
 	   Until a background acquire thread is in progress, its
 	   progress window must be in foreground. */
 
-	QThreadPool::globalInstance()->start(worker);
-
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) new_acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
+	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
 	if (worker->progress_dialog) {
-		worker->progress_dialog->exec();
+		worker->progress_dialog->setModal(true);
+		/* Return immediately, go to starting a worker thread. */
+		worker->progress_dialog->show();
 	}
 
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) new_acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) new_acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) new_acquire_context->viewport;
+	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
+	QThreadPool::globalInstance()->start(worker); /* Worker will auto-delete itself. */
+	worker->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-#ifdef K_FIXME_RESTORE
-	/* We get here if user closed a dialog window.  The window was
-	   either closed through "Cancel" button when the acquire
-	   process was still in progress, or through "OK" button that
-	   became active when acquire process has been completed. */
-	if (worker->acquire_is_running) {
-		/* Cancel and mark for thread to finish. */
-		worker->acquire_is_running = false;
-	} else {
-
-		data_source->on_complete();
-	}
-#endif
-
-
-	delete progress_dialog;
+	return;
 }
 
 
@@ -369,7 +352,7 @@ void AcquireContext::filter_trwlayer_cb(void)
 		return;
 	}
 
-	Acquire::acquire_from_source(iter.value(), iter.value()->mode, g_acquire_context);
+	Acquire::acquire_from_source(iter.value(), iter.value()->mode, *g_acquire_context);
 
 	return;
 }
@@ -529,6 +512,8 @@ sg_ret Acquire::register_bfilter(DataSource * bfilter)
 
 void Acquire::set_context(Window * new_window, Viewport * new_viewport, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
 {
+	qDebug() << SG_PREFIX_I;
+
 	g_acquire_context->window = new_window;
 	g_acquire_context->viewport = new_viewport;
 	g_acquire_context->top_level_layer = new_top_level_layer;
@@ -540,12 +525,10 @@ void Acquire::set_context(Window * new_window, Viewport * new_viewport, LayerAgg
 
 void Acquire::set_target(LayerTRW * trw, Track * trk)
 {
+	qDebug() << SG_PREFIX_I;
+
 	g_acquire_context->target_trw = trw;
 	g_acquire_context->target_trk = trk;
-
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) g_acquire_context;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) g_acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) g_acquire_context->viewport;
 }
 
 
@@ -713,13 +696,6 @@ sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_
 {
 	if (this->babel_process) {
 
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
-
-
 #if 1
 		if (!trw->is_in_tree()) {
 			acquire_context->top_level_layer->add_layer(trw, true);
@@ -745,12 +721,6 @@ sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_
 
 		delete importer;
 
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
-
 		return result;
 	}
 
@@ -766,4 +736,15 @@ sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_
 		qDebug() << SG_PREFIX_E << "Unexpected babel options mode" << (int) this->mode;
 		return sg_ret::err;
 	}
+}
+
+
+
+
+void AcquireContext::print_debug(const char * function, int line) const
+{
+	qDebug() << SG_PREFIX_I << "@@@@@@";
+	qDebug() << SG_PREFIX_I << "@@@@@@    layer" << (quintptr) this->target_trw << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@ viewport" << (quintptr) this->viewport << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@";
 }

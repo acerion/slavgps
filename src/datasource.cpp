@@ -62,7 +62,10 @@ DataSource::~DataSource()
 
 AcquireProgressDialog * DataSource::create_progress_dialog(const QString & title)
 {
-	AcquireProgressDialog * dialog = new AcquireProgressDialog(title);
+	AcquireProgressDialog * dialog = new AcquireProgressDialog(title, this->keep_dialog_open);
+	dialog->set_headline(QObject::tr("Importing data..."));
+	dialog->setMinimumWidth(300);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
 
 	return dialog;
 }
@@ -70,12 +73,13 @@ AcquireProgressDialog * DataSource::create_progress_dialog(const QString & title
 
 
 
-AcquireProgressDialog::AcquireProgressDialog(const QString & window_title, QWidget * parent) : BasicDialog(parent)
+AcquireProgressDialog::AcquireProgressDialog(const QString & window_title, bool keep_open, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(window_title);
 
 	this->headline = new QLabel(QObject::tr("Working..."));
 	this->current_status = new QLabel("");
+	this->keep_dialog_open = keep_open;
 
 	this->grid->addWidget(this->headline, 0, 0);
 	this->grid->addWidget(this->current_status, 1, 0);
@@ -91,6 +95,8 @@ AcquireProgressDialog::AcquireProgressDialog(const QString & window_title, QWidg
 
 AcquireProgressDialog::~AcquireProgressDialog()
 {
+	qDebug() << SG_PREFIX_I;
+
 	if (this->list_selection_widget) {
 		qDebug() << SG_PREFIX_I << "Removing list selection widget from Acquire Progress Dialog";
 		this->grid->removeWidget(this->list_selection_widget);
@@ -111,7 +117,37 @@ void AcquireProgressDialog::set_headline(const QString & text)
 
 
 
+
 void AcquireProgressDialog::set_current_status(const QString & text)
 {
 	this->current_status->setText(text);
+}
+
+
+
+
+void AcquireProgressDialog::handle_acquire_completed_with_success_cb(void)
+{
+	qDebug() << SG_PREFIX_SLOT << "Handling signal about successful completion of acquire";
+
+	if (this->keep_dialog_open) {
+		this->button_box->button(QDialogButtonBox::Ok)->setEnabled(true);
+		this->button_box->button(QDialogButtonBox::Cancel)->setEnabled(false);
+	} else {
+		/* Call 'close()' slot to close the dialog. Thanks to
+		   Qt::WA_DeleteOnClose flag the dialog will be also
+		   deleted. */
+		qDebug() << SG_PREFIX_I << "Will close the dialog by calling 'close()'";
+		this->close();
+	}
+}
+
+
+
+
+void AcquireProgressDialog::handle_acquire_completed_with_failure_cb(void)
+{
+	qDebug() << SG_PREFIX_SLOT << "Handling signal about unsuccessful completion of acquire";
+
+	this->set_headline(QObject::tr("Error: acquisition failed."));
 }

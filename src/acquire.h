@@ -86,7 +86,7 @@ namespace SlavGPS {
 		AcquireContext(Window * new_window, Viewport * new_viewport, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
 			: window(new_window), viewport(new_viewport), top_level_layer(new_top_level_layer), selected_layer(new_selected_layer) {};
 
-		void set_target(LayerTRW * new_trw, Track * new_track);
+		void print_debug(const char * function, int line) const;
 
 		Window * window = NULL;
 		Viewport * viewport = NULL;
@@ -112,7 +112,7 @@ namespace SlavGPS {
 	class AcquireWorker : public QObject, public QRunnable {
 		Q_OBJECT
 	public:
-		AcquireWorker();
+		AcquireWorker(DataSource * data_source, const AcquireContext & acquire_context);
 		~AcquireWorker();
 		void run(); /* Re-implementation of QRunnable::run(). */
 		void configure_target_layer(DataSourceMode mode);
@@ -120,7 +120,9 @@ namespace SlavGPS {
 		void finalize_after_completion(void);
 		void finalize_after_termination(void);
 
-		AcquireContext * acquire_context = NULL;
+		sg_ret build_progress_dialog(void);
+
+		AcquireContext acquire_context;
 
 		bool acquire_is_running = false;
 		DataSource * data_source = NULL;
@@ -128,6 +130,9 @@ namespace SlavGPS {
 
 	signals:
 		void report_status(int status);
+
+		void completed_with_success(void);
+		void completed_with_failure(void);
 	};
 
 
@@ -144,7 +149,7 @@ namespace SlavGPS {
 		};
 
 
-		static void acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext * new_acquire_context);
+		static void acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
 		static void set_context(Window * window, Viewport * viewport, LayerAggregate * top_level_layer, Layer * selected_layer);
 		static void set_target(LayerTRW * trw, Track * trk);
 

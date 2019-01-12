@@ -170,7 +170,7 @@ int DataSourceWikipedia::run_config_dialog(AcquireContext * acquire_context)
 
 AcquireProgressDialog * DataSourceWikipedia::create_progress_dialog(const QString & title)
 {
-	AcquireProgressDialog * progress_dialog = DataSource::create_progress_dialog("hello world" /* title */);
+	AcquireProgressDialog * progress_dialog = DataSource::create_progress_dialog(title);
 	progress_dialog->list_selection_widget = this->list_selection_widget;
 
 	return progress_dialog;

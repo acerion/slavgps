@@ -120,14 +120,20 @@ namespace SlavGPS {
 	class AcquireProgressDialog : public BasicDialog {
 		Q_OBJECT
 	public:
-		AcquireProgressDialog(const QString & window_title, QWidget * parent = NULL);
+		AcquireProgressDialog(const QString & window_title, bool keep_open, QWidget * parent = NULL);
 		~AcquireProgressDialog();
 
 		void set_headline(const QString & text);
 		void set_current_status(const QString & text);
 
 		ListSelectionWidget * list_selection_widget = NULL;
+
+	public slots:
+		void handle_acquire_completed_with_success_cb(void);
+		void handle_acquire_completed_with_failure_cb(void);
+
 	private:
+		bool keep_dialog_open = false; /* ... when done. */
 		QLabel * headline = NULL;
 		QLabel * current_status = NULL;
 	};
