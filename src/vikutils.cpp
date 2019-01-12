@@ -105,7 +105,7 @@ static struct kdtree * kd_timezones = NULL;
  * @climb:        Vertical speed (Out of band (i.e. not in a trackpoint) value for display currently only for GPSD usage).
  *
  * TODO_MAYBE: One day replace this cryptic format code with some kind of tokenizer parsing
- * thus would make it more user friendly and maybe even GUI controlable.
+ * thus would make it more user friendly and maybe even GUI controllable.
  * However for now at least there is some semblance of user control.
  */
 QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb)
