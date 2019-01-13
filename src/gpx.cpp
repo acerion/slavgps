@@ -861,8 +861,9 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 		char * time_iso8601 = g_time_val_to_iso8601(&timestamp);
 		if (time_iso8601 != NULL) {
 			fprintf(file, "  <time>%s</time>\n", time_iso8601);
+			free(time_iso8601);
+			time_iso8601 = NULL;
 		}
-		free(time_iso8601);
 	}
 
 	if (!wp->comment.isEmpty()) {
@@ -908,14 +909,12 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 {
 	FILE * file = context->file;
 
-	char *time_iso8601;
-
 	/* No such thing as a rteseg! So make sure we don't put them in. */
 	if (context->options && !context->options->is_route && tp->newsegment) {
 		fprintf(file, "  </trkseg>\n  <trkseg>\n");
 	}
 
-	static LatLon lat_lon = tp->coord.get_latlon();
+	const LatLon lat_lon = tp->coord.get_latlon();
 	fprintf(file, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {
@@ -926,30 +925,30 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	if (tp->altitude.is_valid()) {
 		s_alt = tp->altitude.value_to_string_for_file();
 	} else if (context->options != NULL && context->options->force_ele) {
-		s_alt = SGUtils::double_to_c(0);
+		s_alt = Altitude(0.0, HeightUnit::Metres).value_to_string_for_file();
 	}
 	if (!s_alt.isEmpty()) {
 		fprintf(file, "    <ele>%s</ele>\n", s_alt.toUtf8().constData());
 	}
 
-	time_iso8601 = NULL;
+
+	char * time_iso8601 = NULL;
 	if (tp->timestamp.is_valid()) {
 		GTimeVal timestamp;
 		timestamp.tv_sec = tp->timestamp.get_value();
 		timestamp.tv_usec = 0;
-
 		time_iso8601 = g_time_val_to_iso8601(&timestamp);
 	} else if (context->options != NULL && context->options->force_time) {
-		GTimeVal current;
-		g_get_current_time(&current);
-
-		time_iso8601 = g_time_val_to_iso8601(&current);
+		GTimeVal timestamp;
+		g_get_current_time(&timestamp);
+		time_iso8601 = g_time_val_to_iso8601(&timestamp);
 	}
 	if (time_iso8601 != NULL) {
 		fprintf(file, "    <time>%s</time>\n", time_iso8601);
+		free(time_iso8601);
+		time_iso8601 = NULL;
 	}
-	free(time_iso8601);
-	time_iso8601 = NULL;
+
 
 	if (!std::isnan(tp->course)) {
 		fprintf(file, "    <course>%s</course>\n", SGUtils::double_to_c(tp->course).toUtf8().constData());
