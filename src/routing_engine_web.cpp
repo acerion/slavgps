@@ -215,7 +215,7 @@ bool RoutingEngineWeb::find(LayerTRW * trw, const LatLon & start, const LatLon &
 	babel_options.source_url = this->get_url_for_coords(start, end);
 	babel_options.input_data_format = this->get_format();
 
-	bool ret = sg_ret::ok == babel_options.import_from_url(trw, &this->dl_options, NULL);
+	bool ret = LoadStatus::Code::Success == babel_options.import_from_url(trw, &this->dl_options, NULL);
 
 	return ret;
 }
@@ -328,7 +328,7 @@ bool RoutingEngineWeb::refine(LayerTRW * trw, Track * trk)
 	babel_options.input_data_format = this->get_format();
 
 	/* Convert and insert data in model. */
-	bool ret = sg_ret::ok == babel_options.import_from_url(trw, &this->dl_options, NULL);
+	bool ret = LoadStatus::Code::Success == babel_options.import_from_url(trw, &this->dl_options, NULL);
 
 	return ret;
 }

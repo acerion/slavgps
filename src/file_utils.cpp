@@ -92,7 +92,11 @@ bool FileUtils::has_extension(const QString & file_name, const QString & file_ex
 	}
 
 	const bool result = base_name.right(file_extension.size()) == file_extension;
-	qDebug() << "DD: File: has extension:" << file_extension << "in" << base_name << ":" << result;
+	if (result) {
+		qDebug() << SG_PREFIX_I << "File name" << base_name << "has expected extension:" << file_extension << "=" << base_name.right(file_extension.size());
+	} else {
+		qDebug() << SG_PREFIX_I << "File name" << base_name << "doesn't have expected extension:" << file_extension << "!=" << base_name.right(file_extension.size());
+	}
 	return result;
 }
 

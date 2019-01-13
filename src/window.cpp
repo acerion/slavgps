@@ -1985,27 +1985,27 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 
 	LayerAggregate * agg = this->items_tree->get_top_layer();
 	this->file_load_status = VikFile::load(agg, this->viewport->central, new_document_full_path);
-	switch (this->file_load_status) {
-	case VikFile::LoadStatus::ReadFailure:
+	switch (this->file_load_status.code) {
+	case LoadStatus::Code::ReadFailure:
 		Dialog::error(tr("The file you requested could not be opened."), this);
 		break;
-	case VikFile::LoadStatus::GPSBabelFailure:
+	case LoadStatus::Code::GPSBabelFailure:
 		Dialog::error(tr("GPSBabel is required to load files of this type or GPSBabel encountered problems."), this);
 		break;
-	case VikFile::LoadStatus::GPXFailure:
+	case LoadStatus::Code::GPXFailure:
 		Dialog::error(tr("Unable to load malformed GPX file %1").arg(new_document_full_path), this);
 		break;
-	case VikFile::LoadStatus::UnsupportedFailure:
+	case LoadStatus::Code::UnsupportedFailure:
 		Dialog::error(tr("Unsupported file type for %1").arg(new_document_full_path), this);
 		break;
-	case VikFile::LoadStatus::FailureNonFatal:
+	case LoadStatus::Code::FailureNonFatal:
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
 			this->get_statusbar()->set_message(StatusBarField::Info, tr("WARNING: issues encountered loading %1").arg(file_base_name(new_document_full_path)));
 		}
 		/* No break, carry on to show any data. */
-	case VikFile::LoadStatus::Success:
+	case LoadStatus::Code::Success:
 		{
 
 			restore_original_filename = true; /* Will actually get inverted by the 'success' component below. */
@@ -2043,10 +2043,10 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 			}
 		}
 		/* No break, carry on to redraw. */
-		//case VikFile::LoadResult::OTHER_SUCCESS:
+		//case LoadStatus::OTHER_SUCCESS:
 	default:
 		success = true;
-		/* When VikFile::LoadResult::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
+		/* When LoadStatus::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = !restore_original_filename;
 
 		this->update_recent_files(new_document_full_path);
@@ -2197,6 +2197,15 @@ void Window::clear_busy_cursor()
 {
 	this->setCursor(Qt::ArrowCursor);
 	/* Viewport has a separate cursor. */
+	/* FIXME: a cursor that has been used before exporting a track
+	   to GPX file is not restored correctly.
+	   Scenario:
+	   1. load NMEA file with track,
+	   2. in layers panel go to the track,
+	   3. in context menu for the track select "export as GPX",
+	   4. go through export procedure,
+	   5. notice that viewport still has "busy" cursor. */
+
 	//this->viewport->central->setCursor(this->viewport->viewport->viewport_cursor);
 }
 
@@ -2360,7 +2369,7 @@ void Window::finish_new(void)
 
 
 	/* If not loaded any file, maybe try the location lookup. */
-	if (true || this->file_load_status == VikFile::LoadStatus::ReadFailure) {
+	if (true || LoadStatus::Code::ReadFailure == this->file_load_status) {
 		if (Preferences::get_startup_method() == StartupMethod::AutoLocation) {
 
 			this->status_bar->set_message(StatusBarField::Info, tr("Trying to determine location..."));
@@ -3027,7 +3036,7 @@ bool Window::export_to(const std::list<const Layer *> & layers, SGFileType file_
 
 		/* We allow exporting empty layers. */
 		if (safe) {
-			bool this_success = sg_ret::ok == VikFile::export_trw_layer((LayerTRW *) layer, file_full_path, file_type, true);
+			bool this_success = SaveStatus::Code::Success == VikFile::export_trw_layer((LayerTRW *) layer, file_full_path, file_type, true);
 
 			/* Show some progress. */
 			if (this_success) {
@@ -3132,20 +3141,21 @@ bool Window::menu_file_save_and_exit_cb(void)
 /* Save current workspace to file indicated by ::current_document_full_path */
 bool Window::save_current_document(void)
 {
-	bool save_status = true;
+	bool success = true;
 
 	this->set_busy_cursor();
-
-	const VikFile::SaveResult save_result = VikFile::save(this->items_tree->get_top_layer(), this->viewport->central, this->current_document_full_path);
-	if (save_result.success) {
-		this->update_recent_files(this->current_document_full_path);
-		save_status = true;
-	} else {
-		Dialog::error(tr("The filename you requested could not be opened for writing."), this);
-		save_status = false;
-	}
+	const SaveStatus save_status = VikFile::save(this->items_tree->get_top_layer(), this->viewport->central, this->current_document_full_path);
 	this->clear_busy_cursor();
-	return save_status;
+
+	if (SaveStatus::Code::Success == save_status) {
+		this->update_recent_files(this->current_document_full_path);
+		return true;
+	}
+
+	/* TODO_IMPROVEMENT: better error messages based on save status value. */
+	Dialog::error(tr("The filename you requested could not be opened for writing."), this);
+
+	return false;
 }
 
 

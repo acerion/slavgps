@@ -27,6 +27,7 @@
 
 
 #include <QString>
+#include <QDebug>
 
 
 
@@ -47,6 +48,68 @@ namespace SlavGPS {
 		err,       /* General error. */
 		ok = 0,
 	};
+
+
+
+
+	/* Status of "load from file" operation. */
+	class LoadStatus {
+	public:
+
+		enum class Code {
+			Success,
+			OtherSuccess,
+			Error,                  /* General error. */
+			InternalError,          /* Error in code logic. */
+			ReadFailure,
+			FileAccess,             /* Can't open target file for reading. */
+			IntermediateFileAccess, /* Can't open intermediate file for reading/writing. */
+			GPSBabelFailure,
+			GPXFailure,
+			UnsupportedFailure,
+			FailureNonFatal,
+		};
+		LoadStatus() {}
+		LoadStatus(LoadStatus::Code new_code) { this->code = new_code; }
+
+		void show_error_dialog(QWidget * parent = NULL) const;
+
+		LoadStatus & operator=(LoadStatus::Code new_code) { this->code = new_code; return *this; }
+
+		LoadStatus::Code code = LoadStatus::Code::Error;
+	};
+	bool operator==(LoadStatus::Code code, const LoadStatus & lhs);
+	bool operator!=(LoadStatus::Code code, const LoadStatus & lhs);
+	QDebug operator<<(QDebug debug, const LoadStatus & save_status);
+
+
+
+
+	/* Status of "save to file" operation. */
+	class SaveStatus {
+	public:
+		enum class Code {
+			Success,
+			Error,                  /* General error. */
+			InternalError,          /* Error in code logic. */
+			FileAccess,             /* Can't open target file for writing. */
+			IntermediateFileAccess, /* Can't open intermediate file for reading/writing. */
+		};
+
+		SaveStatus() {}
+		SaveStatus(SaveStatus::Code new_code) { this->code = new_code; }
+
+		void show_error_dialog(QWidget * parent = NULL) const;
+
+		SaveStatus & operator=(SaveStatus::Code new_code) { this->code = new_code; return *this; }
+
+		SaveStatus::Code code = SaveStatus::Code::Error;
+	};
+	bool operator==(SaveStatus::Code code, const SaveStatus & lhs);
+	bool operator!=(SaveStatus::Code code, const SaveStatus & lhs);
+	QDebug operator<<(QDebug debug, const SaveStatus & save_status);
+
+
 
 
 

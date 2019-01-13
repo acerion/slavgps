@@ -232,20 +232,20 @@ void AcquireWorker::run(void)
 
 
 	this->acquire_is_running = true;
-	const sg_ret acquire_result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, &this->acquire_context, this->progress_dialog);
+	const LoadStatus acquire_result = this->data_source->acquire_into_layer(this->acquire_context.target_trw, &this->acquire_context, this->progress_dialog);
 	this->acquire_is_running = false;
 
 
 	this->acquire_context.print_debug(__FUNCTION__, __LINE__);
 
-	if (acquire_result == sg_ret::ok) {
+	if (LoadStatus::Code::Success == acquire_result) {
 		qDebug() << SG_PREFIX_I << "Acquire process ended with success";
 		this->finalize_after_completion();
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will now signal successful completion of acquire";
 		emit this->completed_with_success();
 	} else {
-		qDebug() << SG_PREFIX_W << "Acquire process ended with error";
+		qDebug() << SG_PREFIX_W << "Acquire process ended with error" << acquire_result;
 		this->finalize_after_termination();
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will now signal unsuccessful completion of acquire";
@@ -566,7 +566,7 @@ AcquireOptions::~AcquireOptions()
  * Uses Babel::convert_through_gpx() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-sg_ret AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	qDebug() << SG_PREFIX_I << "Initial form of shell command" << this->shell_command;
 
@@ -593,7 +593,7 @@ sg_ret AcquireOptions::import_with_shell_command(LayerTRW * trw, AcquireContext 
 	delete this->babel_process;
 	return rv;
 #else
-	return sg_ret::ok;
+	return LoadStatus::Code::Success;
 #endif
 }
 
@@ -623,7 +623,7 @@ int AcquireOptions::kill_babel_process(const QString & status)
  *
  * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
-sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog)
 {
 	/* If no download options specified, use defaults: */
 	DownloadOptions babel_dl_options(2);
@@ -631,14 +631,14 @@ sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_opti
 		babel_dl_options = *dl_options;
 	}
 
-	sg_ret ret = sg_ret::err;
+	LoadStatus load_status = LoadStatus::Code::Error;
 
 	qDebug() << SG_PREFIX_D << "Input data format =" << this->input_data_format << ", url =" << this->source_url;
 
 
 	QTemporaryFile tmp_file;
 	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
-		return sg_ret::err;
+		return LoadStatus::Code::IntermediateFileAccess;
 	}
 	const QString target_file_full_path = tmp_file.fileName();
 	qDebug() << SG_PREFIX_D << "Temporary file:" << target_file_full_path;
@@ -655,7 +655,7 @@ sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_opti
 			file_importer->set_input(this->input_data_format, target_file_full_path);
 			file_importer->set_output("gpx", "-");
 
-			ret = file_importer->convert_through_gpx(trw);
+			load_status = file_importer->convert_through_gpx(trw);
 			delete file_importer;
 		} else {
 			/* Process directly the retrieved file. */
@@ -663,9 +663,9 @@ sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_opti
 
 			QFile file(target_file_full_path);
 			if (file.open(QIODevice::ReadOnly)) {
-				ret = GPX::read_layer_from_file(file, trw);
+				load_status = GPX::read_layer_from_file(file, trw);
 			} else {
-				ret = sg_ret::err;
+				load_status = LoadStatus::Code::FileAccess;
 				qDebug() << SG_PREFIX_E << "Failed to open file" << target_file_full_path << "for reading:" << file.error();
 			}
 		}
@@ -673,7 +673,7 @@ sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_opti
 	Util::remove(target_file_full_path);
 
 
-	return ret;
+	return load_status;
 }
 
 
@@ -692,7 +692,7 @@ sg_ret AcquireOptions::import_from_url(LayerTRW * trw, DownloadOptions * dl_opti
  *
  * Returns: %true on success.
  */
-sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (this->babel_process) {
 
@@ -717,7 +717,7 @@ sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_
 		importer->set_output("gpx", "-"); /* Output data appearing on stdout of gpsbabel will be redirected to input of GPX importer. */
 		importer->set_acquire_context(acquire_context);
 		importer->set_progress_dialog(progr_dialog);
-		const sg_ret result = importer->convert_through_gpx(trw);
+		const LoadStatus result = importer->convert_through_gpx(trw);
 
 		delete importer;
 
@@ -734,7 +734,7 @@ sg_ret AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions * dl_
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected babel options mode" << (int) this->mode;
-		return sg_ret::err;
+		return LoadStatus::Code::InternalError;
 	}
 }
 

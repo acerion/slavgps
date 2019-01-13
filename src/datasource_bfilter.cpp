@@ -125,7 +125,9 @@ BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : Dat
 AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
+
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -224,7 +226,8 @@ BFilterCompressDialog::BFilterCompressDialog(const QString & window_title) : Dat
 AcquireOptions * BFilterCompressDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -292,7 +295,8 @@ int BFilterDuplicates::run_config_dialog(AcquireContext * acquire_context)
 AcquireOptions * BFilterDuplicatesDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -365,7 +369,8 @@ BFilterManualDialog::BFilterManualDialog(const QString & window_title) : DataSou
 AcquireOptions * BFilterManualDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	QString layer_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to save layer to tmp file";
 		return NULL;
 	}
@@ -422,11 +427,15 @@ AcquireOptions * BFilterPolygonDialog::create_acquire_options(AcquireContext * a
 {
 	QString layer_file_full_path;
 	QString track_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
+	SaveStatus save_status;
+
+	save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
 		return NULL;
 	}
-	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->target_trk, NULL)) {
+	save_status = GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->target_trk, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
 		return NULL;
 	}
@@ -485,10 +494,14 @@ AcquireOptions* BFilterExcludePolygonDialog::create_acquire_options(AcquireConte
 {
 	QString layer_file_full_path;
 	QString track_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL)) {
+	SaveStatus save_status;
+
+	save_status = GPX::write_layer_to_tmp_file(layer_file_full_path, acquire_context->target_trw, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write layer to tmp file";
 	}
-	if (sg_ret::ok != GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->target_trk, NULL)) {
+	save_status = GPX::write_track_to_tmp_file(track_file_full_path, acquire_context->target_trk, NULL);
+	if (SaveStatus::Code::Success != save_status) {
 		qDebug() << SG_PREFIX_E << "Failed to write track to tmp file";
 	}
 

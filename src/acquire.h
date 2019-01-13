@@ -178,9 +178,9 @@ namespace SlavGPS {
 		AcquireOptions(AcquireOptions::Mode new_mode) : mode(new_mode) { };
 		virtual ~AcquireOptions();
 
-		sg_ret universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
-		sg_ret import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
-		sg_ret import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
+		LoadStatus universal_import_fn(LayerTRW * trw, DownloadOptions * dl_options, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
+		LoadStatus import_from_url(LayerTRW * trw, DownloadOptions * dl_options, AcquireProgressDialog * progr_dialog);
+		LoadStatus import_with_shell_command(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
 
 		int kill_babel_process(const QString & status);
 

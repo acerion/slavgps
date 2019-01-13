@@ -1059,7 +1059,7 @@ void GPSSession::export_progress_cb(AcquireProgressCode code, void * data)
 /* Re-implementation of QRunnable::run() */
 void GPSSession::run(void)
 {
-	bool result;
+	SaveStatus save_status;
 
 	AcquireContext acquire_context;
 
@@ -1072,7 +1072,7 @@ void GPSSession::run(void)
 		importer->set_acquire_context(&acquire_context);
 		importer->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
-		result = importer->run_process();
+		save_status = importer->run_process() ? SaveStatus::Code::Success : SaveStatus::Code::Error;
 	} else {
 		BabelProcess * exporter = new BabelProcess();
 		exporter->set_options(this->babel_opts);
@@ -1083,11 +1083,11 @@ void GPSSession::run(void)
 		exporter->set_acquire_context(&acquire_context);
 		exporter->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
-		result = sg_ret::ok == exporter->export_through_gpx(this->trw, this->trk);
+		save_status = exporter->export_through_gpx(this->trw, this->trk);
 	}
 
-	if (!result) {
-		this->status_label->setText(QObject::tr("Error: couldn't find gpsbabel."));
+	if (SaveStatus::Code::Success != save_status) {
+		this->status_label->setText(QObject::tr("Error: failed to export with gpsbabel."));
 	} else {
 		this->mutex.lock();
 		if (this->in_progress) {

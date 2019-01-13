@@ -68,13 +68,15 @@ static void my_watch(GPid pid, int status, void * user_data)
 /**
  * Returns true if successfully written.
  */
-sg_ret GeoJSON::write_layer_to_file(FILE * file, LayerTRW * trw)
+SaveStatus GeoJSON::write_layer_to_file(FILE * file, LayerTRW * trw)
 {
-	sg_ret result = sg_ret::err;
+	SaveStatus result = SaveStatus::Code::Error;
 
 	QString tmp_file_full_path;
-	if (sg_ret::ok != GPX::write_layer_to_tmp_file(tmp_file_full_path, trw, NULL)) {
-		return sg_ret::err;
+	SaveStatus intermediate_status = GPX::write_layer_to_tmp_file(tmp_file_full_path, trw, NULL);
+	if (SaveStatus::Code::Success != intermediate_status) {
+		intermediate_status = SaveStatus::Code::IntermediateFileAccess;
+		return intermediate_status;
 	}
 
 	GPid pid;
@@ -114,7 +116,7 @@ sg_ret GeoJSON::write_layer_to_file(FILE * file, LayerTRW * trw)
 		fclose(fout);
 
 		g_child_watch_add(pid, (GChildWatchFunc) my_watch, NULL);
-		result = sg_ret::ok;
+		result = SaveStatus::Code::Success;
 	}
 
 	g_strfreev(argv);

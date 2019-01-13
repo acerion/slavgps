@@ -6,6 +6,7 @@ QT = core gui widgets printsupport xml
 RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc waypoint.qrc
 
 SOURCES += main.cpp \
+    globals.cpp \
     viewport.cpp \
     layer_trw_track_profile_dialog.cpp \
     babel.cpp \

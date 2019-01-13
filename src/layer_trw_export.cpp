@@ -81,17 +81,22 @@ void LayerTRW::export_layer(const QString & title, const QString & default_file_
 	file_selector.selectFile(default_file_full_path);
 
 	if (QDialog::Accepted == file_selector.exec()) {
-		const QString output_file_name = file_selector.selectedFiles().at(0);
+		const QString output_file_full_path = file_selector.selectedFiles().at(0);
+		qDebug() << SG_PREFIX_I << "Will export file to" << output_file_full_path;
 
 		last_folder_url = file_selector.directoryUrl();
 
 		this->get_window()->set_busy_cursor();
 		/* Don't Export invisible items - unless requested on this specific track. */
-		const bool success = VikFile::export_trw(this, output_file_name, file_type, trk, trk ? true : false);
+		const SaveStatus result = VikFile::export_trw(this, output_file_full_path, file_type, trk, trk ? true : false);
 		this->get_window()->clear_busy_cursor();
 
-		if (!success) {
-			Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), this->get_window());
+		switch (result.code) {
+		case SaveStatus::Code::Success:
+			break;
+		default:
+			result.show_error_dialog(this->get_window());
+			break;
 		}
 	}
 }
@@ -108,7 +113,8 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 	static GPXWriteOptions options(true, true, false, false);
 	QString name_used;
 
-	if (sg_ret::ok == GPX::write_layer_to_tmp_file(name_used, this, &options)) {
+	SaveStatus save_status = GPX::write_layer_to_tmp_file(name_used, this, &options);
+	if (SaveStatus::Code::Success == save_status) {
 		const QString quoted_file = Util::shell_quote(name_used);
 		const QString command = QString("%1 %2").arg(external_program).arg(quoted_file);
 
@@ -124,7 +130,7 @@ void LayerTRW::open_layer_with_external_program(const QString & external_program
 
 
 
-int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_file_full_path)
+SaveStatus LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & default_file_full_path)
 {
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
 	if (this->get_tracks().size()) {
@@ -137,7 +143,7 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 		mode.waypoints_write = 1;
 	}
 
-	bool failed = false;
+	SaveStatus save_status = SaveStatus::Code::Error;
 
 	BabelDialog dialog(title);
 	dialog.build_ui(&mode);
@@ -161,18 +167,17 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 		qDebug() << SG_PREFIX_I << "Selected file path:" << output_file_full_path;
 
 
-		this->get_window()->set_busy_cursor();
+
 		dialog.get_write_mode(mode); /* We overwrite the old values of the struct, but that's ok. */
 
 		if (file_type == NULL) {
 			Dialog::error(QObject::tr("You did not select a valid file format."), this->get_window());
 		} else {
-			;
+			this->get_window()->set_busy_cursor();
+			save_status = VikFile::export_with_babel(this, output_file_full_path, file_type->identifier, mode.tracks_write, mode.routes_write, mode.waypoints_write);
+			this->get_window()->clear_busy_cursor();
 		}
 
-		failed = !VikFile::export_with_babel(this, output_file_full_path, file_type->identifier, mode.tracks_write, mode.routes_write, mode.waypoints_write);
-
-		this->get_window()->clear_busy_cursor();
 
 	} else if (rv == QDialog::Rejected) {
 		qDebug() << SG_PREFIX_I << "Dialog result: rejected";
@@ -180,9 +185,9 @@ int LayerTRW::export_layer_with_gpsbabel(const QString & title, const QString & 
 		qDebug() << SG_PREFIX_E << "Dialog result: unknown:" << rv;
 	}
 
-	if (failed) {
-		Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), this->get_window());
+	if (SaveStatus::Code::Success != save_status) {
+		save_status.show_error_dialog(this->get_window());
 	}
 
-	return rv;
+	return save_status;
 }

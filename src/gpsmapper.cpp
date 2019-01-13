@@ -117,7 +117,7 @@ static unsigned int print_rgn_stuff(FILE * file, char const * nm)
 
 
 
-sg_ret GPSMapper::write_waypoints_to_file(FILE * file, const std::list<Waypoint *> & waypoints)
+SaveStatus GPSMapper::write_waypoints_to_file(FILE * file, const std::list<Waypoint *> & waypoints)
 {
 	for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
 		Waypoint * wp = *iter;
@@ -128,7 +128,7 @@ sg_ret GPSMapper::write_waypoints_to_file(FILE * file, const std::list<Waypoint 
 		}
 	}
 
-	return sg_ret::ok;
+	return SaveStatus::Code::Success;
 }
 
 
@@ -142,7 +142,7 @@ static void write_trackpoint(FILE * file, Trackpoint * tp)
 
 
 
-sg_ret GPSMapper::write_tracks_to_file(FILE * file, const std::list<Track *> & tracks)
+SaveStatus GPSMapper::write_tracks_to_file(FILE * file, const std::list<Track *> & tracks)
 {
 	for (auto tracks_iter = tracks.begin(); tracks_iter != tracks.end(); tracks_iter++) {
 		Track * trk = *tracks_iter;
@@ -157,15 +157,14 @@ sg_ret GPSMapper::write_tracks_to_file(FILE * file, const std::list<Track *> & t
 		}
 	}
 
-	return sg_ret::ok;
+	return SaveStatus::Code::Success;
 }
 
 
 
 
-sg_ret GPSMapper::write_layer_to_file(FILE * file, LayerTRW * trw)
+SaveStatus GPSMapper::write_layer_to_file(FILE * file, LayerTRW * trw)
 {
-
 	const QString line = QString("[IMG ID]\n"
 				     "ID=%1\n"
 				     "Name=%2\n"
@@ -179,12 +178,19 @@ sg_ret GPSMapper::write_layer_to_file(FILE * file, LayerTRW * trw)
 				     "[END-IMG ID]\n\n").arg(trw->name).arg(trw->name);
 	fprintf(file, "%s", line.toUtf8().constData());
 
-	if (sg_ret::ok != GPSMapper::write_waypoints_to_file(file, trw->get_waypoints())) {
-		qDebug() << SG_PREFIX_E << "Failed to write waypoints";
-		return sg_ret::err;
+	SaveStatus save_status;
+
+	save_status = GPSMapper::write_waypoints_to_file(file, trw->get_waypoints());
+	if (SaveStatus::Code::Success != save_status) {
+		qDebug() << SG_PREFIX_E << "Failed to write waypoints" << save_status;
+		return save_status;
 	}
-	if (sg_ret::ok != GPSMapper::write_tracks_to_file(file, trw->get_tracks())) {
-		qDebug() << SG_PREFIX_E << "Failed to write tracks";
-		return sg_ret::err;
+
+	save_status = GPSMapper::write_tracks_to_file(file, trw->get_tracks());
+	if (SaveStatus::Code::Success != save_status) {
+		qDebug() << SG_PREFIX_E << "Failed to write tracks" << save_status;
+		return save_status;
 	}
+
+	return SaveStatus::Code::Success;
 }

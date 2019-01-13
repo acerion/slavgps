@@ -233,7 +233,7 @@ void BabelProcess::set_output(const QString & file_type, const QString & file_fu
    \return true on success
    \return false otherwise
 */
-sg_ret BabelProcess::convert_through_gpx(LayerTRW * trw)
+LoadStatus BabelProcess::convert_through_gpx(LayerTRW * trw)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -242,7 +242,7 @@ sg_ret BabelProcess::convert_through_gpx(LayerTRW * trw)
 
 	if (!this->run_process()) {
 		qDebug() << SG_PREFIX_E << "Conversion failed";
-		return sg_ret::err;
+		return LoadStatus::Code::Error;
 	}
 	this->gpx_importer->write("", 0); /* Just to ensure proper termination by GPX parser. */
 	sleep(3);
@@ -255,10 +255,10 @@ sg_ret BabelProcess::convert_through_gpx(LayerTRW * trw)
 	if (trw == NULL) {
 		/* No data actually required but still need to have run gpsbabel anyway
 		   - eg using the device power command_off. */
-		return sg_ret::ok;
+		return LoadStatus::Code::Success;
 	}
 
-	const sg_ret read_success = this->gpx_importer->status != XML_STATUS_ERROR ? sg_ret::ok : sg_ret::err;
+	const LoadStatus read_success = this->gpx_importer->status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::Error;
 
 	delete this->gpx_importer;
 
@@ -656,31 +656,33 @@ void BabelProcess::read_stdout_cb()
    @return true on successful invocation of GPSBabel command
    @return false otherwise
 */
-sg_ret BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
+SaveStatus BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
 {
 	if (!Babel::is_available()) {
 		qDebug() << SG_PREFIX_E << "gpsbabel not found in PATH";
-		return sg_ret::err;
+		return SaveStatus(SaveStatus::Code::Error);
 	}
 
 
 	QTemporaryFile tmp_file;
 	if (!SGUtils::create_temporary_file(tmp_file, "tmp-viking.XXXXXX")) {
-		return sg_ret::err;
+		return SaveStatus::Code::IntermediateFileAccess;
 	}
 	const QString tmp_file_full_path = tmp_file.fileName();
 	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file_full_path;
 
 
 	/* Now strips out invisible tracks and waypoints. */
-	if (!VikFile::export_trw(trw, tmp_file_full_path, SGFileType::GPX, trk, false)) {
-		qDebug() << SG_PREFIX_E << "Error exporting to" << tmp_file_full_path;
-		return sg_ret::err;
+	SaveStatus save_status = VikFile::export_trw(trw, tmp_file_full_path, SGFileType::GPX, trk, false);
+	if (SaveStatus::Code::Success != save_status) {
+		qDebug() << SG_PREFIX_E << "Error exporting to" << tmp_file_full_path << save_status;
+		return save_status;
 	}
 
 	this->set_input("gpx", tmp_file_full_path);
 
-	return this->run_process() ? sg_ret::ok : sg_ret::err;
+	/* FIXME: the status of run_process() doesn't give enough information to return to caller. */
+	return this->run_process() ? SaveStatus::Code::Success : SaveStatus::Code::Error;
 }
 
 

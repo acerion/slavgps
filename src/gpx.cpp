@@ -578,7 +578,7 @@ static void gpx_cdata(GPXImporter * importer, const XML_Char * s, int len)
 
 
 
-sg_ret GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
+LoadStatus GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
 {
 	GPXImporter importer(trw);
 	char buf[GPX_BUFFER_SIZE];
@@ -588,13 +588,14 @@ sg_ret GPX::read_layer_from_file(QFile & file, LayerTRW * trw)
 		const size_t n_read = file.read(buf, sizeof (buf));
 		finish = file.atEnd() || 0 == n_read;
 
-		if (sg_ret::ok != importer.write(buf, n_read)) {
+		LoadStatus load_status = importer.write(buf, n_read);
+		if (LoadStatus::Code::Success != load_status) {
 			qDebug() << SG_PREFIX_E << "Failed to write" << n_read << "bytes of data to GPX importer";
-			return sg_ret::err;
+			return load_status;
 		}
 	}
 
-	return sg_ret::ok;
+	return LoadStatus::Code::Success;
 }
 
 
@@ -1100,7 +1101,7 @@ static int gpx_waypoint_compare(const void * x, const void * y)
 
 
 
-sg_ret GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
+SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options)
 {
 	GPXWriteContext context(options, file);
 
@@ -1191,20 +1192,20 @@ sg_ret GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions * o
 
 	gpx_write_footer(file);
 
-	return sg_ret::ok;
+	return SaveStatus::Code::Success;
 }
 
 
 
 
-sg_ret GPX::write_track_to_file(FILE * file, Track * trk, GPXWriteOptions * options)
+SaveStatus GPX::write_track_to_file(FILE * file, Track * trk, GPXWriteOptions * options)
 {
 	GPXWriteContext context(options, file);
 	gpx_write_header(file);
 	gpx_write_track(trk, &context);
 	gpx_write_footer(file);
 
-	return sg_ret::ok;
+	return SaveStatus::Code::Success;
 }
 
 
@@ -1213,13 +1214,13 @@ sg_ret GPX::write_track_to_file(FILE * file, Track * trk, GPXWriteOptions * opti
 /**
  * Common write of a temporary GPX file.
  */
-sg_ret GPX::write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * trw, Track * trk, GPXWriteOptions * options)
+SaveStatus GPX::write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * trw, Track * trk, GPXWriteOptions * options)
 {
 	QTemporaryFile tmp_file;
 	tmp_file.setFileTemplate("viking_XXXXXX.gpx");
 	if (!tmp_file.open()) {
 		qDebug() << SG_PREFIX_E << "Failed to open temporary file, error =" << tmp_file.error();
-		return sg_ret::err;
+		return SaveStatus::Code::IntermediateFileAccess;
 	}
 	tmp_file.setAutoRemove(false);
 	file_full_path = tmp_file.fileName();
@@ -1227,16 +1228,16 @@ sg_ret GPX::write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * t
 
 	FILE * file2 = fdopen(tmp_file.handle(), "w"); /* TODO: close the file? */
 
-	sg_ret rv;
+	SaveStatus save_status;
 	if (trk) {
-		rv = GPX::write_track_to_file(file2, trk, options);
+		save_status = GPX::write_track_to_file(file2, trk, options);
 	} else {
-		rv = GPX::write_layer_to_file(file2, trw, options);
+		save_status = GPX::write_layer_to_file(file2, trw, options);
 	}
 
 	tmp_file.close();
 
-	return rv;
+	return save_status;
 }
 
 
@@ -1250,7 +1251,7 @@ sg_ret GPX::write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * t
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-sg_ret GPX::write_layer_to_tmp_file(QString & file_full_path, LayerTRW * trw, GPXWriteOptions * options)
+SaveStatus GPX::write_layer_to_tmp_file(QString & file_full_path, LayerTRW * trw, GPXWriteOptions * options)
 {
 	return GPX::write_layer_track_to_tmp_file(file_full_path, trw, NULL, options);
 }
@@ -1266,7 +1267,7 @@ sg_ret GPX::write_layer_to_tmp_file(QString & file_full_path, LayerTRW * trw, GP
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-sg_ret GPX::write_track_to_tmp_file(QString & file_full_path, Track * trk, GPXWriteOptions * options)
+SaveStatus GPX::write_track_to_tmp_file(QString & file_full_path, Track * trk, GPXWriteOptions * options)
 {
 	return GPX::write_layer_track_to_tmp_file(file_full_path, NULL, trk, options);
 }
@@ -1304,7 +1305,7 @@ GPXImporter::~GPXImporter()
 
 
 
-sg_ret GPXImporter::write(const char * data, size_t size)
+LoadStatus GPXImporter::write(const char * data, size_t size)
 {
 #if 0
 	char buffer[GPX_BUFFER_SIZE];
@@ -1324,5 +1325,5 @@ sg_ret GPXImporter::write(const char * data, size_t size)
 	qDebug() << SG_PREFIX_I << "Finish =" << finish << ", success =" << ();
 #endif
 
-	return this->status != XML_STATUS_ERROR ? sg_ret::ok : sg_ret::err;
+	return this->status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::Error;
 }

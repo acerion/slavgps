@@ -374,11 +374,11 @@ static void gpx_meta_data_cdata(xml_data * xd, const XML_Char *s, int len)
 /*
   @file passed to this function is an opened QTemporaryFile.
 */
-static bool read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
+static LoadStatus read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 {
 	FILE *ff = fopen(file.fileName().toUtf8().constData(), "r");
 	if (!ff) {
-		return false;
+		return LoadStatus::Code::FileAccess;
 	}
 
 	XML_Parser parser = XML_ParserCreate(NULL);
@@ -401,7 +401,7 @@ static bool read_gpx_files_metadata_xml(QFile & file, xml_data *xd)
 
 	fclose(ff);
 
-	return status != XML_STATUS_ERROR;
+	return status != XML_STATUS_ERROR ? LoadStatus::Code::Success : LoadStatus::Code::Error;
 }
 
 
@@ -555,11 +555,11 @@ void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMeta
 
 
 
-sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *) acquiring_context->user_data;
 
-	sg_ret result = sg_ret::err;
+	LoadStatus result = LoadStatus::Code::Error;
 
 	/* Support .zip + bzip2 files directly. */
 	DownloadOptions local_dl_options(2); /* Allow a couple of redirects. */
@@ -570,7 +570,7 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 
 	QTemporaryFile tmp_file;
 	if (!dl_handle.download_to_tmp_file(tmp_file, DS_OSM_TRACES_GPX_FILES)) {
-		return sg_ret::err;
+		return LoadStatus::Code::IntermediateFileAccess;
 	}
 
 	xml_data *xd = (xml_data *) malloc(sizeof (xml_data));
@@ -580,14 +580,14 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 	xd->current_gpx_meta_data = new GPXMetaData();
 	xd->list_of_gpx_meta_data.clear();
 
-	bool read_result = read_gpx_files_metadata_xml(tmp_file, xd);
+	LoadStatus metadata_load_result = read_gpx_files_metadata_xml(tmp_file, xd);
 	/* Test already downloaded metadata file: eg: */
 	// result = read_gpx_files_metadata_xml("/tmp/viking-download.GI47PW", xd);
 	Util::remove(tmp_file);
 
-	if (!read_result) {
+	if (LoadStatus::Code::Success != metadata_load_result) {
 		free(xd);
-		return sg_ret::err;
+		return LoadStatus::Code::IntermediateFileAccess;
 	}
 
 	if (xd->list_of_gpx_meta_data.size() == 0) {
@@ -597,7 +597,7 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 		}
 #endif
 		free(xd);
-		return sg_ret::err;
+		return LoadStatus::Code::Error;
 	}
 
 	xd->list_of_gpx_meta_data.reverse();
@@ -643,7 +643,7 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 				target_layer = trw;
 			}
 
-			sg_ret convert_result = sg_ret::err;
+			LoadStatus convert_result = LoadStatus::Code::Error;
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
 				/* Download type is GPX (or a compressed version). */
@@ -654,14 +654,14 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
-				got_something = got_something || (convert_result == sg_ret::ok);
-				if (convert_result != sg_ret::ok) {
+				got_something = got_something || (LoadStatus::Code::Success == convert_result);
+				if (LoadStatus::Code::Success != convert_result) {
 					/* Report errors to the status bar. */
 					acquire_context->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->source_url));
 				}
 			}
 
-			if (convert_result == sg_ret::ok) {
+			if (LoadStatus::Code::Success == convert_result) {
 				/* Can use the layer. */
 				acquire_context->top_level_layer->add_layer(target_layer, true);
 				/* Move to area of the track. */
@@ -698,10 +698,10 @@ sg_ret DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireContext 
 
 	/* ATM The user is only informed if all getting *all* of the traces failed. */
 	if (selected) {
-		result = got_something ? sg_ret::ok : sg_ret::err;
+		result = got_something ? LoadStatus::Code::Success : LoadStatus::Code::Error;
 	} else {
 		/* Process was cancelled but need to return that it proceeded as expected. */
-		result = sg_ret::ok;
+		result = LoadStatus::Code::Success;
 	}
 
 #ifdef FIXME_RESTORE

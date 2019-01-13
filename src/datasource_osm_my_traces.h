@@ -59,7 +59,7 @@ namespace SlavGPS {
 		DataSourceOSMMyTraces(Viewport * viewport);
 		~DataSourceOSMMyTraces() {};
 
-		sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog);
+		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) override;
 
 		int run_config_dialog(AcquireContext * acquire_context);
 

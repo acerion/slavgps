@@ -47,7 +47,7 @@ namespace SlavGPS {
 
 	class GeoJSON {
 	public:
-		static sg_ret write_layer_to_file(FILE * file, LayerTRW * trw);
+		static SaveStatus write_layer_to_file(FILE * file, LayerTRW * trw);
 	};
 
 

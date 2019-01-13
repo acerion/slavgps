@@ -106,11 +106,11 @@ DataSourceWikipedia::DataSourceWikipedia()
 /**
    Process selected files and try to generate waypoints storing them in the given trw.
 */
-sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	if (!trw) {
 		qDebug() << SG_PREFIX_E << "Missing TRW layer";
-		return sg_ret::err;
+		return LoadStatus::Code::InternalError;
 	}
 
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
@@ -122,7 +122,7 @@ sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext * 
 	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context->viewport->get_bbox(), progr_dialog);
 	if (0 == all_geonames.size()) {
 		/* Not an error situation. Info for user has been displayed in progr_dialog. */
-		return sg_ret::ok;
+		return LoadStatus::Code::Success;
 	}
 
 	emit progr_dialog->set_central_widget(this->list_selection_widget);
@@ -150,7 +150,7 @@ sg_ret DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContext * 
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
 	}
 
-	return sg_ret::ok;
+	return LoadStatus::Code::Success;
 }
 
 

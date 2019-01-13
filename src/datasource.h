@@ -79,7 +79,7 @@ namespace SlavGPS {
 		DataSource() {};
 		virtual ~DataSource();
 
-		virtual sg_ret acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) { return sg_ret::err; };
+		virtual LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) { return LoadStatus::Code::Error; };
 		virtual void progress_func(AcquireProgressCode code, void * data, AcquireContext * acquire_context) { return; };
 		virtual void cleanup(void * data) { return; };
 		virtual int kill(const QString & status) { return -1; };

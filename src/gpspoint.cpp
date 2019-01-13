@@ -951,7 +951,7 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 
 
 
-sg_ret GPSPoint::write_layer_to_file(FILE * file, const LayerTRW * trw)
+SaveStatus GPSPoint::write_layer_to_file(FILE * file, const LayerTRW * trw)
 {
 	const std::list<Track *> & tracks = trw->get_tracks();
 	const std::list<Track *> & routes = trw->get_routes();
@@ -964,5 +964,5 @@ sg_ret GPSPoint::write_layer_to_file(FILE * file, const LayerTRW * trw)
 	a_gpspoint_write_tracks(file, tracks);
 	a_gpspoint_write_tracks(file, routes);
 
-	return sg_ret::ok;
+	return SaveStatus::Code::Success;
 }

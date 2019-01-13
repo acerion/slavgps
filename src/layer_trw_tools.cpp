@@ -1454,12 +1454,13 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 			.arg(end.lat, 0, 'f', 3)
 			.arg(end.lon, 0, 'f', 3);
 		trw->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg1);
-		trw->get_window()->set_busy_cursor();
 
+		trw->get_window()->set_busy_cursor();
 		bool find_status = Routing::find_route_with_default_engine(trw, start, end);
+		trw->get_window()->clear_busy_cursor();
 
 		/* Update UI to say we're done. */
-		trw->get_window()->clear_busy_cursor();
+
 		const QString msg2 = (find_status)
 			? QObject::tr("%1 returned route between (%2, %3) and (%4, %5).").arg(engine->get_label()).arg(start.lat, 0, 'f', 3).arg(start.lon, 0, 'f', 3).arg(end.lat, 0, 'f', 3).arg(end.lon, 0, 'f', 3) /* ".3f" */
 			: QObject::tr("Error getting route from %1.").arg(engine->get_label());

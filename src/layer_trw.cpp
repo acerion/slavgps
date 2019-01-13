@@ -4017,10 +4017,10 @@ LayerDataReadStatus LayerTRW::read_layer_data(QFile & file, const QString & dirp
 
 
 
-sg_ret LayerTRW::write_layer_data(FILE * file) const
+SaveStatus LayerTRW::write_layer_data(FILE * file) const
 {
 	fprintf(file, "\n\n~LayerData\n");
-	const sg_ret rv = GPSPoint::write_layer_to_file(file, this);
+	const SaveStatus rv = GPSPoint::write_layer_to_file(file, this);
 	fprintf(file, "~EndLayerData\n");
 
 	return rv;

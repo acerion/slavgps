@@ -888,10 +888,10 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 
 
-VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
+LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
 {
 	if (!viewport) {
-		return VikFile::LoadStatus::ReadFailure;
+		return LoadStatus::Code::ReadFailure;
 	}
 
 	QString full_path;
@@ -905,10 +905,10 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 	QFile file(full_path);
 	if (!file.open(QIODevice::ReadOnly)) {
 		qDebug() << SG_PREFIX_E << "Failed to open file" << full_path << "as read only:" << file.error();
-		return VikFile::LoadStatus::ReadFailure;
+		return LoadStatus::Code::ReadFailure;
 	}
 
-	VikFile::LoadStatus load_status = VikFile::LoadStatus::OtherSuccess;
+	LoadStatus load_status = LoadStatus::Code::OtherSuccess;
 
 	char * dirpath_ = g_path_get_dirname(full_path.toUtf8().constData());
 	QString dirpath(dirpath_);
@@ -917,18 +917,18 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
 		if (sg_ret::ok == VikFile::read_file(file, parent_layer, dirpath, viewport)) {
-			load_status = VikFile::LoadStatus::Success;
+			load_status = LoadStatus::Code::Success;
 		} else {
-			load_status = VikFile::LoadStatus::FailureNonFatal;
+			load_status = LoadStatus::Code::FailureNonFatal;
 		}
 	} else if (jpg_magic_check(full_path)) {
 		if (!jpg_load_file(parent_layer, viewport, full_path)) {
-			load_status = VikFile::LoadStatus::UnsupportedFailure;
+			load_status = LoadStatus::Code::UnsupportedFailure;
 		}
 	} else {
 		/* For all other file types which consist of tracks, routes and/or waypoints,
 		   must be loaded into a new TrackWaypoint layer (hence it be created). */
-		sg_ret convert_status = sg_ret::ok; /* Detect load failures - mainly to remove the layer created as it's not required. */
+		LoadStatus convert_status = LoadStatus::Code::Error; /* Detect load failures - mainly to remove the layer created as it's not required. */
 
 		LayerTRW * trw = new LayerTRW();
 		trw->set_coord_mode(viewport->get_coord_mode());
@@ -945,8 +945,8 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 			convert_status = importer->convert_through_gpx(trw);
 			delete importer;
 
-			if (convert_status != sg_ret::ok) {
-				load_status = VikFile::LoadStatus::GPSBabelFailure;
+			if (LoadStatus::Code::Success != convert_status) {
+				load_status = LoadStatus::Code::GPSBabelFailure;
 			}
 		}
 		/* NB use a extension check first, as a GPX file
@@ -955,21 +955,21 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 		   FileUtils::file_has_magic() function. */
 		else if (FileUtils::has_extension(full_path, ".gpx") || FileUtils::file_has_magic(file, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			convert_status = GPX::read_layer_from_file(file, trw);
-			if (convert_status != sg_ret::ok) {
-				load_status = VikFile::LoadStatus::GPXFailure;
+			if (LoadStatus::Code::Success != convert_status) {
+				load_status = LoadStatus::Code::GPXFailure;
 			}
 		} else {
 			/* Try final supported file type. */
 			const LayerDataReadStatus rv = GPSPoint::read_layer_from_file(file, trw, dirpath);
-			convert_status = (rv == LayerDataReadStatus::Success ? sg_ret::ok : sg_ret::err);
-			if (convert_status != sg_ret::ok) {
+			convert_status = (rv == LayerDataReadStatus::Success ? LoadStatus::Code::Success : LoadStatus::Code::Error);
+			if (LoadStatus::Code::Success != convert_status) {
 				/* Failure here means we don't know how to handle the file. */
-				load_status = VikFile::LoadStatus::UnsupportedFailure;
+				load_status = LoadStatus::Code::UnsupportedFailure;
 			}
 		}
 
 		/* Clean up when we can't handle the file. */
-		if (convert_status != sg_ret::ok) {
+		if (LoadStatus::Code::Success != convert_status) {
 			delete trw;
 		} else {
 			/* Complete the setup from the successful load. */
@@ -985,9 +985,9 @@ VikFile::LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * view
 
 
 
-VikFile::SaveResult VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path)
+SaveStatus VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path)
 {
-	VikFile::SaveResult save_result;
+	SaveStatus save_result;
 
 	QString full_path;
 	if (file_full_path.left(7) == "file://") {
@@ -999,8 +999,7 @@ VikFile::SaveResult VikFile::save(LayerAggregate * top_layer, Viewport * viewpor
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	if (!file) {
-		save_result.success = false;
-		return save_result;
+		return SaveStatus::Code::FileAccess;
 	}
 
 	/* Enable relative paths in .vik files to work. */
@@ -1025,45 +1024,45 @@ VikFile::SaveResult VikFile::save(LayerAggregate * top_layer, Viewport * viewpor
 	fclose(file);
 	file = NULL;
 
-	save_result.success = true;
-	return save_result;
+	return SaveStatus::Code::Success;
 }
 
 
 
 
-sg_ret VikFile::export_trw_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
+SaveStatus VikFile::export_trw_track(Track * trk, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
 
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
 	if (NULL == file) {
 		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path << "as write only";
-		return sg_ret::err;
+		return SaveStatus::Code::FileAccess;
 	}
 
-	sg_ret result = sg_ret::err;
-
+	SaveStatus save_status;
 	switch (file_type) {
 	case SGFileType::GPX:
+		qDebug() << SG_PREFIX_I << "Exporting as GPX:" << file_full_path;
 		/* trk defined so can set the option. */
 		options.is_route = trk->type_id == "sg.trw.route";
-		result = GPX::write_track_to_file(file, trk, &options);
+		save_status = GPX::write_track_to_file(file, trk, &options);
+		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected file type for track" << (int) file_type;
-		result = sg_ret::err;
+		save_status = SaveStatus::Code::InternalError;
 	}
 
 	fclose(file);
-	return result;
+	return save_status;
 }
 
 
 
 
-static sg_ret export_to_kml(const QString & file_full_path, LayerTRW * trw)
+static SaveStatus export_to_kml(const QString & file_full_path, LayerTRW * trw)
 {
-	sg_ret status = sg_ret::ok;
+	SaveStatus save_status = SaveStatus::Code::Success;
 
 	BabelProcess * exporter = new BabelProcess();
 
@@ -1080,35 +1079,35 @@ static sg_ret export_to_kml(const QString & file_full_path, LayerTRW * trw)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid KML Export units" << (int) units;
-		status = sg_ret::err;
+		save_status = SaveStatus::Code::InternalError;
 		break;
 	}
 
 
-	if (status == sg_ret::ok) {
-		status = exporter->export_through_gpx(trw, NULL);
+	if (SaveStatus::Code::Success == save_status) {
+		save_status = exporter->export_through_gpx(trw, NULL);
 	}
 
 	delete exporter;
 
-	return status;
+	return save_status;
 }
 
 
 
 
 /* Call it when @trk argument to VikFile::export() is NULL. */
-sg_ret VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
+SaveStatus VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, bool write_hidden)
 {
 	GPXWriteOptions options(false, false, write_hidden, false);
 
 	FILE * file = fopen(file_full_path.toUtf8().constData(), "w");
 	if (NULL == file) {
 		qDebug() << SG_PREFIX_E << "Failed to open file" << file_full_path;
-		return sg_ret::err;
+		return SaveStatus::Code::FileAccess;
 	}
 
-	sg_ret result = sg_ret::ok;
+	SaveStatus result = SaveStatus::Code::Error;
 
 	switch (file_type) {
 	case SGFileType::GPSMapper:
@@ -1147,30 +1146,30 @@ sg_ret VikFile::export_trw_layer(LayerTRW * trw, const QString & file_full_path,
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS.
  */
-bool VikFile::export_trw(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden)
+SaveStatus VikFile::export_trw(LayerTRW * trw, const QString & file_full_path, SGFileType file_type, Track * trk, bool write_hidden)
 {
 	if (trk) {
-		return sg_ret::ok == VikFile::export_trw_track(trk, file_full_path, file_type, write_hidden);
+		return VikFile::export_trw_track(trk, file_full_path, file_type, write_hidden);
 	} else {
-		return sg_ret::ok == VikFile::export_trw_layer(trw, file_full_path, file_type, write_hidden);
+		return VikFile::export_trw_layer(trw, file_full_path, file_type, write_hidden);
 	}
 }
 
 
 
 
-bool VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints)
+SaveStatus VikFile::export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints)
 {
 	BabelProcess * exporter = new BabelProcess();
 
 	exporter->set_options(BabelProcess::get_trw_string(tracks, routes, waypoints));
 	exporter->set_output(output_data_format, output_file_full_path);
 
-	const bool status = sg_ret::ok == exporter->export_through_gpx(trw, NULL);
+	const SaveStatus save_status = exporter->export_through_gpx(trw, NULL);
 
 	delete exporter;
 
-	return status;
+	return save_status;
 }
 
 

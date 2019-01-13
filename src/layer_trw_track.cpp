@@ -3349,11 +3349,11 @@ void Track::export_track(const QString & title, const QString & default_file_nam
 		last_directory_url = file_selector.directoryUrl();
 
 		ThisApp::get_main_window()->set_busy_cursor();
-		const sg_ret export_status = VikFile::export_trw_track(this, output_file_full_path, file_type, true);
+		const SaveStatus export_status = VikFile::export_trw_track(this, output_file_full_path, file_type, true);
 		ThisApp::get_main_window()->clear_busy_cursor();
 
-		if (export_status != sg_ret::ok) {
-			Dialog::error(QObject::tr("The filename you requested could not be opened for writing."), ThisApp::get_main_window());
+		if (SaveStatus::Code::Success != export_status) {
+			export_status.show_error_dialog(ThisApp::get_main_window());
 		}
 	}
 }
@@ -4148,15 +4148,17 @@ void Track::refine_route_cb(void)
 		last_engine = combo->currentIndex();
 		RoutingEngine * engine = Routing::get_engine_by_index(combo, last_engine);
 
-		/* Change cursor */
-		main_window->set_busy_cursor();
 
 		/* Force saving track */
 		/* FIXME: remove or rename this hack */
 		parent_layer->route_finder_check_added_track = true;
 
-		/* the job */
+
+		/* The job */
+		main_window->set_busy_cursor();
 		engine->refine(parent_layer, this);
+		main_window->clear_busy_cursor();
+
 
 		/* FIXME: remove or rename this hack */
 		if (parent_layer->route_finder_added_track) {
@@ -4167,9 +4169,6 @@ void Track::refine_route_cb(void)
 		parent_layer->route_finder_check_added_track = false;
 
 		parent_layer->emit_layer_changed("TRW - refine route");
-
-		/* Restore cursor */
-		main_window->clear_busy_cursor();
 	}
 }
 
@@ -4186,29 +4185,41 @@ void Track::split_by_segments_cb(void)
 		return;
 	}
 
+
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	QString new_tr_name;
+
 	std::list<Track *> split_tracks = this->split_into_segments();
-	for (auto iter = split_tracks.begin(); iter != split_tracks.end(); iter++) {
+	if (0 == split_tracks.size()) {
+		Dialog::error(tr("Can not split track as it has no segments"), ThisApp::get_main_window());
+		return;
+	}
+
+
+	QString new_trk_name;
+	/* Skip first member of split_tracks for now - it will be used later. */
+	for (auto iter = std::next(split_tracks.begin()); iter != split_tracks.end(); iter++) {
 		if (*iter) {
-			new_tr_name = parent_layer->new_unique_element_name(this->type_id, this->name);
-			(*iter)->set_name(new_tr_name);
+			new_trk_name = parent_layer->new_unique_element_name(this->type_id, this->name);
+			(*iter)->set_name(new_trk_name);
 
 			parent_layer->add_track(*iter);
 		}
 	}
 
-	if (split_tracks.empty()) {
-		Dialog::error(tr("Can not split track as it has no segments"), ThisApp::get_main_window());
-	} else {
-		/* Remove original track. */
-		parent_layer->detach_from_container(this);
-		parent_layer->detach_from_tree(this);
-		delete this; /* FIXME: deleting self. */
 
-		parent_layer->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in callback)");
-	}
+	/* To avoid removing a track that has been split into segments
+	   in track's method, replace original track's contents with a
+	   sub-track created from first segment. */
+
+	Track * first_segment = *split_tracks.begin();
+	this->trackpoints.clear(); /* Remove trackpoints from container, but don't delete trackpoints themselves. */
+	this->trackpoints.swap(first_segment->trackpoints); /* Fill container with trackpoints from first segment. */
+	this->recalculate_bbox();
+	/* All trackpoints from first_segment have been transferred to this. We can delete first_segment; its trackpoints will still exist, elsewhere. */
+	delete first_segment;
+
+	parent_layer->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in callback)");
 }
 
 

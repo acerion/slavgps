@@ -125,7 +125,7 @@ DataSourceGeoTagDialog::DataSourceGeoTagDialog(const QString & window_title) : D
    In prinicple this loading should be quite fast and so don't need to
    have any progress monitoring.
 */
-sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
+LoadStatus DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog)
 {
 	for (int i = 0; i < this->selected_files.size(); i++) {
 		const QString file_full_path = this->selected_files.at(0);
@@ -151,5 +151,5 @@ sg_ret DataSourceGeoTag::acquire_into_layer(LayerTRW * trw, AcquireContext * acq
 	this->selected_files.clear();
 
 	/* No failure. */
-	return sg_ret::ok;
+	return LoadStatus::Code::Success;
 }

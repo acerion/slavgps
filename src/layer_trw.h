@@ -144,7 +144,7 @@ namespace SlavGPS {
 		sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 
 		LayerDataReadStatus read_layer_data(QFile & file, const QString & dirpath);
-		sg_ret write_layer_data(FILE * file) const;
+		SaveStatus write_layer_data(FILE * file) const;
 
 		void add_menu_items(QMenu & menu);
 
@@ -340,7 +340,7 @@ namespace SlavGPS {
 		/* Export. */
 		void export_layer(const QString & title, const QString & default_name, Track * trk, SGFileType file_type);
 		void open_layer_with_external_program(const QString & external_program);
-		int export_layer_with_gpsbabel(const QString & title, const QString & default_name);
+		SaveStatus export_layer_with_gpsbabel(const QString & title, const QString & default_name);
 
 
 		/* Common for LayerTRW and for Tracks. */

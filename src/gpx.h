@@ -131,7 +131,7 @@ namespace SlavGPS {
 	public:
 		GPXImporter(LayerTRW * trw);
 		~GPXImporter();
-		sg_ret write(const char * data, size_t size);
+		LoadStatus write(const char * data, size_t size); /* This is importer, so the function returns LoadStatus. */
 
 		bool set_lat_lon(char const ** attributes);
 
@@ -170,15 +170,15 @@ namespace SlavGPS {
 
 	class GPX {
 	public:
-		static sg_ret read_layer_from_file(QFile & file, LayerTRW * trw);
-		static sg_ret write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options);
-		static sg_ret write_track_to_file(FILE * file, Track * trk, GPXWriteOptions * options);
+		static LoadStatus read_layer_from_file(QFile & file, LayerTRW * trw);
+		static SaveStatus write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions * options);
+		static SaveStatus write_track_to_file(FILE * file, Track * trk, GPXWriteOptions * options);
 
-		static sg_ret write_layer_to_tmp_file(QString & file_full_path, LayerTRW * trw, GPXWriteOptions * options);
-		static sg_ret write_track_to_tmp_file(QString & file_full_path, Track * trk, GPXWriteOptions * options);
+		static SaveStatus write_layer_to_tmp_file(QString & file_full_path, LayerTRW * trw, GPXWriteOptions * options);
+		static SaveStatus write_track_to_tmp_file(QString & file_full_path, Track * trk, GPXWriteOptions * options);
 
 	private:
-		static sg_ret write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * trw, Track * trk, GPXWriteOptions * options);
+		static SaveStatus write_layer_track_to_tmp_file(QString & file_full_path, LayerTRW * trw, Track * trk, GPXWriteOptions * options);
 	};
 
 

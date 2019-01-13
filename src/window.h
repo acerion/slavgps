@@ -335,7 +335,7 @@ namespace SlavGPS {
 
 		QString current_document_full_path;
 
-		VikFile::LoadStatus file_load_status = VikFile::LoadStatus::ReadFailure; /* AKA none. */
+		LoadStatus file_load_status = LoadStatus::Code::ReadFailure; /* AKA none. */
 
 		/* Tool management state. */
 		LayerType tool_layer_type;
