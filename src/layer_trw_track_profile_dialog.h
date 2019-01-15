@@ -140,8 +140,6 @@ namespace SlavGPS {
 		QDialogButtonBox * button_box = NULL;
 		QPushButton * button_cancel = NULL;
 		QPushButton * button_split_at_marker = NULL;
-		QPushButton * button_split_segments = NULL;
-		QPushButton * button_reverse = NULL;
 		QPushButton * button_ok = NULL;
 
 		int profile_width;

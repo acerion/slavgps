@@ -2344,7 +2344,7 @@ void LayerTRW::add_track_from_file(Track * trk)
 			}
 		}
 
-		curr_track->steal_and_append_trackpoints(trk);
+		curr_track->move_trackpoints_from(*trk, trk->begin(), trk->end());
 		trk->free();
 		this->route_finder_append = false; /* This means we have added it. */
 	} else {
@@ -2792,7 +2792,7 @@ void LayerTRW::merge_with_other_cb(void)
 
 		if (source_track) {
 			qDebug() << SG_PREFIX_I << "We have a merge track";
-			track->steal_and_append_trackpoints(source_track);
+			track->move_trackpoints_from(*source_track, source_track->begin(), source_track->end());
 
 			this->detach_from_container(source_track);
 			this->detach_from_tree(source_track);
@@ -2849,7 +2849,7 @@ void LayerTRW::append_track_cb(void)
 	}
 
 
-	track->steal_and_append_trackpoints(source_track);
+	track->move_trackpoints_from(*source_track, source_track->begin(), source_track->end());
 
 
 	/* All trackpoints have been moved from source_track to
@@ -2924,7 +2924,7 @@ void LayerTRW::append_other_cb(void)
 	}
 
 
-	track->steal_and_append_trackpoints(source_track);
+	track->move_trackpoints_from(*source_track, source_track->begin(), source_track->end());
 
 
 	/* All trackpoints have been moved from
@@ -3009,7 +3009,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 
 		for (auto iter = nearby_tracks.begin(); iter != nearby_tracks.end(); iter++) {
 			/* Remove trackpoints from merged track, delete track. */
-			orig_track->steal_and_append_trackpoints(*iter);
+			orig_track->move_trackpoints_from(**iter, (*iter)->begin(), (*iter)->end());
 
 			this->detach_from_container(*iter);
 			this->detach_from_tree(*iter);

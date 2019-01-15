@@ -69,6 +69,14 @@ namespace SlavGPS {
 
 
 
+	enum tp_idx {
+		SELECTED = 0,
+		CURRENT = 1,
+	};
+
+
+
+
 	/* Temporary. */
 	struct my_data {
 		int height;
@@ -177,6 +185,7 @@ namespace SlavGPS {
 		   or implicitly (is copied from 'from' argument'). */
 		Track(bool is_route);
 		Track(const Track & from);
+		Track(const Track * from);
 		Track(const Track & from, const TrackPoints::iterator & begin, const TrackPoints::iterator & end);
 		~Track();
 
@@ -236,6 +245,14 @@ namespace SlavGPS {
 		std::list<Track *> split_into_segments(void);
 
 		Track * split_at_trackpoint(const TrackpointIter & tp);
+
+		/* Split given track at trackpoint indicated by
+		   @idx. Original track stays in items tree, but
+		   transfers part of trackpoints (starting from
+		   trackpoint indicated by @idx) to new track. The new
+		   track is added to items tree and to the same parent
+		   layer, to which given track belongs. */
+		sg_ret split_at_trackpoint(tp_idx idx);
 
 		void smooth_it(bool flat);
 
@@ -311,7 +328,13 @@ namespace SlavGPS {
 		void apply_dem_data_last_trackpoint();
 		unsigned long smooth_missing_elevation_data(bool flat);
 
-		void steal_and_append_trackpoints(Track * from);
+
+		/* Move a subset (range) of trackpoints from track
+		   @from, append them at the end of list of
+		   trackpoints in this track. Recalculate bbox of
+		   source and target tracks. */
+		sg_ret move_trackpoints_from(Track & from, const TrackPoints::iterator & from_begin, const TrackPoints::iterator & from_end);
+
 
 		Coord * cut_back_to_double_point();
 
@@ -402,6 +425,8 @@ namespace SlavGPS {
 		void recalculate_bbox_last_tp();
 		TrackData make_values_distance_over_time_helper(void) const;
 		TrackData make_values_altitude_over_time_helper(void) const;
+
+		void copy_properties(const Track * from);
 
 		sg_ret draw_e_ft(Viewport * viewport, struct my_data * in_data);
 		sg_ret draw_d_ft(Viewport * viewport, struct my_data * in_data);

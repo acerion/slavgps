@@ -303,27 +303,62 @@ Track::Track(bool is_route)
 Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
 {
 	this->tree_item_type = TreeItemType::Sublayer;
+	this->copy_properties(&from);
 
 	/* Copy points. */
 	for (auto iter = from.trackpoints.begin(); iter != from.trackpoints.end(); iter++) {
 		Trackpoint * new_tp = new Trackpoint(**iter);
 		this->trackpoints.push_back(new_tp);
 	}
+}
 
-	this->visible = from.visible;
-	this->draw_name_mode = from.draw_name_mode;
-	this->max_number_dist_labels = from.max_number_dist_labels;
 
-	this->set_name(from.name);
-	this->set_comment(from.comment);
-	this->set_description(from.description);
-	this->set_source(from.source);
+
+
+/**
+   @brief Build new empty track using @from as template
+
+   @from: The Track to copy properties from.
+
+   The constructor only copies properties, but does not copy nor move trackpoints.
+*/
+Track::Track(const Track * from) : Track(from->type_id == "sg.trw.route")
+{
+	this->tree_item_type = TreeItemType::Sublayer;
+	this->copy_properties(from);
+}
+
+
+
+
+void Track::copy_properties(const Track * from)
+{
+	this->visible = from->visible;
+	this->draw_name_mode = from->draw_name_mode;
+	this->max_number_dist_labels = from->max_number_dist_labels;
+
+	this->set_name(from->name);
+	this->set_comment(from->comment);
+	this->set_description(from->description);
+	this->set_source(from->source);
 
 	/* this->type_id is set by Track::Track(bool is_route) called by this constructor. */
 
-	this->has_color = from.has_color;
-	this->color = from.color;
-	this->bbox = from.bbox;
+	this->has_color = from->has_color;
+	this->color = from->color;
+	this->bbox = from->bbox;
+}
+
+
+
+
+sg_ret Track::move_trackpoints_from(Track & from, const TrackPoints::iterator & from_begin, const TrackPoints::iterator & from_end)
+{
+	this->trackpoints.splice(this->trackpoints.end(), from.trackpoints, from_begin, from_end);
+	/* Trackpoints updated in both tracks, so recalculate bbox of both tracks. */
+	this->recalculate_bbox();
+	from.recalculate_bbox();
+	return sg_ret::ok;
 }
 
 
@@ -846,6 +881,57 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 	qDebug() << SG_PREFIX_I << "uid of new track is" << new_track->uid;
 
 	return new_track;
+}
+
+
+
+
+sg_ret Track::split_at_trackpoint(tp_idx tp_idx)
+{
+	Trackpoint * tp = this->get_tp(tp_idx);
+	if (NULL == tp) {
+		qDebug() << SG_PREFIX_E << "Trackpoint with idx" << tp_idx << "is NULL";
+		return sg_ret::err;
+	}
+
+	auto tp_iter = std::next(this->begin());
+	while (tp_iter != this->end()) {
+		if (tp == *tp_iter) { /* We are sure that tp belongs to this trk, so it's ok to compare by pointers. */
+			break;
+		}
+		tp_iter++;
+	}
+	if (tp_iter == this->end()) {
+		qDebug() << SG_PREFIX_E << "Failed to find trackpoint with idx" << tp_idx;
+		return sg_ret::err;
+	}
+
+
+	/* Constructor copies only track properties, but doesn't
+	   transfer or copy trackpoints: */
+	Track * trk_right = new Track(this);
+	/* A range of trackpoints is transferred here: */
+	const sg_ret mv = trk_right->move_trackpoints_from(*this, tp_iter, this->end());
+	if (sg_ret::ok != mv) {
+		qDebug() << SG_PREFIX_E << "Failed to transfer trackpoints during split";
+		delete trk_right;
+		return mv;
+	}
+	/* ::move_trackpoints_from() recalculates bboxes of tracks, no
+	   need to do this explicitly. */
+
+
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	const QString new_name = parent_layer->new_unique_element_name(this->type_id, this->name);
+	trk_right->set_name(new_name);
+
+	if (this->type_id == "sg.trw.route") {
+		parent_layer->add_route(trk_right);
+	} else {
+		parent_layer->add_track(trk_right);
+	}
+
+	return sg_ret::ok;
 }
 
 
@@ -2421,21 +2507,6 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 	}
 
 	return num;
-}
-
-
-
-
-/**
- * Appends 'from' to track, leaving 'from' with no trackpoints.
- */
-void Track::steal_and_append_trackpoints(Track * from)
-{
-	this->trackpoints.insert(this->trackpoints.end(), from->trackpoints.begin(), from->trackpoints.end());
-	from->trackpoints.clear();
-
-	/* Trackpoints updated - so update the bounds. */
-	this->recalculate_bbox();
 }
 
 

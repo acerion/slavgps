@@ -5,7 +5,7 @@
  * Copyright (C) 2005-2007, Alex Foobarian <foobarian@gmail.com>
  * Copyright (C) 2007-2008, Quy Tonthat <qtonthat@gmail.com>
  * Copyright (C) 2012-2014, Rob Norris <rw_norris@hotmail.com>
- * Copyright (C) 2016-2018, Kamil Ignacak <acerion@wp.pl>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,8 +65,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Track Profile Dialog"
-#define SELECTED 0
-#define CURRENT 1
 
 
 
@@ -102,8 +100,6 @@ using namespace SlavGPS;
 enum {
 	SG_TRACK_PROFILE_CANCEL,
 	SG_TRACK_PROFILE_SPLIT_AT_MARKER,
-	SG_TRACK_PROFILE_SPLIT_SEGMENTS,
-	SG_TRACK_PROFILE_REVERSE,
 	SG_TRACK_PROFILE_OK,
 };
 
@@ -1402,82 +1398,24 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 {
 	bool keep_dialog = false;
 
-	/* FIXME: check and make sure the track still exists before doing anything to it. */
 	/* Note: destroying dialog (eg, parent window exit) won't give "response". */
 	switch (resp) {
 	case SG_TRACK_PROFILE_CANCEL:
 		this->reject();
 		break;
+
 	case SG_TRACK_PROFILE_OK:
 		this->trk->update_tree_item_properties();
 		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Profile OK");
 		this->accept();
 		break;
-	case SG_TRACK_PROFILE_REVERSE:
-		this->trk->reverse();
-		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Reverse");
-		keep_dialog = true;
-		break;
-	case SG_TRACK_PROFILE_SPLIT_SEGMENTS: {
-		/* Get new tracks, add them and then the delete old one. old can still exist on clipboard. */
-		std::list<Track *> split_tracks = this->trk->split_into_segments();
-		for (auto iter = split_tracks.begin(); iter != split_tracks.end(); iter++) {
-			if (*iter) {
-				const QString new_tr_name = this->trw->new_unique_element_name(this->trk->type_id, this->trk->name);
-				(*iter)->set_name(new_tr_name);
 
-				if (this->trk->type_id == "sg.trw.route") {
-					this->trw->add_route(*iter);
-				} else {
-					this->trw->add_track(*iter);
-				}
-			}
-		}
-		if (split_tracks.size()) {
-			/* Don't let track destroy this dialog. */
-			this->trw->detach_from_container(this->trk);
-			this->trw->detach_from_tree(this->trk);
-			delete this->trk;
-
-			this->trw->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in track profile dialog)");
-		}
-	}
-		break;
-	case SG_TRACK_PROFILE_SPLIT_AT_MARKER: {
-		auto iter = std::next(this->trk->begin());
-		while (iter != this->trk->end()) {
-			if (this->trk->get_tp(SELECTED) == *iter) {
-				break;
-			}
-			iter++;
-		}
-		if (iter == this->trk->end()) {
+	case SG_TRACK_PROFILE_SPLIT_AT_MARKER:
+		if (sg_ret::ok != this->trk->split_at_trackpoint(SELECTED)) {
 			Dialog::error(tr("Failed to split track. Track unchanged"), this->trw->get_window());
 			keep_dialog = true;
-			break;
 		}
-
-
-		/* Notice that here Trackpoint pointed to by iter is moved to new track. */
-		/* TODO_UNKNOWN: originally the constructor was just Track(). Should we really pass original trk to constructor? */
-
-		/* This constructor recalculates bounding box of new track. */
-		Track * trk_right = new Track(*this->trk, iter, this->trk->end());
-
-		this->trk->erase(iter, this->trk->end());
-		this->trk->recalculate_bbox();
-
-		const QString r_name = this->trw->new_unique_element_name(this->trk->type_id, this->trk->name);
-		trk_right->set_name(r_name);
-
-		if (this->trk->type_id == "sg.trw.route") {
-			this->trw->add_route(trk_right);
-		} else {
-			this->trw->add_track(trk_right);
-		}
-
 		this->trw->emit_layer_changed("A TRW Track has been split into several tracks (at marker)");
-	}
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Dialog response slot: unknown response" << resp;
@@ -1648,24 +1586,17 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 
 	this->button_cancel = this->button_box->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
 	this->button_split_at_marker = this->button_box->addButton(tr("Split at &Marker"), QDialogButtonBox::ActionRole);
-	this->button_split_segments = this->button_box->addButton(tr("Split &Segments"), QDialogButtonBox::ActionRole);
-	this->button_reverse = this->button_box->addButton(tr("&Reverse"), QDialogButtonBox::ActionRole);
 	this->button_ok = this->button_box->addButton(tr("&OK"), QDialogButtonBox::AcceptRole);
 
-	this->button_split_segments->setEnabled(this->trk->get_segment_count() > 1);
 	this->button_split_at_marker->setEnabled(this->trk->get_tp(SELECTED) != NULL); /* Initially no trackpoint is selected. */
 
 	this->signal_mapper = new QSignalMapper(this);
 	connect(this->button_cancel,          SIGNAL (released()), signal_mapper, SLOT (map()));
 	connect(this->button_split_at_marker, SIGNAL (released()), signal_mapper, SLOT (map()));
-	connect(this->button_split_segments,  SIGNAL (released()), signal_mapper, SLOT (map()));
-	connect(this->button_reverse,         SIGNAL (released()), signal_mapper, SLOT (map()));
 	connect(this->button_ok,              SIGNAL (released()), signal_mapper, SLOT (map()));
 
 	this->signal_mapper->setMapping(this->button_cancel,          SG_TRACK_PROFILE_CANCEL);
 	this->signal_mapper->setMapping(this->button_split_at_marker, SG_TRACK_PROFILE_SPLIT_AT_MARKER);
-	this->signal_mapper->setMapping(this->button_split_segments,  SG_TRACK_PROFILE_SPLIT_SEGMENTS);
-	this->signal_mapper->setMapping(this->button_reverse,         SG_TRACK_PROFILE_REVERSE);
 	this->signal_mapper->setMapping(this->button_ok,              SG_TRACK_PROFILE_OK);
 
 	connect(this->signal_mapper, SIGNAL (mapped(int)), this, SLOT (dialog_response_cb(int)));
