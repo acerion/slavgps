@@ -787,50 +787,6 @@ unsigned int Track::get_segment_count() const
 
 
 
-/* TODO_LATER: revisit this function and compare with original from viking. */
-std::list<Track *> Track::split_into_segments(void)
-{
-	std::list<Track *> result;
-
-	unsigned int segs = this->get_segment_count();
-	if (segs < 2) {
-		return result;
-	}
-
-
-	for (auto first = this->trackpoints.begin(); first != this->trackpoints.end(); ) {
-		if ((*first)->newsegment) {
-
-			auto last = next(first);
-			while (last != this->trackpoints.end()
-			       && !(*last)->newsegment) {
-
-				last++;
-			}
-
-
-			/* The constructor will recalculate bbox of the new track. */
-			Track * new_track = new Track(*this, first, last);
-			result.push_back(new_track);
-
-			/* First will now point at either ->end() or beginning of next segment. */
-			first = last;
-		} else {
-			/* I think that this branch of if/else will never be executed
-			   because 'first' will either point at ->begin() at the very
-			   beginning of the loop, or will always be moved to start of
-			   next segment with 'first = last' assignment in first branch
-			   of this if/else. */
-			first++;
-		}
-
-	}
-	return result;
-}
-
-
-
-
 /**
    \brief Split a track at given trackpoint
 
@@ -888,48 +844,65 @@ Track * Track::split_at_trackpoint(const TrackpointIter & tp2)
 
 sg_ret Track::split_at_trackpoint(tp_idx tp_idx)
 {
+	if (this->empty()) {
+		qDebug() << SG_PREFIX_I << "Can't split: track is empty";
+		return sg_ret::err;
+	}
+
 	Trackpoint * tp = this->get_tp(tp_idx);
 	if (NULL == tp) {
 		qDebug() << SG_PREFIX_E << "Trackpoint with idx" << tp_idx << "is NULL";
 		return sg_ret::err;
 	}
 
-	auto tp_iter = std::next(this->begin());
-	while (tp_iter != this->end()) {
-		if (tp == *tp_iter) { /* We are sure that tp belongs to this trk, so it's ok to compare by pointers. */
-			break;
-		}
-		tp_iter++;
-	}
-	if (tp_iter == this->end()) {
-		qDebug() << SG_PREFIX_E << "Failed to find trackpoint with idx" << tp_idx;
-		return sg_ret::err;
-	}
-
-
-	/* Constructor copies only track properties, but doesn't
-	   transfer or copy trackpoints: */
-	Track * trk_right = new Track(this);
-	/* A range of trackpoints is transferred here: */
-	const sg_ret mv = trk_right->move_trackpoints_from(*this, tp_iter, this->end());
-	if (sg_ret::ok != mv) {
-		qDebug() << SG_PREFIX_E << "Failed to transfer trackpoints during split";
-		delete trk_right;
-		return mv;
-	}
-	/* ::move_trackpoints_from() recalculates bboxes of tracks, no
-	   need to do this explicitly. */
-
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	const QString new_name = parent_layer->new_unique_element_name(this->type_id, this->name);
-	trk_right->set_name(new_name);
 
-	if (this->type_id == "sg.trw.route") {
-		parent_layer->add_route(trk_right);
-	} else {
-		parent_layer->add_track(trk_right);
+
+	/* Configuration dialog. */
+	{
+		/* None. */
 	}
+
+
+	/* Process of determining ranges of trackpoints for new tracks. */
+	std::list<TrackPoints::iterator> iterators;
+	{
+		int n = 0;
+
+		auto iter = this->trackpoints.begin();
+		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
+
+
+		iter = std::next(this->begin()); /* We can't start from first iter - that would result in no splitting at all. */
+		while (iter != this->end()) {
+			if (tp == *iter) { /* We are sure that tp belongs to this trk, so it's ok to compare by pointers. */
+				break;
+			}
+			iter++;
+		}
+		if (iter == this->end()) {
+			qDebug() << SG_PREFIX_E << "Failed to find trackpoint with idx" << tp_idx;
+			return sg_ret::err;
+		} else {
+			iterators.push_back(TrackPoints::iterator(iter));
+			n++;
+			qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n;
+		}
+
+
+		iter = this->trackpoints.end();
+		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
+	}
+
+
+	/* Creation of new tracks. */
+	this->split_at_iterators(iterators, parent_layer);
+
 
 	return sg_ret::ok;
 }
@@ -4047,66 +4020,148 @@ void Track::track_use_with_bfilter_cb(void)
 
 
 
-void Track::split_by_timestamp_cb(void)
+void le_finalize(Track * trk, std::list<TrackPoints *> & points, LayerTRW * parent_layer)
 {
-	static uint32_t threshold = 1;
-
-	if (this->empty()) {
-		return;
-	}
-
-	Window * main_window = ThisApp::get_main_window();
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-
-	if (!a_dialog_time_threshold(tr("Split Threshold..."),
-				     tr("Split when time between trackpoints exceeds:"),
-				     &threshold,
-				     main_window)) {
-		return;
-	}
-
-	/* Iterate through trackpoints, and copy them into new lists without touching original list. */
-	auto iter = this->trackpoints.begin();
-	time_t prev_ts = (*iter)->timestamp.get_value();
-
-	TrackPoints * newtps = new TrackPoints;
-	std::list<TrackPoints *> points;
-
-	for (; iter != this->trackpoints.end(); iter++) {
-		time_t ts = (*iter)->timestamp.get_value();
-
-		/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
-		if (ts < prev_ts) {
-			const Time tstamp(ts);
-			if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(tstamp.strftime_local("%c"))), main_window) {
-				parent_layer->request_new_viewport_center(ThisApp::get_main_viewport(), (*iter)->coord);
-			}
-			return;
-		}
-
-		if (ts - prev_ts > threshold * 60) {
-			/* Flush accumulated trackpoints into new list. */
-			points.push_back(newtps);
-			newtps = new TrackPoints;
-		}
-
-		/* Accumulate trackpoint copies in newtps. */
-		newtps->push_back(new Trackpoint(**iter));
-		prev_ts = ts;
-	}
-	if (!newtps->empty()) {
-		points.push_back(newtps);
-	}
-
 	/* Only bother updating if the split results in new tracks. */
 	if (points.size() > 1) {
-		parent_layer->create_new_tracks(this, &points);
+		parent_layer->create_new_tracks(trk, &points);
 	}
 
 	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
-	for (auto iter2 = points.begin(); iter2 != points.end(); iter2++) {
-		delete *iter2;
+	for (auto iter_a = points.begin(); iter_a != points.end(); iter_a++) {
+		delete *iter_a;
 	}
+}
+
+
+
+
+void Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer)
+{
+	/* Only bother updating if the split results in new tracks. */
+	if (iterators.size() == 2) {
+		/* Only two iterators: begin() and end() iterator to
+		   track's trackpoints. Not an error */
+		qDebug() << SG_PREFIX_I << "Not enough trackpoint ranges to split track";
+		return;
+	}
+
+
+	auto iter = iterators.begin();
+	/* Skip first range of trackpoints. These trackpoints will be
+	   kept in original track. The rest of trackpoints (those from
+	   second, third etc. range) will go to newly created
+	   tracks. */
+	iter++;
+
+	for (; iter != std::prev(iterators.end()); iter++) {
+
+		TrackPoints::iterator tp_iter_begin = *iter;
+		TrackPoints::iterator tp_iter_end = *std::next(iter);
+
+		if (1) { /* Debug. */
+			if (tp_iter_end != this->trackpoints.end()) {
+				Trackpoint * tp1 = *tp_iter_begin;
+				Trackpoint * tp2 = *tp_iter_end;
+				qDebug() << SG_PREFIX_I << "Trackpoint" << tp1->timestamp << "(range from" << tp1->timestamp << "to" << tp2->timestamp << ")";
+			} else {
+				Trackpoint * tp1 = *tp_iter_begin;
+				qDebug() << SG_PREFIX_I << "Trackpoint" << tp1->timestamp << "(range from" << tp1->timestamp << "to end)";
+			}
+		}
+
+		Track * new_trk = new Track(this); /* Just copy track properties. */
+		const sg_ret mv = new_trk->move_trackpoints_from(*this, tp_iter_begin, tp_iter_end); /* Now move a range of trackpoints. */
+
+		const QString new_trk_name = parent_layer->new_unique_element_name(this->type_id, this->name);
+		new_trk->set_name(new_trk_name);
+
+		parent_layer->add_track(new_trk);
+	}
+
+
+	/* Original track is not removed. It keeps those trackpoints
+	   that were described by first pair of iterators in
+	   @iterators list. Rest of trackpoints from the original
+	   track have been transferred to new tracks. */
+
+
+	parent_layer->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in callback)");
+}
+
+
+
+
+void Track::split_by_timestamp_cb(void)
+{
+	if (this->empty()) {
+		qDebug() << SG_PREFIX_I << "Can't split: track is empty";
+		return;
+	}
+
+	uint32_t threshold = 1;
+	QWidget * dialog_parent = ThisApp::get_main_window();
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+
+
+	/* Configuration dialog. */
+	{
+		if (!a_dialog_time_threshold(tr("Split Threshold..."),
+					     tr("Split when time between trackpoints exceeds:"),
+					     &threshold,
+					     dialog_parent)) {
+			return;
+		}
+
+		if (threshold == 0) {
+			return;
+		}
+	}
+
+
+	/* Process of determining ranges of trackpoints for new tracks. */
+	std::list<TrackPoints::iterator> iterators;
+	{
+		int n = 0;
+		time_t prev_ts = (*this->trackpoints.begin())->timestamp.get_value();
+
+		auto iter = this->trackpoints.begin();
+		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
+
+
+		for (; iter != this->trackpoints.end(); iter++) {
+			const time_t ts = (*iter)->timestamp.get_value();
+
+			/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
+			if (ts < prev_ts) {
+				const Time tstamp(ts);
+				if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(tstamp.strftime_local("%c"))), dialog_parent) {
+					parent_layer->request_new_viewport_center(ThisApp::get_main_viewport(), (*iter)->coord);
+				}
+				return;
+			}
+
+			if (ts - prev_ts > threshold * 60) {
+				prev_ts = ts;
+				iterators.push_back(TrackPoints::iterator(iter));
+				n++;
+				qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n << "=" << (*iter)->timestamp;
+			}
+		}
+
+
+		iter = this->trackpoints.end();
+		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
+	}
+
+
+	/* Creation of new tracks. */
+	this->split_at_iterators(iterators, parent_layer);
+
 
 	return;
 }
@@ -4120,57 +4175,70 @@ void Track::split_by_timestamp_cb(void)
 void Track::split_by_n_points_cb(void)
 {
 	if (this->empty()) {
+		qDebug() << SG_PREFIX_I << "Can't split: track is empty";
 		return;
 	}
 
-	int n_points = Dialog::get_int(tr("Split Every Nth Point"),
-				       tr("Split on every Nth point:"),
-				       250,   /* Default value as per typical limited track capacity of various GPS devices. */
-				       2,     /* Min */
-				       65536, /* Max */
-				       5,     /* Step */
-				       NULL,  /* ok */
-				       ThisApp::get_main_window());
-	/* Was a valid number returned? */
-	if (!n_points) {
-		return;
-	}
 
-	/* Now split. */
-	TrackPoints * newtps = new TrackPoints;
-	std::list<TrackPoints *> points;
+	int n_points = 0;
+	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	QWidget * dialog_parent = ThisApp::get_main_window();
 
-	int count = 0;
 
-	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
-		/* Accumulate trackpoint copies in newtps, in reverse order */
-		newtps->push_back(new Trackpoint(**iter));
-		count++;
-		if (count >= n_points) {
-			/* flush accumulated trackpoints into new list */
-			points.push_back(newtps);
-			newtps = new TrackPoints;
-			count = 0;
+	/* Configuration dialog. */
+	{
+		n_points = Dialog::get_int(tr("Split Every Nth Point"),
+					   tr("Split on every Nth point:"),
+					   250,   /* Default value as per typical limited track capacity of various GPS devices. */
+					   2,     /* Min */
+					   65536, /* Max */
+					   5,     /* Step */
+					   NULL,  /* ok */
+					   dialog_parent);
+
+		/* Was a valid number returned? */
+		if (0 == n_points) {
+			return;
 		}
 	}
 
-	/* If there is a remaining chunk put that into the new split list.
-	   This may well be the whole track if no split points were encountered. */
-	if (newtps->size()) {
-		points.push_back(newtps);
+
+	/* Process of determining ranges of trackpoints for new tracks. */
+	std::list<TrackPoints::iterator> iterators;
+	{
+		int n = 0;
+		int tp_counter = -1;
+
+		auto iter = this->trackpoints.begin();
+		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
+
+
+		for (; iter != this->trackpoints.end(); iter++) {
+			tp_counter++;
+			if (tp_counter >= n_points) {
+				tp_counter = 0;
+				iterators.push_back(TrackPoints::iterator(iter));
+				n++;
+				qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n;
+			}
+		}
+
+
+		iter = this->trackpoints.end();
+		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
 	}
 
-	/* Only bother updating if the split results in new tracks. */
-	if (points.size() > 1) {
-		((LayerTRW *) this->owning_layer)->create_new_tracks(this, &points);
-	}
 
-	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
-	for (auto iter = points.begin(); iter != points.end(); iter++) {
-		delete *iter;
-	}
+	/* Creation of new tracks. */
+	this->split_at_iterators(iterators, parent_layer);
+
+
+	return;
 }
-
 
 
 
@@ -4253,44 +4321,78 @@ void Track::refine_route_cb(void)
 void Track::split_by_segments_cb(void)
 {
 	if (this->empty()) {
+		qDebug() << SG_PREFIX_I << "Can't split: track is empty";
 		return;
 	}
 
 
+	QWidget * dialog_parent = ThisApp::get_main_window();
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-
-	std::list<Track *> split_tracks = this->split_into_segments();
-	if (0 == split_tracks.size()) {
-		Dialog::error(tr("Can not split track as it has no segments"), ThisApp::get_main_window());
+	const unsigned int segs = this->get_segment_count();
+	if (segs < 2) {
+		Dialog::info(tr("Can not split track as it has no segments"), dialog_parent);
 		return;
 	}
 
 
-	QString new_trk_name;
-	/* Skip first member of split_tracks for now - it will be used later. */
-	for (auto iter = std::next(split_tracks.begin()); iter != split_tracks.end(); iter++) {
-		if (*iter) {
-			new_trk_name = parent_layer->new_unique_element_name(this->type_id, this->name);
-			(*iter)->set_name(new_trk_name);
-
-			parent_layer->add_track(*iter);
-		}
+	/* Configuration dialog. */
+	{
+		/* None. */
 	}
 
 
-	/* To avoid removing a track that has been split into segments
-	   in track's method, replace original track's contents with a
-	   sub-track created from first segment. */
+	/* Process of determining ranges of trackpoints for new tracks. */
+	std::list<TrackPoints::iterator> iterators;
+	{
+		int n = 0;
 
-	Track * first_segment = *split_tracks.begin();
-	this->trackpoints.clear(); /* Remove trackpoints from container, but don't delete trackpoints themselves. */
-	this->trackpoints.swap(first_segment->trackpoints); /* Fill container with trackpoints from first segment. */
-	this->recalculate_bbox();
-	/* All trackpoints from first_segment have been transferred to this. We can delete first_segment; its trackpoints will still exist, elsewhere. */
-	delete first_segment;
+		auto iter = this->trackpoints.begin();
+		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
 
-	parent_layer->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in callback)");
+
+		/* If there are segments defined in the track (and we
+		   have established this with ::get_segment_count()
+		   above), then the first trackpoint in ::trackpoints
+		   container should have "Trackpoint::newsegment ==
+		   true", right? Let's verify this here. It's not too
+		   late yet to abort splitting if this test fails. */
+		if ((*iter)->newsegment != true) {
+			qDebug() << SG_PREFIX_E << "Assertion about first trackpoint failed: first trackpoint's ::newsegment == false";
+			return;
+		}
+
+
+		/* Don't let that first trackpoint with
+		   "Trackpoint::newsegment == true" be pushed to
+		   'iterators' twice (above as ::begin(), and below in
+		   the loop). */
+		iter++;
+
+
+		for (; iter != this->trackpoints.end(); iter++) {
+			if ((*iter)->newsegment) {
+				iterators.push_back(TrackPoints::iterator(iter));
+				n++;
+				qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n << "=" << (*iter)->timestamp;
+			}
+		}
+
+
+		iter = this->trackpoints.end();
+		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		n++;
+		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
+	}
+
+
+	/* Creation of new tracks. */
+	this->split_at_iterators(iterators, parent_layer);
+
+
+	return;
 }
 
 

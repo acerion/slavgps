@@ -242,7 +242,6 @@ namespace SlavGPS {
 
 		unsigned long get_tp_count() const;
 		unsigned int get_segment_count() const;
-		std::list<Track *> split_into_segments(void);
 
 		Track * split_at_trackpoint(const TrackpointIter & tp);
 
@@ -253,6 +252,21 @@ namespace SlavGPS {
 		   track is added to items tree and to the same parent
 		   layer, to which given track belongs. */
 		sg_ret split_at_trackpoint(tp_idx idx);
+
+		/* Split track at iterators. @iterators contains list
+		   of iterators to track's trackpoints container. Each
+		   range of iterators (with exception of first one)
+		   will be used to fill trackpoints container of new
+		   tracks.
+
+		   First element on @iterators should be
+		   trackpoints::begin().  Last element on @iterators
+		   should be trackpoints::end().
+
+		   The split will be performed only when there are
+		   more than two (trackpoints::begin() and
+		   trackpoints::end()) iterators. */
+		void split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer);
 
 		void smooth_it(bool flat);
 
