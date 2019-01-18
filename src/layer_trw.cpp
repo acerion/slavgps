@@ -3027,38 +3027,6 @@ void LayerTRW::merge_by_timestamp_cb(void)
 
 
 
-/*
-  orig - original track
-  points- list of trackpoint lists
-*/
-bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points)
-{
-	for (auto iter = points->begin(); iter != points->end(); iter++) {
-
-		Track * copy = new Track(*orig, (*iter)->begin(), (*iter)->end());
-
-		const QString new_name = this->new_unique_element_name(orig->type_id, orig->name);
-		copy->set_name(new_name);
-
-		if (orig->type_id == "sg.trw.route") {
-			this->add_route(copy);
-		} else {
-			this->add_track(copy);
-		}
-	}
-
-	/* Remove original track and then update the display. */
-	this->detach_from_container(orig);
-	this->detach_from_tree(orig);
-	delete orig;
-
-	this->emit_layer_changed("TRW create new tracks");
-
-	return true;
-}
-
-
-
 
 /**
  * Split a track at the currently selected trackpoint
@@ -3067,14 +3035,12 @@ void LayerTRW::split_at_trackpoint_cb(void)
 {
 	Track * selected_track = this->get_edited_track();
 	if (!selected_track) {
+		qDebug() << SG_PREFIX_N << "Can't split track at trackpoint: no track selected";
 		return;
 	}
 
-	Track * new_track = selected_track->split_at_trackpoint(selected_track->selected_tp_iter);
-	if (new_track) {
-		this->set_edited_track(new_track, new_track->begin());
-		this->add_track(new_track);
-		this->emit_layer_changed("TRW - split at trackpoint");
+	if (sg_ret::ok != selected_track->split_at_trackpoint(selected_track->selected_tp_iter)) {
+		qDebug() << SG_PREFIX_E << "Failed to split track" << selected_track->name << "at trackpoint";
 	}
 }
 
@@ -3561,13 +3527,9 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 			break;
 		}
 
-		Track * new_track = track->split_at_trackpoint(track->selected_tp_iter);
-		if (new_track) {
-			this->set_edited_track(new_track, new_track->begin());
-			this->add_track(new_track);
-			this->emit_layer_changed("TRW - trackpoint properties - split");
+		if (sg_ret::ok != track->split_at_trackpoint(track->selected_tp_iter)) {
+			qDebug() << SG_PREFIX_E << "Failed to split track" << track->name << "at trackpoint";
 		}
-
 		this->tpwin_update_dialog_data();
 		}
 		break;

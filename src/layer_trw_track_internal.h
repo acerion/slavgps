@@ -181,12 +181,8 @@ namespace SlavGPS {
 	class Track : public TreeItem {
 		Q_OBJECT
 	public:
-		/* Track/Route differentiation is made either explicitly (through 'is_route' argument)
-		   or implicitly (is copied from 'from' argument'). */
 		Track(bool is_route);
-		Track(const Track & from);
-		Track(const Track * from);
-		Track(const Track & from, const TrackPoints::iterator & begin, const TrackPoints::iterator & end);
+		Track(const Track & from); /* Only copy properties, don't move or copy trackpoints from source track. */
 		~Track();
 
 
@@ -243,7 +239,7 @@ namespace SlavGPS {
 		unsigned long get_tp_count() const;
 		unsigned int get_segment_count() const;
 
-		Track * split_at_trackpoint(const TrackpointIter & tp);
+		sg_ret split_at_trackpoint(const TrackpointIter & tp);
 
 		/* Split given track at trackpoint indicated by
 		   @idx. Original track stays in items tree, but
@@ -349,6 +345,12 @@ namespace SlavGPS {
 		   source and target tracks. */
 		sg_ret move_trackpoints_from(Track & from, const TrackPoints::iterator & from_begin, const TrackPoints::iterator & from_end);
 
+		/* Make a deep copy of a subset (range) of trackpoints
+		   from other track, append them at the end of list of
+		   trackpoints in this track. Recalculate bbox of this
+		   tracks. */
+		sg_ret copy_trackpoints_from(const TrackPoints::iterator & from_begin, const TrackPoints::iterator & from_end);
+
 
 		Coord * cut_back_to_double_point();
 
@@ -440,7 +442,7 @@ namespace SlavGPS {
 		TrackData make_values_distance_over_time_helper(void) const;
 		TrackData make_values_altitude_over_time_helper(void) const;
 
-		void copy_properties(const Track * from);
+		void copy_properties(const Track & from);
 
 		sg_ret draw_e_ft(Viewport * viewport, struct my_data * in_data);
 		sg_ret draw_d_ft(Viewport * viewport, struct my_data * in_data);

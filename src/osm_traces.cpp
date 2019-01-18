@@ -328,10 +328,12 @@ void OSMTracesUpload::run(void)
 	if (this->trk != NULL) {
 		/* Upload only the selected track. */
 		if (this->anonymize_times) {
-			Track * trk2 = new Track(*this->trk);
-			trk2->anonymize_times();
-			save_status = GPX::write_track_to_tmp_file(file_full_path, trk2, &options);
-			trk2->free();
+			/* Constructor only copies properties... */
+			Track anonymous(*this->trk);
+			/* therefore we have to do deep copy of trackpoints explicitly. */
+			anonymous.copy_trackpoints_from(this->trk->begin(), this->trk->end());
+			anonymous.anonymize_times();
+			save_status = GPX::write_track_to_tmp_file(file_full_path, &anonymous, &options);
 		} else {
 			save_status = GPX::write_track_to_tmp_file(file_full_path, this->trk, &options);
 		}

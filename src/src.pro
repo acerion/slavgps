@@ -109,6 +109,7 @@ SOURCES += main.cpp \
     layers_panel.cpp \
     toolbox.cpp \
     layer_trw_track.cpp \
+    layer_trw_track_split.cpp \
     layer_trw_track_properties_dialog.cpp \
     layer_trw_track_list_dialog.cpp \
     layer_trw_trackpoint_properties.cpp \

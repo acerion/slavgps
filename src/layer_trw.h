@@ -153,11 +153,6 @@ namespace SlavGPS {
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
 
 
-
-
-
-		bool create_new_tracks(Track * orig, std::list<TrackPoints *> * tracks_data);
-
 		sg_ret add_track(Track * trk);
 		sg_ret add_route(Track * trk);
 		sg_ret add_waypoint(Waypoint * wp);
