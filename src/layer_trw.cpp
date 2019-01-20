@@ -3312,7 +3312,7 @@ void LayerTRW::tpwin_update_dialog_data()
 	if (track) {
 		/* Notional center of a track is simply an average of its bounding box extremities. */
 		const LatLon ll_center = track->bbox.get_center_coordinate(); /* TODO_MAYBE: this variable is unused. */
-		this->tpwin->set_dialog_data(track, track->selected_tp_iter.iter, track->is_route());
+		this->tpwin->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
 	}
 }
 
@@ -3331,7 +3331,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		//this->tpwin->reject();
 		break;
 
-	case SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP:
+	case SG_TRACK_SPLIT_TRACK_AT_SELECTED_TP:
 		if (!track) {
 			break;
 		}
@@ -3341,7 +3341,7 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		this->tpwin_update_dialog_data();
 		break;
 
-	case SG_TRACK_DELETE_CURRENT_TP:
+	case SG_TRACK_DELETE_SELECTED_TP:
 		if (!track) {
 			return;
 		}

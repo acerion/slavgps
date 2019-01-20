@@ -82,7 +82,7 @@ namespace SlavGPS {
 
 	class TrackpointIter {
 	public:
-		bool valid = false;
+		bool iter_valid = false;
 		TrackPoints::iterator iter;
 	};
 

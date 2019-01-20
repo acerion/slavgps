@@ -179,7 +179,7 @@ namespace SlavGPS {
 		sg_ret set_initial_visible_range_x_time(void);
 		sg_ret set_initial_visible_range_y(void);
 
-		sg_ret get_position_of_tp(Track * trk, int idx, ScreenPos & screen_pos);
+		sg_ret get_position_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos);
 
 		sg_ret regenerate_data(Track * trk);
 		sg_ret regenerate_sizes(void);

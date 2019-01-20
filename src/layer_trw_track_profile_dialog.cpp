@@ -438,7 +438,7 @@ static bool set_center_at_graph_position(int event_x,
 	}
 
 	if (found) {
-		Trackpoint * tp = trk->get_tp(SELECTED);
+		Trackpoint * tp = trk->get_selected_tp();
 		main_viewport->set_center_from_coord(tp->coord);
 		trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
 	}
@@ -633,7 +633,7 @@ void real_time_label_update(ProfileView * graph, Track * trk)
 		return;
 	}
 
-	const Trackpoint * tp = trk->get_tp(CURRENT);
+	const Trackpoint * tp = trk->get_hovered_tp();
 	if (NULL == tp) {
 		return;
 	}
@@ -680,7 +680,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 
 	switch (graph->viewport2d->x_domain) {
 	case ViewportDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport2d->central->saved_width, &meters_from_start, CURRENT);
+		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport2d->central->saved_width, &meters_from_start, HOVERED);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
@@ -690,12 +690,12 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		break;
 
 	case ViewportDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport2d->central->saved_width, CURRENT);
+		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport2d->central->saved_width, HOVERED);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
 			time_t seconds_from_start = 0;
-			this->trk->get_tp_relative_timestamp(seconds_from_start, CURRENT);
+			this->trk->get_tp_relative_timestamp(seconds_from_start, HOVERED);
 			time_label_update(graph->labels.x_value, seconds_from_start);
 		}
 
@@ -717,9 +717,9 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		}
 		break;
 	case ViewportDomain::Elevation:
-		if (graph->labels.y_value && NULL != this->trk->get_tp(CURRENT)) {
+		if (graph->labels.y_value && NULL != this->trk->get_hovered_tp()) {
 			/* Recalculate value into target unit. */
-			graph->labels.y_value->setText(this->trk->get_tp(CURRENT)->altitude
+			graph->labels.y_value->setText(this->trk->get_hovered_tp()->altitude
 						       .convert_to_unit(Preferences::get_unit_height())
 						       .to_string());
 		}
@@ -848,12 +848,12 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 
 		for (int i = 0; i < w; i++) {
 			/* This could be slow doing this each time... */
-			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) w), CURRENT);
+			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) w), HOVERED);
 			if (!found_tp) {
 				continue;
 			}
 
-			const Trackpoint * tp = trk->get_tp(CURRENT);
+			const Trackpoint * tp = trk->get_hovered_tp();
 			const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
 			if (!elev.is_valid()) {
 				continue;
@@ -1204,7 +1204,7 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 
 
 
-sg_ret ProfileView::get_position_of_tp(Track * trk, int tp_idx, ScreenPos & screen_pos)
+sg_ret ProfileView::get_position_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos)
 {
 	double pc = NAN;
 
@@ -1252,7 +1252,7 @@ sg_ret TrackProfileDialog::draw_center(ProfileView * graph)
 
 		ScreenPos current_pos(-1.0, -1.0);
 		if (this->is_current_drawn) {
-			graph->get_position_of_tp(this->trk, CURRENT, current_pos);
+			graph->get_position_of_tp(this->trk, HOVERED, current_pos);
 		}
 
 		ScreenPos selected_pos;
@@ -1412,7 +1412,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		break;
 
 	case SG_TRACK_PROFILE_SPLIT_AT_MARKER:
-		ret = this->trk->split_at_trackpoint(SELECTED);
+		ret = this->trk->split_at_selected_trackpoint_cb();
 		if (sg_ret::ok != ret) {
 			Dialog::error(tr("Failed to split track. Track unchanged."), this->trw->get_window());
 			keep_dialog = true;
@@ -1591,7 +1591,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 	this->button_split_at_marker = this->button_box->addButton(tr("Split at &Marker"), QDialogButtonBox::ActionRole);
 	this->button_ok = this->button_box->addButton(tr("&OK"), QDialogButtonBox::AcceptRole);
 
-	this->button_split_at_marker->setEnabled(this->trk->get_tp(SELECTED) != NULL); /* Initially no trackpoint is selected. */
+	this->button_split_at_marker->setEnabled(this->trk->has_selected_tp()); /* Initially no trackpoint is selected. */
 
 	this->signal_mapper = new QSignalMapper(this);
 	connect(this->button_cancel,          SIGNAL (released()), signal_mapper, SLOT (map()));

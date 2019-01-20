@@ -356,8 +356,8 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 	this->signal_mapper->setMapping(this->button_close_dialog,      SG_TRACK_CLOSE_DIALOG);
 	this->signal_mapper->setMapping(this->button_insert_tp_after,   SG_TRACK_INSERT_TP_AFTER);
-	this->signal_mapper->setMapping(this->button_delete_current_tp, SG_TRACK_DELETE_CURRENT_TP);
-	this->signal_mapper->setMapping(this->button_split_track,       SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP);
+	this->signal_mapper->setMapping(this->button_delete_current_tp, SG_TRACK_DELETE_SELECTED_TP);
+	this->signal_mapper->setMapping(this->button_split_track,       SG_TRACK_SPLIT_TRACK_AT_SELECTED_TP);
 	this->signal_mapper->setMapping(this->button_go_back,           SG_TRACK_GO_BACK);
 	this->signal_mapper->setMapping(this->button_go_forward,        SG_TRACK_GO_FORWARD);
 

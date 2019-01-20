@@ -60,7 +60,7 @@ sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
 		return sg_ret::err_cond;
 	}
 
-	if (!tp.valid) {
+	if (!tp.iter_valid) {
 		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is invalid";
 		return sg_ret::err_cond;
 	}
@@ -91,105 +91,40 @@ sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
 
 
 	/* Process of determining ranges of trackpoints for new tracks. */
-	std::list<TrackPoints::iterator> iterators;
+	std::list<TrackPoints::iterator> split_iters;
 	{
 		int n = 0;
 
 		auto iter = this->trackpoints.begin();
-		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
 
 
 		iter = tp.iter;
-		iterators.push_back(TrackPoints::iterator(iter));
+		split_iters.push_back(TrackPoints::iterator(iter));
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n << "=" << (*iter)->timestamp;
 
 
 		iter = this->trackpoints.end();
-		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
 	}
 
 
 	/* Creation of new tracks. */
-	return this->split_at_iterators(iterators, parent_layer);
+	return this->split_at_iterators(split_iters, parent_layer);
 }
 
 
 
 
-sg_ret Track::split_at_trackpoint(tp_idx tp_idx)
-{
-	if (this->empty()) {
-		qDebug() << SG_PREFIX_N << "Can't split: track is empty";
-		return sg_ret::err_cond;
-	}
-
-	Trackpoint * tp = this->get_tp(tp_idx);
-	if (NULL == tp) {
-		qDebug() << SG_PREFIX_N << "Can't split: trackpoint with idx" << tp_idx << "is NULL";
-		return sg_ret::err_cond;
-	}
-
-
-	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-
-
-	/* Configuration dialog. */
-	{
-		/* None. */
-	}
-
-
-	/* Process of determining ranges of trackpoints for new tracks. */
-	std::list<TrackPoints::iterator> iterators;
-	{
-		int n = 0;
-
-		auto iter = this->trackpoints.begin();
-		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
-		n++;
-		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
-
-
-		iter = std::next(this->begin()); /* We can't start from first iter - that would result in no splitting at all. */
-		while (iter != this->end()) {
-			if (tp == *iter) { /* We are sure that tp belongs to this trk, so it's ok to compare by pointers. */
-				break;
-			}
-			iter++;
-		}
-		if (iter == this->end()) {
-			qDebug() << SG_PREFIX_E << "Failed to find trackpoint with idx" << tp_idx;
-			return sg_ret::err;
-		} else {
-			iterators.push_back(TrackPoints::iterator(iter));
-			n++;
-			qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n;
-		}
-
-
-		iter = this->trackpoints.end();
-		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
-		n++;
-		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
-	}
-
-
-	/* Creation of new tracks. */
-	return this->split_at_iterators(iterators, parent_layer);
-}
-
-
-
-
-sg_ret Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer)
+sg_ret Track::split_at_iterators(std::list<TrackPoints::iterator> & split_iters, LayerTRW * parent_layer)
 {
 	/* Only bother updating if the split results in new tracks. */
-	if (iterators.size() == 2) {
+	if (split_iters.size() == 2) {
 		/* Only two iterators: begin() and end() iterator to
 		   track's trackpoints. Not an error */
 		qDebug() << SG_PREFIX_I << "Not enough trackpoint ranges to split track";
@@ -197,14 +132,14 @@ sg_ret Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, L
 	}
 
 
-	auto iter = iterators.begin();
+	auto iter = split_iters.begin();
 	/* Skip first range of trackpoints. These trackpoints will be
 	   kept in original track. The rest of trackpoints (those from
 	   second, third etc. range) will go to newly created
 	   tracks. */
 	iter++;
 
-	for (; iter != std::prev(iterators.end()); iter++) {
+	for (; iter != std::prev(split_iters.end()); iter++) {
 
 		TrackPoints::iterator tp_iter_begin = *iter;
 		TrackPoints::iterator tp_iter_end = *std::next(iter);
@@ -232,7 +167,7 @@ sg_ret Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, L
 
 	/* Original track is not removed. It keeps those trackpoints
 	   that were described by first pair of iterators in
-	   @iterators list. Rest of trackpoints from the original
+	   @split_iters list. Rest of trackpoints from the original
 	   track have been transferred to new tracks. */
 
 
@@ -275,13 +210,13 @@ void Track::split_by_timestamp_cb(void)
 
 
 	/* Process of determining ranges of trackpoints for new tracks. */
-	std::list<TrackPoints::iterator> iterators;
+	std::list<TrackPoints::iterator> split_iters;
 	{
 		int n = 0;
 		time_t prev_ts = (*this->trackpoints.begin())->timestamp.get_value();
 
 		auto iter = this->trackpoints.begin();
-		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
 
@@ -300,7 +235,7 @@ void Track::split_by_timestamp_cb(void)
 
 			if (ts - prev_ts > threshold * 60) {
 				prev_ts = ts;
-				iterators.push_back(TrackPoints::iterator(iter));
+				split_iters.push_back(TrackPoints::iterator(iter));
 				n++;
 				qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n << "=" << (*iter)->timestamp;
 			}
@@ -308,14 +243,14 @@ void Track::split_by_timestamp_cb(void)
 
 
 		iter = this->trackpoints.end();
-		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
 	}
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(iterators, parent_layer);
+	this->split_at_iterators(split_iters, parent_layer);
 
 
 	return;
@@ -359,13 +294,13 @@ void Track::split_by_n_points_cb(void)
 
 
 	/* Process of determining ranges of trackpoints for new tracks. */
-	std::list<TrackPoints::iterator> iterators;
+	std::list<TrackPoints::iterator> split_iters;
 	{
 		int n = 0;
 		int tp_counter = -1;
 
 		auto iter = this->trackpoints.begin();
-		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
 
@@ -374,7 +309,7 @@ void Track::split_by_n_points_cb(void)
 			tp_counter++;
 			if (tp_counter >= n_points) {
 				tp_counter = 0;
-				iterators.push_back(TrackPoints::iterator(iter));
+				split_iters.push_back(TrackPoints::iterator(iter));
 				n++;
 				qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n;
 			}
@@ -382,14 +317,14 @@ void Track::split_by_n_points_cb(void)
 
 
 		iter = this->trackpoints.end();
-		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
 	}
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(iterators, parent_layer);
+	this->split_at_iterators(split_iters, parent_layer);
 
 
 	return;
@@ -427,12 +362,12 @@ void Track::split_by_segments_cb(void)
 
 
 	/* Process of determining ranges of trackpoints for new tracks. */
-	std::list<TrackPoints::iterator> iterators;
+	std::list<TrackPoints::iterator> split_iters;
 	{
 		int n = 0;
 
 		auto iter = this->trackpoints.begin();
-		iterators.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
 
@@ -451,14 +386,14 @@ void Track::split_by_segments_cb(void)
 
 		/* Don't let that first trackpoint with
 		   "Trackpoint::newsegment == true" be pushed to
-		   'iterators' twice (above as ::begin(), and below in
+		   'split_iters' twice (above as ::begin(), and below in
 		   the loop). */
 		iter++;
 
 
 		for (; iter != this->trackpoints.end(); iter++) {
 			if ((*iter)->newsegment) {
-				iterators.push_back(TrackPoints::iterator(iter));
+				split_iters.push_back(TrackPoints::iterator(iter));
 				n++;
 				qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n << "=" << (*iter)->timestamp;
 			}
@@ -466,14 +401,14 @@ void Track::split_by_segments_cb(void)
 
 
 		iter = this->trackpoints.end();
-		iterators.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
+		split_iters.push_back(TrackPoints::iterator(iter)); /* Last iterator on the list is always trackpoints.end(). */
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::end() iter" << n;
 	}
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(iterators, parent_layer);
+	this->split_at_iterators(split_iters, parent_layer);
 
 
 	return;

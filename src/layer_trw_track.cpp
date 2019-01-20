@@ -1609,9 +1609,10 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 
 
 /* By Alex Foobarian. */
-bool Track::select_tp_by_percentage_dist(double reldist, double *meters_from_start, int tp_index)
+bool Track::select_tp_by_percentage_dist(double reldist, double *meters_from_start, tp_idx tp_index)
 {
-	this->tps[tp_index] = NULL;
+	this->iterators[tp_index].iter_valid = false;
+
 	if (this->trackpoints.empty()) {
 		return false;
 	}
@@ -1639,7 +1640,8 @@ bool Track::select_tp_by_percentage_dist(double reldist, double *meters_from_sta
 			if (meters_from_start) {
 				*meters_from_start = last_dist;
 			}
-			this->tps[tp_index] = *last_iter;
+			this->iterators[tp_index].iter = last_iter;
+			this->iterators[tp_index].iter_valid = true;
 			return true;
 		} else {
 			return false;
@@ -1660,7 +1662,8 @@ bool Track::select_tp_by_percentage_dist(double reldist, double *meters_from_sta
 		}
 	}
 
-	this->tps[tp_index] = *iter;
+	this->iterators[tp_index].iter = iter;
+	this->iterators[tp_index].iter_valid = true;
 	return true;
 }
 
@@ -1669,7 +1672,7 @@ bool Track::select_tp_by_percentage_dist(double reldist, double *meters_from_sta
 
 bool Track::select_tp_by_percentage_time(double reltime, int tp_index)
 {
-	this->tps[tp_index] = NULL;
+	this->iterators[tp_index].iter_valid = false;
 	if (this->trackpoints.empty()) {
 		return false;
 	}
@@ -1710,16 +1713,17 @@ bool Track::select_tp_by_percentage_time(double reltime, int tp_index)
 
 
 
-	this->tps[tp_index] = *iter;
+	this->iterators[tp_index].iter_valid = true;
+	this->iterators[tp_index].iter = iter;
 	return true;
 }
 
 
 
 
-sg_ret Track::get_tp_relative_timestamp(time_t & seconds_from_start, int tp_index)
+sg_ret Track::get_tp_relative_timestamp(time_t & seconds_from_start, tp_idx tp_index)
 {
-	Trackpoint * tp = this->tps[tp_index];
+	Trackpoint * tp = this->get_tp(tp_index);
 	if (NULL == tp) {
 		return sg_ret::err;
 	}
@@ -3917,7 +3921,7 @@ void Track::refine_route_cb(void)
 
 sg_ret Track::create_tp_next_to_selected_tp(bool before)
 {
-	return this->create_tp_next_to_specified_tp(this->selected_tp_iter, before);
+	return this->create_tp_next_to_specified_tp(this->iterators[SELECTED], before);
 }
 
 
@@ -3937,7 +3941,7 @@ sg_ret Track::create_tp_next_to_selected_tp(bool before)
 */
 sg_ret Track::create_tp_next_to_specified_tp(const TrackpointIter & reference_tp, bool before)
 {
-	if (!reference_tp.valid) {
+	if (!reference_tp.iter_valid) {
 		return sg_ret::err;
 	}
 
@@ -4345,9 +4349,9 @@ sg_ret Track::update_tree_item_properties(void)
 
 
 
-double Track::get_tp_distance_percent(int idx) const
+double Track::get_tp_distance_percent(tp_idx tp_idx) const
 {
-	Trackpoint * tp = this->tps[idx];
+	Trackpoint * tp = this->get_tp(tp_idx);
 	if (tp == NULL) {
 		return NAN;
 	}
@@ -4374,9 +4378,9 @@ double Track::get_tp_distance_percent(int idx) const
 
 
 
-double Track::get_tp_time_percent(int idx) const
+double Track::get_tp_time_percent(tp_idx tp_idx) const
 {
-	const Trackpoint * tp = this->tps[idx];
+	const Trackpoint * tp = this->get_tp(tp_idx);
 	if (tp == NULL) {
 		return NAN;
 	}
@@ -4391,9 +4395,41 @@ double Track::get_tp_time_percent(int idx) const
 
 
 
-Trackpoint * Track::get_tp(int idx) const
+Trackpoint * Track::get_tp(tp_idx tp_idx) const
 {
-	return this->tps[idx];
+	switch (tp_idx) {
+	case SELECTED:
+		return this->get_selected_tp();
+	case HOVERED:
+		return this->get_hovered_tp();
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected tp index" << tp_idx;
+		return NULL;
+	}
+}
+
+
+
+
+Trackpoint * Track::get_selected_tp(void) const
+{
+	if (this->iterators[SELECTED].iter_valid) {
+		return *this->iterators[SELECTED].iter;
+	} else {
+		return NULL;
+	}
+}
+
+
+
+
+Trackpoint * Track::get_hovered_tp(void) const
+{
+	if (this->iterators[HOVERED].iter_valid) {
+		return *this->iterators[HOVERED].iter;
+	} else {
+		return NULL;
+	}
 }
 
 
@@ -4438,7 +4474,7 @@ sg_ret Track::get_timestamps(Time & ts_first, Time & ts_last) const
 */
 void Track::insert_point_after_cb(void)
 {
-	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->selected_tp_iter, false)) {
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->iterators[SELECTED], false)) {
 		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint after selected trackpoint";
 	} else {
 		this->emit_tree_item_changed("Track changed after inserting trackpoint 'after'");
@@ -4453,7 +4489,7 @@ void Track::insert_point_after_cb(void)
 */
 void Track::insert_point_before_cb(void)
 {
-	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->selected_tp_iter, true)) {
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->iterators[SELECTED], true)) {
 		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint before selected trackpoint";
 	} else {
 		this->emit_tree_item_changed("Track changed after inserting trackpoint 'before'");
@@ -4468,7 +4504,7 @@ void Track::insert_point_before_cb(void)
 */
 sg_ret Track::split_at_selected_trackpoint_cb(void)
 {
-	sg_ret ret = this->split_at_trackpoint(this->selected_tp_iter);
+	sg_ret ret = this->split_at_trackpoint(this->iterators[SELECTED]);
 	if (sg_ret::ok != ret) {
 		qDebug() << SG_PREFIX_W << "Failed to split track" << this->name << "at selected trackpoint";
 		return ret;
@@ -4488,7 +4524,7 @@ sg_ret Track::split_at_selected_trackpoint_cb(void)
 
 void LayerTRW::delete_selected_tp(Track * track)
 {
-	TrackPoints::iterator new_tp_iter = track->delete_trackpoint(track->selected_tp_iter.iter);
+	TrackPoints::iterator new_tp_iter = track->delete_trackpoint(track->iterators[SELECTED].iter);
 
 	if (new_tp_iter != track->end()) {
 		/* Set to current to the available adjacent trackpoint. */
@@ -4622,12 +4658,12 @@ sg_ret Track::move_selected_tp_forward(void)
 	if (!this->has_selected_tp()) {
 		return sg_ret::err_cond;
 	}
-	if (std::next(this->selected_tp_iter.iter) == this->end()) {
+	if (std::next(this->iterators[SELECTED].iter) == this->end()) {
 		/* Can't go forward if we are already at the end. */
 		return sg_ret::err_cond;
 	}
 
-	this->selected_tp_iter.iter++;
+	this->iterators[SELECTED].iter++;
 
 	return sg_ret::ok;
 }
@@ -4640,12 +4676,12 @@ sg_ret Track::move_selected_tp_back(void)
 	if (!this->has_selected_tp()) {
 		return sg_ret::err_cond;
 	}
-	if (this->selected_tp_iter.iter == this->begin()) {
+	if (this->iterators[SELECTED].iter == this->begin()) {
 		/* Can't go back if we are already at the beginning. */
 		return sg_ret::err_cond;
 	}
 
-	this->selected_tp_iter.iter--;
+	this->iterators[SELECTED].iter--;
 
 	return sg_ret::ok;
 }
@@ -4655,7 +4691,7 @@ sg_ret Track::move_selected_tp_back(void)
 
 bool Track::has_selected_tp(void) const
 {
-	return this->selected_tp_iter.valid;
+	return this->iterators[SELECTED].iter_valid;
 }
 
 
@@ -4663,8 +4699,8 @@ bool Track::has_selected_tp(void) const
 
 void Track::set_selected_tp(const TrackPoints::iterator & tp_iter)
 {
-	this->selected_tp_iter.iter = tp_iter;
-	this->selected_tp_iter.valid = true; /* TODO: calculate value of this field instead of assuming that the iter is always correct. */
+	this->iterators[SELECTED].iter = tp_iter;
+	this->iterators[SELECTED].iter_valid = true; /* TODO: calculate value of this field instead of assuming that the iter is always correct. */
 }
 
 
@@ -4672,19 +4708,7 @@ void Track::set_selected_tp(const TrackPoints::iterator & tp_iter)
 
 void Track::reset_selected_tp(void)
 {
-	this->selected_tp_iter.valid = false;
-}
-
-
-
-
-Trackpoint * Track::get_selected_tp(void) const
-{
-	if (this->selected_tp_iter.valid) {
-		return *this->selected_tp_iter.iter;
-	} else {
-		return NULL;
-	}
+	this->iterators[SELECTED].iter_valid = false;
 }
 
 

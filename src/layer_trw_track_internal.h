@@ -70,8 +70,8 @@ namespace SlavGPS {
 
 
 	enum tp_idx {
-		SELECTED = 0,
-		CURRENT = 1,
+		SELECTED = 0, /* Trackpoint which has been selected by clicking in 'track profile' widget. */
+		HOVERED = 1,  /* Trackpoint, over which a cursor is hovering (but not clicked) in 'track profile' widget. */
 	};
 
 
@@ -240,18 +240,12 @@ namespace SlavGPS {
 		unsigned int get_segment_count() const;
 
 
-		/* Split given track at trackpoint indicated by
-		   @idx. Original track stays in items tree, but
-		   transfers part of trackpoints (starting from
-		   trackpoint indicated by @idx) to new track. The new
-		   track is added to items tree and to the same parent
-		   layer, to which given track belongs. */
-		sg_ret split_at_trackpoint(tp_idx idx);
-
 		bool has_selected_tp(void) const;
 		void set_selected_tp(const TrackPoints::iterator & tp_iter);
 		void reset_selected_tp(void);
+		Trackpoint * get_tp(tp_idx tp_idx) const;
 		Trackpoint * get_selected_tp(void) const;
+		Trackpoint * get_hovered_tp(void) const;
 
 		bool is_selected(void) const;
 
@@ -292,10 +286,10 @@ namespace SlavGPS {
 		bool get_total_elevation_gain(Altitude & delta_up, Altitude & down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
 
-		bool select_tp_by_percentage_dist(double reldist, double *meters_from_start, int tp_index);
+		bool select_tp_by_percentage_dist(double reldist, double *meters_from_start, tp_idx tp_idx);
 		bool select_tp_by_percentage_time(double reldist, int tp_index);
 
-		sg_ret get_tp_relative_timestamp(time_t & seconds_from_start, int tp_index);
+		sg_ret get_tp_relative_timestamp(time_t & seconds_from_start, tp_idx tp_idx);
 
 		Trackpoint * get_tp_by_max_speed() const;
 		Trackpoint * get_tp_by_max_alt() const;
@@ -303,7 +297,6 @@ namespace SlavGPS {
 		Trackpoint * get_tp_first() const;
 		Trackpoint * get_tp_last() const;
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
-		Trackpoint * get_tp(int idx) const;
 
 		bool get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const;
 		bool get_distances(std::vector<double> & distances) const;
@@ -366,13 +359,13 @@ namespace SlavGPS {
 
 		   @return NAN on problems
 		*/
-		double get_tp_distance_percent(int idx) const;
+		double get_tp_distance_percent(tp_idx tp_idx) const;
 		/**
 		   @brief Return the percentage of how far a current trackpoint is along a track by time
 
 		   @return NAN on problems
 		*/
-		double get_tp_time_percent(int idx) const;
+		double get_tp_time_percent(tp_idx tp_idx) const;
 
 
 		TrackPoints::iterator erase_trackpoint(TrackPoints::iterator iter);
@@ -410,8 +403,7 @@ namespace SlavGPS {
 
 		LayerTRW * get_parent_layer_trw() const;
 
-		/* Track editing tool. */
-		TrackpointIter selected_tp_iter;
+		TrackpointIter iterators[2];
 
 		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;
@@ -451,7 +443,6 @@ namespace SlavGPS {
 		sg_ret draw_d_ft(Viewport * viewport, struct my_data * in_data);
 		sg_ret draw_v_ft(Viewport * viewport, struct my_data * in_data);
 
-
 		/**
 		   @brief Split track at given trackpoint iter
 
@@ -476,9 +467,6 @@ namespace SlavGPS {
 		   more than two (trackpoints::begin() and
 		   trackpoints::end()) iterators. */
 		sg_ret split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer);
-
-
-		Trackpoint * tps[2] = { NULL, NULL };
 
 		Speed max_speed;
 
