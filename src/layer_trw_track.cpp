@@ -3943,7 +3943,8 @@ sg_ret Track::create_tp_next_to_specified_tp(const TrackpointIter & reference_tp
 
 #if 1   /* Debug code. */
 	auto iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), *(reference_tp.iter));
-	assert (iter != this->trackpoints.end()); /* FIXME: this assertion fails after splitting a track, clicking on last tp of newly created track and hitting "insert tp after". */
+	qDebug() << "Will check assertion for track" << this->name;
+	assert (iter != this->trackpoints.end());
 #endif
 
 	Trackpoint * other_tp = NULL;

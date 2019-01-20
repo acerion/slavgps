@@ -51,8 +51,7 @@ using namespace SlavGPS;
    track contains trackpoints from tp+1 till the last tp of original
    track.
 
-   @return newly create track on success
-   @return NULL on errors
+   @return sg_ret status
 */
 sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
 {
@@ -115,10 +114,7 @@ sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(iterators, parent_layer);
-
-
-	return sg_ret::ok;
+	return this->split_at_iterators(iterators, parent_layer);
 }
 
 
@@ -183,23 +179,20 @@ sg_ret Track::split_at_trackpoint(tp_idx tp_idx)
 
 
 	/* Creation of new tracks. */
-	this->split_at_iterators(iterators, parent_layer);
-
-
-	return sg_ret::ok;
+	return this->split_at_iterators(iterators, parent_layer);
 }
 
 
 
 
-void Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer)
+sg_ret Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer)
 {
 	/* Only bother updating if the split results in new tracks. */
 	if (iterators.size() == 2) {
 		/* Only two iterators: begin() and end() iterator to
 		   track's trackpoints. Not an error */
 		qDebug() << SG_PREFIX_I << "Not enough trackpoint ranges to split track";
-		return;
+		return sg_ret::ok;
 	}
 
 
@@ -242,7 +235,12 @@ void Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, Lay
 	   track have been transferred to new tracks. */
 
 
-	parent_layer->emit_tree_item_changed("A TRW Track has been split into several tracks (by segment, in callback)");
+	this->emit_tree_item_changed("A TRW Track has been split into several tracks");
+
+	/* Track has been changed. Parent layer has to know about this. */
+	parent_layer->deselect_current_trackpoint(this);
+
+	return sg_ret::ok;
 }
 
 
@@ -326,8 +324,8 @@ void Track::split_by_timestamp_cb(void)
 
 
 /**
- * Split a track by the number of points as specified by the user
- */
+   Split a track by the number of points as specified by the user
+*/
 void Track::split_by_n_points_cb(void)
 {
 	if (this->empty()) {
@@ -395,6 +393,7 @@ void Track::split_by_n_points_cb(void)
 
 	return;
 }
+
 
 
 

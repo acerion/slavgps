@@ -249,21 +249,6 @@ namespace SlavGPS {
 		   layer, to which given track belongs. */
 		sg_ret split_at_trackpoint(tp_idx idx);
 
-		/* Split track at iterators. @iterators contains list
-		   of iterators to track's trackpoints container. Each
-		   range of iterators (with exception of first one)
-		   will be used to fill trackpoints container of new
-		   tracks.
-
-		   First element on @iterators should be
-		   trackpoints::begin().  Last element on @iterators
-		   should be trackpoints::end().
-
-		   The split will be performed only when there are
-		   more than two (trackpoints::begin() and
-		   trackpoints::end()) iterators. */
-		void split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer);
-
 		void smooth_it(bool flat);
 
 		unsigned int merge_segments(void);
@@ -457,6 +442,22 @@ namespace SlavGPS {
 		sg_ret draw_d_ft(Viewport * viewport, struct my_data * in_data);
 		sg_ret draw_v_ft(Viewport * viewport, struct my_data * in_data);
 
+		/* Split track at iterators. @iterators contains list
+		   of iterators to track's trackpoints container. Each
+		   range of iterators (with exception of first one)
+		   will be used to fill trackpoints container of new
+		   tracks.
+
+		   First element on @iterators should be
+		   trackpoints::begin().  Last element on @iterators
+		   should be trackpoints::end().
+
+		   The split will be performed only when there are
+		   more than two (trackpoints::begin() and
+		   trackpoints::end()) iterators. */
+		sg_ret split_at_iterators(std::list<TrackPoints::iterator> & iterators, LayerTRW * parent_layer);
+
+
 		Trackpoint * tps[2] = { NULL, NULL };
 
 		Speed max_speed;
@@ -511,6 +512,7 @@ namespace SlavGPS {
 		void split_by_timestamp_cb(void);
 		void split_by_n_points_cb(void);
 		void split_by_segments_cb(void);
+		void split_at_selected_trackpoint_cb(void);
 
 		void refine_route_cb(void);
 
@@ -519,7 +521,6 @@ namespace SlavGPS {
 
 		void insert_point_after_cb(void);
 		void insert_point_before_cb(void);
-		void split_at_selected_trackpoint_cb(void);
 
 		void delete_point_selected_cb(void);
 		void delete_points_same_position_cb(void);
