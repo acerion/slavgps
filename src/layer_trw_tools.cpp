@@ -185,9 +185,9 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 	} else if (select_tool->selected_tree_item_type_id == "sg.trw.track" || select_tool->selected_tree_item_type_id == "sg.trw.route") {
 
 		Track * track = this->get_edited_track();
-		if (track && track->selected_tp_iter.valid) {
+		if (track && track->has_selected_tp()) {
 			/* Don't reset the selected trackpoint, thus ensuring it's still presented in Trackpoint Properties window. */
-			(*track->selected_tp_iter.iter)->coord = new_coord;
+			track->get_selected_tp()->coord = new_coord;
 
 			track->recalculate_bbox();
 
@@ -353,7 +353,7 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 	/* Select the Trackpoint.
 	   Can move it immediately when control held or it's the previously selected tp. */
 	if (ev->modifiers() & Qt::ControlModifier
-	    || (current_selected_track && current_selected_track->selected_tp_iter.iter == tp_iter)) {
+	    || (track->is_selected() && track->get_selected_tp() == *tp_iter)) {
 
 		/* Remember position at which selection occurred. */
 		select_tool->remember_selection(ScreenPos(ev->x(), ev->y()));
@@ -709,7 +709,8 @@ bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent *
 	bool snapped = false;
 	if (ev->modifiers() & Qt::ControlModifier) {
 		const Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
-		if (tp && tp != *this->get_edited_track()->selected_tp_iter.iter) {
+		const Track * trk = this->get_edited_track();
+		if (tp && trk && trk->has_selected_tp() && tp != trk->get_selected_tp()) {
 			point_coord = tp->coord;
 			snapped = true;
 		}
@@ -1214,10 +1215,10 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 	Track * track = trw->get_edited_track();
 
-	if (track && track->selected_tp_iter.valid) {
+	if (track && track->has_selected_tp()) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 
-		Trackpoint * tp = *track->selected_tp_iter.iter;
+		const Trackpoint * tp = track->get_selected_tp();
 		const ScreenPos tp_pos = this->viewport->coord_to_screen_pos(tp->coord);
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
@@ -1280,7 +1281,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 	/* Snap to Trackpoint */
 	trw->get_nearby_snap_coordinates_tp(new_coord, ev, this->viewport);
 
-	// trw->selected_tp_iter.tp->coord = new_coord;
+	// trw->get_selected_tp()->coord = new_coord;
 
 	/* Selected item is being moved to new position. */
 	this->perform_move(this->viewport->coord_to_screen_pos(new_coord));
@@ -1293,6 +1294,8 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 
 ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
+	/* TODO: is this method called at all? */
+
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
@@ -1307,7 +1310,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 		return ToolStatus::Ignored;
 	}
 
-	Track * track = trw->get_edited_track(); /* This is the track, to which belongs the edited trackpoint. */
+	Track * track = trw->get_edited_track(); /* This is the track, to which belongs the edited trackpoint. TODO: how can we be sure that a trackpoint is selected? */
 	if (!track) {
 		/* Well, there was no track that was edited, so nothing to do here. */
 		return ToolStatus::Ignored;
@@ -1318,12 +1321,12 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 	/* Snap to trackpoint */
 	if (ev->modifiers() & Qt::ControlModifier) {
 		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
-		if (tp && tp != *track->selected_tp_iter.iter) {
+		if (tp && tp != track->get_selected_tp()) {
 			new_coord = tp->coord;
 		}
 	}
 
-	(*track->selected_tp_iter.iter)->coord = new_coord;
+	track->get_selected_tp()->coord = new_coord;
 	track->recalculate_bbox();
 
 	this->perform_release();

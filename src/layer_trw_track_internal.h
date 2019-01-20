@@ -239,7 +239,6 @@ namespace SlavGPS {
 		unsigned long get_tp_count() const;
 		unsigned int get_segment_count() const;
 
-		sg_ret split_at_trackpoint(const TrackpointIter & tp);
 
 		/* Split given track at trackpoint indicated by
 		   @idx. Original track stays in items tree, but
@@ -248,6 +247,16 @@ namespace SlavGPS {
 		   track is added to items tree and to the same parent
 		   layer, to which given track belongs. */
 		sg_ret split_at_trackpoint(tp_idx idx);
+
+		bool has_selected_tp(void) const;
+		void set_selected_tp(const TrackPoints::iterator & tp_iter);
+		void reset_selected_tp(void);
+		Trackpoint * get_selected_tp(void) const;
+
+		bool is_selected(void) const;
+
+		sg_ret move_selected_tp_forward(void);
+		sg_ret move_selected_tp_back(void);
 
 		void smooth_it(bool flat);
 
@@ -442,6 +451,17 @@ namespace SlavGPS {
 		sg_ret draw_d_ft(Viewport * viewport, struct my_data * in_data);
 		sg_ret draw_v_ft(Viewport * viewport, struct my_data * in_data);
 
+
+		/**
+		   @brief Split track at given trackpoint iter
+
+		   @param tp - trackpoint iter
+
+		   @return sg_ret::ok if split has been performed
+		   @return other value on errors or if split can't be performed
+		*/
+		sg_ret split_at_trackpoint(const TrackpointIter & tp);
+
 		/* Split track at iterators. @iterators contains list
 		   of iterators to track's trackpoints container. Each
 		   range of iterators (with exception of first one)
@@ -512,7 +532,7 @@ namespace SlavGPS {
 		void split_by_timestamp_cb(void);
 		void split_by_n_points_cb(void);
 		void split_by_segments_cb(void);
-		void split_at_selected_trackpoint_cb(void);
+		sg_ret split_at_selected_trackpoint_cb(void);
 
 		void refine_route_cb(void);
 

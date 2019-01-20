@@ -43,6 +43,7 @@ namespace SlavGPS {
 
 	/* Function return value. */
 	enum class sg_ret : int {
+		err_cond,  /* Conditions necessary to perform operation were not met. */
 		err_algo,  /* Function algorithm error. */
 		err_arg,   /* Function arguments error. */
 		err,       /* General error. */

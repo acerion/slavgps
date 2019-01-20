@@ -3295,8 +3295,8 @@ void LayerTRW::cancel_current_tp(bool destroy)
 	}
 
 	Track * track = this->get_edited_track();
-	if (track && track->selected_tp_iter.valid) {
-		track->selected_tp_iter.valid = false;
+	if (track && track->has_selected_tp()) {
+		track->reset_selected_tp();
 		this->reset_edited_track();
 
 		this->emit_tree_item_changed("TRW - cancel current tp");
@@ -3331,39 +3331,26 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		//this->tpwin->reject();
 		break;
 
-	case SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP: {
+	case SG_TRACK_SPLIT_TRACK_AT_CURRENT_TP:
 		if (!track) {
-			return;
-		}
-		if (!track->selected_tp_iter.valid) {
-			return;
-		}
-		if (track->selected_tp_iter.iter == track->begin()) {
-			/* Can't split track at first trackpoint in track. */
 			break;
 		}
-		if (std::next(track->selected_tp_iter.iter) == track->end()) {
-			/* Can't split track at last trackpoint in track. */
+		if (sg_ret::ok != track->split_at_selected_trackpoint_cb()) {
 			break;
-		}
-
-		if (sg_ret::ok != track->split_at_trackpoint(track->selected_tp_iter)) {
-			qDebug() << SG_PREFIX_E << "Failed to split track" << track->name << "at trackpoint";
 		}
 		this->tpwin_update_dialog_data();
-		}
 		break;
 
 	case SG_TRACK_DELETE_CURRENT_TP:
 		if (!track) {
 			return;
 		}
-		if (!track->selected_tp_iter.valid) {
+		if (!track->has_selected_tp()) {
 			return;
 		}
 		this->delete_selected_tp(track);
 
-		if (track->selected_tp_iter.valid) {
+		if (track->has_selected_tp()) {
 			/* Update Trackpoint Properties with the available adjacent trackpoint. */
 			this->tpwin_update_dialog_data();
 		}
@@ -3375,36 +3362,24 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 		if (!track) {
 			break;
 		}
-		if (!track->selected_tp_iter.valid) {
-			return;
-		}
-		if (std::next(track->selected_tp_iter.iter) == track->end()) {
-			/* Can't go forward if we are already at the end. */
+		if (sg_ret::ok != track->move_selected_tp_forward()) {
 			break;
 		}
 
-		track->selected_tp_iter.iter++;
 		this->tpwin_update_dialog_data();
 		this->emit_tree_item_changed("TRW - trackpoint properties - go forward"); /* TODO_LATER longone: either move or only update if tp is inside drawing window */
-
 		break;
 
 	case SG_TRACK_GO_BACK:
 		if (!track) {
 			break;
 		}
-		if (!track->selected_tp_iter.valid) {
-			return;
-		}
-		if (track->selected_tp_iter.iter == track->begin()) {
-			/* Can't go back if we are already at the beginning. */
+		if (sg_ret::ok != track->move_selected_tp_back()) {
 			break;
 		}
 
-		track->selected_tp_iter.iter--;
 		this->tpwin_update_dialog_data();
 		this->emit_tree_item_changed("TRW - trackpoint properties - go back");
-
 		break;
 
 	case SG_TRACK_INSERT_TP_AFTER:
@@ -3441,9 +3416,9 @@ void LayerTRW::trackpoint_properties_show()
 
 
 	Track * track = this->get_edited_track();
-	if (track && track->selected_tp_iter.valid) {
+	if (track && track->has_selected_tp()) {
 		/* Get tp pixel position. */
-		Trackpoint * tp = *track->selected_tp_iter.iter;
+		const Trackpoint * tp = track->get_selected_tp();
 
 		/* Shift up/down to try not to obscure the trackpoint. */
 		const GlobalPoint point_to_expose = SGUtils::coord_to_global_point(tp->coord, ThisApp::get_main_viewport());
@@ -3903,8 +3878,7 @@ void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_
 	}
 
 	this->current_track_ = track;
-	this->current_track_->selected_tp_iter.iter = tp_iter;
-	this->current_track_->selected_tp_iter.valid = true;
+	this->current_track_->set_selected_tp(tp_iter);
 }
 
 
@@ -3919,7 +3893,7 @@ void LayerTRW::set_edited_track(Track * track)
 	}
 
 	this->current_track_ = track;
-	this->current_track_->selected_tp_iter.valid = false;
+	this->current_track_->reset_selected_tp();
 }
 
 

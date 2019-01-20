@@ -2701,7 +2701,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = split_submenu->addAction(tr("Split at Selected &Trackpoint"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_at_selected_trackpoint_cb()));
 		/* Make it available only when a trackpoint is selected. */
-		qa->setEnabled(track && track->selected_tp_iter.valid);
+		qa->setEnabled(track && track->has_selected_tp());
 	}
 
 
@@ -2712,12 +2712,12 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &Before Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_before_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->selected_tp_iter.valid);
+		qa->setEnabled(track && track->has_selected_tp());
 
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &After Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_after_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && this->selected_tp_iter.valid);
+		qa->setEnabled(track && this->has_selected_tp());
 	}
 
 
@@ -2727,7 +2727,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), tr("Delete &Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_point_selected_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->selected_tp_iter.valid);
+		qa->setEnabled(track && track->has_selected_tp());
 
 		qa = delete_submenu->addAction(tr("Delete Points With The Same &Position"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_points_same_position_cb()));
@@ -2912,7 +2912,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	/* Only show in viewport context menu, and only when a trackpoint is selected. */
-	if (!tree_view_context_menu && this->selected_tp_iter.valid) {
+	if (!tree_view_context_menu && this->has_selected_tp()) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
@@ -3255,9 +3255,9 @@ void Track::open_diary_cb(void)
 void Track::open_astro_cb(void)
 {
 	Trackpoint * tp = NULL;
-	if (this->selected_tp_iter.valid) {
+	if (this->has_selected_tp()) {
 		/* Current trackpoint. */
-		tp = *this->selected_tp_iter.iter;
+		tp = this->get_selected_tp();
 
 	} else if (!this->empty()) {
 		/* Otherwise first trackpoint. */
@@ -4466,13 +4466,17 @@ void Track::insert_point_before_cb(void)
 /**
    Split a track at the currently selected trackpoint
 */
-void Track::split_at_selected_trackpoint_cb(void)
+sg_ret Track::split_at_selected_trackpoint_cb(void)
 {
-	if (sg_ret::ok != this->split_at_trackpoint(this->selected_tp_iter)) {
-		qDebug() << SG_PREFIX_E << "Failed to split track" << this->name << "at selected trackpoint";
-	} else {
-		this->emit_tree_item_changed("Track changed after splitting at selected trackpoint");
+	sg_ret ret = this->split_at_trackpoint(this->selected_tp_iter);
+	if (sg_ret::ok != ret) {
+		qDebug() << SG_PREFIX_W << "Failed to split track" << this->name << "at selected trackpoint";
+		return ret;
 	}
+
+	this->emit_tree_item_changed("Track changed after splitting at selected trackpoint");
+
+	return sg_ret::ok;
 }
 
 
@@ -4488,7 +4492,7 @@ void LayerTRW::delete_selected_tp(Track * track)
 
 	if (new_tp_iter != track->end()) {
 		/* Set to current to the available adjacent trackpoint. */
-		track->selected_tp_iter.iter = new_tp_iter;
+		track->set_selected_tp(new_tp_iter);
 		track->recalculate_bbox();
 	} else {
 		this->cancel_current_tp(false);
@@ -4503,7 +4507,7 @@ void LayerTRW::delete_selected_tp(Track * track)
 */
 void Track::delete_point_selected_cb(void)
 {
-	if (!this->selected_tp_iter.valid) {
+	if (!this->has_selected_tp()) {
 		return;
 	}
 
@@ -4608,4 +4612,86 @@ bool Track::is_route(void) const
 bool Track::is_track(void) const
 {
 	return this->type_id == "sg.trw.track";
+}
+
+
+
+
+sg_ret Track::move_selected_tp_forward(void)
+{
+	if (!this->has_selected_tp()) {
+		return sg_ret::err_cond;
+	}
+	if (std::next(this->selected_tp_iter.iter) == this->end()) {
+		/* Can't go forward if we are already at the end. */
+		return sg_ret::err_cond;
+	}
+
+	this->selected_tp_iter.iter++;
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret Track::move_selected_tp_back(void)
+{
+	if (!this->has_selected_tp()) {
+		return sg_ret::err_cond;
+	}
+	if (this->selected_tp_iter.iter == this->begin()) {
+		/* Can't go back if we are already at the beginning. */
+		return sg_ret::err_cond;
+	}
+
+	this->selected_tp_iter.iter--;
+
+	return sg_ret::ok;
+}
+
+
+
+
+bool Track::has_selected_tp(void) const
+{
+	return this->selected_tp_iter.valid;
+}
+
+
+
+
+void Track::set_selected_tp(const TrackPoints::iterator & tp_iter)
+{
+	this->selected_tp_iter.iter = tp_iter;
+	this->selected_tp_iter.valid = true; /* TODO: calculate value of this field instead of assuming that the iter is always correct. */
+}
+
+
+
+
+void Track::reset_selected_tp(void)
+{
+	this->selected_tp_iter.valid = false;
+}
+
+
+
+
+Trackpoint * Track::get_selected_tp(void) const
+{
+	if (this->selected_tp_iter.valid) {
+		return *this->selected_tp_iter.iter;
+	} else {
+		return NULL;
+	}
+}
+
+
+
+
+bool Track::is_selected(void) const
+{
+	LayerTRW * trw = this->get_parent_layer_trw();
+	return trw->get_edited_track() == this;
 }

@@ -472,8 +472,8 @@ QPen LayerTRWPainter::get_track_fg_pen(Track * trk, bool do_highlight)
 {
 	QPen result;
 
-	if (trk == this->trw->get_edited_track()) {
-		/* The track is being created by user, it gets a special pen. */
+	if (trk->is_selected()) {
+		/* The track is highlighted/selected user, it gets a special pen. */
 		result = this->current_track_pen;
 	} else if (do_highlight) {
 		/* Draw all tracks of the layer in 'highlight' color.
@@ -495,6 +495,14 @@ QPen LayerTRWPainter::get_track_fg_pen(Track * trk, bool do_highlight)
 	}
 
 	return result;
+}
+
+
+
+
+static bool tp_is_selected(const Track * trk, const Trackpoint * tp)
+{
+	return trk->has_selected_tp() && tp == trk->get_selected_tp();
 }
 
 
@@ -530,9 +538,10 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	const int tp_size_cur = this->trackpoint_size * 2;
 
 	auto iter = trk->trackpoints.begin();
+	Trackpoint * tp = *iter;
 
-	Track * selected_track = this->trw->get_edited_track();
-	int tp_size = (selected_track && selected_track->selected_tp_iter.valid && *iter == *selected_track->selected_tp_iter.iter) ? tp_size_cur : tp_size_reg;
+	const bool trk_is_selected = trk->is_selected();
+	int tp_size = (trk_is_selected && tp_is_selected(trk, tp)) ? tp_size_cur : tp_size_reg;
 
 	ScreenPos curr_pos = this->viewport->coord_to_screen_pos((*iter)->coord);
 
@@ -564,10 +573,10 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	iter++; /* Because first Trackpoint has been drawn above. */
 
 	for (; iter != trk->trackpoints.end(); iter++) {
-		Trackpoint * tp = *iter;
+		tp = *iter;
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 
-		tp_size = (selected_track && selected_track->selected_tp_iter.valid && tp == *selected_track->selected_tp_iter.iter) ? tp_size_cur : tp_size_reg;
+		tp_size = (trk_is_selected && tp_is_selected(trk, tp)) ? tp_size_cur : tp_size_reg;
 
 
 		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).

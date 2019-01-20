@@ -1051,7 +1051,7 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 		qDebug() << SG_PREFIX_W << "Track with empty name, deleting anyway";
 	}
 
-	if (trk == parent_layer->get_edited_track()) {
+	if (trk->is_selected()) {
 		parent_layer->reset_edited_track();
 		parent_layer->moving_tp = false;
 		parent_layer->route_finder_started = false;

@@ -56,24 +56,25 @@ using namespace SlavGPS;
 sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
 {
 	if (this->empty()) {
-		qDebug() << SG_PREFIX_I << "Can't split: track is empty";
-		return sg_ret::err;
+		qDebug() << SG_PREFIX_N << "Can't split: track is empty";
+		return sg_ret::err_cond;
 	}
 
 	if (!tp.valid) {
-		return sg_ret::err;
+		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is invalid";
+		return sg_ret::err_cond;
 	}
 
 	if (tp.iter == this->begin()) {
 		/* First TP in track. Don't split. This function shouldn't be called at all. */
-		qDebug() << SG_PREFIX_W << "Attempting to split track on first tp";
-		return sg_ret::err;
+		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is first trackpoint";
+		return sg_ret::err_cond;
 	}
 
 	if (tp.iter == std::prev(this->end())) {
 		/* Last TP in track. Don't split. This function shouldn't be called at all. */
-		qDebug() << SG_PREFIX_W << "Attempting to split track on last tp";
-		return sg_ret::err;
+		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is last trackpoint";
+		return sg_ret::err_cond;
 	}
 
 	/* TODO_LATER: make sure that tp is a member of this track. */
@@ -123,14 +124,14 @@ sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
 sg_ret Track::split_at_trackpoint(tp_idx tp_idx)
 {
 	if (this->empty()) {
-		qDebug() << SG_PREFIX_I << "Can't split: track is empty";
-		return sg_ret::err;
+		qDebug() << SG_PREFIX_N << "Can't split: track is empty";
+		return sg_ret::err_cond;
 	}
 
 	Trackpoint * tp = this->get_tp(tp_idx);
 	if (NULL == tp) {
-		qDebug() << SG_PREFIX_E << "Trackpoint with idx" << tp_idx << "is NULL";
-		return sg_ret::err;
+		qDebug() << SG_PREFIX_N << "Can't split: trackpoint with idx" << tp_idx << "is NULL";
+		return sg_ret::err_cond;
 	}
 
 
@@ -192,7 +193,7 @@ sg_ret Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, L
 		/* Only two iterators: begin() and end() iterator to
 		   track's trackpoints. Not an error */
 		qDebug() << SG_PREFIX_I << "Not enough trackpoint ranges to split track";
-		return sg_ret::ok;
+		return sg_ret::err_cond;
 	}
 
 

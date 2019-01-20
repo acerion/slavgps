@@ -1397,6 +1397,7 @@ void TrackProfileDialog::destroy_cb(void) /* Slot. */
 void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 {
 	bool keep_dialog = false;
+	sg_ret ret = sg_ret::err;
 
 	/* Note: destroying dialog (eg, parent window exit) won't give "response". */
 	switch (resp) {
@@ -1411,11 +1412,13 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		break;
 
 	case SG_TRACK_PROFILE_SPLIT_AT_MARKER:
-		if (sg_ret::ok != this->trk->split_at_trackpoint(SELECTED)) {
-			Dialog::error(tr("Failed to split track. Track unchanged"), this->trw->get_window());
+		ret = this->trk->split_at_trackpoint(SELECTED);
+		if (sg_ret::ok != ret) {
+			Dialog::error(tr("Failed to split track. Track unchanged."), this->trw->get_window());
 			keep_dialog = true;
+		} else {
+			this->trw->emit_tree_item_changed("A TRW Track has been split into several tracks (at marker)");
 		}
-		this->trw->emit_tree_item_changed("A TRW Track has been split into several tracks (at marker)");
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Dialog response slot: unknown response" << resp;
