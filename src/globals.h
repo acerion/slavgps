@@ -46,7 +46,7 @@ namespace SlavGPS {
 		err_algo,  /* Function algorithm error. */
 		err_arg,   /* Function arguments error. */
 		err,       /* General error. */
-		ok = 0,
+		ok = 0,    /* Function completed without errors. */
 	};
 
 
