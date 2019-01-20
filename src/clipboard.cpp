@@ -305,7 +305,7 @@ static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 	if (selected && selected->type == LayerType::TRW) {
 		((LayerTRW *) selected)->new_waypoint(Coord(lat_lon, CoordMode::LatLon), selected->get_window());
 		((LayerTRW *) selected)->get_waypoints_node().recalculate_bbox();
-		selected->emit_layer_changed("Clipboard - add wp");
+		selected->emit_tree_item_changed("Clipboard - add wp");
 	} else {
 		Dialog::error(QObject::tr("In order to paste a waypoint, please select an appropriate layer to paste into."), ThisApp::get_main_window());
 	}

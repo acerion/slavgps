@@ -440,7 +440,7 @@ static bool set_center_at_graph_position(int event_x,
 	if (found) {
 		Trackpoint * tp = trk->get_tp(SELECTED);
 		main_viewport->set_center_from_coord(tp->coord);
-		trw->emit_layer_changed("TRW - Track Profile Dialog - set center");
+		trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
 	}
 	return found;
 }
@@ -1406,7 +1406,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 
 	case SG_TRACK_PROFILE_OK:
 		this->trk->update_tree_item_properties();
-		this->trw->emit_layer_changed("TRW - Track Profile Dialog - Profile OK");
+		this->trw->emit_tree_item_changed("TRW - Track Profile Dialog - Profile OK");
 		this->accept();
 		break;
 
@@ -1415,7 +1415,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 			Dialog::error(tr("Failed to split track. Track unchanged"), this->trw->get_window());
 			keep_dialog = true;
 		}
-		this->trw->emit_layer_changed("A TRW Track has been split into several tracks (at marker)");
+		this->trw->emit_tree_item_changed("A TRW Track has been split into several tracks (at marker)");
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Dialog response slot: unknown response" << resp;

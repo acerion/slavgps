@@ -152,7 +152,7 @@ namespace SlavGPS {
 		QString get_current_document_file_name(void);
 
 
-		static void set_redraw_trigger(Layer * layer);
+		void set_redraw_trigger(TreeItem * tree_item);
 
 		void activate_tool_by_id(const QString & tool_id);
 
@@ -330,7 +330,7 @@ namespace SlavGPS {
 		QMenu * submenu_file_acquire = NULL;
 
 		/* Half-drawn update. */
-		Layer * trigger = NULL;
+		TreeItem * redraw_trigger = NULL;
 		Coord trigger_center;
 
 		QString current_document_full_path;

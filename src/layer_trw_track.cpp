@@ -53,6 +53,7 @@
 #include "layer_trw.h"
 #include "layer_trw_painter.h"
 #include "layer_trw_geotag.h"
+#include "layer_trw_tools.h"
 #include "window.h"
 #include "dialog.h"
 #include "layers_panel.h"
@@ -298,7 +299,7 @@ Track::Track(bool is_route)
 
    The constructor only copies properties, but does not copy nor move trackpoints.
 */
-Track::Track(const Track & from) : Track(from.type_id == "sg.trw.route")
+Track::Track(const Track & from) : Track(from.is_route())
 {
 	this->tree_item_type = TreeItemType::Sublayer;
 	this->copy_properties(from);
@@ -1999,7 +2000,7 @@ Track * Track::unmarshall(Pickle & pickle)
 	const QString type_id = pickle.take_string();
 
 #ifdef K_TODO_LATER
-	Track * new_trk = new Track(((Track *)pickle.data)->type_id == "sg.trw.route");
+	Track * new_trk = new Track(((Track *)pickle.data)->is_route());
 	/* Basic properties: */
 	new_trk->visible = ((Track *)pickle.data)->visible;
 	new_trk->draw_name_mode = ((Track *)pickle.data)->draw_name_mode;
@@ -2598,13 +2599,13 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 #if 1
 		/* Consistency check. */
 		if (!track) {
-			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 1";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 1: edited item does not exist";
 		}
-		if (track->type_id != "sg.trw.track") {
-			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 2";
+		if (!track->is_track()) {
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 2: expected edited item to be track";
 		}
-		if (this->type_id != "sg.trw.track") {
-			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 3";
+		if (!this->is_track()) {
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 3: expected this item to be track";
 		}
 #endif
 
@@ -2616,19 +2617,19 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 #if 1
 		/* Consistency check. */
 		if (!track) {
-			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 4";
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 4: edited item does not exist";
 		}
-		if (track->type_id != "sg.trw.route") {
-			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 5";
+		if (!track->is_route()) {
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 5: expected edited item to be route";
 		}
-		if (this->type_id != "sg.trw.route") {
-			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 6";
+		if (!this->is_route()) {
+			qDebug() << SG_PREFIX_E << "Track: menu: inconsistency 6: expected this item to be route";
 		}
 #endif
 
 	}
 
-	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), this->type_id == "sg.trw.track" ? tr("&View Track") : tr("&View Route"));
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), this->is_track() ? tr("&View Track") : tr("&View Route"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (rezoom_to_show_full_cb()));
 
 	{
@@ -2650,9 +2651,9 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_min_alt_cb()));
 
 		/* Routes don't have speeds. */
-		if (this->type_id == "sg.trw.track") {
+		if (this->is_track()) {
 			qa = goto_submenu->addAction(QIcon::fromTheme("media-seek-forward"), tr("&Maximum Speed"));
-			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (goto_max_speed_cb()));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_max_speed_cb()));
 		}
 	}
 
@@ -2661,7 +2662,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		QMenu * combine_submenu = menu.addMenu(QIcon::fromTheme("CONNECT"), tr("Co&mbine"));
 
 		/* Routes don't have times or segments... */
-		if (this->type_id == "sg.trw.track") {
+		if (this->is_track()) {
 			qa = combine_submenu->addAction(tr("&Merge By Time..."));
 			connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (merge_by_timestamp_cb()));
 
@@ -2672,10 +2673,10 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = combine_submenu->addAction(tr("Merge &With Other Tracks..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (merge_with_other_cb()));
 
-		qa = combine_submenu->addAction(this->type_id == "sg.trw.track" ? tr("&Append Track...") : tr("&Append Route..."));
+		qa = combine_submenu->addAction(this->is_track() ? tr("&Append Track...") : tr("&Append Route..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (append_track_cb()));
 
-		qa = combine_submenu->addAction(this->type_id == "sg.trw.track" ? tr("Append &Route...") : tr("Append &Track..."));
+		qa = combine_submenu->addAction(this->is_track() ? tr("Append &Route...") : tr("Append &Track..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (append_other_cb()));
 	}
 
@@ -2685,7 +2686,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		QMenu * split_submenu = menu.addMenu(QIcon::fromTheme("DISCONNECT"), tr("&Split"));
 
 		/* Routes don't have times or segments... */
-		if (this->type_id == "sg.trw.track") {
+		if (this->is_track()) {
 			qa = split_submenu->addAction(tr("&Split By Time..."));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_timestamp_cb()));
 
@@ -2697,8 +2698,8 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = split_submenu->addAction(tr("Split By &Number of Points..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_n_points_cb()));
 
-		qa = split_submenu->addAction(tr("Split at &Trackpoint"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (split_at_trackpoint_cb()));
+		qa = split_submenu->addAction(tr("Split at Selected &Trackpoint"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_at_selected_trackpoint_cb()));
 		/* Make it available only when a trackpoint is selected. */
 		qa->setEnabled(track && track->selected_tp_iter.valid);
 	}
@@ -2709,14 +2710,14 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		QMenu * insert_submenu = menu.addMenu(QIcon::fromTheme("list-add"), tr("&Insert Points"));
 
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &Before Selected Point"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_before_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_before_cb()));
 		/* Make it available only when a point is selected. */
 		qa->setEnabled(track && track->selected_tp_iter.valid);
 
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &After Selected Point"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (insert_point_after_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_after_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->selected_tp_iter.valid);
+		qa->setEnabled(track && this->selected_tp_iter.valid);
 	}
 
 
@@ -2724,15 +2725,15 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		QMenu * delete_submenu = menu.addMenu(QIcon::fromTheme("list-delete"), tr("Delete Poi&nts"));
 
 		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), tr("Delete &Selected Point"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_point_selected_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_point_selected_cb()));
 		/* Make it available only when a point is selected. */
 		qa->setEnabled(track && track->selected_tp_iter.valid);
 
 		qa = delete_submenu->addAction(tr("Delete Points With The Same &Position"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_points_same_position_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_points_same_position_cb()));
 
 		qa = delete_submenu->addAction(tr("Delete Points With The Same &Time"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (delete_points_same_time_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_points_same_time_cb()));
 	}
 
 	{
@@ -2761,11 +2762,11 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 			qa->setToolTip(tr("Set unknown elevation values to the last known value"));
 		}
 
-		qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), this->type_id == "sg.trw.track" ? tr("C&onvert to a Route") : tr("C&onvert to a Track"));
+		qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), this->is_track() ? tr("C&onvert to a Route") : tr("C&onvert to a Track"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (convert_track_route_cb()));
 
 		/* Routes don't have timestamps - so these are only available for tracks. */
-		if (this->type_id == "sg.trw.track") {
+		if (this->is_track()) {
 			qa = transform_submenu->addAction(tr("&Anonymize Times"));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (anonymize_times_cb()));
 			qa->setToolTip(tr("Shift timestamps to a relative offset from 1901-01-01"));
@@ -2777,29 +2778,29 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 	}
 
 
-	qa = menu.addAction(QIcon::fromTheme("go-back"), this->type_id == "sg.trw.track" ? tr("&Reverse Track") : tr("&Reverse Route"));
+	qa = menu.addAction(QIcon::fromTheme("go-back"), this->is_track() ? tr("&Reverse Track") : tr("&Reverse Route"));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (reverse_cb()));
 
-	if (this->type_id == "sg.trw.route") {
+	if (this->is_route()) {
 		qa = menu.addAction(QIcon::fromTheme("edit-find"), tr("Refine Route..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (refine_route_cb()));
 	}
 
 	/* ATM Parent_Layer_ function is only available via the layers panel, due to the method in finding out the maps in use. */
 	if (ThisApp::get_layers_panel()) {
-		qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), this->type_id == "sg.trw.track" ? tr("Down&load Maps Along Track...") : tr("Down&load Maps Along Route..."));
+		qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), this->is_track() ? tr("Down&load Maps Along Track...") : tr("Down&load Maps Along Route..."));
 		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (download_map_along_track_cb()));
 	}
 
-	qa = menu.addAction(QIcon::fromTheme("document-save-as"), this->type_id == "sg.trw.track" ? tr("&Export Track as GPX...") : tr("&Export Route as GPX..."));
+	qa = menu.addAction(QIcon::fromTheme("document-save-as"), this->is_track() ? tr("&Export Track as GPX...") : tr("&Export Route as GPX..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (export_track_as_gpx_cb()));
 
-	qa = menu.addAction(QIcon::fromTheme("list-add"), this->type_id == "sg.trw.track" ? tr("E&xtend Track End") : tr("E&xtend Route End"));
-	connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (extend_track_end_cb()));
+	qa = menu.addAction(QIcon::fromTheme("list-add"), this->is_track() ? tr("E&xtend Track End") : tr("E&xtend Route End"));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (extend_track_end_cb()));
 
-	if (this->type_id == "sg.trw.route") {
+	if (this->is_route()) {
 		qa = menu.addAction(QIcon::fromTheme("vik-icon-Route Finder"), tr("Extend &Using Route Finder"));
-		connect(qa, SIGNAL (triggered(bool)), parent_layer_, SLOT (extend_track_end_route_finder_cb()));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (extend_track_end_route_finder_cb()));
 	}
 
 	/* ATM can't upload a single waypoint but can do waypoints to a GPS.
@@ -2854,7 +2855,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QObject::tr("Delete"));
 		qa->setData((unsigned int) this->get_uid());
-		if (this->type_id == "sg.trw.track") {
+		if (this->is_track()) {
 			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_track_cb()));
 		} else {
 			QObject::connect(qa, SIGNAL (triggered(bool)), parent_layer, SLOT (delete_route_cb()));
@@ -2869,7 +2870,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 	/* These are only made available if a suitable program is installed. */
 	if ((g_have_astro_program || g_have_diary_program)
-	    && this->type_id == "sg.trw.track") {
+	    && this->is_track()) {
 
 		if (g_have_diary_program) {
 			qa = external_submenu->addAction(QIcon::fromTheme("SPELL_CHECK"), QObject::tr("&Diary"));
@@ -2892,7 +2893,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 #ifdef VIK_CONFIG_GOOGLE
-	if (this->type_id == "sg.trw.route" && (this->is_valid_google_route())) {
+	if (this->is_route() && this->is_valid_google_route()) {
 		qa = menu.addAction(QIcon::fromTheme("applications-internet"), tr("&View Google Directions"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (google_route_webpage_cb()));
 	}
@@ -2905,7 +2906,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	/* Some things aren't usable with routes. */
-	if (this->type_id == "sg.trw.track") {
+	if (this->is_track()) {
 		this->sublayer_menu_track_misc(trw, menu, upload_submenu);
 	}
 
@@ -3189,7 +3190,7 @@ void Track::apply_dem_data_only_missing_cb(void)
 
 void Track::export_track_as_gpx_cb(void)
 {
-	const QString title = this->type_id == "sg.trw.route" ? tr("Export Route as GPX") : tr("Export Track as GPX");
+	const QString title = this->is_route() ? tr("Export Route as GPX") : tr("Export Track as GPX");
 	const QString auto_save_name = append_file_ext(this->name, SGFileType::GPX);
 
 	this->export_track(title, auto_save_name, SGFileType::GPX);
@@ -3294,7 +3295,7 @@ void Track::open_astro_cb(void)
 void Track::reverse_cb(void)
 {
 	this->reverse();
-	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Track - reverse");
+	this->emit_tree_item_changed("Track reversed");
 }
 
 
@@ -3316,7 +3317,7 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	LayerTRWTracks * tracks = NULL;
 	QString message;
 
-	if (this->type_id == "sg.trw.track") {
+	if (this->is_track()) {
 		tracks = &parent_layer->tracks;
 		message = tr("A track with the name \"%1\" already exists. Really rename to the same name?").arg(new_name);
 	} else {
@@ -3627,7 +3628,7 @@ void Track::upload_to_osm_traces_cb(void)
 
 void Track::convert_track_route_cb(void)
 {
-	if (this->type_id == "sg.trw.track") {
+	if (this->is_track()) {
 		/* Converting a track to a route may lead to a data
 		   loss, so give user a chance to change his mind. */
 
@@ -3651,8 +3652,8 @@ void Track::convert_track_route_cb(void)
 
 
 	/* Convert and attach to new location. */
-	this->type_id = this->type_id == "sg.trw.route" ? "sg.trw.track": "sg.trw.route";
-	if (this->type_id == "sg.trw.track") {
+	this->type_id = this->is_route() ? "sg.trw.track": "sg.trw.route";
+	if (this->is_track()) {
 		parent_layer->add_track(this);
 	} else {
 		/* Extra steps when converting to route. */
@@ -3664,7 +3665,7 @@ void Track::convert_track_route_cb(void)
 
 
 	/* Redraw. */
-	parent_layer->emit_layer_changed("Indicating change to TRW Layer after converting track <--> route");
+	parent_layer->emit_tree_item_changed("Indicating change to TRW Layer after converting track <--> route");
 }
 
 
@@ -3813,7 +3814,7 @@ std::list<Rect *> * Track::get_map_rectangles(const VikingZoomLevel & viking_zoo
 
 bool Track::is_valid_google_route()
 {
-	return this->type_id == "sg.trw.route"
+	return this->is_route()
 		&& this->comment.size() > 7
 		&& !strncmp(this->comment.toUtf8().constData(), "from:", 5);
 }
@@ -3907,8 +3908,16 @@ void Track::refine_route_cb(void)
 		parent_layer->route_finder_added_track = NULL;
 		parent_layer->route_finder_check_added_track = false;
 
-		parent_layer->emit_layer_changed("TRW - refine route");
+		parent_layer->emit_tree_item_changed("TRW - refine route");
 	}
+}
+
+
+
+
+sg_ret Track::create_tp_next_to_selected_tp(bool before)
+{
+	return this->create_tp_next_to_specified_tp(this->selected_tp_iter, before);
 }
 
 
@@ -3917,46 +3926,58 @@ void Track::refine_route_cb(void)
 /**
    \brief Create a new trackpoint and insert it next to given @param reference_tp.
 
+   Since this method is private, we have pretty good control over
+   @reference_tp and can be rather certain that it belongs to the
+   track.
+
    Insert it before or after @param reference_tp, depending on value of @param before.
 
    The new trackpoint is created at center position between @param
    reference_tp and one of its neighbours: next tp or previous tp.
 */
-void Track::create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool before)
+sg_ret Track::create_tp_next_to_specified_tp(const TrackpointIter & reference_tp, bool before)
 {
-	/* Sanity check. */
-	if (!reference_tp || !reference_tp->valid) {
-		return;
+	if (!reference_tp.valid) {
+		return sg_ret::err;
 	}
 
-	/* TODO_LATER: verify that reference_tp belongs to this track. */
+#if 1   /* Debug code. */
+	auto iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), *(reference_tp.iter));
+	assert (iter != this->trackpoints.end()); /* FIXME: this assertion fails after splitting a track, clicking on last tp of newly created track and hitting "insert tp after". */
+#endif
 
 	Trackpoint * other_tp = NULL;
 
 	if (before) {
 		qDebug() << "------ insert trackpoint before.";
-		if (reference_tp->iter == this->begin()) {
-			return;
+		if (reference_tp.iter == this->begin()) {
+			return sg_ret::err;
 		}
-		other_tp = *std::prev(reference_tp->iter);
+		other_tp = *std::prev(reference_tp.iter);
 	} else {
 		qDebug() << "------ insert trackpoint after.";
-		if (std::next(reference_tp->iter) == this->end()) {
-			return;
+		if (std::next(reference_tp.iter) == this->end()) {
+			return sg_ret::err;
 		}
-		other_tp = *std::next(reference_tp->iter);
+		other_tp = *std::next(reference_tp.iter);
 	}
 
 	/* Use current and other trackpoints to form a new
 	   trackpoint which is inserted into the tracklist. */
 	if (other_tp) {
 
-		Trackpoint * new_tp = new Trackpoint(**reference_tp->iter, *other_tp, ((LayerTRW *) this->owning_layer)->coord_mode);
+		Trackpoint * new_tp = new Trackpoint(**reference_tp.iter, *other_tp, ((LayerTRW *) this->owning_layer)->coord_mode);
 		/* Insert new point into the appropriate trackpoint list,
 		   either before or after the current trackpoint as directed. */
 
-		this->insert(*reference_tp->iter, new_tp, before);
+		this->insert(*reference_tp.iter, new_tp, before);
 	}
+
+	this->emit_tree_item_changed(before
+				     ? "Track changed after adding a trackpoint before specified trackpoint"
+				     : "Track changed after adding a trackpoint after specified trackpoint");
+
+	return sg_ret::ok;
 }
 
 
@@ -4193,7 +4214,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 
 	/* 'visible' doesn't include aggegrate visibility. */
 	bool a_visible = trw->visible && this->visible;
-	a_visible = a_visible && (this->type_id == "sg.trw.route" ? trw->get_routes_visibility() : trw->get_tracks_visibility());
+	a_visible = a_visible && (this->is_route() ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 
 	const Time trk_duration = this->get_duration();
@@ -4406,4 +4427,184 @@ sg_ret Track::get_timestamps(Time & ts_first, Time & ts_last) const
 	}
 
 	return sg_ret::ok;
+}
+
+
+
+
+/**
+   Insert a trackpoint after currently selected trackpoint
+*/
+void Track::insert_point_after_cb(void)
+{
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->selected_tp_iter, false)) {
+		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint after selected trackpoint";
+	} else {
+		this->emit_tree_item_changed("Track changed after inserting trackpoint 'after'");
+	}
+}
+
+
+
+
+/**
+   Insert a trackpoint before currently selected trackpoint
+*/
+void Track::insert_point_before_cb(void)
+{
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->selected_tp_iter, true)) {
+		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint before selected trackpoint";
+	} else {
+		this->emit_tree_item_changed("Track changed after inserting trackpoint 'before'");
+	}
+}
+
+
+
+
+/**
+   Split a track at the currently selected trackpoint
+*/
+void Track::split_at_selected_trackpoint_cb(void)
+{
+	if (sg_ret::ok != this->split_at_trackpoint(this->selected_tp_iter)) {
+		qDebug() << SG_PREFIX_E << "Failed to split track" << this->name << "at selected trackpoint";
+	} else {
+		this->emit_tree_item_changed("Track changed after splitting at selected trackpoint");
+	}
+}
+
+
+
+
+
+
+
+
+void LayerTRW::delete_selected_tp(Track * track)
+{
+	TrackPoints::iterator new_tp_iter = track->delete_trackpoint(track->selected_tp_iter.iter);
+
+	if (new_tp_iter != track->end()) {
+		/* Set to current to the available adjacent trackpoint. */
+		track->selected_tp_iter.iter = new_tp_iter;
+		track->recalculate_bbox();
+	} else {
+		this->cancel_current_tp(false);
+	}
+}
+
+
+
+
+/**
+   Delete the selected trackpoint
+*/
+void Track::delete_point_selected_cb(void)
+{
+	if (!this->selected_tp_iter.valid) {
+		return;
+	}
+
+	LayerTRW * parent_layer = this->get_parent_layer_trw();
+
+	parent_layer->delete_selected_tp(this);
+	parent_layer->deselect_current_trackpoint(this);
+
+	this->emit_tree_item_changed("Deleted selected trackpoint");
+}
+
+
+
+
+/**
+   Delete adjacent trackpoints at the same position
+*/
+void Track::delete_points_same_position_cb(void)
+{
+	const unsigned long n_removed = this->remove_dup_points();
+
+	LayerTRW * parent_layer = this->get_parent_layer_trw();
+
+	parent_layer->deselect_current_trackpoint(this);
+
+	/* Inform user how much was deleted as it's not obvious from the normal view. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
+	Dialog::info(msg, ThisApp::get_main_window());
+
+	this->emit_tree_item_changed("Deleted trackpoints with the same position");
+}
+
+
+
+
+/**
+   Delete adjacent trackpoints with the same timestamp
+*/
+void Track::delete_points_same_time_cb(void)
+{
+	const unsigned long n_removed = this->remove_same_time_points();
+
+	LayerTRW * parent_layer = this->get_parent_layer_trw();
+
+	parent_layer->deselect_current_trackpoint(this);
+
+	/* Inform user how much was deleted as it's not obvious from the normal view. */
+	const QString msg = QObject::tr("Deleted %n points", "", n_removed); /* TODO_2_LATER: verify that "%n" format correctly handles unsigned long. */
+	Dialog::info(msg, ThisApp::get_main_window());
+
+	this->emit_tree_item_changed("Deleted trackpoints with the same timestamp");
+}
+
+
+
+
+void Track::extend_track_end_cb(void)
+{
+	Window * window = ThisApp::get_main_window();
+	Viewport * viewport = ThisApp::get_main_viewport();
+	LayerTRW * parent_layer = this->get_parent_layer_trw();
+
+	window->activate_tool_by_id(this->is_route() ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
+
+	if (!this->empty()) {
+		parent_layer->request_new_viewport_center(viewport, this->get_tp_last()->coord);
+	}
+}
+
+
+
+
+/**
+   Extend a track using route finder
+*/
+void Track::extend_track_end_route_finder_cb(void)
+{
+	Window * window = ThisApp::get_main_window();
+	Viewport * viewport = ThisApp::get_main_viewport();
+	LayerTRW * parent_layer = this->get_parent_layer_trw();
+
+	window->activate_tool_by_id(LAYER_TRW_TOOL_ROUTE_FINDER);
+
+	parent_layer->route_finder_started = true;
+
+	if (!this->empty()) {
+		parent_layer->request_new_viewport_center(viewport, this->get_tp_last()->coord);
+	}
+}
+
+
+
+
+bool Track::is_route(void) const
+{
+	return this->type_id == "sg.trw.route";
+}
+
+
+
+
+bool Track::is_track(void) const
+{
+	return this->type_id == "sg.trw.track";
 }

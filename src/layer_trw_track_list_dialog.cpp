@@ -307,7 +307,7 @@ void TrackListDialog::add_row(Track * trk, DistanceUnit distance_unit, SpeedUnit
 
 	/* 'visible' doesn't include aggegrate visibility. */
 	bool visible = trw->visible && trk->visible;
-	visible = visible && (trk->type_id == "sg.trw.route" ? trw->get_routes_visibility() : trw->get_tracks_visibility());
+	visible = visible && (trk->is_route() ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 
 	const Time trk_duration = trk->get_duration();
@@ -638,7 +638,7 @@ void TrackListDialog::accept_cb(void) /* Slot. */
 	       which a context menu item has been triggered. */
 	if (changed) {
 		trk->update_tree_item_properties();
-		parent_layer->emit_layer_changed("Indicating change to TRW Layer after changing properties of Track in Track list dialog");
+		parent_layer->emit_tree_item_changed("Indicating change to TRW Layer after changing properties of Track in Track list dialog");
 	}
 #endif
 

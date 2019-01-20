@@ -602,7 +602,7 @@ void CommandLineOptions::apply(Window * window)
 			layer->set_name(Layer::get_type_ui_label(layer->type));
 
 			ThisApp::get_layers_panel()->get_top_layer()->add_layer(layer, true);
-			layer->emit_layer_changed("Command Line Options - Apply");
+			layer->emit_tree_item_changed("Command Line Options - Apply");
 		}
 	}
 }

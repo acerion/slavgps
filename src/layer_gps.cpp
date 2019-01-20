@@ -683,7 +683,7 @@ sg_ret LayerGPS::attach_children_to_tree(void)
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trw->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, trw);
 
-		QObject::connect(trw, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+		QObject::connect(trw, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 	}
 
 	return sg_ret::ok;
@@ -1104,7 +1104,7 @@ void GPSSession::run(void)
 					this->trw->post_read(this->viewport, true);
 					/* View the data available. */
 					this->trw->move_viewport_to_show_all(this->viewport) ;
-					this->trw->emit_layer_changed("GPS Session - post read"); /* NB update from background thread. */
+					this->trw->emit_tree_item_changed("GPS Session - post read"); /* NB update from background thread. */
 				}
 			}
 		} else {
@@ -1572,9 +1572,9 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 		/* NB update from background thread. */
 		if (update_all) {
-			layer->emit_layer_changed("GPS - update all");
+			layer->emit_tree_item_changed("GPS - update all");
 		} else {
-			layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_layer_changed("GPS - TRW - update realtime");
+			layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_tree_item_changed("GPS - TRW - update realtime");
 		}
 	}
 }
@@ -1849,14 +1849,14 @@ void LayerGPS::set_coord_mode(CoordMode new_mode)
 
 
 
-/* Doesn't set the trigger. should be done by aggregate layer when child emits 'changed' signal. */
-void LayerGPS::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
+/* Doesn't set the trigger. Should be done by aggregate layer when child emits 'changed' signal. */
+void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
 {
-	qDebug() << "SLOT" PREFIX << this->name << "received 'child layer changed' signal from" << child_layer_name;
+	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
 	if (this->visible) {
 		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		qDebug() << "SIGNAL" PREFIX << "layer" << this->name << "emits 'changed' signal";
-		emit this->layer_changed(this->get_name());
+		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
+		emit this->tree_item_changed(this->get_name());
 	}
 }

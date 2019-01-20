@@ -213,7 +213,7 @@ namespace SlavGPS {
 
 
 
-		void cancel_tps_of_track(Track * trk);
+		void deselect_current_trackpoint(Track * trk);
 
 		void reset_waypoints();
 
@@ -461,20 +461,15 @@ namespace SlavGPS {
 		void merge_by_timestamp_cb(void);
 		void merge_with_other_cb(void);
 		void append_track_cb(void);
-		void split_at_trackpoint_cb(void);
-		void delete_point_selected_cb(void);
-		void delete_points_same_position_cb(void);
-		void delete_points_same_time_cb(void);
 		void download_map_along_track_cb(void);
 		void edit_trackpoint_cb(void);
 		void track_list_dialog_cb(void);
-		void extend_track_end_cb(void);
-		void extend_track_end_route_finder_cb(void);
 
 		void append_other_cb(void);
-		void insert_point_after_cb(void);
-		void insert_point_before_cb(void);
 		void routes_stats_cb();
+
+		/* TRW Layer can contain other layers and should be notified about changes in them. */
+		void child_tree_item_changed_cb(const QString & child_tree_item_name);
 
 		void wp_image_cache_add(const CachedPixmap & cached_pixmap);
 

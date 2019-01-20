@@ -1045,7 +1045,7 @@ SaveStatus VikFile::export_trw_track(Track * trk, const QString & file_full_path
 	case SGFileType::GPX:
 		qDebug() << SG_PREFIX_I << "Exporting as GPX:" << file_full_path;
 		/* trk defined so can set the option. */
-		options.is_route = trk->type_id == "sg.trw.route";
+		options.is_route = trk->is_route();
 		save_status = GPX::write_track_to_file(file, trk, &options);
 		break;
 	default:

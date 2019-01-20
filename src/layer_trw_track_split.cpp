@@ -242,7 +242,7 @@ void Track::split_at_iterators(std::list<TrackPoints::iterator> & iterators, Lay
 	   track have been transferred to new tracks. */
 
 
-	parent_layer->emit_layer_changed("A TRW Track has been split into several tracks (by segment, in callback)");
+	parent_layer->emit_tree_item_changed("A TRW Track has been split into several tracks (by segment, in callback)");
 }
 
 

@@ -86,35 +86,6 @@ extern SelectedTreeItems g_selected;
 
 
 
-/**
- * Draw specified layer.
- */
-void Layer::emit_layer_changed(const QString & where)
-{
-	if (this->visible && this->tree_view) {
-		Window::set_redraw_trigger(this);
-		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'layer changed' signal @" << where;
-		emit this->layer_changed(this->get_name());
-	}
-}
-
-
-
-
-/**
- * Should only be done by LayersPanel (hence never used from the background)
- * need to redraw and record trigger when we make a layer invisible.
- */
-void Layer::emit_layer_changed_although_invisible(const QString & where)
-{
-	Window::set_redraw_trigger(this);
-	qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal @" << where;
-	emit this->layer_changed(this->get_name());
-}
-
-
-
-
 static LayerInterface * vik_layer_interfaces[(int) LayerType::Max] = {
 	&vik_aggregate_layer_interface,
 	&vik_trw_layer_interface,
@@ -732,6 +703,6 @@ void Layer::request_new_viewport_center(Viewport * viewport, const Coord & coord
 {
 	if (viewport) {
 		viewport->set_center_from_coord(coord);
-		this->emit_layer_changed("Requesting change of center coordinate of viewport");
+		this->emit_tree_item_changed("Requesting change of center coordinate of viewport");
 	}
 }

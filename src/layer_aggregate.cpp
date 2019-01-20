@@ -106,7 +106,7 @@ Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, Viewport * viewport
 		Layer * child_layer = Layer::unmarshall(pickle, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
-			QObject::connect(child_layer, SIGNAL (layer_changed(const QString &)), aggregate, SLOT(child_layer_changed_cb(const QString &)));
+			QObject::connect(child_layer, SIGNAL (tree_item_changed(const QString &)), aggregate, SLOT (child_tree_item_changed_cb(const QString &)));
 		}
 	}
 	// qDebug() << SG_PREFIX_I << "unmarshall() ended with len =" << pickle.data_size;
@@ -169,7 +169,7 @@ void LayerAggregate::insert_layer(Layer * layer, const Layer * sibling_layer)
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << layer->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, layer, attach_mode, sibling_layer);
 
-		QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+		QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
 		/* Update our own tooltip. */
 		this->tree_view->apply_tree_item_tooltip(this);
@@ -225,7 +225,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		layer->attach_children_to_tree();
 	}
 
-	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+	QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
 	/* Update our own tooltip. */
 	this->tree_view->apply_tree_item_tooltip(this);
@@ -268,7 +268,7 @@ sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 	layer->attach_children_to_tree();
 
 
-	QObject::connect(layer, SIGNAL (layer_changed(const QString &)), this, SLOT (child_layer_changed_cb(const QString &)));
+	QObject::connect(layer, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 
 
 	this->tree_view->apply_tree_item_timestamp(layer);
@@ -381,7 +381,7 @@ void LayerAggregate::children_visibility_toggle_cb(void) /* Slot. */
 		this->tree_view->apply_tree_item_visibility(layer);
 	}
 	/* Redraw as view may have changed. */
-	this->emit_layer_changed("Aggregate - child visible toggle");
+	this->emit_tree_item_changed("Aggregate - child visible toggle");
 }
 
 
@@ -399,7 +399,7 @@ void LayerAggregate::children_visibility_set(bool on_off)
 	}
 
 	/* Redraw as view may have changed. */
-	this->emit_layer_changed("Aggregate - child visible set");
+	this->emit_tree_item_changed("Aggregate - child visible set");
 }
 
 
@@ -1072,13 +1072,13 @@ LayerAggregate::LayerAggregate()
 
 
 
-void LayerAggregate::child_layer_changed_cb(const QString & child_layer_name) /* Slot. */
+void LayerAggregate::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
 {
-	qDebug() << SG_PREFIX_SLOT << this->name << "received 'child layer changed' signal from" << child_layer_name;
+	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
 	if (this->visible) {
 		/* TODO_2_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
-		emit this->layer_changed(this->get_name());
+		emit this->tree_item_changed(this->get_name());
 	}
 }

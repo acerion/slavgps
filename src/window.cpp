@@ -1853,12 +1853,9 @@ bool Window::clear_highlight(void)
 
 
 
-void Window::set_redraw_trigger(Layer * layer)
+void Window::set_redraw_trigger(TreeItem * tree_item)
 {
-	Window * window = layer->get_window();
-	if (window) {
-		window->trigger = layer;
-	}
+	this->redraw_trigger = tree_item;
 }
 
 

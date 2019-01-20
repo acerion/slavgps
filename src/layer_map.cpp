@@ -1981,6 +1981,6 @@ QString SlavGPS::to_string(MapDownloadMode download_mode)
 
 sg_ret LayerMap::handle_downloaded_tile_cb(void)
 {
-	this->emit_layer_changed("Indicating change to layer in response to downloading new map tile");
+	this->emit_tree_item_changed("Indicating change to layer in response to downloading new map tile");
 	return sg_ret::ok;
 }

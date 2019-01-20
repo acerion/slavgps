@@ -1212,9 +1212,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 
 	bool result = selected_item->properties_dialog();
 	if (result) {
-		if (selected_item->tree_item_type == TreeItemType::Layer) {
-			selected_item->to_layer()->emit_layer_changed("Tree View - Item Properties");
-		}
+		selected_item->emit_tree_item_changed("Tree View - Item Properties");
 		return true;
 	}
 

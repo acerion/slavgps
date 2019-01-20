@@ -116,7 +116,7 @@ void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 		wp->set_new_waypoint_icon();
 
 		if (trw->visible) {
-			trw->emit_layer_changed("TRW - Waypoint List Dialog - properties");
+			trw->emit_tree_item_changed("TRW - Waypoint List Dialog - properties");
 		}
 	}
 }
@@ -137,7 +137,7 @@ void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 
 	viewport->set_center_from_coord(wp->coord);
 	this->waypoint_select(trw);
-	trw->emit_layer_changed("TRW - Waypoint List Dialog - View");
+	trw->emit_tree_item_changed("TRW - Waypoint List Dialog - View");
 }
 
 
@@ -588,7 +588,7 @@ void WaypointListDialog::accept_cb(void) /* Slot. */
 	if (this->selected_wp) {
 		LayerTRW * trw = this->selected_wp->get_parent_layer_trw();
 		this->selected_wp->update_tree_item_properties();
-		trw->emit_layer_changed("TRW - Waypoint List Dialog - Accept");
+		trw->emit_tree_item_changed("TRW - Waypoint List Dialog - Accept");
 	}
 
 	this->accept();

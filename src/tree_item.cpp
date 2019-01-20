@@ -34,6 +34,7 @@
 
 #include "tree_item.h"
 #include "tree_view.h"
+#include "window.h"
 
 
 
@@ -324,4 +325,35 @@ void TreeItem::set_timestamp(time_t value)
 bool TreeItem::move_child(TreeItem & child_tree_item, bool up)
 {
 	return false;
+}
+
+
+
+
+/**
+   Indicate to receiver that specified tree item has changed (if the item is visible)
+*/
+void TreeItem::emit_tree_item_changed(const QString & where)
+{
+	if (this->visible && this->tree_view) {
+		ThisApp::get_main_window()->set_redraw_trigger(this);
+		qDebug() << SG_PREFIX_SIGNAL << "Tree item" << this->name << "emits 'layer changed' signal @" << where;
+		emit this->tree_item_changed(this->name);
+	}
+}
+
+
+
+
+/**
+   Indicate to receiver that specified tree item has changed (even if the item is not)
+
+   Should only be done by LayersPanel (hence never used from the background)
+   need to redraw and record trigger when we make a layer invisible.
+*/
+void TreeItem::emit_tree_item_changed_although_invisible(const QString & where)
+{
+	ThisApp::get_main_window()->set_redraw_trigger(this);
+	qDebug() << SG_PREFIX_SIGNAL << "TreeItem" << this->name << "emits 'changed' signal @" << where;
+	emit this->tree_item_changed(this->name);
 }

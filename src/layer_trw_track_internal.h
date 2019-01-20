@@ -401,13 +401,16 @@ namespace SlavGPS {
 
 		std::list<Rect *> * get_map_rectangles(const VikingZoomLevel & viking_zoom_level);
 
-		void create_tp_next_to_reference_tp(TrackpointIter * reference_tp, bool before);
+		sg_ret create_tp_next_to_selected_tp(bool before);
 
 		void remove_last_trackpoint(void);
 
 #ifdef VIK_CONFIG_GOOGLE
 		bool is_valid_google_route();
 #endif
+
+		bool is_track(void) const;
+		bool is_route(void) const;
 
 		bool properties_dialog();
 
@@ -441,6 +444,12 @@ namespace SlavGPS {
 		void recalculate_bbox_last_tp();
 		TrackData make_values_distance_over_time_helper(void) const;
 		TrackData make_values_altitude_over_time_helper(void) const;
+
+		/* This method is private to make sure that only this
+		   track can pass a trackpoint iter. This gives us
+		   more certainty that given iter belongs to the
+		   track. */
+		sg_ret create_tp_next_to_specified_tp(const TrackpointIter & reference_tp, bool before);
 
 		void copy_properties(const Track & from);
 
@@ -507,6 +516,17 @@ namespace SlavGPS {
 
 		void cut_sublayer_cb(void);
 		void copy_sublayer_cb(void);
+
+		void insert_point_after_cb(void);
+		void insert_point_before_cb(void);
+		void split_at_selected_trackpoint_cb(void);
+
+		void delete_point_selected_cb(void);
+		void delete_points_same_position_cb(void);
+		void delete_points_same_time_cb(void);
+
+		void extend_track_end_cb(void);
+		void extend_track_end_route_finder_cb(void);
 	};
 
 

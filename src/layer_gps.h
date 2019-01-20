@@ -241,7 +241,7 @@ namespace SlavGPS {
 #endif
 
 		/* GPS Layer can contain other layers and should be notified about changes in them. */
-		void child_layer_changed_cb(const QString & child_layer_name);
+		void child_tree_item_changed_cb(const QString & child_tree_item_name);
 	};
 
 

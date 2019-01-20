@@ -124,9 +124,6 @@ namespace SlavGPS {
 
 		static Layer * construct_layer(LayerType layer_type, Viewport * viewport, bool interactive = false);
 
-		void emit_layer_changed(const QString & where);
-		void emit_layer_changed_although_invisible(const QString & where);
-
 		const LayerInterface & get_interface(void) const;
 		static LayerInterface * get_interface(LayerType layer_type);
 		void configure_interface(LayerInterface * intf, ParameterSpecification * param_specs);
@@ -246,9 +243,6 @@ namespace SlavGPS {
 
 	protected slots:
 		virtual void location_info_cb(void);
-
-	signals:
-		void layer_changed(const QString & layer_name);
 
 	};
 

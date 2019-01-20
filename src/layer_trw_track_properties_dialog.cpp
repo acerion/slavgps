@@ -422,7 +422,7 @@ void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 
 	if (changed) {
 		trk->update_tree_item_properties();
-		parent_layer->emit_layer_changed("Indicating change to TRW Layer after changing properties of Track");
+		parent_layer->emit_tree_item_changed("Indicating change to TRW Layer after changing properties of Track");
 	}
 
 

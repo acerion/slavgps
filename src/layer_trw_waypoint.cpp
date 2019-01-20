@@ -465,7 +465,7 @@ void Waypoint::properties_dialog_cb(void)
 		this->set_new_waypoint_icon();
 
 		if (parent_layer->visible) {
-			parent_layer->emit_layer_changed("TRW - Waypoint - properties");
+			parent_layer->emit_tree_item_changed("TRW - Waypoint - properties");
 		}
 	}
 }

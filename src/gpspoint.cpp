@@ -896,7 +896,7 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 		}
 
 		char * tmp_name = slashdup(trk->name);
-		fprintf(file, "type=\"%s\" name=\"%s\"", trk->type_id == "sg.trw.route" ? "route" : "track", tmp_name);
+		fprintf(file, "type=\"%s\" name=\"%s\"", trk->is_route() ? "route" : "track", tmp_name);
 		free(tmp_name);
 
 		if (!trk->comment.isEmpty()) {
@@ -940,11 +940,11 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 		}
 		fprintf(file, "\n");
 
-		const bool is_route = trk->type_id == "sg.trw.route";
+		const bool is_route = trk->is_route();
 		for (auto tp_iter = trk->trackpoints.begin(); tp_iter != trk->trackpoints.end(); tp_iter++) {
 			a_gpspoint_write_trackpoint(file, *tp_iter, is_route);
 		}
-		fprintf(file, "type=\"%send\"\n", trk->type_id == "sg.trw.route" ? "route" : "track");
+		fprintf(file, "type=\"%send\"\n", is_route ? "route" : "track");
 	}
 }
 

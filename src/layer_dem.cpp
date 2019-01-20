@@ -1490,7 +1490,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 			job->run_in_background(ThreadPoolType::Remote);
 		} else {
 			qDebug() << SG_PREFIX_I << "released left button, successfully added the file, emitting 'changed'";
-			this->emit_layer_changed("DEM - released left button");
+			this->emit_tree_item_changed("DEM - released left button");
 		}
 
 	} else if (ev->button() == Qt::RightButton) {
@@ -1536,7 +1536,7 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * 
 void LayerDEM::on_loading_to_cache_completed_cb(void)
 {
 	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'layer changed' after loading list of files";
-	this->emit_layer_changed("DEM - loading to cache completed");
+	this->emit_tree_item_changed("DEM - loading to cache completed");
 }
 
 
@@ -1548,7 +1548,7 @@ sg_ret LayerDEM::handle_downloaded_file_cb(const QString & file_full_path)
 
 	if (this->add_file(file_full_path)) {
 		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'layer changed' after downloading file";
-		this->emit_layer_changed("Indicating change to DEM Layer after downloading a file");
+		this->emit_tree_item_changed("Indicating change to DEM Layer after downloading a file");
 	}
 
 	return sg_ret::ok;

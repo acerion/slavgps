@@ -831,7 +831,7 @@ void LayerTRWTracks::items_visibility_on_cb(void) /* Slot. */
 {
 	this->set_items_visibility(true);
 	/* Redraw. */
-	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Tracks - items visibility on");
+	this->emit_tree_item_changed("TRW - Tracks - items visibility on");
 }
 
 
@@ -841,7 +841,7 @@ void LayerTRWTracks::items_visibility_off_cb(void) /* Slot. */
 {
 	this->set_items_visibility(false);
 	/* Redraw. */
-	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Tracks - items visibility off");
+	this->emit_tree_item_changed("TRW - Tracks - items visibility off");
 }
 
 
@@ -851,7 +851,7 @@ void LayerTRWTracks::items_visibility_toggle_cb(void) /* Slot. */
 {
 	this->toggle_items_visibility();
 	/* Redraw. */
-	((LayerTRW *) this->owning_layer)->emit_layer_changed("TRW - Tracks - items visibility toggle");
+	this->emit_tree_item_changed("TRW - Tracks - items visibility toggle");
 }
 
 
@@ -1065,8 +1065,7 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 		parent_layer->route_finder_added_track = NULL;
 	}
 
-	/* Could be current_tp, so we have to check. */
-	parent_layer->cancel_tps_of_track(trk);
+	parent_layer->deselect_current_trackpoint(trk);
 
 	this->children_map.erase(trk->get_uid()); /* Erase by key. */
 

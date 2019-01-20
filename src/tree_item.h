@@ -131,6 +131,8 @@ namespace SlavGPS {
 		static bool compare_name_ascending(const TreeItem * a, const TreeItem * b);   /* Ascending: AAA -> ZZZ */
 		static bool compare_name_descending(const TreeItem * a, const TreeItem * b);  /* Descending: ZZZ -> AAA */
 
+		void emit_tree_item_changed(const QString & where);
+		void emit_tree_item_changed_although_invisible(const QString & where);
 
 		virtual Time get_timestamp(void) const;
 		virtual void set_timestamp(const Time & value);
@@ -243,6 +245,9 @@ namespace SlavGPS {
 
 	private:
 		TreeItem * parent_tree_item = NULL; /* Direct parent, may be different than owning layer. */
+
+	signals:
+		void tree_item_changed(const QString & tree_item_name);
 	};
 
 	/* These silly names are a workaroud for clash of operator definitions.

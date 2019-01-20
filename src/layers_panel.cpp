@@ -131,7 +131,7 @@ LayersPanel::LayersPanel(QWidget * parent_, Window * window_) : QWidget(parent_)
 
 
 	connect(this->tree_view, SIGNAL(tree_item_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
-	connect(this->toplayer, SIGNAL(layer_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
+	connect(this->toplayer, SIGNAL(tree_item_changed(const QString &)), this, SLOT(emit_items_tree_updated_cb(const QString &)));
 	connect(this->tree_view, SIGNAL (tree_item_selected(void)), this, SLOT (activate_buttons_cb(void)));
 
 

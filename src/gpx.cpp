@@ -1021,7 +1021,7 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(file, "<%s%s>\n  <name>%s</name>\n",
-		trk->type_id == "sg.trw.route" ? "rte" : "trk",
+		trk->is_route() ? "rte" : "trk",
 		trk->visible ? "" : " hidden=\"hidden\"",
 		tmp.toUtf8().constData());
 
@@ -1042,7 +1042,7 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 	}
 
 	/* No such thing as a rteseg! */
-	if (trk->type_id == "sg.trw.track") {
+	if (trk->is_track()) {
 		fprintf(file, "  <trkseg>\n");
 	}
 
@@ -1060,11 +1060,11 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 	}
 
 	/* NB apparently no such thing as a rteseg! */
-	if (trk->type_id == "sg.trw.track") {
+	if (trk->is_track()) {
 		fprintf(file, "  </trkseg>\n");
 	}
 
-	fprintf(file, "</%s>\n", trk->type_id == "sg.trw.route" ? "rte" : "trk");
+	fprintf(file, "</%s>\n", trk->is_route() ? "rte" : "trk");
 }
 
 

@@ -670,7 +670,7 @@ void LayerTRWWaypoints::items_visibility_on_cb(void) /* Slot. */
 {
 	this->set_items_visibility(true);
 	/* Redraw. */
-	this->owning_layer->emit_layer_changed("TRW - Waypoints - Visibility On");
+	this->emit_tree_item_changed("TRW - Waypoints - Visibility On");
 }
 
 
@@ -680,7 +680,7 @@ void LayerTRWWaypoints::items_visibility_off_cb(void) /* Slot. */
 {
 	this->set_items_visibility(false);
 	/* Redraw. */
-	this->owning_layer->emit_layer_changed("TRW - Waypoints - Visibility Off");
+	this->emit_tree_item_changed("TRW - Waypoints - Visibility Off");
 }
 
 
@@ -690,7 +690,7 @@ void LayerTRWWaypoints::items_visibility_toggle_cb(void) /* Slot. */
 {
 	this->toggle_items_visibility();
 	/* Redraw. */
-	this->owning_layer->emit_layer_changed("TRW - Waypoints - Visibility Toggle");
+	this->emit_tree_item_changed("TRW - Waypoints - Visibility Toggle");
 }
 
 
