@@ -73,7 +73,7 @@ namespace SlavGPS {
 		/* TRW layer -> gpx temporary file -> stdin -> gpsbabel -> gpx format -> output file in output format. */
 		SaveStatus export_through_gpx(LayerTRW * trw, Track * trk);
 
-		virtual bool run_process(void);
+		virtual sg_ret run_process(void);
 		int kill(const QString & status);
 
 		QProcess * process = NULL;
@@ -212,7 +212,7 @@ namespace SlavGPS {
 		BabelFeatureLoader();
 		~BabelFeatureLoader();
 
-		bool run_process(void);
+		sg_ret run_process(void) override;
 	};
 
 	class BabelFeatureParser : public BabelProcess {
@@ -233,7 +233,7 @@ namespace SlavGPS {
 		BabelTurnOffDevice(const QString & new_protocol, const QString & new_port)
 			: protocol(new_protocol), port(new_port) {};
 
-		bool run_process(void);
+		sg_ret run_process(void) override;
 
 	private:
 		const QString protocol;

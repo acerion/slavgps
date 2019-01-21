@@ -1018,7 +1018,7 @@ SaveStatus VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const 
 
 	/* Restore previous working directory. */
 	if (!QDir::setCurrent(cwd)) {
-		qDebug() << SG_PREFIX_W << "Could not return to directory" << dir; /* KAMIL_FIXME: this should be 'cwd', not 'dir' - check this in Viking. */
+		qDebug() << SG_PREFIX_W << "Could not return to directory" << cwd;
 	}
 
 	fclose(file);

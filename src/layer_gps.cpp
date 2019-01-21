@@ -1072,7 +1072,7 @@ void GPSSession::run(void)
 		importer->set_acquire_context(&acquire_context);
 		importer->set_progress_dialog(NULL /* TODO: progr_dialog */);
 
-		save_status = importer->run_process() ? SaveStatus::Code::Success : SaveStatus::Code::Error;
+		save_status = (sg_ret::ok == importer->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::Error;
 	} else {
 		BabelProcess * exporter = new BabelProcess();
 		exporter->set_options(this->babel_opts);
@@ -1241,7 +1241,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		if (turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
 			BabelTurnOffDevice turn_off_process(protocol, port);
-			if (!turn_off_process.run_process()) {
+			if (sg_ret::ok != turn_off_process.run_process()) {
 				Dialog::error(QObject::tr("Could not turn off device."), layer->get_window());
 			}
 		}

@@ -240,7 +240,7 @@ LoadStatus BabelProcess::convert_through_gpx(LayerTRW * trw)
 	this->gpx_importer = new GPXImporter(trw);
 
 
-	if (!this->run_process()) {
+	if (sg_ret::ok != this->run_process()) {
 		qDebug() << SG_PREFIX_E << "Conversion failed";
 		return LoadStatus::Code::Error;
 	}
@@ -341,7 +341,7 @@ BabelFeatureLoader::~BabelFeatureLoader()
 
 
 
-bool BabelFeatureLoader::run_process(void)
+sg_ret BabelFeatureLoader::run_process(void)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -370,20 +370,21 @@ bool BabelFeatureLoader::run_process(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-	return true;
+	return sg_ret::ok;
 }
 
 
 
 
-static bool load_babel_features(void)
+static sg_ret load_babel_features(void)
 {
 	if (Babel::is_available()) {
 		BabelFeatureLoader feature_loader;
 		return feature_loader.run_process();
 	} else {
-		qDebug() << SG_PREFIX_W << "Can't load features, gpsbabel not found";
-		return false;
+		qDebug() << SG_PREFIX_N << "Can't load features, gpsbabel not found";
+		/* This is not an error. */
+		return sg_ret::ok;
 	}
 }
 
@@ -494,7 +495,7 @@ BabelProcess::~BabelProcess()
 
 
 
-bool BabelProcess::run_process(void)
+sg_ret BabelProcess::run_process(void)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -556,7 +557,7 @@ bool BabelProcess::run_process(void)
 	}
 #endif
 
-	return true;
+	return sg_ret::ok;
 }
 
 
@@ -681,8 +682,7 @@ SaveStatus BabelProcess::export_through_gpx(LayerTRW * trw, Track * trk)
 
 	this->set_input("gpx", tmp_file_full_path);
 
-	/* FIXME: the status of run_process() doesn't give enough information to return to caller. */
-	return this->run_process() ? SaveStatus::Code::Success : SaveStatus::Code::Error;
+	return (sg_ret::ok == this->run_process()) ? SaveStatus::Code::Success : SaveStatus::Code::Error;
 }
 
 
@@ -762,7 +762,7 @@ BabelDevice::~BabelDevice()
 
 
 
-bool BabelTurnOffDevice::run_process(void)
+sg_ret BabelTurnOffDevice::run_process(void)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -796,5 +796,5 @@ bool BabelTurnOffDevice::run_process(void)
 	this->process->start();
 	this->process->waitForFinished(-1);
 
-	return true;
+	return sg_ret::err;
 }

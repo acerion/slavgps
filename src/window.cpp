@@ -3068,13 +3068,6 @@ void Window::export_to_common(SGFileType file_type, char const * extension)
 	file_selector.setFileMode(QFileDialog::Directory);
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
 
-#ifdef K_FIXME_RESTORE
-	gtk_window_set_transient_for(file_selector, this);
-	gtk_window_set_destroy_with_parent(file_selector, true);
-	gtk_window_set_modal(file_selector, true);
-	gtk_widget_show_all(file_selector);
-#endif
-
 	if (QDialog::Accepted != file_selector.exec()) {
 		return;
 	}

@@ -724,7 +724,6 @@ sg_ret DataSourceGPS::on_complete(void)
 
 	const QString babel_args = QString("-i %1,%2").arg(device).arg(command);
 	BabelTurnOffDevice turn_off(this->device_path, babel_args);
-	turn_off.run_process();
 
-	return sg_ret::ok;
+	return turn_off.run_process();
 }

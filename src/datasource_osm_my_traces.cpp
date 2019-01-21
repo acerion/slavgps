@@ -647,17 +647,16 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 			int gpx_id = (*iter)->id;
 			if (gpx_id) {
 				/* Download type is GPX (or a compressed version). */
-				AcquireOptions * babel_action = (AcquireOptions *) this->acquire_options; /* FIXME_LATER: casting. */
-				babel_action->source_url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
+				this->acquire_options->source_url = QString(DS_OSM_TRACES_GPX_URL_FMT).arg(gpx_id);
 
-				convert_result = babel_action->import_from_url(target_layer, &local_dl_options, NULL);
+				convert_result = this->acquire_options->import_from_url(target_layer, &local_dl_options, NULL);
 				/* TODO_MAYBE investigate using a progress bar:
 				   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
 				got_something = got_something || (LoadStatus::Code::Success == convert_result);
 				if (LoadStatus::Code::Success != convert_result) {
 					/* Report errors to the status bar. */
-					acquire_context->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(babel_action->source_url));
+					acquire_context->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to get trace: %1").arg(this->acquire_options->source_url));
 				}
 			}
 
