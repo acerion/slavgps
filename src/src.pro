@@ -28,6 +28,7 @@ SOURCES += main.cpp \
     datasource_url.cpp \
     datasource_wikipedia.cpp \
     datasource_file.cpp \
+    datasource_webtool.cpp \
     garmin_symbols.cpp \
     version_check.cpp \
     geotag_exif.cpp \
@@ -42,7 +43,6 @@ SOURCES += main.cpp \
     webtool_center.cpp \
     webtool_query.cpp \
     webtool.cpp \
-    webtool_datasource.cpp \
     webtool_format.cpp \
     bluemarble.cpp \
     external_tool.cpp \
@@ -173,7 +173,6 @@ HEADERS += window.h \
     webtool_center.h \
     webtool_query.h \
     webtool.h \
-    webtool_datasource.h \
     webtool_format.h \
     bluemarble.h \
     external_tool.h \
@@ -207,6 +206,7 @@ HEADERS += window.h \
     datasource_geotag.h \
     datasource_geojson.h \
     datasource_bfilter.h \
+    datasource_webtool.h \
     layer_trw_definitions.h \
     layer_trw_stats.h \
     layer_trw_geotag.h \

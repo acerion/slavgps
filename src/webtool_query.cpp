@@ -37,15 +37,9 @@
 #include "window.h"
 #include "layers_panel.h"
 #include "datasource.h"
+#include "datasource_webtool_.h"
 #include "viewport_internal.h"
 #include "webtool_query.h"
-#include "webtool_datasource.h"
-//#include "acquire.h"
-//#include "map_utils.h"
-//#include "dialog.h"
-//#include "util.h"
-//#include "tree_view.h"
-//#include "layer_trw.h"
 
 
 

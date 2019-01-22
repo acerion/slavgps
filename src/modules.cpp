@@ -53,7 +53,7 @@
 #include "map_source_wmsc.h"
 #include "webtool_center.h"
 #include "webtool_bounds.h"
-#include "webtool_datasource.h"
+#include "datasource_webtool.h"
 #include "goto_tool_xml.h"
 #include "routing_engine_web.h"
 #include "vikgobjectbuilder.h"
