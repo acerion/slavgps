@@ -47,7 +47,7 @@ void Google::init(void)
 {
 #ifdef VIK_CONFIG_GOOGLE
 
-	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Google"), "http://maps.google.com/maps/@%1,%2,%3z"));
+	ExternalTools::register_tool(new OnlineService_center(QObject::tr("Google"), "http://maps.google.com/maps/@%1,%2,%3z"));
 
 	/* Goto. */
 #ifdef K_OLD_IMPLEMENTATION

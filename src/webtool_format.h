@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_WEBTOOL_FORMAT_H_
-#define _SG_WEBTOOL_FORMAT_H_
+#ifndef _SG_ONLINE_SERVICE_FORMAT_H_
+#define _SG_ONLINE_SERVICE_FORMAT_H_
 
 
 
@@ -39,19 +39,19 @@ namespace SlavGPS {
 
 
 
-	class WebToolFormat : public WebTool {
+	class OnlineService_format : public OnlineService {
 		Q_OBJECT
 	public:
-		WebToolFormat(const QString & tool_label, const QString & url_format, const QString & url_format_code);
-		~WebToolFormat();
+		OnlineService_format(const QString & tool_label, const QString & url_format, const QString & url_format_code);
+		~OnlineService_format();
 
-		QString get_url_for_viewport(Viewport * viewport);
-		QString get_url_at_position(Viewport * viewport, const Coord * a_coord);
+		QString get_url_for_viewport(Viewport * viewport) override;
+		QString get_url_at_position(Viewport * viewport, const Coord * a_coord) override;
 
 	private:
 		QString url_format_code;  /* Template URL format code, "AOZ" -  default value Lat, Long, Zoom */
 
-	}; /* class WebToolFormat */
+	};
 
 
 
@@ -61,4 +61,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_WEBTOOL_FORMAT_H_ */
+#endif /* #ifndef _SG_ONLINE_SERVICE_FORMAT_H_ */

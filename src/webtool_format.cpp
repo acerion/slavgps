@@ -50,12 +50,12 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "WebTool Format"
+#define SG_MODULE "Online Service with Format"
 
 
 
 
-WebToolFormat::WebToolFormat(const QString & new_label, const QString & new_url_format, const QString & new_url_format_code) : WebTool(new_label)
+OnlineService_format::OnlineService_format(const QString & new_label, const QString & new_url_format, const QString & new_url_format_code) : OnlineService(new_label)
 {
 	qDebug() << SG_PREFIX_I << "Created tool with label" << new_label;
 
@@ -67,7 +67,7 @@ WebToolFormat::WebToolFormat(const QString & new_label, const QString & new_url_
 
 
 
-WebToolFormat::~WebToolFormat()
+OnlineService_format::~OnlineService_format()
 {
 	qDebug() << SG_PREFIX_I << "Delete tool with label" << this->label;
 }
@@ -75,8 +75,8 @@ WebToolFormat::~WebToolFormat()
 
 
 
-/* TODO_LATER: compare with QString WebToolDatasource::get_url_for_viewport(Viewport * viewport) */
-QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
+/* TODO_LATER: compare with QString OnlineService_query::get_url_for_viewport(Viewport * viewport) */
+QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* Center values. */
 	LatLon center_lat_lon = a_viewport->get_center()->get_latlon();
@@ -154,7 +154,7 @@ QString WebToolFormat::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 
 
-QString WebToolFormat::get_url_for_viewport(Viewport * a_viewport)
+QString OnlineService_format::get_url_for_viewport(Viewport * a_viewport)
 {
 	return this->get_url_at_position(a_viewport, NULL);
 }

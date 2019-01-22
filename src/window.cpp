@@ -1147,14 +1147,14 @@ QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
 
 void Window::create_ui(void)
 {
-	/* Menu Tools -> Webtools. */
+	/* Menu Tools -> Online Services. */
 	{
 		QActionGroup * group = new QActionGroup(this);
-		group->setObjectName("webtools");
+		group->setObjectName("online_services");
 		ExternalTools::add_action_items(group, this->get_viewport());
 
-		QMenu * submenu_webtools = this->menu_tools->addMenu(tr("&Webtools"));
-		submenu_webtools->addActions(group->actions());
+		QMenu * submenu_online_services = this->menu_tools->addMenu(tr("Online Services"));
+		submenu_online_services->addActions(group->actions());
 	}
 
 

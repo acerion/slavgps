@@ -38,23 +38,23 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "WebTool Bounds"
+#define SG_MODULE "Online Service with Bounds"
 
 
 
 
-WebToolBounds::WebToolBounds(const QString & new_label, const char * new_url_format) : WebTool(new_label)
+OnlineService_bbox::OnlineService_bbox(const QString & new_label, const QString & new_url_format) : OnlineService(new_label)
 {
 	qDebug() << SG_PREFIX_I << "Created tool with label" << new_label;
 
 	this->label = new_label;
-	this->url_format = strdup(new_url_format);
+	this->url_format = new_url_format;
 }
 
 
 
 
-WebToolBounds::~WebToolBounds()
+OnlineService_bbox::~OnlineService_bbox()
 {
 	qDebug() << SG_PREFIX_I << "Delete tool with label" << this->label;
 }
@@ -62,7 +62,7 @@ WebToolBounds::~WebToolBounds()
 
 
 
-QString WebToolBounds::get_url_for_viewport(Viewport * a_viewport)
+QString OnlineService_bbox::get_url_for_viewport(Viewport * a_viewport)
 {
 	return this->get_url_for_bbox(a_viewport->get_bbox());
 }
@@ -70,17 +70,21 @@ QString WebToolBounds::get_url_for_viewport(Viewport * a_viewport)
 
 
 
-QString WebToolBounds::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
+QString OnlineService_bbox::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
-	/* TODO_2_LATER: could use zoom level to generate an offset from center lat/lon to get the bounds.
-	   For now simply use the existing function to use bounds from the viewport. */
+	/* FIXME: online service expects a bbox, but the method
+	   provides only a coord.  We could use current zoom of a
+	   viewport to generate a bbox around the coord with correct
+	   size of the bbox.
+
+	   For now just use viewport's bbox as a simple workaround. */
 	return this->get_url_for_bbox(a_viewport->get_bbox());
 }
 
 
 
 
-QString WebToolBounds::get_url_for_bbox(const LatLonBBox & bbox)
+QString OnlineService_bbox::get_url_for_bbox(const LatLonBBox & bbox)
 {
 	const LatLonBBoxStrings bbox_strings = bbox.to_strings();
 

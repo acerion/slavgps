@@ -18,8 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_WEBTOOL_DATASOURCE_H_
-#define _SG_WEBTOOL_DATASOURCE_H_
+
+
+
+#ifndef _SG_DATASOURCE_ONLINE_SERVICE_H_
+#define _SG_DATASOURCE_ONLINE_SERVICE_H_
 
 
 
@@ -43,69 +46,35 @@ namespace SlavGPS {
 
 
 
-	class WebToolDatasource;
+	class OnlineService_query;
 
 
 
 
-	class DataSourceWebTool : public DataSourceBabel {
+	class DataSourceOnlineService : public DataSourceBabel {
 	public:
-		DataSourceWebTool() {};
-		DataSourceWebTool(bool search, const QString & window_title, const QString & layer_title, Viewport * viewport, WebToolDatasource * web_tool_data_source);
+		DataSourceOnlineService() {};
+		DataSourceOnlineService(bool search, const QString & window_title, const QString & layer_title, Viewport * viewport, OnlineService_query * online_query_service);
 		int run_config_dialog(AcquireContext * acquire_context);
 
 		void cleanup(void * data);
 
 		bool search = false;
 		Viewport * viewport = NULL;
-		WebToolDatasource * web_tool_data_source = NULL;
+		OnlineService_query * online_query_service = NULL;
 	};
 
 
 
 
-	class WebToolDatasource : public WebTool {
+	class DataSourceOnlineServiceDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		WebToolDatasource(const QString & new_tool_name,
-				  const QString & url_format,
-				  const QString & url_format_code,
-				  const QString & file_type,
-				  const QString & new_input_field_label);
-		~WebToolDatasource();
-
-		void run_at_current_position(Viewport * viewport);
-
-		QString get_url_for_viewport(Viewport * viewport);
-		QString get_url_at_position(Viewport * viewport, const Coord * coord);
-
-		QString get_last_user_string(void) const;
-
-
-
-		/* This should be private. */
-
-		bool webtool_needs_user_string();
-
-		QString url_format_code;
-
-		QString file_type;               /* Default value NULL equates to internal GPX reading. */
-		QString input_field_label_text;  /* Label to be shown next to the user input field if an input term is required. */
-		QString user_string;
-
-	}; /* class WebToolDatasource */
-
-
-
-
-	class DataSourceWebToolDialog : public DataSourceDialog {
-		Q_OBJECT
-	public:
-		DataSourceWebToolDialog(const QString & window_title, Viewport * viewport, WebToolDatasource * new_web_tool_data_source);
+		DataSourceOnlineServiceDialog(const QString & window_title, Viewport * viewport, OnlineService_query * new_online_query_service);
 
 		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
-		WebToolDatasource * web_tool_data_source = NULL;
+		OnlineService_query * online_query_service = NULL;
 		Viewport * viewport = NULL;
 		QLineEdit input_field;
 	};
@@ -118,4 +87,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_WEBTOOL_DATASOURCE_H_ */
+#endif /* #ifndef _SG_DATASOURCE_ONLINE_SERVICE_H_ */

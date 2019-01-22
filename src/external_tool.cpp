@@ -78,7 +78,7 @@ void ExternalTool::run_at_current_position_cb(void)
 
 void ExternalTool::run_at_position_cb(void)
 {
-	this->run_at_position(this->viewport, &this->coord);
+	this->run_at_position(this->viewport, this->coord);
 }
 
 

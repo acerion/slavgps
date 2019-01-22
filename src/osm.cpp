@@ -39,6 +39,7 @@
 #include "webtool_bounds.h"
 #include "webtool_format.h"
 #include "webtool_datasource.h"
+#include "webtool_query.h"
 #include "external_tools.h"
 #include "external_tool_datasources.h"
 #include "goto_tool_xml.h"
@@ -121,30 +122,30 @@ void OSM::init(void)
 	MapSources::register_map_source(new MapSourceOSMMetatiles());
 
 
-	/* Webtools. */
-	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (view)"), "http://www.openstreetmap.org/?lat=%1&lon=%2&zoom=%3"));
+	/* Online Services (formerly Webtools). */
+	ExternalTools::register_tool(new OnlineService_center(QObject::tr("OSM (view)"), "http://www.openstreetmap.org/?lat=%1&lon=%2&zoom=%3"));
 
-	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%1&lon=%2&zoom=%3"));
+	ExternalTools::register_tool(new OnlineService_center(QObject::tr("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%1&lon=%2&zoom=%3"));
 
 #ifdef K_TODO_LATER /* Correctly handle %d arguments in the string. */
 	/* Note the use of positional parameters. */
-	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s"));
+	ExternalTools::register_tool(new OnlineService_center(QObject::tr("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s"));
 #endif
 
-	ExternalTools::register_tool(new WebToolCenter(QObject::tr("OSM (render)"), "http://www.informationfreeway.org/?lat=%1&lon=%2&zoom=%3&layers=B0000F000F"));
+	ExternalTools::register_tool(new OnlineService_center(QObject::tr("OSM (render)"), "http://www.informationfreeway.org/?lat=%1&lon=%2&zoom=%3&layers=B0000F000F"));
 
 	/* Example: http://127.0.0.1:8111/load_and_zoom?left=8.19&right=8.20&top=48.605&bottom=48.590&select=node413602999
 	   JOSM or merkaartor must already be running with remote interface enabled. */
-	ExternalTools::register_tool(new WebToolBounds(QObject::tr("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%1&right=%2&bottom=%3&top=%4"));
+	ExternalTools::register_tool(new OnlineService_bbox(QObject::tr("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%1&right=%2&bottom=%3&top=%4"));
 
-	ExternalTools::register_tool(new WebToolFormat(QObject::tr("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%1/%2/%3", "ZAO"));
+	ExternalTools::register_tool(new OnlineService_format(QObject::tr("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%1/%2/%3", "ZAO"));
 
 	/* Not really OSM but can't be bothered to create somewhere else to put it... */
-	ExternalTools::register_tool(new WebToolCenter(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
+	ExternalTools::register_tool(new OnlineService_center(QObject::tr("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%1;%2"));
 
 
 	/* Datasource. */
-	ExternalToolDataSource::register_tool(new WebToolDatasource(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", "", ""));
+	ExternalToolDataSource::register_tool(new OnlineService_query(QObject::tr("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%1,%2,%3,%4&amp;closed=0", "LBRT", "", ""));
 
 
 	/* Goto */

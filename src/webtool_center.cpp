@@ -40,12 +40,12 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "WebTool Center"
+#define SG_MODULE "Online Service with Center"
 
 
 
 
-WebToolCenter::WebToolCenter(const QString & new_label, const QString & new_url_format) : WebTool(new_label)
+OnlineService_center::OnlineService_center(const QString & new_label, const QString & new_url_format) : OnlineService(new_label)
 {
 	qDebug() << SG_PREFIX_I << "Created tool with label" << new_label;
 
@@ -56,7 +56,7 @@ WebToolCenter::WebToolCenter(const QString & new_label, const QString & new_url_
 
 
 
-WebToolCenter::~WebToolCenter()
+OnlineService_center::~OnlineService_center()
 {
 	qDebug() << SG_PREFIX_I << "Delete tool" << this->label;
 }
@@ -64,7 +64,7 @@ WebToolCenter::~WebToolCenter()
 
 
 
-QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
+QString OnlineService_center::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	QString result;
 	const VikingZoomLevel viking_zoom_level = a_viewport->get_viking_zoom_level();
@@ -84,7 +84,7 @@ QString WebToolCenter::get_url_at_position(Viewport * a_viewport, const Coord * 
 
 
 
-QString WebToolCenter::get_url_for_viewport(Viewport * a_viewport)
+QString OnlineService_center::get_url_for_viewport(Viewport * a_viewport)
 {
 	return this->get_url_for_coord(*a_viewport->get_center(), a_viewport->get_viking_zoom_level());
 }
@@ -92,7 +92,7 @@ QString WebToolCenter::get_url_for_viewport(Viewport * a_viewport)
 
 
 
-QString WebToolCenter::get_url_for_coord(const Coord & a_coord, const VikingZoomLevel & viking_zoom_level)
+QString OnlineService_center::get_url_for_coord(const Coord & a_coord, const VikingZoomLevel & viking_zoom_level)
 {
 	const LatLon lat_lon = a_coord.get_latlon();
 

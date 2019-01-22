@@ -40,6 +40,7 @@ SOURCES += main.cpp \
     routing_engine_web.cpp \
     webtool_bounds.cpp \
     webtool_center.cpp \
+    webtool_query.cpp \
     webtool.cpp \
     webtool_datasource.cpp \
     webtool_format.cpp \
@@ -170,6 +171,7 @@ HEADERS += window.h \
     routing_engine_web.h \
     webtool_bounds.h \
     webtool_center.h \
+    webtool_query.h \
     webtool.h \
     webtool_datasource.h \
     webtool_format.h \

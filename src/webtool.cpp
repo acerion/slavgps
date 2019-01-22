@@ -38,12 +38,12 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "WebTool"
+#define SG_MODULE "Online Service"
 
 
 
 
-WebTool::~WebTool()
+OnlineService::~OnlineService()
 {
 	qDebug() << SG_PREFIX_I << "Deleted tool with label" << this->label;
 }
@@ -51,7 +51,7 @@ WebTool::~WebTool()
 
 
 
-void WebTool::run_at_current_position(Viewport * a_viewport)
+void OnlineService::run_at_current_position(Viewport * a_viewport)
 {
 	const QString url = this->get_url_for_viewport(a_viewport);
 	open_url(url);
@@ -60,9 +60,9 @@ void WebTool::run_at_current_position(Viewport * a_viewport)
 
 
 
-void WebTool::run_at_position(Viewport * a_viewport, const Coord * a_coord)
+void OnlineService::run_at_position(Viewport * new_viewport, const Coord & new_coord)
 {
-	QString url = this->get_url_at_position(a_viewport, a_coord);
+	QString url = this->get_url_at_position(new_viewport, &new_coord);
 	if (url.size()) {
 		open_url(url);
 	}
@@ -71,7 +71,7 @@ void WebTool::run_at_position(Viewport * a_viewport, const Coord * a_coord)
 
 
 
-void WebTool::set_url_format(const QString & new_url_format)
+void OnlineService::set_url_format(const QString & new_url_format)
 {
 	this->url_format = new_url_format;
 }

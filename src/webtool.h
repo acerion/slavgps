@@ -18,8 +18,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_WEBTOOL_H_
-#define _SG_WEBTOOL_H_
+
+
+
+#ifndef _SG_ONLINE_SERVICE_H_
+#define _SG_ONLINE_SERVICE_H_
 
 
 
@@ -45,14 +48,14 @@ namespace SlavGPS {
 
 
 
-	class WebTool : public ExternalTool {
+	class OnlineService : public ExternalTool {
 		Q_OBJECT
 	public:
-		WebTool(const QString & tool_label) : ExternalTool(tool_label) {};
-		~WebTool();
+		OnlineService(const QString & tool_label) : ExternalTool(tool_label) {};
+		~OnlineService();
 
 		void run_at_current_position(Viewport * viewport);
-		void run_at_position(Viewport * viewport, const Coord * a_coord);
+		void run_at_position(Viewport * viewport, const Coord & coord);
 
 		void set_url_format(const QString & new_url_format);
 
@@ -62,8 +65,7 @@ namespace SlavGPS {
 
 	protected:
 		QString url_format;
-
-	}; /* class WebTool */
+	};
 
 
 
@@ -73,4 +75,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_WEBTOOL_H_ */
+#endif /* #ifndef _SG_ONLINE_SERVICE_H_ */

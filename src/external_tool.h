@@ -57,7 +57,7 @@ namespace SlavGPS {
 		const QString & get_label(void) const;
 
 		virtual void run_at_current_position(Viewport * viewport) = 0;
-		virtual void run_at_position(Viewport * viewport, const Coord * coord) = 0;
+		virtual void run_at_position(Viewport * viewport, const Coord & coord) = 0;
 
 	protected:
 		QString label;
