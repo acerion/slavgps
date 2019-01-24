@@ -62,8 +62,8 @@ namespace SlavGPS {
 	protected:
 		QString label;
 
-		Viewport * viewport = NULL; /* Just a reference. */
-		Coord coord;
+		Viewport * m_viewport = NULL; /* Just a reference. */
+		Coord m_coord;
 
 	public slots:
 		void run_at_current_position_cb(void);

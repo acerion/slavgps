@@ -49,7 +49,7 @@ namespace SlavGPS {
 				    const QString & url_format,
 				    const QString & url_format_code,
 				    const QString & file_type,
-				    const QString & new_input_field_label);
+				    const QString & input_field_label);
 		~OnlineService_query();
 
 		void run_at_current_position(Viewport * viewport);

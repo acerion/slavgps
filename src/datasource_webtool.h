@@ -54,27 +54,30 @@ namespace SlavGPS {
 	class DataSourceOnlineService : public DataSourceBabel {
 	public:
 		DataSourceOnlineService() {};
-		DataSourceOnlineService(bool search, const QString & window_title, const QString & layer_title, Viewport * viewport, OnlineService_query * online_query_service);
+		DataSourceOnlineService(const QString & window_title, const QString & layer_title, Viewport * viewport, OnlineService_query * online_service);
 		int run_config_dialog(AcquireContext * acquire_context);
 
 		void cleanup(void * data);
 
-		bool search = false;
 		Viewport * viewport = NULL;
-		OnlineService_query * online_query_service = NULL;
+		OnlineService_query * online_service = NULL;
 	};
 
 
 
 
+	/* Only for those online services that require some search
+	   term from user. I guesstimate that most online services
+	   don't require the term and only need coordinates. */
 	class DataSourceOnlineServiceDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceOnlineServiceDialog(const QString & window_title, Viewport * viewport, OnlineService_query * new_online_query_service);
+		/* Get data from online data source */
+		DataSourceOnlineServiceDialog(const QString & window_title, Viewport * viewport, OnlineService_query * new_online_service);
 
 		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
-		OnlineService_query * online_query_service = NULL;
+		OnlineService_query * online_service = NULL;
 		Viewport * viewport = NULL;
 		QLineEdit input_field;
 	};

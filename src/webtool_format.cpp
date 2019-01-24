@@ -115,6 +115,7 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 	}
 
 	std::vector<QString> values;
+	values.resize(len);
 
 	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
 
@@ -130,12 +131,12 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 		case 'P': values[i] = position_lat; break;
 		case 'N': values[i] = position_lon; break;
 		default:
-			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i];
+			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i] << "at position" << i
 			return QString("");
 		}
 	}
 
-	QString url = QString(this->url_format)
+	const QString url = QString(this->url_format)
 		.arg(values[0])
 		.arg(values[1])
 		.arg(values[2])
@@ -144,9 +145,9 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 		.arg(values[5])
 		.arg(values[6])
 		.arg(values[7])
-		.arg(values[8]);
+		.arg(values[8]);  /* FIXME: fixed, explicit indices. How do we know that there are 9 values in the vector? What about sparse vectors? */
 
-	qDebug() << SG_PREFIX_D << "url at position is" << url;
+	qDebug() << SG_PREFIX_D << "URL at position is" << url;
 
 	return url;
 }

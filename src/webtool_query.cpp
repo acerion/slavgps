@@ -37,7 +37,7 @@
 #include "window.h"
 #include "layers_panel.h"
 #include "datasource.h"
-#include "datasource_webtool_.h"
+#include "datasource_webtool.h"
 #include "viewport_internal.h"
 #include "webtool_query.h"
 
@@ -122,8 +122,32 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 	}
 
 	std::vector<QString> values;
+	values.resize(len);
 
 	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
+
+	QString url = this->url_format;
+
+	/* Evaluate+replace each consecutive format specifier %1, %2,
+	   %3 etc. in url=='format string' with a value. */
+	for (int i = 0; i < len; i++) {
+		switch (this->url_format_code[i].toUpper().toLatin1()) {
+		case 'L': url = url.arg(bbox_strings.west);  break;
+		case 'R': url = url.arg(bbox_strings.east);  break;
+		case 'B': url = url.arg(bbox_strings.south); break;
+		case 'T': url = url.arg(bbox_strings.north); break;
+		case 'A': url = url.arg(center_lat); break;
+		case 'O': url = url.arg(center_lon); break;
+		case 'Z': url = url.arg(tile_zoom_level.to_string()); break;
+		case 'S': url = url.arg(this->user_string); break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i] << "at position" << i;
+			return QString("");
+		}
+	}
+
+
+#if 0
 
 	for (int i = 0; i < len; i++) {
 		switch (this->url_format_code[i].toUpper().toLatin1()) {
@@ -136,21 +160,22 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 		case 'Z': values[i] = tile_zoom_level.to_string(); break;
 		case 'S': values[i] = this->user_string; break;
 		default:
-			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i];
+			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i] << "at position" << i
 			return QString("");
 		}
 	}
 
-	QString url = QString(this->url_format)
+	const QString url = QString(this->url_format)
 		.arg(values[0])
 		.arg(values[1])
 		.arg(values[2])
 		.arg(values[3])
 		.arg(values[4])
 		.arg(values[5])
-		.arg(values[6]);
+		.arg(values[6]); /* FIXME: fixed, explicit indices. How do we know that there are 7 values in the vector? What about sparse vectors? */
+#endif
 
-	qDebug() << SG_PREFIX_I << "url at current position is" << url;
+	qDebug() << SG_PREFIX_I << "URL at current position is" << url;
 
 	return url;
 }
@@ -191,15 +216,14 @@ QString OnlineService_query::get_last_user_string(void) const
 
 
 
-void OnlineService_query::run_at_current_position(Viewport * a_viewport)
+void OnlineService_query::run_at_current_position(Viewport * viewport)
 {
-	DataSource * data_source = new DataSourceOnlineService(this->tool_needs_user_string(),
+	DataSource * data_source = new DataSourceOnlineService(this->get_label(),
 							       this->get_label(),
-							       this->get_label(),
-							       a_viewport,
+							       viewport,
 							       this);
 
-	AcquireContext acquire_context(a_viewport->get_window(), a_viewport, ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
+	AcquireContext acquire_context(viewport->get_window(), viewport, ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
 	Acquire::acquire_from_source(data_source, data_source->mode, acquire_context);
 
 #ifdef K_TODO

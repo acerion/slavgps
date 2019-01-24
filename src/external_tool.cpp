@@ -70,7 +70,7 @@ const QString & ExternalTool::get_label(void) const
 
 void ExternalTool::run_at_current_position_cb(void)
 {
-	this->run_at_current_position(this->viewport);
+	this->run_at_current_position(this->m_viewport);
 }
 
 
@@ -78,21 +78,21 @@ void ExternalTool::run_at_current_position_cb(void)
 
 void ExternalTool::run_at_position_cb(void)
 {
-	this->run_at_position(this->viewport, this->coord);
+	this->run_at_position(this->m_viewport, this->m_coord);
 }
 
 
 
 
-void ExternalTool::set_viewport(Viewport * new_viewport)
+void ExternalTool::set_viewport(Viewport * viewport)
 {
-	this->viewport = new_viewport;
+	this->m_viewport = viewport;
 }
 
 
 
 
-void ExternalTool::set_coord(const Coord & new_coord)
+void ExternalTool::set_coord(const Coord & coord)
 {
-	this->coord = new_coord;
+	this->m_coord = coord;
 }
