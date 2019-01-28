@@ -134,7 +134,8 @@ DataSourceOnlineService::DataSourceOnlineService(const QString & new_window_titl
 
 	this->window_title = new_window_title;
 	this->layer_title = new_layer_title;
-	this->mode = DataSourceMode::AddToLayer;
+	//this->mode = DataSourceMode::AddToLayer;
+	this->mode = DataSourceMode::CreateNewLayer;
 	this->input_type = DataSourceInputType::None;
 	this->autoview = false; /* false = maintain current view rather than setting it to the acquired points. */
 	this->keep_dialog_open = true; /* true = keep dialog open after success. */
@@ -162,6 +163,7 @@ int DataSourceOnlineService::run_config_dialog(AcquireContext * acquire_context)
 	if (answer == QDialog::Accepted) {
 		this->acquire_options = config_dialog.create_acquire_options(acquire_context);
 		this->download_options = new DownloadOptions; /* With default values. */
+		this->download_options->follow_location = 1; /* http -> https */
 	}
 
 	return answer;
