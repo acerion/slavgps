@@ -131,7 +131,7 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 		case 'P': values[i] = position_lat; break;
 		case 'N': values[i] = position_lon; break;
 		default:
-			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i] << "at position" << i
+			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i] << "at position" << i;
 			return QString("");
 		}
 	}
