@@ -1310,22 +1310,22 @@ static void dem24k_draw_existence(Viewport * viewport)
 /* Try to add file full_path.
  * Returns false if file does not exists, true otherwise.
  */
-bool LayerDEM::add_file(const QString & dem_file_path)
+bool LayerDEM::add_file(const QString & dem_file_full_path)
 {
-	if (0 == access(dem_file_path.toUtf8().constData(), F_OK)) {
+	if (0 == access(dem_file_full_path.toUtf8().constData(), F_OK)) {
 		/* Only load if file size is not 0 (not in progress). */
 		struct stat sb;
-		stat(dem_file_path.toUtf8().constData(), &sb);
+		stat(dem_file_full_path.toUtf8().constData(), &sb);
 		if (sb.st_size) {
-			this->files.push_front(dem_file_path);
-			qDebug () << SG_PREFIX_I << "Will now load file" << dem_file_path << "from cache";
-			DEMCache::load_file_into_cache(dem_file_path);
+			this->files.push_front(dem_file_full_path);
+			qDebug () << SG_PREFIX_I << "Will now load file" << dem_file_full_path << "from cache";
+			DEMCache::load_file_into_cache(dem_file_full_path);
 		} else {
-			qDebug() << SG_PREFIX_I << dem_file_path << ": file size is zero";
+			qDebug() << SG_PREFIX_I << dem_file_full_path << ": file size is zero";
 		}
 		return true;
 	} else {
-		qDebug() << SG_PREFIX_I << dem_file_path << ": file does not exist";
+		qDebug() << SG_PREFIX_I << dem_file_full_path << ": file does not exist";
 		return false;
 	}
 }

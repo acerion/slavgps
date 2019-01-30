@@ -88,18 +88,20 @@ namespace SlavGPS {
 	public:
 		~DEM();
 
-		bool read(const QString & file_path);
+		bool read_from_file(const QString & file_full_path);
 
-		int16_t get_xy(int32_t x, int32_t y);
-		int16_t get_east_north(double east, double north);
-		int16_t get_simple_interpol(double east, double north);
-		int16_t get_shepard_interpol(double east, double north);
-		// int16_t vik_dem_get_best_interpol(DEM * dem, double east, double north);
+		int16_t get_xy(int x, int y);
+		int16_t get_east_north_no_interpolation(double east_seconds, double north_seconds);
+		int16_t get_east_north_simple_interpolation(double east_seconds, double north_seconds);
+		int16_t get_east_north_shepard_interpolation(double east_seconds, double north_seconds);
+		// int16_t vik_dem_get_best_interpol(DEM * dem, double east_seconds, double north_seconds);
 
-		void east_north_to_xy(double east, double north, int32_t * col, int32_t * row);
+		void east_north_to_xy(double east_seconds, double north_seconds, int32_t * col, int32_t * row);
 
-		bool get_ref_points_elev_dist(double east, double north, /* in seconds */
-					      int16_t * elevs, int16_t * dists);
+		bool get_ref_points_elevation_distance(double east_seconds,
+						       double north_seconds,
+						       int16_t * elevations,
+						       int16_t * distances);
 
 		bool intersect(const LatLonBBox & other_bbox);
 
@@ -118,7 +120,7 @@ namespace SlavGPS {
 
 		UTM utm; /* UTM object, but only for storing band letter and zone number. */
 
-		char const type_string[30] = "DEM object";
+		const char type_string[30] = "DEM object";
 
 
 	private:

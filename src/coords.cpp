@@ -4,7 +4,7 @@ borrowed from:
 http://acme.com/software/coords/
 I (Evan Battaglia <viking@greentorch.org>) have only made some small changes such as
 renaming functions and defining LatLon and UTM structs.
-2004-02-10 -- I also added a function of my own -- UTM::utm_diff() (a_coords_utm_diff()) -- that I felt belonged in coords.c
+2004-02-10 -- I also added a function of my own -- UTM::get_distance() (a_coords_utm_diff()) -- that I felt belonged in coords.c
 2004-02-21 -- I also added UTM::is_equal().
 
 */
@@ -246,32 +246,35 @@ QDebug SlavGPS::operator<<(QDebug debug, const UTM & utm)
 
 
 
-double UTM::utm_diff(const UTM & utm1, const UTM & utm2)
+double UTM::get_distance(const UTM & utm1, const UTM & utm2)
 {
 	if (utm1.zone == utm2.zone) {
 		return sqrt(pow(utm1.easting - utm2.easting, 2) + pow(utm1.northing - utm2.northing, 2));
 	} else {
 		const LatLon tmp1 = UTM::to_latlon(utm1);
 		const LatLon tmp2 = UTM::to_latlon(utm2);
-		return LatLon::latlon_diff(tmp1, tmp2);
+		return LatLon::get_distance(tmp1, tmp2);
 	}
 }
 
 
 
 
-double LatLon::latlon_diff(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
+double LatLon::get_distance(const LatLon & lat_lon_1, const LatLon & lat_lon_2)
 {
-  static LatLon tmp1, tmp2;
-  double tmp3;
-  tmp1.lat = lat_lon_1.lat * PIOVER180;
-  tmp1.lon = lat_lon_1.lon * PIOVER180;
-  tmp2.lat = lat_lon_2.lat * PIOVER180;
-  tmp2.lon = lat_lon_2.lon * PIOVER180;
-  tmp3 = EquatorialRadius * acos(sin(tmp1.lat)*sin(tmp2.lat)+cos(tmp1.lat)*cos(tmp2.lat)*cos(tmp1.lon-tmp2.lon));
-  // For very small differences we can sometimes get NaN returned
-  return std::isnan(tmp3)?0:tmp3;
+	const double lat1 = lat_lon_1.lat * PIOVER180;
+	const double lon1 = lat_lon_1.lon * PIOVER180;
+	const double lat2 = lat_lon_2.lat * PIOVER180;
+	const double lon2 = lat_lon_2.lon * PIOVER180;
+
+	const double tmp = EquatorialRadius * acos(sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(lon1 - lon2));
+
+	/* For very small differences we can sometimes get NaN returned. */
+	return std::isnan(tmp) ? 0 : tmp;
 }
+
+
+
 
 UTM LatLon::to_utm(const LatLon & lat_lon)
 {

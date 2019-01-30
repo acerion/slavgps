@@ -63,7 +63,7 @@ namespace SlavGPS {
 	public:
 		static void uninit(void); /* For module deinitialization. */
 
-		static DEM * load_file_into_cache(const QString & file_path);
+		static DEM * load_file_into_cache(const QString & file_full_path);
 		static void  unload_from_cache(QStringList & file_paths);
 
 		static DEM * get(const QString & file_path);

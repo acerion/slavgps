@@ -357,10 +357,10 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & lat_lon_
 		}
 	}
 
-	double diffx = LatLon::latlon_diff(lat_lon_tl, lat_lon_tr);
+	const double diffx = LatLon::get_distance(lat_lon_tl, lat_lon_tr);
 	*xmpp = (diffx / width) / factor;
 
-	double diffy = LatLon::latlon_diff(lat_lon_tl, lat_lon_bl);
+	const double diffy = LatLon::get_distance(lat_lon_tl, lat_lon_bl);
 	*ympp = (diffy / height) / factor;
 }
 

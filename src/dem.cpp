@@ -30,6 +30,7 @@
 
 
 
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -84,14 +85,16 @@ static const int g_secs_per_degree = 60 * 60;
 
 
 
-
-static bool get_double_and_continue(char ** buffer, double * tmp, bool warn)
+/**
+   \reviewed 2019-01-28
+*/
+static bool get_double_and_continue(char ** buffer, double * result, const char * msg)
 {
 	char * endptr;
-	*tmp = strtod(*buffer, &endptr);
+	*result = strtod(*buffer, &endptr);
 	if (endptr == NULL || endptr == *buffer) {
-		if (warn) {
-			qDebug() << SG_PREFIX_W << "Invalid DEM";
+		if (msg) {
+			qDebug() << SG_PREFIX_W << "Invalid data:" << msg;
 		}
 		return false;
 	}
@@ -102,14 +105,16 @@ static bool get_double_and_continue(char ** buffer, double * tmp, bool warn)
 
 
 
-
-static bool get_int_and_continue(char ** buffer, int * tmp, bool warn)
+/**
+   \reviewed 2019-01-28
+*/
+static bool get_int_and_continue(char ** buffer, int * result, const char * msg)
 {
 	char * endptr;
-	*tmp = strtol(*buffer, &endptr, 10);
+	*result = strtol(*buffer, &endptr, 10);
 	if (endptr == NULL || endptr == *buffer) {
-		if (warn) {
-			qDebug() << SG_PREFIX_W << "Invalid DEM";
+		if (msg) {
+			qDebug() << SG_PREFIX_W << "Invalid data:" << msg;
 		}
 		return false;
 	}
@@ -120,8 +125,11 @@ static bool get_int_and_continue(char ** buffer, int * tmp, bool warn)
 
 
 
+/**
+   \brief Fix Fortran-style exponentiation 1.0D5 -> 1.0E5
 
-/* Fix Fortran-style exponentiation 1.0D5 -> 1.0E5. */
+   \reviewed 2019-01-28
+*/
 static void fix_exponentiation(char * buffer)
 {
 	while (*buffer) {
@@ -151,12 +159,12 @@ bool DEM::parse_header(char * buffer)
 
 	int int_val;
 	/* "DEM level code, pattern code, palaimetric reference system code" -- skip */
-	get_int_and_continue(&buffer, &int_val, true);
-	get_int_and_continue(&buffer, &int_val, true);
-	get_int_and_continue(&buffer, &int_val, true);
+	get_int_and_continue(&buffer, &int_val, "dem level code");
+	get_int_and_continue(&buffer, &int_val, "pattern code");
+	get_int_and_continue(&buffer, &int_val, "palaimetric reference system code");
 
 	/* zone */
-	get_int_and_continue(&buffer, &int_val, true);
+	get_int_and_continue(&buffer, &int_val, "zone");
 	this->utm.zone = int_val;
 	/* FIXME: southern or northern hemisphere?! */
 	this->utm.set_band_letter('N');
@@ -164,16 +172,16 @@ bool DEM::parse_header(char * buffer)
 	double val;
 	/* skip numbers 5-19  */
 	for (int i = 0; i < 15; i++) {
-		if (!get_double_and_continue(&buffer, &val, false)) {
+		if (!get_double_and_continue(&buffer, &val, "header")) {
 			qDebug() << SG_PREFIX_W << "Invalid DEM header";
 			return false;
 		}
 	}
 
 	/* number 20 -- horizontal unit code (utm/ll) */
-	get_double_and_continue(&buffer, &val, true);
+	get_double_and_continue(&buffer, &val, "horizontal unit code");
 	this->horiz_units = val;
-	get_double_and_continue(&buffer, &val, true);
+	get_double_and_continue(&buffer, &val, "orig vert units");
 	/* this->orig_vert_units = val; now done below */
 
 	/* TODO_2_LATER: do this for real. these are only for 1:24k and 1:250k USGS */
@@ -188,18 +196,18 @@ bool DEM::parse_header(char * buffer)
 	}
 
 	/* skip next */
-	get_double_and_continue(&buffer, &val, true);
+	get_double_and_continue(&buffer, &val, "skip 1");
 
 	/* now we get the four corner points. record the min and max. */
-	get_double_and_continue(&buffer, &val, true);
+	get_double_and_continue(&buffer, &val, "corner east");
 	this->min_east_seconds = val;
 	this->max_east_seconds = val;
-	get_double_and_continue(&buffer, &val, true);
+	get_double_and_continue(&buffer, &val, "corner north");
 	this->min_north_seconds = val;
 	this->max_north_seconds = val;
 
 	for (int i = 0; i < 3; i++) {
-		get_double_and_continue(&buffer, &val, true);
+		get_double_and_continue(&buffer, &val, "east seconds");
 		if (val < this->min_east_seconds) {
 			this->min_east_seconds = val;
 		}
@@ -207,7 +215,7 @@ bool DEM::parse_header(char * buffer)
 		if (val > this->max_east_seconds) {
 			this->max_east_seconds = val;
 		}
-		get_double_and_continue(&buffer, &val, true);
+		get_double_and_continue(&buffer, &val, "north seconds");
 		if (val < this->min_north_seconds) {
 			this->min_north_seconds = val;
 		}
@@ -227,7 +235,7 @@ void DEM::parse_block_as_cont(char * buffer, int32_t * cur_column, int32_t * cur
 {
 	int tmp;
 	while (*cur_row < this->columns[*cur_column]->n_points) {
-		if (get_int_and_continue(&buffer, &tmp, false)) {
+		if (get_int_and_continue(&buffer, &tmp, NULL)) {
 			if (this->orig_vert_units == VIK_DEM_VERT_DECIMETERS) {
 				this->columns[*cur_column]->points[*cur_row] = (int16_t) (tmp / 10);
 			} else {
@@ -250,47 +258,47 @@ void DEM::parse_block_as_header(char * buffer, int32_t * cur_column, int32_t * c
 	/* 1 x n_rows 1 east_west south x x x DATA */
 
 	double tmp;
-	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
+	if ((!get_double_and_continue(&buffer, &tmp, "header 2")) || tmp != 1) {
 		qDebug() << SG_PREFIX_W << "Parse Block: Incorrect DEM Class B record: expected 1";
 		return;
 	}
 
 	/* don't need this */
-	if (!get_double_and_continue(&buffer, &tmp, true)) {
+	if (!get_double_and_continue(&buffer, &tmp, "skip 2")) {
 		return;
 	}
 
 	/* n_rows */
-	if (!get_double_and_continue(&buffer, &tmp, true)) {
+	if (!get_double_and_continue(&buffer, &tmp, "n_rows")) {
 		return;
 	}
 	int32_t n_rows = (int32_t) tmp;
 
-	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
+	if ((!get_double_and_continue(&buffer, &tmp, "header 3")) || tmp != 1) {
 		qDebug() << SG_PREFIX_W << "Parse Block: Incorrect DEM Class B record: expected 1";
 		return;
 	}
 
 	double east_west;
-	if (!get_double_and_continue(&buffer, &east_west, true)) {
+	if (!get_double_and_continue(&buffer, &east_west, "east west")) {
 		return;
 	}
 
 	double south;
-	if (!get_double_and_continue(&buffer, &south, true)) {
+	if (!get_double_and_continue(&buffer, &south, "south")) {
 		return;
 	}
 
 	/* next three things we don't need */
-	if (!get_double_and_continue(&buffer, &tmp, true)) {
+	if (!get_double_and_continue(&buffer, &tmp, "skip 3")) {
 		return;
 	}
 
-	if (!get_double_and_continue(&buffer, &tmp, true)) {
+	if (!get_double_and_continue(&buffer, &tmp, "skip 4")) {
 		return;
 	}
 
-	if (!get_double_and_continue(&buffer, &tmp, true)) {
+	if (!get_double_and_continue(&buffer, &tmp, "skip 5")) {
 		return;
 	}
 
@@ -337,6 +345,9 @@ void DEM::parse_block(char * buffer, int32_t * cur_column, int32_t * cur_row)
 
 
 
+/**
+   \reviewed 2019-01-28
+*/
 bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_name, bool zip)
 {
 	/*
@@ -421,20 +432,28 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 		dem_size = file_size;
 	}
 
+
+	/* Calculate which dataset are we dealing with: 1-arc-second
+	   or 3-arc-second.  For freshly downloaded files user can
+	   specify in UI which file format (1 or 3 arc) will be used,
+	   but for files added "manually" in layer's config it can be
+	   both ways. So we can't rely solely on config in UI, we have
+	   to discover the file format here. */
 	int arcsec;
 	if (dem_size == (num_rows_3sec * num_rows_3sec * sizeof (int16_t))) {
 		arcsec = 3;
 	} else if (dem_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
 		arcsec = 1;
 	} else {
-		qDebug() << SG_PREFIX_W << "File" << file_name << "does not have right size";
+		qDebug() << SG_PREFIX_W << "File" << file_name << "does not have right size, dem size = " << dem_size;
 		file.unmap(file_contents);
 		file.close();
 		return false;
 	}
 
-	int num_rows = (arcsec == 3) ? num_rows_3sec : num_rows_1sec;
-	this->east_scale = this->north_scale = arcsec;
+	const int num_rows = (arcsec == 3) ? num_rows_3sec : num_rows_1sec;
+	this->east_scale = arcsec;
+	this->north_scale = arcsec;
 
 	for (int i = 0; i < num_rows; i++) {
 		this->n_columns++;
@@ -461,44 +480,58 @@ bool DEM::read_srtm_hgt(const QString & file_full_path, const QString & file_nam
 
 
 
-static bool is_strm_hgt(const QString & file_name)
+/**
+   \reviewed 2019-01-28
+*/
+static void parse_file_name(const QString & file_name, bool & is_srtm, bool & is_zipped)
 {
-	size_t len = file_name.size();
-	return (len == 11 || ((len == 15) && (file_name[11] == '.' && file_name[12] == 'z' && file_name[13] == 'i' && file_name[14] == 'p')))
-		&& file_name[7] == '.' && file_name[8] == 'h' && file_name[9] == 'g' && file_name[10] == 't'
-		&& (file_name[0] == 'N' || file_name[0] == 'S')
-		&& (file_name[3] == 'E' || file_name[3] == 'W');
+	is_srtm = false;
+	is_zipped = false;
+
+	const size_t len = file_name.size();
+
+	if (strlen("S01E006.hgt") != len && strlen("S01E006.hgt.zip") != len) {
+		return;
+	}
+	if (file_name[0] != 'N' && file_name[0] != 'S') {
+		return;
+	}
+	if (file_name[3] != 'E' && file_name[3] != 'W') {
+		return;
+	}
+	if (strlen("S01E006.hgt") == len && file_name.right(4) == ".hgt") {
+		is_srtm = true;
+	} else if (strlen("S01E006.hgt.zip") == len && file_name.right(8) == ".hgt.zip") {
+		is_srtm = true;
+		is_zipped = true;
+	} else {
+		;
+	}
 }
 
 
 
 
-
-static bool is_zip_file(const QString & file_name)
-{
-	int len = file_name.size();
-	return len == 15 && file_name[len - 3] == 'z' && file_name[len - 2] == 'i' && file_name[len - 1] == 'p';
-}
-
-
-
-
-
-bool DEM::read(const QString & file_full_path)
+/**
+   \reviewed 2019-01-28
+*/
+bool DEM::read_from_file(const QString & file_full_path)
 {
 	if (access(file_full_path.toUtf8().constData(), R_OK) != 0) {
 		return false;
 	}
 
-	const QString & file_name = file_base_name(file_full_path);
+	const QString file_name = file_base_name(file_full_path);
 
-	if (is_strm_hgt(file_name)) {
-		return this->read_srtm_hgt(file_full_path, file_name, is_zip_file(file_name));
+	bool is_srtm = false;
+	bool is_zipped = false;
+	parse_file_name(file_name, is_srtm, is_zipped);
+	if (is_srtm) {
+		return this->read_srtm_hgt(file_full_path, file_name, is_zipped);
 	} else {
 		return this->read_other(file_full_path);
 	}
 }
-
 
 
 
@@ -558,7 +591,6 @@ bool DEM::read_other(const QString & full_path)
 
 
 
-
 DEM::~DEM()
 {
 	for (int32_t i = 0; i < this->n_columns; i++) {
@@ -569,8 +601,10 @@ DEM::~DEM()
 
 
 
-
-int16_t DEM::get_xy(int32_t col, int32_t row)
+/**
+   \reviewed 2019-01-29
+*/
+int16_t DEM::get_xy(int col, int row)
 {
 	if (col < this->n_columns) {
 		if (row < this->columns[col]->n_points) {
@@ -583,17 +617,18 @@ int16_t DEM::get_xy(int32_t col, int32_t row)
 
 
 
-
-int16_t DEM::get_east_north(double east, double north)
+int16_t DEM::get_east_north_no_interpolation(double east_seconds, double north_seconds)
 {
-	if (east > this->max_east_seconds || east < this->min_east_seconds ||
-	    north > this->max_north_seconds || north < this->min_north_seconds) {
+	if (east_seconds > this->max_east_seconds
+	    || east_seconds < this->min_east_seconds
+	    || north_seconds > this->max_north_seconds
+	    || north_seconds < this->min_north_seconds) {
 
 		return DEM_INVALID_ELEVATION;
 	}
 
-	int col = (int) floor((east - this->min_east_seconds) / this->east_scale);
-	int row = (int) floor((north - this->min_north_seconds) / this->north_scale);
+	const int col = (int) floor((east_seconds - this->min_east_seconds) / this->east_scale);
+	const int row = (int) floor((north_seconds - this->min_north_seconds) / this->north_scale);
 
 	return this->get_xy(col, row);
 }
@@ -601,27 +636,31 @@ int16_t DEM::get_east_north(double east, double north)
 
 
 
-
-bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
-				   int16_t * elevs, int16_t * dists)
+bool DEM::get_ref_points_elevation_distance(double east_seconds,
+					    double north_seconds,
+					    int16_t * elevations,
+					    int16_t * distances)
 {
-	int cols[4], rows[4];
+	int cols[4];
+	int rows[4];
 	LatLon ll[4];
 
-	if (east > this->max_east_seconds || east < this->min_east_seconds ||
-	    north > this->max_north_seconds || north < this->min_north_seconds) {
+	if (east_seconds > this->max_east_seconds
+	    || east_seconds < this->min_east_seconds
+	    || north_seconds > this->max_north_seconds
+	    || north_seconds < this->min_north_seconds) {
 
-		return false;  /* got nothing */
+		return false;  /* Got nothing. */
 	}
 
-	const LatLon pos(north / 3600, east / 3600);
+	const LatLon pos(north_seconds / 3600, east_seconds / 3600);
 
 	/* order of the data: sw, nw, ne, se */
 	/* sw */
-	cols[0] = (int) floor((east - this->min_east_seconds) / this->east_scale);
-	rows[0] = (int) floor((north - this->min_north_seconds) / this->north_scale);
-	ll[0].lon = (this->min_east_seconds + this->east_scale*cols[0]) / 3600;
-	ll[0].lat = (this->min_north_seconds + this->north_scale*rows[0]) / 3600;
+	cols[0] = (int) floor((east_seconds - this->min_east_seconds) / this->east_scale);
+	rows[0] = (int) floor((north_seconds - this->min_north_seconds) / this->north_scale);
+	ll[0].lon = (this->min_east_seconds + this->east_scale * cols[0]) / 3600;
+	ll[0].lat = (this->min_north_seconds + this->north_scale * rows[0]) / 3600;
 	/* nw */
 	cols[1] = cols[0];
 	rows[1] = rows[0] + 1;
@@ -639,41 +678,50 @@ bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
 	ll[3].lat = ll[0].lat;
 
 	for (int i = 0; i < 4; i++) {
-		if ((elevs[i] = this->get_xy(cols[i], rows[i])) == DEM_INVALID_ELEVATION) {
+		if ((elevations[i] = this->get_xy(cols[i], rows[i])) == DEM_INVALID_ELEVATION) {
 			return false;
 		}
-		dists[i] = LatLon::latlon_diff(pos, ll[i]);
+		distances[i] = LatLon::get_distance(pos, ll[i]);
 	}
 
 #if 0   /* Debug. */
 	for (int i = 0; i < 4; i++) {
-		qDebug() << SG_PREFIX_D << i << ":" << ll[i].lat << ll[i].lon << dists[i] << elevs[i];
+		qDebug() << SG_PREFIX_D << i << ":" << ll[i].lat << ll[i].lon << distances[i] << elevs[i];
 	}
 	qDebug() << SG_PREFIX_D << "north_scale =" this->north_scale;
 #endif
 
-	return true;  /* all OK */
+	return true;  /* All OK. */
 }
 
 
 
 
-
-int16_t DEM::get_simple_interpol(double east, double north)
+int16_t DEM::get_east_north_simple_interpolation(double east_seconds, double north_seconds)
 {
-	int16_t elevs[4], dists[4];
-	if (!this->get_ref_points_elev_dist(east, north, elevs, dists)) {
+	int16_t elevations[4] = { 0 };
+	int16_t distances[4] = { 0 };
+	if (!this->get_ref_points_elevation_distance(east_seconds, north_seconds, elevations, distances)) {
 		return DEM_INVALID_ELEVATION;
 	}
 
 	for (int i = 0; i < 4; i++) {
-		if (dists[i] < 1) {
-			return elevs[i];
+		if (distances[i] < 1) {
+			return elevations[i];
 		}
 	}
 
-	double t = (double) elevs[0] / dists[0] + (double) elevs[1] / dists[1] + (double) elevs[2] / dists[2] + (double) elevs[3] / dists[3];
-	double b = 1.0 / dists[0] + 1.0 / dists[1] + 1.0 / dists[2] + 1.0 / dists[3];
+	const double t =
+		(double) elevations[0] / distances[0]
+		+ (double) elevations[1] / distances[1]
+		+ (double) elevations[2] / distances[2]
+		+ (double) elevations[3] / distances[3];
+
+	const double b =
+		1.0 / distances[0]
+		+ 1.0 / distances[1]
+		+ 1.0 / distances[2]
+		+ 1.0 / distances[3];
 
 	return (t/b);
 }
@@ -681,44 +729,43 @@ int16_t DEM::get_simple_interpol(double east, double north)
 
 
 
-
-int16_t DEM::get_shepard_interpol(double east, double north)
+int16_t DEM::get_east_north_shepard_interpolation(double east_seconds, double north_seconds)
 {
-	int16_t elevs[4], dists[4];
-	if (!this->get_ref_points_elev_dist(east, north, elevs, dists)) {
+	int16_t elevations[4] = { 0 };
+	int16_t distances[4] = { 0 };
+	if (!this->get_ref_points_elevation_distance(east_seconds, north_seconds, elevations, distances)) {
 		return DEM_INVALID_ELEVATION;
 	}
 
 	int16_t max_dist = 0;
 	for (int i = 0; i < 4; i++) {
-		if (dists[i] < 1) {
-			return elevs[i];
+		if (distances[i] < 1) {
+			return elevations[i];
 		}
-		if (dists[i] > max_dist) {
-			max_dist = dists[i];
+		if (distances[i] > max_dist) {
+			max_dist = distances[i];
 		}
 	}
 
-	double tmp;
 	double t = 0.0;
 	double b = 0.0;
 
 #ifdef K_TODO_MAYBE
 	/* Derived method by Franke & Nielson. Does not seem to work too well here. */
 	for (int i = 0; i < 4; i++) {
-		tmp = pow((1.0 * (max_dist - dists[i]) / max_dist * dists[i]), 2);
-		t += tmp * elevs[i];
+		const double tmp = pow((1.0 * (max_dist - distances[i]) / max_dist * distances[i]), 2);
+		t += tmp * elevations[i];
 		b += tmp;
 	}
 #endif
 
 	for (int i = 0; i < 4; i++) {
-		tmp = pow((1.0 / dists[i]), 2);
-		t += tmp * elevs[i];
+		const double tmp = pow((1.0 / distances[i]), 2);
+		t += tmp * elevations[i];
 		b += tmp;
 	}
 
-	qDebug() << SG_PREFIX_D << "Shepard Interpolation: tmp =" << tmp << "t =" << t << "b =" << b << "t/b =" << t/b;
+	qDebug() << SG_PREFIX_D << "Shepard Interpolation: t =" << t << "b =" << b << "t/b =" << t/b;
 
 	return (t/b);
 
@@ -727,13 +774,11 @@ int16_t DEM::get_shepard_interpol(double east, double north)
 
 
 
-
-void DEM::east_north_to_xy(double east, double north, int32_t * col, int32_t * row)
+void DEM::east_north_to_xy(double east_seconds, double north_seconds, int32_t * col, int32_t * row)
 {
-	*col = (int32_t) floor((east - this->min_east_seconds) / this->east_scale);
-	*row = (int32_t) floor((north - this->min_north_seconds) / this->north_scale);
+	*col = (int32_t) floor((east_seconds - this->min_east_seconds) / this->east_scale);
+	*row = (int32_t) floor((north_seconds - this->min_north_seconds) / this->north_scale);
 }
-
 
 
 
@@ -782,11 +827,13 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 	bbox.west = dem_southwest.lon;
 	bbox.validate();
 
-	qDebug() << SG_PREFIX_I << "Viewport:" << other_bbox;
-	qDebug() << SG_PREFIX_I << "DEM:     " << bbox;
-	qDebug() << SG_PREFIX_I << "Overlap: " << (BBOX_INTERSECT(bbox, other_bbox) ? "true" : "false");
+	const bool result = BBOX_INTERSECT(bbox, other_bbox);
 
-	return BBOX_INTERSECT(bbox, other_bbox);
+	qDebug() << SG_PREFIX_I << "DEM's bbox:" << bbox;
+	qDebug() << SG_PREFIX_I << "Other bbox:" << other_bbox;
+	qDebug() << SG_PREFIX_I << "Intersect: " << (result ? "true" : "false");
+
+	return result;
 }
 
 

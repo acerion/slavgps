@@ -127,24 +127,24 @@ void DEMCache::uninit(void)
    The tile may been sitting on disc before, or may have been just
    downloaded - the function gets called just the same.
 
-   \param file_path: path to data file with tile data
+   \param file_full_path: path to data file with tile data
 
    \return DEM object representing a tile
 */
-DEM * DEMCache::load_file_into_cache(const QString & file_path)
+DEM * DEMCache::load_file_into_cache(const QString & file_full_path)
 {
-	auto iter = loaded_dems.find(file_path);
+	auto iter = loaded_dems.find(file_full_path);
 	if (iter != loaded_dems.end()) { /* Found. */
 		(*iter).second->ref_count++;
 		return (*iter).second->dem;
 	} else {
 		DEM * dem = new DEM();
-		if (!dem->read(file_path)) {
+		if (!dem->read_from_file(file_full_path)) {
 			delete dem;
 			return NULL;
 		}
 		LoadedDEM * ldem = new LoadedDEM(dem);
-		loaded_dems[file_path] = ldem;
+		loaded_dems[file_full_path] = ldem;
 		return dem;
 	}
 }
@@ -228,13 +228,13 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 
 	switch (ce->method) {
 	case DemInterpolation::None:
-		ce->elev = dem->get_east_north(lon, lat);
+		ce->elev = dem->get_east_north_no_interpolation(lon, lat);
 		break;
 	case DemInterpolation::Simple:
-		ce->elev = dem->get_simple_interpol(lon, lat);
+		ce->elev = dem->get_east_north_simple_interpolation(lon, lat);
 		break;
 	case DemInterpolation::Best:
-		ce->elev = dem->get_shepard_interpol(lon, lat);
+		ce->elev = dem->get_east_north_shepard_interpolation(lon, lat);
 		break;
 	default: break;
 	}
@@ -288,9 +288,9 @@ GList * a_dems_list_copy(GList * dems)
 	GList * rv = g_list_copy(dems);
 	GList * iter = rv;
 	while (iter) {
-		std::string dem_file_path = std::string((const char *) (iter->data));
-		if (!DEMCache::load_file_into_cache(dem_file_path)) {
-			GList *iter_temp = iter->next; /* Delete link, don't bother strdup'ing and free'ing string. */
+		std::string dem_file_full_path = std::string((const char *) (iter->data));
+		if (!DEMCache::load_file_into_cache(dem_file_full_path)) {
+			GList * iter_temp = iter->next; /* Delete link, don't bother strdup'ing and free'ing string. */
 			rv = g_list_remove_link(rv, iter);
 			iter = iter_temp;
 		} else {
@@ -319,14 +319,14 @@ int16_t a_dems_list_get_elev_by_coord(std::list<QString> & file_paths, const Coo
 				ll_tmp = coord->get_latlon();
 				ll_tmp.lat *= 3600;
 				ll_tmp.lon *= 3600;
-				elev = dem->get_east_north(ll_tmp.lon, ll_tmp.lat);
+				elev = dem->get_east_north_no_interpolation(ll_tmp.lon, ll_tmp.lat);
 				if (elev != DEM_INVALID_ELEVATION) {
 					return elev;
 				}
 			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 				utm_tmp = coord->get_utm();
 				if (utm_tmp.zone == dem->utm.zone
-				    && (elev = dem->get_east_north(utm_tmp.easting, utm_tmp.northing)) != DEM_INVALID_ELEVATION) {
+				    && (elev = dem->get_east_north_no_interpolation(utm_tmp.easting, utm_tmp.northing)) != DEM_INVALID_ELEVATION) {
 
 					return elev;
 				}

@@ -93,7 +93,7 @@ namespace SlavGPS {
 
 		static UTM to_utm(const LatLon & lat_lon);
 
-		static double latlon_diff(const LatLon & lat_lon_1, const LatLon & lat_lon_2);
+		static double get_distance(const LatLon & lat_lon_1, const LatLon & lat_lon_2);
 	};
 	QDebug operator<<(QDebug debug, const LatLon & lat_lon);
 
@@ -118,7 +118,7 @@ namespace SlavGPS {
 		static bool is_band_letter(char character); /* Is given character a band letter? */
 		static bool is_band_symbol(char character); /* Is given character a band letter or "none band" indicator? */
 
-		static double utm_diff(const UTM & utm1, const UTM & utm2);
+		static double get_distance(const UTM & utm1, const UTM & utm2);
 
 		/* TODO_HARD: revisit data types (double or int?) for northing/easting. */
 		double northing = 0;

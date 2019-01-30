@@ -64,7 +64,7 @@ static double distance_safe(const Coord & coord1, const Coord & coord2)
 {
 	const LatLon a = coord1.get_latlon();
 	const LatLon b = coord2.get_latlon();
-	return LatLon::latlon_diff(a, b);
+	return LatLon::get_distance(a, b);
 }
 
 
@@ -78,13 +78,13 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 
 	switch (coord1.mode) {
 	case CoordMode::UTM:
-		return UTM::utm_diff(coord1.utm, coord2.utm);
+		return UTM::get_distance(coord1.utm, coord2.utm);
 
 	case CoordMode::LatLon:
-		return LatLon::latlon_diff(coord1.ll, coord2.ll);
+		return LatLon::get_distance(coord1.ll, coord2.ll);
 
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) coord1.mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) coord1.mode;
 		return 0.0;
 	}
 }
@@ -105,11 +105,11 @@ Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 
 	switch (coord1.mode) {
 	case CoordMode::UTM:
-		result = Distance(UTM::utm_diff(coord1.utm, coord2.utm), distance_unit);
+		result = Distance(UTM::get_distance(coord1.utm, coord2.utm), distance_unit);
 		return result;
 
 	case CoordMode::LatLon:
-		result = Distance(LatLon::latlon_diff(coord1.ll, coord2.ll), distance_unit);
+		result = Distance(LatLon::get_distance(coord1.ll, coord2.ll), distance_unit);
 		return result;
 
 	default:
