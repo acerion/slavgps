@@ -112,7 +112,7 @@ void PropertiesDialogTP::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 	/* Always store internally in metres. */
-	this->cur_tp->altitude = this->alt->get_value_uu().get_altitude().convert_to_unit(HeightUnit::Metres);
+	this->cur_tp->altitude = this->alt->get_value_iu().get_altitude();
 }
 
 
@@ -268,8 +268,7 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->lon->setValue(lat_lon.lon);
 
 
-	const Altitude altitude_uu = tp->altitude.convert_to_unit(height_unit); /* Altitude to be presented to user, in user units. */
-	this->alt->set_value_uu(SGVariant(altitude_uu));
+	this->alt->set_value_iu(tp->altitude);
 
 
 	this->update_timestamp_widget(tp);

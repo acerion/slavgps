@@ -49,7 +49,7 @@ using namespace SlavGPS;
 
 
 
-MeasurementEntryWidget::MeasurementEntryWidget(const SGVariant & value_uu, const ParameterScale<double> * scale, QWidget * parent)
+MeasurementEntryWidget::MeasurementEntryWidget(const SGVariant & value_iu, const ParameterScale<double> * scale, QWidget * parent)
 {
 	this->setFrameStyle(QFrame::NoFrame);
 
@@ -64,17 +64,23 @@ MeasurementEntryWidget::MeasurementEntryWidget(const SGVariant & value_uu, const
 	/* Order of calls is important. Use setDecimals() before using setValue(). */
 	this->spin = new QDoubleSpinBox();
 	if (scale) {
+		qDebug() << SG_PREFIX_I << "Setting scale: min =" << scale->min << "max =" << scale->max << "step =" << scale->step << "n_digits =" << scale->n_digits;
+		this->spin->setDecimals(scale->n_digits);
 		this->spin->setMinimum(scale->min);
 		this->spin->setMaximum(scale->max);
 		this->spin->setSingleStep(scale->step);
-		this->spin->setDecimals(scale->n_digits);
+	} else {
+		qDebug() << SG_PREFIX_I << "Not setting scale";
 	}
 
-	if (value_uu.is_valid()) {
-		this->set_value_uu(value_uu);
+	if (value_iu.is_valid()) {
+		qDebug() << SG_PREFIX_I << "Using initial value from function argument";
+		this->set_value_iu(value_iu);
 	} else if (scale) {
-		this->set_value_uu(scale->initial); /* FIXME: ::initial is not in user units. */
+		qDebug() << SG_PREFIX_I << "Using initial value from scale";
+		this->set_value_iu(scale->initial);
 	} else {
+		qDebug() << SG_PREFIX_N << "Not using any initial value";
 		; /* Pass, don't set initial value. */
 	}
 
@@ -84,75 +90,60 @@ MeasurementEntryWidget::MeasurementEntryWidget(const SGVariant & value_uu, const
 	   straight away.  User of this widget has to call
 	   ::setFocus() after putting the widget in layout. */
 	this->setFocusProxy(this->spin);
-
-	/* Save type of variant and user unit of measurement (even if value of measurement is empty). */
-	this->storage_uu = value_uu;
 }
 
 
 
 
-void MeasurementEntryWidget::set_value_uu(const SGVariant & value_uu)
+void MeasurementEntryWidget::set_value_iu(const SGVariant & value_iu)
 {
-	switch (value_uu.type_id) {
+	switch (value_iu.type_id) {
 	case SGVariantType::Altitude:
 		{
-			const Altitude & altitude_uu = value_uu.get_altitude();
-			if (altitude_uu.is_valid()) {
-				this->spin->setValue(altitude_uu.get_value());
-				this->spin->setSuffix(QString(" %1").arg(Altitude::get_unit_full_string(altitude_uu.get_unit())));
+			const Altitude altitude_iu = value_iu.get_altitude();
+			if (altitude_iu.is_valid()) {
+				qDebug() << SG_PREFIX_I << "Setting value of altitude" << altitude_iu.get_value();
+				this->spin->setValue(altitude_iu.convert_to_unit(Preferences::get_unit_height()).get_value());
+				this->spin->setSuffix(QString(" %1").arg(Altitude::get_unit_full_string(altitude_iu.get_unit())));
 			} else {
+				qDebug() << SG_PREFIX_I << "Clearing value of altitude";
 				this->spin->clear();
 				this->spin->setSuffix("");
 			}
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Support for variant type id" << value_uu.type_id << "not implemented yet";
+		qDebug() << SG_PREFIX_E << "Support for variant type id" << value_iu.type_id << "not implemented yet";
 		break;
 	}
 
-	this->storage_uu = value_uu;
+	/* Save type of variant and user unit of measurement (even if value of measurement is empty). */
+	this->type_id = value_iu.type_id;
 }
 
 
 
 
-SGVariant MeasurementEntryWidget::get_value_uu(void) const
+SGVariant MeasurementEntryWidget::get_value_iu(void) const
 {
-	SGVariant result;
+	SGVariant result_iu;
 
-	switch (this->storage_uu.type_id) {
+	switch (this->type_id) {
 	case SGVariantType::Altitude:
-		if (this->storage_uu.get_altitude().is_valid()) {
-
+		{
 			/* Since the value in the widget was presented
 			   to user, it must have been in user
-			   units. Verify this. */
-			if (this->storage_uu.get_altitude().get_unit() != Preferences::get_unit_height()) {
-				qDebug() << SG_PREFIX_E << "Unit mismatch:" << (int) this->storage_uu.get_altitude().get_unit() << "!=" << (int) Preferences::get_unit_height();
-			}
-
-			const Altitude altitude_uu(this->spin->value(), this->storage_uu.get_altitude().get_unit());
-			result = SGVariant(altitude_uu);
-		} else {
-			/* This may happen e.g. when user
-			   manually adds waypoints to TRW
-			   layer. "waypoints properties"
-			   dialog will initially display empty
-			   altitude, and only after user
-			   enters a value we can save it with
-			   some unit. */
+			   units. Now convert to internal unit. */
 			const Altitude altitude_uu(this->spin->value(), Preferences::get_unit_height());
-			result = SGVariant(altitude_uu);
+			result_iu = SGVariant(altitude_uu.convert_to_unit(HeightUnit::Metres));
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Support for variant type id" << this->storage_uu.type_id << "not implemented yet";
+		qDebug() << SG_PREFIX_E << "Support for variant type id" << this->type_id << "not implemented yet";
 		break;
 	}
 
-	return result;
+	return result_iu;
 }
 
 

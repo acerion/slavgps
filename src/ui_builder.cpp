@@ -247,7 +247,9 @@ void PropertiesDialog::fill(Preferences * preferences)
 
 
 
-void PropertiesDialog::fill(const std::map<param_id_t, ParameterSpecification *> & param_specs, const std::map<param_id_t, SGVariant> & values, const std::vector<SGLabelID> & param_groups)
+void PropertiesDialog::fill(const std::map<param_id_t, ParameterSpecification *> & param_specs,
+			    const std::map<param_id_t, SGVariant> & current_parameter_values,
+			    const std::vector<SGLabelID> & param_groups)
 {
 	qDebug() << "\n" SG_PREFIX_I << "Creating Properties Dialog";
 
@@ -255,7 +257,7 @@ void PropertiesDialog::fill(const std::map<param_id_t, ParameterSpecification *>
 
 		const ParameterSpecification & param_spec = *(param_iter->second);
 
-		const SGVariant param_value = values.at(param_iter->first);
+		const SGVariant param_value = current_parameter_values.at(param_iter->first);
 		QWidget * widget = this->make_widget(param_spec, param_value);
 
 		const param_id_t group_id = param_spec.group_id;
@@ -696,7 +698,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	case WidgetType::Altitude:
 		assert (param_spec.type_id == SGVariantType::Altitude);
-		rv = ((MeasurementEntryWidget *) widget)->get_value_uu();
+		rv = ((MeasurementEntryWidget *) widget)->get_value_iu();
 		break;
 
 	default:

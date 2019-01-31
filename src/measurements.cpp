@@ -892,6 +892,7 @@ Altitude Altitude::convert_to_unit(HeightUnit target_height_unit) const
 			output.value = NAN;
 			break;
 		}
+		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid source altitude unit" << (int) this->unit;
 		output.value = NAN;

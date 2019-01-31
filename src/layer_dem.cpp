@@ -87,9 +87,13 @@ void draw_loaded_dem_box(Viewport * viewport);
 
 
 
+/* FIXME: hardcoded unit. */
+static SGVariant scale_min_elev_initial(Altitude(0.0, HeightUnit::Feet));
+static SGVariant scale_max_elev_initial(Altitude(1000.0, HeightUnit::Feet));
+
 /* Upper limit is that high in case if units are feet. */
-static ParameterScale<double> scale_min_elev(0.0, 30000.0,    SGVariant(0.0), 10, 1);
-static ParameterScale<double> scale_max_elev(1.0, 30000.0, SGVariant(1000.0), 10, 1);
+static ParameterScale<double> scale_min_elev(0.0, 30000.0, scale_min_elev_initial, 10, 1);
+static ParameterScale<double> scale_max_elev(1.0, 30000.0, scale_max_elev_initial, 10, 1);
 
 
 
@@ -405,12 +409,13 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 			*/
 			this->min_elev = Altitude(param_value.u.val_double, HeightUnit::Metres);
 		} else {
-			/* Convert from value that was presented in
-			   user interface with user units into value
-			   in internal units (meters) */
-			this->min_elev = param_value.get_altitude().convert_to_unit(HeightUnit::Metres);
+			/* This value should have been converted to
+			   internal units right after getting it from
+			   user interface. So it should be in meters
+			   here. */
+			this->min_elev = param_value.get_altitude();
 		}
-		qDebug() << SG_PREFIX_I << "Saved min elev to layer:" << this->min_elev;
+		qDebug() << SG_PREFIX_I << "Saved min elev to layer:" << this->min_elev << ", file operation =" << is_file_operation;
 		break;
 
 	case PARAM_MAX_ELEV:
@@ -422,8 +427,7 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 			   At this point I think that code reading
 			   value from file doesn't know that it's an
 			   altitude, and has sent us a simple double.
-			   Therefore use param_value.u.val_double.
-			*/
+			   Therefore use param_value.u.val_double. */
 			this->max_elev = Altitude(param_value.u.val_double, HeightUnit::Metres);
 		} else {
 			/* Convert from value that was presented in
@@ -431,7 +435,7 @@ bool LayerDEM::set_param_value(param_id_t param_id, const SGVariant & param_valu
 			   in internal units (meters) */
 			this->max_elev = param_value.get_altitude().convert_to_unit(HeightUnit::Metres);
 		}
-		qDebug() << SG_PREFIX_I << "Saved max elev to layer:" << this->max_elev;
+		qDebug() << SG_PREFIX_I << "Saved max elev to layer:" << this->max_elev << ", file operation =" << is_file_operation;
 		break;
 
 	case PARAM_FILES: {
@@ -513,10 +517,8 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 			   the code. */
 			rv = SGVariant(this->min_elev.get_value(), SGVariantType::Double);
 		} else {
-			/* Build value for presentation in user
-			   interface - convert from internal unit
-			   (meters) into current user's unit. */
-			rv = this->min_elev.convert_to_unit(Preferences::get_unit_height());
+			/* Keep in internal units until the last moment before presenting to user. */
+			rv = this->min_elev;
 		}
 		qDebug() << SG_PREFIX_I << "Read min elev from layer:" << this->min_elev;
 		break;

@@ -406,15 +406,15 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 	/* Set of values of this layer's parameters.
 	   The values will be used to fill widgets inside of Properties Dialog below. */
-	std::map<param_id_t, SGVariant> values;
+	std::map<param_id_t, SGVariant> current_parameter_values;
 	for (auto iter = iface->parameter_specifications.begin(); iter != iface->parameter_specifications.end(); ++iter) {
 		const SGVariant value = this->get_param_value(iter->first, false);
-		values.insert(std::pair<param_id_t, SGVariant>(iter->first, value));
+		current_parameter_values.insert(std::pair<param_id_t, SGVariant>(iter->first, value));
 	}
 
 
 	PropertiesDialog dialog(NULL);
-	dialog.fill(iface->parameter_specifications, values, iface->parameter_groups);
+	dialog.fill(iface->parameter_specifications, current_parameter_values, iface->parameter_groups);
 	if (QDialog::Accepted != dialog.exec()) {
 		return false;
 	}
@@ -466,16 +466,10 @@ LayerType Layer::type_from_type_id_string(const QString & type_id_string)
 */
 void Layer::set_initial_parameter_values(void)
 {
-	std::map<param_id_t, SGVariant> & defaults = this->interface->parameter_default_values;
-
 	for (auto iter = this->interface->parameter_specifications.begin(); iter != this->interface->parameter_specifications.end(); iter++) {
-
-		/* The last argument is is_file_operation=true. In
-		   this function of course we don't pass parameters
-		   from file to layer (at least not directly), so why
-		   this is 'true' is a bit of mystery. TODO_LATER:
-		   explain this mystery. */
-		this->set_param_value(iter->first, defaults.at(iter->first), true);
+		const param_id_t param_id = iter->first;
+		const SGVariant & param_value = this->interface->parameter_default_values.at(param_id);
+		this->set_param_value(param_id, param_value, false);
 	}
 
 	this->has_properties_dialog = this->interface->has_properties_dialog();

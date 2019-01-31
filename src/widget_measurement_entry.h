@@ -49,12 +49,12 @@ namespace SlavGPS {
 	class MeasurementEntryWidget : public QFrame {
 		Q_OBJECT
 	public:
-		MeasurementEntryWidget(const SGVariant & value_uu, const ParameterScale<double> * scale, QWidget * parent = NULL);
+		MeasurementEntryWidget(const SGVariant & value_iu, const ParameterScale<double> * scale, QWidget * parent = NULL);
 
 		/* Set and get value in user units (i.e. units set in
 		   program's preferences).. */
-		void set_value_uu(const SGVariant & measurement_uu);
-		SGVariant get_value_uu(void) const;
+		void set_value_iu(const SGVariant & measurement_iu);
+		SGVariant get_value_iu(void) const;
 
 		void set_tooltip(const QString & tooltip);
 
@@ -66,7 +66,8 @@ namespace SlavGPS {
 		QHBoxLayout * hbox = NULL;
 		QDoubleSpinBox * spin = NULL;
 
-		SGVariant storage_uu; /* For storing type id and user unit (miles, meters, ft/s etc.) of value presented in widget. */
+		/* For storing type of value presented in widget. */
+		SGVariantType type_id;
 	};
 
 

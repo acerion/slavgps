@@ -689,7 +689,7 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 			} else {
 				const SGVariant new_val = new_sgvariant_sub(value_start, param_spec->type_id);
 
-				qDebug() << "DD" PREFIX << "setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
+				qDebug() << SG_PREFIX_D << "Setting value of parameter named" << param_spec->name << "of layer named" << layer->name << ":" << new_val;
 				layer->set_param_value(param_id, new_val, true);
 			}
 			parameter_found = true;
