@@ -81,10 +81,11 @@ namespace SlavGPS {
 		FolderEntry,
 		HScale,         /* SGVariantType::Double or SGVariantType::Int */
 		Color,
-		ComboBox,       /* SGVariantType::String or SGVariantType::Int */
+		ComboBox,       /* SGVariantType::String or SGVariantType::Enumeration */
 		FileList,
 		DateTime,
 
+		Enumeration,
 		Altitude,
 
 		None
@@ -167,6 +168,16 @@ namespace SlavGPS {
 		SGLabelID(const QString & label_, int id_) : label(label_), id(id_) {};
 		QString label;
 		int id = 0;
+	};
+
+
+
+
+	class WidgetEnumerationData {
+	public:
+		std::vector<SGLabelID> values;
+		int default_value;
+		QString tooltip;
 	};
 
 

@@ -88,11 +88,8 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 		value = SGVariant((double) variant.toDouble());
 		break;
 
-	case SGVariantType::Uint:
-		value = SGVariant((uint32_t) variant.toULongLong());
-		break;
-
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		value = SGVariant((int32_t) variant.toLongLong());
 		break;
 
@@ -140,10 +137,8 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 	case SGVariantType::Double:
 		variant = QVariant((double) value.u.val_double);
 		break;
-	case SGVariantType::Uint:
-		variant = QVariant((qulonglong) value.u.val_uint);
-		break;
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		variant = QVariant((qlonglong) value.u.val_int);
 		break;
 	case SGVariantType::Boolean:

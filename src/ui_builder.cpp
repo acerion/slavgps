@@ -370,19 +370,21 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		}
 		break;
 
-	case WidgetType::ComboBox: {
+	case WidgetType::ComboBox:
+	case WidgetType::Enumeration: {
 
-		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::String);
+		assert (param_spec.type_id == SGVariantType::Enumeration
+			|| param_spec.type_id == SGVariantType::String);
 
 		QComboBox * widget_ = new QComboBox(this);
 
 		int selected_idx = 0;
 
 		if (param_spec.widget_data) {
-			const std::vector<SGLabelID> * items = (std::vector<SGLabelID> *) param_spec.widget_data;
+			const WidgetEnumerationData * widget_data = (WidgetEnumerationData *) param_spec.widget_data;
 			int i = 0;
-			for (auto iter = items->begin(); iter != items->end(); iter++) {
-				if (param_spec.type_id == SGVariantType::Int) {
+			for (auto iter = widget_data->values.begin(); iter != widget_data->values.end(); iter++) {
+				if (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Enumeration) {
 					widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
 					if (param_value.u.val_int == (int32_t) (*iter).id) {
 						selected_idx = i;
@@ -409,7 +411,8 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		break;
 
 	case WidgetType::RadioGroup:
-		if (param_spec.type_id == SGVariantType::Int && param_spec.widget_data) {
+		if ((param_spec.type_id == SGVariantType::Int)
+		    && param_spec.widget_data) {
 			const std::vector<SGLabelID> * items = (const std::vector<SGLabelID> *) param_spec.widget_data;
 			assert (items);
 			RadioGroupWidget * widget_ = new RadioGroupWidget("", items, this);
@@ -614,9 +617,11 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::ComboBox:
-		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::String);
+	case WidgetType::Enumeration:
+		assert (param_spec.type_id == SGVariantType::Enumeration
+			|| param_spec.type_id == SGVariantType::String);
 
-		if (param_spec.type_id == SGVariantType::Int) {
+		if (param_spec.type_id == SGVariantType::Enumeration) {
 			rv = SGVariant((int32_t) ((QComboBox *) widget)->currentData().toInt());
 
 		} else if (param_spec.type_id == SGVariantType::String) {

@@ -51,15 +51,16 @@ namespace SlavGPS {
 
 
 
-	enum { DEM_SOURCE_SRTM,
+	enum {
+		DEM_SOURCE_SRTM,
 #ifdef VIK_CONFIG_DEM24K
-	       DEM_SOURCE_DEM24K,
+		DEM_SOURCE_DEM24K,
 #endif
 	};
 
-	enum { DEM_TYPE_HEIGHT = 0,
-	       DEM_TYPE_GRADIENT,
-	       DEM_TYPE_NONE,
+	enum {
+		DEM_TYPE_HEIGHT = 0,
+		DEM_TYPE_GRADIENT,
 	};
 
 

@@ -71,10 +71,8 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	case SGVariantType::Double:
 		this->u.val_double = (double) strtod(str, NULL);
 		break;
-	case SGVariantType::Uint:
-		this->u.val_uint = strtoul(str, NULL, 10);
-		break;
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		this->u.val_int = strtol(str, NULL, 10);
 		break;
 	case SGVariantType::Boolean:
@@ -116,10 +114,8 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 	case SGVariantType::Double:
 		this->u.val_double = str.toDouble();
 		break;
-	case SGVariantType::Uint:
-		this->u.val_uint = str.toULong();
-		break;
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		this->u.val_int = str.toLong();
 		break;
 	case SGVariantType::Boolean:
@@ -184,19 +180,9 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 
 SGVariant::SGVariant(int32_t i, SGVariantType type_id_)
 {
-	assert (type_id_ == SGVariantType::Int);
+	assert (type_id_ == SGVariantType::Int || type_id_ == SGVariantType::Enumeration);
 	this->type_id = type_id_;
 	this->u.val_int = i;
-}
-
-
-
-
-SGVariant::SGVariant(uint32_t new_u, SGVariantType type_id_)
-{
-	assert (type_id_ == SGVariantType::Uint);
-	this->type_id = type_id_;
-	this->u.val_uint = new_u;
 }
 
 
@@ -315,10 +301,8 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 	case SGVariantType::Double:
 		debug << QString("%1").arg(value.u.val_double, 0, 'f', 12);
 		break;
-	case SGVariantType::Uint:
-		debug << value.u.val_uint;
-		break;
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		debug << value.u.val_int;
 		break;
 	case SGVariantType::String:
@@ -371,11 +355,11 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 	case SGVariantType::Double:
 		debug << "Double";
 		break;
-	case SGVariantType::Uint:
-		debug << "Uint";
-		break;
 	case SGVariantType::Int:
 		debug << "Int";
+		break;
+	case SGVariantType::Enumeration:
+		debug << "Enumeration";
 		break;
 	case SGVariantType::String:
 		debug << "String";
@@ -429,10 +413,8 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 	case SGVariantType::Double:
 		this->u.val_double = other.u.val_double;
 		break;
-	case SGVariantType::Uint:
-		this->u.val_uint = other.u.val_uint;
-		break;
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		this->u.val_int = other.u.val_int;
 		break;
 	case SGVariantType::String:
@@ -518,10 +500,8 @@ QString SGVariant::to_string() const
 	case SGVariantType::Double:
 		return QString("%1").arg(this->u.val_double, 0, 'f', 20);
 
-	case SGVariantType::Uint:
-		return QString("%1").arg(this->u.val_uint);
-
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		return QString("%1").arg(this->u.val_int);
 
 	case SGVariantType::String:
@@ -716,11 +696,9 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 			fprintf(file, "%f\n", this->u.val_double);
 			break;
 		}
-		case SGVariantType::Uint:
-			fprintf(file, "%u\n", this->u.val_uint); /* kamilkamil: in viking code the format specifier was incorrect. */
-			break;
 
 		case SGVariantType::Int:
+		case SGVariantType::Enumeration:
 			fprintf(file, "%d\n", this->u.val_int);
 			break;
 

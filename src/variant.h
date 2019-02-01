@@ -55,9 +55,9 @@ namespace SlavGPS {
 	enum class SGVariantType {
 		Empty = 0,
 		Double,
-		Uint,
 		Int,
 
+		Enumeration,
 		String,
 		Boolean,
 		Color,
@@ -77,7 +77,6 @@ namespace SlavGPS {
 
 	union SGVariantPODFields {
 		double val_double;
-		uint32_t val_uint;
 		int32_t val_int;
 		bool val_bool;
 		void * val_pointer; /* For internal usage - don't save this value in a file! */
@@ -100,7 +99,6 @@ namespace SlavGPS {
 
 		SGVariant()                           { type_id = SGVariantType::Empty; }
 		SGVariant(double d,                   SGVariantType type_id = SGVariantType::Double);
-		SGVariant(uint32_t u,                 SGVariantType type_id = SGVariantType::Uint);
 		SGVariant(int32_t i,                  SGVariantType type_id = SGVariantType::Int);
 		SGVariant(const QString & s,          SGVariantType type_id = SGVariantType::String);
 		SGVariant(const char * s,             SGVariantType type_id = SGVariantType::String);

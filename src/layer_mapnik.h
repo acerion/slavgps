@@ -106,7 +106,7 @@ namespace SlavGPS {
 		QString filename_xml;
 		int alpha = 0;
 
-		unsigned int tile_size_x = 0; /* Y is the same as X ATM. */
+		int tile_size_x = 0; /* Y is the same as X ATM. */
 		bool loaded = false;
 		MapnikInterface * mi = NULL;
 		unsigned int rerender_timeout = 0;

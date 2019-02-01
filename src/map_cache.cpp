@@ -87,8 +87,8 @@ public:
 
 static std::unordered_map<std::string, MapCacheItem *> maps_cache;
 static std::list<std::string> keys_list;
-static size_t cache_size = 0;
-static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
+static int cache_size = 0;
+static int max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
 static std::mutex mc_mutex;
 
@@ -226,7 +226,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 	cache_add(key, pixmap, properties);
 
 	/* TODO_LATER: that should be done on preference change only... */
-	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "mapcache_size").u.val_uint * 1024 * 1024;
+	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "mapcache_size").u.val_int * 1024 * 1024;
 
 	while (cache_size > max_cache_size && maps_cache.size()) {
 		cache_remove_oldest();

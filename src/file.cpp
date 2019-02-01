@@ -439,11 +439,8 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 		new_val = SGVariant((double) strtod_i8n(line, NULL));
 		break;
 
-	case SGVariantType::Uint:
-		new_val = SGVariant((uint32_t) strtoul(line, NULL, 10));
-		break;
-
 	case SGVariantType::Int:
+	case SGVariantType::Enumeration:
 		new_val = SGVariant((int32_t) strtol(line, NULL, 10));
 		break;
 

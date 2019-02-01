@@ -98,41 +98,37 @@ static ParameterScale<double> scale_max_elev(1.0, 30000.0, scale_max_elev_initia
 
 
 
-
-static std::vector<SGLabelID> params_source = {
-	SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), 0),
+static WidgetEnumerationData dem_source_enum = {
+	{
+		SGLabelID(QObject::tr("SRTM Global 90m (3 arcsec)"), DEM_SOURCE_SRTM),
 #ifdef VIK_CONFIG_DEM24K
-	SGLabelID(QObject::tr("USA 10m (USGS 24k)"), 1),
+		SGLabelID(QObject::tr("USA 10m (USGS 24k)"),         DEM_SOURCE_DEM24K),
 #endif
+	},
+	DEM_SOURCE_SRTM,
+	QObject::tr("Source of DEM data")
 };
+static SGVariant dem_source_default(void) { return SGVariant(dem_source_enum.default_value, SGVariantType::Enumeration); }
 
 
-static std::vector<SGLabelID> params_type = {
-	SGLabelID(QObject::tr("Absolute height"), 0),
-	SGLabelID(QObject::tr("Height gradient"), 1),
+
+
+static WidgetEnumerationData dem_type_enum = {
+	{
+		SGLabelID(QObject::tr("Absolute height"), DEM_TYPE_HEIGHT),
+		SGLabelID(QObject::tr("Height gradient"), DEM_TYPE_GRADIENT),
+	},
+	DEM_TYPE_HEIGHT,
+	"",
 };
+static SGVariant dem_type_default(void) { return SGVariant(dem_type_enum.default_value, SGVariantType::Enumeration); }
+
 
 
 
 static SGVariant color_default(void)
 {
 	return SGVariant(0, 0, 255, 255);
-}
-
-
-
-
-static SGVariant source_default(void)
-{
-	return SGVariant((int32_t) DEM_SOURCE_SRTM);
-}
-
-
-
-
-static SGVariant type_default(void)
-{
-	return SGVariant((int32_t) DEM_TYPE_HEIGHT);
 }
 
 
@@ -152,13 +148,13 @@ enum {
 
 
 static ParameterSpecification dem_layer_param_specs[] = {
-	{ PARAM_FILES,      "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,             NULL,             NULL, NULL },
-	{ PARAM_SOURCE,     "source",   SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::RadioGroup,      &params_source,   source_default,   NULL, NULL },
-	{ PARAM_COLOR,      "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,             color_default,    NULL, NULL },
-	{ PARAM_TYPE,       "type",     SGVariantType::Int,         PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::RadioGroup,      &params_type,     type_default,     NULL, NULL },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::Altitude,        &scale_min_elev,  NULL,             NULL, NULL },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::Altitude,        &scale_max_elev,  NULL,             NULL, NULL },
-	{ NUM_PARAMS,       "",         SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,             NULL,             NULL, NULL }, /* Guard. */
+	{ PARAM_FILES,      "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,             NULL,                NULL, NULL },
+	{ PARAM_SOURCE,     "source",   SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::Enumeration,     &dem_source_enum, dem_source_default,  NULL, NULL },
+	{ PARAM_COLOR,      "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,             color_default,       NULL, NULL },
+	{ PARAM_TYPE,       "type",     SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::Enumeration,     &dem_type_enum,   dem_type_default,    NULL, NULL },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::Altitude,        &scale_min_elev,  NULL,                NULL, NULL },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::Altitude,        &scale_max_elev,  NULL,                NULL, NULL },
+	{ NUM_PARAMS,       "",         SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,             NULL,                NULL, NULL }, /* Guard. */
 };
 
 

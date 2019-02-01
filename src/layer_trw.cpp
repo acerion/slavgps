@@ -146,18 +146,36 @@ enum {
 };
 
 
-static std::vector<SGLabelID> params_track_drawing_modes = {
-	SGLabelID(QObject::tr("Draw by Track"),                  (int) LayerTRWTrackDrawingMode::ByTrack),
-	SGLabelID(QObject::tr("Draw by Speed"),                  (int) LayerTRWTrackDrawingMode::BySpeed),
-	SGLabelID(QObject::tr("All Tracks Have The Same Color"), (int) LayerTRWTrackDrawingMode::AllSameColor),
-};
 
-static std::vector<SGLabelID> params_wpsymbols = {
-	SGLabelID(QObject::tr("Filled Square"), (int) GraphicMarker::FilledSquare),
-	SGLabelID(QObject::tr("Square"),        (int) GraphicMarker::Square),
-	SGLabelID(QObject::tr("Circle"),        (int) GraphicMarker::Circle),
-	SGLabelID(QObject::tr("X"),             (int) GraphicMarker::X),
+
+static WidgetEnumerationData track_drawing_modes_enum = {
+	{
+		SGLabelID(QObject::tr("Draw by Track"),                  (int) LayerTRWTrackDrawingMode::ByTrack),
+		SGLabelID(QObject::tr("Draw by Speed"),                  (int) LayerTRWTrackDrawingMode::BySpeed),
+		SGLabelID(QObject::tr("All Tracks Have The Same Color"), (int) LayerTRWTrackDrawingMode::AllSameColor),
+	},
+	(int) LayerTRWTrackDrawingMode::ByTrack,
+	""
 };
+static SGVariant track_drawing_modes_default(void) { return SGVariant(track_drawing_modes_enum.default_value, SGVariantType::Enumeration); }
+
+
+
+
+static WidgetEnumerationData wp_symbol_enum = {
+	{
+		SGLabelID(QObject::tr("Filled Square"), (int) GraphicMarker::FilledSquare),
+		SGLabelID(QObject::tr("Square"),        (int) GraphicMarker::Square),
+		SGLabelID(QObject::tr("Circle"),        (int) GraphicMarker::Circle),
+		SGLabelID(QObject::tr("X"),             (int) GraphicMarker::X),
+	},
+	(int) GraphicMarker::FilledSquare,
+	""
+};
+static SGVariant wp_symbol_default(void) { return SGVariant(wp_symbol_enum.default_value, SGVariantType::Enumeration); }
+
+
+
 
 #define MIN_POINT_SIZE 2
 #define MAX_POINT_SIZE 10
@@ -181,36 +199,61 @@ static ParameterScale<int> scale_track_direction_size    ( MIN_ARROW_SIZE,   MAX
 
 
 
-static std::vector<SGLabelID> params_font_sizes = {
-	SGLabelID("Extra Extra Small",   FS_XX_SMALL),
-	SGLabelID("Extra Small",         FS_X_SMALL),
-	SGLabelID("Small",               FS_SMALL),
-	SGLabelID("Medium",              FS_MEDIUM),
-	SGLabelID("Large",               FS_LARGE),
-	SGLabelID("Extra Large",         FS_X_LARGE),
- 	SGLabelID("Extra Extra Large",   FS_XX_LARGE),
+static WidgetEnumerationData font_size_enum = {
+	{
+		SGLabelID("Extra Extra Small",   FS_XX_SMALL),
+		SGLabelID("Extra Small",         FS_X_SMALL),
+		SGLabelID("Small",               FS_SMALL),
+		SGLabelID("Medium",              FS_MEDIUM),
+		SGLabelID("Large",               FS_LARGE),
+		SGLabelID("Extra Large",         FS_X_LARGE),
+		SGLabelID("Extra Extra Large",   FS_XX_LARGE),
+	},
+	(int) FS_MEDIUM,
+	""
 };
+static SGVariant font_size_default(void) { return SGVariant(font_size_enum.default_value, SGVariantType::Enumeration); }
 
 
 
-static std::vector<SGLabelID> params_sort_order = {
-	SGLabelID("None",            (int) TreeViewSortOrder::None),
-	SGLabelID("Name Ascending",  (int) TreeViewSortOrder::AlphabeticalAscending),
-	SGLabelID("Name Descending", (int) TreeViewSortOrder::AlphabeticalDescending),
-	SGLabelID("Date Ascending",  (int) TreeViewSortOrder::DateAscending),
-	SGLabelID("Date Descending", (int) TreeViewSortOrder::DateDescending),
+
+static WidgetEnumerationData sort_order_trk_enum = {
+	{
+		SGLabelID("None",            (int) TreeViewSortOrder::None),
+		SGLabelID("Name Ascending",  (int) TreeViewSortOrder::AlphabeticalAscending),
+		SGLabelID("Name Descending", (int) TreeViewSortOrder::AlphabeticalDescending),
+		SGLabelID("Date Ascending",  (int) TreeViewSortOrder::DateAscending),
+		SGLabelID("Date Descending", (int) TreeViewSortOrder::DateDescending),
+	},
+	(int) TreeViewSortOrder::None,
+	""
 };
+static SGVariant sort_order_trk_default(void) { return SGVariant(sort_order_trk_enum.default_value, SGVariantType::Enumeration); }
 
-static SGVariant black_color_default(void)       { return SGVariant(0, 0, 0, 100); } /* Black. */
-static SGVariant track_drawing_mode_default(void){ return SGVariant((int32_t) LayerTRWTrackDrawingMode::ByTrack); }
-static SGVariant trackbgcolor_default(void)      { return SGVariant(255, 255, 255, 100); }  /* White. */
-static SGVariant tnfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
-static SGVariant wpfontsize_default(void)        { return SGVariant((int32_t) FS_MEDIUM); }
-static SGVariant wptextcolor_default(void)       { return SGVariant(255, 255, 255, 100); } /* White. */
-static SGVariant wpbgcolor_default(void)         { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. */
-static SGVariant wpsymbol_default(void)          { return SGVariant((int32_t) (int) GraphicMarker::FilledSquare); }
-static SGVariant sort_order_default(void)        { return SGVariant((int32_t) 0); }
-static SGVariant string_default(void)            { return SGVariant(""); }
+
+
+
+static WidgetEnumerationData sort_order_wp_enum = {
+	{
+		SGLabelID("None",            (int) TreeViewSortOrder::None),
+		SGLabelID("Name Ascending",  (int) TreeViewSortOrder::AlphabeticalAscending),
+		SGLabelID("Name Descending", (int) TreeViewSortOrder::AlphabeticalDescending),
+		SGLabelID("Date Ascending",  (int) TreeViewSortOrder::DateAscending),
+		SGLabelID("Date Descending", (int) TreeViewSortOrder::DateDescending),
+	},
+	(int) TreeViewSortOrder::None,
+	""
+};
+static SGVariant sort_order_wp_default(void) { return SGVariant(sort_order_wp_enum.default_value, SGVariantType::Enumeration); }
+
+
+
+
+static SGVariant black_color_default(void)           { return SGVariant(0, 0, 0, 100); } /* Black. */
+static SGVariant trackbgcolor_default(void)          { return SGVariant(255, 255, 255, 100); }  /* White. */
+static SGVariant wptextcolor_default(void)           { return SGVariant(255, 255, 255, 100); } /* White. */
+static SGVariant wpbgcolor_default(void)             { return SGVariant(0x83, 0x83, 0xc4, 100); } /* Kind of Blue. */
+static SGVariant string_default(void)                { return SGVariant(""); }
 
 
 
@@ -270,36 +313,36 @@ static ParameterSpecification trw_layer_param_specs[] = {
 	{ PARAM_WAYPOINTS_VISIBLE,       "waypoints_visible", SGVariantType::Boolean, PARAMETER_GROUP_HIDDEN,            QObject::tr("Waypoints are visible"),            WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_ROUTES_VISIBLE,          "routes_visible",    SGVariantType::Boolean, PARAMETER_GROUP_HIDDEN,            QObject::tr("Routes are visible"),               WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
 
-	{ PARAM_DRAW_TRACK_LABELS,       "trackdrawlabels",   SGVariantType::Boolean, PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Labels"),                      WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, N_("Note: the individual track controls what labels may be displayed") },
-	{ PARAM_TRACK_LABEL_FONT_SIZE,   "trackfontsize",     SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Size of Track Label's Font:"),      WidgetType::ComboBox,     &params_font_sizes,          tnfontsize_default,         NULL, NULL },
-	{ PARAM_TRACK_DRAWING_MODE,      "drawmode",          SGVariantType::Int,     PARAMETER_GROUP_TRACKS,            QObject::tr("Track Drawing Mode:"),              WidgetType::ComboBox,     &params_track_drawing_modes, track_drawing_mode_default, NULL, NULL },
-	{ PARAM_TRACK_COLOR_COMMON,      "trackcolor",        SGVariantType::Color,   PARAMETER_GROUP_TRACKS,            QObject::tr("All Tracks Color:"),                WidgetType::Color,        NULL,                        black_color_default,        NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected") },
-	{ PARAM_DRAW_TRACK_LINES,        "drawlines",         SGVariantType::Boolean, PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Lines"),                 WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_TRACK_THICKNESS,         "line_thickness",    SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Thickness:"),                 WidgetType::SpinBoxInt,   &scale_track_thickness,      NULL,                       NULL, NULL },
-	{ PARAM_DRAW_TRACK_DIRECTIONS,   "drawdirections",    SGVariantType::Boolean, PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Directions:"),           WidgetType::CheckButton,  NULL,                        sg_variant_false,           NULL, NULL },
-	{ PARAM_TRACK_DIRECTION_SIZE,    "trkdirectionsize",  SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Direction Size:"),                  WidgetType::SpinBoxInt,   &scale_track_direction_size, NULL,                       NULL, NULL },
-	{ PARAM_DRAW_TRACKPOINTS,        "drawpoints",        SGVariantType::Boolean, PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Trackpoints:"),                WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_TRACKPOINT_SIZE,         "trkpointsize",      SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Trackpoint Size:"),                 WidgetType::SpinBoxInt,   &scale_trackpoint_size,      NULL,                       NULL, NULL },
-	{ PARAM_DRAW_TRACK_ELEVATION,    "drawelevation",     SGVariantType::Boolean, PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Elevation"),             WidgetType::CheckButton,  NULL,                        sg_variant_false,           NULL, NULL },
-	{ PARAM_TRACK_ELEVATION_FACTOR,  "elevation_factor",  SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Draw Elevation Height %:"),         WidgetType::HScale,       &scale_track_elevation_factor, NULL,                     NULL, NULL },
-	{ PARAM_DRAW_TRACK_STOPS,        "drawstops",         SGVariantType::Boolean, PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Stops:"),                WidgetType::CheckButton,  NULL,                        sg_variant_false,           NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time") },
-	{ PARAM_TRACK_MIN_STOP_LENGTH,   "stop_length",       SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Min Stop Length (seconds):"),       WidgetType::SpinBoxInt,   &scale_track_min_stop_length,NULL,                       NULL, NULL },
+	{ PARAM_DRAW_TRACK_LABELS,       "trackdrawlabels",   SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Labels"),                      WidgetType::CheckButton,  NULL,                        sg_variant_true,             NULL, N_("Note: the individual track controls what labels may be displayed") },
+	{ PARAM_TRACK_LABEL_FONT_SIZE,   "trackfontsize",     SGVariantType::Enumeration,  PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Size of Track Label's Font:"),      WidgetType::Enumeration,  &font_size_enum,             font_size_default,           NULL, NULL },
+	{ PARAM_TRACK_DRAWING_MODE,      "drawmode",          SGVariantType::Enumeration,  PARAMETER_GROUP_TRACKS,            QObject::tr("Track Drawing Mode:"),              WidgetType::Enumeration,  &track_drawing_modes_enum,   track_drawing_modes_default, NULL, NULL },
+	{ PARAM_TRACK_COLOR_COMMON,      "trackcolor",        SGVariantType::Color,        PARAMETER_GROUP_TRACKS,            QObject::tr("All Tracks Color:"),                WidgetType::Color,        NULL,                        black_color_default,         NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected") },
+	{ PARAM_DRAW_TRACK_LINES,        "drawlines",         SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Lines"),                 WidgetType::CheckButton,  NULL,                        sg_variant_true,             NULL, NULL },
+	{ PARAM_TRACK_THICKNESS,         "line_thickness",    SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Thickness:"),                 WidgetType::SpinBoxInt,   &scale_track_thickness,      NULL,                        NULL, NULL },
+	{ PARAM_DRAW_TRACK_DIRECTIONS,   "drawdirections",    SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Directions:"),           WidgetType::CheckButton,  NULL,                        sg_variant_false,            NULL, NULL },
+	{ PARAM_TRACK_DIRECTION_SIZE,    "trkdirectionsize",  SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Direction Size:"),                  WidgetType::SpinBoxInt,   &scale_track_direction_size, NULL,                        NULL, NULL },
+	{ PARAM_DRAW_TRACKPOINTS,        "drawpoints",        SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Trackpoints:"),                WidgetType::CheckButton,  NULL,                        sg_variant_true,             NULL, NULL },
+	{ PARAM_TRACKPOINT_SIZE,         "trkpointsize",      SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Trackpoint Size:"),                 WidgetType::SpinBoxInt,   &scale_trackpoint_size,      NULL,                        NULL, NULL },
+	{ PARAM_DRAW_TRACK_ELEVATION,    "drawelevation",     SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Elevation"),             WidgetType::CheckButton,  NULL,                        sg_variant_false,            NULL, NULL },
+	{ PARAM_TRACK_ELEVATION_FACTOR,  "elevation_factor",  SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Draw Elevation Height %:"),         WidgetType::HScale,       &scale_track_elevation_factor, NULL,                      NULL, NULL },
+	{ PARAM_DRAW_TRACK_STOPS,        "drawstops",         SGVariantType::Boolean,      PARAMETER_GROUP_TRACKS,            QObject::tr("Draw Track Stops:"),                WidgetType::CheckButton,  NULL,                        sg_variant_false,            NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time") },
+	{ PARAM_TRACK_MIN_STOP_LENGTH,   "stop_length",       SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Min Stop Length (seconds):"),       WidgetType::SpinBoxInt,   &scale_track_min_stop_length,NULL,                        NULL, NULL },
 
-	{ PARAM_TRACK_BG_THICKNESS,      "bg_line_thickness", SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Thickness:"),      WidgetType::SpinBoxInt,   &scale_track_bg_thickness,   NULL,                       NULL, NULL },
-	{ PARAM_TRK_BG_COLOR,            "trackbgcolor",      SGVariantType::Color,   PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Color"),           WidgetType::Color,        NULL,                        trackbgcolor_default,       NULL, NULL },
-	{ PARAM_TRACK_DRAW_SPEED_FACTOR, "speed_factor",      SGVariantType::Double,  PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Draw by Speed Factor (%):"),        WidgetType::HScale,       &scale_track_draw_speed_factor, NULL,                    NULL, N_("The percentage factor away from the average speed determining the color used") },
-	{ PARAM_TRACK_SORT_ORDER,        "tracksortorder",    SGVariantType::Int,     PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Sort Order:"),                WidgetType::ComboBox,     &params_sort_order,          sort_order_default,         NULL, NULL },
+	{ PARAM_TRACK_BG_THICKNESS,      "bg_line_thickness", SGVariantType::Int,          PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Thickness:"),      WidgetType::SpinBoxInt,   &scale_track_bg_thickness,   NULL,                       NULL, NULL },
+	{ PARAM_TRK_BG_COLOR,            "trackbgcolor",      SGVariantType::Color,        PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Background Color"),           WidgetType::Color,        NULL,                        trackbgcolor_default,       NULL, NULL },
+	{ PARAM_TRACK_DRAW_SPEED_FACTOR, "speed_factor",      SGVariantType::Double,       PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Draw by Speed Factor (%):"),        WidgetType::HScale,       &scale_track_draw_speed_factor, NULL,                    NULL, N_("The percentage factor away from the average speed determining the color used") },
+	{ PARAM_TRACK_SORT_ORDER,        "tracksortorder",    SGVariantType::Enumeration,  PARAMETER_GROUP_TRACKS_ADV,        QObject::tr("Track Sort Order:"),                WidgetType::Enumeration,  &sort_order_trk_enum,        sort_order_trk_default,     NULL, NULL },
 
-	{ PARAM_WP_LABELS,               "drawlabels",        SGVariantType::Boolean, PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Labels"),             WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_WP_LABEL_FONT_SIZE,      "wpfontsize",        SGVariantType::Int,     PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Font Size of Waypoint's Label:"),   WidgetType::ComboBox,     &params_font_sizes,          wpfontsize_default,         NULL, NULL },
-	{ PARAM_WP_MARKER_COLOR,         "wpcolor",           SGVariantType::Color,   PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Color of Waypoint's Marker:"),      WidgetType::Color,        NULL,                        black_color_default,        NULL, NULL },
-	{ PARAM_WP_LABEL_FG_COLOR,       "wptextcolor",       SGVariantType::Color,   PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Color of Waypoint's Label:"),       WidgetType::Color,        NULL,                        wptextcolor_default,        NULL, NULL },
-	{ PARAM_WP_LABEL_BG_COLOR,       "wpbgcolor",         SGVariantType::Color,   PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Background of Waypoint's Label:"),  WidgetType::Color,        NULL,                        wpbgcolor_default,          NULL, NULL },
-	{ PARAM_WPBA,                    "wpbgand",           SGVariantType::Boolean, PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Fake BG Color Translucency:"),      WidgetType::CheckButton,  NULL,                        sg_variant_false,           NULL, NULL },
-	{ PARAM_WP_MARKER_TYPE,          "wpsymbol",          SGVariantType::Int,     PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Type of Waypoint's Marker:"),       WidgetType::ComboBox,     &params_wpsymbols,           wpsymbol_default,           NULL, NULL },
-	{ PARAM_WP_MARKER_SIZE,          "wpsize",            SGVariantType::Int,     PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Size of Waypoint's Marker:"),       WidgetType::SpinBoxInt,   &scale_wp_marker_size,       NULL,                       NULL, NULL },
-	{ PARAM_DRAW_WP_SYMBOLS,         "wpsyms",            SGVariantType::Boolean, PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Symbols:"),           WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
-	{ PARAM_WP_SORT_ORDER,           "wpsortorder",       SGVariantType::Int,     PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Waypoint Sort Order:"),             WidgetType::ComboBox,     &params_sort_order,          sort_order_default,         NULL, NULL },
+	{ PARAM_WP_LABELS,               "drawlabels",        SGVariantType::Boolean,      PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Labels"),             WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
+	{ PARAM_WP_LABEL_FONT_SIZE,      "wpfontsize",        SGVariantType::Enumeration,  PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Font Size of Waypoint's Label:"),   WidgetType::Enumeration,  &font_size_enum,             font_size_default,          NULL, NULL },
+	{ PARAM_WP_MARKER_COLOR,         "wpcolor",           SGVariantType::Color,        PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Color of Waypoint's Marker:"),      WidgetType::Color,        NULL,                        black_color_default,        NULL, NULL },
+	{ PARAM_WP_LABEL_FG_COLOR,       "wptextcolor",       SGVariantType::Color,        PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Color of Waypoint's Label:"),       WidgetType::Color,        NULL,                        wptextcolor_default,        NULL, NULL },
+	{ PARAM_WP_LABEL_BG_COLOR,       "wpbgcolor",         SGVariantType::Color,        PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Background of Waypoint's Label:"),  WidgetType::Color,        NULL,                        wpbgcolor_default,          NULL, NULL },
+	{ PARAM_WPBA,                    "wpbgand",           SGVariantType::Boolean,      PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Fake BG Color Translucency:"),      WidgetType::CheckButton,  NULL,                        sg_variant_false,           NULL, NULL },
+	{ PARAM_WP_MARKER_TYPE,          "wpsymbol",          SGVariantType::Enumeration,  PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Type of Waypoint's Marker:"),       WidgetType::Enumeration,  &wp_symbol_enum,             wp_symbol_default,          NULL, NULL },
+	{ PARAM_WP_MARKER_SIZE,          "wpsize",            SGVariantType::Int,          PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Size of Waypoint's Marker:"),       WidgetType::SpinBoxInt,   &scale_wp_marker_size,       NULL,                       NULL, NULL },
+	{ PARAM_DRAW_WP_SYMBOLS,         "wpsyms",            SGVariantType::Boolean,      PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Draw Waypoint Symbols:"),           WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
+	{ PARAM_WP_SORT_ORDER,           "wpsortorder",       SGVariantType::Enumeration,  PARAMETER_GROUP_WAYPOINTS,         QObject::tr("Waypoint Sort Order:"),             WidgetType::Enumeration,  &sort_order_wp_enum,         sort_order_wp_default,      NULL, NULL },
 
 	{ PARAM_DRAW_WP_IMAGES,          "drawimages",        SGVariantType::Boolean, PARAMETER_GROUP_IMAGES,            QObject::tr("Draw Waypoint Images"),             WidgetType::CheckButton,  NULL,                        sg_variant_true,            NULL, NULL },
 	{ PARAM_WP_IMAGE_SIZE,           "image_size",        SGVariantType::Int,     PARAMETER_GROUP_IMAGES,            QObject::tr("Waypoint Image Size (pixels):"),    WidgetType::HScale,       &scale_wp_image_size,        NULL,                       NULL, NULL },

@@ -188,16 +188,21 @@ enum {
 	VEHICLE_POSITION_ON_SCREEN,
 	VEHICLE_POSITION_NONE,
 };
-static std::vector<SGLabelID> params_vehicle_position = {
-	SGLabelID(QObject::tr("Keep vehicle at center"), VEHICLE_POSITION_CENTERED),
-	SGLabelID(QObject::tr("Keep vehicle on screen"), VEHICLE_POSITION_ON_SCREEN),
-	SGLabelID(QObject::tr("Disable"),                VEHICLE_POSITION_NONE)
+
+static WidgetEnumerationData vehicle_position_enum = {
+	{
+		SGLabelID(QObject::tr("Keep vehicle at center"), VEHICLE_POSITION_CENTERED),
+		SGLabelID(QObject::tr("Keep vehicle on screen"), VEHICLE_POSITION_ON_SCREEN),
+		SGLabelID(QObject::tr("Disable"),                VEHICLE_POSITION_NONE)
+	},
+	VEHICLE_POSITION_ON_SCREEN,
+	""
 };
+static SGVariant vehicle_position_default(void) { return SGVariant(vehicle_position_enum.default_value, SGVariantType::Enumeration); }
 
 
 
 
-static SGVariant moving_map_method_default(void)   { return SGVariant((int32_t) VEHICLE_POSITION_ON_SCREEN); }
 static SGVariant gpsd_host_default(void)           { return SGVariant("localhost"); }
 static SGVariant gpsd_port_default(void)           { return SGVariant(DEFAULT_GPSD_PORT); }
 static SGVariant gpsd_retry_interval_default(void) { return SGVariant("10"); }
@@ -244,13 +249,13 @@ static ParameterSpecification gps_layer_param_specs[] = {
 	{ PARAM_DOWNLOAD_WAYPOINTS,         "gps_download_waypoints",    SGVariantType::Boolean, PARAMETER_GROUP_DATA_MODE,     QObject::tr("Download Waypoints:"),               WidgetType::CheckButton,   NULL,                    sg_variant_true,             NULL, NULL },
 	{ PARAM_UPLOAD_WAYPOINTS,           "gps_upload_waypoints",      SGVariantType::Boolean, PARAMETER_GROUP_DATA_MODE,     QObject::tr("Upload Waypoints:"),                 WidgetType::CheckButton,   NULL,                    sg_variant_true,             NULL, NULL },
 #if REALTIME_GPS_TRACKING_ENABLED
-	{ PARAM_REALTIME_REC,               "record_tracking",           SGVariantType::Boolean, PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Recording tracks"),                  WidgetType::CheckButton,   NULL,                    sg_variant_true,             NULL, NULL },
-	{ PARAM_REALTIME_CENTER_START,      "center_start_tracking",     SGVariantType::Boolean, PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Jump to current position on start"), WidgetType::CheckButton,   NULL,                    sg_variant_false,            NULL, NULL },
-	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         SGVariantType::Int,     PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Moving Map Method:"),                WidgetType::RadioGroup,    &params_vehicle_position,moving_map_method_default,   NULL, NULL },
-	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", SGVariantType::Boolean, PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Update Statusbar:"),                 WidgetType::CheckButton,   NULL,                    sg_variant_true,             NULL, N_("Display information in the statusbar on GPS updates") },
-	{ PARAM_GPSD_HOST,                  "gpsd_host",                 SGVariantType::String,  PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Host:"),                        WidgetType::Entry,         NULL,                    gpsd_host_default,           NULL, NULL },
-	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::String,  PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Port:"),                        WidgetType::Entry,         NULL,                    gpsd_port_default,           NULL, NULL },
-	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::String,  PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::Entry,         NULL,                    gpsd_retry_interval_default, NULL, NULL },
+	{ PARAM_REALTIME_REC,               "record_tracking",           SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Recording tracks"),                  WidgetType::CheckButton,   NULL,                     sg_variant_true,             NULL, NULL },
+	{ PARAM_REALTIME_CENTER_START,      "center_start_tracking",     SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Jump to current position on start"), WidgetType::CheckButton,   NULL,                     sg_variant_false,            NULL, NULL },
+	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         SGVariantType::Enumeration,  PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Moving Map Method:"),                WidgetType::Enumeration,   &vehicle_position_enum,   vehicle_position_default,    NULL, NULL },
+	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Update Statusbar:"),                 WidgetType::CheckButton,   NULL,                     sg_variant_true,             NULL, N_("Display information in the statusbar on GPS updates") },
+	{ PARAM_GPSD_HOST,                  "gpsd_host",                 SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Host:"),                        WidgetType::Entry,         NULL,                     gpsd_host_default,           NULL, NULL },
+	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Port:"),                        WidgetType::Entry,         NULL,                     gpsd_port_default,           NULL, NULL },
+	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::Entry,         NULL,                     gpsd_retry_interval_default, NULL, NULL },
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 	{ NUM_PARAMS,                       "",                          SGVariantType::Empty,   PARAMETER_GROUP_GENERIC,       "",                                               WidgetType::None,          NULL,                    NULL,                        NULL, NULL }, /* Guard. */

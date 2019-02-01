@@ -93,13 +93,13 @@ extern bool vik_verbose;
 
 
 static SGVariant file_default(void)      { return SGVariant(""); }
-static SGVariant size_default(void)      { return SGVariant((uint32_t) 256); }
+static SGVariant size_default(void)      { return SGVariant(256, SGVariantType::Int); }
 static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
 
 
-static ParameterScale<int> scale_alpha(0,  255, SGVariant((int32_t) 255),  5, 0); /* PARAM_ALPHA */
-static ParameterScale<int> scale_timeout(0, 1024, SGVariant((int32_t) 168), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
-static ParameterScale<int> scale_threads(1, 64, SGVariant((int32_t) 1), 1, 0); /* 64 threads should be enough for anyone... */
+static ParameterScale<int> scale_alpha(0,  255, SGVariant(255),  5, 0); /* PARAM_ALPHA */
+static ParameterScale<int> scale_timeout(0, 1024, SGVariant(168), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
+static ParameterScale<int> scale_threads(1, 64, SGVariant(1), 1, 0); /* 64 threads should be enough for anyone... */
 
 
 enum {
@@ -276,7 +276,7 @@ void LayerMapnik::init(void)
 */
 void LayerMapnik::post_init(void)
 {
-	unsigned int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").u.val_uint;
+	const int hours = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "rerender_after").u.val_int;
 	g_planet_import_time = QDateTime::currentDateTime().addSecs(-1 * hours * 60 * 60).toTime_t(); /* In local time zone. */
 
 	/* Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles. */
@@ -363,7 +363,7 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerMapnik * layer = new LayerMapnik();
 
-	layer->tile_size_x = size_default().u.val_uint; /* FUTURE: Is there any use in this being configurable? */
+	layer->tile_size_x = size_default().u.val_int; /* FUTURE: Is there any use in this being configurable? */
 	layer->loaded = false;
 	layer->mi = new MapnikInterface();
 	layer->unmarshall_params(pickle);
@@ -1147,7 +1147,7 @@ LayerMapnik::LayerMapnik()
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
 
-	this->tile_size_x = size_default().u.val_uint; /* FUTURE: Is there any use in this being configurable? */
+	this->tile_size_x = size_default().u.val_int; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
 	this->mi = new MapnikInterface();
 
