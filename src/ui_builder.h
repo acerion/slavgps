@@ -102,17 +102,6 @@ namespace SlavGPS {
 	   Also easier for colors to be set via a function call rather than a static assignment. */
 	typedef SGVariant (* LayerDefaultFunc) (void);
 
-	/* Convert between the value held internally and the value used for display
-	   e.g. keep the internal value in seconds yet use days in the display. */
-	typedef SGVariant (* LayerConvertFunc) (SGVariant);
-
-
-	typedef struct ParameterExtra_e {
-		LayerConvertFunc convert_to_display;
-		LayerConvertFunc convert_to_internal;
-		void * extra_widget_data; /* Even more widget data, in addition to ParameterSpecification::widget_data. */
-	} ParameterExtra;
-
 	class ParameterSpecification {
 	public:
 		param_id_t id;
@@ -122,10 +111,8 @@ namespace SlavGPS {
 		QString ui_label;
 		WidgetType widget_type;
 		void * widget_data;
-
 		LayerDefaultFunc hardcoded_default_value; /* Program's internal, hardcoded value that will be used if settings file doesn't contain a value for given parameter. */
-		ParameterExtra * extra;
-		const char * tooltip;
+		QString tooltip;
 
 		ParameterSpecification & operator=(const ParameterSpecification & other);
 		SGVariant get_hardcoded_value(void) const;
@@ -177,7 +164,6 @@ namespace SlavGPS {
 	public:
 		std::vector<SGLabelID> values;
 		int default_value;
-		QString tooltip;
 	};
 
 

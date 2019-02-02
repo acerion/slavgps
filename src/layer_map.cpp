@@ -129,8 +129,7 @@ static std::map<MapTypeID, MapSource *> map_source_interfaces;
 /* List of labels (string) and IDs (MapTypeID) for each map type. */
 static WidgetEnumerationData map_types_enum = {
 	{},
-	(int) MapTypeID::OSMCycle,
-	""
+	(int) MapTypeID::OSMCycle
 };
 static SGVariant map_type_default(void) { return SGVariant(map_types_enum.default_value, SGVariantType::Enumeration); }
 
@@ -161,8 +160,7 @@ static WidgetEnumerationData map_zooms_enum = {
 		SGLabelID(QObject::tr("USGS 200k"), 19),
 		SGLabelID(QObject::tr("USGS 250k"), 20),
 	},
-	0,
-	QObject::tr("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.")
+	0
 };
 static SGVariant map_zooms_default(void) { return SGVariant(map_zooms_enum.default_value, SGVariantType::Enumeration); }
 
@@ -211,8 +209,7 @@ static WidgetEnumerationData cache_layout_enum = {
 		SGLabelID("Viking", (int) MapCacheLayout::Viking),
 		SGLabelID("OSM",    (int) MapCacheLayout::OSM),
 	},
-	(int) MapCacheLayout::Viking,
-	QObject::tr("This determines the tile storage layout on disk"),
+	(int) MapCacheLayout::Viking
 };
 static SGVariant cache_layout_default(void) { return SGVariant(cache_layout_enum.default_value, SGVariantType::Enumeration); }
 
@@ -236,16 +233,16 @@ FileSelectorWidget::FileTypeFilter map_file_type[1] = { FileSelectorWidget::File
 
 static ParameterSpecification maps_layer_param_specs[] = {
 	/* 'mode' is really map source type id, but can't break file format just to rename the parameter name to something better. */
-	{ PARAM_MAP_TYPE_ID,   "mode",           SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::Enumeration,   &map_types_enum,     map_type_default,     NULL, NULL },
-	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,   NULL,                directory_default,    NULL, NULL },
-	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::Enumeration,   &cache_layout_enum,  cache_layout_default, NULL, NULL },
-	{ PARAM_FILE,          "mapfile",        SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,  map_file_type,       file_default,         NULL, N_("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
-	{ PARAM_ALPHA,         "alpha",          SGVariantType::Int,          PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,        &scale_alpha,        NULL,                 NULL, N_("Control the Alpha value for transparency effects") },
-	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,   NULL,                sg_variant_true,      NULL, NULL },
-	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,   NULL,                sg_variant_false,     NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
-	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::Enumeration,   &map_zooms_enum,     map_zooms_default,    NULL, NULL },
+	{ PARAM_MAP_TYPE_ID,   "mode",           SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Map Type:"),                            WidgetType::Enumeration,   &map_types_enum,     map_type_default,     "" },
+	{ PARAM_CACHE_DIR,     "directory",      SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Maps Directory:"),                      WidgetType::FolderEntry,   NULL,                directory_default,    "" },
+	{ PARAM_CACHE_LAYOUT,  "cache_type",     SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Cache Layout:"),                        WidgetType::Enumeration,   &cache_layout_enum,  cache_layout_default, QObject::tr("This determines the tile storage layout on disk") },
+	{ PARAM_FILE,          "mapfile",        SGVariantType::String,       PARAMETER_GROUP_GENERIC, QObject::tr("Raster MBTiles Map File:"),             WidgetType::FileSelector,  map_file_type,       file_default,         QObject::tr("A raster MBTiles file. Only applies when the map type method is 'MBTiles'") },
+	{ PARAM_ALPHA,         "alpha",          SGVariantType::Int,          PARAMETER_GROUP_GENERIC, QObject::tr("Alpha:"),                               WidgetType::HScale,        &scale_alpha,        NULL,                 QObject::tr("Control the Alpha value for transparency effects") },
+	{ PARAM_AUTO_DOWNLOAD, "autodownload",   SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload maps:"),                   WidgetType::CheckButton,   NULL,                sg_variant_true,      "" },
+	{ PARAM_ONLY_MISSING,  "adlonlymissing", SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Autodownload Only Gets Missing Maps:"), WidgetType::CheckButton,   NULL,                sg_variant_false,     QObject::tr("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on.") },
+	{ PARAM_MAP_ZOOM,      "mapzoom",        SGVariantType::Enumeration,  PARAMETER_GROUP_GENERIC, QObject::tr("Zoom Level:"),                          WidgetType::Enumeration,   &map_zooms_enum,     map_zooms_default,    QObject::tr("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level.") },
 
-	{ NUM_PARAMS,          "",               SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,          NULL,                NULL,                 NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,          "",               SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                                  WidgetType::None,          NULL,                NULL,                 "" }, /* Guard. */
 };
 
 
@@ -306,7 +303,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, Viewport *
 
 
 static ParameterSpecification prefs[] = {
-	{ (param_id_t) LayerType::Max, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FolderEntry, NULL, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer") },
+	{ (param_id_t) LayerType::Max, PREFERENCES_NAMESPACE_GENERAL "maplayer_default_dir", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default map layer directory:"), WidgetType::FolderEntry, NULL, NULL, QObject::tr("Choose a directory to store cached Map tiles for this layer") },
 };
 
 

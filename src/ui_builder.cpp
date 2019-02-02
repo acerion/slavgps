@@ -85,9 +85,7 @@ ParameterSpecification & ParameterSpecification::operator=(const ParameterSpecif
 	this->ui_label = other.ui_label;
 	this->widget_type = other.widget_type;
 	this->widget_data = other.widget_data;
-
 	this->hardcoded_default_value = other.hardcoded_default_value;
-	this->extra = other.extra;
 	this->tooltip = other.tooltip;
 
 	return *this;
@@ -336,12 +334,6 @@ std::map<param_id_t, ParameterSpecification *>::iterator PropertiesDialog::add_w
 
 QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spec, const SGVariant & param_value)
 {
-	/* Perform pre conversion if necessary. */
-	SGVariant value = param_value;
-	if (param_spec.extra && param_spec.extra->convert_to_display) {
-		value = param_spec.extra->convert_to_display(param_value);
-	}
-
 	/* Print this debug before attempting to create a widget. If
 	   application crashes before a widget is created, this debug
 	   will tell us which widget caused problems. */
@@ -352,8 +344,8 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 
 	case WidgetType::Color:
 		if (param_spec.type_id == SGVariantType::Color) {
-			qDebug() << SG_PREFIX_I << "Creating color button with colors" << value;
-			ColorButtonWidget * widget_ = new ColorButtonWidget(value.val_color, NULL);
+			qDebug() << SG_PREFIX_I << "Creating color button with colors" << param_value;
+			ColorButtonWidget * widget_ = new ColorButtonWidget(param_value.val_color, NULL);
 
 			//widget_->setStyleSheet("* { border: none; background-color: rgb(255,125,100) }");
 			widget = widget_;
@@ -363,7 +355,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 	case WidgetType::CheckButton:
 		if (param_spec.type_id == SGVariantType::Boolean) {
 			QCheckBox * widget_ = new QCheckBox;
-			if (value.u.val_bool) {
+			if (param_value.u.val_bool) {
 				widget_->setCheckState(Qt::Checked);
 			}
 			widget = widget_;
@@ -381,9 +373,9 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		int selected_idx = 0;
 
 		if (param_spec.widget_data) {
-			const WidgetEnumerationData * widget_data = (WidgetEnumerationData *) param_spec.widget_data;
+			const WidgetEnumerationData * enum_data = (WidgetEnumerationData *) param_spec.widget_data;
 			int i = 0;
-			for (auto iter = widget_data->values.begin(); iter != widget_data->values.end(); iter++) {
+			for (auto iter = enum_data->values.begin(); iter != enum_data->values.end(); iter++) {
 				if (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Enumeration) {
 					widget_->addItem((*iter).label, QVariant((int32_t) (*iter).id));
 					if (param_value.u.val_int == (int32_t) (*iter).id) {
@@ -425,7 +417,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		assert (param_spec.type_id == SGVariantType::Int);
 		if (param_spec.type_id == SGVariantType::Int && param_spec.widget_data) {
 
-			const int32_t init_val = value.u.val_int;
+			const int32_t init_val = param_value.u.val_int;
 			ParameterScale<int> * scale = (ParameterScale<int> *) param_spec.widget_data;
 			QSpinBox * widget_ = new QSpinBox();
 			widget_->setMinimum(scale->min);
@@ -444,7 +436,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 
 		if (param_spec.type_id == SGVariantType::Double && param_spec.widget_data) {
 
-			const double init_val = value.u.val_double;
+			const double init_val = param_value.u.val_double;
 			ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data;
 			QDoubleSpinBox * widget_ = new QDoubleSpinBox();
 			/* Order of calls is important. Use setDecimals() before using setValue(). */
@@ -460,15 +452,15 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		break;
 
 	case WidgetType::Entry:
-		widget = new QLineEdit(value.to_string());
+		widget = new QLineEdit(param_value.to_string());
 		break;
 
 	case WidgetType::Password:
 		if (param_spec.type_id == SGVariantType::String) {
 			QLineEdit * widget_ = new QLineEdit();
 			widget_->setEchoMode(QLineEdit::Password);
-			if (!value.val_string.isEmpty()) {
-				widget_->setText(value.val_string);
+			if (!param_value.val_string.isEmpty()) {
+				widget_->setText(param_value.val_string);
 			}
 			widget = widget_;
 		}
@@ -484,8 +476,8 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 
 			FileSelectorWidget * widget_ = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), NULL);
 			widget_->set_file_type_filter(file_type_filter);
-			if (!value.val_string.isEmpty()) {
-				widget_->preselect_file_full_path(value.val_string);
+			if (!param_value.val_string.isEmpty()) {
+				widget_->preselect_file_full_path(param_value.val_string);
 			}
 
 			widget = widget_;
@@ -495,8 +487,8 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 	case WidgetType::FolderEntry:
 		if (param_spec.type_id == SGVariantType::String) {
 			FileSelectorWidget * widget_ = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::Directory, tr("Select folder"), NULL);
-			if (!value.val_string.isEmpty()) {
-				widget_->preselect_file_full_path(value.val_string);
+			if (!param_value.val_string.isEmpty()) {
+				widget_->preselect_file_full_path(param_value.val_string);
 			}
 
 			widget = widget_;
@@ -505,7 +497,7 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 
 	case WidgetType::FileList:
 		if (param_spec.type_id == SGVariantType::StringList) {
-			FileListWidget * widget_ = new FileListWidget(param_spec.ui_label, value.val_string_list, this);
+			FileListWidget * widget_ = new FileListWidget(param_spec.ui_label, param_value.val_string_list, this);
 
 			widget = widget_;
 		}
@@ -518,12 +510,12 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 			if (param_spec.type_id == SGVariantType::Int) {
 				ParameterScale<int> * scale = (ParameterScale<int> *) param_spec.widget_data;
 				SliderWidget * widget_ = new SliderWidget(*scale, Qt::Horizontal);
-				widget_->set_value(value.u.val_int);
+				widget_->set_value(param_value.u.val_int);
 				widget = widget_;
 			} else if (param_spec.type_id == SGVariantType::Double) {
 				ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data;
 				SliderWidget * widget_ = new SliderWidget(*scale, Qt::Horizontal);
-				widget_->set_value(value.u.val_double);
+				widget_->set_value(param_value.u.val_double);
 				widget = widget_;
 			} else {
 				qDebug() << SG_PREFIX_E << "Unexpected param spec type" << param_spec.type_id;
@@ -539,8 +531,8 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		assert (param_spec.type_id == SGVariantType::Altitude);
 		if (param_spec.type_id == SGVariantType::Altitude) {
 			const ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data; /* May be NULL. */
-			MeasurementEntryWidget * widget_ = new MeasurementEntryWidget(value, scale, this);
-			qDebug() << SG_PREFIX_I << "New MeasurementEntryWidget with initial value" << value.get_altitude();
+			MeasurementEntryWidget * widget_ = new MeasurementEntryWidget(param_value, scale, this);
+			qDebug() << SG_PREFIX_I << "New MeasurementEntryWidget with initial value" << param_value.get_altitude();
 
 			widget = widget_;
 		}
@@ -557,8 +549,8 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 	}
 
 	if (widget && widget->toolTip().isEmpty()) {
-		if (param_spec.tooltip) {
-			widget->setToolTip(QObject::tr(param_spec.tooltip));
+		if (!param_spec.tooltip.isEmpty()) {
+			widget->setToolTip(param_spec.tooltip);
 		}
 	}
 
@@ -708,11 +700,6 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 
 	default:
 		break;
-	}
-
-	/* Perform conversion if necessary. */
-	if (param_spec.extra && param_spec.extra->convert_to_internal) {
-		rv = param_spec.extra->convert_to_internal(rv);
 	}
 
 	assert (rv.type_id == param_spec.type_id);

@@ -60,7 +60,7 @@ static std::vector<QString> routing_engine_ids; /* These are string IDs. */
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::ComboBox, &routing_engine_combo_items, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_ROUTING "default", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("Default engine:"), WidgetType::ComboBox, &routing_engine_combo_items, NULL, "" },
 };
 
 

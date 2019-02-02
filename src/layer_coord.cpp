@@ -74,12 +74,12 @@ enum {
 
 
 static ParameterSpecification coord_layer_param_specs[] = {
-	{ PARAM_COLOR_DEG,      "color",          SGVariantType::Color,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of degrees/UTM lines:"),  WidgetType::Color,          NULL,                  color_default_deg,  NULL, NULL },
-	{ PARAM_COLOR_MIN,      "color_min",      SGVariantType::Color,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of minutes lines:"),      WidgetType::Color,          NULL,                  color_default_min,  NULL, NULL },
-	{ PARAM_COLOR_SEC,      "color_sec",      SGVariantType::Color,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of seconds lines:"),      WidgetType::Color,          NULL,                  color_default_sec,  NULL, NULL },
-	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::Double, PARAMETER_GROUP_GENERIC, QObject::tr("Minutes Width:"),               WidgetType::SpinBoxDouble,  &scale_minutes_width,  NULL,               NULL, NULL },
-	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::Int,    PARAMETER_GROUP_GENERIC, QObject::tr("Line Thickness:"),              WidgetType::SpinBoxInt,     &scale_line_thickness, NULL,               NULL, NULL },
-	{ PARAM_MAX,            "",               SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                                          WidgetType::None,           NULL,                  NULL,               NULL, NULL }, /* Guard. */
+	{ PARAM_COLOR_DEG,      "color",          SGVariantType::Color,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of degrees/UTM lines:"),  WidgetType::Color,          NULL,                  color_default_deg,  "" },
+	{ PARAM_COLOR_MIN,      "color_min",      SGVariantType::Color,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of minutes lines:"),      WidgetType::Color,          NULL,                  color_default_min,  "" },
+	{ PARAM_COLOR_SEC,      "color_sec",      SGVariantType::Color,  PARAMETER_GROUP_GENERIC, QObject::tr("Color of seconds lines:"),      WidgetType::Color,          NULL,                  color_default_sec,  "" },
+	{ PARAM_MIN_INC,        "min_inc",        SGVariantType::Double, PARAMETER_GROUP_GENERIC, QObject::tr("Minutes Width:"),               WidgetType::SpinBoxDouble,  &scale_minutes_width,  NULL,               "" },
+	{ PARAM_LINE_THICKNESS, "line_thickness", SGVariantType::Int,    PARAMETER_GROUP_GENERIC, QObject::tr("Line Thickness:"),              WidgetType::SpinBoxInt,     &scale_line_thickness, NULL,               "" },
+	{ PARAM_MAX,            "",               SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                                          WidgetType::None,           NULL,                  NULL,               "" }, /* Guard. */
 };
 
 

@@ -83,8 +83,8 @@ DataSourceGeoCache::DataSourceGeoCache(Viewport * new_viewport)
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_GC "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::Entry, NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_GC "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::Entry, NULL, NULL, NULL, NULL },
+	{ 0, PREFERENCES_NAMESPACE_GC "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com username:"), WidgetType::Entry, NULL, NULL, NULL },
+	{ 1, PREFERENCES_NAMESPACE_GC "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("geocaching.com password:"), WidgetType::Entry, NULL, NULL, NULL },
 };
 
 

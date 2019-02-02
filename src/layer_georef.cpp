@@ -111,16 +111,16 @@ private:
    dialog itself) will not be built using parameters specification. */
 
 static ParameterSpecification georef_layer_param_specs[] = {
-	{ PARAM_IMAGE_FILE_FULL_PATH,    "image",                SGVariantType::String, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_EASTING,      "corner_easting",       SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_NORTHING,     "corner_northing",      SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_MPP_EASTING,             "mpp_easting",          SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_MPP_NORTHING,            "mpp_northing",         SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_ZONE,         "corner_zone",          SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_CORNER_UTM_BAND_LETTER,  "corner_letter_as_int", SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
-	{ PARAM_ALPHA,                   "alpha",                SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL },
+	{ PARAM_IMAGE_FILE_FULL_PATH,    "image",                SGVariantType::String, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_EASTING,      "corner_easting",       SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_NORTHING,     "corner_northing",      SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_MPP_EASTING,             "mpp_easting",          SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_MPP_NORTHING,            "mpp_northing",         SGVariantType::Double, PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_ZONE,         "corner_zone",          SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_CORNER_UTM_BAND_LETTER,  "corner_letter_as_int", SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
+	{ PARAM_ALPHA,                   "alpha",                SGVariantType::Int,    PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" },
 
-	{ NUM_PARAMS,                    "",                     SGVariantType::Empty,  PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,                    "",                     SGVariantType::Empty,  PARAMETER_GROUP_HIDDEN, "", WidgetType::None, NULL, NULL, "" }, /* Guard. */
 };
 
 
@@ -176,7 +176,7 @@ LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, Viewpor
 
 
 static ParameterSpecification io_prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Auto Read World Files:"), WidgetType::CheckButton, NULL, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
+	{ 0, PREFERENCES_NAMESPACE_IO "georef_auto_read_world_file", SGVariantType::Boolean, PARAMETER_GROUP_GENERIC, QObject::tr("Auto Read World Files:"), WidgetType::CheckButton, NULL, NULL, QObject::tr("Automatically attempt to read associated world file of a new image for a GeoRef layer") }
 };
 
 

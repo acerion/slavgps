@@ -148,9 +148,9 @@ private:
 
 
 static ParameterSpecification prefs[] = {
-	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM username:"), WidgetType::Entry,    NULL, NULL, NULL, NULL },
-	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM password:"), WidgetType::Password, NULL, NULL, NULL, NULL },
-	{ 2,                                  "",         SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                           WidgetType::None,     NULL, NULL, NULL, NULL } /* Guard. */
+	{ 0, PREFERENCES_NAMESPACE_OSM_TRACES "username", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM username:"), WidgetType::Entry,    NULL, NULL, "" },
+	{ 1, PREFERENCES_NAMESPACE_OSM_TRACES "password", SGVariantType::String, PARAMETER_GROUP_GENERIC, QObject::tr("OSM password:"), WidgetType::Password, NULL, NULL, "" },
+	{ 2,                                  "",         SGVariantType::Empty,  PARAMETER_GROUP_GENERIC, "",                           WidgetType::None,     NULL, NULL, "" } /* Guard. */
 };
 
 
