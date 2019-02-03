@@ -87,11 +87,4 @@ namespace SlavGPS {
 
 
 
-#ifndef N_
-#define N_(s) s
-#endif
-
-
-
-
 #endif /* #ifndef _SG_UTIL_H_ */
