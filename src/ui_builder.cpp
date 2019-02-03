@@ -2,7 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
- * Copyright (c) 2016 - 2018 Kamil Ignacak <acerion@wp.pl>
+ * Copyright (c) 2016 - 2019 Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 
 
-#include <cstdlib>
+//#include <cstdlib>
 #include <cassert>
 
 
@@ -56,7 +56,7 @@
 #include "widget_measurement_entry.h"
 #include "date_time_dialog.h"
 #include "preferences.h"
-#include "goto.h"
+//#include "goto.h"
 
 
 
@@ -707,14 +707,6 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 	qDebug() << SG_PREFIX_I << "Widget" << widget_type_get_label(param_spec.widget_type) << "/" << param_spec.ui_label << "returns value" << rv;
 
 	return rv;
-}
-
-
-
-
-SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i)
-{
-	return params_defaults[i];
 }
 
 

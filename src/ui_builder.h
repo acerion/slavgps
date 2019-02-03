@@ -2,7 +2,7 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
- * Copyright (c) 2016 - 2018 Kamil Ignacak <acerion@wp.pl>
+ * Copyright (c) 2016 - 2019 Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,15 +63,15 @@ namespace SlavGPS {
 
 
 	class Layer;
-	class LayerInterface;
-	class Waypoint;
 	class Preferences;
 
 
 
 
 	enum class WidgetType {
-		CheckButton = 0,
+		None = 0,
+
+		CheckButton,
 		RadioGroup,
 		SpinBoxDouble,  /* SGVariantType::Double */
 		SpinBoxInt,     /* SGVariantType::Int */
@@ -84,11 +84,8 @@ namespace SlavGPS {
 		ComboBox,       /* SGVariantType::String or SGVariantType::Enumeration */
 		FileList,
 		DateTime,
-
 		Enumeration,
 		Altitude,
-
-		None
 	};
 
 	QString widget_type_get_label(WidgetType type_id);
@@ -96,22 +93,35 @@ namespace SlavGPS {
 
 
 
-	/* Default value has to be returned via a function
-	   because certain types value are can not be statically allocated
-	   (i.e. a string value that is dependent on other functions).
-	   Also easier for colors to be set via a function call rather than a static assignment. */
-	typedef SGVariant (* LayerDefaultFunc) (void);
+	typedef SGVariant (* ParameterFunc) (void);
 
 	class ParameterSpecification {
 	public:
 		param_id_t id;
 		QString name;
 		SGVariantType type_id;
-		param_id_t group_id; /* Every parameter belongs to a group of related parameters. Related parameters are put into the same tab in UI dialog. */
+
+		/* Every parameter belongs to a group of related
+		   parameters. Related parameters are put into the
+		   same tab in UI dialog. */
+		param_id_t group_id;
+
 		QString ui_label;
 		WidgetType widget_type;
 		void * widget_data;
-		LayerDefaultFunc hardcoded_default_value; /* Program's internal, hardcoded value that will be used if settings file doesn't contain a value for given parameter. */
+
+		/* Program's internal, hardcoded value that will be
+		   used if settings file doesn't contain a value for
+		   given parameter.
+
+		   Default value has to be returned via a function
+		   because certain types value are can not be
+		   statically allocated (i.e. a string value that is
+		   dependent on other functions).  Also easier for
+		   colors to be set via a function call rather than a
+		   static assignment. */
+		ParameterFunc hardcoded_default_value;
+
 		QString tooltip;
 
 		ParameterSpecification & operator=(const ParameterSpecification & other);
@@ -144,10 +154,6 @@ namespace SlavGPS {
 	};
 
 
-	void uibuilder_run_setparam(SGVariant * paramdatas, uint16_t i, SGVariant data, ParameterSpecification * param_specs);
-	SGVariant uibuilder_run_getparam(SGVariant * params_defaults, uint16_t i);
-
-
 
 
 	class SGLabelID {
@@ -171,7 +177,7 @@ namespace SlavGPS {
 
 	class PropertiesDialog : public QDialog {
 	public:
-		PropertiesDialog(QString const & title = tr("Properties"), QWidget * parent = NULL);
+		PropertiesDialog(const QString & title = tr("Properties"), QWidget * parent = NULL);
 		~PropertiesDialog();
 
 		void fill(Preferences * preferences);
@@ -183,7 +189,7 @@ namespace SlavGPS {
 	private:
 		QWidget * make_widget(const ParameterSpecification & param_spec, const SGVariant & param_value);
 
-		QFormLayout * insert_tab(QString const & label);
+		QFormLayout * insert_tab(const QString & label);
 		std::map<param_id_t, ParameterSpecification *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, ParameterSpecification *>::iterator & iter, std::map<param_id_t, ParameterSpecification *>::iterator & end);
 
 		SGVariant get_param_value_from_widget(QWidget * widget, const ParameterSpecification & param_spec);
