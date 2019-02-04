@@ -68,30 +68,26 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "GPS Layer"
-#define PREFIX ": Layer GPS:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
 
-/* Shouldn't need to use these much any more as the protocol is now saved as a string.
-   They are kept for compatibility loading old .vik files */
-typedef enum {
+enum {
 	GARMIN_P = 0,
 	MAGELLAN_P,
 	DELORME_P,
 	NAVILINK_P,
 	OLD_NUM_PROTOCOLS
-} vik_gps_proto;
-
-
-
-
-static std::vector<SGLabelID> protocols_args = {
-	SGLabelID("garmin",   0),
-	SGLabelID("magellan", 1),
-	SGLabelID("delbin",   2),
-	SGLabelID("navilink", 3)
 };
+
+static std::vector<SGLabelID> gps_protocols_enum = {
+	SGLabelID("garmin",   GARMIN_P),
+	SGLabelID("magellan", MAGELLAN_P),
+	SGLabelID("delbin",   DELORME_P),
+	SGLabelID("navilink", NAVILINK_P)
+};
+static SGVariant gps_protocol_default(void) { return SGVariant("garmin"); }
+
 
 
 
@@ -150,14 +146,6 @@ enum {
 	PARAMETER_GROUP_REALTIME_MODE
 #endif
 };
-
-
-
-
-static SGVariant gps_protocol_default(void)
-{
-	return SGVariant("garmin");
-}
 
 
 
@@ -239,7 +227,7 @@ static ParameterSpecification gps_layer_param_specs[] = {
 	/* NB gps_layer_inst_init() is performed after parameter registeration
 	   thus to give the protocols some potential values use the old static list. */
 	/* TODO_LATER: find another way to use gps_layer_inst_init()? */
-	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("GPS Protocol:"),                     WidgetType::ComboBox,      &protocols_args,          gps_protocol_default,        "" }, // List reassigned at runtime
+	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("GPS Protocol:"),                     WidgetType::ComboBox,      &gps_protocols_enum,      gps_protocol_default,        "" }, // List reassigned at runtime
 	{ PARAM_PORT,                       "gps_port",                  SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("Serial Port:"),                      WidgetType::ComboBox,      &params_ports,            gps_port_default,            "" },
 	{ PARAM_DOWNLOAD_TRACKS,            "gps_download_tracks",       SGVariantType::Boolean,      PARAMETER_GROUP_DATA_MODE,     QObject::tr("Download Tracks:"),                  WidgetType::CheckButton,   NULL,                     sg_variant_true,             "" },
 	{ PARAM_UPLOAD_TRACKS,              "gps_upload_tracks",         SGVariantType::Boolean,      PARAMETER_GROUP_DATA_MODE,     QObject::tr("Upload Tracks:"),                    WidgetType::CheckButton,   NULL,                     sg_variant_true,             "" },
@@ -263,13 +251,13 @@ static ParameterSpecification gps_layer_param_specs[] = {
 
 
 
-GPSSession::GPSSession(GPSDirection dir, LayerTRW * new_trw, Track * new_trk, const QString & new_port, Viewport * new_viewport, bool new_in_progress)
+GPSSession::GPSSession(GPSTransfer & new_transfer, LayerTRW * new_trw, Track * new_trk, Viewport * new_viewport, bool new_in_progress)
 {
-	this->direction = dir;
-	this->window_title = (this->direction == GPSDirection::Down) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
+	this->transfer = new_transfer;
+
+	this->window_title = (this->transfer.direction == GPSDirection::Down) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
 	this->trw = new_trw;
 	this->trk = new_trk;
-	this->port = new_port;
 	this->viewport = new_viewport;
 	this->in_progress = new_in_progress;
 }
@@ -310,15 +298,15 @@ LayerGPSInterface::LayerGPSInterface()
 */
 void LayerGPS::init(void)
 {
-	protocols_args.clear();
+	gps_protocols_enum.clear();
 
 	int i = 0;
 	for (auto iter = Babel::devices.begin(); iter != Babel::devices.end(); iter++) {
 		/* Should be using 'label' property but use
 		   'identifier' for now thus don't need to mess around
 		   converting 'label' to 'identifier' later on. */
-		protocols_args.push_back(SGLabelID((*iter)->identifier, i));
-		qDebug() << "II:" PREFIX << "new protocol:" << (*iter)->identifier;
+		gps_protocols_enum.push_back(SGLabelID((*iter)->identifier, i));
+		qDebug() << SG_PREFIX_I << "New protocol:" << (*iter)->identifier;
 	}
 }
 
@@ -327,7 +315,7 @@ void LayerGPS::init(void)
 
 QString LayerGPS::get_tooltip(void) const
 {
-	return QObject::tr("Protocol: %1").arg(this->protocol);
+	return QObject::tr("Protocol: %1").arg(this->upload.gps_protocol);
 }
 
 
@@ -368,7 +356,7 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 		}
 	}
 
-	// qDebug() << "II: Layer GPS: LayerGPSInterface::unmarshall() ended with" << pickle.data_szie;
+	// qDebug() << SG_PREFIX_I << "Unmarshalling ended with" << pickle.data_szie;
 	assert (pickle.data_size() == 0);
 	return layer;
 }
@@ -409,13 +397,15 @@ bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool
 			const int idx = get_legacy_index(data.val_string, OLD_NUM_PROTOCOLS);
 			if (idx != -1) {
 				/* It is a valid index: activate compatibility. */
-				this->protocol = protocols_args[idx].label;
+				this->upload.gps_protocol = gps_protocols_enum[idx].label;
 			} else {
-				this->protocol = data.val_string;
+				this->upload.gps_protocol = data.val_string;
 			}
-			qDebug() << "DD:" PREFIX << "selected GPS Protocol is" << this->protocol;
+			this->download.gps_protocol = this->upload.gps_protocol;
+
+			qDebug() << SG_PREFIX_D << "Selected GPS Protocol is" << this->upload.gps_protocol;
 		} else {
-			qDebug() << "WW:" PREFIX << "unknown GPS Protocol";
+			qDebug() << SG_PREFIX_W << "Unknown GPS Protocol";
 		}
 		break;
 	case PARAM_PORT:
@@ -424,32 +414,33 @@ bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool
 			const int idx = get_legacy_index(data.val_string, old_params_ports.size());
 			if (idx != -1) {
 				/* It is a valid index: activate compatibility. */
-				this->serial_port = old_params_ports[idx].label;
+				this->upload.serial_port = old_params_ports[idx].label;
 			} else {
-				this->serial_port = data.val_string;
+				this->upload.serial_port = data.val_string;
 			}
-			qDebug() << "DD:" PREFIX << "selected Serial Port is" << this->serial_port;
+			this->download.serial_port = this->upload.serial_port;
+			qDebug() << SG_PREFIX_D << "Selected Serial Port is" << this->upload.serial_port;
 		} else {
-			qDebug() << "WW:" PREFIX << "unknown Serial Port device";
+			qDebug() << SG_PREFIX_W << "Unknown Serial Port device";
 		}
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
-		this->download_tracks = data.u.val_bool;
+		this->download.do_tracks = data.u.val_bool;
 		break;
 	case PARAM_UPLOAD_TRACKS:
-		this->upload_tracks = data.u.val_bool;
+		this->upload.do_tracks = data.u.val_bool;
 		break;
 	case PARAM_DOWNLOAD_ROUTES:
-		this->download_routes = data.u.val_bool;
+		this->download.do_routes = data.u.val_bool;
 		break;
 	case PARAM_UPLOAD_ROUTES:
-		this->upload_routes = data.u.val_bool;
+		this->upload.do_routes = data.u.val_bool;
 		break;
 	case PARAM_DOWNLOAD_WAYPOINTS:
-		this->download_waypoints = data.u.val_bool;
+		this->download.do_waypoints = data.u.val_bool;
 		break;
 	case PARAM_UPLOAD_WAYPOINTS:
-		this->upload_waypoints = data.u.val_bool;
+		this->upload.do_waypoints = data.u.val_bool;
 		break;
 #if REALTIME_GPS_TRACKING_ENABLED
 	case PARAM_GPSD_HOST:
@@ -493,28 +484,28 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 	SGVariant rv;
 	switch (param_id) {
 	case PARAM_PROTOCOL:
-		rv = SGVariant(this->protocol);
+		rv = SGVariant(this->upload.gps_protocol);
 		break;
 	case PARAM_PORT:
-		rv = SGVariant(this->serial_port);
+		rv = SGVariant(this->upload.serial_port);
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
-		rv = SGVariant(this->download_tracks);
+		rv = SGVariant(this->download.do_tracks);
 		break;
 	case PARAM_UPLOAD_TRACKS:
-		rv = SGVariant(this->upload_tracks);
+		rv = SGVariant(this->upload.do_tracks);
 		break;
 	case PARAM_DOWNLOAD_ROUTES:
-		rv = SGVariant(this->download_routes);
+		rv = SGVariant(this->download.do_routes);
 		break;
 	case PARAM_UPLOAD_ROUTES:
-		rv = SGVariant(this->upload_routes);
+		rv = SGVariant(this->upload.do_routes);
 		break;
 	case PARAM_DOWNLOAD_WAYPOINTS:
-		rv = SGVariant(this->download_waypoints);
+		rv = SGVariant(this->download.do_waypoints);
 		break;
 	case PARAM_UPLOAD_WAYPOINTS:
-		rv = SGVariant(this->upload_waypoints);
+		rv = SGVariant(this->upload.do_waypoints);
 		break;
 #if REALTIME_GPS_TRACKING_ENABLED
 	case PARAM_GPSD_HOST:
@@ -741,7 +732,7 @@ void GPSSession::set_total_count(int cnt)
 	this->mutex.lock();
 	if (this->in_progress) {
 		QString msg;
-		if (this->direction == GPSDirection::Down) {
+		if (this->transfer.direction == GPSDirection::Down) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloading %n waypoints...", "", cnt);
@@ -795,7 +786,7 @@ void GPSSession::set_current_count(int cnt)
 
 	if (cnt < this->total_count) {
 		QString fmt;
-		if (this->direction == GPSDirection::Down) {
+		if (this->transfer.direction == GPSDirection::Down) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				fmt = QObject::tr("Downloaded %1 out of %2 waypoints...", "", this->total_count);
@@ -822,7 +813,7 @@ void GPSSession::set_current_count(int cnt)
 		}
 		msg = QString(fmt).arg(cnt).arg(this->total_count);
 	} else {
-		if (this->direction == GPSDirection::Down) {
+		if (this->transfer.direction == GPSDirection::Down) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloaded %n waypoints", "", cnt);
@@ -1067,10 +1058,10 @@ void GPSSession::run(void)
 
 	AcquireContext acquire_context;
 
-	if (this->direction == GPSDirection::Down) {
+	if (this->transfer.direction == GPSDirection::Down) {
 		BabelProcess * importer = new BabelProcess();
 		importer->set_options(this->babel_opts);
-		importer->set_input("", this->port); /* TODO: type of input? */
+		importer->set_input("", this->transfer.serial_port); /* TODO: type of input? */
 
 		acquire_context.target_trw = this->trw;
 		importer->set_acquire_context(&acquire_context);
@@ -1080,7 +1071,7 @@ void GPSSession::run(void)
 	} else {
 		BabelProcess * exporter = new BabelProcess();
 		exporter->set_options(this->babel_opts);
-		exporter->set_output("", this->port); /* TODO: type of output? */
+		exporter->set_output("", this->transfer.serial_port); /* TODO: type of output? */
 
 		acquire_context.target_trw = this->trw;
 		acquire_context.target_trk = this->trk;
@@ -1104,7 +1095,7 @@ void GPSSession::run(void)
 			if (!this->realtime_tracking_in_progress)
 #endif
 			{
-				if (this->viewport && this->direction == GPSDirection::Down) {
+				if (this->viewport && this->transfer.direction == GPSDirection::Down) {
 					this->trw->post_read(this->viewport, true);
 					/* View the data available. */
 					this->trw->move_viewport_to_show_all(this->viewport) ;
@@ -1132,39 +1123,22 @@ void GPSSession::run(void)
 
 
 /**
- * @layer: The TrackWaypoint layer to operate on
- * @track: Operate on a particular track when specified
- * @dir: The direction of the transfer
- * @protocol: The GPS device communication protocol
- * @port: The GPS serial port
- * @tracking: If tracking then viewport display update will be skipped
- * @viewport: A viewport is required as the display may get updated
- * @panel: A layers panel is needed for uploading as the items maybe modified
- * @do_tracks: Whether tracks shoud be processed
- * @do_waypoints: Whether waypoints shoud be processed
- * @turn_off: Whether we should attempt to turn off the GPS device after the transfer (only some devices support this)
- *
- * Talk to a GPS Device using a thread which updates a dialog with the progress.
- */
-int SlavGPS::vik_gps_comm(LayerTRW * layer,
-			  Track * trk,
-			  GPSDirection dir,
-			  const QString & protocol,
-			  const QString & port,
-			  bool tracking,
-			  Viewport * viewport,
-			  LayersPanel * panel,
-			  bool do_tracks,
-			  bool do_routes,
-			  bool do_waypoints,
-			  bool turn_off)
+   @brief Talk to a GPS Device using a thread which updates a dialog with the progress
+
+   @layer: The TrackWaypoint layer to operate on
+   @track: Operate on a particular track when specified
+   @viewport: A viewport is required as the display may get updated
+   @panel: A layers panel is needed for uploading as the items maybe modified
+   @tracking: If tracking then viewport display update will be skipped
+*/
+int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport, LayersPanel * panel, bool tracking)
 {
-	GPSSession * sess = new GPSSession(dir, layer, trk, port, viewport, true);
+	GPSSession * sess = new GPSSession(*this, layer, trk, viewport, true);
 	sess->setAutoDelete(false);
 
 	/* This must be done inside the main thread as the uniquify causes screen updates
 	   (originally performed this nearer the point of upload in the thread). */
-	if (dir == GPSDirection::Up) {
+	if (this->direction == GPSDirection::Up) {
 		/* Enforce unique names in the layer upload to the GPS device.
 		   NB this may only be a Garmin device restriction (and may be not every Garmin device either...).
 		   Thus this maintains the older code in built restriction. */
@@ -1178,12 +1152,11 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 	sess->realtime_tracking_in_progress = tracking;
 #endif
 
-	sess->babel_opts = QString("-D 9 %1").arg(BabelProcess::get_trw_string(do_tracks, do_routes, do_waypoints));
-	sess->protocol = protocol;
-	sess->port = port;
+	sess->babel_opts = QString("-D 9 %1").arg(BabelProcess::get_trw_string(this->do_tracks, this->do_routes, this->do_waypoints));
+
 
 	/* Only create dialog if we're going to do some transferring. */
-	if (do_tracks || do_waypoints || do_routes) {
+	if (this->do_tracks || this->do_waypoints || this->do_routes) {
 
 		sess->dialog = new BasicDialog(layer->get_window());
 		sess->dialog->button_box->button(QDialogButtonBox::Ok)->setEnabled(false);
@@ -1231,7 +1204,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		delete sess->dialog;
 
 	} else {
-		if (!turn_off) {
+		if (!this->turn_off) {
 			Dialog::info(QObject::tr("No GPS items selected for transfer."), layer->get_window());
 		}
 	}
@@ -1242,9 +1215,9 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		sess->in_progress = false;   /* Tell thread to stop. */
 		sess->mutex.unlock();
 	} else {
-		if (turn_off) {
+		if (this->turn_off) {
 			/* No need for thread for powering off device (should be quick operation...) - so use babel command directly: */
-			BabelTurnOffDevice turn_off_process(protocol, port);
+			BabelTurnOffDevice turn_off_process(this->gps_protocol, this->serial_port);
 			if (sg_ret::ok != turn_off_process.run_process()) {
 				Dialog::error(QObject::tr("Could not turn off device."), layer->get_window());
 			}
@@ -1265,18 +1238,7 @@ void LayerGPS::gps_upload_cb(void)
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
-	SlavGPS::vik_gps_comm(trw,
-			      NULL,
-			      GPSDirection::Up,
-			      this->protocol,
-			      this->serial_port,
-			      false,
-			      viewport,
-			      panel,
-			      this->upload_tracks,
-			      this->upload_routes,
-			      this->upload_waypoints,
-			      false);
+	this->upload.run_transfer(trw, NULL, viewport, panel, false);
 }
 
 
@@ -1287,24 +1249,13 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD];
 
-	SlavGPS::vik_gps_comm(trw,
-			      NULL,
-			      GPSDirection::Down,
-			      this->protocol,
-			      this->serial_port,
-
+	this->download.run_transfer(trw, NULL, viewport, NULL,
 #if REALTIME_GPS_TRACKING_ENABLED
-			      this->realtime_tracking_in_progress,
+			      this->realtime_tracking_in_progress
 #else
-			      false,
+			      false
 #endif
-
-			      viewport,
-			      NULL,
-			      this->download_tracks,
-			      this->download_routes,
-			      this->download_waypoints,
-			      false);
+			      );
 }
 
 
@@ -1519,7 +1470,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	LayerGPS * layer = vgpsd->gps_layer;
 
 	if (!layer->realtime_tracking_in_progress) {
-		qDebug() << "WW:" PREFIX << "receiving GPS data while not in realtime mode";
+		qDebug() << SG_PREFIX_W << "Receiving GPS data while not in realtime mode";
 		return;
 	}
 
@@ -1602,7 +1553,7 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 #endif
 			return true;
 		} else {
-			qDebug() << "WW: Disconnected from gpsd. Trying to reconnect";
+			qDebug() << SG_PREFIX_W << "Disconnected from gpsd. Trying to reconnect";
 			layer->rt_gpsd_disconnect();
 			layer->rt_gpsd_connect(false);
 		}
@@ -1715,7 +1666,7 @@ bool LayerGPS::rt_gpsd_connect(bool ask_if_failed)
 	this->realtime_retry_timer = 0;
 	if (rt_gpsd_try_connect((void * ) this)) {
 		if (this->gpsd_retry_interval <= 0) {
-			qDebug() << "WW: Failed to connect to gpsd but will not retry because retry intervel was set to" << this->gpsd_retry_interval << "(which is 0 or negative).";
+			qDebug() << SG_PREFIX_W << "Failed to connect to gpsd but will not retry because retry intervel was set to" << this->gpsd_retry_interval << "(which is 0 or negative).";
 			return false;
 		} else if (ask_if_failed && !this->rt_ask_retry()) {
 			return false;
@@ -1776,7 +1727,7 @@ void LayerGPS::rt_gpsd_disconnect()
 
 void LayerGPS::gps_start_stop_tracking_cb(void)
 {
-	this->realtime_tracking_in_progress = (this->realtime_tracking_in_progress == false);
+	this->realtime_tracking_in_progress = !this->realtime_tracking_in_progress;
 
 	/* Make sure we are still in the boat with libgps. */
 	assert ((((int) GPSFixMode::Fix2D) == MODE_2D) && (((int) GPSFixMode::Fix3D) == MODE_3D));

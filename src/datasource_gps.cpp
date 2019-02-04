@@ -71,7 +71,7 @@ static bool gps_acquire_in_progress = false;
 /* Index of the last device selected. */
 static int g_last_device_index = INVALID_ENTRY_INDEX;
 
-static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog);
+static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DataSourceGPSDialog * config_dialog);
 static int find_initial_device_index(void);
 
 
@@ -107,7 +107,7 @@ DataSourceGPS::DataSourceGPS()
 
 
 
-DatasourceGPSSetup::~DatasourceGPSSetup()
+DataSourceGPSDialog::~DataSourceGPSDialog()
 {
 	gps_acquire_in_progress = false;
 }
@@ -118,7 +118,7 @@ DatasourceGPSSetup::~DatasourceGPSSetup()
 /**
    Method to get the communication protocol of the GPS device from the widget structure.
  */
-QString DatasourceGPSSetup::get_protocol(void)
+QString DataSourceGPSDialog::get_gps_protocol(void)
 {
 	g_last_device_index = this->proto_combo->currentIndex();
 
@@ -140,7 +140,7 @@ QString DatasourceGPSSetup::get_protocol(void)
    "Everything is a file".
    Could actually be normal file or a serial port.
 */
-QString DatasourceGPSSetup::get_port(void)
+QString DataSourceGPSDialog::get_serial_port(void)
 {
 	const QString descriptor = this->serial_port_combo->currentText();
 	ApplicationState::set_string(VIK_SETTINGS_GPS_PORT, descriptor);
@@ -150,73 +150,15 @@ QString DatasourceGPSSetup::get_port(void)
 
 
 
-/**
-   Method to get the track handling behaviour from the widget structure.
-*/
-bool DatasourceGPSSetup::get_do_tracks(void)
-{
-	bool get_tracks = this->get_tracks_b->isChecked();
-	if (this->direction == GPSDirection::Down) {
-		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, get_tracks);
-	}
-	return get_tracks;
-}
-
-
-
-
-/**
-   Method to get the route handling behaviour from the widget structure.
-*/
-bool DatasourceGPSSetup::get_do_routes(void)
-{
-	bool get_routes = this->get_routes_b->isChecked();
-	if (this->direction == GPSDirection::Down) {
-		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, get_routes);
-	}
-	return get_routes;
-}
-
-
-
-
-/**
-   Method to get the waypoint handling behaviour from the widget structure.
-*/
-bool DatasourceGPSSetup::get_do_waypoints(void)
-{
-	bool get_waypoints = this->get_waypoints_b->isChecked();
-	if (this->direction == GPSDirection::Down) {
-		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, get_waypoints);
-	}
-	return get_waypoints;
-}
-
-
-
-
-/**
-   Method to get the off behaviour from the widget structure.
-*/
-bool DatasourceGPSSetup::get_do_turn_off(void)
-{
-	bool power_off = this->off_request_b->isChecked();
-	ApplicationState::set_boolean(VIK_SETTINGS_GPS_POWER_OFF, power_off);
-	return power_off;
-}
-
-
-
-
-AcquireOptions * DatasourceGPSSetup::create_acquire_options(AcquireContext * acquire_context)
+AcquireOptions * DataSourceGPSDialog::create_acquire_options(AcquireContext * acquire_context)
 {
 	gps_acquire_in_progress = true;
 
 	AcquireOptions * babel_options = new AcquireOptions();
 
 	babel_options->babel_process = new BabelProcess();
-	babel_options->babel_process->set_options(QString("-D 9 %1").arg(BabelProcess::get_trw_string(this->get_do_tracks(), this->get_do_routes(), this->get_do_waypoints())));
-	babel_options->babel_process->set_input(this->get_protocol(), this->get_port());
+	babel_options->babel_process->set_options(QString("-D 9 %1").arg(BabelProcess::get_trw_string(this->transfer.do_tracks, this->transfer.do_routes, this->transfer.do_waypoints)));
+	babel_options->babel_process->set_input(this->get_gps_protocol(), this->get_serial_port());
 
 	return babel_options;
 }
@@ -417,7 +359,7 @@ int DataSourceGPS::run_config_dialog(AcquireContext * acquire_context)
 	   checked - hence second argument to constructor is
 	   "true". */
 	GPSTransferType xfer = GPSTransferType::WPT; /* This doesn't really matter much because second arg to constructor is 'true'. */
-	DatasourceGPSSetup config_dialog(this->window_title, xfer, true, NULL);
+	DataSourceGPSDialog config_dialog(this->window_title, xfer, true, NULL);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -425,7 +367,10 @@ int DataSourceGPS::run_config_dialog(AcquireContext * acquire_context)
 		this->download_options = new DownloadOptions; /* With default values. */
 
 		this->device_path = config_dialog.serial_port_combo->currentText();
-		this->do_turn_off = config_dialog.get_do_turn_off();
+
+		config_dialog.save_transfer_options();
+		this->do_turn_off = config_dialog.transfer.turn_off;
+
 		g_last_device_index = config_dialog.proto_combo->currentIndex();
 	}
 
@@ -436,7 +381,27 @@ int DataSourceGPS::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSSetup * setup_dialog)
+void DataSourceGPSDialog::save_transfer_options(void)
+{
+	this->transfer.do_tracks    = this->get_tracks_b->isChecked();
+	this->transfer.do_routes    = this->get_routes_b->isChecked();
+	this->transfer.do_waypoints = this->get_waypoints_b->isChecked();
+	this->transfer.turn_off     = this->off_request_b->isChecked();
+	if (this->transfer.direction == GPSDirection::Down) {
+		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, this->transfer.do_tracks);
+		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, this->transfer.do_routes);
+		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, this->transfer.do_waypoints);
+	}
+	ApplicationState::set_boolean(VIK_SETTINGS_GPS_POWER_OFF, this->transfer.turn_off);
+
+	this->transfer.serial_port = this->get_serial_port();
+	this->transfer.gps_protocol = this->get_gps_protocol();
+}
+
+
+
+
+static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DataSourceGPSDialog * setup_dialog)
 {
 	{
 		setup_dialog->proto_combo = new QComboBox();
@@ -574,9 +539,8 @@ static DataSourceDialog * datasource_gps_setup_dialog_add_widgets(DatasourceGPSS
    @xfer: The default type of items enabled for transfer, others disabled
    @xfer_all: When specified all items are enabled for transfer
 */
-DatasourceGPSSetup::DatasourceGPSSetup(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent) : DataSourceDialog(window_title)
+DataSourceGPSDialog::DataSourceGPSDialog(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent) : DataSourceDialog(window_title)
 {
-	this->direction = GPSDirection::Up;
 	this->setWindowTitle(QObject::tr("GPS Upload"));
 
 	datasource_gps_setup_dialog_add_widgets(this);

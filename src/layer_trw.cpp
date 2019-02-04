@@ -2018,10 +2018,11 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	}
 
 
-	DatasourceGPSSetup gps_upload_setup(QObject::tr("Upload"), xfer_type, xfer_all);
-	if (gps_upload_setup.exec() != QDialog::Accepted) {
+	DataSourceGPSDialog gps_upload_config(QObject::tr("Upload"), xfer_type, xfer_all);
+	if (gps_upload_config.exec() != QDialog::Accepted) {
 		return;
 	}
+	gps_upload_config.save_transfer_options(); /* TODO_IMPROVEMENT: hide this call inside of DataSourceGPSDialog::exec() */
 
 	/* When called from the viewport - work the corresponding layers panel: */
 	if (!panel) {
@@ -2029,18 +2030,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	}
 
 	/* Apply settings to transfer to the GPS device. */
-	vik_gps_comm(this,
-		     trk,
-		     GPSDirection::Up,
-		     gps_upload_setup.get_protocol(),
-		     gps_upload_setup.get_port(),
-		     false,
-		     ThisApp::get_main_viewport(),
-		     panel,
-		     gps_upload_setup.get_do_tracks(),
-		     gps_upload_setup.get_do_routes(),
-		     gps_upload_setup.get_do_waypoints(),
-		     gps_upload_setup.get_do_turn_off());
+	gps_upload_config.transfer.run_transfer(this, trk, ThisApp::get_main_viewport(), panel, false);
 }
 
 

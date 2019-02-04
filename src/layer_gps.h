@@ -94,19 +94,26 @@ namespace SlavGPS {
 
 
 
-	/* Non layer specific but exposes common method. */
-	int vik_gps_comm(LayerTRW * trw_layer,
-			 Track * trk,
-			 GPSDirection dir,
-			 const QString & protocol,
-			 const QString & port,
-			 bool tracking,
-			 Viewport * viewport,
-			 LayersPanel * panel,
-			 bool do_tracks,
-			 bool do_routes,
-			 bool do_waypoints,
-			 bool turn_off);
+	class GPSTransfer {
+	public:
+		GPSTransfer(GPSDirection dir) : direction(dir) {};
+
+		/* Non layer specific but exposes common method. */
+		int run_transfer(LayerTRW * trw_layer, Track * trk, Viewport * viewport, LayersPanel * panel, bool tracking);
+
+		GPSDirection direction;    /* The direction of the transfer. */
+
+		bool do_tracks = false;    /* Whether tracks shoud be processed. */
+		bool do_routes = false;    /* Whether routes shoud be processed. */
+		bool do_waypoints = false; /* Whether waypoints shoud be processed. */
+
+		bool turn_off = false; /* Whether we should attempt to turn off the GPS device after the transfer (only some devices support this). Most of the time will be false. */
+
+		QString gps_protocol;  /* The GPS device communication protocol. */
+		QString serial_port;   /* The GPS serial port. */
+	};
+
+
 
 
 
@@ -219,14 +226,8 @@ namespace SlavGPS {
 		Trackpoint * tp_prev = NULL;
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
-		QString protocol;
-		QString serial_port;
-		bool download_tracks;
-		bool download_routes;
-		bool download_waypoints;
-		bool upload_tracks;
-		bool upload_routes;
-		bool upload_waypoints;
+		GPSTransfer download{GPSDirection::Down};
+		GPSTransfer upload{GPSDirection::Up};
 
 	public slots:
 		void gps_upload_cb(void);
@@ -249,7 +250,7 @@ namespace SlavGPS {
 
 	class GPSSession : public QRunnable, public AcquireTool {
 	public:
-		GPSSession(GPSDirection dir, LayerTRW * trw, Track * track, const QString & port, Viewport * viewport, bool in_progress);
+		GPSSession(GPSTransfer & new_transfer, LayerTRW * trw, Track * track, Viewport * viewport, bool in_progress);
 
 		void set_current_count(int cnt);
 		void set_total_count(int cnt);
@@ -263,9 +264,8 @@ namespace SlavGPS {
 
 		std::mutex mutex;
 
-		GPSDirection direction;
-		QString port;
-		QString protocol;
+		GPSTransfer transfer{GPSDirection::Up};
+
 		QString babel_opts;
 
 		bool in_progress = false;

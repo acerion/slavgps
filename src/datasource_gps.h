@@ -46,6 +46,11 @@ namespace SlavGPS {
 
 
 
+	class DataSourceGPSDialog;
+
+
+
+
 	class DataSourceGPS : public DataSourceBabel {
 	public:
 		DataSourceGPS();
@@ -68,26 +73,22 @@ namespace SlavGPS {
 
 
 
-
-	class DatasourceGPSSetup : public DataSourceDialog {
+	class DataSourceGPSDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DatasourceGPSSetup(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
-		~DatasourceGPSSetup();
+		DataSourceGPSDialog(const QString & window_title, GPSTransferType xfer, bool xfer_all, QWidget * parent = NULL);
+		~DataSourceGPSDialog();
 
 		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
-		QString get_protocol(void);
-		QString get_port(void);
-		bool get_do_tracks(void);
-		bool get_do_routes(void);
-		bool get_do_waypoints(void);
-		bool get_do_turn_off(void);
+		void save_transfer_options(void);
 
-	private slots:
+		QString get_gps_protocol(void);
+		QString get_serial_port(void);
+
+		GPSTransfer transfer{GPSDirection::Up};
 
 
-	public:
 		QComboBox * proto_combo = NULL;
 		QComboBox * serial_port_combo = NULL;
 		QCheckBox * off_request_b = NULL;
@@ -102,12 +103,6 @@ namespace SlavGPS {
 		/* State. */
 		int total_count = 0;
 		int count = 0;
-		/* Know which way xfer is so xfer setting types are only stored for download. */
-		GPSDirection direction;
-
-
-	private:
-
 	};
 
 
@@ -136,7 +131,7 @@ namespace SlavGPS {
 		int total_count = 0;
 		int count = 0;
 		/* Know which way xfer is so xfer setting types are only stored for download. */
-		GPSDirection direction;
+		//GPSDirection direction;
 	private:
 
 	};
