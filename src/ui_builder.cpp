@@ -614,7 +614,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 			|| param_spec.type_id == SGVariantType::String);
 
 		if (param_spec.type_id == SGVariantType::Enumeration) {
-			rv = SGVariant((int32_t) ((QComboBox *) widget)->currentData().toInt());
+			rv = SGVariant(((QComboBox *) widget)->currentData().toInt(), SGVariantType::Enumeration);
 
 		} else if (param_spec.type_id == SGVariantType::String) {
 			rv = SGVariant(((QComboBox *) widget)->currentText());
