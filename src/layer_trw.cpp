@@ -1985,7 +1985,6 @@ void LayerTRW::upload_to_gps_cb()
  */
 void LayerTRW::upload_to_gps(TreeItem * sublayer)
 {
-	LayersPanel * panel = ThisApp::get_layers_panel();
 	Track * trk = NULL;
 	GPSTransferType xfer_type = GPSTransferType::TRK; /* "sg.trw.tracks" = 0 so hard to test different from NULL! */
 	bool xfer_all = false;
@@ -2024,13 +2023,9 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 	}
 	gps_upload_config.save_transfer_options(); /* TODO_IMPROVEMENT: hide this call inside of DataSourceGPSDialog::exec() */
 
-	/* When called from the viewport - work the corresponding layers panel: */
-	if (!panel) {
-		panel = ThisApp::get_layers_panel();
-	}
 
 	/* Apply settings to transfer to the GPS device. */
-	gps_upload_config.transfer.run_transfer(this, trk, ThisApp::get_main_viewport(), panel, false);
+	gps_upload_config.transfer.run_transfer(this, trk, ThisApp::get_main_viewport(), false);
 }
 
 
@@ -3631,20 +3626,16 @@ CoordMode LayerTRW::get_coord_mode(void) const
  * Also requires the layers panel as the names shown there need updating too.
  * Returns whether the operation was successful or not.
  */
-bool LayerTRW::uniquify(LayersPanel * panel)
+bool LayerTRW::uniquify(void)
 {
-	if (panel) {
-		this->tracks.uniquify(this->track_sort_order);
-		this->routes.uniquify(this->track_sort_order);
-		this->waypoints.uniquify(this->wp_sort_order);
+	this->tracks.uniquify(this->track_sort_order);
+	this->routes.uniquify(this->track_sort_order);
+	this->waypoints.uniquify(this->wp_sort_order);
 
-		/* Update. */
-		qDebug() << SG_PREFIX_SIGNAL << "Will call 'emit_items_tree_updated_cb() for" << this->get_name();
-		panel->emit_items_tree_updated_cb(this->get_name());
+	/* Update. */
+	this->emit_tree_item_changed("Indicating change in Layer TRW after uniquifying");
 
-		return true;
-	}
-	return false;
+	return true;
 }
 
 

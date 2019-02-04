@@ -1128,10 +1128,9 @@ void GPSSession::run(void)
    @layer: The TrackWaypoint layer to operate on
    @track: Operate on a particular track when specified
    @viewport: A viewport is required as the display may get updated
-   @panel: A layers panel is needed for uploading as the items maybe modified
    @tracking: If tracking then viewport display update will be skipped
 */
-int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport, LayersPanel * panel, bool tracking)
+int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport, bool tracking)
 {
 	GPSSession * sess = new GPSSession(*this, layer, trk, viewport, true);
 	sess->setAutoDelete(false);
@@ -1142,7 +1141,7 @@ int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport
 		/* Enforce unique names in the layer upload to the GPS device.
 		   NB this may only be a Garmin device restriction (and may be not every Garmin device either...).
 		   Thus this maintains the older code in built restriction. */
-		if (!sess->trw->uniquify(panel)) {
+		if (!sess->trw->uniquify()) {
 			sess->trw->get_window()->get_statusbar()->set_message(StatusBarField::Info,
 									      QObject::tr("Warning - GPS Upload items may overwrite each other"));
 		}
@@ -1234,11 +1233,10 @@ int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport
 
 void LayerGPS::gps_upload_cb(void)
 {
-	LayersPanel * panel = ThisApp::get_layers_panel();
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
-	this->upload.run_transfer(trw, NULL, viewport, panel, false);
+	this->upload.run_transfer(trw, NULL, viewport, false);
 }
 
 
@@ -1249,7 +1247,7 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD];
 
-	this->download.run_transfer(trw, NULL, viewport, NULL,
+	this->download.run_transfer(trw, NULL, viewport,
 #if REALTIME_GPS_TRACKING_ENABLED
 			      this->realtime_tracking_in_progress
 #else

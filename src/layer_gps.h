@@ -98,8 +98,7 @@ namespace SlavGPS {
 	public:
 		GPSTransfer(GPSDirection dir) : direction(dir) {};
 
-		/* Non layer specific but exposes common method. */
-		int run_transfer(LayerTRW * trw_layer, Track * trk, Viewport * viewport, LayersPanel * panel, bool tracking);
+		int run_transfer(LayerTRW * trw_layer, Track * trk, Viewport * viewport, bool tracking);
 
 		GPSDirection direction;    /* The direction of the transfer. */
 
@@ -288,13 +287,7 @@ namespace SlavGPS {
 #if REALTIME_GPS_TRACKING_ENABLED
 		bool realtime_tracking_in_progress = false;
 #endif
-
-};
-
-
-
-
-
+	};
 
 
 

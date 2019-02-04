@@ -286,7 +286,7 @@ namespace SlavGPS {
 		void set_coord_mode(CoordMode mode);
 		CoordMode get_coord_mode(void) const;
 
-		bool uniquify(LayersPanel * panel);
+		bool uniquify(void);
 
 		void tpwin_update_dialog_data();
 
