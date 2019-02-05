@@ -42,6 +42,12 @@
 
 #ifdef VIK_CONFIG_REALTIME_GPS_TRACKING
 #include <gps.h>
+
+#if GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
+#else
+#error "Unsupported major version of GPS API"
+#endif
+
 #endif
 
 

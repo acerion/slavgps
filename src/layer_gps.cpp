@@ -1540,15 +1540,9 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 	LayerGPS * layer = (LayerGPS *) gps_layer;
 
 	if (condition == G_IO_IN) {
-#if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
-		if (!gps_poll(&layer->vgpsd->gpsd)) {
-#elif GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 		if (gps_read(&layer->vgpsd->gpsd) > -1) {
 			/* Reuse old function to perform operations on the new GPS data. */
 			gpsd_raw_hook(layer->vgpsd, NULL);
-#else
-			/* Broken compile. */
-#endif
 			return true;
 		} else {
 			qDebug() << SG_PREFIX_W << "Disconnected from gpsd. Will call disconnect()";
@@ -1592,28 +1586,14 @@ static QString make_track_name(LayerTRW * trw)
 
 bool LayerGPS::rt_gpsd_connect_try_once(void)
 {
-#if GPSD_API_MAJOR_VERSION == 3
-	struct gps_data_t *gpsd = gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData());
-
-	if (gpsd == NULL) {
-#elif GPSD_API_MAJOR_VERSION == 4
-		this->vgpsd = malloc(sizeof(VglGpsd));
-
-	if (gps_open_r(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), /*(struct gps_data_t *)*/this->vgpsd) != 0) {
-#elif GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 	this->vgpsd = (VglGpsd *) malloc(sizeof(VglGpsd));
 	if (gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), &this->vgpsd->gpsd) != 0) {
-#else
 		/* Delibrately break compilation... */
-#endif
 		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2). Will retry in %3 seconds")
 			.arg(this->gpsd_host).arg(this->gpsd_port).arg(this->gpsd_retry_interval);
 		return false; /* Failed to connect, re-start timer. */
 	}
 
-#if GPSD_API_MAJOR_VERSION == 3
-	this->vgpsd = realloc(gpsd, sizeof(VglGpsd));
-#endif
 	this->vgpsd->gps_layer = this;
 
 	this->realtime_fix.dirty = false;
@@ -1632,20 +1612,11 @@ bool LayerGPS::rt_gpsd_connect_try_once(void)
 		trw->add_track(this->realtime_track);
 	}
 
-#if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
-	gps_set_raw_hook(&this->vgpsd->gpsd, gpsd_raw_hook);
-#endif
-
 	this->realtime_io_channel = g_io_channel_unix_new(this->vgpsd->gpsd.gps_fd);
 	this->realtime_io_watch_id = g_io_add_watch(this->realtime_io_channel,
 						    (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP), gpsd_data_available, this);
 
-#if GPSD_API_MAJOR_VERSION == 3
-	gps_query(&this->vgpsd->gpsd, "w+x");
-#endif
-#if GPSD_API_MAJOR_VERSION == 4 || GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 	gps_stream(&this->vgpsd->gpsd, WATCH_ENABLE, NULL);
-#endif
 
 	return true; /* Connection succeeded, no need to restart timer. */
 }
@@ -1708,17 +1679,10 @@ void LayerGPS::rt_gpsd_disconnect()
 	}
 
 	if (this->vgpsd) {
-#if GPSD_API_MAJOR_VERSION == 4 || GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
 		gps_stream(&this->vgpsd->gpsd, WATCH_DISABLE, NULL);
-#endif
 		gps_close(&this->vgpsd->gpsd);
 
-#if GPSD_API_MAJOR_VERSION == 3
 		free(this->vgpsd);
-#elif GPSD_API_MAJOR_VERSION == 4 || GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
-		free(this->vgpsd);
-#endif
-
 		this->vgpsd = NULL;
 	}
 
