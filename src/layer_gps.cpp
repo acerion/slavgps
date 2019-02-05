@@ -1551,9 +1551,17 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 #endif
 			return true;
 		} else {
-			qDebug() << SG_PREFIX_W << "Disconnected from gpsd. Trying to reconnect";
+			qDebug() << SG_PREFIX_W << "Disconnected from gpsd. Will call disconnect()";
 			layer->rt_gpsd_disconnect();
-			layer->rt_gpsd_connect(false);
+			/* We can't restart timer because it may take
+			   N seconds before the timer is re-triggered,
+			   callback is called, and we re-gain
+			   connection to gpsd. This would take too
+			   long. Instead call the callback directly
+			   (this will arm the timer for re-tries if
+			   necessary). */
+			qDebug() << SG_PREFIX_W << "Disconnected from gpsd. Will try to reconnect";
+			layer->rt_gpsd_connect_periodic_retry_cb();
 		}
 	}
 
@@ -1582,63 +1590,64 @@ static QString make_track_name(LayerTRW * trw)
 
 
 
-static bool rt_gpsd_try_connect(void * gps_layer)
+bool LayerGPS::rt_gpsd_connect_try_once(void)
 {
-	LayerGPS * layer = (LayerGPS *) gps_layer;
-
 #if GPSD_API_MAJOR_VERSION == 3
-	struct gps_data_t *gpsd = gps_open(layer->gpsd_host.toUtf8().constData(), layer->gpsd_port.toUtf8().constData());
+	struct gps_data_t *gpsd = gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData());
 
 	if (gpsd == NULL) {
 #elif GPSD_API_MAJOR_VERSION == 4
-	layer->vgpsd = malloc(sizeof(VglGpsd));
+		this->vgpsd = malloc(sizeof(VglGpsd));
 
-	if (gps_open_r(layer->gpsd_host.toUtf8().constData(), layer->gpsd_port.toUtf8().constData(), /*(struct gps_data_t *)*/layer->vgpsd) != 0) {
+	if (gps_open_r(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), /*(struct gps_data_t *)*/this->vgpsd) != 0) {
 #elif GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
-	layer->vgpsd = (VglGpsd *) malloc(sizeof(VglGpsd));
-	if (gps_open(layer->gpsd_host.toUtf8().constData(), layer->gpsd_port.toUtf8().constData(), &layer->vgpsd->gpsd) != 0) {
+	this->vgpsd = (VglGpsd *) malloc(sizeof(VglGpsd));
+	if (gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), &this->vgpsd->gpsd) != 0) {
 #else
 		/* Delibrately break compilation... */
 #endif
 		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2). Will retry in %3 seconds")
-			.arg(layer->gpsd_host).arg(layer->gpsd_port).arg(layer->gpsd_retry_interval);
-		return true;   /* Keep timer running. */
+			.arg(this->gpsd_host).arg(this->gpsd_port).arg(this->gpsd_retry_interval);
+		return false; /* Failed to connect, re-start timer. */
 	}
 
 #if GPSD_API_MAJOR_VERSION == 3
-	layer->vgpsd = realloc(gpsd, sizeof(VglGpsd));
+	this->vgpsd = realloc(gpsd, sizeof(VglGpsd));
 #endif
-	layer->vgpsd->gps_layer = layer;
+	this->vgpsd->gps_layer = this;
 
-	layer->realtime_fix.dirty = layer->last_fix.dirty = false;
+	this->realtime_fix.dirty = false;
+	this->last_fix.dirty = false;
 	/* Track alt/time graph uses VIK_DEFAULT_ALTITUDE (0.0) as invalid. */
-	layer->realtime_fix.fix.altitude = layer->last_fix.fix.altitude = VIK_DEFAULT_ALTITUDE;
-	layer->realtime_fix.fix.speed = layer->last_fix.fix.speed = NAN;
+	this->realtime_fix.fix.altitude = VIK_DEFAULT_ALTITUDE;
+	this->last_fix.fix.altitude = VIK_DEFAULT_ALTITUDE;
+	this->realtime_fix.fix.speed = NAN;
+	this->last_fix.fix.speed = NAN;
 
-	if (layer->realtime_record) {
-		LayerTRW * trw = layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME];
-		layer->realtime_track = new Track(false);
-		layer->realtime_track->visible = true;
-		layer->realtime_track->set_name(make_track_name(trw));
-		trw->add_track(layer->realtime_track);
+	if (this->realtime_record) {
+		LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME];
+		this->realtime_track = new Track(false);
+		this->realtime_track->visible = true;
+		this->realtime_track->set_name(make_track_name(trw));
+		trw->add_track(this->realtime_track);
 	}
 
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
-	gps_set_raw_hook(&layer->vgpsd->gpsd, gpsd_raw_hook);
+	gps_set_raw_hook(&this->vgpsd->gpsd, gpsd_raw_hook);
 #endif
 
-	layer->realtime_io_channel = g_io_channel_unix_new(layer->vgpsd->gpsd.gps_fd);
-	layer->realtime_io_watch_id = g_io_add_watch(layer->realtime_io_channel,
-						    (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP), gpsd_data_available, layer);
+	this->realtime_io_channel = g_io_channel_unix_new(this->vgpsd->gpsd.gps_fd);
+	this->realtime_io_watch_id = g_io_add_watch(this->realtime_io_channel,
+						    (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP), gpsd_data_available, this);
 
 #if GPSD_API_MAJOR_VERSION == 3
-	gps_query(&layer->vgpsd->gpsd, "w+x");
+	gps_query(&this->vgpsd->gpsd, "w+x");
 #endif
 #if GPSD_API_MAJOR_VERSION == 4 || GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
-	gps_stream(&layer->vgpsd->gpsd, WATCH_ENABLE, NULL);
+	gps_stream(&this->vgpsd->gpsd, WATCH_ENABLE, NULL);
 #endif
 
-	return false;  /* No longer called by timeout. */
+	return true; /* Connection succeeded, no need to restart timer. */
 }
 
 
@@ -1659,21 +1668,26 @@ bool LayerGPS::rt_ask_retry()
 
 
 
-bool LayerGPS::rt_gpsd_connect(bool ask_if_failed)
+bool LayerGPS::rt_gpsd_connect_periodic_retry_cb(void)
 {
-	this->realtime_retry_timer = 0;
-	if (rt_gpsd_try_connect((void * ) this)) {
-		if (this->gpsd_retry_interval <= 0) {
-			qDebug() << SG_PREFIX_W << "Failed to connect to gpsd but will not retry because retry intervel was set to" << this->gpsd_retry_interval << "(which is 0 or negative).";
-			return false;
-		} else if (ask_if_failed && !this->rt_ask_retry()) {
-			return false;
-		} else {
-			this->realtime_retry_timer = g_timeout_add_seconds(this->gpsd_retry_interval,
-									   (GSourceFunc)rt_gpsd_try_connect, (void *) this);
-		}
+	this->realtime_retry_timer.stop();
+
+	qDebug() << SG_PREFIX_I << "Periodic retry: will now try single connect in this time period";
+	if (true == this->rt_gpsd_connect_try_once()) {
+		qDebug() << SG_PREFIX_I << "Periodic retry: connected";
+		return true;
 	}
-	return true;
+
+	if (this->gpsd_retry_interval <= 0) {
+		qDebug() << SG_PREFIX_I << "Periodic retry: failed to connect, but interval is zero, not re-trying.";
+		return false;
+	}
+
+	/* Re-start timer. */
+	qDebug() << SG_PREFIX_I << "Periodic retry: failed to connect, re-arming timer for" << this->gpsd_retry_interval << "seconds";
+	this->realtime_retry_timer.start(1000 * this->gpsd_retry_interval);
+
+	return false;
 }
 
 
@@ -1681,10 +1695,8 @@ bool LayerGPS::rt_gpsd_connect(bool ask_if_failed)
 
 void LayerGPS::rt_gpsd_disconnect()
 {
-	if (this->realtime_retry_timer) {
-		g_source_remove(this->realtime_retry_timer);
-		this->realtime_retry_timer = 0;
-	}
+	this->realtime_retry_timer.stop();
+
 	if (this->realtime_io_watch_id) {
 		g_source_remove(this->realtime_io_watch_id);
 		this->realtime_io_watch_id = 0;
@@ -1725,22 +1737,49 @@ void LayerGPS::rt_gpsd_disconnect()
 
 void LayerGPS::gps_start_stop_tracking_cb(void)
 {
-	this->realtime_tracking_in_progress = !this->realtime_tracking_in_progress;
-
 	/* Make sure we are still in the boat with libgps. */
 	assert ((((int) GPSFixMode::Fix2D) == MODE_2D) && (((int) GPSFixMode::Fix3D) == MODE_3D));
 
-	if (this->realtime_tracking_in_progress) {
-		this->first_realtime_trackpoint = true;
-		if (!this->rt_gpsd_connect(true)) {
-			this->first_realtime_trackpoint = false;
-			this->realtime_tracking_in_progress = false;
-			this->tp = NULL;
-		}
-	} else {  /* Stop realtime tracking. */
+	this->realtime_tracking_in_progress = !this->realtime_tracking_in_progress;
+
+	if (!this->realtime_tracking_in_progress) {
+		/* Stop realtime tracking. */
+		this->realtime_retry_timer.stop();
 		this->first_realtime_trackpoint = false;
 		this->tp = NULL;
 		this->rt_gpsd_disconnect();
+
+		return;
+	} else {
+		/* Start realtime tracking. */
+
+		if (true == this->rt_gpsd_connect_try_once()) {
+			/* All ok at first try. */
+			this->first_realtime_trackpoint = true;
+			return;
+		}
+
+		if (this->gpsd_retry_interval <= 0) {
+			/* Failed to start tracking, and we can't retry. */
+			qDebug() << SG_PREFIX_W << "Failed to connect to gpsd but will not retry because retry intervel was set to" << this->gpsd_retry_interval << "(which is 0 or negative).";
+			this->realtime_tracking_in_progress = false;
+			this->first_realtime_trackpoint = false;
+			this->tp = NULL;
+			return;
+		}
+
+		if (!this->rt_ask_retry()) {
+			/* User doesn't want to re-try periodically. */
+			this->realtime_tracking_in_progress = false;
+			this->first_realtime_trackpoint = false;
+			this->tp = NULL;
+			return;
+		}
+
+		/* Try repeatedly in the future, every N seconds. */
+		this->realtime_retry_timer.start(1000 * this->gpsd_retry_interval);
+
+		return;
 	}
 }
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
@@ -1771,6 +1810,9 @@ LayerGPS::LayerGPS()
 
 	this->gpsd_host = QObject::tr("host");
 	this->gpsd_port = QObject::tr("port");
+
+	this->realtime_retry_timer.setSingleShot(true);
+	connect(&this->realtime_retry_timer, SIGNAL (timeout(void)), this, SLOT (rt_gpsd_connect_periodic_retry_cb()));
 
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 

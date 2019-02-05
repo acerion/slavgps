@@ -33,6 +33,7 @@
 
 #include <QRunnable>
 #include <QLabel>
+#include <QTimer>
 
 
 
@@ -192,8 +193,8 @@ namespace SlavGPS {
 		int cur_read_child = 0;   /* Used only for reading file. */
 
 #if REALTIME_GPS_TRACKING_ENABLED
-		bool rt_gpsd_connect(bool ask_if_failed);
-		void rt_gpsd_disconnect();
+		bool rt_gpsd_connect_try_once(void);
+		void rt_gpsd_disconnect(void);
 
 		VglGpsd * vgpsd = NULL;
 		bool realtime_tracking_in_progress;  /* Set/reset only by the callback. */
@@ -205,7 +206,7 @@ namespace SlavGPS {
 
 		GIOChannel * realtime_io_channel = NULL;
 		unsigned int realtime_io_watch_id = 0;
-		unsigned int realtime_retry_timer = 0;
+		QTimer realtime_retry_timer;
 
 		QPen realtime_track_pen;
 		QPen realtime_track_bg_pen;
@@ -238,6 +239,12 @@ namespace SlavGPS {
 #if REALTIME_GPS_TRACKING_ENABLED
 		void gps_start_stop_tracking_cb(void);
 		void gps_empty_realtime_cb(void);
+
+		/**
+		   @return true if connection attempt succeeded
+		   @return false if connection attempt failed
+		*/
+		bool rt_gpsd_connect_periodic_retry_cb(void);
 #endif
 
 		/* GPS Layer can contain other layers and should be notified about changes in them. */
