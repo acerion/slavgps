@@ -1462,34 +1462,33 @@ void LayerGPS::update_statusbar(Window * window_)
 
 
 
-static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
+void LayerGPS::rt_gpsd_raw_hook(void)
 {
 	bool update_all = false;
-	LayerGPS * layer = vgpsd->gps_layer;
 
-	if (!layer->realtime_tracking_in_progress) {
+	if (!this->realtime_tracking_in_progress) {
 		qDebug() << SG_PREFIX_W << "Receiving GPS data while not in realtime mode";
 		return;
 	}
 
-	if ((vgpsd->gpsd.fix.mode >= MODE_2D) &&
-	    !std::isnan(vgpsd->gpsd.fix.latitude) &&
-	    !std::isnan(vgpsd->gpsd.fix.longitude)) {
+	if ((this->gpsdata.fix.mode >= MODE_2D) &&
+	    !std::isnan(this->gpsdata.fix.latitude) &&
+	    !std::isnan(this->gpsdata.fix.longitude)) {
 
-		Window * window_ = layer->get_window();
-		Viewport * viewport = layer->get_window()->get_viewport();
-		layer->realtime_fix.fix = vgpsd->gpsd.fix;
-		layer->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;
-		layer->realtime_fix.dirty = true;
+		Window * window_ = this->get_window();
+		Viewport * viewport = window_->get_viewport();
+		this->realtime_fix.fix = this->gpsdata.fix;
+		this->realtime_fix.satellites_used = this->gpsdata.satellites_used;
+		this->realtime_fix.dirty = true;
 
-		const Coord vehicle_coord(LatLon(layer->realtime_fix.fix.latitude, layer->realtime_fix.fix.longitude),
-					  layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode());
+		const Coord vehicle_coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude),
+					  this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode());
 
-		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
-		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {
+		if ((this->vehicle_position == VEHICLE_POSITION_CENTERED) ||
+		    (this->realtime_jump_to_start && this->first_realtime_trackpoint)) {
 			viewport->set_center_from_coord(vehicle_coord, false);
 			update_all = true;
-		} else if (layer->vehicle_position == VEHICLE_POSITION_ON_SCREEN) {
+		} else if (this->vehicle_position == VEHICLE_POSITION_ON_SCREEN) {
 			const int hdiv = 6;
 			const int vdiv = 6;
 			const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
@@ -1512,22 +1511,22 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 			}
 		}
 
-		layer->first_realtime_trackpoint = false;
+		this->first_realtime_trackpoint = false;
 
-		layer->tp = layer->create_realtime_trackpoint(false);
+		this->tp = this->create_realtime_trackpoint(false);
 
-		if (layer->tp) {
-			if (layer->realtime_update_statusbar) {
-				layer->update_statusbar(window_);
+		if (this->tp) {
+			if (this->realtime_update_statusbar) {
+				this->update_statusbar(window_);
 			}
-			layer->tp_prev = layer->tp;
+			this->tp_prev = this->tp;
 		}
 
 		/* NB update from background thread. */
 		if (update_all) {
-			layer->emit_tree_item_changed("GPS - update all");
+			this->emit_tree_item_changed("GPS - update all");
 		} else {
-			layer->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_tree_item_changed("GPS - TRW - update realtime");
+			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_tree_item_changed("GPS - TRW - update realtime");
 		}
 	}
 }
@@ -1540,9 +1539,9 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 	LayerGPS * layer = (LayerGPS *) gps_layer;
 
 	if (condition == G_IO_IN) {
-		if (gps_read(&layer->vgpsd->gpsd) > -1) {
+		if (gps_read(&layer->gpsdata) > -1) {
 			/* Reuse old function to perform operations on the new GPS data. */
-			gpsd_raw_hook(layer->vgpsd, NULL);
+			layer->rt_gpsd_raw_hook();
 			return true;
 		} else {
 			qDebug() << SG_PREFIX_W << "Disconnected from gpsd. Will call disconnect()";
@@ -1586,15 +1585,13 @@ static QString make_track_name(LayerTRW * trw)
 
 bool LayerGPS::rt_gpsd_connect_try_once(void)
 {
-	this->vgpsd = (VglGpsd *) malloc(sizeof(VglGpsd));
-	if (gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), &this->vgpsd->gpsd) != 0) {
+	if (0 != gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), &this->gpsdata)) {
 		/* Delibrately break compilation... */
-		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2). Will retry in %3 seconds")
-			.arg(this->gpsd_host).arg(this->gpsd_port).arg(this->gpsd_retry_interval);
+		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2): %3.")
+			.arg(this->gpsd_host).arg(this->gpsd_port).arg(gps_errstr(errno));
 		return false; /* Failed to connect, re-start timer. */
 	}
-
-	this->vgpsd->gps_layer = this;
+	this->gpsdata_opened = true;
 
 	this->realtime_fix.dirty = false;
 	this->last_fix.dirty = false;
@@ -1612,11 +1609,11 @@ bool LayerGPS::rt_gpsd_connect_try_once(void)
 		trw->add_track(this->realtime_track);
 	}
 
-	this->realtime_io_channel = g_io_channel_unix_new(this->vgpsd->gpsd.gps_fd);
+	this->realtime_io_channel = g_io_channel_unix_new(this->gpsdata.gps_fd);
 	this->realtime_io_watch_id = g_io_add_watch(this->realtime_io_channel,
 						    (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP), gpsd_data_available, this);
 
-	gps_stream(&this->vgpsd->gpsd, WATCH_ENABLE, NULL);
+	gps_stream(&this->gpsdata, WATCH_ENABLE, NULL);
 
 	return true; /* Connection succeeded, no need to restart timer. */
 }
@@ -1678,12 +1675,10 @@ void LayerGPS::rt_gpsd_disconnect()
 		this->realtime_io_channel = NULL;
 	}
 
-	if (this->vgpsd) {
-		gps_stream(&this->vgpsd->gpsd, WATCH_DISABLE, NULL);
-		gps_close(&this->vgpsd->gpsd);
-
-		free(this->vgpsd);
-		this->vgpsd = NULL;
+	if (this->gpsdata_opened) {
+		gps_stream(&this->gpsdata, WATCH_DISABLE, NULL);
+		gps_close(&this->gpsdata);
+		this->gpsdata_opened = false;
 	}
 
 	if (this->realtime_record && this->realtime_track) {

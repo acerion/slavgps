@@ -126,7 +126,7 @@ namespace SlavGPS {
 
 #if REALTIME_GPS_TRACKING_ENABLED
 	typedef struct {
-		struct gps_data_t gpsd;
+
 		LayerGPS * gps_layer;
 	} VglGpsd;
 
@@ -201,8 +201,11 @@ namespace SlavGPS {
 #if REALTIME_GPS_TRACKING_ENABLED
 		bool rt_gpsd_connect_try_once(void);
 		void rt_gpsd_disconnect(void);
+		void rt_gpsd_raw_hook(void);
 
-		VglGpsd * vgpsd = NULL;
+		struct gps_data_t gpsdata;
+		bool gpsdata_opened = false;
+
 		bool realtime_tracking_in_progress;  /* Set/reset only by the callback. */
 		bool first_realtime_trackpoint = false;
 		GPSFix realtime_fix;
