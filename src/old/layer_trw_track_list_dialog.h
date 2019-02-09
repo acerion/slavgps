@@ -60,11 +60,6 @@ namespace SlavGPS {
 
 
 
-	void track_list_dialog(QString const & title, Layer * layer, const QString & type_id);
-
-
-
-
 	class TrackListDialog : public QDialog {
 		Q_OBJECT
 	public:

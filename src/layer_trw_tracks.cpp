@@ -44,7 +44,6 @@
 #include "layer_trw_painter.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_track_internal.h"
-#include "layer_trw_track_list_dialog.h"
 #include "viewport_internal.h"
 #include "tree_view_internal.h"
 #include "clipboard.h"
@@ -865,7 +864,7 @@ void LayerTRWTracks::track_list_dialog_cb(void) /* Slot. */
 	} else {
 		title = tr("%1: Route List").arg(this->owning_layer->name);
 	}
-	track_list_dialog(title, this->owning_layer, this->type_id);
+	Track::list_dialog(title, this->owning_layer, this->type_id);
 }
 
 

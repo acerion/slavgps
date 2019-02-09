@@ -521,34 +521,6 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 
-/**
-   @title: the title for the dialog
-   @layer: The layer, from which a list of tracks should be extracted
-   @type_id_string: TreeItem type to be show in list (empty string for both tracks and routes)
-
-  Common method for showing a list of tracks with extended information
-*/
-void SlavGPS::track_list_dialog(QString const & title, Layer * layer, const QString & type_id_string)
-{
-	TrackListDialog dialog(title, layer->get_window());
-
-	dialog.tracks.clear();
-
-	if (layer->type == LayerType::Aggregate) {
-		((LayerAggregate *) layer)->get_tracks_list(dialog.tracks, type_id_string);
-	} else if (layer->type == LayerType::TRW) {
-		((LayerTRW *) layer)->get_tracks_list(dialog.tracks, type_id_string);
-	} else {
-		assert (0);
-	}
-
-	dialog.build_model(layer->type != LayerType::Aggregate);
-	dialog.exec();
-}
-
-
-
-
 TrackListDialog::TrackListDialog(QString const & title, QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(title);

@@ -185,109 +185,6 @@ int TreeItemListDialog::column_id_to_column_idx(TreeItemPropertyID column_id)
 
 
 
-/**
-   Create a table of tree_items with corresponding tree_item information.
-   This table does not support being actively updated.
-*/
-void TreeItemListDialog::build_model(const TreeItemListFormat & new_list_format)
-{
-	if (this->tree_items.empty()) {
-		return;
-	}
-
-	this->list_format = new_list_format;
-
-	this->model = new QStandardItemModel();
-
-	for (unsigned int i = 0; i < this->list_format.columns.size(); i++) {
-		this->model->setHorizontalHeaderItem(i, new QStandardItem(this->list_format.columns[i].header_label));
-	}
-
-
-	this->view = new QTableView();
-	this->view->horizontalHeader()->setStretchLastSection(false);
-	this->view->verticalHeader()->setVisible(false);
-	this->view->setWordWrap(false);
-	this->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-	this->view->setTextElideMode(Qt::ElideRight);
-	this->view->setSelectionMode(QAbstractItemView::ExtendedSelection);
-	this->view->setSelectionBehavior(QAbstractItemView::SelectRows);
-	this->view->setShowGrid(false);
-	this->view->setModel(this->model);
-	this->view->setSortingEnabled(true);
-
-
-	for (unsigned int i = 0; i < this->list_format.columns.size(); i++) {
-		this->model->setHorizontalHeaderItem(i, new QStandardItem(this->list_format.columns[i].header_label));
-
-		this->view->horizontalHeader()->setSectionHidden(i, !this->list_format.columns[i].visible);
-		this->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Interactive);
-#ifdef TODO_LATER
-		this->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
-		this->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Stretch);
-#endif
-	}
-
-
-	this->vbox->addWidget(this->view);
-	this->vbox->addWidget(this->button_box);
-
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
-
-	connect(this->button_box, SIGNAL(accepted()), this, SLOT(accept()));
-
-
-
-	/* Set this member before adding rows to the table. */
-	Qt::DateFormat dt_format;
-	if (ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &dt_format)) {
-		this->date_time_format = dt_format;
-	}
-
-
-
-	for (auto iter = tree_items.begin(); iter != tree_items.end(); iter++) {
-		const QList<QStandardItem *> items = (*iter)->get_list_representation(this->list_format);
-		this->model->invisibleRootItem()->appendRow(items);
-	}
-	this->view->sortByColumn(TreeItemPropertyID::ParentLayer, Qt::SortOrder::AscendingOrder);
-
-
-	this->setMinimumSize(700, 400);
-
-
-	this->view->show();
-
-	this->view->setVisible(false);
-	this->view->resizeRowsToContents();
-	this->view->resizeColumnsToContents();
-	this->view->setVisible(true);
-}
-
-
-
-
-/**
-   @title: the title for the dialog
-   @layer: the layer, from which a list of tree_items should be extracted
-
-   Common method for showing a list of tree_items with extended information
-*/
-void TreeItemListDialog::show_dialog(QString const & title, const TreeItemListFormat & new_list_format, const std::list<TreeItem *> & items, QWidget * parent)
-{
-	TreeItemListDialog dialog(title, parent);
-
-	dialog.tree_items = items;
-
-	dialog.build_model(new_list_format);
-	dialog.exec();
-}
-
-
-
-
 TreeItemListDialog::TreeItemListDialog(QString const & title, QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(title);
@@ -355,3 +252,173 @@ TreeItemListFormat & TreeItemListFormat::operator=(const TreeItemListFormat & ot
 
 	return *this;
 }
+
+
+
+
+#ifdef K_FIXME_RESTORE
+
+
+
+
+typedef struct {
+	bool has_layer_names;
+	bool include_positions;
+	QString str;
+} copy_data_t;
+
+
+
+
+/**
+ * At the moment allow copying the data displayed** with or without the positions
+ * (since the position data is not shown in the list but is useful in copying to external apps).
+ *
+ * ATM The visibility flag is not copied and neither is a text representation of the waypoint symbol.
+ */
+static void copy_selection(QStandardItemModel * model, GtkTreePath * path, GtkTreeIter * iter, void * data)
+{
+	copy_data_t * cd = (copy_data_t *) data;
+
+	char * layername;
+	gtk_tree_model_get(model, iter, 0, &layername, -1);
+
+	char * name;
+	gtk_tree_model_get(model, iter, 1, &name, -1);
+
+	char * date;
+	gtk_tree_model_get(model, iter, 2, &date, -1);
+
+	char * comment;
+	gtk_tree_model_get(model, iter, 4, &comment, -1);
+	if (comment == NULL) {
+		comment = strdup("");
+	}
+
+	int hh;
+	gtk_tree_model_get(model, iter, 5, &hh, -1);
+
+	Waypoint * wp;
+        gtk_tree_model_get(model, iter, WAYPOINT_COLUMN, &wp, -1);
+	LatLon ll;
+	if (wp) {
+		ll = wp->coord.get_latlon();
+	}
+	char sep = '\t'; // Could make this configurable - but simply always make it a tab character for now
+	// NB Even if the columns have been reordered - this copies it out only in the original default order
+	// if col 0 is displayed then also copy the layername
+	// Note that the lat/lon data copy is using the users locale
+	if (cd->has_layer_names) {
+		if (cd->include_positions) {
+			g_string_append_printf(cd->str, "%s%c%s%c%s%c%s%c%d%c%.6f%c%.6f\n", layername, sep, name, sep, date, sep, comment, sep, hh, sep, ll.lat, sep, ll.lon);
+		} else {
+			g_string_append_printf(cd->str, "%s%c%s%c%s%c%s%c%d\n", layername, sep, name, sep, date, sep, comment, sep, hh);
+		}
+	} else {
+		if (cd->include_positions) {
+			g_string_append_printf(cd->str, "%s%c%s%c%s%c%d%c%.6f%c%.6f\n", name, sep, date, sep, comment, sep, hh, sep, ll.lat, sep, ll.lon);
+		} else {
+			g_string_append_printf(cd->str, "%s%c%s%c%s%c%d\n", name, sep, date, sep, comment, sep, hh);
+		}
+	}
+	free(layername);
+	free(name);
+	free(date);
+	free(comment);
+}
+
+
+
+
+void WaypointListDialog::copy_selected(bool include_positions)
+{
+	copy_data_t cd;
+
+	QItemSelectionModel * selection = this->view.selectionModel();
+	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
+	GList * gl = gtk_tree_view_get_columns(this->view);
+	unsigned int count = g_list_length(gl);
+	g_list_free(gl);
+	cd.has_layer_names = (count > N_COLUMNS-3);
+	cd.include_positions = include_positions;
+	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
+
+	Pickle dummy;
+	Clipboard::copy(ClipboardDataType::Text, LayerType::Aggregate, "", dummy, cd.str);
+}
+
+
+void TrackListDialog::accept_cb(void) /* Slot. */
+{
+	/* Here we are iterating over all rows in the table, saving
+	   all tracks. We access the tracks through this->model, so
+	   don't even think about using this->selected_track. */
+
+
+	bool changed = false;
+
+
+	const int n_rows = this->model->rowCount(this->model->invisibleRootItem()->index());
+	for (int row = 0; row < n_rows; row++) {
+		QStandardItem * item = NULL;
+
+		item = this->model->item(row, TRACK_COLUMN);
+		assert (NULL != item);
+		Track * trk = item->data(RoleLayerData).value<Track *>();
+		if (!trk) {
+			qDebug() << SG_PREFIX_E << "NULL track in 'accept' handler";
+			return;
+		}
+
+
+		LayerTRW * parent_layer = (LayerTRW *) trk->get_owning_layer();
+		parent_layer->lock_remove();
+
+
+		/* Make sure that the track really is in parent layer. */
+		bool has_child = false;
+		if (sg_ret::ok != parent_layer->has_child(trk, &has_child)) {
+			parent_layer->unlock_remove();
+			return;
+		}
+		if (!has_child) {
+			qDebug() << SG_PREFIX_W << "Can't find edited Track in TRW layer";
+			parent_layer->unlock_remove();
+			return;
+		}
+
+
+		/* Save all edited properties of given track. */
+
+		item = this->model->item(row, COMMENT_COLUMN);
+		assert (NULL != item);
+		QString comment = item->text();
+		if (trk->comment != comment) {
+			trk->set_comment(comment);
+			changed = true;
+		}
+
+
+		parent_layer->unlock_remove();
+	}
+
+#if K_TODO  /* The dialog may be invoked from LayerAggregate's context
+	       menu, which means that there may be multiple TRW
+	       layers.  For each of them we need to call
+	       trw->udpate_tree_item(), but we must be sure that this
+	       doesn't trigger few redraws in a row. There must be
+	       only one redraw, final one. Most probably triggered
+	       from a layer (either TRW layer or Aggregate layer), for
+	       which a context menu item has been triggered. */
+	if (changed) {
+		trk->update_tree_item_properties();
+		parent_layer->emit_tree_item_changed("Indicating change to TRW Layer after changing properties of Track in Track list dialog");
+	}
+#endif
+
+
+	this->accept();
+}
+
+
+#endif

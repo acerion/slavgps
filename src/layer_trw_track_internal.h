@@ -312,6 +312,8 @@ namespace SlavGPS {
 		void marshall(Pickle & pickle);
 		static Track * unmarshall(Pickle & pickle);
 
+		static void list_dialog(QString const & title, Layer * layer, const QString & type_id);
+
 		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format);
 
 

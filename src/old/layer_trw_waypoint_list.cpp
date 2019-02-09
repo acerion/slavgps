@@ -51,6 +51,7 @@
 #include "tree_view_internal.h"
 #include "dialog.h"
 #include "clipboard.h"
+#include "tree_item_list.h"
 
 
 
@@ -527,33 +528,6 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	this->view->resizeRowsToContents();
 	this->view->resizeColumnsToContents();
 	this->view->setVisible(true);
-}
-
-
-
-
-/**
-   @title: the title for the dialog
-   @layer: the layer, from which a list of waypoints should be extracted
-
-   Common method for showing a list of waypoints with extended information
-*/
-void SlavGPS::waypoint_list_dialog(QString const & title, Layer * layer)
-{
-	WaypointListDialog dialog(title, layer->get_window());
-
-	dialog.waypoints.clear();
-
-	if (layer->type == LayerType::TRW) {
-		((LayerTRW *) layer)->get_waypoints_list(dialog.waypoints);
-	} else if (layer->type == LayerType::Aggregate) {
-		((LayerAggregate *) layer)->get_waypoints_list(dialog.waypoints);
-	} else {
-		assert (0);
-	}
-
-	dialog.build_model(layer->type != LayerType::Aggregate);
-	dialog.exec();
 }
 
 

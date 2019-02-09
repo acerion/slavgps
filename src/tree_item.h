@@ -89,6 +89,16 @@ namespace SlavGPS {
 		Comment,         /* Comment attribute of given tree item. */
 		Elevation,       /* Elevation attribute of given tree item. */
 		Coordinate,      /* Coordinate attribute of given tree item. */
+
+		/* Track/Route-specific properties. */
+		Length,
+		Duration,
+		MinimumSpeed,
+		AverageSpeed,
+		MaximumSpeed,
+		MinimumHeight,
+		AverageHeight,
+		MaximumHeight,
 	};
 
 

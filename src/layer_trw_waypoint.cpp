@@ -23,6 +23,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <cassert>
 #include <mutex>
 
 
@@ -30,6 +31,7 @@
 
 #include "coords.h"
 #include "coord.h"
+#include "layer_aggregate.h"
 #include "layer_trw.h"
 #include "layer_trw_menu.h"
 #include "layer_trw_painter.h"
@@ -740,6 +742,10 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 	const QString tooltip(this->description);
 	QString date_time_string;
 
+	LayerTRW * trw = this->get_parent_layer_trw();
+
+	bool a_visible = trw->visible && this->visible;
+	a_visible = a_visible && trw->get_waypoints_visibility();
 
 	Qt::DateFormat date_time_format = Qt::ISODate;
 	ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &date_time_format);
@@ -747,6 +753,14 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 
 	for (const TreeItemListColumn & col : list_format.columns) {
 		switch (col.id) {
+
+		case TreeItemPropertyID::ParentLayer:
+			item = new QStandardItem(trw->name);
+			item->setToolTip(tooltip);
+			item->setEditable(false); /* Item's properties widget is not a good place to edit its parent name. */
+			items << item;
+			break;
+
 		case TreeItemPropertyID::TheItem:
 			item = new QStandardItem(this->name);
 			item->setToolTip(tooltip);
@@ -764,73 +778,49 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 			items << item;
 			break;
 
+		case TreeItemPropertyID::Icon:
+			item = new QStandardItem();
+			item->setToolTip(tooltip);
+			item->setIcon(get_wp_icon_small(this->symbol_name));
+			item->setEditable(false);
+			items << item;
+			break;
+
+		case TreeItemPropertyID::Visibility:
+			/* Visibility */
+			item = new QStandardItem();
+			item->setToolTip(tooltip);
+			item->setCheckable(true);
+			item->setCheckState(a_visible ? Qt::Checked : Qt::Unchecked);
+			items << item;
+			break;
+
+		case TreeItemPropertyID::Comment:
+			item = new QStandardItem(this->comment);
+			item->setToolTip(tooltip);
+			items << item;
+			break;
+
+		case TreeItemPropertyID::Elevation:
+			{
+				const HeightUnit height_unit = Preferences::get_unit_height();
+				const Altitude display_alt = this->altitude.convert_to_unit(height_unit);
+				item = new QStandardItem();
+				item->setToolTip(tooltip);
+				variant = QVariant::fromValue(display_alt.value_to_string());
+				item->setData(variant, RoleLayerData);
+				items << item;
+			}
+			break;
+
+		case TreeItemPropertyID::Coordinate:
 		default:
 			qDebug() << SG_PREFIX_E << "Unexpected TreeItem Column ID" << (int) col.id;
 			break;
 		}
 	}
 
-
 	return items;
-
-#if 0
-
-	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemPropertyID::Name));
-	list_format.column_descriptions.push_back(TreeItemListColumn(TreeItemPropertyID::Timestamp));
-
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	const SpeedUnit speed_units = Preferences::get_unit_speed();
-	const HeightUnit height_unit = Preferences::get_unit_height();
-
-
-
-
-	LayerTRW * trw = this->get_parent_layer_trw();
-
-	/* This parameter doesn't include aggegrate visibility. */
-	bool a_visible = trw->visible && this->visible;
-#ifdef K_TODO
-	a_visible = a_visible && trw->get_tree_items_visibility();
-#endif
-
-
-
-	/* LayerName */
-	item = new QStandardItem(trw->name);
-	item->setToolTip(tooltip);
-	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
-	items << item;
-
-
-
-	/* Date */
-
-	/* Visibility */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	item->setCheckable(true);
-	item->setCheckState(a_visible ? Qt::Checked : Qt::Unchecked);
-	items << item;
-
-	/* Comment */
-	item = new QStandardItem(this->comment);
-	item->setToolTip(tooltip);
-	items << item;
-
-	/* Elevation */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(this->altitude.convert_to_unit(height_unit).to_string());
-	item->setData(variant, RoleLayerData);
-	items << item;
-
-	/* Icon */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	item->setIcon(get_wp_icon_small(this->symbol_name));
-	item->setEditable(false);
-	items << item;
-#endif
 }
 
 
@@ -932,4 +922,49 @@ sg_ret Waypoint::propagate_new_waypoint_name(void)
 	this->tree_view->sort_children(&parent_layer->waypoints, parent_layer->wp_sort_order);
 
 	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @title: the title for the dialog
+   @layer: the layer, from which a list of waypoints should be extracted
+
+   Common method for showing a list of waypoints with extended information
+*/
+void Waypoint::list_dialog(QString const & title, Layer * layer)
+{
+	Window * window = layer->get_window();
+
+
+	std::list<Waypoint *> tree_items;
+	if (layer->type == LayerType::TRW) {
+		((LayerTRW *) layer)->get_waypoints_list(tree_items);
+	} else if (layer->type == LayerType::Aggregate) {
+		((LayerAggregate *) layer)->get_waypoints_list(tree_items);
+	} else {
+		assert (0);
+	}
+	if (tree_items.empty()) {
+		Dialog::info(QObject::tr("No Waypoints found"), window);
+		return;
+	}
+
+
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	TreeItemListFormat list_format;
+	if (layer->type == LayerType::Aggregate) {
+		list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("ParentLayer"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::LayerName, QHeaderView::Interactive);
+	}
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::TheItem,    true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Waypoint, QHeaderView::Interactive);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Timestamp,  true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Date, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Visibility, true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Visibility, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Comment,    true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Elevation,  true, QObject::tr("Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Elevation, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Icon,       true, QObject::tr("Symbol"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Icon, QHeaderView::ResizeToContents);
+
+
+	TreeItemListDialogHelper<Waypoint *> dialog_helper;
+	dialog_helper.show_dialog(title, list_format, tree_items, window);
 }

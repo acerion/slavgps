@@ -35,8 +35,7 @@
 #include "layer_aggregate.h"
 #include "layer_trw.h"
 #include "layer_trw_stats.h"
-#include "layer_trw_waypoint_list.h"
-#include "layer_trw_track_list_dialog.h"
+#include "layer_trw_track_internal.h"
 #include "layer_gps.h"
 #include "layers_panel.h"
 #include "tree_view_internal.h"
@@ -492,7 +491,7 @@ void LayerAggregate::get_waypoints_list(std::list<Waypoint *> & list)
 void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Waypoint List").arg(this->name);
-	waypoint_list_dialog(title, this);
+	Waypoint::list_dialog(title, this);
 }
 
 
@@ -541,7 +540,8 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 		}
 
 
-		TreeItemListDialog::show_dialog(tr("List of matching items"), list_format, items_by_date, this->get_window());
+		TreeItemListDialogHelper<TreeItem *> dialog_helper;
+		dialog_helper.show_dialog(tr("List of matching items"), list_format, items_by_date, this->get_window());
 	}
 }
 
@@ -565,7 +565,7 @@ void LayerAggregate::get_tracks_list(std::list<Track *> & list, const QString & 
 void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 {
 	QString title = tr("%1: Track and Route List").arg(this->name);
-	track_list_dialog(title, this, "");
+	Track::list_dialog(title, this, "");
 }
 
 

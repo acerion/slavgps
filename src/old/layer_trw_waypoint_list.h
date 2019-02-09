@@ -58,11 +58,6 @@ namespace SlavGPS {
 
 
 
-	void waypoint_list_dialog(QString const & title, Layer * layer);
-
-
-
-
 	class WaypointListModel : public QStandardItemModel {
 		Q_OBJECT
 

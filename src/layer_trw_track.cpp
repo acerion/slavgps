@@ -45,6 +45,7 @@
 #include "application_state.h"
 #include "util.h"
 #include "osm_traces.h"
+#include "layer_aggregate.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_profile_dialog.h"
 #include "layer_trw_track_properties_dialog.h"
@@ -4184,36 +4185,10 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	QVariant variant;
 
 
-	for (const TreeItemListColumn & col : list_format.columns) {
-		switch (col.id) {
-		case TreeItemPropertyID::TheItem:
-			break;
-		case TreeItemPropertyID::Timestamp:
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Unexpected TreeItem Column ID" << (int) col.id;
-			break;
-		}
-	}
-
-
-	return items;
-
-#if 0
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-	const HeightUnit height_unit = ;
+	const HeightUnit height_unit = Preferences::get_unit_height();
 
-
-	const Distance trk_dist = this->get_length().convert_to_unit(distance_unit);
-
-	/* Get start date. */
-	QString start_date_str;
-	if (!this->empty()
-	    && (*this->trackpoints.begin())->timestamp.is_valid()) {
-
-		start_date_str = (*this->trackpoints.begin())->timestamp.get_time_string(dialog->date_time_format);
-	}
 
 	LayerTRW * trw = this->get_parent_layer_trw();
 
@@ -4222,20 +4197,9 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	a_visible = a_visible && (this->is_route() ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 
-	const Time trk_duration = this->get_duration();
+	Qt::DateFormat date_time_format = Qt::ISODate;
+	ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &date_time_format);
 
-
-	Altitude max_alt(0.0, HeightUnit::Metres);
-	TrackData altitudes = this->make_track_data_altitude_over_distance(500); /* TODO_LATER: magic number. */
-	if (altitudes.valid) {
-		altitudes.calculate_min_max();
-		max_alt.set_value(altitudes.y_max);
-	}
-
-
-	QList<QStandardItem *> items;
-	QStandardItem * item = NULL;
-	QVariant variant;
 
 	QString tooltip("");
 	if (!this->comment.isEmpty()) {
@@ -4247,79 +4211,119 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemListFormat &
 	}
 
 
-	/* LAYER_NAME_COLUMN */
-	item = new QStandardItem(trw->name);
-	item->setToolTip(tooltip);
-	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
-	items << item;
+	for (const TreeItemListColumn & col : list_format.columns) {
+		switch (col.id) {
+		case TreeItemPropertyID::ParentLayer:
+			item = new QStandardItem(trw->name);
+			item->setToolTip(tooltip);
+			item->setEditable(false); /* This dialog is not a good place to edit layer name. */
+			items << item;
+			break;
 
-	/* TRACK_COLUMN */
-	item = new QStandardItem(this->name);
-	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(this);
-	item->setData(variant, RoleLayerData);
-	items << item;
+		case TreeItemPropertyID::TheItem:
+			item = new QStandardItem(this->name);
+			item->setToolTip(tooltip);
+			variant = QVariant::fromValue(this);
+			item->setData(variant, RoleLayerData);
+			items << item;
+			break;
 
-	/* DATE_COLUMN */
-	item = new QStandardItem(start_date_str);
-	item->setToolTip(tooltip);
-	items << item;
+		case TreeItemPropertyID::Timestamp:
+			{
+				QString start_date_str;
+				if (!this->empty()
+				    && (*this->trackpoints.begin())->timestamp.is_valid()) {
 
-	/* VISIBLE_COLUMN */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	item->setCheckable(true);
-	item->setCheckState(a_visible ? Qt::Checked : Qt::Unchecked);
-	items << item;
+					start_date_str = (*this->trackpoints.begin())->timestamp.get_time_string(date_time_format);
+				}
+				item = new QStandardItem(start_date_str);
+				item->setToolTip(tooltip);
+				items << item;
+			}
+			break;
 
-	/* COMMENT_COLUMN */
-	item = new QStandardItem(this->comment);
-	item->setToolTip(tooltip);
-	items << item;
+		case TreeItemPropertyID::Visibility:
+			item = new QStandardItem();
+			item->setToolTip(tooltip);
+			item->setCheckable(true);
+			item->setCheckState(a_visible ? Qt::Checked : Qt::Unchecked);
+			items << item;
+			break;
 
-	/* LENGTH_COLUMN */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(trk_dist.value);
-	item->setData(variant, Qt::DisplayRole);
-	item->setEditable(false); /* This dialog is not a good place to edit track length. */
-	items << item;
+		case TreeItemPropertyID::Comment:
+			item = new QStandardItem(this->comment);
+			item->setToolTip(tooltip);
+			items << item;
+			break;
 
-	/* DURATION_COLUMN */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(trk_duration.get_value());
-	item->setData(variant, Qt::DisplayRole);
-	item->setEditable(false); /* This dialog is not a good place to edit track duration. */
-	items << item;
 
-	/* AVERAGE_SPEED_COLUMN */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(this->get_average_speed().convert_to_unit(speed_unit).to_string());
-	item->setData(variant, Qt::DisplayRole);
-	item->setEditable(false); /* 'Average speed' is not an editable parameter. */
-	items << item;
+		case TreeItemPropertyID::Length:
+			{
+				const Distance trk_dist = this->get_length().convert_to_unit(distance_unit);
+				item = new QStandardItem();
+				item->setToolTip(tooltip);
+				variant = QVariant::fromValue(trk_dist.value);
+				item->setData(variant, Qt::DisplayRole);
+				item->setEditable(false); /* This dialog is not a good place to edit track length. */
+				items << item;
+			}
+			break;
 
-	/* MAXIMUM_SPEED_COLUMN */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(this->get_max_speed().convert_to_unit(speed_unit).to_string());
-	item->setData(variant, Qt::DisplayRole);
-	item->setEditable(false); /* 'Maximum speed' is not an editable parameter. */
-	items << item;
+		case TreeItemPropertyID::Duration:
+			{
+				const Time trk_duration = this->get_duration();
+				item = new QStandardItem();
+				item->setToolTip(tooltip);
+				variant = QVariant::fromValue(trk_duration.get_value());
+				item->setData(variant, Qt::DisplayRole);
+				item->setEditable(false); /* This dialog is not a good place to edit track duration. */
+				items << item;
+			}
+			break;
 
-	/* MAXIMUM_HEIGHT_COLUMN */
-	item = new QStandardItem();
-	item->setToolTip(tooltip);
-	variant = QVariant::fromValue(max_alt.convert_to_unit(Preferences::get_unit_height()).to_string());
-	item->setData(variant, Qt::DisplayRole);
-	item->setEditable(false); /* 'Maximum height' is not an editable parameter. */
-	items << item;
+		case TreeItemPropertyID::AverageSpeed:
+			item = new QStandardItem();
+			item->setToolTip(tooltip);
+			variant = QVariant::fromValue(this->get_average_speed().convert_to_unit(speed_unit).to_string());
+			item->setData(variant, Qt::DisplayRole);
+			item->setEditable(false); /* 'Average speed' is not an editable parameter. */
+			items << item;
+			break;
 
+		case TreeItemPropertyID::MaximumSpeed:
+			item = new QStandardItem();
+			item->setToolTip(tooltip);
+			variant = QVariant::fromValue(this->get_max_speed().convert_to_unit(speed_unit).to_string());
+			item->setData(variant, Qt::DisplayRole);
+			item->setEditable(false); /* 'Maximum speed' is not an editable parameter. */
+			items << item;
+			break;
+
+		case TreeItemPropertyID::MaximumHeight:
+			{
+				Altitude max_alt(0.0, HeightUnit::Metres);
+				TrackData altitudes = this->make_track_data_altitude_over_distance(500); /* TODO_LATER: magic number. */
+				if (altitudes.valid) {
+					altitudes.calculate_min_max();
+					max_alt.set_value(altitudes.y_max);
+				}
+
+				item = new QStandardItem();
+				item->setToolTip(tooltip);
+				variant = QVariant::fromValue(max_alt.convert_to_unit(Preferences::get_unit_height()).to_string());
+				item->setData(variant, Qt::DisplayRole);
+				item->setEditable(false); /* 'Maximum height' is not an editable parameter. */
+				items << item;
+			}
+			break;
+
+		default:
+			qDebug() << SG_PREFIX_E << "Unexpected TreeItem Column ID" << (int) col.id;
+			break;
+		}
+	}
 
 	return items;
-#endif
 }
 
 
@@ -4718,4 +4722,55 @@ bool Track::is_selected(void) const
 {
 	LayerTRW * trw = this->get_parent_layer_trw();
 	return trw->get_edited_track() == this;
+}
+
+
+
+
+/**
+   @title: the title for the dialog
+   @layer: The layer, from which a list of tracks should be extracted
+   @type_id_string: TreeItem type to be show in list (empty string for both tracks and routes)
+
+  Common method for showing a list of tracks with extended information
+*/
+void Track::list_dialog(QString const & title, Layer * layer, const QString & type_id_string)
+{
+	Window * window = layer->get_window();
+
+
+	std::list<Track *> tree_items;
+	if (layer->type == LayerType::Aggregate) {
+		((LayerAggregate *) layer)->get_tracks_list(tree_items, type_id_string);
+	} else if (layer->type == LayerType::TRW) {
+		((LayerTRW *) layer)->get_tracks_list(tree_items, type_id_string);
+	} else {
+		assert (0);
+	}
+	if (tree_items.empty()) {
+		Dialog::info(QObject::tr("No Tracks found"), window);
+		return;
+	}
+
+
+	const HeightUnit height_unit = Preferences::get_unit_height();
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	TreeItemListFormat list_format;
+	if (layer->type == LayerType::Aggregate) {
+		list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("Parent Layer"))); // this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
+	}
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::TheItem,       true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(TRACK_COLUMN, QHeaderView::Interactive);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Timestamp,     true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Visibility,    true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Comment,       true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Interactive);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Length,        true, QObject::tr("Length\n(%1)").arg(Distance::get_unit_full_string(distance_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Duration,      true, QObject::tr("Duration\n(minutes)"))); // this->view->horizontalHeader()->setSectionResizeMode(DURATION_COLUMN, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::AverageSpeed,  true, QObject::tr("Average Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(AVERAGE_SPEED_COLUMN, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::MaximumSpeed,  true, QObject::tr("Maximum Speed\n(%1)").arg(Speed::get_unit_string(speed_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_SPEED_COLUMN, QHeaderView::ResizeToContents);
+	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::MaximumHeight, true, QObject::tr("Maximum Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch); // this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
+
+
+	TreeItemListDialogHelper<Track *> dialog_helper;
+	dialog_helper.show_dialog(title, list_format, tree_items, window);
 }

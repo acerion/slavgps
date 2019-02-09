@@ -112,11 +112,9 @@ SOURCES += main.cpp \
     layer_trw_track.cpp \
     layer_trw_track_split.cpp \
     layer_trw_track_properties_dialog.cpp \
-    layer_trw_track_list_dialog.cpp \
     layer_trw_trackpoint_properties.cpp \
     layer_trw_waypoint.cpp \
     layer_trw_waypoint_properties.cpp \
-    layer_trw_waypoint_list.cpp \
     tree_item.cpp \
     tree_view.cpp \
     ui_builder.cpp \
@@ -259,11 +257,9 @@ HEADERS += window.h \
     layer_trw_track_internal.h \
     layer_trw_track_properties_dialog.h \
     layer_trw_track_profile_dialog.h \
-    layer_trw_track_list_dialog.h \
     layer_trw_trackpoint_properties.h \
     layer_trw_waypoint.h \
     layer_trw_waypoint_properties.h \
-    layer_trw_waypoint_list.h \
     tree_item.h \
     tree_view.h \
     tree_item_list.h \

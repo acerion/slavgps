@@ -49,9 +49,7 @@
 #include "layer_trw_tools.h"
 #include "layer_trw_dialogs.h"
 #include "layer_trw_waypoint_properties.h"
-#include "layer_trw_waypoint_list.h"
 #include "layer_trw_track_internal.h"
-#include "layer_trw_track_list_dialog.h"
 #include "layer_trw_trackpoint_properties.h"
 #include "layer_map.h"
 #include "tree_view_internal.h"
@@ -3758,7 +3756,7 @@ void LayerTRW::download_map_along_track_cb(void)
 void LayerTRW::track_list_dialog_cb(void)
 {
 	const QString title = tr("%1: Track and Route List").arg(this->name);
-	track_list_dialog(title, this, "");
+	Track::list_dialog(title, this, "");
 }
 
 
@@ -3767,7 +3765,7 @@ void LayerTRW::track_list_dialog_cb(void)
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	const QString title = tr("%1: Waypoint List").arg(this->name);
-	waypoint_list_dialog(title, this);
+	Waypoint::list_dialog(title, this);
 }
 
 
