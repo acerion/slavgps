@@ -83,7 +83,7 @@ namespace SlavGPS {
 
 		static void list_dialog(QString const & title, Layer * layer);
 
-		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format);
+		QList<QStandardItem *> get_list_representation(const TreeItemViewFormat & view_format) override;
 
 		void convert(CoordMode dest_mode);
 

@@ -251,10 +251,63 @@ void TreeItem::set_menu_operation_ids(TreeItem::MenuOperation new_value)
 
 
 
-QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemListFormat & list_format)
+QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemViewFormat & view_format)
 {
-	QList<QStandardItem *> result;
-	return result;
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+
+	QList<QStandardItem *> items;
+	QVariant variant;
+
+	const QString tooltip = this->get_tooltip();
+
+	for (const TreeItemViewColumn & col : view_format.columns) {
+
+		QStandardItem * item = NULL;
+
+		switch (col.id) {
+		case TreeItemPropertyID::TheItem:
+			item = new QStandardItem(this->name);
+			item->setToolTip(tooltip);
+			item->setEditable(this->editable);
+			variant = QVariant::fromValue(this);
+			item->setData(variant, RoleLayerData);
+			if (!this->icon.isNull()) { /* Icon can be set with ::apply_tree_item_icon(). */
+				item->setIcon(this->icon);
+			}
+			//item->moveToThread(QApplication::instance()->thread())
+			items << item;
+			break;
+
+		case TreeItemPropertyID::Visibility:
+			item = new QStandardItem();
+			item->setCheckable(true);
+			item->setCheckState(this->visible ? Qt::Checked : Qt::Unchecked);
+			//item->moveToThread(QApplication::instance()->thread())
+			items << item;
+			break;
+
+
+		case TreeItemPropertyID::Editable:
+			item = new QStandardItem();
+			variant = QVariant::fromValue(this->editable);
+			item->setData(variant, RoleLayerData);
+			//item->moveToThread(QApplication::instance()->thread())
+			items << item;
+			break;
+
+		case TreeItemPropertyID::Timestamp:
+			/* Value in this column can be set with ::apply_tree_item_timestamp(). */
+			item = new QStandardItem(this->timestamp.get_value());
+			//item->moveToThread(QApplication::instance()->thread())
+			items << item;
+			break;
+		default:
+			qDebug() << SG_PREFIX_N << "Unexpected tree item column id" << (int) col.id;
+			break;
+		}
+	}
+
+	return items;
 }
 
 

@@ -133,11 +133,14 @@ namespace SlavGPS {
 
 	private:
 		sg_ret insert_tree_item_at_row(TreeItem * parent_tree_item, TreeItem * tree_item, int row);
-		QList<QStandardItem *> create_new_row(TreeItem * tree_item, const QString & name);
 
 		bool editing = false;
 
 		TreeModel * tree_model = NULL;
+		TreeItemViewFormat view_format;
+
+		int property_id_to_column_idx(TreeItemPropertyID property_id) const;
+		TreeItemPropertyID column_idx_to_property_id(int col) const;
 	};
 
 

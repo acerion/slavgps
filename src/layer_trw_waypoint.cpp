@@ -734,7 +734,7 @@ LayerTRW * Waypoint::get_parent_layer_trw() const
 
 
 
-QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListFormat & list_format)
+QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemViewFormat & view_format)
 {
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
@@ -751,7 +751,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 	ApplicationState::get_integer(VIK_SETTINGS_SORTABLE_DATE_TIME_FORMAT, (int *) &date_time_format);
 
 
-	for (const TreeItemListColumn & col : list_format.columns) {
+	for (const TreeItemViewColumn & col : view_format.columns) {
 		switch (col.id) {
 
 		case TreeItemPropertyID::ParentLayer:
@@ -794,6 +794,14 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemListForma
 			item->setCheckState(a_visible ? Qt::Checked : Qt::Unchecked);
 			items << item;
 			break;
+
+		case TreeItemPropertyID::Editable:
+			item = new QStandardItem();
+			variant = QVariant::fromValue(this->editable);
+			item->setData(variant, RoleLayerData);
+			items << item;
+			break;
+
 
 		case TreeItemPropertyID::Comment:
 			item = new QStandardItem(this->comment);
@@ -953,18 +961,18 @@ void Waypoint::list_dialog(QString const & title, Layer * layer)
 
 
 	const HeightUnit height_unit = Preferences::get_unit_height();
-	TreeItemListFormat list_format;
+	TreeItemViewFormat view_format;
 	if (layer->type == LayerType::Aggregate) {
-		list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("ParentLayer"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::LayerName, QHeaderView::Interactive);
+		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::ParentLayer, true, QObject::tr("ParentLayer"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::LayerName, QHeaderView::Interactive);
 	}
-	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::TheItem,    true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Waypoint, QHeaderView::Interactive);
-	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Timestamp,  true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Date, QHeaderView::ResizeToContents);
-	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Visibility, true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Visibility, QHeaderView::ResizeToContents);
-	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Comment,    true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch);
-	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Elevation,  true, QObject::tr("Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Elevation, QHeaderView::ResizeToContents);
-	list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Icon,       true, QObject::tr("Symbol"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Icon, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,    true, QObject::tr("Name"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Waypoint, QHeaderView::Interactive);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp,  true, QObject::tr("Timestamp"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Date, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Visibility, true, QObject::tr("Visibility"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Visibility, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Comment,    true, QObject::tr("Comment"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Comment, QHeaderView::Stretch);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, QObject::tr("Height\n(%1)").arg(Altitude::get_unit_full_string(height_unit)))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Elevation, QHeaderView::ResizeToContents);
+	view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Icon,       true, QObject::tr("Symbol"))); // this->view->horizontalHeader()->setSectionResizeMode(WaypointListModel::Icon, QHeaderView::ResizeToContents);
 
 
 	TreeItemListDialogHelper<Waypoint *> dialog_helper;
-	dialog_helper.show_dialog(title, list_format, tree_items, window);
+	dialog_helper.show_dialog(title, view_format, tree_items, window);
 }

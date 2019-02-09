@@ -114,7 +114,7 @@ TreeItem * TreeView::get_tree_item(const TreeIndex & item_index) const
 		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << item_index.row() << item_index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(item_index.row(), (int) TreeViewColumn::TreeItem);
+	QStandardItem * ch = parent_item->child(item_index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -132,7 +132,7 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Timestamp);
+	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::Timestamp));
 
 	qDebug() << SG_PREFIX_I;
 
@@ -153,7 +153,8 @@ void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Name);
+	/* TODO: apply the tooltip to all visible columns? */
+	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
 	ch->setToolTip(tree_item->get_tooltip());
 }
 
@@ -291,7 +292,7 @@ void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 	}
 
 	qDebug() << SG_PREFIX_I;
-	/* Icon is a property of TreeViewColumn::Name column. */
+	/* Icon is a property of TreeItemPropertyID::TheItem column. */
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
@@ -300,7 +301,7 @@ void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 	qDebug() << SG_PREFIX_I;
-	QStandardItem * ch = parent_item->child(tree_item->index.row(), (int) TreeViewColumn::Name);
+	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
 	ch->setIcon(icon);
 
 	qDebug() << SG_PREFIX_I;
@@ -334,7 +335,7 @@ bool TreeView::get_tree_item_visibility(const TreeItem * tree_item)
 		}
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent_item->child(index.row(), (int) TreeViewColumn::Visible);
+	QStandardItem * ch = parent_item->child(index.row(), this->property_id_to_column_idx(TreeItemPropertyID::Visibility));
 
 	QVariant variant = ch->data();
 	return ch->checkState() != Qt::Unchecked; /* See if Item is either checked (Qt::Checked) or partially checked (Qt::PartiallyChecked). */
@@ -395,7 +396,7 @@ bool TreeView::apply_tree_item_visibility(const TreeItem * tree_item)
 		return false;
 	}
 
-	QModelIndex visible_index = tree_item->index.sibling(tree_item->index.row(), (int) TreeViewColumn::Visible);
+	QModelIndex visible_index = tree_item->index.sibling(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::Visibility));
 	this->tree_model->itemFromIndex(visible_index)->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
 
 	return true;
@@ -438,62 +439,6 @@ void TreeView::select_tree_item(const TreeItem * tree_item)
 void TreeView::deselect_tree_item(const TreeItem * tree_item)
 {
 	this->selectionModel()->select(tree_item->index, QItemSelectionModel::Deselect);
-}
-
-
-
-
-QList<QStandardItem *> TreeView::create_new_row(TreeItem * tree_item, const QString & name)
-{
-	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
-
-	QList<QStandardItem *> items;
-	QStandardItem * item = NULL;
-	QVariant variant;
-
-	const QString tooltip = tree_item->get_tooltip();
-
-
-	/* TreeViewColumn::Name */
-	item = new QStandardItem(name);
-	item->setToolTip(tooltip);
-	item->setEditable(tree_item->editable);
-	if (!tree_item->icon.isNull()) { /* Icon can be set with ::apply_tree_item_icon(). */
-		item->setIcon(tree_item->icon);
-	}
-	//item->moveToThread(QApplication::instance()->thread())
-	items << item;
-
-	/* TreeViewColumn::Visible */
-	item = new QStandardItem();
-	item->setCheckable(true);
-	item->setCheckState(tree_item->visible ? Qt::Checked : Qt::Unchecked);
-	//item->moveToThread(QApplication::instance()->thread())
-	items << item;
-
-	/* TreeViewColumn::TreeItem */
-	item = new QStandardItem();
-	variant = QVariant::fromValue(tree_item);
-	item->setData(variant, RoleLayerData);
-	//item->moveToThread(QApplication::instance()->thread())
-	items << item;
-
-	/* TreeViewColumn::Editable */
-	item = new QStandardItem();
-	variant = QVariant::fromValue(tree_item->editable);
-	item->setData(variant, RoleLayerData);
-	//item->moveToThread(QApplication::instance()->thread())
-	items << item;
-
-	/* TreeViewColumn::Timestamp */
-	/* Value in this column can be set with ::apply_tree_item_timestamp(). */
-	qlonglong timestamp = 0;
-	item = new QStandardItem((qlonglong) timestamp);
-	//item->moveToThread(QApplication::instance()->thread())
-	items << item;
-
-
-	return items;
 }
 
 
@@ -702,7 +647,7 @@ sg_ret TreeView::insert_tree_item_at_row(TreeItem * new_parent_tree_item, TreeIt
 		qDebug() << SG_PREFIX_I << "Inserting tree item" << tree_item->name << "on top of tree";
 	}
 
-	QList<QStandardItem *> items = this->create_new_row(tree_item, tree_item->name);
+	QList<QStandardItem *> items = tree_item->get_list_representation(this->view_format);
 
 	if (new_parent_tree_item && new_parent_tree_item->index.isValid()) {
 		this->tree_model->itemFromIndex(new_parent_tree_item->index)->insertRow(row, items);
@@ -737,23 +682,23 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 	this->tree_model = new TreeModel(this, NULL);
 
 
-
 	QStandardItem * header_item = NULL;
 
-	header_item = new QStandardItem("Item Name");
-	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Name, header_item);
+	header_item = new QStandardItem("Item");
+	this->tree_model->setHorizontalHeaderItem(this->property_id_to_column_idx(TreeItemPropertyID::TheItem), header_item);
+	this->view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem, true, QObject::tr("Item")));
 
 	header_item = new QStandardItem("Visible");
-	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Visible, header_item);
-
-	header_item = new QStandardItem("Item");
-	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::TreeItem, header_item);
+	this->tree_model->setHorizontalHeaderItem(this->property_id_to_column_idx(TreeItemPropertyID::Visibility), header_item);
+	this->view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Visibility, true, QObject::tr("Visible")));
 
 	header_item = new QStandardItem("Editable");
-	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Editable, header_item);
+	this->tree_model->setHorizontalHeaderItem(this->property_id_to_column_idx(TreeItemPropertyID::Editable), header_item);
+	this->view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Editable, false, QObject::tr("Editable")));
 
 	header_item = new QStandardItem("Time stamp");
-	this->tree_model->setHorizontalHeaderItem((int) TreeViewColumn::Timestamp, header_item);
+	this->tree_model->setHorizontalHeaderItem(this->property_id_to_column_idx(TreeItemPropertyID::Timestamp), header_item);
+	this->view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp, false, QObject::tr("Timestamp")));
 
 
 	this->setModel(this->tree_model);
@@ -763,10 +708,10 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 	this->setSelectionMode(QAbstractItemView::SingleSelection);
 
 
-	this->header()->setSectionResizeMode((int) TreeViewColumn::Visible, QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
-	this->header()->setSectionHidden((int) TreeViewColumn::TreeItem, true);
-	this->header()->setSectionHidden((int) TreeViewColumn::Editable, true);
-	this->header()->setSectionHidden((int) TreeViewColumn::Timestamp, true);
+	this->header()->setSectionResizeMode(this->property_id_to_column_idx(TreeItemPropertyID::Visibility), QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
+	this->header()->setSectionHidden(this->property_id_to_column_idx(TreeItemPropertyID::TheItem), false);
+	this->header()->setSectionHidden(this->property_id_to_column_idx(TreeItemPropertyID::Editable), true);
+	this->header()->setSectionHidden(this->property_id_to_column_idx(TreeItemPropertyID::Timestamp), true);
 
 
 	//connect(this, SIGNAL (activated(const QModelIndex &)), this, SLOT (tree_item_selected_cb(void)));
@@ -842,9 +787,10 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		return;
 	}
 
-	const TreeViewColumn col = (TreeViewColumn) index->column();
-	switch (col) {
-	case TreeViewColumn::Name:
+	const int col = index->column();
+	const TreeItemPropertyID property_id = this->column_idx_to_property_id(col);
+	switch (property_id) {
+	case TreeItemPropertyID::TheItem:
 		if (item->text().isEmpty()) {
 			qDebug() << SG_PREFIX_W << "Edited item in column Name: new name is empty, ignoring the change";
 			/* We have to undo the action of setting empty text label. */
@@ -856,7 +802,7 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 
 		break;
 
-	case TreeViewColumn::Visible:
+	case TreeItemPropertyID::Visibility:
 		qDebug() << SG_PREFIX_I << "Edited item in column Visible: is checkable?" << item->isCheckable();
 
 		tree_item->visible = (bool) item->checkState();
@@ -864,15 +810,11 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		emit this->tree_item_needs_redraw(tree_item->get_uid());
 		break;
 
-	case TreeViewColumn::TreeItem:
-		qDebug() << SG_PREFIX_W << "Edited item in column TreeItem";
-		break;
-
-	case TreeViewColumn::Editable:
+	case TreeItemPropertyID::Editable:
 		qDebug() << SG_PREFIX_W << "Edited item in column Editable";
 		break;
 
-	case TreeViewColumn::Timestamp:
+	case TreeItemPropertyID::Timestamp:
 		qDebug() << SG_PREFIX_W << "Edited item in column Timestamp";
 		break;
 
@@ -1271,4 +1213,59 @@ void SelectedTreeItems::clear(void)
 int SelectedTreeItems::size(void) const
 {
 	return this->selected_tree_items.size();
+}
+
+
+
+
+int TreeView::property_id_to_column_idx(TreeItemPropertyID property_id) const
+{
+	int col = 0;
+
+	switch (property_id) {
+	case TreeItemPropertyID::TheItem:
+		col = 0;
+		break;
+	case TreeItemPropertyID::Visibility:
+		col = 1;
+		break;
+	case TreeItemPropertyID::Editable:
+		col = 2;
+		break;
+	case TreeItemPropertyID::Timestamp:
+		col = 3;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected property id" << (int) property_id;
+		break;
+	}
+
+	return col;
+}
+
+
+
+
+TreeItemPropertyID TreeView::column_idx_to_property_id(int col) const
+{
+	TreeItemPropertyID property_id;
+	switch (col) {
+	case 0:
+		property_id = TreeItemPropertyID::TheItem;
+		break;
+	case 1:
+		property_id = TreeItemPropertyID::Visibility;
+		break;
+	case 2:
+		property_id = TreeItemPropertyID::Editable;
+		break;
+	case 3:
+		property_id = TreeItemPropertyID::Timestamp;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected column" << col;
+		break;
+	}
+
+	return property_id;
 }

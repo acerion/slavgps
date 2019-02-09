@@ -59,7 +59,7 @@ namespace SlavGPS {
 	class TreeView;
 	class Pickle;
 
-	class TreeItemListFormat;
+	class TreeItemViewFormat;
 	class TreeItemIdentityPredicate;
 
 
@@ -86,6 +86,7 @@ namespace SlavGPS {
 		Timestamp,       /* Timestamp attribute of given tree item. */
 		Icon,            /* Icon attribute of given tree item (pixmap). */
 		Visibility,      /* Is the tree item visible in tree view (boolean)? */
+		Editable,
 		Comment,         /* Comment attribute of given tree item. */
 		Elevation,       /* Elevation attribute of given tree item. */
 		Coordinate,      /* Coordinate attribute of given tree item. */
@@ -99,6 +100,26 @@ namespace SlavGPS {
 		MinimumHeight,
 		AverageHeight,
 		MaximumHeight,
+	};
+
+
+
+
+	class TreeItemViewColumn {
+	public:
+		TreeItemViewColumn(enum TreeItemPropertyID new_id, bool new_visible, const QString & new_header_label) :
+			id(new_id),
+			visible(new_visible),
+			header_label(new_header_label) {};
+		const TreeItemPropertyID id;
+		const bool visible;            /* Is the column visible? */
+		const QString header_label;    /* If the column is visible, this is the label of column header. */
+	};
+
+	class TreeItemViewFormat {
+	public:
+		std::vector<TreeItemViewColumn> columns;
+		TreeItemViewFormat & operator=(const TreeItemViewFormat & other);
 	};
 
 
@@ -171,7 +192,7 @@ namespace SlavGPS {
 
 		virtual void marshall(Pickle & pickle) { };
 
-		virtual QList<QStandardItem *> get_list_representation(const TreeItemListFormat & list_format);
+		virtual QList<QStandardItem *> get_list_representation(const TreeItemViewFormat & view_format);
 
 		/* Update visible properties of tree item in tree view. */
 		virtual sg_ret update_tree_item_properties(void) { return sg_ret::ok; };

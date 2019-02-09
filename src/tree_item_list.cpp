@@ -174,8 +174,8 @@ void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
 
 int TreeItemListDialog::column_id_to_column_idx(TreeItemPropertyID column_id)
 {
-	for (unsigned int i = 0; i < this->list_format.columns.size(); i++) {
-		if (this->list_format.columns[i].id == column_id) {
+	for (unsigned int i = 0; i < this->view_format.columns.size(); i++) {
+		if (this->view_format.columns[i].id == column_id) {
 			return (int) i;
 		}
 	}
@@ -238,14 +238,14 @@ void TreeItemListModel::sort(int column, Qt::SortOrder order)
 
 
 
-TreeItemListFormat & TreeItemListFormat::operator=(const TreeItemListFormat & other)
+TreeItemViewFormat & TreeItemViewFormat::operator=(const TreeItemViewFormat & other)
 {
 	if (&other == this) {
 		return *this;
 	}
 
 	for (unsigned int i = 0; i < other.columns.size(); i++) {
-		this->columns.push_back(TreeItemListColumn(other.columns[i].id,
+		this->columns.push_back(TreeItemViewColumn(other.columns[i].id,
 							   other.columns[i].visible,
 							   other.columns[i].header_label));
 	}

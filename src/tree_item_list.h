@@ -63,28 +63,6 @@ namespace SlavGPS {
 
 
 
-
-	class TreeItemListColumn {
-	public:
-		TreeItemListColumn(enum TreeItemPropertyID new_id, bool new_visible, const QString & new_header_label) :
-			id(new_id),
-			visible(new_visible),
-			header_label(new_header_label) {};
-		const TreeItemPropertyID id;
-		const bool visible;            /* Is the column visible? */
-		const QString header_label;    /* If the column is visible, this is the label of column header. */
-	};
-
-	class TreeItemListFormat {
-	public:
-		std::vector<TreeItemListColumn> columns;
-		TreeItemListFormat & operator=(const TreeItemListFormat & other);
-	};
-
-
-
-
-
 	class TreeItemListModel : public QStandardItemModel {
 		Q_OBJECT
 
@@ -102,7 +80,7 @@ namespace SlavGPS {
 		TreeItemListDialog(QString const & title, QWidget * parent_widget);
 		~TreeItemListDialog();
 
-		TreeItemListFormat list_format;
+		TreeItemViewFormat view_format;
 
 
 
@@ -137,7 +115,7 @@ namespace SlavGPS {
 		/**
 		   Common method for showing a list of tree items with extended information
 		*/
-		void show_dialog(QString const & title, const TreeItemListFormat & list_format, const std::list<T> & items, QWidget * parent = NULL);
+		void show_dialog(QString const & title, const TreeItemViewFormat & view_format, const std::list<T> & items, QWidget * parent = NULL);
 
 	private:
 		void build_model(void);
@@ -152,7 +130,7 @@ namespace SlavGPS {
 
 
 	template <class T>
-	void TreeItemListDialogHelper<T>::show_dialog(QString const & title, const TreeItemListFormat & list_format, const std::list<T> & items, QWidget * parent)
+	void TreeItemListDialogHelper<T>::show_dialog(QString const & title, const TreeItemViewFormat & view_format, const std::list<T> & items, QWidget * parent)
 	{
 		if (items.empty()) {
 			return;
@@ -160,7 +138,7 @@ namespace SlavGPS {
 		this->tree_items = items;
 
 		this->dialog = new TreeItemListDialog(title, parent);
-		this->dialog->list_format = list_format;
+		this->dialog->view_format = view_format;
 
 		this->build_model();
 		this->build_view();
@@ -182,8 +160,8 @@ namespace SlavGPS {
 	{
 		this->dialog->model = new QStandardItemModel();
 
-		for (unsigned int i = 0; i < this->dialog->list_format.columns.size(); i++) {
-			this->dialog->model->setHorizontalHeaderItem(i, new QStandardItem(this->dialog->list_format.columns[i].header_label));
+		for (unsigned int i = 0; i < this->dialog->view_format.columns.size(); i++) {
+			this->dialog->model->setHorizontalHeaderItem(i, new QStandardItem(this->dialog->view_format.columns[i].header_label));
 		}
 	}
 
@@ -206,10 +184,10 @@ namespace SlavGPS {
 		this->dialog->view->setSortingEnabled(true);
 
 
-		for (unsigned int i = 0; i < this->dialog->list_format.columns.size(); i++) {
-			this->dialog->model->setHorizontalHeaderItem(i, new QStandardItem(this->dialog->list_format.columns[i].header_label));
+		for (unsigned int i = 0; i < this->dialog->view_format.columns.size(); i++) {
+			this->dialog->model->setHorizontalHeaderItem(i, new QStandardItem(this->dialog->view_format.columns[i].header_label));
 
-			this->dialog->view->horizontalHeader()->setSectionHidden(i, !this->dialog->list_format.columns[i].visible);
+			this->dialog->view->horizontalHeader()->setSectionHidden(i, !this->dialog->view_format.columns[i].visible);
 			this->dialog->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Interactive);
 #ifdef TODO_LATER
 			this->dialog->view->horizontalHeader()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
@@ -238,7 +216,7 @@ namespace SlavGPS {
 
 
 		for (auto iter = this->tree_items.begin(); iter != this->tree_items.end(); iter++) {
-			const QList<QStandardItem *> items = (*iter)->get_list_representation(this->dialog->list_format);
+			const QList<QStandardItem *> items = (*iter)->get_list_representation(this->dialog->view_format);
 			this->dialog->model->invisibleRootItem()->appendRow(items);
 		}
 		this->dialog->view->sortByColumn(TreeItemPropertyID::ParentLayer, Qt::SortOrder::AscendingOrder);

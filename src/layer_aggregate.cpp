@@ -524,15 +524,15 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 		Dialog::info(tr("No items found with the requested date."), this->get_window());
 	} else {
 		const HeightUnit height_unit = Preferences::get_unit_height();
-		TreeItemListFormat list_format;
-		list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::TheItem,  true, tr("Tree Item")));
-		list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Timestamp, true, tr("Timestamp")));
+		TreeItemViewFormat view_format;
+		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::TheItem,  true, tr("Tree Item")));
+		view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Timestamp, true, tr("Timestamp")));
 		switch (height_unit) {
 		case HeightUnit::Metres:
-			list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Metres)")));
+			view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Metres)")));
 			break;
 		case HeightUnit::Feet:
-			list_format.columns.push_back(TreeItemListColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Feet)")));
+			view_format.columns.push_back(TreeItemViewColumn(TreeItemPropertyID::Elevation,  true, tr("Height\n(Feet)")));
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
@@ -541,7 +541,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 
 		TreeItemListDialogHelper<TreeItem *> dialog_helper;
-		dialog_helper.show_dialog(tr("List of matching items"), list_format, items_by_date, this->get_window());
+		dialog_helper.show_dialog(tr("List of matching items"), view_format, items_by_date, this->get_window());
 	}
 }
 
