@@ -1796,12 +1796,12 @@ bool Viewport::get_half_drawn(void) const
 
 
 
-LatLonBBox Viewport::get_bbox(void) const
+LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
 {
-	Coord tleft =  this->screen_pos_to_coord(0,                  0);
-	Coord tright = this->screen_pos_to_coord(this->canvas.width, 0);
-	Coord bleft =  this->screen_pos_to_coord(0,                  this->canvas.height);
-	Coord bright = this->screen_pos_to_coord(this->canvas.width, this->canvas.height);
+	Coord tleft =  this->screen_pos_to_coord(margin_left,                       margin_top);
+	Coord tright = this->screen_pos_to_coord(this->canvas.width + margin_right, margin_top);
+	Coord bleft =  this->screen_pos_to_coord(margin_left,                       this->canvas.height + margin_bottom);
+	Coord bright = this->screen_pos_to_coord(this->canvas.width + margin_right, this->canvas.height + margin_bottom);
 
 	tleft.change_mode(CoordMode::LatLon);
 	tright.change_mode(CoordMode::LatLon);

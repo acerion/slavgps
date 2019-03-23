@@ -497,20 +497,20 @@ void LayerTRWTracks::uniquify(TreeViewSortOrder sort_order)
 /**
    \brief Get a a unique new name for element of type \param item_type_id
 */
-QString LayerTRWTracks::new_unique_element_name(const QString & old_name)
+QString LayerTRWTracks::new_unique_element_name(const QString & existing_name)
 {
 	int i = 2;
-	QString new_name = old_name;
+	QString new_name = existing_name;
 
-	Track * existing = NULL;
+	Track * existing_trk = NULL;
 	do {
-		existing = this->find_track_by_name(new_name);
+		existing_trk = this->find_track_by_name(new_name);
 		/* If found a name already in use try adding 1 to it and we try again. */
-		if (existing) {
-			new_name = QString("%1#%2").arg(old_name).arg(i);
+		if (existing_trk) {
+			new_name = QString("%1#%2").arg(existing_name).arg(i);
 			i++;
 		}
-	} while (existing != NULL);
+	} while (existing_trk != NULL);
 
 	return new_name;
 }

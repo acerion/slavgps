@@ -145,7 +145,7 @@ namespace SlavGPS {
 
 
 		void uniquify(TreeViewSortOrder sort_order);
-		QString new_unique_element_name(const QString & old_name);
+		QString new_unique_element_name(const QString & existing_name);
 
 		/* Uses a case sensitive find. Finds the first waypoint matching given name. */
 		Waypoint * find_waypoint_by_name(const QString & wp_name);

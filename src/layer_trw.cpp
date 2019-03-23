@@ -1527,7 +1527,7 @@ void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track 
 	}
 
 	Trackpoint * tp = tp_iter == track->end() ? NULL : *tp_iter;
-	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code.toUtf8().constData(), tp, tp_prev, track, NAN);
+	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, track, NAN);
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
 }
 

@@ -69,6 +69,8 @@ using namespace SlavGPS;
 
 #define SG_MODULE "GPS Layer"
 
+#define VIK_SETTINGS_GPS_STATUSBAR_FORMAT "gps_statusbar_format"
+
 
 
 
@@ -171,19 +173,13 @@ static SGVariant gps_port_default(void)
 
 #if REALTIME_GPS_TRACKING_ENABLED
 
-enum {
-	VEHICLE_POSITION_CENTERED = 0,
-	VEHICLE_POSITION_ON_SCREEN,
-	VEHICLE_POSITION_NONE,
-};
-
 static WidgetEnumerationData vehicle_position_enum = {
 	{
-		SGLabelID(QObject::tr("Keep vehicle at center"), VEHICLE_POSITION_CENTERED),
-		SGLabelID(QObject::tr("Keep vehicle on screen"), VEHICLE_POSITION_ON_SCREEN),
-		SGLabelID(QObject::tr("Disable"),                VEHICLE_POSITION_NONE)
+		SGLabelID(QObject::tr("Keep vehicle at center"), (int) VehiclePosition::Centered),
+		SGLabelID(QObject::tr("Keep vehicle on screen"), (int) VehiclePosition::OnScreen),
+		SGLabelID(QObject::tr("Disable"),                (int) VehiclePosition::None)
 	},
-	VEHICLE_POSITION_ON_SCREEN
+	(int) VehiclePosition::OnScreen
 };
 static SGVariant vehicle_position_default(void) { return SGVariant(vehicle_position_enum.default_value, SGVariantType::Enumeration); }
 
@@ -253,6 +249,8 @@ static ParameterSpecification gps_layer_param_specs[] = {
 
 GPSSession::GPSSession(GPSTransfer & new_transfer, LayerTRW * new_trw, Track * new_trk, Viewport * new_viewport, bool new_in_progress)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	this->transfer = new_transfer;
 
 	this->window_title = (this->transfer.direction == GPSDirection::Down) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
@@ -373,6 +371,8 @@ Layer * LayerGPSInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 */
 static int get_legacy_index(const QString & string, int limit)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	int idx = -1;
 
 	if (!string.at(0).isNull() && string.at(0).isDigit() && string.at(1).isNull()) {
@@ -390,6 +390,8 @@ static int get_legacy_index(const QString & string, int limit)
 
 bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool is_file_operation)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	switch (param_id) {
 	case PARAM_PROTOCOL:
 		if (!data.val_string.isEmpty()) {
@@ -463,7 +465,7 @@ bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		this->realtime_jump_to_start = data.u.val_bool;
 		break;
 	case PARAM_VEHICLE_POSITION:
-		this->vehicle_position = data.u.val_int;
+		this->vehicle_position = (VehiclePosition) data.u.val_int;
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
 		this->realtime_update_statusbar = data.u.val_bool;
@@ -481,6 +483,8 @@ bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool
 
 SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation) const
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	SGVariant rv;
 	switch (param_id) {
 	case PARAM_PROTOCOL:
@@ -524,7 +528,7 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->realtime_jump_to_start);
 		break;
 	case PARAM_VEHICLE_POSITION:
-		rv = SGVariant(this->vehicle_position);
+		rv = SGVariant((int32_t) this->vehicle_position);
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
 		rv = SGVariant(this->realtime_update_statusbar); /* kamilkamil: in viking code there is a mismatch of data types. */
@@ -542,6 +546,8 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 
 void LayerGPS::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
+	qDebug() << SG_PREFIX_D << "-- realtime tracking";
+
 	Layer * trigger = viewport->get_trigger();
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
@@ -569,7 +575,7 @@ void LayerGPS::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 			}
 		}
 		if (!viewport->get_half_drawn()) {
-			this->realtime_tracking_draw(viewport);
+			this->rt_tracking_draw(viewport, this->current_rt_data);
 		}
 	}
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
@@ -580,6 +586,8 @@ void LayerGPS::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 void LayerGPS::change_coord_mode(CoordMode mode)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i]->change_coord_mode(mode);
 	}
@@ -608,13 +616,13 @@ void LayerGPS::add_menu_items(QMenu & menu)
 #if REALTIME_GPS_TRACKING_ENABLED
 	action = new QAction(this->realtime_tracking_in_progress ? QObject::tr("&Stop Realtime Tracking") : QObject::tr("&Start Realtime Tracking"), this);
 	action->setIcon(this->realtime_tracking_in_progress ? QIcon::fromTheme("media-playback-stop") : QIcon::fromTheme("media-playback-start"));
-	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_start_stop_tracking_cb()));
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (rt_start_stop_tracking_cb()));
 	menu.addAction(action);
 
 
 	action = new QAction(QObject::tr("Empty &Realtime"), this);
 	action->setIcon(QIcon::fromTheme("edit-clear"));
-	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (gps_empty_realtime_cb(void)));
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (rt_empty_realtime_cb(void)));
 	menu.addAction(action);
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
@@ -648,9 +656,10 @@ LayerGPS::~LayerGPS()
 		}
 		this->trw_children[i]->unref_layer();
 	}
+
 #if REALTIME_GPS_TRACKING_ENABLED
-	this->rt_gpsd_disconnect();
-#endif /* REALTIME_GPS_TRACKING_ENABLED */
+	this->rt_stop_tracking();
+#endif
 }
 
 
@@ -689,6 +698,8 @@ sg_ret LayerGPS::attach_children_to_tree(void)
 
 std::list<Layer const * > LayerGPS::get_child_layers(void) const
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	std::list<Layer const * > result;
 	for (int i = GPS_CHILD_LAYER_MAX - 1; i >= 0; i--) {
 		result.push_front((Layer const *) this->trw_children[i]);
@@ -701,6 +712,8 @@ std::list<Layer const * > LayerGPS::get_child_layers(void) const
 
 LayerTRW * LayerGPS::get_a_child()
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	assert ((this->cur_read_child >= 0) && (this->cur_read_child < GPS_CHILD_LAYER_MAX));
 
 	LayerTRW * trw = this->trw_children[this->cur_read_child];
@@ -715,6 +728,8 @@ LayerTRW * LayerGPS::get_a_child()
 
 int LayerGPS::get_child_layers_count(void) const
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	if (this->trw_children[0]) {
 		/* First child layer not created, so the second/third is not created either. */
 		return 0;
@@ -729,6 +744,8 @@ int LayerGPS::get_child_layers_count(void) const
 
 void GPSSession::set_total_count(int cnt)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	this->mutex.lock();
 	if (this->in_progress) {
 		QString msg;
@@ -776,6 +793,8 @@ void GPSSession::set_total_count(int cnt)
 /* Compare this function with set_current_count(int cnt, AcquireProcess * acquiring) */
 void GPSSession::set_current_count(int cnt)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	this->mutex.lock();
 	if (!this->in_progress) {
 		this->mutex.unlock();
@@ -849,6 +868,8 @@ void GPSSession::set_current_count(int cnt)
 
 void GPSSession::set_gps_device_info(const QString & info)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	this->mutex.lock();
 	if (this->in_progress) {
 		this->gps_device_label->setText(QObject::tr("GPS Device: %1").arg(info));
@@ -865,6 +886,8 @@ void GPSSession::set_gps_device_info(const QString & info)
 */
 void GPSSession::process_line_for_gps_info(const char * line)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	if (strstr(line, "PRDDAT")) { /* TODO_2_LATER: there is a very similar code in datasource_gps_progress() */
 		char **tokens = g_strsplit(line, " ", 0);
 		char info[128];
@@ -910,6 +933,8 @@ void GPSSession::process_line_for_gps_info(const char * line)
 
 void GPSSession::import_progress_cb(AcquireProgressCode code, void * data)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	char * line = NULL;
 
 	this->mutex.lock();
@@ -974,6 +999,8 @@ void GPSSession::import_progress_cb(AcquireProgressCode code, void * data)
 
 void GPSSession::export_progress_cb(AcquireProgressCode code, void * data)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	char * line = NULL;
 	static unsigned int cnt = 0;
 
@@ -1054,6 +1081,8 @@ void GPSSession::export_progress_cb(AcquireProgressCode code, void * data)
 /* Re-implementation of QRunnable::run() */
 void GPSSession::run(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	SaveStatus save_status;
 
 	AcquireContext acquire_context;
@@ -1132,6 +1161,8 @@ void GPSSession::run(void)
 */
 int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport, bool tracking)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	GPSSession * sess = new GPSSession(*this, layer, trk, viewport, true);
 	sess->setAutoDelete(false);
 
@@ -1233,6 +1264,8 @@ int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport
 
 void LayerGPS::gps_upload_cb(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
@@ -1244,6 +1277,8 @@ void LayerGPS::gps_upload_cb(void)
 
 void LayerGPS::gps_download_cb(void) /* Slot. */
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	Viewport * viewport = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD];
 
@@ -1261,6 +1296,8 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 
 void LayerGPS::gps_empty_upload_cb(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Upload data?"), ThisApp::get_main_window())) {
 		return;
@@ -1276,6 +1313,8 @@ void LayerGPS::gps_empty_upload_cb(void)
 
 void LayerGPS::gps_empty_download_cb(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Download data?"), ThisApp::get_main_window())) {
 		return;
@@ -1290,8 +1329,10 @@ void LayerGPS::gps_empty_download_cb(void)
 
 
 #if REALTIME_GPS_TRACKING_ENABLED
-void LayerGPS::gps_empty_realtime_cb(void)
+void LayerGPS::rt_empty_realtime_cb(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), ThisApp::get_main_window())) {
 		return;
@@ -1307,6 +1348,8 @@ void LayerGPS::gps_empty_realtime_cb(void)
 
 void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(tr("Are you sure you want to delete all GPS data?"), ThisApp::get_main_window())) {
 		return;
@@ -1328,82 +1371,87 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 
 
 #if REALTIME_GPS_TRACKING_ENABLED
-void LayerGPS::realtime_tracking_draw(Viewport * viewport)
+void LayerGPS::rt_tracking_draw(Viewport * viewport, RTData & rt_data)
 {
-	const Coord coord_nw = viewport->screen_pos_to_coord(-20, -20);
-	const Coord coord_se = viewport->screen_pos_to_coord(viewport->get_width() + 20, viewport->get_width() + 20);
-	const LatLon lnw = coord_nw.get_latlon();
-	const LatLon lse = coord_se.get_latlon();
+	qDebug() << SG_PREFIX_D << "-- realtime tracking";
 
-	if (this->realtime_fix.fix.latitude > lse.lat &&
-	     this->realtime_fix.fix.latitude < lnw.lat &&
-	     this->realtime_fix.fix.longitude > lnw.lon &&
-	     this->realtime_fix.fix.longitude < lse.lon &&
-	     !std::isnan(this->realtime_fix.fix.track)) {
-
-		const Coord gps_coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude), viewport->get_coord_mode());
-		const ScreenPos screen_pos = viewport->coord_to_screen_pos(gps_coord);
-
-		double heading_cos = cos(DEG2RAD(this->realtime_fix.fix.track));
-		double heading_sin = sin(DEG2RAD(this->realtime_fix.fix.track));
-
-		int half_back_y = screen_pos.y + 8 * heading_cos;
-		int half_back_x = screen_pos.x - 8 * heading_sin;
-		int half_back_bg_y = screen_pos.y + 10 * heading_cos;
-		int half_back_bg_x = screen_pos.x - 10 * heading_sin;
-
-		int pt_y = half_back_y - 24 * heading_cos;
-		int pt_x = half_back_x + 24 * heading_sin;
-		//ptbg_y = half_back_bg_y - 28 * heading_cos;
-		int ptbg_x = half_back_bg_x + 28 * heading_sin;
-
-		int side1_y = half_back_y + 9 * heading_sin;
-		int side1_x = half_back_x + 9 * heading_cos;
-		int side1bg_y = half_back_bg_y + 11 * heading_sin;
-		int side1bg_x = half_back_bg_x + 11 * heading_cos;
-
-		int side2_y = half_back_y - 9 * heading_sin;
-		int side2_x = half_back_x - 9 * heading_cos;
-		int side2bg_y = half_back_bg_y - 11 * heading_sin;
-		int side2bg_x = half_back_bg_x - 11 * heading_cos;
-
-		QPoint trian[3] = { QPoint(pt_x, pt_y), QPoint(side1_x, side1_y), QPoint(side2_x, side2_y) };
-		QPoint trian_bg[3] = { QPoint(ptbg_x, pt_y), QPoint(side1bg_x, side1bg_y), QPoint(side2bg_x, side2bg_y) };
-
-		//QPen const & pen, QPoint const * points, int npoints, bool filled
-
-		viewport->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
-		viewport->draw_polygon(this->realtime_track_pen, trian, 3, true);
-		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
-
-		//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
+	if (std::isnan(rt_data.fix.track)) {
+		qDebug() << SG_PREFIX_N << "Skipping drawing - no fix track";
+		return;
 	}
+
+	const LatLonBBox bbox = viewport->get_bbox(-20, -20, 20, 20);
+	if (!bbox.contains_point(rt_data.lat_lon)) {
+		qDebug() << SG_PREFIX_N << "Skipping drawing - point outside of viewport";
+		return;
+	}
+
+	Coord gps_coord = rt_data.coord;
+	gps_coord.change_mode(viewport->get_coord_mode()); /* TODO_LATER: why do we need to change coord mode? */
+
+	const ScreenPos screen_pos = viewport->coord_to_screen_pos(gps_coord);
+
+	double heading_cos = cos(DEG2RAD(rt_data.fix.track));
+	double heading_sin = sin(DEG2RAD(rt_data.fix.track));
+
+	int half_back_y = screen_pos.y + 8 * heading_cos;
+	int half_back_x = screen_pos.x - 8 * heading_sin;
+	int half_back_bg_y = screen_pos.y + 10 * heading_cos;
+	int half_back_bg_x = screen_pos.x - 10 * heading_sin;
+
+	int pt_y = half_back_y - 24 * heading_cos;
+	int pt_x = half_back_x + 24 * heading_sin;
+	//ptbg_y = half_back_bg_y - 28 * heading_cos;
+	int ptbg_x = half_back_bg_x + 28 * heading_sin;
+
+	int side1_y = half_back_y + 9 * heading_sin;
+	int side1_x = half_back_x + 9 * heading_cos;
+	int side1bg_y = half_back_bg_y + 11 * heading_sin;
+	int side1bg_x = half_back_bg_x + 11 * heading_cos;
+
+	int side2_y = half_back_y - 9 * heading_sin;
+	int side2_x = half_back_x - 9 * heading_cos;
+	int side2bg_y = half_back_bg_y - 11 * heading_sin;
+	int side2bg_x = half_back_bg_x - 11 * heading_cos;
+
+	QPoint trian[3] = { QPoint(pt_x, pt_y), QPoint(side1_x, side1_y), QPoint(side2_x, side2_y) };
+	QPoint trian_bg[3] = { QPoint(ptbg_x, pt_y), QPoint(side1bg_x, side1bg_y), QPoint(side2bg_x, side2bg_y) };
+
+	//QPen const & pen, QPoint const * points, int npoints, bool filled
+
+	viewport->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
+	viewport->draw_polygon(this->realtime_track_pen, trian, 3, true);
+	viewport->fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
+
+	//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 }
 
 
 
 
-Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
+Trackpoint * LayerGPS::rt_create_trackpoint(bool forced)
 {
+	qDebug() << SG_PREFIX_D << "-- realtime tracking";
+
 	/* Note that fix.time is a double, but it should not affect
 	   the precision for most GPS. */
-	const time_t cur_timestamp = this->realtime_fix.fix.time;
-	const time_t last_timestamp = this->last_fix.fix.time;
+	const time_t cur_timestamp = this->current_rt_data.fix.time;
+	const time_t last_timestamp = this->previous_rt_data.fix.time;
 
 	if (cur_timestamp < last_timestamp) {
 		return NULL;
 	}
 
-	if (this->realtime_record && this->realtime_fix.dirty) {
+	if (this->realtime_record && !this->current_rt_data.saved_to_track) {
 		bool replace = false;
-		int heading = std::isnan(this->realtime_fix.fix.track) ? 0 : (int)floor(this->realtime_fix.fix.track);
-		int last_heading = std::isnan(this->last_fix.fix.track) ? 0 : (int)floor(this->last_fix.fix.track);
-		const Altitude alt = std::isnan(this->realtime_fix.fix.altitude) ? Altitude() : Altitude(this->realtime_fix.fix.altitude, HeightUnit::Metres);
-		const Altitude last_alt = std::isnan(this->last_fix.fix.altitude) ? Altitude() : Altitude(this->last_fix.fix.altitude, HeightUnit::Metres);
+		int heading = std::isnan(this->current_rt_data.fix.track) ? 0 : (int)floor(this->current_rt_data.fix.track);
+		int last_heading = std::isnan(this->previous_rt_data.fix.track) ? 0 : (int)floor(this->previous_rt_data.fix.track);
+		const Altitude alt = std::isnan(this->current_rt_data.fix.altitude) ? Altitude() : Altitude(this->current_rt_data.fix.altitude, HeightUnit::Metres);
+		const Altitude last_alt = std::isnan(this->previous_rt_data.fix.altitude) ? Altitude() : Altitude(this->previous_rt_data.fix.altitude, HeightUnit::Metres);
 
 		if (!this->realtime_track->empty()
-		    && this->realtime_fix.fix.mode > MODE_2D
-		    && this->last_fix.fix.mode <= MODE_2D
+		    && this->current_rt_data.fix.mode > MODE_2D
+		    && this->previous_rt_data.fix.mode <= MODE_2D
 		    && (cur_timestamp - last_timestamp) < 2) {
 
 			auto last_tp = std::prev(this->realtime_track->end());
@@ -1419,24 +1467,23 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 				     || (alt.is_valid() && (alt.floor() != last_alt.floor())))))) {
 
 			/* TODO_LATER: check for new segments. */
-			Trackpoint * tp_ = new Trackpoint();
-			tp_->newsegment = false;
-			tp_->set_timestamp(this->realtime_fix.fix.time);
-			tp_->altitude = alt;
+			Trackpoint * new_tp = new Trackpoint();
+			new_tp->newsegment = false;
+			new_tp->set_timestamp(this->current_rt_data.fix.time);
+			new_tp->altitude = alt;
 			/* Speed only available for 3D fix. Check for NAN when use this speed. */
-			tp_->speed = this->realtime_fix.fix.speed;
-			tp_->course = this->realtime_fix.fix.track;
-			tp_->nsats = this->realtime_fix.satellites_used;
-			tp_->fix_mode = (GPSFixMode) this->realtime_fix.fix.mode;
+			new_tp->speed = this->current_rt_data.fix.speed;
+			new_tp->course = this->current_rt_data.fix.track;
+			new_tp->nsats = this->current_rt_data.satellites_used;
+			new_tp->fix_mode = (GPSFixMode) this->current_rt_data.fix.mode;
 
-			tp_->coord = Coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude),
-					   this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode());
+			new_tp->coord = this->current_rt_data.coord;
 
-			this->realtime_track->add_trackpoint(tp_, true); /* Ensure bounds is recalculated. */
-			this->realtime_fix.dirty = false;
-			this->realtime_fix.satellites_used = 0;
-			this->last_fix = this->realtime_fix;
-			return tp_;
+			this->realtime_track->add_trackpoint(new_tp, true); /* Ensure bounds is recalculated. */
+			this->current_rt_data.saved_to_track = true;
+			this->current_rt_data.satellites_used = 0;
+			this->previous_rt_data = this->current_rt_data;
+			return new_tp;
 		}
 	}
 	return NULL;
@@ -1445,89 +1492,88 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 
 
 
-#define VIK_SETTINGS_GPS_STATUSBAR_FORMAT "gps_statusbar_format"
-
-void LayerGPS::update_statusbar(Window * window_)
+/**
+   @reviewed-on: 2019-03-22
+*/
+void LayerGPS::rt_update_statusbar(Window * window)
 {
-	QString statusbar_format_code;
-	if (!ApplicationState::get_string(VIK_SETTINGS_GPS_STATUSBAR_FORMAT, statusbar_format_code)) {
-		/* Otherwise use default. */
-		statusbar_format_code = "GSA";
-	}
-
-	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code.toUtf8().constData(), this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
-	window_->get_statusbar()->set_message(StatusBarField::Info, msg);
+	const QString msg = vu_trackpoint_formatted_message(this->statusbar_format_code, this->tp, this->tp_prev, this->realtime_track, this->previous_rt_data.fix.climb);
+	window->get_statusbar()->set_message(StatusBarField::Info, msg);
 }
 
 
 
 
+/**
+   @reviewed-on: 2019-03-23
+*/
 void LayerGPS::rt_gpsd_raw_hook(void)
 {
-	bool update_all = false;
-
 	if (!this->realtime_tracking_in_progress) {
 		qDebug() << SG_PREFIX_W << "Receiving GPS data while not in realtime mode";
 		return;
 	}
+	if (this->gpsdata.fix.mode < MODE_2D) {
+		qDebug() << SG_PREFIX_N << "Ignoring raw data - fix worse than 2D:" << (int) this->gpsdata.fix.mode;
+		return;
+	}
 
-	if ((this->gpsdata.fix.mode >= MODE_2D) &&
-	    !std::isnan(this->gpsdata.fix.latitude) &&
-	    !std::isnan(this->gpsdata.fix.longitude)) {
 
-		Window * window_ = this->get_window();
-		Viewport * viewport = window_->get_viewport();
-		this->realtime_fix.fix = this->gpsdata.fix;
-		this->realtime_fix.satellites_used = this->gpsdata.satellites_used;
-		this->realtime_fix.dirty = true;
+	if (sg_ret::ok != this->current_rt_data.set(this->gpsdata, this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode())) {
+		qDebug() << SG_PREFIX_N << "Can't initialize current_rt_data with current gps data"
+		return;
+	}
 
-		const Coord vehicle_coord(LatLon(this->realtime_fix.fix.latitude, this->realtime_fix.fix.longitude),
-					  this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode());
 
-		if ((this->vehicle_position == VEHICLE_POSITION_CENTERED) ||
-		    (this->realtime_jump_to_start && this->first_realtime_trackpoint)) {
-			viewport->set_center_from_coord(vehicle_coord, false);
-			update_all = true;
-		} else if (this->vehicle_position == VEHICLE_POSITION_ON_SCREEN) {
-			const int hdiv = 6;
-			const int vdiv = 6;
-			const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
-			int width = viewport->get_width();
-			int height = viewport->get_height();
-			int vx, vy;
+	Window * window = this->get_window();
+	Viewport * viewport = window->get_viewport();
+	bool viewport_shifted = false;
 
-			viewport->coord_to_screen_pos(vehicle_coord, &vx, &vy);
-			update_all = true;
-			if (vx < (width/hdiv)) {
-				viewport->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
-			} else if (vx > (width - width/hdiv)) {
-				viewport->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
-			} else if (vy < (height/vdiv)) {
-				viewport->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
-			} else if (vy > (height - height/vdiv)) {
-				viewport->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
-			} else {
-				update_all = false;
-			}
-		}
+	if ((this->vehicle_position == VehiclePosition::Centered) ||
+	    (this->realtime_jump_to_start && this->first_realtime_trackpoint)) {
+		viewport->set_center_from_coord(this->current_rt_data.coord, false);
+		viewport_shifted = true;
+	} else if (this->vehicle_position == VehiclePosition::OnScreen) {
+		const int hdiv = 6;
+		const int vdiv = 6;
+		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
+		int width = viewport->get_width();
+		int height = viewport->get_height();
+		int vx, vy;
 
-		this->first_realtime_trackpoint = false;
-
-		this->tp = this->create_realtime_trackpoint(false);
-
-		if (this->tp) {
-			if (this->realtime_update_statusbar) {
-				this->update_statusbar(window_);
-			}
-			this->tp_prev = this->tp;
-		}
-
-		/* NB update from background thread. */
-		if (update_all) {
-			this->emit_tree_item_changed("GPS - update all");
+		viewport->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy);
+		viewport_shifted = true;
+		if (vx < (width/hdiv)) {
+			viewport->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
+		} else if (vx > (width - width/hdiv)) {
+			viewport->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
+		} else if (vy < (height/vdiv)) {
+			viewport->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
+		} else if (vy > (height - height/vdiv)) {
+			viewport->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
 		} else {
-			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_tree_item_changed("GPS - TRW - update realtime");
+			viewport_shifted = false;
 		}
+	} else {
+		/* VehiclePosition::None */
+	}
+
+	this->first_realtime_trackpoint = false;
+
+	this->tp = this->rt_create_trackpoint(false);
+
+	if (this->tp) {
+		if (this->realtime_update_statusbar) {
+			this->rt_update_statusbar(window);
+		}
+		this->tp_prev = this->tp;
+	}
+
+	/* Update from background thread. */
+	if (viewport_shifted) {
+		this->emit_tree_item_changed("Requesting redrawing of all layers because viewport has been shifted after adding new tp");
+	} else {
+		this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->emit_tree_item_changed("Requesting redrawing of Realtime TRW Layer after adding new tp");
 	}
 }
 
@@ -1536,6 +1582,8 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 
 static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void * gps_layer)
 {
+	qDebug() << SG_PREFIX_D << "-- realtime tracking";
+
 	LayerGPS * layer = (LayerGPS *) gps_layer;
 
 	if (condition == G_IO_IN) {
@@ -1564,27 +1612,10 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 
 
 
-/* TODO_MAYBE: maybe we could have a common code in LayerTRW for this. */
-static QString make_track_name(LayerTRW * trw)
-{
-	const QString base_name = "REALTIME";
-
-	QString name = base_name;
-	int i = 2;
-
-	while (trw->get_tracks_node().find_track_by_name(name) != NULL) {
-		name = QString("%1#%2").arg(base_name).arg(i);
-		i++;
-	}
-
-	return name;
-}
-
-
-
-
 bool LayerGPS::rt_gpsd_connect_try_once(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	if (0 != gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), &this->gpsdata)) {
 		/* Delibrately break compilation... */
 		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2): %3.")
@@ -1592,20 +1623,15 @@ bool LayerGPS::rt_gpsd_connect_try_once(void)
 		return false; /* Failed to connect, re-start timer. */
 	}
 	this->gpsdata_opened = true;
-
-	this->realtime_fix.dirty = false;
-	this->last_fix.dirty = false;
-	/* Track alt/time graph uses VIK_DEFAULT_ALTITUDE (0.0) as invalid. */
-	this->realtime_fix.fix.altitude = VIK_DEFAULT_ALTITUDE;
-	this->last_fix.fix.altitude = VIK_DEFAULT_ALTITUDE;
-	this->realtime_fix.fix.speed = NAN;
-	this->last_fix.fix.speed = NAN;
+	this->current_rt_data.reset();
+	this->previous_rt_data.reset();
 
 	if (this->realtime_record) {
 		LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME];
 		this->realtime_track = new Track(false);
 		this->realtime_track->visible = true;
-		this->realtime_track->set_name(make_track_name(trw));
+		const QString track_name = trw->tracks.new_unique_element_name(QObject::tr("REALTIME"));
+		this->realtime_track->set_name(track_name);
 		trw->add_track(this->realtime_track);
 	}
 
@@ -1623,6 +1649,8 @@ bool LayerGPS::rt_gpsd_connect_try_once(void)
 
 bool LayerGPS::rt_ask_retry()
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	const QString message = tr("Failed to connect to gpsd at %1 (port %2)\n"
 				   "Should Viking keep trying (every %3 seconds)?")
 		.arg(this->gpsd_host)
@@ -1638,6 +1666,8 @@ bool LayerGPS::rt_ask_retry()
 
 bool LayerGPS::rt_gpsd_connect_periodic_retry_cb(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	this->realtime_retry_timer.stop();
 
 	qDebug() << SG_PREFIX_I << "Periodic retry: will now try single connect in this time period";
@@ -1661,16 +1691,31 @@ bool LayerGPS::rt_gpsd_connect_periodic_retry_cb(void)
 
 
 
-void LayerGPS::rt_gpsd_disconnect()
+void LayerGPS::rt_gpsd_disconnect(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	this->realtime_retry_timer.stop();
 
+	this->rt_gpsd_disconnect_inner();
+
+	this->rt_cleanup_layer_children();
+}
+
+
+
+
+/**
+   @reviewed-on: 2019-03-23
+*/
+void LayerGPS::rt_gpsd_disconnect_inner(void)
+{
 	if (this->realtime_io_watch_id) {
 		g_source_remove(this->realtime_io_watch_id);
 		this->realtime_io_watch_id = 0;
 	}
 	if (this->realtime_io_channel) {
-		GError *error = NULL;
+		GError * error = NULL;
 		g_io_channel_shutdown(this->realtime_io_channel, false, &error);
 		this->realtime_io_channel = NULL;
 	}
@@ -1681,36 +1726,47 @@ void LayerGPS::rt_gpsd_disconnect()
 		this->gpsdata_opened = false;
 	}
 
+	return;
+}
+
+
+
+
+/**
+   @reviewed-on: 2019-03-23
+*/
+void LayerGPS::rt_cleanup_layer_children(void)
+{
+	/* Remove current track if it was created but it never
+	   "received" any trackpoints from gpsd (i.e. is empty). */
 	if (this->realtime_record && this->realtime_track) {
-		if (!this->realtime_track->empty()) {
+		if (this->realtime_track->empty()) {
 			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_container(this->realtime_track);
 			this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->detach_from_tree(this->realtime_track);
 			delete this->realtime_track;
 		}
 		this->realtime_track = NULL;
 	}
+
+	return;
 }
 
 
 
 
-void LayerGPS::gps_start_stop_tracking_cb(void)
+void LayerGPS::rt_start_stop_tracking_cb(void)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	/* Make sure we are still in the boat with libgps. */
 	assert ((((int) GPSFixMode::Fix2D) == MODE_2D) && (((int) GPSFixMode::Fix3D) == MODE_3D));
 
-	this->realtime_tracking_in_progress = !this->realtime_tracking_in_progress;
-
-	if (!this->realtime_tracking_in_progress) {
-		/* Stop realtime tracking. */
-		this->realtime_retry_timer.stop();
-		this->first_realtime_trackpoint = false;
-		this->tp = NULL;
-		this->rt_gpsd_disconnect();
-
+	if (this->realtime_tracking_in_progress) {
+		this->rt_stop_tracking();
 		return;
 	} else {
 		/* Start realtime tracking. */
+		this->realtime_tracking_in_progress = true;
 
 		if (true == this->rt_gpsd_connect_try_once()) {
 			/* All ok at first try. */
@@ -1741,6 +1797,21 @@ void LayerGPS::gps_start_stop_tracking_cb(void)
 		return;
 	}
 }
+
+
+
+
+void LayerGPS::rt_stop_tracking(void)
+{
+	this->realtime_tracking_in_progress = false;
+	this->realtime_retry_timer.stop();
+	this->first_realtime_trackpoint = false;
+	this->tp = NULL;
+	this->rt_gpsd_disconnect();
+
+	return;
+}
+
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 
@@ -1775,6 +1846,12 @@ LayerGPS::LayerGPS()
 
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
+	if (!ApplicationState::get_string(VIK_SETTINGS_GPS_STATUSBAR_FORMAT, this->statusbar_format_code)) {
+		/* Otherwise use default. */
+		this->statusbar_format_code = "GSA";
+		ApplicationState::set_string(VIK_SETTINGS_GPS_STATUSBAR_FORMAT, this->statusbar_format_code);
+	}
+
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
 
@@ -1795,6 +1872,8 @@ LayerGPS::LayerGPS()
 /* To be called right after constructor. */
 void LayerGPS::set_coord_mode(CoordMode new_mode)
 {
+	qDebug() << SG_PREFIX_D << "";
+
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i]->set_coord_mode(new_mode);
 	}
@@ -1806,6 +1885,8 @@ void LayerGPS::set_coord_mode(CoordMode new_mode)
 /* Doesn't set the trigger. Should be done by aggregate layer when child emits 'changed' signal. */
 void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
 {
+	qDebug() << SG_PREFIX_D << "-- realtime tracking";
+
 	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
 	if (this->visible) {
 		/* TODO_LATER: this can used from the background - e.g. in acquire
@@ -1813,4 +1894,42 @@ void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());
 	}
+}
+
+
+
+
+/**
+   @reviewed-on: 2019-03-22
+*/
+sg_ret RTData::set(struct gps_data_t & gpsdata, CoordMode coord_mode)
+{
+	this->fix = gpsdata.fix;
+	this->satellites_used = gpsdata.satellites_used;
+	this->saved_to_track = false;
+
+
+	this->lat_lon = LatLon(this->fix.latitude, this->fix.longitude);
+	if (!this->lat_lon.is_valid()) {
+		qDebug() << SG_PREFIX_W << "Invalid latitude or longitude in gps fix";
+		return sg_ret::err;
+	}
+	this->coord = Coord(this->lat_lon, coord_mode);
+
+
+	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @reviewed-on: 2019-03-22
+*/
+void RTData::reset(void)
+{
+	this->saved_to_track = true;
+	/* Track alt/time graph uses VIK_DEFAULT_ALTITUDE (0.0) as invalid. */
+	this->fix.altitude = VIK_DEFAULT_ALTITUDE;
+	this->fix.speed = NAN;
 }

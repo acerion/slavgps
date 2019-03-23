@@ -130,7 +130,7 @@ namespace SlavGPS {
 		Track * find_child_by_uid(sg_uid_t uid) const;
 
 		void uniquify(TreeViewSortOrder sort_order);
-		QString new_unique_element_name(const QString & old_name);
+		QString new_unique_element_name(const QString & existing_name);
 
 		void assign_colors(LayerTRWTrackDrawingMode track_drawing_mode, const QColor & track_color_common);
 

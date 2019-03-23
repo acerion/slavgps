@@ -389,20 +389,20 @@ void LayerTRWWaypoints::uniquify(TreeViewSortOrder sort_order)
 /**
    \brief Get a a unique new name for element of type \param item_type_id
 */
-QString LayerTRWWaypoints::new_unique_element_name(const QString & old_name)
+QString LayerTRWWaypoints::new_unique_element_name(const QString & existing_name)
 {
 	int i = 2;
-	QString new_name = old_name;
+	QString new_name = existing_name;
 
-	Waypoint * existing = NULL;
+	Waypoint * existing_wp = NULL;
 	do {
-		existing = this->find_waypoint_by_name(new_name);
+		existing_wp = this->find_waypoint_by_name(new_name);
 		/* If found a name already in use try adding 1 to it and we try again. */
-		if (existing) {
-			new_name = QString("%1#%2").arg(old_name).arg(i);
+		if (existing_wp) {
+			new_name = QString("%1#%2").arg(existing_name).arg(i);
 			i++;
 		}
-	} while (existing != NULL);
+	} while (existing_wp != NULL);
 
 	return new_name;
 }

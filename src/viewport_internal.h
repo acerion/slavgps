@@ -195,7 +195,7 @@ namespace SlavGPS {
 		int get_rightmost_zone(void) const;
 
 		sg_ret set_bbox(const LatLonBBox & bbox);
-		LatLonBBox get_bbox(void) const;
+		LatLonBBox get_bbox(int margin_left = 0, int margin_right = 0, int margin_top = 0, int margin_bottom = 0) const;
 
 
 		int get_width(void) const;

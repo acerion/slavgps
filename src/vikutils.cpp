@@ -108,19 +108,16 @@ static struct kdtree * kd_timezones = NULL;
  * thus would make it more user friendly and maybe even GUI controllable.
  * However for now at least there is some semblance of user control.
  */
-QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb)
+QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Trackpoint * tp, Trackpoint * tp_prev, Track * trk, double climb)
 {
 	QString msg = "";
 	if (!tp) {
 		return msg;
 	}
 
-	int len = 0;
-	if (format_code) {
-		len = strlen(format_code);
-	}
-
+	int len = format_code.length();
 	if (len > FMT_MAX_NUMBER_CODES) {
+		qDebug() << SG_PREFIX_W << "Format code" << format_code << "is too long, truncating";
 		len = FMT_MAX_NUMBER_CODES;
 	}
 
@@ -131,10 +128,12 @@ QString SlavGPS::vu_trackpoint_formatted_message(const char * format_code, Track
 	const QString separator = " | ";
 
 	for (int i = 0; i < len; i++) {
-		switch (g_ascii_toupper(format_code[i])) {
+		const char c = format_code[i].toUpper().toLatin1();
+		switch (c) {
 		case 'G': /* GPS Preamble. */
 			values[i] = QObject::tr("GPSD");
 			break;
+
 		case 'K': /* Trkpt Preamble. */
 			values[i] = QObject::tr("Trkpt");
 			break;

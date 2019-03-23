@@ -125,16 +125,31 @@ namespace SlavGPS {
 
 
 #if REALTIME_GPS_TRACKING_ENABLED
-	typedef struct {
+	class RTData {
+	public:
+		sg_ret set(struct gps_data_t & gpsdata, CoordMode coord_mode);
+		void reset(void);
 
-		LayerGPS * gps_layer;
-	} VglGpsd;
-
-	typedef struct {
 		struct gps_fix_t fix;
 		int satellites_used;
-		bool dirty;   /* Needs to be saved. */
-	} GPSFix;
+
+		/* Whether this current data has been used to create a
+		   trackpoint and that trackpoint has been pushed to a
+		   real-time tracking track. */
+		bool saved_to_track;
+
+		LatLon lat_lon;
+		Coord coord; /* Always in coordinate system of Real-time tracking TRW layer. */
+	};
+
+
+
+
+	enum class VehiclePosition {
+		Centered = 0,
+		OnScreen,
+		None
+	};
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 
@@ -167,6 +182,7 @@ namespace SlavGPS {
 		LayerGPS();
 		~LayerGPS();
 
+
 		/* Module initialization. */
 		static void init(void);
 
@@ -184,32 +200,67 @@ namespace SlavGPS {
 
 		int get_child_layers_count(void) const;
 		std::list<Layer const * > get_child_layers(void) const;
-		LayerTRW * get_a_child();
-
-		void realtime_tracking_draw(Viewport * viewport);
-		Trackpoint * create_realtime_trackpoint(bool forced);
-		void update_statusbar(Window * window);
-		bool rt_ask_retry();
-
+		LayerTRW * get_a_child(void);
 
 		void set_coord_mode(CoordMode mode);
 
+		GPSTransfer download{GPSDirection::Down};
+		GPSTransfer upload{GPSDirection::Up};
 
 		LayerTRW * trw_children[GPS_CHILD_LAYER_MAX] = { 0 };
 		int cur_read_child = 0;   /* Used only for reading file. */
 
 #if REALTIME_GPS_TRACKING_ENABLED
-		bool rt_gpsd_connect_try_once(void);
 		void rt_gpsd_disconnect(void);
 		void rt_gpsd_raw_hook(void);
 
 		struct gps_data_t gpsdata;
 		bool gpsdata_opened = false;
+#endif
 
-		bool realtime_tracking_in_progress;  /* Set/reset only by the callback. */
-		bool first_realtime_trackpoint = false;
-		GPSFix realtime_fix;
-		GPSFix last_fix;
+	public slots:
+		void gps_upload_cb(void);
+		void gps_download_cb(void);
+		void gps_empty_download_cb(void);
+		void gps_empty_all_cb(void);
+		void gps_empty_upload_cb(void);
+
+		/* GPS Layer can contain other layers and should be notified about changes in them. */
+		void child_tree_item_changed_cb(const QString & child_tree_item_name);
+
+#if REALTIME_GPS_TRACKING_ENABLED
+		void rt_start_stop_tracking_cb(void);
+		void rt_empty_realtime_cb(void);
+
+		/**
+		   @return true if connection attempt succeeded
+		   @return false if connection attempt failed
+		*/
+		bool rt_gpsd_connect_periodic_retry_cb(void);
+#endif
+
+	private:
+
+#if REALTIME_GPS_TRACKING_ENABLED
+		void rt_tracking_draw(Viewport * viewport, RTData & rt_data);
+		Trackpoint * rt_create_trackpoint(bool forced);
+		void rt_update_statusbar(Window * window);
+
+		bool rt_ask_retry(void);
+
+		/* Top-level function for deinitializing and stopping
+		   everything related to tracking. */
+		void rt_stop_tracking(void);
+
+		/* Clean up layer's child items (tracks, waypoints)
+		   - remove them if necessary. */
+		void rt_cleanup_layer_children(void);
+
+		/* Close connection to gpsd. */
+		void rt_gpsd_disconnect_inner(void);
+
+		bool rt_gpsd_connect_try_once(void);
+
 
 		Track * realtime_track = NULL;
 
@@ -226,38 +277,20 @@ namespace SlavGPS {
 		/* Params. */
 		QString gpsd_host;
 		QString gpsd_port;
-		int gpsd_retry_interval;
-		bool realtime_record;
-		bool realtime_jump_to_start;
-		int32_t vehicle_position; /* Signed int because this is a generic enum ID. */
-		bool realtime_update_statusbar;
+		int gpsd_retry_interval = 10; /* The same value as in gpsd_retry_interval_default. */
+		bool realtime_record = false;
+		bool realtime_jump_to_start = false;
+		VehiclePosition vehicle_position = VehiclePosition::OnScreen; /* Default value is the same as in vehicle_position_enum. */
+		bool realtime_update_statusbar = false;
+		QString statusbar_format_code;
 		Trackpoint * tp = NULL;
 		Trackpoint * tp_prev = NULL;
-#endif /* REALTIME_GPS_TRACKING_ENABLED */
 
-		GPSTransfer download{GPSDirection::Down};
-		GPSTransfer upload{GPSDirection::Up};
-
-	public slots:
-		void gps_upload_cb(void);
-		void gps_download_cb(void);
-		void gps_empty_download_cb(void);
-		void gps_empty_all_cb(void);
-		void gps_empty_upload_cb(void);
-
-#if REALTIME_GPS_TRACKING_ENABLED
-		void gps_start_stop_tracking_cb(void);
-		void gps_empty_realtime_cb(void);
-
-		/**
-		   @return true if connection attempt succeeded
-		   @return false if connection attempt failed
-		*/
-		bool rt_gpsd_connect_periodic_retry_cb(void);
+		bool realtime_tracking_in_progress = false;  /* Set/reset only by the callback. */
+		bool first_realtime_trackpoint = false;
+		RTData current_rt_data;
+		RTData previous_rt_data;
 #endif
-
-		/* GPS Layer can contain other layers and should be notified about changes in them. */
-		void child_tree_item_changed_cb(const QString & child_tree_item_name);
 	};
 
 
