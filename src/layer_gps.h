@@ -65,6 +65,7 @@
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 #define REALTIME_GPS_TRACKING_ENABLED 1
+#define SG_GPSD_PORT 2947
 #else
 #define REALTIME_GPS_TRACKING_ENABLED 0
 #endif
@@ -88,8 +89,8 @@ namespace SlavGPS {
 
 
 	enum class GPSDirection {
-		Down = 0,
-		Up
+		Download = 0,
+		Upload
 	};
 
 	enum class GPSTransferType {
@@ -204,8 +205,8 @@ namespace SlavGPS {
 
 		void set_coord_mode(CoordMode mode);
 
-		GPSTransfer download{GPSDirection::Down};
-		GPSTransfer upload{GPSDirection::Up};
+		GPSTransfer download{GPSDirection::Download};
+		GPSTransfer upload{GPSDirection::Upload};
 
 		LayerTRW * trw_children[GPS_CHILD_LAYER_MAX] = { 0 };
 		int cur_read_child = 0;   /* Used only for reading file. */
@@ -243,7 +244,7 @@ namespace SlavGPS {
 
 #if REALTIME_GPS_TRACKING_ENABLED
 		void rt_tracking_draw(Viewport * viewport, RTData & rt_data);
-		Trackpoint * rt_create_trackpoint(bool forced);
+		Trackpoint * rt_create_trackpoint(bool record_every_tp);
 		void rt_update_statusbar(Window * window);
 
 		bool rt_ask_retry(void);
@@ -276,8 +277,8 @@ namespace SlavGPS {
 
 		/* Params. */
 		QString gpsd_host;
-		QString gpsd_port;
-		int gpsd_retry_interval = 10; /* The same value as in gpsd_retry_interval_default. */
+		int gpsd_port = SG_GPSD_PORT;
+		int gpsd_retry_interval = 10; /* The same value as in gpsd_retry_interval_scale. */
 		bool realtime_record = false;
 		bool realtime_jump_to_start = false;
 		VehiclePosition vehicle_position = VehiclePosition::OnScreen; /* Default value is the same as in vehicle_position_enum. */
@@ -312,7 +313,7 @@ namespace SlavGPS {
 
 		std::mutex mutex;
 
-		GPSTransfer transfer{GPSDirection::Up};
+		GPSTransfer transfer{GPSDirection::Upload};
 
 		QString babel_opts;
 

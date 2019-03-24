@@ -183,12 +183,13 @@ static WidgetEnumerationData vehicle_position_enum = {
 };
 static SGVariant vehicle_position_default(void) { return SGVariant(vehicle_position_enum.default_value, SGVariantType::Enumeration); }
 
+static SGVariant gpsd_host_default(void) { return SGVariant("localhost"); }
 
+/* If user enters 0 then retry is disabled. */
+static ParameterScale<int> gpsd_retry_interval_scale(0, 10000, SGVariant((int32_t) 10), 10, 0);
 
-
-static SGVariant gpsd_host_default(void)           { return SGVariant("localhost"); }
-static SGVariant gpsd_port_default(void)           { return SGVariant(DEFAULT_GPSD_PORT); }
-static SGVariant gpsd_retry_interval_default(void) { return SGVariant("10"); }
+/* If user enters 0 then default port number will be used. */
+static ParameterScale<int> gpsd_port_scale(0, 65535, SGVariant((int32_t) SG_GPSD_PORT), 1, 0);
 
 #endif
 
@@ -237,8 +238,8 @@ static ParameterSpecification gps_layer_param_specs[] = {
 	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         SGVariantType::Enumeration,  PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Moving Map Method:"),                WidgetType::Enumeration,   &vehicle_position_enum,   vehicle_position_default,    "" },
 	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", SGVariantType::Boolean,      PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Update Statusbar:"),                 WidgetType::CheckButton,   NULL,                     sg_variant_true,             QObject::tr("Display information in the statusbar on GPS updates") },
 	{ PARAM_GPSD_HOST,                  "gpsd_host",                 SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Host:"),                        WidgetType::Entry,         NULL,                     gpsd_host_default,           "" },
-	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Port:"),                        WidgetType::Entry,         NULL,                     gpsd_port_default,           "" },
-	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::String,       PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::Entry,         NULL,                     gpsd_retry_interval_default, "" },
+	{ PARAM_GPSD_PORT,                  "gpsd_port",                 SGVariantType::Int,          PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Port:"),                        WidgetType::SpinBoxInt,    &gpsd_port_scale,         NULL,                        "" },
+	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       SGVariantType::Int,          PARAMETER_GROUP_REALTIME_MODE, QObject::tr("Gpsd Retry Interval (seconds):"),    WidgetType::SpinBoxInt,    &gpsd_retry_interval_scale, NULL,                      "" },
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
 
 	{ NUM_PARAMS,                       "",                          SGVariantType::Empty,        PARAMETER_GROUP_GENERIC,       "",                                               WidgetType::None,          NULL,                     NULL,                        "" }, /* Guard. */
@@ -253,7 +254,7 @@ GPSSession::GPSSession(GPSTransfer & new_transfer, LayerTRW * new_trw, Track * n
 
 	this->transfer = new_transfer;
 
-	this->window_title = (this->transfer.direction == GPSDirection::Down) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
+	this->window_title = (this->transfer.direction == GPSDirection::Download) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
 	this->trw = new_trw;
 	this->trk = new_trk;
 	this->viewport = new_viewport;
@@ -451,12 +452,10 @@ bool LayerGPS::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		}
 		break;
 	case PARAM_GPSD_PORT:
-		if (!data.val_string.isEmpty()) {
-			this->gpsd_port = data.val_string;
-		}
+		this->gpsd_port = data.u.val_int == 0 ? SG_GPSD_PORT : data.u.val_int;
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		this->gpsd_retry_interval = strtol(data.val_string.toUtf8().constData(), NULL, 10);
+		this->gpsd_retry_interval = data.u.val_int;
 		break;
 	case PARAM_REALTIME_REC:
 		this->realtime_record = data.u.val_bool;
@@ -516,10 +515,10 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->gpsd_host);
 		break;
 	case PARAM_GPSD_PORT:
-		rv = SGVariant(this->gpsd_port.isEmpty() ? DEFAULT_GPSD_PORT: this->gpsd_port);
+		rv = SGVariant(this->gpsd_port == 0 ? SG_GPSD_PORT : this->gpsd_port);
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		rv = SGVariant(QString("%1").arg(this->gpsd_retry_interval));
+		rv = SGVariant(this->gpsd_retry_interval);
 		break;
 	case PARAM_REALTIME_REC:
 		rv = SGVariant(this->realtime_record);
@@ -720,16 +719,17 @@ LayerTRW * LayerGPS::get_a_child()
 	if (++(this->cur_read_child) >= GPS_CHILD_LAYER_MAX) {
 		this->cur_read_child = 0;
 	}
-	return(trw);
+	return trw;
 }
 
 
 
 
+/**
+   @reviewed-on: 2019-03-23
+*/
 int LayerGPS::get_child_layers_count(void) const
 {
-	qDebug() << SG_PREFIX_D << "";
-
 	if (this->trw_children[0]) {
 		/* First child layer not created, so the second/third is not created either. */
 		return 0;
@@ -749,7 +749,7 @@ void GPSSession::set_total_count(int cnt)
 	this->mutex.lock();
 	if (this->in_progress) {
 		QString msg;
-		if (this->transfer.direction == GPSDirection::Down) {
+		if (this->transfer.direction == GPSDirection::Download) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloading %n waypoints...", "", cnt);
@@ -805,7 +805,7 @@ void GPSSession::set_current_count(int cnt)
 
 	if (cnt < this->total_count) {
 		QString fmt;
-		if (this->transfer.direction == GPSDirection::Down) {
+		if (this->transfer.direction == GPSDirection::Download) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				fmt = QObject::tr("Downloaded %1 out of %2 waypoints...", "", this->total_count);
@@ -832,7 +832,7 @@ void GPSSession::set_current_count(int cnt)
 		}
 		msg = QString(fmt).arg(cnt).arg(this->total_count);
 	} else {
-		if (this->transfer.direction == GPSDirection::Down) {
+		if (this->transfer.direction == GPSDirection::Download) {
 			switch (this->progress_type) {
 			case GPSTransferType::WPT:
 				msg = QObject::tr("Downloaded %n waypoints", "", cnt);
@@ -1087,7 +1087,7 @@ void GPSSession::run(void)
 
 	AcquireContext acquire_context;
 
-	if (this->transfer.direction == GPSDirection::Down) {
+	if (this->transfer.direction == GPSDirection::Download) {
 		BabelProcess * importer = new BabelProcess();
 		importer->set_options(this->babel_opts);
 		importer->set_input("", this->transfer.serial_port); /* TODO: type of input? */
@@ -1124,7 +1124,7 @@ void GPSSession::run(void)
 			if (!this->realtime_tracking_in_progress)
 #endif
 			{
-				if (this->viewport && this->transfer.direction == GPSDirection::Down) {
+				if (this->viewport && this->transfer.direction == GPSDirection::Download) {
 					this->trw->post_read(this->viewport, true);
 					/* View the data available. */
 					this->trw->move_viewport_to_show_all(this->viewport) ;
@@ -1168,7 +1168,7 @@ int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport
 
 	/* This must be done inside the main thread as the uniquify causes screen updates
 	   (originally performed this nearer the point of upload in the thread). */
-	if (this->direction == GPSDirection::Up) {
+	if (this->direction == GPSDirection::Upload) {
 		/* Enforce unique names in the layer upload to the GPS device.
 		   NB this may only be a Garmin device restriction (and may be not every Garmin device either...).
 		   Thus this maintains the older code in built restriction. */
@@ -1294,10 +1294,11 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 
 
 
+/**
+   @reviewed-on: 2019-03-23
+*/
 void LayerGPS::gps_empty_upload_cb(void)
 {
-	qDebug() << SG_PREFIX_D << "";
-
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Upload data?"), ThisApp::get_main_window())) {
 		return;
@@ -1311,10 +1312,11 @@ void LayerGPS::gps_empty_upload_cb(void)
 
 
 
+/**
+   @reviewed-on: 2019-03-23
+*/
 void LayerGPS::gps_empty_download_cb(void)
 {
-	qDebug() << SG_PREFIX_D << "";
-
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Download data?"), ThisApp::get_main_window())) {
 		return;
@@ -1329,27 +1331,30 @@ void LayerGPS::gps_empty_download_cb(void)
 
 
 #if REALTIME_GPS_TRACKING_ENABLED
+/**
+   @reviewed-on: 2019-03-23
+*/
 void LayerGPS::rt_empty_realtime_cb(void)
 {
-	qDebug() << SG_PREFIX_D << "";
-
 	/* Get confirmation from the user. */
-	if (!Dialog::yes_or_no(QObject::tr("Are you sure you want to delete GPS Realtime data?"), ThisApp::get_main_window())) {
+	if (!Dialog::yes_or_no(tr("Are you sure you want to delete GPS Realtime data?"), ThisApp::get_main_window())) {
 		return;
 	}
 
 	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_waypoints();
 	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_tracks();
+	/* There are no routes in Realtime TRW layer. */
 }
 #endif
 
 
 
 
+/**
+   @reviewed-on: 2019-03-23
+*/
 void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 {
-	qDebug() << SG_PREFIX_D << "";
-
 	/* Get confirmation from the user. */
 	if (!Dialog::yes_or_no(tr("Are you sure you want to delete all GPS data?"), ThisApp::get_main_window())) {
 		return;
@@ -1364,6 +1369,7 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 #if REALTIME_GPS_TRACKING_ENABLED
 	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_waypoints();
 	this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->delete_all_tracks();
+	/* There are no routes in Realtime TRW layer. */
 #endif
 }
 
@@ -1373,8 +1379,6 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 #if REALTIME_GPS_TRACKING_ENABLED
 void LayerGPS::rt_tracking_draw(Viewport * viewport, RTData & rt_data)
 {
-	qDebug() << SG_PREFIX_D << "-- realtime tracking";
-
 	if (std::isnan(rt_data.fix.track)) {
 		qDebug() << SG_PREFIX_N << "Skipping drawing - no fix track";
 		return;
@@ -1429,64 +1433,108 @@ void LayerGPS::rt_tracking_draw(Viewport * viewport, RTData & rt_data)
 
 
 
-Trackpoint * LayerGPS::rt_create_trackpoint(bool forced)
+Trackpoint * LayerGPS::rt_create_trackpoint(bool record_every_tp)
 {
-	qDebug() << SG_PREFIX_D << "-- realtime tracking";
-
 	/* Note that fix.time is a double, but it should not affect
 	   the precision for most GPS. */
 	const time_t cur_timestamp = this->current_rt_data.fix.time;
 	const time_t last_timestamp = this->previous_rt_data.fix.time;
 
 	if (cur_timestamp < last_timestamp) {
+		qDebug() << SG_PREFIX_N << "Not generating tp, timestamps mismatch:" << cur_timestamp << last_timestamp;
 		return NULL;
 	}
 
-	if (this->realtime_record && !this->current_rt_data.saved_to_track) {
-		bool replace = false;
-		int heading = std::isnan(this->current_rt_data.fix.track) ? 0 : (int)floor(this->current_rt_data.fix.track);
-		int last_heading = std::isnan(this->previous_rt_data.fix.track) ? 0 : (int)floor(this->previous_rt_data.fix.track);
-		const Altitude alt = std::isnan(this->current_rt_data.fix.altitude) ? Altitude() : Altitude(this->current_rt_data.fix.altitude, HeightUnit::Metres);
-		const Altitude last_alt = std::isnan(this->previous_rt_data.fix.altitude) ? Altitude() : Altitude(this->previous_rt_data.fix.altitude, HeightUnit::Metres);
+	if (!this->realtime_record) {
+		/* We don't "record" real time gps data, so there is
+		   no need to create a trackpoint. */
+		qDebug() << SG_PREFIX_N << "Not generating tp, not in 'realtime record' mode";
+		return NULL;
+	}
 
-		if (!this->realtime_track->empty()
-		    && this->current_rt_data.fix.mode > MODE_2D
-		    && this->previous_rt_data.fix.mode <= MODE_2D
-		    && (cur_timestamp - last_timestamp) < 2) {
+	if (this->current_rt_data.saved_to_track) {
+		/* Current position obtained from gpsd has been
+		   already used to generate a trackpoint. */
+		qDebug() << SG_PREFIX_N << "Not generating tp from the same data again";
+		return NULL;
+	}
 
-			auto last_tp = std::prev(this->realtime_track->end());
-			delete *last_tp;
-			this->realtime_track->trackpoints.erase(last_tp);
-			replace = true;
-		}
 
-		if (replace || ((cur_timestamp != last_timestamp)
-				&& ((forced
-				     || ((heading < last_heading) && (heading < (last_heading - 3)))
-				     || ((heading > last_heading) && (heading > (last_heading + 3)))
-				     || (alt.is_valid() && (alt.floor() != last_alt.floor())))))) {
+	bool create_this_tp = false;
 
-			/* TODO_LATER: check for new segments. */
-			Trackpoint * new_tp = new Trackpoint();
-			new_tp->newsegment = false;
-			new_tp->set_timestamp(this->current_rt_data.fix.time);
-			new_tp->altitude = alt;
-			/* Speed only available for 3D fix. Check for NAN when use this speed. */
-			new_tp->speed = this->current_rt_data.fix.speed;
-			new_tp->course = this->current_rt_data.fix.track;
-			new_tp->nsats = this->current_rt_data.satellites_used;
-			new_tp->fix_mode = (GPSFixMode) this->current_rt_data.fix.mode;
+#define CURRENT_HAS_BETTER_FIX  (this->current_rt_data.fix.mode > MODE_2D && this->previous_rt_data.fix.mode <= MODE_2D)
 
-			new_tp->coord = this->current_rt_data.coord;
+	if (!this->realtime_track->empty() && CURRENT_HAS_BETTER_FIX && (cur_timestamp - last_timestamp) < 2) {
+		auto last_tp = std::prev(this->realtime_track->end());
+		delete *last_tp;
+		this->realtime_track->trackpoints.erase(last_tp);
+		create_this_tp = true;
+	}
 
-			this->realtime_track->add_trackpoint(new_tp, true); /* Ensure bounds is recalculated. */
-			this->current_rt_data.saved_to_track = true;
-			this->current_rt_data.satellites_used = 0;
-			this->previous_rt_data = this->current_rt_data;
-			return new_tp;
+	if (!create_this_tp && record_every_tp) {
+		create_this_tp = true;
+	}
+
+	if (!create_this_tp && (cur_timestamp != last_timestamp)) {
+		if (std::isnan(this->current_rt_data.fix.track) || std::isnan(this->previous_rt_data.fix.track)) {
+			/* Can't determine if heading has changed by
+			   some margin. Better record this tp to be
+			   safe. */
+			create_this_tp = true;
+		} else {
+			const double diff = this->current_rt_data.fix.track - this->previous_rt_data.fix.track;
+			if (fabs(diff) > 3.0) {
+				/* Current heading has changed
+				   significantly since last recorded
+				   tp. */
+				create_this_tp = true;
+			}
 		}
 	}
-	return NULL;
+
+
+	const Altitude alt = Altitude(this->current_rt_data.fix.altitude, HeightUnit::Metres); /* Altitude::is_valid() may return false. */
+	if (!create_this_tp && (cur_timestamp != last_timestamp)) {
+		const Altitude last_alt = Altitude(this->previous_rt_data.fix.altitude, HeightUnit::Metres); /* Altitude::is_valid() may return false. */
+
+		if (!alt.is_valid() || !last_alt.is_valid()) {
+			/* Can't determine if altitude has changed by
+			   some margin. Better record this tp to be
+			   safe. */
+			create_this_tp = true;
+		} else {
+			if (alt.floor() != last_alt.floor()) {
+				/* Current altitude has changed
+				   significantly since last recorded
+				   tp. */
+				create_this_tp = true;
+			}
+		}
+	}
+
+	if (create_this_tp) {
+		/* TODO_LATER: check for new segments. */
+		Trackpoint * new_tp = new Trackpoint();
+		new_tp->newsegment = false;
+		new_tp->set_timestamp(this->current_rt_data.fix.time);
+		new_tp->altitude = alt;
+		/* Speed only available for 3D fix. Check for NAN when use this speed. */
+		new_tp->speed = this->current_rt_data.fix.speed;
+		new_tp->course = this->current_rt_data.fix.track;
+		new_tp->nsats = this->current_rt_data.satellites_used;
+		new_tp->fix_mode = (GPSFixMode) this->current_rt_data.fix.mode;
+
+		new_tp->coord = this->current_rt_data.coord;
+
+		this->realtime_track->add_trackpoint(new_tp, true); /* Ensure bounds is recalculated. */
+		this->current_rt_data.saved_to_track = true;
+		this->current_rt_data.satellites_used = 0;
+		this->previous_rt_data = this->current_rt_data;
+		return new_tp;
+	} else {
+		qDebug() << SG_PREFIX_N << "Not generating tp - other reason";
+		return NULL;
+	}
 }
 
 
@@ -1520,7 +1568,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 
 
 	if (sg_ret::ok != this->current_rt_data.set(this->gpsdata, this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME]->get_coord_mode())) {
-		qDebug() << SG_PREFIX_N << "Can't initialize current_rt_data with current gps data"
+		qDebug() << SG_PREFIX_N << "Can't initialize current_rt_data with current gps data";
 		return;
 	}
 
@@ -1614,11 +1662,11 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 
 bool LayerGPS::rt_gpsd_connect_try_once(void)
 {
-	qDebug() << SG_PREFIX_D << "";
+	char port[sizeof ("65535")] = { 0 };
+	snprintf(port, sizeof (port), "%d", this->gpsd_port);
 
-	if (0 != gps_open(this->gpsd_host.toUtf8().constData(), this->gpsd_port.toUtf8().constData(), &this->gpsdata)) {
-		/* Delibrately break compilation... */
-		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at %1 (port %2): %3.")
+	if (0 != gps_open(this->gpsd_host.toUtf8().constData(), port, &this->gpsdata)) {
+		qDebug() << QObject::tr("WW: Layer GPS: Failed to connect to gpsd at '%1' (port %2): %3.")
 			.arg(this->gpsd_host).arg(this->gpsd_port).arg(gps_errstr(errno));
 		return false; /* Failed to connect, re-start timer. */
 	}
@@ -1647,17 +1695,18 @@ bool LayerGPS::rt_gpsd_connect_try_once(void)
 
 
 
-bool LayerGPS::rt_ask_retry()
+/**
+   @reviewed-on: 2019-03-23
+*/
+bool LayerGPS::rt_ask_retry(void)
 {
-	qDebug() << SG_PREFIX_D << "";
-
 	const QString message = tr("Failed to connect to gpsd at %1 (port %2)\n"
 				   "Should Viking keep trying (every %3 seconds)?")
 		.arg(this->gpsd_host)
 		.arg(this->gpsd_port)
 		.arg(this->gpsd_retry_interval);
 
-	const int reply = QMessageBox::question(this->get_window(), "title", message);
+	const int reply = QMessageBox::question(this->get_window(), tr("GPS Layer"), message);
 	return (reply == QMessageBox::Yes);
 }
 
@@ -1683,7 +1732,7 @@ bool LayerGPS::rt_gpsd_connect_periodic_retry_cb(void)
 
 	/* Re-start timer. */
 	qDebug() << SG_PREFIX_I << "Periodic retry: failed to connect, re-arming timer for" << this->gpsd_retry_interval << "seconds";
-	this->realtime_retry_timer.start(1000 * this->gpsd_retry_interval);
+	this->realtime_retry_timer.start(MSECS_PER_SEC * this->gpsd_retry_interval);
 
 	return false;
 }
@@ -1792,7 +1841,7 @@ void LayerGPS::rt_start_stop_tracking_cb(void)
 		}
 
 		/* Try repeatedly in the future, every N seconds. */
-		this->realtime_retry_timer.start(1000 * this->gpsd_retry_interval);
+		this->realtime_retry_timer.start(MSECS_PER_SEC * this->gpsd_retry_interval);
 
 		return;
 	}
@@ -1839,7 +1888,6 @@ LayerGPS::LayerGPS()
 	this->realtime_track_pt_pen = this->realtime_track_pt1_pen;
 
 	this->gpsd_host = QObject::tr("host");
-	this->gpsd_port = QObject::tr("port");
 
 	this->realtime_retry_timer.setSingleShot(true);
 	connect(&this->realtime_retry_timer, SIGNAL (timeout(void)), this, SLOT (rt_gpsd_connect_periodic_retry_cb()));

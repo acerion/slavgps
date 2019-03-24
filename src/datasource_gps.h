@@ -86,7 +86,7 @@ namespace SlavGPS {
 		QString get_gps_protocol(void);
 		QString get_serial_port(void);
 
-		GPSTransfer transfer{GPSDirection::Up};
+		GPSTransfer transfer{GPSDirection::Upload};
 
 
 		QComboBox * proto_combo = NULL;

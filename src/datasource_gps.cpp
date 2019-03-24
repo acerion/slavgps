@@ -387,7 +387,7 @@ void DataSourceGPSDialog::save_transfer_options(void)
 	this->transfer.do_routes    = this->get_routes_b->isChecked();
 	this->transfer.do_waypoints = this->get_waypoints_b->isChecked();
 	this->transfer.turn_off     = this->off_request_b->isChecked();
-	if (this->transfer.direction == GPSDirection::Down) {
+	if (this->transfer.direction == GPSDirection::Download) {
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, this->transfer.do_tracks);
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, this->transfer.do_routes);
 		ApplicationState::set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, this->transfer.do_waypoints);
