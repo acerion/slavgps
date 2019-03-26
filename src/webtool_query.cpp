@@ -104,6 +104,7 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 	QString center_lon;
 	lat_lon.to_strings_raw(center_lat, center_lon);
 
+
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
 	if (a_viewport->get_viking_zoom_level().x_y_is_equal()) {
@@ -115,14 +116,11 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 		qDebug() << SG_PREFIX_E << "url format code is empty";
 		return QString("");
 	} else if (len > MAX_NUMBER_CODES) {
-		qDebug() << SG_PREFIX_W << "url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
-		len = MAX_NUMBER_CODES;
+		qDebug() << SG_PREFIX_E << "url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
+		return QString("");
 	} else {
 		;
 	}
-
-	std::vector<QString> values;
-	values.resize(len);
 
 	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
 
@@ -145,35 +143,6 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 			return QString("");
 		}
 	}
-
-
-#if 0
-
-	for (int i = 0; i < len; i++) {
-		switch (this->url_format_code[i].toUpper().toLatin1()) {
-		case 'L': values[i] = bbox_strings.west;  break;
-		case 'R': values[i] = bbox_strings.east;  break;
-		case 'B': values[i] = bbox_strings.south; break;
-		case 'T': values[i] = bbox_strings.north; break;
-		case 'A': values[i] = center_lat; break;
-		case 'O': values[i] = center_lon; break;
-		case 'Z': values[i] = tile_zoom_level.to_string(); break;
-		case 'S': values[i] = this->user_string; break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i] << "at position" << i
-			return QString("");
-		}
-	}
-
-	const QString url = QString(this->url_format)
-		.arg(values[0])
-		.arg(values[1])
-		.arg(values[2])
-		.arg(values[3])
-		.arg(values[4])
-		.arg(values[5])
-		.arg(values[6]); /* FIXME: fixed, explicit indices. How do we know that there are 7 values in the vector? What about sparse vectors? */
-#endif
 
 	qDebug() << SG_PREFIX_I << "URL at current position is" << url;
 

@@ -108,44 +108,34 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 		qDebug() << SG_PREFIX_E << "url format code is empty";
 		return QString("");
 	} else if (len > MAX_NUMBER_CODES) {
-		qDebug() << SG_PREFIX_W << "url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
-		len = MAX_NUMBER_CODES;
+		qDebug() << SG_PREFIX_E << "url format code too long:" << len << MAX_NUMBER_CODES << this->url_format_code;
+		return QString("");
 	} else {
 		;
 	}
 
-	std::vector<QString> values;
-	values.resize(len);
-
 	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
 
+	QString url = this->url_format;
+
+	/* Evaluate+replace each consecutive format specifier %1, %2,
+	   %3 etc. in url=='format string' with a value. */
 	for (int i = 0; i < len; i++) {
 		switch (this->url_format_code[i].toUpper().toLatin1()) {
-		case 'L': values[i] = bbox_strings.west;  break;
-		case 'R': values[i] = bbox_strings.east;  break;
-		case 'B': values[i] = bbox_strings.south; break;
-		case 'T': values[i] = bbox_strings.north; break;
-		case 'A': values[i] = center_lat; break;
-		case 'O': values[i] = center_lon; break;
-		case 'Z': values[i] = tile_zoom_level.to_string(); break;
-		case 'P': values[i] = position_lat; break;
-		case 'N': values[i] = position_lon; break;
+		case 'L': url = url.arg(bbox_strings.west);  break;
+		case 'R': url = url.arg(bbox_strings.east);  break;
+		case 'B': url = url.arg(bbox_strings.south); break;
+		case 'T': url = url.arg(bbox_strings.north); break;
+		case 'A': url = url.arg(center_lat); break;
+		case 'O': url = url.arg(center_lon); break;
+		case 'Z': url = url.arg(tile_zoom_level.to_string()); break;
+		case 'P': url = url.arg(position_lat); break;
+		case 'N': url = url.arg(position_lon); break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid URL format code" << this->url_format_code[i] << "at position" << i;
 			return QString("");
 		}
 	}
-
-	const QString url = QString(this->url_format)
-		.arg(values[0])
-		.arg(values[1])
-		.arg(values[2])
-		.arg(values[3])
-		.arg(values[4])
-		.arg(values[5])
-		.arg(values[6])
-		.arg(values[7])
-		.arg(values[8]);  /* FIXME: fixed, explicit indices. How do we know that there are 9 values in the vector? What about sparse vectors? */
 
 	qDebug() << SG_PREFIX_D << "URL at position is" << url;
 

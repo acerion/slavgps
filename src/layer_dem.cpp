@@ -87,13 +87,13 @@ void draw_loaded_dem_box(Viewport * viewport);
 
 
 
-/* FIXME: hardcoded unit. */
-static SGVariant scale_min_elev_initial(Altitude(0.0, HeightUnit::Feet));
-static SGVariant scale_max_elev_initial(Altitude(1000.0, HeightUnit::Feet));
+/* Internal units - Metres. */
+static SGVariant scale_min_elev_initial_iu(Altitude(0.0, HeightUnit::Metres));
+static SGVariant scale_max_elev_initial_iu(Altitude(1000.0, HeightUnit::Metres));
 
 /* Upper limit is that high in case if units are feet. */
-static ParameterScale<double> scale_min_elev(0.0, 30000.0, scale_min_elev_initial, 10, 1);
-static ParameterScale<double> scale_max_elev(1.0, 30000.0, scale_max_elev_initial, 10, 1);
+static ParameterScale<double> scale_min_elev_iu(0.0, 30000.0, scale_min_elev_initial_iu, 10, 1);
+static ParameterScale<double> scale_max_elev_iu(1.0, 30000.0, scale_max_elev_initial_iu, 10, 1);
 
 
 
@@ -146,13 +146,13 @@ enum {
 
 
 static ParameterSpecification dem_layer_param_specs[] = {
-	{ PARAM_FILES,      "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,             NULL,                "" },
-	{ PARAM_SOURCE,     "source",   SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::Enumeration,     &dem_source_enum, dem_source_default,  QObject::tr("Source of DEM data") },
-	{ PARAM_COLOR,      "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,             color_default,       "" },
-	{ PARAM_TYPE,       "type",     SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::Enumeration,     &dem_type_enum,   dem_type_default,    "" },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::Altitude,        &scale_min_elev,  NULL,                "" },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::Altitude,        &scale_max_elev,  NULL,                "" },
-	{ NUM_PARAMS,       "",         SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,             NULL,                "" }, /* Guard. */
+	{ PARAM_FILES,      "files",    SGVariantType::StringList,  PARAMETER_GROUP_GENERIC, QObject::tr("DEM Files:"),       WidgetType::FileList,        NULL,                NULL,                "" },
+	{ PARAM_SOURCE,     "source",   SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::Enumeration,     &dem_source_enum,    dem_source_default,  QObject::tr("Source of DEM data") },
+	{ PARAM_COLOR,      "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,                color_default,       "" },
+	{ PARAM_TYPE,       "type",     SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::Enumeration,     &dem_type_enum,      dem_type_default,    "" },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::Altitude,        &scale_min_elev_iu,  NULL,                "" },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::Altitude,        &scale_max_elev_iu,  NULL,                "" },
+	{ NUM_PARAMS,       "",         SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,                NULL,                "" }, /* Guard. */
 };
 
 
