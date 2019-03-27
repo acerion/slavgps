@@ -80,7 +80,7 @@ namespace SlavGPS {
 		QString get_tooltip(void) const;
 		void add_menu_items(QMenu & menu);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
-		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const;
+		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
 
 
