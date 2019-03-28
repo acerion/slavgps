@@ -41,8 +41,8 @@ namespace SlavGPS {
 		~MapSourceWmsc();
 		MapSourceWmsc(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 
-		bool coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
-		void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
+		bool coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const override;
+		void tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const override;
 
 		bool supports_download_only_new(void) const override;
 

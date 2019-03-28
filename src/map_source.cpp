@@ -406,18 +406,18 @@ QString MapSource::get_file_extension(void) const
 
 
 
-bool MapSource::coord_to_tile(const Coord & scr_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
-	fprintf(stderr, "MapSource coord_to_tile() returns false\n");
+	fprintf(stderr, "MapSource coord_to_tile_info() returns false\n");
 	return false;
 }
 
 
 
 
-void MapSource::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
+void MapSource::tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
-	fprintf(stderr, "MapSource::tile_to_center_coord\n");
+	fprintf(stderr, "MapSource::tile_info_to_center_coord\n");
 	return;
 }
 
@@ -543,7 +543,7 @@ QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const Tile
 bool MapSource::includes_tile(const TileInfo & tile_info) const
 {
 	Coord center_coord;
-	this->tile_to_center_coord(tile_info, center_coord);
+	this->tile_info_to_center_coord(tile_info, center_coord);
 
 	const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LatLon);
 	const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LatLon);

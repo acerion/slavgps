@@ -88,7 +88,7 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
 	if (src_coord.mode != CoordMode::UTM) {
 		return false;
@@ -115,7 +115,7 @@ bool MapSourceTerraserver::coord_to_tile(const Coord & src_coord, const VikingZo
 
 
 
-void MapSourceTerraserver::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
+void MapSourceTerraserver::tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	/* TODO_2_LATER: slowdown here! */
 	double mpp = scale_to_mpp(src.scale.get_scale_value());

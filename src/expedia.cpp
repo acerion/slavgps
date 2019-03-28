@@ -53,8 +53,8 @@ using namespace SlavGPS;
 
 
 
-static bool expedia_coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
-static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coord);
+static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
+static void expedia_tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord);
 static DownloadStatus expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
@@ -103,8 +103,8 @@ void Expedia::init(void)
 	map_type.tilesize_x = 0;
 	map_type.tilesize_y = 0;
 	map_type.drawmode = ViewportDrawMode::Expedia;
-	map_type.coord_to_tile = expedia_coord_to_tile;
-	map_type.tile_to_center_coord = expedia_tile_to_center_coord;
+	map_type.coord_to_tile_info = expedia_coord_to_tile_info;
+	map_type.tile_info_to_center_coord = expedia_tile_info_to_center_coord;
 	map_type.download = expedia_download_tile;
 	map_type.download_handle_init = expedia_handle_init;
 	map_type.download_handle_cleanup = expedia_handle_cleanup;
@@ -182,7 +182,7 @@ sg_ret expedia_crop(const QString & file)
 
 /* If degree_freeq = 60 -> nearest minute (in middle).
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
-static bool expedia_coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
+static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
 {
 	assert (src_coord.mode == CoordMode::LatLon);
 
@@ -220,7 +220,7 @@ LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 
 
 
-static void expedia_tile_to_center_coord(const TileInfo & src, Coord & dest_coord)
+static void expedia_tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord)
 {
 	dest_coord.mode = CoordMode::LatLon;
 	dest_coord.ll.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;

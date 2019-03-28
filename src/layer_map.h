@@ -115,6 +115,11 @@ namespace SlavGPS {
 
 		void download_onscreen_maps(MapDownloadMode map_download_mode);
 
+		/* Check if given tile is visible in viewport.
+		   Otherwise redraw of viewport is not needed. */
+		bool is_tile_visible(const TileInfo & tile_info);
+
+		VikingZoomLevel calculate_viking_zoom_level(const Viewport * viewport);
 
 		static void set_autodownload_default(bool autodownload);
 		static void set_cache_default(MapCacheLayout layout);

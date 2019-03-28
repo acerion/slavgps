@@ -94,7 +94,7 @@ bool MapSourceWmsc::supports_download_only_new(void) const
 
 
 
-bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSourceWmsc::coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
 	assert (src_coord.mode == CoordMode::LatLon);
 
@@ -127,7 +127,7 @@ bool MapSourceWmsc::coord_to_tile(const Coord & src_coord, const VikingZoomLevel
 
 
 
-void MapSourceWmsc::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
+void MapSourceWmsc::tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	const double socalled_mpp = src.scale.to_so_called_mpp();
 	dest_coord.mode = CoordMode::LatLon;

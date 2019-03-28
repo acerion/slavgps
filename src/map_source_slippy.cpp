@@ -109,7 +109,7 @@ bool MapSourceSlippy::supports_download_only_new(void) const
 
 
 
-bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
 {
 	bool result = MapUtils::coord_to_iTMS(src_coord, viking_zoom_level, dest);
 	return result;
@@ -118,7 +118,7 @@ bool MapSourceSlippy::coord_to_tile(const Coord & src_coord, const VikingZoomLev
 
 
 
-void MapSourceSlippy::tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const
+void MapSourceSlippy::tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const
 {
 	dest_coord = MapUtils::iTMS_to_center_coord(src);
 }

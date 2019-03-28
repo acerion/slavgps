@@ -52,6 +52,15 @@ TilesRange TileInfo::get_tiles_range(const TileInfo & ulm, const TileInfo & brm)
 
 
 
+QDebug SlavGPS::operator<<(QDebug debug, const TileInfo & tile_info)
+{
+	debug << "x =" << tile_info.x << ", y =" << tile_info.y << ", zoom level =" << tile_info.get_tile_zoom_level();
+	return debug;
+}
+
+
+
+
 int TileScale::get_tile_zoom_level(void) const
 {
 	return MAGIC_SEVENTEEN - this->value;
@@ -121,4 +130,12 @@ void TileScale::set_scale_valid(bool new_value)
 bool TileScale::get_scale_valid(void) const
 {
 	return this->valid;
+}
+
+
+
+
+int TilesRange::get_tiles_count(void) const
+{
+	return (this->x_end - this->x_begin) * (this->y_end - this->y_begin);
 }

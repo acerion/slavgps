@@ -212,9 +212,7 @@ void MapDownloadJob::run(void)
 				MapCache::remove_all_shrinkfactors(tile_iter, this->map_source->map_type_id, this->layer->file_full_path);
 			}
 
-			if (this->refresh_display) {
-				/* TODO_2_LATER: check if downloaded tile is visible in viewport.
-				   Otherwise redraw of viewport is not needed. */
+			if (this->refresh_display && this->layer->is_tile_visible(tile_iter)) {
 				qDebug() << SG_PREFIX_SIGNAL << "Will emit 'download job completed' signal to indicate completion of tile download job";
 				emit this->download_job_completed();
 			}

@@ -24,6 +24,11 @@
 
 
 
+#include <QDebug>
+
+
+
+
 namespace SlavGPS {
 
 
@@ -31,6 +36,8 @@ namespace SlavGPS {
 
 	class TilesRange {
 	public:
+		int get_tiles_count(void) const;
+
 		int x_begin = 0;
 		int x_end   = 0;
 		int y_begin = 0;
@@ -79,6 +86,7 @@ namespace SlavGPS {
 		int z;      /* Zone or anything else. */
 		TileScale scale;
 	};
+	QDebug operator<<(QDebug debug, const TileInfo & tile_info);
 
 
 

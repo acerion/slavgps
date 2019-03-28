@@ -37,8 +37,8 @@ namespace SlavGPS {
 		MapSourceTerraserver(MapTypeID type, const QString & label);
 
 
-		bool coord_to_tile(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
-		void tile_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
+		bool coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const override;
+		void tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const override;
 
 		const QString get_server_hostname(void) const;
 		const QString get_server_path(const TileInfo & src) const;
