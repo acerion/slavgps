@@ -415,10 +415,19 @@ bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingZoomLeve
 
 
 
-void MapSource::tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const
+sg_ret MapSource::tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon) const
 {
-	fprintf(stderr, "MapSource::tile_info_to_center_coord\n");
-	return;
+	fprintf(stderr, "MapSource::tile_info_to_center_lat_lon\n");
+	return sg_ret::err;
+}
+
+
+
+
+sg_ret MapSource::tile_info_to_center_utm(const TileInfo & src, UTM & utm) const
+{
+	fprintf(stderr, "MapSource::tile_info_to_center_utm\n");
+	return sg_ret::err;
 }
 
 
@@ -542,13 +551,27 @@ QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const Tile
 
 bool MapSource::includes_tile(const TileInfo & tile_info) const
 {
-	Coord center_coord;
-	this->tile_info_to_center_coord(tile_info, center_coord);
+	/* TODO_LATER: simplify. */
 
-	const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LatLon);
-	const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LatLon);
+	if (this->coord_mode == CoordMode::LatLon) {
+		LatLon lat_lon;
+		this->tile_info_to_center_lat_lon(tile_info, lat_lon);
 
-	return center_coord.is_inside(&coord_tl, &coord_br);
+		const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LatLon);
+		const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LatLon);
+
+		Coord center_coord(lat_lon, CoordMode::LatLon);
+		return center_coord.is_inside(&coord_tl, &coord_br);
+	} else {
+		UTM utm;
+		this->tile_info_to_center_utm(tile_info, utm);
+
+		const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LatLon);
+		const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LatLon);
+
+		Coord center_coord(utm, CoordMode::UTM);
+		return center_coord.is_inside(&coord_tl, &coord_br);
+	}
 }
 
 

@@ -51,7 +51,8 @@ namespace SlavGPS {
 		uint16_t tilesize_y;
 		ViewportDrawMode drawmode;
 		bool (* coord_to_tile_info) (const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
-		void (* tile_info_to_center_coord) (const TileInfo & src, Coord & dest_coord);
+		sg_ret (* tile_info_to_center_lat_lon) (const TileInfo & src, LatLon & lat_lon);
+		sg_ret (* tile_info_to_center_utm) (const TileInfo & src, UTM & utm);
 		DownloadStatus (* download) (const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
 		void *(* download_handle_init) ();
 		void (* download_handle_cleanup) (void * handle);

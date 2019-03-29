@@ -207,6 +207,10 @@ namespace SlavGPS {
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
 		void coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
 		ScreenPos coord_to_screen_pos(const Coord & coord) const;
+		void lat_lon_to_screen_pos(const LatLon & lat_lon, int * x, int * y) const;
+		ScreenPos lat_lon_to_screen_pos(const LatLon & lat_lon) const;
+		void utm_to_screen_pos(const UTM & utm, int * x, int * y) const;
+		ScreenPos utm_to_screen_pos(const UTM & utm) const;
 
 
 

@@ -118,9 +118,10 @@ bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingZo
 
 
 
-void MapSourceSlippy::tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const
+sg_ret MapSourceSlippy::tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon) const
 {
-	dest_coord = MapUtils::iTMS_to_center_coord(src);
+	lat_lon = MapUtils::iTMS_to_center_lat_lon(src);
+	return sg_ret::ok;
 }
 
 

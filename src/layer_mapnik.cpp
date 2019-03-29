@@ -787,8 +787,8 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br,
  */
 QPixmap LayerMapnik::get_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br)
 {
-	const Coord coord_ul = MapUtils::iTMS_to_coord(ti_ul);
-	const Coord coord_br = MapUtils::iTMS_to_coord(ti_br);
+	const Coord coord_ul = Coord(MapUtils::iTMS_to_lat_lon(ti_ul), CoordMode::LatLon);
+	const Coord coord_br = Coord(MapUtils::iTMS_to_lat_lon(ti_br), CoordMode::LatLon);
 
 	QPixmap pixmap = MapCache::get_tile_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 	if (!pixmap.isNull()) {
@@ -863,9 +863,9 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 				const QPixmap pixmap = this->get_pixmap(ti_ul, ti_br);
 				if (!pixmap.isNull()) {
-					const Coord coord = MapUtils::iTMS_to_coord(ti_ul);
+					const LatLon lat_lon = MapUtils::iTMS_to_lat_lon(ti_ul);
 					int xx, yy;
-					viewport->coord_to_screen_pos(coord, &xx, &yy);
+					viewport->lat_lon_to_screen_pos(lat_lon, &xx, &yy);
 					viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 				}
 			}
@@ -881,8 +881,8 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 			int xx, yy;
 			ti_ul.x = xmin; ti_ul.y = ymin;
 
-			const Coord coord = MapUtils::iTMS_to_center_coord(&ti_ul);
-			viewport->coord_to_screen_pos(coord, &xx, &yy);
+			const LatLon lat_lon = MapUtils::iTMS_to_center_lat_lon(&ti_ul);
+			viewport->lat_lon_to_screen_pos(lat_lon, &xx, &yy);
 			xx = xx - (this->tile_size_x/2);
 			yy = yy - (this->tile_size_x/2); // Yes use X ATM
 			for (int x = xmin; x <= xmax; x++) {
@@ -1033,12 +1033,12 @@ void LayerMapnik::rerender()
 	/* Requested position to map coord. */
 	MapUtils::coord_to_iTMS(this->rerender_ul, this->rerender_viking_zoom_level, ti_ul);
 	/* Reconvert back - thus getting the coordinate at the tile *ul corner*. */
-	this->rerender_ul = MapUtils::iTMS_to_coord(ti_ul);
+	this->rerender_ul = Coord(MapUtils::iTMS_to_lat_lon(ti_ul), CoordMode::LatLon);
 	/* Bottom right bound is simply +1 in TMS coords. */
 	TileInfo ti_br = ti_ul;
 	ti_br.x = ti_br.x+1;
 	ti_br.y = ti_br.y+1;
-	this->rerender_br = MapUtils::iTMS_to_coord(ti_br);
+	this->rerender_br = Coord(MapUtils::iTMS_to_lat_lon(ti_br), CoordMode::LatLon);
 	this->thread_add(ti_ul, this->rerender_ul, this->rerender_br, this->filename_xml);
 }
 

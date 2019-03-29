@@ -181,7 +181,8 @@ namespace SlavGPS {
 		QString get_file_extension(void) const;
 
 		virtual bool coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
-		virtual void tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const;
+		virtual sg_ret tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon) const;
+		virtual sg_ret tile_info_to_center_utm(const TileInfo & src, UTM & utm) const;
 
 		virtual DownloadStatus download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const;
 		DownloadHandle * download_handle_init(void) const;
@@ -226,6 +227,8 @@ namespace SlavGPS {
 
 		/* Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html */
 		bool switch_xy;
+
+		CoordMode coord_mode = CoordMode::LatLon; /* Only selected map sources will have UTM. */
 
 	protected:
 		bool is_direct_file_access_flag;

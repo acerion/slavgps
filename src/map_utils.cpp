@@ -193,16 +193,15 @@ bool MapUtils::coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & vi
 
 
 /* Internal convenience function. */
-static Coord _to_coord_with_offset(const TileInfo & src, double offset)
+static LatLon _to_lat_lon_with_offset(const TileInfo & src, double offset)
 {
-	Coord dest_coord;
+	LatLon lat_lon;
 
 	const double socalled_mpp = src.scale.to_so_called_mpp();
-	dest_coord.mode = CoordMode::LatLon;
-	dest_coord.ll.lon = ((src.x + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360) - 180;
-	dest_coord.ll.lat = DEMERCLAT(180 - ((src.y + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360));
+	lat_lon.lon = ((src.x + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360) - 180;
+	lat_lon.lat = DEMERCLAT(180 - ((src.y + offset) / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 360));
 
-	return dest_coord;
+	return lat_lon;
 }
 
 
@@ -217,9 +216,9 @@ static Coord _to_coord_with_offset(const TileInfo & src, double offset)
  *
  * Returns: whether the conversion was performed
  */
-Coord SlavGPS::MapUtils::iTMS_to_center_coord(const TileInfo & src)
+LatLon SlavGPS::MapUtils::iTMS_to_center_lat_lon(const TileInfo & src)
 {
-	return _to_coord_with_offset(src, 0.5);
+	return _to_lat_lon_with_offset(src, 0.5);
 }
 
 
@@ -234,7 +233,7 @@ Coord SlavGPS::MapUtils::iTMS_to_center_coord(const TileInfo & src)
  *
  * Returns: whether the conversion was performed
  */
-Coord SlavGPS::MapUtils::iTMS_to_coord(const TileInfo & src)
+LatLon SlavGPS::MapUtils::iTMS_to_lat_lon(const TileInfo & src)
 {
-	return _to_coord_with_offset(src, 0.0);
+	return _to_lat_lon_with_offset(src, 0.0);
 }

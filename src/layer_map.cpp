@@ -1085,7 +1085,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	TileInfo tile_iter = tile_ul;
 
 	const QString map_type_string = map_source->get_map_type_string();
-	Coord coord;
+	LatLon lat_lon;
+	UTM utm;
 	if (map_source->get_tilesize_x() == 0 && !existence_only) {
 
 		for (tile_iter.x = unordered_tiles_range.x_begin; tile_iter.x <= unordered_tiles_range.x_end; tile_iter.x++) {
@@ -1103,8 +1104,14 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				int viewport_x;
 				int viewport_y;
 
-				map_source->tile_info_to_center_coord(tile_iter, coord);
-				viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
+				if (map_source->coord_mode == CoordMode::LatLon) {
+					map_source->tile_info_to_center_lat_lon(tile_iter, lat_lon);
+					viewport->lat_lon_to_screen_pos(lat_lon, &viewport_x, &viewport_y);
+				} else {
+					map_source->tile_info_to_center_utm(tile_iter, utm);
+					viewport->utm_to_screen_pos(utm, &viewport_x, &viewport_y);
+				}
+
 				viewport_x -= (width/2);
 				viewport_y -= (height/2);
 
@@ -1131,8 +1138,13 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 		int viewport_x;
 		int viewport_y;
-		map_source->tile_info_to_center_coord(tile_ul, coord);
-		viewport->coord_to_screen_pos(coord, &viewport_x, &viewport_y);
+		if (map_source->coord_mode == CoordMode::LatLon) {
+			map_source->tile_info_to_center_lat_lon(tile_ul, lat_lon);
+			viewport->lat_lon_to_screen_pos(lat_lon, &viewport_x, &viewport_y);
+		} else {
+			map_source->tile_info_to_center_utm(tile_ul, utm);
+			viewport->utm_to_screen_pos(utm, &viewport_x, &viewport_y);
+		}
 
 		const int viewport_x_grid = viewport_x;
 		const int viewport_y_grid = viewport_y;

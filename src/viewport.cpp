@@ -1133,6 +1133,82 @@ ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in) const
 
 
 
+/*
+  Since this function is used for every drawn trackpoint - it can get called a lot.
+  Thus x & y position factors are calculated once on zoom changes,
+  avoiding the need to do it here all the time.
+*/
+void Viewport::lat_lon_to_screen_pos(const LatLon & lat_lon, int * pos_x, int * pos_y) const
+{
+	const double xmpp = this->viking_zoom_level.x;
+	const double ympp = this->viking_zoom_level.y;
+
+	const LatLon * ll_center = &this->center.ll;
+
+	if (this->drawmode == ViewportDrawMode::LatLon) {
+		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - ll_center->lon));
+		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (ll_center->lat - lat_lon.lat));
+	} else if (this->drawmode == ViewportDrawMode::Expedia) {
+		double xx,yy;
+		calcxy(&xx, &yy, ll_center->lon, ll_center->lat, lat_lon.lon, lat_lon.lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
+		*pos_x = xx;
+		*pos_y = yy;
+	} else if (this->drawmode == ViewportDrawMode::Mercator) {
+		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - ll_center->lon));
+		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(ll_center->lat) - MERCLAT(lat_lon.lat)));
+	} else {
+		/* TODO */
+	}
+}
+
+
+
+
+ScreenPos Viewport::lat_lon_to_screen_pos(const LatLon & lat_lon) const
+{
+	ScreenPos pos;
+	this->lat_lon_to_screen_pos(lat_lon, &pos.x, &pos.y);
+	return pos;
+}
+
+
+
+
+/*
+  Since this function is used for every drawn trackpoint - it can get called a lot.
+  Thus x & y position factors are calculated once on zoom changes,
+  avoiding the need to do it here all the time.
+*/
+void Viewport::utm_to_screen_pos(const UTM & utm, int * pos_x, int * pos_y) const
+{
+	const double xmpp = this->viking_zoom_level.x;
+	const double ympp = this->viking_zoom_level.y;
+
+	const UTM * utm_center = &this->center.utm;
+
+	if (utm_center->zone != utm.zone && this->is_one_utm_zone){
+		*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
+		return;
+	}
+
+	*pos_x = ((utm.easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
+		(utm_center->zone - utm.zone) * this->utm_zone_width / xmpp;
+	*pos_y = (this->canvas.height_2) - ((utm.northing - utm_center->northing) / ympp);
+}
+
+
+
+
+ScreenPos Viewport::utm_to_screen_pos(const UTM & utm) const
+{
+	ScreenPos pos;
+	this->utm_to_screen_pos(utm, &pos.x, &pos.y);
+	return pos;
+}
+
+
+
+
 /* Clip functions continually reduce the value by a factor until it is in the acceptable range
    whilst also scaling the other coordinate value. */
 static void clip_x(int * x1, int * y1, int * x2, int * y2)

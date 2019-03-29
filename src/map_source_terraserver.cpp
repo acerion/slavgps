@@ -115,14 +115,15 @@ bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const Vik
 
 
 
-void MapSourceTerraserver::tile_info_to_center_coord(const TileInfo & src, Coord & dest_coord) const
+sg_ret MapSourceTerraserver::tile_info_to_center_utm(const TileInfo & src, UTM & utm) const
 {
 	/* TODO_2_LATER: slowdown here! */
-	double mpp = scale_to_mpp(src.scale.get_scale_value());
-	dest_coord.mode = CoordMode::UTM;
-	dest_coord.utm.zone = src.z;
-	dest_coord.utm.easting = ((src.x * 200) + 100) * mpp;
-	dest_coord.utm.northing = ((src.y * 200) + 100) * mpp;
+	const double mpp = scale_to_mpp(src.scale.get_scale_value());
+	utm.zone = src.z;
+	utm.easting = ((src.x * 200) + 100) * mpp;
+	utm.northing = ((src.y * 200) + 100) * mpp;
+
+	return sg_ret::ok;
 }
 
 
@@ -171,4 +172,6 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString 
 	this->dl_options.file_validator_fn = map_file_validator_fn;
 
 	this->is_direct_file_access_flag = false;
+
+	this->coord_mode = CoordMode::UTM;
 }
