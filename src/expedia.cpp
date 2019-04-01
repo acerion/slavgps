@@ -5,6 +5,10 @@
  *
  * Some formulas or perhaps even code derived from GPSDrive
  * GPSDrive Copyright (C) 2001-2004 Fritz Ganter <ganter@ganter.at>
+
+ * Lat/Lon plotting functions expedia_screen_pos_to_lat_lon() and
+ * expedia_lat_lon_to_screen_pos() are from GPSDrive GPSDrive
+ * Copyright (C) 2001-2004 Fritz Ganter <ganter@ganter.at>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,10 +64,13 @@ static DownloadStatus expedia_download_tile(const TileInfo & src, const QString 
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
 
+static double calcR(double lat);
+
 
 
 
 static DownloadOptions expedia_options;
+static double Radius[181];
 
 
 
@@ -281,4 +288,99 @@ static void * expedia_handle_init()
 static void expedia_handle_cleanup(void * handle)
 {
 	/* Even less here! */
+}
+
+
+
+
+/* Thanks GPSDrive. */
+bool Expedia::screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon & lat_lon_center, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
+{
+	double Ra = Radius[90 + (int) lat_lon_center.lat];
+
+	int px = (mapSizeX2 - x) * pixelfact_x;
+	int py = (-mapSizeY2 + y) * pixelfact_y;
+
+	double lat = lat_lon_center.lat - py / Ra;
+	double lon = lat_lon_center.lon - px / (Ra * cos (DEG2RAD(lat)));
+
+	double dif = lat * (1 - (cos (DEG2RAD(fabs (lon - lat_lon_center.lon)))));
+	lat = lat - dif / 1.5;
+	lon = lat_lon_center.lon - px / (Ra * cos (DEG2RAD(lat)));
+
+	lat_lon = LatLon(lat, lon);
+
+	return true;
+}
+
+
+
+
+/* Thanks GPSDrive. */
+bool Expedia::lat_lon_to_screen_pos(double * pos_x, double * pos_y, const LatLon & lat_lon_center, const LatLon & lat_lon, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
+{
+	int mapSizeX = 2 * mapSizeX2;
+	int mapSizeY = 2 * mapSizeY2;
+
+	assert (lat_lon_center.lat >= -90.0 && lat_lon_center.lat <= 90.0);
+	//    lat_lon_center.lon *= rad2deg; // FIXME, optimize equations
+	//    lat_lon_center.lat *= rad2deg;
+	double Ra = Radius[90 + (int) lat_lon_center.lat];
+	*pos_x = Ra * cos (DEG2RAD(lat_lon_center.lat)) * (lat_lon_center.lon - lat_lon.lon);
+	*pos_y = Ra * (lat_lon_center.lat - lat_lon.lat);
+	double dif = Ra * RAD2DEG(1 - (cos ((DEG2RAD(lat_lon_center.lon - lat_lon.lon)))));
+	*pos_y = *pos_y + dif / 1.85;
+	*pos_x = *pos_x / pixelfact_x;
+	*pos_y = *pos_y / pixelfact_y;
+	*pos_x = mapSizeX2 - *pos_x;
+	*pos_y += mapSizeY2;
+	if ((*pos_x < 0)||(*pos_x >= mapSizeX)||(*pos_y < 0)||(*pos_y >= mapSizeY)) {
+		return false;
+	}
+	return true;
+}
+
+
+
+
+void Expedia::init_radius(void)
+{
+	static bool done_before = false;
+	if (!done_before) {
+		for (int i = -90; i <= 90; i++) {
+			Radius[i + 90] = calcR(DEG2RAD((double) i));
+		}
+		done_before = true;
+	}
+}
+
+
+
+
+static double calcR(double lat)
+{
+	/*
+	 * The radius of curvature of an ellipsoidal Earth in the plane of the
+	 * meridian is given by
+	 *
+	 * R' = a * (1 - e^2) / (1 - e^2 * (sin(lat))^2)^(3/2)
+	 *
+	 *
+	 * where a is the equatorial radius, b is the polar radius, and e is
+	 * the eccentricity of the ellipsoid = sqrt(1 - b^2/a^2)
+	 *
+	 * a = 6378 km (3963 mi) Equatorial radius (surface to center distance)
+	 * b = 6356.752 km (3950 mi) Polar radius (surface to center distance) e
+	 * = 0.081082 Eccentricity
+	 */
+	double a = 6378.137;
+	double e2 = 0.081082 * 0.081082;
+	lat = DEG2RAD(lat);
+	double sc = sin (lat);
+	double x = a * (1.0 - e2);
+	double z = 1.0 - e2 * sc * sc;
+	double y = pow (z, 1.5);
+	double r = x / y;
+	r = r * 1000.0;
+	return r;
 }

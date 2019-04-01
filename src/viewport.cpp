@@ -4,9 +4,6 @@
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
  *
- * Lat/Lon plotting functions calcxy* are from GPSDrive
- * GPSDrive Copyright (C) 2001-2004 Fritz Ganter <ganter@ganter.at>
- *
  * Multiple UTM zone patch by Kit Transue <notlostyet@didactek.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +57,7 @@
 #include "application_state.h"
 #include "dialog.h"
 #include "statusbar.h"
+#include "expedia.h"
 
 
 
@@ -95,20 +93,12 @@ using namespace SlavGPS;
 
 static double EASTING_OFFSET = 500000.0;
 
-static bool calcxy(double * pos_x, double * pos_y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
-static bool calcxy_rev(double * longitude, double * latitude, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
-static double calcR(double lat);
-
-static double Radius[181];
-static void viewport_init_ra();
-
-
 
 
 
 void Viewport::init(void)
 {
-	viewport_init_ra();
+	Expedia::init_radius();
 }
 
 
@@ -1020,8 +1010,10 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	Coord coord;
 	const double xmpp = this->viking_zoom_level.x;
 	const double ympp = this->viking_zoom_level.y;
+	int zone_delta = 0;
 
-	if (this->coord_mode == CoordMode::UTM) {
+	switch (this->coord_mode) {
+	case CoordMode::UTM:
 		coord.mode = CoordMode::UTM;
 
 		coord.utm.zone = this->center.utm.zone;
@@ -1029,13 +1021,14 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.utm.set_band_letter(this->center.utm.get_band_letter());
 		coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
 
-		int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
+		zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
 
 		coord.utm.zone += zone_delta;
 		coord.utm.easting -= zone_delta * this->utm_zone_width;
 		coord.utm.northing = (((this->canvas.height_2) - pos_y) * ympp) + this->center.utm.northing;
+		break;
 
-	} else if (this->coord_mode == CoordMode::LatLon) {
+	case CoordMode::LatLon:
 		coord.mode = CoordMode::LatLon;
 
 		if (this->drawmode == ViewportDrawMode::LatLon) {
@@ -1043,7 +1036,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y));
 
 		} else if (this->drawmode == ViewportDrawMode::Expedia) {
-			calcxy_rev(&coord.ll.lon, &coord.ll.lat, pos_x, pos_y, center.ll.lon, this->center.ll.lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
+			Expedia::screen_pos_to_lat_lon(coord.ll, pos_x, pos_y, this->center.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
 
 		} else if (this->drawmode == ViewportDrawMode::Mercator) {
 			/* This isn't called with a high frequently so less need to optimize. */
@@ -1052,8 +1045,11 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		} else {
 			qDebug() << SG_PREFIX_E << "Unrecognized draw mode" << (int) this->drawmode;
 		}
-	} else {
+		break;
+	default:
 		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << (int) this->coord_mode;
+		break;
+
 	}
 
 	return coord; /* Named Return Value Optimization. */
@@ -1077,46 +1073,65 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
 */
 void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
 {
-	Coord coord;
+	Coord coord = coord_in;
 	const double xmpp = this->viking_zoom_level.x;
 	const double ympp = this->viking_zoom_level.y;
 
 	if (coord_in.mode != this->coord_mode) {
-		/* TODO_MAYBE: what's going on here? Why this special case even exists? */
-		qDebug() << SG_PREFIX_W << "Have to convert in Viewport::coord_to_screen_pos()! This should never happen!";
-
-		coord = coord_in;
+		/* The intended use of the function is that coord_in
+		   argument is always in correct coord mode (i.e. in
+		   viewport's coord mode). If it is necessary to
+		   convert the coord_in to proper coord mode, it is
+		   done before the function call. Therefore if it
+		   turns out that coord_in's coordinate mode is
+		   different than viewport's coordinate mode, it's an
+		   error. */
+		qDebug() << SG_PREFIX_W << "Need to convert coord mode! This should never happen!";
 		coord.change_mode(this->coord_mode);
-	} else {
-		coord = coord_in;
 	}
 
-	if (this->coord_mode == CoordMode::UTM) {
-		const UTM * utm_center = &this->center.utm;
-		const UTM * utm = &coord.utm;
-		if (utm_center->zone != utm->zone && this->is_one_utm_zone){
-			*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
-			return;
-		}
+	switch (this->coord_mode) {
+	case CoordMode::UTM:
+		{
+			const UTM * utm_center = &this->center.utm;
+			const UTM * utm = &coord.utm;
+			if (utm_center->zone != utm->zone && this->is_one_utm_zone){
+				*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
+				return;
+			}
 
-		*pos_x = ((utm->easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
-			(utm_center->zone - utm->zone) * this->utm_zone_width / xmpp;
-		*pos_y = (this->canvas.height_2) - ((utm->northing - utm_center->northing) / ympp);
-	} else if (this->coord_mode == CoordMode::LatLon) {
-		const LatLon * ll_center = &this->center.ll;
-		const LatLon * ll = &coord.ll;
-		if (this->drawmode == ViewportDrawMode::LatLon) {
-			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (ll->lon - ll_center->lon));
-			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (ll_center->lat - ll->lat));
-		} else if (this->drawmode == ViewportDrawMode::Expedia) {
-			double xx,yy;
-			calcxy(&xx, &yy, ll_center->lon, ll_center->lat, ll->lon, ll->lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
-			*pos_x = xx;
-			*pos_y = yy;
-		} else if (this->drawmode == ViewportDrawMode::Mercator) {
-			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (ll->lon - ll_center->lon));
-			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(ll_center->lat) - MERCLAT(ll->lat)));
+			*pos_x = ((utm->easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
+				(utm_center->zone - utm->zone) * this->utm_zone_width / xmpp;
+			*pos_y = (this->canvas.height_2) - ((utm->northing - utm_center->northing) / ympp);
 		}
+		break;
+
+	case CoordMode::LatLon:
+		switch (this->drawmode) {
+		case ViewportDrawMode::LatLon:
+			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
+			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (this->center.ll.lat - coord.ll.lat));
+			break;
+		case ViewportDrawMode::Expedia:
+			{
+				double xx, yy;
+				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.ll, coord.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
+				*pos_x = xx;
+				*pos_y = yy;
+			}
+			break;
+		case ViewportDrawMode::Mercator:
+			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
+			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.ll.lat) - MERCLAT(coord.ll.lat)));
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
+			break;
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected viewport coord mode" << (int) this->coord_mode;
+		break;
 	}
 }
 
@@ -1143,21 +1158,26 @@ void Viewport::lat_lon_to_screen_pos(const LatLon & lat_lon, int * pos_x, int * 
 	const double xmpp = this->viking_zoom_level.x;
 	const double ympp = this->viking_zoom_level.y;
 
-	const LatLon * ll_center = &this->center.ll;
-
-	if (this->drawmode == ViewportDrawMode::LatLon) {
-		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - ll_center->lon));
-		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (ll_center->lat - lat_lon.lat));
-	} else if (this->drawmode == ViewportDrawMode::Expedia) {
-		double xx,yy;
-		calcxy(&xx, &yy, ll_center->lon, ll_center->lat, lat_lon.lon, lat_lon.lat, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
-		*pos_x = xx;
-		*pos_y = yy;
-	} else if (this->drawmode == ViewportDrawMode::Mercator) {
-		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - ll_center->lon));
-		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(ll_center->lat) - MERCLAT(lat_lon.lat)));
-	} else {
-		/* TODO */
+	switch (this->drawmode) {
+	case ViewportDrawMode::LatLon:
+		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - this->center.ll.lon));
+		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (this->center.ll.lat - lat_lon.lat));
+		break;
+	case ViewportDrawMode::Expedia:
+		{
+			double xx,yy;
+			Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.ll, lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
+			*pos_x = xx;
+			*pos_y = yy;
+		}
+		break;
+	case ViewportDrawMode::Mercator:
+		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - this->center.ll.lon));
+		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.ll.lat) - MERCLAT(lat_lon.lat)));
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
+		break;
 	}
 }
 
@@ -1685,107 +1705,6 @@ void Viewport::set_coord_mode(CoordMode new_mode)
 {
 	this->coord_mode = new_mode;
 	this->center.change_mode(new_mode);
-}
-
-
-
-
-/* Thanks GPSDrive. */
-static bool calcxy_rev(double * longitude, double * latitude, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
-{
-	double Ra = Radius[90+(int)zero_lat];
-
-	int px = (mapSizeX2 - x) * pixelfact_x;
-	int py = (-mapSizeY2 + y) * pixelfact_y;
-
-	double lat = zero_lat - py / Ra;
-	double lon =
-		zero_long -
-		px / (Ra *
-		      cos (DEG2RAD(lat)));
-
-	double dif = lat * (1 - (cos (DEG2RAD(fabs (lon - zero_long)))));
-	lat = lat - dif / 1.5;
-	lon =
-		zero_long -
-		px / (Ra *
-		      cos (DEG2RAD(lat)));
-
-	*latitude = lat;
-	*longitude = lon;
-	return (true);
-}
-
-
-
-
-/* Thanks GPSDrive. */
-static bool calcxy(double * pos_x, double * pos_y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
-{
-	int mapSizeX = 2 * mapSizeX2;
-	int mapSizeY = 2 * mapSizeY2;
-
-	assert (lt >= -90.0 && lt <= 90.0);
-	//    lg *= rad2deg; // FIXME, optimize equations
-	//    lt *= rad2deg;
-	double Ra = Radius[90 + (int) lt];
-	*pos_x = Ra * cos (DEG2RAD(lt)) * (lg - zero_long);
-	*pos_y = Ra * (lt - zero_lat);
-	double dif = Ra * RAD2DEG(1 - (cos ((DEG2RAD(lg - zero_long)))));
-	*pos_y = *pos_y + dif / 1.85;
-	*pos_x = *pos_x / pixelfact_x;
-	*pos_y = *pos_y / pixelfact_y;
-	*pos_x = mapSizeX2 - *pos_x;
-	*pos_y += mapSizeY2;
-	if ((*pos_x < 0)||(*pos_x >= mapSizeX)||(*pos_y < 0)||(*pos_y >= mapSizeY)) {
-		return false;
-	}
-	return true;
-}
-
-
-
-
-static void viewport_init_ra()
-{
-	static bool done_before = false;
-	if (!done_before) {
-		for (int i = -90; i <= 90; i++) {
-			Radius[i + 90] = calcR (DEG2RAD((double)i));
-		}
-		done_before = true;
-	}
-}
-
-
-
-
-double calcR(double lat)
-{
-	/*
-	 * The radius of curvature of an ellipsoidal Earth in the plane of the
-	 * meridian is given by
-	 *
-	 * R' = a * (1 - e^2) / (1 - e^2 * (sin(lat))^2)^(3/2)
-	 *
-	 *
-	 * where a is the equatorial radius, b is the polar radius, and e is
-	 * the eccentricity of the ellipsoid = sqrt(1 - b^2/a^2)
-	 *
-	 * a = 6378 km (3963 mi) Equatorial radius (surface to center distance)
-	 * b = 6356.752 km (3950 mi) Polar radius (surface to center distance) e
-	 * = 0.081082 Eccentricity
-	 */
-	double a = 6378.137;
-	double e2 = 0.081082 * 0.081082;
-	lat = DEG2RAD(lat);
-	double sc = sin (lat);
-	double x = a * (1.0 - e2);
-	double z = 1.0 - e2 * sc * sc;
-	double y = pow (z, 1.5);
-	double r = x / y;
-	r = r * 1000.0;
-	return r;
 }
 
 
