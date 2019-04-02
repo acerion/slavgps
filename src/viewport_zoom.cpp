@@ -51,6 +51,53 @@ using namespace SlavGPS;
 
 
 
+/* World Scale:
+   VIK_GZ(MAGIC_SEVENTEEN) down to submeter scale: 1/VIK_GZ(5)
+
+   No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that. */
+
+
+static const double scale_mpps[] = {
+	VIK_GZ(0),    /*       1 */
+	VIK_GZ(1),    /*       2 */
+	VIK_GZ(2),    /*       4 */
+	VIK_GZ(3),    /*       8 */
+	VIK_GZ(4),    /*      16 */
+	VIK_GZ(5),    /*      32 */
+	VIK_GZ(6),    /*      64 */
+	VIK_GZ(7),    /*     128 */
+	VIK_GZ(8),    /*     256 */
+	VIK_GZ(9),    /*     512 */
+	VIK_GZ(10),   /*    1024 */
+	VIK_GZ(11),   /*    2048 */
+	VIK_GZ(12),   /*    4096 */
+	VIK_GZ(13),   /*    8192 */
+	VIK_GZ(14),   /*   16384 */
+	VIK_GZ(15),   /*   32768 */
+	VIK_GZ(16),
+	VIK_GZ(17) };
+
+static const int num_scales = (sizeof(scale_mpps) / sizeof(scale_mpps[0]));
+
+static const double scale_neg_mpps[] = {
+	1.0/VIK_GZ(0),    /*   1   */
+	1.0/VIK_GZ(1),    /*   0.5 */
+	1.0/VIK_GZ(2),    /*   0.25 */
+	1.0/VIK_GZ(3),    /*   0.125 */
+	1.0/VIK_GZ(4),    /*   0.0625 */
+	1.0/VIK_GZ(5) };  /*   0.03125 */
+
+static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpps[0]));
+
+
+
+
+#define ERROR_MARGIN 0.01
+
+
+
+
+
 bool ViewportZoomDialog::custom_zoom_dialog(VikingZoomLevel & zoom, QWidget * parent)
 {
 	ViewportZoomDialog dialog(zoom, parent);
@@ -442,17 +489,48 @@ bool VikingZoomLevel::is_valid(void) const
 
 TileScale VikingZoomLevel::to_tile_scale(void) const
 {
-	TileScale tile_scale = MapUtils::mpp_to_tile_scale(this->x);
+	const double mpp = this->x;
+
+	TileScale tile_scale;
+
+	for (int i = 0; i < num_scales; i++) {
+		if (std::abs(scale_mpps[i] - mpp) < ERROR_MARGIN) {
+			tile_scale.set_scale_value(i);
+			tile_scale.set_scale_valid(true);
+			return tile_scale;
+		}
+	}
+	for (int i = 0; i < num_scales_neg; i++) {
+		if (std::abs(scale_neg_mpps[i] - mpp) < 0.000001) {
+			tile_scale.set_scale_value(-i);
+			tile_scale.set_scale_valid(true);
+			return tile_scale;
+		}
+	}
+
+	/* In original implementation of the function '255' was the
+	   value returned when the loops didn't find any valid
+	   value. */
+	tile_scale.set_scale_value(255);
+	tile_scale.set_scale_valid(false);
 	return tile_scale;
 }
 
 
 
 
+/* See: http://wiki.openstreetmap.org/wiki/Zoom_levels */
 TileZoomLevel VikingZoomLevel::to_tile_zoom_level(void) const
 {
-	TileZoomLevel tile_zoom_level = MapUtils::mpp_to_tile_zoom_level(this->x);
-	return tile_zoom_level;
+	const double mpp = this->x;
+
+	const TileScale tile_scale = this->to_tile_scale();
+	int tile_zoom_level = tile_scale.get_tile_zoom_level();
+	if (tile_zoom_level < (int) TileZoomLevels::MaxZoomOut) {
+		tile_zoom_level = (int) TileZoomLevels::Default;
+	}
+
+	return TileZoomLevel(tile_zoom_level);
 }
 
 

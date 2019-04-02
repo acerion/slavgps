@@ -841,60 +841,78 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	const VikingZoomLevel viking_zoom_level = viewport->get_viking_zoom_level();
 
+
+
+	if (coord_ul.mode != CoordMode::LatLon) {
+		qDebug() << SG_PREFIX_E << "Invalid coord mode of ul coord:" << (int) coord_ul.mode;
+		return;
+	}
+	if (coord_br.mode != CoordMode::LatLon) {
+		qDebug() << SG_PREFIX_E << "Invalid coord mode of br coord:" << (int) coord_br.mode;
+		return;
+	}
+
+
 	TileInfo ti_ul, ti_br;
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(coord_ul.ll, viking_zoom_level, ti_ul)) {
+		qDebug() << SG_PREFIX_E << "Failed to convert ul";
+		return;
+	}
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(coord_br.ll, viking_zoom_level, ti_br)) {
+		qDebug() << SG_PREFIX_E << "Failed to convert br";
+		return;
+	}
 
-	if (MapUtils::coord_to_iTMS(coord_ul, viking_zoom_level, ti_ul) &&
-	     MapUtils::coord_to_iTMS(coord_br, viking_zoom_level, ti_br)) {
-		/* TODO_LATER: Understand if tilesize != 256 does this need to use shrinkfactors? */
 
-		const int xmin = std::min(ti_ul.x, ti_br.x);
-		const int xmax = std::max(ti_ul.x, ti_br.x);
-		const int ymin = std::min(ti_ul.y, ti_br.y);
-		const int ymax = std::max(ti_ul.y, ti_br.y);
+	/* TODO_LATER: Understand if tilesize != 256 does this need to use shrinkfactors? */
 
-		/* Split rendering into a grid for the current viewport
-		   thus each individual 'tile' can then be stored in the map cache. */
-		for (int x = xmin; x <= xmax; x++) {
-			for (int y = ymin; y <= ymax; y++) {
-				ti_ul.x = x;
-				ti_ul.y = y;
-				ti_br.x = x+1;
-				ti_br.y = y+1;
+	const int xmin = std::min(ti_ul.x, ti_br.x);
+	const int xmax = std::max(ti_ul.x, ti_br.x);
+	const int ymin = std::min(ti_ul.y, ti_br.y);
+	const int ymax = std::max(ti_ul.y, ti_br.y);
 
-				const QPixmap pixmap = this->get_pixmap(ti_ul, ti_br);
-				if (!pixmap.isNull()) {
-					const LatLon lat_lon = MapUtils::iTMS_to_lat_lon(ti_ul);
-					int xx, yy;
-					viewport->lat_lon_to_screen_pos(lat_lon, &xx, &yy);
-					viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
-				}
+	/* Split rendering into a grid for the current viewport
+	   thus each individual 'tile' can then be stored in the map cache. */
+	for (int x = xmin; x <= xmax; x++) {
+		for (int y = ymin; y <= ymax; y++) {
+			ti_ul.x = x;
+			ti_ul.y = y;
+			ti_br.x = x+1;
+			ti_br.y = y+1;
+
+			const QPixmap pixmap = this->get_pixmap(ti_ul, ti_br);
+			if (!pixmap.isNull()) {
+				const LatLon lat_lon = MapUtils::iTMS_to_lat_lon(ti_ul);
+				int xx, yy;
+				viewport->lat_lon_to_screen_pos(lat_lon, &xx, &yy);
+				viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 			}
 		}
+	}
 
-		/* Done after so drawn on top.
-		   Just a handy guide to tile blocks. */
-		if (vik_debug && vik_verbose) {
+	/* Done after so drawn on top.
+	   Just a handy guide to tile blocks. */
+	if (vik_debug && vik_verbose) {
 #ifdef K_FIXME_RESTORE
-			QPen * black_pen = viewport->get_widget()->style->black_pen;
-			int width = viewport->get_width();
-			int height = viewport->get_height();
-			int xx, yy;
-			ti_ul.x = xmin; ti_ul.y = ymin;
+		QPen * black_pen = viewport->get_widget()->style->black_pen;
+		int width = viewport->get_width();
+		int height = viewport->get_height();
+		int xx, yy;
+		ti_ul.x = xmin; ti_ul.y = ymin;
 
-			const LatLon lat_lon = MapUtils::iTMS_to_center_lat_lon(&ti_ul);
-			viewport->lat_lon_to_screen_pos(lat_lon, &xx, &yy);
-			xx = xx - (this->tile_size_x/2);
-			yy = yy - (this->tile_size_x/2); // Yes use X ATM
-			for (int x = xmin; x <= xmax; x++) {
-				viewport->draw_line(black_pen, xx, 0, xx, height);
-				xx += this->tile_size_x;
-			}
-			for (int y = ymin; y <= ymax; y++) {
-				viewport->draw_line(black_pen, 0, yy, width, yy);
-				yy += this->tile_size_x; // Yes use X ATM
-			}
-#endif
+		const LatLon lat_lon = MapUtils::iTMS_to_center_lat_lon(&ti_ul);
+		viewport->lat_lon_to_screen_pos(lat_lon, &xx, &yy);
+		xx = xx - (this->tile_size_x/2);
+		yy = yy - (this->tile_size_x/2); // Yes use X ATM
+		for (int x = xmin; x <= xmax; x++) {
+			viewport->draw_line(black_pen, xx, 0, xx, height);
+			xx += this->tile_size_x;
 		}
+		for (int y = ymin; y <= ymax; y++) {
+			viewport->draw_line(black_pen, 0, yy, width, yy);
+			yy += this->tile_size_x; // Yes use X ATM
+		}
+#endif
 	}
 }
 
@@ -1029,11 +1047,21 @@ static void mapnik_layer_rerender_cb(LayerMapnik * lmk)
  */
 void LayerMapnik::rerender()
 {
+	if (this->rerender_ul.mode != CoordMode::LatLon) {
+		qDebug() << SG_PREFIX_E << "Invalid coord mode of ul:" << (int) this->rerender_ul.mode;
+		return;
+	}
+
 	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	MapUtils::coord_to_iTMS(this->rerender_ul, this->rerender_viking_zoom_level, ti_ul);
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->rerender_ul.ll, this->rerender_viking_zoom_level, ti_ul)) {
+		qDebug() << SG_PREFIX_E << "Failed to convert ul";
+		return;
+	}
+
 	/* Reconvert back - thus getting the coordinate at the tile *ul corner*. */
 	this->rerender_ul = Coord(MapUtils::iTMS_to_lat_lon(ti_ul), CoordMode::LatLon);
+
 	/* Bottom right bound is simply +1 in TMS coords. */
 	TileInfo ti_br = ti_ul;
 	ti_br.x = ti_br.x+1;
@@ -1058,9 +1086,17 @@ static void mapnik_layer_tile_info_cb(LayerMapnik * lmk)
  */
 void LayerMapnik::tile_info()
 {
+	if (this->rerender_ul.mode != CoordMode::LatLon) {
+		qDebug() << SG_PREFIX_E << "Invalid coord mode of ul:" << (int) this->rerender_ul.mode;
+		return;
+	}
+
 	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	MapUtils::coord_to_iTMS(this->rerender_ul, this->rerender_viking_zoom_level, ti_ul);
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->rerender_ul.ll, this->rerender_viking_zoom_level, ti_ul)) {
+		qDebug() << SG_PREFIX_E << "Failed to convert ul";
+		return;
+	}
 
 	MapCacheItemProperties properties = MapCache::get_properties(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
 

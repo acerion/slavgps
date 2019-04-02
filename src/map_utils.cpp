@@ -39,106 +39,6 @@ using namespace SlavGPS;
 
 
 
-/* World Scale:
-   VIK_GZ(MAGIC_SEVENTEEN) down to submeter scale: 1/VIK_GZ(5)
-
-   No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that. */
-
-
-static const double scale_mpps[] = {
-	VIK_GZ(0),    /*       1 */
-	VIK_GZ(1),    /*       2 */
-	VIK_GZ(2),    /*       4 */
-	VIK_GZ(3),    /*       8 */
-	VIK_GZ(4),    /*      16 */
-	VIK_GZ(5),    /*      32 */
-	VIK_GZ(6),    /*      64 */
-	VIK_GZ(7),    /*     128 */
-	VIK_GZ(8),    /*     256 */
-	VIK_GZ(9),    /*     512 */
-	VIK_GZ(10),   /*    1024 */
-	VIK_GZ(11),   /*    2048 */
-	VIK_GZ(12),   /*    4096 */
-	VIK_GZ(13),   /*    8192 */
-	VIK_GZ(14),   /*   16384 */
-	VIK_GZ(15),   /*   32768 */
-	VIK_GZ(16),
-	VIK_GZ(17) };
-
-static const int num_scales = (sizeof(scale_mpps) / sizeof(scale_mpps[0]));
-
-static const double scale_neg_mpps[] = {
-	1.0/VIK_GZ(0),    /*   1   */
-	1.0/VIK_GZ(1),    /*   0.5 */
-	1.0/VIK_GZ(2),    /*   0.25 */
-	1.0/VIK_GZ(3),    /*   0.125 */
-	1.0/VIK_GZ(4),    /*   0.0625 */
-	1.0/VIK_GZ(5) };  /*   0.03125 */
-
-static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpps[0]));
-
-
-
-
-#define ERROR_MARGIN 0.01
-
-
-
-
-/**
- * @mpp: The so called 'mpp'
- *
- * Returns: the zoom scale value which may be negative.
- */
-TileScale MapUtils::mpp_to_tile_scale(double mpp)
-{
-	TileScale tile_scale;
-
-	for (int i = 0; i < num_scales; i++) {
-		if (std::abs(scale_mpps[i] - mpp) < ERROR_MARGIN) {
-			tile_scale.set_scale_value(i);
-			tile_scale.set_scale_valid(true);
-			return tile_scale;
-		}
-	}
-	for (int i = 0; i < num_scales_neg; i++) {
-		if (std::abs(scale_neg_mpps[i] - mpp) < 0.000001) {
-			tile_scale.set_scale_value(-i);
-			tile_scale.set_scale_valid(true);
-			return tile_scale;
-		}
-	}
-
-	/* In original implementation of the function '255' was the
-	   value returned when the loops didn't find any valid
-	   value. */
-	tile_scale.set_scale_value(255);
-	tile_scale.set_scale_valid(false);
-	return tile_scale;
-}
-
-
-
-
-/**
- * @mpp: The so called 'mpp'
- *
- * Returns: a Map Source Zoom Level.
- * See: http://wiki.openstreetmap.org/wiki/Zoom_levels
- */
-TileZoomLevel MapUtils::mpp_to_tile_zoom_level(double mpp)
-{
-	const TileScale tile_scale = MapUtils::mpp_to_tile_scale(mpp);
-	int tile_zoom_level = tile_scale.get_tile_zoom_level();
-	if (tile_zoom_level < (int) TileZoomLevels::MaxZoomOut) {
-		tile_zoom_level = (int) TileZoomLevels::Default;
-	}
-	return TileZoomLevel(tile_zoom_level);
-}
-
-
-
-
 /**
  * SECTION:map_utils
  * @short_description: Notes about TMS / Spherical Mercator conversion
@@ -164,14 +64,10 @@ TileZoomLevel MapUtils::mpp_to_tile_zoom_level(double mpp)
  *
  * Returns: whether the conversion was performed
  */
-bool MapUtils::coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
+sg_ret MapUtils::lat_lon_to_iTMS(const LatLon & lat_lon, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
 {
-	if (src_coord.mode != CoordMode::LatLon) {
-		return false;
-	}
-
 	if (!viking_zoom_level.x_y_is_equal()) {
-		return false;
+		return sg_ret::err;
 	}
 
 	/* Convenience variable. */
@@ -179,14 +75,14 @@ bool MapUtils::coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & vi
 
 	dest.scale = viking_zoom_level.to_tile_scale();
 	if (!dest.scale.is_valid()) {
-		return false;
+		return sg_ret::err;
 	}
 
-	dest.x = (src_coord.ll.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
-	dest.y = (180 - MERCLAT(src_coord.ll.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
+	dest.x = (lat_lon.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
+	dest.y = (180 - MERCLAT(lat_lon.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
 	dest.z = 0;
 
-	return true;
+	return sg_ret::ok;
 }
 
 

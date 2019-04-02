@@ -50,9 +50,7 @@ namespace SlavGPS {
 
 	class MapUtils {
 	public:
-		static TileScale mpp_to_tile_scale(double mpp);
-		static TileZoomLevel mpp_to_tile_zoom_level(double mpp);
-		static bool coord_to_iTMS(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
+		static sg_ret lat_lon_to_iTMS(const LatLon & lat_lon, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
 		static LatLon iTMS_to_center_lat_lon(const TileInfo & src);
 		static LatLon iTMS_to_lat_lon(const TileInfo & src);
 	};
