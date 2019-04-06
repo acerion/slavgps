@@ -79,7 +79,9 @@ using namespace SlavGPS;
 
 
 
-#define MERCATOR_FACTOR(x) ((65536.0 / 180 / (x)) * 256.0)
+#define MERCATOR_FACTOR(_mpp_) ((65536.0 / 180 / (_mpp_)) * 256.0)
+/* TODO: Form of this expression should be optimized for usage in denominator. */
+#define REVERSE_MERCATOR_FACTOR(_mpp_) ((65536.0 / 180 / (_mpp_)) * 256.0)
 
 #define VIK_SETTINGS_VIEW_LAST_LATITUDE     "viewport_last_latitude"
 #define VIK_SETTINGS_VIEW_LAST_LONGITUDE    "viewport_last_longitude"
@@ -1010,39 +1012,129 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	Coord coord;
 	const double xmpp = this->viking_zoom_level.x;
 	const double ympp = this->viking_zoom_level.y;
-	int zone_delta = 0;
 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		coord.mode = CoordMode::UTM;
 
-		coord.utm.zone = this->center.utm.zone;
-		assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
-		coord.utm.set_band_letter(this->center.utm.get_band_letter());
-		coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
+		/* Modified (reformatted) formula. */
+		{
+			const int delta_x = pos_x - this->canvas.width_2;
+			const int delta_y = this->canvas.height_2 - pos_y;
 
-		zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
+			coord.utm.zone = this->center.utm.zone;
+			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+			coord.utm.set_band_letter(this->center.utm.get_band_letter());
+			coord.utm.easting = (delta_x * xmpp) + this->center.utm.easting;
 
-		coord.utm.zone += zone_delta;
-		coord.utm.easting -= zone_delta * this->utm_zone_width;
-		coord.utm.northing = (((this->canvas.height_2) - pos_y) * ympp) + this->center.utm.northing;
+			const int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
+
+			coord.utm.zone += zone_delta;
+			coord.utm.easting -= zone_delta * this->utm_zone_width;
+			coord.utm.northing = (delta_y * ympp) + this->center.utm.northing;
+		}
+
+		/* Original code, used for comparison of results with new, reformatted formula. */
+		{
+			int zone_delta = 0;
+
+			Coord test_coord;
+			test_coord.mode = CoordMode::UTM;
+
+			test_coord.utm.zone = this->center.utm.zone;
+			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+			test_coord.utm.set_band_letter(this->center.utm.get_band_letter());
+			test_coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
+
+			zone_delta = floor((test_coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
+
+			test_coord.utm.zone += zone_delta;
+			test_coord.utm.easting -= zone_delta * this->utm_zone_width;
+			test_coord.utm.northing = (((this->canvas.height_2) - pos_y) * ympp) + this->center.utm.northing;
+
+
+			if (coord.utm.zone != test_coord.utm.zone) {
+				qDebug() << SG_PREFIX_E << "UTM: Zone calculation mismatch" << coord << test_coord << coord.utm.zone << test_coord.utm.zone;
+			}
+			if (coord.utm.easting != test_coord.utm.easting) {
+				qDebug() << SG_PREFIX_E << "UTM: Easting calculation mismatch" << coord << test_coord << (coord.utm.easting - test_coord.utm.easting);
+			}
+			if (coord.utm.northing != test_coord.utm.northing) {
+				qDebug() << SG_PREFIX_E << "UTM: Northing calculation mismatch" << coord << test_coord << (coord.utm.northing - test_coord.utm.northing);
+			}
+			if (coord.utm.get_band_letter() != test_coord.utm.get_band_letter()) {
+				qDebug() << SG_PREFIX_E << "UTM: Band letter calculation mismatch" << coord << test_coord << coord.utm.get_band_letter() << test_coord.utm.get_band_letter();
+			}
+		}
 		break;
 
 	case CoordMode::LatLon:
 		coord.mode = CoordMode::LatLon;
 
-		if (this->drawmode == ViewportDrawMode::LatLon) {
-			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
-			coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y));
+		switch (this->drawmode) {
+		case ViewportDrawMode::LatLon:
+			/* Modified (reformatted) formula. */
+			{
+				const int delta_x = pos_x - this->canvas.width_2;
+				const int delta_y = this->canvas.height_2 - pos_y;
 
-		} else if (this->drawmode == ViewportDrawMode::Expedia) {
+				coord.ll.lon = this->center.ll.lon + (delta_x / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.ll.lat = this->center.ll.lat + (delta_y / REVERSE_MERCATOR_FACTOR(ympp));
+			}
+
+			/* Original code, used for comparison of results with new, reformatted formula. */
+			{
+				Coord test_coord;
+				test_coord.mode = CoordMode::LatLon;
+
+				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
+				test_coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y));
+
+				if (coord.ll.lat != test_coord.ll.lat) {
+					qDebug() << SG_PREFIX_E << "LatLon: Latitude calculation mismatch" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
+				}
+				if (coord.ll.lon != test_coord.ll.lon) {
+					qDebug() << SG_PREFIX_E << "LatLon: Longitude calculation mismatch" << coord << test_coord << (coord.ll.lon - test_coord.ll.lon);
+				}
+			}
+			break;
+
+		case ViewportDrawMode::Expedia:
 			Expedia::screen_pos_to_lat_lon(coord.ll, pos_x, pos_y, this->center.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
+			break;
 
-		} else if (this->drawmode == ViewportDrawMode::Mercator) {
+		case ViewportDrawMode::Mercator:
 			/* This isn't called with a high frequently so less need to optimize. */
-			coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
-			coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y)));
-		} else {
+			/* Modified (reformatted) formula. */
+			{
+				const int delta_x = pos_x - this->canvas.width_2;
+				const int delta_y = this->canvas.height_2 - pos_y;
+
+				coord.ll.lon = this->center.ll.lon + (delta_x / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (delta_y / (REVERSE_MERCATOR_FACTOR(ympp))));
+			}
+
+			/* Original code, used for comparison of results with new, reformatted formula. */
+			{
+				Coord test_coord;
+				test_coord.mode = CoordMode::LatLon;
+
+				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
+				test_coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y)));
+
+				if (coord.ll.lat != test_coord.ll.lat) {
+					qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
+				} else {
+					qDebug() << SG_PREFIX_I << "Mercator: OK Latitude" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
+				}
+				if (coord.ll.lon != test_coord.ll.lon) {
+					qDebug() << SG_PREFIX_E << "Mercator: Longitude calculation mismatch" << coord << test_coord << (coord.ll.lon - test_coord.ll.lon);
+				} else {
+					qDebug() << SG_PREFIX_I << "Mercator: OK Longitude" << coord << test_coord << (coord.ll.lon - test_coord.ll.lon);
+				}
+			}
+			break;
+		default:
 			qDebug() << SG_PREFIX_E << "Unrecognized draw mode" << (int) this->drawmode;
 		}
 		break;

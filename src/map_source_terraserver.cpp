@@ -57,7 +57,7 @@ static int mpp_to_scale(double mpp, MapTypeID type)
 	mpp *= 4;
 	int t = (int) mpp;
 	if (std::abs(mpp - t) > MARGIN_OF_ERROR) {
-		return false;
+		return 0;
 	}
 
 	switch (t) {
