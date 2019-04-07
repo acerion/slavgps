@@ -48,6 +48,7 @@
 #include "preferences.h"
 #include "util.h"
 #include "map_utils.h"
+#include "layer_map.h"
 
 
 
@@ -202,7 +203,7 @@ void cache_remove_oldest()
  * Function increments reference counter of pixmap.
  * Caller may (and should) decrease it's reference.
  */
-void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const PixmapScale & pixmap_scale, const QString & file_name)
 {
 	/* It doesn't matter much which type of zoom we get here from
 	   ::scale, as long as we use the same type in all functions
@@ -218,7 +219,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 	static char key_[MC_KEY_SIZE];
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
 	std::string key(key_);
 
 	mc_mutex.lock();
@@ -251,7 +252,7 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const PixmapScale & pixmap_scale, const QString & file_name)
 {
 	QPixmap result;
 
@@ -263,7 +264,7 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
 	std::string key(key_);
 
 	mc_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
@@ -279,7 +280,7 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 
 
 
-MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name)
+MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const PixmapScale & pixmap_scale, const QString & file_name)
 {
 	MapCacheItemProperties properties(0.0);
 
@@ -291,7 +292,7 @@ MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapT
 
 	static char key_[MC_KEY_SIZE];
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
 	std::string key(key_);
 
 	auto iter = maps_cache.find(key);

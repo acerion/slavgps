@@ -46,6 +46,11 @@ namespace SlavGPS {
 
 
 
+	class PixmapScale;
+
+
+
+
 	enum class MapCacheLayout {
 		Viking = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout. */
 		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png). */
@@ -70,9 +75,9 @@ namespace SlavGPS {
 		static void init(void);
 		static void uninit(void);
 
-		static void add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
-		static QPixmap get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
-		static MapCacheItemProperties get_properties(const TileInfo & tile_info, MapTypeID map_type, int alpha, double xshrinkfactor, double yshrinkfactor, const QString & file_name);
+		static void add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemProperties & properties, const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
+		static QPixmap get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
+		static MapCacheItemProperties get_properties(const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
 
 		static size_t get_size(void);
 		static int get_count(void);

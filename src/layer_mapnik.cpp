@@ -686,7 +686,7 @@ void LayerMapnik::render(const TileInfo & ti_ul, const Coord & coord_ul, const C
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 
-	MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(tt), ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(tt), ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
 }
 
 
@@ -767,7 +767,7 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br,
 				ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
 
-			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(-1.0), ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(-1.0), ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
 		if (g_planet_import_time < stat_buf.st_mtime) {
@@ -790,7 +790,7 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br)
 	const Coord coord_ul = Coord(MapUtils::iTMS_to_lat_lon(ti_ul), CoordMode::LatLon);
 	const Coord coord_br = Coord(MapUtils::iTMS_to_lat_lon(ti_br), CoordMode::LatLon);
 
-	QPixmap pixmap = MapCache::get_tile_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	QPixmap pixmap = MapCache::get_tile_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "MAP CACHE HIT";
 	} else {
@@ -1098,7 +1098,7 @@ void LayerMapnik::tile_info()
 		return;
 	}
 
-	MapCacheItemProperties properties = MapCache::get_properties(ti_ul, MapTypeID::MapnikRender, this->alpha, 0.0, 0.0, this->filename_xml);
+	MapCacheItemProperties properties = MapCache::get_properties(ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
 
 	const QString tile_file_full_path = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
 

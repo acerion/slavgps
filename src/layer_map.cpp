@@ -845,15 +845,15 @@ Layer * LayerMapInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 
 
-static void pixmap_apply_settings(QPixmap & pixmap, int alpha, double scale_x, double scale_y)
+static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const PixmapScale & pixmap_scale)
 {
 	/* Apply alpha setting. */
 	if (scale_alpha.is_in_range(alpha)) {
 		ui_pixmap_set_alpha(pixmap, alpha);
 	}
 
-	if (scale_x != 1.0 || scale_y != 1.0) {
-		ui_pixmap_scale_size_by(pixmap, scale_x, scale_y);
+	if (pixmap_scale.x != 1.0 || pixmap_scale.y != 1.0) {
+		ui_pixmap_scale_size_by(pixmap, pixmap_scale.x, pixmap_scale.y);
 	}
 
 	return;
@@ -862,10 +862,10 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, double scale_x, d
 
 
 
-QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, double scale_x, double scale_y)
+QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, const PixmapScale & pixmap_scale)
 {
 	/* Get the thing. */
-	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->map_type_id, this->alpha, scale_x, scale_y, this->file_full_path);
+	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->map_type_id, this->alpha, pixmap_scale, this->file_full_path);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "CACHE HIT";
 		return pixmap;
@@ -883,10 +883,10 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & ti
 	pixmap = map_source->get_tile_pixmap(map_cache_obj, tile_info, args);
 
 	if (!pixmap.isNull()) {
-		pixmap_apply_settings(pixmap, this->alpha, scale_x, scale_y);
+		pixmap_apply_settings(pixmap, this->alpha, pixmap_scale);
 
 		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(0.0), tile_info, map_source->map_type_id,
-					  this->alpha, scale_x, scale_y, this->file_full_path);
+					  this->alpha, pixmap_scale, this->file_full_path);
 	}
 
 	return pixmap;
@@ -937,7 +937,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_iter,
 				   int viewport_x, int viewport_y,
 				   int tilesize_x_ceil, int tilesize_y_ceil,
-				   double scale_x, double scale_y,
+				   const PixmapScale & pixmap_scale,
 				   const QString & map_type_string)
 {
 	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
@@ -947,7 +947,10 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_it
 		TileInfo scaled_tile_iter = tile_iter;
 		scaled_tile_iter.scale_down(scale_inc, scale_factor);
 
-		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, scaled_tile_iter, scale_x * scale_factor, scale_y * scale_factor);
+		PixmapScale scaled_pixmap_scale = pixmap_scale;
+		scaled_pixmap_scale.scale_down(scale_factor);
+
+		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, scaled_tile_iter, scaled_pixmap_scale);
 		if (!pixmap.isNull()) {
 			qDebug() << SG_PREFIX_I << "Pixmap found";
 			const int pixmap_x = (tile_iter.x % scale_factor) * tilesize_x_ceil;
@@ -968,7 +971,7 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_it
 bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter,
 				 int viewport_x, int viewport_y,
 				 int tilesize_x_ceil, int tilesize_y_ceil,
-				 double scale_x, double scale_y,
+				 const PixmapScale & pixmap_scale,
 				 const QString & map_type_string)
 {
 	/* Try with bigger zooms. */
@@ -978,13 +981,16 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter
 		TileInfo scaled_tile_iter = tile_iter;
 		scaled_tile_iter.scale_up(scale_dec, scale_factor);
 
+		PixmapScale scaled_pixmap_scale = pixmap_scale;
+		scaled_pixmap_scale.scale_up(scale_factor);
+
 		for (int pict_x = 0; pict_x < scale_factor; pict_x ++) {
 			for (int pict_y = 0; pict_y < scale_factor; pict_y ++) {
 				TileInfo ulm3 = scaled_tile_iter;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 
-				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm3, scale_x / scale_factor, scale_y / scale_factor);
+				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm3, scaled_pixmap_scale);
 				if (!pixmap.isNull()) {
 					qDebug() << SG_PREFIX_I << "Pixmap found";
 					int pixmap_x = 0;
@@ -1011,19 +1017,17 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	double xzoom = viewport->get_viking_zoom_level().get_x();
 	double yzoom = viewport->get_viking_zoom_level().get_y();
 
-	double scale_x = 1.0;
-	double scale_y = 1.0;
+	PixmapScale pixmap_scale(1.0, 1.0);
+
 	bool existence_only = false;
 
 	if (this->xmapzoom && (this->xmapzoom != xzoom || this->ymapzoom != yzoom)) {
-		scale_x = this->xmapzoom / xzoom;
-		scale_y = this->ymapzoom / yzoom;
+		pixmap_scale = PixmapScale(this->xmapzoom / xzoom, this->ymapzoom / yzoom);
 		xzoom = this->xmapzoom;
 		yzoom = this->xmapzoom;
-		if (! (scale_x > MIN_SHRINKFACTOR && scale_x < MAX_SHRINKFACTOR &&
-			scale_y > MIN_SHRINKFACTOR && scale_y < MAX_SHRINKFACTOR)) {
+		if (!pixmap_scale.condition_1()) {
 
-			if (scale_x > REAL_MIN_SHRINKFACTOR && scale_y > REAL_MIN_SHRINKFACTOR) {
+			if (pixmap_scale.condition_2()) {
 				qDebug() << SG_PREFIX_D << "existence_only due to SHRINKFACTORS";
 				existence_only = true;
 			} else {
@@ -1091,7 +1095,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		for (tile_iter.x = unordered_tiles_range.x_begin; tile_iter.x <= unordered_tiles_range.x_end; tile_iter.x++) {
 			for (tile_iter.y = unordered_tiles_range.y_begin; tile_iter.y <= unordered_tiles_range.y_end; tile_iter.y++) {
 
-				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, scale_x, scale_y);
+				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
 				if (pixmap.isNull()) {
 					qDebug() << SG_PREFIX_W << "Pixmap not found";
 					continue;
@@ -1119,8 +1123,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			}
 		}
 	} else { /* tilesize is known, don't have to keep converting coords. */
-		const double tilesize_x = map_source->get_tilesize_x() * scale_x;
-		const double tilesize_y = map_source->get_tilesize_y() * scale_y;
+		const double tilesize_x = map_source->get_tilesize_x() * pixmap_scale.x;
+		const double tilesize_y = map_source->get_tilesize_y() * pixmap_scale.y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
 		const int tilesize_x_ceil = ceil(tilesize_x);
 		const int tilesize_y_ceil = ceil(tilesize_y);
@@ -1174,7 +1178,14 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				} else {
 					/* Try correct scale first. */
 					int scale_factor = 1;
-					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, scale_x * scale_factor, scale_y * scale_factor);
+
+					/* Since scale_factor == 1, this is not necessary: */
+					/*
+					   PixmapScale scaled_pixmap_scale = scale;
+					   scaled_pixmap_scale = scale.scale_down(scale_factor);
+					*/
+
+					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
 					if (!pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Pixmap found";
 						const int pixmap_x = (tile_iter.x % scale_factor) * tilesize_x_ceil;
@@ -1185,12 +1196,12 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 						qDebug() << SG_PREFIX_I << "Pixmap not found";
 						/* Otherwise try different scales. */
 						if (SCALE_SMALLER_ZOOM_FIRST) {
-							if (!this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
-								this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
+							if (!this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string)) {
+								this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string);
 							}
 						} else {
-							if (!this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string)) {
-								this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, scale_x, scale_y, map_type_string);
+							if (!this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string)) {
+								this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string);
 							}
 						}
 					}
@@ -1999,4 +2010,47 @@ VikingZoomLevel LayerMap::calculate_viking_zoom_level(const Viewport * viewport)
 	VikingZoomLevel result(xzoom, yzoom);
 
 	return result;
+}
+
+
+
+
+PixmapScale::PixmapScale(double new_x, double new_y)
+{
+	this->x = new_x;
+	this->y = new_y;
+}
+
+
+
+
+bool PixmapScale::condition_1(void) const
+{
+	return (this->x > MIN_SHRINKFACTOR && this->x < MAX_SHRINKFACTOR &&
+		this->y > MIN_SHRINKFACTOR && this->y < MAX_SHRINKFACTOR);
+}
+
+
+
+
+bool PixmapScale::condition_2(void) const
+{
+	return this->x > REAL_MIN_SHRINKFACTOR && this->y > REAL_MIN_SHRINKFACTOR;
+}
+
+
+
+
+void PixmapScale::scale_down(int scale_factor)
+{
+	this->x *= scale_factor;
+	this->y *= scale_factor;
+}
+
+
+
+void PixmapScale::scale_up(int scale_factor)
+{
+	this->x /= scale_factor;
+	this->y /= scale_factor;
 }

@@ -56,6 +56,7 @@ namespace SlavGPS {
 	enum class ViewportDrawMode;
 	class Viewport;
 	class VikingZoomLevel;
+	class PixmapScale;
 
 
 
