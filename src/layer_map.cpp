@@ -934,7 +934,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 
 
 
-bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
+bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_iter,
 				   int viewport_x, int viewport_y,
 				   int tilesize_x_ceil, int tilesize_y_ceil,
 				   double scale_x, double scale_y,
@@ -943,16 +943,15 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
 		/* Try with smaller zooms. */
 		int scale_factor = 1 << scale_inc;  /* 2^scale_inc */
-		TileInfo ulm2 = ulm;
-		ulm2.x = ulm.x / scale_factor;
-		ulm2.y = ulm.y / scale_factor;
-		ulm2.scale.set_scale_value(ulm.scale.get_scale_value() + scale_inc); /* TODO_LATER: should it be "+ scale_inc" or "* scale_inc"? */
 
-		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm2, scale_x * scale_factor, scale_y * scale_factor);
+		TileInfo scaled_tile_iter = tile_iter;
+		scaled_tile_iter.scale_down(scale_inc, scale_factor);
+
+		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, scaled_tile_iter, scale_x * scale_factor, scale_y * scale_factor);
 		if (!pixmap.isNull()) {
 			qDebug() << SG_PREFIX_I << "Pixmap found";
-			const int pixmap_x = (ulm.x % scale_factor) * tilesize_x_ceil;
-			const int pixmap_y = (ulm.y % scale_factor) * tilesize_y_ceil;
+			const int pixmap_x = (tile_iter.x % scale_factor) * tilesize_x_ceil;
+			const int pixmap_y = (tile_iter.y % scale_factor) * tilesize_y_ceil;
 			qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
 			viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
 			return true;
@@ -966,7 +965,7 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, TileInfo ulm,
 
 
 
-bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
+bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter,
 				 int viewport_x, int viewport_y,
 				 int tilesize_x_ceil, int tilesize_y_ceil,
 				 double scale_x, double scale_y,
@@ -975,13 +974,13 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, TileInfo ulm,
 	/* Try with bigger zooms. */
 	for (unsigned int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
 		int scale_factor = 1 << scale_dec;  /* 2^scale_dec */
-		TileInfo ulm2 = ulm;
-		ulm2.x = ulm.x * scale_factor;
-		ulm2.y = ulm.y * scale_factor;
-		ulm2.scale.set_scale_value(ulm.scale.get_scale_value() - scale_dec); /* TODO_LATER: should it be "- scale_dec" or "/ scale_dec"? */
+
+		TileInfo scaled_tile_iter = tile_iter;
+		scaled_tile_iter.scale_up(scale_dec, scale_factor);
+
 		for (int pict_x = 0; pict_x < scale_factor; pict_x ++) {
 			for (int pict_y = 0; pict_y < scale_factor; pict_y ++) {
-				TileInfo ulm3 = ulm2;
+				TileInfo ulm3 = scaled_tile_iter;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 

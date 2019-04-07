@@ -52,6 +52,26 @@ TilesRange TileInfo::get_tiles_range(const TileInfo & ulm, const TileInfo & brm)
 
 
 
+void TileInfo::scale_up(int scale_dec, int scale_factor)
+{
+	this->x = this->x * scale_factor;
+	this->y = this->y * scale_factor;
+	this->scale.set_scale_value(this->scale.get_scale_value() - scale_dec); /* TODO_LATER: should it be "- scale_dec" or "/ scale_dec"? */
+}
+
+
+
+
+void TileInfo::scale_down(int scale_inc, int scale_factor)
+{
+	this->x = this->x / scale_factor;
+	this->y = this->y / scale_factor;
+	this->scale.set_scale_value(this->scale.get_scale_value() + scale_inc); /* TODO_LATER: should it be "+ scale_inc" or "* scale_inc"? */
+}
+
+
+
+
 QDebug SlavGPS::operator<<(QDebug debug, const TileInfo & tile_info)
 {
 	debug << "x =" << tile_info.x << ", y =" << tile_info.y << ", zoom level =" << tile_info.get_tile_zoom_level();

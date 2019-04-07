@@ -76,6 +76,9 @@ namespace SlavGPS {
 	public:
 		static TilesRange get_tiles_range(const TileInfo & ulm, const TileInfo & brm);
 
+		void scale_up(int scale_dec, int scale_factor);
+		void scale_down(int scale_inc, int scale_factor);
+
 		/* https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#X_and_Y */
 		int x = 0;
 		int y = 0;
