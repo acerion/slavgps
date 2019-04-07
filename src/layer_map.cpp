@@ -173,7 +173,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 
 
 
-static void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, int tilesize_x, int tilesize_y);
+static void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height);
 
 
 
@@ -936,7 +936,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 
 bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_iter,
 				   int viewport_x, int viewport_y,
-				   int tilesize_x_ceil, int tilesize_y_ceil,
+				   int tile_width, int tile_height,
 				   const PixmapScale & pixmap_scale,
 				   const QString & map_type_string)
 {
@@ -953,10 +953,10 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_it
 		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, scaled_tile_iter, scaled_pixmap_scale);
 		if (!pixmap.isNull()) {
 			qDebug() << SG_PREFIX_I << "Pixmap found";
-			const int pixmap_x = (tile_iter.x % scale_factor) * tilesize_x_ceil;
-			const int pixmap_y = (tile_iter.y % scale_factor) * tilesize_y_ceil;
+			const int pixmap_x = (tile_iter.x % scale_factor) * tile_width;
+			const int pixmap_y = (tile_iter.y % scale_factor) * tile_height;
 			qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-			viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
+			viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tile_width, tile_height);
 			return true;
 		} else {
 			qDebug() << SG_PREFIX_I << "Pixmap not found";
@@ -970,7 +970,7 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_it
 
 bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter,
 				 int viewport_x, int viewport_y,
-				 int tilesize_x_ceil, int tilesize_y_ceil,
+				 int tile_width, int tile_height,
 				 const PixmapScale & pixmap_scale,
 				 const QString & map_type_string)
 {
@@ -984,8 +984,11 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter
 		PixmapScale scaled_pixmap_scale = pixmap_scale;
 		scaled_pixmap_scale.scale_up(scale_factor);
 
-		for (int pict_x = 0; pict_x < scale_factor; pict_x ++) {
-			for (int pict_y = 0; pict_y < scale_factor; pict_y ++) {
+		const int scaled_tile_width = tile_width / scale_factor;
+		const int scaled_tile_height = tile_height / scale_factor;
+
+		for (int pict_x = 0; pict_x < scale_factor; pict_x++) {
+			for (int pict_y = 0; pict_y < scale_factor; pict_y++) {
 				TileInfo ulm3 = scaled_tile_iter;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
@@ -995,10 +998,11 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter
 					qDebug() << SG_PREFIX_I << "Pixmap found";
 					int pixmap_x = 0;
 					int pixmap_y = 0;
-					int dest_x = viewport_x + pict_x * (tilesize_x_ceil / scale_factor);
-					int dest_y = viewport_y + pict_y * (tilesize_y_ceil / scale_factor);
+					int dest_x = viewport_x + pict_x * scaled_tile_width;
+					int dest_y = viewport_y + pict_y * scaled_tile_height;
+
 					qDebug() << SG_PREFIX_I << "Calling draw_pixmap";
-					viewport->draw_pixmap(pixmap, dest_x, dest_y, pixmap_x, pixmap_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
+					viewport->draw_pixmap(pixmap, dest_x, dest_y, pixmap_x, pixmap_y, scaled_tile_width, scaled_tile_height);
 					return true;
 				} else {
 					qDebug() << SG_PREFIX_I << "Pixmap not found";
@@ -1102,8 +1106,10 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				}
 
 				qDebug() << SG_PREFIX_I << "Pixmap found";
-				const int width = pixmap.width();
-				const int height = pixmap.height();
+				const int pixmap_x = 0;
+				const int pixmap_y = 0;
+				const int tile_width = pixmap.width();
+				const int tile_height = pixmap.height();
 				int viewport_x;
 				int viewport_y;
 
@@ -1115,19 +1121,19 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					viewport->utm_to_screen_pos(utm, &viewport_x, &viewport_y);
 				}
 
-				viewport_x -= (width/2);
-				viewport_y -= (height/2);
+				viewport_x -= (tile_width / 2);
+				viewport_y -= (tile_height / 2);
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-				viewport->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, width, height);
+				viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tile_width, tile_height);
 			}
 		}
 	} else { /* tilesize is known, don't have to keep converting coords. */
-		const double tilesize_x = map_source->get_tilesize_x() * pixmap_scale.x;
-		const double tilesize_y = map_source->get_tilesize_y() * pixmap_scale.y;
+		const double tile_width_f = map_source->get_tilesize_x() * pixmap_scale.x;
+		const double tile_height_f = map_source->get_tilesize_y() * pixmap_scale.y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
-		const int tilesize_x_ceil = ceil(tilesize_x);
-		const int tilesize_y_ceil = ceil(tilesize_y);
+		const int tile_width = ceil(tile_width_f);
+		const int tile_height = ceil(tile_height_f);
 
 
 		const int delta_x = (tile_ul.x == unordered_tiles_range.x_begin) ? 1 : -1;
@@ -1154,8 +1160,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 		/* Above trick so viewport_x,viewport_y doubles. this is so shrinkfactors aren't rounded off
 		   e.g. if tile size 128, shrinkfactor 0.333. */
-		viewport_x -= (tilesize_x/2);
-		int base_viewport_y = viewport_y - (tilesize_y/2);
+		viewport_x -= (tile_width_f / 2);
+		int base_viewport_y = viewport_y - (tile_height_f / 2);
 
 		const MapCacheObj map_cache_obj(map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
 
@@ -1173,7 +1179,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 					if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 						const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-						viewport->draw_line(pen, viewport_x + tilesize_x_ceil, viewport_y, viewport_x, viewport_y + tilesize_y_ceil);
+						viewport->draw_line(pen, viewport_x + tile_width, viewport_y, viewport_x, viewport_y + tile_height);
 					}
 				} else {
 					/* Try correct scale first. */
@@ -1188,28 +1194,28 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
 					if (!pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Pixmap found";
-						const int pixmap_x = (tile_iter.x % scale_factor) * tilesize_x_ceil;
-						const int pixmap_y = (tile_iter.y % scale_factor) * tilesize_y_ceil;
+						const int pixmap_x = (tile_iter.x % scale_factor) * tile_width;
+						const int pixmap_y = (tile_iter.y % scale_factor) * tile_height;
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap, pixmap_x =" << pixmap_x << "pixmap_y =" << pixmap_y << "viewport_x =" << viewport_x << "viewport_y =" << viewport_y;
-						viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tilesize_x_ceil, tilesize_y_ceil);
+						viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tile_width, tile_height);
 					} else {
 						qDebug() << SG_PREFIX_I << "Pixmap not found";
 						/* Otherwise try different scales. */
 						if (SCALE_SMALLER_ZOOM_FIRST) {
-							if (!this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string)) {
-								this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string);
+							if (!this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string)) {
+								this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
 							}
 						} else {
-							if (!this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string)) {
-								this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tilesize_x_ceil, tilesize_y_ceil, pixmap_scale, map_type_string);
+							if (!this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string)) {
+								this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
 							}
 						}
 					}
 				}
 
-				viewport_y += tilesize_y;
+				viewport_y += tile_height_f;
 			}
-			viewport_x += tilesize_x;
+			viewport_x += tile_width_f;
 		}
 
 		/* ATM Only show tile grid lines in extreme debug mode. */
@@ -1223,7 +1229,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			/* Grid drawing here so it gets drawn on top of the map.
 			   Thus loop around x & y again, but this time separately.
 			   Only showing grid for the current scale */
-			draw_grid(viewport, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_begin, delta_x, ordered_tiles_range.x_end, ordered_tiles_range.y_begin, delta_y, ordered_tiles_range.y_end, tilesize_x, tilesize_y);
+			draw_grid(viewport, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_begin, delta_x, ordered_tiles_range.x_end, ordered_tiles_range.y_begin, delta_y, ordered_tiles_range.y_end, tile_width_f, tile_height_f);
 		}
 	}
 }
@@ -1231,26 +1237,26 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 
 
-void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, int tilesize_x, int tilesize_y)
+void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
 {
 	const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
 
 	/* Draw single grid lines across the whole screen. */
-	const int width = viewport->get_width();
-	const int height = viewport->get_height();
-	const int base_viewport_x = viewport_x - (tilesize_x / 2);
-	const int base_viewport_y = viewport_y - (tilesize_y / 2);
+	const int viewport_width = viewport->get_width();
+	const int viewport_height = viewport->get_height();
+	const int base_viewport_x = viewport_x - (tile_width / 2);
+	const int base_viewport_y = viewport_y - (tile_height / 2);
 
 	viewport_x = base_viewport_x;
 	for (int x = x_begin; x != x_end; x += delta_x) {
-		viewport->draw_line(pen, viewport_x, base_viewport_y, viewport_x, height);
-		viewport_x += tilesize_x;
+		viewport->draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
+		viewport_x += tile_width;
 	}
 
 	viewport_y = base_viewport_y;
 	for (int y = y_begin; y != y_end; y += delta_y) {
-		viewport->draw_line(pen, base_viewport_x, viewport_y, width, viewport_y);
-		viewport_y += tilesize_y;
+		viewport->draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
+		viewport_y += tile_height;
 	}
 }
 
