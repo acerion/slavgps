@@ -934,12 +934,14 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 
 
 
-bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_iter,
-				   int viewport_x, int viewport_y,
-				   int tile_width, int tile_height,
-				   const PixmapScale & pixmap_scale,
-				   const QString & map_type_string)
+TileGeometry LayerMap::find_scaled_down_tile(Viewport * viewport, const TileInfo & tile_iter,
+					     int viewport_x, int viewport_y,
+					     int tile_width, int tile_height,
+					     const PixmapScale & pixmap_scale,
+					     const QString & map_type_string)
 {
+	TileGeometry result;
+
 	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
 		/* Try with smaller zooms. */
 		int scale_factor = 1 << scale_inc;  /* 2^scale_inc */
@@ -950,30 +952,36 @@ bool LayerMap::try_draw_scale_down(Viewport * viewport, const TileInfo & tile_it
 		PixmapScale scaled_pixmap_scale = pixmap_scale;
 		scaled_pixmap_scale.scale_down(scale_factor);
 
-		const QPixmap pixmap = this->get_tile_pixmap(map_type_string, scaled_tile_iter, scaled_pixmap_scale);
-		if (!pixmap.isNull()) {
-			qDebug() << SG_PREFIX_I << "Pixmap found";
-			const int pixmap_x = (tile_iter.x % scale_factor) * tile_width;
-			const int pixmap_y = (tile_iter.y % scale_factor) * tile_height;
-			qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-			viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tile_width, tile_height);
-			return true;
+		result.pixmap = this->get_tile_pixmap(map_type_string, scaled_tile_iter, scaled_pixmap_scale);
+		if (!result.pixmap.isNull()) {
+			qDebug() << SG_PREFIX_I << "Found scaled-down tile pixmap";
+
+			result.dest_x = viewport_x;
+			result.dest_y = viewport_y;
+			result.begin_x = (tile_iter.x % scale_factor) * tile_width;
+			result.begin_y = (tile_iter.y % scale_factor) * tile_height;
+			result.width = tile_width;
+			result.height = tile_height;
+
+			return result;
 		} else {
 			qDebug() << SG_PREFIX_I << "Pixmap not found";
 		}
 	}
-	return false;
+	return result;
 }
 
 
 
 
-bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter,
-				 int viewport_x, int viewport_y,
-				 int tile_width, int tile_height,
-				 const PixmapScale & pixmap_scale,
-				 const QString & map_type_string)
+TileGeometry LayerMap::find_scaled_up_tile(Viewport * viewport, const TileInfo & tile_iter,
+					   int viewport_x, int viewport_y,
+					   int tile_width, int tile_height,
+					   const PixmapScale & pixmap_scale,
+					   const QString & map_type_string)
 {
+	TileGeometry result;
+
 	/* Try with bigger zooms. */
 	for (unsigned int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
 		int scale_factor = 1 << scale_dec;  /* 2^scale_dec */
@@ -993,24 +1001,25 @@ bool LayerMap::try_draw_scale_up(Viewport * viewport, const TileInfo & tile_iter
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
 
-				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, ulm3, scaled_pixmap_scale);
-				if (!pixmap.isNull()) {
-					qDebug() << SG_PREFIX_I << "Pixmap found";
-					int pixmap_x = 0;
-					int pixmap_y = 0;
-					int dest_x = viewport_x + pict_x * scaled_tile_width;
-					int dest_y = viewport_y + pict_y * scaled_tile_height;
+				result.pixmap = this->get_tile_pixmap(map_type_string, ulm3, scaled_pixmap_scale);
+				if (!result.pixmap.isNull()) {
+					qDebug() << SG_PREFIX_I << "Found scaled-up tile pixmap";
 
-					qDebug() << SG_PREFIX_I << "Calling draw_pixmap";
-					viewport->draw_pixmap(pixmap, dest_x, dest_y, pixmap_x, pixmap_y, scaled_tile_width, scaled_tile_height);
-					return true;
+					result.dest_x = viewport_x + pict_x * scaled_tile_width;
+					result.dest_y = viewport_y + pict_y * scaled_tile_height;
+					result.begin_x = 0;
+					result.begin_y = 0;
+					result.width = scaled_tile_width;
+					result.height = scaled_tile_height;
+
+					return result;
 				} else {
 					qDebug() << SG_PREFIX_I << "Pixmap not found";
 				}
 			}
 		}
 	}
-	return false;
+	return result;
 }
 
 
@@ -1099,33 +1108,33 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		for (tile_iter.x = unordered_tiles_range.x_begin; tile_iter.x <= unordered_tiles_range.x_end; tile_iter.x++) {
 			for (tile_iter.y = unordered_tiles_range.y_begin; tile_iter.y <= unordered_tiles_range.y_end; tile_iter.y++) {
 
-				const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
-				if (pixmap.isNull()) {
+				TileGeometry tile_geometry;
+
+				tile_geometry.pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
+				if (tile_geometry.pixmap.isNull()) {
 					qDebug() << SG_PREFIX_W << "Pixmap not found";
 					continue;
 				}
-
 				qDebug() << SG_PREFIX_I << "Pixmap found";
-				const int pixmap_x = 0;
-				const int pixmap_y = 0;
-				const int tile_width = pixmap.width();
-				const int tile_height = pixmap.height();
-				int viewport_x;
-				int viewport_y;
+
+				tile_geometry.begin_x = 0;
+				tile_geometry.begin_y = 0;
+				tile_geometry.width = tile_geometry.pixmap.width();
+				tile_geometry.height = tile_geometry.pixmap.height();
 
 				if (map_source->coord_mode == CoordMode::LatLon) {
 					map_source->tile_info_to_center_lat_lon(tile_iter, lat_lon);
-					viewport->lat_lon_to_screen_pos(lat_lon, &viewport_x, &viewport_y);
+					viewport->lat_lon_to_screen_pos(lat_lon, &tile_geometry.dest_x, &tile_geometry.dest_y);
 				} else {
 					map_source->tile_info_to_center_utm(tile_iter, utm);
-					viewport->utm_to_screen_pos(utm, &viewport_x, &viewport_y);
+					viewport->utm_to_screen_pos(utm, &tile_geometry.dest_x, &tile_geometry.dest_y);
 				}
 
-				viewport_x -= (tile_width / 2);
-				viewport_y -= (tile_height / 2);
+				tile_geometry.dest_x -= (tile_geometry.width / 2);
+				tile_geometry.dest_y -= (tile_geometry.height / 2);
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-				viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tile_width, tile_height);
+				viewport->draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
 			}
 		}
 	} else { /* tilesize is known, don't have to keep converting coords. */
@@ -1190,26 +1199,38 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					   PixmapScale scaled_pixmap_scale = scale;
 					   scaled_pixmap_scale = scale.scale_down(scale_factor);
 					*/
+					TileGeometry tile_geometry;
+					tile_geometry.pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
+					if (!tile_geometry.pixmap.isNull()) {
+						qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap found";
 
-					const QPixmap pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
-					if (!pixmap.isNull()) {
-						qDebug() << SG_PREFIX_I << "Pixmap found";
-						const int pixmap_x = (tile_iter.x % scale_factor) * tile_width;
-						const int pixmap_y = (tile_iter.y % scale_factor) * tile_height;
-						qDebug() << SG_PREFIX_I << "Calling draw_pixmap, pixmap_x =" << pixmap_x << "pixmap_y =" << pixmap_y << "viewport_x =" << viewport_x << "viewport_y =" << viewport_y;
-						viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, tile_width, tile_height);
+						tile_geometry.dest_x = viewport_x;
+						tile_geometry.dest_y = viewport_y;
+						tile_geometry.begin_x = (tile_iter.x % scale_factor) * tile_width;
+						tile_geometry.begin_y = (tile_iter.y % scale_factor) * tile_height;
+						tile_geometry.width = tile_width;
+						tile_geometry.height = tile_height;
+
 					} else {
-						qDebug() << SG_PREFIX_I << "Pixmap not found";
+						qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap not found, will look for re-scaled pixmap";
+
 						/* Otherwise try different scales. */
 						if (SCALE_SMALLER_ZOOM_FIRST) {
-							if (!this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string)) {
-								this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
+							tile_geometry = this->find_scaled_down_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
+							if (tile_geometry.pixmap.isNull()) {
+								tile_geometry = this->find_scaled_up_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
 							}
 						} else {
-							if (!this->try_draw_scale_up(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string)) {
-								this->try_draw_scale_down(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
+							tile_geometry = this->find_scaled_up_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
+							if (tile_geometry.pixmap.isNull()) {
+								tile_geometry = this->find_scaled_down_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
 							}
 						}
+					}
+
+					if (!tile_geometry.pixmap.isNull()) {
+						qDebug() << SG_PREFIX_I << "Calling draw_pixmap";
+						viewport->draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
 					}
 				}
 
