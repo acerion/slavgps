@@ -62,6 +62,8 @@ namespace SlavGPS {
 
 	class TileGeometry {
 	public:
+		void scale_up(int scale_factor);
+
 		QPixmap pixmap;
 
 		/* x/y coordinates in target viewport, where the pixmap will be drawn. */
@@ -196,12 +198,13 @@ namespace SlavGPS {
 		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode);
 		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode);
 
-		TileGeometry find_scaled_down_tile(Viewport * viewport, const TileInfo & tile_iter, int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, const PixmapScale & pixmap_scale, const QString & map_name);
-		TileGeometry find_scaled_up_tile(Viewport * viewport, const TileInfo & , int viewport_x, int viewport_y, int tilesize_x_ceil, int tilesize_y_ceil, const PixmapScale & pixmap_scale, const QString & map_name);
+		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string, int scale_factor);
+		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
+		TileGeometry find_scaled_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
 
 		bool should_start_autodownload(Viewport * viewport);
 
-		QPixmap get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, const PixmapScale & scale);
+		QPixmap get_tile_pixmap(const QString & map_type_string, const TileInfo & tile_info, const PixmapScale & scale);
 		QPixmap create_pixmap_from_file(const QString & file_full_path);
 
 	public slots:

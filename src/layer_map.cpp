@@ -862,7 +862,7 @@ static void pixmap_apply_settings(QPixmap & pixmap, int alpha, const PixmapScale
 
 
 
-QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, TileInfo & tile_info, const PixmapScale & pixmap_scale)
+QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInfo & tile_info, const PixmapScale & pixmap_scale)
 {
 	/* Get the thing. */
 	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, this->map_type_id, this->alpha, pixmap_scale, this->file_full_path);
@@ -934,9 +934,8 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 
 
 
-TileGeometry LayerMap::find_scaled_down_tile(Viewport * viewport, const TileInfo & tile_iter,
-					     int viewport_x, int viewport_y,
-					     int tile_width, int tile_height,
+TileGeometry LayerMap::find_scaled_down_tile(const TileInfo & tile_iter,
+					     const TileGeometry & tile_geometry,
 					     const PixmapScale & pixmap_scale,
 					     const QString & map_type_string)
 {
@@ -956,12 +955,12 @@ TileGeometry LayerMap::find_scaled_down_tile(Viewport * viewport, const TileInfo
 		if (!result.pixmap.isNull()) {
 			qDebug() << SG_PREFIX_I << "Found scaled-down tile pixmap";
 
-			result.dest_x = viewport_x;
-			result.dest_y = viewport_y;
-			result.begin_x = (tile_iter.x % scale_factor) * tile_width;
-			result.begin_y = (tile_iter.y % scale_factor) * tile_height;
-			result.width = tile_width;
-			result.height = tile_height;
+			result.dest_x = tile_geometry.dest_x;
+			result.dest_y = tile_geometry.dest_y;
+			result.begin_x = (tile_iter.x % scale_factor) * tile_geometry.width;
+			result.begin_y = (tile_iter.y % scale_factor) * tile_geometry.height;
+			result.width = tile_geometry.width;
+			result.height = tile_geometry.height;
 
 			return result;
 		} else {
@@ -974,9 +973,8 @@ TileGeometry LayerMap::find_scaled_down_tile(Viewport * viewport, const TileInfo
 
 
 
-TileGeometry LayerMap::find_scaled_up_tile(Viewport * viewport, const TileInfo & tile_iter,
-					   int viewport_x, int viewport_y,
-					   int tile_width, int tile_height,
+TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
+					   const TileGeometry & tile_geometry,
 					   const PixmapScale & pixmap_scale,
 					   const QString & map_type_string)
 {
@@ -992,8 +990,8 @@ TileGeometry LayerMap::find_scaled_up_tile(Viewport * viewport, const TileInfo &
 		PixmapScale scaled_pixmap_scale = pixmap_scale;
 		scaled_pixmap_scale.scale_up(scale_factor);
 
-		const int scaled_tile_width = tile_width / scale_factor;
-		const int scaled_tile_height = tile_height / scale_factor;
+		TileGeometry scaled_tile_geometry = tile_geometry;
+		scaled_tile_geometry.scale_up(scale_factor);
 
 		for (int pict_x = 0; pict_x < scale_factor; pict_x++) {
 			for (int pict_y = 0; pict_y < scale_factor; pict_y++) {
@@ -1005,12 +1003,12 @@ TileGeometry LayerMap::find_scaled_up_tile(Viewport * viewport, const TileInfo &
 				if (!result.pixmap.isNull()) {
 					qDebug() << SG_PREFIX_I << "Found scaled-up tile pixmap";
 
-					result.dest_x = viewport_x + pict_x * scaled_tile_width;
-					result.dest_y = viewport_y + pict_y * scaled_tile_height;
+					result.dest_x = tile_geometry.dest_x + pict_x * scaled_tile_geometry.width;
+					result.dest_y = tile_geometry.dest_y + pict_y * scaled_tile_geometry.height;
 					result.begin_x = 0;
 					result.begin_y = 0;
-					result.width = scaled_tile_width;
-					result.height = scaled_tile_height;
+					result.width = scaled_tile_geometry.width;
+					result.height = scaled_tile_geometry.height;
 
 					return result;
 				} else {
@@ -1199,38 +1197,17 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					   PixmapScale scaled_pixmap_scale = scale;
 					   scaled_pixmap_scale = scale.scale_down(scale_factor);
 					*/
+
 					TileGeometry tile_geometry;
-					tile_geometry.pixmap = this->get_tile_pixmap(map_type_string, tile_iter, pixmap_scale);
-					if (!tile_geometry.pixmap.isNull()) {
-						qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap found";
+					tile_geometry.dest_x = viewport_x;
+					tile_geometry.dest_y = viewport_y;
+					tile_geometry.width = tile_width;
+					tile_geometry.height = tile_height;
 
-						tile_geometry.dest_x = viewport_x;
-						tile_geometry.dest_y = viewport_y;
-						tile_geometry.begin_x = (tile_iter.x % scale_factor) * tile_width;
-						tile_geometry.begin_y = (tile_iter.y % scale_factor) * tile_height;
-						tile_geometry.width = tile_width;
-						tile_geometry.height = tile_height;
-
-					} else {
-						qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap not found, will look for re-scaled pixmap";
-
-						/* Otherwise try different scales. */
-						if (SCALE_SMALLER_ZOOM_FIRST) {
-							tile_geometry = this->find_scaled_down_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
-							if (tile_geometry.pixmap.isNull()) {
-								tile_geometry = this->find_scaled_up_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
-							}
-						} else {
-							tile_geometry = this->find_scaled_up_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
-							if (tile_geometry.pixmap.isNull()) {
-								tile_geometry = this->find_scaled_down_tile(viewport, tile_iter, viewport_x, viewport_y, tile_width, tile_height, pixmap_scale, map_type_string);
-							}
-						}
-					}
-
-					if (!tile_geometry.pixmap.isNull()) {
-						qDebug() << SG_PREFIX_I << "Calling draw_pixmap";
-						viewport->draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
+					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, map_type_string, scale_factor);
+					if (!found_tile.pixmap.isNull()) {
+						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
+						viewport->draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
 					}
 				}
 
@@ -2080,4 +2057,51 @@ void PixmapScale::scale_up(int scale_factor)
 {
 	this->x /= scale_factor;
 	this->y /= scale_factor;
+}
+
+
+
+
+void TileGeometry::scale_up(int scale_factor)
+{
+	this->width /= scale_factor;
+	this->height /= scale_factor;
+}
+
+
+
+
+TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string, int scale_factor)
+{
+	TileGeometry result;
+
+	result.pixmap = this->get_tile_pixmap(map_type_string, tile_info, pixmap_scale);
+	if (!result.pixmap.isNull()) {
+		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap found";
+
+		result.dest_x = tile_geometry.dest_x;
+		result.dest_y = tile_geometry.dest_y;
+		result.begin_x = (tile_info.x % scale_factor) * tile_geometry.width;
+		result.begin_y = (tile_info.y % scale_factor) * tile_geometry.height;
+		result.width = tile_geometry.width;
+		result.height = tile_geometry.height;
+
+	} else {
+		qDebug() << SG_PREFIX_I << "Non-re-scaled pixmap not found, will look for re-scaled pixmap";
+
+		/* Otherwise try different scales. */
+		if (SCALE_SMALLER_ZOOM_FIRST) {
+			result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+			if (result.pixmap.isNull()) {
+				result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+			}
+		} else {
+			result = this->find_scaled_up_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+			if (result.pixmap.isNull()) {
+				result = this->find_scaled_down_tile(tile_info, tile_geometry, pixmap_scale, map_type_string);
+			}
+		}
+	}
+
+	return result;
 }
