@@ -1135,12 +1135,35 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				viewport->draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
 			}
 		}
-	} else { /* tilesize is known, don't have to keep converting coords. */
+	} else {
+		const MapCacheObj map_cache_obj(map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
+
+
+
+		/* Tile size is known, don't have to keep converting coords. */
+		TileGeometry tile_geometry;
 		const double tile_width_f = map_source->get_tilesize_x() * pixmap_scale.x;
 		const double tile_height_f = map_source->get_tilesize_y() * pixmap_scale.y;
 		/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
-		const int tile_width = ceil(tile_width_f);
-		const int tile_height = ceil(tile_height_f);
+		tile_geometry.width = ceil(tile_width_f);
+		tile_geometry.height = ceil(tile_height_f);
+
+		if (map_source->coord_mode == CoordMode::LatLon) {
+			map_source->tile_info_to_center_lat_lon(tile_ul, lat_lon);
+			viewport->lat_lon_to_screen_pos(lat_lon, &tile_geometry.dest_x, &tile_geometry.dest_y);
+		} else {
+			map_source->tile_info_to_center_utm(tile_ul, utm);
+			viewport->utm_to_screen_pos(utm, &tile_geometry.dest_x, &tile_geometry.dest_y);
+		}
+
+		const int viewport_x_grid = tile_geometry.dest_x;
+		const int viewport_y_grid = tile_geometry.dest_y;
+
+		/* Using *_f  so tile_geometry.dest_x,tile_geometry.dest_y doubles. this is so shrinkfactors aren't rounded off
+		   e.g. if tile size 128, shrinkfactor 0.333. */
+		tile_geometry.dest_x -= (tile_width_f / 2);
+		const int base_viewport_y = tile_geometry.dest_y - (tile_height_f / 2);
+
 
 
 		const int delta_x = (tile_ul.x == unordered_tiles_range.x_begin) ? 1 : -1;
@@ -1152,57 +1175,24 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		ordered_tiles_range.y_end   = (delta_y == 1) ? (unordered_tiles_range.y_end + 1) : (unordered_tiles_range.y_begin - 1);
 
 
-		int viewport_x;
-		int viewport_y;
-		if (map_source->coord_mode == CoordMode::LatLon) {
-			map_source->tile_info_to_center_lat_lon(tile_ul, lat_lon);
-			viewport->lat_lon_to_screen_pos(lat_lon, &viewport_x, &viewport_y);
-		} else {
-			map_source->tile_info_to_center_utm(tile_ul, utm);
-			viewport->utm_to_screen_pos(utm, &viewport_x, &viewport_y);
-		}
 
-		const int viewport_x_grid = viewport_x;
-		const int viewport_y_grid = viewport_y;
-
-		/* Above trick so viewport_x,viewport_y doubles. this is so shrinkfactors aren't rounded off
-		   e.g. if tile size 128, shrinkfactor 0.333. */
-		viewport_x -= (tile_width_f / 2);
-		int base_viewport_y = viewport_y - (tile_height_f / 2);
-
-		const MapCacheObj map_cache_obj(map_source->is_direct_file_access() ? MapCacheLayout::OSM : this->cache_layout, this->cache_dir);
-
-
+		//existence_only = true;
 
 		for (tile_iter.x = ordered_tiles_range.x_begin; tile_iter.x != ordered_tiles_range.x_end; tile_iter.x += delta_x) {
-			viewport_y = base_viewport_y;
+			tile_geometry.dest_y = base_viewport_y;
 			for (tile_iter.y = ordered_tiles_range.y_begin; tile_iter.y != ordered_tiles_range.y_end; tile_iter.y += delta_y) {
 
 				if (existence_only) {
-					const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_iter,
-													map_source->map_type_id,
-													map_source->get_map_type_string(),
-													map_source->get_file_extension());
-
-					if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
-						const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-						viewport->draw_line(pen, viewport_x + tile_width, viewport_y, viewport_x, viewport_y + tile_height);
-					}
+					this->draw_existence(viewport, tile_iter, tile_geometry, map_source, map_cache_obj);
 				} else {
 					/* Try correct scale first. */
-					int scale_factor = 1;
+					const int scale_factor = 1;
 
 					/* Since scale_factor == 1, this is not necessary: */
 					/*
 					   PixmapScale scaled_pixmap_scale = scale;
 					   scaled_pixmap_scale = scale.scale_down(scale_factor);
 					*/
-
-					TileGeometry tile_geometry;
-					tile_geometry.dest_x = viewport_x;
-					tile_geometry.dest_y = viewport_y;
-					tile_geometry.width = tile_width;
-					tile_geometry.height = tile_height;
 
 					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, map_type_string, scale_factor);
 					if (!found_tile.pixmap.isNull()) {
@@ -1211,9 +1201,9 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 					}
 				}
 
-				viewport_y += tile_height_f;
+				tile_geometry.dest_y += tile_height_f;
 			}
-			viewport_x += tile_width_f;
+			tile_geometry.dest_x += tile_width_f;
 		}
 
 		/* ATM Only show tile grid lines in extreme debug mode. */
@@ -1221,7 +1211,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 #if 1
 		    true
 #else
-		    vik_debug && vik_verbose
+		    false /* vik_debug && vik_verbose */
 #endif
 		    ) {
 			/* Grid drawing here so it gets drawn on top of the map.
@@ -2104,4 +2094,20 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 	}
 
 	return result;
+}
+
+
+
+
+void LayerMap::draw_existence(Viewport * viewport, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj)
+{
+	const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_info,
+									map_source->map_type_id,
+									map_source->get_map_type_string(),
+									map_source->get_file_extension());
+
+	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
+		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
+		viewport->draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
+	}
 }

@@ -202,6 +202,8 @@ namespace SlavGPS {
 		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
 		TileGeometry find_scaled_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
 
+		void draw_existence(Viewport * viewport, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj);
+
 		bool should_start_autodownload(Viewport * viewport);
 
 		QPixmap get_tile_pixmap(const QString & map_type_string, const TileInfo & tile_info, const PixmapScale & scale);
