@@ -288,6 +288,8 @@ void LayerMapnik::post_init(void)
 			g_planet_import_time = stat_buf.st_mtime;
 		}
 	}
+
+	LayerMapnik::init_interface();
 }
 
 
@@ -300,8 +302,8 @@ void LayerMapnik::uninit(void)
 
 
 
-/* NB Only performed once per program run. */
-void SlavGPS::layer_mapnik_init(void)
+/* NB Only performed once per program run. TODO: run on every change of preferences? */
+void LayerMapnik::init_interface(void)
 {
 #ifdef HAVE_LIBMAPNIK
 	const SGVariant plugins_dir = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "plugins_directory");
@@ -364,8 +366,7 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 	LayerMapnik * layer = new LayerMapnik();
 
 	layer->tile_size_x = size_default().u.val_int; /* FUTURE: Is there any use in this being configurable? */
-	layer->loaded = false;
-	layer->mi = new MapnikInterface();
+	//layer->mi = new MapnikInterface(); // TODO: remove
 	layer->unmarshall_params(pickle);
 
 	return layer;
@@ -547,6 +548,8 @@ bool LayerMapnik::carto_load(void)
 
 void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 {
+	qDebug() << SG_PREFIX_I;
+
 	/* Determine if carto needs to be run. */
 	bool do_carto = false;
 	if (this->filename_css.length() > 1) {
@@ -573,21 +576,22 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 		}
 	}
 
-	if (do_carto)
+	if (do_carto) {
 		/* Don't load the XML config if carto load fails. */
 		if (!this->carto_load()) {
 			return;
 		}
+	}
 
-	const QString ans = this->mi->load_map_file(this->filename_xml, this->tile_size_x, this->tile_size_x);
-	if (ans.isEmpty()) {
-		this->loaded = true;
+	QString msg;
+	if (sg_ret::ok == this->mi->load_map_file(this->filename_xml, this->tile_size_x, this->tile_size_x, msg)) {
+		this->map_file_loaded = true;
 		if (!from_file) {
 			/* TODO_LATER: shouldn't we use Window::update_recent_files()? */
 			update_desktop_recent_documents(this->get_window(), this->filename_xml, ""); /* TODO_LATER: provide correct mime data type for mapnik data. */
 		}
 	} else {
-		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
+		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
 	}
 }
 
@@ -675,6 +679,7 @@ void LayerMapnik::render(const TileInfo & ti_ul, const Coord & coord_ul, const C
 	double tt = (double)(tt2-tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
 	if (pixmap.isNull()) {
+		qDebug() << SG_PREFIX_N << "Rendered pixmap is empty";
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
 		const QPixmap substitute = QPixmap(":/icons/layer/mapnik.png");
 		pixmap = substitute.scaled(this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -820,7 +825,7 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br)
 
 void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
-	if (!this->loaded) {
+	if (!this->map_file_loaded) {
 		return;
 	}
 
@@ -955,17 +960,19 @@ void LayerMapnik::reload_cb(void)
 */
 void LayerMapnik::run_carto_cb(void)
 {
+	qDebug() << SG_PREFIX_I;
+
 	Viewport * viewport = ThisApp::get_main_viewport();
 
 	/* Don't load the XML config if carto load fails. */
 	if (!this->carto_load()) {
 		return;
 	}
-	const QString ans = this->mi->load_map_file(this->filename_xml, this->tile_size_x, this->tile_size_x);
-	if (ans.isEmpty()) {
+	QString msg;
+	if (sg_ret::ok == this->mi->load_map_file(this->filename_xml, this->tile_size_x, this->tile_size_x, msg)) {
 		this->draw_tree_item(viewport, false, false);
 	} else {
-		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(ans), this->get_window());
+		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
 	}
 }
 
@@ -1184,7 +1191,6 @@ LayerMapnik::LayerMapnik()
 	this->set_name(Layer::get_type_ui_label(this->type));
 
 	this->tile_size_x = size_default().u.val_int; /* FUTURE: Is there any use in this being configurable? */
-	this->loaded = false;
 	this->mi = new MapnikInterface();
 
 	/* TODO_LATER: initialize this? */

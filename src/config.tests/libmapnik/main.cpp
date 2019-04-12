@@ -8,13 +8,13 @@
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/load_map.hpp>
 #include <mapnik/projection.hpp>
-#if MAPNIK_VERSION < 300000
-#include <mapnik/graphics.hpp>
-#else
 #include <mapnik/value.hpp>
-#endif
 #include <mapnik/image_util.hpp>
 
+
+#if MAPNIK_VERSION < 300000
+#error "Unsupported mapnik version" MAPNIK_VERSION
+#endif
 
 
 int main()

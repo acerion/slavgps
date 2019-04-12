@@ -304,7 +304,7 @@ void SlavGPS::modules_post_init()
 	LayerMapnik::post_init();
 	LayerTRW::init();
 	LayerGPS::init();
-	LayerMapnik::init();
+	LayerMapnik::post_init();
 
 	Viewport::init();
 }

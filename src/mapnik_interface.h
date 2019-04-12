@@ -35,6 +35,11 @@
 
 
 
+#include "globals.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -50,7 +55,7 @@ namespace SlavGPS {
 
 		QStringList get_parameters(void) const;
 
-		QString load_map_file(const QString & filename, unsigned int width, unsigned int height);
+		sg_ret load_map_file(const QString & map_file_full_path, unsigned int width, unsigned int height, QString & msg);
 
 		QPixmap render_map(double lat_tl, double lon_tl, double lat_br, double lon_br);
 

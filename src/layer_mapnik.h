@@ -107,7 +107,7 @@ namespace SlavGPS {
 		int alpha = 0;
 
 		int tile_size_x = 0; /* Y is the same as X ATM. */
-		bool loaded = false;
+
 		MapnikInterface * mi = NULL;
 		unsigned int rerender_timeout = 0;
 
@@ -123,12 +123,12 @@ namespace SlavGPS {
 		void run_carto_cb(void);
 		void information_cb(void);
 		void about_cb(void);
+
+	private:
+		static void init_interface(void);
+
+		bool map_file_loaded = false;
 	};
-
-
-
-
-	void layer_mapnik_init(void);
 
 
 

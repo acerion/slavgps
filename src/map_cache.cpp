@@ -162,7 +162,7 @@ void cache_add(std::string & key, const QPixmap pixmap, const MapCacheItemProper
 	keys_list.push_back(key);
 
 	if (maps_cache.size() != keys_list.size()) {
-		qDebug() << "EE" PREFIX << "ERROR: size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+		qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 		exit(EXIT_FAILURE);
 	}
 }
@@ -191,7 +191,7 @@ void cache_remove_oldest()
 	keys_list.pop_front();
 
 	if (maps_cache.size() != keys_list.size()) {
-		qDebug() << "EE" PREFIX << "ERROR: size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+		qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 		exit(EXIT_FAILURE);
 	}
 }
@@ -336,7 +336,7 @@ void flush_matching(std::string & key_part)
 		}
 
 		if (maps_cache.size() != keys_list.size()) {
-			qDebug() << "EE" PREFIX << "size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+			qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -383,7 +383,7 @@ void MapCache::flush(void)
 	}
 
 	if (maps_cache.size() != keys_list.size()) {
-		qDebug() << "EE" PREFIX << "size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+		qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
 		exit(EXIT_FAILURE);
 	}
 

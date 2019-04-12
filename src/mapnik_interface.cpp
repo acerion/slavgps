@@ -36,12 +36,9 @@
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/load_map.hpp>
 #include <mapnik/projection.hpp>
-#if MAPNIK_VERSION < 300000
-#include <mapnik/graphics.hpp>
-#else
 #include <mapnik/value.hpp>
-#endif
 #include <mapnik/image_util.hpp>
+#include <mapnik/box2d.hpp>
 
 
 
@@ -70,21 +67,6 @@ using namespace SlavGPS;
 
 
 
-
-#if MAPNIK_VERSION < 200000
-#include <mapnik/envelope.hpp>
-#define image_32 Image32
-#define image_data_32 ImageData32
-#define box2d Envelope
-#define zoom_to_box zoomToBox
-#else
-#include <mapnik/box2d.hpp>
-#if MAPNIK_VERSION >= 300000
-/* In Mapnik3 'image_32' has changed names once again. */
-#define image_32 image_rgba8
-#define raw_data data
-#endif
-#endif
 
 
 
@@ -117,11 +99,7 @@ void MapnikInterface::initialize(const QString & plugins_dir, const QString & fo
 	qDebug() << SG_PREFIX_D << "Using Mapnik version" << MAPNIK_VERSION_STRING;
 	try {
 		if (!plugins_dir.isEmpty()) {
-#if MAPNIK_VERSION >= 200200
 			mapnik::datasource_cache::instance().register_datasources(plugins_dir.toUtf8().constData());
-#else
-			mapnik::datasource_cache::instance()->register_datasources(plugins_dir.toUtf8().constData());
-#endif
 		}
 		if (!font_dir.isEmpty()) {
 			if (!mapnik::freetype_engine::register_fonts(font_dir.toUtf8().constData(), font_dir_recurse)) {
@@ -146,17 +124,6 @@ void MapnikInterface::set_copyright(void)
 	this->copyright = "";
 
 	mapnik::parameters map_parameters = this->map->get_extra_parameters();
-#if MAPNIK_VERSION < 300000
-	for (mapnik::parameters::const_iterator ii = map_parameters.begin(); ii != map_parameters.end(); ii++) {
-		if (ii->first == "attribution" || ii->first == "copyright") {
-			std::stringstream ss;
-			ss << ii->second;
-			// Copy it
-			this->copyright = QString::fromStdString(ss);
-			break;
-		}
-	}
-#else
 	if (map_parameters.get<std::string>("attribution")) {
 		this->copyright = QString::fromStdString(*map_parameters.get<std::string>("attribution"));
 	}
@@ -166,7 +133,6 @@ void MapnikInterface::set_copyright(void)
 			this->copyright = QString::fromStdString(*map_parameters.get<std::string>("copyright"));
 		}
 	}
-#endif
 }
 
 
@@ -180,15 +146,16 @@ void MapnikInterface::set_copyright(void)
 /**
    Returns empty string on success otherwise a string about what went wrong
 */
-QString MapnikInterface::load_map_file(const QString & filename, unsigned int width, unsigned int height)
+sg_ret MapnikInterface::load_map_file(const QString & map_file_full_path, unsigned int width, unsigned int height, QString & msg)
 {
-	QString msg;
+	qDebug() << SG_PREFIX_I << "Loading map file" << map_file_full_path << "with width/height" << width << height;
 
+	sg_ret ret = sg_ret::ok;
 	try {
 		this->map->remove_all(); /* Support reloading. */
-		mapnik::load_map(*this->map, filename.toUtf8().constData());
+		mapnik::load_map(*this->map, map_file_full_path.toUtf8().constData());
 
-		this->map->resize(width,height);
+		this->map->resize(width, height);
 		this->map->set_srs(mapnik::MAPNIK_GMERC_PROJ); /* ONLY WEB MERCATOR output supported ATM. */
 
 		/* IIRC This size is the number of pixels outside the tile to be considered so stuff is shown (i.e. particularly labels).
@@ -200,19 +167,22 @@ QString MapnikInterface::load_map_file(const QString & filename, unsigned int wi
 			if (ApplicationState::get_integer(VIK_SETTINGS_MAPNIK_BUFFER_SIZE, &tmp)) {
 				buffer_size = tmp;
 			}
+			qDebug() << SG_PREFIX_I << "Buffer size will be" << buffer_size;
 
 			this->map->set_buffer_size(buffer_size);
 		}
 		this->set_copyright();
 
-		qDebug() << QObject::tr("Debug: Mapnik: layers: %1").arg(this->map->layer_count());
+		qDebug() << QObject::tr("Debug: Mapnik: layers count: %1").arg(this->map->layer_count());
 	} catch (std::exception const& ex) {
 		msg = ex.what();
+		ret = sg_ret::err;
 	} catch (...) {
 		msg = QObject::tr("unknown error");
+		ret = sg_ret::err;
 	}
 
-	return msg;
+	return ret;
 }
 
 
@@ -225,49 +195,69 @@ QPixmap MapnikInterface::render_map(double lat_tl, double lon_tl, double lat_br,
 {
 	QPixmap result; /* Initially the pixmap returns true for ::isNull(). */
 
-	/* Note projection & bbox want stuff in lon,lat order! */
-	double p0x = lon_tl;
-	double p0y = lat_tl;
-	double p1x = lon_br;
-	double p1y = lat_br;
-
-	/* Convert into projection coordinates for bbox. */
-	projection.forward(p0x, p0y);
-	projection.forward(p1x, p1y);
-
-	/* Copy main object to local map variable.
-	   This enables rendering to work when this function is called from different threads. */
-	mapnik::Map map_copy(*this->map);
-
 	try {
-		unsigned width  = map_copy.width();
-		unsigned height = map_copy.height();
-		mapnik::image_32 image(width, height);
-		mapnik::box2d<double> bbox(p0x, p0y, p1x, p1y);
-		map_copy.zoom_to_box(bbox);
+		/* Copy main object to local map variable.
+		   This enables rendering to work when this function is called from different threads. */
+		mapnik::Map & local_map = *this->map; // TODO: this should be a copy?
+		const unsigned width  = local_map.width();
+		const unsigned height = local_map.height();
 
-		mapnik::agg_renderer<mapnik::image_32> render(map_copy, image);
-		render.apply();
+		/* Note projection & bbox want stuff in lon,lat order! */
+		double p0x = lon_tl;
+		double p0y = lat_tl;
+		double p1x = lon_br;
+		double p1y = lat_br;
+
+		/* Convert into projection coordinates for bbox. */
+		projection.forward(p0x, p0y);
+		projection.forward(p1x, p1y);
+
+		mapnik::box2d<double> bbox(p0x, p0y, p1x, p1y);
+		qDebug() << SG_PREFIX_I << "Mapnik 2d box" << p0x << p0y << p1x << p1y;
+
+		local_map.zoom_to_box(bbox);
+
+		mapnik::image_rgba8 image(width, height);
+		mapnik::agg_renderer<mapnik::image_rgba8> renderer(local_map, image);
+		renderer.apply();
 
 		if (image.painted()) {
-			unsigned char * image_raw_data = (unsigned char *) malloc(width * 4 * height);
+			if (1) { /* Debug. */
+				char buffer[64] = { 0 };
+				mapnik::save_to_file(image, std::tmpnam(buffer), "png");
+			}
+
+			const size_t data_size = image.size();
+			if (1) { /* Debug. */
+				const size_t data_size_aux = width * height * 4; /* Four bytes per pixel: RGBA. */
+				if (data_size != data_size_aux) {
+					qDebug() << SG_PREFIX_W << "Unexpected image size calculations" << data_size << "!=" << data_size_aux;
+				}
+				qDebug() << SG_PREFIX_I << "Loading image from data with size" << data_size;
+			}
+			unsigned char * image_raw_data = (unsigned char *) malloc(data_size);
 			if (!image_raw_data) {
 				return result;
 			}
-			memcpy(image_raw_data, image.raw_data(), width * height * 4);
-#ifdef K_FIXME_RESTORE
-			/* TODO_LATER: QPixmap::loadFromData() ? */
-			result = gdk_pixbuf_new_from_data(image_raw_data, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
-			/* TODO_LATER: free image_raw_data? */
+			std::string buf = mapnik::save_to_string(image, "png");
+			std::copy(buf.begin(), buf.end(), image_raw_data);
+
+			const bool loaded = result.loadFromData(image_raw_data, data_size, "PNG");
+			if (loaded) {
+				qDebug() << SG_PREFIX_I << "Image successfully loaded from mapnik rendering";
+			} else {
+				qDebug() << SG_PREFIX_E << "Failed to load image from mapnik rendering";
+			}
+			free(image_raw_data);
 			/* TODO_LATER: in original application the image_raw_data was not deallocated. */
-#endif
 		} else {
 			qDebug() << QObject::tr("Warning: Mapnik: image not rendered");
 		}
 	}
 	catch (const std::exception & ex) {
 		qDebug() << QObject::tr("Error: Mapnik: An error occurred while rendering: %s", ex.what());
-	} catch (...) {
+	}
+	catch (...) {
 		qDebug() << QObject::tr("Error: Mapnik: An unknown error occurred while rendering");
 	}
 	return result;
@@ -298,15 +288,9 @@ QStringList MapnikInterface::get_parameters(void) const
 
 	mapnik::parameters map_parameters = this->map->get_extra_parameters();
 	/* Simply want the strings of each parameter so we can display something... */
-#if MAPNIK_VERSION < 300000
-	for (mapnik::parameters::const_iterator param = map_parameters.begin(); param != map_parameters.end(); param++) {
-		std::stringstream ss;
-		ss << param->first << ": " << param->second;
-#else
 	for (auto const& param : map_parameters) {
 		std::stringstream ss;
 		ss << param.first << ": " << *(map_parameters.get<std::string>(param.first,"empty"));
-#endif
 		/* Copy - otherwise ss goes output scope and junk memory would be referenced. */
 		const QString param_string = QString(ss.str().c_str());
 		parameters << param_string;
@@ -326,11 +310,7 @@ QString MapnikInterface::about(void)
 	QString msg;
 
 	/* Normally about 10 plugins so list them all. */
-#if MAPNIK_VERSION >= 200200
 	std::vector<std::string> plugins = mapnik::datasource_cache::instance().plugin_names();
-#else
-	std::vector<std::string> plugins = mapnik::datasource_cache::instance()->plugin_names();
-#endif
 	std::string str;
 	for (unsigned int nn = 0; nn < plugins.size(); nn++) {
 		str += plugins[nn] + ',';
