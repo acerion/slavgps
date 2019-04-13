@@ -70,11 +70,11 @@ SOURCES += main.cpp \
     layer_trw_geotag.cpp \
     layer_trw_track_statistics.cpp \
     jpg.cpp \
-    mapnik_interface.cpp \
     gpsmapper.cpp \
     layer_georef.cpp \
     layer_gps.cpp \
     layer_mapnik.cpp \
+    layer_mapnik_wrapper.cpp \
     print.cpp \
     layer_map.cpp \
     layer_map_download.cpp \
@@ -210,11 +210,11 @@ HEADERS += window.h \
     layer_trw_geotag.h \
     layer_trw_track_statistics.h \
     jpg.h \
-    mapnik_interface.h \
     gpsmapper.h \
     layer_georef.h \
     layer_gps.h \
     layer_mapnik.h \
+    layer_mapnik_wrapper.h \
     print.h \
     layer_map.h \
     layer_map_download.h \

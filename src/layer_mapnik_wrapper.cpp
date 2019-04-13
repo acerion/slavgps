@@ -49,7 +49,7 @@
 
 
 
-#include "mapnik_interface.h"
+#include "layer_mapnik_wrapper.h"
 #include "application_state.h"
 #include "util.h"
 #include "globals.h"

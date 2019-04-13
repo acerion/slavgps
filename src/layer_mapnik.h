@@ -37,7 +37,7 @@
 #include "layer.h"
 #include "layer_interface.h"
 #include "layer_tool.h"
-#include "mapnik_interface.h"
+#include "layer_mapnik_wrapper.h"
 
 
 

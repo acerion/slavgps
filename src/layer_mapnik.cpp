@@ -62,7 +62,7 @@
 #include "util.h"
 #include "ui_util.h"
 #include "preferences.h"
-#include "mapnik_interface.h"
+#include "layer_mapnik_wrapper.h"
 #include "background.h"
 #include "dialog.h"
 #include "statusbar.h"
