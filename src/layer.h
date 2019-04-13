@@ -223,7 +223,7 @@ namespace SlavGPS {
 
 		void set_initial_parameter_values(void);
 
-		Window * get_window(void);
+		Window * get_window(void) const;
 
 		void ref_layer(void);
 		void unref_layer(void);

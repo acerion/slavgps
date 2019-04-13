@@ -585,7 +585,7 @@ bool Layer::compare_timestamp_descending(const Layer * first, const Layer * seco
 
 
 
-Window * Layer::get_window(void)
+Window * Layer::get_window(void) const
 {
 	return ThisApp::get_main_window();
 }

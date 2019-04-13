@@ -91,12 +91,12 @@ namespace SlavGPS {
 
 		bool carto_load(void);
 		void possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ulm);
-		void render(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br);
-		void thread_add(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br, const QString & file_name);
-		QPixmap load_pixmap(const TileInfo & ulm, const TileInfo & brm, bool * rerender) const;
-		QPixmap get_pixmap(const TileInfo & ulm, const TileInfo & brm);
-		void rerender();
-		void tile_info();
+		void render(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br);
+		void thread_add(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const QString & file_name);
+		QPixmap load_pixmap(const TileInfo & tile_info, bool * rerender) const;
+		QPixmap get_pixmap(const TileInfo & tile_info);
+		void render_tile(const TileInfo & tile_info);
+
 		ToolStatus feature_release(QMouseEvent * event, LayerTool * tool);
 
 
@@ -114,20 +114,26 @@ namespace SlavGPS {
 		bool use_file_cache = false;
 		QString file_cache_dir;
 
-		Coord rerender_ul;
-		Coord rerender_br;
-		VikingZoomLevel rerender_viking_zoom_level;
 
-		void flush_memory_cb(void);
-		void reload_cb(void);
+
+	public slots:
+		void tile_info_cb(void);
+		void flush_map_cache_cb(void);
+		void reload_map_cb(void);
 		void run_carto_cb(void);
-		void information_cb(void);
-		void about_cb(void);
+		void mapnik_information_cb(void);
+		void about_mapnik_cb(void);
+		void rerender_tile_cb(void);
 
 	private:
 		static void init_interface(void);
 
 		bool map_file_loaded = false;
+
+		/* Coordinates of mouse right-click-and-release. */
+		LatLon clicked_lat_lon;
+		/* Zoom level at the moment of right-click-and-release. */
+		VikingZoomLevel clicked_viking_zoom_level;
 	};
 
 

@@ -92,6 +92,11 @@ extern bool vik_verbose;
 
 
 
+static sg_ret get_lat_lon_ul_br(const TileInfo & tile_info, LatLon & lat_lon_ul, LatLon & lat_lon_br);
+
+
+
+
 static SGVariant file_default(void)      { return SGVariant(""); }
 static SGVariant size_default(void)      { return SGVariant(256, SGVariantType::Int); }
 static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
@@ -248,7 +253,7 @@ static QHash<QString, bool> mapnik_requests; /* Just for storing of QStrings. */
 void LayerMapnik::init(void)
 {
 #ifdef HAVE_LIBMAPNIK
-	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_MAPNIK, QObject::tr("Mapnik"));
+	Preferences::register_parameter_group(PREFERENCES_NAMESPACE_MAPNIK, tr("Mapnik"));
 
 	unsigned int i = 0;
 
@@ -636,14 +641,14 @@ void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ti_ul)
 
 class RenderInfo : public BackgroundJob {
 public:
-	RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, const TileInfo & ti_ul, const QString & new_request);
+	RenderInfo(LayerMapnik * layer, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const TileInfo & ti_ul, const QString & new_request);
 
 	void run(void);
 
 	LayerMapnik * lmk = NULL;
 
-	Coord coord_ul;
-	Coord coord_br;
+	LatLon lat_lon_ul;
+	LatLon lat_lon_br;
 	TileInfo ti_ul;
 
 	QString request;
@@ -652,14 +657,14 @@ public:
 
 
 
-RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Coord & new_coord_br, const TileInfo & new_ti_ul, const QString & new_request)
+RenderInfo::RenderInfo(LayerMapnik * layer, const LatLon & new_lat_lon_ul, const LatLon & new_lat_lon_br, const TileInfo & new_ti_ul, const QString & new_request)
 {
 	this->n_items = 1;
 
 	this->lmk = layer;
 
-	this->coord_ul = new_coord_ul;
-	this->coord_br = new_coord_br;
+	this->lat_lon_ul = new_lat_lon_ul;
+	this->lat_lon_br = new_lat_lon_br;
 	this->ti_ul = new_ti_ul;
 
 	this->request = new_request;
@@ -669,14 +674,14 @@ RenderInfo::RenderInfo(LayerMapnik * layer, const Coord & new_coord_ul, const Co
 
 
 /**
- * Common render function which can run in separate thread.
- */
-void LayerMapnik::render(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br)
+   Common render function which can run in separate thread
+*/
+void LayerMapnik::render(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br)
 {
 	int64_t tt1 = g_get_real_time();
-	QPixmap pixmap = this->mi->render_map(coord_ul.ll.lat, coord_ul.ll.lon, coord_br.ll.lat, coord_br.ll.lon);
+	QPixmap pixmap = this->mi->render_map(lat_lon_ul.lat, lat_lon_ul.lon, lat_lon_br.lat, lat_lon_br.lon);
 	int64_t tt2 = g_get_real_time();
-	double tt = (double)(tt2-tt1)/1000000;
+	double tt = (double) (tt2 - tt1)/1000000;
 	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
 	if (pixmap.isNull()) {
 		qDebug() << SG_PREFIX_N << "Rendered pixmap is empty";
@@ -684,14 +689,14 @@ void LayerMapnik::render(const TileInfo & ti_ul, const Coord & coord_ul, const C
 		const QPixmap substitute = QPixmap(":/icons/layer/mapnik.png");
 		pixmap = substitute.scaled(this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
-	this->possibly_save_pixmap(pixmap, ti_ul);
+	this->possibly_save_pixmap(pixmap, tile_info);
 
 	/* TODO_MAYBE: Mapnik can apply alpha, but use our own function for now. */
 	if (scale_alpha.is_in_range(this->alpha)) {
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 
-	MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(tt), ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
+	MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(tt), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
 }
 
 
@@ -701,7 +706,7 @@ void RenderInfo::run(void)
 {
 	const bool end_job = this->set_progress_state(0);
 	if (!end_job) {
-		this->lmk->render(this->ti_ul, this->coord_ul, this->coord_br);
+		this->lmk->render(this->ti_ul, this->lat_lon_ul, this->lat_lon_br);
 	}
 
 	tp_mutex.lock();
@@ -722,14 +727,11 @@ void RenderInfo::run(void)
 
 
 
-/**
- * Thread.
- */
-void LayerMapnik::thread_add(const TileInfo & ti_ul, const Coord & coord_ul, const Coord & coord_br, const QString & file_name)
+void LayerMapnik::thread_add(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const QString & file_name)
 {
 	/* Create request. */
 	const unsigned int nn = file_name.isEmpty() ? 0 : qHash(file_name, 0);
-	const QString request = QString(REQUEST_HASHKEY_FORMAT).arg(ti_ul.x).arg(ti_ul.y).arg(ti_ul.z).arg(ti_ul.scale.get_scale_value()).arg(nn);
+	const QString request = QString(REQUEST_HASHKEY_FORMAT).arg(tile_info.x).arg(tile_info.y).arg(tile_info.z).arg(tile_info.scale.get_scale_value()).arg(nn);
 
 	tp_mutex.lock();
 
@@ -738,13 +740,13 @@ void LayerMapnik::thread_add(const TileInfo & ti_ul, const Coord & coord_ul, con
 		return;
 	}
 
-	RenderInfo * ri = new RenderInfo(this, coord_ul, coord_br, ti_ul, request);
+	RenderInfo * ri = new RenderInfo(this, lat_lon_ul, lat_lon_br, tile_info, request);
 	mapnik_requests.insert(request, true);
 
 	tp_mutex.unlock();
 
 	const QString base_name = FileUtils::get_base_name(file_name);
-	const QString job_description = QObject::tr("Mapnik Render %1:%2:%3 %4").arg(ti_ul.scale.get_scale_value()).arg(ti_ul.x).arg(ti_ul.y).arg(base_name);
+	const QString job_description = tr("Mapnik Render %1:%2:%3 %4").arg(tile_info.scale.get_scale_value()).arg(tile_info.x).arg(tile_info.y).arg(base_name);
 	ri->set_description(job_description);
 	ri->run_in_background(ThreadPoolType::LocalMapnik);
 }
@@ -753,14 +755,14 @@ void LayerMapnik::thread_add(const TileInfo & ti_ul, const Coord & coord_ul, con
 
 
 /**
- * If function returns QPixmap properly, reference counter to this
- * buffer has to be decreased, when buffer is no longer needed.
- */
-QPixmap LayerMapnik::load_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br, bool * rerender_) const
+   If function returns QPixmap properly, reference counter to this
+   buffer has to be decreased, when buffer is no longer needed.
+*/
+QPixmap LayerMapnik::load_pixmap(const TileInfo & tile_info, bool * rerender_) const
 {
 	*rerender_ = false;
 	QPixmap pixmap;
-	const QString filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
+	const QString filename = get_filename(this->file_cache_dir, tile_info.x, tile_info.y, tile_info.scale);
 
 	struct stat stat_buf;
 	if (stat(filename.toUtf8().constData(), &stat_buf) == 0) {
@@ -772,7 +774,7 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br,
 				ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
 
-			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(-1.0), ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
+			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(-1.0), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
 		}
 		/* If file is too old mark for rerendering. */
 		if (g_planet_import_time < stat_buf.st_mtime) {
@@ -787,33 +789,36 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br,
 
 
 /**
- * Caller has to decrease reference counter of returned QPixmap,
- * when buffer is no longer needed.
- */
-QPixmap LayerMapnik::get_pixmap(const TileInfo & ti_ul, const TileInfo & ti_br)
+   Caller has to decrease reference counter of returned QPixmap,
+   when buffer is no longer needed.
+*/
+QPixmap LayerMapnik::get_pixmap(const TileInfo & tile_info)
 {
-	const Coord coord_ul = Coord(MapUtils::iTMS_to_lat_lon(ti_ul), CoordMode::LatLon);
-	const Coord coord_br = Coord(MapUtils::iTMS_to_lat_lon(ti_br), CoordMode::LatLon);
-
-	QPixmap pixmap = MapCache::get_tile_pixmap(ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
+	QPixmap pixmap = MapCache::get_tile_pixmap(tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->filename_xml);
 	if (!pixmap.isNull()) {
 		qDebug() << SG_PREFIX_I << "MAP CACHE HIT";
-	} else {
-		qDebug() << SG_PREFIX_I << "MAP CACHE MISS";
+		return pixmap;
+	}
 
-		bool rerender_ = false;
-		if (this->use_file_cache && !this->file_cache_dir.isEmpty()) {
-			pixmap = this->load_pixmap(ti_ul, ti_br, &rerender_);
-		}
+	qDebug() << SG_PREFIX_I << "MAP CACHE MISS";
 
-		if (pixmap.isNull() || rerender_) {
-			if (true) {
-				this->thread_add(ti_ul, coord_ul, coord_br, this->filename_xml);
-			} else {
-				/* Run in the foreground. */
-				this->render(ti_ul, coord_ul, coord_br);
-				this->emit_tree_item_changed("Mapnik - get pixmap");
-			}
+	bool rerender_ = false;
+	if (this->use_file_cache && !this->file_cache_dir.isEmpty()) {
+		pixmap = this->load_pixmap(tile_info, &rerender_);
+	}
+
+	if (pixmap.isNull() || rerender_) {
+
+		LatLon lat_lon_ul;
+		LatLon lat_lon_br;
+		get_lat_lon_ul_br(tile_info, lat_lon_ul, lat_lon_br);
+
+		if (true) {
+			this->thread_add(tile_info, lat_lon_ul, lat_lon_br, this->filename_xml);
+		} else {
+			/* Run in the foreground. */
+			this->render(tile_info, lat_lon_ul, lat_lon_br);
+			this->emit_tree_item_changed("Mapnik - get pixmap");
 		}
 	}
 
@@ -843,27 +848,18 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
+	const LatLon lat_lon_ul = coord_ul.get_latlon();
+	const LatLon lat_lon_br = coord_br.get_latlon();
 
 	const VikingZoomLevel viking_zoom_level = viewport->get_viking_zoom_level();
 
 
-
-	if (coord_ul.mode != CoordMode::LatLon) {
-		qDebug() << SG_PREFIX_E << "Invalid coord mode of ul coord:" << (int) coord_ul.mode;
-		return;
-	}
-	if (coord_br.mode != CoordMode::LatLon) {
-		qDebug() << SG_PREFIX_E << "Invalid coord mode of br coord:" << (int) coord_br.mode;
-		return;
-	}
-
-
 	TileInfo ti_ul, ti_br;
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(coord_ul.ll, viking_zoom_level, ti_ul)) {
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(lat_lon_ul, viking_zoom_level, ti_ul)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert ul";
 		return;
 	}
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(coord_br.ll, viking_zoom_level, ti_br)) {
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(lat_lon_br, viking_zoom_level, ti_br)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert br";
 		return;
 	}
@@ -878,19 +874,22 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	/* Split rendering into a grid for the current viewport
 	   thus each individual 'tile' can then be stored in the map cache. */
-	for (int x = xmin; x <= xmax; x++) {
-		for (int y = ymin; y <= ymax; y++) {
-			ti_ul.x = x;
-			ti_ul.y = y;
-			ti_br.x = x+1;
-			ti_br.y = y+1;
-
-			const QPixmap pixmap = this->get_pixmap(ti_ul, ti_br);
+	TileInfo tile_iter = ti_ul;
+	for (tile_iter.x = xmin; tile_iter.x <= xmax; tile_iter.x++) {
+		for (tile_iter.y = ymin; tile_iter.y <= ymax; tile_iter.y++) {
+			const QPixmap pixmap = this->get_pixmap(tile_iter);
 			if (!pixmap.isNull()) {
-				const LatLon lat_lon = MapUtils::iTMS_to_lat_lon(ti_ul);
-				int xx, yy;
-				viewport->lat_lon_to_screen_pos(lat_lon, &xx, &yy);
-				viewport->draw_pixmap(pixmap, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
+				/* Lat/lon coordinate of u-l corner of a pixmap. */
+				const LatLon pixmap_lat_lon_ul = MapUtils::iTMS_to_lat_lon(tile_iter);
+
+				/* x/y coordinate of u-l corner of a pixmap in viewport's x/y coordinates. */
+				int viewport_x;
+				int viewport_y;
+				viewport->lat_lon_to_screen_pos(pixmap_lat_lon_ul, &viewport_x, &viewport_y);
+
+				const int pixmap_x = 0;
+				const int pixmap_y = 0;
+				viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
 			}
 		}
 	}
@@ -932,7 +931,7 @@ LayerMapnik::~LayerMapnik()
 
 
 
-void LayerMapnik::flush_memory_cb(void)
+void LayerMapnik::flush_map_cache_cb(void)
 {
 	MapCache::flush_type(MapTypeID::MapnikRender);
 }
@@ -940,7 +939,7 @@ void LayerMapnik::flush_memory_cb(void)
 
 
 
-void LayerMapnik::reload_cb(void)
+void LayerMapnik::reload_map_cb(void)
 {
 	Viewport * viewport = ThisApp::get_main_viewport();
 
@@ -972,7 +971,7 @@ void LayerMapnik::run_carto_cb(void)
 	if (sg_ret::ok == this->mi->load_map_file(this->filename_xml, this->tile_size_x, this->tile_size_x, msg)) {
 		this->draw_tree_item(viewport, false, false);
 	} else {
-		Dialog::error(QObject::tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
+		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
 	}
 }
 
@@ -982,21 +981,21 @@ void LayerMapnik::run_carto_cb(void)
 /**
    Show Mapnik configuration parameters
 */
-void LayerMapnik::information_cb(void)
+void LayerMapnik::mapnik_information_cb(void)
 {
 	if (!this->mi) {
 		return;
 	}
 	QStringList params = this->mi->get_parameters();
 	if (params.size()) {
-		a_dialog_list(QObject::tr("Mapnik Information"), params, 1, this->get_window());
+		a_dialog_list(tr("Mapnik Information"), params, 1, this->get_window());
 	}
 }
 
 
 
 
-void LayerMapnik::about_cb(void)
+void LayerMapnik::about_mapnik_cb(void)
 {
 	Dialog::info(MapnikInterface::about(), this->get_window());
 }
@@ -1010,97 +1009,70 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 
 	/* Typical users shouldn't need to use this functionality - so debug only ATM. */
 	if (vik_debug) {
-		action = new QAction(QObject::tr("&Flush Memory Cache"), this);
-		action->setIcon(QIcon::fromTheme("GTK_STOCK_REMOVE"));
-		QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (flush_memory_cb()));
+		action = new QAction(tr("&Flush Map Cache"), this);
+		action->setIcon(QIcon::fromTheme("edit-clear"));
+		QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (flush_map_cache_cb()));
 		menu.addAction(action);
 	}
 
-	action = new QAction(QObject::tr("Re&fresh"), this);
-	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (reload_cb()));
+	action = new QAction(tr("Re&fresh Map"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (reload_map_cb()));
 	menu.addAction(action);
 
 
 	if ("" != this->filename_css) {
-		action = new QAction(QObject::tr("&Run Carto Command"), this);
-		action->setIcon(QIcon::fromTheme("GTK_STOCK_EXECUTE"));
+		action = new QAction(tr("&Run Carto Command"), this);
 		QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (run_carto_cb()));
 		menu.addAction(action);
 	}
 
-	action = new QAction(QObject::tr("&Info"), this);
-	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (information_cb()));
+	action = new QAction(tr("&Info"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_information_cb()));
 	menu.addAction(action);
 
 
-	action = new QAction(QObject::tr("&About"), this);
-	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (about_cb()));
+	action = new QAction(tr("&About Mapnik"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (about_mapnik_cb()));
 	menu.addAction(action);
 }
 
 
 
 
-static void mapnik_layer_rerender_cb(LayerMapnik * lmk)
+void LayerMapnik::rerender_tile_cb(void)
 {
-	lmk->rerender();
+	TileInfo tile_info;
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_zoom_level, tile_info)) {
+		qDebug() << SG_PREFIX_E << "Failed to convert clicked coordinate to tile info";
+		return;
+	}
+
+	this->render_tile(tile_info);
 }
 
 
 
 
 /**
- * Rerender a specific tile.
- */
-void LayerMapnik::rerender()
+   Render a specific tile
+*/
+void LayerMapnik::render_tile(const TileInfo & tile_info)
 {
-	if (this->rerender_ul.mode != CoordMode::LatLon) {
-		qDebug() << SG_PREFIX_E << "Invalid coord mode of ul:" << (int) this->rerender_ul.mode;
-		return;
-	}
+	LatLon lat_lon_ul;
+	LatLon lat_lon_br;
+	get_lat_lon_ul_br(tile_info, lat_lon_ul, lat_lon_br);
 
-	TileInfo ti_ul;
-	/* Requested position to map coord. */
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->rerender_ul.ll, this->rerender_viking_zoom_level, ti_ul)) {
-		qDebug() << SG_PREFIX_E << "Failed to convert ul";
-		return;
-	}
-
-	/* Reconvert back - thus getting the coordinate at the tile *ul corner*. */
-	this->rerender_ul = Coord(MapUtils::iTMS_to_lat_lon(ti_ul), CoordMode::LatLon);
-
-	/* Bottom right bound is simply +1 in TMS coords. */
-	TileInfo ti_br = ti_ul;
-	ti_br.x = ti_br.x+1;
-	ti_br.y = ti_br.y+1;
-	this->rerender_br = Coord(MapUtils::iTMS_to_lat_lon(ti_br), CoordMode::LatLon);
-	this->thread_add(ti_ul, this->rerender_ul, this->rerender_br, this->filename_xml);
+	this->thread_add(tile_info, lat_lon_ul, lat_lon_br, this->filename_xml);
 }
 
 
 
 
-static void mapnik_layer_tile_info_cb(LayerMapnik * lmk)
+void LayerMapnik::tile_info_cb(void)
 {
-	lmk->tile_info();
-}
-
-
-
-
-/**
- * Info.
- */
-void LayerMapnik::tile_info()
-{
-	if (this->rerender_ul.mode != CoordMode::LatLon) {
-		qDebug() << SG_PREFIX_E << "Invalid coord mode of ul:" << (int) this->rerender_ul.mode;
-		return;
-	}
-
 	TileInfo ti_ul;
 	/* Requested position to map coord. */
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->rerender_ul.ll, this->rerender_viking_zoom_level, ti_ul)) {
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_zoom_level, ti_ul)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert ul";
 		return;
 	}
@@ -1114,7 +1086,7 @@ void LayerMapnik::tile_info()
 
 	/* Show the info. */
 	if (properties.duration > 0.0) {
-		QString render_message = QObject::tr("Rendering time %1 seconds").arg(properties.duration, 0, 'f', 2);
+		QString render_message = tr("Rendering time %1 seconds").arg(properties.duration, 0, 'f', 2);
 		tile_info_strings.push_back(render_message);
 	}
 
@@ -1152,21 +1124,23 @@ ToolStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEve
 ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
-		this->rerender_ul = tool->viewport->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
-		this->rerender_viking_zoom_level = tool->viewport->get_viking_zoom_level();
+		const Coord coord = tool->viewport->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
+		this->clicked_lat_lon = coord.get_latlon();
+
+		this->clicked_viking_zoom_level = tool->viewport->get_viking_zoom_level();
 
 		if (!this->right_click_menu) {
 			QAction * action = NULL;
 			this->right_click_menu = new QMenu();
 
-			action = new QAction(QObject::tr("&Rerender Tile"), this);
-			action->setIcon(QIcon::fromTheme("GTK_STOCK_REFRESH"));
-			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_rerender_cb));
+			action = new QAction(tr("&Rerender Tile"), this);
+			action->setIcon(QIcon::fromTheme("view-refresh"));
+			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (rerender_tile_cb));
 			this->right_click_menu->addAction(action);
 
-			action = new QAction(QObject::tr("&Info"), this);
+			action = new QAction(tr("Tile &Info"), this);
 			action->setIcon(QIcon::fromTheme("dialog-information"));
-			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_tile_info_cb));
+			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (tile_info_cb));
 			this->right_click_menu->addAction(action);
 		}
 
@@ -1184,16 +1158,40 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 LayerMapnik::LayerMapnik()
 {
 	this->type = LayerType::Mapnik;
-	strcpy(this->debug_string, "MAPNIK");
+	strcpy(this->debug_string, "Mapnik");
 	this->interface = &vik_mapnik_layer_interface;
 
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
 
-	this->tile_size_x = size_default().u.val_int; /* FUTURE: Is there any use in this being configurable? */
+	this->tile_size_x = size_default().u.val_int; /* TODO_MAYBE: Is there any use in this being configurable? */
 	this->mi = new MapnikInterface();
+}
 
-	/* TODO_LATER: initialize this? */
-	//this->rerender_ul;
-	//this->rerender_br;
+
+
+
+
+/*
+  Get a pair of lat/lon coordinates describing a tile: coordinate of
+  upper left corner of a tile and coordinate of bottom right corner of
+  a tile.
+*/
+sg_ret get_lat_lon_ul_br(const TileInfo & tile_info, LatLon & lat_lon_ul, LatLon & lat_lon_br)
+{
+	/*
+	  Bottom-right coordinate of a tile is simply +1/+1 in TMS
+	  coords (i.e. it is coordinate of u-l corner of a next tile
+	  that is +one to the right and +one to the bottom).
+
+	  TODO: what if we are at a bottom or on the right of an x/y grid of tiles?
+	*/
+	TileInfo next_tile_info = tile_info;
+	next_tile_info.x++;
+	next_tile_info.y++;
+
+	lat_lon_ul = MapUtils::iTMS_to_lat_lon(tile_info); /* Reconvert back - thus getting the coordinate at the tile's *ul corner*. */
+	lat_lon_br = MapUtils::iTMS_to_lat_lon(next_tile_info);
+
+	return sg_ret::ok;
 }
