@@ -3235,9 +3235,9 @@ Window * Window::new_window()
 
 void Window::menu_view_cache_info_cb(void)
 {
-	const size_t bytes = MapCache::get_size();
+	const size_t bytes = MapCache::get_size_bytes();
 	const QString size_string = Measurements::get_file_size_string(bytes);
-	const QString msg = tr("Map Cache size is %1 with %2 items").arg(size_string).arg(MapCache::get_count());
+	const QString msg = tr("Map Cache size is %1 with %2 items").arg(size_string).arg(MapCache::get_items_count());
 
 	Dialog::info(msg, this);
 }

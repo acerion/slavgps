@@ -59,7 +59,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Map Cache"
-#define PREFIX ": Map Cache:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -69,7 +68,7 @@ public:
 	MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemProperties & properties);
 	~MapCacheItem() {};
 
-	size_t get_size(void) const;
+	size_t get_size_bytes(void) const;
 
 	QPixmap pixmap;
 	MapCacheItemProperties properties;
@@ -78,7 +77,7 @@ public:
 
 
 
-#define MC_KEY_SIZE 64
+#define MAP_CACHE_KEY_SIZE 64
 
 #define HASHKEY_FORMAT_STRING "%d-%d-%d-%d-%d-%lu-%d-%.3f-%.3f"
 #define HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA "%d-%d-%d-%d-%d-%lu-"
@@ -88,10 +87,10 @@ public:
 
 static std::unordered_map<std::string, MapCacheItem *> maps_cache;
 static std::list<std::string> keys_list;
-static int cache_size = 0;
-static int max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
+static int current_cache_size_bytes = 0; /* [Bytes] */
+static int max_cache_size_bytes = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024; /* [Bytes] */
 
-static std::mutex mc_mutex;
+static std::mutex map_cache_mutex;
 
 static ParameterScale<int> scale_cache_size(1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0);
 
@@ -102,10 +101,11 @@ static ParameterSpecification prefs[] = {
 
 
 
-static void cache_add(std::string & key, const QPixmap pixmap, const MapCacheItemProperties & properties);
-static void cache_remove(std::string & key);
-static void cache_remove_oldest();
-static void flush_matching(std::string & key_part);
+static void cache_add(const std::string & key, const QPixmap pixmap, const MapCacheItemProperties & properties);
+static void cache_remove(const std::string & key);
+static void cache_remove_oldest(void);
+static void flush_matching(const std::string & key_part);
+static void dump_cache(void);
 
 
 
@@ -119,12 +119,16 @@ MapCacheItem::MapCacheItem(const QPixmap & new_pixmap, const MapCacheItemPropert
 
 
 
-size_t MapCacheItem::get_size(void) const
+size_t MapCacheItem::get_size_bytes(void) const
 {
 	size_t size = 0;
 
 	if (!this->pixmap.isNull()) {
-		size += this->pixmap.width() * this->pixmap.height() * (this->pixmap.depth() / 8);
+		const int bits_per_pixel = this->pixmap.depth();
+		const int bytes_per_pixel = bits_per_pixel / 8;
+		const int n_pixels = this->pixmap.width() * this->pixmap.height();
+
+		size += n_pixels * bytes_per_pixel;
 		size += sizeof (MapCacheItemProperties);
 		size += 100; /* Not sure what this value represents, probably a guess at an average pixmap metadata size. This value existed in Viking. */
 	}
@@ -143,26 +147,30 @@ void MapCache::init(void)
 
 
 
-void cache_add(std::string & key, const QPixmap pixmap, const MapCacheItemProperties & properties)
+void cache_add(const std::string & key, const QPixmap pixmap, const MapCacheItemProperties & properties)
 {
 	MapCacheItem * ci = new MapCacheItem(pixmap, properties);
 
-	size_t before = maps_cache.size();
+	const size_t before = maps_cache.size();
 
 	/* Insert new or overwrite existing. */
 	maps_cache[key] = ci;
 
-	size_t after = maps_cache.size();
+	const size_t after = maps_cache.size();
 
-	if (after != before) {
+	const bool item_really_added = (after != before);
+	if (item_really_added) {
 		/* An item has been added, not replaced/updated. */
-		cache_size += ci->get_size();
+		current_cache_size_bytes += ci->get_size_bytes();
+		keys_list.push_back(key);
+	} else {
+		/* Item has been only updated in map cache. The item's
+		   key already exists on list of keys. */
 	}
-
-	keys_list.push_back(key);
 
 	if (maps_cache.size() != keys_list.size()) {
 		qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+		dump_cache();
 		exit(EXIT_FAILURE);
 	}
 }
@@ -170,12 +178,12 @@ void cache_add(std::string & key, const QPixmap pixmap, const MapCacheItemProper
 
 
 
-void cache_remove(std::string & key)
+void cache_remove(const std::string & key)
 {
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end()) {
 		MapCacheItem * ci = iter->second;
-		cache_size -= ci->get_size();
+		current_cache_size_bytes -= ci->get_size_bytes();
 		maps_cache.erase(key);
 		delete ci;
 	}
@@ -184,7 +192,7 @@ void cache_remove(std::string & key)
 
 
 
-void cache_remove_oldest()
+void cache_remove_oldest(void)
 {
 	std::string old_key = keys_list.front();
 	cache_remove(old_key);
@@ -192,6 +200,7 @@ void cache_remove_oldest()
 
 	if (maps_cache.size() != keys_list.size()) {
 		qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+		dump_cache();
 		exit(EXIT_FAILURE);
 	}
 }
@@ -216,31 +225,31 @@ void MapCache::add_tile_pixmap(const QPixmap & pixmap, const MapCacheItemPropert
 		return;
 	}
 
-	static char key_[MC_KEY_SIZE];
+	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
-	std::string key(key_);
+	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
+	std::string key(key_buffer);
 
-	mc_mutex.lock();
+	map_cache_mutex.lock();
 
 	cache_add(key, pixmap, properties);
 
 	/* TODO_LATER: that should be done on preference change only... */
-	max_cache_size = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "mapcache_size").u.val_int * 1024 * 1024;
+	max_cache_size_bytes = Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "mapcache_size").u.val_int * 1024 * 1024;
 
-	while (cache_size > max_cache_size && maps_cache.size()) {
+	while (current_cache_size_bytes > max_cache_size_bytes && maps_cache.size()) {
 		cache_remove_oldest();
 	}
-	mc_mutex.unlock();
+	map_cache_mutex.unlock();
 
 	static int tmp = 0;
 	if ((++tmp == 20)) {
 		qDebug() << SG_PREFIX_D
 			 << "keys count =" << keys_list.size()
-			 << "cache count =" << maps_cache.size()
-			 << "cache size =" << cache_size
-			 << "max cache size =" << max_cache_size;
+			 << ", cache items count =" << maps_cache.size()
+			 << ", current cache size =" << current_cache_size_bytes << "Bytes"
+			 << ", max cache size =" << max_cache_size_bytes << "Bytes";
 		tmp = 0;
 	}
 }
@@ -262,17 +271,17 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 	   universal, the common denominator for all map types. */
 	const int the_scale = tile_info.scale.get_scale_value();
 
-	static char key_[MC_KEY_SIZE];
+	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
-	std::string key(key_);
+	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
+	std::string key(key_buffer);
 
-	mc_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
+	map_cache_mutex.lock(); /* Prevent returning pixmap when cache is being cleared */
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end()) {
 		result = iter->second->pixmap;
 	}
-	mc_mutex.unlock();
+	map_cache_mutex.unlock();
 
 	return result;
 }
@@ -290,10 +299,10 @@ MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapT
 	   universal, the common denominator for all map types. */
 	const int the_scale = tile_info.scale.get_scale_value();
 
-	static char key_[MC_KEY_SIZE];
+	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
-	std::string key(key_);
+	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn, alpha, pixmap_scale.x, pixmap_scale.y);
+	std::string key(key_buffer);
 
 	auto iter = maps_cache.find(key);
 	if (iter != maps_cache.end() && iter->second) {
@@ -309,12 +318,12 @@ MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapT
 /**
  * Common function to remove cache items for keys starting with the specified string
  */
-void flush_matching(std::string & key_part)
+void flush_matching(const std::string & key_part)
 {
-	mc_mutex.lock();
+	map_cache_mutex.lock();
 
 	if (keys_list.empty()) {
-		mc_mutex.unlock();
+		map_cache_mutex.unlock();
 		return;
 	}
 
@@ -337,11 +346,12 @@ void flush_matching(std::string & key_part)
 
 		if (maps_cache.size() != keys_list.size()) {
 			qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+			dump_cache();
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	mc_mutex.unlock();
+	map_cache_mutex.unlock();
 }
 
 
@@ -360,10 +370,10 @@ void MapCache::remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID ma
 	   universal, the common denominator for all map types. */
 	const int the_scale = tile_info.scale.get_scale_value();
 
-	char key_[MC_KEY_SIZE];
+	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
 	std::size_t nn = file_name.isEmpty() ? 0 : std::hash<std::string>{}(file_name.toUtf8().constData());
-	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn);
-	std::string key(key_);
+	snprintf(key_buffer, sizeof(key_buffer), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, (int) map_type_id, tile_info.x, tile_info.y, tile_info.z, the_scale, nn);
+	std::string key(key_buffer);
 
 	flush_matching(key);
 }
@@ -374,7 +384,7 @@ void MapCache::remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID ma
 void MapCache::flush(void)
 {
 	/* Everything happens within the mutex lock section. */
-	mc_mutex.lock();
+	map_cache_mutex.lock();
 
 	for (auto iter = keys_list.begin(); iter != keys_list.end(); iter++) {
 		std::string key = *iter;
@@ -384,10 +394,11 @@ void MapCache::flush(void)
 
 	if (maps_cache.size() != keys_list.size()) {
 		qDebug() << SG_PREFIX_E << "Size mismatch:" << maps_cache.size() << "!=" << keys_list.size();
+		dump_cache();
 		exit(EXIT_FAILURE);
 	}
 
-	mc_mutex.unlock();
+	map_cache_mutex.unlock();
 }
 
 
@@ -401,9 +412,9 @@ void MapCache::flush(void)
 */
 void MapCache::flush_type(MapTypeID map_type_id)
 {
-	char key_[MC_KEY_SIZE];
-	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING_TYPE, (int) map_type_id);
-	std::string key(key_);
+	char key_buffer[MAP_CACHE_KEY_SIZE] = { 0 };
+	snprintf(key_buffer, sizeof (key_buffer), HASHKEY_FORMAT_STRING_TYPE, (int) map_type_id);
+	std::string key(key_buffer);
 	flush_matching(key);
 }
 
@@ -419,17 +430,15 @@ void MapCache::uninit(void)
 
 
 
-/* Size of map cache in memory. */
-size_t MapCache::get_size()
+size_t MapCache::get_size_bytes(void)
 {
-	return cache_size;
+	return current_cache_size_bytes;
 }
 
 
 
 
-/* Count of items in the map cache. */
-int MapCache::get_count()
+int MapCache::get_items_count(void)
 {
 	return maps_cache.size();
 }
@@ -485,7 +494,7 @@ const QString & MapCache::get_default_maps_dir(void)
 			/* Add the separator at the end. */
 			default_dir += QDir::separator();
 		}
-		qDebug() << "DD: Layer Map: get default dir: dir is" << default_dir;
+		qDebug() << SG_PREFIX_D << "Default dir is" << default_dir;
 	}
 	return default_dir;
 }
@@ -559,4 +568,31 @@ QString MapCacheObj::get_cache_file_full_path(const TileInfo & tile_info,
 	qDebug() << SG_PREFIX_I << "Cache file full path:" << result;
 
 	return result;
+}
+
+
+
+
+void dump_cache(void)
+{
+	qDebug() << SG_PREFIX_I << "---- Map cache dump - begin ----";
+	qDebug() << SG_PREFIX_I << "Maps size =" << maps_cache.size() << "Keys size =" << keys_list.size();
+
+	int i = 0;
+	for (auto iter = maps_cache.begin(); iter != maps_cache.end(); iter++) {
+		MapCacheItem * item = iter->second;
+		std::cout << "Map cache key no." << i << " = " << iter->first << ", "
+			  << (item == NULL ? "pixmap pointer is NULL" : item->pixmap.isNull() ? "pixmap is empty" : "pixmap is valid") << "\n";
+		i++;
+	}
+
+	std::cout << "\n";
+
+	i = 0;
+	for (auto iter = keys_list.begin(); iter != keys_list.end(); iter++) {
+		std::cout << "Key list item no." << i << " = " << *iter << "\n";
+		i++;
+	}
+
+	qDebug() << SG_PREFIX_I << "---- Map cache dump - end ----";
 }

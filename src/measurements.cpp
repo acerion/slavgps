@@ -63,10 +63,10 @@ QString Measurements::get_file_size_string(size_t file_size)
 {
 	float size = (float) file_size;
 
-	static const QStringList suffixes = { QObject::tr("KB"), QObject::tr("MB"), QObject::tr("GB"), QObject::tr("TB") };
+	static const QStringList suffixes = { QObject::tr("B"), QObject::tr("KB"), QObject::tr("MB"), QObject::tr("GB"), QObject::tr("TB") };
 
 	QStringListIterator iter(suffixes);
-	QString unit = QObject::tr("B"); /* B == Bytes. */
+	QString unit = iter.next(); /* Initially B/Bytes. */
 	bool show_fractional = false; /* Show (or don't show) fractional part when displaying number of bytes. */
 
 	while (size >= 1024.0 && iter.hasNext()) {

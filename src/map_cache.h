@@ -79,8 +79,12 @@ namespace SlavGPS {
 		static QPixmap get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
 		static MapCacheItemProperties get_properties(const TileInfo & tile_info, MapTypeID map_type, int alpha, const PixmapScale & pixmap_scale, const QString & file_name);
 
-		static size_t get_size(void);
-		static int get_count(void);
+
+		/* Get size of map cache in memory (in bytes). */
+		static size_t get_size_bytes(void);
+
+		/* Get number (count) of items in the map cache. */
+		static int get_items_count(void);
 
 		static void remove_all_shrinkfactors(const TileInfo & tile_info, MapTypeID map_type, const QString & file_name);
 		static void flush(void);
