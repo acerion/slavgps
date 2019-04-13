@@ -85,15 +85,15 @@ namespace SlavGPS {
 
 
 
-		void set_file_xml(const QString & name);
+		void set_file_xml(const QString & file_full_path);
 		void set_file_css(const QString & name);
 		void set_cache_dir(const QString & name);
 
-		bool carto_load(void);
+
 		void possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ulm);
 		void render(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br);
-		void thread_add(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const QString & file_name);
-		QPixmap load_pixmap(const TileInfo & tile_info, bool * rerender) const;
+		void thread_add(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const QString & file_full_path);
+		QPixmap load_pixmap(const TileInfo & tile_info, bool & rerender) const;
 		QPixmap get_pixmap(const TileInfo & tile_info);
 		void render_tile(const TileInfo & tile_info);
 
@@ -103,7 +103,7 @@ namespace SlavGPS {
 
 
 		QString filename_css; /* CartoCSS MML File - use 'carto' to convert into xml. */
-		QString filename_xml;
+
 		int alpha = 0;
 
 		int tile_size_x = 0; /* Y is the same as X ATM. */
@@ -128,7 +128,22 @@ namespace SlavGPS {
 	private:
 		static void init_interface(void);
 
-		bool map_file_loaded = false;
+		bool should_run_carto(void) const;
+		sg_ret carto_load(void);
+
+		/* Draw single tile to viewport. */
+		sg_ret draw_tile(Viewport * viewport, const TileInfo & tile_info);
+
+		/* Get range of tiles that will cover current
+		   viewport.  Also get tile info of first tile in that
+		   range (upper-left tile). */
+		sg_ret get_tiles_range(const Viewport * viewport, TilesRange & range, TileInfo & tile_info_ul);
+
+		void draw_grid(Viewport * viewport, const TilesRange & range, const TileInfo & tile_info_ul) const;
+
+		QString xml_map_file_full_path;
+
+		bool xml_map_file_loaded = false;
 
 		/* Coordinates of mouse right-click-and-release. */
 		LatLon clicked_lat_lon;

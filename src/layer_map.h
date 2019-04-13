@@ -163,6 +163,16 @@ namespace SlavGPS {
 		static QString get_cache_filename(const MapCacheObj & map_cache_obj, MapTypeID map_type_id, const QString & map_type_string, const TileInfo & tile_info, const QString & file_extension);
 
 
+		/*
+		  Draw grid lines at viewport coordinates x/y.  The
+		  grid starts at x_begin/y_begin (inclusive) and ends
+		  and x_end/y_end (exclusive).
+
+		  The grid lines are drawn at delta_x/delta_y intervals.
+		*/
+		static void draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height);
+
+
 		MapTypeID map_type_id = MapTypeID::Initial;
 		QString cache_dir;
 		MapCacheLayout cache_layout = MapCacheLayout::Viking;

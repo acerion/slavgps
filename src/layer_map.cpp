@@ -95,6 +95,7 @@ LayerMapInterface vik_map_layer_interface;
 
 
 extern bool vik_debug;
+extern bool vik_verbose;
 
 
 
@@ -169,11 +170,6 @@ static SGVariant map_zooms_default(void) { return SGVariant(map_zooms_enum.defau
 
 static double __mapzooms_x[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
 static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
-
-
-
-
-static void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height);
 
 
 
@@ -1103,8 +1099,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	UTM utm;
 	if (map_source->get_tilesize_x() == 0 && !existence_only) {
 
-		for (tile_iter.x = unordered_tiles_range.x_begin; tile_iter.x <= unordered_tiles_range.x_end; tile_iter.x++) {
-			for (tile_iter.y = unordered_tiles_range.y_begin; tile_iter.y <= unordered_tiles_range.y_end; tile_iter.y++) {
+		for (tile_iter.x = unordered_tiles_range.x_first; tile_iter.x <= unordered_tiles_range.x_last; tile_iter.x++) {
+			for (tile_iter.y = unordered_tiles_range.y_first; tile_iter.y <= unordered_tiles_range.y_last; tile_iter.y++) {
 
 				TileGeometry tile_geometry;
 
@@ -1166,21 +1162,21 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 
 
-		const int delta_x = (tile_ul.x == unordered_tiles_range.x_begin) ? 1 : -1;
-		const int delta_y = (tile_ul.y == unordered_tiles_range.y_begin) ? 1 : -1;
+		const int delta_x = (tile_ul.x == unordered_tiles_range.x_first) ? 1 : -1;
+		const int delta_y = (tile_ul.y == unordered_tiles_range.y_first) ? 1 : -1;
 		TilesRange ordered_tiles_range;
-		ordered_tiles_range.x_begin = (delta_x == 1) ? unordered_tiles_range.x_begin : unordered_tiles_range.x_end;
-		ordered_tiles_range.y_begin = (delta_y == 1) ? unordered_tiles_range.y_begin : unordered_tiles_range.y_end;
-		ordered_tiles_range.x_end   = (delta_x == 1) ? (unordered_tiles_range.x_end + 1) : (unordered_tiles_range.x_begin - 1);
-		ordered_tiles_range.y_end   = (delta_y == 1) ? (unordered_tiles_range.y_end + 1) : (unordered_tiles_range.y_begin - 1);
+		ordered_tiles_range.x_first = (delta_x == 1) ? unordered_tiles_range.x_first : unordered_tiles_range.x_last;
+		ordered_tiles_range.y_first = (delta_y == 1) ? unordered_tiles_range.y_first : unordered_tiles_range.y_last;
+		ordered_tiles_range.x_last   = (delta_x == 1) ? (unordered_tiles_range.x_last + 1) : (unordered_tiles_range.x_first - 1);
+		ordered_tiles_range.y_last   = (delta_y == 1) ? (unordered_tiles_range.y_last + 1) : (unordered_tiles_range.y_first - 1);
 
 
 
 		//existence_only = true;
 
-		for (tile_iter.x = ordered_tiles_range.x_begin; tile_iter.x != ordered_tiles_range.x_end; tile_iter.x += delta_x) {
+		for (tile_iter.x = ordered_tiles_range.x_first; tile_iter.x != ordered_tiles_range.x_last; tile_iter.x += delta_x) {
 			tile_geometry.dest_y = base_viewport_y;
-			for (tile_iter.y = ordered_tiles_range.y_begin; tile_iter.y != ordered_tiles_range.y_end; tile_iter.y += delta_y) {
+			for (tile_iter.y = ordered_tiles_range.y_first; tile_iter.y != ordered_tiles_range.y_last; tile_iter.y += delta_y) {
 
 				if (existence_only) {
 					this->draw_existence(viewport, tile_iter, tile_geometry, map_source, map_cache_obj);
@@ -1207,17 +1203,12 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		}
 
 		/* ATM Only show tile grid lines in extreme debug mode. */
-		if (
-#if 1
-		    true
-#else
-		    false /* vik_debug && vik_verbose */
-#endif
-		    ) {
+		if (true || (vik_debug && vik_verbose)) {
 			/* Grid drawing here so it gets drawn on top of the map.
 			   Thus loop around x & y again, but this time separately.
 			   Only showing grid for the current scale */
-			draw_grid(viewport, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_begin, delta_x, ordered_tiles_range.x_end, ordered_tiles_range.y_begin, delta_y, ordered_tiles_range.y_end, tile_width_f, tile_height_f);
+			const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
+			LayerMap::draw_grid(viewport, pen, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_first, delta_x, ordered_tiles_range.x_last + 1, ordered_tiles_range.y_first, delta_y, ordered_tiles_range.y_last + 1, tile_width_f, tile_height_f);
 		}
 	}
 }
@@ -1225,10 +1216,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 
 
 
-void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
+void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
 {
-	const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-
 	/* Draw single grid lines across the whole screen. */
 	const int viewport_width = viewport->get_width();
 	const int viewport_height = viewport->get_height();
@@ -1237,12 +1226,18 @@ void draw_grid(Viewport * viewport, int viewport_x, int viewport_y, int x_begin,
 
 	viewport_x = base_viewport_x;
 	for (int x = x_begin; x != x_end; x += delta_x) {
+		/* Using 'base_viewport_y as a third arg,
+		   instead of zero, causes drawing only whole
+		   tiles on top of a map. */
 		viewport->draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
 		viewport_x += tile_width;
 	}
 
 	viewport_y = base_viewport_y;
 	for (int y = y_begin; y != y_end; y += delta_y) {
+		/* Using 'base_viewport_x as a second arg,
+		   instead of zero, causes drawing only whole
+		   tiles on left size of a map. */
 		viewport->draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
 		viewport_y += tile_height;
 	}

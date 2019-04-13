@@ -37,14 +37,14 @@ using namespace SlavGPS;
 
 
 
-TilesRange TileInfo::get_tiles_range(const TileInfo & ulm, const TileInfo & brm)
+TilesRange TileInfo::get_tiles_range(const TileInfo & tile_info_ul, const TileInfo & tile_info_br)
 {
 	TilesRange range;
 
-	range.x_begin = std::min(ulm.x, brm.x);
-	range.x_end   = std::max(ulm.x, brm.x);
-	range.y_begin = std::min(ulm.y, brm.y);
-	range.y_end   = std::max(ulm.y, brm.y);
+	range.x_first = std::min(tile_info_ul.x, tile_info_br.x);
+	range.x_last  = std::max(tile_info_ul.x, tile_info_br.x);
+	range.y_first = std::min(tile_info_ul.y, tile_info_br.y);
+	range.y_last  = std::max(tile_info_ul.y, tile_info_br.y);
 
 	return range;
 }
@@ -181,5 +181,5 @@ bool TileScale::get_scale_valid(void) const
 
 int TilesRange::get_tiles_count(void) const
 {
-	return (this->x_end - this->x_begin) * (this->y_end - this->y_begin);
+	return (this->x_last - this->x_first) * (this->y_last - this->y_first);
 }

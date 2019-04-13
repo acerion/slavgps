@@ -105,8 +105,8 @@ void MapDownloadJob::run(void)
 
 	qDebug() << SG_PREFIX_I << "Called";
 
-	for (tile_iter.x = this->range.x_begin; tile_iter.x <= this->range.x_end; tile_iter.x++) {
-		for (tile_iter.y = this->range.y_begin; tile_iter.y <= this->range.y_end; tile_iter.y++) {
+	for (tile_iter.x = this->range.x_first; tile_iter.x <= this->range.x_last; tile_iter.x++) {
+		for (tile_iter.y = this->range.y_first; tile_iter.y <= this->range.y_last; tile_iter.y++) {
 
 			/* Only attempt to download a tile from areas supported by current map source. */
 			if (!this->map_source->includes_tile(tile_iter)) {
@@ -266,8 +266,8 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 
 	int n_maps = 0;
 
-	for (tile_iter.x = this->range.x_begin; tile_iter.x <= this->range.x_end; tile_iter.x++) {
-		for (tile_iter.y = this->range.y_begin; tile_iter.y <= this->range.y_end; tile_iter.y++) {
+	for (tile_iter.x = this->range.x_first; tile_iter.x <= this->range.x_last; tile_iter.x++) {
+		for (tile_iter.y = this->range.y_first; tile_iter.y <= this->range.y_last; tile_iter.y++) {
 			/* Only count tiles from supported areas. */
 			if (!this->map_source->includes_tile(tile_iter)) {
 				continue;
@@ -349,7 +349,8 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 
 int MapDownloadJob::calculate_total_tile_count_to_download(void) const
 {
-	return (this->range.x_end - this->range.x_begin + 1) * (this->range.y_end - this->range.y_begin + 1);
+	/* TODO: can't we use TilesRange::count()? */
+	return (this->range.x_last - this->range.x_first + 1) * (this->range.y_last - this->range.y_first + 1);
 }
 
 

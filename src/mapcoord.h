@@ -48,10 +48,10 @@ namespace SlavGPS {
 	public:
 		int get_tiles_count(void) const;
 
-		int x_begin = 0;
-		int x_end   = 0;
-		int y_begin = 0;
-		int y_end   = 0;
+		int x_first = 0;
+		int x_last  = 0;
+		int y_first = 0;
+		int y_last  = 0;
 	};
 
 
