@@ -31,7 +31,7 @@ src/file.c
 src/geotag_exif.c
 src/osm-traces.c
 src/mapcache.c
-src/mapnik_interface.cpp
+src/layer_mapnik_wrapper.cpp
 src/print.c
 src/ui_util.c
 src/util.c
