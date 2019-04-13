@@ -29,7 +29,17 @@
 
 
 
+#include "globals.h"
+
+
+
+
 namespace SlavGPS {
+
+
+
+
+	class LatLon;
 
 
 
@@ -78,6 +88,12 @@ namespace SlavGPS {
 
 		void scale_up(int scale_dec, int scale_factor);
 		void scale_down(int scale_inc, int scale_factor);
+
+		/*
+		  Get Lat/Lon coordinates of two points of iTMS tile:
+		  of upper-left corner and of bottom-right corner.
+		*/
+		sg_ret get_itms_lat_lon_ul_br(LatLon & lat_lon_ul, LatLon & lat_lon_br) const;
 
 		/* https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#X_and_Y */
 		int x = 0;

@@ -27,7 +27,6 @@
 
 
 
-#include "mapcoord.h"
 #include "coord.h"
 #include "map_source.h"
 #include "mapcoord.h"

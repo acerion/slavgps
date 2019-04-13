@@ -92,11 +92,6 @@ extern bool vik_verbose;
 
 
 
-static sg_ret get_lat_lon_ul_br(const TileInfo & tile_info, LatLon & lat_lon_ul, LatLon & lat_lon_br);
-
-
-
-
 static SGVariant file_default(void)      { return SGVariant(""); }
 static SGVariant size_default(void)      { return SGVariant(256, SGVariantType::Int); }
 static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
@@ -811,7 +806,7 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & tile_info)
 
 		LatLon lat_lon_ul;
 		LatLon lat_lon_br;
-		get_lat_lon_ul_br(tile_info, lat_lon_ul, lat_lon_br);
+		tile_info.get_itms_lat_lon_ul_br(lat_lon_ul, lat_lon_br);
 
 		if (true) {
 			this->thread_add(tile_info, lat_lon_ul, lat_lon_br, this->filename_xml);
@@ -1060,7 +1055,7 @@ void LayerMapnik::render_tile(const TileInfo & tile_info)
 {
 	LatLon lat_lon_ul;
 	LatLon lat_lon_br;
-	get_lat_lon_ul_br(tile_info, lat_lon_ul, lat_lon_br);
+	tile_info.get_itms_lat_lon_ul_br(lat_lon_ul, lat_lon_br);
 
 	this->thread_add(tile_info, lat_lon_ul, lat_lon_br, this->filename_xml);
 }
@@ -1166,32 +1161,4 @@ LayerMapnik::LayerMapnik()
 
 	this->tile_size_x = size_default().u.val_int; /* TODO_MAYBE: Is there any use in this being configurable? */
 	this->mi = new MapnikInterface();
-}
-
-
-
-
-
-/*
-  Get a pair of lat/lon coordinates describing a tile: coordinate of
-  upper left corner of a tile and coordinate of bottom right corner of
-  a tile.
-*/
-sg_ret get_lat_lon_ul_br(const TileInfo & tile_info, LatLon & lat_lon_ul, LatLon & lat_lon_br)
-{
-	/*
-	  Bottom-right coordinate of a tile is simply +1/+1 in TMS
-	  coords (i.e. it is coordinate of u-l corner of a next tile
-	  that is +one to the right and +one to the bottom).
-
-	  TODO: what if we are at a bottom or on the right of an x/y grid of tiles?
-	*/
-	TileInfo next_tile_info = tile_info;
-	next_tile_info.x++;
-	next_tile_info.y++;
-
-	lat_lon_ul = MapUtils::iTMS_to_lat_lon(tile_info); /* Reconvert back - thus getting the coordinate at the tile's *ul corner*. */
-	lat_lon_br = MapUtils::iTMS_to_lat_lon(next_tile_info);
-
-	return sg_ret::ok;
 }

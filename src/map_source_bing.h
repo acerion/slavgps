@@ -33,7 +33,6 @@
 
 
 #include "coord.h"
-#include "mapcoord.h"
 #include "map_source_slippy.h"
 #include "background.h"
 #include "globals.h"

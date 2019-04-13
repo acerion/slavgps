@@ -72,6 +72,30 @@ void TileInfo::scale_down(int scale_inc, int scale_factor)
 
 
 
+sg_ret TileInfo::get_itms_lat_lon_ul_br(LatLon & lat_lon_ul, LatLon & lat_lon_br) const
+{
+	/*
+	  Bottom-right coordinate of a tile is simply +1/+1 in iTMS
+	  coords, i.e. it is coordinate of u-l corner of a next tile
+	  that is +one to the right and +one to the bottom.
+
+	  TODO: what if we are at a bottom or on the right of an x/y grid of tiles?
+	*/
+	TileInfo next_tile_info = *this;
+	next_tile_info.x++;
+	next_tile_info.y++;
+
+	/* Reconvert back - thus getting the coordinate at the given
+	   tile's *ul corner*. */
+	lat_lon_ul = MapUtils::iTMS_to_lat_lon(*this);
+	lat_lon_br = MapUtils::iTMS_to_lat_lon(next_tile_info); /* ul of 'next' tile is br of 'this' tile. */
+
+	return sg_ret::ok;
+}
+
+
+
+
 QDebug SlavGPS::operator<<(QDebug debug, const TileInfo & tile_info)
 {
 	debug << "x =" << tile_info.x << ", y =" << tile_info.y << ", zoom level =" << tile_info.get_tile_zoom_level();

@@ -38,6 +38,7 @@
 
 
 #include "dialog.h"
+#include "mapcoord.h"
 
 
 

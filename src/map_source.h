@@ -34,7 +34,6 @@
 
 
 #include "coord.h"
-#include "mapcoord.h"
 #include "bbox.h"
 #include "download.h"
 #include "viewport.h"
@@ -57,6 +56,7 @@ namespace SlavGPS {
 	class Viewport;
 	class VikingZoomLevel;
 	class PixmapScale;
+	class TileInfo;
 
 
 
