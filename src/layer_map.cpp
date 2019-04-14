@@ -881,7 +881,7 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInf
 	if (!pixmap.isNull()) {
 		pixmap_apply_settings(pixmap, this->alpha, pixmap_scale);
 
-		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(0.0), tile_info, map_source->map_type_id,
+		MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, map_source->map_type_id,
 					  this->alpha, pixmap_scale, this->file_full_path);
 	}
 

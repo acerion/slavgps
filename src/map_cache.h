@@ -46,14 +46,26 @@ namespace SlavGPS {
 
 
 
+/* Number of digits after comma for render time presented in
+   seconds. */
+#define SG_RENDER_TIME_RESOLUTION   6
+
+/* Rendering was not performed (at least not during the application's
+   run). Pixmap was already existing on disc and original render time
+   is not available. */
+#define SG_RENDER_TIME_NO_RENDER    0
+
+
+
+
 	class PixmapScale;
 
 
 
 
 	enum class MapCacheLayout {
-		Viking = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout. */
-		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png). */
+		Viking = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (Legacy default layout. Notice no file extension.) */
+		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default extension (ext) is "png".) */
 		Num         /* Last enum. */
 	};
 
@@ -63,8 +75,15 @@ namespace SlavGPS {
 	class MapCacheItemProperties {
 	public:
 		MapCacheItemProperties() {}
-		MapCacheItemProperties(double new_duration) : duration(new_duration) {}
-		double duration = 0.0; // Mostly for Mapnik Rendering duration - negative values indicate not rendered(i.e. read from disk)
+		MapCacheItemProperties(long duration) : rendering_duration_ns(duration) {}
+
+		/*
+		  How much time it took to render a pixmap.
+
+		  The unit of this fields is the same as of 'struct
+		  timespec::tv_nsec'.
+		*/
+		long rendering_duration_ns = SG_RENDER_TIME_NO_RENDER; /* [nanoseconds] */
 	};
 
 

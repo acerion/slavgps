@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cctype>
+#include <ctime>
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -307,7 +308,8 @@ void LayerMapnik::uninit(void)
 
 
 
-/* NB Only performed once per program run. TODO: run on every change of preferences? */
+/* Only performed once per program run.
+   TODO_LATER: run on every change of preferences? */
 void LayerMapnik::init_wrapper(void)
 {
 #ifdef HAVE_LIBMAPNIK
@@ -495,17 +497,14 @@ sg_ret LayerMapnik::carto_load(void)
 		window_->set_busy_cursor();
 	}
 
-	int64_t tt1 = 0;
-	int64_t tt2 = 0;
-	/* You won't get a sensible timing measurement if running too old a GLIB. */
-#if GLIB_CHECK_VERSION (2, 28, 0)
-	tt1 = g_get_real_time();
-#endif
+	struct timespec before = { 0, 0 };
+	struct timespec after = { 0, 0 };
 
-	if (g_spawn_command_line_sync(command.toUtf8().constData(), &mystdout, &mystderr, NULL, &error)) {
-#if GLIB_CHECK_VERSION (2, 28, 0)
-		tt2 = g_get_real_time();
-#endif
+	const int before_rv = clock_gettime(CLOCK_MONOTONIC, &before);
+	const bool spawn_result = g_spawn_command_line_sync(command.toUtf8().constData(), &mystdout, &mystderr, NULL, &error);
+	const int after_rv = clock_gettime(CLOCK_MONOTONIC, &after);
+
+	if (spawn_result) {
 		if (mystderr)
 			if (strlen(mystderr) > 1) {
 				Dialog::error(tr("Error running carto command:\n%1").arg(QString(mystderr)), this->get_window());
@@ -541,7 +540,15 @@ sg_ret LayerMapnik::carto_load(void)
 	}
 
 	if (window_) {
-		const QString msg = tr("%1 completed in %2 seconds").arg(pref_value.val_string).arg((double) (tt2-tt1)/G_USEC_PER_SEC, 0, 'f', 1);
+		QString msg;
+		if (before_rv == 0 && after_rv == 0) {
+			const long duration_ns = (after.tv_nsec - before.tv_nsec) + ((after.tv_sec - before.tv_nsec) * NANOSECS_PER_SEC);
+			const double seconds = (1.0 * duration_ns) / NANOSECS_PER_SEC;
+			msg = tr("%1 completed in %2 seconds").arg(pref_value.val_string).arg(seconds, 0, 'f', 1);
+		} else {
+			msg = tr("%1 completed").arg(pref_value.val_string);
+			qDebug() << SG_PREFIX_E << "One or both calls to clock_gettime() has failed:" << before_rv << after_rv;
+		}
 		window_->statusbar_update(StatusBarField::Info, msg);
 		window_->clear_busy_cursor();
 	}
@@ -644,26 +651,38 @@ void LayerMapnik::render_tile_now(const TileInfo & tile_info)
 	LatLon lat_lon_br;
 	tile_info.get_itms_lat_lon_ul_br(lat_lon_ul, lat_lon_br);
 
-	const int64_t tt1 = g_get_real_time();
+
+	struct timespec before = { 0, 0 };
+	struct timespec after = { 0, 0 };
+	const int before_rv = clock_gettime(CLOCK_MONOTONIC, &before);
 	QPixmap pixmap = this->mw.render_map(lat_lon_ul.lat, lat_lon_ul.lon, lat_lon_br.lat, lat_lon_br.lon);
-	const int64_t tt2 = g_get_real_time();
-	const double render_time = (double) (tt2 - tt1)/1000000;
-	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", render_time);
+	const int after_rv = clock_gettime(CLOCK_MONOTONIC, &after);
+
+
+	MapCacheItemProperties properties;
+	if (before_rv == 0 && after_rv == 0) {
+		properties.rendering_duration_ns = (after.tv_nsec - before.tv_nsec) + ((after.tv_sec - before.tv_nsec) * NANOSECS_PER_SEC);
+		const double seconds = (1.0 * properties.rendering_duration_ns) / NANOSECS_PER_SEC;
+		const QString render_time = QString("%1").arg(seconds, 0, 'f', SG_RENDER_TIME_RESOLUTION);
+		qDebug() << SG_PREFIX_D << "Mapnik rendering completed in" << render_time << "seconds";
+	} else {
+		properties.rendering_duration_ns = SG_RENDER_TIME_NO_RENDER;
+		qDebug() << SG_PREFIX_E << "One or both calls to clock_gettime() has failed:" << before_rv << after_rv;
+	}
+
 	if (pixmap.isNull()) {
 		qDebug() << SG_PREFIX_N << "Rendered pixmap is empty";
-		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
+		/* A pixmap to stick into cache in case of an unrenderable area - otherwise will get continually re-requested. */
 		const QPixmap substitute = QPixmap(":/icons/layer/mapnik.png");
 		pixmap = substitute.scaled(this->tile_size_x, this->tile_size_x, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
 	this->possibly_save_pixmap(pixmap, tile_info);
 
-	/* TODO_MAYBE: Mapnik can apply alpha, but use our own function for now. */
 	if (scale_alpha.is_in_range(this->alpha)) {
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 
-	/* TODO: shouldn't we pass to MapCacheItemProperties() some other value? */
-	MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(render_time), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+	MapCache::add_tile_pixmap(pixmap, properties, tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
 }
 
 
@@ -740,7 +759,7 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & tile_info, bool & rerender) co
 				ui_pixmap_set_alpha(pixmap, this->alpha);
 			}
 
-			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(-1.0), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+			MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(SG_RENDER_TIME_NO_RENDER), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
 		}
 		/* If file is too old mark for rerendering. */
 		if (g_planet_import_time < stat_buf.st_mtime) {
@@ -778,8 +797,8 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & tile_info)
 		if (run_in_background) {
 			this->queue_rendering_in_background(tile_info, this->xml_map_file_full_path);
 		} else {
-			/* TODO: maybe we could return pixmap here
-			   from render_tile_now() and pass it to
+			/* TODO_MAYBE: maybe we could return pixmap
+			   here from render_tile_now() and pass it to
 			   caller of get_pixmap(), without the need to
 			   emit signal? */
 			this->render_tile_now(tile_info);
@@ -986,9 +1005,13 @@ void LayerMapnik::tile_info_cb(void)
 	tile_info_add_file_info_strings(tile_info_strings, file_full_path);
 
 	/* Show the info. */
-	if (properties.duration > 0.0) {
-		QString render_message = tr("Rendering time %1 seconds").arg(properties.duration, 0, 'f', 2);
+	if (properties.rendering_duration_ns != SG_RENDER_TIME_NO_RENDER) {
+		const double seconds = (1.0 * properties.rendering_duration_ns) / NANOSECS_PER_SEC;
+		const QString render_message = tr("Rendering time %1 seconds").arg(seconds, 0, 'f', SG_RENDER_TIME_RESOLUTION);
 		tile_info_strings.push_back(render_message);
+	} else {
+		/* File was read from disc, and render duration is
+		   lost, and is not available now. */
 	}
 
 	a_dialog_list(tr("Tile Information"), tile_info_strings, 5, this->get_window());
@@ -1073,7 +1096,7 @@ LayerMapnik::LayerMapnik()
 
 bool LayerMapnik::should_run_carto(void) const
 {
-	if (this->css_file_full_path.length() <= 1) { /* TODO: why this strange condition? Why not just .isEmpty()? */
+	if (this->css_file_full_path.isEmpty()) {
 		return false;
 	}
 

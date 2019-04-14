@@ -119,6 +119,10 @@ namespace SlavGPS {
 #define MSECS_PER_SEC 1000
 #endif
 
+#ifndef NANOSECS_PER_SEC
+#define NANOSECS_PER_SEC 1000000000UL
+#endif
+
 
 
 

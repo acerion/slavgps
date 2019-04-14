@@ -191,16 +191,16 @@ sg_ret MapnikWrapper::load_map_file(const QString & map_file_full_path, unsigned
 */
 QPixmap MapnikWrapper::render_map(double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
-	QPixmap result; /* Initially the pixmap returns true for ::isNull(). */
+	QPixmap result;
 
 	try {
 		/* Copy main object to local map variable.
 		   This enables rendering to work when this function is called from different threads. */
-		mapnik::Map & local_map = this->map; // TODO: this should be a copy?
+		mapnik::Map & local_map = this->map; /* TODO_LATER: this should be a copy or reference? */
 		const unsigned width  = local_map.width();
 		const unsigned height = local_map.height();
 
-		/* Note projection & bbox want stuff in lon,lat order! */
+		/* Projection & bbox want coordinates in lon,lat order. */
 		double p0x = lon_tl;
 		double p0y = lat_tl;
 		double p1x = lon_br;
@@ -247,7 +247,6 @@ QPixmap MapnikWrapper::render_map(double lat_tl, double lon_tl, double lat_br, d
 				qDebug() << SG_PREFIX_E << "Failed to load image from mapnik rendering";
 			}
 			free(image_raw_data);
-			/* TODO_LATER: in original application the image_raw_data was not deallocated. */
 		} else {
 			qDebug() << QObject::tr("Warning: Mapnik: image not rendered");
 		}

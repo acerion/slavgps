@@ -291,7 +291,7 @@ QPixmap MapCache::get_tile_pixmap(const TileInfo & tile_info, MapTypeID map_type
 
 MapCacheItemProperties MapCache::get_properties(const TileInfo & tile_info, MapTypeID map_type_id, int alpha, const PixmapScale & pixmap_scale, const QString & file_name)
 {
-	MapCacheItemProperties properties(0.0);
+	MapCacheItemProperties properties;
 
 	/* It doesn't matter much which type of zoom we get here from
 	   ::scale, as long as we use the same type in all functions
