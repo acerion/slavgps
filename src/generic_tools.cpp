@@ -117,9 +117,6 @@ GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : Lay
 	this->action_label       = QObject::tr("&Ruler");
 	this->action_tooltip     = QObject::tr("Ruler Tool");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_U; /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
-
-	this->cursor_click = new QCursor(Qt::ArrowCursor);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
 }
 
 
@@ -127,8 +124,6 @@ GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : Lay
 
 GenericToolRuler::~GenericToolRuler()
 {
-	delete this->cursor_click;
-	delete this->cursor_release;
 	delete this->ruler;
 }
 
@@ -278,9 +273,6 @@ GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : Layer
 	this->action_label       = QObject::tr("&Zoom");
 	this->action_tooltip     = QObject::tr("Zoom Tool");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_Z;
-
-	this->cursor_click = new QCursor(Qt::ArrowCursor);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
 }
 
 
@@ -288,8 +280,6 @@ GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : Layer
 
 GenericToolZoom::~GenericToolZoom()
 {
-	delete this->cursor_click;
-	delete this->cursor_release;
 }
 
 
@@ -507,8 +497,8 @@ LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(w
 	this->action_tooltip     = QObject::tr("Pan Tool");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_P;
 
-	this->cursor_click = new QCursor(Qt::ClosedHandCursor);
-	this->cursor_release = new QCursor(Qt::OpenHandCursor);
+	this->cursor_click = QCursor(Qt::ClosedHandCursor);
+	this->cursor_release = QCursor(Qt::OpenHandCursor);
 }
 
 
@@ -516,8 +506,6 @@ LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(w
 
 LayerToolPan::~LayerToolPan()
 {
-	delete this->cursor_click;
-	delete this->cursor_release;
 }
 
 
@@ -597,9 +585,6 @@ LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : Layer
 	this->action_label       = QObject::tr("&Select");
 	this->action_tooltip     = QObject::tr("Select Tool");
 	this->action_accelerator = Qt::CTRL + Qt::SHIFT + Qt::Key_L;
-
-	this->cursor_click = new QCursor(Qt::ArrowCursor);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
 }
 
 
@@ -607,8 +592,6 @@ LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : Layer
 
 LayerToolSelect::~LayerToolSelect()
 {
-	delete this->cursor_click;
-	delete this->cursor_release;
 }
 
 

@@ -108,10 +108,11 @@ QActionGroup * Toolbox::add_tools(LayerToolContainer * new_tools)
 
 
 
-LayerTool * Toolbox::get_tool(QString const & tool_id)
+LayerTool * Toolbox::get_tool(QString const & tool_id) const
 {
 	auto iter = this->tools.find(tool_id);
 	if (iter == this->tools.end()) {
+		qDebug() << SG_PREFIX_E << "Failed to find tool with id =" << tool_id;
 		return NULL;
 	} else {
 		return iter->second;
@@ -123,14 +124,14 @@ LayerTool * Toolbox::get_tool(QString const & tool_id)
 
 void Toolbox::activate_tool_by_id(const QString & tool_id)
 {
-	LayerTool * new_tool = this->get_tool(tool_id);
-	if (!new_tool) {
-		qDebug() << SG_PREFIX_E << "Trying to activate a non-existent tool" << tool_id;
+	LayerTool * tool = this->get_tool(tool_id);
+	if (NULL == tool) {
+		qDebug() << SG_PREFIX_E << "Trying to activate a non-existent tool with id =" << tool_id;
 		return;
 	}
 
 	if (this->active_tool) {
-		if (this->active_tool == new_tool) {
+		if (this->active_tool == tool) {
 			/* Don't re-activate the same tool. */
 			return;
 		}
@@ -139,9 +140,9 @@ void Toolbox::activate_tool_by_id(const QString & tool_id)
 
 	qDebug() << SG_PREFIX_I << "activating tool" << tool_id;
 
-	if (new_tool->activate_tool()) {
-		this->active_tool = new_tool;
-		this->active_tool_qa = new_tool->qa;
+	if (tool->activate_tool()) {
+		this->active_tool = tool;
+		this->active_tool_qa = tool->qa;
 		this->active_tool->qa->setChecked(true);
 	}
 
@@ -155,13 +156,13 @@ void Toolbox::activate_tool_by_id(const QString & tool_id)
 void Toolbox::deactivate_tool_by_id(const QString & tool_id)
 {
 	LayerTool * tool = this->get_tool(tool_id);
-	if (!tool) {
-		qDebug() << SG_PREFIX_E << "can't find tool" << tool_id;
+	if (NULL == tool) {
+		qDebug() << SG_PREFIX_E << "Can't find tool with id =" << tool_id;
 		return;
 	}
 
 	if (this->active_tool != tool) {
-		qDebug() << SG_PREFIX_W << "trying to deactivate inactive tool" << tool_id;
+		qDebug() << SG_PREFIX_W << "Trying to deactivate inactive tool with id =" << tool_id;
 		return;
 	}
 
@@ -302,22 +303,6 @@ LayerTool * Toolbox::get_active_tool(void)
 
 
 
-QCursor const * Toolbox::get_cursor_click(QString const & tool_id)
-{
-	return this->get_tool(tool_id)->cursor_release;
-}
-
-
-
-
-QCursor const * Toolbox::get_cursor_release(QString const & tool_id)
-{
-	return this->get_tool(tool_id)->cursor_release;
-}
-
-
-
-
 /* A common set of boring tests done before passing a layer to a
    toolbox is possible/valid. */
 Layer * Toolbox::handle_mouse_event_common(void)
@@ -357,7 +342,7 @@ void Toolbox::handle_mouse_click(QMouseEvent * event)
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO_2_LATER: move this into click() method. */
+	this->active_tool->viewport->setCursor(this->active_tool->cursor_click); /* TODO_2_LATER: move this into click() method. */
 	this->active_tool->handle_mouse_click(layer, event);
 
 	return;
@@ -373,7 +358,7 @@ void Toolbox::handle_mouse_double_click(QMouseEvent * event)
 		return;
 	}
 
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_click); /* TODO_2_LATER: move this into click() method. */
+	this->active_tool->viewport->setCursor(this->active_tool->cursor_click); /* TODO_2_LATER: move this into click() method. */
 	this->active_tool->handle_mouse_double_click(layer, event);
 
 	return;
@@ -408,7 +393,7 @@ void Toolbox::handle_mouse_release(QMouseEvent * event)
 
 	qDebug() << SG_PREFIX_I << "Passing layer" << layer->debug_string << "to tool" << this->active_tool->id_string;
 
-	this->active_tool->viewport->setCursor(*this->active_tool->cursor_release); /* TODO_2_LATER: move this into release() method. */
+	this->active_tool->viewport->setCursor(this->active_tool->cursor_release); /* TODO_2_LATER: move this into release() method. */
 	this->active_tool->handle_mouse_release(layer, event);
 
 	return;

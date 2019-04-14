@@ -1203,8 +1203,8 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_)
 	this->action_tooltip     = QObject::tr("Georef Move Map");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
-	this->cursor_click = new QCursor(Qt::ClosedHandCursor);
-	this->cursor_release = new QCursor(Qt::OpenHandCursor);
+	this->cursor_click = QCursor(Qt::ClosedHandCursor);
+	this->cursor_release = QCursor(Qt::OpenHandCursor);
 }
 
 
@@ -1245,9 +1245,6 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_)
 	this->action_label       = QObject::tr("Georef Z&oom Tool");
 	this->action_tooltip     = QObject::tr("Georef Zoom Tool");
 	// this->action_accelerator = ...; /* Empty accelerator. */
-
-	this->cursor_click = new QCursor(Qt::ArrowCursor);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
 }
 
 

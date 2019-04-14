@@ -1367,9 +1367,6 @@ LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport
 	this->action_label       = QObject::tr("&DEM Download");
 	this->action_tooltip     = QObject::tr("DEM Download");
 	// this->action_accelerator = ...; /* Empty accelerator. */
-
-	this->cursor_click = new QCursor(Qt::ArrowCursor);
-	this->cursor_release = new QCursor(Qt::ArrowCursor);
 }
 
 

@@ -3967,6 +3967,10 @@ bool LayerTRW::reset_edited_wp(void)
 bool LayerTRW::get_track_creation_in_progress() const
 {
 	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	if (NULL == new_track_tool) {
+		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_TRACK;
+		return false;
+	}
 	return new_track_tool->creation_in_progress == this;
 }
 
@@ -3976,6 +3980,10 @@ bool LayerTRW::get_track_creation_in_progress() const
 void LayerTRW::reset_track_creation_in_progress()
 {
 	LayerToolTRWNewTrack * new_track_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_TRACK);
+	if (NULL == new_track_tool) {
+		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_TRACK;
+		return;
+	}
 	if (new_track_tool->creation_in_progress == this) {
 		new_track_tool->creation_in_progress = NULL;
 	}
@@ -3987,6 +3995,10 @@ void LayerTRW::reset_track_creation_in_progress()
 bool LayerTRW::get_route_creation_in_progress() const
 {
 	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	if (NULL == new_route_tool) {
+		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_ROUTE;
+		return false;
+	}
 	return new_route_tool->creation_in_progress == this;
 }
 
@@ -3996,6 +4008,10 @@ bool LayerTRW::get_route_creation_in_progress() const
 void LayerTRW::reset_route_creation_in_progress()
 {
 	LayerToolTRWNewTrack * new_route_tool = (LayerToolTRWNewTrack *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
+	if (NULL == new_route_tool) {
+		qDebug() << SG_PREFIX_E << "Failed to get tool with id =" << LAYER_TRW_TOOL_CREATE_ROUTE;
+		return;
+	}
 	if (new_route_tool->creation_in_progress == this) {
 		new_route_tool->creation_in_progress = NULL;
 	}

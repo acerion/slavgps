@@ -59,6 +59,8 @@ LayerTool::LayerTool(Window * new_window, Viewport * new_viewport, LayerType new
 		strcpy(this->debug_string, "LayerType::");
 		strcpy(this->debug_string + 11, Layer::get_type_id_string(layer_type).toUtf8().constData());
 	}
+	this->cursor_click = QCursor(Qt::ArrowCursor);
+	this->cursor_release = QCursor(Qt::ArrowCursor);
 }
 
 
@@ -66,8 +68,6 @@ LayerTool::LayerTool(Window * new_window, Viewport * new_viewport, LayerType new
 
 LayerTool::~LayerTool()
 {
-	delete this->cursor_click;
-	delete this->cursor_release;
 }
 
 

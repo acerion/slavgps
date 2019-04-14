@@ -58,7 +58,7 @@ namespace SlavGPS {
 		   @return pointer to tool on success
 		   @return NULL on failure
 		*/
-		LayerTool * get_tool(const QString & tool_id);
+		LayerTool * get_tool(const QString & tool_id) const;
 
 		const LayerTool * get_current_tool(void) const;
 
@@ -86,9 +86,6 @@ namespace SlavGPS {
 		QActionGroup * get_group(const QString & group_name);
 		QAction * get_active_tool_action(void);
 		LayerTool * get_active_tool(void);
-
-		const QCursor * get_cursor_click(const QString & tool_id);
-		const QCursor * get_cursor_release(const QString & tool_id);
 
 		void handle_mouse_click(QMouseEvent * event);
 		void handle_mouse_double_click(QMouseEvent * event);

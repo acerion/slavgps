@@ -119,8 +119,10 @@ namespace SlavGPS {
 
 		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
 
-		QCursor const * cursor_click = NULL;
-		QCursor const * cursor_release = NULL;
+		/* Default cursors will be provided by LayerTool base
+		   class. */
+		QCursor cursor_click;
+		QCursor cursor_release;
 
 		Window * window = NULL;
 		Viewport * viewport = NULL;

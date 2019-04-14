@@ -1525,8 +1525,8 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 	this->action_tooltip     = QObject::tr("Maps Download");
 	// this->action_accelerator = ...; /* Empty accelerator. */
 
-	this->cursor_click = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
-	this->cursor_release = new QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
+	this->cursor_click = QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
+	this->cursor_release = QCursor(QPixmap(":cursors/maps_download.png"), 0, 0);
 }
 
 

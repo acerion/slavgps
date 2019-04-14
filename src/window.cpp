@@ -1265,7 +1265,14 @@ void Window::layer_tool_cb(QAction * qa)
 		qDebug() << SG_PREFIX_I << "Setting 'release' cursor for tool" << new_tool_id;
 
 		this->toolbox->activate_tool_by_id(new_tool_id);
-		this->viewport->central->setCursor(*this->toolbox->get_cursor_release(new_tool_id));
+		LayerTool * tool = this->toolbox->get_tool(new_tool_id);
+		if (NULL == tool) {
+			qDebug() << SG_PREFIX_E << "Failed to get tool with tool id =" << new_tool_id;
+			/* Fallback cursor. */
+			this->viewport->central->setCursor(QCursor(Qt::ArrowCursor));
+		} else {
+			this->viewport->central->setCursor(tool->cursor_release);
+		}
 		this->display_tool_name();
 	}
 }
