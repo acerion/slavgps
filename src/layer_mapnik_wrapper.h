@@ -47,8 +47,8 @@ namespace SlavGPS {
 
 	class MapnikWrapper {
 	public:
-		MapnikWrapper();
-		~MapnikWrapper();
+		MapnikWrapper() {}
+		~MapnikWrapper() {}
 
 		QString get_copyright(void) const;
 		void set_copyright(void);
@@ -60,7 +60,7 @@ namespace SlavGPS {
 		QPixmap render_map(double lat_tl, double lon_tl, double lat_br, double lon_br);
 
 		static void initialize(const QString & plugins_dir, const QString & font_dir, bool font_dir_recurse);
-		static QString about(void);
+		static QStringList about(void);
 
 		mapnik::Map map;
 

@@ -304,7 +304,16 @@ namespace SlavGPS {
 		void create_ui(void);
 
 		void display_tool_name();
-		void update_recent_files(QString const & path);
+
+		/**
+		   Function used to update "recent files" entry in
+		   File menu.  Use only for files that Viking knows
+		   how to handle without additional context.  .vik and
+		   .kml files are such files. Files with other types
+		   (e.g. generic xml file) probably are not.
+		*/
+		void update_recent_files(QString const & path, const QString & mime_type);
+
 		void open_window(const QStringList & file_full_paths);
 
 		bool pan_move_flag = false;

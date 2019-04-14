@@ -2053,7 +2053,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 		/* When LoadStatus::OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = !restore_original_filename;
 
-		this->update_recent_files(new_document_full_path);
+		this->update_recent_files(new_document_full_path, "text/x-gps-data");
 		this->draw_tree_items();
 		break;
 	}
@@ -2144,9 +2144,9 @@ bool Window::menu_file_save_as_cb(void)
 
 
 
-void Window::update_recent_files(QString const & file_full_path)
+void Window::update_recent_files(QString const & file_full_path, const QString & mime_type)
 {
-	SlavGPS::update_desktop_recent_documents(this, file_full_path, "text/x-gps-data");
+	SlavGPS::update_desktop_recent_documents(this, file_full_path, mime_type);
 
 	/*
 	  TODO_MAYBE
@@ -3145,7 +3145,7 @@ bool Window::save_current_document(void)
 	this->clear_busy_cursor();
 
 	if (SaveStatus::Code::Success == save_status) {
-		this->update_recent_files(this->current_document_full_path);
+		this->update_recent_files(this->current_document_full_path, "text/x-gps-data");
 		return true;
 	}
 

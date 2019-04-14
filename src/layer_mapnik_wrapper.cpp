@@ -62,32 +62,14 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "Mapnik"
-
-
-
-
-
+#define SG_MODULE "Mapnik Wrapper"
+#define VIK_SETTINGS_MAPNIK_BUFFER_SIZE "mapnik_buffer_size"
 
 
 
 
 /* Can't change projection after init - but ATM only support drawing in Spherical Mercator. */
 static mapnik::projection projection(mapnik::MAPNIK_GMERC_PROJ);
-
-
-
-
-MapnikWrapper::MapnikWrapper()
-{
-}
-
-
-
-
-MapnikWrapper::~MapnikWrapper()
-{
-}
 
 
 
@@ -132,11 +114,6 @@ void MapnikWrapper::set_copyright(void)
 		}
 	}
 }
-
-
-
-
-#define VIK_SETTINGS_MAPNIK_BUFFER_SIZE "mapnik_buffer_size"
 
 
 
@@ -302,10 +279,8 @@ QStringList MapnikWrapper::get_parameters(void) const
 /**
    General information about Mapnik
 */
-QString MapnikWrapper::about(void)
+QStringList MapnikWrapper::about(void)
 {
-	QString msg;
-
 	/* Normally about 10 plugins so list them all. */
 	std::vector<std::string> plugins = mapnik::datasource_cache::instance().plugin_names();
 	std::string str;
@@ -313,12 +288,14 @@ QString MapnikWrapper::about(void)
 		str += plugins[nn] + ',';
 	}
 	str += '\n';
+
 	/* NB Can have a couple hundred fonts loaded when using system directories.
 	   So ATM don't list them all - otherwise need better GUI feedback display. */
-	msg = QObject::tr("Mapnik %1\nPlugins=%2Fonts loaded=%3")
-		.arg(MAPNIK_VERSION_STRING)
-		.arg(str.c_str())
-		.arg(mapnik::freetype_engine::face_names().size());
+
+	QStringList msg;
+	msg << QObject::tr("Mapnik %1").arg(MAPNIK_VERSION_STRING);
+	msg << QObject::tr("Plugins=%2").arg(str.c_str());
+	msg << QObject::tr("Fonts loaded=%3").arg(mapnik::freetype_engine::face_names().size());
 
 	return msg;
 }

@@ -91,7 +91,10 @@ namespace SlavGPS {
 		void flush_map_cache_cb(void);
 		void reload_map_cb(void);
 		void run_carto_cb(void);
-		void mapnik_information_cb(void);
+
+		/* Show Mapnik layer's parameters/meta info. */
+		void mapnik_layer_information_cb(void);
+
 		void about_mapnik_cb(void);
 		void rerender_tile_cb(void);
 

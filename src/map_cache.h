@@ -48,7 +48,7 @@ namespace SlavGPS {
 
 /* Number of digits after comma for render time presented in
    seconds. */
-#define SG_RENDER_TIME_RESOLUTION   6
+#define SG_RENDER_TIME_PRECISION    6
 
 /* Rendering was not performed (at least not during the application's
    run). Pixmap was already existing on disc and original render time

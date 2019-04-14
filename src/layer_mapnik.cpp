@@ -98,12 +98,38 @@ extern bool vik_verbose;
 
 
 
+/* Wrapper around two consecutive calls to
+   clock_gettime(CLOCK_MONOTONIC, ...). Used to measure duration of
+   any action. Call ::start() before the action starts and ::stop()
+   after the action completes. It provides nanosecond-resolution for
+   very fast actions, e.g. rendering of a single Map tile. */
+class DurationMeter {
+public:
+	void start(void);
+	void stop(void);
+	double get_seconds(void) const;
+	long get_nanoseconds(void) const;
+	QString get_seconds_string(int precision) const;
+	bool is_valid(void) const;
+private:
+	struct timespec before = { 0, 0 };
+	struct timespec after = { 0, 0 };
+
+	int before_rv = -1;
+	int after_rv = -1;
+};
+
+
+
+
+static QString g_mapnik_xml_mime_type("text/xml");
+
 static SGVariant file_default(void)      { return SGVariant(""); }
-static SGVariant size_default(void)      { return SGVariant(256, SGVariantType::Int); }
+static SGVariant size_default(void)      { return SGVariant(256, SGVariantType::Int); } /* TODO_MAYBE: Is there any use in this being configurable? */
 static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
 
 
-static ParameterScale<int> scale_alpha(0,  255, SGVariant(255),  5, 0); /* PARAM_ALPHA */
+static ParameterScale<int> scale_alpha(0,  255, SGVariant(255),  5, 0);
 static ParameterScale<int> scale_timeout(0, 1024, SGVariant(168), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
 static ParameterScale<int> scale_threads(1, 64, SGVariant(1), 1, 0); /* 64 threads should be enough for anyone... */
 
@@ -372,7 +398,7 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerMapnik * layer = new LayerMapnik();
 
-	layer->set_tile_size(size_default().u.val_int); /* TODO_MAYBE: Is there any use in this being configurable? */
+	layer->set_tile_size(size_default().u.val_int);
 	layer->unmarshall_params(pickle);
 
 	return layer;
@@ -500,9 +526,10 @@ sg_ret LayerMapnik::carto_load(void)
 	struct timespec before = { 0, 0 };
 	struct timespec after = { 0, 0 };
 
-	const int before_rv = clock_gettime(CLOCK_MONOTONIC, &before);
+	DurationMeter dmeter;
+	dmeter.start();
 	const bool spawn_result = g_spawn_command_line_sync(command.toUtf8().constData(), &mystdout, &mystderr, NULL, &error);
-	const int after_rv = clock_gettime(CLOCK_MONOTONIC, &after);
+	dmeter.stop();
 
 	if (spawn_result) {
 		if (mystderr)
@@ -541,13 +568,11 @@ sg_ret LayerMapnik::carto_load(void)
 
 	if (window_) {
 		QString msg;
-		if (before_rv == 0 && after_rv == 0) {
-			const long duration_ns = (after.tv_nsec - before.tv_nsec) + ((after.tv_sec - before.tv_nsec) * NANOSECS_PER_SEC);
-			const double seconds = (1.0 * duration_ns) / NANOSECS_PER_SEC;
-			msg = tr("%1 completed in %2 seconds").arg(pref_value.val_string).arg(seconds, 0, 'f', 1);
+		if (dmeter.is_valid()) {
+			msg = tr("%1 completed in %2 seconds").arg(pref_value.val_string).arg(dmeter.get_seconds_string(1));
 		} else {
 			msg = tr("%1 completed").arg(pref_value.val_string);
-			qDebug() << SG_PREFIX_E << "One or both calls to clock_gettime() has failed:" << before_rv << after_rv;
+			qDebug() << SG_PREFIX_E << "Failed to get duration of 'carto' execution";
 		}
 		window_->statusbar_update(StatusBarField::Info, msg);
 		window_->clear_busy_cursor();
@@ -572,9 +597,15 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 	if (sg_ret::ok == this->mw.load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
 		this->xml_map_file_loaded = true;
 		if (!from_file) {
-			/* TODO_LATER: shouldn't we use Window::update_recent_files()? */
-			/* TODO_LATER: provide correct mime data type for mapnik data. */
-			update_desktop_recent_documents(this->get_window(), this->xml_map_file_full_path, "");
+			/* Mapnik xml file is not a file type that the
+			   program knows to handle.  If we registered
+			   the xml file with
+			   Window::update_recent_files(), the program
+			   wouldn't know how to open an xml file (we
+			   would have to add logic that checks the
+			   contents of xml file, and we don't have
+			   that yet). */
+			update_desktop_recent_documents(this->get_window(), this->xml_map_file_full_path, g_mapnik_xml_mime_type);
 		}
 	} else {
 		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
@@ -651,23 +682,19 @@ void LayerMapnik::render_tile_now(const TileInfo & tile_info)
 	LatLon lat_lon_br;
 	tile_info.get_itms_lat_lon_ul_br(lat_lon_ul, lat_lon_br);
 
-
-	struct timespec before = { 0, 0 };
-	struct timespec after = { 0, 0 };
-	const int before_rv = clock_gettime(CLOCK_MONOTONIC, &before);
+	DurationMeter dmeter;
+	dmeter.start();
 	QPixmap pixmap = this->mw.render_map(lat_lon_ul.lat, lat_lon_ul.lon, lat_lon_br.lat, lat_lon_br.lon);
-	const int after_rv = clock_gettime(CLOCK_MONOTONIC, &after);
-
+	dmeter.stop();
 
 	MapCacheItemProperties properties;
-	if (before_rv == 0 && after_rv == 0) {
-		properties.rendering_duration_ns = (after.tv_nsec - before.tv_nsec) + ((after.tv_sec - before.tv_nsec) * NANOSECS_PER_SEC);
-		const double seconds = (1.0 * properties.rendering_duration_ns) / NANOSECS_PER_SEC;
-		const QString render_time = QString("%1").arg(seconds, 0, 'f', SG_RENDER_TIME_RESOLUTION);
-		qDebug() << SG_PREFIX_D << "Mapnik rendering completed in" << render_time << "seconds";
+	if (dmeter.is_valid()) {
+		properties.rendering_duration_ns = dmeter.get_nanoseconds();
+		const QString seconds_string = dmeter.get_seconds_string(SG_RENDER_TIME_PRECISION);
+		qDebug() << SG_PREFIX_D << "Mapnik rendering completed in" << seconds_string << "seconds";
 	} else {
 		properties.rendering_duration_ns = SG_RENDER_TIME_NO_RENDER;
-		qDebug() << SG_PREFIX_E << "One or both calls to clock_gettime() has failed:" << before_rv << after_rv;
+		qDebug() << SG_PREFIX_E << "Failed to get duration of Mapnik rendering";
 	}
 
 	if (pixmap.isNull()) {
@@ -919,12 +946,10 @@ void LayerMapnik::run_carto_cb(void)
 /**
    Show Mapnik configuration parameters
 */
-void LayerMapnik::mapnik_information_cb(void)
+void LayerMapnik::mapnik_layer_information_cb(void)
 {
 	QStringList params = this->mw.get_parameters();
-	if (params.size()) {
-		a_dialog_list(tr("Mapnik Information"), params, 1, this->get_window());
-	}
+	Dialog::info(Dialog::default_title, tr("Mapnik Layer Information"), params, this->get_window());
 }
 
 
@@ -932,7 +957,7 @@ void LayerMapnik::mapnik_information_cb(void)
 
 void LayerMapnik::about_mapnik_cb(void)
 {
-	Dialog::info(MapnikWrapper::about(), this->get_window());
+	Dialog::info(Dialog::default_title, tr("About Mapnik"), MapnikWrapper::about(), this->get_window());
 }
 
 
@@ -961,8 +986,8 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 		menu.addAction(action);
 	}
 
-	action = new QAction(tr("&Info"), this);
-	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_information_cb()));
+	action = new QAction(tr("&Information about this layer"), this);
+	QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (mapnik_layer_information_cb()));
 	menu.addAction(action);
 
 
@@ -1007,14 +1032,14 @@ void LayerMapnik::tile_info_cb(void)
 	/* Show the info. */
 	if (properties.rendering_duration_ns != SG_RENDER_TIME_NO_RENDER) {
 		const double seconds = (1.0 * properties.rendering_duration_ns) / NANOSECS_PER_SEC;
-		const QString render_message = tr("Rendering time %1 seconds").arg(seconds, 0, 'f', SG_RENDER_TIME_RESOLUTION);
+		const QString render_message = tr("Rendering time: %1 seconds").arg(seconds, 0, 'f', SG_RENDER_TIME_PRECISION);
 		tile_info_strings.push_back(render_message);
 	} else {
 		/* File was read from disc, and render duration is
 		   lost, and is not available now. */
 	}
 
-	a_dialog_list(tr("Tile Information"), tile_info_strings, 5, this->get_window());
+	Dialog::info(Dialog::default_title, tr("Tile Information"), tile_info_strings, this->get_window());
 }
 
 
@@ -1059,18 +1084,18 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 
 			action = new QAction(tr("&Rerender Tile"), this);
 			action->setIcon(QIcon::fromTheme("view-refresh"));
-			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (rerender_tile_cb));
+			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (rerender_tile_cb()));
 			this->right_click_menu->addAction(action);
 
 			action = new QAction(tr("Tile &Info"), this);
 			action->setIcon(QIcon::fromTheme("dialog-information"));
-			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (tile_info_cb));
+			QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (tile_info_cb()));
 			this->right_click_menu->addAction(action);
 		}
 
 		this->right_click_menu->exec(QCursor::pos());
 
-		/* FIXME: Where do we return Ack? */
+		return ToolStatus::Ack;
 	}
 
 	return ToolStatus::Ignored;
@@ -1088,7 +1113,7 @@ LayerMapnik::LayerMapnik()
 	this->set_initial_parameter_values();
 	this->set_name(Layer::get_type_ui_label(this->type));
 
-	this->tile_size_x = size_default().u.val_int; /* TODO_MAYBE: Is there any use in this being configurable? */
+	this->tile_size_x = size_default().u.val_int;
 }
 
 
@@ -1208,5 +1233,62 @@ sg_ret LayerMapnik::set_tile_size(int size)
 	} else {
 		qDebug() << SG_PREFIX_E << "Invalid value of tile size:" << size;
 		return sg_ret::err;
+	}
+}
+
+
+
+
+void DurationMeter::start(void)
+{
+
+	this->before_rv = clock_gettime(CLOCK_MONOTONIC, &this->before);
+}
+
+
+
+
+void DurationMeter::stop(void)
+{
+	this->after_rv = clock_gettime(CLOCK_MONOTONIC, &this->after);
+}
+
+
+
+
+double DurationMeter::get_seconds(void) const
+{
+	long ns = this->get_nanoseconds();
+	return (1.0 * ns) / NANOSECS_PER_SEC;
+}
+
+
+
+
+long DurationMeter::get_nanoseconds(void) const
+{
+	const long ns = (this->after.tv_nsec - this->before.tv_nsec) + ((this->after.tv_sec - this->before.tv_sec) * NANOSECS_PER_SEC);
+	return ns;
+}
+
+
+
+
+QString DurationMeter::get_seconds_string(int precision) const
+{
+	const double seconds = this->get_seconds();
+	return QString("%1").arg(seconds, 0, 'f', precision);
+}
+
+
+
+
+bool DurationMeter::is_valid(void) const
+{
+	if (this->before_rv == 0 && this->after_rv == 0) {
+		return true;
+	} else {
+		qDebug() << SG_PREFIX_E << "One or both calls to clock_gettime() has failed:" << this->before_rv << this->after_rv;
+		return false;
 	}
 }
