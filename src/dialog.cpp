@@ -60,10 +60,34 @@ using namespace SlavGPS;
 
 
 
+/* Class' static member. */
+QString Dialog::default_title(PROJECT);
+
+
+
+
 void Dialog::info(QString const & message, QWidget * parent)
 {
 	QMessageBox box(parent);
 	box.setText(message);
+	box.setIcon(QMessageBox::Information);
+	box.exec();
+	return;
+}
+
+
+
+void Dialog::info(const QString & title, const QString & header, const QStringList & message, QWidget * parent)
+{
+	QMessageBox box(parent);
+	box.setWindowTitle(title);
+	box.setTextFormat(Qt::RichText);
+
+	const QString formatted_message = QString("<big>%1</big>"
+						  "<br/><br/>"
+						  "%2").arg(header).arg(message.join("<br/>"));
+	box.setText(formatted_message);
+
 	box.setIcon(QMessageBox::Information);
 	box.exec();
 	return;

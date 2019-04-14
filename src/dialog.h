@@ -56,7 +56,13 @@ namespace SlavGPS {
 
 	class Dialog {
 	public:
-		static void info(QString const & message, QWidget * parent);
+		static void info(const QString & message, QWidget * parent = NULL);
+
+		/* Header will be displayed using slightly larger
+		   font. Message will be split into separate strings,
+		   separated by newline. */
+		static void info(const QString & title, const QString & header, const QStringList & message, QWidget * parent = NULL);
+
 		static void warning(QString const & message, QWidget * parent);
 		static void error(QString const & message, QWidget * parent);
 		static bool yes_or_no(QString const & message, QWidget * parent = NULL, QString const & title = PROJECT);
@@ -66,6 +72,8 @@ namespace SlavGPS {
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
 
 		static void move_dialog(QDialog * dialog, const GlobalPoint & exposed_point, bool move_vertically);
+
+		static QString default_title;
 	};
 
 
