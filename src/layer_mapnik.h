@@ -24,11 +24,6 @@
 
 
 
-#include <cstdint>
-
-
-
-
 #include <QObject>
 
 
@@ -82,39 +77,14 @@ namespace SlavGPS {
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
+		sg_ret set_tile_size(int tile_size);
 
-
-
-		void set_file_xml(const QString & file_full_path);
-		void set_file_css(const QString & name);
-		void set_cache_dir(const QString & name);
-
-
-		void possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ulm);
-		void render(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br);
-		void thread_add(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const QString & file_full_path);
-		QPixmap load_pixmap(const TileInfo & tile_info, bool & rerender) const;
-		QPixmap get_pixmap(const TileInfo & tile_info);
-		void render_tile(const TileInfo & tile_info);
+		/**
+		   Common tile render function which can run in separate thread or in main thread
+		*/
+		void render_tile_now(const TileInfo & tile_info);
 
 		ToolStatus feature_release(QMouseEvent * event, LayerTool * tool);
-
-
-
-
-		QString filename_css; /* CartoCSS MML File - use 'carto' to convert into xml. */
-
-		int alpha = 0;
-
-		int tile_size_x = 0; /* Y is the same as X ATM. */
-
-		MapnikInterface * mi = NULL;
-		unsigned int rerender_timeout = 0;
-
-		bool use_file_cache = false;
-		QString file_cache_dir;
-
-
 
 	public slots:
 		void tile_info_cb(void);
@@ -126,7 +96,17 @@ namespace SlavGPS {
 		void rerender_tile_cb(void);
 
 	private:
-		static void init_interface(void);
+		static void init_wrapper(void);
+
+		void set_file_xml(const QString & file_full_path);
+		void set_file_css(const QString & name);
+		void set_cache_dir(const QString & file_full_path);
+
+		void possibly_save_pixmap(QPixmap & pixmap, const TileInfo & tile_info) const;
+
+		void queue_rendering_in_background(const TileInfo & tile_info, const QString & file_full_path);
+		QPixmap load_pixmap(const TileInfo & tile_info, bool & rerender) const;
+		QPixmap get_pixmap(const TileInfo & tile_info);
 
 		bool should_run_carto(void) const;
 		sg_ret carto_load(void);
@@ -141,6 +121,7 @@ namespace SlavGPS {
 
 		void draw_grid(Viewport * viewport, const TilesRange & range, const TileInfo & tile_info_ul) const;
 
+		QString css_file_full_path; /* CartoCSS MML File - use 'carto' to convert into xml. */
 		QString xml_map_file_full_path;
 
 		bool xml_map_file_loaded = false;
@@ -149,6 +130,16 @@ namespace SlavGPS {
 		LatLon clicked_lat_lon;
 		/* Zoom level at the moment of right-click-and-release. */
 		VikingZoomLevel clicked_viking_zoom_level;
+
+		int alpha = 0;
+
+		int tile_size_x = 0; /* Y is the same as X ATM. */
+
+		MapnikWrapper mw;
+		unsigned int rerender_timeout = 0;
+
+		bool use_file_cache = false;
+		QString file_cache_dir;
 	};
 
 

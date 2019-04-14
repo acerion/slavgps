@@ -84,6 +84,10 @@ using namespace SlavGPS;
 #define SG_MODULE "Mapnik Layer"
 #define LAYER_MAPNIK_GRID_COLOR "black"
 
+/* x, y, z, scale, xml map file path's hash. */
+#define REQUEST_HASHKEY_FORMAT "%1-%2-%3-%4-%5"
+
+
 
 
 
@@ -238,7 +242,7 @@ static ParameterSpecification prefs[] = {
 
 static time_t g_planet_import_time;
 static std::mutex tp_mutex;
-static QHash<QString, bool> mapnik_requests; /* Just for storing of QStrings. */
+static QHash<QString, bool> mapnik_job_requests; /* Just for storing of QStrings. */
 
 
 
@@ -290,7 +294,7 @@ void LayerMapnik::post_init(void)
 		}
 	}
 
-	LayerMapnik::init_interface();
+	LayerMapnik::init_wrapper();
 }
 
 
@@ -304,7 +308,7 @@ void LayerMapnik::uninit(void)
 
 
 /* NB Only performed once per program run. TODO: run on every change of preferences? */
-void LayerMapnik::init_interface(void)
+void LayerMapnik::init_wrapper(void)
 {
 #ifdef HAVE_LIBMAPNIK
 	const SGVariant plugins_dir = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "plugins_directory");
@@ -315,7 +319,7 @@ void LayerMapnik::init_interface(void)
 	    && fonts_dir.type_id != SGVariantType::Empty
 	    && recurse.type_id != SGVariantType::Empty) {
 
-		MapnikInterface::initialize(plugins_dir.val_string, fonts_dir.val_string, recurse.u.val_bool);
+		MapnikWrapper::initialize(plugins_dir.val_string, fonts_dir.val_string, recurse.u.val_bool);
 	} else {
 		qDebug() << SG_PREFIX_E << "Unable to initialize Mapnik interface from preferences";
 	}
@@ -346,9 +350,9 @@ void LayerMapnik::set_file_xml(const QString & file_full_path)
 
 
 
-void LayerMapnik::set_file_css(const QString & name_)
+void LayerMapnik::set_file_css(const QString & file_full_path)
 {
-	this->filename_css = name_;
+	this->css_file_full_path = file_full_path;
 }
 
 
@@ -366,7 +370,7 @@ Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 {
 	LayerMapnik * layer = new LayerMapnik();
 
-	layer->tile_size_x = size_default().u.val_int; /* TODO_MAYBE: Is there any use in this being configurable? */
+	layer->set_tile_size(size_default().u.val_int); /* TODO_MAYBE: Is there any use in this being configurable? */
 	layer->unmarshall_params(pickle);
 
 	return layer;
@@ -409,19 +413,19 @@ SGVariant LayerMapnik::get_param_value(param_id_t param_id, bool is_file_operati
 	SGVariant param_value;
 	switch (param_id) {
 	case PARAM_CONFIG_CSS: {
-		param_value = SGVariant(this->filename_css);
+		param_value = SGVariant(this->css_file_full_path);
 		bool set = false;
 		if (is_file_operation) {
 			if (Preferences::get_file_path_format() == FilePathFormat::Relative) {
 				const QString cwd = QDir::currentPath();
 				if (!cwd.isEmpty()) {
-					param_value = SGVariant(file_GetRelativeFilename(cwd, this->filename_css));
+					param_value = SGVariant(file_GetRelativeFilename(cwd, this->css_file_full_path));
 					set = true;
 				}
 			}
 		}
 		if (!set) {
-			param_value = SGVariant(this->filename_css);
+			param_value = SGVariant(this->css_file_full_path);
 		}
 		break;
 	}
@@ -472,11 +476,11 @@ sg_ret LayerMapnik::carto_load(void)
 	GError *error = NULL;
 
 	const SGVariant pref_value = Preferences::get_param_value(PREFERENCES_NAMESPACE_MAPNIK "carto");
-	const QString command = QString("%1 %2").arg(pref_value.val_string).arg(this->filename_css);
+	const QString command = QString("%1 %2").arg(pref_value.val_string).arg(this->css_file_full_path);
 
 	sg_ret result = sg_ret::ok;
 
-	//char *args[2]; args[0] = pref_value.s; args[1] = this->filename_css;
+	//char *args[2]; args[0] = pref_value.s; args[1] = this->css_file_full_path;
 	//GPid pid;
 	//if (g_spawn_async_with_pipes(NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &carto_stdout, &carto_error, &error)) {
 	// cf code in babel.c to handle stdout
@@ -515,13 +519,13 @@ sg_ret LayerMapnik::carto_load(void)
 				if (error) {
 					fprintf(stderr, "CRITICAL: %s: %s\n", __FUNCTION__, error->message);
 				}
-				this->xml_map_file_full_path = QString(g_regex_replace_literal(regex, this->filename_css.toUtf8().constData(), -1, 0, ".xml", (GRegexMatchFlags) 0, &error)) ;
+				this->xml_map_file_full_path = QString(g_regex_replace_literal(regex, this->css_file_full_path.toUtf8().constData(), -1, 0, ".xml", (GRegexMatchFlags) 0, &error)) ;
 				if (error) {
 					fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
 				}
 				/* Prevent overwriting self. */
-				if (this->xml_map_file_full_path == this->filename_css) {
-					this->xml_map_file_full_path = this->filename_css + ".xml";
+				if (this->xml_map_file_full_path == this->css_file_full_path) {
+					this->xml_map_file_full_path = this->css_file_full_path + ".xml";
 				}
 			}
 			if (!g_file_set_contents(this->xml_map_file_full_path.toUtf8().constData(), mystdout, -1, &error) ) {
@@ -558,7 +562,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 	}
 
 	QString msg;
-	if (sg_ret::ok == this->mi->load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
+	if (sg_ret::ok == this->mw.load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
 		this->xml_map_file_loaded = true;
 		if (!from_file) {
 			/* TODO_LATER: shouldn't we use Window::update_recent_files()? */
@@ -573,7 +577,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 
 
-static QString get_filename(const QString dir, int x, int y, const TileScale & scale)
+static QString get_pixmap_full_path(const QString dir, int x, int y, const TileScale & scale)
 {
 	return QDir::toNativeSeparators(QString("%1/%2/%3/%4.png").arg(dir).arg(scale.get_tile_zoom_level()).arg(x).arg(y));
 }
@@ -581,7 +585,7 @@ static QString get_filename(const QString dir, int x, int y, const TileScale & s
 
 
 
-void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ti_ul)
+void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, const TileInfo & tile_info) const
 {
 	if (!this->use_file_cache) {
 		return;
@@ -591,68 +595,60 @@ void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, const TileInfo & ti_ul)
 		return;
 	}
 
-	const QString filename = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
+	const QString file_full_path = get_pixmap_full_path(this->file_cache_dir, tile_info.x, tile_info.y, tile_info.scale);
 
-	char *dir = g_path_get_dirname(filename.toUtf8().constData());
-	if (0 != access(filename.toUtf8().constData(), F_OK)) {
+	char * dir = g_path_get_dirname(file_full_path.toUtf8().constData());
+	if (0 != access(file_full_path.toUtf8().constData(), F_OK)) {
 		if (g_mkdir_with_parents(dir , 0777) != 0) {
 			fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir);
 		}
 	}
 	free(dir);
 
-	if (!pixmap.save(filename, "png")) {
-		qDebug() << "WW: Layer Mapnik: failed to save pixmap to" << filename;
+	if (!pixmap.save(file_full_path, "png")) {
+		qDebug() << SG_PREFIX_W << "Failed to save pixmap to" << file_full_path;
 	}
 }
 
 
 
 
-class RenderInfo : public BackgroundJob {
+class RenderJob : public BackgroundJob {
 public:
-	RenderInfo(LayerMapnik * layer, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const TileInfo & ti_ul, const QString & new_request);
+	RenderJob(LayerMapnik * layer, const TileInfo & tile_info, const QString & job_request_key);
 
 	void run(void);
 
-	LayerMapnik * lmk = NULL;
-
-	LatLon lat_lon_ul;
-	LatLon lat_lon_br;
-	TileInfo ti_ul;
-
-	QString request;
+	LayerMapnik * layer = NULL;
+	TileInfo tile_info;
+	QString job_request_key;
 };
 
 
 
 
-RenderInfo::RenderInfo(LayerMapnik * layer, const LatLon & new_lat_lon_ul, const LatLon & new_lat_lon_br, const TileInfo & new_ti_ul, const QString & new_request)
+RenderJob::RenderJob(LayerMapnik * new_layer, const TileInfo & new_tile_info, const QString & new_job_request_key)
 {
-	this->n_items = 1;
-
-	this->lmk = layer;
-
-	this->lat_lon_ul = new_lat_lon_ul;
-	this->lat_lon_br = new_lat_lon_br;
-	this->ti_ul = new_ti_ul;
-
-	this->request = new_request;
+	this->n_items = 1; /* Render one tile at a time (one tile per background job). */
+	this->layer = new_layer;
+	this->tile_info = new_tile_info;
+	this->job_request_key = new_job_request_key;
 }
 
 
 
 
-/**
-   Common render function which can run in separate thread
-*/
-void LayerMapnik::render(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br)
+void LayerMapnik::render_tile_now(const TileInfo & tile_info)
 {
-	int64_t tt1 = g_get_real_time();
-	QPixmap pixmap = this->mi->render_map(lat_lon_ul.lat, lat_lon_ul.lon, lat_lon_br.lat, lat_lon_br.lon);
-	int64_t tt2 = g_get_real_time();
-	double tt = (double) (tt2 - tt1)/1000000;
-	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", tt);
+	LatLon lat_lon_ul;
+	LatLon lat_lon_br;
+	tile_info.get_itms_lat_lon_ul_br(lat_lon_ul, lat_lon_br);
+
+	const int64_t tt1 = g_get_real_time();
+	QPixmap pixmap = this->mw.render_map(lat_lon_ul.lat, lat_lon_ul.lon, lat_lon_br.lat, lat_lon_br.lon);
+	const int64_t tt2 = g_get_real_time();
+	const double render_time = (double) (tt2 - tt1)/1000000;
+	fprintf(stderr, "DEBUG: Mapnik rendering completed in %.3f seconds\n", render_time);
 	if (pixmap.isNull()) {
 		qDebug() << SG_PREFIX_N << "Rendered pixmap is empty";
 		/* A pixmap to stick into cache incase of an unrenderable area - otherwise will get continually re-requested. */
@@ -666,25 +662,31 @@ void LayerMapnik::render(const TileInfo & tile_info, const LatLon & lat_lon_ul, 
 		ui_pixmap_scale_alpha(pixmap, this->alpha);
 	}
 
-	MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(tt), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+	/* TODO: shouldn't we pass to MapCacheItemProperties() some other value? */
+	MapCache::add_tile_pixmap(pixmap, MapCacheItemProperties(render_time), tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
 }
 
 
 
 
-void RenderInfo::run(void)
+void RenderJob::run(void)
 {
-	const bool end_job = this->set_progress_state(0);
-	if (!end_job) {
-		this->lmk->render(this->ti_ul, this->lat_lon_ul, this->lat_lon_br);
+	const bool terminate_job = this->set_progress_state(0);
+	if (!terminate_job) {
+		/* We weren't told to terminate this background task,
+		   so we can proceed to render the tile. */
+		this->layer->render_tile_now(this->tile_info);
 	}
 
 	tp_mutex.lock();
-	mapnik_requests.remove(this->request);
+	mapnik_job_requests.remove(this->job_request_key);
 	tp_mutex.unlock();
 
-	if (!end_job) {
-		this->lmk->emit_tree_item_changed("Mapnik - render info"); /* NB update display from background. */
+	if (!terminate_job) {
+		/* We weren't told to terminate this background task,
+		   so we can proceed to ask for displaying of rendered
+		   tile. */
+		this->layer->emit_tree_item_changed("Indicating ending of rendering of Mapnik tile from background job");
 	}
 	return;
 }
@@ -692,33 +694,30 @@ void RenderInfo::run(void)
 
 
 
-#define REQUEST_HASHKEY_FORMAT "%1-%2-%3-%4-%5"
-
-
-
-
-void LayerMapnik::thread_add(const TileInfo & tile_info, const LatLon & lat_lon_ul, const LatLon & lat_lon_br, const QString & file_full_path)
+void LayerMapnik::queue_rendering_in_background(const TileInfo & tile_info, const QString & file_full_path)
 {
 	/* Create request. */
 	const unsigned int nn = file_full_path.isEmpty() ? 0 : qHash(file_full_path, 0);
-	const QString request = QString(REQUEST_HASHKEY_FORMAT).arg(tile_info.x).arg(tile_info.y).arg(tile_info.z).arg(tile_info.scale.get_scale_value()).arg(nn);
+	const QString job_request_key = QString(REQUEST_HASHKEY_FORMAT).arg(tile_info.x).arg(tile_info.y).arg(tile_info.z).arg(tile_info.scale.get_scale_value()).arg(nn);
 
 	tp_mutex.lock();
 
-	if (mapnik_requests.contains(request)) {
+	if (mapnik_job_requests.contains(job_request_key)) {
+		/* This tile is already being rendered, no need to create a duplicate. */
+		qDebug() << SG_PREFIX_N << "Skipping duplicate job with request key" << job_request_key;
 		tp_mutex.unlock();
 		return;
 	}
 
-	RenderInfo * ri = new RenderInfo(this, lat_lon_ul, lat_lon_br, tile_info, request);
-	mapnik_requests.insert(request, true);
+	RenderJob * job = new RenderJob(this, tile_info, job_request_key);
+	mapnik_job_requests.insert(job_request_key, true);
 
 	tp_mutex.unlock();
 
 	const QString base_name = FileUtils::get_base_name(file_full_path);
 	const QString job_description = tr("Mapnik Render %1:%2:%3 %4").arg(tile_info.scale.get_scale_value()).arg(tile_info.x).arg(tile_info.y).arg(base_name);
-	ri->set_description(job_description);
-	ri->run_in_background(ThreadPoolType::LocalMapnik);
+	job->set_description(job_description);
+	job->run_in_background(ThreadPoolType::LocalMapnik);
 }
 
 
@@ -729,13 +728,13 @@ QPixmap LayerMapnik::load_pixmap(const TileInfo & tile_info, bool & rerender) co
 	rerender = false;
 
 	QPixmap pixmap;
-	const QString filename = get_filename(this->file_cache_dir, tile_info.x, tile_info.y, tile_info.scale);
+	const QString file_full_path = get_pixmap_full_path(this->file_cache_dir, tile_info.x, tile_info.y, tile_info.scale);
 
 	struct stat stat_buf;
-	if (stat(filename.toUtf8().constData(), &stat_buf) == 0) {
+	if (stat(file_full_path.toUtf8().constData(), &stat_buf) == 0) {
 		/* Get from disk. */
-		if (!pixmap.load(filename)) {
-			qDebug() << "WW: Layer Mapnik: failed to load pixmap from" << filename;
+		if (!pixmap.load(file_full_path)) {
+			qDebug() << "WW: Layer Mapnik: failed to load pixmap from" << file_full_path;
 		} else {
 			if (scale_alpha.is_in_range(this->alpha)) {
 				ui_pixmap_set_alpha(pixmap, this->alpha);
@@ -772,16 +771,19 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & tile_info)
 
 	if (pixmap.isNull() || rerender) {
 
-		LatLon lat_lon_ul;
-		LatLon lat_lon_br;
-		tile_info.get_itms_lat_lon_ul_br(lat_lon_ul, lat_lon_br);
+		/* Ask Mapnik to render a tile, and put results of the
+		   rendering in some known location. */
 
 		const bool run_in_background = true;
 		if (run_in_background) {
-			this->thread_add(tile_info, lat_lon_ul, lat_lon_br, this->xml_map_file_full_path);
+			this->queue_rendering_in_background(tile_info, this->xml_map_file_full_path);
 		} else {
-			this->render(tile_info, lat_lon_ul, lat_lon_br);
-			this->emit_tree_item_changed("Mapnik - get pixmap");
+			/* TODO: maybe we could return pixmap here
+			   from render_tile_now() and pass it to
+			   caller of get_pixmap(), without the need to
+			   emit signal? */
+			this->render_tile_now(tile_info);
+			this->emit_tree_item_changed("Indicating ending of rendering of Mapnik tile from foreground job");
 		}
 	}
 
@@ -802,11 +804,9 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		return;
 	}
 
-	if (this->mi) {
-		const QString copyright = this->mi->get_copyright();
-		if (!copyright.isEmpty()) {
-			viewport->add_copyright(copyright);
-		}
+	const QString copyright = this->mw.get_copyright();
+	if (!copyright.isEmpty()) {
+		viewport->add_copyright(copyright);
 	}
 
 	/* Split rendering of a map into a grid for the current
@@ -847,7 +847,6 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 LayerMapnik::~LayerMapnik()
 {
-	delete this->mi;
 }
 
 
@@ -887,7 +886,7 @@ void LayerMapnik::run_carto_cb(void)
 	}
 
 	QString msg;
-	if (sg_ret::ok == this->mi->load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
+	if (sg_ret::ok == this->mw.load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
 		Viewport * viewport = ThisApp::get_main_viewport();
 		this->draw_tree_item(viewport, false, false);
 	} else {
@@ -903,10 +902,7 @@ void LayerMapnik::run_carto_cb(void)
 */
 void LayerMapnik::mapnik_information_cb(void)
 {
-	if (!this->mi) {
-		return;
-	}
-	QStringList params = this->mi->get_parameters();
+	QStringList params = this->mw.get_parameters();
 	if (params.size()) {
 		a_dialog_list(tr("Mapnik Information"), params, 1, this->get_window());
 	}
@@ -917,7 +913,7 @@ void LayerMapnik::mapnik_information_cb(void)
 
 void LayerMapnik::about_mapnik_cb(void)
 {
-	Dialog::info(MapnikInterface::about(), this->get_window());
+	Dialog::info(MapnikWrapper::about(), this->get_window());
 }
 
 
@@ -940,7 +936,7 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 	menu.addAction(action);
 
 
-	if ("" != this->filename_css) {
+	if (!this->css_file_full_path.isEmpty()) {
 		action = new QAction(tr("&Run Carto Command"), this);
 		QObject::connect(action, SIGNAL (triggered(bool)), this, SLOT (run_carto_cb()));
 		menu.addAction(action);
@@ -967,22 +963,7 @@ void LayerMapnik::rerender_tile_cb(void)
 		return;
 	}
 
-	this->render_tile(tile_info);
-}
-
-
-
-
-/**
-   Render a specific tile
-*/
-void LayerMapnik::render_tile(const TileInfo & tile_info)
-{
-	LatLon lat_lon_ul;
-	LatLon lat_lon_br;
-	tile_info.get_itms_lat_lon_ul_br(lat_lon_ul, lat_lon_br);
-
-	this->thread_add(tile_info, lat_lon_ul, lat_lon_br, this->xml_map_file_full_path);
+	this->queue_rendering_in_background(tile_info, this->xml_map_file_full_path);
 }
 
 
@@ -990,19 +971,19 @@ void LayerMapnik::render_tile(const TileInfo & tile_info)
 
 void LayerMapnik::tile_info_cb(void)
 {
-	TileInfo ti_ul;
+	TileInfo tile_info;
 	/* Requested position to map coord. */
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_zoom_level, ti_ul)) {
-		qDebug() << SG_PREFIX_E << "Failed to convert ul";
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_zoom_level, tile_info)) {
+		qDebug() << SG_PREFIX_E << "Failed to convert clicked coordinate to tile info";
 		return;
 	}
 
-	MapCacheItemProperties properties = MapCache::get_properties(ti_ul, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
+	MapCacheItemProperties properties = MapCache::get_properties(tile_info, MapTypeID::MapnikRender, this->alpha, PixmapScale(0.0, 0.0), this->xml_map_file_full_path);
 
-	const QString tile_file_full_path = get_filename(this->file_cache_dir, ti_ul.x, ti_ul.y, ti_ul.scale);
+	const QString file_full_path = get_pixmap_full_path(this->file_cache_dir, tile_info.x, tile_info.y, tile_info.scale);
 
 	QStringList tile_info_strings;
-	tile_info_add_file_info_strings(tile_info_strings, tile_file_full_path);
+	tile_info_add_file_info_strings(tile_info_strings, file_full_path);
 
 	/* Show the info. */
 	if (properties.duration > 0.0) {
@@ -1085,7 +1066,6 @@ LayerMapnik::LayerMapnik()
 	this->set_name(Layer::get_type_ui_label(this->type));
 
 	this->tile_size_x = size_default().u.val_int; /* TODO_MAYBE: Is there any use in this being configurable? */
-	this->mi = new MapnikInterface();
 }
 
 
@@ -1093,7 +1073,7 @@ LayerMapnik::LayerMapnik()
 
 bool LayerMapnik::should_run_carto(void) const
 {
-	if (this->filename_css.length() <= 1) { /* TODO: why this strange condition? Why not just .isEmpty()? */
+	if (this->css_file_full_path.length() <= 1) { /* TODO: why this strange condition? Why not just .isEmpty()? */
 		return false;
 	}
 
@@ -1107,7 +1087,7 @@ bool LayerMapnik::should_run_carto(void) const
 	struct stat stat_buf1;
 	if (stat(this->xml_map_file_full_path.toUtf8().constData(), &stat_buf1) == 0) {
 		struct stat stat_buf2;
-		if (stat(this->filename_css.toUtf8().constData(), &stat_buf2) == 0) {
+		if (stat(this->css_file_full_path.toUtf8().constData(), &stat_buf2) == 0) {
 			/* Is CSS file newer than the XML file. */
 			if (stat_buf2.st_mtime > stat_buf1.st_mtime) {
 				result = true;
@@ -1192,4 +1172,18 @@ void LayerMapnik::draw_grid(Viewport * viewport, const TilesRange & range, const
 	LayerMap::draw_grid(viewport, pen, viewport_x, viewport_y, range.x_first, delta_x, range.x_last + 1, range.y_first, delta_y, range.y_last + 1, tile_width, tile_height);
 
 	return;
+}
+
+
+
+
+sg_ret LayerMapnik::set_tile_size(int size)
+{
+	if (size > 0) {
+		this->tile_size_x = size;
+		return sg_ret::ok;
+	} else {
+		qDebug() << SG_PREFIX_E << "Invalid value of tile size:" << size;
+		return sg_ret::err;
+	}
 }

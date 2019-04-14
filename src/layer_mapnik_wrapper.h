@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_MAPNIK_INTERFACE_H_
-#define _SG_MAPNIK_INTERFACE_H_
+#ifndef _SG_LAYER_MAPNIK_WRAPPER_H_
+#define _SG_LAYER_MAPNIK_WRAPPER_H_
 
 
 
@@ -45,10 +45,10 @@ namespace SlavGPS {
 
 
 
-	class MapnikInterface {
+	class MapnikWrapper {
 	public:
-		MapnikInterface();
-		~MapnikInterface();
+		MapnikWrapper();
+		~MapnikWrapper();
 
 		QString get_copyright(void) const;
 		void set_copyright(void);
@@ -62,7 +62,7 @@ namespace SlavGPS {
 		static void initialize(const QString & plugins_dir, const QString & font_dir, bool font_dir_recurse);
 		static QString about(void);
 
-		mapnik::Map * map = NULL;
+		mapnik::Map map;
 
 	private:
 		QString copyright; /* Cached Mapnik parameter to save looking it up each time. */
@@ -76,4 +76,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_MAPNIK_INTERFACE_H_ */
+#endif /* #ifndef _SG_LAYER_MAPNIK_WRAPPER_H_ */

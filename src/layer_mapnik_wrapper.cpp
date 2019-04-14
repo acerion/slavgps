@@ -78,23 +78,21 @@ static mapnik::projection projection(mapnik::MAPNIK_GMERC_PROJ);
 
 
 
-MapnikInterface::MapnikInterface()
+MapnikWrapper::MapnikWrapper()
 {
-	this->map = new mapnik::Map;
 }
 
 
 
 
-MapnikInterface::~MapnikInterface()
+MapnikWrapper::~MapnikWrapper()
 {
-	delete this->map;
 }
 
 
 
 
-void MapnikInterface::initialize(const QString & plugins_dir, const QString & font_dir, bool font_dir_recurse)
+void MapnikWrapper::initialize(const QString & plugins_dir, const QString & font_dir, bool font_dir_recurse)
 {
 	qDebug() << SG_PREFIX_D << "Using Mapnik version" << MAPNIK_VERSION_STRING;
 	try {
@@ -119,11 +117,11 @@ void MapnikInterface::initialize(const QString & plugins_dir, const QString & fo
 /**
    Caching this answer instead of looking it up each time
 */
-void MapnikInterface::set_copyright(void)
+void MapnikWrapper::set_copyright(void)
 {
 	this->copyright = "";
 
-	mapnik::parameters map_parameters = this->map->get_extra_parameters();
+	mapnik::parameters map_parameters = this->map.get_extra_parameters();
 	if (map_parameters.get<std::string>("attribution")) {
 		this->copyright = QString::fromStdString(*map_parameters.get<std::string>("attribution"));
 	}
@@ -146,22 +144,22 @@ void MapnikInterface::set_copyright(void)
 /**
    Returns empty string on success otherwise a string about what went wrong
 */
-sg_ret MapnikInterface::load_map_file(const QString & map_file_full_path, unsigned int width, unsigned int height, QString & msg)
+sg_ret MapnikWrapper::load_map_file(const QString & map_file_full_path, unsigned int width, unsigned int height, QString & msg)
 {
 	qDebug() << SG_PREFIX_I << "Loading map file" << map_file_full_path << "with width/height" << width << height;
 
 	sg_ret ret = sg_ret::ok;
 	try {
-		this->map->remove_all(); /* Support reloading. */
-		mapnik::load_map(*this->map, map_file_full_path.toUtf8().constData());
+		this->map.remove_all(); /* Support reloading. */
+		mapnik::load_map(this->map, map_file_full_path.toUtf8().constData());
 
-		this->map->resize(width, height);
-		this->map->set_srs(mapnik::MAPNIK_GMERC_PROJ); /* ONLY WEB MERCATOR output supported ATM. */
+		this->map.resize(width, height);
+		this->map.set_srs(mapnik::MAPNIK_GMERC_PROJ); /* ONLY WEB MERCATOR output supported ATM. */
 
 		/* IIRC This size is the number of pixels outside the tile to be considered so stuff is shown (i.e. particularly labels).
 		   Only set buffer size if the buffer size isn't explicitly set in the mapnik stylesheet.
 		   Alternatively render a bigger 'virtual' tile and then only use the appropriate subset */
-		if (this->map->buffer_size() == 0) {
+		if (this->map.buffer_size() == 0) {
 			int buffer_size = (width + height / 4); /* e.g. 128 for a 256x256 image. */
 			int tmp;
 			if (ApplicationState::get_integer(VIK_SETTINGS_MAPNIK_BUFFER_SIZE, &tmp)) {
@@ -169,11 +167,11 @@ sg_ret MapnikInterface::load_map_file(const QString & map_file_full_path, unsign
 			}
 			qDebug() << SG_PREFIX_I << "Buffer size will be" << buffer_size;
 
-			this->map->set_buffer_size(buffer_size);
+			this->map.set_buffer_size(buffer_size);
 		}
 		this->set_copyright();
 
-		qDebug() << QObject::tr("Debug: Mapnik: layers count: %1").arg(this->map->layer_count());
+		qDebug() << QObject::tr("Debug: Mapnik: layers count: %1").arg(this->map.layer_count());
 	} catch (std::exception const& ex) {
 		msg = ex.what();
 		ret = sg_ret::err;
@@ -191,14 +189,14 @@ sg_ret MapnikInterface::load_map_file(const QString & map_file_full_path, unsign
 /**
    Returns a pixmap of the specified area
 */
-QPixmap MapnikInterface::render_map(double lat_tl, double lon_tl, double lat_br, double lon_br)
+QPixmap MapnikWrapper::render_map(double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
 	QPixmap result; /* Initially the pixmap returns true for ::isNull(). */
 
 	try {
 		/* Copy main object to local map variable.
 		   This enables rendering to work when this function is called from different threads. */
-		mapnik::Map & local_map = *this->map; // TODO: this should be a copy?
+		mapnik::Map & local_map = this->map; // TODO: this should be a copy?
 		const unsigned width  = local_map.width();
 		const unsigned height = local_map.height();
 
@@ -271,7 +269,7 @@ QPixmap MapnikInterface::render_map(double lat_tl, double lon_tl, double lat_br,
 
    Returned string may be empty.
 */
-QString MapnikInterface::get_copyright(void) const
+QString MapnikWrapper::get_copyright(void) const
 {
 	return this->copyright;
 }
@@ -282,11 +280,11 @@ QString MapnikInterface::get_copyright(void) const
 /**
    'Parameter' information about the Map configuration.
 */
-QStringList MapnikInterface::get_parameters(void) const
+QStringList MapnikWrapper::get_parameters(void) const
 {
 	QStringList parameters;
 
-	mapnik::parameters map_parameters = this->map->get_extra_parameters();
+	mapnik::parameters map_parameters = this->map.get_extra_parameters();
 	/* Simply want the strings of each parameter so we can display something... */
 	for (auto const& param : map_parameters) {
 		std::stringstream ss;
@@ -305,7 +303,7 @@ QStringList MapnikInterface::get_parameters(void) const
 /**
    General information about Mapnik
 */
-QString MapnikInterface::about(void)
+QString MapnikWrapper::about(void)
 {
 	QString msg;
 
