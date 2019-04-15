@@ -61,7 +61,7 @@ namespace SlavGPS {
 		/* Header will be displayed using slightly larger
 		   font. Message will be split into separate strings,
 		   separated by newline. */
-		static void info(const QString & title, const QString & header, const QStringList & message, QWidget * parent = NULL);
+		static void info(const QString & header, const QStringList & message, QWidget * parent = NULL);
 
 		static void warning(QString const & message, QWidget * parent);
 		static void error(QString const & message, QWidget * parent);
@@ -72,8 +72,6 @@ namespace SlavGPS {
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
 
 		static void move_dialog(QDialog * dialog, const GlobalPoint & exposed_point, bool move_vertically);
-
-		static QString default_title;
 	};
 
 
@@ -120,12 +118,6 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
-
-
-
-
-
-void a_dialog_list(const QString & title, const QStringList & items, int padding, QWidget * parent = NULL);
 
 
 

@@ -949,7 +949,7 @@ void LayerMapnik::run_carto_cb(void)
 void LayerMapnik::mapnik_layer_information_cb(void)
 {
 	QStringList params = this->mw.get_parameters();
-	Dialog::info(Dialog::default_title, tr("Mapnik Layer Information"), params, this->get_window());
+	Dialog::info(tr("Mapnik Layer Information"), params, this->get_window());
 }
 
 
@@ -957,7 +957,7 @@ void LayerMapnik::mapnik_layer_information_cb(void)
 
 void LayerMapnik::about_mapnik_cb(void)
 {
-	Dialog::info(Dialog::default_title, tr("About Mapnik"), MapnikWrapper::about(), this->get_window());
+	Dialog::info(tr("About Mapnik"), MapnikWrapper::about(), this->get_window());
 }
 
 
@@ -1039,7 +1039,7 @@ void LayerMapnik::tile_info_cb(void)
 		   lost, and is not available now. */
 	}
 
-	Dialog::info(Dialog::default_title, tr("Tile Information"), tile_info_strings, this->get_window());
+	Dialog::info(tr("Tile Information"), tile_info_strings, this->get_window());
 }
 
 

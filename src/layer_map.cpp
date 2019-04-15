@@ -1428,7 +1428,7 @@ void LayerMap::tile_info_cb(void)
 
 	const QStringList tile_info_strings = map_source->get_tile_description(map_cache_obj, tile_info, args);
 
-	a_dialog_list(tr("Tile Information"), tile_info_strings, 5, this->get_window());
+	Dialog::info(tr("Tile Information"), tile_info_strings, this->get_window());
 }
 
 

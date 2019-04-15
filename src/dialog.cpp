@@ -60,12 +60,6 @@ using namespace SlavGPS;
 
 
 
-/* Class' static member. */
-QString Dialog::default_title(PROJECT);
-
-
-
-
 void Dialog::info(QString const & message, QWidget * parent)
 {
 	QMessageBox box(parent);
@@ -77,10 +71,9 @@ void Dialog::info(QString const & message, QWidget * parent)
 
 
 
-void Dialog::info(const QString & title, const QString & header, const QStringList & message, QWidget * parent)
+void Dialog::info(const QString & header, const QStringList & message, QWidget * parent)
 {
 	QMessageBox box(parent);
-	box.setWindowTitle(title);
 	box.setTextFormat(Qt::RichText);
 
 	const QString formatted_message = QString("<big>%1</big>"
@@ -140,31 +133,6 @@ int Dialog::get_int(const QString & title, const QString & label, int default_nu
 	return result;
 }
 
-
-
-
-/**
-   Creates a dialog with list of text.
-   Mostly useful for longer messages that have several lines of information.
-*/
-void a_dialog_list(const QString & title, const QStringList & items, int padding, QWidget * parent)
-{
-	QMessageBox box(parent);
-	//box.setTitle(title);
-	box.setIcon(QMessageBox::Information);
-
-	QVBoxLayout vbox;
-	QLayout * old = box.layout();
-	delete old;
-	box.setLayout(&vbox);
-
-	for (int i = 0; i < items.size(); i++) {
-		QLabel * label = ui_label_new_selectable(items.at(i), &box);
-		vbox.addWidget(label);
-	}
-
-	box.exec();
-}
 
 
 
@@ -354,7 +322,7 @@ BasicDialog::BasicDialog(const QString & title, QWidget * parent) : BasicDialog(
 
 void BasicDialog::set_central_widget_cb(QWidget * widget)
 {
-	qDebug() << __FILE__ << __LINE__;
+	qDebug() << SG_PREFIX_D;
 	QLayoutItem * child;
 	while ((child = this->grid->takeAt(0)) != 0) {
 		delete child->widget();
@@ -367,15 +335,10 @@ void BasicDialog::set_central_widget_cb(QWidget * widget)
 	qDebug() << SG_PREFIX_I << "this-> thread     =" << this->thread();
 	qDebug() << SG_PREFIX_I << "this->grid thread =" << this->grid->thread();
 
-	qDebug() << __FILE__ << __LINE__;
 	//widget->moveToThread(QApplication::instance()->thread());
-	qDebug() << __FILE__ << __LINE__;
 	//this->moveToThread(QApplication::instance()->thread());
-	qDebug() << __FILE__ << __LINE__;
 	//this->grid->moveToThread(QApplication::instance()->thread());
-	qDebug() << __FILE__ << __LINE__;
 	this->grid->addWidget(widget, 0, 0);
-	qDebug() << __FILE__ << __LINE__;
 
 	return;
 }
