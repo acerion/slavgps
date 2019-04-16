@@ -91,7 +91,6 @@ using namespace SlavGPS;
 
 
 
-
 extern bool vik_debug;
 extern bool vik_verbose;
 
@@ -608,7 +607,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 			update_desktop_recent_documents(this->get_window(), this->xml_map_file_full_path, g_mapnik_xml_mime_type);
 		}
 	} else {
-		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
+		Dialog::error(tr("Mapnik error during loading configuration file:\n%1").arg(msg), this->get_window());
 	}
 }
 
@@ -634,17 +633,13 @@ void LayerMapnik::possibly_save_pixmap(QPixmap & pixmap, const TileInfo & tile_i
 	}
 
 	const QString file_full_path = get_pixmap_full_path(this->file_cache_dir, tile_info.x, tile_info.y, tile_info.scale);
-
-	char * dir = g_path_get_dirname(file_full_path.toUtf8().constData());
-	if (0 != access(file_full_path.toUtf8().constData(), F_OK)) {
-		if (g_mkdir_with_parents(dir , 0777) != 0) {
-			fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir);
+	if (sg_ret::ok == FileUtils::create_directory_for_file(file_full_path)) {
+		qDebug() << SG_PREFIX_I << "Directory for pixmap" << file_full_path;
+		if (!pixmap.save(file_full_path, "png")) {
+			qDebug() << SG_PREFIX_W << "Failed to save pixmap to" << file_full_path;
 		}
-	}
-	free(dir);
-
-	if (!pixmap.save(file_full_path, "png")) {
-		qDebug() << SG_PREFIX_W << "Failed to save pixmap to" << file_full_path;
+	} else {
+		qDebug() << SG_PREFIX_E << "No directory for pixmap" << file_full_path;
 	}
 }
 
@@ -948,7 +943,7 @@ void LayerMapnik::run_carto_cb(void)
 */
 void LayerMapnik::mapnik_layer_information_cb(void)
 {
-	QStringList params = this->mw.get_parameters();
+	const QStringList params = this->mw.get_parameters();
 	Dialog::info(tr("Mapnik Layer Information"), params, this->get_window());
 }
 
@@ -957,7 +952,7 @@ void LayerMapnik::mapnik_layer_information_cb(void)
 
 void LayerMapnik::about_mapnik_cb(void)
 {
-	Dialog::info(tr("About Mapnik"), MapnikWrapper::about(), this->get_window());
+	Dialog::info(tr("About Mapnik"), MapnikWrapper::about_mapnik(), this->get_window());
 }
 
 

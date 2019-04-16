@@ -96,10 +96,7 @@ void MapnikWrapper::initialize(const QString & plugins_dir, const QString & font
 
 
 
-/**
-   Caching this answer instead of looking it up each time
-*/
-void MapnikWrapper::set_copyright(void)
+void MapnikWrapper::configure_copyright(void)
 {
 	this->copyright = "";
 
@@ -146,7 +143,7 @@ sg_ret MapnikWrapper::load_map_file(const QString & map_file_full_path, unsigned
 
 			this->map.set_buffer_size(buffer_size);
 		}
-		this->set_copyright();
+		this->configure_copyright();
 
 		qDebug() << QObject::tr("Debug: Mapnik: layers count: %1").arg(this->map.layer_count());
 	} catch (std::exception const& ex) {
@@ -264,10 +261,8 @@ QStringList MapnikWrapper::get_parameters(void) const
 	/* Simply want the strings of each parameter so we can display something... */
 	for (auto const& param : map_parameters) {
 		std::stringstream ss;
-		ss << param.first << ": " << *(map_parameters.get<std::string>(param.first,"empty"));
-		/* Copy - otherwise ss goes output scope and junk memory would be referenced. */
-		const QString param_string = QString(ss.str().c_str());
-		parameters << param_string;
+		ss << param.first << ": " << *(map_parameters.get<std::string>(param.first, "empty"));
+		parameters << ss.str().c_str();
 	}
 
 	return parameters;
@@ -279,23 +274,27 @@ QStringList MapnikWrapper::get_parameters(void) const
 /**
    General information about Mapnik
 */
-QStringList MapnikWrapper::about(void)
+QStringList MapnikWrapper::about_mapnik(void)
 {
 	/* Normally about 10 plugins so list them all. */
 	std::vector<std::string> plugins = mapnik::datasource_cache::instance().plugin_names();
 	std::string str;
-	for (unsigned int nn = 0; nn < plugins.size(); nn++) {
-		str += plugins[nn] + ',';
+	const unsigned int n = plugins.size();
+	for (unsigned int i = 0; i < n; i++) {
+		if (i + 1 < n) {
+			str += plugins[i] + ", ";
+		} else {
+			str += plugins[i];
+		}
 	}
-	str += '\n';
 
-	/* NB Can have a couple hundred fonts loaded when using system directories.
+	/* There can be a couple hundred fonts loaded when using system directories.
 	   So ATM don't list them all - otherwise need better GUI feedback display. */
 
 	QStringList msg;
 	msg << QObject::tr("Mapnik %1").arg(MAPNIK_VERSION_STRING);
-	msg << QObject::tr("Plugins=%2").arg(str.c_str());
-	msg << QObject::tr("Fonts loaded=%3").arg(mapnik::freetype_engine::face_names().size());
+	msg << QObject::tr("Plugins: %2").arg(str.c_str());
+	msg << QObject::tr("Number of loaded fonts: %3").arg(mapnik::freetype_engine::face_names().size());
 
 	return msg;
 }

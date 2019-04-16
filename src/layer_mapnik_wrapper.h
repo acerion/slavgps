@@ -51,8 +51,6 @@ namespace SlavGPS {
 		~MapnikWrapper() {}
 
 		QString get_copyright(void) const;
-		void set_copyright(void);
-
 		QStringList get_parameters(void) const;
 
 		sg_ret load_map_file(const QString & map_file_full_path, unsigned int width, unsigned int height, QString & msg);
@@ -60,11 +58,18 @@ namespace SlavGPS {
 		QPixmap render_map(double lat_tl, double lon_tl, double lat_br, double lon_br);
 
 		static void initialize(const QString & plugins_dir, const QString & font_dir, bool font_dir_recurse);
-		static QStringList about(void);
-
-		mapnik::Map map;
+		static QStringList about_mapnik(void);
 
 	private:
+		/*
+		  Make sure that copyright/attribution information
+		  from XML map file is saved in the wrapper class.
+
+		  The copyright information is read from XML once and
+		  cached for future uses. */
+		void configure_copyright(void);
+
+		mapnik::Map map;
 		QString copyright; /* Cached Mapnik parameter to save looking it up each time. */
 	};
 
