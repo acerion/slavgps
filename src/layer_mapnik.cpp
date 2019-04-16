@@ -847,7 +847,7 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	const QString copyright = this->mw.get_copyright();
 	if (!copyright.isEmpty()) {
-		viewport->add_copyright(copyright);
+		viewport->add_attribution(copyright);
 	}
 
 	/* Split rendering of a map into a grid for the current

@@ -35,6 +35,7 @@
 
 
 #include "measurements.h"
+#include "globals.h"
 
 
 
@@ -45,6 +46,7 @@ namespace SlavGPS {
 
 
 	class Viewport;
+	class ViewportLogo;
 
 
 
@@ -53,27 +55,28 @@ namespace SlavGPS {
 	public:
 		ViewportDecorations();
 
-		void draw(Viewport * viewport);
-		void reset_data(void);
+		sg_ret add_attribution(QString const & copyright);
+		sg_ret add_logo(const ViewportLogo & logo);
 
-		QStringList copyrights;
-		std::list<ViewportLogo> logos;
+		void draw(Viewport * viewport) const;
+		void clear(void);
 
 	private:
-		void draw_scale(Viewport * viewport);
-		void draw_copyrights(Viewport * viewport);
-		void draw_center_mark(Viewport * viewport);
-		void draw_logos(Viewport * viewport);
+		void draw_attributions(Viewport * viewport) const;
+		void draw_logos(Viewport * viewport) const;
 
-		void draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h);
-		QString draw_scale_helper_value(Viewport * viewport, DistanceUnit distance_unit, double scale_unit);
+		void draw_scale(Viewport * viewport) const;
+		void draw_center_mark(Viewport * viewport) const;
 
-		void reset_copyrights(void);
-		void reset_logos(void);
+		void draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h) const;
+		QString draw_scale_helper_value(Viewport * viewport, DistanceUnit distance_unit, double scale_unit) const;
 
 		/* For scale and center mark. */
 		QPen pen_marks_bg;
 		QPen pen_marks_fg;
+
+		QStringList attributions; /* Attributions/copyrights of stuff displayed in viewport. */
+		std::list<ViewportLogo> logos;
 	};
 
 

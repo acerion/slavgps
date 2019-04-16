@@ -216,7 +216,7 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 		    (tile_scale.get_tile_zoom_level()) > current->zoom_min &&
 		    (tile_scale.get_tile_zoom_level()) < current->zoom_max) {
 
-			viewport->add_copyright(current->attribution);
+			viewport->add_attribution(current->attribution);
 			qDebug() << SG_PREFIX_D << "Found match:" << current->attribution;
 		}
 	}

@@ -226,8 +226,11 @@ namespace SlavGPS {
 
 
 
-		void add_copyright(QString const & copyright);
-		void add_logo(const ViewportLogo & logo);
+		/*
+		  Add given @attribution to list of attributions displayed in viewport.
+		*/
+		sg_ret add_attribution(const QString & attribution);
+		sg_ret add_logo(const ViewportLogo & logo);
 
 
 

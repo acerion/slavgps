@@ -52,7 +52,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Viewport Decorations"
-#define PREFIX ": Viewport Decorations:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -74,10 +73,10 @@ ViewportDecorations::ViewportDecorations()
 
 
 
-void ViewportDecorations::draw(Viewport * viewport)
+void ViewportDecorations::draw(Viewport * viewport) const
 {
 	this->draw_scale(viewport);
-	this->draw_copyrights(viewport);
+	this->draw_attributions(viewport);
 	this->draw_center_mark(viewport);
 	this->draw_logos(viewport);
 }
@@ -85,7 +84,7 @@ void ViewportDecorations::draw(Viewport * viewport)
 
 
 
-void ViewportDecorations::draw_scale(Viewport * viewport)
+void ViewportDecorations::draw_scale(Viewport * viewport) const
 {
 	if (!viewport->scale_visibility) {
 		return;
@@ -115,7 +114,7 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 		break;
 	default:
 		base_distance = 1; /* Keep the compiler happy. */
-		qDebug() << "EE" PREFIX << "invalid distance unit" << (int) distance_unit;
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
 		break;
 	}
 
@@ -174,7 +173,7 @@ void ViewportDecorations::draw_scale(Viewport * viewport)
 
 
 
-void ViewportDecorations::draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h)
+void ViewportDecorations::draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h) const
 {
 	/* Black scale. */
 	viewport->draw_line(pen, PAD,             viewport->canvas.height - PAD, PAD + scale_len, viewport->canvas.height - PAD);
@@ -192,7 +191,7 @@ void ViewportDecorations::draw_scale_helper_scale(Viewport * viewport, const QPe
 
 
 
-QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, DistanceUnit distance_unit, double scale_unit)
+QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, DistanceUnit distance_unit, double scale_unit) const
 {
 	QString scale_value;
 
@@ -235,58 +234,40 @@ QString ViewportDecorations::draw_scale_helper_value(Viewport * viewport, Distan
 
 
 
-void ViewportDecorations::draw_copyrights(Viewport * viewport)
+/* Draw list of attribution strings, aligning them to bottom-right corner. */
+void ViewportDecorations::draw_attributions(Viewport * viewport) const
 {
-	/* TODO_2_LATER: how to ensure that these 128 chars fit into bounding rectangle used below? */
-#define MAX_COPYRIGHTS_LEN 128
-	QString result;
-	int free_space = MAX_COPYRIGHTS_LEN;
+	const QFont font("Helvetica", 12);
+	const QPen & pen = this->pen_marks_fg;
 
-#if 1
-	this->copyrights << "test copyright 1";
-	this->copyrights << "another test copyright";
-#endif
+	const int font_height = viewport->fontMetrics().boundingRect("© Copyright").height();
+	const int single_row_height = 1.2 * font_height;
 
-	/* Compute copyrights string. */
+	const int base_rect_width = viewport->canvas.width - (2 * PAD);     /* The actual width will be the same for all attribution label rectangles. */
+	const int base_rect_height = viewport->canvas.height - (2 * PAD);   /* The actual height will be smaller and smaller for each consecutive attribution. */
+	const int base_anchor_x = viewport->canvas.width - (1 * PAD);       /* x coordinate of actual anchor of every rectangle will be in the same place. */
+	const int base_anchor_y = viewport->canvas.height - (1 * PAD);      /* y coordinate of actual anchor of every rectangle will be higher for each consecutive attribution. */
 
-	for (int i = 0; i < this->copyrights.size(); i++) {
+	for (int i = 0; i < this->attributions.size(); i++) {
+		const int delta = (i * single_row_height);
 
-		if (free_space < 0) {
-			break;
-		}
+		const int rect_width = base_rect_width;
+		const int rect_height = base_rect_height - delta;
+		const int anchor_x = base_anchor_x;
+		const int anchor_y = base_anchor_y - delta;
 
-		QString const & copyright = copyrights[i];
+		const QRectF bounding_rect = QRectF(anchor_x, anchor_y, -rect_width, -rect_height);
 
-		/* Only use part of this copyright that fits in the available space left,
-		   remembering 1 character is left available for the appended space. */
-
-		result.append(copyright.left(free_space));
-		free_space -= copyright.size();
-
-		result.append(" ");
-		free_space--;
+		viewport->draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignRight, this->attributions[i], 0);
 	}
-
-	/* Copyright text will be in bottom-right corner. */
-	/* Use no more than half of width of viewport. */
-	int x_size = 0.5 * viewport->canvas.width;
-	int y_size = 0.7 * viewport->canvas.height;
-	int w_size = viewport->canvas.width - x_size - PAD;
-	int h_size = viewport->canvas.height - y_size - PAD;
-
-	QPointF box_start = QPointF(viewport->canvas.width - PAD, viewport->canvas.height - PAD); /* Anchor in bottom-right corner. */
-	QRectF bounding_rect = QRectF(box_start.x(), box_start.y(), -w_size, -h_size);
-	viewport->draw_text(QFont("Helvetica", 12), this->pen_marks_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, result, 0);
-
-#undef MAX_COPYRIGHTS_LEN
 }
 
 
 
 
-void ViewportDecorations::draw_center_mark(Viewport * viewport)
+void ViewportDecorations::draw_center_mark(Viewport * viewport) const
 {
-	//qDebug() << "II" PREFIX << "center mark visibility =" << viewport->center_mark_visibility;
+	//qDebug() << SG_PREFIX_I << "Center mark visibility =" << viewport->center_mark_visibility;
 
 	if (!viewport->center_mark_visibility) {
 		return;
@@ -316,7 +297,7 @@ void ViewportDecorations::draw_center_mark(Viewport * viewport)
 
 
 
-void ViewportDecorations::draw_logos(Viewport * viewport)
+void ViewportDecorations::draw_logos(Viewport * viewport) const
 {
 	int x_pos = viewport->canvas.width - PAD;
 	int y_pos = PAD;
@@ -331,24 +312,10 @@ void ViewportDecorations::draw_logos(Viewport * viewport)
 
 
 
-void ViewportDecorations::reset_data(void)
+void ViewportDecorations::clear(void)
 {
-	this->reset_copyrights();
-	this->reset_logos();
-}
+	this->attributions.clear();
 
-
-
-void ViewportDecorations::reset_copyrights(void)
-{
-	this->copyrights.clear();
-}
-
-
-
-
-void ViewportDecorations::reset_logos(void)
-{
 	/* There are no pointers involved in logos, so we can safely
 	   do ::clear() here. */
 	this->logos.clear();
@@ -413,4 +380,45 @@ static int rescale_unit(double * base_distance, double * scale_unit, int maximum
 	//fprintf(stderr, "rescale unit len = %g\n", len);
 
 	return (int) len;
+}
+
+
+
+
+/**
+   \brief Add an attribution/copyright to display on viewport
+
+   @attribution: new attribution/copyright to display.
+*/
+sg_ret ViewportDecorations::add_attribution(QString const & attribution)
+{
+	if (!this->attributions.contains(attribution)) {
+		this->attributions.push_front(attribution);
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret ViewportDecorations::add_logo(const ViewportLogo & logo)
+{
+	if (logo.logo_id == "") {
+		qDebug() << SG_PREFIX_W << "Trying to add empty logo";
+		return sg_ret::ok;
+	}
+
+	bool found = false;
+	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
+		if (iter->logo_id == logo.logo_id) {
+			found = true;
+		}
+	}
+
+	if (!found) {
+		this->logos.push_front(logo);
+	}
+
+	return sg_ret::ok;
 }

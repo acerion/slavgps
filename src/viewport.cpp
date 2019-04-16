@@ -80,7 +80,7 @@ using namespace SlavGPS;
 
 
 #define MERCATOR_FACTOR(_mpp_) ((65536.0 / 180 / (_mpp_)) * 256.0)
-/* TODO: Form of this expression should be optimized for usage in denominator. */
+/* TODO_LATER: Form of this expression should be optimized for usage in denominator. */
 #define REVERSE_MERCATOR_FACTOR(_mpp_) ((65536.0 / 180 / (_mpp_)) * 256.0)
 
 #define VIK_SETTINGS_VIEW_LAST_LATITUDE     "viewport_last_latitude"
@@ -366,7 +366,10 @@ void Viewport::clear(void)
 	//QPainter painter(this->canvas.pixmap);
 	this->canvas.painter->eraseRect(0, 0, this->canvas.width, this->canvas.height);
 
-	this->decorations.reset_data();
+
+	/* Some maps may have been removed, so their logos and/or
+	   attributions/copyrights must be cleared as well. */
+	this->decorations.clear();
 
 }
 
@@ -375,6 +378,12 @@ void Viewport::clear(void)
 
 void Viewport::draw_decorations(void)
 {
+#if 1   /* Debug. To verify display of attribution when there are no
+	   maps, or only maps without attributions. */
+	this->decorations.add_attribution("© Test attribution holder 1");
+	this->decorations.add_attribution("© Another test attribution holder 2017-2019");
+#endif
+
 	this->decorations.draw(this);
 
 	return;
@@ -1909,40 +1918,21 @@ LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top,
 
 
 /**
-   \brief Add a copyright to display on viewport
+   \brief Add an attribution/copyright to display on viewport
 
-   @copyright: new copyright to display.
+   @copyright: new attribution/copyright to display.
 */
-void Viewport::add_copyright(QString const & copyright)
+sg_ret Viewport::add_attribution(QString const & attribution)
 {
-	/* TODO_2_LATER: make sure that this code is executed. */
-	if (!this->decorations.copyrights.contains(copyright)) {
-		this->decorations.copyrights.push_front(copyright);
-	}
+	return this->decorations.add_attribution(attribution);
 }
 
 
 
 
-void Viewport::add_logo(const ViewportLogo & logo)
+sg_ret Viewport::add_logo(const ViewportLogo & logo)
 {
-	if (logo.logo_id == "") {
-		qDebug() << SG_PREFIX_W << "Trying to add empty logo";
-		return;
-	}
-
-	bool found = false;
-	for (auto iter = this->decorations.logos.begin(); iter != this->decorations.logos.end(); iter++) {
-		if (iter->logo_id == logo.logo_id) {
-			found = true;
-		}
-	}
-
-	if (!found) {
-		this->decorations.logos.push_front(logo);
-	}
-
-	return;
+	return this->decorations.add_logo(logo);
 }
 
 
