@@ -65,6 +65,7 @@
 #include "clipboard.h"
 #include "dialog.h"
 #include "ui_util.h"
+#include "file_utils.h"
 #include "measurements.h"
 #include "preferences.h"
 #include "map_utils.h"
@@ -351,11 +352,13 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 	if (QDir::isAbsolutePath(path)) {
 		canonical = path;
 	} else {
-		char * dirpath = NULL;
+		QString dirpath;
 		if (reference_file_full_path.isEmpty()) {
-			dirpath = g_get_current_dir(); // Fallback - if here then probably can't create the correct path
+			char * dirpath_ = g_get_current_dir(); // Fallback - if here then probably can't create the correct path
+			dirpath = QString(dirpath_);
+			free(dirpath_);
 		} else {
-			dirpath = g_path_get_dirname(reference_file_full_path.toUtf8().constData());
+			dirpath = FileUtils::path_get_dirname(reference_file_full_path);
 		}
 
 
@@ -368,7 +371,6 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 		}
 
 		canonical = SGUtils::get_canonical_path(full_path);
-		free(dirpath);
 	}
 
 	return canonical;

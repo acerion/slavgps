@@ -907,13 +907,11 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, con
 
 	LoadStatus load_status = LoadStatus::Code::OtherSuccess;
 
-	char * dirpath_ = g_path_get_dirname(full_path.toUtf8().constData());
-	QString dirpath(dirpath_);
-	free(dirpath_);
+	const QString dir_full_path = FileUtils::path_get_dirname(full_path);
 
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
-		if (sg_ret::ok == VikFile::read_file(file, parent_layer, dirpath, viewport)) {
+		if (sg_ret::ok == VikFile::read_file(file, parent_layer, dir_full_path, viewport)) {
 			load_status = LoadStatus::Code::Success;
 		} else {
 			load_status = LoadStatus::Code::FailureNonFatal;
@@ -957,7 +955,7 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, con
 			}
 		} else {
 			/* Try final supported file type. */
-			const LayerDataReadStatus rv = GPSPoint::read_layer_from_file(file, trw, dirpath);
+			const LayerDataReadStatus rv = GPSPoint::read_layer_from_file(file, trw, dir_full_path);
 			convert_status = (rv == LayerDataReadStatus::Success ? LoadStatus::Code::Success : LoadStatus::Code::Error);
 			if (LoadStatus::Code::Success != convert_status) {
 				/* Failure here means we don't know how to handle the file. */
@@ -1001,14 +999,12 @@ SaveStatus VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const 
 
 	/* Enable relative paths in .vik files to work. */
 	const QString cwd = QDir::currentPath();
-	char * dir = g_path_get_dirname(full_path.toUtf8().constData());
-	if (dir) {
-		if (!QDir::setCurrent(QString(dir))) {
-			qDebug() << SG_PREFIX_W << "Could not change directory to" << dir;
+	const QString dir_full_path = FileUtils::path_get_dirname(full_path);
+	if (!dir_full_path.isEmpty()) {
+		if (!QDir::setCurrent(dir_full_path)) {
+			qDebug() << SG_PREFIX_W << "Could not change directory to" << dir_full_path;
 			/* TODO_LATER: better error handling here. */
 		}
-
-		free(dir);
 	}
 
 	file_write(file, top_layer, viewport);

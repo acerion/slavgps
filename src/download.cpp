@@ -76,6 +76,7 @@
 #include "preferences.h"
 #include "util.h"
 #include "vikutils.h"
+#include "file_utils.h"
 
 
 
@@ -560,11 +561,10 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 		}
 
 	} else {
-		char *dir = g_path_get_dirname(dest_file_path.toUtf8().constData());
-		if (g_mkdir_with_parents(dir , 0777) != 0) {
-			qDebug() << SG_PREFIX_W << "Failed to mkdir" << dir;
+		if (sg_ret::ok != FileUtils::create_directory_for_file(dest_file_path)) {
+			qDebug() << SG_PREFIX_E << "Failed to create directory for file" << dest_file_path;
+			return DownloadStatus::FileWriteError;
 		}
-		free(dir);
 	}
 
 	const QString tmp_file_path = dest_file_path + ".tmp";
