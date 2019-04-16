@@ -23,13 +23,18 @@
 
 
 
+#include <unistd.h>
+
+
+
+
 #include <QDebug>
+#include <QDir>
 
 
 
 
 #include "file_utils.h"
-#include "globals.h"
 
 
 
@@ -121,4 +126,44 @@ bool FileUtils::file_has_magic(QFile & file, char const * magic, size_t size)
 	}
 
 	return true;
+}
+
+
+
+
+QString FileUtils::path_get_dirname(const QString & file_full_path)
+{
+	const QFileInfo file_info(file_full_path);
+	const QDir dir = file_info.dir();
+
+	/* I think that we can't use ::canonicalPath() or
+	   ::absolutePath() because the path may not exist yet so QT
+	   can't "calculate" canonical/absolute path. ::path() seems
+	   to be the only available option here. */
+	const QString dir_path = dir.path();
+
+	qDebug() << SG_PREFIX_D << "File full path =" << file_full_path << "----> dir full path =" << dir << dir_path;
+
+	return dir_path;
+}
+
+
+
+
+sg_ret FileUtils::create_directory_for_file(const QString & file_full_path)
+{
+	const QString dir_path = FileUtils::path_get_dirname(file_full_path);
+
+	if (0 == access(dir_path.toUtf8().constData(), F_OK)) {
+		return sg_ret::ok;
+	}
+
+	QDir dir(QDir::root());
+	if (dir.mkpath(dir_path)) {
+		qDebug() << SG_PREFIX_I << "Created path:" << file_full_path << "->" << dir_path;
+		return sg_ret::ok;
+	} else {
+		qDebug() << SG_PREFIX_E << "Not created path:" << file_full_path << "->" << dir_path;
+		return sg_ret::err;
+	}
 }

@@ -36,13 +36,13 @@
 
 
 
-#include <cstdio>
-
-
-
-
 #include <QString>
 #include <QFile>
+
+
+
+
+#include "globals.h"
 
 
 
@@ -54,6 +54,8 @@ namespace SlavGPS {
 	class FileUtils {
 	public:
 		static QString get_base_name(const QString & file_name);
+		static sg_ret create_directory_for_file(const QString & file_full_path);
+		static QString path_get_dirname(const QString & file_full_path);
 		static bool has_extension(const QString & file_name, const QString & file_extension);
 		static bool file_has_magic(QFile &, char const * magic, size_t size);
 	};
