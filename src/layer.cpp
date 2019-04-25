@@ -480,11 +480,7 @@ void Layer::set_initial_parameter_values(void)
 
 Layer::Layer()
 {
-	qDebug() << SG_PREFIX_I;
-
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
-
-	this->tree_item_type = TreeItemType::Layer; /* TODO_2_LATER: re-think initializing parent classes of Layer and TreeItem. */
 }
 
 

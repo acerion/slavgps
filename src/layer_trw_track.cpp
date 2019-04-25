@@ -277,8 +277,6 @@ void Track::free()
 
 Track::Track(bool is_route)
 {
-	this->tree_item_type = TreeItemType::Sublayer;
-
 	if (is_route) {
 		this->type_id = "sg.trw.route";
 	} else {
@@ -302,7 +300,6 @@ Track::Track(bool is_route)
 */
 Track::Track(const Track & from) : Track(from.is_route())
 {
-	this->tree_item_type = TreeItemType::Sublayer;
 	this->copy_properties(from);
 }
 

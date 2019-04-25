@@ -240,7 +240,8 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 
 	QMenu menu;
 
-	if (item->tree_item_type == TreeItemType::Layer) {
+	switch (item->get_tree_item_type()) {
+	case TreeItemType::Layer: {
 
 		qDebug() << SG_PREFIX_I << "Context menu event: menu for layer" << item->type_id << item->name;
 
@@ -253,14 +254,20 @@ void LayersPanel::context_menu_show_for_item(TreeItem * item)
 
 		/* Layer-type-specific menu items. */
 		layer->add_menu_items(menu);
-	} else {
+		}
+		break;
+	case TreeItemType::Sublayer:
 		qDebug() << SG_PREFIX_I << "Context menu event: menu for sublayer" << item->type_id << item->name;
-
 
 		if (!item->add_context_menu_items(menu, true)) {
 			return;
 		}
 		/* TODO_LATER: specific things for different types. */
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) item->get_tree_item_type() << item->name;
+		return;
 	}
 
 	menu.exec(QCursor::pos());
@@ -427,7 +434,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		return;
 	}
 
-	if (selected_item->tree_item_type == TreeItemType::Layer) {
+	switch (selected_item->get_tree_item_type()) {
+	case TreeItemType::Layer: {
 		/* A layer can be owned only by Aggregate layer.
 		   TODO_LATER: what about TRW layers under GPS layer? */
 		LayerAggregate * parent_layer = (LayerAggregate *) selected_item->get_owning_layer();
@@ -452,9 +460,16 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		} else {
 			Dialog::info(tr("You cannot cut the Top Layer."), this->window);
 		}
-	} else if (selected_item->tree_item_type == TreeItemType::Sublayer) {
+		}
+		break;
+	case TreeItemType::Sublayer: {
 		Layer * parent_layer = this->get_selected_layer();
 		parent_layer->cut_sublayer(selected_item);
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) selected_item->get_tree_item_type() << selected_item->name;
+		break;
 	}
 }
 
@@ -509,7 +524,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		return;
 	}
 
-	if (selected_item->tree_item_type == TreeItemType::Layer) {
+	switch (selected_item->get_tree_item_type()) {
+	case TreeItemType::Layer: {
 		Layer * layer = selected_item->to_layer();
 
 
@@ -542,10 +558,18 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 			/* We can't delete top-level aggregate layer. */
 			Dialog::info(tr("You cannot delete the %1.").arg(layer->get_name()), this->window);
 		}
-	} else if (selected_item->tree_item_type == TreeItemType::Sublayer) {
+		}
+		break;
+	case TreeItemType::Sublayer: {
 		Layer * parent_layer = this->get_selected_layer();
 		parent_layer->delete_sublayer(selected_item);
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) selected_item->get_tree_item_type() << selected_item->name;
+		return;
 	}
+
 
 	this->activate_buttons_cb();
 }
@@ -767,7 +791,7 @@ Layer * LayersPanel::go_up_to_layer(const TreeItem * tree_item, LayerType expect
 		}
 
 		TreeItem * this_item = this->tree_view->get_tree_item(this_index);
-		if (this_item->tree_item_type == TreeItemType::Layer) {
+		if (this_item->get_tree_item_type() == TreeItemType::Layer) {
 
 			if (((Layer *) this_item)->type == expected_layer_type) {
 				return (Layer *) this_item; /* Returning matching layer. */

@@ -292,7 +292,7 @@ sg_ret LayerAggregate::attach_to_tree(Layer * layer)
 bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
 {
 	/* We are in aggregate layer, so the child must be a layer as well. */
-	if (child_tree_item.tree_item_type != TreeItemType::Layer) {
+	if (child_tree_item.get_tree_item_type() != TreeItemType::Layer) {
 		qDebug() << SG_PREFIX_E << "Attempting to move non-layer child" << child_tree_item.name;
 		return false;
 	}
@@ -1030,7 +1030,7 @@ sg_ret LayerAggregate::dropped_item_is_acceptable(TreeItem * tree_item, bool * r
 
 	/* Aggregate layer can contain only other layers, nothing more
 	   (at least at this time). */
-	if (TreeItemType::Layer == tree_item->tree_item_type) {
+	if (TreeItemType::Layer == tree_item->get_tree_item_type()) {
 		*result = true;
 		return sg_ret::ok;
 	}

@@ -244,8 +244,9 @@ namespace SlavGPS {
 		*/
 		virtual bool move_child(TreeItem & child_tree_item, bool up);
 
+		virtual TreeItemType get_tree_item_type(void) const = 0;
+
 	//protected:
-		TreeItemType tree_item_type = TreeItemType::Layer;
 		TreeIndex index;             /* Set in TreeView::attach_to_tree(). */
 		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::insert_tree_item_at_row(). */
 

@@ -63,6 +63,8 @@ namespace SlavGPS {
 		Waypoint(const Waypoint& other);
 		~Waypoint();
 
+		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
+
 
 		void set_name(const QString & new_name);
 		void set_comment(const QString & new_comment);

@@ -59,7 +59,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Clipboard:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Clipboard"
 
 
 
@@ -469,16 +469,24 @@ void Clipboard::copy_selected(LayersPanel * panel)
 		len = 0;
 	} else {
 		TreeItem * item = selected->tree_view->get_tree_item(selected->index);
-		if (item->tree_item_type == TreeItemType::Sublayer) {
+
+		switch (item->get_tree_item_type()) {
+		case TreeItemType::Sublayer:
 			type = ClipboardDataType::Sublayer;
 			selected->copy_sublayer(item, &data, &len);
-		} else {
+			break;
+		case TreeItemType::Layer: {
 			int ilen = 0;
 			type = ClipboardDataType::Layer;
 #ifdef K
 			Layer::marshall(selected, &data, &ilen);
 #endif
 			len = ilen;
+			}
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) item->get_tree_item_type() << item->name;
+			return;
 		}
 	}
 #if 1
@@ -716,7 +724,7 @@ QString Pickle::take_string(void)
 	this->read_iter += length;
 
 
-	qDebug() << "II" PREFIX << "tag =" << tag << ", length =" << length << ", value =" << value;
+	qDebug() << SG_PREFIX_I << "tag =" << tag << ", length =" << length << ", value =" << value;
 
 	return value;
 }
@@ -756,7 +764,7 @@ const char * Pickle::take_pickle_tag(const char * expected_tag)
 	this->read_iter += strlen(tag_value) + 1; /* +1 for terminating NUL. */
 
 	if (0 != strcmp(expected_tag, tag_value)) {
-		qDebug() << "EE" PREFIX << "unexpected tlv tag" << tag_value << ", expected" << expected_tag;
+		qDebug() << SG_PREFIX_E << "Unexpected tlv tag" << tag_value << ", expected" << expected_tag;
 		assert(0);
 	}
 

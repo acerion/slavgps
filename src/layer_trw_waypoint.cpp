@@ -75,8 +75,6 @@ extern bool g_have_diary_program;
 
 Waypoint::Waypoint()
 {
-	this->tree_item_type = TreeItemType::Sublayer;
-
 	this->name = tr("Waypoint");
 
 	this->type_id = "sg.trw.waypoint";
@@ -90,8 +88,6 @@ Waypoint::Waypoint()
 /* Copy constructor. */
 Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 {
-	this->tree_item_type = TreeItemType::Sublayer;
-
 	this->coord = wp.coord;
 	this->visible = wp.visible;
 	this->set_timestamp(wp.timestamp);

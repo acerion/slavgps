@@ -130,9 +130,15 @@ QString TreeItem::get_tooltip(void) const
 
 Layer * TreeItem::to_layer(void) const
 {
-	if (this->tree_item_type == TreeItemType::Layer) {
+	switch (this->get_tree_item_type()) {
+	case TreeItemType::Layer:
 		return (Layer *) this;
-	} else {
+	case TreeItemType::Sublayer:
+		return this->owning_layer;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) this->get_tree_item_type() << this->name;
+		/* We shouldn't be returning anything, but at least
+		   try to return something that may be not NULL. */
 		return this->owning_layer;
 	}
 }

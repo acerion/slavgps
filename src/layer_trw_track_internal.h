@@ -185,6 +185,8 @@ namespace SlavGPS {
 		Track(const Track & from); /* Only copy properties, don't move or copy trackpoints from source track. */
 		~Track();
 
+		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
+
 
 		void set_defaults();
 		void set_name(const QString & new_name);

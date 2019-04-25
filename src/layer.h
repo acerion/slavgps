@@ -121,6 +121,8 @@ namespace SlavGPS {
 		virtual void unmarshall_params(Pickle & pickle);
 		static Layer * unmarshall(Pickle & pickle, Viewport * viewport);
 
+		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Layer; }
+
 
 		static Layer * construct_layer(LayerType layer_type, Viewport * viewport, bool interactive = false);
 

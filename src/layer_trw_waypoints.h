@@ -140,6 +140,8 @@ namespace SlavGPS {
 
 		QString get_tooltip(void) const;
 
+		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
+
 
 		sg_ret attach_children_to_tree(void);
 

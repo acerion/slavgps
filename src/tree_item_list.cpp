@@ -70,7 +70,8 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 
 	QMenu menu;
 
-	if (item->tree_item_type == TreeItemType::Layer) {
+	switch (item->get_tree_item_type()) {
+	case TreeItemType::Layer: {
 
 		qDebug() << SG_PREFIX_I << "Menu for layer tree item" << item->type_id << item->name;
 
@@ -86,14 +87,21 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 
 		/* Layer-type-specific menu items. */
 		layer->add_menu_items(menu);
-	} else {
-		qDebug() << SG_PREFIX_I << "Menu for non-layer tree item" << item->type_id << item->name;
+		}
+		break;
 
+	case TreeItemType::Sublayer:
+		qDebug() << SG_PREFIX_I << "Menu for non-layer tree item" << item->type_id << item->name;
 
 		if (!item->add_context_menu_items(menu, true)) {
 			return;
 		}
 		/* TODO_LATER: specific things for different types. */
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected value of tree item type:" << (int) item->get_tree_item_type() << item->name;
+		return;
 	}
 
 	menu.exec(cursor_position);

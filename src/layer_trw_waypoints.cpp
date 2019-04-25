@@ -70,7 +70,6 @@ extern SelectedTreeItems g_selected;
 
 LayerTRWWaypoints::LayerTRWWaypoints()
 {
-	this->tree_item_type = TreeItemType::Sublayer;
 	this->type_id = "sg.trw.waypoints";
 	this->accepted_child_type_ids << "sg.trw.waypoint";
 	this->editable = false;
@@ -1047,7 +1046,7 @@ sg_ret LayerTRWWaypoints::dropped_item_is_acceptable(TreeItem * tree_item, bool 
 		return sg_ret::err;
 	}
 
-	if (TreeItemType::Sublayer != tree_item->tree_item_type) {
+	if (TreeItemType::Sublayer != tree_item->get_tree_item_type()) {
 		qDebug() << SG_PREFIX_D << "Item" << tree_item->name << "is not a sublayer";
 		*result = false;
 		return sg_ret::ok;

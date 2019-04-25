@@ -667,7 +667,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 		TreeItem * selected_item = tree_view->get_selected_tree_item();
 		if (selected_item) {
 			/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. TODO_LATER: improve this condition. */
-			if (selected_item->tree_item_type == TreeItemType::Sublayer
+			if (selected_item->get_tree_item_type() == TreeItemType::Sublayer
 			    || selected_item->to_layer()->type == LayerType::TRW) {
 
 				tree_view->deselect_tree_item(selected_item);

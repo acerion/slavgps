@@ -122,6 +122,8 @@ namespace SlavGPS {
 
 		sg_ret attach_children_to_tree(void);
 
+		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Sublayer; }
+
 
 		/* Get track by name - not guaranteed to be unique. Finds the first one matching the name. */
 		Track * find_track_by_name(const QString & trk_name);

@@ -79,7 +79,6 @@ extern SelectedTreeItems g_selected;
 
 void LayerTRWTracks::init_item(void)
 {
-	this->tree_item_type = TreeItemType::Sublayer;
 	this->editable = false;
 	this->menu_operation_ids = TreeItem::MenuOperation::None;
 }
@@ -1120,7 +1119,7 @@ sg_ret LayerTRWTracks::dropped_item_is_acceptable(TreeItem * tree_item, bool * r
 		return sg_ret::err;
 	}
 
-	if (TreeItemType::Sublayer != tree_item->tree_item_type) {
+	if (TreeItemType::Sublayer != tree_item->get_tree_item_type()) {
 		*result = false;
 		return sg_ret::ok;
 	}

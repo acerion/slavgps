@@ -1447,17 +1447,7 @@ QString LayerTRW::get_tooltip(void) const
 		QDateTime date_end;
 		date_end.setTime_t(ttd.end_time.get_value());
 
-		QString duration_string;
-
-		if (date_start != date_end) { /* TODO_MAYBE: should we compare dates/times, or only dates? */
-			/* Dates differ so print range on separate line. */
-			duration_string = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
-		} else {
-			/* Same date so just show it and keep rest of text on the same line - provided it's a valid time! */
-			if (ttd.start_time != 0) {
-				duration_string = date_start.toString(Qt::SystemLocaleLongDate);
-			}
-		}
+		const QString duration_string = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
 
 		if (ttd.length.is_valid()) {
 			/* Prepare info string dependent on distance units. */
@@ -2467,7 +2457,7 @@ sg_ret LayerTRW::dropped_item_is_acceptable(TreeItem * tree_item, bool * result)
 		return sg_ret::err;
 	}
 
-	if (TreeItemType::Sublayer != tree_item->tree_item_type) {
+	if (TreeItemType::Sublayer != tree_item->get_tree_item_type()) {
 		*result = false;
 		return sg_ret::ok;
 	}
