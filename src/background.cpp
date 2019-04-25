@@ -53,7 +53,8 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Background"
-#define PREFIX ": Background:" << __FUNCTION__ << __LINE__ << ">"
+/* Maximal number of threads to be used on local machine/CPU. */
+#define VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL "background_max_threads_local"
 
 
 
@@ -140,7 +141,7 @@ bool BackgroundJob::test_termination_condition(void)
 #ifdef K_FIXME_RESTORE /* Should we call ::cleanup_on_cancel() in test function? */
 	if (this->remove_from_list) {
 		this->cleanup_on_cancel();
-		qDebug() << "WW" PREFIX << "background job termination: remove from list";
+		qDebug() << SG_PREFIX_W << "Background job termination: remove from list";
 		return true;
 	}
 #endif
@@ -213,13 +214,6 @@ void BackgroundJob::detach_from_window(BackgroundWindow * window)
 
 
 
-#define VIK_SETTINGS_BACKGROUND_MAX_THREADS "background_max_threads"
-#define VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL "background_max_threads_local"
-
-
-
-
-
 /**
    Just setup any preferences
 */
@@ -235,13 +229,9 @@ void Background::init()
 */
 void Background::post_init(void)
 {
-	/* Initialize thread pools. TODO_2_LATER: we don't have local/remote pools anymore. Address this fact in this file. */
+	/* Initialize thread pool. */
 	int max_threads = 10;  /* Limit maximum number of threads running at one time. */
 	int maxt;
-	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS, &maxt)) {
-		max_threads = maxt;
-	}
-
 	if (ApplicationState::get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL, &maxt)) {
 		max_threads = maxt;
 	} else {
@@ -249,7 +239,7 @@ void Background::post_init(void)
 		max_threads = threads > 1 ? threads - 1 : 1; /* Don't use all available CPUs! */
 	}
 
-	qDebug() << SG_PREFIX_I << "setting threads limit to" << max_threads;
+	qDebug() << SG_PREFIX_I << "Setting threads limit to" << max_threads;
 	QThreadPool::globalInstance()->setMaxThreadCount(max_threads);
 	QThreadPool::globalInstance()->setExpiryTimeout(-1); /* No expiry. */
 }
