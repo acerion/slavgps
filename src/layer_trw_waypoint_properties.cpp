@@ -195,9 +195,9 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 		LatLon lat_lon;
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_LAT]);
-		lat_lon.lat = param_value.get_latitude();
+		lat_lon.lat = param_value.get_latitude().val;
 		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_LON]);
-		lat_lon.lon = param_value.get_longitude();
+		lat_lon.lon = param_value.get_longitude().val;
 		wp->coord = Coord(lat_lon, coord_mode);
 
 

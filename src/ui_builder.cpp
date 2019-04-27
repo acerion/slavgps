@@ -54,6 +54,7 @@
 #include "widget_radio_group.h"
 #include "widget_slider.h"
 #include "widget_measurement_entry.h"
+#include "widget_lat_lon_entry.h"
 #include "date_time_dialog.h"
 #include "preferences.h"
 //#include "goto.h"
@@ -137,6 +138,12 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 		break;
 	case WidgetType::DateTime:
 		result = "DateTime";
+		break;
+	case WidgetType::Latitude:
+		result = "Latitude";
+		break;
+	case WidgetType::Longitude:
+		result = "Longitude";
 		break;
 	case WidgetType::Altitude:
 		result = "Altitude";
@@ -520,6 +527,26 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		widget = new SGDateTimeButton(param_value.get_timestamp(), this);
 		break;
 
+	case WidgetType::Latitude:
+		assert (param_spec.type_id == SGVariantType::Latitude);
+		if (param_spec.type_id == SGVariantType::Latitude) {
+			LatEntryWidget * widget_ = new LatEntryWidget(param_value, this);
+			qDebug() << SG_PREFIX_I << "New LatEntryWidget with initial value" << param_value.get_latitude().to_string();
+
+			widget = widget_;
+		}
+		break;
+
+	case WidgetType::Longitude:
+		assert (param_spec.type_id == SGVariantType::Longitude);
+		if (param_spec.type_id == SGVariantType::Longitude) {
+			LonEntryWidget * widget_ = new LonEntryWidget(param_value, this);
+			qDebug() << SG_PREFIX_I << "New LonEntryWidget with initial value" << param_value.get_longitude().to_string();
+
+			widget = widget_;
+		}
+		break;
+
 	case WidgetType::Altitude:
 		assert (param_spec.type_id == SGVariantType::Altitude);
 		if (param_spec.type_id == SGVariantType::Altitude) {
@@ -686,12 +713,23 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		rv = SGVariant(((SGDateTimeButton *) widget)->get_value());
 		break;
 
+	case WidgetType::Latitude:
+		assert (param_spec.type_id == SGVariantType::Latitude);
+		rv = SGVariant(((LatEntryWidget *) widget)->value(), SGVariantType::Latitude);
+		break;
+
+	case WidgetType::Longitude:
+		assert (param_spec.type_id == SGVariantType::Longitude);
+		rv = SGVariant(((LonEntryWidget *) widget)->value(), SGVariantType::Longitude);
+		break;
+
 	case WidgetType::Altitude:
 		assert (param_spec.type_id == SGVariantType::Altitude);
 		rv = ((MeasurementEntryWidget *) widget)->get_value_iu();
 		break;
 
 	default:
+		qDebug() << SG_PREFIX_E << "Unexpected widget type" << (int) param_spec.widget_type;
 		break;
 	}
 

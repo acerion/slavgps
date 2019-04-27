@@ -22,7 +22,6 @@
 
 
 #include <QLabel>
-#include <QDebug>
 
 
 
@@ -38,7 +37,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Widget LatLon Entry:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Widget LatLon Entry"
 
 
 
@@ -55,38 +54,27 @@ LatLonEntryWidget::LatLonEntryWidget(QWidget * parent)
 
 	int row = 0;
 
-	this->lat_spin = new QDoubleSpinBox();
-	this->lat_spin->setDecimals(SG_PRECISION_LATITUDE);
-	this->lat_spin->setMinimum(-90.0);
-	this->lat_spin->setMaximum(90.0);
-	this->lat_spin->setSingleStep(0.05);
-	this->lat_spin->setToolTip(QObject::tr("Coordinate: latitude")); /* Default tooltip. */
+	this->lat_entry = new LatEntryWidget(SGVariant(0.0, SGVariantType::Latitude));
 	this->lat_label = new QLabel(QObject::tr("Latitude:")); /* Default label. */
 	this->grid->addWidget(this->lat_label, row, 0);
-	this->grid->addWidget(this->lat_spin, row, 1);
+	this->grid->addWidget(this->lat_entry, row, 1);
 	row++;
 
-	this->lon_spin = new QDoubleSpinBox();
-	this->lon_spin->setDecimals(SG_PRECISION_LONGITUDE);
-	this->lon_spin->setMinimum(-180.0);
-	this->lon_spin->setMaximum(180.0);
-	this->lon_spin->setSingleStep(0.05);
-	this->lon_spin->setValue(0.0);
-	this->lon_spin->setToolTip(QObject::tr("Coordinate: longitude")); /* Default tooltip. */
+	this->lon_entry = new LonEntryWidget(SGVariant(0.0, SGVariantType::Longitude));
 	this->lon_label = new QLabel(QObject::tr("Longitude:")); /* Default label. */
 	this->grid->addWidget(this->lon_label, row, 0);
-	this->grid->addWidget(this->lon_spin, row, 1);
+	this->grid->addWidget(this->lon_entry, row, 1);
 	row++;
 
 	/* Ensure the first entry field has focus so we can start
 	   typing straight away.  User of this widget has to call
 	   LatLonEntryWidget::setFocus() after putting the widget in
 	   layout. */
-	this->setFocusProxy(this->lat_spin);
+	this->setFocusProxy(this->lat_entry);
 
 
-	QObject::connect(this->lat_spin, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
-	QObject::connect(this->lon_spin, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
+	QObject::connect(this->lat_entry, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
+	QObject::connect(this->lon_entry, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
 }
 
 
@@ -94,8 +82,8 @@ LatLonEntryWidget::LatLonEntryWidget(QWidget * parent)
 
 void LatLonEntryWidget::set_value(const LatLon & lat_lon)
 {
-	this->lat_spin->setValue(lat_lon.lat);
-	this->lon_spin->setValue(lat_lon.lon);
+	this->lat_entry->setValue(lat_lon.lat);
+	this->lon_entry->setValue(lat_lon.lon);
 }
 
 
@@ -105,8 +93,8 @@ LatLon LatLonEntryWidget::get_value(void) const
 {
 	LatLon lat_lon;
 
-	lat_lon.lat = this->lat_spin->value();
-	lat_lon.lon = this->lon_spin->value();
+	lat_lon.lat = this->lat_entry->value();
+	lat_lon.lon = this->lon_entry->value();
 
 	return lat_lon;
 }
@@ -116,10 +104,10 @@ LatLon LatLonEntryWidget::get_value(void) const
 
 void LatLonEntryWidget::set_text(const QString & latitude_label, const QString & latitude_tooltip, const QString & longitude_label, const QString & longitude_tooltip)
 {
-	this->lat_spin->setToolTip(latitude_tooltip);
+	this->lat_entry->setToolTip(latitude_tooltip);
 	this->lat_label->setText(latitude_label);
 
-	this->lon_spin->setToolTip(longitude_tooltip);
+	this->lon_entry->setToolTip(longitude_tooltip);
 	this->lon_label->setText(longitude_label);
 }
 
@@ -129,4 +117,30 @@ void LatLonEntryWidget::set_text(const QString & latitude_label, const QString &
 void LatLonEntryWidget::value_changed_cb(void) /* Slot. */
 {
 	emit this->value_changed();
+}
+
+
+
+
+LatEntryWidget::LatEntryWidget(const SGVariant & value, QWidget * parent) : QDoubleSpinBox(parent)
+{
+	this->setDecimals(SG_PRECISION_LATITUDE);
+	this->setMinimum(-90.0);
+	this->setMaximum(90.0);
+	this->setSingleStep(0.05);
+	this->setValue(value.get_latitude().val);
+	this->setToolTip(QObject::tr("Coordinate: latitude")); /* Default tooltip. */
+}
+
+
+
+
+LonEntryWidget::LonEntryWidget(const SGVariant & value, QWidget * parent) : QDoubleSpinBox(parent)
+{
+	this->setDecimals(SG_PRECISION_LONGITUDE);
+	this->setMinimum(-180.0);
+	this->setMaximum(180.0);
+	this->setSingleStep(0.05);
+	this->setValue(value.get_longitude().val);
+	this->setToolTip(QObject::tr("Coordinate: longitude")); /* Default tooltip. */
 }

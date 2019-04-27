@@ -85,6 +85,9 @@ namespace SlavGPS {
 		FileList,
 		DateTime,
 		Enumeration,
+
+		Latitude,
+		Longitude,
 		Altitude,
 	};
 

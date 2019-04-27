@@ -106,14 +106,16 @@ namespace SlavGPS {
 		SGVariant(int r, int g, int b, int a, SGVariantType type_id = SGVariantType::Color);
 		SGVariant(const QColor & color,       SGVariantType type_id = SGVariantType::Color);
 		SGVariant(const QStringList & sl,     SGVariantType type_id = SGVariantType::StringList);
+		SGVariant(const Latitude & lat,       SGVariantType type_id = SGVariantType::Latitude);
+		SGVariant(const Longitude & lon,      SGVariantType type_id = SGVariantType::Longitude);
 		SGVariant(const Altitude & a,         SGVariantType type_id = SGVariantType::Altitude);
 		SGVariant(const Time & timestamp,     SGVariantType type_id = SGVariantType::Timestamp);
 
 		~SGVariant();
 
 		Time get_timestamp(void) const;
-		double get_latitude() const;
-		double get_longitude() const;
+		Latitude get_latitude(void) const;
+		Longitude get_longitude(void) const;
 		Altitude get_altitude(void) const;
 
 		QString to_string() const;
@@ -132,7 +134,8 @@ namespace SlavGPS {
 		QStringList val_string_list;
 	private:
 		Time val_timestamp;  /* SGVariantType::TIMESTAMP */
-		double val_lat_lon;  /* SGVariantType::LATITUDE/LONGITUDE */
+		Latitude lat;
+		Longitude lon;
 		Altitude altitude;
 	};
 

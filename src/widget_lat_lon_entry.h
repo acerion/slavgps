@@ -36,11 +36,30 @@
 
 
 #include "coords.h"
+#include "variant.h"
 
 
 
 
 namespace SlavGPS {
+
+
+
+
+	class LatEntryWidget : public QDoubleSpinBox {
+		Q_OBJECT
+	public:
+		LatEntryWidget(const SGVariant & value, QWidget * parent = NULL);
+	};
+
+
+
+
+	class LonEntryWidget : public QDoubleSpinBox {
+		Q_OBJECT
+	public:
+		LonEntryWidget(const SGVariant & value, QWidget * parent = NULL);
+	};
 
 
 
@@ -64,11 +83,12 @@ namespace SlavGPS {
 	public:
 		QGridLayout * grid = NULL;
 
-		QDoubleSpinBox * lat_spin = NULL;
-		QDoubleSpinBox * lon_spin = NULL;
-
+	private:
 		QLabel * lat_label = NULL;
 		QLabel * lon_label = NULL;
+
+		LatEntryWidget * lat_entry = NULL;
+		LonEntryWidget * lon_entry = NULL;
 	};
 
 

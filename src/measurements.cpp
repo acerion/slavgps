@@ -2186,3 +2186,76 @@ bool Gradient::is_zero(void) const
 	}
 	return std::abs(this->value) < epsilon;
 }
+
+
+
+
+Latitude::Latitude(const char * str)
+{
+	if (str) {
+		this->val = strtod(str, NULL);
+	}
+}
+
+
+
+
+Latitude::Latitude(const QString & str)
+{
+	this->val = str.toDouble();
+}
+
+
+
+
+QString Latitude::to_string(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->val, 'f', SG_PRECISION_LATITUDE);
+}
+
+
+
+
+const QString Latitude::value_to_string_for_file(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->val, 'f', SG_PRECISION_LATITUDE);
+}
+
+
+
+
+Longitude::Longitude(const QString & str)
+{
+	this->val = str.toDouble();
+}
+
+
+
+
+Longitude::Longitude(const char * str)
+{
+	if (str) {
+		this->val = strtod(str, NULL);
+	}
+}
+
+
+
+
+QString Longitude::to_string(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->val, 'f', SG_PRECISION_LONGITUDE);
+}
+
+
+
+
+const QString Longitude::value_to_string_for_file(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->val, 'f', SG_PRECISION_LONGITUDE);
+}
+

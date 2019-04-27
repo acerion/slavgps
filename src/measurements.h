@@ -252,6 +252,48 @@ namespace SlavGPS {
 
 
 
+	class Latitude {
+	public:
+		Latitude() {};
+		Latitude(const char * str);
+		Latitude(const QString & str);
+
+		QString to_string(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   saving the value in gpx or vik file. */
+		const QString value_to_string_for_file(void) const;
+
+		double val = 0.0;
+	};
+
+
+
+
+	class Longitude {
+	public:
+		Longitude() {};
+		Longitude(const char * str);
+		Longitude(const QString & str);
+
+		QString to_string(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   saving the value in gpx or vik file. */
+		const QString value_to_string_for_file(void) const;
+
+		double val = 0.0;
+	};
+
+
+
+
 	class Altitude {
 	public:
 		Altitude() {};

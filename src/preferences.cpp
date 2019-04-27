@@ -117,8 +117,10 @@ static WidgetEnumerationData time_ref_frame_enum = {
 
 
 /* Hardcoded default location is New York. */
-static ParameterScale<double> scale_lat( -90.0,  90.0, SGVariant(40.714490),  0.05, 2);
-static ParameterScale<double> scale_lon(-180.0, 180.0, SGVariant(-74.007130), 0.05, 2);
+static SGVariant hardcoded_latitude_value(40.714490, SGVariantType::Latitude);
+static SGVariant hardcoded_longitude_value(-74.007130, SGVariantType::Longitude);
+static SGVariant hardcoded_latitude_fn(void) { return hardcoded_latitude_value; }
+static SGVariant hardcoded_longitude_fn(void) { return hardcoded_longitude_value; }
 
 static ParameterSpecification general_prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_GENERAL "degree_format",            SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Degree format:"),            WidgetType::Enumeration,     &degree_format_enum,    NULL, "" },
@@ -126,8 +128,8 @@ static ParameterSpecification general_prefs[] = {
 	{ 2, PREFERENCES_NAMESPACE_GENERAL "units_speed",              SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Speed units:"),              WidgetType::Enumeration,     &unit_speed_enum,       NULL, "" },
 	{ 3, PREFERENCES_NAMESPACE_GENERAL "units_height",             SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Height units:"),             WidgetType::Enumeration,     &unit_height_enum,      NULL, "" },
 	{ 4, PREFERENCES_NAMESPACE_GENERAL "use_large_waypoint_icons", SGVariantType::Boolean,         PARAMETER_GROUP_GENERIC, QObject::tr("Use large waypoint icons:"), WidgetType::CheckButton,     NULL,                   NULL, "" },
-	{ 5, PREFERENCES_NAMESPACE_GENERAL "default_latitude",         SGVariantType::Double,          PARAMETER_GROUP_GENERIC, QObject::tr("Default latitude:"),         WidgetType::SpinBoxDouble,   &scale_lat,             NULL, "" },
-	{ 6, PREFERENCES_NAMESPACE_GENERAL "default_longitude",        SGVariantType::Double,          PARAMETER_GROUP_GENERIC, QObject::tr("Default longitude:"),        WidgetType::SpinBoxDouble,   &scale_lon,             NULL, "" },
+	{ 5, PREFERENCES_NAMESPACE_GENERAL "default_latitude",         SGVariantType::Latitude,        PARAMETER_GROUP_GENERIC, QObject::tr("Default latitude:"),         WidgetType::Latitude,        NULL,                   hardcoded_latitude_fn, "" },
+	{ 6, PREFERENCES_NAMESPACE_GENERAL "default_longitude",        SGVariantType::Longitude,       PARAMETER_GROUP_GENERIC, QObject::tr("Default longitude:"),        WidgetType::Longitude,       NULL,                   hardcoded_longitude_fn, "" },
 	{ 7, PREFERENCES_NAMESPACE_GENERAL "time_reference_frame",     SGVariantType::Enumeration,     PARAMETER_GROUP_GENERIC, QObject::tr("Time Display:"),             WidgetType::Enumeration,     &time_ref_frame_enum,   NULL, QObject::tr("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object.") },
 	{ 8,                               "",                         SGVariantType::Empty,           PARAMETER_GROUP_GENERIC, "",                                       WidgetType::None,            NULL,                   NULL, "" },
 };
@@ -544,9 +546,9 @@ void Preferences::register_default_values()
 	i++;
 	Preferences::register_parameter_instance(general_prefs[i], SGVariant(true, general_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter_instance(general_prefs[i], scale_lat.initial);
+	Preferences::register_parameter_instance(general_prefs[i], hardcoded_latitude_value);
 	i++;
-	Preferences::register_parameter_instance(general_prefs[i], scale_lon.initial);
+	Preferences::register_parameter_instance(general_prefs[i], hardcoded_longitude_value);
 	i++;
 	Preferences::register_parameter_instance(general_prefs[i], SGVariant((int32_t) SGTimeReference::Locale, general_prefs[i].type_id));
 
@@ -649,7 +651,7 @@ bool Preferences::get_use_large_waypoint_icons()
 
 double Preferences::get_default_lat()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude").u.val_double;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude").get_latitude().val;
 }
 
 
@@ -657,7 +659,7 @@ double Preferences::get_default_lat()
 
 double Preferences::get_default_lon()
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude").u.val_double;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude").get_longitude().val;
 }
 
 

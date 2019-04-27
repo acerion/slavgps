@@ -46,7 +46,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Variant"
-#define PREFIX ": Variant:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -56,7 +55,7 @@ SGVariant::SGVariant(const SGVariant & val)
 	*this = val;
 
 	if (val.type_id == SGVariantType::Empty) {
-		qDebug() << "EE" PREFIX << "passed value with empty type to copy constructor";
+		qDebug() << SG_PREFIX_E << "Passed value with empty type to copy constructor";
 	}
 }
 
@@ -91,8 +90,10 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->val_timestamp.set_from_unix_timestamp(str);
 		break;
 	case SGVariantType::Latitude:
+		this->lat = Latitude(str);
+		break;
 	case SGVariantType::Longitude:
-		this->val_lat_lon = strtod(str, NULL);
+		this->lon = Longitude(str);
 		break;
 	case SGVariantType::Altitude:
 		this->altitude = Altitude(strtod(str, NULL), HeightUnit::Metres);
@@ -134,8 +135,10 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->val_timestamp.set_from_unix_timestamp(str);
 		break;
 	case SGVariantType::Latitude:
+		this->lat = Latitude(str);
+		break;
 	case SGVariantType::Longitude:
-		this->val_lat_lon = str.toDouble();
+		this->lon = Longitude(str);
 		break;
 	case SGVariantType::Altitude:
 		this->altitude = Altitude(str.toDouble(), HeightUnit::Metres);
@@ -151,11 +154,6 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 
 SGVariant::SGVariant(double d, SGVariantType type_id_)
 {
-	assert (type_id_ == SGVariantType::Double
-		|| type_id_ == SGVariantType::Latitude
-		|| type_id_ == SGVariantType::Longitude
-		|| type_id_ == SGVariantType::Altitude);
-
 	this->type_id = type_id_;
 
 	switch (type_id_) {
@@ -163,8 +161,10 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 		this->u.val_double = d;
 		break;
 	case SGVariantType::Latitude:
+		this->lat.val = d;
+		break;
 	case SGVariantType::Longitude:
-		this->val_lat_lon = d;
+		this->lon.val = d;
 		break;
 	case SGVariantType::Altitude:
 		this->altitude = Altitude(d, HeightUnit::Metres);
@@ -248,6 +248,26 @@ SGVariant::SGVariant(const QStringList & string_list, SGVariantType type_id_)
 
 
 
+SGVariant::SGVariant(const Latitude & new_lat, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Latitude);
+	this->type_id = type_id_;
+	this->lat.val = new_lat.val;
+}
+
+
+
+
+SGVariant::SGVariant(const Longitude & new_lon, SGVariantType type_id_)
+{
+	assert (type_id_ == SGVariantType::Longitude);
+	this->type_id = type_id_;
+	this->lon.val = new_lon.val;
+}
+
+
+
+
 SGVariant::SGVariant(const Altitude & a, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Altitude);
@@ -325,11 +345,11 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 		break;
 	case SGVariantType::Latitude:
 		/* This is for debug, so we don't apply any format specifiers. */
-		debug << value.get_latitude();
+		debug << value.get_latitude().to_string();
 		break;
 	case SGVariantType::Longitude:
 		/* This is for debug, so we don't apply any format specifiers. */
-		debug << value.get_longitude();
+		debug << value.get_longitude().to_string();
 		break;
 	case SGVariantType::Altitude:
 		/* This is for debug, so we don't apply any format specifiers. */
@@ -389,7 +409,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 		debug << "Altitude";
 		break;
 	default:
-		debug << "EE" PREFIX << "unsupported variant type id" << (int) type_id;
+		debug << SG_PREFIX_E << "Unsupported variant type id" << (int) type_id;
 		break;
 	};
 
@@ -436,14 +456,16 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 		this->val_timestamp = other.val_timestamp;
 		break;
 	case SGVariantType::Latitude:
+		this->lat = other.lat;
+		break;
 	case SGVariantType::Longitude:
-		this->val_lat_lon = other.val_lat_lon;
+		this->lon = other.lon;
 		break;
 	case SGVariantType::Altitude:
 		this->altitude = other.altitude;
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) other.type_id;
+		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) other.type_id;
 		break;
 	};
 
@@ -461,20 +483,19 @@ Time SGVariant::get_timestamp(void) const
 
 
 
-double SGVariant::get_latitude() const
+Latitude SGVariant::get_latitude(void) const
 {
 	assert (this->type_id == SGVariantType::Latitude);
-
-	return this->val_lat_lon;
+	return this->lat;
 }
 
 
 
 
-double SGVariant::get_longitude() const
+Longitude SGVariant::get_longitude(void) const
 {
 	assert (this->type_id == SGVariantType::Longitude);
-	return this->val_lat_lon;
+	return this->lon;
 }
 
 
@@ -491,8 +512,6 @@ Altitude SGVariant::get_altitude(void) const
 
 QString SGVariant::to_string() const
 {
-	static QLocale c_locale = QLocale::c();
-
 	switch (this->type_id) {
 	case SGVariantType::Empty:
 		return QString("<empty value>");
@@ -523,16 +542,16 @@ QString SGVariant::to_string() const
 		return QString("%1").arg(this->get_timestamp().to_timestamp_string());
 
 	case SGVariantType::Latitude:
-		return c_locale.toString(this->get_latitude(), 'f', SG_PRECISION_LATITUDE);
+		return this->lat.to_string();
 
 	case SGVariantType::Longitude:
-		return c_locale.toString(this->get_longitude(), 'f', SG_PRECISION_LONGITUDE);
+		return this->lon.to_string();
 
 	case SGVariantType::Altitude:
 		return this->altitude.to_string();
 
 	default:
-		qDebug() << "EE" PREFIX << "unsupported variant type id" << (int) this->type_id;
+		qDebug() << SG_PREFIX_E << "Unsupported variant type id" << (int) this->type_id;
 		return QString("");
 	};
 }
@@ -606,7 +625,7 @@ SGVariant SGVariant::unmarshall(Pickle & pickle, SGVariantType expected_type_id)
 
 
 	if (type_id != expected_type_id) {
-		qDebug() << "EE" PREFIX << "wrong variant type id:" << type_id << "!=" << expected_type_id;
+		qDebug() << SG_PREFIX_E << "Wrong variant type id:" << type_id << "!=" << expected_type_id;
 		assert(0);
 	}
 
@@ -651,7 +670,7 @@ SGVariant SGVariant::unmarshall(Pickle & pickle, SGVariantType expected_type_id)
 
 		/* Test that we are reading correct data. */
 		if (expected_size != sizeof (result.u)) {
-			qDebug() << "EE" PREFIX << "unexpected size of POD:" << expected_size << "!=" << sizeof (result.u);
+			qDebug() << SG_PREFIX_E << "Unexpected size of POD:" << expected_size << "!=" << sizeof (result.u);
 			assert(0);
 		}
 
@@ -714,8 +733,24 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 			fprintf(file, "#%.2x%.2x%.2x\n", this->val_color.red(), this->val_color.green(), this->val_color.blue());
 			break;
 
+		case SGVariantType::Latitude:
+			fprintf(file, "%s\n", this->lat.value_to_string_for_file().toUtf8().constData());
+			break;
+
+		case SGVariantType::Longitude:
+			fprintf(file, "%s\n", this->lon.value_to_string_for_file().toUtf8().constData());
+			break;
+
+		case SGVariantType::Altitude:
+			fprintf(file, "%s\n", this->altitude.value_to_string_for_file().toUtf8().constData());
+			break;
+
 		default:
-			qDebug() << "EE" PREFIX << "Unhandled variant type id" << (int) this->type_id;
+			qDebug() << SG_PREFIX_E << "Unhandled variant type id" << (int) this->type_id;
+
+			/* The newline is needed to prevent having two
+			   consecutive lines "glued" into one. */
+			fprintf(file, "\n");
 			break;
 		}
 	}
