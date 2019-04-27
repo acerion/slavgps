@@ -24,7 +24,6 @@
 
 
 #include <string>
-#include <map>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -50,12 +49,18 @@
 
 
 
+/* TODO_LATER: Handle variants of type "string list". */
+
+
+
+
 using namespace SlavGPS;
 
 
 
 
 #define SG_MODULE "Preferences"
+#define VIKING_PREFERENCES_FILE "viking.prefs"
 
 
 
@@ -111,7 +116,7 @@ static WidgetEnumerationData time_ref_frame_enum = {
 
 
 
-/* Hardwired default location is New York. */
+/* Hardcoded default location is New York. */
 static ParameterScale<double> scale_lat( -90.0,  90.0, SGVariant(40.714490),  0.05, 2);
 static ParameterScale<double> scale_lon(-180.0, 180.0, SGVariant(-74.007130), 0.05, 2);
 
@@ -211,49 +216,24 @@ static ParameterSpecification startup_prefs[] = {
 	{ 4, PREFERENCES_NAMESPACE_STARTUP "check_version",         SGVariantType::Boolean,      PARAMETER_GROUP_GENERIC, QObject::tr("Check For New Version:"),   WidgetType::CheckButton,   NULL,                    NULL, QObject::tr("Periodically check to see if a new version of Viking is available") },
 	{ 5,                               "",                      SGVariantType::Empty,        PARAMETER_GROUP_GENERIC, "",                                      WidgetType::None,          NULL,                    NULL, "" }, /* Guard. */
 };
-/* End of Options static stuff. */
-
 
 
 
 
 static Preferences preferences;
-
-
-
-
-/* TODO_LATER: STRING_LIST. */
-/* TODO_LATER: share code in file reading. */
-/* TODO_LATER: remove hackaround in show_window. */
-
-
-
-
-#define VIKING_PREFERENCES_FILE "viking.prefs"
-
-
-
-/* How to get a value of parameter:
-   1. use id to get a parameter from registered_parameter_specifications, then
-   2. use parameter->name to look up parameter's value in registered_parameter_values.
-   You probably can skip right to point 2 if you know full name of parameter.
-
-   How to set a value of parameter:
-   1.
-   2.
-*/
-static QHash<QString, ParameterSpecification> registered_parameter_specifications; /* Parameter name -> Parameter specification. */
-static QHash<QString, SGVariant> registered_parameter_values; /* Parameter name -> Value of parameter. */
-
-
-
-
-/************ groups *********/
-
-
-
-
+static std::vector<PreferenceTuple> g_preferences_list;
 static QHash<QString, param_id_t> groups_keys_to_indices;
+
+
+
+
+/* Predicate for std::find_if() for looking up preferences in g_preferences_list by name. */
+struct PreferencesCompareByName {
+	PreferencesCompareByName(const QString & new_param_name) : param_name(new_param_name) { }
+	bool operator()(PreferenceTuple & item) const { return item.param_name == this->param_name; }
+private:
+	const QString param_name;
+};
 
 
 
@@ -282,7 +262,7 @@ static param_id_t preferences_param_key_to_group_id(const QString & key)
 		return -1;
 	}
 
-	qDebug() << "kamil" << key << "<-" << key.left(last_dot + 1);
+	qDebug() << SG_PREFIX_D << key << "<-" << key.left(last_dot + 1);
 
 	const int index = groups_keys_to_indices[key.left(last_dot + 1)];
 	if (0 == index) {
@@ -320,27 +300,28 @@ static bool preferences_load_from_file()
 		if (0 >= file.readLine(buf, sizeof (buf))) {
 			break;
 		}
-		if (Util::split_string_from_file_on_equals(QString(buf), key, val)) {
-			/* If it's not in there, ignore it. */
-			auto old_val_iter = registered_parameter_values.find(key);
-			if (old_val_iter == registered_parameter_values.end()) {
-				qDebug() << "II: Preferences: load from file: ignoring key/val" << key << val;
-				continue;
-			} else {
-				qDebug() << "II: Preferences: load from file: modifying key/val" << key << val;
-			}
-
-
-			/* Otherwise change it (you know the type!).
-			   If it's a string list do some funky stuff ... yuck... not yet. */
-			if (old_val_iter.value().type_id == SGVariantType::StringList) {
-				qDebug() << "EE: Preferences: Load from File: 'string list' not implemented";
-			}
-
-			const SGVariant new_val = SGVariant(old_val_iter.value().type_id, val); /* String representation -> variant. */
-			registered_parameter_values.insert(key, new_val);
-			/* Change value. */
+		if (!Util::split_string_from_file_on_equals(QString(buf), key, val)) {
+			qDebug() << SG_PREFIX_N << "Can't split line from config file:" << buf;
+			continue;
 		}
+
+		/* If the parameter is not registered, ignore it. */
+		auto pref = std::find_if(g_preferences_list.begin(), g_preferences_list.end(), PreferencesCompareByName(key));
+		if (pref == g_preferences_list.end()) {
+			qDebug() << SG_PREFIX_N << "Ignoring key/val (parameter not registered)" << key << val;
+			continue;
+		}
+
+
+		if (pref->param_value.type_id == SGVariantType::StringList) {
+			qDebug() << SG_PREFIX_E << "'string list' variant type not implemented, skipping parameter" << key;
+			continue;
+		}
+
+		/* Finally change existing value of registered parameter. */
+		qDebug() << SG_PREFIX_I << "Modifying key/val" << key << val;
+		const SGVariant new_val = SGVariant(pref->param_value.type_id, val); /* Build variant from string representation. */
+		pref->param_value = new_val;
 	}
 
 	/* ~QFile() closes the file if necessary. */
@@ -351,33 +332,31 @@ static bool preferences_load_from_file()
 
 
 
-bool Preferences::set_param_value(const QString & param_name, const SGVariant & param_value)
+bool Preferences::set_param_value(const QString & param_name, const SGVariant & new_param_value)
 {
-	auto iter = registered_parameter_specifications.find(QString(param_name));
-	if (iter == registered_parameter_specifications.end()) {
-		qDebug() << "EE: Preferences: Set Param Value: parameter" << param_name << "not found";
+	auto pref = std::find_if(g_preferences_list.begin(), g_preferences_list.end(), PreferencesCompareByName(param_name));
+	if (pref == g_preferences_list.end()) {
+		qDebug() << SG_PREFIX_E << "Parameter" << param_name << "not found";
 		return false;
 	}
-
-	const ParameterSpecification & param_spec = *iter;
 
 	/* Don't change stored pointer values. */
-	if (param_spec.type_id == SGVariantType::Pointer) {
+	if (pref->param_spec.type_id == SGVariantType::Pointer) {
 		return false;
 	}
-	if (param_spec.type_id == SGVariantType::StringList) {
-		qDebug() << "EE: Preferences: Set Parameter Value: 'string list' not implemented";
+	if (pref->param_spec.type_id == SGVariantType::StringList) {
+		qDebug() << SG_PREFIX_E << "'string list' not implemented";
 		return false;
 	}
-	if (param_value.type_id != param_spec.type_id) {
-		qDebug() << "EE: Preferences: mismatch of variant type for parameter" << param_name << param_value.type_id << param_spec.type_id;
+	if (new_param_value.type_id != pref->param_spec.type_id) {
+		qDebug() << SG_PREFIX_E << "Mismatch of variant type for parameter" << param_name << new_param_value.type_id << pref->param_spec.type_id;
 		return false;
 	}
 
 	/* [] operator will return modifiable reference.  */
-	registered_parameter_values[QString(param_name)] = param_value;
+	pref->param_value = new_param_value;
 
-	qDebug() << "II: Preferences: set new value of parameter" << param_name << "=" << param_value;
+	qDebug() << SG_PREFIX_I << "Set new value of parameter" << param_name << "=" << new_param_value;
 
 	return true;
 }
@@ -408,18 +387,13 @@ bool Preferences::save_to_file(void)
 
 	qDebug() << SG_PREFIX_I << "Saving to file" << full_path;
 
-	for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
-		const ParameterSpecification & param_spec = *iter;
-
-		auto val_iter = registered_parameter_values.find(param_spec.name);
-		if (val_iter != registered_parameter_values.end()) {
-
-			const SGVariant param_value = val_iter.value();
-			if (param_value.type_id != SGVariantType::Pointer) {
-				qDebug() << SG_PREFIX_I << "Saving param" << param_spec.name << "=" << param_value;
-				param_value.write(file, param_spec.name);
-			}
+	for (auto pref = g_preferences_list.begin(); pref != g_preferences_list.end(); pref++) {
+		if (pref->param_value.type_id == SGVariantType::Pointer) {
+			/* Internal preference that should not be saved to file. */
+			continue;
 		}
+		qDebug() << SG_PREFIX_I << "Saving param" << pref->param_spec.name << "=" << pref->param_value;
+		pref->param_value.write(file, pref->param_spec.name);
 	}
 	fclose(file);
 	file = NULL;
@@ -432,26 +406,31 @@ bool Preferences::save_to_file(void)
 
 void Preferences::show_window(QWidget * parent)
 {
-	// preferences.loaded = true;
-	// preferences_load_from_file();
+	if (!preferences.loaded) {
+		qDebug() << SG_PREFIX_E << "Preferences haven't been loaded until now, this is bad";
+		preferences_load_from_file();
+		preferences.loaded = true;
+	}
 
 	PropertiesDialog dialog(QObject::tr("Preferences"), parent);
 	dialog.fill(&preferences);
-
-	if (QDialog::Accepted == dialog.exec()) {
-		for (auto iter = registered_parameter_specifications.begin(); iter != registered_parameter_specifications.end(); iter++) {
-
-			const ParameterSpecification & param_spec = iter.value();
-			const QString & param_name = param_spec.name;
-			assert (param_name == iter.key());
-			const SGVariant param_value = dialog.get_param_value(param_spec);
-
-			qDebug() << SG_PREFIX_I << "Parameter from preferences dialog:" << param_name << "=" << param_value;
-
-			Preferences::set_param_value(param_name, param_value);
-		}
-		Preferences::save_to_file();
+	if (QDialog::Accepted != dialog.exec()) {
+		return;
 	}
+
+
+	for (auto pref = g_preferences_list.begin(); pref != g_preferences_list.end(); pref++) {
+
+		/* It is called "new_param_value", but it's
+		   really new only if it was changed in
+		   preferences window. */
+		const SGVariant new_param_value = dialog.get_param_value(pref->param_spec);
+
+		qDebug() << SG_PREFIX_I << "Parameter from preferences dialog:" << pref->param_name << "=" << new_param_value;
+
+		Preferences::set_param_value(pref->param_name, new_param_value);
+	}
+	Preferences::save_to_file();
 }
 
 
@@ -480,8 +459,9 @@ void SlavGPS::Preferences::register_parameter_instance(const ParameterSpecificat
 		qDebug() << SG_PREFIX_E << "Failed to find group id for param name" << new_param_spec.name;
 	}
 
-	registered_parameter_specifications.insert(key, new_param_spec);
-	registered_parameter_values.insert(key, default_value);
+
+	PreferenceTuple pref(new_param_spec.name, new_param_spec, default_value);
+	g_preferences_list.push_back(pref);
 }
 
 
@@ -489,8 +469,7 @@ void SlavGPS::Preferences::register_parameter_instance(const ParameterSpecificat
 
 void Preferences::uninit()
 {
-	registered_parameter_specifications.clear();
-	registered_parameter_values.clear();
+	g_preferences_list.clear();
 }
 
 
@@ -509,28 +488,28 @@ SGVariant Preferences::get_param_value(const QString & param_name)
 		preferences.loaded = true;
 	}
 
-	auto val_iter = registered_parameter_values.find(param_name);
-	if (val_iter == registered_parameter_values.end()) {
+	auto pref = std::find_if(g_preferences_list.begin(), g_preferences_list.end(), PreferencesCompareByName(param_name));
+	if (pref == g_preferences_list.end()) {
 		return empty;
 	} else {
-		return val_iter.value();
+		return pref->param_value;
 	}
 }
 
 
 
 
-QHash<QString, ParameterSpecification>::iterator Preferences::begin()
+std::vector<PreferenceTuple>::iterator Preferences::begin()
 {
-	return registered_parameter_specifications.begin();
+	return g_preferences_list.begin();
 }
 
 
 
 
-QHash<QString, ParameterSpecification>::iterator Preferences::end()
+std::vector<PreferenceTuple>::iterator Preferences::end()
 {
-	return registered_parameter_specifications.end();
+	return g_preferences_list.end();
 }
 
 
@@ -547,7 +526,7 @@ bool Preferences::get_restore_window_state(void)
 /* Defaults for preferences are setup here. */
 void Preferences::register_default_values()
 {
-	qDebug() << "DD: Preferences: VIKING VERSION as number:" << SGUtils::version_to_number(PACKAGE_VERSION);
+	qDebug() << SG_PREFIX_D << "VIKING VERSION as number:" << SGUtils::version_to_number(PACKAGE_VERSION);
 
 	int i = 0;
 

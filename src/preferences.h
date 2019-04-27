@@ -24,6 +24,11 @@
 
 
 
+#include <vector>
+
+
+
+
 #include <QWidget>
 #include <QHash>
 
@@ -32,6 +37,8 @@
 
 #include "globals.h"
 #include "measurements.h"
+#include "variant.h"
+#include "ui_builder.h"
 
 
 
@@ -120,6 +127,18 @@ namespace SlavGPS {
 
 
 
+	class PreferenceTuple {
+	public:
+	PreferenceTuple(const QString & name, const ParameterSpecification & spec, const SGVariant & value)
+		: param_name(name), param_spec(spec), param_value(value) {};
+		QString param_name;
+		ParameterSpecification param_spec;
+		SGVariant param_value;
+	};
+
+
+
+
 	class Preferences {
 	public:
 		Preferences() {};
@@ -137,10 +156,6 @@ namespace SlavGPS {
 		*/
 		static void register_parameter_group(const QString & group_key, const QString & group_ui_label);
 
-		/* Nothing in pref is copied neither but pref itself is copied. (TODO_LATER: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
-		   so pref key is not copied. default param data IS copied. */
-		/* Group field (integer) will be overwritten. */
-		/* \param param_spec should be persistent through the life of the preference. */
 		static void register_parameter_instance(const ParameterSpecification & param_spec, const SGVariant & default_param_value);
 
 		/* Set value of a single parameter. */
@@ -149,8 +164,8 @@ namespace SlavGPS {
 		static SGVariant get_param_value(const QString & param_name);
 
 
-		QHash<QString, ParameterSpecification>::iterator begin();
-		QHash<QString, ParameterSpecification>::iterator end();
+		std::vector<PreferenceTuple>::iterator begin();
+		std::vector<PreferenceTuple>::iterator end();
 
 		static bool get_restore_window_state(void);
 

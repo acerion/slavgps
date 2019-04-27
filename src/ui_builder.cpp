@@ -210,8 +210,8 @@ void PropertiesDialog::fill(Preferences * preferences)
 {
 	qDebug() << "\n" SG_PREFIX_I << "Creating Properties Dialog from preferences";
 
-	for (auto iter = preferences->begin(); iter != preferences->end(); iter++) {
-		param_id_t group_id = iter.value().group_id;
+	for (auto pref = preferences->begin(); pref != preferences->end(); pref++) {
+		param_id_t group_id = pref->param_spec.group_id;
 
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
@@ -229,16 +229,9 @@ void PropertiesDialog::fill(Preferences * preferences)
 		}
 
 
-		const ParameterSpecification & param_spec = iter.value();
-		const QString param_name = iter.key();
-		/* Remember that iter.ke() is <some namespace><dot>param_spec.name.
-		   This is not the best place to re-create map's key by concatenating
-		   some strings. Just use iter.key() and be done with it. */
-		const SGVariant param_value = preferences->get_param_value(param_name);
-
-		QWidget * widget = this->make_widget(param_spec, param_value);
-		form->addRow(param_spec.ui_label, widget);
-		this->widgets.insert(param_name, widget);
+		QWidget * widget = this->make_widget(pref->param_spec, pref->param_value);
+		form->addRow(pref->param_spec.ui_label, widget);
+		this->widgets.insert(pref->param_name, widget);
 	}
 }
 
