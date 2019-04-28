@@ -34,16 +34,16 @@ namespace SlavGPS {
 
 
 
-	QString convert_lat_dec_to_ddd(double lat);
-	QString convert_lon_dec_to_ddd(double lon);
+	void convert_lat_dec_to_ddd(QString & lat_string, double lat);
+	void convert_lon_dec_to_ddd(QString & lon_string, double lon);
 
-	QString convert_lat_dec_to_dmm(double lat);
-	QString convert_lon_dec_to_dmm(double lon);
+	void convert_lat_dec_to_dmm(QString & lat_string, double lat);
+	void convert_lon_dec_to_dmm(QString & lon_string, double lon);
 
-	QString convert_lat_dec_to_dms(double lat);
-	QString convert_lon_dec_to_dms(double lon);
+	void convert_lat_dec_to_dms(QString & lat_string, double lat);
+	void convert_lon_dec_to_dms(QString & lon_string, double lon);
 
-	double convert_dms_to_dec(char const * dms);
+	double convert_dms_to_dec(const char * dms);
 
 
 

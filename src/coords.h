@@ -76,8 +76,8 @@ namespace SlavGPS {
 		void invalidate(void) { this->lat = NAN; this->lon = NAN; };
 
 		/* Convert value to string with DegreeFormat::Raw format. */
-		static QString lat_to_string_raw(const LatLon & lat_lon);
-		static QString lon_to_string_raw(const LatLon & lat_lon);
+		static void lat_to_string_raw(QString & lat_string, const LatLon & lat_lon);
+		static void lon_to_string_raw(QString & lon_string, const LatLon & lat_lon);
 
 		/* Convert value to "lat,lon" string with DegreeFormat::Raw format for each token in the string. */
 		QString to_string(void) const;

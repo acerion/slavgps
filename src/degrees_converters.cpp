@@ -23,12 +23,8 @@
 
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 #include <cstdlib>
-
-
-
-
-#include <glib.h>
 
 
 
@@ -39,9 +35,9 @@
 
 
 
-static char * convert_dec_to_ddd(double dec, char pos_c, char neg_c);
-static char * convert_dec_to_dmm(double dec, char pos_c, char neg_c);
-static char * convert_dec_to_dms(double dec, char pos_c, char neg_c);
+static void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char pos_c, char neg_c);
+static void convert_dec_to_dmm(char * str, size_t size, double dec, char pos_c, char neg_c);
+static void convert_dec_to_dms(char * str, size_t size, double dec, char pos_c, char neg_c);
 
 
 
@@ -50,7 +46,7 @@ static char * convert_dec_to_dms(double dec, char pos_c, char neg_c);
  * @param pos_c char for positive value
  * @param neg_c char for negative value
  */
-static char * convert_dec_to_ddd(double dec, char pos_c, char neg_c)
+void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char pos_c, char neg_c)
 {
 	char sign_c = ' ';
 
@@ -63,35 +59,33 @@ static char * convert_dec_to_ddd(double dec, char pos_c, char neg_c)
 	}
 
 	/* Degree. */
-	double val_d = fabs(dec);
+	const double val_d = fabs(dec);
 
 	/* Format. */
-	char * result = g_strdup_printf("%c%f" DEGREE_SYMBOL, sign_c, val_d);
-	return result;
+	snprintf(str, size, "%c%.*f" DEGREE_SYMBOL, sign_c, precision, val_d);
 }
 
 
 
 
-QString SlavGPS::convert_lat_dec_to_ddd(double lat)
+void SlavGPS::convert_lat_dec_to_ddd(QString & lat_string, double lat)
 {
-	char * str = convert_dec_to_ddd(lat, 'N', 'S');
-	const QString result(str);
-	free(str);
+	/* 1 sign character + 2 digits + 1 dot + N fractional digits + terminating NUL. */
+	char c_str[1 + 2 + 1 + SG_PRECISION_LATITUDE + 1] = { 0 };
 
-	return result;
+	convert_dec_to_ddd(c_str, sizeof (c_str), SG_PRECISION_LATITUDE, lat, 'N', 'S');
+	lat_string = QString(c_str);
 }
 
 
 
 
-QString SlavGPS::convert_lon_dec_to_ddd(double lon)
+void SlavGPS::convert_lon_dec_to_ddd(QString & lon_string, double lon)
 {
-	char * str = convert_dec_to_ddd(lon, 'E', 'W');
-	const QString result(str);
-	free(str);
-
-	return result;
+	/* 1 sign character + 3 digits + 1 dot + N fractional digits + terminating NUL. */
+	char c_str[1 + 3 + 1 + SG_PRECISION_LONGITUDE + 1] = { 0 };
+	convert_dec_to_ddd(c_str, sizeof (c_str), SG_PRECISION_LONGITUDE, lon, 'E', 'W');
+	lon_string = QString(c_str);
 }
 
 
@@ -101,7 +95,7 @@ QString SlavGPS::convert_lon_dec_to_ddd(double lon)
  * @param pos_c char for positive value
  * @param neg_c char for negative value
  */
-static char * convert_dec_to_dmm(double dec, char pos_c, char neg_c)
+void convert_dec_to_dmm(char * str, size_t size, double dec, char pos_c, char neg_c)
 {
 	char sign_c = ' ';
 
@@ -121,32 +115,29 @@ static char * convert_dec_to_dmm(double dec, char pos_c, char neg_c)
 	double val_m = (tmp - val_d) * 60;
 
 	/* Format. */
-	char * result = g_strdup_printf("%c%d" DEGREE_SYMBOL "%f'", sign_c, val_d, val_m);
-	return result;
+	snprintf(str, size, "%c%d" DEGREE_SYMBOL "%f'", sign_c, val_d, val_m);
 }
 
 
 
 
-QString SlavGPS::convert_lat_dec_to_dmm(double lat)
+void SlavGPS::convert_lat_dec_to_dmm(QString & lat_string, double lat)
 {
-	char * str = convert_dec_to_dmm(lat, 'N', 'S');
-	const QString result(str);
-	free(str);
+	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
 
-	return result;
+	convert_dec_to_dmm(c_str, sizeof (c_str), lat, 'N', 'S');
+	lat_string = QString(c_str);
 }
 
 
 
 
-QString SlavGPS::convert_lon_dec_to_dmm(double lon)
+void SlavGPS::convert_lon_dec_to_dmm(QString & lon_string, double lon)
 {
-	char * str = convert_dec_to_dmm(lon, 'E', 'W');
-	const QString result(str);
-	free(str);
+	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
 
-	return result;
+	convert_dec_to_dmm(c_str, sizeof (c_str), lon, 'E', 'W');
+	lon_string = QString(c_str);
 }
 
 
@@ -156,10 +147,9 @@ QString SlavGPS::convert_lon_dec_to_dmm(double lon)
  * @param pos_c char for positive value
  * @param neg_c char for negative value
  */
-static char * convert_dec_to_dms(double dec, char pos_c, char neg_c)
+static void convert_dec_to_dms(char * str, size_t size, double dec, char pos_c, char neg_c)
 {
 	char sign_c = ' ';
-
 
 	if (dec > 0) {
 		sign_c = pos_c;
@@ -181,32 +171,29 @@ static char * convert_dec_to_dms(double dec, char pos_c, char neg_c)
 	double val_s = (tmp - val_m) * 60;
 
 	/* Format. */
-	char * result = g_strdup_printf("%c%d" DEGREE_SYMBOL "%d'%.4f\"", sign_c, val_d, val_m, val_s);
-	return result;
+	snprintf(str, size, "%c%d" DEGREE_SYMBOL "%d'%.4f\"", sign_c, val_d, val_m, val_s);
 }
 
 
 
 
-QString SlavGPS::convert_lat_dec_to_dms(double lat)
+void SlavGPS::convert_lat_dec_to_dms(QString & lat_string, double lat)
 {
-	char * str = convert_dec_to_dms(lat, 'N', 'S');
-	const QString result(str);
-	free(str);
+	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
 
-	return result;
+	convert_dec_to_dms(c_str, sizeof (c_str), lat, 'N', 'S');
+	lat_string = QString(c_str);
 }
 
 
 
 
-QString SlavGPS::convert_lon_dec_to_dms(double lon)
+void SlavGPS::convert_lon_dec_to_dms(QString & lon_string, double lon)
 {
-	char * str = convert_dec_to_dms(lon, 'E', 'W');
-	const QString result(str);
-	free(str);
+	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
 
-	return result;
+	convert_dec_to_dms(c_str, sizeof (c_str), lon, 'E', 'W');
+	lon_string = QString(c_str);
 }
 
 

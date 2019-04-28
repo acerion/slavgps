@@ -56,12 +56,7 @@ renaming functions and defining LatLon and UTM structs.
 
 #include "measurements.h"
 #include "coords.h"
-#ifdef HAVE_VIKING
 #include "preferences.h"
-#else
-#define DEG2RAD(x) ((x)*(M_PI/180))
-#define RAD2DEG(x) ((x)*(180/M_PI))
-#endif
 #include "degrees_converters.h"
 #include "bbox.h"
 
@@ -73,7 +68,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " Coords"
+#define SG_MODULE "Coords"
 
 
 
@@ -99,19 +94,19 @@ bool UTM::is_band_letter(char letter)
 
 
 
-QString LatLon::lat_to_string_raw(const LatLon & lat_lon)
+void LatLon::lat_to_string_raw(QString & lat_string, const LatLon & lat_lon)
 {
 	static QLocale c_locale = QLocale::c();
-	return c_locale.toString(lat_lon.lat, 'f', SG_PRECISION_LATITUDE);
+	lat_string = c_locale.toString(lat_lon.lat, 'f', SG_PRECISION_LATITUDE);
 }
 
 
 
 
-QString LatLon::lon_to_string_raw(const LatLon & lat_lon)
+void LatLon::lon_to_string_raw(QString & lon_string, const LatLon & lat_lon)
 {
 	static QLocale c_locale = QLocale::c();
-	return c_locale.toString(lat_lon.lon, 'f', SG_PRECISION_LONGITUDE);
+	lon_string = c_locale.toString(lat_lon.lon, 'f', SG_PRECISION_LONGITUDE);
 }
 
 
@@ -410,36 +405,31 @@ LatLon UTM::to_latlon(const UTM & utm)
 
 
 
-void LatLon::to_strings(const LatLon & lat_lon, QString & lat, QString & lon)
+void LatLon::to_strings(const LatLon & lat_lon, QString & lat_string, QString & lon_string)
 {
-#ifdef HAVE_VIKING
 	DegreeFormat format = Preferences::get_degree_format();
 
 	switch (format) {
 	case DegreeFormat::DDD:
-		lat = convert_lat_dec_to_ddd(lat_lon.lat);
-		lon = convert_lon_dec_to_ddd(lat_lon.lon);
+		convert_lat_dec_to_ddd(lat_string, lat_lon.lat);
+		convert_lon_dec_to_ddd(lon_string, lat_lon.lon);
 		break;
 	case DegreeFormat::DMM:
-		lat = convert_lat_dec_to_dmm(lat_lon.lat);
-		lon = convert_lon_dec_to_dmm(lat_lon.lon);
+		convert_lat_dec_to_dmm(lat_string, lat_lon.lat);
+		convert_lon_dec_to_dmm(lon_string, lat_lon.lon);
 		break;
 	case DegreeFormat::DMS:
-		lat = convert_lat_dec_to_dms(lat_lon.lat);
-		lon = convert_lon_dec_to_dms(lat_lon.lon);
+		convert_lat_dec_to_dms(lat_string, lat_lon.lat);
+		convert_lon_dec_to_dms(lon_string, lat_lon.lon);
 		break;
 	case DegreeFormat::Raw:
-		lat = LatLon::lat_to_string_raw(lat_lon);
-		lon = LatLon::lon_to_string_raw(lat_lon);
+		LatLon::lat_to_string_raw(lat_string, lat_lon);
+		LatLon::lon_to_string_raw(lon_string, lat_lon);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << "unknown degree format %d" << (int) format;
+		qDebug() << SG_PREFIX_E << "Unknown degree format %d" << (int) format;
 		break;
 	}
-#else
-	lat = convert_lat_dec_to_ddd(lat_lon.lat);
-	lon = convert_lon_dec_to_ddd(lat_lon.lon);
-#endif
 }
 
 

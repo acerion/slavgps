@@ -442,9 +442,6 @@ DEFINES += "HAVE_SYS_TYPES_H=1"
 DEFINES += "HAVE_SYS_STAT_H=1"
 DEFINES += "HAVE_UNISTD_H=1"
 
-# Enable Viking specifics in otherwise reusable code
-DEFINES += "HAVE_VIKING=1"
-
 # Size of the map cache
 DEFINES += "VIK_CONFIG_MAPCACHE_SIZE=128"
 
