@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "degrees_converters.h"
+#include "lat_lon.h"
 
 int main(int argc, char *argv[]) {
 	int i;

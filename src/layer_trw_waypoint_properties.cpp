@@ -32,7 +32,7 @@
 #include "dialog.h"
 #include "ui_builder.h"
 #include "date_time_dialog.h"
-#include "degrees_converters.h"
+#include "lat_lon.h"
 #include "preferences.h"
 #include "thumbnails.h"
 #include "garmin_symbols.h"

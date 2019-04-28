@@ -49,7 +49,7 @@
 #include "dialog.h"
 #include "application_state.h"
 #include "util.h"
-#include "degrees_converters.h"
+#include "lat_lon.h"
 #include "viewport_internal.h"
 #include "vikutils.h"
 #include "widget_utm_entry.h"

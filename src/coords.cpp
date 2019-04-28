@@ -57,7 +57,7 @@ renaming functions and defining LatLon and UTM structs.
 #include "measurements.h"
 #include "coords.h"
 #include "preferences.h"
-#include "degrees_converters.h"
+#include "lat_lon.h"
 #include "bbox.h"
 
 

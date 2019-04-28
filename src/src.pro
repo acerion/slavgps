@@ -94,7 +94,7 @@ SOURCES += main.cpp \
     viewport_zoom.cpp \
     coord.cpp \
     coords.cpp \
-    degrees_converters.cpp \
+    lat_lon.cpp \
     layer_defaults.cpp \
     layer.cpp \
     layer_tool.cpp \
@@ -236,7 +236,7 @@ HEADERS += window.h \
     coord.h \
     coords.h \
     globals.h \
-    degrees_converters.h \
+    lat_lon.h \
     layer_defaults.h \
     layer.h \
     layer_tool.h \

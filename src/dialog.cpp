@@ -43,7 +43,7 @@
 #include "dialog.h"
 #include "ui_util.h"
 #include "date_time_dialog.h"
-#include "degrees_converters.h"
+#include "lat_lon.h"
 #include "viewport_internal.h"
 
 
