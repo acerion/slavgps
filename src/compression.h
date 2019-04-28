@@ -29,13 +29,18 @@
 
 
 
+#include "globals.h"
+
+
+
+
 namespace SlavGPS {
 
 
 
 
 	void * unzip_file(char * zip_file, size_t * unzip_size);
-	char * uncompress_bzip2(const QString & file_path);
+	sg_ret uncompress_bzip2(QString & uncompressed_file_full_path, const QString & archive_file_full_path);
 
 
 

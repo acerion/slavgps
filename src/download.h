@@ -87,7 +87,7 @@ namespace SlavGPS {
 	sg_ret kml_file_validator_fn(FILE * file, bool * is_valid);
 
 	/* Convert. */
-	void a_try_decompress_file(const QString & file_path);
+	void a_try_decompress_file(const QString & archive_file_full_path);
 	typedef void (* VikFileContentConvertFunc) (const QString &); /* Function's argument is path to (temporary) file. */
 
 

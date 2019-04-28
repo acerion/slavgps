@@ -45,11 +45,6 @@
 
 
 
-#include <glib.h>
-
-
-
-
 #include "window.h"
 #include "viewport_zoom.h"
 #include "vikutils.h"
@@ -354,9 +349,7 @@ QString SlavGPS::vu_get_canonical_filename(Layer * layer, const QString & path, 
 	} else {
 		QString dirpath;
 		if (reference_file_full_path.isEmpty()) {
-			char * dirpath_ = g_get_current_dir(); // Fallback - if here then probably can't create the correct path
-			dirpath = QString(dirpath_);
-			free(dirpath_);
+			dirpath = QDir::current().path(); // Fallback - if here then probably can't create the correct path
 		} else {
 			dirpath = FileUtils::path_get_dirname(reference_file_full_path);
 		}

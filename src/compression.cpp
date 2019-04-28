@@ -53,6 +53,13 @@
 
 
 
+using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Compression"
+
 
 
 
@@ -175,14 +182,14 @@ end:
  *
  * Also see: http://www.bzip.org/1.0.5/bzip2-manual-1.0.5.html
  */
-char * SlavGPS::uncompress_bzip2(const QString & file_path)
+sg_ret SlavGPS::uncompress_bzip2(QString & uncompressed_file_full_path, const QString & archive_file_full_path)
 {
 #ifdef HAVE_BZLIB_H
-	fprintf(stderr, "DEBUG: %s: bzip2 %s\n", __FUNCTION__, BZ2_bzlibVersion());
+	qDebug() << SG_PREFIX_D << "bzip2 version" << BZ2_bzlibVersion();
 
-	FILE *ff = fopen(file_path.toUtf8().constData(), "rb");
+	FILE * ff = fopen(archive_file_full_path.toUtf8().constData(), "rb");
 	if (!ff) {
-		return NULL;
+		return sg_ret::err;
 	}
 
 	int bzerror;
@@ -190,8 +197,8 @@ char * SlavGPS::uncompress_bzip2(const QString & file_path)
 	if (bzerror != BZ_OK) {
 		BZ2_bzReadClose(&bzerror, bf);
 		/* Handle error. */
-		qDebug() << "WW: Compression: BZ ReadOpen error on" << file_path;
-		return NULL;
+		qDebug() << SG_PREFIX_W << "BZ ReadOpen error on" << archive_file_full_path;
+		return sg_ret::err;
 	}
 
 	GFileIOStream * gios;
@@ -203,15 +210,15 @@ char * SlavGPS::uncompress_bzip2(const QString & file_path)
 #else
 	int fd = g_file_open_tmp("vik-bz2-tmp.XXXXXX", &tmpname, &error);
 	if (error) {
-		fprintf(stderr, "WARNING: %s\n", error->message);
+		qDebug() << SG_PREFIX_W << error->message;
 		g_error_free(error);
-		return NULL;
+		return sg_ret::err;
 	}
 	gios = g_file_open_readwrite(g_file_new_for_path (tmpname), NULL, &error);
 	if (error) {
-		fprintf(stderr, "WARNING: %s\n", error->message);
+		qDebug() << SG_PREFIX_W << error->message;
 		g_error_free(error);
-		return NULL;
+		return sg_ret::err;
 	}
 #endif
 
@@ -227,7 +234,7 @@ char * SlavGPS::uncompress_bzip2(const QString & file_path)
 		if (bzerror == BZ_OK || bzerror == BZ_STREAM_END) {
 			/* Do something with buf[0 .. nBuf-1] */
 			if (g_output_stream_write(gos, buf, nBuf, NULL, &error) < 0) {
-				fprintf(stderr, "CRITICAL: Couldn't write bz2 tmp %s file due to %s\n", tmpname, error->message);
+				qDebug() << SG_PREFIX_E << "Couldn't write bz2 tmp" << tmpname << "file due to" << error->message;
 				g_error_free(error);
 				BZ2_bzReadClose(&bzerror, bf);
 				goto end;
@@ -236,7 +243,7 @@ char * SlavGPS::uncompress_bzip2(const QString & file_path)
 	}
 	if (bzerror != BZ_STREAM_END) {
 		/* Handle error... */
-		fprintf(stderr, "WARNING: %s: BZ error :(%d. read %d\n", __FUNCTION__, bzerror, nBuf);
+		qDebug() << SG_PREFIX_W << "BZ error: " << bzerror << "read" << nBuf;
 	}
 	BZ2_bzReadClose(&bzerror, bf);
 	g_output_stream_close(gos, NULL, &error);
@@ -245,8 +252,11 @@ char * SlavGPS::uncompress_bzip2(const QString & file_path)
 	g_object_unref(gios);
 	fclose(ff);
 
-	return tmpname;
+	uncompressed_file_full_path = QString(tmpname);
+	g_free(tmpname);
+
+	return sg_ret::ok;
 #else
-	return NULL;
+	return sg_ret::err;
 #endif
 }

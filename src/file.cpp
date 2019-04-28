@@ -1207,7 +1207,9 @@ char const * SlavGPS::file_GetRelativeFilename(const char * currentDirectory, co
 	/* Handle DOS names that are on different drives: */
 	if (currentDirectory[0] != absoluteFilename[0]) {
 		/* Not on the same drive, so only absolute filename will do. */
-		g_strlcpy(relativeFilename, absoluteFilename, MAXPATHLEN+1);
+		strncpy(relativeFilename, absoluteFilename, sizeof (relativeFilename));
+		relativeFilename[sizeof (relativeFilename) - 1] = '\0';
+
 		return relativeFilename;
 	}
 
@@ -1228,7 +1230,9 @@ char const * SlavGPS::file_GetRelativeFilename(const char * currentDirectory, co
 			i++;
 		}
 
-		g_strlcpy(relativeFilename, &absoluteFilename[i], MAXPATHLEN+1);
+		strncpy(relativeFilename, &absoluteFilename[i], sizeof (relativeFilename));
+		relativeFilename[sizeof (relativeFilename) - 1] = '\0';
+
 		return relativeFilename;
 	}
 

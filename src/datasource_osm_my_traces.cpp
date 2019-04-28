@@ -290,12 +290,14 @@ static void gpx_meta_data_start(xml_data * xd, const char * element, const char 
 		}
 
 		if ((tmp = get_attr(attributes, "lat"))) {
-			g_strlcpy (buf, tmp, sizeof (buf));
+			strncpy(buf, tmp, sizeof (buf));
+			buf[sizeof (buf) - 1] = '\0';
 			xd->current_gpx_meta_data->ll.lat = SGUtils::c_to_double(buf);
 		}
 
 		if ((tmp = get_attr(attributes, "lon"))) {
-			g_strlcpy(buf, tmp, sizeof (buf));
+			strncpy(buf, tmp, sizeof (buf));
+			buf[sizeof (buf) - 1] = '\0';
 			xd->current_gpx_meta_data->ll.lon = SGUtils::c_to_double(buf);
 		}
 

@@ -323,7 +323,7 @@ static sg_ret uncompress_zip(const QString & file_full_path)
  *
  * Perform magic to decide how which type of decompression to attempt.
  */
-void SlavGPS::a_try_decompress_file(const QString & file_path)
+void SlavGPS::a_try_decompress_file(const QString & archive_file_full_path)
 {
 #ifdef HAVE_MAGIC_H
 #ifdef MAGIC_VERSION
@@ -344,9 +344,9 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 		int ml = magic_load(myt, NULL);
 #endif
 		if (ml == 0) {
-			char const * magic = magic_file(myt, file_path.toUtf8().constData());
+			char const * magic = magic_file(myt, archive_file_full_path.toUtf8().constData());
 			if (NULL == magic || '\0' == magic[0]) {
-				qDebug() << SG_PREFIX_W << "Empty magic in file" << file_path;
+				qDebug() << SG_PREFIX_W << "Empty magic in file" << archive_file_full_path;
 			} else {
 				qDebug() << SG_PREFIX_D << "Magic in file:" << magic;
 
@@ -370,16 +370,18 @@ void SlavGPS::a_try_decompress_file(const QString & file_path)
 	}
 
 	if (zip) {
-		uncompress_zip(file_path);
+		uncompress_zip(archive_file_full_path);
 	} else if (bzip2) {
-		char* bz2_name = uncompress_bzip2(file_path);
-		if (bz2_name) {
-			if (!QDir::root().remove(file_path)) {
-				qDebug() << SG_PREFIX_E << "Remove file failed (" << file_path << ")";
+		QString uncompressed_file_full_path;
+		if (sg_ret::ok == uncompress_bzip2(uncompressed_file_full_path, archive_file_full_path)) {
+			if (!QDir::root().remove(archive_file_full_path)) {
+				qDebug() << SG_PREFIX_E << "Remove file failed (" << archive_file_full_path << ")";
 			}
-			if (g_rename(bz2_name, file_path.toUtf8().constData())) {
-				qDebug() << SG_PREFIX_E << "File rename failed [" << bz2_name << "] to [" << file_path << "]";
+			if (!QDir::root().rename(uncompressed_file_full_path, archive_file_full_path)) {
+				qDebug() << SG_PREFIX_E << "File rename failed [" << uncompressed_file_full_path << "] to [" << archive_file_full_path << "]";
 			}
+		} else {
+			qDebug() << SG_PREFIX_E << "Failed to uncompress bz2 file" << archive_file_full_path;
 		}
 	}
 
@@ -633,7 +635,7 @@ DownloadStatus DownloadHandle::perform_download(const QString & hostname, const 
 		}
 
 		/* Move completely-downloaded file to permanent location. */
-		if (g_rename(tmp_file_path.toUtf8().constData(), dest_file_path.toUtf8().constData())) {
+		if (!QDir::root().rename(tmp_file_path, dest_file_path)) {
 			qDebug() << SG_PREFIX_W << "File rename failed" << tmp_file_path << "to" << dest_file_path;
 		}
 	}
