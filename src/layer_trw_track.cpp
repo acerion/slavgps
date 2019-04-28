@@ -445,7 +445,7 @@ void Track::recalculate_bbox_last_tp()
 	if (tp) {
 		/* See if this trackpoint increases the track bounds and update if so. */
 		const LatLon lat_lon = tp->coord.get_latlon();
-		BBOX_EXPAND_WITH_LATLON(this->bbox, lat_lon);
+		this->bbox.expand_with_lat_lon(lat_lon);
 	}
 }
 
@@ -2063,7 +2063,7 @@ void Track::recalculate_bbox(void)
 	this->bbox.invalidate();
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		const LatLon lat_lon = (*iter)->coord.get_latlon();
-		BBOX_EXPAND_WITH_LATLON(this->bbox, lat_lon);
+		this->bbox.expand_with_lat_lon(lat_lon);
 	}
 	this->bbox.validate();
 
@@ -2948,7 +2948,7 @@ void Track::goto_center_cb(void)
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
 	Viewport * viewport = ThisApp::get_main_viewport();
 
-	const Coord coord(this->get_bbox().get_center(), parent_layer_->coord_mode);
+	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_layer_->coord_mode);
 	parent_layer_->request_new_viewport_center(viewport, coord);
 }
 

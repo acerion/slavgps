@@ -86,7 +86,7 @@ QString OnlineService_bbox::get_url_at_position(Viewport * a_viewport, const Coo
 
 QString OnlineService_bbox::get_url_for_bbox(const LatLonBBox & bbox)
 {
-	const LatLonBBoxStrings bbox_strings = bbox.to_strings();
+	const LatLonBBoxStrings bbox_strings = bbox.values_to_c_strings();
 
 	const QString url = QString(this->url_format).arg(bbox_strings.west).arg(bbox_strings.east).arg(bbox_strings.south).arg(bbox_strings.north);
 

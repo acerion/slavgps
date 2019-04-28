@@ -23,6 +23,7 @@
 
 #include "bbox.h"
 #include "coord.h"
+#include "lat_lon.h"
 
 
 
@@ -32,35 +33,32 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "BBox"
+
+
+
+
 LatLonBBox::LatLonBBox(const LatLon & corner1, const LatLon & corner2)
 {
 	/* TODO_HARD: what happens if corner1/corner2 crosses the boundary of +/- longitude? */
 
 	if (corner1.lat > corner2.lat) {
-		this->north = corner1.lat;
-		this->south = corner2.lat;
+		this->north.set_value(corner1.lat);
+		this->south.set_value(corner2.lat);
 	} else {
-		this->north = corner2.lat;
-		this->south = corner1.lat;
+		this->north.set_value(corner2.lat);
+		this->south.set_value(corner1.lat);
 	}
 
 	if (corner1.lon > corner2.lon) {
-		this->east = corner1.lon;
-		this->west = corner2.lon;
+		this->east.set_value(corner1.lon);
+		this->west.set_value(corner2.lon);
 	} else {
-		this->east = corner2.lon;
-		this->west = corner1.lon;
+		this->east.set_value(corner2.lon);
+		this->west.set_value(corner1.lon);
 	}
 
 	this->validate();
-}
-
-
-
-
-LatLon LatLonBBox::get_center_coordinate(void) const
-{
-	return LatLon((this->north + this->south) / 2, (this->east + this->west) / 2);
 }
 
 
@@ -76,10 +74,10 @@ bool LatLonBBox::is_valid(void) const
 
 void LatLonBBox::invalidate(void)
 {
-	this->north = NAN;
-	this->east  = NAN;
-	this->south = NAN;
-	this->west  = NAN;
+	this->north.invalidate();
+	this->east.invalidate();
+	this->south.invalidate();
+	this->west.invalidate();
 
 	this->valid = false;
 }
@@ -89,20 +87,14 @@ void LatLonBBox::invalidate(void)
 
 bool LatLonBBox::validate(void)
 {
-	if (!std::isnan(this->north) && !std::isnan(this->east) && !std::isnan(this->south) && !std::isnan(this->west)
-	    && this->north >= -90.0 && this->north <= +90.0
-	    && this->south >= -90.0 && this->south <= +90.0
-	    && this->east >= -180.0 && this->east <= +180.0
-	    && this->west >= -180.0 && this->west <= +180.0) {
+	if (this->north.is_valid()
+	    && this->south.is_valid()
+	    && this->east.is_valid()
+	    && this->west.is_valid()) {
 
 		this->valid = true;
 	} else {
-		this->north = NAN;
-		this->east  = NAN;
-		this->south = NAN;
-		this->west  = NAN;
-
-		this->valid = false;
+		this->invalidate();
 	}
 
 	return this->valid;
@@ -117,15 +109,13 @@ bool LatLonBBox::validate(void)
    Strings will have a non-localized, regular dot as a separator
    between integer part and fractional part.
 */
-LatLonBBoxStrings LatLonBBox::to_strings(void) const
+LatLonBBoxStrings LatLonBBox::values_to_c_strings(void) const
 {
-	static QLocale c_locale = QLocale::c();
-
 	LatLonBBoxStrings bbox_strings;
-	bbox_strings.north = c_locale.toString(this->north);
-	bbox_strings.south = c_locale.toString(this->south);
-	bbox_strings.east  = c_locale.toString(this->east);
-	bbox_strings.west  = c_locale.toString(this->west);
+	bbox_strings.north = this->north.value_to_string_for_file();
+	bbox_strings.south = this->south.value_to_string_for_file();
+	bbox_strings.east  = this->east.value_to_string_for_file();
+	bbox_strings.west  = this->west.value_to_string_for_file();
 
 	return bbox_strings;
 }
@@ -135,18 +125,18 @@ LatLonBBoxStrings LatLonBBox::to_strings(void) const
 
 QDebug SlavGPS::operator<<(QDebug debug, const LatLonBBox & bbox)
 {
-	debug.nospace() << "North: " << bbox.north << ", South: " << bbox.south << ", East: " << bbox.east << ", West: " << bbox.west;
+	debug.nospace() << "North: " << bbox.north.get_value() << ", South: " << bbox.south.get_value() << ", East: " << bbox.east.get_value() << ", West: " << bbox.west.get_value();
 	return debug;
 }
 
 
 
 
-LatLon LatLonBBox::get_center(void) const
+LatLon LatLonBBox::get_center_lat_lon(void) const
 {
 	LatLon result;
 	if (this->valid) {
-		result = LatLon((this->north + this->south) / 2, (this->west + this->east) / 2);
+		result = LatLon((this->north.get_value() + this->south.get_value()) / 2, (this->east.get_value() + this->west.get_value()) / 2);
 	} else {
 		; /* Return invalid latlon. */
 	}
@@ -160,10 +150,10 @@ bool LatLonBBox::contains_point(const LatLon & point) const
 {
 	/* TODO_HARD: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
 
-	if (point.lat <= this->north
-	    && point.lat >= this->south
-	    && point.lon <= this->east
-	    && point.lon >= this->west) {
+	if (point.lat <= this->north.get_value()
+	    && point.lat >= this->south.get_value()
+	    && point.lon <= this->east.get_value()
+	    && point.lon >= this->west.get_value()) {
 
 		return true;
 	} else {
@@ -179,28 +169,68 @@ bool LatLonBBox::contains_bbox(const LatLonBBox & bbox) const
 	/* TODO_HARD: handle situation where the bbox is at the border of +/- 180 degrees longitude. */
 
 	/* Convert into definite 'smallest' and 'largest' positions. */
-	double lowest_latitude = 0.0;
-	if (bbox.north < bbox.south) {
-		lowest_latitude = bbox.north;
-	} else {
-		lowest_latitude = bbox.south;
-	}
+	const double minimal_latitude = std::min(bbox.north.get_value(), bbox.south.get_value());
+	const double maximal_longitude = std::max(bbox.east.get_value(), bbox.west.get_value());
 
-	double maximal_longitude = 0.0;
-	if (bbox.east > bbox.west) {
-	        maximal_longitude = bbox.east;
-	} else {
-		maximal_longitude = bbox.west;
-	}
-
-
-	if (this->south <= lowest_latitude
-	    && this->north >= lowest_latitude
-	    && this->west <= maximal_longitude
-	    && this->east >= maximal_longitude) {
+	if (this->south.get_value() <= minimal_latitude
+	    && this->north.get_value() >= minimal_latitude
+	    && this->west.get_value() <= maximal_longitude
+	    && this->east.get_value() >= maximal_longitude) {
 
 		return true;
 	} else {
 		return false;
 	}
+}
+
+
+
+
+sg_ret LatLonBBox::expand_with_lat_lon(const LatLon & lat_lon)
+{
+	if (!lat_lon.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Trying to expand with invalid LatLon";
+		return sg_ret::err;
+	}
+
+	if (!this->north.is_valid() || (lat_lon.lat > this->north.get_value())) {
+		this->north.set_value(lat_lon.lat);
+	}
+	if (!this->south.is_valid() || (lat_lon.lat < this->south.get_value())) {
+		this->south.set_value(lat_lon.lat);
+	}
+	if (!this->east.is_valid() || (lat_lon.lon > this->east.get_value())) {
+		this->east.set_value(lat_lon.lon);
+	}
+	if (!this->west.is_valid() || (lat_lon.lon < this->west.get_value())) {
+		this->west.set_value(lat_lon.lon);
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret LatLonBBox::expand_with_bbox(const LatLonBBox & other)
+{
+	if (!other.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Trying to expand with invalid BBox";
+		return sg_ret::err;
+	}
+
+	if (!this->north.is_valid() || other.north.get_value() > this->north.get_value()) {
+		this->north = other.north;
+	}
+	if (!this->south.is_valid() || other.south.get_value() < this->south.get_value()) {
+		this->south = other.south;
+	}
+	if (!this->east.is_valid() || other.east.get_value() > this->east.get_value()) {
+		this->east = other.east;
+	}
+	if (!this->west.is_valid() || other.west.get_value() < this->west.get_value()) {
+		this->west = other.west;
+	}
+
+	return sg_ret::ok;
 }

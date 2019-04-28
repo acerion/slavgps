@@ -80,7 +80,7 @@ void PropertiesDialogTP::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 
-	const Coord new_coord(LatLon(this->lat->value(), this->lon->value()), this->cur_tp->coord.mode);
+	const Coord new_coord(LatLon(this->lat_entry->value(), this->lon_entry->value()), this->cur_tp->coord.mode);
 
 
 	const bool redraw_track = Coord::distance(this->cur_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
@@ -191,8 +191,8 @@ void PropertiesDialogTP::reset_dialog_data(void)
 
 	this->course->setText("");
 
-	this->lat->setEnabled(false);
-	this->lon->setEnabled(false);
+	this->lat_entry->setEnabled(false);
+	this->lon_entry->setEnabled(false);
 	this->alt->setEnabled(false);
 	this->timestamp_widget->setEnabled(false);
 
@@ -248,8 +248,8 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->button_go_back->setEnabled(current_tp_iter != track->begin());
 
 
-	this->lat->setEnabled(true);
-	this->lon->setEnabled(true);
+	this->lat_entry->setEnabled(true);
+	this->lon_entry->setEnabled(true);
 	this->alt->setEnabled(true);
 	this->timestamp_widget->setEnabled(tp->timestamp.is_valid());
 
@@ -264,8 +264,8 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->sync_to_current_tp_block = true; /* Don't update while setting data. */
 
 	const LatLon lat_lon = tp->coord.get_latlon();
-	this->lat->setValue(lat_lon.lat);
-	this->lon->setValue(lat_lon.lon);
+	this->lat_entry->setValue(lat_lon.lat);
+	this->lon_entry->setValue(lat_lon.lon);
 
 
 	this->alt->set_value_iu(tp->altitude);
@@ -381,26 +381,16 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 
 
-	this->lat = new QDoubleSpinBox(this);
-	this->lat->setDecimals(6);
-	this->lat->setMinimum(-90);
-	this->lat->setMaximum(90);
-	this->lat->setSingleStep(0.00005);
-	this->lat->setValue(0);
+	this->lat_entry = new LatEntryWidget(SGVariant(0.0, SGVariantType::Latitude));
 	this->grid->addWidget(new QLabel(tr("Latitude:")), 1, 0);
-	this->grid->addWidget(this->lat, 1, 1);
-	connect(this->lat, SIGNAL (valueChanged(double)), this, SLOT (sync_latlon_entry_to_current_tp_cb(void)));
+	this->grid->addWidget(this->lat_entry, 1, 1);
+	connect(this->lat_entry, SIGNAL (valueChanged(double)), this, SLOT (sync_latlon_entry_to_current_tp_cb(void)));
 
 
-	this->lon = new QDoubleSpinBox(this);
-	this->lon->setDecimals(6);
-	this->lon->setMinimum(-180);
-	this->lon->setMaximum(180);
-	this->lon->setSingleStep(0.00005);
-	this->lon->setValue(0);
+	this->lon_entry = new LonEntryWidget(SGVariant(0.0, SGVariantType::Longitude));
 	this->grid->addWidget(new QLabel(tr("Longitude:")), 2, 0);
-	this->grid->addWidget(this->lon, 2, 1);
-	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_current_tp_cb(void)));
+	this->grid->addWidget(this->lon_entry, 2, 1);
+	connect(this->lon_entry, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_current_tp_cb(void)));
 
 
 	ParameterScale<double> scale_alti(SG_ALTITUDE_RANGE_MIN, SG_ALTITUDE_RANGE_MAX, SGVariant(0.0), 1, SG_ALTITUDE_PRECISION);

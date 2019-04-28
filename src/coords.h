@@ -48,6 +48,11 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
+#include "lat_lon.h"
+
+
+
+
 /* Number of UTM zones */
 #define UTM_ZONES 60
 
@@ -68,6 +73,7 @@ namespace SlavGPS {
 	class LatLon {
 	public:
 		LatLon(double new_lat = NAN, double new_lon = NAN) : lat(new_lat), lon(new_lon) {};
+		LatLon(const Latitude & lat, const Longitude & lon);
 
 		double lat = NAN;
 		double lon = NAN;

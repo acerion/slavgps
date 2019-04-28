@@ -35,6 +35,11 @@
 
 
 
+using namespace SlavGPS;
+
+
+
+
 static void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char pos_c, char neg_c);
 static void convert_dec_to_dmm(char * str, size_t size, double dec, char pos_c, char neg_c);
 static void convert_dec_to_dms(char * str, size_t size, double dec, char pos_c, char neg_c);
@@ -71,9 +76,9 @@ void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char
 void SlavGPS::convert_lat_dec_to_ddd(QString & lat_string, double lat)
 {
 	/* 1 sign character + 2 digits + 1 dot + N fractional digits + terminating NUL. */
-	char c_str[1 + 2 + 1 + SG_PRECISION_LATITUDE + 1] = { 0 };
+	char c_str[1 + 2 + 1 + SG_LATITUDE_PRECISION + 1] = { 0 };
 
-	convert_dec_to_ddd(c_str, sizeof (c_str), SG_PRECISION_LATITUDE, lat, 'N', 'S');
+	convert_dec_to_ddd(c_str, sizeof (c_str), SG_LATITUDE_PRECISION, lat, 'N', 'S');
 	lat_string = QString(c_str);
 }
 
@@ -83,8 +88,8 @@ void SlavGPS::convert_lat_dec_to_ddd(QString & lat_string, double lat)
 void SlavGPS::convert_lon_dec_to_ddd(QString & lon_string, double lon)
 {
 	/* 1 sign character + 3 digits + 1 dot + N fractional digits + terminating NUL. */
-	char c_str[1 + 3 + 1 + SG_PRECISION_LONGITUDE + 1] = { 0 };
-	convert_dec_to_ddd(c_str, sizeof (c_str), SG_PRECISION_LONGITUDE, lon, 'E', 'W');
+	char c_str[1 + 3 + 1 + SG_LONGITUDE_PRECISION + 1] = { 0 };
+	convert_dec_to_ddd(c_str, sizeof (c_str), SG_LONGITUDE_PRECISION, lon, 'E', 'W');
 	lon_string = QString(c_str);
 }
 
@@ -255,4 +260,162 @@ double SlavGPS::convert_dms_to_dec(char const * dms)
 	}
 
 	return result;
+}
+
+
+
+
+Latitude::Latitude(const char * str)
+{
+	if (str) {
+		this->set_value(strtod(str, NULL));
+	}
+}
+
+
+
+
+Latitude::Latitude(const QString & str)
+{
+	this->set_value(str.toDouble());
+}
+
+
+
+
+QString Latitude::to_string(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->value, 'f', SG_LATITUDE_PRECISION);
+}
+
+
+
+
+const QString Latitude::value_to_string_for_file(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->value, 'f', SG_LATITUDE_PRECISION);
+}
+
+
+
+
+bool Latitude::set_value(double new_value)
+{
+	if (std::isnan(new_value)) {
+		this->value = NAN;
+	} else if (new_value < SG_LATITUDE_MIN || new_value > SG_LATITUDE_MAX) {
+		this->value = NAN;
+	} else {
+		this->value = new_value;
+	}
+
+	this->valid = !std::isnan(new_value);
+
+	return this->valid;
+}
+
+
+
+
+double Latitude::get_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+bool Latitude::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+
+void Latitude::invalidate(void)
+{
+	this->value = NAN;
+	this->valid = false;
+}
+
+
+
+
+Longitude::Longitude(const QString & str)
+{
+	this->set_value(str.toDouble());
+}
+
+
+
+
+Longitude::Longitude(const char * str)
+{
+	if (str) {
+		this->set_value(strtod(str, NULL));
+	}
+}
+
+
+
+
+QString Longitude::to_string(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->value, 'f', SG_LONGITUDE_PRECISION);
+}
+
+
+
+
+const QString Longitude::value_to_string_for_file(void) const
+{
+	static QLocale c_locale = QLocale::c();
+	return c_locale.toString(this->value, 'f', SG_LONGITUDE_PRECISION);
+}
+
+
+
+
+bool Longitude::set_value(double new_value)
+{
+	if (std::isnan(new_value)) {
+		this->value = NAN;
+	} else if (new_value < SG_LONGITUDE_MIN || new_value > SG_LONGITUDE_MAX) {
+		this->value = NAN;
+	} else {
+		this->value = new_value;
+	}
+
+	this->valid = !std::isnan(new_value);
+
+	return this->valid;
+}
+
+
+
+
+double Longitude::get_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+bool Longitude::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+
+void Longitude::invalidate(void)
+{
+	this->value = NAN;
+	this->valid = false;
 }

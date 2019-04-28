@@ -286,7 +286,7 @@ static bool clip_parse_latlon(const char * text, LatLon & lat_lon)
 	free(s);
 
 	/* Did we get to the end without actually finding a coordinate? */
-	if (i<len && lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
+	if (i<len && lat >= SG_LATITUDE_MIN && lat <= SG_LATITUDE_MAX && lon >= SG_LONGITUDE_MIN && lon <= SG_LONGITUDE_MAX) {
 		lat_lon.lat = lat;
 		lat_lon.lon = lon;
 		return true;

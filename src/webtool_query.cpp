@@ -122,7 +122,7 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 		;
 	}
 
-	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
+	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().values_to_c_strings();
 
 	QString url = this->url_format;
 

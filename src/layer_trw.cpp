@@ -1615,13 +1615,13 @@ LatLonBBox LayerTRW::get_bbox(void)
 	LatLonBBox intermediate;
 
 	intermediate = this->tracks.get_bbox();
-	BBOX_EXPAND_WITH_BBOX(result, intermediate);
+	result.expand_with_bbox(intermediate);
 
 	intermediate = this->routes.get_bbox();
-	BBOX_EXPAND_WITH_BBOX(result, intermediate);
+	result.expand_with_bbox(intermediate);
 
 	intermediate = this->waypoints.get_bbox();
-	BBOX_EXPAND_WITH_BBOX(result, intermediate);
+	result.expand_with_bbox(intermediate);
 
 	return result;
 }
@@ -1632,7 +1632,7 @@ LatLonBBox LayerTRW::get_bbox(void)
 bool LayerTRW::find_center(Coord * dest)
 {
 	if (this->get_bbox().is_valid()) {
-		*dest = Coord(this->get_bbox().get_center(), this->coord_mode);
+		*dest = Coord(this->get_bbox().get_center_lat_lon(), this->coord_mode);
 		return true;
 	} else {
 		return false;
@@ -3322,7 +3322,7 @@ void LayerTRW::tpwin_update_dialog_data()
 	Track * track = this->get_edited_track();
 	if (track) {
 		/* Notional center of a track is simply an average of its bounding box extremities. */
-		const LatLon ll_center = track->bbox.get_center_coordinate(); /* TODO_MAYBE: this variable is unused. */
+		const LatLon ll_center = track->bbox.get_center_lat_lon(); /* TODO_MAYBE: this variable is unused. */
 		this->tpwin->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
 	}
 }

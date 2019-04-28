@@ -362,12 +362,8 @@ std::list<Geoname *> Geonames::generate_geonames(const LatLonBBox & bbox, Acquir
 {
 	std::list<Geoname *> wiki_places;
 
-	const QString north = SGUtils::double_to_c(bbox.north);
-	const QString south = SGUtils::double_to_c(bbox.south);
-	const QString east = SGUtils::double_to_c(bbox.east);
-	const QString west = SGUtils::double_to_c(bbox.west);
-
-	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
+	const LatLonBBoxStrings strings = bbox.values_to_c_strings();
+	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(strings.north).arg(strings.south).arg(strings.east).arg(strings.west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
 
 	DownloadHandle dl_handle;
 	QTemporaryFile tmp_file;
@@ -426,12 +422,8 @@ std::list<Geoname *> Geonames::select_geonames(const std::list<Geoname *> & all_
 
 void Geonames::create_wikipedia_waypoints(LayerTRW * trw, const LatLonBBox & bbox, Window * window)
 {
-	const QString north = SGUtils::double_to_c(bbox.north);
-	const QString south = SGUtils::double_to_c(bbox.south);
-	const QString east = SGUtils::double_to_c(bbox.east);
-	const QString west = SGUtils::double_to_c(bbox.west);
-
-	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(north).arg(south).arg(east).arg(west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
+	const LatLonBBoxStrings strings = bbox.values_to_c_strings();
+	const QString uri = QString(GEONAMES_WIKIPEDIA_URL_FMT).arg(strings.north).arg(strings.south).arg(strings.east).arg(strings.west).arg(GEONAMES_LANG).arg(GEONAMES_MAX_ENTRIES);
 
 	DownloadHandle dl_handle;
 	QTemporaryFile tmp_file;

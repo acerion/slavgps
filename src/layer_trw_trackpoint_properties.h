@@ -35,7 +35,6 @@
 #include <QFormLayout>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include <QDoubleSpinBox>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -47,6 +46,7 @@
 
 #include "widget_timestamp.h"
 #include "widget_measurement_entry.h"
+#include "widget_lat_lon_entry.h"
 #include "layer_trw_track.h"
 
 
@@ -123,8 +123,8 @@ namespace SlavGPS {
 		QVBoxLayout * vbox = NULL;
 
 		QLineEdit * trkpt_name = NULL;
-		QDoubleSpinBox * lat = NULL;
-		QDoubleSpinBox * lon = NULL;
+		LatEntryWidget * lat_entry = NULL;
+		LonEntryWidget * lon_entry = NULL;
 		MeasurementEntryWidget * alt = NULL;
 		QLabel * course = NULL;
 

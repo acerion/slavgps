@@ -325,7 +325,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 	if (trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd ||
 	    trk->draw_name_mode == TrackDrawNameMode::Centre) {
 
-		const Coord coord(trk->get_bbox().get_center(), this->trw->coord_mode);
+		const Coord coord(trk->get_bbox().get_center_lat_lon(), this->trw->coord_mode);
 		this->draw_track_label(ename, fg_color, bg_color, coord);
 	}
 
@@ -583,8 +583,8 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
 		if (this->vp_coord_mode == CoordMode::LatLon
-		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
-			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
+		    && ((prev_tp->coord.ll.lon < SG_LATITUDE_MIN && tp->coord.ll.lon > SG_LATITUDE_MAX)
+			|| (prev_tp->coord.ll.lon > SG_LATITUDE_MAX && tp->coord.ll.lon < SG_LATITUDE_MIN))) {
 
 			use_prev_pos = false;
 			continue;
@@ -753,8 +753,8 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
 		if (this->vp_coord_mode == CoordMode::LatLon
-		    && ((prev_tp->coord.ll.lon < -90.0 && tp->coord.ll.lon > 90.0)
-			|| (prev_tp->coord.ll.lon > 90.0 && tp->coord.ll.lon < -90.0))) {
+		    && ((prev_tp->coord.ll.lon < SG_LATITUDE_MIN && tp->coord.ll.lon > SG_LATITUDE_MAX)
+			|| (prev_tp->coord.ll.lon > SG_LATITUDE_MAX && tp->coord.ll.lon < SG_LATITUDE_MIN))) {
 
 			use_prev_pos = false;
 			continue;

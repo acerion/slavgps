@@ -322,7 +322,7 @@ bool Expedia::lat_lon_to_screen_pos(double * pos_x, double * pos_y, const LatLon
 	int mapSizeX = 2 * mapSizeX2;
 	int mapSizeY = 2 * mapSizeY2;
 
-	assert (lat_lon_center.lat >= -90.0 && lat_lon_center.lat <= 90.0);
+	assert (lat_lon_center.lat >= SG_LATITUDE_MIN && lat_lon_center.lat <= SG_LATITUDE_MAX);
 	//    lat_lon_center.lon *= rad2deg; // FIXME, optimize equations
 	//    lat_lon_center.lat *= rad2deg;
 	double Ra = Radius[90 + (int) lat_lon_center.lat];
@@ -347,7 +347,7 @@ void Expedia::init_radius(void)
 {
 	static bool done_before = false;
 	if (!done_before) {
-		for (int i = -90; i <= 90; i++) {
+		for (int i = (int) SG_LATITUDE_MIN; i <= (int) SG_LATITUDE_MAX; i++) {
 			Radius[i + 90] = calcR(DEG2RAD((double) i));
 		}
 		done_before = true;

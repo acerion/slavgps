@@ -161,10 +161,10 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 		this->u.val_double = d;
 		break;
 	case SGVariantType::Latitude:
-		this->lat.val = d;
+		this->lat.set_value(d);
 		break;
 	case SGVariantType::Longitude:
-		this->lon.val = d;
+		this->lon.set_value(d);
 		break;
 	case SGVariantType::Altitude:
 		this->altitude = Altitude(d, HeightUnit::Metres);
@@ -252,7 +252,7 @@ SGVariant::SGVariant(const Latitude & new_lat, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Latitude);
 	this->type_id = type_id_;
-	this->lat.val = new_lat.val;
+	this->lat = new_lat;
 }
 
 
@@ -262,7 +262,7 @@ SGVariant::SGVariant(const Longitude & new_lon, SGVariantType type_id_)
 {
 	assert (type_id_ == SGVariantType::Longitude);
 	this->type_id = type_id_;
-	this->lon.val = new_lon.val;
+	this->lon = new_lon;
 }
 
 

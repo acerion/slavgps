@@ -208,7 +208,7 @@ void LayerTRWTracks::recalculate_bbox(void)
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		(*iter)->recalculate_bbox();
 		const LatLonBBox trk_bbox = (*iter)->get_bbox();
-		BBOX_EXPAND_WITH_BBOX(this->bbox, trk_bbox);
+		this->bbox.expand_with_bbox(trk_bbox);
 	}
 
 	this->bbox.validate();

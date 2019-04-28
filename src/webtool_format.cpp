@@ -114,7 +114,7 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 		;
 	}
 
-	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().to_strings();
+	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().values_to_c_strings();
 
 	QString url = this->url_format;
 

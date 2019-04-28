@@ -649,17 +649,17 @@ bool Preferences::get_use_large_waypoint_icons()
 
 
 
-double Preferences::get_default_lat()
+Latitude Preferences::get_default_lat(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude").get_latitude().val;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_latitude").get_latitude();
 }
 
 
 
 
-double Preferences::get_default_lon()
+Longitude Preferences::get_default_lon(void)
 {
-	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude").get_longitude().val;
+	return Preferences::get_param_value(PREFERENCES_NAMESPACE_GENERAL "default_longitude").get_longitude();
 }
 
 

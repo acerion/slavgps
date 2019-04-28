@@ -38,7 +38,9 @@
 
 
 
+#include "globals.h"
 #include "coords.h"
+#include "lat_lon.h"
 
 
 
@@ -64,8 +66,7 @@ namespace SlavGPS {
 		LatLonBBox() {};
 		LatLonBBox(const LatLon & corner1, const LatLon & corner2);
 
-		LatLonBBoxStrings to_strings(void) const;
-		LatLon get_center_coordinate(void) const;
+		LatLonBBoxStrings values_to_c_strings(void) const;
 
 		/* Set all fields of bbox (coordinates and 'valid'
 		   field) to initial, invalid values. */
@@ -106,18 +107,23 @@ namespace SlavGPS {
 		*/
 		bool contains_bbox(const LatLonBBox & bbox) const;
 
+		/* Make the given LatLonBBox larger by expanding it to include given LatLon. */
+		sg_ret expand_with_lat_lon(const LatLon & lat_lon);
+
+		/* Make a bbox larger by expanding it to include other bbox. */
+		sg_ret expand_with_bbox(const LatLonBBox & other);
 
 
 		/* Get coordinate of a point that is a simple
 		   arithmetic average of north/south, east/west
 		   values. */
-		LatLon get_center(void) const;
+		LatLon get_center_lat_lon(void) const;
 
 
-		double north = NAN; /* Maximal latitude (towards +90 north). */
-		double south = NAN; /* Minimal latitude (towards -90 south). */
-		double east  = NAN; /* Maximal longitude (towards +180 east). */
-		double west  = NAN; /* Minimal longitude (towards -180 west). */
+		Latitude north; /* Maximal latitude (towards +90 north). */
+		Latitude south; /* Minimal latitude (towards -90 south). */
+		Longitude east; /* Maximal longitude (towards +180 east). */
+		Longitude west; /* Minimal longitude (towards -180 west). */
 
 	private:
 		bool valid = false;
@@ -143,45 +149,7 @@ namespace SlavGPS {
  *       |      b|
  *       +-------+
  */
-#define BBOX_INTERSECT(a,b) ((a).south < (b).north && (a).north > (b).south && (a).east > (b).west && (a).west < (b).east)
-
-
-
-
-/* Make the given LatLonBBox larger by expanding it to include given LatLon. */
-#define BBOX_EXPAND_WITH_LATLON(m_bbox, m_lat_lon) {			\
-		if ((m_lat_lon.lat > m_bbox.north) || std::isnan(m_bbox.north)) { \
-			m_bbox.north = m_lat_lon.lat;			\
-		}							\
-		if ((m_lat_lon.lat < m_bbox.south) || std::isnan(m_bbox.south)) { \
-			m_bbox.south = m_lat_lon.lat;			\
-		}							\
-		if ((m_lat_lon.lon > m_bbox.east) || std::isnan(m_bbox.east)) { \
-			m_bbox.east = m_lat_lon.lon;			\
-		}							\
-		if ((m_lat_lon.lon < m_bbox.west) || std::isnan(m_bbox.west)) {	\
-			m_bbox.west = m_lat_lon.lon;			\
-		}							\
-	}
-
-
-
-
-/* Make the first LatLonBBox larger by expanding it to include second LatLonBBox. */
-#define BBOX_EXPAND_WITH_BBOX(m_target, m_source) {			\
-		if (m_source.north > m_target.north || std::isnan(m_target.north)) { \
-			m_target.north = m_source.north;		\
-		}							\
-		if (m_source.south < m_target.south || std::isnan(m_target.south)) { \
-			m_target.south = m_source.south;		\
-		}							\
-		if (m_source.east > m_target.east || std::isnan(m_target.east)) { \
-			m_target.east = m_source.east;			\
-		}							\
-		if (m_source.west < m_target.west || std::isnan(m_target.west)) { \
-			m_target.west = m_source.west;			\
-		}							\
-	}
+#define BBOX_INTERSECT(a,b) ((a).south.get_value() < (b).north.get_value() && (a).north.get_value() > (b).south.get_value() && (a).east.get_value() > (b).west.get_value() && (a).west.get_value() < (b).east.get_value())
 
 
 

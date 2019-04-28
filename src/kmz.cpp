@@ -469,7 +469,7 @@ KMZOpenResult SlavGPS::kmz_open_file(const QString & file_full_path, Viewport * 
 
 		if (pixmap) {
 			/* Some simple detection of broken position values ?? */
-			//if (xd->north > 90.0 || xd->north < -90.0 || xd->south > 90.0 || xd->south < -90.0)
+			//if (xd->north > SG_LATITUDE_MAX || xd->north < SG_LATITUDE_MIN || xd->south > 90.0 || xd->south < SG_LATITUDE_MIN)
 
 			const Coord coord_tl(LatLon(north, west), viewport->get_coord_mode());
 			const Coord coord_br(LatLon(south, east), viewport->get_coord_mode());

@@ -321,7 +321,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	if (sg_ret::ok == this->trk->get_timestamps(ts1, ts2)) {
 
 		/* Notional center of a track is simply an average of the bounding box extremities. */
-		const LatLon center((this->trk->bbox.north + this->trk->bbox.south) / 2, (this->trk->bbox.east + trk->bbox.west) / 2);
+		const LatLon center = this->trk->bbox.get_center_lat_lon();
 		LayerTRW * parent_layer = (LayerTRW *) this->trk->get_owning_layer();
 		const Coord coord(center, parent_layer->get_coord_mode());
 		this->tz = TZLookup::get_tz_at_location(coord);

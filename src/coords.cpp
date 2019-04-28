@@ -93,11 +93,17 @@ bool UTM::is_band_letter(char letter)
 
 
 
+LatLon::LatLon(const Latitude & latitude, const Longitude & longitude)
+{
+	this->lat = latitude.get_value();
+	this->lon = longitude.get_value();
+}
+
 
 void LatLon::lat_to_string_raw(QString & lat_string, const LatLon & lat_lon)
 {
 	static QLocale c_locale = QLocale::c();
-	lat_string = c_locale.toString(lat_lon.lat, 'f', SG_PRECISION_LATITUDE);
+	lat_string = c_locale.toString(lat_lon.lat, 'f', SG_LATITUDE_PRECISION);
 }
 
 
@@ -106,7 +112,7 @@ void LatLon::lat_to_string_raw(QString & lat_string, const LatLon & lat_lon)
 void LatLon::lon_to_string_raw(QString & lon_string, const LatLon & lat_lon)
 {
 	static QLocale c_locale = QLocale::c();
-	lon_string = c_locale.toString(lat_lon.lon, 'f', SG_PRECISION_LONGITUDE);
+	lon_string = c_locale.toString(lat_lon.lon, 'f', SG_LONGITUDE_PRECISION);
 }
 
 
@@ -116,8 +122,8 @@ QString LatLon::to_string(void) const
 {
 	static QLocale c_locale = QLocale::c();
 	return QString("%1,%2")
-		.arg(c_locale.toString(this->lat, 'f', SG_PRECISION_LATITUDE))
-		.arg(c_locale.toString(this->lon, 'f', SG_PRECISION_LONGITUDE));
+		.arg(c_locale.toString(this->lat, 'f', SG_LATITUDE_PRECISION))
+		.arg(c_locale.toString(this->lon, 'f', SG_LONGITUDE_PRECISION));
 }
 
 
@@ -133,8 +139,8 @@ void LatLon::to_strings_raw(QString & lat_string, QString & lon_string) const
 {
 	static QLocale c_locale = QLocale::c();
 
-	lat_string = c_locale.toString(this->lat, 'f', SG_PRECISION_LATITUDE);
-	lon_string = c_locale.toString(this->lon, 'f', SG_PRECISION_LONGITUDE);
+	lat_string = c_locale.toString(this->lat, 'f', SG_LATITUDE_PRECISION);
+	lon_string = c_locale.toString(this->lon, 'f', SG_LONGITUDE_PRECISION);
 
 	return;
 }
@@ -285,10 +291,10 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
     latitude = lat_lon.lat;
     longitude = lat_lon.lon;
 
-    /* We want the longitude within -180..180. */
-    if ( longitude < -180.0 )
+    /* We want the longitude within SG_LONGITUDE_MIN..SG_LONGITUDE_MAX. */
+    if ( longitude < SG_LONGITUDE_MIN )
 	longitude += 360.0;
-    if ( longitude > 180.0 )
+    if ( longitude > SG_LONGITUDE_MAX )
 	longitude -= 360.0;
 
     /* Now convert. */

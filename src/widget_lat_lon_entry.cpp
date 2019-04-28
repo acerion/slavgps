@@ -124,11 +124,11 @@ void LatLonEntryWidget::value_changed_cb(void) /* Slot. */
 
 LatEntryWidget::LatEntryWidget(const SGVariant & value, QWidget * parent) : QDoubleSpinBox(parent)
 {
-	this->setDecimals(SG_PRECISION_LATITUDE);
-	this->setMinimum(-90.0);
-	this->setMaximum(90.0);
+	this->setDecimals(SG_LATITUDE_PRECISION);
+	this->setMinimum(SG_LATITUDE_MIN);
+	this->setMaximum(SG_LATITUDE_MAX);
 	this->setSingleStep(0.05);
-	this->setValue(value.get_latitude().val);
+	this->setValue(value.get_latitude().get_value());
 	this->setToolTip(QObject::tr("Coordinate: latitude")); /* Default tooltip. */
 }
 
@@ -137,10 +137,10 @@ LatEntryWidget::LatEntryWidget(const SGVariant & value, QWidget * parent) : QDou
 
 LonEntryWidget::LonEntryWidget(const SGVariant & value, QWidget * parent) : QDoubleSpinBox(parent)
 {
-	this->setDecimals(SG_PRECISION_LONGITUDE);
-	this->setMinimum(-180.0);
-	this->setMaximum(180.0);
+	this->setDecimals(SG_LONGITUDE_PRECISION);
+	this->setMinimum(SG_LONGITUDE_MIN);
+	this->setMaximum(SG_LONGITUDE_MAX);
 	this->setSingleStep(0.05);
-	this->setValue(value.get_longitude().val);
+	this->setValue(value.get_longitude().get_value());
 	this->setToolTip(QObject::tr("Coordinate: longitude")); /* Default tooltip. */
 }

@@ -1340,7 +1340,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	layer->mpp_northing = ympp;
 
 	const LatLonBBox bbox(lat_lon_tl, lat_lon_br);
-	viewport->set_center_from_lat_lon(bbox.get_center()); /* TODO: is this call necessary if we call ::set_bbox() below? */
+	viewport->set_center_from_lat_lon(bbox.get_center_lat_lon()); /* TODO: is this call necessary if we call ::set_bbox() below? */
 
 	/* Set best zoom level. */
 	viewport->set_bbox(bbox);

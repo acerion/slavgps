@@ -490,20 +490,20 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 	/* Can zoom out more than whole world and so the above can give invalid positions */
 	/* Restrict values properly so drawing doesn't go into a near 'infinite' loop */
-	if (min.lon < -180.0) {
-		min.lon = -180.0;
+	if (min.lon < SG_LONGITUDE_MIN) {
+		min.lon = SG_LONGITUDE_MIN;
 	}
 
-	if (max.lon > 180.0) {
-		max.lon = 180.0;
+	if (max.lon > SG_LONGITUDE_MAX) {
+		max.lon = SG_LONGITUDE_MAX;
 	}
 
-	if (min.lat < -90.0) {
-		min.lat = -90.0;
+	if (min.lat < SG_LATITUDE_MIN) {
+		min.lat = SG_LATITUDE_MIN;
 	}
 
-	if (max.lat > 90.0) {
-		max.lat = 90.0;
+	if (max.lat > SG_LATITUDE_MAX) {
+		max.lat = SG_LATITUDE_MAX;
 	}
 
 	double lon = ((double) ((long) ((min.lon)/ this->deg_inc))) * this->deg_inc;

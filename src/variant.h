@@ -37,6 +37,7 @@
 
 
 #include "measurements.h"
+#include "lat_lon.h"
 
 
 

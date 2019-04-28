@@ -37,6 +37,7 @@
 #include "bbox.h"
 #include "download.h"
 #include "viewport.h"
+#include "lat_lon.h"
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"
@@ -239,10 +240,10 @@ namespace SlavGPS {
 		TileZoomLevel tile_zoom_level_min = TileZoomLevel(0);  /* Minimum Zoom level supported by the map provider.  TMS Zoom level. 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
 		TileZoomLevel tile_zoom_level_max = TileZoomLevel(18); /* Maximum Zoom level supported by the map provider. / TMS Zoom level. Often 18 is the upper limit for a map source (maximally zoomed in). */
 
-		double lat_min =  -90.0; /* [degrees] Minimum latitude supported by the map provider. */
-		double lat_max =   90.0; /* [degrees] Maximum latitude supported by the map provider. */
-		double lon_min = -180.0; /* [degrees] Minimum longitude supported by the map provider. */
-		double lon_max =  180.0; /* [degrees] Maximum longitude supported by the map provider. */
+		double lat_min = SG_LATITUDE_MIN;  /* [degrees] Minimum latitude supported by the map provider. */
+		double lat_max = SG_LATITUDE_MAX;  /* [degrees] Maximum latitude supported by the map provider. */
+		double lon_min = SG_LONGITUDE_MIN; /* [degrees] Minimum longitude supported by the map provider. */
+		double lon_max = SG_LONGITUDE_MAX; /* [degrees] Maximum longitude supported by the map provider. */
 	};
 
 

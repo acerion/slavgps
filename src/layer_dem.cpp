@@ -618,10 +618,10 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 	double escale_deg = dem->east_scale / ((double) 3600);
 
 	const LatLonBBox viewport_bbox = viewport->get_bbox();
-	double start_lat_as = std::max(viewport_bbox.south * 3600.0, dem->min_north_seconds);
-	double end_lat_as   = std::min(viewport_bbox.north * 3600.0, dem->max_north_seconds);
-	double start_lon_as = std::max(viewport_bbox.west * 3600.0, dem->min_east_seconds);
-	double end_lon_as   = std::min(viewport_bbox.east * 3600.0, dem->max_east_seconds);
+	double start_lat_as = std::max(viewport_bbox.south.get_value() * 3600.0, dem->min_north_seconds);
+	double end_lat_as   = std::min(viewport_bbox.north.get_value() * 3600.0, dem->max_north_seconds);
+	double start_lon_as = std::max(viewport_bbox.west.get_value() * 3600.0, dem->min_east_seconds);
+	double end_lon_as   = std::min(viewport_bbox.east.get_value() * 3600.0, dem->max_east_seconds);
 
 	double start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
 	double end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
@@ -1159,8 +1159,8 @@ static void srtm_draw_existence(Viewport * viewport)
 
 	qDebug() << SG_PREFIX_D << "Viewport bounding box:" << bbox;
 
-	for (int lat = floor(bbox.south); lat <= floor(bbox.north); lat++) {
-		for (int lon = floor(bbox.west); lon <= floor(bbox.east); lon++) {
+	for (int lat = floor(bbox.south.get_value()); lat <= floor(bbox.north.get_value()); lat++) {
+		for (int lon = floor(bbox.west.get_value()); lon <= floor(bbox.east.get_value()); lon++) {
 			QString continent_dir;
 			if (!srtm_get_continent_dir(continent_dir, lat, lon)) {
 				continue;

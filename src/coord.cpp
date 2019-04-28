@@ -285,11 +285,11 @@ static LatLon get_north_west_corner(const LatLon & center, const LatLon & distan
 
 	ret.lat = center.lat + distance_from_center.lat;
 	ret.lon = center.lon - distance_from_center.lon;
-	if (ret.lon < -180) {
+	if (ret.lon < SG_LONGITUDE_MIN) {
 		ret.lon += 360.0;
 	}
 
-	if (ret.lat > 90.0) {  /* Over north pole. */
+	if (ret.lat > SG_LATITUDE_MAX) {  /* Over north pole. */
 		ret.lat = 180 - ret.lat;
 		ret.lon = ret.lon - 180;
 	}
@@ -306,11 +306,11 @@ static LatLon get_south_east_corner(const LatLon & center, const LatLon & distan
 
 	ret.lat = center.lat - distance_from_center.lat;
 	ret.lon = center.lon + distance_from_center.lon;
-	if (ret.lon > 180.0) {
+	if (ret.lon > SG_LONGITUDE_MAX) {
 		ret.lon -= 360.0;
 	}
 
-	if (ret.lat < -90.0) {  /* Over south pole. */
+	if (ret.lat < SG_LATITUDE_MIN) {  /* Over south pole. */
 		ret.lat += 180;
 		ret.lon = ret.lon - 180;
 	}

@@ -633,16 +633,16 @@ sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mod
 		qDebug() << SG_PREFIX_E << "bbox is invalid:" << bbox;
 		return sg_ret::err;
 	}
-	if (!bbox.get_center().is_valid()) {
-		qDebug() << SG_PREFIX_E << "bbox's center is invalid:" << bbox.get_center();
+	if (!bbox.get_center_lat_lon().is_valid()) {
+		qDebug() << SG_PREFIX_E << "bbox's center is invalid:" << bbox.get_center_lat_lon();
 		return sg_ret::err;
 	}
 	if (!VikingZoomLevel::value_is_valid(zoom)) {
 		qDebug() << SG_PREFIX_E << "zoom is invalid:" << zoom;
 		return sg_ret::err;
 	}
-	if (sg_ret::ok != viewport->set_center_from_lat_lon(bbox.get_center(), save_position)) {
-		qDebug() << SG_PREFIX_E << "Failed to set center from coordinate" << bbox.get_center();
+	if (sg_ret::ok != viewport->set_center_from_lat_lon(bbox.get_center_lat_lon(), save_position)) {
+		qDebug() << SG_PREFIX_E << "Failed to set center from coordinate" << bbox.get_center_lat_lon();
 		return sg_ret::err;
 	}
 
