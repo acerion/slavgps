@@ -342,6 +342,12 @@ namespace SlavGPS {
 
 
 
+	bool get_unit_gps_info(char * info, size_t info_size, const char * str);
+	bool get_prddat_gps_info(char * info, size_t info_size, const char * str);
+
+
+
+
 } /* namespace SlavGPS */
 
 

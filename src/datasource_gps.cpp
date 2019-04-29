@@ -288,42 +288,19 @@ void DataSourceGPS::progress_func(AcquireProgressCode code, void * data, Acquire
 			gps_dialog->progress_label = gps_dialog->rte_label;
 			gps_dialog->progress_type = GPSTransferType::RTE;
 		}
-
-		if (strstr(line, "PRDDAT")) { /* TODO_2_LATER: there is a very similar code in process_line_for_gps_info() */
-			char **tokens = g_strsplit(line, " ", 0);
-			char info[128];
-		        size_t ilen = 0;
-			int i;
-			int n_tokens = 0;
-
-			while (tokens[n_tokens]) {
-				n_tokens++;
-			}
-
-			if (n_tokens > 8) {
-				for (i=8; tokens[i] && ilen < sizeof(info)-2 && strcmp(tokens[i], "00"); i++) {
-					unsigned int ch;
-					sscanf(tokens[i], "%x", &ch);
-					info[ilen++] = ch;
-				}
-				info[ilen++] = 0;
+		if (strstr(line, "PRDDAT")) {
+			char info[128] = { 0 };
+			if (get_prddat_gps_info(info, sizeof (info), line)) {
 				set_gps_info(info, acquiring);
 			}
-			g_strfreev(tokens);
 		}
-		/* e.g: "Unit:\teTrex Legend HCx Software Version 2.90\n" */
-		if (strstr(line, "Unit:")) {
-			char **tokens = g_strsplit(line, "\t", 0);
-			int n_tokens = 0;
-			while (tokens[n_tokens]) {
-				n_tokens++;
+		if (strstr(line, "Unit:")) {  /* e.g: "Unit:\teTrex Legend HCx Software Version 2.90\n" */
+			char info[128] = { 0 };
+			if (get_unit_gps_info(info, sizeof (info), line)) {
+				set_gps_info(info, acquiring);
 			}
+		}
 
-			if (n_tokens > 1) {
-				set_gps_info(tokens[1], acquiring);
-			}
-			g_strfreev(tokens);
-		}
 		/* Tells us how many items there will be. */
 		if (strstr(line, "RECORD")) {
 			unsigned int lsb, msb, cnt;

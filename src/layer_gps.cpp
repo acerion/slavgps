@@ -888,44 +888,73 @@ void GPSSession::process_line_for_gps_info(const char * line)
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	if (strstr(line, "PRDDAT")) { /* TODO_2_LATER: there is a very similar code in datasource_gps_progress() */
-		char **tokens = g_strsplit(line, " ", 0);
-		char info[128];
-		size_t ilen = 0;
-		int n_tokens = 0;
-
-		while (tokens[n_tokens]) {
-			n_tokens++;
-		}
-
-		/* I'm not entirely clear what information this is trying to get...
-		   Obviously trying to decipher some kind of text/naming scheme.
-		   Anyway this will be superceded if there is 'Unit:' information. */
-		if (n_tokens > 8) {
-			for (int i = 8; tokens[i] && ilen < sizeof(info) - 2 && strcmp(tokens[i], "00"); i++) {
-				unsigned int ch;
-				sscanf(tokens[i], "%x", &ch);
-				info[ilen++] = ch;
-			}
-			info[ilen++] = 0;
+	if (strstr(line, "PRDDAT")) {
+		char info[128] = { 0 };
+		if (SlavGPS::get_prddat_gps_info(info, sizeof (info), line)) {
 			this->set_gps_device_info(info);
 		}
-		g_strfreev(tokens);
 	}
 
 	/* eg: "Unit:\teTrex Legend HCx Software Version 2.90\n" */
 	if (strstr(line, "Unit:")) {
-		char **tokens = g_strsplit(line, "\t", 0);
-		int n_tokens = 0;
-		while (tokens[n_tokens]) {
-			n_tokens++;
+		char info[128] = { 0 };
+		if (SlavGPS::get_unit_gps_info(info, sizeof (info), line)) {
+			this->set_gps_device_info(info);
+		}
+	}
+}
+
+
+
+
+bool SlavGPS::get_prddat_gps_info(char * info, size_t info_size, const char * str)
+{
+	const QString line(str);
+	const QStringList tokens = line.split(" ");
+
+	size_t ilen = 0;
+	const int n_tokens = tokens.size();
+
+	if (n_tokens <= 8) {
+		return false;
+	}
+
+	/* I'm not entirely clear what information this is trying to get...
+	   Obviously trying to decipher some kind of text/naming scheme.
+	   Anyway this will be superceded if there is 'Unit:' information. */
+	for (int i = 8; i < n_tokens; i++) {
+
+		if (!(ilen < info_size - 2)) {
+			break;
+		}
+		if (tokens[i] == "00") {
+			break;
 		}
 
-		if (n_tokens > 1) {
-			this->set_gps_device_info(tokens[1]);
-		}
-		g_strfreev(tokens);
+		unsigned int ch;
+		sscanf(tokens[i].toUtf8().constData(), "%x", &ch);
+		info[ilen++] = ch;
 	}
+	info[ilen++] = 0;
+
+	return true;
+}
+
+
+
+
+bool SlavGPS::get_unit_gps_info(char * info, size_t info_size, const char * str)
+{
+	const QString line(str);
+	const QStringList tokens = line.split("\t");
+	const int n_tokens = tokens.size();
+
+	if (n_tokens <= 1) {
+		return false;
+	}
+
+	snprintf(info, info_size, "%s", tokens[1].toUtf8().constData());
+	return true;
 }
 
 
