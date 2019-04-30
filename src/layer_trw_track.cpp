@@ -408,11 +408,8 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 		this->speed = (tp_a.speed + tp_b.speed) / 2;
 	}
 
-	/* TODO_LATER - improve interpolation of course, as it may not be correct.
-	   if courses in degrees are 350 + 020, the mid course more likely to be 005 (not 185)
-	   [similar applies if value is in radians] */
-	if (tp_a.course != NAN && tp_b.course != NAN) {
-		this->course = (tp_a.course + tp_b.course) / 2;
+	if (tp_a.course.is_valid() && tp_b.course.is_valid()) {
+		this->course = Angle::get_vector_sum(tp_a.course, tp_b.course);
 	}
 
 	/* DOP / sat values remain at defaults as not

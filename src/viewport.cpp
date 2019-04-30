@@ -1954,7 +1954,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 	double dx = (x2 - x1) / len * 10;
 	double dy = (y2 - y1) / len * 10;
 
-	angle.value = atan2(dy, dx) + M_PI_2;
+	angle.set_value(atan2(dy, dx) + M_PI_2);
 
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 
@@ -1965,17 +1965,11 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 		test = Coord(LatLon::to_utm(ll), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
 
-		base_angle.value = M_PI - atan2(test_pos.x - x1, test_pos.y - y1);
-		angle.value -= base_angle.value;
+		base_angle.set_value(M_PI - atan2(test_pos.x - x1, test_pos.y - y1));
+		angle.set_value(angle.get_value() - base_angle.get_value());
 	}
 
-	if (angle.value < 0) {
-		angle.value += 2 * M_PI;
-	}
-
-	if (angle.value > 2 * M_PI) {
-		angle.value -= 2 * M_PI;
-	}
+	angle.normalize();
 }
 
 

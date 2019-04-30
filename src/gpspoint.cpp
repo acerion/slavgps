@@ -848,13 +848,13 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 		fprintf(file, " newsegment=\"yes\"");
 	}
 
-	if (!std::isnan(tp->speed) || !std::isnan(tp->course) || tp->nsats > 0) {
+	if (!std::isnan(tp->speed) || tp->course.is_valid() || tp->nsats > 0) {
 		fprintf(file, " extended=\"yes\"");
 		if (!std::isnan(tp->speed)) {
 			fprintf(file, " speed=\"%s\"", SGUtils::double_to_c(tp->speed).toUtf8().constData());
 		}
-		if (!std::isnan(tp->course)) {
-			fprintf(file, " course=\"%s\"", SGUtils::double_to_c(tp->course).toUtf8().constData());
+		if (tp->course.is_valid()) {
+			fprintf(file, " course=\"%s\"", tp->course.value_to_c_string().toUtf8().constData());
 		}
 		if (tp->nsats > 0) {
 			fprintf(file, " sat=\"%d\"", tp->nsats);

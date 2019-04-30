@@ -950,8 +950,8 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	}
 
 
-	if (!std::isnan(tp->course)) {
-		fprintf(file, "    <course>%s</course>\n", SGUtils::double_to_c(tp->course).toUtf8().constData());
+	if (tp->course.is_valid()) {
+		fprintf(file, "    <course>%s</course>\n", tp->course.value_to_c_string().toUtf8().constData());
 	}
 	if (!std::isnan(tp->speed)) {
 		fprintf(file, "    <speed>%s</speed>\n", SGUtils::double_to_c(tp->speed).toUtf8().constData());

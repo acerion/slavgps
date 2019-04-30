@@ -25,6 +25,7 @@
 
 #include <cmath>
 #include <ctime>
+#include <cassert>
 
 
 
@@ -1518,22 +1519,204 @@ double Speed::convert_mps_to(double speed, SpeedUnit speed_unit)
 
 
 
-QString Angle::to_string(void) const
+QString Angle::to_string(int precision) const
 {
-	return QObject::tr("%1°").arg(RAD2DEG(this->value), 0, 'f', 1);
+	if (this->is_valid()) {
+		return QObject::tr("%1%2").arg(RAD2DEG(this->value), 5, 'f', precision, '0').arg(DEGREE_SYMBOL);
+	} else {
+		return INVALID_RESULT_STRING;
+	}
 }
 
 
 
 
-QString Angle::get_course_string(double value, int precision)
+QString Angle::value_to_c_string(int precision) const
 {
-	if (std::isnan(value)) {
-		return INVALID_RESULT_STRING;
-	} else {
-		/* Second arg is a degree symbol. */
-		return QObject::tr("%1%2").arg(value, 5, 'f', precision, '0').arg("\u00b0");
+	return SGUtils::double_to_c(this->value);
+}
+
+
+
+
+double Angle::get_value(void) const
+{
+	return this->value;
+}
+
+
+
+
+bool Angle::set_value(double new_value)
+{
+	this->value = new_value;
+	this->valid = !std::isnan(this->value);
+
+	return this->valid;
+}
+
+
+
+
+bool Angle::is_valid(void) const
+{
+	return this->valid;
+}
+
+
+
+
+void Angle::invalidate(void)
+{
+	this->value = NAN;
+	this->valid = false;
+}
+
+
+
+
+Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
+{
+	/*
+	  TODO_MAYBE: there is still some room for improvement in this
+	  function:
+	  - can't we do it any easier way?
+	  - is the epsilon value in if() correct?
+	  - when do we accept returning 0, and when 2*pi?
+	*/
+
+	double angle = 0.0;
+
+	const double angle_min = std::min(angle1.value, angle2.value);
+	const double angle_max = std::max(angle1.value, angle2.value);
+
+	const double diff = angle_max - angle_min;
+	if (std::abs(M_PI - diff) > 0.000000000001) { /* Check for two angles that are 180 degrees apart. */
+		const double x1 = cos(angle1.value);
+		const double y1 = sin(angle1.value);
+
+		const double x2 = cos(angle2.value);
+		const double y2 = sin(angle2.value);
+
+		const double x = x1 + x2;
+		const double y = y1 + y2;
+
+		angle = x == 0.0 ? 0.0 : atan2(y, x);
+		angle = angle < 0 ? ((2 * M_PI) + angle) : angle;
 	}
+
+	return Angle(angle);
+}
+
+
+
+
+void Angle::normalize(void)
+{
+	if (!this->is_valid()) {
+		return;
+	}
+
+	if (this->value < 0) {
+		this->value += 2 * M_PI;
+	}
+	if (this->value > 2 * M_PI) {
+		this->value -= 2 * M_PI;
+	}
+
+	return;
+}
+
+
+
+
+bool Measurements::unit_tests(void)
+{
+	const double epsilon = 0.0001;
+
+	{
+		const Angle a1(DEG2RAD(0.0));
+		const Angle a2(DEG2RAD(0.0));
+		const double expected = DEG2RAD(0.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(360.0));
+		const Angle a2(DEG2RAD(360.0));
+		const double expected = DEG2RAD(360.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(70.0));
+		const Angle a2(DEG2RAD(70.0));
+		const double expected = DEG2RAD(70.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(184.0));
+		const Angle a2(DEG2RAD(186.0));
+		const double expected = DEG2RAD(185.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(185.0));
+		const Angle a2(DEG2RAD(185.0));
+		const double expected = DEG2RAD(185.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(350.0));
+		const Angle a2(DEG2RAD(20.0));
+		const double expected = DEG2RAD(5.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(0.0));
+		const Angle a2(DEG2RAD(180.0));
+		const double expected = DEG2RAD(0.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(-180.0));
+		const Angle a2(DEG2RAD(+180.0));
+		const double expected = DEG2RAD(180.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+	{
+		const Angle a1(DEG2RAD(90));
+		const Angle a2(DEG2RAD(270.0));
+		const double expected = DEG2RAD(0.0);
+
+		const Angle result = Angle::get_vector_sum(a1, a2);
+		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_value() - expected));
+	}
+
+	return true;
 }
 
 

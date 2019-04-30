@@ -1,3 +1,4 @@
+
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -142,8 +143,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 	/* Fill between middle and innermost circle. */
 	if (1) {
-		const float start_angle = (90 - RAD2DEG(this->base_angle.value)) * 16;
-		const float span_angle = -RAD2DEG(this->angle.value) * 16;
+		const float start_angle = (90 - RAD2DEG(this->base_angle.get_value())) * 16;
+		const float span_angle = -RAD2DEG(this->angle.get_value()) * 16;
 
 		painter.setPen(this->arc_pen);
 
@@ -162,8 +163,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 	if (1) {
 		int ticksize = 2 * radius_delta;
 		for (int i = 0; i < 180; i += 5) {
-			this->c = cos(DEG2RAD(i) * 2 + this->base_angle.value);
-			this->s = sin(DEG2RAD(i) * 2 + this->base_angle.value);
+			this->c = cos(DEG2RAD(i) * 2 + this->base_angle.get_value());
+			this->s = sin(DEG2RAD(i) * 2 + this->base_angle.get_value());
 			painter.drawLine(this->x1 + (radius-radius_delta)*this->c, this->y1 + (radius-radius_delta)*this->s, this->x1 + (radius+ticksize)*this->c, this->y1 + (radius+ticksize)*this->s);
 		}
 	}
@@ -172,8 +173,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 		/* Two axis inside a compass.
 		   Varying angle will rotate the axis. I don't know why you would need this :) */
 		//float angle = 0;
-		int c2 = (radius + radius_delta * 2) * sin(this->base_angle.value);
-		int s2 = (radius + radius_delta * 2) * cos(this->base_angle.value);
+		int c2 = (radius + radius_delta * 2) * sin(this->base_angle.get_value());
+		int s2 = (radius + radius_delta * 2) * cos(this->base_angle.get_value());
 		painter.drawLine(this->x1 - c2, this->y1 - s2, this->x1 + c2, this->y1 + s2);
 		painter.drawLine(this->x1 + s2, this->y1 - c2, this->x1 - s2, this->y1 + c2);
 	}
@@ -237,8 +238,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
 
-		const int label2_x = this->x1 - radius * cos(this->angle.value - M_PI_2) / 2;
-		const int label2_y = this->y1 - radius * sin(this->angle.value - M_PI_2) / 2;
+		const int label2_x = this->x1 - radius * cos(this->angle.get_value() - M_PI_2) / 2;
+		const int label2_y = this->y1 - radius * sin(this->angle.get_value() - M_PI_2) / 2;
 
 		label2_rect.moveTo(label2_x - label2_rect.width() / 2, label2_y - label2_rect.height() / 2);
 		label2_rect.adjust(-margin, -margin, margin, margin);

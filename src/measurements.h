@@ -58,7 +58,7 @@ namespace SlavGPS {
 #define SG_PRECISION_GRADIENT   2
 
 
-#define DEGREE_SYMBOL "\302\260"
+#define DEGREE_SYMBOL "\302\260"     /* "\u00b0" */
 
 
 
@@ -155,10 +155,26 @@ namespace SlavGPS {
 
 	class Angle {
 	public:
-		QString to_string(void) const;
-		static QString get_course_string(double value, int precision = SG_PRECISION_COURSE);
+		Angle(double new_value = NAN) { this->set_value(new_value); }
 
-		double value = 0.0;
+		QString to_string(int precision = SG_PRECISION_COURSE) const;
+		QString value_to_c_string(int precision = SG_PRECISION_COURSE) const;
+
+		double get_value(void) const;
+		bool set_value(double value);
+
+		bool is_valid(void) const;
+		void invalidate(void);
+
+		/* Ensure that value is in range of 0-2pi (if the
+		   value is valid). */
+		void normalize(void);
+
+		static Angle get_vector_sum(const Angle & angle1, const Angle & angle2);
+
+	private:
+		double value = NAN;
+		bool valid = false;
 	};
 
 
@@ -167,6 +183,7 @@ namespace SlavGPS {
 	class Measurements {
 	public:
 		static QString get_file_size_string(size_t file_size);
+		static bool unit_tests(void);
 	};
 
 

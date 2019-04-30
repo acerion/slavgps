@@ -75,8 +75,8 @@ namespace SlavGPS {
 		double c = 0;
 		double s = 0;
 
-		Angle angle;
-		Angle base_angle;
+		Angle angle = { 0.0 };
+		Angle base_angle = { 0.0 };
 
 		DistanceUnit distance_unit;
 		Distance line_distance;

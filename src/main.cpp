@@ -51,6 +51,7 @@
 #include "external_tools.h"
 #include "clipboard.h"
 #include "file.h"
+#include "measurements.h"
 
 
 
@@ -149,6 +150,8 @@ void test_pickle(void)
 int main(int argc, char ** argv)
 {
 	//test_pickle();
+
+	Measurements::unit_tests();
 
 	QApplication app(argc, argv);
 	CommandLineOptions command_line_options;

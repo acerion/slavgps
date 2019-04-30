@@ -192,10 +192,10 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			break;
 
 		case 'C':
-			values[i] = QObject::tr("%1Course %2").arg(separator).arg(Angle::get_course_string(tp->course));
+			values[i] = QObject::tr("%1Course %2").arg(separator).arg(tp->course.to_string());
 			break;
 
-		case 'P': {
+		case 'P':
 			if (tp_prev) {
 				const Distance diff = Coord::distance_2(tp->coord, tp_prev->coord);
 				values[i] = QObject::tr("%1Distance diff %2")
@@ -204,7 +204,6 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					.arg(diff.convert_to_supplementary_unit(Preferences::get_unit_distance()).to_string());
 			}
 			break;
-		}
 
 		case 'T': {
 			/* Compact date time format. */
@@ -213,7 +212,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			break;
 		}
 
-		case 'M': {
+		case 'M':
 			if (tp_prev) {
 				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
 					const Time t_diff = tp->timestamp - tp_prev->timestamp;
@@ -221,13 +220,12 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 				}
 			}
 			break;
-		}
 
 		case 'X':
 			values[i] = QObject::tr("%1No. of Sats %2").arg(separator).arg(tp->nsats);
 			break;
 
-		case 'F': { /* Distance from tp to the end 'Finish' (along the track). */
+		case 'F': /* Distance from tp to the end 'Finish' (along the track). */
 			if (trk) {
 				Distance begin_to_tp = trk->get_length_to_trackpoint(tp);
 				Distance total = trk->get_length_including_gaps();
@@ -238,9 +236,8 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					.arg(tp_to_end.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 			}
 			break;
-		}
 
-		case 'D': { /* Distance from start (along the track). */
+		case 'D': /* Distance from start (along the track). */
 			if (trk) {
 				const Distance begin_to_tp = trk->get_length_to_trackpoint(tp);
 
@@ -249,7 +246,6 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					.arg(begin_to_tp.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 			}
 			break;
-		}
 
 		case 'L': {
 			/* Location (Latitude/Longitude). */

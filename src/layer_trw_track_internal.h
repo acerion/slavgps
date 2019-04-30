@@ -108,7 +108,7 @@ namespace SlavGPS {
 
 		Altitude altitude;      /* Invalid/unavailable by default. */
 		double speed = NAN;  	/* NAN if data unavailable. */
-		double course = NAN;    /* NAN if data unavailable. */
+		Angle course;           /* Invalid if data unavailable. Invalid by default. */
 
 		unsigned int nsats = 0;     /* Number of satellites used. 0 if data unavailable. */
 
