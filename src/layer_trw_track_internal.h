@@ -396,6 +396,8 @@ namespace SlavGPS {
 
 		void remove_last_trackpoint(void);
 
+		void prepare_for_profile(void);
+
 #ifdef VIK_CONFIG_GOOGLE
 		bool is_valid_google_route();
 #endif

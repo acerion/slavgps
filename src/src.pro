@@ -48,6 +48,7 @@ SOURCES += main.cpp \
     external_tool.cpp \
     external_tool_datasources.cpp \
     external_tools.cpp \
+    astro.cpp \
     bing.cpp \
     google.cpp \
     googlesearch.cpp \
@@ -176,6 +177,7 @@ HEADERS += window.h \
     external_tool.h \
     external_tool_datasources.h \
     external_tools.h \
+    astro.h \
     bing.h \
     google.h \
     googlesearch.h \

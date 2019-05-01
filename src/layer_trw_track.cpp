@@ -66,6 +66,7 @@
 #include "file.h"
 #include "acquire.h"
 #include "tree_item_list.h"
+#include "astro.h"
 
 
 
@@ -3273,13 +3274,10 @@ void Track::open_astro_cb(void)
 		const QString time_buf = tp->timestamp.strftime_utc("%H:%M:%S");
 
 		const LatLon ll = tp->coord.get_latlon();
-		char *lat_str = convert_to_dms(ll.lat);
-		char *lon_str = convert_to_dms(ll.lon);
-		char alt_buf[20];
-		snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(tp->altitude.get_value()));
-		parent_layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
-		std::free(lat_str);
-		std::free(lon_str);
+		const QString lat_str = Astro::convert_to_dms(ll.lat);
+		const QString lon_str = Astro::convert_to_dms(ll.lon);
+		const QString alt_str = QString("%1").arg((int)round(tp->altitude.get_value()));
+		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
 		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
 	}
@@ -4774,4 +4772,12 @@ void Track::list_dialog(QString const & title, Layer * layer, const QString & ty
 
 	TreeItemListDialogHelper<Track *> dialog_helper;
 	dialog_helper.show_dialog(title, view_format, tree_items, window);
+}
+
+
+
+
+void Track::prepare_for_profile(void)
+{
+	this->track_length_including_gaps = this->get_length_value_including_gaps();
 }

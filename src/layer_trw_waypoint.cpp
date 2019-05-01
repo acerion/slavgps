@@ -50,6 +50,7 @@
 #include "geotag_exif.h"
 #include "preferences.h"
 #include "application_state.h"
+#include "astro.h"
 
 
 
@@ -545,13 +546,10 @@ void Waypoint::open_astro_cb(void)
 		const QString time_buf = this->timestamp.strftime_utc("%H:%M:%S");
 
 		const LatLon ll = this->coord.get_latlon();
-		char *lat_str = convert_to_dms(ll.lat);
-		char *lon_str = convert_to_dms(ll.lon);
-		char alt_buf[20];
-		snprintf(alt_buf, sizeof(alt_buf), "%d", (int) round(this->altitude.get_value()));
-		parent_layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
-		free(lat_str);
-		free(lon_str);
+		const QString lat_str = Astro::convert_to_dms(ll.lat);
+		const QString lon_str = Astro::convert_to_dms(ll.lon);
+		const QString alt_str = QString("%1").arg((int) round(this->altitude.get_value()));
+		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
 		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());
 	}

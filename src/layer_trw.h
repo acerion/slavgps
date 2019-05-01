@@ -256,7 +256,6 @@ namespace SlavGPS {
 		void delete_selected_tp(Track * trk);
 
 		void diary_open(const QString & date_str);
-		void astro_open(const QString & date_str, const QString & time_str, char const * lat_str, char const * lon_str, char const * alt_str);
 
 
 
@@ -503,9 +502,6 @@ namespace SlavGPS {
 
 
 
-
-
-	char * convert_to_dms(double dec);
 
 	bool is_valid_geocache_name(const char * str);
 

@@ -1560,11 +1560,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 	this->tabs = new QTabWidget();
 	this->tabs->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-
-	/* NB This value not shown yet - but is used by internal calculations. */
-	/* TODO_IMPROVEMENT: move this calculation into Track class. */
-	this->trk->track_length_including_gaps = this->trk->get_length_value_including_gaps();
-
+	this->trk->prepare_for_profile();
 
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
 		ProfileView * graph = *iter;

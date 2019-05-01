@@ -72,6 +72,7 @@
 #include "osm_traces.h"
 #include "layer_gps.h"
 #include "layer_trw_stats.h"
+#include "astro.h"
 #include "geonames_search.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "layer_trw_geotag.h"
@@ -436,10 +437,6 @@ static QString diary_program;
 
 bool have_geojson_export = false;
 
-bool g_have_astro_program = false;
-static QString astro_program;
-#define VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM "external_astro_program"
-
 
 
 
@@ -502,21 +499,7 @@ void LayerTRW::init(void)
 		have_geojson_export = true;
 	}
 
-	/* Astronomy Domain. */
-	if (!ApplicationState::get_string(VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM, astro_program)) {
-#ifdef WINDOWS
-		//astro_program = "C:\\Program Files\\Stellarium\\stellarium.exe";
-		astro_program = "C:/Progra~1/Stellarium/stellarium.exe";
-#else
-		astro_program = "stellarium";
-#endif
-	} else {
-		/* User specified so assume it works. */
-		g_have_astro_program = true;
-	}
-	if (!QStandardPaths::findExecutable(astro_program).isEmpty()) {
-		g_have_astro_program = true;
-	}
+	Astro::init();
 }
 
 
@@ -3027,83 +3010,6 @@ void LayerTRW::diary_open(const QString & date_str)
 		Dialog::error(tr("Could not launch %1 to open file.").arg(diary_program), this->get_window());
 		g_error_free(err);
 	}
-}
-
-
-
-
-/**
- * Open a program at the specified date
- * Mainly for Stellarium - http://stellarium.org/
- * But could work with any program that accepts the same command line options...
- * FUTURE: Allow configuring of command line options + format or parameters
- */
-void LayerTRW::astro_open(const QString & date_str, const QString & time_str, char const * lat_str, char const * lon_str, char const * alt_str)
-{
-	GError *err = NULL;
-	char * ini_file_path;
-	int fd = g_file_open_tmp("vik-astro-XXXXXX.ini", &ini_file_path, &err);
-	if (fd < 0) {
-		fprintf(stderr, "WARNING: %s: Failed to open temporary file: %s\n", __FUNCTION__, err->message);
-		g_clear_error(&err);
-		return;
-	}
-	const QString cmd = QString("%1 -c %2 --full-screen no --sky-date %3 --sky-time %4 --latitude %5 --longitude %6 --altitude %7")
-		.arg(astro_program)
-		.arg(ini_file_path)
-		.arg(date_str)
-		.arg(time_str)
-		.arg(lat_str)
-		.arg(lon_str)
-		.arg(alt_str);
-
-	qDebug() << SG_PREFIX_I << "Command is " << cmd;
-
-	if (!g_spawn_command_line_async(cmd.toUtf8().constData(), &err)) {
-		Dialog::error(tr("Could not launch %1").arg(astro_program), this->get_window());
-		fprintf(stderr, "WARNING: %s\n", err->message);
-		g_error_free(err);
-	}
-	Util::add_to_deletion_list(QString(ini_file_path));
-	free(ini_file_path);
-}
-
-
-
-
-/*
-  TODO_MAYBE: move to common file, e.g. to astro.cpp.
-
-  Format of stellarium lat & lon seems designed to be particularly awkward
-  who uses ' & " in the parameters for the command line?!
-  -1d4'27.48"
-  +53d58'16.65"
-*/
-char * SlavGPS::convert_to_dms(double dec)
-{
-	char sign_c = ' ';
-	if (dec > 0) {
-		sign_c = '+';
-	} else if (dec < 0) {
-		sign_c = '-';
-	} else { /* Nul value. */
-		sign_c = ' ';
-	}
-
-	/* Degrees. */
-	double tmp = fabs(dec);
-	int val_d = (int)tmp;
-
-	/* Minutes. */
-	tmp = (tmp - val_d) * 60;
-	int val_m = (int)tmp;
-
-	/* Seconds. */
-	double val_s = (tmp - val_m) * 60;
-
-	/* Format. */
-	char * result = g_strdup_printf("%c%dd%d\\\'%.4f\\\"", sign_c, val_d, val_m, val_s);
-	return result;
 }
 
 
