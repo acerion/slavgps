@@ -1936,10 +1936,10 @@ LayerGPS::LayerGPS()
 		this->trw_children[i] = new LayerTRW();
 
 		/* No cutting or deleting of TRW sublayers. */
-		const TreeItem::MenuOperation default_ops = this->trw_children[i]->get_menu_operation_ids();
-		const TreeItem::MenuOperation new_ops = operator_bit_and(default_ops, operator_bit_not(operator_bit_or(TreeItem::MenuOperation::Cut, TreeItem::MenuOperation::Delete)));
-
-		this->trw_children[i]->set_menu_operation_ids(new_ops);
+		MenuOperation ops = this->trw_children[i]->get_menu_operation_ids();
+		ops = (MenuOperation) (ops & (~MenuOperationCut));
+		ops = (MenuOperation) (ops & (~MenuOperationDelete));
+		this->trw_children[i]->set_menu_operation_ids(ops);
 	}
 }
 

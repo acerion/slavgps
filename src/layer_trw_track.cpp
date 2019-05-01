@@ -287,6 +287,8 @@ Track::Track(bool is_route)
 	this->ref_count = 1;
 
 	this->has_properties_dialog = true;
+
+	this->menu_operation_ids = (MenuOperation) (MenuOperationCut | MenuOperationCopy | MenuOperationDelete);
 }
 
 
@@ -2847,6 +2849,8 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 	/* Common "Edit" items. */
 	{
+		assert (this->menu_operation_ids == (MenuOperationCut | MenuOperationCopy | MenuOperationDelete));
+
 		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QObject::tr("Cut"));
 		QObject::connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
 

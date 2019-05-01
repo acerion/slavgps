@@ -129,6 +129,19 @@ namespace SlavGPS {
 
 
 
+	/* Which standard operations shall be present in context menu for a tree item? */
+	enum MenuOperation : uint16_t {
+		MenuOperationNone       = 0x0000,
+		MenuOperationProperties = 0x0001,
+		MenuOperationCut        = 0x0002,
+		MenuOperationCopy       = 0x0004,
+		MenuOperationPaste      = 0x0008,
+		MenuOperationDelete     = 0x0010,
+		MenuOperationNew        = 0x0020,
+		MenuOperationAll        = 0xffff,
+	};
+
+
 
 	class TreeItem : public QObject {
 		Q_OBJECT
@@ -139,19 +152,6 @@ namespace SlavGPS {
 	public:
 		TreeItem();
 		~TreeItem();
-
-
-		/* Which standard operations shall be present in context menu for a tree item? */
-		enum MenuOperation {
-			None       = 0x0000,
-			Properties = 0x0001,
-			Cut        = 0x0002,
-			Copy       = 0x0004,
-			Paste      = 0x0008,
-			Delete     = 0x0010,
-			New        = 0x0020,
-			All        = 0xffff,
-		};
 
 
 		TreeIndex const & get_index(void);
@@ -224,8 +224,8 @@ namespace SlavGPS {
 		TreeItem * get_parent_tree_item(void) const;
 
 
-		TreeItem::MenuOperation get_menu_operation_ids(void) const;
-		void set_menu_operation_ids(TreeItem::MenuOperation new_value);
+		MenuOperation get_menu_operation_ids(void) const;
+		void set_menu_operation_ids(MenuOperation new_value);
 
 		/* See if two items are exactly the same object (i.e. whether pointers point to the same object).
 		   Return true if this condition is true.
@@ -271,7 +271,7 @@ namespace SlavGPS {
 
 		/* Menu items (actions) to be created and put into a
 		   context menu for given tree item type. */
-		TreeItem::MenuOperation menu_operation_ids = TreeItem::MenuOperation::All;
+		MenuOperation menu_operation_ids = MenuOperationAll;
 
 		Time timestamp; /* Invalid by default. */
 
@@ -281,13 +281,6 @@ namespace SlavGPS {
 	signals:
 		void tree_item_changed(const QString & tree_item_name);
 	};
-
-	/* These silly names are a workaroud for clash of operator definitions.
-	   https://stackoverflow.com/questions/10755058/qflags-enum-type-conversion-fails-all-of-a-sudden */
-	TreeItem::MenuOperation operator_bit_and(const TreeItem::MenuOperation arg1, const TreeItem::MenuOperation arg2);
-	TreeItem::MenuOperation operator_bit_or(const TreeItem::MenuOperation arg1, const TreeItem::MenuOperation arg2);
-	TreeItem::MenuOperation operator_bit_not(const TreeItem::MenuOperation arg);
-
 
 
 

@@ -81,9 +81,9 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 		Layer * layer = item->to_layer();
 
 		/* "New layer -> layer types" submenu. */
-		TreeItem::MenuOperation operations = layer->get_menu_operation_ids();
-		operations = operator_bit_or(operations, TreeItem::MenuOperation::New);
-		//this->context_menu_add_standard_items(&menu, operations);
+		MenuOperation ops = layer->get_menu_operation_ids();
+		ops = (MenuOperation) (ops | MenuOperationNew);
+		//this->context_menu_add_standard_items(&menu, ops);
 
 		/* Layer-type-specific menu items. */
 		layer->add_menu_items(menu);

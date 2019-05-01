@@ -26,6 +26,11 @@
 
 
 
+#include <cassert>
+
+
+
+
 #include <QDebug>
 
 
@@ -75,7 +80,7 @@ LayerTRWWaypoints::LayerTRWWaypoints()
 	this->editable = false;
 	this->name_generator.set_parent_sublayer(this);
 	this->name = tr("Waypoints");
-	this->menu_operation_ids = TreeItem::MenuOperation::None;
+	this->menu_operation_ids = MenuOperationPaste;
 }
 
 
@@ -589,7 +594,8 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 	QAction * qa = NULL;
 	bool rv = false;
 
-	/* TODO_LATER: This overrides/conflicts with "this->menu_operation_ids = TreeItem::MenuOperation::None" operation from constructor. */
+	assert (this->menu_operation_ids == MenuOperationPaste);
+
 	qa = menu.addAction(QIcon::fromTheme("edit-paste"), tr("Paste"));
 	/* TODO_2_LATER: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 	qa->setEnabled(Clipboard::get_current_type() == ClipboardDataType::Sublayer);
