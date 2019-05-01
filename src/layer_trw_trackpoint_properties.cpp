@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +35,7 @@
 
 
 #include "ui_builder.h"
+#include "layer_trw.h"
 #include "layer_trw_trackpoint_properties.h"
 #include "layer_trw_track_internal.h"
 #include "vikutils.h"
@@ -58,7 +60,7 @@ using namespace SlavGPS;
 /**
    Update contents of timestamp widget
 */
-void PropertiesDialogTP::update_timestamp_widget(Trackpoint * tp)
+void TpPropertiesDialog::update_timestamp_widget(Trackpoint * tp)
 {
 	if (tp->timestamp.is_valid()) {
 		this->timestamp_widget->set_timestamp(tp->timestamp, tp->coord);
@@ -70,9 +72,9 @@ void PropertiesDialogTP::update_timestamp_widget(Trackpoint * tp)
 
 
 
-void PropertiesDialogTP::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
+void TpPropertiesDialog::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
 {
-	if (!this->cur_tp) {
+	if (!this->current_tp) {
 		return;
 	}
 	if (this->sync_to_current_tp_block) {
@@ -80,11 +82,11 @@ void PropertiesDialogTP::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 
-	const Coord new_coord(LatLon(this->lat_entry->value(), this->lon_entry->value()), this->cur_tp->coord.mode);
+	const Coord new_coord(LatLon(this->lat_entry->value(), this->lon_entry->value()), this->current_tp->coord.mode);
 
 
-	const bool redraw_track = Coord::distance(this->cur_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
-	this->cur_tp->coord = new_coord;
+	const bool redraw_track = Coord::distance(this->current_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
+	this->current_tp->coord = new_coord;
 
 
 	this->timestamp_widget->set_coord(new_coord);
@@ -95,16 +97,16 @@ void PropertiesDialogTP::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
 		/* Tell parent code that a track has changed its
 		   coordinates (one of track's trackpoints has changed
 		   its coordinates). */
-		emit this->trackpoint_coordinates_changed(SG_TRACK_CHANGED);
+		emit this->trackpoint_coordinates_changed();
 	}
 }
 
 
 
 
-void PropertiesDialogTP::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
+void TpPropertiesDialog::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 {
-	if (!this->cur_tp) {
+	if (!this->current_tp) {
 		return;
 	}
 	if (this->sync_to_current_tp_block) {
@@ -112,14 +114,14 @@ void PropertiesDialogTP::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 	/* Always store internally in metres. */
-	this->cur_tp->altitude = this->alt->get_value_iu().get_altitude();
+	this->current_tp->altitude = this->alt->get_value_iu().get_altitude();
 }
 
 
 
 
 /* Set timestamp of current trackpoint. */
-void PropertiesDialogTP::sync_timestamp_entry_to_current_tp_cb(time_t timestamp_value)
+void TpPropertiesDialog::sync_timestamp_entry_to_current_tp_cb(time_t timestamp_value)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp_value;
 
@@ -130,7 +132,7 @@ void PropertiesDialogTP::sync_timestamp_entry_to_current_tp_cb(time_t timestamp_
 
 
 /* Clear timestamp of current trackpoint. */
-void PropertiesDialogTP::sync_empty_timestamp_entry_to_current_tp_cb(void)
+void TpPropertiesDialog::sync_empty_timestamp_entry_to_current_tp_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
 
@@ -140,9 +142,9 @@ void PropertiesDialogTP::sync_empty_timestamp_entry_to_current_tp_cb(void)
 
 
 
-bool PropertiesDialogTP::set_timestamp_of_current_tp(const Time & timestamp)
+bool TpPropertiesDialog::set_timestamp_of_current_tp(const Time & timestamp)
 {
-	if (!this->cur_tp) {
+	if (!this->current_tp) {
 		return false;
 	}
 	if (this->sync_to_current_tp_block) {
@@ -155,7 +157,7 @@ bool PropertiesDialogTP::set_timestamp_of_current_tp(const Time & timestamp)
 	   consecutive values.  Should we now warn user about unsorted
 	   timestamps in consecutive trackpoints? */
 
-	this->cur_tp->set_timestamp(timestamp);
+	this->current_tp->set_timestamp(timestamp);
 
 	return true;
 }
@@ -163,16 +165,16 @@ bool PropertiesDialogTP::set_timestamp_of_current_tp(const Time & timestamp)
 
 
 
-bool PropertiesDialogTP::sync_name_entry_to_current_tp_cb(const QString & new_name) /* Slot. */
+bool TpPropertiesDialog::sync_name_entry_to_current_tp_cb(const QString & new_name) /* Slot. */
 {
-	if (!this->cur_tp) {
+	if (!this->current_tp) {
 		return false;
 	}
 	if (this->sync_to_current_tp_block) {
 		return false;
 	}
 
-	this->cur_tp->set_name(new_name);
+	this->current_tp->set_name(new_name);
 
 	return true;
 }
@@ -180,9 +182,10 @@ bool PropertiesDialogTP::sync_name_entry_to_current_tp_cb(const QString & new_na
 
 
 
-void PropertiesDialogTP::reset_dialog_data(void)
+void TpPropertiesDialog::reset_dialog_data(void)
 {
-	this->cur_tp = NULL;
+	this->current_tp = NULL;
+	this->current_track = NULL;
 
 	this->trkpt_name->insert("");
 	this->trkpt_name->setEnabled(false);
@@ -226,7 +229,7 @@ void PropertiesDialogTP::reset_dialog_data(void)
  *
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  */
-void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route)
+void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route)
 {
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
@@ -276,17 +279,17 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->sync_to_current_tp_block = false; /* Can now update after setting data. */
 
 
-	if (this->cur_tp) {
-		const Distance diff = Coord::distance_2(tp->coord, this->cur_tp->coord);
+	if (this->current_tp) {
+		const Distance diff = Coord::distance_2(tp->coord, this->current_tp->coord);
 		this->diff_dist->setText(diff.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 
-		if (tp->timestamp.is_valid() && this->cur_tp->timestamp.is_valid()) {
-			this->diff_time->setText(tr("%1 s").arg((long) (tp->timestamp.get_value() - this->cur_tp->timestamp.get_value())));
-			if (tp->timestamp == this->cur_tp->timestamp) {
+		if (tp->timestamp.is_valid() && this->current_tp->timestamp.is_valid()) {
+			this->diff_time->setText(tr("%1 s").arg((long) (tp->timestamp.get_value() - this->current_tp->timestamp.get_value())));
+			if (tp->timestamp == this->current_tp->timestamp) {
 				this->diff_speed->setText("--");
 			} else {
-				const double dist = Coord::distance(tp->coord, this->cur_tp->coord);
-				const Time duration = Time::get_abs_diff(tp->timestamp, this->cur_tp->timestamp);
+				const double dist = Coord::distance(tp->coord, this->current_tp->coord);
+				const Time duration = Time::get_abs_diff(tp->timestamp, this->current_tp->timestamp);
 				const Speed tmp_speed(dist / duration.get_value(), SpeedUnit::MetresPerSecond);
 				this->diff_speed->setText(tmp_speed.to_string());
 			}
@@ -305,13 +308,14 @@ void PropertiesDialogTP::set_dialog_data(Track * track, const TrackPoints::itera
 	this->sat->setText(tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode));
 
 
-	this->cur_tp = tp;
+	this->current_tp = tp;
+	this->current_track = track;
 }
 
 
 
 
-void PropertiesDialogTP::set_dialog_title(const QString & track_name)
+void TpPropertiesDialog::set_dialog_title(const QString & track_name)
 {
 	this->setWindowTitle(QObject::tr("%1: Trackpoint").arg(track_name));
 }
@@ -319,20 +323,15 @@ void PropertiesDialogTP::set_dialog_title(const QString & track_name)
 
 
 
-PropertiesDialogTP::PropertiesDialogTP()
-{
-}
-
-
-
-
-PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent_widget)
+TpPropertiesDialog::TpPropertiesDialog(QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(tr("Trackpoint"));
 
 	this->button_box = new QDialogButtonBox();
 
-	this->button_close_dialog = this->button_box->addButton(tr("&Close"), QDialogButtonBox::ActionRole);
+
+	this->button_close_dialog = this->button_box->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
+
 	this->button_insert_tp_after = this->button_box->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
 	this->button_insert_tp_after->setIcon(QIcon::fromTheme("list-add"));
 	this->button_delete_current_tp = this->button_box->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
@@ -344,21 +343,31 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 	this->button_go_forward->setIcon(QIcon::fromTheme("go-next"));
 
 
+	 /* Without this connection the dialog wouldn't close.  Button
+	    box is sending accepted() signal thanks to AcceptRole of
+	    "Close" button, configured above. */
+	connect(this->button_box, SIGNAL (accepted()), this, SLOT (accept()));
 
+
+	/* Use signal mapper only for buttons that do some action
+	   related to track/trackpoint.  Previously I've used the
+	   signal mapper also for "Close" button, but that led to some
+	   crash of app (probably signal going back and forth between
+	   the dialog and trw layer), so I removed it. */
 	this->signal_mapper = new QSignalMapper(this);
-	connect(this->button_close_dialog,      SIGNAL (released()), signal_mapper, SLOT (map()));
 	connect(this->button_insert_tp_after,   SIGNAL (released()), signal_mapper, SLOT (map()));
 	connect(this->button_delete_current_tp, SIGNAL (released()), signal_mapper, SLOT (map()));
 	connect(this->button_split_track,       SIGNAL (released()), signal_mapper, SLOT (map()));
 	connect(this->button_go_back,           SIGNAL (released()), signal_mapper, SLOT (map()));
 	connect(this->button_go_forward,        SIGNAL (released()), signal_mapper, SLOT (map()));
 
-	this->signal_mapper->setMapping(this->button_close_dialog,      SG_TRACK_CLOSE_DIALOG);
-	this->signal_mapper->setMapping(this->button_insert_tp_after,   SG_TRACK_INSERT_TP_AFTER);
-	this->signal_mapper->setMapping(this->button_delete_current_tp, SG_TRACK_DELETE_SELECTED_TP);
-	this->signal_mapper->setMapping(this->button_split_track,       SG_TRACK_SPLIT_TRACK_AT_SELECTED_TP);
-	this->signal_mapper->setMapping(this->button_go_back,           SG_TRACK_GO_BACK);
-	this->signal_mapper->setMapping(this->button_go_forward,        SG_TRACK_GO_FORWARD);
+	this->signal_mapper->setMapping(this->button_insert_tp_after,   (int) TpPropertiesDialog::Action::InsertTpAfter);
+	this->signal_mapper->setMapping(this->button_delete_current_tp, (int) TpPropertiesDialog::Action::DeleteSelectedTp);
+	this->signal_mapper->setMapping(this->button_split_track,       (int) TpPropertiesDialog::Action::SplitAtSelectedTp);
+	this->signal_mapper->setMapping(this->button_go_back,           (int) TpPropertiesDialog::Action::GoBack);
+	this->signal_mapper->setMapping(this->button_go_forward,        (int) TpPropertiesDialog::Action::GoForward);
+
+	connect(this->signal_mapper, SIGNAL (mapped(int)), this, SLOT (clicked_cb(int)));
 
 
 	this->vbox = new QVBoxLayout;
@@ -469,6 +478,76 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent_widget) : QDialog(parent
 
 
 
-PropertiesDialogTP::~PropertiesDialogTP()
+TpPropertiesDialog::~TpPropertiesDialog()
 {
+}
+
+
+
+
+void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
+{
+	qDebug() << SG_PREFIX_I << "Handling dialog action" << action;
+
+	Track * track = this->current_track;
+	if (!track) {
+		qDebug() << SG_PREFIX_N << "Not handling action, no current track";
+		return;
+	}
+	LayerTRW * trw = (LayerTRW *) track->get_owning_layer();
+	if (!trw) {
+		qDebug() << SG_PREFIX_N << "Not handling action, no current trw layer";
+		return;
+	}
+
+
+	switch ((TpPropertiesDialog::Action) action) {
+	case TpPropertiesDialog::Action::SplitAtSelectedTp:
+		if (sg_ret::ok != track->split_at_selected_trackpoint_cb()) {
+			break;
+		}
+		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		break;
+
+	case TpPropertiesDialog::Action::DeleteSelectedTp:
+		if (!track->has_selected_tp()) {
+			return;
+		}
+		trw->delete_selected_tp(track);
+
+		if (track->has_selected_tp()) {
+			/* Update Trackpoint Properties with the available adjacent trackpoint. */
+			this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		}
+
+		track->emit_tree_item_changed("Indicating deletion of trackpoint");
+		break;
+
+	case TpPropertiesDialog::Action::GoForward:
+		if (sg_ret::ok != track->move_selected_tp_forward()) {
+			break;
+		}
+
+		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		track->emit_tree_item_changed("Indicating going forward in track");
+		break;
+
+	case TpPropertiesDialog::Action::GoBack:
+		if (sg_ret::ok != track->move_selected_tp_back()) {
+			break;
+		}
+
+		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		track->emit_tree_item_changed("TRW - trackpoint properties - go back");
+		break;
+
+	case TpPropertiesDialog::Action::InsertTpAfter:
+		/* This method makes necessary checks of selected trackpoint.
+		   It also triggers redraw of layer. */
+		track->create_tp_next_to_selected_tp(false);
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected dialog action" << action;
+	}
 }

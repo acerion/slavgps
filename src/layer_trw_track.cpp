@@ -4538,7 +4538,7 @@ void LayerTRW::delete_selected_tp(Track * track)
 		track->set_selected_tp(new_tp_iter);
 		track->recalculate_bbox();
 	} else {
-		this->cancel_current_tp(false);
+		this->cancel_current_tp();
 	}
 }
 

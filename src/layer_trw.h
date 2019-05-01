@@ -65,7 +65,7 @@ namespace SlavGPS {
 	class Track;
 	class TrackpointSearch;
 	class WaypointSearch;
-	class PropertiesDialogTP;
+	class TpPropertiesDialog;
 	class DataSource;
 	enum class TreeViewSortOrder;
 	enum class LayerDataReadStatus;
@@ -287,7 +287,7 @@ namespace SlavGPS {
 
 		bool uniquify(void);
 
-		void tpwin_update_dialog_data();
+		void tpwin_update_dialog_data(Track * trk);
 
 
 		int get_track_thickness();
@@ -303,7 +303,7 @@ namespace SlavGPS {
 
 
 		/* This should be private. */
-		void cancel_current_tp(bool destroy);
+		void cancel_current_tp(void);
 		void tpwin_response(int response);
 		void update_statusbar();
 
@@ -349,7 +349,7 @@ namespace SlavGPS {
 
 		bool moving_wp = false;
 
-		PropertiesDialogTP * tpwin = NULL;
+		TpPropertiesDialog * tpwin = NULL;
 
 		/* Track editing tool -- more specifically, moving tps. */
 		bool moving_tp = false;
@@ -387,9 +387,6 @@ namespace SlavGPS {
 
 
 	public slots:
-		void trackpoint_properties_cb(int response);
-
-
 
 		/* Context menu callbacks. */
 
@@ -471,6 +468,9 @@ namespace SlavGPS {
 		void child_tree_item_changed_cb(const QString & child_tree_item_name);
 
 		void wp_image_cache_add(const CachedPixmap & cached_pixmap);
+
+		void on_tpwin_closed_cb(void);
+		void on_tpwin_tp_coordinates_changed_cb(void);
 
 
 	private:

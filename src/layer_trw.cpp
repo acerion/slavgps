@@ -129,11 +129,6 @@ extern SelectedTreeItems g_selected;
 
 
 
-static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
-
-
-
-
 /****** PARAMETERS ******/
 
 enum {
@@ -1541,7 +1536,7 @@ void LayerTRW::reset_internal_selections(void)
 {
 	this->reset_edited_track();
 	this->reset_edited_wp();
-	this->cancel_current_tp(false);
+	this->cancel_current_tp();
 }
 
 
@@ -2271,7 +2266,7 @@ sg_ret LayerTRW::add_route(Track * trk)
 void LayerTRW::deselect_current_trackpoint(Track * trk)
 {
 	if (this->get_edited_track() == trk) {
-		this->cancel_current_tp(false);
+		this->cancel_current_tp();
 	}
 }
 
@@ -2543,7 +2538,7 @@ void LayerTRW::delete_all_routes()
 {
 	this->route_finder_added_track = NULL;
 	if (this->get_edited_track()) {
-		this->cancel_current_tp(false);
+		this->cancel_current_tp();
 		this->reset_edited_track();
 	}
 
@@ -2571,7 +2566,7 @@ void LayerTRW::delete_all_tracks()
 {
 	this->route_finder_added_track = NULL;
 	if (this->get_edited_track()) {
-		this->cancel_current_tp(false);
+		this->cancel_current_tp();
 		this->reset_edited_track();
 	}
 
@@ -3192,23 +3187,30 @@ bool SlavGPS::is_valid_geocache_name(const char * str)
 
 
 
-static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy)
+void LayerTRW::on_tpwin_closed_cb(void)
 {
-	layer->cancel_current_tp(destroy);
+	if (this->tpwin) {
+		this->tpwin = NULL;
+	}
+
+	this->cancel_current_tp();
 }
 
 
 
 
-void LayerTRW::cancel_current_tp(bool destroy)
+void LayerTRW::on_tpwin_tp_coordinates_changed_cb(void)
+{
+	this->emit_tree_item_changed("Indicating change of edited trackpoint's coordinates");
+}
+
+
+
+
+void LayerTRW::cancel_current_tp(void)
 {
 	if (this->tpwin) {
-		if (destroy) {
-			delete this->tpwin;
-			this->tpwin = NULL;
-		} else {
-			this->tpwin->reset_dialog_data();
-		}
+		this->tpwin->reset_dialog_data();
 	}
 
 	Track * track = this->get_edited_track();
@@ -3223,9 +3225,8 @@ void LayerTRW::cancel_current_tp(bool destroy)
 
 
 
-void LayerTRW::tpwin_update_dialog_data()
+void LayerTRW::tpwin_update_dialog_data(Track * track)
 {
-	Track * track = this->get_edited_track();
 	if (track) {
 		/* Notional center of a track is simply an average of its bounding box extremities. */
 		const LatLon ll_center = track->bbox.get_center_lat_lon(); /* TODO_MAYBE: this variable is unused. */
@@ -3236,98 +3237,12 @@ void LayerTRW::tpwin_update_dialog_data()
 
 
 
-void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
-{
-	assert (this->tpwin != NULL);
-
-	Track * track = this->get_edited_track();
-
-	switch (response) {
-	case SG_TRACK_CLOSE_DIALOG:
-		this->cancel_current_tp(true);
-		//this->tpwin->reject();
-		break;
-
-	case SG_TRACK_SPLIT_TRACK_AT_SELECTED_TP:
-		if (!track) {
-			break;
-		}
-		if (sg_ret::ok != track->split_at_selected_trackpoint_cb()) {
-			break;
-		}
-		this->tpwin_update_dialog_data();
-		break;
-
-	case SG_TRACK_DELETE_SELECTED_TP:
-		if (!track) {
-			return;
-		}
-		if (!track->has_selected_tp()) {
-			return;
-		}
-		this->delete_selected_tp(track);
-
-		if (track->has_selected_tp()) {
-			/* Update Trackpoint Properties with the available adjacent trackpoint. */
-			this->tpwin_update_dialog_data();
-		}
-
-		this->emit_tree_item_changed("TRW - trackpoint properties - delete current");
-		break;
-
-	case SG_TRACK_GO_FORWARD:
-		if (!track) {
-			break;
-		}
-		if (sg_ret::ok != track->move_selected_tp_forward()) {
-			break;
-		}
-
-		this->tpwin_update_dialog_data();
-		this->emit_tree_item_changed("TRW - trackpoint properties - go forward"); /* TODO_LATER longone: either move or only update if tp is inside drawing window */
-		break;
-
-	case SG_TRACK_GO_BACK:
-		if (!track) {
-			break;
-		}
-		if (sg_ret::ok != track->move_selected_tp_back()) {
-			break;
-		}
-
-		this->tpwin_update_dialog_data();
-		this->emit_tree_item_changed("TRW - trackpoint properties - go back");
-		break;
-
-	case SG_TRACK_INSERT_TP_AFTER:
-		if (!track) {
-			break;
-		}
-		/* This method makes necessary checks of selected trackpoint.
-		   It also triggers redraw of layer. */
-		track->create_tp_next_to_selected_tp(false);
-		break;
-
-	case SG_TRACK_CHANGED:
-		this->emit_tree_item_changed("TRW - trackpoint properties - track changed");
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected dialog response" << response;
-	}
-}
-
-
-
-
 void LayerTRW::trackpoint_properties_show()
 {
 	if (!this->tpwin) {
-		this->tpwin = new PropertiesDialogTP(this->get_window());
-		connect(this->tpwin, SIGNAL (trackpoint_coordinates_changed(int)), this, SLOT (trackpoint_properties_cb(int)));
-		connect(this->tpwin->signal_mapper, SIGNAL (mapped(int)), this, SLOT (trackpoint_properties_cb(int)));
-
-		//QObject::connect(this->tpwin, SIGNAL("delete-event"), this, SLOT (trw_layer_cancel_current_tp_cb));
+		this->tpwin = new TpPropertiesDialog(this->get_window());
+		connect(this->tpwin, SIGNAL (accepted()), this, SLOT (on_tpwin_closed_cb())); /* "Close" button clicked in dialog. */
+		connect(this->tpwin, SIGNAL (trackpoint_coordinates_changed()), this, SLOT (on_tpwin_tp_coordinates_changed_cb()));
 	}
 	this->tpwin->show();
 
@@ -3341,7 +3256,7 @@ void LayerTRW::trackpoint_properties_show()
 		const GlobalPoint point_to_expose = SGUtils::coord_to_global_point(tp->coord, ThisApp::get_main_viewport());
 		Dialog::move_dialog(this->tpwin, point_to_expose, true);
 
-		this->tpwin_update_dialog_data();
+		this->tpwin_update_dialog_data(track);
 	}
 	/* Set layer name and TP data. */
 }

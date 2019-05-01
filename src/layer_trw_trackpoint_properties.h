@@ -63,33 +63,28 @@ namespace SlavGPS {
 
 
 
-	/* Dialog response codes. */
-	enum {
-		SG_TRACK_CLOSE_DIALOG,
-		SG_TRACK_INSERT_TP_AFTER,
-		SG_TRACK_DELETE_SELECTED_TP,
-		SG_TRACK_SPLIT_TRACK_AT_SELECTED_TP,
-		SG_TRACK_GO_BACK,
-		SG_TRACK_GO_FORWARD,
-
-		SG_TRACK_CHANGED
-	};
-
-
-
-
-	class PropertiesDialogTP : public QDialog {
+	class TpPropertiesDialog : public QDialog {
 		Q_OBJECT
 	public:
-		PropertiesDialogTP();
-		PropertiesDialogTP(QWidget * parent);
-		~PropertiesDialogTP();
+		TpPropertiesDialog(QWidget * parent = NULL);
+		~TpPropertiesDialog();
 
 		void set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route);
 		void reset_dialog_data(void);
 		void set_dialog_title(const QString & track_name);
 
-		QSignalMapper * signal_mapper = NULL;
+
+		/* Dialog action codes. */
+		enum class Action {
+			InsertTpAfter,
+			DeleteSelectedTp,
+			SplitAtSelectedTp,
+			GoBack,
+			GoForward,
+		};
+
+	public slots:
+		void clicked_cb(int response);
 
 	private slots:
 		void sync_latlon_entry_to_current_tp_cb(void);
@@ -100,15 +95,19 @@ namespace SlavGPS {
 
 	signals:
 		/* Coordinates of one of track's trackpoints has changed its coordinates. */
-		void trackpoint_coordinates_changed(int response);
+		void trackpoint_coordinates_changed(void);
 
 	private:
 		void update_timestamp_widget(Trackpoint * tp);
 
 		bool set_timestamp_of_current_tp(const Time & timestamp);
 
-		Trackpoint * cur_tp = NULL;
+		Trackpoint * current_tp = NULL;
+		Track * current_track = NULL;
+
 		bool sync_to_current_tp_block = false;
+
+		QSignalMapper * signal_mapper = NULL;
 
 		QDialogButtonBox * button_box = NULL;
 

@@ -192,7 +192,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 			track->recalculate_bbox();
 
 			if (this->tpwin) {
-				this->tpwin_update_dialog_data();
+				this->tpwin_update_dialog_data(track);
 			}
 		}
 	} else {
@@ -276,7 +276,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 			this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
 
 			if (this->tpwin) {
-				this->tpwin_update_dialog_data();
+				this->tpwin_update_dialog_data(tp_search.closest_track);
 			}
 
 			this->emit_tree_item_changed("Track has been selected with select tool click");
@@ -300,7 +300,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 			this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
 
 			if (this->tpwin) {
-				this->tpwin_update_dialog_data();
+				this->tpwin_update_dialog_data(tp_search.closest_track);
 			}
 
 			this->emit_tree_item_changed("Route has been selected with select tool click");
@@ -312,7 +312,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	   So unmark/deselect all "current"/"edited" elements of this layer. */
 	this->reset_edited_wp();
 	this->reset_edited_track();
-	this->cancel_current_tp(false);
+	this->cancel_current_tp();
 
 	/* Blank info. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
@@ -1333,7 +1333,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMous
 
 	/* Diff dist is diff from orig. */
 	if (trw->tpwin) {
-		trw->tpwin_update_dialog_data();
+		trw->tpwin_update_dialog_data(track);
 	}
 
 	trw->emit_tree_item_changed("TRW - edit trackpoint - handle mouse release");
