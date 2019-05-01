@@ -180,9 +180,6 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(avg_speed.convert_to_unit(speed_unit).to_string());
 
 
-	/* TODO_LATER: always round off height value output since sub unit accuracy is overkill. */
-
-
 
 	/* Minimum Altitude */
 	if (stats.min_alt.get_value() != VIK_VAL_MIN_ALT) {
@@ -270,21 +267,13 @@ void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisib
 
 void TRWStatsDialog::include_invisible_toggled_cb(int state)
 {
-	bool include_invisible = (bool) state;
+	const bool include_invisible = (bool) state;
 	qDebug() << SG_PREFIX_D << "Include invisible items:" << include_invisible;
 
-	/* Delete old list of items. */
-	this->tracks.clear();
-
-	/* Get the latest list of items to analyse. */
-	/* TODO_2_LATER: why do we need to get the latest list on checkbox toggle? */
-	if (this->layer->type == LayerType::TRW) {
-		((LayerTRW *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
-	} else if (layer->type == LayerType::Aggregate) {
-		((LayerAggregate *) this->layer)->get_tracks_list(this->tracks, this->type_id_string);
-	} else {
-		assert (0);
-	}
+	/* Re-use existing this->tracks. No need to re-get them from
+	   layers. this->tracks contains both visible and invisible
+	   tracks, so it's a matter of checking in collect_stats()
+	   which ones to include in stats. */
 
 	TrackStatistics stats;
 	this->collect_stats(stats, include_invisible);
