@@ -44,7 +44,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX " GoTo Tool:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "GoTo Tool"
 
 
 
@@ -112,9 +112,9 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 	GotoToolResult ret = GotoToolResult::Error;
 	LatLon lat_lon;
 
-	qDebug() << "DD" PREFIX << "raw goto name:" << name;
+	qDebug() << SG_PREFIX_D << "Raw goto name:" << name;
 	const QString escaped_name = Util::uri_escape(name);
-	qDebug() << "DD" PREFIX << "escaped goto name:" << escaped_name;
+	qDebug() << SG_PREFIX_D << "Escaped goto name:" << escaped_name;
 
 	const QString uri = QString(this->get_url_format()).arg(escaped_name);
 	DownloadHandle dl_handle(this->get_download_options());
@@ -126,7 +126,7 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 		goto done_no_file;
 	}
 
-	qDebug() << "DD" PREFIX << "temporary file:" << tmp_file.fileName();
+	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file.fileName();
 
 	if (this->parse_file_for_latlon(tmp_file, lat_lon)) {
 		*coord = Coord(lat_lon, viewport->get_coord_mode());

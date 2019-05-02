@@ -36,6 +36,7 @@
 
 #include "dir.h"
 #include "application_state.h"
+#include "globals.h"
 
 
 
@@ -45,7 +46,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": ApplicationState:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Application State"
 
 
 
@@ -88,11 +89,11 @@ bool ApplicationState::get_boolean(const char * name, bool * val)
 {
 	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
 	if (value.isNull()) {
-		qDebug() << "EE: ApplicationState: invalid boolean value read for key" << name;
+		qDebug() << SG_PREFIX_E << "Invalid boolean value read for key" << name;
 		return false;
 	} else {
 		*val = value.toBool();
-		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		qDebug() << SG_PREFIX_I << "Valid integer value read for key" << name << *val;
 		return true;
 	}
 }
@@ -112,11 +113,11 @@ bool ApplicationState::get_string(const char * name, QString & val)
 {
 	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
 	if (value.isNull()) {
-		qDebug() << "EE: ApplicationState: invalid string value read for key" << name;
+		qDebug() << SG_PREFIX_E << "Invalid string value read for key" << name;
 		return false;
 	} else {
 		val = value.toString();
-		qDebug() << "II: ApplicationState: valid integer value read for key" << name << val;
+		qDebug() << SG_PREFIX_I << "Valid integer value read for key" << name << val;
 		return true;
 	}
 }
@@ -136,11 +137,11 @@ bool ApplicationState::get_integer(const char * name, int * val)
 {
 	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
 	if (value.isNull()) {
-		qDebug() << "EE: ApplicationState: invalid integer value read for key" << name;
+		qDebug() << SG_PREFIX_E << "Invalid integer value read for key" << name;
 		return false;
 	} else {
 		*val = value.toInt();
-		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		qDebug() << SG_PREFIX_I << "Valid integer value read for key" << name << *val;
 		return true;
 	}
 }
@@ -160,11 +161,11 @@ bool ApplicationState::get_double(const char * name, double * val)
 {
 	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
 	if (value.isNull()) {
-		qDebug() << "EE: ApplicationState: invalid double value read for key" << name;
+		qDebug() << SG_PREFIX_E << "Invalid double value read for key" << name;
 		return false;
 	} else {
 		*val = value.toDouble();
-		qDebug() << "II: ApplicationState: valid integer value read for key" << name << *val;
+		qDebug() << SG_PREFIX_I << "Valid integer value read for key" << name << *val;
 		return true;
 	}
 }
@@ -187,16 +188,16 @@ bool ApplicationState::get_integer_list(const char * name, std::vector<int> & in
 {
 	const QVariant value = settings_file->value(VIKING_SETTINGS_GROUP + name);
 	if (value.isNull()) {
-		qDebug() << "EE: ApplicationState: invalid integer list value read for key" << name;
+		qDebug() << SG_PREFIX_E << "Invalid integer list value read for key" << name;
 		return false;
 	} else {
-		qDebug() << "II" PREFIX << "getting list of integers from file for key name" << name;
+		qDebug() << SG_PREFIX_I << "Getting list of integers from file for key name" << name;
 		QList<QVariant> list = value.toList();
 		integers.resize(list.size());
 		for (int i = 0; i < list.size(); i++) {
 			const int data = list.at(i).toInt();
 			integers.push_back(data);
-			qDebug() << data;
+			qDebug() << SG_PREFIX_I << data;
 		}
 		return true;
 	}

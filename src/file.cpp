@@ -82,7 +82,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "File"
-#define PREFIX ": File:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -466,7 +465,7 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 
 	default:
 		/* Other types should not appear in a file. */
-		qDebug() << "EE" PREFIX << "unexpected type id" << type_id;
+		qDebug() << SG_PREFIX_E << "Unexpected type id" << type_id;
 		break;
 	}
 
@@ -787,10 +786,10 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 			LayerAggregate * parent = (LayerAggregate *) read_parser.stack.second;
 			Layer * child = read_parser.stack.first;
 
-			//qDebug() << "DD" PREFIX << "will call parent Aggregate Layer's" << parent->name << "add_layer(" << child->name << ")";
+			//qDebug() << SG_PREFIX_D << "Will call parent Aggregate Layer's" << parent->name << "add_layer(" << child->name << ")";
 			//parent->add_layer(child, false);
 
-			//qDebug() << "DD" PREFIX << "will call child layer's" << child->name << "post_read()";
+			//qDebug() << SG_PREFIX_D << "Will call child layer's" << child->name << "post_read()";
 			//child->post_read(viewport, true);
 		}
 		read_parser.stack.pop();
@@ -897,7 +896,7 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, con
 	} else {
 		full_path = file_full_path;
 	}
-	qDebug() << "DD: VikFile: load: reading from file" << full_path;
+	qDebug() << SG_PREFIX_D << "Reading from file" << full_path;
 
 	QFile file(full_path);
 	if (!file.open(QIODevice::ReadOnly)) {
@@ -990,7 +989,7 @@ SaveStatus VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const 
 	} else {
 		full_path = file_full_path;
 	}
-	qDebug() << "DD: VikFile: load: saving to file" << full_path;
+	qDebug() << SG_PREFIX_D << "Saving to file" << full_path;
 
 	FILE * file = fopen(full_path.toUtf8().constData(), "w");
 	if (!file) {

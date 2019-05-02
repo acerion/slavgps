@@ -43,6 +43,7 @@
 
 
 #include "util.h"
+#include "globals.h"
 
 
 
@@ -52,7 +53,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Utils:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Utils"
 
 
 
@@ -65,7 +66,7 @@ static std::list<QString> deletion_list;
 int Util::get_number_of_threads(void)
 {
 	const int n_threads = QThread::idealThreadCount();
-	qDebug() << "DD" PREFIX << "there can be up to" << n_threads << "threads on this machine";
+	qDebug() << SG_PREFIX_D << "There can be up to" << n_threads << "threads on this machine";
 	return n_threads;
 }
 
@@ -165,7 +166,7 @@ void Util::remove_all_in_deletion_list(void)
 {
 	for (auto iter = deletion_list.begin(); iter != deletion_list.end(); iter++) {
 		if (!QDir::root().remove((*iter))) {
-			qDebug() << "WW: Utils: Failed to remove" << *iter;
+			qDebug() << SG_PREFIX_W << "Failed to remove" << *iter;
 		}
 	}
 	deletion_list.clear();
@@ -186,7 +187,7 @@ void Util::remove_all_in_deletion_list(void)
 bool Util::remove(const QString & file_full_path)
 {
 	if (1 /* vik_debug && vik_verbose */) {
-		qDebug() << "WW: Util: Remove: not removing file" << file_full_path;
+		qDebug() << SG_PREFIX_W << "Not removing file" << file_full_path;
 		return 0;
 	} else {
 		return QDir::root().remove(file_full_path);
@@ -199,7 +200,7 @@ bool Util::remove(const QString & file_full_path)
 bool Util::remove(QFile & file)
 {
 	if (1 /* vik_debug && vik_verbose */) {
-		qDebug() << "WW: Util: Remove: not removing file" << file.fileName();
+		qDebug() << SG_PREFIX_W << "Not removing file" << file.fileName();
 		return 0;
 	} else {
 		return file.remove();

@@ -63,7 +63,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "GoTo XML"
-#define PREFIX ": GoTo XML:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -184,7 +183,7 @@ bool MyHandler::endElement(const QString &namespaceURI, const QString &localName
 {
 	qDebug() << SG_PREFIX_I << "localName =" << localName << "qName =" << qName;
 	this->stack.pop_back();
-	qDebug() << "DD" PREFIX << "stack after popping =" << this->stack;
+	qDebug() << SG_PREFIX_D << "Stack after popping =" << this->stack;
 	return true;
 }
 
@@ -227,7 +226,7 @@ bool MyHandler::characters(const QString & ch)
 
 bool MyHandler::fatalError(const QXmlParseException & exception)
 {
-	qDebug() << "EE" PREFIX << exception.message() << exception.lineNumber() << exception.columnNumber();
+	qDebug() << SG_PREFIX_E << exception.message() << exception.lineNumber() << exception.columnNumber();
 	return true;
 }
 

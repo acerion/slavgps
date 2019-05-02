@@ -64,7 +64,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "GoTo"
-#define PREFIX ": GoTo:" << __FUNCTION__ << __LINE__ << ">"
 #define VIK_SETTINGS_GOTO_PROVIDER "goto_provider"
 
 
@@ -234,7 +233,7 @@ int goto_location_dialog(QString & new_location, const QString & initial_locatio
 
 	QString user_input = dialog.input_field.text();
 	if (user_input.isEmpty()) {
-		qDebug() << "EE: goto: can't get string" << dialog.input_field.text();
+		qDebug() << SG_PREFIX_E << "Can't get string" << dialog.input_field.text();
 		new_location = "";
 		return QDialog::Rejected;
 	} else {
@@ -447,7 +446,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
 		/* Try city name lookup. */
 		if (!city.isEmpty()) {
-			qDebug() << "DD" PREFIX << "found city" << city;
+			qDebug() << SG_PREFIX_D << "Found city" << city;
 			if (city != "(Unknown city)") {
 				Coord new_center;
 				if (get_coordinate_of(viewport, city, &new_center)) {
@@ -462,7 +461,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
 		/* Try country name lookup. */
 		if (!country.isEmpty()) {
-			qDebug() << "DD" PREFIX << "found country" << country;
+			qDebug() << SG_PREFIX_D << "Found country" << country;
 			if (country != "(Unknown Country)") {
 				Coord new_center;
 				if (get_coordinate_of(viewport, country, &new_center)) {

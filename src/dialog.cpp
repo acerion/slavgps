@@ -55,7 +55,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Dialog"
-#define PREFIX ": Dialog:" << __FUNCTION__ << __LINE__ << ">"
 
 
 

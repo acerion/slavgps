@@ -67,7 +67,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Map Source Slippy"
-#define PREFIX ": Map Source Slippy:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -82,7 +81,7 @@ MapSourceSlippy::MapSourceSlippy()
 
 MapSourceSlippy::MapSourceSlippy(MapTypeID new_map_type_id, const QString & new_label, const QString & new_server_hostname, const QString & new_server_path_format)
 {
-	qDebug() << "II" PREFIX << "called VikSlippy constructor with id" << (int) new_map_type_id;
+	qDebug() << SG_PREFIX_I << "Called VikSlippy constructor with id" << (int) new_map_type_id;
 
 	this->map_type_id = new_map_type_id;
 	this->label = new_label;
@@ -152,6 +151,6 @@ DownloadStatus MapSourceSlippy::download_tile(const TileInfo & src, const QStrin
 {
 	dl_handle->set_options(this->dl_options);
 	DownloadStatus result = dl_handle->perform_download(get_server_hostname(), get_server_path(src), dest_file_path, DownloadProtocol::HTTP);
-	qDebug() << "II: Map Source Slippy: download" << get_server_hostname() << get_server_path(src) << "->" << result;
+	qDebug() << SG_PREFIX_I << "Download" << get_server_hostname() << get_server_path(src) << "->" << result;
 	return result;
 }

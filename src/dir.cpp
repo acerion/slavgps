@@ -41,6 +41,7 @@
 
 
 #include "dir.h"
+#include "globals.h"
 
 
 
@@ -50,7 +51,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": SlavGPS Locations:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Locations"
 
 
 
@@ -89,7 +90,7 @@ QString SlavGPSLocations::build_final_name(const QString & base_dir)
 	QString full_dir_path = QDir::toNativeSeparators(base_dir + "/.viking");
 #endif
 
-	qDebug() << "II" PREFIX << "Returning newly constructed directory path" << full_dir_path;
+	qDebug() << SG_PREFIX_I << "Returning newly constructed directory path" << full_dir_path;
 	return full_dir_path;
 }
 
@@ -106,7 +107,7 @@ QString SlavGPSLocations::build_final_name(const QString & base_dir)
 QString SlavGPSLocations::get_config_dir_no_create(void)
 {
 	if (!SlavGPSLocations::config_dir.isEmpty()) {
-		qDebug() << "II" PREFIX << "Returning cached directory path" << SlavGPSLocations::config_dir;
+		qDebug() << SG_PREFIX_I << "Returning cached directory path" << SlavGPSLocations::config_dir;
 		return SlavGPSLocations::config_dir;
 	}
 
@@ -137,7 +138,7 @@ QString SlavGPSLocations::get_config_dir_no_create(void)
 
 
 	/* Fatal error. */
-	qDebug() << "EE" PREFIX << "Unable to find/create a base directory for .viking dir";
+	qDebug() << SG_PREFIX_E << "Unable to find/create a base directory for .viking dir";
 	SlavGPSLocations::config_dir = "";
 	return SlavGPSLocations::config_dir;
 }
@@ -149,14 +150,14 @@ QString SlavGPSLocations::get_config_dir(void)
 {
 	QString dir_path = SlavGPSLocations::get_config_dir_no_create();
 	if (dir_path.isEmpty()) {
-		qDebug() << "EE" PREFIX << "Returning empty directory path";
+		qDebug() << SG_PREFIX_E << "Returning empty directory path";
 		return dir_path;
 	}
 
 	if (0 != access(dir_path.toUtf8().constData(), F_OK)) {
-		qDebug() << "II" PREFIX << "Directory" << dir_path << "does not exist, will create one.";
+		qDebug() << SG_PREFIX_I << "Directory" << dir_path << "does not exist, will create one.";
 		if (0 != mkdir(dir_path.toUtf8().constData(), 0755)) {
-			qDebug() << "WW" PREFIX << "Failed to create directory" << dir_path;
+			qDebug() << SG_PREFIX_W << "Failed to create directory" << dir_path;
 		}
 	}
 	return dir_path;

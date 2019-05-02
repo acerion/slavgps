@@ -51,7 +51,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Google Search:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Google Search"
 
 
 
@@ -93,7 +93,7 @@ bool GotoToolGoogle::parse_file_for_latlon(QFile & file, LatLon & lat_lon)
 	off_t file_size = file.size();
 	unsigned char * file_contents = file.map(0, file_size, QFileDevice::MapPrivateOption);
 	if (!file_contents) {
-		qDebug() << "EE" PREFIX << "Can't map file" << file.fileName() << file.error();
+		qDebug() << SG_PREFIX_E << "Can't map file" << file.fileName() << file.error();
 		return false;
 	}
 

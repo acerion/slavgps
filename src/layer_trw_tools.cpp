@@ -76,7 +76,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer TRW Tools"
-#define PREFIX " Layer TRW Tools:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -333,7 +332,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, Viewport * viewport, LayerToolSelect * select_tool)
 {
 	/* Double-click will be handled by checking event->flags() in the function below, and calling proper handling method. */
-	qDebug() << "DD: Layer TRW:" << __FUNCTION__;
+	qDebug() << SG_PREFIX_D;
 	return this->handle_select_tool_click(ev, viewport, select_tool);
 }
 
@@ -760,7 +759,7 @@ static int draw_sync(LayerTRW * trw, Viewport * viewport, const QPixmap & pixmap
 {
 	if (1 /* trw->draw_sync_do*/ ) {
 		viewport->draw_pixmap(pixmap, 0, 0);
-		qDebug() << "SIGNAL:" PREFIX << "will emit 'tree_item_changed()' signal for" << trw->get_name();
+		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'tree_item_changed()' signal for" << trw->get_name();
 		emit trw->tree_item_changed(trw->get_name());
 #ifdef K_OLD_IMPLEMENTATION
 		/* Sometimes don't want to draw normally because another
@@ -913,7 +912,7 @@ ToolStatus LayerToolTRWNewTrack::handle_key_press(Layer * layer, QKeyEvent * ev)
 
 	/* Check of consistency between LayerTRW and the tool. */
 	if (true && !track) {
-		qDebug() << "EE: Layer TRW Tools: new track handle key press: creation-in-progress=true, but no track selected in layer";
+		qDebug() << SG_PREFIX_E << "New track handle key press: creation-in-progress=true, but no track selected in layer";
 		return ToolStatus::Ignored;
 	}
 

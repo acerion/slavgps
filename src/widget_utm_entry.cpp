@@ -44,7 +44,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Widget UTM Entry"
-#define PREFIX " Widget UTM Entry:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -134,7 +133,7 @@ UTM UTMEntryWidget::get_value(void) const
 		qDebug() << SG_PREFIX_E << "Unexpectedly long text in combo:" << text;
 	} else {
 		utm.set_band_letter(text.at(0).toUpper().toLatin1());
-		qDebug() << "II:" PREFIX << "UTM band letter conversion" << text << "->" << utm.get_band_letter();
+		qDebug() << SG_PREFIX_I << "UTM band letter conversion" << text << "->" << utm.get_band_letter();
 	}
 
 	return utm;

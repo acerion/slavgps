@@ -58,7 +58,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Web Routing Engine:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Web Routing Engine"
 
 
 
@@ -313,7 +313,7 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk)
 
 	/* Concat. */
 	const QString url = ctx.url_parts.join("");
-	qDebug() << "DD" PREFIX << "Final url is" << url;
+	qDebug() << SG_PREFIX_D << "Final url is" << url;
 
 	return url;
 }

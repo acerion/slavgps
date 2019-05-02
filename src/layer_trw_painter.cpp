@@ -68,7 +68,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Layer TRW Painter"
-#define PREFIX " Layer TRW Painter:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -823,8 +822,8 @@ void LayerTRWPainter::draw_track(Track * trk, Viewport * a_viewport, bool do_hig
 {
 	if (!BBOX_INTERSECT (trk->bbox, a_viewport->get_bbox())) {
 #if 0
-		qDebug() << "DD" PREFIX << "track bbox:" << trk->bbox;
-		qDebug() << "DD" PREFIX << "viewport bbox:" << a_viewport->get_bbox();
+		qDebug() << SG_PREFIX_D << "Track bbox:" << trk->bbox;
+		qDebug() << SG_PREFIX_D << "Viewport bbox:" << a_viewport->get_bbox();
 #endif
 		return;
 	}
@@ -1238,7 +1237,7 @@ inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
 		fits_vertically = coord.ll.lat > this->coord_bottommost && coord.ll.lat < this->coord_topmost;
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << "unexpected viewport coordinate mode" << (int) this->vp_coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected viewport coordinate mode" << (int) this->vp_coord_mode;
 		break;
 	}
 

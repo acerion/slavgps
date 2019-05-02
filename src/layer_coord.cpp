@@ -47,7 +47,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Coord Layer"
-#define PREFIX ": Layer Coord:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -122,15 +121,15 @@ bool LayerCoord::set_param_value(param_id_t param_id, const SGVariant & param_va
 {
 	switch (param_id) {
 	case PARAM_COLOR_DEG:
-		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving degrees color" << param_value;
+		qDebug() << SG_PREFIX_I << "Saving degrees color" << param_value;
 		this->color_deg = param_value.val_color;
 		break;
 	case PARAM_COLOR_MIN:
-		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving minutes color" << param_value;
+		qDebug() << SG_PREFIX_I << "Saving minutes color" << param_value;
 		this->color_min = param_value.val_color;
 		break;
 	case PARAM_COLOR_SEC:
-		qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "saving seconds color" << param_value;
+		qDebug() << SG_PREFIX_I << "Saving seconds color" << param_value;
 		this->color_sec = param_value.val_color;
 		break;
 	case PARAM_MIN_INC:
@@ -138,7 +137,7 @@ bool LayerCoord::set_param_value(param_id_t param_id, const SGVariant & param_va
 		break;
 	case PARAM_LINE_THICKNESS:
 		if (param_value.u.val_int >= scale_line_thickness.min && param_value.u.val_int <= scale_line_thickness.max) {
-			qDebug() << "II: Layer Coordinate: saving line thickness" << param_value;
+			qDebug() << SG_PREFIX_I << "Saving line thickness" << param_value;
 			this->line_thickness = param_value.u.val_int;
 		}
 		break;
@@ -174,7 +173,7 @@ SGVariant LayerCoord::get_param_value(param_id_t param_id, bool is_file_operatio
 		qDebug() << SG_PREFIX_E << "Unknown parameter id" << param_id;
 		break;
 	}
-	qDebug() << "II: Layer Coordinate:" << __FUNCTION__ << "returning" << rv;
+	qDebug() << SG_PREFIX_I << "Returning" << rv;
 	return rv;
 }
 
@@ -192,7 +191,7 @@ void LayerCoord::draw_tree_item(Viewport * viewport, bool highlight_selected, bo
 		this->draw_utm(viewport);
 		break;
 	default:
-		qDebug() << "EE" PREFIX << "unhandled viewport coord mode" << (int) mode;
+		qDebug() << SG_PREFIX_E << "Unhandled viewport coord mode" << (int) mode;
 		break;
 	};
 

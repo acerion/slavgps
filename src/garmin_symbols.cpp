@@ -47,7 +47,7 @@ using namespace SlavGPS;
 
 
 
-#define PREFIX ": Garmin Symbols:" << __FUNCTION__ << __LINE__ << ">"
+#define SG_MODULE "Garmin Symbols"
 #define SMALL_SYMBOL_SIZE 18
 #define LARGE_SYMBOL_SIZE 30
 
@@ -410,7 +410,7 @@ static QPixmap * get_wp_sym_from_index(int i)
 QPixmap * GarminSymbols::get_wp_symbol(const QString & symbol_name)
 {
 	if (symbol_name.isEmpty()) {
-		qDebug() << "EE" PREFIX << "argument is empty string";
+		qDebug() << SG_PREFIX_E << "Argument is empty string";
 		return NULL;
 	}
 
@@ -428,7 +428,7 @@ QPixmap * GarminSymbols::get_wp_symbol(const QString & symbol_name)
 		return get_wp_sym_from_index(iter->second);
 	}
 
-	qDebug() << "EE" PREFIX << "Failed to find wp symbol for symbol name" << symbol_name;
+	qDebug() << SG_PREFIX_E << "Failed to find wp symbol for symbol name" << symbol_name;
 	return NULL;
 }
 
@@ -438,7 +438,7 @@ QPixmap * GarminSymbols::get_wp_symbol(const QString & symbol_name)
 QString GarminSymbols::get_normalized_symbol_name(const QString & symbol_name)
 {
 	if (symbol_name.isEmpty()) {
-		qDebug() << "EE" PREFIX << "argument is empty string";
+		qDebug() << SG_PREFIX_E << "Argument is empty string";
 		return "";
 	}
 
@@ -456,7 +456,7 @@ QString GarminSymbols::get_normalized_symbol_name(const QString & symbol_name)
 		return garmin_symbols[iter->second].symbol_name;
 	}
 
-	qDebug() << "EE" PREFIX << "Failed to find normalized wo symbol name for symbol name" << symbol_name;
+	qDebug() << SG_PREFIX_E << "Failed to find normalized wo symbol name for symbol name" << symbol_name;
 	return "";
 }
 
@@ -466,7 +466,7 @@ QString GarminSymbols::get_normalized_symbol_name(const QString & symbol_name)
 void GarminSymbols::populate_symbols_list(QComboBox * symbol_list, const QString & preselected_symbol_name)
 {
 	if (!symbol_list) {
-		qDebug() << "EE" PREFIX << "NULL argument";
+		qDebug() << SG_PREFIX_E << "NULL argument";
 		return;
 	}
 
@@ -504,7 +504,7 @@ bool GarminSymbols::is_none_symbol_name(const QString & symbol_name)
 /* Use when preferences have changed to reset icons. */
 void GarminSymbols::clear_symbols(void)
 {
-	qDebug() << "DD" PREFIX << "clearing symbols table";
+	qDebug() << SG_PREFIX_D << "Clearing symbols table";
 
 	int i = 0;
 	while (garmin_symbols[i].num != -1) {

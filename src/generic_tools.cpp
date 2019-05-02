@@ -58,7 +58,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Generic Tools"
-#define PREFIX ": Generic Tools:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
@@ -173,7 +172,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD" PREFIX << "called";
+	qDebug() << SG_PREFIX_D << "Called";
 
 	if (!this->ruler) {
 		/* Ruler tool may be selected, but there was no first
@@ -287,7 +286,7 @@ GenericToolZoom::~GenericToolZoom()
 
 ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_click() called";
+	qDebug() << SG_PREFIX_D << "Called";
 
 	const Qt::KeyboardModifiers modifiers = event->modifiers();
 
@@ -363,7 +362,7 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD: Generic Tool Zoom: ->handle_mouse_move() called";
+	qDebug() << SG_PREFIX_D << "Called";
 
 	const unsigned int modifiers = event->modifiers() & Qt::ShiftModifier;
 
@@ -424,7 +423,7 @@ ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event
 
 ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << SG_PREFIX_D << "called";
+	qDebug() << SG_PREFIX_D << "Called";
 
 	if (event->button() != Qt::LeftButton && event->button() != Qt::RightButton) {
 		return ToolStatus::Ignored;
@@ -518,7 +517,7 @@ ToolStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 
 	/* Standard pan click. */
 	if (event->button() == Qt::LeftButton) {
-		qDebug() << "DD: Layer Tools: Pan click: window->pan_click()";
+		qDebug() << SG_PREFIX_D << "Will call window->pan_click()";
 		this->window->pan_click(event);
 	}
 
@@ -557,7 +556,7 @@ ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * 
 
 ToolStatus LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
-	//qDebug() << "DD: Layer Tools: Pan: calling window->pan_move()";
+	//qDebug() << SG_PREFIX_D << "Will call window->pan_move()";
 	this->window->pan_move(event);
 
 	return ToolStatus::Ack;
@@ -599,7 +598,7 @@ LayerToolSelect::~LayerToolSelect()
 
 ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD" PREFIX << this->id_string;
+	qDebug() << SG_PREFIX_D << this->id_string;
 
 	this->select_and_move_activated = false;
 
@@ -622,7 +621,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
-	qDebug() << "DD" PREFIX << this->id_string;
+	qDebug() << SG_PREFIX_D << this->id_string;
 
 	this->select_and_move_activated = false;
 
@@ -652,15 +651,15 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 
 	bool handled = false;
 	if (event->type() == QEvent::MouseButtonDblClick) {
-		qDebug() << "DD" PREFIX << this->id_string << "handling double click, looking for layer";
+		qDebug() << SG_PREFIX_D << this->id_string << "handling double click, looking for layer";
 		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->viewport->central, this);
 	} else {
-		qDebug() << "DD" PREFIX << this->id_string << "handle single click, looking for layer";
+		qDebug() << SG_PREFIX_D << this->id_string << "handle single click, looking for layer";
 		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->viewport->central, this);
 	}
 
 	if (!handled) {
-		qDebug() << "DD" PREFIX << this->id_string << "mouse event not handled";
+		qDebug() << SG_PREFIX_D << this->id_string << "mouse event not handled";
 		/* Deselect & redraw screen if necessary to remove the highlight. */
 
 		TreeView * tree_view = this->window->items_tree->get_tree_view();

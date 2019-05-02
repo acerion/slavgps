@@ -44,7 +44,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Timestamp Widget"
-#define PREFIX " Widget Timestamp: "
 
 
 

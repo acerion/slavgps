@@ -40,7 +40,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Coord"
-#define PREFIX " Coord: "
 
 
 
@@ -131,7 +130,7 @@ Coord::Coord(const LatLon & new_lat_lon, CoordMode new_mode)
 		this->ll = new_lat_lon;
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) new_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) new_mode;
 		break;
 	}
 
@@ -151,7 +150,7 @@ Coord::Coord(const UTM & new_utm, CoordMode new_mode)
 		this->ll = UTM::to_latlon(new_utm);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) new_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) new_mode;
 	}
 
 	this->mode = new_mode;
@@ -182,7 +181,7 @@ LatLon Coord::get_latlon(void) const
 		ret = UTM::to_latlon(this->utm);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) this->mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) this->mode;
 		break;
 	}
 
@@ -204,7 +203,7 @@ UTM Coord::get_utm(void) const
 		ret = LatLon::to_utm(this->ll);
 		break;
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) this->mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) this->mode;
 		break;
 	}
 
@@ -228,7 +227,7 @@ bool Coord::operator==(const Coord & coord) const
 		return this->ll.lat == coord.ll.lat && this->ll.lon == coord.ll.lon;
 
 	default:
-		qDebug() << "EE:" PREFIX << __FUNCTION__ << __LINE__ << "unexpected CoordMode" << (int) this->mode;
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) this->mode;
 		return false;
 	}
 }
@@ -269,7 +268,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
 		debug << "Coordinate LatLon:" << coord.ll;
 		break;
 	default:
-		debug << "EE: Coordinate: unexpected coordinate mode" << (int) coord.mode;
+		debug << "\n" << SG_PREFIX_E << "Unexpected coordinate mode" << (int) coord.mode;
 		break;
 	}
 

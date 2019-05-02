@@ -61,7 +61,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Waypoint"
-#define PREFIX ": Waypoint:" << __FUNCTION__ << __LINE__ << ">"
 
 
 
