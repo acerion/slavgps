@@ -51,13 +51,7 @@ using namespace SlavGPS;
 
 
 
-/* The last used directory. */
-static QUrl g_last_directory_url;
-
-
-/* The last used file filter. */
-/* TODO_2_LATER: verify how this overlaps with babel_dialog.cpp:g_last_file_type_index. */
-static QString g_last_filter;
+#define SG_MODULE "DataSource File"
 
 
 
@@ -94,12 +88,6 @@ int DataSourceFile::run_config_dialog(AcquireContext * acquire_context)
 DataSourceFileDialog::DataSourceFileDialog(const QString & title) : BabelDialog(title)
 {
 	this->build_ui();
-	if (g_last_directory_url.isValid()) {
-		this->file_selector->set_directory_url(g_last_directory_url);
-	}
-	if (!g_last_filter.isEmpty()) {
-		this->file_selector->select_name_filter(g_last_filter);
-	}
 
 	this->file_selector->setFocus();
 
@@ -118,10 +106,6 @@ DataSourceFileDialog::~DataSourceFileDialog()
 
 AcquireOptions * DataSourceFileDialog::create_acquire_options(AcquireContext * acquire_context)
 {
-	g_last_directory_url = this->file_selector->get_directory_url();
-	g_last_filter = this->file_selector->get_selected_name_filter();
-
-
 	/* Generate the process options. */
 	AcquireOptions * acquire_options = new AcquireOptions();
 
@@ -138,8 +122,8 @@ void DataSourceFileDialog::accept_cb(void)
 {
 	const BabelFileType * file_type = this->get_file_type_selection();
 
-	qDebug() << "II: Datasource File: dialog result: accepted";
-	qDebug() << "II: Datasource File: selected format type identifier:" << file_type->identifier;
-	qDebug() << "II: Datasource File: selected format type label:" << file_type->label;
-	qDebug() << "II: Datasource File: selected file path:" << this->file_selector->get_selected_file_full_path();
+	qDebug() << SG_PREFIX_I << "Dialog result: accepted";
+	qDebug() << SG_PREFIX_I << "Selected format type identifier:" << file_type->identifier;
+	qDebug() << SG_PREFIX_I << "Selected format type label:" << file_type->label;
+	qDebug() << SG_PREFIX_I << "Selected file path:" << this->file_selector->get_selected_file_full_path();
 }

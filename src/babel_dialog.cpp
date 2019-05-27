@@ -44,11 +44,9 @@ using namespace SlavGPS;
 
 
 
-/* The last file format selected. */
-static int g_last_file_type_index = 0;
-
-/* TODO_2_LATER: verify how to implement "last used directory" here. Look at
-   g_last_directory_url in datasource_file.cpp. */
+/* Index of last selected file format/type on list of file formats
+   recognized by Babel. */
+static int g_last_babel_file_type_index = 0;
 
 
 
@@ -141,11 +139,11 @@ BabelFileType * BabelDialog::get_file_type_selection(void)
 	   All other items have been added with id >= 0. */
 	const int id = this->file_types_combo->currentData().toInt();
 	if (id == -1) {
-		qDebug() << "II: Babel Dialog: selected file type: NONE";
+		qDebug() << SG_PREFIX_I << "Selected file type: NONE";
 		return NULL;
 	} else {
 		BabelFileType * file_type = Babel::file_types.at(id);
-		qDebug() << "II: Babel Dialog: selected file type:" << file_type->identifier << ", " << file_type->label;
+		qDebug() << SG_PREFIX_I << "Selected file type:" << file_type->identifier << ", " << file_type->label;
 		return file_type;
 	}
 }
@@ -203,7 +201,7 @@ QHBoxLayout * BabelDialog::build_mode_selector(bool tracks, bool routes, bool wa
 void BabelDialog::get_write_mode(BabelMode & mode)
 {
 	if (!this->mode_box) {
-		qDebug() << "EE: Babel Dialog: calling get write mode for object with NULL mode box";
+		qDebug() << SG_PREFIX_E << "Calling get write mode for object with NULL mode box";
 		return;
 	}
 
@@ -212,21 +210,21 @@ void BabelDialog::get_write_mode(BabelMode & mode)
 
 	widget = this->mode_box->itemAt(0)->widget();
 	if (!widget) {
-		qDebug() << "EE: Babel Dialog: failed to get checkbox 0";
+		qDebug() << SG_PREFIX_E << "Failed to get checkbox 0";
 		return;
 	}
 	mode.tracks_write = ((QCheckBox *) widget)->isChecked();
 
 	widget = this->mode_box->itemAt(1)->widget();
 	if (!widget) {
-		qDebug() << "EE: Babel Dialog: failed to get checkbox 1";
+		qDebug() << SG_PREFIX_E << "Failed to get checkbox 1";
 		return;
 	}
 	mode.routes_write = ((QCheckBox *) widget)->isChecked();
 
 	widget = this->mode_box->itemAt(2)->widget();
 	if (!widget) {
-		qDebug() << "EE: Babel Dialog: failed to get checkbox 2";
+		qDebug() << SG_PREFIX_E << "Failed to get checkbox 2";
 		return;
 	}
 	mode.waypoints_write = ((QCheckBox *) widget)->isChecked();
@@ -257,7 +255,7 @@ BabelDialog::~BabelDialog()
 
 void BabelDialog::build_ui(const BabelMode * mode)
 {
-	qDebug() << "II: Babel Dialog: building dialog UI";
+	qDebug() << SG_PREFIX_I << "Building dialog UI";
 
 
 
@@ -273,18 +271,6 @@ void BabelDialog::build_ui(const BabelMode * mode)
 	}
 	this->grid->addWidget(this->file_selector, 1, 0);
 
-#ifdef K_TODO_MAYBE
-	/* We don't do this because we don't have filename here. */
-	if (!filename.isEmpty()) {
-		this->file_entry->preselect_file(filename);
-	}
-
-	/* We don't do this because last_directory_url is kept by classes inheriting from this class. */
-	if (last_directory_url.isValid()) {
-		this->file_entry->set_directory_url(last_directory_url);
-	}
-#endif
-
 
 
 	this->grid->addWidget(new QLabel(tr("File type:")), 2, 0);
@@ -292,7 +278,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 
 	this->file_types_combo = this->build_file_type_selector(mode);
-	this->file_types_combo->setCurrentIndex(g_last_file_type_index);
+	this->file_types_combo->setCurrentIndex(g_last_babel_file_type_index);
 	this->grid->addWidget(this->file_types_combo, 3, 0);
 	QObject::connect(this->file_types_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (file_type_changed_cb(int)));
 
@@ -328,7 +314,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 
 	/* Manually call the callback to set state of OK button. */
-	this->file_type_changed_cb(g_last_file_type_index);
+	this->file_type_changed_cb(g_last_babel_file_type_index);
 
 
 	/* Blinky cursor in input field will be visible and will bring
@@ -344,7 +330,7 @@ void BabelDialog::build_ui(const BabelMode * mode)
 
 void BabelDialog::file_type_changed_cb(int index)
 {
-	qDebug() << "SLOT: Babel Dialog: current index changed to" << index;
+	qDebug() << SG_PREFIX_SLOT << "Current index changed to" << index;
 
 	/* Only allow dialog's validation when format selection is done. */
 	QPushButton * button = this->button_box->button(QDialogButtonBox::Ok);
@@ -375,11 +361,11 @@ void BabelDialog::file_type_changed_cb(int index)
 
 void BabelDialog::on_accept_cb(void)
 {
-	g_last_file_type_index = this->file_types_combo->currentIndex();
-	if (g_last_file_type_index != 0) {
-		const BabelFileType * file_type = Babel::file_types.at(g_last_file_type_index);
-		qDebug() << "SLOT: Babel Dialog: On Accept: selected file type:" << g_last_file_type_index << file_type->identifier << file_type->label;
+	g_last_babel_file_type_index = this->file_types_combo->currentIndex();
+	if (0 == g_last_babel_file_type_index) {
+		qDebug() << SG_PREFIX_SLOT << "Last file type index is zero";
 	} else {
-		qDebug() << "SLOT: Babel Dialog: On Accept: last file type index =" << g_last_file_type_index;
+		const BabelFileType * file_type = Babel::file_types.at(g_last_babel_file_type_index);
+		qDebug() << SG_PREFIX_SLOT << "Selected file type:" << g_last_babel_file_type_index << file_type->identifier << file_type->label;
 	}
 }
