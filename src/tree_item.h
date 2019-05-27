@@ -185,10 +185,22 @@ namespace SlavGPS {
 		virtual sg_ret dropped_item_is_acceptable(TreeItem * tree_item, bool * result) const;
 
 
+
 		/* Change visibility of tree item.
 		   Return visibility state after the toggle has been performed. */
-		virtual bool toggle_visible(void);
-		virtual void set_visible(bool new_state);
+		bool toggle_visible(void);
+
+		void set_visible(bool new_state);
+
+		/* See if given item is marked as visible. Don't look
+		   at parents' visibility. */
+		bool is_visible(void) const;
+
+		/* See if given item is marked as visible, and all its
+		   parents are also marked as visible. */
+		bool is_visible_with_parents(void) const;
+
+
 
 		virtual void marshall(Pickle & pickle) { };
 
@@ -246,12 +258,13 @@ namespace SlavGPS {
 
 		virtual TreeItemType get_tree_item_type(void) const = 0;
 
+
 	//protected:
 		TreeIndex index;             /* Set in TreeView::attach_to_tree(). */
 		TreeView * tree_view = NULL; /* Reference to application's main tree, set in TreeView::insert_tree_item_at_row(). */
 
 		bool editable = true; /* Is this item is editable? TODO_LATER: be more specific: is the data editable, or is the reference visible in the tree editable? */
-		bool visible = true;  /* Is this item is visible in a tree of data items? */
+
 
 		bool has_properties_dialog = false; /* Does this tree item has dialog, in which you can view or change *configurable* properties? */
 
@@ -274,6 +287,11 @@ namespace SlavGPS {
 		MenuOperation menu_operation_ids = MenuOperationAll;
 
 		Time timestamp; /* Invalid by default. */
+
+		/* Is this item marked as visible in a tree of data
+		   items? This does not include visibility of parent
+		   items. */
+		bool visible = true;
 
 	private:
 		TreeItem * parent_tree_item = NULL; /* Direct parent, may be different than owning layer. */

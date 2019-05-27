@@ -721,7 +721,7 @@ ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * ev
 	this->select_and_move_activated = false;
 
 	if (event->button() == Qt::RightButton) {
-		if (layer && layer->type == LayerType::TRW && layer->visible) {
+		if (layer && layer->type == LayerType::TRW && layer->is_visible()) {
 			/* See if a TRW item is selected, and show menu for the item. */
 			layer->handle_select_tool_context_menu(event, this->window->viewport->central);
 		}

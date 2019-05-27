@@ -464,7 +464,7 @@ void Waypoint::properties_dialog_cb(void)
 
 		this->set_new_waypoint_icon();
 
-		if (parent_layer->visible) {
+		if (parent_layer->is_visible()) {
 			parent_layer->emit_tree_item_changed("TRW - Waypoint - properties");
 		}
 	}
@@ -739,7 +739,7 @@ QList<QStandardItem *> Waypoint::get_list_representation(const TreeItemViewForma
 
 	LayerTRW * trw = this->get_parent_layer_trw();
 
-	bool a_visible = trw->visible && this->visible;
+	bool a_visible = trw->is_visible() && this->visible;
 	a_visible = a_visible && trw->get_waypoints_visibility();
 
 	Qt::DateFormat date_time_format = Qt::ISODate;

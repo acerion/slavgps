@@ -223,7 +223,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 		qDebug() << SG_PREFIX_E << "Skipping non-TRW layer";
 		return false;
 	}
-	if (!this->tracks.visible && !this->waypoints.visible && !this->routes.visible) {
+	if (!this->tracks.is_visible() && !this->waypoints.is_visible() && !this->routes.is_visible()) {
 		qDebug() << SG_PREFIX_D << "Skipping - all sublayers are invisible";
 		return false;
 	}
@@ -232,7 +232,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	if (this->waypoints.visible && BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox)) {
+	if (this->waypoints.is_visible() && BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Waypoints present in viewport, trying to catch waypoint";
 		WaypointSearch wp_search(ev->x(), ev->y(), viewport);
 		this->waypoints.search_closest_wp(wp_search);
@@ -262,7 +262,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	/* Used for both track and route lists. */
 	TrackpointSearch tp_search(ev->x(), ev->y(), viewport);
 
-	if (this->tracks.visible && BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox)) {
+	if (this->tracks.is_visible() && BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Tracks present in viewport, trying to catch track";
 		this->tracks.track_search_closest_tp(tp_search);
 		if (tp_search.closest_tp) {
@@ -286,7 +286,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 
 
 	/* Try again for routes. */
-	if (this->routes.visible && BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox)) {
+	if (this->routes.is_visible() && BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Routes present in viewport, trying to catch route";
 		this->routes.track_search_closest_tp(tp_search);
 		if (tp_search.closest_tp) {
@@ -434,12 +434,12 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * view
 		return false;
 	}
 
-	if (!this->tracks.visible && !this->waypoints.visible && !this->routes.visible) {
+	if (!this->tracks.is_visible() && !this->waypoints.is_visible() && !this->routes.is_visible()) {
 		return false;
 	}
 
 	Track * track = this->get_edited_track(); /* Track or route that is currently being selected/edited. */
-	if (track && track->visible) { /* Track or Route. */
+	if (track && track->is_visible()) { /* Track or Route. */
 		if (!track->name.isEmpty()) {
 
 			QMenu menu(viewport);
@@ -451,7 +451,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * view
 	}
 
 	Waypoint * wp = this->get_edited_wp(); /* Waypoint that is currently being selected/edited. */
-	if (wp && wp->visible) {
+	if (wp && wp->is_visible()) {
 		if (!wp->name.isEmpty()) {
 			QMenu menu(viewport);
 
@@ -494,7 +494,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 	if (this->layer_edit_holding) {
 		return ToolStatus::Ack;
 	}
-	if (!trw->visible || !trw->waypoints.visible) {
+	if (!trw->is_visible() || !trw->waypoints.is_visible()) {
 		return ToolStatus::Ignored;
 	}
 
@@ -503,7 +503,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 
 	Waypoint * current_wp = trw->get_edited_wp();
 
-	if (current_wp && current_wp->visible) {
+	if (current_wp && current_wp->is_visible()) {
 		/* Some waypoint has already been activated before the
 		   click happened, e.g. by selecting it in items tree.
 
@@ -1157,12 +1157,13 @@ ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEven
 		return ToolStatus::Ignored;
 	}
 
+	bool visible_with_parents = false;
 	const Coord coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
-	if (trw->new_waypoint(coord, trw->get_window())) {
+	if (trw->new_waypoint(coord, visible_with_parents, trw->get_window())) {
 		trw->get_waypoints_node().recalculate_bbox();
-		if (trw->visible) {
+		if (visible_with_parents) {
 			qDebug() << SG_PREFIX_I << "Created new waypoint, will emit update";
-			trw->emit_tree_item_changed("TRW - new waypoint - handle mouse click");
+			trw->emit_tree_item_changed("New waypoint created with 'new waypoint' tool");
 		}
 	}
 	return ToolStatus::Ack;
@@ -1208,7 +1209,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		return ToolStatus::Ignored;
 	}
 
-	if (!trw->visible && !(trw->tracks.visible && trw->routes.visible)) {
+	if (!trw->is_visible() && !(trw->tracks.is_visible() && trw->routes.is_visible())) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1221,14 +1222,14 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		const ScreenPos tp_pos = this->viewport->coord_to_screen_pos(tp->coord);
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
-		if (track->visible && ScreenPos::is_close_enough(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
+		if (track->is_visible() && ScreenPos::is_close_enough(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
 			this->remember_selection(event_pos);
 			return ToolStatus::Ack;
 		}
 
 	}
 
-	if (trw->get_tracks_node().visible) {
+	if (trw->get_tracks_node().is_visible()) {
 		trw->get_tracks_node().track_search_closest_tp(tp_search);
 
 		if (tp_search.closest_tp) {
@@ -1242,7 +1243,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 		}
 	}
 
-	if (trw->get_routes_node().visible) {
+	if (trw->get_routes_node().is_visible()) {
 		trw->get_routes_node().track_search_closest_tp(tp_search);
 
 		if (tp_search.closest_tp) {

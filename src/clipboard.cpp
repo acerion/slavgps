@@ -303,7 +303,8 @@ static void clip_add_wp(LayersPanel * panel, const LatLon & lat_lon)
 	Layer * selected = panel->get_selected_layer();
 
 	if (selected && selected->type == LayerType::TRW) {
-		((LayerTRW *) selected)->new_waypoint(Coord(lat_lon, CoordMode::LatLon), selected->get_window());
+		bool dummy = false;
+		((LayerTRW *) selected)->new_waypoint(Coord(lat_lon, CoordMode::LatLon), dummy, selected->get_window());
 		((LayerTRW *) selected)->get_waypoints_node().recalculate_bbox();
 		selected->emit_tree_item_changed("Clipboard - add wp");
 	} else {

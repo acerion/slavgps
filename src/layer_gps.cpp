@@ -1706,7 +1706,6 @@ bool LayerGPS::rt_gpsd_connect_try_once(void)
 	if (this->realtime_record) {
 		LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_REALTIME];
 		this->realtime_track = new Track(false);
-		this->realtime_track->visible = true;
 		const QString track_name = trw->tracks.new_unique_element_name(QObject::tr("REALTIME"));
 		this->realtime_track->set_name(track_name);
 		trw->add_track(this->realtime_track);
@@ -1965,7 +1964,7 @@ void LayerGPS::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 	qDebug() << SG_PREFIX_D << "-- realtime tracking";
 
 	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
-	if (this->visible) {
+	if (this->is_visible()) {
 		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";

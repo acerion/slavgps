@@ -393,7 +393,7 @@ LayerDataReadStatus GPSPoint::read_layer_from_file(QFile & file, LayerTRW * trw,
 Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QString & dirpath)
 {
 	Waypoint * wp = new Waypoint();
-	wp->visible = this->line_visible;
+	wp->set_visible(this->line_visible);
 	wp->altitude = this->line_altitude;
 	wp->set_name(this->line_name);
 	wp->set_timestamp(this->line_timestamp);
@@ -447,7 +447,7 @@ Track * GPSPointParser::create_track(LayerTRW * trw)
 		this->line_name = strdup("UNK");
 	}
 
-	trk->visible = this->line_visible;
+	trk->set_visible(this->line_visible);
 	trk->name = this->line_name;
 
 	if (this->line_comment) {
@@ -816,7 +816,7 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 			   The symbol names will always be lowercase. */
 			fprintf(file, " symbol=\"%s\"", wp->symbol_name.toLower().toUtf8().constData());
 		}
-		if (!wp->visible) {
+		if (!wp->is_visible()) {
 			fprintf(file, " visible=\"n\"");
 		}
 		fprintf(file, "\n");
@@ -935,7 +935,7 @@ static void a_gpspoint_write_tracks(FILE * file, const std::list<Track *> & trac
 			fprintf(file, " number_dist_labels=\"%d\"", trk->max_number_dist_labels);
 		}
 
-		if (!trk->visible) {
+		if (!trk->is_visible()) {
 			fprintf(file, " visible=\"n\"");
 		}
 		fprintf(file, "\n");

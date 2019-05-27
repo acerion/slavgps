@@ -34,6 +34,7 @@
 
 #include "tree_item.h"
 #include "tree_view.h"
+#include "tree_view_internal.h"
 #include "window.h"
 
 
@@ -107,6 +108,22 @@ bool TreeItem::toggle_visible(void)
 void TreeItem::set_visible(bool new_state)
 {
 	this->visible = new_state;
+}
+
+
+
+
+bool TreeItem::is_visible_with_parents(void) const
+{
+	return this->tree_view->get_tree_item_visibility_with_parents(this);
+}
+
+
+
+
+bool TreeItem::is_visible(void) const
+{
+	return this->visible;
 }
 
 
@@ -260,7 +277,7 @@ QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemViewForma
 		case TreeItemPropertyID::Visibility:
 			item = new QStandardItem();
 			item->setCheckable(true);
-			item->setCheckState(this->visible ? Qt::Checked : Qt::Unchecked);
+			item->setCheckState(this->is_visible() ? Qt::Checked : Qt::Unchecked);
 			//item->moveToThread(QApplication::instance()->thread())
 			items << item;
 			break;

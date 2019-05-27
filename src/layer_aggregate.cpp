@@ -375,7 +375,7 @@ void LayerAggregate::children_visibility_toggle_cb(void) /* Slot. */
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		layer->visible = !layer->visible;
+		layer->toggle_visible();
 		/* Also set checkbox on/off in tree view. */
 		this->tree_view->apply_tree_item_visibility(layer);
 	}
@@ -392,7 +392,7 @@ void LayerAggregate::children_visibility_set(bool on_off)
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		layer->visible = on_off;
+		layer->set_visible(on_off);
 		/* Also set checkbox on_off in tree view. */
 		this->tree_view->apply_tree_item_visibility(layer);
 	}
@@ -680,7 +680,7 @@ sg_ret LayerAggregate::detach_from_container(Layer * layer, bool * was_visible)
 	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->to_layer(), layer));
 
 	if (NULL != was_visible) {
-		*was_visible = layer->visible;
+		*was_visible = layer->is_visible();
 	}
 
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
@@ -722,7 +722,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 	assert (layer->is_in_tree());
 	assert (TreeItem::the_same_object(this->tree_view->get_tree_item(layer->index)->to_layer(), layer));
 
-	const bool was_visible = layer->visible;
+	const bool was_visible = layer->is_visible();
 
 	this->tree_view->detach_tree_item(layer);
 
@@ -801,9 +801,9 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 	do {
 		child--;
 		Layer * layer = *child;
-		if (layer->visible && layer->type == layer_type) {
+		if (layer->is_visible() && layer->type == layer_type) {
 			return layer;
-		} else if (layer->visible && layer->type == LayerType::Aggregate) {
+		} else if (layer->is_visible() && layer->type == LayerType::Aggregate) {
 			Layer * rv = ((LayerAggregate *) layer)->get_top_visible_layer_of_type(layer_type);
 			if (rv) {
 				return rv;
@@ -829,12 +829,12 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 		Layer * layer = *child;
 		if (layer->type == LayerType::Aggregate) {
 			/* Don't even consider invisible aggregrates, unless told to. */
-			if (layer->visible || include_invisible) {
+			if (layer->is_visible() || include_invisible) {
 				LayerAggregate * aggregate = (LayerAggregate *) layer;
 				aggregate->get_all_layers_of_type(layers, type, include_invisible);
 			}
 		} else if (expected_layer_type == layer->type) {
-			if (layer->visible || include_invisible) {
+			if (layer->is_visible() || include_invisible) {
 				layers.push_back(layer); /* now in top down order */
 			}
 		} else if (expected_layer_type == LayerType::TRW) {
@@ -843,7 +843,7 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 			}
 
 			/* GPS layers contain TRW layers. cf with usage in file.c */
-			if (!(layer->visible || include_invisible)) {
+			if (!(layer->is_visible() || include_invisible)) {
 				continue;
 			}
 
@@ -870,7 +870,7 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 		return false;
 	}
 
-	if (!this->visible) {
+	if (!this->is_visible()) {
 		/* In practice this condition will be checked for
 		   top-level aggregate layer only. For child aggregate
 		   layers the visibility condition in a loop below
@@ -882,7 +882,7 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 	bool has_been_handled = false;
 
 	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
-		if (!(*iter)->visible) {
+		if (!(*iter)->is_visible()) {
 			continue;
 		}
 
@@ -1075,7 +1075,7 @@ LayerAggregate::LayerAggregate()
 void LayerAggregate::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
 {
 	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
-	if (this->visible) {
+	if (this->is_visible()) {
 		/* TODO_2_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";

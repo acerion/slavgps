@@ -376,7 +376,7 @@ Track * LayerTRWTracks::find_track_with_duplicate_name(void) const
 void LayerTRWTracks::set_items_visibility(bool on_off)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->visible = on_off;
+		(*iter)->set_visible(on_off);
 		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
@@ -387,7 +387,7 @@ void LayerTRWTracks::set_items_visibility(bool on_off)
 void LayerTRWTracks::toggle_items_visibility(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->visible = !(*iter)->visible;
+		(*iter)->toggle_visible();
 		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
@@ -411,7 +411,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search)
 
 		Track * trk = *track_iter;
 
-		if (!trk->visible) {
+		if (!trk->is_visible()) {
 			continue;
 		}
 
@@ -1054,7 +1054,7 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 	}
 
 	if (NULL != was_visible) {
-		*was_visible = trk->visible;
+		*was_visible = trk->is_visible();
 	}
 
 	if (trk == parent_layer->route_finder_added_track) {

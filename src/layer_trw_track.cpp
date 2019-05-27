@@ -4189,7 +4189,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 	LayerTRW * trw = this->get_parent_layer_trw();
 
 	/* 'visible' doesn't include aggegrate visibility. */
-	bool a_visible = trw->visible && this->visible;
+	bool a_visible = trw->is_visible() && this->is_visible();
 	a_visible = a_visible && (this->is_route() ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 

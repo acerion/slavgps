@@ -137,7 +137,7 @@ void TrackStatistics::add_track_maybe(Track * trk, bool layer_is_visible, bool t
 		}
 
 		/* Skip invisible tracks. */
-		if (!trk->visible) {
+		if (!trk->is_visible()) {
 			return;
 		}
 	}

@@ -146,7 +146,6 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 		trw->add_waypoint_from_file(wp);
 	} else {
 		wp = new Waypoint();
-		wp->visible = true;
 		wp->set_name(file_base_name(file_full_path));
 		trw->add_waypoint_from_file(wp);
 		wp->set_image_full_path(file_full_path);

@@ -93,8 +93,6 @@ Geoname::Geoname(const Geoname & geoname) : Geoname()
 Waypoint * Geoname::create_waypoint(CoordMode coord_mode) const
 {
 	Waypoint * wp = new Waypoint();
-
-	wp->visible = true;
 	wp->coord = Coord(this->lat_lon, coord_mode);
 	wp->altitude = this->elevation;
 	wp->set_comment(this->comment);

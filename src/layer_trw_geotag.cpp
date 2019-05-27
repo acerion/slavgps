@@ -542,7 +542,6 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 				/* Create waypoint with found position. */
 
 				Waypoint * wp2 = new Waypoint();
-				wp2->visible = true;
 				wp2->coord = this->coord;
 				wp2->altitude = this->altitude;
 				wp2->set_image_full_path(file_full_path);

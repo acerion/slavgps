@@ -828,7 +828,7 @@ void LayerTRWPainter::draw_track(Track * trk, Viewport * a_viewport, bool do_hig
 		return;
 	}
 
-	if (!trk->visible) {
+	if (!trk->is_visible()) {
 		return;
 	}
 
@@ -1098,7 +1098,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, Viewport * a_viewport, bool d
 {
 	wp->drawn_image_rect = QRect(); /* Null-ify/invalidate. */
 
-	if (!wp->visible) {
+	if (!wp->is_visible()) {
 		return;
 	}
 

@@ -252,11 +252,11 @@ void TRWStatsDialog::collect_stats(TrackStatistics & stats, bool include_invisib
 		LayerTRW * trw = trk->get_parent_layer_trw();
 		assert (trw->type == LayerType::TRW);
 		qDebug() << SG_PREFIX_I << "Collecting stats with layer/tracks/routes/include visibility:"
-			 << trw->visible
+			 << trw->is_visible()
 			 << trw->get_tracks_visibility()
 			 << trw->get_routes_visibility()
 			 << include_invisible;
-		stats.add_track_maybe(trk, trw->visible, trw->get_tracks_visibility(), trw->get_routes_visibility(), include_invisible);
+		stats.add_track_maybe(trk, trw->is_visible(), trw->get_tracks_visibility(), trw->get_routes_visibility(), include_invisible);
 	}
 
 	return;

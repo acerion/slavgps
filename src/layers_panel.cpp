@@ -405,7 +405,7 @@ void LayersPanel::move_item(bool up)
 
 void LayersPanel::draw_tree_items(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
 {
-	if (!viewport || !this->toplayer->visible) {
+	if (!viewport || !this->toplayer->is_visible()) {
 		return;
 	}
 
@@ -633,7 +633,7 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 		return layer;
 	}
 
-	if (this->toplayer->visible) {
+	if (this->toplayer->is_visible()) {
 		return this->toplayer->get_top_visible_layer_of_type(layer_type);
 	}
 

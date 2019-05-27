@@ -235,7 +235,7 @@ static void gpx_start(GPXImporter * importer, char const * el, char const ** att
 	case tt_wpt:
 		if (importer->set_lat_lon(attributes)) {
 			importer->wp = new Waypoint();
-			importer->wp->visible = get_attr(attributes, "hidden").isEmpty();
+			importer->wp->set_visible(get_attr(attributes, "hidden").isEmpty());
 			importer->wp->coord = Coord(importer->lat_lon, importer->trw->get_coord_mode());
 		}
 		break;
@@ -244,7 +244,7 @@ static void gpx_start(GPXImporter * importer, char const * el, char const ** att
 	case tt_rte:
 		importer->trk = new Track(importer->current_tag_type == tt_rte);
 		importer->trk->set_defaults();
-		importer->trk->visible = get_attr(attributes, "hidden").isEmpty();
+		importer->trk->set_visible(get_attr(attributes, "hidden").isEmpty());
 		break;
 
 	case tt_trk_trkseg:
@@ -290,7 +290,6 @@ static void gpx_start(GPXImporter * importer, char const * el, char const ** att
 
 	case tt_waypoint:
 		importer->wp = new Waypoint();
-		importer->wp->visible = true;
 		break;
 
 	case tt_waypoint_coord:
@@ -832,7 +831,7 @@ static QString entitize(const QString & input)
 static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 {
 	/* Don't write invisible waypoints when specified. */
-	if (context->options && !context->options->hidden && !wp->visible) {
+	if (context->options && !context->options->hidden && !wp->is_visible()) {
 		return;
 	}
 
@@ -840,7 +839,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 	static LatLon lat_lon = wp->coord.get_latlon();
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
-	fprintf(file, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->visible ? "" : " hidden=\"hidden\"");
+	fprintf(file, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->is_visible() ? "" : " hidden=\"hidden\"");
 
 	/* Sanity clause. */
 	if (wp->name.isEmpty()) {
@@ -1004,7 +1003,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 static void gpx_write_track(Track * trk, GPXWriteContext * context)
 {
 	/* Don't write invisible tracks when specified. */
-	if (context->options && !context->options->hidden && !trk->visible) {
+	if (context->options && !context->options->hidden && !trk->is_visible()) {
 		return;
 	}
 
@@ -1022,7 +1021,7 @@ static void gpx_write_track(Track * trk, GPXWriteContext * context)
 	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(file, "<%s%s>\n  <name>%s</name>\n",
 		trk->is_route() ? "rte" : "trk",
-		trk->visible ? "" : " hidden=\"hidden\"",
+		trk->is_visible() ? "" : " hidden=\"hidden\"",
 		tmp.toUtf8().constData());
 
 	if (!trk->comment.isEmpty()) {

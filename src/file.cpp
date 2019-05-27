@@ -193,7 +193,7 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 static void write_layer_params_and_data(FILE * file, const Layer * layer)
 {
 	fprintf(file, "name=%s\n", layer->name.isEmpty() ? "" : layer->name.toUtf8().constData());
-	if (!layer->visible) {
+	if (!layer->is_visible()) {
 		fprintf(file, "visible=f\n");
 	}
 
@@ -276,7 +276,7 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, View
 	fprintf(file, "drawcentermark=%s\n", viewport->get_center_mark_visibility() ? "t" : "f");
 	fprintf(file, "drawhighlight=%s\n", viewport->get_highlight_usage() ? "t" : "f");
 
-	if (!top_level_layer->visible) {
+	if (!top_level_layer->is_visible()) {
 		fprintf(file, "visible=f\n");
 	}
 
@@ -362,7 +362,7 @@ sg_ret ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & 
 
 		} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
 			/* This branch exists for both top level layer and sub-layers. */
-			top_layer->visible = TEST_BOOLEAN(value_start);
+			top_layer->set_visible(TEST_BOOLEAN(value_start));
 
 		} else {
 			read_status = sg_ret::err;
@@ -643,7 +643,7 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 		parent_layer->add_layer(layer, false);
 
 	} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
-		layer->visible = TEST_BOOLEAN(value_start);
+		layer->set_visible(TEST_BOOLEAN(value_start));
 
 	} else if (name_len != 0) { /* Some other parameter. */
 
@@ -797,7 +797,7 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 
 	viewport->set_center_from_lat_lon(lat_lon); /* The function will reject lat_lon if it's invalid. */
 
-	if (top_layer->tree_view && !top_layer->visible) {
+	if (top_layer->tree_view && !top_layer->is_visible()) {
 		top_layer->tree_view->apply_tree_item_visibility(top_layer);
 	}
 

@@ -223,7 +223,7 @@ Waypoint * LayerTRWWaypoints::find_waypoint_with_duplicate_name(void) const
 void LayerTRWWaypoints::set_items_visibility(bool on_off)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->visible = on_off;
+		(*iter)->set_visible(on_off);
 		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
@@ -234,7 +234,7 @@ void LayerTRWWaypoints::set_items_visibility(bool on_off)
 void LayerTRWWaypoints::toggle_items_visibility(void)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->visible = !(*iter)->visible;
+		(*iter)->toggle_visible();
 		this->tree_view->apply_tree_item_visibility(*iter);
 	}
 }
@@ -246,7 +246,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 		Waypoint * wp = *iter;
-		if (!wp->visible) {
+		if (!wp->is_visible()) {
 			continue;
 		}
 
@@ -908,7 +908,7 @@ sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visibl
 	}
 
 	if (NULL != was_visible) {
-		*was_visible = wp->visible;
+		*was_visible = wp->is_visible();
 	}
 
 	this->name_generator.remove_name(wp->name);

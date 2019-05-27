@@ -709,7 +709,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		this->waypoints.recalculate_bbox();
 
 		/* Consider if redraw necessary for the new item. */
-		if (this->visible && this->waypoints.visible && wp->visible) {
+		if (this->is_visible() && this->waypoints.is_visible() && wp->is_visible()) {
 			this->emit_tree_item_changed("TRW - paste waypoint");
 		}
 		return true;
@@ -726,7 +726,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		trk->convert(this->coord_mode);
 
 		/* Consider if redraw necessary for the new item. */
-		if (this->visible && this->tracks.visible && trk->visible) {
+		if (this->is_visible() && this->tracks.is_visible() && trk->is_visible()) {
 			this->emit_tree_item_changed("TRW - paste track");
 		}
 		return true;
@@ -741,7 +741,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		trk->convert(this->coord_mode);
 
 		/* Consider if redraw necessary for the new item. */
-		if (this->visible && this->routes.visible && trk->visible) {
+		if (this->is_visible() && this->routes.is_visible() && trk->is_visible()) {
 			this->emit_tree_item_changed("TRW - paste route");
 		}
 		return true;
@@ -772,13 +772,13 @@ bool LayerTRW::set_param_value(param_id_t param_id, const SGVariant & data, bool
 {
 	switch (param_id) {
 	case PARAM_TRACKS_VISIBLE:
-		this->tracks.visible = data.u.val_bool;
+		this->tracks.set_visible(data.u.val_bool);
 		break;
 	case PARAM_WAYPOINTS_VISIBLE:
-		this->waypoints.visible = data.u.val_bool;
+		this->waypoints.set_visible(data.u.val_bool);
 		break;
 	case PARAM_ROUTES_VISIBLE:
-		this->routes.visible = data.u.val_bool;
+		this->routes.set_visible(data.u.val_bool);
 		break;
 	case PARAM_DRAW_TRACK_LABELS:
 		this->painter->draw_track_labels = data.u.val_bool;
@@ -975,9 +975,9 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 {
 	SGVariant rv;
 	switch (param_id) {
-	case PARAM_TRACKS_VISIBLE:          rv = SGVariant(this->tracks.visible);                            break;
-	case PARAM_WAYPOINTS_VISIBLE:       rv = SGVariant(this->waypoints.visible);                         break;
-	case PARAM_ROUTES_VISIBLE:          rv = SGVariant(this->routes.visible);                            break;
+	case PARAM_TRACKS_VISIBLE:          rv = SGVariant(this->tracks.is_visible());                       break;
+	case PARAM_WAYPOINTS_VISIBLE:       rv = SGVariant(this->waypoints.is_visible());                    break;
+	case PARAM_ROUTES_VISIBLE:          rv = SGVariant(this->routes.is_visible());                       break;
 	case PARAM_DRAW_TRACK_LABELS:       rv = SGVariant(this->painter->draw_track_labels);                break;
 	case PARAM_TRACK_LABEL_FONT_SIZE:   rv = SGVariant((int32_t) this->painter->track_label_font_size);  break;
 	case PARAM_TRACK_DRAWING_MODE:      rv = SGVariant((int32_t) this->painter->track_drawing_mode);     break;
@@ -1269,17 +1269,17 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 	   paint. */
 	this->painter->set_viewport(viewport);
 
-	if (this->tracks.visible) {
+	if (this->tracks.is_visible()) {
 		qDebug() << SG_PREFIX_I << "Calling function to draw tracks, highlight:" << highlight_selected << item_is_selected;
 		this->tracks.draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
-	if (this->routes.visible) {
+	if (this->routes.is_visible()) {
 		qDebug() << SG_PREFIX_I << "Calling function to draw routes, highlight:" << highlight_selected << item_is_selected;
 		this->routes.draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
 
-	if (this->waypoints.visible) {
+	if (this->waypoints.is_visible()) {
 		qDebug() << SG_PREFIX_I << "Calling function to draw waypoints, highlight:" << highlight_selected << item_is_selected;
 		this->waypoints.draw_tree_item(viewport, highlight_selected, item_is_selected);
 	}
@@ -1552,7 +1552,7 @@ bool LayerTRW::is_empty(void) const
 
 bool LayerTRW::get_tracks_visibility(void) const
 {
-	return this->tracks.visible;
+	return this->tracks.is_visible();
 }
 
 
@@ -1560,7 +1560,7 @@ bool LayerTRW::get_tracks_visibility(void) const
 
 bool LayerTRW::get_routes_visibility(void) const
 {
-	return this->routes.visible;
+	return this->routes.is_visible();
 }
 
 
@@ -1568,7 +1568,7 @@ bool LayerTRW::get_routes_visibility(void) const
 
 bool LayerTRW::get_waypoints_visibility(void) const
 {
-	return this->waypoints.visible;
+	return this->waypoints.is_visible();
 }
 
 
@@ -1763,8 +1763,10 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 
 
 
-bool LayerTRW::new_waypoint(const Coord & default_coord, Window * parent_window)
+bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_parents, Window * parent_window)
 {
+	visible_with_parents = false;
+
 	/* Notice that we don't handle situation when returned default
 	   name is invalid. The new name in properties dialog will
 	   simply be empty. */
@@ -1780,8 +1782,8 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, Window * parent_window)
 	const std::tuple<bool, bool> result = waypoint_properties_dialog(wp, default_name, this->coord_mode, parent_window);
 	if (std::get<SG_WP_DIALOG_OK>(result)) {
 		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
-		wp->visible = true;
 		this->add_waypoint(wp);
+		visible_with_parents = wp->is_visible_with_parents();
 		return true;
 	} else {
 		qDebug() << SG_PREFIX_I << "Failed to create new waypoint in dialog, rejecting";
@@ -1977,7 +1979,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 		xfer_all = true;
 	}
 
-	if (trk && !trk->visible) {
+	if (trk && !trk->is_visible()) {
 		Dialog::error(tr("Can not upload invisible track."), this->get_window());
 		return;
 	}
@@ -1999,12 +2001,16 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 
 void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
-	/* TODO_LATER longone: okay, if layer above (aggregate) is invisible but this->visible is true, this redraws for no reason.
-	   Instead return true if you want to update. */
-	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center2()), this->get_window()) {
+	bool visible_with_parents = false;
+
+	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center2(), visible_with_parents, this->get_window())) {
 		this->waypoints.recalculate_bbox();
-		if (this->visible) {
-			this->emit_tree_item_changed("Redrawing items after adding waypoint");
+		/* We don't have direct access to added waypoint, so
+		   we can't call ::emit_tree_item_changed(). But we
+		   have access to 'waypoints' node, so let's use
+		   that. */
+		if (visible_with_parents) {
+			this->waypoints.emit_tree_item_changed("Redrawing 'waypoints' node after adding waypoint");
 		}
 	}
 }
@@ -2546,7 +2552,7 @@ void LayerTRW::delete_all_routes()
 		this->tree_view->detach_tree_item(*iter);
 	}
 	this->tree_view->detach_tree_item(&this->routes);
-	this->routes.visible = false; /* There is no such item in tree anymore. */
+	this->routes.set_visible(false); /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
 	   set to this item or any of its children, or to anything
@@ -2574,7 +2580,7 @@ void LayerTRW::delete_all_tracks()
 		this->tree_view->detach_tree_item(*iter);
 	}
 	this->tree_view->detach_tree_item(&this->tracks);
-	this->tracks.visible = false; /* There is no such item in tree anymore. */
+	this->tracks.set_visible(false); /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
 	   set to this item or any of its children, or to anything
@@ -2601,7 +2607,7 @@ void LayerTRW::delete_all_waypoints()
 		this->tree_view->detach_tree_item(*iter);
 	}
 	this->tree_view->detach_tree_item(&this->waypoints);
-	this->waypoints.visible = false; /* There is no such item in tree anymore. */
+	this->waypoints.set_visible(false); /* There is no such item in tree anymore. */
 
 	/* Don't try (for now) to verify if ->selected_tree_item was
 	   set to this item or any of its children, or to anything
@@ -3620,9 +3626,9 @@ LayerTRW::LayerTRW() : Layer()
 
 	/* Param settings that are not available via the GUI. */
 	/* Force to on after processing params (which defaults them to off with a zero value). */
-	this->tracks.visible = true;
-	this->routes.visible = true;
-	this->waypoints.visible = true;
+	this->tracks.set_visible(true);
+	this->routes.set_visible(true);
+	this->waypoints.set_visible(true);
 
 	this->metadata = new TRWMetadata();
 	this->draw_sync_done = true;
@@ -4051,7 +4057,7 @@ bool LayerTRW::move_child(TreeItem & child_tree_item, bool up)
 void LayerTRW::child_tree_item_changed_cb(const QString & child_tree_item_name) /* Slot. */
 {
 	qDebug() << SG_PREFIX_SLOT << "Layer" << this->name << "received 'child tree item changed' signal from" << child_tree_item_name;
-	if (this->visible) {
+	if (this->is_visible()) {
 		/* TODO_LATER: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
