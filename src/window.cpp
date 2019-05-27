@@ -437,8 +437,8 @@ void Window::create_actions(void)
 			qa->setToolTip(tr("Transfer data from a GPS device"));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_gps_cb(void)));
 
-			qa = this->submenu_file_acquire->addAction(tr("Import File With GPS&Babel..."));
-			qa->setToolTip(tr("Import File With GPS&Babel..."));
+			qa = this->submenu_file_acquire->addAction(tr("From &File (With GPSBabel)..."));
+			qa->setToolTip(tr("Import File With GPSBabel..."));
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb(void)));
 
 			qa = this->submenu_file_acquire->addAction(tr("&Directions..."));

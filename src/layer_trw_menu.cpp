@@ -218,9 +218,9 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_geotagged_images_cb()));
 #endif
 
-		qa = acquire_submenu->addAction(tr("From &File..."));
+		qa = acquire_submenu->addAction(tr("From &File (With GPSBabel)..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb()));
-		qa->setToolTip(tr("Import File With GPS_Babel..."));
+		qa->setToolTip(tr("From &File (With GPSBabel)..."));
 
 		ExternalToolDataSource::add_menu_items(acquire_submenu, this->get_window()->get_viewport());
 	}
