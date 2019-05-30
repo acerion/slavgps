@@ -181,5 +181,5 @@ bool TileScale::get_scale_valid(void) const
 
 int TilesRange::get_tiles_count(void) const
 {
-	return (this->x_last - this->x_first) * (this->y_last - this->y_first);
+	return (this->x_last - this->x_first + 1) * (this->y_last - this->y_first + 1);
 }
