@@ -94,6 +94,12 @@ namespace SlavGPS {
 		bool download_in_progress = false;
 
 		TilesRange range;
+
+		/* How many tiles did we fail to download? */
+		unsigned int failed_downloads = 0;
+
+		/* How many tiles did we fail to save to disc? */
+		unsigned int failed_saves = 0;
 	};
 
 

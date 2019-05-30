@@ -189,13 +189,18 @@ void MapDownloadJob::run(void)
 				switch (dr) {
 				case DownloadStatus::HTTPError:
 				case DownloadStatus::ContentError: {
-					/* TODO_LATER: ?? count up the number of download errors somehow... */
-					const QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Failed to download map tile");
+					this->failed_downloads++;
+					const QString msg = tr("%1: Failed to download map tile (%2 failed in total)")
+						.arg(this->layer->get_map_label())
+						.arg(this->failed_downloads);
 					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
 				}
 				case DownloadStatus::FileWriteError: {
-					const QString msg = tr("%1: %2").arg(this->layer->get_map_label()).arg("Unable to save map tile");
+					this->failed_saves++;
+					const QString msg = tr("%1: Failed to save map tile (%2 failed in total)")
+						.arg(this->layer->get_map_label())
+						.arg(this->failed_saves);
 					ThisApp::get_main_window()->statusbar_update(StatusBarField::Info, msg);
 					break;
 				}
@@ -349,8 +354,9 @@ int MapDownloadJob::calculate_tile_count_to_download(void) const
 
 int MapDownloadJob::calculate_total_tile_count_to_download(void) const
 {
-	/* TODO: can't we use TilesRange::count()? */
-	return (this->range.x_last - this->range.x_first + 1) * (this->range.y_last - this->range.y_first + 1);
+	const int count = this->range.get_tiles_count();
+	qDebug() << SG_PREFIX_I << "Number of maps to download:" << count;
+	return count;
 }
 
 
