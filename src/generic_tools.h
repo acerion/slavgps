@@ -56,9 +56,10 @@ namespace SlavGPS {
 		GenericToolZoom(Window * window, Viewport * viewport);
 		~GenericToolZoom();
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 
 	private:
 		/* "ztr" == "zoom to rectangle". */
@@ -75,14 +76,14 @@ namespace SlavGPS {
 		GenericToolRuler(Window * window, Viewport * viewport);
 		~GenericToolRuler();
 
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
-
 		bool deactivate_tool(void);
 
 	private:
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event) override;
+
 		void reset_ruler(void);
 
 		QPixmap orig_viewport_pixmap; /* Pixmap with saved viewport's state without ruler drawn on top of it. */
@@ -96,10 +97,11 @@ namespace SlavGPS {
 		LayerToolPan(Window * window, Viewport * viewport);
 		~LayerToolPan();
 
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
+	private:
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
 	};
 
 
@@ -108,15 +110,16 @@ namespace SlavGPS {
 		LayerToolSelect(Window * window, Viewport * viewport);
 		~LayerToolSelect();
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
-		void handle_mouse_click_common(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-
 		QString selected_tree_item_type_id;
 
 	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+
+		void handle_mouse_click_common(Layer * layer, QMouseEvent * event);
+
 		/* When a mouse click happens and some layer handles the click,
 		   it's possible to start to move the selected item belonging to the layer. */
 		bool select_and_move_activated = false;

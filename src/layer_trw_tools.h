@@ -65,60 +65,66 @@ namespace SlavGPS {
 	public:
 		LayerToolTRWNewWaypoint(Window * window, Viewport * viewport);
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWEditTrackpoint : public LayerTool {
 	public:
 		LayerToolTRWEditTrackpoint(Window * window, Viewport * viewport);
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWExtendedRouteFinder : public LayerTool {
 	public:
 		LayerToolTRWExtendedRouteFinder(Window * window, Viewport * viewport);
-
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
-
 		void undo(LayerTRW * trw, Track * track);
+
+	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event) override;
+
 	};
 
 	class LayerToolTRWShowPicture : public LayerTool {
 	public:
 		LayerToolTRWShowPicture(Window * window, Viewport * viewport);
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWEditWaypoint : public LayerTool {
 	public:
 		LayerToolTRWEditWaypoint(Window * window, Viewport * viewport);
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
 	};
 
 	class LayerToolTRWNewTrack : public LayerTool {
 	public:
 		LayerToolTRWNewTrack(Window * window, Viewport * viewport, bool is_route_tool);
 
-		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
-		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event);
-
 		bool is_route_tool = false;
 		LayerTRW * creation_in_progress = NULL;
 		Ruler * ruler = NULL;
 		QPixmap orig_viewport_pixmap;
+
+	private:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event) override;
+		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event) override;
 	};
 
 

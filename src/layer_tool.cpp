@@ -155,3 +155,46 @@ bool LayerTool::deactivate_tool(void)
 {
 	return true;
 }
+
+
+
+
+ToolStatus LayerTool::handle_mouse_click(Layer * layer, QMouseEvent * event)
+{
+	this->viewport->setCursor(this->cursor_click);
+	return this->internal_handle_mouse_click(layer, event);
+}
+
+
+
+
+ToolStatus LayerTool::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+{
+	this->viewport->setCursor(this->cursor_click);
+	return this->internal_handle_mouse_double_click(layer, event);
+}
+
+
+
+
+ToolStatus LayerTool::handle_mouse_move(Layer * layer, QMouseEvent * event)
+{
+	return this->internal_handle_mouse_move(layer, event);
+}
+
+
+
+
+ToolStatus LayerTool::handle_mouse_release(Layer * layer, QMouseEvent * event)
+{
+	this->viewport->setCursor(this->cursor_release);
+	return this->internal_handle_mouse_release(layer, event);
+}
+
+
+
+
+ToolStatus LayerTool::handle_key_press(Layer * layer, QKeyEvent * event)
+{
+	return this->internal_handle_key_press(layer, event);
+}

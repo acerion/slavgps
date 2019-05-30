@@ -484,7 +484,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * 
 
 
 
-ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -601,7 +601,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_click(Layer * layer, QMouseEve
 
 
 
-ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -627,7 +627,7 @@ ToolStatus LayerToolTRWEditWaypoint::handle_mouse_move(Layer * layer, QMouseEven
 
 
 
-ToolStatus LayerToolTRWEditWaypoint::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -825,7 +825,7 @@ void LayerTRW::update_statusbar()
 
 
 
-ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	if (!this->ruler) {
 		/* Cursor is moved, but there was no mouse click that would start a new track segment. */
@@ -896,7 +896,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_move(Layer * layer, QMouseEvent * 
 
 
 
-ToolStatus LayerToolTRWNewTrack::handle_key_press(Layer * layer, QKeyEvent * ev)
+ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEvent * ev)
 {
 	if (this->id_string == LAYER_TRW_TOOL_CREATE_TRACK && !this->creation_in_progress) {
 		/* Track is not being created at the moment, so a Key can't affect work of this tool. */
@@ -985,7 +985,7 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 
 
 
-ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1069,7 +1069,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_click(Layer * layer, QMouseEvent *
 
 
 
-ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 	if (trw->type != LayerType::TRW) {
@@ -1117,7 +1117,7 @@ ToolStatus LayerToolTRWNewTrack::handle_mouse_double_click(Layer * layer, QMouse
 
 
 
-ToolStatus LayerToolTRWNewTrack::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1149,7 +1149,7 @@ LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * vi
 
 
 
-ToolStatus LayerToolTRWNewWaypoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1195,7 +1195,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewpor
  * then initiate the move operation to drag the point to a new destination.
  * NB The current trackpoint will get reset elsewhere.
  */
-ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1264,7 +1264,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_click(Layer * layer, QMouseE
 
 
 
-ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1292,7 +1292,7 @@ ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_move(Layer * layer, QMouseEv
 
 
 
-ToolStatus LayerToolTRWEditTrackpoint::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	/* TODO: is this method called at all? */
 
@@ -1362,7 +1362,7 @@ LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_move(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	/* TODO_2_LATER: implement function similar to LayerToolTRWNewTrack::handle_mouse_move() */
 	return ToolStatus::Ignored;
@@ -1371,7 +1371,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_move(Layer * layer, QMo
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1414,7 +1414,7 @@ void LayerToolTRWExtendedRouteFinder::undo(LayerTRW * trw, Track * track)
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1496,7 +1496,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::handle_mouse_click(Layer * layer, QM
 
 
 
-ToolStatus LayerToolTRWExtendedRouteFinder::handle_key_press(Layer * layer, QKeyEvent * ev)
+ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * layer, QKeyEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1540,7 +1540,7 @@ LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * vi
 
 
 
-ToolStatus LayerToolTRWShowPicture::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWShowPicture::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	if (layer->type != LayerType::TRW) {
 		return ToolStatus::Ignored;

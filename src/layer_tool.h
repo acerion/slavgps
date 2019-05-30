@@ -80,11 +80,11 @@ namespace SlavGPS {
 
 		QString get_description(void) const;
 
-		virtual ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event)        { return ToolStatus::Ignored; }
-		virtual ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return ToolStatus::Ignored; }
-		virtual ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::Ignored; }
-		virtual ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::Ignored; }
-		virtual ToolStatus handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::Ignored; }; /* TODO_LATER: where do we call this function? */
+		ToolStatus handle_mouse_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_double_click(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_move(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
+		ToolStatus handle_key_press(Layer * layer, QKeyEvent * event); /* TODO_LATER: where do we call this function? */
 
 		/* Return true if tool has been successfully activated.
 		   Return false otherwise. */
@@ -146,6 +146,13 @@ namespace SlavGPS {
 		QString id_string;
 
 		char debug_string[100]; /* For debug purposes only. */
+
+	protected:
+		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event)        { return ToolStatus::Ignored; }
+		virtual ToolStatus internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event) { return ToolStatus::Ignored; }
+		virtual ToolStatus internal_handle_mouse_move(Layer * layer, QMouseEvent * event)         { return ToolStatus::Ignored; }
+		virtual ToolStatus internal_handle_mouse_release(Layer * layer, QMouseEvent * event)      { return ToolStatus::Ignored; }
+		virtual ToolStatus internal_handle_key_press(Layer * layer, QKeyEvent * event)            { return ToolStatus::Ignored; }
 	};
 
 

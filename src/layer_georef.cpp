@@ -1210,7 +1210,7 @@ LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_)
 
 
 
-ToolStatus LayerToolGeorefMove::handle_mouse_release(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolGeorefMove::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
 	return ((LayerGeoref *) layer)->move_release(ev, this);
 }
@@ -1250,7 +1250,7 @@ LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_)
 
 
 
-ToolStatus LayerToolGeorefZoom::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolGeorefZoom::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	return ((LayerGeoref *) layer)->zoom_press(ev, this);
 }
@@ -1285,7 +1285,7 @@ ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 
 
 
-ToolStatus LayerToolGeorefMove::handle_mouse_click(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolGeorefMove::internal_handle_mouse_click(Layer * layer, QMouseEvent * ev)
 {
 	return ((LayerGeoref *) layer)->move_press(ev, this);
 }

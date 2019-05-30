@@ -1461,7 +1461,7 @@ void SlavGPS::tile_info_add_file_info_strings(QStringList & items, const QString
 
 
 
-ToolStatus LayerToolMapsDownload::handle_mouse_release(Layer * _layer, QMouseEvent * event)
+ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, QMouseEvent * event)
 {
 	if (!_layer || _layer->type != LayerType::Map) {
 		return ToolStatus::Ignored;
@@ -1532,7 +1532,7 @@ LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewpo
 
 
 
-ToolStatus LayerToolMapsDownload::handle_mouse_click(Layer * _layer, QMouseEvent * event)
+ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QMouseEvent * event)
 {
 	TileInfo tmp;
 	if (!_layer || _layer->type != LayerType::Map) {

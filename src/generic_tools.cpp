@@ -129,7 +129,7 @@ GenericToolRuler::~GenericToolRuler()
 
 
 
-ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * event)
+ToolStatus GenericToolRuler::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "called";
 
@@ -170,7 +170,7 @@ ToolStatus GenericToolRuler::handle_mouse_click(Layer * layer, QMouseEvent * eve
 
 
 
-ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * event)
+ToolStatus GenericToolRuler::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -205,9 +205,10 @@ ToolStatus GenericToolRuler::handle_mouse_move(Layer * layer, QMouseEvent * even
 
 
 
-ToolStatus GenericToolRuler::handle_mouse_release(Layer * layer, QMouseEvent * event)
+ToolStatus GenericToolRuler::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_I << "called";
+
 
 	return ToolStatus::Ack;
 }
@@ -227,7 +228,7 @@ bool GenericToolRuler::deactivate_tool(void)
 
 
 
-ToolStatus GenericToolRuler::handle_key_press(Layer * layer, QKeyEvent * event)
+ToolStatus GenericToolRuler::internal_handle_key_press(Layer * layer, QKeyEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "called";
 
@@ -284,7 +285,7 @@ GenericToolZoom::~GenericToolZoom()
 
 
 
-ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * event)
+ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -360,7 +361,7 @@ ToolStatus GenericToolZoom::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 
 
-ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event)
+ToolStatus GenericToolZoom::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -421,7 +422,7 @@ ToolStatus GenericToolZoom::handle_mouse_move(Layer * layer, QMouseEvent * event
 
 
 
-ToolStatus GenericToolZoom::handle_mouse_release(Layer * layer, QMouseEvent * event)
+ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 
@@ -510,7 +511,7 @@ LayerToolPan::~LayerToolPan()
 
 
 
-ToolStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolPan::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 	this->window->set_dirty_flag(true);
@@ -527,7 +528,7 @@ ToolStatus LayerToolPan::handle_mouse_click(Layer * layer, QMouseEvent * event)
 
 
 
-ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolPan::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << "Called";
 	this->window->set_dirty_flag(true);
@@ -554,7 +555,7 @@ ToolStatus LayerToolPan::handle_mouse_double_click(Layer * layer, QMouseEvent * 
 
 
 
-ToolStatus LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolPan::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	//qDebug() << SG_PREFIX_D << "Will call window->pan_move()";
 	this->window->pan_move(event);
@@ -565,7 +566,7 @@ ToolStatus LayerToolPan::handle_mouse_move(Layer * layer, QMouseEvent * event)
 
 
 
-ToolStatus LayerToolPan::handle_mouse_release(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolPan::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (event->button() == Qt::LeftButton) {
 		this->window->pan_release(event);
@@ -596,7 +597,7 @@ LayerToolSelect::~LayerToolSelect()
 
 
 
-ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolSelect::internal_handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << this->id_string;
 
@@ -619,7 +620,7 @@ ToolStatus LayerToolSelect::handle_mouse_click(Layer * layer, QMouseEvent * even
 
 
 
-ToolStatus LayerToolSelect::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolSelect::internal_handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
 	qDebug() << SG_PREFIX_D << this->id_string;
 
@@ -684,7 +685,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 
 
 
-ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolSelect::internal_handle_mouse_move(Layer * layer, QMouseEvent * event)
 {
 	if (this->select_and_move_activated) {
 		if (layer) {
@@ -702,7 +703,7 @@ ToolStatus LayerToolSelect::handle_mouse_move(Layer * layer, QMouseEvent * event
 
 
 
-ToolStatus LayerToolSelect::handle_mouse_release(Layer * layer, QMouseEvent * event)
+ToolStatus LayerToolSelect::internal_handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
 	if (this->select_and_move_activated) {
 		if (layer) {

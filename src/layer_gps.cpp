@@ -676,16 +676,10 @@ sg_ret LayerGPS::attach_children_to_tree(void)
 		return sg_ret::err;
 	}
 
-	for (int ix = 0; ix < GPS_CHILD_LAYER_MAX; ix++) {
-		LayerTRW * trw = this->trw_children[ix];
-
-		/* TODO_LATER: find a way to pass 'above=true' argument to function adding new tree item. */
-
-		/* This call sets TreeItem::index and TreeItem::tree_view of added item. */
-		trw->set_name(trw_names[ix].label);
+	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
+		LayerTRW * trw = this->trw_children[i];
 		qDebug() << SG_PREFIX_I << "Attaching to tree item" << trw->name << "under" << this->name;
 		this->tree_view->attach_to_tree(this, trw);
-
 		QObject::connect(trw, SIGNAL (tree_item_changed(const QString &)), this, SLOT (child_tree_item_changed_cb(const QString &)));
 	}
 
@@ -1933,6 +1927,7 @@ LayerGPS::LayerGPS()
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		this->trw_children[i] = new LayerTRW();
+		this->trw_children[i]->set_name(trw_names[i].label);
 
 		/* No cutting or deleting of TRW sublayers. */
 		MenuOperation ops = this->trw_children[i]->get_menu_operation_ids();
