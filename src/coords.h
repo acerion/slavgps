@@ -49,6 +49,7 @@ renaming functions and defining LatLon and UTM structs.
 
 
 #include "lat_lon.h"
+#include "globals.h"
 
 
 
@@ -66,6 +67,14 @@ namespace SlavGPS {
 
 	class UTM;
 	class LatLonBBox;
+
+
+
+
+	class Coords {
+	public:
+		static bool unit_tests(void);
+	};
 
 
 
@@ -108,15 +117,15 @@ namespace SlavGPS {
 
 	class UTM {
 	public:
-		UTM() {};
+		UTM(double new_northing = NAN, double new_easting = NAN, int new_zone = 0, char new_band_letter = 0) {};
 
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
 		static LatLon to_latlon(const UTM & utm);
 
 		QString to_string(void) const;
 
-		char get_band_letter(void) const;
-		bool set_band_letter(char character);
+
+
 		bool has_band_letter(void) const;
 
 		static bool is_northern_hemisphere(const UTM & utm);
@@ -125,6 +134,16 @@ namespace SlavGPS {
 		static bool is_band_symbol(char character); /* Is given character a band letter or "none band" indicator? */
 
 		static double get_distance(const UTM & utm1, const UTM & utm2);
+
+		sg_ret set_northing(double value);
+		sg_ret set_easting(double value);
+		sg_ret set_zone(int value);
+		bool set_band_letter(char character);
+
+		double get_northing(void) const { return this->northing; }
+		double get_easting(void) const { return this->easting; }
+		double get_zone(void) const { return this->zone; }
+		char get_band_letter(void) const;
 
 		/* TODO_HARD: revisit data types (double or int?) for northing/easting. */
 		double northing = 0;

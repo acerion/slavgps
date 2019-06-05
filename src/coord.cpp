@@ -363,8 +363,8 @@ void Coord::to_strings(QString & str1, QString & str2) const
 		   format:
 		   ZONE[N|S] EASTING NORTHING */
 
-		str1 = QString("%1%2").arg((int) utm.zone).arg(utm.get_band_letter());
-		str2 = QString("%1 %2").arg((int) utm.easting).arg((int) utm.northing);
+		str1 = QString("%1%2").arg((int) utm.get_zone()).arg(utm.get_band_letter());
+		str2 = QString("%1 %2").arg((int) utm.get_easting()).arg((int) utm.get_northing());
 		break;
 	case CoordMode::LatLon:
 		LatLon::to_strings(this->ll, str1, str2);
@@ -387,11 +387,7 @@ QString Coord::to_string(void) const
 
 	switch (this->mode) {
 	case CoordMode::UTM:
-		/* First string will contain "zone + N/S", second
-		   string will contain easting and northing of a UTM
-		   format:
-		   ZONE[N|S] EASTING NORTHING */
-		result = QObject::tr("%1%2 %3 %4").arg((int) utm.zone).arg(utm.get_band_letter()).arg((int) utm.easting).arg((int) utm.northing);
+		result = utm.to_string();
 		break;
 
 	case CoordMode::LatLon:

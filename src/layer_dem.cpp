@@ -796,10 +796,10 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	bleft.change_mode(CoordMode::UTM);
 	bright.change_mode(CoordMode::UTM);
 
-	double max_nor = std::max(tleft.utm.northing, tright.utm.northing);
-	double min_nor = std::min(bleft.utm.northing, bright.utm.northing);
-	double max_eas = std::max(bright.utm.easting, tright.utm.easting);
-	double min_eas = std::min(bleft.utm.easting, tleft.utm.easting);
+	double max_nor = std::max(tleft.utm.get_northing(), tright.utm.get_northing());
+	double min_nor = std::min(bleft.utm.get_northing(), bright.utm.get_northing());
+	double max_eas = std::max(bright.utm.get_easting(), tright.utm.get_easting());
+	double min_eas = std::min(bleft.utm.get_easting(), tleft.utm.get_easting());
 
 	double start_eas, end_eas;
 	double start_nor = std::max(min_nor, dem->min_north_seconds);

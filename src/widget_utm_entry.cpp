@@ -124,8 +124,8 @@ UTM UTMEntryWidget::get_value(void) const
 {
 	UTM utm;
 
-	utm.easting = this->easting_spin->value();
-	utm.northing = this->northing_spin->value();
+	utm.set_easting(this->easting_spin->value());
+	utm.set_northing(this->northing_spin->value());
 	utm.zone = this->zone_spin->value();
 
 	const QString text = this->band_letter_combo->currentText();

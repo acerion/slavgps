@@ -453,11 +453,11 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	LatLon ll, ll2, min, max;
 
 	UTM utm = center;
-	utm.northing = center.northing - (ympp * height / 2);
+	utm.northing = center.get_northing() - (ympp * height / 2);
 
 	ll = UTM::to_latlon(utm);
 
-	utm.northing = center.northing + (ympp * height / 2);
+	utm.northing = center.get_northing() + (ympp * height / 2);
 
 	ll2 = UTM::to_latlon(utm);
 
@@ -531,9 +531,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 	for (; ll.lat <= max.lat ; ll.lat += this->deg_inc, ll2.lat += this->deg_inc) {
 		utm = LatLon::to_utm(ll);
-		int x1 = (height / 2) - ((utm.northing - center.northing) / ympp);
+		int x1 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 		utm = LatLon::to_utm(ll2);
-		int x2 = (height / 2) - ((utm.northing - center.northing) / ympp);
+		int x2 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 		viewport->draw_line(pen, width, x2, 0, x1);
 	}
 }

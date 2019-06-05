@@ -117,9 +117,9 @@ double Viewport::calculate_utm_zone_width(void) const
 		LatLon ll = UTM::to_latlon(utm);
 
 		/* Boundary. */
-		ll.lon = (utm.zone - 1) * 6 - 180 ;
+		ll.lon = (utm.get_zone() - 1) * 6 - 180 ;
 		utm = LatLon::to_utm(ll);
-		return fabs(utm.easting - EASTING_OFFSET) * 2;
+		return fabs(utm.get_easting() - EASTING_OFFSET) * 2;
 	}
 
 	case CoordMode::LatLon:
@@ -1065,11 +1065,11 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			if (coord.utm.zone != test_coord.utm.zone) {
 				qDebug() << SG_PREFIX_E << "UTM: Zone calculation mismatch" << coord << test_coord << coord.utm.zone << test_coord.utm.zone;
 			}
-			if (coord.utm.easting != test_coord.utm.easting) {
-				qDebug() << SG_PREFIX_E << "UTM: Easting calculation mismatch" << coord << test_coord << (coord.utm.easting - test_coord.utm.easting);
+			if (coord.utm.get_easting() != test_coord.utm.get_easting()) {
+				qDebug() << SG_PREFIX_E << "UTM: Easting calculation mismatch" << coord << test_coord << (coord.utm.get_easting() - test_coord.utm.get_easting());
 			}
-			if (coord.utm.northing != test_coord.utm.northing) {
-				qDebug() << SG_PREFIX_E << "UTM: Northing calculation mismatch" << coord << test_coord << (coord.utm.northing - test_coord.utm.northing);
+			if (coord.utm.get_northing() != test_coord.utm.get_northing()) {
+				qDebug() << SG_PREFIX_E << "UTM: Northing calculation mismatch" << coord << test_coord << (coord.utm.get_northing() - test_coord.utm.get_northing());
 			}
 			if (coord.utm.get_band_letter() != test_coord.utm.get_band_letter()) {
 				qDebug() << SG_PREFIX_E << "UTM: Band letter calculation mismatch" << coord << test_coord << coord.utm.get_band_letter() << test_coord.utm.get_band_letter();
@@ -1203,7 +1203,7 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 
 			*pos_x = ((utm->easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
 				(utm_center->zone - utm->zone) * this->utm_zone_width / xmpp;
-			*pos_y = (this->canvas.height_2) - ((utm->northing - utm_center->northing) / ympp);
+			*pos_y = (this->canvas.height_2) - ((utm->get_northing() - utm_center->get_northing()) / ympp);
 		}
 		break;
 
@@ -1314,7 +1314,7 @@ void Viewport::utm_to_screen_pos(const UTM & utm, int * pos_x, int * pos_y) cons
 
 	*pos_x = ((utm.easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
 		(utm_center->zone - utm.zone) * this->utm_zone_width / xmpp;
-	*pos_y = (this->canvas.height_2) - ((utm.northing - utm_center->northing) / ympp);
+	*pos_y = (this->canvas.height_2) - ((utm.get_northing() - utm_center->get_northing()) / ympp);
 }
 
 
@@ -2197,7 +2197,7 @@ void Viewport::get_location_strings(UTM utm, QString & lat, QString & lon)
 		// NB zone is stored in a char but is an actual number
 		snprintf(*lat, 4, "%d%c", utm.zone, utm.get_band_letter());
 		*lon = (char *) malloc(16*sizeof(char));
-		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
+		snprintf(*lon, 16, "%d %d", (int)utm.get_easting(), (int)utm.get_northing());
 	} else {
 		const LatLon lat_lon = UTM::to_latlon(utm);
 		LatLon::to_strings(lat_lon, lat, lon);

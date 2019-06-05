@@ -304,10 +304,10 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 		break;
 	}
 	case PARAM_CORNER_UTM_EASTING:
-		rv = SGVariant(this->utm_tl.easting);
+		rv = SGVariant(this->utm_tl.get_easting());
 		break;
 	case PARAM_CORNER_UTM_NORTHING:
-		rv = SGVariant(this->utm_tl.northing);
+		rv = SGVariant(this->utm_tl.get_northing());
 		break;
 	case PARAM_MPP_EASTING:
 		rv = SGVariant(this->mpp_easting);
@@ -316,7 +316,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 		rv = SGVariant(this->mpp_northing);
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		rv = SGVariant((int32_t) this->utm_tl.zone);
+		rv = SGVariant((int32_t) this->utm_tl.get_zone());
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		/* The parameter is called "corner_letter_as_int", so we have to cast to int here. */
@@ -1161,8 +1161,8 @@ void LayerGeoref::goto_center_cb(void)
 	Viewport * viewport = ThisApp::get_main_viewport();
 	UTM utm = viewport->get_center()->get_utm();
 
-	utm.easting = this->utm_tl.easting + (this->image_width * this->mpp_easting / 2); /* Only an approximation. */
-	utm.northing = this->utm_tl.northing - (this->image_height * this->mpp_northing / 2);
+	utm.easting = this->utm_tl.get_easting() + (this->image_width * this->mpp_easting / 2); /* Only an approximation. */
+	utm.northing = this->utm_tl.get_northing() - (this->image_height * this->mpp_northing / 2);
 
 	viewport->set_center_from_utm(utm);
 	viewport->request_redraw("Redrawing items after setting new center coord in viewport");

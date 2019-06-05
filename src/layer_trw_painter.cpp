@@ -131,10 +131,10 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 		const int height = this->vp_ympp * (this->vp_rect.height() / 2) + outside_margin / this->vp_ympp;
 		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
 
-		this->coord_leftmost = this->vp_center.utm.easting - width;
-		this->coord_rightmost = this->vp_center.utm.easting + width;
-		this->coord_bottommost = this->vp_center.utm.northing - height;
-		this->coord_topmost = this->vp_center.utm.northing + height;
+		this->coord_leftmost = this->vp_center.utm.get_easting() - width;
+		this->coord_rightmost = this->vp_center.utm.get_easting() + width;
+		this->coord_bottommost = this->vp_center.utm.get_northing() - height;
+		this->coord_topmost = this->vp_center.utm.get_northing() + height;
 
 	} else if (this->vp_coord_mode == CoordMode::LatLon) {
 
@@ -1229,8 +1229,8 @@ inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
 
 	switch (this->vp_coord_mode) {
 	case CoordMode::UTM:
-		fits_horizontally = coord.utm.easting < this->coord_rightmost && coord.utm.easting > this->coord_leftmost;
-		fits_vertically = coord.utm.northing > this->coord_bottommost && coord.utm.northing < this->coord_topmost;
+		fits_horizontally = coord.utm.get_easting() < this->coord_rightmost && coord.utm.get_easting() > this->coord_leftmost;
+		fits_vertically = coord.utm.get_northing() > this->coord_bottommost && coord.utm.get_northing() < this->coord_topmost;
 		break;
 	case CoordMode::LatLon:
 		fits_horizontally = coord.ll.lon < this->coord_rightmost && coord.ll.lon > this->coord_leftmost;

@@ -152,6 +152,7 @@ int main(int argc, char ** argv)
 	//test_pickle();
 
 	Measurements::unit_tests();
+	Coords::unit_tests();
 
 	QApplication app(argc, argv);
 	CommandLineOptions command_line_options;
