@@ -363,7 +363,7 @@ void Coord::to_strings(QString & str1, QString & str2) const
 		   format:
 		   ZONE[N|S] EASTING NORTHING */
 
-		str1 = QString("%1%2").arg((int) utm.get_zone()).arg(utm.get_band_letter());
+		str1 = QString("%1%2").arg((int) utm.get_zone()).arg(utm.get_band_as_letter());
 		str2 = QString("%1 %2").arg((int) utm.get_easting()).arg((int) utm.get_northing());
 		break;
 	case CoordMode::LatLon:

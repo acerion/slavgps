@@ -594,7 +594,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		/* TODO_LATER: compare this condition with condition in LayerTRWPainter::draw_waypoint_sub(). */
 		bool first_condition = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
 
-		bool second_condition_A = ((!this->vp_is_one_utm_zone) || tp->coord.utm.zone == this->vp_center.utm.zone);  /* Only check zones if UTM & one_utm_zone. */
+		bool second_condition_A = ((!this->vp_is_one_utm_zone) || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm));  /* Only check zones if UTM & one_utm_zone. */
 
 		const bool fits_into_viewport = this->coord_fits_in_viewport(tp->coord);
 
@@ -659,7 +659,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			if (!tp->newsegment && this->draw_track_lines) {
 
 				/* UTM only: zone check. */
-				if (do_draw_trackpoints && this->trw->coord_mode == CoordMode::UTM && tp->coord.utm.zone != this->vp_center.utm.zone) {
+				if (do_draw_trackpoints && this->trw->coord_mode == CoordMode::UTM && !UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
 					draw_utm_skip_insignia(this->viewport, main_pen, curr_pos.x, curr_pos.y);
 				}
 
@@ -690,7 +690,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		} else {
 
 			if (use_prev_pos && this->draw_track_lines && (!tp->newsegment)) {
-				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->vp_center.utm.zone) {
+				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
 					curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
 
 					if (!do_highlight && (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed)) {
@@ -795,7 +795,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 		} else {
 			if (use_prev_pos && this->draw_track_lines && !tp->newsegment) {
-				if (this->trw->coord_mode != CoordMode::UTM || tp->coord.utm.zone == this->vp_center.utm.zone) {
+				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
 					curr_pos = this->viewport->coord_to_screen_pos(tp->coord);
 
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -860,7 +860,7 @@ void LayerTRWPainter::draw_track(Track * trk, Viewport * a_viewport, bool do_hig
 void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 {
 	const bool cond = (this->vp_coord_mode == CoordMode::UTM && !this->vp_is_one_utm_zone)
-		|| ((this->vp_coord_mode == CoordMode::LatLon || wp->coord.utm.zone == this->vp_center.utm.zone) &&
+		|| ((this->vp_coord_mode == CoordMode::LatLon || UTM::is_the_same_zone(wp->coord.utm, this->vp_center.utm)) &&
 		    this->coord_fits_in_viewport(wp->coord));
 
 

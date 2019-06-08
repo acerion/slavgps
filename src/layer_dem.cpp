@@ -804,7 +804,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	double start_eas, end_eas;
 	double start_nor = std::max(min_nor, dem->min_north_seconds);
 	double end_nor   = std::min(max_nor, dem->max_north_seconds);
-	if (tleft.utm.zone == dem->utm.zone && bleft.utm.zone == dem->utm.zone
+	if (UTM::is_the_same_zone(tleft.utm, dem->utm) && UTM::is_the_same_zone(bleft.utm, dem->utm)
 	    && UTM::is_northern_hemisphere(tleft.utm) == UTM::is_northern_hemisphere(dem->utm)
 	    && UTM::is_northern_hemisphere(bleft.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
@@ -813,7 +813,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 		start_eas = dem->min_east_seconds;
 	}
 
-	if (tright.utm.zone == dem->utm.zone && bright.utm.zone == dem->utm.zone
+	if (UTM::is_the_same_zone(tright.utm, dem->utm) && UTM::is_the_same_zone(bright.utm, dem->utm)
 	    && UTM::is_northern_hemisphere(tright.utm) == UTM::is_northern_hemisphere(dem->utm)
 	    && UTM::is_northern_hemisphere(bright.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
@@ -835,10 +835,10 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
 
-	UTM counter;
-	counter.zone = dem->utm.zone;
-	assert (UTM::is_band_letter(dem->utm.get_band_letter())); /* TODO_2_LATER: smarter handling of error value. In theory the source object should be valid and for sure contain valid band letter. */
-	counter.set_band_letter(dem->utm.get_band_letter());
+	/* TODO_2_LATER: smarter handling of invalid band letter
+	   value. In theory the source object should be valid and for
+	   sure contain valid band letter. */
+	UTM counter(NAN, NAN, dem->utm.get_zone(), dem->utm.get_band_letter());
 
 	const double min_elevation = this->min_elev.get_value();
 	const double max_elevation = this->max_elev.get_value();

@@ -234,18 +234,14 @@ bool LayerGeoref::set_param_value(param_id_t param_id, const SGVariant & param_v
 		this->mpp_northing = param_value.u.val_double;
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		if (param_value.u.val_int <= UTM_ZONES) {
-			this->utm_tl.zone = param_value.u.val_int;
-		} else {
-			qDebug() << SG_PREFIX_E << "Invalid utm zone" << param_value.u.val_int;
+		if (sg_ret::ok != this->utm_tl.set_zone(param_value.u.val_int)) {
+			qDebug() << SG_PREFIX_E << "Failed to set UTM zone from" << param_value.u.val_int;
 		}
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		/* The parameter is called "corner_letter_as_int", so we have to use .val_int here. */
-		if (UTM::is_band_letter(param_value.u.val_int)) {
-			this->utm_tl.set_band_letter((char) param_value.u.val_int);
-		} else {
-			qDebug() << SG_PREFIX_E << "Invalid utm band letter/decimal =" << param_value.u.val_int;
+		if (sg_ret::ok != this->utm_tl.set_band_letter((char) param_value.u.val_int)) {
+			qDebug() << SG_PREFIX_E << "Failed to set UTM band letter from" << param_value.u.val_int;;
 		}
 		break;
 	case PARAM_ALPHA:
@@ -320,7 +316,7 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		/* The parameter is called "corner_letter_as_int", so we have to cast to int here. */
-		rv = SGVariant((int32_t) this->utm_tl.get_band_letter());
+		rv = SGVariant((int32_t) this->utm_tl.get_band_as_letter());
 		break;
 	case PARAM_ALPHA:
 		/* Alpha shall always be int. Cast to int here, to be sure that it's stored in variant correctly. */

@@ -70,6 +70,9 @@ using namespace SlavGPS;
 
 #define SG_MODULE "Coords"
 
+/* Number of UTM zones */
+#define UTM_ZONES 60
+
 
 
 
@@ -93,11 +96,22 @@ bool UTM::is_band_letter(char letter)
 
 
 
+
+bool UTM::is_band_letter(UTMLetter letter)
+{
+	return UTM::is_band_letter((char) letter);
+}
+
+
+
+
 LatLon::LatLon(const Latitude & latitude, const Longitude & longitude)
 {
 	this->lat = latitude.get_value();
 	this->lon = longitude.get_value();
 }
+
+
 
 
 void LatLon::lat_to_string_raw(QString & lat_string, const LatLon & lat_lon)
@@ -165,7 +179,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const LatLon & lat_lon)
 #define EquatorialRadius 6378137
 #define EccentricitySquared 0.00669438
 
-static char coords_utm_band_letter(double latitude);
+static UTMLetter coords_utm_band_letter(double latitude);
 
 
 
@@ -190,6 +204,11 @@ sg_ret UTM::set_easting(double value)
 
 sg_ret UTM::set_zone(int value)
 {
+	if (value <= 0 || value > UTM_ZONES) {
+		qDebug() << SG_PREFIX_E << "Invalid UTM zone" << value;
+		return sg_ret::err;
+	}
+
 	this->zone = value;
 	return sg_ret::ok;
 }
@@ -197,7 +216,7 @@ sg_ret UTM::set_zone(int value)
 
 
 
-char UTM::get_band_letter(void) const
+UTMLetter UTM::get_band_letter(void) const
 {
 	return this->band_letter;
 }
@@ -205,13 +224,35 @@ char UTM::get_band_letter(void) const
 
 
 
-bool UTM::set_band_letter(char letter)
+char UTM::get_band_as_letter(void) const
 {
-	if (!is_band_letter(letter)) {
-		return false;
+	return (char) this->band_letter;
+}
+
+
+
+
+sg_ret UTM::set_band_letter(UTMLetter letter)
+{
+	if (!is_band_letter((char) letter)) {
+		qDebug() << SG_PREFIX_E << "Invalid utm band letter/decimal" << (char) letter;
+		return sg_ret::err;
 	}
 	this->band_letter = letter;
-	return true;
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret UTM::set_band_letter(char letter)
+{
+	if (!is_band_letter(letter)) {
+		qDebug() << SG_PREFIX_E << "Invalid utm band letter/decimal" << letter;
+		return sg_ret::err;
+	}
+	this->band_letter = (UTMLetter) letter;
+	return sg_ret::ok;
 }
 
 
@@ -249,7 +290,7 @@ QString UTM::to_string(void) const
 		.arg(this->northing, 0, 'f', 4)
 		.arg(this->easting, 0, 'f', 4)
 		.arg(this->zone)
-		.arg(this->band_letter);
+		.arg((char) this->band_letter);
 
 	return result;
 }
@@ -259,7 +300,7 @@ QString UTM::to_string(void) const
 
 bool UTM::is_northern_hemisphere(const UTM & utm)
 {
-	return utm.get_band_letter() >= 'N';
+	return utm.band_letter >= UTMLetter::N;
 }
 
 
@@ -321,6 +362,7 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 	const double lat_rad = DEG2RAD(latitude);
 	const double long_rad = DEG2RAD(longitude);
 	int zone = (int) ((longitude + 180) / 6) + 1;
+	qDebug() << "---- lon -> zone" << longitude << zone;
 	if (latitude >= 56.0 && latitude < 64.0 && longitude >= 3.0 && longitude < 12.0) {
 		zone = 32;
 	}
@@ -352,7 +394,7 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 	UTM utm;
 	utm.northing = northing;
 	utm.easting = easting;
-	utm.zone = zone;
+	utm.set_zone(zone);
 	utm.set_band_letter(coords_utm_band_letter(latitude)); /* We don't check result of set_band_letter() here, we assume that the letter has been calculated by coords_utm_band_letter() correctly. */
 	return utm;
 }
@@ -360,34 +402,34 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 
 
 
-static char coords_utm_band_letter(double latitude)
+static UTMLetter coords_utm_band_letter(double latitude)
 {
 	/*
 	  This routine determines the correct UTM band letter
 	  designator for the given latitude.  It returns 'Z' if the
 	  latitude is outside the UTM limits of 84N to 80S.
 	*/
-	if (latitude <= 84.0 && latitude >= 72.0) return 'X';
-	else if (latitude < 72.0 && latitude >= 64.0) return 'W';
-	else if (latitude < 64.0 && latitude >= 56.0) return 'V';
-	else if (latitude < 56.0 && latitude >= 48.0) return 'U';
-	else if (latitude < 48.0 && latitude >= 40.0) return 'T';
-	else if (latitude < 40.0 && latitude >= 32.0) return 'S';
-	else if (latitude < 32.0 && latitude >= 24.0) return 'R';
-	else if (latitude < 24.0 && latitude >= 16.0) return 'Q';
-	else if (latitude < 16.0 && latitude >= 8.0) return 'P';
-	else if (latitude <  8.0 && latitude >= 0.0) return 'N';
-	else if (latitude <  0.0 && latitude >= -8.0) return 'M';
-	else if (latitude < -8.0 && latitude >= -16.0) return 'L';
-	else if (latitude < -16.0 && latitude >= -24.0) return 'K';
-	else if (latitude < -24.0 && latitude >= -32.0) return 'J';
-	else if (latitude < -32.0 && latitude >= -40.0) return 'H';
-	else if (latitude < -40.0 && latitude >= -48.0) return 'G';
-	else if (latitude < -48.0 && latitude >= -56.0) return 'F';
-	else if (latitude < -56.0 && latitude >= -64.0) return 'E';
-	else if (latitude < -64.0 && latitude >= -72.0) return 'D';
-	else if (latitude < -72.0 && latitude >= -80.0) return 'C';
-	else return 'Z';
+	if (latitude <= 84.0      && latitude >=  72.0) return UTMLetter::X;
+	else if (latitude <  72.0 && latitude >=  64.0) return UTMLetter::W;
+	else if (latitude <  64.0 && latitude >=  56.0) return UTMLetter::V;
+	else if (latitude <  56.0 && latitude >=  48.0) return UTMLetter::U;
+	else if (latitude <  48.0 && latitude >=  40.0) return UTMLetter::T;
+	else if (latitude <  40.0 && latitude >=  32.0) return UTMLetter::S;
+	else if (latitude <  32.0 && latitude >=  24.0) return UTMLetter::R;
+	else if (latitude <  24.0 && latitude >=  16.0) return UTMLetter::Q;
+	else if (latitude <  16.0 && latitude >=   8.0) return UTMLetter::P;
+	else if (latitude <   8.0 && latitude >=   0.0) return UTMLetter::N;
+	else if (latitude <   0.0 && latitude >=  -8.0) return UTMLetter::M;
+	else if (latitude <  -8.0 && latitude >= -16.0) return UTMLetter::L;
+	else if (latitude < -16.0 && latitude >= -24.0) return UTMLetter::K;
+	else if (latitude < -24.0 && latitude >= -32.0) return UTMLetter::J;
+	else if (latitude < -32.0 && latitude >= -40.0) return UTMLetter::H;
+	else if (latitude < -40.0 && latitude >= -48.0) return UTMLetter::G;
+	else if (latitude < -48.0 && latitude >= -56.0) return UTMLetter::F;
+	else if (latitude < -56.0 && latitude >= -64.0) return UTMLetter::E;
+	else if (latitude < -64.0 && latitude >= -72.0) return UTMLetter::D;
+	else if (latitude < -72.0 && latitude >= -80.0) return UTMLetter::C;
+	else return UTMLetter::Z;
 }
 
 
@@ -397,8 +439,8 @@ LatLon UTM::to_latlon(const UTM & utm)
 {
 	double x = utm.easting - 500000.0; /* remove 500000 meter offset */
 	double y = utm.northing;
-	assert (utm.band_letter >= 'A' && utm.band_letter <= 'Z');
-	if (utm.band_letter < 'N') {
+	assert (utm.band_letter >= UTMLetter::A && utm.band_letter <= UTMLetter::Z);
+	if (utm.band_letter < UTMLetter::N) {
 		/* southern hemisphere */
 		y -= 10000000.0; /* remove 1e7 meter offset */
 	}
@@ -489,7 +531,7 @@ static bool lat_lon_close_enough(const LatLon & lat_lon1, const LatLon & lat_lon
 
 
 
-static bool utm_close_enough(const UTM & utm1, const UTM & utm2)
+bool UTM::close_enough(const UTM & utm1, const UTM & utm2)
 {
 	const double epsilon = 0.1;
 
@@ -509,11 +551,28 @@ static bool utm_close_enough(const UTM & utm1, const UTM & utm2)
 	}
 
 	if (utm1.get_band_letter() != utm2.get_band_letter()) {
-		qDebug() << SG_PREFIX_E << "Band letter error:" << utm1.get_band_letter() << utm2.get_band_letter();
+		qDebug() << SG_PREFIX_E << "Band letter error:" << utm1.get_band_as_letter() << utm2.get_band_as_letter();
 		return false;
 	}
 
 	return true;
+}
+
+
+
+
+bool UTM::is_the_same_zone(const UTM & utm1, const UTM & utm2)
+{
+	return utm1.zone == utm2.zone;
+}
+
+
+
+
+sg_ret UTM::shift_zone_by(int shift)
+{
+	this->zone += shift; /* TODO: wrap result to allowable range. */
+	return sg_ret::ok;
 }
 
 
@@ -538,13 +597,13 @@ bool Coords::unit_tests(void)
 		UTM utm_in;
 		utm_in.northing = 3778331;
 		utm_in.easting = 283673;
-		utm_in.zone = 33;
-		utm_in.set_band_letter('S');
+		utm_in.set_zone(33);
+		utm_in.set_band_letter(UTMLetter::S);
 		const LatLon lat_lon = UTM::to_latlon(utm_in);
 		const UTM utm_out = LatLon::to_utm(lat_lon);
 
-		qDebug() << SG_PREFIX_D << utm_in << "->" << lat_lon << "->" << utm_out << "->" << utm_close_enough(utm_in, utm_out);
-		assert (utm_close_enough(utm_in, utm_out));
+		qDebug() << SG_PREFIX_D << utm_in << "->" << lat_lon << "->" << utm_out << "->" << UTM::close_enough(utm_in, utm_out);
+		assert (UTM::close_enough(utm_in, utm_out));
 
 		//N = , Z = 33, L = S"
 	}

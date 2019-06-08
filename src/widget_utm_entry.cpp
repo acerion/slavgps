@@ -113,8 +113,8 @@ void UTMEntryWidget::set_value(const UTM & utm)
 
 	this->easting_spin->setValue(utm.easting);
 	this->northing_spin->setValue(utm.northing);
-	this->zone_spin->setValue(utm.zone);
-	this->band_letter_combo->setCurrentText(QString(utm.get_band_letter()));
+	this->zone_spin->setValue(utm.get_zone());
+	this->band_letter_combo->setCurrentText(QString(utm.get_band_as_letter()));
 }
 
 
@@ -126,14 +126,14 @@ UTM UTMEntryWidget::get_value(void) const
 
 	utm.set_easting(this->easting_spin->value());
 	utm.set_northing(this->northing_spin->value());
-	utm.zone = this->zone_spin->value();
+	utm.set_zone(this->zone_spin->value());
 
 	const QString text = this->band_letter_combo->currentText();
 	if (1 != text.size()) {
 		qDebug() << SG_PREFIX_E << "Unexpectedly long text in combo:" << text;
 	} else {
 		utm.set_band_letter(text.at(0).toUpper().toLatin1());
-		qDebug() << SG_PREFIX_I << "UTM band letter conversion" << text << "->" << utm.get_band_letter();
+		qDebug() << SG_PREFIX_I << "UTM band letter conversion" << text << "->" << utm.get_band_as_letter();
 	}
 
 	return utm;

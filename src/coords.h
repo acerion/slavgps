@@ -54,12 +54,6 @@ renaming functions and defining LatLon and UTM structs.
 
 
 
-/* Number of UTM zones */
-#define UTM_ZONES 60
-
-
-
-
 namespace SlavGPS {
 
 
@@ -115,9 +109,41 @@ namespace SlavGPS {
 
 
 
+	enum class UTMLetter : char {
+		A = 'A',
+		B = 'B',
+		C = 'C',
+		D = 'D',
+		E = 'E',
+		F = 'F',
+		G = 'G',
+		H = 'H',
+		J = 'J',
+		K = 'K',
+		L = 'L',
+		M = 'M',
+		N = 'N',
+		P = 'P',
+		Q = 'Q',
+		R = 'R',
+		S = 'S',
+		T = 'T',
+		U = 'U',
+		V = 'V',
+		W = 'W',
+		X = 'X',
+		Y = 'Y',
+		Z = 'Z',
+
+		None
+	};
+
+
+
+
 	class UTM {
 	public:
-		UTM(double new_northing = NAN, double new_easting = NAN, int new_zone = 0, char new_band_letter = 0) {};
+		UTM(double new_northing = NAN, double new_easting = NAN, int new_zone = 0, UTMLetter new_band_letter = UTMLetter::None) {};
 
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
 		static LatLon to_latlon(const UTM & utm);
@@ -128,9 +154,11 @@ namespace SlavGPS {
 
 		bool has_band_letter(void) const;
 
+		static bool is_the_same_zone(const UTM & utm1, const UTM & utm2);
 		static bool is_northern_hemisphere(const UTM & utm);
 		static QStringList get_band_symbols(void);
 		static bool is_band_letter(char character); /* Is given character a band letter? */
+		static bool is_band_letter(UTMLetter letter); /* Is given character a band letter? */
 		static bool is_band_symbol(char character); /* Is given character a band letter or "none band" indicator? */
 
 		static double get_distance(const UTM & utm1, const UTM & utm2);
@@ -138,20 +166,26 @@ namespace SlavGPS {
 		sg_ret set_northing(double value);
 		sg_ret set_easting(double value);
 		sg_ret set_zone(int value);
-		bool set_band_letter(char character);
+		sg_ret set_band_letter(char character);
+		sg_ret set_band_letter(UTMLetter letter);
+
+		sg_ret shift_zone_by(int shift);
 
 		double get_northing(void) const { return this->northing; }
 		double get_easting(void) const { return this->easting; }
-		double get_zone(void) const { return this->zone; }
-		char get_band_letter(void) const;
+		int get_zone(void) const { return this->zone; }
+		UTMLetter get_band_letter(void) const;
+		char get_band_as_letter(void) const;
 
 		/* TODO_HARD: revisit data types (double or int?) for northing/easting. */
 		double northing = 0;
 		double easting = 0;
-		int zone = 0;
+
+		static bool close_enough(const UTM & utm1, const UTM & utm2);
 
 	private:
-		char band_letter = 0;
+		int zone = 0;
+		UTMLetter band_letter = UTMLetter::None;
 	};
 	QDebug operator<<(QDebug debug, const UTM & utm);
 

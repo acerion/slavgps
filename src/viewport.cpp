@@ -612,7 +612,7 @@ void Viewport::utm_zone_check(void)
 {
 	if (this->coord_mode == CoordMode::UTM) {
 		const UTM utm = LatLon::to_utm(UTM::to_latlon(center.utm));
-		if (utm.zone != this->center.utm.zone) {
+		if (!UTM::is_the_same_zone(utm, this->center.utm)) {
 			this->center.utm = utm;
 		}
 
@@ -935,8 +935,8 @@ void Viewport::get_center_for_zone(UTM & center_utm, int zone)
 	}
 
 	center_utm = this->center.utm;
-	center_utm.easting -= (zone - center_utm.zone) * this->utm_zone_width;
-	center_utm.zone = zone;
+	center_utm.easting -= (zone - center_utm.get_zone()) * this->utm_zone_width;
+	center_utm.set_zone(zone);
 }
 
 
@@ -949,7 +949,7 @@ int Viewport::get_leftmost_zone(void) const
 	}
 
 	const Coord coord = this->screen_pos_to_coord(0, 0);
-	return coord.utm.zone;
+	return coord.utm.get_zone();
 }
 
 
@@ -962,7 +962,7 @@ int Viewport::get_rightmost_zone(void) const
 	}
 
 	const Coord coord = this->screen_pos_to_coord(this->canvas.width, 0);
-	return coord.utm.zone;
+	return coord.utm.get_zone();
 }
 
 
@@ -1031,14 +1031,14 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			const int delta_x = pos_x - this->canvas.width_2;
 			const int delta_y = this->canvas.height_2 - pos_y;
 
-			coord.utm.zone = this->center.utm.zone;
+			coord.utm.set_zone(this->center.utm.get_zone());
 			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			coord.utm.set_band_letter(this->center.utm.get_band_letter());
 			coord.utm.easting = (delta_x * xmpp) + this->center.utm.easting;
 
 			const int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
 
-			coord.utm.zone += zone_delta;
+			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.easting -= zone_delta * this->utm_zone_width;
 			coord.utm.northing = (delta_y * ympp) + this->center.utm.northing;
 		}
@@ -1050,20 +1050,20 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			Coord test_coord;
 			test_coord.mode = CoordMode::UTM;
 
-			test_coord.utm.zone = this->center.utm.zone;
+			test_coord.utm.set_zone(this->center.utm.get_zone());
 			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			test_coord.utm.set_band_letter(this->center.utm.get_band_letter());
 			test_coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
 
 			zone_delta = floor((test_coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
 
-			test_coord.utm.zone += zone_delta;
+			test_coord.utm.shift_zone_by(zone_delta);
 			test_coord.utm.easting -= zone_delta * this->utm_zone_width;
 			test_coord.utm.northing = (((this->canvas.height_2) - pos_y) * ympp) + this->center.utm.northing;
 
 
-			if (coord.utm.zone != test_coord.utm.zone) {
-				qDebug() << SG_PREFIX_E << "UTM: Zone calculation mismatch" << coord << test_coord << coord.utm.zone << test_coord.utm.zone;
+			if (!UTM::is_the_same_zone(coord.utm, test_coord.utm)) {
+				qDebug() << SG_PREFIX_E << "UTM: Zone calculation mismatch" << coord << test_coord << coord.utm.get_zone() << test_coord.utm.get_zone();
 			}
 			if (coord.utm.get_easting() != test_coord.utm.get_easting()) {
 				qDebug() << SG_PREFIX_E << "UTM: Easting calculation mismatch" << coord << test_coord << (coord.utm.get_easting() - test_coord.utm.get_easting());
@@ -1072,7 +1072,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				qDebug() << SG_PREFIX_E << "UTM: Northing calculation mismatch" << coord << test_coord << (coord.utm.get_northing() - test_coord.utm.get_northing());
 			}
 			if (coord.utm.get_band_letter() != test_coord.utm.get_band_letter()) {
-				qDebug() << SG_PREFIX_E << "UTM: Band letter calculation mismatch" << coord << test_coord << coord.utm.get_band_letter() << test_coord.utm.get_band_letter();
+				qDebug() << SG_PREFIX_E << "UTM: Band letter calculation mismatch" << coord << test_coord << coord.utm.get_band_as_letter() << test_coord.utm.get_band_as_letter();
 			}
 		}
 		break;
@@ -1194,16 +1194,19 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		{
-			const UTM * utm_center = &this->center.utm;
-			const UTM * utm = &coord.utm;
-			if (utm_center->zone != utm->zone && this->is_one_utm_zone){
-				*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
+			const UTM & utm_center = this->center.utm;
+			const UTM & utm = coord.utm;
+			const int zone_diff = utm_center.get_zone() - utm.get_zone();
+
+			if (0 != zone_diff && this->is_one_utm_zone){
+				*pos_x = VIK_VIEWPORT_UTM_WRONG_ZONE;
+				*pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
 				return;
 			}
 
-			*pos_x = ((utm->easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
-				(utm_center->zone - utm->zone) * this->utm_zone_width / xmpp;
-			*pos_y = (this->canvas.height_2) - ((utm->get_northing() - utm_center->get_northing()) / ympp);
+			*pos_x = ((utm.easting - utm_center.easting) / xmpp) + (this->canvas.width_2) -
+				zone_diff * this->utm_zone_width / xmpp;
+			*pos_y = (this->canvas.height_2) - ((utm.get_northing() - utm_center.get_northing()) / ympp);
 		}
 		break;
 
@@ -1305,16 +1308,17 @@ void Viewport::utm_to_screen_pos(const UTM & utm, int * pos_x, int * pos_y) cons
 	const double xmpp = this->viking_zoom_level.x;
 	const double ympp = this->viking_zoom_level.y;
 
-	const UTM * utm_center = &this->center.utm;
+	const UTM & utm_center = this->center.utm;
+	const int zone_diff = utm_center.get_zone() - utm.get_zone();
 
-	if (utm_center->zone != utm.zone && this->is_one_utm_zone){
+	if (0 != zone_diff && this->is_one_utm_zone){
 		*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
 		return;
 	}
 
-	*pos_x = ((utm.easting - utm_center->easting) / xmpp) + (this->canvas.width_2) -
-		(utm_center->zone - utm.zone) * this->utm_zone_width / xmpp;
-	*pos_y = (this->canvas.height_2) - ((utm.get_northing() - utm_center->get_northing()) / ympp);
+	*pos_x = ((utm.easting - utm_center.easting) / xmpp) + (this->canvas.width_2) -
+		zone_diff * this->utm_zone_width / xmpp;
+	*pos_y = (this->canvas.height_2) - ((utm.get_northing() - utm_center.get_northing()) / ympp);
 }
 
 
@@ -2195,7 +2199,7 @@ void Viewport::get_location_strings(UTM utm, QString & lat, QString & lon)
 		//  ZONE[N|S] EASTING NORTHING
 		*lat = (char *) malloc(4*sizeof(char));
 		// NB zone is stored in a char but is an actual number
-		snprintf(*lat, 4, "%d%c", utm.zone, utm.get_band_letter());
+		snprintf(*lat, 4, "%d%c", utm.zone, utm.get_band_as_letter());
 		*lon = (char *) malloc(16*sizeof(char));
 		snprintf(*lon, 16, "%d %d", (int)utm.get_easting(), (int)utm.get_northing());
 	} else {

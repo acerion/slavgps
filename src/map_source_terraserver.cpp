@@ -108,7 +108,7 @@ bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const Vik
 
 	dest.x = (int)(((int)(src_coord.utm.get_easting()))/(200 * xmpp));
 	dest.y = (int)(((int)(src_coord.utm.get_northing()))/(200 * xmpp));
-	dest.z = src_coord.utm.zone;
+	dest.z = src_coord.utm.get_zone();
 	return true;
 }
 
@@ -119,7 +119,7 @@ sg_ret MapSourceTerraserver::tile_info_to_center_utm(const TileInfo & src, UTM &
 {
 	/* TODO_2_LATER: slowdown here! */
 	const double mpp = scale_to_mpp(src.scale.get_scale_value());
-	utm.zone = src.z;
+	utm.set_zone(src.z);
 	utm.easting = ((src.x * 200) + 100) * mpp;
 	utm.northing = ((src.y * 200) + 100) * mpp;
 

@@ -216,7 +216,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 		lon = ll_tmp.lon * 3600;
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 		static UTM utm_tmp;
-		if (utm_tmp.zone != dem->utm.zone) {
+		if (!UTM::is_the_same_zone(utm_tmp, dem->utm)) {
 			return false;
 		}
 		utm_tmp = ce->coord->get_utm();
