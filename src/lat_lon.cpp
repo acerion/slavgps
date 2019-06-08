@@ -311,7 +311,7 @@ bool Latitude::set_value(double new_value)
 		this->value = new_value;
 	}
 
-	this->valid = !std::isnan(new_value);
+	this->valid = !std::isnan(this->value);
 
 	return this->valid;
 }
@@ -390,7 +390,7 @@ bool Longitude::set_value(double new_value)
 		this->value = new_value;
 	}
 
-	this->valid = !std::isnan(new_value);
+	this->valid = !std::isnan(this->value);
 
 	return this->valid;
 }
