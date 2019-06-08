@@ -351,10 +351,10 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 	double longitude = lat_lon.lon;
 
 	/* We want the longitude within SG_LONGITUDE_MIN..SG_LONGITUDE_MAX. */
-	if (longitude < SG_LONGITUDE_MIN) {
+	while (longitude < SG_LONGITUDE_MIN) {
 		longitude += 360.0;
 	}
-	if (longitude > SG_LONGITUDE_MAX) {
+	while (longitude > SG_LONGITUDE_MAX) {
 		longitude -= 360.0;
 	}
 
@@ -362,10 +362,10 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 	const double lat_rad = DEG2RAD(latitude);
 	const double long_rad = DEG2RAD(longitude);
 	int zone = (int) ((longitude + 180) / 6) + 1;
-	qDebug() << "---- lon -> zone" << longitude << zone;
 	if (latitude >= 56.0 && latitude < 64.0 && longitude >= 3.0 && longitude < 12.0) {
 		zone = 32;
 	}
+	qDebug() << "---- Converting longitude to zone:" << longitude << zone;
 
 	/* Special zones for Svalbard. */
 	if (latitude >= 72.0 && latitude < 84.0) {
