@@ -70,8 +70,6 @@ namespace SlavGPS {
 		static double distance(const Coord & coord1, const Coord & coord2); /* Result is in meters. */
 		static Distance distance_2(const Coord & coord1, const Coord & coord2); /* Result is in meters. */
 
-		void to_strings(QString & str1, QString & str2) const;
-
 		QString to_string(void) const;
 
 		bool operator==(const Coord & coord) const;
@@ -84,14 +82,6 @@ namespace SlavGPS {
 		CoordMode mode = CoordMode::UTM;
 	};
 	QDebug operator<<(QDebug debug, const Coord & coord);
-
-
-
-
-	class CoordUtils {
-	public:
-		static void to_strings(QString & lat, QString & lon, const LatLon & lat_lon);
-	};
 
 
 

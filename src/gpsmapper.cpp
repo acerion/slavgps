@@ -123,7 +123,7 @@ SaveStatus GPSMapper::write_waypoints_to_file(FILE * file, const std::list<Waypo
 		Waypoint * wp = *iter;
 		unsigned int len = print_rgn_stuff(file, wp->comment.toUtf8().constData());
 		if (len) {
-			fprintf(file, "Data0=(%s)\n", wp->coord.get_latlon().to_string().toUtf8().constData()); /* "Data0=(lat,lon)\n" */
+			fprintf(file, "Data0=(%s)\n", wp->coord.get_latlon().to_string_raw().toUtf8().constData()); /* "Data0=(lat,lon)\n" */
 			fprintf(file, "[END-%.5s]\n\n", wp->comment.toUtf8().constData() + len + 1);
 		}
 	}
@@ -136,7 +136,7 @@ SaveStatus GPSMapper::write_waypoints_to_file(FILE * file, const std::list<Waypo
 
 static void write_trackpoint(FILE * file, Trackpoint * tp)
 {
-	fprintf(file, "(%s),", tp->coord.get_latlon().to_string().toUtf8().constData()); /* "(%s,%s)," */
+	fprintf(file, "(%s),", tp->coord.get_latlon().to_string_raw().toUtf8().constData()); /* "(%s,%s)," */
 }
 
 

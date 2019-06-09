@@ -254,13 +254,10 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 QString Ruler::get_msg(void) const
 {
-	QString lat;
-	QString lon;
-	this->end_coord.get_latlon().to_strings_raw(lat, lon);
+	const QString coord_string = this->end_coord.to_string();
 
-	const QString msg = QObject::tr("%1 %2 DIFF %3")
-		.arg(lat)
-		.arg(lon)
+	const QString msg = QObject::tr("%1 DIFF %2")
+		.arg(coord_string)
 		.arg(this->line_distance.convert_to_unit(this->distance_unit).to_string());
 
 	return msg;

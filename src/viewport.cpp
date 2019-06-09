@@ -686,11 +686,6 @@ std::list<QString> Viewport::get_centers_list(void) const
 
 	for (auto iter = this->centers->begin(); iter != this->centers->end(); iter++) {
 
-		const LatLon lat_lon = (*iter).get_latlon();
-		QString lat;
-		QString lon;
-		LatLon::to_strings(lat_lon, lat, lon);
-
 		QString extra;
 		if (iter == prev(this->centers_iter)) {
 			extra = tr("[Back]");
@@ -702,7 +697,9 @@ std::list<QString> Viewport::get_centers_list(void) const
 			; /* NOOP */
 		}
 
-		result.push_back(tr("%1 %2%3").arg(lat).arg(lon).arg(extra));
+		result.push_back(tr("%1%2")
+				 .arg((*iter).to_string())
+				 .arg(extra));
 	}
 
 	return result;
@@ -2182,32 +2179,6 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	this->window->pan_move(ev);
 #endif
 }
-
-
-
-
-#ifdef K_OLD_IMPLEMENTATION
-/* No longer used. */
-/**
- * Utility function to get positional strings for the given location
- * lat and lon strings will get allocated and so need to be freed after use
- */
-void Viewport::get_location_strings(UTM utm, QString & lat, QString & lon)
-{
-	if (this->get_drawmode() == ViewportDrawMode::UTM) {
-		// Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
-		//  ZONE[N|S] EASTING NORTHING
-		*lat = (char *) malloc(4*sizeof(char));
-		// NB zone is stored in a char but is an actual number
-		snprintf(*lat, 4, "%d%c", utm.zone, utm.get_band_as_letter());
-		*lon = (char *) malloc(16*sizeof(char));
-		snprintf(*lon, 16, "%d %d", (int)utm.get_easting(), (int)utm.get_northing());
-	} else {
-		const LatLon lat_lon = UTM::to_latlon(utm);
-		LatLon::to_strings(lat_lon, lat, lon);
-	}
-}
-#endif
 
 
 

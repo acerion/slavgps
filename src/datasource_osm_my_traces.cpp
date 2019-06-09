@@ -432,7 +432,7 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 				   0, gpx_meta_data->name,
 				   1, gpx_meta_data->descrition,
 				   2, gpx_meta_data->timestamp,
-				   3, gpx_meta_data->ll.to_string(),
+				   3, gpx_meta_data->ll.to_string_raw(),
 				   4, gpx_meta_data->visibility,
 				   5, gpx_meta_data->in_current_view,
 				   -1);

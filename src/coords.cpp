@@ -132,11 +132,12 @@ void LatLon::lon_to_string_raw(QString & lon_string, const LatLon & lat_lon)
 
 
 
-QString LatLon::to_string(void) const
+QString LatLon::to_string_raw(const QString & separator) const
 {
 	static QLocale c_locale = QLocale::c();
-	return QString("%1,%2")
+	return QString("%1%2%3")
 		.arg(c_locale.toString(this->lat, 'f', SG_LATITUDE_PRECISION))
+		.arg(separator)
 		.arg(c_locale.toString(this->lon, 'f', SG_LONGITUDE_PRECISION));
 }
 
@@ -468,31 +469,38 @@ LatLon UTM::to_latlon(const UTM & utm)
 
 
 
-void LatLon::to_strings(const LatLon & lat_lon, QString & lat_string, QString & lon_string)
+QString LatLon::to_string(void) const
 {
+	QString lat_string;
+	QString lon_string;
+
 	DegreeFormat format = Preferences::get_degree_format();
 
 	switch (format) {
 	case DegreeFormat::DDD:
-		convert_lat_dec_to_ddd(lat_string, lat_lon.lat);
-		convert_lon_dec_to_ddd(lon_string, lat_lon.lon);
+		convert_lat_dec_to_ddd(lat_string, this->lat);
+		convert_lon_dec_to_ddd(lon_string, this->lon);
 		break;
 	case DegreeFormat::DMM:
-		convert_lat_dec_to_dmm(lat_string, lat_lon.lat);
-		convert_lon_dec_to_dmm(lon_string, lat_lon.lon);
+		convert_lat_dec_to_dmm(lat_string, this->lat);
+		convert_lon_dec_to_dmm(lon_string, this->lon);
 		break;
 	case DegreeFormat::DMS:
-		convert_lat_dec_to_dms(lat_string, lat_lon.lat);
-		convert_lon_dec_to_dms(lon_string, lat_lon.lon);
+		convert_lat_dec_to_dms(lat_string, this->lat);
+		convert_lon_dec_to_dms(lon_string, this->lon);
 		break;
 	case DegreeFormat::Raw:
-		LatLon::lat_to_string_raw(lat_string, lat_lon);
-		LatLon::lon_to_string_raw(lon_string, lat_lon);
+		LatLon::lat_to_string_raw(lat_string, *this);
+		LatLon::lon_to_string_raw(lon_string, *this);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown degree format %d" << (int) format;
 		break;
 	}
+
+	QString result = QString("%1 %2").arg(lat_string, lon_string);
+
+	return result;
 }
 
 

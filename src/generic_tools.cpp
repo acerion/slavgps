@@ -150,10 +150,7 @@ ToolStatus GenericToolRuler::internal_handle_mouse_click(Layer * layer, QMouseEv
 		qDebug() << SG_PREFIX_I << "first click, starting ruler";
 
 		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
-		QString lat;
-		QString lon;
-		cursor_coord.get_latlon().to_strings_raw(lat, lon);
-		msg = QObject::tr("%1 %2").arg(lat).arg(lon);
+		msg = cursor_coord.to_string();
 
 		/* Save clean viewport (clean == without ruler drawn on top of it). */
 		this->orig_viewport_pixmap = this->viewport->get_pixmap();

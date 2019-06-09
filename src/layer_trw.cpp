@@ -1513,18 +1513,15 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	/* Position part.
 	   Position is put last, as this bit is most likely not to be seen if the display is not big enough,
 	   one can easily use the current pointer position to see this if needed. */
-	const LatLon lat_lon = wp->coord.get_latlon();
-	QString lat;
-	QString lon;
-	LatLon::to_strings(lat_lon, lat, lon);
+	const QString coord_string = wp->coord.to_string();
 
 	/* Combine parts to make overall message. */
 	QString msg;
 	if (!wp->comment.isEmpty()) {
 		/* Add comment if available. */
-		msg = tr("%1 | %2 %3 | Comment: %4").arg(alti_string_uu).arg(lat).arg(lon).arg(wp->comment);
+		msg = tr("%1 | %2 | Comment: %3").arg(alti_string_uu).arg(coord_string).arg(wp->comment);
 	} else {
-		msg = tr("%1 | %2 %3").arg(alti_string_uu).arg(lat).arg(lon);
+		msg = tr("%1 | %2").arg(alti_string_uu).arg(coord_string);
 	}
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
 }

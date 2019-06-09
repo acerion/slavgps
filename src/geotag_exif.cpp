@@ -248,7 +248,7 @@ LatLon GeotagExif::get_object_lat_lon(const QString & file_full_path)
 		Altitude alti;
 		if (geotag_exif_get_gps_info(exif_data, tmp_lat_lon, alti)) {
 			lat_lon = tmp_lat_lon;
-			qDebug() << SG_PREFIX_I << "Lat/Lon =" << lat_lon.to_string() << "altitude =" << alti.to_string();
+			qDebug() << SG_PREFIX_I << "Lat/Lon =" << lat_lon << "altitude =" << alti.to_string();
 		}
 	}
 

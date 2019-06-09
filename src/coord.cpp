@@ -354,33 +354,6 @@ bool Coord::is_inside(const Coord * tl, const Coord * br) const
 
 
 
-void Coord::to_strings(QString & str1, QString & str2) const
-{
-	switch (this->mode) {
-	case CoordMode::UTM:
-		/* First string will contain "zone + N/S", second
-		   string will contain easting and northing of a UTM
-		   format:
-		   ZONE[N|S] EASTING NORTHING */
-
-		str1 = QString("%1%2").arg((int) utm.get_zone()).arg(utm.get_band_as_letter());
-		str2 = QString("%1 %2").arg((int) utm.get_easting()).arg((int) utm.get_northing());
-		break;
-	case CoordMode::LatLon:
-		LatLon::to_strings(this->ll, str1, str2);
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << (int) this->mode;
-		break;
-	}
-
-	return;
-}
-
-
-
-
 QString Coord::to_string(void) const
 {
 	QString result;

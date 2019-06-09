@@ -88,11 +88,11 @@ namespace SlavGPS {
 		static void lat_to_string_raw(QString & lat_string, const LatLon & lat_lon);
 		static void lon_to_string_raw(QString & lon_string, const LatLon & lat_lon);
 
-		/* Convert value to "lat,lon" string with DegreeFormat::Raw format for each token in the string. */
-		QString to_string(void) const;
+		/* Generate "lat,lon" string with DegreeFormat::Raw. o*/
+		QString to_string_raw(const QString & separator = ",") const;
 
 		/* Convert value to pair of strings using preferred representation. */
-		static void to_strings(const LatLon & lat_lon, QString & lat, QString & lon);
+		QString to_string(void) const;
 
 		/* Convert value to strings with DegreeFormat::Raw format. */
 		void to_strings_raw(QString & lat, QString & lon) const;

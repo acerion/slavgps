@@ -249,12 +249,9 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 
 		case 'L': {
 			/* Location (Latitude/Longitude). */
-			const LatLon lat_lon = tp->coord.get_latlon();
-			QString lat;
-			QString lon;
-			LatLon::to_strings(lat_lon, lat, lon);
+			const QString lat_lon_string = tp->coord.get_latlon().to_string();
 
-			values[i] = QObject::tr("%1%2 %3").arg(separator).arg(lat).arg(lon);
+			values[i] = QObject::tr("%1%2").arg(separator).arg(lat_lon_string);
 			break;
 		}
 
