@@ -1159,7 +1159,7 @@ sg_ret LayerMapnik::draw_tile(Viewport * viewport, const TileInfo & tile_info)
 		/* x/y coordinate of u-l corner of a pixmap in viewport's x/y coordinates. */
 		int viewport_x;
 		int viewport_y;
-		viewport->lat_lon_to_screen_pos(pixmap_lat_lon_ul, &viewport_x, &viewport_y);
+		viewport->coord_to_screen_pos(Coord(pixmap_lat_lon_ul, CoordMode::LatLon), &viewport_x, &viewport_y);
 
 		const int pixmap_x = 0;
 		const int pixmap_y = 0;
@@ -1204,7 +1204,7 @@ void LayerMapnik::draw_grid(Viewport * viewport, const TilesRange & range, const
 	int viewport_x;
 	int viewport_y;
 	const LatLon lat_lon = MapUtils::iTMS_to_center_lat_lon(tile_info_ul);
-	viewport->lat_lon_to_screen_pos(lat_lon, &viewport_x, &viewport_y);
+	viewport->coord_to_screen_pos(Coord(lat_lon, CoordMode::LatLon), &viewport_x, &viewport_y);
 
 	const int delta_x = 1;
 	const int delta_y = 1;

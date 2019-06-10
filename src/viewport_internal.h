@@ -188,8 +188,8 @@ namespace SlavGPS {
 		void set_center_from_screen_pos(int x, int y);
 		void set_center_from_screen_pos(const ScreenPos & pos);
 
-		void get_center_for_zone(UTM & center, int zone);
-		void get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
+		sg_ret utm_recalculate_current_center_for_other_zone(UTM & center_in_other_zone, int zone);
+		sg_ret get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
 
 		int get_leftmost_zone(void) const;
 		int get_rightmost_zone(void) const;
@@ -202,16 +202,15 @@ namespace SlavGPS {
 		int get_height(void) const;
 		QRect get_rect(void) const;
 
+		double get_canvas_height_m(void) const;
+		double get_canvas_width_m(void) const;
+
+
 		/* Coordinate transformations. */
 		Coord screen_pos_to_coord(int x, int y) const;
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
-		void coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
+		sg_ret coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
 		ScreenPos coord_to_screen_pos(const Coord & coord) const;
-		void lat_lon_to_screen_pos(const LatLon & lat_lon, int * x, int * y) const;
-		ScreenPos lat_lon_to_screen_pos(const LatLon & lat_lon) const;
-		void utm_to_screen_pos(const UTM & utm, int * x, int * y) const;
-		ScreenPos utm_to_screen_pos(const UTM & utm) const;
-
 
 
 		/* Viewport's zoom. */

@@ -93,11 +93,6 @@ using namespace SlavGPS;
 
 
 
-static double EASTING_OFFSET = 500000.0;
-
-
-
-
 void Viewport::init(void)
 {
 	Expedia::init_radius();
@@ -113,13 +108,13 @@ double Viewport::calculate_utm_zone_width(void) const
 
 		/* Get latitude of screen bottom. */
 		UTM utm = this->center.utm;
-		utm.northing -= this->canvas.height * this->viking_zoom_level.y / 2;
+		utm.northing -= (this->get_canvas_height_m() / 2);
 		LatLon ll = UTM::to_latlon(utm);
 
 		/* Boundary. */
 		ll.lon = (utm.get_zone() - 1) * 6 - 180 ;
 		utm = LatLon::to_utm(ll);
-		return fabs(utm.get_easting() - EASTING_OFFSET) * 2;
+		return fabs(utm.get_easting() - UTM_CENTRAL_MERIDIAN_EASTING) * 2;
 	}
 
 	case CoordMode::LatLon:
@@ -901,39 +896,58 @@ void Viewport::set_center_from_coord(const Coord & coord, bool save_position)
 
 
 
-void Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
+sg_ret Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
-		return;
+		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << (int) this->coord_mode;
+		return sg_ret::err;
 	}
 
 	/* Get center, then just offset. */
-	this->get_center_for_zone(coord_ul.utm, zone);
+	if (sg_ret::ok != this->utm_recalculate_current_center_for_other_zone(coord_ul.utm, zone)) {
+		qDebug() << SG_PREFIX_E << "Can't center for zone" << zone;
+		return sg_ret::err;
+	}
 	coord_ul.mode = CoordMode::UTM;
+
 
 	/* Both coordinates will be now at center. */
 	coord_br = coord_ul;
 
+
 	/* And now we offset the two coordinates:
 	   we move the coordinates from center to one of the two corners. */
-	coord_ul.utm.northing += (this->viking_zoom_level.y * this->canvas.height / 2);
-	coord_ul.utm.easting  -= (this->viking_zoom_level.x * this->canvas.width / 2);
-	coord_br.utm.northing -= (this->viking_zoom_level.y * this->canvas.height / 2);
-	coord_br.utm.easting  += (this->viking_zoom_level.x * this->canvas.width / 2);
+	const double center_to_top_m = this->get_canvas_height_m() / 2;
+	const double center_to_left_m = this->get_canvas_width_m() / 2;
+	coord_ul.utm.northing += center_to_top_m;
+	coord_ul.utm.easting  -= center_to_left_m;
+
+	const double center_to_bottom_m = this->get_canvas_height_m() / 2;
+	const double center_to_right_m = this->get_canvas_width_m() / 2;
+	coord_br.utm.northing -= center_to_bottom_m;
+	coord_br.utm.easting  += center_to_right_m;
+
+	return sg_ret::ok;
 }
 
 
 
 
-void Viewport::get_center_for_zone(UTM & center_utm, int zone)
+sg_ret Viewport::utm_recalculate_current_center_for_other_zone(UTM & center_in_other_zone, int zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
-		return;
+		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << (int) this->coord_mode;
+		return sg_ret::err;
 	}
 
-	center_utm = this->center.utm;
-	center_utm.easting -= (zone - center_utm.get_zone()) * this->utm_zone_width;
-	center_utm.set_zone(zone);
+	const int zone_diff = zone - this->center.utm.get_zone();
+
+	/* TODO: why do we have to offset easting? Wouldn't easting of center be the same in each zone? */
+	center_in_other_zone = this->center.utm;
+	center_in_other_zone.easting -= zone_diff * this->utm_zone_width;
+	center_in_other_zone.set_zone(zone);
+
+	return sg_ret::ok;
 }
 
 
@@ -1033,7 +1047,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			coord.utm.set_band_letter(this->center.utm.get_band_letter());
 			coord.utm.easting = (delta_x * xmpp) + this->center.utm.easting;
 
-			const int zone_delta = floor((coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
+			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.easting -= zone_delta * this->utm_zone_width;
@@ -1052,7 +1066,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			test_coord.utm.set_band_letter(this->center.utm.get_band_letter());
 			test_coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
 
-			zone_delta = floor((test_coord.utm.easting - EASTING_OFFSET) / this->utm_zone_width + 0.5);
+			zone_delta = floor((test_coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			test_coord.utm.shift_zone_by(zone_delta);
 			test_coord.utm.easting -= zone_delta * this->utm_zone_width;
@@ -1169,7 +1183,7 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
   Thus x & y position factors are calculated once on zoom changes,
   avoiding the need to do it here all the time.
 */
-void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
+sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
 {
 	Coord coord = coord_in;
 	const double xmpp = this->viking_zoom_level.x;
@@ -1191,19 +1205,17 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		{
-			const UTM & utm_center = this->center.utm;
-			const UTM & utm = coord.utm;
-			const int zone_diff = utm_center.get_zone() - utm.get_zone();
+			const int zone_diff = this->center.utm.get_zone() - coord.utm.get_zone();
 
 			if (0 != zone_diff && this->is_one_utm_zone){
-				*pos_x = VIK_VIEWPORT_UTM_WRONG_ZONE;
-				*pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
-				return;
+				return sg_ret::err;
 			}
 
-			*pos_x = ((utm.easting - utm_center.easting) / xmpp) + (this->canvas.width_2) -
-				zone_diff * this->utm_zone_width / xmpp;
-			*pos_y = (this->canvas.height_2) - ((utm.get_northing() - utm_center.get_northing()) / ympp);
+			const double horiz_distance_m = coord.utm.get_easting() - this->center.utm.get_easting();
+			const double vert_distance_m = coord.utm.get_northing() - this->center.utm.get_northing();
+
+			*pos_x = (horiz_distance_m / xmpp) + (this->canvas.width_2) - (zone_diff * this->utm_zone_width) / xmpp;
+			*pos_y = (this->canvas.height_2) - (vert_distance_m / ympp);
 		}
 		break;
 
@@ -1227,13 +1239,15 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
-			break;
+			return sg_ret::err;
 		}
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected viewport coord mode" << (int) this->coord_mode;
-		break;
+		return sg_ret::err;
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -1242,89 +1256,9 @@ void Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * po
 ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in) const
 {
 	ScreenPos pos;
-	this->coord_to_screen_pos(coord_in, &pos.x, &pos.y);
-	return pos;
-}
-
-
-
-
-/*
-  Since this function is used for every drawn trackpoint - it can get called a lot.
-  Thus x & y position factors are calculated once on zoom changes,
-  avoiding the need to do it here all the time.
-*/
-void Viewport::lat_lon_to_screen_pos(const LatLon & lat_lon, int * pos_x, int * pos_y) const
-{
-	const double xmpp = this->viking_zoom_level.x;
-	const double ympp = this->viking_zoom_level.y;
-
-	switch (this->drawmode) {
-	case ViewportDrawMode::LatLon:
-		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - this->center.ll.lon));
-		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (this->center.ll.lat - lat_lon.lat));
-		break;
-	case ViewportDrawMode::Expedia:
-		{
-			double xx,yy;
-			Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.ll, lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
-			*pos_x = xx;
-			*pos_y = yy;
-		}
-		break;
-	case ViewportDrawMode::Mercator:
-		*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (lat_lon.lon - this->center.ll.lon));
-		*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.ll.lat) - MERCLAT(lat_lon.lat)));
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
-		break;
+	if (sg_ret::ok != this->coord_to_screen_pos(coord_in, &pos.x, &pos.y)) {
+		/* TODO: invalidate pos. */
 	}
-}
-
-
-
-
-ScreenPos Viewport::lat_lon_to_screen_pos(const LatLon & lat_lon) const
-{
-	ScreenPos pos;
-	this->lat_lon_to_screen_pos(lat_lon, &pos.x, &pos.y);
-	return pos;
-}
-
-
-
-
-/*
-  Since this function is used for every drawn trackpoint - it can get called a lot.
-  Thus x & y position factors are calculated once on zoom changes,
-  avoiding the need to do it here all the time.
-*/
-void Viewport::utm_to_screen_pos(const UTM & utm, int * pos_x, int * pos_y) const
-{
-	const double xmpp = this->viking_zoom_level.x;
-	const double ympp = this->viking_zoom_level.y;
-
-	const UTM & utm_center = this->center.utm;
-	const int zone_diff = utm_center.get_zone() - utm.get_zone();
-
-	if (0 != zone_diff && this->is_one_utm_zone){
-		*pos_x = *pos_y = VIK_VIEWPORT_UTM_WRONG_ZONE;
-		return;
-	}
-
-	*pos_x = ((utm.easting - utm_center.easting) / xmpp) + (this->canvas.width_2) -
-		zone_diff * this->utm_zone_width / xmpp;
-	*pos_y = (this->canvas.height_2) - ((utm.get_northing() - utm_center.get_northing()) / ympp);
-}
-
-
-
-
-ScreenPos Viewport::utm_to_screen_pos(const UTM & utm) const
-{
-	ScreenPos pos;
-	this->utm_to_screen_pos(utm, &pos.x, &pos.y);
 	return pos;
 }
 
@@ -2922,4 +2856,20 @@ sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 	}
 
 	return sg_ret::ok;
+}
+
+
+
+
+double Viewport::get_canvas_height_m(void) const
+{
+	return this->canvas.height * this->viking_zoom_level.y;
+}
+
+
+
+
+double Viewport::get_canvas_width_m(void) const
+{
+	return this->viking_zoom_level.x * this->canvas.width;
 }

@@ -38,7 +38,7 @@ namespace SlavGPS {
 
 
 		bool coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const override;
-		sg_ret tile_info_to_center_utm(const TileInfo & src, UTM & utm) const override;
+		sg_ret tile_info_to_center_coord(const TileInfo & src, Coord & coord) const override;
 
 		const QString get_server_hostname(void) const;
 		const QString get_server_path(const TileInfo & src) const;

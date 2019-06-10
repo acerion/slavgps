@@ -183,8 +183,7 @@ namespace SlavGPS {
 		QString get_file_extension(void) const;
 
 		virtual bool coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
-		virtual sg_ret tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon) const;
-		virtual sg_ret tile_info_to_center_utm(const TileInfo & src, UTM & utm) const;
+		virtual sg_ret tile_info_to_center_coord(const TileInfo & src, Coord & coord) const;
 
 		virtual DownloadStatus download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const;
 		DownloadHandle * download_handle_init(void) const;

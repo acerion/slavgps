@@ -261,23 +261,29 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 	int x1, y1, x2, y2;
 
 #define DRAW_COORDINATE_LINE(pen, coord_begin, coord_end) {		\
-		viewport->coord_to_screen_pos((coord_begin), &x1, &y1);	\
-		viewport->coord_to_screen_pos((coord_end), &x2, &y2);	\
-		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
+		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
+		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
+		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
+			viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+		}							\
 	}
 
 #define DRAW_LONGITUDE_LINE(pen, coord_begin, coord_end, text) {	\
-		viewport->coord_to_screen_pos((coord_begin), &x1, &y1);	\
-		viewport->coord_to_screen_pos((coord_end), &x2, &y2);	\
-		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
-		viewport->draw_text(text_font, text_pen, x1, y1 + 15, text); \
+		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
+		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
+		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
+			viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			viewport->draw_text(text_font, text_pen, x1, y1 + 15, text); \
+		}							\
 	}
 
 #define DRAW_LATITUDE_LINE(pen, coord_begin, coord_end, text) {		\
-		viewport->coord_to_screen_pos((coord_begin), &x1, &y1);	\
-		viewport->coord_to_screen_pos((coord_end), &x2, &y2);	\
-		viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2);	\
-		viewport->draw_text(text_font, text_pen, x1, y1, text); \
+		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
+		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
+		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
+			viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			viewport->draw_text(text_font, text_pen, x1, y1, text); \
+		}							\
 	}
 
 

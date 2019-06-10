@@ -59,6 +59,13 @@ namespace SlavGPS {
 
 
 
+#define UTM_ZONES_COUNT                        60 /* Number of UTM zones */
+#define UTM_NORTHING_AT_EQUATOR        10000000.0 /* [m] */
+#define UTM_CENTRAL_MERIDIAN_EASTING     500000.0 /* [m] */
+
+
+
+
 	class UTM;
 	class LatLonBBox;
 

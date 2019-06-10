@@ -70,9 +70,6 @@ using namespace SlavGPS;
 
 #define SG_MODULE "Coords"
 
-/* Number of UTM zones */
-#define UTM_ZONES 60
-
 
 
 
@@ -205,7 +202,7 @@ sg_ret UTM::set_easting(double value)
 
 sg_ret UTM::set_zone(int value)
 {
-	if (value <= 0 || value > UTM_ZONES) {
+	if (value <= 0 || value > UTM_ZONES_COUNT) {
 		qDebug() << SG_PREFIX_E << "Invalid UTM zone" << value;
 		return sg_ret::err;
 	}
@@ -387,7 +384,7 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 	double easting = K0 * N * (A + (1 - T + C) * A * A * A / 6 + (5 - 18 * T + T * T + 72 * C - 58 * eccPrimeSquared) * A * A * A * A * A / 120) + 500000.0;
 	double northing = K0 * (M + N * tan(lat_rad) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A * A * A * A / 24 + (61 - 58 * T + T * T + 600 * C - 330 * eccPrimeSquared) * A * A * A * A * A * A / 720));
 	if (latitude < 0.0) {
-		northing += 10000000.0;  /* 1e7 meter offset for southern hemisphere */
+		northing += UTM_NORTHING_AT_EQUATOR;  /* Offset for southern hemisphere */
 	}
 
 	/* All done. */
@@ -443,7 +440,7 @@ LatLon UTM::to_latlon(const UTM & utm)
 	assert (utm.band_letter >= UTMLetter::A && utm.band_letter <= UTMLetter::Z);
 	if (utm.band_letter < UTMLetter::N) {
 		/* southern hemisphere */
-		y -= 10000000.0; /* remove 1e7 meter offset */
+		y -= UTM_NORTHING_AT_EQUATOR; /* Remove offset. */
 	}
 
 	const double long_origin = (utm.zone - 1) * 6 - 180 + 3;	/* +3 puts origin in middle of zone */

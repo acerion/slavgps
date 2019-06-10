@@ -127,16 +127,17 @@ bool MapSourceWmsc::coord_to_tile_info(const Coord & src_coord, const VikingZoom
 
 
 
-sg_ret MapSourceWmsc::tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon) const
+sg_ret MapSourceWmsc::tile_info_to_center_coord(const TileInfo & src, Coord & coord) const
 {
 	const double socalled_mpp = src.scale.to_so_called_mpp();
 
-	lat_lon.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
+	coord.mode = CoordMode::LatLon;
+	coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
-	lat_lon.lat = -((src.y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
+	coord.ll.lat = -((src.y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
 
-	qDebug() << SG_PREFIX_D << "Converting:" << src.x << src.y << "->" << lat_lon;
+	qDebug() << SG_PREFIX_D << "Converting:" << src.x << src.y << "->" << coord.ll;
 
 	return sg_ret::ok;
 }

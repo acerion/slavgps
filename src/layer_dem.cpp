@@ -690,7 +690,9 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 			box_c.lat += (nscale_deg * skip_factor)/2;
 			box_c.lon -= (escale_deg * skip_factor)/2;
 			tmp = Coord(box_c, viewport_coord_mode);
-			viewport->coord_to_screen_pos(tmp, &box_x, &box_y);
+			if (sg_ret::ok != viewport->coord_to_screen_pos(tmp, &box_x, &box_y)) {
+				continue;
+			}
 			/* Catch box at borders. */
 			if (box_x < 0) {
 				box_x = 0;
@@ -703,7 +705,9 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 			box_c.lat -= nscale_deg * skip_factor;
 			box_c.lon += escale_deg * skip_factor;
 			tmp = Coord(box_c, viewport_coord_mode);
-			viewport->coord_to_screen_pos(tmp, &box_width, &box_height);
+			if (sg_ret::ok != viewport->coord_to_screen_pos(tmp, &box_width, &box_height)) {
+				continue;
+			}
 			box_width -= box_x;
 			box_height -= box_y;
 			/* Catch box at borders. */

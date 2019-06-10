@@ -1095,7 +1095,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	TileInfo tile_iter = tile_ul;
 
 	const QString map_type_string = map_source->get_map_type_string();
-	LatLon lat_lon;
+	Coord coord;LatLon lat_lon;
 	UTM utm;
 	if (map_source->get_tilesize_x() == 0 && !existence_only) {
 
@@ -1116,13 +1116,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				tile_geometry.width = tile_geometry.pixmap.width();
 				tile_geometry.height = tile_geometry.pixmap.height();
 
-				if (map_source->coord_mode == CoordMode::LatLon) {
-					map_source->tile_info_to_center_lat_lon(tile_iter, lat_lon);
-					viewport->lat_lon_to_screen_pos(lat_lon, &tile_geometry.dest_x, &tile_geometry.dest_y);
-				} else {
-					map_source->tile_info_to_center_utm(tile_iter, utm);
-					viewport->utm_to_screen_pos(utm, &tile_geometry.dest_x, &tile_geometry.dest_y);
-				}
+				map_source->tile_info_to_center_coord(tile_iter, coord);
+				viewport->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
 
 				tile_geometry.dest_x -= (tile_geometry.width / 2);
 				tile_geometry.dest_y -= (tile_geometry.height / 2);
@@ -1144,13 +1139,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		tile_geometry.width = ceil(tile_width_f);
 		tile_geometry.height = ceil(tile_height_f);
 
-		if (map_source->coord_mode == CoordMode::LatLon) {
-			map_source->tile_info_to_center_lat_lon(tile_ul, lat_lon);
-			viewport->lat_lon_to_screen_pos(lat_lon, &tile_geometry.dest_x, &tile_geometry.dest_y);
-		} else {
-			map_source->tile_info_to_center_utm(tile_ul, utm);
-			viewport->utm_to_screen_pos(utm, &tile_geometry.dest_x, &tile_geometry.dest_y);
-		}
+		map_source->tile_info_to_center_coord(tile_ul, coord);
+		viewport->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
 
 		const int viewport_x_grid = tile_geometry.dest_x;
 		const int viewport_y_grid = tile_geometry.dest_y;

@@ -121,10 +121,15 @@ bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingZo
 
 
 
-sg_ret MapSourceSlippy::tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon) const
+sg_ret MapSourceSlippy::tile_info_to_center_coord(const TileInfo & src, Coord & coord) const
 {
-	lat_lon = MapUtils::iTMS_to_center_lat_lon(src);
-	return sg_ret::ok;
+	if (coord.mode == CoordMode::LatLon) {
+		coord.ll = MapUtils::iTMS_to_center_lat_lon(src);
+		return sg_ret::ok;
+	} else {
+		qDebug() << SG_PREFIX_E << "Called the function for non-LatLon coord mode" << (int) coord.mode;
+		return sg_ret::err;
+	}
 }
 
 

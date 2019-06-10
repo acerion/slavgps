@@ -58,8 +58,7 @@ using namespace SlavGPS;
 
 
 static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
-static sg_ret expedia_tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon);
-static sg_ret expedia_tile_info_to_center_utm(const TileInfo & src, UTM & utm);
+static sg_ret expedia_tile_info_to_center_coord(const TileInfo & src, Coord & coord);
 static DownloadStatus expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
@@ -112,8 +111,7 @@ void Expedia::init(void)
 	map_type.tilesize_y = 0;
 	map_type.drawmode = ViewportDrawMode::Expedia;
 	map_type.coord_to_tile_info = expedia_coord_to_tile_info;
-	map_type.tile_info_to_center_lat_lon = expedia_tile_info_to_center_lat_lon;
-	map_type.tile_info_to_center_utm = expedia_tile_info_to_center_utm;
+	map_type.tile_info_to_center_coord = expedia_tile_info_to_center_coord;
 	map_type.download = expedia_download_tile;
 	map_type.download_handle_init = expedia_handle_init;
 	map_type.download_handle_cleanup = expedia_handle_cleanup;
@@ -229,19 +227,15 @@ LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 
 
 
-static sg_ret expedia_tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon)
+static sg_ret expedia_tile_info_to_center_coord(const TileInfo & src, Coord & coord)
 {
-	lat_lon.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
-	lat_lon.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
-	return sg_ret::ok;
-}
-
-
-
-
-static sg_ret expedia_tile_info_to_center_utm(const TileInfo & src, UTM & utm)
-{
-	return sg_ret::err;
+	if (coord.mode == CoordMode::LatLon) {
+		coord.ll.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
+		coord.ll.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
+		return sg_ret::ok;
+	} else {
+		return sg_ret::err;
+	}
 }
 
 

@@ -1612,18 +1612,19 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		int height = viewport->get_height();
 		int vx, vy;
 
-		viewport->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy);
-		viewport_shifted = true;
-		if (vx < (width/hdiv)) {
-			viewport->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
-		} else if (vx > (width - width/hdiv)) {
-			viewport->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
-		} else if (vy < (height/vdiv)) {
-			viewport->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
-		} else if (vy > (height - height/vdiv)) {
-			viewport->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
-		} else {
-			viewport_shifted = false;
+		if (sg_ret::ok == viewport->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {
+			viewport_shifted = true;
+			if (vx < (width/hdiv)) {
+				viewport->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
+			} else if (vx > (width - width/hdiv)) {
+				viewport->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
+			} else if (vy < (height/vdiv)) {
+				viewport->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
+			} else if (vy > (height - height/vdiv)) {
+				viewport->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
+			} else {
+				viewport_shifted = false;
+			}
 		}
 	} else {
 		/* VehiclePosition::None */

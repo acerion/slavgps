@@ -42,7 +42,6 @@
 
 
 /* Used for coord to screen etc, screen to coord. */
-#define VIK_VIEWPORT_UTM_WRONG_ZONE -9999999
 #define VIK_VIEWPORT_OFF_SCREEN_DOUBLE -9999999.9
 
 

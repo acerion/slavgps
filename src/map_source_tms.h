@@ -44,7 +44,7 @@ namespace SlavGPS {
 		bool supports_download_only_new(void) const override;
 
 		bool coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const override;
-		sg_ret tile_info_to_center_lat_lon(const TileInfo & src, LatLon & lat_lon) const override;
+		sg_ret tile_info_to_center_coord(const TileInfo & src, Coord & coord) const override;
 
 		const QString get_server_path(const TileInfo & src) const;
 	};
