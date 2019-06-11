@@ -71,6 +71,9 @@ namespace SlavGPS {
 		void draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h) const;
 		QString draw_scale_helper_value(Viewport * viewport, DistanceUnit distance_unit, double scale_unit) const;
 
+		/* Draw text with viewport's size and viewport's bbox. */
+		void draw_viewport_data(Viewport * viewport) const;
+
 		/* For scale and center mark. */
 		QPen pen_marks_bg;
 		QPen pen_marks_fg;

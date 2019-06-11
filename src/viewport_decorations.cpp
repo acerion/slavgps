@@ -79,6 +79,7 @@ void ViewportDecorations::draw(Viewport * viewport) const
 	this->draw_attributions(viewport);
 	this->draw_center_mark(viewport);
 	this->draw_logos(viewport);
+	this->draw_viewport_data(viewport); /* Viewport bbox coordinates, viewport width and height. */
 }
 
 
@@ -421,4 +422,31 @@ sg_ret ViewportDecorations::add_logo(const ViewportLogo & logo)
 	}
 
 	return sg_ret::ok;
+}
+
+
+
+
+void ViewportDecorations::draw_viewport_data(Viewport * viewport) const
+{
+	const LatLonBBox bbox = viewport->get_bbox();
+
+	const QString north = "N " + bbox.north.to_string();
+	const QString west =  "W " + bbox.west.to_string();
+	const QString east =  "E " + bbox.east.to_string();
+	const QString south = "S " + bbox.south.to_string();
+	const QString size = QString("w = %1, h = %2").arg(viewport->get_width()).arg(viewport->get_height());
+
+	const QPointF data_start(10, 10); /* Top-right corner of viewport. */
+	const QRectF bounding_rect = QRectF(data_start.x(), data_start.y(), data_start.x() + 400, data_start.y() + 400);
+
+	const QFont font = QFont("Helvetica", 10);
+	const QPen & pen_fg = this->pen_marks_fg;
+
+	viewport->draw_text(font, pen_fg, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north, 0);
+	viewport->draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east, 0);
+	viewport->draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignLeft, west, 0);
+	viewport->draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignHCenter, south, 0);
+
+	viewport->draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignHCenter, size, 0);
 }

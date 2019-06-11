@@ -1469,10 +1469,10 @@ void Viewport::draw_text(const QFont & text_font, const QPen & pen, const QRectF
 #if 1
 	/* Debug. */
 	this->canvas.painter->setPen(QColor("red"));
-	this->canvas.painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
+	this->canvas.painter->drawEllipse(final_bounding_rect.left(), final_bounding_rect.top(), 5, 5);
 
 	this->canvas.painter->setPen(QColor("darkgreen"));
-	this->canvas.painter->drawRect(bounding_rect);
+	this->canvas.painter->drawRect(final_bounding_rect);
 
 	this->canvas.painter->setPen(QColor("red"));
 	this->canvas.painter->drawRect(text_rect);
@@ -1544,7 +1544,7 @@ void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & te
 #if 1
 	/* Debug. */
 	canv->painter->setPen(QColor("red"));
-	canv->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
+	canv->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
 
 	canv->painter->setPen(QColor("darkgreen"));
 	canv->painter->drawRect(bounding_rect);
