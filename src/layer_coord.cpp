@@ -456,17 +456,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	const double ympp = viewport->get_viking_zoom_level().get_y();
 	const int width = viewport->get_width();
 	const int height = viewport->get_height();
-	LatLon ll, ll2, min, max;
 
-	UTM utm = center;
-	utm.northing = center.get_northing() - (ympp * height / 2);
 
-	ll = UTM::to_latlon(utm);
-
-	utm.northing = center.get_northing() + (ympp * height / 2);
-
-	ll2 = UTM::to_latlon(utm);
-
+	LatLon min, max;
 	{
 		/*
 		  Find corner coords in lat/lon.
@@ -474,73 +466,127 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		*/
 		UTM temp_utm;
 		temp_utm = center;
-		temp_utm.easting -= (width/2)*xmpp;
-		temp_utm.northing += (height/2)*ympp;
+
+		temp_utm.easting = temp_utm.easting - (width / 2) * xmpp;
+		temp_utm.northing = temp_utm.northing + (height / 2) * ympp;
 		const LatLon topleft = UTM::to_latlon(temp_utm);
 
-		temp_utm.easting += (width*xmpp);
+		temp_utm = center;
+		temp_utm.easting = temp_utm.easting + (width / 2 * xmpp);
 		const LatLon topright = UTM::to_latlon(temp_utm);
 
-		temp_utm.northing -= (height*ympp);
+		temp_utm = center;
+		temp_utm.northing = temp_utm.northing - (height / 2 * ympp);
 		const LatLon bottomright = UTM::to_latlon(temp_utm);
 
-		temp_utm.easting -= (width*xmpp);
+		temp_utm = center;
+		temp_utm.easting = temp_utm.easting - (width / 2 * xmpp);
 		const LatLon bottomleft = UTM::to_latlon(temp_utm);
 
 		min.lon = (topleft.lon < bottomleft.lon) ? topleft.lon : bottomleft.lon;
 		max.lon = (topright.lon > bottomright.lon) ? topright.lon : bottomright.lon;
 		min.lat = (bottomleft.lat < bottomright.lat) ? bottomleft.lat : bottomright.lat;
 		max.lat = (topleft.lat > topright.lat) ? topleft.lat : topright.lat;
+
+
+
+		/* Can zoom out more than whole world and so the above can give invalid positions */
+		/* Restrict values properly so drawing doesn't go into a near 'infinite' loop */
+		if (min.lon < SG_LONGITUDE_MIN) {
+			min.lon = SG_LONGITUDE_MIN;
+		}
+
+		if (max.lon > SG_LONGITUDE_MAX) {
+			max.lon = SG_LONGITUDE_MAX;
+		}
+
+		if (min.lat < SG_LATITUDE_MIN) {
+			min.lat = SG_LATITUDE_MIN;
+		}
+
+		if (max.lat > SG_LATITUDE_MAX) {
+			max.lat = SG_LATITUDE_MAX;
+		}
+
+		qDebug() << "============= min/max latitude = " << min << max << viewport->get_bbox();
+
+		LatLonBBox bbox = viewport->get_bbox();
+		min.lat = bbox.south.get_value();
+		min.lon = bbox.west.get_value();
+		max.lat = bbox.north.get_value();
+		max.lon = bbox.east.get_value();
 	}
 
-	/* Can zoom out more than whole world and so the above can give invalid positions */
-	/* Restrict values properly so drawing doesn't go into a near 'infinite' loop */
-	if (min.lon < SG_LONGITUDE_MIN) {
-		min.lon = SG_LONGITUDE_MIN;
+
+	/* Vertical lines. */
+	if (1) {
+		UTM utm = center;
+
+		const double degrees_delta = this->deg_inc;
+
+		/* Distance from center to either upper or lower edge
+		   of canvas. [meters] */
+		const double vert_distance_m = (height / 2) * ympp;
+
+		utm.northing = center.get_northing() - vert_distance_m;
+		LatLon lat_lon_bottom = UTM::to_latlon(utm);
+
+		utm.northing = center.get_northing() + vert_distance_m;
+		LatLon lat_lon_top = UTM::to_latlon(utm);
+
+
+		double lon = ((double) ((long) (min.lon / degrees_delta))) * degrees_delta;
+		lat_lon_bottom.lon = lon;
+		lat_lon_top.lon = lon;
+
+		for (;
+		     lat_lon_bottom.lon <= max.lon,       lat_lon_top.lon <= max.lon;
+		     lat_lon_bottom.lon += degrees_delta, lat_lon_top.lon += degrees_delta) {
+
+			utm = LatLon::to_utm(lat_lon_bottom);
+			int x1 = ((utm.easting - center.easting) / xmpp) + (width / 2);
+
+			utm = LatLon::to_utm(lat_lon_top);
+			int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
+
+			viewport->draw_line(pen, x1, height, x2, 0);
+		}
 	}
 
-	if (max.lon > SG_LONGITUDE_MAX) {
-		max.lon = SG_LONGITUDE_MAX;
-	}
 
-	if (min.lat < SG_LATITUDE_MIN) {
-		min.lat = SG_LATITUDE_MIN;
-	}
 
-	if (max.lat > SG_LATITUDE_MAX) {
-		max.lat = SG_LATITUDE_MAX;
-	}
+	/* Horizontal lines. */
+	if (1) {
+		UTM utm = center;
 
-	double lon = ((double) ((long) ((min.lon)/ this->deg_inc))) * this->deg_inc;
-	ll.lon = ll2.lon = lon;
+		const double degrees_delta = this->deg_inc;
 
-	for (; ll.lon <= max.lon; ll.lon += this->deg_inc, ll2.lon += this->deg_inc) {
-		utm = LatLon::to_utm(ll);
-		int x1 = ((utm.easting - center.easting) / xmpp) + (width / 2);
-		utm = LatLon::to_utm(ll2);
-		int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
-		viewport->draw_line(pen, x1, height, x2, 0);
-	}
+		/* Distance from center to either left or right edge
+		   of canvas. [meters] */
+		const double horiz_distance_m = (width / 2) * xmpp;
 
-	utm = center;
-	utm.easting = center.easting - (xmpp * width / 2);
+		utm.easting = center.easting - horiz_distance_m;
+		LatLon lat_lon_left = UTM::to_latlon(utm);
 
-	ll = UTM::to_latlon(utm);
+		utm.easting = center.easting + horiz_distance_m;
+		LatLon lat_lon_right = UTM::to_latlon(utm);
 
-	utm.easting = center.easting + (xmpp * width / 2);
+		const double lat = ((double) ((long) (min.lat / degrees_delta))) * degrees_delta;
+		lat_lon_left.lat = lat;
+		lat_lon_right.lat = lat;
 
-	ll2 = UTM::to_latlon(utm);
+		for (;
+		     lat_lon_left.lat <= max.lat,       lat_lon_right.lat <= max.lat;
+		     lat_lon_left.lat += degrees_delta, lat_lon_right.lat += degrees_delta) {
 
-	/* Really lat, just reusing a variable. */
-	lon = ((double) ((long) ((min.lat)/ this->deg_inc))) * this->deg_inc;
-	ll.lat = ll2.lat = lon;
+			utm = LatLon::to_utm(lat_lon_left);
+			int x1 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 
-	for (; ll.lat <= max.lat ; ll.lat += this->deg_inc, ll2.lat += this->deg_inc) {
-		utm = LatLon::to_utm(ll);
-		int x1 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
-		utm = LatLon::to_utm(ll2);
-		int x2 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
-		viewport->draw_line(pen, width, x2, 0, x1);
+			utm = LatLon::to_utm(lat_lon_right);
+			int x2 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
+
+			viewport->draw_line(pen, width, x2, 0, x1);
+		}
 	}
 }
 
