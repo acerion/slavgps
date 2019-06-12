@@ -91,13 +91,16 @@ void ViewportDecorations::draw_scale(Viewport * viewport) const
 		return;
 	}
 
+	const int canvas_width = viewport->canvas.get_width();
+	const int canvas_height = viewport->canvas.get_height();
+
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
-	int MAXIMUM_WIDTH = viewport->canvas.width * RELATIVE_WIDTH;
+	int MAXIMUM_WIDTH = canvas_width * RELATIVE_WIDTH;
 
-	const Coord left =  viewport->screen_pos_to_coord(0,                                       viewport->canvas.height / 2);
-	const Coord right = viewport->screen_pos_to_coord(viewport->canvas.width * RELATIVE_WIDTH, viewport->canvas.height / 2);
+	const Coord left =  viewport->screen_pos_to_coord(0,                             canvas_height / 2);
+	const Coord right = viewport->screen_pos_to_coord(canvas_width * RELATIVE_WIDTH, canvas_height / 2);
 
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const double l2r = Coord::distance(left, right);
@@ -142,7 +145,7 @@ void ViewportDecorations::draw_scale(Viewport * viewport) const
 	{
 		const QString scale_value = this->draw_scale_helper_value(viewport, distance_unit, scale_unit);
 
-		const QPointF scale_start(PAD, viewport->canvas.height - PAD); /* Bottom-left corner of scale. */
+		const QPointF scale_start(PAD, canvas_height - PAD); /* Bottom-left corner of scale. */
 		const QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
 		const QRectF bounding_rect = QRectF(value_start.x(), 0, value_start.x() + 300, value_start.y());
 
@@ -176,12 +179,15 @@ void ViewportDecorations::draw_scale(Viewport * viewport) const
 
 void ViewportDecorations::draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h) const
 {
-	/* Black scale. */
-	viewport->draw_line(pen, PAD,             viewport->canvas.height - PAD, PAD + scale_len, viewport->canvas.height - PAD);
-	viewport->draw_line(pen, PAD,             viewport->canvas.height - PAD, PAD,             viewport->canvas.height - PAD - h);
-	viewport->draw_line(pen, PAD + scale_len, viewport->canvas.height - PAD, PAD + scale_len, viewport->canvas.height - PAD - h);
+	const int canvas_width = viewport->canvas.get_width();
+	const int canvas_height = viewport->canvas.get_height();
 
-	int y1 = viewport->canvas.height - PAD;
+	/* Black scale. */
+	viewport->draw_line(pen, PAD,             canvas_height - PAD, PAD + scale_len, canvas_height - PAD);
+	viewport->draw_line(pen, PAD,             canvas_height - PAD, PAD,             canvas_height - PAD - h);
+	viewport->draw_line(pen, PAD + scale_len, canvas_height - PAD, PAD + scale_len, canvas_height - PAD - h);
+
+	const int y1 = canvas_height - PAD;
 	for (int i = 1; i < 10; i++) {
 		int x1 = PAD + i * scale_len / 10;
 		int diff = ((i == 5) ? (2 * h / 3) : (1 * h / 3));
@@ -244,10 +250,10 @@ void ViewportDecorations::draw_attributions(Viewport * viewport) const
 	const int font_height = viewport->fontMetrics().boundingRect("© Copyright").height();
 	const int single_row_height = 1.2 * font_height;
 
-	const int base_rect_width = viewport->canvas.width - (2 * PAD);     /* The actual width will be the same for all attribution label rectangles. */
-	const int base_rect_height = viewport->canvas.height - (2 * PAD);   /* The actual height will be smaller and smaller for each consecutive attribution. */
-	const int base_anchor_x = viewport->canvas.width - (1 * PAD);       /* x coordinate of actual anchor of every rectangle will be in the same place. */
-	const int base_anchor_y = viewport->canvas.height - (1 * PAD);      /* y coordinate of actual anchor of every rectangle will be higher for each consecutive attribution. */
+	const int base_rect_width = viewport->canvas.get_width() - (2 * PAD);     /* The actual width will be the same for all attribution label rectangles. */
+	const int base_rect_height = viewport->canvas.get_height() - (2 * PAD);   /* The actual height will be smaller and smaller for each consecutive attribution. */
+	const int base_anchor_x = viewport->canvas.get_width() - (1 * PAD);       /* x coordinate of actual anchor of every rectangle will be in the same place. */
+	const int base_anchor_y = viewport->canvas.get_height() - (1 * PAD);      /* y coordinate of actual anchor of every rectangle will be higher for each consecutive attribution. */
 
 	for (int i = 0; i < this->attributions.size(); i++) {
 		const int delta = (i * single_row_height);
@@ -276,8 +282,8 @@ void ViewportDecorations::draw_center_mark(Viewport * viewport) const
 
 	const int len = 30;
 	const int gap = 4;
-	int center_x = viewport->canvas.width / 2;
-	int center_y = viewport->canvas.height / 2;
+	const int center_x = viewport->canvas.get_width() / 2;
+	const int center_y = viewport->canvas.get_height() / 2;
 
 	const QPen & pen_fg = this->pen_marks_fg;
 	const QPen & pen_bg = this->pen_marks_bg;
@@ -300,8 +306,8 @@ void ViewportDecorations::draw_center_mark(Viewport * viewport) const
 
 void ViewportDecorations::draw_logos(Viewport * viewport) const
 {
-	int x_pos = viewport->canvas.width - PAD;
-	int y_pos = PAD;
+	int x_pos = viewport->canvas.get_width() - PAD;
+	const int y_pos = PAD;
 	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
 		const QPixmap & logo_pixmap = iter->logo_pixmap;
 		const int logo_width = logo_pixmap.width();

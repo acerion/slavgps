@@ -78,17 +78,30 @@ namespace SlavGPS {
 		char debug[100] = { 0 };
 		Viewport2D * viewport = NULL;
 
-		int width = 0;
-		int height = 0;
 
-		/* Half of the normal width and height. */
-		int width_2 = 0;
-		int height_2 = 0;
+		int get_leftmost_pixel(void) const;
+		int get_rightmost_pixel(void) const;
+		int get_topmost_pixel(void) const;
+		int get_bottommost_pixel(void) const;
+
+		/* Get number of pixel (starting with zero) that is in
+		   center of canvas, either at the center of vertical
+		   line, or at the center of horizontal line. */
+		int get_vert_center_pixel(void) const;
+		int get_horiz_center_pixel(void) const;
+
+		int get_width(void) const;
+		int get_height(void) const;
+
+
 
 		QPixmap saved_pixmap;
 		bool saved_pixmap_valid;
 
 	protected:
+		int width = 0;
+		int height = 0;
+
 		QPainter * painter = NULL;
 		QPixmap * pixmap = NULL;
 		QPixmap * snapshot_buffer = NULL;
@@ -97,6 +110,7 @@ namespace SlavGPS {
 	signals:
 		void reconfigured(Viewport2D * viewport);
 	};
+	QDebug operator<<(QDebug debug, const ViewportCanvas & canvas);
 
 
 

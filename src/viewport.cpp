@@ -357,9 +357,9 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 */
 void Viewport::clear(void)
 {
-	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->canvas.debug << this->canvas.width << this->canvas.height;
+	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->canvas;
 	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->eraseRect(0, 0, this->canvas.width, this->canvas.height);
+	this->canvas.painter->eraseRect(0, 0, this->canvas.get_width(), this->canvas.get_height());
 
 
 	/* Some maps may have been removed, so their logos and/or
@@ -972,7 +972,8 @@ int Viewport::get_rightmost_zone(void) const
 		return 0;
 	}
 
-	const Coord coord = this->screen_pos_to_coord(this->canvas.width, 0);
+	const Coord coord = this->screen_pos_to_coord(this->canvas.get_rightmost_pixel(),
+						      this->canvas.get_topmost_pixel()); /* Second argument shouldn't really matter if we are getting "rightmost" zone. */
 	return coord.utm.get_zone();
 }
 
@@ -983,8 +984,16 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 {
 	if (coord_mode == CoordMode::UTM) {
 		/* Slightly optimized. */
-		this->center.utm.easting += this->viking_zoom_level.x * (x1 - (this->canvas.width / 2));
-		this->center.utm.northing += this->viking_zoom_level.y * ((this->canvas.height / 2) - y1);
+
+		/* TODO: verify position of x1 and y1 in these equations. */
+		const int delta_horiz_pixel = x1 - this->canvas.get_horiz_center_pixel();
+		const int delta_vert_pixel = this->canvas.get_vert_center_pixel() - y1;
+
+		const double delta_horiz_m = delta_horiz_pixel * this->viking_zoom_level.x;
+		const double delta_vert_m = delta_vert_pixel * this->viking_zoom_level.y;
+
+		this->center.utm.easting += delta_horiz_m;
+		this->center.utm.northing += delta_vert_m;
 		this->utm_zone_check();
 	} else {
 		const Coord coord = this->screen_pos_to_coord(x1, y1);
@@ -1005,7 +1014,7 @@ void Viewport::set_center_from_screen_pos(const ScreenPos & pos)
 
 int Viewport::get_width(void) const
 {
-	return this->canvas.width;
+	return this->canvas.get_width();
 }
 
 
@@ -1013,7 +1022,7 @@ int Viewport::get_width(void) const
 
 int Viewport::get_height(void) const
 {
-	return this->canvas.height;
+	return this->canvas.get_height();
 }
 
 
@@ -1021,7 +1030,7 @@ int Viewport::get_height(void) const
 
 QRect Viewport::get_rect(void) const
 {
-	return QRect(0, 0, this->canvas.width, this->canvas.height);
+	return QRect(0, 0, this->canvas.get_width(), this->canvas.get_height());
 }
 
 
@@ -1033,25 +1042,27 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	const double xmpp = this->viking_zoom_level.x;
 	const double ympp = this->viking_zoom_level.y;
 
+	/* Distance of pixel specified by pos_x/pos_y from canvas' central pixel.
+	   TODO: verify location of pos_x and pos_y in these equations. */
+	const int delta_horiz_pixels = pos_x - this->canvas.get_horiz_center_pixel();
+	const int delta_vert_pixels = this->canvas.get_vert_center_pixel() - pos_y;
+
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		coord.mode = CoordMode::UTM;
 
 		/* Modified (reformatted) formula. */
 		{
-			const int delta_x = pos_x - this->canvas.width_2;
-			const int delta_y = this->canvas.height_2 - pos_y;
-
 			coord.utm.set_zone(this->center.utm.get_zone());
 			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			coord.utm.set_band_letter(this->center.utm.get_band_letter());
-			coord.utm.easting = (delta_x * xmpp) + this->center.utm.easting;
+			coord.utm.easting = (delta_horiz_pixels * xmpp) + this->center.utm.easting;
 
 			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.easting -= zone_delta * this->utm_zone_width;
-			coord.utm.northing = (delta_y * ympp) + this->center.utm.northing;
+			coord.utm.northing = (delta_vert_pixels * ympp) + this->center.utm.northing;
 		}
 
 		/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1064,13 +1075,13 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			test_coord.utm.set_zone(this->center.utm.get_zone());
 			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			test_coord.utm.set_band_letter(this->center.utm.get_band_letter());
-			test_coord.utm.easting = ((pos_x - (this->canvas.width_2)) * xmpp) + this->center.utm.easting;
+			test_coord.utm.easting = (delta_horiz_pixels * xmpp) + this->center.utm.easting;
 
 			zone_delta = floor((test_coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			test_coord.utm.shift_zone_by(zone_delta);
 			test_coord.utm.easting -= zone_delta * this->utm_zone_width;
-			test_coord.utm.northing = (((this->canvas.height_2) - pos_y) * ympp) + this->center.utm.northing;
+			test_coord.utm.northing = (delta_vert_pixels * ympp) + this->center.utm.northing;
 
 
 			if (!UTM::is_the_same_zone(coord.utm, test_coord.utm)) {
@@ -1095,11 +1106,8 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		case ViewportDrawMode::LatLon:
 			/* Modified (reformatted) formula. */
 			{
-				const int delta_x = pos_x - this->canvas.width_2;
-				const int delta_y = this->canvas.height_2 - pos_y;
-
-				coord.ll.lon = this->center.ll.lon + (delta_x / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.ll.lat = this->center.ll.lat + (delta_y / REVERSE_MERCATOR_FACTOR(ympp));
+				coord.ll.lon = this->center.ll.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.ll.lat = this->center.ll.lat + (delta_vert_pixels / REVERSE_MERCATOR_FACTOR(ympp));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1107,8 +1115,8 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.mode = CoordMode::LatLon;
 
-				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
-				test_coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y));
+				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * delta_vert_pixels);
 
 				if (coord.ll.lat != test_coord.ll.lat) {
 					qDebug() << SG_PREFIX_E << "LatLon: Latitude calculation mismatch" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
@@ -1120,18 +1128,18 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			break;
 
 		case ViewportDrawMode::Expedia:
-			Expedia::screen_pos_to_lat_lon(coord.ll, pos_x, pos_y, this->center.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
+			Expedia::screen_pos_to_lat_lon(coord.ll, pos_x, pos_y, this->center.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
+						       /* TODO: make sure that this is ok, that we don't need to use get_width()/get_height() here. */
+						       this->canvas.get_horiz_center_pixel(),
+						       this->canvas.get_vert_center_pixel());
 			break;
 
 		case ViewportDrawMode::Mercator:
 			/* This isn't called with a high frequently so less need to optimize. */
 			/* Modified (reformatted) formula. */
 			{
-				const int delta_x = pos_x - this->canvas.width_2;
-				const int delta_y = this->canvas.height_2 - pos_y;
-
-				coord.ll.lon = this->center.ll.lon + (delta_x / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (delta_y / (REVERSE_MERCATOR_FACTOR(ympp))));
+				coord.ll.lon = this->center.ll.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (delta_vert_pixels / (REVERSE_MERCATOR_FACTOR(ympp))));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1139,8 +1147,8 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.mode = CoordMode::LatLon;
 
-				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * (pos_x - this->canvas.width_2));
-				test_coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * (this->canvas.height_2 - pos_y)));
+				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * delta_vert_pixels));
 
 				if (coord.ll.lat != test_coord.ll.lat) {
 					qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
@@ -1189,6 +1197,9 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 	const double xmpp = this->viking_zoom_level.x;
 	const double ympp = this->viking_zoom_level.y;
 
+	const int horiz_center_pixel = this->canvas.get_horiz_center_pixel();
+	const int vert_center_pixel = this->canvas.get_vert_center_pixel();
+
 	if (coord_in.mode != this->coord_mode) {
 		/* The intended use of the function is that coord_in
 		   argument is always in correct coord mode (i.e. in
@@ -1214,28 +1225,28 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 			const double horiz_distance_m = coord.utm.get_easting() - this->center.utm.get_easting();
 			const double vert_distance_m = coord.utm.get_northing() - this->center.utm.get_northing();
 
-			*pos_x = (horiz_distance_m / xmpp) + (this->canvas.width_2) - (zone_diff * this->utm_zone_width) / xmpp;
-			*pos_y = (this->canvas.height_2) - (vert_distance_m / ympp);
+			*pos_x = horiz_center_pixel + (horiz_distance_m / xmpp) - (zone_diff * this->utm_zone_width) / xmpp;
+			*pos_y = vert_center_pixel - (vert_distance_m / ympp); /* TODO: plus or minus? */
 		}
 		break;
 
 	case CoordMode::LatLon:
 		switch (this->drawmode) {
 		case ViewportDrawMode::LatLon:
-			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
-			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (this->center.ll.lat - coord.ll.lat));
+			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
+			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center.ll.lat - coord.ll.lat));
 			break;
 		case ViewportDrawMode::Expedia:
 			{
 				double xx, yy;
-				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.ll, coord.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->canvas.width_2, this->canvas.height_2);
+				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.ll, coord.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, horiz_center_pixel, vert_center_pixel);
 				*pos_x = xx;
 				*pos_y = yy;
 			}
 			break;
 		case ViewportDrawMode::Mercator:
-			*pos_x = this->canvas.width_2 + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
-			*pos_y = this->canvas.height_2 + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.ll.lat) - MERCLAT(coord.ll.lat)));
+			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
+			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.ll.lat) - MERCLAT(coord.ll.lat)));
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
@@ -1329,18 +1340,38 @@ void Viewport::clip_line(int * x1, int * y1, int * x2, int * y2)
 
 
 
+bool line_is_outside_of_canvas(const ViewportCanvas & canvas, int begin_x, int begin_y, int end_x, int end_y)
+{
+	const int leftmost   = canvas.get_leftmost_pixel();
+	const int rightmost  = canvas.get_rightmost_pixel();
+	const int topmost    = canvas.get_topmost_pixel();
+	const int bottommost = canvas.get_bottommost_pixel();
+
+	/* Here we follow Qt's coordinate system:
+	   begin in top-left corner; pixel numbers increase as we go down and right. */
+
+	if (begin_x < leftmost && end_x < leftmost) {
+		return true;
+	}
+	if (begin_y < topmost && end_y < topmost) {
+		return true;
+	}
+	if (begin_x > bottommost && end_x > bottommost) {
+		return true;
+	}
+	if (begin_y > rightmost && end_y > rightmost) {
+		return true;
+	}
+
+	return false;
+}
+
+
 
 void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
 {
-	//fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d)\n", begin_x, begin_y, end_x, end_y);
-
-	if ((begin_x < 0 && end_x < 0) || (begin_y < 0 && end_y < 0)) {
-		return;
-	}
-	if (begin_x > this->canvas.width && end_x > this->canvas.width) {
-		return;
-	}
-	if (begin_y > this->canvas.height && end_y > this->canvas.height) {
+	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
+	if (line_is_outside_of_canvas(this->canvas, begin_x, begin_y, end_x, end_y)) {
 		return;
 	}
 
@@ -1356,32 +1387,24 @@ void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, 
 
 
 
-
 void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
 {
-	if ((begin_x < 0 && end_x < 0) || (begin_y < 0 && end_y < 0)) {
+	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
+	if (line_is_outside_of_canvas(this->central->canvas, begin_x, begin_y, end_x, end_y)) {
 		return;
 	}
-	if (begin_x > this->central->canvas.width && end_x > this->central->canvas.width) {
-		return;
-	}
-	if (begin_y > this->central->canvas.height && end_y > this->central->canvas.height) {
-		return;
-	}
-
-	// fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d) (canvas height = %d)\n", begin_x, begin_y, end_x, end_y, this->canvas.height);
 
 	/*** Clipping, yeah! ***/
 	//Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
 	/* x/y coordinates are converted here from "beginning in
-	   bottom-left corner" to "beginning in upper-left corner"
+	   bottom-left corner" to "beginning in top-left corner"
 	   coordinate system. */
-	const int h = this->central->canvas.height;
+	const int bottom_pixel = this->central->canvas.get_bottommost_pixel();
 
 	this->central->canvas.painter->setPen(pen);
-	this->central->canvas.painter->drawLine(begin_x, h - begin_y - 1,
-						end_x,   h - end_y - 1);
+	this->central->canvas.painter->drawLine(begin_x, bottom_pixel - begin_y,
+						end_x,   bottom_pixel - end_y);
 }
 
 
@@ -1389,8 +1412,15 @@ void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, i
 
 void Viewport::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left_y, int rect_width, int rect_height)
 {
-	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
-	if (upper_left_x > -32 && upper_left_x < this->canvas.width + 32 && upper_left_y > -32 && upper_left_y < this->canvas.height + 32) {
+	/* Using 32 as half the default waypoint image size, so this
+	   draws ensures the highlight gets done. */
+	const int border = 32;
+
+	/* TODO: review this condition. */
+	if (upper_left_x > -border
+	    && upper_left_y > -border
+	    && upper_left_x < this->canvas.get_width() + border
+	    && upper_left_y < this->canvas.get_height() + border) {
 
 		//QPainter painter(this->canvas.pixmap);
 		this->canvas.painter->setPen(pen);
@@ -1403,8 +1433,15 @@ void Viewport::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left
 
 void Viewport::draw_rectangle(const QPen & pen, const QRect & rect)
 {
-	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
-	if (rect.x() > -32 && rect.x() < this->canvas.width + 32 && rect.y() > -32 && rect.y() < this->canvas.height + 32) {
+	/* Using 32 as half the default waypoint image size, so this
+	   draws ensures the highlight gets done. */
+	const int border = 32;
+
+	/* TODO: review this condition. */
+	if (rect.x() > -border
+	    && rect.y() > -border
+	    && rect.x() < this->canvas.get_width() + border
+	    && rect.y() < this->canvas.get_height() + border) {
 
 		//QPainter painter(this->canvas.pixmap);
 		this->canvas.painter->setPen(pen);
@@ -1417,8 +1454,15 @@ void Viewport::draw_rectangle(const QPen & pen, const QRect & rect)
 
 void Viewport::fill_rectangle(const QColor & color, int pos_x, int pos_y, int rect_width, int rect_height)
 {
-	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
-	if (pos_x > -32 && pos_x < this->canvas.width + 32 && pos_y > -32 && pos_y < this->canvas.height + 32) {
+	/* Using 32 as half the default waypoint image size, so this
+	   draws ensures the highlight gets done. */
+	const int border = 32;
+
+	/* TODO: review this condition. */
+	if (pos_x > -border
+	    && pos_y > -border
+	    && pos_x < this->canvas.get_width() + border
+	    && pos_y < this->canvas.get_height() + border) {
 
 		//QPainter painter(this->canvas.pixmap);
 		this->canvas.painter->fillRect(pos_x, pos_y, rect_width, rect_height, color);
@@ -1430,7 +1474,14 @@ void Viewport::fill_rectangle(const QColor & color, int pos_x, int pos_y, int re
 
 void Viewport::draw_text(QFont const & text_font, QPen const & pen, int pos_x, int pos_y, QString const & text)
 {
-	if (pos_x > -100 && pos_x < this->canvas.width + 100 && pos_y > -100 && pos_y < this->canvas.height + 100) {
+	const int border = 100;
+
+	/* TODO: review this condition. */
+	if (pos_x > -border
+	    && pos_y > -border
+	    && pos_x < this->canvas.get_width() + border
+	    && pos_y < this->canvas.get_height() + border) {
+
 		//QPainter painter(this->canvas.pixmap);
 		this->canvas.painter->setPen(pen);
 		this->canvas.painter->setFont(text_font);
@@ -1829,10 +1880,10 @@ bool Viewport::get_half_drawn(void) const
 
 LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
 {
-	Coord tleft =  this->screen_pos_to_coord(margin_left,                       margin_top);
-	Coord tright = this->screen_pos_to_coord(this->canvas.width + margin_right, margin_top);
-	Coord bleft =  this->screen_pos_to_coord(margin_left,                       this->canvas.height + margin_bottom);
-	Coord bright = this->screen_pos_to_coord(this->canvas.width + margin_right, this->canvas.height + margin_bottom);
+	Coord tleft =  this->screen_pos_to_coord(this->canvas.get_leftmost_pixel() + margin_left,    this->canvas.get_topmost_pixel() + margin_top);
+	Coord tright = this->screen_pos_to_coord(this->canvas.get_rightmost_pixel() + margin_right,  this->canvas.get_topmost_pixel() + margin_top);
+	Coord bleft =  this->screen_pos_to_coord(this->canvas.get_leftmost_pixel() + margin_left,    this->canvas.get_bottommost_pixel() + margin_bottom);
+	Coord bright = this->screen_pos_to_coord(this->canvas.get_rightmost_pixel() + margin_right,  this->canvas.get_bottommost_pixel() + margin_bottom);
 
 	tleft.change_mode(CoordMode::LatLon);
 	tright.change_mode(CoordMode::LatLon);
@@ -1895,7 +1946,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon ll = test.get_latlon();
-		ll.lat += this->get_viking_zoom_level().y * this->canvas.height / 11000.0; // about 11km per degree latitude
+		ll.lat += this->get_viking_zoom_level().y * this->canvas.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
 
 		test = Coord(LatLon::to_utm(ll), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
@@ -2009,8 +2060,9 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 
 	const Qt::KeyboardModifiers modifiers = ev->modifiers();
 
-	const int w = this->canvas.width;
-	const int h = this->canvas.height;
+	/* TODO: using get_width() and get_height() will give us only 99%-correct results. */
+	const int w = this->canvas.get_width();
+	const int h = this->canvas.get_height();
 	const bool scroll_up = angle.y() > 0;
 
 
@@ -2042,7 +2094,7 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		}
 		break;
 	case Qt::NoModifier: {
-		const ScreenPos center_pos(this->canvas.width / 2, this->canvas.height / 2);
+		const ScreenPos center_pos(this->canvas.get_horiz_center_pixel(), this->canvas.get_vert_center_pixel());
 		const ScreenPos event_pos(ev->x(), ev->y());
 		const ZoomOperation zoom_operation = SlavGPS::wheel_event_to_zoom_operation(ev);
 
@@ -2154,8 +2206,8 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 	Viewport * scaled_viewport = new Viewport(a_window);
 
-	const int orig_width = this->canvas.width;
-	const int orig_height = this->canvas.height;
+	const int orig_width = this->canvas.get_width();
+	const int orig_height = this->canvas.get_height();
 
 	const double orig_factor = 1.0 * orig_width / orig_height;
 	const double target_factor = 1.0 * target_width / target_height;
@@ -2284,8 +2336,9 @@ bool Viewport::print_cb(QPrinter * printer)
 */
 void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 {
-	const int w = this->central->canvas.width;
-	const int h = this->central->canvas.height;
+	/* TODO: review, see if we should use get_width()/get_height() or get_bottommost_pixel()&co. */
+	const int w = this->central->canvas.get_width();
+	const int h = this->central->canvas.get_height();
 	const int x = pos.x;
 	const int y = h - pos.y - 1; /* Convert from "beginning in bottom-left corner" to "beginning in top-left corner" coordinate system. */
 
@@ -2534,9 +2587,6 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	this->width = new_width;
 	this->height = new_height;
 
-	this->width_2 = this->width / 2;
-	this->height_2 = this->height / 2;
-
 	if (this->pixmap) {
 		qDebug() << SG_PREFIX_I << this->debug << "Deleting old canvas pixmap";
 		/* Painter must be deleted before paint device, otherwise
@@ -2755,52 +2805,52 @@ ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWid
 
 int Viewport2D::central_get_width(void) const
 {
-	return this->central ? this->central->canvas.width : 0;
+	return this->central ? this->central->canvas.get_width() : 0;
 }
 
 int Viewport2D::central_get_height(void) const
 {
-	return this->central ? this->central->canvas.height : 0;
+	return this->central ? this->central->canvas.get_height() : 0;
 }
 
 int Viewport2D::left_get_width(void) const
 {
-	return this->left ? this->left->canvas.width : 0;
+	return this->left ? this->left->canvas.get_width() : 0;
 }
 
 int Viewport2D::left_get_height(void) const
 {
-	return this->left ? this->left->canvas.height : 0;
+	return this->left ? this->left->canvas.get_height() : 0;
 }
 
 int Viewport2D::right_get_width(void) const
 {
-	return this->right ? this->right->canvas.width : 0;
+	return this->right ? this->right->canvas.get_width() : 0;
 }
 
 int Viewport2D::right_get_height(void) const
 {
-	return this->right ? this->right->canvas.height : 0;
+	return this->right ? this->right->canvas.get_height() : 0;
 }
 
 int Viewport2D::top_get_width(void) const
 {
-	return this->top ? this->top->canvas.width : 0;
+	return this->top ? this->top->canvas.get_width() : 0;
 }
 
 int Viewport2D::top_get_height(void) const
 {
-	return this->top ? this->top->canvas.height : 0;
+	return this->top ? this->top->canvas.get_height() : 0;
 }
 
 int Viewport2D::bottom_get_width(void) const
 {
-	return this->bottom ? this->bottom->canvas.width : 0;
+	return this->bottom ? this->bottom->canvas.get_width() : 0;
 }
 
 int Viewport2D::bottom_get_height(void) const
 {
-	return this->bottom ? this->bottom->canvas.height : 0;
+	return this->bottom ? this->bottom->canvas.get_height() : 0;
 }
 
 
@@ -2808,8 +2858,11 @@ int Viewport2D::bottom_get_height(void) const
 
 sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 {
-	const int w = this->canvas.width;
-	const int h = this->canvas.height;
+	/* TODO: review this function and see if we need to use
+	   get_width()/get_height() or maybe
+	   get_bottommost_pixel()&co. */
+	const int w = this->canvas.get_width();
+	const int h = this->canvas.get_height();
 
 	const QPoint position = this->mapFromGlobal(QCursor::pos());
 
@@ -2863,7 +2916,7 @@ sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 
 double Viewport::get_canvas_height_m(void) const
 {
-	return this->canvas.height * this->viking_zoom_level.y;
+	return this->canvas.get_height() * this->viking_zoom_level.y;
 }
 
 
@@ -2871,5 +2924,51 @@ double Viewport::get_canvas_height_m(void) const
 
 double Viewport::get_canvas_width_m(void) const
 {
-	return this->viking_zoom_level.x * this->canvas.width;
+	return this->canvas.get_width() * this->viking_zoom_level.x;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const ViewportCanvas & canvas)
+{
+	debug << "Canvas:" << canvas.debug << "width=" << canvas.get_width() << "height=" << canvas.get_height();
+	return debug;
+}
+
+
+
+
+
+int ViewportCanvas::get_leftmost_pixel(void) const
+{
+	return 0;
+}
+int ViewportCanvas::get_rightmost_pixel(void) const
+{
+	return this->width - 1;
+}
+int ViewportCanvas::get_topmost_pixel(void) const
+{
+	return 0;
+}
+int ViewportCanvas::get_bottommost_pixel(void) const
+{
+	return this->height - 1;
+}
+int ViewportCanvas::get_vert_center_pixel(void) const
+{
+	return (this->height - 1) / 2;
+}
+int ViewportCanvas::get_horiz_center_pixel(void) const
+{
+	return (this->width - 1) / 2;
+}
+int ViewportCanvas::get_width(void) const
+{
+	return this->width;
+}
+int ViewportCanvas::get_height(void) const
+{
+	return this->height;
 }
