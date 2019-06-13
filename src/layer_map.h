@@ -146,7 +146,7 @@ namespace SlavGPS {
 
 		void start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode);
 		void download(Viewport * viewport, bool only_new);
-		void download_section(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level);
+		void download_section(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale);
 
 		void download_onscreen_maps(MapDownloadMode map_download_mode);
 
@@ -154,7 +154,7 @@ namespace SlavGPS {
 		   Otherwise redraw of viewport is not needed. */
 		bool is_tile_visible(const TileInfo & tile_info);
 
-		VikingZoomLevel calculate_viking_zoom_level(const Viewport * viewport);
+		VikingScale calculate_viking_scale(const Viewport * viewport);
 
 		static void set_autodownload_default(bool autodownload);
 		static void set_cache_default(MapCacheLayout layout);
@@ -186,7 +186,7 @@ namespace SlavGPS {
 		bool adl_only_missing = false;
 
 		Coord * last_center = NULL;
-		VikingZoomLevel last_map_zoom;
+		VikingScale last_map_scale;
 
 		/* TODO_LATER: Should this be 0 or -1? */
 		int dl_tool_x = -1;
@@ -205,8 +205,8 @@ namespace SlavGPS {
 #endif
 
 	private:
-		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode);
-		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode);
+		int how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
+		void download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode);
 
 		TileGeometry find_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string, int scale_factor);
 		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
@@ -263,7 +263,7 @@ namespace SlavGPS {
 	public:
 		DownloadMethodsAndZoomsDialog() {};
 		DownloadMethodsAndZoomsDialog(const QString & title,
-					      const std::vector<VikingZoomLevel> & viking_zoom_levels,
+					      const std::vector<VikingScale> & viking_scales,
 					      const std::vector<MapDownloadMode> & download_modes,
 					      QWidget * parent = NULL);
 

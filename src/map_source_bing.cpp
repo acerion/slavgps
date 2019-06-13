@@ -192,11 +192,11 @@ const QString MapSourceBing::get_server_path(const TileInfo & src) const
 
 
 
-void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingZoomLevel & viking_zoom_level)
+void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingScale & viking_scale)
 {
-	qDebug() << SG_PREFIX_D << "Looking for" << bbox << "at zoom" << viking_zoom_level.get_x();
+	qDebug() << SG_PREFIX_D << "Looking for" << bbox << "at scale" << viking_scale.get_x();
 
-	const TileScale tile_scale = viking_zoom_level.to_tile_scale();
+	const TileScale tile_scale = viking_scale.to_tile_scale();
 
 	/* Load imagery providers. */
 	if (0 == this->providers.size() && "<no-set>" != this->bing_api_key) { /* TODO_2_LATER: also check this->bing_api_key.isEmpty()? */

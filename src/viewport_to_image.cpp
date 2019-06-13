@@ -96,8 +96,8 @@ void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 void ViewportSaveDialog::calculate_total_area_cb(void)
 {
 	QString label_text;
-	double w = this->width_spin->value() * this->viewport->get_viking_zoom_level().get_x();
-	double h = this->height_spin->value() * this->viewport->get_viking_zoom_level().get_x(); /* TODO_2_LATER: change to get_y(). */
+	double w = this->width_spin->value() * this->viewport->get_viking_scale().get_x();
+	double h = this->height_spin->value() * this->viewport->get_viking_scale().get_x(); /* TODO_2_LATER: change to get_y(). */
 	if (this->tiles_width_spin) { /* save many images; find TOTAL area covered */
 		w *= this->tiles_width_spin->value();
 		h *= this->tiles_height_spin->value();
@@ -130,7 +130,7 @@ ViewportSaveDialog::ViewportSaveDialog(QString const & title, Viewport * new_vie
 	this->viewport = new_viewport;
 
 	this->original_width = this->viewport->get_width();
-	this->original_viking_zoom_level = this->viewport->get_viking_zoom_level();
+	this->original_viking_scale = this->viewport->get_viking_scale();
 
 	this->proportion = 1.0 * this->viewport->get_width() / this->viewport->get_height();
 }
@@ -254,15 +254,15 @@ void ViewportSaveDialog::build_ui(ViewportToImage::SaveMode save_mode, ViewportT
 
 
 
-void ViewportSaveDialog::get_scaled_parameters(int & width, int & height, VikingZoomLevel & viking_zoom_level) const
+void ViewportSaveDialog::get_scaled_parameters(int & width, int & height, VikingScale & viking_scale) const
 {
 	width = this->width_spin->value();
 	height = this->height_spin->value();
 
 	const double scale = 1.0 * width / this->original_width;
-	viking_zoom_level = this->original_viking_zoom_level * scale;
+	viking_scale = this->original_viking_scale * scale;
 
-	qDebug() << SG_PREFIX_I << "Returning width" << width << "height" << height << "viking zoom level" << viking_zoom_level << "scale" << scale;
+	qDebug() << SG_PREFIX_I << "Returning width" << width << "height" << height << "viking scale" << viking_scale << "scale" << scale;
 	return;
 }
 
@@ -322,8 +322,8 @@ ViewportToImage::ViewportToImage(Viewport * new_viewport, ViewportToImage::SaveM
 	this->viewport = new_viewport;
 	this->save_mode = new_save_mode;
 	this->window = new_window;
-	this->original_viking_zoom_level = this->viewport->get_viking_zoom_level();
-	this->scaled_viking_zoom_level = this->viewport->get_viking_zoom_level(); /* This value will be re-calculated by function called in ::run_dialog((), */
+	this->original_viking_scale = this->viewport->get_viking_scale();
+	this->scaled_viking_scale = this->viewport->get_viking_scale(); /* This value will be re-calculated by function called in ::run_dialog((), */
 
 	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, &this->scaled_width)) {
 		this->scaled_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
@@ -360,7 +360,7 @@ bool ViewportToImage::run_dialog(const QString & title)
 		return false;
 	}
 
-	dialog.get_scaled_parameters(this->scaled_width, this->scaled_height, this->scaled_viking_zoom_level);
+	dialog.get_scaled_parameters(this->scaled_width, this->scaled_height, this->scaled_viking_scale);
 	this->file_format = dialog.get_image_format();
 
 	if (this->save_mode == ViewportToImage::SaveMode::Directory) {
@@ -395,9 +395,9 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 {
 	this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Generating image file..."));
 
-	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->scaled_width << this->scaled_height << this->scaled_viking_zoom_level;
+	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->scaled_width << this->scaled_height << this->scaled_viking_scale;
 #if 0
-	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_zoom_level);
+	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_scale);
 #else
 	Viewport * scaled_viewport = new Viewport(this->window);
 
@@ -406,7 +406,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	scaled_viewport->set_drawmode(this->viewport->get_drawmode());
 	scaled_viewport->set_coord_mode(this->viewport->get_coord_mode());
 	scaled_viewport->set_center_from_coord(this->viewport->center, false);
-	scaled_viewport->set_viking_zoom_level(this->scaled_viking_zoom_level);
+	scaled_viewport->set_viking_scale(this->scaled_viking_scale);
 
 	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled Viewport");
 
@@ -500,10 +500,10 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 		}
 	}
 
-	const VikingZoomLevel orig_viking_zoom_level = this->viewport->get_viking_zoom_level();
+	const VikingScale orig_viking_scale = this->viewport->get_viking_scale();
 	const UTM utm_orig = this->viewport->get_center()->utm;
 
-	this->viewport->set_viking_zoom_level(this->scaled_viking_zoom_level);
+	this->viewport->set_viking_scale(this->scaled_viking_scale);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
 	this->viewport->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
@@ -513,7 +513,7 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 	const char * extension = this->file_format == ViewportToImage::FileFormat::PNG ? "png" : "jpg";
 
 	/* TODO_2_LATER: support non-identical x/y zoom values. */
-	const double xmpp = this->scaled_viking_zoom_level.get_x();
+	const double xmpp = this->scaled_viking_scale.get_x();
 
 	for (int y = 1; y <= this->n_tiles_y; y++) {
 		for (int x = 1; x <= this->n_tiles_x; x++) {
@@ -553,7 +553,7 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 
 	this->viewport->set_center_from_utm(utm_orig, false);
 
-	this->viewport->set_viking_zoom_level(orig_viking_zoom_level);
+	this->viewport->set_viking_scale(orig_viking_scale);
 
 	this->viewport->reconfigure_drawing_area();
 	this->window->draw_tree_items();

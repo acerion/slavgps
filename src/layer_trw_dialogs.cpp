@@ -169,7 +169,7 @@ bool SlavGPS::a_dialog_time_threshold(const QString & title, const QString & lab
 
 
 
-MapAndZoomDialog::MapAndZoomDialog(const QString & title, const QStringList & map_labels, const std::vector<VikingZoomLevel> & viking_zoom_levels, QWidget * parent) : BasicDialog(parent)
+MapAndZoomDialog::MapAndZoomDialog(const QString & title, const QStringList & map_labels, const std::vector<VikingScale> & viking_scales, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(title);
 
@@ -185,8 +185,8 @@ MapAndZoomDialog::MapAndZoomDialog(const QString & title, const QStringList & ma
 
 	QLabel * zoom_label = new QLabel(tr("Zoom level:"));
 	this->zoom_combo = new QComboBox();
-	for (unsigned int i = 0; i < viking_zoom_levels.size(); i++) {
-		this->zoom_combo->addItem(viking_zoom_levels[i].to_string());
+	for (unsigned int i = 0; i < viking_scales.size(); i++) {
+		this->zoom_combo->addItem(viking_scales[i].to_string());
 	}
 
 

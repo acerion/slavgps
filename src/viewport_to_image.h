@@ -65,8 +65,8 @@ namespace SlavGPS {
 		int n_tiles_x = 0;
 		int n_tiles_y = 0;
 
-		VikingZoomLevel original_viking_zoom_level;  /* Viking zoom level of original viewport. */
-		VikingZoomLevel scaled_viking_zoom_level;    /* Viking zoom level of scaled viewport. */
+		VikingScale original_viking_scale;  /* Viking scale of original viewport. */
+		VikingScale scaled_viking_scale;    /* Viking scale of scaled viewport. */
 	};
 
 
@@ -79,7 +79,7 @@ namespace SlavGPS {
 		~ViewportSaveDialog();
 
 		void build_ui(ViewportToImage::SaveMode save_mode, ViewportToImage::FileFormat file_format);
-		void get_scaled_parameters(int & width, int & height, VikingZoomLevel & zoom_level) const;
+		void get_scaled_parameters(int & width, int & height, VikingScale & scale) const;
 		ViewportToImage::FileFormat get_image_format(void) const;
 
 		int get_n_tiles_x(void) const;
@@ -110,7 +110,7 @@ namespace SlavGPS {
 		/* Width of original viewport. */
 		int original_width = 0;
 
-		VikingZoomLevel original_viking_zoom_level;  /* Viking zoom level of original viewport. */
+		VikingScale original_viking_scale;  /* Viking scale of original viewport. */
 
 		/* Only used for ViewportToImage::SaveMode::Directory. */
 		QSpinBox * tiles_width_spin = NULL;

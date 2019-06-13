@@ -997,7 +997,7 @@ void LayerMapnik::add_menu_items(QMenu & menu)
 void LayerMapnik::rerender_tile_cb(void)
 {
 	TileInfo tile_info;
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_zoom_level, tile_info)) {
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_scale, tile_info)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert clicked coordinate to tile info";
 		return;
 	}
@@ -1012,7 +1012,7 @@ void LayerMapnik::tile_info_cb(void)
 {
 	TileInfo tile_info;
 	/* Requested position to map coord. */
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_zoom_level, tile_info)) {
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(this->clicked_lat_lon, this->clicked_viking_scale, tile_info)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert clicked coordinate to tile info";
 		return;
 	}
@@ -1071,7 +1071,7 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 		const Coord coord = tool->viewport->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
 		this->clicked_lat_lon = coord.get_latlon();
 
-		this->clicked_viking_zoom_level = tool->viewport->get_viking_zoom_level();
+		this->clicked_viking_scale = tool->viewport->get_viking_scale();
 
 		if (!this->right_click_menu) {
 			QAction * action = NULL;
@@ -1179,14 +1179,14 @@ sg_ret LayerMapnik::get_tiles_range(const Viewport * viewport, TilesRange & rang
 	const LatLon lat_lon_ul = coord_ul.get_latlon();
 	const LatLon lat_lon_br = coord_br.get_latlon();
 
-	const VikingZoomLevel viking_zoom_level = viewport->get_viking_zoom_level();
+	const VikingScale viking_scale = viewport->get_viking_scale();
 
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(lat_lon_ul, viking_zoom_level, tile_info_ul)) {
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(lat_lon_ul, viking_scale, tile_info_ul)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert ul";
 		return sg_ret::err;
 	}
 	TileInfo tile_info_br;
-	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(lat_lon_br, viking_zoom_level, tile_info_br)) {
+	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(lat_lon_br, viking_scale, tile_info_br)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert br";
 		return sg_ret::err;
 	}

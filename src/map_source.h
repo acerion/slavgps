@@ -55,7 +55,7 @@ namespace SlavGPS {
 	enum class MapCacheLayout;
 	enum class ViewportDrawMode;
 	class Viewport;
-	class VikingZoomLevel;
+	class VikingScale;
 	class PixmapScale;
 	class TileInfo;
 
@@ -150,7 +150,7 @@ namespace SlavGPS {
 
 		virtual MapSource & operator=(const MapSource & other);
 
-		virtual void add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingZoomLevel & viking_zoom_level);
+		virtual void add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingScale & viking_scale);
 		QString get_license(void) const;
 		QString get_license_url(void) const;
 		const ViewportLogo & get_logo(void) const;
@@ -182,7 +182,7 @@ namespace SlavGPS {
 
 		QString get_file_extension(void) const;
 
-		virtual bool coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const;
+		virtual bool coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest) const;
 		virtual sg_ret tile_info_to_center_coord(const TileInfo & src, Coord & coord) const;
 
 		virtual DownloadStatus download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle) const;

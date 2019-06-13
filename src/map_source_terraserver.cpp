@@ -88,18 +88,18 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest) const
 {
 	if (src_coord.mode != CoordMode::UTM) {
 		return false;
 	}
 
-	if (!viking_zoom_level.x_y_is_equal()) {
+	if (!viking_scale.x_y_is_equal()) {
 		return false;
 	}
 
-	const double xmpp = viking_zoom_level.get_x();
-	const double ympp = viking_zoom_level.get_y();
+	const double xmpp = viking_scale.get_x();
+	const double ympp = viking_scale.get_y();
 
 	dest.scale.set_scale_value(mpp_to_scale(xmpp, this->map_type_id));
 	if (0 == dest.scale.get_scale_value()) {

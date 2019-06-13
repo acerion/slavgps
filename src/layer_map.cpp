@@ -902,7 +902,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 
 	/* Don't attempt to download unsupported zoom levels. */
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	const TileZoomLevel tile_zoom_level = viewport->get_viking_zoom_level().to_tile_zoom_level();
+	const TileZoomLevel tile_zoom_level = viewport->get_viking_scale().to_tile_zoom_level();
 	if (!map_source->is_supported_tile_zoom_level(tile_zoom_level)) {
 		return false;
 	}
@@ -911,19 +911,19 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 		Coord * new_center = new Coord();
 		*new_center = center;
 		this->last_center = new_center;
-		this->last_map_zoom = viewport->get_viking_zoom_level();
+		this->last_map_scale = viewport->get_viking_scale();
 		return true;
 	}
 
 
 	if ((*this->last_center == center) /* TODO_MAYBE: perhaps Coord::distance()? */
-	    && this->last_map_zoom == viewport->get_viking_zoom_level()) {
+	    && this->last_map_scale == viewport->get_viking_scale()) {
 
 		return false;
 	}
 
 	*this->last_center = center;
-	this->last_map_zoom = viewport->get_viking_zoom_level();
+	this->last_map_scale = viewport->get_viking_scale();
 	return true;
 }
 
@@ -1021,8 +1021,8 @@ TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
 
 void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
 {
-	double xzoom = viewport->get_viking_zoom_level().get_x();
-	double yzoom = viewport->get_viking_zoom_level().get_y();
+	double xzoom = viewport->get_viking_scale().get_x();
+	double yzoom = viewport->get_viking_scale().get_y();
 
 	PixmapScale pixmap_scale(1.0, 1.0);
 
@@ -1054,9 +1054,9 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	TileInfo tile_ul;
 	TileInfo tile_br;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	const VikingZoomLevel viking_zoom_level(xzoom, yzoom);
-	if (!map_source->coord_to_tile_info(coord_ul, viking_zoom_level, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_zoom_level, tile_br)) {
+	const VikingScale viking_scale(xzoom, yzoom);
+	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
 		return;
 	}
@@ -1246,7 +1246,7 @@ void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 	/* Copyright. */
 	const LatLonBBox bbox = viewport->get_bbox();
-	map_source->add_copyright(viewport, bbox, viewport->get_viking_zoom_level());
+	map_source->add_copyright(viewport, bbox, viewport->get_viking_scale());
 
 	viewport->add_logo(map_source->get_logo());
 
@@ -1293,9 +1293,9 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	const VikingZoomLevel viking_zoom_level = this->calculate_viking_zoom_level(viewport);
-	if (!map_source->coord_to_tile_info(coord_ul, viking_zoom_level, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_zoom_level, tile_br)) {
+	const VikingScale viking_scale = this->calculate_viking_scale(viewport);
+	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
 		qDebug() << SG_PREFIX_E << "Conversion coord to tile failed";
 		return;
@@ -1321,7 +1321,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 
 
 
-void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode)
+void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode)
 {
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
@@ -1330,7 +1330,7 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 		return;
 	}
 
-	if (!viking_zoom_level.x_y_is_equal()) {
+	if (!viking_scale.x_y_is_equal()) {
 		qDebug() << SG_PREFIX_E << "Unequal zoom levels";
 		return;
 	}
@@ -1338,8 +1338,8 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
 	TileInfo tile_ul;
 	TileInfo tile_br;
 
-	if (!map_source->coord_to_tile_info(coord_ul, viking_zoom_level, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_zoom_level, tile_br)) {
+	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile_info() failed";
 		return;
 	}
@@ -1365,9 +1365,9 @@ void LayerMap::download_section_sub(const Coord & coord_ul, const Coord & coord_
  *
  * Download a specified map area at a certain zoom level
  */
-void LayerMap::download_section(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level)
+void LayerMap::download_section(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale)
 {
-	this->download_section_sub(coord_ul, coord_br, viking_zoom_level, MapDownloadMode::MissingOnly);
+	this->download_section_sub(coord_ul, coord_br, viking_scale, MapDownloadMode::MissingOnly);
 }
 
 
@@ -1404,9 +1404,9 @@ void LayerMap::tile_info_cb(void)
 {
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-        const VikingZoomLevel viking_zoom_level = this->calculate_viking_zoom_level(this->redownload_viewport);
+        const VikingScale viking_scale = this->calculate_viking_scale(this->redownload_viewport);
 	TileInfo tile_info;
-	if (!map_source->coord_to_tile_info(this->redownload_ul, viking_zoom_level, tile_info)) {
+	if (!map_source->coord_to_tile_info(this->redownload_ul, viking_scale, tile_info)) {
 		return;
 	}
 
@@ -1532,10 +1532,10 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QM
 	LayerMap * layer = (LayerMap *) _layer;
 
 	const MapSource * map_source = map_source_interfaces[layer->map_type_id];
-	const VikingZoomLevel viking_zoom_level = layer->calculate_viking_zoom_level(this->viewport);
+	const VikingScale viking_scale = layer->calculate_viking_scale(this->viewport);
 	if (map_source->get_drawmode() == this->viewport->get_drawmode()
 	    && map_source->coord_to_tile_info(this->viewport->get_center2(),
-					      viking_zoom_level,
+					      viking_scale,
 					      tmp)) {
 
 		layer->dl_tool_x = event->x();
@@ -1560,13 +1560,13 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	const ViewportDrawMode map_draw_mode = map_source->get_drawmode();
 	const ViewportDrawMode vp_draw_mode = viewport->get_drawmode();
 
-	const VikingZoomLevel viking_zoom_level = this->calculate_viking_zoom_level(viewport);
+	const VikingScale viking_scale = this->calculate_viking_scale(viewport);
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
 	if (map_draw_mode == vp_draw_mode
-	    && map_source->coord_to_tile_info(coord_ul, viking_zoom_level, tile_ul)
-	    && map_source->coord_to_tile_info(coord_br, viking_zoom_level, tile_br)) {
+	    && map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    && map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
 		this->start_download_thread(viewport, coord_ul, coord_br, map_download_mode);
 
@@ -1623,7 +1623,7 @@ void LayerMap::about_cb(void)
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
  */
-int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingZoomLevel & viking_zoom_level, MapDownloadMode map_download_mode)
+int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale, MapDownloadMode map_download_mode)
 {
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
@@ -1631,15 +1631,15 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, cons
 		return 0;
 	}
 
-	if (!viking_zoom_level.x_y_is_equal()) {
+	if (!viking_scale.x_y_is_equal()) {
 		qDebug() << SG_PREFIX_E << "Unequal zoom levels";
 		return 0;
 	}
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	if (!map_source->coord_to_tile_info(coord_ul, viking_zoom_level, tile_ul)
-	    || !map_source->coord_to_tile_info(coord_br, viking_zoom_level, tile_br)) {
+	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
+	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 		qDebug() << SG_PREFIX_W << "coord_to_tile_info() failed";
 		return 0;
 	}
@@ -1662,7 +1662,7 @@ int LayerMap::how_many_maps(const Coord & coord_ul, const Coord & coord_br, cons
 
 
 DownloadMethodsAndZoomsDialog::DownloadMethodsAndZoomsDialog(const QString & title,
-							     const std::vector<VikingZoomLevel> & viking_zoom_levels,
+							     const std::vector<VikingScale> & viking_scales,
 							     const std::vector<MapDownloadMode> & download_modes,
 							     QWidget * parent) : BasicDialog(parent)
 {
@@ -1674,8 +1674,8 @@ DownloadMethodsAndZoomsDialog::DownloadMethodsAndZoomsDialog(const QString & tit
 
 	this->grid->addWidget(new QLabel(QObject::tr("Zoom Start:")), row, 0);
 	this->smaller_zoom_combo = new QComboBox();
-	for (unsigned int i = 0; i < viking_zoom_levels.size(); i++) {
-		this->smaller_zoom_combo->addItem(viking_zoom_levels.at(i).to_string(), i);
+	for (unsigned int i = 0; i < viking_scales.size(); i++) {
+		this->smaller_zoom_combo->addItem(viking_scales.at(i).to_string(), i);
 	}
 	this->grid->addWidget(this->smaller_zoom_combo, row, 1);
 	row++;
@@ -1683,8 +1683,8 @@ DownloadMethodsAndZoomsDialog::DownloadMethodsAndZoomsDialog(const QString & tit
 
 	this->grid->addWidget(new QLabel(QObject::tr("Zoom End:")), row, 0);
 	this->larger_zoom_combo = new QComboBox();
-	for (unsigned int i = 0; i < viking_zoom_levels.size(); i++) {
-		this->larger_zoom_combo->addItem(viking_zoom_levels.at(i).to_string(), i);
+	for (unsigned int i = 0; i < viking_scales.size(); i++) {
+		this->larger_zoom_combo->addItem(viking_scales.at(i).to_string(), i);
 	}
 	this->grid->addWidget(this->larger_zoom_combo, row, 1);
 	row++;
@@ -1753,18 +1753,18 @@ void LayerMap::download_all_cb(void)
 	   Still can give massive numbers to download.
 	   A screen size of 1600x1200 gives around 300,000 tiles between 1..128 when none exist before!! */
 
-	const std::vector<VikingZoomLevel> viking_zooms = {
-		VikingZoomLevel(1),
-		VikingZoomLevel(2),
-		VikingZoomLevel(4),
-		VikingZoomLevel(8),
-		VikingZoomLevel(16),
-		VikingZoomLevel(32),
-		VikingZoomLevel(64),
-		VikingZoomLevel(128),
-		VikingZoomLevel(256),
-		VikingZoomLevel(512),
-		VikingZoomLevel(1024) };
+	const std::vector<VikingScale> viking_scales = {
+		VikingScale(1),
+		VikingScale(2),
+		VikingScale(4),
+		VikingScale(8),
+		VikingScale(16),
+		VikingScale(32),
+		VikingScale(64),
+		VikingScale(128),
+		VikingScale(256),
+		VikingScale(512),
+		VikingScale(1024) };
 
 	/* Redownload method - needs to align with REDOWNLOAD* macro values. */
 	const std::vector<MapDownloadMode> download_modes = {
@@ -1777,19 +1777,19 @@ void LayerMap::download_all_cb(void)
 	const int download_mode_idx = 0; /* MapDownloadMode::MissingOnly */
 
 
-	const VikingZoomLevel current_viking_zoom = viewport->get_viking_zoom_level().get_x();
+	const VikingScale current_viking_scale = viewport->get_viking_scale().get_x();
 	int larger_zoom_idx = 0;
 	int smaller_zoom_idx = 0;
-	if (0 != VikingZoomLevel::get_closest_index(larger_zoom_idx, viking_zooms, current_viking_zoom)) {
-		qDebug() << SG_PREFIX_W << "Failed to get the closest viking zoom level";
-		larger_zoom_idx = viking_zooms.size() - 1;
+	if (0 != VikingScale::get_closest_index(larger_zoom_idx, viking_scales, current_viking_scale)) {
+		qDebug() << SG_PREFIX_W << "Failed to get the closest viking scale";
+		larger_zoom_idx = viking_scales.size() - 1;
 	}
 	/* Default to only 2 zoom levels below the current one. */
 	smaller_zoom_idx = (larger_zoom_idx >= 2) ? larger_zoom_idx - 2 : larger_zoom_idx;
 
 
 	const QString title = QObject::tr("%1: Download for Zoom Levels").arg(this->get_map_label());
-	DownloadMethodsAndZoomsDialog dialog(title, viking_zooms, download_modes, this->get_window());
+	DownloadMethodsAndZoomsDialog dialog(title, viking_scales, download_modes, this->get_window());
 	dialog.preselect(smaller_zoom_idx, larger_zoom_idx, download_mode_idx);
 
 
@@ -1815,7 +1815,7 @@ void LayerMap::download_all_cb(void)
 	   With MapDownloadMode::MisingOnly this only missing ones - however still has a server lookup per tile. */
 	int map_count = 0;
 	for (int zz = selected_larger_zoom_idx; zz >= selected_smaller_zoom_idx; zz--) {
-		map_count = map_count + this->how_many_maps(coord_ul, coord_br, viking_zooms[zz], selected_download_mode);
+		map_count = map_count + this->how_many_maps(coord_ul, coord_br, viking_scales[zz], selected_download_mode);
 	}
 
 	qDebug() << SG_PREFIX_D << "Download request map count" << map_count << "for method" << to_string(selected_download_mode);
@@ -1837,7 +1837,7 @@ void LayerMap::download_all_cb(void)
 
 	/* Get Maps - call for each zoom level (in reverse). */
 	for (int zz = selected_larger_zoom_idx; zz >= selected_smaller_zoom_idx; zz--) {
-		this->download_section_sub(coord_ul, coord_br, viking_zooms[zz], selected_download_mode);
+		this->download_section_sub(coord_ul, coord_br, viking_scales[zz], selected_download_mode);
 	}
 }
 
@@ -1981,12 +1981,12 @@ bool LayerMap::is_tile_visible(const TileInfo & tile_info)
 
 
 
-VikingZoomLevel LayerMap::calculate_viking_zoom_level(const Viewport * viewport)
+VikingScale LayerMap::calculate_viking_scale(const Viewport * viewport)
 {
-	const double xzoom = this->xmapzoom ? this->xmapzoom : viewport->get_viking_zoom_level().get_x();
-	const double yzoom = this->ymapzoom ? this->ymapzoom : viewport->get_viking_zoom_level().get_y();
+	const double xmpp = this->xmapzoom ? this->xmapzoom : viewport->get_viking_scale().get_x();
+	const double ympp = this->ymapzoom ? this->ymapzoom : viewport->get_viking_scale().get_y();
 
-	VikingZoomLevel result(xzoom, yzoom);
+	VikingScale result(xmpp, ympp);
 
 	return result;
 }

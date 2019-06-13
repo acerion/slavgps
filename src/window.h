@@ -68,7 +68,7 @@ namespace SlavGPS {
 
 
 	enum class SGFileType;
-	class VikingZoomLevel;
+	class VikingScale;
 	class Layer;
 	class LayerTRW;
 	class Toolbox;

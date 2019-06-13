@@ -49,7 +49,7 @@ namespace SlavGPS {
 
 	class MapUtils {
 	public:
-		static sg_ret lat_lon_to_iTMS(const LatLon & lat_lon, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
+		static sg_ret lat_lon_to_iTMS(const LatLon & lat_lon, const VikingScale & viking_scale, TileInfo & dest);
 		static LatLon iTMS_to_center_lat_lon(const TileInfo & src);
 		static LatLon iTMS_to_lat_lon(const TileInfo & src);
 	};

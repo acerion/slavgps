@@ -70,7 +70,7 @@ namespace SlavGPS {
 		void set_scale_valid(bool new_value);
 		bool get_scale_valid(void) const;
 
-		bool from_viking_zoom_level = false;
+		bool from_viking_scale = false;
 
 	private:
 		int value = 0;

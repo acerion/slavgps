@@ -153,7 +153,7 @@ enum WindowPan {
 
 
 
-static QMenu * create_zoom_submenu(const VikingZoomLevel & viking_zoom_level, QString const & label, QMenu * parent);
+static QMenu * create_zoom_submenu(const VikingScale & viking_scale, QString const & label, QMenu * parent);
 
 
 
@@ -825,7 +825,7 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_to);
 
 
-		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->central->get_viking_zoom_level(), tr("&Zoom"), this->menu_view);
+		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->central->get_viking_scale(), tr("&Zoom"), this->menu_view);
 		this->menu_view->addMenu(zoom_submenu);
 		connect(zoom_submenu, SIGNAL(triggered (QAction *)), this, SLOT (zoom_level_selected_cb(QAction *)));
 
@@ -948,10 +948,10 @@ void Window::draw_sync()
 
 void Window::update_status_bar_on_redraw(void)
 {
-	const QString zoom_level = this->viewport->central->get_viking_zoom_level().pretty_print(this->viewport->central->get_coord_mode());
+	const QString scale = this->viewport->central->get_viking_scale().pretty_print(this->viewport->central->get_coord_mode());
 
-	qDebug() << SG_PREFIX_I << "Zoom level is" << zoom_level;
-	this->status_bar->set_message(StatusBarField::Zoom, zoom_level);
+	qDebug() << SG_PREFIX_I << "Viking scale is" << scale;
+	this->status_bar->set_message(StatusBarField::Zoom, scale);
 	this->display_tool_name();
 }
 
@@ -1802,10 +1802,10 @@ void Window::zoom_cb(void)
 
 void Window::zoom_to_cb(void)
 {
-	VikingZoomLevel viking_zoom_level = this->viewport->central->get_viking_zoom_level();
+	VikingScale viking_scale = this->viewport->central->get_viking_scale();
 
-	if (ViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_zoom_level, this)) {
-		this->viewport->central->set_viking_zoom_level(viking_zoom_level);
+	if (ViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_scale, this)) {
+		this->viewport->central->set_viking_scale(viking_scale);
 		this->emit_center_or_zoom_changed("zoom to...");
 	}
 }
@@ -2326,7 +2326,7 @@ void LocatorJob::run(void)
 			zoom = 2048.0;
 		}
 
-		this->window->viewport->central->set_viking_zoom_level(zoom);
+		this->window->viewport->central->set_viking_scale(zoom);
 		this->window->viewport->central->set_center_from_lat_lon(lat_lon, false);
 
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location found: %1").arg(name));
@@ -2663,12 +2663,12 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	int level = qa->data().toInt();
 	qDebug() << SG_PREFIX_SLOT << "'Zoom Changed' callback" << qa->text() << level;
 
-	double zoom_request = pow(2, level - 5);
+	double requested_scale = pow(2, level - 5); /* TODO: encapsulate? */
 
 	/* But has it really changed? */
-	double current_zoom = this->viewport->central->get_viking_zoom_level().get_x();
-	if (current_zoom != 0.0 && zoom_request != current_zoom) {
-		this->viewport->central->set_viking_zoom_level(zoom_request);
+	const double current_scale = this->viewport->central->get_viking_scale().get_x();
+	if (current_scale != 0.0 && requested_scale != current_scale) {
+		this->viewport->central->set_viking_scale(requested_scale);
 
 		/* Ask to draw updated viewport. */
 		this->emit_center_or_zoom_changed("zoom level selected");
@@ -2724,9 +2724,9 @@ bool create_zoom_actions(void)
 
 
 /**
- * @viking_zoom_level: The initial zoom level.
+ * @viking_scale: The initial scale level.
  */
-static QMenu * create_zoom_submenu(const VikingZoomLevel & viking_zoom_level, QString const & label, QMenu * parent)
+static QMenu * create_zoom_submenu(const VikingScale & viking_scale, QString const & label, QMenu * parent)
 {
 	QMenu * menu = NULL;
 	if (parent) {
@@ -2745,7 +2745,7 @@ static QMenu * create_zoom_submenu(const VikingZoomLevel & viking_zoom_level, QS
 
 
 
-	int active = 5 + round(log(viking_zoom_level.get_x()) / log(2));
+	int active = 5 + round(log(viking_scale.get_x()) / log(2)); /* TODO: encapsulate. Inverse expression "pow(2, level - 5)" has shown up elsewhere. */
 	/* Ensure value derived from mpp is in bounds of the menu. */
 	if (active >= (int) zoom_actions.size()) {
 		active = zoom_actions.size() - 1;

@@ -56,24 +56,24 @@ using namespace SlavGPS;
 
 /**
  * @src:   Original #Coord in #CoordMode::LatLon format
- * @xzoom: Viking zoom level in x direction
- * @yzoom: Viking zoom level in y direction (actually needs to be same as xzoom)
+ * @xzoom: Viking scale in x direction
+ * @yzoom: Viking scale in y direction (actually needs to be same as xzoom)
  * @dest:  The resulting Inverse TMS coordinates in #TileInfo
  *
  * Convert a #Coord in CoordMode::LatLon format into Inverse TMS coordinates.
  *
  * Returns: whether the conversion was performed
  */
-sg_ret MapUtils::lat_lon_to_iTMS(const LatLon & lat_lon, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
+sg_ret MapUtils::lat_lon_to_iTMS(const LatLon & lat_lon, const VikingScale & viking_scale, TileInfo & dest)
 {
-	if (!viking_zoom_level.x_y_is_equal()) {
+	if (!viking_scale.x_y_is_equal()) {
 		return sg_ret::err;
 	}
 
 	/* Convenience variable. */
-	const double xzoom = viking_zoom_level.get_x();
+	const double xzoom = viking_scale.get_x();
 
-	dest.scale = viking_zoom_level.to_tile_scale();
+	dest.scale = viking_scale.to_tile_scale();
 	if (!dest.scale.is_valid()) {
 		return sg_ret::err;
 	}

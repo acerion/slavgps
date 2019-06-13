@@ -131,8 +131,8 @@ namespace SlavGPS {
 
 		/* Coordinates of mouse right-click-and-release. */
 		LatLon clicked_lat_lon;
-		/* Zoom level at the moment of right-click-and-release. */
-		VikingZoomLevel clicked_viking_zoom_level;
+		/* Scale at the moment of right-click-and-release. */
+		VikingScale clicked_viking_scale;
 
 		int alpha = 0;
 

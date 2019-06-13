@@ -179,9 +179,9 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 		}
 	}
 
-	this->viking_zoom_level.set(zoom_x, zoom_y);
-	this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
-	this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
+	this->viking_scale.set(zoom_x, zoom_y);
+	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
+	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 
 
@@ -240,8 +240,8 @@ Viewport::~Viewport()
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon);
 
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->viking_zoom_level.x);
-		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->viking_zoom_level.y);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->viking_scale.x);
+		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->viking_scale.y);
 	}
 
 	delete this->centers;
@@ -481,19 +481,19 @@ void Viewport::pan_sync(int x_off, int y_off)
 
 
 
-sg_ret Viewport::set_viking_zoom_level(double new_value)
+sg_ret Viewport::set_viking_scale(double new_value)
 {
-	if (!VikingZoomLevel::value_is_valid(new_value)) {
+	if (!VikingScale::value_is_valid(new_value)) {
 		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
 		return sg_ret::err;
 	}
 
-	if (sg_ret::ok != this->viking_zoom_level.set(new_value, new_value)) {
+	if (sg_ret::ok != this->viking_scale.set(new_value, new_value)) {
 		return sg_ret::err;
 	}
 
-	this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
-	this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
+	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
+	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 	if (this->drawmode == ViewportDrawMode::UTM) {
 		this->utm_zone_check();
@@ -507,9 +507,9 @@ sg_ret Viewport::set_viking_zoom_level(double new_value)
 
 void Viewport::zoom_in(void)
 {
-	if (this->viking_zoom_level.zoom_in(2)) {
-		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
-		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
+	if (this->viking_scale.zoom_in(2)) {
+		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
+		this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 		this->utm_zone_check();
 	}
@@ -520,9 +520,9 @@ void Viewport::zoom_in(void)
 
 void Viewport::zoom_out(void)
 {
-	if (this->viking_zoom_level.zoom_out(2)) {
-		this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
-		this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
+	if (this->viking_scale.zoom_out(2)) {
+		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
+		this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 		this->utm_zone_check();
 	}
@@ -531,32 +531,32 @@ void Viewport::zoom_out(void)
 
 
 
-const VikingZoomLevel & Viewport::get_viking_zoom_level(void) const
+const VikingScale & Viewport::get_viking_scale(void) const
 {
-	return this->viking_zoom_level;
+	return this->viking_scale;
 }
 
 
 
 
-sg_ret Viewport::set_viking_zoom_level(const VikingZoomLevel & new_value)
+sg_ret Viewport::set_viking_scale(const VikingScale & new_value)
 {
-	this->viking_zoom_level = new_value;
+	this->viking_scale = new_value;
 	return sg_ret::ok;
 }
 
 
 
 
-sg_ret Viewport::set_viking_zoom_level_x(double new_value)
+sg_ret Viewport::set_viking_scale_x(double new_value)
 {
-	if (!VikingZoomLevel::value_is_valid(new_value)) {
+	if (!VikingScale::value_is_valid(new_value)) {
 		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
 		return sg_ret::err;
 	}
 
-	this->viking_zoom_level.x = new_value;
-	this->xmfactor = MERCATOR_FACTOR(this->viking_zoom_level.x);
+	this->viking_scale.x = new_value;
+	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
 	if (this->drawmode == ViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
@@ -567,15 +567,15 @@ sg_ret Viewport::set_viking_zoom_level_x(double new_value)
 
 
 
-sg_ret Viewport::set_viking_zoom_level_y(double new_value)
+sg_ret Viewport::set_viking_scale_y(double new_value)
 {
-	if (!VikingZoomLevel::value_is_valid(new_value)) {
+	if (!VikingScale::value_is_valid(new_value)) {
 		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
 		return sg_ret::err;
 	}
 
-	this->viking_zoom_level.y = new_value;
-	this->ymfactor = MERCATOR_FACTOR(this->viking_zoom_level.y);
+	this->viking_scale.y = new_value;
+	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 	if (this->drawmode == ViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
@@ -989,8 +989,8 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 		const int delta_horiz_pixel = x1 - this->canvas.get_horiz_center_pixel();
 		const int delta_vert_pixel = this->canvas.get_vert_center_pixel() - y1;
 
-		const double delta_horiz_m = delta_horiz_pixel * this->viking_zoom_level.x;
-		const double delta_vert_m = delta_vert_pixel * this->viking_zoom_level.y;
+		const double delta_horiz_m = delta_horiz_pixel * this->viking_scale.x;
+		const double delta_vert_m = delta_vert_pixel * this->viking_scale.y;
 
 		this->center.utm.easting += delta_horiz_m;
 		this->center.utm.northing += delta_vert_m;
@@ -1039,8 +1039,8 @@ QRect Viewport::get_rect(void) const
 Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 {
 	Coord coord;
-	const double xmpp = this->viking_zoom_level.x;
-	const double ympp = this->viking_zoom_level.y;
+	const double xmpp = this->viking_scale.x;
+	const double ympp = this->viking_scale.y;
 
 	/* Distance of pixel specified by pos_x/pos_y from canvas' central pixel.
 	   TODO: verify location of pos_x and pos_y in these equations. */
@@ -1194,8 +1194,8 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
 sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
 {
 	Coord coord = coord_in;
-	const double xmpp = this->viking_zoom_level.x;
-	const double ympp = this->viking_zoom_level.y;
+	const double xmpp = this->viking_scale.x;
+	const double ympp = this->viking_scale.y;
 
 	const int horiz_center_pixel = this->canvas.get_horiz_center_pixel();
 	const int vert_center_pixel = this->canvas.get_vert_center_pixel();
@@ -1946,7 +1946,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon ll = test.get_latlon();
-		ll.lat += this->get_viking_zoom_level().y * this->canvas.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
+		ll.lat += this->get_viking_scale().y * this->canvas.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
 
 		test = Coord(LatLon::to_utm(ll), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
@@ -2140,7 +2140,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 #endif
 
 	/* Change interpolate method according to scale. */
-	double zoom = this->get_viking_zoom_level().get_x();
+	double zoom = this->get_viking_scale().get_x();
 	DemInterpolation interpol_method;
 	if (zoom > 2.0) {
 		interpol_method = DemInterpolation::None;
@@ -2169,7 +2169,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 
 
-Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, const VikingZoomLevel & expected_viking_zoom_level)
+Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, const VikingScale & expected_viking_scale)
 {
 	/*
 	  We always want to print original viewport in its
@@ -2232,12 +2232,12 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 	/* Set zoom - either explicitly passed to the function, or
 	   calculated implicitly. */
-	if (expected_viking_zoom_level.is_valid()) {
-		scaled_viewport->set_viking_zoom_level(expected_viking_zoom_level);
+	if (expected_viking_scale.is_valid()) {
+		scaled_viewport->set_viking_scale(expected_viking_scale);
 	} else {
-		const VikingZoomLevel calculated_viking_zoom_level(this->viking_zoom_level.x / scale_factor, this->viking_zoom_level.y / scale_factor);
-		if (calculated_viking_zoom_level.is_valid()) {
-			scaled_viewport->set_viking_zoom_level(calculated_viking_zoom_level);
+		const VikingScale calculated_viking_scale(this->viking_scale.x / scale_factor, this->viking_scale.y / scale_factor);
+		if (calculated_viking_scale.is_valid()) {
+			scaled_viewport->set_viking_scale(calculated_viking_scale);
 		} else {
 			/* TODO_HARD: now what? */
 		}
@@ -2300,7 +2300,7 @@ bool Viewport::print_cb(QPrinter * printer)
 	const int target_width = target_rect.width();
 	const int target_height = target_rect.height();
 
-	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, VikingZoomLevel());
+	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, VikingScale());
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print canvas. */
@@ -2916,7 +2916,7 @@ sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 
 double Viewport::get_canvas_height_m(void) const
 {
-	return this->canvas.get_height() * this->viking_zoom_level.y;
+	return this->canvas.get_height() * this->viking_scale.y;
 }
 
 
@@ -2924,7 +2924,7 @@ double Viewport::get_canvas_height_m(void) const
 
 double Viewport::get_canvas_width_m(void) const
 {
-	return this->canvas.get_width() * this->viking_zoom_level.x;
+	return this->canvas.get_width() * this->viking_scale.x;
 }
 
 

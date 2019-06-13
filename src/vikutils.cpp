@@ -552,12 +552,12 @@ void CommandLineOptions::apply(Window * window)
 	}
 
 	if (this->zoom_level_osm >= 0) {
-		/* Convert OSM zoom level into Viking zoom level. */
-		double map_zoom = exp((MAGIC_SEVENTEEN - this->zoom_level_osm) * log(2));
-		if (map_zoom > 1.0) {
-			map_zoom = round(map_zoom);
+		/* Convert OSM zoom level into Viking scale. */
+		double map_scale = exp((MAGIC_SEVENTEEN - this->zoom_level_osm) * log(2));
+		if (map_scale > 1.0) {
+			map_scale = round(map_scale);
 		}
-		viewport->set_viking_zoom_level(map_zoom);
+		viewport->set_viking_scale(map_scale);
 	}
 
 	if (this->map_type_id != MapTypeID::Initial) {

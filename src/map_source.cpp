@@ -280,7 +280,7 @@ void MapSource::set_file_extension(const QString & new_file_extension)
    @bbox: bounding box of interest
    @zoom: the zoom level of interest
 */
-void MapSource::add_copyright(Viewport * viewport, const LatLonBBox &  bbox, const VikingZoomLevel & viking_zoom_level)
+void MapSource::add_copyright(Viewport * viewport, const LatLonBBox &  bbox, const VikingScale & viking_scale)
 {
 	return;
 }
@@ -406,7 +406,7 @@ QString MapSource::get_file_extension(void) const
 
 
 
-bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingScale & viking_scale, TileInfo & dest) const
 {
 	fprintf(stderr, "MapSource coord_to_tile_info() returns false\n");
 	return false;

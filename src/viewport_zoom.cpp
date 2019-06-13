@@ -98,16 +98,16 @@ static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpp
 
 
 
-bool ViewportZoomDialog::custom_zoom_dialog(VikingZoomLevel & zoom, QWidget * parent)
+bool ViewportZoomDialog::custom_zoom_dialog(VikingScale & scale, QWidget * parent)
 {
-	ViewportZoomDialog dialog(zoom, parent);
+	ViewportZoomDialog dialog(scale, parent);
 
 	if (QDialog::Accepted == dialog.exec()) {
-		zoom = dialog.get_value();
+		scale = dialog.get_value();
 
 		/* There is something strange about argument to qSetRealNumberPrecision().  The precision for
 		   fractional part is not enough, I had to add few places for leading digits and decimal dot. */
-		qDebug() << SG_PREFIX_I << "Saving custom zoom as" << zoom;
+		qDebug() << SG_PREFIX_I << "Saving custom Viking scale as" << scale;
 		return true;
 	} else {
 		return false;
@@ -117,7 +117,7 @@ bool ViewportZoomDialog::custom_zoom_dialog(VikingZoomLevel & zoom, QWidget * pa
 
 
 
-ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
+ViewportZoomDialog::ViewportZoomDialog(VikingScale & scale, QWidget * parent)
 {
 	this->setWindowTitle(QObject::tr("Zoom Factors..."));
 
@@ -134,7 +134,7 @@ ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
 	this->xspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->xspin.setSingleStep(1);
 	this->xspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
-	this->xspin.setValue(zoom.get_x());
+	this->xspin.setValue(scale.get_x());
 
 	this->grid->addWidget(xlabel, row, 0);
 	this->grid->addWidget(&this->xspin, row, 1);
@@ -147,7 +147,7 @@ ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
 	this->yspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
 	this->yspin.setSingleStep(1);
 	this->yspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
-	this->yspin.setValue(zoom.get_y());
+	this->yspin.setValue(scale.get_y());
 
 	this->grid->addWidget(ylabel, row, 0);
 	this->grid->addWidget(&this->yspin, row, 1);
@@ -155,7 +155,7 @@ ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
 
 
 	this->checkbox.setText(QObject::tr("X and Y zoom factors must be equal"));
-	if (zoom.x_y_is_equal()) {
+	if (scale.x_y_is_equal()) {
 		this->checkbox.setChecked(true);
 	}
 	this->grid->addWidget(&this->checkbox, row, 0, 1, 2); /* Row span = 1, Column span = 2. */
@@ -169,9 +169,9 @@ ViewportZoomDialog::ViewportZoomDialog(VikingZoomLevel & zoom, QWidget * parent)
 
 
 
-VikingZoomLevel ViewportZoomDialog::get_value(void) const
+VikingScale ViewportZoomDialog::get_value(void) const
 {
-	return VikingZoomLevel(this->xspin.value(), this->yspin.value());
+	return VikingScale(this->xspin.value(), this->yspin.value());
 }
 
 
@@ -332,7 +332,7 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 
 
 
-VikingZoomLevel::VikingZoomLevel(const VikingZoomLevel & other)
+VikingScale::VikingScale(const VikingScale & other)
 {
 	this->x = other.x;
 	this->y = other.y;
@@ -341,7 +341,7 @@ VikingZoomLevel::VikingZoomLevel(const VikingZoomLevel & other)
 
 
 
-bool VikingZoomLevel::x_y_is_equal(void) const
+bool VikingScale::x_y_is_equal(void) const
 {
 	return this->x == this->y;
 }
@@ -349,7 +349,7 @@ bool VikingZoomLevel::x_y_is_equal(void) const
 
 
 
-double VikingZoomLevel::get_x(void) const
+double VikingScale::get_x(void) const
 {
 	return this->x;
 }
@@ -357,7 +357,7 @@ double VikingZoomLevel::get_x(void) const
 
 
 
-double VikingZoomLevel::get_y(void) const
+double VikingScale::get_y(void) const
 {
 	return this->y;
 }
@@ -365,7 +365,7 @@ double VikingZoomLevel::get_y(void) const
 
 
 
-sg_ret VikingZoomLevel::set(double new_x, double new_y)
+sg_ret VikingScale::set(double new_x, double new_y)
 {
 	if (new_x >= SG_VIEWPORT_ZOOM_MIN
 	    && new_x <= SG_VIEWPORT_ZOOM_MAX
@@ -382,7 +382,7 @@ sg_ret VikingZoomLevel::set(double new_x, double new_y)
 }
 
 
-bool VikingZoomLevel::zoom_in(int factor)
+bool VikingScale::zoom_in(int factor)
 {
 	if (this->x >= (SG_VIEWPORT_ZOOM_MIN * factor) && this->y >= (SG_VIEWPORT_ZOOM_MIN * factor)) {
 		this->x /= factor;
@@ -396,7 +396,7 @@ bool VikingZoomLevel::zoom_in(int factor)
 
 
 
-bool VikingZoomLevel::zoom_out(int factor)
+bool VikingScale::zoom_out(int factor)
 {
 	if (this->x <= (SG_VIEWPORT_ZOOM_MAX / factor) && this->y <= (SG_VIEWPORT_ZOOM_MAX / factor)) {
 		this->x *= factor;
@@ -411,7 +411,7 @@ bool VikingZoomLevel::zoom_out(int factor)
 
 
 
-QString VikingZoomLevel::pretty_print(CoordMode coord_mode) const
+QString VikingScale::pretty_print(CoordMode coord_mode) const
 {
 	QString result;
 
@@ -437,7 +437,7 @@ QString VikingZoomLevel::pretty_print(CoordMode coord_mode) const
 
 
 
-QString VikingZoomLevel::to_string(void) const
+QString VikingScale::to_string(void) const
 {
 	QString result;
 
@@ -454,16 +454,16 @@ QString VikingZoomLevel::to_string(void) const
 
 
 
-QDebug SlavGPS::operator<<(QDebug debug, const VikingZoomLevel & viking_zoom_level)
+QDebug SlavGPS::operator<<(QDebug debug, const VikingScale & viking_scale)
 {
-	debug << "VikingZoomLevel" << viking_zoom_level.get_x() << viking_zoom_level.get_y();
+	debug << "VikingScale" << viking_scale.get_x() << viking_scale.get_y();
 	return debug;
 }
 
 
 
 
-bool VikingZoomLevel::operator==(const VikingZoomLevel & other) const
+bool VikingScale::operator==(const VikingScale & other) const
 {
 	return this->x == other.x && this->y == other.y;
 }
@@ -471,23 +471,23 @@ bool VikingZoomLevel::operator==(const VikingZoomLevel & other) const
 
 
 
-bool VikingZoomLevel::value_is_valid(double zoom)
+bool VikingScale::value_is_valid(double value)
 {
-	return zoom >= SG_VIEWPORT_ZOOM_MIN && zoom <= SG_VIEWPORT_ZOOM_MAX;
+	return value >= SG_VIEWPORT_ZOOM_MIN && value <= SG_VIEWPORT_ZOOM_MAX;
 }
 
 
 
 
-bool VikingZoomLevel::is_valid(void) const
+bool VikingScale::is_valid(void) const
 {
-	return VikingZoomLevel::value_is_valid(this->x) && VikingZoomLevel::value_is_valid(this->y);
+	return VikingScale::value_is_valid(this->x) && VikingScale::value_is_valid(this->y);
 }
 
 
 
 
-TileScale VikingZoomLevel::to_tile_scale(void) const
+TileScale VikingScale::to_tile_scale(void) const
 {
 	const double mpp = this->x;
 
@@ -520,7 +520,7 @@ TileScale VikingZoomLevel::to_tile_scale(void) const
 
 
 /* See: http://wiki.openstreetmap.org/wiki/Zoom_levels */
-TileZoomLevel VikingZoomLevel::to_tile_zoom_level(void) const
+TileZoomLevel VikingScale::to_tile_zoom_level(void) const
 {
 	const double mpp = this->x;
 
@@ -536,23 +536,23 @@ TileZoomLevel VikingZoomLevel::to_tile_zoom_level(void) const
 
 
 
-VikingZoomLevel::VikingZoomLevel(void)
+VikingScale::VikingScale(void)
 {
 }
 
 
 
 
-VikingZoomLevel::VikingZoomLevel(double zoom)
+VikingScale::VikingScale(double value)
 {
-	this->x = zoom;
-	this->y = zoom;
+	this->x = value;
+	this->y = value;
 }
 
 
 
 
-VikingZoomLevel::VikingZoomLevel(double new_x, double new_y)
+VikingScale::VikingScale(double new_x, double new_y)
 {
 	this->x = new_x;
 	this->y = new_y;
@@ -561,10 +561,10 @@ VikingZoomLevel::VikingZoomLevel(double new_x, double new_y)
 
 
 
-int VikingZoomLevel::get_closest_index(int & result, const std::vector<VikingZoomLevel> & viking_zooms, const VikingZoomLevel & viking_zoom_level)
+int VikingScale::get_closest_index(int & result, const std::vector<VikingScale> & viking_scales, const VikingScale & viking_scale)
 {
-	for (unsigned int idx = 0; idx < viking_zooms.size(); idx++) {
-		if (viking_zoom_level.get_x() == viking_zooms[idx].get_x()) {
+	for (unsigned int idx = 0; idx < viking_scales.size(); idx++) {
+		if (viking_scale.get_x() == viking_scales[idx].get_x()) {
 			result = idx;
 			return 0;
 		}
@@ -576,7 +576,7 @@ int VikingZoomLevel::get_closest_index(int & result, const std::vector<VikingZoo
 
 
 
-VikingZoomLevel & VikingZoomLevel::operator*=(double rhs)
+VikingScale & VikingScale::operator*=(double rhs)
 {
 	if (this->is_valid()) {
 		this->x *= rhs;
@@ -590,7 +590,7 @@ VikingZoomLevel & VikingZoomLevel::operator*=(double rhs)
 
 
 
-VikingZoomLevel & VikingZoomLevel::operator/=(double rhs)
+VikingScale & VikingScale::operator/=(double rhs)
 {
 	if (0.0 == rhs) {
 		qDebug() << SG_PREFIX_E << "Can't divide by zero";
@@ -637,7 +637,7 @@ sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mod
 		qDebug() << SG_PREFIX_E << "bbox's center is invalid:" << bbox.get_center_lat_lon();
 		return sg_ret::err;
 	}
-	if (!VikingZoomLevel::value_is_valid(zoom)) {
+	if (!VikingScale::value_is_valid(zoom)) {
 		qDebug() << SG_PREFIX_E << "zoom is invalid:" << zoom;
 		return sg_ret::err;
 	}
@@ -649,7 +649,7 @@ sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mod
 	/* Never zoom in too far - generally not that useful, as too close! */
 	/* Always recalculate the 'best' zoom level. */
 
-	if (sg_ret::ok != viewport->set_viking_zoom_level(zoom)) {
+	if (sg_ret::ok != viewport->set_viking_scale(zoom)) {
 		qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
 		return sg_ret::err;
 	}
@@ -665,7 +665,7 @@ sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mod
 
 		/* Try next zoom level. */
 		zoom = zoom * 2;
-		if (sg_ret::ok != viewport->set_viking_zoom_level(zoom)) {
+		if (sg_ret::ok != viewport->set_viking_scale(zoom)) {
 			qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
 			return sg_ret::err;
 		}

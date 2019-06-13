@@ -398,8 +398,8 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	sub_viewport_rect.setHeight(this->image_height);
 
 	bool scale_mismatch = false; /* Flag to scale the pixmap if it doesn't match our dimensions. */
-	const double xmpp = viewport->get_viking_zoom_level().get_x();
-	const double ympp = viewport->get_viking_zoom_level().get_y();
+	const double xmpp = viewport->get_viking_scale().get_x();
+	const double ympp = viewport->get_viking_scale().get_y();
 	if (xmpp != this->mpp_easting || ympp != this->mpp_northing) {
 		scale_mismatch = true;
 		sub_viewport_rect.setWidth(round(this->image_width * this->mpp_easting / xmpp));
@@ -1144,8 +1144,8 @@ sg_ret LayerGeoref::get_values_from_dialog(const GeorefConfigDialog & dialog)
 void LayerGeoref::zoom_to_fit_cb(void)
 {
 	Viewport * viewport = ThisApp::get_main_viewport();
-	viewport->set_viking_zoom_level_x(this->mpp_easting);
-	viewport->set_viking_zoom_level_y(this->mpp_northing);
+	viewport->set_viking_scale_x(this->mpp_easting);
+	viewport->set_viking_scale_y(this->mpp_northing);
 	viewport->request_redraw("Redrawing items after setting new zoom level in viewport");
 }
 
@@ -1222,8 +1222,8 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (this->click_x != -1) {
-		this->utm_tl.easting += (ev->x() - this->click_x) * tool->viewport->get_viking_zoom_level().get_x();
-		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->viewport->get_viking_zoom_level().get_y();
+		this->utm_tl.easting += (ev->x() - this->click_x) * tool->viewport->get_viking_scale().get_x();
+		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->viewport->get_viking_scale().get_y();
 		this->emit_tree_item_changed("Georef - move released");
 		return ToolStatus::Ack;
 	}
@@ -1272,8 +1272,8 @@ ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 			this->mpp_northing /= 1.01;
 		}
 	}
-	tool->viewport->set_viking_zoom_level_x(this->mpp_easting);
-	tool->viewport->set_viking_zoom_level_y(this->mpp_northing);
+	tool->viewport->set_viking_scale_x(this->mpp_easting);
+	tool->viewport->set_viking_scale_y(this->mpp_northing);
 	this->emit_tree_item_changed("Georef - zoom press");
 	return ToolStatus::Ack;
 }
@@ -1366,7 +1366,7 @@ LayerGeoref::LayerGeoref()
 void LayerGeoref::configure_from_viewport(Viewport const * viewport)
 {
 	/* Make these defaults based on the current view. */
-	this->mpp_northing = viewport->get_viking_zoom_level().get_y();
-	this->mpp_easting = viewport->get_viking_zoom_level().get_x();
+	this->mpp_northing = viewport->get_viking_scale().get_y();
+	this->mpp_easting = viewport->get_viking_scale().get_x();
 	this->utm_tl = viewport->get_center()->get_utm();
 }

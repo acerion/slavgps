@@ -231,11 +231,11 @@ namespace SlavGPS {
 		void zoom_in(void);
 		void zoom_out(void);
 
-		sg_ret set_viking_zoom_level(double new_value);
-		sg_ret set_viking_zoom_level_x(double new_value);
-		sg_ret set_viking_zoom_level_y(double new_value);
-		sg_ret set_viking_zoom_level(const VikingZoomLevel & new_value);
-		const VikingZoomLevel & get_viking_zoom_level(void) const;
+		sg_ret set_viking_scale(double new_value);
+		sg_ret set_viking_scale_x(double new_value);
+		sg_ret set_viking_scale_y(double new_value);
+		sg_ret set_viking_scale(const VikingScale & new_value);
+		const VikingScale & get_viking_scale(void) const;
 
 
 
@@ -318,7 +318,7 @@ namespace SlavGPS {
 		   false) - the function will then use its standard
 		   algorithm for determining expected zoom of scaled
 		   viewport. */
-		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, const VikingZoomLevel & expected_viking_zoom_level);
+		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, const VikingScale & expected_viking_scale);
 
 
 		void emit_center_or_zoom_changed(const QString & trigger_name);
@@ -389,7 +389,7 @@ namespace SlavGPS {
 		void save_current_center(void);
 
 
-		VikingZoomLevel viking_zoom_level;
+		VikingScale viking_scale;
 		double xmfactor = 0.0f;
 		double ymfactor = 0.0f;
 

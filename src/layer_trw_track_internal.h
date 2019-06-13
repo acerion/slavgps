@@ -390,7 +390,7 @@ namespace SlavGPS {
 
 		QString sublayer_rename_request(const QString & new_name);
 
-		std::list<Rect *> * get_map_rectangles(const VikingZoomLevel & viking_zoom_level);
+		std::list<Rect *> * get_map_rectangles(const VikingScale & viking_scale);
 
 		sg_ret create_tp_next_to_selected_tp(bool before);
 

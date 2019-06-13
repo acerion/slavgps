@@ -3468,15 +3468,15 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 
 /* ----------- Downloading maps along tracks --------------- */
 
-void vik_track_download_map(Track * trk, LayerMap * layer_map, const VikingZoomLevel & viking_zoom_level)
+void vik_track_download_map(Track * trk, LayerMap * layer_map, const VikingScale & viking_scale)
 {
-	std::list<Rect *> * rects_to_download = trk->get_map_rectangles(viking_zoom_level);
+	std::list<Rect *> * rects_to_download = trk->get_map_rectangles(viking_scale);
 	if (!rects_to_download) {
 		return;
 	}
 
 	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-		layer_map->download_section((*rect_iter)->tl, (*rect_iter)->br, viking_zoom_level);
+		layer_map->download_section((*rect_iter)->tl, (*rect_iter)->br, viking_scale);
 	}
 
 	if (rects_to_download) {
@@ -3492,21 +3492,21 @@ void vik_track_download_map(Track * trk, LayerMap * layer_map, const VikingZoomL
 
 void LayerTRW::download_map_along_track_cb(void)
 {
-	std::vector<VikingZoomLevel> viking_zooms = {
-		VikingZoomLevel(0.125),
-		VikingZoomLevel(0.25),
-		VikingZoomLevel(0.5),
-		VikingZoomLevel(1),
-		VikingZoomLevel(2),
-		VikingZoomLevel(4),
-		VikingZoomLevel(8),
-		VikingZoomLevel(16),
-		VikingZoomLevel(32),
-		VikingZoomLevel(64),
-		VikingZoomLevel(128),
-		VikingZoomLevel(256),
-		VikingZoomLevel(512),
-		VikingZoomLevel(1024) };
+	std::vector<VikingScale> viking_scales = {
+		VikingScale(0.125),
+		VikingScale(0.25),
+		VikingScale(0.5),
+		VikingScale(1),
+		VikingScale(2),
+		VikingScale(4),
+		VikingScale(8),
+		VikingScale(16),
+		VikingScale(32),
+		VikingScale(64),
+		VikingScale(128),
+		VikingScale(256),
+		VikingScale(512),
+		VikingScale(1024) };
 
 	LayersPanel * panel = ThisApp::get_layers_panel();
 	const Viewport * viewport = ThisApp::get_main_viewport();
@@ -3535,16 +3535,16 @@ void LayerTRW::download_map_along_track_cb(void)
 
 
 
-	const VikingZoomLevel current_viking_zoom(viewport->get_viking_zoom_level().get_x());
+	const VikingScale current_viking_scale(viewport->get_viking_scale().get_x());
 	int default_zoom_idx = 0;
-	if (0 != VikingZoomLevel::get_closest_index(default_zoom_idx, viking_zooms, current_viking_zoom)) {
-		qDebug() << SG_PREFIX_W << "Failed to get the closest viking zoom level";
-		default_zoom_idx = viking_zooms.size() - 1;
+	if (0 != VikingScale::get_closest_index(default_zoom_idx, viking_scales, current_viking_scale)) {
+		qDebug() << SG_PREFIX_W << "Failed to get the closest Viking scale";
+		default_zoom_idx = viking_scales.size() - 1;
 	}
 
 
 
-	MapAndZoomDialog dialog(QObject::tr("Download along track"), map_labels, viking_zooms, this->get_window());
+	MapAndZoomDialog dialog(QObject::tr("Download along track"), map_labels, viking_scales, this->get_window());
 	dialog.preselect(0, default_zoom_idx);
 	if (QDialog::Accepted != dialog.exec()) {
 		return;
@@ -3559,7 +3559,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		iter++;
 	}
 
-	vik_track_download_map(track, *iter, viking_zooms[selected_zoom_idx]);
+	vik_track_download_map(track, *iter, viking_scales[selected_zoom_idx]);
 
 	return;
 }

@@ -612,7 +612,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_viking_zoom_level().get_x() / 80); /* TODO_2_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_viking_scale().get_x() / 80); /* TODO_2_LATER: smarter calculation. */
 
 	double nscale_deg = dem->north_scale / ((double) 3600);
 	double escale_deg = dem->east_scale / ((double) 3600);
@@ -788,7 +788,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 
 void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_viking_zoom_level().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(viewport->get_viking_scale().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
 
 	Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
 	Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);

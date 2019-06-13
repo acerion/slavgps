@@ -65,14 +65,15 @@ namespace SlavGPS {
 
 
 
-
-	class VikingZoomLevel {
+	/* "Meters per pixel" scale. How many meters on Viewport
+	   canvas are represented by one pixel of canvas. */
+	class VikingScale {
 		friend class Viewport;
 	public:
-		VikingZoomLevel(void);
-		VikingZoomLevel(double zoom);
-		VikingZoomLevel(double x, double y);
-		VikingZoomLevel(const VikingZoomLevel & other);
+		VikingScale(void);
+		VikingScale(double scale);
+		VikingScale(double x, double y);
+		VikingScale(const VikingScale & other);
 
 		TileScale to_tile_scale(void) const;
 		TileZoomLevel to_tile_zoom_level(void) const;
@@ -82,7 +83,7 @@ namespace SlavGPS {
 		double get_y(void) const;
 		bool x_y_is_equal(void) const;
 
-		static bool value_is_valid(double zoom);
+		static bool value_is_valid(double value);
 		bool is_valid(void) const;
 
 		bool zoom_in(int factor);
@@ -91,29 +92,29 @@ namespace SlavGPS {
 		QString pretty_print(CoordMode coord_mode) const;
 		QString to_string(void) const;
 
-		bool operator==(const VikingZoomLevel & other) const;
+		bool operator==(const VikingScale & other) const;
 
-		VikingZoomLevel & operator*=(double rhs);
-		VikingZoomLevel & operator/=(double rhs);
-		VikingZoomLevel operator*(double rhs) const { VikingZoomLevel result = *this; result *= rhs; return result; }
-		VikingZoomLevel operator/(double rhs) const { VikingZoomLevel result = *this; result /= rhs; return result; }
+		VikingScale & operator*=(double rhs);
+		VikingScale & operator/=(double rhs);
+		VikingScale operator*(double rhs) const { VikingScale result = *this; result *= rhs; return result; }
+		VikingScale operator/(double rhs) const { VikingScale result = *this; result /= rhs; return result; }
 
 		/**
-		   Find in @viking_zooms the a zoom value that is the
-		   closest to @viking_zoom_level.  On success return
-		   through @result an index of the found closest zoom.
+		   Find in @viking_scales the a scale value that is the
+		   closest to @viking_scale.  On success return
+		   through @result an index of the found closest scale.
 
 		   @return 0 on success
 		   @return negative value on failure
 		*/
-		static int get_closest_index(int & result, const std::vector<VikingZoomLevel> & viking_zooms, const VikingZoomLevel & viking_zoom_level);
+		static int get_closest_index(int & result, const std::vector<VikingScale> & viking_scales, const VikingScale & viking_scale);
 
 	private:
 		/* Invalid values. */
 		double x = SG_VIEWPORT_ZOOM_MIN - 1;
 		double y = SG_VIEWPORT_ZOOM_MIN - 1;
 	};
-	QDebug operator<<(QDebug debug, const VikingZoomLevel & viking_zoom_level);
+	QDebug operator<<(QDebug debug, const VikingScale & viking_scale);
 
 
 
@@ -164,12 +165,12 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		ViewportZoomDialog() {};
-		ViewportZoomDialog(VikingZoomLevel & viking_zoom_level, QWidget * a_parent = NULL);
+		ViewportZoomDialog(VikingScale & viking_scale, QWidget * a_parent = NULL);
 		~ViewportZoomDialog() {};
 
-		VikingZoomLevel get_value(void) const;
+		VikingScale get_value(void) const;
 
-		static bool custom_zoom_dialog(/* in/out */ VikingZoomLevel & viking_zoom_level, QWidget * parent);
+		static bool custom_zoom_dialog(/* in/out */ VikingScale & viking_scale, QWidget * parent);
 
 	private slots:
 		void spin_changed_cb(double new_value);

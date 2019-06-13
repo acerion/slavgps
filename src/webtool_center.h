@@ -48,7 +48,7 @@ namespace SlavGPS {
 		QString get_url_for_viewport(Viewport * viewport) override;
 		QString get_url_at_position(Viewport * viewport, const Coord * coord) override;
 
-		QString get_url_for_coord(const Coord & a_coord, const VikingZoomLevel & viking_zoom_level);
+		QString get_url_for_coord(const Coord & a_coord, const VikingScale & viking_scale);
 
 	};
 

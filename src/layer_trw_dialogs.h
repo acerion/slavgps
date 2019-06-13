@@ -49,14 +49,14 @@ namespace SlavGPS {
 
 
 
-	class VikingZoomLevel;
+	class VikingScale;
 
 
 
 
 	QString a_dialog_new_track(const QString & default_name, bool is_route, QWidget * parent);
 	bool a_dialog_time_threshold(const QString & title, const QString & label, uint32_t * thr, QWidget * parent = NULL);
-	bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const std::vector<VikingZoomLevel> & viking_zoom_levels, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent);
+	bool a_dialog_map_and_zoom(const QStringList & map_labels, unsigned int default_map_idx, const std::vector<VikingScale> & viking_scales, unsigned int default_zoom_idx, unsigned int * selected_map_idx, unsigned int * selected_zoom_idx, QWidget * parent);
 
 
 
@@ -65,7 +65,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		MapAndZoomDialog() {};
-		MapAndZoomDialog(const QString & title, const QStringList & map_labels, const std::vector<VikingZoomLevel> & viking_zoom_levels, QWidget * parent = NULL);
+		MapAndZoomDialog(const QString & title, const QStringList & map_labels, const std::vector<VikingScale> & viking_scaless, QWidget * parent = NULL);
 
 		void preselect(int map_idx, int zoom_idx);
 		int get_map_idx(void) const;

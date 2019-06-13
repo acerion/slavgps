@@ -112,8 +112,8 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 {
 	this->viewport = new_viewport;
 
-	this->vp_xmpp = this->viewport->get_viking_zoom_level().get_x();
-	this->vp_ympp = this->viewport->get_viking_zoom_level().get_y();
+	this->vp_xmpp = this->viewport->get_viking_scale().get_x();
+	this->vp_ympp = this->viewport->get_viking_scale().get_y();
 
 	this->vp_rect = this->viewport->get_rect();
 	this->vp_center = this->viewport->get_center2();

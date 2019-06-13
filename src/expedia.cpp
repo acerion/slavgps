@@ -57,7 +57,7 @@ using namespace SlavGPS;
 
 
 
-static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest);
+static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest);
 static sg_ret expedia_tile_info_to_center_coord(const TileInfo & src, Coord & coord);
 static DownloadStatus expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
 static void * expedia_handle_init();
@@ -140,10 +140,10 @@ double expedia_altis_freq(int alti)
 
 
 /* Returns -1 if none of the above. */
-int expedia_zoom_to_alti(double viking_zoom_level)
+int expedia_zoom_to_alti(double viking_scale)
 {
 	for (unsigned int i = 0; i < expedia_altis_count; i++) {
-		if (fabs(expedia_altis[i] - viking_zoom_level) / viking_zoom_level < MPP_MARGIN_OF_ERROR) {
+		if (fabs(expedia_altis[i] - viking_scale) / viking_scale < MPP_MARGIN_OF_ERROR) {
 			return expedia_altis[i];
 		}
 	}
@@ -189,15 +189,15 @@ sg_ret expedia_crop(const QString & file)
 
 /* If degree_freeq = 60 -> nearest minute (in middle).
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
-static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest)
+static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest)
 {
 	assert (src_coord.mode == CoordMode::LatLon);
 
-	if (!viking_zoom_level.x_y_is_equal()) {
+	if (!viking_scale.x_y_is_equal()) {
 		return false;
 	}
 
-	int alti = expedia_zoom_to_alti(viking_zoom_level.get_x());
+	int alti = expedia_zoom_to_alti(viking_scale.get_x());
 	if (alti != -1) {
 		dest.scale.set_scale_value(alti);
 		dest.x = (int) (((src_coord.ll.lon + 180) * expedia_altis_freq(alti))+0.5);

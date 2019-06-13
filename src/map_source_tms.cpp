@@ -100,19 +100,19 @@ bool MapSourceTms::supports_download_only_new(void) const
 
 
 
-bool MapSourceTms::coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSourceTms::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest) const
 {
 	assert (src_coord.mode == CoordMode::LatLon);
 
-	if (!viking_zoom_level.x_y_is_equal()) {
+	if (!viking_scale.x_y_is_equal()) {
 		return false;
 	}
 
 	/* Convenience variables. */
-	const double xzoom = viking_zoom_level.get_x();
-	const double yzoom = viking_zoom_level.get_y();
+	const double xzoom = viking_scale.get_x();
+	const double yzoom = viking_scale.get_y();
 
-	dest.scale = viking_zoom_level.to_tile_scale();
+	dest.scale = viking_scale.to_tile_scale();
 	if (!dest.scale.is_valid()) {
 		return false;
 	}

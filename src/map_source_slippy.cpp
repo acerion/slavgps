@@ -108,14 +108,14 @@ bool MapSourceSlippy::supports_download_only_new(void) const
 
 
 
-bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingZoomLevel & viking_zoom_level, TileInfo & dest) const
+bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest) const
 {
 	if (src_coord.mode != CoordMode::LatLon) {
 		qDebug() << SG_PREFIX_E << "Invalid coord mode of argument";
 		return false;
 	}
 
-	return sg_ret::ok == MapUtils::lat_lon_to_iTMS(src_coord.ll, viking_zoom_level, dest);
+	return sg_ret::ok == MapUtils::lat_lon_to_iTMS(src_coord.ll, viking_scale, dest);
 }
 
 

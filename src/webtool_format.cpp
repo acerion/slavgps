@@ -99,8 +99,8 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
-	if (a_viewport->get_viking_zoom_level().x_y_is_equal()) {
-		tile_zoom_level = a_viewport->get_viking_zoom_level().to_tile_zoom_level();
+	if (a_viewport->get_viking_scale().x_y_is_equal()) {
+		tile_zoom_level = a_viewport->get_viking_scale().to_tile_zoom_level();
 	}
 
 	int len = this->url_format_code.size();
