@@ -406,9 +406,9 @@ QString MapSource::get_file_extension(void) const
 
 
 
-bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingScale & viking_scale, TileInfo & dest) const
+bool MapSource::coord_to_tile_info(const Coord & scr_coord, const VikingScale & viking_scale, TileInfo & tile_info) const
 {
-	fprintf(stderr, "MapSource coord_to_tile_info() returns false\n");
+	qDebug() << SG_PREFIX_E << "Called method from base class";
 	return false;
 }
 

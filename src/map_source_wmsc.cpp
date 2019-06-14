@@ -94,7 +94,7 @@ bool MapSourceWmsc::supports_download_only_new(void) const
 
 
 
-bool MapSourceWmsc::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest) const
+bool MapSourceWmsc::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info) const
 {
 	assert (src_coord.mode == CoordMode::LatLon);
 
@@ -102,25 +102,23 @@ bool MapSourceWmsc::coord_to_tile_info(const Coord & src_coord, const VikingScal
 		return false;
 	}
 
-	/* Convenience variables. */
-	const double xzoom = viking_scale.get_x();
-	const double yzoom = viking_scale.get_y();
-
-	dest.scale = viking_scale.to_tile_scale();
-	if (!dest.scale.is_valid()) {
+	tile_info.scale = viking_scale.to_tile_scale();
+	if (!tile_info.scale.is_valid()) {
 		return false;
 	}
 
-	/* Note: VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2 = number of tile on Y axis. */
-	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
-		xzoom, yzoom, VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
-	dest.x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
+	/* Convenience variables. */
+	const double xmpp = viking_scale.get_x();
+	const double ympp = viking_scale.get_y();
+
+	/* Note: VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2 = number of tile on Y axis. */
+	fprintf(stderr, "DEBUG: %s: xmpp=%f ympp=%f -> %f\n", __FUNCTION__, xmpp, ympp, VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
+	tile_info.x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
-	dest.y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom / 2);
-	dest.z = 0;
-	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__,
-		src_coord.ll.lon, src_coord.ll.lat, dest.x, dest.y);
+	tile_info.y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
+	tile_info.z = 0;
+	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__, src_coord.ll.lon, src_coord.ll.lat, tile_info.x, tile_info.y);
 	return true;
 }
 

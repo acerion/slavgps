@@ -376,7 +376,7 @@ namespace SlavGPS {
 		TrackPoints::iterator delete_trackpoint(TrackPoints::iterator iter);
 		void insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before);
 
-		std::list<Rect *> * get_rectangles(LatLon * wh);
+		std::list<Rect *> get_rectangles(const LatLon & area_span);
 		//CoordMode get_coord_mode(void) const;
 
 		bool add_context_menu_items(QMenu & menu, bool tree_view_context_menu);
@@ -390,7 +390,7 @@ namespace SlavGPS {
 
 		QString sublayer_rename_request(const QString & new_name);
 
-		std::list<Rect *> * get_map_rectangles(const VikingScale & viking_scale);
+		std::list<Rect *> get_map_rectangles(const VikingScale & viking_scale);
 
 		sg_ret create_tp_next_to_selected_tp(bool before);
 

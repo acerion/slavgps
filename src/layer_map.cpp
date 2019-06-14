@@ -139,7 +139,7 @@ static SGVariant map_type_default(void) { return SGVariant(map_types_enum.defaul
 
 static WidgetEnumerationData map_zooms_enum = {
 	{
-		SGLabelID(QObject::tr("Use Viking Zoom Level"), 0),
+		SGLabelID(QObject::tr("Use Viking Zoom Level"), 0), /* LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE = 0 */
 		SGLabelID(QObject::tr("0.25"),       1),
 		SGLabelID(QObject::tr("0.5"),        2),
 		SGLabelID(QObject::tr("1"),          3),
@@ -168,8 +168,10 @@ static SGVariant map_zooms_default(void) { return SGVariant(map_zooms_enum.defau
 
 
 
-static double __mapzooms_x[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
-static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
+/* Count of elements in each of these two arrays should be the same as
+   count of elements in map_zooms_enum[]. */
+static double map_zooms_x[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
+static double map_zooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1.016, 2.4384, 2.54, 5.08, 10.16, 20.32, 25.4 };
 
 
 
@@ -586,11 +588,12 @@ bool LayerMap::set_param_value(param_id_t param_id, const SGVariant & data, bool
 		break;
 	case PARAM_MAP_ZOOM:
 		if (data.u.val_int < (int) map_zooms_enum.values.size()) {
-			this->mapzoom_id = data.u.val_int;
-			this->xmapzoom = __mapzooms_x[data.u.val_int];
-			this->ymapzoom = __mapzooms_y[data.u.val_int];
+			this->map_zoom_id = data.u.val_int;
+			this->map_zoom_x = map_zooms_x[this->map_zoom_id];
+			this->map_zoom_y = map_zooms_y[this->map_zoom_id];
 		} else {
 			qDebug() << SG_PREFIX_W << "Unknown Map Zoom" << data.u.val_int;
+			this->map_zoom_id = LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE; /* Safe fallback value. */
 		}
 		break;
 	default:
@@ -651,7 +654,7 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->adl_only_missing); /* kamilkamil: in viking code there is a type mismatch. */
 		break;
 	case PARAM_MAP_ZOOM:
-		rv = SGVariant((int32_t) this->mapzoom_id);
+		rv = SGVariant((int32_t) this->map_zoom_id);
 		break;
 	default: break;
 	}
@@ -1021,30 +1024,32 @@ TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
 
 void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
 {
-	double xzoom = viewport->get_viking_scale().get_x();
-	double yzoom = viewport->get_viking_scale().get_y();
+	double xmpp = viewport->get_viking_scale().get_x();
+	double ympp = viewport->get_viking_scale().get_y();
 
 	PixmapScale pixmap_scale(1.0, 1.0);
 
 	bool existence_only = false;
 
-	if (this->xmapzoom && (this->xmapzoom != xzoom || this->ymapzoom != yzoom)) {
-		pixmap_scale = PixmapScale(this->xmapzoom / xzoom, this->ymapzoom / yzoom);
-		xzoom = this->xmapzoom;
-		yzoom = this->xmapzoom;
-		if (!pixmap_scale.condition_1()) {
+	if (this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE) {
+		if (this->map_zoom_x != xmpp || this->map_zoom_y != ympp) {
+			pixmap_scale = PixmapScale(this->map_zoom_x / xmpp, this->map_zoom_y / ympp);
+			xmpp = this->map_zoom_x;
+			ympp = this->map_zoom_x; /* TODO: this is setting ympp from map_zoom_x. Verify this. */
+			if (!pixmap_scale.condition_1()) {
 
-			if (pixmap_scale.condition_2()) {
-				qDebug() << SG_PREFIX_D << "existence_only due to SHRINKFACTORS";
-				existence_only = true;
-			} else {
-				/* Report the reason for not drawing. */
-				Window * window = this->get_window();
-				if (window) {
-					QString msg = tr("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
-					window->statusbar_update(StatusBarField::Info, msg);
+				if (pixmap_scale.condition_2()) {
+					qDebug() << SG_PREFIX_D << "existence_only due to SHRINKFACTORS";
+					existence_only = true;
+				} else {
+					/* Report the reason for not drawing. */
+					Window * window = this->get_window();
+					if (window) {
+						QString msg = tr("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
+						window->statusbar_update(StatusBarField::Info, msg);
+					}
+					return;
 				}
-				return;
 			}
 		}
 	}
@@ -1054,7 +1059,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	TileInfo tile_ul;
 	TileInfo tile_br;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	const VikingScale viking_scale(xzoom, yzoom);
+	const VikingScale viking_scale(xmpp, ympp);
 	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
 	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
@@ -1780,7 +1785,7 @@ void LayerMap::download_all_cb(void)
 	const VikingScale current_viking_scale = viewport->get_viking_scale().get_x();
 	int larger_zoom_idx = 0;
 	int smaller_zoom_idx = 0;
-	if (0 != VikingScale::get_closest_index(larger_zoom_idx, viking_scales, current_viking_scale)) {
+	if (sg_ret::ok != VikingScale::get_closest_index(larger_zoom_idx, viking_scales, current_viking_scale)) {
 		qDebug() << SG_PREFIX_W << "Failed to get the closest viking scale";
 		larger_zoom_idx = viking_scales.size() - 1;
 	}
@@ -1983,10 +1988,9 @@ bool LayerMap::is_tile_visible(const TileInfo & tile_info)
 
 VikingScale LayerMap::calculate_viking_scale(const Viewport * viewport)
 {
-	const double xmpp = this->xmapzoom ? this->xmapzoom : viewport->get_viking_scale().get_x();
-	const double ympp = this->ymapzoom ? this->ymapzoom : viewport->get_viking_scale().get_y();
-
-	VikingScale result(xmpp, ympp);
+	const double xmpp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_x : viewport->get_viking_scale().get_x();
+	const double ympp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_y : viewport->get_viking_scale().get_y();
+	const VikingScale result(xmpp, ympp);
 
 	return result;
 }

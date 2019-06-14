@@ -3470,20 +3470,17 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 
 void vik_track_download_map(Track * trk, LayerMap * layer_map, const VikingScale & viking_scale)
 {
-	std::list<Rect *> * rects_to_download = trk->get_map_rectangles(viking_scale);
-	if (!rects_to_download) {
+	std::list<Rect *> rectangles_to_download = trk->get_map_rectangles(viking_scale);
+	if (rectangles_to_download.empty()) {
 		return;
 	}
 
-	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-		layer_map->download_section((*rect_iter)->tl, (*rect_iter)->br, viking_scale);
+	for (auto iter = rectangles_to_download.begin(); iter != rectangles_to_download.end(); iter++) {
+		layer_map->download_section((*iter)->tl, (*iter)->br, viking_scale);
 	}
 
-	if (rects_to_download) {
-		for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-			free(*rect_iter);
-		}
-		delete rects_to_download;
+	for (auto iter = rectangles_to_download.begin(); iter != rectangles_to_download.end(); iter++) {
+		delete *iter;
 	}
 }
 
@@ -3537,7 +3534,7 @@ void LayerTRW::download_map_along_track_cb(void)
 
 	const VikingScale current_viking_scale(viewport->get_viking_scale().get_x());
 	int default_zoom_idx = 0;
-	if (0 != VikingScale::get_closest_index(default_zoom_idx, viking_scales, current_viking_scale)) {
+	if (sg_ret::ok != VikingScale::get_closest_index(default_zoom_idx, viking_scales, current_viking_scale)) {
 		qDebug() << SG_PREFIX_W << "Failed to get the closest Viking scale";
 		default_zoom_idx = viking_scales.size() - 1;
 	}

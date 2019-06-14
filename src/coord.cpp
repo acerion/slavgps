@@ -320,10 +320,10 @@ static LatLon get_south_east_corner(const LatLon & center, const LatLon & distan
 
 
 
-void Coord::get_area_coordinates(const LatLon * area_span, Coord * coord_tl, Coord * coord_br) const
+void Coord::get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coord * coord_br) const
 {
 	const LatLon center = this->get_latlon();
-	const LatLon distance_from_center(area_span->lat / 2, area_span->lon / 2);
+	const LatLon distance_from_center(area_span.lat / 2, area_span.lon / 2);
 
 	coord_tl->ll = get_north_west_corner(center, distance_from_center);
 	coord_tl->mode = CoordMode::LatLon;

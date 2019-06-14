@@ -57,11 +57,12 @@ using namespace SlavGPS;
 
 
 
-static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest);
+static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info);
 static sg_ret expedia_tile_info_to_center_coord(const TileInfo & src, Coord & coord);
 static DownloadStatus expedia_download_tile(const TileInfo & src, const QString & dest_file_path, DownloadHandle * dl_handle);
 static void * expedia_handle_init();
 static void expedia_handle_cleanup(void * handle);
+static int viking_scale_to_expedia_alti(double viking_scale);
 
 static double calcR(double lat);
 
@@ -140,7 +141,7 @@ double expedia_altis_freq(int alti)
 
 
 /* Returns -1 if none of the above. */
-int expedia_zoom_to_alti(double viking_scale)
+int viking_scale_to_expedia_alti(double viking_scale)
 {
 	for (unsigned int i = 0; i < expedia_altis_count; i++) {
 		if (fabs(expedia_altis[i] - viking_scale) / viking_scale < MPP_MARGIN_OF_ERROR) {
@@ -189,7 +190,7 @@ sg_ret expedia_crop(const QString & file)
 
 /* If degree_freeq = 60 -> nearest minute (in middle).
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
-static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest)
+static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info)
 {
 	assert (src_coord.mode == CoordMode::LatLon);
 
@@ -197,15 +198,15 @@ static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScal
 		return false;
 	}
 
-	int alti = expedia_zoom_to_alti(viking_scale.get_x());
+	const int alti = viking_scale_to_expedia_alti(viking_scale.get_x());
 	if (alti != -1) {
-		dest.scale.set_scale_value(alti);
-		dest.x = (int) (((src_coord.ll.lon + 180) * expedia_altis_freq(alti))+0.5);
-		dest.y = (int) (((src_coord.ll.lat + 90) * expedia_altis_freq(alti))+0.5);
+		tile_info.scale.set_scale_value(alti);
+		tile_info.x = (int) (((src_coord.ll.lon + 180) * expedia_altis_freq(alti))+0.5);
+		tile_info.y = (int) (((src_coord.ll.lat + 90) * expedia_altis_freq(alti))+0.5);
 		/* + 0.5 to round off and not floor. */
 
 		/* Just to space out tiles on the filesystem. */
-		dest.z = 0;
+		tile_info.z = 0;
 		return true;
 	}
 	return false;

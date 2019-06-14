@@ -54,6 +54,15 @@ namespace SlavGPS {
 
 
 
+	enum {
+		/* Must be kept as zero for backwards compatibility
+		   reasons. Not a big deal, just don't change it. */
+		LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE = 0,
+	};
+
+
+
+
 	class Viewport;
 	class MapCacheObj;
 
@@ -178,9 +187,10 @@ namespace SlavGPS {
 		MapCacheLayout cache_layout = MapCacheLayout::Viking;
 		int alpha = 0;
 
-		int mapzoom_id = 0;
-		double xmapzoom = 0.0;
-		double ymapzoom = 0.0;
+
+		int map_zoom_id = LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE; /* This member is used as array index, so make sure to use with non-sparse enum values. */
+		double map_zoom_x = 0.0;
+		double map_zoom_y = 0.0;
 
 		bool autodownload = false;
 		bool adl_only_missing = false;

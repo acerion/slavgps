@@ -61,7 +61,7 @@ namespace SlavGPS {
 
 		/* Get top-left and bottom-right coordinates of rectangle that has
 		   dimensions (width/height) specified by area_span, and is centered at this coord's center. */
-		void get_area_coordinates(const LatLon * area_span, Coord * coord_tl, Coord * coord_br) const;
+		void get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coord * coord_br) const;
 
 		bool is_inside(const Coord * coord_tl, const Coord * coord_br) const;
 

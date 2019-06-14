@@ -88,7 +88,7 @@ static double scale_to_mpp(int scale)
 
 
 
-bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest) const
+bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info) const
 {
 	if (src_coord.mode != CoordMode::UTM) {
 		return false;
@@ -101,14 +101,14 @@ bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const Vik
 	const double xmpp = viking_scale.get_x();
 	const double ympp = viking_scale.get_y();
 
-	dest.scale.set_scale_value(mpp_to_scale(xmpp, this->map_type_id));
-	if (0 == dest.scale.get_scale_value()) {
+	tile_info.scale.set_scale_value(mpp_to_scale(xmpp, this->map_type_id));
+	if (0 == tile_info.scale.get_scale_value()) {
 		return false;
 	}
 
-	dest.x = (int)(((int)(src_coord.utm.get_easting()))/(200 * xmpp));
-	dest.y = (int)(((int)(src_coord.utm.get_northing()))/(200 * xmpp));
-	dest.z = src_coord.utm.get_zone();
+	tile_info.x = (int)(((int)(src_coord.utm.get_easting()))/(200 * xmpp));
+	tile_info.y = (int)(((int)(src_coord.utm.get_northing()))/(200 * xmpp));
+	tile_info.z = src_coord.utm.get_zone();
 	return true;
 }
 

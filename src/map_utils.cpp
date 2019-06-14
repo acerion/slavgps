@@ -70,16 +70,17 @@ sg_ret MapUtils::lat_lon_to_iTMS(const LatLon & lat_lon, const VikingScale & vik
 		return sg_ret::err;
 	}
 
-	/* Convenience variable. */
-	const double xzoom = viking_scale.get_x();
-
 	dest.scale = viking_scale.to_tile_scale();
 	if (!dest.scale.is_valid()) {
 		return sg_ret::err;
 	}
 
-	dest.x = (lat_lon.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
-	dest.y = (180 - MERCLAT(lat_lon.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xzoom;
+	/* Convenience variable. */
+	const double xmpp = viking_scale.get_x();
+	const double ympp = viking_scale.get_y();
+
+	dest.x = (lat_lon.lon + 180) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp;
+	dest.y = (180 - MERCLAT(lat_lon.lat)) / 360 * VIK_GZ(MAGIC_SEVENTEEN) / ympp;
 	dest.z = 0;
 
 	return sg_ret::ok;

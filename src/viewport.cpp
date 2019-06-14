@@ -541,6 +541,7 @@ const VikingScale & Viewport::get_viking_scale(void) const
 
 sg_ret Viewport::set_viking_scale(const VikingScale & new_value)
 {
+	/* TODO: add validation. */
 	this->viking_scale = new_value;
 	return sg_ret::ok;
 }

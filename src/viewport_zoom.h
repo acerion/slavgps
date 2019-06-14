@@ -39,6 +39,7 @@
 
 #include "dialog.h"
 #include "mapcoord.h"
+#include "globals.h"
 
 
 
@@ -104,10 +105,10 @@ namespace SlavGPS {
 		   closest to @viking_scale.  On success return
 		   through @result an index of the found closest scale.
 
-		   @return 0 on success
-		   @return negative value on failure
+		   @return sg_ret::ok on success
+		   @return sg_ret::err on failure
 		*/
-		static int get_closest_index(int & result, const std::vector<VikingScale> & viking_scales, const VikingScale & viking_scale);
+		static sg_ret get_closest_index(int & result, const std::vector<VikingScale> & viking_scales, const VikingScale & viking_scale);
 
 	private:
 		/* Invalid values. */

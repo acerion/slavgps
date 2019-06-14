@@ -40,7 +40,7 @@ namespace SlavGPS {
 		~MapSourceWmsc();
 		MapSourceWmsc(MapTypeID map_type, const QString & label, const QString & server_hostname, const QString & server_path_format);
 
-		bool coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & dest) const override;
+		bool coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info) const override;
 		sg_ret tile_info_to_center_coord(const TileInfo & src, Coord & coord) const override;
 
 		bool supports_download_only_new(void) const override;

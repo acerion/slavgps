@@ -2500,9 +2500,9 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 
 
 
-std::list<Rect *> * Track::get_rectangles(LatLon * wh)
+std::list<Rect *> Track::get_rectangles(const LatLon & area_span)
 {
-	std::list<Rect *> * rectangles = new std::list<Rect *>;
+	std::list<Rect *> rectangles;
 
 	bool new_map = true;
 	Coord coord_tl;
@@ -2511,18 +2511,18 @@ std::list<Rect *> * Track::get_rectangles(LatLon * wh)
 	while (iter != this->trackpoints.end()) {
 		Coord * cur_coord = &(*iter)->coord;
 		if (new_map) {
-			cur_coord->get_area_coordinates(wh, &coord_tl, &coord_br);
+			cur_coord->get_area_coordinates(area_span, &coord_tl, &coord_br);
 			Rect * rect = new Rect;
 			rect->tl = coord_tl;
 			rect->br = coord_br;
 			rect->center = *cur_coord;
-			rectangles->push_front(rect);
+			rectangles.push_front(rect);
 			new_map = false;
 			iter++;
 			continue;
 		}
 		bool found = false;
-		for (auto rect_iter = rectangles->begin(); rect_iter != rectangles->end(); rect_iter++) {
+		for (auto rect_iter = rectangles.begin(); rect_iter != rectangles.end(); rect_iter++) {
 			if (cur_coord->is_inside(&(*rect_iter)->tl, &(*rect_iter)->br)) {
 				found = true;
 				break;
@@ -3687,10 +3687,10 @@ void Track::geotagging_track_cb(void)
 
 
 
-static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradient)
+static Coord * get_next_coord(Coord *from, Coord *to, const LatLon & area_span, double gradient)
 {
-	if ((dist->lon >= std::abs(to->ll.lon - from->ll.lon))
-	    && (dist->lat >= std::abs(to->ll.lat - from->ll.lat))) {
+	if ((area_span.lon >= std::abs(to->ll.lon - from->ll.lon))
+	    && (area_span.lat >= std::abs(to->ll.lat - from->ll.lat))) {
 
 		return NULL;
 	}
@@ -3700,16 +3700,16 @@ static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradi
 
 	if (std::abs(gradient) < 1) {
 		if (from->ll.lon > to->ll.lon) {
-			coord->ll.lon = from->ll.lon - dist->lon;
+			coord->ll.lon = from->ll.lon - area_span.lon;
 		} else {
-			coord->ll.lon = from->ll.lon + dist->lon;
+			coord->ll.lon = from->ll.lon + area_span.lon;
 		}
 		coord->ll.lat = gradient * (coord->ll.lon - from->ll.lon) + from->ll.lat;
 	} else {
 		if (from->ll.lat > to->ll.lat) {
-			coord->ll.lat = from->ll.lat - dist->lat;
+			coord->ll.lat = from->ll.lat - area_span.lat;
 		} else {
-			coord->ll.lat = from->ll.lat + dist->lat;
+			coord->ll.lat = from->ll.lat + area_span.lat;
 		}
 		coord->ll.lon = (1/gradient) * (coord->ll.lat - from->ll.lat) + from->ll.lat;
 	}
@@ -3720,14 +3720,14 @@ static Coord * get_next_coord(Coord *from, Coord *to, LatLon *dist, double gradi
 
 
 
-static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, LatLon *dist)
+static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, const LatLon & area_span)
 {
 	/* TODO_LATER: handle vertical track (to->ll.lon - from->ll.lon == 0). */
 	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
 
 	Coord * next = from;
 	while (true) {
-		if ((next = get_next_coord(next, to, dist, gradient)) == NULL) {
+		if ((next = get_next_coord(next, to, area_span, gradient)) == NULL) {
 			break;
 		}
 		list.push_front(next);
@@ -3739,34 +3739,35 @@ static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, Lat
 
 
 
-static int get_download_area_width(const VikingScale & viking_scale, LatLon * wh) /* kamilFIXME: viewport is unused, why? */
+static sg_ret get_download_area_span(const VikingScale & viking_scale, LatLon & span) /* kamilFIXME: viewport is unused, why? */
 {
 	/* TODO_LATER: calculating based on current size of viewport. */
 	const double w_at_zoom_0_125 = 0.0013;
 	const double h_at_zoom_0_125 = 0.0011;
 	const double zoom_factor = viking_scale.get_x() / 0.125;
 
-	wh->lat = h_at_zoom_0_125 * zoom_factor;
-	wh->lon = w_at_zoom_0_125 * zoom_factor;
+	span.lat = h_at_zoom_0_125 * zoom_factor;
+	span.lon = w_at_zoom_0_125 * zoom_factor;
 
-	return 0;   /* All OK. */
+	return sg_ret::ok;
 }
 
 
 
 
-std::list<Rect *> * Track::get_map_rectangles(const VikingScale & viking_scale)
+std::list<Rect *> Track::get_map_rectangles(const VikingScale & viking_scale)
 {
+	std::list<Rect *> rectangles; /* Rectangles to download. */
 	if (this->empty()) {
-		return NULL;
+		return rectangles;
 	}
 
-	LatLon wh;
-	if (get_download_area_width(viking_scale, &wh)) {
-		return NULL;
+	LatLon area_span;
+	if (sg_ret::ok != get_download_area_span(viking_scale, area_span)) {
+		return rectangles;
 	}
 
-	std::list<Rect *> * rects_to_download = this->get_rectangles(&wh);
+	rectangles = this->get_rectangles(area_span);
 	std::list<Coord *> fillins;
 
 	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
@@ -3777,14 +3778,14 @@ std::list<Rect *> * Track::get_map_rectangles(const VikingScale & viking_scale)
 		std::list<Rect *>::iterator cur_rect;
 		std::list<Rect *>::iterator next_rect;
 
-		for (cur_rect = rects_to_download->begin();
-		     (next_rect = std::next(cur_rect)) != rects_to_download->end();
+		for (cur_rect = rectangles.begin();
+		     (next_rect = std::next(cur_rect)) != rectangles.end();
 		     cur_rect++) {
 
-			if ((wh.lon < std::abs((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
-			    || (wh.lat < std::abs((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
+			if ((area_span.lon < std::abs((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
+			    || (area_span.lat < std::abs((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
 
-				add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
+				add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, area_span);
 			}
 		}
 	} else {
@@ -3795,17 +3796,17 @@ std::list<Rect *> * Track::get_map_rectangles(const VikingScale & viking_scale)
 	Coord coord_br;
 	for (auto iter = fillins.begin(); iter != fillins.end(); iter++) {
 		Coord * cur_coord = *iter;
-		cur_coord->get_area_coordinates(&wh, &coord_tl, &coord_br);
+		cur_coord->get_area_coordinates(area_span, &coord_tl, &coord_br);
 		Rect * rect = new Rect;
 		rect->tl = coord_tl;
 		rect->br = coord_br;
 		rect->center = *cur_coord;
-		rects_to_download->push_front(rect);
+		rectangles.push_front(rect);
 
 		delete *iter;
 	}
 
-	return rects_to_download;
+	return rectangles;
 }
 
 

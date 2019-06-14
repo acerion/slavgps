@@ -561,16 +561,16 @@ VikingScale::VikingScale(double new_x, double new_y)
 
 
 
-int VikingScale::get_closest_index(int & result, const std::vector<VikingScale> & viking_scales, const VikingScale & viking_scale)
+sg_ret VikingScale::get_closest_index(int & result, const std::vector<VikingScale> & viking_scales, const VikingScale & viking_scale)
 {
 	for (unsigned int idx = 0; idx < viking_scales.size(); idx++) {
 		if (viking_scale.get_x() == viking_scales[idx].get_x()) {
 			result = idx;
-			return 0;
+			return sg_ret::ok;
 		}
 	}
 
-	return -1;
+	return sg_ret::err;
 }
 
 
