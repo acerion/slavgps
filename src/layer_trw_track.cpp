@@ -1042,7 +1042,7 @@ TrackData Track::make_values_altitude_over_time_helper(void) const
 void Track::convert(CoordMode dest_mode)
 {
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
-		(*iter)->coord.change_mode(dest_mode);
+		(*iter)->coord.recalculate_to_mode(dest_mode);
 	}
 }
 
@@ -2523,7 +2523,7 @@ std::list<Rect *> Track::get_rectangles(const LatLon & area_span)
 		}
 		bool found = false;
 		for (auto rect_iter = rectangles.begin(); rect_iter != rectangles.end(); rect_iter++) {
-			if (cur_coord->is_inside(&(*rect_iter)->tl, &(*rect_iter)->br)) {
+			if (cur_coord->is_inside((*rect_iter)->tl, (*rect_iter)->br)) {
 				found = true;
 				break;
 			}
@@ -3696,7 +3696,7 @@ static Coord * get_next_coord(Coord *from, Coord *to, const LatLon & area_span, 
 	}
 
 	Coord * coord = new Coord();
-	coord->mode = CoordMode::LatLon;
+	coord->set_coord_mode(CoordMode::LatLon);
 
 	if (std::abs(gradient) < 1) {
 		if (from->ll.lon > to->ll.lon) {

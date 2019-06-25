@@ -90,7 +90,7 @@ static double scale_to_mpp(int scale)
 
 bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info) const
 {
-	if (src_coord.mode != CoordMode::UTM) {
+	if (src_coord.get_coord_mode() != CoordMode::UTM) {
 		return false;
 	}
 
@@ -119,7 +119,7 @@ sg_ret MapSourceTerraserver::tile_info_to_center_coord(const TileInfo & src, Coo
 {
 	/* TODO_2_LATER: slowdown here! */
 	const double mpp = scale_to_mpp(src.scale.get_scale_value());
-	coord.mode = CoordMode::UTM;
+	coord.set_coord_mode(CoordMode::UTM); /* This function decides what will be the coord mode of returned coordinate. */
 	coord.utm.set_zone(src.z);
 	coord.utm.easting = ((src.x * 200) + 100) * mpp;
 	coord.utm.northing = ((src.y * 200) + 100) * mpp;

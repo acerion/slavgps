@@ -192,7 +192,7 @@ sg_ret expedia_crop(const QString & file)
    Everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq). */
 static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info)
 {
-	assert (src_coord.mode == CoordMode::LatLon);
+	assert (src_coord.get_coord_mode() == CoordMode::LatLon);
 
 	if (!viking_scale.x_y_is_equal()) {
 		return false;
@@ -230,13 +230,10 @@ LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 
 static sg_ret expedia_tile_info_to_center_coord(const TileInfo & src, Coord & coord)
 {
-	if (coord.mode == CoordMode::LatLon) {
-		coord.ll.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
-		coord.ll.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
-		return sg_ret::ok;
-	} else {
-		return sg_ret::err;
-	}
+	coord.set_coord_mode(CoordMode::LatLon); /* This function decides what will be the coord mode of returned coordinate. */
+	coord.ll.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
+	coord.ll.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
+	return sg_ret::ok;
 }
 
 

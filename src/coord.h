@@ -40,10 +40,10 @@ namespace SlavGPS {
 
 
 
-	/* Possible more modes to come? xy? We'll leave that as an option. */
 	enum class CoordMode {
-		UTM     = 0,
-		LatLon  = 1
+		Invalid = -1, /* Invalid mode. May be also used to indicate invalid coordinate. */
+		UTM     =  0,
+		LatLon  =  1
 	};
 
 
@@ -58,14 +58,17 @@ namespace SlavGPS {
 
 		LatLon get_latlon(void) const;
 		UTM get_utm(void) const;
+		CoordMode get_coord_mode(void) const;
+
+		void set_coord_mode(CoordMode mode);
 
 		/* Get top-left and bottom-right coordinates of rectangle that has
 		   dimensions (width/height) specified by area_span, and is centered at this coord's center. */
 		void get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coord * coord_br) const;
 
-		bool is_inside(const Coord * coord_tl, const Coord * coord_br) const;
+		bool is_inside(const Coord & coord_tl, const Coord & coord_br) const;
 
-		void change_mode(CoordMode new_mode);
+		sg_ret recalculate_to_mode(CoordMode new_mode);
 
 		static double distance(const Coord & coord1, const Coord & coord2); /* Result is in meters. */
 		static Distance distance_2(const Coord & coord1, const Coord & coord2); /* Result is in meters. */
@@ -79,7 +82,9 @@ namespace SlavGPS {
 
 		LatLon ll;
 		UTM utm;
-		CoordMode mode = CoordMode::UTM;
+
+	private:
+		CoordMode mode = CoordMode::Invalid;
 	};
 	QDebug operator<<(QDebug debug, const Coord & coord);
 

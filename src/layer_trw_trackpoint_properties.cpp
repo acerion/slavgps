@@ -82,7 +82,7 @@ void TpPropertiesDialog::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 
-	const Coord new_coord(LatLon(this->lat_entry->value(), this->lon_entry->value()), this->current_tp->coord.mode);
+	const Coord new_coord(LatLon(this->lat_entry->value(), this->lon_entry->value()), this->current_tp->coord.get_coord_mode());
 
 
 	const bool redraw_track = Coord::distance(this->current_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */

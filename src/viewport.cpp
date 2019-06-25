@@ -909,7 +909,7 @@ sg_ret Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zo
 		qDebug() << SG_PREFIX_E << "Can't center for zone" << zone;
 		return sg_ret::err;
 	}
-	coord_ul.mode = CoordMode::UTM;
+	coord_ul.set_coord_mode(CoordMode::UTM);
 
 
 	/* Both coordinates will be now at center. */
@@ -1050,7 +1050,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
-		coord.mode = CoordMode::UTM;
+		coord.set_coord_mode(CoordMode::UTM);
 
 		/* Modified (reformatted) formula. */
 		{
@@ -1071,7 +1071,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			int zone_delta = 0;
 
 			Coord test_coord;
-			test_coord.mode = CoordMode::UTM;
+			test_coord.set_coord_mode(CoordMode::UTM);
 
 			test_coord.utm.set_zone(this->center.utm.get_zone());
 			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
@@ -1101,7 +1101,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		break;
 
 	case CoordMode::LatLon:
-		coord.mode = CoordMode::LatLon;
+		coord.set_coord_mode(CoordMode::LatLon);
 
 		switch (this->drawmode) {
 		case ViewportDrawMode::LatLon:
@@ -1114,7 +1114,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			/* Original code, used for comparison of results with new, reformatted formula. */
 			{
 				Coord test_coord;
-				test_coord.mode = CoordMode::LatLon;
+				test_coord.set_coord_mode(CoordMode::LatLon);
 
 				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
 				test_coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * delta_vert_pixels);
@@ -1146,7 +1146,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			/* Original code, used for comparison of results with new, reformatted formula. */
 			{
 				Coord test_coord;
-				test_coord.mode = CoordMode::LatLon;
+				test_coord.set_coord_mode(CoordMode::LatLon);
 
 				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
 				test_coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * delta_vert_pixels));
@@ -1201,7 +1201,7 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 	const int horiz_center_pixel = this->canvas.get_horiz_center_pixel();
 	const int vert_center_pixel = this->canvas.get_vert_center_pixel();
 
-	if (coord_in.mode != this->coord_mode) {
+	if (coord_in.get_coord_mode() != this->coord_mode) {
 		/* The intended use of the function is that coord_in
 		   argument is always in correct coord mode (i.e. in
 		   viewport's coord mode). If it is necessary to
@@ -1211,7 +1211,7 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 		   different than viewport's coordinate mode, it's an
 		   error. */
 		qDebug() << SG_PREFIX_W << "Need to convert coord mode! This should never happen!";
-		coord.change_mode(this->coord_mode);
+		coord.recalculate_to_mode(this->coord_mode);
 	}
 
 	switch (this->coord_mode) {
@@ -1792,7 +1792,7 @@ CoordMode Viewport::get_coord_mode(void) const
 void Viewport::set_coord_mode(CoordMode new_mode)
 {
 	this->coord_mode = new_mode;
-	this->center.change_mode(new_mode);
+	this->center.recalculate_to_mode(new_mode);
 }
 
 
@@ -1886,10 +1886,10 @@ LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top,
 	Coord bleft =  this->screen_pos_to_coord(this->canvas.get_leftmost_pixel() + margin_left,    this->canvas.get_bottommost_pixel() + margin_bottom);
 	Coord bright = this->screen_pos_to_coord(this->canvas.get_rightmost_pixel() + margin_right,  this->canvas.get_bottommost_pixel() + margin_bottom);
 
-	tleft.change_mode(CoordMode::LatLon);
-	tright.change_mode(CoordMode::LatLon);
-	bleft.change_mode(CoordMode::LatLon);
-	bright.change_mode(CoordMode::LatLon);
+	tleft.recalculate_to_mode(CoordMode::LatLon);
+	tright.recalculate_to_mode(CoordMode::LatLon);
+	bleft.recalculate_to_mode(CoordMode::LatLon);
+	bright.recalculate_to_mode(CoordMode::LatLon);
 
 	LatLonBBox bbox;
 	bbox.north = std::max(tleft.ll.lat, tright.ll.lat);

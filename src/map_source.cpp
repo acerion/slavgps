@@ -542,12 +542,15 @@ QPixmap MapSource::get_tile_pixmap(const MapCacheObj & map_cache_obj, const Tile
 bool MapSource::includes_tile(const TileInfo & tile_info) const
 {
 	Coord center_coord;
-	this->tile_info_to_center_coord(tile_info, center_coord);
+	if (sg_ret::ok != this->tile_info_to_center_coord(tile_info, center_coord)) {
+		qDebug() << SG_PREFIX_E << "Failed to convert tile into to coordinate";
+		return false;
+	}
 
 	const Coord coord_tl(LatLon(this->lat_max, this->lon_min), CoordMode::LatLon);
 	const Coord coord_br(LatLon(this->lat_min, this->lon_max), CoordMode::LatLon);
 
-	return center_coord.is_inside(&coord_tl, &coord_br);
+	return center_coord.is_inside(coord_tl, coord_br);
 }
 
 

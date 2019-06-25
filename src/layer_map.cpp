@@ -1022,7 +1022,7 @@ TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
 
 
 
-void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
+sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
 {
 	double xmpp = viewport->get_viking_scale().get_x();
 	double ympp = viewport->get_viking_scale().get_y();
@@ -1048,7 +1048,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 						QString msg = tr("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
 						window->statusbar_update(StatusBarField::Info, msg);
 					}
-					return;
+					return sg_ret::ok;
 				}
 			}
 		}
@@ -1063,7 +1063,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
 	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
-		return;
+		qDebug() << SG_PREFIX_E << "Failed to get tile info";
+		return sg_ret::err;
 	}
 
 
@@ -1100,8 +1101,7 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 	TileInfo tile_iter = tile_ul;
 
 	const QString map_type_string = map_source->get_map_type_string();
-	Coord coord;LatLon lat_lon;
-	UTM utm;
+	Coord coord;
 	if (map_source->get_tilesize_x() == 0 && !existence_only) {
 
 		for (tile_iter.x = unordered_tiles_range.x_first; tile_iter.x <= unordered_tiles_range.x_last; tile_iter.x++) {
@@ -1121,7 +1121,10 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 				tile_geometry.width = tile_geometry.pixmap.width();
 				tile_geometry.height = tile_geometry.pixmap.height();
 
-				map_source->tile_info_to_center_coord(tile_iter, coord);
+				if (sg_ret::ok != map_source->tile_info_to_center_coord(tile_iter, coord)) {
+					qDebug() << SG_PREFIX_E << "Can't get coord, continue";
+					continue;
+				}
 				viewport->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
 
 				tile_geometry.dest_x -= (tile_geometry.width / 2);
@@ -1144,7 +1147,10 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 		tile_geometry.width = ceil(tile_width_f);
 		tile_geometry.height = ceil(tile_height_f);
 
-		map_source->tile_info_to_center_coord(tile_ul, coord);
+		if (sg_ret::ok != map_source->tile_info_to_center_coord(tile_ul, coord)) {
+			qDebug() << SG_PREFIX_E << "Can't get coord, return";
+			return sg_ret::err;
+		}
 		viewport->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
 
 		const int viewport_x_grid = tile_geometry.dest_x;
@@ -1206,6 +1212,8 @@ void LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const C
 			LayerMap::draw_grid(viewport, pen, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_first, delta_x, ordered_tiles_range.x_last + 1, ordered_tiles_range.y_first, delta_y, ordered_tiles_range.y_last + 1, tile_width_f, tile_height_f);
 		}
 	}
+
+	return sg_ret::ok;
 }
 
 

@@ -110,7 +110,7 @@ bool MapSourceSlippy::supports_download_only_new(void) const
 
 bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info) const
 {
-	if (src_coord.mode != CoordMode::LatLon) {
+	if (src_coord.get_coord_mode() != CoordMode::LatLon) {
 		qDebug() << SG_PREFIX_E << "Invalid coord mode of argument";
 		return false;
 	}
@@ -123,13 +123,9 @@ bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingSc
 
 sg_ret MapSourceSlippy::tile_info_to_center_coord(const TileInfo & src, Coord & coord) const
 {
-	if (coord.mode == CoordMode::LatLon) {
-		coord.ll = MapUtils::iTMS_to_center_lat_lon(src);
-		return sg_ret::ok;
-	} else {
-		qDebug() << SG_PREFIX_E << "Called the function for non-LatLon coord mode" << (int) coord.mode;
-		return sg_ret::err;
-	}
+	coord.set_coord_mode(CoordMode::LatLon); /* This function decides what will be the coord mode of returned coordinate. */
+	coord.ll = MapUtils::iTMS_to_center_lat_lon(src);
+	return sg_ret::ok;
 }
 
 

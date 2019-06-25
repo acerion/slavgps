@@ -795,10 +795,10 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 	Coord bleft =  viewport->screen_pos_to_coord(0,                     viewport->get_height());
 	Coord bright = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
 
-	tleft.change_mode(CoordMode::UTM);
-	tright.change_mode(CoordMode::UTM);
-	bleft.change_mode(CoordMode::UTM);
-	bright.change_mode(CoordMode::UTM);
+	tleft.recalculate_to_mode(CoordMode::UTM);
+	tright.recalculate_to_mode(CoordMode::UTM);
+	bleft.recalculate_to_mode(CoordMode::UTM);
+	bright.recalculate_to_mode(CoordMode::UTM);
 
 	double max_nor = std::max(tleft.utm.get_northing(), tright.utm.get_northing());
 	double min_nor = std::min(bleft.utm.get_northing(), bright.utm.get_northing());

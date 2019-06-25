@@ -1414,7 +1414,7 @@ void LayerGPS::rt_tracking_draw(Viewport * viewport, RTData & rt_data)
 	}
 
 	Coord gps_coord = rt_data.coord;
-	gps_coord.change_mode(viewport->get_coord_mode()); /* TODO_LATER: why do we need to change coord mode? */
+	gps_coord.recalculate_to_mode(viewport->get_coord_mode()); /* TODO_LATER: why do we need to change coord mode? */
 
 	const ScreenPos screen_pos = viewport->coord_to_screen_pos(gps_coord);
 

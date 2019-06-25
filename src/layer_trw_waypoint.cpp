@@ -272,7 +272,7 @@ Waypoint * Waypoint::unmarshall(Pickle & pickle)
 
 void Waypoint::convert(CoordMode dest_mode)
 {
-	this->coord.change_mode(dest_mode);
+	this->coord.recalculate_to_mode(dest_mode);
 }
 
 

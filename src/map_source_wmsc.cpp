@@ -96,7 +96,7 @@ bool MapSourceWmsc::supports_download_only_new(void) const
 
 bool MapSourceWmsc::coord_to_tile_info(const Coord & src_coord, const VikingScale & viking_scale, TileInfo & tile_info) const
 {
-	assert (src_coord.mode == CoordMode::LatLon);
+	assert (src_coord.get_coord_mode() == CoordMode::LatLon);
 
 	if (!viking_scale.x_y_is_equal()) {
 		return false;
@@ -129,7 +129,8 @@ sg_ret MapSourceWmsc::tile_info_to_center_coord(const TileInfo & src, Coord & co
 {
 	const double socalled_mpp = src.scale.to_so_called_mpp();
 
-	coord.mode = CoordMode::LatLon;
+	coord.set_coord_mode(CoordMode::LatLon); /* This function decides what will be the coord mode of returned coordinate. */
+
 	coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */

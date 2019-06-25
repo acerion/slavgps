@@ -44,16 +44,25 @@ using namespace SlavGPS;
 
 
 
-void Coord::change_mode(CoordMode new_mode)
+sg_ret Coord::recalculate_to_mode(CoordMode new_mode)
 {
 	if (this->mode != new_mode) {
-		if (new_mode == CoordMode::LatLon) {
+		switch (new_mode) {
+		case CoordMode::LatLon:
 			this->ll = UTM::to_latlon(this->utm);
-		} else {
+			break;
+		case CoordMode::UTM:
 			this->utm = LatLon::to_utm(this->ll);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid new mode" << (int) new_mode;
+			return sg_ret::err;
 		}
+
 		this->mode = new_mode;
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -213,6 +222,23 @@ UTM Coord::get_utm(void) const
 
 
 
+CoordMode Coord::get_coord_mode(void) const
+{
+	return this->mode;
+}
+
+
+
+
+void Coord::set_coord_mode(CoordMode new_mode)
+{
+	this->mode = new_mode;
+	return;
+}
+
+
+
+
 bool Coord::operator==(const Coord & coord) const
 {
 	if (this->mode != coord.mode) {
@@ -260,7 +286,7 @@ Coord & Coord::operator=(const Coord & other)
 
 QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
 {
-	switch (coord.mode) {
+	switch (coord.get_coord_mode()) {
 	case CoordMode::UTM:
 		debug << "Coordinate UTM:" << coord.utm;
 		break;
@@ -268,7 +294,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
 		debug << "Coordinate LatLon:" << coord.ll;
 		break;
 	default:
-		debug << "\n" << SG_PREFIX_E << "Unexpected coordinate mode" << (int) coord.mode;
+		debug << "\n" << SG_PREFIX_E << "Unexpected coordinate mode" << (int) coord.get_coord_mode();
 		break;
 	}
 
@@ -335,11 +361,11 @@ void Coord::get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coo
 
 
 
-bool Coord::is_inside(const Coord * tl, const Coord * br) const
+bool Coord::is_inside(const Coord & tl, const Coord & br) const
 {
 	const LatLon this_lat_lon = this->get_latlon();
-	const LatLon tl_ll = tl->get_latlon();
-	const LatLon br_ll = br->get_latlon();
+	const LatLon tl_ll = tl.get_latlon();
+	const LatLon br_ll = br.get_latlon();
 
 	if ((this_lat_lon.lat > tl_ll.lat) || (this_lat_lon.lon < tl_ll.lon)) {
 		return false;
