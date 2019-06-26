@@ -108,12 +108,13 @@ double Viewport::calculate_utm_zone_width(void) const
 
 		/* Get latitude of screen bottom. */
 		UTM utm = this->center.utm;
-		utm.northing -= (this->get_canvas_height_m() / 2);
-		LatLon ll = UTM::to_latlon(utm);
+		const double center_to_bottom_m = this->get_canvas_height_m() / 2;
+		utm.shift_northing_by(-center_to_bottom_m);
+		LatLon lat_lon = UTM::to_lat_lon(utm);
 
 		/* Boundary. */
-		ll.lon = (utm.get_zone() - 1) * 6 - 180 ;
-		utm = LatLon::to_utm(ll);
+		lat_lon.lon = (utm.get_zone() - 1) * 6 - 180 ;
+		utm = LatLon::to_utm(lat_lon);
 		return fabs(utm.get_easting() - UTM_CENTRAL_MERIDIAN_EASTING) * 2;
 	}
 
@@ -236,7 +237,7 @@ Viewport::~Viewport()
 {
 	qDebug() << SG_PREFIX_I;
 	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
-		const LatLon lat_lon = this->center.get_latlon();
+		const LatLon lat_lon = this->center.get_lat_lon();
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon);
 
@@ -587,15 +588,7 @@ sg_ret Viewport::set_viking_scale_y(double new_value)
 
 
 
-const Coord * Viewport::get_center(void) const
-{
-	return &this->center;
-}
-
-
-
-
-Coord Viewport::get_center2(void) const
+const Coord & Viewport::get_center(void) const
 {
 	return this->center;
 }
@@ -607,7 +600,7 @@ Coord Viewport::get_center2(void) const
 void Viewport::utm_zone_check(void)
 {
 	if (this->coord_mode == CoordMode::UTM) {
-		const UTM utm = LatLon::to_utm(UTM::to_latlon(center.utm));
+		const UTM utm = LatLon::to_utm(UTM::to_lat_lon(center.utm));
 		if (!UTM::is_the_same_zone(utm, this->center.utm)) {
 			this->center.utm = utm;
 		}
@@ -920,13 +913,13 @@ sg_ret Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zo
 	   we move the coordinates from center to one of the two corners. */
 	const double center_to_top_m = this->get_canvas_height_m() / 2;
 	const double center_to_left_m = this->get_canvas_width_m() / 2;
-	coord_ul.utm.northing += center_to_top_m;
-	coord_ul.utm.easting  -= center_to_left_m;
+	coord_ul.utm.shift_northing_by(center_to_top_m);
+	coord_ul.utm.shift_easting_by(-center_to_left_m);
 
 	const double center_to_bottom_m = this->get_canvas_height_m() / 2;
 	const double center_to_right_m = this->get_canvas_width_m() / 2;
-	coord_br.utm.northing -= center_to_bottom_m;
-	coord_br.utm.easting  += center_to_right_m;
+	coord_br.utm.shift_northing_by(-center_to_bottom_m);
+	coord_br.utm.shift_easting_by(center_to_right_m);
 
 	return sg_ret::ok;
 }
@@ -945,7 +938,7 @@ sg_ret Viewport::utm_recalculate_current_center_for_other_zone(UTM & center_in_o
 
 	/* TODO: why do we have to offset easting? Wouldn't easting of center be the same in each zone? */
 	center_in_other_zone = this->center.utm;
-	center_in_other_zone.easting -= zone_diff * this->utm_zone_width;
+	center_in_other_zone.shift_easting_by(-(zone_diff * this->utm_zone_width));
 	center_in_other_zone.set_zone(zone);
 
 	return sg_ret::ok;
@@ -993,8 +986,8 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 		const double delta_horiz_m = delta_horiz_pixel * this->viking_scale.x;
 		const double delta_vert_m = delta_vert_pixel * this->viking_scale.y;
 
-		this->center.utm.easting += delta_horiz_m;
-		this->center.utm.northing += delta_vert_m;
+		this->center.utm.shift_easting_by(delta_horiz_m);
+		this->center.utm.shift_northing_by(delta_vert_m);
 		this->utm_zone_check();
 	} else {
 		const Coord coord = this->screen_pos_to_coord(x1, y1);
@@ -1057,13 +1050,13 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			coord.utm.set_zone(this->center.utm.get_zone());
 			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			coord.utm.set_band_letter(this->center.utm.get_band_letter());
-			coord.utm.easting = (delta_horiz_pixels * xmpp) + this->center.utm.easting;
+			coord.utm.set_easting((delta_horiz_pixels * xmpp) + this->center.utm.get_easting());
 
 			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			coord.utm.shift_zone_by(zone_delta);
-			coord.utm.easting -= zone_delta * this->utm_zone_width;
-			coord.utm.northing = (delta_vert_pixels * ympp) + this->center.utm.northing;
+			coord.utm.shift_easting_by(-(zone_delta * this->utm_zone_width));
+			coord.utm.set_northing((delta_vert_pixels * ympp) + this->center.utm.get_northing());
 		}
 
 		/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1107,8 +1100,8 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		case ViewportDrawMode::LatLon:
 			/* Modified (reformatted) formula. */
 			{
-				coord.ll.lon = this->center.ll.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.ll.lat = this->center.ll.lat + (delta_vert_pixels / REVERSE_MERCATOR_FACTOR(ympp));
+				coord.lat_lon.lon = this->center.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.lat_lon.lat = this->center.lat_lon.lat + (delta_vert_pixels / REVERSE_MERCATOR_FACTOR(ympp));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1116,20 +1109,20 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
-				test_coord.ll.lat = this->center.ll.lat + (180.0 * ympp / 65536 / 256 * delta_vert_pixels);
+				test_coord.lat_lon.lon = this->center.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.lat_lon.lat = this->center.lat_lon.lat + (180.0 * ympp / 65536 / 256 * delta_vert_pixels);
 
-				if (coord.ll.lat != test_coord.ll.lat) {
-					qDebug() << SG_PREFIX_E << "LatLon: Latitude calculation mismatch" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
+				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
+					qDebug() << SG_PREFIX_E << "LatLon: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				}
-				if (coord.ll.lon != test_coord.ll.lon) {
-					qDebug() << SG_PREFIX_E << "LatLon: Longitude calculation mismatch" << coord << test_coord << (coord.ll.lon - test_coord.ll.lon);
+				if (coord.lat_lon.lon != test_coord.lat_lon.lon) {
+					qDebug() << SG_PREFIX_E << "LatLon: Longitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				}
 			}
 			break;
 
 		case ViewportDrawMode::Expedia:
-			Expedia::screen_pos_to_lat_lon(coord.ll, pos_x, pos_y, this->center.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
+			Expedia::screen_pos_to_lat_lon(coord.lat_lon, pos_x, pos_y, this->center.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
 						       /* TODO: make sure that this is ok, that we don't need to use get_width()/get_height() here. */
 						       this->canvas.get_horiz_center_pixel(),
 						       this->canvas.get_vert_center_pixel());
@@ -1139,8 +1132,8 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			/* This isn't called with a high frequently so less need to optimize. */
 			/* Modified (reformatted) formula. */
 			{
-				coord.ll.lon = this->center.ll.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (delta_vert_pixels / (REVERSE_MERCATOR_FACTOR(ympp))));
+				coord.lat_lon.lon = this->center.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center.lat_lon.lat) + (delta_vert_pixels / (REVERSE_MERCATOR_FACTOR(ympp))));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1148,18 +1141,18 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.ll.lon = this->center.ll.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
-				test_coord.ll.lat = DEMERCLAT (MERCLAT(this->center.ll.lat) + (180.0 * ympp / 65536 / 256 * delta_vert_pixels));
+				test_coord.lat_lon.lon = this->center.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center.lat_lon.lat) + (180.0 * ympp / 65536 / 256 * delta_vert_pixels));
 
-				if (coord.ll.lat != test_coord.ll.lat) {
-					qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
+				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
+					qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				} else {
-					qDebug() << SG_PREFIX_I << "Mercator: OK Latitude" << coord << test_coord << (coord.ll.lat - test_coord.ll.lat);
+					qDebug() << SG_PREFIX_I << "Mercator: OK Latitude" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				}
-				if (coord.ll.lon != test_coord.ll.lon) {
-					qDebug() << SG_PREFIX_E << "Mercator: Longitude calculation mismatch" << coord << test_coord << (coord.ll.lon - test_coord.ll.lon);
+				if (coord.lat_lon.lon != test_coord.lat_lon.lon) {
+					qDebug() << SG_PREFIX_E << "Mercator: Longitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				} else {
-					qDebug() << SG_PREFIX_I << "Mercator: OK Longitude" << coord << test_coord << (coord.ll.lon - test_coord.ll.lon);
+					qDebug() << SG_PREFIX_I << "Mercator: OK Longitude" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				}
 			}
 			break;
@@ -1234,20 +1227,20 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 	case CoordMode::LatLon:
 		switch (this->drawmode) {
 		case ViewportDrawMode::LatLon:
-			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
-			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center.ll.lat - coord.ll.lat));
+			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center.lat_lon.lon));
+			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center.lat_lon.lat - coord.lat_lon.lat));
 			break;
 		case ViewportDrawMode::Expedia:
 			{
 				double xx, yy;
-				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.ll, coord.ll, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, horiz_center_pixel, vert_center_pixel);
+				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.lat_lon, coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, horiz_center_pixel, vert_center_pixel);
 				*pos_x = xx;
 				*pos_y = yy;
 			}
 			break;
 		case ViewportDrawMode::Mercator:
-			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.ll.lon - this->center.ll.lon));
-			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.ll.lat) - MERCLAT(coord.ll.lat)));
+			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center.lat_lon.lon));
+			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.lat_lon.lat) - MERCLAT(coord.lat_lon.lat)));
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
@@ -1892,10 +1885,10 @@ LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top,
 	bright.recalculate_to_mode(CoordMode::LatLon);
 
 	LatLonBBox bbox;
-	bbox.north = std::max(tleft.ll.lat, tright.ll.lat);
-	bbox.south = std::min(bleft.ll.lat, bright.ll.lat);
-	bbox.east  = std::max(tright.ll.lon, bright.ll.lon);
-	bbox.west  = std::min(tleft.ll.lon, bleft.ll.lon);
+	bbox.north = std::max(tleft.lat_lon.lat, tright.lat_lon.lat);
+	bbox.south = std::min(bleft.lat_lon.lat, bright.lat_lon.lat);
+	bbox.east  = std::max(tright.lat_lon.lon, bright.lat_lon.lon);
+	bbox.west  = std::min(tleft.lat_lon.lon, bleft.lat_lon.lon);
 	bbox.validate();
 
 	return bbox;
@@ -1946,10 +1939,10 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
-		LatLon ll = test.get_latlon();
-		ll.lat += this->get_viking_scale().y * this->canvas.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
+		LatLon lat_lon = test.get_lat_lon();
+		lat_lon.lat += this->get_viking_scale().y * this->canvas.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
 
-		test = Coord(LatLon::to_utm(ll), CoordMode::UTM);
+		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
 
 		base_angle.set_value(M_PI - atan2(test_pos.x - x1, test_pos.y - y1));

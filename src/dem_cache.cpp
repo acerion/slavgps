@@ -211,7 +211,7 @@ static bool calculate_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 	double lat, lon;
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		const LatLon ll_tmp = ce->coord->get_latlon();
+		const LatLon ll_tmp = ce->coord->get_lat_lon();
 		lat = ll_tmp.lat * 3600;
 		lon = ll_tmp.lon * 3600;
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {

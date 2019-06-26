@@ -115,7 +115,7 @@ bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingSc
 		return false;
 	}
 
-	return sg_ret::ok == MapUtils::lat_lon_to_iTMS(src_coord.ll, viking_scale, tile_info);
+	return sg_ret::ok == MapUtils::lat_lon_to_iTMS(src_coord.lat_lon, viking_scale, tile_info);
 }
 
 
@@ -124,7 +124,7 @@ bool MapSourceSlippy::coord_to_tile_info(const Coord & src_coord, const VikingSc
 sg_ret MapSourceSlippy::tile_info_to_center_coord(const TileInfo & src, Coord & coord) const
 {
 	coord.set_coord_mode(CoordMode::LatLon); /* This function decides what will be the coord mode of returned coordinate. */
-	coord.ll = MapUtils::iTMS_to_center_lat_lon(src);
+	coord.lat_lon = MapUtils::iTMS_to_center_lat_lon(src);
 	return sg_ret::ok;
 }
 

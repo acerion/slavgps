@@ -98,7 +98,7 @@ OnlineService_query::~OnlineService_query()
 QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 {
 	/* Center values. */
-	const LatLon lat_lon = a_viewport->get_center()->get_latlon();
+	const LatLon lat_lon = a_viewport->get_center().get_lat_lon();
 
 	QString center_lat;
 	QString center_lon;

@@ -429,7 +429,7 @@ void LayerTRWWaypoints::recalculate_bbox(void)
 
 
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		const LatLon lat_lon = (*iter)->coord.get_latlon();
+		const LatLon lat_lon = (*iter)->coord.get_lat_lon();
 		this->bbox.expand_with_lat_lon(lat_lon);
 	}
 	this->bbox.validate();

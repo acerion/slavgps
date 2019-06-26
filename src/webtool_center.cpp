@@ -75,7 +75,7 @@ QString OnlineService_center::get_url_at_position(Viewport * a_viewport, const C
 		result = this->get_url_for_coord(*a_coord, viking_scale);
 	} else {
 		qDebug() << SG_PREFIX_I << "Getting URL for center of viewport";
-		result = this->get_url_for_coord(*a_viewport->get_center(), viking_scale);
+		result = this->get_url_for_coord(a_viewport->get_center(), viking_scale);
 	}
 
 	return result;
@@ -86,7 +86,7 @@ QString OnlineService_center::get_url_at_position(Viewport * a_viewport, const C
 
 QString OnlineService_center::get_url_for_viewport(Viewport * a_viewport)
 {
-	return this->get_url_for_coord(*a_viewport->get_center(), a_viewport->get_viking_scale());
+	return this->get_url_for_coord(a_viewport->get_center(), a_viewport->get_viking_scale());
 }
 
 
@@ -94,7 +94,7 @@ QString OnlineService_center::get_url_for_viewport(Viewport * a_viewport)
 
 QString OnlineService_center::get_url_for_coord(const Coord & a_coord, const VikingScale & viking_scale)
 {
-	const LatLon lat_lon = a_coord.get_latlon();
+	const LatLon lat_lon = a_coord.get_lat_lon();
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	TileZoomLevel tile_zoom_level(TileZoomLevels::Default);

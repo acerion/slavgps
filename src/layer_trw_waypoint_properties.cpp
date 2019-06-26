@@ -100,7 +100,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 	std::map<param_id_t, SGVariant> values;
 	{
-		const LatLon lat_lon = wp->coord.get_latlon();
+		const LatLon lat_lon = wp->coord.get_lat_lon();
 
 		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_NAME, SGVariant(default_wp_name))); /* TODO_LATER: This should be somehow taken from param_specs->default */
 

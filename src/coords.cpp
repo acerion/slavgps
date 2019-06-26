@@ -256,6 +256,24 @@ sg_ret UTM::set_band_letter(char letter)
 
 
 
+sg_ret UTM::shift_northing_by(double delta_meters)
+{
+	this->northing += delta_meters;
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret UTM::shift_easting_by(double delta_meters)
+{
+	this->easting += delta_meters;
+	return sg_ret::ok;
+}
+
+
+
+
 QStringList UTM::get_band_symbols(void)
 {
 	static QStringList symbols;
@@ -318,8 +336,8 @@ double UTM::get_distance(const UTM & utm1, const UTM & utm2)
 	if (utm1.zone == utm2.zone) {
 		return sqrt(pow(utm1.easting - utm2.easting, 2) + pow(utm1.northing - utm2.northing, 2));
 	} else {
-		const LatLon tmp1 = UTM::to_latlon(utm1);
-		const LatLon tmp2 = UTM::to_latlon(utm2);
+		const LatLon tmp1 = UTM::to_lat_lon(utm1);
+		const LatLon tmp2 = UTM::to_lat_lon(utm2);
 		return LatLon::get_distance(tmp1, tmp2);
 	}
 }
@@ -433,7 +451,7 @@ static UTMLetter coords_utm_band_letter(double latitude)
 
 
 
-LatLon UTM::to_latlon(const UTM & utm)
+LatLon UTM::to_lat_lon(const UTM & utm)
 {
 	double x = utm.easting - 500000.0; /* remove 500000 meter offset */
 	double y = utm.northing;
@@ -589,7 +607,7 @@ bool Coords::unit_tests(void)
 	{
 		const LatLon lat_lon_in(34.123456, 12.654321);
 		const UTM utm = LatLon::to_utm(lat_lon_in);
-		const LatLon lat_lon_out = UTM::to_latlon(utm);
+		const LatLon lat_lon_out = UTM::to_lat_lon(utm);
 
 		qDebug() << SG_PREFIX_D << lat_lon_in << "->" << utm << "->" << lat_lon_out << "->" << lat_lon_close_enough(lat_lon_in, lat_lon_out);
 		assert (lat_lon_close_enough(lat_lon_in, lat_lon_out));
@@ -604,7 +622,7 @@ bool Coords::unit_tests(void)
 		utm_in.easting = 283673;
 		utm_in.set_zone(33);
 		utm_in.set_band_letter(UTMLetter::S);
-		const LatLon lat_lon = UTM::to_latlon(utm_in);
+		const LatLon lat_lon = UTM::to_lat_lon(utm_in);
 		const UTM utm_out = LatLon::to_utm(lat_lon);
 
 		qDebug() << SG_PREFIX_D << utm_in << "->" << lat_lon << "->" << utm_out << "->" << UTM::close_enough(utm_in, utm_out);

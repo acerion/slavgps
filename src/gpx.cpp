@@ -836,7 +836,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 	}
 
 	FILE * file = context->file;
-	static LatLon lat_lon = wp->coord.get_latlon();
+	const LatLon lat_lon = wp->coord.get_lat_lon();
 	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
 	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(file, "<wpt lat=\"%s\" lon=\"%s\"%s>\n", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), wp->is_visible() ? "" : " hidden=\"hidden\"");
@@ -913,7 +913,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 		fprintf(file, "  </trkseg>\n  <trkseg>\n");
 	}
 
-	const LatLon lat_lon = tp->coord.get_latlon();
+	const LatLon lat_lon = tp->coord.get_lat_lon();
 	fprintf(file, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 
 	if (!tp->name.isEmpty()) {

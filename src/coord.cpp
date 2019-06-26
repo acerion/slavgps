@@ -49,10 +49,10 @@ sg_ret Coord::recalculate_to_mode(CoordMode new_mode)
 	if (this->mode != new_mode) {
 		switch (new_mode) {
 		case CoordMode::LatLon:
-			this->ll = UTM::to_latlon(this->utm);
+			this->lat_lon = UTM::to_lat_lon(this->utm);
 			break;
 		case CoordMode::UTM:
-			this->utm = LatLon::to_utm(this->ll);
+			this->utm = LatLon::to_utm(this->lat_lon);
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid new mode" << (int) new_mode;
@@ -70,8 +70,8 @@ sg_ret Coord::recalculate_to_mode(CoordMode new_mode)
 
 static double distance_safe(const Coord & coord1, const Coord & coord2)
 {
-	const LatLon a = coord1.get_latlon();
-	const LatLon b = coord2.get_latlon();
+	const LatLon a = coord1.get_lat_lon();
+	const LatLon b = coord2.get_lat_lon();
 	return LatLon::get_distance(a, b);
 }
 
@@ -89,7 +89,7 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 		return UTM::get_distance(coord1.utm, coord2.utm);
 
 	case CoordMode::LatLon:
-		return LatLon::get_distance(coord1.ll, coord2.ll);
+		return LatLon::get_distance(coord1.lat_lon, coord2.lat_lon);
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) coord1.mode;
@@ -117,7 +117,7 @@ Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 		return result;
 
 	case CoordMode::LatLon:
-		result = Distance(LatLon::get_distance(coord1.ll, coord2.ll), distance_unit);
+		result = Distance(LatLon::get_distance(coord1.lat_lon, coord2.lat_lon), distance_unit);
 		return result;
 
 	default:
@@ -136,7 +136,7 @@ Coord::Coord(const LatLon & new_lat_lon, CoordMode new_mode)
 		this->utm = LatLon::to_utm(new_lat_lon);
 		break;
 	case CoordMode::LatLon:
-		this->ll = new_lat_lon;
+		this->lat_lon = new_lat_lon;
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) new_mode;
@@ -156,7 +156,7 @@ Coord::Coord(const UTM & new_utm, CoordMode new_mode)
 		this->utm = new_utm;
 		break;
 	case CoordMode::LatLon:
-		this->ll = UTM::to_latlon(new_utm);
+		this->lat_lon = UTM::to_lat_lon(new_utm);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) new_mode;
@@ -170,7 +170,7 @@ Coord::Coord(const UTM & new_utm, CoordMode new_mode)
 
 Coord::Coord(const Coord& coord)
 {
-	this->ll = coord.ll;
+	this->lat_lon = coord.lat_lon;
 	this->utm = coord.utm;
 	this->mode = coord.mode;
 }
@@ -178,16 +178,16 @@ Coord::Coord(const Coord& coord)
 
 
 
-LatLon Coord::get_latlon(void) const
+LatLon Coord::get_lat_lon(void) const
 {
 	LatLon ret;
 
 	switch (this->mode) {
 	case CoordMode::LatLon:
-		ret = this->ll;
+		ret = this->lat_lon;
 		break;
 	case CoordMode::UTM:
-		ret = UTM::to_latlon(this->utm);
+		ret = UTM::to_lat_lon(this->utm);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) this->mode;
@@ -209,7 +209,7 @@ UTM Coord::get_utm(void) const
 		ret = this->utm;
 		break;
 	case CoordMode::LatLon:
-		ret = LatLon::to_utm(this->ll);
+		ret = LatLon::to_utm(this->lat_lon);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) this->mode;
@@ -250,7 +250,7 @@ bool Coord::operator==(const Coord & coord) const
 		return UTM::is_equal(this->utm, coord.utm);
 
 	case CoordMode::LatLon:
-		return this->ll.lat == coord.ll.lat && this->ll.lon == coord.ll.lon;
+		return this->lat_lon.lat == coord.lat_lon.lat && this->lat_lon.lon == coord.lat_lon.lon;
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) this->mode;
@@ -272,7 +272,7 @@ bool Coord::operator!=(const Coord & coord) const
 Coord & Coord::operator=(const Coord & other)
 {
 	if (other.mode == CoordMode::LatLon) {
-		this->ll = other.ll;
+		this->lat_lon = other.lat_lon;
 	} else {
 		this->utm = other.utm;
 	}
@@ -291,7 +291,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const Coord & coord)
 		debug << "Coordinate UTM:" << coord.utm;
 		break;
 	case CoordMode::LatLon:
-		debug << "Coordinate LatLon:" << coord.ll;
+		debug << "Coordinate LatLon:" << coord.lat_lon;
 		break;
 	default:
 		debug << "\n" << SG_PREFIX_E << "Unexpected coordinate mode" << (int) coord.get_coord_mode();
@@ -348,13 +348,13 @@ static LatLon get_south_east_corner(const LatLon & center, const LatLon & distan
 
 void Coord::get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coord * coord_br) const
 {
-	const LatLon center = this->get_latlon();
+	const LatLon center = this->get_lat_lon();
 	const LatLon distance_from_center(area_span.lat / 2, area_span.lon / 2);
 
-	coord_tl->ll = get_north_west_corner(center, distance_from_center);
+	coord_tl->lat_lon = get_north_west_corner(center, distance_from_center);
 	coord_tl->mode = CoordMode::LatLon;
 
-	coord_br->ll = get_south_east_corner(center, distance_from_center);
+	coord_br->lat_lon = get_south_east_corner(center, distance_from_center);
 	coord_br->mode = CoordMode::LatLon;
 }
 
@@ -363,15 +363,15 @@ void Coord::get_area_coordinates(const LatLon & area_span, Coord * coord_tl, Coo
 
 bool Coord::is_inside(const Coord & tl, const Coord & br) const
 {
-	const LatLon this_lat_lon = this->get_latlon();
-	const LatLon tl_ll = tl.get_latlon();
-	const LatLon br_ll = br.get_latlon();
+	const LatLon this_lat_lon = this->get_lat_lon();
+	const LatLon tl_lat_lon = tl.get_lat_lon();
+	const LatLon br_lat_lon = br.get_lat_lon();
 
-	if ((this_lat_lon.lat > tl_ll.lat) || (this_lat_lon.lon < tl_ll.lon)) {
+	if ((this_lat_lon.lat > tl_lat_lon.lat) || (this_lat_lon.lon < tl_lat_lon.lon)) {
 		return false;
 	}
 
-	if ((this_lat_lon.lat < br_ll.lat) || (this_lat_lon.lon > br_ll.lon)) {
+	if ((this_lat_lon.lat < br_lat_lon.lat) || (this_lat_lon.lon > br_lat_lon.lon)) {
 		return false;
 	}
 	return true;
@@ -390,7 +390,7 @@ QString Coord::to_string(void) const
 		break;
 
 	case CoordMode::LatLon:
-		result = this->ll.to_string();
+		result = this->lat_lon.to_string();
 		break;
 
 	default:

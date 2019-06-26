@@ -116,7 +116,7 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 	this->vp_ympp = this->viewport->get_viking_scale().get_y();
 
 	this->vp_rect = this->viewport->get_rect();
-	this->vp_center = this->viewport->get_center2();
+	this->vp_center = this->viewport->get_center();
 	this->vp_coord_mode = this->viewport->get_coord_mode();
 	this->vp_is_one_utm_zone = this->viewport->get_is_one_utm_zone(); /* False if some other projection besides UTM. */
 
@@ -146,10 +146,10 @@ void LayerTRWPainter::set_viewport(Viewport * new_viewport)
 		const Coord upperleft = this->viewport->screen_pos_to_coord(-outside_margin, -outside_margin);
 		const Coord bottomright = this->viewport->screen_pos_to_coord(this->vp_rect.width() + outside_margin, this->vp_rect.height() + outside_margin);
 
-		this->coord_leftmost = upperleft.ll.lon;
-		this->coord_rightmost = bottomright.ll.lon;
-		this->coord_bottommost = bottomright.ll.lat;
-		this->coord_topmost = upperleft.ll.lat;
+		this->coord_leftmost = upperleft.lat_lon.lon;
+		this->coord_rightmost = bottomright.lat_lon.lon;
+		this->coord_bottommost = bottomright.lat_lon.lat;
+		this->coord_topmost = upperleft.lat_lon.lat;
 	} else {
 		;
 	}
@@ -272,8 +272,8 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 
 		if (tp_current && tp_next) {
 
-			const LatLon ll_current = tp_current->coord.get_latlon();
-			const LatLon ll_next = tp_next->coord.get_latlon();
+			const LatLon ll_current = tp_current->coord.get_lat_lon();
+			const LatLon ll_next = tp_next->coord.get_lat_lon();
 
 			/* Positional interpolation.
 			   Using a simple ratio - may not be perfectly correct due to lat/lon projections
@@ -524,7 +524,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 
 #if 1   /* Temporary test code. */
-	this->draw_track_label("test track label", QColor("green"), QColor("black"), this->viewport->get_center2());
+	this->draw_track_label("test track label", QColor("green"), QColor("black"), this->viewport->get_center());
 #endif
 
 
@@ -582,8 +582,8 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
 		if (this->vp_coord_mode == CoordMode::LatLon
-		    && ((prev_tp->coord.ll.lon < SG_LATITUDE_MIN && tp->coord.ll.lon > SG_LATITUDE_MAX)
-			|| (prev_tp->coord.ll.lon > SG_LATITUDE_MAX && tp->coord.ll.lon < SG_LATITUDE_MIN))) {
+		    && ((prev_tp->coord.lat_lon.lon < -90.0 && tp->coord.lat_lon.lon > 90.0)
+			|| (prev_tp->coord.lat_lon.lon > 90.0 && tp->coord.lat_lon.lon < -90.0))) {
 
 			use_prev_pos = false;
 			continue;
@@ -752,8 +752,8 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
 		if (this->vp_coord_mode == CoordMode::LatLon
-		    && ((prev_tp->coord.ll.lon < SG_LATITUDE_MIN && tp->coord.ll.lon > SG_LATITUDE_MAX)
-			|| (prev_tp->coord.ll.lon > SG_LATITUDE_MAX && tp->coord.ll.lon < SG_LATITUDE_MIN))) {
+		    && ((prev_tp->coord.lat_lon.lon < -90.0 && tp->coord.lat_lon.lon > 90.0)
+			|| (prev_tp->coord.lat_lon.lon > 90.0 && tp->coord.lat_lon.lon < -90.0))) {
 
 			use_prev_pos = false;
 			continue;
@@ -1233,8 +1233,8 @@ inline bool LayerTRWPainter::coord_fits_in_viewport(const Coord & coord) const
 		fits_vertically = coord.utm.get_northing() > this->coord_bottommost && coord.utm.get_northing() < this->coord_topmost;
 		break;
 	case CoordMode::LatLon:
-		fits_horizontally = coord.ll.lon < this->coord_rightmost && coord.ll.lon > this->coord_leftmost;
-		fits_vertically = coord.ll.lat > this->coord_bottommost && coord.ll.lat < this->coord_topmost;
+		fits_horizontally = coord.lat_lon.lon < this->coord_rightmost && coord.lat_lon.lon > this->coord_leftmost;
+		fits_vertically = coord.lat_lon.lat > this->coord_bottommost && coord.lat_lon.lat < this->coord_topmost;
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected viewport coordinate mode" << (int) this->vp_coord_mode;

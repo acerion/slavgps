@@ -185,8 +185,7 @@ namespace SlavGPS {
 		sg_ret get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
 
 
-		const Coord * get_center() const;
-		Coord get_center2() const;
+		const Coord & get_center(void) const;
 		std::list<QString> get_centers_list(void) const;
 		void show_centers(Window * parent) const;
 		void print_centers(const QString & label) const;

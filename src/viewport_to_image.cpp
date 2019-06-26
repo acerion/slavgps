@@ -501,7 +501,7 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 	}
 
 	const VikingScale orig_viking_scale = this->viewport->get_viking_scale();
-	const UTM utm_orig = this->viewport->get_center()->utm;
+	const UTM utm_orig = this->viewport->get_center().get_utm();
 
 	this->viewport->set_viking_scale(this->scaled_viking_scale);
 

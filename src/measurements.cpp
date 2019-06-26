@@ -2132,8 +2132,8 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord) const
 		} else {
 			/* No results (e.g. could be in the middle of a sea).
 			   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-			const LatLon ll = coord.get_latlon();
-			result = time_string_adjusted(this->value, round (ll.lon / 15.0) * 3600);
+			const LatLon lat_lon = coord.get_lat_lon();
+			result = time_string_adjusted(this->value, round (lat_lon.lon / 15.0) * 3600);
 			qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
 		}
 		break;
@@ -2189,8 +2189,8 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const 
 			} else {
 				/* No results (e.g. could be in the middle of a sea).
 				   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-				const LatLon ll = coord.get_latlon();
-			        result = time_string_adjusted(this->value, round (ll.lon / 15.0) * 3600);
+				const LatLon lat_lon = coord.get_lat_lon();
+			        result = time_string_adjusted(this->value, round (lat_lon.lon / 15.0) * 3600);
 				qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
 			}
 		}

@@ -291,10 +291,10 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 	const Coord ur = viewport->screen_pos_to_coord(viewport->get_width(), 0);
 	const Coord bl = viewport->screen_pos_to_coord(0,                     viewport->get_height());
 
-	const double minimum_lon = ul.ll.lon;
-	const double maximum_lon = ur.ll.lon;
-	const double minimum_lat = bl.ll.lat;
-	const double maximum_lat = ul.ll.lat;
+	const double minimum_lon = ul.lat_lon.lon;
+	const double maximum_lon = ur.lat_lon.lon;
+	const double minimum_lat = bl.lat_lon.lat;
+	const double maximum_lat = ul.lat_lon.lat;
 
 	const double width_degrees = fabs(minimum_lon - maximum_lon);
 	const double width_minutes = 60.0 * width_degrees;
@@ -333,8 +333,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				for (int second = seconds_begin; second < seconds_end; second++) {
 					if (second % modulo_seconds == 0) {
 						/* Seconds -> degrees. */
-						ul_local.ll.lon = second / 3600.0;
-						bl_local.ll.lon = second / 3600.0;
+						ul_local.lat_lon.lon = second / 3600.0;
+						bl_local.lat_lon.lon = second / 3600.0;
 
 						if (draw_labels) {
 							DRAW_LONGITUDE_LINE(seconds_pen, ul_local, bl_local, QString("%1''").arg(second % 60));
@@ -348,8 +348,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 			if (zoom_level_allows_for_minutes && modulo_minutes) {
 				if (minute % modulo_minutes == 0) {
 					/* Minutes -> degrees. */
-					ul_local.ll.lon = minute / 60.0;
-					bl_local.ll.lon = minute / 60.0;
+					ul_local.lat_lon.lon = minute / 60.0;
+					bl_local.lat_lon.lon = minute / 60.0;
 
 					if (draw_labels) {
 						DRAW_LONGITUDE_LINE(minutes_pen, ul_local, bl_local, QString("%1'").arg(minute % 60));
@@ -364,8 +364,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				const double degree = minute / 60.0;
 				if (is_degree && (((int) degree) % modulo_degrees == 0)) {
 
-					ul_local.ll.lon = degree;
-					bl_local.ll.lon = degree;
+					ul_local.lat_lon.lon = degree;
+					bl_local.lat_lon.lon = degree;
 
 					if (draw_labels) {
 						DRAW_LONGITUDE_LINE(degrees_pen, ul_local, bl_local, QString("%1%2").arg((int) degree).arg(DEGREE_SYMBOL));
@@ -393,8 +393,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				for (int second = seconds_begin; second < seconds_end; second++) {
 					if (second % modulo_seconds == 0) {
 						/* Seconds -> degrees. */
-						ul_local.ll.lat = second / 3600.0;
-						ur_local.ll.lat = second / 3600.0;
+						ul_local.lat_lon.lat = second / 3600.0;
+						ur_local.lat_lon.lat = second / 3600.0;
 
 						if (draw_labels) {
 							DRAW_LATITUDE_LINE(seconds_pen, ul_local, ur_local, QString("%1''").arg(second % 60));
@@ -408,8 +408,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 			if (zoom_level_allows_for_minutes && modulo_minutes) {
 				if (minute % modulo_minutes == 0) {
 					/* Minutes -> degrees. */
-					ul_local.ll.lat = minute / 60.0;
-					ur_local.ll.lat = minute / 60.0;
+					ul_local.lat_lon.lat = minute / 60.0;
+					ur_local.lat_lon.lat = minute / 60.0;
 
 					if (draw_labels) {
 						DRAW_LATITUDE_LINE(minutes_pen, ul_local, ur_local, QString("%1'").arg(minute % 60));
@@ -424,8 +424,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 				if (is_degree && (((int) degree) % modulo_degrees == 0)) {
 
 					/* Minutes -> degrees. */
-					ul_local.ll.lat = degree;
-					ur_local.ll.lat = degree;
+					ul_local.lat_lon.lat = degree;
+					ur_local.lat_lon.lat = degree;
 
 					if (draw_labels) {
 						DRAW_LATITUDE_LINE(degrees_pen, ul_local, ur_local, QString("%1%2").arg((int) degree).arg(DEGREE_SYMBOL));
@@ -451,7 +451,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	QPen pen(this->color_deg);
 	pen.setWidth(this->line_thickness);
 
-	const UTM center = viewport->get_center()->get_utm();
+	const UTM center = viewport->get_center().get_utm();
 	const double xmpp = viewport->get_viking_scale().get_x();
 	const double ympp = viewport->get_viking_scale().get_y();
 	const int width = viewport->get_width();
@@ -469,19 +469,19 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 		temp_utm.easting = temp_utm.easting - (width / 2) * xmpp;
 		temp_utm.northing = temp_utm.northing + (height / 2) * ympp;
-		const LatLon topleft = UTM::to_latlon(temp_utm);
+		const LatLon topleft = UTM::to_lat_lon(temp_utm);
 
 		temp_utm = center;
 		temp_utm.easting = temp_utm.easting + (width / 2 * xmpp);
-		const LatLon topright = UTM::to_latlon(temp_utm);
+		const LatLon topright = UTM::to_lat_lon(temp_utm);
 
 		temp_utm = center;
 		temp_utm.northing = temp_utm.northing - (height / 2 * ympp);
-		const LatLon bottomright = UTM::to_latlon(temp_utm);
+		const LatLon bottomright = UTM::to_lat_lon(temp_utm);
 
 		temp_utm = center;
 		temp_utm.easting = temp_utm.easting - (width / 2 * xmpp);
-		const LatLon bottomleft = UTM::to_latlon(temp_utm);
+		const LatLon bottomleft = UTM::to_lat_lon(temp_utm);
 
 		min.lon = (topleft.lon < bottomleft.lon) ? topleft.lon : bottomleft.lon;
 		max.lon = (topright.lon > bottomright.lon) ? topright.lon : bottomright.lon;
@@ -529,10 +529,10 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		const double vert_distance_m = (height / 2) * ympp;
 
 		utm.northing = center.get_northing() - vert_distance_m;
-		LatLon lat_lon_bottom = UTM::to_latlon(utm);
+		LatLon lat_lon_bottom = UTM::to_lat_lon(utm);
 
 		utm.northing = center.get_northing() + vert_distance_m;
-		LatLon lat_lon_top = UTM::to_latlon(utm);
+		LatLon lat_lon_top = UTM::to_lat_lon(utm);
 
 
 		double lon = ((double) ((long) (min.lon / degrees_delta))) * degrees_delta;
@@ -566,10 +566,10 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		const double horiz_distance_m = (width / 2) * xmpp;
 
 		utm.easting = center.easting - horiz_distance_m;
-		LatLon lat_lon_left = UTM::to_latlon(utm);
+		LatLon lat_lon_left = UTM::to_lat_lon(utm);
 
 		utm.easting = center.easting + horiz_distance_m;
-		LatLon lat_lon_right = UTM::to_latlon(utm);
+		LatLon lat_lon_right = UTM::to_lat_lon(utm);
 
 		const double lat = ((double) ((long) (min.lat / degrees_delta))) * degrees_delta;
 		lat_lon_left.lat = lat;

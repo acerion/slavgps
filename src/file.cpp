@@ -253,7 +253,7 @@ size_t consume_empty_in_line(char ** line)
 
 void file_write_header(FILE * file, const LayerAggregate * top_level_layer, Viewport * viewport)
 {
-	const LatLon lat_lon = viewport->get_center()->get_latlon();
+	const LatLon lat_lon = viewport->get_center().get_lat_lon();
 
 	const QString mode_id_string = ViewportDrawModes::get_id_string(viewport->get_drawmode());
 

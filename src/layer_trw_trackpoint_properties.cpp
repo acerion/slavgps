@@ -266,7 +266,7 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->sync_to_current_tp_block = true; /* Don't update while setting data. */
 
-	const LatLon lat_lon = tp->coord.get_latlon();
+	const LatLon lat_lon = tp->coord.get_lat_lon();
 	this->lat_entry->setValue(lat_lon.lat);
 	this->lon_entry->setValue(lat_lon.lon);
 

@@ -201,8 +201,8 @@ static bool expedia_coord_to_tile_info(const Coord & src_coord, const VikingScal
 	const int alti = viking_scale_to_expedia_alti(viking_scale.get_x());
 	if (alti != -1) {
 		tile_info.scale.set_scale_value(alti);
-		tile_info.x = (int) (((src_coord.ll.lon + 180) * expedia_altis_freq(alti))+0.5);
-		tile_info.y = (int) (((src_coord.ll.lat + 90) * expedia_altis_freq(alti))+0.5);
+		tile_info.x = (int) (((src_coord.lat_lon.lon + 180) * expedia_altis_freq(alti))+0.5);
+		tile_info.y = (int) (((src_coord.lat_lon.lat + 90) * expedia_altis_freq(alti))+0.5);
 		/* + 0.5 to round off and not floor. */
 
 		/* Just to space out tiles on the filesystem. */
@@ -231,8 +231,8 @@ LatLon expedia_xy_to_latlon_middle(int alti, int x, int y)
 static sg_ret expedia_tile_info_to_center_coord(const TileInfo & src, Coord & coord)
 {
 	coord.set_coord_mode(CoordMode::LatLon); /* This function decides what will be the coord mode of returned coordinate. */
-	coord.ll.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
-	coord.ll.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
+	coord.lat_lon.lon = (((double) src.x) / expedia_altis_freq(src.scale.get_scale_value())) - 180;
+	coord.lat_lon.lat = (((double) src.y) / expedia_altis_freq(src.scale.get_scale_value())) - 90;
 	return sg_ret::ok;
 }
 

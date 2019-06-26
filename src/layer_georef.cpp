@@ -787,7 +787,7 @@ void GeorefConfigDialog::sync_from_utm_to_lat_lon(void)
 void GeorefConfigDialog::sync_from_lat_lon_to_utm(void)
 {
 	const UTM utm_corner = this->utm_entry->get_value();
-	const LatLon lat_lon = UTM::to_latlon(utm_corner);
+	const LatLon lat_lon = UTM::to_lat_lon(utm_corner);
 
 	this->lat_lon_tl_entry->set_value(lat_lon);
 }
@@ -1038,7 +1038,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 						 tr("Upper left latitude"),
 						 tr("Upper left longitude:"),
 						 tr("Upper left longitude"));
-		this->lat_lon_tl_entry->set_value(coord.ll);
+		this->lat_lon_tl_entry->set_value(coord.lat_lon);
 
 		this->lat_lon_br_entry = new LatLonEntryWidget();
 		this->lat_lon_br_entry->set_text(tr("Lower right latitude:"),
@@ -1155,10 +1155,13 @@ void LayerGeoref::zoom_to_fit_cb(void)
 void LayerGeoref::goto_center_cb(void)
 {
 	Viewport * viewport = ThisApp::get_main_viewport();
-	UTM utm = viewport->get_center()->get_utm();
+	UTM utm = viewport->get_center().get_utm();
 
-	utm.easting = this->utm_tl.get_easting() + (this->image_width * this->mpp_easting / 2); /* Only an approximation. */
-	utm.northing = this->utm_tl.get_northing() - (this->image_height * this->mpp_northing / 2);
+	const double center_to_left_m = this->image_width * this->mpp_easting / 2;  /* Only an approximation. */
+	const double center_to_bottom_m = this->image_height * this->mpp_northing / 2;
+
+	utm.easting = this->utm_tl.get_easting() + center_to_left_m;
+	utm.northing = this->utm_tl.get_northing() - center_to_bottom_m;
 
 	viewport->set_center_from_utm(utm);
 	viewport->request_redraw("Redrawing items after setting new center coord in viewport");
@@ -1322,12 +1325,12 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	layer->set_name(name);
 	layer->image = *pixmap;
 	layer->utm_tl = coord_tl.get_utm();
-	layer->lat_lon_br = coord_br.get_latlon();
+	layer->lat_lon_br = coord_br.get_lat_lon();
 	layer->image_width = layer->image.width();
 	layer->image_height = layer->image.height();
 
-	const LatLon lat_lon_tl = coord_tl.get_latlon();
-	const LatLon lat_lon_br = coord_br.get_latlon();
+	const LatLon lat_lon_tl = coord_tl.get_lat_lon();
+	const LatLon lat_lon_br = coord_br.get_lat_lon();
 	const CoordMode coord_mode = viewport->get_coord_mode();
 
 	double xmpp, ympp;
@@ -1368,5 +1371,5 @@ void LayerGeoref::configure_from_viewport(Viewport const * viewport)
 	/* Make these defaults based on the current view. */
 	this->mpp_northing = viewport->get_viking_scale().get_y();
 	this->mpp_easting = viewport->get_viking_scale().get_x();
-	this->utm_tl = viewport->get_center()->get_utm();
+	this->utm_tl = viewport->get_center().get_utm();
 }

@@ -275,7 +275,7 @@ public:
 void URLParts::append_tp_coords(const Trackpoint * tp)
 {
 	/* Stringify coordinate. */
-	const QString string = substitute_latlon(this->engine->url_via_ll_fmt, tp->coord.get_latlon());
+	const QString string = substitute_latlon(this->engine->url_via_ll_fmt, tp->coord.get_lat_lon());
 
 	/* Append. */
 	this->url_parts[this->nb] = string;
@@ -306,10 +306,10 @@ QString RoutingEngineWeb::get_url_for_track(Track * trk)
 
 	/* Override first and last positions with associated formats. */
 	Trackpoint * tp = *trk->trackpoints.begin();
-	ctx.url_parts[1] = substitute_latlon(this->url_start_ll_fmt, tp->coord.get_latlon()); /* TODO_2_LATER: have more control and checks for list index. */
+	ctx.url_parts[1] = substitute_latlon(this->url_start_ll_fmt, tp->coord.get_lat_lon()); /* TODO_2_LATER: have more control and checks for list index. */
 
 	tp = *std::prev(trk->trackpoints.end());
-	ctx.url_parts[len - 2] = substitute_latlon(this->url_stop_ll_fmt, tp->coord.get_latlon()); /* TODO_2_LATER: have more control and checks for list index. */
+	ctx.url_parts[len - 2] = substitute_latlon(this->url_stop_ll_fmt, tp->coord.get_lat_lon()); /* TODO_2_LATER: have more control and checks for list index. */
 
 	/* Concat. */
 	const QString url = ctx.url_parts.join("");

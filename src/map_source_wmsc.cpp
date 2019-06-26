@@ -113,12 +113,12 @@ bool MapSourceWmsc::coord_to_tile_info(const Coord & src_coord, const VikingScal
 
 	/* Note: VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2 = number of tile on Y axis. */
 	fprintf(stderr, "DEBUG: %s: xmpp=%f ympp=%f -> %f\n", __FUNCTION__, xmpp, ympp, VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
-	tile_info.x = floor((src_coord.ll.lon + 180) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
+	tile_info.x = floor((src_coord.lat_lon.lon + 180) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
-	tile_info.y = floor((180 - (src_coord.ll.lat + 90)) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
+	tile_info.y = floor((180 - (src_coord.lat_lon.lat + 90)) / 180 * VIK_GZ(MAGIC_SEVENTEEN) / xmpp / 2);
 	tile_info.z = 0;
-	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__, src_coord.ll.lon, src_coord.ll.lat, tile_info.x, tile_info.y);
+	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__, src_coord.lat_lon.lon, src_coord.lat_lon.lat, tile_info.x, tile_info.y);
 	return true;
 }
 
@@ -131,12 +131,12 @@ sg_ret MapSourceWmsc::tile_info_to_center_coord(const TileInfo & src, Coord & co
 
 	coord.set_coord_mode(CoordMode::LatLon); /* This function decides what will be the coord mode of returned coordinate. */
 
-	coord.ll.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
+	coord.lat_lon.lon = (src.x + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	   tile index on Y axis follow a screen logic (top -> down). */
-	coord.ll.lat = -((src.y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
+	coord.lat_lon.lat = -((src.y + 0.5) * 180 / VIK_GZ(MAGIC_SEVENTEEN) * socalled_mpp * 2 - 90);
 
-	qDebug() << SG_PREFIX_D << "Converting:" << src.x << src.y << "->" << coord.ll;
+	qDebug() << SG_PREFIX_D << "Converting:" << src.x << src.y << "->" << coord.lat_lon;
 
 	return sg_ret::ok;
 }

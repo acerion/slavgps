@@ -430,7 +430,7 @@ static sg_ret write_exif_gps_data(const QString & file_full_path, const Coord & 
 		return sg_ret::err;
 	}
 
-	const LatLon lat_lon = coord.get_latlon();
+	const LatLon lat_lon = coord.get_lat_lon();
 
 	if (!geotag_exif_set_gps_info(exif_data, lat_lon.lat, lat_lon.lon, alt.get_value())) {
 		return sg_ret::err;

@@ -1453,17 +1453,17 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
 	const Coord coord = tool->viewport->screen_pos_to_coord(ev->x(), ev->y());
-	const LatLon ll = coord.get_latlon();
+	const LatLon lat_lon = coord.get_lat_lon();
 
-	qDebug() << SG_PREFIX_I << "received event, processing, coord =" << ll;
+	qDebug() << SG_PREFIX_I << "received event, processing, coord =" << lat_lon;
 
 	QString cache_file_name;
 	if (this->source == DEM_SOURCE_SRTM) {
-		cache_file_name = srtm_lat_lon_to_cache_file_name(ll);
+		cache_file_name = srtm_lat_lon_to_cache_file_name(lat_lon);
 		qDebug() << SG_PREFIX_I << "cache file name" << cache_file_name;
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
-		cache_file_name = dem24k_lat_lon_to_cache_file_name(ll);
+		cache_file_name = dem24k_lat_lon_to_cache_file_name(lat_lon);
 #endif
 	}
 
@@ -1482,7 +1482,7 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 		} else if (!this->add_file(dem_full_path)) {
 			qDebug() << SG_PREFIX_I << "released left button, failed to add the file, downloading it";
 			const QString job_description = QObject::tr("Downloading DEM %1").arg(cache_file_name);
-			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, ll, this);
+			DEMDownloadJob * job = new DEMDownloadJob(dem_full_path, lat_lon, this);
 			job->set_description(job_description);
 			job->run_in_background(ThreadPoolType::Remote);
 		} else {
@@ -1502,9 +1502,9 @@ bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 
 		/* What a hack... */
 		QVariant variant;
-		variant = QVariant::fromValue((double) ll.lat);
+		variant = QVariant::fromValue((double) lat_lon.lat);
 		this->right_click_menu->setProperty("lat", variant);
-		variant = QVariant::fromValue((double) ll.lon);
+		variant = QVariant::fromValue((double) lat_lon.lon);
 		this->right_click_menu->setProperty("lon", variant);
 
 		this->right_click_menu->exec(QCursor::pos());

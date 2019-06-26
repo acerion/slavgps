@@ -107,7 +107,7 @@ bool MapSourceTerraserver::coord_to_tile_info(const Coord & src_coord, const Vik
 	}
 
 	tile_info.x = (int)(((int)(src_coord.utm.get_easting()))/(200 * xmpp));
-	tile_info.y = (int)(((int)(src_coord.utm.get_northing()))/(200 * xmpp));
+	tile_info.y = (int)(((int)(src_coord.utm.get_northing()))/(200 * ympp));
 	tile_info.z = src_coord.utm.get_zone();
 	return true;
 }
@@ -121,8 +121,8 @@ sg_ret MapSourceTerraserver::tile_info_to_center_coord(const TileInfo & src, Coo
 	const double mpp = scale_to_mpp(src.scale.get_scale_value());
 	coord.set_coord_mode(CoordMode::UTM); /* This function decides what will be the coord mode of returned coordinate. */
 	coord.utm.set_zone(src.z);
-	coord.utm.easting = ((src.x * 200) + 100) * mpp;
-	coord.utm.northing = ((src.y * 200) + 100) * mpp;
+	coord.utm.set_easting(((src.x * 200) + 100) * mpp);
+	coord.utm.set_northing(((src.y * 200) + 100) * mpp);
 
 	return sg_ret::ok;
 }

@@ -391,8 +391,8 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 
 Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode coord_mode)
 {
-	const LatLon ll_a = tp_a.coord.get_latlon();
-	const LatLon ll_b = tp_b.coord.get_latlon();
+	const LatLon ll_a = tp_a.coord.get_lat_lon();
+	const LatLon ll_b = tp_b.coord.get_lat_lon();
 
 	/* Main positional interpolation. */
 	this->coord = Coord(LatLon::get_average(ll_a, ll_b), coord_mode);
@@ -444,7 +444,7 @@ void Track::recalculate_bbox_last_tp()
 	Trackpoint * tp = *std::prev(this->trackpoints.end());
 	if (tp) {
 		/* See if this trackpoint increases the track bounds and update if so. */
-		const LatLon lat_lon = tp->coord.get_latlon();
+		const LatLon lat_lon = tp->coord.get_lat_lon();
 		this->bbox.expand_with_lat_lon(lat_lon);
 	}
 }
@@ -2062,7 +2062,7 @@ void Track::recalculate_bbox(void)
 
 	this->bbox.invalidate();
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
-		const LatLon lat_lon = (*iter)->coord.get_latlon();
+		const LatLon lat_lon = (*iter)->coord.get_lat_lon();
 		this->bbox.expand_with_lat_lon(lat_lon);
 	}
 	this->bbox.validate();
@@ -3277,9 +3277,9 @@ void Track::open_astro_cb(void)
 		const QString date_buf = tp->timestamp.strftime_utc("%Y%m%d");
 		const QString time_buf = tp->timestamp.strftime_utc("%H:%M:%S");
 
-		const LatLon ll = tp->coord.get_latlon();
-		const QString lat_str = Astro::convert_to_dms(ll.lat);
-		const QString lon_str = Astro::convert_to_dms(ll.lon);
+		const LatLon lat_lon = tp->coord.get_lat_lon();
+		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
+		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
 		const QString alt_str = QString("%1").arg((int)round(tp->altitude.get_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
@@ -3689,8 +3689,8 @@ void Track::geotagging_track_cb(void)
 
 static Coord * get_next_coord(Coord *from, Coord *to, const LatLon & area_span, double gradient)
 {
-	if ((area_span.lon >= std::abs(to->ll.lon - from->ll.lon))
-	    && (area_span.lat >= std::abs(to->ll.lat - from->ll.lat))) {
+	if ((area_span.lon >= std::abs(to->lat_lon.lon - from->lat_lon.lon))
+	    && (area_span.lat >= std::abs(to->lat_lon.lat - from->lat_lon.lat))) {
 
 		return NULL;
 	}
@@ -3699,19 +3699,19 @@ static Coord * get_next_coord(Coord *from, Coord *to, const LatLon & area_span, 
 	coord->set_coord_mode(CoordMode::LatLon);
 
 	if (std::abs(gradient) < 1) {
-		if (from->ll.lon > to->ll.lon) {
-			coord->ll.lon = from->ll.lon - area_span.lon;
+		if (from->lat_lon.lon > to->lat_lon.lon) {
+			coord->lat_lon.lon = from->lat_lon.lon - area_span.lon;
 		} else {
-			coord->ll.lon = from->ll.lon + area_span.lon;
+			coord->lat_lon.lon = from->lat_lon.lon + area_span.lon;
 		}
-		coord->ll.lat = gradient * (coord->ll.lon - from->ll.lon) + from->ll.lat;
+		coord->lat_lon.lat = gradient * (coord->lat_lon.lon - from->lat_lon.lon) + from->lat_lon.lat;
 	} else {
-		if (from->ll.lat > to->ll.lat) {
-			coord->ll.lat = from->ll.lat - area_span.lat;
+		if (from->lat_lon.lat > to->lat_lon.lat) {
+			coord->lat_lon.lat = from->lat_lon.lat - area_span.lat;
 		} else {
-			coord->ll.lat = from->ll.lat + area_span.lat;
+			coord->lat_lon.lat = from->lat_lon.lat + area_span.lat;
 		}
-		coord->ll.lon = (1/gradient) * (coord->ll.lat - from->ll.lat) + from->ll.lat;
+		coord->lat_lon.lon = (1/gradient) * (coord->lat_lon.lat - from->lat_lon.lat) + from->lat_lon.lat;
 	}
 
 	return coord;
@@ -3722,8 +3722,8 @@ static Coord * get_next_coord(Coord *from, Coord *to, const LatLon & area_span, 
 
 static void add_fillins(std::list<Coord *> & list, Coord * from, Coord * to, const LatLon & area_span)
 {
-	/* TODO_LATER: handle vertical track (to->ll.lon - from->ll.lon == 0). */
-	double gradient = (to->ll.lat - from->ll.lat)/(to->ll.lon - from->ll.lon);
+	/* TODO_LATER: handle vertical track (to->lat_lon.lon - from->lat_lon.lon == 0). */
+	const double gradient = (to->lat_lon.lat - from->lat_lon.lat)/(to->lat_lon.lon - from->lat_lon.lon);
 
 	Coord * next = from;
 	while (true) {
@@ -3782,8 +3782,8 @@ std::list<Rect *> Track::get_map_rectangles(const VikingScale & viking_scale)
 		     (next_rect = std::next(cur_rect)) != rectangles.end();
 		     cur_rect++) {
 
-			if ((area_span.lon < std::abs((*cur_rect)->center.ll.lon - (*next_rect)->center.ll.lon))
-			    || (area_span.lat < std::abs((*cur_rect)->center.ll.lat - (*next_rect)->center.ll.lat))) {
+			if ((area_span.lon < std::abs((*cur_rect)->center.lat_lon.lon - (*next_rect)->center.lat_lon.lon))
+			    || (area_span.lat < std::abs((*cur_rect)->center.lat_lon.lat - (*next_rect)->center.lat_lon.lat))) {
 
 				add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, area_span);
 			}

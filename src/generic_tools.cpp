@@ -443,7 +443,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
 
 			/* From the extend of the bounds pick the best zoom level. */
-			const LatLonBBox bbox(cursor_coord.get_latlon(), start_coord.get_latlon());
+			const LatLonBBox bbox(cursor_coord.get_lat_lon(), start_coord.get_lat_lon());
 			ViewportZoom::zoom_to_show_bbox_common(this->viewport, this->viewport->get_coord_mode(), bbox, SG_VIEWPORT_ZOOM_MIN, false);
 			redraw_viewport = true;
 		}

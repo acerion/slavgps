@@ -382,7 +382,7 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 			const double scale = up.get_value() / (1.0 * down.get_value());
 
 			/* Interpolate coordinate. */
-			const LatLon interpolated = LatLon::get_interpolated(tp->coord.get_latlon(), tp_next->coord.get_latlon(), scale);
+			const LatLon interpolated = LatLon::get_interpolated(tp->coord.get_lat_lon(), tp_next->coord.get_lat_lon(), scale);
 			this->coord = Coord(interpolated, CoordMode::LatLon);
 
 			/* Interpolate elevation. */

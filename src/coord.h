@@ -56,7 +56,7 @@ namespace SlavGPS {
 		Coord(const UTM & new_utm, CoordMode new_mode);
 		Coord(const Coord& coord);
 
-		LatLon get_latlon(void) const;
+		LatLon get_lat_lon(void) const;
 		UTM get_utm(void) const;
 		CoordMode get_coord_mode(void) const;
 
@@ -80,7 +80,7 @@ namespace SlavGPS {
 		Coord & operator=(const Coord & other);
 
 
-		LatLon ll;
+		LatLon lat_lon;
 		UTM utm;
 
 	private:

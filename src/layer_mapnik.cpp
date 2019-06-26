@@ -1069,7 +1069,7 @@ ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
 		const Coord coord = tool->viewport->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
-		this->clicked_lat_lon = coord.get_latlon();
+		this->clicked_lat_lon = coord.get_lat_lon();
 
 		this->clicked_viking_scale = tool->viewport->get_viking_scale();
 
@@ -1176,8 +1176,8 @@ sg_ret LayerMapnik::get_tiles_range(const Viewport * viewport, TilesRange & rang
 {
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
 	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
-	const LatLon lat_lon_ul = coord_ul.get_latlon();
-	const LatLon lat_lon_br = coord_br.get_latlon();
+	const LatLon lat_lon_ul = coord_ul.get_lat_lon();
+	const LatLon lat_lon_br = coord_br.get_lat_lon();
 
 	const VikingScale viking_scale = viewport->get_viking_scale();
 

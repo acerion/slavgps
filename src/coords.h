@@ -153,7 +153,7 @@ namespace SlavGPS {
 		UTM(double new_northing = NAN, double new_easting = NAN, int new_zone = 0, UTMLetter new_band_letter = UTMLetter::None) {};
 
 		static bool is_equal(const UTM & utm1, const UTM & utm2);
-		static LatLon to_latlon(const UTM & utm);
+		static LatLon to_lat_lon(const UTM & utm);
 
 		QString to_string(void) const;
 
@@ -175,6 +175,9 @@ namespace SlavGPS {
 		sg_ret set_zone(int value);
 		sg_ret set_band_letter(char character);
 		sg_ret set_band_letter(UTMLetter letter);
+
+		sg_ret shift_northing_by(double delta_meters);
+		sg_ret shift_easting_by(double delta_meters);
 
 		sg_ret shift_zone_by(int shift);
 

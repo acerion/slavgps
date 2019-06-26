@@ -2000,7 +2000,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	bool visible_with_parents = false;
 
-	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center2(), visible_with_parents, this->get_window())) {
+	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center(), visible_with_parents, this->get_window())) {
 		this->waypoints.recalculate_bbox();
 		/* We don't have direct access to added waypoint, so
 		   we can't call ::emit_tree_item_changed(). But we

@@ -1436,8 +1436,8 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 		   || ((ev->modifiers() & Qt::ControlModifier) && track)) {
 
 		Trackpoint * tp_start = track->get_tp_last();
-		const LatLon start = tp_start->coord.get_latlon();
-		const LatLon end = tmp.get_latlon();
+		const LatLon start = tp_start->coord.get_lat_lon();
+		const LatLon end = tmp.get_lat_lon();
 
 		trw->route_finder_started = true;
 		trw->route_finder_append = true;  /* Merge tracks. Keep started true. */

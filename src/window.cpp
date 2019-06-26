@@ -995,7 +995,7 @@ void Window::draw_tree_items(void)
 
 #ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
-	this->trigger_center = this->viewport->viewport->get_center2();
+	this->trigger_center = this->viewport->viewport->get_center();
 	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
 	Layer * old_trigger = this->viewport->viewport->get_trigger();
@@ -1442,7 +1442,7 @@ void Window::menu_copy_centre_cb(void)
 	QString first;
 	QString second;
 
-	const Coord coord = this->viewport->central->get_center2();
+	const Coord coord = this->viewport->central->get_center();
 
 	bool full_format = false;
 	(void) ApplicationState::get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
@@ -1453,7 +1453,7 @@ void Window::menu_copy_centre_cb(void)
 		message = coord.to_string();
 	} else {
 		/* Simple x.xx y.yy format. */
-		message = coord.get_latlon().to_string();
+		message = coord.get_lat_lon().to_string();
 	}
 
 	Pickle dummy;
@@ -1473,11 +1473,11 @@ void Window::map_cache_flush_cb(void)
 
 void Window::set_default_location_cb(void)
 {
-	const LatLon current_center_ll = this->viewport->central->get_center()->get_latlon();
+	const LatLon current_center_lat_lon = this->viewport->central->get_center().get_lat_lon();
 
 	/* Push center coordinate values to Preferences */
-	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_ll.lat));
-	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_longitude"), SGVariant((double) current_center_ll.lon));
+	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_lat_lon.lat));
+	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_longitude"), SGVariant((double) current_center_lat_lon.lon));
 	Preferences::save_to_file();
 }
 

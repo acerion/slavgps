@@ -451,7 +451,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 				Coord new_center;
 				if (get_coordinate_of(viewport, city, &new_center)) {
 					/* Got something. */
-					lat_lon = new_center.get_latlon();
+					lat_lon = new_center.get_lat_lon();
 					result = 2;
 					name = city;
 					goto tidy;
@@ -466,7 +466,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 				Coord new_center;
 				if (get_coordinate_of(viewport, country, &new_center)) {
 					/* Finally got something. */
-					lat_lon = new_center.get_latlon();
+					lat_lon = new_center.get_lat_lon();
 					result = 3;
 					name = country;
 					goto tidy;
@@ -486,7 +486,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
 sg_ret GoTo::goto_latlon(Window * window, Viewport * viewport)
 {
-	const LatLon initial_lat_lon = viewport->get_center()->get_latlon();
+	const LatLon initial_lat_lon = viewport->get_center().get_lat_lon();
 	const LatLon new_lat_lon = goto_latlon_dialog(initial_lat_lon, window);
 
 	if (!new_lat_lon.is_valid()) {
@@ -530,7 +530,7 @@ LatLon goto_latlon_dialog(const LatLon & initial_lat_lon, Window * parent)
 bool GoTo::goto_utm(Window * window, Viewport * viewport)
 {
 	UTM new_utm;
-	const UTM initial_utm = viewport->get_center()->get_utm();
+	const UTM initial_utm = viewport->get_center().get_utm();
 
 	if (QDialog::Rejected == goto_utm_dialog(new_utm, initial_utm, window)) {
 		return false;

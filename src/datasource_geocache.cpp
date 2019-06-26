@@ -207,7 +207,7 @@ DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title,
 
 
 	QLabel * center_label = new QLabel(QObject::tr("Centered around:"), this);
-	const LatLon lat_lon = this->viewport->get_center()->get_latlon();
+	const LatLon lat_lon = this->viewport->get_center().get_lat_lon();
 	this->center_entry = new LatLonEntryWidget();
 	this->center_entry->set_value(lat_lon);
 

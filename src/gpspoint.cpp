@@ -756,7 +756,7 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 			continue;
 		}
 
-		const LatLon lat_lon = wp->coord.get_latlon();
+		const LatLon lat_lon = wp->coord.get_lat_lon();
 		char * tmp_name = slashdup(wp->name);
 		fprintf(file, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData(), tmp_name);
 		free(tmp_name);
@@ -828,7 +828,7 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 
 static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool is_route)
 {
-	const LatLon lat_lon = tp->coord.get_latlon();
+	const LatLon lat_lon = tp->coord.get_lat_lon();
 
 	fprintf(file, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", is_route ? "route" : "track", SGUtils::double_to_c(lat_lon.lat).toUtf8().constData(), SGUtils::double_to_c(lat_lon.lon).toUtf8().constData());
 

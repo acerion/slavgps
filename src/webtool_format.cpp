@@ -79,7 +79,7 @@ OnlineService_format::~OnlineService_format()
 QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
 {
 	/* Center values. */
-	LatLon center_lat_lon = a_viewport->get_center()->get_latlon();
+	LatLon center_lat_lon = a_viewport->get_center().get_lat_lon();
 	QString center_lat;
 	QString center_lon;
 	center_lat_lon.to_strings_raw(center_lat, center_lon);
@@ -87,7 +87,7 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 
 	LatLon position_lat_lon;
 	if (a_coord) {
-		position_lat_lon = a_coord->get_latlon();
+		position_lat_lon = a_coord->get_lat_lon();
 	} else {
 		/* Coordinate not provided to function, so fall back to center of viewport. */
 		position_lat_lon = center_lat_lon;

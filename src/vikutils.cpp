@@ -249,7 +249,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 
 		case 'L': {
 			/* Location (Latitude/Longitude). */
-			const QString lat_lon_string = tp->coord.get_latlon().to_string();
+			const QString lat_lon_string = tp->coord.get_lat_lon().to_string();
 
 			values[i] = QObject::tr("%1%2").arg(separator).arg(lat_lon_string);
 			break;
@@ -504,8 +504,8 @@ const QTimeZone * TZLookup::get_tz_at_location(const Coord & coord)
 		return tz;
 	}
 
-	const LatLon ll = coord.get_latlon();
-	const double pt[2] = { ll.lat, ll.lon };
+	const LatLon lat_lon = coord.get_lat_lon();
+	const double pt[2] = { lat_lon.lat, lat_lon.lon };
 
 	double nearest;
 	if (!ApplicationState::get_double(VIK_SETTINGS_NEAREST_TZ_FACTOR, &nearest)) {
