@@ -32,17 +32,25 @@
 #include <QLabel>
 #include <QDebug>
 #include <QAction>
+#include <QHBoxLayout>
 
 
 
 
 #include "statusbar.h"
 #include "background.h"
+#include "widget_coord_display.h"
+#include "globals.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Status Bar"
 
 
 
@@ -143,13 +151,11 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	this->fields[(int) StatusBarField::Items] = label;
 	this->addPermanentWidget(label);
 
-	label = new QLabel("position");
-	label->minimumSize().rwidth() = 275;
-	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
-	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	label->setToolTip(tr("Current position"));
-	this->fields[(int) StatusBarField::Position] = label;
-	this->addPermanentWidget(label);
+
+	CoordDisplayWidget * coord_display = new CoordDisplayWidget();
+	this->fields[(int) StatusBarField::Position] = coord_display;
+	this->addPermanentWidget(coord_display);
+
 
 	label = new QLabel("info");
 	label->minimumSize().rwidth() = 275;
@@ -179,19 +185,29 @@ void StatusBar::set_message(StatusBarField field, QString const & message)
 	case StatusBarField::Items:
 	case StatusBarField::Zoom:
 	case StatusBarField::Info:
-	case StatusBarField::Position:
-	case StatusBarField::Tool: {
-
+	case StatusBarField::Tool:
 		/* Label. */
 		((QLabel *) this->fields[(int) field])->setText(message);
-	}
+		break;
+
+	case StatusBarField::Position:
+		qDebug() << SG_PREFIX_E << "'position' field should be set with ::set_coord()";
 		break;
 
 	default:
-		qDebug() << "EE: Status Bar: unhandled field number" << (int) field;
+		qDebug() << SG_PREFIX_E << "unhandled field number" << (int) field;
 		break;
 	}
 }
+
+
+
+
+void StatusBar::set_coord(const Coord & coord)
+{
+	((CoordDisplayWidget *) this->fields[(int) StatusBarField::Position])->set_value(coord);
+}
+
 
 
 

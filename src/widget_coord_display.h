@@ -1,7 +1,7 @@
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,19 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_STATUSBAR_H_
-#define _SG_STATUSBAR_H_
-
-
-
-
-#include <vector>
+#ifndef _SG_WIDGET_COORD_H_
+#define _SG_WIDGET_COORD_H_
 
 
 
 
 #include <QObject>
-#include <QStatusBar>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QLabel>
 
 
 
@@ -45,31 +42,16 @@ namespace SlavGPS {
 
 
 
-	enum class StatusBarField {
-		Tool,
-		Items,
-		Zoom,
-		Info,
-		Position,
-		Max
-	};
-
-
-
-
-	class StatusBar : public QStatusBar {
+	class CoordDisplayWidget : public QFrame {
 		Q_OBJECT
 	public:
-		StatusBar(QWidget * parent);
-		~StatusBar();
-
-		void set_message(StatusBarField field, QString const & message);
-		void set_coord(const Coord & coord);
-		QAction * toggleViewAction(void) const;
+		CoordDisplayWidget(QWidget * parent = NULL);
+		void set_value(const Coord & coord);
 
 	private:
-		QAction * toggle_view_action = NULL;
-		std::vector<QWidget *> fields;
+		QVBoxLayout * vbox = NULL;
+		QLabel * lat_lon_label = NULL;
+		QLabel * utm_label = NULL;
 	};
 
 
@@ -80,4 +62,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_STATUSBAR_H_ */
+#endif /* #ifndef _SG_WIDGET_COORD_H_ */

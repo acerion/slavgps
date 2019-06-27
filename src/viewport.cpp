@@ -2145,15 +2145,14 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	}
 
 	const Altitude altitude = DEMCache::get_elev_by_coord(coord, interpol_method);
-
 	QString message;
 	if (altitude.is_valid()) {
-		message = QObject::tr("%1 %2").arg(coord_string).arg(altitude.convert_to_unit(Preferences::get_unit_height()).to_string());
-	} else {
-		message = coord_string;
+		/* TODO: add displaying of altitude in statusbar. */
+		// altitude.convert_to_unit(Preferences::get_unit_height()).to_string()
+		//message = QObject::tr("%1 %2").arg(coord_string).arg();
 	}
 
-	this->window->get_statusbar()->set_message(StatusBarField::Position, message);
+	this->window->get_statusbar()->set_coord(coord);
 
 #ifdef K_FIXME_RESTORE
 	this->window->pan_move(ev);
