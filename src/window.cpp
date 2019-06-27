@@ -1306,8 +1306,17 @@ void Window::pan_move(QMouseEvent * ev)
 {
 	//qDebug() << SG_PREFIX_I;
 	if (this->pan_pos.x != -1) {
-		this->viewport->central->set_center_from_screen_pos(this->viewport->central_get_width() / 2 - ev->x() + this->pan_pos.x,
-								    this->viewport->central_get_height() / 2 - ev->y() + this->pan_pos.y);
+		const int center_x = this->viewport->central_get_width() / 2;
+		const int center_y = this->viewport->central_get_height() / 2;
+
+		/* By how much a center of viewport was moved by panning? */
+		const int pan_delta_x = ev->x() - this->pan_pos.x;
+		const int pan_delta_y = ev->y() - this->pan_pos.y;
+
+		/* "Move a screen pixel that is delta x/y from center
+		   of viewport, into a center of viewport. */
+		this->viewport->central->set_center_from_screen_pos(center_x - pan_delta_x, center_y - pan_delta_y);
+
 		this->pan_move_flag = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
 		this->emit_center_or_zoom_changed("pan move");

@@ -317,7 +317,7 @@ namespace SlavGPS {
 		void open_window(const QStringList & file_full_paths);
 
 		bool pan_move_flag = false;
-		ScreenPos pan_pos;
+		ScreenPos pan_pos; /* Last recorded position of cursor while panning. */
 		ScreenPos delayed_pan_pos; /* Temporary storage. */
 		bool single_click_pending = false;
 
