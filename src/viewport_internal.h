@@ -42,6 +42,7 @@
 #include "viewport.h"
 #include "viewport_decorations.h"
 #include "viewport_zoom.h"
+#include "viewport_pixmap.h"
 #include "coord.h"
 #include "bbox.h"
 
@@ -62,85 +63,6 @@ namespace SlavGPS {
 
 
 
-	/* Wrapper around pixmap and a painter that paints to the
-	   pixmap.  Simple class providing paint primitives. */
-	class ViewportPixmap : public QObject {
-		Q_OBJECT
-
-		friend class Viewport;
-		friend class Viewport2D;
-		friend class ViewportDecorations;
-		friend class ViewportMargin;
-	public:
-		ViewportPixmap();
-		~ViewportPixmap();
-
-		void reconfigure(int width, int height);
-
-		char debug[100] = { 0 };
-
-		int get_leftmost_pixel(void) const;
-		int get_rightmost_pixel(void) const;
-		int get_topmost_pixel(void) const;
-		int get_bottommost_pixel(void) const;
-
-		/* Get number of pixel (starting with zero) that is in
-		   center of viewport pixmap, either at the center of
-		   vertical line, or at the center of horizontal
-		   line. */
-		int get_vert_center_pixel(void) const;
-		int get_horiz_center_pixel(void) const;
-
-		int get_width(void) const;
-		int get_height(void) const;
-
-
-		void clear(void);
-
-
-		/* Drawing primitives. */
-		void draw_line(QPen const & pen, int begin_x, int begin_y, int end_x, int end_y);
-		void draw_rectangle(QPen const & pen, int upper_left_x, int upper_left_y, int width, int height);
-		void draw_rectangle(QPen const & pen, const QRect & rect);
-		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
-
-		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
-		void draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset);
-		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
-		void draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text);
-
-		void draw_arc(QPen const & pen, int x, int y, int width, int height, int start_angle, int span_angle);
-		void draw_ellipse(QPen const & pen, const QPoint & center, int radius_x, int radius_y, bool filled);
-		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
-
-		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height);
-		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y);
-		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
-
-
-
-
-		/* TODO: move to 'protected'. */
-		QPixmap saved_pixmap;
-		bool saved_pixmap_valid;
-
-
-	protected:
-		Viewport2D * parent_viewport = NULL;
-
-		int width = 0;
-		int height = 0;
-
-
-		QPainter * painter = NULL;
-		QPixmap * pixmap = NULL;
-		QPixmap * snapshot_buffer = NULL;
-
-
-	signals:
-		void reconfigured(Viewport2D * viewport);
-	};
-	QDebug operator<<(QDebug debug, const ViewportPixmap & vpixmap);
 
 
 

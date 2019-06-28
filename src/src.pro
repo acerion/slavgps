@@ -93,6 +93,7 @@ SOURCES += main.cpp \
     viewport_to_image.cpp \
     viewport_decorations.cpp \
     viewport_zoom.cpp \
+    viewport_pixmap.cpp \
     coord.cpp \
     coords.cpp \
     lat_lon.cpp \
@@ -236,6 +237,7 @@ HEADERS += window.h \
     viewport_to_image.h \
     viewport_decorations.h \
     viewport_zoom.h \
+    viewport_pixmap.h \
     coord.h \
     coords.h \
     globals.h \
