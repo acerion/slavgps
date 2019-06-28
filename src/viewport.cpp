@@ -1348,16 +1348,16 @@ void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & te
 
 	switch (pos) {
 	case ViewportMargin::Position::Left:
-		vpixmap = &this->left->vpixmap;
+		vpixmap = this->left;
 		break;
 	case ViewportMargin::Position::Right:
-		vpixmap = &this->right->vpixmap;
+		vpixmap = this->right;
 		break;
 	case ViewportMargin::Position::Top:
-		vpixmap = &this->top->vpixmap;
+		vpixmap = this->top;
 		break;
 	case ViewportMargin::Position::Bottom:
-		vpixmap = &this->bottom->vpixmap;
+		vpixmap = this->bottom;
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";
@@ -2297,10 +2297,10 @@ void Viewport2D::create_margins(int l, int r, int t, int b)
 	this->grid->addWidget(this->top,     0, 1);
 	this->grid->addWidget(this->bottom,  2, 1);
 
-	this->left->vpixmap.parent_viewport   = this;
-	this->right->vpixmap.parent_viewport  = this;
-	this->top->vpixmap.parent_viewport    = this;
-	this->bottom->vpixmap.parent_viewport = this;
+	this->left->parent_viewport   = this;
+	this->right->parent_viewport  = this;
+	this->top->parent_viewport    = this;
+	this->bottom->parent_viewport = this;
 
 	return;
 }
@@ -2312,8 +2312,8 @@ void ViewportMargin::paintEvent(QPaintEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
 
-	QPainter painter(this);
-	painter.drawPixmap(0, 0, *this->vpixmap.pixmap);
+	QPainter event_painter(this);
+	event_painter.drawPixmap(0, 0, *this->pixmap);
 
 	return;
 }
@@ -2325,30 +2325,34 @@ void ViewportMargin::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
 
-	this->vpixmap.reconfigure(this->geometry().width(), this->geometry().height());
-	this->vpixmap.painter->setPen(this->border_pen);
+	this->reconfigure(this->geometry().width(), this->geometry().height());
+	this->painter->setPen(this->border_pen);
 
 	switch (this->position) {
 	case ViewportMargin::Position::Left:
-		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "left");
-		this->vpixmap.painter->drawLine(this->geometry().width() - 1, 0,
-					       this->geometry().width() - 1, this->geometry().height() - 1);
+		this->painter->drawText(this->rect(), Qt::AlignCenter, "left");
+		this->painter->drawLine(this->geometry().width() - 1, 0,
+					this->geometry().width() - 1, this->geometry().height() - 1);
 		break;
+
 	case ViewportMargin::Position::Right:
-		this->vpixmap.painter->drawLine(1, 1,
-					       1, this->geometry().height() - 1);
-		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "right");
+		this->painter->drawLine(1, 1,
+					1, this->geometry().height() - 1);
+		this->painter->drawText(this->rect(), Qt::AlignCenter, "right");
 		break;
+
 	case ViewportMargin::Position::Top:
-		this->vpixmap.painter->drawLine(0,                            this->geometry().height() - 1,
-					       this->geometry().width() - 1, this->geometry().height() - 1);
-		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "top");
+		this->painter->drawLine(0,                            this->geometry().height() - 1,
+					this->geometry().width() - 1, this->geometry().height() - 1);
+		this->painter->drawText(this->rect(), Qt::AlignCenter, "top");
 		break;
+
 	case ViewportMargin::Position::Bottom:
-		this->vpixmap.painter->drawLine(1,                            1,
-					       this->geometry().width() - 1, 1);
-		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "bottom");
+		this->painter->drawLine(1,                            1,
+					this->geometry().width() - 1, 1);
+		this->painter->drawText(this->rect(), Qt::AlignCenter, "bottom");
 		break;
+
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";
 		break;
@@ -2360,7 +2364,7 @@ void ViewportMargin::resizeEvent(QResizeEvent * ev)
 
 
 
-ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWidget * parent) : QWidget(parent)
+ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWidget * parent) : ViewportPixmap(parent)
 {
 	this->position = pos;
 	this->size = main_size;
@@ -2372,25 +2376,25 @@ ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWid
 	case ViewportMargin::Position::Left:
 		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 		this->setMinimumSize(size, 10);
-		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "left");
+		snprintf(this->debug, sizeof (this->debug), "%s", "left");
 		break;
 
 	case ViewportMargin::Position::Right:
 		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 		this->setMinimumSize(size, 10);
-		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "right");
+		snprintf(this->debug, sizeof (this->debug), "%s", "right");
 		break;
 
 	case ViewportMargin::Position::Top:
 		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 		this->setMinimumSize(10, size);
-		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "top");
+		snprintf(this->debug, sizeof (this->debug), "%s", "top");
 		break;
 
 	case ViewportMargin::Position::Bottom:
 		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 		this->setMinimumSize(10, size);
-		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "bottom");
+		snprintf(this->debug, sizeof (this->debug), "%s", "bottom");
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";
@@ -2413,42 +2417,42 @@ int Viewport2D::central_get_height(void) const
 
 int Viewport2D::left_get_width(void) const
 {
-	return this->left ? this->left->vpixmap.get_width() : 0;
+	return this->left ? this->left->get_width() : 0;
 }
 
 int Viewport2D::left_get_height(void) const
 {
-	return this->left ? this->left->vpixmap.get_height() : 0;
+	return this->left ? this->left->get_height() : 0;
 }
 
 int Viewport2D::right_get_width(void) const
 {
-	return this->right ? this->right->vpixmap.get_width() : 0;
+	return this->right ? this->right->get_width() : 0;
 }
 
 int Viewport2D::right_get_height(void) const
 {
-	return this->right ? this->right->vpixmap.get_height() : 0;
+	return this->right ? this->right->get_height() : 0;
 }
 
 int Viewport2D::top_get_width(void) const
 {
-	return this->top ? this->top->vpixmap.get_width() : 0;
+	return this->top ? this->top->get_width() : 0;
 }
 
 int Viewport2D::top_get_height(void) const
 {
-	return this->top ? this->top->vpixmap.get_height() : 0;
+	return this->top ? this->top->get_height() : 0;
 }
 
 int Viewport2D::bottom_get_width(void) const
 {
-	return this->bottom ? this->bottom->vpixmap.get_width() : 0;
+	return this->bottom ? this->bottom->get_width() : 0;
 }
 
 int Viewport2D::bottom_get_height(void) const
 {
-	return this->bottom ? this->bottom->vpixmap.get_height() : 0;
+	return this->bottom ? this->bottom->get_height() : 0;
 }
 
 

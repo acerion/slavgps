@@ -344,7 +344,7 @@ namespace SlavGPS {
 
 
 
-	class ViewportMargin : public QWidget {
+	class ViewportMargin : public ViewportPixmap {
 		Q_OBJECT
 	public:
 
@@ -360,7 +360,6 @@ namespace SlavGPS {
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
 
-		ViewportPixmap vpixmap;
 		ViewportMargin::Position position;
 
 		/* The border around main area of viewport. It's specified by margin sizes. */

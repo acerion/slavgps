@@ -1311,7 +1311,7 @@ sg_ret TrackProfileDialog::paint_center_cb(Viewport2D * viewport)
 
 sg_ret TrackProfileDialog::paint_left_cb(Viewport2D * viewport)
 {
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from vpixmap" << viewport->left->vpixmap.debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from vpixmap" << viewport->left->debug;
 
 	ProfileView * view = this->find_view(viewport);
 	if (!view) {
@@ -1330,7 +1330,7 @@ sg_ret TrackProfileDialog::paint_left_cb(Viewport2D * viewport)
 
 sg_ret TrackProfileDialog::paint_bottom_cb(Viewport2D * viewport)
 {
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from vpixmap" << viewport->bottom->vpixmap.debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from vpixmap" << viewport->bottom->debug;
 
 	ProfileView * view = this->find_view(viewport);
 	if (!view) {
@@ -1573,8 +1573,8 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 		this->tabs->addTab(graph, graph->get_graph_title());
 
 		connect(&graph->viewport2d->central->vpixmap, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_center_cb(Viewport2D *)));
-		connect(&graph->viewport2d->left->vpixmap, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_left_cb(Viewport2D *)));
-		connect(&graph->viewport2d->bottom->vpixmap, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_bottom_cb(Viewport2D *)));
+		connect(graph->viewport2d->left, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_left_cb(Viewport2D *)));
+		connect(graph->viewport2d->bottom, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_bottom_cb(Viewport2D *)));
 	}
 
 
