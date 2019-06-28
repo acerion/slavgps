@@ -61,7 +61,7 @@ namespace SlavGPS {
 	class Window;
 	class Viewport;
 	class Viewport2D;
-	class ViewportCanvas;
+	class ViewportPixmap;
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
@@ -182,7 +182,6 @@ namespace SlavGPS {
 		sg_ret get_position_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos);
 
 		sg_ret regenerate_data(Track * trk);
-		sg_ret regenerate_sizes(void);
 
 		sg_ret draw_graph(Track * trk);
 		sg_ret draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn);

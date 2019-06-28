@@ -2881,16 +2881,16 @@ void Window::menu_view_pan_cb(void)
 
 	switch (direction) {
 	case PAN_NORTH:
-		v->set_center_from_screen_pos(v->get_width() / 2, 0);
+		v->set_center_from_screen_pos(v->vpixmap.get_width() / 2, 0);
 		break;
 	case PAN_EAST:
-		v->set_center_from_screen_pos(v->get_width(), v->get_height() / 2);
+		v->set_center_from_screen_pos(v->vpixmap.get_width(), v->vpixmap.get_height() / 2);
 		break;
 	case PAN_SOUTH:
-		v->set_center_from_screen_pos(v->get_width() / 2, v->get_height());
+		v->set_center_from_screen_pos(v->vpixmap.get_width() / 2, v->vpixmap.get_height());
 		break;
 	case PAN_WEST:
-		v->set_center_from_screen_pos(0, v->get_height() / 2);
+		v->set_center_from_screen_pos(0, v->vpixmap.get_height() / 2);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown direction" << direction;;

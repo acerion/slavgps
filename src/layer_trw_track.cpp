@@ -3463,9 +3463,9 @@ sg_ret Track::draw_e_ft(Viewport * viewport, struct my_data * data)
 		cur_pos.x = col;
 		cur_pos.y = bottom - bottom * (value - alt_min) / visible_range;
 
-		viewport->draw_line(pen,
-				    last_pos.x, last_pos.y,
-				    cur_pos.x, cur_pos.y);
+		viewport->vpixmap.draw_line(pen,
+					    last_pos.x, last_pos.y,
+					    cur_pos.x, cur_pos.y);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3514,9 +3514,9 @@ sg_ret Track::draw_d_ft(Viewport * viewport, struct my_data * data)
 		cur_pos.x = col;
 		cur_pos.y = bottom - bottom * (value - dist_min) / visible_range;
 
-		viewport->draw_line(pen,
-				    last_pos.x, last_pos.y,
-				    cur_pos.x, cur_pos.y);
+		viewport->vpixmap.draw_line(pen,
+					    last_pos.x, last_pos.y,
+					    cur_pos.x, cur_pos.y);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3571,9 +3571,9 @@ sg_ret Track::draw_v_ft(Viewport * viewport, struct my_data * data)
 		cur_pos.x = col;
 		cur_pos.y = bottom - bottom * (current_value_uu - min_value_uu) / visible_values_range_uu;
 
-		viewport->draw_line(pen,
-				    last_pos.x, last_pos.y,
-				    cur_pos.x, cur_pos.y);
+		viewport->vpixmap.draw_line(pen,
+					    last_pos.x, last_pos.y,
+					    cur_pos.x, cur_pos.y);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);

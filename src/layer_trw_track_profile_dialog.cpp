@@ -459,10 +459,10 @@ static bool set_center_at_graph_position(int event_x,
 sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn)
 {
 	/* Restore previously saved image that has no marks on it, just the graph, grids, borders and margins. */
-	if (this->viewport2d->central->canvas.saved_pixmap_valid) {
+	if (this->viewport2d->central->vpixmap.saved_pixmap_valid) {
 		/* Debug code. */
 		// qDebug() << SG_PREFIX_I << "Restoring saved image";
-		this->viewport2d->central->set_pixmap(this->viewport2d->central->canvas.saved_pixmap);
+		this->viewport2d->central->set_pixmap(this->viewport2d->central->vpixmap.saved_pixmap);
 	} else {
 		qDebug() << SG_PREFIX_W << "NOT restoring saved image";
 	}
@@ -577,8 +577,8 @@ void TrackProfileDialog::handle_mouse_button_release_cb(Viewport * viewport, QMo
 sg_ret ProfileView::set_pos_y(ScreenPos & screen_pos)
 {
 	/* Using saved width/saved height for performance reasons. */
-	const int w = this->viewport2d->central->saved_width;
-	const int h = this->viewport2d->central->saved_height;
+	const int w = this->viewport2d->central->vpixmap.get_width();
+	const int h = this->viewport2d->central->vpixmap.get_height();
 
 	int ix = (int) screen_pos.x;
 	/* Ensure ix is inside of graph. */
@@ -680,7 +680,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 
 	switch (graph->viewport2d->x_domain) {
 	case ViewportDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport2d->central->saved_width, &meters_from_start, HOVERED);
+		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport2d->central->vpixmap.get_width(), &meters_from_start, HOVERED);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
@@ -690,7 +690,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		break;
 
 	case ViewportDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport2d->central->saved_width, HOVERED);
+		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport2d->central->vpixmap.get_width(), HOVERED);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
@@ -786,7 +786,7 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 
 			const int x = w * current_function_arg / max_function_arg;
 			const int y = 0 - h * current_function_value_uu / max_function_value_dem;
-			this->viewport2d->central->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
+			this->viewport2d->central->vpixmap.fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
 		}
 
 		if (do_speed) {
@@ -799,7 +799,7 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 			/* This is just a speed indicator - no actual values can be inferred by user. */
 			const int x = w * current_function_arg / max_function_arg;
 			const int y = 0 - h * current_function_value / max_function_value_speed;
-			this->viewport2d->central->fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
+			this->viewport2d->central->vpixmap.fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -866,7 +866,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 
 			const int x = i;
 			const int y = 0 - h * current_function_value_uu / max_function_value;
-			this->viewport2d->central->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 
@@ -884,7 +884,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 
 			const int x = i;
 			const int y = 0 - h * current_function_value / max_function_value;
-			this->viewport2d->central->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 
@@ -920,7 +920,7 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 
 			const int x = w * current_function_arg / max_function_arg;
 			const int y = 0 - h * current_function_value / max_function_value;
-			this->viewport2d->central->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -995,7 +995,7 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 
 				const int x = w * current_function_arg / max_function_arg;
 				const int y = 0 - h * current_function_value / max_function_value;
-				this->viewport2d->central->fill_rectangle(color, x - 2, y - 2, 4, 4);
+				this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 			}
 		} else {
 			qDebug() << SG_PREFIX_W << "Not drawing additional indicators: can't get timestamps";
@@ -1023,7 +1023,7 @@ void ProfileViewDT::draw_additional_indicators(Track * trk)
 
 			const int x = i;
 			const int y = 0 - h * current_function_value / max_function_value;
-			this->viewport2d->central->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
 }
@@ -1093,8 +1093,6 @@ sg_ret ProfileView::draw_graph(Track * trk)
 		}
 	}
 
-	this->regenerate_sizes();
-
 	if (sg_ret::ok != this->regenerate_data(trk)) {
 		return sg_ret::err;
 	}
@@ -1123,8 +1121,8 @@ sg_ret ProfileView::draw_graph(Track * trk)
 
 	/* The pixmap = margin + graph area. */
 	qDebug() << SG_PREFIX_I << "Saving viewport" << this->viewport2d->central->debug;
-	this->viewport2d->central->canvas.saved_pixmap = this->viewport2d->central->get_pixmap();
-	this->viewport2d->central->canvas.saved_pixmap_valid = true;
+	this->viewport2d->central->vpixmap.saved_pixmap = this->viewport2d->central->get_pixmap();
+	this->viewport2d->central->vpixmap.saved_pixmap_valid = true;
 
 	return sg_ret::ok;
 }
@@ -1158,7 +1156,7 @@ void ProfileView::draw_speed_dist(Track * trk)
 		/* This is just a speed indicator - no actual values can be inferred by user. */
 		const int x = w * current_function_arg / max_function_arg;
 		const int y = 0 - h * current_function_value / max_function_value;
-		this->viewport2d->central->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 	}
 }
 
@@ -1194,7 +1192,7 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 		}
 
 		/* If dialog window is resized then saved image is no longer valid. */
-		view->viewport2d->central->canvas.saved_pixmap_valid = !resized;
+		view->viewport2d->central->vpixmap.saved_pixmap_valid = !resized;
 		this->draw_center(view);
 
 		/* TODO: what about drawing margins? */
@@ -1294,7 +1292,7 @@ sg_ret TrackProfileDialog::draw_bottom(ProfileView * graph)
 
 sg_ret TrackProfileDialog::paint_center_cb(Viewport2D * viewport)
 {
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from canvas" << viewport->central->canvas.debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from vpixmap" << viewport->central->vpixmap.debug;
 
 	ProfileView * view = this->find_view(viewport);
 	if (!view) {
@@ -1302,7 +1300,7 @@ sg_ret TrackProfileDialog::paint_center_cb(Viewport2D * viewport)
 		return sg_ret::err;
 	}
 
-	view->viewport2d->central->canvas.saved_pixmap_valid = true;
+	view->viewport2d->central->vpixmap.saved_pixmap_valid = true;
 	this->draw_center(view);
 
 	return sg_ret::ok;
@@ -1313,7 +1311,7 @@ sg_ret TrackProfileDialog::paint_center_cb(Viewport2D * viewport)
 
 sg_ret TrackProfileDialog::paint_left_cb(Viewport2D * viewport)
 {
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from canvas" << viewport->left->canvas.debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from vpixmap" << viewport->left->vpixmap.debug;
 
 	ProfileView * view = this->find_view(viewport);
 	if (!view) {
@@ -1321,7 +1319,7 @@ sg_ret TrackProfileDialog::paint_left_cb(Viewport2D * viewport)
 		return sg_ret::err;
 	}
 
-	//view->viewport2d->left->canvas.saved_img_valid = true;
+	//view->viewport2d->left->vpixmap.saved_img_valid = true;
 	this->draw_left(view);
 
 	return sg_ret::ok;
@@ -1332,7 +1330,7 @@ sg_ret TrackProfileDialog::paint_left_cb(Viewport2D * viewport)
 
 sg_ret TrackProfileDialog::paint_bottom_cb(Viewport2D * viewport)
 {
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from canvas" << viewport->bottom->canvas.debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from vpixmap" << viewport->bottom->vpixmap.debug;
 
 	ProfileView * view = this->find_view(viewport);
 	if (!view) {
@@ -1340,7 +1338,7 @@ sg_ret TrackProfileDialog::paint_bottom_cb(Viewport2D * viewport)
 		return sg_ret::err;
 	}
 
-	//view->viewport2d->bottom->ocanvas.saved_img_valid = true;
+	//view->viewport2d->bottom->vpixmap.saved_img_valid = true;
 	this->draw_bottom(view);
 
 	return sg_ret::ok;
@@ -1574,9 +1572,9 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 
 		this->tabs->addTab(graph, graph->get_graph_title());
 
-		connect(&graph->viewport2d->central->canvas, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_center_cb(Viewport2D *)));
-		connect(&graph->viewport2d->left->canvas, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_left_cb(Viewport2D *)));
-		connect(&graph->viewport2d->bottom->canvas, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_bottom_cb(Viewport2D *)));
+		connect(&graph->viewport2d->central->vpixmap, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_center_cb(Viewport2D *)));
+		connect(&graph->viewport2d->left->vpixmap, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_left_cb(Viewport2D *)));
+		connect(&graph->viewport2d->bottom->vpixmap, SIGNAL (reconfigured(Viewport2D *)), this, SLOT (paint_bottom_cb(Viewport2D *)));
 	}
 
 
@@ -1887,17 +1885,6 @@ sg_ret ProfileView::regenerate_data(Track * trk)
 	/* Ask a track to generate a vector of values representing some parameter
 	   of a track as a function of either time or distance. */
 	return this->regenerate_data_from_scratch(trk);
-}
-
-
-
-
-sg_ret ProfileView::regenerate_sizes(void)
-{
-	this->viewport2d->central->saved_width = this->viewport2d->central_get_width();
-	this->viewport2d->central->saved_height = this->viewport2d->central_get_height();
-
-	return sg_ret::ok;
 }
 
 

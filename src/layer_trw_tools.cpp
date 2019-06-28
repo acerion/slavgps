@@ -758,7 +758,7 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport
 static int draw_sync(LayerTRW * trw, Viewport * viewport, const QPixmap & pixmap)
 {
 	if (1 /* trw->draw_sync_do*/ ) {
-		viewport->draw_pixmap(pixmap, 0, 0);
+		viewport->vpixmap.draw_pixmap(pixmap, 0, 0);
 		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'tree_item_changed()' signal for" << trw->get_name();
 		emit trw->tree_item_changed(trw->get_name());
 #ifdef K_OLD_IMPLEMENTATION

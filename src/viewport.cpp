@@ -108,7 +108,7 @@ double Viewport::calculate_utm_zone_width(void) const
 
 		/* Get latitude of screen bottom. */
 		UTM utm = this->center.utm;
-		const double center_to_bottom_m = this->get_canvas_height_m() / 2;
+		const double center_to_bottom_m = this->get_vpixmap_height_m() / 2;
 		utm.shift_northing_by(-center_to_bottom_m);
 		LatLon lat_lon = UTM::to_lat_lon(utm);
 
@@ -148,7 +148,7 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	this->setMinimumSize(200, 300);
-	snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "center");
+	snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "center");
 	//this->setMaximumSize(2700, 2700);
 
 	/* We want to constantly update cursor position in
@@ -321,11 +321,11 @@ void Viewport::set_highlight_thickness(int w)
 void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 {
 	if (new_width == 0 && new_height == 0) {
-		qDebug() << SG_PREFIX_I << "Will reconfigure canvas with geometry sizes" << this->geometry().width() << this->geometry().height();
-		this->canvas.reconfigure(this->geometry().width(), this->geometry().height());
+		qDebug() << SG_PREFIX_I << "Will reconfigure vpixmap with geometry sizes" << this->geometry().width() << this->geometry().height();
+		this->vpixmap.reconfigure(this->geometry().width(), this->geometry().height());
 	} else {
-		qDebug() << SG_PREFIX_I << "Will reconfigure canvas with specified sizes" << new_width << new_height;
-		this->canvas.reconfigure(new_width, new_height);
+		qDebug() << SG_PREFIX_I << "Will reconfigure vpixmap with specified sizes" << new_width << new_height;
+		this->vpixmap.reconfigure(new_width, new_height);
 	}
 }
 
@@ -334,7 +334,7 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 
 QPixmap Viewport::get_pixmap(void) const
 {
-	return *this->canvas.pixmap;
+	return *this->vpixmap.pixmap;
 }
 
 
@@ -342,11 +342,11 @@ QPixmap Viewport::get_pixmap(void) const
 
 void Viewport::set_pixmap(const QPixmap & pixmap)
 {
-	if (this->canvas.pixmap->size() != pixmap.size()) {
-		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: canvas =" << this->canvas.pixmap->size() << ", new pixmap =" << pixmap.size();
+	if (this->vpixmap.pixmap->size() != pixmap.size()) {
+		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: vpixmap =" << this->vpixmap.pixmap->size() << ", new vpixmap =" << pixmap.size();
 	} else {
-		//QPainter painter(this->canvas.pixmap);
-		this->canvas.painter->drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
+		//QPainter painter(this->vpixmap.pixmap);
+		this->vpixmap.painter->drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
 	}
 }
 
@@ -358,9 +358,9 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 */
 void Viewport::clear(void)
 {
-	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->canvas;
-	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->eraseRect(0, 0, this->canvas.get_width(), this->canvas.get_height());
+	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->vpixmap;
+	//QPainter painter(this->vpixmap.pixmap);
+	this->vpixmap.clear();
 
 
 	/* Some maps may have been removed, so their logos and/or
@@ -444,8 +444,8 @@ bool Viewport::get_scale_visibility(void) const
 void Viewport::sync(void)
 {
 	qDebug() << SG_PREFIX_I << "sync (will call ->render())";
-	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->canvas.pixmap), 0, 0, 0, 0, this->canvas.width, this->canvas.height);
-	this->render(this->canvas.pixmap);
+	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->vpixmap.pixmap), 0, 0, 0, 0, this->vpixmap.width, this->vpixmap.height);
+	this->render(this->vpixmap.pixmap);
 }
 
 
@@ -457,13 +457,13 @@ void Viewport::pan_sync(int x_off, int y_off)
 #ifdef K_FIXME_RESTORE
 	int x, y, wid, hei;
 
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->canvas.pixmap), 0, 0, x_off, y_off, this->canvas.width, this->canvas.height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->vpixmap.pixmap), 0, 0, x_off, y_off, this->vpixmap.width, this->vpixmap.height);
 
 	if (x_off >= 0) {
 		x = 0;
 		wid = x_off;
 	} else {
-		x = this->canvas.width + x_off;
+		x = this->vpixmap.width + x_off;
 		wid = -x_off;
 	}
 
@@ -471,11 +471,11 @@ void Viewport::pan_sync(int x_off, int y_off)
 		y = 0;
 		hei = y_off;
 	} else {
-		y = this->canvas.height + y_off;
+		y = this->vpixmap.height + y_off;
 		hei = -y_off;
 	}
-	gtk_widget_queue_draw_area(GTK_WIDGET(this), x, 0, wid, this->canvas.height);
-	gtk_widget_queue_draw_area(GTK_WIDGET(this), 0, y, this->canvas.width, hei);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this), x, 0, wid, this->vpixmap.height);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this), 0, y, this->vpixmap.width, hei);
 #endif
 }
 
@@ -911,13 +911,13 @@ sg_ret Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zo
 
 	/* And now we offset the two coordinates:
 	   we move the coordinates from center to one of the two corners. */
-	const double center_to_top_m = this->get_canvas_height_m() / 2;
-	const double center_to_left_m = this->get_canvas_width_m() / 2;
+	const double center_to_top_m = this->get_vpixmap_height_m() / 2;
+	const double center_to_left_m = this->get_vpixmap_width_m() / 2;
 	coord_ul.utm.shift_northing_by(center_to_top_m);
 	coord_ul.utm.shift_easting_by(-center_to_left_m);
 
-	const double center_to_bottom_m = this->get_canvas_height_m() / 2;
-	const double center_to_right_m = this->get_canvas_width_m() / 2;
+	const double center_to_bottom_m = this->get_vpixmap_height_m() / 2;
+	const double center_to_right_m = this->get_vpixmap_width_m() / 2;
 	coord_br.utm.shift_northing_by(-center_to_bottom_m);
 	coord_br.utm.shift_easting_by(center_to_right_m);
 
@@ -966,8 +966,8 @@ int Viewport::get_rightmost_zone(void) const
 		return 0;
 	}
 
-	const Coord coord = this->screen_pos_to_coord(this->canvas.get_rightmost_pixel(),
-						      this->canvas.get_topmost_pixel()); /* Second argument shouldn't really matter if we are getting "rightmost" zone. */
+	const Coord coord = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel(),
+						      this->vpixmap.get_topmost_pixel()); /* Second argument shouldn't really matter if we are getting "rightmost" zone. */
 	return coord.utm.get_zone();
 }
 
@@ -980,8 +980,8 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 		/* Slightly optimized. */
 
 		/* TODO: verify position of x1 and y1 in these equations. */
-		const int delta_horiz_pixel = x1 - this->canvas.get_horiz_center_pixel();
-		const int delta_vert_pixel = this->canvas.get_vert_center_pixel() - y1;
+		const int delta_horiz_pixel = x1 - this->vpixmap.get_horiz_center_pixel();
+		const int delta_vert_pixel = this->vpixmap.get_vert_center_pixel() - y1;
 
 		const double delta_horiz_m = delta_horiz_pixel * this->viking_scale.x;
 		const double delta_vert_m = delta_vert_pixel * this->viking_scale.y;
@@ -1006,25 +1006,9 @@ void Viewport::set_center_from_screen_pos(const ScreenPos & pos)
 
 
 
-int Viewport::get_width(void) const
-{
-	return this->canvas.get_width();
-}
-
-
-
-
-int Viewport::get_height(void) const
-{
-	return this->canvas.get_height();
-}
-
-
-
-
 QRect Viewport::get_rect(void) const
 {
-	return QRect(0, 0, this->canvas.get_width(), this->canvas.get_height());
+	return QRect(0, 0, this->vpixmap.get_width(), this->vpixmap.get_height());
 }
 
 
@@ -1036,10 +1020,10 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
 
-	/* Distance of pixel specified by pos_x/pos_y from canvas' central pixel.
+	/* Distance of pixel specified by pos_x/pos_y from vpixmap' central pixel.
 	   TODO: verify location of pos_x and pos_y in these equations. */
-	const int delta_horiz_pixels = pos_x - this->canvas.get_horiz_center_pixel();
-	const int delta_vert_pixels = this->canvas.get_vert_center_pixel() - pos_y;
+	const int delta_horiz_pixels = pos_x - this->vpixmap.get_horiz_center_pixel();
+	const int delta_vert_pixels = this->vpixmap.get_vert_center_pixel() - pos_y;
 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
@@ -1124,8 +1108,8 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		case ViewportDrawMode::Expedia:
 			Expedia::screen_pos_to_lat_lon(coord.lat_lon, pos_x, pos_y, this->center.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
 						       /* TODO: make sure that this is ok, that we don't need to use get_width()/get_height() here. */
-						       this->canvas.get_horiz_center_pixel(),
-						       this->canvas.get_vert_center_pixel());
+						       this->vpixmap.get_horiz_center_pixel(),
+						       this->vpixmap.get_vert_center_pixel());
 			break;
 
 		case ViewportDrawMode::Mercator:
@@ -1191,8 +1175,8 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
 
-	const int horiz_center_pixel = this->canvas.get_horiz_center_pixel();
-	const int vert_center_pixel = this->canvas.get_vert_center_pixel();
+	const int horiz_center_pixel = this->vpixmap.get_horiz_center_pixel();
+	const int vert_center_pixel = this->vpixmap.get_vert_center_pixel();
 
 	if (coord_in.get_coord_mode() != this->coord_mode) {
 		/* The intended use of the function is that coord_in
@@ -1334,12 +1318,12 @@ void Viewport::clip_line(int * x1, int * y1, int * x2, int * y2)
 
 
 
-bool line_is_outside_of_canvas(const ViewportCanvas & canvas, int begin_x, int begin_y, int end_x, int end_y)
+bool line_is_outside_of_vpixmap(const ViewportPixmap & vpixmap, int begin_x, int begin_y, int end_x, int end_y)
 {
-	const int leftmost   = canvas.get_leftmost_pixel();
-	const int rightmost  = canvas.get_rightmost_pixel();
-	const int topmost    = canvas.get_topmost_pixel();
-	const int bottommost = canvas.get_bottommost_pixel();
+	const int leftmost   = vpixmap.get_leftmost_pixel();
+	const int rightmost  = vpixmap.get_rightmost_pixel();
+	const int topmost    = vpixmap.get_topmost_pixel();
+	const int bottommost = vpixmap.get_bottommost_pixel();
 
 	/* Here we follow Qt's coordinate system:
 	   begin in top-left corner; pixel numbers increase as we go down and right. */
@@ -1362,20 +1346,20 @@ bool line_is_outside_of_canvas(const ViewportCanvas & canvas, int begin_x, int b
 
 
 
-void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
+void ViewportPixmap::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
-	if (line_is_outside_of_canvas(this->canvas, begin_x, begin_y, end_x, end_y)) {
+	if (line_is_outside_of_vpixmap(*this, begin_x, begin_y, end_x, end_y)) {
 		return;
 	}
 
 	/*** Clipping, yeah! ***/
 	Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
-	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawLine(begin_x, begin_y,
-				       end_x,   end_y);
+	//QPainter painter(this->vpixmap.pixmap);
+	this->painter->setPen(pen);
+	this->painter->drawLine(begin_x, begin_y,
+				end_x,   end_y);
 }
 
 
@@ -1384,7 +1368,7 @@ void Viewport::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, 
 void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
-	if (line_is_outside_of_canvas(this->central->canvas, begin_x, begin_y, end_x, end_y)) {
+	if (line_is_outside_of_vpixmap(this->central->vpixmap, begin_x, begin_y, end_x, end_y)) {
 		return;
 	}
 
@@ -1394,17 +1378,17 @@ void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, i
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to "beginning in top-left corner"
 	   coordinate system. */
-	const int bottom_pixel = this->central->canvas.get_bottommost_pixel();
+	const int bottom_pixel = this->central->vpixmap.get_bottommost_pixel();
 
-	this->central->canvas.painter->setPen(pen);
-	this->central->canvas.painter->drawLine(begin_x, bottom_pixel - begin_y,
-						end_x,   bottom_pixel - end_y);
+	this->central->vpixmap.painter->setPen(pen);
+	this->central->vpixmap.painter->drawLine(begin_x, bottom_pixel - begin_y,
+						 end_x,   bottom_pixel - end_y);
 }
 
 
 
 
-void Viewport::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left_y, int rect_width, int rect_height)
+void ViewportPixmap::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left_y, int rect_width, int rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this
 	   draws ensures the highlight gets done. */
@@ -1413,19 +1397,19 @@ void Viewport::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left
 	/* TODO: review this condition. */
 	if (upper_left_x > -border
 	    && upper_left_y > -border
-	    && upper_left_x < this->canvas.get_width() + border
-	    && upper_left_y < this->canvas.get_height() + border) {
+	    && upper_left_x < this->get_width() + border
+	    && upper_left_y < this->get_height() + border) {
 
-		//QPainter painter(this->canvas.pixmap);
-		this->canvas.painter->setPen(pen);
-		this->canvas.painter->drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
+		//QPainter painter(this->vpixmap.pixmap);
+		this->painter->setPen(pen);
+		this->painter->drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
 	}
 }
 
 
 
 
-void Viewport::draw_rectangle(const QPen & pen, const QRect & rect)
+void ViewportPixmap::draw_rectangle(const QPen & pen, const QRect & rect)
 {
 	/* Using 32 as half the default waypoint image size, so this
 	   draws ensures the highlight gets done. */
@@ -1434,19 +1418,19 @@ void Viewport::draw_rectangle(const QPen & pen, const QRect & rect)
 	/* TODO: review this condition. */
 	if (rect.x() > -border
 	    && rect.y() > -border
-	    && rect.x() < this->canvas.get_width() + border
-	    && rect.y() < this->canvas.get_height() + border) {
+	    && rect.x() < this->get_width() + border
+	    && rect.y() < this->get_height() + border) {
 
-		//QPainter painter(this->canvas.pixmap);
-		this->canvas.painter->setPen(pen);
-		this->canvas.painter->drawRect(rect);
+		//QPainter painter(this->pixmap);
+		this->painter->setPen(pen);
+		this->painter->drawRect(rect);
 	}
 }
 
 
 
 
-void Viewport::fill_rectangle(const QColor & color, int pos_x, int pos_y, int rect_width, int rect_height)
+void ViewportPixmap::fill_rectangle(const QColor & color, int pos_x, int pos_y, int rect_width, int rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this
 	   draws ensures the highlight gets done. */
@@ -1455,47 +1439,47 @@ void Viewport::fill_rectangle(const QColor & color, int pos_x, int pos_y, int re
 	/* TODO: review this condition. */
 	if (pos_x > -border
 	    && pos_y > -border
-	    && pos_x < this->canvas.get_width() + border
-	    && pos_y < this->canvas.get_height() + border) {
+	    && pos_x < this->get_width() + border
+	    && pos_y < this->get_height() + border) {
 
-		//QPainter painter(this->canvas.pixmap);
-		this->canvas.painter->fillRect(pos_x, pos_y, rect_width, rect_height, color);
+		//QPainter painter(this->pixmap);
+		this->painter->fillRect(pos_x, pos_y, rect_width, rect_height, color);
 	}
 }
 
 
 
 
-void Viewport::draw_text(QFont const & text_font, QPen const & pen, int pos_x, int pos_y, QString const & text)
+void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, int pos_x, int pos_y, QString const & text)
 {
 	const int border = 100;
 
 	/* TODO: review this condition. */
 	if (pos_x > -border
 	    && pos_y > -border
-	    && pos_x < this->canvas.get_width() + border
-	    && pos_y < this->canvas.get_height() + border) {
+	    && pos_x < this->get_width() + border
+	    && pos_y < this->get_height() + border) {
 
-		//QPainter painter(this->canvas.pixmap);
-		this->canvas.painter->setPen(pen);
-		this->canvas.painter->setFont(text_font);
-		this->canvas.painter->drawText(pos_x, pos_y, text);
+		//QPainter painter(this->pixmap);
+		this->painter->setPen(pen);
+		this->painter->setFont(text_font);
+		this->painter->drawText(pos_x, pos_y, text);
 	}
 }
 
 
 
 
-void Viewport::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
 {
-	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->setFont(text_font);
+	//QPainter painter(this->pixmap);
+	this->painter->setFont(text_font);
 
 	/* "Normalize" bounding rectangles that have negative width or height.
 	   Otherwise the text will be outside of the bounding rectangle. */
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
-	QRectF text_rect = this->canvas.painter->boundingRect(final_bounding_rect, flags, text);
+	QRectF text_rect = this->painter->boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		qreal new_top = text_rect.top() - (text_rect.height() / 2);
@@ -1513,18 +1497,18 @@ void Viewport::draw_text(const QFont & text_font, const QPen & pen, const QRectF
 
 #if 1
 	/* Debug. */
-	this->canvas.painter->setPen(QColor("red"));
-	this->canvas.painter->drawEllipse(final_bounding_rect.left(), final_bounding_rect.top(), 5, 5);
+	this->painter->setPen(QColor("red"));
+	this->painter->drawEllipse(final_bounding_rect.left(), final_bounding_rect.top(), 5, 5);
 
-	this->canvas.painter->setPen(QColor("darkgreen"));
-	this->canvas.painter->drawRect(final_bounding_rect);
+	this->painter->setPen(QColor("darkgreen"));
+	this->painter->drawRect(final_bounding_rect);
 
-	this->canvas.painter->setPen(QColor("red"));
-	this->canvas.painter->drawRect(text_rect);
+	this->painter->setPen(QColor("red"));
+	this->painter->drawRect(text_rect);
 #endif
 
-	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawText(text_rect, flags, text, NULL);
+	this->painter->setPen(pen);
+	this->painter->drawText(text_rect, flags, text, NULL);
 }
 
 
@@ -1533,43 +1517,43 @@ void Viewport::draw_text(const QFont & text_font, const QPen & pen, const QRectF
 void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
 {
 	qDebug() << SG_PREFIX_I << "Will draw label" << text;
-	ViewportCanvas * canv = NULL;
+	ViewportPixmap * vpixmap = NULL;
 
 	switch (pos) {
 	case ViewportMargin::Position::Left:
-		canv = &this->left->canvas;
+		vpixmap = &this->left->vpixmap;
 		break;
 	case ViewportMargin::Position::Right:
-		canv = &this->right->canvas;
+		vpixmap = &this->right->vpixmap;
 		break;
 	case ViewportMargin::Position::Top:
-		canv = &this->top->canvas;
+		vpixmap = &this->top->vpixmap;
 		break;
 	case ViewportMargin::Position::Bottom:
-		canv = &this->bottom->canvas;
+		vpixmap = &this->bottom->vpixmap;
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";
 		break;
 	}
 
-	if (!canv) {
-		qDebug() << SG_PREFIX_E << "No margin canvas selected";
+	if (!vpixmap) {
+		qDebug() << SG_PREFIX_E << "No margin vpixmap selected";
 		return;
 	}
-	if (!canv->painter) {
-		qDebug() << SG_PREFIX_W << "Canvas has no painter (yet?)";
+	if (!vpixmap->painter) {
+		qDebug() << SG_PREFIX_W << "Viewport Pixmap has no painter (yet?)";
 		return;
 	}
 
 
-	canv->painter->setFont(text_font);
+	vpixmap->painter->setFont(text_font);
 
 	/* "Normalize" bounding rectangles that have negative width or height.
 	   Otherwise the text will be outside of the bounding rectangle. */
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
-	QRectF text_rect = canv->painter->boundingRect(final_bounding_rect, flags, text);
+	QRectF text_rect = vpixmap->painter->boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		qreal new_top = text_rect.top() - (text_rect.height() / 2);
@@ -1588,52 +1572,51 @@ void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & te
 
 #if 1
 	/* Debug. */
-	canv->painter->setPen(QColor("red"));
-	canv->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
+	vpixmap->painter->setPen(QColor("red"));
+	vpixmap->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
 
-	canv->painter->setPen(QColor("darkgreen"));
-	canv->painter->drawRect(bounding_rect);
+	vpixmap->painter->setPen(QColor("darkgreen"));
+	vpixmap->painter->drawRect(bounding_rect);
 
-	canv->painter->setPen(QColor("red"));
-	canv->painter->drawRect(text_rect);
+	vpixmap->painter->setPen(QColor("red"));
+	vpixmap->painter->drawRect(text_rect);
 #endif
 
-	canv->painter->setPen(pen);
-	canv->painter->drawText(text_rect, flags, text, NULL);
-
+	vpixmap->painter->setPen(pen);
+	vpixmap->painter->drawText(text_rect, flags, text, NULL);
 }
 
 
-void Viewport::draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text)
+void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text)
 {
 	/* http://doc.qt.io/qt-5/qpainterpath.html#addText */
 
-	this->canvas.painter->setPen(outline_pen);
-	this->canvas.painter->setBrush(QBrush(fill_color));
+	this->painter->setPen(outline_pen);
+	this->painter->setBrush(QBrush(fill_color));
 
 	QPainterPath path;
 	path.addText(base_point, text_font, text);
 
-	this->canvas.painter->drawPath(path);
+	this->painter->drawPath(path);
 
 	/* Reset painter. */
-	this->canvas.painter->setPen(QPen());
-	this->canvas.painter->setBrush(QBrush());
+	this->painter->setPen(QPen());
+	this->painter->setBrush(QBrush());
 }
 
 
 
 
-void Viewport::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
 {
-	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->setFont(text_font);
+	//QPainter painter(this->pixmap);
+	this->painter->setFont(text_font);
 
 	/* "Normalize" bounding rectangles that have negative width or height.
 	   Otherwise the text will be outside of the bounding rectangle. */
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
-	QRectF text_rect = this->canvas.painter->boundingRect(final_bounding_rect, flags, text);
+	QRectF text_rect = this->painter->boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		qreal new_top = text_rect.top() - (text_rect.height() / 2);
@@ -1651,45 +1634,45 @@ void Viewport::draw_text(QFont const & text_font, QPen const & pen, const QColor
 
 #if 1
 	/* Debug. */
-	this->canvas.painter->setPen(QColor("red"));
-	this->canvas.painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
+	this->painter->setPen(QColor("red"));
+	this->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
 
-	this->canvas.painter->setPen(QColor("darkgreen"));
-	this->canvas.painter->drawRect(bounding_rect);
+	this->painter->setPen(QColor("darkgreen"));
+	this->painter->drawRect(bounding_rect);
 #endif
 
 	/* A highlight of drawn text, must be executed before .drawText(). */
-	this->canvas.painter->fillRect(text_rect, bg_color);
+	this->painter->fillRect(text_rect, bg_color);
 
-	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawText(text_rect, flags, text, NULL);
+	this->painter->setPen(pen);
+	this->painter->drawText(text_rect, flags, text, NULL);
 }
 
 
 
 
-void Viewport::draw_pixmap(QPixmap const & pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height)
+void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height)
 {
-	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->drawPixmap(viewport_x, viewport_y, pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
+	//QPainter painter(this->pixmap);
+	this->painter->drawPixmap(viewport_x, viewport_y, a_pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
 }
 
 
 
 
-void Viewport::draw_pixmap(QPixmap const & pixmap, int viewport_x, int viewport_y)
+void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int viewport_y)
 {
-	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->drawPixmap(viewport_x, viewport_y, pixmap);
+	//QPainter painter(this->pixmap);
+	this->painter->drawPixmap(viewport_x, viewport_y, a_pixmap);
 }
 
 
 
 
-void Viewport::draw_pixmap(QPixmap const & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect)
+void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, const QRect & viewport_rect, const QRect & pixmap_rect)
 {
-	//QPainter painter(this->canvas.pixmap);
-	this->canvas.painter->drawPixmap(viewport_rect, pixmap, pixmap_rect);
+	//QPainter painter(this->pixmap);
+	this->painter->drawPixmap(viewport_rect, a_pixmap, pixmap_rect);
 }
 
 
@@ -1714,47 +1697,47 @@ void Viewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 		sp_ne.y = 0;
 	}
 
-	this->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	this->vpixmap.draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 
 	return;
 }
 
 
 
-void Viewport::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int start_angle, int span_angle)
+void ViewportPixmap::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int start_angle, int span_angle)
 {
-	this->canvas.painter->setPen(pen);
-	this->canvas.painter->drawArc(center_x, center_y, size_w, size_h, start_angle, span_angle * 16);
+	this->painter->setPen(pen);
+	this->painter->drawArc(center_x, center_y, size_w, size_h, start_angle, span_angle * 16);
 }
 
 
 
 
-void Viewport::draw_ellipse(QPen const & pen, const QPoint & ellipse_center, int radius_x, int radius_y, bool filled)
+void ViewportPixmap::draw_ellipse(QPen const & pen, const QPoint & ellipse_center, int radius_x, int radius_y, bool filled)
 {
 	/* TODO_LATER: see if there is a difference in outer size of ellipse drawn with and without a filling. */
 
 	if (filled) {
 		/* Set brush to fill ellipse. */
-		this->canvas.painter->setBrush(QBrush(pen.color()));
+		this->painter->setBrush(QBrush(pen.color()));
 	} else {
-		this->canvas.painter->setPen(pen);
+		this->painter->setPen(pen);
 	}
 
-	this->canvas.painter->drawEllipse(ellipse_center, radius_x, radius_y);
+	this->painter->drawEllipse(ellipse_center, radius_x, radius_y);
 
 	if (filled) {
 		/* Reset brush. */
-		this->canvas.painter->setBrush(QBrush());
+		this->painter->setBrush(QBrush());
 	}
 }
 
 
 
 
-void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled)
+void ViewportPixmap::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled)
 {
-	//QPainter painter(this->canvas.pixmap);
+	//QPainter painter(this->pixmap);
 
 	if (filled) {
 		QPainterPath path;
@@ -1763,11 +1746,11 @@ void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints
 			path.lineTo(points[i]);
 		}
 
-		this->canvas.painter->setPen(Qt::NoPen);
-		this->canvas.painter->fillPath(path, QBrush(QColor(pen.color())));
+		this->painter->setPen(Qt::NoPen);
+		this->painter->fillPath(path, QBrush(QColor(pen.color())));
 	} else {
-		this->canvas.painter->setPen(pen);
-		this->canvas.painter->drawPolygon(points, npoints);
+		this->painter->setPen(pen);
+		this->painter->drawPolygon(points, npoints);
 	}
 }
 
@@ -1841,7 +1824,7 @@ Layer * Viewport::get_trigger(void) const
 void Viewport::snapshot_save(void)
 {
 	qDebug() << SG_PREFIX_I << "Save snapshot";
-	*this->canvas.snapshot_buffer = *this->canvas.pixmap;
+	*this->vpixmap.snapshot_buffer = *this->vpixmap.pixmap;
 }
 
 
@@ -1850,7 +1833,7 @@ void Viewport::snapshot_save(void)
 void Viewport::snapshot_load(void)
 {
 	qDebug() << SG_PREFIX_I << "Load snapshot";
-	*this->canvas.pixmap = *this->canvas.snapshot_buffer;
+	*this->vpixmap.pixmap = *this->vpixmap.snapshot_buffer;
 }
 
 
@@ -1874,10 +1857,10 @@ bool Viewport::get_half_drawn(void) const
 
 LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
 {
-	Coord tleft =  this->screen_pos_to_coord(this->canvas.get_leftmost_pixel() + margin_left,    this->canvas.get_topmost_pixel() + margin_top);
-	Coord tright = this->screen_pos_to_coord(this->canvas.get_rightmost_pixel() + margin_right,  this->canvas.get_topmost_pixel() + margin_top);
-	Coord bleft =  this->screen_pos_to_coord(this->canvas.get_leftmost_pixel() + margin_left,    this->canvas.get_bottommost_pixel() + margin_bottom);
-	Coord bright = this->screen_pos_to_coord(this->canvas.get_rightmost_pixel() + margin_right,  this->canvas.get_bottommost_pixel() + margin_bottom);
+	Coord tleft =  this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_topmost_pixel() + margin_top);
+	Coord tright = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_topmost_pixel() + margin_top);
+	Coord bleft =  this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_bottommost_pixel() + margin_bottom);
+	Coord bright = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_bottommost_pixel() + margin_bottom);
 
 	tleft.recalculate_to_mode(CoordMode::LatLon);
 	tright.recalculate_to_mode(CoordMode::LatLon);
@@ -1940,7 +1923,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon lat_lon = test.get_lat_lon();
-		lat_lon.lat += this->get_viking_scale().y * this->canvas.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
+		lat_lon.lat += this->get_viking_scale().y * this->vpixmap.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
 
 		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
@@ -1961,7 +1944,7 @@ void Viewport::paintEvent(QPaintEvent * ev)
 
 	QPainter painter(this);
 
-	painter.drawPixmap(0, 0, *this->canvas.pixmap);
+	painter.drawPixmap(0, 0, *this->vpixmap.pixmap);
 
 	painter.setPen(Qt::blue);
 	painter.setFont(QFont("Arial", 30));
@@ -1978,6 +1961,8 @@ void Viewport::resizeEvent(QResizeEvent * ev)
 	qDebug() << SG_PREFIX_I;
 
 	this->reconfigure_drawing_area();
+
+	/* TODO: call of this function should be triggered by signal. */
 	ThisApp::get_main_window()->draw_tree_items();
 	//this->draw_scale();
 
@@ -2055,8 +2040,8 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 	const Qt::KeyboardModifiers modifiers = ev->modifiers();
 
 	/* TODO: using get_width() and get_height() will give us only 99%-correct results. */
-	const int w = this->canvas.get_width();
-	const int h = this->canvas.get_height();
+	const int w = this->vpixmap.get_width();
+	const int h = this->vpixmap.get_height();
 	const bool scroll_up = angle.y() > 0;
 
 
@@ -2088,7 +2073,7 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		}
 		break;
 	case Qt::NoModifier: {
-		const ScreenPos center_pos(this->canvas.get_horiz_center_pixel(), this->canvas.get_vert_center_pixel());
+		const ScreenPos center_pos(this->vpixmap.get_horiz_center_pixel(), this->vpixmap.get_vert_center_pixel());
 		const ScreenPos event_pos(ev->x(), ev->y());
 		const ZoomOperation zoom_operation = SlavGPS::wheel_event_to_zoom_operation(ev);
 
@@ -2199,8 +2184,8 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 	Viewport * scaled_viewport = new Viewport(a_window);
 
-	const int orig_width = this->canvas.get_width();
-	const int orig_height = this->canvas.get_height();
+	const int orig_width = this->vpixmap.get_width();
+	const int orig_height = this->vpixmap.get_height();
 
 	const double orig_factor = 1.0 * orig_width / orig_height;
 	const double target_factor = 1.0 * target_width / target_height;
@@ -2238,7 +2223,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 
 
-	snprintf(scaled_viewport->canvas.debug, sizeof (scaled_viewport->canvas.debug), "%s", "Scaled Viewport");
+	snprintf(scaled_viewport->vpixmap.debug, sizeof (scaled_viewport->vpixmap.debug), "%s", "Scaled Viewport Pixmap");
 
 	/* Notice that we configure size of the print viewport using
 	   size of scaled source, not size of target device (i.e. not
@@ -2296,19 +2281,19 @@ bool Viewport::print_cb(QPrinter * printer)
 	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, VikingScale());
 
 	/* Since we are printing viewport as it is, we allow existing
-	   highlights to be drawn to print canvas. */
+	   highlights to be drawn to print pixmap. */
 	ThisApp::get_layers_panel()->draw_tree_items(scaled_viewport, true, false);
 
 
 	QPainter printer_painter;
 	printer_painter.begin(printer);
 	QPoint paint_begin; /* Beginning of rectangle, into which we will paint in target device. */
-	//paint_begin.setX((target_width / 2.0) - (scaled_viewport->canvas.width / 2.0));
-	//paint_begin.setY((target_height / 2.0) - (scaled_viewport->canvas.height / 2.0));
+	//paint_begin.setX((target_width / 2.0) - (scaled_viewport->vpixmap.width / 2.0));
+	//paint_begin.setY((target_height / 2.0) - (scaled_viewport->vpixmap.height / 2.0));
 	paint_begin.setX(0);
 	paint_begin.setY(0);
 
-	printer_painter.drawPixmap(paint_begin, *scaled_viewport->canvas.pixmap);
+	printer_painter.drawPixmap(paint_begin, *scaled_viewport->vpixmap.pixmap);
 	printer_painter.end();
 
 	delete scaled_viewport;
@@ -2324,14 +2309,14 @@ bool Viewport::print_cb(QPrinter * printer)
 
 
 /*
-  @pos is a position in viewport's canvas.
+  @pos is a position in viewport's pixmap.
   The function makes sure that the crosshair is drawn only inside of graph area.
 */
 void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 {
 	/* TODO: review, see if we should use get_width()/get_height() or get_bottommost_pixel()&co. */
-	const int w = this->central->canvas.get_width();
-	const int h = this->central->canvas.get_height();
+	const int w = this->central->vpixmap.get_width();
+	const int h = this->central->vpixmap.get_height();
 	const int x = pos.x;
 	const int y = h - pos.y - 1; /* Convert from "beginning in bottom-left corner" to "beginning in top-left corner" coordinate system. */
 
@@ -2342,13 +2327,13 @@ void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 		return;
 	}
 
-	this->central->canvas.painter->setPen(this->central->marker_pen);
+	this->central->vpixmap.painter->setPen(this->central->marker_pen);
 
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-	this->central->canvas.painter->drawLine(0, y, w, y); /* Horizontal line. */
-	this->central->canvas.painter->drawLine(x, 0, x, h); /* Vertical line. */
+	this->central->vpixmap.painter->drawLine(0, y, w, y); /* Horizontal line. */
+	this->central->vpixmap.painter->drawLine(x, 0, x, h); /* Vertical line. */
 }
 
 
@@ -2526,7 +2511,7 @@ void Viewport::dropEvent(QDropEvent * event)
 
 bool Viewport::is_ready(void) const
 {
-	return this->canvas.pixmap != NULL;
+	return this->vpixmap.pixmap != NULL;
 }
 
 
@@ -2545,14 +2530,14 @@ void Viewport::emit_center_or_zoom_changed(const QString & trigger_name)
 
 
 
-ViewportCanvas::ViewportCanvas()
+ViewportPixmap::ViewportPixmap()
 {
 }
 
 
 
 
-ViewportCanvas::~ViewportCanvas()
+ViewportPixmap::~ViewportPixmap()
 {
 	/* Painter must be deleted before paint device, otherwise
 	   destructor of the paint device will complain. */
@@ -2563,17 +2548,17 @@ ViewportCanvas::~ViewportCanvas()
 
 
 
-void ViewportCanvas::reconfigure(int new_width, int new_height)
+void ViewportPixmap::reconfigure(int new_width, int new_height)
 {
 	/* We don't handle situation when size of the pixmap doesn't
 	   change.  Such situation will occur rarely, and adding a
 	   code path to handle this special case would bring little
 	   gain. */
 
-	qDebug() << SG_PREFIX_N << this->debug << "*** Canvas is being reconfigured with size" << new_width << new_height << "***";
+	qDebug() << SG_PREFIX_N << this->debug << "vpixmap is being reconfigured with size" << new_width << new_height;
 
 	if (this->width == new_width && this->height == new_height) {
-		qDebug() << SG_PREFIX_I << this->debug << "Canvas not reconfigured: size didn't change";
+		qDebug() << SG_PREFIX_I << this->debug << "vpixmap not reconfigured: size didn't change";
 		return;
 	}
 
@@ -2581,14 +2566,14 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	this->height = new_height;
 
 	if (this->pixmap) {
-		qDebug() << SG_PREFIX_I << this->debug << "Deleting old canvas pixmap";
+		qDebug() << SG_PREFIX_I << this->debug << "Deleting old vpixmap";
 		/* Painter must be deleted before paint device, otherwise
 		   destructor of the paint device will complain. */
 		delete this->painter;
 		delete this->pixmap;
 	}
 
-	qDebug() << SG_PREFIX_I << this->debug << "Creating new canvas pixmap with size" << this->width << this->height;
+	qDebug() << SG_PREFIX_I << this->debug << "Creating new vpixmap with size" << this->width << this->height;
 	this->pixmap = new QPixmap(this->width, this->height);
 	this->pixmap->fill();
 
@@ -2604,7 +2589,7 @@ void ViewportCanvas::reconfigure(int new_width, int new_height)
 	this->snapshot_buffer = new QPixmap(this->width, this->height);
 
 	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
-	emit this->reconfigured(this->viewport);
+	emit this->reconfigured(this->parent_viewport); /* TODO: maybe emit->this->parent_viewport->some_signal()? */
 }
 
 
@@ -2651,7 +2636,7 @@ void Viewport2D::create_central(void)
 	}
 
 	this->central = new Viewport(this);
-	this->central->canvas.viewport = this;
+	this->central->vpixmap.parent_viewport = this;
 
 	this->grid->addWidget(this->central, 1, 1);
 }
@@ -2692,10 +2677,10 @@ void Viewport2D::create_margins(int l, int r, int t, int b)
 	this->grid->addWidget(this->top,     0, 1);
 	this->grid->addWidget(this->bottom,  2, 1);
 
-	this->left->canvas.viewport = this;
-	this->right->canvas.viewport = this;
-	this->top->canvas.viewport = this;
-	this->bottom->canvas.viewport = this;
+	this->left->vpixmap.parent_viewport   = this;
+	this->right->vpixmap.parent_viewport  = this;
+	this->top->vpixmap.parent_viewport    = this;
+	this->bottom->vpixmap.parent_viewport = this;
 
 	return;
 }
@@ -2708,7 +2693,7 @@ void ViewportMargin::paintEvent(QPaintEvent * ev)
 	qDebug() << SG_PREFIX_I;
 
 	QPainter painter(this);
-	painter.drawPixmap(0, 0, *this->canvas.pixmap);
+	painter.drawPixmap(0, 0, *this->vpixmap.pixmap);
 
 	return;
 }
@@ -2720,29 +2705,29 @@ void ViewportMargin::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
 
-	this->canvas.reconfigure(this->geometry().width(), this->geometry().height());
-	this->canvas.painter->setPen(this->border_pen);
+	this->vpixmap.reconfigure(this->geometry().width(), this->geometry().height());
+	this->vpixmap.painter->setPen(this->border_pen);
 
 	switch (this->position) {
 	case ViewportMargin::Position::Left:
-		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "left");
-		this->canvas.painter->drawLine(this->geometry().width() - 1, 0,
+		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "left");
+		this->vpixmap.painter->drawLine(this->geometry().width() - 1, 0,
 					       this->geometry().width() - 1, this->geometry().height() - 1);
 		break;
 	case ViewportMargin::Position::Right:
-		this->canvas.painter->drawLine(1, 1,
+		this->vpixmap.painter->drawLine(1, 1,
 					       1, this->geometry().height() - 1);
-		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "right");
+		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "right");
 		break;
 	case ViewportMargin::Position::Top:
-		this->canvas.painter->drawLine(0,                            this->geometry().height() - 1,
+		this->vpixmap.painter->drawLine(0,                            this->geometry().height() - 1,
 					       this->geometry().width() - 1, this->geometry().height() - 1);
-		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "top");
+		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "top");
 		break;
 	case ViewportMargin::Position::Bottom:
-		this->canvas.painter->drawLine(1,                            1,
+		this->vpixmap.painter->drawLine(1,                            1,
 					       this->geometry().width() - 1, 1);
-		this->canvas.painter->drawText(this->rect(), Qt::AlignCenter, "bottom");
+		this->vpixmap.painter->drawText(this->rect(), Qt::AlignCenter, "bottom");
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";
@@ -2767,25 +2752,25 @@ ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWid
 	case ViewportMargin::Position::Left:
 		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 		this->setMinimumSize(size, 10);
-		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "left");
+		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "left");
 		break;
 
 	case ViewportMargin::Position::Right:
 		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 		this->setMinimumSize(size, 10);
-		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "right");
+		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "right");
 		break;
 
 	case ViewportMargin::Position::Top:
 		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 		this->setMinimumSize(10, size);
-		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "top");
+		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "top");
 		break;
 
 	case ViewportMargin::Position::Bottom:
 		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 		this->setMinimumSize(10, size);
-		snprintf(this->canvas.debug, sizeof (this->canvas.debug), "%s", "bottom");
+		snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "bottom");
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled margin position";
@@ -2798,52 +2783,52 @@ ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWid
 
 int Viewport2D::central_get_width(void) const
 {
-	return this->central ? this->central->canvas.get_width() : 0;
+	return this->central ? this->central->vpixmap.get_width() : 0;
 }
 
 int Viewport2D::central_get_height(void) const
 {
-	return this->central ? this->central->canvas.get_height() : 0;
+	return this->central ? this->central->vpixmap.get_height() : 0;
 }
 
 int Viewport2D::left_get_width(void) const
 {
-	return this->left ? this->left->canvas.get_width() : 0;
+	return this->left ? this->left->vpixmap.get_width() : 0;
 }
 
 int Viewport2D::left_get_height(void) const
 {
-	return this->left ? this->left->canvas.get_height() : 0;
+	return this->left ? this->left->vpixmap.get_height() : 0;
 }
 
 int Viewport2D::right_get_width(void) const
 {
-	return this->right ? this->right->canvas.get_width() : 0;
+	return this->right ? this->right->vpixmap.get_width() : 0;
 }
 
 int Viewport2D::right_get_height(void) const
 {
-	return this->right ? this->right->canvas.get_height() : 0;
+	return this->right ? this->right->vpixmap.get_height() : 0;
 }
 
 int Viewport2D::top_get_width(void) const
 {
-	return this->top ? this->top->canvas.get_width() : 0;
+	return this->top ? this->top->vpixmap.get_width() : 0;
 }
 
 int Viewport2D::top_get_height(void) const
 {
-	return this->top ? this->top->canvas.get_height() : 0;
+	return this->top ? this->top->vpixmap.get_height() : 0;
 }
 
 int Viewport2D::bottom_get_width(void) const
 {
-	return this->bottom ? this->bottom->canvas.get_width() : 0;
+	return this->bottom ? this->bottom->vpixmap.get_width() : 0;
 }
 
 int Viewport2D::bottom_get_height(void) const
 {
-	return this->bottom ? this->bottom->canvas.get_height() : 0;
+	return this->bottom ? this->bottom->vpixmap.get_height() : 0;
 }
 
 
@@ -2854,8 +2839,8 @@ sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 	/* TODO: review this function and see if we need to use
 	   get_width()/get_height() or maybe
 	   get_bottommost_pixel()&co. */
-	const int w = this->canvas.get_width();
-	const int h = this->canvas.get_height();
+	const int w = this->vpixmap.get_width();
+	const int h = this->vpixmap.get_height();
 
 	const QPoint position = this->mapFromGlobal(QCursor::pos());
 
@@ -2907,25 +2892,25 @@ sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 
 
 
-double Viewport::get_canvas_height_m(void) const
+double Viewport::get_vpixmap_height_m(void) const
 {
-	return this->canvas.get_height() * this->viking_scale.y;
+	return this->vpixmap.get_height() * this->viking_scale.y;
 }
 
 
 
 
-double Viewport::get_canvas_width_m(void) const
+double Viewport::get_vpixmap_width_m(void) const
 {
-	return this->canvas.get_width() * this->viking_scale.x;
+	return this->vpixmap.get_width() * this->viking_scale.x;
 }
 
 
 
 
-QDebug SlavGPS::operator<<(QDebug debug, const ViewportCanvas & canvas)
+QDebug SlavGPS::operator<<(QDebug debug, const ViewportPixmap & vpixmap)
 {
-	debug << "Canvas:" << canvas.debug << "width=" << canvas.get_width() << "height=" << canvas.get_height();
+	debug << "ViewportPixmap:" << vpixmap.debug << "width=" << vpixmap.get_width() << "height=" << vpixmap.get_height();
 	return debug;
 }
 
@@ -2933,35 +2918,43 @@ QDebug SlavGPS::operator<<(QDebug debug, const ViewportCanvas & canvas)
 
 
 
-int ViewportCanvas::get_leftmost_pixel(void) const
+int ViewportPixmap::get_leftmost_pixel(void) const
 {
 	return 0;
 }
-int ViewportCanvas::get_rightmost_pixel(void) const
+int ViewportPixmap::get_rightmost_pixel(void) const
 {
 	return this->width - 1;
 }
-int ViewportCanvas::get_topmost_pixel(void) const
+int ViewportPixmap::get_topmost_pixel(void) const
 {
 	return 0;
 }
-int ViewportCanvas::get_bottommost_pixel(void) const
+int ViewportPixmap::get_bottommost_pixel(void) const
 {
 	return this->height - 1;
 }
-int ViewportCanvas::get_vert_center_pixel(void) const
+int ViewportPixmap::get_vert_center_pixel(void) const
 {
 	return (this->height - 1) / 2;
 }
-int ViewportCanvas::get_horiz_center_pixel(void) const
+int ViewportPixmap::get_horiz_center_pixel(void) const
 {
 	return (this->width - 1) / 2;
 }
-int ViewportCanvas::get_width(void) const
+int ViewportPixmap::get_width(void) const
 {
 	return this->width;
 }
-int ViewportCanvas::get_height(void) const
+int ViewportPixmap::get_height(void) const
 {
 	return this->height;
+}
+
+
+
+
+void ViewportPixmap::clear(void)
+{
+	this->painter->eraseRect(0, 0, this->get_width(), this->get_height());
 }

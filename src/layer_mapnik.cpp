@@ -1163,7 +1163,7 @@ sg_ret LayerMapnik::draw_tile(Viewport * viewport, const TileInfo & tile_info)
 
 		const int pixmap_x = 0;
 		const int pixmap_y = 0;
-		viewport->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
+		viewport->vpixmap.draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
 	}
 
 	return sg_ret::ok;
@@ -1175,7 +1175,7 @@ sg_ret LayerMapnik::draw_tile(Viewport * viewport, const TileInfo & tile_info)
 sg_ret LayerMapnik::get_tiles_range(const Viewport * viewport, TilesRange & range, TileInfo & tile_info_ul)
 {
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
-	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
+	const Coord coord_br = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
 	const LatLon lat_lon_ul = coord_ul.get_lat_lon();
 	const LatLon lat_lon_br = coord_br.get_lat_lon();
 

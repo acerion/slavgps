@@ -66,8 +66,8 @@ namespace SlavGPS {
 
 
 
-	/* "Meters per pixel" scale. How many meters on Viewport
-	   canvas are represented by one pixel of canvas. */
+	/* "Meters per pixel" scale. How many meters on viewport
+	   pixmap are represented by one pixel of viewport' pixmap. */
 	class VikingScale {
 		friend class Viewport;
 	public:

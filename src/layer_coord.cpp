@@ -264,7 +264,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
 		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
 		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			viewport->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
 		}							\
 	}
 
@@ -272,8 +272,8 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
 		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
 		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
-			viewport->draw_text(text_font, text_pen, x1, y1 + 15, text); \
+			viewport->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			viewport->vpixmap.draw_text(text_font, text_pen, x1, y1 + 15, text); \
 		}							\
 	}
 
@@ -281,15 +281,15 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
 		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
 		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			viewport->draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
-			viewport->draw_text(text_font, text_pen, x1, y1, text); \
+			viewport->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			viewport->vpixmap.draw_text(text_font, text_pen, x1, y1, text); \
 		}							\
 	}
 
 
-	const Coord ul = viewport->screen_pos_to_coord(0,                     0);
-	const Coord ur = viewport->screen_pos_to_coord(viewport->get_width(), 0);
-	const Coord bl = viewport->screen_pos_to_coord(0,                     viewport->get_height());
+	const Coord ul = viewport->screen_pos_to_coord(0,                             0);
+	const Coord ur = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), 0);
+	const Coord bl = viewport->screen_pos_to_coord(0,                             viewport->vpixmap.get_height());
 
 	const double minimum_lon = ul.lat_lon.lon;
 	const double maximum_lon = ur.lat_lon.lon;
@@ -454,8 +454,8 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	const UTM center = viewport->get_center().get_utm();
 	const double xmpp = viewport->get_viking_scale().get_x();
 	const double ympp = viewport->get_viking_scale().get_y();
-	const int width = viewport->get_width();
-	const int height = viewport->get_height();
+	const int width = viewport->vpixmap.get_width();
+	const int height = viewport->vpixmap.get_height();
 
 
 	LatLon min, max;
@@ -525,7 +525,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		const double degrees_delta = this->deg_inc;
 
 		/* Distance from center to either upper or lower edge
-		   of canvas. [meters] */
+		   of pixmap that we draw to. [meters] */
 		const double vert_distance_m = (height / 2) * ympp;
 
 		utm.northing = center.get_northing() - vert_distance_m;
@@ -549,7 +549,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 			utm = LatLon::to_utm(lat_lon_top);
 			int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
 
-			viewport->draw_line(pen, x1, height, x2, 0);
+			viewport->vpixmap.draw_line(pen, x1, height, x2, 0);
 		}
 	}
 
@@ -562,7 +562,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		const double degrees_delta = this->deg_inc;
 
 		/* Distance from center to either left or right edge
-		   of canvas. [meters] */
+		   of pixmap that we draw to. [meters] */
 		const double horiz_distance_m = (width / 2) * xmpp;
 
 		utm.easting = center.easting - horiz_distance_m;
@@ -585,7 +585,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 			utm = LatLon::to_utm(lat_lon_right);
 			int x2 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 
-			viewport->draw_line(pen, width, x2, 0, x1);
+			viewport->vpixmap.draw_line(pen, width, x2, 0, x1);
 		}
 	}
 }

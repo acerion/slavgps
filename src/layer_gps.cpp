@@ -1446,9 +1446,9 @@ void LayerGPS::rt_tracking_draw(Viewport * viewport, RTData & rt_data)
 
 	//QPen const & pen, QPoint const * points, int npoints, bool filled
 
-	viewport->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
-	viewport->draw_polygon(this->realtime_track_pen, trian, 3, true);
-	viewport->fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
+	viewport->vpixmap.draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
+	viewport->vpixmap.draw_polygon(this->realtime_track_pen, trian, 3, true);
+	viewport->vpixmap.fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
 
 	//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 }
@@ -1608,8 +1608,8 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		const int hdiv = 6;
 		const int vdiv = 6;
 		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
-		int width = viewport->get_width();
-		int height = viewport->get_height();
+		const int width = viewport->vpixmap.get_width();
+		const int height = viewport->vpixmap.get_height();
 		int vx, vy;
 
 		if (sg_ret::ok == viewport->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {

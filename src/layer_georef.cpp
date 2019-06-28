@@ -444,7 +444,7 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	qDebug() << "++++++++ EXPECT 0 0:" << (transformed_image.width() - sub_viewport_rect.width()) << (transformed_image.height() - sub_viewport_rect.height());
 
-	viewport->draw_pixmap(transformed_image, sub_viewport_rect, image_rect);
+	viewport->vpixmap.draw_pixmap(transformed_image, sub_viewport_rect, image_rect);
 }
 
 

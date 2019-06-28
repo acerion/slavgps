@@ -81,8 +81,8 @@ void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 	this->width_spin->blockSignals(true);
 	this->height_spin->blockSignals(true);
 
-	this->width_spin->setValue(this->viewport->get_width());
-	this->height_spin->setValue(this->viewport->get_height());
+	this->width_spin->setValue(this->viewport->vpixmap.get_width());
+	this->height_spin->setValue(this->viewport->vpixmap.get_height());
 
 	this->width_spin->blockSignals(false);
 	this->height_spin->blockSignals(false);
@@ -129,10 +129,10 @@ ViewportSaveDialog::ViewportSaveDialog(QString const & title, Viewport * new_vie
 	this->setWindowTitle(title);
 	this->viewport = new_viewport;
 
-	this->original_width = this->viewport->get_width();
+	this->original_width = this->viewport->vpixmap.get_width();
 	this->original_viking_scale = this->viewport->get_viking_scale();
 
-	this->proportion = 1.0 * this->viewport->get_width() / this->viewport->get_height();
+	this->proportion = 1.0 * this->viewport->vpixmap.get_width() / this->viewport->vpixmap.get_height();
 }
 
 
@@ -424,7 +424,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 	//scaled_viewport->set_bbox(this->viewport->get_bbox());
 
-	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->get_width() << scaled_viewport->get_height();
+	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->vpixmap.get_width() << scaled_viewport->vpixmap.get_height();
 
 	/* Redraw all layers at current position and zoom.
 	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */

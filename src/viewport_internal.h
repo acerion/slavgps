@@ -57,12 +57,14 @@ namespace SlavGPS {
 	class Layer;
 	class Viewport2D;
 	class ViewportMargin;
-	class ViewportCanvas;
+	class ViewportPixmap;
 
 
 
 
-	class ViewportCanvas : public QObject {
+	/* Wrapper around pixmap and a painter that paints to the
+	   pixmap.  Simple class providing paint primitives. */
+	class ViewportPixmap : public QObject {
 		Q_OBJECT
 
 		friend class Viewport;
@@ -70,14 +72,12 @@ namespace SlavGPS {
 		friend class ViewportDecorations;
 		friend class ViewportMargin;
 	public:
-		ViewportCanvas();
-		~ViewportCanvas();
+		ViewportPixmap();
+		~ViewportPixmap();
 
 		void reconfigure(int width, int height);
 
 		char debug[100] = { 0 };
-		Viewport2D * viewport = NULL;
-
 
 		int get_leftmost_pixel(void) const;
 		int get_rightmost_pixel(void) const;
@@ -85,8 +85,9 @@ namespace SlavGPS {
 		int get_bottommost_pixel(void) const;
 
 		/* Get number of pixel (starting with zero) that is in
-		   center of canvas, either at the center of vertical
-		   line, or at the center of horizontal line. */
+		   center of viewport pixmap, either at the center of
+		   vertical line, or at the center of horizontal
+		   line. */
 		int get_vert_center_pixel(void) const;
 		int get_horiz_center_pixel(void) const;
 
@@ -94,13 +95,42 @@ namespace SlavGPS {
 		int get_height(void) const;
 
 
+		void clear(void);
 
+
+		/* Drawing primitives. */
+		void draw_line(QPen const & pen, int begin_x, int begin_y, int end_x, int end_y);
+		void draw_rectangle(QPen const & pen, int upper_left_x, int upper_left_y, int width, int height);
+		void draw_rectangle(QPen const & pen, const QRect & rect);
+		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
+
+		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
+		void draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset);
+		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
+		void draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text);
+
+		void draw_arc(QPen const & pen, int x, int y, int width, int height, int start_angle, int span_angle);
+		void draw_ellipse(QPen const & pen, const QPoint & center, int radius_x, int radius_y, bool filled);
+		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
+
+		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height);
+		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y);
+		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
+
+
+
+
+		/* TODO: move to 'protected'. */
 		QPixmap saved_pixmap;
 		bool saved_pixmap_valid;
 
+
 	protected:
+		Viewport2D * parent_viewport = NULL;
+
 		int width = 0;
 		int height = 0;
+
 
 		QPainter * painter = NULL;
 		QPixmap * pixmap = NULL;
@@ -110,7 +140,7 @@ namespace SlavGPS {
 	signals:
 		void reconfigured(Viewport2D * viewport);
 	};
-	QDebug operator<<(QDebug debug, const ViewportCanvas & canvas);
+	QDebug operator<<(QDebug debug, const ViewportPixmap & vpixmap);
 
 
 
@@ -146,27 +176,11 @@ namespace SlavGPS {
 
 
 		/* Drawing primitives. */
-		void draw_line(QPen const & pen, int begin_x, int begin_y, int end_x, int end_y);
-		void draw_rectangle(QPen const & pen, int upper_left_x, int upper_left_y, int width, int height);
-		void draw_rectangle(QPen const & pen, const QRect & rect);
-		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
 
-		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
-		void draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset);
-		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
-		void draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text);
-
-		void draw_arc(QPen const & pen, int x, int y, int width, int height, int start_angle, int span_angle);
-		void draw_ellipse(QPen const & pen, const QPoint & center, int radius_x, int radius_y, bool filled);
-		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
-
-		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height);
-		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y);
-		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
 
 		void draw_bbox(const LatLonBBox & bbox, const QPen & pen);
 
-		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
+		/* Run this before drawing a line. ViewportPixmap::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
 		CoordMode get_coord_mode(void) const;
@@ -211,12 +225,10 @@ namespace SlavGPS {
 		LatLonBBox get_bbox(int margin_left = 0, int margin_right = 0, int margin_top = 0, int margin_bottom = 0) const;
 
 
-		int get_width(void) const;
-		int get_height(void) const;
 		QRect get_rect(void) const;
 
-		double get_canvas_height_m(void) const;
-		double get_canvas_width_m(void) const;
+		double get_vpixmap_height_m(void) const;
+		double get_vpixmap_width_m(void) const;
 
 
 		/* Coordinate transformations. */
@@ -372,10 +384,7 @@ namespace SlavGPS {
 
 		char debug[100] = { 0 };
 
-		ViewportCanvas canvas;
-
-		int saved_width = 0;
-		int saved_height = 0;
+		ViewportPixmap vpixmap;
 
 	private:
 		void free_center(std::list<Coord>::iterator iter);
@@ -429,7 +438,7 @@ namespace SlavGPS {
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
 
-		ViewportCanvas canvas;
+		ViewportPixmap vpixmap;
 		ViewportMargin::Position position;
 
 		/* The border around main area of viewport. It's specified by margin sizes. */

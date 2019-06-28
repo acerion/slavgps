@@ -766,14 +766,14 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 				}
 
 				int idx = GET_INDEX(change, min_elevation, max_elevation, DEM_N_GRADIENT_COLORS);
-				viewport->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
+				viewport->vpixmap.fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
 
 			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 				if (elev > 0 && !below_minimum) {
 					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
-				viewport->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
+				viewport->vpixmap.fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
 			} else {
 				; /* No other dem type to process. */
 			}
@@ -790,10 +790,10 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 {
 	unsigned int skip_factor = ceil(viewport->get_viking_scale().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
 
-	Coord tleft =  viewport->screen_pos_to_coord(0,                     0);
-	Coord tright = viewport->screen_pos_to_coord(viewport->get_width(), 0);
-	Coord bleft =  viewport->screen_pos_to_coord(0,                     viewport->get_height());
-	Coord bright = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
+	Coord tleft =  viewport->screen_pos_to_coord(0,                             0);
+	Coord tright = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), 0);
+	Coord bleft =  viewport->screen_pos_to_coord(0,                             viewport->vpixmap.get_height());
+	Coord bright = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
 
 	tleft.recalculate_to_mode(CoordMode::UTM);
 	tright.recalculate_to_mode(CoordMode::UTM);
@@ -883,7 +883,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-				viewport->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
+				viewport->vpixmap.fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
 			}
 		} /* for y= */
 	} /* for x= */
@@ -904,12 +904,12 @@ void draw_loaded_dem_box(Viewport * viewport)
 	ScreenPos sp_ne = viewport->coord_to_screen_pos(demne);
 	ScreenPos sp_sw = viewport->coord_to_screen_pos(demsw);
 
-	if (sp_ne.x > viewport->get_width()) {
-		sp_ne.x = viewport->get_width();
+	if (sp_ne.x > viewport->vpixmap.get_width()) {
+		sp_ne.x = viewport->vpixmap.get_width();
 	}
 
-	if (sp_sw.y > viewport->get_height()) {
-		sp_sw.y = viewport->get_height();
+	if (sp_sw.y > viewport->vpixmap.get_height()) {
+		sp_sw.y = viewport->vpixmap.get_height();
 	}
 
 	if (sp_sw.x < 0) {
@@ -922,7 +922,7 @@ void draw_loaded_dem_box(Viewport * viewport)
 
 	qDebug() << SG_PREFIX_I << "drawing loaded DEM box";
 
-	viewport->draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	viewport->vpixmap.draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 #endif
 
 	return;
@@ -1214,7 +1214,7 @@ void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & 
 	}
 
 	qDebug() << SG_PREFIX_D << "Drawing existence rectangle for" << cache_file_path;
-	viewport->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	viewport->vpixmap.draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 }
 
 

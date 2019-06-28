@@ -219,7 +219,7 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 			label1_y = (this->y1 + this->y2) / 2 - label1_rect.height() / 2 + this->dx;
 		}
 
-		if (label1_x < -5 || label1_y < -5 || label1_x > this->viewport->get_width() + 5 || label1_y > this->viewport->get_height() + 5) {
+		if (label1_x < -5 || label1_y < -5 || label1_x > this->viewport->vpixmap.get_width() + 5 || label1_y > this->viewport->vpixmap.get_height() + 5) {
 			label1_x = this->x2 + 10;
 			label1_y = this->y2 - 5;
 		}

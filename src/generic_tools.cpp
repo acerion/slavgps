@@ -288,7 +288,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 
 	const Qt::KeyboardModifiers modifiers = event->modifiers();
 
-	const ScreenPos center_pos(this->viewport->get_width() / 2, this->viewport->get_height() / 2);
+	const ScreenPos center_pos(this->viewport->vpixmap.get_width() / 2, this->viewport->vpixmap.get_height() / 2);
 	const ScreenPos event_pos(event->x(), event->y());
 
 	/* Did the zoom operation affect viewport? */

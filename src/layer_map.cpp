@@ -1131,7 +1131,7 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 				tile_geometry.dest_y -= (tile_geometry.height / 2);
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-				viewport->draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
+				viewport->vpixmap.draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
 			}
 		}
 	} else {
@@ -1194,7 +1194,7 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, map_type_string, scale_factor);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
-						viewport->draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
+						viewport->vpixmap.draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
 					}
 				}
 
@@ -1222,8 +1222,8 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
 {
 	/* Draw single grid lines across the whole screen. */
-	const int viewport_width = viewport->get_width();
-	const int viewport_height = viewport->get_height();
+	const int viewport_width = viewport->vpixmap.get_width();
+	const int viewport_height = viewport->vpixmap.get_height();
 	const int base_viewport_x = viewport_x - (tile_width / 2);
 	const int base_viewport_y = viewport_y - (tile_height / 2);
 
@@ -1232,7 +1232,7 @@ void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, 
 		/* Using 'base_viewport_y as a third arg,
 		   instead of zero, causes drawing only whole
 		   tiles on top of a map. */
-		viewport->draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
+		viewport->vpixmap.draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
 		viewport_x += tile_width;
 	}
 
@@ -1241,7 +1241,7 @@ void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, 
 		/* Using 'base_viewport_x as a second arg,
 		   instead of zero, causes drawing only whole
 		   tiles on left size of a map. */
-		viewport->draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
+		viewport->vpixmap.draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
 		viewport_y += tile_height;
 	}
 }
@@ -1276,7 +1276,7 @@ void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		}
 	} else {
 		const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
-		const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
+		const Coord coord_br = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
 
 		this->draw_section(viewport, coord_ul, coord_br);
 	}
@@ -1475,13 +1475,13 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
 			const Coord coord_ul = this->viewport->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
-			const Coord coord_br = this->viewport->screen_pos_to_coord(std::min(this->viewport->get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->viewport->get_height(), std::max(event->y(), layer->dl_tool_y)));
+			const Coord coord_br = this->viewport->screen_pos_to_coord(std::min(this->viewport->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->viewport->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
 			layer->start_download_thread(this->viewport, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 			return ToolStatus::Ack;
 		} else {
 			layer->redownload_ul = this->viewport->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
-			layer->redownload_br = this->viewport->screen_pos_to_coord(std::min(this->viewport->get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->viewport->get_height(), std::max(event->y(), layer->dl_tool_y)));
+			layer->redownload_br = this->viewport->screen_pos_to_coord(std::min(this->viewport->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->viewport->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
 
 			layer->redownload_viewport = this->viewport;
 
@@ -1566,7 +1566,7 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	Viewport * viewport = this->get_window()->get_viewport();
 
 	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
-	const Coord coord_br = viewport->screen_pos_to_coord(viewport->get_width(), viewport->get_height());
+	const Coord coord_br = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
 
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
@@ -2105,6 +2105,6 @@ void LayerMap::draw_existence(Viewport * viewport, const TileInfo & tile_info, c
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-		viewport->draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
+		viewport->vpixmap.draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
 	}
 }

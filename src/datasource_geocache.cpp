@@ -130,10 +130,10 @@ bool DataSourceGeoCache::have_programs(void)
 void DataSourceGeoCacheDialog::draw_circle_cb(void)
 {
 	if (this->circle_onscreen) {
-		this->viewport->draw_ellipse(this->circle_pen,
-					     QPoint(this->circle_x, this->circle_y),
-					     this->circle_radius, this->circle_radius,
-					     false);
+		this->viewport->vpixmap.draw_ellipse(this->circle_pen,
+						     QPoint(this->circle_x, this->circle_y),
+						     this->circle_radius, this->circle_radius,
+						     false);
 	}
 
 	/* Calculate widgets circle_x and circle_y. */
@@ -151,18 +151,21 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		this->circle_x = circle_center.x;
 		this->circle_y = circle_center.y;
 
+		const int height = this->viewport->vpixmap.get_height();
+		const int width = this->viewport->vpixmap.get_width();
+
 		/* Determine miles per pixel. */
-		const Coord coord1 = this->viewport->screen_pos_to_coord(0, this->viewport->get_height()/2);
-		const Coord coord2 = this->viewport->screen_pos_to_coord(this->viewport->get_width(), this->viewport->get_height()/2);
-		const double pixels_per_meter = ((double)this->viewport->get_width()) / Coord::distance(coord1, coord2);
+		const Coord coord1 = this->viewport->screen_pos_to_coord(0, height/2);
+		const Coord coord2 = this->viewport->screen_pos_to_coord(width, height/2);
+		const double pixels_per_meter = ((double) width) / Coord::distance(coord1, coord2);
 
 		/* This is approximate. */
 		this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
 
-		this->viewport->draw_ellipse(this->circle_pen,
-					     QPoint(this->circle_x, this->circle_y),
-					     this->circle_radius, this->circle_radius,
-					     false);
+		this->viewport->vpixmap.draw_ellipse(this->circle_pen,
+						     QPoint(this->circle_x, this->circle_y),
+						     this->circle_radius, this->circle_radius,
+						     false);
 
 		this->circle_onscreen = true;
 	} else {
@@ -293,10 +296,10 @@ AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext
 DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 {
 	if (this->circle_onscreen) {
-		this->viewport->draw_ellipse(this->circle_pen,
-					     QPoint(this->circle_x, this->circle_y),
-					     this->circle_radius, this->circle_radius,
-					     false);
+		this->viewport->vpixmap.draw_ellipse(this->circle_pen,
+						     QPoint(this->circle_x, this->circle_y),
+						     this->circle_radius, this->circle_radius,
+						     false);
 		this->viewport->sync();
 	}
 }
@@ -309,6 +312,6 @@ bool DataSourceGeoCacheDialog::circle_is_onscreen(const ScreenPos & circle_cente
 	/* TODO_2_LATER: real calculation. */
 	return circle_center.x > -1000
 		&& circle_center.y > -1000
-		&& circle_center.x < (this->viewport->get_width() + 1000)
-		&& circle_center.y < (this->viewport->get_width() + 1000);
+		&& circle_center.x < (this->viewport->vpixmap.get_width() + 1000)
+		&& circle_center.y < (this->viewport->vpixmap.get_width() + 1000);
 }
