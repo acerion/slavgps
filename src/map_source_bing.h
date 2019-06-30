@@ -62,7 +62,7 @@ namespace SlavGPS {
 		MapSourceBing(MapTypeID map_type, const QString & label, const QString & key);
 		~MapSourceBing();
 
-		void add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingScale & viking_scale);
+		void add_copyright(GisViewport * gisview, const LatLonBBox & bbox, const VikingScale & viking_scale);
 		const QString get_server_path(const TileInfo & src) const;
 		sg_ret load_providers(void);
 

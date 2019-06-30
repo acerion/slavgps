@@ -545,10 +545,10 @@ void CommandLineOptions::apply(Window * window)
 		return;
 	}
 
-	Viewport * viewport = window->get_viewport();
+	GisViewport * gisview = window->get_viewport();
 
 	if (this->lat_lon.is_valid()) {
-		viewport->set_center_from_lat_lon(this->lat_lon);
+		gisview->set_center_from_lat_lon(this->lat_lon);
 	}
 
 	if (this->zoom_level_osm >= 0) {
@@ -557,7 +557,7 @@ void CommandLineOptions::apply(Window * window)
 		if (map_scale > 1.0) {
 			map_scale = round(map_scale);
 		}
-		viewport->set_viking_scale(map_scale);
+		gisview->set_viking_scale(map_scale);
 	}
 
 	if (this->map_type_id != MapTypeID::Initial) {
@@ -857,16 +857,16 @@ QString SGUtils::double_to_c(double d, int precision)
 
 
 
-GlobalPoint SGUtils::coord_to_global_point(const Coord & coord, const Viewport * viewport)
+GlobalPoint SGUtils::coord_to_global_point(const Coord & coord, const GisViewport * gisview)
 {
 	GlobalPoint global_point;
-	const ScreenPos screen_pos = viewport->coord_to_screen_pos(coord); /* In viewport's x/y coordinate system. */
-	global_point.point = viewport->mapToGlobal(QPoint(screen_pos.x, screen_pos.y)); /* In screen's x/y coordinate system. */
+	const ScreenPos screen_pos = gisview->coord_to_screen_pos(coord); /* In viewport's x/y coordinate system. */
+	global_point.point = gisview->mapToGlobal(QPoint(screen_pos.x, screen_pos.y)); /* In screen's x/y coordinate system. */
 
 	if (1) { /* Debug. */
 		const int primary_screen = QApplication::desktop()->primaryScreen();
 		const QRect primary_screen_geo = QApplication::desktop()->availableGeometry(primary_screen);
-		const QRect containing_screen_geo = QApplication::desktop()->availableGeometry(viewport);
+		const QRect containing_screen_geo = QApplication::desktop()->availableGeometry(gisview);
 
 		qDebug() << SG_PREFIX_D << "Available geometry of primary screen:" << primary_screen_geo;
 		qDebug() << SG_PREFIX_D << "Available geometry of screen containing widget:" << containing_screen_geo;

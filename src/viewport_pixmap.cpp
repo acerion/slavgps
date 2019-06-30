@@ -67,7 +67,7 @@ void ViewportPixmap::draw_line(const QPen & pen, int begin_x, int begin_y, int e
 	}
 
 	/*** Clipping, yeah! ***/
-	Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
+	GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
 	//QPainter painter(this->vpixmap.pixmap);
 	this->painter->setPen(pen);

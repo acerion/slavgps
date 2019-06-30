@@ -110,7 +110,7 @@ void Expedia::init(void)
 	map_type.uniq_id = MapTypeID::Expedia;
 	map_type.tilesize_x = 0;
 	map_type.tilesize_y = 0;
-	map_type.drawmode = ViewportDrawMode::Expedia;
+	map_type.drawmode = GisViewportDrawMode::Expedia;
 	map_type.coord_to_tile_info = expedia_coord_to_tile_info;
 	map_type.tile_info_to_center_coord = expedia_tile_info_to_center_coord;
 	map_type.download = expedia_download_tile;

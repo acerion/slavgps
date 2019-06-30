@@ -56,7 +56,7 @@ using namespace SlavGPS;
 MapSourceWmsc::MapSourceWmsc()
 {
 	fprintf(stderr, "MapSourceWmsc constructor start\n");
-	drawmode = ViewportDrawMode::LatLon;
+	drawmode = GisViewportDrawMode::LatLon;
 	fprintf(stderr, "MapSourceWmsc constructor end\n");
 }
 

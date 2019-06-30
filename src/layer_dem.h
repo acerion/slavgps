@@ -69,8 +69,8 @@ namespace SlavGPS {
 	class LayerDEMInterface : public LayerInterface {
 	public:
 		LayerDEMInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
-		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
+		LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
 	};
 
 
@@ -83,13 +83,13 @@ namespace SlavGPS {
 		~LayerDEM();
 
 		/* Layer interface methods. */
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(const QString & dem_file_path);
-		void draw_dem(Viewport * viewport, DEM * dem);
-		void draw_dem_ll(Viewport * viewport, DEM * dem);
-		void draw_dem_utm(Viewport * viewport, DEM * dem);
+		void draw_dem(GisViewport * gisview, DEM * dem);
+		void draw_dem_ll(GisViewport * gisview, DEM * dem);
+		void draw_dem_utm(GisViewport * gisview, DEM * dem);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
@@ -120,7 +120,7 @@ namespace SlavGPS {
 
 	class LayerToolDEMDownload : public LayerTool {
 	public:
-		LayerToolDEMDownload(Window * window, Viewport * viewport);
+		LayerToolDEMDownload(Window * window, GisViewport * gisview);
 
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};

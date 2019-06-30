@@ -78,7 +78,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class LayerGPS;
 	class LayerTRW;
 	class Window;
@@ -106,7 +106,7 @@ namespace SlavGPS {
 	public:
 		GPSTransfer(GPSDirection dir) : direction(dir) {};
 
-		int run_transfer(LayerTRW * trw_layer, Track * trk, Viewport * viewport, bool tracking);
+		int run_transfer(LayerTRW * trw_layer, Track * trk, GisViewport * gisview, bool tracking);
 
 		GPSDirection direction;    /* The direction of the transfer. */
 
@@ -171,7 +171,7 @@ namespace SlavGPS {
 	class LayerGPSInterface : public LayerInterface {
 	public:
 		LayerGPSInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
 	};
 
 
@@ -189,7 +189,7 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
@@ -243,7 +243,7 @@ namespace SlavGPS {
 	private:
 
 #if REALTIME_GPS_TRACKING_ENABLED
-		void rt_tracking_draw(Viewport * viewport, RTData & rt_data);
+		void rt_tracking_draw(GisViewport * gisview, RTData & rt_data);
 		Trackpoint * rt_create_trackpoint(bool record_every_tp);
 		void rt_update_statusbar(Window * window);
 
@@ -299,7 +299,7 @@ namespace SlavGPS {
 
 	class GPSSession : public QRunnable, public AcquireTool {
 	public:
-		GPSSession(GPSTransfer & new_transfer, LayerTRW * trw, Track * track, Viewport * viewport, bool in_progress);
+		GPSSession(GPSTransfer & new_transfer, LayerTRW * trw, Track * track, GisViewport * gisview, bool in_progress);
 
 		void set_current_count(int cnt);
 		void set_total_count(int cnt);
@@ -333,7 +333,7 @@ namespace SlavGPS {
 		QLabel * rte_label = NULL;
 		QLabel * progress_label = NULL;
 		GPSTransferType progress_type = GPSTransferType::WPT;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 #if REALTIME_GPS_TRACKING_ENABLED
 		bool realtime_tracking_in_progress = false;
 #endif

@@ -45,8 +45,8 @@ namespace SlavGPS {
 		OnlineService_format(const QString & tool_label, const QString & url_format, const QString & url_format_code);
 		~OnlineService_format();
 
-		QString get_url_for_viewport(Viewport * viewport) override;
-		QString get_url_at_position(Viewport * viewport, const Coord * a_coord) override;
+		QString get_url_for_viewport(GisViewport * gisview) override;
+		QString get_url_at_position(GisViewport * gisview, const Coord * a_coord) override;
 
 	private:
 		QString url_format_code;  /* Template URL format code, "AOZ" -  default value Lat, Long, Zoom */

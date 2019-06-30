@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
@@ -54,13 +54,13 @@ namespace SlavGPS {
 		OnlineService(const QString & tool_label) : ExternalTool(tool_label) {};
 		~OnlineService();
 
-		void run_at_current_position(Viewport * viewport);
-		void run_at_position(Viewport * viewport, const Coord & coord);
+		void run_at_current_position(GisViewport * gisview);
+		void run_at_position(GisViewport * gisview, const Coord & coord);
 
 		void set_url_format(const QString & new_url_format);
 
-		virtual QString get_url_for_viewport(Viewport * viewport) = 0;
-		virtual QString get_url_at_position(Viewport * viewport, const Coord * coord) = 0;
+		virtual QString get_url_for_viewport(GisViewport * gisview) = 0;
+		virtual QString get_url_at_position(GisViewport * gisview, const Coord * coord) = 0;
 
 
 	protected:

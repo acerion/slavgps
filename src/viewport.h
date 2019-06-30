@@ -53,12 +53,12 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
 
-	enum class ViewportDomain {
+	enum class GisViewportDomain {
 		Time = 0,
 		Elevation,
 		Distance,
@@ -70,7 +70,7 @@ namespace SlavGPS {
 
 
 
-	class ViewportLogo {
+	class GisViewportLogo {
 	public:
 		QPixmap logo_pixmap;
 		QString logo_id; /* For easy comparison of logos. For Map Sources this will be map_type_string; */
@@ -80,7 +80,7 @@ namespace SlavGPS {
 
 
 	/* Drawmode management. */
-	enum class ViewportDrawMode {
+	enum class GisViewportDrawMode {
 		UTM = 0,
 		Expedia,
 		Mercator,
@@ -90,11 +90,11 @@ namespace SlavGPS {
 
 
 
-	class ViewportDrawModes {
+	class GisViewportDrawModes {
 	public:
-		static QString get_name(ViewportDrawMode mode);
-		static QString get_id_string(ViewportDrawMode mode);
-		static bool set_draw_mode_from_file(Viewport * viewport, const char * line);
+		static QString get_name(GisViewportDrawMode mode);
+		static QString get_id_string(GisViewportDrawMode mode);
+		static bool set_draw_mode_from_file(GisViewport * gisview, const char * line);
 	};
 
 

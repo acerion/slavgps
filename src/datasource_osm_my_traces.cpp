@@ -71,9 +71,9 @@ using namespace SlavGPS;
 
 
 
-DataSourceOSMMyTraces::DataSourceOSMMyTraces(Viewport * new_viewport)
+DataSourceOSMMyTraces::DataSourceOSMMyTraces(GisViewport * new_gisview)
 {
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 
 	this->window_title = QObject::tr("OSM My Traces");
 	this->layer_title = QObject::tr("OSM My Traces");
@@ -103,10 +103,10 @@ DataSourceOSMMyTraces::DataSourceOSMMyTraces(Viewport * new_viewport)
 
 int DataSourceOSMMyTraces::run_config_dialog(AcquireContext * acquire_context)
 {
-	DataSourceOSMMyTracesDialog config_dialog(this->window_title, this->viewport);
+	DataSourceOSMMyTracesDialog config_dialog(this->window_title, this->gisview);
 
 	/* Keep reference to viewport. */
-	config_dialog.viewport = this->viewport;
+	config_dialog.gisview = this->gisview;
 
 
 	QLabel * user_label = new QLabel(QObject::tr("Username:"));
@@ -546,7 +546,7 @@ static std::list<GPXMetaData *> * select_from_list(Window * parent, std::list<GP
 */
 void DataSourceOSMMyTracesDialog::set_in_current_view_property(std::list<GPXMetaData *> & list)
 {
-	const LatLonBBox viewport_bbox = this->viewport->get_bbox();
+	const LatLonBBox viewport_bbox = this->gisview->get_bbox();
 
 	for (auto iter = list.begin(); iter != list.end(); iter++) {
 		GPXMetaData * gmd = *iter;
@@ -635,7 +635,7 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 			if (create_new_layer) {
 				/* Have data but no layer - so create one. */
 				target_layer = new LayerTRW();
-				target_layer->set_coord_mode(acquire_context->viewport->get_coord_mode());
+				target_layer->set_coord_mode(acquire_context->gisview->get_coord_mode());
 				if (!(*iter)->name.isEmpty()) {
 					target_layer->set_name((*iter)->name);
 				} else {
@@ -666,8 +666,8 @@ LoadStatus DataSourceOSMMyTraces::acquire_into_layer(LayerTRW * trw, AcquireCont
 				/* Can use the layer. */
 				acquire_context->top_level_layer->add_layer(target_layer, true);
 				/* Move to area of the track. */
-				target_layer->post_read(acquire_context->viewport, true);
-				target_layer->move_viewport_to_show_all(acquire_context->viewport);
+				target_layer->post_read(acquire_context->gisview, true);
+				target_layer->move_viewport_to_show_all(acquire_context->gisview);
 				vtl_last = target_layer;
 			} else {
 				if (create_new_layer) {

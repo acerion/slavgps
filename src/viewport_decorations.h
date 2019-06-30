@@ -45,41 +45,41 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
-	class ViewportLogo;
+	class GisViewport;
+	class GisViewportLogo;
 
 
 
 
-	class ViewportDecorations {
+	class GisViewportDecorations {
 	public:
-		ViewportDecorations();
+		GisViewportDecorations();
 
 		sg_ret add_attribution(QString const & copyright);
-		sg_ret add_logo(const ViewportLogo & logo);
+		sg_ret add_logo(const GisViewportLogo & logo);
 
-		void draw(Viewport * viewport) const;
+		void draw(GisViewport * gisview) const;
 		void clear(void);
 
 	private:
-		void draw_attributions(Viewport * viewport) const;
-		void draw_logos(Viewport * viewport) const;
+		void draw_attributions(GisViewport * gisview) const;
+		void draw_logos(GisViewport * gisview) const;
 
-		void draw_scale(Viewport * viewport) const;
-		void draw_center_mark(Viewport * viewport) const;
+		void draw_scale(GisViewport * gisview) const;
+		void draw_center_mark(GisViewport * gisview) const;
 
-		void draw_scale_helper_scale(Viewport * viewport, const QPen & pen, int scale_len, int h) const;
-		QString draw_scale_helper_value(Viewport * viewport, DistanceUnit distance_unit, double scale_unit) const;
+		void draw_scale_helper_scale(GisViewport * gisview, const QPen & pen, int scale_len, int h) const;
+		QString draw_scale_helper_value(GisViewport * gisview, DistanceUnit distance_unit, double scale_unit) const;
 
 		/* Draw text with viewport's size and viewport's bbox. */
-		void draw_viewport_data(Viewport * viewport) const;
+		void draw_viewport_data(GisViewport * gisview) const;
 
 		/* For scale and center mark. */
 		QPen pen_marks_bg;
 		QPen pen_marks_fg;
 
 		QStringList attributions; /* Attributions/copyrights of stuff displayed in viewport. */
-		std::list<ViewportLogo> logos;
+		std::list<GisViewportLogo> logos;
 	};
 
 

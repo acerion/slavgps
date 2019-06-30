@@ -238,7 +238,7 @@ QString Layer::get_type_ui_label(LayerType type)
 
 
 
-Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool interactive)
+Layer * Layer::construct_layer(LayerType layer_type, GisViewport * gisview, bool interactive)
 {
 	qDebug() << SG_PREFIX_I << "Will create new" << Layer::get_type_ui_label(layer_type) << "layer";
 
@@ -262,7 +262,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 		break;
 	case LayerType::Georef:
 		layer = new LayerGeoref();
-		((LayerGeoref *) layer)->configure_from_viewport(viewport);
+		((LayerGeoref *) layer)->configure_from_viewport(gisview);
 		break;
 #ifdef HAVE_LIBMAPNIK
 	case LayerType::Mapnik:
@@ -280,7 +280,7 @@ Layer * Layer::construct_layer(LayerType layer_type, Viewport * viewport, bool i
 
 	assert (layer);
 
-	layer->set_coord_mode(viewport->get_coord_mode());
+	layer->set_coord_mode(gisview->get_coord_mode());
 
 
 	if (interactive && layer->has_properties_dialog) {
@@ -310,12 +310,12 @@ void Layer::marshall(Pickle & pickle)
 
 
 
-Layer * Layer::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * Layer::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerType layer_type;
 	pickle.take_raw_object((char *) &layer_type, sizeof (layer_type));
 
-	return vik_layer_interfaces[(int) layer_type]->unmarshall(pickle, viewport);
+	return vik_layer_interfaces[(int) layer_type]->unmarshall(pickle, gisview);
 }
 
 
@@ -397,7 +397,7 @@ bool Layer::properties_dialog()
 
 
 /* Returns true if OK was pressed. */
-bool Layer::properties_dialog(Viewport * viewport)
+bool Layer::properties_dialog(GisViewport * gisview)
 {
 	qDebug() << SG_PREFIX_I << "Opening properties dialog for layer" << this->get_type_ui_label();
 
@@ -430,7 +430,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 	}
 
 
-	this->post_read(viewport, false); /* Update any gc's. */
+	this->post_read(gisview, false); /* Update any gc's. */
 	return true;
 }
 
@@ -486,7 +486,7 @@ Layer::Layer()
 
 
 
-void Layer::post_read(Viewport * viewport, bool from_file)
+void Layer::post_read(GisViewport * gisview, bool from_file)
 {
 	return;
 }
@@ -689,10 +689,10 @@ Time Layer::get_timestamp(void) const
 
 
 
-void Layer::request_new_viewport_center(Viewport * viewport, const Coord & coord)
+void Layer::request_new_viewport_center(GisViewport * gisview, const Coord & coord)
 {
-	if (viewport) {
-		viewport->set_center_from_coord(coord);
+	if (gisview) {
+		gisview->set_center_from_coord(coord);
 		this->emit_tree_item_changed("Requesting change of center coordinate of viewport");
 	}
 }

@@ -100,7 +100,7 @@ namespace SlavGPS {
 
 		void handle_selection_of_tree_item(const TreeItem & tree_item);
 
-		Viewport * get_viewport(void);
+		GisViewport * get_viewport(void);
 		LayersPanel * get_items_tree(void);
 		QMenu * get_layer_menu(QMenu * menu);
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
@@ -129,7 +129,7 @@ namespace SlavGPS {
 		void keyPressEvent(QKeyEvent * event);
 
 
-		QAction * get_drawmode_action(ViewportDrawMode mode);
+		QAction * get_drawmode_action(GisViewportDrawMode mode);
 
 
 		void simple_map_update(bool only_new);
@@ -386,21 +386,21 @@ namespace SlavGPS {
 
 	class ThisApp {
 	public:
-		void set(Window * new_window, LayersPanel * new_layers_panel, Viewport * new_viewport)
+		void set(Window * new_window, LayersPanel * new_layers_panel, GisViewport * new_gisview)
 		{
 			this->window = new_window;
 			this->layers_panel = new_layers_panel;
-			this->viewport = new_viewport;
+			this->gisview = new_gisview;
 		}
 
 		static Window * get_main_window(void);
 		static LayersPanel * get_layers_panel(void);
-		static Viewport * get_main_viewport(void);
+		static GisViewport * get_main_viewport(void);
 
 	private:
 		Window * window = NULL;
 		LayersPanel * layers_panel = NULL;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 	};
 
 

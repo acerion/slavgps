@@ -62,7 +62,7 @@ namespace SlavGPS {
 	class TrackProfileDialog;
 
 	enum class SGFileType;
-	enum class ViewportDomain;
+	enum class GisViewportDomain;
 
 	class LayerTRW;
 
@@ -385,8 +385,8 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree(void);
 
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
-		sg_ret draw_tree_item(Viewport * viewport, struct my_data * data, ViewportDomain x_domain, ViewportDomain y_domain);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
+		sg_ret draw_tree_item(GisViewport * gisview, struct my_data * data, GisViewportDomain x_domain, GisViewportDomain y_domain);
 
 		QString sublayer_rename_request(const QString & new_name);
 
@@ -445,9 +445,9 @@ namespace SlavGPS {
 
 		void copy_properties(const Track & from);
 
-		sg_ret draw_e_ft(Viewport * viewport, struct my_data * in_data);
-		sg_ret draw_d_ft(Viewport * viewport, struct my_data * in_data);
-		sg_ret draw_v_ft(Viewport * viewport, struct my_data * in_data);
+		sg_ret draw_e_ft(GisViewport * gisview, struct my_data * in_data);
+		sg_ret draw_d_ft(GisViewport * gisview, struct my_data * in_data);
+		sg_ret draw_v_ft(GisViewport * gisview, struct my_data * in_data);
 
 		/**
 		   @brief Split track at given trackpoint iter

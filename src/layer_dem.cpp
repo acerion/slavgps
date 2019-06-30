@@ -72,7 +72,7 @@ using namespace SlavGPS;
 
 
 
-void draw_loaded_dem_box(Viewport * viewport);
+void draw_loaded_dem_box(GisViewport * gisview);
 
 
 
@@ -160,11 +160,11 @@ static ParameterSpecification dem_layer_param_specs[] = {
 
 static bool dem_layer_download_release(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
 static bool dem_layer_download_click(Layer * vdl, QMouseEvent * ev, LayerTool * tool);
-static void srtm_draw_existence(Viewport * viewport);
+static void srtm_draw_existence(GisViewport * gisview);
 #ifdef VIK_CONFIG_DEM24K
-static void dem24k_draw_existence(Viewport * viewport);
+static void dem24k_draw_existence(GisViewport * gisview);
 #endif
-static void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & coord_ne, const Coord & coord_sw, const QString & cache_file_path);
+static void draw_existence_common(GisViewport * gisview, const QPen & pen, const Coord & coord_ne, const Coord & coord_sw, const QString & cache_file_path);
 
 
 
@@ -232,7 +232,7 @@ LayerDEMInterface::LayerDEMInterface()
 
 
 
-LayerToolContainer * LayerDEMInterface::create_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerDEMInterface::create_tools(Window * window, GisViewport * gisview)
 {
 	/* This method should be called only once. */
 	static bool created = false;
@@ -241,7 +241,7 @@ LayerToolContainer * LayerDEMInterface::create_tools(Window * window, Viewport *
 	}
 	auto tools = new LayerToolContainer;
 
-	LayerTool * tool = new LayerToolDEMDownload(window, viewport);
+	LayerTool * tool = new LayerToolDEMDownload(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
 	created = true;
@@ -262,7 +262,7 @@ QString LayerDEM::get_tooltip(void) const
 
 
 
-Layer * LayerDEMInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerDEMInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerDEM * layer = new LayerDEM();
 
@@ -557,13 +557,13 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 
 
 
-void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
+void LayerDEM::draw_dem(GisViewport * gisview, DEM * dem)
 {
 	/* If given DEM is loaded into application, we want to know whether the DEM and
 	   current viewport overlap, so that we know whether we should draw it in
 	   viewport or not. We do this check every time a viewport has been changed
 	   (moved or re-zoomed). */
-	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	const LatLonBBox viewport_bbox = gisview->get_bbox();
 	if (!dem->intersect(viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "DEM does not overlap with viewport, not drawing the DEM";
 		return;
@@ -582,14 +582,14 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	  we have dem for but don't want to cover the map (or maybe
 	  we just need translucent DEM?).
 	*/
-	draw_loaded_dem_box(viewport);
+	draw_loaded_dem_box(gisview);
 
 	switch (dem->horiz_units) {
 	case VIK_DEM_HORIZ_LL_ARCSECONDS:
-		this->draw_dem_ll(viewport, dem);
+		this->draw_dem_ll(gisview, dem);
 		break;
 	case VIK_DEM_HORIZ_UTM_METERS:
-		this->draw_dem_utm(viewport, dem);
+		this->draw_dem_utm(gisview, dem);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected DEM horiz units" << (int) dem->horiz_units;
@@ -610,14 +610,14 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 
 
-void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
+void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_viking_scale().get_x() / 80); /* TODO_2_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 80); /* TODO_2_LATER: smarter calculation. */
 
 	double nscale_deg = dem->north_scale / ((double) 3600);
 	double escale_deg = dem->east_scale / ((double) 3600);
 
-	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	const LatLonBBox viewport_bbox = gisview->get_bbox();
 	double start_lat_as = std::max(viewport_bbox.south.get_value() * 3600.0, dem->min_north_seconds);
 	double end_lat_as   = std::min(viewport_bbox.north.get_value() * 3600.0, dem->max_north_seconds);
 	double start_lon_as = std::max(viewport_bbox.west.get_value() * 3600.0, dem->min_east_seconds);
@@ -644,7 +644,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 	const double max_elevation = this->max_elev.get_value();
 
 	Coord tmp; /* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
-	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
+	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
 	LatLon counter;
 	int32_t x;
 	for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
@@ -690,7 +690,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 			box_c.lat += (nscale_deg * skip_factor)/2;
 			box_c.lon -= (escale_deg * skip_factor)/2;
 			tmp = Coord(box_c, viewport_coord_mode);
-			if (sg_ret::ok != viewport->coord_to_screen_pos(tmp, &box_x, &box_y)) {
+			if (sg_ret::ok != gisview->coord_to_screen_pos(tmp, &box_x, &box_y)) {
 				continue;
 			}
 			/* Catch box at borders. */
@@ -705,7 +705,7 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 			box_c.lat -= nscale_deg * skip_factor;
 			box_c.lon += escale_deg * skip_factor;
 			tmp = Coord(box_c, viewport_coord_mode);
-			if (sg_ret::ok != viewport->coord_to_screen_pos(tmp, &box_width, &box_height)) {
+			if (sg_ret::ok != gisview->coord_to_screen_pos(tmp, &box_width, &box_height)) {
 				continue;
 			}
 			box_width -= box_x;
@@ -766,14 +766,14 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 				}
 
 				int idx = GET_INDEX(change, min_elevation, max_elevation, DEM_N_GRADIENT_COLORS);
-				viewport->vpixmap.fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
+				gisview->vpixmap.fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
 
 			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 				if (elev > 0 && !below_minimum) {
 					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
-				viewport->vpixmap.fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
+				gisview->vpixmap.fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
 			} else {
 				; /* No other dem type to process. */
 			}
@@ -786,14 +786,14 @@ void LayerDEM::draw_dem_ll(Viewport * viewport, DEM * dem)
 
 
 
-void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
+void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 {
-	unsigned int skip_factor = ceil(viewport->get_viking_scale().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
+	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
 
-	Coord tleft =  viewport->screen_pos_to_coord(0,                             0);
-	Coord tright = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), 0);
-	Coord bleft =  viewport->screen_pos_to_coord(0,                             viewport->vpixmap.get_height());
-	Coord bright = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
+	Coord tleft =  gisview->screen_pos_to_coord(0,                             0);
+	Coord tright = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), 0);
+	Coord bleft =  gisview->screen_pos_to_coord(0,                             gisview->vpixmap.get_height());
+	Coord bright = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
 
 	tleft.recalculate_to_mode(CoordMode::UTM);
 	tright.recalculate_to_mode(CoordMode::UTM);
@@ -837,7 +837,7 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 	/* TODO_LATER: why start_x and start_y are -1 -- rounding error from above? */
 
-	const CoordMode viewport_coord_mode = viewport->get_coord_mode();
+	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
 
 	/* TODO_2_LATER: smarter handling of invalid band letter
 	   value. In theory the source object should be valid and for
@@ -876,14 +876,14 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 			{
 				/* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
-				const ScreenPos pos = viewport->coord_to_screen_pos(Coord(counter, viewport_coord_mode));
+				const ScreenPos pos = gisview->coord_to_screen_pos(Coord(counter, viewport_coord_mode));
 
 				int idx = 0; /* Default index for color of 'sea'. */
 				if (elev > 0) {
 					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-				viewport->vpixmap.fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
+				gisview->vpixmap.fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
 			}
 		} /* for y= */
 	} /* for x= */
@@ -894,22 +894,22 @@ void LayerDEM::draw_dem_utm(Viewport * viewport, DEM * dem)
 
 
 
-void draw_loaded_dem_box(Viewport * viewport)
+void draw_loaded_dem_box(GisViewport * gisview)
 {
 #ifdef TODO_LATER
 	/* For getting values of dem_northeast and dem_southwest see DEM::intersect(). */
-	const Coord demne(dem_northeast, viewport->get_coord_mode());
-	const Coord demsw(dem_southwest, viewport->get_coord_mode());
+	const Coord demne(dem_northeast, gisview->get_coord_mode());
+	const Coord demsw(dem_southwest, gisview->get_coord_mode());
 
-	ScreenPos sp_ne = viewport->coord_to_screen_pos(demne);
-	ScreenPos sp_sw = viewport->coord_to_screen_pos(demsw);
+	ScreenPos sp_ne = gisview->coord_to_screen_pos(demne);
+	ScreenPos sp_sw = gisview->coord_to_screen_pos(demsw);
 
-	if (sp_ne.x > viewport->vpixmap.get_width()) {
-		sp_ne.x = viewport->vpixmap.get_width();
+	if (sp_ne.x > gisview->vpixmap.get_width()) {
+		sp_ne.x = gisview->vpixmap.get_width();
 	}
 
-	if (sp_sw.y > viewport->vpixmap.get_height()) {
-		sp_sw.y = viewport->vpixmap.get_height();
+	if (sp_sw.y > gisview->vpixmap.get_height()) {
+		sp_sw.y = gisview->vpixmap.get_height();
 	}
 
 	if (sp_sw.x < 0) {
@@ -977,14 +977,14 @@ static bool srtm_get_continent_dir(QString & continent_dir, int lat, int lon)
 
 
 
-void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerDEM::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	/* Draw rectangles around areas, for which DEM tiles are already downloaded. */
 	if (this->source == DEM_SOURCE_SRTM) {
-		srtm_draw_existence(viewport);
+		srtm_draw_existence(gisview);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
-		dem24k_draw_existence(viewport);
+		dem24k_draw_existence(gisview);
 #endif
 	}
 
@@ -1008,7 +1008,7 @@ void LayerDEM::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 		DEM * dem = DEMCache::get(dem_file_path);
 		if (dem) {
 			qDebug() << SG_PREFIX_I << "Got file" << dem_file_path << "from cache, will now draw it";
-			this->draw_dem(viewport, dem);
+			this->draw_dem(gisview, dem);
 		} else {
 			qDebug() << SG_PREFIX_E << "Failed to get file" << dem_file_path << "from cache, not drawing";
 		}
@@ -1154,14 +1154,14 @@ static const QString srtm_lat_lon_to_cache_file_name(const LatLon & lat_lon)
 
 
 
-static void srtm_draw_existence(Viewport * viewport)
+static void srtm_draw_existence(GisViewport * gisview)
 {
 	QString cache_file_path;
 
-	const LatLonBBox bbox = viewport->get_bbox();
+	const LatLonBBox bbox = gisview->get_bbox();
 	QPen pen("black");
 
-	qDebug() << SG_PREFIX_D << "Viewport bounding box:" << bbox;
+	qDebug() << SG_PREFIX_D << "GisViewport bounding box:" << bbox;
 
 	for (int lat = floor(bbox.south.get_value()); lat <= floor(bbox.north.get_value()); lat++) {
 		for (int lon = floor(bbox.west.get_value()); lon <= floor(bbox.east.get_value()); lon++) {
@@ -1179,7 +1179,7 @@ static void srtm_draw_existence(Viewport * viewport)
 			const LatLon lat_lon_ne(lat + 1, lon + 1);
 			const LatLonBBox dem_bbox(lat_lon_sw, lat_lon_ne);
 
-			viewport->draw_bbox(dem_bbox, pen);
+			gisview->draw_bbox(dem_bbox, pen);
 
 #if 0
 			Coord coord_ne;
@@ -1193,17 +1193,17 @@ static void srtm_draw_existence(Viewport * viewport)
 			coord_ne.ll.lon = lon + 1;
 			coord_ne.mode = CoordMode::LatLon;
 
-			draw_existence_common(viewport, pen, coord_sw, coord_ne, cache_file_path);
+			draw_existence_common(gisview, pen, coord_sw, coord_ne, cache_file_path);
 #endif
 		}
 	}
 }
 
 
-void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & coord_ne, const Coord & coord_sw, const QString & cache_file_path)
+void draw_existence_common(GisViewport * gisview, const QPen & pen, const Coord & coord_ne, const Coord & coord_sw, const QString & cache_file_path)
 {
-	ScreenPos sp_sw = viewport->coord_to_screen_pos(coord_sw);
-	ScreenPos sp_ne = viewport->coord_to_screen_pos(coord_ne);
+	ScreenPos sp_sw = gisview->coord_to_screen_pos(coord_sw);
+	ScreenPos sp_ne = gisview->coord_to_screen_pos(coord_ne);
 
 	if (sp_sw.x < 0) {
 		sp_sw.x = 0;
@@ -1214,7 +1214,7 @@ void draw_existence_common(Viewport * viewport, const QPen & pen, const Coord & 
 	}
 
 	qDebug() << SG_PREFIX_D << "Drawing existence rectangle for" << cache_file_path;
-	viewport->vpixmap.draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	gisview->vpixmap.draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 }
 
 
@@ -1251,9 +1251,9 @@ static QString dem24k_lat_lon_to_cache_file_name(const LatLon & lat_lon)
 
 
 
-static void dem24k_draw_existence(Viewport * viewport)
+static void dem24k_draw_existence(GisViewport * gisview)
 {
-	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	const LatLonBBox viewport_bbox = gisview->get_bbox();
 	QPen pen("black");
 
 	for (double lat = floor(viewport_bbox.south * 8) / 8; lat <= floor(viewport_bbox.north * 8) / 8; lat += 0.125) {
@@ -1293,7 +1293,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 			coord_ne.ll.lon = lon;
 			coord_ne.mode = CoordMode::LatLon;
 
-			draw_existence_common(viewport, pen, coord_sw, coord_ne, cache_file_path);
+			draw_existence_common(gisview, pen, coord_sw, coord_ne, cache_file_path);
 		}
 	}
 }
@@ -1363,7 +1363,7 @@ static void free_dem_download_params(DEMDownloadJob * p)
 
 
 
-LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::DEM)
+LayerToolDEMDownload::LayerToolDEMDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::DEM)
 {
 	this->id_string = "sg.tool.layer_dem.dem_download";
 
@@ -1452,7 +1452,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 /* Mouse button released when "Download Tool" for DEM layer is active. */
 bool LayerDEM::download_release(QMouseEvent * ev, LayerTool * tool)
 {
-	const Coord coord = tool->viewport->screen_pos_to_coord(ev->x(), ev->y());
+	const Coord coord = tool->gisview->screen_pos_to_coord(ev->x(), ev->y());
 	const LatLon lat_lon = coord.get_lat_lon();
 
 	qDebug() << SG_PREFIX_I << "received event, processing, coord =" << lat_lon;

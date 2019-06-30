@@ -46,12 +46,12 @@ namespace SlavGPS {
 	class DataSourceOSMTraces : public DataSourceBabel {
 	public:
 		DataSourceOSMTraces() {};
-		DataSourceOSMTraces(Viewport * viewport);
+		DataSourceOSMTraces(GisViewport * gisview);
 		~DataSourceOSMTraces() {};
 
 		int run_config_dialog(AcquireContext * acquire_context);
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 	};
 
 
@@ -60,7 +60,7 @@ namespace SlavGPS {
 	class DataSourceOSMTracesDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport);
+		DataSourceOSMTracesDialog(const QString & window_title, GisViewport * gisview);
 		~DataSourceOSMTracesDialog();
 
 		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
@@ -70,7 +70,7 @@ namespace SlavGPS {
 
 	private:
 		QSpinBox spin_box;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 	};
 
 

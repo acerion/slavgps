@@ -297,7 +297,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu * external_submenu)
 {
-	Viewport * viewport = parent_layer->get_window()->get_viewport();
+	GisViewport * gisview = parent_layer->get_window()->get_viewport();
 
 
 	/* Try adding submenu items with external tools pre-configured
@@ -305,7 +305,7 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 	const Track * track = parent_layer->get_edited_track();
 	if (track && track->has_selected_tp()) {
 		const Coord coord = track->get_selected_tp()->coord;
-		ExternalTools::add_menu_items(external_submenu, viewport, &coord);
+		ExternalTools::add_menu_items(external_submenu, gisview, &coord);
 		return;
 	}
 
@@ -317,7 +317,7 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 	const Waypoint * wp = parent_layer->get_edited_wp();
 	if (wp) {
 		const Coord * coord = &wp->coord;
-		ExternalTools::add_menu_items(external_submenu, viewport, coord);
+		ExternalTools::add_menu_items(external_submenu, gisview, coord);
 		return;
 	}
 
@@ -327,7 +327,7 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 
 	   TODO_LATER: Should use selected items centre - rather than
 	   implicitly using the current viewport. */
-	ExternalTools::add_menu_items(external_submenu, viewport, NULL);
+	ExternalTools::add_menu_items(external_submenu, gisview, NULL);
 }
 
 

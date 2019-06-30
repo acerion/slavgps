@@ -379,7 +379,7 @@ static bool parse_kml(const char * buffer, int len, char ** name, char ** image,
    @return <KMZOpenStatus::ZipError, zip-err-code> on zip errors,
    @return <KMZOpenStatus::some-value, ...> on KMZ errors.
 */
-KMZOpenResult SlavGPS::kmz_open_file(const QString & file_full_path, Viewport * viewport, LayersPanel * panel)
+KMZOpenResult SlavGPS::kmz_open_file(const QString & file_full_path, GisViewport * gisview, LayersPanel * panel)
 {
 	KMZOpenResult ret;
 

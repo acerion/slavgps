@@ -61,14 +61,14 @@ void ExternalTools::uninit(void)
 
 
 
-void ExternalTools::add_action_items(QActionGroup * action_group, Viewport * viewport)
+void ExternalTools::add_action_items(QActionGroup * action_group, GisViewport * gisview)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
 
 		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
-		ext_tool->set_viewport(viewport);
+		ext_tool->set_viewport(gisview);
 
 		QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_current_position_cb(void)));
 		action_group->addAction(qa);
@@ -81,13 +81,13 @@ void ExternalTools::add_action_items(QActionGroup * action_group, Viewport * vie
 /**
    Add to any menu. Mostly for allowing to assign for TrackWaypoint layer menus.
 */
-void ExternalTools::add_menu_items(QMenu * menu, Viewport * viewport, const Coord * coord)
+void ExternalTools::add_menu_items(QMenu * menu, GisViewport * gisview, const Coord * coord)
 {
 	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
 		ExternalTool * ext_tool = *iter;
 		QAction * qa = new QAction(ext_tool->get_label(), NULL);
 
-		ext_tool->set_viewport(viewport);
+		ext_tool->set_viewport(gisview);
 		if (coord) {
 			ext_tool->set_coord(*coord);
 			QObject::connect(qa, SIGNAL (triggered(bool)), ext_tool, SLOT (run_at_position_cb(void)));

@@ -41,7 +41,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
@@ -67,7 +67,7 @@ namespace SlavGPS {
 		virtual const DownloadOptions * get_download_options(void) const;
 		virtual bool parse_file_for_latlon(QFile & file, LatLon & lat_lon) = 0;
 
-		GotoToolResult get_coord(Viewport * viewport, const QString & name, Coord * coord);
+		GotoToolResult get_coord(GisViewport * gisview, const QString & name, Coord * coord);
 
 	protected:
 

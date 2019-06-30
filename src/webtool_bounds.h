@@ -34,7 +34,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
@@ -45,8 +45,8 @@ namespace SlavGPS {
 		OnlineService_bbox(const QString & tool_label, const QString & new_url_format);
 		~OnlineService_bbox();
 
-		QString get_url_for_viewport(Viewport * viewport) override;
-		QString get_url_at_position(Viewport * viewport, const Coord * coord) override;
+		QString get_url_for_viewport(GisViewport * gisview) override;
+		QString get_url_at_position(GisViewport * gisview, const Coord * coord) override;
 
 	private:
 		QString get_url_for_bbox(const LatLonBBox & bbox);

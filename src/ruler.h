@@ -42,13 +42,13 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
 	class Ruler {
 	public:
-		Ruler(Viewport * new_viewport, DistanceUnit new_distance_unit);
+		Ruler(GisViewport * gisview, DistanceUnit new_distance_unit);
 
 		void set_begin(int begin_x, int begin_y);
 		void set_end(int end_x, int end_y);
@@ -82,7 +82,7 @@ namespace SlavGPS {
 		Distance line_distance;
 		Distance total_distance;
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 
 		QPen line_pen;
 		QPen compass_pen;

@@ -95,14 +95,14 @@ void LayerAggregate::marshall(Pickle & pickle)
 
 
 
-Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerAggregateInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerAggregate * aggregate = new LayerAggregate();
 
 	aggregate->unmarshall_params(pickle);
 
 	while (pickle.data_size() > 0) {
-		Layer * child_layer = Layer::unmarshall(pickle, viewport);
+		Layer * child_layer = Layer::unmarshall(pickle, gisview);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
 			QObject::connect(child_layer, SIGNAL (tree_item_changed(const QString &)), aggregate, SLOT (child_tree_item_changed_cb(const QString &)));
@@ -325,32 +325,32 @@ bool LayerAggregate::move_child(TreeItem & child_tree_item, bool up)
  * of the pixmap before drawing the trigger layer so we can use it again
  * later.
  */
-void LayerAggregate::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerAggregate::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
-	Layer * trigger = viewport->get_trigger();
+	Layer * trigger = gisview->get_trigger();
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 #ifdef K_FIXME_RESTORE
 		if (TreeItem::the_same_object(layer, trigger)) {
-			if (viewport->get_half_drawn()) {
-				viewport->set_half_drawn(false);
-				viewport->snapshot_load();
+			if (gisview->get_half_drawn()) {
+				gisview->set_half_drawn(false);
+				gisview->snapshot_load();
 			} else {
-				viewport->snapshot_save();
+				gisview->snapshot_save();
 			}
 		}
 
 		if (layer->type == LayerType::AGGREGATE
 		    || layer->type == LayerType::GPS
-		    || !viewport->get_half_drawn()) {
+		    || !gisview->get_half_drawn()) {
 
 			qDebug() << SG_PREFIX_I << "Calling draw_if_visible() for" << layer->name;
-			layer->draw_tree_item(viewport, false, false);
+			layer->draw_tree_item(gisview, false, false);
 		}
 #else
 		qDebug() << SG_PREFIX_I << "Calling draw_tree_item(" << highlight_selected << parent_is_selected << ") for" << layer->name;
-		layer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
+		layer->draw_tree_item(gisview, highlight_selected, parent_is_selected);
 #endif
 	}
 }
@@ -745,7 +745,7 @@ bool LayerAggregate::delete_layer(Layer * layer)
 
 #ifdef K_TODO_MAYBE
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
-unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
+unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, GisViewport * gisview)
 {
 	if (this->children->empty()) {
 		return false;
@@ -760,7 +760,7 @@ unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFu
 
 		/* If this layer "accepts" the tool call. */
 		if (layer->visible && layer->type == layer_type) {
-			if (tool_func(layer, event, viewport)) {
+			if (tool_func(layer, event, gisview)) {
 				return 0;
 			} else {
 				found_rej = true;
@@ -769,7 +769,7 @@ unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFu
 
 		/* Recursive -- try the same for the child aggregate layer. */
 		else if (layer->visible && layer->type == LayerType::AGGREGATE) {
-			int rv = ((LayerAggregate *) layer)->layer_tool(layer_type, tool_func, event, viewport);
+			int rv = ((LayerAggregate *) layer)->layer_tool(layer_type, tool_func, event, gisview);
 			if (rv == 0) {
 				return 0;
 			} else if (rv == 2) {
@@ -864,7 +864,7 @@ void LayerAggregate::get_all_layers_of_type(std::list<Layer const *> & layers, L
 
 
 
-bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)
+bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	if (this->children->empty()) {
 		return false;
@@ -887,9 +887,9 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 		}
 
 		if (event->flags() & Qt::MouseEventCreatedDoubleClick) {
-			has_been_handled = (*iter)->handle_select_tool_double_click(event, viewport, select_tool);
+			has_been_handled = (*iter)->handle_select_tool_double_click(event, gisview, select_tool);
 		} else {
-			has_been_handled = (*iter)->handle_select_tool_click(event, viewport, select_tool);
+			has_been_handled = (*iter)->handle_select_tool_click(event, gisview, select_tool);
 		}
 		if (has_been_handled) {
 			/* A Layer has handled the event. */
@@ -942,10 +942,10 @@ bool LayerAggregate::handle_select_tool_click(QMouseEvent * event, Viewport * vi
 
 
 
-bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)
+bool LayerAggregate::handle_select_tool_double_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* Double-click will be handled by checking event->flags() in the function below, and calling proper handling method. */
-	return this->handle_select_tool_click(event, viewport, select_tool);
+	return this->handle_select_tool_click(event, gisview, select_tool);
 }
 
 

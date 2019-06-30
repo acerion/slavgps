@@ -74,7 +74,7 @@ using namespace SlavGPS;
 
 
 
-LayerToolContainer * GenericTools::create_tools(Window * window, Viewport * viewport)
+LayerToolContainer * GenericTools::create_tools(Window * window, GisViewport * gisview)
 {
 	/* This method should be called only once. */
 	static bool created = false;
@@ -86,16 +86,16 @@ LayerToolContainer * GenericTools::create_tools(Window * window, Viewport * view
 
 	LayerTool * tool = NULL;
 
-	tool = new LayerToolSelect(window, viewport);
+	tool = new LayerToolSelect(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new GenericToolRuler(window, viewport);
+	tool = new GenericToolRuler(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new GenericToolZoom(window, viewport);
+	tool = new GenericToolZoom(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolPan(window, viewport);
+	tool = new LayerToolPan(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
 	created = true;
@@ -108,7 +108,7 @@ LayerToolContainer * GenericTools::create_tools(Window * window, Viewport * view
 
 
 
-GenericToolRuler::GenericToolRuler(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
+GenericToolRuler::GenericToolRuler(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.ruler";
 
@@ -149,13 +149,13 @@ ToolStatus GenericToolRuler::internal_handle_mouse_click(Layer * layer, QMouseEv
 	} else {
 		qDebug() << SG_PREFIX_I << "first click, starting ruler";
 
-		const Coord cursor_coord = this->viewport->screen_pos_to_coord(event->x(), event->y());
+		const Coord cursor_coord = this->gisview->screen_pos_to_coord(event->x(), event->y());
 		msg = cursor_coord.to_string();
 
 		/* Save clean viewport (clean == without ruler drawn on top of it). */
-		this->orig_viewport_pixmap = this->viewport->get_pixmap();
+		this->orig_viewport_pixmap = this->gisview->get_pixmap();
 
-		this->ruler = new Ruler(this->viewport, Preferences::get_unit_distance());
+		this->ruler = new Ruler(this->gisview, Preferences::get_unit_distance());
 		this->ruler->set_begin(event->x(), event->y());
 	}
 
@@ -187,9 +187,9 @@ ToolStatus GenericToolRuler::internal_handle_mouse_move(Layer * layer, QMouseEve
 	QPainter painter(&marked_pixmap);
 	this->ruler->set_end(event->x(), event->y());
 	this->ruler->paint_ruler(painter, Preferences::get_create_track_tooltip());
-	this->viewport->set_pixmap(marked_pixmap);
-	/* This will call Viewport::paintEvent(), triggering final render to screen. */
-	this->viewport->update();
+	this->gisview->set_pixmap(marked_pixmap);
+	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
+	this->gisview->update();
 
 
 	const QString msg = ruler->get_msg();
@@ -251,18 +251,18 @@ void GenericToolRuler::reset_ruler(void)
 		qDebug() << SG_PREFIX_W << "Detected NULL orig viewport pixmap";
 	} else {
 		/* Restore clean viewport (clean == without ruler drawn on top of it). */
-		this->viewport->set_pixmap(this->orig_viewport_pixmap);
+		this->gisview->set_pixmap(this->orig_viewport_pixmap);
 		this->orig_viewport_pixmap = QPixmap();
 
-		/* This will call Viewport::paintEvent(), triggering final render to screen. */
-		this->viewport->update();
+		/* This will call GisViewport::paintEvent(), triggering final render to screen. */
+		this->gisview->update();
 	}
 }
 
 
 
 
-GenericToolZoom::GenericToolZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
+GenericToolZoom::GenericToolZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.zoom";
 
@@ -288,7 +288,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 
 	const Qt::KeyboardModifiers modifiers = event->modifiers();
 
-	const ScreenPos center_pos(this->viewport->vpixmap.get_width() / 2, this->viewport->vpixmap.get_height() / 2);
+	const ScreenPos center_pos(this->gisview->vpixmap.get_width() / 2, this->gisview->vpixmap.get_height() / 2);
 	const ScreenPos event_pos(event->x(), event->y());
 
 	/* Did the zoom operation affect viewport? */
@@ -304,7 +304,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 		   preserved (coordinate at the center before the zoom
 		   and coordinate at the center after the zoom will be
 		   the same). */
-		redraw_viewport = ViewportZoom::keep_coordinate_in_center(zoom_operation, this->viewport, this->window, center_pos);
+		redraw_viewport = GisViewportZoom::keep_coordinate_in_center(zoom_operation, this->gisview, this->window, center_pos);
 		break;
 
 	case Qt::ControlModifier:
@@ -312,7 +312,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 		   viewport (coordinate of a place under cursor before
 		   zoom will be placed at the center of viewport after
 		   zoom). */
-		redraw_viewport = ViewportZoom::move_coordinate_to_center(zoom_operation, this->viewport, this->window, event_pos);
+		redraw_viewport = GisViewportZoom::move_coordinate_to_center(zoom_operation, this->gisview, this->window, event_pos);
 		break;
 
 	case Qt::ShiftModifier:
@@ -325,7 +325,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 			this->ztr_is_active = true;
 			this->ztr_start_x = event_pos.x;
 			this->ztr_start_y = event_pos.y;
-			this->ztr_orig_viewport_pixmap = this->viewport->get_pixmap();
+			this->ztr_orig_viewport_pixmap = this->gisview->get_pixmap();
 			break;
 		default:
 			break;
@@ -339,7 +339,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 		   position in viewport as before zoom.  Before zoom
 		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
-		redraw_viewport = ViewportZoom::keep_coordinate_under_cursor(zoom_operation, this->viewport, this->window, event_pos, center_pos);
+		redraw_viewport = GisViewportZoom::keep_coordinate_under_cursor(zoom_operation, this->gisview, this->window, event_pos, center_pos);
 		break;
 
 	default:
@@ -408,10 +408,10 @@ ToolStatus GenericToolZoom::internal_handle_mouse_move(Layer * layer, QMouseEven
 	new_pen.setWidth(1);
 	painter.setPen(new_pen);
 	painter.drawRect(xx, yy, width, height);
-	this->viewport->set_pixmap(marked_pixmap);
+	this->gisview->set_pixmap(marked_pixmap);
 
-	/* This will call Viewport::paintEvent(), triggering final render to screen. */
-	this->viewport->update();
+	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
+	this->gisview->update();
 
 	return ToolStatus::Ack;
 }
@@ -439,12 +439,12 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 		   moved the mouse at all. */
 		if (modifiers == Qt::ShiftModifier && (abs(event_pos.x - this->ztr_start_x) >= 5) && (abs(event_pos.y - this->ztr_start_y) >= 5)) {
 
-			const Coord start_coord = this->viewport->screen_pos_to_coord(this->ztr_start_x, this->ztr_start_y);
-			const Coord cursor_coord = this->viewport->screen_pos_to_coord(event_pos);
+			const Coord start_coord = this->gisview->screen_pos_to_coord(this->ztr_start_x, this->ztr_start_y);
+			const Coord cursor_coord = this->gisview->screen_pos_to_coord(event_pos);
 
 			/* From the extend of the bounds pick the best zoom level. */
 			const LatLonBBox bbox(cursor_coord.get_lat_lon(), start_coord.get_lat_lon());
-			ViewportZoom::zoom_to_show_bbox_common(this->viewport, this->viewport->get_coord_mode(), bbox, SG_VIEWPORT_ZOOM_MIN, false);
+			GisViewportZoom::zoom_to_show_bbox_common(this->gisview, this->gisview->get_coord_mode(), bbox, SG_GISVIEWPORT_ZOOM_MIN, false);
 			redraw_viewport = true;
 		}
 	} else {
@@ -455,15 +455,15 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 			/* Zoom in/out by three if possible. */
 
 			if (event->button() == Qt::LeftButton) {
-				this->viewport->set_center_from_screen_pos(event_pos);
-				this->viewport->zoom_in();
-				this->viewport->zoom_in();
-				this->viewport->zoom_in();
+				this->gisview->set_center_from_screen_pos(event_pos);
+				this->gisview->zoom_in();
+				this->gisview->zoom_in();
+				this->gisview->zoom_in();
 			} else { /* Qt::RightButton */
-				this->viewport->set_center_from_screen_pos(event_pos);
-				this->viewport->zoom_out();
-				this->viewport->zoom_out();
-				this->viewport->zoom_out();
+				this->gisview->set_center_from_screen_pos(event_pos);
+				this->gisview->zoom_out();
+				this->gisview->zoom_out();
+				this->gisview->zoom_out();
 			}
 			redraw_viewport = true;
 		}
@@ -485,7 +485,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 
 
 
-LayerToolPan::LayerToolPan(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
+LayerToolPan::LayerToolPan(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.pan";
 
@@ -574,7 +574,7 @@ ToolStatus LayerToolPan::internal_handle_mouse_release(Layer * layer, QMouseEven
 
 
 
-LayerToolSelect::LayerToolSelect(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Max)
+LayerToolSelect::LayerToolSelect(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Max)
 {
 	this->id_string = "sg.tool.generic.select";
 
@@ -686,7 +686,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_move(Layer * layer, QMouseEven
 {
 	if (this->select_and_move_activated) {
 		if (layer) {
-			layer->handle_select_tool_move(event, this->viewport, this);
+			layer->handle_select_tool_move(event, this->gisview, this);
 		}
 	} else {
 		/* Optional Panning. */
@@ -704,7 +704,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_release(Layer * layer, QMouseE
 {
 	if (this->select_and_move_activated) {
 		if (layer) {
-			layer->handle_select_tool_release(event, this->viewport, this);
+			layer->handle_select_tool_release(event, this->gisview, this);
 		}
 	}
 

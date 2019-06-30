@@ -52,7 +52,7 @@ namespace SlavGPS {
 	class DataSourceGeoCache : public DataSourceBabel {
 	public:
 		DataSourceGeoCache() {};
-		DataSourceGeoCache(Viewport * viewport);
+		DataSourceGeoCache(GisViewport * gisview);
 		~DataSourceGeoCache() {};
 
 		static void init(void);
@@ -60,7 +60,7 @@ namespace SlavGPS {
 
 		int run_config_dialog(AcquireContext * acquire_context);
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 	};
 
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 	class DataSourceGeoCacheDialog : public DataSourceDialog {
 		Q_OBJECT
 	public:
-		DataSourceGeoCacheDialog(const QString & window_title, Viewport * viewport);
+		DataSourceGeoCacheDialog(const QString & window_title, GisViewport * gisview);
 		~DataSourceGeoCacheDialog();
 
 		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
@@ -82,7 +82,7 @@ namespace SlavGPS {
 		QDoubleSpinBox * miles_radius_spin = NULL;
 
 		QPen circle_pen;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 		bool circle_onscreen = true;
 		int circle_x = 0;
 		int circle_y = 0;

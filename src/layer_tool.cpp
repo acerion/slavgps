@@ -47,10 +47,10 @@ using namespace SlavGPS;
 
 
 
-LayerTool::LayerTool(Window * new_window, Viewport * new_viewport, LayerType new_layer_type)
+LayerTool::LayerTool(Window * new_window, GisViewport * new_gisview, LayerType new_layer_type)
 {
 	this->window = new_window;
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 	this->layer_type = new_layer_type;
 
 	if (layer_type == LayerType::Max) {
@@ -109,7 +109,7 @@ void LayerTool::perform_move(const ScreenPos & new_pos)
 	this->layer_edit_moving = true;
 
 	if (tool_sync_done) {
-		this->viewport->sync();
+		this->gisview->sync();
 		tool_sync_done = true;
 	}
 }
@@ -161,7 +161,7 @@ bool LayerTool::deactivate_tool(void)
 
 ToolStatus LayerTool::handle_mouse_click(Layer * layer, QMouseEvent * event)
 {
-	this->viewport->setCursor(this->cursor_click);
+	this->gisview->setCursor(this->cursor_click);
 	return this->internal_handle_mouse_click(layer, event);
 }
 
@@ -170,7 +170,7 @@ ToolStatus LayerTool::handle_mouse_click(Layer * layer, QMouseEvent * event)
 
 ToolStatus LayerTool::handle_mouse_double_click(Layer * layer, QMouseEvent * event)
 {
-	this->viewport->setCursor(this->cursor_click);
+	this->gisview->setCursor(this->cursor_click);
 	return this->internal_handle_mouse_double_click(layer, event);
 }
 
@@ -187,7 +187,7 @@ ToolStatus LayerTool::handle_mouse_move(Layer * layer, QMouseEvent * event)
 
 ToolStatus LayerTool::handle_mouse_release(Layer * layer, QMouseEvent * event)
 {
-	this->viewport->setCursor(this->cursor_release);
+	this->gisview->setCursor(this->cursor_release);
 	return this->internal_handle_mouse_release(layer, event);
 }
 

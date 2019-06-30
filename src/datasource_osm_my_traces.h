@@ -56,14 +56,14 @@ namespace SlavGPS {
 	class DataSourceOSMMyTraces : public DataSource {
 	public:
 		DataSourceOSMMyTraces() {};
-		DataSourceOSMMyTraces(Viewport * viewport);
+		DataSourceOSMMyTraces(GisViewport * gisview);
 		~DataSourceOSMMyTraces() {};
 
 		LoadStatus acquire_into_layer(LayerTRW * trw, AcquireContext * acquire_context, AcquireProgressDialog * progr_dialog) override;
 
 		int run_config_dialog(AcquireContext * acquire_context);
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 	};
 
 
@@ -71,7 +71,7 @@ namespace SlavGPS {
 
 	class DataSourceOSMMyTracesDialog : public DataSourceDialog {
 	public:
-		DataSourceOSMMyTracesDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title) { this->viewport = new_viewport; };
+		DataSourceOSMMyTracesDialog(const QString & window_title, GisViewport * new_gisview) : DataSourceDialog(window_title) { this->gisview = new_gisview; };
 
 		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
@@ -81,7 +81,7 @@ namespace SlavGPS {
 		QLineEdit user_entry;
 		QLineEdit password_entry;
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 	};
 
 

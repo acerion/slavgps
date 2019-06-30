@@ -133,12 +133,12 @@ class ReadParser {
 public:
 	ReadParser(QFile * new_file) : file(new_file) {};
 
-	void handle_layer_begin(const char * line, Viewport * viewport);
-	void handle_layer_end(const char * line, Viewport * viewport);
+	void handle_layer_begin(const char * line, GisViewport * gisview);
+	void handle_layer_end(const char * line, GisViewport * gisview);
 	void handle_layer_data_begin(const QString & dirpath);
 	void handle_layer_parameters(const char * line, size_t line_len);
 
-	sg_ret read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon);
+	sg_ret read_header(Layer * top_layer, GisViewport * gisview, LatLon & lat_lon);
 
 	LayerStack<Layer *> stack;
 	ParameterSpecification * param_specs = NULL; /* For current layer, so we don't have to keep on looking up interface. */
@@ -251,30 +251,30 @@ size_t consume_empty_in_line(char ** line)
 
 
 
-void file_write_header(FILE * file, const LayerAggregate * top_level_layer, Viewport * viewport)
+void file_write_header(FILE * file, const LayerAggregate * top_level_layer, GisViewport * gisview)
 {
-	const LatLon lat_lon = viewport->get_center().get_lat_lon();
+	const LatLon lat_lon = gisview->get_center().get_lat_lon();
 
-	const QString mode_id_string = ViewportDrawModes::get_id_string(viewport->get_drawmode());
+	const QString mode_id_string = GisViewportDrawModes::get_id_string(gisview->get_drawmode());
 
 	char bg_color_string[8] = { 0 };
-	SGUtils::color_to_string(bg_color_string, sizeof (bg_color_string), viewport->get_background_color());
+	SGUtils::color_to_string(bg_color_string, sizeof (bg_color_string), gisview->get_background_color());
 
 	char hl_color_string[8] = { 0 };
-	SGUtils::color_to_string(hl_color_string, sizeof (hl_color_string), viewport->get_highlight_color());
+	SGUtils::color_to_string(hl_color_string, sizeof (hl_color_string), gisview->get_highlight_color());
 
 	fprintf(file, "#VIKING GPS Data file " PACKAGE_URL "\n");
 	fprintf(file, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
-	fprintf(file, "\nxmpp=%f\n", viewport->get_viking_scale().get_x());
-	fprintf(file, "ympp=%f\n", viewport->get_viking_scale().get_y());
+	fprintf(file, "\nxmpp=%f\n", gisview->get_viking_scale().get_x());
+	fprintf(file, "ympp=%f\n", gisview->get_viking_scale().get_y());
 	fprintf(file, "lat=%f\n", lat_lon.lat);
 	fprintf(file, "lon=%f\n", lat_lon.lon);
 	fprintf(file, "mode=%s\n", mode_id_string.toUtf8().constData());
 	fprintf(file, "color=%s\n", bg_color_string);
 	fprintf(file, "highlightcolor=%s\n", hl_color_string);
-	fprintf(file, "drawscale=%s\n", viewport->get_scale_visibility() ? "t" : "f");
-	fprintf(file, "drawcentermark=%s\n", viewport->get_center_mark_visibility() ? "t" : "f");
-	fprintf(file, "drawhighlight=%s\n", viewport->get_highlight_usage() ? "t" : "f");
+	fprintf(file, "drawscale=%s\n", gisview->get_scale_visibility() ? "t" : "f");
+	fprintf(file, "drawcentermark=%s\n", gisview->get_center_mark_visibility() ? "t" : "f");
+	fprintf(file, "drawhighlight=%s\n", gisview->get_highlight_usage() ? "t" : "f");
 
 	if (!top_level_layer->is_visible()) {
 		fprintf(file, "visible=f\n");
@@ -286,7 +286,7 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, View
 
 
 
-sg_ret ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & lat_lon)
+sg_ret ReadParser::read_header(Layer * top_layer, GisViewport * gisview, LatLon & lat_lon)
 {
 	sg_ret read_status = sg_ret::ok;
 
@@ -328,10 +328,10 @@ sg_ret ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & 
 			}
 			/* However we'll still carry and attempt to read whatever we can. */
 		} else if (name_len == 4 && strncasecmp(line, "xmpp", name_len) == 0) { /* "hard coded" params: global & for all layer-types */
-			viewport->set_viking_scale_x(strtod_i8n(value_start, NULL));
+			gisview->set_viking_scale_x(strtod_i8n(value_start, NULL));
 
 		} else if (name_len == 4 && strncasecmp(line, "ympp", name_len) == 0) {
-			viewport->set_viking_scale_y(strtod_i8n(value_start, NULL));
+			gisview->set_viking_scale_y(strtod_i8n(value_start, NULL));
 
 		} else if (name_len == 3 && strncasecmp(line, "lat", name_len) == 0) {
 			lat_lon.lat = strtod_i8n(value_start, NULL);
@@ -340,25 +340,25 @@ sg_ret ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & 
 			lat_lon.lon = strtod_i8n(value_start, NULL);
 
 		} else if (name_len == 4 && strncasecmp(line, "mode", name_len) == 0) {
-			if (!ViewportDrawModes::set_draw_mode_from_file(viewport, value_start)) {
+			if (!GisViewportDrawModes::set_draw_mode_from_file(gisview, value_start)) {
 				qDebug() << SG_PREFIX_E << "Failed to set draw mode";
 				read_status = sg_ret::err;
 			}
 
 		} else if (name_len == 5 && strncasecmp(line, "color", name_len) == 0) {
-			viewport->set_background_color(QString(value_start));
+			gisview->set_background_color(QString(value_start));
 
 		} else if (name_len == 14 && strncasecmp(line, "highlightcolor", name_len) == 0) {
-			viewport->set_highlight_color(QString(value_start));
+			gisview->set_highlight_color(QString(value_start));
 
 		} else if (name_len == 9 && strncasecmp(line, "drawscale", name_len) == 0) {
-			viewport->set_scale_visibility(TEST_BOOLEAN(value_start));
+			gisview->set_scale_visibility(TEST_BOOLEAN(value_start));
 
 		} else if (name_len == 14 && strncasecmp(line, "drawcentermark", name_len) == 0) {
-			viewport->set_center_mark_visibility(TEST_BOOLEAN(value_start));
+			gisview->set_center_mark_visibility(TEST_BOOLEAN(value_start));
 
 		} else if (name_len == 13 && strncasecmp(line, "drawhighlight", name_len) == 0) {
-			viewport->set_highlight_usage(TEST_BOOLEAN(value_start));
+			gisview->set_highlight_usage(TEST_BOOLEAN(value_start));
 
 		} else if (name_len == 7 && strncasecmp(line, "visible", name_len) == 0) {
 			/* This branch exists for both top level layer and sub-layers. */
@@ -376,9 +376,9 @@ sg_ret ReadParser::read_header(Layer * top_layer, Viewport * viewport, LatLon & 
 
 
 
-static void file_write(FILE * file, LayerAggregate * top_level_layer, Viewport * viewport)
+static void file_write(FILE * file, LayerAggregate * top_level_layer, GisViewport * gisview)
 {
-	file_write_header(file, top_level_layer, viewport);
+	file_write_header(file, top_level_layer, gisview);
 
 	LayerStack<std::list<const Layer *>> stack;
 	stack.push(top_level_layer->get_child_layers()); /* List of layers pushed to stack may be empty (if Top Level Layer has no children). */
@@ -474,7 +474,7 @@ SGVariant new_sgvariant_sub(const char * line, SGVariantType type_id)
 
 
 
-void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
+void ReadParser::handle_layer_begin(const char * line, GisViewport * gisview)
 {
 	if (!this->stack.first) { /* TODO_LATER: verify that this condition is handled correctly inside of this branch. */
 		this->parse_status = sg_ret::err;
@@ -511,7 +511,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 
 	} else { /* Any other LayerType::X type. */
 
-		Layer * layer = Layer::construct_layer(layer_type, viewport);
+		Layer * layer = Layer::construct_layer(layer_type, gisview);
 		this->stack.push(layer);
 		this->param_specs = layer->get_interface().parameters_c;
 		this->param_specs_count = layer->get_interface().parameter_specifications.size();
@@ -531,7 +531,7 @@ void ReadParser::handle_layer_begin(const char * line, Viewport * viewport)
 
 
 
-void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
+void ReadParser::handle_layer_end(const char * line, GisViewport * gisview)
 {
 	if (this->stack.second == NULL) {
 		this->parse_status = sg_ret::err;
@@ -556,7 +556,7 @@ void ReadParser::handle_layer_end(const char * line, Viewport * viewport)
 		if (layer && parent_layer) {
 			if (parent_layer->type == LayerType::Aggregate) {
 				//layer->attach_children_to_tree();
-				layer->post_read(viewport, true);
+				layer->post_read(gisview, true);
 			} else if (parent_layer->type == LayerType::GPS) {
 				/* TODO_2_LATER: anything else needs to be done here? */
 			} else {
@@ -719,14 +719,14 @@ void ReadParser::handle_layer_parameters(const char * line, size_t line_len)
 
    TODO_LATER flow up line number(s) / error messages of problems encountered...
 */
-sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport)
+sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, GisViewport * gisview)
 {
 	LatLon lat_lon;
 
 	ReadParser read_parser(&file);
 	read_parser.stack.push(top_layer);
 
-	if (sg_ret::ok != read_parser.read_header(top_layer, viewport, lat_lon)) {
+	if (sg_ret::ok != read_parser.read_header(top_layer, gisview, lat_lon)) {
 		return sg_ret::err;
 	}
 
@@ -751,11 +751,11 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
 				qDebug() << SG_PREFIX_D << "Encountered begin of Layer in line" << read_parser.line_num << line;
-				read_parser.handle_layer_begin(line, viewport);
+				read_parser.handle_layer_begin(line, gisview);
 
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
 				qDebug() << SG_PREFIX_D << "Encountered end of Layer in line" << read_parser.line_num << line;
-				read_parser.handle_layer_end(line, viewport);
+				read_parser.handle_layer_end(line, gisview);
 
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
 				qDebug() << SG_PREFIX_D << "Encountered begin of LayerData in line" << read_parser.line_num << line;
@@ -790,12 +790,12 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 			//parent->add_layer(child, false);
 
 			//qDebug() << SG_PREFIX_D << "Will call child layer's" << child->name << "post_read()";
-			//child->post_read(viewport, true);
+			//child->post_read(gisview, true);
 		}
 		read_parser.stack.pop();
 	}
 
-	viewport->set_center_from_lat_lon(lat_lon); /* The function will reject lat_lon if it's invalid. */
+	gisview->set_center_from_lat_lon(lat_lon); /* The function will reject lat_lon if it's invalid. */
 
 	if (top_layer->tree_view && !top_layer->is_visible()) {
 		top_layer->tree_view->apply_tree_item_visibility(top_layer);
@@ -817,7 +817,7 @@ if "[EndLayer]"
   pop(&stack);
   vik_aggregate_layer_add_layer(stack.first, layer);
 if "[LayerData]"
-  vik_layer_data (VIK_LAYER_DATA(stack.first), file, viewport);
+  vik_layer_data (VIK_LAYER_DATA(stack.first), file, gisview);
 
 */
 
@@ -884,9 +884,9 @@ QString SlavGPS::append_file_ext(const QString & file_name, SGFileType file_type
 
 
 
-LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
+LoadStatus VikFile::load(LayerAggregate * parent_layer, GisViewport * gisview, const QString & file_full_path)
 {
-	if (!viewport) {
+	if (!gisview) {
 		return LoadStatus::Code::ReadFailure;
 	}
 
@@ -910,13 +910,13 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, con
 
 	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (FileUtils::file_has_magic(file, VIK_MAGIC, VIK_MAGIC_LEN)) {
-		if (sg_ret::ok == VikFile::read_file(file, parent_layer, dir_full_path, viewport)) {
+		if (sg_ret::ok == VikFile::read_file(file, parent_layer, dir_full_path, gisview)) {
 			load_status = LoadStatus::Code::Success;
 		} else {
 			load_status = LoadStatus::Code::FailureNonFatal;
 		}
 	} else if (jpg_magic_check(full_path)) {
-		if (!jpg_load_file(parent_layer, viewport, full_path)) {
+		if (!jpg_load_file(parent_layer, gisview, full_path)) {
 			load_status = LoadStatus::Code::UnsupportedFailure;
 		}
 	} else {
@@ -925,7 +925,7 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, con
 		LoadStatus convert_status = LoadStatus::Code::Error; /* Detect load failures - mainly to remove the layer created as it's not required. */
 
 		LayerTRW * trw = new LayerTRW();
-		trw->set_coord_mode(viewport->get_coord_mode());
+		trw->set_coord_mode(gisview->get_coord_mode());
 		trw->set_name(FileUtils::get_base_name(full_path));
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
@@ -967,9 +967,9 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, con
 			delete trw;
 		} else {
 			/* Complete the setup from the successful load. */
-			trw->post_read(viewport, true);
+			trw->post_read(gisview, true);
 			parent_layer->add_layer(trw, false);
-			trw->move_viewport_to_show_all(viewport);
+			trw->move_viewport_to_show_all(gisview);
 		}
 	}
 
@@ -979,7 +979,7 @@ LoadStatus VikFile::load(LayerAggregate * parent_layer, Viewport * viewport, con
 
 
 
-SaveStatus VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path)
+SaveStatus VikFile::save(LayerAggregate * top_layer, GisViewport * gisview, const QString & file_full_path)
 {
 	SaveStatus save_result;
 
@@ -1006,7 +1006,7 @@ SaveStatus VikFile::save(LayerAggregate * top_layer, Viewport * viewport, const 
 		}
 	}
 
-	file_write(file, top_layer, viewport);
+	file_write(file, top_layer, gisview);
 
 	/* Restore previous working directory. */
 	if (!QDir::setCurrent(cwd)) {

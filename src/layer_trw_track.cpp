@@ -2933,8 +2933,8 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		Viewport * viewport = ThisApp::get_main_viewport();
-		this->owning_layer->request_new_viewport_center(viewport, this->get_tp_first()->coord);
+		GisViewport * gisview = ThisApp::get_main_viewport();
+		this->owning_layer->request_new_viewport_center(gisview, this->get_tp_first()->coord);
 	}
 }
 
@@ -2948,10 +2948,10 @@ void Track::goto_center_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	Viewport * viewport = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_viewport();
 
 	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_layer_->coord_mode);
-	parent_layer_->request_new_viewport_center(viewport, coord);
+	parent_layer_->request_new_viewport_center(gisview, coord);
 }
 
 
@@ -2963,8 +2963,8 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	Viewport * viewport = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(viewport, this->get_tp_last()->coord);
+	GisViewport * gisview = ThisApp::get_main_viewport();
+	this->owning_layer->request_new_viewport_center(gisview, this->get_tp_last()->coord);
 }
 
 
@@ -2977,8 +2977,8 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	Viewport * viewport = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(viewport, tp->coord);
+	GisViewport * gisview = ThisApp::get_main_viewport();
+	this->owning_layer->request_new_viewport_center(gisview, tp->coord);
 }
 
 
@@ -2991,8 +2991,8 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	Viewport * viewport = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(viewport, tp->coord);
+	GisViewport * gisview = ThisApp::get_main_viewport();
+	this->owning_layer->request_new_viewport_center(gisview, tp->coord);
 }
 
 
@@ -3005,8 +3005,8 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	Viewport * viewport = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(viewport, tp->coord);
+	GisViewport * gisview = ThisApp::get_main_viewport();
+	this->owning_layer->request_new_viewport_center(gisview, tp->coord);
 }
 
 
@@ -3387,7 +3387,7 @@ bool Track::handle_selection_in_tree(void)
  * Only handles a single track
  * It assumes the track belongs to the TRW Layer (it doesn't check this is the case)
  */
-void Track::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this)) {
@@ -3406,7 +3406,7 @@ void Track::draw_tree_item(Viewport * viewport, bool highlight_selected, bool pa
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	parent_layer->painter->draw_track(this, viewport, item_is_selected && highlight_selected);
+	parent_layer->painter->draw_track(this, gisview, item_is_selected && highlight_selected);
 }
 
 
@@ -3420,7 +3420,7 @@ typedef struct screen_pos {
 
 
 
-sg_ret Track::draw_e_ft(Viewport * viewport, struct my_data * data)
+sg_ret Track::draw_e_ft(GisViewport * gisview, struct my_data * data)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3463,7 +3463,7 @@ sg_ret Track::draw_e_ft(Viewport * viewport, struct my_data * data)
 		cur_pos.x = col;
 		cur_pos.y = bottom - bottom * (value - alt_min) / visible_range;
 
-		viewport->vpixmap.draw_line(pen,
+		gisview->vpixmap.draw_line(pen,
 					    last_pos.x, last_pos.y,
 					    cur_pos.x, cur_pos.y);
 
@@ -3477,7 +3477,7 @@ sg_ret Track::draw_e_ft(Viewport * viewport, struct my_data * data)
 
 
 
-sg_ret Track::draw_d_ft(Viewport * viewport, struct my_data * data)
+sg_ret Track::draw_d_ft(GisViewport * gisview, struct my_data * data)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3514,7 +3514,7 @@ sg_ret Track::draw_d_ft(Viewport * viewport, struct my_data * data)
 		cur_pos.x = col;
 		cur_pos.y = bottom - bottom * (value - dist_min) / visible_range;
 
-		viewport->vpixmap.draw_line(pen,
+		gisview->vpixmap.draw_line(pen,
 					    last_pos.x, last_pos.y,
 					    cur_pos.x, cur_pos.y);
 
@@ -3527,7 +3527,7 @@ sg_ret Track::draw_d_ft(Viewport * viewport, struct my_data * data)
 
 
 
-sg_ret Track::draw_v_ft(Viewport * viewport, struct my_data * data)
+sg_ret Track::draw_v_ft(GisViewport * gisview, struct my_data * data)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3571,7 +3571,7 @@ sg_ret Track::draw_v_ft(Viewport * viewport, struct my_data * data)
 		cur_pos.x = col;
 		cur_pos.y = bottom - bottom * (current_value_uu - min_value_uu) / visible_values_range_uu;
 
-		viewport->vpixmap.draw_line(pen,
+		gisview->vpixmap.draw_line(pen,
 					    last_pos.x, last_pos.y,
 					    cur_pos.x, cur_pos.y);
 
@@ -3585,22 +3585,22 @@ sg_ret Track::draw_v_ft(Viewport * viewport, struct my_data * data)
 
 
 
-sg_ret Track::draw_tree_item(Viewport * viewport, struct my_data * in_data, ViewportDomain x_domain, ViewportDomain y_domain)
+sg_ret Track::draw_tree_item(GisViewport * gisview, struct my_data * in_data, GisViewportDomain x_domain, GisViewportDomain y_domain)
 {
-	if (x_domain != ViewportDomain::Time) {
+	if (x_domain != GisViewportDomain::Time) {
 		qDebug() << SG_PREFIX_W << "Can't draw non-time based graph";
 		return sg_ret::err;
 	}
 
 	switch (y_domain) {
-	case ViewportDomain::Elevation:
-		return this->draw_e_ft(viewport, in_data);
+	case GisViewportDomain::Elevation:
+		return this->draw_e_ft(gisview, in_data);
 		break;
-	case ViewportDomain::Distance:
-		return this->draw_d_ft(viewport, in_data);
+	case GisViewportDomain::Distance:
+		return this->draw_d_ft(gisview, in_data);
 		break;
-	case ViewportDomain::Speed:
-		return this->draw_v_ft(viewport, in_data);
+	case GisViewportDomain::Speed:
+		return this->draw_v_ft(gisview, in_data);
 		break;
 	default:
 		qDebug() << SG_PREFIX_W << "Can't draw graphs of this y-domain";
@@ -4611,13 +4611,13 @@ void Track::delete_points_same_time_cb(void)
 void Track::extend_track_end_cb(void)
 {
 	Window * window = ThisApp::get_main_window();
-	Viewport * viewport = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_viewport();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
 	window->activate_tool_by_id(this->is_route() ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(viewport, this->get_tp_last()->coord);
+		parent_layer->request_new_viewport_center(gisview, this->get_tp_last()->coord);
 	}
 }
 
@@ -4630,7 +4630,7 @@ void Track::extend_track_end_cb(void)
 void Track::extend_track_end_route_finder_cb(void)
 {
 	Window * window = ThisApp::get_main_window();
-	Viewport * viewport = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_viewport();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
 	window->activate_tool_by_id(LAYER_TRW_TOOL_ROUTE_FINDER);
@@ -4638,7 +4638,7 @@ void Track::extend_track_end_route_finder_cb(void)
 	parent_layer->route_finder_started = true;
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(viewport, this->get_tp_last()->coord);
+		parent_layer->request_new_viewport_center(gisview, this->get_tp_last()->coord);
 	}
 }
 

@@ -37,7 +37,7 @@ namespace SlavGPS {
 
 
 	class Window;
-	class Viewport;
+	class GisViewport;
 	class Ruler;
 
 
@@ -45,7 +45,7 @@ namespace SlavGPS {
 
 	class GenericTools {
 	public:
-		static LayerToolContainer * create_tools(Window * window, Viewport * viewport);
+		static LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
 	};
 
 
@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 	class GenericToolZoom : public LayerTool {
 	public:
-		GenericToolZoom(Window * window, Viewport * viewport);
+		GenericToolZoom(Window * window, GisViewport * gisview);
 		~GenericToolZoom();
 
 	private:
@@ -73,7 +73,7 @@ namespace SlavGPS {
 
 	class GenericToolRuler : public LayerTool {
 	public:
-		GenericToolRuler(Window * window, Viewport * viewport);
+		GenericToolRuler(Window * window, GisViewport * gisview);
 		~GenericToolRuler();
 
 		bool deactivate_tool(void);
@@ -94,7 +94,7 @@ namespace SlavGPS {
 
 	class LayerToolPan : public LayerTool {
 	public:
-		LayerToolPan(Window * window, Viewport * viewport);
+		LayerToolPan(Window * window, GisViewport * gisview);
 		~LayerToolPan();
 
 	private:
@@ -107,7 +107,7 @@ namespace SlavGPS {
 
 	class LayerToolSelect : public LayerTool {
 	public:
-		LayerToolSelect(Window * window, Viewport * viewport);
+		LayerToolSelect(Window * window, GisViewport * gisview);
 		~LayerToolSelect();
 
 		QString selected_tree_item_type_id;

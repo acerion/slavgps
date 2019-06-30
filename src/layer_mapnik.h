@@ -42,7 +42,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
@@ -50,8 +50,8 @@ namespace SlavGPS {
 	class LayerMapnikInterface : public LayerInterface {
 	public:
 		LayerMapnikInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
-		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
+		LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
 	};
 
 
@@ -70,8 +70,8 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
-		void post_read(Viewport * viewport, bool from_file);
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void post_read(GisViewport * gisview, bool from_file);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		void add_menu_items(QMenu & menu);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
@@ -115,14 +115,14 @@ namespace SlavGPS {
 		sg_ret carto_load(void);
 
 		/* Draw single tile to viewport. */
-		sg_ret draw_tile(Viewport * viewport, const TileInfo & tile_info);
+		sg_ret draw_tile(GisViewport * gisview, const TileInfo & tile_info);
 
 		/* Get range of tiles that will cover current
 		   viewport.  Also get tile info of first tile in that
 		   range (upper-left tile). */
-		sg_ret get_tiles_range(const Viewport * viewport, TilesRange & range, TileInfo & tile_info_ul);
+		sg_ret get_tiles_range(const GisViewport * gisview, TilesRange & range, TileInfo & tile_info_ul);
 
-		void draw_grid(Viewport * viewport, const TilesRange & range, const TileInfo & tile_info_ul) const;
+		void draw_grid(GisViewport * gisview, const TilesRange & range, const TileInfo & tile_info_ul) const;
 
 		QString css_file_full_path; /* CartoCSS MML File - use 'carto' to convert into xml. */
 		QString xml_map_file_full_path;
@@ -150,7 +150,7 @@ namespace SlavGPS {
 
 	class LayerToolMapnikFeature : public LayerTool {
 	public:
-		LayerToolMapnikFeature(Window * window, Viewport * viewport);
+		LayerToolMapnikFeature(Window * window, GisViewport * gisview);
 
 		ToolStatus handle_mouse_release(Layer * layer, QMouseEvent * event);
 	};

@@ -95,10 +95,10 @@ OnlineService_query::~OnlineService_query()
  * Calculate individual elements (similarly to the Online Service BBox & Center) for *all* potential values.
  * Then only values specified by the URL format are used in parameterizing the URL.
  */
-QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
+QString OnlineService_query::get_url_for_viewport(GisViewport * a_gisview)
 {
 	/* Center values. */
-	const LatLon lat_lon = a_viewport->get_center().get_lat_lon();
+	const LatLon lat_lon = a_gisview->get_center().get_lat_lon();
 
 	QString center_lat;
 	QString center_lon;
@@ -107,8 +107,8 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
-	if (a_viewport->get_viking_scale().x_y_is_equal()) {
-		tile_zoom_level = a_viewport->get_viking_scale().to_tile_zoom_level();
+	if (a_gisview->get_viking_scale().x_y_is_equal()) {
+		tile_zoom_level = a_gisview->get_viking_scale().to_tile_zoom_level();
 	}
 
 	int len = this->url_format_code.size();
@@ -122,7 +122,7 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 		;
 	}
 
-	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().values_to_c_strings();
+	const LatLonBBoxStrings bbox_strings = a_gisview->get_bbox().values_to_c_strings();
 
 	QString url = this->url_format;
 
@@ -152,9 +152,9 @@ QString OnlineService_query::get_url_for_viewport(Viewport * a_viewport)
 
 
 
-QString OnlineService_query::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
+QString OnlineService_query::get_url_at_position(GisViewport * a_gisview, const Coord * a_coord)
 {
-	return this->get_url_for_viewport(a_viewport);
+	return this->get_url_for_viewport(a_gisview);
 }
 
 
@@ -185,14 +185,14 @@ QString OnlineService_query::get_last_user_string(void) const
 
 
 
-void OnlineService_query::run_at_current_position(Viewport * viewport)
+void OnlineService_query::run_at_current_position(GisViewport * gisview)
 {
 	DataSource * data_source = new DataSourceOnlineService(this->get_label(),
 							       this->get_label(),
-							       viewport,
+							       gisview,
 							       this);
 
-	AcquireContext acquire_context(viewport->get_window(), viewport, ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
+	AcquireContext acquire_context(gisview->get_window(), gisview, ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
 	Acquire::acquire_from_source(data_source, data_source->mode, acquire_context);
 
 #ifdef K_TODO

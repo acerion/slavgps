@@ -51,18 +51,18 @@ OnlineService::~OnlineService()
 
 
 
-void OnlineService::run_at_current_position(Viewport * a_viewport)
+void OnlineService::run_at_current_position(GisViewport * a_gisview)
 {
-	const QString url = this->get_url_for_viewport(a_viewport);
+	const QString url = this->get_url_for_viewport(a_gisview);
 	open_url(url);
 }
 
 
 
 
-void OnlineService::run_at_position(Viewport * new_viewport, const Coord & new_coord)
+void OnlineService::run_at_position(GisViewport * new_gisview, const Coord & new_coord)
 {
-	QString url = this->get_url_at_position(new_viewport, &new_coord);
+	QString url = this->get_url_at_position(new_gisview, &new_coord);
 	if (url.size()) {
 		open_url(url);
 	}

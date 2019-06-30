@@ -67,16 +67,16 @@ namespace SlavGPS {
 
 
 
-	class Viewport : public QWidget {
+	class GisViewport : public QWidget {
 		Q_OBJECT
 
-		friend class ViewportDecorations;
+		friend class GisViewportDecorations;
 		friend class Viewport2D;
 	public:
-		Viewport(QWidget * parent = NULL);
-		~Viewport();
+		GisViewport(QWidget * parent = NULL);
+		~GisViewport();
 
-		/* Viewport module initialization function. */
+		/* GisViewport module initialization function. */
 		static void init(void);
 
 		/* If a viewport widget already has some non-zero geometry,
@@ -129,7 +129,7 @@ namespace SlavGPS {
 
 
 
-		/* Viewport position. */
+		/* GisViewport position. */
 		void set_center_from_coord(const Coord & coord, bool save_position = true);
 		void set_center_from_utm(const UTM & utm, bool save_position = true);
 		sg_ret set_center_from_lat_lon(const LatLon & lat_lon, bool save_position = true);
@@ -160,7 +160,7 @@ namespace SlavGPS {
 		ScreenPos coord_to_screen_pos(const Coord & coord) const;
 
 
-		/* Viewport's zoom. */
+		/* GisViewport's zoom. */
 		void zoom_in(void);
 		void zoom_out(void);
 
@@ -176,7 +176,7 @@ namespace SlavGPS {
 		  Add given @attribution to list of attributions displayed in viewport.
 		*/
 		sg_ret add_attribution(const QString & attribution);
-		sg_ret add_logo(const ViewportLogo & logo);
+		sg_ret add_logo(const GisViewportLogo & logo);
 
 
 
@@ -213,15 +213,15 @@ namespace SlavGPS {
 		void clear(void);
 
 
-		void set_drawmode(ViewportDrawMode drawmode);
-		ViewportDrawMode get_drawmode(void) const;
+		void set_drawmode(GisViewportDrawMode drawmode);
+		GisViewportDrawMode get_drawmode(void) const;
 
 
 		void request_redraw(const QString & trigger_descr);
 
 
 
-		/* Viewport buffer management/drawing to screen. */
+		/* GisViewport buffer management/drawing to screen. */
 		QPixmap get_pixmap(void) const;   /* Get contents of drawing buffer. */
 		void set_pixmap(const QPixmap & pixmap);
 		void sync(void);              /* Draw buffer to window. */
@@ -251,7 +251,7 @@ namespace SlavGPS {
 		   false) - the function will then use its standard
 		   algorithm for determining expected zoom of scaled
 		   viewport. */
-		Viewport * create_scaled_viewport(Window * window, int target_width, int target_height, const VikingScale & expected_viking_scale);
+		GisViewport * create_scaled_viewport(Window * window, int target_width, int target_height, const VikingScale & expected_viking_scale);
 
 
 		void emit_center_or_zoom_changed(const QString & trigger_name);
@@ -279,7 +279,7 @@ namespace SlavGPS {
 		bool is_one_utm_zone;
 
 		/* Subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
-		ViewportDrawMode drawmode;
+		GisViewportDrawMode drawmode;
 
 
 		/* Properties of text labels drawn on margins of charts (next to each horizontal/vertical grid line). */
@@ -324,12 +324,12 @@ namespace SlavGPS {
 		double ymfactor = 0.0f;
 
 		Window * window = NULL;
-		ViewportDecorations decorations;
+		GisViewportDecorations decorations;
 
 
 	signals:
-		void cursor_moved(Viewport * viewport, QMouseEvent * event);
-		void button_released(Viewport * viewport, QMouseEvent * event);
+		void cursor_moved(GisViewport * gisview, QMouseEvent * event);
+		void button_released(GisViewport * gisview, QMouseEvent * event);
 		void center_updated(void);
 		void center_or_zoom_changed(void);
 
@@ -415,10 +415,10 @@ namespace SlavGPS {
 		ViewportMargin * right = NULL;
 		ViewportMargin * top = NULL;
 		ViewportMargin * bottom = NULL;
-		Viewport * central = NULL;
+		GisViewport * central = NULL;
 
-		ViewportDomain x_domain = ViewportDomain::Max;
-		ViewportDomain y_domain = ViewportDomain::Max;
+		GisViewportDomain x_domain = GisViewportDomain::Max;
+		GisViewportDomain y_domain = GisViewportDomain::Max;
 
 		HeightUnit height_unit;
 		DistanceUnit distance_unit;

@@ -51,7 +51,7 @@ namespace SlavGPS {
 
 
 	class Track;
-	class Viewport;
+	class GisViewport;
 	class LayerTRW;
 	class Window;
 
@@ -88,12 +88,12 @@ namespace SlavGPS {
 
 	class TrackpointSearch {
 	public:
-		TrackpointSearch(int ev_x, int ev_y, Viewport * viewport);
+		TrackpointSearch(int ev_x, int ev_y, GisViewport * gisview);
 
 		/* Input. */
 		int x = 0;
 		int y = 0;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 		LatLonBBox bbox;
 
 		/* Output. */
@@ -174,7 +174,7 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree(void);
 
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 
 		bool move_child(TreeItem & child_tree_item, bool up) override;
 

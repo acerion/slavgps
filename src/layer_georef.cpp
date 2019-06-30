@@ -149,7 +149,7 @@ LayerGeorefInterface::LayerGeorefInterface()
 
 
 
-LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, GisViewport * gisview)
 {
 	/* This method should be called only once. */
 	static bool created = false;
@@ -161,10 +161,10 @@ LayerToolContainer * LayerGeorefInterface::create_tools(Window * window, Viewpor
 
 	LayerTool * tool = NULL;
 
-	tool = new LayerToolGeorefMove(window, viewport);
+	tool = new LayerToolGeorefMove(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolGeorefZoom(window, viewport);
+	tool = new LayerToolGeorefZoom(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
 	created = true;
@@ -198,15 +198,15 @@ QString LayerGeoref::get_tooltip(void) const
 
 
 
-Layer * LayerGeorefInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerGeorefInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerGeoref * layer = new LayerGeoref();
-	layer->configure_from_viewport(viewport);
+	layer->configure_from_viewport(gisview);
 
 	layer->unmarshall_params(pickle);
 
 	if (!layer->image_file_full_path.isEmpty()) {
-		layer->post_read(viewport, true);
+		layer->post_read(gisview, true);
 	}
 	return layer;
 }
@@ -363,16 +363,16 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & lat_lon_
 
 
 
-void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerGeoref::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	if (this->image.isNull()) {
 		qDebug() << SG_PREFIX_I << "Not drawing the layer, no image";
 		return;
 	}
 
-	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	const LatLonBBox viewport_bbox = gisview->get_bbox();
 	const LatLonBBox image_bbox(this->lat_lon_tl, this->lat_lon_br);
-	qDebug() << SG_PREFIX_I << "Viewport bbox" << viewport_bbox;
+	qDebug() << SG_PREFIX_I << "GisViewport bbox" << viewport_bbox;
 	qDebug() << SG_PREFIX_I << "Image bbox   " << image_bbox;
 
 	if (!BBOX_INTERSECT (viewport_bbox, image_bbox)) {
@@ -384,13 +384,13 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	QPen pen;
 	pen.setColor("red");
 	pen.setWidth(1);
-	viewport->draw_bbox(image_bbox, pen);
+	gisview->draw_bbox(image_bbox, pen);
 
 	QPixmap transformed_image = this->image;
 
 #if 0
-	const Coord coord_tl(this->utm_tl, viewport->get_coord_mode());
-	const ScreenPos pos_tl = viewport->coord_to_screen_pos(coord_tl);
+	const Coord coord_tl(this->utm_tl, gisview->get_coord_mode());
+	const ScreenPos pos_tl = gisview->coord_to_screen_pos(coord_tl);
 
 	QRect sub_viewport_rect;
 	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x, pos_tl.y));
@@ -398,8 +398,8 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 	sub_viewport_rect.setHeight(this->image_height);
 
 	bool scale_mismatch = false; /* Flag to scale the pixmap if it doesn't match our dimensions. */
-	const double xmpp = viewport->get_viking_scale().get_x();
-	const double ympp = viewport->get_viking_scale().get_y();
+	const double xmpp = gisview->get_viking_scale().get_x();
+	const double ympp = gisview->get_viking_scale().get_y();
 	if (xmpp != this->mpp_easting || ympp != this->mpp_northing) {
 		scale_mismatch = true;
 		sub_viewport_rect.setWidth(round(this->image_width * this->mpp_easting / xmpp));
@@ -424,17 +424,17 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		}
 	}
 #else
-	const Coord coord_tl(this->lat_lon_tl, viewport->get_coord_mode());
-	const ScreenPos pos_tl = viewport->coord_to_screen_pos(coord_tl);
+	const Coord coord_tl(this->lat_lon_tl, gisview->get_coord_mode());
+	const ScreenPos pos_tl = gisview->coord_to_screen_pos(coord_tl);
 
-	const Coord coord_br(this->lat_lon_br, viewport->get_coord_mode());
-	const ScreenPos pos_br = viewport->coord_to_screen_pos(coord_br);
+	const Coord coord_br(this->lat_lon_br, gisview->get_coord_mode());
+	const ScreenPos pos_br = gisview->coord_to_screen_pos(coord_br);
 
 	QRect sub_viewport_rect;
 	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x, pos_tl.y));
 	sub_viewport_rect.setWidth(pos_br.x - pos_tl.x + 1);
 	sub_viewport_rect.setHeight(pos_br.y - pos_tl.y + 1);
-	qDebug() << SG_PREFIX_I << "Viewport rectangle =" << sub_viewport_rect;
+	qDebug() << SG_PREFIX_I << "GisViewport rectangle =" << sub_viewport_rect;
 #endif
 
 	QRect image_rect;
@@ -444,7 +444,7 @@ void LayerGeoref::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	qDebug() << "++++++++ EXPECT 0 0:" << (transformed_image.width() - sub_viewport_rect.width()) << (transformed_image.height() - sub_viewport_rect.height());
 
-	viewport->vpixmap.draw_pixmap(transformed_image, sub_viewport_rect, image_rect);
+	gisview->vpixmap.draw_pixmap(transformed_image, sub_viewport_rect, image_rect);
 }
 
 
@@ -457,16 +457,16 @@ LayerGeoref::~LayerGeoref()
 
 
 
-bool LayerGeoref::properties_dialog(Viewport * viewport)
+bool LayerGeoref::properties_dialog(GisViewport * gisview)
 {
-	return this->run_dialog(viewport, this->get_window());
+	return this->run_dialog(gisview, this->get_window());
 }
 
 
 
 
 /* Also known as LayerGeoref::load_image(). */
-void LayerGeoref::post_read(Viewport * viewport, bool from_file)
+void LayerGeoref::post_read(GisViewport * gisview, bool from_file)
 {
 	if (this->image_file_full_path.isEmpty()) {
 		qDebug() << SG_PREFIX_I << "Not loading image, file path is empty";
@@ -967,8 +967,8 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 	this->x_scale_spin = new QDoubleSpinBox();
-	this->x_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	this->x_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	this->x_scale_spin->setMinimum(SG_GISVIEWPORT_ZOOM_MIN);
+	this->x_scale_spin->setMaximum(SG_GISVIEWPORT_ZOOM_MAX);
 	this->x_scale_spin->setSingleStep(1);
 	this->x_scale_spin->setValue(4);
 	this->x_scale_spin->setToolTip(tr("The scale of the map in the X direction (meters per pixel)"));
@@ -978,8 +978,8 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 	this->y_scale_spin = new QDoubleSpinBox();
-	this->y_scale_spin->setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	this->y_scale_spin->setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	this->y_scale_spin->setMinimum(SG_GISVIEWPORT_ZOOM_MIN);
+	this->y_scale_spin->setMaximum(SG_GISVIEWPORT_ZOOM_MAX);
 	this->y_scale_spin->setSingleStep(1);
 	this->y_scale_spin->setValue(4);
 	this->y_scale_spin->setToolTip(tr("The scale of the map in the Y direction (meters per pixel)"));
@@ -1086,7 +1086,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 
 
 /* Returns true if OK was pressed. */
-bool LayerGeoref::run_dialog(Viewport * viewport, QWidget * parent)
+bool LayerGeoref::run_dialog(GisViewport * gisview, QWidget * parent)
 {
 	GeorefConfigDialog dialog(this, parent);
 	if (dialog.exec() != QDialog::Accepted) {
@@ -1102,7 +1102,7 @@ bool LayerGeoref::run_dialog(Viewport * viewport, QWidget * parent)
 	/* TODO_MAYBE: we could check whether the parameters have
 	   changed or if image file or world file have been changed on
 	   disc and only then re-generate pixmap. */
-	this->post_read(viewport, false);
+	this->post_read(gisview, false);
 
 
 	if (alpha_scale.is_in_range(this->alpha)) {
@@ -1143,10 +1143,10 @@ sg_ret LayerGeoref::get_values_from_dialog(const GeorefConfigDialog & dialog)
 
 void LayerGeoref::zoom_to_fit_cb(void)
 {
-	Viewport * viewport = ThisApp::get_main_viewport();
-	viewport->set_viking_scale_x(this->mpp_easting);
-	viewport->set_viking_scale_y(this->mpp_northing);
-	viewport->request_redraw("Redrawing items after setting new zoom level in viewport");
+	GisViewport * gisview = ThisApp::get_main_viewport();
+	gisview->set_viking_scale_x(this->mpp_easting);
+	gisview->set_viking_scale_y(this->mpp_northing);
+	gisview->request_redraw("Redrawing items after setting new zoom level in viewport");
 }
 
 
@@ -1154,8 +1154,8 @@ void LayerGeoref::zoom_to_fit_cb(void)
 
 void LayerGeoref::goto_center_cb(void)
 {
-	Viewport * viewport = ThisApp::get_main_viewport();
-	UTM utm = viewport->get_center().get_utm();
+	GisViewport * gisview = ThisApp::get_main_viewport();
+	UTM utm = gisview->get_center().get_utm();
 
 	const double center_to_left_m = this->image_width * this->mpp_easting / 2;  /* Only an approximation. */
 	const double center_to_bottom_m = this->image_height * this->mpp_northing / 2;
@@ -1163,8 +1163,8 @@ void LayerGeoref::goto_center_cb(void)
 	utm.easting = this->utm_tl.get_easting() + center_to_left_m;
 	utm.northing = this->utm_tl.get_northing() - center_to_bottom_m;
 
-	viewport->set_center_from_utm(utm);
-	viewport->request_redraw("Redrawing items after setting new center coord in viewport");
+	gisview->set_center_from_utm(utm);
+	gisview->request_redraw("Redrawing items after setting new center coord in viewport");
 }
 
 
@@ -1193,7 +1193,7 @@ void LayerGeoref::add_menu_items(QMenu & menu)
 
 
 
-LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Georef)
+LayerToolGeorefMove::LayerToolGeorefMove(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Georef)
 {
 	this->id_string = "sg.tool.layer_georef.move";
 
@@ -1225,8 +1225,8 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (this->click_x != -1) {
-		this->utm_tl.easting += (ev->x() - this->click_x) * tool->viewport->get_viking_scale().get_x();
-		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->viewport->get_viking_scale().get_y();
+		this->utm_tl.easting += (ev->x() - this->click_x) * tool->gisview->get_viking_scale().get_x();
+		this->utm_tl.northing -= (ev->y() - this->click_y) * tool->gisview->get_viking_scale().get_y();
 		this->emit_tree_item_changed("Georef - move released");
 		return ToolStatus::Ack;
 	}
@@ -1236,7 +1236,7 @@ ToolStatus LayerGeoref::move_release(QMouseEvent * ev, LayerTool * tool)
 
 
 
-LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Georef)
+LayerToolGeorefZoom::LayerToolGeorefZoom(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Georef)
 {
 	this->id_string = "sg.tool.layer_georef.zoom";
 
@@ -1265,18 +1265,18 @@ ToolStatus LayerGeoref::zoom_press(QMouseEvent * ev, LayerTool * tool)
 	}
 
 	if (ev->button() == Qt::LeftButton) {
-		if (this->mpp_easting < (SG_VIEWPORT_ZOOM_MAX / 1.05) && this->mpp_northing < (SG_VIEWPORT_ZOOM_MAX / 1.05)) {
+		if (this->mpp_easting < (SG_GISVIEWPORT_ZOOM_MAX / 1.05) && this->mpp_northing < (SG_GISVIEWPORT_ZOOM_MAX / 1.05)) {
 			this->mpp_easting *= 1.01;
 			this->mpp_northing *= 1.01;
 		}
 	} else {
-		if (this->mpp_easting > (SG_VIEWPORT_ZOOM_MIN * 1.05) && this->mpp_northing > (SG_VIEWPORT_ZOOM_MIN * 1.05)) {
+		if (this->mpp_easting > (SG_GISVIEWPORT_ZOOM_MIN * 1.05) && this->mpp_northing > (SG_GISVIEWPORT_ZOOM_MIN * 1.05)) {
 			this->mpp_easting /= 1.01;
 			this->mpp_northing /= 1.01;
 		}
 	}
-	tool->viewport->set_viking_scale_x(this->mpp_easting);
-	tool->viewport->set_viking_scale_y(this->mpp_northing);
+	tool->gisview->set_viking_scale_x(this->mpp_easting);
+	tool->gisview->set_viking_scale_y(this->mpp_northing);
 	this->emit_tree_item_changed("Georef - zoom press");
 	return ToolStatus::Ack;
 }
@@ -1306,7 +1306,7 @@ ToolStatus LayerGeoref::move_press(QMouseEvent * ev, LayerTool * tool)
 
 
 
-LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord & coord_tl, const Coord & coord_br)
+LayerGeoref * SlavGPS::georef_layer_create(GisViewport * gisview, const QString & name, QPixmap * pixmap, const Coord & coord_tl, const Coord & coord_br)
 {
 	if (!pixmap || pixmap->isNull()) {
 		/* Bad image */
@@ -1321,7 +1321,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	}
 
 	LayerGeoref * layer = new LayerGeoref();
-	layer->configure_from_viewport(viewport);
+	layer->configure_from_viewport(gisview);
 	layer->set_name(name);
 	layer->image = *pixmap;
 	layer->utm_tl = coord_tl.get_utm();
@@ -1331,7 +1331,7 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 
 	const LatLon lat_lon_tl = coord_tl.get_lat_lon();
 	const LatLon lat_lon_br = coord_br.get_lat_lon();
-	const CoordMode coord_mode = viewport->get_coord_mode();
+	const CoordMode coord_mode = gisview->get_coord_mode();
 
 	double xmpp, ympp;
 	georef_layer_mpp_from_coords(coord_mode, lat_lon_tl, lat_lon_br, layer->image_width, layer->image_height, &xmpp, &ympp);
@@ -1339,10 +1339,10 @@ LayerGeoref * SlavGPS::georef_layer_create(Viewport * viewport, const QString & 
 	layer->mpp_northing = ympp;
 
 	const LatLonBBox bbox(lat_lon_tl, lat_lon_br);
-	viewport->set_center_from_lat_lon(bbox.get_center_lat_lon()); /* TODO: is this call necessary if we call ::set_bbox() below? */
+	gisview->set_center_from_lat_lon(bbox.get_center_lat_lon()); /* TODO: is this call necessary if we call ::set_bbox() below? */
 
 	/* Set best zoom level. */
-	viewport->set_bbox(bbox);
+	gisview->set_bbox(bbox);
 
 	return layer;
 }
@@ -1366,10 +1366,10 @@ LayerGeoref::LayerGeoref()
 
 
 /* To be called right after constructor. */
-void LayerGeoref::configure_from_viewport(Viewport const * viewport)
+void LayerGeoref::configure_from_viewport(const GisViewport * gisview)
 {
 	/* Make these defaults based on the current view. */
-	this->mpp_northing = viewport->get_viking_scale().get_y();
-	this->mpp_easting = viewport->get_viking_scale().get_x();
-	this->utm_tl = viewport->get_center().get_utm();
+	this->mpp_northing = gisview->get_viking_scale().get_y();
+	this->mpp_easting = gisview->get_viking_scale().get_x();
+	this->utm_tl = gisview->get_center().get_utm();
 }

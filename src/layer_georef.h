@@ -54,7 +54,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class FileSelectorWidget;
 	class LayerGeoref;
 	class WorldFile;
@@ -121,8 +121,8 @@ namespace SlavGPS {
 	class LayerGeorefInterface : public LayerInterface {
 	public:
 		LayerGeorefInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
-		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
+		LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
 	};
 
 
@@ -132,16 +132,16 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		LayerGeoref();
-		LayerGeoref(Viewport * viewport);
+		LayerGeoref(GisViewport * gisview);
 		~LayerGeoref();
 
 
 		/* Layer interface methods. */
-		void post_read(Viewport * viewport, bool from_file);
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void post_read(GisViewport * gisview, bool from_file);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		void add_menu_items(QMenu & menu);
-		bool properties_dialog(Viewport * viewport);
+		bool properties_dialog(GisViewport * gisview);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
@@ -149,13 +149,13 @@ namespace SlavGPS {
 		void reset_pixmaps(void);
 
 
-		void configure_from_viewport(Viewport const * viewport);
+		void configure_from_viewport(const GisViewport * gisview);
 
 
 		void create_image_file(void);
 		void set_image_file_full_path(const QString & full_path);
 
-		bool run_dialog(Viewport * viewport, QWidget * parent);
+		bool run_dialog(GisViewport * gisview, QWidget * parent);
 
 		ToolStatus move_release(QMouseEvent * event, LayerTool * tool);
 		ToolStatus zoom_press(QMouseEvent * event, LayerTool * tool);
@@ -196,14 +196,14 @@ namespace SlavGPS {
 
 
 
-	LayerGeoref * georef_layer_create(Viewport * viewport, const QString & name, QPixmap * pixmap, const Coord & coord_tr, const Coord & coord_br);
+	LayerGeoref * georef_layer_create(GisViewport * gisview, const QString & name, QPixmap * pixmap, const Coord & coord_tr, const Coord & coord_br);
 
 
 
 
 	class LayerToolGeorefMove : public LayerTool {
 	public:
-		LayerToolGeorefMove(Window * window, Viewport * viewport);
+		LayerToolGeorefMove(Window * window, GisViewport * gisview);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
@@ -212,7 +212,7 @@ namespace SlavGPS {
 
 	class LayerToolGeorefZoom : public LayerTool {
 	public:
-		LayerToolGeorefZoom(Window * window, Viewport * viewport);
+		LayerToolGeorefZoom(Window * window, GisViewport * gisview);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;

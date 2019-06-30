@@ -81,8 +81,8 @@ void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 	this->width_spin->blockSignals(true);
 	this->height_spin->blockSignals(true);
 
-	this->width_spin->setValue(this->viewport->vpixmap.get_width());
-	this->height_spin->setValue(this->viewport->vpixmap.get_height());
+	this->width_spin->setValue(this->gisview->vpixmap.get_width());
+	this->height_spin->setValue(this->gisview->vpixmap.get_height());
 
 	this->width_spin->blockSignals(false);
 	this->height_spin->blockSignals(false);
@@ -96,8 +96,8 @@ void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 void ViewportSaveDialog::calculate_total_area_cb(void)
 {
 	QString label_text;
-	double w = this->width_spin->value() * this->viewport->get_viking_scale().get_x();
-	double h = this->height_spin->value() * this->viewport->get_viking_scale().get_x(); /* TODO_2_LATER: change to get_y(). */
+	double w = this->width_spin->value() * this->gisview->get_viking_scale().get_x();
+	double h = this->height_spin->value() * this->gisview->get_viking_scale().get_x(); /* TODO_2_LATER: change to get_y(). */
 	if (this->tiles_width_spin) { /* save many images; find TOTAL area covered */
 		w *= this->tiles_width_spin->value();
 		h *= this->tiles_height_spin->value();
@@ -124,15 +124,15 @@ void ViewportSaveDialog::calculate_total_area_cb(void)
 
 
 
-ViewportSaveDialog::ViewportSaveDialog(QString const & title, Viewport * new_viewport, QWidget * parent) : BasicDialog(parent)
+ViewportSaveDialog::ViewportSaveDialog(QString const & title, GisViewport * new_gisview, QWidget * parent) : BasicDialog(parent)
 {
 	this->setWindowTitle(title);
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 
-	this->original_width = this->viewport->vpixmap.get_width();
-	this->original_viking_scale = this->viewport->get_viking_scale();
+	this->original_width = this->gisview->vpixmap.get_width();
+	this->original_viking_scale = this->gisview->get_viking_scale();
 
-	this->proportion = 1.0 * this->viewport->vpixmap.get_width() / this->viewport->vpixmap.get_height();
+	this->proportion = 1.0 * this->gisview->vpixmap.get_width() / this->gisview->vpixmap.get_height();
 }
 
 
@@ -317,13 +317,13 @@ int ViewportSaveDialog::get_n_tiles_y(void) const
 
 
 
-ViewportToImage::ViewportToImage(Viewport * new_viewport, ViewportToImage::SaveMode new_save_mode, Window * new_window)
+ViewportToImage::ViewportToImage(GisViewport * new_gisview, ViewportToImage::SaveMode new_save_mode, Window * new_window)
 {
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 	this->save_mode = new_save_mode;
 	this->window = new_window;
-	this->original_viking_scale = this->viewport->get_viking_scale();
-	this->scaled_viking_scale = this->viewport->get_viking_scale(); /* This value will be re-calculated by function called in ::run_dialog((), */
+	this->original_viking_scale = this->gisview->get_viking_scale();
+	this->scaled_viking_scale = this->gisview->get_viking_scale(); /* This value will be re-calculated by function called in ::run_dialog((), */
 
 	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEWPORT_SAVE_WIDTH, &this->scaled_width)) {
 		this->scaled_width = VIEWPORT_SAVE_DEFAULT_WIDTH;
@@ -354,7 +354,7 @@ ViewportToImage::~ViewportToImage()
 
 bool ViewportToImage::run_dialog(const QString & title)
 {
-	ViewportSaveDialog dialog(QObject::tr("Save Viewport to Image File"), this->viewport, NULL);
+	ViewportSaveDialog dialog(QObject::tr("Save Viewport to Image File"), this->gisview, NULL);
 	dialog.build_ui(this->save_mode, this->file_format);
 	if (QDialog::Accepted != dialog.exec()) {
 		return false;
@@ -397,15 +397,15 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->scaled_width << this->scaled_height << this->scaled_viking_scale;
 #if 0
-	Viewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_scale);
+	GisViewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_scale);
 #else
-	Viewport * scaled_viewport = new Viewport(this->window);
+	GisViewport * scaled_viewport = new GisViewport(this->window);
 
 
 	/* Copy/set selected properties of viewport. */
-	scaled_viewport->set_drawmode(this->viewport->get_drawmode());
-	scaled_viewport->set_coord_mode(this->viewport->get_coord_mode());
-	scaled_viewport->set_center_from_coord(this->viewport->center, false);
+	scaled_viewport->set_drawmode(this->gisview->get_drawmode());
+	scaled_viewport->set_coord_mode(this->gisview->get_coord_mode());
+	scaled_viewport->set_center_from_coord(this->gisview->center, false);
 	scaled_viewport->set_viking_scale(this->scaled_viking_scale);
 
 	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled Viewport");
@@ -416,9 +416,9 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	   print to target device should cover the same area
 	   (i.e. have the same bounding box) as original viewport. */
 	scaled_viewport->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
-	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->viewport->get_bbox();
+	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->gisview->get_bbox();
 	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
-	scaled_viewport->set_bbox(this->viewport->get_bbox());
+	scaled_viewport->set_bbox(this->gisview->get_bbox());
 	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
 #endif
 
@@ -456,7 +456,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 			this->file_format = ViewportToImage::FileFormat::JPEG;
 		}
 
-		const LatLonBBox bbox = this->viewport->get_bbox();
+		const LatLonBBox bbox = this->gisview->get_bbox();
 		const int ans = kmz_save_file(pixmap, file_full_path, bbox.north.get_value(), bbox.east.get_value(), bbox.south.get_value(), bbox.west.get_value());
 		if (0 != ans) {
 			qDebug() << SG_PREFIX_E << "Saving to kmz file failed with code" << ans;
@@ -487,7 +487,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 {
-	if (this->viewport->get_coord_mode() != CoordMode::UTM) {
+	if (this->gisview->get_coord_mode() != CoordMode::UTM) {
 		Dialog::error(QObject::tr("You must be in UTM mode to use this feature"), this->window);
 		return sg_ret::err;
 	}
@@ -500,13 +500,13 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 		}
 	}
 
-	const VikingScale orig_viking_scale = this->viewport->get_viking_scale();
-	const UTM utm_orig = this->viewport->get_center().get_utm();
+	const VikingScale orig_viking_scale = this->gisview->get_viking_scale();
+	const UTM utm_orig = this->gisview->get_center().get_utm();
 
-	this->viewport->set_viking_scale(this->scaled_viking_scale);
+	this->gisview->set_viking_scale(this->scaled_viking_scale);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
-	this->viewport->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
+	this->gisview->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
 
 
 	UTM utm;
@@ -532,13 +532,13 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 			}
 
 			/* TODO_2_LATER: move to correct place. */
-			this->viewport->set_center_from_utm(utm, false);
+			this->gisview->set_center_from_utm(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
 			this->window->draw_tree_items();
 
 			/* Save buffer as file. */
-			const QPixmap pixmap = this->viewport->get_pixmap();
+			const QPixmap pixmap = this->gisview->get_pixmap();
 			if (pixmap.isNull()) {
 				qDebug() << SG_PREFIX_E << "Unable to create viewport pixmap" << file_full_path;
 				this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Unable to create viewport's image"));
@@ -551,11 +551,11 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 		}
 	}
 
-	this->viewport->set_center_from_utm(utm_orig, false);
+	this->gisview->set_center_from_utm(utm_orig, false);
 
-	this->viewport->set_viking_scale(orig_viking_scale);
+	this->gisview->set_viking_scale(orig_viking_scale);
 
-	this->viewport->reconfigure_drawing_area();
+	this->gisview->reconfigure_drawing_area();
 	this->window->draw_tree_items();
 
 	return sg_ret::ok;

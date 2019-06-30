@@ -47,7 +47,7 @@ namespace SlavGPS {
 
 
 	class Window;
-	class Viewport;
+	class GisViewport;
 
 
 
@@ -58,11 +58,11 @@ namespace SlavGPS {
 
 		static void register_tool(GotoTool * tool);
 
-		static bool goto_location(Window * window, Viewport * viewport);
-		static sg_ret goto_latlon(Window * window, Viewport * viewport);
-		static bool goto_utm(Window * window, Viewport * viewport);
+		static bool goto_location(Window * window, GisViewport * gisview);
+		static sg_ret goto_latlon(Window * window, GisViewport * gisview);
+		static bool goto_utm(Window * window, GisViewport * gisview);
 
-		static int where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name);
+		static int where_am_i(GisViewport * gisview, LatLon & lat_lon, QString & name);
 	};
 
 

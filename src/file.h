@@ -40,7 +40,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class LayerAggregate;
 	class LayerTRW;
 	class Track;
@@ -82,8 +82,8 @@ namespace SlavGPS {
 	class VikFile {
 	public:
 
-		static SaveStatus save(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
-		static LoadStatus load(LayerAggregate * top_layer, Viewport * viewport, const QString & file_full_path);
+		static SaveStatus save(LayerAggregate * top_layer, GisViewport * gisview, const QString & file_full_path);
+		static LoadStatus load(LayerAggregate * top_layer, GisViewport * gisview, const QString & file_full_path);
 
 		/* Function to determine if a filename is a 'viking' type file. */
 		static bool has_vik_file_magic(const QString & file_full_path);
@@ -101,7 +101,7 @@ namespace SlavGPS {
 		static SaveStatus export_with_babel(LayerTRW * trw, const QString & output_file_full_path, const QString & output_data_format, bool tracks, bool routes, bool waypoints);
 
 	private:
-		static sg_ret read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, Viewport * viewport);
+		static sg_ret read_file(QFile & file, LayerAggregate * top_layer, const QString & dirpath, GisViewport * gisview);
 	};
 
 

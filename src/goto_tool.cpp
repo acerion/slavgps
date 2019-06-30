@@ -97,7 +97,7 @@ const DownloadOptions * GotoTool::get_download_options(void) const
 /**
  * vik_goto_tool_get_coord:
  *
- * @viewport:  The #Viewport
+ * @viewport:  The #GisViewport
  * @srch_str:  The string to search with
  * @coord:     Returns the top match position for a successful search
  *
@@ -107,7 +107,7 @@ const DownloadOptions * GotoTool::get_download_options(void) const
  *  1  = search unavailable in the #GotoTool due to communication issue
  *
  */
-GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Coord * coord)
+GotoToolResult GotoTool::get_coord(GisViewport * gisview, const QString & name, Coord * coord)
 {
 	GotoToolResult ret = GotoToolResult::Error;
 	LatLon lat_lon;
@@ -129,7 +129,7 @@ GotoToolResult GotoTool::get_coord(Viewport * viewport, const QString & name, Co
 	qDebug() << SG_PREFIX_D << "Temporary file:" << tmp_file.fileName();
 
 	if (this->parse_file_for_latlon(tmp_file, lat_lon)) {
-		*coord = Coord(lat_lon, viewport->get_coord_mode());
+		*coord = Coord(lat_lon, gisview->get_coord_mode());
 		ret = GotoToolResult::Found;
 	} else {
 		ret = GotoToolResult::NotFound;

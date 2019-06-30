@@ -67,9 +67,9 @@ using namespace SlavGPS;
 
 
 
-DataSourceGeoCache::DataSourceGeoCache(Viewport * new_viewport)
+DataSourceGeoCache::DataSourceGeoCache(GisViewport * new_gisview)
 {
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 
 	this->window_title = QObject::tr("Download Geocaches");
 	this->layer_title = QObject::tr("Geocaching.com Caches");
@@ -130,10 +130,10 @@ bool DataSourceGeoCache::have_programs(void)
 void DataSourceGeoCacheDialog::draw_circle_cb(void)
 {
 	if (this->circle_onscreen) {
-		this->viewport->vpixmap.draw_ellipse(this->circle_pen,
-						     QPoint(this->circle_x, this->circle_y),
-						     this->circle_radius, this->circle_radius,
-						     false);
+		this->gisview->vpixmap.draw_ellipse(this->circle_pen,
+						    QPoint(this->circle_x, this->circle_y),
+						    this->circle_radius, this->circle_radius,
+						    false);
 	}
 
 	/* Calculate widgets circle_x and circle_y. */
@@ -143,29 +143,29 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		return;
 	}
 
-	const Coord circle_center_coord(lat_lon, this->viewport->get_coord_mode());
-	const ScreenPos circle_center = this->viewport->coord_to_screen_pos(circle_center_coord);
+	const Coord circle_center_coord(lat_lon, this->gisview->get_coord_mode());
+	const ScreenPos circle_center = this->gisview->coord_to_screen_pos(circle_center_coord);
 
 	if (this->circle_is_onscreen(circle_center)) {
 
 		this->circle_x = circle_center.x;
 		this->circle_y = circle_center.y;
 
-		const int height = this->viewport->vpixmap.get_height();
-		const int width = this->viewport->vpixmap.get_width();
+		const int height = this->gisview->vpixmap.get_height();
+		const int width = this->gisview->vpixmap.get_width();
 
 		/* Determine miles per pixel. */
-		const Coord coord1 = this->viewport->screen_pos_to_coord(0, height/2);
-		const Coord coord2 = this->viewport->screen_pos_to_coord(width, height/2);
+		const Coord coord1 = this->gisview->screen_pos_to_coord(0, height/2);
+		const Coord coord2 = this->gisview->screen_pos_to_coord(width, height/2);
 		const double pixels_per_meter = ((double) width) / Coord::distance(coord1, coord2);
 
 		/* This is approximate. */
 		this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
 
-		this->viewport->vpixmap.draw_ellipse(this->circle_pen,
-						     QPoint(this->circle_x, this->circle_y),
-						     this->circle_radius, this->circle_radius,
-						     false);
+		this->gisview->vpixmap.draw_ellipse(this->circle_pen,
+						    QPoint(this->circle_x, this->circle_y),
+						    this->circle_radius, this->circle_radius,
+						    false);
 
 		this->circle_onscreen = true;
 	} else {
@@ -174,7 +174,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 	/* TODO_2_LATER: See if onscreen. */
 	/* Okay. */
-	this->viewport->sync();
+	this->gisview->sync();
 }
 
 
@@ -182,7 +182,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 int DataSourceGeoCache::run_config_dialog(AcquireContext * acquire_context)
 {
-	DataSourceGeoCacheDialog config_dialog(this->window_title, this->viewport);
+	DataSourceGeoCacheDialog config_dialog(this->window_title, this->gisview);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -196,9 +196,9 @@ int DataSourceGeoCache::run_config_dialog(AcquireContext * acquire_context)
 
 
 
-DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title)
+DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title, GisViewport * new_gisview) : DataSourceDialog(window_title)
 {
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 
 
 	QLabel * num_label = new QLabel(QObject::tr("Number geocaches:"), this);
@@ -210,7 +210,7 @@ DataSourceGeoCacheDialog::DataSourceGeoCacheDialog(const QString & window_title,
 
 
 	QLabel * center_label = new QLabel(QObject::tr("Centered around:"), this);
-	const LatLon lat_lon = this->viewport->get_center().get_lat_lon();
+	const LatLon lat_lon = this->gisview->get_center().get_lat_lon();
 	this->center_entry = new LatLonEntryWidget();
 	this->center_entry->set_value(lat_lon);
 
@@ -296,11 +296,11 @@ AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext
 DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 {
 	if (this->circle_onscreen) {
-		this->viewport->vpixmap.draw_ellipse(this->circle_pen,
-						     QPoint(this->circle_x, this->circle_y),
-						     this->circle_radius, this->circle_radius,
-						     false);
-		this->viewport->sync();
+		this->gisview->vpixmap.draw_ellipse(this->circle_pen,
+						    QPoint(this->circle_x, this->circle_y),
+						    this->circle_radius, this->circle_radius,
+						    false);
+		this->gisview->sync();
 	}
 }
 
@@ -312,6 +312,6 @@ bool DataSourceGeoCacheDialog::circle_is_onscreen(const ScreenPos & circle_cente
 	/* TODO_2_LATER: real calculation. */
 	return circle_center.x > -1000
 		&& circle_center.y > -1000
-		&& circle_center.x < (this->viewport->vpixmap.get_width() + 1000)
-		&& circle_center.y < (this->viewport->vpixmap.get_width() + 1000);
+		&& circle_center.x < (this->gisview->vpixmap.get_width() + 1000)
+		&& circle_center.y < (this->gisview->vpixmap.get_width() + 1000);
 }

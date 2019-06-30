@@ -66,9 +66,9 @@ static int g_last_page_number = 0;
 
 
 
-DataSourceOSMTraces::DataSourceOSMTraces(Viewport * new_viewport)
+DataSourceOSMTraces::DataSourceOSMTraces(GisViewport * new_gisview)
 {
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 
 	this->window_title = QObject::tr("OSM traces");
 	this->layer_title = QObject::tr("OSM traces");
@@ -83,7 +83,7 @@ DataSourceOSMTraces::DataSourceOSMTraces(Viewport * new_viewport)
 
 int DataSourceOSMTraces::run_config_dialog(AcquireContext * acquire_context)
 {
-	DataSourceOSMTracesDialog config_dialog(this->window_title, this->viewport);
+	DataSourceOSMTracesDialog config_dialog(this->window_title, this->gisview);
 
 	const int answer = config_dialog.exec();
 	if (answer == QDialog::Accepted) {
@@ -101,7 +101,7 @@ AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContex
 {
 	AcquireOptions * babel_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
 
-	const LatLonBBoxStrings bbox_strings = this->viewport->get_bbox().values_to_c_strings();
+	const LatLonBBoxStrings bbox_strings = this->gisview->get_bbox().values_to_c_strings();
 
 	/* Retrieve the specified page number. */
 	const int page = this->spin_box.value();
@@ -118,7 +118,7 @@ AcquireOptions * DataSourceOSMTracesDialog::create_acquire_options(AcquireContex
 
 
 
-DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_title, Viewport * new_viewport) : DataSourceDialog(window_title)
+DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_title, GisViewport * new_gisview) : DataSourceDialog(window_title)
 {
 	/* Page selector. */
 	QLabel * label = new QLabel(tr("Page Number:"));
@@ -133,7 +133,7 @@ DataSourceOSMTracesDialog::DataSourceOSMTracesDialog(const QString & window_titl
 
 	connect(this->button_box, &QDialogButtonBox::accepted, this, &DataSourceOSMTracesDialog::accept_cb);
 
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 }
 
 

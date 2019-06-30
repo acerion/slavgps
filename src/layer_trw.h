@@ -58,7 +58,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class LayerTRW;
 	class LayerTRWPainter;
 	class LayersPanel;
@@ -96,8 +96,8 @@ namespace SlavGPS {
 	class LayerTRWInterface : public LayerInterface {
 	public:
 		LayerTRWInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
-		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
+		LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
 	};
 
 
@@ -114,16 +114,16 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
-		void post_read(Viewport * viewport, bool from_file);
+		void post_read(GisViewport * gisview, bool from_file);
 		QString get_tooltip(void) const;
 
 
 		/* Methods for generic "Select" tool. */
-		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
-		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
-		bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
-		bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
-		bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport);
+		bool handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
+		bool handle_select_tool_double_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
+		bool handle_select_tool_move(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
+		bool handle_select_tool_release(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
+		bool handle_select_tool_context_menu(QMouseEvent * event, GisViewport * gisview);
 
 		void handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter);
 		void handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp);
@@ -192,7 +192,7 @@ namespace SlavGPS {
 
 
 		/* Draw all items of the layer, with highlight. */
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 
 
 		void recalculate_bbox(void);
@@ -203,7 +203,7 @@ namespace SlavGPS {
 		void set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
 
-		bool move_viewport_to_show_all(Viewport * viewport);
+		bool move_viewport_to_show_all(GisViewport * gisview);
 
 		/**
 		   @param is_visible_with_parents - whether the
@@ -274,11 +274,11 @@ namespace SlavGPS {
 
 
 
-		Trackpoint * search_nearby_tp(Viewport * viewport, int x, int y);
-		Waypoint * search_nearby_wp(Viewport * viewport, int x, int y);
+		Trackpoint * search_nearby_tp(GisViewport * gisview, int x, int y);
+		Waypoint * search_nearby_wp(GisViewport * gisview, int x, int y);
 
-		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, Viewport * viewport);
-		bool get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, Viewport * viewport);
+		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview);
+		bool get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview);
 
 
 		void sort_all();

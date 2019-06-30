@@ -385,7 +385,7 @@ LayerTRWInterface::LayerTRWInterface()
 
 
 
-LayerToolContainer * LayerTRWInterface::create_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerTRWInterface::create_tools(Window * window, GisViewport * gisview)
 {
 	/* This method should be called only once. */
 	static bool created = false;
@@ -397,25 +397,25 @@ LayerToolContainer * LayerTRWInterface::create_tools(Window * window, Viewport *
 
 	LayerTool * tool = NULL;
 
-	tool = new LayerToolTRWNewWaypoint(window, viewport);
+	tool = new LayerToolTRWNewWaypoint(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWNewTrack(window, viewport, false);
+	tool = new LayerToolTRWNewTrack(window, gisview, false);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWNewTrack(window, viewport, true);
+	tool = new LayerToolTRWNewTrack(window, gisview, true);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWExtendedRouteFinder(window, viewport);
+	tool = new LayerToolTRWExtendedRouteFinder(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWEditWaypoint(window, viewport);
+	tool = new LayerToolTRWEditWaypoint(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWEditTrackpoint(window, viewport);
+	tool = new LayerToolTRWEditTrackpoint(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
-	tool = new LayerToolTRWShowPicture(window, viewport);
+	tool = new LayerToolTRWShowPicture(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
 	created = true;
@@ -1164,10 +1164,10 @@ void LayerTRW::marshall(Pickle & pickle)
 
 
 
-Layer * LayerTRWInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerTRW * trw = new LayerTRW();
-	trw->set_coord_mode(viewport->get_coord_mode());
+	trw->set_coord_mode(gisview->get_coord_mode());
 
 	const pickle_size_t original_data_size = pickle.data_size();
 
@@ -1255,7 +1255,7 @@ static unsigned int strcase_hash(gconstpointer v)
 
 
 
-void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerTRW::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	/* Check the layer for visibility (including all the parents' visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this)) {
@@ -1267,21 +1267,21 @@ void LayerTRW::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 	/* This will copy viewport's parameters (size, coords, etc.)
 	   to painter, so that painter knows whether, what and how to
 	   paint. */
-	this->painter->set_viewport(viewport);
+	this->painter->set_viewport(gisview);
 
 	if (this->tracks.is_visible()) {
 		qDebug() << SG_PREFIX_I << "Calling function to draw tracks, highlight:" << highlight_selected << item_is_selected;
-		this->tracks.draw_tree_item(viewport, highlight_selected, item_is_selected);
+		this->tracks.draw_tree_item(gisview, highlight_selected, item_is_selected);
 	}
 
 	if (this->routes.is_visible()) {
 		qDebug() << SG_PREFIX_I << "Calling function to draw routes, highlight:" << highlight_selected << item_is_selected;
-		this->routes.draw_tree_item(viewport, highlight_selected, item_is_selected);
+		this->routes.draw_tree_item(gisview, highlight_selected, item_is_selected);
 	}
 
 	if (this->waypoints.is_visible()) {
 		qDebug() << SG_PREFIX_I << "Calling function to draw waypoints, highlight:" << highlight_selected << item_is_selected;
-		this->waypoints.draw_tree_item(viewport, highlight_selected, item_is_selected);
+		this->waypoints.draw_tree_item(gisview, highlight_selected, item_is_selected);
 	}
 
 	return;
@@ -1621,8 +1621,8 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		Viewport * viewport = ThisApp::get_main_viewport();
-		this->request_new_viewport_center(viewport, coord);
+		GisViewport * gisview = ThisApp::get_main_viewport();
+		this->request_new_viewport_center(gisview, coord);
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -1631,11 +1631,11 @@ void LayerTRW::centerize_cb(void)
 
 
 
-bool LayerTRW::move_viewport_to_show_all(Viewport * viewport)
+bool LayerTRW::move_viewport_to_show_all(GisViewport * gisview)
 {
 	if (this->get_bbox().is_valid()) {
-		viewport->set_bbox(this->get_bbox());
-		viewport->request_redraw("Re-align viewport to show whole contents of TRW Layer");
+		gisview->set_bbox(this->get_bbox());
+		gisview->request_redraw("Re-align viewport to show whole contents of TRW Layer");
 		return true;
 	} else {
 		return false;
@@ -1652,9 +1652,9 @@ void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 		return;
 	}
 
-	Viewport * viewport = ThisApp::get_main_viewport();
-	if (this->move_viewport_to_show_all(viewport)) {
-		viewport->request_redraw("Redrawing viewport after re-aligning it to show all of TRW Layer");
+	GisViewport * gisview = ThisApp::get_main_viewport();
+	if (this->move_viewport_to_show_all(gisview)) {
+		gisview->request_redraw("Redrawing viewport after re-aligning it to show all of TRW Layer");
 	}
 }
 
@@ -1794,9 +1794,9 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 
 void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-	Viewport * viewport = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_viewport();
 
-	Geonames::create_wikipedia_waypoints(this, viewport->get_bbox(), this->get_window());
+	Geonames::create_wikipedia_waypoints(this, gisview->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
 
 	this->emit_tree_item_changed("Redrawing items after adding wikipedia waypoints");
@@ -3386,7 +3386,7 @@ Time LayerTRW::get_timestamp(void) const
 
 
 
-void LayerTRW::post_read(Viewport * viewport, bool from_file)
+void LayerTRW::post_read(GisViewport * gisview, bool from_file)
 {
 	if (this->tree_view) {
 		this->generate_missing_thumbnails();
@@ -3506,7 +3506,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		VikingScale(1024) };
 
 	LayersPanel * panel = ThisApp::get_layers_panel();
-	const Viewport * viewport = ThisApp::get_main_viewport();
+	const GisViewport * gisview = ThisApp::get_main_viewport();
 
 	Track * track = this->get_edited_track();
 	if (!track) {
@@ -3532,7 +3532,7 @@ void LayerTRW::download_map_along_track_cb(void)
 
 
 
-	const VikingScale current_viking_scale(viewport->get_viking_scale().get_x());
+	const VikingScale current_viking_scale(gisview->get_viking_scale().get_x());
 	int default_zoom_idx = 0;
 	if (sg_ret::ok != VikingScale::get_closest_index(default_zoom_idx, viking_scales, current_viking_scale)) {
 		qDebug() << SG_PREFIX_W << "Failed to get the closest Viking scale";

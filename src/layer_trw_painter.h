@@ -61,7 +61,7 @@ namespace SlavGPS {
 	class Track;
 	class Trackpoint;
 	class LayerTRW;
-	class Viewport;
+	class GisViewport;
 	class Waypoint;
 	class Window;
 
@@ -74,13 +74,13 @@ namespace SlavGPS {
 		LayerTRWPainter(LayerTRW * trw);
 
 		/* Call this every time the viewport changes (e.g. on zoom). */
-		void set_viewport(Viewport * viewport);
+		void set_viewport(GisViewport * gisview);
 
 		void make_track_pens(void);
 		void make_wp_pens(void);
 
-		void draw_waypoint(Waypoint * wp, Viewport * viewport, bool do_highlight);
-		void draw_track(Track * trk, Viewport * viewport, bool do_highlight);
+		void draw_waypoint(Waypoint * wp, GisViewport * gisview, bool do_highlight);
+		void draw_track(Track * trk, GisViewport * gisview, bool do_highlight);
 
 	private:
 		QColor get_fg_color(const Track * trk) const;
@@ -107,7 +107,7 @@ namespace SlavGPS {
 
 		QPen get_track_fg_pen(Track * trk, bool do_highlight);
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 		LayerTRW * trw = NULL;
 		Window * window = NULL;
 
@@ -117,7 +117,7 @@ namespace SlavGPS {
 		double vp_ympp = 0.0;
 		Coord vp_center;
 		CoordMode vp_coord_mode;    /* UTM or Lat/Lon. */
-		bool vp_is_one_utm_zone = false;  /* Viewport shows only one UTM zone. */
+		bool vp_is_one_utm_zone = false;  /* GisViewport shows only one UTM zone. */
 
 		double cosine_factor = 0.0;    /* Cosine factor in track directions. */
 		double sine_factor = 0.0;      /* Sine factor in track directions. */

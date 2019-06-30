@@ -42,11 +42,11 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::a_print(Window * parent, Viewport * viewport)
+void SlavGPS::a_print(Window * parent, GisViewport * gisview)
 {
 	QPrinter printer;
 	QPrintPreviewDialog dialog(&printer, parent);
-	QObject::connect(&dialog, SIGNAL (paintRequested(QPrinter *)), viewport, SLOT (print_cb(QPrinter *)));
+	QObject::connect(&dialog, SIGNAL (paintRequested(QPrinter *)), gisview, SLOT (print_cb(QPrinter *)));
 	if (dialog.exec() == QDialog::Accepted) {
 		// print ...
 	}

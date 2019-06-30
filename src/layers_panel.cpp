@@ -403,18 +403,18 @@ void LayersPanel::move_item(bool up)
 
 
 
-void LayersPanel::draw_tree_items(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayersPanel::draw_tree_items(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
-	if (!viewport || !this->toplayer->is_visible()) {
+	if (!gisview || !this->toplayer->is_visible()) {
 		return;
 	}
 
 	/* We call ::get_highlight_usage() here, on top of call chain,
 	   so that all layer items can use this information and don't
 	   have to call ::get_highlight_usage() themselves. */
-	highlight_selected = highlight_selected && viewport->get_highlight_usage();
+	highlight_selected = highlight_selected && gisview->get_highlight_usage();
 	qDebug() << SG_PREFIX_I << "Calling toplayer->draw_tree_item(highlight_selected =" << highlight_selected << "parent_is_selected =" << parent_is_selected << ")";
-	this->toplayer->draw_tree_item(viewport, highlight_selected, parent_is_selected);
+	this->toplayer->draw_tree_item(gisview, highlight_selected, parent_is_selected);
 
 	/* TODO_LATER: layers panel or tree view or aggregate layer should
 	   recognize which layer lays under non-transparent layers,
@@ -609,14 +609,14 @@ Layer * LayersPanel::get_selected_layer()
 
 
 #ifdef K_TODO_MAYBE
-bool LayersPanel::tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, Viewport * viewport)
+bool LayersPanel::tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, GisViewport * gisview)
 {
 	Layer * layer = this->get_selected_layer();
 	if (layer && layer->type == layer_type) {
-		tool_func(layer, ev, viewport);
+		tool_func(layer, ev, gisview);
 		return true;
 	} else if (this->toplayer->visible &&
-		   this->toplayer->layer_tool(layer_type, tool_func, ev, viewport) != 1) { /* either accepted or rejected, but a layer was found */
+		   this->toplayer->layer_tool(layer_type, tool_func, ev, gisview) != 1) { /* either accepted or rejected, but a layer was found */
 		return true;
 	}
 	return false;

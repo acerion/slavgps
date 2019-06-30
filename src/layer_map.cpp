@@ -280,7 +280,7 @@ LayerMapInterface::LayerMapInterface()
 
 
 
-LayerToolContainer * LayerMapInterface::create_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerMapInterface::create_tools(Window * window, GisViewport * gisview)
 {
 	/* This method should be called only once. */
 	static bool created = false;
@@ -290,7 +290,7 @@ LayerToolContainer * LayerMapInterface::create_tools(Window * window, Viewport *
 
 	auto tools = new LayerToolContainer;
 
-	LayerTool * tool = new LayerToolMapsDownload(window, viewport);
+	LayerTool * tool = new LayerToolMapsDownload(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
 	created = true;
@@ -783,15 +783,15 @@ LayerMap::~LayerMap()
 
 
 
-void LayerMap::post_read(Viewport * viewport, bool from_file)
+void LayerMap::post_read(GisViewport * gisview, bool from_file)
 {
 	MapSource * map_source = map_source_interfaces[this->map_type_id];
 
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
 		   So, we can check if we have to inform the user about inconsistency. */
-		if (map_source->get_drawmode() != viewport->get_drawmode()) {
-			const QString drawmode_name = ViewportDrawModes::get_name(map_source->get_drawmode());
+		if (map_source->get_drawmode() != gisview->get_drawmode()) {
+			const QString drawmode_name = GisViewportDrawModes::get_name(map_source->get_drawmode());
 			const QString msg = QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.").arg(drawmode_name);
 			Dialog::warning(msg, this->get_window());
 		}
@@ -825,12 +825,12 @@ QString LayerMap::get_tooltip(void) const
 
 
 
-Layer * LayerMapInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerMapInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerMap * layer = new LayerMap();
 
 	layer->unmarshall_params(pickle);
-	layer->post_read(viewport, false);
+	layer->post_read(gisview, false);
 	return layer;
 }
 
@@ -894,9 +894,9 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInf
 
 
 
-bool LayerMap::should_start_autodownload(Viewport * viewport)
+bool LayerMap::should_start_autodownload(GisViewport * gisview)
 {
-	const Coord center = viewport->get_center();
+	const Coord center = gisview->get_center();
 
 	if (this->get_window()->get_pan_move()) {
 		/* D'n'D pan in action: do not download. */
@@ -905,7 +905,7 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 
 	/* Don't attempt to download unsupported zoom levels. */
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
-	const TileZoomLevel tile_zoom_level = viewport->get_viking_scale().to_tile_zoom_level();
+	const TileZoomLevel tile_zoom_level = gisview->get_viking_scale().to_tile_zoom_level();
 	if (!map_source->is_supported_tile_zoom_level(tile_zoom_level)) {
 		return false;
 	}
@@ -914,19 +914,19 @@ bool LayerMap::should_start_autodownload(Viewport * viewport)
 		Coord * new_center = new Coord();
 		*new_center = center;
 		this->last_center = new_center;
-		this->last_map_scale = viewport->get_viking_scale();
+		this->last_map_scale = gisview->get_viking_scale();
 		return true;
 	}
 
 
 	if ((*this->last_center == center) /* TODO_MAYBE: perhaps Coord::distance()? */
-	    && this->last_map_scale == viewport->get_viking_scale()) {
+	    && this->last_map_scale == gisview->get_viking_scale()) {
 
 		return false;
 	}
 
 	*this->last_center = center;
-	this->last_map_scale = viewport->get_viking_scale();
+	this->last_map_scale = gisview->get_viking_scale();
 	return true;
 }
 
@@ -1022,10 +1022,10 @@ TileGeometry LayerMap::find_scaled_up_tile(const TileInfo & tile_iter,
 
 
 
-sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br)
+sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br)
 {
-	double xmpp = viewport->get_viking_scale().get_x();
-	double ympp = viewport->get_viking_scale().get_y();
+	double xmpp = gisview->get_viking_scale().get_x();
+	double ympp = gisview->get_viking_scale().get_y();
 
 	PixmapScale pixmap_scale(1.0, 1.0);
 
@@ -1055,7 +1055,7 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 	}
 
 
-	/* Viewport's corner coordinates -> tiles info. */
+	/* GisViewport's corner coordinates -> tiles info. */
 	TileInfo tile_ul;
 	TileInfo tile_br;
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
@@ -1082,14 +1082,14 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 		existence_only = true;
 	}
 
-	if ((!existence_only) && this->autodownload  && this->should_start_autodownload(viewport)) {
+	if ((!existence_only) && this->autodownload  && this->should_start_autodownload(gisview)) {
 		qDebug() << SG_PREFIX_D << "Starting autodownload";
 		if (!this->adl_only_missing && map_source->supports_download_only_new()) {
 			/* Try to download newer tiles. */
-			this->start_download_thread(viewport, coord_ul, coord_br, MapDownloadMode::New);
+			this->start_download_thread(gisview, coord_ul, coord_br, MapDownloadMode::New);
 		} else {
 			/* Download only missing tiles. */
-			this->start_download_thread(viewport, coord_ul, coord_br, MapDownloadMode::MissingOnly);
+			this->start_download_thread(gisview, coord_ul, coord_br, MapDownloadMode::MissingOnly);
 		}
 	}
 
@@ -1125,13 +1125,13 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 					qDebug() << SG_PREFIX_E << "Can't get coord, continue";
 					continue;
 				}
-				viewport->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
+				gisview->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
 
 				tile_geometry.dest_x -= (tile_geometry.width / 2);
 				tile_geometry.dest_y -= (tile_geometry.height / 2);
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-				viewport->vpixmap.draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
+				gisview->vpixmap.draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
 			}
 		}
 	} else {
@@ -1151,7 +1151,7 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 			qDebug() << SG_PREFIX_E << "Can't get coord, return";
 			return sg_ret::err;
 		}
-		viewport->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
+		gisview->coord_to_screen_pos(coord, &tile_geometry.dest_x, &tile_geometry.dest_y);
 
 		const int viewport_x_grid = tile_geometry.dest_x;
 		const int viewport_y_grid = tile_geometry.dest_y;
@@ -1180,7 +1180,7 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 			for (tile_iter.y = ordered_tiles_range.y_first; tile_iter.y != ordered_tiles_range.y_last; tile_iter.y += delta_y) {
 
 				if (existence_only) {
-					this->draw_existence(viewport, tile_iter, tile_geometry, map_source, map_cache_obj);
+					this->draw_existence(gisview, tile_iter, tile_geometry, map_source, map_cache_obj);
 				} else {
 					/* Try correct scale first. */
 					const int scale_factor = 1;
@@ -1194,7 +1194,7 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, map_type_string, scale_factor);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
-						viewport->vpixmap.draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
+						gisview->vpixmap.draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
 					}
 				}
 
@@ -1209,7 +1209,7 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 			   Thus loop around x & y again, but this time separately.
 			   Only showing grid for the current scale */
 			const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-			LayerMap::draw_grid(viewport, pen, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_first, delta_x, ordered_tiles_range.x_last + 1, ordered_tiles_range.y_first, delta_y, ordered_tiles_range.y_last + 1, tile_width_f, tile_height_f);
+			LayerMap::draw_grid(gisview, pen, viewport_x_grid, viewport_y_grid, ordered_tiles_range.x_first, delta_x, ordered_tiles_range.x_last + 1, ordered_tiles_range.y_first, delta_y, ordered_tiles_range.y_last + 1, tile_width_f, tile_height_f);
 		}
 	}
 
@@ -1219,11 +1219,11 @@ sg_ret LayerMap::draw_section(Viewport * viewport, const Coord & coord_ul, const
 
 
 
-void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
+void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
 {
 	/* Draw single grid lines across the whole screen. */
-	const int viewport_width = viewport->vpixmap.get_width();
-	const int viewport_height = viewport->vpixmap.get_height();
+	const int viewport_width = gisview->vpixmap.get_width();
+	const int viewport_height = gisview->vpixmap.get_height();
 	const int base_viewport_x = viewport_x - (tile_width / 2);
 	const int base_viewport_y = viewport_y - (tile_height / 2);
 
@@ -1232,7 +1232,7 @@ void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, 
 		/* Using 'base_viewport_y as a third arg,
 		   instead of zero, causes drawing only whole
 		   tiles on top of a map. */
-		viewport->vpixmap.draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
+		gisview->vpixmap.draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
 		viewport_x += tile_width;
 	}
 
@@ -1241,7 +1241,7 @@ void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, 
 		/* Using 'base_viewport_x as a second arg,
 		   instead of zero, causes drawing only whole
 		   tiles on left size of a map. */
-		viewport->vpixmap.draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
+		gisview->vpixmap.draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
 		viewport_y += tile_height;
 	}
 }
@@ -1249,36 +1249,36 @@ void LayerMap::draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, 
 
 
 
-void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerMap::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-	if (map_source->get_drawmode() != viewport->get_drawmode()) {
+	if (map_source->get_drawmode() != gisview->get_drawmode()) {
 		return;
 	}
 
 	/* Copyright. */
-	const LatLonBBox bbox = viewport->get_bbox();
-	map_source->add_copyright(viewport, bbox, viewport->get_viking_scale());
+	const LatLonBBox bbox = gisview->get_bbox();
+	map_source->add_copyright(gisview, bbox, gisview->get_viking_scale());
 
-	viewport->add_logo(map_source->get_logo());
+	gisview->add_logo(map_source->get_logo());
 
 	/* Get corner coords. */
-	if (viewport->get_coord_mode() == CoordMode::UTM && ! viewport->get_is_one_utm_zone()) {
+	if (gisview->get_coord_mode() == CoordMode::UTM && ! gisview->get_is_one_utm_zone()) {
 		/* UTM multi-zone stuff by Kit Transue. */
-		const int leftmost_zone = viewport->get_leftmost_zone();
-		const int rightmost_zone = viewport->get_rightmost_zone();
+		const int leftmost_zone = gisview->get_leftmost_zone();
+		const int rightmost_zone = gisview->get_rightmost_zone();
 		Coord coord_ul;
 		Coord coord_br;
 		for (int zone = leftmost_zone; zone <= rightmost_zone; ++zone) {
-			viewport->get_corners_for_zone(coord_ul, coord_br, zone);
-			this->draw_section(viewport, coord_ul, coord_br);
+			gisview->get_corners_for_zone(coord_ul, coord_br, zone);
+			this->draw_section(gisview, coord_ul, coord_br);
 		}
 	} else {
-		const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
-		const Coord coord_br = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
+		const Coord coord_ul = gisview->screen_pos_to_coord(0, 0);
+		const Coord coord_br = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
 
-		this->draw_section(viewport, coord_ul, coord_br);
+		this->draw_section(gisview, coord_ul, coord_br);
 	}
 }
 
@@ -1292,7 +1292,7 @@ void LayerMap::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 
 
-void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode)
+void LayerMap::start_download_thread(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode)
 {
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
@@ -1306,7 +1306,7 @@ void LayerMap::start_download_thread(Viewport * viewport, const Coord & coord_ul
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
-	const VikingScale viking_scale = this->calculate_viking_scale(viewport);
+	const VikingScale viking_scale = this->calculate_viking_scale(gisview);
 	if (!map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
 	    || !map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
@@ -1388,7 +1388,7 @@ void LayerMap::download_section(const Coord & coord_ul, const Coord & coord_br, 
 
 void LayerMap::redownload_bad_cb(void)
 {
-	this->start_download_thread(this->redownload_viewport, this->redownload_ul, this->redownload_br, MapDownloadMode::MissingAndBad);
+	this->start_download_thread(this->redownload_gisview, this->redownload_ul, this->redownload_br, MapDownloadMode::MissingAndBad);
 }
 
 
@@ -1396,7 +1396,7 @@ void LayerMap::redownload_bad_cb(void)
 
 void LayerMap::redownload_all_cb(void)
 {
-	this->start_download_thread(this->redownload_viewport, this->redownload_ul, this->redownload_br, MapDownloadMode::All);
+	this->start_download_thread(this->redownload_gisview, this->redownload_ul, this->redownload_br, MapDownloadMode::All);
 }
 
 
@@ -1404,7 +1404,7 @@ void LayerMap::redownload_all_cb(void)
 
 void LayerMap::redownload_new_cb(void)
 {
-	this->start_download_thread(this->redownload_viewport, this->redownload_ul, this->redownload_br, MapDownloadMode::New);
+	this->start_download_thread(this->redownload_gisview, this->redownload_ul, this->redownload_br, MapDownloadMode::New);
 }
 
 
@@ -1417,7 +1417,7 @@ void LayerMap::tile_info_cb(void)
 {
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-        const VikingScale viking_scale = this->calculate_viking_scale(this->redownload_viewport);
+        const VikingScale viking_scale = this->calculate_viking_scale(this->redownload_gisview);
 	TileInfo tile_info;
 	if (!map_source->coord_to_tile_info(this->redownload_ul, viking_scale, tile_info)) {
 		return;
@@ -1474,16 +1474,16 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button() == Qt::LeftButton) {
-			const Coord coord_ul = this->viewport->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
-			const Coord coord_br = this->viewport->screen_pos_to_coord(std::min(this->viewport->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->viewport->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
-			layer->start_download_thread(this->viewport, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
+			const Coord coord_ul = this->gisview->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
+			const Coord coord_br = this->gisview->screen_pos_to_coord(std::min(this->gisview->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->gisview->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
+			layer->start_download_thread(this->gisview, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 			return ToolStatus::Ack;
 		} else {
-			layer->redownload_ul = this->viewport->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
-			layer->redownload_br = this->viewport->screen_pos_to_coord(std::min(this->viewport->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->viewport->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
+			layer->redownload_ul = this->gisview->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
+			layer->redownload_br = this->gisview->screen_pos_to_coord(std::min(this->gisview->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->gisview->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
 
-			layer->redownload_viewport = this->viewport;
+			layer->redownload_gisview = this->gisview;
 
 			layer->dl_tool_x = -1;
 			layer->dl_tool_y = -1;
@@ -1519,7 +1519,7 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 
 
 
-LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Map)
+LayerToolMapsDownload::LayerToolMapsDownload(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Map)
 {
 	this->id_string = "sg.tool.layer_map.maps_download";
 
@@ -1545,9 +1545,9 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QM
 	LayerMap * layer = (LayerMap *) _layer;
 
 	const MapSource * map_source = map_source_interfaces[layer->map_type_id];
-	const VikingScale viking_scale = layer->calculate_viking_scale(this->viewport);
-	if (map_source->get_drawmode() == this->viewport->get_drawmode()
-	    && map_source->coord_to_tile_info(this->viewport->get_center(),
+	const VikingScale viking_scale = layer->calculate_viking_scale(this->gisview);
+	if (map_source->get_drawmode() == this->gisview->get_drawmode()
+	    && map_source->coord_to_tile_info(this->gisview->get_center(),
 					      viking_scale,
 					      tmp)) {
 
@@ -1563,17 +1563,17 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QM
 
 void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 {
-	Viewport * viewport = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_viewport();
 
-	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
-	const Coord coord_br = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
+	const Coord coord_ul = gisview->screen_pos_to_coord(0, 0);
+	const Coord coord_br = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
 
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-	const ViewportDrawMode map_draw_mode = map_source->get_drawmode();
-	const ViewportDrawMode vp_draw_mode = viewport->get_drawmode();
+	const GisViewportDrawMode map_draw_mode = map_source->get_drawmode();
+	const GisViewportDrawMode vp_draw_mode = gisview->get_drawmode();
 
-	const VikingScale viking_scale = this->calculate_viking_scale(viewport);
+	const VikingScale viking_scale = this->calculate_viking_scale(gisview);
 
 	TileInfo tile_ul;
 	TileInfo tile_br;
@@ -1581,10 +1581,10 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	    && map_source->coord_to_tile_info(coord_ul, viking_scale, tile_ul)
 	    && map_source->coord_to_tile_info(coord_br, viking_scale, tile_br)) {
 
-		this->start_download_thread(viewport, coord_ul, coord_br, map_download_mode);
+		this->start_download_thread(gisview, coord_ul, coord_br, map_download_mode);
 
 	} else if (map_draw_mode != vp_draw_mode) {
-		const QString drawmode_name = ViewportDrawModes::get_name(map_draw_mode);
+		const QString drawmode_name = GisViewportDrawModes::get_name(map_draw_mode);
 		const QString err = QObject::tr("Wrong drawmode for this map.\nSelect \"%1\" from View menu and try again.").arg(drawmode_name);
 		Dialog::error(err, this->get_window());
 	} else {
@@ -1759,7 +1759,7 @@ int DownloadMethodsAndZoomsDialog::get_larger_zoom_idx(void) const
  */
 void LayerMap::download_all_cb(void)
 {
-	Viewport * viewport = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_viewport();
 
 	/* I don't think we should allow users to hammer the servers too much...
 	   Deliberately not allowing lowest zoom levels.
@@ -1790,7 +1790,7 @@ void LayerMap::download_all_cb(void)
 	const int download_mode_idx = 0; /* MapDownloadMode::MissingOnly */
 
 
-	const VikingScale current_viking_scale = viewport->get_viking_scale().get_x();
+	const VikingScale current_viking_scale = gisview->get_viking_scale().get_x();
 	int larger_zoom_idx = 0;
 	int smaller_zoom_idx = 0;
 	if (sg_ret::ok != VikingScale::get_closest_index(larger_zoom_idx, viking_scales, current_viking_scale)) {
@@ -1819,9 +1819,9 @@ void LayerMap::download_all_cb(void)
 
 
 	/* Find out new current positions. */
-	const LatLonBBox bbox = viewport->get_bbox();
-	const Coord coord_ul(LatLon(bbox.north, bbox.west), viewport->get_coord_mode());
-	const Coord coord_br(LatLon(bbox.south, bbox.east), viewport->get_coord_mode());
+	const LatLonBBox bbox = gisview->get_bbox();
+	const Coord coord_ul(LatLon(bbox.north, bbox.west), gisview->get_coord_mode());
+	const Coord coord_br(LatLon(bbox.south, bbox.east), gisview->get_coord_mode());
 
 	/* Get Maps Count - call for each zoom level (in reverse).
 	   With MapDownloadMode::New this is a possible maximum.
@@ -1911,9 +1911,9 @@ void LayerMap::add_menu_items(QMenu & menu)
 /**
  * Enable downloading maps of the current screen area either 'new' or 'everything'.
  */
-void LayerMap::download(Viewport * viewport, bool only_new)
+void LayerMap::download(GisViewport * gisview, bool only_new)
 {
-	if (!viewport) {
+	if (!gisview) {
 		return;
 	}
 
@@ -1994,10 +1994,10 @@ bool LayerMap::is_tile_visible(const TileInfo & tile_info)
 
 
 
-VikingScale LayerMap::calculate_viking_scale(const Viewport * viewport)
+VikingScale LayerMap::calculate_viking_scale(const GisViewport * gisview)
 {
-	const double xmpp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_x : viewport->get_viking_scale().get_x();
-	const double ympp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_y : viewport->get_viking_scale().get_y();
+	const double xmpp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_x : gisview->get_viking_scale().get_x();
+	const double ympp = this->map_zoom_id != LAYER_MAP_ZOOM_ID_USE_VIKING_SCALE ? this->map_zoom_y : gisview->get_viking_scale().get_y();
 	const VikingScale result(xmpp, ympp);
 
 	return result;
@@ -2096,7 +2096,7 @@ TileGeometry LayerMap::find_tile(const TileInfo & tile_info, const TileGeometry 
 
 
 
-void LayerMap::draw_existence(Viewport * viewport, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj)
+void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj)
 {
 	const QString path_buf = map_cache_obj.get_cache_file_full_path(tile_info,
 									map_source->map_type_id,
@@ -2105,6 +2105,6 @@ void LayerMap::draw_existence(Viewport * viewport, const TileInfo & tile_info, c
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-		viewport->vpixmap.draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
+		gisview->vpixmap.draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
 	}
 }

@@ -57,7 +57,7 @@ namespace SlavGPS {
 
 
 	class TreeItem;
-	class Viewport;
+	class GisViewport;
 	class TreeItem;
 
 

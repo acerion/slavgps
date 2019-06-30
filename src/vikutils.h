@@ -58,7 +58,7 @@ namespace SlavGPS {
 
 
 	class Window;
-	class Viewport;
+	class GisViewport;
 	class Layer;
 	class LayerTRW;
 	class Track;
@@ -167,7 +167,7 @@ namespace SlavGPS {
 		   Convert a geo coordinate @coord of item visible in
 		   given @viewport to x/y coordinate on screen.
 		*/
-		static GlobalPoint coord_to_global_point(const Coord & coord, const Viewport * viewport);
+		static GlobalPoint coord_to_global_point(const Coord & coord, const GisViewport * gisview);
 
 
 		/* Generate an integer suitable for comparison of version numbers. */

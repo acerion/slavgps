@@ -106,7 +106,7 @@ LayerCoordInterface::LayerCoordInterface()
 
 
 
-Layer * LayerCoordInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerCoordInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerCoord * layer = new LayerCoord();
 	layer->unmarshall_params(pickle);
@@ -116,7 +116,7 @@ Layer * LayerCoordInterface::unmarshall(Pickle & pickle, Viewport * viewport)
 
 
 
-/* Viewport can be NULL as it's not used ATM. */
+/* GisViewport can be NULL as it's not used ATM. */
 bool LayerCoord::set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation)
 {
 	switch (param_id) {
@@ -180,15 +180,15 @@ SGVariant LayerCoord::get_param_value(param_id_t param_id, bool is_file_operatio
 
 
 
-void LayerCoord::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerCoord::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
-	const CoordMode mode = viewport->get_coord_mode();
+	const CoordMode mode = gisview->get_coord_mode();
 	switch (mode) {
 	case CoordMode::LatLon:
-		this->draw_latlon(viewport);
+		this->draw_latlon(gisview);
 		break;
 	case CoordMode::UTM:
-		this->draw_utm(viewport);
+		this->draw_utm(gisview);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled viewport coord mode" << (int) mode;
@@ -196,7 +196,7 @@ void LayerCoord::draw_tree_item(Viewport * viewport, bool highlight_selected, bo
 	};
 
 	/* Not really necessary, but keeping for now. */
-	// viewport->sync();
+	// gisview->sync();
 }
 
 
@@ -243,7 +243,7 @@ int get_modulo_seconds(double width_in_seconds)
 
 
 
-void LayerCoord::draw_latlon(Viewport * viewport)
+void LayerCoord::draw_latlon(GisViewport * gisview)
 {
 	QPen degrees_pen(this->color_deg);
 	degrees_pen.setWidth(this->line_thickness);
@@ -261,35 +261,35 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 	int x1, y1, x2, y2;
 
 #define DRAW_COORDINATE_LINE(pen, coord_begin, coord_end) {		\
-		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
-		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
+		const sg_ret ret1 = gisview->coord_to_screen_pos((coord_begin), &x1, &y1); \
+		const sg_ret ret2 = gisview->coord_to_screen_pos((coord_end), &x2, &y2); \
 		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			viewport->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			gisview->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
 		}							\
 	}
 
 #define DRAW_LONGITUDE_LINE(pen, coord_begin, coord_end, text) {	\
-		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
-		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
+		const sg_ret ret1 = gisview->coord_to_screen_pos((coord_begin), &x1, &y1); \
+		const sg_ret ret2 = gisview->coord_to_screen_pos((coord_end), &x2, &y2); \
 		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			viewport->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
-			viewport->vpixmap.draw_text(text_font, text_pen, x1, y1 + 15, text); \
+			gisview->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			gisview->vpixmap.draw_text(text_font, text_pen, x1, y1 + 15, text); \
 		}							\
 	}
 
 #define DRAW_LATITUDE_LINE(pen, coord_begin, coord_end, text) {		\
-		const sg_ret ret1 = viewport->coord_to_screen_pos((coord_begin), &x1, &y1); \
-		const sg_ret ret2 = viewport->coord_to_screen_pos((coord_end), &x2, &y2); \
+		const sg_ret ret1 = gisview->coord_to_screen_pos((coord_begin), &x1, &y1); \
+		const sg_ret ret2 = gisview->coord_to_screen_pos((coord_end), &x2, &y2); \
 		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			viewport->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
-			viewport->vpixmap.draw_text(text_font, text_pen, x1, y1, text); \
+			gisview->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+			gisview->vpixmap.draw_text(text_font, text_pen, x1, y1, text); \
 		}							\
 	}
 
 
-	const Coord ul = viewport->screen_pos_to_coord(0,                             0);
-	const Coord ur = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), 0);
-	const Coord bl = viewport->screen_pos_to_coord(0,                             viewport->vpixmap.get_height());
+	const Coord ul = gisview->screen_pos_to_coord(0,                             0);
+	const Coord ur = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), 0);
+	const Coord bl = gisview->screen_pos_to_coord(0,                             gisview->vpixmap.get_height());
 
 	const double minimum_lon = ul.lat_lon.lon;
 	const double maximum_lon = ur.lat_lon.lon;
@@ -446,16 +446,16 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 
 
-void LayerCoord::draw_utm(Viewport * viewport)
+void LayerCoord::draw_utm(GisViewport * gisview)
 {
 	QPen pen(this->color_deg);
 	pen.setWidth(this->line_thickness);
 
-	const UTM center = viewport->get_center().get_utm();
-	const double xmpp = viewport->get_viking_scale().get_x();
-	const double ympp = viewport->get_viking_scale().get_y();
-	const int width = viewport->vpixmap.get_width();
-	const int height = viewport->vpixmap.get_height();
+	const UTM center = gisview->get_center().get_utm();
+	const double xmpp = gisview->get_viking_scale().get_x();
+	const double ympp = gisview->get_viking_scale().get_y();
+	const int width = gisview->vpixmap.get_width();
+	const int height = gisview->vpixmap.get_height();
 
 
 	LatLon min, max;
@@ -508,9 +508,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 			max.lat = SG_LATITUDE_MAX;
 		}
 
-		qDebug() << "============= min/max latitude = " << min << max << viewport->get_bbox();
+		qDebug() << "============= min/max latitude = " << min << max << gisview->get_bbox();
 
-		LatLonBBox bbox = viewport->get_bbox();
+		LatLonBBox bbox = gisview->get_bbox();
 		min.lat = bbox.south.get_value();
 		min.lon = bbox.west.get_value();
 		max.lat = bbox.north.get_value();
@@ -549,7 +549,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 			utm = LatLon::to_utm(lat_lon_top);
 			int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
 
-			viewport->vpixmap.draw_line(pen, x1, height, x2, 0);
+			gisview->vpixmap.draw_line(pen, x1, height, x2, 0);
 		}
 	}
 
@@ -585,7 +585,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 			utm = LatLon::to_utm(lat_lon_right);
 			int x2 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 
-			viewport->vpixmap.draw_line(pen, width, x2, 0, x1);
+			gisview->vpixmap.draw_line(pen, width, x2, 0, x1);
 		}
 	}
 }

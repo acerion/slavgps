@@ -199,7 +199,7 @@ Window::Window()
 	QObject::connect(this->viewport, SIGNAL("drawing_area_reconfigured"), this, SLOT (window_configure_event));
 	gtk_widget_add_events(this->viewport, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
 
-	/* This signal appears to be already handled by Viewport::wheelEvent(). */
+	/* This signal appears to be already handled by GisViewport::wheelEvent(). */
 	QObject::connect(this->viewport, SIGNAL("scroll_event"), this, SLOT (draw_scroll_cb));
 
 	QObject::connect(this->viewport, SIGNAL("button_press_event"), this, SLOT (draw_click_cb(QMouseEvent *)));
@@ -622,28 +622,28 @@ void Window::create_actions(void)
 
 		group = new QActionGroup(this);
 
-		this->qa_drawmode_utm = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::UTM), this);
-		this->qa_drawmode_utm->setData(QVariant((int) ViewportDrawMode::UTM));
+		this->qa_drawmode_utm = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::UTM), this);
+		this->qa_drawmode_utm->setData(QVariant((int) GisViewportDrawMode::UTM));
 		this->qa_drawmode_utm->setCheckable(true);
 		group->addAction(this->qa_drawmode_utm);
 		this->menu_view->addAction(this->qa_drawmode_utm);
 
 #ifdef VIK_CONFIG_EXPEDIA
-		this->qa_drawmode_expedia = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::Expedia), this);
-		this->qa_drawmode_expedia->setData(QVariant((int) ViewportDrawMode::Expedia));
+		this->qa_drawmode_expedia = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::Expedia), this);
+		this->qa_drawmode_expedia->setData(QVariant((int) GisViewportDrawMode::Expedia));
 		this->qa_drawmode_expedia->setCheckable(true);
 		group->addAction(this->qa_drawmode_expedia);
 		this->menu_view->addAction(this->qa_drawmode_expedia);
 #endif
 
-		this->qa_drawmode_mercator = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::Mercator), this);
-		this->qa_drawmode_mercator->setData(QVariant((int) ViewportDrawMode::Mercator));
+		this->qa_drawmode_mercator = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::Mercator), this);
+		this->qa_drawmode_mercator->setData(QVariant((int) GisViewportDrawMode::Mercator));
 		this->qa_drawmode_mercator->setCheckable(true);
 		group->addAction(this->qa_drawmode_mercator);
 		this->menu_view->addAction(this->qa_drawmode_mercator);
 
-		this->qa_drawmode_latlon = new QAction(ViewportDrawModes::get_name(ViewportDrawMode::LatLon), this);
-		this->qa_drawmode_latlon->setData(QVariant((int) ViewportDrawMode::LatLon));
+		this->qa_drawmode_latlon = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::LatLon), this);
+		this->qa_drawmode_latlon->setData(QVariant((int) GisViewportDrawMode::LatLon));
 		this->qa_drawmode_latlon->setCheckable(true);
 		group->addAction(this->qa_drawmode_latlon);
 		this->menu_view->addAction(this->qa_drawmode_latlon);
@@ -1021,7 +1021,7 @@ void Window::draw_tree_items(void)
 	/* Other viewport decoration items on top if they are enabled/in use. */
 	this->viewport->central->draw_decorations();
 
-	/* This will call Viewport::paintEvent(), triggering final render to screen. */
+	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
 	this->viewport->central->update();
 
 	this->viewport->central->set_half_drawn(false); /* Just in case. */
@@ -1053,7 +1053,7 @@ void Window::handle_selection_of_tree_item(const TreeItem & tree_item)
 
 
 
-Viewport * Window::get_viewport()
+GisViewport * Window::get_viewport()
 {
 	return this->viewport->central;
 }
@@ -1813,7 +1813,7 @@ void Window::zoom_to_cb(void)
 {
 	VikingScale viking_scale = this->viewport->central->get_viking_scale();
 
-	if (ViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_scale, this)) {
+	if (GisViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_scale, this)) {
 		this->viewport->central->set_viking_scale(viking_scale);
 		this->emit_center_or_zoom_changed("zoom to...");
 	}
@@ -2252,22 +2252,22 @@ QString Window::get_current_document_full_path(void)
 
 
 
-QAction * Window::get_drawmode_action(ViewportDrawMode mode)
+QAction * Window::get_drawmode_action(GisViewportDrawMode mode)
 {
 	QAction * qa = NULL;
 	switch (mode) {
 #ifdef VIK_CONFIG_EXPEDIA
-	case ViewportDrawMode::Expedia:
+	case GisViewportDrawMode::Expedia:
 		qa = this->qa_drawmode_expedia;
 		break;
 #endif
-	case ViewportDrawMode::Mercator:
+	case GisViewportDrawMode::Mercator:
 		qa = this->qa_drawmode_mercator;
 		break;
-	case ViewportDrawMode::LatLon:
+	case GisViewportDrawMode::LatLon:
 		qa = this->qa_drawmode_latlon;
 		break;
-	case ViewportDrawMode::UTM:
+	case GisViewportDrawMode::UTM:
 		qa = this->qa_drawmode_utm;
 		break;
 	default:
@@ -2791,7 +2791,7 @@ QComboBox * SlavGPS::create_zoom_combo_all_levels(QWidget * parent)
 /* Really a misnomer: changes coord mode (actual coordinates) AND/OR draw mode (viewport only). */
 void Window::change_coord_mode_cb(QAction * qa)
 {
-	ViewportDrawMode drawmode = (ViewportDrawMode) qa->data().toInt();
+	GisViewportDrawMode drawmode = (GisViewportDrawMode) qa->data().toInt();
 
 	qDebug() << SG_PREFIX_D << "Coordinate mode changed to" << qa->text() << (int) drawmode;
 
@@ -2801,13 +2801,13 @@ void Window::change_coord_mode_cb(QAction * qa)
 		return;
 	}
 
-	const ViewportDrawMode olddrawmode = this->viewport->central->get_drawmode();
+	const GisViewportDrawMode olddrawmode = this->viewport->central->get_drawmode();
 	if (olddrawmode != drawmode) {
 		/* This takes care of coord mode too. */
 		this->viewport->central->set_drawmode(drawmode);
-		if (drawmode == ViewportDrawMode::UTM) {
+		if (drawmode == GisViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::UTM);
-		} else if (olddrawmode == ViewportDrawMode::UTM) {
+		} else if (olddrawmode == GisViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::LatLon);
 		}
 		this->draw_tree_items();
@@ -2877,7 +2877,7 @@ void Window::menu_view_pan_cb(void)
 		return;
 	}
 
-	Viewport * v = this->viewport->central;
+	GisViewport * v = this->viewport->central;
 
 	switch (direction) {
 	case PAN_NORTH:
@@ -3431,9 +3431,9 @@ LayersPanel * ThisApp::get_layers_panel(void)
 
 
 
-Viewport * ThisApp::get_main_viewport(void)
+GisViewport * ThisApp::get_main_viewport(void)
 {
-	assert (g_this_app.viewport);
+	assert (g_this_app.gisview);
 
-	return g_this_app.viewport;
+	return g_this_app.gisview;
 }

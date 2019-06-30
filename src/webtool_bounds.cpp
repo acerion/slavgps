@@ -62,15 +62,15 @@ OnlineService_bbox::~OnlineService_bbox()
 
 
 
-QString OnlineService_bbox::get_url_for_viewport(Viewport * a_viewport)
+QString OnlineService_bbox::get_url_for_viewport(GisViewport * a_gisview)
 {
-	return this->get_url_for_bbox(a_viewport->get_bbox());
+	return this->get_url_for_bbox(a_gisview->get_bbox());
 }
 
 
 
 
-QString OnlineService_bbox::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
+QString OnlineService_bbox::get_url_at_position(GisViewport * a_gisview, const Coord * a_coord)
 {
 	/* FIXME: online service expects a bbox, but the method
 	   provides only a coord.  We could use current zoom of a
@@ -78,7 +78,7 @@ QString OnlineService_bbox::get_url_at_position(Viewport * a_viewport, const Coo
 	   size of the bbox.
 
 	   For now just use viewport's bbox as a simple workaround. */
-	return this->get_url_for_bbox(a_viewport->get_bbox());
+	return this->get_url_for_bbox(a_gisview->get_bbox());
 }
 
 

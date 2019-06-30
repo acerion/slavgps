@@ -251,7 +251,7 @@ int goto_location_dialog(QString & new_location, const QString & initial_locatio
 
    Returns: %true if a successful lookup
 */
-static bool get_coordinate_of(Viewport * viewport, const QString & name, /* in/out */ Coord * coord)
+static bool get_coordinate_of(GisViewport * gisview, const QString & name, /* in/out */ Coord * coord)
 {
 	if (goto_tools.empty()) {
 		return false;
@@ -268,7 +268,7 @@ static bool get_coordinate_of(Viewport * viewport, const QString & name, /* in/o
 		return false;
 	}
 
-	if (goto_tool->get_coord(viewport, name, coord) != GotoToolResult::Found) {
+	if (goto_tool->get_coord(gisview, name, coord) != GotoToolResult::Found) {
 		return false;
 	}
 
@@ -278,7 +278,7 @@ static bool get_coordinate_of(Viewport * viewport, const QString & name, /* in/o
 
 
 
-bool GoTo::goto_location(Window * window, Viewport * viewport)
+bool GoTo::goto_location(Window * window, GisViewport * gisview)
 {
 	bool moved_to_new_position = false;
 
@@ -295,10 +295,10 @@ bool GoTo::goto_location(Window * window, Viewport * viewport)
 			ask_again = false;
 		} else {
 			Coord location_coord;
-			GotoToolResult ans = goto_tools[last_goto_idx]->get_coord(viewport, location.toUtf8().data(), &location_coord);
+			GotoToolResult ans = goto_tools[last_goto_idx]->get_coord(gisview, location.toUtf8().data(), &location_coord);
 			switch (ans) {
 			case GotoToolResult::Found:
-				viewport->set_center_from_coord(location_coord);
+				gisview->set_center_from_coord(location_coord);
 				ask_again = false;
 				moved_to_new_position = true;
 				g_last_location = location;
@@ -342,7 +342,7 @@ bool GoTo::goto_location(Window * window, Viewport * viewport)
  *   3 if position only as precise as a country
  * @name: Contains the name of location found. Free this string after use.
  */
-int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
+int GoTo::where_am_i(GisViewport * gisview, LatLon & lat_lon, QString & name)
 {
 	name = "";
 	lat_lon.invalidate();
@@ -449,7 +449,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 			qDebug() << SG_PREFIX_D << "Found city" << city;
 			if (city != "(Unknown city)") {
 				Coord new_center;
-				if (get_coordinate_of(viewport, city, &new_center)) {
+				if (get_coordinate_of(gisview, city, &new_center)) {
 					/* Got something. */
 					lat_lon = new_center.get_lat_lon();
 					result = 2;
@@ -464,7 +464,7 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 			qDebug() << SG_PREFIX_D << "Found country" << country;
 			if (country != "(Unknown Country)") {
 				Coord new_center;
-				if (get_coordinate_of(viewport, country, &new_center)) {
+				if (get_coordinate_of(gisview, country, &new_center)) {
 					/* Finally got something. */
 					lat_lon = new_center.get_lat_lon();
 					result = 3;
@@ -484,9 +484,9 @@ int GoTo::where_am_i(Viewport * viewport, LatLon & lat_lon, QString & name)
 
 
 
-sg_ret GoTo::goto_latlon(Window * window, Viewport * viewport)
+sg_ret GoTo::goto_latlon(Window * window, GisViewport * gisview)
 {
-	const LatLon initial_lat_lon = viewport->get_center().get_lat_lon();
+	const LatLon initial_lat_lon = gisview->get_center().get_lat_lon();
 	const LatLon new_lat_lon = goto_latlon_dialog(initial_lat_lon, window);
 
 	if (!new_lat_lon.is_valid()) {
@@ -494,7 +494,7 @@ sg_ret GoTo::goto_latlon(Window * window, Viewport * viewport)
 		return sg_ret::ok;
 	}
 
-	return viewport->set_center_from_lat_lon(new_lat_lon); /* This function will return error on invalid argument. */
+	return gisview->set_center_from_lat_lon(new_lat_lon); /* This function will return error on invalid argument. */
 }
 
 
@@ -527,16 +527,16 @@ LatLon goto_latlon_dialog(const LatLon & initial_lat_lon, Window * parent)
 
 
 
-bool GoTo::goto_utm(Window * window, Viewport * viewport)
+bool GoTo::goto_utm(Window * window, GisViewport * gisview)
 {
 	UTM new_utm;
-	const UTM initial_utm = viewport->get_center().get_utm();
+	const UTM initial_utm = gisview->get_center().get_utm();
 
 	if (QDialog::Rejected == goto_utm_dialog(new_utm, initial_utm, window)) {
 		return false;
 	}
 
-	viewport->set_center_from_utm(new_utm);
+	gisview->set_center_from_utm(new_utm);
 
 	return true;
 }

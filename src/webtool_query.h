@@ -52,10 +52,10 @@ namespace SlavGPS {
 				    const QString & input_field_label);
 		~OnlineService_query();
 
-		void run_at_current_position(Viewport * viewport);
+		void run_at_current_position(GisViewport * gisview);
 
-		QString get_url_for_viewport(Viewport * viewport) override;
-		QString get_url_at_position(Viewport * viewport, const Coord * coord) override;
+		QString get_url_for_viewport(GisViewport * gisview) override;
+		QString get_url_at_position(GisViewport * gisview, const Coord * coord) override;
 
 		QString get_last_user_string(void) const;
 

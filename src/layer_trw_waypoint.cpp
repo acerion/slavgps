@@ -312,7 +312,7 @@ void Waypoint::sublayer_menu_waypoint_misc(LayerTRW * parent_layer_, QMenu & men
 		/* Add this menu item only if context menu is displayed for item in tree view.
 		   There is little sense in command "show this waypoint in main viewport"
 		   if context menu is already displayed in main viewport. */
-		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Show this Waypoint in main Viewport"));
+		qa = menu.addAction(QIcon::fromTheme("go-jump"), tr("&Show this Waypoint in main GisViewport"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_in_viewport_cb()));
 	}
 
@@ -646,7 +646,7 @@ bool Waypoint::handle_selection_in_tree(void)
  * Only handles a single waypoint
  * It assumes the waypoint belongs to the TRW Layer (it doesn't check this is the case)
  */
-void Waypoint::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void Waypoint::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	/* Check the layer for visibility (including all the parents visibilities). */
 	if (!this->tree_view->get_tree_item_visibility_with_parents(this)) {
@@ -665,7 +665,7 @@ void Waypoint::draw_tree_item(Viewport * viewport, bool highlight_selected, bool
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
-	parent_layer->painter->draw_waypoint(this, viewport, item_is_selected && highlight_selected);
+	parent_layer->painter->draw_waypoint(this, gisview, item_is_selected && highlight_selected);
 }
 
 

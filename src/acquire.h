@@ -46,7 +46,7 @@ namespace SlavGPS {
 
 
 	class LayersPanel;
-	class Viewport;
+	class GisViewport;
 	class Window;
 	class LayerTRW;
 	class LayerAggregate;
@@ -83,13 +83,13 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		AcquireContext();
-		AcquireContext(Window * new_window, Viewport * new_viewport, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
-			: window(new_window), viewport(new_viewport), top_level_layer(new_top_level_layer), selected_layer(new_selected_layer) {};
+		AcquireContext(Window * new_window, GisViewport * new_gisview, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
+			: window(new_window), gisview(new_gisview), top_level_layer(new_top_level_layer), selected_layer(new_selected_layer) {};
 
 		void print_debug(const char * function, int line) const;
 
 		Window * window = NULL;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 		LayerAggregate * top_level_layer = NULL;
 		Layer * selected_layer = NULL;
 
@@ -150,7 +150,7 @@ namespace SlavGPS {
 
 
 		static void acquire_from_source(DataSource * data_source, DataSourceMode mode, AcquireContext & acquire_context);
-		static void set_context(Window * window, Viewport * viewport, LayerAggregate * top_level_layer, Layer * selected_layer);
+		static void set_context(Window * window, GisViewport * gisview, LayerAggregate * top_level_layer, Layer * selected_layer);
 		static void set_target(LayerTRW * trw, Track * trk);
 
 		static QMenu * create_bfilter_layer_menu(QWidget * parent);

@@ -141,25 +141,25 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 
 	const int w = this->viewport2d->central_get_width();
 
-	if (this->viewport2d->y_domain == ViewportDomain::Elevation && this->viewport2d->x_domain == ViewportDomain::Distance) {
+	if (this->viewport2d->y_domain == GisViewportDomain::Elevation && this->viewport2d->x_domain == GisViewportDomain::Distance) {
 		this->track_data = trk->make_track_data_altitude_over_distance(w);
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Gradient && this->viewport2d->x_domain == ViewportDomain::Distance) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Gradient && this->viewport2d->x_domain == GisViewportDomain::Distance) {
 		this->track_data = trk->make_track_data_gradient_over_distance(w);
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Speed && this->viewport2d->x_domain == ViewportDomain::Time) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Speed && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		this->track_data_raw = trk->make_track_data_speed_over_time();
 		this->track_data = this->track_data_raw.compress(w);
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Distance && this->viewport2d->x_domain == ViewportDomain::Time) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Distance && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		this->track_data_raw = trk->make_track_data_distance_over_time();
 		this->track_data = this->track_data_raw.compress(w);
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Elevation && this->viewport2d->x_domain == ViewportDomain::Time) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Elevation && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		this->track_data_raw = trk->make_track_data_altitude_over_time();
 		this->track_data = this->track_data_raw.compress(w);
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Speed && this->viewport2d->x_domain == ViewportDomain::Distance) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Speed && this->viewport2d->x_domain == GisViewportDomain::Distance) {
 		this->track_data_raw = trk->make_track_data_speed_over_distance();
 		this->track_data = this->track_data_raw.compress(w);
 	} else {
@@ -176,7 +176,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 	/* Do necessary adjustments to y values. */
 
 	switch (this->viewport2d->y_domain) {
-	case ViewportDomain::Speed:
+	case GisViewportDomain::Speed:
 		/* Convert into appropriate units. */
 		for (int i = 0; i < w; i++) {
 			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->viewport2d->speed_unit);
@@ -188,7 +188,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 			this->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
 		}
 		break;
-	case ViewportDomain::Elevation:
+	case GisViewportDomain::Elevation:
 		/* Convert into appropriate units. */
 		if (this->viewport2d->height_unit == HeightUnit::Feet) {
 			/* Convert altitudes into feet units. */
@@ -200,7 +200,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 
 		this->track_data.calculate_min_max();
 		break;
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		/* Convert into appropriate units. */
 		for (int i = 0; i < w; i++) {
 			this->track_data.y[i] = Distance::convert_meters_to(this->track_data.y[i], this->viewport2d->distance_unit);
@@ -213,7 +213,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 
 		this->track_data.calculate_min_max();
 		break;
-	case ViewportDomain::Gradient:
+	case GisViewportDomain::Gradient:
 		/* No unit conversion needed. */
 		this->track_data.calculate_min_max();
 		break;
@@ -231,10 +231,10 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 	/* Do necessary adjustments to x values. */
 	sg_ret result = sg_ret::err;
 	switch (this->viewport2d->x_domain) {
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		result = this->set_initial_visible_range_x_distance();
 		break;
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		result = this->set_initial_visible_range_x_time();
 		break;
 	default:
@@ -352,15 +352,15 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 	const double range = abs(this->track_data.y_max - this->track_data.y_min);
 
 	switch (this->viewport2d->y_domain) {
-	case ViewportDomain::Speed:
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Speed:
+	case GisViewportDomain::Distance:
 		/* Some graphs better start at zero, e.g. speed graph
 		   or distance graph. Showing negative speed values on
 		   a graph wouldn't make sense. */
 		this->y_min_visible = this->track_data.y_min;
 		break;
-	case ViewportDomain::Elevation:
-	case ViewportDomain::Gradient:
+	case GisViewportDomain::Elevation:
+	case GisViewportDomain::Gradient:
 		this->y_min_visible = this->track_data.y_min - range * over;
 		break;
 	default:
@@ -378,19 +378,19 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 	int interval_index = 0;
 
 	switch (this->viewport2d->y_domain) {
-	case ViewportDomain::Speed:
+	case GisViewportDomain::Speed:
 		interval_index = speed_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
 		this->y_interval = speed_intervals.intervals.values[interval_index];
 		break;
-	case ViewportDomain::Elevation:
+	case GisViewportDomain::Elevation:
 		interval_index = altitude_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
 		this->y_interval = altitude_intervals.intervals.values[interval_index];
 		break;
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		interval_index = distance_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
 		this->y_interval = distance_intervals.intervals.values[interval_index].value;
 		break;
-	case ViewportDomain::Gradient:
+	case GisViewportDomain::Gradient:
 		interval_index = gradient_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
 		this->y_interval = gradient_intervals.intervals.values[interval_index];
 		break;
@@ -409,9 +409,9 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 /* Change what is displayed in main viewport in reaction to click event in one of Profile Dialog viewports. */
 static bool set_center_at_graph_position(int event_x,
 					 LayerTRW * trw,
-					 Viewport * main_viewport,
+					 GisViewport * main_gisview,
 					 Track * trk,
-					 ViewportDomain x_domain,
+					 GisViewportDomain x_domain,
 					 int graph_width)
 {
 	int x = event_x;
@@ -426,10 +426,10 @@ static bool set_center_at_graph_position(int event_x,
 
 	bool found = false;
 	switch (x_domain) {
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		found = trk->select_tp_by_percentage_time((double) x / graph_width, SELECTED);
 		break;
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		found = trk->select_tp_by_percentage_dist((double) x / graph_width, NULL, SELECTED);
 		break;
 	default:
@@ -439,7 +439,7 @@ static bool set_center_at_graph_position(int event_x,
 
 	if (found) {
 		Trackpoint * tp = trk->get_selected_tp();
-		main_viewport->set_center_from_coord(tp->coord);
+		main_gisview->set_center_from_coord(tp->coord);
 		trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
 	}
 	return found;
@@ -488,7 +488,7 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 
 
 	if (is_selected_drawn || is_current_drawn) {
-		/* This will call Viewport::paintEvent(), triggering final render to screen. */
+		/* This will call GisViewport::paintEvent(), triggering final render to screen. */
 		this->viewport2d->central->update();
 	}
 
@@ -514,15 +514,15 @@ ProfileView * TrackProfileDialog::get_current_view(void) const
    Find a trackpoint corresponding to cursor position when button was released.
    Draw marking for this trackpoint.
 */
-void TrackProfileDialog::handle_mouse_button_release_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, QMouseEvent * ev)
 {
 	ProfileView * graph = this->get_current_view();
-	assert (graph->viewport2d->central == viewport);
+	assert (graph->viewport2d->central == gisview);
 
 
 	ScreenPos current_pos;
-	viewport->get_cursor_pos(ev, current_pos);
-	const bool found_tp = set_center_at_graph_position(current_pos.x, this->trw, this->main_viewport, this->trk, graph->viewport2d->x_domain, graph->viewport2d->central_get_width());
+	gisview->get_cursor_pos(ev, current_pos);
+	const bool found_tp = set_center_at_graph_position(current_pos.x, this->trw, this->main_gisview, this->trk, graph->viewport2d->x_domain, graph->viewport2d->central_get_width());
 	if (!found_tp) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
@@ -646,10 +646,10 @@ void real_time_label_update(ProfileView * graph, Track * trk)
 
 
 
-void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEvent * ev)
 {
 	ProfileView * graph = this->get_current_view();
-	assert (graph->viewport2d->central == viewport);
+	assert (graph->viewport2d->central == gisview);
 
 	if (!graph->track_data.valid) {
 		qDebug() << SG_PREFIX_E << "Not handling cursor move, track data invalid";
@@ -679,7 +679,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 	}
 
 	switch (graph->viewport2d->x_domain) {
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport2d->central->vpixmap.get_width(), &meters_from_start, HOVERED);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
@@ -689,7 +689,7 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 		}
 		break;
 
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport2d->central->vpixmap.get_width(), HOVERED);
 		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
 
@@ -709,14 +709,14 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 
 	double y = graph->track_data.y[current_pos.x];
 	switch (graph->viewport2d->y_domain) {
-	case ViewportDomain::Speed:
+	case GisViewportDomain::Speed:
 		if (graph->labels.y_value) {
 			/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
 			   No conversions needed as already in appropriate units. */
 			graph->labels.y_value->setText(Speed::to_string(y));
 		}
 		break;
-	case ViewportDomain::Elevation:
+	case GisViewportDomain::Elevation:
 		if (graph->labels.y_value && NULL != this->trk->get_hovered_tp()) {
 			/* Recalculate value into target unit. */
 			graph->labels.y_value->setText(this->trk->get_hovered_tp()->altitude
@@ -724,13 +724,13 @@ void TrackProfileDialog::handle_cursor_move_cb(Viewport * viewport, QMouseEvent 
 						       .to_string());
 		}
 		break;
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		if (graph->labels.y_value) {
 			const Distance distance_uu(y, Preferences::get_unit_distance()); /* 'y' is already recalculated to user unit, so this constructor must use user unit as well. */
 			graph->labels.y_value->setText(distance_uu.to_string());
 		}
 		break;
-	case ViewportDomain::Gradient:
+	case GisViewportDomain::Gradient:
 		if (graph->labels.y_value) {
 			const Gradient gradient_uu(y);
 			graph->labels.y_value->setText(gradient_uu.to_string());
@@ -813,7 +813,7 @@ void ProfileView::draw_function_values(void)
 	const int w = this->viewport2d->central_get_width();
 	const int h = this->viewport2d->central_get_height();
 
-	if (this->viewport2d->y_domain == ViewportDomain::Elevation) {
+	if (this->viewport2d->y_domain == GisViewportDomain::Elevation) {
 		for (int i = 0; i < w; i++) {
 			if (this->track_data.y[i] == VIK_DEFAULT_ALTITUDE) {
 				this->viewport2d->central_draw_line(this->no_alt_info_pen,
@@ -1086,7 +1086,7 @@ void ProfileViewDT::save_values(void)
 */
 sg_ret ProfileView::draw_graph(Track * trk)
 {
-	if (this->viewport2d->x_domain == ViewportDomain::Time) {
+	if (this->viewport2d->x_domain == GisViewportDomain::Time) {
 		const Time duration = trk->get_duration(true);
 		if (!duration.is_valid() || duration.get_value() <= 0) {
 			return sg_ret::err;
@@ -1116,7 +1116,7 @@ sg_ret ProfileView::draw_graph(Track * trk)
 
 	this->draw_additional_indicators(trk);
 
-	/* This will call Viewport::paintEvent(), triggering final render to screen. */
+	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
 	this->viewport2d->central->update();
 
 	/* The pixmap = margin + graph area. */
@@ -1212,10 +1212,10 @@ sg_ret ProfileView::get_position_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & s
 	}
 
 	switch (this->viewport2d->x_domain) {
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		pc = trk->get_tp_time_percent(tp_idx);
 		break;
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		pc = trk->get_tp_distance_percent(tp_idx);
 		break;
 	default:
@@ -1347,7 +1347,7 @@ sg_ret TrackProfileDialog::paint_bottom_cb(Viewport2D * viewport)
 
 
 
-void ProfileView::create_viewport(TrackProfileDialog * new_dialog, ViewportDomain x_domain, ViewportDomain y_domain)
+void ProfileView::create_viewport(TrackProfileDialog * new_dialog, GisViewportDomain x_domain, GisViewportDomain y_domain)
 {
 	const int initial_width = GRAPH_INITIAL_WIDTH;
 	const int initial_height = GRAPH_INITIAL_HEIGHT;
@@ -1360,8 +1360,8 @@ void ProfileView::create_viewport(TrackProfileDialog * new_dialog, ViewportDomai
 	this->viewport2d->x_domain = x_domain;
 	this->viewport2d->y_domain = y_domain;
 
-	QObject::connect(this->viewport2d->central, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_cb(Viewport *, QMouseEvent *)));
-	QObject::connect(this->viewport2d->central, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (handle_mouse_button_release_cb(Viewport *, QMouseEvent *)));
+	QObject::connect(this->viewport2d->central, SIGNAL (cursor_moved(GisViewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_cb(GisViewport *, QMouseEvent *)));
+	QObject::connect(this->viewport2d->central, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (handle_mouse_button_release_cb(GisViewport *, QMouseEvent *)));
 
 	return;
 }
@@ -1473,9 +1473,9 @@ void ProfileView::create_widgets_layout(void)
 
 
 
-void SlavGPS::track_profile_dialog(Track * trk, Viewport * main_viewport, QWidget * parent)
+void SlavGPS::track_profile_dialog(Track * trk, GisViewport * main_gisview, QWidget * parent)
 {
-	TrackProfileDialog dialog(QObject::tr("Track Profile"), trk, main_viewport, parent);
+	TrackProfileDialog dialog(QObject::tr("Track Profile"), trk, main_gisview, parent);
 	trk->set_profile_dialog(&dialog);
 	dialog.exec();
 	trk->clear_profile_dialog();
@@ -1488,22 +1488,22 @@ QString ProfileView::get_graph_title(void) const
 {
 	QString result;
 
-	if (this->viewport2d->y_domain == ViewportDomain::Elevation && this->viewport2d->x_domain == ViewportDomain::Distance) {
+	if (this->viewport2d->y_domain == GisViewportDomain::Elevation && this->viewport2d->x_domain == GisViewportDomain::Distance) {
 		result = QObject::tr("Elevation over distance");
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Gradient && this->viewport2d->x_domain == ViewportDomain::Distance) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Gradient && this->viewport2d->x_domain == GisViewportDomain::Distance) {
 		result = QObject::tr("Gradient over distance");
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Speed && this->viewport2d->x_domain == ViewportDomain::Time) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Speed && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		result = QObject::tr("Speed over time");
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Distance && this->viewport2d->x_domain == ViewportDomain::Time) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Distance && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		result = QObject::tr("Distance over time");
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Elevation && this->viewport2d->x_domain == ViewportDomain::Time) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Elevation && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		result = QObject::tr("Elevation over time");
 
-	} else if (this->viewport2d->y_domain == ViewportDomain::Speed && this->viewport2d->x_domain == ViewportDomain::Distance) {
+	} else if (this->viewport2d->y_domain == GisViewportDomain::Speed && this->viewport2d->x_domain == GisViewportDomain::Distance) {
 		result = QObject::tr("Speed over distance");
 
 	} else {
@@ -1516,13 +1516,13 @@ QString ProfileView::get_graph_title(void) const
 
 
 
-TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, Viewport * new_main_viewport, QWidget * parent) : QDialog(parent)
+TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, GisViewport * new_main_gisview, QWidget * parent) : QDialog(parent)
 {
 	this->setWindowTitle(tr("%1 - Track Profile").arg(new_trk->name));
 
 	this->trw = (LayerTRW *) new_trk->get_owning_layer();
 	this->trk = new_trk;
-	this->main_viewport = new_main_viewport;
+	this->main_gisview = new_main_gisview;
 
 
 	QLayout * old = this->layout();
@@ -1609,13 +1609,13 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, V
 void ProfileView::configure_labels(void)
 {
 	switch (this->viewport2d->x_domain) {
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		this->labels.x_label = new QLabel(QObject::tr("Track Distance:"));
 		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		this->labels.x_label = new QLabel(QObject::tr("Time From Start:"));
 		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
@@ -1631,25 +1631,25 @@ void ProfileView::configure_labels(void)
 
 
 	switch (this->viewport2d->y_domain) {
-	case ViewportDomain::Elevation:
+	case GisViewportDomain::Elevation:
 		this->labels.y_label = new QLabel(QObject::tr("Track Height:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
-	case ViewportDomain::Gradient:
+	case GisViewportDomain::Gradient:
 		this->labels.y_label = new QLabel(QObject::tr("Track Gradient:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
-	case ViewportDomain::Speed:
+	case GisViewportDomain::Speed:
 		this->labels.y_label = new QLabel(QObject::tr("Track Speed:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		this->labels.y_label = new QLabel(QObject::tr("Track Distance:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
@@ -1840,7 +1840,7 @@ QString get_time_grid_label(const Time & interval_value, const Time & value)
 
 
 
-ProfileView::ProfileView(ViewportDomain x_domain, ViewportDomain y_domain, TrackProfileDialog * new_dialog, QWidget * parent) : QWidget(parent)
+ProfileView::ProfileView(GisViewportDomain x_domain, GisViewportDomain y_domain, TrackProfileDialog * new_dialog, QWidget * parent) : QWidget(parent)
 {
 	this->dialog = new_dialog;
 
@@ -1861,12 +1861,12 @@ ProfileView::ProfileView(ViewportDomain x_domain, ViewportDomain y_domain, Track
 
 
 
-ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView(ViewportDomain::Time,     ViewportDomain::Elevation, new_dialog) {}
-ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView(ViewportDomain::Distance, ViewportDomain::Speed,     new_dialog) {}
-ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView(ViewportDomain::Distance, ViewportDomain::Elevation, new_dialog) {}
-ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView(ViewportDomain::Distance, ViewportDomain::Gradient,  new_dialog) {}
-ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView(ViewportDomain::Time,     ViewportDomain::Speed,     new_dialog) {}
-ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView(ViewportDomain::Time,     ViewportDomain::Distance,  new_dialog) {}
+ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView(GisViewportDomain::Time,     GisViewportDomain::Elevation, new_dialog) {}
+ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView(GisViewportDomain::Distance, GisViewportDomain::Speed,     new_dialog) {}
+ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView(GisViewportDomain::Distance, GisViewportDomain::Elevation, new_dialog) {}
+ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView(GisViewportDomain::Distance, GisViewportDomain::Gradient,  new_dialog) {}
+ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView(GisViewportDomain::Time,     GisViewportDomain::Speed,     new_dialog) {}
+ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView(GisViewportDomain::Time,     GisViewportDomain::Distance,  new_dialog) {}
 
 
 
@@ -2197,16 +2197,16 @@ void ProfileView::draw_x_grid_sub_t_outside(void)
 QString ProfileView::get_y_grid_label(float value_uu)
 {
 	switch (this->viewport2d->y_domain) {
-	case ViewportDomain::Elevation:
+	case GisViewportDomain::Elevation:
 		return Altitude(value_uu, this->viewport2d->height_unit).to_string();
 
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		return Distance(value_uu, this->viewport2d->distance_unit).to_string();
 
-	case ViewportDomain::Speed:
+	case GisViewportDomain::Speed:
 		return Speed(value_uu, this->viewport2d->speed_unit).to_string();
 
-	case ViewportDomain::Gradient:
+	case GisViewportDomain::Gradient:
 		return Gradient(value_uu).to_string();
 
 	default:
@@ -2221,11 +2221,11 @@ QString ProfileView::get_y_grid_label(float value_uu)
 void ProfileView::draw_x_grid_inside(const Track * trk)
 {
 	switch (this->viewport2d->x_domain) {
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		this->draw_x_grid_sub_t_inside();
 		break;
 
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		this->draw_x_grid_sub_d_inside();
 		break;
 
@@ -2241,11 +2241,11 @@ void ProfileView::draw_x_grid_inside(const Track * trk)
 void ProfileView::draw_x_grid_outside(const Track * trk)
 {
 	switch (this->viewport2d->x_domain) {
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		this->draw_x_grid_sub_t_outside();
 		break;
 
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		this->draw_x_grid_sub_d_outside();
 		break;
 
@@ -2258,23 +2258,23 @@ void ProfileView::draw_x_grid_outside(const Track * trk)
 
 
 
-bool ProfileView::supported_domains(ViewportDomain x_domain, ViewportDomain y_domain)
+bool ProfileView::supported_domains(GisViewportDomain x_domain, GisViewportDomain y_domain)
 {
 	switch (x_domain) {
-	case ViewportDomain::Distance:
+	case GisViewportDomain::Distance:
 		switch (y_domain) {
-		case ViewportDomain::Elevation:
-		case ViewportDomain::Gradient:
-		case ViewportDomain::Speed:
+		case GisViewportDomain::Elevation:
+		case GisViewportDomain::Gradient:
+		case GisViewportDomain::Speed:
 			return true;
 		default:
 			return false;
 		}
-	case ViewportDomain::Time:
+	case GisViewportDomain::Time:
 		switch (y_domain) {
-		case ViewportDomain::Speed:
-		case ViewportDomain::Distance:
-		case ViewportDomain::Elevation:
+		case GisViewportDomain::Speed:
+		case GisViewportDomain::Distance:
+		case GisViewportDomain::Elevation:
 			return true;
 
 		default:

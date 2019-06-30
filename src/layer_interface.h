@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 
 	class Layer;
-	class Viewport;
+	class GisViewport;
 	class LayerTool;
 
 
@@ -71,7 +71,7 @@ namespace SlavGPS {
 	public:
 		LayerInterface() {};
 
-		virtual Layer * unmarshall(Pickle & pickle, Viewport * viewport) { return NULL; };
+		virtual Layer * unmarshall(Pickle & pickle, GisViewport * gisview) { return NULL; };
 
 		QKeySequence action_accelerator;
 		QIcon action_icon;
@@ -81,7 +81,7 @@ namespace SlavGPS {
 		   Pointers in the container are owned by caller.
 
 		   By default a layer-type has no layer-specific tools. */
-		virtual LayerToolContainer * create_tools(Window * window, Viewport * viewport) { return NULL; };
+		virtual LayerToolContainer * create_tools(Window * window, GisViewport * gisview) { return NULL; };
 
 		/* Does given layer type have configurable properties that can be viewed and edited in dialog window?
 		   This returns correct value only after Layer::set_initial_parameter_values() has been called. */

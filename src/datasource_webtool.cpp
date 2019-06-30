@@ -59,9 +59,9 @@ QHash<QString, QString> dso_last_user_strings;
 
 
 
-DataSourceOnlineServiceDialog::DataSourceOnlineServiceDialog(const QString & window_title, Viewport * new_viewport, OnlineService_query * new_online_service) : DataSourceDialog(window_title)
+DataSourceOnlineServiceDialog::DataSourceOnlineServiceDialog(const QString & window_title, GisViewport * new_gisview, OnlineService_query * new_online_service) : DataSourceDialog(window_title)
 {
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 	this->online_service = new_online_service;
 
 
@@ -99,7 +99,7 @@ AcquireOptions * DataSourceOnlineServiceDialog::create_acquire_options(AcquireCo
 
 
 	AcquireOptions * acquire_options = new AcquireOptions(AcquireOptions::Mode::FromURL);
-	acquire_options->source_url = this->online_service->get_url_for_viewport(this->viewport);
+	acquire_options->source_url = this->online_service->get_url_for_viewport(this->gisview);
 	qDebug() << SG_PREFIX_D << "Source URL =" << acquire_options->source_url;
 
 	/* Only use first section of the file_type string.
@@ -127,9 +127,9 @@ void DataSourceOnlineService::cleanup(void * data)
 
 
 
-DataSourceOnlineService::DataSourceOnlineService(const QString & new_window_title, const QString & new_layer_title, Viewport * new_viewport, OnlineService_query * new_online_service)
+DataSourceOnlineService::DataSourceOnlineService(const QString & new_window_title, const QString & new_layer_title, GisViewport * new_gisview, OnlineService_query * new_online_service)
 {
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 	this->online_service = new_online_service;
 
 	this->window_title = new_window_title;
@@ -148,7 +148,7 @@ int DataSourceOnlineService::run_config_dialog(AcquireContext * acquire_context)
 {
 	int answer;
 
-	DataSourceOnlineServiceDialog config_dialog(this->window_title, this->viewport, this->online_service);
+	DataSourceOnlineServiceDialog config_dialog(this->window_title, this->gisview, this->online_service);
 	if (this->online_service->tool_needs_user_string()) {
 		answer = config_dialog.exec();
 	} else {

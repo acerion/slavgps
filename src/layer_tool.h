@@ -44,7 +44,7 @@ namespace SlavGPS {
 
 
 	class Window;
-	class Viewport;
+	class GisViewport;
 	class Layer;
 	enum class LayerType;
 
@@ -75,7 +75,7 @@ namespace SlavGPS {
 	class LayerTool {
 
 	public:
-		LayerTool(Window * window, Viewport * viewport, LayerType layer_type);
+		LayerTool(Window * window, GisViewport * gisview, LayerType layer_type);
 		virtual ~LayerTool();
 
 		QString get_description(void) const;
@@ -125,7 +125,7 @@ namespace SlavGPS {
 		QCursor cursor_release;
 
 		Window * window = NULL;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 
 
 		/*

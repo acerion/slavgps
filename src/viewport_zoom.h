@@ -45,11 +45,11 @@
 
 
 /* Number of decimal places in presentation of zoom mpp values. */
-#define SG_VIEWPORT_ZOOM_PRECISION 8
+#define SG_GISVIEWPORT_ZOOM_PRECISION 8
 
 
-#define SG_VIEWPORT_ZOOM_MIN (1 / 32.0)
-#define SG_VIEWPORT_ZOOM_MAX 32768.0
+#define SG_GISVIEWPORT_ZOOM_MIN (1 / 32.0)
+#define SG_GISVIEWPORT_ZOOM_MAX 32768.0
 
 
 
@@ -60,7 +60,7 @@ namespace SlavGPS {
 
 
 	class Window;
-	class Viewport;
+	class GisViewport;
 	class ScreenPos;
 	enum class CoordMode;
 
@@ -69,7 +69,7 @@ namespace SlavGPS {
 	/* "Meters per pixel" scale. How many meters on viewport
 	   pixmap are represented by one pixel of viewport' pixmap. */
 	class VikingScale {
-		friend class Viewport;
+		friend class GisViewport;
 	public:
 		VikingScale(void);
 		VikingScale(double scale);
@@ -112,8 +112,8 @@ namespace SlavGPS {
 
 	private:
 		/* Invalid values. */
-		double x = SG_VIEWPORT_ZOOM_MIN - 1;
-		double y = SG_VIEWPORT_ZOOM_MIN - 1;
+		double x = SG_GISVIEWPORT_ZOOM_MIN - 1;
+		double y = SG_GISVIEWPORT_ZOOM_MIN - 1;
 	};
 	QDebug operator<<(QDebug debug, const VikingScale & viking_scale);
 
@@ -135,39 +135,39 @@ namespace SlavGPS {
 
 
 
-	class ViewportZoom {
+	class GisViewportZoom {
 	public:
 		/* Clicked location will be put at the center of
 		   viewport (coordinate of a place under cursor before
 		   zoom will be placed at the center of viewport after
 		   zoom). */
-		static bool move_coordinate_to_center(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & event_pos);
+		static bool move_coordinate_to_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos);
 
 		/* Location at the center of viewport will be
 		   preserved (coordinate at the center before the zoom
 		   and coordinate at the center after the zoom will be
 		   the same). */
-		static bool keep_coordinate_in_center(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & center_pos);
+		static bool keep_coordinate_in_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & center_pos);
 
 		/* Clicked coordinate will be put after zoom at the same
 		   position in viewport as before zoom.  Before zoom
 		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
-		static bool keep_coordinate_under_cursor(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos);
+		static bool keep_coordinate_under_cursor(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos);
 
-		static sg_ret zoom_to_show_bbox(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox);
-		static sg_ret zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position);
+		static sg_ret zoom_to_show_bbox(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox);
+		static sg_ret zoom_to_show_bbox_common(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position);
 	};
 
 
 
 
-	class ViewportZoomDialog : public BasicDialog {
+	class GisViewportZoomDialog : public BasicDialog {
 		Q_OBJECT
 	public:
-		ViewportZoomDialog() {};
-		ViewportZoomDialog(VikingScale & viking_scale, QWidget * a_parent = NULL);
-		~ViewportZoomDialog() {};
+		GisViewportZoomDialog() {};
+		GisViewportZoomDialog(VikingScale & viking_scale, QWidget * a_parent = NULL);
+		~GisViewportZoomDialog() {};
 
 		VikingScale get_value(void) const;
 

@@ -62,7 +62,7 @@ using namespace SlavGPS;
 MapSourceTms::MapSourceTms()
 {
 	fprintf(stderr, "MapSourceTms constructor start\n");
-	drawmode = ViewportDrawMode::LatLon;
+	drawmode = GisViewportDrawMode::LatLon;
 	fprintf(stderr, "MapSourceTms constructor end\n");
 }
 

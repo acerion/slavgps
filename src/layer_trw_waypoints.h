@@ -51,7 +51,7 @@ namespace SlavGPS {
 
 
 	class Waypoint;
-	class Viewport;
+	class GisViewport;
 	class LayerTRW;
 	class Window;
 	class LayersPanel;
@@ -109,15 +109,15 @@ namespace SlavGPS {
 
 	class WaypointSearch {
 	public:
-		WaypointSearch(int ev_x, int ev_y, Viewport * viewport_) :
+		WaypointSearch(int ev_x, int ev_y, GisViewport * new_gisview) :
 			x(ev_x),
 			y(ev_y),
-			viewport(viewport_) {};
+			gisview(new_gisview) {};
 
 		/* Input. */
 		int x = 0;
 		int y = 0;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 
 		/* Output. */
 		int closest_x = 0;
@@ -171,7 +171,7 @@ namespace SlavGPS {
 		void set_items_visibility(bool on_off);
 		void toggle_items_visibility();
 		void search_closest_wp(WaypointSearch & search);
-		QString tool_show_picture_wp(int event_x, int event_y, Viewport * viewport);
+		QString tool_show_picture_wp(int event_x, int event_y, GisViewport * gisview);
 		QStringList get_list_of_missing_thumbnails(void) const;
 		void change_coord_mode(CoordMode new_mode);
 
@@ -187,7 +187,7 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree(void);
 
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 
 		/* Similar to C++ container's ::clear() method: call
 		   destructor for all elements of this container,

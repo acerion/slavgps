@@ -250,7 +250,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 			continue;
 		}
 
-		const ScreenPos wp_pos = search.viewport->coord_to_screen_pos(wp->coord);
+		const ScreenPos wp_pos = search.gisview->coord_to_screen_pos(wp->coord);
 		bool found = false;
 
 		/* If waypoint has non-empty image then use the image size to select. */
@@ -291,7 +291,7 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 
 
 
-QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewport * viewport)
+QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, GisViewport * gisview)
 {
 	QString found;
 
@@ -305,7 +305,7 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, Viewpo
 			continue;
 		}
 
-		const ScreenPos wp_pos = viewport->coord_to_screen_pos(wp->coord);
+		const ScreenPos wp_pos = gisview->coord_to_screen_pos(wp->coord);
 		int slackx = wp->drawn_image_rect.width() / 2;
 		int slacky = wp->drawn_image_rect.height() / 2;
 		if (wp_pos.x <= event_x + slackx && wp_pos.x >= event_x - slackx
@@ -647,23 +647,23 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 */
 void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	Viewport * viewport = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_viewport();
 	const unsigned int n_items = this->children_list.size();
 
 	if (1 == n_items) {
 		/* Only 1 waypoint - jump straight to it. Notice that we don't care about waypoint's visibility.  */
 		const auto iter = this->children_list.begin();
-		viewport->set_center_from_coord((*iter)->coord);
+		gisview->set_center_from_coord((*iter)->coord);
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */
-		viewport->set_bbox(this->bbox);
+		gisview->set_bbox(this->bbox);
 	} else {
 		return; /* Zero items. */
 	}
 
 	/* We have re-aligned main viewport. Ask main application window to redraw the viewport. */
-	viewport->request_redraw("Re-align viewport to show to show all TRW Waypoints");
+	gisview->request_redraw("Re-align viewport to show to show all TRW Waypoints");
 
 	return;
 }
@@ -758,7 +758,7 @@ bool LayerTRWWaypoints::handle_selection_in_tree(void)
  * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	if (this->empty()) {
 		return;
@@ -785,12 +785,12 @@ void LayerTRWWaypoints::draw_tree_item(Viewport * viewport, bool highlight_selec
 	}
 
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
-	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	const LatLonBBox viewport_bbox = gisview->get_bbox();
 
 	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->type_id << (*iter)->name;
-			(*iter)->draw_tree_item(viewport, highlight_selected, item_is_selected);
+			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);
 		}
 	}
 }

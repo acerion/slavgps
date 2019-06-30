@@ -168,7 +168,7 @@ MapSourceTerraserver::MapSourceTerraserver(MapTypeID new_type_id, const QString 
 
 	this->tilesize_x = 200;
 	this->tilesize_y = 200;
-	this->drawmode = ViewportDrawMode::UTM;
+	this->drawmode = GisViewportDrawMode::UTM;
 
 	this->dl_options.file_validator_fn = map_file_validator_fn;
 

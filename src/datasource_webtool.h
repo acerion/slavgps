@@ -54,12 +54,12 @@ namespace SlavGPS {
 	class DataSourceOnlineService : public DataSourceBabel {
 	public:
 		DataSourceOnlineService() {};
-		DataSourceOnlineService(const QString & window_title, const QString & layer_title, Viewport * viewport, OnlineService_query * online_service);
+		DataSourceOnlineService(const QString & window_title, const QString & layer_title, GisViewport * gisview, OnlineService_query * online_service);
 		int run_config_dialog(AcquireContext * acquire_context);
 
 		void cleanup(void * data);
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 		OnlineService_query * online_service = NULL;
 	};
 
@@ -73,12 +73,12 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		/* Get data from online data source */
-		DataSourceOnlineServiceDialog(const QString & window_title, Viewport * viewport, OnlineService_query * new_online_service);
+		DataSourceOnlineServiceDialog(const QString & window_title, GisViewport * gisview, OnlineService_query * new_online_service);
 
 		AcquireOptions * create_acquire_options(AcquireContext * acquire_context);
 
 		OnlineService_query * online_service = NULL;
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 		QLineEdit input_field;
 	};
 

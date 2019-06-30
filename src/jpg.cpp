@@ -114,7 +114,7 @@ bool SlavGPS::jpg_magic_check(const QString & file_full_path)
 
    Returns: Whether the loading was a success or not.
 */
-bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, const QString & file_full_path)
+bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, GisViewport * gisview, const QString & file_full_path)
 {
 	bool auto_zoom = true;
 	/* Auto load into TrackWaypoint layer if one is selected. */
@@ -126,7 +126,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 		/* Create layer if necessary. */
 
 		trw = (LayerTRW *) new LayerTRW();
-		trw->set_coord_mode(viewport->get_coord_mode());
+		trw->set_coord_mode(gisview->get_coord_mode());
 		trw->set_name(FileUtils::get_base_name(file_full_path));
 		create_layer = true;
 	} else {
@@ -136,7 +136,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 	Waypoint * wp = NULL;
 
 #ifdef VIK_CONFIG_GEOTAG
-	wp = GeotagExif::create_waypoint_from_file(file_full_path, viewport->get_coord_mode());
+	wp = GeotagExif::create_waypoint_from_file(file_full_path, gisview->get_coord_mode());
 #endif
 	if (wp) {
 		if (wp->name.isEmpty()) {
@@ -150,18 +150,18 @@ bool SlavGPS::jpg_load_file(LayerAggregate * parent_layer, Viewport * viewport, 
 		trw->add_waypoint_from_file(wp);
 		wp->set_image_full_path(file_full_path);
 		/* Simply set position to the current center. */
-		wp->coord = viewport->get_center();
+		wp->coord = gisview->get_center();
 		auto_zoom = false;
 	}
 
 	/* Complete the setup. */
-	trw->post_read(viewport, true);
+	trw->post_read(gisview, true);
 	if (create_layer) {
 		parent_layer->add_layer(trw, false);
 	}
 
 	if (auto_zoom) {
-		trw->move_viewport_to_show_all(viewport);
+		trw->move_viewport_to_show_all(gisview);
 	}
 
 	/* ATM This routine can't fail. */

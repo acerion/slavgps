@@ -46,7 +46,7 @@ namespace SlavGPS {
 		uint16_t get_tilesize_x(void) const;
 		uint16_t get_tilesize_y(void) const;
 
-		ViewportDrawMode get_drawmode(void) const;
+		GisViewportDrawMode get_drawmode(void) const;
 
 
 		QString label;

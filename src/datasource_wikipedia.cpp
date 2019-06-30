@@ -115,11 +115,11 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
 	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+	qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->gisview;
 
 
 	qDebug() << "---- will generate all geonames list";
-	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context->viewport->get_bbox(), progr_dialog);
+	std::list<Geoname *> all_geonames = Geonames::generate_geonames(acquire_context->gisview->get_bbox(), progr_dialog);
 	if (0 == all_geonames.size()) {
 		/* Not an error situation. Info for user has been displayed in progr_dialog. */
 		return LoadStatus::Code::Success;
@@ -139,7 +139,7 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->gisview;
 
 		const Geoname * geoname = *iter;
 		Waypoint * wp = geoname->create_waypoint(trw->get_coord_mode());
@@ -147,7 +147,7 @@ LoadStatus DataSourceWikipedia::acquire_into_layer(LayerTRW * trw, AcquireContex
 
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  context" << (quintptr) acquire_context;
 		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@    layer" << (quintptr) acquire_context->target_trw;
-		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@ viewport" << (quintptr) acquire_context->viewport;
+		qDebug() << SG_PREFIX_I << "@@@@@@@@@@@@@@@@  gisview" << (quintptr) acquire_context->gisview;
 	}
 
 	return LoadStatus::Code::Success;

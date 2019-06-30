@@ -70,7 +70,7 @@ const QString & ExternalTool::get_label(void) const
 
 void ExternalTool::run_at_current_position_cb(void)
 {
-	this->run_at_current_position(this->m_viewport);
+	this->run_at_current_position(this->m_gisview);
 }
 
 
@@ -78,15 +78,15 @@ void ExternalTool::run_at_current_position_cb(void)
 
 void ExternalTool::run_at_position_cb(void)
 {
-	this->run_at_position(this->m_viewport, this->m_coord);
+	this->run_at_position(this->m_gisview, this->m_coord);
 }
 
 
 
 
-void ExternalTool::set_viewport(Viewport * viewport)
+void ExternalTool::set_viewport(GisViewport * gisview)
 {
-	this->m_viewport = viewport;
+	this->m_gisview = gisview;
 }
 
 

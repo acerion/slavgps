@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class Window;
 	class LayerTRW;
 	class LayerInterface;
@@ -119,12 +119,12 @@ namespace SlavGPS {
 		virtual void marshall(Pickle & pickle);
 		virtual void marshall_params(Pickle & pickle);
 		virtual void unmarshall_params(Pickle & pickle);
-		static Layer * unmarshall(Pickle & pickle, Viewport * viewport);
+		static Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
 
 		virtual TreeItemType get_tree_item_type(void) const override { return TreeItemType::Layer; }
 
 
-		static Layer * construct_layer(LayerType layer_type, Viewport * viewport, bool interactive = false);
+		static Layer * construct_layer(LayerType layer_type, GisViewport * gisview, bool interactive = false);
 
 		const LayerInterface & get_interface(void) const;
 		static LayerInterface * get_interface(LayerType layer_type);
@@ -139,9 +139,9 @@ namespace SlavGPS {
 		   or properties box is run.  usually used to create
 		   GC's that depend on params, but GC's can also be
 		   created from create() or set_param(). */
-		virtual void post_read(Viewport * viewport, bool from_file);
+		virtual void post_read(GisViewport * gisview, bool from_file);
 
-		virtual void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected) { return; };
+		virtual void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected) { return; };
 
 		virtual QString get_tooltip(void) const;
 
@@ -150,11 +150,11 @@ namespace SlavGPS {
 		virtual void set_coord_mode(CoordMode mode) { return; };
 
 		/* Methods for generic "Select" tool. */
-		virtual bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)         { return false; };
-		virtual bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)  { return false; };
-		virtual bool handle_select_tool_move(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)          { return false; };
-		virtual bool handle_select_tool_release(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool)       { return false; };
-		virtual bool handle_select_tool_context_menu(QMouseEvent * event, Viewport * viewport)                                 { return false; };
+		virtual bool handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)         { return false; };
+		virtual bool handle_select_tool_double_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)  { return false; };
+		virtual bool handle_select_tool_move(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)          { return false; };
+		virtual bool handle_select_tool_release(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool)       { return false; };
+		virtual bool handle_select_tool_context_menu(QMouseEvent * event, GisViewport * gisview)                                 { return false; };
 
 		virtual void cut_sublayer(TreeItem * item) { return; };
 		virtual void copy_sublayer(TreeItem * item, uint8_t ** data, unsigned int * len) { return; };
@@ -163,7 +163,7 @@ namespace SlavGPS {
 
 		virtual void change_coord_mode(CoordMode dest_mode) { return; };
 
-		void request_new_viewport_center(Viewport * viewport, const Coord & coord);
+		void request_new_viewport_center(GisViewport * gisview, const Coord & coord);
 
 		virtual Time get_timestamp(void) const override;
 
@@ -181,7 +181,7 @@ namespace SlavGPS {
 
 		virtual void add_menu_items(QMenu & menu);
 
-		virtual bool properties_dialog(Viewport * viewport);
+		virtual bool properties_dialog(GisViewport * gisview);
 		virtual bool properties_dialog();
 
 		/* Get current, per-instance-of-layer, value of a layer parameter. The parameter is specified by its id.

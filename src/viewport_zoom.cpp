@@ -98,9 +98,9 @@ static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpp
 
 
 
-bool ViewportZoomDialog::custom_zoom_dialog(VikingScale & scale, QWidget * parent)
+bool GisViewportZoomDialog::custom_zoom_dialog(VikingScale & scale, QWidget * parent)
 {
-	ViewportZoomDialog dialog(scale, parent);
+	GisViewportZoomDialog dialog(scale, parent);
 
 	if (QDialog::Accepted == dialog.exec()) {
 		scale = dialog.get_value();
@@ -117,7 +117,7 @@ bool ViewportZoomDialog::custom_zoom_dialog(VikingScale & scale, QWidget * paren
 
 
 
-ViewportZoomDialog::ViewportZoomDialog(VikingScale & scale, QWidget * parent)
+GisViewportZoomDialog::GisViewportZoomDialog(VikingScale & scale, QWidget * parent)
 {
 	this->setWindowTitle(QObject::tr("Zoom Factors..."));
 
@@ -130,10 +130,10 @@ ViewportZoomDialog::ViewportZoomDialog(VikingScale & scale, QWidget * parent)
 
 	QLabel * xlabel = new QLabel(QObject::tr("X (easting):"), this);
 
-	this->xspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	this->xspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	this->xspin.setMinimum(SG_GISVIEWPORT_ZOOM_MIN);
+	this->xspin.setMaximum(SG_GISVIEWPORT_ZOOM_MAX);
 	this->xspin.setSingleStep(1);
-	this->xspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
+	this->xspin.setDecimals(SG_GISVIEWPORT_ZOOM_PRECISION);
 	this->xspin.setValue(scale.get_x());
 
 	this->grid->addWidget(xlabel, row, 0);
@@ -143,10 +143,10 @@ ViewportZoomDialog::ViewportZoomDialog(VikingScale & scale, QWidget * parent)
 
 	QLabel * ylabel = new QLabel(QObject::tr("Y (northing):"), this);
 
-	this->yspin.setMinimum(SG_VIEWPORT_ZOOM_MIN);
-	this->yspin.setMaximum(SG_VIEWPORT_ZOOM_MAX);
+	this->yspin.setMinimum(SG_GISVIEWPORT_ZOOM_MIN);
+	this->yspin.setMaximum(SG_GISVIEWPORT_ZOOM_MAX);
 	this->yspin.setSingleStep(1);
-	this->yspin.setDecimals(SG_VIEWPORT_ZOOM_PRECISION);
+	this->yspin.setDecimals(SG_GISVIEWPORT_ZOOM_PRECISION);
 	this->yspin.setValue(scale.get_y());
 
 	this->grid->addWidget(ylabel, row, 0);
@@ -169,7 +169,7 @@ ViewportZoomDialog::ViewportZoomDialog(VikingScale & scale, QWidget * parent)
 
 
 
-VikingScale ViewportZoomDialog::get_value(void) const
+VikingScale GisViewportZoomDialog::get_value(void) const
 {
 	return VikingScale(this->xspin.value(), this->yspin.value());
 }
@@ -177,7 +177,7 @@ VikingScale ViewportZoomDialog::get_value(void) const
 
 
 
-void ViewportZoomDialog::spin_changed_cb(double new_value)
+void GisViewportZoomDialog::spin_changed_cb(double new_value)
 {
 	if (this->checkbox.isChecked()) {
 		if (new_value == this->xspin.value()) {
@@ -233,20 +233,20 @@ ZoomOperation SlavGPS::wheel_event_to_zoom_operation(const QWheelEvent * event)
 
 
 
-bool ViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & event_pos)
+bool GisViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos)
 {
 	bool redraw_viewport = false;
 
 	switch (zoom_operation) {
 	case ZoomOperation::In:
-		viewport->set_center_from_screen_pos(event_pos);
-		viewport->zoom_in();
+		gisview->set_center_from_screen_pos(event_pos);
+		gisview->zoom_in();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
-		viewport->set_center_from_screen_pos(event_pos);
-		viewport->zoom_out();
+		gisview->set_center_from_screen_pos(event_pos);
+		gisview->zoom_out();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -260,20 +260,20 @@ bool ViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, Viewp
 
 
 
-bool ViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & center_pos)
+bool GisViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & center_pos)
 {
 	bool redraw_viewport = false;
 
 	switch (zoom_operation) {
 	case ZoomOperation::In:
-		viewport->set_center_from_screen_pos(center_pos);
-		viewport->zoom_in();
+		gisview->set_center_from_screen_pos(center_pos);
+		gisview->zoom_in();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
-		viewport->set_center_from_screen_pos(center_pos);
-		viewport->zoom_out();
+		gisview->set_center_from_screen_pos(center_pos);
+		gisview->zoom_out();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -287,7 +287,7 @@ bool ViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, Viewp
 
 
 
-bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Viewport * viewport, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos)
+bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, GisViewport * gisview, Window * window, const ScreenPos & event_pos, const ScreenPos & center_pos)
 {
 	bool redraw_viewport = false;
 
@@ -295,14 +295,14 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 	case ZoomOperation::In: {
 
 		/* Here we use event position before zooming in. */
-		const Coord cursor_coord = viewport->screen_pos_to_coord(event_pos);
+		const Coord cursor_coord = gisview->screen_pos_to_coord(event_pos);
 
-		viewport->zoom_in();
+		gisview->zoom_in();
 
 		/* Position of event calculated in modified (zoomed in) viewport. */
-		const ScreenPos orig_pos = viewport->coord_to_screen_pos(cursor_coord);
+		const ScreenPos orig_pos = gisview->coord_to_screen_pos(cursor_coord);
 
-		viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
+		gisview->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -310,14 +310,14 @@ bool ViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation, Vi
 	case ZoomOperation::Out: {
 
 		/* Here we use event position before zooming out. */
-		const Coord cursor_coord = viewport->screen_pos_to_coord(event_pos);
+		const Coord cursor_coord = gisview->screen_pos_to_coord(event_pos);
 
-		viewport->zoom_out();
+		gisview->zoom_out();
 
 		/* Position of event calculated in modified (zoomed out) viewport. */
-		const ScreenPos orig_pos = viewport->coord_to_screen_pos(cursor_coord);
+		const ScreenPos orig_pos = gisview->coord_to_screen_pos(cursor_coord);
 
-		viewport->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
+		gisview->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -367,10 +367,10 @@ double VikingScale::get_y(void) const
 
 sg_ret VikingScale::set(double new_x, double new_y)
 {
-	if (new_x >= SG_VIEWPORT_ZOOM_MIN
-	    && new_x <= SG_VIEWPORT_ZOOM_MAX
-	    && new_y >= SG_VIEWPORT_ZOOM_MIN
-	    && new_y <= SG_VIEWPORT_ZOOM_MAX) {
+	if (new_x >= SG_GISVIEWPORT_ZOOM_MIN
+	    && new_x <= SG_GISVIEWPORT_ZOOM_MAX
+	    && new_y >= SG_GISVIEWPORT_ZOOM_MIN
+	    && new_y <= SG_GISVIEWPORT_ZOOM_MAX) {
 
 		this->x = new_x;
 		this->y = new_y;
@@ -384,7 +384,7 @@ sg_ret VikingScale::set(double new_x, double new_y)
 
 bool VikingScale::zoom_in(int factor)
 {
-	if (this->x >= (SG_VIEWPORT_ZOOM_MIN * factor) && this->y >= (SG_VIEWPORT_ZOOM_MIN * factor)) {
+	if (this->x >= (SG_GISVIEWPORT_ZOOM_MIN * factor) && this->y >= (SG_GISVIEWPORT_ZOOM_MIN * factor)) {
 		this->x /= factor;
 		this->y /= factor;
 		return true;
@@ -398,7 +398,7 @@ bool VikingScale::zoom_in(int factor)
 
 bool VikingScale::zoom_out(int factor)
 {
-	if (this->x <= (SG_VIEWPORT_ZOOM_MAX / factor) && this->y <= (SG_VIEWPORT_ZOOM_MAX / factor)) {
+	if (this->x <= (SG_GISVIEWPORT_ZOOM_MAX / factor) && this->y <= (SG_GISVIEWPORT_ZOOM_MAX / factor)) {
 		this->x *= factor;
 		this->y *= factor;
 
@@ -419,15 +419,15 @@ QString VikingScale::pretty_print(CoordMode coord_mode) const
 
 	if (this->x_y_is_equal()) {
 		if ((int) this->x - this->x < 0.0) {
-			result = QObject::tr("%1 %2").arg(this->x, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION).arg(unit);
+			result = QObject::tr("%1 %2").arg(this->x, 0, 'f', SG_GISVIEWPORT_ZOOM_PRECISION).arg(unit);
 		} else {
 			/* xmpp should be a whole number so don't show useless .000 bit. */
 		        result = QObject::tr("%1 %2").arg((int) this->x).arg(unit);
 		}
 	} else {
 		result = QObject::tr("%1/%2f %3")
-			.arg(this->x, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
-			.arg(this->y, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION)
+			.arg(this->x, 0, 'f', SG_GISVIEWPORT_ZOOM_PRECISION)
+			.arg(this->y, 0, 'f', SG_GISVIEWPORT_ZOOM_PRECISION)
 			.arg(unit);
 	}
 
@@ -442,7 +442,7 @@ QString VikingScale::to_string(void) const
 	QString result;
 
 	if ((int) this->x - this->x < 0.0) {
-		result = QObject::tr("%1").arg(this->x, 0, 'f', SG_VIEWPORT_ZOOM_PRECISION);
+		result = QObject::tr("%1").arg(this->x, 0, 'f', SG_GISVIEWPORT_ZOOM_PRECISION);
 	} else {
 		/* xmpp should be a whole number so don't show useless .000 bit. */
 		result = QObject::tr("%1").arg((int) this->x);
@@ -473,7 +473,7 @@ bool VikingScale::operator==(const VikingScale & other) const
 
 bool VikingScale::value_is_valid(double value)
 {
-	return value >= SG_VIEWPORT_ZOOM_MIN && value <= SG_VIEWPORT_ZOOM_MAX;
+	return value >= SG_GISVIEWPORT_ZOOM_MIN && value <= SG_GISVIEWPORT_ZOOM_MAX;
 }
 
 
@@ -612,9 +612,9 @@ VikingScale & VikingScale::operator/=(double rhs)
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-sg_ret ViewportZoom::zoom_to_show_bbox(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox)
+sg_ret GisViewportZoom::zoom_to_show_bbox(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox)
 {
-	return ViewportZoom::zoom_to_show_bbox_common(viewport, mode, bbox, 1.0, true);
+	return GisViewportZoom::zoom_to_show_bbox_common(gisview, mode, bbox, 1.0, true);
 }
 
 
@@ -623,7 +623,7 @@ sg_ret ViewportZoom::zoom_to_show_bbox(Viewport * viewport, CoordMode mode, cons
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level.
  */
-sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position)
+sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, CoordMode mode, const LatLonBBox & bbox, double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere]. */
 	/* Then loop through zoom levels until provided positions are in view. */
@@ -641,7 +641,7 @@ sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mod
 		qDebug() << SG_PREFIX_E << "zoom is invalid:" << zoom;
 		return sg_ret::err;
 	}
-	if (sg_ret::ok != viewport->set_center_from_lat_lon(bbox.get_center_lat_lon(), save_position)) {
+	if (sg_ret::ok != gisview->set_center_from_lat_lon(bbox.get_center_lat_lon(), save_position)) {
 		qDebug() << SG_PREFIX_E << "Failed to set center from coordinate" << bbox.get_center_lat_lon();
 		return sg_ret::err;
 	}
@@ -649,15 +649,15 @@ sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mod
 	/* Never zoom in too far - generally not that useful, as too close! */
 	/* Always recalculate the 'best' zoom level. */
 
-	if (sg_ret::ok != viewport->set_viking_scale(zoom)) {
+	if (sg_ret::ok != gisview->set_viking_scale(zoom)) {
 		qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
 		return sg_ret::err;
 	}
 
 
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels. */
-	while (zoom <= SG_VIEWPORT_ZOOM_MAX) {
-		const LatLonBBox current_bbox = viewport->get_bbox();
+	while (zoom <= SG_GISVIEWPORT_ZOOM_MAX) {
+		const LatLonBBox current_bbox = gisview->get_bbox();
 		if (current_bbox.contains_bbox(bbox)) {
 			/* Found within zoom level. */
 			break;
@@ -665,7 +665,7 @@ sg_ret ViewportZoom::zoom_to_show_bbox_common(Viewport * viewport, CoordMode mod
 
 		/* Try next zoom level. */
 		zoom = zoom * 2;
-		if (sg_ret::ok != viewport->set_viking_scale(zoom)) {
+		if (sg_ret::ok != gisview->set_viking_scale(zoom)) {
 			qDebug() << SG_PREFIX_E << "Failed to set zoom" << zoom;
 			return sg_ret::err;
 		}

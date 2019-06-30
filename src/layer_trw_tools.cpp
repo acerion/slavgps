@@ -83,8 +83,8 @@ using namespace SlavGPS;
 extern LayerTool * trw_layer_tools[];
 
 
-static ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport);
-static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport) { return ToolStatus::Ignored; } /* TODO_2_LATER: implement the function for route finder tool. */
+static ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview);
+static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview) { return ToolStatus::Ignored; } /* TODO_2_LATER: implement the function for route finder tool. */
 
 
 
@@ -93,9 +93,9 @@ static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * tra
   ATM: Leave this as 'Track' only.
   Not overly bothered about having a snap to route trackpoint capability.
 */
-Trackpoint * LayerTRW::search_nearby_tp(Viewport * viewport, int x, int y)
+Trackpoint * LayerTRW::search_nearby_tp(GisViewport * gisview, int x, int y)
 {
-	TrackpointSearch search(x, y, viewport);
+	TrackpointSearch search(x, y, gisview);
 
 	this->tracks.track_search_closest_tp(search);
 
@@ -105,9 +105,9 @@ Trackpoint * LayerTRW::search_nearby_tp(Viewport * viewport, int x, int y)
 
 
 
-Waypoint * LayerTRW::search_nearby_wp(Viewport * viewport, int x, int y)
+Waypoint * LayerTRW::search_nearby_wp(GisViewport * gisview, int x, int y)
 {
-	WaypointSearch search(x, y, viewport);
+	WaypointSearch search(x, y, gisview);
 
 	this->waypoints.search_closest_wp(search);
 
@@ -121,23 +121,23 @@ Waypoint * LayerTRW::search_nearby_wp(Viewport * viewport, int x, int y)
   This method is for handling "move" event coming from generic Select tool.
   The generic Select tool doesn't know how to implement layer-specific movement, so the layer has to implement the behaviour itself.
 */
-bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, Viewport * viewport, LayerToolSelect * select_tool)
+bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	if (!select_tool->layer_edit_holding) {
 		return false;
 	}
 
-	Coord new_coord = viewport->screen_pos_to_coord(ev->x(), ev->y());
+	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 	/* Here always allow snapping back to the original location.
 	   This is useful when one decides not to move the thing after all.
 	   If one wants to move the item only a little bit then don't hold down the 'snap' key! */
 
 	/* See if the coordinates of the new "move" position should be snapped to existing nearby Trackpoint or Waypoint. */
-	this->get_nearby_snap_coordinates(new_coord, ev, viewport);
+	this->get_nearby_snap_coordinates(new_coord, ev, gisview);
 
 	/* The selected item is being moved to new position. */
-	select_tool->perform_move(viewport->coord_to_screen_pos(new_coord));
+	select_tool->perform_move(gisview->coord_to_screen_pos(new_coord));
 
 	return true;
 }
@@ -149,7 +149,7 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, Viewport * viewport, La
   This method is for handling "release" event coming from generic Select tool.
   The generic Select tool doesn't know how to implement layer-specific release, so the layer has to implement the behaviour itself.
 */
-bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport, LayerToolSelect * select_tool)
+bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	if (!select_tool->layer_edit_holding) {
 		/* The tool wasn't holding any item, so there is nothing to do on mouse release. */
@@ -168,10 +168,10 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
 		return false;
 	}
 
-	Coord new_coord = viewport->screen_pos_to_coord(ev->x(), ev->y());
+	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 	/* See if the coordinates of the new "release" position should be snapped to existing nearby Trackpoint or Waypoint. */
-	this->get_nearby_snap_coordinates(new_coord, ev, viewport);
+	this->get_nearby_snap_coordinates(new_coord, ev, gisview);
 
 	select_tool->perform_release();
 
@@ -213,7 +213,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, Viewport * viewport,
   The item found is automatically selected.
   This is a tool like feature but routed via the layer interface, since it's instigated by a 'global' layer tool in window.c
 */
-bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, LayerToolSelect * select_tool)
+bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	if (ev->button() != Qt::LeftButton) {
 		qDebug() << SG_PREFIX_I << "Skipping non-left button";
@@ -228,13 +228,13 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 		return false;
 	}
 
-	const LatLonBBox viewport_bbox = viewport->get_bbox();
+	const LatLonBBox viewport_bbox = gisview->get_bbox();
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
 	if (this->waypoints.is_visible() && BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Waypoints present in viewport, trying to catch waypoint";
-		WaypointSearch wp_search(ev->x(), ev->y(), viewport);
+		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
 		this->waypoints.search_closest_wp(wp_search);
 
 		if (wp_search.closest_wp) {
@@ -260,7 +260,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
 	qDebug() << SG_PREFIX_D << "No waypoint found, will look for tracks";
 
 	/* Used for both track and route lists. */
-	TrackpointSearch tp_search(ev->x(), ev->y(), viewport);
+	TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
 
 	if (this->tracks.is_visible() && BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox)) {
 		qDebug() << SG_PREFIX_I << "Tracks present in viewport, trying to catch track";
@@ -329,11 +329,11 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, Viewport * viewport, L
   The item found is automatically selected.
   This is a tool like feature but routed via the layer interface, since it's instigated by a 'global' layer tool in window.c
 */
-bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, Viewport * viewport, LayerToolSelect * select_tool)
+bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
 	/* Double-click will be handled by checking event->flags() in the function below, and calling proper handling method. */
 	qDebug() << SG_PREFIX_D;
-	return this->handle_select_tool_click(ev, viewport, select_tool);
+	return this->handle_select_tool_click(ev, gisview, select_tool);
 }
 
 
@@ -424,7 +424,7 @@ void LayerTRW::handle_select_tool_double_click_do_waypoint_selection(QMouseEvent
    This function is called when generic Select tool is selected from tool bar.
    It would be nice to somehow merge this function with code used when "edit track/route/waypoint" tool is selected.
 */
-bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * viewport)
+bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * gisview)
 {
 	if (ev->button() != Qt::RightButton) {
 		return false;
@@ -442,7 +442,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * view
 	if (track && track->is_visible()) { /* Track or Route. */
 		if (!track->name.isEmpty()) {
 
-			QMenu menu(viewport);
+			QMenu menu(gisview);
 
 			track->add_context_menu_items(menu, false);
 			menu.exec(QCursor::pos());
@@ -453,7 +453,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * view
 	Waypoint * wp = this->get_edited_wp(); /* Waypoint that is currently being selected/edited. */
 	if (wp && wp->is_visible()) {
 		if (!wp->name.isEmpty()) {
-			QMenu menu(viewport);
+			QMenu menu(gisview);
 
 			wp->add_context_menu_items(menu, false);
 			menu.exec(QCursor::pos());
@@ -468,7 +468,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, Viewport * view
 
 
 
-LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
+LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
 {
 	this->id_string = LAYER_TRW_TOOL_EDIT_WAYPOINT;
 
@@ -514,7 +514,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		   to click coordinates, but the pre-selected waypoint
 		   has priority. */
 
-		const ScreenPos wp_pos = this->viewport->coord_to_screen_pos(current_wp->coord);
+		const ScreenPos wp_pos = this->gisview->coord_to_screen_pos(current_wp->coord);
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
 		if (ScreenPos::is_close_enough(wp_pos, event_pos, WAYPOINT_SIZE_APPROX)) {
@@ -535,7 +535,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		   have any waypoint to operate on - yet. Try to find
 		   one close to click coordinates. */
 
-		WaypointSearch wp_search(ev->x(), ev->y(), viewport);
+		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
 		trw->get_waypoints_node().search_closest_wp(wp_search);
 
 		if (wp_search.closest_wp) {
@@ -613,13 +613,13 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 		return ToolStatus::Ignored;
 	}
 
-	Coord new_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 	/* See if the coordinates of the new "move" position should be snapped to existing nearby Trackpoint or Waypoint. */
-	trw->get_nearby_snap_coordinates(new_coord, ev, viewport);
+	trw->get_nearby_snap_coordinates(new_coord, ev, gisview);
 
 	/* Selected item is being moved to new position. */
-	this->perform_move(this->viewport->coord_to_screen_pos(new_coord));
+	this->perform_move(this->gisview->coord_to_screen_pos(new_coord));
 
 	return ToolStatus::Ack;
 }
@@ -643,10 +643,10 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 
 	switch (ev->button()) {
 	case Qt::LeftButton: {
-		Coord new_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+		Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 		/* See if the coordinates of the release position should be snapped to existing nearby Trackpoint or Waypoint. */
-		trw->get_nearby_snap_coordinates(new_coord, ev, this->viewport);
+		trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview);
 
 		this->perform_release();
 
@@ -673,18 +673,18 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
   Waypoint was used. If both conditions are true, put coordinates of
   such Trackpoint or Waypoint in @param point_coord.
 */
-bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, Viewport * viewport)
+bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview)
 {
 	bool snapped = false;
 
 	/* Snap to Trackpoint. */
-	if (this->get_nearby_snap_coordinates_tp(point_coord, ev, viewport)) {
+	if (this->get_nearby_snap_coordinates_tp(point_coord, ev, gisview)) {
 		snapped = true;
 	}
 
 	/* Snap to waypoint. */
 	if (ev->modifiers() & Qt::ShiftModifier) {
-		const Waypoint * wp = this->search_nearby_wp(viewport, ev->x(), ev->y());
+		const Waypoint * wp = this->search_nearby_wp(gisview, ev->x(), ev->y());
 		if (wp && wp != this->get_edited_wp()) {
 			point_coord = wp->coord;
 			snapped = true;
@@ -703,11 +703,11 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
   conditions are true, put coordinates of such Trackpoint in @param
   point_coord.
 */
-bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, Viewport * viewport)
+bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview)
 {
 	bool snapped = false;
 	if (ev->modifiers() & Qt::ControlModifier) {
-		const Trackpoint * tp = this->search_nearby_tp(viewport, ev->x(), ev->y());
+		const Trackpoint * tp = this->search_nearby_tp(gisview, ev->x(), ev->y());
 		const Track * trk = this->get_edited_track();
 		if (tp && trk && trk->has_selected_tp() && tp != trk->get_selected_tp()) {
 			point_coord = tp->coord;
@@ -721,7 +721,7 @@ bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent *
 
 
 
-LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport_, bool is_route) : LayerTool(window_, viewport_, LayerType::TRW)
+LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, GisViewport * gisview_, bool is_route) : LayerTool(window_, gisview_, LayerType::TRW)
 {
 	this->is_route_tool = is_route;
 	if (is_route) {
@@ -755,10 +755,10 @@ LayerToolTRWNewTrack::LayerToolTRWNewTrack(Window * window_, Viewport * viewport
 /*
  * Draw specified pixmap.
  */
-static int draw_sync(LayerTRW * trw, Viewport * viewport, const QPixmap & pixmap)
+static int draw_sync(LayerTRW * trw, GisViewport * gisview, const QPixmap & pixmap)
 {
 	if (1 /* trw->draw_sync_do*/ ) {
-		viewport->vpixmap.draw_pixmap(pixmap, 0, 0);
+		gisview->vpixmap.draw_pixmap(pixmap, 0, 0);
 		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'tree_item_changed()' signal for" << trw->get_name();
 		emit trw->tree_item_changed(trw->get_name());
 #ifdef K_OLD_IMPLEMENTATION
@@ -855,9 +855,9 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMous
 		this->ruler->paint_ruler(painter, Preferences::get_create_track_tooltip());
 
 
-		this->viewport->set_pixmap(marked_pixmap);
-		/* This will call Viewport::paintEvent(), triggering final render to screen. */
-		this->viewport->update();
+		this->gisview->set_pixmap(marked_pixmap);
+		/* This will call GisViewport::paintEvent(), triggering final render to screen. */
+		this->gisview->update();
 
 
 		/* Get elevation data. */
@@ -867,7 +867,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMous
 
 
 		/* Adjust elevation data (if available) for the current pointer position. */
-		const Coord cursor_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+		const Coord cursor_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 		const Altitude elev_new = DEMCache::get_elev_by_coord(cursor_coord, DemInterpolation::Best);
 		const Trackpoint * last_tpt = track->get_tp_last();
 		if (elev_new.is_valid()) {
@@ -955,7 +955,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEv
    \param ev - mouse event
    \param viewport - viewport, in which a click occurred
 */
-ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, Viewport * viewport)
+ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev, GisViewport * gisview)
 {
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "NULL track argument";
@@ -964,10 +964,10 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 
 
 	Trackpoint * tp = new Trackpoint();
-	tp->coord = viewport->screen_pos_to_coord(ev->x(), ev->y());
+	tp->coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 	/* Snap to other Trackpoint. */
-	trw->get_nearby_snap_coordinates_tp(tp->coord, ev, viewport);
+	trw->get_nearby_snap_coordinates_tp(tp->coord, ev, gisview);
 
 	tp->newsegment = false;
 	tp->timestamp.set_valid(false);
@@ -1022,10 +1022,10 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 		delete this->ruler;
 		this->ruler = NULL;
 	}
-	this->ruler = new Ruler(this->viewport, Preferences::get_unit_distance());
+	this->ruler = new Ruler(this->gisview, Preferences::get_unit_distance());
 	this->ruler->set_line_pen(trw->painter->current_track_new_point_pen);
 	this->ruler->set_begin(ev->x(), ev->y());
-	this->orig_viewport_pixmap = this->viewport->get_pixmap(); /* Save clean viewport (clean == without ruler drawn on top of it). */
+	this->orig_viewport_pixmap = this->gisview->get_pixmap(); /* Save clean viewport (clean == without ruler drawn on top of it). */
 
 
 	Track * track = NULL;
@@ -1063,7 +1063,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 		this->creation_in_progress = trw;
 	}
 
-	return create_new_trackpoint(trw, track, ev, this->viewport);
+	return create_new_trackpoint(trw, track, ev, this->gisview);
 }
 
 
@@ -1133,7 +1133,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_release(Layer * layer, QM
 
 
 
-LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
+LayerToolTRWNewWaypoint::LayerToolTRWNewWaypoint(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
 {
 	this->id_string = LAYER_TRW_TOOL_CREATE_WAYPOINT;
 
@@ -1158,7 +1158,7 @@ ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, Q
 	}
 
 	bool visible_with_parents = false;
-	const Coord coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+	const Coord coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 	if (trw->new_waypoint(coord, visible_with_parents, trw->get_window())) {
 		trw->get_waypoints_node().recalculate_bbox();
 		if (visible_with_parents) {
@@ -1172,7 +1172,7 @@ ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, Q
 
 
 
-LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
+LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
 {
 	this->id_string = LAYER_TRW_TOOL_EDIT_TRACKPOINT;
 
@@ -1199,7 +1199,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	TrackpointSearch tp_search(ev->x(), ev->y(), this->viewport);
+	TrackpointSearch tp_search(ev->x(), ev->y(), this->gisview);
 
 	if (ev->button() != Qt::LeftButton) {
 		return ToolStatus::Ignored;
@@ -1219,7 +1219,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 
 		const Trackpoint * tp = track->get_selected_tp();
-		const ScreenPos tp_pos = this->viewport->coord_to_screen_pos(tp->coord);
+		const ScreenPos tp_pos = this->gisview->coord_to_screen_pos(tp->coord);
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
 		if (track->is_visible() && ScreenPos::is_close_enough(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
@@ -1276,15 +1276,15 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 		return ToolStatus::Ignored;
 	}
 
-	Coord new_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 	/* Snap to Trackpoint */
-	trw->get_nearby_snap_coordinates_tp(new_coord, ev, this->viewport);
+	trw->get_nearby_snap_coordinates_tp(new_coord, ev, this->gisview);
 
 	// trw->get_selected_tp()->coord = new_coord;
 
 	/* Selected item is being moved to new position. */
-	this->perform_move(this->viewport->coord_to_screen_pos(new_coord));
+	this->perform_move(this->gisview->coord_to_screen_pos(new_coord));
 
 	return ToolStatus::Ack;
 }
@@ -1316,11 +1316,11 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 		return ToolStatus::Ignored;
 	}
 
-	Coord new_coord = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 	/* Snap to trackpoint */
 	if (ev->modifiers() & Qt::ControlModifier) {
-		Trackpoint * tp = trw->search_nearby_tp(this->viewport, ev->x(), ev->y());
+		Trackpoint * tp = trw->search_nearby_tp(this->gisview, ev->x(), ev->y());
 		if (tp && tp != track->get_selected_tp()) {
 			new_coord = tp->coord;
 		}
@@ -1344,7 +1344,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 
 
 
-LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
+LayerToolTRWExtendedRouteFinder::LayerToolTRWExtendedRouteFinder(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
 {
 	this->id_string = LAYER_TRW_TOOL_ROUTE_FINDER;
 
@@ -1420,7 +1420,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 
 	Track * track = trw->get_edited_track();
 
-	Coord tmp = this->viewport->screen_pos_to_coord(ev->x(), ev->y());
+	Coord tmp = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 	if (ev->button() == Qt::RightButton && track) {
 		this->undo(trw, track);
 
@@ -1430,7 +1430,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 	}
 	/* If we started the track but via undo deleted all the track points, begin again. */
 	else if (track && track->is_route() && !track->get_tp_first()) {
-		return create_new_trackpoint_route_finder(trw, track, ev, this->viewport);
+		return create_new_trackpoint_route_finder(trw, track, ev, this->gisview);
 
 	} else if ((track && track->is_route())
 		   || ((ev->modifiers() & Qt::ControlModifier) && track)) {
@@ -1524,7 +1524,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * la
 
 
 
-LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::TRW)
+LayerToolTRWShowPicture::LayerToolTRWShowPicture(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::TRW)
 {
 	this->id_string = LAYER_TRW_TOOL_SHOW_PICTURE;
 
@@ -1548,7 +1548,7 @@ ToolStatus LayerToolTRWShowPicture::internal_handle_mouse_click(Layer * layer, Q
 
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->viewport);
+	QString found_image = trw->get_waypoints_node().tool_show_picture_wp(ev->x(), ev->y(), this->gisview);
 	if (!found_image.isEmpty()) {
 		trw->show_wp_picture_cb();
 		return ToolStatus::Ack; /* Found a match. */

@@ -48,9 +48,9 @@ namespace SlavGPS {
 	class ViewportPixmap : public QWidget {
 		Q_OBJECT
 
-		friend class Viewport;
+		friend class GisViewport;
 		friend class Viewport2D;
-		friend class ViewportDecorations;
+		friend class GisViewportDecorations;
 		friend class ViewportMargin;
 	public:
 		ViewportPixmap(QWidget * parent = NULL);

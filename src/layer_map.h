@@ -63,7 +63,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class MapCacheObj;
 
 
@@ -119,8 +119,8 @@ namespace SlavGPS {
 	class LayerMapInterface : public LayerInterface {
 	public:
 		LayerMapInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
-		LayerToolContainer * create_tools(Window * window, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
+		LayerToolContainer * create_tools(Window * window, GisViewport * gisview);
 	};
 
 
@@ -135,9 +135,9 @@ namespace SlavGPS {
 		static void init(void);
 
 		/* Layer interface methods. */
-		void post_read(Viewport * viewport, bool from_file);
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
-		sg_ret draw_section(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br);
+		void post_read(GisViewport * gisview, bool from_file);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
+		sg_ret draw_section(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br);
 		QString get_tooltip(void) const;
 		void add_menu_items(QMenu & menu);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
@@ -153,8 +153,8 @@ namespace SlavGPS {
 		MapTypeID get_map_type_id(void) const;
 		static MapTypeID get_default_map_type_id(void);
 
-		void start_download_thread(Viewport * viewport, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode);
-		void download(Viewport * viewport, bool only_new);
+		void start_download_thread(GisViewport * gisview, const Coord & coord_ul, const Coord & coord_br, MapDownloadMode map_download_mode);
+		void download(GisViewport * gisview, bool only_new);
 		void download_section(const Coord & coord_ul, const Coord & coord_br, const VikingScale & viking_scale);
 
 		void download_onscreen_maps(MapDownloadMode map_download_mode);
@@ -163,7 +163,7 @@ namespace SlavGPS {
 		   Otherwise redraw of viewport is not needed. */
 		bool is_tile_visible(const TileInfo & tile_info);
 
-		VikingScale calculate_viking_scale(const Viewport * viewport);
+		VikingScale calculate_viking_scale(const GisViewport * gisview);
 
 		static void set_autodownload_default(bool autodownload);
 		static void set_cache_default(MapCacheLayout layout);
@@ -179,7 +179,7 @@ namespace SlavGPS {
 
 		  The grid lines are drawn at delta_x/delta_y intervals.
 		*/
-		static void draw_grid(Viewport * viewport, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height);
+		static void draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height);
 
 
 		MapTypeID map_type_id = MapTypeID::Initial;
@@ -207,7 +207,7 @@ namespace SlavGPS {
 		Coord redownload_ul; /* Right click menu only. */
 		Coord redownload_br;
 
-		Viewport * redownload_viewport = NULL;
+		GisViewport * redownload_gisview = NULL;
 		QString file_full_path;
 
 #ifdef HAVE_SQLITE3_H
@@ -222,9 +222,9 @@ namespace SlavGPS {
 		TileGeometry find_scaled_down_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
 		TileGeometry find_scaled_up_tile(const TileInfo & tile_info, const TileGeometry & tile_geometry, const PixmapScale & pixmap_scale, const QString & map_type_string);
 
-		void draw_existence(Viewport * viewport, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj);
+		void draw_existence(GisViewport * gisview, const TileInfo & tile_info, const TileGeometry & tile_geometry, const MapSource * map_source, const MapCacheObj & map_cache_obj);
 
-		bool should_start_autodownload(Viewport * viewport);
+		bool should_start_autodownload(GisViewport * gisview);
 
 		QPixmap get_tile_pixmap(const QString & map_type_string, const TileInfo & tile_info, const PixmapScale & scale);
 		QPixmap create_pixmap_from_file(const QString & file_full_path);
@@ -250,7 +250,7 @@ namespace SlavGPS {
 
 	class LayerToolMapsDownload : public LayerTool {
 	public:
-		LayerToolMapsDownload(Window * window, Viewport * viewport);
+		LayerToolMapsDownload(Window * window, GisViewport * gisview);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;

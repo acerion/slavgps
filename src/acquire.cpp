@@ -84,7 +84,7 @@ AcquireWorker::AcquireWorker(DataSource * new_data_source, const AcquireContext 
 
 
 	this->acquire_context.window               = new_acquire_context.window;
-	this->acquire_context.viewport             = new_acquire_context.viewport;
+	this->acquire_context.gisview              = new_acquire_context.gisview;
 	this->acquire_context.top_level_layer      = new_acquire_context.top_level_layer;
 	this->acquire_context.selected_layer       = new_acquire_context.selected_layer;
 	this->acquire_context.target_trw           = new_acquire_context.target_trw;
@@ -147,7 +147,7 @@ void AcquireWorker::configure_target_layer(DataSourceMode mode)
 
 	if (this->acquire_context.target_trw_allocated) {
 		this->acquire_context.target_trw = new LayerTRW();
-		this->acquire_context.target_trw->set_coord_mode(this->acquire_context.viewport->get_coord_mode());
+		this->acquire_context.target_trw->set_coord_mode(this->acquire_context.gisview->get_coord_mode());
 		this->acquire_context.target_trw->set_name(this->data_source->layer_title);
 	}
 
@@ -195,10 +195,10 @@ void AcquireWorker::finalize_after_completion(void)
 
 
 	this->acquire_context.target_trw->attach_children_to_tree();
-	this->acquire_context.target_trw->post_read(this->acquire_context.viewport, true);
+	this->acquire_context.target_trw->post_read(this->acquire_context.gisview, true);
 	/* View this data if desired - must be done after post read (so that the bounds are known). */
 	if (this->data_source && this->data_source->autoview) {
-		this->acquire_context.target_trw->move_viewport_to_show_all(this->acquire_context.viewport);
+		this->acquire_context.target_trw->move_viewport_to_show_all(this->acquire_context.gisview);
 		// this->acquire_context.panel->emit_items_tree_updated_cb("acquire completed");
 	}
 }
@@ -510,12 +510,12 @@ sg_ret Acquire::register_bfilter(DataSource * bfilter)
 
 
 
-void Acquire::set_context(Window * new_window, Viewport * new_viewport, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
+void Acquire::set_context(Window * new_window, GisViewport * new_gisview, LayerAggregate * new_top_level_layer, Layer * new_selected_layer)
 {
 	qDebug() << SG_PREFIX_I;
 
 	g_acquire_context->window = new_window;
-	g_acquire_context->viewport = new_viewport;
+	g_acquire_context->gisview = new_gisview;
 	g_acquire_context->top_level_layer = new_top_level_layer;
 	g_acquire_context->selected_layer = new_selected_layer;
 }
@@ -744,7 +744,7 @@ LoadStatus AcquireOptions::universal_import_fn(LayerTRW * trw, DownloadOptions *
 void AcquireContext::print_debug(const char * function, int line) const
 {
 	qDebug() << SG_PREFIX_I << "@@@@@@";
-	qDebug() << SG_PREFIX_I << "@@@@@@    layer" << (quintptr) this->target_trw << function << line;
-	qDebug() << SG_PREFIX_I << "@@@@@@ viewport" << (quintptr) this->viewport << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@   layer" << (quintptr) this->target_trw << function << line;
+	qDebug() << SG_PREFIX_I << "@@@@@@ gisview" << (quintptr) this->gisview << function << line;
 	qDebug() << SG_PREFIX_I << "@@@@@@";
 }

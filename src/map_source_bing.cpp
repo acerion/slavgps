@@ -192,7 +192,7 @@ const QString MapSourceBing::get_server_path(const TileInfo & src) const
 
 
 
-void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingScale & viking_scale)
+void MapSourceBing::add_copyright(GisViewport * gisview, const LatLonBBox & bbox, const VikingScale & viking_scale)
 {
 	qDebug() << SG_PREFIX_D << "Looking for" << bbox << "at scale" << viking_scale.get_x();
 
@@ -216,7 +216,7 @@ void MapSourceBing::add_copyright(Viewport * viewport, const LatLonBBox & bbox, 
 		    (tile_scale.get_tile_zoom_level()) > current->zoom_min &&
 		    (tile_scale.get_tile_zoom_level()) < current->zoom_max) {
 
-			viewport->add_attribution(current->attribution);
+			gisview->add_attribution(current->attribution);
 			qDebug() << SG_PREFIX_D << "Found match:" << current->attribution;
 		}
 	}

@@ -100,7 +100,7 @@ namespace SlavGPS {
 
 		bool handle_selection_in_tree(void);
 
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 
 		QString sublayer_rename_request(const QString & new_name);
 

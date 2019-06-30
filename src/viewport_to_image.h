@@ -23,7 +23,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class Window;
 
 
@@ -42,7 +42,7 @@ namespace SlavGPS {
 			FileKMZ,
 		};
 
-		ViewportToImage(Viewport * viewport, ViewportToImage::SaveMode save_mode, Window * window);
+		ViewportToImage(GisViewport * gisview, ViewportToImage::SaveMode save_mode, Window * window);
 		~ViewportToImage();
 
 		bool run_dialog(const QString & title);
@@ -54,7 +54,7 @@ namespace SlavGPS {
 		sg_ret save_to_image(const QString & full_path);
 		sg_ret save_to_dir(const QString & full_path);
 
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 		ViewportToImage::SaveMode save_mode;
 		Window * window = NULL;
 
@@ -75,7 +75,7 @@ namespace SlavGPS {
 	class ViewportSaveDialog : public BasicDialog {
 		Q_OBJECT
 	public:
-		ViewportSaveDialog(QString const & title, Viewport * viewport, QWidget * parent = NULL);
+		ViewportSaveDialog(QString const & title, GisViewport * gisview, QWidget * parent = NULL);
 		~ViewportSaveDialog();
 
 		void build_ui(ViewportToImage::SaveMode save_mode, ViewportToImage::FileFormat file_format);
@@ -95,7 +95,7 @@ namespace SlavGPS {
 		void handle_changed_height_cb(int h);
 
 	private:
-		Viewport * viewport = NULL;
+		GisViewport * gisview = NULL;
 
 		QSpinBox * width_spin = NULL;
 		QSpinBox * height_spin = NULL;

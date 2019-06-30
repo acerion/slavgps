@@ -125,7 +125,7 @@ void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	QPoint t = this->view->viewport()->pos();
 
 	qDebug() << SG_PREFIX_D << "Event @" << orig.x() << orig.y();
-	qDebug() << SG_PREFIX_D << "Viewport @" << v;
+	qDebug() << SG_PREFIX_D << "GisViewport @" << v;
 	qDebug() << SG_PREFIX_D << "Tree view @" << t;
 
 	QPoint point;

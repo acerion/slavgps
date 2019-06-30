@@ -76,10 +76,10 @@ OnlineService_format::~OnlineService_format()
 
 
 /* TODO_LATER: compare with QString OnlineService_query::get_url_for_viewport(Viewport * viewport) */
-QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const Coord * a_coord)
+QString OnlineService_format::get_url_at_position(GisViewport * a_gisview, const Coord * a_coord)
 {
 	/* Center values. */
-	LatLon center_lat_lon = a_viewport->get_center().get_lat_lon();
+	LatLon center_lat_lon = a_gisview->get_center().get_lat_lon();
 	QString center_lat;
 	QString center_lon;
 	center_lat_lon.to_strings_raw(center_lat, center_lon);
@@ -99,8 +99,8 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 
 	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	TileZoomLevel tile_zoom_level(TileZoomLevels::Default); /* Zoomed in by default. */
-	if (a_viewport->get_viking_scale().x_y_is_equal()) {
-		tile_zoom_level = a_viewport->get_viking_scale().to_tile_zoom_level();
+	if (a_gisview->get_viking_scale().x_y_is_equal()) {
+		tile_zoom_level = a_gisview->get_viking_scale().to_tile_zoom_level();
 	}
 
 	int len = this->url_format_code.size();
@@ -114,7 +114,7 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 		;
 	}
 
-	const LatLonBBoxStrings bbox_strings = a_viewport->get_bbox().values_to_c_strings();
+	const LatLonBBoxStrings bbox_strings = a_gisview->get_bbox().values_to_c_strings();
 
 	QString url = this->url_format;
 
@@ -145,7 +145,7 @@ QString OnlineService_format::get_url_at_position(Viewport * a_viewport, const C
 
 
 
-QString OnlineService_format::get_url_for_viewport(Viewport * a_viewport)
+QString OnlineService_format::get_url_for_viewport(GisViewport * a_gisview)
 {
-	return this->get_url_at_position(a_viewport, NULL);
+	return this->get_url_at_position(a_gisview, NULL);
 }

@@ -40,7 +40,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
@@ -51,18 +51,18 @@ namespace SlavGPS {
 		ExternalTool(const QString & tool_label);
 		~ExternalTool();
 
-		void set_viewport(Viewport * viewport);
+		void set_viewport(GisViewport * gisview);
 		void set_coord(const Coord & coord);
 
 		const QString & get_label(void) const;
 
-		virtual void run_at_current_position(Viewport * viewport) = 0;
-		virtual void run_at_position(Viewport * viewport, const Coord & coord) = 0;
+		virtual void run_at_current_position(GisViewport * gisview) = 0;
+		virtual void run_at_position(GisViewport * gisview, const Coord & coord) = 0;
 
 	protected:
 		QString label;
 
-		Viewport * m_viewport = NULL; /* Just a reference. */
+		GisViewport * m_gisview = NULL; /* Just a reference. */
 		Coord m_coord;
 
 	public slots:

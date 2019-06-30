@@ -53,8 +53,8 @@ namespace SlavGPS {
 
 	class MapCacheObj;
 	enum class MapCacheLayout;
-	enum class ViewportDrawMode;
-	class Viewport;
+	enum class GisViewportDrawMode;
+	class GisViewport;
 	class VikingScale;
 	class PixmapScale;
 	class TileInfo;
@@ -150,10 +150,10 @@ namespace SlavGPS {
 
 		virtual MapSource & operator=(const MapSource & other);
 
-		virtual void add_copyright(Viewport * viewport, const LatLonBBox & bbox, const VikingScale & viking_scale);
+		virtual void add_copyright(GisViewport * gisview, const LatLonBBox & bbox, const VikingScale & viking_scale);
 		QString get_license(void) const;
 		QString get_license_url(void) const;
-		const ViewportLogo & get_logo(void) const;
+		const GisViewportLogo & get_logo(void) const;
 
 		const QString get_server_hostname(void) const;
 		virtual const QString get_server_path(const TileInfo & src) const;
@@ -164,7 +164,7 @@ namespace SlavGPS {
 		QString get_label(void) const;
 		uint16_t get_tilesize_x(void) const;
 		uint16_t get_tilesize_y(void) const;
-		ViewportDrawMode get_drawmode(void) const;
+		GisViewportDrawMode get_drawmode(void) const;
 
 		virtual QPixmap get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
 		virtual QStringList get_tile_description(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const;
@@ -196,7 +196,7 @@ namespace SlavGPS {
 		void set_label(const QString & label);
 		void set_tilesize_x(uint16_t tilesize_x);
 		void set_tilesize_y(uint16_t tilesize_y);
-		void set_drawmode(ViewportDrawMode drawmode);
+		void set_drawmode(GisViewportDrawMode drawmode);
 		void set_copyright(const QString & copyright);
 		void set_license(const QString & license);
 		void set_license_url(const QString & license_url);
@@ -209,7 +209,7 @@ namespace SlavGPS {
 		QString copyright;     /* The copyright of the map source. */
 		QString license;       /* The license of the map source. */
 		QString license_url;   /* The URL of the license of the map source. */
-		ViewportLogo logo;
+		GisViewportLogo logo;
 
 		QString map_type_string;  /* The name of the map that may be used as the file cache directory. Non-translatable. */
 		MapTypeID map_type_id;    /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
@@ -218,7 +218,7 @@ namespace SlavGPS {
 		uint16_t tilesize_x; /* The size of the tile (x). */
 		uint16_t tilesize_y; /* The size of the tile (x). */
 
-		ViewportDrawMode drawmode; /* The mode used to draw map. */
+		GisViewportDrawMode drawmode; /* The mode used to draw map. */
 		QString file_extension;    /* The file extension of tile files on disk. */
 
 		DownloadOptions dl_options;

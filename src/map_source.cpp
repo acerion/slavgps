@@ -68,7 +68,7 @@ MapSource::MapSource()
 	tilesize_x = 256;
 	tilesize_y = 256;
 
-	drawmode = ViewportDrawMode::Mercator; /* ViewportDrawMode::UTM */
+	drawmode = GisViewportDrawMode::Mercator; /* ViewportDrawMode::UTM */
 	this->file_extension = ".png";
 
 	this->dl_options.file_validator_fn = map_file_validator_fn;
@@ -233,7 +233,7 @@ void MapSource::set_tilesize_y(uint16_t tilesize_y_)
 
 
 
-void MapSource::set_drawmode(ViewportDrawMode new_drawmode)
+void MapSource::set_drawmode(GisViewportDrawMode new_drawmode)
 {
 	this->drawmode = new_drawmode;
 }
@@ -280,7 +280,7 @@ void MapSource::set_file_extension(const QString & new_file_extension)
    @bbox: bounding box of interest
    @zoom: the zoom level of interest
 */
-void MapSource::add_copyright(Viewport * viewport, const LatLonBBox &  bbox, const VikingScale & viking_scale)
+void MapSource::add_copyright(GisViewport * gisview, const LatLonBBox &  bbox, const VikingScale & viking_scale)
 {
 	return;
 }
@@ -304,7 +304,7 @@ QString MapSource::get_license_url(void) const
 
 
 
-const ViewportLogo & MapSource::get_logo(void) const
+const GisViewportLogo & MapSource::get_logo(void) const
 {
 	return this->logo;
 }
@@ -353,7 +353,7 @@ uint16_t MapSource::get_tilesize_y(void) const
 
 
 
-ViewportDrawMode MapSource::get_drawmode(void) const
+GisViewportDrawMode MapSource::get_drawmode(void) const
 {
 	return this->drawmode;
 }

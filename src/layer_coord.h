@@ -35,7 +35,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 
 
 
@@ -43,7 +43,7 @@ namespace SlavGPS {
 	class LayerCoordInterface : public LayerInterface {
 	public:
 		LayerCoordInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
 	};
 
 
@@ -55,13 +55,13 @@ namespace SlavGPS {
 		~LayerCoord() {};
 
 		/* Layer interface methods. */
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 
 	private:
-		void draw_latlon(Viewport * viewport);
-		void draw_utm(Viewport * viewport);
+		void draw_latlon(GisViewport * gisview);
+		void draw_utm(GisViewport * gisview);
 
 		QColor color_deg;       /* Color of "degrees" coordinate lines. */
 		QColor color_min;       /* Color of "minutes" coordinate lines. */

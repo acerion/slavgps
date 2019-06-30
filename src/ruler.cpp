@@ -51,10 +51,10 @@ using namespace SlavGPS;
 
 
 
-Ruler::Ruler(Viewport * new_viewport, DistanceUnit new_distance_unit)
+Ruler::Ruler(GisViewport * new_gisview, DistanceUnit new_distance_unit)
 {
 	this->distance_unit = new_distance_unit;
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 
 	this->line_pen.setColor(QColor("black"));
 	this->line_pen.setWidth(1);
@@ -73,7 +73,7 @@ void Ruler::set_begin(int begin_x, int begin_y)
 	this->x1 = begin_x;
 	this->y1 = begin_y;
 
-	this->begin_coord = this->viewport->screen_pos_to_coord(begin_x, begin_y);
+	this->begin_coord = this->gisview->screen_pos_to_coord(begin_x, begin_y);
 }
 
 
@@ -84,7 +84,7 @@ void Ruler::set_end(int end_x, int end_y)
 	this->x2 = end_x;
 	this->y2 = end_y;
 
-	this->end_coord = this->viewport->screen_pos_to_coord(end_x, end_y);
+	this->end_coord = this->gisview->screen_pos_to_coord(end_x, end_y);
 
 	this->len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	this->dx = (x2 - x1) / len * 10;
@@ -92,7 +92,7 @@ void Ruler::set_end(int end_x, int end_y)
 	this->c = cos(DEG2RAD(15.0));
 	this->s = sin(DEG2RAD(15.0));
 
-	this->viewport->compute_bearing(this->x1, this->y1, this->x2, this->y2, this->angle, this->base_angle);
+	this->gisview->compute_bearing(this->x1, this->y1, this->x2, this->y2, this->angle, this->base_angle);
 
 	this->line_distance = Coord::distance_2(this->end_coord, this->begin_coord);
 }
@@ -110,11 +110,11 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 		int tmp_y1 = this->y1;
 		int tmp_x2 = this->x2;
 		int tmp_y2 = this->y2;
-		Viewport::clip_line(&tmp_x1, &tmp_y1, &tmp_x2, &tmp_y2);
+		GisViewport::clip_line(&tmp_x1, &tmp_y1, &tmp_x2, &tmp_y2);
 		painter.drawLine(tmp_x1, tmp_y1, tmp_x2, tmp_y2);
 
 
-		Viewport::clip_line(&this->x1, &this->y1, &this->x2, &this->y2);
+		GisViewport::clip_line(&this->x1, &this->y1, &this->x2, &this->y2);
 
 		painter.drawLine(this->x1,            this->y1,            this->x2,                                             this->y2);
 		painter.drawLine(this->x1 - this->dy, this->y1 + this->dx, this->x1 + this->dy,                                  this->y1 - this->dx);
@@ -219,7 +219,7 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 			label1_y = (this->y1 + this->y2) / 2 - label1_rect.height() / 2 + this->dx;
 		}
 
-		if (label1_x < -5 || label1_y < -5 || label1_x > this->viewport->vpixmap.get_width() + 5 || label1_y > this->viewport->vpixmap.get_height() + 5) {
+		if (label1_x < -5 || label1_y < -5 || label1_x > this->gisview->vpixmap.get_width() + 5 || label1_y > this->gisview->vpixmap.get_height() + 5) {
 			label1_x = this->x2 + 10;
 			label1_y = this->y2 - 5;
 		}

@@ -59,7 +59,7 @@ namespace SlavGPS {
 
 
 	class Window;
-	class Viewport;
+	class GisViewport;
 	class Viewport2D;
 	class ViewportPixmap;
 	class LayerTRW;
@@ -89,7 +89,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackProfileDialog() {};
-		TrackProfileDialog(QString const & title, Track * trk, Viewport * main_viewport, QWidget * parent = NULL);
+		TrackProfileDialog(QString const & title, Track * trk, GisViewport * main_gisview, QWidget * parent = NULL);
 		~TrackProfileDialog();
 
 		void clear_image(QPixmap * pix);
@@ -107,7 +107,7 @@ namespace SlavGPS {
 
 
 		LayerTRW * trw = NULL;
-		Viewport * main_viewport = NULL;
+		GisViewport * main_gisview = NULL;
 		Track * trk = NULL;
 
 		std::vector<ProfileView *> graphs;
@@ -121,8 +121,8 @@ namespace SlavGPS {
 		sg_ret paint_left_cb(Viewport2D * viewport);
 		sg_ret paint_bottom_cb(Viewport2D * viewport);
 
-		void handle_cursor_move_cb(Viewport * viewport, QMouseEvent * ev);
-		void handle_mouse_button_release_cb(Viewport * viewport, QMouseEvent * event);
+		void handle_cursor_move_cb(GisViewport * gisview, QMouseEvent * ev);
+		void handle_mouse_button_release_cb(GisViewport * gisview, QMouseEvent * event);
 
 	private:
 		/* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
@@ -154,7 +154,7 @@ namespace SlavGPS {
 	class ProfileView : public QWidget {
 		Q_OBJECT
 	public:
-		ProfileView(ViewportDomain x_domain, ViewportDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
+		ProfileView(GisViewportDomain x_domain, GisViewportDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
 		virtual ~ProfileView();
 
 		virtual void draw_additional_indicators(Track * trk) {};
@@ -164,7 +164,7 @@ namespace SlavGPS {
 		void configure_labels(void);
 		void create_widgets_layout(void);
 
-		void create_viewport(TrackProfileDialog * dialog, ViewportDomain x_domain, ViewportDomain y_domain);
+		void create_viewport(TrackProfileDialog * dialog, GisViewportDomain x_domain, GisViewportDomain y_domain);
 		QString get_graph_title(void) const;
 
 		sg_ret set_pos_y(ScreenPos & screen_pos);
@@ -192,7 +192,7 @@ namespace SlavGPS {
 		void draw_speed_dist(Track * trk);
 
 		/* Check whether given combination of x/y domains is supported by ProfileView. */
-		static bool supported_domains(ViewportDomain x_domain, ViewportDomain y_domain);
+		static bool supported_domains(GisViewportDomain x_domain, GisViewportDomain y_domain);
 
 		void draw_x_grid_inside(const Track * trk);
 		void draw_x_grid_outside(const Track * trk);
@@ -334,7 +334,7 @@ namespace SlavGPS {
 
 
 
-	void track_profile_dialog(Track * trk, Viewport * main_viewport, QWidget * parent);
+	void track_profile_dialog(Track * trk, GisViewport * main_gisview, QWidget * parent);
 
 
 

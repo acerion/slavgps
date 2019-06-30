@@ -47,7 +47,7 @@ namespace SlavGPS {
 
 
 	/* Forward declarations. */
-	class Viewport;
+	class GisViewport;
 	class LayersPanel;
 	class Track;
 	class Waypoint;
@@ -58,7 +58,7 @@ namespace SlavGPS {
 	class LayerAggregateInterface : public LayerInterface {
 	public:
 		LayerAggregateInterface();
-		Layer * unmarshall(Pickle & pickle, Viewport * viewport);
+		Layer * unmarshall(Pickle & pickle, GisViewport * gisview);
 	};
 
 
@@ -73,7 +73,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 
-		void draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected);
+		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		void marshall(Pickle & pickle);
 		void change_coord_mode(CoordMode mode);
@@ -109,8 +109,8 @@ namespace SlavGPS {
 
 		Layer * get_top_visible_layer_of_type(LayerType layer_type);
 		void get_all_layers_of_type(std::list<const Layer *> & layers, LayerType layer_type, bool include_invisible) const;
-		bool handle_select_tool_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
-		bool handle_select_tool_double_click(QMouseEvent * event, Viewport * viewport, LayerToolSelect * select_tool);
+		bool handle_select_tool_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
+		bool handle_select_tool_double_click(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
 
 		int get_child_layers_count(void) const;
 		std::list<Layer const *> get_child_layers(void) const;

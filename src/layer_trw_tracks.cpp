@@ -422,7 +422,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search)
 
 		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 
-			const ScreenPos tp_pos = search.viewport->coord_to_screen_pos((*iter)->coord);
+			const ScreenPos tp_pos = search.gisview->coord_to_screen_pos((*iter)->coord);
 
 			const int dist_x = abs(tp_pos.x - search.x);
 			const int dist_y = abs(tp_pos.y - search.y);
@@ -887,7 +887,7 @@ bool LayerTRWTracks::handle_selection_in_tree(void)
  * Generally for drawing all tracks or routes or waypoints
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	if (!this->is_in_tree()) {
 		/* This subnode hasn't been added to tree yet. */
@@ -919,7 +919,7 @@ void LayerTRWTracks::draw_tree_item(Viewport * viewport, bool highlight_selected
 	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
 #endif
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-			(*iter)->draw_tree_item(viewport, highlight_selected, item_is_selected);
+			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);
 		}
 #ifdef K_TODO_MAYBE
 	}
@@ -981,12 +981,12 @@ void LayerTRWTracks::sort_order_timestamp_descend_cb(void)
 
 
 
-TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, Viewport * new_viewport)
+TrackpointSearch::TrackpointSearch(int ev_x, int ev_y, GisViewport * new_gisview)
 {
 	this->x = ev_x;
 	this->y = ev_y;
-	this->viewport = new_viewport;
-	this->bbox = this->viewport->get_bbox();
+	this->gisview = new_gisview;
+	this->bbox = this->gisview->get_bbox();
 }
 
 

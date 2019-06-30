@@ -184,7 +184,7 @@ LayerMapnikInterface::LayerMapnikInterface()
 
 
 
-LayerToolContainer * LayerMapnikInterface::create_tools(Window * window, Viewport * viewport)
+LayerToolContainer * LayerMapnikInterface::create_tools(Window * window, GisViewport * gisview)
 {
 	/* This method should be called only once. */
 	static bool created = false;
@@ -194,7 +194,7 @@ LayerToolContainer * LayerMapnikInterface::create_tools(Window * window, Viewpor
 
 	auto tools = new LayerToolContainer;
 
-	LayerTool * tool = new LayerToolMapnikFeature(window, viewport);
+	LayerTool * tool = new LayerToolMapnikFeature(window, gisview);
 	tools->insert({{ tool->id_string, tool }});
 
 	created = true;
@@ -393,7 +393,7 @@ void LayerMapnik::set_cache_dir(const QString & name_)
 
 
 
-Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerMapnikInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerMapnik * layer = new LayerMapnik();
 
@@ -583,7 +583,7 @@ sg_ret LayerMapnik::carto_load(void)
 
 
 
-void LayerMapnik::post_read(Viewport * viewport, bool from_file)
+void LayerMapnik::post_read(GisViewport * gisview, bool from_file)
 {
 	if (this->should_run_carto()) {
 		/* Don't load the XML config if carto load fails. */
@@ -834,20 +834,20 @@ QPixmap LayerMapnik::get_pixmap(const TileInfo & tile_info)
 
 
 
-void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerMapnik::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	if (!this->xml_map_file_loaded) {
 		return;
 	}
 
-	if (viewport->get_drawmode() != ViewportDrawMode::Mercator) {
+	if (gisview->get_drawmode() != GisViewportDrawMode::Mercator) {
 		this->get_window()->get_statusbar()->set_message(StatusBarField::Info, tr("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}
 
 	const QString copyright = this->mw.get_copyright();
 	if (!copyright.isEmpty()) {
-		viewport->add_attribution(copyright);
+		gisview->add_attribution(copyright);
 	}
 
 	/* Split rendering of a map into a grid for the current
@@ -858,14 +858,14 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 
 	TilesRange range;
 	TileInfo tile_iter; /* Will be set by get_tiles_range() to first tile in range (to upper-left tile). */
-	if (sg_ret::ok != this->get_tiles_range(viewport, range, tile_iter)) {
+	if (sg_ret::ok != this->get_tiles_range(gisview, range, tile_iter)) {
 		qDebug() << SG_PREFIX_E << "Failed to get tiles range for current viewport";
 		return;
 	}
 
 	for (tile_iter.x = range.x_first; tile_iter.x <= range.x_last; tile_iter.x++) {
 		for (tile_iter.y = range.y_first; tile_iter.y <= range.y_last; tile_iter.y++) {
-			this->draw_tile(viewport, tile_iter);
+			this->draw_tile(gisview, tile_iter);
 		}
 	}
 
@@ -879,7 +879,7 @@ void LayerMapnik::draw_tree_item(Viewport * viewport, bool highlight_selected, b
 		tile_iter.x = range.x_first;
 		tile_iter.y = range.y_first;
 
-		this->draw_grid(viewport, range, tile_iter);
+		this->draw_grid(gisview, range, tile_iter);
 	}
 }
 
@@ -903,10 +903,10 @@ void LayerMapnik::flush_map_cache_cb(void)
 
 void LayerMapnik::reload_map_cb(void)
 {
-	Viewport * viewport = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_viewport();
 
-	this->post_read(viewport, false);
-	this->draw_tree_item(viewport, false, false);
+	this->post_read(gisview, false);
+	this->draw_tree_item(gisview, false, false);
 }
 
 
@@ -928,8 +928,8 @@ void LayerMapnik::run_carto_cb(void)
 
 	QString msg;
 	if (sg_ret::ok == this->mw.load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
-		Viewport * viewport = ThisApp::get_main_viewport();
-		this->draw_tree_item(viewport, false, false);
+		GisViewport * gisview = ThisApp::get_main_viewport();
+		this->draw_tree_item(gisview, false, false);
 	} else {
 		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
 	}
@@ -1040,7 +1040,7 @@ void LayerMapnik::tile_info_cb(void)
 
 
 
-LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, Viewport * viewport_) : LayerTool(window_, viewport_, LayerType::Mapnik)
+LayerToolMapnikFeature::LayerToolMapnikFeature(Window * window_, GisViewport * gisview_) : LayerTool(window_, gisview_, LayerType::Mapnik)
 {
 	this->id_string = "sg.tool.layer_mapnik.feature";
 
@@ -1068,10 +1068,10 @@ ToolStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEve
 ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
-		const Coord coord = tool->viewport->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
+		const Coord coord = tool->gisview->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
 		this->clicked_lat_lon = coord.get_lat_lon();
 
-		this->clicked_viking_scale = tool->viewport->get_viking_scale();
+		this->clicked_viking_scale = tool->gisview->get_viking_scale();
 
 		if (!this->right_click_menu) {
 			QAction * action = NULL;
@@ -1149,7 +1149,7 @@ bool LayerMapnik::should_run_carto(void) const
 
 
 
-sg_ret LayerMapnik::draw_tile(Viewport * viewport, const TileInfo & tile_info)
+sg_ret LayerMapnik::draw_tile(GisViewport * gisview, const TileInfo & tile_info)
 {
 	const QPixmap pixmap = this->get_pixmap(tile_info);
 	if (!pixmap.isNull()) {
@@ -1159,11 +1159,11 @@ sg_ret LayerMapnik::draw_tile(Viewport * viewport, const TileInfo & tile_info)
 		/* x/y coordinate of u-l corner of a pixmap in viewport's x/y coordinates. */
 		int viewport_x;
 		int viewport_y;
-		viewport->coord_to_screen_pos(Coord(pixmap_lat_lon_ul, CoordMode::LatLon), &viewport_x, &viewport_y);
+		gisview->coord_to_screen_pos(Coord(pixmap_lat_lon_ul, CoordMode::LatLon), &viewport_x, &viewport_y);
 
 		const int pixmap_x = 0;
 		const int pixmap_y = 0;
-		viewport->vpixmap.draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
+		gisview->vpixmap.draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
 	}
 
 	return sg_ret::ok;
@@ -1172,14 +1172,14 @@ sg_ret LayerMapnik::draw_tile(Viewport * viewport, const TileInfo & tile_info)
 
 
 
-sg_ret LayerMapnik::get_tiles_range(const Viewport * viewport, TilesRange & range, TileInfo & tile_info_ul)
+sg_ret LayerMapnik::get_tiles_range(const GisViewport * gisview, TilesRange & range, TileInfo & tile_info_ul)
 {
-	const Coord coord_ul = viewport->screen_pos_to_coord(0, 0);
-	const Coord coord_br = viewport->screen_pos_to_coord(viewport->vpixmap.get_width(), viewport->vpixmap.get_height());
+	const Coord coord_ul = gisview->screen_pos_to_coord(0, 0);
+	const Coord coord_br = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
 	const LatLon lat_lon_ul = coord_ul.get_lat_lon();
 	const LatLon lat_lon_br = coord_br.get_lat_lon();
 
-	const VikingScale viking_scale = viewport->get_viking_scale();
+	const VikingScale viking_scale = gisview->get_viking_scale();
 
 	if (sg_ret::ok != MapUtils::lat_lon_to_iTMS(lat_lon_ul, viking_scale, tile_info_ul)) {
 		qDebug() << SG_PREFIX_E << "Failed to convert ul";
@@ -1199,12 +1199,12 @@ sg_ret LayerMapnik::get_tiles_range(const Viewport * viewport, TilesRange & rang
 
 
 
-void LayerMapnik::draw_grid(Viewport * viewport, const TilesRange & range, const TileInfo & tile_info_ul) const
+void LayerMapnik::draw_grid(GisViewport * gisview, const TilesRange & range, const TileInfo & tile_info_ul) const
 {
 	int viewport_x;
 	int viewport_y;
 	const LatLon lat_lon = MapUtils::iTMS_to_center_lat_lon(tile_info_ul);
-	viewport->coord_to_screen_pos(Coord(lat_lon, CoordMode::LatLon), &viewport_x, &viewport_y);
+	gisview->coord_to_screen_pos(Coord(lat_lon, CoordMode::LatLon), &viewport_x, &viewport_y);
 
 	const int delta_x = 1;
 	const int delta_y = 1;
@@ -1212,7 +1212,7 @@ void LayerMapnik::draw_grid(Viewport * viewport, const TilesRange & range, const
 	const int tile_height = this->tile_size_x; /* Using LayerMapnik::tile_size_x because we don't have LayerMapnik::tile_size_y. */
 
 	const QPen pen(QColor(LAYER_MAPNIK_GRID_COLOR));
-	LayerMap::draw_grid(viewport, pen, viewport_x, viewport_y, range.x_first, delta_x, range.x_last + 1, range.y_first, delta_y, range.y_last + 1, tile_width, tile_height);
+	LayerMap::draw_grid(gisview, pen, viewport_x, viewport_y, range.x_first, delta_x, range.x_last + 1, range.y_first, delta_y, range.y_last + 1, tile_width, tile_height);
 
 	return;
 }

@@ -33,11 +33,11 @@ namespace SlavGPS {
 
 
 	class Window;
-	class Viewport;
+	class GisViewport;
 
 
 
-	void a_print(Window * window, Viewport * viewport);
+	void a_print(Window * window, GisViewport * gisview);
 
 
 

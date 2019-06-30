@@ -67,7 +67,7 @@ using namespace SlavGPS;
 
 
 
-#define SG_MODULE "Viewport"
+#define SG_MODULE "GisViewport"
 
 
 
@@ -93,7 +93,7 @@ using namespace SlavGPS;
 
 
 
-void Viewport::init(void)
+void GisViewport::init(void)
 {
 	Expedia::init_radius();
 }
@@ -101,7 +101,7 @@ void Viewport::init(void)
 
 
 
-double Viewport::calculate_utm_zone_width(void) const
+double GisViewport::calculate_utm_zone_width(void) const
 {
 	switch (this->coord_mode) {
 	case CoordMode::UTM: {
@@ -130,7 +130,7 @@ double Viewport::calculate_utm_zone_width(void) const
 
 
 
-const QColor & Viewport::get_background_color(void) const
+const QColor & GisViewport::get_background_color(void) const
 {
 	return this->background_color;
 }
@@ -138,7 +138,7 @@ const QColor & Viewport::get_background_color(void) const
 
 
 
-Viewport::Viewport(QWidget * parent) : QWidget(parent)
+GisViewport::GisViewport(QWidget * parent) : QWidget(parent)
 {
 	this->window = ThisApp::get_main_window();
 
@@ -187,7 +187,7 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 
 
 	this->coord_mode = CoordMode::LatLon;
-	this->drawmode = ViewportDrawMode::Mercator;
+	this->drawmode = GisViewportDrawMode::Mercator;
 
 
 
@@ -233,7 +233,7 @@ Viewport::Viewport(QWidget * parent) : QWidget(parent)
 
 
 
-Viewport::~Viewport()
+GisViewport::~GisViewport()
 {
 	qDebug() << SG_PREFIX_I;
 	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
@@ -251,7 +251,7 @@ Viewport::~Viewport()
 
 
 
-void Viewport::set_background_color(const QString & color_name)
+void GisViewport::set_background_color(const QString & color_name)
 {
 	this->background_color.setNamedColor(color_name);
 	this->background_pen.setColor(this->background_color);
@@ -260,7 +260,7 @@ void Viewport::set_background_color(const QString & color_name)
 
 
 
-void Viewport::set_background_color(const QColor & color)
+void GisViewport::set_background_color(const QColor & color)
 {
 	this->background_color = color;
 	this->background_pen.setColor(color);
@@ -269,7 +269,7 @@ void Viewport::set_background_color(const QColor & color)
 
 
 
-const QColor & Viewport::get_highlight_color(void) const
+const QColor & GisViewport::get_highlight_color(void) const
 {
 	return this->highlight_color;
 }
@@ -277,7 +277,7 @@ const QColor & Viewport::get_highlight_color(void) const
 
 
 
-void Viewport::set_highlight_color(const QString & color_name)
+void GisViewport::set_highlight_color(const QString & color_name)
 {
 	this->highlight_color.setNamedColor(color_name);
 	this->highlight_pen.setColor(this->highlight_color);
@@ -286,7 +286,7 @@ void Viewport::set_highlight_color(const QString & color_name)
 
 
 
-void Viewport::set_highlight_color(const QColor & color)
+void GisViewport::set_highlight_color(const QColor & color)
 {
 	this->highlight_color = color;
 	this->highlight_pen.setColor(color);
@@ -295,7 +295,7 @@ void Viewport::set_highlight_color(const QColor & color)
 
 
 
-QPen Viewport::get_highlight_pen(void) const
+QPen GisViewport::get_highlight_pen(void) const
 {
 	return this->highlight_pen;
 }
@@ -303,7 +303,7 @@ QPen Viewport::get_highlight_pen(void) const
 
 
 
-void Viewport::set_highlight_thickness(int w)
+void GisViewport::set_highlight_thickness(int w)
 {
 	this->highlight_pen.setWidth(w);
 
@@ -318,7 +318,7 @@ void Viewport::set_highlight_thickness(int w)
 
 
 
-void Viewport::reconfigure_drawing_area(int new_width, int new_height)
+void GisViewport::reconfigure_drawing_area(int new_width, int new_height)
 {
 	if (new_width == 0 && new_height == 0) {
 		qDebug() << SG_PREFIX_I << "Will reconfigure vpixmap with geometry sizes" << this->geometry().width() << this->geometry().height();
@@ -332,7 +332,7 @@ void Viewport::reconfigure_drawing_area(int new_width, int new_height)
 
 
 
-QPixmap Viewport::get_pixmap(void) const
+QPixmap GisViewport::get_pixmap(void) const
 {
 	return *this->vpixmap.pixmap;
 }
@@ -340,7 +340,7 @@ QPixmap Viewport::get_pixmap(void) const
 
 
 
-void Viewport::set_pixmap(const QPixmap & pixmap)
+void GisViewport::set_pixmap(const QPixmap & pixmap)
 {
 	if (this->vpixmap.pixmap->size() != pixmap.size()) {
 		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: vpixmap =" << this->vpixmap.pixmap->size() << ", new vpixmap =" << pixmap.size();
@@ -356,7 +356,7 @@ void Viewport::set_pixmap(const QPixmap & pixmap)
 /**
    \brief Clear the whole viewport
 */
-void Viewport::clear(void)
+void GisViewport::clear(void)
 {
 	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->vpixmap;
 	//QPainter painter(this->vpixmap.pixmap);
@@ -372,7 +372,7 @@ void Viewport::clear(void)
 
 
 
-void Viewport::draw_decorations(void)
+void GisViewport::draw_decorations(void)
 {
 #if 1   /* Debug. To verify display of attribution when there are no
 	   maps, or only maps without attributions. */
@@ -391,7 +391,7 @@ void Viewport::draw_decorations(void)
 /**
    \brief Enable/Disable display of center mark
 */
-void Viewport::set_center_mark_visibility(bool new_state)
+void GisViewport::set_center_mark_visibility(bool new_state)
 {
 	this->center_mark_visibility = new_state;
 }
@@ -399,7 +399,7 @@ void Viewport::set_center_mark_visibility(bool new_state)
 
 
 
-bool Viewport::get_center_mark_visibility() const
+bool GisViewport::get_center_mark_visibility() const
 {
 	return this->center_mark_visibility;
 }
@@ -407,7 +407,7 @@ bool Viewport::get_center_mark_visibility() const
 
 
 
-void Viewport::set_highlight_usage(bool new_state)
+void GisViewport::set_highlight_usage(bool new_state)
 {
 	this->highlight_usage = new_state;
 }
@@ -415,7 +415,7 @@ void Viewport::set_highlight_usage(bool new_state)
 
 
 
-bool Viewport::get_highlight_usage(void) const
+bool GisViewport::get_highlight_usage(void) const
 {
 	return this->highlight_usage;
 }
@@ -425,7 +425,7 @@ bool Viewport::get_highlight_usage(void) const
 /**
    \brief Enable/Disable display of scale
 */
-void Viewport::set_scale_visibility(bool new_state)
+void GisViewport::set_scale_visibility(bool new_state)
 {
 	this->scale_visibility = new_state;
 }
@@ -433,7 +433,7 @@ void Viewport::set_scale_visibility(bool new_state)
 
 
 
-bool Viewport::get_scale_visibility(void) const
+bool GisViewport::get_scale_visibility(void) const
 {
 	return this->scale_visibility;
 }
@@ -441,7 +441,7 @@ bool Viewport::get_scale_visibility(void) const
 
 
 
-void Viewport::sync(void)
+void GisViewport::sync(void)
 {
 	qDebug() << SG_PREFIX_I << "sync (will call ->render())";
 	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->vpixmap.pixmap), 0, 0, 0, 0, this->vpixmap.width, this->vpixmap.height);
@@ -451,7 +451,7 @@ void Viewport::sync(void)
 
 
 
-void Viewport::pan_sync(int x_off, int y_off)
+void GisViewport::pan_sync(int x_off, int y_off)
 {
 	qDebug() << SG_PREFIX_I;
 #ifdef K_FIXME_RESTORE
@@ -482,7 +482,7 @@ void Viewport::pan_sync(int x_off, int y_off)
 
 
 
-sg_ret Viewport::set_viking_scale(double new_value)
+sg_ret GisViewport::set_viking_scale(double new_value)
 {
 	if (!VikingScale::value_is_valid(new_value)) {
 		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
@@ -496,7 +496,7 @@ sg_ret Viewport::set_viking_scale(double new_value)
 	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
-	if (this->drawmode == ViewportDrawMode::UTM) {
+	if (this->drawmode == GisViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 
@@ -506,7 +506,7 @@ sg_ret Viewport::set_viking_scale(double new_value)
 
 
 
-void Viewport::zoom_in(void)
+void GisViewport::zoom_in(void)
 {
 	if (this->viking_scale.zoom_in(2)) {
 		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
@@ -519,7 +519,7 @@ void Viewport::zoom_in(void)
 
 
 
-void Viewport::zoom_out(void)
+void GisViewport::zoom_out(void)
 {
 	if (this->viking_scale.zoom_out(2)) {
 		this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
@@ -532,7 +532,7 @@ void Viewport::zoom_out(void)
 
 
 
-const VikingScale & Viewport::get_viking_scale(void) const
+const VikingScale & GisViewport::get_viking_scale(void) const
 {
 	return this->viking_scale;
 }
@@ -540,7 +540,7 @@ const VikingScale & Viewport::get_viking_scale(void) const
 
 
 
-sg_ret Viewport::set_viking_scale(const VikingScale & new_value)
+sg_ret GisViewport::set_viking_scale(const VikingScale & new_value)
 {
 	/* TODO: add validation. */
 	this->viking_scale = new_value;
@@ -550,7 +550,7 @@ sg_ret Viewport::set_viking_scale(const VikingScale & new_value)
 
 
 
-sg_ret Viewport::set_viking_scale_x(double new_value)
+sg_ret GisViewport::set_viking_scale_x(double new_value)
 {
 	if (!VikingScale::value_is_valid(new_value)) {
 		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
@@ -559,7 +559,7 @@ sg_ret Viewport::set_viking_scale_x(double new_value)
 
 	this->viking_scale.x = new_value;
 	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
-	if (this->drawmode == ViewportDrawMode::UTM) {
+	if (this->drawmode == GisViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 
@@ -569,7 +569,7 @@ sg_ret Viewport::set_viking_scale_x(double new_value)
 
 
 
-sg_ret Viewport::set_viking_scale_y(double new_value)
+sg_ret GisViewport::set_viking_scale_y(double new_value)
 {
 	if (!VikingScale::value_is_valid(new_value)) {
 		qDebug() << SG_PREFIX_E << "Failed to set new zoom level, invalid value" << new_value;
@@ -578,7 +578,7 @@ sg_ret Viewport::set_viking_scale_y(double new_value)
 
 	this->viking_scale.y = new_value;
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
-	if (this->drawmode == ViewportDrawMode::UTM) {
+	if (this->drawmode == GisViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 
@@ -588,7 +588,7 @@ sg_ret Viewport::set_viking_scale_y(double new_value)
 
 
 
-const Coord & Viewport::get_center(void) const
+const Coord & GisViewport::get_center(void) const
 {
 	return this->center;
 }
@@ -597,7 +597,7 @@ const Coord & Viewport::get_center(void) const
 
 
 /* Called every time we update coordinates/zoom. */
-void Viewport::utm_zone_check(void)
+void GisViewport::utm_zone_check(void)
 {
 	if (this->coord_mode == CoordMode::UTM) {
 		const UTM utm = LatLon::to_utm(UTM::to_lat_lon(center.utm));
@@ -617,7 +617,7 @@ void Viewport::utm_zone_check(void)
 /**
    \brief Remove an individual center position from the history list
 */
-void Viewport::free_center(std::list<Coord>::iterator iter)
+void GisViewport::free_center(std::list<Coord>::iterator iter)
 {
 	if (iter == this->centers_iter) {
 		this->centers_iter = this->centers->erase(iter);
@@ -639,7 +639,7 @@ void Viewport::free_center(std::list<Coord>::iterator iter)
 
 
 
-void Viewport::save_current_center(void)
+void GisViewport::save_current_center(void)
 {
 	if (this->centers_iter == prev(this->centers->end())) {
 		/* We are at most recent element of history. */
@@ -660,7 +660,7 @@ void Viewport::save_current_center(void)
 	this->centers_iter++;
 	assert (std::next(this->centers_iter) == this->centers->end());
 
-	this->print_centers("Viewport::save_current_center()");
+	this->print_centers("GisViewport::save_current_center()");
 
 	qDebug() << SG_PREFIX_SIGNAL << "Emitting center_updated()";
 	emit this->center_updated();
@@ -669,7 +669,7 @@ void Viewport::save_current_center(void)
 
 
 
-std::list<QString> Viewport::get_centers_list(void) const
+std::list<QString> GisViewport::get_centers_list(void) const
 {
 	std::list<QString> result;
 
@@ -702,7 +702,7 @@ std::list<QString> Viewport::get_centers_list(void) const
 
    ATM only for debug usage.
 */
-void Viewport::show_centers(Window * parent_window) const
+void GisViewport::show_centers(Window * parent_window) const
 {
 	const std::list<QString> texts = this->get_centers_list();
 
@@ -724,7 +724,7 @@ void Viewport::show_centers(Window * parent_window) const
 
 
 
-void Viewport::print_centers(const QString & label) const
+void GisViewport::print_centers(const QString & label) const
 {
 	const std::list<QString> texts = this->get_centers_list();
 
@@ -745,7 +745,7 @@ void Viewport::print_centers(const QString & label) const
    @return true on success
    @return false otherwise
 */
-bool Viewport::go_back(void)
+bool GisViewport::go_back(void)
 {
 	/* See if the current position is different from the
 	   last saved center position within a certain radius. */
@@ -782,7 +782,7 @@ bool Viewport::go_back(void)
    @return true on success
    @return false otherwise
 */
-bool Viewport::go_forward(void)
+bool GisViewport::go_forward(void)
 {
 	if (!this->forward_available()) {
 		/* Already at the latest center. */
@@ -803,7 +803,7 @@ bool Viewport::go_forward(void)
    @return true when a previous position in the history is available
    @return false otherwise
 */
-bool Viewport::back_available(void) const
+bool GisViewport::back_available(void) const
 {
 	return (this->centers->size() > 1 && this->centers_iter != this->centers->begin());
 }
@@ -815,7 +815,7 @@ bool Viewport::back_available(void) const
    @return true when a next position in the history is available
    @return false otherwise
 */
-bool Viewport::forward_available(void) const
+bool GisViewport::forward_available(void) const
 {
 	return (this->centers->size() > 1 && this->centers_iter != prev(this->centers->end()));
 }
@@ -828,7 +828,7 @@ bool Viewport::forward_available(void) const
    @save_position: Whether this new position should be saved into the history of positions
                    Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
 */
-sg_ret Viewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_position)
+sg_ret GisViewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_position)
 {
 	if (!lat_lon.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
@@ -855,7 +855,7 @@ sg_ret Viewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_posit
    @save_position: Whether this new position should be saved into the history of positions
                    Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
 */
-void Viewport::set_center_from_utm(const UTM & utm, bool save_position)
+void GisViewport::set_center_from_utm(const UTM & utm, bool save_position)
 {
 	this->center = Coord(utm, this->coord_mode);
 	if (save_position) {
@@ -875,7 +875,7 @@ void Viewport::set_center_from_utm(const UTM & utm, bool save_position)
    @save_position: Whether this new position should be saved into the history of positions
                    Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
 */
-void Viewport::set_center_from_coord(const Coord & coord, bool save_position)
+void GisViewport::set_center_from_coord(const Coord & coord, bool save_position)
 {
 	this->center = coord;
 	if (save_position) {
@@ -890,7 +890,7 @@ void Viewport::set_center_from_coord(const Coord & coord, bool save_position)
 
 
 
-sg_ret Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
+sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
 		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << (int) this->coord_mode;
@@ -927,7 +927,7 @@ sg_ret Viewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zo
 
 
 
-sg_ret Viewport::utm_recalculate_current_center_for_other_zone(UTM & center_in_other_zone, int zone)
+sg_ret GisViewport::utm_recalculate_current_center_for_other_zone(UTM & center_in_other_zone, int zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
 		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << (int) this->coord_mode;
@@ -947,7 +947,7 @@ sg_ret Viewport::utm_recalculate_current_center_for_other_zone(UTM & center_in_o
 
 
 
-int Viewport::get_leftmost_zone(void) const
+int GisViewport::get_leftmost_zone(void) const
 {
 	if (coord_mode != CoordMode::UTM) {
 		return 0;
@@ -960,7 +960,7 @@ int Viewport::get_leftmost_zone(void) const
 
 
 
-int Viewport::get_rightmost_zone(void) const
+int GisViewport::get_rightmost_zone(void) const
 {
 	if (coord_mode != CoordMode::UTM) {
 		return 0;
@@ -974,7 +974,7 @@ int Viewport::get_rightmost_zone(void) const
 
 
 
-void Viewport::set_center_from_screen_pos(int x1, int y1)
+void GisViewport::set_center_from_screen_pos(int x1, int y1)
 {
 	if (coord_mode == CoordMode::UTM) {
 		/* Slightly optimized. */
@@ -998,7 +998,7 @@ void Viewport::set_center_from_screen_pos(int x1, int y1)
 
 
 
-void Viewport::set_center_from_screen_pos(const ScreenPos & pos)
+void GisViewport::set_center_from_screen_pos(const ScreenPos & pos)
 {
 	this->set_center_from_screen_pos(pos.x, pos.y);
 }
@@ -1006,7 +1006,7 @@ void Viewport::set_center_from_screen_pos(const ScreenPos & pos)
 
 
 
-QRect Viewport::get_rect(void) const
+QRect GisViewport::get_rect(void) const
 {
 	return QRect(0, 0, this->vpixmap.get_width(), this->vpixmap.get_height());
 }
@@ -1014,7 +1014,7 @@ QRect Viewport::get_rect(void) const
 
 
 
-Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
+Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 {
 	Coord coord;
 	const double xmpp = this->viking_scale.x;
@@ -1081,7 +1081,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		coord.set_coord_mode(CoordMode::LatLon);
 
 		switch (this->drawmode) {
-		case ViewportDrawMode::LatLon:
+		case GisViewportDrawMode::LatLon:
 			/* Modified (reformatted) formula. */
 			{
 				coord.lat_lon.lon = this->center.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
@@ -1105,14 +1105,14 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			}
 			break;
 
-		case ViewportDrawMode::Expedia:
+		case GisViewportDrawMode::Expedia:
 			Expedia::screen_pos_to_lat_lon(coord.lat_lon, pos_x, pos_y, this->center.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
 						       /* TODO: make sure that this is ok, that we don't need to use get_width()/get_height() here. */
 						       this->vpixmap.get_horiz_center_pixel(),
 						       this->vpixmap.get_vert_center_pixel());
 			break;
 
-		case ViewportDrawMode::Mercator:
+		case GisViewportDrawMode::Mercator:
 			/* This isn't called with a high frequently so less need to optimize. */
 			/* Modified (reformatted) formula. */
 			{
@@ -1156,7 +1156,7 @@ Coord Viewport::screen_pos_to_coord(int pos_x, int pos_y) const
 
 
 
-Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
+Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 {
 	return this->screen_pos_to_coord(pos.x, pos.y);
 }
@@ -1169,7 +1169,7 @@ Coord Viewport::screen_pos_to_coord(const ScreenPos & pos) const
   Thus x & y position factors are calculated once on zoom changes,
   avoiding the need to do it here all the time.
 */
-sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
+sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
 {
 	Coord coord = coord_in;
 	const double xmpp = this->viking_scale.x;
@@ -1210,11 +1210,11 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 
 	case CoordMode::LatLon:
 		switch (this->drawmode) {
-		case ViewportDrawMode::LatLon:
+		case GisViewportDrawMode::LatLon:
 			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center.lat_lon.lon));
 			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center.lat_lon.lat - coord.lat_lon.lat));
 			break;
-		case ViewportDrawMode::Expedia:
+		case GisViewportDrawMode::Expedia:
 			{
 				double xx, yy;
 				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.lat_lon, coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, horiz_center_pixel, vert_center_pixel);
@@ -1222,7 +1222,7 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 				*pos_y = yy;
 			}
 			break;
-		case ViewportDrawMode::Mercator:
+		case GisViewportDrawMode::Mercator:
 			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center.lat_lon.lon));
 			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.lat_lon.lat) - MERCLAT(coord.lat_lon.lat)));
 			break;
@@ -1242,7 +1242,7 @@ sg_ret Viewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * 
 
 
 
-ScreenPos Viewport::coord_to_screen_pos(const Coord & coord_in) const
+ScreenPos GisViewport::coord_to_screen_pos(const Coord & coord_in) const
 {
 	ScreenPos pos;
 	if (sg_ret::ok != this->coord_to_screen_pos(coord_in, &pos.x, &pos.y)) {
@@ -1297,7 +1297,7 @@ static void clip_y(int * x1, int * y1, int * x2, int * y2)
  *
  * This function should be called before calling gdk_draw_line().
  */
-void Viewport::clip_line(int * x1, int * y1, int * x2, int * y2)
+void GisViewport::clip_line(int * x1, int * y1, int * x2, int * y2)
 {
 	if (*x1 > 32768 || *x1 < -32767) {
 		clip_x(x1, y1, x2, y2);
@@ -1326,7 +1326,7 @@ void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, i
 	}
 
 	/*** Clipping, yeah! ***/
-	//Viewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
+	//GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to "beginning in top-left corner"
@@ -1416,7 +1416,7 @@ void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & te
 
 
 
-void Viewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
+void GisViewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 {
 	if (!BBOX_INTERSECT(bbox, this->get_bbox())) {
 		qDebug() << SG_PREFIX_I << "Not drawing bbox" << bbox << ", does not intersects with viewport bbox" << this->get_bbox();
@@ -1442,7 +1442,7 @@ void Viewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 
 
 
-CoordMode Viewport::get_coord_mode(void) const
+CoordMode GisViewport::get_coord_mode(void) const
 {
 	return this->coord_mode;
 }
@@ -1450,7 +1450,7 @@ CoordMode Viewport::get_coord_mode(void) const
 
 
 
-void Viewport::set_coord_mode(CoordMode new_mode)
+void GisViewport::set_coord_mode(CoordMode new_mode)
 {
 	this->coord_mode = new_mode;
 	this->center.recalculate_to_mode(new_mode);
@@ -1459,7 +1459,7 @@ void Viewport::set_coord_mode(CoordMode new_mode)
 
 
 
-bool Viewport::get_is_one_utm_zone(void) const
+bool GisViewport::get_is_one_utm_zone(void) const
 {
 	return coord_mode == CoordMode::UTM && this->is_one_utm_zone;
 }
@@ -1467,11 +1467,11 @@ bool Viewport::get_is_one_utm_zone(void) const
 
 
 
-void Viewport::set_drawmode(ViewportDrawMode new_drawmode)
+void GisViewport::set_drawmode(GisViewportDrawMode new_drawmode)
 {
 	this->drawmode = new_drawmode;
 
-	if (new_drawmode == ViewportDrawMode::UTM) {
+	if (new_drawmode == GisViewportDrawMode::UTM) {
 		this->set_coord_mode(CoordMode::UTM);
 	} else {
 		this->set_coord_mode(CoordMode::LatLon);
@@ -1481,7 +1481,7 @@ void Viewport::set_drawmode(ViewportDrawMode new_drawmode)
 
 
 
-ViewportDrawMode Viewport::get_drawmode(void) const
+GisViewportDrawMode GisViewport::get_drawmode(void) const
 {
 	return this->drawmode;
 }
@@ -1490,7 +1490,7 @@ ViewportDrawMode Viewport::get_drawmode(void) const
 
 
 /******** Triggering. *******/
-void Viewport::set_trigger(Layer * trg)
+void GisViewport::set_trigger(Layer * trg)
 {
 	this->trigger = trg;
 }
@@ -1498,7 +1498,7 @@ void Viewport::set_trigger(Layer * trg)
 
 
 
-Layer * Viewport::get_trigger(void) const
+Layer * GisViewport::get_trigger(void) const
 {
 	return this->trigger;
 }
@@ -1506,7 +1506,7 @@ Layer * Viewport::get_trigger(void) const
 
 
 
-void Viewport::snapshot_save(void)
+void GisViewport::snapshot_save(void)
 {
 	qDebug() << SG_PREFIX_I << "Save snapshot";
 	*this->vpixmap.snapshot_buffer = *this->vpixmap.pixmap;
@@ -1515,7 +1515,7 @@ void Viewport::snapshot_save(void)
 
 
 
-void Viewport::snapshot_load(void)
+void GisViewport::snapshot_load(void)
 {
 	qDebug() << SG_PREFIX_I << "Load snapshot";
 	*this->vpixmap.pixmap = *this->vpixmap.snapshot_buffer;
@@ -1524,7 +1524,7 @@ void Viewport::snapshot_load(void)
 
 
 
-void Viewport::set_half_drawn(bool new_half_drawn)
+void GisViewport::set_half_drawn(bool new_half_drawn)
 {
 	this->half_drawn = new_half_drawn;
 }
@@ -1532,7 +1532,7 @@ void Viewport::set_half_drawn(bool new_half_drawn)
 
 
 
-bool Viewport::get_half_drawn(void) const
+bool GisViewport::get_half_drawn(void) const
 {
 	return this->half_drawn;
 }
@@ -1540,7 +1540,7 @@ bool Viewport::get_half_drawn(void) const
 
 
 
-LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
+LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
 {
 	Coord tleft =  this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_topmost_pixel() + margin_top);
 	Coord tright = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_topmost_pixel() + margin_top);
@@ -1570,7 +1570,7 @@ LatLonBBox Viewport::get_bbox(int margin_left, int margin_right, int margin_top,
 
    @copyright: new attribution/copyright to display.
 */
-sg_ret Viewport::add_attribution(QString const & attribution)
+sg_ret GisViewport::add_attribution(QString const & attribution)
 {
 	return this->decorations.add_attribution(attribution);
 }
@@ -1578,7 +1578,7 @@ sg_ret Viewport::add_attribution(QString const & attribution)
 
 
 
-sg_ret Viewport::add_logo(const ViewportLogo & logo)
+sg_ret GisViewport::add_logo(const GisViewportLogo & logo)
 {
 	return this->decorations.add_logo(logo);
 }
@@ -1596,7 +1596,7 @@ sg_ret Viewport::add_logo(const ViewportLogo & logo)
  *
  * Compute bearing.
  */
-void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle)
+void GisViewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle)
 {
 	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	double dx = (x2 - x1) / len * 10;
@@ -1604,7 +1604,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 
 	angle.set_value(atan2(dy, dx) + M_PI_2);
 
-	if (this->get_drawmode() == ViewportDrawMode::UTM) {
+	if (this->get_drawmode() == GisViewportDrawMode::UTM) {
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon lat_lon = test.get_lat_lon();
@@ -1623,7 +1623,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, An
 
 
 
-void Viewport::paintEvent(QPaintEvent * ev)
+void GisViewport::paintEvent(QPaintEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -1641,7 +1641,7 @@ void Viewport::paintEvent(QPaintEvent * ev)
 
 
 
-void Viewport::resizeEvent(QResizeEvent * ev)
+void GisViewport::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -1658,7 +1658,7 @@ void Viewport::resizeEvent(QResizeEvent * ev)
 
 
 
-void Viewport::mousePressEvent(QMouseEvent * ev)
+void GisViewport::mousePressEvent(QMouseEvent * ev)
 {
 	qDebug() << SG_PREFIX_I << "Mouse CLICK event, button" << (int) ev->button();
 
@@ -1670,7 +1670,7 @@ void Viewport::mousePressEvent(QMouseEvent * ev)
 
 
 
-bool Viewport::eventFilter(QObject * object, QEvent * ev)
+bool GisViewport::eventFilter(QObject * object, QEvent * ev)
 {
 	if (ev->type() == QEvent::MouseButtonDblClick) {
 		QMouseEvent * m = (QMouseEvent *) ev;
@@ -1689,7 +1689,7 @@ bool Viewport::eventFilter(QObject * object, QEvent * ev)
 
 
 
-void Viewport::mouseMoveEvent(QMouseEvent * ev)
+void GisViewport::mouseMoveEvent(QMouseEvent * ev)
 {
 	this->draw_mouse_motion_cb(ev);
 
@@ -1703,7 +1703,7 @@ void Viewport::mouseMoveEvent(QMouseEvent * ev)
 
 
 
-void Viewport::mouseReleaseEvent(QMouseEvent * ev)
+void GisViewport::mouseReleaseEvent(QMouseEvent * ev)
 {
 	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
 
@@ -1716,7 +1716,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent * ev)
 
 
 
-void Viewport::wheelEvent(QWheelEvent * ev)
+void GisViewport::wheelEvent(QWheelEvent * ev)
 {
 	QPoint angle = ev->angleDelta();
 	qDebug() << SG_PREFIX_I << "Wheel event, buttons =" << (int) ev->buttons() << "angle =" << angle.y();
@@ -1766,7 +1766,7 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 		   position in viewport as before zoom.  Before zoom
 		   the coordinate was under cursor, and after zoom it
 		   will be still under cursor. */
-		ViewportZoom::keep_coordinate_under_cursor(zoom_operation, this, this->window, event_pos, center_pos);
+		GisViewportZoom::keep_coordinate_under_cursor(zoom_operation, this, this->window, event_pos, center_pos);
 	}
 	default:
 		/* Other modifier. Just ignore. */
@@ -1780,7 +1780,7 @@ void Viewport::wheelEvent(QWheelEvent * ev)
 
 
 
-void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
+void GisViewport::draw_mouse_motion_cb(QMouseEvent * ev)
 {
 	QPoint position = this->mapFromGlobal(QCursor::pos());
 
@@ -1832,7 +1832,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 
 
-Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, const VikingScale & expected_viking_scale)
+GisViewport * GisViewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, const VikingScale & expected_viking_scale)
 {
 	/*
 	  We always want to print original viewport in its
@@ -1867,7 +1867,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 	qDebug() << SG_PREFIX_I << "Expected image size =" << target_width << target_height;
 
-	Viewport * scaled_viewport = new Viewport(a_window);
+	GisViewport * scaled_viewport = new GisViewport(a_window);
 
 	const int orig_width = this->vpixmap.get_width();
 	const int orig_height = this->vpixmap.get_height();
@@ -1928,7 +1928,7 @@ Viewport * Viewport::create_scaled_viewport(Window * a_window, int target_width,
 
 
 
-bool Viewport::print_cb(QPrinter * printer)
+bool GisViewport::print_cb(QPrinter * printer)
 {
 	const QRectF page_rect = printer->pageRect(QPrinter::DevicePixel);
 	const QRectF paper_rect = printer->paperRect(QPrinter::DevicePixel);
@@ -1963,7 +1963,7 @@ bool Viewport::print_cb(QPrinter * printer)
 	const int target_width = target_rect.width();
 	const int target_height = target_rect.height();
 
-	Viewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, VikingScale());
+	GisViewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, VikingScale());
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print pixmap. */
@@ -2066,16 +2066,16 @@ bool ScreenPos::operator==(const ScreenPos & pos) const
 
 
 
-QString ViewportDrawModes::get_name(ViewportDrawMode mode)
+QString GisViewportDrawModes::get_name(GisViewportDrawMode mode)
 {
 	switch (mode) {
-	case ViewportDrawMode::UTM:
+	case GisViewportDrawMode::UTM:
 		return QObject::tr("&UTM Mode");
-	case ViewportDrawMode::Expedia:
+	case GisViewportDrawMode::Expedia:
 		return QObject::tr("&Expedia Mode");
-	case ViewportDrawMode::Mercator:
+	case GisViewportDrawMode::Mercator:
 		return QObject::tr("&Mercator Mode");
-	case ViewportDrawMode::LatLon:
+	case GisViewportDrawMode::LatLon:
 		return QObject::tr("&Lat/Lon Mode");
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected draw mode" << (int) mode;
@@ -2085,21 +2085,21 @@ QString ViewportDrawModes::get_name(ViewportDrawMode mode)
 
 
 
-QString ViewportDrawModes::get_id_string(ViewportDrawMode mode)
+QString GisViewportDrawModes::get_id_string(GisViewportDrawMode mode)
 {
 	QString mode_id_string;
 
 	switch (mode) {
-	case ViewportDrawMode::UTM:
+	case GisViewportDrawMode::UTM:
 		mode_id_string = "utm";
 		break;
-	case ViewportDrawMode::Expedia:
+	case GisViewportDrawMode::Expedia:
 		mode_id_string = "expedia";
 		break;
-	case ViewportDrawMode::Mercator:
+	case GisViewportDrawMode::Mercator:
 		mode_id_string = "mercator";
 		break;
-	case ViewportDrawMode::LatLon:
+	case GisViewportDrawMode::LatLon:
 		mode_id_string = "latlon";
 		break;
 	default:
@@ -2113,15 +2113,15 @@ QString ViewportDrawModes::get_id_string(ViewportDrawMode mode)
 
 
 
-bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char * line)
+bool GisViewportDrawModes::set_draw_mode_from_file(GisViewport * gisview, const char * line)
 {
 	bool success = true;
 
 	if (0 == strcasecmp(line, "utm")) {
-		viewport->set_drawmode(ViewportDrawMode::UTM);
+		gisview->set_drawmode(GisViewportDrawMode::UTM);
 
 	} else if (0 == strcasecmp(line, "expedia")) {
-		viewport->set_drawmode(ViewportDrawMode::Expedia);
+		gisview->set_drawmode(GisViewportDrawMode::Expedia);
 
 	} else if (0 == strcasecmp(line, "google")) {
 		success = false;
@@ -2132,10 +2132,10 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 		qDebug() << SG_PREFIX_W << QObject::tr("Read file: draw mode 'kh' no more supported");
 
 	} else if (0 == strcasecmp(line, "mercator")) {
-		viewport->set_drawmode(ViewportDrawMode::Mercator);
+		gisview->set_drawmode(GisViewportDrawMode::Mercator);
 
 	} else if (0 == strcasecmp(line, "latlon")) {
-		viewport->set_drawmode(ViewportDrawMode::LatLon);
+		gisview->set_drawmode(GisViewportDrawMode::LatLon);
 	} else {
 		qDebug() << SG_PREFIX_E << QObject::tr("Read file: unexpected draw mode") << line;
 		success = false;
@@ -2147,15 +2147,15 @@ bool ViewportDrawModes::set_draw_mode_from_file(Viewport * viewport, const char 
 
 
 
-sg_ret Viewport::set_bbox(const LatLonBBox & new_bbox)
+sg_ret GisViewport::set_bbox(const LatLonBBox & new_bbox)
 {
-	return ViewportZoom::zoom_to_show_bbox(this, this->get_coord_mode(), new_bbox);
+	return GisViewportZoom::zoom_to_show_bbox(this, this->get_coord_mode(), new_bbox);
 }
 
 
 
 
-void Viewport::request_redraw(const QString & trigger_descr)
+void GisViewport::request_redraw(const QString & trigger_descr)
 {
 	this->emit_center_or_zoom_changed(trigger_descr);
 }
@@ -2164,7 +2164,7 @@ void Viewport::request_redraw(const QString & trigger_descr)
 
 
 /* Tell QT what type of MIME data we accept. */
-void Viewport::dragEnterEvent(QDragEnterEvent * event)
+void GisViewport::dragEnterEvent(QDragEnterEvent * event)
 {
 	if (event->mimeData()->hasFormat("text/plain")) {
 		event->acceptProposedAction();
@@ -2175,7 +2175,7 @@ void Viewport::dragEnterEvent(QDragEnterEvent * event)
 
 
 
-void Viewport::dropEvent(QDropEvent * event)
+void GisViewport::dropEvent(QDropEvent * event)
 {
 	const QString & text = event->mimeData()->text();
 
@@ -2194,7 +2194,7 @@ void Viewport::dropEvent(QDropEvent * event)
 
 
 
-bool Viewport::is_ready(void) const
+bool GisViewport::is_ready(void) const
 {
 	return this->vpixmap.pixmap != NULL;
 }
@@ -2203,10 +2203,10 @@ bool Viewport::is_ready(void) const
 
 
 /**
-   To be called when action initiated in Viewport has changed center
+   To be called when action initiated in GisViewport has changed center
    of viewport or zoom of viewport.
 */
-void Viewport::emit_center_or_zoom_changed(const QString & trigger_name)
+void GisViewport::emit_center_or_zoom_changed(const QString & trigger_name)
 {
 	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal triggered by" << trigger_name;
 	emit this->center_or_zoom_changed();
@@ -2215,7 +2215,7 @@ void Viewport::emit_center_or_zoom_changed(const QString & trigger_name)
 
 
 
-Window * Viewport::get_window(void) const
+Window * GisViewport::get_window(void) const
 {
 	return this->window;
 }
@@ -2255,7 +2255,7 @@ void Viewport2D::create_central(void)
 		delete this->central;
 	}
 
-	this->central = new Viewport(this);
+	this->central = new GisViewport(this);
 	this->central->vpixmap.parent_viewport = this;
 
 	this->grid->addWidget(this->central, 1, 1);
@@ -2458,7 +2458,7 @@ int Viewport2D::bottom_get_height(void) const
 
 
 
-sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
+sg_ret GisViewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 {
 	/* TODO: review this function and see if we need to use
 	   get_width()/get_height() or maybe
@@ -2516,7 +2516,7 @@ sg_ret Viewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 
 
 
-double Viewport::get_vpixmap_height_m(void) const
+double GisViewport::get_vpixmap_height_m(void) const
 {
 	return this->vpixmap.get_height() * this->viking_scale.y;
 }
@@ -2524,7 +2524,7 @@ double Viewport::get_vpixmap_height_m(void) const
 
 
 
-double Viewport::get_vpixmap_width_m(void) const
+double GisViewport::get_vpixmap_width_m(void) const
 {
 	return this->vpixmap.get_width() * this->viking_scale.x;
 }

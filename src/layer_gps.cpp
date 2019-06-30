@@ -248,7 +248,7 @@ static ParameterSpecification gps_layer_param_specs[] = {
 
 
 
-GPSSession::GPSSession(GPSTransfer & new_transfer, LayerTRW * new_trw, Track * new_trk, Viewport * new_viewport, bool new_in_progress)
+GPSSession::GPSSession(GPSTransfer & new_transfer, LayerTRW * new_trw, Track * new_trk, GisViewport * new_gisview, bool new_in_progress)
 {
 	qDebug() << SG_PREFIX_D << "";
 
@@ -257,7 +257,7 @@ GPSSession::GPSSession(GPSTransfer & new_transfer, LayerTRW * new_trw, Track * n
 	this->window_title = (this->transfer.direction == GPSDirection::Download) ? QObject::tr("GPS Download") : QObject::tr("GPS Upload");
 	this->trw = new_trw;
 	this->trk = new_trk;
-	this->viewport = new_viewport;
+	this->gisview = new_gisview;
 	this->in_progress = new_in_progress;
 }
 
@@ -338,16 +338,16 @@ void LayerGPS::marshall(Pickle & pickle)
 
 
 /* "Paste". */
-Layer * LayerGPSInterface::unmarshall(Pickle & pickle, Viewport * viewport)
+Layer * LayerGPSInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 {
 	LayerGPS * layer = new LayerGPS();
-	layer->set_coord_mode(viewport->get_coord_mode());
+	layer->set_coord_mode(gisview->get_coord_mode());
 
 	layer->unmarshall_params(pickle);
 
 	int i = 0;
 	while (pickle.data_size() > 0 && i < GPS_CHILD_LAYER_MAX) {
-		Layer * child_layer = Layer::unmarshall(pickle, viewport);
+		Layer * child_layer = Layer::unmarshall(pickle, gisview);
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			/* NB no need to attach signal update handler here
@@ -543,38 +543,38 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 
 
 
-void LayerGPS::draw_tree_item(Viewport * viewport, bool highlight_selected, bool parent_is_selected)
+void LayerGPS::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected)
 {
 	qDebug() << SG_PREFIX_D << "-- realtime tracking";
 
-	Layer * trigger = viewport->get_trigger();
+	Layer * trigger = gisview->get_trigger();
 
 	for (int i = 0; i < GPS_CHILD_LAYER_MAX; i++) {
 		LayerTRW * trw = this->trw_children[i];
 		if (TreeItem::the_same_object(trw, trigger)) {
-			if (viewport->get_half_drawn()) {
-				viewport->set_half_drawn(false);
-				viewport->snapshot_load();
+			if (gisview->get_half_drawn()) {
+				gisview->set_half_drawn(false);
+				gisview->snapshot_load();
 			} else {
-				viewport->snapshot_save();
+				gisview->snapshot_save();
 			}
 		}
-		if (!viewport->get_half_drawn()) {
-			trw->draw_tree_item(viewport, false, false);
+		if (!gisview->get_half_drawn()) {
+			trw->draw_tree_item(gisview, false, false);
 		}
 	}
 #if REALTIME_GPS_TRACKING_ENABLED
 	if (this->realtime_tracking_in_progress) {
 		if (TreeItem::the_same_object(this, trigger)) {
-			if (viewport->get_half_drawn()) {
-				viewport->set_half_drawn(false);
-				viewport->snapshot_load();
+			if (gisview->get_half_drawn()) {
+				gisview->set_half_drawn(false);
+				gisview->snapshot_load();
 			} else {
-				viewport->snapshot_save();
+				gisview->snapshot_save();
 			}
 		}
-		if (!viewport->get_half_drawn()) {
-			this->rt_tracking_draw(viewport, this->current_rt_data);
+		if (!gisview->get_half_drawn()) {
+			this->rt_tracking_draw(gisview, this->current_rt_data);
 		}
 	}
 #endif /* REALTIME_GPS_TRACKING_ENABLED */
@@ -1147,10 +1147,10 @@ void GPSSession::run(void)
 			if (!this->realtime_tracking_in_progress)
 #endif
 			{
-				if (this->viewport && this->transfer.direction == GPSDirection::Download) {
-					this->trw->post_read(this->viewport, true);
+				if (this->gisview && this->transfer.direction == GPSDirection::Download) {
+					this->trw->post_read(this->gisview, true);
 					/* View the data available. */
-					this->trw->move_viewport_to_show_all(this->viewport) ;
+					this->trw->move_viewport_to_show_all(this->gisview) ;
 					this->trw->emit_tree_item_changed("GPS Session - post read"); /* NB update from background thread. */
 				}
 			}
@@ -1182,11 +1182,11 @@ void GPSSession::run(void)
    @viewport: A viewport is required as the display may get updated
    @tracking: If tracking then viewport display update will be skipped
 */
-int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, Viewport * viewport, bool tracking)
+int GPSTransfer::run_transfer(LayerTRW * layer, Track * trk, GisViewport * gisview, bool tracking)
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	GPSSession * sess = new GPSSession(*this, layer, trk, viewport, true);
+	GPSSession * sess = new GPSSession(*this, layer, trk, gisview, true);
 	sess->setAutoDelete(false);
 
 	/* This must be done inside the main thread as the uniquify causes screen updates
@@ -1289,10 +1289,10 @@ void LayerGPS::gps_upload_cb(void)
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	Viewport * viewport = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
-	this->upload.run_transfer(trw, NULL, viewport, false);
+	this->upload.run_transfer(trw, NULL, gisview, false);
 }
 
 
@@ -1302,10 +1302,10 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	Viewport * viewport = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_viewport();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD];
 
-	this->download.run_transfer(trw, NULL, viewport,
+	this->download.run_transfer(trw, NULL, gisview,
 #if REALTIME_GPS_TRACKING_ENABLED
 			      this->realtime_tracking_in_progress
 #else
@@ -1400,23 +1400,23 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 
 
 #if REALTIME_GPS_TRACKING_ENABLED
-void LayerGPS::rt_tracking_draw(Viewport * viewport, RTData & rt_data)
+void LayerGPS::rt_tracking_draw(GisViewport * gisview, RTData & rt_data)
 {
 	if (std::isnan(rt_data.fix.track)) {
 		qDebug() << SG_PREFIX_N << "Skipping drawing - no fix track";
 		return;
 	}
 
-	const LatLonBBox bbox = viewport->get_bbox(-20, -20, 20, 20);
+	const LatLonBBox bbox = gisview->get_bbox(-20, -20, 20, 20);
 	if (!bbox.contains_point(rt_data.lat_lon)) {
 		qDebug() << SG_PREFIX_N << "Skipping drawing - point outside of viewport";
 		return;
 	}
 
 	Coord gps_coord = rt_data.coord;
-	gps_coord.recalculate_to_mode(viewport->get_coord_mode()); /* TODO_LATER: why do we need to change coord mode? */
+	gps_coord.recalculate_to_mode(gisview->get_coord_mode()); /* TODO_LATER: why do we need to change coord mode? */
 
-	const ScreenPos screen_pos = viewport->coord_to_screen_pos(gps_coord);
+	const ScreenPos screen_pos = gisview->coord_to_screen_pos(gps_coord);
 
 	double heading_cos = cos(DEG2RAD(rt_data.fix.track));
 	double heading_sin = sin(DEG2RAD(rt_data.fix.track));
@@ -1446,9 +1446,9 @@ void LayerGPS::rt_tracking_draw(Viewport * viewport, RTData & rt_data)
 
 	//QPen const & pen, QPoint const * points, int npoints, bool filled
 
-	viewport->vpixmap.draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
-	viewport->vpixmap.draw_polygon(this->realtime_track_pen, trian, 3, true);
-	viewport->vpixmap.fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
+	gisview->vpixmap.draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
+	gisview->vpixmap.draw_polygon(this->realtime_track_pen, trian, 3, true);
+	gisview->vpixmap.fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
 
 	//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 }
@@ -1597,31 +1597,31 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 
 
 	Window * window = this->get_window();
-	Viewport * viewport = window->get_viewport();
+	GisViewport * gisview = window->get_viewport();
 	bool viewport_shifted = false;
 
 	if ((this->vehicle_position == VehiclePosition::Centered) ||
 	    (this->realtime_jump_to_start && this->first_realtime_trackpoint)) {
-		viewport->set_center_from_coord(this->current_rt_data.coord, false);
+		gisview->set_center_from_coord(this->current_rt_data.coord, false);
 		viewport_shifted = true;
 	} else if (this->vehicle_position == VehiclePosition::OnScreen) {
 		const int hdiv = 6;
 		const int vdiv = 6;
 		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
-		const int width = viewport->vpixmap.get_width();
-		const int height = viewport->vpixmap.get_height();
+		const int width = gisview->vpixmap.get_width();
+		const int height = gisview->vpixmap.get_height();
 		int vx, vy;
 
-		if (sg_ret::ok == viewport->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {
+		if (sg_ret::ok == gisview->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {
 			viewport_shifted = true;
 			if (vx < (width/hdiv)) {
-				viewport->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
+				gisview->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
 			} else if (vx > (width - width/hdiv)) {
-				viewport->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
+				gisview->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
 			} else if (vy < (height/vdiv)) {
-				viewport->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
+				gisview->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
 			} else if (vy > (height - height/vdiv)) {
-				viewport->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
+				gisview->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
 			} else {
 				viewport_shifted = false;
 			}

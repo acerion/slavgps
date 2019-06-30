@@ -43,7 +43,7 @@ namespace SlavGPS {
 
 
 
-	class Viewport;
+	class GisViewport;
 	class Ruler;
 
 
@@ -63,7 +63,7 @@ namespace SlavGPS {
 
 	class LayerToolTRWNewWaypoint : public LayerTool {
 	public:
-		LayerToolTRWNewWaypoint(Window * window, Viewport * viewport);
+		LayerToolTRWNewWaypoint(Window * window, GisViewport * gisview);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
@@ -71,7 +71,7 @@ namespace SlavGPS {
 
 	class LayerToolTRWEditTrackpoint : public LayerTool {
 	public:
-		LayerToolTRWEditTrackpoint(Window * window, Viewport * viewport);
+		LayerToolTRWEditTrackpoint(Window * window, GisViewport * gisview);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
@@ -81,7 +81,7 @@ namespace SlavGPS {
 
 	class LayerToolTRWExtendedRouteFinder : public LayerTool {
 	public:
-		LayerToolTRWExtendedRouteFinder(Window * window, Viewport * viewport);
+		LayerToolTRWExtendedRouteFinder(Window * window, GisViewport * gisview);
 		void undo(LayerTRW * trw, Track * track);
 
 	private:
@@ -94,7 +94,7 @@ namespace SlavGPS {
 
 	class LayerToolTRWShowPicture : public LayerTool {
 	public:
-		LayerToolTRWShowPicture(Window * window, Viewport * viewport);
+		LayerToolTRWShowPicture(Window * window, GisViewport * gisview);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
@@ -102,7 +102,7 @@ namespace SlavGPS {
 
 	class LayerToolTRWEditWaypoint : public LayerTool {
 	public:
-		LayerToolTRWEditWaypoint(Window * window, Viewport * viewport);
+		LayerToolTRWEditWaypoint(Window * window, GisViewport * gisview);
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
@@ -112,7 +112,7 @@ namespace SlavGPS {
 
 	class LayerToolTRWNewTrack : public LayerTool {
 	public:
-		LayerToolTRWNewTrack(Window * window, Viewport * viewport, bool is_route_tool);
+		LayerToolTRWNewTrack(Window * window, GisViewport * gisview, bool is_route_tool);
 
 		bool is_route_tool = false;
 		LayerTRW * creation_in_progress = NULL;
