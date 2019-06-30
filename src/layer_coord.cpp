@@ -451,7 +451,7 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 	QPen pen(this->color_deg);
 	pen.setWidth(this->line_thickness);
 
-	const UTM center = gisview->get_center().get_utm();
+	const UTM center = gisview->get_center_coord().get_utm();
 	const double xmpp = gisview->get_viking_scale().get_x();
 	const double ympp = gisview->get_viking_scale().get_y();
 	const int width = gisview->vpixmap.get_width();

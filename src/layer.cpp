@@ -692,7 +692,7 @@ Time Layer::get_timestamp(void) const
 void Layer::request_new_viewport_center(GisViewport * gisview, const Coord & coord)
 {
 	if (gisview) {
-		gisview->set_center_from_coord(coord);
+		gisview->set_center_coord(coord);
 		this->emit_tree_item_changed("Requesting change of center coordinate of viewport");
 	}
 }

@@ -66,15 +66,76 @@ namespace SlavGPS {
 
 
 
-
+	/* GIS-aware viewport. Viewport that knows something about
+	   coordinates etc. */
 	class GisViewport : public QWidget {
 		Q_OBJECT
 
 		friend class GisViewportDecorations;
 		friend class Viewport2D;
 	public:
+
+		/* ******** Methods that definitely should be in this class. ******** */
+
 		GisViewport(QWidget * parent = NULL);
 		~GisViewport();
+
+
+		void draw_bbox(const LatLonBBox & bbox, const QPen & pen);
+		sg_ret set_bbox(const LatLonBBox & bbox);
+		LatLonBBox get_bbox(int margin_left = 0, int margin_right = 0, int margin_top = 0, int margin_bottom = 0) const;
+
+		CoordMode get_coord_mode(void) const;
+		void set_coord_mode(CoordMode mode);
+
+		bool go_back(void);
+		bool go_forward(void);
+		bool back_available(void) const;
+		bool forward_available(void) const;
+
+		const Coord & get_center_coord(void) const;
+		std::list<QString> get_center_coords_list(void) const;
+		void show_center_coords(Window * parent) const;
+		void print_center_coords(const QString & label) const;
+
+		/* Coordinate transformations. */
+		Coord screen_pos_to_coord(int x, int y) const;
+		Coord screen_pos_to_coord(const ScreenPos & pos) const;
+		sg_ret coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
+		ScreenPos coord_to_screen_pos(const Coord & coord) const;
+
+		/* GisViewport's zoom. */
+		void zoom_in(void);
+		void zoom_out(void);
+
+		sg_ret set_viking_scale(double new_value);
+		sg_ret set_viking_scale_x(double new_value);
+		sg_ret set_viking_scale_y(double new_value);
+		sg_ret set_viking_scale(const VikingScale & new_value);
+		const VikingScale & get_viking_scale(void) const;
+
+		void set_drawmode(GisViewportDrawMode drawmode);
+		GisViewportDrawMode get_drawmode(void) const;
+
+		sg_ret utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, int zone);
+		sg_ret get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
+
+		int get_leftmost_zone(void) const;
+		int get_rightmost_zone(void) const;
+		bool get_is_one_utm_zone(void) const;
+
+		sg_ret set_center_coord(const Coord & coord, bool save_position = true);
+		sg_ret set_center_coord(const UTM & utm, bool save_position = true);
+		sg_ret set_center_coord(const LatLon & lat_lon, bool save_position = true);
+		sg_ret set_center_coord(int x, int y);
+		sg_ret set_center_coord(const ScreenPos & pos);
+
+		void emit_center_coord_or_zoom_changed(const QString & trigger_name);
+
+
+
+		/* ******** Other methods. ******** */
+
 
 		/* GisViewport module initialization function. */
 		static void init(void);
@@ -97,23 +158,8 @@ namespace SlavGPS {
 
 
 
-		/* Drawing primitives. */
-
-
-		void draw_bbox(const LatLonBBox & bbox, const QPen & pen);
-
 		/* Run this before drawing a line. ViewportPixmap::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
-
-		CoordMode get_coord_mode(void) const;
-		void set_coord_mode(CoordMode mode);
-
-
-		bool go_back(void);
-		bool go_forward(void);
-		bool back_available(void) const;
-		bool forward_available(void) const;
-
 
 		/* Get cursor position of a mouse event.  Returned
 		   position is in "beginning is in bottom-left corner"
@@ -121,30 +167,6 @@ namespace SlavGPS {
 		sg_ret get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
 
 
-		const Coord & get_center(void) const;
-		std::list<QString> get_centers_list(void) const;
-		void show_centers(Window * parent) const;
-		void print_centers(const QString & label) const;
-
-
-
-
-		/* GisViewport position. */
-		void set_center_from_coord(const Coord & coord, bool save_position = true);
-		void set_center_from_utm(const UTM & utm, bool save_position = true);
-		sg_ret set_center_from_lat_lon(const LatLon & lat_lon, bool save_position = true);
-
-		void set_center_from_screen_pos(int x, int y);
-		void set_center_from_screen_pos(const ScreenPos & pos);
-
-		sg_ret utm_recalculate_current_center_for_other_zone(UTM & center_in_other_zone, int zone);
-		sg_ret get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
-
-		int get_leftmost_zone(void) const;
-		int get_rightmost_zone(void) const;
-
-		sg_ret set_bbox(const LatLonBBox & bbox);
-		LatLonBBox get_bbox(int margin_left = 0, int margin_right = 0, int margin_top = 0, int margin_bottom = 0) const;
 
 
 		QRect get_rect(void) const;
@@ -153,22 +175,6 @@ namespace SlavGPS {
 		double get_vpixmap_width_m(void) const;
 
 
-		/* Coordinate transformations. */
-		Coord screen_pos_to_coord(int x, int y) const;
-		Coord screen_pos_to_coord(const ScreenPos & pos) const;
-		sg_ret coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
-		ScreenPos coord_to_screen_pos(const Coord & coord) const;
-
-
-		/* GisViewport's zoom. */
-		void zoom_in(void);
-		void zoom_out(void);
-
-		sg_ret set_viking_scale(double new_value);
-		sg_ret set_viking_scale_x(double new_value);
-		sg_ret set_viking_scale_y(double new_value);
-		sg_ret set_viking_scale(const VikingScale & new_value);
-		const VikingScale & get_viking_scale(void) const;
 
 
 
@@ -195,7 +201,6 @@ namespace SlavGPS {
 		const QColor & get_background_color(void) const;
 
 
-		bool get_is_one_utm_zone(void) const;
 
 
 		void draw_decorations(void);
@@ -204,22 +209,12 @@ namespace SlavGPS {
 		void set_scale_visibility(bool new_state);
 		bool get_scale_visibility(void) const;
 
-
 		void set_highlight_usage(bool new_state);
 		bool get_highlight_usage(void) const;
 
-
-
 		void clear(void);
 
-
-		void set_drawmode(GisViewportDrawMode drawmode);
-		GisViewportDrawMode get_drawmode(void) const;
-
-
 		void request_redraw(const QString & trigger_descr);
-
-
 
 		/* GisViewport buffer management/drawing to screen. */
 		QPixmap get_pixmap(void) const;   /* Get contents of drawing buffer. */
@@ -227,12 +222,8 @@ namespace SlavGPS {
 		void sync(void);              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 
-
-
 		/* Utilities. */
 		void compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle);
-
-
 
 		/* Trigger stuff. */
 		void set_trigger(Layer * trigger);
@@ -254,32 +245,50 @@ namespace SlavGPS {
 		GisViewport * create_scaled_viewport(Window * window, int target_width, int target_height, const VikingScale & expected_viking_scale);
 
 
-		void emit_center_or_zoom_changed(const QString & trigger_name);
-
 
 		Window * get_window(void) const;
+
+
+
+
+
+
+		/* ******** Class variables that definitely should be in this class. ******** */
+
+
+		CoordMode coord_mode;
+
+
+		Coord center_coord;
+		/* center_coords_iter++ means moving forward in history. Thus prev(center_coords->end()) is the newest item.
+		   center_coords_iter-- means moving backward in history. Thus center_coords->begin() is the oldest item (in the beginning of history). */
+		std::list<Coord> * center_coords;  /* The history of requested positions. */
+		std::list<Coord>::iterator center_coords_iter; /* Current position within the history list. */
+		int center_coords_max;      /* Configurable maximum size of the history list. */
+		int center_coords_radius;   /* Metres. */
+
+
+		/* Subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
+		GisViewportDrawMode drawmode;
+
+
+		double utm_zone_width = 0.0;
+		bool is_one_utm_zone;
+
+
+
+
+		/* ******** Other class variables. ******** */
 
 
 		/* Whether or not to display some decorations. */
 		bool scale_visibility = true;
 		bool center_mark_visibility = true;
 
-		CoordMode coord_mode;
-		Coord center;
 
-		/* centers_iter++ means moving forward in history. Thus prev(centers->end()) is the newest item.
-		   centers_iter-- means moving backward in history. Thus centers->begin() is the oldest item (in the beginning of history). */
-		std::list<Coord> * centers;  /* The history of requested positions. */
-		std::list<Coord>::iterator centers_iter; /* Current position within the history list. */
 
-		int centers_max;      /* configurable maximum size of the history list. */
-		int centers_radius;   /* Metres. */
 
-		double utm_zone_width = 0.0;
-		bool is_one_utm_zone;
 
-		/* Subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
-		GisViewportDrawMode drawmode;
 
 
 		/* Properties of text labels drawn on margins of charts (next to each horizontal/vertical grid line). */
@@ -309,29 +318,49 @@ namespace SlavGPS {
 		ViewportPixmap vpixmap;
 
 	private:
-		void free_center(std::list<Coord>::iterator iter);
+		/* ******** Methods that definitely should be in this class. ******** */
+
+		/* Store the current center coordinate into the history list
+		   and emit a signal to notify clients the list has been updated. */
+		void save_current_center_coord(void);
+
+		void free_center_coords(std::list<Coord>::iterator iter);
+
 
 		double calculate_utm_zone_width(void) const;
 		void utm_zone_check(void);
 
-		/* Store the current center position into the history list
-		   and emit a signal to notify clients the list has been updated. */
-		void save_current_center(void);
 
+
+		/* ******** Other methods. ******** */
+
+
+
+		/* ******** Class variables that definitely should be in this class. ******** */
 
 		VikingScale viking_scale;
 		double xmfactor = 0.0f;
 		double ymfactor = 0.0f;
 
-		Window * window = NULL;
 		GisViewportDecorations decorations;
 
 
+		/* ******** Other class variables. ******** */
+
+		Window * window = NULL;
+
+
 	signals:
+		/* ******** Signals that definitely should be in this class. ******** */
+
+
+		/* ******** Other signals. ******** */
 		void cursor_moved(GisViewport * gisview, QMouseEvent * event);
 		void button_released(GisViewport * gisview, QMouseEvent * event);
-		void center_updated(void);
-		void center_or_zoom_changed(void);
+
+		/* TODO: do we need to have two separate signals? */
+		void center_coord_updated(void);
+		void center_coord_or_zoom_changed(void);
 
 
 	public slots:

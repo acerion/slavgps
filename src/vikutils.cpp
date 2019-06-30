@@ -548,7 +548,7 @@ void CommandLineOptions::apply(Window * window)
 	GisViewport * gisview = window->get_viewport();
 
 	if (this->lat_lon.is_valid()) {
-		gisview->set_center_from_lat_lon(this->lat_lon);
+		gisview->set_center_coord(this->lat_lon);
 	}
 
 	if (this->zoom_level_osm >= 0) {

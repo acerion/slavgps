@@ -1155,7 +1155,7 @@ void LayerGeoref::zoom_to_fit_cb(void)
 void LayerGeoref::goto_center_cb(void)
 {
 	GisViewport * gisview = ThisApp::get_main_viewport();
-	UTM utm = gisview->get_center().get_utm();
+	UTM utm = gisview->get_center_coord().get_utm();
 
 	const double center_to_left_m = this->image_width * this->mpp_easting / 2;  /* Only an approximation. */
 	const double center_to_bottom_m = this->image_height * this->mpp_northing / 2;
@@ -1163,7 +1163,7 @@ void LayerGeoref::goto_center_cb(void)
 	utm.easting = this->utm_tl.get_easting() + center_to_left_m;
 	utm.northing = this->utm_tl.get_northing() - center_to_bottom_m;
 
-	gisview->set_center_from_utm(utm);
+	gisview->set_center_coord(utm);
 	gisview->request_redraw("Redrawing items after setting new center coord in viewport");
 }
 
@@ -1339,7 +1339,7 @@ LayerGeoref * SlavGPS::georef_layer_create(GisViewport * gisview, const QString 
 	layer->mpp_northing = ympp;
 
 	const LatLonBBox bbox(lat_lon_tl, lat_lon_br);
-	gisview->set_center_from_lat_lon(bbox.get_center_lat_lon()); /* TODO: is this call necessary if we call ::set_bbox() below? */
+	gisview->set_center_coord(bbox.get_center_lat_lon()); /* TODO: is this call necessary if we call ::set_bbox() below? */
 
 	/* Set best zoom level. */
 	gisview->set_bbox(bbox);
@@ -1371,5 +1371,5 @@ void LayerGeoref::configure_from_viewport(const GisViewport * gisview)
 	/* Make these defaults based on the current view. */
 	this->mpp_northing = gisview->get_viking_scale().get_y();
 	this->mpp_easting = gisview->get_viking_scale().get_x();
-	this->utm_tl = gisview->get_center().get_utm();
+	this->utm_tl = gisview->get_center_coord().get_utm();
 }

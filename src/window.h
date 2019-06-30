@@ -121,7 +121,8 @@ namespace SlavGPS {
 		void pan_move(QMouseEvent * event);
 		void pan_release(QMouseEvent * event);
 		void pan_off(void);
-		bool get_pan_move(void);
+		bool get_pan_move_in_progress(void) const;
+		sg_ret pan_move_update_viewport(const QMouseEvent * ev);
 
 		char type_string[30];
 
@@ -167,7 +168,7 @@ namespace SlavGPS {
 
 		bool get_side_panel_visibility(void) const;
 
-		void emit_center_or_zoom_changed(const QString & trigger_name);
+		void emit_center_coord_or_zoom_changed(const QString & trigger_name);
 
 
 		QAction * qa_tree_item_properties = NULL;
@@ -316,7 +317,7 @@ namespace SlavGPS {
 
 		void open_window(const QStringList & file_full_paths);
 
-		bool pan_move_flag = false;
+		bool pan_move_in_progress = false;
 		ScreenPos pan_pos; /* Last recorded position of cursor while panning. */
 		ScreenPos delayed_pan_pos; /* Temporary storage. */
 		bool single_click_pending = false;
@@ -378,7 +379,7 @@ namespace SlavGPS {
 		bool dirty_flag = false;
 
 	signals:
-		void center_or_zoom_changed(void);
+		void center_coord_or_zoom_changed(void);
 	};
 
 

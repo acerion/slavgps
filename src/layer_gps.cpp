@@ -1602,7 +1602,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 
 	if ((this->vehicle_position == VehiclePosition::Centered) ||
 	    (this->realtime_jump_to_start && this->first_realtime_trackpoint)) {
-		gisview->set_center_from_coord(this->current_rt_data.coord, false);
+		gisview->set_center_coord(this->current_rt_data.coord, false);
 		viewport_shifted = true;
 	} else if (this->vehicle_position == VehiclePosition::OnScreen) {
 		const int hdiv = 6;
@@ -1615,13 +1615,17 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		if (sg_ret::ok == gisview->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {
 			viewport_shifted = true;
 			if (vx < (width/hdiv)) {
-				gisview->set_center_from_screen_pos(vx - width/2 + width/hdiv + px, vy);
+				gisview->set_center_coord(vx - width/2 + width/hdiv + px, vy);
+
 			} else if (vx > (width - width/hdiv)) {
-				gisview->set_center_from_screen_pos(vx + width/2 - width/hdiv - px, vy);
+				gisview->set_center_coord(vx + width/2 - width/hdiv - px, vy);
+
 			} else if (vy < (height/vdiv)) {
-				gisview->set_center_from_screen_pos(vx, vy - height/2 + height/vdiv + px);
+				gisview->set_center_coord(vx, vy - height/2 + height/vdiv + px);
+
 			} else if (vy > (height - height/vdiv)) {
-				gisview->set_center_from_screen_pos(vx, vy + height/2 - height/vdiv - px);
+				gisview->set_center_coord(vx, vy + height/2 - height/vdiv - px);
+
 			} else {
 				viewport_shifted = false;
 			}

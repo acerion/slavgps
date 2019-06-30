@@ -405,7 +405,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	/* Copy/set selected properties of viewport. */
 	scaled_viewport->set_drawmode(this->gisview->get_drawmode());
 	scaled_viewport->set_coord_mode(this->gisview->get_coord_mode());
-	scaled_viewport->set_center_from_coord(this->gisview->center, false);
+	scaled_viewport->set_center_coord(this->gisview->center_coord, false);
 	scaled_viewport->set_viking_scale(this->scaled_viking_scale);
 
 	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled Viewport");
@@ -501,7 +501,7 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 	}
 
 	const VikingScale orig_viking_scale = this->gisview->get_viking_scale();
-	const UTM utm_orig = this->gisview->get_center().get_utm();
+	const UTM utm_orig = this->gisview->get_center_coord().get_utm();
 
 	this->gisview->set_viking_scale(this->scaled_viking_scale);
 
@@ -532,7 +532,7 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 			}
 
 			/* TODO_2_LATER: move to correct place. */
-			this->gisview->set_center_from_utm(utm, false);
+			this->gisview->set_center_coord(utm, false);
 
 			/* Redraw all layers at current position and zoom. */
 			this->window->draw_tree_items();
@@ -551,7 +551,7 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 		}
 	}
 
-	this->gisview->set_center_from_utm(utm_orig, false);
+	this->gisview->set_center_coord(utm_orig, false);
 
 	this->gisview->set_viking_scale(orig_viking_scale);
 

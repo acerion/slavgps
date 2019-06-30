@@ -107,7 +107,7 @@ double GisViewport::calculate_utm_zone_width(void) const
 	case CoordMode::UTM: {
 
 		/* Get latitude of screen bottom. */
-		UTM utm = this->center.utm;
+		UTM utm = this->center_coord.utm;
 		const double center_to_bottom_m = this->get_vpixmap_height_m() / 2;
 		utm.shift_northing_by(-center_to_bottom_m);
 		LatLon lat_lon = UTM::to_lat_lon(utm);
@@ -191,17 +191,17 @@ GisViewport::GisViewport(QWidget * parent) : QWidget(parent)
 
 
 
-	this->centers = new std::list<Coord>;
-	this->centers_iter = this->centers->begin();
-	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->centers_max)) {
-		this->centers_max = 20;
+	this->center_coords = new std::list<Coord>;
+	this->center_coords_iter = this->center_coords->begin();
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->center_coords_max)) {
+		this->center_coords_max = 20;
 	}
-	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &this->centers_radius)) {
-		this->centers_radius = 500;
+	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &this->center_coords_radius)) {
+		this->center_coords_radius = 500;
 	}
 
 
-	this->set_center_from_lat_lon(initial_lat_lon); /* The function will reject latlon if it's invalid. */
+	this->set_center_coord(initial_lat_lon); /* The function will reject latlon if it's invalid. */
 
 
 	this->setFocusPolicy(Qt::ClickFocus);
@@ -237,7 +237,7 @@ GisViewport::~GisViewport()
 {
 	qDebug() << SG_PREFIX_I;
 	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
-		const LatLon lat_lon = this->center.get_lat_lon();
+		const LatLon lat_lon = this->center_coord.get_lat_lon();
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, lat_lon.lon);
 
@@ -245,7 +245,7 @@ GisViewport::~GisViewport()
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->viking_scale.y);
 	}
 
-	delete this->centers;
+	delete this->center_coords;
 }
 
 
@@ -588,9 +588,9 @@ sg_ret GisViewport::set_viking_scale_y(double new_value)
 
 
 
-const Coord & GisViewport::get_center(void) const
+const Coord & GisViewport::get_center_coord(void) const
 {
-	return this->center;
+	return this->center_coord;
 }
 
 
@@ -600,9 +600,9 @@ const Coord & GisViewport::get_center(void) const
 void GisViewport::utm_zone_check(void)
 {
 	if (this->coord_mode == CoordMode::UTM) {
-		const UTM utm = LatLon::to_utm(UTM::to_lat_lon(center.utm));
-		if (!UTM::is_the_same_zone(utm, this->center.utm)) {
-			this->center.utm = utm;
+		const UTM utm = LatLon::to_utm(UTM::to_lat_lon(this->center_coord.utm));
+		if (!UTM::is_the_same_zone(utm, this->center_coord.utm)) {
+			this->center_coord.utm = utm;
 		}
 
 		/* Misc. stuff so we don't have to check later. */
@@ -617,70 +617,70 @@ void GisViewport::utm_zone_check(void)
 /**
    \brief Remove an individual center position from the history list
 */
-void GisViewport::free_center(std::list<Coord>::iterator iter)
+void GisViewport::free_center_coords(std::list<Coord>::iterator iter)
 {
-	if (iter == this->centers_iter) {
-		this->centers_iter = this->centers->erase(iter);
+	if (iter == this->center_coords_iter) {
+		this->center_coords_iter = this->center_coords->erase(iter);
 
-		if (this->centers_iter == this->centers->end()) {
+		if (this->center_coords_iter == this->center_coords->end()) {
 			/* We have removed last element on the list. */
 
-			if (centers->empty()) {
-				this->centers_iter = this->centers->begin();
+			if (center_coords->empty()) {
+				this->center_coords_iter = this->center_coords->begin();
 			} else {
-				this->centers_iter--;
+				this->center_coords_iter--;
 			}
 		}
 	} else {
-		this->centers->erase(iter);
+		this->center_coords->erase(iter);
 	}
 }
 
 
 
 
-void GisViewport::save_current_center(void)
+void GisViewport::save_current_center_coord(void)
 {
-	if (this->centers_iter == prev(this->centers->end())) {
+	if (this->center_coords_iter == prev(this->center_coords->end())) {
 		/* We are at most recent element of history. */
-		if (this->centers->size() == (unsigned) this->centers_max) {
+		if (this->center_coords->size() == (unsigned) this->center_coords_max) {
 			/* List is full, so drop the oldest value to make room for the new one. */
-			this->free_center(this->centers->begin());
+			this->free_center_coords(this->center_coords->begin());
 		}
 	} else {
 		/* We are somewhere in the middle of history list, possibly at the beginning.
 		   Every center visited after current one must be discarded. */
-		this->centers->erase(next(this->centers_iter), this->centers->end());
-		assert (std::next(this->centers_iter) == this->centers->end());
+		this->center_coords->erase(next(this->center_coords_iter), this->center_coords->end());
+		assert (std::next(this->center_coords_iter) == this->center_coords->end());
 	}
 
 	/* Store new position. */
 	/* push_back() puts at the end. By convention end == newest. */
-	this->centers->push_back(this->center);
-	this->centers_iter++;
-	assert (std::next(this->centers_iter) == this->centers->end());
+	this->center_coords->push_back(this->center_coord);
+	this->center_coords_iter++;
+	assert (std::next(this->center_coords_iter) == this->center_coords->end());
 
-	this->print_centers("GisViewport::save_current_center()");
+	this->print_center_coords("GisViewport::save_current_center_coord()");
 
-	qDebug() << SG_PREFIX_SIGNAL << "Emitting center_updated()";
-	emit this->center_updated();
+	qDebug() << SG_PREFIX_SIGNAL << "Emitting center_coord_updated()";
+	emit this->center_coord_updated();
 }
 
 
 
 
-std::list<QString> GisViewport::get_centers_list(void) const
+std::list<QString> GisViewport::get_center_coords_list(void) const
 {
 	std::list<QString> result;
 
-	for (auto iter = this->centers->begin(); iter != this->centers->end(); iter++) {
+	for (auto iter = this->center_coords->begin(); iter != this->center_coords->end(); iter++) {
 
 		QString extra;
-		if (iter == prev(this->centers_iter)) {
+		if (iter == prev(this->center_coords_iter)) {
 			extra = tr("[Back]");
-		} else if (iter == next(this->centers_iter)) {
+		} else if (iter == next(this->center_coords_iter)) {
 			extra = tr("[Forward]");
-		} else if (iter == this->centers_iter) {
+		} else if (iter == this->center_coords_iter) {
 			extra = tr("[Current]");
 		} else {
 			; /* NOOP */
@@ -702,9 +702,9 @@ std::list<QString> GisViewport::get_centers_list(void) const
 
    ATM only for debug usage.
 */
-void GisViewport::show_centers(Window * parent_window) const
+void GisViewport::show_center_coords(Window * parent_window) const
 {
-	const std::list<QString> texts = this->get_centers_list();
+	const std::list<QString> texts = this->get_center_coords_list();
 
 	/* Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
@@ -724,12 +724,12 @@ void GisViewport::show_centers(Window * parent_window) const
 
 
 
-void GisViewport::print_centers(const QString & label) const
+void GisViewport::print_center_coords(const QString & label) const
 {
-	const std::list<QString> texts = this->get_centers_list();
+	const std::list<QString> texts = this->get_center_coords_list();
 
 	for (auto iter = texts.begin(); iter != texts.end(); iter++) {
-		qDebug() << SG_PREFIX_I << "Centers:" << label << *iter;
+		qDebug() << SG_PREFIX_I << "Center coords:" << label << *iter;
 	}
 
 	return;
@@ -749,12 +749,12 @@ bool GisViewport::go_back(void)
 {
 	/* See if the current position is different from the
 	   last saved center position within a certain radius. */
-	if (Coord::distance(*this->centers_iter, this->center) > this->centers_radius) {
+	if (Coord::distance(*this->center_coords_iter, this->center_coord) > this->center_coords_radius) {
 
-		if (this->centers_iter == prev(this->centers->end())) {
+		if (this->center_coords_iter == prev(this->center_coords->end())) {
 			/* Only when we haven't already moved back in the list.
 			   Remember where this request came from (alternatively we could insert in the list on every back attempt). */
-			this->save_current_center();
+			this->save_current_center_coord();
 		}
 	}
 
@@ -767,8 +767,8 @@ bool GisViewport::go_back(void)
 	   Otherwise this will skip to the previous saved position, as it's probably somewhere else. */
 
 	/* This is safe because ::back_available() returned true. */
-	this->centers_iter--;
-	this->set_center_from_coord(*this->centers_iter, false);
+	this->center_coords_iter--;
+	this->set_center_coord(*this->center_coords_iter, false);
 
 	return true;
 }
@@ -790,8 +790,8 @@ bool GisViewport::go_forward(void)
 	}
 
 	/* This is safe because ::forward_available() returned true. */
-	this->centers_iter++;
-	this->set_center_from_coord(*this->centers_iter, false);
+	this->center_coords_iter++;
+	this->set_center_coord(*this->center_coords_iter, false);
 
 	return true;
 }
@@ -805,7 +805,7 @@ bool GisViewport::go_forward(void)
 */
 bool GisViewport::back_available(void) const
 {
-	return (this->centers->size() > 1 && this->centers_iter != this->centers->begin());
+	return (this->center_coords->size() > 1 && this->center_coords_iter != this->center_coords->begin());
 }
 
 
@@ -817,7 +817,7 @@ bool GisViewport::back_available(void) const
 */
 bool GisViewport::forward_available(void) const
 {
-	return (this->centers->size() > 1 && this->centers_iter != prev(this->centers->end()));
+	return (this->center_coords->size() > 1 && this->center_coords_iter != prev(this->center_coords->end()));
 }
 
 
@@ -828,16 +828,42 @@ bool GisViewport::forward_available(void) const
    @save_position: Whether this new position should be saved into the history of positions
                    Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
 */
-sg_ret GisViewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_position)
+sg_ret GisViewport::set_center_coord(const LatLon & lat_lon, bool save_position)
 {
 	if (!lat_lon.is_valid()) {
 		qDebug() << SG_PREFIX_E << "Not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
 		return sg_ret::err;
 	}
 
-	this->center = Coord(lat_lon, this->coord_mode);
+	return this->set_center_coord(Coord(lat_lon, this->coord_mode), save_position);
+}
+
+
+
+
+/**
+   @utm:           The new center position in UTM format
+   @save_position: Whether this new position should be saved into the history of positions
+                   Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
+*/
+sg_ret GisViewport::set_center_coord(const UTM & utm, bool save_position)
+{
+	return this->set_center_coord(Coord(utm, this->coord_mode), save_position);
+}
+
+
+
+
+/**
+   @coord:         The new center position in a Coord type
+   @save_position: Whether this new position should be saved into the history of positions
+                   Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
+*/
+sg_ret GisViewport::set_center_coord(const Coord & coord, bool save_position)
+{
+	this->center_coord = coord;
 	if (save_position) {
-		this->save_current_center();
+		this->save_current_center_coord();
 	}
 
 	if (this->coord_mode == CoordMode::UTM) {
@@ -850,41 +876,18 @@ sg_ret GisViewport::set_center_from_lat_lon(const LatLon & lat_lon, bool save_po
 
 
 
-/**
-   @utm:           The new center position in UTM format
-   @save_position: Whether this new position should be saved into the history of positions
-                   Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
-*/
-void GisViewport::set_center_from_utm(const UTM & utm, bool save_position)
+sg_ret GisViewport::set_center_coord(int x1, int y1)
 {
-	this->center = Coord(utm, this->coord_mode);
-	if (save_position) {
-		this->save_current_center();
-	}
-
-	if (this->coord_mode == CoordMode::UTM) {
-		this->utm_zone_check();
-	}
+	const Coord coord = this->screen_pos_to_coord(x1, y1);
+	return this->set_center_coord(coord, false);
 }
 
 
 
 
-/**
-   @coord:         The new center position in a Coord type
-   @save_position: Whether this new position should be saved into the history of positions
-                   Normally only specific user requests should be saved (i.e. to not include Pan and Zoom repositions)
-*/
-void GisViewport::set_center_from_coord(const Coord & coord, bool save_position)
+sg_ret GisViewport::set_center_coord(const ScreenPos & pos)
 {
-	this->center = coord;
-	if (save_position) {
-		this->save_current_center();
-	}
-
-	if (this->coord_mode == CoordMode::UTM) {
-		this->utm_zone_check();
-	}
+	return this->set_center_coord(pos.x, pos.y);
 }
 
 
@@ -898,7 +901,7 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int
 	}
 
 	/* Get center, then just offset. */
-	if (sg_ret::ok != this->utm_recalculate_current_center_for_other_zone(coord_ul.utm, zone)) {
+	if (sg_ret::ok != this->utm_recalculate_current_center_coord_for_other_zone(coord_ul.utm, zone)) {
 		qDebug() << SG_PREFIX_E << "Can't center for zone" << zone;
 		return sg_ret::err;
 	}
@@ -927,17 +930,17 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int
 
 
 
-sg_ret GisViewport::utm_recalculate_current_center_for_other_zone(UTM & center_in_other_zone, int zone)
+sg_ret GisViewport::utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, int zone)
 {
 	if (this->coord_mode != CoordMode::UTM) {
 		qDebug() << SG_PREFIX_E << "Coord mode is not UTM:" << (int) this->coord_mode;
 		return sg_ret::err;
 	}
 
-	const int zone_diff = zone - this->center.utm.get_zone();
+	const int zone_diff = zone - this->center_coord.utm.get_zone();
 
 	/* TODO: why do we have to offset easting? Wouldn't easting of center be the same in each zone? */
-	center_in_other_zone = this->center.utm;
+	center_in_other_zone = this->center_coord.utm;
 	center_in_other_zone.shift_easting_by(-(zone_diff * this->utm_zone_width));
 	center_in_other_zone.set_zone(zone);
 
@@ -974,38 +977,6 @@ int GisViewport::get_rightmost_zone(void) const
 
 
 
-void GisViewport::set_center_from_screen_pos(int x1, int y1)
-{
-	if (coord_mode == CoordMode::UTM) {
-		/* Slightly optimized. */
-
-		/* TODO: verify position of x1 and y1 in these equations. */
-		const int delta_horiz_pixel = x1 - this->vpixmap.get_horiz_center_pixel();
-		const int delta_vert_pixel = this->vpixmap.get_vert_center_pixel() - y1;
-
-		const double delta_horiz_m = delta_horiz_pixel * this->viking_scale.x;
-		const double delta_vert_m = delta_vert_pixel * this->viking_scale.y;
-
-		this->center.utm.shift_easting_by(delta_horiz_m);
-		this->center.utm.shift_northing_by(delta_vert_m);
-		this->utm_zone_check();
-	} else {
-		const Coord coord = this->screen_pos_to_coord(x1, y1);
-		this->set_center_from_coord(coord, false);
-	}
-}
-
-
-
-
-void GisViewport::set_center_from_screen_pos(const ScreenPos & pos)
-{
-	this->set_center_from_screen_pos(pos.x, pos.y);
-}
-
-
-
-
 QRect GisViewport::get_rect(void) const
 {
 	return QRect(0, 0, this->vpixmap.get_width(), this->vpixmap.get_height());
@@ -1031,16 +1002,16 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 
 		/* Modified (reformatted) formula. */
 		{
-			coord.utm.set_zone(this->center.utm.get_zone());
-			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
-			coord.utm.set_band_letter(this->center.utm.get_band_letter());
-			coord.utm.set_easting((delta_horiz_pixels * xmpp) + this->center.utm.get_easting());
+			coord.utm.set_zone(this->center_coord.utm.get_zone());
+			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+			coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
+			coord.utm.set_easting((delta_horiz_pixels * xmpp) + this->center_coord.utm.get_easting());
 
 			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.shift_easting_by(-(zone_delta * this->utm_zone_width));
-			coord.utm.set_northing((delta_vert_pixels * ympp) + this->center.utm.get_northing());
+			coord.utm.set_northing((delta_vert_pixels * ympp) + this->center_coord.utm.get_northing());
 		}
 
 		/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1050,16 +1021,16 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			Coord test_coord;
 			test_coord.set_coord_mode(CoordMode::UTM);
 
-			test_coord.utm.set_zone(this->center.utm.get_zone());
-			assert (UTM::is_band_letter(this->center.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
-			test_coord.utm.set_band_letter(this->center.utm.get_band_letter());
-			test_coord.utm.easting = (delta_horiz_pixels * xmpp) + this->center.utm.easting;
+			test_coord.utm.set_zone(this->center_coord.utm.get_zone());
+			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+			test_coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
+			test_coord.utm.easting = (delta_horiz_pixels * xmpp) + this->center_coord.utm.easting;
 
 			zone_delta = floor((test_coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
 			test_coord.utm.shift_zone_by(zone_delta);
 			test_coord.utm.easting -= zone_delta * this->utm_zone_width;
-			test_coord.utm.northing = (delta_vert_pixels * ympp) + this->center.utm.northing;
+			test_coord.utm.northing = (delta_vert_pixels * ympp) + this->center_coord.utm.northing;
 
 
 			if (!UTM::is_the_same_zone(coord.utm, test_coord.utm)) {
@@ -1084,8 +1055,8 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		case GisViewportDrawMode::LatLon:
 			/* Modified (reformatted) formula. */
 			{
-				coord.lat_lon.lon = this->center.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.lat_lon.lat = this->center.lat_lon.lat + (delta_vert_pixels / REVERSE_MERCATOR_FACTOR(ympp));
+				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.lat_lon.lat = this->center_coord.lat_lon.lat + (delta_vert_pixels / REVERSE_MERCATOR_FACTOR(ympp));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1093,8 +1064,8 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.lat_lon.lon = this->center.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
-				test_coord.lat_lon.lat = this->center.lat_lon.lat + (180.0 * ympp / 65536 / 256 * delta_vert_pixels);
+				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.lat_lon.lat = this->center_coord.lat_lon.lat + (180.0 * ympp / 65536 / 256 * delta_vert_pixels);
 
 				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
 					qDebug() << SG_PREFIX_E << "LatLon: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
@@ -1106,7 +1077,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			break;
 
 		case GisViewportDrawMode::Expedia:
-			Expedia::screen_pos_to_lat_lon(coord.lat_lon, pos_x, pos_y, this->center.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
+			Expedia::screen_pos_to_lat_lon(coord.lat_lon, pos_x, pos_y, this->center_coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
 						       /* TODO: make sure that this is ok, that we don't need to use get_width()/get_height() here. */
 						       this->vpixmap.get_horiz_center_pixel(),
 						       this->vpixmap.get_vert_center_pixel());
@@ -1116,8 +1087,8 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			/* This isn't called with a high frequently so less need to optimize. */
 			/* Modified (reformatted) formula. */
 			{
-				coord.lat_lon.lon = this->center.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
-				coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center.lat_lon.lat) + (delta_vert_pixels / (REVERSE_MERCATOR_FACTOR(ympp))));
+				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat) + (delta_vert_pixels / (REVERSE_MERCATOR_FACTOR(ympp))));
 			}
 
 			/* Original code, used for comparison of results with new, reformatted formula. */
@@ -1125,8 +1096,8 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.lat_lon.lon = this->center.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
-				test_coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center.lat_lon.lat) + (180.0 * ympp / 65536 / 256 * delta_vert_pixels));
+				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat) + (180.0 * ympp / 65536 / 256 * delta_vert_pixels));
 
 				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
 					qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
@@ -1194,14 +1165,14 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		{
-			const int zone_diff = this->center.utm.get_zone() - coord.utm.get_zone();
+			const int zone_diff = this->center_coord.utm.get_zone() - coord.utm.get_zone();
 
 			if (0 != zone_diff && this->is_one_utm_zone){
 				return sg_ret::err;
 			}
 
-			const double horiz_distance_m = coord.utm.get_easting() - this->center.utm.get_easting();
-			const double vert_distance_m = coord.utm.get_northing() - this->center.utm.get_northing();
+			const double horiz_distance_m = coord.utm.get_easting() - this->center_coord.utm.get_easting();
+			const double vert_distance_m = coord.utm.get_northing() - this->center_coord.utm.get_northing();
 
 			*pos_x = horiz_center_pixel + (horiz_distance_m / xmpp) - (zone_diff * this->utm_zone_width) / xmpp;
 			*pos_y = vert_center_pixel - (vert_distance_m / ympp); /* TODO: plus or minus? */
@@ -1211,20 +1182,20 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 	case CoordMode::LatLon:
 		switch (this->drawmode) {
 		case GisViewportDrawMode::LatLon:
-			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center.lat_lon.lon));
-			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center.lat_lon.lat - coord.lat_lon.lat));
+			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
+			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center_coord.lat_lon.lat - coord.lat_lon.lat));
 			break;
 		case GisViewportDrawMode::Expedia:
 			{
 				double xx, yy;
-				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center.lat_lon, coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, horiz_center_pixel, vert_center_pixel);
+				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center_coord.lat_lon, coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, horiz_center_pixel, vert_center_pixel);
 				*pos_x = xx;
 				*pos_y = yy;
 			}
 			break;
 		case GisViewportDrawMode::Mercator:
-			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center.lat_lon.lon));
-			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center.lat_lon.lat) - MERCLAT(coord.lat_lon.lat)));
+			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
+			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center_coord.lat_lon.lat) - MERCLAT(coord.lat_lon.lat)));
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
@@ -1453,7 +1424,7 @@ CoordMode GisViewport::get_coord_mode(void) const
 void GisViewport::set_coord_mode(CoordMode new_mode)
 {
 	this->coord_mode = new_mode;
-	this->center.recalculate_to_mode(new_mode);
+	this->center_coord.recalculate_to_mode(new_mode);
 }
 
 
@@ -1734,18 +1705,18 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 	case Qt::ControlModifier:
 		/* Control == pan up & down. */
 		if (scroll_up) {
-			this->set_center_from_screen_pos(w / 2, h / 3);
+			this->set_center_coord(w / 2, h / 3);
 		} else {
-			this->set_center_from_screen_pos(w / 2, h * 2 / 3);
+			this->set_center_coord(w / 2, h * 2 / 3);
 		}
 		break;
 
 	case Qt::ShiftModifier:
 		/* Shift == pan left & right. */
 		if (scroll_up) {
-			this->set_center_from_screen_pos(w / 3, h / 2);
+			this->set_center_coord(w / 3, h / 2);
 		} else {
-			this->set_center_from_screen_pos(w * 2 / 3, h / 2);
+			this->set_center_coord(w * 2 / 3, h / 2);
 		}
 		break;
 
@@ -1889,7 +1860,7 @@ GisViewport * GisViewport::create_scaled_viewport(Window * a_window, int target_
 	/* Copy/set selected properties of viewport. */
 	scaled_viewport->set_drawmode(this->get_drawmode());
 	scaled_viewport->set_coord_mode(this->get_coord_mode());
-	scaled_viewport->set_center_from_coord(this->center, false);
+	scaled_viewport->set_center_coord(this->center_coord, false);
 
 
 
@@ -2157,7 +2128,7 @@ sg_ret GisViewport::set_bbox(const LatLonBBox & new_bbox)
 
 void GisViewport::request_redraw(const QString & trigger_descr)
 {
-	this->emit_center_or_zoom_changed(trigger_descr);
+	this->emit_center_coord_or_zoom_changed(trigger_descr);
 }
 
 
@@ -2206,10 +2177,10 @@ bool GisViewport::is_ready(void) const
    To be called when action initiated in GisViewport has changed center
    of viewport or zoom of viewport.
 */
-void GisViewport::emit_center_or_zoom_changed(const QString & trigger_name)
+void GisViewport::emit_center_coord_or_zoom_changed(const QString & trigger_name)
 {
 	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal triggered by" << trigger_name;
-	emit this->center_or_zoom_changed();
+	emit this->center_coord_or_zoom_changed();
 }
 
 

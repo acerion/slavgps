@@ -79,7 +79,7 @@ OnlineService_format::~OnlineService_format()
 QString OnlineService_format::get_url_at_position(GisViewport * a_gisview, const Coord * a_coord)
 {
 	/* Center values. */
-	LatLon center_lat_lon = a_gisview->get_center().get_lat_lon();
+	LatLon center_lat_lon = a_gisview->get_center_coord().get_lat_lon();
 	QString center_lat;
 	QString center_lon;
 	center_lat_lon.to_strings_raw(center_lat, center_lon);

@@ -239,13 +239,13 @@ bool GisViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, Gi
 
 	switch (zoom_operation) {
 	case ZoomOperation::In:
-		gisview->set_center_from_screen_pos(event_pos);
+		gisview->set_center_coord(event_pos);
 		gisview->zoom_in();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
-		gisview->set_center_from_screen_pos(event_pos);
+		gisview->set_center_coord(event_pos);
 		gisview->zoom_out();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
@@ -266,13 +266,13 @@ bool GisViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, Gi
 
 	switch (zoom_operation) {
 	case ZoomOperation::In:
-		gisview->set_center_from_screen_pos(center_pos);
+		gisview->set_center_coord(center_pos);
 		gisview->zoom_in();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
-		gisview->set_center_from_screen_pos(center_pos);
+		gisview->set_center_coord(center_pos);
 		gisview->zoom_out();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
@@ -302,7 +302,7 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 		/* Position of event calculated in modified (zoomed in) viewport. */
 		const ScreenPos orig_pos = gisview->coord_to_screen_pos(cursor_coord);
 
-		gisview->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
+		gisview->set_center_coord(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -317,7 +317,7 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 		/* Position of event calculated in modified (zoomed out) viewport. */
 		const ScreenPos orig_pos = gisview->coord_to_screen_pos(cursor_coord);
 
-		gisview->set_center_from_screen_pos(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
+		gisview->set_center_coord(center_pos.x + (orig_pos.x - event_pos.x), center_pos.y + (orig_pos.y - event_pos.y));
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -641,7 +641,7 @@ sg_ret GisViewportZoom::zoom_to_show_bbox_common(GisViewport * gisview, CoordMod
 		qDebug() << SG_PREFIX_E << "zoom is invalid:" << zoom;
 		return sg_ret::err;
 	}
-	if (sg_ret::ok != gisview->set_center_from_lat_lon(bbox.get_center_lat_lon(), save_position)) {
+	if (sg_ret::ok != gisview->set_center_coord(bbox.get_center_lat_lon(), save_position)) {
 		qDebug() << SG_PREFIX_E << "Failed to set center from coordinate" << bbox.get_center_lat_lon();
 		return sg_ret::err;
 	}

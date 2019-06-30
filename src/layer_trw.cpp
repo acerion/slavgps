@@ -1747,7 +1747,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			ThisApp::get_main_viewport()->set_center_from_coord(wp->coord);
+			ThisApp::get_main_viewport()->set_center_coord(wp->coord);
 			this->tree_view->select_and_expose_tree_item(wp);
 			ThisApp::get_main_viewport()->request_redraw("Redrawing items after setting new center in viewport");
 
@@ -2000,7 +2000,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	bool visible_with_parents = false;
 
-	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center(), visible_with_parents, this->get_window())) {
+	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center_coord(), visible_with_parents, this->get_window())) {
 		this->waypoints.recalculate_bbox();
 		/* We don't have direct access to added waypoint, so
 		   we can't call ::emit_tree_item_changed(). But we

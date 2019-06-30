@@ -298,7 +298,7 @@ bool GoTo::goto_location(Window * window, GisViewport * gisview)
 			GotoToolResult ans = goto_tools[last_goto_idx]->get_coord(gisview, location.toUtf8().data(), &location_coord);
 			switch (ans) {
 			case GotoToolResult::Found:
-				gisview->set_center_from_coord(location_coord);
+				gisview->set_center_coord(location_coord);
 				ask_again = false;
 				moved_to_new_position = true;
 				g_last_location = location;
@@ -486,7 +486,7 @@ int GoTo::where_am_i(GisViewport * gisview, LatLon & lat_lon, QString & name)
 
 sg_ret GoTo::goto_latlon(Window * window, GisViewport * gisview)
 {
-	const LatLon initial_lat_lon = gisview->get_center().get_lat_lon();
+	const LatLon initial_lat_lon = gisview->get_center_coord().get_lat_lon();
 	const LatLon new_lat_lon = goto_latlon_dialog(initial_lat_lon, window);
 
 	if (!new_lat_lon.is_valid()) {
@@ -494,7 +494,7 @@ sg_ret GoTo::goto_latlon(Window * window, GisViewport * gisview)
 		return sg_ret::ok;
 	}
 
-	return gisview->set_center_from_lat_lon(new_lat_lon); /* This function will return error on invalid argument. */
+	return gisview->set_center_coord(new_lat_lon); /* This function will return error on invalid argument. */
 }
 
 
@@ -530,13 +530,13 @@ LatLon goto_latlon_dialog(const LatLon & initial_lat_lon, Window * parent)
 bool GoTo::goto_utm(Window * window, GisViewport * gisview)
 {
 	UTM new_utm;
-	const UTM initial_utm = gisview->get_center().get_utm();
+	const UTM initial_utm = gisview->get_center_coord().get_utm();
 
 	if (QDialog::Rejected == goto_utm_dialog(new_utm, initial_utm, window)) {
 		return false;
 	}
 
-	gisview->set_center_from_utm(new_utm);
+	gisview->set_center_coord(new_utm);
 
 	return true;
 }

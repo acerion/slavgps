@@ -653,7 +653,7 @@ void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 	if (1 == n_items) {
 		/* Only 1 waypoint - jump straight to it. Notice that we don't care about waypoint's visibility.  */
 		const auto iter = this->children_list.begin();
-		gisview->set_center_from_coord((*iter)->coord);
+		gisview->set_center_coord((*iter)->coord);
 
 	} else if (1 < n_items) {
 		/* If at least 2 waypoints - find center and then zoom to fit */

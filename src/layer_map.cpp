@@ -896,10 +896,10 @@ QPixmap LayerMap::get_tile_pixmap(const QString & map_type_string, const TileInf
 
 bool LayerMap::should_start_autodownload(GisViewport * gisview)
 {
-	const Coord center = gisview->get_center();
+	const Coord center = gisview->get_center_coord();
 
-	if (this->get_window()->get_pan_move()) {
-		/* D'n'D pan in action: do not download. */
+	if (this->get_window()->get_pan_move_in_progress()) {
+		/* Panning in progress: do not download. */
 		return false;
 	}
 
@@ -1547,7 +1547,7 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QM
 	const MapSource * map_source = map_source_interfaces[layer->map_type_id];
 	const VikingScale viking_scale = layer->calculate_viking_scale(this->gisview);
 	if (map_source->get_drawmode() == this->gisview->get_drawmode()
-	    && map_source->coord_to_tile_info(this->gisview->get_center(),
+	    && map_source->coord_to_tile_info(this->gisview->get_center_coord(),
 					      viking_scale,
 					      tmp)) {
 

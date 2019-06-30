@@ -116,7 +116,7 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 	this->vp_ympp = this->gisview->get_viking_scale().get_y();
 
 	this->vp_rect = this->gisview->get_rect();
-	this->vp_center = this->gisview->get_center();
+	this->vp_center = this->gisview->get_center_coord();
 	this->vp_coord_mode = this->gisview->get_coord_mode();
 	this->vp_is_one_utm_zone = this->gisview->get_is_one_utm_zone(); /* False if some other projection besides UTM. */
 
@@ -524,7 +524,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 
 #if 1   /* Temporary test code. */
-	this->draw_track_label("test track label", QColor("green"), QColor("black"), this->gisview->get_center());
+	this->draw_track_label("test track label", QColor("green"), QColor("black"), this->gisview->get_center_coord());
 #endif
 
 

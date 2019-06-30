@@ -179,10 +179,10 @@ Window::Window()
 
 
 	/* Own signals. */
-	connect(this->viewport, SIGNAL (center_updated(void)), this, SLOT (center_changed_cb(void)));
-	connect(this->viewport, SIGNAL (center_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
+	connect(this->viewport, SIGNAL (center_coord_updated(void)), this, SLOT (center_changed_cb(void)));
+	connect(this->viewport, SIGNAL (center_coord_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
-	connect(this, SIGNAL (center_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
+	connect(this, SIGNAL (center_coord_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
 
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
@@ -995,7 +995,7 @@ void Window::draw_tree_items(void)
 
 #ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
-	this->trigger_center = this->viewport->viewport->get_center();
+	this->trigger_center = this->viewport->viewport->get_center_coord();
 	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
 	Layer * old_trigger = this->viewport->viewport->get_trigger();
@@ -1294,8 +1294,10 @@ void Window::activate_tool_by_id(const QString & tool_id)
 void Window::pan_click(QMouseEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
+
+	this->pan_move_in_progress = false;
+
 	/* Set panning origin. */
-	this->pan_move_flag = false;
 	this->pan_pos = ScreenPos(ev->x(), ev->y());
 }
 
@@ -1306,21 +1308,32 @@ void Window::pan_move(QMouseEvent * ev)
 {
 	//qDebug() << SG_PREFIX_I;
 	if (this->pan_pos.x != -1) {
-		const int center_x = this->viewport->central_get_width() / 2;
-		const int center_y = this->viewport->central_get_height() / 2;
+		this->pan_move_update_viewport(ev);
 
-		/* By how much a center of viewport was moved by panning? */
-		const int pan_delta_x = ev->x() - this->pan_pos.x;
-		const int pan_delta_y = ev->y() - this->pan_pos.y;
-
-		/* "Move a screen pixel that is delta x/y from center
-		   of viewport, into a center of viewport. */
-		this->viewport->central->set_center_from_screen_pos(center_x - pan_delta_x, center_y - pan_delta_y);
-
-		this->pan_move_flag = true;
+		this->pan_move_in_progress = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
-		this->emit_center_or_zoom_changed("pan move");
+		this->emit_center_coord_or_zoom_changed("pan move");
 	}
+}
+
+
+
+
+/* Tell viewport that it needs to move by certain offset in reaction
+   to pan action */
+sg_ret Window::pan_move_update_viewport(const QMouseEvent * ev)
+{
+	/* TODO: use proper methods for getting center pixel. */
+	const int center_x = this->viewport->central_get_width() / 2;
+	const int center_y = this->viewport->central_get_height() / 2;
+
+	/* By how much a center of viewport was moved by panning? */
+	const int pan_delta_x = ev->x() - this->pan_pos.x;
+	const int pan_delta_y = ev->y() - this->pan_pos.y;
+
+	/* "Move a screen pixel that is delta x/y from center
+	   of viewport, into a center of viewport. */
+	return this->viewport->central->set_center_coord(center_x - pan_delta_x, center_y - pan_delta_y);
 }
 
 
@@ -1331,7 +1344,7 @@ void Window::pan_release(QMouseEvent * ev)
 	qDebug() << SG_PREFIX_I;
 	bool do_draw = true;
 
-	if (this->pan_move_flag == false) {
+	if (this->pan_move_in_progress == false) {
 		this->single_click_pending = !this->single_click_pending;
 		if (this->single_click_pending) {
 			/* Store offset to use. */
@@ -1348,16 +1361,15 @@ void Window::pan_release(QMouseEvent * ev)
 #endif
 			do_draw = false;
 		} else {
-			this->viewport->central->set_center_from_screen_pos(this->pan_pos);
+			this->viewport->central->set_center_coord(this->pan_pos);
 		}
 	} else {
-		this->viewport->central->set_center_from_screen_pos(this->viewport->central_get_width() / 2 - ev->x() + this->pan_pos.x,
-								    this->viewport->central_get_height() / 2 - ev->y() + this->pan_pos.y);
+		this->pan_move_update_viewport(ev);
 	}
 
 	this->pan_off();
 	if (do_draw) {
-		this->emit_center_or_zoom_changed("pan release");
+		this->emit_center_coord_or_zoom_changed("pan release");
 	}
 }
 
@@ -1366,7 +1378,7 @@ void Window::pan_release(QMouseEvent * ev)
 
 void Window::pan_off(void)
 {
-	this->pan_move_flag = false;
+	this->pan_move_in_progress = false;
 	this->pan_pos.x = -1;
 	this->pan_pos.y = -1;
 }
@@ -1375,15 +1387,15 @@ void Window::pan_off(void)
 
 
 /**
-   \brief Retrieve window's pan_move_flag
+   \brief Retrieve window's pan_move_in_progress
 
    Should be removed as soon as possible.
 
-   \return window's pan_move
+   \return window's 'pan move in progress' flag
 */
-bool Window::get_pan_move(void)
+bool Window::get_pan_move_in_progress(void) const
 {
-	return this->pan_move_flag;
+	return this->pan_move_in_progress;
 }
 
 
@@ -1451,7 +1463,7 @@ void Window::menu_copy_centre_cb(void)
 	QString first;
 	QString second;
 
-	const Coord coord = this->viewport->central->get_center();
+	const Coord coord = this->viewport->central->get_center_coord();
 
 	bool full_format = false;
 	(void) ApplicationState::get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
@@ -1482,7 +1494,7 @@ void Window::map_cache_flush_cb(void)
 
 void Window::set_default_location_cb(void)
 {
-	const LatLon current_center_lat_lon = this->viewport->central->get_center().get_lat_lon();
+	const LatLon current_center_lat_lon = this->viewport->central->get_center_coord().get_lat_lon();
 
 	/* Push center coordinate values to Preferences */
 	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_lat_lon.lat));
@@ -1616,11 +1628,11 @@ void Window::closeEvent(QCloseEvent * ev)
 void Window::goto_default_location_cb(void)
 {
 	const LatLon lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
-	if (sg_ret::ok != this->viewport->central->set_center_from_lat_lon(lat_lon)) {
+	if (sg_ret::ok != this->viewport->central->set_center_coord(lat_lon)) {
 		qDebug() << SG_PREFIX_E << "Failed to set center location from" << lat_lon;
 		return;
 	}
-	this->emit_center_or_zoom_changed("go to default location");
+	this->emit_center_coord_or_zoom_changed("go to default location");
 }
 
 
@@ -1629,7 +1641,7 @@ void Window::goto_default_location_cb(void)
 void Window::goto_location_cb()
 {
 	if (GoTo::goto_location(this, this->viewport->central)) {
-		this->emit_center_or_zoom_changed("go to location");
+		this->emit_center_coord_or_zoom_changed("go to location");
 	}
 }
 
@@ -1642,7 +1654,7 @@ void Window::goto_latlon_cb(void)
 		qDebug() << SG_PREFIX_E << "Failed to go to lat/lon";
 		return;
 	}
-	this->emit_center_or_zoom_changed("go to latlon");
+	this->emit_center_coord_or_zoom_changed("go to latlon");
 }
 
 
@@ -1651,7 +1663,7 @@ void Window::goto_latlon_cb(void)
 void Window::goto_utm_cb(void)
 {
 	if (GoTo::goto_utm(this, this->viewport->central)) {
-		this->emit_center_or_zoom_changed("go to utm");
+		this->emit_center_coord_or_zoom_changed("go to utm");
 	}
 }
 
@@ -1668,7 +1680,7 @@ void Window::goto_previous_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->emit_center_or_zoom_changed("go to previous location");
+		this->emit_center_coord_or_zoom_changed("go to previous location");
 	}
 }
 
@@ -1685,7 +1697,7 @@ void Window::goto_next_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->emit_center_or_zoom_changed("go to next location");
+		this->emit_center_coord_or_zoom_changed("go to next location");
 	}
 }
 
@@ -1803,7 +1815,7 @@ void Window::zoom_cb(void)
 		return;
 	}
 
-	this->emit_center_or_zoom_changed(debug_msg);
+	this->emit_center_coord_or_zoom_changed(debug_msg);
 }
 
 
@@ -1815,7 +1827,7 @@ void Window::zoom_to_cb(void)
 
 	if (GisViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_scale, this)) {
 		this->viewport->central->set_viking_scale(viking_scale);
-		this->emit_center_or_zoom_changed("zoom to...");
+		this->emit_center_coord_or_zoom_changed("zoom to...");
 	}
 }
 
@@ -2336,11 +2348,11 @@ void LocatorJob::run(void)
 		}
 
 		this->window->viewport->central->set_viking_scale(zoom);
-		this->window->viewport->central->set_center_from_lat_lon(lat_lon, false);
+		this->window->viewport->central->set_center_coord(lat_lon, false);
 
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location found: %1").arg(name));
 
-		this->window->emit_center_or_zoom_changed("determine location");
+		this->window->emit_center_coord_or_zoom_changed("determine location");
 	} else {
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to determine location"));
 	}
@@ -2421,7 +2433,7 @@ void Window::open_window(const QStringList & file_full_paths)
 
 void Window::show_centers_cb() /* Slot. */
 {
-	this->viewport->central->show_centers(this);
+	this->viewport->central->show_center_coords(this);
 }
 
 
@@ -2680,7 +2692,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 		this->viewport->central->set_viking_scale(requested_scale);
 
 		/* Ask to draw updated viewport. */
-		this->emit_center_or_zoom_changed("zoom level selected");
+		this->emit_center_coord_or_zoom_changed("zoom level selected");
 	}
 }
 
@@ -2881,23 +2893,23 @@ void Window::menu_view_pan_cb(void)
 
 	switch (direction) {
 	case PAN_NORTH:
-		v->set_center_from_screen_pos(v->vpixmap.get_width() / 2, 0);
+		v->set_center_coord(v->vpixmap.get_width() / 2, 0);
 		break;
 	case PAN_EAST:
-		v->set_center_from_screen_pos(v->vpixmap.get_width(), v->vpixmap.get_height() / 2);
+		v->set_center_coord(v->vpixmap.get_width(), v->vpixmap.get_height() / 2);
 		break;
 	case PAN_SOUTH:
-		v->set_center_from_screen_pos(v->vpixmap.get_width() / 2, v->vpixmap.get_height());
+		v->set_center_coord(v->vpixmap.get_width() / 2, v->vpixmap.get_height());
 		break;
 	case PAN_WEST:
-		v->set_center_from_screen_pos(0, v->vpixmap.get_height() / 2);
+		v->set_center_coord(0, v->vpixmap.get_height() / 2);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown direction" << direction;;
 		break;
 	}
 
-	this->emit_center_or_zoom_changed("pan from menu");
+	this->emit_center_coord_or_zoom_changed("pan from menu");
 }
 
 
@@ -2962,9 +2974,9 @@ static bool window_pan_timeout(Window * window)
 	}
 
 	/* Set panning origin. */
-	window->pan_move_flag = false;
+	window->pan_move_in_progress = false;
 	window->single_click_pending = false;
-	window->viewport->set_center_from_screen_pos(window->delayed_pan_pos);
+	window->viewport->set_center_coord(window->delayed_pan_pos);
 	window->draw_tree_items();
 
 	/* Really turn off the pan moving!! */
@@ -3394,10 +3406,10 @@ void Window::open_recent_file_cb(void)
    To be called when action initiated in Window (e.g. in Window's
    menus) has changed center of viewport or zoom of viewport.
 */
-void Window::emit_center_or_zoom_changed(const QString & trigger_name)
+void Window::emit_center_coord_or_zoom_changed(const QString & trigger_name)
 {
-	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal after" << trigger_name << "event in Window";
-	emit this->center_or_zoom_changed();
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center coord or zoom changed' signal after" << trigger_name << "event in Window";
+	emit this->center_coord_or_zoom_changed();
 }
 
 

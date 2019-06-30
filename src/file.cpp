@@ -253,7 +253,7 @@ size_t consume_empty_in_line(char ** line)
 
 void file_write_header(FILE * file, const LayerAggregate * top_level_layer, GisViewport * gisview)
 {
-	const LatLon lat_lon = gisview->get_center().get_lat_lon();
+	const LatLon lat_lon = gisview->get_center_coord().get_lat_lon();
 
 	const QString mode_id_string = GisViewportDrawModes::get_id_string(gisview->get_drawmode());
 
@@ -795,7 +795,7 @@ sg_ret VikFile::read_file(QFile & file, LayerAggregate * top_layer, const QStrin
 		read_parser.stack.pop();
 	}
 
-	gisview->set_center_from_lat_lon(lat_lon); /* The function will reject lat_lon if it's invalid. */
+	gisview->set_center_coord(lat_lon); /* The function will reject lat_lon if it's invalid. */
 
 	if (top_layer->tree_view && !top_layer->is_visible()) {
 		top_layer->tree_view->apply_tree_item_visibility(top_layer);

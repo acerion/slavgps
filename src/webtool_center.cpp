@@ -75,7 +75,7 @@ QString OnlineService_center::get_url_at_position(GisViewport * a_gisview, const
 		result = this->get_url_for_coord(*a_coord, viking_scale);
 	} else {
 		qDebug() << SG_PREFIX_I << "Getting URL for center of viewport";
-		result = this->get_url_for_coord(a_gisview->get_center(), viking_scale);
+		result = this->get_url_for_coord(a_gisview->get_center_coord(), viking_scale);
 	}
 
 	return result;
@@ -86,7 +86,7 @@ QString OnlineService_center::get_url_at_position(GisViewport * a_gisview, const
 
 QString OnlineService_center::get_url_for_viewport(GisViewport * a_gisview)
 {
-	return this->get_url_for_coord(a_gisview->get_center(), a_gisview->get_viking_scale());
+	return this->get_url_for_coord(a_gisview->get_center_coord(), a_gisview->get_viking_scale());
 }
 
 

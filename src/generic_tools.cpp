@@ -455,12 +455,12 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 			/* Zoom in/out by three if possible. */
 
 			if (event->button() == Qt::LeftButton) {
-				this->gisview->set_center_from_screen_pos(event_pos);
+				this->gisview->set_center_coord(event_pos);
 				this->gisview->zoom_in();
 				this->gisview->zoom_in();
 				this->gisview->zoom_in();
 			} else { /* Qt::RightButton */
-				this->gisview->set_center_from_screen_pos(event_pos);
+				this->gisview->set_center_coord(event_pos);
 				this->gisview->zoom_out();
 				this->gisview->zoom_out();
 				this->gisview->zoom_out();

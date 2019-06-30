@@ -439,7 +439,7 @@ static bool set_center_at_graph_position(int event_x,
 
 	if (found) {
 		Trackpoint * tp = trk->get_selected_tp();
-		main_gisview->set_center_from_coord(tp->coord);
+		main_gisview->set_center_coord(tp->coord);
 		trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
 	}
 	return found;
