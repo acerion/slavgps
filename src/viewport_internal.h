@@ -99,6 +99,7 @@ namespace SlavGPS {
 		void print_center_coords(const QString & label) const;
 
 		/* Coordinate transformations. */
+		Coord screen_pos_to_coord(ScreenPosition screen_pos) const;
 		Coord screen_pos_to_coord(int x, int y) const;
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
 		sg_ret coord_to_screen_pos(const Coord & coord, int * x, int * y) const;

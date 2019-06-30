@@ -1323,9 +1323,8 @@ void Window::pan_move(QMouseEvent * ev)
    to pan action */
 sg_ret Window::pan_move_update_viewport(const QMouseEvent * ev)
 {
-	/* TODO: use proper methods for getting center pixel. */
-	const int center_x = this->viewport->central_get_width() / 2;
-	const int center_y = this->viewport->central_get_height() / 2;
+	const int center_x = this->viewport->central->vpixmap.get_horiz_center_pixel();
+	const int center_y = this->viewport->central->vpixmap.get_vert_center_pixel();
 
 	/* By how much a center of viewport was moved by panning? */
 	const int pan_delta_x = ev->x() - this->pan_pos.x;
@@ -2891,6 +2890,8 @@ void Window::menu_view_pan_cb(void)
 
 	GisViewport * v = this->viewport->central;
 
+	/* TODO: review this switch: arguments to set_center_coord(),
+	   and usage of get_width()/get_height() methods. */
 	switch (direction) {
 	case PAN_NORTH:
 		v->set_center_coord(v->vpixmap.get_width() / 2, 0);

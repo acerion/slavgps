@@ -100,6 +100,17 @@ namespace SlavGPS {
 
 
 
+	/* Enum created to avoid using specific pixel values. */
+	enum class ScreenPosition {
+		UpperLeft,
+		UpperRight,
+		BottomLeft,
+		BottomRight
+	};
+
+
+
+
 	class ScreenPos {
 	public:
 		ScreenPos() {};

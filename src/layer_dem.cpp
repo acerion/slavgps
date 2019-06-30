@@ -790,36 +790,36 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 {
 	unsigned int skip_factor = ceil(gisview->get_viking_scale().get_x() / 10); /* TODO_2_LATER: smarter calculation. */
 
-	Coord tleft =  gisview->screen_pos_to_coord(0,                             0);
-	Coord tright = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), 0);
-	Coord bleft =  gisview->screen_pos_to_coord(0,                             gisview->vpixmap.get_height());
-	Coord bright = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
+	Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
+	Coord coord_ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
+	Coord coord_bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
+	Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
 
-	tleft.recalculate_to_mode(CoordMode::UTM);
-	tright.recalculate_to_mode(CoordMode::UTM);
-	bleft.recalculate_to_mode(CoordMode::UTM);
-	bright.recalculate_to_mode(CoordMode::UTM);
+	coord_ul.recalculate_to_mode(CoordMode::UTM);
+	coord_ur.recalculate_to_mode(CoordMode::UTM);
+	coord_bl.recalculate_to_mode(CoordMode::UTM);
+	coord_br.recalculate_to_mode(CoordMode::UTM);
 
-	double max_nor = std::max(tleft.utm.get_northing(), tright.utm.get_northing());
-	double min_nor = std::min(bleft.utm.get_northing(), bright.utm.get_northing());
-	double max_eas = std::max(bright.utm.get_easting(), tright.utm.get_easting());
-	double min_eas = std::min(bleft.utm.get_easting(), tleft.utm.get_easting());
+	double max_nor = std::max(coord_ul.utm.get_northing(), coord_ur.utm.get_northing());
+	double min_nor = std::min(coord_bl.utm.get_northing(), coord_br.utm.get_northing());
+	double max_eas = std::max(coord_br.utm.get_easting(),  coord_ur.utm.get_easting());
+	double min_eas = std::min(coord_bl.utm.get_easting(),  coord_ul.utm.get_easting());
 
 	double start_eas, end_eas;
 	double start_nor = std::max(min_nor, dem->min_north_seconds);
 	double end_nor   = std::min(max_nor, dem->max_north_seconds);
-	if (UTM::is_the_same_zone(tleft.utm, dem->utm) && UTM::is_the_same_zone(bleft.utm, dem->utm)
-	    && UTM::is_northern_hemisphere(tleft.utm) == UTM::is_northern_hemisphere(dem->utm)
-	    && UTM::is_northern_hemisphere(bleft.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	if (UTM::is_the_same_zone(coord_ul.utm, dem->utm) && UTM::is_the_same_zone(coord_bl.utm, dem->utm)
+	    && UTM::is_northern_hemisphere(coord_ul.utm) == UTM::is_northern_hemisphere(dem->utm)
+	    && UTM::is_northern_hemisphere(coord_bl.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		start_eas = std::max(min_eas, dem->min_east_seconds);
 	} else {
 		start_eas = dem->min_east_seconds;
 	}
 
-	if (UTM::is_the_same_zone(tright.utm, dem->utm) && UTM::is_the_same_zone(bright.utm, dem->utm)
-	    && UTM::is_northern_hemisphere(tright.utm) == UTM::is_northern_hemisphere(dem->utm)
-	    && UTM::is_northern_hemisphere(bright.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
+	if (UTM::is_the_same_zone(coord_ur.utm, dem->utm) && UTM::is_the_same_zone(coord_br.utm, dem->utm)
+	    && UTM::is_northern_hemisphere(coord_ur.utm) == UTM::is_northern_hemisphere(dem->utm)
+	    && UTM::is_northern_hemisphere(coord_br.utm) == UTM::is_northern_hemisphere(dem->utm)) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 		end_eas = std::min(max_eas, dem->max_east_seconds);
 	} else {

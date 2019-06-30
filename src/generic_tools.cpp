@@ -288,7 +288,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 
 	const Qt::KeyboardModifiers modifiers = event->modifiers();
 
-	const ScreenPos center_pos(this->gisview->vpixmap.get_width() / 2, this->gisview->vpixmap.get_height() / 2);
+	const ScreenPos center_pos = this->gisview->vpixmap.get_center_screen_pos();
 	const ScreenPos event_pos(event->x(), event->y());
 
 	/* Did the zoom operation affect viewport? */

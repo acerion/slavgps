@@ -412,7 +412,7 @@ int ViewportPixmap::get_rightmost_pixel(void) const
 {
 	return this->width - 1;
 }
-int ViewportPixmap::get_topmost_pixel(void) const
+int ViewportPixmap::get_upmost_pixel(void) const
 {
 	return 0;
 }
@@ -440,6 +440,14 @@ int ViewportPixmap::get_height(void) const
 
 
 
+ScreenPos ViewportPixmap::get_center_screen_pos(void) const
+{
+	return ScreenPos(this->get_horiz_center_pixel(), this->get_vert_center_pixel());
+}
+
+
+
+
 void ViewportPixmap::clear(void)
 {
 	this->painter->eraseRect(0, 0, this->get_width(), this->get_height());
@@ -452,7 +460,7 @@ bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int en
 {
 	const int leftmost   = this->get_leftmost_pixel();
 	const int rightmost  = this->get_rightmost_pixel();
-	const int topmost    = this->get_topmost_pixel();
+	const int upmost     = this->get_upmost_pixel();
 	const int bottommost = this->get_bottommost_pixel();
 
 	/* Here we follow Qt's coordinate system:
@@ -461,7 +469,7 @@ bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int en
 	if (begin_x < leftmost && end_x < leftmost) {
 		return true;
 	}
-	if (begin_y < topmost && end_y < topmost) {
+	if (begin_y < upmost && end_y < upmost) {
 		return true;
 	}
 	if (begin_x > bottommost && end_x > bottommost) {

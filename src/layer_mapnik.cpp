@@ -1068,7 +1068,7 @@ ToolStatus LayerToolMapnikFeature::handle_mouse_release(Layer * layer, QMouseEve
 ToolStatus LayerMapnik::feature_release(QMouseEvent * ev, LayerTool * tool)
 {
 	if (ev->button() == Qt::RightButton) {
-		const Coord coord = tool->gisview->screen_pos_to_coord(MAX(0, ev->x()), MAX(0, ev->y()));
+		const Coord coord = tool->gisview->screen_pos_to_coord(std::max(0, ev->x()), std::max(0, ev->y()));
 		this->clicked_lat_lon = coord.get_lat_lon();
 
 		this->clicked_viking_scale = tool->gisview->get_viking_scale();
@@ -1174,8 +1174,8 @@ sg_ret LayerMapnik::draw_tile(GisViewport * gisview, const TileInfo & tile_info)
 
 sg_ret LayerMapnik::get_tiles_range(const GisViewport * gisview, TilesRange & range, TileInfo & tile_info_ul)
 {
-	const Coord coord_ul = gisview->screen_pos_to_coord(0, 0);
-	const Coord coord_br = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
+	const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
+	const Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
 	const LatLon lat_lon_ul = coord_ul.get_lat_lon();
 	const LatLon lat_lon_br = coord_br.get_lat_lon();
 

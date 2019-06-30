@@ -1275,8 +1275,8 @@ void LayerMap::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 			this->draw_section(gisview, coord_ul, coord_br);
 		}
 	} else {
-		const Coord coord_ul = gisview->screen_pos_to_coord(0, 0);
-		const Coord coord_br = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
+		const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
+		const Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
 
 		this->draw_section(gisview, coord_ul, coord_br);
 	}
@@ -1473,15 +1473,32 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 	LayerMap * layer = (LayerMap *) _layer;
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
+
+		const int pixel_u = this->gisview->vpixmap.get_upmost_pixel();
+		const int pixel_r = this->gisview->vpixmap.get_rightmost_pixel();
+		const int pixel_b = this->gisview->vpixmap.get_bottommost_pixel();
+		const int pixel_l = this->gisview->vpixmap.get_leftmost_pixel();
+
 		if (event->button() == Qt::LeftButton) {
-			const Coord coord_ul = this->gisview->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
-			const Coord coord_br = this->gisview->screen_pos_to_coord(std::min(this->gisview->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->gisview->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
+			const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
+			const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
+			const Coord coord_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
+
+			const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
+			const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
+			const Coord coord_br = this->gisview->screen_pos_to_coord(br_x, br_y);
+
 			layer->start_download_thread(this->gisview, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 			return ToolStatus::Ack;
 		} else {
-			layer->redownload_ul = this->gisview->screen_pos_to_coord(std::max(0, std::min(event->x(), layer->dl_tool_x)), std::max(0, std::min(event->y(), layer->dl_tool_y)));
-			layer->redownload_br = this->gisview->screen_pos_to_coord(std::min(this->gisview->vpixmap.get_width(), std::max(event->x(), layer->dl_tool_x)), std::min(this->gisview->vpixmap.get_height(), std::max(event->y(), layer->dl_tool_y)));
+			const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
+			const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
+			layer->redownload_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
+
+			const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
+			const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
+			layer->redownload_br = this->gisview->screen_pos_to_coord(br_x, br_y);
 
 			layer->redownload_gisview = this->gisview;
 
@@ -1565,8 +1582,8 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 {
 	GisViewport * gisview = this->get_window()->get_viewport();
 
-	const Coord coord_ul = gisview->screen_pos_to_coord(0, 0);
-	const Coord coord_br = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), gisview->vpixmap.get_height());
+	const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
+	const Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
 
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 

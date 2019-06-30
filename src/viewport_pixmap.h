@@ -33,6 +33,11 @@
 
 
 
+#include "viewport.h"
+
+
+
+
 namespace SlavGPS {
 
 
@@ -60,7 +65,7 @@ namespace SlavGPS {
 
 		int get_leftmost_pixel(void) const;
 		int get_rightmost_pixel(void) const;
-		int get_topmost_pixel(void) const;
+		int get_upmost_pixel(void) const;
 		int get_bottommost_pixel(void) const;
 
 		/* Get number of pixel (starting with zero) that is in
@@ -69,6 +74,7 @@ namespace SlavGPS {
 		   line. */
 		int get_vert_center_pixel(void) const;
 		int get_horiz_center_pixel(void) const;
+		ScreenPos get_center_screen_pos(void) const;
 
 		int get_width(void) const;
 		int get_height(void) const;

@@ -287,9 +287,9 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 	}
 
 
-	const Coord ul = gisview->screen_pos_to_coord(0,                             0);
-	const Coord ur = gisview->screen_pos_to_coord(gisview->vpixmap.get_width(), 0);
-	const Coord bl = gisview->screen_pos_to_coord(0,                             gisview->vpixmap.get_height());
+	const Coord ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
+	const Coord ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
+	const Coord bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
 
 	const double minimum_lon = ul.lat_lon.lon;
 	const double maximum_lon = ur.lat_lon.lon;

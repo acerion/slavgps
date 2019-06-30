@@ -956,7 +956,8 @@ int GisViewport::get_leftmost_zone(void) const
 		return 0;
 	}
 
-	const Coord coord = this->screen_pos_to_coord(0, 0);
+	const Coord coord = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel(),
+						      this->vpixmap.get_upmost_pixel()); /* Second argument shouldn't really matter if we are getting "leftmost" zone. */
 	return coord.utm.get_zone();
 }
 
@@ -970,7 +971,7 @@ int GisViewport::get_rightmost_zone(void) const
 	}
 
 	const Coord coord = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel(),
-						      this->vpixmap.get_topmost_pixel()); /* Second argument shouldn't really matter if we are getting "rightmost" zone. */
+						      this->vpixmap.get_upmost_pixel()); /* Second argument shouldn't really matter if we are getting "rightmost" zone. */
 	return coord.utm.get_zone();
 }
 
@@ -980,6 +981,44 @@ int GisViewport::get_rightmost_zone(void) const
 QRect GisViewport::get_rect(void) const
 {
 	return QRect(0, 0, this->vpixmap.get_width(), this->vpixmap.get_height());
+}
+
+
+
+
+Coord GisViewport::screen_pos_to_coord(ScreenPosition screen_pos) const
+{
+	Coord result;
+	int pos_x, pos_y;
+
+	switch (screen_pos) {
+	case ScreenPosition::UpperLeft:
+		pos_x = this->vpixmap.get_leftmost_pixel();
+		pos_y = this->vpixmap.get_upmost_pixel();;
+		break;
+
+	case ScreenPosition::UpperRight:
+		pos_x = this->vpixmap.get_rightmost_pixel();
+		pos_y = this->vpixmap.get_upmost_pixel();
+		break;
+
+	case ScreenPosition::BottomLeft:
+		pos_x = this->vpixmap.get_leftmost_pixel();
+		pos_y = this->vpixmap.get_bottommost_pixel();
+		break;
+
+	case ScreenPosition::BottomRight:
+		pos_x = this->vpixmap.get_rightmost_pixel();
+		pos_y = this->vpixmap.get_bottommost_pixel();
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected screen position" << (int) screen_pos;
+		break;
+	}
+
+	result = this->screen_pos_to_coord(pos_x, pos_y);
+	return result;
 }
 
 
@@ -1513,21 +1552,21 @@ bool GisViewport::get_half_drawn(void) const
 
 LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
 {
-	Coord tleft =  this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_topmost_pixel() + margin_top);
-	Coord tright = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_topmost_pixel() + margin_top);
-	Coord bleft =  this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_bottommost_pixel() + margin_bottom);
-	Coord bright = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_bottommost_pixel() + margin_bottom);
+	Coord coord_ul = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_upmost_pixel() + margin_top);
+	Coord coord_ur = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_upmost_pixel() + margin_top);
+	Coord coord_bl = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_bottommost_pixel() + margin_bottom);
+	Coord coord_br = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_bottommost_pixel() + margin_bottom);
 
-	tleft.recalculate_to_mode(CoordMode::LatLon);
-	tright.recalculate_to_mode(CoordMode::LatLon);
-	bleft.recalculate_to_mode(CoordMode::LatLon);
-	bright.recalculate_to_mode(CoordMode::LatLon);
+	coord_ul.recalculate_to_mode(CoordMode::LatLon);
+	coord_ur.recalculate_to_mode(CoordMode::LatLon);
+	coord_bl.recalculate_to_mode(CoordMode::LatLon);
+	coord_br.recalculate_to_mode(CoordMode::LatLon);
 
 	LatLonBBox bbox;
-	bbox.north = std::max(tleft.lat_lon.lat, tright.lat_lon.lat);
-	bbox.south = std::min(bleft.lat_lon.lat, bright.lat_lon.lat);
-	bbox.east  = std::max(tright.lat_lon.lon, bright.lat_lon.lon);
-	bbox.west  = std::min(tleft.lat_lon.lon, bleft.lat_lon.lon);
+	bbox.north = std::max(coord_ul.lat_lon.lat, coord_ur.lat_lon.lat);
+	bbox.south = std::min(coord_bl.lat_lon.lat, coord_br.lat_lon.lat);
+	bbox.east  = std::max(coord_ur.lat_lon.lon, coord_br.lat_lon.lon);
+	bbox.west  = std::min(coord_ul.lat_lon.lon, coord_bl.lat_lon.lon);
 	bbox.validate();
 
 	return bbox;
