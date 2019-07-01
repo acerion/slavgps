@@ -59,6 +59,14 @@ ViewportPixmap::~ViewportPixmap()
 
 
 
+void ViewportPixmap::draw_line(QPen const & pen, const ScreenPos & begin, const ScreenPos & end)
+{
+	this->draw_line(pen, begin.x, begin.y, end.x, end.y);
+}
+
+
+
+
 void ViewportPixmap::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;

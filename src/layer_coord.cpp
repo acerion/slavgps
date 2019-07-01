@@ -539,17 +539,22 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 		lat_lon_bottom.lon = lon;
 		lat_lon_top.lon = lon;
 
+		ScreenPos begin;
+		ScreenPos end;
+		begin.y = height;
+		end.y = 0;
+
 		for (;
 		     lat_lon_bottom.lon <= max.lon,       lat_lon_top.lon <= max.lon;
 		     lat_lon_bottom.lon += degrees_delta, lat_lon_top.lon += degrees_delta) {
 
 			utm = LatLon::to_utm(lat_lon_bottom);
-			int x1 = ((utm.easting - center.easting) / xmpp) + (width / 2);
+			begin.x = ((utm.easting - center.easting) / xmpp) + (width / 2);
 
 			utm = LatLon::to_utm(lat_lon_top);
-			int x2 = ((utm.easting - center.easting) / xmpp) + (width / 2);
+			end.x = ((utm.easting - center.easting) / xmpp) + (width / 2);
 
-			gisview->vpixmap.draw_line(pen, x1, height, x2, 0);
+			gisview->vpixmap.draw_line(pen, begin, end);
 		}
 	}
 
@@ -575,17 +580,22 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 		lat_lon_left.lat = lat;
 		lat_lon_right.lat = lat;
 
+		ScreenPos begin;
+		ScreenPos end;
+		begin.x = width;
+		end.x = 0;
+
 		for (;
 		     lat_lon_left.lat <= max.lat,       lat_lon_right.lat <= max.lat;
 		     lat_lon_left.lat += degrees_delta, lat_lon_right.lat += degrees_delta) {
 
 			utm = LatLon::to_utm(lat_lon_left);
-			int x1 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
+			end.y = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 
 			utm = LatLon::to_utm(lat_lon_right);
-			int x2 = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
+			begin.y = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 
-			gisview->vpixmap.draw_line(pen, width, x2, 0, x1);
+			gisview->vpixmap.draw_line(pen, begin, end);
 		}
 	}
 }

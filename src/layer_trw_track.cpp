@@ -3412,15 +3412,7 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 
 
 
-typedef struct screen_pos {
-	double x = 0.0;
-	double y = 0.0;
-} screen_pos;
-
-
-
-
-sg_ret Track::draw_e_ft(GisViewport * gisview, struct my_data * data)
+sg_ret Track::draw_e_ft(GisViewport * gisview, int width, int height)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3444,28 +3436,21 @@ sg_ret Track::draw_e_ft(GisViewport * gisview, struct my_data * data)
 	const double alt_max = max_alt.get_value() + margin * max_alt.get_value();
 	const double visible_range = alt_max - alt_min;
 
-	const int bottom = data->height;
+	const int bottommost_pixel = height - 1;
 
-	const double x_scale = 1.0 * this->trackpoints.size() / data->width;
+	const double x_scale = 1.0 * this->trackpoints.size() / width;
 
-	qDebug() << __FUNCTION__ << "+++++++++++++++++++";
-
-	screen_pos cur_pos;
-	screen_pos last_pos;
-
-	last_pos.x = 0.0;
-	last_pos.y = bottom;
+	ScreenPos cur_pos;
+	ScreenPos last_pos(0, bottommost_pixel);
 
 	double col = 0.0;
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		const double value = (*iter)->altitude.is_valid() ? (*iter)->altitude.get_value() : 0.0;
 
 		cur_pos.x = col;
-		cur_pos.y = bottom - bottom * (value - alt_min) / visible_range;
+		cur_pos.y = bottommost_pixel - height * (value - alt_min) / visible_range;
 
-		gisview->vpixmap.draw_line(pen,
-					    last_pos.x, last_pos.y,
-					    cur_pos.x, cur_pos.y);
+		gisview->vpixmap.draw_line(pen, last_pos, cur_pos);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3477,7 +3462,7 @@ sg_ret Track::draw_e_ft(GisViewport * gisview, struct my_data * data)
 
 
 
-sg_ret Track::draw_d_ft(GisViewport * gisview, struct my_data * data)
+sg_ret Track::draw_d_ft(GisViewport * gisview, int width, int height)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3495,28 +3480,21 @@ sg_ret Track::draw_d_ft(GisViewport * gisview, struct my_data * data)
 	const double dist_max = distances[distances.size() - 1] + margin * distances[distances.size() - 1];
 	const double visible_range = dist_max - dist_min;
 
-	const int bottom = data->height;
+	const int bottommost_pixel = height - 1;
 
-	const double x_scale = 1.0 * distances.size() / data->width;
+	const double x_scale = 1.0 * distances.size() / width;
 
-	qDebug() << __FUNCTION__ << "+++++++++++++++++++";
-
-	screen_pos cur_pos;
-	screen_pos last_pos;
-
-	last_pos.x = 0.0;
-	last_pos.y = bottom;
+	ScreenPos cur_pos;
+	ScreenPos last_pos(0, bottommost_pixel);
 
 	double col = 0.0;
 	for (auto iter = distances.begin(); iter != distances.end(); iter++) {
 		const double value = *iter;
 
 		cur_pos.x = col;
-		cur_pos.y = bottom - bottom * (value - dist_min) / visible_range;
+		cur_pos.y = bottommost_pixel - height * (value - dist_min) / visible_range;
 
-		gisview->vpixmap.draw_line(pen,
-					    last_pos.x, last_pos.y,
-					    cur_pos.x, cur_pos.y);
+		gisview->vpixmap.draw_line(pen, last_pos, cur_pos);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3527,7 +3505,7 @@ sg_ret Track::draw_d_ft(GisViewport * gisview, struct my_data * data)
 
 
 
-sg_ret Track::draw_v_ft(GisViewport * gisview, struct my_data * data)
+sg_ret Track::draw_v_ft(GisViewport * gisview, int width, int height)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3552,28 +3530,23 @@ sg_ret Track::draw_v_ft(GisViewport * gisview, struct my_data * data)
 	const double max_value_uu = 6; // TODO: correct calculation
 	const double visible_values_range_uu = max_value_uu - min_value_uu;
 
-	const int bottom = data->height;
+	const int bottommost_pixel = height - 1;
 
-	const double x_scale = 1.0 * n_values / data->width;
+	const double x_scale = 1.0 * n_values / width;
 
-	qDebug() << __FUNCTION__ << "+++++++++++++++++++";
-
-	screen_pos cur_pos;
-	screen_pos last_pos;
-
-	last_pos.x = 0.0;
-	last_pos.y = bottom;
+	ScreenPos cur_pos;
+	ScreenPos last_pos(0, bottommost_pixel);
 
 	double col = 0.0;
 	for (auto iter = values_uu.begin(); iter != values_uu.end(); iter++) {
 		const auto current_value_uu = *iter;
 
 		cur_pos.x = col;
-		cur_pos.y = bottom - bottom * (current_value_uu - min_value_uu) / visible_values_range_uu;
+		cur_pos.y = height - bottommost_pixel * (current_value_uu - min_value_uu) / visible_values_range_uu;
 
 		gisview->vpixmap.draw_line(pen,
-					    last_pos.x, last_pos.y,
-					    cur_pos.x, cur_pos.y);
+					   last_pos.x, last_pos.y,
+					   cur_pos.x, cur_pos.y);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3585,7 +3558,7 @@ sg_ret Track::draw_v_ft(GisViewport * gisview, struct my_data * data)
 
 
 
-sg_ret Track::draw_tree_item(GisViewport * gisview, struct my_data * in_data, GisViewportDomain x_domain, GisViewportDomain y_domain)
+sg_ret Track::draw_tree_item(GisViewport * gisview, int width, int height, GisViewportDomain x_domain, GisViewportDomain y_domain)
 {
 	if (x_domain != GisViewportDomain::Time) {
 		qDebug() << SG_PREFIX_W << "Can't draw non-time based graph";
@@ -3594,13 +3567,13 @@ sg_ret Track::draw_tree_item(GisViewport * gisview, struct my_data * in_data, Gi
 
 	switch (y_domain) {
 	case GisViewportDomain::Elevation:
-		return this->draw_e_ft(gisview, in_data);
+		return this->draw_e_ft(gisview, width, height);
 		break;
 	case GisViewportDomain::Distance:
-		return this->draw_d_ft(gisview, in_data);
+		return this->draw_d_ft(gisview, width, height);
 		break;
 	case GisViewportDomain::Speed:
-		return this->draw_v_ft(gisview, in_data);
+		return this->draw_v_ft(gisview, width, height);
 		break;
 	default:
 		qDebug() << SG_PREFIX_W << "Can't draw graphs of this y-domain";

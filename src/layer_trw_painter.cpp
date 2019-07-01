@@ -667,7 +667,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 					prev_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
 				}
 
-				this->gisview->vpixmap.draw_line(main_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
+				this->gisview->vpixmap.draw_line(main_pen, prev_pos, curr_pos);
 
 				if (this->draw_track_elevation
 				    && std::next(iter) != trk->trackpoints.end()
@@ -699,7 +699,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
-						this->gisview->vpixmap.draw_line(main_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
+						this->gisview->vpixmap.draw_line(main_pen, prev_pos, curr_pos);
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -787,7 +787,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 				if (!use_prev_pos) {
 					prev_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
 				}
-				this->gisview->vpixmap.draw_line(this->track_bg_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
+				this->gisview->vpixmap.draw_line(this->track_bg_pen, prev_pos, curr_pos);
 			}
 		skip:
 			prev_pos = curr_pos;
@@ -800,7 +800,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
-						this->gisview->vpixmap.draw_line(main_pen, prev_pos.x, prev_pos.y, curr_pos.x, curr_pos.y);
+						this->gisview->vpixmap.draw_line(main_pen, prev_pos, curr_pos);
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */

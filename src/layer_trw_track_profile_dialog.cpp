@@ -139,29 +139,29 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 {
 	/* First create track data using appropriate Track method. */
 
-	const int w = this->viewport2d->central_get_width();
+	const int compressed_n_points = this->viewport2d->central_get_width();
 
 	if (this->viewport2d->y_domain == GisViewportDomain::Elevation && this->viewport2d->x_domain == GisViewportDomain::Distance) {
-		this->track_data = trk->make_track_data_altitude_over_distance(w);
+		this->track_data = trk->make_track_data_altitude_over_distance(compressed_n_points);
 
 	} else if (this->viewport2d->y_domain == GisViewportDomain::Gradient && this->viewport2d->x_domain == GisViewportDomain::Distance) {
-		this->track_data = trk->make_track_data_gradient_over_distance(w);
+		this->track_data = trk->make_track_data_gradient_over_distance(compressed_n_points);
 
 	} else if (this->viewport2d->y_domain == GisViewportDomain::Speed && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		this->track_data_raw = trk->make_track_data_speed_over_time();
-		this->track_data = this->track_data_raw.compress(w);
+		this->track_data = this->track_data_raw.compress(compressed_n_points);
 
 	} else if (this->viewport2d->y_domain == GisViewportDomain::Distance && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		this->track_data_raw = trk->make_track_data_distance_over_time();
-		this->track_data = this->track_data_raw.compress(w);
+		this->track_data = this->track_data_raw.compress(compressed_n_points);
 
 	} else if (this->viewport2d->y_domain == GisViewportDomain::Elevation && this->viewport2d->x_domain == GisViewportDomain::Time) {
 		this->track_data_raw = trk->make_track_data_altitude_over_time();
-		this->track_data = this->track_data_raw.compress(w);
+		this->track_data = this->track_data_raw.compress(compressed_n_points);
 
 	} else if (this->viewport2d->y_domain == GisViewportDomain::Speed && this->viewport2d->x_domain == GisViewportDomain::Distance) {
 		this->track_data_raw = trk->make_track_data_speed_over_distance();
-		this->track_data = this->track_data_raw.compress(w);
+		this->track_data = this->track_data_raw.compress(compressed_n_points);
 	} else {
 		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->viewport2d->x_domain << (int) this->viewport2d->y_domain;
 	}
@@ -178,7 +178,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 	switch (this->viewport2d->y_domain) {
 	case GisViewportDomain::Speed:
 		/* Convert into appropriate units. */
-		for (int i = 0; i < w; i++) {
+		for (int i = 0; i < compressed_n_points; i++) {
 			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->viewport2d->speed_unit);
 		}
 
@@ -192,7 +192,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		/* Convert into appropriate units. */
 		if (this->viewport2d->height_unit == HeightUnit::Feet) {
 			/* Convert altitudes into feet units. */
-			for (int i = 0; i < w; i++) {
+			for (int i = 0; i < compressed_n_points; i++) {
 				this->track_data.y[i] = VIK_METERS_TO_FEET(this->track_data.y[i]);
 			}
 		}
@@ -202,7 +202,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		break;
 	case GisViewportDomain::Distance:
 		/* Convert into appropriate units. */
-		for (int i = 0; i < w; i++) {
+		for (int i = 0; i < compressed_n_points; i++) {
 			this->track_data.y[i] = Distance::convert_meters_to(this->track_data.y[i], this->viewport2d->distance_unit);
 		}
 
@@ -412,12 +412,14 @@ static bool set_center_at_graph_position(int event_x,
 					 GisViewport * main_gisview,
 					 Track * trk,
 					 GisViewportDomain x_domain,
-					 int graph_width)
+					 int graph_width_px)
 {
+	const int graph_pixel_leftmost = graph_width_px - 1;
+
 	int x = event_x;
-	if (x >= graph_width) {
-		qDebug() << SG_PREFIX_E << "Condition 1 error:" << x << graph_width;
-		x = graph_width; /* Notice that it's not 'x = graph_width - 1'. Current assignment will put mark at the border of graph. */
+	if (x > graph_pixel_leftmost) {
+		qDebug() << SG_PREFIX_E << "Condition 1 error:" << x << graph_pixel_leftmost;
+		x = graph_pixel_leftmost;
 	}
 	if (x < 0) {
 		qDebug() << SG_PREFIX_E << "Condition 2 error:" << x;
@@ -427,10 +429,10 @@ static bool set_center_at_graph_position(int event_x,
 	bool found = false;
 	switch (x_domain) {
 	case GisViewportDomain::Time:
-		found = trk->select_tp_by_percentage_time((double) x / graph_width, SELECTED);
+		found = trk->select_tp_by_percentage_time((double) x / graph_width_px, SELECTED);
 		break;
 	case GisViewportDomain::Distance:
-		found = trk->select_tp_by_percentage_dist((double) x / graph_width, NULL, SELECTED);
+		found = trk->select_tp_by_percentage_dist((double) x / graph_width_px, NULL, SELECTED);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) x_domain;
@@ -522,7 +524,12 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 
 	ScreenPos current_pos;
 	gisview->get_cursor_pos(ev, current_pos);
-	const bool found_tp = set_center_at_graph_position(current_pos.x, this->trw, this->main_gisview, this->trk, graph->viewport2d->x_domain, graph->viewport2d->central_get_width());
+	const bool found_tp = set_center_at_graph_position(current_pos.x,
+							   this->trw,
+							   this->main_gisview,
+							   this->trk,
+							   graph->viewport2d->x_domain,
+							   graph->viewport2d->central_get_width());
 	if (!found_tp) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
@@ -767,8 +774,8 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 	const QColor dem_color = this->dem_alt_pen.color();
 	const QColor speed_color = this->gps_speed_pen.color();
 
-	const int w = this->viewport2d->central_get_width();
-	const int h = this->viewport2d->central_get_height();
+	const int width = this->viewport2d->central_get_width();
+	const int height = this->viewport2d->central_get_height();
 
 	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 
@@ -784,8 +791,8 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 			/* offset is in current height units. */
 			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
-			const int x = w * current_function_arg / max_function_arg;
-			const int y = 0 - h * current_function_value_uu / max_function_value_dem;
+			const int x = width * current_function_arg / max_function_arg;
+			const int y = 0 - height * current_function_value_uu / max_function_value_dem;
 			this->viewport2d->central->vpixmap.fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
 		}
 
@@ -797,8 +804,8 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 			const double current_function_value = (*iter)->speed;
 
 			/* This is just a speed indicator - no actual values can be inferred by user. */
-			const int x = w * current_function_arg / max_function_arg;
-			const int y = 0 - h * current_function_value / max_function_value_speed;
+			const int x = width * current_function_arg / max_function_arg;
+			const int y = 0 - height * current_function_value / max_function_value_speed;
 			this->viewport2d->central->vpixmap.fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -810,26 +817,26 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 void ProfileView::draw_function_values(void)
 {
 	const double visible_range = this->y_max_visible - this->y_min_visible;
-	const int w = this->viewport2d->central_get_width();
-	const int h = this->viewport2d->central_get_height();
+	const int width = this->viewport2d->central_get_width();
+	const int height = this->viewport2d->central_get_height();
 
 	if (this->viewport2d->y_domain == GisViewportDomain::Elevation) {
-		for (int i = 0; i < w; i++) {
+		for (int i = 0; i < width; i++) {
 			if (this->track_data.y[i] == VIK_DEFAULT_ALTITUDE) {
 				this->viewport2d->central_draw_line(this->no_alt_info_pen,
 								    i, 0,
-								    i, 0 + h);
+								    i, 0 + height);
 			} else {
 				this->viewport2d->central_draw_line(this->main_pen,
 								    i, 0,
-								    i, 0 + h * (this->track_data.y[i] - this->y_min_visible) / visible_range);
+								    i, 0 + height * (this->track_data.y[i] - this->y_min_visible) / visible_range);
 			}
 		}
 	} else {
-		for (int i = 0; i < w; i++) {
+		for (int i = 0; i < width; i++) {
 			this->viewport2d->central_draw_line(this->main_pen,
 							    i, 0,
-							    i, 0 + h * (this->track_data.y[i] - this->y_min_visible) / visible_range);
+							    i, 0 + height * (this->track_data.y[i] - this->y_min_visible) / visible_range);
 		}
 	}
 }
@@ -838,17 +845,17 @@ void ProfileView::draw_function_values(void)
 
 void ProfileViewET::draw_additional_indicators(Track * trk)
 {
-	const int w = this->viewport2d->central_get_width();
-	const int h = this->viewport2d->central_get_height();
+	const int width = this->viewport2d->central_get_width();
+	const int height = this->viewport2d->central_get_height();
 
 	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
 		const double max_function_value = this->y_max_visible;
 
 		const QColor color = this->dem_alt_pen.color();
 
-		for (int i = 0; i < w; i++) {
+		for (int i = 0; i < width; i++) {
 			/* This could be slow doing this each time... */
-			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) w), HOVERED);
+			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) width), HOVERED);
 			if (!found_tp) {
 				continue;
 			}
@@ -865,7 +872,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
 			const int x = i;
-			const int y = 0 - h * current_function_value_uu / max_function_value;
+			const int y = 0 - height * current_function_value_uu / max_function_value;
 			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -878,12 +885,12 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
-		for (int i = 0; i < w; i++) {
+		for (int i = 0; i < width; i++) {
 
 			const double current_function_value = this->track_data.y[i];
 
 			const int x = i;
-			const int y = 0 - h * current_function_value / max_function_value;
+			const int y = 0 - height * current_function_value / max_function_value;
 			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -898,8 +905,8 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		const int w = this->viewport2d->central_get_width();
-		const int h = this->viewport2d->central_get_height();
+		const int width = this->viewport2d->central_get_width();
+		const int height = this->viewport2d->central_get_height();
 
 		const double max_function_arg = trk->get_length_value_including_gaps();
 		const double max_function_value = this->y_max_visible;
@@ -918,8 +925,8 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			current_function_value = gps_speed - this->y_min_visible;
 
-			const int x = w * current_function_arg / max_function_arg;
-			const int y = 0 - h * current_function_value / max_function_value;
+			const int x = width * current_function_arg / max_function_arg;
+			const int y = 0 - height * current_function_value / max_function_value;
 			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -967,8 +974,8 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		const int w = this->viewport2d->central_get_width();
-		const int h = this->viewport2d->central_get_height();
+		const int width = this->viewport2d->central_get_width();
+		const int height = this->viewport2d->central_get_height();
 
 		Time ts_begin;
 		Time ts_end;
@@ -993,8 +1000,8 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 				const time_t current_function_arg = (*iter)->timestamp.get_value() - time_begin;
 				const double current_function_value = gps_speed - this->y_min_visible;
 
-				const int x = w * current_function_arg / max_function_arg;
-				const int y = 0 - h * current_function_value / max_function_value;
+				const int x = width * current_function_arg / max_function_arg;
+				const int y = 0 - height * current_function_value / max_function_value;
 				this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 			}
 		} else {
@@ -1012,17 +1019,17 @@ void ProfileViewDT::draw_additional_indicators(Track * trk)
 	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
-		const int w = this->viewport2d->central_get_width();
-		const int h = this->viewport2d->central_get_height();
+		const int width = this->viewport2d->central_get_width();
+		const int height = this->viewport2d->central_get_height();
 
 		const QColor color = this->gps_speed_pen.color();
 		/* This is just an indicator - no actual values can be inferred by user. */
-		for (int i = 0; i < w; i++) {
+		for (int i = 0; i < width; i++) {
 
 			const double current_function_value = this->track_data.y[i];
 
 			const int x = i;
-			const int y = 0 - h * current_function_value / max_function_value;
+			const int y = 0 - height * current_function_value / max_function_value;
 			this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -1101,12 +1108,11 @@ sg_ret ProfileView::draw_graph(Track * trk)
 	this->viewport2d->central->clear();
 
 
-
-     	struct my_data data2;
-	data2.width = this->viewport2d->central_get_width();
-	data2.height = this->viewport2d->central_get_height();
-
-	if (sg_ret::err == trk->draw_tree_item(this->viewport2d->central, &data2, this->viewport2d->x_domain, this->viewport2d->y_domain)) {
+	/* TODO: do we compare returned value correctly? */
+	if (sg_ret::err == trk->draw_tree_item(this->viewport2d->central,
+					       this->viewport2d->central_get_width(),
+					       this->viewport2d->central_get_height(),
+					       this->viewport2d->x_domain, this->viewport2d->y_domain)) {
 		this->draw_function_values();
 	}
 
@@ -1139,8 +1145,8 @@ void ProfileView::draw_speed_dist(Track * trk)
 	const double max_function_value = trk->get_max_speed().get_value() * 110 / 100; /* Calculate the max speed factor. */
 	const double max_function_arg = trk->get_length_value_including_gaps();
 
-	const int w = this->viewport2d->central_get_width();
-	const int h = this->viewport2d->central_get_height();
+	const int width = this->viewport2d->central_get_width();
+	const int heigth = this->viewport2d->central_get_height();
 
 	const QColor color = this->gps_speed_pen.color();
 	double current_function_arg = 0.0;
@@ -1154,8 +1160,8 @@ void ProfileView::draw_speed_dist(Track * trk)
 		current_function_value = (*iter)->speed;
 
 		/* This is just a speed indicator - no actual values can be inferred by user. */
-		const int x = w * current_function_arg / max_function_arg;
-		const int y = 0 - h * current_function_value / max_function_value;
+		const int x = width * current_function_arg / max_function_arg;
+		const int y = 0 - heigth * current_function_value / max_function_value;
 		this->viewport2d->central->vpixmap.fill_rectangle(color, x - 2, y - 2, 4, 4);
 	}
 }
@@ -1937,8 +1943,8 @@ void find_grid_line_indices(const T & min_visible, const T & max_visible, const 
 
 void ProfileView::draw_y_grid_inside(void)
 {
-	const int w = this->viewport2d->central_get_width();
-	const int h = this->viewport2d->central_get_height();
+	const int width = this->viewport2d->central_get_width();
+	const int height = this->viewport2d->central_get_height();
 
 	const double visible_range = this->y_max_visible - this->y_min_visible;
 	if (visible_range < 0.000001) {
@@ -1951,7 +1957,7 @@ void ProfileView::draw_y_grid_inside(void)
 	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
 
 #if 0   /* Debug. */
-	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << h;
+	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << height;
 	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
 	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -1962,12 +1968,12 @@ void ProfileView::draw_y_grid_inside(void)
 		/* 'row' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * h / (visible_range * 1.0);
+		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * height / (visible_range * 1.0);
 
-		if (row >= 0 && row < h) {
+		if (row >= 0 && row < height) {
 			this->viewport2d->central_draw_line(this->viewport2d->central->grid_pen,
 							    0, row,
-							    w, row);
+							    width, row);
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", row =" << row;
 		}
@@ -1979,8 +1985,8 @@ void ProfileView::draw_y_grid_inside(void)
 
 void ProfileView::draw_y_grid_outside(void)
 {
-	const int w = this->viewport2d->left_get_width();
-	const int h = this->viewport2d->left_get_height();
+	const int width = this->viewport2d->left_get_width();
+	const int height = this->viewport2d->left_get_height();
 
 	const double visible_range = this->y_max_visible - this->y_min_visible;
 	if (visible_range < 0.000001) {
@@ -1993,7 +1999,7 @@ void ProfileView::draw_y_grid_outside(void)
 	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << h;
+	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << height;
 	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
 	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2004,11 +2010,11 @@ void ProfileView::draw_y_grid_outside(void)
 		/* 'row' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * h / (visible_range * 1.0);
+		const int row = (axis_mark_uu - this->y_min_visible) * 1.0 * height / (visible_range * 1.0);
 
-		if (row >= 0 && row < h) {
+		if (row >= 0 && row < height) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", row =" << row;
-			const QRectF bounding_rect = QRectF(0, h - row, w - 3, h - 3);
+			const QRectF bounding_rect = QRectF(0, height - row, width - 3, height - 3);
 			const QString label = this->get_y_grid_label(axis_mark_uu);
 			this->viewport2d->margin_draw_text(ViewportMargin::Position::Left, this->viewport2d->central->labels_font, this->viewport2d->central->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
 		} else {
@@ -2022,8 +2028,8 @@ void ProfileView::draw_y_grid_outside(void)
 
 void ProfileView::draw_x_grid_sub_d_inside(void)
 {
-	const int w = this->viewport2d->central_get_width();
-	const int h = this->viewport2d->central_get_height();
+	const int width = this->viewport2d->central_get_width();
+	const int height = this->viewport2d->central_get_height();
 
 	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
 	if (visible_range.is_zero()) {
@@ -2036,7 +2042,7 @@ void ProfileView::draw_x_grid_sub_d_inside(void)
 	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2047,13 +2053,13 @@ void ProfileView::draw_x_grid_sub_d_inside(void)
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * w / (visible_range * 1.0);
+		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * width / (visible_range * 1.0);
 
-		if (col >= 0 && col < w) {
+		if (col >= 0 && col < width) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
 			this->viewport2d->central_draw_line(this->viewport2d->central->grid_pen,
 							    col, 0,
-							    col, 0 + h);
+							    col, 0 + height);
 
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
@@ -2066,8 +2072,8 @@ void ProfileView::draw_x_grid_sub_d_inside(void)
 
 void ProfileView::draw_x_grid_sub_d_outside(void)
 {
-	const int w = this->viewport2d->bottom_get_width();
-	const int h = this->viewport2d->bottom_get_height();
+	const int width = this->viewport2d->bottom_get_width();
+	const int height = this->viewport2d->bottom_get_height();
 
 	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
 	if (visible_range.is_zero()) {
@@ -2080,7 +2086,7 @@ void ProfileView::draw_x_grid_sub_d_outside(void)
 	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2091,11 +2097,11 @@ void ProfileView::draw_x_grid_sub_d_outside(void)
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * w / (visible_range * 1.0);
+		const int col = (axis_mark_uu - this->x_min_visible_d) * 1.0 * width / (visible_range * 1.0);
 
-		if (col >= 0 && col < w) {
+		if (col >= 0 && col < width) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
-			const QRectF bounding_rect = QRectF(col, 0, w - 3, h - 3);
+			const QRectF bounding_rect = QRectF(col, 0, width - 3, height - 3);
 			const QString label = axis_mark_uu.to_nice_string();
 			this->viewport2d->margin_draw_text(ViewportMargin::Position::Bottom, this->viewport2d->central->labels_font, this->viewport2d->central->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
 		} else {
@@ -2109,8 +2115,8 @@ void ProfileView::draw_x_grid_sub_d_outside(void)
 
 void ProfileView::draw_x_grid_sub_t_inside(void)
 {
-	const int w = this->viewport2d->central_get_width();
-	const int h = this->viewport2d->central_get_height();
+	const int width = this->viewport2d->central_get_width();
+	const int height = this->viewport2d->central_get_height();
 
 	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
 	if (visible_range.is_zero()) {
@@ -2123,7 +2129,7 @@ void ProfileView::draw_x_grid_sub_t_inside(void)
 	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
 	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2134,13 +2140,13 @@ void ProfileView::draw_x_grid_sub_t_inside(void)
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * w / (visible_range * 1.0);
+		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * width / (visible_range * 1.0);
 
-		if (col >= 0 && col < w) {
+		if (col >= 0 && col < width) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
 			this->viewport2d->central_draw_line(this->viewport2d->central->grid_pen,
 							    col, 0,
-							    col, 0 + h);
+							    col, 0 + height);
 
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
@@ -2153,8 +2159,8 @@ void ProfileView::draw_x_grid_sub_t_inside(void)
 
 void ProfileView::draw_x_grid_sub_t_outside(void)
 {
-	const int w = this->viewport2d->bottom_get_width();
-	const int h = this->viewport2d->bottom_get_height();
+	const int width = this->viewport2d->bottom_get_width();
+	const int height = this->viewport2d->bottom_get_height();
 
 	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
 	if (visible_range.is_zero()) {
@@ -2167,7 +2173,7 @@ void ProfileView::draw_x_grid_sub_t_outside(void)
 	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << w;
+	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
 	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2178,11 +2184,11 @@ void ProfileView::draw_x_grid_sub_t_outside(void)
 		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * w / (visible_range * 1.0);
+		const int col = (axis_mark_uu - this->x_min_visible_t) * 1.0 * width / (visible_range * 1.0);
 
-		if (col >= 0 && col < w) {
+		if (col >= 0 && col < width) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
-			const QRectF bounding_rect = QRectF(col, 0, w - 3, h - 3);
+			const QRectF bounding_rect = QRectF(col, 0, width - 3, height - 3);
 			const QString label = get_time_grid_label(this->x_interval_t, axis_mark_uu);
 			this->viewport2d->margin_draw_text(ViewportMargin::Position::Bottom, this->viewport2d->central->labels_font, this->viewport2d->central->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
 		} else {
