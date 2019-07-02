@@ -118,6 +118,8 @@ namespace SlavGPS {
 		int x = 0;
 		int y = 0;
 
+		bool valid = false;
+
 		void set(int new_x, int new_y);
 		void set(double new_x, double new_y);
 
@@ -126,6 +128,7 @@ namespace SlavGPS {
 		static ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);
 		static bool is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit);
 	};
+	QDebug operator<<(QDebug debug, const ScreenPos & screen_pos);
 
 
 

@@ -94,6 +94,8 @@ namespace SlavGPS {
 		/* Convert value to string with DegreeFormat::Raw format. */
 		static void lat_to_string_raw(QString & lat_string, const LatLon & lat_lon);
 		static void lon_to_string_raw(QString & lon_string, const LatLon & lat_lon);
+		static void lat_to_string_raw(QString & lat_string, const Latitude & lat);
+		static void lon_to_string_raw(QString & lon_string, const Longitude & lon);
 
 		/* Generate "lat,lon" string with DegreeFormat::Raw. o*/
 		QString to_string_raw(const QString & separator = ",") const;

@@ -437,17 +437,20 @@ void GisViewportDecorations::draw_viewport_data(GisViewport * gisview) const
 {
 	const LatLonBBox bbox = gisview->get_bbox();
 
-	const QString north = "N " + bbox.north.to_string();
-	const QString west =  "W " + bbox.west.to_string();
-	const QString east =  "E " + bbox.east.to_string();
-	const QString south = "S " + bbox.south.to_string();
+	const QString north = bbox.north.to_string();
+	const QString west =  bbox.west.to_string();
+	const QString east =  bbox.east.to_string();
+	const QString south = bbox.south.to_string();
 	const QString size = QString("w = %1, h = %2").arg(gisview->vpixmap.get_width()).arg(gisview->vpixmap.get_height());
 
 	const QPointF data_start(10, 10); /* Top-right corner of gisview. */
 	const QRectF bounding_rect = QRectF(data_start.x(), data_start.y(), data_start.x() + 400, data_start.y() + 400);
 
-	const QFont font = QFont("Helvetica", 10);
-	const QPen & pen_fg = this->pen_marks_fg;
+	/* These debugs are really useful. Don't be shy about them,
+	   print them large and readable. */
+	const QFont font = QFont("Helvetica", 12);
+	QPen pen_fg = this->pen_marks_fg;
+	pen_fg.setColor(QColor("black"));
 
 	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north, 0);
 	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east, 0);

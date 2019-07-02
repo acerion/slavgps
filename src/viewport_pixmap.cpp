@@ -71,6 +71,7 @@ void ViewportPixmap::draw_line(const QPen & pen, int begin_x, int begin_y, int e
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
 	if (this->line_is_outside(begin_x, begin_y, end_x, end_y)) {
+		qDebug() << SG_PREFIX_I << "Line" << begin_x << begin_y << end_x << end_y << "is outside of viewport";
 		return;
 	}
 
@@ -475,15 +476,23 @@ bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int en
 	   begin in top-left corner; pixel numbers increase as we go down and right. */
 
 	if (begin_x < leftmost && end_x < leftmost) {
+		/* Line begins and ends on left side of viewport pixmap. */
+		//qDebug() << SG_PREFIX_D << "cond 1, leftmost =" << leftmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
 		return true;
 	}
 	if (begin_y < upmost && end_y < upmost) {
+		/* Line begins and ends above viewport pixmap. */
+		//qDebug() << SG_PREFIX_D << "cond 2, upmost =" << upmost << ", begin_y = " << begin_y << ", end_y =" << end_y;
 		return true;
 	}
-	if (begin_x > bottommost && end_x > bottommost) {
+	if (begin_x > rightmost && end_x > rightmost) {
+		/* Line begins and ends on right side of viewport pixmap. */
+		//qDebug() << SG_PREFIX_D << "cond 3, rightmost =" << rightmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
 		return true;
 	}
-	if (begin_y > rightmost && end_y > rightmost) {
+	if (begin_y > bottommost && end_y > bottommost) {
+		/* Line begins and ends below viewport pixmap. */
+		//qDebug() << SG_PREFIX_D << "cond 4, bottommost =" << bottommost << ", begin_y = " << begin_y << ", end_y =" << end_y;
 		return true;
 	}
 

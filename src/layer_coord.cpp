@@ -257,44 +257,47 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 	bool draw_labels = true;
 
-
-	int x1, y1, x2, y2;
+	ScreenPos screen_pos_begin;
+	ScreenPos screen_pos_end;
 
 #define DRAW_COORDINATE_LINE(pen, coord_begin, coord_end) {		\
-		const sg_ret ret1 = gisview->coord_to_screen_pos((coord_begin), &x1, &y1); \
-		const sg_ret ret2 = gisview->coord_to_screen_pos((coord_end), &x2, &y2); \
-		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			gisview->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
+		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
+		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
+		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
+			gisview->vpixmap.draw_line((pen), screen_pos_begin, screen_pos_end); \
+			qDebug() << "kamil A:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
 
 #define DRAW_LONGITUDE_LINE(pen, coord_begin, coord_end, text) {	\
-		const sg_ret ret1 = gisview->coord_to_screen_pos((coord_begin), &x1, &y1); \
-		const sg_ret ret2 = gisview->coord_to_screen_pos((coord_end), &x2, &y2); \
-		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			gisview->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
-			gisview->vpixmap.draw_text(text_font, text_pen, x1, y1 + 15, text); \
+		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
+		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
+		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
+			gisview->vpixmap.draw_line((pen), screen_pos_begin, screen_pos_end); \
+			gisview->vpixmap.draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y + 15, text); \
+			qDebug() << "kamil B:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
 
 #define DRAW_LATITUDE_LINE(pen, coord_begin, coord_end, text) {		\
-		const sg_ret ret1 = gisview->coord_to_screen_pos((coord_begin), &x1, &y1); \
-		const sg_ret ret2 = gisview->coord_to_screen_pos((coord_end), &x2, &y2); \
-		if (ret1 == sg_ret::ok && ret2 == sg_ret::ok) {		\
-			gisview->vpixmap.draw_line((pen), x1 + 1, y1 + 1, x2, y2); \
-			gisview->vpixmap.draw_text(text_font, text_pen, x1, y1, text); \
+		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
+		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
+		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
+			gisview->vpixmap.draw_line((pen), screen_pos_begin, screen_pos_end); \
+			gisview->vpixmap.draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y, text); \
+			qDebug() << "kamil C:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
 
 
-	const Coord ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
-	const Coord ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
-	const Coord bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
+	const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
+	const Coord coord_ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
+	const Coord coord_bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
 
-	const double minimum_lon = ul.lat_lon.lon;
-	const double maximum_lon = ur.lat_lon.lon;
-	const double minimum_lat = bl.lat_lon.lat;
-	const double maximum_lat = ul.lat_lon.lat;
+	const double minimum_lon = coord_ul.lat_lon.lon;
+	const double maximum_lon = coord_ur.lat_lon.lon;
+	const double minimum_lat = coord_bl.lat_lon.lat;
+	const double maximum_lat = coord_ul.lat_lon.lat;
 
 	const double width_degrees = fabs(minimum_lon - maximum_lon);
 	const double width_minutes = 60.0 * width_degrees;
@@ -320,8 +323,8 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 	/* Vertical lines. */
 	{
-		Coord ul_local = ul;
-		Coord bl_local = bl;
+		Coord ul_local = coord_ul;
+		Coord bl_local = coord_bl;
 
 		const int minutes_start = (int) floor(minimum_lon * 60);
 		const int minutes_end = (int) ceil(maximum_lon * 60);
@@ -380,8 +383,8 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 	/* Horizontal lines. */
 	{
-		Coord ul_local = ul;
-		Coord ur_local = ur;
+		Coord ul_local = coord_ul;
+		Coord ur_local = coord_ur;
 
 		const int minutes_start = (int) floor(minimum_lat * 60);
 		const int minutes_end = (int) ceil(maximum_lat * 60);

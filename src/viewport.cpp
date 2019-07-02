@@ -1255,9 +1255,10 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 ScreenPos GisViewport::coord_to_screen_pos(const Coord & coord_in) const
 {
 	ScreenPos pos;
-	if (sg_ret::ok != this->coord_to_screen_pos(coord_in, &pos.x, &pos.y)) {
-		/* TODO: invalidate pos. */
-	}
+	if (sg_ret::ok == this->coord_to_screen_pos(coord_in, &pos.x, &pos.y)) {
+		pos.valid = true;
+	} /* else: invalid by default. */
+
 	return pos;
 }
 
@@ -1332,6 +1333,7 @@ void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, i
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
 	if (this->central->vpixmap.line_is_outside(begin_x, begin_y, end_x, end_y)) {
+		qDebug() << SG_PREFIX_I << "Line" << begin_x << begin_y << end_x << end_y << "is outside of viewport";
 		return;
 	}
 
@@ -2537,4 +2539,13 @@ double GisViewport::get_vpixmap_height_m(void) const
 double GisViewport::get_vpixmap_width_m(void) const
 {
 	return this->vpixmap.get_width() * this->viking_scale.x;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const ScreenPos & screen_pos)
+{
+	debug << "ScreenPos:" << QString("(%1,%2)").arg(screen_pos.x).arg(screen_pos.y);
+	return debug;
 }

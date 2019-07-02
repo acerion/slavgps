@@ -30,12 +30,20 @@
 
 
 #include "lat_lon.h"
+#include "coords.h"
 #include "measurements.h"
+#include "preferences.h"
+#include "globals.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "LatLon"
 
 
 
@@ -285,8 +293,28 @@ Latitude::Latitude(const QString & str)
 
 QString Latitude::to_string(void) const
 {
-	static QLocale c_locale = QLocale::c();
-	return c_locale.toString(this->value, 'f', SG_LATITUDE_PRECISION);
+	QString lat_string;
+	const DegreeFormat format = Preferences::get_degree_format();
+
+	switch (format) {
+	case DegreeFormat::DDD:
+		convert_lat_dec_to_ddd(lat_string, this->value);
+		break;
+	case DegreeFormat::DMM:
+		convert_lat_dec_to_dmm(lat_string, this->value);
+		break;
+	case DegreeFormat::DMS:
+		convert_lat_dec_to_dms(lat_string, this->value);
+		break;
+	case DegreeFormat::Raw:
+		LatLon::lat_to_string_raw(lat_string, *this);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unknown degree format %d" << (int) format;
+		break;
+	}
+
+	return lat_string;
 }
 
 
@@ -364,8 +392,28 @@ Longitude::Longitude(const char * str)
 
 QString Longitude::to_string(void) const
 {
-	static QLocale c_locale = QLocale::c();
-	return c_locale.toString(this->value, 'f', SG_LONGITUDE_PRECISION);
+	QString lon_string;
+	const DegreeFormat format = Preferences::get_degree_format();
+
+	switch (format) {
+	case DegreeFormat::DDD:
+		convert_lon_dec_to_ddd(lon_string, this->value);
+		break;
+	case DegreeFormat::DMM:
+		convert_lon_dec_to_dmm(lon_string, this->value);
+		break;
+	case DegreeFormat::DMS:
+		convert_lon_dec_to_dms(lon_string, this->value);
+		break;
+	case DegreeFormat::Raw:
+		LatLon::lon_to_string_raw(lon_string, *this);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unknown degree format %d" << (int) format;
+		break;
+	}
+
+	return lon_string;
 }
 
 

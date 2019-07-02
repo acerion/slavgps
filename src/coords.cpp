@@ -129,6 +129,24 @@ void LatLon::lon_to_string_raw(QString & lon_string, const LatLon & lat_lon)
 
 
 
+void LatLon::lat_to_string_raw(QString & lat_string, const Latitude & lat)
+{
+	static QLocale c_locale = QLocale::c();
+	lat_string = c_locale.toString(lat.get_value(), 'f', SG_LATITUDE_PRECISION);
+}
+
+
+
+
+void LatLon::lon_to_string_raw(QString & lon_string, const Longitude & lon)
+{
+	static QLocale c_locale = QLocale::c();
+	lon_string = c_locale.toString(lon.get_value(), 'f', SG_LONGITUDE_PRECISION);
+}
+
+
+
+
 QString LatLon::to_string_raw(const QString & separator) const
 {
 	static QLocale c_locale = QLocale::c();
@@ -489,7 +507,7 @@ QString LatLon::to_string(void) const
 	QString lat_string;
 	QString lon_string;
 
-	DegreeFormat format = Preferences::get_degree_format();
+	const DegreeFormat format = Preferences::get_degree_format();
 
 	switch (format) {
 	case DegreeFormat::DDD:

@@ -146,7 +146,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 	const Coord circle_center_coord(lat_lon, this->gisview->get_coord_mode());
 	const ScreenPos circle_center = this->gisview->coord_to_screen_pos(circle_center_coord);
 
-	if (this->circle_is_onscreen(circle_center)) {
+	if (circle_center.valid && this->circle_is_onscreen(circle_center)) {
 
 		this->circle_x = circle_center.x;
 		this->circle_y = circle_center.y;
