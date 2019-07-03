@@ -243,23 +243,6 @@ int get_modulo_seconds(double width_in_seconds)
 
 
 
-void LayerCoord::draw_latlon(GisViewport * gisview)
-{
-	QPen degrees_pen(this->color_deg);
-	degrees_pen.setWidth(this->line_thickness);
-	QPen minutes_pen(this->color_min);
-	minutes_pen.setWidth(std::max(this->line_thickness / 2, 1));
-	QPen seconds_pen(this->color_sec);
-	seconds_pen.setWidth(std::max(this->line_thickness / 5, 1));
-
-	QPen text_pen(QColor("black"));
-	QFont text_font("Helvetica", 10);
-
-	bool draw_labels = true;
-
-	ScreenPos screen_pos_begin;
-	ScreenPos screen_pos_end;
-
 #define DRAW_COORDINATE_LINE(pen, coord_begin, coord_end) {		\
 		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
 		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
@@ -290,14 +273,33 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 	}
 
 
-	const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
-	const Coord coord_ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
-	const Coord coord_bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
 
-	const double minimum_lon = coord_ul.lat_lon.lon;
-	const double maximum_lon = coord_ur.lat_lon.lon;
-	const double minimum_lat = coord_bl.lat_lon.lat;
-	const double maximum_lat = coord_ul.lat_lon.lat;
+
+void LayerCoord::draw_latlon(GisViewport * gisview)
+{
+	QPen degrees_pen(this->color_deg);
+	degrees_pen.setWidth(this->line_thickness);
+	QPen minutes_pen(this->color_min);
+	minutes_pen.setWidth(std::max(this->line_thickness / 2, 1));
+	QPen seconds_pen(this->color_sec);
+	seconds_pen.setWidth(std::max(this->line_thickness / 5, 1));
+
+	QPen text_pen(QColor("black"));
+	QFont text_font("Helvetica", 10);
+
+	bool draw_labels = true;
+
+	ScreenPos screen_pos_begin;
+	ScreenPos screen_pos_end;
+
+
+
+	const LatLonBBox bbox = gisview->get_bbox();
+	const double minimum_lon = bbox.west.get_value();
+	const double maximum_lon = bbox.east.get_value();
+	const double minimum_lat = bbox.south.get_value();
+	const double maximum_lat = bbox.north.get_value();
+
 
 	const double width_degrees = fabs(minimum_lon - maximum_lon);
 	const double width_minutes = 60.0 * width_degrees;
@@ -323,8 +325,8 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 	/* Vertical lines. */
 	{
-		Coord ul_local = coord_ul;
-		Coord bl_local = coord_bl;
+		Coord ul_local = Coord(LatLon(maximum_lat, minimum_lon), CoordMode::LatLon);
+		Coord bl_local = Coord(LatLon(minimum_lat, minimum_lon), CoordMode::LatLon);
 
 		const int minutes_start = (int) floor(minimum_lon * 60);
 		const int minutes_end = (int) ceil(maximum_lon * 60);
@@ -383,8 +385,8 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 
 	/* Horizontal lines. */
 	{
-		Coord ul_local = coord_ul;
-		Coord ur_local = coord_ur;
+		Coord ul_local = Coord(LatLon(maximum_lat, minimum_lon), CoordMode::LatLon);
+		Coord ur_local = Coord(LatLon(maximum_lat, maximum_lon), CoordMode::LatLon);
 
 		const int minutes_start = (int) floor(minimum_lat * 60);
 		const int minutes_end = (int) ceil(maximum_lat * 60);
@@ -439,9 +441,7 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 			}
 		}
 	}
-#undef DRAW_COORDINATE_LINE
-#undef DRAW_LATITUDE_LINE
-#undef DRAW_LONGITUDE_LINE
+
 	return;
 }
 
@@ -453,6 +453,99 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 {
 	QPen pen(this->color_deg);
 	pen.setWidth(this->line_thickness);
+
+#if 1
+	QPen degrees_pen(this->color_deg);
+	degrees_pen.setWidth(this->line_thickness);
+	QPen minutes_pen(this->color_min);
+	minutes_pen.setWidth(std::max(this->line_thickness / 2, 1));
+	QPen seconds_pen(this->color_sec);
+	seconds_pen.setWidth(std::max(this->line_thickness / 5, 1));
+
+	QPen text_pen(QColor("black"));
+	QFont text_font("Helvetica", 10);
+
+	bool draw_labels = true;
+
+	ScreenPos screen_pos_begin;
+	ScreenPos screen_pos_end;
+
+
+	const LatLonBBox bbox = gisview->get_bbox();
+	const double minimum_lon = bbox.west.get_value();
+	const double maximum_lon = bbox.east.get_value();
+	const double minimum_lat = bbox.south.get_value();
+	const double maximum_lat = bbox.north.get_value();
+
+
+	const double width_degrees = fabs(minimum_lon - maximum_lon);
+
+
+#if 1   /* Debug. */
+	qDebug() << "-----------------width" << width_degrees << "degrees, lat/lon:" << minimum_lon << maximum_lon;
+#endif
+
+
+	/* Vertical lines. */
+	{
+		Coord ul_local = Coord(LatLon(maximum_lat, minimum_lon), CoordMode::LatLon);
+		Coord bl_local = Coord(LatLon(minimum_lat, minimum_lon), CoordMode::LatLon);
+
+		const int interval = 6; /* Every zone is 6 degrees wide. */
+
+		int n;
+		n = floor(minimum_lon / interval);
+		const int degrees_start = n * interval - interval;
+		n = ceil(maximum_lon / interval);
+		const int degrees_end = n * interval + interval;
+
+		for (int degree = degrees_start; degree < degrees_end; degree += interval) {
+			ul_local.lat_lon.lon = degree;
+			bl_local.lat_lon.lon = degree;
+			Coord ul = ul_local;
+			Coord bl = bl_local;
+			ul.recalculate_to_mode(CoordMode::UTM);
+			bl.recalculate_to_mode(CoordMode::UTM);
+
+			if (draw_labels) {
+				DRAW_LONGITUDE_LINE(degrees_pen, ul, bl, QString("%1%2").arg(degree).arg(DEGREE_SYMBOL));
+			} else {
+				DRAW_COORDINATE_LINE(degrees_pen, ul, bl);
+			}
+		}
+	}
+
+
+	/* Horizontal lines. */
+	{
+		Coord ul_local = Coord(LatLon(maximum_lat, minimum_lon), CoordMode::LatLon);
+		Coord ur_local = Coord(LatLon(maximum_lat, maximum_lon), CoordMode::LatLon);
+
+		const int interval = 8; /* Every band is 8 degrees high. */
+
+		int n;
+		n = floor(minimum_lat / interval);
+		const int degrees_start = n * interval - interval;
+		n = ceil(maximum_lat / interval);
+		const int degrees_end = n * interval + interval;
+
+		for (int degree = degrees_start; degree < degrees_end; degree += interval) {
+			ul_local.lat_lon.lat = degree;
+			ur_local.lat_lon.lat = degree;
+			Coord ul = ul_local;
+			Coord ur = ur_local;
+			ul.recalculate_to_mode(CoordMode::UTM);
+			ur.recalculate_to_mode(CoordMode::UTM);
+
+			if (draw_labels) {
+				DRAW_LATITUDE_LINE(degrees_pen, ul, ur, QString("%1%2").arg(degree).arg(DEGREE_SYMBOL));
+			} else {
+				DRAW_COORDINATE_LINE(degrees_pen, ul, ur);
+			}
+		}
+	}
+
+#else
 
 	const UTM center = gisview->get_center_coord().get_utm();
 	const double xmpp = gisview->get_viking_scale().get_x();
@@ -601,7 +694,11 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 			gisview->vpixmap.draw_line(pen, begin, end);
 		}
 	}
+#endif
 }
+#undef DRAW_COORDINATE_LINE
+#undef DRAW_LATITUDE_LINE
+#undef DRAW_LONGITUDE_LINE
 
 
 

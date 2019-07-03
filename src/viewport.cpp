@@ -1030,8 +1030,9 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
 
-	/* Distance of pixel specified by pos_x/pos_y from vpixmap' central pixel.
-	   TODO: verify location of pos_x and pos_y in these equations. */
+	/* Distance of pixel specified by pos_x/pos_y from vpixmap's
+	   central pixel.  TODO: verify location of pos_x and pos_y in
+	   these equations. */
 	const int delta_horiz_pixels = pos_x - this->vpixmap.get_horiz_center_pixel();
 	const int delta_vert_pixels = this->vpixmap.get_vert_center_pixel() - pos_y;
 
@@ -1041,17 +1042,33 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 
 		/* Modified (reformatted) formula. */
 		{
+			coord.utm.set_northing((delta_vert_pixels * ympp) + this->center_coord.utm.get_northing());
+
 			coord.utm.set_zone(this->center_coord.utm.get_zone());
-			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
-			coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
 			coord.utm.set_easting((delta_horiz_pixels * xmpp) + this->center_coord.utm.get_easting());
-
 			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
-
 			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.shift_easting_by(-(zone_delta * this->utm_zone_width));
-			coord.utm.set_northing((delta_vert_pixels * ympp) + this->center_coord.utm.get_northing());
+
+			/* Calculate correct band letter.  TODO: there
+			   has to be an easier way to do this. */
+			{
+				/* We only need this initial
+				   assignment to avoid assertion fail
+				   in ::to_lat_lon(). */
+				assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
+				coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
+
+				/* Calculated lat_lon will contain
+				   information about latitude, and
+				   converting latitude to band letter
+				   is piece of cake. */
+				LatLon lat_lon = UTM::to_lat_lon(coord.utm);
+				UTM utm = LatLon::to_utm(lat_lon);
+				coord.utm.set_band_letter(utm.get_band_letter());
+			}
 		}
+
 
 		/* Original code, used for comparison of results with new, reformatted formula. */
 		{
@@ -1080,9 +1097,6 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			}
 			if (coord.utm.get_northing() != test_coord.utm.get_northing()) {
 				qDebug() << SG_PREFIX_E << "UTM: Northing calculation mismatch" << coord << test_coord << (coord.utm.get_northing() - test_coord.utm.get_northing());
-			}
-			if (coord.utm.get_band_letter() != test_coord.utm.get_band_letter()) {
-				qDebug() << SG_PREFIX_E << "UTM: Band letter calculation mismatch" << coord << test_coord << coord.utm.get_band_as_letter() << test_coord.utm.get_band_as_letter();
 			}
 		}
 		break;

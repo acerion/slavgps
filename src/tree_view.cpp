@@ -111,7 +111,7 @@ TreeItem * TreeView::get_tree_item(const TreeIndex & item_index) const
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(item_index.parent());
 	if (!parent_item) {
 		/* "item_index" points at the top tree item. */
-		qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << item_index.row() << item_index.column();
+		//qDebug() << SG_PREFIX_I << "Querying Top Tree Item for item" << item_index.row() << item_index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent_item->child(item_index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
