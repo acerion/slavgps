@@ -255,7 +255,7 @@ void file_write_header(FILE * file, const LayerAggregate * top_level_layer, GisV
 {
 	const LatLon lat_lon = gisview->get_center_coord().get_lat_lon();
 
-	const QString mode_id_string = GisViewportDrawModes::get_id_string(gisview->get_drawmode());
+	const QString mode_id_string = GisViewportDrawModes::get_id_string(gisview->get_draw_mode());
 
 	char bg_color_string[8] = { 0 };
 	SGUtils::color_to_string(bg_color_string, sizeof (bg_color_string), gisview->get_background_color());

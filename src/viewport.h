@@ -79,13 +79,14 @@ namespace SlavGPS {
 
 
 
-	/* Drawmode management. */
 	enum class GisViewportDrawMode {
+		Invalid = -1,
 		UTM = 0,
 		Expedia,
 		Mercator,
 		LatLon
 	};
+	QDebug operator<<(QDebug debug, const GisViewportDrawMode mode);
 
 
 

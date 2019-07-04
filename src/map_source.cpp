@@ -68,7 +68,7 @@ MapSource::MapSource()
 	tilesize_x = 256;
 	tilesize_y = 256;
 
-	drawmode = GisViewportDrawMode::Mercator; /* ViewportDrawMode::UTM */
+	this->drawmode = GisViewportDrawMode::Mercator; /* ViewportDrawMode::UTM */
 	this->file_extension = ".png";
 
 	this->dl_options.file_validator_fn = map_file_validator_fn;

@@ -185,12 +185,6 @@ GisViewport::GisViewport(QWidget * parent) : QWidget(parent)
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 
-
-	this->coord_mode = CoordMode::LatLon;
-	this->drawmode = GisViewportDrawMode::Mercator;
-
-
-
 	this->center_coords = new std::list<Coord>;
 	this->center_coords_iter = this->center_coords->begin();
 	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->center_coords_max)) {
@@ -496,7 +490,7 @@ sg_ret GisViewport::set_viking_scale(double new_value)
 	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
-	if (this->drawmode == GisViewportDrawMode::UTM) {
+	if (this->draw_mode == GisViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 
@@ -559,7 +553,7 @@ sg_ret GisViewport::set_viking_scale_x(double new_value)
 
 	this->viking_scale.x = new_value;
 	this->xmfactor = MERCATOR_FACTOR(this->viking_scale.x);
-	if (this->drawmode == GisViewportDrawMode::UTM) {
+	if (this->draw_mode == GisViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 
@@ -578,7 +572,7 @@ sg_ret GisViewport::set_viking_scale_y(double new_value)
 
 	this->viking_scale.y = new_value;
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
-	if (this->drawmode == GisViewportDrawMode::UTM) {
+	if (this->draw_mode == GisViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 
@@ -1104,7 +1098,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	case CoordMode::LatLon:
 		coord.set_coord_mode(CoordMode::LatLon);
 
-		switch (this->drawmode) {
+		switch (this->draw_mode) {
 		case GisViewportDrawMode::LatLon:
 			/* Modified (reformatted) formula. */
 			{
@@ -1165,11 +1159,11 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			}
 			break;
 		default:
-			qDebug() << SG_PREFIX_E << "Unrecognized draw mode" << (int) this->drawmode;
+			qDebug() << SG_PREFIX_E << "Unrecognized draw mode" << this->draw_mode;
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << (int) this->coord_mode;
+		qDebug() << SG_PREFIX_E << "Unrecognized coord mode" << this->coord_mode;
 		break;
 
 	}
@@ -1215,6 +1209,8 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 		coord.recalculate_to_mode(this->coord_mode);
 	}
 
+	qDebug() << SG_PREFIX_I << this->coord_mode << this->draw_mode;
+
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
 		{
@@ -1233,7 +1229,7 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 		break;
 
 	case CoordMode::LatLon:
-		switch (this->drawmode) {
+		switch (this->draw_mode) {
 		case GisViewportDrawMode::LatLon:
 			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
 			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center_coord.lat_lon.lat - coord.lat_lon.lat));
@@ -1251,12 +1247,12 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 			*pos_y = vert_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center_coord.lat_lon.lat) - MERCLAT(coord.lat_lon.lat)));
 			break;
 		default:
-			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << (int) this->drawmode;
+			qDebug() << SG_PREFIX_E << "Unexpected viewport drawing mode" << this->draw_mode;
 			return sg_ret::err;
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unexpected viewport coord mode" << (int) this->coord_mode;
+		qDebug() << SG_PREFIX_E << "Unexpected viewport coord mode" << this->coord_mode;
 		return sg_ret::err;
 	}
 
@@ -1493,9 +1489,9 @@ bool GisViewport::get_is_one_utm_zone(void) const
 
 
 
-void GisViewport::set_drawmode(GisViewportDrawMode new_drawmode)
+void GisViewport::set_draw_mode(GisViewportDrawMode new_drawmode)
 {
-	this->drawmode = new_drawmode;
+	this->draw_mode = new_drawmode;
 
 	if (new_drawmode == GisViewportDrawMode::UTM) {
 		this->set_coord_mode(CoordMode::UTM);
@@ -1507,9 +1503,9 @@ void GisViewport::set_drawmode(GisViewportDrawMode new_drawmode)
 
 
 
-GisViewportDrawMode GisViewport::get_drawmode(void) const
+GisViewportDrawMode GisViewport::get_draw_mode(void) const
 {
-	return this->drawmode;
+	return this->draw_mode;
 }
 
 
@@ -1630,7 +1626,7 @@ void GisViewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle,
 
 	angle.set_value(atan2(dy, dx) + M_PI_2);
 
-	if (this->get_drawmode() == GisViewportDrawMode::UTM) {
+	if (this->get_draw_mode() == GisViewportDrawMode::UTM) {
 
 		Coord test = this->screen_pos_to_coord(x1, y1);
 		LatLon lat_lon = test.get_lat_lon();
@@ -1913,7 +1909,7 @@ GisViewport * GisViewport::create_scaled_viewport(Window * a_window, int target_
 
 
 	/* Copy/set selected properties of viewport. */
-	scaled_viewport->set_drawmode(this->get_drawmode());
+	scaled_viewport->set_draw_mode(this->get_draw_mode());
 	scaled_viewport->set_coord_mode(this->get_coord_mode());
 	scaled_viewport->set_center_coord(this->center_coord, false);
 
@@ -2144,10 +2140,10 @@ bool GisViewportDrawModes::set_draw_mode_from_file(GisViewport * gisview, const 
 	bool success = true;
 
 	if (0 == strcasecmp(line, "utm")) {
-		gisview->set_drawmode(GisViewportDrawMode::UTM);
+		gisview->set_draw_mode(GisViewportDrawMode::UTM);
 
 	} else if (0 == strcasecmp(line, "expedia")) {
-		gisview->set_drawmode(GisViewportDrawMode::Expedia);
+		gisview->set_draw_mode(GisViewportDrawMode::Expedia);
 
 	} else if (0 == strcasecmp(line, "google")) {
 		success = false;
@@ -2158,16 +2154,45 @@ bool GisViewportDrawModes::set_draw_mode_from_file(GisViewport * gisview, const 
 		qDebug() << SG_PREFIX_W << QObject::tr("Read file: draw mode 'kh' no more supported");
 
 	} else if (0 == strcasecmp(line, "mercator")) {
-		gisview->set_drawmode(GisViewportDrawMode::Mercator);
+		gisview->set_draw_mode(GisViewportDrawMode::Mercator);
 
 	} else if (0 == strcasecmp(line, "latlon")) {
-		gisview->set_drawmode(GisViewportDrawMode::LatLon);
+		gisview->set_draw_mode(GisViewportDrawMode::LatLon);
 	} else {
 		qDebug() << SG_PREFIX_E << QObject::tr("Read file: unexpected draw mode") << line;
 		success = false;
 	}
 
 	return success;
+}
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const GisViewportDrawMode mode)
+{
+	switch (mode) {
+	case GisViewportDrawMode::Invalid:
+		debug << "GisViewportDrawMode::Invalid";
+		break;
+	case GisViewportDrawMode::UTM:
+		debug << "GisViewportDrawMode::UTM";
+		break;
+	case GisViewportDrawMode::Expedia:
+		debug << "GisViewportDrawMode::Expedia";
+		break;
+	case GisViewportDrawMode::Mercator:
+		debug << "GisViewportDrawMode::Mercator";
+		break;
+	case GisViewportDrawMode::LatLon:
+		debug << "GisViewportDrawMode::LatLon";
+		break;
+	default:
+		debug << "GisViewportDrawMode::Unknown (" << (int) mode << ")";
+		break;
+	}
+
+	return debug;
 }
 
 

@@ -840,7 +840,7 @@ void LayerMapnik::draw_tree_item(GisViewport * gisview, bool highlight_selected,
 		return;
 	}
 
-	if (gisview->get_drawmode() != GisViewportDrawMode::Mercator) {
+	if (gisview->get_draw_mode() != GisViewportDrawMode::Mercator) {
 		this->get_window()->get_statusbar()->set_message(StatusBarField::Info, tr("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}

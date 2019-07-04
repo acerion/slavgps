@@ -403,7 +403,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 
 	/* Copy/set selected properties of viewport. */
-	scaled_viewport->set_drawmode(this->gisview->get_drawmode());
+	scaled_viewport->set_draw_mode(this->gisview->get_draw_mode());
 	scaled_viewport->set_coord_mode(this->gisview->get_coord_mode());
 	scaled_viewport->set_center_coord(this->gisview->center_coord, false);
 	scaled_viewport->set_viking_scale(this->scaled_viking_scale);

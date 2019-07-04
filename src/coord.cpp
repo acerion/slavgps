@@ -400,3 +400,26 @@ QString Coord::to_string(void) const
 
 	return result;
 }
+
+
+
+
+QDebug SlavGPS::operator<<(QDebug debug, const CoordMode mode)
+{
+	switch (mode) {
+	case CoordMode::Invalid:
+		debug << "CoordMode::Invalid";
+		break;
+	case CoordMode::UTM:
+		debug << "CoordMode::UTM";
+		break;
+	case CoordMode::LatLon:
+		debug << "CoordMode::LatLon";
+		break;
+	default:
+		debug << "CoordMode::Unknown (" << (int) mode << ")";
+		break;
+	}
+
+	return debug;
+}

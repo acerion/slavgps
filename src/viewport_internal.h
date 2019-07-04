@@ -115,8 +115,8 @@ namespace SlavGPS {
 		sg_ret set_viking_scale(const VikingScale & new_value);
 		const VikingScale & get_viking_scale(void) const;
 
-		void set_drawmode(GisViewportDrawMode drawmode);
-		GisViewportDrawMode get_drawmode(void) const;
+		void set_draw_mode(GisViewportDrawMode drawmode);
+		GisViewportDrawMode get_draw_mode(void) const;
 
 		sg_ret utm_recalculate_current_center_coord_for_other_zone(UTM & center_in_other_zone, int zone);
 		sg_ret get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int zone);
@@ -257,8 +257,6 @@ namespace SlavGPS {
 		/* ******** Class variables that definitely should be in this class. ******** */
 
 
-		CoordMode coord_mode;
-
 
 		Coord center_coord;
 		/* center_coords_iter++ means moving forward in history. Thus prev(center_coords->end()) is the newest item.
@@ -269,8 +267,8 @@ namespace SlavGPS {
 		int center_coords_radius;   /* Metres. */
 
 
-		/* Subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
-		GisViewportDrawMode drawmode;
+		CoordMode coord_mode = CoordMode::LatLon;
+		GisViewportDrawMode draw_mode = GisViewportDrawMode::Mercator;
 
 
 		double utm_zone_width = 0.0;

@@ -790,7 +790,7 @@ void LayerMap::post_read(GisViewport * gisview, bool from_file)
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
 		   So, we can check if we have to inform the user about inconsistency. */
-		if (map_source->get_drawmode() != gisview->get_drawmode()) {
+		if (map_source->get_drawmode() != gisview->get_draw_mode()) {
 			const QString drawmode_name = GisViewportDrawModes::get_name(map_source->get_drawmode());
 			const QString msg = QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.").arg(drawmode_name);
 			Dialog::warning(msg, this->get_window());
@@ -1253,7 +1253,7 @@ void LayerMap::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 {
 	MapSource * map_source = map_source_interfaces[this->map_type_id];
 
-	if (map_source->get_drawmode() != gisview->get_drawmode()) {
+	if (map_source->get_drawmode() != gisview->get_draw_mode()) {
 		return;
 	}
 
@@ -1563,7 +1563,7 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QM
 
 	const MapSource * map_source = map_source_interfaces[layer->map_type_id];
 	const VikingScale viking_scale = layer->calculate_viking_scale(this->gisview);
-	if (map_source->get_drawmode() == this->gisview->get_drawmode()
+	if (map_source->get_drawmode() == this->gisview->get_draw_mode()
 	    && map_source->coord_to_tile_info(this->gisview->get_center_coord(),
 					      viking_scale,
 					      tmp)) {
@@ -1588,7 +1588,7 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 	const MapSource * map_source = map_source_interfaces[this->map_type_id];
 
 	const GisViewportDrawMode map_draw_mode = map_source->get_drawmode();
-	const GisViewportDrawMode vp_draw_mode = gisview->get_drawmode();
+	const GisViewportDrawMode vp_draw_mode = gisview->get_draw_mode();
 
 	const VikingScale viking_scale = this->calculate_viking_scale(gisview);
 

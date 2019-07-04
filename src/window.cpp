@@ -2038,7 +2038,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 				this->set_current_document_full_path(new_document_full_path);
 			}
 
-			QAction * drawmode_action = this->get_drawmode_action(this->viewport->central->get_drawmode());
+			QAction * drawmode_action = this->get_drawmode_action(this->viewport->central->get_draw_mode());
 			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
 			drawmode_action->setChecked(true);
 			this->only_updating_coord_mode_ui = false;
@@ -2812,10 +2812,11 @@ void Window::change_coord_mode_cb(QAction * qa)
 		return;
 	}
 
-	const GisViewportDrawMode olddrawmode = this->viewport->central->get_drawmode();
+	const GisViewportDrawMode olddrawmode = this->viewport->central->get_draw_mode();
 	if (olddrawmode != drawmode) {
-		/* This takes care of coord mode too. */
-		this->viewport->central->set_drawmode(drawmode);
+
+		this->viewport->central->set_draw_mode(drawmode); /* This takes care of viewport's coord mode too. */
+
 		if (drawmode == GisViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::UTM);
 		} else if (olddrawmode == GisViewportDrawMode::UTM) {

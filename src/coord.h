@@ -45,6 +45,7 @@ namespace SlavGPS {
 		UTM     =  0,
 		LatLon  =  1
 	};
+	QDebug operator<<(QDebug debug, const CoordMode mode);
 
 
 
