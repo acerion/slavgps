@@ -1307,7 +1307,7 @@ void Window::pan_click(QMouseEvent * ev)
 void Window::pan_move(QMouseEvent * ev)
 {
 	//qDebug() << SG_PREFIX_I;
-	if (this->pan_pos.x != -1) {
+	if (this->pan_pos.x != -1 && this->pan_pos.y != -1) {
 		this->pan_move_update_viewport(ev);
 
 		this->pan_move_in_progress = true;
@@ -1330,9 +1330,14 @@ sg_ret Window::pan_move_update_viewport(const QMouseEvent * ev)
 	const int pan_delta_x = ev->x() - this->pan_pos.x;
 	const int pan_delta_y = ev->y() - this->pan_pos.y;
 
-	/* "Move a screen pixel that is delta x/y from center
-	   of viewport, into a center of viewport. */
-	return this->viewport->central->set_center_coord(center_x - pan_delta_x, center_y - pan_delta_y);
+	if (pan_delta_x != 0 || pan_delta_y != 0) {
+		/* "Move a screen pixel that is delta x/y from center
+		   of viewport, into a center of viewport. */
+		return this->viewport->central->set_center_coord(center_x - pan_delta_x, center_y - pan_delta_y);
+	} else {
+		/* There was no movement. */
+		return sg_ret::ok;
+	}
 }
 
 
@@ -2890,24 +2895,24 @@ void Window::menu_view_pan_cb(void)
 	}
 
 	GisViewport * v = this->viewport->central;
+	const int vert_center_pixel  = v->vpixmap.get_vert_center_pixel();
+	const int horiz_center_pixel = v->vpixmap.get_horiz_center_pixel();
 
-	/* TODO: review this switch: arguments to set_center_coord(),
-	   and usage of get_width()/get_height() methods. */
 	switch (direction) {
 	case PAN_NORTH:
-		v->set_center_coord(v->vpixmap.get_width() / 2, 0);
+		v->set_center_coord(horiz_center_pixel, v->vpixmap.get_upmost_pixel()); /* Move upmost pixel to center. */
 		break;
 	case PAN_EAST:
-		v->set_center_coord(v->vpixmap.get_width(), v->vpixmap.get_height() / 2);
+		v->set_center_coord(v->vpixmap.get_rightmost_pixel(), vert_center_pixel); /* Move rightmost pixel to center. */
 		break;
 	case PAN_SOUTH:
-		v->set_center_coord(v->vpixmap.get_width() / 2, v->vpixmap.get_height());
+		v->set_center_coord(horiz_center_pixel, v->vpixmap.get_bottommost_pixel()); /* Move bottommost pixel to center. */
 		break;
 	case PAN_WEST:
-		v->set_center_coord(0, v->vpixmap.get_height() / 2);
+		v->set_center_coord(v->vpixmap.get_leftmost_pixel(), vert_center_pixel); /* Move leftmost pixel to center. */
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unknown direction" << direction;;
+		qDebug() << SG_PREFIX_E << "Unknown pan direction" << direction;;
 		break;
 	}
 

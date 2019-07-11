@@ -96,22 +96,22 @@ void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 void ViewportSaveDialog::calculate_total_area_cb(void)
 {
 	QString label_text;
-	double w = this->width_spin->value() * this->gisview->get_viking_scale().get_x();
-	double h = this->height_spin->value() * this->gisview->get_viking_scale().get_x(); /* TODO_2_LATER: change to get_y(). */
+	double width = this->width_spin->value() * this->gisview->get_viking_scale().get_x();
+	double height = this->height_spin->value() * this->gisview->get_viking_scale().get_x(); /* TODO_2_LATER: change to get_y(). */
 	if (this->tiles_width_spin) { /* save many images; find TOTAL area covered */
-		w *= this->tiles_width_spin->value();
-		h *= this->tiles_height_spin->value();
+		width *= this->tiles_width_spin->value();
+		height *= this->tiles_height_spin->value();
 	}
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	switch (distance_unit) {
 	case DistanceUnit::Kilometres:
-		label_text = tr("Total area: %1m x %2m (%3 sq. km)").arg((long) w).arg((long) h).arg((w * h / 1000000), 0, 'f', 3); /* "%.3f" */
+		label_text = tr("Total area: %1m x %2m (%3 sq. km)").arg((long) width).arg((long) height).arg((width * height / 1000000), 0, 'f', 3); /* "%.3f" */
 		break;
 	case DistanceUnit::Miles:
-		label_text = tr("Total area: %1m x %2m (%3 sq. miles)").arg((long) w).arg((long) h).arg((w * h / 2589988.11), 0, 'f', 3); /* "%.3f" */
+		label_text = tr("Total area: %1m x %2m (%3 sq. miles)").arg((long) width).arg((long) height).arg((width * height / 2589988.11), 0, 'f', 3); /* "%.3f" */
 		break;
 	case DistanceUnit::NauticalMiles:
-		label_text = tr("Total area: %1m x %2m (%3 sq. NM)").arg((long) w).arg((long) h).arg((w * h / (1852.0 * 1852.0), 0, 'f', 3)); /* "%.3f" */
+		label_text = tr("Total area: %1m x %2m (%3 sq. NM)").arg((long) width).arg((long) height).arg((width * height / (1852.0 * 1852.0), 0, 'f', 3)); /* "%.3f" */
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected distance unit" << (int) distance_unit;

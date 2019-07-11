@@ -1407,6 +1407,7 @@ void LayerGPS::rt_tracking_draw(GisViewport * gisview, RTData & rt_data)
 		return;
 	}
 
+	/* TODO: what do these values mean? */
 	const LatLonBBox bbox = gisview->get_bbox(-20, -20, 20, 20);
 	if (!bbox.contains_point(rt_data.lat_lon)) {
 		qDebug() << SG_PREFIX_N << "Skipping drawing - point outside of viewport";

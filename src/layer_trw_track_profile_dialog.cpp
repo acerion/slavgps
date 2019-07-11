@@ -522,9 +522,9 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 	assert (graph->viewport2d->central == gisview);
 
 
-	ScreenPos current_pos;
-	gisview->get_cursor_pos(ev, current_pos);
-	const bool found_tp = set_center_at_graph_position(current_pos.x,
+	ScreenPos current_pos_cbl;
+	gisview->get_cursor_pos_cbl(ev, current_pos_cbl);
+	const bool found_tp = set_center_at_graph_position(current_pos_cbl.x,
 							   this->trw,
 							   this->main_gisview,
 							   this->trk,
@@ -544,7 +544,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 
 	   This is done on all graphs because we want to have 'mouse
 	   release' event reflected in all graphs. */
-	current_pos.set(-1.0, -1.0); /* Don't draw current position on clicks. */
+	current_pos_cbl.set(-1.0, -1.0); /* Don't draw current position on clicks. */
 	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
 		ProfileView * a_graph = *iter;
 		if (!a_graph->viewport2d->central) {
@@ -561,13 +561,13 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 		}
 
 
-	        ScreenPos selected_pos;
-		if (sg_ret::ok != a_graph->get_position_of_tp(this->trk, SELECTED, selected_pos)) {
+	        ScreenPos selected_pos_cbl;
+		if (sg_ret::ok != a_graph->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl)) {
 			continue;
 		}
 
 		/* Positions passed to draw_marks() are in graph's coordinate system, not viewport's coordinate system. */
-		a_graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
+		a_graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 	}
 
 	this->button_split_at_marker->setEnabled(this->is_selected_drawn);
@@ -578,22 +578,41 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 
 
 
-/**
- * Calculate y position for mark on y=f(x) graph.
- */
-sg_ret ProfileView::set_pos_y(ScreenPos & screen_pos)
+sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 {
 	/* Using saved width/saved height for performance reasons. */
 	const int w = this->viewport2d->central->vpixmap.get_width();
-	const int h = this->viewport2d->central->vpixmap.get_height();
+
 
 	int ix = (int) screen_pos.x;
-	/* Ensure ix is inside of graph. */
-	if (ix == w) {
-		ix--;
+
+	/*
+	  Ensure ix is inside of graph.
+
+	  Here we call functions that return pixels in "beginning in
+	  upper-left corner" coordinate system.  Since in this
+	  function we calculate screen pos that is in "beginning in
+	  lower-left corner" coordinate system, this should be safe,
+	  because in both coordinate systems beginning is on the left.
+	*/
+	const int leftmost_pixel = this->viewport2d->central->vpixmap.get_leftmost_pixel();
+	const int rightmost_pixel = this->viewport2d->central->vpixmap.get_rightmost_pixel();
+	if (ix < leftmost_pixel) {
+		ix = leftmost_pixel;
+	} else if (ix > rightmost_pixel) {
+		ix = rightmost_pixel;
+	} else {
+		;
 	}
 
-	const int y = h * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
+	/* This is to handle situations when leftmost pixel of central
+	   pixmap is not zero, i.e. if central pixmap has some
+	   margin. We must avoid situation when ix, used as array
+	   index, is out of bounds. */
+	ix = ix - leftmost_pixel;
+
+	const int height = this->viewport2d->central->vpixmap.get_height();
+	const int y = height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
 	screen_pos.set(screen_pos.x, y);
 
 	return sg_ret::ok;
@@ -602,15 +621,15 @@ sg_ret ProfileView::set_pos_y(ScreenPos & screen_pos)
 
 
 
-sg_ret ProfileView::get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos)
+sg_ret ProfileView::get_cursor_pos_cbl_on_line(QMouseEvent * ev, ScreenPos & screen_pos_cbl)
 {
 	/* Get exact cursor position. 'y' may not be on a graph line. */
-	if (sg_ret::ok != this->viewport2d->central->get_cursor_pos(ev, screen_pos)) {
+	if (sg_ret::ok != this->viewport2d->central->get_cursor_pos_cbl(ev, screen_pos_cbl)) {
 		/* Not an error? */
 		return sg_ret::ok;
 	}
 	/* Adjust 'y' position so that its on a graph line. */
-	this->set_pos_y(screen_pos);
+	this->set_pos_y_cbl(screen_pos_cbl);
 
 	return sg_ret::ok;
 }
@@ -664,10 +683,12 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 	}
 
 	double meters_from_start = 0.0;
-	ScreenPos selected_pos; /* Crosshair laying on a graph where currently selected tp is located. */
-	ScreenPos current_pos;  /* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
 
-	if (sg_ret::ok != graph->get_cursor_pos_on_line(ev, current_pos)) {
+	/* Screen coordinates in "beginning in bottom-left" coordinate system. */
+	ScreenPos selected_pos_cbl; /* Crosshair laying on a graph where currently selected tp is located. */
+	ScreenPos current_pos_cbl;  /* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
+
+	if (sg_ret::ok != graph->get_cursor_pos_cbl_on_line(ev, current_pos_cbl)) {
 		qDebug() << SG_PREFIX_E << "Failed to get cursor position on line";
 		return;
 	}
@@ -682,13 +703,13 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 		   current trackpoint (trackpoint under moving cursor
 		   mouse) is changing. The trackpoint selected by
 		   previous cursor click is does not change. */
-		graph->get_position_of_tp(this->trk, SELECTED, selected_pos);
+		graph->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl);
 	}
 
 	switch (graph->viewport2d->x_domain) {
 	case GisViewportDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) current_pos.x / graph->viewport2d->central->vpixmap.get_width(), &meters_from_start, HOVERED);
-		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
+		this->trk->select_tp_by_percentage_dist((double) current_pos_cbl.x / graph->viewport2d->central->vpixmap.get_width(), &meters_from_start, HOVERED);
+		graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
 			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
@@ -697,8 +718,8 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 		break;
 
 	case GisViewportDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) current_pos.x / graph->viewport2d->central->vpixmap.get_width(), HOVERED);
-		graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
+		this->trk->select_tp_by_percentage_time((double) current_pos_cbl.x / graph->viewport2d->central->vpixmap.get_width(), HOVERED);
+		graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
 			time_t seconds_from_start = 0;
@@ -714,7 +735,7 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 	};
 
 
-	double y = graph->track_data.y[current_pos.x];
+	double y = graph->track_data.y[current_pos_cbl.x];
 	switch (graph->viewport2d->y_domain) {
 	case GisViewportDomain::Speed:
 		if (graph->labels.y_value) {
@@ -1208,7 +1229,7 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 
 
 
-sg_ret ProfileView::get_position_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos)
+sg_ret ProfileView::get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos)
 {
 	double pc = NAN;
 
@@ -1232,7 +1253,7 @@ sg_ret ProfileView::get_position_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & s
 
 	if (!std::isnan(pc)) {
 		screen_pos.set(pc * this->viewport2d->central_get_width(), 0.0); /* Set x.*/
-		this->set_pos_y(screen_pos); /* Find y. */
+		this->set_pos_y_cbl(screen_pos); /* Find y. */
 	}
 
 	// qDebug() << SG_PREFIX_D << "returning pos of tp idx" << tp_idx;
@@ -1254,15 +1275,15 @@ sg_ret TrackProfileDialog::draw_center(ProfileView * graph)
 	/* Ensure markers are redrawn if necessary. */
 	if (this->is_selected_drawn || this->is_current_drawn) {
 
-		ScreenPos current_pos(-1.0, -1.0);
+		ScreenPos current_pos_cbl(-1.0, -1.0);
 		if (this->is_current_drawn) {
-			graph->get_position_of_tp(this->trk, HOVERED, current_pos);
+			graph->get_position_cbl_of_tp(this->trk, HOVERED, current_pos_cbl);
 		}
 
-		ScreenPos selected_pos;
-		graph->get_position_of_tp(this->trk, SELECTED, selected_pos);
+		ScreenPos selected_pos_cbl;
+		graph->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl);
 
-		ret = graph->draw_marks(selected_pos, current_pos, this->is_selected_drawn, this->is_current_drawn);
+		ret = graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 		if (sg_ret::ok != ret) {
 			qDebug() << SG_PREFIX_E << "Failed to draw marks";
 			return ret;

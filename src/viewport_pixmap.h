@@ -63,6 +63,9 @@ namespace SlavGPS {
 
 		void reconfigure(int width, int height);
 
+		/* Returned pixels are in Qt's coordinate system,
+		   where beginning (0,0 point) is in top-left
+		   corner. */
 		int get_leftmost_pixel(void) const;
 		int get_rightmost_pixel(void) const;
 		int get_upmost_pixel(void) const;

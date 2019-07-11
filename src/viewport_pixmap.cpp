@@ -467,32 +467,35 @@ void ViewportPixmap::clear(void)
 
 bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int end_y)
 {
+	/*
+	  Here we follow Qt's coordinate system:
+	  begin in top-left corner, pixel numbers increase as we go down and right.
+	  "q_" prefix means just that: that values are in Qt's coordinate system.
+	*/
+
 	const int leftmost   = this->get_leftmost_pixel();
 	const int rightmost  = this->get_rightmost_pixel();
 	const int upmost     = this->get_upmost_pixel();
 	const int bottommost = this->get_bottommost_pixel();
 
-	/* Here we follow Qt's coordinate system:
-	   begin in top-left corner; pixel numbers increase as we go down and right. */
-
 	if (begin_x < leftmost && end_x < leftmost) {
 		/* Line begins and ends on left side of viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 1, leftmost =" << leftmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
+		//qDebug() << SG_PREFIX_D << "cond 1, leftmost =" << q_leftmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
 		return true;
 	}
 	if (begin_y < upmost && end_y < upmost) {
 		/* Line begins and ends above viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 2, upmost =" << upmost << ", begin_y = " << begin_y << ", end_y =" << end_y;
+		//qDebug() << SG_PREFIX_D << "cond 2, upmost =" << q_upmost << ", begin_y = " << begin_y << ", end_y =" << end_y;
 		return true;
 	}
 	if (begin_x > rightmost && end_x > rightmost) {
 		/* Line begins and ends on right side of viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 3, rightmost =" << rightmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
+		//qDebug() << SG_PREFIX_D << "cond 3, rightmost =" << q_rightmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
 		return true;
 	}
 	if (begin_y > bottommost && end_y > bottommost) {
 		/* Line begins and ends below viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 4, bottommost =" << bottommost << ", begin_y = " << begin_y << ", end_y =" << end_y;
+		//qDebug() << SG_PREFIX_D << "cond 4, bottommost =" << q_bottommost << ", begin_y = " << begin_y << ", end_y =" << end_y;
 		return true;
 	}
 

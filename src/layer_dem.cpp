@@ -904,20 +904,23 @@ void draw_loaded_dem_box(GisViewport * gisview)
 	ScreenPos sp_ne = gisview->coord_to_screen_pos(demne);
 	ScreenPos sp_sw = gisview->coord_to_screen_pos(demsw);
 
-	if (sp_ne.x > gisview->vpixmap.get_width()) {
-		sp_ne.x = gisview->vpixmap.get_width();
+	const int leftmost_pixel   = gisview->vpixmap.get_leftmost_pixel();
+	const int rightmost_pixel  = gisview->vpixmap.get_rightmost_pixel();
+	const int upmost_pixel     = gisview->vpixmap.get_upmost_pixel();
+	const int bottommost_pixel = gisview->vpixmap.get_bottommost_pixel();
+
+	if (sp_ne.x > rightmost_pixel) {
+		sp_ne.x = rightmost_pixel;
+	}
+	if (sp_ne.y < topmost_pixel) {
+		sp_ne.y = topmost_pixel;
 	}
 
-	if (sp_sw.y > gisview->vpixmap.get_height()) {
-		sp_sw.y = gisview->vpixmap.get_height();
+	if (sp_sw.x < leftmost_pixel) {
+		sp_sw.x = leftmost_pixel;
 	}
-
-	if (sp_sw.x < 0) {
-		sp_sw.x = 0;
-	}
-
-	if (sp_ne.y < 0) {
-		sp_ne.y = 0;
+	if (sp_sw.y > bottommost_pixel) {
+		sp_sw.y = bottommost_pixel;
 	}
 
 	qDebug() << SG_PREFIX_I << "drawing loaded DEM box";

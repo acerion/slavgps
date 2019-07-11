@@ -282,7 +282,7 @@ void GisViewportDecorations::draw_center_mark(GisViewport * gisview) const
 
 	const int len = 30;
 	const int gap = 4;
-	const int center_x = gisview->vpixmap.get_width() / 2;
+	const int center_x = gisview->vpixmap.get_width() / 2; /* TODO: use proper methods from ViewportPixmap class. */
 	const int center_y = gisview->vpixmap.get_height() / 2;
 
 	const QPen & pen_fg = this->pen_marks_fg;
@@ -435,16 +435,8 @@ sg_ret GisViewportDecorations::add_logo(const GisViewportLogo & logo)
 
 void GisViewportDecorations::draw_viewport_data(GisViewport * gisview) const
 {
-	const LatLonBBox bbox = gisview->get_bbox();
+	const QRectF bounding_rect = QRectF(20, 20, gisview->vpixmap.get_width() - 40, gisview->vpixmap.get_height() - 80);
 
-	const QString north = bbox.north.to_string();
-	const QString west =  bbox.west.to_string();
-	const QString east =  bbox.east.to_string();
-	const QString south = bbox.south.to_string();
-	const QString size = QString("w = %1, h = %2").arg(gisview->vpixmap.get_width()).arg(gisview->vpixmap.get_height());
-
-	const QPointF data_start(10, 10); /* Top-right corner of gisview. */
-	const QRectF bounding_rect = QRectF(data_start.x(), data_start.y(), data_start.x() + 400, data_start.y() + 400);
 
 	/* These debugs are really useful. Don't be shy about them,
 	   print them large and readable. */
@@ -452,10 +444,67 @@ void GisViewportDecorations::draw_viewport_data(GisViewport * gisview) const
 	QPen pen_fg = this->pen_marks_fg;
 	pen_fg.setColor(QColor("black"));
 
+
+	const LatLonBBox bbox = gisview->get_bbox();
+	const QString north = "bbox: " + bbox.north.to_string();
+	const QString west =  "bbox: " + bbox.west.to_string();
+	const QString east =  "bbox: " + bbox.east.to_string();
+	const QString south = "bbox: " + bbox.south.to_string();
 	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north, 0);
 	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east, 0);
 	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignLeft, west, 0);
 	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignHCenter, south, 0);
 
+
+	const QString size = QString("w = %1, h = %2").arg(gisview->vpixmap.get_width()).arg(gisview->vpixmap.get_height());
 	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignHCenter, size, 0);
+
+
+	Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
+ 	Coord coord_ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
+ 	Coord coord_bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
+ 	Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
+
+	QString ul = "ul: ";
+	QString ur = "ur: ";
+	QString bl = "bl: ";
+	QString br = "br: ";
+
+	const CoordMode coord_mode = gisview->get_coord_mode();
+	switch (coord_mode) {
+	case CoordMode::UTM:
+		/* UTM first, then LatLon. */
+		ul += coord_ul.get_utm().to_string() + "\n";
+		ul += coord_ul.get_lat_lon().to_string();
+		ur += coord_ur.get_utm().to_string() + "\n";
+		ur += coord_ur.get_lat_lon().to_string();
+		bl += coord_bl.get_utm().to_string() + "\n";
+		bl += coord_bl.get_lat_lon().to_string();
+		br += coord_br.get_utm().to_string() + "\n";
+		br += coord_br.get_lat_lon().to_string();
+		break;
+
+	case CoordMode::LatLon:
+		/* LatLon first, then UTM. */
+		ul += coord_ul.get_lat_lon().to_string() + "\n";
+		ul += coord_ul.get_utm().to_string();
+		ur += coord_ur.get_lat_lon().to_string() + "\n";
+		ur += coord_ur.get_utm().to_string();
+		bl += coord_bl.get_lat_lon().to_string() + "\n";
+		bl += coord_bl.get_utm().to_string();
+		br += coord_br.get_lat_lon().to_string() + "\n";
+		br += coord_br.get_utm().to_string();
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) coord_mode;
+		break;
+	}
+	ul.replace("Zone", "\nZone"); /* Coordinate strings will get very long. Put zone + band in new line. */
+	ur.replace("Zone", "\nZone");
+	bl.replace("Zone", "\nZone");
+	br.replace("Zone", "\nZone");
+	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignLeft,  ul, 0);
+	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignRight, ur, 0);
+	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft,  bl, 0);
+	gisview->vpixmap.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, br, 0);
 }

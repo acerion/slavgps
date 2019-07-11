@@ -1157,6 +1157,7 @@ void LayerGeoref::goto_center_cb(void)
 	GisViewport * gisview = ThisApp::get_main_viewport();
 	UTM utm = gisview->get_center_coord().get_utm();
 
+	/* TODO: verify image_width/height - shouldn't they be center pixels? */
 	const double center_to_left_m = this->image_width * this->mpp_easting / 2;  /* Only an approximation. */
 	const double center_to_bottom_m = this->image_height * this->mpp_northing / 2;
 

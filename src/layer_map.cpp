@@ -1472,63 +1472,64 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 
 	LayerMap * layer = (LayerMap *) _layer;
 
-	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
+	if (layer->dl_tool_x == -1 || layer->dl_tool_y == -1) {
+		return ToolStatus::Ignored;
+	}
 
-		const int pixel_u = this->gisview->vpixmap.get_upmost_pixel();
-		const int pixel_r = this->gisview->vpixmap.get_rightmost_pixel();
-		const int pixel_b = this->gisview->vpixmap.get_bottommost_pixel();
-		const int pixel_l = this->gisview->vpixmap.get_leftmost_pixel();
+	const int pixel_u = this->gisview->vpixmap.get_upmost_pixel();
+	const int pixel_r = this->gisview->vpixmap.get_rightmost_pixel();
+	const int pixel_b = this->gisview->vpixmap.get_bottommost_pixel();
+	const int pixel_l = this->gisview->vpixmap.get_leftmost_pixel();
 
-		if (event->button() == Qt::LeftButton) {
-			const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
-			const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
-			const Coord coord_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
+	if (event->button() == Qt::LeftButton) {
+		const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
+		const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
+		const Coord coord_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
 
-			const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
-			const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
-			const Coord coord_br = this->gisview->screen_pos_to_coord(br_x, br_y);
+		const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
+		const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
+		const Coord coord_br = this->gisview->screen_pos_to_coord(br_x, br_y);
 
-			layer->start_download_thread(this->gisview, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
-			layer->dl_tool_x = layer->dl_tool_y = -1;
-			return ToolStatus::Ack;
-		} else {
-			const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
-			const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
-			layer->redownload_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
+		layer->start_download_thread(this->gisview, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
+		layer->dl_tool_x = -1;
+		layer->dl_tool_y = -1;
+		return ToolStatus::Ack;
+	} else {
+		const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
+		const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
+		layer->redownload_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
 
-			const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
-			const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
-			layer->redownload_br = this->gisview->screen_pos_to_coord(br_x, br_y);
+		const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
+		const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
+		layer->redownload_br = this->gisview->screen_pos_to_coord(br_x, br_y);
 
-			layer->redownload_gisview = this->gisview;
+		layer->redownload_gisview = this->gisview;
 
-			layer->dl_tool_x = -1;
-			layer->dl_tool_y = -1;
+		layer->dl_tool_x = -1;
+		layer->dl_tool_y = -1;
 
+		if (!layer->dl_right_click_menu) {
+			QAction * action = NULL;
+			layer->dl_right_click_menu = new QMenu();
 
-			if (!layer->dl_right_click_menu) {
-				QAction * action = NULL;
-				layer->dl_right_click_menu = new QMenu();
+			action = new QAction(QObject::tr("Redownload &Bad Map(s)"), layer);
+			layer->dl_right_click_menu->addAction(action);
+			QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_bad_cb));
 
-				action = new QAction(QObject::tr("Redownload &Bad Map(s)"), layer);
-				layer->dl_right_click_menu->addAction(action);
-				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_bad_cb));
+			action = new QAction(QObject::tr("Redownload &New Map(s)"), layer);
+			layer->dl_right_click_menu->addAction(action);
+			QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_new_cb(void)));
 
-				action = new QAction(QObject::tr("Redownload &New Map(s)"), layer);
-				layer->dl_right_click_menu->addAction(action);
-				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_new_cb(void)));
+			action = new QAction(QObject::tr("Redownload &All Map(s)"), layer);
+			layer->dl_right_click_menu->addAction(action);
+			QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_all_cb(void)));
 
-				action = new QAction(QObject::tr("Redownload &All Map(s)"), layer);
-				layer->dl_right_click_menu->addAction(action);
-				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (redownload_all_cb(void)));
-
-				action = new QAction(QObject::tr("&Show Tile Information"), layer);
-				layer->dl_right_click_menu->addAction(action);
-				action->setIcon(QIcon::fromTheme("help-about"));
-				QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (tile_info_cb(void)));
-			}
-			layer->dl_right_click_menu->exec(QCursor::pos());
+			action = new QAction(QObject::tr("&Show Tile Information"), layer);
+			layer->dl_right_click_menu->addAction(action);
+			action->setIcon(QIcon::fromTheme("help-about"));
+			QObject::connect(action, SIGNAL (triggered(bool)), layer, SLOT (tile_info_cb(void)));
 		}
+		layer->dl_right_click_menu->exec(QCursor::pos());
 	}
 	return ToolStatus::Ignored;
 }

@@ -198,7 +198,9 @@ namespace SlavGPS {
 		Coord * last_center = NULL;
 		VikingScale last_map_scale;
 
-		/* TODO_LATER: Should this be 0 or -1? */
+		/* These event coordinates indicate pixel in Qt's
+		   coordinate system, where beginning is in top-left
+		   corner of screen. */
 		int dl_tool_x = -1;
 		int dl_tool_y = -1;
 

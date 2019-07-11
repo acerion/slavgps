@@ -64,8 +64,13 @@ namespace SlavGPS {
 	private:
 		/* "ztr" == "zoom to rectangle". */
 		bool ztr_is_active = false;
+
+		/* These event coordinates indicate pixel in Qt's
+		   coordinate system, where beginning is in top-left
+		   corner of screen. */
 		int ztr_start_x = 0;
 		int ztr_start_y = 0;
+
 		QPixmap ztr_orig_viewport_pixmap; /* Pixmap with saved viewport's state without "zoom to rectangle" mark. */
 	};
 

@@ -68,31 +68,33 @@ Ruler::Ruler(GisViewport * new_gisview, DistanceUnit new_distance_unit)
 
 
 
-void Ruler::set_begin(int begin_x, int begin_y)
+void Ruler::set_begin(int begin_x_, int begin_y_)
 {
-	this->x1 = begin_x;
-	this->y1 = begin_y;
+	this->begin_x = begin_x_;
+	this->begin_y = begin_y_;
 
-	this->begin_coord = this->gisview->screen_pos_to_coord(begin_x, begin_y);
+	this->begin_coord = this->gisview->screen_pos_to_coord(this->begin_x, this->begin_y);
 }
 
 
 
 
-void Ruler::set_end(int end_x, int end_y)
+void Ruler::set_end(int end_x_, int end_y_)
 {
-	this->x2 = end_x;
-	this->y2 = end_y;
+	this->end_x = end_x_;
+	this->end_y = end_y_;
 
-	this->end_coord = this->gisview->screen_pos_to_coord(end_x, end_y);
+	this->end_coord = this->gisview->screen_pos_to_coord(this->end_x, this->end_y);
 
-	this->len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-	this->dx = (x2 - x1) / len * 10;
-	this->dy = (y2 - y1) / len * 10;
+	/* TODO: these calculations are repeated in compute_bearing(). */
+	this->len = sqrt((this->begin_x - this->end_x) * (this->begin_x - this->end_x) + (this->begin_y - this->end_y) * (this->begin_y - this->end_y));
+	this->dx = (this->end_x - this->begin_x) / len * 10;
+	this->dy = (this->end_y - this->begin_y) / len * 10;
+
 	this->c = cos(DEG2RAD(15.0));
 	this->s = sin(DEG2RAD(15.0));
 
-	this->gisview->compute_bearing(this->x1, this->y1, this->x2, this->y2, this->angle, this->base_angle);
+	this->gisview->compute_bearing(this->begin_x, this->begin_y, this->end_x, this->end_y, this->angle, this->base_angle);
 
 	this->line_distance = Coord::distance_2(this->end_coord, this->begin_coord);
 }
@@ -106,23 +108,23 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 	/* Draw line with arrow ends. */
 	if (1) {
-		int tmp_x1 = this->x1;
-		int tmp_y1 = this->y1;
-		int tmp_x2 = this->x2;
-		int tmp_y2 = this->y2;
-		GisViewport::clip_line(&tmp_x1, &tmp_y1, &tmp_x2, &tmp_y2);
-		painter.drawLine(tmp_x1, tmp_y1, tmp_x2, tmp_y2);
+		int tmp_begin_x = this->begin_x;
+		int tmp_begin_y = this->begin_y;
+		int tmp_end_x = this->end_x;
+		int tmp_end_y = this->end_y;
+		GisViewport::clip_line(&tmp_begin_x, &tmp_begin_y, &tmp_end_x, &tmp_end_y);
+		painter.drawLine(tmp_begin_x, tmp_begin_y, tmp_end_x, tmp_end_y);
 
 
-		GisViewport::clip_line(&this->x1, &this->y1, &this->x2, &this->y2);
+		GisViewport::clip_line(&this->begin_x, &this->begin_y, &this->end_x, &this->end_y);
 
-		painter.drawLine(this->x1,            this->y1,            this->x2,                                             this->y2);
-		painter.drawLine(this->x1 - this->dy, this->y1 + this->dx, this->x1 + this->dy,                                  this->y1 - this->dx);
-		painter.drawLine(this->x2 - this->dy, this->y2 + this->dx, this->x2 + this->dy,                                  this->y2 - this->dx);
-		painter.drawLine(this->x2,            this->y2,            this->x2 - (this->dx * this->c + this->dy * this->s), this->y2 - (this->dy * this->c - this->dx * this->s));
-		painter.drawLine(this->x2,            this->y2,            this->x2 - (this->dx * this->c - this->dy * this->s), this->y2 - (this->dy * this->c + this->dx * this->s));
-		painter.drawLine(this->x1,            this->y1,            this->x1 + (this->dx * this->c + this->dy * this->s), this->y1 + (this->dy * this->c - this->dx * this->s));
-		painter.drawLine(this->x1,            this->y1,            this->x1 + (this->dx * this->c - this->dy * this->s), this->y1 + (this->dy * this->c + this->dx * this->s));
+		painter.drawLine(this->begin_x,            this->begin_y,            this->end_x,                                             this->end_y);
+		painter.drawLine(this->begin_x - this->dy, this->begin_y + this->dx, this->begin_x + this->dy,                                  this->begin_y - this->dx);
+		painter.drawLine(this->end_x - this->dy, this->end_y + this->dx, this->end_x + this->dy,                                  this->end_y - this->dx);
+		painter.drawLine(this->end_x,            this->end_y,            this->end_x - (this->dx * this->c + this->dy * this->s), this->end_y - (this->dy * this->c - this->dx * this->s));
+		painter.drawLine(this->end_x,            this->end_y,            this->end_x - (this->dx * this->c - this->dy * this->s), this->end_y - (this->dy * this->c + this->dx * this->s));
+		painter.drawLine(this->begin_x,            this->begin_y,            this->begin_x + (this->dx * this->c + this->dy * this->s), this->begin_y + (this->dy * this->c - this->dx * this->s));
+		painter.drawLine(this->begin_x,            this->begin_y,            this->begin_x + (this->dx * this->c - this->dy * this->s), this->begin_y + (this->dy * this->c + this->dx * this->s));
 	}
 
 
@@ -136,9 +138,9 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 	if (1) {
 
 		/* Three full circles. */
-		painter.drawArc(this->x1 - radius + radius_delta, this->y1 - radius + radius_delta, 2 * (radius - radius_delta), 2 * (radius - radius_delta), 0, 16 * 360); /* Innermost. */
-		painter.drawArc(this->x1 - radius,                this->y1 - radius,                2 * radius,                  2 * radius,                  0, 16 * 360); /* Middle. */
-		painter.drawArc(this->x1 - radius - radius_delta, this->y1 - radius - radius_delta, 2 * (radius + radius_delta), 2 * (radius + radius_delta), 0, 16 * 360); /* Outermost. */
+		painter.drawArc(this->begin_x - radius + radius_delta, this->begin_y - radius + radius_delta, 2 * (radius - radius_delta), 2 * (radius - radius_delta), 0, 16 * 360); /* Innermost. */
+		painter.drawArc(this->begin_x - radius,                this->begin_y - radius,                2 * radius,                  2 * radius,                  0, 16 * 360); /* Middle. */
+		painter.drawArc(this->begin_x - radius - radius_delta, this->begin_y - radius - radius_delta, 2 * (radius + radius_delta), 2 * (radius + radius_delta), 0, 16 * 360); /* Outermost. */
 	}
 
 	/* Fill between middle and innermost circle. */
@@ -148,8 +150,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		painter.setPen(this->arc_pen);
 
-		painter.drawArc(this->x1 - radius + radius_delta / 2,
-				this->y1 - radius + radius_delta / 2,
+		painter.drawArc(this->begin_x - radius + radius_delta / 2,
+				this->begin_y - radius + radius_delta / 2,
 				2 * radius - radius_delta,
 				2 * radius - radius_delta,
 				start_angle, span_angle);
@@ -165,7 +167,7 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 		for (int i = 0; i < 180; i += 5) {
 			this->c = cos(DEG2RAD(i) * 2 + this->base_angle.get_value());
 			this->s = sin(DEG2RAD(i) * 2 + this->base_angle.get_value());
-			painter.drawLine(this->x1 + (radius-radius_delta)*this->c, this->y1 + (radius-radius_delta)*this->s, this->x1 + (radius+ticksize)*this->c, this->y1 + (radius+ticksize)*this->s);
+			painter.drawLine(this->begin_x + (radius-radius_delta)*this->c, this->begin_y + (radius-radius_delta)*this->s, this->begin_x + (radius+ticksize)*this->c, this->begin_y + (radius+ticksize)*this->s);
 		}
 	}
 
@@ -175,14 +177,14 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 		//float angle = 0;
 		int c2 = (radius + radius_delta * 2) * sin(this->base_angle.get_value());
 		int s2 = (radius + radius_delta * 2) * cos(this->base_angle.get_value());
-		painter.drawLine(this->x1 - c2, this->y1 - s2, this->x1 + c2, this->y1 + s2);
-		painter.drawLine(this->x1 + s2, this->y1 - c2, this->x1 - s2, this->y1 + c2);
+		painter.drawLine(this->begin_x - c2, this->begin_y - s2, this->begin_x + c2, this->begin_y + s2);
+		painter.drawLine(this->begin_x + s2, this->begin_y - c2, this->begin_x - s2, this->begin_y + c2);
 	}
 
 
 	/* Draw compass labels. */
 	if (1) {
-		painter.drawText(this->x1 - 5, this->y1 - radius - 3 * radius_delta - 8, "N");
+		painter.drawText(this->begin_x - 5, this->begin_y - radius - 3 * radius_delta - 8, "N");
 	}
 
 
@@ -212,16 +214,16 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 		int label1_y;
 
 		if (this->dy > 0) {
-			label1_x = (this->x1 + this->x2) / 2 + this->dy;
-			label1_y = (this->y1 + this->y2) / 2 - label1_rect.height() / 2 - this->dx;
+			label1_x = (this->begin_x + this->end_x) / 2 + this->dy;
+			label1_y = (this->begin_y + this->end_y) / 2 - label1_rect.height() / 2 - this->dx;
 		} else {
-			label1_x = (this->x1 + this->x2) / 2 - this->dy;
-			label1_y = (this->y1 + this->y2) / 2 - label1_rect.height() / 2 + this->dx;
+			label1_x = (this->begin_x + this->end_x) / 2 - this->dy;
+			label1_y = (this->begin_y + this->end_y) / 2 - label1_rect.height() / 2 + this->dx;
 		}
 
 		if (label1_x < -5 || label1_y < -5 || label1_x > this->gisview->vpixmap.get_width() + 5 || label1_y > this->gisview->vpixmap.get_height() + 5) {
-			label1_x = this->x2 + 10;
-			label1_y = this->y2 - 5;
+			label1_x = this->end_x + 10;
+			label1_y = this->end_y - 5;
 		}
 
 		label1_rect.moveTo(label1_x, label1_y);
@@ -238,8 +240,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
 
-		const int label2_x = this->x1 - radius * cos(this->angle.get_value() - M_PI_2) / 2;
-		const int label2_y = this->y1 - radius * sin(this->angle.get_value() - M_PI_2) / 2;
+		const int label2_x = this->begin_x - radius * cos(this->angle.get_value() - M_PI_2) / 2;
+		const int label2_y = this->begin_y - radius * sin(this->angle.get_value() - M_PI_2) / 2;
 
 		label2_rect.moveTo(label2_x - label2_rect.width() / 2, label2_y - label2_rect.height() / 2);
 		label2_rect.adjust(-margin, -margin, margin, margin);

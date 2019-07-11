@@ -50,8 +50,13 @@ namespace SlavGPS {
 	public:
 		Ruler(GisViewport * gisview, DistanceUnit new_distance_unit);
 
+		/* Arguments to the functions should indicate
+		   coordinates of pixel in Qt's coordinate system,
+		   where beginning (point 0,0) is in upper-left
+		   corner. */
 		void set_begin(int begin_x, int begin_y);
 		void set_end(int end_x, int end_y);
+
 		void set_total_distance(const Distance & new_total_distance) { this->total_distance = new_total_distance; }
 		void set_line_pen(const QPen & pen) { this->line_pen = pen; }
 
@@ -64,10 +69,13 @@ namespace SlavGPS {
 	private:
 		void draw_line(QPainter & painter);
 
-		int x1 = 0;
-		int y1 = 0;
-		int x2 = 0;
-		int y2 = 0;
+		/* These coordinates of beginning and end of ruler are
+		   in Qt's coordinate system, where beginning (pixel
+		   0,0) is in upper-left corner. */
+		int begin_x = 0;
+		int begin_y = 0;
+		int end_x = 0;
+		int end_y = 0;
 
 		double len = 0;
 		double dx = 0;

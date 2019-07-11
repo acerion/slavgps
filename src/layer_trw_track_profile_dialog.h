@@ -167,19 +167,40 @@ namespace SlavGPS {
 		void create_viewport(TrackProfileDialog * dialog, GisViewportDomain x_domain, GisViewportDomain y_domain);
 		QString get_graph_title(void) const;
 
-		sg_ret set_pos_y(ScreenPos & screen_pos);
+		/**
+		   Set y position of argument that matches x position of argument.
+		   In other words: find y = f(x), where f() is current graph.
 
-		/* Get position of cursor on a graph. 'x' coordinate
+		   Returned cursor position is in "beginning of
+		   coordinate system (position 0,0) is in bottom-left
+		   corner".
+		   cbl = coordinate-bottom-left.
+		*/
+		sg_ret set_pos_y_cbl(ScreenPos & screen_pos);
+
+		/**
+		   Get position of cursor on a graph. 'x' coordinate
 		   will match current 'x' position of cursor, and 'y'
 		   coordinate will be on a graph line that corresponds
-		   with the 'x' position. */
-		sg_ret get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos);
+		   with the 'x' position.
+
+		   Returned cursor position is in "beginning of
+		   coordinate system (position 0,0) is in bottom-left
+		   corner".
+		   cbl = coordinate-bottom-left.
+		*/
+		sg_ret get_cursor_pos_cbl_on_line(QMouseEvent * ev, ScreenPos & screen_pos);
 
 		sg_ret set_initial_visible_range_x_distance(void);
 		sg_ret set_initial_visible_range_x_time(void);
 		sg_ret set_initial_visible_range_y(void);
 
-		sg_ret get_position_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos);
+		/**
+		   Calculate y position for mark on y=f(x) graph.
+		   The position will be in "beginning of coordinates system is in bottom-left corner".
+		   cbl = coordinate-bottom-left.
+		*/
+		sg_ret get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos);
 
 		sg_ret regenerate_data(Track * trk);
 

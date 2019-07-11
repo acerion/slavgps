@@ -318,9 +318,12 @@ namespace SlavGPS {
 		void open_window(const QStringList & file_full_paths);
 
 		bool pan_move_in_progress = false;
+		bool single_click_pending = false;
+		/* Coordinates of these screen positions should be in
+		   Qt's coordinate system, where beginning (pixel 0,0)
+		   is in upper-left corner. */
 		ScreenPos pan_pos; /* Last recorded position of cursor while panning. */
 		ScreenPos delayed_pan_pos; /* Temporary storage. */
-		bool single_click_pending = false;
 
 
 		QMenuBar * menu_bar = NULL;

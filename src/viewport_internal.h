@@ -83,6 +83,7 @@ namespace SlavGPS {
 
 		void draw_bbox(const LatLonBBox & bbox, const QPen & pen);
 		sg_ret set_bbox(const LatLonBBox & bbox);
+		/* Positive value of a margin mean that we want to shrink bbox from specified side. */
 		LatLonBBox get_bbox(int margin_left = 0, int margin_right = 0, int margin_top = 0, int margin_bottom = 0) const;
 
 		CoordMode get_coord_mode(void) const;
@@ -98,12 +99,19 @@ namespace SlavGPS {
 		void show_center_coords(Window * parent) const;
 		void print_center_coords(const QString & label) const;
 
-		/* Coordinate transformations. */
+
+		/* Coordinate transformations.
+		   Pixel coordinates passed to the functions are in
+		   Qt's coordinate system, where beginning (0,0 point)
+		   is in top-left corner. */
 		Coord screen_pos_to_coord(ScreenPosition screen_pos) const;
 		Coord screen_pos_to_coord(int x, int y) const;
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
+
+		/* Coordinate transformations. */
 		sg_ret coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
 		ScreenPos coord_to_screen_pos(const Coord & coord) const;
+
 
 		/* GisViewport's zoom. */
 		void zoom_in(void);
@@ -125,11 +133,19 @@ namespace SlavGPS {
 		int get_rightmost_zone(void) const;
 		bool get_is_one_utm_zone(void) const;
 
+
+
 		sg_ret set_center_coord(const Coord & coord, bool save_position = true);
 		sg_ret set_center_coord(const UTM & utm, bool save_position = true);
 		sg_ret set_center_coord(const LatLon & lat_lon, bool save_position = true);
+
+		/* These pixel coordinates should be in Qt's
+		   coordinate system, where beginning (point 0,0) is
+		   in upper-left corner. */
 		sg_ret set_center_coord(int x, int y);
 		sg_ret set_center_coord(const ScreenPos & pos);
+
+
 
 		void emit_center_coord_or_zoom_changed(const QString & trigger_name);
 
@@ -165,7 +181,7 @@ namespace SlavGPS {
 		/* Get cursor position of a mouse event.  Returned
 		   position is in "beginning is in bottom-left corner"
 		   coordinate system. */
-		sg_ret get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
+		sg_ret get_cursor_pos_cbl(QMouseEvent * ev, ScreenPos & screen_pos) const;
 
 
 
@@ -223,8 +239,11 @@ namespace SlavGPS {
 		void sync(void);              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 
-		/* Utilities. */
-		void compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle);
+
+		/* Pixel coordinates passed to this function should be
+		   in Qt's coordinate system, where beginning (pixel
+		   0,0) is in upper-left corner. */
+		void compute_bearing(int begin_x, int begin_y, int end_x, int end_y, Angle & angle, Angle & base_angle);
 
 		/* Trigger stuff. */
 		void set_trigger(Layer * trigger);

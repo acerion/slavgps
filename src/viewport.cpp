@@ -825,7 +825,7 @@ bool GisViewport::forward_available(void) const
 sg_ret GisViewport::set_center_coord(const LatLon & lat_lon, bool save_position)
 {
 	if (!lat_lon.is_valid()) {
-		qDebug() << SG_PREFIX_E << "Not setting lat/lon, value is invalid:" << lat_lon.lat << lat_lon.lon;
+		qDebug() << SG_PREFIX_E << "Not setting center coord from lat/lon, value is invalid:" << lat_lon;
 		return sg_ret::err;
 	}
 
@@ -1350,11 +1350,11 @@ void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, i
 	/*** Clipping, yeah! ***/
 	//GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
-	/* x/y coordinates are converted here from "beginning in
-	   bottom-left corner" to "beginning in top-left corner"
-	   coordinate system. */
 	const int bottom_pixel = this->central->vpixmap.get_bottommost_pixel();
 
+	/* x/y coordinates are converted here from "beginning in
+	   bottom-left corner" to Qt's "beginning in top-left corner"
+	   coordinate system. */
 	this->central->vpixmap.painter->setPen(pen);
 	this->central->vpixmap.painter->drawLine(begin_x, bottom_pixel - begin_y,
 						 end_x,   bottom_pixel - end_y);
@@ -1564,10 +1564,14 @@ bool GisViewport::get_half_drawn(void) const
 
 LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_top, int margin_bottom) const
 {
-	Coord coord_ul = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_upmost_pixel() + margin_top);
-	Coord coord_ur = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_upmost_pixel() + margin_top);
-	Coord coord_bl = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,    this->vpixmap.get_bottommost_pixel() + margin_bottom);
-	Coord coord_br = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() + margin_right,  this->vpixmap.get_bottommost_pixel() + margin_bottom);
+	/* Remember that positive values of margins should shrink the
+	   bbox, and that get() methods used here return values in
+	   Qt's coordinate system where beginning of the coordinate
+	   system is in upper-left corner.  */
+	Coord coord_ul = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,   this->vpixmap.get_upmost_pixel() + margin_top);
+	Coord coord_ur = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() - margin_right, this->vpixmap.get_upmost_pixel() + margin_top);
+	Coord coord_bl = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,   this->vpixmap.get_bottommost_pixel() - margin_bottom);
+	Coord coord_br = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() - margin_right, this->vpixmap.get_bottommost_pixel() - margin_bottom);
 
 	coord_ul.recalculate_to_mode(CoordMode::LatLon);
 	coord_ur.recalculate_to_mode(CoordMode::LatLon);
@@ -1609,33 +1613,29 @@ sg_ret GisViewport::add_logo(const GisViewportLogo & logo)
 
 
 /**
- * @x1: screen coord
- * @y1: screen coord
- * @x2: screen coord
- * @y2: screen coord
  * @angle: bearing in Radian (output)
  * @base_angle: UTM base angle in Radian (output)
  *
  * Compute bearing.
  */
-void GisViewport::compute_bearing(int x1, int y1, int x2, int y2, Angle & angle, Angle & base_angle)
+void GisViewport::compute_bearing(int begin_x, int begin_y, int end_x, int end_y, Angle & angle, Angle & base_angle)
 {
-	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-	double dx = (x2 - x1) / len * 10;
-	double dy = (y2 - y1) / len * 10;
+	double len = sqrt((begin_x - end_x) * (begin_x - end_x) + (begin_y - end_y) * (begin_y - end_y));
+	double dx = (end_x - begin_x) / len * 10;
+	double dy = (end_y - begin_y) / len * 10;
 
 	angle.set_value(atan2(dy, dx) + M_PI_2);
 
 	if (this->get_draw_mode() == GisViewportDrawMode::UTM) {
 
-		Coord test = this->screen_pos_to_coord(x1, y1);
+		Coord test = this->screen_pos_to_coord(begin_x, begin_y);
 		LatLon lat_lon = test.get_lat_lon();
-		lat_lon.lat += this->get_viking_scale().y * this->vpixmap.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_bottommost_pixel()? */
+		lat_lon.lat += this->get_viking_scale().y * this->vpixmap.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_q_bottommost_pixel()? */
 
 		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
 		const ScreenPos test_pos = this->coord_to_screen_pos(test);
 
-		base_angle.set_value(M_PI - atan2(test_pos.x - x1, test_pos.y - y1));
+		base_angle.set_value(M_PI - atan2(test_pos.x - begin_x, test_pos.y - begin_y));
 		angle.set_value(angle.get_value() - base_angle.get_value());
 	}
 
@@ -2021,15 +2021,18 @@ bool GisViewport::print_cb(QPrinter * printer)
 */
 void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 {
-	/* TODO: review, see if we should use get_width()/get_height() or get_bottommost_pixel()&co. */
-	const int w = this->central->vpixmap.get_width();
-	const int h = this->central->vpixmap.get_height();
+	const int rigthmost_pixel = this->central->vpixmap.get_rightmost_pixel();
+	const int bottommost_pixel = this->central->vpixmap.get_bottommost_pixel();
+
+	/* Convert from "beginning in bottom-left corner" to Qt's
+	   "beginning in top-left corner" coordinate system. "q_"
+	   prefix means "Qt's coordinate system". */
 	const int x = pos.x;
-	const int y = h - pos.y - 1; /* Convert from "beginning in bottom-left corner" to "beginning in top-left corner" coordinate system. */
+	const int y = bottommost_pixel - pos.y;
 
-	qDebug() << SG_PREFIX_I << "Crosshair at" << x << y;
+	qDebug() << SG_PREFIX_I << "Crosshair at coord" << x << y;
 
-	if (x > w || y > h) {
+	if (x > rigthmost_pixel || y > bottommost_pixel) {
 		/* Position outside of graph area. */
 		return;
 	}
@@ -2039,8 +2042,8 @@ void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-	this->central->vpixmap.painter->drawLine(0, y, w, y); /* Horizontal line. */
-	this->central->vpixmap.painter->drawLine(x, 0, x, h); /* Vertical line. */
+	this->central->vpixmap.painter->drawLine(0, y, rigthmost_pixel, y); /* Horizontal line. */
+	this->central->vpixmap.painter->drawLine(x, 0, x, bottommost_pixel); /* Vertical line. */
 }
 
 
@@ -2509,13 +2512,12 @@ int Viewport2D::bottom_get_height(void) const
 
 
 
-sg_ret GisViewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
+sg_ret GisViewport::get_cursor_pos_cbl(QMouseEvent * ev, ScreenPos & screen_pos) const
 {
-	/* TODO: review this function and see if we need to use
-	   get_width()/get_height() or maybe
-	   get_bottommost_pixel()&co. */
-	const int w = this->vpixmap.get_width();
-	const int h = this->vpixmap.get_height();
+	const int leftmost   = this->vpixmap.get_leftmost_pixel();
+	const int rightmost  = this->vpixmap.get_rightmost_pixel();
+	const int upmost     = this->vpixmap.get_upmost_pixel();
+	const int bottommost = this->vpixmap.get_bottommost_pixel();
 
 	const QPoint position = this->mapFromGlobal(QCursor::pos());
 
@@ -2531,35 +2533,23 @@ sg_ret GisViewport::get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) con
 	const int y = ev->y();
 #endif
 
-	if (x > w) {
-		/* Cursor outside of chart area. */
+	/* Cursor outside of chart area. */
+	if (x > rightmost) {
 		return sg_ret::err;
 	}
-	if (y > h) {
-		/* Cursor outside of chart area. */
+	if (y > bottommost) {
+		return sg_ret::err;
+	}
+	if (x < leftmost) {
+		return sg_ret::err;
+	}
+	if (y < upmost) {
 		return sg_ret::err;
 	}
 
+	/* Converting from Qt's "beginning is in upper-left" into "beginning is in bottom-left" coordinate system. */
 	screen_pos.x = x;
-	if (screen_pos.x < 0) {
-		qDebug() << SG_PREFIX_E << "Condition 1 for mouse movement failed:" << screen_pos.x << x;
-		screen_pos.x = 0;
-	}
-	if (screen_pos.x > w) {
-		qDebug() << SG_PREFIX_E << "Condition 2 for mouse movement failed:" << screen_pos.x << x << w;
-		screen_pos.x = w;
-	}
-
-
-	screen_pos.y = h - y - 1; /* Converting from QT's "beginning is in upper-left" into "beginning is in bottom-left" coordinate system. */
-	if (screen_pos.y < 0) {
-		qDebug() << SG_PREFIX_E << "Condition 3 for mouse movement failed:" << screen_pos.y << y;
-		screen_pos.y = 0;
-	}
-	if (screen_pos.y > h) {
-		qDebug() << SG_PREFIX_E << "Condition 4 for mouse movement failed:" << screen_pos.y << x << h;
-		screen_pos.y = h;
-	}
+	screen_pos.y = bottommost - y;
 
 	return sg_ret::ok;
 }
