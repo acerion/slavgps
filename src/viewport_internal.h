@@ -477,6 +477,32 @@ namespace SlavGPS {
 
 
 
+	class ArrowSymbol {
+	public:
+		/**
+		   @param blades_width_degrees - how widely the arrow blades will be spread?
+		*/
+		ArrowSymbol(double blades_width_degrees = 15.0, int size_factor = 1);
+
+		/**
+		   @param direction decides in which direction the arrow head will be pointing. -1 or +1.
+		*/
+		void set_arrow_tip(int x, int y, int direction = 1);
+
+		sg_ret paint(QPainter & painter, double dx, double dy);
+
+	private:
+		double cosine_factor = 0.0;
+		double sine_factor = 0.0;
+
+		int tip_x = 0;
+		int tip_y = 0;
+		int direction = 1;
+	};
+
+
+
+
 } /* namespace SlavGPS */
 
 

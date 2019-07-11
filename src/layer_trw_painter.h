@@ -119,9 +119,7 @@ namespace SlavGPS {
 		CoordMode vp_coord_mode;    /* UTM or Lat/Lon. */
 		bool vp_is_one_utm_zone = false;  /* GisViewport shows only one UTM zone. */
 
-		double cosine_factor = 0.0;    /* Cosine factor in track directions. */
-		double sine_factor = 0.0;      /* Sine factor in track directions. */
-
+		ArrowSymbol track_arrow;
 
 		/* Variables used to decide whether an element that should be drawn is inside of visible area. */
 		double coord_leftmost = 0.0;   /* Longitude or easting of leftmost point visible. */

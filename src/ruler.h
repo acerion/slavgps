@@ -80,8 +80,9 @@ namespace SlavGPS {
 		double len = 0;
 		double dx = 0;
 		double dy = 0;
-		double c = 0;
-		double s = 0;
+
+		ArrowSymbol begin_arrow;
+		ArrowSymbol end_arrow;
 
 		Angle angle = { 0.0 };
 		Angle base_angle = { 0.0 };

@@ -120,8 +120,7 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 	this->vp_coord_mode = this->gisview->get_coord_mode();
 	this->vp_is_one_utm_zone = this->gisview->get_is_one_utm_zone(); /* False if some other projection besides UTM. */
 
-	this->cosine_factor = this->draw_track_directions_size * cos(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
-	this->sine_factor = this->draw_track_directions_size * sin(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
+	this->track_arrow = ArrowSymbol(45, this->draw_track_directions_size); /* Calculate once per trw update - even if not used. */
 
 	if (this->vp_coord_mode == CoordMode::UTM && this->vp_is_one_utm_zone) {
 
@@ -427,8 +426,12 @@ void LayerTRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const Sc
 	if (len > 1) {
 		const double dx = (begin.x - midx) / len;
 		const double dy = (begin.y - midy) / len;
-		this->gisview->vpixmap.draw_line(pen, midx, midy, midx + (dx * this->cosine_factor + dy * this->sine_factor), midy + (dy * this->cosine_factor - dx * this->sine_factor));
-		this->gisview->vpixmap.draw_line(pen, midx, midy, midx + (dx * this->cosine_factor - dy * this->sine_factor), midy + (dy * this->cosine_factor + dx * this->sine_factor));
+
+		QPainter * painter = this->gisview->vpixmap.get_painter();
+		painter->setPen(pen);
+
+		this->track_arrow.set_arrow_tip(midx, midy);
+		this->track_arrow.paint(*painter, dx, dy);
 	}
 }
 

@@ -243,7 +243,7 @@ namespace SlavGPS {
 	private:
 
 #if REALTIME_GPS_TRACKING_ENABLED
-		void rt_tracking_draw(GisViewport * gisview, RTData & rt_data);
+		void rt_tracking_draw(GisViewport * gisview, const RTData & rt_data);
 		Trackpoint * rt_create_trackpoint(bool record_every_tp);
 		void rt_update_statusbar(Window * window);
 

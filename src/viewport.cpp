@@ -2578,3 +2578,44 @@ QDebug SlavGPS::operator<<(QDebug debug, const ScreenPos & screen_pos)
 	debug << "ScreenPos:" << QString("(%1,%2)").arg(screen_pos.x).arg(screen_pos.y);
 	return debug;
 }
+
+
+
+
+
+ArrowSymbol::ArrowSymbol(double blades_width_degrees, int size_factor_)
+{
+	/* How widely the arrow blades are spread. */
+	this->cosine_factor = cos(DEG2RAD(blades_width_degrees)) * size_factor_;
+	this->sine_factor = sin(DEG2RAD(blades_width_degrees)) * size_factor_;
+}
+
+
+
+
+void ArrowSymbol::set_arrow_tip(int x, int y, int direction_)
+{
+	this->tip_x = x;
+	this->tip_y = y;
+	this->direction = direction_;
+}
+
+
+
+
+sg_ret ArrowSymbol::paint(QPainter & painter, double dx, double dy)
+{
+	painter.drawLine(this->tip_x,
+			 this->tip_y,
+			 this->tip_x + this->direction * (dx * this->cosine_factor + dy * this->sine_factor),
+			 this->tip_y + this->direction * (dy * this->cosine_factor - dx * this->sine_factor));
+
+	painter.drawLine(this->tip_x,
+			 this->tip_y,
+			 this->tip_x + this->direction * (dx * this->cosine_factor - dy * this->sine_factor),
+			 this->tip_y + this->direction * (dy * this->cosine_factor + dx * this->sine_factor));
+
+	return sg_ret::ok;
+}
+
+

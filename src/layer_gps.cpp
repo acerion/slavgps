@@ -1400,7 +1400,7 @@ void LayerGPS::gps_empty_all_cb(void) /* Slot. */
 
 
 #if REALTIME_GPS_TRACKING_ENABLED
-void LayerGPS::rt_tracking_draw(GisViewport * gisview, RTData & rt_data)
+void LayerGPS::rt_tracking_draw(GisViewport * gisview, const RTData & rt_data)
 {
 	if (std::isnan(rt_data.fix.track)) {
 		qDebug() << SG_PREFIX_N << "Skipping drawing - no fix track";
@@ -1415,7 +1415,7 @@ void LayerGPS::rt_tracking_draw(GisViewport * gisview, RTData & rt_data)
 	}
 
 	Coord gps_coord = rt_data.coord;
-	gps_coord.recalculate_to_mode(gisview->get_coord_mode()); /* TODO_LATER: why do we need to change coord mode? */
+	gps_coord.recalculate_to_mode(gisview->get_coord_mode()); /* Just in case if current coordinate mode is UTM and data from GPS is LatLon. */
 
 	const ScreenPos screen_pos = gisview->coord_to_screen_pos(gps_coord);
 

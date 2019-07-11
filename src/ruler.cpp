@@ -72,6 +72,7 @@ void Ruler::set_begin(int begin_x_, int begin_y_)
 {
 	this->begin_x = begin_x_;
 	this->begin_y = begin_y_;
+	this->begin_arrow.set_arrow_tip(this->begin_x, this->begin_y, 1);
 
 	this->begin_coord = this->gisview->screen_pos_to_coord(this->begin_x, this->begin_y);
 }
@@ -83,16 +84,14 @@ void Ruler::set_end(int end_x_, int end_y_)
 {
 	this->end_x = end_x_;
 	this->end_y = end_y_;
+	this->end_arrow.set_arrow_tip(this->end_x, this->end_y, -1);
 
 	this->end_coord = this->gisview->screen_pos_to_coord(this->end_x, this->end_y);
 
 	/* TODO: these calculations are repeated in compute_bearing(). */
 	this->len = sqrt((this->begin_x - this->end_x) * (this->begin_x - this->end_x) + (this->begin_y - this->end_y) * (this->begin_y - this->end_y));
-	this->dx = (this->end_x - this->begin_x) / len * 10;
-	this->dy = (this->end_y - this->begin_y) / len * 10;
-
-	this->c = cos(DEG2RAD(15.0));
-	this->s = sin(DEG2RAD(15.0));
+	this->dx = (this->end_x - this->begin_x) / this->len * 10;
+	this->dy = (this->end_y - this->begin_y) / this->len * 10;
 
 	this->gisview->compute_bearing(this->begin_x, this->begin_y, this->end_x, this->end_y, this->angle, this->base_angle);
 
@@ -108,23 +107,22 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 	/* Draw line with arrow ends. */
 	if (1) {
-		int tmp_begin_x = this->begin_x;
-		int tmp_begin_y = this->begin_y;
-		int tmp_end_x = this->end_x;
-		int tmp_end_y = this->end_y;
-		GisViewport::clip_line(&tmp_begin_x, &tmp_begin_y, &tmp_end_x, &tmp_end_y);
-		painter.drawLine(tmp_begin_x, tmp_begin_y, tmp_end_x, tmp_end_y);
-
-
 		GisViewport::clip_line(&this->begin_x, &this->begin_y, &this->end_x, &this->end_y);
 
-		painter.drawLine(this->begin_x,            this->begin_y,            this->end_x,                                             this->end_y);
-		painter.drawLine(this->begin_x - this->dy, this->begin_y + this->dx, this->begin_x + this->dy,                                  this->begin_y - this->dx);
-		painter.drawLine(this->end_x - this->dy, this->end_y + this->dx, this->end_x + this->dy,                                  this->end_y - this->dx);
-		painter.drawLine(this->end_x,            this->end_y,            this->end_x - (this->dx * this->c + this->dy * this->s), this->end_y - (this->dy * this->c - this->dx * this->s));
-		painter.drawLine(this->end_x,            this->end_y,            this->end_x - (this->dx * this->c - this->dy * this->s), this->end_y - (this->dy * this->c + this->dx * this->s));
-		painter.drawLine(this->begin_x,            this->begin_y,            this->begin_x + (this->dx * this->c + this->dy * this->s), this->begin_y + (this->dy * this->c - this->dx * this->s));
-		painter.drawLine(this->begin_x,            this->begin_y,            this->begin_x + (this->dx * this->c - this->dy * this->s), this->begin_y + (this->dy * this->c + this->dx * this->s));
+		/* The main line. */
+		painter.drawLine(this->begin_x, this->begin_y, this->end_x, this->end_y);
+
+		/* Bar anchored at the beginning of ruler. */
+		painter.drawLine(this->begin_x - this->dy, this->begin_y + this->dx, this->begin_x + this->dy, this->begin_y - this->dx);
+
+		/* Bar anchored at the end of ruler. */
+		painter.drawLine(this->end_x - this->dy, this->end_y + this->dx, this->end_x + this->dy, this->end_y - this->dx);
+
+		/* Arrow head at the beginning of ruler. */
+		this->begin_arrow.paint(painter, this->dx, this->dy);
+
+		/* Arrow head at the end of ruler. */
+		this->end_arrow.paint(painter, this->dx, this->dy);
 	}
 
 
@@ -163,11 +161,16 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 	/* Ticks around circles, every N degrees. */
 	if (1) {
+		double cosine_factor = 0.0;
+		double sine_factor = 0.0;
+
 		int ticksize = 2 * radius_delta;
 		for (int i = 0; i < 180; i += 5) {
-			this->c = cos(DEG2RAD(i) * 2 + this->base_angle.get_value());
-			this->s = sin(DEG2RAD(i) * 2 + this->base_angle.get_value());
-			painter.drawLine(this->begin_x + (radius-radius_delta)*this->c, this->begin_y + (radius-radius_delta)*this->s, this->begin_x + (radius+ticksize)*this->c, this->begin_y + (radius+ticksize)*this->s);
+			cosine_factor = cos(DEG2RAD(i) * 2 + this->base_angle.get_value());
+			sine_factor = sin(DEG2RAD(i) * 2 + this->base_angle.get_value());
+			painter.drawLine(this->begin_x + (radius-radius_delta) * cosine_factor,
+					 this->begin_y + (radius-radius_delta) * sine_factor, this->begin_x + (radius+ticksize) * cosine_factor,
+					 this->begin_y + (radius+ticksize) * sine_factor);
 		}
 	}
 

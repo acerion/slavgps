@@ -111,6 +111,10 @@ namespace SlavGPS {
 		bool line_is_outside(int begin_x, int begin_y, int end_x, int end_y);
 
 
+		/* TODO: return reference? */
+		QPainter * get_painter(void) { return this->painter; }
+
+
 
 		char debug[100] = { 0 };
 
