@@ -60,7 +60,7 @@ namespace SlavGPS {
 
 		static bool goto_location(Window * window, GisViewport * gisview);
 		static sg_ret goto_latlon(Window * window, GisViewport * gisview);
-		static bool goto_utm(Window * window, GisViewport * gisview);
+		static sg_ret goto_utm(Window * window, GisViewport * gisview);
 
 		static int where_am_i(GisViewport * gisview, LatLon & lat_lon, QString & name);
 	};

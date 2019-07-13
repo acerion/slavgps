@@ -857,11 +857,10 @@ QString SGUtils::double_to_c(double d, int precision)
 
 
 
-GlobalPoint SGUtils::coord_to_global_point(const Coord & coord, const GisViewport * gisview)
+QPoint SGUtils::coord_to_point(const Coord & coord, const GisViewport * gisview)
 {
-	GlobalPoint global_point;
 	const ScreenPos screen_pos = gisview->coord_to_screen_pos(coord); /* In viewport's x/y coordinate system. */
-	global_point.point = gisview->mapToGlobal(QPoint(screen_pos.x, screen_pos.y)); /* In screen's x/y coordinate system. */
+	QPoint point = gisview->mapToGlobal(QPoint(screen_pos.x, screen_pos.y)); /* In screen's x/y coordinate system. */
 
 	if (1) { /* Debug. */
 		const int primary_screen = QApplication::desktop()->primaryScreen();
@@ -872,5 +871,5 @@ GlobalPoint SGUtils::coord_to_global_point(const Coord & coord, const GisViewpor
 		qDebug() << SG_PREFIX_D << "Available geometry of screen containing widget:" << containing_screen_geo;
 	}
 
-	return global_point;
+	return point;
 }

@@ -176,7 +176,7 @@ void Dialog::map_license(const QString & map_name, const QString & map_license, 
    @point_to_expose - x/y coordinates of point to be exposed by movement of the dialog
    @move_vertically: The reposition strategy. move_vertically==true moves dialog vertically, otherwise moves it horizontally
 */
-void Dialog::move_dialog(QDialog * dialog, const GlobalPoint & point_to_expose, bool move_vertically)
+void Dialog::move_dialog(QDialog * dialog, const QPoint & point_to_expose, bool move_vertically)
 {
 	/* http://doc.qt.io/qt-5/application-windows.html#window-geometry */
 
@@ -192,7 +192,7 @@ void Dialog::move_dialog(QDialog * dialog, const GlobalPoint & point_to_expose, 
 
 	if (1) { /* Debug. */
 		const int primary_screen = QApplication::desktop()->primaryScreen();
-		qDebug() << SG_PREFIX_D << "Primary screen:" << primary_screen << "dialog begin:" << dialog_pos << "coord pos:" << point_to_expose.point;
+		qDebug() << SG_PREFIX_D << "Primary screen:" << primary_screen << "dialog begin:" << dialog_pos << "coord pos:" << point_to_expose;
 	}
 
 
@@ -203,22 +203,22 @@ void Dialog::move_dialog(QDialog * dialog, const GlobalPoint & point_to_expose, 
 	}
 
 
-	if (point_to_expose.point.x() < dialog_pos.x()) {
+	if (point_to_expose.x() < dialog_pos.x()) {
 		/* Point visible, on left side of dialog. */
 		qDebug() << SG_PREFIX_D << "Point visible on left";
 		return;
 	}
-	if (point_to_expose.point.y() < dialog_pos.y()) {
+	if (point_to_expose.y() < dialog_pos.y()) {
 		/* Point visible, above dialog. */
 		qDebug() << SG_PREFIX_D << "Point visible above";
 		return;
 	}
-	if (point_to_expose.point.x() > (dialog_pos.x() + dialog_width)) {
+	if (point_to_expose.x() > (dialog_pos.x() + dialog_width)) {
 		/* Point visible, on right side of dialog. */
 		qDebug() << SG_PREFIX_D << "Point visible on right";
 		return;
 	}
-	if (point_to_expose.point.y() > (dialog_pos.y() + dialog_height)) {
+	if (point_to_expose.y() > (dialog_pos.y() + dialog_height)) {
 		/* Point visible, below dialog. */
 		qDebug() << SG_PREFIX_D << "Point visible below";
 		return;
@@ -228,25 +228,25 @@ void Dialog::move_dialog(QDialog * dialog, const GlobalPoint & point_to_expose, 
 	QPoint new_position;
 	if (move_vertically) {
 		/* Move dialog up or down. */
-		if (point_to_expose.point.y() > dialog_height + 10) {
+		if (point_to_expose.y() > dialog_height + 10) {
 			/* Move above given screen position. */
 			qDebug() << SG_PREFIX_D << "Move up";
-			new_position = QPoint(dialog_pos.x(), point_to_expose.point.y() - dialog_height - 10);
+			new_position = QPoint(dialog_pos.x(), point_to_expose.y() - dialog_height - 10);
 		} else {
 			/* Move below given screen position. */
 			qDebug() << SG_PREFIX_D << "Move down";
-			new_position = QPoint(dialog_pos.x(), point_to_expose.point.y() + 10);
+			new_position = QPoint(dialog_pos.x(), point_to_expose.y() + 10);
 		}
 	} else {
 		/* Move dialog left or right. */
-		if (point_to_expose.point.x() > dialog_width + 10) {
+		if (point_to_expose.x() > dialog_width + 10) {
 			/* Move to the left of given screen position. */
 			qDebug() << SG_PREFIX_D << "Move to the left";
-			new_position = QPoint(point_to_expose.point.x() - dialog_width - 10, dialog_pos.y());
+			new_position = QPoint(point_to_expose.x() - dialog_width - 10, dialog_pos.y());
 		} else {
 			/* Move to the right of given screen position. */
 			qDebug() << SG_PREFIX_D << "Move to the right";
-			new_position = QPoint(point_to_expose.point.x() + 10, dialog_pos.y());
+			new_position = QPoint(point_to_expose.x() + 10, dialog_pos.y());
 		}
 	}
 	dialog->move(new_position);

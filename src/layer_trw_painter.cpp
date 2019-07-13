@@ -427,11 +427,11 @@ void LayerTRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const Sc
 		const double dx = (begin.x - midx) / len;
 		const double dy = (begin.y - midy) / len;
 
-		QPainter * painter = this->gisview->vpixmap.get_painter();
-		painter->setPen(pen);
+		QPainter & painter = this->gisview->vpixmap.get_painter();
+		painter.setPen(pen);
 
 		this->track_arrow.set_arrow_tip(midx, midy);
-		this->track_arrow.paint(*painter, dx, dy);
+		this->track_arrow.paint(painter, dx, dy);
 	}
 }
 

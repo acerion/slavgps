@@ -168,9 +168,6 @@ namespace SlavGPS {
 
 		bool get_side_panel_visibility(void) const;
 
-		void emit_center_coord_or_zoom_changed(const QString & trigger_name);
-
-
 		QAction * qa_tree_item_properties = NULL;
 
 	public slots:

@@ -527,18 +527,18 @@ LatLon goto_latlon_dialog(const LatLon & initial_lat_lon, Window * parent)
 
 
 
-bool GoTo::goto_utm(Window * window, GisViewport * gisview)
+sg_ret GoTo::goto_utm(Window * window, GisViewport * gisview)
 {
 	UTM new_utm;
 	const UTM initial_utm = gisview->get_center_coord().get_utm();
 
 	if (QDialog::Rejected == goto_utm_dialog(new_utm, initial_utm, window)) {
-		return false;
+		return sg_ret::err;
 	}
 
 	gisview->set_center_coord(new_utm);
 
-	return true;
+	return sg_ret::ok;
 }
 
 

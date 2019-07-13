@@ -50,9 +50,11 @@ ViewportPixmap::ViewportPixmap(QWidget * parent) : QWidget(parent)
 
 ViewportPixmap::~ViewportPixmap()
 {
-	/* Painter must be deleted before paint device, otherwise
-	   destructor of the paint device will complain. */
-	delete this->painter;
+	/* Call ::end() before deleting paint device, otherwise
+	   destructor of the paint device will complain:
+	   "QPaintDevice: Cannot destroy paint device that is being
+	   painted". */
+	this->painter.end();
 	delete this->pixmap;
 }
 
@@ -78,10 +80,9 @@ void ViewportPixmap::draw_line(const QPen & pen, int begin_x, int begin_y, int e
 	/*** Clipping, yeah! ***/
 	GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
-	//QPainter painter(this->vpixmap.pixmap);
-	this->painter->setPen(pen);
-	this->painter->drawLine(begin_x, begin_y,
-				end_x,   end_y);
+	this->painter.setPen(pen);
+	this->painter.drawLine(begin_x, begin_y,
+			       end_x,   end_y);
 }
 
 
@@ -99,9 +100,8 @@ void ViewportPixmap::draw_rectangle(const QPen & pen, int upper_left_x, int uppe
 	    && upper_left_x < this->get_width() + border
 	    && upper_left_y < this->get_height() + border) {
 
-		//QPainter painter(this->vpixmap.pixmap);
-		this->painter->setPen(pen);
-		this->painter->drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
+		this->painter.setPen(pen);
+		this->painter.drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
 	}
 }
 
@@ -120,9 +120,8 @@ void ViewportPixmap::draw_rectangle(const QPen & pen, const QRect & rect)
 	    && rect.x() < this->get_width() + border
 	    && rect.y() < this->get_height() + border) {
 
-		//QPainter painter(this->pixmap);
-		this->painter->setPen(pen);
-		this->painter->drawRect(rect);
+		this->painter.setPen(pen);
+		this->painter.drawRect(rect);
 	}
 }
 
@@ -141,8 +140,7 @@ void ViewportPixmap::fill_rectangle(const QColor & color, int pos_x, int pos_y, 
 	    && pos_x < this->get_width() + border
 	    && pos_y < this->get_height() + border) {
 
-		//QPainter painter(this->pixmap);
-		this->painter->fillRect(pos_x, pos_y, rect_width, rect_height, color);
+		this->painter.fillRect(pos_x, pos_y, rect_width, rect_height, color);
 	}
 }
 
@@ -159,10 +157,9 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, int po
 	    && pos_x < this->get_width() + border
 	    && pos_y < this->get_height() + border) {
 
-		//QPainter painter(this->pixmap);
-		this->painter->setPen(pen);
-		this->painter->setFont(text_font);
-		this->painter->drawText(pos_x, pos_y, text);
+		this->painter.setPen(pen);
+		this->painter.setFont(text_font);
+		this->painter.drawText(pos_x, pos_y, text);
 	}
 }
 
@@ -171,14 +168,13 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, int po
 
 void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
 {
-	//QPainter painter(this->pixmap);
-	this->painter->setFont(text_font);
+	this->painter.setFont(text_font);
 
 	/* "Normalize" bounding rectangles that have negative width or height.
 	   Otherwise the text will be outside of the bounding rectangle. */
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
-	QRectF text_rect = this->painter->boundingRect(final_bounding_rect, flags, text);
+	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		qreal new_top = text_rect.top() - (text_rect.height() / 2);
@@ -196,18 +192,18 @@ void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const 
 
 #if 1
 	/* Debug. */
-	this->painter->setPen(QColor("red"));
-	this->painter->drawEllipse(final_bounding_rect.left(), final_bounding_rect.top(), 5, 5);
+	this->painter.setPen(QColor("red"));
+	this->painter.drawEllipse(final_bounding_rect.left(), final_bounding_rect.top(), 5, 5);
 
-	this->painter->setPen(QColor("darkgreen"));
-	this->painter->drawRect(final_bounding_rect);
+	this->painter.setPen(QColor("darkgreen"));
+	this->painter.drawRect(final_bounding_rect);
 
-	this->painter->setPen(QColor("red"));
-	this->painter->drawRect(text_rect);
+	this->painter.setPen(QColor("red"));
+	this->painter.drawRect(text_rect);
 #endif
 
-	this->painter->setPen(pen);
-	this->painter->drawText(text_rect, flags, text, NULL);
+	this->painter.setPen(pen);
+	this->painter.drawText(text_rect, flags, text, NULL);
 }
 
 
@@ -217,17 +213,17 @@ void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & ou
 {
 	/* http://doc.qt.io/qt-5/qpainterpath.html#addText */
 
-	this->painter->setPen(outline_pen);
-	this->painter->setBrush(QBrush(fill_color));
+	this->painter.setPen(outline_pen);
+	this->painter.setBrush(QBrush(fill_color));
 
 	QPainterPath path;
 	path.addText(base_point, text_font, text);
 
-	this->painter->drawPath(path);
+	this->painter.drawPath(path);
 
 	/* Reset painter. */
-	this->painter->setPen(QPen());
-	this->painter->setBrush(QBrush());
+	this->painter.setPen(QPen());
+	this->painter.setBrush(QBrush());
 }
 
 
@@ -235,14 +231,13 @@ void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & ou
 
 void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
 {
-	//QPainter painter(this->pixmap);
-	this->painter->setFont(text_font);
+	this->painter.setFont(text_font);
 
 	/* "Normalize" bounding rectangles that have negative width or height.
 	   Otherwise the text will be outside of the bounding rectangle. */
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
-	QRectF text_rect = this->painter->boundingRect(final_bounding_rect, flags, text);
+	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		qreal new_top = text_rect.top() - (text_rect.height() / 2);
@@ -260,18 +255,18 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const 
 
 #if 1
 	/* Debug. */
-	this->painter->setPen(QColor("red"));
-	this->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
+	this->painter.setPen(QColor("red"));
+	this->painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
 
-	this->painter->setPen(QColor("darkgreen"));
-	this->painter->drawRect(bounding_rect);
+	this->painter.setPen(QColor("darkgreen"));
+	this->painter.drawRect(bounding_rect);
 #endif
 
 	/* A highlight of drawn text, must be executed before .drawText(). */
-	this->painter->fillRect(text_rect, bg_color);
+	this->painter.fillRect(text_rect, bg_color);
 
-	this->painter->setPen(pen);
-	this->painter->drawText(text_rect, flags, text, NULL);
+	this->painter.setPen(pen);
+	this->painter.drawText(text_rect, flags, text, NULL);
 }
 
 
@@ -279,8 +274,7 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const 
 
 void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height)
 {
-	//QPainter painter(this->pixmap);
-	this->painter->drawPixmap(viewport_x, viewport_y, a_pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
+	this->painter.drawPixmap(viewport_x, viewport_y, a_pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
 }
 
 
@@ -288,8 +282,7 @@ void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int v
 
 void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int viewport_y)
 {
-	//QPainter painter(this->pixmap);
-	this->painter->drawPixmap(viewport_x, viewport_y, a_pixmap);
+	this->painter.drawPixmap(viewport_x, viewport_y, a_pixmap);
 }
 
 
@@ -297,8 +290,7 @@ void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int v
 
 void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, const QRect & viewport_rect, const QRect & pixmap_rect)
 {
-	//QPainter painter(this->pixmap);
-	this->painter->drawPixmap(viewport_rect, a_pixmap, pixmap_rect);
+	this->painter.drawPixmap(viewport_rect, a_pixmap, pixmap_rect);
 }
 
 
@@ -306,8 +298,8 @@ void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, const QRect & viewpor
 
 void ViewportPixmap::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int start_angle, int span_angle)
 {
-	this->painter->setPen(pen);
-	this->painter->drawArc(center_x, center_y, size_w, size_h, start_angle, span_angle * 16);
+	this->painter.setPen(pen);
+	this->painter.drawArc(center_x, center_y, size_w, size_h, start_angle, span_angle * 16);
 }
 
 
@@ -319,16 +311,16 @@ void ViewportPixmap::draw_ellipse(QPen const & pen, const QPoint & ellipse_cente
 
 	if (filled) {
 		/* Set brush to fill ellipse. */
-		this->painter->setBrush(QBrush(pen.color()));
+		this->painter.setBrush(QBrush(pen.color()));
 	} else {
-		this->painter->setPen(pen);
+		this->painter.setPen(pen);
 	}
 
-	this->painter->drawEllipse(ellipse_center, radius_x, radius_y);
+	this->painter.drawEllipse(ellipse_center, radius_x, radius_y);
 
 	if (filled) {
 		/* Reset brush. */
-		this->painter->setBrush(QBrush());
+		this->painter.setBrush(QBrush());
 	}
 }
 
@@ -337,8 +329,6 @@ void ViewportPixmap::draw_ellipse(QPen const & pen, const QPoint & ellipse_cente
 
 void ViewportPixmap::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled)
 {
-	//QPainter painter(this->pixmap);
-
 	if (filled) {
 		QPainterPath path;
 		path.moveTo(points[0]);
@@ -346,11 +336,11 @@ void ViewportPixmap::draw_polygon(QPen const & pen, QPoint const * points, int n
 			path.lineTo(points[i]);
 		}
 
-		this->painter->setPen(Qt::NoPen);
-		this->painter->fillPath(path, QBrush(QColor(pen.color())));
+		this->painter.setPen(Qt::NoPen);
+		this->painter.fillPath(path, QBrush(QColor(pen.color())));
 	} else {
-		this->painter->setPen(pen);
-		this->painter->drawPolygon(points, npoints);
+		this->painter.setPen(pen);
+		this->painter.drawPolygon(points, npoints);
 	}
 }
 
@@ -376,9 +366,11 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 
 	if (this->pixmap) {
 		qDebug() << SG_PREFIX_I << this->debug << "Deleting old vpixmap";
-		/* Painter must be deleted before paint device, otherwise
-		   destructor of the paint device will complain. */
-		delete this->painter;
+		/* Call ::end() before deleting paint device,
+		   otherwise destructor of the paint device will
+		   complain: "QPaintDevice: Cannot destroy paint
+		   device that is being painted". */
+		this->painter.end();
 		delete this->pixmap;
 	}
 
@@ -386,7 +378,7 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 	this->pixmap = new QPixmap(this->width, this->height);
 	this->pixmap->fill();
 
-	this->painter = new QPainter(this->pixmap);
+	this->painter.begin(this->pixmap);
 
 
 	/* TODO_UNKNOWN trigger: only if this is enabled!!! */
@@ -459,7 +451,7 @@ ScreenPos ViewportPixmap::get_center_screen_pos(void) const
 
 void ViewportPixmap::clear(void)
 {
-	this->painter->eraseRect(0, 0, this->get_width(), this->get_height());
+	this->painter.eraseRect(0, 0, this->get_width(), this->get_height());
 }
 
 

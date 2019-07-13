@@ -166,10 +166,10 @@ void GisViewportDecorations::draw_scale(GisViewport * gisview) const
 #if 1
 		/* Debug. */
 		//QPainter painter(gisview->scr_buffer);
-		gisview->vpixmap.painter->setPen(QColor("red"));
-		gisview->vpixmap.painter->drawEllipse(scale_start, 3, 3);
-		gisview->vpixmap.painter->setPen(QColor("blue"));
-		gisview->vpixmap.painter->drawEllipse(value_start, 3, 3);
+		gisview->vpixmap.painter.setPen(QColor("red"));
+		gisview->vpixmap.painter.drawEllipse(scale_start, 3, 3);
+		gisview->vpixmap.painter.setPen(QColor("blue"));
+		gisview->vpixmap.painter.drawEllipse(value_start, 3, 3);
 #endif
 	}
 }
@@ -282,8 +282,8 @@ void GisViewportDecorations::draw_center_mark(GisViewport * gisview) const
 
 	const int len = 30;
 	const int gap = 4;
-	const int center_x = gisview->vpixmap.get_width() / 2; /* TODO: use proper methods from ViewportPixmap class. */
-	const int center_y = gisview->vpixmap.get_height() / 2;
+	const int center_x = gisview->vpixmap.get_horiz_center_pixel();
+	const int center_y = gisview->vpixmap.get_vert_center_pixel();
 
 	const QPen & pen_fg = this->pen_marks_fg;
 	const QPen & pen_bg = this->pen_marks_bg;

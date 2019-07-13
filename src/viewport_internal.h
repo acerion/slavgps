@@ -63,6 +63,19 @@ namespace SlavGPS {
 
 
 
+	class CenterCoords : public std::list<Coord> {
+	public:
+		CenterCoords();
+
+		void remove_item(std::list<Coord>::iterator iter);
+
+		/* current_iter++ means moving forward in history. Thus prev(center_coords->end()) is the newest item.
+		   current_iter-- means moving backward in history. Thus center_coords->begin() is the oldest item (in the beginning of history). */
+		std::list<Coord>::iterator current_iter; /* Current position within the history list. */
+		int max_items;      /* Configurable maximum size of the history list. */
+		int radius;   /* Metres. */
+	};
+
 
 
 
@@ -144,10 +157,6 @@ namespace SlavGPS {
 		   in upper-left corner. */
 		sg_ret set_center_coord(int x, int y);
 		sg_ret set_center_coord(const ScreenPos & pos);
-
-
-
-		void emit_center_coord_or_zoom_changed(const QString & trigger_name);
 
 
 
@@ -278,12 +287,7 @@ namespace SlavGPS {
 
 
 		Coord center_coord;
-		/* center_coords_iter++ means moving forward in history. Thus prev(center_coords->end()) is the newest item.
-		   center_coords_iter-- means moving backward in history. Thus center_coords->begin() is the oldest item (in the beginning of history). */
-		std::list<Coord> * center_coords;  /* The history of requested positions. */
-		std::list<Coord>::iterator center_coords_iter; /* Current position within the history list. */
-		int center_coords_max;      /* Configurable maximum size of the history list. */
-		int center_coords_radius;   /* Metres. */
+		CenterCoords center_coords;  /* The history of requested positions. */
 
 
 		CoordMode coord_mode = CoordMode::LatLon;
@@ -342,8 +346,6 @@ namespace SlavGPS {
 		   and emit a signal to notify clients the list has been updated. */
 		void save_current_center_coord(void);
 
-		void free_center_coords(std::list<Coord>::iterator iter);
-
 
 		double calculate_utm_zone_width(void) const;
 		void utm_zone_check(void);
@@ -371,14 +373,20 @@ namespace SlavGPS {
 	signals:
 		/* ******** Signals that definitely should be in this class. ******** */
 
+		void list_of_center_coords_changed(void);
+
+		/**
+		   To be emitted when action initiated in GisViewport
+		   has changed center of viewport or zoom of viewport.
+		*/
+		void center_coord_or_zoom_changed(void);
+
 
 		/* ******** Other signals. ******** */
 		void cursor_moved(GisViewport * gisview, QMouseEvent * event);
 		void button_released(GisViewport * gisview, QMouseEvent * event);
 
-		/* TODO: do we need to have two separate signals? */
-		void center_coord_updated(void);
-		void center_coord_or_zoom_changed(void);
+
 
 
 	public slots:

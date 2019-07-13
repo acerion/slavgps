@@ -3256,7 +3256,7 @@ void LayerTRW::trackpoint_properties_show()
 		const Trackpoint * tp = track->get_selected_tp();
 
 		/* Shift up/down to try not to obscure the trackpoint. */
-		const GlobalPoint point_to_expose = SGUtils::coord_to_global_point(tp->coord, ThisApp::get_main_viewport());
+		const QPoint point_to_expose = SGUtils::coord_to_point(tp->coord, ThisApp::get_main_viewport());
 		Dialog::move_dialog(this->tpwin, point_to_expose, true);
 
 		this->tpwin_update_dialog_data(track);

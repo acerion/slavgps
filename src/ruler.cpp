@@ -175,13 +175,9 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 	}
 
 	if (1) {
-		/* Two axis inside a compass.
-		   Varying angle will rotate the axis. I don't know why you would need this :) */
-		//float angle = 0;
-		int c2 = (radius + radius_delta * 2) * sin(this->base_angle.get_value());
-		int s2 = (radius + radius_delta * 2) * cos(this->base_angle.get_value());
-		painter.drawLine(this->begin_x - c2, this->begin_y - s2, this->begin_x + c2, this->begin_y + s2);
-		painter.drawLine(this->begin_x + s2, this->begin_y - c2, this->begin_x - s2, this->begin_y + c2);
+		/* Two axis inside a compass. */
+		painter.drawLine(this->begin_x - radius, this->begin_y,          this->begin_x + radius, this->begin_y);
+		painter.drawLine(this->begin_x,          this->begin_y - radius, this->begin_x,          this->begin_y + radius);
 	}
 
 

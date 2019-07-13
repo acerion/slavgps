@@ -97,7 +97,7 @@ void ViewportSaveDialog::calculate_total_area_cb(void)
 {
 	QString label_text;
 	double width = this->width_spin->value() * this->gisview->get_viking_scale().get_x();
-	double height = this->height_spin->value() * this->gisview->get_viking_scale().get_x(); /* TODO_2_LATER: change to get_y(). */
+	double height = this->height_spin->value() * this->gisview->get_viking_scale().get_y();
 	if (this->tiles_width_spin) { /* save many images; find TOTAL area covered */
 		width *= this->tiles_width_spin->value();
 		height *= this->tiles_height_spin->value();
@@ -512,8 +512,8 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 	UTM utm;
 	const char * extension = this->file_format == ViewportToImage::FileFormat::PNG ? "png" : "jpg";
 
-	/* TODO_2_LATER: support non-identical x/y zoom values. */
 	const double xmpp = this->scaled_viking_scale.get_x();
+	const double ympp = this->scaled_viking_scale.get_y();
 
 	for (int y = 1; y <= this->n_tiles_y; y++) {
 		for (int x = 1; x <= this->n_tiles_x; x++) {
@@ -526,15 +526,15 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 			}
 
 			if (this->n_tiles_y & 0x1) {/* odd */
-				utm.northing -= ((double)y - ceil(((double) this->n_tiles_y)/2)) * (this->scaled_height * xmpp);
+				utm.northing -= ((double)y - ceil(((double) this->n_tiles_y)/2)) * (this->scaled_height * ympp);
 			} else { /* even */
-				utm.northing -= ((double)y - (((double) this->n_tiles_y)+1)/2) * (this->scaled_height * xmpp);
+				utm.northing -= ((double)y - (((double) this->n_tiles_y)+1)/2) * (this->scaled_height * ympp);
 			}
 
-			/* TODO_2_LATER: move to correct place. */
 			this->gisview->set_center_coord(utm, false);
 
-			/* Redraw all layers at current position and zoom. */
+			/* Redraw all layers at current position and zoom.
+			   TODO: why do we call Window method here? */
 			this->window->draw_tree_items();
 
 			/* Save buffer as file. */

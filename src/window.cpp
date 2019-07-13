@@ -179,7 +179,7 @@ Window::Window()
 
 
 	/* Own signals. */
-	connect(this->viewport, SIGNAL (center_coord_updated(void)), this, SLOT (center_changed_cb(void)));
+	connect(this->viewport, SIGNAL (list_of_center_coords_changed(void)), this, SLOT (center_changed_cb(void)));
 	connect(this->viewport, SIGNAL (center_coord_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
 	connect(this, SIGNAL (center_coord_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
@@ -1312,7 +1312,7 @@ void Window::pan_move(QMouseEvent * ev)
 
 		this->pan_move_in_progress = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
-		this->emit_center_coord_or_zoom_changed("pan move");
+		this->viewport->central->request_redraw("pan move");
 	}
 }
 
@@ -1373,7 +1373,7 @@ void Window::pan_release(QMouseEvent * ev)
 
 	this->pan_off();
 	if (do_draw) {
-		this->emit_center_coord_or_zoom_changed("pan release");
+		this->viewport->central->request_redraw("pan release");
 	}
 }
 
@@ -1636,7 +1636,7 @@ void Window::goto_default_location_cb(void)
 		qDebug() << SG_PREFIX_E << "Failed to set center location from" << lat_lon;
 		return;
 	}
-	this->emit_center_coord_or_zoom_changed("go to default location");
+	this->viewport->central->request_redraw("go to default location");
 }
 
 
@@ -1645,7 +1645,7 @@ void Window::goto_default_location_cb(void)
 void Window::goto_location_cb()
 {
 	if (GoTo::goto_location(this, this->viewport->central)) {
-		this->emit_center_coord_or_zoom_changed("go to location");
+		this->viewport->central->request_redraw("go to location");
 	}
 }
 
@@ -1658,7 +1658,7 @@ void Window::goto_latlon_cb(void)
 		qDebug() << SG_PREFIX_E << "Failed to go to lat/lon";
 		return;
 	}
-	this->emit_center_coord_or_zoom_changed("go to latlon");
+	this->viewport->central->request_redraw("go to latlon");
 }
 
 
@@ -1666,9 +1666,11 @@ void Window::goto_latlon_cb(void)
 
 void Window::goto_utm_cb(void)
 {
-	if (GoTo::goto_utm(this, this->viewport->central)) {
-		this->emit_center_coord_or_zoom_changed("go to utm");
+	if (sg_ret::ok != GoTo::goto_utm(this, this->viewport->central)) {
+		qDebug() << SG_PREFIX_E << "Failed to go to lat/lon";
+		return;
 	}
+	this->viewport->central->request_redraw("go to utm");
 }
 
 
@@ -1676,7 +1678,7 @@ void Window::goto_utm_cb(void)
 
 void Window::goto_previous_location_cb(void)
 {
-	bool changed = this->viewport->central->go_back();
+	const bool changed = this->viewport->central->go_back();
 
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
@@ -1684,7 +1686,7 @@ void Window::goto_previous_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->emit_center_coord_or_zoom_changed("go to previous location");
+		this->viewport->central->request_redraw("go to previous location");
 	}
 }
 
@@ -1701,7 +1703,7 @@ void Window::goto_next_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->emit_center_coord_or_zoom_changed("go to next location");
+		this->viewport->central->request_redraw("go to next location");
 	}
 }
 
@@ -1819,7 +1821,7 @@ void Window::zoom_cb(void)
 		return;
 	}
 
-	this->emit_center_coord_or_zoom_changed(debug_msg);
+	this->viewport->central->request_redraw(debug_msg);
 }
 
 
@@ -1831,7 +1833,7 @@ void Window::zoom_to_cb(void)
 
 	if (GisViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_scale, this)) {
 		this->viewport->central->set_viking_scale(viking_scale);
-		this->emit_center_coord_or_zoom_changed("zoom to...");
+		this->viewport->central->request_redraw("zoom to...");
 	}
 }
 
@@ -2353,10 +2355,9 @@ void LocatorJob::run(void)
 
 		this->window->viewport->central->set_viking_scale(zoom);
 		this->window->viewport->central->set_center_coord(lat_lon, false);
+		this->window->viewport->central->request_redraw("determine location");
 
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location found: %1").arg(name));
-
-		this->window->emit_center_coord_or_zoom_changed("determine location");
 	} else {
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Unable to determine location"));
 	}
@@ -2696,7 +2697,7 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 		this->viewport->central->set_viking_scale(requested_scale);
 
 		/* Ask to draw updated viewport. */
-		this->emit_center_coord_or_zoom_changed("zoom level selected");
+		this->viewport->central->request_redraw("zoom level selected");
 	}
 }
 
@@ -2916,7 +2917,7 @@ void Window::menu_view_pan_cb(void)
 		break;
 	}
 
-	this->emit_center_coord_or_zoom_changed("pan from menu");
+	this->viewport->central->request_redraw("pan from menu");
 }
 
 
@@ -3404,19 +3405,6 @@ void Window::open_recent_file_cb(void)
 		   'recent file' in new window. */
 		this->open_window(QStringList(file_full_path));
 	}
-}
-
-
-
-
-/**
-   To be called when action initiated in Window (e.g. in Window's
-   menus) has changed center of viewport or zoom of viewport.
-*/
-void Window::emit_center_coord_or_zoom_changed(const QString & trigger_name)
-{
-	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center coord or zoom changed' signal after" << trigger_name << "event in Window";
-	emit this->center_coord_or_zoom_changed();
 }
 
 

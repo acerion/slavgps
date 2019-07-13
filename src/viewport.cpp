@@ -185,13 +185,11 @@ GisViewport::GisViewport(QWidget * parent) : QWidget(parent)
 	this->ymfactor = MERCATOR_FACTOR(this->viking_scale.y);
 
 
-	this->center_coords = new std::list<Coord>;
-	this->center_coords_iter = this->center_coords->begin();
-	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->center_coords_max)) {
-		this->center_coords_max = 20;
+	if (!ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &this->center_coords.max_items)) {
+		this->center_coords.max_items = 20;
 	}
-	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &this->center_coords_radius)) {
-		this->center_coords_radius = 500;
+	if (ApplicationState::get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &this->center_coords.radius)) {
+		this->center_coords.radius = 500;
 	}
 
 
@@ -238,8 +236,6 @@ GisViewport::~GisViewport()
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, this->viking_scale.x);
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->viking_scale.y);
 	}
-
-	delete this->center_coords;
 }
 
 
@@ -340,7 +336,7 @@ void GisViewport::set_pixmap(const QPixmap & pixmap)
 		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: vpixmap =" << this->vpixmap.pixmap->size() << ", new vpixmap =" << pixmap.size();
 	} else {
 		//QPainter painter(this->vpixmap.pixmap);
-		this->vpixmap.painter->drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
+		this->vpixmap.painter.drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
 	}
 }
 
@@ -536,9 +532,13 @@ const VikingScale & GisViewport::get_viking_scale(void) const
 
 sg_ret GisViewport::set_viking_scale(const VikingScale & new_value)
 {
-	/* TODO: add validation. */
-	this->viking_scale = new_value;
-	return sg_ret::ok;
+	if (new_value.is_valid()) {
+		this->viking_scale = new_value;
+		return sg_ret::ok;
+	} else {
+		qDebug() << SG_PREFIX_E << "New value is invalid";
+		return sg_ret::err;
+	}
 }
 
 
@@ -611,22 +611,22 @@ void GisViewport::utm_zone_check(void)
 /**
    \brief Remove an individual center position from the history list
 */
-void GisViewport::free_center_coords(std::list<Coord>::iterator iter)
+void CenterCoords::remove_item(std::list<Coord>::iterator iter)
 {
-	if (iter == this->center_coords_iter) {
-		this->center_coords_iter = this->center_coords->erase(iter);
+	if (iter == this->current_iter) {
+		this->current_iter = this->erase(iter);
 
-		if (this->center_coords_iter == this->center_coords->end()) {
+		if (this->current_iter == this->end()) {
 			/* We have removed last element on the list. */
 
-			if (center_coords->empty()) {
-				this->center_coords_iter = this->center_coords->begin();
+			if (this->empty()) {
+				this->current_iter = this->begin();
 			} else {
-				this->center_coords_iter--;
+				this->current_iter--;
 			}
 		}
 	} else {
-		this->center_coords->erase(iter);
+		this->erase(iter);
 	}
 }
 
@@ -635,29 +635,29 @@ void GisViewport::free_center_coords(std::list<Coord>::iterator iter)
 
 void GisViewport::save_current_center_coord(void)
 {
-	if (this->center_coords_iter == prev(this->center_coords->end())) {
+	if (this->center_coords.current_iter == prev(this->center_coords.end())) {
 		/* We are at most recent element of history. */
-		if (this->center_coords->size() == (unsigned) this->center_coords_max) {
+		if (this->center_coords.size() == (unsigned) this->center_coords.max_items) {
 			/* List is full, so drop the oldest value to make room for the new one. */
-			this->free_center_coords(this->center_coords->begin());
+			this->center_coords.remove_item(this->center_coords.begin());
 		}
 	} else {
 		/* We are somewhere in the middle of history list, possibly at the beginning.
 		   Every center visited after current one must be discarded. */
-		this->center_coords->erase(next(this->center_coords_iter), this->center_coords->end());
-		assert (std::next(this->center_coords_iter) == this->center_coords->end());
+		this->center_coords.erase(next(this->center_coords.current_iter), this->center_coords.end());
+		assert (std::next(this->center_coords.current_iter) == this->center_coords.end());
 	}
 
 	/* Store new position. */
 	/* push_back() puts at the end. By convention end == newest. */
-	this->center_coords->push_back(this->center_coord);
-	this->center_coords_iter++;
-	assert (std::next(this->center_coords_iter) == this->center_coords->end());
+	this->center_coords.push_back(this->center_coord);
+	this->center_coords.current_iter++;
+	assert (std::next(this->center_coords.current_iter) == this->center_coords.end());
 
 	this->print_center_coords("GisViewport::save_current_center_coord()");
 
-	qDebug() << SG_PREFIX_SIGNAL << "Emitting center_coord_updated()";
-	emit this->center_coord_updated();
+	qDebug() << SG_PREFIX_SIGNAL << "Emitting list_of_center_coords_changed()";
+	emit this->list_of_center_coords_changed();
 }
 
 
@@ -667,14 +667,14 @@ std::list<QString> GisViewport::get_center_coords_list(void) const
 {
 	std::list<QString> result;
 
-	for (auto iter = this->center_coords->begin(); iter != this->center_coords->end(); iter++) {
+	for (auto iter = this->center_coords.begin(); iter != this->center_coords.end(); iter++) {
 
 		QString extra;
-		if (iter == prev(this->center_coords_iter)) {
+		if (iter == prev(this->center_coords.current_iter)) {
 			extra = tr("[Back]");
-		} else if (iter == next(this->center_coords_iter)) {
+		} else if (iter == next(this->center_coords.current_iter)) {
 			extra = tr("[Forward]");
-		} else if (iter == this->center_coords_iter) {
+		} else if (iter == this->center_coords.current_iter) {
 			extra = tr("[Current]");
 		} else {
 			; /* NOOP */
@@ -743,9 +743,9 @@ bool GisViewport::go_back(void)
 {
 	/* See if the current position is different from the
 	   last saved center position within a certain radius. */
-	if (Coord::distance(*this->center_coords_iter, this->center_coord) > this->center_coords_radius) {
+	if (Coord::distance(*this->center_coords.current_iter, this->center_coord) > this->center_coords.radius) {
 
-		if (this->center_coords_iter == prev(this->center_coords->end())) {
+		if (this->center_coords.current_iter == prev(this->center_coords.end())) {
 			/* Only when we haven't already moved back in the list.
 			   Remember where this request came from (alternatively we could insert in the list on every back attempt). */
 			this->save_current_center_coord();
@@ -761,8 +761,8 @@ bool GisViewport::go_back(void)
 	   Otherwise this will skip to the previous saved position, as it's probably somewhere else. */
 
 	/* This is safe because ::back_available() returned true. */
-	this->center_coords_iter--;
-	this->set_center_coord(*this->center_coords_iter, false);
+	this->center_coords.current_iter--;
+	this->set_center_coord(*this->center_coords.current_iter, false);
 
 	return true;
 }
@@ -784,8 +784,8 @@ bool GisViewport::go_forward(void)
 	}
 
 	/* This is safe because ::forward_available() returned true. */
-	this->center_coords_iter++;
-	this->set_center_coord(*this->center_coords_iter, false);
+	this->center_coords.current_iter++;
+	this->set_center_coord(*this->center_coords.current_iter, false);
 
 	return true;
 }
@@ -799,7 +799,7 @@ bool GisViewport::go_forward(void)
 */
 bool GisViewport::back_available(void) const
 {
-	return (this->center_coords->size() > 1 && this->center_coords_iter != this->center_coords->begin());
+	return (this->center_coords.size() > 1 && this->center_coords.current_iter != this->center_coords.begin());
 }
 
 
@@ -811,7 +811,7 @@ bool GisViewport::back_available(void) const
 */
 bool GisViewport::forward_available(void) const
 {
-	return (this->center_coords->size() > 1 && this->center_coords_iter != prev(this->center_coords->end()));
+	return (this->center_coords.size() > 1 && this->center_coords.current_iter != prev(this->center_coords.end()));
 }
 
 
@@ -1037,9 +1037,9 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		/* Modified (reformatted) formula. */
 		{
 			coord.utm.set_northing((delta_vert_pixels * ympp) + this->center_coord.utm.get_northing());
-
-			coord.utm.set_zone(this->center_coord.utm.get_zone());
 			coord.utm.set_easting((delta_horiz_pixels * xmpp) + this->center_coord.utm.get_easting());
+			coord.utm.set_zone(this->center_coord.utm.get_zone());
+
 			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 			coord.utm.shift_zone_by(zone_delta);
 			coord.utm.shift_easting_by(-(zone_delta * this->utm_zone_width));
@@ -1355,9 +1355,9 @@ void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, i
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to Qt's "beginning in top-left corner"
 	   coordinate system. */
-	this->central->vpixmap.painter->setPen(pen);
-	this->central->vpixmap.painter->drawLine(begin_x, bottom_pixel - begin_y,
-						 end_x,   bottom_pixel - end_y);
+	this->central->vpixmap.painter.setPen(pen);
+	this->central->vpixmap.painter.drawLine(begin_x, bottom_pixel - begin_y,
+						end_x,   bottom_pixel - end_y);
 }
 
 
@@ -1390,19 +1390,15 @@ void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & te
 		qDebug() << SG_PREFIX_E << "No margin vpixmap selected";
 		return;
 	}
-	if (!vpixmap->painter) {
-		qDebug() << SG_PREFIX_W << "Viewport Pixmap has no painter (yet?)";
-		return;
-	}
 
 
-	vpixmap->painter->setFont(text_font);
+	vpixmap->painter.setFont(text_font);
 
 	/* "Normalize" bounding rectangles that have negative width or height.
 	   Otherwise the text will be outside of the bounding rectangle. */
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
-	QRectF text_rect = vpixmap->painter->boundingRect(final_bounding_rect, flags, text);
+	QRectF text_rect = vpixmap->painter.boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		qreal new_top = text_rect.top() - (text_rect.height() / 2);
@@ -1421,18 +1417,18 @@ void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & te
 
 #if 1
 	/* Debug. */
-	vpixmap->painter->setPen(QColor("red"));
-	vpixmap->painter->drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
+	vpixmap->painter.setPen(QColor("red"));
+	vpixmap->painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
 
-	vpixmap->painter->setPen(QColor("darkgreen"));
-	vpixmap->painter->drawRect(bounding_rect);
+	vpixmap->painter.setPen(QColor("darkgreen"));
+	vpixmap->painter.drawRect(bounding_rect);
 
-	vpixmap->painter->setPen(QColor("red"));
-	vpixmap->painter->drawRect(text_rect);
+	vpixmap->painter.setPen(QColor("red"));
+	vpixmap->painter.drawRect(text_rect);
 #endif
 
-	vpixmap->painter->setPen(pen);
-	vpixmap->painter->drawText(text_rect, flags, text, NULL);
+	vpixmap->painter.setPen(pen);
+	vpixmap->painter.drawText(text_rect, flags, text, NULL);
 }
 
 
@@ -2037,13 +2033,13 @@ void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
 		return;
 	}
 
-	this->central->vpixmap.painter->setPen(this->central->marker_pen);
+	this->central->vpixmap.painter.setPen(this->central->marker_pen);
 
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-	this->central->vpixmap.painter->drawLine(0, y, rigthmost_pixel, y); /* Horizontal line. */
-	this->central->vpixmap.painter->drawLine(x, 0, x, bottommost_pixel); /* Vertical line. */
+	this->central->vpixmap.painter.drawLine(0, y, rigthmost_pixel, y); /* Horizontal line. */
+	this->central->vpixmap.painter.drawLine(x, 0, x, bottommost_pixel); /* Vertical line. */
 }
 
 
@@ -2211,7 +2207,8 @@ sg_ret GisViewport::set_bbox(const LatLonBBox & new_bbox)
 
 void GisViewport::request_redraw(const QString & trigger_descr)
 {
-	this->emit_center_coord_or_zoom_changed(trigger_descr);
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal triggered by" << trigger_descr;
+	emit this->center_coord_or_zoom_changed();
 }
 
 
@@ -2251,19 +2248,6 @@ void GisViewport::dropEvent(QDropEvent * event)
 bool GisViewport::is_ready(void) const
 {
 	return this->vpixmap.pixmap != NULL;
-}
-
-
-
-
-/**
-   To be called when action initiated in GisViewport has changed center
-   of viewport or zoom of viewport.
-*/
-void GisViewport::emit_center_coord_or_zoom_changed(const QString & trigger_name)
-{
-	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal triggered by" << trigger_name;
-	emit this->center_coord_or_zoom_changed();
 }
 
 
@@ -2380,31 +2364,31 @@ void ViewportMargin::resizeEvent(QResizeEvent * ev)
 	qDebug() << SG_PREFIX_I;
 
 	this->reconfigure(this->geometry().width(), this->geometry().height());
-	this->painter->setPen(this->border_pen);
+	this->painter.setPen(this->border_pen);
 
 	switch (this->position) {
 	case ViewportMargin::Position::Left:
-		this->painter->drawText(this->rect(), Qt::AlignCenter, "left");
-		this->painter->drawLine(this->geometry().width() - 1, 0,
+		this->painter.drawText(this->rect(), Qt::AlignCenter, "left");
+		this->painter.drawLine(this->geometry().width() - 1, 0,
 					this->geometry().width() - 1, this->geometry().height() - 1);
 		break;
 
 	case ViewportMargin::Position::Right:
-		this->painter->drawLine(1, 1,
+		this->painter.drawLine(1, 1,
 					1, this->geometry().height() - 1);
-		this->painter->drawText(this->rect(), Qt::AlignCenter, "right");
+		this->painter.drawText(this->rect(), Qt::AlignCenter, "right");
 		break;
 
 	case ViewportMargin::Position::Top:
-		this->painter->drawLine(0,                            this->geometry().height() - 1,
+		this->painter.drawLine(0,                            this->geometry().height() - 1,
 					this->geometry().width() - 1, this->geometry().height() - 1);
-		this->painter->drawText(this->rect(), Qt::AlignCenter, "top");
+		this->painter.drawText(this->rect(), Qt::AlignCenter, "top");
 		break;
 
 	case ViewportMargin::Position::Bottom:
-		this->painter->drawLine(1,                            1,
+		this->painter.drawLine(1,                            1,
 					this->geometry().width() - 1, 1);
-		this->painter->drawText(this->rect(), Qt::AlignCenter, "bottom");
+		this->painter.drawText(this->rect(), Qt::AlignCenter, "bottom");
 		break;
 
 	default:
@@ -2619,3 +2603,8 @@ sg_ret ArrowSymbol::paint(QPainter & painter, double dx, double dy)
 }
 
 
+
+CenterCoords::CenterCoords()
+{
+	this->current_iter = this->begin();
+}

@@ -111,8 +111,7 @@ namespace SlavGPS {
 		bool line_is_outside(int begin_x, int begin_y, int end_x, int end_y);
 
 
-		/* TODO: return reference? */
-		QPainter * get_painter(void) { return this->painter; }
+		QPainter & get_painter(void) { return this->painter; }
 
 
 
@@ -129,7 +128,7 @@ namespace SlavGPS {
 		int width = 0;
 		int height = 0;
 
-		QPainter * painter = NULL;
+		QPainter painter;
 		QPixmap * pixmap = NULL;
 		QPixmap * snapshot_buffer = NULL;
 

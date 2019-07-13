@@ -122,16 +122,6 @@ namespace SlavGPS {
 
 
 
-	/* Global Coordinates of a x/y position on screens. */
-	class GlobalPoint {
-	public:
-		QPoint point;
-		/* TODO_2_LATER: add screen number to indicate on which screen this point is present. */
-	};
-
-
-
-
 	class SGUtils {
 	public:
 		static bool is_very_first_run(void);
@@ -167,7 +157,7 @@ namespace SlavGPS {
 		   Convert a geo coordinate @coord of item visible in
 		   given @viewport to x/y coordinate on screen.
 		*/
-		static GlobalPoint coord_to_global_point(const Coord & coord, const GisViewport * gisview);
+		static QPoint coord_to_point(const Coord & coord, const GisViewport * gisview);
 
 
 		/* Generate an integer suitable for comparison of version numbers. */
