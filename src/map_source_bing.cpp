@@ -367,7 +367,9 @@ sg_ret MapSourceBing::parse_file_for_providers(QFile & tmp_file)
 	if (true && vik_debug) {
 		for (auto iter = this->providers.begin(); iter != this->providers.end(); iter++) {
 			const BingImageryProvider * p = *iter;
-			fprintf(stderr, "DD: Map Source Bing: Bing Imagery Provider: %s from %d to %d %g %g %g %g\n", p->attribution.toUtf8().constData(), p->zoom_min, p->zoom_max, p->bbox.south, p->bbox.north, p->bbox.east, p->bbox.west);
+			qDebug() << SG_PREFIX_D << "Bing Imagery Provider" << p->attribution
+				 << ", zoom from" << p->zoom_min << "to" << p->zoom_max
+				 << p->bbox;
 		}
 	}
 
