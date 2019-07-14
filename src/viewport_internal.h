@@ -249,11 +249,6 @@ namespace SlavGPS {
 		void pan_sync(int x_off, int y_off);
 
 
-		/* Pixel coordinates passed to this function should be
-		   in Qt's coordinate system, where beginning (pixel
-		   0,0) is in upper-left corner. */
-		void compute_bearing(int begin_x, int begin_y, int end_x, int end_y, Angle & angle, Angle & base_angle);
-
 		/* Trigger stuff. */
 		void set_trigger(Layer * trigger);
 		Layer * get_trigger(void) const;

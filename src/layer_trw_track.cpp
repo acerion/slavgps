@@ -3367,7 +3367,7 @@ bool Track::handle_selection_in_tree(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-#ifdef K_TODO_MAYBE
+#if 0
 	/* TODO_MAYBE: to be implemented? */
 	parent_layer->set_statusbar_msg_info_trk(this);
 #endif

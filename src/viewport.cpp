@@ -1608,39 +1608,6 @@ sg_ret GisViewport::add_logo(const GisViewportLogo & logo)
 
 
 
-/**
- * @angle: bearing in Radian (output)
- * @base_angle: UTM base angle in Radian (output)
- *
- * Compute bearing.
- */
-void GisViewport::compute_bearing(int begin_x, int begin_y, int end_x, int end_y, Angle & angle, Angle & base_angle)
-{
-	double len = sqrt((begin_x - end_x) * (begin_x - end_x) + (begin_y - end_y) * (begin_y - end_y));
-	double dx = (end_x - begin_x) / len * 10;
-	double dy = (end_y - begin_y) / len * 10;
-
-	angle.set_value(atan2(dy, dx) + M_PI_2);
-
-	if (this->get_draw_mode() == GisViewportDrawMode::UTM) {
-
-		Coord test = this->screen_pos_to_coord(begin_x, begin_y);
-		LatLon lat_lon = test.get_lat_lon();
-		lat_lon.lat += this->get_viking_scale().y * this->vpixmap.get_height() / 11000.0; // about 11km per degree latitude /* TODO: get_height() or get_q_bottommost_pixel()? */
-
-		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
-		const ScreenPos test_pos = this->coord_to_screen_pos(test);
-
-		base_angle.set_value(M_PI - atan2(test_pos.x - begin_x, test_pos.y - begin_y));
-		angle.set_value(angle.get_value() - base_angle.get_value());
-	}
-
-	angle.normalize();
-}
-
-
-
-
 void GisViewport::paintEvent(QPaintEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;

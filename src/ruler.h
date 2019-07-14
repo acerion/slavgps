@@ -77,7 +77,6 @@ namespace SlavGPS {
 		int end_x = 0;
 		int end_y = 0;
 
-		double len = 0;
 		double dx = 0;
 		double dy = 0;
 

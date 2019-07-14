@@ -88,12 +88,29 @@ void Ruler::set_end(int end_x_, int end_y_)
 
 	this->end_coord = this->gisview->screen_pos_to_coord(this->end_x, this->end_y);
 
-	/* TODO: these calculations are repeated in compute_bearing(). */
-	this->len = sqrt((this->begin_x - this->end_x) * (this->begin_x - this->end_x) + (this->begin_y - this->end_y) * (this->begin_y - this->end_y));
-	this->dx = (this->end_x - this->begin_x) / this->len * 10;
-	this->dy = (this->end_y - this->begin_y) / this->len * 10;
+	const double len = sqrt((this->begin_x - this->end_x) * (this->begin_x - this->end_x) + (this->begin_y - this->end_y) * (this->begin_y - this->end_y));
+	this->dx = (this->end_x - this->begin_x) / len * 10;
+	this->dy = (this->end_y - this->begin_y) / len * 10;
 
-	this->gisview->compute_bearing(this->begin_x, this->begin_y, this->end_x, this->end_y, this->angle, this->base_angle);
+	/*
+	  angle: bearing in Radian
+	  base_angle: UTM base angle in Radian
+	*/
+	this->angle.set_value(atan2(this->dy, this->dx) + M_PI_2);
+	if (this->gisview->get_draw_mode() == GisViewportDrawMode::UTM) {
+		Coord test = this->gisview->screen_pos_to_coord(this->begin_x, this->begin_y);
+		LatLon lat_lon = test.get_lat_lon();
+		/* TODO: get_height() or get_q_bottommost_pixel()? */
+		/* FIXME: magic number. */
+		lat_lon.lat += this->gisview->get_viking_scale().get_y() * this->gisview->vpixmap.get_height() / 11000.0; // about 11km per degree latitude
+
+		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
+		const ScreenPos test_pos = this->gisview->coord_to_screen_pos(test);
+
+		this->base_angle.set_value(M_PI - atan2(test_pos.x - this->begin_x, test_pos.y - this->begin_y));
+		this->angle.set_value(this->angle.get_value() - this->base_angle.get_value());
+	}
+	this->angle.normalize();
 
 	this->line_distance = Coord::distance_2(this->end_coord, this->begin_coord);
 }

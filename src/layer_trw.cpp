@@ -3232,7 +3232,6 @@ void LayerTRW::tpwin_update_dialog_data(Track * track)
 {
 	if (track) {
 		/* Notional center of a track is simply an average of its bounding box extremities. */
-		const LatLon ll_center = track->bbox.get_center_lat_lon(); /* TODO_MAYBE: this variable is unused. */
 		this->tpwin->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
 	}
 }
