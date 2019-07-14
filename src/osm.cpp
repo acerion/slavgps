@@ -249,6 +249,10 @@ MapSourceOSMOnDisk::MapSourceOSMOnDisk() : MapSourceSlippy(MapTypeID::OSMOnDisk,
 
 QPixmap MapSourceOSMOnDisk::get_tile_pixmap(const MapCacheObj & map_cache_obj, const TileInfo & tile_info, const MapSourceArgs & args) const
 {
+	if (MapCacheLayout::OSM != map_cache_obj.layout) {
+		qDebug() << SG_PREFIX_W << "Layout mismatch:" << (int) MapCacheLayout::OSM << (int) map_cache_obj.layout;
+	}
+
 	const MapCacheObj new_map_cache_obj(MapCacheLayout::OSM, map_cache_obj.dir_full_path); /* TODO_LATER: why do we need to create the copy with explicit layout? */
 	const QString tile_file_full_path = new_map_cache_obj.get_cache_file_full_path(tile_info,
 										       this->map_type_id,
