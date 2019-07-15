@@ -647,7 +647,7 @@ bool LayerTRWWaypoints::add_context_menu_items(QMenu & menu, bool tree_view_cont
 */
 void LayerTRWWaypoints::move_viewport_to_show_all_cb(void) /* Slot. */
 {
-	GisViewport * gisview = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_gis_view();
 	const unsigned int n_items = this->children_list.size();
 
 	if (1 == n_items) {

@@ -102,7 +102,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 		LatLon lat_lon = test.get_lat_lon();
 		/* TODO: get_height() or get_q_bottommost_pixel()? */
 		/* FIXME: magic number. */
-		lat_lon.lat += this->gisview->get_viking_scale().get_y() * this->gisview->vpixmap.get_height() / 11000.0; // about 11km per degree latitude
+		lat_lon.lat += this->gisview->get_viking_scale().get_y() * this->gisview->central_get_height() / 11000.0; // about 11km per degree latitude
 
 		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
 		const ScreenPos test_pos = this->gisview->coord_to_screen_pos(test);
@@ -237,7 +237,7 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 			label1_y = (this->begin_y + this->end_y) / 2 - label1_rect.height() / 2 + this->dx;
 		}
 
-		if (label1_x < -5 || label1_y < -5 || label1_x > this->gisview->vpixmap.get_width() + 5 || label1_y > this->gisview->vpixmap.get_height() + 5) {
+		if (label1_x < -5 || label1_y < -5 || label1_x > this->gisview->central_get_width() + 5 || label1_y > this->gisview->central_get_height() + 5) {
 			label1_x = this->end_x + 10;
 			label1_y = this->end_y - 5;
 		}

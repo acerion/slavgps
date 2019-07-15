@@ -115,7 +115,7 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 	this->vp_xmpp = this->gisview->get_viking_scale().get_x();
 	this->vp_ympp = this->gisview->get_viking_scale().get_y();
 
-	this->vp_rect = this->gisview->get_rect();
+	this->vp_rect = this->gisview->central_get_rect();
 	this->vp_center = this->gisview->get_center_coord();
 	this->vp_coord_mode = this->gisview->get_coord_mode();
 	this->vp_is_one_utm_zone = this->gisview->get_is_one_utm_zone(); /* False if some other projection besides UTM. */
@@ -205,12 +205,12 @@ LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoin
 static void draw_utm_skip_insignia(GisViewport * gisview, QPen & pen, int x, int y)
 {
 	/* First draw '+'. */
-	gisview->vpixmap.draw_line(pen, x+5, y,   x-5, y );
-	gisview->vpixmap.draw_line(pen, x,   y+5, x,   y-5);
+	gisview->draw_line(pen, x+5, y,   x-5, y );
+	gisview->draw_line(pen, x,   y+5, x,   y-5);
 
 	/* And now draw 'x' on top of it. */
-	gisview->vpixmap.draw_line(pen, x+5, y+5, x-5, y-5);
-	gisview->vpixmap.draw_line(pen, x+5, y-5, x-5, y+5);
+	gisview->draw_line(pen, x+5, y+5, x-5, y-5);
+	gisview->draw_line(pen, x+5, y-5, x-5, y+5);
 }
 
 
@@ -222,11 +222,11 @@ void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_c
 
 	QPen pen;
 	pen.setColor(fg_color);
-	this->gisview->vpixmap.draw_text(QFont("Helvetica", pango_font_size_to_point_font_size(this->track_label_font_size)),
-					 pen,
-					 label_pos.x,
-					 label_pos.y,
-					 text);
+	this->gisview->draw_text(QFont("Helvetica", pango_font_size_to_point_font_size(this->track_label_font_size)),
+				 pen,
+				 label_pos.x,
+				 label_pos.y,
+				 text);
 }
 
 
@@ -427,7 +427,7 @@ void LayerTRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const Sc
 		const double dx = (begin.x - midx) / len;
 		const double dy = (begin.y - midy) / len;
 
-		QPainter & painter = this->gisview->vpixmap.get_painter();
+		QPainter & painter = this->gisview->get_painter();
 		painter.setPen(pen);
 
 		this->track_arrow.set_arrow_tip(midx, midy);
@@ -462,9 +462,9 @@ void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const S
 	tmp_pen.setColor("green");
 	tmp_pen.setWidth(1);
 #endif
-	this->gisview->vpixmap.draw_polygon(tmp_pen, points, 4, true);
+	this->gisview->draw_polygon(tmp_pen, points, 4, true);
 
-	this->gisview->vpixmap.draw_line(pen, begin.x, begin.y - FIXALTITUDE (tp), end.x, end.y - FIXALTITUDE (tp_next));
+	this->gisview->draw_line(pen, begin.x, begin.y - FIXALTITUDE (tp), end.x, end.y - FIXALTITUDE (tp_next));
 }
 
 
@@ -552,7 +552,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 	if (do_draw_trackpoints) {
 		QPoint trian[3] = { QPoint(curr_pos.x, curr_pos.y-(3*tp_size)), QPoint(curr_pos.x-(2*tp_size), curr_pos.y+(2*tp_size)), QPoint(curr_pos.x+(2*tp_size), curr_pos.y+(2*tp_size)) };
-		this->gisview->vpixmap.draw_polygon(main_pen, trian, 3, true);
+		this->gisview->draw_polygon(main_pen, trian, 3, true);
 	}
 
 
@@ -629,9 +629,9 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->track_min_stop_length) {
 
 				const int stop_radius = (6 * tp_size) / 2;
-				this->gisview->vpixmap.draw_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen],
-								     QPoint(curr_pos.x, curr_pos.y),
-								     stop_radius, stop_radius, true);
+				this->gisview->draw_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen],
+							    QPoint(curr_pos.x, curr_pos.y),
+							    stop_radius, stop_radius, true);
 			}
 
 			if (use_prev_pos && curr_pos == prev_pos) {
@@ -651,11 +651,11 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			if (do_draw_trackpoints) {
 				if (std::next(iter) != trk->trackpoints.end()) {
 					/* Regular point - draw 2x square. */
-					this->gisview->vpixmap.fill_rectangle(main_pen.color(), curr_pos.x-tp_size, curr_pos.y-tp_size, 2*tp_size, 2*tp_size);
+					this->gisview->fill_rectangle(main_pen.color(), curr_pos.x-tp_size, curr_pos.y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
 					/* Final point - draw 4x circle. */
 					const int tp_radius = (4 * tp_size) / 2;
-					this->gisview->vpixmap.draw_ellipse(main_pen, QPoint(curr_pos.x, curr_pos.y), tp_radius, tp_radius, true);
+					this->gisview->draw_ellipse(main_pen, QPoint(curr_pos.x, curr_pos.y), tp_radius, tp_radius, true);
 				}
 			}
 
@@ -670,7 +670,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 					prev_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
 				}
 
-				this->gisview->vpixmap.draw_line(main_pen, prev_pos, curr_pos);
+				this->gisview->draw_line(main_pen, prev_pos, curr_pos);
 
 				if (this->draw_track_elevation
 				    && std::next(iter) != trk->trackpoints.end()
@@ -702,7 +702,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
-						this->gisview->vpixmap.draw_line(main_pen, prev_pos, curr_pos);
+						this->gisview->draw_line(main_pen, prev_pos, curr_pos);
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -790,7 +790,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 				if (!use_prev_pos) {
 					prev_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
 				}
-				this->gisview->vpixmap.draw_line(this->track_bg_pen, prev_pos, curr_pos);
+				this->gisview->draw_line(this->track_bg_pen, prev_pos, curr_pos);
 			}
 		skip:
 			prev_pos = curr_pos;
@@ -803,7 +803,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (curr_pos.x != prev_pos.x || curr_pos.y != prev_pos.y) {
-						this->gisview->vpixmap.draw_line(main_pen, prev_pos, curr_pos);
+						this->gisview->draw_line(main_pen, prev_pos, curr_pos);
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
@@ -998,9 +998,9 @@ bool LayerTRWPainter::draw_waypoint_image(Waypoint * wp, const ScreenPos & wp_po
 		const int delta = pen_width / 2;
 		pen.setWidth(pen_width);
 
-		this->gisview->vpixmap.draw_rectangle(pen, wp->drawn_image_rect.adjusted(-delta, -delta, delta, delta));
+		this->gisview->draw_rectangle(pen, wp->drawn_image_rect.adjusted(-delta, -delta, delta, delta));
 	}
-	this->gisview->vpixmap.draw_pixmap(pixmap, wp->drawn_image_rect, QRect(0, 0, w, h));
+	this->gisview->draw_pixmap(pixmap, wp->drawn_image_rect, QRect(0, 0, w, h));
 
 	return true;
 }
@@ -1021,7 +1021,7 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & wp_p
 	if (this->draw_wp_symbols && !wp->symbol_name.isEmpty() && wp->symbol_pixmap) {
 		const int viewport_x = x - wp->symbol_pixmap->width() / 2;
 		const int viewport_y = y - wp->symbol_pixmap->height() / 2;
-		this->gisview->vpixmap.draw_pixmap(*wp->symbol_pixmap, viewport_x, viewport_y);
+		this->gisview->draw_pixmap(*wp->symbol_pixmap, viewport_x, viewport_y);
 
 	} else {
 		/* size - square's width (height), circle's diameter. */
@@ -1030,20 +1030,20 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & wp_p
 
 		switch (this->wp_marker_type) {
 		case GraphicMarker::FilledSquare:
-			this->gisview->vpixmap.fill_rectangle(pen.color(), x - size / 2, y - size / 2, size, size);
+			this->gisview->fill_rectangle(pen.color(), x - size / 2, y - size / 2, size, size);
 			break;
 		case GraphicMarker::Square:
-			this->gisview->vpixmap.draw_rectangle(pen, x - size / 2, y - size / 2, size, size);
+			this->gisview->draw_rectangle(pen, x - size / 2, y - size / 2, size, size);
 			break;
 		case GraphicMarker::Circle:
 			size = 50;
-			this->gisview->vpixmap.draw_ellipse(pen, QPoint(wp_pos.x, wp_pos.y), size / 2, size / 2, true);
+			this->gisview->draw_ellipse(pen, QPoint(wp_pos.x, wp_pos.y), size / 2, size / 2, true);
 			break;
 		case GraphicMarker::X:
 			/* x-markers need additional division of size by two. */
 			size /= 2;
-			this->gisview->vpixmap.draw_line(pen, x - size, y - size, x + size, y + size);
-			this->gisview->vpixmap.draw_line(pen, x - size, y + size, x + size, y - size);
+			this->gisview->draw_line(pen, x - size, y - size, x + size, y + size);
+			this->gisview->draw_line(pen, x - size, y + size, x + size, y - size);
 		default:
 			break;
 		}
@@ -1075,20 +1075,20 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & wp_po
 
 		/* +3/-3: we don't want the background of text overlap too much with symbol of waypoint. */
 		QRectF bounding_rect(label_x + 3, label_y - 3, 300, -30);
-		this->gisview->vpixmap.draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),
-						 this->wp_label_fg_pen,
-						 this->gisview->get_highlight_pen().color(),
-						 bounding_rect,
-						 Qt::AlignBottom | Qt::AlignLeft,
-						 wp->name,
-						 0);
+		this->gisview->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),
+					 this->wp_label_fg_pen,
+					 this->gisview->get_highlight_pen().color(),
+					 bounding_rect,
+					 Qt::AlignBottom | Qt::AlignLeft,
+					 wp->name,
+					 0);
 	} else {
 		/* Draw waypoint's label with regular background color. */
-		this->gisview->vpixmap.draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),
-						  this->wp_label_fg_pen,
-						  label_x,
-						  label_y,
-						  wp->name);
+		this->gisview->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),
+					 this->wp_label_fg_pen,
+					 label_x,
+					 label_y,
+					 wp->name);
 	}
 
 	return;

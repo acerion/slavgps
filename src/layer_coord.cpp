@@ -247,7 +247,7 @@ int get_modulo_seconds(double width_in_seconds)
 		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
 		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
 		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
-			gisview->vpixmap.draw_line((pen), screen_pos_begin, screen_pos_end); \
+			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
 			qDebug() << "kamil A:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
@@ -256,8 +256,8 @@ int get_modulo_seconds(double width_in_seconds)
 		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
 		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
 		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
-			gisview->vpixmap.draw_line((pen), screen_pos_begin, screen_pos_end); \
-			gisview->vpixmap.draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y + 15, text); \
+			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
+			gisview->draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y + 15, text); \
 			qDebug() << "kamil B:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
@@ -266,8 +266,8 @@ int get_modulo_seconds(double width_in_seconds)
 		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
 		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
 		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
-			gisview->vpixmap.draw_line((pen), screen_pos_begin, screen_pos_end); \
-			gisview->vpixmap.draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y, text); \
+			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
+			gisview->draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y, text); \
 			qDebug() << "kamil C:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
@@ -550,8 +550,8 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 	const UTM center = gisview->get_center_coord().get_utm();
 	const double xmpp = gisview->get_viking_scale().get_x();
 	const double ympp = gisview->get_viking_scale().get_y();
-	const int width = gisview->vpixmap.get_width();
-	const int height = gisview->vpixmap.get_height();
+	const int width = gisview->central_get_width();
+	const int height = gisview->central_get_height();
 
 
 	LatLon min, max;
@@ -650,7 +650,7 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 			utm = LatLon::to_utm(lat_lon_top);
 			end.x = ((utm.easting - center.easting) / xmpp) + (width / 2);
 
-			gisview->vpixmap.draw_line(pen, begin, end);
+			gisview->draw_line(pen, begin, end);
 		}
 	}
 
@@ -691,7 +691,7 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 			utm = LatLon::to_utm(lat_lon_right);
 			begin.y = (height / 2) - ((utm.get_northing() - center.get_northing()) / ympp);
 
-			gisview->vpixmap.draw_line(pen, begin, end);
+			gisview->draw_line(pen, begin, end);
 		}
 	}
 #endif

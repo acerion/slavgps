@@ -130,10 +130,10 @@ bool DataSourceGeoCache::have_programs(void)
 void DataSourceGeoCacheDialog::draw_circle_cb(void)
 {
 	if (this->circle_onscreen) {
-		this->gisview->vpixmap.draw_ellipse(this->circle_pen,
-						    QPoint(this->circle_x, this->circle_y),
-						    this->circle_radius, this->circle_radius,
-						    false);
+		this->gisview->draw_ellipse(this->circle_pen,
+					    QPoint(this->circle_x, this->circle_y),
+					    this->circle_radius, this->circle_radius,
+					    false);
 	}
 
 	/* Calculate widgets circle_x and circle_y. */
@@ -151,10 +151,10 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		this->circle_x = circle_center.x;
 		this->circle_y = circle_center.y;
 
-		const int width = this->gisview->vpixmap.get_width();
-		const int vert_center_pixel = this->gisview->vpixmap.get_vert_center_pixel();
-		const int leftmost_pixel  = this->gisview->vpixmap.get_leftmost_pixel();
-		const int rightmost_pixel = this->gisview->vpixmap.get_rightmost_pixel();
+		const int width = this->gisview->central_get_width();
+		const int vert_center_pixel = this->gisview->central_get_y_center_pixel();
+		const int leftmost_pixel  = this->gisview->central_get_leftmost_pixel();
+		const int rightmost_pixel = this->gisview->central_get_rightmost_pixel();
 
 		/* Determine miles per pixel. */
 		const Coord coord1 = this->gisview->screen_pos_to_coord(leftmost_pixel, vert_center_pixel);
@@ -164,7 +164,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		/* This is approximate. */
 		this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
 
-		this->gisview->vpixmap.draw_ellipse(this->circle_pen,
+		this->gisview->draw_ellipse(this->circle_pen,
 						    QPoint(this->circle_x, this->circle_y),
 						    this->circle_radius, this->circle_radius,
 						    false);
@@ -298,10 +298,10 @@ AcquireOptions * DataSourceGeoCacheDialog::create_acquire_options(AcquireContext
 DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 {
 	if (this->circle_onscreen) {
-		this->gisview->vpixmap.draw_ellipse(this->circle_pen,
-						    QPoint(this->circle_x, this->circle_y),
-						    this->circle_radius, this->circle_radius,
-						    false);
+		this->gisview->draw_ellipse(this->circle_pen,
+					    QPoint(this->circle_x, this->circle_y),
+					    this->circle_radius, this->circle_radius,
+					    false);
 		this->gisview->sync();
 	}
 }
@@ -314,6 +314,6 @@ bool DataSourceGeoCacheDialog::circle_is_onscreen(const ScreenPos & circle_cente
 	/* TODO_2_LATER: real calculation. */
 	return circle_center.x > -1000
 		&& circle_center.y > -1000
-		&& circle_center.x < (this->gisview->vpixmap.get_width() + 1000)
-		&& circle_center.y < (this->gisview->vpixmap.get_width() + 1000);
+		&& circle_center.x < (this->gisview->central_get_width() + 1000)
+		&& circle_center.y < (this->gisview->central_get_width() + 1000);
 }

@@ -43,44 +43,78 @@ namespace SlavGPS {
 
 
 
-	class Viewport2D;
-
-
-
-
 	/* Wrapper around pixmap and a painter that paints to the
 	   pixmap.  Simple class providing paint primitives. */
 	class ViewportPixmap : public QWidget {
 		Q_OBJECT
 
-		friend class GisViewport;
-		friend class Viewport2D;
 		friend class GisViewportDecorations;
-		friend class ViewportMargin;
 	public:
-		ViewportPixmap(QWidget * parent = NULL);
+		ViewportPixmap(int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = NULL);
 		~ViewportPixmap();
 
+		enum class MarginPosition {
+			Left,
+			Right,
+			Top,
+			Bottom
+		};
+
+		void paintEvent(QPaintEvent * event);
+
 		void reconfigure(int width, int height);
+
+		/* If a viewport widget already has some non-zero geometry,
+		   you can call this method without arguments. */
+		void reconfigure_drawing_area(int width = 0, int height = 0);
+
+		/* ViewportPixmap buffer management/drawing to screen. */
+		QPixmap get_pixmap(void) const;   /* Get contents of drawing buffer. */
+		void set_pixmap(const QPixmap & pixmap);
+		void sync(void);              /* Draw buffer to window. */
+		void pan_sync(int x_off, int y_off);
+
+		void snapshot_save(void);
+		void snapshot_load(void);
+
+		bool is_ready(void) const;
+
+
+		/* Run this before drawing a line. ViewportPixmap::draw_line() runs it for you. */
+		static void clip_line(int * x1, int * y1, int * x2, int * y2);
+
 
 		/* Returned pixels are in Qt's coordinate system,
 		   where beginning (0,0 point) is in top-left
 		   corner. */
-		int get_leftmost_pixel(void) const;
-		int get_rightmost_pixel(void) const;
-		int get_upmost_pixel(void) const;
-		int get_bottommost_pixel(void) const;
+		int central_get_leftmost_pixel(void) const;
+		int central_get_rightmost_pixel(void) const;
+		int central_get_upmost_pixel(void) const;
+		int central_get_bottommost_pixel(void) const;
 
 		/* Get number of pixel (starting with zero) that is in
 		   center of viewport pixmap, either at the center of
 		   vertical line, or at the center of horizontal
 		   line. */
-		int get_vert_center_pixel(void) const;
-		int get_horiz_center_pixel(void) const;
-		ScreenPos get_center_screen_pos(void) const;
+		int central_get_y_center_pixel(void) const;
+		int central_get_x_center_pixel(void) const;
+		ScreenPos central_get_center_screen_pos(void) const;
 
-		int get_width(void) const;
-		int get_height(void) const;
+		int total_get_width(void) const;
+		int total_get_height(void) const;
+
+		int central_get_width(void) const;
+		int central_get_height(void) const;
+		int left_get_width(void) const;
+		int left_get_height(void) const;
+		int right_get_width(void) const;
+		int right_get_height(void) const;
+		int top_get_width(void) const;
+		int top_get_height(void) const;
+		int bottom_get_width(void) const;
+		int bottom_get_height(void) const;
+
+		QRect central_get_rect(void) const;
 
 		void clear(void);
 
@@ -107,11 +141,45 @@ namespace SlavGPS {
 		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
 
 
+		void margin_draw_text(ViewportPixmap::MarginPosition pos, QFont const & text_font, QPen const & pen, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
+
+		/* Draw a line in central part of viewport.  x/y
+		   coordinates should be in "beginning is in
+		   bottom-left corner" coordinates system. */
+		void central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y);
+
+		/* Draw a crosshair in central part of viewport.  x/y
+		   coordinates should be in "beginning is in bottom
+		   left corner" coordinates system.
+
+		   "Simple" means one horizontal and one vertical line
+		   crossing at given position. */
+		void central_draw_simple_crosshair(const ScreenPos & pos);
+
 
 		bool line_is_outside(int begin_x, int begin_y, int end_x, int end_y);
 
 
 		QPainter & get_painter(void) { return this->painter; }
+
+
+		void set_highlight_usage(bool new_state);
+		bool get_highlight_usage(void) const;
+
+		QPen get_highlight_pen(void) const;
+		void set_highlight_thickness(int thickness);
+
+		void set_highlight_color(const QString & color_name);
+		void set_highlight_color(const QColor & color);
+		const QColor & get_highlight_color(void) const;
+
+
+
+		/* Color/graphics context management. */
+		void set_background_color(const QColor & color);
+		void set_background_color(const QString & color_name);
+		const QColor & get_background_color(void) const;
+
 
 
 
@@ -122,11 +190,36 @@ namespace SlavGPS {
 		bool saved_pixmap_valid;
 
 
-	protected:
-		Viewport2D * parent_viewport = NULL;
+		/* x/y mark lines indicating e.g. current position of cursor in viewport (sort of a crosshair indicator). */
+		QPen marker_pen;
+		/* Generic pen for a generic (other than geographical coordinates) grid. */
+		QPen grid_pen;
 
-		int width = 0;
-		int height = 0;
+
+		/* Properties of text labels drawn on margins of charts (next to each horizontal/vertical grid line). */
+		QPen labels_pen;
+		QFont labels_font;
+
+		QPen background_pen;
+		QColor background_color;
+
+	protected:
+		//Viewport2D * parent_viewport = NULL;
+
+		/* Full width/height, i.e. including margins. */
+		int total_width = 0;
+		int total_height = 0;
+
+		int left_margin = 0;
+		int right_margin = 0;
+		int top_margin = 0;
+		int bottom_margin = 0;
+
+		QPen highlight_pen;
+		QColor highlight_color;
+
+		bool highlight_usage = true;
+
 
 		QPainter painter;
 		QPixmap * pixmap = NULL;
@@ -134,7 +227,7 @@ namespace SlavGPS {
 
 
 	signals:
-		void reconfigured(Viewport2D * viewport);
+		void reconfigured(ViewportPixmap * vpixmap);
 	};
 	QDebug operator<<(QDebug debug, const ViewportPixmap & vpixmap);
 

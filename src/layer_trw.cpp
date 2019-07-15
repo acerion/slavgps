@@ -1621,8 +1621,7 @@ void LayerTRW::centerize_cb(void)
 {
 	Coord coord;
 	if (this->find_center(&coord)) {
-		GisViewport * gisview = ThisApp::get_main_viewport();
-		this->request_new_viewport_center(gisview, coord);
+		this->request_new_viewport_center(ThisApp::get_main_gis_view(), coord);
 	} else {
 		Dialog::info(tr("This layer has no waypoints or trackpoints."), this->get_window());
 	}
@@ -1652,7 +1651,7 @@ void LayerTRW::move_viewport_to_show_all_cb(void) /* Slot. */
 		return;
 	}
 
-	GisViewport * gisview = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_gis_view();
 	if (this->move_viewport_to_show_all(gisview)) {
 		gisview->request_redraw("Redrawing viewport after re-aligning it to show all of TRW Layer");
 	}
@@ -1747,9 +1746,9 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 		if (!wp) {
 			Dialog::error(tr("Waypoint not found in this layer."), this->get_window());
 		} else {
-			ThisApp::get_main_viewport()->set_center_coord(wp->coord);
+			ThisApp::get_main_gis_view()->set_center_coord(wp->coord);
 			this->tree_view->select_and_expose_tree_item(wp);
-			ThisApp::get_main_viewport()->request_redraw("Redrawing items after setting new center in viewport");
+			ThisApp::get_main_gis_view()->request_redraw("Redrawing items after setting new center in viewport");
 
 			break;
 		}
@@ -1794,7 +1793,7 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 
 void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-	GisViewport * gisview = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_gis_view();
 
 	Geonames::create_wikipedia_waypoints(this, gisview->get_bbox(), this->get_window());
 	this->waypoints.recalculate_bbox();
@@ -1898,7 +1897,7 @@ void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
  */
 void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
-	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_viewport()));
+	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
 }
 #endif
 
@@ -1990,7 +1989,7 @@ void LayerTRW::upload_to_gps(TreeItem * sublayer)
 
 
 	/* Apply settings to transfer to the GPS device. */
-	gps_upload_config.transfer.run_transfer(this, trk, ThisApp::get_main_viewport(), false);
+	gps_upload_config.transfer.run_transfer(this, trk, ThisApp::get_main_gis_view(), false);
 }
 
 
@@ -2000,7 +1999,7 @@ void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
 	bool visible_with_parents = false;
 
-	if (this->new_waypoint(ThisApp::get_main_viewport()->get_center_coord(), visible_with_parents, this->get_window())) {
+	if (this->new_waypoint(ThisApp::get_main_gis_view()->get_center_coord(), visible_with_parents, this->get_window())) {
 		this->waypoints.recalculate_bbox();
 		/* We don't have direct access to added waypoint, so
 		   we can't call ::emit_tree_item_changed(). But we
@@ -3255,7 +3254,7 @@ void LayerTRW::trackpoint_properties_show()
 		const Trackpoint * tp = track->get_selected_tp();
 
 		/* Shift up/down to try not to obscure the trackpoint. */
-		const QPoint point_to_expose = SGUtils::coord_to_point(tp->coord, ThisApp::get_main_viewport());
+		const QPoint point_to_expose = SGUtils::coord_to_point(tp->coord, ThisApp::get_main_gis_view());
 		Dialog::move_dialog(this->tpwin, point_to_expose, true);
 
 		this->tpwin_update_dialog_data(track);
@@ -3505,7 +3504,7 @@ void LayerTRW::download_map_along_track_cb(void)
 		VikingScale(1024) };
 
 	LayersPanel * panel = ThisApp::get_layers_panel();
-	const GisViewport * gisview = ThisApp::get_main_viewport();
+	const GisViewport * gisview = ThisApp::get_main_gis_view();
 
 	Track * track = this->get_edited_track();
 	if (!track) {
@@ -3674,7 +3673,7 @@ bool LayerTRW::handle_selection_in_tree(void)
 	g_selected.add_to_set(this);
 
 	/* Set highlight thickness. */
-	ThisApp::get_main_viewport()->set_highlight_thickness(this->get_track_thickness());
+	ThisApp::get_main_gis_view()->set_highlight_thickness(this->get_track_thickness());
 
 	/* Mark for redraw. */
 	return true;

@@ -72,7 +72,6 @@ namespace SlavGPS {
 	class Layer;
 	class LayerTRW;
 	class Toolbox;
-	class Viewport2D;
 	class LayersPanel;
 	class ScreenPos;
 	class DataSource;
@@ -100,7 +99,7 @@ namespace SlavGPS {
 
 		void handle_selection_of_tree_item(const TreeItem & tree_item);
 
-		GisViewport * get_viewport(void);
+		GisViewport * get_main_gis_view(void);
 		LayersPanel * get_items_tree(void);
 		QMenu * get_layer_menu(QMenu * menu);
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
@@ -108,8 +107,6 @@ namespace SlavGPS {
 		StatusBar * get_statusbar(void);
 
 		LayersPanel * items_tree = NULL;
-		Viewport2D * viewport = NULL;
-
 
 		void statusbar_update(StatusBarField field, QString const & message);
 
@@ -322,12 +319,12 @@ namespace SlavGPS {
 		ScreenPos pan_pos; /* Last recorded position of cursor while panning. */
 		ScreenPos delayed_pan_pos; /* Temporary storage. */
 
-
 		QMenuBar * menu_bar = NULL;
 		QToolBar * toolbar = NULL;
 		QDockWidget * panel_dock = NULL;
 		StatusBar * status_bar = NULL;
 		Toolbox * toolbox = NULL;
+		GisViewport * main_gis_vp = NULL;
 
 		QMenu * menu_file = NULL;
 		QMenu * menu_edit = NULL;
@@ -396,7 +393,7 @@ namespace SlavGPS {
 
 		static Window * get_main_window(void);
 		static LayersPanel * get_layers_panel(void);
-		static GisViewport * get_main_viewport(void);
+		static GisViewport * get_main_gis_view(void);
 
 	private:
 		Window * window = NULL;

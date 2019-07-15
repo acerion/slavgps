@@ -766,14 +766,14 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 				}
 
 				int idx = GET_INDEX(change, min_elevation, max_elevation, DEM_N_GRADIENT_COLORS);
-				gisview->vpixmap.fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
+				gisview->fill_rectangle(this->gradients[idx], box_x, box_y, box_width, box_height);
 
 			} else if (this->dem_type == DEM_TYPE_HEIGHT) {
 				int idx = 0; /* Default index for color of 'sea' or for places below the defined mininum. */
 				if (elev > 0 && !below_minimum) {
 					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
-				gisview->vpixmap.fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
+				gisview->fill_rectangle(this->colors[idx], box_x, box_y, box_width, box_height);
 			} else {
 				; /* No other dem type to process. */
 			}
@@ -883,7 +883,7 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-				gisview->vpixmap.fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
+				gisview->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
 			}
 		} /* for y= */
 	} /* for x= */
@@ -904,10 +904,10 @@ void draw_loaded_dem_box(GisViewport * gisview)
 	ScreenPos sp_ne = gisview->coord_to_screen_pos(demne);
 	ScreenPos sp_sw = gisview->coord_to_screen_pos(demsw);
 
-	const int leftmost_pixel   = gisview->vpixmap.get_leftmost_pixel();
-	const int rightmost_pixel  = gisview->vpixmap.get_rightmost_pixel();
-	const int upmost_pixel     = gisview->vpixmap.get_upmost_pixel();
-	const int bottommost_pixel = gisview->vpixmap.get_bottommost_pixel();
+	const int leftmost_pixel   = gisview->central_get_leftmost_pixel();
+	const int rightmost_pixel  = gisview->central_get_rightmost_pixel();
+	const int upmost_pixel     = gisview->central_get_upmost_pixel();
+	const int bottommost_pixel = gisview->central_get_bottommost_pixel();
 
 	if (sp_ne.x > rightmost_pixel) {
 		sp_ne.x = rightmost_pixel;
@@ -925,7 +925,7 @@ void draw_loaded_dem_box(GisViewport * gisview)
 
 	qDebug() << SG_PREFIX_I << "drawing loaded DEM box";
 
-	viewport->vpixmap.draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	viewport->draw_rectangle(black_gc, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 #endif
 
 	return;
@@ -1217,7 +1217,7 @@ void draw_existence_common(GisViewport * gisview, const QPen & pen, const Coord 
 	}
 
 	qDebug() << SG_PREFIX_D << "Drawing existence rectangle for" << cache_file_path;
-	gisview->vpixmap.draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	gisview->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 }
 
 

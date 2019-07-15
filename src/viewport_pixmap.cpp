@@ -38,11 +38,37 @@ using namespace SlavGPS;
 
 #define SG_MODULE "ViewportPixmap"
 
+#define DEFAULT_BACKGROUND_COLOR "#CCCCCC"
+#define DEFAULT_HIGHLIGHT_COLOR "#EEA500" /* Orange. */
 
 
 
-ViewportPixmap::ViewportPixmap(QWidget * parent) : QWidget(parent)
+
+
+ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget * parent) : QWidget(parent)
 {
+	this->left_margin = left;
+	this->right_margin = right;
+	this->top_margin = top;
+	this->bottom_margin = bottom;
+
+	this->marker_pen.setColor(QColor("brown"));
+	this->marker_pen.setWidth(1);
+
+	this->grid_pen.setColor(QColor("dimgray"));
+	this->grid_pen.setWidth(1);
+
+	this->labels_pen.setColor("black");
+	this->labels_font.setFamily("Helvetica");
+	this->labels_font.setPointSize(11);
+
+	this->background_pen.setColor(QString(DEFAULT_BACKGROUND_COLOR));
+	this->background_pen.setWidth(1);
+	this->set_background_color(QString(DEFAULT_BACKGROUND_COLOR));
+
+	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
+	this->highlight_pen.setWidth(1);
+	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
 }
 
 
@@ -97,8 +123,8 @@ void ViewportPixmap::draw_rectangle(const QPen & pen, int upper_left_x, int uppe
 	/* TODO: review this condition. */
 	if (upper_left_x > -border
 	    && upper_left_y > -border
-	    && upper_left_x < this->get_width() + border
-	    && upper_left_y < this->get_height() + border) {
+	    && upper_left_x < this->central_get_width() + border
+	    && upper_left_y < this->central_get_height() + border) {
 
 		this->painter.setPen(pen);
 		this->painter.drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
@@ -117,8 +143,8 @@ void ViewportPixmap::draw_rectangle(const QPen & pen, const QRect & rect)
 	/* TODO: review this condition. */
 	if (rect.x() > -border
 	    && rect.y() > -border
-	    && rect.x() < this->get_width() + border
-	    && rect.y() < this->get_height() + border) {
+	    && rect.x() < this->central_get_width() + border
+	    && rect.y() < this->central_get_height() + border) {
 
 		this->painter.setPen(pen);
 		this->painter.drawRect(rect);
@@ -137,8 +163,8 @@ void ViewportPixmap::fill_rectangle(const QColor & color, int pos_x, int pos_y, 
 	/* TODO: review this condition. */
 	if (pos_x > -border
 	    && pos_y > -border
-	    && pos_x < this->get_width() + border
-	    && pos_y < this->get_height() + border) {
+	    && pos_x < this->central_get_width() + border
+	    && pos_y < this->central_get_height() + border) {
 
 		this->painter.fillRect(pos_x, pos_y, rect_width, rect_height, color);
 	}
@@ -154,8 +180,8 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, int po
 	/* TODO: review this condition. */
 	if (pos_x > -border
 	    && pos_y > -border
-	    && pos_x < this->get_width() + border
-	    && pos_y < this->get_height() + border) {
+	    && pos_x < this->central_get_width() + border
+	    && pos_y < this->central_get_height() + border) {
 
 		this->painter.setPen(pen);
 		this->painter.setFont(text_font);
@@ -349,6 +375,8 @@ void ViewportPixmap::draw_polygon(QPen const & pen, QPoint const * points, int n
 
 void ViewportPixmap::reconfigure(int new_width, int new_height)
 {
+	/* TODO: where do we reconfigure margin sizes? */
+
 	/* We don't handle situation when size of the pixmap doesn't
 	   change.  Such situation will occur rarely, and adding a
 	   code path to handle this special case would bring little
@@ -356,13 +384,13 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 
 	qDebug() << SG_PREFIX_N << this->debug << "vpixmap is being reconfigured with size" << new_width << new_height;
 
-	if (this->width == new_width && this->height == new_height) {
+	if (this->total_width == new_width && this->total_height == new_height) {
 		qDebug() << SG_PREFIX_I << this->debug << "vpixmap not reconfigured: size didn't change";
 		return;
 	}
 
-	this->width = new_width;
-	this->height = new_height;
+	this->total_width = new_width;
+	this->total_height = new_height;
 
 	if (this->pixmap) {
 		qDebug() << SG_PREFIX_I << this->debug << "Deleting old vpixmap";
@@ -374,8 +402,8 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 		delete this->pixmap;
 	}
 
-	qDebug() << SG_PREFIX_I << this->debug << "Creating new vpixmap with size" << this->width << this->height;
-	this->pixmap = new QPixmap(this->width, this->height);
+	qDebug() << SG_PREFIX_I << this->debug << "Creating new vpixmap with size" << this->total_width << this->total_height;
+	this->pixmap = new QPixmap(this->total_width, this->total_height);
 	this->pixmap->fill();
 
 	this->painter.begin(this->pixmap);
@@ -386,11 +414,11 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 		qDebug() << SG_PREFIX_D << this->debug << "Deleting old snapshot buffer";
 		delete this->snapshot_buffer;
 	}
-	qDebug() << SG_PREFIX_I << this->debug << "Creating new snapshot buffer with size" << this->width << this->height;
-	this->snapshot_buffer = new QPixmap(this->width, this->height);
+	qDebug() << SG_PREFIX_I << this->debug << "Creating new snapshot buffer with size" << this->total_width << this->total_height;
+	this->snapshot_buffer = new QPixmap(this->total_width, this->total_height);
 
 	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
-	emit this->reconfigured(this->parent_viewport); /* TODO: maybe emit->this->parent_viewport->some_signal()? */
+	emit this->reconfigured(this); /* TODO: maybe emit->this->parent_viewport->some_signal()? */
 }
 
 
@@ -398,52 +426,123 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 
 QDebug SlavGPS::operator<<(QDebug debug, const ViewportPixmap & vpixmap)
 {
-	debug << "ViewportPixmap:" << vpixmap.debug << "width=" << vpixmap.get_width() << "height=" << vpixmap.get_height();
+	debug << "ViewportPixmap:" << vpixmap.debug << "width=" << vpixmap.central_get_width() << "height=" << vpixmap.central_get_height();
 	return debug;
 }
 
 
 
 
-int ViewportPixmap::get_leftmost_pixel(void) const
+int ViewportPixmap::central_get_leftmost_pixel(void) const
 {
-	return 0;
+	return this->left_margin;
 }
-int ViewportPixmap::get_rightmost_pixel(void) const
+int ViewportPixmap::central_get_rightmost_pixel(void) const
 {
-	return this->width - 1;
+	return this->total_width - this->right_margin - 1;
 }
-int ViewportPixmap::get_upmost_pixel(void) const
+int ViewportPixmap::central_get_upmost_pixel(void) const
 {
-	return 0;
+	return this->top_margin;
 }
-int ViewportPixmap::get_bottommost_pixel(void) const
+int ViewportPixmap::central_get_bottommost_pixel(void) const
 {
-	return this->height - 1;
+	return this->total_height - this->bottom_margin - 1;
 }
-int ViewportPixmap::get_vert_center_pixel(void) const
+
+int ViewportPixmap::central_get_x_center_pixel(void) const
 {
-	return (this->height - 1) / 2;
+	return (this->total_width - this->left_margin - this->right_margin - 1) / 2;
 }
-int ViewportPixmap::get_horiz_center_pixel(void) const
+
+int ViewportPixmap::central_get_y_center_pixel(void) const
 {
-	return (this->width - 1) / 2;
+	return (this->total_height - this->top_margin - this->bottom_margin - 1) / 2;
 }
-int ViewportPixmap::get_width(void) const
+
+int ViewportPixmap::total_get_width(void) const
 {
-	return this->width;
+	return this->total_width;
 }
-int ViewportPixmap::get_height(void) const
+
+int ViewportPixmap::total_get_height(void) const
 {
-	return this->height;
+	return this->total_height;
+}
+
+/**
+   @reviewed-on 2019-07-14
+*/
+int ViewportPixmap::central_get_width(void) const
+{
+	return this->total_width - this->left_margin - this->right_margin;
+}
+
+/**
+   @reviewed-on 2019-07-14
+*/
+int ViewportPixmap::central_get_height(void) const
+{
+	return this->total_height - this->top_margin - this->bottom_margin;
+}
+
+/**
+   @reviewed-on 2019-07-14
+*/
+int ViewportPixmap::left_get_width(void) const
+{
+	return this->left_margin;
+}
+int ViewportPixmap::left_get_height(void) const
+{
+	return this->total_height;
+}
+
+/**
+   @reviewed-on 2019-07-14
+*/
+int ViewportPixmap::right_get_width(void) const
+{
+	return this->right_margin;
+}
+
+int ViewportPixmap::right_get_height(void) const
+{
+	return this->total_height;
+}
+
+int ViewportPixmap::top_get_width(void) const
+{
+	return this->total_width;
+}
+
+/**
+   @reviewed-on 2019-07-14
+*/
+int ViewportPixmap::top_get_height(void) const
+{
+	return this->top_margin;
+}
+
+int ViewportPixmap::bottom_get_width(void) const
+{
+	return this->total_width;
+}
+
+/**
+   @reviewed-on 2019-07-14
+*/
+int ViewportPixmap::bottom_get_height(void) const
+{
+	return this->bottom_margin;
 }
 
 
 
 
-ScreenPos ViewportPixmap::get_center_screen_pos(void) const
+ScreenPos ViewportPixmap::central_get_center_screen_pos(void) const
 {
-	return ScreenPos(this->get_horiz_center_pixel(), this->get_vert_center_pixel());
+	return ScreenPos(this->central_get_x_center_pixel(), this->central_get_y_center_pixel());
 }
 
 
@@ -451,7 +550,7 @@ ScreenPos ViewportPixmap::get_center_screen_pos(void) const
 
 void ViewportPixmap::clear(void)
 {
-	this->painter.eraseRect(0, 0, this->get_width(), this->get_height());
+	this->painter.eraseRect(0, 0, this->total_width, this->total_height); /* TODO: use Qt's method that clears whole widget? */
 }
 
 
@@ -465,10 +564,10 @@ bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int en
 	  "q_" prefix means just that: that values are in Qt's coordinate system.
 	*/
 
-	const int leftmost   = this->get_leftmost_pixel();
-	const int rightmost  = this->get_rightmost_pixel();
-	const int upmost     = this->get_upmost_pixel();
-	const int bottommost = this->get_bottommost_pixel();
+	const int leftmost   = this->central_get_leftmost_pixel();
+	const int rightmost  = this->central_get_rightmost_pixel();
+	const int upmost     = this->central_get_upmost_pixel();
+	const int bottommost = this->central_get_bottommost_pixel();
 
 	if (begin_x < leftmost && end_x < leftmost) {
 		/* Line begins and ends on left side of viewport pixmap. */
@@ -492,4 +591,414 @@ bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int en
 	}
 
 	return false;
+}
+
+
+
+
+void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+{
+#ifdef K_TODO_RESTORE
+	qDebug() << SG_PREFIX_I << "Will draw label" << text;
+	ViewportPixmap * vpixmap = NULL;
+
+	switch (pos) {
+	case ViewportPixmap::MarginPosition::Left:
+		vpixmap = this->left;
+		break;
+	case ViewportPixmap::MarginPosition::Right:
+		vpixmap = this->right;
+		break;
+	case ViewportPixmap::MarginPosition::Top:
+		vpixmap = this->top;
+		break;
+	case ViewportPixmap::MarginPosition::Bottom:
+		vpixmap = this->bottom;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled margin position";
+		break;
+	}
+
+	if (!vpixmap) {
+		qDebug() << SG_PREFIX_E << "No margin vpixmap selected";
+		return;
+	}
+
+
+	vpixmap->painter.setFont(text_font);
+
+	/* "Normalize" bounding rectangles that have negative width or height.
+	   Otherwise the text will be outside of the bounding rectangle. */
+	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
+
+	QRectF text_rect = vpixmap->painter.boundingRect(final_bounding_rect, flags, text);
+	if (text_offset & SG_TEXT_OFFSET_UP) {
+		/* Move boxes a bit up, so that text is right against grid line, not below it. */
+		qreal new_top = text_rect.top() - (text_rect.height() / 2);
+		final_bounding_rect.moveTop(new_top);
+		text_rect.moveTop(new_top);
+	}
+
+	if (text_offset & SG_TEXT_OFFSET_LEFT) {
+		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
+		qreal new_left = text_rect.left() - (text_rect.width() / 2);
+		final_bounding_rect.moveLeft(new_left);
+		text_rect.moveLeft(new_left);
+	}
+
+
+
+#if 1
+	/* Debug. */
+	vpixmap->painter.setPen(QColor("red"));
+	vpixmap->painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
+
+	vpixmap->painter.setPen(QColor("darkgreen"));
+	vpixmap->painter.drawRect(bounding_rect);
+
+	vpixmap->painter.setPen(QColor("red"));
+	vpixmap->painter.drawRect(text_rect);
+#endif
+
+	vpixmap->painter.setPen(pen);
+	vpixmap->painter.drawText(text_rect, flags, text, NULL);
+
+#endif
+}
+
+
+
+
+void ViewportPixmap::central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
+{
+	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
+	if (this->line_is_outside(begin_x, begin_y, end_x, end_y)) {
+		qDebug() << SG_PREFIX_I << "Line" << begin_x << begin_y << end_x << end_y << "is outside of viewport";
+		return;
+	}
+
+	/*** Clipping, yeah! ***/
+	//GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
+
+	const int bottom_pixel = this->central_get_bottommost_pixel();
+
+	/* x/y coordinates are converted here from "beginning in
+	   bottom-left corner" to Qt's "beginning in top-left corner"
+	   coordinate system. */
+	this->painter.setPen(pen);
+	this->painter.drawLine(begin_x, bottom_pixel - begin_y,
+			       end_x,   bottom_pixel - end_y);
+}
+
+
+
+
+/*
+  @pos is a position in viewport's pixmap.
+  The function makes sure that the crosshair is drawn only inside of graph area.
+*/
+void ViewportPixmap::central_draw_simple_crosshair(const ScreenPos & pos)
+{
+	const int rigthmost_pixel = this->central_get_rightmost_pixel();
+	const int bottommost_pixel = this->central_get_bottommost_pixel();
+
+	/* Convert from "beginning in bottom-left corner" to Qt's
+	   "beginning in top-left corner" coordinate system. "q_"
+	   prefix means "Qt's coordinate system". */
+	const int x = pos.x;
+	const int y = bottommost_pixel - pos.y;
+
+	qDebug() << SG_PREFIX_I << "Crosshair at coord" << x << y;
+
+	if (x > rigthmost_pixel || y > bottommost_pixel) {
+		/* Position outside of graph area. */
+		return;
+	}
+
+	this->painter.setPen(this->marker_pen);
+
+	/* Small optimization: use QT's drawing primitives directly.
+	   Remember that (0,0) screen position is in upper-left corner of viewport. */
+
+	this->painter.drawLine(0, y, rigthmost_pixel, y); /* Horizontal line. */
+	this->painter.drawLine(x, 0, x, bottommost_pixel); /* Vertical line. */
+}
+
+
+
+
+void ViewportPixmap::set_background_color(const QString & color_name)
+{
+	this->background_color.setNamedColor(color_name);
+	this->background_pen.setColor(this->background_color);
+}
+
+
+
+
+void ViewportPixmap::set_background_color(const QColor & color)
+{
+	this->background_color = color;
+	this->background_pen.setColor(color);
+}
+
+
+
+
+const QColor & ViewportPixmap::get_background_color(void) const
+{
+	return this->background_color;
+}
+
+
+
+
+void ViewportPixmap::set_highlight_usage(bool new_state)
+{
+	this->highlight_usage = new_state;
+}
+
+
+
+
+bool ViewportPixmap::get_highlight_usage(void) const
+{
+	return this->highlight_usage;
+}
+
+
+
+
+const QColor & ViewportPixmap::get_highlight_color(void) const
+{
+	return this->highlight_color;
+}
+
+
+
+
+void ViewportPixmap::set_highlight_color(const QString & color_name)
+{
+	this->highlight_color.setNamedColor(color_name);
+	this->highlight_pen.setColor(this->highlight_color);
+}
+
+
+
+
+void ViewportPixmap::set_highlight_color(const QColor & color)
+{
+	this->highlight_color = color;
+	this->highlight_pen.setColor(color);
+}
+
+
+
+
+QPen ViewportPixmap::get_highlight_pen(void) const
+{
+	return this->highlight_pen;
+}
+
+
+
+
+void ViewportPixmap::set_highlight_thickness(int w)
+{
+	this->highlight_pen.setWidth(w);
+
+	this->highlight_pen.setCapStyle(Qt::RoundCap);
+	this->highlight_pen.setJoinStyle(Qt::RoundJoin);
+
+#if 0   /* This line style is used by default. */
+	this->highlight_pen.setStyle(Qt::SolidLine);
+#endif
+}
+
+
+
+
+QRect ViewportPixmap::central_get_rect(void) const
+{
+	return QRect(0, 0, this->central_get_width(), this->central_get_height());
+}
+
+
+
+
+void ViewportPixmap::paintEvent(QPaintEvent * ev)
+{
+	qDebug() << SG_PREFIX_I;
+
+	QPainter event_painter(this);
+	event_painter.drawPixmap(0, 0, *this->pixmap);
+
+	return;
+}
+
+
+
+
+QPixmap ViewportPixmap::get_pixmap(void) const
+{
+	return *this->pixmap;
+}
+
+
+
+
+void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
+{
+	if (this->pixmap->size() != new_pixmap.size()) {
+		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: existing pixmap =" << this->pixmap->size() << ", new pixmap =" << new_pixmap.size();
+	} else {
+		this->painter.drawPixmap(0, 0, new_pixmap, 0, 0, 0, 0);
+	}
+}
+
+
+
+
+
+void ViewportPixmap::reconfigure_drawing_area(int new_width, int new_height)
+{
+	if (new_width == 0 && new_height == 0) {
+		qDebug() << SG_PREFIX_I << "Will reconfigure viewport with geometry sizes" << this->geometry().width() << this->geometry().height();
+		this->reconfigure(this->geometry().width(), this->geometry().height());
+	} else {
+		qDebug() << SG_PREFIX_I << "Will reconfigure viewport with specified sizes" << new_width << new_height;
+		this->reconfigure(new_width, new_height);
+	}
+}
+
+
+
+
+void ViewportPixmap::sync(void)
+{
+	qDebug() << SG_PREFIX_I << "sync (will call ->render())";
+	this->render(this->pixmap);
+}
+
+
+
+
+void ViewportPixmap::pan_sync(int x_off, int y_off)
+{
+	qDebug() << SG_PREFIX_I;
+#ifdef K_FIXME_RESTORE
+	int x, y, wid, hei;
+
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->pixmap), 0, 0, x_off, y_off, this->width, this->vpixmap.height);
+
+	if (x_off >= 0) {
+		x = 0;
+		wid = x_off;
+	} else {
+		x = this->width + x_off;
+		wid = -x_off;
+	}
+
+	if (y_off >= 0) {
+		y = 0;
+		hei = y_off;
+	} else {
+		y = this->height + y_off;
+		hei = -y_off;
+	}
+	gtk_widget_queue_draw_area(GTK_WIDGET(this), x, 0, wid, this->height);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this), 0, y, this->width, hei);
+#endif
+}
+
+
+
+
+
+/* Clip functions continually reduce the value by a factor until it is in the acceptable range
+   whilst also scaling the other coordinate value. */
+static void clip_x(int * x1, int * y1, int * x2, int * y2)
+{
+	while (std::abs(*x1) > 32768) {
+		*x1 = *x2 + (0.5 * (*x1 - *x2));
+		*y1 = *y2 + (0.5 * (*y1 - *y2));
+	}
+}
+
+
+
+
+static void clip_y(int * x1, int * y1, int * x2, int * y2)
+{
+	while (std::abs(*y1) > 32767) {
+		*x1 = *x2 + (0.5 * (*x1 - *x2));
+		*y1 = *y2 + (0.5 * (*y1 - *y2));
+	}
+}
+
+
+
+
+/**
+ * @x1: screen coord
+ * @y1: screen coord
+ * @x2: screen coord
+ * @y2: screen coord
+ *
+ * Due to the seemingly undocumented behaviour of gdk_draw_line(), we need to restrict the range of values passed in.
+ * So despite it accepting ints, the effective range seems to be the actually the minimum C int range (2^16).
+ * This seems to be limitations coming from the X Window System.
+ *
+ * See http://www.rahul.net/kenton/40errs.html
+ * ERROR 7. Boundary conditions.
+ * "The X coordinate space is not infinite.
+ *  Most drawing functions limit position, width, and height to 16 bit integers (sometimes signed, sometimes unsigned) of accuracy.
+ *  Because most C compilers use 32 bit integers, Xlib will not complain if you exceed the 16 bit limit, but your results will usually not be what you expected.
+ *  You should be especially careful of this if you are implementing higher level scalable graphics packages."
+ *
+ * This function should be called before calling gdk_draw_line().
+ */
+void ViewportPixmap::clip_line(int * x1, int * y1, int * x2, int * y2)
+{
+	if (*x1 > 32768 || *x1 < -32767) {
+		clip_x(x1, y1, x2, y2);
+	}
+
+	if (*y1 > 32768 || *y1 < -32767) {
+		clip_y(x1, y1, x2, y2);
+	}
+
+	if (*x2 > 32768 || *x2 < -32767) {
+		clip_x(x2, y2, x1, y1);
+	}
+
+	if (*y2 > 32768 || *y2 < -32767) {
+		clip_y(x2, y2, x1, y1);
+	}
+}
+
+
+
+void ViewportPixmap::snapshot_save(void)
+{
+	qDebug() << SG_PREFIX_I << "Save snapshot";
+	*this->snapshot_buffer = *this->pixmap;
+}
+
+
+
+
+void ViewportPixmap::snapshot_load(void)
+{
+	qDebug() << SG_PREFIX_I << "Load snapshot";
+	*this->pixmap = *this->snapshot_buffer;
+}
+
+
+
+
+bool ViewportPixmap::is_ready(void) const
+{
+	return this->pixmap != NULL;
 }

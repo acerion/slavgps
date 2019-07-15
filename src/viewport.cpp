@@ -72,13 +72,6 @@ using namespace SlavGPS;
 
 
 
-#define DEFAULT_BACKGROUND_COLOR "#CCCCCC"
-#define DEFAULT_HIGHLIGHT_COLOR "#EEA500"
-/* Default highlight in orange. */
-
-
-
-
 #define MERCATOR_FACTOR(_mpp_) ((65536.0 / 180 / (_mpp_)) * 256.0)
 /* TODO_LATER: Form of this expression should be optimized for usage in denominator. */
 #define REVERSE_MERCATOR_FACTOR(_mpp_) ((65536.0 / 180 / (_mpp_)) * 256.0)
@@ -108,7 +101,7 @@ double GisViewport::calculate_utm_zone_width(void) const
 
 		/* Get latitude of screen bottom. */
 		UTM utm = this->center_coord.utm;
-		const double center_to_bottom_m = this->get_vpixmap_height_m() / 2;
+		const double center_to_bottom_m = this->central_get_height_m() / 2;
 		utm.shift_northing_by(-center_to_bottom_m);
 		LatLon lat_lon = UTM::to_lat_lon(utm);
 
@@ -130,25 +123,16 @@ double GisViewport::calculate_utm_zone_width(void) const
 
 
 
-const QColor & GisViewport::get_background_color(void) const
-{
-	return this->background_color;
-}
-
-
-
-
-GisViewport::GisViewport(QWidget * parent) : QWidget(parent)
+GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * parent) : ViewportPixmap(left, right, top, bottom, parent)
 {
 	this->window = ThisApp::get_main_window();
-
 
 
 	this->installEventFilter(this);
 
 	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	this->setMinimumSize(200, 300);
-	snprintf(this->vpixmap.debug, sizeof (this->vpixmap.debug), "%s", "center");
+	snprintf(this->debug, sizeof (this->debug), "%s", "center");
 	//this->setMaximumSize(2700, 2700);
 
 	/* We want to constantly update cursor position in
@@ -203,23 +187,9 @@ GisViewport::GisViewport(QWidget * parent) : QWidget(parent)
 
 	this->scale_visibility = true;
 
-	this->labels_pen.setColor("black");
-	this->labels_font.setFamily("Helvetica");
-	this->labels_font.setPointSize(11);
-
-	this->marker_pen.setColor(QColor("brown"));
-	this->marker_pen.setWidth(1);
-
-	this->grid_pen.setColor(QColor("dimgray"));
-	this->grid_pen.setWidth(1);
-
-	this->background_pen.setColor(QString(DEFAULT_BACKGROUND_COLOR));
-	this->background_pen.setWidth(1);
-	this->set_background_color(QString(DEFAULT_BACKGROUND_COLOR));
-
-	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
-	this->highlight_pen.setWidth(1);
-	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
+	this->height_unit = Preferences::get_unit_height();
+	this->distance_unit = Preferences::get_unit_distance();
+	this->speed_unit = Preferences::get_unit_speed();
 }
 
 
@@ -241,122 +211,17 @@ GisViewport::~GisViewport()
 
 
 
-void GisViewport::set_background_color(const QString & color_name)
-{
-	this->background_color.setNamedColor(color_name);
-	this->background_pen.setColor(this->background_color);
-}
-
-
-
-
-void GisViewport::set_background_color(const QColor & color)
-{
-	this->background_color = color;
-	this->background_pen.setColor(color);
-}
-
-
-
-
-const QColor & GisViewport::get_highlight_color(void) const
-{
-	return this->highlight_color;
-}
-
-
-
-
-void GisViewport::set_highlight_color(const QString & color_name)
-{
-	this->highlight_color.setNamedColor(color_name);
-	this->highlight_pen.setColor(this->highlight_color);
-}
-
-
-
-
-void GisViewport::set_highlight_color(const QColor & color)
-{
-	this->highlight_color = color;
-	this->highlight_pen.setColor(color);
-}
-
-
-
-
-QPen GisViewport::get_highlight_pen(void) const
-{
-	return this->highlight_pen;
-}
-
-
-
-
-void GisViewport::set_highlight_thickness(int w)
-{
-	this->highlight_pen.setWidth(w);
-
-	this->highlight_pen.setCapStyle(Qt::RoundCap);
-	this->highlight_pen.setJoinStyle(Qt::RoundJoin);
-
-#if 0   /* This line style is used by default. */
-	this->highlight_pen.setStyle(Qt::SolidLine);
-#endif
-}
-
-
-
-
-void GisViewport::reconfigure_drawing_area(int new_width, int new_height)
-{
-	if (new_width == 0 && new_height == 0) {
-		qDebug() << SG_PREFIX_I << "Will reconfigure vpixmap with geometry sizes" << this->geometry().width() << this->geometry().height();
-		this->vpixmap.reconfigure(this->geometry().width(), this->geometry().height());
-	} else {
-		qDebug() << SG_PREFIX_I << "Will reconfigure vpixmap with specified sizes" << new_width << new_height;
-		this->vpixmap.reconfigure(new_width, new_height);
-	}
-}
-
-
-
-
-QPixmap GisViewport::get_pixmap(void) const
-{
-	return *this->vpixmap.pixmap;
-}
-
-
-
-
-void GisViewport::set_pixmap(const QPixmap & pixmap)
-{
-	if (this->vpixmap.pixmap->size() != pixmap.size()) {
-		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: vpixmap =" << this->vpixmap.pixmap->size() << ", new vpixmap =" << pixmap.size();
-	} else {
-		//QPainter painter(this->vpixmap.pixmap);
-		this->vpixmap.painter.drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
-	}
-}
-
-
-
-
 /**
    \brief Clear the whole viewport
 */
 void GisViewport::clear(void)
 {
-	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->vpixmap;
-	//QPainter painter(this->vpixmap.pixmap);
-	this->vpixmap.clear();
-
+	qDebug() << SG_PREFIX_I << "Clear whole viewport" << this->debug;
+	ViewportPixmap::clear();
 
 	/* Some maps may have been removed, so their logos and/or
 	   attributions/copyrights must be cleared as well. */
 	this->decorations.clear();
-
 }
 
 
@@ -397,21 +262,6 @@ bool GisViewport::get_center_mark_visibility() const
 
 
 
-void GisViewport::set_highlight_usage(bool new_state)
-{
-	this->highlight_usage = new_state;
-}
-
-
-
-
-bool GisViewport::get_highlight_usage(void) const
-{
-	return this->highlight_usage;
-}
-
-
-
 /**
    \brief Enable/Disable display of scale
 */
@@ -426,47 +276,6 @@ void GisViewport::set_scale_visibility(bool new_state)
 bool GisViewport::get_scale_visibility(void) const
 {
 	return this->scale_visibility;
-}
-
-
-
-
-void GisViewport::sync(void)
-{
-	qDebug() << SG_PREFIX_I << "sync (will call ->render())";
-	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->vpixmap.pixmap), 0, 0, 0, 0, this->vpixmap.width, this->vpixmap.height);
-	this->render(this->vpixmap.pixmap);
-}
-
-
-
-
-void GisViewport::pan_sync(int x_off, int y_off)
-{
-	qDebug() << SG_PREFIX_I;
-#ifdef K_FIXME_RESTORE
-	int x, y, wid, hei;
-
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->vpixmap.pixmap), 0, 0, x_off, y_off, this->vpixmap.width, this->vpixmap.height);
-
-	if (x_off >= 0) {
-		x = 0;
-		wid = x_off;
-	} else {
-		x = this->vpixmap.width + x_off;
-		wid = -x_off;
-	}
-
-	if (y_off >= 0) {
-		y = 0;
-		hei = y_off;
-	} else {
-		y = this->vpixmap.height + y_off;
-		hei = -y_off;
-	}
-	gtk_widget_queue_draw_area(GTK_WIDGET(this), x, 0, wid, this->vpixmap.height);
-	gtk_widget_queue_draw_area(GTK_WIDGET(this), 0, y, this->vpixmap.width, hei);
-#endif
 }
 
 
@@ -908,13 +717,13 @@ sg_ret GisViewport::get_corners_for_zone(Coord & coord_ul, Coord & coord_br, int
 
 	/* And now we offset the two coordinates:
 	   we move the coordinates from center to one of the two corners. */
-	const double center_to_top_m = this->get_vpixmap_height_m() / 2;
-	const double center_to_left_m = this->get_vpixmap_width_m() / 2;
+	const double center_to_top_m = this->central_get_height_m() / 2;
+	const double center_to_left_m = this->central_get_width_m() / 2;
 	coord_ul.utm.shift_northing_by(center_to_top_m);
 	coord_ul.utm.shift_easting_by(-center_to_left_m);
 
-	const double center_to_bottom_m = this->get_vpixmap_height_m() / 2;
-	const double center_to_right_m = this->get_vpixmap_width_m() / 2;
+	const double center_to_bottom_m = this->central_get_height_m() / 2;
+	const double center_to_right_m = this->central_get_width_m() / 2;
 	coord_br.utm.shift_northing_by(-center_to_bottom_m);
 	coord_br.utm.shift_easting_by(center_to_right_m);
 
@@ -950,8 +759,8 @@ int GisViewport::get_leftmost_zone(void) const
 		return 0;
 	}
 
-	const Coord coord = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel(),
-						      this->vpixmap.get_upmost_pixel()); /* Second argument shouldn't really matter if we are getting "leftmost" zone. */
+	const Coord coord = this->screen_pos_to_coord(this->central_get_leftmost_pixel(),
+						      this->central_get_upmost_pixel()); /* Second argument shouldn't really matter if we are getting "leftmost" zone. */
 	return coord.utm.get_zone();
 }
 
@@ -964,17 +773,9 @@ int GisViewport::get_rightmost_zone(void) const
 		return 0;
 	}
 
-	const Coord coord = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel(),
-						      this->vpixmap.get_upmost_pixel()); /* Second argument shouldn't really matter if we are getting "rightmost" zone. */
+	const Coord coord = this->screen_pos_to_coord(this->central_get_rightmost_pixel(),
+						      this->central_get_upmost_pixel()); /* Second argument shouldn't really matter if we are getting "rightmost" zone. */
 	return coord.utm.get_zone();
-}
-
-
-
-
-QRect GisViewport::get_rect(void) const
-{
-	return QRect(0, 0, this->vpixmap.get_width(), this->vpixmap.get_height());
 }
 
 
@@ -987,23 +788,23 @@ Coord GisViewport::screen_pos_to_coord(ScreenPosition screen_pos) const
 
 	switch (screen_pos) {
 	case ScreenPosition::UpperLeft:
-		pos_x = this->vpixmap.get_leftmost_pixel();
-		pos_y = this->vpixmap.get_upmost_pixel();;
+		pos_x = this->central_get_leftmost_pixel();
+		pos_y = this->central_get_upmost_pixel();;
 		break;
 
 	case ScreenPosition::UpperRight:
-		pos_x = this->vpixmap.get_rightmost_pixel();
-		pos_y = this->vpixmap.get_upmost_pixel();
+		pos_x = this->central_get_rightmost_pixel();
+		pos_y = this->central_get_upmost_pixel();
 		break;
 
 	case ScreenPosition::BottomLeft:
-		pos_x = this->vpixmap.get_leftmost_pixel();
-		pos_y = this->vpixmap.get_bottommost_pixel();
+		pos_x = this->central_get_leftmost_pixel();
+		pos_y = this->central_get_bottommost_pixel();
 		break;
 
 	case ScreenPosition::BottomRight:
-		pos_x = this->vpixmap.get_rightmost_pixel();
-		pos_y = this->vpixmap.get_bottommost_pixel();
+		pos_x = this->central_get_rightmost_pixel();
+		pos_y = this->central_get_bottommost_pixel();
 		break;
 
 	default:
@@ -1024,11 +825,11 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
 
-	/* Distance of pixel specified by pos_x/pos_y from vpixmap's
+	/* Distance of pixel specified by pos_x/pos_y from viewport's
 	   central pixel.  TODO: verify location of pos_x and pos_y in
 	   these equations. */
-	const int delta_horiz_pixels = pos_x - this->vpixmap.get_horiz_center_pixel();
-	const int delta_vert_pixels = this->vpixmap.get_vert_center_pixel() - pos_y;
+	const int delta_horiz_pixels = pos_x - this->central_get_x_center_pixel();
+	const int delta_vert_pixels = this->central_get_y_center_pixel() - pos_y;
 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
@@ -1125,9 +926,9 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 
 		case GisViewportDrawMode::Expedia:
 			Expedia::screen_pos_to_lat_lon(coord.lat_lon, pos_x, pos_y, this->center_coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP,
-						       /* TODO: make sure that this is ok, that we don't need to use get_width()/get_height() here. */
-						       this->vpixmap.get_horiz_center_pixel(),
-						       this->vpixmap.get_vert_center_pixel());
+						       /* TODO: make sure that this is ok, that we don't need to use central_get_width()/get_height() here. */
+						       this->central_get_x_center_pixel(),
+						       this->central_get_y_center_pixel());
 			break;
 
 		case GisViewportDrawMode::Mercator:
@@ -1193,8 +994,8 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
 
-	const int horiz_center_pixel = this->vpixmap.get_horiz_center_pixel();
-	const int vert_center_pixel = this->vpixmap.get_vert_center_pixel();
+	const int horiz_center_pixel = this->central_get_x_center_pixel();
+	const int vert_center_pixel = this->central_get_y_center_pixel();
 
 	if (coord_in.get_coord_mode() != this->coord_mode) {
 		/* The intended use of the function is that coord_in
@@ -1275,165 +1076,6 @@ ScreenPos GisViewport::coord_to_screen_pos(const Coord & coord_in) const
 
 
 
-/* Clip functions continually reduce the value by a factor until it is in the acceptable range
-   whilst also scaling the other coordinate value. */
-static void clip_x(int * x1, int * y1, int * x2, int * y2)
-{
-	while (std::abs(*x1) > 32768) {
-		*x1 = *x2 + (0.5 * (*x1 - *x2));
-		*y1 = *y2 + (0.5 * (*y1 - *y2));
-	}
-}
-
-
-
-
-static void clip_y(int * x1, int * y1, int * x2, int * y2)
-{
-	while (std::abs(*y1) > 32767) {
-		*x1 = *x2 + (0.5 * (*x1 - *x2));
-		*y1 = *y2 + (0.5 * (*y1 - *y2));
-	}
-}
-
-
-
-
-/**
- * @x1: screen coord
- * @y1: screen coord
- * @x2: screen coord
- * @y2: screen coord
- *
- * Due to the seemingly undocumented behaviour of gdk_draw_line(), we need to restrict the range of values passed in.
- * So despite it accepting ints, the effective range seems to be the actually the minimum C int range (2^16).
- * This seems to be limitations coming from the X Window System.
- *
- * See http://www.rahul.net/kenton/40errs.html
- * ERROR 7. Boundary conditions.
- * "The X coordinate space is not infinite.
- *  Most drawing functions limit position, width, and height to 16 bit integers (sometimes signed, sometimes unsigned) of accuracy.
- *  Because most C compilers use 32 bit integers, Xlib will not complain if you exceed the 16 bit limit, but your results will usually not be what you expected.
- *  You should be especially careful of this if you are implementing higher level scalable graphics packages."
- *
- * This function should be called before calling gdk_draw_line().
- */
-void GisViewport::clip_line(int * x1, int * y1, int * x2, int * y2)
-{
-	if (*x1 > 32768 || *x1 < -32767) {
-		clip_x(x1, y1, x2, y2);
-	}
-
-	if (*y1 > 32768 || *y1 < -32767) {
-		clip_y(x1, y1, x2, y2);
-	}
-
-	if (*x2 > 32768 || *x2 < -32767) {
-		clip_x(x2, y2, x1, y1);
-	}
-
-	if (*y2 > 32768 || *y2 < -32767) {
-		clip_y(x2, y2, x1, y1);
-	}
-}
-
-
-
-void Viewport2D::central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
-{
-	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
-	if (this->central->vpixmap.line_is_outside(begin_x, begin_y, end_x, end_y)) {
-		qDebug() << SG_PREFIX_I << "Line" << begin_x << begin_y << end_x << end_y << "is outside of viewport";
-		return;
-	}
-
-	/*** Clipping, yeah! ***/
-	//GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
-
-	const int bottom_pixel = this->central->vpixmap.get_bottommost_pixel();
-
-	/* x/y coordinates are converted here from "beginning in
-	   bottom-left corner" to Qt's "beginning in top-left corner"
-	   coordinate system. */
-	this->central->vpixmap.painter.setPen(pen);
-	this->central->vpixmap.painter.drawLine(begin_x, bottom_pixel - begin_y,
-						end_x,   bottom_pixel - end_y);
-}
-
-
-
-
-void Viewport2D::margin_draw_text(ViewportMargin::Position pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
-{
-	qDebug() << SG_PREFIX_I << "Will draw label" << text;
-	ViewportPixmap * vpixmap = NULL;
-
-	switch (pos) {
-	case ViewportMargin::Position::Left:
-		vpixmap = this->left;
-		break;
-	case ViewportMargin::Position::Right:
-		vpixmap = this->right;
-		break;
-	case ViewportMargin::Position::Top:
-		vpixmap = this->top;
-		break;
-	case ViewportMargin::Position::Bottom:
-		vpixmap = this->bottom;
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled margin position";
-		break;
-	}
-
-	if (!vpixmap) {
-		qDebug() << SG_PREFIX_E << "No margin vpixmap selected";
-		return;
-	}
-
-
-	vpixmap->painter.setFont(text_font);
-
-	/* "Normalize" bounding rectangles that have negative width or height.
-	   Otherwise the text will be outside of the bounding rectangle. */
-	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
-
-	QRectF text_rect = vpixmap->painter.boundingRect(final_bounding_rect, flags, text);
-	if (text_offset & SG_TEXT_OFFSET_UP) {
-		/* Move boxes a bit up, so that text is right against grid line, not below it. */
-		qreal new_top = text_rect.top() - (text_rect.height() / 2);
-		final_bounding_rect.moveTop(new_top);
-		text_rect.moveTop(new_top);
-	}
-
-	if (text_offset & SG_TEXT_OFFSET_LEFT) {
-		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
-		qreal new_left = text_rect.left() - (text_rect.width() / 2);
-		final_bounding_rect.moveLeft(new_left);
-		text_rect.moveLeft(new_left);
-	}
-
-
-
-#if 1
-	/* Debug. */
-	vpixmap->painter.setPen(QColor("red"));
-	vpixmap->painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
-
-	vpixmap->painter.setPen(QColor("darkgreen"));
-	vpixmap->painter.drawRect(bounding_rect);
-
-	vpixmap->painter.setPen(QColor("red"));
-	vpixmap->painter.drawRect(text_rect);
-#endif
-
-	vpixmap->painter.setPen(pen);
-	vpixmap->painter.drawText(text_rect, flags, text, NULL);
-}
-
-
-
-
 void GisViewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 {
 	if (!BBOX_INTERSECT(bbox, this->get_bbox())) {
@@ -1453,7 +1095,7 @@ void GisViewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 		sp_ne.y = 0;
 	}
 
-	this->vpixmap.draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	this->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
 
 	return;
 }
@@ -1524,24 +1166,6 @@ Layer * GisViewport::get_trigger(void) const
 
 
 
-void GisViewport::snapshot_save(void)
-{
-	qDebug() << SG_PREFIX_I << "Save snapshot";
-	*this->vpixmap.snapshot_buffer = *this->vpixmap.pixmap;
-}
-
-
-
-
-void GisViewport::snapshot_load(void)
-{
-	qDebug() << SG_PREFIX_I << "Load snapshot";
-	*this->vpixmap.pixmap = *this->vpixmap.snapshot_buffer;
-}
-
-
-
-
 void GisViewport::set_half_drawn(bool new_half_drawn)
 {
 	this->half_drawn = new_half_drawn;
@@ -1564,10 +1188,10 @@ LatLonBBox GisViewport::get_bbox(int margin_left, int margin_right, int margin_t
 	   bbox, and that get() methods used here return values in
 	   Qt's coordinate system where beginning of the coordinate
 	   system is in upper-left corner.  */
-	Coord coord_ul = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,   this->vpixmap.get_upmost_pixel() + margin_top);
-	Coord coord_ur = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() - margin_right, this->vpixmap.get_upmost_pixel() + margin_top);
-	Coord coord_bl = this->screen_pos_to_coord(this->vpixmap.get_leftmost_pixel() + margin_left,   this->vpixmap.get_bottommost_pixel() - margin_bottom);
-	Coord coord_br = this->screen_pos_to_coord(this->vpixmap.get_rightmost_pixel() - margin_right, this->vpixmap.get_bottommost_pixel() - margin_bottom);
+	Coord coord_ul = this->screen_pos_to_coord(this->central_get_leftmost_pixel() + margin_left,   this->central_get_upmost_pixel() + margin_top);
+	Coord coord_ur = this->screen_pos_to_coord(this->central_get_rightmost_pixel() - margin_right, this->central_get_upmost_pixel() + margin_top);
+	Coord coord_bl = this->screen_pos_to_coord(this->central_get_leftmost_pixel() + margin_left,   this->central_get_bottommost_pixel() - margin_bottom);
+	Coord coord_br = this->screen_pos_to_coord(this->central_get_rightmost_pixel() - margin_right, this->central_get_bottommost_pixel() - margin_bottom);
 
 	coord_ul.recalculate_to_mode(CoordMode::LatLon);
 	coord_ur.recalculate_to_mode(CoordMode::LatLon);
@@ -1603,24 +1227,6 @@ sg_ret GisViewport::add_attribution(QString const & attribution)
 sg_ret GisViewport::add_logo(const GisViewportLogo & logo)
 {
 	return this->decorations.add_logo(logo);
-}
-
-
-
-
-void GisViewport::paintEvent(QPaintEvent * ev)
-{
-	qDebug() << SG_PREFIX_I;
-
-	QPainter painter(this);
-
-	painter.drawPixmap(0, 0, *this->vpixmap.pixmap);
-
-	painter.setPen(Qt::blue);
-	painter.setFont(QFont("Arial", 30));
-	painter.drawText(this->rect(), Qt::AlignCenter, "SlavGPS");
-
-	return;
 }
 
 
@@ -1709,9 +1315,9 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 
 	const Qt::KeyboardModifiers modifiers = ev->modifiers();
 
-	/* TODO: using get_width() and get_height() will give us only 99%-correct results. */
-	const int w = this->vpixmap.get_width();
-	const int h = this->vpixmap.get_height();
+	/* TODO: using central_get_width() and central_get_height() will give us only 99%-correct results. */
+	const int w = this->central_get_width();
+	const int h = this->central_get_height();
 	const bool scroll_up = angle.y() > 0;
 
 
@@ -1743,7 +1349,7 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		}
 		break;
 	case Qt::NoModifier: {
-		const ScreenPos center_pos(this->vpixmap.get_horiz_center_pixel(), this->vpixmap.get_vert_center_pixel());
+		const ScreenPos center_pos(this->central_get_x_center_pixel(), this->central_get_y_center_pixel());
 		const ScreenPos event_pos(ev->x(), ev->y());
 		const ZoomOperation zoom_operation = SlavGPS::wheel_event_to_zoom_operation(ev);
 
@@ -1852,10 +1458,10 @@ GisViewport * GisViewport::create_scaled_viewport(Window * a_window, int target_
 
 	qDebug() << SG_PREFIX_I << "Expected image size =" << target_width << target_height;
 
-	GisViewport * scaled_viewport = new GisViewport(a_window);
+	GisViewport * scaled_viewport = new GisViewport(0, 0, 0, 0, a_window); /* TODO: get proper values of margins in constructor call. */
 
-	const int orig_width = this->vpixmap.get_width();
-	const int orig_height = this->vpixmap.get_height();
+	const int orig_width = this->central_get_width();
+	const int orig_height = this->central_get_height();
 
 	const double orig_factor = 1.0 * orig_width / orig_height;
 	const double target_factor = 1.0 * target_width / target_height;
@@ -1893,7 +1499,7 @@ GisViewport * GisViewport::create_scaled_viewport(Window * a_window, int target_
 
 
 
-	snprintf(scaled_viewport->vpixmap.debug, sizeof (scaled_viewport->vpixmap.debug), "%s", "Scaled Viewport Pixmap");
+	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled Viewport Pixmap");
 
 	/* Notice that we configure size of the print viewport using
 	   size of scaled source, not size of target device (i.e. not
@@ -1958,12 +1564,12 @@ bool GisViewport::print_cb(QPrinter * printer)
 	QPainter printer_painter;
 	printer_painter.begin(printer);
 	QPoint paint_begin; /* Beginning of rectangle, into which we will paint in target device. */
-	//paint_begin.setX((target_width / 2.0) - (scaled_viewport->vpixmap.width / 2.0));
-	//paint_begin.setY((target_height / 2.0) - (scaled_viewport->vpixmap.height / 2.0));
+	//paint_begin.setX((target_width / 2.0) - (scaled_viewport->width / 2.0));
+	//paint_begin.setY((target_height / 2.0) - (scaled_viewport->height / 2.0));
 	paint_begin.setX(0);
 	paint_begin.setY(0);
 
-	printer_painter.drawPixmap(paint_begin, *scaled_viewport->vpixmap.pixmap);
+	printer_painter.drawPixmap(paint_begin, *scaled_viewport->pixmap);
 	printer_painter.end();
 
 	delete scaled_viewport;
@@ -1973,40 +1579,6 @@ bool GisViewport::print_cb(QPrinter * printer)
 
 
 	return true;
-}
-
-
-
-
-/*
-  @pos is a position in viewport's pixmap.
-  The function makes sure that the crosshair is drawn only inside of graph area.
-*/
-void Viewport2D::central_draw_simple_crosshair(const ScreenPos & pos)
-{
-	const int rigthmost_pixel = this->central->vpixmap.get_rightmost_pixel();
-	const int bottommost_pixel = this->central->vpixmap.get_bottommost_pixel();
-
-	/* Convert from "beginning in bottom-left corner" to Qt's
-	   "beginning in top-left corner" coordinate system. "q_"
-	   prefix means "Qt's coordinate system". */
-	const int x = pos.x;
-	const int y = bottommost_pixel - pos.y;
-
-	qDebug() << SG_PREFIX_I << "Crosshair at coord" << x << y;
-
-	if (x > rigthmost_pixel || y > bottommost_pixel) {
-		/* Position outside of graph area. */
-		return;
-	}
-
-	this->central->vpixmap.painter.setPen(this->central->marker_pen);
-
-	/* Small optimization: use QT's drawing primitives directly.
-	   Remember that (0,0) screen position is in upper-left corner of viewport. */
-
-	this->central->vpixmap.painter.drawLine(0, y, rigthmost_pixel, y); /* Horizontal line. */
-	this->central->vpixmap.painter.drawLine(x, 0, x, bottommost_pixel); /* Vertical line. */
 }
 
 
@@ -2212,14 +1784,6 @@ void GisViewport::dropEvent(QDropEvent * event)
 
 
 
-bool GisViewport::is_ready(void) const
-{
-	return this->vpixmap.pixmap != NULL;
-}
-
-
-
-
 Window * GisViewport::get_window(void) const
 {
 	return this->window;
@@ -2228,247 +1792,12 @@ Window * GisViewport::get_window(void) const
 
 
 
-Viewport2D::Viewport2D(int l, int r, int t, int b, QWidget * parent) : QWidget(parent)
-{
-	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-	this->height_unit = Preferences::get_unit_height();
-	this->distance_unit = Preferences::get_unit_distance();
-	this->speed_unit = Preferences::get_unit_speed();
-
-	this->grid = new QGridLayout();
-	this->grid->setSpacing(0); /* Space between contents of grid. */
-	this->grid->setContentsMargins(0, 0, 0, 0); /* Outermost margins of a grid. */
-
-	QLayout * old = this->layout();
-	delete old;
-	qDeleteAll(this->children());
-	this->setLayout(this->grid);
-
-	this->create_central();
-	this->create_margins(l, r, t, b);
-}
-
-
-
-
-void Viewport2D::create_central(void)
-{
-	if (this->central) {
-		qDebug() << SG_PREFIX_I << "Removing old central widget";
-		this->grid->removeWidget(this->central);
-		delete this->central;
-	}
-
-	this->central = new GisViewport(this);
-	this->central->vpixmap.parent_viewport = this;
-
-	this->grid->addWidget(this->central, 1, 1);
-}
-
-
-
-
-void Viewport2D::create_margins(int l, int r, int t, int b)
-{
-	if (this->left) {
-		qDebug() << SG_PREFIX_I << "Removing old left margin";
-		this->grid->removeWidget(this->left);
-		delete this->left;
-	}
-	if (this->right) {
-		qDebug() << SG_PREFIX_I << "Removing old right margin";
-		this->grid->removeWidget(this->right);
-		delete this->right;
-	}
-	if (this->top) {
-		qDebug() << SG_PREFIX_I << "Removing old top margin";
-		this->grid->removeWidget(this->top);
-		delete this->top;
-	}
-	if (this->bottom) {
-		qDebug() << SG_PREFIX_I << "Removing old bottom margin";
-		this->grid->removeWidget(this->bottom);
-		delete this->bottom;
-	}
-
-	this->left   = new ViewportMargin(ViewportMargin::Position::Left,   l);
-	this->right  = new ViewportMargin(ViewportMargin::Position::Right,  r);
-	this->top    = new ViewportMargin(ViewportMargin::Position::Top,    t);
-	this->bottom = new ViewportMargin(ViewportMargin::Position::Bottom, b);
-
-	this->grid->addWidget(this->left,    1, 0);
-	this->grid->addWidget(this->right,   1, 2);
-	this->grid->addWidget(this->top,     0, 1);
-	this->grid->addWidget(this->bottom,  2, 1);
-
-	this->left->parent_viewport   = this;
-	this->right->parent_viewport  = this;
-	this->top->parent_viewport    = this;
-	this->bottom->parent_viewport = this;
-
-	return;
-}
-
-
-
-
-void ViewportMargin::paintEvent(QPaintEvent * ev)
-{
-	qDebug() << SG_PREFIX_I;
-
-	QPainter event_painter(this);
-	event_painter.drawPixmap(0, 0, *this->pixmap);
-
-	return;
-}
-
-
-
-
-void ViewportMargin::resizeEvent(QResizeEvent * ev)
-{
-	qDebug() << SG_PREFIX_I;
-
-	this->reconfigure(this->geometry().width(), this->geometry().height());
-	this->painter.setPen(this->border_pen);
-
-	switch (this->position) {
-	case ViewportMargin::Position::Left:
-		this->painter.drawText(this->rect(), Qt::AlignCenter, "left");
-		this->painter.drawLine(this->geometry().width() - 1, 0,
-					this->geometry().width() - 1, this->geometry().height() - 1);
-		break;
-
-	case ViewportMargin::Position::Right:
-		this->painter.drawLine(1, 1,
-					1, this->geometry().height() - 1);
-		this->painter.drawText(this->rect(), Qt::AlignCenter, "right");
-		break;
-
-	case ViewportMargin::Position::Top:
-		this->painter.drawLine(0,                            this->geometry().height() - 1,
-					this->geometry().width() - 1, this->geometry().height() - 1);
-		this->painter.drawText(this->rect(), Qt::AlignCenter, "top");
-		break;
-
-	case ViewportMargin::Position::Bottom:
-		this->painter.drawLine(1,                            1,
-					this->geometry().width() - 1, 1);
-		this->painter.drawText(this->rect(), Qt::AlignCenter, "bottom");
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled margin position";
-		break;
-	}
-
-	return;
-}
-
-
-
-
-ViewportMargin::ViewportMargin(ViewportMargin::Position pos, int main_size, QWidget * parent) : ViewportPixmap(parent)
-{
-	this->position = pos;
-	this->size = main_size;
-
-	this->border_pen.setColor(QColor("black"));
-	this->border_pen.setWidth(2);
-
-	switch (this->position) {
-	case ViewportMargin::Position::Left:
-		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-		this->setMinimumSize(size, 10);
-		snprintf(this->debug, sizeof (this->debug), "%s", "left");
-		break;
-
-	case ViewportMargin::Position::Right:
-		this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-		this->setMinimumSize(size, 10);
-		snprintf(this->debug, sizeof (this->debug), "%s", "right");
-		break;
-
-	case ViewportMargin::Position::Top:
-		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-		this->setMinimumSize(10, size);
-		snprintf(this->debug, sizeof (this->debug), "%s", "top");
-		break;
-
-	case ViewportMargin::Position::Bottom:
-		this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-		this->setMinimumSize(10, size);
-		snprintf(this->debug, sizeof (this->debug), "%s", "bottom");
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled margin position";
-		break;
-	}
-}
-
-
-
-
-int Viewport2D::central_get_width(void) const
-{
-	return this->central ? this->central->vpixmap.get_width() : 0;
-}
-
-int Viewport2D::central_get_height(void) const
-{
-	return this->central ? this->central->vpixmap.get_height() : 0;
-}
-
-int Viewport2D::left_get_width(void) const
-{
-	return this->left ? this->left->get_width() : 0;
-}
-
-int Viewport2D::left_get_height(void) const
-{
-	return this->left ? this->left->get_height() : 0;
-}
-
-int Viewport2D::right_get_width(void) const
-{
-	return this->right ? this->right->get_width() : 0;
-}
-
-int Viewport2D::right_get_height(void) const
-{
-	return this->right ? this->right->get_height() : 0;
-}
-
-int Viewport2D::top_get_width(void) const
-{
-	return this->top ? this->top->get_width() : 0;
-}
-
-int Viewport2D::top_get_height(void) const
-{
-	return this->top ? this->top->get_height() : 0;
-}
-
-int Viewport2D::bottom_get_width(void) const
-{
-	return this->bottom ? this->bottom->get_width() : 0;
-}
-
-int Viewport2D::bottom_get_height(void) const
-{
-	return this->bottom ? this->bottom->get_height() : 0;
-}
-
-
-
-
 sg_ret GisViewport::get_cursor_pos_cbl(QMouseEvent * ev, ScreenPos & screen_pos) const
 {
-	const int leftmost   = this->vpixmap.get_leftmost_pixel();
-	const int rightmost  = this->vpixmap.get_rightmost_pixel();
-	const int upmost     = this->vpixmap.get_upmost_pixel();
-	const int bottommost = this->vpixmap.get_bottommost_pixel();
+	const int leftmost   = this->central_get_leftmost_pixel();
+	const int rightmost  = this->central_get_rightmost_pixel();
+	const int upmost     = this->central_get_upmost_pixel();
+	const int bottommost = this->central_get_bottommost_pixel();
 
 	const QPoint position = this->mapFromGlobal(QCursor::pos());
 
@@ -2508,17 +1837,17 @@ sg_ret GisViewport::get_cursor_pos_cbl(QMouseEvent * ev, ScreenPos & screen_pos)
 
 
 
-double GisViewport::get_vpixmap_height_m(void) const
+double GisViewport::central_get_height_m(void) const
 {
-	return this->vpixmap.get_height() * this->viking_scale.y;
+	return this->central_get_height() * this->viking_scale.y;
 }
 
 
 
 
-double GisViewport::get_vpixmap_width_m(void) const
+double GisViewport::central_get_width_m(void) const
 {
-	return this->vpixmap.get_width() * this->viking_scale.x;
+	return this->central_get_width() * this->viking_scale.x;
 }
 
 

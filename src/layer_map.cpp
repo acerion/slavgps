@@ -1131,7 +1131,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 				tile_geometry.dest_y -= (tile_geometry.height / 2);
 
 				qDebug() << SG_PREFIX_I << "Calling draw_pixmap()";
-				gisview->vpixmap.draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
+				gisview->draw_pixmap(tile_geometry.pixmap, tile_geometry.dest_x, tile_geometry.dest_y, tile_geometry.begin_x, tile_geometry.begin_y, tile_geometry.width, tile_geometry.height);
 			}
 		}
 	} else {
@@ -1194,7 +1194,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 					const TileGeometry found_tile = this->find_tile(tile_iter, tile_geometry, pixmap_scale, map_type_string, scale_factor);
 					if (!found_tile.pixmap.isNull()) {
 						qDebug() << SG_PREFIX_I << "Calling draw_pixmap to draw found tile";
-						gisview->vpixmap.draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
+						gisview->draw_pixmap(found_tile.pixmap, found_tile.dest_x, found_tile.dest_y, found_tile.begin_x, found_tile.begin_y, found_tile.width, found_tile.height);
 					}
 				}
 
@@ -1222,8 +1222,8 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
 {
 	/* Draw single grid lines across the whole screen. */
-	const int viewport_width = gisview->vpixmap.get_width();
-	const int viewport_height = gisview->vpixmap.get_height();
+	const int viewport_width = gisview->central_get_width();
+	const int viewport_height = gisview->central_get_height();
 	const int base_viewport_x = viewport_x - (tile_width / 2);
 	const int base_viewport_y = viewport_y - (tile_height / 2);
 
@@ -1232,7 +1232,7 @@ void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x
 		/* Using 'base_viewport_y as a third arg,
 		   instead of zero, causes drawing only whole
 		   tiles on top of a map. */
-		gisview->vpixmap.draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
+		gisview->draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
 		viewport_x += tile_width;
 	}
 
@@ -1241,7 +1241,7 @@ void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x
 		/* Using 'base_viewport_x as a second arg,
 		   instead of zero, causes drawing only whole
 		   tiles on left size of a map. */
-		gisview->vpixmap.draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
+		gisview->draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
 		viewport_y += tile_height;
 	}
 }
@@ -1476,10 +1476,10 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 		return ToolStatus::Ignored;
 	}
 
-	const int pixel_u = this->gisview->vpixmap.get_upmost_pixel();
-	const int pixel_r = this->gisview->vpixmap.get_rightmost_pixel();
-	const int pixel_b = this->gisview->vpixmap.get_bottommost_pixel();
-	const int pixel_l = this->gisview->vpixmap.get_leftmost_pixel();
+	const int pixel_u = this->gisview->central_get_upmost_pixel();
+	const int pixel_r = this->gisview->central_get_rightmost_pixel();
+	const int pixel_b = this->gisview->central_get_bottommost_pixel();
+	const int pixel_l = this->gisview->central_get_leftmost_pixel();
 
 	if (event->button() == Qt::LeftButton) {
 		const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
@@ -1581,7 +1581,7 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_click(Layer * _layer, QM
 
 void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 {
-	GisViewport * gisview = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_main_gis_view();
 
 	const Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
 	const Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
@@ -1777,7 +1777,7 @@ int DownloadMethodsAndZoomsDialog::get_larger_zoom_idx(void) const
  */
 void LayerMap::download_all_cb(void)
 {
-	GisViewport * gisview = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_main_gis_view();
 
 	/* I don't think we should allow users to hammer the servers too much...
 	   Deliberately not allowing lowest zoom levels.
@@ -2123,6 +2123,6 @@ void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info,
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-		gisview->vpixmap.draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
+		gisview->draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
 	}
 }

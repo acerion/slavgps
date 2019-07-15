@@ -815,8 +815,8 @@ void LayerTRWTracks::move_viewport_to_show_all_cb(void) /* Slot. */
 	this->recalculate_bbox();
 
 	if (n_items > 0) {
-		ThisApp::get_main_viewport()->set_bbox(this->get_bbox());
-		ThisApp::get_main_viewport()->request_redraw("Re-align viewport to show all tracks or routes");
+		ThisApp::get_main_gis_view()->set_bbox(this->get_bbox());
+		ThisApp::get_main_gis_view()->request_redraw("Re-align viewport to show all tracks or routes");
 	}
 }
 

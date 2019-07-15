@@ -175,12 +175,12 @@ Window::Window()
 	this->create_actions();
 	this->toolbox = new Toolbox(this);
 	this->create_ui();
-	g_this_app.set(this, this->items_tree, this->viewport->central); /* Calling it again, this time with non-NULL layers panel and viewport. */
+	g_this_app.set(this, this->items_tree, this->main_gis_vp); /* Calling it again, this time with non-NULL layers panel and viewport. */
 
 
 	/* Own signals. */
-	connect(this->viewport, SIGNAL (list_of_center_coords_changed(void)), this, SLOT (center_changed_cb(void)));
-	connect(this->viewport, SIGNAL (center_coord_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
+	connect(this->main_gis_vp, SIGNAL (list_of_center_coords_changed(void)), this, SLOT (center_changed_cb(void)));
+	connect(this->main_gis_vp, SIGNAL (center_coord_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
 	connect(this, SIGNAL (center_coord_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
 
@@ -195,15 +195,15 @@ Window::Window()
 
 
 	// Signals from GTK
-	QObject::connect(this->viewport, SIGNAL("expose_event"), this, SLOT (draw_sync_cb));
-	QObject::connect(this->viewport, SIGNAL("drawing_area_reconfigured"), this, SLOT (window_configure_event));
-	gtk_widget_add_events(this->viewport, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
+	QObject::connect(this->main_gis_vp, SIGNAL("expose_event"), this, SLOT (draw_sync_cb));
+	QObject::connect(this->main_gis_vp, SIGNAL("drawing_area_reconfigured"), this, SLOT (window_configure_event));
+	gtk_widget_add_events(this->main_gis_vp, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
 
 	/* This signal appears to be already handled by GisViewport::wheelEvent(). */
-	QObject::connect(this->viewport, SIGNAL("scroll_event"), this, SLOT (draw_scroll_cb));
+	QObject::connect(this->main_gis_vp, SIGNAL("scroll_event"), this, SLOT (draw_scroll_cb));
 
-	QObject::connect(this->viewport, SIGNAL("button_press_event"), this, SLOT (draw_click_cb(QMouseEvent *)));
-	QObject::connect(this->viewport, SIGNAL("button_release_event"), this, SLOT (draw_release_cb(QMouseEvent *)));
+	QObject::connect(this->main_gis_vp, SIGNAL("button_press_event"), this, SLOT (draw_click_cb(QMouseEvent *)));
+	QObject::connect(this->main_gis_vp, SIGNAL("button_release_event"), this, SLOT (draw_release_cb(QMouseEvent *)));
 
 	QObject::connect(this->layers_tree, SIGNAL("delete_layer"), this, SLOT (vik_window_clear_highlight_cb));
 
@@ -303,7 +303,7 @@ Window::Window()
 	}
 
 	/* Drag and Drop of files are accepted only onto the viewport, nowhere else */
-	this->viewport->setAcceptDrops(true);
+	this->main_gis_vp->setAcceptDrops(true);
 
 
 	/* Set the default tool + mode. */
@@ -325,7 +325,7 @@ Window::~Window()
 	Background::remove_window(this);
 
 	window_list.remove(this);
-	delete this->viewport;
+	delete this->main_gis_vp;
 	delete this->items_tree;
 }
 
@@ -338,9 +338,9 @@ void Window::create_layout()
 	this->addToolBar(this->toolbar);
 
 
-	this->viewport = new Viewport2D(10, 20, 30, 40, this);
-	qDebug() << SG_PREFIX_I << "Created Viewport with center's size:" << this->viewport->central_get_height() << this->viewport->central_get_width();
-	this->setCentralWidget(this->viewport);
+	this->main_gis_vp = new GisViewport(10, 20, 30, 40, this);
+	qDebug() << SG_PREFIX_I << "Created Viewport with center's size:" << this->main_gis_vp->central_get_height() << this->main_gis_vp->central_get_width();
+	this->setCentralWidget(this->main_gis_vp);
 
 
 	this->panel_dock = new QDockWidget(tr("Layers"), this);
@@ -486,7 +486,7 @@ void Window::create_actions(void)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (import_kmz_file_cb(void)));
 #endif
 
-			ExternalToolDataSource::add_menu_items(this->submenu_file_acquire, this->get_viewport());
+			ExternalToolDataSource::add_menu_items(this->submenu_file_acquire, this->main_gis_vp);
 		}
 
 
@@ -825,7 +825,7 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_to);
 
 
-		QMenu * zoom_submenu = create_zoom_submenu(this->viewport->central->get_viking_scale(), tr("&Zoom"), this->menu_view);
+		QMenu * zoom_submenu = create_zoom_submenu(this->main_gis_vp->get_viking_scale(), tr("&Zoom"), this->menu_view);
 		this->menu_view->addMenu(zoom_submenu);
 		connect(zoom_submenu, SIGNAL(triggered (QAction *)), this, SLOT (zoom_level_selected_cb(QAction *)));
 
@@ -938,7 +938,7 @@ static void draw_sync_cb(Window * window)
 void Window::draw_sync()
 {
 	qDebug() << SG_PREFIX_I << "Sync begin";
-	//this->viewport->sync();
+	//this->main_gis_vp->sync();
 	qDebug() << SG_PREFIX_I << "Sync end";
 	this->update_status_bar_on_redraw();
 }
@@ -948,7 +948,7 @@ void Window::draw_sync()
 
 void Window::update_status_bar_on_redraw(void)
 {
-	const QString scale = this->viewport->central->get_viking_scale().pretty_print(this->viewport->central->get_coord_mode());
+	const QString scale = this->main_gis_vp->get_viking_scale().pretty_print(this->main_gis_vp->get_coord_mode());
 
 	qDebug() << SG_PREFIX_I << "Viking scale is" << scale;
 	this->status_bar->set_message(StatusBarField::Zoom, scale);
@@ -966,13 +966,13 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	qDebug() << SG_PREFIX_I << "Clicked \"layer new\" for layer type" << Layer::get_type_ui_label(layer_type);
 
 
-	Layer * layer = Layer::construct_layer(layer_type, this->viewport->central, true);
+	Layer * layer = Layer::construct_layer(layer_type, this->main_gis_vp, true);
 	if (layer) {
-		this->items_tree->add_layer(layer, this->viewport->central->get_coord_mode());
+		this->items_tree->add_layer(layer, this->main_gis_vp->get_coord_mode());
 
-		//this->viewport->viewport->reconfigure_drawing_area();
+		//this->main_gis_vp->reconfigure_drawing_area();
 		qDebug() << SG_PREFIX_I << "Calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
-		layer->draw_tree_item(this->viewport->central, false, false);
+		layer->draw_tree_item(this->main_gis_vp, false, false);
 
 		qDebug() << SG_PREFIX_I << "Will call draw_tree_items()";
 		this->draw_tree_items();
@@ -988,43 +988,43 @@ void Window::draw_tree_items(void)
 	qDebug() << "\n";
 	qDebug() << SG_PREFIX_I;
 
-	if (!this->viewport->central->is_ready()) {
+	if (!this->main_gis_vp->is_ready()) {
 		/* Viewport may not be ready during early stages of application's life. */
 		return;
 	}
 
 #ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
-	this->trigger_center = this->viewport->viewport->get_center_coord();
+	this->trigger_center = this->main_gis_vp->get_center_coord();
 	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
-	Layer * old_trigger = this->viewport->viewport->get_trigger();
+	Layer * old_trigger = this->main_gis_vp->get_trigger();
 
 	if (!new_trigger) {
 		; /* Do nothing -- have to redraw everything. */
 	} else if ((old_trigger != new_trigger)
 		   || (old_center != this->trigger_center)
 		   || (new_trigger->type == LayerType::Aggregate)) {
-		this->viewport->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
+		this->main_gis_vp->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
-		this->viewport->viewport->set_half_drawn(true);
+		this->main_gis_vp->set_half_drawn(true);
 	}
 #endif
 
 
-	this->viewport->central->clear();
+	this->main_gis_vp->clear();
 
 	/* Main layer drawing.  This is a standard drawing of items in
 	   main viewport, so allow highlight. */
-	this->items_tree->draw_tree_items(this->viewport->central, true, false);
+	this->items_tree->draw_tree_items(this->main_gis_vp, true, false);
 
 	/* Other viewport decoration items on top if they are enabled/in use. */
-	this->viewport->central->draw_decorations();
+	this->main_gis_vp->draw_decorations();
 
 	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
-	this->viewport->central->update();
+	this->main_gis_vp->update();
 
-	this->viewport->central->set_half_drawn(false); /* Just in case. */
+	this->main_gis_vp->set_half_drawn(false); /* Just in case. */
 
 	this->draw_sync();
 }
@@ -1053,9 +1053,9 @@ void Window::handle_selection_of_tree_item(const TreeItem & tree_item)
 
 
 
-GisViewport * Window::get_viewport()
+GisViewport * Window::get_main_gis_view(void)
 {
-	return this->viewport->central;
+	return this->main_gis_vp;
 }
 
 
@@ -1108,8 +1108,8 @@ void Window::center_changed_cb(void) /* Slot. */
 
 	/* TODO_2_LATER: see if this comment should be implemented or not:
 	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
-	this->qa_previous_location->setEnabled(this->viewport->central->back_available());
-	this->qa_next_location->setEnabled(this->viewport->central->forward_available());
+	this->qa_previous_location->setEnabled(this->main_gis_vp->back_available());
+	this->qa_next_location->setEnabled(this->main_gis_vp->forward_available());
 }
 
 
@@ -1151,7 +1151,7 @@ void Window::create_ui(void)
 	{
 		QActionGroup * group = new QActionGroup(this);
 		group->setObjectName("online_services");
-		ExternalTools::add_action_items(group, this->get_viewport());
+		ExternalTools::add_action_items(group, this->main_gis_vp);
 
 		QMenu * submenu_online_services = this->menu_tools->addMenu(tr("Online Services"));
 		submenu_online_services->addActions(group->actions());
@@ -1161,7 +1161,7 @@ void Window::create_ui(void)
 	/* Menu Tools -> Generic tools;
 	   Toolbar -> Generic Tools. */
 	{
-		LayerToolContainer * tools = GenericTools::create_tools(this, this->viewport->central);
+		LayerToolContainer * tools = GenericTools::create_tools(this, this->main_gis_vp);
 
 		QActionGroup * tools_group = this->toolbox->add_tools(tools);
 
@@ -1210,7 +1210,7 @@ void Window::create_ui(void)
 			   tools require Window and Viewport
 			   variables, which may not be available at that time. */
 
-			LayerToolContainer * tools = Layer::get_interface(type)->create_tools(this, this->viewport->central);
+			LayerToolContainer * tools = Layer::get_interface(type)->create_tools(this, this->main_gis_vp);
 			if (!tools) {
 				/* Either error, or given layer type has no layer-specific tools. */
 				continue;
@@ -1269,9 +1269,9 @@ void Window::layer_tool_cb(QAction * qa)
 		if (NULL == tool) {
 			qDebug() << SG_PREFIX_E << "Failed to get tool with tool id =" << new_tool_id;
 			/* Fallback cursor. */
-			this->viewport->central->setCursor(QCursor(Qt::ArrowCursor));
+			this->main_gis_vp->setCursor(QCursor(Qt::ArrowCursor));
 		} else {
-			this->viewport->central->setCursor(tool->cursor_release);
+			this->main_gis_vp->setCursor(tool->cursor_release);
 		}
 		this->display_tool_name();
 	}
@@ -1312,7 +1312,7 @@ void Window::pan_move(QMouseEvent * ev)
 
 		this->pan_move_in_progress = true;
 		this->pan_pos = ScreenPos(ev->x(), ev->y());
-		this->viewport->central->request_redraw("pan move");
+		this->main_gis_vp->request_redraw("pan move");
 	}
 }
 
@@ -1323,8 +1323,8 @@ void Window::pan_move(QMouseEvent * ev)
    to pan action */
 sg_ret Window::pan_move_update_viewport(const QMouseEvent * ev)
 {
-	const int center_x = this->viewport->central->vpixmap.get_horiz_center_pixel();
-	const int center_y = this->viewport->central->vpixmap.get_vert_center_pixel();
+	const int center_x = this->main_gis_vp->central_get_x_center_pixel();
+	const int center_y = this->main_gis_vp->central_get_y_center_pixel();
 
 	/* By how much a center of viewport was moved by panning? */
 	const int pan_delta_x = ev->x() - this->pan_pos.x;
@@ -1333,7 +1333,7 @@ sg_ret Window::pan_move_update_viewport(const QMouseEvent * ev)
 	if (pan_delta_x != 0 || pan_delta_y != 0) {
 		/* "Move a screen pixel that is delta x/y from center
 		   of viewport, into a center of viewport. */
-		return this->viewport->central->set_center_coord(center_x - pan_delta_x, center_y - pan_delta_y);
+		return this->main_gis_vp->set_center_coord(center_x - pan_delta_x, center_y - pan_delta_y);
 	} else {
 		/* There was no movement. */
 		return sg_ret::ok;
@@ -1365,7 +1365,7 @@ void Window::pan_release(QMouseEvent * ev)
 #endif
 			do_draw = false;
 		} else {
-			this->viewport->central->set_center_coord(this->pan_pos);
+			this->main_gis_vp->set_center_coord(this->pan_pos);
 		}
 	} else {
 		this->pan_move_update_viewport(ev);
@@ -1373,7 +1373,7 @@ void Window::pan_release(QMouseEvent * ev)
 
 	this->pan_off();
 	if (do_draw) {
-		this->viewport->central->request_redraw("pan release");
+		this->main_gis_vp->request_redraw("pan release");
 	}
 }
 
@@ -1467,7 +1467,7 @@ void Window::menu_copy_centre_cb(void)
 	QString first;
 	QString second;
 
-	const Coord coord = this->viewport->central->get_center_coord();
+	const Coord coord = this->main_gis_vp->get_center_coord();
 
 	bool full_format = false;
 	(void) ApplicationState::get_boolean(VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT, &full_format);
@@ -1498,7 +1498,7 @@ void Window::map_cache_flush_cb(void)
 
 void Window::set_default_location_cb(void)
 {
-	const LatLon current_center_lat_lon = this->viewport->central->get_center_coord().get_lat_lon();
+	const LatLon current_center_lat_lon = this->main_gis_vp->get_center_coord().get_lat_lon();
 
 	/* Push center coordinate values to Preferences */
 	Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_GENERAL "default_latitude"), SGVariant((double) current_center_lat_lon.lat));
@@ -1632,11 +1632,11 @@ void Window::closeEvent(QCloseEvent * ev)
 void Window::goto_default_location_cb(void)
 {
 	const LatLon lat_lon = LatLon(Preferences::get_default_lat(), Preferences::get_default_lon());
-	if (sg_ret::ok != this->viewport->central->set_center_coord(lat_lon)) {
+	if (sg_ret::ok != this->main_gis_vp->set_center_coord(lat_lon)) {
 		qDebug() << SG_PREFIX_E << "Failed to set center location from" << lat_lon;
 		return;
 	}
-	this->viewport->central->request_redraw("go to default location");
+	this->main_gis_vp->request_redraw("go to default location");
 }
 
 
@@ -1644,8 +1644,8 @@ void Window::goto_default_location_cb(void)
 
 void Window::goto_location_cb()
 {
-	if (GoTo::goto_location(this, this->viewport->central)) {
-		this->viewport->central->request_redraw("go to location");
+	if (GoTo::goto_location(this, this->main_gis_vp)) {
+		this->main_gis_vp->request_redraw("go to location");
 	}
 }
 
@@ -1654,11 +1654,11 @@ void Window::goto_location_cb()
 
 void Window::goto_latlon_cb(void)
 {
-	if (sg_ret::ok != GoTo::goto_latlon(this, this->viewport->central)) {
+	if (sg_ret::ok != GoTo::goto_latlon(this, this->main_gis_vp)) {
 		qDebug() << SG_PREFIX_E << "Failed to go to lat/lon";
 		return;
 	}
-	this->viewport->central->request_redraw("go to latlon");
+	this->main_gis_vp->request_redraw("go to latlon");
 }
 
 
@@ -1666,11 +1666,11 @@ void Window::goto_latlon_cb(void)
 
 void Window::goto_utm_cb(void)
 {
-	if (sg_ret::ok != GoTo::goto_utm(this, this->viewport->central)) {
+	if (sg_ret::ok != GoTo::goto_utm(this, this->main_gis_vp)) {
 		qDebug() << SG_PREFIX_E << "Failed to go to lat/lon";
 		return;
 	}
-	this->viewport->central->request_redraw("go to utm");
+	this->main_gis_vp->request_redraw("go to utm");
 }
 
 
@@ -1678,7 +1678,7 @@ void Window::goto_utm_cb(void)
 
 void Window::goto_previous_location_cb(void)
 {
-	const bool changed = this->viewport->central->go_back();
+	const bool changed = this->main_gis_vp->go_back();
 
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
@@ -1686,7 +1686,7 @@ void Window::goto_previous_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->viewport->central->request_redraw("go to previous location");
+		this->main_gis_vp->request_redraw("go to previous location");
 	}
 }
 
@@ -1695,7 +1695,7 @@ void Window::goto_previous_location_cb(void)
 
 void Window::goto_next_location_cb(void)
 {
-	bool changed = this->viewport->central->go_forward();
+	bool changed = this->main_gis_vp->go_forward();
 
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
@@ -1703,7 +1703,7 @@ void Window::goto_next_location_cb(void)
 	this->center_changed_cb();
 
 	if (changed) {
-		this->viewport->central->request_redraw("go to next location");
+		this->main_gis_vp->request_redraw("go to next location");
 	}
 }
 
@@ -1732,7 +1732,7 @@ void Window::set_scale_visibility_cb(bool new_state)
 {
 	if (this->qa_view_scale_visibility->isChecked() != new_state) {
 		this->qa_view_scale_visibility->setChecked(new_state);
-		this->viewport->central->set_scale_visibility(new_state);
+		this->main_gis_vp->set_scale_visibility(new_state);
 		this->draw_tree_items();
 	}
 }
@@ -1744,7 +1744,7 @@ void Window::set_center_mark_visibility_cb(bool new_state)
 {
 	if (this->qa_view_center_mark_visibility->isChecked() != new_state) {
 		this->qa_view_center_mark_visibility->setChecked(new_state);
-		this->viewport->central->set_center_mark_visibility(new_state);
+		this->main_gis_vp->set_center_mark_visibility(new_state);
 		this->draw_tree_items();
 	}
 }
@@ -1755,7 +1755,7 @@ void Window::set_highlight_usage_cb(bool new_state)
 {
 	if (this->qa_view_highlight_usage->isChecked() != new_state) {
 		this->qa_view_highlight_usage->setChecked(new_state);
-		this->viewport->central->set_highlight_usage(new_state);
+		this->main_gis_vp->set_highlight_usage(new_state);
 		this->draw_tree_items();
 	}
 }
@@ -1811,17 +1811,17 @@ void Window::zoom_cb(void)
 	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
 		qDebug() << SG_PREFIX_D << "Zoom In";
 		debug_msg = "zoom in";
-		this->viewport->central->zoom_in();
+		this->main_gis_vp->zoom_in();
 	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
 		qDebug() << SG_PREFIX_D << "Zoom Out";
 		debug_msg = "zoom out";
-		this->viewport->central->zoom_out();
+		this->main_gis_vp->zoom_out();
 	} else {
 		qDebug() << SG_PREFIX_E << "Invalid zoom key sequence" << seq;
 		return;
 	}
 
-	this->viewport->central->request_redraw(debug_msg);
+	this->main_gis_vp->request_redraw(debug_msg);
 }
 
 
@@ -1829,11 +1829,11 @@ void Window::zoom_cb(void)
 
 void Window::zoom_to_cb(void)
 {
-	VikingScale viking_scale = this->viewport->central->get_viking_scale();
+	VikingScale viking_scale = this->main_gis_vp->get_viking_scale();
 
 	if (GisViewportZoomDialog::custom_zoom_dialog(/* in/out */ viking_scale, this)) {
-		this->viewport->central->set_viking_scale(viking_scale);
-		this->viewport->central->request_redraw("zoom to...");
+		this->main_gis_vp->set_viking_scale(viking_scale);
+		this->main_gis_vp->request_redraw("zoom to...");
 	}
 }
 
@@ -2015,7 +2015,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 	bool restore_original_filename = false;
 
 	LayerAggregate * agg = this->items_tree->get_top_layer();
-	this->file_load_status = VikFile::load(agg, this->viewport->central, new_document_full_path);
+	this->file_load_status = VikFile::load(agg, this->main_gis_vp, new_document_full_path);
 	switch (this->file_load_status.code) {
 	case LoadStatus::Code::ReadFailure:
 		Dialog::error(tr("The file you requested could not be opened."), this);
@@ -2045,31 +2045,31 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 				this->set_current_document_full_path(new_document_full_path);
 			}
 
-			QAction * drawmode_action = this->get_drawmode_action(this->viewport->central->get_draw_mode());
+			QAction * drawmode_action = this->get_drawmode_action(this->main_gis_vp->get_draw_mode());
 			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
 			drawmode_action->setChecked(true);
 			this->only_updating_coord_mode_ui = false;
 
 
-			this->items_tree->change_coord_mode(this->viewport->central->get_coord_mode());
+			this->items_tree->change_coord_mode(this->main_gis_vp->get_coord_mode());
 
 			/* Slightly long winded methods to align loaded viewport settings with the UI. */
-			bool vp_state_scale = this->viewport->central->get_scale_visibility();
+			bool vp_state_scale = this->main_gis_vp->get_scale_visibility();
 			bool ui_state_scale = this->qa_view_scale_visibility->isChecked();
 			if (vp_state_scale != ui_state_scale) {
-				this->viewport->central->set_scale_visibility(!vp_state_scale);
+				this->main_gis_vp->set_scale_visibility(!vp_state_scale);
 				this->set_scale_visibility_cb(!vp_state_scale);
 			}
-			bool vp_state_centermark = this->viewport->central->get_center_mark_visibility();
+			bool vp_state_centermark = this->main_gis_vp->get_center_mark_visibility();
 			bool ui_state_centermark = this->qa_view_center_mark_visibility->isChecked();
 			if (vp_state_centermark != ui_state_centermark) {
-				this->viewport->central->set_center_mark_visibility(!vp_state_centermark);
+				this->main_gis_vp->set_center_mark_visibility(!vp_state_centermark);
 				this->set_center_mark_visibility_cb(!vp_state_centermark);
 			}
-			bool vp_state_highlight = this->viewport->central->get_highlight_usage();
+			bool vp_state_highlight = this->main_gis_vp->get_highlight_usage();
 			bool ui_state_highlight = this->qa_view_highlight_usage->isChecked();
 			if (vp_state_highlight != ui_state_highlight) {
-				this->viewport->central->set_highlight_usage(!vp_state_highlight);
+				this->main_gis_vp->set_highlight_usage(!vp_state_highlight);
 				this->set_highlight_usage_cb(!vp_state_highlight);
 			}
 		}
@@ -2218,7 +2218,7 @@ void Window::update_recent_files(QString const & file_full_path, const QString &
 void Window::set_busy_cursor()
 {
 	this->setCursor(Qt::WaitCursor);
-	this->viewport->central->setCursor(Qt::WaitCursor);
+	this->main_gis_vp->setCursor(Qt::WaitCursor);
 }
 
 
@@ -2237,7 +2237,7 @@ void Window::clear_busy_cursor()
 	   4. go through export procedure,
 	   5. notice that viewport still has "busy" cursor. */
 
-	//this->viewport->central->setCursor(this->viewport->viewport->viewport_cursor);
+	//this->main_gis_vp->setCursor(this->main_gis_vp->viewport_cursor);
 }
 
 
@@ -2333,7 +2333,7 @@ void LocatorJob::run(void)
 {
 	LatLon lat_lon;
 	QString name;
-	int ans = GoTo::where_am_i(this->window->viewport->central, lat_lon, name);
+	int ans = GoTo::where_am_i(this->window->get_main_gis_view(), lat_lon, name);
 
 	const bool end_job = this->set_progress_state(1.0);
 	if (end_job) {
@@ -2353,9 +2353,9 @@ void LocatorJob::run(void)
 			zoom = 2048.0;
 		}
 
-		this->window->viewport->central->set_viking_scale(zoom);
-		this->window->viewport->central->set_center_coord(lat_lon, false);
-		this->window->viewport->central->request_redraw("determine location");
+		this->window->get_main_gis_view()->set_viking_scale(zoom);
+		this->window->get_main_gis_view()->set_center_coord(lat_lon, false);
+		this->window->get_main_gis_view()->request_redraw("determine location");
 
 		this->window->statusbar_update(StatusBarField::Info, QObject::tr("Location found: %1").arg(name));
 	} else {
@@ -2438,7 +2438,7 @@ void Window::open_window(const QStringList & file_full_paths)
 
 void Window::show_centers_cb() /* Slot. */
 {
-	this->viewport->central->show_center_coords(this);
+	this->main_gis_vp->show_center_coords(this);
 }
 
 
@@ -2485,7 +2485,7 @@ void Window::acquire_handler(DataSource * data_source)
 		mode = DataSourceMode::CreateNewLayer;
 	}
 
-	AcquireContext acquire_context(this, this->viewport->central, this->items_tree->get_top_layer(), this->items_tree->get_selected_layer());
+	AcquireContext acquire_context(this, this->main_gis_vp, this->items_tree->get_top_layer(), this->items_tree->get_selected_layer());
 	Acquire::acquire_from_source(data_source, mode, acquire_context);
 }
 
@@ -2547,7 +2547,7 @@ void Window::acquire_from_gc_cb(void)
 		return;
 	}
 
-	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_viewport()));
+	this->acquire_handler(new DataSourceGeoCache(ThisApp::get_main_gis_view()));
 }
 #endif
 
@@ -2584,7 +2584,7 @@ void Window::acquire_from_url_cb(void)
 
 void Window::draw_viewport_to_image_file_cb(void)
 {
-	ViewportToImage vti(this->get_viewport(), ViewportToImage::SaveMode::File, this);
+	ViewportToImage vti(this->main_gis_vp, ViewportToImage::SaveMode::File, this);
 
 	if (!vti.run_dialog(tr("Save Viewport to Image File"))) {
 		return;
@@ -2603,7 +2603,7 @@ void Window::draw_viewport_to_image_file_cb(void)
 
 void Window::draw_viewport_to_image_dir_cb(void)
 {
-	ViewportToImage vti(this->get_viewport(), ViewportToImage::SaveMode::Directory, this);
+	ViewportToImage vti(this->main_gis_vp, ViewportToImage::SaveMode::Directory, this);
 	if (!vti.run_dialog(tr("Save Viewport to Images in Directory"))) {
 		return;
 	}
@@ -2623,7 +2623,7 @@ void Window::draw_viewport_to_image_dir_cb(void)
 #ifdef HAVE_ZIP_H
 void Window::draw_viewport_to_kmz_file_cb(void)
 {
-	if (this->viewport->viewport->get_coord_mode() == CoordMode::UTM) {
+	if (this->main_gis_vp->get_coord_mode() == CoordMode::UTM) {
 		Dialog::error(tr("This feature is not available in UTM mode"));
 		return;
 	}
@@ -2647,23 +2647,23 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	   track, waypoint etc...). */
 
 	/* Remove some viewport overlays as these aren't useful in KMZ file. */
-	bool has_xhair = this->viewport->viewport->get_center_mark_visibility();
+	bool has_xhair = this->main_gis_vp->get_center_mark_visibility();
 	if (has_xhair) {
-		this->viewport->viewport->set_center_mark_visibility(false);
+		this->main_gis_vp->set_center_mark_visibility(false);
 	}
-	bool has_scale = this->viewport->viewport->get_scale_visibility();
+	bool has_scale = this->main_gis_vp->get_scale_visibility();
 	if (has_scale) {
-		this->viewport->viewport->set_scale_visibility(false);
+		this->main_gis_vp->set_scale_visibility(false);
 	}
 
 	vti.save_to_destination(destination_full_path);
 
 	if (has_xhair) {
-		this->viewport->viewport->set_center_mark_visibility(true);
+		this->main_gis_vp->set_center_mark_visibility(true);
 	}
 
 	if (has_scale) {
-		this->viewport->viewport->set_scale_visibility(true);
+		this->main_gis_vp->set_scale_visibility(true);
 	}
 
 	if (has_xhair || has_scale) {
@@ -2677,7 +2677,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 
 void Window::print_cb(void)
 {
-	a_print(this, this->viewport->central);
+	a_print(this, this->main_gis_vp);
 }
 
 
@@ -2692,12 +2692,12 @@ void Window::zoom_level_selected_cb(QAction * qa) /* Slot. */
 	double requested_scale = pow(2, level - 5); /* TODO: encapsulate? */
 
 	/* But has it really changed? */
-	const double current_scale = this->viewport->central->get_viking_scale().get_x();
+	const double current_scale = this->main_gis_vp->get_viking_scale().get_x();
 	if (current_scale != 0.0 && requested_scale != current_scale) {
-		this->viewport->central->set_viking_scale(requested_scale);
+		this->main_gis_vp->set_viking_scale(requested_scale);
 
 		/* Ask to draw updated viewport. */
-		this->viewport->central->request_redraw("zoom level selected");
+		this->main_gis_vp->request_redraw("zoom level selected");
 	}
 }
 
@@ -2818,10 +2818,10 @@ void Window::change_coord_mode_cb(QAction * qa)
 		return;
 	}
 
-	const GisViewportDrawMode olddrawmode = this->viewport->central->get_draw_mode();
+	const GisViewportDrawMode olddrawmode = this->main_gis_vp->get_draw_mode();
 	if (olddrawmode != drawmode) {
 
-		this->viewport->central->set_draw_mode(drawmode); /* This takes care of viewport's coord mode too. */
+		this->main_gis_vp->set_draw_mode(drawmode); /* This takes care of viewport's coord mode too. */
 
 		if (drawmode == GisViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::UTM);
@@ -2850,11 +2850,11 @@ void Window::menu_view_refresh_cb(void)
 void Window::menu_view_set_highlight_color_cb(void)
 {
 	QColorDialog color_dialog(this);
-	color_dialog.setCurrentColor(this->viewport->central->get_highlight_color());
+	color_dialog.setCurrentColor(this->main_gis_vp->get_highlight_color());
 	color_dialog.setWindowTitle(tr("Choose a highlight color"));
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
-		this->viewport->central->set_highlight_color(selected_color);
+		this->main_gis_vp->set_highlight_color(selected_color);
 		this->draw_tree_items();
 	}
 }
@@ -2865,11 +2865,11 @@ void Window::menu_view_set_highlight_color_cb(void)
 void Window::menu_view_set_bg_color_cb(void)
 {
 	QColorDialog color_dialog(this);
-	color_dialog.setCurrentColor(this->viewport->central->get_background_color());
+	color_dialog.setCurrentColor(this->main_gis_vp->get_background_color());
 	color_dialog.setWindowTitle(tr("Choose a background color"));
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
-		this->viewport->central->set_background_color(selected_color);
+		this->main_gis_vp->set_background_color(selected_color);
 		this->draw_tree_items();
 	}
 }
@@ -2895,29 +2895,29 @@ void Window::menu_view_pan_cb(void)
 		return;
 	}
 
-	GisViewport * v = this->viewport->central;
-	const int vert_center_pixel  = v->vpixmap.get_vert_center_pixel();
-	const int horiz_center_pixel = v->vpixmap.get_horiz_center_pixel();
+	GisViewport * v = this->main_gis_vp;
+	const int vert_center_pixel  = v->central_get_y_center_pixel();
+	const int horiz_center_pixel = v->central_get_x_center_pixel();
 
 	switch (direction) {
 	case PAN_NORTH:
-		v->set_center_coord(horiz_center_pixel, v->vpixmap.get_upmost_pixel()); /* Move upmost pixel to center. */
+		v->set_center_coord(horiz_center_pixel, v->central_get_upmost_pixel()); /* Move upmost pixel to center. */
 		break;
 	case PAN_EAST:
-		v->set_center_coord(v->vpixmap.get_rightmost_pixel(), vert_center_pixel); /* Move rightmost pixel to center. */
+		v->set_center_coord(v->central_get_rightmost_pixel(), vert_center_pixel); /* Move rightmost pixel to center. */
 		break;
 	case PAN_SOUTH:
-		v->set_center_coord(horiz_center_pixel, v->vpixmap.get_bottommost_pixel()); /* Move bottommost pixel to center. */
+		v->set_center_coord(horiz_center_pixel, v->central_get_bottommost_pixel()); /* Move bottommost pixel to center. */
 		break;
 	case PAN_WEST:
-		v->set_center_coord(v->vpixmap.get_leftmost_pixel(), vert_center_pixel); /* Move leftmost pixel to center. */
+		v->set_center_coord(v->central_get_leftmost_pixel(), vert_center_pixel); /* Move leftmost pixel to center. */
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown pan direction" << direction;;
 		break;
 	}
 
-	this->viewport->central->request_redraw("pan from menu");
+	this->main_gis_vp->request_redraw("pan from menu");
 }
 
 
@@ -2936,7 +2936,7 @@ void Window::simple_map_update(bool only_new)
 	/* Find the most relevent single map layer to operate on. */
 	Layer * layer = this->items_tree->get_top_layer()->get_top_visible_layer_of_type(LayerType::Map);
 	if (layer) {
-		((LayerMap *) layer)->download(this->viewport->central, only_new);
+		((LayerMap *) layer)->download(this->main_gis_vp, only_new);
 	}
 }
 
@@ -2949,7 +2949,7 @@ void Window::simple_map_update(bool only_new)
 void Window::draw_click_cb(QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
-	this->viewport->viewport->setFocus();
+	this->main_gis_vp->setFocus();
 
 	/* middle button pressed.  we reserve all middle button and scroll events
 	 * for panning and zooming; tools only get left/right/movement
@@ -2999,7 +2999,7 @@ static bool window_pan_timeout(Window * window)
 void Window::draw_release_cb(QMouseEvent * ev)
 {
 #ifdef K_FIXME_RESTORE
-	this->viewport->viewport->setFocus();
+	this->main_gis_vp->setFocus();
 
 	if (ev->button() == Qt::MiddleButton) {  /* move / pan */
 		if (this->tb->active_tool->pan_handler) {
@@ -3170,7 +3170,7 @@ bool Window::save_current_document(void)
 	bool success = true;
 
 	this->set_busy_cursor();
-	const SaveStatus save_status = VikFile::save(this->items_tree->get_top_layer(), this->viewport->central, this->current_document_full_path);
+	const SaveStatus save_status = VikFile::save(this->items_tree->get_top_layer(), this->main_gis_vp, this->current_document_full_path);
 	this->clear_busy_cursor();
 
 	if (SaveStatus::Code::Success == save_status) {
@@ -3208,7 +3208,7 @@ void Window::import_kmz_file_cb(void)
 	}
 	const QString full_path = selection.at(0);
 
-	const KMZOpenResult ret = kmz_open_file(full_path, this->viewport->central, this->items_tree);
+	const KMZOpenResult ret = kmz_open_file(full_path, this->main_gis_vp, this->items_tree);
 	if (ret.kmz_status != KMZOpenStatus::Success) {
 		Dialog::error(tr("Unable to import %1: %2").arg(full_path).arg(ret.to_string()), this);
 	}
@@ -3438,7 +3438,7 @@ LayersPanel * ThisApp::get_layers_panel(void)
 
 
 
-GisViewport * ThisApp::get_main_viewport(void)
+GisViewport * ThisApp::get_main_gis_view(void)
 {
 	assert (g_this_app.gisview);
 

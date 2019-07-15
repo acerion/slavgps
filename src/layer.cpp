@@ -390,7 +390,7 @@ QIcon Layer::get_icon(void)
 /* Returns true if OK was pressed. */
 bool Layer::properties_dialog()
 {
-	return this->properties_dialog(ThisApp::get_main_viewport());
+	return this->properties_dialog(ThisApp::get_main_gis_view());
 }
 
 

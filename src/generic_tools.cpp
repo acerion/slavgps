@@ -288,7 +288,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 
 	const Qt::KeyboardModifiers modifiers = event->modifiers();
 
-	const ScreenPos center_pos = this->gisview->vpixmap.get_center_screen_pos();
+	const ScreenPos center_pos = this->gisview->central_get_center_screen_pos();
 	const ScreenPos event_pos(event->x(), event->y());
 
 	/* Did the zoom operation affect viewport? */
@@ -534,12 +534,12 @@ ToolStatus LayerToolPan::internal_handle_mouse_double_click(Layer * layer, QMous
 	   No need to change the center as that has already occurred in the first click of a double click occurrence. */
 	if (event->button() == Qt::LeftButton) {
 		if (event->modifiers() & Qt::ShiftModifier) {
-			this->window->viewport->central->zoom_out();
+			this->window->get_main_gis_view()->zoom_out();
 		} else {
-			this->window->viewport->central->zoom_in();
+			this->window->get_main_gis_view()->zoom_in();
 		}
 	} else if (event->button() == Qt::RightButton) {
-		this->window->viewport->central->zoom_out();
+		this->window->get_main_gis_view()->zoom_out();
 	} else {
 		/* Ignore other mouse buttons. */
 	}
@@ -650,10 +650,10 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 	bool handled = false;
 	if (event->type() == QEvent::MouseButtonDblClick) {
 		qDebug() << SG_PREFIX_D << this->id_string << "handling double click, looking for layer";
-		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->viewport->central, this);
+		handled = this->window->items_tree->get_top_layer()->handle_select_tool_double_click(event, this->window->get_main_gis_view(), this);
 	} else {
 		qDebug() << SG_PREFIX_D << this->id_string << "handle single click, looking for layer";
-		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->viewport->central, this);
+		handled = this->window->items_tree->get_top_layer()->handle_select_tool_click(event, this->window->get_main_gis_view(), this);
 	}
 
 	if (!handled) {
@@ -721,7 +721,7 @@ ToolStatus LayerToolSelect::internal_handle_mouse_release(Layer * layer, QMouseE
 	if (event->button() == Qt::RightButton) {
 		if (layer && layer->type == LayerType::TRW && layer->is_visible()) {
 			/* See if a TRW item is selected, and show menu for the item. */
-			layer->handle_select_tool_context_menu(event, this->window->viewport->central);
+			layer->handle_select_tool_context_menu(event, this->window->get_main_gis_view());
 		}
 	}
 

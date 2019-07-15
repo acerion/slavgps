@@ -103,7 +103,7 @@ AcquireProgressDialog::~AcquireProgressDialog()
 
 		/* By making the widget a child of viewport, we make sure that
 		   it won't be deleted by destructor of acquire progress dialog. */
-		this->list_selection_widget->setParent(ThisApp::get_main_viewport());
+		this->list_selection_widget->setParent(ThisApp::get_main_gis_view());
 	}
 }
 

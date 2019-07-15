@@ -60,7 +60,6 @@ namespace SlavGPS {
 
 	class Window;
 	class GisViewport;
-	class Viewport2D;
 	class ViewportPixmap;
 	class LayerTRW;
 	class Track;
@@ -102,7 +101,7 @@ namespace SlavGPS {
 		sg_ret draw_left(ProfileView * graph);
 		sg_ret draw_bottom(ProfileView * graph);
 
-		ProfileView * find_view(Viewport2D * viewport) const;
+		ProfileView * find_view(GisViewport * graph_2d) const;
 		ProfileView * get_current_view(void) const;
 
 
@@ -117,9 +116,9 @@ namespace SlavGPS {
 		void dialog_response_cb(int resp);
 		void destroy_cb(void);
 
-		sg_ret paint_center_cb(Viewport2D * viewport);
-		sg_ret paint_left_cb(Viewport2D * viewport);
-		sg_ret paint_bottom_cb(Viewport2D * viewport);
+		sg_ret paint_center_cb(GisViewport * graph_2d);
+		sg_ret paint_left_cb(GisViewport * graph_2d);
+		sg_ret paint_bottom_cb(GisViewport * graph_2d);
 
 		void handle_cursor_move_cb(GisViewport * gisview, QMouseEvent * ev);
 		void handle_mouse_button_release_cb(GisViewport * gisview, QMouseEvent * event);
@@ -160,6 +159,12 @@ namespace SlavGPS {
 		virtual void draw_additional_indicators(Track * trk) {};
 		virtual void configure_controls(void) {};
 		virtual void save_values(void) {};
+
+
+		int get_x_pixels(void) const;
+		int get_y_pixels(void) const;
+
+
 
 		void configure_labels(void);
 		void create_widgets_layout(void);
@@ -253,7 +258,7 @@ namespace SlavGPS {
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;
 
-		Viewport2D * viewport2d = NULL;
+		GisViewport * graph_2d = NULL;
 		TrackViewLabels labels;
 
 		QGridLayout * labels_grid = NULL;

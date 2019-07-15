@@ -1289,7 +1289,7 @@ void LayerGPS::gps_upload_cb(void)
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	GisViewport * gisview = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_main_gis_view();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_UPLOAD];
 
 	this->upload.run_transfer(trw, NULL, gisview, false);
@@ -1302,7 +1302,7 @@ void LayerGPS::gps_download_cb(void) /* Slot. */
 {
 	qDebug() << SG_PREFIX_D << "";
 
-	GisViewport * gisview = this->get_window()->get_viewport();
+	GisViewport * gisview = this->get_window()->get_main_gis_view();
 	LayerTRW * trw = this->trw_children[GPS_CHILD_LAYER_TRW_DOWNLOAD];
 
 	this->download.run_transfer(trw, NULL, gisview,
@@ -1447,9 +1447,9 @@ void LayerGPS::rt_tracking_draw(GisViewport * gisview, const RTData & rt_data)
 
 	//QPen const & pen, QPoint const * points, int npoints, bool filled
 
-	gisview->vpixmap.draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
-	gisview->vpixmap.draw_polygon(this->realtime_track_pen, trian, 3, true);
-	gisview->vpixmap.fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
+	gisview->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
+	gisview->draw_polygon(this->realtime_track_pen, trian, 3, true);
+	gisview->fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
 
 	//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 }
@@ -1598,7 +1598,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 
 
 	Window * window = this->get_window();
-	GisViewport * gisview = window->get_viewport();
+	GisViewport * gisview = window->get_main_gis_view();
 	bool viewport_shifted = false;
 
 	if ((this->vehicle_position == VehiclePosition::Centered) ||
@@ -1609,8 +1609,8 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		const int hdiv = 6;
 		const int vdiv = 6;
 		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
-		const int width = gisview->vpixmap.get_width();
-		const int height = gisview->vpixmap.get_height();
+		const int width = gisview->central_get_width();
+		const int height = gisview->central_get_height();
 		int vx, vy;
 
 		if (sg_ret::ok == gisview->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {

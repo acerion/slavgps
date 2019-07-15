@@ -545,7 +545,7 @@ void CommandLineOptions::apply(Window * window)
 		return;
 	}
 
-	GisViewport * gisview = window->get_viewport();
+	GisViewport * gisview = window->get_main_gis_view();
 
 	if (this->lat_lon.is_valid()) {
 		gisview->set_center_coord(this->lat_lon);

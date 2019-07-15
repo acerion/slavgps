@@ -444,7 +444,7 @@ void LayerGeoref::draw_tree_item(GisViewport * gisview, bool highlight_selected,
 
 	qDebug() << "++++++++ EXPECT 0 0:" << (transformed_image.width() - sub_viewport_rect.width()) << (transformed_image.height() - sub_viewport_rect.height());
 
-	gisview->vpixmap.draw_pixmap(transformed_image, sub_viewport_rect, image_rect);
+	gisview->draw_pixmap(transformed_image, sub_viewport_rect, image_rect);
 }
 
 
@@ -1143,7 +1143,7 @@ sg_ret LayerGeoref::get_values_from_dialog(const GeorefConfigDialog & dialog)
 
 void LayerGeoref::zoom_to_fit_cb(void)
 {
-	GisViewport * gisview = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_gis_view();
 	gisview->set_viking_scale_x(this->mpp_easting);
 	gisview->set_viking_scale_y(this->mpp_northing);
 	gisview->request_redraw("Redrawing items after setting new zoom level in viewport");
@@ -1154,7 +1154,7 @@ void LayerGeoref::zoom_to_fit_cb(void)
 
 void LayerGeoref::goto_center_cb(void)
 {
-	GisViewport * gisview = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_gis_view();
 	UTM utm = gisview->get_center_coord().get_utm();
 
 	/* TODO: verify image_width/height - shouldn't they be center pixels? */

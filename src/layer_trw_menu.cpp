@@ -222,7 +222,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (acquire_from_file_cb()));
 		qa->setToolTip(tr("From &File (With GPSBabel)..."));
 
-		ExternalToolDataSource::add_menu_items(acquire_submenu, this->get_window()->get_viewport());
+		ExternalToolDataSource::add_menu_items(acquire_submenu, this->get_window()->get_main_gis_view());
 	}
 
 
@@ -264,7 +264,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 
 
-	Acquire::set_context(this->get_window(), ThisApp::get_main_viewport(), ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
+	Acquire::set_context(this->get_window(), ThisApp::get_main_gis_view(), ThisApp::get_layers_panel()->get_top_layer(), ThisApp::get_layers_panel()->get_selected_layer());
 	Acquire::set_target(this, NULL);
 
 
@@ -289,7 +289,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 	QMenu * external_submenu = menu.addMenu(QIcon::fromTheme("EXECUTE"), tr("Externa&l"));
 	/* TODO_LATER: Should use selected layer's centre - rather than implicitly using the current viewport. */
-	ExternalTools::add_menu_items(external_submenu, this->get_window()->get_viewport(), NULL);
+	ExternalTools::add_menu_items(external_submenu, this->get_window()->get_main_gis_view(), NULL);
 }
 
 
@@ -297,7 +297,7 @@ void LayerTRW::add_menu_items(QMenu & menu)
 
 void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_layer, QMenu * external_submenu)
 {
-	GisViewport * gisview = parent_layer->get_window()->get_viewport();
+	GisViewport * gisview = parent_layer->get_window()->get_main_gis_view();
 
 
 	/* Try adding submenu items with external tools pre-configured

@@ -2567,7 +2567,7 @@ void Track::sublayer_menu_track_misc(LayerTRW * parent_layer_, QMenu & menu, QMe
 	if (ThisApp::get_layers_panel()) {
 
 		Acquire::set_context(ThisApp::get_main_window(),
-				     ThisApp::get_main_viewport(),
+				     ThisApp::get_main_gis_view(),
 				     ThisApp::get_layers_panel()->get_top_layer(),
 				     ThisApp::get_layers_panel()->get_selected_layer());
 		Acquire::set_target(parent_layer_, this);
@@ -2933,8 +2933,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 void Track::goto_startpoint_cb(void)
 {
 	if (!this->empty()) {
-		GisViewport * gisview = ThisApp::get_main_viewport();
-		this->owning_layer->request_new_viewport_center(gisview, this->get_tp_first()->coord);
+		this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_first()->coord);
 	}
 }
 
@@ -2948,10 +2947,9 @@ void Track::goto_center_cb(void)
 	}
 
 	LayerTRW * parent_layer_ = (LayerTRW *) this->owning_layer;
-	GisViewport * gisview = ThisApp::get_main_viewport();
 
 	const Coord coord(this->get_bbox().get_center_lat_lon(), parent_layer_->coord_mode);
-	parent_layer_->request_new_viewport_center(gisview, coord);
+	parent_layer_->request_new_viewport_center(ThisApp::get_main_gis_view(), coord);
 }
 
 
@@ -2963,8 +2961,7 @@ void Track::goto_endpoint_cb(void)
 		return;
 	}
 
-	GisViewport * gisview = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(gisview, this->get_tp_last()->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_last()->coord);
 }
 
 
@@ -2977,8 +2974,7 @@ void Track::goto_max_speed_cb()
 		return;
 	}
 
-	GisViewport * gisview = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(gisview, tp->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), tp->coord);
 }
 
 
@@ -2991,8 +2987,7 @@ void Track::goto_max_alt_cb(void)
 		return;
 	}
 
-	GisViewport * gisview = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(gisview, tp->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), tp->coord);
 }
 
 
@@ -3005,8 +3000,7 @@ void Track::goto_min_alt_cb(void)
 		return;
 	}
 
-	GisViewport * gisview = ThisApp::get_main_viewport();
-	this->owning_layer->request_new_viewport_center(gisview, tp->coord);
+	this->owning_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), tp->coord);
 }
 
 
@@ -3074,7 +3068,7 @@ void Track::profile_dialog_cb(void)
 		return;
 	}
 
-	track_profile_dialog(this, ThisApp::get_main_viewport(), ThisApp::get_main_window());
+	track_profile_dialog(this, ThisApp::get_main_gis_view(), ThisApp::get_main_window());
 }
 
 
@@ -3119,8 +3113,8 @@ void Track::rezoom_to_show_full_cb(void)
 		return;
 	}
 
-	ThisApp::get_main_viewport()->set_bbox(this->get_bbox());
-	ThisApp::get_main_viewport()->request_redraw("Re-align viewport to show whole contents of TRW Track");
+	ThisApp::get_main_gis_view()->set_bbox(this->get_bbox());
+	ThisApp::get_main_gis_view()->request_redraw("Re-align viewport to show whole contents of TRW Track");
 }
 
 
@@ -3450,7 +3444,7 @@ sg_ret Track::draw_e_ft(GisViewport * gisview, int width, int height)
 		cur_pos.x = col;
 		cur_pos.y = bottommost_pixel - height * (value - alt_min) / visible_range;
 
-		gisview->vpixmap.draw_line(pen, last_pos, cur_pos);
+		gisview->draw_line(pen, last_pos, cur_pos);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3494,7 +3488,7 @@ sg_ret Track::draw_d_ft(GisViewport * gisview, int width, int height)
 		cur_pos.x = col;
 		cur_pos.y = bottommost_pixel - height * (value - dist_min) / visible_range;
 
-		gisview->vpixmap.draw_line(pen, last_pos, cur_pos);
+		gisview->draw_line(pen, last_pos, cur_pos);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3544,9 +3538,9 @@ sg_ret Track::draw_v_ft(GisViewport * gisview, int width, int height)
 		cur_pos.x = col;
 		cur_pos.y = height - bottommost_pixel * (current_value_uu - min_value_uu) / visible_values_range_uu;
 
-		gisview->vpixmap.draw_line(pen,
-					   last_pos.x, last_pos.y,
-					   cur_pos.x, cur_pos.y);
+		gisview->draw_line(pen,
+				   last_pos.x, last_pos.y,
+				   cur_pos.x, cur_pos.y);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -4584,13 +4578,12 @@ void Track::delete_points_same_time_cb(void)
 void Track::extend_track_end_cb(void)
 {
 	Window * window = ThisApp::get_main_window();
-	GisViewport * gisview = ThisApp::get_main_viewport();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
 	window->activate_tool_by_id(this->is_route() ? LAYER_TRW_TOOL_CREATE_ROUTE : LAYER_TRW_TOOL_CREATE_TRACK);
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(gisview, this->get_tp_last()->coord);
+		parent_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_last()->coord);
 	}
 }
 
@@ -4603,7 +4596,6 @@ void Track::extend_track_end_cb(void)
 void Track::extend_track_end_route_finder_cb(void)
 {
 	Window * window = ThisApp::get_main_window();
-	GisViewport * gisview = ThisApp::get_main_viewport();
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
 	window->activate_tool_by_id(LAYER_TRW_TOOL_ROUTE_FINDER);
@@ -4611,7 +4603,7 @@ void Track::extend_track_end_route_finder_cb(void)
 	parent_layer->route_finder_started = true;
 
 	if (!this->empty()) {
-		parent_layer->request_new_viewport_center(gisview, this->get_tp_last()->coord);
+		parent_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), this->get_tp_last()->coord);
 	}
 }
 

@@ -373,7 +373,7 @@ void Toolbox::handle_mouse_move(QMouseEvent * event)
 	}
 
 	if (ToolStatus::AckGrabFocus == this->active_tool->handle_mouse_move(layer, event)) {
-		this->window->viewport->setFocus();
+		this->window->get_main_gis_view()->setFocus();
 	}
 
 	return;

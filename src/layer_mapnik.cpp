@@ -903,7 +903,7 @@ void LayerMapnik::flush_map_cache_cb(void)
 
 void LayerMapnik::reload_map_cb(void)
 {
-	GisViewport * gisview = ThisApp::get_main_viewport();
+	GisViewport * gisview = ThisApp::get_main_gis_view();
 
 	this->post_read(gisview, false);
 	this->draw_tree_item(gisview, false, false);
@@ -928,8 +928,7 @@ void LayerMapnik::run_carto_cb(void)
 
 	QString msg;
 	if (sg_ret::ok == this->mw.load_map_file(this->xml_map_file_full_path, this->tile_size_x, this->tile_size_x, msg)) {
-		GisViewport * gisview = ThisApp::get_main_viewport();
-		this->draw_tree_item(gisview, false, false);
+		this->draw_tree_item(ThisApp::get_main_gis_view(), false, false);
 	} else {
 		Dialog::error(tr("Mapnik error loading configuration file:\n%1").arg(msg), this->get_window());
 	}
@@ -1163,7 +1162,7 @@ sg_ret LayerMapnik::draw_tile(GisViewport * gisview, const TileInfo & tile_info)
 
 		const int pixmap_x = 0;
 		const int pixmap_y = 0;
-		gisview->vpixmap.draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
+		gisview->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
 	}
 
 	return sg_ret::ok;

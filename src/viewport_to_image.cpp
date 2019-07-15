@@ -81,8 +81,8 @@ void ViewportSaveDialog::get_size_from_viewport_cb(void) /* Slot */
 	this->width_spin->blockSignals(true);
 	this->height_spin->blockSignals(true);
 
-	this->width_spin->setValue(this->gisview->vpixmap.get_width());
-	this->height_spin->setValue(this->gisview->vpixmap.get_height());
+	this->width_spin->setValue(this->gisview->central_get_width());
+	this->height_spin->setValue(this->gisview->central_get_height());
 
 	this->width_spin->blockSignals(false);
 	this->height_spin->blockSignals(false);
@@ -129,10 +129,10 @@ ViewportSaveDialog::ViewportSaveDialog(QString const & title, GisViewport * new_
 	this->setWindowTitle(title);
 	this->gisview = new_gisview;
 
-	this->original_width = this->gisview->vpixmap.get_width();
+	this->original_width = this->gisview->central_get_width();
 	this->original_viking_scale = this->gisview->get_viking_scale();
 
-	this->proportion = 1.0 * this->gisview->vpixmap.get_width() / this->gisview->vpixmap.get_height();
+	this->proportion = 1.0 * this->gisview->central_get_width() / this->gisview->central_get_height();
 }
 
 
@@ -399,7 +399,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 #if 0
 	GisViewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_scale);
 #else
-	GisViewport * scaled_viewport = new GisViewport(this->window);
+	GisViewport * scaled_viewport = new GisViewport(0, 0, 0, 0, this->window); /* TODO: pass proper margin values to constructor. */
 
 
 	/* Copy/set selected properties of viewport. */
@@ -424,7 +424,7 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 
 	//scaled_viewport->set_bbox(this->viewport->get_bbox());
 
-	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->vpixmap.get_width() << scaled_viewport->vpixmap.get_height();
+	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->central_get_width() << scaled_viewport->central_get_height();
 
 	/* Redraw all layers at current position and zoom.
 	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */
