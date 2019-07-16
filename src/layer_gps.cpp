@@ -1609,7 +1609,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		const int hdiv = 6;
 		const int vdiv = 6;
 		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
-		const int width = gisview->central_get_width();
+		const int width = gisview->central_get_width(); /* TODO: shouldn't we get central x/y pixels here? */
 		const int height = gisview->central_get_height();
 		int vx, vy;
 

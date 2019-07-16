@@ -906,7 +906,7 @@ void draw_loaded_dem_box(GisViewport * gisview)
 
 	const int leftmost_pixel   = gisview->central_get_leftmost_pixel();
 	const int rightmost_pixel  = gisview->central_get_rightmost_pixel();
-	const int upmost_pixel     = gisview->central_get_upmost_pixel();
+	const int topmost_pixel    = gisview->central_get_topmost_pixel();
 	const int bottommost_pixel = gisview->central_get_bottommost_pixel();
 
 	if (sp_ne.x > rightmost_pixel) {

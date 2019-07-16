@@ -47,10 +47,10 @@ using namespace SlavGPS;
 
 ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget * parent) : QWidget(parent)
 {
-	this->left_margin = left;
-	this->right_margin = right;
-	this->top_margin = top;
-	this->bottom_margin = bottom;
+	this->left_margin_width = left;
+	this->right_margin_width = right;
+	this->top_margin_height = top;
+	this->bottom_margin_height = bottom;
 
 	this->marker_pen.setColor(QColor("brown"));
 	this->marker_pen.setWidth(1);
@@ -418,7 +418,7 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 	this->snapshot_buffer = new QPixmap(this->total_width, this->total_height);
 
 	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
-	emit this->reconfigured(this); /* TODO: maybe emit->this->parent_viewport->some_signal()? */
+	emit this->reconfigured(this);
 }
 
 
@@ -426,45 +426,88 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 
 QDebug SlavGPS::operator<<(QDebug debug, const ViewportPixmap & vpixmap)
 {
-	debug << "ViewportPixmap:" << vpixmap.debug << "width=" << vpixmap.central_get_width() << "height=" << vpixmap.central_get_height();
+	debug << "ViewportPixmap:" << vpixmap.debug << "central width=" << vpixmap.central_get_width() << "central height=" << vpixmap.central_get_height();
 	return debug;
 }
 
 
 
 
+/**
+   @reviewed-on 2019-07-15
+*/
 int ViewportPixmap::central_get_leftmost_pixel(void) const
 {
-	return this->left_margin;
+	return this->left_margin_width;
 }
+
+/**
+   @reviewed-on 2019-07-15
+*/
 int ViewportPixmap::central_get_rightmost_pixel(void) const
 {
-	return this->total_width - this->right_margin - 1;
+	return this->total_width - this->right_margin_width - 1;
 }
-int ViewportPixmap::central_get_upmost_pixel(void) const
+
+/**
+   @reviewed-on 2019-07-15
+*/
+int ViewportPixmap::central_get_topmost_pixel(void) const
 {
-	return this->top_margin;
+	return this->top_margin_height;
 }
+
+/**
+   @reviewed-on 2019-07-15
+*/
 int ViewportPixmap::central_get_bottommost_pixel(void) const
 {
-	return this->total_height - this->bottom_margin - 1;
+	return this->total_height - this->bottom_margin_height - 1;
 }
 
+/**
+   @reviewed-on 2019-07-15
+*/
 int ViewportPixmap::central_get_x_center_pixel(void) const
 {
-	return (this->total_width - this->left_margin - this->right_margin - 1) / 2;
+	/* If left and right margins were zero, this would be
+	   horizontal position of center pixel. */
+	const int x_center_without_margins = (this->total_width - this->left_margin_width - this->right_margin_width - 1) / 2;
+
+	/* Move the pixel's position left by how much place takes the
+	   left margin. */
+	const int x_center_shifted_by_left_margin = x_center_without_margins + this->left_margin_width;
+
+	return x_center_shifted_by_left_margin;
 }
 
+/**
+   @reviewed-on 2019-07-15
+*/
 int ViewportPixmap::central_get_y_center_pixel(void) const
 {
-	return (this->total_height - this->top_margin - this->bottom_margin - 1) / 2;
+	/* If top and bottom margins were zero, this would be vertical
+	   position of center pixel. */
+	const int y_center_without_margins = (this->total_height - this->top_margin_height - this->bottom_margin_height - 1) / 2;
+
+	/* Move the pixel's position down by how much place takes the
+	   top margin. */
+	const int y_center_shifted_by_top_margin = y_center_without_margins + this->top_margin_height;
+
+	return y_center_shifted_by_top_margin;
 }
 
+/**
+   @reviewed-on 2019-07-15
+*/
 int ViewportPixmap::total_get_width(void) const
 {
 	return this->total_width;
 }
 
+/**
+   @reviewed-on 2019-07-15
+*/
 int ViewportPixmap::total_get_height(void) const
 {
 	return this->total_height;
@@ -475,7 +518,7 @@ int ViewportPixmap::total_get_height(void) const
 */
 int ViewportPixmap::central_get_width(void) const
 {
-	return this->total_width - this->left_margin - this->right_margin;
+	return this->total_width - this->left_margin_width - this->right_margin_width;
 }
 
 /**
@@ -483,7 +526,7 @@ int ViewportPixmap::central_get_width(void) const
 */
 int ViewportPixmap::central_get_height(void) const
 {
-	return this->total_height - this->top_margin - this->bottom_margin;
+	return this->total_height - this->top_margin_height - this->bottom_margin_height;
 }
 
 /**
@@ -491,7 +534,7 @@ int ViewportPixmap::central_get_height(void) const
 */
 int ViewportPixmap::left_get_width(void) const
 {
-	return this->left_margin;
+	return this->left_margin_width;
 }
 int ViewportPixmap::left_get_height(void) const
 {
@@ -503,7 +546,7 @@ int ViewportPixmap::left_get_height(void) const
 */
 int ViewportPixmap::right_get_width(void) const
 {
-	return this->right_margin;
+	return this->right_margin_width;
 }
 
 int ViewportPixmap::right_get_height(void) const
@@ -521,7 +564,7 @@ int ViewportPixmap::top_get_width(void) const
 */
 int ViewportPixmap::top_get_height(void) const
 {
-	return this->top_margin;
+	return this->top_margin_height;
 }
 
 int ViewportPixmap::bottom_get_width(void) const
@@ -534,12 +577,15 @@ int ViewportPixmap::bottom_get_width(void) const
 */
 int ViewportPixmap::bottom_get_height(void) const
 {
-	return this->bottom_margin;
+	return this->bottom_margin_height;
 }
 
 
 
 
+/**
+   @reviewed-on 2019-07-15
+*/
 ScreenPos ViewportPixmap::central_get_center_screen_pos(void) const
 {
 	return ScreenPos(this->central_get_x_center_pixel(), this->central_get_y_center_pixel());
@@ -566,27 +612,27 @@ bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int en
 
 	const int leftmost   = this->central_get_leftmost_pixel();
 	const int rightmost  = this->central_get_rightmost_pixel();
-	const int upmost     = this->central_get_upmost_pixel();
+	const int topmost    = this->central_get_topmost_pixel();
 	const int bottommost = this->central_get_bottommost_pixel();
 
 	if (begin_x < leftmost && end_x < leftmost) {
 		/* Line begins and ends on left side of viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 1, leftmost =" << q_leftmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
+		//qDebug() << SG_PREFIX_D << "cond 1, leftmost =" << leftmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
 		return true;
 	}
-	if (begin_y < upmost && end_y < upmost) {
+	if (begin_y < topmost && end_y < topmost) {
 		/* Line begins and ends above viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 2, upmost =" << q_upmost << ", begin_y = " << begin_y << ", end_y =" << end_y;
+		//qDebug() << SG_PREFIX_D << "cond 2, topmost =" << topmost << ", begin_y = " << begin_y << ", end_y =" << end_y;
 		return true;
 	}
 	if (begin_x > rightmost && end_x > rightmost) {
 		/* Line begins and ends on right side of viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 3, rightmost =" << q_rightmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
+		//qDebug() << SG_PREFIX_D << "cond 3, rightmost =" << rightmost << ", begin_x = " << begin_x << ", end_x =" << end_x;
 		return true;
 	}
 	if (begin_y > bottommost && end_y > bottommost) {
 		/* Line begins and ends below viewport pixmap. */
-		//qDebug() << SG_PREFIX_D << "cond 4, bottommost =" << q_bottommost << ", begin_y = " << begin_y << ", end_y =" << end_y;
+		//qDebug() << SG_PREFIX_D << "cond 4, bottommost =" << bottommost << ", begin_y = " << begin_y << ", end_y =" << end_y;
 		return true;
 	}
 
@@ -681,14 +727,14 @@ void ViewportPixmap::central_draw_line(const QPen & pen, int begin_x, int begin_
 	/*** Clipping, yeah! ***/
 	//GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
-	const int bottom_pixel = this->central_get_bottommost_pixel();
+	const int bottommost_pixel = this->central_get_bottommost_pixel();
 
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to Qt's "beginning in top-left corner"
 	   coordinate system. */
 	this->painter.setPen(pen);
-	this->painter.drawLine(begin_x, bottom_pixel - begin_y,
-			       end_x,   bottom_pixel - end_y);
+	this->painter.drawLine(begin_x, bottommost_pixel - begin_y,
+			       end_x,   bottommost_pixel - end_y);
 }
 
 
@@ -821,7 +867,10 @@ void ViewportPixmap::set_highlight_thickness(int w)
 
 QRect ViewportPixmap::central_get_rect(void) const
 {
-	return QRect(0, 0, this->central_get_width(), this->central_get_height());
+	const int begin_x = this->central_get_leftmost_pixel();
+	const int begin_y = this->central_get_topmost_pixel();
+
+	return QRect(begin_x, begin_y, begin_x + this->central_get_width(), begin_y + this->central_get_height());
 }
 
 

@@ -338,7 +338,7 @@ void Window::create_layout()
 	this->addToolBar(this->toolbar);
 
 
-	this->main_gis_vp = new GisViewport(10, 20, 30, 40, this);
+	this->main_gis_vp = new GisViewport(10, 40, 80, 160, this);
 	qDebug() << SG_PREFIX_I << "Created Viewport with center's size:" << this->main_gis_vp->central_get_height() << this->main_gis_vp->central_get_width();
 	this->setCentralWidget(this->main_gis_vp);
 
@@ -2896,21 +2896,21 @@ void Window::menu_view_pan_cb(void)
 	}
 
 	GisViewport * v = this->main_gis_vp;
-	const int vert_center_pixel  = v->central_get_y_center_pixel();
-	const int horiz_center_pixel = v->central_get_x_center_pixel();
+	const int x_center_pixel = v->central_get_x_center_pixel();
+	const int y_center_pixel = v->central_get_y_center_pixel();
 
 	switch (direction) {
 	case PAN_NORTH:
-		v->set_center_coord(horiz_center_pixel, v->central_get_upmost_pixel()); /* Move upmost pixel to center. */
+		v->set_center_coord(x_center_pixel, v->central_get_topmost_pixel()); /* Move topmost pixel to center. */
 		break;
 	case PAN_EAST:
-		v->set_center_coord(v->central_get_rightmost_pixel(), vert_center_pixel); /* Move rightmost pixel to center. */
+		v->set_center_coord(v->central_get_rightmost_pixel(), y_center_pixel); /* Move rightmost pixel to center. */
 		break;
 	case PAN_SOUTH:
-		v->set_center_coord(horiz_center_pixel, v->central_get_bottommost_pixel()); /* Move bottommost pixel to center. */
+		v->set_center_coord(x_center_pixel, v->central_get_bottommost_pixel()); /* Move bottommost pixel to center. */
 		break;
 	case PAN_WEST:
-		v->set_center_coord(v->central_get_leftmost_pixel(), vert_center_pixel); /* Move leftmost pixel to center. */
+		v->set_center_coord(v->central_get_leftmost_pixel(), y_center_pixel); /* Move leftmost pixel to center. */
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown pan direction" << direction;;

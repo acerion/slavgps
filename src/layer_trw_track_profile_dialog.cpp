@@ -580,9 +580,9 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 
 sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 {
-	/* Using saved width/saved height for performance reasons. */
-	const int w = this->graph_2d->central_get_width();
-
+	/* TODO: use saved width/saved height for performance reasons. */
+	const int width = this->graph_2d->central_get_width();
+	const int height = this->graph_2d->central_get_height();
 
 	int ix = (int) screen_pos.x;
 
@@ -611,7 +611,7 @@ sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 	   index, is out of bounds. */
 	ix = ix - leftmost_pixel;
 
-	const int height = this->graph_2d->central_get_height();
+
 	const int y = height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
 	screen_pos.set(screen_pos.x, y);
 
@@ -2319,6 +2319,7 @@ bool ProfileView::supported_domains(GisViewportDomain x_domain, GisViewportDomai
 
 int ProfileView::get_x_pixels(void) const
 {
+	/* TODO: use cached value? */
 	return this->graph_2d->central_get_width();
 }
 
@@ -2327,5 +2328,6 @@ int ProfileView::get_x_pixels(void) const
 
 int ProfileView::get_y_pixels(void) const
 {
+	/* TODO: use cached value? */
 	return this->graph_2d->central_get_height();
 }

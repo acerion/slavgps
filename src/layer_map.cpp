@@ -1222,8 +1222,8 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
 {
 	/* Draw single grid lines across the whole screen. */
-	const int viewport_width = gisview->central_get_width();
-	const int viewport_height = gisview->central_get_height();
+	const int center_width = gisview->central_get_width();
+	const int center_height = gisview->central_get_height();
 	const int base_viewport_x = viewport_x - (tile_width / 2);
 	const int base_viewport_y = viewport_y - (tile_height / 2);
 
@@ -1232,7 +1232,7 @@ void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x
 		/* Using 'base_viewport_y as a third arg,
 		   instead of zero, causes drawing only whole
 		   tiles on top of a map. */
-		gisview->draw_line(pen, viewport_x, base_viewport_y, viewport_x, viewport_height);
+		gisview->draw_line(pen, viewport_x, base_viewport_y, viewport_x, center_height);
 		viewport_x += tile_width;
 	}
 
@@ -1241,7 +1241,7 @@ void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x
 		/* Using 'base_viewport_x as a second arg,
 		   instead of zero, causes drawing only whole
 		   tiles on left size of a map. */
-		gisview->draw_line(pen, base_viewport_x, viewport_y, viewport_width, viewport_y);
+		gisview->draw_line(pen, base_viewport_x, viewport_y, center_width, viewport_y);
 		viewport_y += tile_height;
 	}
 }
@@ -1476,18 +1476,18 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 		return ToolStatus::Ignored;
 	}
 
-	const int pixel_u = this->gisview->central_get_upmost_pixel();
-	const int pixel_r = this->gisview->central_get_rightmost_pixel();
-	const int pixel_b = this->gisview->central_get_bottommost_pixel();
-	const int pixel_l = this->gisview->central_get_leftmost_pixel();
+	const int leftmost_pixel   = this->gisview->central_get_leftmost_pixel();
+	const int rightmost_pixel  = this->gisview->central_get_rightmost_pixel();
+	const int topmost_pixel    = this->gisview->central_get_topmost_pixel();
+	const int bottommost_pixel = this->gisview->central_get_bottommost_pixel();
 
 	if (event->button() == Qt::LeftButton) {
-		const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
-		const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
+		const int ul_x = std::max(rightmost_pixel, std::min(event->x(), layer->dl_tool_x));
+		const int ul_y = std::max(topmost_pixel, std::min(event->y(), layer->dl_tool_y));
 		const Coord coord_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
 
-		const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
-		const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
+		const int br_x = std::min(leftmost_pixel, std::max(event->x(), layer->dl_tool_x));
+		const int br_y = std::min(bottommost_pixel, std::max(event->y(), layer->dl_tool_y));
 		const Coord coord_br = this->gisview->screen_pos_to_coord(br_x, br_y);
 
 		layer->start_download_thread(this->gisview, coord_ul, coord_br, MapDownloadMode::DownloadAndRefresh);
@@ -1495,12 +1495,12 @@ ToolStatus LayerToolMapsDownload::internal_handle_mouse_release(Layer * _layer, 
 		layer->dl_tool_y = -1;
 		return ToolStatus::Ack;
 	} else {
-		const int ul_x = std::max(pixel_r, std::min(event->x(), layer->dl_tool_x));
-		const int ul_y = std::max(pixel_u, std::min(event->y(), layer->dl_tool_y));
+		const int ul_x = std::max(rightmost_pixel, std::min(event->x(), layer->dl_tool_x));
+		const int ul_y = std::max(topmost_pixel, std::min(event->y(), layer->dl_tool_y));
 		layer->redownload_ul = this->gisview->screen_pos_to_coord(ul_x, ul_y);
 
-		const int br_x = std::min(pixel_l, std::max(event->x(), layer->dl_tool_x));
-		const int br_y = std::min(pixel_b, std::max(event->y(), layer->dl_tool_y));
+		const int br_x = std::min(leftmost_pixel, std::max(event->x(), layer->dl_tool_x));
+		const int br_y = std::min(bottommost_pixel, std::max(event->y(), layer->dl_tool_y));
 		layer->redownload_br = this->gisview->screen_pos_to_coord(br_x, br_y);
 
 		layer->redownload_gisview = this->gisview;
@@ -2123,6 +2123,9 @@ void LayerMap::draw_existence(GisViewport * gisview, const TileInfo & tile_info,
 
 	if (0 == access(path_buf.toUtf8().constData(), F_OK)) {
 		const QPen pen(QColor(LAYER_MAP_GRID_COLOR));
-		gisview->draw_line(pen, tile_geometry.dest_x + tile_geometry.width, tile_geometry.dest_y, tile_geometry.dest_x, tile_geometry.dest_y + tile_geometry.height);
+		gisview->draw_line(pen, tile_geometry.dest_x + tile_geometry.width,
+				   tile_geometry.dest_y,
+				   tile_geometry.dest_x,
+				   tile_geometry.dest_y + tile_geometry.height);
 	}
 }

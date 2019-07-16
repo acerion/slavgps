@@ -75,6 +75,25 @@ GisViewportDecorations::GisViewportDecorations()
 
 void GisViewportDecorations::draw(GisViewport * gisview) const
 {
+	if (1) { /* For debug purposes only. */
+		QPen pen;
+
+		/* Boundaries of pixmap. */
+		pen.setColor("red");
+		pen.setWidth(4);
+		const int begin_x = gisview->left_get_width();
+		const int begin_y = gisview->top_get_height();
+		const int w = gisview->total_get_width() - gisview->left_get_width() - gisview->right_get_width();
+		const int h = gisview->total_get_height() - gisview->top_get_height() - gisview->bottom_get_height();
+		gisview->draw_rectangle(pen, 0, 0, gisview->total_get_width(), gisview->total_get_height());
+
+		/* Margin. */
+		pen.setColor("blue");
+		pen.setWidth(2);
+		gisview->draw_rectangle(pen, begin_x, begin_y, w, h);
+	}
+
+
 	this->draw_scale(gisview);
 	this->draw_attributions(gisview);
 	this->draw_center_mark(gisview);
@@ -91,16 +110,18 @@ void GisViewportDecorations::draw_scale(GisViewport * gisview) const
 		return;
 	}
 
-	const int vpixmap_width = gisview->central_get_width();
-	const int vpixmap_height = gisview->central_get_height();
+	const int central_width  = gisview->central_get_width();
+	const int central_height = gisview->central_get_height();
+	const int leftmost_pixel = gisview->central_get_leftmost_pixel();
+	const int y_center_pixel = gisview->central_get_y_center_pixel();
 
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
-	int MAXIMUM_WIDTH = vpixmap_width * RELATIVE_WIDTH;
+	int MAXIMUM_WIDTH = central_width * RELATIVE_WIDTH;
 
-	const Coord left =  gisview->screen_pos_to_coord(0,                              vpixmap_height / 2);
-	const Coord right = gisview->screen_pos_to_coord(vpixmap_width * RELATIVE_WIDTH, vpixmap_height / 2);
+	const Coord left  = gisview->screen_pos_to_coord(leftmost_pixel,                                  y_center_pixel);
+	const Coord right = gisview->screen_pos_to_coord(leftmost_pixel + central_width * RELATIVE_WIDTH, y_center_pixel);
 
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const double l2r = Coord::distance(left, right);
@@ -145,7 +166,7 @@ void GisViewportDecorations::draw_scale(GisViewport * gisview) const
 	{
 		const QString scale_value = this->draw_scale_helper_value(gisview, distance_unit, scale_unit);
 
-		const QPointF scale_start(PAD, vpixmap_height - PAD); /* Bottom-left corner of scale. */
+		const QPointF scale_start(PAD, central_height - PAD); /* Bottom-left corner of scale. */
 		const QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
 		const QRectF bounding_rect = QRectF(value_start.x(), 0, value_start.x() + 300, value_start.y());
 
@@ -178,15 +199,18 @@ void GisViewportDecorations::draw_scale(GisViewport * gisview) const
 
 void GisViewportDecorations::draw_scale_helper_scale(GisViewport * gisview, const QPen & pen, int scale_len, int h) const
 {
-	const int vpixmap_width = gisview->central_get_width();
-	const int vpixmap_height = gisview->central_get_height();
+	const int central_width = gisview->central_get_width();
+	const int central_height = gisview->central_get_height();
+
+	const int begin_x = gisview->central_get_leftmost_pixel() + PAD;
+	const int begin_y = gisview->central_get_bottommost_pixel() - PAD;
 
 	/* Black scale. */
-	gisview->draw_line(pen, PAD,             vpixmap_height - PAD, PAD + scale_len, vpixmap_height - PAD);
-	gisview->draw_line(pen, PAD,             vpixmap_height - PAD, PAD,             vpixmap_height - PAD - h);
-	gisview->draw_line(pen, PAD + scale_len, vpixmap_height - PAD, PAD + scale_len, vpixmap_height - PAD - h);
+	gisview->draw_line(pen, begin_x,             begin_y, begin_x + scale_len, begin_y);
+	gisview->draw_line(pen, begin_x,             begin_y, PAD,             central_height - PAD - h);
+	gisview->draw_line(pen, begin_x + scale_len, begin_y, PAD + scale_len, central_height - PAD - h);
 
-	const int y1 = vpixmap_height - PAD;
+	const int y1 = central_height - PAD;
 	for (int i = 1; i < 10; i++) {
 		int x1 = PAD + i * scale_len / 10;
 		int diff = ((i == 5) ? (2 * h / 3) : (1 * h / 3));
@@ -251,8 +275,8 @@ void GisViewportDecorations::draw_attributions(GisViewport * gisview) const
 
 	const int base_rect_width  = gisview->central_get_width() - (2 * PAD);    /* The actual width will be the same for all attribution label rectangles. */
 	const int base_rect_height = gisview->central_get_height() - (2 * PAD);   /* The actual height will be smaller and smaller for each consecutive attribution. */
-	const int base_anchor_x    = gisview->central_get_width() - (1 * PAD);    /* x coordinate of actual anchor of every rectangle will be in the same place. */
-	const int base_anchor_y    = gisview->central_get_height() - (1 * PAD);   /* y coordinate of actual anchor of every rectangle will be higher for each consecutive attribution. */
+	const int base_anchor_x    = gisview->central_get_rightmost_pixel() - (1 * PAD);    /* x coordinate of actual anchor of every rectangle will be in the same place. */
+	const int base_anchor_y    = gisview->central_get_bottommost_pixel() - (1 * PAD);   /* y coordinate of actual anchor of every rectangle will be higher for each consecutive attribution. */
 
 	for (int i = 0; i < this->attributions.size(); i++) {
 		const int delta = (i * single_row_height);

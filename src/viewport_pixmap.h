@@ -89,15 +89,15 @@ namespace SlavGPS {
 		   corner. */
 		int central_get_leftmost_pixel(void) const;
 		int central_get_rightmost_pixel(void) const;
-		int central_get_upmost_pixel(void) const;
+		int central_get_topmost_pixel(void) const;
 		int central_get_bottommost_pixel(void) const;
 
-		/* Get number of pixel (starting with zero) that is in
-		   center of viewport pixmap, either at the center of
-		   vertical line, or at the center of horizontal
-		   line. */
-		int central_get_y_center_pixel(void) const;
+		/* Get coordinate of pixel (starting with zero) that
+		   is in center of central part of viewport pixmap,
+		   either at the center of horizontal line (x), or at
+		   the center of vertical line (y). */
 		int central_get_x_center_pixel(void) const;
+		int central_get_y_center_pixel(void) const;
 		ScreenPos central_get_center_screen_pos(void) const;
 
 		int total_get_width(void) const;
@@ -204,16 +204,15 @@ namespace SlavGPS {
 		QColor background_color;
 
 	protected:
-		//Viewport2D * parent_viewport = NULL;
 
 		/* Full width/height, i.e. including margins. */
 		int total_width = 0;
 		int total_height = 0;
 
-		int left_margin = 0;
-		int right_margin = 0;
-		int top_margin = 0;
-		int bottom_margin = 0;
+		int left_margin_width = 0;
+		int right_margin_width = 0;
+		int top_margin_height = 0;
+		int bottom_margin_height = 0;
 
 		QPen highlight_pen;
 		QColor highlight_color;
