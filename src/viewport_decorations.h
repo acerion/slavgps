@@ -58,21 +58,37 @@ namespace SlavGPS {
 		sg_ret add_attribution(QString const & copyright);
 		sg_ret add_logo(const GisViewportLogo & logo);
 
-		void draw(GisViewport * gisview) const;
+		void draw(GisViewport & gisview) const;
 		void clear(void);
 
 	private:
-		void draw_attributions(GisViewport * gisview) const;
-		void draw_logos(GisViewport * gisview) const;
+		void draw_attributions(GisViewport & gisview) const;
+		void draw_logos(GisViewport & gisview) const;
+		void draw_scale(GisViewport & gisview) const;
+		void draw_center_mark(GisViewport & gisview) const;
 
-		void draw_scale(GisViewport * gisview) const;
-		void draw_center_mark(GisViewport * gisview) const;
+		/**
+		   @brief Draw horizontal line with vertical bars representing a scale indicator
 
-		void draw_scale_helper_scale(GisViewport * gisview, const QPen & pen, int scale_len, int h) const;
-		QString draw_scale_helper_value(GisViewport * gisview, DistanceUnit distance_unit, double scale_unit) const;
+		   @param begin - this is where bottom-left corner of
+		   scale should be
+		*/
+		void draw_scale_helper_draw_scale(GisViewport & gisview, const ScreenPos & begin, const QPen & pen, int scale_len_px, int bar_height_max_px) const;
 
-		/* Draw text with viewport's size and viewport's bbox. */
-		void draw_viewport_data(GisViewport * gisview) const;
+		QString draw_scale_helper_get_value_string(GisViewport & gisview, DistanceUnit distance_unit, double scale_unit) const;
+
+		/**
+		   @brief Draw text with viewport's metadata
+
+		   Draw info about viewport's size, viewport's bbox
+		   and about geo-coordinates of viewport's corners.
+		*/
+		void draw_viewport_metadata(GisViewport & gisview) const;
+
+		/**
+		   @brief Draw markers of location of some key pixels in viewport
+		*/
+		void draw_viewport_pixels(GisViewport & gisview) const;
 
 		/* For scale and center mark. */
 		QPen pen_marks_bg;
@@ -80,6 +96,9 @@ namespace SlavGPS {
 
 		QStringList attributions; /* Attributions/copyrights of stuff displayed in viewport. */
 		std::list<GisViewportLogo> logos;
+
+		/* Padding between different decorations. */
+		int base_padding = 10;
 	};
 
 

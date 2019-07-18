@@ -76,13 +76,13 @@ namespace SlavGPS {
 		QPixmap pixmap;
 
 		/* x/y coordinates in target viewport, where the pixmap will be drawn. */
-		int dest_x = 0;
-		int dest_y = 0;
+		fpixel dest_x = 0.0;
+		fpixel dest_y = 0.0;
 
-		int begin_x = 0;
-		int begin_y = 0;
-		int width = 0;
-		int height = 0;
+		fpixel begin_x = 0.0;
+		fpixel begin_y = 0.0;
+		fpixel width = 0.0;
+		fpixel height = 0.0;
 	};
 
 
@@ -179,7 +179,7 @@ namespace SlavGPS {
 
 		  The grid lines are drawn at delta_x/delta_y intervals.
 		*/
-		static void draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height);
+		static void draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewport_x, fpixel viewport_y, fpixel x_begin, fpixel delta_x, fpixel x_end, fpixel y_begin, fpixel delta_y, fpixel y_end, double tile_width, double tile_height);
 
 
 		MapTypeID map_type_id = MapTypeID::Initial;

@@ -41,6 +41,7 @@
 #include "tree_view.h"
 #include "bbox.h"
 #include "coord.h"
+#include "viewport.h"
 
 
 
@@ -97,8 +98,7 @@ namespace SlavGPS {
 		LatLonBBox bbox;
 
 		/* Output. */
-		int closest_x = 0;
-		int closest_y = 0;
+		ScreenPos closest_pos;
 		Track * closest_track = NULL;
 		Trackpoint * closest_tp = NULL;
 

@@ -41,6 +41,7 @@
 #include "tree_view.h"
 #include "bbox.h"
 #include "coord.h"
+#include "viewport.h"
 
 
 
@@ -120,8 +121,7 @@ namespace SlavGPS {
 		GisViewport * gisview = NULL;
 
 		/* Output. */
-		int closest_x = 0;
-		int closest_y = 0;
+		ScreenPos closest_pos;
 		Waypoint * closest_wp = NULL;
 	};
 

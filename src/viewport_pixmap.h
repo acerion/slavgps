@@ -95,9 +95,10 @@ namespace SlavGPS {
 		/* Get coordinate of pixel (starting with zero) that
 		   is in center of central part of viewport pixmap,
 		   either at the center of horizontal line (x), or at
-		   the center of vertical line (y). */
-		int central_get_x_center_pixel(void) const;
-		int central_get_y_center_pixel(void) const;
+		   the center of vertical line (y).
+		*/
+		fpixel central_get_x_center_pixel(void) const;
+		fpixel central_get_y_center_pixel(void) const;
 		ScreenPos central_get_center_screen_pos(void) const;
 
 		int total_get_width(void) const;
@@ -130,11 +131,11 @@ namespace SlavGPS {
 		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
 		void draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset);
 		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, int text_offset);
-		void draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text);
+		void draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const ScreenPos & base_point, QString const & text);
 
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int start_angle, int span_angle);
-		void draw_ellipse(QPen const & pen, const QPoint & center, int radius_x, int radius_y, bool filled);
-		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
+		void draw_ellipse(QPen const & pen, const ScreenPos & center, int radius_x, int radius_y, bool filled);
+		void draw_polygon(QPen const & pen, ScreenPos const * points, int npoints, bool filled);
 
 		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height);
 		void draw_pixmap(const QPixmap & pixmap, int viewport_x, int viewport_y);

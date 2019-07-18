@@ -857,10 +857,13 @@ QString SGUtils::double_to_c(double d, int precision)
 
 
 
-QPoint SGUtils::coord_to_point(const Coord & coord, const GisViewport * gisview)
+ScreenPos SGUtils::coord_to_point(const Coord & coord, const GisViewport * gisview)
 {
 	const ScreenPos screen_pos = gisview->coord_to_screen_pos(coord); /* In viewport's x/y coordinate system. */
-	QPoint point = gisview->mapToGlobal(QPoint(screen_pos.x, screen_pos.y)); /* In screen's x/y coordinate system. */
+
+	/* FIXME: loss of precision: fpixel -> int.
+	   FIXME: slowdown: calling constructor before passing values to method. */
+	QPoint point = gisview->mapToGlobal(QPoint(screen_pos.x(), screen_pos.y())); /* In screen's x/y coordinate system. */
 
 	if (1) { /* Debug. */
 		const int primary_screen = QApplication::desktop()->primaryScreen();
@@ -871,5 +874,5 @@ QPoint SGUtils::coord_to_point(const Coord & coord, const GisViewport * gisview)
 		qDebug() << SG_PREFIX_D << "Available geometry of screen containing widget:" << containing_screen_geo;
 	}
 
-	return point;
+	return ScreenPos(point.x(), point.y()); /* FIXME: slowdown: calling constructor. */
 }

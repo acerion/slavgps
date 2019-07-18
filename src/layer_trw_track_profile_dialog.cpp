@@ -473,14 +473,14 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 
 	/* Now draw marks on this fresh (restored from saved) image. */
 
-	if (current_pos.x > 0 && current_pos.y > 0) {
+	if (current_pos.x() > 0 && current_pos.y() > 0) {
 		this->graph_2d->central_draw_simple_crosshair(current_pos);
 		is_current_drawn = true;
 	} else {
 		is_current_drawn = false;
 	}
 
-	if (selected_pos.x > 0 && selected_pos.y > 0) {
+	if (selected_pos.x() > 0 && selected_pos.y() > 0) {
 		this->graph_2d->central_draw_simple_crosshair(selected_pos);
 		is_selected_drawn = true;
 	} else {
@@ -524,7 +524,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 
 	ScreenPos current_pos_cbl;
 	gisview->get_cursor_pos_cbl(ev, current_pos_cbl);
-	const bool found_tp = set_center_at_graph_position(current_pos_cbl.x,
+	const bool found_tp = set_center_at_graph_position(current_pos_cbl.x(),
 							   this->trw,
 							   this->main_gisview,
 							   this->trk,
@@ -584,7 +584,7 @@ sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 	const int width = this->graph_2d->central_get_width();
 	const int height = this->graph_2d->central_get_height();
 
-	int ix = (int) screen_pos.x;
+	int ix = (int) screen_pos.x();
 
 	/*
 	  Ensure ix is inside of graph.
@@ -613,7 +613,7 @@ sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 
 
 	const int y = height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
-	screen_pos.set(screen_pos.x, y);
+	screen_pos.set(screen_pos.x(), y);
 
 	return sg_ret::ok;
 }
@@ -708,7 +708,7 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 
 	switch (graph->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) current_pos_cbl.x / graph->graph_2d->central_get_width(), &meters_from_start, HOVERED);
+		this->trk->select_tp_by_percentage_dist((double) current_pos_cbl.x() / graph->graph_2d->central_get_width(), &meters_from_start, HOVERED);
 		graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
@@ -718,7 +718,7 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 		break;
 
 	case GisViewportDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) current_pos_cbl.x / graph->graph_2d->central_get_width(), HOVERED);
+		this->trk->select_tp_by_percentage_time((double) current_pos_cbl.x() / graph->graph_2d->central_get_width(), HOVERED);
 		graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
 		if (graph->labels.x_value) {
@@ -735,7 +735,7 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 	};
 
 
-	double y = graph->track_data.y[current_pos_cbl.x];
+	double y = graph->track_data.y[(int) current_pos_cbl.x()]; /* FIXME: use proper value for array index. */
 	switch (graph->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
 		if (graph->labels.y_value) {

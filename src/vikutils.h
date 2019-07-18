@@ -157,7 +157,7 @@ namespace SlavGPS {
 		   Convert a geo coordinate @coord of item visible in
 		   given @viewport to x/y coordinate on screen.
 		*/
-		static QPoint coord_to_point(const Coord & coord, const GisViewport * gisview);
+		static ScreenPos coord_to_point(const Coord & coord, const GisViewport * gisview);
 
 
 		/* Generate an integer suitable for comparison of version numbers. */

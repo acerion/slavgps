@@ -89,7 +89,7 @@ ViewportPixmap::~ViewportPixmap()
 
 void ViewportPixmap::draw_line(QPen const & pen, const ScreenPos & begin, const ScreenPos & end)
 {
-	this->draw_line(pen, begin.x, begin.y, end.x, end.y);
+	this->draw_line(pen, begin.x(), begin.y(), end.x(), end.y());
 }
 
 
@@ -203,14 +203,14 @@ void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const 
 	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
-		qreal new_top = text_rect.top() - (text_rect.height() / 2);
+		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
 		final_bounding_rect.moveTop(new_top);
 		text_rect.moveTop(new_top);
 	}
 
 	if (text_offset & SG_TEXT_OFFSET_LEFT) {
 		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
-		qreal new_left = text_rect.left() - (text_rect.width() / 2);
+		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
 		final_bounding_rect.moveLeft(new_left);
 		text_rect.moveLeft(new_left);
 	}
@@ -235,7 +235,7 @@ void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const 
 
 
 
-void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const QPointF & base_point, QString const & text)
+void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const ScreenPos & base_point, QString const & text)
 {
 	/* http://doc.qt.io/qt-5/qpainterpath.html#addText */
 
@@ -266,14 +266,14 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const 
 	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
-		qreal new_top = text_rect.top() - (text_rect.height() / 2);
+		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
 		final_bounding_rect.moveTop(new_top);
 		text_rect.moveTop(new_top);
 	}
 
 	if (text_offset & SG_TEXT_OFFSET_LEFT) {
 		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
-		qreal new_left = text_rect.left() - (text_rect.width() / 2);
+		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
 		final_bounding_rect.moveLeft(new_left);
 		text_rect.moveLeft(new_left);
 	}
@@ -331,7 +331,7 @@ void ViewportPixmap::draw_arc(QPen const & pen, int center_x, int center_y, int 
 
 
 
-void ViewportPixmap::draw_ellipse(QPen const & pen, const QPoint & ellipse_center, int radius_x, int radius_y, bool filled)
+void ViewportPixmap::draw_ellipse(QPen const & pen, const ScreenPos & ellipse_center, int radius_x, int radius_y, bool filled)
 {
 	/* TODO_LATER: see if there is a difference in outer size of ellipse drawn with and without a filling. */
 
@@ -353,7 +353,7 @@ void ViewportPixmap::draw_ellipse(QPen const & pen, const QPoint & ellipse_cente
 
 
 
-void ViewportPixmap::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled)
+void ViewportPixmap::draw_polygon(QPen const & pen, ScreenPos const * points, int npoints, bool filled)
 {
 	if (filled) {
 		QPainterPath path;
@@ -466,33 +466,45 @@ int ViewportPixmap::central_get_bottommost_pixel(void) const
 }
 
 /**
-   @reviewed-on 2019-07-15
+   @reviewed-on 2019-07-17
 */
-int ViewportPixmap::central_get_x_center_pixel(void) const
+fpixel ViewportPixmap::central_get_x_center_pixel(void) const
 {
 	/* If left and right margins were zero, this would be
 	   horizontal position of center pixel. */
-	const int x_center_without_margins = (this->total_width - this->left_margin_width - this->right_margin_width - 1) / 2;
+	/* To understand how this calculation work, just draw 4-by-5
+	   rectangle in grid notebook, mark indices of pixels on x and
+	   y axis (starting with zero index) and mark center position
+	   in the rectangle. Then look at corresponding indices of the
+	   mark on x and y axis and try to derive formula from
+	   that. */
+	const fpixel x_center_without_margins = (this->total_width - this->left_margin_width - this->right_margin_width) / 2.0;
 
-	/* Move the pixel's position left by how much place takes the
-	   left margin. */
-	const int x_center_shifted_by_left_margin = x_center_without_margins + this->left_margin_width;
+	/* Move the pixel's position left by how much place the left
+	   margin takes. */
+	const fpixel x_center_shifted_by_left_margin = x_center_without_margins + this->left_margin_width;
 
 	return x_center_shifted_by_left_margin;
 }
 
 /**
-   @reviewed-on 2019-07-15
+   @reviewed-on 2019-07-17
 */
-int ViewportPixmap::central_get_y_center_pixel(void) const
+fpixel ViewportPixmap::central_get_y_center_pixel(void) const
 {
 	/* If top and bottom margins were zero, this would be vertical
 	   position of center pixel. */
-	const int y_center_without_margins = (this->total_height - this->top_margin_height - this->bottom_margin_height - 1) / 2;
+	/* To understand how this calculation work, just draw 4-by-5
+	   rectangle in grid notebook, mark indices of pixels on x and
+	   y axis (starting with zero index) and mark center position
+	   in the rectangle. Then look at corresponding indices of the
+	   mark on x and y axis and try to derive formula from
+	   that. */
+	const fpixel y_center_without_margins = (this->total_height - this->top_margin_height - this->bottom_margin_height) / 2.0;
 
-	/* Move the pixel's position down by how much place takes the
-	   top margin. */
-	const int y_center_shifted_by_top_margin = y_center_without_margins + this->top_margin_height;
+	/* Move the pixel's position down by how much place the top
+	   margin takes. */
+	const fpixel y_center_shifted_by_top_margin = y_center_without_margins + this->top_margin_height;
 
 	return y_center_shifted_by_top_margin;
 }
@@ -681,14 +693,14 @@ void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const 
 	QRectF text_rect = vpixmap->painter.boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
-		qreal new_top = text_rect.top() - (text_rect.height() / 2);
+		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
 		final_bounding_rect.moveTop(new_top);
 		text_rect.moveTop(new_top);
 	}
 
 	if (text_offset & SG_TEXT_OFFSET_LEFT) {
 		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
-		qreal new_left = text_rect.left() - (text_rect.width() / 2);
+		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
 		final_bounding_rect.moveLeft(new_left);
 		text_rect.moveLeft(new_left);
 	}
@@ -752,8 +764,8 @@ void ViewportPixmap::central_draw_simple_crosshair(const ScreenPos & pos)
 	/* Convert from "beginning in bottom-left corner" to Qt's
 	   "beginning in top-left corner" coordinate system. "q_"
 	   prefix means "Qt's coordinate system". */
-	const int x = pos.x;
-	const int y = bottommost_pixel - pos.y;
+	const int x = pos.x();
+	const int y = bottommost_pixel - pos.y();
 
 	qDebug() << SG_PREFIX_I << "Crosshair at coord" << x << y;
 

@@ -286,7 +286,7 @@ static void expedia_handle_cleanup(void * handle)
 
 
 /* Thanks GPSDrive. */
-bool Expedia::screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon & lat_lon_center, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
+bool Expedia::screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon & lat_lon_center, double pixelfact_x, double pixelfact_y, fpixel mapSizeX2, fpixel mapSizeY2)
 {
 	double Ra = Radius[90 + (int) lat_lon_center.lat];
 
@@ -309,7 +309,7 @@ bool Expedia::screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon
 
 
 /* Thanks GPSDrive. */
-bool Expedia::lat_lon_to_screen_pos(double * pos_x, double * pos_y, const LatLon & lat_lon_center, const LatLon & lat_lon, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
+bool Expedia::lat_lon_to_screen_pos(fpixel * pos_x, fpixel * pos_y, const LatLon & lat_lon_center, const LatLon & lat_lon, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
 {
 	int mapSizeX = 2 * mapSizeX2;
 	int mapSizeY = 2 * mapSizeY2;

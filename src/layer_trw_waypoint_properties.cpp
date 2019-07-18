@@ -382,7 +382,7 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 
 	if (!is_new) {
 		/* Shift left/right/up/down to try not to obscure the waypoint. */
-		const QPoint point_to_expose = SGUtils::coord_to_point(wp->coord);
+		const ScreenPos point_to_expose = SGUtils::coord_to_point(wp->coord);
 		Dialog::move_dialog(GTK_WINDOW(dialog), point_to_expose, false);
 	}
 

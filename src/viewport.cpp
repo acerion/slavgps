@@ -235,7 +235,9 @@ void GisViewport::draw_decorations(void)
 	this->decorations.add_attribution("© Another test attribution holder 2017-2019");
 #endif
 
-	this->decorations.draw(this);
+	/* TODO: add test logos. */
+
+	this->decorations.draw(*this);
 
 	return;
 }
@@ -679,7 +681,7 @@ sg_ret GisViewport::set_center_coord(const Coord & coord, bool save_position)
 
 
 
-sg_ret GisViewport::set_center_coord(int x1, int y1)
+sg_ret GisViewport::set_center_coord(fpixel x1, fpixel y1)
 {
 	const Coord coord = this->screen_pos_to_coord(x1, y1);
 	return this->set_center_coord(coord, false);
@@ -690,7 +692,7 @@ sg_ret GisViewport::set_center_coord(int x1, int y1)
 
 sg_ret GisViewport::set_center_coord(const ScreenPos & pos)
 {
-	return this->set_center_coord(pos.x, pos.y);
+	return this->set_center_coord(pos.x(), pos.y());
 }
 
 
@@ -821,7 +823,7 @@ Coord GisViewport::screen_pos_to_coord(ScreenPosition screen_pos) const
 
 
 
-Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
+Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 {
 	Coord coord;
 	const double xmpp = this->viking_scale.x;
@@ -830,8 +832,8 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 	/* Distance of pixel specified by pos_x/pos_y from viewport's
 	   central pixel.  TODO: verify location of pos_x and pos_y in
 	   these equations. */
-	const int delta_horiz_pixels = pos_x - this->central_get_x_center_pixel();
-	const int delta_y_pixels = this->central_get_y_center_pixel() - pos_y;
+	const fpixel delta_x_pixels = pos_x - this->central_get_x_center_pixel();
+	const fpixel delta_y_pixels = this->central_get_y_center_pixel() - pos_y;
 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
@@ -840,7 +842,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		/* Modified (reformatted) formula. */
 		{
 			coord.utm.set_northing((delta_y_pixels * ympp) + this->center_coord.utm.get_northing());
-			coord.utm.set_easting((delta_horiz_pixels * xmpp) + this->center_coord.utm.get_easting());
+			coord.utm.set_easting((delta_x_pixels * xmpp) + this->center_coord.utm.get_easting());
 			coord.utm.set_zone(this->center_coord.utm.get_zone());
 
 			const int zone_delta = floor((coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
@@ -877,7 +879,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			test_coord.utm.set_zone(this->center_coord.utm.get_zone());
 			assert (UTM::is_band_letter(this->center_coord.utm.get_band_letter())); /* TODO_2_LATER: add smarter error handling. In theory the source object should be valid and for sure contain valid band letter. */
 			test_coord.utm.set_band_letter(this->center_coord.utm.get_band_letter());
-			test_coord.utm.easting = (delta_horiz_pixels * xmpp) + this->center_coord.utm.easting;
+			test_coord.utm.easting = (delta_x_pixels * xmpp) + this->center_coord.utm.easting;
 
 			zone_delta = floor((test_coord.utm.easting - UTM_CENTRAL_MERIDIAN_EASTING) / this->utm_zone_width + 0.5);
 
@@ -905,7 +907,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 		case GisViewportDrawMode::LatLon:
 			/* Modified (reformatted) formula. */
 			{
-				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_x_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
 				coord.lat_lon.lat = this->center_coord.lat_lon.lat + (delta_y_pixels / REVERSE_MERCATOR_FACTOR(ympp));
 			}
 
@@ -914,7 +916,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_x_pixels);
 				test_coord.lat_lon.lat = this->center_coord.lat_lon.lat + (180.0 * ympp / 65536 / 256 * delta_y_pixels);
 
 				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
@@ -937,7 +939,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 			/* This isn't called with a high frequently so less need to optimize. */
 			/* Modified (reformatted) formula. */
 			{
-				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_horiz_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
+				coord.lat_lon.lon = this->center_coord.lat_lon.lon + (delta_x_pixels / REVERSE_MERCATOR_FACTOR(xmpp));
 				coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat) + (delta_y_pixels / (REVERSE_MERCATOR_FACTOR(ympp))));
 			}
 
@@ -946,7 +948,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 				Coord test_coord;
 				test_coord.set_coord_mode(CoordMode::LatLon);
 
-				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_horiz_pixels);
+				test_coord.lat_lon.lon = this->center_coord.lat_lon.lon + (180.0 * xmpp / 65536 / 256 * delta_x_pixels);
 				test_coord.lat_lon.lat = DEMERCLAT (MERCLAT(this->center_coord.lat_lon.lat) + (180.0 * ympp / 65536 / 256 * delta_y_pixels));
 
 				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
@@ -979,7 +981,7 @@ Coord GisViewport::screen_pos_to_coord(int pos_x, int pos_y) const
 
 Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
 {
-	return this->screen_pos_to_coord(pos.x, pos.y);
+	return this->screen_pos_to_coord(pos.x(), pos.y());
 }
 
 
@@ -990,14 +992,14 @@ Coord GisViewport::screen_pos_to_coord(const ScreenPos & pos) const
   Thus x & y position factors are calculated once on zoom changes,
   avoiding the need to do it here all the time.
 */
-sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int * pos_y) const
+sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, fpixel * pos_y) const
 {
 	Coord coord = coord_in;
 	const double xmpp = this->viking_scale.x;
 	const double ympp = this->viking_scale.y;
 
-	const int horiz_center_pixel = this->central_get_x_center_pixel();
-	const int y_center_pixel = this->central_get_y_center_pixel();
+	const fpixel x_center_pixel = this->central_get_x_center_pixel();
+	const fpixel y_center_pixel = this->central_get_y_center_pixel();
 
 	if (coord_in.get_coord_mode() != this->coord_mode) {
 		/* The intended use of the function is that coord_in
@@ -1026,7 +1028,7 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 			const double horiz_distance_m = coord.utm.get_easting() - this->center_coord.utm.get_easting();
 			const double vert_distance_m = coord.utm.get_northing() - this->center_coord.utm.get_northing();
 
-			*pos_x = horiz_center_pixel + (horiz_distance_m / xmpp) - (zone_diff * this->utm_zone_width) / xmpp;
+			*pos_x = x_center_pixel + (horiz_distance_m / xmpp) - (zone_diff * this->utm_zone_width) / xmpp;
 			*pos_y = y_center_pixel - (vert_distance_m / ympp); /* TODO: plus or minus? */
 		}
 		break;
@@ -1034,19 +1036,20 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 	case CoordMode::LatLon:
 		switch (this->draw_mode) {
 		case GisViewportDrawMode::LatLon:
-			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
+			*pos_x = x_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
 			*pos_y = y_center_pixel + (MERCATOR_FACTOR(ympp) * (this->center_coord.lat_lon.lat - coord.lat_lon.lat));
 			break;
 		case GisViewportDrawMode::Expedia:
 			{
-				double xx, yy;
-				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center_coord.lat_lon, coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, horiz_center_pixel, y_center_pixel);
+				fpixel xx;
+				fpixel yy;
+				Expedia::lat_lon_to_screen_pos(&xx, &yy, this->center_coord.lat_lon, coord.lat_lon, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, x_center_pixel, y_center_pixel);
 				*pos_x = xx;
 				*pos_y = yy;
 			}
 			break;
 		case GisViewportDrawMode::Mercator:
-			*pos_x = horiz_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
+			*pos_x = x_center_pixel + (MERCATOR_FACTOR(xmpp) * (coord.lat_lon.lon - this->center_coord.lat_lon.lon));
 			*pos_y = y_center_pixel + (MERCATOR_FACTOR(ympp) * (MERCLAT(this->center_coord.lat_lon.lat) - MERCLAT(coord.lat_lon.lat)));
 			break;
 		default:
@@ -1068,7 +1071,11 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, int * pos_x, int
 ScreenPos GisViewport::coord_to_screen_pos(const Coord & coord_in) const
 {
 	ScreenPos pos;
-	if (sg_ret::ok == this->coord_to_screen_pos(coord_in, &pos.x, &pos.y)) {
+	fpixel x;
+	fpixel y;
+	if (sg_ret::ok == this->coord_to_screen_pos(coord_in, &x, &y)) {
+		pos.rx() = x;
+		pos.ry() = y;
 		pos.valid = true;
 	} /* else: invalid by default. */
 
@@ -1089,15 +1096,15 @@ void GisViewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 	ScreenPos sp_sw = this->coord_to_screen_pos(Coord(LatLon(bbox.south, bbox.west), this->coord_mode));
 	ScreenPos sp_ne = this->coord_to_screen_pos(Coord(LatLon(bbox.north, bbox.east), this->coord_mode));
 
-	if (sp_sw.x < 0) {
-		sp_sw.x = 0;
+	if (sp_sw.x() < 0) {
+		sp_sw.rx() = 0;
 	}
 
-	if (sp_ne.y < 0) {
-		sp_ne.y = 0;
+	if (sp_ne.y() < 0) {
+		sp_ne.ry() = 0;
 	}
 
-	this->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	this->draw_rectangle(pen, sp_sw.x(), sp_ne.y(), sp_ne.x() - sp_sw.x(), sp_sw.y() - sp_ne.y());
 
 	return;
 }
@@ -1566,7 +1573,7 @@ bool GisViewport::print_cb(QPrinter * printer)
 
 	QPainter printer_painter;
 	printer_painter.begin(printer);
-	QPoint paint_begin; /* Beginning of rectangle, into which we will paint in target device. */
+	ScreenPos paint_begin; /* Beginning of rectangle, into which we will paint in target device. */
 	//paint_begin.setX((target_width / 2.0) - (scaled_viewport->width / 2.0));
 	//paint_begin.setY((target_height / 2.0) - (scaled_viewport->height / 2.0));
 	paint_begin.setX(0);
@@ -1587,19 +1594,10 @@ bool GisViewport::print_cb(QPrinter * printer)
 
 
 
-void ScreenPos::set(int new_x, int new_y)
+void ScreenPos::set(fpixel new_x, fpixel new_y)
 {
-	this->x = new_x;
-	this->y = new_y;
-}
-
-
-
-
-void ScreenPos::set(double new_x, double new_y)
-{
-	this->x = new_x;
-	this->y = new_y;
+	this->rx() = new_x;
+	this->ry() = new_y;
 }
 
 
@@ -1607,7 +1605,7 @@ void ScreenPos::set(double new_x, double new_y)
 
 ScreenPos ScreenPos::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
 {
-	return ScreenPos((pos1.x + pos2.x) / 2, (pos1.y + pos2.y) / 2);
+	return ScreenPos((pos1.x() + pos2.x()) / 2.0, (pos1.y() + pos2.y()) / 2.0);
 }
 
 
@@ -1615,7 +1613,7 @@ ScreenPos ScreenPos::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
 
 bool ScreenPos::is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit)
 {
-	return (abs(pos1.x - pos2.x) < limit) && (abs(pos1.y - pos2.y) < limit);
+	return (abs(pos1.x() - pos2.x()) < limit) && (abs(pos1.y() - pos2.y()) < limit);
 }
 
 
@@ -1623,7 +1621,7 @@ bool ScreenPos::is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, 
 
 bool ScreenPos::operator==(const ScreenPos & pos) const
 {
-	return (this->x == pos.x) && (this->y == pos.y);
+	return (this->x() == pos.x()) && (this->y() == pos.y());
 }
 
 
@@ -1831,8 +1829,8 @@ sg_ret GisViewport::get_cursor_pos_cbl(QMouseEvent * ev, ScreenPos & screen_pos)
 	}
 
 	/* Converting from Qt's "beginning is in upper-left" into "beginning is in bottom-left" coordinate system. */
-	screen_pos.x = x;
-	screen_pos.y = bottommost - y;
+	screen_pos.rx() = x;
+	screen_pos.ry() = bottommost - y;
 
 	return sg_ret::ok;
 }
@@ -1858,7 +1856,7 @@ double GisViewport::central_get_width_m(void) const
 
 QDebug SlavGPS::operator<<(QDebug debug, const ScreenPos & screen_pos)
 {
-	debug << "ScreenPos:" << QString("(%1,%2)").arg(screen_pos.x).arg(screen_pos.y);
+	debug << "ScreenPos:" << QString("(%1,%2)").arg(screen_pos.x()).arg(screen_pos.y());
 	return debug;
 }
 

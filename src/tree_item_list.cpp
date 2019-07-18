@@ -104,7 +104,7 @@ void show_context_menu(TreeItem * item, const QPoint & cursor_position)
 		return;
 	}
 
-	menu.exec(cursor_position);
+	menu.exec(QPoint(cursor_position.x(), cursor_position.y()));
 
 	return;
 }
@@ -120,7 +120,7 @@ void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	}
 	qDebug() << SG_PREFIX_I << "context menu event inside list view";
 
-	QPoint orig = ev->pos();
+	ScreenPos orig = ScreenPos(ev->pos());
 	QPoint v = this->view->pos();
 	QPoint t = this->view->viewport()->pos();
 

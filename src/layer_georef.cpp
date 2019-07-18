@@ -393,7 +393,7 @@ void LayerGeoref::draw_tree_item(GisViewport * gisview, bool highlight_selected,
 	const ScreenPos pos_tl = gisview->coord_to_screen_pos(coord_tl);
 
 	QRect sub_viewport_rect;
-	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x, pos_tl.y));
+	sub_viewport_rect.setTopLeft(pos_tl);
 	sub_viewport_rect.setWidth(this->image_width);
 	sub_viewport_rect.setHeight(this->image_height);
 
@@ -431,9 +431,9 @@ void LayerGeoref::draw_tree_item(GisViewport * gisview, bool highlight_selected,
 	const ScreenPos pos_br = gisview->coord_to_screen_pos(coord_br);
 
 	QRect sub_viewport_rect;
-	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x, pos_tl.y));
-	sub_viewport_rect.setWidth(pos_br.x - pos_tl.x + 1);
-	sub_viewport_rect.setHeight(pos_br.y - pos_tl.y + 1);
+	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x(), pos_tl.y()));
+	sub_viewport_rect.setWidth(pos_br.x() - pos_tl.x() + 1);
+	sub_viewport_rect.setHeight(pos_br.y() - pos_tl.y() + 1);
 	qDebug() << SG_PREFIX_I << "GisViewport rectangle =" << sub_viewport_rect;
 #endif
 

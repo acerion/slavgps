@@ -259,21 +259,21 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 			int slackx = wp->drawn_image_rect.width() / 2;
 			int slacky = wp->drawn_image_rect.height() / 2;
 
-			if (wp_pos.x <= search.x + slackx
-			    && wp_pos.x >= search.x - slackx
-			    && wp_pos.y <= search.y + slacky
-			    && wp_pos.y >= search.y - slacky) {
+			if (wp_pos.x() <= search.x + slackx
+			    && wp_pos.x() >= search.x - slackx
+			    && wp_pos.y() <= search.y + slacky
+			    && wp_pos.y() >= search.y - slacky) {
 
 				found = true;
 			}
 		} else {
-			const int dist_x = abs(wp_pos.x - search.x);
-			const int dist_y = abs(wp_pos.y - search.y);
+			const int dist_x = fabs(wp_pos.x() - search.x);
+			const int dist_y = fabs(wp_pos.y() - search.y);
 
 			if (dist_x <= WAYPOINT_SIZE_APPROX && dist_y <= WAYPOINT_SIZE_APPROX
 			    && ((!search.closest_wp)
 				/* Was the old waypoint we already found closer than this one? */
-				|| dist_x + dist_y < abs(wp_pos.x - search.closest_x) + abs(wp_pos.y - search.closest_y))) {
+				|| dist_x + dist_y < fabs(wp_pos.x() - search.closest_pos.x()) + fabs(wp_pos.y() - search.closest_pos.y()))) {
 
 				found = true;
 			}
@@ -281,10 +281,8 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 
 		if (found) {
 			search.closest_wp = wp;
-			search.closest_x = wp_pos.x;
-			search.closest_y = wp_pos.y;
+			search.closest_pos = wp_pos;
 		}
-
 	}
 }
 
@@ -308,8 +306,8 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, GisVie
 		const ScreenPos wp_pos = gisview->coord_to_screen_pos(wp->coord);
 		int slackx = wp->drawn_image_rect.width() / 2;
 		int slacky = wp->drawn_image_rect.height() / 2;
-		if (wp_pos.x <= event_x + slackx && wp_pos.x >= event_x - slackx
-		    && wp_pos.y <= event_y + slacky && wp_pos.y >= event_y - slacky) {
+		if (wp_pos.x() <= event_x + slackx && wp_pos.x() >= event_x - slackx
+		    && wp_pos.y() <= event_y + slacky && wp_pos.y() >= event_y - slacky) {
 
 			found = wp->image_full_path;
 			/* We've found a match. However continue searching

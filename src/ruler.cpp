@@ -107,7 +107,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
 		const ScreenPos test_pos = this->gisview->coord_to_screen_pos(test);
 
-		this->base_angle.set_value(M_PI - atan2(test_pos.x - this->begin_x, test_pos.y - this->begin_y));
+		this->base_angle.set_value(M_PI - atan2(test_pos.x() - this->begin_x, test_pos.y() - this->begin_y));
 		this->angle.set_value(this->angle.get_value() - this->base_angle.get_value());
 	}
 	this->angle.normalize();

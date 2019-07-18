@@ -71,7 +71,7 @@ namespace SlavGPS {
 
 		static int get_int(const QString & title, const QString & label, int default_num, int min, int max, int step, bool * ok, QWidget * parent);
 
-		static void move_dialog(QDialog * dialog, const QPoint & exposed_point, bool move_vertically);
+		static void move_dialog(QDialog * dialog, const ScreenPos & exposed_point, bool move_vertically);
 	};
 
 

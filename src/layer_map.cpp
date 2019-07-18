@@ -1219,7 +1219,7 @@ sg_ret LayerMap::draw_section(GisViewport * gisview, const Coord & coord_ul, con
 
 
 
-void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, int viewport_x, int viewport_y, int x_begin, int delta_x, int x_end, int y_begin, int delta_y, int y_end, double tile_width, double tile_height)
+void LayerMap::draw_grid(GisViewport * gisview, const QPen & pen, fpixel viewport_x, fpixel viewport_y, fpixel x_begin, fpixel delta_x, fpixel x_end, fpixel y_begin, fpixel delta_y, fpixel y_end, double tile_width, double tile_height)
 {
 	/* Draw single grid lines across the whole screen. */
 	const int center_width = gisview->central_get_width();

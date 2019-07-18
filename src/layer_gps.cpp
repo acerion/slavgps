@@ -1422,10 +1422,10 @@ void LayerGPS::rt_tracking_draw(GisViewport * gisview, const RTData & rt_data)
 	double heading_cos = cos(DEG2RAD(rt_data.fix.track));
 	double heading_sin = sin(DEG2RAD(rt_data.fix.track));
 
-	int half_back_y = screen_pos.y + 8 * heading_cos;
-	int half_back_x = screen_pos.x - 8 * heading_sin;
-	int half_back_bg_y = screen_pos.y + 10 * heading_cos;
-	int half_back_bg_x = screen_pos.x - 10 * heading_sin;
+	int half_back_y = screen_pos.y() + 8 * heading_cos;
+	int half_back_x = screen_pos.x() - 8 * heading_sin;
+	int half_back_bg_y = screen_pos.y() + 10 * heading_cos;
+	int half_back_bg_x = screen_pos.x() - 10 * heading_sin;
 
 	int pt_y = half_back_y - 24 * heading_cos;
 	int pt_x = half_back_x + 24 * heading_sin;
@@ -1442,14 +1442,14 @@ void LayerGPS::rt_tracking_draw(GisViewport * gisview, const RTData & rt_data)
 	int side2bg_y = half_back_bg_y - 11 * heading_sin;
 	int side2bg_x = half_back_bg_x - 11 * heading_cos;
 
-	QPoint trian[3] = { QPoint(pt_x, pt_y), QPoint(side1_x, side1_y), QPoint(side2_x, side2_y) };
-	QPoint trian_bg[3] = { QPoint(ptbg_x, pt_y), QPoint(side1bg_x, side1bg_y), QPoint(side2bg_x, side2bg_y) };
+	ScreenPos trian[3] = { ScreenPos(pt_x, pt_y), ScreenPos(side1_x, side1_y), ScreenPos(side2_x, side2_y) };
+	ScreenPos trian_bg[3] = { ScreenPos(ptbg_x, pt_y), ScreenPos(side1bg_x, side1bg_y), ScreenPos(side2bg_x, side2bg_y) };
 
-	//QPen const & pen, QPoint const * points, int npoints, bool filled
+	//QPen const & pen, ScreenPos const * points, int npoints, bool filled
 
 	gisview->draw_polygon(this->realtime_track_bg_pen, trian_bg, 3, true);
 	gisview->draw_polygon(this->realtime_track_pen, trian, 3, true);
-	gisview->fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x - 2, screen_pos.y - 2, 4, 4);
+	gisview->fill_rectangle((rt_data.fix.mode > MODE_2D) ? this->realtime_track_pt2_pen.color() : this->realtime_track_pt1_pen.color(), screen_pos.x() - 2, screen_pos.y() - 2, 4, 4);
 
 	//this->realtime_track_pt_pen = (this->realtime_track_pt_pen == this->realtime_track_pt1_pen) ? this->realtime_track_pt2_pen : this->realtime_track_pt1_pen;
 }
@@ -1611,7 +1611,7 @@ void LayerGPS::rt_gpsd_raw_hook(void)
 		const int px = 20; /* Adjustment in pixels to make sure vehicle is inside the box. */
 		const int width = gisview->central_get_width(); /* TODO: shouldn't we get central x/y pixels here? */
 		const int height = gisview->central_get_height();
-		int vx, vy;
+		fpixel vx, vy;
 
 		if (sg_ret::ok == gisview->coord_to_screen_pos(this->current_rt_data.coord, &vx, &vy)) {
 			viewport_shifted = true;

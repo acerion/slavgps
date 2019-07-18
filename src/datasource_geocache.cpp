@@ -131,7 +131,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 {
 	if (this->circle_onscreen) {
 		this->gisview->draw_ellipse(this->circle_pen,
-					    QPoint(this->circle_x, this->circle_y),
+					    ScreenPos(this->circle_x, this->circle_y),
 					    this->circle_radius, this->circle_radius,
 					    false);
 	}
@@ -148,11 +148,11 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 	if (circle_center.valid && this->circle_is_onscreen(circle_center)) {
 
-		this->circle_x = circle_center.x;
-		this->circle_y = circle_center.y;
+		this->circle_x = circle_center.x();
+		this->circle_y = circle_center.y();
 
 		const int width = this->gisview->central_get_width();
-		const int y_center_pixel  = this->gisview->central_get_y_center_pixel();
+		const fpixel y_center_pixel  = this->gisview->central_get_y_center_pixel();
 		const int leftmost_pixel  = this->gisview->central_get_leftmost_pixel();
 		const int rightmost_pixel = this->gisview->central_get_rightmost_pixel();
 
@@ -165,9 +165,9 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
 
 		this->gisview->draw_ellipse(this->circle_pen,
-						    QPoint(this->circle_x, this->circle_y),
-						    this->circle_radius, this->circle_radius,
-						    false);
+					    ScreenPos(this->circle_x, this->circle_y),
+					    this->circle_radius, this->circle_radius,
+					    false);
 
 		this->circle_onscreen = true;
 	} else {
@@ -299,7 +299,7 @@ DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 {
 	if (this->circle_onscreen) {
 		this->gisview->draw_ellipse(this->circle_pen,
-					    QPoint(this->circle_x, this->circle_y),
+					    ScreenPos(this->circle_x, this->circle_y),
 					    this->circle_radius, this->circle_radius,
 					    false);
 		this->gisview->sync();
@@ -312,8 +312,8 @@ DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 bool DataSourceGeoCacheDialog::circle_is_onscreen(const ScreenPos & circle_center)
 {
 	/* TODO_2_LATER: real calculation. */
-	return circle_center.x > -1000
-		&& circle_center.y > -1000
-		&& circle_center.x < (this->gisview->central_get_width() + 1000)
-		&& circle_center.y < (this->gisview->central_get_width() + 1000);
+	return circle_center.x() > -1000
+		&& circle_center.y() > -1000
+		&& circle_center.x() < (this->gisview->central_get_width() + 1000)
+		&& circle_center.y() < (this->gisview->central_get_width() + 1000);
 }

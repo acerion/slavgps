@@ -46,8 +46,8 @@ namespace SlavGPS {
 
 		static void init_radius(void);
 
-		static bool lat_lon_to_screen_pos(double * pos_x, double * pos_y, const LatLon & lat_lon_center, const LatLon & lat_lon, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
-		static bool screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon & lat_lon_center, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
+		static bool lat_lon_to_screen_pos(fpixel * pos_x, fpixel * pos_y, const LatLon & lat_lon_center, const LatLon & lat_lon, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
+		static bool screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon & lat_lon_center, double pixelfact_x, double pixelfact_y, fpixel mapSizeX2, fpixel mapSizeY2);
 
 	};
 

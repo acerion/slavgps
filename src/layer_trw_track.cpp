@@ -3441,8 +3441,8 @@ sg_ret Track::draw_e_ft(GisViewport * gisview, int width, int height)
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		const double value = (*iter)->altitude.is_valid() ? (*iter)->altitude.get_value() : 0.0;
 
-		cur_pos.x = col;
-		cur_pos.y = bottommost_pixel - height * (value - alt_min) / visible_range;
+		cur_pos.rx() = col;
+		cur_pos.ry() = bottommost_pixel - height * (value - alt_min) / visible_range;
 
 		gisview->draw_line(pen, last_pos, cur_pos);
 
@@ -3485,8 +3485,8 @@ sg_ret Track::draw_d_ft(GisViewport * gisview, int width, int height)
 	for (auto iter = distances.begin(); iter != distances.end(); iter++) {
 		const double value = *iter;
 
-		cur_pos.x = col;
-		cur_pos.y = bottommost_pixel - height * (value - dist_min) / visible_range;
+		cur_pos.rx() = col;
+		cur_pos.ry() = bottommost_pixel - height * (value - dist_min) / visible_range;
 
 		gisview->draw_line(pen, last_pos, cur_pos);
 
@@ -3535,12 +3535,12 @@ sg_ret Track::draw_v_ft(GisViewport * gisview, int width, int height)
 	for (auto iter = values_uu.begin(); iter != values_uu.end(); iter++) {
 		const auto current_value_uu = *iter;
 
-		cur_pos.x = col;
-		cur_pos.y = height - bottommost_pixel * (current_value_uu - min_value_uu) / visible_values_range_uu;
+		cur_pos.rx() = col;
+		cur_pos.ry() = height - bottommost_pixel * (current_value_uu - min_value_uu) / visible_values_range_uu;
 
 		gisview->draw_line(pen,
-				   last_pos.x, last_pos.y,
-				   cur_pos.x, cur_pos.y);
+				   last_pos.x(), last_pos.y(),
+				   cur_pos.x(), cur_pos.y());
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);

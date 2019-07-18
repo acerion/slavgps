@@ -176,7 +176,7 @@ void Dialog::map_license(const QString & map_name, const QString & map_license, 
    @point_to_expose - x/y coordinates of point to be exposed by movement of the dialog
    @move_vertically: The reposition strategy. move_vertically==true moves dialog vertically, otherwise moves it horizontally
 */
-void Dialog::move_dialog(QDialog * dialog, const QPoint & point_to_expose, bool move_vertically)
+void Dialog::move_dialog(QDialog * dialog, const ScreenPos & point_to_expose, bool move_vertically)
 {
 	/* http://doc.qt.io/qt-5/application-windows.html#window-geometry */
 

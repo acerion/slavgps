@@ -111,18 +111,25 @@ namespace SlavGPS {
 
 
 
+	/*
+	  For pixel coordinates that are better represented by
+	  floating point variables. 'qreal' type matches
+	  primitive data type used to construct QPointF.
+	*/
+	typedef qreal fpixel;
 
-	class ScreenPos {
+
+
+
+	class ScreenPos : public QPointF {
 	public:
 		ScreenPos() {};
-		ScreenPos(int new_x, int new_y) : x(new_x), y(new_y) {};
-		int x = 0;
-		int y = 0;
+		ScreenPos(fpixel x, fpixel y) : QPointF(x, y) {};
+		ScreenPos(const QPointF & other) : QPointF(other) {};
 
 		bool valid = false;
 
-		void set(int new_x, int new_y);
-		void set(double new_x, double new_y);
+		void set(fpixel x, fpixel y);
 
 		bool operator==(const ScreenPos & pos) const;
 

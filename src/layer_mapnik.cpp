@@ -1156,12 +1156,12 @@ sg_ret LayerMapnik::draw_tile(GisViewport * gisview, const TileInfo & tile_info)
 		const LatLon pixmap_lat_lon_ul = MapUtils::iTMS_to_lat_lon(tile_info);
 
 		/* x/y coordinate of u-l corner of a pixmap in viewport's x/y coordinates. */
-		int viewport_x;
-		int viewport_y;
+		fpixel viewport_x;
+		fpixel viewport_y;
 		gisview->coord_to_screen_pos(Coord(pixmap_lat_lon_ul, CoordMode::LatLon), &viewport_x, &viewport_y);
 
-		const int pixmap_x = 0;
-		const int pixmap_y = 0;
+		const fpixel pixmap_x = 0;
+		const fpixel pixmap_y = 0;
 		gisview->draw_pixmap(pixmap, viewport_x, viewport_y, pixmap_x, pixmap_y, this->tile_size_x, this->tile_size_x);
 	}
 
@@ -1200,8 +1200,8 @@ sg_ret LayerMapnik::get_tiles_range(const GisViewport * gisview, TilesRange & ra
 
 void LayerMapnik::draw_grid(GisViewport * gisview, const TilesRange & range, const TileInfo & tile_info_ul) const
 {
-	int viewport_x;
-	int viewport_y;
+	fpixel viewport_x;
+	fpixel viewport_y;
 	const LatLon lat_lon = MapUtils::iTMS_to_center_lat_lon(tile_info_ul);
 	gisview->coord_to_screen_pos(Coord(lat_lon, CoordMode::LatLon), &viewport_x, &viewport_y);
 

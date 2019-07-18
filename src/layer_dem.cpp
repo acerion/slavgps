@@ -684,7 +684,10 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 			}
 
 			/* Calculate bounding box for drawing. */
-			int box_x, box_y, box_width, box_height;
+			fpixel box_x;
+			fpixel box_y;
+			fpixel box_width;
+			fpixel box_height;
 			LatLon box_c;
 			box_c = counter;
 			box_c.lat += (nscale_deg * skip_factor)/2;
@@ -883,7 +886,7 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 					idx = GET_INDEX(elev, min_elevation, max_elevation, DEM_N_HEIGHT_COLORS);
 				}
 				//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
-				gisview->fill_rectangle(this->colors[idx], pos.x - 1, pos.y - 1, 2, 2);
+				gisview->fill_rectangle(this->colors[idx], pos.x() - 1, pos.y() - 1, 2, 2);
 			}
 		} /* for y= */
 	} /* for x= */
@@ -1208,16 +1211,16 @@ void draw_existence_common(GisViewport * gisview, const QPen & pen, const Coord 
 	ScreenPos sp_sw = gisview->coord_to_screen_pos(coord_sw);
 	ScreenPos sp_ne = gisview->coord_to_screen_pos(coord_ne);
 
-	if (sp_sw.x < 0) {
-		sp_sw.x = 0;
+	if (sp_sw.x() < 0) {
+		sp_sw.rx() = 0;
 	}
 
-	if (sp_ne.y < 0) {
-		sp_ne.y = 0;
+	if (sp_ne.y() < 0) {
+		sp_ne.ry() = 0;
 	}
 
 	qDebug() << SG_PREFIX_D << "Drawing existence rectangle for" << cache_file_path;
-	gisview->draw_rectangle(pen, sp_sw.x, sp_ne.y, sp_ne.x - sp_sw.x, sp_sw.y - sp_ne.y);
+	gisview->draw_rectangle(pen, sp_sw.x(), sp_ne.y(), sp_ne.x() - sp_sw.x(), sp_sw.y() - sp_ne.y());
 }
 
 

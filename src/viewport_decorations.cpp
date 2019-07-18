@@ -57,11 +57,13 @@ using namespace SlavGPS;
 
 
 static int rescale_unit(double * base_distance, double * scale_unit, int maximum_width);
-static int PAD = 10;
 
 
 
 
+/**
+   @reviewed-on: 2019-07-16
+*/
 GisViewportDecorations::GisViewportDecorations()
 {
 	this->pen_marks_fg.setColor(QColor("grey"));
@@ -73,55 +75,65 @@ GisViewportDecorations::GisViewportDecorations()
 
 
 
-void GisViewportDecorations::draw(GisViewport * gisview) const
+/**
+   @reviewed-on: 2019-07-17
+*/
+void GisViewportDecorations::draw(GisViewport & gisview) const
 {
 	if (1) { /* For debug purposes only. */
 		QPen pen;
 
-		/* Boundaries of pixmap. */
+		/* Boundaries of whole pixmap. */
 		pen.setColor("red");
-		pen.setWidth(4);
-		const int begin_x = gisview->left_get_width();
-		const int begin_y = gisview->top_get_height();
-		const int w = gisview->total_get_width() - gisview->left_get_width() - gisview->right_get_width();
-		const int h = gisview->total_get_height() - gisview->top_get_height() - gisview->bottom_get_height();
-		gisview->draw_rectangle(pen, 0, 0, gisview->total_get_width(), gisview->total_get_height());
-
-		/* Margin. */
-		pen.setColor("blue");
 		pen.setWidth(2);
-		gisview->draw_rectangle(pen, begin_x, begin_y, w, h);
+		gisview.draw_rectangle(pen, 0, 0, gisview.total_get_width(), gisview.total_get_height());
+
+		/* The largest rectangle that fits into central part of pixmap. */
+		pen.setColor("blue");
+		pen.setWidth(1);
+		const int begin_x = gisview.central_get_leftmost_pixel();
+		const int begin_y = gisview.central_get_topmost_pixel();
+		const int width = gisview.central_get_width();
+		const int height = gisview.central_get_height();
+		gisview.draw_rectangle(pen, begin_x, begin_y, width, height);
 	}
 
 
-	this->draw_scale(gisview);
+
 	this->draw_attributions(gisview);
-	this->draw_center_mark(gisview);
 	this->draw_logos(gisview);
-	this->draw_viewport_data(gisview); /* GisViewport bbox coordinates, viewport width and height. */
+	this->draw_scale(gisview);
+	this->draw_center_mark(gisview);
+
+
+
+	if (1) { /* Debug. Draw on top of any other decorations. */
+		this->draw_viewport_metadata(gisview);
+		this->draw_viewport_pixels(gisview);
+	}
 }
 
 
 
 
-void GisViewportDecorations::draw_scale(GisViewport * gisview) const
+void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 {
-	if (!gisview->scale_visibility) {
+	if (!gisview.scale_visibility) {
 		return;
 	}
 
-	const int central_width  = gisview->central_get_width();
-	const int central_height = gisview->central_get_height();
-	const int leftmost_pixel = gisview->central_get_leftmost_pixel();
-	const int y_center_pixel = gisview->central_get_y_center_pixel();
+	const int central_width  = gisview.central_get_width();
+	const int central_height = gisview.central_get_height();
+	const int leftmost_pixel = gisview.central_get_leftmost_pixel();
+	const fpixel y_center_pixel = gisview.central_get_y_center_pixel();
 
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
 	int MAXIMUM_WIDTH = central_width * RELATIVE_WIDTH;
 
-	const Coord left  = gisview->screen_pos_to_coord(leftmost_pixel,                                  y_center_pixel);
-	const Coord right = gisview->screen_pos_to_coord(leftmost_pixel + central_width * RELATIVE_WIDTH, y_center_pixel);
+	const Coord left  = gisview.screen_pos_to_coord(leftmost_pixel,                                  y_center_pixel);
+	const Coord right = gisview.screen_pos_to_coord(leftmost_pixel + central_width * RELATIVE_WIDTH, y_center_pixel);
 
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const double l2r = Coord::distance(left, right);
@@ -149,27 +161,30 @@ void GisViewportDecorations::draw_scale(GisViewport * gisview) const
 	double scale_unit = 1; /* [km, miles, nautical miles] */
 
 	//fprintf(stderr, "%s:%d: base_distance = %g, scale_unit = %g, MAXIMUM_WIDTH = %d\n", __FUNCTION__, __LINE__, base_distance, scale_unit, MAXIMUM_WIDTH);
-	int len = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
-	//fprintf(stderr, "resolved len = %d\n", len);
+	const int scale_len_px = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
+	//fprintf(stderr, "resolved scale len = %d pixels\n", scale_len_px);
 
 
 	const QPen & pen_fg = this->pen_marks_fg;
 	const QPen & pen_bg = this->pen_marks_bg;
+	ScreenPos begin(gisview.central_get_leftmost_pixel() + this->base_padding, gisview.central_get_bottommost_pixel() - this->base_padding);
 
-	this->draw_scale_helper_scale(gisview, pen_bg, len, HEIGHT); /* Bright background. */
-	this->draw_scale_helper_scale(gisview, pen_fg, len, HEIGHT); /* Darker scale on the bright background. */
+	this->draw_scale_helper_draw_scale(gisview, begin, pen_bg, scale_len_px, HEIGHT); /* Bright background. */
+	this->draw_scale_helper_draw_scale(gisview, begin, pen_fg, scale_len_px, HEIGHT); /* Darker scale on the bright background. */
+	if (1) { /* Debug. */
+		gisview.painter.setPen(QColor("red"));
+		gisview.painter.drawEllipse(begin, 3, 3);
+	}
 
 
 	/* Draw scale value.  We need to draw the text with outline,
 	   so that it's more visible on a map that will be present in
 	   the background. */
 	{
-		const QString scale_value = this->draw_scale_helper_value(gisview, distance_unit, scale_unit);
+		begin.rx() += (scale_len_px + this->base_padding); /* Scale value is to the right of scale bar. */
+		const QRectF bounding_rect = QRectF(begin.x(), 0, begin.x() + 300, begin.y());
 
-		const QPointF scale_start(PAD, central_height - PAD); /* Bottom-left corner of scale. */
-		const QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
-		const QRectF bounding_rect = QRectF(value_start.x(), 0, value_start.x() + 300, value_start.y());
-
+		const QString scale_value = this->draw_scale_helper_get_value_string(gisview, distance_unit, scale_unit);
 		const QFont scale_font = QFont("Helvetica", 40);
 
 #if 1           /* Text with outline. */
@@ -177,51 +192,59 @@ void GisViewportDecorations::draw_scale(GisViewport * gisview) const
 		outline_pen.setWidth(1);
 		outline_pen.setColor(pen_bg.color());
 		const QColor fill_color(pen_fg.color());
-		gisview->draw_outlined_text(scale_font, outline_pen, fill_color, value_start, scale_value);
+		gisview.draw_outlined_text(scale_font, outline_pen, fill_color, begin, scale_value);
 
 #else           /* Text without outline (old version). */
-		gisview->draw_text(scale_font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
+		gisview.draw_text(scale_font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, scale_value, 0);
 #endif
 
 
-#if 1
-		/* Debug. */
-		gisview->painter.setPen(QColor("red"));
-		gisview->painter.drawEllipse(scale_start, 3, 3);
-		gisview->painter.setPen(QColor("blue"));
-		gisview->painter.drawEllipse(value_start, 3, 3);
-#endif
+		if (1) { /* Debug. */
+			gisview.painter.setPen(QColor("blue"));
+			gisview.painter.drawEllipse(begin, 3, 3);
+		}
 	}
 }
 
 
 
 
-void GisViewportDecorations::draw_scale_helper_scale(GisViewport * gisview, const QPen & pen, int scale_len, int h) const
+/**
+   @reviewed-on: 2019-07-16
+*/
+void GisViewportDecorations::draw_scale_helper_draw_scale(GisViewport & gisview, const ScreenPos & begin, const QPen & pen, int scale_len_px, int bar_height_max_px) const
 {
-	const int central_width = gisview->central_get_width();
-	const int central_height = gisview->central_get_height();
+	/* Main horizontal bar. */
+	gisview.draw_line(pen, begin.x(),  begin.y(), begin.x() + scale_len_px, begin.y());
 
-	const int begin_x = gisview->central_get_leftmost_pixel() + PAD;
-	const int begin_y = gisview->central_get_bottommost_pixel() - PAD;
+	/* Vertical bars. */
+	const int n = 10; /* Scale bar is divided into N parts. */
+	const int y = begin.y();
+	for (int i = 0; i <= n; i++) {
+		const int x = begin.x() + i * scale_len_px / 10;
 
-	/* Black scale. */
-	gisview->draw_line(pen, begin_x,             begin_y, begin_x + scale_len, begin_y);
-	gisview->draw_line(pen, begin_x,             begin_y, PAD,             central_height - PAD - h);
-	gisview->draw_line(pen, begin_x + scale_len, begin_y, PAD + scale_len, central_height - PAD - h);
+		int bar_height = 0;
+		switch (i) {
+		case 0:   /* Vertical bar at left end. */
+		case n:  /* Vertical bar at right end. */
+			bar_height = bar_height_max_px;
+			break;
+		case n/2:   /* Vertical bar in the center. */
+			bar_height = 0.666 * bar_height_max_px;
+			break;
+		default:
+			bar_height = 0.333 * bar_height_max_px;
+			break;
+		}
 
-	const int y1 = central_height - PAD;
-	for (int i = 1; i < 10; i++) {
-		int x1 = PAD + i * scale_len / 10;
-		int diff = ((i == 5) ? (2 * h / 3) : (1 * h / 3));
-		gisview->draw_line(pen, x1, y1, x1, y1 - diff);
+		gisview.draw_line(pen, x, y, x, y - bar_height);
 	}
 }
 
 
 
 
-QString GisViewportDecorations::draw_scale_helper_value(GisViewport * gisview, DistanceUnit distance_unit, double scale_unit) const
+QString GisViewportDecorations::draw_scale_helper_get_value_string(GisViewport & gisview, DistanceUnit distance_unit, double scale_unit) const
 {
 	QString scale_value;
 
@@ -265,18 +288,18 @@ QString GisViewportDecorations::draw_scale_helper_value(GisViewport * gisview, D
 
 
 /* Draw list of attribution strings, aligning them to bottom-right corner. */
-void GisViewportDecorations::draw_attributions(GisViewport * gisview) const
+void GisViewportDecorations::draw_attributions(GisViewport & gisview) const
 {
 	const QFont font("Helvetica", 12);
 	const QPen & pen = this->pen_marks_fg;
 
-	const int font_height = gisview->fontMetrics().boundingRect("© Copyright").height();
+	const int font_height = gisview.fontMetrics().boundingRect("© Copyright").height();
 	const int single_row_height = 1.2 * font_height;
 
-	const int base_rect_width  = gisview->central_get_width() - (2 * PAD);    /* The actual width will be the same for all attribution label rectangles. */
-	const int base_rect_height = gisview->central_get_height() - (2 * PAD);   /* The actual height will be smaller and smaller for each consecutive attribution. */
-	const int base_anchor_x    = gisview->central_get_rightmost_pixel() - (1 * PAD);    /* x coordinate of actual anchor of every rectangle will be in the same place. */
-	const int base_anchor_y    = gisview->central_get_bottommost_pixel() - (1 * PAD);   /* y coordinate of actual anchor of every rectangle will be higher for each consecutive attribution. */
+	const int base_rect_width  = gisview.central_get_width() - (2 * this->base_padding);    /* The actual width will be the same for all attribution label rectangles. */
+	const int base_rect_height = gisview.central_get_height() - (2 * this->base_padding);   /* The actual height will be smaller and smaller for each consecutive attribution. */
+	const int base_anchor_x    = gisview.central_get_rightmost_pixel() - (1 * this->base_padding);    /* x coordinate of actual anchor of every rectangle will be in the same place. */
+	const int base_anchor_y    = gisview.central_get_bottommost_pixel() - (1 * this->base_padding);   /* y coordinate of actual anchor of every rectangle will be higher for each consecutive attribution. */
 
 	for (int i = 0; i < this->attributions.size(); i++) {
 		const int delta = (i * single_row_height);
@@ -288,55 +311,55 @@ void GisViewportDecorations::draw_attributions(GisViewport * gisview) const
 
 		const QRectF bounding_rect = QRectF(anchor_x, anchor_y, -rect_width, -rect_height);
 
-		gisview->draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignRight, this->attributions[i], 0);
+		gisview.draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignRight, this->attributions[i], 0);
 	}
 }
 
 
 
 
-void GisViewportDecorations::draw_center_mark(GisViewport * gisview) const
+void GisViewportDecorations::draw_center_mark(GisViewport & gisview) const
 {
-	//qDebug() << SG_PREFIX_I << "Center mark visibility =" << gisview->center_mark_visibility;
+	//qDebug() << SG_PREFIX_I << "Center mark visibility =" << gisview.center_mark_visibility;
 
-	if (!gisview->center_mark_visibility) {
+	if (!gisview.center_mark_visibility) {
 		return;
 	}
 
 	const int len = 30;
 	const int gap = 4;
-	const int center_x = gisview->central_get_x_center_pixel();
-	const int center_y = gisview->central_get_y_center_pixel();
+	const fpixel center_x = gisview.central_get_x_center_pixel();
+	const fpixel center_y = gisview.central_get_y_center_pixel();
 
 	const QPen & pen_fg = this->pen_marks_fg;
 	const QPen & pen_bg = this->pen_marks_bg;
 
 	/* White background. */
-	gisview->draw_line(pen_bg, center_x - len, center_y,       center_x - gap, center_y);
-	gisview->draw_line(pen_bg, center_x + gap, center_y,       center_x + len, center_y);
-	gisview->draw_line(pen_bg, center_x,       center_y - len, center_x,       center_y - gap);
-	gisview->draw_line(pen_bg, center_x,       center_y + gap, center_x,       center_y + len);
+	gisview.draw_line(pen_bg, center_x - len, center_y,       center_x - gap, center_y);
+	gisview.draw_line(pen_bg, center_x + gap, center_y,       center_x + len, center_y);
+	gisview.draw_line(pen_bg, center_x,       center_y - len, center_x,       center_y - gap);
+	gisview.draw_line(pen_bg, center_x,       center_y + gap, center_x,       center_y + len);
 
 	/* Black foreground. */
-	gisview->draw_line(pen_fg, center_x - len, center_y,        center_x - gap, center_y);
-	gisview->draw_line(pen_fg, center_x + gap, center_y,        center_x + len, center_y);
-	gisview->draw_line(pen_fg, center_x,       center_y - len,  center_x,       center_y - gap);
-	gisview->draw_line(pen_fg, center_x,       center_y + gap,  center_x,       center_y + len);
+	gisview.draw_line(pen_fg, center_x - len, center_y,        center_x - gap, center_y);
+	gisview.draw_line(pen_fg, center_x + gap, center_y,        center_x + len, center_y);
+	gisview.draw_line(pen_fg, center_x,       center_y - len,  center_x,       center_y - gap);
+	gisview.draw_line(pen_fg, center_x,       center_y + gap,  center_x,       center_y + len);
 }
 
 
 
 
-void GisViewportDecorations::draw_logos(GisViewport * gisview) const
+void GisViewportDecorations::draw_logos(GisViewport & gisview) const
 {
-	int x_pos = gisview->central_get_width() - PAD;
-	const int y_pos = PAD;
+	int x_pos = gisview.central_get_width() - this->base_padding;
+	const int y_pos = this->base_padding;
 	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
 		const QPixmap & logo_pixmap = iter->logo_pixmap;
 		const int logo_width = logo_pixmap.width();
 		const int logo_height = logo_pixmap.height();
-		gisview->draw_pixmap(logo_pixmap, 0, 0, x_pos - logo_width, y_pos, logo_width, logo_height);
-		x_pos = x_pos - logo_width - PAD;
+		gisview.draw_pixmap(logo_pixmap, 0, 0, x_pos - logo_width, y_pos, logo_width, logo_height);
+		x_pos = x_pos - logo_width - this->base_padding;
 	}
 }
 
@@ -456,44 +479,48 @@ sg_ret GisViewportDecorations::add_logo(const GisViewportLogo & logo)
 
 
 
-void GisViewportDecorations::draw_viewport_data(GisViewport * gisview) const
+void GisViewportDecorations::draw_viewport_metadata(GisViewport & gisview) const
 {
-	const QRectF bounding_rect = QRectF(20, 20, gisview->central_get_width() - 40, gisview->central_get_height() - 80);
-
+	const int bbox_pad = this->base_padding * 1.5;
+	const QRectF bounding_rect = QRectF(gisview.central_get_leftmost_pixel() + bbox_pad,
+					    gisview.central_get_topmost_pixel() + bbox_pad,
+					    gisview.central_get_width() - 2 * bbox_pad,
+					    gisview.central_get_height() * 0.8); /* Prevent overlap of bbox info and decorations at the bottom of viewport. */
 
 	/* These debugs are really useful. Don't be shy about them,
 	   print them large and readable. */
-	const QFont font = QFont("Helvetica", 12);
+	QFont font = QFont("Helvetica", 12);
+	font.setBold(true);
 	QPen pen_fg = this->pen_marks_fg;
 	pen_fg.setColor(QColor("black"));
 
 
-	const LatLonBBox bbox = gisview->get_bbox();
+	const LatLonBBox bbox = gisview.get_bbox();
 	const QString north = "bbox: " + bbox.north.to_string();
 	const QString west =  "bbox: " + bbox.west.to_string();
 	const QString east =  "bbox: " + bbox.east.to_string();
 	const QString south = "bbox: " + bbox.south.to_string();
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north, 0);
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east, 0);
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignLeft, west, 0);
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignHCenter, south, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignLeft, west, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignHCenter, south, 0);
 
 
-	const QString size = QString("w = %1, h = %2").arg(gisview->central_get_width()).arg(gisview->central_get_height());
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignHCenter, size, 0);
+	const QString size = QString("w = %1, h = %2").arg(gisview.central_get_width()).arg(gisview.central_get_height());
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignHCenter, size, 0);
 
 
-	Coord coord_ul = gisview->screen_pos_to_coord(ScreenPosition::UpperLeft);
- 	Coord coord_ur = gisview->screen_pos_to_coord(ScreenPosition::UpperRight);
- 	Coord coord_bl = gisview->screen_pos_to_coord(ScreenPosition::BottomLeft);
- 	Coord coord_br = gisview->screen_pos_to_coord(ScreenPosition::BottomRight);
+	Coord coord_ul = gisview.screen_pos_to_coord(ScreenPosition::UpperLeft);
+ 	Coord coord_ur = gisview.screen_pos_to_coord(ScreenPosition::UpperRight);
+ 	Coord coord_bl = gisview.screen_pos_to_coord(ScreenPosition::BottomLeft);
+ 	Coord coord_br = gisview.screen_pos_to_coord(ScreenPosition::BottomRight);
 
 	QString ul = "ul: ";
 	QString ur = "ur: ";
 	QString bl = "bl: ";
 	QString br = "br: ";
 
-	const CoordMode coord_mode = gisview->get_coord_mode();
+	const CoordMode coord_mode = gisview.get_coord_mode();
 	switch (coord_mode) {
 	case CoordMode::UTM:
 		/* UTM first, then LatLon. */
@@ -526,8 +553,54 @@ void GisViewportDecorations::draw_viewport_data(GisViewport * gisview) const
 	ur.replace("Zone", "\nZone");
 	bl.replace("Zone", "\nZone");
 	br.replace("Zone", "\nZone");
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignLeft,  ul, 0);
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignRight, ur, 0);
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft,  bl, 0);
-	gisview->draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, br, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignLeft,  ul, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignRight, ur, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft,  bl, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, br, 0);
+}
+
+
+
+
+void GisViewportDecorations::draw_viewport_pixels(GisViewport & gisview) const
+{
+	int radius = 0;
+
+	const int leftmost_px   = gisview.central_get_leftmost_pixel();
+	const int rightmost_px  = gisview.central_get_rightmost_pixel();
+	const int topmost_px    = gisview.central_get_topmost_pixel();
+	const int bottommost_px = gisview.central_get_bottommost_pixel();
+
+	radius = 8;
+	gisview.painter.setPen(QColor("red"));
+	gisview.painter.drawEllipse(ScreenPos(leftmost_px, topmost_px), radius, radius);
+	gisview.painter.setPen(QColor("green"));
+	gisview.painter.drawEllipse(ScreenPos(rightmost_px, topmost_px), radius, radius);
+	gisview.painter.setPen(QColor("blue"));
+	gisview.painter.drawEllipse(ScreenPos(leftmost_px, bottommost_px), radius, radius);
+	gisview.painter.setPen(QColor("orange"));
+	gisview.painter.drawEllipse(ScreenPos(rightmost_px, bottommost_px), radius, radius);
+
+
+	const fpixel x_center_px = gisview.central_get_x_center_pixel();
+	const fpixel y_center_px = gisview.central_get_y_center_pixel();
+
+	gisview.painter.setPen(QColor("red"));
+	gisview.painter.drawEllipse(ScreenPos(x_center_px, y_center_px),
+				    gisview.central_get_width() / 2.0,
+				    gisview.central_get_height() / 2.0);
+
+#if 0
+	const int _px = gisview.central_get_width();
+	const int _px = gisview.central_get_height();
+	const int _px = gisview.left_get_width();
+	const int _px = gisview.left_get_height();
+	const int _px = gisview.right_get_width();
+	const int _px = gisview.right_get_height();
+	const int _px = gisview.top_get_width();
+	const int _px = gisview.top_get_height();
+	const int _px = gisview.bottom_get_width();
+	const int _px = gisview.bottom_get_height();
+#endif
+
 }

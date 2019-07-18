@@ -257,7 +257,7 @@ int get_modulo_seconds(double width_in_seconds)
 		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
 		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
 			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
-			gisview->draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y + 15, text); \
+			gisview->draw_text(text_font, text_pen, screen_pos_begin.x(), screen_pos_begin.y() + 15, text); \
 			qDebug() << "kamil B:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
@@ -267,7 +267,7 @@ int get_modulo_seconds(double width_in_seconds)
 		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
 		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
 			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
-			gisview->draw_text(text_font, text_pen, screen_pos_begin.x, screen_pos_begin.y, text); \
+			gisview->draw_text(text_font, text_pen, screen_pos_begin.x(), screen_pos_begin.y(), text); \
 			qDebug() << "kamil C:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}

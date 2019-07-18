@@ -115,11 +115,11 @@ namespace SlavGPS {
 		   Qt's coordinate system, where beginning (0,0 point)
 		   is in top-left corner. */
 		Coord screen_pos_to_coord(ScreenPosition screen_pos) const;
-		Coord screen_pos_to_coord(int x, int y) const;
+		Coord screen_pos_to_coord(fpixel x, fpixel y) const;
 		Coord screen_pos_to_coord(const ScreenPos & pos) const;
 
 		/* Coordinate transformations. */
-		sg_ret coord_to_screen_pos(const Coord & coord, int * x, int * y) const;
+		sg_ret coord_to_screen_pos(const Coord & coord, fpixel * x, fpixel * y) const;
 		ScreenPos coord_to_screen_pos(const Coord & coord) const;
 
 
@@ -152,7 +152,7 @@ namespace SlavGPS {
 		/* These pixel coordinates should be in Qt's
 		   coordinate system, where beginning (point 0,0) is
 		   in upper-left corner. */
-		sg_ret set_center_coord(int x, int y);
+		sg_ret set_center_coord(fpixel x, fpixel y);
 		sg_ret set_center_coord(const ScreenPos & pos);
 
 

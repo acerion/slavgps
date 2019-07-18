@@ -338,7 +338,7 @@ void Window::create_layout()
 	this->addToolBar(this->toolbar);
 
 
-	this->main_gis_vp = new GisViewport(10, 40, 80, 160, this);
+	this->main_gis_vp = new GisViewport(90, 60, 30, 120, this);
 	qDebug() << SG_PREFIX_I << "Created Viewport with center's size:" << this->main_gis_vp->central_get_height() << this->main_gis_vp->central_get_width();
 	this->setCentralWidget(this->main_gis_vp);
 
@@ -1307,7 +1307,7 @@ void Window::pan_click(QMouseEvent * ev)
 void Window::pan_move(QMouseEvent * ev)
 {
 	//qDebug() << SG_PREFIX_I;
-	if (this->pan_pos.x != -1 && this->pan_pos.y != -1) {
+	if (this->pan_pos.x() != -1 && this->pan_pos.y() != -1) {
 		this->pan_move_update_viewport(ev);
 
 		this->pan_move_in_progress = true;
@@ -1323,12 +1323,12 @@ void Window::pan_move(QMouseEvent * ev)
    to pan action */
 sg_ret Window::pan_move_update_viewport(const QMouseEvent * ev)
 {
-	const int center_x = this->main_gis_vp->central_get_x_center_pixel();
-	const int center_y = this->main_gis_vp->central_get_y_center_pixel();
+	const fpixel center_x = this->main_gis_vp->central_get_x_center_pixel();
+	const fpixel center_y = this->main_gis_vp->central_get_y_center_pixel();
 
 	/* By how much a center of viewport was moved by panning? */
-	const int pan_delta_x = ev->x() - this->pan_pos.x;
-	const int pan_delta_y = ev->y() - this->pan_pos.y;
+	const int pan_delta_x = ev->x() - this->pan_pos.x();
+	const int pan_delta_y = ev->y() - this->pan_pos.y();
 
 	if (pan_delta_x != 0 || pan_delta_y != 0) {
 		/* "Move a screen pixel that is delta x/y from center
@@ -1383,8 +1383,8 @@ void Window::pan_release(QMouseEvent * ev)
 void Window::pan_off(void)
 {
 	this->pan_move_in_progress = false;
-	this->pan_pos.x = -1;
-	this->pan_pos.y = -1;
+	this->pan_pos = ScreenPos(-1, -1);
+	this->pan_pos.ry() = -1;
 }
 
 
@@ -2896,8 +2896,8 @@ void Window::menu_view_pan_cb(void)
 	}
 
 	GisViewport * v = this->main_gis_vp;
-	const int x_center_pixel = v->central_get_x_center_pixel();
-	const int y_center_pixel = v->central_get_y_center_pixel();
+	const fpixel x_center_pixel = v->central_get_x_center_pixel();
+	const fpixel y_center_pixel = v->central_get_y_center_pixel();
 
 	switch (direction) {
 	case PAN_NORTH:
