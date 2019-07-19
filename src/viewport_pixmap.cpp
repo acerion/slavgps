@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * Multiple UTM zone patch by Kit Transue <notlostyet@didactek.com>
  *
@@ -76,12 +77,11 @@ ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget
 
 ViewportPixmap::~ViewportPixmap()
 {
-	/* Call ::end() before deleting paint device, otherwise
-	   destructor of the paint device will complain:
-	   "QPaintDevice: Cannot destroy paint device that is being
-	   painted". */
+	/* Call ::end() before deleting paint device
+	   (ViewportPixmap::pixmap), otherwise destructor of the paint
+	   device will complain: "QPaintDevice: Cannot destroy paint
+	   device that is being painted". */
 	this->painter.end();
-	delete this->pixmap;
 }
 
 
@@ -95,7 +95,7 @@ void ViewportPixmap::draw_line(QPen const & pen, const ScreenPos & begin, const 
 
 
 
-void ViewportPixmap::draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
+void ViewportPixmap::draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
 	if (this->line_is_outside(begin_x, begin_y, end_x, end_y)) {
@@ -114,7 +114,7 @@ void ViewportPixmap::draw_line(const QPen & pen, int begin_x, int begin_y, int e
 
 
 
-void ViewportPixmap::draw_rectangle(const QPen & pen, int upper_left_x, int upper_left_y, int rect_width, int rect_height)
+void ViewportPixmap::draw_rectangle(const QPen & pen, fpixel upper_left_x, fpixel upper_left_y, fpixel rect_width, fpixel rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this
 	   draws ensures the highlight gets done. */
@@ -154,7 +154,7 @@ void ViewportPixmap::draw_rectangle(const QPen & pen, const QRect & rect)
 
 
 
-void ViewportPixmap::fill_rectangle(const QColor & color, int pos_x, int pos_y, int rect_width, int rect_height)
+void ViewportPixmap::fill_rectangle(const QColor & color, fpixel pos_x, fpixel pos_y, fpixel rect_width, fpixel rect_height)
 {
 	/* Using 32 as half the default waypoint image size, so this
 	   draws ensures the highlight gets done. */
@@ -173,7 +173,7 @@ void ViewportPixmap::fill_rectangle(const QColor & color, int pos_x, int pos_y, 
 
 
 
-void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, int pos_x, int pos_y, QString const & text)
+void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, fpixel pos_x, fpixel pos_y, QString const & text)
 {
 	const int border = 100;
 
@@ -192,7 +192,7 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, int po
 
 
 
-void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 	this->painter.setFont(text_font);
 
@@ -201,14 +201,14 @@ void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const 
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
 	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
-	if (text_offset & SG_TEXT_OFFSET_UP) {
+	if ((unsigned int) text_offset & (unsigned int) TextOffset::Up) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
 		final_bounding_rect.moveTop(new_top);
 		text_rect.moveTop(new_top);
 	}
 
-	if (text_offset & SG_TEXT_OFFSET_LEFT) {
+	if ((unsigned int) text_offset & (unsigned int) TextOffset::Left) {
 		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
 		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
 		final_bounding_rect.moveLeft(new_left);
@@ -255,7 +255,7 @@ void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & ou
 
 
 
-void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 	this->painter.setFont(text_font);
 
@@ -264,14 +264,14 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const 
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
 	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
-	if (text_offset & SG_TEXT_OFFSET_UP) {
+	if ((unsigned int) text_offset & (unsigned int) TextOffset::Up) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
 		final_bounding_rect.moveTop(new_top);
 		text_rect.moveTop(new_top);
 	}
 
-	if (text_offset & SG_TEXT_OFFSET_LEFT) {
+	if ((unsigned int) text_offset & (unsigned int) TextOffset::Left) {
 		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
 		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
 		final_bounding_rect.moveLeft(new_left);
@@ -298,7 +298,7 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const 
 
 
 
-void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int viewport_y, int pixmap_x, int pixmap_y, int pixmap_width, int pixmap_height)
+void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, fpixel viewport_x, fpixel viewport_y, fpixel pixmap_x, fpixel pixmap_y, fpixel pixmap_width, fpixel pixmap_height)
 {
 	this->painter.drawPixmap(viewport_x, viewport_y, a_pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
 }
@@ -306,7 +306,7 @@ void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int v
 
 
 
-void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, int viewport_x, int viewport_y)
+void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, fpixel viewport_x, fpixel viewport_y)
 {
 	this->painter.drawPixmap(viewport_x, viewport_y, a_pixmap);
 }
@@ -322,7 +322,7 @@ void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, const QRect & viewpor
 
 
 
-void ViewportPixmap::draw_arc(QPen const & pen, int center_x, int center_y, int size_w, int size_h, int start_angle, int span_angle)
+void ViewportPixmap::draw_arc(QPen const & pen, fpixel center_x, fpixel center_y, fpixel size_w, fpixel size_h, int start_angle, int span_angle)
 {
 	this->painter.setPen(pen);
 	this->painter.drawArc(center_x, center_y, size_w, size_h, start_angle, span_angle * 16);
@@ -331,7 +331,7 @@ void ViewportPixmap::draw_arc(QPen const & pen, int center_x, int center_y, int 
 
 
 
-void ViewportPixmap::draw_ellipse(QPen const & pen, const ScreenPos & ellipse_center, int radius_x, int radius_y, bool filled)
+void ViewportPixmap::draw_ellipse(QPen const & pen, const ScreenPos & ellipse_center, fpixel radius_x, fpixel radius_y, bool filled)
 {
 	/* TODO_LATER: see if there is a difference in outer size of ellipse drawn with and without a filling. */
 
@@ -392,30 +392,27 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 	this->total_width = new_width;
 	this->total_height = new_height;
 
-	if (this->pixmap) {
-		qDebug() << SG_PREFIX_I << this->debug << "Deleting old vpixmap";
-		/* Call ::end() before deleting paint device,
-		   otherwise destructor of the paint device will
-		   complain: "QPaintDevice: Cannot destroy paint
-		   device that is being painted". */
-		this->painter.end();
-		delete this->pixmap;
-	}
+	qDebug() << SG_PREFIX_I << this->debug << "Will regenerate vpixmap with size" << this->total_width << this->total_height;
+	/*
+	  Call ::end() before deleting paint device
+	  (ViewportPixmap::pixmap), otherwise destructor of the paint
+	  device will complain: "QPaintDevice: Cannot destroy paint
+	  device that is being painted".
 
-	qDebug() << SG_PREFIX_I << this->debug << "Creating new vpixmap with size" << this->total_width << this->total_height;
-	this->pixmap = new QPixmap(this->total_width, this->total_height);
-	this->pixmap->fill();
+	  This comment may not be applicable because we don't really
+	  delete the pixmap (it is no longer a pointer variable), but
+	  we still need to call .end().
+	*/
+	this->painter.end();
+	this->pixmap = QPixmap(this->total_width, this->total_height); /* Reset pixmap with new size */
+	this->pixmap.fill();
+	this->painter.begin(&this->pixmap);
 
-	this->painter.begin(this->pixmap);
 
-
+	qDebug() << SG_PREFIX_I << this->debug << "Will regenerate snapshot buffer with size" << this->total_width << this->total_height;
 	/* TODO_UNKNOWN trigger: only if this is enabled!!! */
-	if (this->snapshot_buffer) {
-		qDebug() << SG_PREFIX_D << this->debug << "Deleting old snapshot buffer";
-		delete this->snapshot_buffer;
-	}
-	qDebug() << SG_PREFIX_I << this->debug << "Creating new snapshot buffer with size" << this->total_width << this->total_height;
-	this->snapshot_buffer = new QPixmap(this->total_width, this->total_height);
+	this->snapshot_buffer = QPixmap(this->total_width, this->total_height); /* Reset snapshot buffer with new size */
+
 
 	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
 	emit this->reconfigured(this);
@@ -614,7 +611,7 @@ void ViewportPixmap::clear(void)
 
 
 
-bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int end_y)
+bool ViewportPixmap::line_is_outside(fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y)
 {
 	/*
 	  Here we follow Qt's coordinate system:
@@ -654,7 +651,7 @@ bool ViewportPixmap::line_is_outside(int begin_x, int begin_y, int end_x, int en
 
 
 
-void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, int text_offset)
+void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 #ifdef K_TODO_RESTORE
 	qDebug() << SG_PREFIX_I << "Will draw label" << text;
@@ -728,7 +725,7 @@ void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const 
 
 
 
-void ViewportPixmap::central_draw_line(const QPen & pen, int begin_x, int begin_y, int end_x, int end_y)
+void ViewportPixmap::central_draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
 	if (this->line_is_outside(begin_x, begin_y, end_x, end_y)) {
@@ -893,7 +890,7 @@ void ViewportPixmap::paintEvent(QPaintEvent * ev)
 	qDebug() << SG_PREFIX_I;
 
 	QPainter event_painter(this);
-	event_painter.drawPixmap(0, 0, *this->pixmap);
+	event_painter.drawPixmap(0, 0, this->pixmap);
 
 	return;
 }
@@ -903,7 +900,7 @@ void ViewportPixmap::paintEvent(QPaintEvent * ev)
 
 QPixmap ViewportPixmap::get_pixmap(void) const
 {
-	return *this->pixmap;
+	return this->pixmap;
 }
 
 
@@ -911,8 +908,8 @@ QPixmap ViewportPixmap::get_pixmap(void) const
 
 void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
 {
-	if (this->pixmap->size() != new_pixmap.size()) {
-		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: existing pixmap =" << this->pixmap->size() << ", new pixmap =" << new_pixmap.size();
+	if (this->pixmap.size() != new_pixmap.size()) {
+		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: existing pixmap =" << this->pixmap.size() << ", new pixmap =" << new_pixmap.size();
 	} else {
 		this->painter.drawPixmap(0, 0, new_pixmap, 0, 0, 0, 0);
 	}
@@ -939,7 +936,7 @@ void ViewportPixmap::reconfigure_drawing_area(int new_width, int new_height)
 void ViewportPixmap::sync(void)
 {
 	qDebug() << SG_PREFIX_I << "sync (will call ->render())";
-	this->render(this->pixmap);
+	this->render(&this->pixmap);
 }
 
 
@@ -979,9 +976,9 @@ void ViewportPixmap::pan_sync(int x_off, int y_off)
 
 /* Clip functions continually reduce the value by a factor until it is in the acceptable range
    whilst also scaling the other coordinate value. */
-static void clip_x(int * x1, int * y1, int * x2, int * y2)
+static void clip_x(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 {
-	while (std::abs(*x1) > 32768) {
+	while (std::fabs(*x1) > 32768) {
 		*x1 = *x2 + (0.5 * (*x1 - *x2));
 		*y1 = *y2 + (0.5 * (*y1 - *y2));
 	}
@@ -990,9 +987,9 @@ static void clip_x(int * x1, int * y1, int * x2, int * y2)
 
 
 
-static void clip_y(int * x1, int * y1, int * x2, int * y2)
+static void clip_y(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 {
-	while (std::abs(*y1) > 32767) {
+	while (std::fabs(*y1) > 32767) {
 		*x1 = *x2 + (0.5 * (*x1 - *x2));
 		*y1 = *y2 + (0.5 * (*y1 - *y2));
 	}
@@ -1020,7 +1017,7 @@ static void clip_y(int * x1, int * y1, int * x2, int * y2)
  *
  * This function should be called before calling gdk_draw_line().
  */
-void ViewportPixmap::clip_line(int * x1, int * y1, int * x2, int * y2)
+void ViewportPixmap::clip_line(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 {
 	if (*x1 > 32768 || *x1 < -32767) {
 		clip_x(x1, y1, x2, y2);
@@ -1044,7 +1041,7 @@ void ViewportPixmap::clip_line(int * x1, int * y1, int * x2, int * y2)
 void ViewportPixmap::snapshot_save(void)
 {
 	qDebug() << SG_PREFIX_I << "Save snapshot";
-	*this->snapshot_buffer = *this->pixmap;
+	this->snapshot_buffer = this->pixmap;
 }
 
 
@@ -1053,7 +1050,7 @@ void ViewportPixmap::snapshot_save(void)
 void ViewportPixmap::snapshot_load(void)
 {
 	qDebug() << SG_PREFIX_I << "Load snapshot";
-	*this->pixmap = *this->snapshot_buffer;
+	this->pixmap = this->snapshot_buffer;
 }
 
 
@@ -1061,5 +1058,5 @@ void ViewportPixmap::snapshot_load(void)
 
 bool ViewportPixmap::is_ready(void) const
 {
-	return this->pixmap != NULL;
+	return !this->pixmap.isNull();
 }

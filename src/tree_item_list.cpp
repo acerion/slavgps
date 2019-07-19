@@ -120,7 +120,7 @@ void TreeItemListDialog::contextMenuEvent(QContextMenuEvent * ev)
 	}
 	qDebug() << SG_PREFIX_I << "context menu event inside list view";
 
-	ScreenPos orig = ScreenPos(ev->pos());
+	QPoint orig = ev->pos();
 	QPoint v = this->view->pos();
 	QPoint t = this->view->viewport()->pos();
 

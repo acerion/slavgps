@@ -244,18 +244,18 @@ int get_modulo_seconds(double width_in_seconds)
 
 
 #define DRAW_COORDINATE_LINE(pen, coord_begin, coord_end) {		\
-		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
-		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
-		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
+		if (sg_ret::ok == gisview->coord_to_screen_pos(coord_begin, screen_pos_begin) \
+		    && sg_ret::ok == gisview->coord_to_screen_pos(coord_end, screen_pos_end)) {	\
+									\
 			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
 			qDebug() << "kamil A:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
 		}							\
 	}
 
 #define DRAW_LONGITUDE_LINE(pen, coord_begin, coord_end, text) {	\
-		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
-		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
-		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
+		if (sg_ret::ok == gisview->coord_to_screen_pos(coord_begin, screen_pos_begin) \
+		    && sg_ret::ok == gisview->coord_to_screen_pos(coord_end, screen_pos_end)) { \
+									\
 			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
 			gisview->draw_text(text_font, text_pen, screen_pos_begin.x(), screen_pos_begin.y() + 15, text); \
 			qDebug() << "kamil B:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
@@ -263,9 +263,9 @@ int get_modulo_seconds(double width_in_seconds)
 	}
 
 #define DRAW_LATITUDE_LINE(pen, coord_begin, coord_end, text) {		\
-		screen_pos_begin = gisview->coord_to_screen_pos(coord_begin); \
-		screen_pos_end   = gisview->coord_to_screen_pos(coord_end); \
-		if (screen_pos_begin.valid && screen_pos_end.valid) {	\
+		if (sg_ret::ok == gisview->coord_to_screen_pos(coord_begin, screen_pos_begin) \
+		    && sg_ret::ok == gisview->coord_to_screen_pos(coord_end, screen_pos_end)) {	\
+									\
 			gisview->draw_line((pen), screen_pos_begin, screen_pos_end); \
 			gisview->draw_text(text_font, text_pen, screen_pos_begin.x(), screen_pos_begin.y(), text); \
 			qDebug() << "kamil C:" << coord_begin << screen_pos_begin << coord_end << screen_pos_end; \
@@ -301,7 +301,7 @@ void LayerCoord::draw_latlon(GisViewport * gisview)
 	const double maximum_lat = bbox.north.get_value();
 
 
-	const double width_degrees = fabs(minimum_lon - maximum_lon);
+	const double width_degrees = std::fabs(minimum_lon - maximum_lon);
 	const double width_minutes = 60.0 * width_degrees;
 	const double width_seconds = 60.0 * width_minutes;
 
@@ -478,7 +478,7 @@ void LayerCoord::draw_utm(GisViewport * gisview)
 	const double maximum_lat = bbox.north.get_value();
 
 
-	const double width_degrees = fabs(minimum_lon - maximum_lon);
+	const double width_degrees = std::fabs(minimum_lon - maximum_lon);
 
 
 #if 1   /* Debug. */

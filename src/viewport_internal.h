@@ -120,7 +120,7 @@ namespace SlavGPS {
 
 		/* Coordinate transformations. */
 		sg_ret coord_to_screen_pos(const Coord & coord, fpixel * x, fpixel * y) const;
-		ScreenPos coord_to_screen_pos(const Coord & coord) const;
+		sg_ret coord_to_screen_pos(const Coord & coord, ScreenPos & pos) const;
 
 
 		/* GisViewport's zoom. */

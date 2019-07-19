@@ -300,7 +300,8 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 		gisview->zoom_in();
 
 		/* Position of event calculated in modified (zoomed in) viewport. */
-		const ScreenPos orig_pos = gisview->coord_to_screen_pos(cursor_coord);
+		ScreenPos orig_pos;
+		gisview->coord_to_screen_pos(cursor_coord, orig_pos);
 
 		gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()));
 		window->set_dirty_flag(true);
@@ -315,7 +316,8 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 		gisview->zoom_out();
 
 		/* Position of event calculated in modified (zoomed out) viewport. */
-		const ScreenPos orig_pos = gisview->coord_to_screen_pos(cursor_coord);
+		ScreenPos orig_pos;
+		gisview->coord_to_screen_pos(cursor_coord, orig_pos);
 
 		gisview->set_center_coord(center_pos.x() + (orig_pos.x() - event_pos.x()), center_pos.y() + (orig_pos.y() - event_pos.y()));
 		window->set_dirty_flag(true);

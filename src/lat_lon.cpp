@@ -72,7 +72,7 @@ void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char
 	}
 
 	/* Degree. */
-	const double val_d = fabs(dec);
+	const double val_d = std::fabs(dec);
 
 	/* Format. */
 	snprintf(str, size, "%c%.*f" DEGREE_SYMBOL, sign_c, precision, val_d);
@@ -121,7 +121,7 @@ void convert_dec_to_dmm(char * str, size_t size, double dec, char pos_c, char ne
 	}
 
 	/* Degree. */
-	double tmp = fabs(dec);
+	double tmp = std::fabs(dec);
 	int val_d = (int) tmp;
 
 	/* Minutes. */
@@ -173,7 +173,7 @@ static void convert_dec_to_dms(char * str, size_t size, double dec, char pos_c, 
 	}
 
 	/* Degree. */
-	double tmp = fabs(dec);
+	double tmp = std::fabs(dec);
 	int val_d = (int) tmp;
 
 	/* Minutes. */

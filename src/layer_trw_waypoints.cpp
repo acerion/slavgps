@@ -250,7 +250,9 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 			continue;
 		}
 
-		const ScreenPos wp_pos = search.gisview->coord_to_screen_pos(wp->coord);
+		ScreenPos wp_pos;
+		search.gisview->coord_to_screen_pos(wp->coord, wp_pos);
+
 		bool found = false;
 
 		/* If waypoint has non-empty image then use the image size to select. */
@@ -267,13 +269,13 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 				found = true;
 			}
 		} else {
-			const int dist_x = fabs(wp_pos.x() - search.x);
-			const int dist_y = fabs(wp_pos.y() - search.y);
+			const int dist_x = std::fabs(wp_pos.x() - search.x);
+			const int dist_y = std::fabs(wp_pos.y() - search.y);
 
 			if (dist_x <= WAYPOINT_SIZE_APPROX && dist_y <= WAYPOINT_SIZE_APPROX
 			    && ((!search.closest_wp)
 				/* Was the old waypoint we already found closer than this one? */
-				|| dist_x + dist_y < fabs(wp_pos.x() - search.closest_pos.x()) + fabs(wp_pos.y() - search.closest_pos.y()))) {
+				|| dist_x + dist_y < std::fabs(wp_pos.x() - search.closest_pos.x()) + std::fabs(wp_pos.y() - search.closest_pos.y()))) {
 
 				found = true;
 			}
@@ -303,7 +305,9 @@ QString LayerTRWWaypoints::tool_show_picture_wp(int event_x, int event_y, GisVie
 			continue;
 		}
 
-		const ScreenPos wp_pos = gisview->coord_to_screen_pos(wp->coord);
+		ScreenPos wp_pos;
+		gisview->coord_to_screen_pos(wp->coord, wp_pos);
+
 		int slackx = wp->drawn_image_rect.width() / 2;
 		int slacky = wp->drawn_image_rect.height() / 2;
 		if (wp_pos.x() <= event_x + slackx && wp_pos.x() >= event_x - slackx

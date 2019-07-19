@@ -72,10 +72,10 @@ namespace SlavGPS {
 		/* These coordinates of beginning and end of ruler are
 		   in Qt's coordinate system, where beginning (pixel
 		   0,0) is in upper-left corner. */
-		int begin_x = 0;
-		int begin_y = 0;
-		int end_x = 0;
-		int end_y = 0;
+		fpixel begin_x = 0;
+		fpixel begin_y = 0;
+		fpixel end_x = 0;
+		fpixel end_y = 0;
 
 		double dx = 0;
 		double dy = 0;

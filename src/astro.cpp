@@ -85,7 +85,7 @@ QString Astro::convert_to_dms(double dec)
 	}
 
 	/* Degrees. */
-	double tmp = fabs(dec);
+	double tmp = std::fabs(dec);
 	const int val_d = (int)tmp;
 
 	/* Minutes. */

@@ -105,7 +105,8 @@ void Ruler::set_end(int end_x_, int end_y_)
 		lat_lon.lat += this->gisview->get_viking_scale().get_y() * this->gisview->central_get_height() / 11000.0; // about 11km per degree latitude
 
 		test = Coord(LatLon::to_utm(lat_lon), CoordMode::UTM);
-		const ScreenPos test_pos = this->gisview->coord_to_screen_pos(test);
+		ScreenPos test_pos;
+		this->gisview->coord_to_screen_pos(test, test_pos);
 
 		this->base_angle.set_value(M_PI - atan2(test_pos.x() - this->begin_x, test_pos.y() - this->begin_y));
 		this->angle.set_value(this->angle.get_value() - this->base_angle.get_value());

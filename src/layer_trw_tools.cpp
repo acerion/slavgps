@@ -137,7 +137,9 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 	this->get_nearby_snap_coordinates(new_coord, ev, gisview);
 
 	/* The selected item is being moved to new position. */
-	select_tool->perform_move(gisview->coord_to_screen_pos(new_coord));
+	ScreenPos new_coord_pos;
+	gisview->coord_to_screen_pos(new_coord, new_coord_pos);
+	select_tool->perform_move(new_coord_pos);
 
 	return true;
 }
@@ -514,10 +516,12 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		   to click coordinates, but the pre-selected waypoint
 		   has priority. */
 
-		const ScreenPos wp_pos = this->gisview->coord_to_screen_pos(current_wp->coord);
+		ScreenPos wp_pos;
+		this->gisview->coord_to_screen_pos(current_wp->coord, wp_pos);
+
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
-		if (ScreenPos::is_close_enough(wp_pos, event_pos, WAYPOINT_SIZE_APPROX)) {
+		if (ScreenPos::are_closer_than(wp_pos, event_pos, WAYPOINT_SIZE_APPROX)) {
 
 			/* A waypoint has been selected in some way
 			   (e.g. by selecting it in items tree), and
@@ -619,7 +623,9 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 	trw->get_nearby_snap_coordinates(new_coord, ev, gisview);
 
 	/* Selected item is being moved to new position. */
-	this->perform_move(this->gisview->coord_to_screen_pos(new_coord));
+	ScreenPos new_coord_pos;
+	this->gisview->coord_to_screen_pos(new_coord, new_coord_pos);
+	this->perform_move(new_coord_pos);
 
 	return ToolStatus::Ack;
 }
@@ -1219,10 +1225,11 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 
 		const Trackpoint * tp = track->get_selected_tp();
-		const ScreenPos tp_pos = this->gisview->coord_to_screen_pos(tp->coord);
+		ScreenPos tp_pos;
+		this->gisview->coord_to_screen_pos(tp->coord, tp_pos);
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
-		if (track->is_visible() && ScreenPos::is_close_enough(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
+		if (track->is_visible() && ScreenPos::are_closer_than(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
 			this->remember_selection(event_pos);
 			return ToolStatus::Ack;
 		}
@@ -1284,7 +1291,9 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 	// trw->get_selected_tp()->coord = new_coord;
 
 	/* Selected item is being moved to new position. */
-	this->perform_move(this->gisview->coord_to_screen_pos(new_coord));
+	ScreenPos new_coord_pos;
+	this->gisview->coord_to_screen_pos(new_coord, new_coord_pos);
+	this->perform_move(new_coord_pos);
 
 	return ToolStatus::Ack;
 }

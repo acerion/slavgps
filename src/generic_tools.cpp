@@ -437,7 +437,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 		/* Ensure that we haven't just released mouse button
 		   on the exact same position i.e. probably haven't
 		   moved the mouse at all. */
-		if (modifiers == Qt::ShiftModifier && (fabs(event_pos.x() - this->ztr_start_x) >= 5) && (fabs(event_pos.y() - this->ztr_start_y) >= 5)) {
+		if (modifiers == Qt::ShiftModifier && (std::fabs(event_pos.x() - this->ztr_start_x) >= 5) && (std::fabs(event_pos.y() - this->ztr_start_y) >= 5)) {
 
 			const Coord start_coord = this->gisview->screen_pos_to_coord(this->ztr_start_x, this->ztr_start_y);
 			const Coord cursor_coord = this->gisview->screen_pos_to_coord(event_pos);

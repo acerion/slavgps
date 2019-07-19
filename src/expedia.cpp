@@ -144,7 +144,7 @@ double expedia_altis_freq(int alti)
 int viking_scale_to_expedia_alti(double viking_scale)
 {
 	for (unsigned int i = 0; i < expedia_altis_count; i++) {
-		if (fabs(expedia_altis[i] - viking_scale) / viking_scale < MPP_MARGIN_OF_ERROR) {
+		if (std::fabs(expedia_altis[i] - viking_scale) / viking_scale < MPP_MARGIN_OF_ERROR) {
 			return expedia_altis[i];
 		}
 	}
@@ -296,7 +296,7 @@ bool Expedia::screen_pos_to_lat_lon(LatLon & lat_lon, int x, int y, const LatLon
 	double lat = lat_lon_center.lat - py / Ra;
 	double lon = lat_lon_center.lon - px / (Ra * cos (DEG2RAD(lat)));
 
-	double dif = lat * (1 - (cos (DEG2RAD(fabs (lon - lat_lon_center.lon)))));
+	double dif = lat * (1 - (cos (DEG2RAD(std::fabs (lon - lat_lon_center.lon)))));
 	lat = lat - dif / 1.5;
 	lon = lat_lon_center.lon - px / (Ra * cos (DEG2RAD(lat)));
 

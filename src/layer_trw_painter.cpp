@@ -218,7 +218,8 @@ static void draw_utm_skip_insignia(GisViewport * gisview, QPen & pen, int x, int
 
 void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_color, const QColor & bg_color, const Coord & coord)
 {
-	const ScreenPos label_pos = this->gisview->coord_to_screen_pos(coord);
+	ScreenPos label_pos;
+	this->gisview->coord_to_screen_pos(coord, label_pos);
 
 	QPen pen;
 	pen.setColor(fg_color);
@@ -262,11 +263,11 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 		double dist_next = 0.0;
 		Trackpoint * tp_next = trk->get_tp_by_dist(axis_mark_iu.value, true, &dist_next);
 
-		double dist_between_tps = fabs(dist_next - dist_current);
+		double dist_between_tps = std::fabs(dist_next - dist_current);
 		double ratio = 0.0;
 		/* Prevent division by 0 errors. */
 		if (dist_between_tps > 0.0) {
-			ratio = fabs(axis_mark_iu.value - dist_current) / dist_between_tps;
+			ratio = std::fabs(axis_mark_iu.value - dist_current) / dist_between_tps;
 		}
 
 		if (tp_current && tp_next) {
@@ -356,8 +357,12 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 
 		if (Coord::distance(begin_coord, end_coord) < distance_diff) {
 			/* Start and end 'close' together so only draw one label at an average location. */
-			const ScreenPos begin_pos = this->gisview->coord_to_screen_pos(begin_coord);
-			const ScreenPos end_pos = this->gisview->coord_to_screen_pos(end_coord);
+			ScreenPos begin_pos;
+			this->gisview->coord_to_screen_pos(begin_coord, begin_pos);
+
+			ScreenPos end_pos;
+			this->gisview->coord_to_screen_pos(end_coord, end_pos);
+
 			const Coord av_coord = this->gisview->screen_pos_to_coord(ScreenPos::get_average(begin_pos, end_pos));
 
 			QString name = QObject::tr("%1: start/end").arg(ename);
@@ -545,7 +550,8 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	const bool trk_is_selected = trk->is_selected();
 	int tp_size = (trk_is_selected && tp_is_selected(trk, tp)) ? tp_size_cur : tp_size_reg;
 
-	ScreenPos curr_pos = this->gisview->coord_to_screen_pos((*iter)->coord);
+	ScreenPos curr_pos;
+	this->gisview->coord_to_screen_pos((*iter)->coord, curr_pos);
 
 	/* Draw the first point as something a bit different from the normal points.
 	   ATM it's slightly bigger and a triangle. */
@@ -618,7 +624,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 			//fprintf(stderr, "first branch ----\n");
 
-			curr_pos = this->gisview->coord_to_screen_pos(tp->coord);
+			this->gisview->coord_to_screen_pos(tp->coord, curr_pos);
 
 			/* The concept of drawing stops is that if the next trackpoint has a
 			   timestamp far into the future, we draw a circle of 6x trackpoint
@@ -669,7 +675,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 				}
 
 				if (!use_prev_pos) {
-					prev_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
+					this->gisview->coord_to_screen_pos(prev_tp->coord, prev_pos);
 				}
 
 				this->gisview->draw_line(main_pen, prev_pos, curr_pos);
@@ -696,7 +702,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 			if (use_prev_pos && this->draw_track_lines && (!tp->newsegment)) {
 				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
-					curr_pos = this->gisview->coord_to_screen_pos(tp->coord);
+					this->gisview->coord_to_screen_pos(tp->coord, curr_pos);
 
 					if (!do_highlight && (this->track_drawing_mode == LayerTRWTrackDrawingMode::BySpeed)) {
 						main_pen = this->track_pens[(int) speed_coloring.get(tp, prev_tp)];
@@ -709,7 +715,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (curr_pos.x() != prev_pos.x() || curr_pos.y() != prev_pos.y()) {
-						curr_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
+						this->gisview->coord_to_screen_pos(prev_tp->coord, curr_pos);
 						draw_utm_skip_insignia(this->gisview, main_pen, curr_pos.x(), curr_pos.y());
 					}
 				}
@@ -743,7 +749,9 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 	auto iter = trk->trackpoints.begin();
 
-	ScreenPos curr_pos = this->gisview->coord_to_screen_pos((*iter)->coord);
+	ScreenPos curr_pos;
+	this->gisview->coord_to_screen_pos((*iter)->coord, curr_pos);
+
 	ScreenPos prev_pos = curr_pos;
 	bool use_prev_pos = true; /* prev_pos contains valid coordinates of previous point. */
 
@@ -779,7 +787,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 
 		if (fits_into_viewport) {
-			curr_pos = this->gisview->coord_to_screen_pos(tp->coord);
+			this->gisview->coord_to_screen_pos(tp->coord, curr_pos);
 
 			if (use_prev_pos && curr_pos == prev_pos) {
 				/* Points are the same in display coordinates, don't
@@ -790,7 +798,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 			if (!tp->newsegment && this->draw_track_lines) {
 				if (!use_prev_pos) {
-					prev_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
+					this->gisview->coord_to_screen_pos(prev_tp->coord, prev_pos);
 				}
 				this->gisview->draw_line(this->track_bg_pen, prev_pos, curr_pos);
 			}
@@ -801,7 +809,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 		} else {
 			if (use_prev_pos && this->draw_track_lines && !tp->newsegment) {
 				if (this->trw->coord_mode != CoordMode::UTM || UTM::is_the_same_zone(tp->coord.utm, this->vp_center.utm)) {
-					curr_pos = this->gisview->coord_to_screen_pos(tp->coord);
+					this->gisview->coord_to_screen_pos(tp->coord, curr_pos);
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (curr_pos.x() != prev_pos.x() || curr_pos.y() != prev_pos.y()) {
@@ -810,7 +818,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (curr_pos.x() != prev_pos.x() || curr_pos.y() != prev_pos.y()) {
-						curr_pos = this->gisview->coord_to_screen_pos(prev_tp->coord);
+						this->gisview->coord_to_screen_pos(prev_tp->coord, curr_pos);
 						draw_utm_skip_insignia(this->gisview, main_pen, curr_pos.x(), curr_pos.y());
 					}
 				}
@@ -873,7 +881,8 @@ void LayerTRWPainter::draw_waypoint_sub(Waypoint * wp, bool do_highlight)
 		return;
 	}
 
-	const ScreenPos wp_screen_pos = this->gisview->coord_to_screen_pos(wp->coord);
+	ScreenPos wp_screen_pos;
+	this->gisview->coord_to_screen_pos(wp->coord, wp_screen_pos);
 
 	if (this->draw_wp_images && !wp->image_full_path.isEmpty()) {
 		if (this->draw_waypoint_image(wp, wp_screen_pos, do_highlight)) {
@@ -1083,7 +1092,7 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & wp_po
 					 bounding_rect,
 					 Qt::AlignBottom | Qt::AlignLeft,
 					 wp->name,
-					 0);
+					 TextOffset::None);
 	} else {
 		/* Draw waypoint's label with regular background color. */
 		this->gisview->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),

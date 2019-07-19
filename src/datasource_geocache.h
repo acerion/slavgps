@@ -84,8 +84,7 @@ namespace SlavGPS {
 		QPen circle_pen;
 		GisViewport * gisview = NULL;
 		bool circle_onscreen = true;
-		int circle_x = 0;
-		int circle_y = 0;
+		ScreenPos circle_pos;
 		int circle_radius = 0;
 
 	private slots:

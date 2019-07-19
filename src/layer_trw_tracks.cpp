@@ -308,8 +308,8 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 		const Time diff1 = main_ts_begin - ts_end;
 		const Time diff2 = ts_begin - main_ts_end;
 
-		if (!(labs(diff1.get_value()) < threshold          /* ts_begin ts_end                 main_ts_begin main_ts_end */
-		      || labs(diff2.get_value()) < threshold)) {   /* main_ts_begin main_ts_end       ts_begin ts_end */
+		if (!(std::labs(diff1.get_value()) < threshold          /* ts_begin ts_end                 main_ts_begin main_ts_end */
+		      || std::labs(diff2.get_value()) < threshold)) {   /* main_ts_begin main_ts_end       ts_begin ts_end */
 			continue;
 		}
 
@@ -422,15 +422,16 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search)
 
 		for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
 
-			const ScreenPos tp_pos = search.gisview->coord_to_screen_pos((*iter)->coord);
+			ScreenPos tp_pos;
+			search.gisview->coord_to_screen_pos((*iter)->coord, tp_pos);
 
-			const int dist_x = fabs(tp_pos.x() - search.x);
-			const int dist_y = fabs(tp_pos.y() - search.y);
+			const int dist_x = std::fabs(tp_pos.x() - search.x);
+			const int dist_y = std::fabs(tp_pos.y() - search.y);
 
 			if (dist_x <= TRACKPOINT_SIZE_APPROX && dist_y <= TRACKPOINT_SIZE_APPROX
 			    && ((!search.closest_tp)
 				/* Was the old trackpoint we already found closer than this one? */
-				|| dist_x + dist_y < fabs(tp_pos.x() - search.closest_pos.x()) + fabs(tp_pos.y() - search.closest_pos.y()))) {
+				|| dist_x + dist_y < std::fabs(tp_pos.x() - search.closest_pos.x()) + std::fabs(tp_pos.y() - search.closest_pos.y()))) {
 
 				search.closest_track = *track_iter;
 				search.closest_tp = *iter;

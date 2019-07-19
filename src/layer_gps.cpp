@@ -1417,7 +1417,8 @@ void LayerGPS::rt_tracking_draw(GisViewport * gisview, const RTData & rt_data)
 	Coord gps_coord = rt_data.coord;
 	gps_coord.recalculate_to_mode(gisview->get_coord_mode()); /* Just in case if current coordinate mode is UTM and data from GPS is LatLon. */
 
-	const ScreenPos screen_pos = gisview->coord_to_screen_pos(gps_coord);
+	ScreenPos screen_pos;
+	gisview->coord_to_screen_pos(gps_coord, screen_pos);
 
 	double heading_cos = cos(DEG2RAD(rt_data.fix.track));
 	double heading_sin = sin(DEG2RAD(rt_data.fix.track));
@@ -1507,7 +1508,7 @@ Trackpoint * LayerGPS::rt_create_trackpoint(bool record_every_tp)
 			create_this_tp = true;
 		} else {
 			const double diff = this->current_rt_data.fix.track - this->previous_rt_data.fix.track;
-			if (fabs(diff) > 3.0) {
+			if (std::fabs(diff) > 3.0) {
 				/* Current heading has changed
 				   significantly since last recorded
 				   tp. */

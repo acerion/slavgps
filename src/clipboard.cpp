@@ -267,14 +267,14 @@ static bool clip_parse_latlon(const char * text, LatLon & lat_lon)
 
 			/* DMM without Cardinal directions. */
 			if (sscanf(cand, "%d%*[ ]%lf*[ ]%d%*[ ]%lf", &latdeg, &latm, &londeg, &lonm) == 4) {
-				lat = latdeg/abs(latdeg) * (abs(latdeg) + latm / 60);
-				lon = londeg/abs(londeg) * (abs(londeg) + lonm / 60);
+				lat = latdeg/std::abs(latdeg) * (std::abs(latdeg) + latm / 60);
+				lon = londeg/std::abs(londeg) * (std::abs(londeg) + lonm / 60);
 				break;
 			}
 			/* DMS without Cardinal directions. */
 			if (sscanf(cand, "%d%*[ ]%d%*[ ]%lf%*[ ]%d%*[ ]%d%*[ ]%lf", &latdeg, &latmi, &lats, &londeg, &lonmi, &lons) == 6) {
-				lat = latdeg/abs(latdeg) * (abs(latdeg) + latm / 60.0 + lats / 3600.0);
-				lon = londeg/abs(londeg) * (abs(londeg) + lonm / 60.0 + lons / 3600.0);
+				lat = latdeg/std::abs(latdeg) * (std::abs(latdeg) + latm / 60.0 + lats / 3600.0);
+				lon = londeg/std::abs(londeg) * (std::abs(londeg) + lonm / 60.0 + lons / 3600.0);
 				break;
 			}
 			/* Raw values. */

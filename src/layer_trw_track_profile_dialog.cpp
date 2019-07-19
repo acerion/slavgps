@@ -349,7 +349,7 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 	   the start, and be prepared to handle non-rounded
 	   y_min/max_visible from the start. */
 	const double over = 0.05; /* There is no deep reasoning behind this particular value. */
-	const double range = abs(this->track_data.y_max - this->track_data.y_min);
+	const double range = std::abs(this->track_data.y_max - this->track_data.y_min);
 
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
@@ -2039,7 +2039,7 @@ void ProfileView::draw_y_grid_outside(void)
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", row =" << row;
 			const QRectF bounding_rect = QRectF(0, height - row, width - 3, height - 3);
 			const QString label = this->get_y_grid_label(axis_mark_uu);
-			this->graph_2d->margin_draw_text(ViewportPixmap::MarginPosition::Left, this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, SG_TEXT_OFFSET_UP);
+			this->graph_2d->margin_draw_text(ViewportPixmap::MarginPosition::Left, this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, TextOffset::Up);
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", row =" << row;
 		}
@@ -2126,7 +2126,7 @@ void ProfileView::draw_x_grid_sub_d_outside(void)
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
 			const QRectF bounding_rect = QRectF(col, 0, width - 3, height - 3);
 			const QString label = axis_mark_uu.to_nice_string();
-			this->graph_2d->margin_draw_text(ViewportPixmap::MarginPosition::Bottom, this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
+			this->graph_2d->margin_draw_text(ViewportPixmap::MarginPosition::Bottom, this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, TextOffset::Left);
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
 		}
@@ -2213,7 +2213,7 @@ void ProfileView::draw_x_grid_sub_t_outside(void)
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
 			const QRectF bounding_rect = QRectF(col, 0, width - 3, height - 3);
 			const QString label = get_time_grid_label(this->x_interval_t, axis_mark_uu);
-			this->graph_2d->margin_draw_text(ViewportPixmap::MarginPosition::Bottom, this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, SG_TEXT_OFFSET_LEFT);
+			this->graph_2d->margin_draw_text(ViewportPixmap::MarginPosition::Bottom, this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, TextOffset::Left);
 		} else {
 			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
 		}

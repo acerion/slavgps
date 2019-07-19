@@ -348,7 +348,7 @@ static void georef_layer_mpp_from_coords(CoordMode mode, const LatLon & lat_lon_
 		/* Convert from actual image MPP to Viking 'pixelfact'. */
 		double mid_lat = (lat_lon_bl.lat + lat_lon_tr.lat) / 2.0;
 		/* Protect against div by zero (but shouldn't have 90 degrees for mid latitude...). */
-		if (fabs(mid_lat) < 89.9) {
+		if (std::fabs(mid_lat) < 89.9) {
 			factor = cos(DEG2RAD(mid_lat)) * 1.193;
 		}
 	}
@@ -425,10 +425,12 @@ void LayerGeoref::draw_tree_item(GisViewport * gisview, bool highlight_selected,
 	}
 #else
 	const Coord coord_tl(this->lat_lon_tl, gisview->get_coord_mode());
-	const ScreenPos pos_tl = gisview->coord_to_screen_pos(coord_tl);
+	ScreenPos pos_tl;
+	gisview->coord_to_screen_pos(coord_tl, pos_tl);
 
 	const Coord coord_br(this->lat_lon_br, gisview->get_coord_mode());
-	const ScreenPos pos_br = gisview->coord_to_screen_pos(coord_br);
+	ScreenPos pos_br;
+	gisview->coord_to_screen_pos(coord_br, pos_br);
 
 	QRect sub_viewport_rect;
 	sub_viewport_rect.setTopLeft(QPoint(pos_tl.x(), pos_tl.y()));

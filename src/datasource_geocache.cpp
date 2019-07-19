@@ -131,12 +131,12 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 {
 	if (this->circle_onscreen) {
 		this->gisview->draw_ellipse(this->circle_pen,
-					    ScreenPos(this->circle_x, this->circle_y),
+					    this->circle_pos,
 					    this->circle_radius, this->circle_radius,
 					    false);
 	}
 
-	/* Calculate widgets circle_x and circle_y. */
+	/* Calculate widgets circle_pos. */
 	const LatLon lat_lon = this->center_entry->get_value();
 	if (!lat_lon.is_valid()) {
 		qDebug() << SG_PREFIX_W << "Invalid lat/lon from center entry" << lat_lon;
@@ -144,12 +144,11 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 	}
 
 	const Coord circle_center_coord(lat_lon, this->gisview->get_coord_mode());
-	const ScreenPos circle_center = this->gisview->coord_to_screen_pos(circle_center_coord);
+	ScreenPos circle_center;
+	sg_ret ret = this->gisview->coord_to_screen_pos(circle_center_coord, circle_center);
+	if (sg_ret::ok == ret && this->circle_is_onscreen(circle_center)) {
 
-	if (circle_center.valid && this->circle_is_onscreen(circle_center)) {
-
-		this->circle_x = circle_center.x();
-		this->circle_y = circle_center.y();
+		this->circle_pos = circle_center;
 
 		const int width = this->gisview->central_get_width();
 		const fpixel y_center_pixel  = this->gisview->central_get_y_center_pixel();
@@ -165,7 +164,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 		this->circle_radius = this->miles_radius_spin->value() * METERSPERMILE * pixels_per_meter;
 
 		this->gisview->draw_ellipse(this->circle_pen,
-					    ScreenPos(this->circle_x, this->circle_y),
+					    this->circle_pos,
 					    this->circle_radius, this->circle_radius,
 					    false);
 
@@ -299,7 +298,7 @@ DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 {
 	if (this->circle_onscreen) {
 		this->gisview->draw_ellipse(this->circle_pen,
-					    ScreenPos(this->circle_x, this->circle_y),
+					    this->circle_pos,
 					    this->circle_radius, this->circle_radius,
 					    false);
 		this->gisview->sync();

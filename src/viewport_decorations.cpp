@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2007, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * Lat/Lon plotting functions calcxy* are from GPSDrive
  * GPSDrive Copyright (C) 2001-2004 Fritz Ganter <ganter@ganter.at>
@@ -311,40 +312,34 @@ void GisViewportDecorations::draw_attributions(GisViewport & gisview) const
 
 		const QRectF bounding_rect = QRectF(anchor_x, anchor_y, -rect_width, -rect_height);
 
-		gisview.draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignRight, this->attributions[i], 0);
+		gisview.draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignRight, this->attributions[i], TextOffset::None);
 	}
 }
 
 
 
 
+/**
+   @reviewed-on: 2019-07-18
+*/
 void GisViewportDecorations::draw_center_mark(GisViewport & gisview) const
 {
-	//qDebug() << SG_PREFIX_I << "Center mark visibility =" << gisview.center_mark_visibility;
-
 	if (!gisview.center_mark_visibility) {
 		return;
 	}
 
 	const int len = 30;
-	const int gap = 4;
+	const int gap = 5; /* Lines of center mark don't actually cross. There is a gap in lines at the intersection. */
 	const fpixel center_x = gisview.central_get_x_center_pixel();
 	const fpixel center_y = gisview.central_get_y_center_pixel();
 
-	const QPen & pen_fg = this->pen_marks_fg;
-	const QPen & pen_bg = this->pen_marks_bg;
-
-	/* White background. */
-	gisview.draw_line(pen_bg, center_x - len, center_y,       center_x - gap, center_y);
-	gisview.draw_line(pen_bg, center_x + gap, center_y,       center_x + len, center_y);
-	gisview.draw_line(pen_bg, center_x,       center_y - len, center_x,       center_y - gap);
-	gisview.draw_line(pen_bg, center_x,       center_y + gap, center_x,       center_y + len);
-
-	/* Black foreground. */
-	gisview.draw_line(pen_fg, center_x - len, center_y,        center_x - gap, center_y);
-	gisview.draw_line(pen_fg, center_x + gap, center_y,        center_x + len, center_y);
-	gisview.draw_line(pen_fg, center_x,       center_y - len,  center_x,       center_y - gap);
-	gisview.draw_line(pen_fg, center_x,       center_y + gap,  center_x,       center_y + len);
+	QList<const QPen *> pens = { &this->pen_marks_bg, &this->pen_marks_fg }; /* Background pen should be first. */
+	for (int i = 0; i < pens.size(); i++) {
+		gisview.draw_line(*pens[i], center_x - len, center_y,       center_x - gap, center_y);
+		gisview.draw_line(*pens[i], center_x + gap, center_y,       center_x + len, center_y);
+		gisview.draw_line(*pens[i], center_x,       center_y - len, center_x,       center_y - gap);
+		gisview.draw_line(*pens[i], center_x,       center_y + gap, center_x,       center_y + len);
+	}
 }
 
 
@@ -442,6 +437,8 @@ static int rescale_unit(double * base_distance, double * scale_unit, int maximum
    \brief Add an attribution/copyright to display on viewport
 
    @attribution: new attribution/copyright to display.
+
+   @reviewed-on: 2019-07-18
 */
 sg_ret GisViewportDecorations::add_attribution(QString const & attribution)
 {
@@ -500,14 +497,14 @@ void GisViewportDecorations::draw_viewport_metadata(GisViewport & gisview) const
 	const QString west =  "bbox: " + bbox.west.to_string();
 	const QString east =  "bbox: " + bbox.east.to_string();
 	const QString south = "bbox: " + bbox.south.to_string();
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north, 0);
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east, 0);
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignLeft, west, 0);
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignHCenter, south, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north, TextOffset::None);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east, TextOffset::None);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignLeft, west, TextOffset::None);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignHCenter, south, TextOffset::None);
 
 
 	const QString size = QString("w = %1, h = %2").arg(gisview.central_get_width()).arg(gisview.central_get_height());
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignHCenter, size, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignVCenter | Qt::AlignHCenter, size, TextOffset::None);
 
 
 	Coord coord_ul = gisview.screen_pos_to_coord(ScreenPosition::UpperLeft);
@@ -553,25 +550,25 @@ void GisViewportDecorations::draw_viewport_metadata(GisViewport & gisview) const
 	ur.replace("Zone", "\nZone");
 	bl.replace("Zone", "\nZone");
 	br.replace("Zone", "\nZone");
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignLeft,  ul, 0);
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignRight, ur, 0);
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft,  bl, 0);
-	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, br, 0);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignLeft,  ul, TextOffset::None);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignTop    | Qt::AlignRight, ur, TextOffset::None);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft,  bl, TextOffset::None);
+	gisview.draw_text(font, pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, br, TextOffset::None);
 }
 
 
 
 
+/**
+   @reviewed-on: 2019-07-18
+*/
 void GisViewportDecorations::draw_viewport_pixels(GisViewport & gisview) const
 {
-	int radius = 0;
-
 	const int leftmost_px   = gisview.central_get_leftmost_pixel();
 	const int rightmost_px  = gisview.central_get_rightmost_pixel();
 	const int topmost_px    = gisview.central_get_topmost_pixel();
 	const int bottommost_px = gisview.central_get_bottommost_pixel();
-
-	radius = 8;
+	const int radius = 8;
 	gisview.painter.setPen(QColor("red"));
 	gisview.painter.drawEllipse(ScreenPos(leftmost_px, topmost_px), radius, radius);
 	gisview.painter.setPen(QColor("green"));
@@ -582,25 +579,21 @@ void GisViewportDecorations::draw_viewport_pixels(GisViewport & gisview) const
 	gisview.painter.drawEllipse(ScreenPos(rightmost_px, bottommost_px), radius, radius);
 
 
-	const fpixel x_center_px = gisview.central_get_x_center_pixel();
-	const fpixel y_center_px = gisview.central_get_y_center_pixel();
 
-	gisview.painter.setPen(QColor("red"));
-	gisview.painter.drawEllipse(ScreenPos(x_center_px, y_center_px),
-				    gisview.central_get_width() / 2.0,
-				    gisview.central_get_height() / 2.0);
-
+	/*
+	  Either of the two ways to get center should give the same
+	  result.  Keep them both in code to be able to test all three
+	  GisViewport methods.
+	*/
 #if 0
-	const int _px = gisview.central_get_width();
-	const int _px = gisview.central_get_height();
-	const int _px = gisview.left_get_width();
-	const int _px = gisview.left_get_height();
-	const int _px = gisview.right_get_width();
-	const int _px = gisview.right_get_height();
-	const int _px = gisview.top_get_width();
-	const int _px = gisview.top_get_height();
-	const int _px = gisview.bottom_get_width();
-	const int _px = gisview.bottom_get_height();
+	ScreenPos center = gisview.central_get_center_screen_pos();
+#else
+	ScreenPos center(gisview.central_get_x_center_pixel(),
+			 gisview.central_get_y_center_pixel());
 #endif
 
+	gisview.painter.setPen(QColor("red"));
+	gisview.painter.drawEllipse(center,
+				    gisview.central_get_width() / 2.0,
+				    gisview.central_get_height() / 2.0);
 }

@@ -550,7 +550,7 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 	if (new_elev == DEM_INVALID_ELEVATION) {
 		return 0;
 	} else {
-		return abs(new_elev - elev);
+		return std::abs(new_elev - elev);
 	}
 }
 
@@ -879,7 +879,8 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 
 			{
 				/* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
-				const ScreenPos pos = gisview->coord_to_screen_pos(Coord(counter, viewport_coord_mode));
+				ScreenPos pos;
+				gisview->coord_to_screen_pos(Coord(counter, viewport_coord_mode), pos);
 
 				int idx = 0; /* Default index for color of 'sea'. */
 				if (elev > 0) {
@@ -1208,8 +1209,10 @@ static void srtm_draw_existence(GisViewport * gisview)
 
 void draw_existence_common(GisViewport * gisview, const QPen & pen, const Coord & coord_ne, const Coord & coord_sw, const QString & cache_file_path)
 {
-	ScreenPos sp_sw = gisview->coord_to_screen_pos(coord_sw);
-	ScreenPos sp_ne = gisview->coord_to_screen_pos(coord_ne);
+	ScreenPos sp_sw;
+	gisview->coord_to_screen_pos(coord_sw, sp_sw);
+	ScreenPos sp_ne;
+	gisview->coord_to_screen_pos(coord_ne, sp_ne);
 
 	if (sp_sw.x() < 0) {
 		sp_sw.rx() = 0;

@@ -125,27 +125,15 @@ namespace SlavGPS {
 	public:
 		ScreenPos() {};
 		ScreenPos(fpixel x, fpixel y) : QPointF(x, y) {};
-		ScreenPos(const QPointF & other) : QPointF(other) {};
-
-		bool valid = false;
 
 		void set(fpixel x, fpixel y);
 
 		bool operator==(const ScreenPos & pos) const;
 
 		static ScreenPos get_average(const ScreenPos & pos1, const ScreenPos & pos2);
-		static bool is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit);
+		static bool are_closer_than(const ScreenPos & pos1, const ScreenPos & pos2, fpixel limit);
 	};
 	QDebug operator<<(QDebug debug, const ScreenPos & screen_pos);
-
-
-
-
-	enum {
-		SG_TEXT_OFFSET_NONE = 0x00,
-		SG_TEXT_OFFSET_LEFT = 0x01,
-		SG_TEXT_OFFSET_UP   = 0x02
-	};
 
 
 

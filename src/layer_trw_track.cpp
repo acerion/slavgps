@@ -1649,7 +1649,7 @@ bool Track::select_tp_by_percentage_dist(double reldist, double *meters_from_sta
 	/* We've gone past the dist already, was prev trackpoint closer? */
 	/* Should do a vik_coord_average_weighted() thingy. */
 	if (iter != this->trackpoints.begin()
-	    && fabs(current_dist-current_inc-dist) < fabs(current_dist - dist)) {
+	    && std::fabs(current_dist-current_inc-dist) < fabs(current_dist - dist)) {
 		if (meters_from_start) {
 			*meters_from_start = last_dist;
 		}

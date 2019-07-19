@@ -108,7 +108,7 @@ double GisViewport::calculate_utm_zone_width(void) const
 		/* Boundary. */
 		lat_lon.lon = (utm.get_zone() - 1) * 6 - 180 ;
 		utm = LatLon::to_utm(lat_lon);
-		return fabs(utm.get_easting() - UTM_CENTRAL_MERIDIAN_EASTING) * 2;
+		return std::fabs(utm.get_easting() - UTM_CENTRAL_MERIDIAN_EASTING) * 2;
 	}
 
 	case CoordMode::LatLon:
@@ -1068,18 +1068,18 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, 
 
 
 
-ScreenPos GisViewport::coord_to_screen_pos(const Coord & coord_in) const
+sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, ScreenPos & result) const
 {
-	ScreenPos pos;
 	fpixel x;
 	fpixel y;
 	if (sg_ret::ok == this->coord_to_screen_pos(coord_in, &x, &y)) {
-		pos.rx() = x;
-		pos.ry() = y;
-		pos.valid = true;
-	} /* else: invalid by default. */
+		result.rx() = x;
+		result.ry() = y;
+		return sg_ret::ok;
+	} else {
+		return sg_ret::err;
+	}
 
-	return pos;
 }
 
 
@@ -1093,8 +1093,10 @@ void GisViewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 	}
 
 
-	ScreenPos sp_sw = this->coord_to_screen_pos(Coord(LatLon(bbox.south, bbox.west), this->coord_mode));
-	ScreenPos sp_ne = this->coord_to_screen_pos(Coord(LatLon(bbox.north, bbox.east), this->coord_mode));
+	ScreenPos sp_sw;
+	this->coord_to_screen_pos(Coord(LatLon(bbox.south, bbox.west), this->coord_mode), sp_sw);
+	ScreenPos sp_ne;
+	this->coord_to_screen_pos(Coord(LatLon(bbox.north, bbox.east), this->coord_mode), sp_ne);
 
 	if (sp_sw.x() < 0) {
 		sp_sw.rx() = 0;
@@ -1579,7 +1581,7 @@ bool GisViewport::print_cb(QPrinter * printer)
 	paint_begin.setX(0);
 	paint_begin.setY(0);
 
-	printer_painter.drawPixmap(paint_begin, *scaled_viewport->pixmap);
+	printer_painter.drawPixmap(paint_begin, scaled_viewport->pixmap);
 	printer_painter.end();
 
 	delete scaled_viewport;
@@ -1611,9 +1613,9 @@ ScreenPos ScreenPos::get_average(const ScreenPos & pos1, const ScreenPos & pos2)
 
 
 
-bool ScreenPos::is_close_enough(const ScreenPos & pos1, const ScreenPos & pos2, int limit)
+bool ScreenPos::are_closer_than(const ScreenPos & pos1, const ScreenPos & pos2, fpixel limit)
 {
-	return (abs(pos1.x() - pos2.x()) < limit) && (abs(pos1.y() - pos2.y()) < limit);
+	return (std::fabs(pos1.x() - pos2.x()) < limit) && (std::fabs(pos1.y() - pos2.y()) < limit);
 }
 
 

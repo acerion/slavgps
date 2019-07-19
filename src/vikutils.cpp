@@ -859,7 +859,8 @@ QString SGUtils::double_to_c(double d, int precision)
 
 ScreenPos SGUtils::coord_to_point(const Coord & coord, const GisViewport * gisview)
 {
-	const ScreenPos screen_pos = gisview->coord_to_screen_pos(coord); /* In viewport's x/y coordinate system. */
+	ScreenPos screen_pos;
+	gisview->coord_to_screen_pos(coord, screen_pos); /* In viewport's x/y coordinate system. */
 
 	/* FIXME: loss of precision: fpixel -> int.
 	   FIXME: slowdown: calling constructor before passing values to method. */

@@ -771,7 +771,7 @@ void SlavGPS::trw_layer_geotag_dialog(Window * parent, LayerTRW * trw, Waypoint 
 	dialog->interpolate_segments_cb->setChecked(default_values.interpolate_segments);
 
 	char tmp_string[10];
-	snprintf(tmp_string, sizeof (tmp_string), "%+02d:%02d", default_values.TimeZoneHours, abs(default_values.TimeZoneMins));
+	snprintf(tmp_string, sizeof (tmp_string), "%+02d:%02d", default_values.TimeZoneHours, std::abs(default_values.TimeZoneMins));
 	dialog->time_zone_entry->setText(tmp_string);
 	snprintf(tmp_string, sizeof (tmp_string), "%d", default_values.time_offset);
 	dialog->time_offset_entry->setText(tmp_string);
