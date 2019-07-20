@@ -310,13 +310,13 @@ namespace SlavGPS {
 	signals:
 		/* ******** Signals that definitely should be in this class. ******** */
 
-		void list_of_center_coords_changed(void);
+		void list_of_center_coords_changed(GisViewport * gisview);
 
 		/**
 		   To be emitted when action initiated in GisViewport
 		   has changed center of viewport or zoom of viewport.
 		*/
-		void center_coord_or_zoom_changed(void);
+		void center_coord_or_zoom_changed(GisViewport * gisview);
 
 
 		/* ******** Other signals. ******** */

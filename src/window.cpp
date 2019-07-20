@@ -178,11 +178,10 @@ Window::Window()
 	g_this_app.set(this, this->items_tree, this->main_gis_vp); /* Calling it again, this time with non-NULL layers panel and viewport. */
 
 
-	/* Own signals. */
-	connect(this->main_gis_vp, SIGNAL (list_of_center_coords_changed(void)), this, SLOT (center_changed_cb(void)));
-	connect(this->main_gis_vp, SIGNAL (center_coord_or_zoom_changed(void)), this, SLOT (draw_tree_items_cb()));
+	connect(this->main_gis_vp, SIGNAL (list_of_center_coords_changed(GisViewport *)), this, SLOT (center_changed_cb(GisViewport *)));
+	connect(this->main_gis_vp, SIGNAL (center_coord_or_zoom_changed(GisViewport *)), this, SLOT (draw_tree_items_cb(GisViewport *)));
+	connect(this->main_gis_vp, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (draw_tree_items_cb(ViewportPixmap *)));
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
-	connect(this, SIGNAL (center_coord_or_zoom_changed()), this, SLOT (draw_tree_items_cb()));
 
 
 	this->pan_pos = ScreenPos(-1, -1);  /* -1: off */
@@ -918,10 +917,29 @@ void Window::create_actions(void)
 
 
 
-void Window::draw_tree_items_cb()
+void Window::draw_tree_items_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT;
-	this->draw_tree_items();
+	this->draw_tree_items(this->main_gis_vp);
+}
+
+
+
+
+void Window::draw_tree_items_cb(GisViewport * gisview)
+{
+	qDebug() << SG_PREFIX_SLOT;
+	this->draw_tree_items(gisview);
+}
+
+
+
+
+void Window::draw_tree_items_cb(ViewportPixmap * vpixmap)
+{
+	qDebug() << SG_PREFIX_SLOT;
+	GisViewport * gisview = (GisViewport *) vpixmap;
+	this->draw_tree_items(gisview);
 }
 
 
@@ -970,12 +988,11 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	if (layer) {
 		this->items_tree->add_layer(layer, this->main_gis_vp->get_coord_mode());
 
-		//this->main_gis_vp->reconfigure_drawing_area();
 		qDebug() << SG_PREFIX_I << "Calling layer->draw_tree_item() for new layer" << Layer::get_type_ui_label(layer_type);
 		layer->draw_tree_item(this->main_gis_vp, false, false);
 
 		qDebug() << SG_PREFIX_I << "Will call draw_tree_items()";
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 		this->set_dirty_flag(true);
 	}
 }
@@ -983,43 +1000,43 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 
 
-void Window::draw_tree_items(void)
+void Window::draw_tree_items(GisViewport * gisview)
 {
 	qDebug() << "\n";
 	qDebug() << SG_PREFIX_I;
 
 #ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
-	this->trigger_center = this->main_gis_vp->get_center_coord();
+	this->trigger_center = gisview->get_center_coord();
 	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
-	Layer * old_trigger = this->main_gis_vp->get_trigger();
+	Layer * old_trigger = gisview->get_trigger();
 
 	if (!new_trigger) {
 		; /* Do nothing -- have to redraw everything. */
 	} else if ((old_trigger != new_trigger)
 		   || (old_center != this->trigger_center)
 		   || (new_trigger->type == LayerType::Aggregate)) {
-		this->main_gis_vp->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
+		gisview->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
-		this->main_gis_vp->set_half_drawn(true);
+		gisview->set_half_drawn(true);
 	}
 #endif
 
 
-	this->main_gis_vp->clear();
+	gisview->clear();
 
 	/* Main layer drawing.  This is a standard drawing of items in
 	   main viewport, so allow highlight. */
-	this->items_tree->draw_tree_items(this->main_gis_vp, true, false);
+	this->items_tree->draw_tree_items(gisview, true, false);
 
 	/* Other viewport decoration items on top if they are enabled/in use. */
-	this->main_gis_vp->draw_decorations();
+	gisview->draw_decorations();
 
 	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
-	this->main_gis_vp->update();
+	gisview->update();
 
-	this->main_gis_vp->set_half_drawn(false); /* Just in case. */
+	gisview->set_half_drawn(false); /* Just in case. */
 
 	this->draw_sync();
 }
@@ -1031,7 +1048,7 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
 	qDebug() << SG_PREFIX_SLOT << "Draw layer with uid" << (qulonglong) uid;
 	/* TODO_HARD: draw only one layer, not all of them. */
-	this->draw_tree_items();
+	this->draw_tree_items(this->main_gis_vp);
 }
 
 
@@ -1097,14 +1114,14 @@ void Window::statusbar_update(StatusBarField field, QString const & message)
 
 
 
-void Window::center_changed_cb(void) /* Slot. */
+void Window::center_changed_cb(GisViewport * gisview) /* Slot. */
 {
 	qDebug() << SG_PREFIX_SLOT << "Called";
 
 	/* TODO_2_LATER: see if this comment should be implemented or not:
 	   "ATM Keep back always available, so when we pan - we can jump to the last requested position." */
-	this->qa_previous_location->setEnabled(this->main_gis_vp->back_available());
-	this->qa_next_location->setEnabled(this->main_gis_vp->forward_available());
+	this->qa_previous_location->setEnabled(gisview->back_available());
+	this->qa_next_location->setEnabled(gisview->forward_available());
 }
 
 
@@ -1450,7 +1467,11 @@ void Window::menu_edit_delete_all_cb(void)
 	if (Dialog::yes_or_no(tr("Are you sure you want to delete all layers?"), this)) {
 		this->items_tree->clear();
 		this->set_current_document_full_path("");
-		this->draw_tree_items();
+
+		/* TODO: verify if this call is needed, maybe removing
+		   all tree items has triggered re-painting of
+		   viewport? */
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 
@@ -1675,10 +1696,11 @@ void Window::goto_previous_location_cb(void)
 {
 	const bool changed = this->main_gis_vp->go_back();
 
+	/* TODO: is this function call necessary? */
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
 	   (otherwise we would get stuck in an infinite loop!). */
-	this->center_changed_cb();
+	this->center_changed_cb(this->main_gis_vp);
 
 	if (changed) {
 		this->main_gis_vp->request_redraw("go to previous location");
@@ -1692,10 +1714,11 @@ void Window::goto_next_location_cb(void)
 {
 	bool changed = this->main_gis_vp->go_forward();
 
+	/* TODO: is this function call necessary? */
 	/* Recheck sensitivities of prev/next menu actions, as the
 	   center changed signal is not sent on back/forward changes
 	   (otherwise we would get stuck in an infinite loop!). */
-	this->center_changed_cb();
+	this->center_changed_cb(this->main_gis_vp);
 
 	if (changed) {
 		this->main_gis_vp->request_redraw("go to next location");
@@ -1728,7 +1751,7 @@ void Window::set_scale_visibility_cb(bool new_state)
 	if (this->qa_view_scale_visibility->isChecked() != new_state) {
 		this->qa_view_scale_visibility->setChecked(new_state);
 		this->main_gis_vp->set_scale_visibility(new_state);
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 
@@ -1740,7 +1763,7 @@ void Window::set_center_mark_visibility_cb(bool new_state)
 	if (this->qa_view_center_mark_visibility->isChecked() != new_state) {
 		this->qa_view_center_mark_visibility->setChecked(new_state);
 		this->main_gis_vp->set_center_mark_visibility(new_state);
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 
@@ -1751,7 +1774,7 @@ void Window::set_highlight_usage_cb(bool new_state)
 	if (this->qa_view_highlight_usage->isChecked() != new_state) {
 		this->qa_view_highlight_usage->setChecked(new_state);
 		this->main_gis_vp->set_highlight_usage(new_state);
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 
@@ -2076,7 +2099,7 @@ void Window::open_file(const QString & new_document_full_path, bool set_as_curre
 		restore_original_filename = !restore_original_filename;
 
 		this->update_recent_files(new_document_full_path, "text/x-gps-data");
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 		break;
 	}
 
@@ -2389,7 +2412,10 @@ void Window::finish_new(void)
 
 		this->items_tree->get_top_layer()->add_layer(layer, true);
 
-		this->draw_tree_items();
+		/* TODO: verify if this call is necessary. Maybe
+		   adding new layer has triggered re-painting
+		   already? */
+		this->draw_tree_items(this->main_gis_vp);
 	}
 
 
@@ -2662,7 +2688,7 @@ void Window::draw_viewport_to_kmz_file_cb(void)
 	}
 
 	if (has_xhair || has_scale) {
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 #endif
@@ -2823,7 +2849,11 @@ void Window::change_coord_mode_cb(QAction * qa)
 		} else if (olddrawmode == GisViewportDrawMode::UTM) {
 			this->items_tree->change_coord_mode(CoordMode::LatLon);
 		}
-		this->draw_tree_items();
+
+		/* TODO: verify if this call is necessary. Maybe
+		   changing of coord mode has triggered re-painting
+		   already? */
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 
@@ -2850,7 +2880,7 @@ void Window::menu_view_set_highlight_color_cb(void)
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
 		this->main_gis_vp->set_highlight_color(selected_color);
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 
@@ -2865,7 +2895,7 @@ void Window::menu_view_set_bg_color_cb(void)
 	if (QDialog::Accepted == color_dialog.exec()) {
 		const QColor selected_color = color_dialog.selectedColor();
 		this->main_gis_vp->set_background_color(selected_color);
-		this->draw_tree_items();
+		this->draw_tree_items(this->main_gis_vp);
 	}
 }
 
@@ -2980,7 +3010,11 @@ static bool window_pan_timeout(Window * window)
 	window->pan_move_in_progress = false;
 	window->single_click_pending = false;
 	window->viewport->set_center_coord(window->delayed_pan_pos);
-	window->draw_tree_items();
+
+	/* TODO: verify if this call is necessary. Maybe call to
+	   set_center_coord() has emitted a signal that triggered
+	   re-painting already? */
+	window->draw_tree_items(this->main_gis_vp);
 
 	/* Really turn off the pan moving!! */
 	window->pan_off();
@@ -3208,7 +3242,7 @@ void Window::import_kmz_file_cb(void)
 		Dialog::error(tr("Unable to import %1: %2").arg(full_path).arg(ret.to_string()), this);
 	}
 
-	this->draw_tree_items();
+	this->draw_tree_items(this->main_gis_vp);
 }
 
 
@@ -3290,7 +3324,7 @@ void Window::apply_new_preferences(void)
 		trw->reset_waypoints();
 	}
 
-	this->draw_tree_items();
+	this->draw_tree_items(this->main_gis_vp);
 }
 
 

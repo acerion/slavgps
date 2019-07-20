@@ -533,9 +533,12 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 
 			this->gisview->set_center_coord(utm, false);
 
-			/* Redraw all layers at current position and zoom.
-			   TODO: why do we call Window method here? */
-			this->window->draw_tree_items();
+			/* Redraw all layers at current position and
+			   zoom.  TODO: why do we call Window method
+			   here? Don't we draw to viewport after
+			   reconfigure_drawing_area() called below
+			   emits signal? */
+			this->window->draw_tree_items(this->gisview);
 
 			/* Save buffer as file. */
 			const QPixmap pixmap = this->gisview->get_pixmap();
@@ -556,7 +559,9 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 	this->gisview->set_viking_scale(orig_viking_scale);
 
 	this->gisview->reconfigure_drawing_area();
-	this->window->draw_tree_items();
+
+	/* This is already called after reconfigure_drawing_area() emitted a signal. */
+	//this->window->draw_tree_items();
 
 	return sg_ret::ok;
 }

@@ -468,7 +468,7 @@ void GisViewport::save_current_center_coord(void)
 	this->print_center_coords("GisViewport::save_current_center_coord()");
 
 	qDebug() << SG_PREFIX_SIGNAL << "Emitting list_of_center_coords_changed()";
-	emit this->list_of_center_coords_changed();
+	emit this->list_of_center_coords_changed(this);
 }
 
 
@@ -1247,11 +1247,9 @@ void GisViewport::resizeEvent(QResizeEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
 
+	/* This will emit "sizes changed" signal that will lead to
+	   redrawing of all tree items. */
 	this->reconfigure_drawing_area();
-
-	/* TODO: call of this function should be triggered by signal. */
-	ThisApp::get_main_window()->draw_tree_items();
-	//this->draw_scale();
 
 	return;
 }
@@ -1376,8 +1374,8 @@ void GisViewport::wheelEvent(QWheelEvent * ev)
 		break;
 	};
 
-	qDebug() << SG_PREFIX_I << "Will call Window::draw_tree_items()";
-	this->window->draw_tree_items();
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit center_coord_or_zoom_changed()";
+	emit this->center_coord_or_zoom_changed(this);
 }
 
 
@@ -1750,7 +1748,7 @@ sg_ret GisViewport::set_bbox(const LatLonBBox & new_bbox)
 void GisViewport::request_redraw(const QString & trigger_descr)
 {
 	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'center or zoom changed' signal triggered by" << trigger_descr;
-	emit this->center_coord_or_zoom_changed();
+	emit this->center_coord_or_zoom_changed(this);
 }
 
 

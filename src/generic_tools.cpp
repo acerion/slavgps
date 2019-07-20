@@ -217,7 +217,7 @@ bool GenericToolRuler::deactivate_tool(void)
 {
 	qDebug() << SG_PREFIX_I << "called";
 
-	this->window->draw_tree_items();
+	this->window->draw_tree_items(this->gisview);
 
 	return true;
 }
@@ -348,7 +348,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_click(Layer * layer, QMouseEve
 	};
 
 	if (redraw_viewport) {
-		this->window->draw_tree_items();
+		this->window->draw_tree_items(this->gisview);
 	}
 
 
@@ -470,7 +470,7 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 	}
 
 	if (redraw_viewport) {
-		this->window->draw_tree_items();
+		this->window->draw_tree_items(this->gisview);
 	}
 
 	/* Reset "zoom to rectangle" tool.
@@ -544,7 +544,7 @@ ToolStatus LayerToolPan::internal_handle_mouse_double_click(Layer * layer, QMous
 		/* Ignore other mouse buttons. */
 	}
 
-	this->window->draw_tree_items();
+	this->window->draw_tree_items(this->gisview);
 
 	return ToolStatus::Ack;
 }
@@ -669,7 +669,7 @@ void LayerToolSelect::handle_mouse_click_common(Layer * layer, QMouseEvent * eve
 
 				tree_view->deselect_tree_item(selected_item);
 				if (this->window->clear_highlight()) {
-					this->window->draw_tree_items();
+					this->window->draw_tree_items(this->gisview);
 				}
 			}
 		}

@@ -116,9 +116,9 @@ namespace SlavGPS {
 		void dialog_response_cb(int resp);
 		void destroy_cb(void);
 
-		sg_ret paint_center_cb(GisViewport * graph_2d);
-		sg_ret paint_left_cb(GisViewport * graph_2d);
-		sg_ret paint_bottom_cb(GisViewport * graph_2d);
+		sg_ret paint_center_cb(ViewportPixmap * pixmap);
+		sg_ret paint_left_cb(ViewportPixmap * pixmap);
+		sg_ret paint_bottom_cb(ViewportPixmap * pixmap);
 
 		void handle_cursor_move_cb(GisViewport * gisview, QMouseEvent * ev);
 		void handle_mouse_button_release_cb(GisViewport * gisview, QMouseEvent * event);

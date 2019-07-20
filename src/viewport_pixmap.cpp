@@ -434,7 +434,7 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 
 
 	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
-	emit this->reconfigured(this);
+	emit this->sizes_changed(this);
 }
 
 

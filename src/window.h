@@ -92,7 +92,7 @@ namespace SlavGPS {
 		~Window();
 		static Window * new_window();
 
-		void draw_tree_items();
+		void draw_tree_items(GisViewport * gisview);
 		void draw_sync();
 
 		void update_status_bar_on_redraw();
@@ -172,7 +172,20 @@ namespace SlavGPS {
 
 		void menu_layer_new_cb(void);
 		void draw_layer_cb(sg_uid_t uid);
+
+
+		/* Draw all tree items from main tree items view to
+		   main GIS viewport of application. */
 		void draw_tree_items_cb(void);
+
+		/* Draw all tree items from main tree items view to
+		   given GIS viewport. */
+		void draw_tree_items_cb(GisViewport * gisview);
+
+		/* Draw all tree items from main tree items view to
+		   given GIS viewport (@param vpixmap will be cast to
+		   GisViewport *). */
+		void draw_tree_items_cb(ViewportPixmap * vpixmap);
 
 
 		void goto_default_location_cb(void);
@@ -266,7 +279,7 @@ namespace SlavGPS {
 	protected:
 
 	private slots:
-		void center_changed_cb(void);
+		void center_changed_cb(GisViewport * gisview);
 		void layer_tool_cb(QAction * a);
 
 		void destroy_window_cb(void);
@@ -374,9 +387,6 @@ namespace SlavGPS {
 		   new waypoint or track doesn't set this flag, so its
 		   usefulness is questionable. */
 		bool dirty_flag = false;
-
-	signals:
-		void center_coord_or_zoom_changed(void);
 	};
 
 

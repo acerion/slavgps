@@ -1317,8 +1317,9 @@ sg_ret TrackProfileDialog::draw_bottom(ProfileView * graph)
 
 
 
-sg_ret TrackProfileDialog::paint_center_cb(GisViewport * viewport)
+sg_ret TrackProfileDialog::paint_center_cb(ViewportPixmap * pixmap)
 {
+	GisViewport * viewport = (GisViewport *) pixmap;
 	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->debug;
 
 	ProfileView * view = this->find_view(viewport);
@@ -1336,8 +1337,10 @@ sg_ret TrackProfileDialog::paint_center_cb(GisViewport * viewport)
 
 
 
-sg_ret TrackProfileDialog::paint_left_cb(GisViewport * viewport)
+sg_ret TrackProfileDialog::paint_left_cb(ViewportPixmap * pixmap)
 {
+	GisViewport * viewport = (GisViewport *) pixmap;
+
 	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->debug;
 
 	ProfileView * view = this->find_view(viewport);
@@ -1355,8 +1358,10 @@ sg_ret TrackProfileDialog::paint_left_cb(GisViewport * viewport)
 
 
 
-sg_ret TrackProfileDialog::paint_bottom_cb(GisViewport * viewport)
+sg_ret TrackProfileDialog::paint_bottom_cb(ViewportPixmap * pixmap)
 {
+	GisViewport * viewport = (GisViewport *) pixmap;
+
 	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->debug;
 
 	ProfileView * view = this->find_view(viewport);
@@ -1599,11 +1604,11 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 
 		this->tabs->addTab(graph, graph->get_graph_title());
 
-		connect(graph->graph_2d, SIGNAL (reconfigured(GisViewport *)), this, SLOT (paint_center_cb(GisViewport *)));
+		connect(graph->graph_2d, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (paint_center_cb(ViewportPixmap *)));
 
 		/* TODO: these signals don't make sense anymore. */
-		connect(graph->graph_2d, SIGNAL (reconfigured(GisViewport *)), this, SLOT (paint_left_cb(GisViewport *)));
-		connect(graph->graph_2d, SIGNAL (reconfigured(GisViewport *)), this, SLOT (paint_bottom_cb(GisViewport *)));
+		connect(graph->graph_2d, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (paint_left_cb(ViewportPixmap *)));
+		connect(graph->graph_2d, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (paint_bottom_cb(ViewportPixmap *)));
 	}
 
 

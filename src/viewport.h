@@ -54,6 +54,7 @@ namespace SlavGPS {
 
 
 	class GisViewport;
+	class ViewportPixmap; /* Forward declarations for benefit of headers that include this file. */
 
 
 
