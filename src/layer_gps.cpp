@@ -554,7 +554,7 @@ void LayerGPS::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 		if (TreeItem::the_same_object(trw, trigger)) {
 			if (gisview->get_half_drawn()) {
 				gisview->set_half_drawn(false);
-				gisview->snapshot_load();
+				gisview->snapshot_restore();
 			} else {
 				gisview->snapshot_save();
 			}
@@ -568,7 +568,7 @@ void LayerGPS::draw_tree_item(GisViewport * gisview, bool highlight_selected, bo
 		if (TreeItem::the_same_object(this, trigger)) {
 			if (gisview->get_half_drawn()) {
 				gisview->set_half_drawn(false);
-				gisview->snapshot_load();
+				gisview->snapshot_restore();
 			} else {
 				gisview->snapshot_save();
 			}

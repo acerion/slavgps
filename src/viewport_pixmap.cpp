@@ -46,6 +46,9 @@ using namespace SlavGPS;
 
 
 
+/**
+   @reviewed-on tbd
+*/
 ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget * parent) : QWidget(parent)
 {
 	this->left_margin_width = left;
@@ -75,6 +78,9 @@ ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget
 
 
 
+/**
+   @reviewed-on tbd
+*/
 ViewportPixmap::~ViewportPixmap()
 {
 	/* Call ::end() before deleting paint device
@@ -87,6 +93,9 @@ ViewportPixmap::~ViewportPixmap()
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::draw_line(QPen const & pen, const ScreenPos & begin, const ScreenPos & end)
 {
 	this->draw_line(pen, begin.x(), begin.y(), end.x(), end.y());
@@ -95,6 +104,9 @@ void ViewportPixmap::draw_line(QPen const & pen, const ScreenPos & begin, const 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
@@ -107,91 +119,63 @@ void ViewportPixmap::draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y,
 	GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
 	this->painter.setPen(pen);
-	this->painter.drawLine(begin_x, begin_y,
-			       end_x,   end_y);
+	this->painter.drawLine(begin_x, begin_y, end_x, end_y);
 }
 
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 void ViewportPixmap::draw_rectangle(const QPen & pen, fpixel upper_left_x, fpixel upper_left_y, fpixel rect_width, fpixel rect_height)
 {
-	/* Using 32 as half the default waypoint image size, so this
-	   draws ensures the highlight gets done. */
-	const int border = 32;
-
-	/* TODO: review this condition. */
-	if (upper_left_x > -border
-	    && upper_left_y > -border
-	    && upper_left_x < this->central_get_width() + border
-	    && upper_left_y < this->central_get_height() + border) {
-
-		this->painter.setPen(pen);
-		this->painter.drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
-	}
+	this->painter.setPen(pen);
+	this->painter.drawRect(upper_left_x, upper_left_y, rect_width, rect_height);
 }
 
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 void ViewportPixmap::draw_rectangle(const QPen & pen, const QRect & rect)
 {
-	/* Using 32 as half the default waypoint image size, so this
-	   draws ensures the highlight gets done. */
-	const int border = 32;
-
-	/* TODO: review this condition. */
-	if (rect.x() > -border
-	    && rect.y() > -border
-	    && rect.x() < this->central_get_width() + border
-	    && rect.y() < this->central_get_height() + border) {
-
-		this->painter.setPen(pen);
-		this->painter.drawRect(rect);
-	}
+	this->painter.setPen(pen);
+	this->painter.drawRect(rect);
 }
 
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 void ViewportPixmap::fill_rectangle(const QColor & color, fpixel pos_x, fpixel pos_y, fpixel rect_width, fpixel rect_height)
 {
-	/* Using 32 as half the default waypoint image size, so this
-	   draws ensures the highlight gets done. */
-	const int border = 32;
-
-	/* TODO: review this condition. */
-	if (pos_x > -border
-	    && pos_y > -border
-	    && pos_x < this->central_get_width() + border
-	    && pos_y < this->central_get_height() + border) {
-
-		this->painter.fillRect(pos_x, pos_y, rect_width, rect_height, color);
-	}
+	this->painter.fillRect(pos_x, pos_y, rect_width, rect_height, color);
 }
 
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, fpixel pos_x, fpixel pos_y, QString const & text)
 {
-	const int border = 100;
-
-	/* TODO: review this condition. */
-	if (pos_x > -border
-	    && pos_y > -border
-	    && pos_x < this->central_get_width() + border
-	    && pos_y < this->central_get_height() + border) {
-
-		this->painter.setPen(pen);
-		this->painter.setFont(text_font);
-		this->painter.drawText(pos_x, pos_y, text);
-	}
+	this->painter.setPen(pen);
+	this->painter.setFont(text_font);
+	this->painter.drawText(pos_x, pos_y, text);
 }
 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 	this->painter.setFont(text_font);
@@ -235,6 +219,9 @@ void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const ScreenPos & base_point, QString const & text)
 {
 	/* http://doc.qt.io/qt-5/qpainterpath.html#addText */
@@ -255,6 +242,9 @@ void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & ou
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 	this->painter.setFont(text_font);
@@ -298,30 +288,42 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const 
 
 
 
-void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, fpixel viewport_x, fpixel viewport_y, fpixel pixmap_x, fpixel pixmap_y, fpixel pixmap_width, fpixel pixmap_height)
+/**
+   @reviewed-on tbd
+*/
+void ViewportPixmap::draw_pixmap(QPixmap const & pixmap, fpixel viewport_x, fpixel viewport_y, fpixel pixmap_x, fpixel pixmap_y, fpixel pixmap_width, fpixel pixmap_height)
 {
-	this->painter.drawPixmap(viewport_x, viewport_y, a_pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
+	this->painter.drawPixmap(viewport_x, viewport_y, pixmap, pixmap_x, pixmap_y, pixmap_width, pixmap_height);
 }
 
 
 
 
-void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, fpixel viewport_x, fpixel viewport_y)
+/**
+   @reviewed-on tbd
+*/
+void ViewportPixmap::draw_pixmap(QPixmap const & pixmap, fpixel viewport_x, fpixel viewport_y)
 {
-	this->painter.drawPixmap(viewport_x, viewport_y, a_pixmap);
+	this->painter.drawPixmap(viewport_x, viewport_y, pixmap);
 }
 
 
 
 
-void ViewportPixmap::draw_pixmap(QPixmap const & a_pixmap, const QRect & viewport_rect, const QRect & pixmap_rect)
+/**
+   @reviewed-on tbd
+*/
+void ViewportPixmap::draw_pixmap(QPixmap const & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect)
 {
-	this->painter.drawPixmap(viewport_rect, a_pixmap, pixmap_rect);
+	this->painter.drawPixmap(viewport_rect, pixmap, pixmap_rect);
 }
 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::draw_arc(QPen const & pen, fpixel center_x, fpixel center_y, fpixel size_w, fpixel size_h, int start_angle, int span_angle)
 {
 	this->painter.setPen(pen);
@@ -331,28 +333,42 @@ void ViewportPixmap::draw_arc(QPen const & pen, fpixel center_x, fpixel center_y
 
 
 
-void ViewportPixmap::draw_ellipse(QPen const & pen, const ScreenPos & ellipse_center, fpixel radius_x, fpixel radius_y, bool filled)
+/**
+   @reviewed-on 2019-07-19
+*/
+void ViewportPixmap::draw_ellipse(QPen const & pen, const ScreenPos & ellipse_center, fpixel radius_x, fpixel radius_y)
 {
-	/* TODO_LATER: see if there is a difference in outer size of ellipse drawn with and without a filling. */
-
-	if (filled) {
-		/* Set brush to fill ellipse. */
-		this->painter.setBrush(QBrush(pen.color()));
-	} else {
-		this->painter.setPen(pen);
-	}
-
+	/* If pen has width 1, draw_ellipse() and fill_ellipse() will
+	   draw ellipsis with the same outer size. */
+	this->painter.setPen(pen);
 	this->painter.drawEllipse(ellipse_center, radius_x, radius_y);
-
-	if (filled) {
-		/* Reset brush. */
-		this->painter.setBrush(QBrush());
-	}
 }
 
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
+void ViewportPixmap::fill_ellipse(const QColor & color, const ScreenPos & ellipse_center, fpixel radius_x, fpixel radius_y)
+{
+	/* If pen has width 1, draw_ellipse() and fill_ellipse() will
+	   draw ellipsis with the same outer size. */
+	QPen pen(color);
+	pen.setWidth(1);
+
+	this->painter.setBrush(QBrush(color));
+	this->painter.setPen(pen);
+	this->painter.drawEllipse(ellipse_center, radius_x, radius_y);
+	this->painter.setBrush(QBrush()); /* Reset brush. */
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::draw_polygon(QPen const & pen, ScreenPos const * points, int npoints, bool filled)
 {
 	if (filled) {
@@ -373,6 +389,9 @@ void ViewportPixmap::draw_polygon(QPen const & pen, ScreenPos const * points, in
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::reconfigure(int new_width, int new_height)
 {
 	/* TODO: where do we reconfigure margin sizes? */
@@ -404,14 +423,14 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 	  we still need to call .end().
 	*/
 	this->painter.end();
-	this->pixmap = QPixmap(this->total_width, this->total_height); /* Reset pixmap with new size */
-	this->pixmap.fill();
-	this->painter.begin(&this->pixmap);
+	this->vpixmap = QPixmap(this->total_width, this->total_height); /* Reset pixmap with new size */
+	this->vpixmap.fill();
+	this->painter.begin(&this->vpixmap);
 
 
 	qDebug() << SG_PREFIX_I << this->debug << "Will regenerate snapshot buffer with size" << this->total_width << this->total_height;
 	/* TODO_UNKNOWN trigger: only if this is enabled!!! */
-	this->snapshot_buffer = QPixmap(this->total_width, this->total_height); /* Reset snapshot buffer with new size */
+	this->vpixmap_snapshot = QPixmap(this->total_width, this->total_height); /* Reset snapshot buffer with new size */
 
 
 	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
@@ -421,6 +440,9 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 
 
 
+/**
+   @reviewed-on tbd
+*/
 QDebug SlavGPS::operator<<(QDebug debug, const ViewportPixmap & vpixmap)
 {
 	debug << "ViewportPixmap:" << vpixmap.debug << "central width=" << vpixmap.central_get_width() << "central height=" << vpixmap.central_get_height();
@@ -438,6 +460,9 @@ int ViewportPixmap::central_get_leftmost_pixel(void) const
 	return this->left_margin_width;
 }
 
+
+
+
 /**
    @reviewed-on 2019-07-15
 */
@@ -445,6 +470,9 @@ int ViewportPixmap::central_get_rightmost_pixel(void) const
 {
 	return this->total_width - this->right_margin_width - 1;
 }
+
+
+
 
 /**
    @reviewed-on 2019-07-15
@@ -454,6 +482,9 @@ int ViewportPixmap::central_get_topmost_pixel(void) const
 	return this->top_margin_height;
 }
 
+
+
+
 /**
    @reviewed-on 2019-07-15
 */
@@ -461,6 +492,9 @@ int ViewportPixmap::central_get_bottommost_pixel(void) const
 {
 	return this->total_height - this->bottom_margin_height - 1;
 }
+
+
+
 
 /**
    @reviewed-on 2019-07-17
@@ -506,6 +540,9 @@ fpixel ViewportPixmap::central_get_y_center_pixel(void) const
 	return y_center_shifted_by_top_margin;
 }
 
+
+
+
 /**
    @reviewed-on 2019-07-15
 */
@@ -513,6 +550,9 @@ int ViewportPixmap::total_get_width(void) const
 {
 	return this->total_width;
 }
+
+
+
 
 /**
    @reviewed-on 2019-07-15
@@ -522,6 +562,9 @@ int ViewportPixmap::total_get_height(void) const
 	return this->total_height;
 }
 
+
+
+
 /**
    @reviewed-on 2019-07-14
 */
@@ -529,6 +572,9 @@ int ViewportPixmap::central_get_width(void) const
 {
 	return this->total_width - this->left_margin_width - this->right_margin_width;
 }
+
+
+
 
 /**
    @reviewed-on 2019-07-14
@@ -538,6 +584,9 @@ int ViewportPixmap::central_get_height(void) const
 	return this->total_height - this->top_margin_height - this->bottom_margin_height;
 }
 
+
+
+
 /**
    @reviewed-on 2019-07-14
 */
@@ -545,10 +594,19 @@ int ViewportPixmap::left_get_width(void) const
 {
 	return this->left_margin_width;
 }
+
+
+
+/**
+   @reviewed-on tbd
+*/
 int ViewportPixmap::left_get_height(void) const
 {
 	return this->total_height;
 }
+
+
+
 
 /**
    @reviewed-on 2019-07-14
@@ -558,15 +616,30 @@ int ViewportPixmap::right_get_width(void) const
 	return this->right_margin_width;
 }
 
+
+
+
+/**
+   @reviewed-on tbd
+*/
 int ViewportPixmap::right_get_height(void) const
 {
 	return this->total_height;
 }
 
+
+
+
+/**
+   @reviewed-on tbd
+*/
 int ViewportPixmap::top_get_width(void) const
 {
 	return this->total_width;
 }
+
+
+
 
 /**
    @reviewed-on 2019-07-14
@@ -576,10 +649,19 @@ int ViewportPixmap::top_get_height(void) const
 	return this->top_margin_height;
 }
 
+
+
+
+/**
+   @reviewed-on tbd
+*/
 int ViewportPixmap::bottom_get_width(void) const
 {
 	return this->total_width;
 }
+
+
+
 
 /**
    @reviewed-on 2019-07-14
@@ -603,14 +685,21 @@ ScreenPos ViewportPixmap::central_get_center_screen_pos(void) const
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::clear(void)
 {
-	this->painter.eraseRect(0, 0, this->total_width, this->total_height); /* TODO: use Qt's method that clears whole widget? */
+	/* TODO: should we also clear vpixmap and vpixmap_snapshot? */
+	this->painter.eraseRect(0, 0, this->total_width, this->total_height);
 }
 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 bool ViewportPixmap::line_is_outside(fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y)
 {
 	/*
@@ -651,6 +740,9 @@ bool ViewportPixmap::line_is_outside(fpixel begin_x, fpixel begin_y, fpixel end_
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 #ifdef K_TODO_RESTORE
@@ -725,6 +817,9 @@ void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::central_draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
@@ -752,6 +847,8 @@ void ViewportPixmap::central_draw_line(const QPen & pen, fpixel begin_x, fpixel 
 /*
   @pos is a position in viewport's pixmap.
   The function makes sure that the crosshair is drawn only inside of graph area.
+
+  @reviewed-on tbd
 */
 void ViewportPixmap::central_draw_simple_crosshair(const ScreenPos & pos)
 {
@@ -783,6 +880,9 @@ void ViewportPixmap::central_draw_simple_crosshair(const ScreenPos & pos)
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::set_background_color(const QString & color_name)
 {
 	this->background_color.setNamedColor(color_name);
@@ -792,6 +892,9 @@ void ViewportPixmap::set_background_color(const QString & color_name)
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::set_background_color(const QColor & color)
 {
 	this->background_color = color;
@@ -801,6 +904,9 @@ void ViewportPixmap::set_background_color(const QColor & color)
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 const QColor & ViewportPixmap::get_background_color(void) const
 {
 	return this->background_color;
@@ -809,6 +915,9 @@ const QColor & ViewportPixmap::get_background_color(void) const
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 void ViewportPixmap::set_highlight_usage(bool new_state)
 {
 	this->highlight_usage = new_state;
@@ -817,6 +926,9 @@ void ViewportPixmap::set_highlight_usage(bool new_state)
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 bool ViewportPixmap::get_highlight_usage(void) const
 {
 	return this->highlight_usage;
@@ -825,6 +937,9 @@ bool ViewportPixmap::get_highlight_usage(void) const
 
 
 
+/**
+   @reviewed-on 2019-07-19
+*/
 const QColor & ViewportPixmap::get_highlight_color(void) const
 {
 	return this->highlight_color;
@@ -833,6 +948,9 @@ const QColor & ViewportPixmap::get_highlight_color(void) const
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::set_highlight_color(const QString & color_name)
 {
 	this->highlight_color.setNamedColor(color_name);
@@ -842,6 +960,9 @@ void ViewportPixmap::set_highlight_color(const QString & color_name)
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::set_highlight_color(const QColor & color)
 {
 	this->highlight_color = color;
@@ -851,7 +972,10 @@ void ViewportPixmap::set_highlight_color(const QColor & color)
 
 
 
-QPen ViewportPixmap::get_highlight_pen(void) const
+/**
+   @reviewed-on 2019-07-19
+*/
+const QPen & ViewportPixmap::get_highlight_pen(void) const
 {
 	return this->highlight_pen;
 }
@@ -859,6 +983,9 @@ QPen ViewportPixmap::get_highlight_pen(void) const
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::set_highlight_thickness(int w)
 {
 	this->highlight_pen.setWidth(w);
@@ -874,6 +1001,9 @@ void ViewportPixmap::set_highlight_thickness(int w)
 
 
 
+/**
+   @reviewed-on tbd
+*/
 QRect ViewportPixmap::central_get_rect(void) const
 {
 	const int begin_x = this->central_get_leftmost_pixel();
@@ -885,12 +1015,15 @@ QRect ViewportPixmap::central_get_rect(void) const
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::paintEvent(QPaintEvent * ev)
 {
 	qDebug() << SG_PREFIX_I;
 
 	QPainter event_painter(this);
-	event_painter.drawPixmap(0, 0, this->pixmap);
+	event_painter.drawPixmap(0, 0, this->vpixmap);
 
 	return;
 }
@@ -898,18 +1031,24 @@ void ViewportPixmap::paintEvent(QPaintEvent * ev)
 
 
 
-QPixmap ViewportPixmap::get_pixmap(void) const
+/**
+   @reviewed-on 2019-07-19
+*/
+const QPixmap & ViewportPixmap::get_pixmap(void) const
 {
-	return this->pixmap;
+	return this->vpixmap;
 }
 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
 {
-	if (this->pixmap.size() != new_pixmap.size()) {
-		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: existing pixmap =" << this->pixmap.size() << ", new pixmap =" << new_pixmap.size();
+	if (this->vpixmap.size() != new_pixmap.size()) {
+		qDebug() << SG_PREFIX_E << "Pixmap size mismatch: existing pixmap =" << this->vpixmap.size() << ", new pixmap =" << new_pixmap.size();
 	} else {
 		this->painter.drawPixmap(0, 0, new_pixmap, 0, 0, 0, 0);
 	}
@@ -918,7 +1057,9 @@ void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
 
 
 
-
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::reconfigure_drawing_area(int new_width, int new_height)
 {
 	if (new_width == 0 && new_height == 0) {
@@ -933,15 +1074,21 @@ void ViewportPixmap::reconfigure_drawing_area(int new_width, int new_height)
 
 
 
-void ViewportPixmap::sync(void)
+/**
+   @reviewed-on tbd
+*/
+void ViewportPixmap::render_to_screen(void)
 {
-	qDebug() << SG_PREFIX_I << "sync (will call ->render())";
-	this->render(&this->pixmap);
+	qDebug() << SG_PREFIX_I << "called, will call ->render()";
+	this->render(&this->vpixmap);
 }
 
 
 
 
+/**
+   @reviewed-on tbd
+*/
 void ViewportPixmap::pan_sync(int x_off, int y_off)
 {
 	qDebug() << SG_PREFIX_I;
@@ -974,8 +1121,12 @@ void ViewportPixmap::pan_sync(int x_off, int y_off)
 
 
 
-/* Clip functions continually reduce the value by a factor until it is in the acceptable range
-   whilst also scaling the other coordinate value. */
+/*
+  Clip functions continually reduce the value by a factor until it is in the acceptable range
+  whilst also scaling the other coordinate value.
+
+   @reviewed-on tbd
+*/
 static void clip_x(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 {
 	while (std::fabs(*x1) > 32768) {
@@ -987,6 +1138,9 @@ static void clip_x(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 
 
 
+/**
+   @reviewed-on tbd
+*/
 static void clip_y(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 {
 	while (std::fabs(*y1) > 32767) {
@@ -999,24 +1153,26 @@ static void clip_y(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 
 
 /**
- * @x1: screen coord
- * @y1: screen coord
- * @x2: screen coord
- * @y2: screen coord
- *
- * Due to the seemingly undocumented behaviour of gdk_draw_line(), we need to restrict the range of values passed in.
- * So despite it accepting ints, the effective range seems to be the actually the minimum C int range (2^16).
- * This seems to be limitations coming from the X Window System.
- *
- * See http://www.rahul.net/kenton/40errs.html
- * ERROR 7. Boundary conditions.
- * "The X coordinate space is not infinite.
- *  Most drawing functions limit position, width, and height to 16 bit integers (sometimes signed, sometimes unsigned) of accuracy.
- *  Because most C compilers use 32 bit integers, Xlib will not complain if you exceed the 16 bit limit, but your results will usually not be what you expected.
- *  You should be especially careful of this if you are implementing higher level scalable graphics packages."
- *
- * This function should be called before calling gdk_draw_line().
- */
+   @x1: screen coord
+   @y1: screen coord
+   @x2: screen coord
+   @y2: screen coord
+
+   Due to the seemingly undocumented behaviour of gdk_draw_line(), we need to restrict the range of values passed in.
+   So despite it accepting ints, the effective range seems to be the actually the minimum C int range (2^16).
+   This seems to be limitations coming from the X Window System.
+
+   See http://www.rahul.net/kenton/40errs.html
+   ERROR 7. Boundary conditions.
+   "The X coordinate space is not infinite.
+   Most drawing functions limit position, width, and height to 16 bit integers (sometimes signed, sometimes unsigned) of accuracy.
+   Because most C compilers use 32 bit integers, Xlib will not complain if you exceed the 16 bit limit, but your results will usually not be what you expected.
+   You should be especially careful of this if you are implementing higher level scalable graphics packages."
+
+   This function should be called before calling gdk_draw_line().
+
+  @reviewed-on tbd
+*/
 void ViewportPixmap::clip_line(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2)
 {
 	if (*x1 > 32768 || *x1 < -32767) {
@@ -1038,25 +1194,24 @@ void ViewportPixmap::clip_line(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y
 
 
 
+
+/**
+   @reviewed-on 2019-07-19
+*/
 void ViewportPixmap::snapshot_save(void)
 {
 	qDebug() << SG_PREFIX_I << "Save snapshot";
-	this->snapshot_buffer = this->pixmap;
+	this->vpixmap_snapshot = this->vpixmap;
 }
 
 
 
 
-void ViewportPixmap::snapshot_load(void)
+/**
+   @reviewed-on 2019-07-19
+*/
+void ViewportPixmap::snapshot_restore(void)
 {
-	qDebug() << SG_PREFIX_I << "Load snapshot";
-	this->pixmap = this->snapshot_buffer;
-}
-
-
-
-
-bool ViewportPixmap::is_ready(void) const
-{
-	return !this->pixmap.isNull();
+	qDebug() << SG_PREFIX_I << "Restore snapshot";
+	this->vpixmap = this->vpixmap_snapshot;
 }

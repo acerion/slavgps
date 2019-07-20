@@ -173,8 +173,7 @@ void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 	this->draw_scale_helper_draw_scale(gisview, begin, pen_bg, scale_len_px, HEIGHT); /* Bright background. */
 	this->draw_scale_helper_draw_scale(gisview, begin, pen_fg, scale_len_px, HEIGHT); /* Darker scale on the bright background. */
 	if (1) { /* Debug. */
-		gisview.painter.setPen(QColor("red"));
-		gisview.painter.drawEllipse(begin, 3, 3);
+		gisview.draw_ellipse(QColor("red"), begin, 3, 3);
 	}
 
 
@@ -201,8 +200,7 @@ void GisViewportDecorations::draw_scale(GisViewport & gisview) const
 
 
 		if (1) { /* Debug. */
-			gisview.painter.setPen(QColor("blue"));
-			gisview.painter.drawEllipse(begin, 3, 3);
+			gisview.draw_ellipse(QColor("blue"), begin, 3, 3);
 		}
 	}
 }
@@ -560,7 +558,7 @@ void GisViewportDecorations::draw_viewport_metadata(GisViewport & gisview) const
 
 
 /**
-   @reviewed-on: 2019-07-18
+   @reviewed-on: 2019-07-19
 */
 void GisViewportDecorations::draw_viewport_pixels(GisViewport & gisview) const
 {
@@ -569,14 +567,11 @@ void GisViewportDecorations::draw_viewport_pixels(GisViewport & gisview) const
 	const int topmost_px    = gisview.central_get_topmost_pixel();
 	const int bottommost_px = gisview.central_get_bottommost_pixel();
 	const int radius = 8;
-	gisview.painter.setPen(QColor("red"));
-	gisview.painter.drawEllipse(ScreenPos(leftmost_px, topmost_px), radius, radius);
-	gisview.painter.setPen(QColor("green"));
-	gisview.painter.drawEllipse(ScreenPos(rightmost_px, topmost_px), radius, radius);
-	gisview.painter.setPen(QColor("blue"));
-	gisview.painter.drawEllipse(ScreenPos(leftmost_px, bottommost_px), radius, radius);
-	gisview.painter.setPen(QColor("orange"));
-	gisview.painter.drawEllipse(ScreenPos(rightmost_px, bottommost_px), radius, radius);
+
+	gisview.draw_ellipse(QColor("red"),    ScreenPos(leftmost_px, topmost_px), radius, radius);
+	gisview.draw_ellipse(QColor("green"),  ScreenPos(rightmost_px, topmost_px), radius, radius);
+	gisview.draw_ellipse(QColor("blue"),   ScreenPos(leftmost_px, bottommost_px), radius, radius);
+	gisview.draw_ellipse(QColor("orange"), ScreenPos(rightmost_px, bottommost_px), radius, radius);
 
 
 
@@ -592,8 +587,10 @@ void GisViewportDecorations::draw_viewport_pixels(GisViewport & gisview) const
 			 gisview.central_get_y_center_pixel());
 #endif
 
-	gisview.painter.setPen(QColor("red"));
-	gisview.painter.drawEllipse(center,
-				    gisview.central_get_width() / 2.0,
-				    gisview.central_get_height() / 2.0);
+	QPen pen(QColor("blue"));
+	pen.setWidth(1);
+	gisview.draw_ellipse(pen,
+			     center,
+			     gisview.central_get_width() / 2.0,
+			     gisview.central_get_height() / 2.0);
 }

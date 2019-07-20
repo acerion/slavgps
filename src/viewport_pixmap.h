@@ -80,16 +80,13 @@ namespace SlavGPS {
 		void reconfigure_drawing_area(int width = 0, int height = 0);
 
 		/* ViewportPixmap buffer management/drawing to screen. */
-		QPixmap get_pixmap(void) const;   /* Get contents of drawing buffer. */
+		const QPixmap & get_pixmap(void) const;   /* Get contents of drawing buffer. */
 		void set_pixmap(const QPixmap & pixmap);
-		void sync(void);              /* Draw buffer to window. */
+		void render_to_screen(void);              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 
 		void snapshot_save(void);
-		void snapshot_load(void);
-
-		bool is_ready(void) const;
-
+		void snapshot_restore(void);
 
 		/* Run this before drawing a line. ViewportPixmap::draw_line() runs it for you. */
 		static void clip_line(fpixel * x1, fpixel * y1, fpixel * x2, fpixel * y2);
@@ -133,27 +130,28 @@ namespace SlavGPS {
 
 
 		/* Drawing primitives. */
-		void draw_line(QPen const & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y);
-		void draw_line(QPen const & pen, const ScreenPos & begin, const ScreenPos & end);
-		void draw_rectangle(QPen const & pen, fpixel upper_left_x, fpixel upper_left_y, fpixel width, fpixel height);
-		void draw_rectangle(QPen const & pen, const QRect & rect);
-		void fill_rectangle(QColor const & color, fpixel x, fpixel y, fpixel width, fpixel height);
+		void draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y);
+		void draw_line(const QPen & pen, const ScreenPos & begin, const ScreenPos & end);
+		void draw_rectangle(const QPen & pen, fpixel upper_left_x, fpixel upper_left_y, fpixel width, fpixel height);
+		void draw_rectangle(const QPen & pen, const QRect & rect);
+		void fill_rectangle(const QColor & color, fpixel x, fpixel y, fpixel width, fpixel height);
 
-		void draw_text(QFont const & font, QPen const & pen, fpixel x, fpixel y, QString const & text);
+		void draw_text(const QFont & font, const QPen & pen, fpixel x, fpixel y, const QString & text);
 		void draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset);
-		void draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, QString const & text, TextOffset text_offset);
-		void draw_outlined_text(QFont const & text_font, QPen const & outline_pen, const QColor & fill_color, const ScreenPos & base_point, QString const & text);
+		void draw_text(const QFont & text_font, const QPen & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset);
+		void draw_outlined_text(const QFont & text_font, const QPen & outline_pen, const QColor & fill_color, const ScreenPos & base_point, const QString & text);
 
-		void draw_arc(QPen const & pen, fpixel center_x, fpixel center_y, fpixel width, fpixel height, int start_angle, int span_angle);
-		void draw_ellipse(QPen const & pen, const ScreenPos & center, fpixel radius_x, fpixel radius_y, bool filled);
-		void draw_polygon(QPen const & pen, ScreenPos const * points, int npoints, bool filled);
+		void draw_arc(const QPen & pen, fpixel center_x, fpixel center_y, fpixel width, fpixel height, int start_angle, int span_angle);
+		void draw_ellipse(const QPen & pen, const ScreenPos & center, fpixel radius_x, fpixel radius_y);
+		void fill_ellipse(const QColor & color, const ScreenPos & center, fpixel radius_x, fpixel radius_y);
+		void draw_polygon(const QPen & pen, const ScreenPos * points, int npoints, bool filled);
 
 		void draw_pixmap(const QPixmap & pixmap, fpixel viewport_x, fpixel viewport_y, fpixel pixmap_x, fpixel pixmap_y, fpixel pixmap_width, fpixel pixmap_height);
 		void draw_pixmap(const QPixmap & pixmap, fpixel viewport_x, fpixel viewport_y);
 		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
 
 
-		void margin_draw_text(ViewportPixmap::MarginPosition pos, QFont const & text_font, QPen const & pen, const QRectF & bounding_rect, int flags, QString const & text, TextOffset text_offset);
+		void margin_draw_text(ViewportPixmap::MarginPosition pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset);
 
 		/* Draw a line in central part of viewport.  x/y
 		   coordinates should be in "beginning is in
@@ -178,7 +176,7 @@ namespace SlavGPS {
 		void set_highlight_usage(bool new_state);
 		bool get_highlight_usage(void) const;
 
-		QPen get_highlight_pen(void) const;
+		const QPen & get_highlight_pen(void) const;
 		void set_highlight_thickness(int thickness);
 
 		void set_highlight_color(const QString & color_name);
@@ -233,8 +231,8 @@ namespace SlavGPS {
 
 
 		QPainter painter;
-		QPixmap pixmap;
-		QPixmap snapshot_buffer;
+		QPixmap vpixmap;
+		QPixmap vpixmap_snapshot;
 
 
 	signals:

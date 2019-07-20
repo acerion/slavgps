@@ -109,7 +109,7 @@ void LayerTool::perform_move(const ScreenPos & new_pos)
 	this->layer_edit_moving = true;
 
 	if (tool_sync_done) {
-		this->gisview->sync();
+		this->gisview->render_to_screen();
 		tool_sync_done = true;
 	}
 }

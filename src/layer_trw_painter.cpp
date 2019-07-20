@@ -637,9 +637,9 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->track_min_stop_length) {
 
 				const int stop_radius = (6 * tp_size) / 2;
-				this->gisview->draw_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen],
+				this->gisview->fill_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen].color(),
 							    curr_pos,
-							    stop_radius, stop_radius, true);
+							    stop_radius, stop_radius);
 			}
 
 			if (use_prev_pos && curr_pos == prev_pos) {
@@ -663,7 +663,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 				} else {
 					/* Final point - draw 4x circle. */
 					const int tp_radius = (4 * tp_size) / 2;
-					this->gisview->draw_ellipse(main_pen, curr_pos, tp_radius, tp_radius, true);
+					this->gisview->fill_ellipse(main_pen.color(), curr_pos, tp_radius, tp_radius);
 				}
 			}
 
@@ -1048,7 +1048,7 @@ void LayerTRWPainter::draw_waypoint_symbol(Waypoint * wp, const ScreenPos & wp_p
 			break;
 		case GraphicMarker::Circle:
 			size = 50;
-			this->gisview->draw_ellipse(pen, wp_pos, size / 2, size / 2, true);
+			this->gisview->fill_ellipse(pen.color(), wp_pos, size / 2, size / 2);
 			break;
 		case GraphicMarker::X:
 			/* x-markers need additional division of size by two. */

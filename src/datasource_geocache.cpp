@@ -132,8 +132,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 	if (this->circle_onscreen) {
 		this->gisview->draw_ellipse(this->circle_pen,
 					    this->circle_pos,
-					    this->circle_radius, this->circle_radius,
-					    false);
+					    this->circle_radius, this->circle_radius);
 	}
 
 	/* Calculate widgets circle_pos. */
@@ -165,8 +164,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 		this->gisview->draw_ellipse(this->circle_pen,
 					    this->circle_pos,
-					    this->circle_radius, this->circle_radius,
-					    false);
+					    this->circle_radius, this->circle_radius);
 
 		this->circle_onscreen = true;
 	} else {
@@ -175,7 +173,7 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 
 	/* TODO_2_LATER: See if onscreen. */
 	/* Okay. */
-	this->gisview->sync();
+	this->gisview->render_to_screen();
 }
 
 
@@ -299,9 +297,8 @@ DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 	if (this->circle_onscreen) {
 		this->gisview->draw_ellipse(this->circle_pen,
 					    this->circle_pos,
-					    this->circle_radius, this->circle_radius,
-					    false);
-		this->gisview->sync();
+					    this->circle_radius, this->circle_radius);
+		this->gisview->render_to_screen();
 	}
 }
 

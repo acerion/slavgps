@@ -988,11 +988,6 @@ void Window::draw_tree_items(void)
 	qDebug() << "\n";
 	qDebug() << SG_PREFIX_I;
 
-	if (!this->main_gis_vp->is_ready()) {
-		/* Viewport may not be ready during early stages of application's life. */
-		return;
-	}
-
 #ifdef K_FIXME_RESTORE
 	const Coord old_center = this->trigger_center;
 	this->trigger_center = this->main_gis_vp->get_center_coord();

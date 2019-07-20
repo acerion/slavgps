@@ -1581,7 +1581,7 @@ bool GisViewport::print_cb(QPrinter * printer)
 	paint_begin.setX(0);
 	paint_begin.setY(0);
 
-	printer_painter.drawPixmap(paint_begin, scaled_viewport->pixmap);
+	printer_painter.drawPixmap(paint_begin, scaled_viewport->vpixmap);
 	printer_painter.end();
 
 	delete scaled_viewport;
