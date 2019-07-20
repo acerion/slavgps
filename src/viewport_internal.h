@@ -124,8 +124,19 @@ namespace SlavGPS {
 
 
 		/* GisViewport's zoom. */
-		void zoom_in(void);
-		void zoom_out(void);
+
+		/* Functions doing zoom in/out in following way: a geo
+		   point with specific geo coordinates that was at
+		   center screen position of center area of viewport
+		   when zooming started, will be still at the center
+		   screen position of center area of viewport when the
+		   zooming ends.
+
+		   The geo point that was in a center of viewport will
+		   have the same screen position after zoom ended as
+		   it had before zoom started. */
+		void zoom_in_on_center_pixel(void);
+		void zoom_out_on_center_pixel(void);
 
 		sg_ret set_viking_scale(double new_value);
 		sg_ret set_viking_scale_x(double new_value);

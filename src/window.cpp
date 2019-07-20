@@ -621,27 +621,27 @@ void Window::create_actions(void)
 
 		group = new QActionGroup(this);
 
-		this->qa_drawmode_utm = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::UTM), this);
+		this->qa_drawmode_utm = new QAction(GisViewportDrawModes::get_label_with_accelerator(GisViewportDrawMode::UTM), this);
 		this->qa_drawmode_utm->setData(QVariant((int) GisViewportDrawMode::UTM));
 		this->qa_drawmode_utm->setCheckable(true);
 		group->addAction(this->qa_drawmode_utm);
 		this->menu_view->addAction(this->qa_drawmode_utm);
 
 #ifdef VIK_CONFIG_EXPEDIA
-		this->qa_drawmode_expedia = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::Expedia), this);
+		this->qa_drawmode_expedia = new QAction(GisViewportDrawModes::get_label_with_accelerator(GisViewportDrawMode::Expedia), this);
 		this->qa_drawmode_expedia->setData(QVariant((int) GisViewportDrawMode::Expedia));
 		this->qa_drawmode_expedia->setCheckable(true);
 		group->addAction(this->qa_drawmode_expedia);
 		this->menu_view->addAction(this->qa_drawmode_expedia);
 #endif
 
-		this->qa_drawmode_mercator = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::Mercator), this);
+		this->qa_drawmode_mercator = new QAction(GisViewportDrawModes::get_label_with_accelerator(GisViewportDrawMode::Mercator), this);
 		this->qa_drawmode_mercator->setData(QVariant((int) GisViewportDrawMode::Mercator));
 		this->qa_drawmode_mercator->setCheckable(true);
 		group->addAction(this->qa_drawmode_mercator);
 		this->menu_view->addAction(this->qa_drawmode_mercator);
 
-		this->qa_drawmode_latlon = new QAction(GisViewportDrawModes::get_name(GisViewportDrawMode::LatLon), this);
+		this->qa_drawmode_latlon = new QAction(GisViewportDrawModes::get_label_with_accelerator(GisViewportDrawMode::LatLon), this);
 		this->qa_drawmode_latlon->setData(QVariant((int) GisViewportDrawMode::LatLon));
 		this->qa_drawmode_latlon->setCheckable(true);
 		group->addAction(this->qa_drawmode_latlon);
@@ -1829,11 +1829,11 @@ void Window::zoom_cb(void)
 	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
 		qDebug() << SG_PREFIX_D << "Zoom In";
 		debug_msg = "zoom in";
-		this->main_gis_vp->zoom_in();
+		this->main_gis_vp->zoom_in_on_center_pixel();
 	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
 		qDebug() << SG_PREFIX_D << "Zoom Out";
 		debug_msg = "zoom out";
-		this->main_gis_vp->zoom_out();
+		this->main_gis_vp->zoom_out_on_center_pixel();
 	} else {
 		qDebug() << SG_PREFIX_E << "Invalid zoom key sequence" << seq;
 		return;

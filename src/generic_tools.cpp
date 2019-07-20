@@ -456,14 +456,14 @@ ToolStatus GenericToolZoom::internal_handle_mouse_release(Layer * layer, QMouseE
 
 			if (event->button() == Qt::LeftButton) {
 				this->gisview->set_center_coord(event_pos);
-				this->gisview->zoom_in();
-				this->gisview->zoom_in();
-				this->gisview->zoom_in();
+				this->gisview->zoom_in_on_center_pixel();
+				this->gisview->zoom_in_on_center_pixel();
+				this->gisview->zoom_in_on_center_pixel();
 			} else { /* Qt::RightButton */
 				this->gisview->set_center_coord(event_pos);
-				this->gisview->zoom_out();
-				this->gisview->zoom_out();
-				this->gisview->zoom_out();
+				this->gisview->zoom_out_on_center_pixel();
+				this->gisview->zoom_out_on_center_pixel();
+				this->gisview->zoom_out_on_center_pixel();
 			}
 			redraw_viewport = true;
 		}
@@ -534,12 +534,12 @@ ToolStatus LayerToolPan::internal_handle_mouse_double_click(Layer * layer, QMous
 	   No need to change the center as that has already occurred in the first click of a double click occurrence. */
 	if (event->button() == Qt::LeftButton) {
 		if (event->modifiers() & Qt::ShiftModifier) {
-			this->window->get_main_gis_view()->zoom_out();
+			this->window->get_main_gis_view()->zoom_out_on_center_pixel();
 		} else {
-			this->window->get_main_gis_view()->zoom_in();
+			this->window->get_main_gis_view()->zoom_in_on_center_pixel();
 		}
 	} else if (event->button() == Qt::RightButton) {
-		this->window->get_main_gis_view()->zoom_out();
+		this->window->get_main_gis_view()->zoom_out_on_center_pixel();
 	} else {
 		/* Ignore other mouse buttons. */
 	}

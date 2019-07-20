@@ -94,7 +94,7 @@ namespace SlavGPS {
 
 	class GisViewportDrawModes {
 	public:
-		static QString get_name(GisViewportDrawMode mode);
+		static QString get_label_with_accelerator(GisViewportDrawMode mode);
 		static QString get_id_string(GisViewportDrawMode mode);
 		static bool set_draw_mode_from_file(GisViewport * gisview, const char * line);
 	};

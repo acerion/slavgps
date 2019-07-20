@@ -791,7 +791,7 @@ void LayerMap::post_read(GisViewport * gisview, bool from_file)
 		/* If this method is not called in file reading context it is called in GUI context.
 		   So, we can check if we have to inform the user about inconsistency. */
 		if (map_source->get_drawmode() != gisview->get_draw_mode()) {
-			const QString drawmode_name = GisViewportDrawModes::get_name(map_source->get_drawmode());
+			const QString drawmode_name = GisViewportDrawModes::get_label_with_accelerator(map_source->get_drawmode());
 			const QString msg = QObject::tr("New map cannot be displayed in the current drawmode.\nSelect \"%1\" from View menu to view it.").arg(drawmode_name);
 			Dialog::warning(msg, this->get_window());
 		}
@@ -1602,7 +1602,7 @@ void LayerMap::download_onscreen_maps(MapDownloadMode map_download_mode)
 		this->start_download_thread(gisview, coord_ul, coord_br, map_download_mode);
 
 	} else if (map_draw_mode != vp_draw_mode) {
-		const QString drawmode_name = GisViewportDrawModes::get_name(map_draw_mode);
+		const QString drawmode_name = GisViewportDrawModes::get_label_with_accelerator(map_draw_mode);
 		const QString err = QObject::tr("Wrong drawmode for this map.\nSelect \"%1\" from View menu and try again.").arg(drawmode_name);
 		Dialog::error(err, this->get_window());
 	} else {

@@ -240,13 +240,13 @@ bool GisViewportZoom::move_coordinate_to_center(ZoomOperation zoom_operation, Gi
 	switch (zoom_operation) {
 	case ZoomOperation::In:
 		gisview->set_center_coord(event_pos);
-		gisview->zoom_in();
+		gisview->zoom_in_on_center_pixel();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
 		gisview->set_center_coord(event_pos);
-		gisview->zoom_out();
+		gisview->zoom_out_on_center_pixel();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -267,13 +267,13 @@ bool GisViewportZoom::keep_coordinate_in_center(ZoomOperation zoom_operation, Gi
 	switch (zoom_operation) {
 	case ZoomOperation::In:
 		gisview->set_center_coord(center_pos);
-		gisview->zoom_in();
+		gisview->zoom_in_on_center_pixel();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
 	case ZoomOperation::Out:
 		gisview->set_center_coord(center_pos);
-		gisview->zoom_out();
+		gisview->zoom_out_on_center_pixel();
 		window->set_dirty_flag(true);
 		redraw_viewport = true;
 		break;
@@ -297,7 +297,7 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 		/* Here we use event position before zooming in. */
 		const Coord cursor_coord = gisview->screen_pos_to_coord(event_pos);
 
-		gisview->zoom_in();
+		gisview->zoom_in_on_center_pixel();
 
 		/* Position of event calculated in modified (zoomed in) viewport. */
 		ScreenPos orig_pos;
@@ -313,7 +313,7 @@ bool GisViewportZoom::keep_coordinate_under_cursor(ZoomOperation zoom_operation,
 		/* Here we use event position before zooming out. */
 		const Coord cursor_coord = gisview->screen_pos_to_coord(event_pos);
 
-		gisview->zoom_out();
+		gisview->zoom_out_on_center_pixel();
 
 		/* Position of event calculated in modified (zoomed out) viewport. */
 		ScreenPos orig_pos;
