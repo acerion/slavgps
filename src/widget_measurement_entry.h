@@ -46,6 +46,11 @@ namespace SlavGPS {
 
 
 
+	class Altitude;
+
+
+
+
 	class MeasurementEntryWidget : public QFrame {
 		Q_OBJECT
 	public:
@@ -68,6 +73,24 @@ namespace SlavGPS {
 
 		/* For storing type of value presented in widget. */
 		SGVariantType type_id;
+	};
+
+
+
+
+	class MeasurementDisplayWidget : public QFrame {
+		Q_OBJECT
+	public:
+		MeasurementDisplayWidget(QWidget * parent = NULL);
+
+		/* @altitude must be in User Units (hence _uu postfix). */
+		void set_value_uu(const Altitude & altitude);
+
+		void set_tooltip(const QString & tooltip);
+
+	private:
+		QVBoxLayout * vbox = NULL;
+		QLabel * label = NULL;
 	};
 
 

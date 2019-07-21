@@ -153,3 +153,36 @@ void MeasurementEntryWidget::set_tooltip(const QString & tooltip)
 {
 	this->spin->setToolTip(tooltip);
 }
+
+
+
+
+MeasurementDisplayWidget::MeasurementDisplayWidget(QWidget * parent)
+{
+	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);
+
+	this->vbox = new QVBoxLayout();
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+	this->label = new QLabel(SG_MEASUREMENT_INVALID_VALUE_STRING); /* Default label. */
+	this->vbox->addWidget(this->label);
+}
+
+
+
+
+void MeasurementDisplayWidget::set_value_uu(const Altitude & altitude)
+{
+	this->label->setText(altitude.to_string());
+}
+
+
+
+
+void MeasurementDisplayWidget::set_tooltip(const QString & tooltip)
+{
+	this->label->setToolTip(tooltip);
+}

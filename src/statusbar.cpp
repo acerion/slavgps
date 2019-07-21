@@ -40,6 +40,7 @@
 #include "statusbar.h"
 #include "background.h"
 #include "widget_coord_display.h"
+#include "widget_measurement_entry.h"
 #include "globals.h"
 
 
@@ -151,11 +152,14 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 	this->fields[(int) StatusBarField::Items] = label;
 	this->addPermanentWidget(label);
 
-
 	CoordDisplayWidget * coord_display = new CoordDisplayWidget();
 	this->fields[(int) StatusBarField::Position] = coord_display;
 	this->addPermanentWidget(coord_display);
 
+	MeasurementDisplayWidget * altitude_display = new MeasurementDisplayWidget();
+	altitude_display->set_tooltip(QObject::tr("DEM Altitude"));
+	this->fields[(int) StatusBarField::Altitude] = altitude_display;
+	this->addPermanentWidget(altitude_display);
 
 	label = new QLabel("info");
 	label->minimumSize().rwidth() = 275;
@@ -194,6 +198,10 @@ void StatusBar::set_message(StatusBarField field, QString const & message)
 		qDebug() << SG_PREFIX_E << "'position' field should be set with ::set_coord()";
 		break;
 
+	case StatusBarField::Altitude:
+		qDebug() << SG_PREFIX_E << "'altitude' field should be set with ::set_altitude()";
+		break;
+
 	default:
 		qDebug() << SG_PREFIX_E << "unhandled field number" << (int) field;
 		break;
@@ -206,6 +214,14 @@ void StatusBar::set_message(StatusBarField field, QString const & message)
 void StatusBar::set_coord(const Coord & coord)
 {
 	((CoordDisplayWidget *) this->fields[(int) StatusBarField::Position])->set_value(coord);
+}
+
+
+
+
+void StatusBar::set_altitude_uu(const Altitude & altitude)
+{
+	((MeasurementDisplayWidget *) this->fields[(int) StatusBarField::Altitude])->set_value_uu(altitude);
 }
 
 

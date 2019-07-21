@@ -59,6 +59,8 @@ namespace SlavGPS {
 
 
 #define DEGREE_SYMBOL "\302\260"     /* "\u00b0" */
+#define SG_MEASUREMENT_INVALID_VALUE_STRING "--"
+#define SG_MEASUREMENT_INVALID_UNIT_STRING  "??"
 
 
 

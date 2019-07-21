@@ -48,8 +48,6 @@ using namespace SlavGPS;
 
 
 #define SG_MODULE "Measurements"
-#define INVALID_RESULT_STRING "--"
-#define INVALID_UNIT_STRING   "??"
 
 
 
@@ -302,7 +300,7 @@ QString Distance::to_string(void) const
 	QString result;
 
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -313,7 +311,7 @@ QString Distance::to_string(void) const
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = INVALID_RESULT_STRING;
+			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 			break;
 		}
 	} else {
@@ -329,7 +327,7 @@ QString Distance::to_string(void) const
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = INVALID_RESULT_STRING;
+			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 			break;
 		}
 	}
@@ -345,7 +343,7 @@ QString Distance::to_nice_string(void) const
 	QString result;
 
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -360,7 +358,7 @@ QString Distance::to_nice_string(void) const
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = INVALID_RESULT_STRING;
+			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 			break;
 		}
 	} else {
@@ -381,7 +379,7 @@ QString Distance::to_nice_string(void) const
 			break;
 		default:
 			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = INVALID_RESULT_STRING;
+			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 			break;
 		}
 	}
@@ -684,7 +682,7 @@ QString Distance::get_unit_full_string(DistanceUnit distance_unit)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
-		result = INVALID_UNIT_STRING;
+		result = SG_MEASUREMENT_INVALID_UNIT_STRING;
 		break;
 	}
 
@@ -776,7 +774,7 @@ const QString Altitude::value_to_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 	} else {
 		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
 	}
@@ -791,7 +789,7 @@ QString Altitude::to_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -817,7 +815,7 @@ QString Altitude::to_nice_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -1100,7 +1098,7 @@ QString Altitude::get_unit_full_string(HeightUnit height_unit)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		result = INVALID_UNIT_STRING;
+		result = SG_MEASUREMENT_INVALID_UNIT_STRING;
 		break;
 	}
 
@@ -1179,7 +1177,7 @@ const QString Speed::value_to_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 	} else {
 		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
 	}
@@ -1194,7 +1192,7 @@ QString Speed::to_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -1212,7 +1210,7 @@ QString Speed::to_string(void) const
 		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (this->value), 0, 'f', SG_PRECISION_SPEED);
 		break;
 	default:
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
 		break;
 	}
@@ -1227,7 +1225,7 @@ QString Speed::to_nice_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -1255,7 +1253,7 @@ QString Speed::to_nice_string(void) const
 QString Speed::to_string(double value, int precision)
 {
 	if (std::isnan(value)) {
-		return INVALID_RESULT_STRING;
+		return SG_MEASUREMENT_INVALID_VALUE_STRING;
 	}
 
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
@@ -1276,7 +1274,7 @@ QString Speed::to_string(double value, int precision)
 		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
 		break;
 	default:
-		buffer = INVALID_RESULT_STRING;
+		buffer = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
 		break;
 	}
@@ -1455,7 +1453,7 @@ QString Speed::get_unit_full_string(SpeedUnit speed_unit)
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
-		result = INVALID_UNIT_STRING;
+		result = SG_MEASUREMENT_INVALID_UNIT_STRING;
 		break;
 	}
 
@@ -1524,7 +1522,7 @@ QString Angle::to_string(int precision) const
 	if (this->is_valid()) {
 		return QObject::tr("%1%2").arg(RAD2DEG(this->value), 5, 'f', precision, '0').arg(DEGREE_SYMBOL);
 	} else {
-		return INVALID_RESULT_STRING;
+		return SG_MEASUREMENT_INVALID_VALUE_STRING;
 	}
 }
 
@@ -2111,7 +2109,7 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord) const
 	QString result;
 
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -2165,7 +2163,7 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const 
 	QString result;
 
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
@@ -2314,7 +2312,7 @@ const QString Gradient::value_to_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 	} else {
 		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
 	}
@@ -2329,7 +2327,7 @@ QString Gradient::to_string(void) const
 {
 	QString result;
 	if (!this->valid) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 	} else {
 		result = QObject::tr("%1%").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
 	}
@@ -2351,7 +2349,7 @@ QString Gradient::to_string(double value, int precision)
 {
 	QString result;
 	if (std::isnan(value)) {
-		result = INVALID_RESULT_STRING;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 	} else {
 		result = QObject::tr("%1%").arg(value, 0, 'f', SG_PRECISION_GRADIENT);
 	}

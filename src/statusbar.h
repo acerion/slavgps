@@ -41,6 +41,7 @@ namespace SlavGPS {
 
 
 	class Coord;
+	class Altitude;
 
 
 
@@ -51,6 +52,7 @@ namespace SlavGPS {
 		Zoom,
 		Info,
 		Position,
+		Altitude,
 		Max
 	};
 
@@ -65,6 +67,10 @@ namespace SlavGPS {
 
 		void set_message(StatusBarField field, QString const & message);
 		void set_coord(const Coord & coord);
+
+		/* @altitude must be in User Units (hence _uu postfix). */
+		void set_altitude_uu(const Altitude & altitude);
+
 		QAction * toggleViewAction(void) const;
 
 	private:
