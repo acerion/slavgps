@@ -1033,6 +1033,10 @@ void Window::draw_tree_items(GisViewport * gisview)
 	/* Other viewport decoration items on top if they are enabled/in use. */
 	gisview->draw_decorations();
 
+	if (1) { /* Debug. Draw on top of decorations. */
+		gisview->debug_draw_debugs();
+	}
+
 	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
 	gisview->update();
 

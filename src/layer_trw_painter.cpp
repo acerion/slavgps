@@ -1091,8 +1091,7 @@ void LayerTRWPainter::draw_waypoint_label(Waypoint * wp, const ScreenPos & wp_po
 					 this->gisview->get_highlight_pen().color(),
 					 bounding_rect,
 					 Qt::AlignBottom | Qt::AlignLeft,
-					 wp->name,
-					 TextOffset::None);
+					 wp->name);
 	} else {
 		/* Draw waypoint's label with regular background color. */
 		this->gisview->draw_text(QFont("Arial", pango_font_size_to_point_font_size(this->wp_label_font_size)),

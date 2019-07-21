@@ -58,12 +58,17 @@ namespace SlavGPS {
 		sg_ret add_attribution(QString const & copyright);
 		sg_ret add_logo(const GisViewportLogo & logo);
 
-		void draw(GisViewport & gisview) const;
+		void draw(GisViewport & gisview);
 		void clear(void);
 
 	private:
-		void draw_attributions(GisViewport & gisview) const;
+		void draw_attributions(GisViewport & gisview);
+
+		/**
+		   The logos are drawn above attributions, horizontally, from right to left
+		*/
 		void draw_logos(GisViewport & gisview) const;
+
 		void draw_scale(GisViewport & gisview) const;
 		void draw_center_mark(GisViewport & gisview) const;
 
@@ -77,19 +82,6 @@ namespace SlavGPS {
 
 		QString draw_scale_helper_get_value_string(GisViewport & gisview, DistanceUnit distance_unit, double scale_unit) const;
 
-		/**
-		   @brief Draw text with viewport's metadata
-
-		   Draw info about viewport's size, viewport's bbox
-		   and about geo-coordinates of viewport's corners.
-		*/
-		void draw_viewport_metadata(GisViewport & gisview) const;
-
-		/**
-		   @brief Draw markers of location of some key pixels in viewport
-		*/
-		void draw_viewport_pixels(GisViewport & gisview) const;
-
 		/* For scale and center mark. */
 		QPen pen_marks_bg;
 		QPen pen_marks_fg;
@@ -99,6 +91,12 @@ namespace SlavGPS {
 
 		/* Padding between different decorations. */
 		int base_padding = 10;
+
+		/* Rectangle within which attributions have been
+		   drawn. Coordinates in global coordinates of
+		   viewport pixmap. Calculated by
+		   ::draw_attributions(). */
+		QRectF attributions_rect;
 	};
 
 

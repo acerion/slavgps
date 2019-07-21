@@ -1,0 +1,8 @@
+<!DOCTYPE RCC><RCC version="1.0">
+  <qresource>
+    <file>test_data/pixmap_16x16.png</file>
+    <file>test_data/pixmap_checkered_black_alpha.png</file>
+    <file>test_data/test_pixmap_2.png</file>
+    <file>test_data/test_pixmap_3.png</file>
+  </qresource>
+</RCC>

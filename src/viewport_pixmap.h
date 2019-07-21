@@ -136,12 +136,14 @@ namespace SlavGPS {
 		void draw_line(const QPen & pen, const ScreenPos & begin, const ScreenPos & end);
 		void draw_rectangle(const QPen & pen, fpixel upper_left_x, fpixel upper_left_y, fpixel width, fpixel height);
 		void draw_rectangle(const QPen & pen, const QRect & rect);
+		void draw_rectangle(const QPen & pen, const QRectF & rect);
 		void fill_rectangle(const QColor & color, fpixel x, fpixel y, fpixel width, fpixel height);
 
 		void draw_text(const QFont & font, const QPen & pen, fpixel x, fpixel y, const QString & text);
-		void draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset);
-		void draw_text(const QFont & text_font, const QPen & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset);
+		QRectF draw_text(const QFont & font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset = TextOffset::None);
+		QRectF draw_text(const QFont & text_font, const QPen & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset = TextOffset::None);
 		void draw_outlined_text(const QFont & text_font, const QPen & outline_pen, const QColor & fill_color, const ScreenPos & base_point, const QString & text);
+		void offset_text_bounding_rect(QRectF & text_rect, TextOffset text_offset) const;
 
 		void draw_arc(const QPen & pen, fpixel center_x, fpixel center_y, fpixel width, fpixel height, int start_angle, int span_angle);
 		void draw_ellipse(const QPen & pen, const ScreenPos & center, fpixel radius_x, fpixel radius_y);
@@ -193,6 +195,10 @@ namespace SlavGPS {
 		const QColor & get_background_color(void) const;
 
 
+		/**
+		   @bried Debug function: draw misc elements to Viewport Pixmap for debugging purposes
+		*/
+		void debug_pixmap_draw(void);
 
 
 		char debug[100] = { 0 };
@@ -235,6 +241,9 @@ namespace SlavGPS {
 		QPainter painter;
 		QPixmap vpixmap;
 		QPixmap vpixmap_snapshot;
+
+	private:
+		void draw_text_debug(const QRectF & text_rect);
 
 
 	signals:

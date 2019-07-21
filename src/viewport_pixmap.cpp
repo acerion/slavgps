@@ -150,6 +150,18 @@ void ViewportPixmap::draw_rectangle(const QPen & pen, const QRect & rect)
 
 
 /**
+   @reviewed-on 2019-07-21
+*/
+void ViewportPixmap::draw_rectangle(const QPen & pen, const QRectF & rect)
+{
+	this->painter.setPen(pen);
+	this->painter.drawRect(rect);
+}
+
+
+
+
+/**
    @reviewed-on 2019-07-19
 */
 void ViewportPixmap::fill_rectangle(const QColor & color, fpixel pos_x, fpixel pos_y, fpixel rect_width, fpixel rect_height)
@@ -176,44 +188,26 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, fpixel
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
+QRectF ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 	this->painter.setFont(text_font);
 
-	/* "Normalize" bounding rectangles that have negative width or height.
-	   Otherwise the text will be outside of the bounding rectangle. */
-	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
+	/* Get bounding rect of text drawn with font set above with .setFont(). */
+	QRectF text_rect = this->painter.boundingRect(bounding_rect, flags, text);
 
-	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
-	if ((unsigned int) text_offset & (unsigned int) TextOffset::Up) {
-		/* Move boxes a bit up, so that text is right against grid line, not below it. */
-		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
-		final_bounding_rect.moveTop(new_top);
-		text_rect.moveTop(new_top);
+	if (TextOffset::None != text_offset) {
+		this->offset_text_bounding_rect(text_rect, text_offset);
 	}
-
-	if ((unsigned int) text_offset & (unsigned int) TextOffset::Left) {
-		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
-		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
-		final_bounding_rect.moveLeft(new_left);
-		text_rect.moveLeft(new_left);
-	}
-
-
-#if 1
-	/* Debug. */
-	this->painter.setPen(QColor("red"));
-	this->painter.drawEllipse(final_bounding_rect.left(), final_bounding_rect.top(), 5, 5);
-
-	this->painter.setPen(QColor("darkgreen"));
-	this->painter.drawRect(final_bounding_rect);
-
-	this->painter.setPen(QColor("red"));
-	this->painter.drawRect(text_rect);
-#endif
 
 	this->painter.setPen(pen);
 	this->painter.drawText(text_rect, flags, text, NULL);
+
+
+	if (1) { /* Debug. */
+		this->draw_text_debug(text_rect);
+	}
+
+	return text_rect;
 }
 
 
@@ -245,44 +239,64 @@ void ViewportPixmap::draw_outlined_text(QFont const & text_font, QPen const & ou
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
+QRectF ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, const QColor & bg_color, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 	this->painter.setFont(text_font);
 
-	/* "Normalize" bounding rectangles that have negative width or height.
-	   Otherwise the text will be outside of the bounding rectangle. */
-	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
+	/* Get bounding rect of text drawn with font set above with .setFont(). */
+	QRectF text_rect = this->painter.boundingRect(bounding_rect, flags, text);
 
-	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
-	if ((unsigned int) text_offset & (unsigned int) TextOffset::Up) {
-		/* Move boxes a bit up, so that text is right against grid line, not below it. */
-		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
-		final_bounding_rect.moveTop(new_top);
-		text_rect.moveTop(new_top);
+	if (TextOffset::None != text_offset) {
+		this->offset_text_bounding_rect(text_rect, text_offset);
 	}
-
-	if ((unsigned int) text_offset & (unsigned int) TextOffset::Left) {
-		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
-		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
-		final_bounding_rect.moveLeft(new_left);
-		text_rect.moveLeft(new_left);
-	}
-
-
-#if 1
-	/* Debug. */
-	this->painter.setPen(QColor("red"));
-	this->painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
-
-	this->painter.setPen(QColor("darkgreen"));
-	this->painter.drawRect(bounding_rect);
-#endif
 
 	/* A highlight of drawn text, must be executed before .drawText(). */
 	this->painter.fillRect(text_rect, bg_color);
 
 	this->painter.setPen(pen);
 	this->painter.drawText(text_rect, flags, text, NULL);
+
+
+	if (1) { /* Debug. */
+		this->draw_text_debug(text_rect);
+	}
+
+	return text_rect;
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+void ViewportPixmap::draw_text_debug(const QRectF & text_rect)
+{
+	this->painter.setPen(QColor("red"));
+
+	this->painter.drawEllipse(QPoint(text_rect.left(), text_rect.top()), 6, 6);
+	this->painter.drawRect(text_rect);
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+void ViewportPixmap::offset_text_bounding_rect(QRectF & text_rect, TextOffset text_offset) const
+{
+	if ((unsigned int) text_offset & (unsigned int) TextOffset::Up) {
+		/* Move box a bit up. */
+		const fpixel new_top = text_rect.top() - (text_rect.height() / 2);
+		text_rect.moveTop(new_top);
+	}
+
+	if ((unsigned int) text_offset & (unsigned int) TextOffset::Left) {
+		/* Move box a bit to the left. */
+		const fpixel new_left = text_rect.left() - (text_rect.width() / 2);
+		text_rect.moveLeft(new_left);
+	}
 }
 
 
@@ -464,11 +478,19 @@ int ViewportPixmap::central_get_leftmost_pixel(void) const
 
 
 /**
-   @reviewed-on 2019-07-15
+   @reviewed-on 2019-07-21
 */
 int ViewportPixmap::central_get_rightmost_pixel(void) const
 {
-	return this->total_width - this->right_margin_width - 1;
+	/*
+	  The following code:
+	      QRectF rect(0, 0, 10, 11);
+	      qDebug() << "left =" << rect.left() << ", right =" << rect.right() << ", top =" << rect.top() << ", bottom =" << rect.bottom();
+	  will print
+	      left = 0 , right = 10 , top = 0 , bottom = 11
+	  This code is written in a way that follows this logic.
+	*/
+	return this->total_width - this->right_margin_width;
 }
 
 
@@ -486,11 +508,19 @@ int ViewportPixmap::central_get_topmost_pixel(void) const
 
 
 /**
-   @reviewed-on 2019-07-15
+   @reviewed-on 2019-07-21
 */
 int ViewportPixmap::central_get_bottommost_pixel(void) const
 {
-	return this->total_height - this->bottom_margin_height - 1;
+	/*
+	  The following code:
+	      QRectF rect(0, 0, 10, 11);
+	      qDebug() << "left =" << rect.left() << ", right =" << rect.right() << ", top =" << rect.top() << ", bottom =" << rect.bottom();
+	  will print
+	      left = 0 , right = 10 , top = 0 , bottom = 11
+	  This code is written in a way that follows this logic.
+	*/
+	return this->total_height - this->bottom_margin_height;
 }
 
 
@@ -779,38 +809,15 @@ void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const 
 	   Otherwise the text will be outside of the bounding rectangle. */
 	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
 
-	QRectF text_rect = vpixmap->painter.boundingRect(final_bounding_rect, flags, text);
-	if (text_offset & SG_TEXT_OFFSET_UP) {
-		/* Move boxes a bit up, so that text is right against grid line, not below it. */
-		fpixel new_top = text_rect.top() - (text_rect.height() / 2);
-		final_bounding_rect.moveTop(new_top);
-		text_rect.moveTop(new_top);
+	/* Get bounding rect of text drawn with font set above with .setFont(). */
+	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
+	if (TextOffset::None != text_offset) {
+		this->offset_text_bounding_rect(text_rect, text_offset);
 	}
 
-	if (text_offset & SG_TEXT_OFFSET_LEFT) {
-		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
-		fpixel new_left = text_rect.left() - (text_rect.width() / 2);
-		final_bounding_rect.moveLeft(new_left);
-		text_rect.moveLeft(new_left);
+	if (1) { /* Debug. */
+		this->draw_text_debug(text_rect);
 	}
-
-
-
-#if 1
-	/* Debug. */
-	vpixmap->painter.setPen(QColor("red"));
-	vpixmap->painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 5, 5);
-
-	vpixmap->painter.setPen(QColor("darkgreen"));
-	vpixmap->painter.drawRect(bounding_rect);
-
-	vpixmap->painter.setPen(QColor("red"));
-	vpixmap->painter.drawRect(text_rect);
-#endif
-
-	vpixmap->painter.setPen(pen);
-	vpixmap->painter.drawText(text_rect, flags, text, NULL);
-
 #endif
 }
 
@@ -1214,4 +1221,121 @@ void ViewportPixmap::snapshot_restore(void)
 {
 	qDebug() << SG_PREFIX_I << "Restore snapshot";
 	this->vpixmap = this->vpixmap_snapshot;
+}
+
+
+
+
+/**
+   @reviewed-on: 2019-07-21
+*/
+void ViewportPixmap::debug_pixmap_draw(void)
+{
+	const int leftmost_px   = this->central_get_leftmost_pixel();
+	const int rightmost_px  = this->central_get_rightmost_pixel();
+	const int topmost_px    = this->central_get_topmost_pixel();
+	const int bottommost_px = this->central_get_bottommost_pixel();
+
+	if (1) {
+		/*
+		  Small circles with centers in corners of central
+		  area of viewport.
+		*/
+		const int radius = 8;
+		this->draw_ellipse(QColor("red"),    ScreenPos(leftmost_px, topmost_px), radius, radius);
+		this->draw_ellipse(QColor("green"),  ScreenPos(rightmost_px, topmost_px), radius, radius);
+		this->draw_ellipse(QColor("blue"),   ScreenPos(leftmost_px, bottommost_px), radius, radius);
+		this->draw_ellipse(QColor("orange"), ScreenPos(rightmost_px, bottommost_px), radius, radius);
+	}
+
+	if (1) {
+		/*
+		  Boundaries of whole pixmap.
+		*/
+		QPen pen(QColor("blue"));
+		pen.setWidth(2);
+		this->draw_rectangle(pen, 0, 0, this->total_get_width(), this->total_get_height());
+	}
+
+	if (1) {
+		/*
+		  The largest rectangle that fits into central part of pixmap.
+
+		  When looking at right and bottom border of the
+		  rectangle, remember about how Qt draws these borders
+		  of rectangles:
+		  https://doc.qt.io/qt-5/qrect.html#rendering
+		*/
+		QPen pen(QColor("red"));
+		pen.setWidth(1);
+		const int begin_x = this->central_get_leftmost_pixel();
+		const int begin_y = this->central_get_topmost_pixel();
+		const int width = this->central_get_width();
+		const int height = this->central_get_height();
+		this->draw_rectangle(pen, begin_x, begin_y, width, height);
+	}
+
+	if (1) {
+		/*
+		  The largest ellipsis that fits into central part of
+		  pixmap. The outermost parts of ellipsis must overlap
+		  with the sides of the largest rectangle drawn above.
+
+		  See also this info about how Qt paints rectangles
+		  (I'm guessing that similar approach applies to
+		  ellipsis too):
+		  https://doc.qt.io/qt-5/qrect.html#rendering
+		*/
+
+		/*
+		  Either of the two ways to get center should give the same
+		  result.  Keep them both in code to be able to test all three
+		  GisViewport methods.
+		*/
+#if 0
+		const ScreenPos center = this->central_get_center_screen_pos();
+#else
+		const ScreenPos center(this->central_get_x_center_pixel(),
+				       this->central_get_y_center_pixel());
+#endif
+
+		QPen pen(QColor("blue"));
+		pen.setWidth(1);
+		this->draw_ellipse(pen,
+				   center,
+				   this->central_get_width() / 2.0,
+				   this->central_get_height() / 2.0);
+	}
+
+	if (1) {
+		/* Draw checkered pixmap in four corners of central
+		   area of viewport. This pixmap is rectangular, so I
+		   can use the same sizes when scaling it down. */
+		const int size = 40;
+		const QPixmap pixmap = QPixmap(":/test_data/pixmap_checkered_black_alpha.png").scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+		fpixel viewport_x;
+		fpixel viewport_y;
+
+		/* Top left. */
+		viewport_x = leftmost_px;
+		viewport_y = topmost_px;
+		this->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, size, size);
+		//this->draw_pixmap(pixmap, viewport_x, viewport_y);
+
+		/* Top right. */
+		viewport_x = rightmost_px - size;
+		viewport_y = topmost_px;
+		this->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, size, size);
+
+		/* Bottom left. */
+		viewport_x = leftmost_px;
+		viewport_y = bottommost_px - size;
+		this->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, size, size);
+
+		/* Bottom right. */
+		viewport_x = rightmost_px - size;
+		viewport_y = bottommost_px - size;
+		this->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, size, size);
+	}
 }

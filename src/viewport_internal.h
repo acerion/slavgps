@@ -173,6 +173,10 @@ namespace SlavGPS {
 		double central_get_height_m(void) const;
 		double central_get_width_m(void) const;
 
+		/**
+		   @brief Debug function: draw in viewport misc debug information about viewport
+		*/
+		void debug_draw_debugs(void);
 
 
 
@@ -297,6 +301,15 @@ namespace SlavGPS {
 
 		double calculate_utm_zone_width(void) const;
 		void utm_zone_check(void);
+
+		/**
+		   @brief Debug function: draw text with viewport's GIS metadata
+
+		   Draw info about viewport's size, viewport's bbox
+		   and about geo-coordinates of viewport's corners.
+		*/
+		void debug_gisviewport_draw(void);
+
 
 
 

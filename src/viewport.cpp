@@ -54,6 +54,7 @@
 #include "widget_list_selection.h"
 #include "layers_panel.h"
 #include "measurements.h"
+#include "widget_measurement_entry.h"
 #include "application_state.h"
 #include "dialog.h"
 #include "statusbar.h"
@@ -243,21 +244,164 @@ void GisViewport::clear(void)
 
 
 /**
-   @reviewed-on tbd
+   @reviewed-on 2019-07-21
 */
 void GisViewport::draw_decorations(void)
 {
-#if 1   /* Debug. To verify display of attribution when there are no
-	   maps, or only maps without attributions. */
-	this->decorations.add_attribution("© Test attribution holder 1");
-	this->decorations.add_attribution("© Another test attribution holder 2017-2019");
-#endif
+	if (1) {
+		/*
+		  Debug. Fake attribution strings to verify display of
+		  attributions.
+		*/
+		this->decorations.add_attribution("© Test attribution holder 1");
+		this->decorations.add_attribution("© Another test attribution holder 2017-2019");
+	}
 
-	/* TODO: add test logos. */
+	if (1) {
+		/*
+		  Debug. Fake logo pixmaps to verify display of logos.
+		*/
+
+		GisViewportLogo logo;
+
+		logo.logo_id = ":/test_data/pixmap_checkered_black_alpha.png";
+		logo.logo_pixmap = QPixmap(logo.logo_id);
+		this->decorations.add_logo(logo);
+
+		/* This pixmap is smaller than ViewportDecoration's
+		   MAX_LOGO_HEIGHT, so it shouldn't be scaled down by
+		   ViewportDecorations. It will be displayed with its original
+		   size. */
+		logo.logo_id = ":/test_data/pixmap_16x16.png";
+		logo.logo_pixmap = QPixmap(logo.logo_id);
+		this->decorations.add_logo(logo);
+
+		logo.logo_id = ":/test_data/test_pixmap_2.png";
+		logo.logo_pixmap = QPixmap(logo.logo_id);
+		this->decorations.add_logo(logo);
+
+		logo.logo_id = ":/test_data/test_pixmap_3.png";
+		logo.logo_pixmap = QPixmap(logo.logo_id);
+		this->decorations.add_logo(logo);
+	}
 
 	this->decorations.draw(*this);
 
 	return;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-07-21
+*/
+void GisViewport::debug_draw_debugs(void)
+{
+	this->debug_gisviewport_draw();
+	this->debug_pixmap_draw();
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+void GisViewport::debug_gisviewport_draw(void)
+{
+	const int padding = 10;
+
+	/* Use additional margins to prevent overlap of debugs with
+	   additional elements placed at the top and bottom of
+	   viewport.
+
+	   Using padding + these margins means that debugs' bounding
+	   rect is smaller than actual central part of viewport. */
+	const int top_protection = 40;
+	const int bottom_protection = 100;
+	const QRectF bounding_rect = QRectF(this->central_get_leftmost_pixel() + padding,
+					    this->central_get_topmost_pixel() + padding + top_protection,
+					    this->central_get_width() - 2 * padding,
+					    this->central_get_height() - 2 * bottom_protection);
+
+	/* These debugs are really useful. Don't be shy about them,
+	   print them large and readable. */
+	QFont font = QFont("Helvetica", 12);
+	font.setBold(true);
+	QPen pen(QColor("black"));
+
+
+	if (1) { /* Bounding Box lat/lon information. */
+		const LatLonBBox bbox = this->get_bbox();
+		const QString north = "bbox: " + bbox.north.to_string();
+		const QString west =  "bbox: " + bbox.west.to_string();
+		const QString east =  "bbox: " + bbox.east.to_string();
+		const QString south = "bbox: " + bbox.south.to_string();
+		this->draw_text(font, pen, bounding_rect, Qt::AlignTop | Qt::AlignHCenter, north);
+		this->draw_text(font, pen, bounding_rect, Qt::AlignVCenter | Qt::AlignRight, east);
+		this->draw_text(font, pen, bounding_rect, Qt::AlignVCenter | Qt::AlignLeft, west);
+		this->draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignHCenter, south);
+	}
+
+
+	if (1) { /* Width/height of central area. */
+		const QString size = QString("central width = %1\ncentral height = %2").arg(this->central_get_width()).arg(this->central_get_height());
+		this->draw_text(font, pen, bounding_rect, Qt::AlignVCenter | Qt::AlignHCenter, size);
+	}
+
+
+	if (1) { /* Geo coordinates of corners of central area. */
+		Coord coord_ul = this->screen_pos_to_coord(ScreenPosition::UpperLeft);
+		Coord coord_ur = this->screen_pos_to_coord(ScreenPosition::UpperRight);
+		Coord coord_bl = this->screen_pos_to_coord(ScreenPosition::BottomLeft);
+		Coord coord_br = this->screen_pos_to_coord(ScreenPosition::BottomRight);
+
+		QString ul = "ul: ";
+		QString ur = "ur: ";
+		QString bl = "bl: ";
+		QString br = "br: ";
+
+		switch (this->coord_mode) {
+		case CoordMode::UTM:
+			/* UTM first, then LatLon. */
+			ul += coord_ul.get_utm().to_string() + "\n";
+			ul += coord_ul.get_lat_lon().to_string();
+			ur += coord_ur.get_utm().to_string() + "\n";
+			ur += coord_ur.get_lat_lon().to_string();
+			bl += coord_bl.get_utm().to_string() + "\n";
+			bl += coord_bl.get_lat_lon().to_string();
+			br += coord_br.get_utm().to_string() + "\n";
+			br += coord_br.get_lat_lon().to_string();
+			break;
+
+		case CoordMode::LatLon:
+			/* LatLon first, then UTM. */
+			ul += coord_ul.get_lat_lon().to_string() + "\n";
+			ul += coord_ul.get_utm().to_string();
+			ur += coord_ur.get_lat_lon().to_string() + "\n";
+			ur += coord_ur.get_utm().to_string();
+			bl += coord_bl.get_lat_lon().to_string() + "\n";
+			bl += coord_bl.get_utm().to_string();
+			br += coord_br.get_lat_lon().to_string() + "\n";
+			br += coord_br.get_utm().to_string();
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) this->coord_mode;
+			break;
+		}
+		ul.replace("Zone", "\nZone"); /* Coordinate strings will get very long. Put zone + band in new line. */
+		ur.replace("Zone", "\nZone");
+		bl.replace("Zone", "\nZone");
+		br.replace("Zone", "\nZone");
+		this->draw_text(font, pen, bounding_rect, Qt::AlignTop    | Qt::AlignLeft,  ul);
+		this->draw_text(font, pen, bounding_rect, Qt::AlignTop    | Qt::AlignRight, ur);
+		this->draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignLeft,  bl);
+		this->draw_text(font, pen, bounding_rect, Qt::AlignBottom | Qt::AlignRight, br);
+	}
+
+
+	this->draw_rectangle(QPen(QColor("maroon")), bounding_rect);
 }
 
 
@@ -1594,23 +1738,24 @@ void GisViewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
 #endif
 
-	const int pos_x = position.x();
-	const int pos_y = position.y();
-
 #ifdef K_FIXME_RESTORE
 	this->window->tb->move(ev);
 #endif
 
-	/* Get coordinates in viewport's coordinates mode. */
-	Coord coord = this->screen_pos_to_coord(pos_x, pos_y);
-	const QString coord_string = coord.to_string();
 
-#if 0   /* Verbose debug. */
-	qDebug() << SG_PREFIX_D << "Mouse motion: cursor pos:" << position << ", coordinates:" << first << second;
-#endif
+	const int pos_x = position.x();
+	const int pos_y = position.y();
+
+
+
+	/* Get coordinates in viewport's coordinates mode. */
+	const Coord coord = this->screen_pos_to_coord(pos_x, pos_y);
+	this->window->get_statusbar()->set_coord(coord);
+
+
 
 	/* Change interpolate method according to scale. */
-	double zoom = this->get_viking_scale().get_x();
+	const double zoom = this->get_viking_scale().get_x();
 	DemInterpolation interpol_method;
 	if (zoom > 2.0) {
 		interpol_method = DemInterpolation::None;
@@ -1619,16 +1764,13 @@ void GisViewport::draw_mouse_motion_cb(QMouseEvent * ev)
 	} else {
 		interpol_method = DemInterpolation::Best;
 	}
-
-	const Altitude altitude = DEMCache::get_elev_by_coord(coord, interpol_method);
-	QString message;
+	Altitude altitude = DEMCache::get_elev_by_coord(coord, interpol_method);
 	if (altitude.is_valid()) {
-		/* TODO: add displaying of altitude in statusbar. */
-		// altitude.convert_to_unit(Preferences::get_unit_height()).to_string()
-		//message = QObject::tr("%1 %2").arg(coord_string).arg();
+		altitude.convert_to_unit(Preferences::get_unit_height());
 	}
+	this->window->get_statusbar()->set_altitude_uu(altitude);
 
-	this->window->get_statusbar()->set_coord(coord);
+
 
 #ifdef K_FIXME_RESTORE
 	this->window->pan_move(ev);
