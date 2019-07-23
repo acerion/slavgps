@@ -194,6 +194,78 @@ namespace SlavGPS {
 
 
 
+	template <class T>
+	class ListSelectionDialog : public BasicDialog {
+	public:
+		ListSelectionDialog(const QString & title, ListSelectionMode selection_mode, const QStringList & header_labels, QWidget * parent = NULL);
+
+		void set_list(const std::list<T> & elements);
+		std::list<T> get_selection(void) const;
+
+		ListSelectionWidget * list_widget = NULL;
+	};
+
+	template <class T>
+	ListSelectionDialog<T>::ListSelectionDialog(const QString & title, ListSelectionMode selection_mode, const QStringList & header_labels, QWidget * parent)
+		: BasicDialog(title, parent)
+	{
+		this->list_widget = new ListSelectionWidget(selection_mode, this);
+		this->list_widget->set_headers(header_labels);
+
+		this->setMinimumHeight(400);
+		this->grid->addWidget(this->list_widget, 0, 0);
+	}
+
+
+	template <class T>
+	void ListSelectionDialog<T>::set_list(const std::list<T> & elements)
+	{
+		for (auto iter = elements.begin(); iter != elements.end(); iter++) {
+			SlavGPS::ListSelectionRow row(*iter);
+			this->list_widget->model.invisibleRootItem()->appendRow(row.items);
+		}
+		this->list_widget->setVisible(false);
+		this->list_widget->resizeRowsToContents();
+		this->list_widget->resizeColumnsToContents();
+		this->list_widget->setVisible(true);
+		this->list_widget->show();
+	}
+
+
+	template <class T>
+	std::list<T> ListSelectionDialog<T>::get_selection(void) const
+	{
+		std::list<T> result;
+
+		/* Don't use selectedIndexes(),
+		   because this method would return as many
+		   indexes per row as there are columns. We only
+		   want one item in 'selected_indices' list per row. */
+		QModelIndexList selected_indices = this->list_widget->selectionModel()->selectedRows();
+
+		QStandardItem * root_item = this->list_widget->model.invisibleRootItem();
+		if (!root_item) {
+			qDebug() << "EE   Widget List Dialog  >  Failed to get root item";
+			return result;
+		}
+		for (auto iter = selected_indices.begin(); iter != selected_indices.end(); iter++) {
+
+			/* Pointer to the object that we want
+			   to put in result is in zero-th column. */
+
+			QModelIndex item_index = *iter;
+			QStandardItem * child_item = root_item->child(item_index.row(), 0);
+			if (!child_item) {
+				qDebug() << "EE   Widget List Dialog  >  Failed to get child item from zero-th column";
+				break;
+			}
+
+			const QVariant variant = child_item->data(RoleLayerData);
+			result.push_back(variant.value<T>());
+		}
+
+		return result;
+	}
 
 
 

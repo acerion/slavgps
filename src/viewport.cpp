@@ -724,15 +724,18 @@ void GisViewport::show_center_coords(Window * parent_window) const
 	/* Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
 	const QStringList headers = { tr("Back/Forward Locations") };
-	BasicDialog dialog(tr("Back/Forward Locations"), parent_window);
-	std::list<QString> result = a_dialog_select_from_list(dialog, texts, ListSelectionMode::SingleItem, headers);
-
-	/* TODO_MAYBE: why do we allow any selection and why do we use result here? */
-
-	/* Because we have used ListSelectionMode::SingleItem selection
-	   mode, this list has at most one element. */
-	if (!result.empty()) {
-		qDebug() << SG_PREFIX_D << "History center item:" << *result.begin();
+	ListSelectionDialog<QString> dialog(tr("Back/Forward Locations"), ListSelectionMode::SingleItem, headers, parent_window);
+	dialog.set_list(texts);
+	if (QDialog::Accepted == dialog.exec()) {
+		/* We don't have to get the list of results, but for
+		   debug purposes lets get it and display it. */
+		const std::list<QString> result = dialog.get_selection();
+		/* Because we have used ListSelectionMode::SingleItem
+		   selection mode, this list has at most one
+		   element. */
+		if (!result.empty()) {
+			qDebug() << SG_PREFIX_D << "History center item:" << *result.begin();
+		}
 	}
 }
 
