@@ -7,7 +7,7 @@ RESOURCES = icons.qrc cursors.qrc thumbnails.qrc misc.qrc waypoint.qrc test_data
 
 SOURCES += main.cpp \
     globals.cpp \
-    viewport.cpp \
+    viewport_gis.cpp \
     layer_trw_track_profile_dialog.cpp \
     babel.cpp \
     mem_cache.cpp \
@@ -233,6 +233,7 @@ HEADERS += window.h \
     geonames_search.h \
     generic_tools.h \
     viewport.h \
+    viewport_gis.h \
     viewport_internal.h \
     viewport_to_image.h \
     viewport_decorations.h \
