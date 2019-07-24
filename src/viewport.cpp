@@ -208,9 +208,36 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 /**
    @reviewed-on tbd
 */
+GisViewport * GisViewport::copy(int new_total_width, int new_total_height, float scale, QWidget * parent) const
+{
+	GisViewport * new_object = new GisViewport(scale > 0 ? floor(scale * this->left_margin_width)    : this->left_margin_width,
+						   scale > 0 ? floor(scale * this->right_margin_width)   : this->right_margin_width,
+						   scale > 0 ? floor(scale * this->top_margin_height)    : this->top_margin_height,
+						   scale > 0 ? floor(scale * this->bottom_margin_height) : this->bottom_margin_height,
+						   parent);
+
+	snprintf(new_object->debug, sizeof (new_object->debug), "Copy of %s", this->debug);
+
+	new_object->reconfigure_drawing_area(new_total_width, new_total_height);
+
+	new_object->set_draw_mode(this->get_draw_mode());
+	new_object->set_coord_mode(this->get_coord_mode());
+	new_object->set_center_coord(this->center_coord, false);
+	new_object->set_viking_scale(this->viking_scale);
+	new_object->set_bbox(this->get_bbox());
+
+	return new_object;
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
 GisViewport::~GisViewport()
 {
-	qDebug() << SG_PREFIX_I;
+	qDebug() << SG_PREFIX_I << "Deleting viewport" << this->debug;
 	if (Preferences::get_startup_method() == StartupMethod::LastLocation) {
 		const LatLon lat_lon = this->center_coord.get_lat_lon();
 		ApplicationState::set_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, lat_lon.lat);
@@ -1782,69 +1809,17 @@ void GisViewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 
 
-
 /**
    @reviewed-on tbd
 */
-GisViewport * GisViewport::create_scaled_viewport(Window * a_window, int target_width, int target_height, const VikingScale & expected_viking_scale)
+GisViewport * GisViewport::create_scaled_viewport(int scaled_width, int scaled_height, double scale_factor, const VikingScale & expected_viking_scale, QWidget * parent)
 {
-	/*
-	  We always want to print original viewport in its
-	  fullness. If necessary, we should scale our drawing so that
-	  it always covers the most of target device, but we want to
-	  keep proportions of original viewport. The question is how
-	  much should we scale our drawing?
-
-	  We need to look at how shapes of original viewport and
-	  target device match. In the example below the original
-	  viewport is more "height-ish" than target device. We will
-	  want to scale the drawing from original viewport by factor of
-	  ~2 (target device height / original height) before drawing it to
-	  target device. Scaling drawing from original viewport in
-	  this example to match width of target device would make
-	  the drawing too tall.
-
-	   +--------------------------------+
-	   |                                |
-	   |   +-----+                      |
-	   |   |     |original viewport     |
-	   |   |     |                      |
-	   |   |     |                      |target device
-	   |   +-----+                      |
-	   |                                |
-	   |                                |
-	   +--------------------------------+
-
-	   TODO_HARD: make sure that this works also for target
-	   device smaller than original viewport.
-	*/
-
-	qDebug() << SG_PREFIX_I << "Expected image size =" << target_width << target_height;
-
-	GisViewport * scaled_viewport = new GisViewport(0, 0, 0, 0, a_window); /* TODO: get proper values of margins in constructor call. */
-
-	const int orig_width = this->central_get_width();
-	const int orig_height = this->central_get_height();
-
-	const double orig_factor = 1.0 * orig_width / orig_height;
-	const double target_factor = 1.0 * target_width / target_height;
-
-	double scale_factor = 0.0;
-	if (orig_factor > target_factor) {
-		/* Original viewport is more "wide-ish" than target device. */
-		scale_factor = 1.0 * target_width / orig_width;
-	} else {
-		/* Original viewport is more "height-ish" than target device. */
-		scale_factor = 1.0 * target_height / orig_height;
-	}
-
-
-
-	/* Copy/set selected properties of viewport. */
-	scaled_viewport->set_draw_mode(this->get_draw_mode());
-	scaled_viewport->set_coord_mode(this->get_coord_mode());
-	scaled_viewport->set_center_coord(this->center_coord, false);
-
+	/* Notice that we configure size of the new viewport using
+	   scaled width/height, not size of target device (i.e. not of
+	   target paper or target image). The image that we will print
+	   to target device should cover the same area (i.e. have the
+	   same bounding box) as original viewport. */
+	GisViewport * scaled_viewport = this->copy(scaled_width, scaled_height, scale_factor, parent);
 
 
 	/* Set zoom - either explicitly passed to the function, or
@@ -1859,22 +1834,18 @@ GisViewport * GisViewport::create_scaled_viewport(Window * a_window, int target_
 			/* TODO_HARD: now what? */
 		}
 	}
+	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled GIS Viewport");
 
-
-
-	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled Viewport Pixmap");
-
-	/* Notice that we configure size of the print viewport using
-	   size of scaled source, not size of target device (i.e. not
-	   of target paper or target image). The image that we will
-	   print to target device should cover the same area
-	   (i.e. have the same bounding box) as original viewport. */
-	scaled_viewport->reconfigure_drawing_area(orig_width * scale_factor, orig_height * scale_factor);
 
 	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->get_bbox();
 	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
-	scaled_viewport->set_bbox(this->get_bbox());
-	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
+
+	qDebug() << SG_PREFIX_I << "Original viewport:";
+	this->debug_print_info();
+	qDebug() << SG_PREFIX_I << "Scaled viewport:";
+	scaled_viewport->debug_print_info();
+
+
 
 	return scaled_viewport;
 }
@@ -1916,11 +1887,20 @@ bool GisViewport::print_cb(QPrinter * printer)
 		break;
 	}
 
-	const QRectF target_rect(page_rect);
-	const int target_width = target_rect.width();
-	const int target_height = target_rect.height();
+	const int target_device_width = page_rect.width();
+	const int target_device_height = page_rect.height();
 
-	GisViewport * scaled_viewport = this->create_scaled_viewport(this->window, target_width, target_height, VikingScale());
+	int scaled_width = 0;
+	int scaled_height = 0;
+	double scale_factor = 0.0;
+	/* Since aspect ratio of target device may be different than
+	   aspect ratio of viewport, we need to call function that
+	   will calculate size of scaled viewport that will guarantee
+	   filling target device while keeping aspect ratio of
+	   original viewport (so that the image printed to target
+	   device is not distorted). */
+	this->calculate_scaled_sizes(target_device_width, target_device_height, scaled_width, scaled_height, scale_factor);
+	GisViewport * scaled_viewport = this->create_scaled_viewport(scaled_width, scaled_height, scale_factor, VikingScale(), this->window);
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print pixmap. */
@@ -1940,7 +1920,7 @@ bool GisViewport::print_cb(QPrinter * printer)
 
 	delete scaled_viewport;
 
-	qDebug() << SG_PREFIX_I << "target rectangle:" << target_rect;
+	qDebug() << SG_PREFIX_I << "page rectangle:" << page_rect;
 	qDebug() << SG_PREFIX_I << "paint_begin:" << paint_begin;
 
 

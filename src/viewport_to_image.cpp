@@ -391,40 +391,23 @@ sg_ret ViewportToImage::save_to_destination(const QString & full_path)
 
 
 
+/**
+   @reviewed-on tbd
+*/
 sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 {
 	this->window->get_statusbar()->set_message(StatusBarField::Info, QObject::tr("Generating image file..."));
 
 	qDebug() << SG_PREFIX_I << "Will create scaled viewport of size" << this->scaled_width << this->scaled_height << this->scaled_viking_scale;
-#if 0
-	GisViewport * scaled_viewport = this->viewport->create_scaled_viewport(this->window, this->scaled_width, this->scaled_height, this->scaled_viking_scale);
-#else
-	GisViewport * scaled_viewport = new GisViewport(0, 0, 0, 0, this->window); /* TODO: pass proper margin values to constructor. */
-
-
-	/* Copy/set selected properties of viewport. */
-	scaled_viewport->set_draw_mode(this->gisview->get_draw_mode());
-	scaled_viewport->set_coord_mode(this->gisview->get_coord_mode());
-	scaled_viewport->set_center_coord(this->gisview->center_coord, false);
-	scaled_viewport->set_viking_scale(this->scaled_viking_scale);
-
-	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled Viewport");
-
-	/* Notice that we configure size of the print viewport using
-	   size of scaled source, not size of target device (i.e. not
-	   of target paper or target image). The image that we will
-	   print to target device should cover the same area
-	   (i.e. have the same bounding box) as original viewport. */
-	scaled_viewport->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
-	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->gisview->get_bbox();
-	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
-	scaled_viewport->set_bbox(this->gisview->get_bbox());
-	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
-#endif
-
-	//scaled_viewport->set_bbox(this->viewport->get_bbox());
-
-	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->central_get_width() << scaled_viewport->central_get_height();
+	/* This class provides width/height of target device that
+	   gives the same proportions as the source viewport has. So
+	   there is no need to call calculate_scaled_sizes() to
+	   calculate correct sizes for scaled viewport. */
+	const double scale_factor = 1.0 * this->scaled_width / this->gisview->total_get_width();
+	GisViewport * scaled_viewport = this->gisview->create_scaled_viewport(this->scaled_width, this->scaled_height,
+									      scale_factor,
+									      this->scaled_viking_scale, this->window);
+	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->total_get_width() << scaled_viewport->total_get_height();
 
 	/* Redraw all layers at current position and zoom.
 	   Since we are saving viewport as it is, we allow existing highlights to be drawn to image. */

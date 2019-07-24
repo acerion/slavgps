@@ -75,11 +75,21 @@ namespace SlavGPS {
 
 		void paintEvent(QPaintEvent * event);
 
-		void reconfigure(int width, int height);
+		/**
+		   @param total_width and @param total_height refer to
+		   pixmap size with margins.
+		*/
+		void reconfigure(int total_width, int total_height);
 
-		/* If a viewport widget already has some non-zero geometry,
-		   you can call this method without arguments. */
-		void reconfigure_drawing_area(int width = 0, int height = 0);
+		/**
+		   If a viewport widget already has some non-zero
+		   geometry, you can call this method without
+		   arguments.
+
+		   @param total_width and @param total_height refer to
+		   pixmap size with margins.
+		*/
+		void reconfigure_drawing_area(int total_width = 0, int total_height = 0);
 
 		/* ViewportPixmap buffer management/drawing to screen. */
 		const QPixmap & get_pixmap(void) const;   /* Get contents of drawing buffer. */
@@ -196,9 +206,27 @@ namespace SlavGPS {
 
 
 		/**
+		   Target device in which we want to print pixmap may
+		   have different proportions than the pixmap.
+		   Calculate size of scaled pixmap so that it:
+		   a) fits into and maximally fills target device and,
+		   b) keeps proportions of original pixmap
+
+		   @param scale_factor is a scale used to re-scale sizes of margins
+		*/
+		sg_ret calculate_scaled_sizes(int target_width, int target_height, int & scaled_width, int & scaled_height, double & scale_factor);
+
+
+
+		/**
 		   @bried Debug function: draw misc elements to Viewport Pixmap for debugging purposes
 		*/
 		void debug_pixmap_draw(void);
+
+		/**
+		   @brief Print out selected parameters of an object
+		*/
+		virtual void debug_print_info(void) const;
 
 
 		char debug[100] = { 0 };

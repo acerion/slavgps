@@ -406,7 +406,7 @@ void ViewportPixmap::draw_polygon(QPen const & pen, ScreenPos const * points, in
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::reconfigure(int new_width, int new_height)
+void ViewportPixmap::reconfigure(int new_total_width, int new_total_height)
 {
 	/* TODO: where do we reconfigure margin sizes? */
 
@@ -415,15 +415,15 @@ void ViewportPixmap::reconfigure(int new_width, int new_height)
 	   code path to handle this special case would bring little
 	   gain. */
 
-	qDebug() << SG_PREFIX_N << this->debug << "vpixmap is being reconfigured with size" << new_width << new_height;
+	qDebug() << SG_PREFIX_N << this->debug << "vpixmap is being reconfigured with new total width =" << new_total_width << "and new total height = " << new_total_height;
 
-	if (this->total_width == new_width && this->total_height == new_height) {
+	if (this->total_width == new_total_width && this->total_height == new_total_height) {
 		qDebug() << SG_PREFIX_I << this->debug << "vpixmap not reconfigured: size didn't change";
 		return;
 	}
 
-	this->total_width = new_width;
-	this->total_height = new_height;
+	this->total_width = new_total_width;
+	this->total_height = new_total_height;
 
 	qDebug() << SG_PREFIX_I << this->debug << "Will regenerate vpixmap with size" << this->total_width << this->total_height;
 	/*
@@ -1067,14 +1067,14 @@ void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::reconfigure_drawing_area(int new_width, int new_height)
+void ViewportPixmap::reconfigure_drawing_area(int new_total_width, int new_total_height)
 {
-	if (new_width == 0 && new_height == 0) {
+	if (new_total_width == 0 && new_total_height == 0) {
 		qDebug() << SG_PREFIX_I << "Will reconfigure viewport with geometry sizes" << this->geometry().width() << this->geometry().height();
 		this->reconfigure(this->geometry().width(), this->geometry().height());
 	} else {
-		qDebug() << SG_PREFIX_I << "Will reconfigure viewport with specified sizes" << new_width << new_height;
-		this->reconfigure(new_width, new_height);
+		qDebug() << SG_PREFIX_I << "Will reconfigure viewport with specified total width =" << new_total_width << "and total height =" << new_total_height;
+		this->reconfigure(new_total_width, new_total_height);
 	}
 }
 
@@ -1339,3 +1339,134 @@ void ViewportPixmap::debug_pixmap_draw(void)
 		this->draw_pixmap(pixmap, viewport_x, viewport_y, 0, 0, size, size);
 	}
 }
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+void ViewportPixmap::debug_print_info(void) const
+{
+	qDebug() << SG_PREFIX_I << this->debug;
+
+
+	qDebug() << SG_PREFIX_I << "total width    =" << this->total_get_width();
+	qDebug() << SG_PREFIX_I << "total height   =" << this->total_get_height();
+
+	qDebug() << SG_PREFIX_I << "central width  =" << this->central_get_width();
+	qDebug() << SG_PREFIX_I << "central height =" << this->central_get_height();
+	qDebug() << SG_PREFIX_I << "left width     =" << this->left_get_width();
+	qDebug() << SG_PREFIX_I << "left height    =" << this->left_get_height();
+	qDebug() << SG_PREFIX_I << "right width    =" << this->right_get_width();
+	qDebug() << SG_PREFIX_I << "right height   =" << this->right_get_height();
+	qDebug() << SG_PREFIX_I << "top width      =" << this->top_get_width();
+	qDebug() << SG_PREFIX_I << "top height     =" << this->top_get_height();
+	qDebug() << SG_PREFIX_I << "bottom width   =" << this->bottom_get_width();
+	qDebug() << SG_PREFIX_I << "bottom height  =" << this->bottom_get_height();
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+sg_ret ViewportPixmap::calculate_scaled_sizes(int target_width, int target_height, int & scaled_width, int & scaled_height, double & scale_factor)
+{
+	/*
+	  We always want to print original pixmap to target device in
+	  the pixmap's fullness. If necessary, we should scale the
+	  pixmap in a way that ensures covering the most of target
+	  device, but we want to keep proportions of original
+	  pixmap. The question is how much should we scale our pixmap?
+
+	  We need to look at how shapes of original pixmap and target
+	  device match. In the example below the original pixmap is
+	  more "height-ish" than target device. We will want to scale
+	  the original pixmap by factor of ~2 (target device height /
+	  original height) before drawing it to target device. Scaling
+	  original pixmap in this example to match width of target
+	  device would make the resulting image too tall.
+
+	   +-------------------------------+
+	   |                               |
+	   |   +----+                      |
+	   |   |    |original pixmap       |
+	   |   |    |                      |
+	   |   |    |                      |target device
+	   |   +----+                      |
+	   |                               |
+	   |                               |
+	   +-------------------------------+
+
+	   TODO_HARD: make sure that this works also for target device
+	   smaller than original pixmap.
+	*/
+
+	qDebug() << SG_PREFIX_I << "Attempt to create scaled pixmap with size no larger than width =" << target_width << ", height =" << target_height;
+
+
+	const int orig_width = this->central_get_width();
+	const int orig_height = this->central_get_height();
+
+	const double orig_factor = 1.0 * orig_width / orig_height;
+	const double target_factor = 1.0 * target_width / target_height;
+
+	if (orig_factor > target_factor) {
+		/*
+		  Original pixmap is more "wide-ish" than target
+		  device.
+
+		  +--------------+
+		  |              |
+		  | +---------+  |
+		  | |         |original pixmap
+		  | |         |  |
+		  | +---------+  |target device
+		  |              |
+		  |              |
+		  |              |
+		  |              |
+		  +--------------+
+
+		  Width of scaled pixmap will then simply be copied,
+		  but height needs to be calculated.
+		*/
+		qDebug() << SG_PREFIX_I << "Target device is more height-ish than pixmap, copying width, calculating height";
+		qDebug() << SG_PREFIX_I << "Calculating height, floor(" << (scale_factor * orig_height) << ") =" << floor(scale_factor * orig_height);
+
+		scale_factor = 1.0 * target_width / orig_width;
+		scaled_width = target_width;
+		scaled_height = floor(scale_factor * orig_height);
+	} else {
+		/*
+		  Original pixmap is more "height-ish" than target
+		  device.
+
+		  +-------------------------------+
+		  |                               |
+		  |   +----+                      |
+		  |   |    |original pixmap       |
+		  |   |    |                      |
+		  |   |    |                      |target device
+		  |   +----+                      |
+		  |                               |
+		  |                               |
+		  +-------------------------------+
+
+		  Height of scaled pixmap can be simply copied, but
+		  width needs to be calculated.
+		*/
+		qDebug() << SG_PREFIX_I << "Target device is more wide-ish than pixmap, calculating width, copying height";
+		qDebug() << SG_PREFIX_I << "Calculating width, floor(" << (scale_factor * orig_width) << ") =" << floor(scale_factor * orig_width);
+
+		scale_factor = 1.0 * target_height / orig_height;
+		scaled_width = floor(scale_factor * orig_width);
+		scaled_height = target_height;
+	}
+	qDebug() << SG_PREFIX_I << "Scale factor =" << scale_factor << ", scaled width =" << scaled_width << ", scaled height =" << scaled_height;
+
+	return sg_ret::ok;
+}
+
