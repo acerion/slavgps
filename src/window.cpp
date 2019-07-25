@@ -180,7 +180,7 @@ Window::Window()
 
 	connect(this->main_gis_vp, SIGNAL (list_of_center_coords_changed(GisViewport *)), this, SLOT (center_changed_cb(GisViewport *)));
 	connect(this->main_gis_vp, SIGNAL (center_coord_or_zoom_changed(GisViewport *)), this, SLOT (draw_tree_items_cb(GisViewport *)));
-	connect(this->main_gis_vp, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (draw_tree_items_cb(ViewportPixmap *)));
+	connect(this->main_gis_vp, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (draw_tree_items_cb(ViewportPixmap *)));
 	connect(this->items_tree, SIGNAL (items_tree_updated()), this, SLOT (draw_tree_items_cb()));
 
 
@@ -195,7 +195,7 @@ Window::Window()
 
 	// Signals from GTK
 	QObject::connect(this->main_gis_vp, SIGNAL("expose_event"), this, SLOT (draw_sync_cb));
-	QObject::connect(this->main_gis_vp, SIGNAL("drawing_area_reconfigured"), this, SLOT (window_configure_event));
+	QObject::connect(this->main_gis_vp, SIGNAL(size_changed((ViewportPixmap *)), this, SLOT (window_configure_event));
 	gtk_widget_add_events(this->main_gis_vp, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
 
 	/* This signal appears to be already handled by GisViewport::wheelEvent(). */

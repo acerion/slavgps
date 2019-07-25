@@ -88,6 +88,7 @@ namespace SlavGPS {
 		/* ******** Methods that definitely should be in this class. ******** */
 
 		GisViewport(int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = NULL);
+		GisViewport(int total_width, int total_height, int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = NULL);
 		~GisViewport();
 		GisViewport * copy(int total_width, int total_height, float scale, QWidget * parent = NULL) const;
 

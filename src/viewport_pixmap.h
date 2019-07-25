@@ -76,20 +76,19 @@ namespace SlavGPS {
 		void paintEvent(QPaintEvent * event);
 
 		/**
-		   @param total_width and @param total_height refer to
-		   pixmap size with margins.
-		*/
-		void reconfigure(int total_width, int total_height);
+		   @brief Reconfigure a pixmap so that it uses new
+		   total width and new total height
 
-		/**
-		   If a viewport widget already has some non-zero
-		   geometry, you can call this method without
-		   arguments.
+		   The function can be called when parent widget
+		   (e.g. main window) is being resized by user.
+
+		   Margin sizes are not affected.
 
 		   @param total_width and @param total_height refer to
 		   pixmap size with margins.
 		*/
-		void reconfigure_drawing_area(int total_width = 0, int total_height = 0);
+		void apply_total_sizes(int total_width, int total_height);
+
 
 		/* ViewportPixmap buffer management/drawing to screen. */
 		const QPixmap & get_pixmap(void) const;   /* Get contents of drawing buffer. */
@@ -275,7 +274,7 @@ namespace SlavGPS {
 
 
 	signals:
-		void sizes_changed(ViewportPixmap * vpixmap);
+		void size_changed(ViewportPixmap * vpixmap);
 	};
 	QDebug operator<<(QDebug debug, const ViewportPixmap & vpixmap);
 

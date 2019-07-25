@@ -1384,10 +1384,10 @@ void ProfileView::create_viewport(TrackProfileDialog * new_dialog, GisViewportDo
 	const int initial_width = GRAPH_INITIAL_WIDTH;
 	const int initial_height = GRAPH_INITIAL_HEIGHT;
 
-	this->graph_2d = new GisViewport(GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT, GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, dialog);
+	this->graph_2d = new GisViewport(initial_width, initial_height, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT, GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, dialog);
 	snprintf(this->graph_2d->debug, sizeof (this->graph_2d->debug), "%s", this->get_graph_title().toUtf8().constData());
-	this->graph_2d->resize(initial_width, initial_height);
-	this->graph_2d->reconfigure_drawing_area(initial_width, initial_height);
+	//this->graph_2d->resize(initial_width, initial_height);
+
 
 	this->graph_2d->x_domain = x_domain;
 	this->graph_2d->y_domain = y_domain;
@@ -1604,11 +1604,11 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 
 		this->tabs->addTab(graph, graph->get_graph_title());
 
-		connect(graph->graph_2d, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (paint_center_cb(ViewportPixmap *)));
+		connect(graph->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_center_cb(ViewportPixmap *)));
 
 		/* TODO: these signals don't make sense anymore. */
-		connect(graph->graph_2d, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (paint_left_cb(ViewportPixmap *)));
-		connect(graph->graph_2d, SIGNAL (sizes_changed(ViewportPixmap *)), this, SLOT (paint_bottom_cb(ViewportPixmap *)));
+		connect(graph->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_left_cb(ViewportPixmap *)));
+		connect(graph->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_bottom_cb(ViewportPixmap *)));
 	}
 
 

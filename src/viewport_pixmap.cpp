@@ -406,26 +406,26 @@ void ViewportPixmap::draw_polygon(QPen const & pen, ScreenPos const * points, in
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::reconfigure(int new_total_width, int new_total_height)
+void ViewportPixmap::apply_total_sizes(int new_total_width, int new_total_height)
 {
-	/* TODO: where do we reconfigure margin sizes? */
+	/*
+	  Regenerate new pixmap members with given total sizes. Notice
+	  that margin sizes are not affected - they are constant. But
+	  if total size changes and margins stay the same, then
+	  central area also changes (in the same direction).
+	*/
 
-	/* We don't handle situation when size of the pixmap doesn't
-	   change.  Such situation will occur rarely, and adding a
-	   code path to handle this special case would bring little
-	   gain. */
-
-	qDebug() << SG_PREFIX_N << this->debug << "vpixmap is being reconfigured with new total width =" << new_total_width << "and new total height = " << new_total_height;
+	qDebug() << SG_PREFIX_N << "Attempting to apply new total sizes to" << this->debug << ": width =" << new_total_width << ", height =" << new_total_height;
 
 	if (this->total_width == new_total_width && this->total_height == new_total_height) {
-		qDebug() << SG_PREFIX_I << this->debug << "vpixmap not reconfigured: size didn't change";
+		qDebug() << SG_PREFIX_I << "Not applying new total sizes to" << this->debug << ": size didn't change";
 		return;
 	}
 
 	this->total_width = new_total_width;
 	this->total_height = new_total_height;
 
-	qDebug() << SG_PREFIX_I << this->debug << "Will regenerate vpixmap with size" << this->total_width << this->total_height;
+	qDebug() << SG_PREFIX_I << this->debug << "Will regenerate pixmaps with total width =" << this->total_width << ", total height =" << this->total_height;
 	/*
 	  Call ::end() before deleting paint device
 	  (ViewportPixmap::pixmap), otherwise destructor of the paint
@@ -447,8 +447,8 @@ void ViewportPixmap::reconfigure(int new_total_width, int new_total_height)
 	this->vpixmap_snapshot = QPixmap(this->total_width, this->total_height); /* Reset snapshot buffer with new size */
 
 
-	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"reconfigured\" signal";
-	emit this->sizes_changed(this);
+	qDebug() << SG_PREFIX_SIGNAL << this->debug << "Sending \"size changed\" signal";
+	emit this->size_changed(this);
 }
 
 
@@ -1067,23 +1067,6 @@ void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::reconfigure_drawing_area(int new_total_width, int new_total_height)
-{
-	if (new_total_width == 0 && new_total_height == 0) {
-		qDebug() << SG_PREFIX_I << "Will reconfigure viewport with geometry sizes" << this->geometry().width() << this->geometry().height();
-		this->reconfigure(this->geometry().width(), this->geometry().height());
-	} else {
-		qDebug() << SG_PREFIX_I << "Will reconfigure viewport with specified total width =" << new_total_width << "and total height =" << new_total_height;
-		this->reconfigure(new_total_width, new_total_height);
-	}
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
 void ViewportPixmap::render_to_screen(void)
 {
 	qDebug() << SG_PREFIX_I << "called, will call ->render()";
@@ -1469,4 +1452,3 @@ sg_ret ViewportPixmap::calculate_scaled_sizes(int target_width, int target_heigh
 
 	return sg_ret::ok;
 }
-

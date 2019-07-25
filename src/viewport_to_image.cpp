@@ -489,7 +489,7 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 	this->gisview->set_viking_scale(this->scaled_viking_scale);
 
 	/* Set expected width and height. Do this only once for all images (all images have the same size). */
-	this->gisview->reconfigure_drawing_area(this->scaled_width, this->scaled_height);
+	this->gisview->apply_total_sizes(this->scaled_width, this->scaled_height);
 
 
 	UTM utm;
@@ -519,8 +519,8 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 			/* Redraw all layers at current position and
 			   zoom.  TODO: why do we call Window method
 			   here? Don't we draw to viewport after
-			   reconfigure_drawing_area() called below
-			   emits signal? */
+			   apply_total_sizes() called below emits
+			   signal? */
 			this->window->draw_tree_items(this->gisview);
 
 			/* Save buffer as file. */
@@ -541,9 +541,9 @@ sg_ret ViewportToImage::save_to_dir(const QString & dir_full_path)
 
 	this->gisview->set_viking_scale(orig_viking_scale);
 
-	this->gisview->reconfigure_drawing_area();
+	this->gisview->apply_total_sizes(this->gisview->geometry().width(), this->gisview->geometry().height());
 
-	/* This is already called after reconfigure_drawing_area() emitted a signal. */
+	/* This is already called after apply_total_sizes() emitted a signal. */
 	//this->window->draw_tree_items();
 
 	return sg_ret::ok;

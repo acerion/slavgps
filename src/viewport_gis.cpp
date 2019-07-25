@@ -208,17 +208,31 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 /**
    @reviewed-on tbd
 */
+GisViewport::GisViewport(int new_total_width, int new_total_height, int left, int right, int top, int bottom, QWidget * parent)
+	: GisViewport(left, right, top, bottom, parent)
+{
+	qDebug() << SG_PREFIX_I << "Resizing new viewport to width =" << new_total_width << ", height =" << new_total_height;
+	this->resize(new_total_width, new_total_height);
+	this->apply_total_sizes(new_total_width, new_total_height);
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
 GisViewport * GisViewport::copy(int new_total_width, int new_total_height, float scale, QWidget * parent) const
 {
-	GisViewport * new_object = new GisViewport(scale > 0 ? floor(scale * this->left_margin_width)    : this->left_margin_width,
+	GisViewport * new_object = new GisViewport(new_total_width,
+						   new_total_height,
+						   scale > 0 ? floor(scale * this->left_margin_width)    : this->left_margin_width,
 						   scale > 0 ? floor(scale * this->right_margin_width)   : this->right_margin_width,
 						   scale > 0 ? floor(scale * this->top_margin_height)    : this->top_margin_height,
 						   scale > 0 ? floor(scale * this->bottom_margin_height) : this->bottom_margin_height,
 						   parent);
 
 	snprintf(new_object->debug, sizeof (new_object->debug), "Copy of %s", this->debug);
-
-	new_object->reconfigure_drawing_area(new_total_width, new_total_height);
 
 	new_object->set_draw_mode(this->get_draw_mode());
 	new_object->set_coord_mode(this->get_coord_mode());
@@ -1574,11 +1588,11 @@ sg_ret GisViewport::add_logo(const GisViewportLogo & logo)
 */
 void GisViewport::resizeEvent(QResizeEvent * ev)
 {
-	qDebug() << SG_PREFIX_I;
+	qDebug() << SG_PREFIX_I << "Reacting to resize event, new total viewport size is width =" << this->geometry().width() << ", height =" << this->geometry().height();
 
 	/* This will emit "sizes changed" signal that will lead to
 	   redrawing of all tree items. */
-	this->reconfigure_drawing_area();
+	this->apply_total_sizes(this->geometry().width(), this->geometry().height());
 
 	return;
 }
