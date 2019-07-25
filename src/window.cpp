@@ -2610,8 +2610,7 @@ void Window::acquire_from_url_cb(void)
 void Window::draw_viewport_to_image_file_cb(void)
 {
 	ViewportToImage vti(this->main_gis_vp, ViewportToImage::SaveMode::File, this);
-
-	if (!vti.run_dialog(tr("Save Viewport to Image File"))) {
+	if (!vti.run_config_dialog(tr("Save Viewport to Image File"))) {
 		return;
 	}
 
@@ -2628,72 +2627,52 @@ void Window::draw_viewport_to_image_file_cb(void)
 
 void Window::draw_viewport_to_image_dir_cb(void)
 {
+	if (this->main_gis_vp->get_coord_mode() != CoordMode::UTM) {
+		Dialog::info(tr("This feature is available only in UTM mode"));
+		return;
+	}
+
 	ViewportToImage vti(this->main_gis_vp, ViewportToImage::SaveMode::Directory, this);
-	if (!vti.run_dialog(tr("Save Viewport to Images in Directory"))) {
-		return;
+	if (vti.run_config_dialog(tr("Save Viewport to Images in Directory"))) {
+		vti.run_save_dialog_and_save();
 	}
-
-	const QString destination_full_path = vti.get_destination_full_path();
-	if (destination_full_path.isEmpty()) {
-		return;
-	}
-
-	/* UTM mode ATM. */
-	vti.save_to_destination(destination_full_path);
+	return;
 }
 
 
 
 
 #ifdef HAVE_ZIP_H
+/*
+  ATM This only generates a KMZ file with the current
+  viewport image - intended mostly for map images [but will
+  include any lines/icons from track & waypoints that are
+  drawn] (it does *not* include a full KML dump of every
+  track, waypoint etc...).
+*/
 void Window::draw_viewport_to_kmz_file_cb(void)
 {
 	if (this->main_gis_vp->get_coord_mode() == CoordMode::UTM) {
-		Dialog::error(tr("This feature is not available in UTM mode"));
+		Dialog::info(tr("This feature is not available in UTM mode"));
 		return;
 	}
 
 	ViewportToImage vti(this->get_viewport, ViewportToImage::SaveMode::FileKMZ, this);
-
-	if (!vti.run_dialog(tr("Save Viewport to KMZ File"))) {
-		return;
+	if (vti.run_config_dialog(tr("Save Viewport to KMZ File"))) {
+		vti.run_save_dialog_and_save();
 	}
 
-	const QString destination_full_path = vti.get_destination_full_path();
-	if (destination_full_path.isEmpty()) {
-		return;
-	}
+	return;
+}
 
 
-	/* ATM This only generates a KMZ file with the current
-	   viewport image - intended mostly for map images [but will
-	   include any lines/icons from track & waypoints that are
-	   drawn] (it does *not* include a full KML dump of every
-	   track, waypoint etc...). */
 
-	/* Remove some viewport overlays as these aren't useful in KMZ file. */
-	bool has_xhair = this->main_gis_vp->get_center_mark_visibility();
-	if (has_xhair) {
-		this->main_gis_vp->set_center_mark_visibility(false);
-	}
-	bool has_scale = this->main_gis_vp->get_scale_visibility();
-	if (has_scale) {
-		this->main_gis_vp->set_scale_visibility(false);
-	}
 
-	vti.save_to_destination(destination_full_path);
 
-	if (has_xhair) {
-		this->main_gis_vp->set_center_mark_visibility(true);
-	}
 
-	if (has_scale) {
-		this->main_gis_vp->set_scale_visibility(true);
-	}
 
-	if (has_xhair || has_scale) {
-		this->draw_tree_items(this->main_gis_vp);
-	}
+
+
 }
 #endif
 

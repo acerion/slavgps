@@ -45,7 +45,16 @@ namespace SlavGPS {
 		ViewportToImage(GisViewport * gisview, ViewportToImage::SaveMode save_mode, Window * window);
 		~ViewportToImage();
 
-		bool run_dialog(const QString & title);
+		bool run_config_dialog(const QString & title);
+
+		/**
+		   Run target file/directory selection dialog. Save
+		   viewport if user selects target location.
+
+		   @return true if save has been made
+		   @return false if save has not been made
+		*/
+		bool run_save_dialog_and_save(void);
 
 		QString get_destination_full_path(void);
 		sg_ret save_to_destination(const QString & full_path);
@@ -59,8 +68,8 @@ namespace SlavGPS {
 		Window * window = NULL;
 
 		/* For storing last selections. */
-		int scaled_width = 0;    /* Width of target image. */
-		int scaled_height = 0;   /* Height of target image. */
+		int scaled_total_width = 0;    /* Width of target image. */
+		int scaled_total_height = 0;   /* Height of target image. */
 		ViewportToImage::FileFormat file_format = ViewportToImage::FileFormat::JPEG;
 		int n_tiles_x = 0;
 		int n_tiles_y = 0;
@@ -105,12 +114,14 @@ namespace SlavGPS {
 		/* Proportion of width/height dimensions of viewport
 		   (original viewport and scaled viewport).
 		   p = w/h. */
-		double proportion = 0.0;
+		double original_proportion = 0.0;
 
-		/* Width of original viewport. */
-		int original_width = 0;
+		/* Width/height of original viewport. */
+		int original_total_width = 0;
+		int original_total_height = 0;
 
-		VikingScale original_viking_scale;  /* Viking scale of original viewport. */
+		/* Viking scale of original viewport. */
+		VikingScale original_viking_scale;
 
 		/* Only used for ViewportToImage::SaveMode::Directory. */
 		QSpinBox * tiles_width_spin = NULL;

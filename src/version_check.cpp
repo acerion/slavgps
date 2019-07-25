@@ -74,7 +74,7 @@ void VersionCheck::new_version_available_dialog(const QString & new_version)
 
 	/* Only a simple goto website option is offered.
 	   Trying to do an installation update is platform specific. */
-	if (Dialog::yes_or_no(QObject::tr("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(new_version), this->window)) {
+	if (Dialog::yes_or_no(QObject::tr("There is a newer version of Viking available: %1\n\nDo you want to go to Viking's website now?").arg(new_version), this->window)) {
 
 		/* 'VIKING_URL' redirects to the Wiki, here we want to go the main site. */
 		open_url(SG_URL_MAIN_PAGE);
