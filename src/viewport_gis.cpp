@@ -222,14 +222,33 @@ GisViewport::GisViewport(int new_total_width, int new_total_height, int left, in
 /**
    @reviewed-on tbd
 */
-GisViewport * GisViewport::copy(int new_total_width, int new_total_height, float scale, QWidget * parent) const
+GisViewport * GisViewport::copy(int target_total_width, int target_total_height, QWidget * parent) const
 {
-	GisViewport * new_object = new GisViewport(new_total_width,
-						   new_total_height,
-						   scale > 0 ? floor(scale * this->left_margin_width)    : this->left_margin_width,
-						   scale > 0 ? floor(scale * this->right_margin_width)   : this->right_margin_width,
-						   scale > 0 ? floor(scale * this->top_margin_height)    : this->top_margin_height,
-						   scale > 0 ? floor(scale * this->bottom_margin_height) : this->bottom_margin_height,
+	const double scale = 1.0 * target_total_width / this->total_get_width();
+	return this->copy(target_total_width, target_total_height, this->viking_scale / scale, parent);
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+GisViewport * GisViewport::copy(int target_total_width, int target_total_height, const VikingScale & target_viking_scale, QWidget * parent) const
+{
+	if (!target_viking_scale.is_valid()) {
+		qDebug() << SG_PREFIX_E << "Invalid 'viking scale' argument";
+		return NULL;
+	}
+
+	const double scale = 1.0 * target_total_width / this->total_get_width();
+
+	GisViewport * new_object = new GisViewport(target_total_width,
+						   target_total_height,
+						   floor(scale * this->left_margin_width),
+						   floor(scale * this->right_margin_width),
+						   floor(scale * this->top_margin_height),
+						   floor(scale * this->bottom_margin_height),
 						   parent);
 
 	snprintf(new_object->debug, sizeof (new_object->debug), "Copy of %s", this->debug);
@@ -237,8 +256,17 @@ GisViewport * GisViewport::copy(int new_total_width, int new_total_height, float
 	new_object->set_draw_mode(this->get_draw_mode());
 	new_object->set_coord_mode(this->get_coord_mode());
 	new_object->set_center_coord(this->center_coord, false);
-	new_object->set_viking_scale(this->viking_scale);
-	new_object->set_bbox(this->get_bbox());
+	new_object->set_viking_scale(target_viking_scale);
+	//new_object->set_bbox(this->get_bbox()); /* TODO: why without this the scaling works correctly? */
+
+	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->get_bbox();
+	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << new_object->get_bbox();
+
+	qDebug() << SG_PREFIX_I << "Original viewport:";
+	this->debug_print_info();
+	qDebug() << SG_PREFIX_I << "Scaled viewport:";
+	new_object->debug_print_info();
+
 
 	return new_object;
 }
@@ -1823,49 +1851,6 @@ void GisViewport::draw_mouse_motion_cb(QMouseEvent * ev)
 
 
 
-/**
-   @reviewed-on tbd
-*/
-GisViewport * GisViewport::create_scaled_viewport(int scaled_width, int scaled_height, double scale_factor, const VikingScale & expected_viking_scale, QWidget * parent)
-{
-	/* Notice that we configure size of the new viewport using
-	   scaled width/height, not size of target device (i.e. not of
-	   target paper or target image). The image that we will print
-	   to target device should cover the same area (i.e. have the
-	   same bounding box) as original viewport. */
-	GisViewport * scaled_viewport = this->copy(scaled_width, scaled_height, scale_factor, parent);
-
-
-	/* Set zoom - either explicitly passed to the function, or
-	   calculated implicitly. */
-	if (expected_viking_scale.is_valid()) {
-		scaled_viewport->set_viking_scale(expected_viking_scale);
-	} else {
-		const VikingScale calculated_viking_scale(this->viking_scale.x / scale_factor, this->viking_scale.y / scale_factor);
-		if (calculated_viking_scale.is_valid()) {
-			scaled_viewport->set_viking_scale(calculated_viking_scale);
-		} else {
-			/* TODO_HARD: now what? */
-		}
-	}
-	snprintf(scaled_viewport->debug, sizeof (scaled_viewport->debug), "%s", "Scaled GIS Viewport");
-
-
-	qDebug() << SG_PREFIX_I << "Original viewport's bbox =" << this->get_bbox();
-	qDebug() << SG_PREFIX_I << "Scaled viewport's bbox =  " << scaled_viewport->get_bbox();
-
-	qDebug() << SG_PREFIX_I << "Original viewport:";
-	this->debug_print_info();
-	qDebug() << SG_PREFIX_I << "Scaled viewport:";
-	scaled_viewport->debug_print_info();
-
-
-
-	return scaled_viewport;
-}
-
-
-
 
 /**
    @reviewed-on tbd
@@ -1901,20 +1886,20 @@ bool GisViewport::print_cb(QPrinter * printer)
 		break;
 	}
 
-	const int target_device_width = page_rect.width();
-	const int target_device_height = page_rect.height();
 
-	int scaled_width = 0;
-	int scaled_height = 0;
-	double scale_factor = 0.0;
 	/* Since aspect ratio of target device may be different than
 	   aspect ratio of viewport, we need to call function that
 	   will calculate size of scaled viewport that will guarantee
 	   filling target device while keeping aspect ratio of
 	   original viewport (so that the image printed to target
 	   device is not distorted). */
-	this->calculate_scaled_sizes(target_device_width, target_device_height, scaled_width, scaled_height, scale_factor);
-	GisViewport * scaled_viewport = this->create_scaled_viewport(scaled_width, scaled_height, scale_factor, VikingScale(), this->window);
+	const int target_device_width = page_rect.width();
+	const int target_device_height = page_rect.height();
+	int scaled_width = 0;
+	int scaled_height = 0;
+	double dummy;
+	this->calculate_scaled_sizes(target_device_width, target_device_height, scaled_width, scaled_height, dummy);
+	GisViewport * scaled_viewport = this->copy(scaled_width, scaled_height, this->window);
 
 	/* Since we are printing viewport as it is, we allow existing
 	   highlights to be drawn to print pixmap. */

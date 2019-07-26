@@ -90,7 +90,29 @@ namespace SlavGPS {
 		GisViewport(int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = NULL);
 		GisViewport(int total_width, int total_height, int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = NULL);
 		~GisViewport();
-		GisViewport * copy(int total_width, int total_height, float scale, QWidget * parent = NULL) const;
+
+		/**
+		   @brief Create re-scaled viewport with new width and height
+
+		   All relevant size parameters will be re-scaled
+		   based on the new width/height.
+
+		   Viking scale of viewport will be re-scaled based on
+		   the new width/height.
+		*/
+		GisViewport * copy(int target_width, int target_height, QWidget * parent = NULL) const;
+
+		/**
+		   @brief Create re-scaled viewport with new width and height
+
+		   All relevant size parameters will be re-scaled
+		   based on the new width/height.
+
+		   Viking scale of viewport will be set according to
+		   @param target_viking_scale.  @param
+		   target_viking_scale must be valid
+		*/
+		GisViewport * copy(int target_width, int target_height, const VikingScale & target_viking_scale, QWidget * parent = NULL) const;
 
 
 		void draw_bbox(const LatLonBBox & bbox, const QPen & pen);
@@ -237,16 +259,6 @@ namespace SlavGPS {
 
 		void set_half_drawn(bool half_drawn);
 		bool get_half_drawn(void) const;
-
-
-		/**
-		   @param expected_viking_scale may be invalid
-		   (::is_valid() returns false) - the function will
-		   then use its standard algorithm for determining
-		   expected zoom of scaled viewport.
-		*/
-		GisViewport * create_scaled_viewport(int target_width, int target_height, double scale_factor, const VikingScale & expected_viking_scale, QWidget * parent = NULL);
-
 
 
 		Window * get_window(void) const;

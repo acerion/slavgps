@@ -479,22 +479,18 @@ sg_ret ViewportToImage::save_to_image(const QString & file_full_path)
 	   gives the same proportions as the source viewport has. So
 	   there is no need to call calculate_scaled_sizes() to
 	   calculate correct sizes for scaled viewport. */
-	const double scale_factor = 1.0 * this->scaled_total_width / this->gisview->total_get_width();
 	qDebug() << SG_PREFIX_I << "Will create scaled viewport of total width ="
 		 << this->scaled_total_width
 		 << ", total height ="
 		 << this->scaled_total_height
 		 << ", viking scale ="
 		 << this->scaled_viking_scale
-		 << ", scale factor ="
-		 << scale_factor;
-	GisViewport * scaled_viewport = this->gisview->copy(this->scaled_total_width, this->scaled_total_height,
-							    scale_factor, this->window);
-#if 0
-	GisViewport * scaled_viewport = this->gisview->create_scaled_viewport(this->scaled_total_width, this->scaled_total_height,
-									      scale_factor,
-									      this->original_viking_scale, this->window);
-#endif
+		 << ", size scale factor ="
+		 << (1.0 * this->scaled_total_width / this->gisview->total_get_width());
+	GisViewport * scaled_viewport = this->gisview->copy(this->scaled_total_width,
+							    this->scaled_total_height,
+							    this->window);
+
 	qDebug() << SG_PREFIX_I << "Created scaled viewport of size" << scaled_viewport->total_get_width() << scaled_viewport->total_get_height();
 
 	if (this->save_mode == ViewportToImage::SaveMode::FileKMZ) {
