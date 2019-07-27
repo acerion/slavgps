@@ -160,7 +160,7 @@ namespace SlavGPS {
 		void clear_busy_cursor(void);
 
 
-		bool save_current_document();
+
 		void apply_new_preferences(void);
 
 		bool get_side_panel_visibility(void) const;
@@ -324,6 +324,13 @@ namespace SlavGPS {
 
 		void open_window(const QStringList & file_full_paths);
 
+		/**
+		   @brief Save current workspace to file indicated by @param full_path
+
+		   On errors appropriate message is presented to user.
+		*/
+		sg_ret save_current_workspace_to_file(const QString & full_path);
+
 		bool pan_move_in_progress = false;
 		bool single_click_pending = false;
 		/* Coordinates of these screen positions should be in
@@ -404,6 +411,9 @@ namespace SlavGPS {
 		static Window * get_main_window(void);
 		static LayersPanel * get_layers_panel(void);
 		static GisViewport * get_main_gis_view(void);
+
+		/* The last used directory. */
+		QUrl last_folder_files_url;
 
 	private:
 		Window * window = NULL;

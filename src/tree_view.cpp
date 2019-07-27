@@ -806,7 +806,7 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		qDebug() << SG_PREFIX_I << "Edited item in column Visible: is checkable?" << item->isCheckable();
 
 		tree_item->set_visible(item->checkState());
-		qDebug() << SG_PREFIX_SIGNAL << "Eemitting tree_item_needs_redraw(), uid=", tree_item->get_uid();
+		qDebug() << SG_PREFIX_SIGNAL << "Emitting tree_item_needs_redraw(), uid=", tree_item->get_uid();
 		emit this->tree_item_needs_redraw(tree_item->get_uid());
 		break;
 

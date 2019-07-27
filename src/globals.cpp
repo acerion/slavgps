@@ -185,7 +185,11 @@ void SaveStatus::show_error_dialog(QWidget * parent) const
 		message = QObject::tr("Can't save file: internal error");
 		break;
 	case SaveStatus::Code::FileAccess:
-		message = QObject::tr("Can't save file: can't open file for writing");
+		/*
+		  Examples of situation when this error can occur:
+		  1. trying to save-again file in directory that has been removed.
+		*/
+		message = QObject::tr("Can't save file: can't open file for writing. Try to save file in different location.");
 		break;
 	case SaveStatus::Code::IntermediateFileAccess:
 		message = QObject::tr("Can't save file: Can't access intermediate file");

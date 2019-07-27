@@ -127,11 +127,6 @@ static ThisApp g_this_app;
 
 
 
-/* The last used directories. */
-static QUrl g_last_folder_files_url;
-
-
-
 enum WindowPan {
 	PAN_NORTH = 0,
 	PAN_EAST,
@@ -1050,8 +1045,10 @@ void Window::draw_tree_items(GisViewport * gisview)
 
 void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 {
-	qDebug() << SG_PREFIX_SLOT << "Draw layer with uid" << (qulonglong) uid;
-	/* TODO_HARD: draw only one layer, not all of them. */
+	qDebug() << SG_PREFIX_SLOT << "Will redraw all tree items after change made to layer with uid" << (qulonglong) uid;
+	/* Only one layer has changed (e.g. its visibility was
+	   toggled), which means that all tree items need to be
+	   redrawn. */
 	this->draw_tree_items(this->main_gis_vp);
 }
 
@@ -1061,7 +1058,7 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 void Window::handle_selection_of_tree_item(const TreeItem & tree_item)
 {
 	/* Get either the selected layer itself, or an owner/parent of selected sublayer item. */
-	Layer * layer = tree_item.to_layer();
+	const Layer * layer = tree_item.to_layer();
 	qDebug() << SG_PREFIX_I << "Selected layer type" << layer->get_type_ui_label();
 	this->toolbox->activate_tools_group(layer->get_type_id_string());
 }
@@ -1943,8 +1940,8 @@ void Window::open_file_cb(void)
 
 	QFileDialog file_selector(this, tr("Select a GPS data file to open"));
 
-	if (g_last_folder_files_url.isValid()) {
-		file_selector.setDirectoryUrl(g_last_folder_files_url);
+	if (g_this_app.last_folder_files_url.isValid()) {
+		file_selector.setDirectoryUrl(g_this_app.last_folder_files_url);
 	}
 
 
@@ -1983,7 +1980,7 @@ void Window::open_file_cb(void)
 		return;
 	}
 
-	g_last_folder_files_url = file_selector.directoryUrl();
+	g_this_app.last_folder_files_url = file_selector.directoryUrl();
 
 	if ((this->dirty_flag || !this->current_document_full_path.isEmpty()) && new_window) {
 		const QStringList selection = file_selector.selectedFiles();
@@ -2125,11 +2122,7 @@ bool Window::menu_file_save_cb(void)
 		   This function will reset dirty flag if necessary. */
 		return this->menu_file_save_as_cb();
 	} else {
-		const bool status = this->save_current_document();
-		if (status) {
-			this->set_dirty_flag(false);
-		}
-		return status;
+		return sg_ret::ok == this->save_current_workspace_to_file(this->current_document_full_path);
 	}
 }
 
@@ -2138,8 +2131,6 @@ bool Window::menu_file_save_cb(void)
 
 bool Window::menu_file_save_as_cb(void)
 {
-	bool save_status = false;
-
 	QFileDialog file_selector(this, QObject::tr("Save as Viking File"));
 	file_selector.setFileMode(QFileDialog::AnyFile); /* Specify new or select existing file. */
 	file_selector.setAcceptMode(QFileDialog::AcceptSave);
@@ -2149,8 +2140,8 @@ bool Window::menu_file_save_as_cb(void)
 	file_selector.setNameFilters(filter);
 
 
-	if (g_last_folder_files_url.isValid()) {
-		file_selector.setDirectoryUrl(g_last_folder_files_url);
+	if (g_this_app.last_folder_files_url.isValid()) {
+		file_selector.setDirectoryUrl(g_this_app.last_folder_files_url);
 	}
 
 #ifdef K_FIXME_RESTORE
@@ -2167,6 +2158,7 @@ bool Window::menu_file_save_as_cb(void)
 	file_selector.selectFile(auto_save_name);
 
 
+	bool save_status = false;
 	while (QDialog::Accepted == file_selector.exec()) {
 		QStringList selection = file_selector.selectedFiles();
 		if (!selection.size()) {
@@ -2177,14 +2169,12 @@ bool Window::menu_file_save_as_cb(void)
 		/* QT file selector handles "overwrite existing file" question for us. */
 
 		this->set_current_document_full_path(full_path);
-		if (this->save_current_document()) {
-			this->set_dirty_flag(false);
-			g_last_folder_files_url = file_selector.directoryUrl();
+
+		/* This function will display dialog message on save errors. */
+		if (sg_ret::ok == this->save_current_workspace_to_file(full_path)) {
+			g_this_app.last_folder_files_url = file_selector.directoryUrl();
 		        save_status = true;
 			break;
-		} else {
-			/* TODO_LATER: handle saving errors. */
-			save_status = false;
 		}
 	}
 
@@ -2257,7 +2247,12 @@ void Window::clear_busy_cursor()
 	   2. in layers panel go to the track,
 	   3. in context menu for the track select "export as GPX",
 	   4. go through export procedure,
-	   5. notice that viewport still has "busy" cursor. */
+	   5. notice that viewport still has "busy" cursor.
+	   Scenario 2:
+	   1. create TRW layer, create some track,
+	   2. save current workspace to file,
+	   3. move cursor to main viewport, see that it's still showing 'busy' status.
+	*/
 
 	//this->main_gis_vp->setCursor(this->main_gis_vp->viewport_cursor);
 }
@@ -2812,32 +2807,44 @@ QComboBox * SlavGPS::create_zoom_combo_all_levels(QWidget * parent)
 /* Really a misnomer: changes coord mode (actual coordinates) AND/OR draw mode (viewport only). */
 void Window::change_coord_mode_cb(QAction * qa)
 {
-	GisViewportDrawMode drawmode = (GisViewportDrawMode) qa->data().toInt();
-
-	qDebug() << SG_PREFIX_D << "Coordinate mode changed to" << qa->text() << (int) drawmode;
-
 	/* TODO_HARD: verify that this function changes mode in all the places that need to be updated. */
+
+	const GisViewportDrawMode drawmode = (GisViewportDrawMode) qa->data().toInt();
+	const GisViewportDrawMode old_drawmode = this->main_gis_vp->get_draw_mode();
+	qDebug() << SG_PREFIX_D << "Coordinate mode changed from" << (int) old_drawmode << "to" << qa->text() << (int) drawmode;
+
 
 	if (this->only_updating_coord_mode_ui) {
 		return;
 	}
-
-	const GisViewportDrawMode olddrawmode = this->main_gis_vp->get_draw_mode();
-	if (olddrawmode != drawmode) {
-
-		this->main_gis_vp->set_draw_mode(drawmode); /* This takes care of viewport's coord mode too. */
-
-		if (drawmode == GisViewportDrawMode::UTM) {
-			this->items_tree->change_coord_mode(CoordMode::UTM);
-		} else if (olddrawmode == GisViewportDrawMode::UTM) {
-			this->items_tree->change_coord_mode(CoordMode::LatLon);
-		}
-
-		/* TODO: verify if this call is necessary. Maybe
-		   changing of coord mode has triggered re-painting
-		   already? */
-		this->draw_tree_items(this->main_gis_vp);
+	if (old_drawmode == drawmode) {
+		return;
 	}
+
+
+	/* Set draw mode of viewport. */
+	this->main_gis_vp->set_draw_mode(drawmode);
+
+
+	/* Set coord mode of tree items. */
+	switch (drawmode) {
+	case GisViewportDrawMode::UTM:
+		this->items_tree->change_coord_mode(CoordMode::UTM);
+		break;
+	case GisViewportDrawMode::Expedia:
+	case GisViewportDrawMode::Mercator:
+	case GisViewportDrawMode::LatLon:
+		this->items_tree->change_coord_mode(CoordMode::LatLon);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected drawmode" << (int) drawmode;
+		return;
+	}
+
+
+	/* Draw tree items with new coord mode into viewport with new
+	   draw mode. */
+	this->draw_tree_items(this->main_gis_vp);
 }
 
 
@@ -3167,33 +3174,34 @@ bool Window::menu_file_save_and_exit_cb(void)
 {
 	if (this->menu_file_save_cb()) {
 		this->close();
-		return(true);
+		return true;
 	} else {
-		return(false);
+		return false;
 	}
 }
 
 
 
 
-/* Save current workspace to file indicated by ::current_document_full_path */
-bool Window::save_current_document(void)
+/**
+   @reviewed-on 2019-07-27
+*/
+sg_ret Window::save_current_workspace_to_file(const QString & full_path)
 {
-	bool success = true;
-
+	qDebug() << SG_PREFIX_I << "Before calling function that saves a file" << full_path;
 	this->set_busy_cursor();
-	const SaveStatus save_status = VikFile::save(this->items_tree->get_top_layer(), this->main_gis_vp, this->current_document_full_path);
+	const SaveStatus save_status = VikFile::save(this->items_tree->get_top_layer(), this->main_gis_vp, full_path);
 	this->clear_busy_cursor();
+	qDebug() << SG_PREFIX_I << "After calling function that saves a file" << full_path;
 
-	if (SaveStatus::Code::Success == save_status) {
-		this->update_recent_files(this->current_document_full_path, "text/x-gps-data");
-		return true;
+	if (save_status.code == SaveStatus::Code::Success) {
+		this->set_dirty_flag(false);
+		this->update_recent_files(full_path, "text/x-gps-data");
+		return sg_ret::ok;
+	} else {
+		save_status.show_error_dialog(this);
+		return sg_ret::err;
 	}
-
-	/* TODO_IMPROVEMENT: better error messages based on save status value. */
-	Dialog::error(tr("The filename you requested could not be opened for writing."), this);
-
-	return false;
 }
 
 
