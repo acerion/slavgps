@@ -186,10 +186,10 @@ static SGVariant vehicle_position_default(void) { return SGVariant(vehicle_posit
 static SGVariant gpsd_host_default(void) { return SGVariant("localhost"); }
 
 /* If user enters 0 then retry is disabled. */
-static ParameterScale<int> gpsd_retry_interval_scale(0, 10000, SGVariant((int32_t) 10), 10, 0);
+static ParameterScale<int> gpsd_retry_interval_scale(0, 10000, SGVariant((int32_t) 10, SGVariantType::Int), 10, 0);
 
 /* If user enters 0 then default port number will be used. */
-static ParameterScale<int> gpsd_port_scale(0, 65535, SGVariant((int32_t) SG_GPSD_PORT), 1, 0);
+static ParameterScale<int> gpsd_port_scale(0, 65535, SGVariant((int32_t) SG_GPSD_PORT, SGVariantType::Int), 1, 0);
 
 #endif
 
@@ -515,10 +515,10 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->gpsd_host);
 		break;
 	case PARAM_GPSD_PORT:
-		rv = SGVariant(this->gpsd_port == 0 ? SG_GPSD_PORT : this->gpsd_port);
+		rv = SGVariant(this->gpsd_port == 0 ? SG_GPSD_PORT : this->gpsd_port, gps_layer_param_specs[PARAM_GPSD_PORT].type_id);
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		rv = SGVariant(this->gpsd_retry_interval);
+		rv = SGVariant(this->gpsd_retry_interval, gps_layer_param_specs[PARAM_GPSD_RETRY_INTERVAL].type_id);
 		break;
 	case PARAM_REALTIME_REC:
 		rv = SGVariant(this->realtime_record);
@@ -527,7 +527,7 @@ SGVariant LayerGPS::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->realtime_jump_to_start);
 		break;
 	case PARAM_VEHICLE_POSITION:
-		rv = SGVariant((int32_t) this->vehicle_position);
+		rv = SGVariant((int32_t) this->vehicle_position, gps_layer_param_specs[PARAM_VEHICLE_POSITION].type_id);
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
 		rv = SGVariant(this->realtime_update_statusbar); /* kamilkamil: in viking code there is a mismatch of data types. */

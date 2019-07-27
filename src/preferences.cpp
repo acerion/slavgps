@@ -190,7 +190,7 @@ static WidgetEnumerationData vik_fileref_enum = {
 	(int) FilePathFormat::Absolute
 };
 
-static ParameterScale<int> scale_recent_files(-1, 25, SGVariant((int32_t) 10), 1, 0); /* Viking's comment about value of hardcoded default: "Seemingly GTK's default for the number of recent files.". */
+static ParameterScale<int> scale_recent_files(-1, 25, SGVariant(10, SGVariantType::Int), 1, 0); /* Viking's comment about value of hardcoded default: "Seemingly GTK's default for the number of recent files.". */
 
 static ParameterSpecification prefs_advanced[] = {
 	{ 0, PREFERENCES_NAMESPACE_ADVANCED "save_file_reference_mode",  SGVariantType::Enumeration,   PARAMETER_GROUP_GENERIC, QObject::tr("Save File Reference Mode:"),           WidgetType::Enumeration,  &vik_fileref_enum,    NULL, QObject::tr("When saving a Viking .vik file, this determines how the directory paths of filenames are written.") },

@@ -59,7 +59,8 @@ using namespace SlavGPS;
 
 #define VIK_SETTINGS_BFILTER_SIMPLIFY "bfilter_simplify"
 static bool bfilter_simplify_default_set = false;
-static SGVariant bfilter_simplify_params_defaults[] = { SGVariant((int32_t) 100) };
+static const int32_t simplify_default_value = 100;
+static SGVariant bfilter_simplify_params_defaults[] = { SGVariant(simplify_default_value, SGVariantType::Int) };
 
 
 
@@ -77,10 +78,10 @@ BFilterSimplify::BFilterSimplify()
 	if (!bfilter_simplify_default_set) {
 		int32_t tmp;
 		if (!ApplicationState::get_integer(VIK_SETTINGS_BFILTER_SIMPLIFY, &tmp)) {
-			tmp = 100;
+			tmp = simplify_default_value;
 		}
 
-		bfilter_simplify_params_defaults[0] = SGVariant(tmp);
+		bfilter_simplify_params_defaults[0] = SGVariant(tmp, SGVariantType::Int);
 		bfilter_simplify_default_set = true;
 	}
 }
@@ -106,7 +107,7 @@ int BFilterSimplify::run_config_dialog(AcquireContext * acquire_context)
 
 BFilterSimplifyDialog::BFilterSimplifyDialog(const QString & window_title) : DataSourceDialog(window_title)
 {
-	static const ParameterScale<int> scale(1, 10000, SGVariant((int32_t) 100), 10, 0);
+	static const ParameterScale<int> scale(1, 10000, SGVariant(simplify_default_value, SGVariantType::Int), 10, 0);
 
 	this->grid->addWidget(new QLabel(tr("Max number of points:")), 0, 0);
 
@@ -139,7 +140,7 @@ AcquireOptions * BFilterSimplifyDialog::create_acquire_options(AcquireContext * 
 	options->babel_process->set_filters(QString("-x simplify,count=%1").arg(value));
 
 	/* Store for subsequent default use. */
-	bfilter_simplify_params_defaults[0] = SGVariant(value);
+	bfilter_simplify_params_defaults[0] = SGVariant(value, SGVariantType::Int);
 
 	Util::add_to_deletion_list(layer_file_full_path);
 

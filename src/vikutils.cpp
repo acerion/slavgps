@@ -306,7 +306,7 @@ void SGUtils::set_auto_features_on_first_run(void)
 
 		/* Enable auto add map + Enable IP lookup. */
 		Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_STARTUP "add_default_map_layer"), SGVariant((bool) true));
-		Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_STARTUP "startup_method"),        SGVariant((int32_t) StartupMethod::AutoLocation));
+		Preferences::set_param_value(QString(PREFERENCES_NAMESPACE_STARTUP "startup_method"),        SGVariant((int32_t) StartupMethod::AutoLocation, SGVariantType::Enumeration));
 
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */

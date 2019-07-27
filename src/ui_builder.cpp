@@ -403,8 +403,9 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		break;
 
 	case WidgetType::RadioGroup:
-		if ((param_spec.type_id == SGVariantType::Int)
-		    && param_spec.widget_data) {
+		assert (param_spec.type_id == SGVariantType::Enumeration);
+		assert (param_spec.widget_data);
+		{
 			const std::vector<SGLabelID> * items = (const std::vector<SGLabelID> *) param_spec.widget_data;
 			assert (items);
 			RadioGroupWidget * widget_ = new RadioGroupWidget("", items, this);
@@ -660,13 +661,14 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		break;
 
 	case WidgetType::RadioGroup:
+		assert (param_spec.type_id == SGVariantType::Enumeration);
 		/* get_id_of_selected() returns arbitrary ID. */
-		rv = SGVariant((int32_t) ((RadioGroupWidget *) widget)->get_id_of_selected());
+		rv = SGVariant((int32_t) ((RadioGroupWidget *) widget)->get_id_of_selected(), SGVariantType::Enumeration);
 		break;
 
 	case WidgetType::SpinBoxInt:
 		assert (param_spec.type_id == SGVariantType::Int);
-		rv = SGVariant((int32_t) ((QSpinBox *) widget)->value());
+		rv = SGVariant((int32_t) ((QSpinBox *) widget)->value(), SGVariantType::Int);
 		break;
 
 	case WidgetType::SpinBoxDouble:
@@ -701,7 +703,7 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 	case WidgetType::HScale:
 		assert (param_spec.type_id == SGVariantType::Int || param_spec.type_id == SGVariantType::Double);
 		if (param_spec.type_id == SGVariantType::Int) {
-			rv = SGVariant((int32_t) ((SliderWidget *) widget)->get_value());
+			rv = SGVariant((int32_t) ((SliderWidget *) widget)->get_value(), SGVariantType::Int);
 		} else if (param_spec.type_id == SGVariantType::Double) {
 			rv = SGVariant((double) ((SliderWidget *) widget)->get_value());
 		} else {

@@ -52,7 +52,7 @@ using namespace SlavGPS;
 
 
 static ParameterScale<double> scale_minutes_width(0.05,  60.0,    SGVariant(1.0),         0.25,    10); /* PARAM_MIN_INC */
-static ParameterScale<int>    scale_line_thickness(  1,    15,    SGVariant((int32_t) 3),    1,     0); /* PARAM_LINE_THICKNESS */
+static ParameterScale<int>    scale_line_thickness(  1,    15,    SGVariant((int32_t) 3, SGVariantType::Int),    1,     0); /* PARAM_LINE_THICKNESS */
 
 
 static SGVariant color_default_deg(void) { return SGVariant(QColor("blue")); }
@@ -167,7 +167,7 @@ SGVariant LayerCoord::get_param_value(param_id_t param_id, bool is_file_operatio
 		rv = SGVariant((double) this->deg_inc * 60.0);
 		break;
 	case PARAM_LINE_THICKNESS:
-		rv = SGVariant((int32_t) this->line_thickness);
+		rv = SGVariant((int32_t) this->line_thickness, coord_layer_param_specs[PARAM_LINE_THICKNESS].type_id);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unknown parameter id" << param_id;

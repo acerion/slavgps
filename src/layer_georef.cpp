@@ -127,7 +127,7 @@ static ParameterSpecification georef_layer_param_specs[] = {
 
 
 LayerGeorefInterface vik_georef_layer_interface;
-static ParameterScale<int> alpha_scale(0, 255, SGVariant((int32_t) 0), 1, 0);
+static ParameterScale<int> alpha_scale(0, 255, SGVariant(0, SGVariantType::Int), 1, 0);
 
 
 
@@ -312,15 +312,15 @@ SGVariant LayerGeoref::get_param_value(param_id_t param_id, bool is_file_operati
 		rv = SGVariant(this->mpp_northing);
 		break;
 	case PARAM_CORNER_UTM_ZONE:
-		rv = SGVariant((int32_t) this->utm_tl.get_zone());
+		rv = SGVariant((int32_t) this->utm_tl.get_zone(), SGVariantType::Int);
 		break;
 	case PARAM_CORNER_UTM_BAND_LETTER:
 		/* The parameter is called "corner_letter_as_int", so we have to cast to int here. */
-		rv = SGVariant((int32_t) this->utm_tl.get_band_as_letter());
+		rv = SGVariant((int32_t) this->utm_tl.get_band_as_letter(), SGVariantType::Int);
 		break;
 	case PARAM_ALPHA:
 		/* Alpha shall always be int. Cast to int here, to be sure that it's stored in variant correctly. */
-		rv = SGVariant((int32_t) this->alpha);
+		rv = SGVariant((int32_t) this->alpha, SGVariantType::Int);
 		break;
 	default:
 		break;
@@ -1054,7 +1054,7 @@ GeorefConfigDialog::GeorefConfigDialog(LayerGeoref * the_layer, QWidget * parent
 	}
 
 
-	alpha_scale.initial = SGVariant((int32_t) this->layer->alpha);
+	alpha_scale.initial = SGVariant((int32_t) this->layer->alpha, SGVariantType::Int);
 	this->alpha_slider = new SliderWidget(alpha_scale, Qt::Horizontal);
 	this->grid->addWidget(new QLabel(tr("Alpha:")), row, 0);
 	this->grid->addWidget(this->alpha_slider, row, 1);

@@ -176,17 +176,17 @@ static SGVariant wp_symbol_default(void) { return SGVariant(wp_symbol_enum.defau
 #define MAX_ARROW_SIZE 20
 
                                                         /*            min,              max,                     hardcoded default,    step,   digits */
-static ParameterScale<int> scale_track_thickness         (              1,               10,                SGVariant((int32_t) 1),       1,        0); /* PARAM_TRACK_THICKNESS */
-static ParameterScale<int> scale_track_draw_speed_factor (              0,              100,                       SGVariant(30.0),       1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
-static ParameterScale<int> scale_wp_image_size           (             16,              128,               SGVariant((int32_t) 64),       4,        0); /* PARAM_WP_IMAGE_SIZE */
-static ParameterScale<int> scale_wp_image_alpha          (              0,              255,              SGVariant((int32_t) 255),       5,        0); /* PARAM_WP_IMAGE_ALPHA */
-static ParameterScale<int> scale_wp_image_cache_capacity (              5,              500,              SGVariant((int32_t) 300),       5,        0); /* PARAM_WP_IMAGE_CACHE_CAPACITY, megabytes */
-static ParameterScale<int> scale_track_bg_thickness      (              0,                8,                SGVariant((int32_t) 0),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
-static ParameterScale<int> scale_wp_marker_size          (              1,               64,                SGVariant((int32_t) 4),       1,        0); /* PARAM_WP_MARKER_SIZE */
-static ParameterScale<int> scale_track_min_stop_length   (MIN_STOP_LENGTH,  MAX_STOP_LENGTH,               SGVariant((int32_t) 60),       1,        0); /* PARAM_TRACK_MIN_STOP_LENGTH */
-static ParameterScale<int> scale_track_elevation_factor  (              1,              100,               SGVariant((int32_t) 30),       1,        0); /* PARAM_TRACK_ELEVATION_FACTOR */
-static ParameterScale<int> scale_trackpoint_size         ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE),       1,        0); /* PARAM_TRACKPOINT_SIZE */
-static ParameterScale<int> scale_track_direction_size    ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
+static ParameterScale<int> scale_track_thickness         (              1,               10,                SGVariant((int32_t) 1, SGVariantType::Int),       1,        0); /* PARAM_TRACK_THICKNESS */
+static ParameterScale<int> scale_track_draw_speed_factor (              0,              100,                      SGVariant(30.0),                            1,        0); /* PARAM_TRACK_DRAW_SPEED_FACTOR */
+static ParameterScale<int> scale_wp_image_size           (             16,              128,               SGVariant((int32_t) 64, SGVariantType::Int),       4,        0); /* PARAM_WP_IMAGE_SIZE */
+static ParameterScale<int> scale_wp_image_alpha          (              0,              255,              SGVariant((int32_t) 255, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_ALPHA */
+static ParameterScale<int> scale_wp_image_cache_capacity (              5,              500,              SGVariant((int32_t) 300, SGVariantType::Int),       5,        0); /* PARAM_WP_IMAGE_CACHE_CAPACITY, megabytes */
+static ParameterScale<int> scale_track_bg_thickness      (              0,                8,                SGVariant((int32_t) 0, SGVariantType::Int),       1,        0); /* PARAM_TRACK_BG_THICKNESS */
+static ParameterScale<int> scale_wp_marker_size          (              1,               64,                SGVariant((int32_t) 4, SGVariantType::Int),       1,        0); /* PARAM_WP_MARKER_SIZE */
+static ParameterScale<int> scale_track_min_stop_length   (MIN_STOP_LENGTH,  MAX_STOP_LENGTH,               SGVariant((int32_t) 60, SGVariantType::Int),       1,        0); /* PARAM_TRACK_MIN_STOP_LENGTH */
+static ParameterScale<int> scale_track_elevation_factor  (              1,              100,               SGVariant((int32_t) 30, SGVariantType::Int),       1,        0); /* PARAM_TRACK_ELEVATION_FACTOR */
+static ParameterScale<int> scale_trackpoint_size         ( MIN_POINT_SIZE,   MAX_POINT_SIZE,   SGVariant((int32_t) MIN_POINT_SIZE, SGVariantType::Int),       1,        0); /* PARAM_TRACKPOINT_SIZE */
+static ParameterScale<int> scale_track_direction_size    ( MIN_ARROW_SIZE,   MAX_ARROW_SIZE,                SGVariant((int32_t) 5, SGVariantType::Int),       1,        0); /* PARAM_TRACK_DIRECTION_SIZE */
 
 
 
@@ -983,25 +983,25 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 	case PARAM_TRACK_DRAWING_MODE:      rv = SGVariant((int32_t) this->painter->track_drawing_mode, trw_layer_param_specs[param_id].type_id);     break;
 	case PARAM_TRACK_COLOR_COMMON:      rv = SGVariant(this->painter->track_color_common);               break;
 	case PARAM_DRAW_TRACKPOINTS:        rv = SGVariant(this->painter->draw_trackpoints);                 break;
-	case PARAM_TRACKPOINT_SIZE:         rv = SGVariant((int32_t) this->painter->trackpoint_size);        break;
+	case PARAM_TRACKPOINT_SIZE:         rv = SGVariant((int32_t) this->painter->trackpoint_size, trw_layer_param_specs[param_id].type_id);        break;
 	case PARAM_DRAW_TRACK_ELEVATION:    rv = SGVariant(this->painter->draw_track_elevation);             break;
-	case PARAM_TRACK_ELEVATION_FACTOR:  rv = SGVariant((int32_t) this->painter->track_elevation_factor); break;
+	case PARAM_TRACK_ELEVATION_FACTOR:  rv = SGVariant((int32_t) this->painter->track_elevation_factor, trw_layer_param_specs[param_id].type_id); break;
 	case PARAM_DRAW_TRACK_STOPS:        rv = SGVariant(this->painter->draw_track_stops);                 break;
-	case PARAM_TRACK_MIN_STOP_LENGTH:   rv = SGVariant((int32_t) this->painter->track_min_stop_length);  break;
+	case PARAM_TRACK_MIN_STOP_LENGTH:   rv = SGVariant((int32_t) this->painter->track_min_stop_length, trw_layer_param_specs[param_id].type_id);  break;
 	case PARAM_DRAW_TRACK_LINES:        rv = SGVariant(this->painter->draw_track_lines);                 break;
 	case PARAM_DRAW_TRACK_DIRECTIONS:   rv = SGVariant(this->painter->draw_track_directions);            break;
-	case PARAM_TRACK_DIRECTION_SIZE:    rv = SGVariant((int32_t) this->painter->draw_track_directions_size); break;
-	case PARAM_TRACK_THICKNESS:         rv = SGVariant((int32_t) this->painter->track_thickness);        break;
-	case PARAM_TRACK_BG_THICKNESS:      rv = SGVariant((int32_t) this->painter->track_bg_thickness);     break;
+	case PARAM_TRACK_DIRECTION_SIZE:    rv = SGVariant((int32_t) this->painter->draw_track_directions_size, trw_layer_param_specs[param_id].type_id); break;
+	case PARAM_TRACK_THICKNESS:         rv = SGVariant((int32_t) this->painter->track_thickness, trw_layer_param_specs[param_id].type_id);        break;
+	case PARAM_TRACK_BG_THICKNESS:      rv = SGVariant((int32_t) this->painter->track_bg_thickness, trw_layer_param_specs[param_id].type_id);     break;
 	case PARAM_WP_LABELS:               rv = SGVariant(this->painter->draw_wp_labels);                   break;
 	case PARAM_TRK_BG_COLOR:            rv = SGVariant(this->painter->track_bg_color);                   break;
 	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv = SGVariant(this->painter->track_draw_speed_factor);          break;
 	case PARAM_TRACK_SORT_ORDER:        rv = SGVariant((int32_t) this->track_sort_order, trw_layer_param_specs[param_id].type_id);                break;
 
 	case PARAM_DRAW_WP_IMAGES:          rv = SGVariant(this->painter->draw_wp_images);       break;
-	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->painter->wp_image_size);       break;
-	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->painter->wp_image_alpha);      break;
-	case PARAM_WP_IMAGE_CACHE_CAPACITY: rv = SGVariant((int32_t) this->wp_image_cache.get_capacity_megabytes()); break;
+	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->painter->wp_image_size, trw_layer_param_specs[param_id].type_id);       break;
+	case PARAM_WP_IMAGE_ALPHA:          rv = SGVariant((int32_t) this->painter->wp_image_alpha, trw_layer_param_specs[param_id].type_id);      break;
+	case PARAM_WP_IMAGE_CACHE_CAPACITY: rv = SGVariant((int32_t) this->wp_image_cache.get_capacity_megabytes(), trw_layer_param_specs[param_id].type_id); break;
 
 	case PARAM_WP_MARKER_COLOR:         rv = SGVariant(this->painter->wp_marker_color);      break;
 	case PARAM_WP_LABEL_FG_COLOR:       rv = SGVariant(this->painter->wp_label_fg_color);    break;

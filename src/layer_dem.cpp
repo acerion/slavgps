@@ -489,11 +489,11 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 		break;
 
 	case PARAM_SOURCE:
-		rv = SGVariant((int32_t) this->source);
+		rv = SGVariant((int32_t) this->source, dem_layer_param_specs[PARAM_SOURCE].type_id);
 		break;
 
 	case PARAM_TYPE:
-		rv = SGVariant((int32_t) this->dem_type);
+		rv = SGVariant((int32_t) this->dem_type, dem_layer_param_specs[PARAM_TYPE].type_id);
 		break;
 
 	case PARAM_COLOR:

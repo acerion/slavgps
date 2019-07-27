@@ -92,7 +92,7 @@ static int max_cache_size_bytes = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024; /* [By
 
 static std::mutex map_cache_mutex;
 
-static ParameterScale<int> scale_cache_size(1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE), 1, 0);
+static ParameterScale<int> scale_cache_size(1, 1024, SGVariant((int32_t) VIK_CONFIG_MAPCACHE_SIZE, SGVariantType::Int), 1, 0);
 
 static ParameterSpecification prefs[] = {
 	{ 0, PREFERENCES_NAMESPACE_GENERAL "mapcache_size", SGVariantType::Int, PARAMETER_GROUP_GENERIC, QObject::tr("Map cache memory size (MB):"), WidgetType::HScale, &scale_cache_size, NULL, "" },

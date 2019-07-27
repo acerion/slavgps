@@ -100,7 +100,14 @@ namespace SlavGPS {
 
 		SGVariant()                           { type_id = SGVariantType::Empty; }
 		SGVariant(double d,                   SGVariantType type_id = SGVariantType::Double);
-		SGVariant(int32_t i,                  SGVariantType type_id = SGVariantType::Int);
+
+		/* This constructor can be used to construct both
+		   SGVariantType::Int and SGVariantType::Enumeration.
+		   Don't set default value of second argument, force
+		   client code to explicitly specify type id of
+		   created variant. */
+		SGVariant(int32_t i,                  SGVariantType type_id);
+
 		SGVariant(const QString & s,          SGVariantType type_id = SGVariantType::String);
 		SGVariant(const char * s,             SGVariantType type_id = SGVariantType::String);
 		SGVariant(bool b,                     SGVariantType type_id = SGVariantType::Boolean);

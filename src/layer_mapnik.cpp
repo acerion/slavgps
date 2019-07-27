@@ -128,9 +128,9 @@ static SGVariant size_default(void)      { return SGVariant(256, SGVariantType::
 static SGVariant cache_dir_default(void) { return SGVariant(MapCache::get_default_maps_dir() + "MapnikRendering"); }
 
 
-static ParameterScale<int> scale_alpha(0,  255, SGVariant(255),  5, 0);
-static ParameterScale<int> scale_timeout(0, 1024, SGVariant(168), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
-static ParameterScale<int> scale_threads(1, 64, SGVariant(1), 1, 0); /* 64 threads should be enough for anyone... */
+static ParameterScale<int> scale_alpha(0,  255, SGVariant(255, SGVariantType::Int), 5, 0);
+static ParameterScale<int> scale_timeout(0, 1024, SGVariant(168, SGVariantType::Int), 12, 0); /* Renderer timeout hours. Value of hardcoded default is one week. */
+static ParameterScale<int> scale_threads(1, 64, SGVariant(1, SGVariantType::Int), 1, 0); /* 64 threads should be enough for anyone... */
 
 
 enum {
@@ -474,7 +474,7 @@ SGVariant LayerMapnik::get_param_value(param_id_t param_id, bool is_file_operati
 		break;
 	}
 	case PARAM_ALPHA:
-		param_value = SGVariant((int32_t) this->alpha);
+		param_value = SGVariant((int32_t) this->alpha, mapnik_layer_param_specs[PARAM_ALPHA].type_id);
 		break;
 	case PARAM_USE_FILE_CACHE:
 		param_value = SGVariant(this->use_file_cache);

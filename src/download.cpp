@@ -197,12 +197,12 @@ static std::mutex dem_files_mutex;
 
 /* Spin button scale. */
 /* FIXME: value of age is stored internally as seconds and as such is presented to user. Make the presentation more user-friendly. */
-static ParameterScale<int> scale_age(1, 365, SGVariant((int32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400)), 1, 0); /* download_tile_age; hardcoded default value in days. */
+static ParameterScale<int> scale_age(1, 365, SGVariant((int32_t) (VIK_CONFIG_DEFAULT_TILE_AGE / 86400), SGVariantType::Int), 1, 0); /* download_tile_age; hardcoded default value in days. */
 
 
 
 
-
+#if 0
 static SGVariant convert_to_display(SGVariant value)
 {
 	/* From seconds into days. */
@@ -217,7 +217,7 @@ static SGVariant convert_to_internal(SGVariant value)
 	/* From days into seconds. */
 	return SGVariant((int32_t) (86400 * value.u.val_int));
 }
-
+#endif
 
 
 

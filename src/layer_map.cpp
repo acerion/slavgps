@@ -176,7 +176,7 @@ static double map_zooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 
 
 
 
-static ParameterScale<int> scale_alpha(0, 255, SGVariant((int32_t) 255), 3, 0);
+static ParameterScale<int> scale_alpha(0, 255, SGVariant((int32_t) 255, SGVariantType::Int), 3, 0);
 
 
 
@@ -636,16 +636,16 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 		break;
 	}
 	case PARAM_CACHE_LAYOUT:
-		rv = SGVariant((int32_t) this->cache_layout);
+		rv = SGVariant((int32_t) this->cache_layout, maps_layer_param_specs[PARAM_CACHE_LAYOUT].type_id);
 		break;
 	case PARAM_FILE:
 		rv = SGVariant(this->file_full_path);
 		break;
 	case PARAM_MAP_TYPE_ID:
-		rv = SGVariant((int32_t) this->map_type_id);
+		rv = SGVariant((int32_t) this->map_type_id, maps_layer_param_specs[PARAM_MAP_TYPE_ID].type_id);
 		break;
 	case PARAM_ALPHA:
-		rv = SGVariant((int32_t) this->alpha);
+		rv = SGVariant((int32_t) this->alpha, maps_layer_param_specs[PARAM_ALPHA].type_id);
 		break;
 	case PARAM_AUTO_DOWNLOAD:
 		rv = SGVariant(this->autodownload); /* kamilkamil: in viking code there is a type mismatch. */
@@ -654,7 +654,7 @@ SGVariant LayerMap::get_param_value(param_id_t param_id, bool is_file_operation)
 		rv = SGVariant(this->adl_only_missing); /* kamilkamil: in viking code there is a type mismatch. */
 		break;
 	case PARAM_MAP_ZOOM:
-		rv = SGVariant((int32_t) this->map_zoom_id);
+		rv = SGVariant((int32_t) this->map_zoom_id, maps_layer_param_specs[PARAM_MAP_ZOOM].type_id);
 		break;
 	default: break;
 	}
