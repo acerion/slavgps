@@ -979,8 +979,8 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 	case PARAM_WAYPOINTS_VISIBLE:       rv = SGVariant(this->waypoints.is_visible());                    break;
 	case PARAM_ROUTES_VISIBLE:          rv = SGVariant(this->routes.is_visible());                       break;
 	case PARAM_DRAW_TRACK_LABELS:       rv = SGVariant(this->painter->draw_track_labels);                break;
-	case PARAM_TRACK_LABEL_FONT_SIZE:   rv = SGVariant((int32_t) this->painter->track_label_font_size);  break;
-	case PARAM_TRACK_DRAWING_MODE:      rv = SGVariant((int32_t) this->painter->track_drawing_mode);     break;
+	case PARAM_TRACK_LABEL_FONT_SIZE:   rv = SGVariant((int32_t) this->painter->track_label_font_size, trw_layer_param_specs[param_id].type_id);  break;
+	case PARAM_TRACK_DRAWING_MODE:      rv = SGVariant((int32_t) this->painter->track_drawing_mode, trw_layer_param_specs[param_id].type_id);     break;
 	case PARAM_TRACK_COLOR_COMMON:      rv = SGVariant(this->painter->track_color_common);               break;
 	case PARAM_DRAW_TRACKPOINTS:        rv = SGVariant(this->painter->draw_trackpoints);                 break;
 	case PARAM_TRACKPOINT_SIZE:         rv = SGVariant((int32_t) this->painter->trackpoint_size);        break;
@@ -996,7 +996,7 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 	case PARAM_WP_LABELS:               rv = SGVariant(this->painter->draw_wp_labels);                   break;
 	case PARAM_TRK_BG_COLOR:            rv = SGVariant(this->painter->track_bg_color);                   break;
 	case PARAM_TRACK_DRAW_SPEED_FACTOR: rv = SGVariant(this->painter->track_draw_speed_factor);          break;
-	case PARAM_TRACK_SORT_ORDER:        rv = SGVariant((int32_t) this->track_sort_order);                break;
+	case PARAM_TRACK_SORT_ORDER:        rv = SGVariant((int32_t) this->track_sort_order, trw_layer_param_specs[param_id].type_id);                break;
 
 	case PARAM_DRAW_WP_IMAGES:          rv = SGVariant(this->painter->draw_wp_images);       break;
 	case PARAM_WP_IMAGE_SIZE:           rv = SGVariant((int32_t) this->painter->wp_image_size);       break;
@@ -1007,11 +1007,11 @@ SGVariant LayerTRW::get_param_value(param_id_t param_id, bool is_file_operation)
 	case PARAM_WP_LABEL_FG_COLOR:       rv = SGVariant(this->painter->wp_label_fg_color);    break;
 	case PARAM_WP_LABEL_BG_COLOR:       rv = SGVariant(this->painter->wp_label_bg_color);    break;
 	case PARAM_WPBA:                    rv = SGVariant(this->painter->wpbgand);              break;
-	case PARAM_WP_MARKER_TYPE:          rv = SGVariant((int32_t) this->painter->wp_marker_type);      break;
-	case PARAM_WP_MARKER_SIZE:          rv = SGVariant((int32_t) this->painter->wp_marker_size);      break;
+	case PARAM_WP_MARKER_TYPE:          rv = SGVariant((int32_t) this->painter->wp_marker_type,     trw_layer_param_specs[param_id].type_id);  break;
+	case PARAM_WP_MARKER_SIZE:          rv = SGVariant((int32_t) this->painter->wp_marker_size,     trw_layer_param_specs[param_id].type_id);  break;
 	case PARAM_DRAW_WP_SYMBOLS:         rv = SGVariant(this->painter->draw_wp_symbols);               break;
-	case PARAM_WP_LABEL_FONT_SIZE:      rv = SGVariant((int32_t) this->painter->wp_label_font_size);  break;
-	case PARAM_WP_SORT_ORDER:           rv = SGVariant((int32_t) this->wp_sort_order);       break;
+	case PARAM_WP_LABEL_FONT_SIZE:      rv = SGVariant((int32_t) this->painter->wp_label_font_size, trw_layer_param_specs[param_id].type_id);  break;
+	case PARAM_WP_SORT_ORDER:           rv = SGVariant((int32_t) this->wp_sort_order,               trw_layer_param_specs[param_id].type_id);  break;
 
 	/* Metadata. */
 	case PARAM_MDDESC:

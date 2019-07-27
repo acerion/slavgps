@@ -202,7 +202,8 @@ static void write_layer_params_and_data(FILE * file, const Layer * layer)
 		/* Get current, per-layer-instance value of parameter. Refer to the parameter by its id ((*iter)->first). */
 		const SGVariant param_value = layer->get_param_value(iter->first, true);
 		if (iter->second->type_id != param_value.type_id) {
-			qDebug() << SG_PREFIX_E << "type id mismatch for parameter named" << iter->second->name << ":" << iter->second->type_id << param_value.type_id;
+			qDebug() << SG_PREFIX_E << "type id mismatch for parameter named" << iter->second->name << ":"
+				 << iter->second->type_id << "!=" << param_value.type_id;
 			assert (iter->second->type_id == param_value.type_id);
 		}
 		param_value.write(file, iter->second->name);
