@@ -51,6 +51,8 @@ using namespace SlavGPS;
 */
 ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget * parent) : QWidget(parent)
 {
+	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
 	this->left_margin_width = left;
 	this->right_margin_width = right;
 	this->top_margin_height = top;
@@ -73,6 +75,13 @@ ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget
 	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
 	this->highlight_pen.setWidth(1);
 	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
+
+	/* A valid (non-null) initial pixmap for painter, otherwise
+	   the painter will complain to console. */
+	this->vpixmap = QPixmap(10, 10);
+	/* ::apply_total_sizes() first calls painter.end(), so in
+	   constructor we have to start with painter.begin(). */
+	this->painter.begin(&this->vpixmap);
 }
 
 
@@ -1451,4 +1460,22 @@ sg_ret ViewportPixmap::calculate_scaled_sizes(int target_width, int target_heigh
 	qDebug() << SG_PREFIX_I << "Scale factor =" << scale_factor << ", scaled width =" << scaled_width << ", scaled height =" << scaled_height;
 
 	return sg_ret::ok;
+}
+
+
+
+
+/**
+   @reviewed-on 2019-07-28
+*/
+void ViewportPixmap::resizeEvent(QResizeEvent * ev)
+{
+	qDebug() << SG_PREFIX_I << "Reacting to resize event, new total size is width =" << this->geometry().width() << ", height =" << this->geometry().height();
+
+	/* This will emit "sizes changed" signal. Clients that
+	   subscribe to this signal will re-draw their contents to
+	   resized viewport pixmap widget. */
+	this->apply_total_sizes(this->geometry().width(), this->geometry().height());
+
+	return;
 }

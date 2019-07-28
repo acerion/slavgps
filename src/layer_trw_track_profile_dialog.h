@@ -47,6 +47,7 @@
 
 
 
+#include "viewport_pixmap.h"
 #include "layer_trw_track_internal.h"
 #include "measurements.h"
 
@@ -60,7 +61,6 @@ namespace SlavGPS {
 
 	class Window;
 	class GisViewport;
-	class ViewportPixmap;
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
@@ -84,6 +84,32 @@ namespace SlavGPS {
 
 
 
+	class Graph2D : public ViewportPixmap {
+		Q_OBJECT
+	public:
+		Graph2D(int left = 0, int right = 0, int top = 0, int bottom = 0, QWidget * parent = NULL);
+
+		/* Get cursor position of a mouse event.  Returned
+		   position is in "beginning is in bottom-left corner"
+		   coordinate system. */
+		sg_ret cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
+
+
+		void mousePressEvent(QMouseEvent * event); /* Double click is handled through event filter. */
+		void mouseMoveEvent(QMouseEvent * event);
+		void mouseReleaseEvent(QMouseEvent * event);
+
+		GisViewportDomain x_domain = GisViewportDomain::Max;
+		GisViewportDomain y_domain = GisViewportDomain::Max;
+
+		HeightUnit height_unit;
+		DistanceUnit distance_unit;
+		SpeedUnit speed_unit;
+	};
+
+
+
+
 	class TrackProfileDialog : public QDialog {
 		Q_OBJECT
 	public:
@@ -93,15 +119,15 @@ namespace SlavGPS {
 
 		void clear_image(QPixmap * pix);
 
-		void draw_all_graphs(bool resized);
+		void draw_all_views(bool resized);
 
 		void save_values(void);
 
-		sg_ret draw_center(ProfileView * graph);
-		sg_ret draw_left(ProfileView * graph);
-		sg_ret draw_bottom(ProfileView * graph);
+		sg_ret draw_center(ProfileView * view);
+		sg_ret draw_left(ProfileView * view);
+		sg_ret draw_bottom(ProfileView * view);
 
-		ProfileView * find_view(GisViewport * graph_2d) const;
+		ProfileView * find_view(Graph2D * graph_2d) const;
 		ProfileView * get_current_view(void) const;
 
 
@@ -109,7 +135,7 @@ namespace SlavGPS {
 		GisViewport * main_gisview = NULL;
 		Track * trk = NULL;
 
-		std::vector<ProfileView *> graphs;
+		std::vector<ProfileView *> views;
 
 	private slots:
 		void checkbutton_toggle_cb(void);
@@ -120,8 +146,8 @@ namespace SlavGPS {
 		sg_ret paint_left_cb(ViewportPixmap * pixmap);
 		sg_ret paint_bottom_cb(ViewportPixmap * pixmap);
 
-		void handle_cursor_move_cb(GisViewport * gisview, QMouseEvent * ev);
-		void handle_mouse_button_release_cb(GisViewport * gisview, QMouseEvent * event);
+		void handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseEvent * ev);
+		void handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * event);
 
 	private:
 		/* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
@@ -131,7 +157,7 @@ namespace SlavGPS {
 
 		//char * tz = NULL; /* TimeZone at track's location. */
 
-		/* Pen used to draw main parts of graphs (i.e. the values of functions y = f(x)). */
+		/* Pen used to draw main parts of views (i.e. the values of functions y = f(x)). */
 		QPen main_pen;
 
 		QTabWidget * tabs = NULL;
@@ -166,11 +192,12 @@ namespace SlavGPS {
 
 
 
+		void create_graph_2d(void);
 		void configure_labels(void);
 		void create_widgets_layout(void);
 
-		void create_viewport(TrackProfileDialog * dialog, GisViewportDomain x_domain, GisViewportDomain y_domain);
-		QString get_graph_title(void) const;
+		void configure_title(void);
+		const QString & get_title(void) const;
 
 		/**
 		   Set y position of argument that matches x position of argument.
@@ -184,17 +211,17 @@ namespace SlavGPS {
 		sg_ret set_pos_y_cbl(ScreenPos & screen_pos);
 
 		/**
-		   Get position of cursor on a graph. 'x' coordinate
-		   will match current 'x' position of cursor, and 'y'
-		   coordinate will be on a graph line that corresponds
-		   with the 'x' position.
+		   Get position of cursor on a 2d graph. 'x'
+		   coordinate will match current 'x' position of
+		   cursor, and 'y' coordinate will be on a 2d graph
+		   line that corresponds with the 'x' position.
 
 		   Returned cursor position is in "beginning of
 		   coordinate system (position 0,0) is in bottom-left
 		   corner".
 		   cbl = coordinate-bottom-left.
 		*/
-		sg_ret get_cursor_pos_cbl_on_line(QMouseEvent * ev, ScreenPos & screen_pos);
+		sg_ret cbl_get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos);
 
 		sg_ret set_initial_visible_range_x_distance(void);
 		sg_ret set_initial_visible_range_x_time(void);
@@ -258,7 +285,10 @@ namespace SlavGPS {
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;
 
-		GisViewport * graph_2d = NULL;
+		GisViewportDomain x_domain = GisViewportDomain::Max;
+		GisViewportDomain y_domain = GisViewportDomain::Max;
+
+		Graph2D * graph_2d = NULL;
 		TrackViewLabels labels;
 
 		QGridLayout * labels_grid = NULL;
@@ -267,6 +297,7 @@ namespace SlavGPS {
 
 	private:
 		sg_ret regenerate_data_from_scratch(Track * trk);
+		QString title;
 	};
 
 

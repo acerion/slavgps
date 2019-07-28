@@ -3406,7 +3406,7 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 
 
 
-sg_ret Track::draw_e_ft(GisViewport * gisview, int width, int height)
+sg_ret Track::draw_e_ft(Graph2D * graph_2d, int width, int height)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3444,7 +3444,7 @@ sg_ret Track::draw_e_ft(GisViewport * gisview, int width, int height)
 		cur_pos.rx() = col;
 		cur_pos.ry() = bottommost_pixel - height * (value - alt_min) / visible_range;
 
-		gisview->draw_line(pen, last_pos, cur_pos);
+		graph_2d->draw_line(pen, last_pos, cur_pos);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3456,7 +3456,7 @@ sg_ret Track::draw_e_ft(GisViewport * gisview, int width, int height)
 
 
 
-sg_ret Track::draw_d_ft(GisViewport * gisview, int width, int height)
+sg_ret Track::draw_d_ft(Graph2D * graph_2d, int width, int height)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3488,7 +3488,7 @@ sg_ret Track::draw_d_ft(GisViewport * gisview, int width, int height)
 		cur_pos.rx() = col;
 		cur_pos.ry() = bottommost_pixel - height * (value - dist_min) / visible_range;
 
-		gisview->draw_line(pen, last_pos, cur_pos);
+		graph_2d->draw_line(pen, last_pos, cur_pos);
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3499,7 +3499,7 @@ sg_ret Track::draw_d_ft(GisViewport * gisview, int width, int height)
 
 
 
-sg_ret Track::draw_v_ft(GisViewport * gisview, int width, int height)
+sg_ret Track::draw_v_ft(Graph2D * graph_2d, int width, int height)
 {
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
@@ -3538,9 +3538,9 @@ sg_ret Track::draw_v_ft(GisViewport * gisview, int width, int height)
 		cur_pos.rx() = col;
 		cur_pos.ry() = height - bottommost_pixel * (current_value_uu - min_value_uu) / visible_values_range_uu;
 
-		gisview->draw_line(pen,
-				   last_pos.x(), last_pos.y(),
-				   cur_pos.x(), cur_pos.y());
+		graph_2d->draw_line(pen,
+				    last_pos.x(), last_pos.y(),
+				    cur_pos.x(), cur_pos.y());
 
 		last_pos = cur_pos;
 		col = col + (1 / x_scale);
@@ -3552,7 +3552,7 @@ sg_ret Track::draw_v_ft(GisViewport * gisview, int width, int height)
 
 
 
-sg_ret Track::draw_tree_item(GisViewport * gisview, int width, int height, GisViewportDomain x_domain, GisViewportDomain y_domain)
+sg_ret Track::draw_tree_item(Graph2D * graph_2d, int width, int height, GisViewportDomain x_domain, GisViewportDomain y_domain)
 {
 	if (x_domain != GisViewportDomain::Time) {
 		qDebug() << SG_PREFIX_W << "Can't draw non-time based graph";
@@ -3561,13 +3561,13 @@ sg_ret Track::draw_tree_item(GisViewport * gisview, int width, int height, GisVi
 
 	switch (y_domain) {
 	case GisViewportDomain::Elevation:
-		return this->draw_e_ft(gisview, width, height);
+		return this->draw_e_ft(graph_2d, width, height);
 		break;
 	case GisViewportDomain::Distance:
-		return this->draw_d_ft(gisview, width, height);
+		return this->draw_d_ft(graph_2d, width, height);
 		break;
 	case GisViewportDomain::Speed:
-		return this->draw_v_ft(gisview, width, height);
+		return this->draw_v_ft(graph_2d, width, height);
 		break;
 	default:
 		qDebug() << SG_PREFIX_W << "Can't draw graphs of this y-domain";

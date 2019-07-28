@@ -140,7 +140,7 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 
 	this->installEventFilter(this);
 
-	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
 	this->setMinimumSize(200, 300);
 	snprintf(this->debug, sizeof (this->debug), "%s", "center");
 	//this->setMaximumSize(2700, 2700);
@@ -191,15 +191,9 @@ GisViewport::GisViewport(int left, int right, int top, int bottom, QWidget * par
 
 
 	this->setFocusPolicy(Qt::ClickFocus);
-	//this->qpainter = new QPainter(this);
-
-
 
 	this->scale_visibility = true;
 
-	this->height_unit = Preferences::get_unit_height();
-	this->distance_unit = Preferences::get_unit_distance();
-	this->speed_unit = Preferences::get_unit_speed();
 }
 
 
@@ -1606,23 +1600,6 @@ sg_ret GisViewport::add_attribution(QString const & attribution)
 sg_ret GisViewport::add_logo(const GisViewportLogo & logo)
 {
 	return this->decorations.add_logo(logo);
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-void GisViewport::resizeEvent(QResizeEvent * ev)
-{
-	qDebug() << SG_PREFIX_I << "Reacting to resize event, new total viewport size is width =" << this->geometry().width() << ", height =" << this->geometry().height();
-
-	/* This will emit "sizes changed" signal that will lead to
-	   redrawing of all tree items. */
-	this->apply_total_sizes(this->geometry().width(), this->geometry().height());
-
-	return;
 }
 
 

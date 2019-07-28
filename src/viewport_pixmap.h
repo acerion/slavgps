@@ -139,6 +139,8 @@ namespace SlavGPS {
 		void clear(void);
 
 
+		void resizeEvent(QResizeEvent * event);
+
 
 		/* Drawing primitives. */
 		void draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y);
@@ -275,6 +277,9 @@ namespace SlavGPS {
 
 	signals:
 		void size_changed(ViewportPixmap * vpixmap);
+		void cursor_moved(ViewportPixmap * vpixmap, QMouseEvent * event);
+		void button_released(ViewportPixmap * vpixmap, QMouseEvent * event);
+
 	};
 	QDebug operator<<(QDebug debug, const ViewportPixmap & vpixmap);
 

@@ -116,18 +116,16 @@ static GraphIntervalsSpeed    speed_intervals;
 
 
 static void time_label_update(QLabel * label, time_t seconds_from_start);
-static void real_time_label_update(ProfileView * graph, const Trackpoint * tp);
+static void real_time_label_update(ProfileView * view, const Trackpoint * tp);
 
 static QString get_time_grid_label(const Time & interval_value, const Time & value);
-
-static QString get_graph_title(void);
 
 
 
 
 TrackProfileDialog::~TrackProfileDialog()
 {
-	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
 		delete *iter;
 	}
 }
@@ -167,10 +165,10 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 	}
 
 	if (!this->track_data.valid) {
-		qDebug() << SG_PREFIX_E << "Value vector for" << this->get_graph_title() << "is invalid";
+		qDebug() << SG_PREFIX_E << "Value vector for" << this->get_title() << "is invalid";
 		return sg_ret::err;
 	}
-	qDebug() << SG_PREFIX_I << "Generated value vector for" << this->get_graph_title() << ", will now adjust y values";
+	qDebug() << SG_PREFIX_I << "Generated value vector for" << this->get_title() << ", will now adjust y values";
 
 
 	/* Do necessary adjustments to y values. */
@@ -182,7 +180,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->graph_2d->speed_unit);
 		}
 
-		qDebug() << SG_PREFIX_D << "Calculating min/max y speed for" << this->get_graph_title();
+		qDebug() << SG_PREFIX_D << "Calculating min/max y speed for" << this->get_title();
 		this->track_data.calculate_min_max();
 		if (this->track_data.y_min < 0.0) {
 			this->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
@@ -224,7 +222,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 
 
 
-	qDebug() << SG_PREFIX_I << "After calling calculate_min_max; x_min/x_max =" << this->track_data.x_min << this->track_data.x_max << this->get_graph_title();
+	qDebug() << SG_PREFIX_I << "After calling calculate_min_max; x_min/x_max =" << this->track_data.x_min << this->track_data.x_max << this->get_title();
 
 
 
@@ -322,7 +320,7 @@ sg_ret ProfileView::set_initial_visible_range_x_time(void)
 
 	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
 	if (visible_range.is_zero()) {
-		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_graph_title();
+		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_title();
 		return sg_ret::err;
 	}
 
@@ -516,20 +514,21 @@ ProfileView * TrackProfileDialog::get_current_view(void) const
    Find a trackpoint corresponding to cursor position when button was released.
    Draw marking for this trackpoint.
 */
-void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, QMouseEvent * ev)
+void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * ev)
 {
-	ProfileView * graph = this->get_current_view();
-	assert (graph->graph_2d == gisview);
+	Graph2D * graph_2d = (Graph2D *) vpixmap;
+	ProfileView * view = this->get_current_view();
+	assert (view->graph_2d == graph_2d);
 
 
 	ScreenPos current_pos_cbl;
-	gisview->get_cursor_pos_cbl(ev, current_pos_cbl);
+	graph_2d->cbl_get_cursor_pos(ev, current_pos_cbl);
 	const bool found_tp = set_center_at_graph_position(current_pos_cbl.x(),
 							   this->trw,
 							   this->main_gisview,
 							   this->trk,
-							   graph->graph_2d->x_domain,
-							   graph->get_x_pixels());
+							   view->graph_2d->x_domain,
+							   view->get_x_pixels());
 	if (!found_tp) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
@@ -545,13 +544,13 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 	   This is done on all graphs because we want to have 'mouse
 	   release' event reflected in all graphs. */
 	current_pos_cbl.set(-1.0, -1.0); /* Don't draw current position on clicks. */
-	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
-		ProfileView * a_graph = *iter;
-		if (!a_graph->graph_2d) {
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
+		ProfileView * view_iter = *iter;
+		if (!view_iter->graph_2d) {
 			continue;
 		}
 
-		if (!a_graph->track_data.valid) {
+		if (!view_iter->track_data.valid) {
 			/* We didn't visit that tab yet, so track data
 			   hasn't been generated for current graph
 			   width. */
@@ -562,12 +561,16 @@ void TrackProfileDialog::handle_mouse_button_release_cb(GisViewport * gisview, Q
 
 
 	        ScreenPos selected_pos_cbl;
-		if (sg_ret::ok != a_graph->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl)) {
+		if (sg_ret::ok != view_iter->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl)) {
 			continue;
 		}
 
-		/* Positions passed to draw_marks() are in graph's coordinate system, not viewport's coordinate system. */
-		a_graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		/*
+		  Positions passed to draw_marks() are in our 2D
+		  graph's coordinate system, not Qt's coordinate
+		  system.
+		*/
+		view_iter->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 	}
 
 	this->button_split_at_marker->setEnabled(this->is_selected_drawn);
@@ -621,10 +624,10 @@ sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 
 
 
-sg_ret ProfileView::get_cursor_pos_cbl_on_line(QMouseEvent * ev, ScreenPos & screen_pos_cbl)
+sg_ret ProfileView::cbl_get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos_cbl)
 {
 	/* Get exact cursor position. 'y' may not be on a graph line. */
-	if (sg_ret::ok != this->graph_2d->get_cursor_pos_cbl(ev, screen_pos_cbl)) {
+	if (sg_ret::ok != this->graph_2d->cbl_get_cursor_pos(ev, screen_pos_cbl)) {
 		/* Not an error? */
 		return sg_ret::ok;
 	}
@@ -651,10 +654,10 @@ void time_label_update(QLabel * label, time_t seconds_from_start)
 
 
 
-void real_time_label_update(ProfileView * graph, Track * trk)
+void real_time_label_update(ProfileView * view, Track * trk)
 {
-	if (NULL == graph->labels.t_value) {
-		/* This function shouldn't be called for graphs that don't have the T label. */
+	if (NULL == view->labels.t_value) {
+		/* This function shouldn't be called for views that don't have the T label. */
 		qDebug() << SG_PREFIX_W << "Called the function, but label is NULL";
 		return;
 	}
@@ -664,7 +667,7 @@ void real_time_label_update(ProfileView * graph, Track * trk)
 		return;
 	}
 
-	graph->labels.t_value->setText(tp->timestamp.to_timestamp_string(Qt::LocalTime));
+	view->labels.t_value->setText(tp->timestamp.to_timestamp_string(Qt::LocalTime));
 
 	return;
 }
@@ -672,12 +675,13 @@ void real_time_label_update(ProfileView * graph, Track * trk)
 
 
 
-void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEvent * ev)
+void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseEvent * ev)
 {
-	ProfileView * graph = this->get_current_view();
-	assert (graph->graph_2d == gisview);
+	Graph2D * graph_2d = (Graph2D *) vpixmap;
+	ProfileView * view = this->get_current_view();
+	assert (view->graph_2d == graph_2d);
 
-	if (!graph->track_data.valid) {
+	if (!view->track_data.valid) {
 		qDebug() << SG_PREFIX_E << "Not handling cursor move, track data invalid";
 		return;
 	}
@@ -688,7 +692,7 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 	ScreenPos selected_pos_cbl; /* Crosshair laying on a graph where currently selected tp is located. */
 	ScreenPos current_pos_cbl;  /* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
 
-	if (sg_ret::ok != graph->get_cursor_pos_cbl_on_line(ev, current_pos_cbl)) {
+	if (sg_ret::ok != view->cbl_get_cursor_pos_on_line(ev, current_pos_cbl)) {
 		qDebug() << SG_PREFIX_E << "Failed to get cursor position on line";
 		return;
 	}
@@ -703,69 +707,69 @@ void TrackProfileDialog::handle_cursor_move_cb(GisViewport * gisview, QMouseEven
 		   current trackpoint (trackpoint under moving cursor
 		   mouse) is changing. The trackpoint selected by
 		   previous cursor click is does not change. */
-		graph->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl);
+		view->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl);
 	}
 
-	switch (graph->graph_2d->x_domain) {
+	switch (view->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) current_pos_cbl.x() / graph->graph_2d->central_get_width(), &meters_from_start, HOVERED);
-		graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		this->trk->select_tp_by_percentage_dist((double) current_pos_cbl.x() / view->graph_2d->central_get_width(), &meters_from_start, HOVERED);
+		view->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
-		if (graph->labels.x_value) {
+		if (view->labels.x_value) {
 			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
-			graph->labels.x_value->setText(distance.convert_to_unit(Preferences::get_unit_distance()).to_string());
+			view->labels.x_value->setText(distance.convert_to_unit(Preferences::get_unit_distance()).to_string());
 		}
 		break;
 
 	case GisViewportDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) current_pos_cbl.x() / graph->graph_2d->central_get_width(), HOVERED);
-		graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		this->trk->select_tp_by_percentage_time((double) current_pos_cbl.x() / view->graph_2d->central_get_width(), HOVERED);
+		view->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
-		if (graph->labels.x_value) {
+		if (view->labels.x_value) {
 			time_t seconds_from_start = 0;
 			this->trk->get_tp_relative_timestamp(seconds_from_start, HOVERED);
-			time_label_update(graph->labels.x_value, seconds_from_start);
+			time_label_update(view->labels.x_value, seconds_from_start);
 		}
 
-		real_time_label_update(graph, this->trk);
+		real_time_label_update(view, this->trk);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) graph->graph_2d->x_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) view->graph_2d->x_domain;
 		break;
 	};
 
 
-	double y = graph->track_data.y[(int) current_pos_cbl.x()]; /* FIXME: use proper value for array index. */
-	switch (graph->graph_2d->y_domain) {
+	double y = view->track_data.y[(int) current_pos_cbl.x()]; /* FIXME: use proper value for array index. */
+	switch (view->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
-		if (graph->labels.y_value) {
+		if (view->labels.y_value) {
 			/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
 			   No conversions needed as already in appropriate units. */
-			graph->labels.y_value->setText(Speed::to_string(y));
+			view->labels.y_value->setText(Speed::to_string(y));
 		}
 		break;
 	case GisViewportDomain::Elevation:
-		if (graph->labels.y_value && NULL != this->trk->get_hovered_tp()) {
+		if (view->labels.y_value && NULL != this->trk->get_hovered_tp()) {
 			/* Recalculate value into target unit. */
-			graph->labels.y_value->setText(this->trk->get_hovered_tp()->altitude
-						       .convert_to_unit(Preferences::get_unit_height())
-						       .to_string());
+			view->labels.y_value->setText(this->trk->get_hovered_tp()->altitude
+						      .convert_to_unit(Preferences::get_unit_height())
+						      .to_string());
 		}
 		break;
 	case GisViewportDomain::Distance:
-		if (graph->labels.y_value) {
+		if (view->labels.y_value) {
 			const Distance distance_uu(y, Preferences::get_unit_distance()); /* 'y' is already recalculated to user unit, so this constructor must use user unit as well. */
-			graph->labels.y_value->setText(distance_uu.to_string());
+			view->labels.y_value->setText(distance_uu.to_string());
 		}
 		break;
 	case GisViewportDomain::Gradient:
-		if (graph->labels.y_value) {
+		if (view->labels.y_value) {
 			const Gradient gradient_uu(y);
-			graph->labels.y_value->setText(gradient_uu.to_string());
+			view->labels.y_value->setText(gradient_uu.to_string());
 		}
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) graph->graph_2d->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) view->graph_2d->y_domain;
 		break;
 	};
 
@@ -1114,14 +1118,18 @@ void ProfileViewDT::save_values(void)
 */
 sg_ret ProfileView::draw_graph(Track * trk)
 {
+	qDebug() << SG_PREFIX_I;
+
 	if (this->graph_2d->x_domain == GisViewportDomain::Time) {
 		const Time duration = trk->get_duration(true);
 		if (!duration.is_valid() || duration.get_value() <= 0) {
+			qDebug() << SG_PREFIX_E << "return 1";
 			return sg_ret::err;
 		}
 	}
 
 	if (sg_ret::ok != this->regenerate_data(trk)) {
+		qDebug() << SG_PREFIX_E << "return 2";
 		return sg_ret::err;
 	}
 
@@ -1134,6 +1142,8 @@ sg_ret ProfileView::draw_graph(Track * trk)
 					       this->get_x_pixels(),
 					       this->get_y_pixels(),
 					       this->graph_2d->x_domain, this->graph_2d->y_domain)) {
+
+		qDebug() << SG_PREFIX_I << "draw function values";
 		this->draw_function_values();
 	}
 
@@ -1143,11 +1153,11 @@ sg_ret ProfileView::draw_graph(Track * trk)
 
 	this->draw_additional_indicators(trk);
 
-	/* This will call GisViewport::paintEvent(), triggering final render to screen. */
+	/* This will call ::paintEvent(), triggering final render to screen. */
 	this->graph_2d->update();
 
 	/* The pixmap = margin + graph area. */
-	qDebug() << SG_PREFIX_I << "Saving viewport" << this->graph_2d->debug;
+	qDebug() << SG_PREFIX_I << "Saving graph" << this->graph_2d->debug;
 	this->graph_2d->saved_pixmap = this->graph_2d->get_pixmap();
 	this->graph_2d->saved_pixmap_valid = true;
 
@@ -1193,11 +1203,11 @@ void ProfileView::draw_speed_dist(Track * trk)
 /**
    Look up view
 */
-ProfileView * TrackProfileDialog::find_view(GisViewport * viewport) const
+ProfileView * TrackProfileDialog::find_view(Graph2D * graph_2d) const
 {
-	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
 		ProfileView * view = *iter;
-		if (view->graph_2d == viewport) {
+		if (view->graph_2d == graph_2d) {
 			return view;
 		}
 	}
@@ -1210,9 +1220,9 @@ ProfileView * TrackProfileDialog::find_view(GisViewport * viewport) const
 /**
    Draw all graphs
 */
-void TrackProfileDialog::draw_all_graphs(bool resized)
+void TrackProfileDialog::draw_all_views(bool resized)
 {
-	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
 		ProfileView * view = *iter;
 		if (!view->graph_2d) {
 			continue;
@@ -1264,11 +1274,11 @@ sg_ret ProfileView::get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos
 
 
 
-sg_ret TrackProfileDialog::draw_center(ProfileView * graph)
+sg_ret TrackProfileDialog::draw_center(ProfileView * view)
 {
-	sg_ret ret = graph->draw_graph(this->trk);
+	sg_ret ret = view->draw_graph(this->trk);
 	if (sg_ret::ok != ret) {
-		qDebug() << SG_PREFIX_E << "Failed to draw single graph";
+		qDebug() << SG_PREFIX_E << "Failed to draw single view";
 		return ret;
 	}
 
@@ -1277,13 +1287,13 @@ sg_ret TrackProfileDialog::draw_center(ProfileView * graph)
 
 		ScreenPos current_pos_cbl(-1.0, -1.0);
 		if (this->is_current_drawn) {
-			graph->get_position_cbl_of_tp(this->trk, HOVERED, current_pos_cbl);
+			view->get_position_cbl_of_tp(this->trk, HOVERED, current_pos_cbl);
 		}
 
 		ScreenPos selected_pos_cbl;
-		graph->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl);
+		view->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl);
 
-		ret = graph->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		ret = view->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 		if (sg_ret::ok != ret) {
 			qDebug() << SG_PREFIX_E << "Failed to draw marks";
 			return ret;
@@ -1296,9 +1306,9 @@ sg_ret TrackProfileDialog::draw_center(ProfileView * graph)
 
 
 
-sg_ret TrackProfileDialog::draw_left(ProfileView * graph)
+sg_ret TrackProfileDialog::draw_left(ProfileView * view)
 {
-	graph->draw_y_grid_outside();
+	view->draw_y_grid_outside();
 
 	return sg_ret::ok;
 }
@@ -1306,9 +1316,9 @@ sg_ret TrackProfileDialog::draw_left(ProfileView * graph)
 
 
 
-sg_ret TrackProfileDialog::draw_bottom(ProfileView * graph)
+sg_ret TrackProfileDialog::draw_bottom(ProfileView * view)
 {
-	graph->draw_x_grid_outside(graph->dialog->trk);
+	view->draw_x_grid_outside(view->dialog->trk);
 
 	return sg_ret::ok;
 }
@@ -1319,10 +1329,10 @@ sg_ret TrackProfileDialog::draw_bottom(ProfileView * graph)
 
 sg_ret TrackProfileDialog::paint_center_cb(ViewportPixmap * pixmap)
 {
-	GisViewport * viewport = (GisViewport *) pixmap;
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->debug;
+	Graph2D * graph_2d = (Graph2D *) pixmap;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
 
-	ProfileView * view = this->find_view(viewport);
+	ProfileView * view = this->find_view(graph_2d);
 	if (!view) {
 		qDebug() << SG_PREFIX_E << "Can't find view";
 		return sg_ret::err;
@@ -1339,11 +1349,11 @@ sg_ret TrackProfileDialog::paint_center_cb(ViewportPixmap * pixmap)
 
 sg_ret TrackProfileDialog::paint_left_cb(ViewportPixmap * pixmap)
 {
-	GisViewport * viewport = (GisViewport *) pixmap;
+	Graph2D * graph_2d = (Graph2D *) pixmap;
 
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
 
-	ProfileView * view = this->find_view(viewport);
+	ProfileView * view = this->find_view(graph_2d);
 	if (!view) {
 		qDebug() << SG_PREFIX_E << "Can't find view";
 		return sg_ret::err;
@@ -1360,11 +1370,11 @@ sg_ret TrackProfileDialog::paint_left_cb(ViewportPixmap * pixmap)
 
 sg_ret TrackProfileDialog::paint_bottom_cb(ViewportPixmap * pixmap)
 {
-	GisViewport * viewport = (GisViewport *) pixmap;
+	Graph2D * graph_2d = (Graph2D *) pixmap;
 
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from viewport" << viewport->debug;
+	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
 
-	ProfileView * view = this->find_view(viewport);
+	ProfileView * view = this->find_view(graph_2d);
 	if (!view) {
 		qDebug() << SG_PREFIX_E << "Can't find view";
 		return sg_ret::err;
@@ -1379,21 +1389,22 @@ sg_ret TrackProfileDialog::paint_bottom_cb(ViewportPixmap * pixmap)
 
 
 
-void ProfileView::create_viewport(TrackProfileDialog * new_dialog, GisViewportDomain x_domain, GisViewportDomain y_domain)
+void ProfileView::create_graph_2d(void)
 {
+	this->graph_2d = new Graph2D(GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT, GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, NULL);
+	snprintf(this->graph_2d->debug, sizeof (this->graph_2d->debug), "%s", this->get_title().toUtf8().constData());
+
+#if 0   /* This seems to be unnecessary. */
+	qDebug() << SG_PREFIX_I << "Before applying total sizes for graph" << this->graph_2d->debug;
 	const int initial_width = GRAPH_INITIAL_WIDTH;
 	const int initial_height = GRAPH_INITIAL_HEIGHT;
+	this->graph_2d->apply_total_sizes(initial_width, initial_height);
+	qDebug() << SG_PREFIX_I << "After applying total sizes for graph" << this->graph_2d->debug;
+#endif
 
-	this->graph_2d = new GisViewport(initial_width, initial_height, GRAPH_MARGIN_LEFT, GRAPH_MARGIN_RIGHT, GRAPH_MARGIN_TOP, GRAPH_MARGIN_BOTTOM, dialog);
-	snprintf(this->graph_2d->debug, sizeof (this->graph_2d->debug), "%s", this->get_graph_title().toUtf8().constData());
-	//this->graph_2d->resize(initial_width, initial_height);
+	this->graph_2d->x_domain = this->x_domain;
+	this->graph_2d->y_domain = this->y_domain;
 
-
-	this->graph_2d->x_domain = x_domain;
-	this->graph_2d->y_domain = y_domain;
-
-	QObject::connect(this->graph_2d, SIGNAL (cursor_moved(GisViewport *, QMouseEvent *)),    dialog, SLOT (handle_cursor_move_cb(GisViewport *, QMouseEvent *)));
-	QObject::connect(this->graph_2d, SIGNAL (button_released(Viewport *, QMouseEvent *)), dialog, SLOT (handle_mouse_button_release_cb(GisViewport *, QMouseEvent *)));
 
 	return;
 }
@@ -1408,7 +1419,7 @@ void TrackProfileDialog::save_values(void)
 	ApplicationState::set_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, this->profile_height);
 
 	/* Just for this session. */
-	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
 		(*iter)->save_values();
 	}
 }
@@ -1472,7 +1483,7 @@ void TrackProfileDialog::checkbutton_toggle_cb(void)
 {
 	/* Even though not resized, we'll pretend it is -
 	   as this invalidates the saved images (since the image may have changed). */
-	this->draw_all_graphs(true);
+	this->draw_all_views(true);
 }
 
 
@@ -1516,33 +1527,39 @@ void SlavGPS::track_profile_dialog(Track * trk, GisViewport * main_gisview, QWid
 
 
 
-QString ProfileView::get_graph_title(void) const
+const QString & ProfileView::get_title(void) const
 {
-	QString result;
+	return this->title;
+}
 
-	if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		result = QObject::tr("Elevation over distance");
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Gradient && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		result = QObject::tr("Gradient over distance");
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		result = QObject::tr("Speed over time");
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Distance && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		result = QObject::tr("Distance over time");
+void ProfileView::configure_title(void)
+{
+	if (this->y_domain == GisViewportDomain::Elevation && this->x_domain == GisViewportDomain::Distance) {
+		this->title = QObject::tr("Elevation over distance");
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		result = QObject::tr("Elevation over time");
+	} else if (this->y_domain == GisViewportDomain::Gradient && this->x_domain == GisViewportDomain::Distance) {
+		this->title = QObject::tr("Gradient over distance");
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		result = QObject::tr("Speed over distance");
+	} else if (this->y_domain == GisViewportDomain::Speed && this->x_domain == GisViewportDomain::Time) {
+		this->title = QObject::tr("Speed over time");
+
+	} else if (this->y_domain == GisViewportDomain::Distance && this->x_domain == GisViewportDomain::Time) {
+		this->title = QObject::tr("Distance over time");
+
+	} else if (this->y_domain == GisViewportDomain::Elevation && this->x_domain == GisViewportDomain::Time) {
+		this->title = QObject::tr("Elevation over time");
+
+	} else if (this->y_domain == GisViewportDomain::Speed && this->x_domain == GisViewportDomain::Distance) {
+		this->title = QObject::tr("Speed over distance");
 
 	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->graph_2d->x_domain << (int) this->graph_2d->y_domain;
+		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->x_domain << (int) this->y_domain;
 	}
 
-	return result;
+	return;
 }
 
 
@@ -1580,35 +1597,40 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 		}
 	}
 
-	this->graphs.push_back(new ProfileViewED(this));
-	this->graphs.push_back(new ProfileViewGD(this));
-	this->graphs.push_back(new ProfileViewST(this));
-	this->graphs.push_back(new ProfileViewDT(this));
-	this->graphs.push_back(new ProfileViewET(this));
-	this->graphs.push_back(new ProfileViewSD(this));
+	this->views.push_back(new ProfileViewED(this));
+	this->views.push_back(new ProfileViewGD(this));
+	this->views.push_back(new ProfileViewST(this));
+	this->views.push_back(new ProfileViewDT(this));
+	this->views.push_back(new ProfileViewET(this));
+	this->views.push_back(new ProfileViewSD(this));
 
 	this->tabs = new QTabWidget();
 	this->tabs->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	this->trk->prepare_for_profile();
 
-	for (auto iter = this->graphs.begin(); iter != this->graphs.end(); iter++) {
-		ProfileView * graph = *iter;
-		if (!graph->graph_2d) {
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
+		ProfileView * view = *iter;
+		if (!view) {
 			continue;
 		}
 
-		graph->create_widgets_layout();
-		graph->configure_labels();
-		graph->configure_controls();
+		view->configure_title();
+		view->create_graph_2d();
+		view->create_widgets_layout();
+		view->configure_labels();
+		view->configure_controls();
 
-		this->tabs->addTab(graph, graph->get_graph_title());
+		this->tabs->addTab(view, view->get_title());
 
-		connect(graph->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_center_cb(ViewportPixmap *)));
+		qDebug() << SG_PREFIX_I << "Configuring signals for graph" << view->graph_2d->debug << "in view" << view->get_title();
+		connect(view->graph_2d, SIGNAL (cursor_moved(ViewportPixmap *, QMouseEvent *)),    this, SLOT (handle_cursor_move_cb(ViewportPixmap *, QMouseEvent *)));
+		connect(view->graph_2d, SIGNAL (button_released(ViewportPixmap *, QMouseEvent *)), this, SLOT (handle_mouse_button_release_cb(ViewportPixmap *, QMouseEvent *)));
+		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_center_cb(ViewportPixmap *)));
 
 		/* TODO: these signals don't make sense anymore. */
-		connect(graph->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_left_cb(ViewportPixmap *)));
-		connect(graph->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_bottom_cb(ViewportPixmap *)));
+		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_left_cb(ViewportPixmap *)));
+		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_bottom_cb(ViewportPixmap *)));
 	}
 
 
@@ -1725,6 +1747,7 @@ void ProfileView::configure_labels(void)
 void ProfileViewET::configure_controls(void)
 {
 	bool value;
+
 
 	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM, &value)) {
@@ -1874,12 +1897,12 @@ QString get_time_grid_label(const Time & interval_value, const Time & value)
 
 
 
-ProfileView::ProfileView(GisViewportDomain x_domain, GisViewportDomain y_domain, TrackProfileDialog * new_dialog, QWidget * parent) : QWidget(parent)
+ProfileView::ProfileView(GisViewportDomain new_x_domain, GisViewportDomain new_y_domain, TrackProfileDialog * new_dialog, QWidget * parent) : QWidget(parent)
 {
 	this->dialog = new_dialog;
 
-	if (!ProfileView::supported_domains(x_domain, y_domain)) {
-		qDebug() << SG_PREFIX_E << "Unhandled combination of x/y domains:" << (int) x_domain << (int) y_domain;
+	if (!ProfileView::supported_domains(new_x_domain, new_y_domain)) {
+		qDebug() << SG_PREFIX_E << "Unhandled combination of x/y domains:" << (int) new_x_domain << (int) new_y_domain;
 	}
 
 	this->main_pen.setColor("lightsteelblue");
@@ -1889,7 +1912,10 @@ ProfileView::ProfileView(GisViewportDomain x_domain, GisViewportDomain y_domain,
 	this->dem_alt_pen.setColor("green");
 	this->no_alt_info_pen.setColor("yellow");
 
-	this->create_viewport(new_dialog, x_domain, y_domain);
+	this->x_domain = new_x_domain;
+	this->y_domain = new_y_domain;
+
+
 }
 
 
@@ -1985,7 +2011,7 @@ void ProfileView::draw_y_grid_inside(void)
 	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
 
 #if 0   /* Debug. */
-	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << height;
+	qDebug() << "===== drawing y grid for graph" << this->get_title() << ", height =" << height;
 	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
 	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2027,7 +2053,7 @@ void ProfileView::draw_y_grid_outside(void)
 	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing y grid for graph" << this->get_graph_title() << ", height =" << height;
+	qDebug() << "===== drawing y grid for graph" << this->get_title() << ", height =" << height;
 	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
 	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2070,7 +2096,7 @@ void ProfileView::draw_x_grid_sub_d_inside(void)
 	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", width =" << width;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2114,7 +2140,7 @@ void ProfileView::draw_x_grid_sub_d_outside(void)
 	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", width =" << width;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2157,7 +2183,7 @@ void ProfileView::draw_x_grid_sub_t_inside(void)
 	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", width =" << width;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
 	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2201,7 +2227,7 @@ void ProfileView::draw_x_grid_sub_t_outside(void)
 	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_graph_title() << ", width =" << width;
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", width =" << width;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
 	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
@@ -2335,4 +2361,100 @@ int ProfileView::get_y_pixels(void) const
 {
 	/* TODO: use cached value? */
 	return this->graph_2d->central_get_height();
+}
+
+
+
+
+Graph2D::Graph2D(int left, int right, int top, int bottom, QWidget * parent) : ViewportPixmap(left, right, top, bottom, parent)
+{
+	this->height_unit = Preferences::get_unit_height();
+	this->distance_unit = Preferences::get_unit_distance();
+	this->speed_unit = Preferences::get_unit_speed();
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+sg_ret Graph2D::cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
+{
+	const int leftmost   = this->central_get_leftmost_pixel();
+	const int rightmost  = this->central_get_rightmost_pixel();
+	const int topmost    = this->central_get_topmost_pixel();
+	const int bottommost = this->central_get_bottommost_pixel();
+
+	const QPoint position = this->mapFromGlobal(QCursor::pos());
+
+#if 0   /* Verbose debug. */
+	qDebug() << SG_PREFIX_I << "Difference in cursor position: dx = " << position.x() - ev->x() << ", dy = " << position.y() - ev->y();
+#endif
+
+#if 0
+	const int x = position.x();
+	const int y = position.y();
+#else
+	const int x = ev->x();
+	const int y = ev->y();
+#endif
+
+	/* Cursor outside of chart area. */
+	if (x > rightmost) {
+		return sg_ret::err;
+	}
+	if (y > bottommost) {
+		return sg_ret::err;
+	}
+	if (x < leftmost) {
+		return sg_ret::err;
+	}
+	if (y < topmost) {
+		return sg_ret::err;
+	}
+
+	/* Converting from Qt's "beginning is in upper-left" into "beginning is in bottom-left" coordinate system. */
+	screen_pos.rx() = x;
+	screen_pos.ry() = bottommost - y;
+
+	return sg_ret::ok;
+}
+
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+void Graph2D::mousePressEvent(QMouseEvent * ev)
+{
+	qDebug() << SG_PREFIX_I << "Mouse CLICK event, button" << (int) ev->button();
+	ev->accept();
+}
+
+
+
+/**
+   @reviewed-on tbd
+*/
+void Graph2D::mouseMoveEvent(QMouseEvent * ev)
+{
+	//this->draw_mouse_motion_cb(ev);
+	emit this->cursor_moved(this, ev);
+	ev->accept();
+}
+
+
+
+
+/**
+   @reviewed-on tbd
+*/
+void Graph2D::mouseReleaseEvent(QMouseEvent * ev)
+{
+	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
+	emit this->button_released(this, ev);
+	ev->accept();
 }

@@ -212,7 +212,6 @@ namespace SlavGPS {
 		static void init(void);
 
 
-		void resizeEvent(QResizeEvent * event);
 		void mousePressEvent(QMouseEvent * event); /* Double click is handled through event filter. */
 		void mouseMoveEvent(QMouseEvent * event);
 		void mouseReleaseEvent(QMouseEvent * event);
@@ -281,15 +280,6 @@ namespace SlavGPS {
 		bool is_one_utm_zone;
 
 
-		GisViewportDomain x_domain = GisViewportDomain::Max;
-		GisViewportDomain y_domain = GisViewportDomain::Max;
-
-		HeightUnit height_unit;
-		DistanceUnit distance_unit;
-		SpeedUnit speed_unit;
-
-
-
 		/* ******** Other class variables. ******** */
 
 
@@ -352,13 +342,6 @@ namespace SlavGPS {
 		   has changed center of viewport or zoom of viewport.
 		*/
 		void center_coord_or_zoom_changed(GisViewport * gisview);
-
-
-		/* ******** Other signals. ******** */
-		void cursor_moved(GisViewport * gisview, QMouseEvent * event);
-		void button_released(GisViewport * gisview, QMouseEvent * event);
-
-
 
 
 	public slots:
