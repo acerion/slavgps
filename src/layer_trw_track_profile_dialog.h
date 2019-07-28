@@ -143,13 +143,6 @@ namespace SlavGPS {
 		void handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * event);
 
 	private:
-		/* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
-		bool is_selected_drawn = false;
-		/* Trackpoint that is closest to current position of *hovering* cursor. */
-		bool is_current_drawn = false;
-
-		//char * tz = NULL; /* TimeZone at track's location. */
-
 		/* Pen used to draw main parts of views (i.e. the values of functions y = f(x)). */
 		QPen main_pen;
 
@@ -180,11 +173,11 @@ namespace SlavGPS {
 		virtual void save_values(void) {};
 
 
-		int get_x_pixels(void) const;
-		int get_y_pixels(void) const;
+		int get_central_width_px(void) const;
+		int get_central_height_px(void) const;
 
 
-		sg_ret draw_track(Track * trk, bool & is_selected_drawn, bool & is_current_drawn);
+		sg_ret draw_track_and_crosshairs(Track * trk);
 
 		void create_graph_2d(void);
 		void configure_labels(void);
@@ -231,7 +224,7 @@ namespace SlavGPS {
 		sg_ret regenerate_data(Track * trk);
 
 		sg_ret draw_graph_without_crosshairs(Track * trk);
-		sg_ret draw_crosshairs(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn);
+		sg_ret draw_crosshairs(const ScreenPos & selected_tp_pos, const ScreenPos & cursor_pos);
 
 		void draw_function_values(void);
 
@@ -241,15 +234,11 @@ namespace SlavGPS {
 		/* Check whether given combination of x/y domains is supported by ProfileView. */
 		static bool supported_domains(GisViewportDomain x_domain, GisViewportDomain y_domain);
 
-		void draw_x_grid_inside(const Track * trk);
-		void draw_x_grid_outside(const Track * trk);
-		void draw_y_grid_inside(void);
-		void draw_y_grid_outside(void);
+		void draw_x_grid(const Track * trk);
+		void draw_y_grid(void);
 
-		void draw_x_grid_sub_d_inside(void);
-		void draw_x_grid_sub_d_outside(void);
-		void draw_x_grid_sub_t_inside(void);
-		void draw_x_grid_sub_t_outside(void);
+		void draw_x_grid_d_domain(void);
+		void draw_x_grid_t_domain(void);
 
 		QString get_y_grid_label(float value);
 

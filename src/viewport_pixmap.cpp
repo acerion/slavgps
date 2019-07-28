@@ -203,6 +203,7 @@ void ViewportPixmap::draw_text(QFont const & text_font, QPen const & pen, fpixel
 QRectF ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
 {
 	this->painter.setFont(text_font);
+	this->painter.setPen(pen);
 
 	/* Get bounding rect of text drawn with font set above with .setFont(). */
 	QRectF text_rect = this->painter.boundingRect(bounding_rect, flags, text);
@@ -211,9 +212,7 @@ QRectF ViewportPixmap::draw_text(const QFont & text_font, const QPen & pen, cons
 		this->offset_text_bounding_rect(text_rect, text_offset);
 	}
 
-	this->painter.setPen(pen);
 	this->painter.drawText(text_rect, flags, text, NULL);
-
 
 	if (1) { /* Debug. */
 		this->draw_text_debug(text_rect);
@@ -850,14 +849,12 @@ void ViewportPixmap::central_draw_line(const QPen & pen, fpixel begin_x, fpixel 
 	/*** Clipping, yeah! ***/
 	//GisViewport::clip_line(&begin_x, &begin_y, &end_x, &end_y);
 
-	const int bottommost_pixel = this->central_get_bottommost_pixel();
-
 	/* x/y coordinates are converted here from "beginning in
 	   bottom-left corner" to Qt's "beginning in top-left corner"
 	   coordinate system. */
 	this->painter.setPen(pen);
-	this->painter.drawLine(begin_x, bottommost_pixel - begin_y,
-			       end_x,   bottommost_pixel - end_y);
+	this->painter.drawLine(begin_x, begin_y,
+			       end_x,   end_y);
 }
 
 
