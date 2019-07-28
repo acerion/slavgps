@@ -123,10 +123,6 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		sg_ret draw_center(ProfileView * view);
-		sg_ret draw_left(ProfileView * view);
-		sg_ret draw_bottom(ProfileView * view);
-
 		ProfileView * find_view(Graph2D * graph_2d) const;
 		ProfileView * get_current_view(void) const;
 
@@ -141,10 +137,7 @@ namespace SlavGPS {
 		void checkbutton_toggle_cb(void);
 		void dialog_response_cb(int resp);
 		void destroy_cb(void);
-
-		sg_ret paint_center_cb(ViewportPixmap * pixmap);
-		sg_ret paint_left_cb(ViewportPixmap * pixmap);
-		sg_ret paint_bottom_cb(ViewportPixmap * pixmap);
+		sg_ret paint_graph_cb(ViewportPixmap * pixmap);
 
 		void handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseEvent * ev);
 		void handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * event);
@@ -191,6 +184,7 @@ namespace SlavGPS {
 		int get_y_pixels(void) const;
 
 
+		sg_ret draw_track(Track * trk, bool & is_selected_drawn, bool & is_current_drawn);
 
 		void create_graph_2d(void);
 		void configure_labels(void);
@@ -228,7 +222,7 @@ namespace SlavGPS {
 		sg_ret set_initial_visible_range_y(void);
 
 		/**
-		   Calculate y position for mark on y=f(x) graph.
+		   Calculate y position for crosshair on y=f(x) graph.
 		   The position will be in "beginning of coordinates system is in bottom-left corner".
 		   cbl = coordinate-bottom-left.
 		*/
@@ -236,8 +230,8 @@ namespace SlavGPS {
 
 		sg_ret regenerate_data(Track * trk);
 
-		sg_ret draw_graph(Track * trk);
-		sg_ret draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn);
+		sg_ret draw_graph_without_crosshairs(Track * trk);
+		sg_ret draw_crosshairs(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn);
 
 		void draw_function_values(void);
 

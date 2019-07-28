@@ -456,9 +456,9 @@ static bool set_center_at_graph_position(int event_x,
 
    Both "pos" arguments should indicate position in graph's coordinate system.
 */
-sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn)
+sg_ret ProfileView::draw_crosshairs(const ScreenPos & selected_pos, const ScreenPos & current_pos, bool & is_selected_drawn, bool & is_current_drawn)
 {
-	/* Restore previously saved image that has no marks on it, just the graph, grids, borders and margins. */
+	/* Restore previously saved image that has no crosshairs on it, just the graph, grids, borders and margins. */
 	if (this->graph_2d->saved_pixmap_valid) {
 		/* Debug code. */
 		// qDebug() << SG_PREFIX_I << "Restoring saved image";
@@ -469,7 +469,7 @@ sg_ret ProfileView::draw_marks(const ScreenPos & selected_pos, const ScreenPos &
 
 
 
-	/* Now draw marks on this fresh (restored from saved) image. */
+	/* Now draw crosshairs on this fresh (restored from saved) image. */
 
 	if (current_pos.x() > 0 && current_pos.y() > 0) {
 		this->graph_2d->central_draw_simple_crosshair(current_pos);
@@ -512,7 +512,7 @@ ProfileView * TrackProfileDialog::get_current_view(void) const
    React to mouse button release
 
    Find a trackpoint corresponding to cursor position when button was released.
-   Draw marking for this trackpoint.
+   Draw crosshair for this trackpoint.
 */
 void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * ev)
 {
@@ -538,8 +538,8 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 	this->button_split_at_marker->setEnabled(true);
 
 
-	/* Attempt to redraw marker on all graphs. Notice that this
-	   does not redraw full graphs, just marks.
+	/* Attempt to redraw crosshair on all graphs. Notice that this
+	   does not redraw full graphs, just crossharis.
 
 	   This is done on all graphs because we want to have 'mouse
 	   release' event reflected in all graphs. */
@@ -555,7 +555,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 			   hasn't been generated for current graph
 			   width. */
 			/* FIXME: generate the track data so that we
-			   can set a mark over there. */
+			   can set a crosshair over there. */
 			continue;
 		}
 
@@ -566,11 +566,12 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 		}
 
 		/*
-		  Positions passed to draw_marks() are in our 2D
-		  graph's coordinate system, not Qt's coordinate
-		  system.
+		  Positions passed to draw_crosshairs() are in 2D
+		  graph's coordinate system (beginning in bottom left
+		  corner), not Qt's coordinate system (beginning in
+		  upper left corner).
 		*/
-		view_iter->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		view_iter->draw_crosshairs(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 	}
 
 	this->button_split_at_marker->setEnabled(this->is_selected_drawn);
@@ -713,7 +714,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 	switch (view->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
 		this->trk->select_tp_by_percentage_dist((double) current_pos_cbl.x() / view->graph_2d->central_get_width(), &meters_from_start, HOVERED);
-		view->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		view->draw_crosshairs(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
 		if (view->labels.x_value) {
 			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
@@ -723,7 +724,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 	case GisViewportDomain::Time:
 		this->trk->select_tp_by_percentage_time((double) current_pos_cbl.x() / view->graph_2d->central_get_width(), HOVERED);
-		view->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		view->draw_crosshairs(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
 
 		if (view->labels.x_value) {
 			time_t seconds_from_start = 0;
@@ -1116,7 +1117,7 @@ void ProfileViewDT::save_values(void)
 /**
    \brief Draw the y = f(x) graph
 */
-sg_ret ProfileView::draw_graph(Track * trk)
+sg_ret ProfileView::draw_graph_without_crosshairs(Track * trk)
 {
 	qDebug() << SG_PREFIX_I;
 
@@ -1150,6 +1151,10 @@ sg_ret ProfileView::draw_graph(Track * trk)
 	/* Draw grid on top of graph of values. */
 	this->draw_x_grid_inside(trk);
 	this->draw_y_grid_inside();
+	this->draw_x_grid_outside(trk);
+	this->draw_y_grid_outside();
+
+	this->graph_2d->central_draw_outside_boundary_rect();
 
 	this->draw_additional_indicators(trk);
 
@@ -1230,9 +1235,8 @@ void TrackProfileDialog::draw_all_views(bool resized)
 
 		/* If dialog window is resized then saved image is no longer valid. */
 		view->graph_2d->saved_pixmap_valid = !resized;
-		this->draw_center(view);
+		view->draw_track(this->trk, this->is_selected_drawn, this->is_current_drawn);
 
-		/* TODO: what about drawing margins? */
 	}
 }
 
@@ -1274,60 +1278,43 @@ sg_ret ProfileView::get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos
 
 
 
-sg_ret TrackProfileDialog::draw_center(ProfileView * view)
+sg_ret ProfileView::draw_track(Track * trk, bool & is_selected_drawn, bool & is_current_drawn)
 {
-	sg_ret ret = view->draw_graph(this->trk);
+	sg_ret ret_trk;
+	sg_ret ret_marks;
+
+	sg_ret ret = this->draw_graph_without_crosshairs(trk);
 	if (sg_ret::ok != ret) {
-		qDebug() << SG_PREFIX_E << "Failed to draw single view";
+		qDebug() << SG_PREFIX_E << "Failed to draw graph without crosshairs";
 		return ret;
 	}
 
-	/* Ensure markers are redrawn if necessary. */
-	if (this->is_selected_drawn || this->is_current_drawn) {
+
+	/* Draw crosshairs. */
+	if (is_selected_drawn || is_current_drawn) {
 
 		ScreenPos current_pos_cbl(-1.0, -1.0);
-		if (this->is_current_drawn) {
-			view->get_position_cbl_of_tp(this->trk, HOVERED, current_pos_cbl);
+		if (is_current_drawn) {
+			this->get_position_cbl_of_tp(trk, HOVERED, current_pos_cbl);
 		}
 
 		ScreenPos selected_pos_cbl;
-		view->get_position_cbl_of_tp(this->trk, SELECTED, selected_pos_cbl);
+		this->get_position_cbl_of_tp(trk, SELECTED, selected_pos_cbl);
 
-		ret = view->draw_marks(selected_pos_cbl, current_pos_cbl, this->is_selected_drawn, this->is_current_drawn);
+		ret = this->draw_crosshairs(selected_pos_cbl, current_pos_cbl, is_selected_drawn, is_current_drawn);
 		if (sg_ret::ok != ret) {
-			qDebug() << SG_PREFIX_E << "Failed to draw marks";
-			return ret;
+			qDebug() << SG_PREFIX_E << "Failed to draw crosshairs";
 		}
 	}
 
-	return sg_ret::ok;
+
+	return ret;
 }
 
 
 
 
-sg_ret TrackProfileDialog::draw_left(ProfileView * view)
-{
-	view->draw_y_grid_outside();
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret TrackProfileDialog::draw_bottom(ProfileView * view)
-{
-	view->draw_x_grid_outside(view->dialog->trk);
-
-	return sg_ret::ok;
-}
-
-
-
-
-
-sg_ret TrackProfileDialog::paint_center_cb(ViewportPixmap * pixmap)
+sg_ret TrackProfileDialog::paint_graph_cb(ViewportPixmap * pixmap)
 {
 	Graph2D * graph_2d = (Graph2D *) pixmap;
 	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
@@ -1339,49 +1326,8 @@ sg_ret TrackProfileDialog::paint_center_cb(ViewportPixmap * pixmap)
 	}
 
 	view->graph_2d->saved_pixmap_valid = true;
-	this->draw_center(view);
+	view->draw_track(this->trk, this->is_selected_drawn, this->is_current_drawn);
 
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret TrackProfileDialog::paint_left_cb(ViewportPixmap * pixmap)
-{
-	Graph2D * graph_2d = (Graph2D *) pixmap;
-
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
-
-	ProfileView * view = this->find_view(graph_2d);
-	if (!view) {
-		qDebug() << SG_PREFIX_E << "Can't find view";
-		return sg_ret::err;
-	}
-
-	//view->graph_2d->left->saved_img_valid = true;
-	this->draw_left(view);
-
-	return sg_ret::ok;
-}
-
-
-
-
-sg_ret TrackProfileDialog::paint_bottom_cb(ViewportPixmap * pixmap)
-{
-	Graph2D * graph_2d = (Graph2D *) pixmap;
-
-	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
-
-	ProfileView * view = this->find_view(graph_2d);
-	if (!view) {
-		qDebug() << SG_PREFIX_E << "Can't find view";
-		return sg_ret::err;
-	}
-
-	//view->graph_2d->saved_img_valid = true;
-	this->draw_bottom(view);
 
 	return sg_ret::ok;
 }
@@ -1404,7 +1350,6 @@ void ProfileView::create_graph_2d(void)
 
 	this->graph_2d->x_domain = this->x_domain;
 	this->graph_2d->y_domain = this->y_domain;
-
 
 	return;
 }
@@ -1626,11 +1571,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 		qDebug() << SG_PREFIX_I << "Configuring signals for graph" << view->graph_2d->debug << "in view" << view->get_title();
 		connect(view->graph_2d, SIGNAL (cursor_moved(ViewportPixmap *, QMouseEvent *)),    this, SLOT (handle_cursor_move_cb(ViewportPixmap *, QMouseEvent *)));
 		connect(view->graph_2d, SIGNAL (button_released(ViewportPixmap *, QMouseEvent *)), this, SLOT (handle_mouse_button_release_cb(ViewportPixmap *, QMouseEvent *)));
-		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_center_cb(ViewportPixmap *)));
-
-		/* TODO: these signals don't make sense anymore. */
-		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_left_cb(ViewportPixmap *)));
-		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_bottom_cb(ViewportPixmap *)));
+		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_graph_cb(ViewportPixmap *)));
 	}
 
 

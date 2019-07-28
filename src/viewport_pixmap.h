@@ -181,6 +181,15 @@ namespace SlavGPS {
 		   crossing at given position. */
 		void central_draw_simple_crosshair(const ScreenPos & pos);
 
+		/**
+		   Draw a rectangle around central area, but only if
+		   there is any margin around the central area.
+
+		   The rectangle will be drawn just outside of central
+		   area.
+		*/
+		sg_ret central_draw_outside_boundary_rect(void);
+
 
 		bool line_is_outside(fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y);
 
@@ -263,6 +272,8 @@ namespace SlavGPS {
 
 		QPen highlight_pen;
 		QColor highlight_color;
+
+		QPen central_outside_boundary_rect_pen;
 
 		bool highlight_usage = true;
 

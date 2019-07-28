@@ -76,6 +76,9 @@ ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget
 	this->highlight_pen.setWidth(1);
 	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
 
+	this->central_outside_boundary_rect_pen.setColor("red");
+	this->central_outside_boundary_rect_pen.setWidth(1);
+
 	/* A valid (non-null) initial pixmap for painter, otherwise
 	   the painter will complain to console. */
 	this->vpixmap = QPixmap(10, 10);
@@ -1478,4 +1481,25 @@ void ViewportPixmap::resizeEvent(QResizeEvent * ev)
 	this->apply_total_sizes(this->geometry().width(), this->geometry().height());
 
 	return;
+}
+
+
+
+
+sg_ret ViewportPixmap::central_draw_outside_boundary_rect(void)
+{
+	if (this->left_margin_width > 0
+	    || this->right_margin_width > 0
+	    || this->top_margin_height > 0
+	    || this->bottom_margin_height > 0) {
+
+		const int x = this->central_get_leftmost_pixel() - 1;
+		const int y = this->central_get_topmost_pixel() - 1;
+		const int width = this->central_get_width() + 2;
+		const int height = this->central_get_height() + 2;
+
+		this->draw_rectangle(this->central_outside_boundary_rect_pen, x, y, width, height);
+	}
+
+	return sg_ret::ok;
 }
