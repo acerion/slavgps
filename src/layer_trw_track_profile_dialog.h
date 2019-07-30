@@ -94,6 +94,9 @@ namespace SlavGPS {
 		   coordinate system. */
 		sg_ret cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
 
+		/* How many rows/columns are there to draw? */
+		int central_get_n_columns(void) const;
+		int central_get_n_rows(void) const;
 
 		void mousePressEvent(QMouseEvent * event); /* Double click is handled through event filter. */
 		void mouseMoveEvent(QMouseEvent * event);
@@ -105,6 +108,13 @@ namespace SlavGPS {
 		HeightUnit height_unit;
 		DistanceUnit distance_unit;
 		SpeedUnit speed_unit;
+
+		/* Calculated on every resize event. Having cached
+		   values saves a minimal amount of time when we move
+		   cursor back and forth across the graph and
+		   calculate cursor location on a track. */
+		int cached_central_n_columns = 0;
+		int cached_central_n_rows = 0;
 	};
 
 
@@ -137,7 +147,7 @@ namespace SlavGPS {
 		void checkbutton_toggle_cb(void);
 		void dialog_response_cb(int resp);
 		void destroy_cb(void);
-		sg_ret paint_graph_cb(ViewportPixmap * pixmap);
+		sg_ret handle_graph_resize_cb(ViewportPixmap * pixmap);
 
 		void handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseEvent * ev);
 		void handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * event);
@@ -173,8 +183,8 @@ namespace SlavGPS {
 		virtual void save_values(void) {};
 
 
-		int get_central_width_px(void) const;
-		int get_central_height_px(void) const;
+		int get_central_n_columns(void) const;
+		int get_central_n_rows(void) const;
 
 
 		sg_ret draw_track_and_crosshairs(Track * trk);

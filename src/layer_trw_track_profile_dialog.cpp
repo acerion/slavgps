@@ -137,7 +137,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 {
 	/* First create track data using appropriate Track method. */
 
-	const int compressed_n_points = this->get_central_width_px();
+	const int compressed_n_points = this->get_central_n_columns();
 
 	if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Distance) {
 		this->track_data = trk->make_track_data_altitude_over_distance(compressed_n_points);
@@ -410,9 +410,9 @@ static bool set_center_at_graph_position(int event_x,
 					 GisViewport * main_gisview,
 					 Track * trk,
 					 GisViewportDomain x_domain,
-					 int graph_width_px)
+					 int graph_n_columns)
 {
-	const int graph_pixel_leftmost = graph_width_px - 1;
+	const int graph_pixel_leftmost = graph_n_columns - 1; /* TODO: you don't have to calculate this. */
 
 	int x = event_x;
 	if (x > graph_pixel_leftmost) {
@@ -427,10 +427,10 @@ static bool set_center_at_graph_position(int event_x,
 	bool found = false;
 	switch (x_domain) {
 	case GisViewportDomain::Time:
-		found = trk->select_tp_by_percentage_time((double) x / graph_width_px, SELECTED);
+		found = trk->select_tp_by_percentage_time((double) x / graph_n_columns, SELECTED);
 		break;
 	case GisViewportDomain::Distance:
-		found = trk->select_tp_by_percentage_dist((double) x / graph_width_px, NULL, SELECTED);
+		found = trk->select_tp_by_percentage_dist((double) x / graph_n_columns, NULL, SELECTED);
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) x_domain;
@@ -536,7 +536,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 							   this->main_gisview,
 							   this->trk,
 							   view->graph_2d->x_domain,
-							   view->get_central_width_px());
+							   view->get_central_n_columns());
 	if (!found_tp) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
@@ -594,9 +594,11 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 {
-	/* TODO: use saved width/saved height for performance reasons. */
-	const int width = this->get_central_width_px();
-	const int height = this->get_central_height_px();
+	//const int n_columns = this->graph_2d->central_get_n_columns();
+	const int n_rows = this->graph_2d->central_get_n_rows();
+
+	//const int width = this->get_central_width_px();
+	//const int height = this->get_central_height_px();
 
 	int ix = (int) screen_pos.x();
 
@@ -626,7 +628,7 @@ sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 	ix = ix - leftmost_pixel;
 
 
-	const int y = height * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
+	const int y = n_rows * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
 	screen_pos.set(screen_pos.x(), y);
 
 	return sg_ret::ok;
@@ -723,7 +725,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 	switch (view->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) cursor_pos_cbl.x() / view->get_central_width_px(), &meters_from_start, HOVERED);
+		this->trk->select_tp_by_percentage_dist((double) cursor_pos_cbl.x() / view->get_central_n_columns(), &meters_from_start, HOVERED);
 		view->draw_crosshairs(selected_tp_pos_cbl, cursor_pos_cbl);
 
 		if (view->labels.x_value) {
@@ -733,7 +735,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 		break;
 
 	case GisViewportDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) cursor_pos_cbl.x() / view->get_central_width_px(), HOVERED);
+		this->trk->select_tp_by_percentage_time((double) cursor_pos_cbl.x() / view->get_central_n_columns(), HOVERED);
 		view->draw_crosshairs(selected_tp_pos_cbl, cursor_pos_cbl);
 
 		if (view->labels.x_value) {
@@ -810,8 +812,8 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 	const QColor dem_color = this->dem_alt_pen.color();
 	const QColor speed_color = this->gps_speed_pen.color();
 
-	const int width = this->get_central_width_px();
-	const int height = this->get_central_height_px();
+	const int n_columns = this->graph_2d->central_get_n_columns();
+	const int n_rows = this->graph_2d->central_get_n_rows();
 
 	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 
@@ -827,8 +829,8 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 			/* offset is in current height units. */
 			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
-			const int x = width * current_function_arg / max_function_arg;
-			const int y = 0 - height * current_function_value_uu / max_function_value_dem;
+			const int x = n_columns * current_function_arg / max_function_arg;
+			const int y = 0 - n_rows * current_function_value_uu / max_function_value_dem;
 			this->graph_2d->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
 		}
 
@@ -840,8 +842,8 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 			const double current_function_value = (*iter)->speed;
 
 			/* This is just a speed indicator - no actual values can be inferred by user. */
-			const int x = width * current_function_arg / max_function_arg;
-			const int y = 0 - height * current_function_value / max_function_value_speed;
+			const int x = n_columns * current_function_arg / max_function_arg;
+			const int y = 0 - n_rows * current_function_value / max_function_value_speed;
 			this->graph_2d->fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -850,48 +852,51 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 
 
 
+/**
+   @reviewed-on 2019-07-29
+*/
 void ProfileView::draw_function_values(void)
 {
 	const double visible_range = this->y_max_visible - this->y_min_visible;
-	const int width = this->get_central_width_px();
-	const int height = this->get_central_height_px();
 
-	if (this->graph_2d->y_domain == GisViewportDomain::Elevation) {
-		for (int i = 0; i < width; i++) {
-			if (this->track_data.y[i] == VIK_DEFAULT_ALTITUDE) {
-				this->graph_2d->central_draw_line(this->no_alt_info_pen,
-								    i, 0,
-								    i, 0 + height);
-			} else {
-				this->graph_2d->central_draw_line(this->main_pen,
-								    i, 0,
-								    i, 0 + height * (this->track_data.y[i] - this->y_min_visible) / visible_range);
-			}
-		}
-	} else {
-		for (int i = 0; i < width; i++) {
-			this->graph_2d->central_draw_line(this->main_pen,
-							    i, 0,
-							    i, 0 + height * (this->track_data.y[i] - this->y_min_visible) / visible_range);
-		}
+	const int n_columns = this->graph_2d->central_get_n_columns();
+	const int n_rows = this->graph_2d->central_get_n_rows();
+
+	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+	const int rightmost_px = this->graph_2d->central_get_rightmost_pixel();
+	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
+
+	for (int i = 0; i < n_columns; i++) {
+		const bool value_valid = this->track_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
+
+		/* Value of function in 'coordinate system with beginning in bottom left corner'. */
+		const int cbl_value = value_valid
+			? (n_rows * (this->track_data.y[i] - this->y_min_visible) / visible_range)
+			: n_rows;
+
+		this->graph_2d->central_draw_line(value_valid ? this->main_pen : this->no_alt_info_pen,
+						  leftmost_px + i, bottommost_px,
+						  leftmost_px + i, bottommost_px - cbl_value);
+
 	}
 }
 
 
 
+
 void ProfileViewET::draw_additional_indicators(Track * trk)
 {
-	const int width = this->get_central_width_px();
-	const int height = this->get_central_height_px();
+	const int n_columns = this->graph_2d->central_get_n_columns();
+	const int n_rows = this->graph_2d->central_get_n_rows();
 
 	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
 		const double max_function_value = this->y_max_visible;
 
 		const QColor color = this->dem_alt_pen.color();
 
-		for (int i = 0; i < width; i++) {
+		for (int i = 0; i < n_columns; i++) {
 			/* This could be slow doing this each time... */
-			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) width), HOVERED);
+			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) n_columns), HOVERED);
 			if (!found_tp) {
 				continue;
 			}
@@ -908,7 +913,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
 
 			const int x = i;
-			const int y = 0 - height * current_function_value_uu / max_function_value;
+			const int y = 0 - n_rows * current_function_value_uu / max_function_value;
 			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -921,12 +926,12 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
-		for (int i = 0; i < width; i++) {
+		for (int i = 0; i < n_columns; i++) {
 
 			const double current_function_value = this->track_data.y[i];
 
 			const int x = i;
-			const int y = 0 - height * current_function_value / max_function_value;
+			const int y = 0 - n_rows * current_function_value / max_function_value;
 			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -941,8 +946,8 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		const int width = this->get_central_width_px();
-		const int height = this->get_central_height_px();
+		const int n_columns = this->graph_2d->central_get_n_columns();
+		const int n_rows = this->graph_2d->central_get_n_rows();
 
 		const double max_function_arg = trk->get_length_value_including_gaps();
 		const double max_function_value = this->y_max_visible;
@@ -961,8 +966,8 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 			current_function_value = gps_speed - this->y_min_visible;
 
-			const int x = width * current_function_arg / max_function_arg;
-			const int y = 0 - height * current_function_value / max_function_value;
+			const int x = n_columns * current_function_arg / max_function_arg;
+			const int y = 0 - n_rows * current_function_value / max_function_value;
 			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -1010,8 +1015,8 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 {
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 
-		const int width = this->get_central_width_px();
-		const int height = this->get_central_height_px();
+		const int n_columns = this->graph_2d->central_get_n_columns();
+		const int n_rows = this->graph_2d->central_get_n_rows();
 
 		Time ts_begin;
 		Time ts_end;
@@ -1036,8 +1041,8 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 				const time_t current_function_arg = (*iter)->timestamp.get_value() - time_begin;
 				const double current_function_value = gps_speed - this->y_min_visible;
 
-				const int x = width * current_function_arg / max_function_arg;
-				const int y = 0 - height * current_function_value / max_function_value;
+				const int x = n_columns * current_function_arg / max_function_arg;
+				const int y = 0 - n_rows * current_function_value / max_function_value;
 				this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
 			}
 		} else {
@@ -1055,17 +1060,18 @@ void ProfileViewDT::draw_additional_indicators(Track * trk)
 	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
 
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
-		const int width = this->get_central_width_px();
-		const int height = this->get_central_height_px();
+
+		const int n_columns = this->graph_2d->central_get_n_columns();
+		const int n_rows = this->graph_2d->central_get_n_rows();
 
 		const QColor color = this->gps_speed_pen.color();
 		/* This is just an indicator - no actual values can be inferred by user. */
-		for (int i = 0; i < width; i++) {
+		for (int i = 0; i < n_columns; i++) {
 
 			const double current_function_value = this->track_data.y[i];
 
 			const int x = i;
-			const int y = 0 - height * current_function_value / max_function_value;
+			const int y = 0 - n_rows * current_function_value / max_function_value;
 			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
 		}
 	}
@@ -1150,8 +1156,8 @@ sg_ret ProfileView::draw_graph_without_crosshairs(Track * trk)
 
 	/* TODO: do we compare returned value correctly? */
 	if (sg_ret::err == trk->draw_tree_item(this->graph_2d,
-					       this->get_central_width_px(),
-					       this->get_central_height_px(),
+					       this->get_central_n_columns(),
+					       this->get_central_n_rows(),
 					       this->graph_2d->x_domain, this->graph_2d->y_domain)) {
 
 		qDebug() << SG_PREFIX_I << "draw function values";
@@ -1189,8 +1195,8 @@ void ProfileView::draw_speed_dist(Track * trk)
 	const double max_function_value = trk->get_max_speed().get_value() * 110 / 100; /* Calculate the max speed factor. */
 	const double max_function_arg = trk->get_length_value_including_gaps();
 
-	const int width = this->get_central_width_px();
-	const int heigth = this->get_central_height_px();
+	const int n_columns = this->get_central_n_columns();
+	const int n_rows = this->get_central_n_rows();
 
 	const QColor color = this->gps_speed_pen.color();
 	double current_function_arg = 0.0;
@@ -1204,8 +1210,8 @@ void ProfileView::draw_speed_dist(Track * trk)
 		current_function_value = (*iter)->speed;
 
 		/* This is just a speed indicator - no actual values can be inferred by user. */
-		const int x = width * current_function_arg / max_function_arg;
-		const int y = 0 - heigth * current_function_value / max_function_value;
+		const int x = n_columns * current_function_arg / max_function_arg;
+		const int y = 0 - n_rows * current_function_value / max_function_value;
 		this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
 	}
 }
@@ -1273,7 +1279,7 @@ sg_ret ProfileView::get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos
 	}
 
 	if (!std::isnan(pc)) {
-		screen_pos.set(pc * this->get_central_width_px(), 0.0); /* Set x.*/
+		screen_pos.set(pc * this->get_central_n_columns(), 0.0); /* Set x.*/
 		this->set_pos_y_cbl(screen_pos); /* Find y. */
 	}
 
@@ -1318,7 +1324,7 @@ sg_ret ProfileView::draw_track_and_crosshairs(Track * trk)
 
 
 
-sg_ret TrackProfileDialog::paint_graph_cb(ViewportPixmap * pixmap)
+sg_ret TrackProfileDialog::handle_graph_resize_cb(ViewportPixmap * pixmap)
 {
 	Graph2D * graph_2d = (Graph2D *) pixmap;
 	qDebug() << SG_PREFIX_SLOT << "Reacting to signal from graph" << graph_2d->debug;
@@ -1328,6 +1334,14 @@ sg_ret TrackProfileDialog::paint_graph_cb(ViewportPixmap * pixmap)
 		qDebug() << SG_PREFIX_E << "Can't find view";
 		return sg_ret::err;
 	}
+
+
+	//const int n_columns = ;
+	//const int n_rows = ;
+
+
+	view->graph_2d->cached_central_n_columns = view->graph_2d->central_get_n_columns();
+	view->graph_2d->cached_central_n_rows = view->graph_2d->central_get_n_rows();
 
 	view->graph_2d->saved_pixmap_valid = true;
 	view->draw_track_and_crosshairs(this->trk);
@@ -1575,7 +1589,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 		qDebug() << SG_PREFIX_I << "Configuring signals for graph" << view->graph_2d->debug << "in view" << view->get_title();
 		connect(view->graph_2d, SIGNAL (cursor_moved(ViewportPixmap *, QMouseEvent *)),    this, SLOT (handle_cursor_move_cb(ViewportPixmap *, QMouseEvent *)));
 		connect(view->graph_2d, SIGNAL (button_released(ViewportPixmap *, QMouseEvent *)), this, SLOT (handle_mouse_button_release_cb(ViewportPixmap *, QMouseEvent *)));
-		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (paint_graph_cb(ViewportPixmap *)));
+		connect(view->graph_2d, SIGNAL (size_changed(ViewportPixmap *)), this, SLOT (handle_graph_resize_cb(ViewportPixmap *)));
 	}
 
 
@@ -1942,8 +1956,8 @@ void find_grid_line_indices(const T & min_visible, const T & max_visible, const 
 
 void ProfileView::draw_y_grid(void)
 {
-	const int central_width = this->get_central_width_px();
-	const int central_height = this->get_central_height_px();
+	const int central_n_columns = this->get_central_n_columns();
+	const int central_n_rows = this->get_central_n_rows();
 	const int left_width = this->graph_2d->left_get_width();
 	const int left_height = this->graph_2d->left_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
@@ -1975,7 +1989,7 @@ void ProfileView::draw_y_grid(void)
 		   bottom-left corner'. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int cbl_x_value = (axis_mark_uu - this->y_min_visible) * central_height / (visible_range * 1.0);
+		const int cbl_x_value = (axis_mark_uu - this->y_min_visible) * central_n_rows / (visible_range * 1.0);
 		/* Conversion to viewport pixmap's 'coordinate system
 		   with beginning in top-left corner' */
 		const int row = bottommost_px - cbl_x_value;
@@ -1985,8 +1999,8 @@ void ProfileView::draw_y_grid(void)
 		if (row >= topmost_px && row <= bottommost_px) {
 			/* Graph line. From left edge of central area to right edge of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
-							  leftmost_px,                 row,
-							  leftmost_px + central_width, row);
+							  leftmost_px,                     row,
+							  leftmost_px + central_n_columns, row);
 
 			/* Text label in left margin. */
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", left_row =" << left_row;
@@ -2004,8 +2018,8 @@ void ProfileView::draw_y_grid(void)
 
 void ProfileView::draw_x_grid_d_domain(void)
 {
-	const int central_width  = this->get_central_width_px();
-	const int central_height = this->get_central_height_px();
+	const int central_n_columns  = this->get_central_n_columns();
+	const int central_n_rows = this->get_central_n_rows();
 	const int bottom_width   = this->graph_2d->bottom_get_width();
 	const int bottom_height  = this->graph_2d->bottom_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
@@ -2024,7 +2038,7 @@ void ProfileView::draw_x_grid_d_domain(void)
 	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", central width =" << central_width;
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", central n cols =" << central_n_columns;
 	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", bottom width =" << bottom_width;
 	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
 	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
@@ -2038,7 +2052,7 @@ void ProfileView::draw_x_grid_d_domain(void)
 		   bottom-left corner'. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int cbl_x_value = (axis_mark_uu - this->x_min_visible_d) * central_width / (visible_range * 1.0);
+		const int cbl_x_value = (axis_mark_uu - this->x_min_visible_d) * central_n_columns / (visible_range * 1.0);
 		/* Conversion to viewport pixmap's 'coordinate system
 		   with beginning in top-left corner' */
 		const int col = leftmost_px + cbl_x_value;
@@ -2049,7 +2063,7 @@ void ProfileView::draw_x_grid_d_domain(void)
 			/* Graph line. From bottom of central area to top of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
 							  col, topmost_px,
-							  col, topmost_px + central_height);
+							  col, topmost_px + central_n_rows);
 
 			/* Text label in bottom margin. */
 			const QRectF bounding_rect = QRectF(col, bottommost_px + 1, bottom_width - 3, bottom_height - 3);
@@ -2067,8 +2081,8 @@ void ProfileView::draw_x_grid_d_domain(void)
 
 void ProfileView::draw_x_grid_t_domain(void)
 {
-	const int central_width  = this->get_central_width_px();
-	const int central_height = this->get_central_height_px();
+	const int central_n_columns  = this->get_central_n_columns();
+	const int central_n_rows = this->get_central_n_rows();
 	const int bottom_width   = this->graph_2d->bottom_get_width();
 	const int bottom_height  = this->graph_2d->bottom_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
@@ -2087,7 +2101,7 @@ void ProfileView::draw_x_grid_t_domain(void)
 	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
 
 #if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", central width =" << central_width;
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", central width =" << central_n_columns;
 	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", bottom width =" << bottom_width;
 	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
 	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
@@ -2100,7 +2114,7 @@ void ProfileView::draw_x_grid_t_domain(void)
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
 		const int col = leftmost_px
-			+ (axis_mark_uu - this->x_min_visible_t) * 1.0 * central_width / (visible_range * 1.0);
+			+ (axis_mark_uu - this->x_min_visible_t) * 1.0 * central_n_columns / (visible_range * 1.0);
 
 		if (col >= leftmost_px && col <= rightmost_px) {
 			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
@@ -2108,7 +2122,7 @@ void ProfileView::draw_x_grid_t_domain(void)
 			/* Graph line. From bottom of central area to top of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
 							  col, topmost_px,
-							  col, topmost_px + central_height);
+							  col, topmost_px + central_n_rows);
 
 
 			/* Text label in bottom margin. */
@@ -2199,19 +2213,17 @@ bool ProfileView::supported_domains(GisViewportDomain x_domain, GisViewportDomai
 
 
 
-int ProfileView::get_central_width_px(void) const
+int ProfileView::get_central_n_columns(void) const
 {
-	/* TODO: use cached value? */
-	return this->graph_2d->central_get_width();
+	return this->graph_2d->cached_central_n_columns;
 }
 
 
 
 
-int ProfileView::get_central_height_px(void) const
+int ProfileView::get_central_n_rows(void) const
 {
-	/* TODO: use cached value? */
-	return this->graph_2d->central_get_height();
+	return this->graph_2d->cached_central_n_rows;
 }
 
 
@@ -2308,4 +2320,20 @@ void Graph2D::mouseReleaseEvent(QMouseEvent * ev)
 	qDebug() << SG_PREFIX_I << "called with button" << (int) ev->button();
 	emit this->button_released(this, ev);
 	ev->accept();
+}
+
+
+
+
+int Graph2D::central_get_n_columns(void) const
+{
+	return this->central_get_rightmost_pixel() - this->central_get_leftmost_pixel() + 1;
+}
+
+
+
+
+int Graph2D::central_get_n_rows(void) const
+{
+	return this->central_get_bottommost_pixel() - this->central_get_topmost_pixel() + 1;
 }

@@ -2007,7 +2007,7 @@ sg_ret RTData::set(struct gps_data_t & gpsdata, CoordMode coord_mode)
 void RTData::reset(void)
 {
 	this->saved_to_track = true;
-	/* Track alt/time graph uses VIK_DEFAULT_ALTITUDE (0.0) as invalid. */
-	this->fix.altitude = VIK_DEFAULT_ALTITUDE;
+	/* Track alt/time graph uses NAN value as indicator of invalid altitude/speed. */
+	this->fix.altitude = NAN;
 	this->fix.speed = NAN;
 }

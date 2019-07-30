@@ -269,15 +269,15 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	int elev_points = 100; /* this->trk->size()? */
 	TrackData altitudes = this->trk->make_track_data_altitude_over_distance(elev_points);
 	if (!altitudes.valid) {
-		altitudes.y_min = VIK_DEFAULT_ALTITUDE;
-		altitudes.y_max = VIK_DEFAULT_ALTITUDE;
+		altitudes.y_min = NAN;
+		altitudes.y_max = NAN;
 	} else {
 		altitudes.calculate_min_max();
 	}
 
 	QString result;
 	const HeightUnit height_unit = Preferences::get_unit_height();
-	if (altitudes.y_min == VIK_DEFAULT_ALTITUDE) {
+	if (altitudes.y_min == NAN) {
 		result = tr("No Data");
 	} else {
 		Altitude alti_min = Altitude(altitudes.y_min, HeightUnit::Metres);

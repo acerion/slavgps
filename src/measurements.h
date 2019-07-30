@@ -99,7 +99,6 @@ namespace SlavGPS {
 #define MERCLAT(x) (RAD2DEG(log(tan((0.25 * M_PI) + (0.5 * DEG2RAD(x))))))
 #define DEMERCLAT(x) (RAD2DEG(atan(sinh(DEG2RAD(x)))))
 
-#define VIK_DEFAULT_ALTITUDE 0.0
 #define VIK_DEFAULT_DOP 0.0
 
 
