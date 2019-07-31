@@ -84,6 +84,39 @@ namespace SlavGPS {
 
 
 
+	/*
+	  Crosshair that knows its position in 2D graph and in Qt
+	  widget. See comments on x/y members for details.
+	*/
+	class Crosshair2D {
+	public:
+		/*
+		  Coordinates valid only in central area of 2d graph,
+		  and following 'beginning in bottom-left corner'
+		  coordinate system.
+
+		  So if the two values are zero, they indicate
+		  bottom-left corner of central area of 2d graph.
+		*/
+		int central_cbl_x = 0;
+		int central_cbl_y = 0;
+
+		/*
+		  Global coordinates in Qt widget, following
+		  'beginning in top-left corner' convention.
+		*/
+		int x = 0;
+		int y = 0;
+
+		QString debug;
+
+		bool valid = false;
+	};
+
+
+
+
+
 	class Graph2D : public ViewportPixmap {
 		Q_OBJECT
 	public:
@@ -93,6 +126,8 @@ namespace SlavGPS {
 		   position is in "beginning is in bottom-left corner"
 		   coordinate system. */
 		sg_ret cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const;
+
+		void central_draw_simple_crosshair(const Crosshair2D & crosshair);
 
 		/* How many rows/columns are there to draw? */
 		int central_get_n_columns(void) const;
@@ -153,6 +188,9 @@ namespace SlavGPS {
 		void handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * event);
 
 	private:
+		sg_ret set_center_at_selected_tp(QMouseEvent * ev, const Graph2D * graph_2d, int graph_2d_central_n_columns);
+
+
 		/* Pen used to draw main parts of views (i.e. the values of functions y = f(x)). */
 		QPen main_pen;
 
@@ -197,7 +235,7 @@ namespace SlavGPS {
 		const QString & get_title(void) const;
 
 		/**
-		   Set y position of argument that matches x position of argument.
+		   Find y position of argument that matches x position of argument.
 		   In other words: find y = f(x), where f() is current graph.
 
 		   Returned cursor position is in "beginning of
@@ -205,7 +243,7 @@ namespace SlavGPS {
 		   corner".
 		   cbl = coordinate-bottom-left.
 		*/
-		sg_ret set_pos_y_cbl(ScreenPos & screen_pos);
+		sg_ret cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y);
 
 		/**
 		   Get position of cursor on a 2d graph. 'x'
@@ -218,7 +256,7 @@ namespace SlavGPS {
 		   corner".
 		   cbl = coordinate-bottom-left.
 		*/
-		sg_ret cbl_get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos);
+		Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev);
 
 		sg_ret set_initial_visible_range_x_distance(void);
 		sg_ret set_initial_visible_range_x_time(void);
@@ -229,12 +267,12 @@ namespace SlavGPS {
 		   The position will be in "beginning of coordinates system is in bottom-left corner".
 		   cbl = coordinate-bottom-left.
 		*/
-		sg_ret get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos);
+		Crosshair2D get_position_of_tp(Track * trk, tp_idx tp_idx);
 
 		sg_ret regenerate_data(Track * trk);
 
 		sg_ret draw_graph_without_crosshairs(Track * trk);
-		sg_ret draw_crosshairs(const ScreenPos & selected_tp_pos, const ScreenPos & cursor_pos);
+		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
 
 		void draw_function_values(void);
 

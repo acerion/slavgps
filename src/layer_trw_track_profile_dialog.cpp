@@ -404,45 +404,56 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 
 
 
-/* Change what is displayed in main viewport in reaction to click event in one of Profile Dialog viewports. */
-static bool set_center_at_graph_position(int event_x,
-					 LayerTRW * trw,
-					 GisViewport * main_gisview,
-					 Track * trk,
-					 GisViewportDomain x_domain,
-					 int graph_n_columns)
+/**
+   Change what is displayed in main GIS viewport in reaction to click
+   event in one of Profile Dialog graphs.
+*/
+sg_ret TrackProfileDialog::set_center_at_selected_tp(QMouseEvent * ev, const Graph2D * graph_2d, int graph_2d_central_n_columns)
 {
-	const int graph_pixel_leftmost = graph_n_columns - 1; /* TODO: you don't have to calculate this. */
+	const int graph_2d_leftmost_pixel = graph_2d->central_get_leftmost_pixel();
+	const int graph_2d_rightmost_pixel = graph_2d->central_get_rightmost_pixel();
 
-	int x = event_x;
-	if (x > graph_pixel_leftmost) {
-		qDebug() << SG_PREFIX_E << "Condition 1 error:" << x << graph_pixel_leftmost;
-		x = graph_pixel_leftmost;
+
+	const int event_x = ev->x();
+	if (event_x < graph_2d_leftmost_pixel) {
+		qDebug() << SG_PREFIX_E << "Event x =" << event_x << "is beyond left border =" << graph_2d_leftmost_pixel;
+		return sg_ret::err;
 	}
-	if (x < 0) {
-		qDebug() << SG_PREFIX_E << "Condition 2 error:" << x;
-		x = 0;
+	if (event_x > graph_2d_rightmost_pixel) {
+		qDebug() << SG_PREFIX_E << "Event x =" << event_x << "is beyond right border =" << graph_2d_rightmost_pixel;
+		return sg_ret::err;
 	}
+
+
+	/*
+	  Coordinate 'x' of event in central area of graph, where
+	  bottom-left corner of the center area is a beginning of
+	  coordinate system.
+	*/
+	const int center_cbl_x = event_x - graph_2d->central_get_leftmost_pixel();
 
 	bool found = false;
-	switch (x_domain) {
+	switch (graph_2d->x_domain) {
 	case GisViewportDomain::Time:
-		found = trk->select_tp_by_percentage_time((double) x / graph_n_columns, SELECTED);
+		found = this->trk->select_tp_by_percentage_time((double) center_cbl_x / graph_2d_central_n_columns, SELECTED);
 		break;
 	case GisViewportDomain::Distance:
-		found = trk->select_tp_by_percentage_dist((double) x / graph_n_columns, NULL, SELECTED);
+		found = this->trk->select_tp_by_percentage_dist((double) center_cbl_x / graph_2d_central_n_columns, NULL, SELECTED);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) x_domain;
-		break;
+		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) graph_2d->x_domain;
+		return sg_ret::err;
 	}
 
+
 	if (found) {
-		Trackpoint * tp = trk->get_selected_tp();
-		main_gisview->set_center_coord(tp->coord);
-		trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
+		Trackpoint * tp = this->trk->get_selected_tp();
+		this->main_gisview->set_center_coord(tp->coord);
+		this->trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
+		return sg_ret::ok;
+	} else {
+		return sg_ret::err;
 	}
-	return found;
 }
 
 
@@ -456,12 +467,9 @@ static bool set_center_at_graph_position(int event_x,
 
    Both "pos" arguments should indicate position in graph's coordinate system.
 */
-sg_ret ProfileView::draw_crosshairs(const ScreenPos & selected_tp_pos, const ScreenPos & cursor_pos)
+sg_ret ProfileView::draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos)
 {
-	const bool cursor_pos_valid = cursor_pos.x() > 0 && cursor_pos.y() > 0;
-	const bool selected_tp_pos_valid = selected_tp_pos.x() > 0 && selected_tp_pos.y() > 0;
-
-	if (!cursor_pos_valid && !selected_tp_pos_valid) {
+	if (!selected_tp.valid && !cursor_pos.valid) {
 		/* Perhaps this should be an error, maybe we shouldn't
 		   call the function when both positions are
 		   invalid. */
@@ -484,12 +492,13 @@ sg_ret ProfileView::draw_crosshairs(const ScreenPos & selected_tp_pos, const Scr
 	/*
 	  Now draw crosshairs on this fresh (restored from saved) image.
 	*/
-	if (cursor_pos_valid) {
+	if (selected_tp.valid) {
+		this->graph_2d->central_draw_simple_crosshair(selected_tp);
+	}
+	if (cursor_pos.valid) {
 		this->graph_2d->central_draw_simple_crosshair(cursor_pos);
 	}
-	if (selected_tp_pos_valid) {
-		this->graph_2d->central_draw_simple_crosshair(selected_tp_pos);
-	}
+
 
 
 	/*
@@ -529,15 +538,17 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 	assert (view->graph_2d == graph_2d);
 
 
-	ScreenPos cursor_pos_cbl;
-	graph_2d->cbl_get_cursor_pos(ev, cursor_pos_cbl);
-	const bool found_tp = set_center_at_graph_position(cursor_pos_cbl.x(),
-							   this->trw,
-							   this->main_gisview,
-							   this->trk,
-							   view->graph_2d->x_domain,
-							   view->get_central_n_columns());
-	if (!found_tp) {
+
+	qDebug() << SG_PREFIX_I << "Crosshair. Mouse event at" << ev->x() << ev->y() << "(cbl ="
+		 << ev->x() - graph_2d->central_get_leftmost_pixel()
+		 << graph_2d->central_get_bottommost_pixel() - ev->y() << ")";
+
+
+
+	const sg_ret tp_lookup = this->set_center_at_selected_tp(ev,
+								 graph_2d,
+								 view->get_central_n_columns());
+	if (sg_ret::ok != tp_lookup) {
 		/* Unable to get the point so give up. */
 		this->button_split_at_marker->setEnabled(false);
 		return;
@@ -545,14 +556,14 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 	this->button_split_at_marker->setEnabled(true);
 
-	bool is_selected_tp_crosshair = false; /* TODO: calculate value of this flag based on 'ScreenPos selected_tp_pos_cbl' being valid below. */
+	bool is_selected_tp_crosshair = false; /* TODO: calculate value of this flag based on 'selected_tp' being valid below. */
 
 	/* Attempt to redraw crosshair on all graphs. Notice that this
 	   does not redraw full graphs, just crosshairs.
 
 	   This is done on all graphs because we want to have 'mouse
 	   release' event reflected in all graphs. */
-	cursor_pos_cbl.set(-1.0, -1.0); /* Don't draw current position on clicks. */
+	Crosshair2D cursor_pos; /* Noninitialized == invalid. Don't draw cursor position on clicks. */
 	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
 		ProfileView * view_iter = *iter;
 		if (!view_iter->graph_2d) {
@@ -569,8 +580,9 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 		}
 
 
-	        ScreenPos selected_tp_pos_cbl;
-		if (sg_ret::ok != view_iter->get_position_cbl_of_tp(this->trk, SELECTED, selected_tp_pos_cbl)) {
+	        Crosshair2D selected_tp = view_iter->get_position_of_tp(this->trk, SELECTED);
+		selected_tp.debug = "selected tp 3";
+		if (!selected_tp.valid) {
 			continue;
 		}
 
@@ -580,7 +592,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 		  corner), not Qt's coordinate system (beginning in
 		  upper left corner).
 		*/
-		view_iter->draw_crosshairs(selected_tp_pos_cbl, cursor_pos_cbl);
+		view_iter->draw_crosshairs(selected_tp, cursor_pos);
 	}
 
 
@@ -592,44 +604,39 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 
 
-sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
+sg_ret ProfileView::cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y)
 {
-	//const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
-
-	//const int width = this->get_central_width_px();
-	//const int height = this->get_central_height_px();
-
-	int ix = (int) screen_pos.x();
+	const int n_cols = this->graph_2d->central_get_n_columns();
 
 	/*
-	  Ensure ix is inside of graph.
+	  Ensure x is inside of graph.
 
 	  Here we call functions that return pixels in "beginning in
-	  upper-left corner" coordinate system.  Since in this
-	  function we calculate screen pos that is in "beginning in
-	  lower-left corner" coordinate system, this should be safe,
-	  because in both coordinate systems beginning is on the left.
+	  upper-left corner" coordinate system.  Since here we verify
+	  position of 'x' that is also inn "beginning in lower-left
+	  corner" coordinate system, this should be safe, because in
+	  both coordinate systems beginning is on the left.
 	*/
 	const int leftmost_pixel = this->graph_2d->central_get_leftmost_pixel();
 	const int rightmost_pixel = this->graph_2d->central_get_rightmost_pixel();
-	if (ix < leftmost_pixel) {
-		ix = leftmost_pixel;
-	} else if (ix > rightmost_pixel) {
-		ix = rightmost_pixel;
-	} else {
-		;
+	if (cbl_x < leftmost_pixel) {
+		qDebug() << SG_PREFIX_E << "x too far to left:" << cbl_x << leftmost_pixel;
+		return sg_ret::err;
+	}
+	if (cbl_x > rightmost_pixel) {
+		qDebug() << SG_PREFIX_E << "x too far to right:" << cbl_x << rightmost_pixel;
+		return sg_ret::err;
 	}
 
-	/* This is to handle situations when leftmost pixel of central
-	   pixmap is not zero, i.e. if central pixmap has some
-	   margin. We must avoid situation when ix, used as array
-	   index, is out of bounds. */
-	ix = ix - leftmost_pixel;
+
+	if (cbl_x > n_cols) {
+		qDebug() << SG_PREFIX_E << "cbl x too large:" << cbl_x << n_cols;
+		assert (cbl_x <= n_cols);
+	}
 
 
-	const int y = n_rows * (this->track_data.y[ix] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
-	screen_pos.set(screen_pos.x(), y);
+	cbl_y = n_rows * (this->track_data.y[cbl_x] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
 
 	return sg_ret::ok;
 }
@@ -637,17 +644,29 @@ sg_ret ProfileView::set_pos_y_cbl(ScreenPos & screen_pos)
 
 
 
-sg_ret ProfileView::cbl_get_cursor_pos_on_line(QMouseEvent * ev, ScreenPos & screen_pos_cbl)
+Crosshair2D ProfileView::get_cursor_pos_on_line(QMouseEvent * ev)
 {
-	/* Get exact cursor position. 'y' may not be on a graph line. */
-	if (sg_ret::ok != this->graph_2d->cbl_get_cursor_pos(ev, screen_pos_cbl)) {
-		/* Not an error? */
-		return sg_ret::ok;
-	}
-	/* Adjust 'y' position so that its on a graph line. */
-	this->set_pos_y_cbl(screen_pos_cbl);
+	Crosshair2D crosshair;
 
-	return sg_ret::ok;
+	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+
+	crosshair.central_cbl_x = ev->x() - leftmost_px;
+
+	/* Find 'y' position that lays on a graph line. */
+	this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y);
+
+	/*
+	  Use coordinates of point that is
+	  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
+	  b) is in 'beginning in bottom-left' coordinate system (cbl)
+	  to calculate global, 'beginning in top-left' coordinates.
+	*/
+	crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
+	crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
+
+	crosshair.valid = true;
+
+	return crosshair;
 }
 
 
@@ -701,32 +720,37 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 	double meters_from_start = 0.0;
 
-	/* Screen coordinates in "beginning in bottom-left" coordinate system. */
-	ScreenPos selected_tp_pos_cbl; /* Crosshair laying on a graph where currently selected tp is located. */
-	ScreenPos cursor_pos_cbl;  /* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
 
-	if (sg_ret::ok != view->cbl_get_cursor_pos_on_line(ev, cursor_pos_cbl)) {
+	/* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
+	Crosshair2D cursor_pos = view->get_cursor_pos_on_line(ev);
+	if (!cursor_pos.valid) {
 		qDebug() << SG_PREFIX_E << "Failed to get cursor position on line";
 		return;
 	}
-	if (true) {
-		/* At the beginning there will be no selected tp, so
-		   this function will return !ok. This is fine, ignore
-		   the !ok status and continue to drawing current
-		   position.
 
-		   TODO_OPTIMIZATION: there is no need to find a
-		   selected trackpoint every time a cursor moves. Only
-		   current trackpoint (trackpoint under moving cursor
-		   mouse) is changing. The trackpoint selected by
-		   previous cursor click is does not change. */
-		view->get_position_cbl_of_tp(this->trk, SELECTED, selected_tp_pos_cbl);
-	}
+
+	/*
+	  Crosshair laying on a graph where currently selected tp is
+	  located.
+
+	  At the beginning there will be no selected tp, so this
+	  function will return !ok. This is fine, ignore the !ok
+	  status and continue to drawing current position.
+
+	  TODO_OPTIMIZATION: there is no need to find a selected
+	  trackpoint every time a cursor moves. Only current
+	  trackpoint (trackpoint under moving cursor mouse) is
+	  changing. The trackpoint selected by previous cursor click
+	  is does not change.
+	*/
+	Crosshair2D selected_tp = view->get_position_of_tp(this->trk, SELECTED);
+	selected_tp.debug = "selected tp 1";
+
 
 	switch (view->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
-		this->trk->select_tp_by_percentage_dist((double) cursor_pos_cbl.x() / view->get_central_n_columns(), &meters_from_start, HOVERED);
-		view->draw_crosshairs(selected_tp_pos_cbl, cursor_pos_cbl);
+		this->trk->select_tp_by_percentage_dist((double) cursor_pos.central_cbl_x / view->get_central_n_columns(), &meters_from_start, HOVERED);
+		view->draw_crosshairs(selected_tp, cursor_pos);
 
 		if (view->labels.x_value) {
 			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
@@ -735,8 +759,8 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 		break;
 
 	case GisViewportDomain::Time:
-		this->trk->select_tp_by_percentage_time((double) cursor_pos_cbl.x() / view->get_central_n_columns(), HOVERED);
-		view->draw_crosshairs(selected_tp_pos_cbl, cursor_pos_cbl);
+		this->trk->select_tp_by_percentage_time((double) cursor_pos.central_cbl_x / view->get_central_n_columns(), HOVERED);
+		view->draw_crosshairs(selected_tp, cursor_pos);
 
 		if (view->labels.x_value) {
 			time_t seconds_from_start = 0;
@@ -752,7 +776,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 	};
 
 
-	double y = view->track_data.y[(int) cursor_pos_cbl.x()]; /* FIXME: use proper value for array index. */
+	double y = view->track_data.y[cursor_pos.central_cbl_x]; /* FIXME: use proper value for array index. */
 	switch (view->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
 		if (view->labels.y_value) {
@@ -1154,14 +1178,20 @@ sg_ret ProfileView::draw_graph_without_crosshairs(Track * trk)
 	this->graph_2d->clear();
 
 
-	/* TODO: do we compare returned value correctly? */
-	if (sg_ret::err == trk->draw_tree_item(this->graph_2d,
-					       this->get_central_n_columns(),
-					       this->get_central_n_rows(),
-					       this->graph_2d->x_domain, this->graph_2d->y_domain)) {
+	switch (this->graph_2d->x_domain) {
+	case GisViewportDomain::Time:
+		qDebug() << SG_PREFIX_I << "draw tree item (time domain)";
+		trk->draw_tree_item(this->graph_2d,
+				    this->get_central_n_columns(),
+				    this->get_central_n_rows(),
+				    this->graph_2d->x_domain, this->graph_2d->y_domain);
+		break;
 
-		qDebug() << SG_PREFIX_I << "draw function values";
+	default:
+		/* Some other y domain. */
+		qDebug() << SG_PREFIX_I << "draw function values (non-time domain)";
 		this->draw_function_values();
+		break;
 	}
 
 	/* Draw grid on top of graph of values. */
@@ -1256,13 +1286,14 @@ void TrackProfileDialog::draw_all_views(bool resized)
 
 
 
-sg_ret ProfileView::get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos & screen_pos)
+Crosshair2D ProfileView::get_position_of_tp(Track * trk, tp_idx tp_idx)
 {
 	double pc = NAN;
+	Crosshair2D crosshair; /* Initially invalid. */
 
 	Trackpoint * tp = trk->get_tp(tp_idx);
 	if (NULL == tp) {
-		return sg_ret::err;
+		return crosshair;
 	}
 
 	switch (this->graph_2d->x_domain) {
@@ -1279,13 +1310,24 @@ sg_ret ProfileView::get_position_cbl_of_tp(Track * trk, tp_idx tp_idx, ScreenPos
 	}
 
 	if (!std::isnan(pc)) {
-		screen_pos.set(pc * this->get_central_n_columns(), 0.0); /* Set x.*/
-		this->set_pos_y_cbl(screen_pos); /* Find y. */
+		crosshair.central_cbl_x = pc * this->get_central_n_columns();             /* Find x. */
+		this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y); /* Find y. */
+
+		/*
+		  Use coordinates of point that is
+		  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
+		  b) is in 'beginning in bottom-left' coordinate system (cbl)
+		  to calculate global, 'beginning in top-left' coordinates.
+		*/
+		crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
+		crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
+
+		crosshair.valid = true;
 	}
 
 	// qDebug() << SG_PREFIX_D << "returning pos of tp idx" << tp_idx;
 
-	return sg_ret::ok;
+	return crosshair;
 }
 
 
@@ -1305,13 +1347,12 @@ sg_ret ProfileView::draw_track_and_crosshairs(Track * trk)
 
 	/* Draw crosshairs. */
 	if (1) {
-		ScreenPos cursor_pos_cbl(-1.0, -1.0);
-		this->get_position_cbl_of_tp(trk, HOVERED, cursor_pos_cbl);
+		Crosshair2D cursor_pos = this->get_position_of_tp(trk, HOVERED);
+		cursor_pos.debug = "cursor pos";
+		Crosshair2D selected_tp = this->get_position_of_tp(trk, SELECTED);
+		selected_tp.debug = "selected tp 2";
 
-		ScreenPos selected_tp_pos_cbl;
-		this->get_position_cbl_of_tp(trk, SELECTED, selected_tp_pos_cbl);
-
-		ret = this->draw_crosshairs(selected_tp_pos_cbl, cursor_pos_cbl);
+		ret = this->draw_crosshairs(selected_tp, cursor_pos);
 		if (sg_ret::ok != ret) {
 			qDebug() << SG_PREFIX_E << "Failed to draw crosshairs";
 		}
@@ -2336,4 +2377,43 @@ int Graph2D::central_get_n_columns(void) const
 int Graph2D::central_get_n_rows(void) const
 {
 	return this->central_get_bottommost_pixel() - this->central_get_topmost_pixel() + 1;
+}
+
+
+
+
+void Graph2D::central_draw_simple_crosshair(const Crosshair2D & crosshair)
+{
+	const int leftmost_pixel = this->central_get_leftmost_pixel();
+	const int rigthmost_pixel = this->central_get_rightmost_pixel();
+	const int topmost_pixel = this->central_get_topmost_pixel();
+	const int bottommost_pixel = this->central_get_bottommost_pixel();
+
+	if (!crosshair.valid) {
+		qDebug() << SG_PREFIX_E << "Crosshair" << crosshair.debug << "is invalid";
+		/* Position outside of graph area. */
+		return;
+	}
+
+	qDebug() << SG_PREFIX_I << "Crosshair" << crosshair.debug << "at coord" << crosshair.x << crosshair.y << "(central cbl =" << crosshair.central_cbl_x << crosshair.central_cbl_y << ")";
+
+	if (crosshair.x > rigthmost_pixel || crosshair.x < leftmost_pixel) {
+		qDebug() << SG_PREFIX_E << "Crosshair has bad x";
+		/* Position outside of graph area. */
+		return;
+	}
+	if (crosshair.y > bottommost_pixel || crosshair.y < topmost_pixel) {
+		qDebug() << SG_PREFIX_E << "Crosshair has bad y";
+		/* Position outside of graph area. */
+		return;
+	}
+
+
+	this->painter.setPen(this->marker_pen);
+
+	/* Small optimization: use QT's drawing primitives directly.
+	   Remember that (0,0) screen position is in upper-left corner of viewport. */
+
+	this->painter.drawLine(leftmost_pixel, crosshair.y, rigthmost_pixel, crosshair.y); /* Horizontal line. */
+	this->painter.drawLine(crosshair.x, topmost_pixel, crosshair.x, bottommost_pixel); /* Vertical line. */
 }

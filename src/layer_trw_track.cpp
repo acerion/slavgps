@@ -3529,7 +3529,7 @@ sg_ret Track::draw_tree_item(Graph2D * graph_2d, int n_columns, int n_rows, GisV
 		break;
 
 	case GisViewportDomain::Speed:
-		if (!this->get_distances(values_uu, min_value_uu, max_value_uu)) {
+		if (!this->get_speeds(values_uu, min_value_uu, max_value_uu)) {
 			qDebug() << SG_PREFIX_N << "Can't get values of speeds";
 			return sg_ret::err;
 		}
