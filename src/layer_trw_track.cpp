@@ -1018,20 +1018,41 @@ TrackData Track::make_values_altitude_over_time_helper(void) const
 
 	TrackData data(tp_count);
 
-	int i = 0;
 	auto iter = this->trackpoints.begin();
+	if (iter == this->trackpoints.end()) {
+		return data;
+	}
 
-	data.x[i] = (*iter)->timestamp.get_value();
-	data.y[i] = (*iter)->altitude.get_value();
-	i++;
-	iter++;
+	int i = 0;
+	do {
+		const bool y_valid = (*iter)->altitude.is_valid();
 
-	while (iter != this->trackpoints.end()) {
 		data.x[i] = (*iter)->timestamp.get_value();
-		data.y[i] = (*iter)->altitude.get_value();
+		data.y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
+
+		if (data.x[i] > data.x_max) {
+			data.x_max = data.x[i];
+		}
+		if (data.x[i] < data.x_min) {
+			data.x_min = data.x[i];
+		}
+		if (y_valid) {
+			if (data.y[i] > data.y_max) {
+				data.y_max = data.y[i];
+			}
+			if (data.y[i] < data.y_min) {
+				data.y_min = data.y[i];
+			}
+		}
+
 		i++;
 		iter++;
-	}
+	} while (iter != this->trackpoints.end());
+
+	assert (i == tp_count);
+	data.valid = true;
+
+	qDebug() << SG_PREFIX_D << "Filled" << i << "cells with altitudes";
 
 	return data;
 }
@@ -1309,23 +1330,47 @@ TrackData Track::make_track_data_speed_over_time(void) const
 	result.allocate_vector(tp_count);
 
 	int i = 0;
-	result.x[i] = data_dt.x[0];
-	result.y[i] = 0.0;
-	i++;
+	for (i = 0; i < tp_count; i++) {
 
-	for (; i < tp_count; i++) {
-		if (data_dt.x[i] <= data_dt.x[i - 1]) {
-			/* Handle glitch in values of consecutive time stamps.
-			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
-			qDebug() << SG_PREFIX_W << "Glitch in timestamps:" << i << data_dt.x[i] << data_dt.x[i - 1];
-			result.x[i] = data_dt.x[i - 1];
-			result.y[i] = 0;
+		/* TODO: handle invalid distance values in data_dt. */
+		bool y_valid = false;
+
+		if (i == 0) {
+			result.x[i] = data_dt.x[0];
+			result.y[i] = 0.0;
+			y_valid = true;
 		} else {
-			const double delta_t = (data_dt.x[i] - data_dt.x[i - 1]);
-			const double delta_d = (data_dt.y[i] - data_dt.y[i - 1]);
+			if (data_dt.x[i] <= data_dt.x[i - 1]) {
+				/* Handle glitch in values of consecutive time stamps.
+				   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
+				qDebug() << SG_PREFIX_W << "Glitch in timestamps:" << i << data_dt.x[i] << data_dt.x[i - 1];
+				result.x[i] = data_dt.x[i - 1];
+				result.y[i] = 0;
+				y_valid = false;
+			} else {
+				const double delta_t = (data_dt.x[i] - data_dt.x[i - 1]);
+				const double delta_d = (data_dt.y[i] - data_dt.y[i - 1]);
 
-			result.x[i] = data_dt.x[i];
-			result.y[i] = delta_d / delta_t;
+				result.x[i] = data_dt.x[i];
+				result.y[i] = delta_d / delta_t;
+				y_valid = true;
+			}
+		}
+
+
+		if (result.x[i] > result.x_max) {
+			result.x_max = result.x[i];
+		}
+		if (result.x[i] < result.x_min) {
+			result.x_min = result.x[i];
+		}
+		if (y_valid) {
+			if (result.y[i] > result.y_max) {
+				result.y_max = result.y[i];
+			}
+			if (result.y[i] < result.y_min) {
+				result.y_min = result.y[i];
+			}
 		}
 	}
 
@@ -1357,22 +1402,49 @@ TrackData Track::make_track_data_distance_over_time(void) const
 	result.allocate_vector(tp_count);
 
 	int i = 0;
-	result.x[i] = data_dt.x[i];
-	result.y[i] = result.y[i];
-	i++;
+	for (i = 0; i < data_dt.n_points; i++) {
 
-	for (; i < data_dt.n_points; i++) {
-		if (data_dt.x[i] <= data_dt.x[i - 1]) {
-			/* Handle glitch in values of consecutive time stamps.
-			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
-			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
-			result.x[i] = data_dt.x[i - 1];
-			result.y[i] = 0;
-		} else {
+		bool y_valid = false;
+
+		if (i == 0) {
 			result.x[i] = data_dt.x[i];
-			result.y[i] = data_dt.y[i - 1];
+			result.y[i] = result.y[i];
+			y_valid = true;
+		} else {
+
+			if (data_dt.x[i] <= data_dt.x[i - 1]) {
+				/* Handle glitch in values of consecutive time stamps.
+				   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
+				qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
+				result.x[i] = data_dt.x[i - 1];
+				result.y[i] = NAN;
+				y_valid = false;
+			} else {
+				result.x[i] = data_dt.x[i];
+				result.y[i] = data_dt.y[i - 1];
+				y_valid = true;
+			}
+		}
+
+
+		if (result.x[i] > result.x_max) {
+			result.x_max = result.x[i];
+		}
+		if (result.x[i] < result.x_min) {
+			result.x_min = result.x[i];
+		}
+		if (y_valid) {
+			if (result.y[i] > result.y_max) {
+				result.y_max = result.y[i];
+			}
+			if (result.y[i] < result.y_min) {
+				result.y_min = result.y[i];
+			}
 		}
 	}
+
+	assert (i == tp_count);
+	qDebug() << SG_PREFIX_D << "Filled" << i << "cells with altitudes";
 
 	result.valid = true;
 	return result;
@@ -1892,122 +1964,6 @@ bool Track::get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const
 			min_alt = tmp_alt;
 		}
 	}
-	return true;
-}
-
-
-
-
-bool Track::get_distances(std::vector<double> & values, double & min, double & max) const
-{
-	if (this->trackpoints.empty()) {
-		return false;
-	}
-
-	qDebug() << SG_PREFIX_D << "Will reserve" << this->trackpoints.size() << "cells for distances";
-	values.reserve(this->trackpoints.size());
-
-	double acc = 0.0;
-	int i = 0;
-
-	values.push_back(acc);
-	i++;
-
-	min = 0.0;
-	max = 0.0;
-
-	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
-		const double delta = Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		acc += delta;
-
-		values.push_back(acc);
-
-		if (acc < min) {
-			min = acc;
-		}
-		if (acc > max) {
-			max = acc;
-		}
-
-		i++;
-	}
-	qDebug() << SG_PREFIX_D << "Filled" << i << values.size() << "cells with distances";
-
-	return true;
-}
-
-
-
-
-bool Track::get_speeds(std::vector<double> & values, double & min, double & max) const
-{
-	if (this->trackpoints.empty()) {
-		return false;
-	}
-
-	qDebug() << SG_PREFIX_D << "Will reserve" << this->trackpoints.size() << "cells for speeds";
-	values.reserve(this->trackpoints.size());
-
-	int i = 0;
-
-	values.push_back(0.0);
-	i++;
-
-	min = 0.0;
-	max = 0.0;
-
-	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
-		const double delta_d = Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		const time_t delta_t = (*iter)->timestamp.get_value() - (*std::prev(iter))->timestamp.get_value();
-		const double value = delta_t ? delta_d/delta_t : 0.0;
-		values.push_back(value);
-
-		if (value < min) {
-			min = value;
-		}
-		if (value > max) {
-			max = value;
-		}
-
-		i++;
-	}
-	qDebug() << SG_PREFIX_D << "Filled" << i << values.size() << "cells with speeds";
-
-	return true;
-}
-
-
-
-
-bool Track::get_altitudes(std::vector<double> & values, double & min, double & max) const
-{
-	if (this->trackpoints.empty()) {
-		return false;
-	}
-
-	qDebug() << SG_PREFIX_D << "Will reserve" << this->trackpoints.size() << "cells for altitudes";
-	values.reserve(this->trackpoints.size());
-
-	int i = 0;
-
-	min = 0.0;
-	max = 0.0;
-
-	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
-		const double value = (*iter)->altitude.is_valid() ? (*iter)->altitude.get_value() : 0.0; /* TODO: this should be NAN instead of 0.0, and it should be better handled in calculation of min/max below. */
-		values.push_back(value);
-
-		if (value < min) {
-			min = value;
-		}
-		if (value > max) {
-			max = value;
-		}
-
-		i++;
-	}
-	qDebug() << SG_PREFIX_D << "Filled" << i << values.size() << "cells with altitudes";
-
 	return true;
 }
 
@@ -3460,16 +3416,16 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 
 
 
-sg_ret Track::draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_rows, std::vector<double> values_uu, double min_value_uu, double max_value_uu)
+sg_ret Track::draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_rows, const TrackData & track_data)
 {
-	const size_t n_values = values_uu.size();
+	const size_t n_values = track_data.n_points;
 	if (0 == n_values) {
 		qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
 		return sg_ret::err;
 	}
 
 	const double margin = 0.05;
-	const double visible_values_range_uu = max_value_uu - min_value_uu;
+	const double visible_values_range_uu = track_data.y_max - track_data.y_min;
 
 	const int bottommost_pixel = graph_2d->central_get_bottommost_pixel();
 	const int leftmost_pixel = graph_2d->central_get_leftmost_pixel();
@@ -3477,18 +3433,20 @@ sg_ret Track::draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_r
 	const double x_scale = 1.0 * n_values / n_columns;
 
 	ScreenPos cur_pos;
-	ScreenPos last_pos(0, bottommost_pixel);
+	ScreenPos last_pos(leftmost_pixel, bottommost_pixel);
 
 	QPen pen;
 	pen.setColor(this->has_color ? this->color : "blue");
 	pen.setWidth(1);
 
+	qDebug() << SG_PREFIX_I << "kamil will draw graph'" << graph_2d->debug << "'with n data points =" << n_values << "into graph with n columns =" << n_columns;
+
 	double col = leftmost_pixel;
-	for (auto iter = values_uu.begin(); iter != values_uu.end(); iter++) {
-		const double current_value_uu = *iter;
+	for (size_t i = 0; i < n_values; i++) {
+		const double current_value_uu = track_data.y[i];
 
 		cur_pos.rx() = col;
-		cur_pos.ry() = bottommost_pixel - n_rows * (current_value_uu - min_value_uu) / visible_values_range_uu;
+		cur_pos.ry() = bottommost_pixel - n_rows * (current_value_uu - track_data.y_min) / visible_values_range_uu;
 
 		graph_2d->draw_line(pen, last_pos, cur_pos);
 
@@ -3497,50 +3455,6 @@ sg_ret Track::draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_r
 	}
 
 	return sg_ret::ok;
-}
-
-
-
-
-sg_ret Track::draw_tree_item(Graph2D * graph_2d, int n_columns, int n_rows, GisViewportDomain x_domain, GisViewportDomain y_domain)
-{
-	if (x_domain != GisViewportDomain::Time) {
-		qDebug() << SG_PREFIX_W << "Can't draw non-time based graph";
-		return sg_ret::err;
-	}
-
-	double min_value_uu = 0.0;
-	double max_value_uu = 0.0;
-	std::vector<double> values_uu;
-
-	switch (y_domain) {
-	case GisViewportDomain::Elevation:
-		if (!this->get_altitudes(values_uu, min_value_uu, max_value_uu)) {
-			qDebug() << SG_PREFIX_N << "Can't get values of altitudes";
-			return sg_ret::err;
-		}
-		break;
-
-	case GisViewportDomain::Distance:
-		if (!this->get_distances(values_uu, min_value_uu, max_value_uu)) {
-			qDebug() << SG_PREFIX_N << "Can't get values of distances";
-			return sg_ret::err;
-		}
-		break;
-
-	case GisViewportDomain::Speed:
-		if (!this->get_speeds(values_uu, min_value_uu, max_value_uu)) {
-			qDebug() << SG_PREFIX_N << "Can't get values of speeds";
-			return sg_ret::err;
-		}
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_W << "Can't draw graphs of this y-domain" << (int) y_domain;
-		return sg_ret::err;
-	}
-
-	return this->draw_function_over_time(graph_2d, n_columns, n_rows, values_uu, min_value_uu, max_value_uu);
 }
 
 

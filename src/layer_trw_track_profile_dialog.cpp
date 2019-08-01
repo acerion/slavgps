@@ -877,9 +877,9 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 
 
 /**
-   @reviewed-on 2019-07-29
+   @reviewed-on tbd
 */
-void ProfileView::draw_function_values(void)
+void ProfileView::draw_function_values(Track * trk)
 {
 	const double visible_range = this->y_max_visible - this->y_min_visible;
 
@@ -890,18 +890,30 @@ void ProfileView::draw_function_values(void)
 	const int rightmost_px = this->graph_2d->central_get_rightmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
-	for (int i = 0; i < n_columns; i++) {
-		const bool value_valid = this->track_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
 
-		/* Value of function in 'coordinate system with beginning in bottom left corner'. */
-		const int cbl_value = value_valid
-			? (n_rows * (this->track_data.y[i] - this->y_min_visible) / visible_range)
-			: n_rows;
+	if (GisViewportDomain::Time == this->graph_2d->x_domain) {
+		qDebug() << SG_PREFIX_I
+			 << "kamil will call draw_function_over_time() to draw graph" << this->graph_2d->debug
+			 << "into n columns =" << n_columns << this->get_central_n_columns();
 
-		this->graph_2d->central_draw_line(value_valid ? this->main_pen : this->no_alt_info_pen,
-						  leftmost_px + i, bottommost_px,
-						  leftmost_px + i, bottommost_px - cbl_value);
+		trk->draw_function_over_time(this->graph_2d,
+					     this->get_central_n_columns(),
+					     this->get_central_n_rows(),
+					     this->track_data_raw);
+	} else {
+		for (int i = 0; i < n_columns; i++) {
+			const bool value_valid = this->track_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
 
+			/* Value of function in 'coordinate system with beginning in bottom left corner'. */
+			const int cbl_value = value_valid
+				? (n_rows * (this->track_data.y[i] - this->y_min_visible) / visible_range)
+				: n_rows;
+
+			this->graph_2d->central_draw_line(value_valid ? this->main_pen : this->no_alt_info_pen,
+							  leftmost_px + i, bottommost_px,
+							  leftmost_px + i, bottommost_px - cbl_value);
+
+		}
 	}
 }
 
@@ -1177,22 +1189,7 @@ sg_ret ProfileView::draw_graph_without_crosshairs(Track * trk)
 	/* Clear before redrawing. */
 	this->graph_2d->clear();
 
-
-	switch (this->graph_2d->x_domain) {
-	case GisViewportDomain::Time:
-		qDebug() << SG_PREFIX_I << "draw tree item (time domain)";
-		trk->draw_tree_item(this->graph_2d,
-				    this->get_central_n_columns(),
-				    this->get_central_n_rows(),
-				    this->graph_2d->x_domain, this->graph_2d->y_domain);
-		break;
-
-	default:
-		/* Some other y domain. */
-		qDebug() << SG_PREFIX_I << "draw function values (non-time domain)";
-		this->draw_function_values();
-		break;
-	}
+	this->draw_function_values(trk);
 
 	/* Draw grid on top of graph of values. */
 	this->draw_x_grid(trk);

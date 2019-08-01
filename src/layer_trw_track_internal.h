@@ -293,9 +293,6 @@ namespace SlavGPS {
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;
 
 		bool get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const;
-		bool get_distances(std::vector<double> & distances, double & min, double & max) const;
-		bool get_speeds(std::vector<double> & speeds, double & min, double & max) const;
-		bool get_altitudes(std::vector<double> & speeds, double & min, double & max) const;
 
 		TrackData make_track_data_altitude_over_distance(int compressed_n_points) const;
 		TrackData make_track_data_gradient_over_distance(int compressed_n_points) const;
@@ -384,7 +381,7 @@ namespace SlavGPS {
 		  @param n_columns indicates for how many x values in 2D graph an y = f(x) value should be drawn.
 		  @param n_rows indicates how many pixels are available to draw a range of y = f(x) function.
 		*/
-		sg_ret draw_tree_item(Graph2D * graph_2d, int n_columns, int n_rows, GisViewportDomain x_domain, GisViewportDomain y_domain);
+		sg_ret draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_rows, const TrackData & track_data);
 
 		QString sublayer_rename_request(const QString & new_name);
 
@@ -443,11 +440,7 @@ namespace SlavGPS {
 
 		void copy_properties(const Track & from);
 
-		/*
-		  @param n_columns indicates for how many x values in 2D graph an y = f(x) value should be drawn.
-		  @param n_rows indicates how many pixels are available to draw a range of y = f(x) function.
-		*/
-		sg_ret draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_rows, std::vector<double> values_uu, double min_value_uu, double max_value_uu);
+
 
 		/**
 		   @brief Split track at given trackpoint iter

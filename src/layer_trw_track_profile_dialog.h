@@ -274,7 +274,7 @@ namespace SlavGPS {
 		sg_ret draw_graph_without_crosshairs(Track * trk);
 		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
 
-		void draw_function_values(void);
+		void draw_function_values(Track * trk);
 
 		void draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed);
 		void draw_speed_dist(Track * trk);
