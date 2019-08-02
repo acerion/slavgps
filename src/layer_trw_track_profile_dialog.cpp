@@ -221,8 +221,19 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 	};
 
 
+	qDebug() << SG_PREFIX_I << "Generated raw track data" << this->get_title()
+		 << ", valid =" << (this->track_data_raw.valid ? "true" : "false")
+		 << ", x_min =" << this->track_data_raw.x_min
+		 << ", x_max =" << this->track_data_raw.x_max
+		 << ", y_min =" << this->track_data_raw.y_min
+		 << ", y_max =" << this->track_data_raw.y_max;
 
-	qDebug() << SG_PREFIX_I << "After calling calculate_min_max; x_min/x_max =" << this->track_data.x_min << this->track_data.x_max << this->get_title();
+	qDebug() << SG_PREFIX_I << "Generated compressed track data" << this->get_title()
+		 << ", valid =" << (this->track_data.valid ? "true" : "false")
+		 << ", x_min =" << this->track_data.x_min
+		 << ", x_max =" << this->track_data.x_max
+		 << ", y_min =" << this->track_data.y_min
+		 << ", y_max =" << this->track_data.y_max;
 
 
 
@@ -346,8 +357,11 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 	   be non-rounded (i.e. random).  Make them non-rounded from
 	   the start, and be prepared to handle non-rounded
 	   y_min/max_visible from the start. */
-	const double over = 0.05; /* There is no deep reasoning behind this particular value. */
-	const double range = std::abs(this->track_data.y_max - this->track_data.y_min);
+	const double y_margin = 0.05; /* There is no deep reasoning behind this particular value. */
+
+	/* This is not exactly the same range as this->y_visible_range_uu
+	   calculated below. */
+	const double y_data_range = std::fabs(this->track_data.y_max - this->track_data.y_min);
 
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
@@ -355,17 +369,18 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 		/* Some graphs better start at zero, e.g. speed graph
 		   or distance graph. Showing negative speed values on
 		   a graph wouldn't make sense. */
-		this->y_min_visible = this->track_data.y_min;
+		this->y_visible_min = this->track_data.y_min;
 		break;
 	case GisViewportDomain::Elevation:
 	case GisViewportDomain::Gradient:
-		this->y_min_visible = this->track_data.y_min - range * over;
+		this->y_visible_min = this->track_data.y_min - y_data_range * y_margin;
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
 		return sg_ret::err;
 	}
-	this->y_max_visible = this->track_data.y_max + range * over;
+	this->y_visible_max = this->track_data.y_max + y_data_range * y_margin;
+	this->y_visible_range_uu = std::fabs(this->y_visible_max - this->y_visible_min);
 
 
 
@@ -377,19 +392,19 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
-		interval_index = speed_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		interval_index = speed_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
 		this->y_interval = speed_intervals.intervals.values[interval_index];
 		break;
 	case GisViewportDomain::Elevation:
-		interval_index = altitude_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		interval_index = altitude_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
 		this->y_interval = altitude_intervals.intervals.values[interval_index];
 		break;
 	case GisViewportDomain::Distance:
-		interval_index = distance_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		interval_index = distance_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
 		this->y_interval = distance_intervals.intervals.values[interval_index].value;
 		break;
 	case GisViewportDomain::Gradient:
-		interval_index = gradient_intervals.intervals.get_interval_index(this->y_min_visible, this->y_max_visible, n_intervals);
+		interval_index = gradient_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
 		this->y_interval = gradient_intervals.intervals.values[interval_index];
 		break;
 	default:
@@ -636,7 +651,7 @@ sg_ret ProfileView::cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y)
 	}
 
 
-	cbl_y = n_rows * (this->track_data.y[cbl_x] - this->y_min_visible) / (this->y_max_visible - this->y_min_visible);
+	cbl_y = n_rows * (this->track_data.y[cbl_x] - this->y_visible_min) / this->y_visible_range_uu;
 
 	return sg_ret::ok;
 }
@@ -831,7 +846,7 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 	}
 
 	double current_function_arg = 0.0;
-	const double max_function_value_dem = this->y_max_visible;
+	const double max_function_value_dem = this->y_visible_max;
 
 	const QColor dem_color = this->dem_alt_pen.color();
 	const QColor speed_color = this->gps_speed_pen.color();
@@ -851,7 +866,7 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 			const double elev_value_uu = elev.convert_to_unit(this->graph_2d->height_unit).get_value();
 
 			/* offset is in current height units. */
-			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
+			const double current_function_value_uu = elev_value_uu - this->y_visible_min;
 
 			const int x = n_columns * current_function_arg / max_function_arg;
 			const int y = 0 - n_rows * current_function_value_uu / max_function_value_dem;
@@ -879,10 +894,8 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 /**
    @reviewed-on tbd
 */
-void ProfileView::draw_function_values(Track * trk)
+sg_ret ProfileView::draw_function_values(Track * trk)
 {
-	const double visible_range = this->y_max_visible - this->y_min_visible;
-
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
 
@@ -890,31 +903,96 @@ void ProfileView::draw_function_values(Track * trk)
 	const int rightmost_px = this->graph_2d->central_get_rightmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
+	QPen valid_pen;
+	valid_pen.setColor(trk->has_color ? trk->color : "blue");
+	valid_pen.setWidth(1);
+
+	QPen err_pen;
+	err_pen.setColor(trk->color == "red" ? "black" : "red");
+	err_pen.setWidth(1);
+
 
 	if (GisViewportDomain::Time == this->graph_2d->x_domain) {
+
 		qDebug() << SG_PREFIX_I
 			 << "kamil will call draw_function_over_time() to draw graph" << this->graph_2d->debug
 			 << "into n columns =" << n_columns << this->get_central_n_columns();
-
+#if 0
 		trk->draw_function_over_time(this->graph_2d,
 					     this->get_central_n_columns(),
 					     this->get_central_n_rows(),
 					     this->track_data_raw);
+#else
+
+
+		const size_t n_values = this->track_data_raw.n_points;
+		if (0 == n_values) {
+			qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
+			return sg_ret::err;
+		}
+
+		const double margin = 0.05;
+		const double visible_values_range_uu = this->track_data_raw.y_max - this->track_data_raw.y_min;
+
+		qDebug() << "__ kamil kamil __" << this->y_visible_range_uu << visible_values_range_uu;
+
+		const double x_scale = 1.0 * n_values / n_columns;
+
+		ScreenPos cur_pos;
+		ScreenPos last_pos(leftmost_px, bottommost_px);
+
+		QPen pen;
+		pen.setColor(trk->has_color ? trk->color : "blue");
+		pen.setWidth(1);
+
+		qDebug() << SG_PREFIX_I << "kamil will draw graph'" << graph_2d->debug << "'with n data points =" << n_values << "into graph with n columns =" << n_columns;
+
+		double col = leftmost_px;
+		for (size_t i = 0; i < n_values; i++) {
+			const double current_value_uu = this->track_data_raw.y[i];
+
+			cur_pos.rx() = col;
+			cur_pos.ry() = bottommost_px - n_rows * (current_value_uu - this->track_data_raw.y_min) / visible_values_range_uu;
+
+			graph_2d->draw_line(pen, last_pos, cur_pos);
+
+			last_pos = cur_pos;
+			col = col + (1 / x_scale);
+		}
+
+#endif
 	} else {
-		for (int i = 0; i < n_columns; i++) {
-			const bool value_valid = this->track_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
+		const TrackData & trk_data = this->track_data;
 
-			/* Value of function in 'coordinate system with beginning in bottom left corner'. */
-			const int cbl_value = value_valid
-				? (n_rows * (this->track_data.y[i] - this->y_min_visible) / visible_range)
-				: n_rows;
+		const size_t n_values = trk_data.n_points;
+		assert (n_values == (size_t) n_columns);
+		if (0 == n_values) {
+			qDebug() << SG_PREFIX_N << "There were zero values in" << this->graph_2d->debug;
+			return sg_ret::err;
+		}
 
-			this->graph_2d->central_draw_line(value_valid ? this->main_pen : this->no_alt_info_pen,
-							  leftmost_px + i, bottommost_px,
-							  leftmost_px + i, bottommost_px - cbl_value);
+		ScreenPos cur_pos;
+		ScreenPos last_pos(leftmost_px, bottommost_px);
 
+		double col = leftmost_px;
+		for (size_t i = 0; i < n_values; i++) {
+			const bool value_valid = trk_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
+
+			const double current_value_uu = value_valid
+				? trk_data.y[i]
+				: this->y_visible_min + (this->y_visible_range_uu / 2); /* I hope that this will result in a point in the center between top border and bottom border. */
+
+			cur_pos.rx() = col;
+			cur_pos.ry() = bottommost_px - n_rows * (current_value_uu - trk_data.y_min) / this->y_visible_range_uu;
+
+			this->graph_2d->draw_line(value_valid ? valid_pen : err_pen, last_pos, cur_pos);
+
+			last_pos = cur_pos;
+			col = col + 1;
 		}
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -926,7 +1004,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 	const int n_rows = this->graph_2d->central_get_n_rows();
 
 	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
-		const double max_function_value = this->y_max_visible;
+		const double max_function_value = this->y_visible_max;
 
 		const QColor color = this->dem_alt_pen.color();
 
@@ -946,7 +1024,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 			const double elev_value_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
 
 			/* offset is in current height units. */
-			const double current_function_value_uu = elev_value_uu - this->y_min_visible;
+			const double current_function_value_uu = elev_value_uu - this->y_visible_min;
 
 			const int x = i;
 			const int y = 0 - n_rows * current_function_value_uu / max_function_value;
@@ -986,7 +1064,7 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 		const int n_rows = this->graph_2d->central_get_n_rows();
 
 		const double max_function_arg = trk->get_length_value_including_gaps();
-		const double max_function_value = this->y_max_visible;
+		const double max_function_value = this->y_visible_max;
 		double current_function_arg = 0.0;
 		double current_function_value = 0.0;
 
@@ -1000,7 +1078,7 @@ void ProfileViewSD::draw_additional_indicators(Track * trk)
 			gps_speed = Speed::convert_mps_to(gps_speed, this->graph_2d->speed_unit);
 
 			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			current_function_value = gps_speed - this->y_min_visible;
+			current_function_value = gps_speed - this->y_visible_min;
 
 			const int x = n_columns * current_function_arg / max_function_arg;
 			const int y = 0 - n_rows * current_function_value / max_function_value;
@@ -1062,7 +1140,7 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 			const time_t time_end = ts_end.get_value();
 
 			const time_t max_function_arg = time_end - time_begin;
-			const double max_function_value = this->y_max_visible;
+			const double max_function_value = this->y_visible_max;
 
 			const QColor color = this->gps_speed_pen.color();
 
@@ -1075,7 +1153,7 @@ void ProfileViewST::draw_additional_indicators(Track * trk)
 				gps_speed = Speed::convert_mps_to(gps_speed, this->graph_2d->speed_unit);
 
 				const time_t current_function_arg = (*iter)->timestamp.get_value() - time_begin;
-				const double current_function_value = gps_speed - this->y_min_visible;
+				const double current_function_value = gps_speed - this->y_visible_min;
 
 				const int x = n_columns * current_function_arg / max_function_arg;
 				const int y = 0 - n_rows * current_function_value / max_function_value;
@@ -1966,7 +2044,7 @@ sg_ret ProfileView::regenerate_data(Track * trk)
 template <typename T>
 void find_grid_line_indices(const T & min_visible, const T & max_visible, const T & interval, int & first_mark, int & last_mark)
 {
-	/* 'first_mark * y_interval' will be below y_min_visible. */
+	/* 'first_mark * y_interval' will be below y_visible_min. */
 	if (min_visible <= 0) {
 		while (interval * first_mark > min_visible) {
 			first_mark--;
@@ -1977,7 +2055,7 @@ void find_grid_line_indices(const T & min_visible, const T & max_visible, const 
 		}
 	}
 
-	/* 'last_mark * y_interval' will be above y_max_visible. */
+	/* 'last_mark * y_interval' will be above y_visible_max. */
 	if (max_visible <= 0) {
 		while (interval * last_mark - interval > max_visible) {
 			last_mark--;
@@ -1994,6 +2072,11 @@ void find_grid_line_indices(const T & min_visible, const T & max_visible, const 
 
 void ProfileView::draw_y_grid(void)
 {
+	if (this->y_visible_range_uu < 0.000001) {
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_visible_range_uu;
+		return;
+	}
+
 	const int central_n_columns = this->get_central_n_columns();
 	const int central_n_rows = this->get_central_n_rows();
 	const int left_width = this->graph_2d->left_get_width();
@@ -2003,20 +2086,13 @@ void ProfileView::draw_y_grid(void)
 	const int topmost_px     = this->graph_2d->central_get_topmost_pixel();
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
-
-	const double visible_range = this->y_max_visible - this->y_min_visible;
-	if (visible_range < 0.000001) {
-		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_min_visible << this->y_max_visible;
-		return;
-	}
-
 	int first_mark = 0;
 	int last_mark = 0;
-	find_grid_line_indices(this->y_min_visible, this->y_max_visible, this->y_interval, first_mark, last_mark);
+	find_grid_line_indices(this->y_visible_min, this->y_visible_max, this->y_interval, first_mark, last_mark);
 
 #if 0   /* Debug. */
 	qDebug() << "===== drawing y grid for graph" << this->get_title() << ", central height =" << central_height;
-	qDebug() << "      min/max y visible:" << this->y_min_visible << this->y_max_visible;
+	qDebug() << "      min/max y visible:" << this->y_visible_min << this->y_visible_max;
 	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
 #endif
 
@@ -2027,7 +2103,7 @@ void ProfileView::draw_y_grid(void)
 		   bottom-left corner'. */
 		/* Purposefully use "1.0 *" to enforce conversion to
 		   float, to avoid losing data during integer division. */
-		const int cbl_x_value = (axis_mark_uu - this->y_min_visible) * central_n_rows / (visible_range * 1.0);
+		const int cbl_x_value = (axis_mark_uu - this->y_visible_min) * central_n_rows / this->y_visible_range_uu;
 		/* Conversion to viewport pixmap's 'coordinate system
 		   with beginning in top-left corner' */
 		const int row = bottommost_px - cbl_x_value;

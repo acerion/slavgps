@@ -274,7 +274,7 @@ namespace SlavGPS {
 		sg_ret draw_graph_without_crosshairs(Track * trk);
 		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
 
-		void draw_function_values(Track * trk);
+		sg_ret draw_function_values(Track * trk);
 
 		void draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed);
 		void draw_speed_dist(Track * trk);
@@ -301,9 +301,26 @@ namespace SlavGPS {
 		Time x_min_visible_t = { 0 };
 		Time x_max_visible_t = { 0 };
 
+
+
 		double y_interval = 0.0;
-		double y_min_visible = 0.0;
-		double y_max_visible = 0.0;
+		/*
+		  For some graphs these values will be "padded" with
+		  some margin so that there is some space between
+		  top/bottom border of graph area and graph lines.
+
+		  That way the graph won't touch top/bottom border
+		  lines.
+		*/
+		double y_visible_min = 0.0;
+		double y_visible_max = 0.0;
+		/*
+		  Difference between max and min (with margins
+		  mentioned above). Calculated once, used many times.
+		*/
+		double y_visible_range_uu = 0.0;
+
+
 
 		TrackData track_data;     /* Compressed. */
 		TrackData track_data_raw; /* Raw = uncompressed. */

@@ -138,6 +138,11 @@ namespace SlavGPS {
 
 		TrackData compress(int compressed_size) const;
 
+		sg_ret y_distance_convert_meters_to(DistanceUnit distance_unit);
+		sg_ret y_speed_convert_mps_to(SpeedUnit speed_unit);
+
+		char debug[100] = { 0 };
+
 		double * x = NULL;
 		double * y = NULL;
 
@@ -149,6 +154,13 @@ namespace SlavGPS {
 
 		bool valid = false;
 		int n_points = 0;
+
+		GisViewportDomain x_domain = GisViewportDomain::Max;
+		GisViewportDomain y_domain = GisViewportDomain::Max;
+
+		DistanceUnit y_distance_unit = DistanceUnit::Kilometres;
+		SupplementaryDistanceUnit y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
+		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
 	};
 
 

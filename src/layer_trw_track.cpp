@@ -980,6 +980,25 @@ const Speed & Track::get_max_speed(void) const
 
 
 
+#define CALCULATE_MIN_MAX(_y_valid_, _x_, _y_, _x_min_, _x_max_, _y_min_, _y_max_, _i_) \
+	if (_x_[_i_] > _x_max_) {					\
+		_x_max_ = _x_[_i_];					\
+	}								\
+	if (_x_[_i_] < _x_min_) {					\
+		_x_min_ = _x_[_i_];					\
+	}								\
+	if (_y_valid_) {						\
+		if (_y_[_i_] > _y_max_) {				\
+			_y_max_ = _y_[_i_];				\
+		}							\
+		if (_y_[_i_] < _y_min_) {				\
+			_y_min_ = _y_[_i_];				\
+		}							\
+	}								\
+
+
+
+
 /* Simple method for copying "distance over time" information from Track to TrackData. */
 TrackData Track::make_values_distance_over_time_helper(void) const
 {
@@ -992,12 +1011,18 @@ TrackData Track::make_values_distance_over_time_helper(void) const
 	int i = 0;
 	data.x[i] = (*iter)->timestamp.get_value();
 	data.y[i] = 0;
+	CALCULATE_MIN_MAX(true, data.x, data.y, data.x_min, data.x_max, data.y_min, data.y_max, i);
 	i++;
 	iter++;
 
 	while (iter != this->trackpoints.end()) {
+
+		const bool y_valid = data.y[i] != NAN; /* TODO: check if this comparison is valid. */
+
 		data.x[i] = (*iter)->timestamp.get_value();
 		data.y[i] = data.y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
+
+		CALCULATE_MIN_MAX(y_valid, data.x, data.y, data.x_min, data.x_max, data.y_min, data.y_max, i);
 
 		if (data.x[i] <= data.x[i - 1]) {
 			qDebug() << SG_PREFIX_W << "Inconsistent time data at index" << i << ":" << data.x[i] << data.x[i - 1];
@@ -1008,6 +1033,7 @@ TrackData Track::make_values_distance_over_time_helper(void) const
 
 	return data;
 }
+
 
 
 
@@ -1029,21 +1055,7 @@ TrackData Track::make_values_altitude_over_time_helper(void) const
 
 		data.x[i] = (*iter)->timestamp.get_value();
 		data.y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
-
-		if (data.x[i] > data.x_max) {
-			data.x_max = data.x[i];
-		}
-		if (data.x[i] < data.x_min) {
-			data.x_min = data.x[i];
-		}
-		if (y_valid) {
-			if (data.y[i] > data.y_max) {
-				data.y_max = data.y[i];
-			}
-			if (data.y[i] < data.y_min) {
-				data.y_min = data.y[i];
-			}
-		}
+		CALCULATE_MIN_MAX(y_valid, data.x, data.y, data.x_min, data.x_max, data.y_min, data.y_max, i);
 
 		i++;
 		iter++;
@@ -1329,6 +1341,7 @@ TrackData Track::make_track_data_speed_over_time(void) const
 
 	result.allocate_vector(tp_count);
 
+
 	int i = 0;
 	for (i = 0; i < tp_count; i++) {
 
@@ -1357,21 +1370,7 @@ TrackData Track::make_track_data_speed_over_time(void) const
 			}
 		}
 
-
-		if (result.x[i] > result.x_max) {
-			result.x_max = result.x[i];
-		}
-		if (result.x[i] < result.x_min) {
-			result.x_min = result.x[i];
-		}
-		if (y_valid) {
-			if (result.y[i] > result.y_max) {
-				result.y_max = result.y[i];
-			}
-			if (result.y[i] < result.y_min) {
-				result.y_min = result.y[i];
-			}
-		}
+		CALCULATE_MIN_MAX(y_valid, result.x, result.y, result.x_min, result.x_max, result.y_min, result.y_max, i);
 	}
 
 	result.n_points = tp_count;
@@ -1396,6 +1395,8 @@ TrackData Track::make_track_data_distance_over_time(void) const
 
 	const int tp_count = this->get_tp_count();
 	const TrackData data_dt = this->make_values_distance_over_time_helper();
+
+	/* TODO: why do we need to generate 'result', if we already have 'data_dt'? */
 
 	assert (data_dt.n_points == tp_count);
 
@@ -1426,21 +1427,7 @@ TrackData Track::make_track_data_distance_over_time(void) const
 			}
 		}
 
-
-		if (result.x[i] > result.x_max) {
-			result.x_max = result.x[i];
-		}
-		if (result.x[i] < result.x_min) {
-			result.x_min = result.x[i];
-		}
-		if (y_valid) {
-			if (result.y[i] > result.y_max) {
-				result.y_max = result.y[i];
-			}
-			if (result.y[i] < result.y_min) {
-				result.y_min = result.y[i];
-			}
-		}
+		CALCULATE_MIN_MAX(y_valid, result.x, result.y, result.x_min, result.x_max, result.y_min, result.y_max, i);
 	}
 
 	assert (i == tp_count);
@@ -1585,6 +1572,7 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 	int i = 0;
 	result.x[i] = 0;
 	result.y[i] = 0;
+	CALCULATE_MIN_MAX(true, result.x, result.y, result.x_min, result.x_max, result.y_min, result.y_max, i);
 	i++;
 
 	for (; i < tp_count; i++) {
@@ -1612,6 +1600,7 @@ TrackData Track::make_track_data_speed_over_distance(void) const
 
 			result.y[i] = delta_d / delta_t;
 			result.x[i] = result.x[i - 1] + (delta_d / (n + 1 + n)); /* Accumulate the distance. */
+			CALCULATE_MIN_MAX(true, result.x, result.y, result.x_min, result.x_max, result.y_min, result.y_max, i);
 		}
 	}
 
@@ -3904,19 +3893,17 @@ void TrackData::calculate_min_max(void)
 {
 	this->x_min = this->x[0];
 	this->x_max = this->x[0];
-
 	for (int i = 0; i < this->n_points; i++) {
-		qDebug() << "i / x" << i << this->x[i];
 		if (this->x[i] > this->x_max) {
 			this->x_max = this->x[i];
-			qDebug() << "         max = " << this->x_max;
 		}
 
 		if (this->x[i] < this->x_min) {
 			this->x_min = this->x[i];
-			qDebug() << "         min = " << this->x_min;
 		}
+		qDebug() << "i =" << i << ", x =" << this->x[i] << ", x_min =" << this->x_min << ", x_max =" << this->x_max;
 	}
+
 
 	this->y_min = this->y[0];
 	this->y_max = this->y[0];
@@ -3928,6 +3915,7 @@ void TrackData::calculate_min_max(void)
 		if (this->y[i] < this->y_min) {
 			this->y_min = this->y[i];
 		}
+		qDebug() << "i =" << i << ", x =" << this->y[i] << ", y_min =" << this->y_min << ", y_max =" << this->y_max;
 	}
 }
 
@@ -4632,4 +4620,57 @@ void Track::list_dialog(QString const & title, Layer * layer, const QString & ty
 void Track::prepare_for_profile(void)
 {
 	this->track_length_including_gaps = this->get_length_value_including_gaps();
+}
+
+
+
+
+sg_ret TrackData::y_distance_convert_meters_to(DistanceUnit new_distance_unit)
+{
+#if 0
+	if (this->y_supplementary_distance_unit != SupplementaryDistanceUnit::Meters) {
+		qDebug() << SG_PREFIX_E << "Unexpected y supplementary distance unit" << (int) this->y_supplementary_distance_unit << "in" << this->debug;
+		return sg_ret::err;
+	}
+
+	for (int i = 0; i < this->n_points; i++) {
+		this->y[i] = Distance::convert_meters_to(this->y[i], new_distance_unit);
+	}
+
+	this->y_min = Distance::convert_meters_to(this->y_min, new_distance_unit);
+	this->y_max = Distance::convert_meters_to(this->y_max, new_distance_unit);
+
+	this->y_supplementary_distance_unit = (SupplementaryDistanceUnit) -1;
+	this->y_distance_unit = new_distance_unit;
+#endif
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TrackData::y_speed_convert_mps_to(SpeedUnit new_speed_unit)
+{
+#if 0
+	if (this->y_speed_unit != SpeedUnit::MetresPerSecond) {
+		qDebug() << SG_PREFIX_E << "Unexpected speed unit" << (int) this->y_speed_unit << "in" << this->debug;
+		return sg_ret::err;
+	}
+
+	for (int i = 0; i < this->n_points; i++) {
+		this->y[i] = Speed::convert_mps_to(this->y[i], new_speed_unit);
+	}
+
+	this->y_min = Speed::convert_mps_to(this->y_min, new_speed_unit);
+	this->y_max = Speed::convert_mps_to(this->y_max, new_speed_unit);
+
+	if (this->y_min < 0.0) {
+		this->y_min = 0; /* TODO: old comment, to be verified: "Splines sometimes give negative speeds". */
+	}
+
+	this->y_speed_unit = new_speed_unit;
+#endif
+
+	return sg_ret::ok;
 }
