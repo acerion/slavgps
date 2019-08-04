@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (c) 2012, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (c) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +28,12 @@
 
 
 
+#include "globals.h"
 #include "layer_trw_track_data.h"
+
+
+
+#define SG_MODULE "Layer TRW Track Data"
 
 
 
@@ -170,11 +176,21 @@ void TrackData::calculate_min_max(void)
 void TrackData::allocate_vector(int n_data_points)
 {
 	if (this->x) {
+		if (this->n_points) {
+			qDebug() << SG_PREFIX_E << "Called the function for already allocated vector x";
+		} else {
+			qDebug() << SG_PREFIX_W << "Called the function for already allocated vector x";
+		}
 		free(this->x);
 		this->x = NULL;
 	}
 
 	if (this->y) {
+		if (this->n_points) {
+			qDebug() << SG_PREFIX_E << "Called the function for already allocated vector y";
+		} else {
+			qDebug() << SG_PREFIX_W << "Called the function for already allocated vector y";
+		}
 		free(this->y);
 		this->y = NULL;
 	}
@@ -257,9 +273,8 @@ TrackData & TrackData::operator=(const TrackData & other)
 
 
 
-sg_ret TrackData::y_distance_convert_meters_to(DistanceUnit new_distance_unit)
+sg_ret TrackData::y_distance_convert_units(DistanceUnit new_distance_unit)
 {
-#if 0
 	if (this->y_supplementary_distance_unit != SupplementaryDistanceUnit::Meters) {
 		qDebug() << SG_PREFIX_E << "Unexpected y supplementary distance unit" << (int) this->y_supplementary_distance_unit << "in" << this->debug;
 		return sg_ret::err;
@@ -274,7 +289,6 @@ sg_ret TrackData::y_distance_convert_meters_to(DistanceUnit new_distance_unit)
 
 	this->y_supplementary_distance_unit = (SupplementaryDistanceUnit) -1;
 	this->y_distance_unit = new_distance_unit;
-#endif
 
 	return sg_ret::ok;
 }
@@ -282,9 +296,8 @@ sg_ret TrackData::y_distance_convert_meters_to(DistanceUnit new_distance_unit)
 
 
 
-sg_ret TrackData::y_speed_convert_mps_to(SpeedUnit new_speed_unit)
+sg_ret TrackData::y_speed_convert_units(SpeedUnit new_speed_unit)
 {
-#if 0
 	if (this->y_speed_unit != SpeedUnit::MetresPerSecond) {
 		qDebug() << SG_PREFIX_E << "Unexpected speed unit" << (int) this->y_speed_unit << "in" << this->debug;
 		return sg_ret::err;
@@ -302,7 +315,6 @@ sg_ret TrackData::y_speed_convert_mps_to(SpeedUnit new_speed_unit)
 	}
 
 	this->y_speed_unit = new_speed_unit;
-#endif
 
 	return sg_ret::ok;
 }
@@ -310,7 +322,7 @@ sg_ret TrackData::y_speed_convert_mps_to(SpeedUnit new_speed_unit)
 
 
 
-QDebug operator<<(QDebug debug, const TrackData & track_data)
+QDebug SlavGPS::operator<<(QDebug debug, const TrackData & track_data)
 {
 	if (track_data.valid) {
 		debug << "TrackData" << track_data.debug << "is valid"

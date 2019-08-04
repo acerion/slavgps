@@ -2,6 +2,8 @@
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (c) 2012, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (c) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,8 +67,8 @@ namespace SlavGPS {
 
 		TrackData compress(int compressed_size) const;
 
-		sg_ret y_distance_convert_meters_to(DistanceUnit distance_unit);
-		sg_ret y_speed_convert_mps_to(SpeedUnit speed_unit);
+		sg_ret y_distance_convert_units(DistanceUnit distance_unit);
+		sg_ret y_speed_convert_units(SpeedUnit speed_unit);
 
 		char debug[100] = { 0 };
 
