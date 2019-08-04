@@ -42,6 +42,7 @@
 #include "bbox.h"
 #include "tree_view.h"
 #include "layer_trw_track.h"
+#include "layer_trw_track_data.h"
 #include "dialog.h"
 #include "measurements.h"
 
@@ -108,59 +109,6 @@ namespace SlavGPS {
 		double hdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
 		double vdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
 		double pdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
-	};
-
-
-
-
-	/*
-	  Convenience class for pair of vectors representing track's
-	  Speed/Time or Altitude/Timestamp information.
-
-	  The two vectors are put in one data structure because
-	  values in the vectors are calculated during one iteration
-	  over the same trackpoint list. If I decided to split the
-	  two vectors, I would have to collect data in the vectors
-	  during two separate iterations over trackpoint list. This
-	  would take twice as much time.
-	*/
-	class TrackData {
-	public:
-		TrackData();
-		TrackData(int n_data_points);
-		~TrackData();
-
-		TrackData & operator=(const TrackData & other);
-
-		void invalidate(void);
-		void calculate_min_max(void);
-		void allocate_vector(int n_data_points);
-
-		TrackData compress(int compressed_size) const;
-
-		sg_ret y_distance_convert_meters_to(DistanceUnit distance_unit);
-		sg_ret y_speed_convert_mps_to(SpeedUnit speed_unit);
-
-		char debug[100] = { 0 };
-
-		double * x = NULL;
-		double * y = NULL;
-
-		double x_min = 0.0;
-		double x_max = 0.0;
-
-		double y_min = 0.0;
-		double y_max = 0.0;
-
-		bool valid = false;
-		int n_points = 0;
-
-		GisViewportDomain x_domain = GisViewportDomain::Max;
-		GisViewportDomain y_domain = GisViewportDomain::Max;
-
-		DistanceUnit y_distance_unit = DistanceUnit::Kilometres;
-		SupplementaryDistanceUnit y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
-		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
 	};
 
 

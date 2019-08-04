@@ -145,13 +145,7 @@ sg_ret ProfileView::regenerate_track_data_to_draw(Track * trk)
 	const int compressed_n_points = this->get_central_n_columns();
 	this->track_data_to_draw = this->initial_track_data.compress(compressed_n_points);
 
-	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title()
-		 << ", valid =" << (this->initial_track_data.valid ? "true" : "false")
-		 << ", x_min =" << this->initial_track_data.x_min
-		 << ", x_max =" << this->initial_track_data.x_max
-		 << ", y_min =" << this->initial_track_data.y_min
-		 << ", y_max =" << this->initial_track_data.y_max;
-
+	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title() << this->initial_track_data;
 
 
 	if (!this->track_data_to_draw.valid) {
@@ -216,20 +210,8 @@ sg_ret ProfileView::regenerate_track_data_to_draw(Track * trk)
 	  that debug information about initial track data and track
 	  data to draw were displayed next to each other.
 	*/
-	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title()
-		 << ", valid =" << (this->initial_track_data.valid ? "true" : "false")
-		 << ", x_min =" << this->initial_track_data.x_min
-		 << ", x_max =" << this->initial_track_data.x_max
-		 << ", y_min =" << this->initial_track_data.y_min
-		 << ", y_max =" << this->initial_track_data.y_max;
-
-	qDebug() << SG_PREFIX_I << "Track data to draw" << this->get_title()
-		 << ", valid =" << (this->track_data_to_draw.valid ? "true" : "false")
-		 << ", x_min =" << this->track_data_to_draw.x_min
-		 << ", x_max =" << this->track_data_to_draw.x_max
-		 << ", y_min =" << this->track_data_to_draw.y_min
-		 << ", y_max =" << this->track_data_to_draw.y_max;
-
+	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title() << this->initial_track_data;
+	qDebug() << SG_PREFIX_I << "Track data to draw" << this->get_title() << this->track_data_to_draw;
 
 
 	/* Do necessary adjustments to x values. */

@@ -112,6 +112,7 @@ SOURCES += main.cpp \
     layers_panel.cpp \
     toolbox.cpp \
     layer_trw_track.cpp \
+    layer_trw_track_data.cpp \
     layer_trw_track_split.cpp \
     layer_trw_track_properties_dialog.cpp \
     layer_trw_trackpoint_properties.cpp \
@@ -260,6 +261,7 @@ HEADERS += window.h \
     layers_panel.h \
     toolbox.h \
     layer_trw_track.h \
+    layer_trw_track_data.h \
     layer_trw_track_internal.h \
     layer_trw_track_properties_dialog.h \
     layer_trw_track_profile_dialog.h \
