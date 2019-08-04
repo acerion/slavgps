@@ -39,9 +39,10 @@
 
 
 #include "window.h"
+#include "layer_trw.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_properties_dialog.h"
-#include "layer_trw.h"
+#include "layer_trw_track_data.h"
 #include "vikutils.h"
 #include "util.h"
 #include "ui_util.h"
@@ -267,7 +268,8 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 
 	int elev_points = 100; /* this->trk->size()? */
-	TrackData altitudes = this->trk->make_track_data_altitude_over_distance(elev_points);
+	TrackData altitudes;
+	altitudes.make_track_data_altitude_over_distance(this->trk, elev_points);
 	if (!altitudes.valid) {
 		altitudes.y_min = NAN;
 		altitudes.y_max = NAN;

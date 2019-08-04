@@ -1991,23 +1991,25 @@ ProfileView::~ProfileView()
 /* Create initial track data using appropriate Track method. */
 sg_ret ProfileView::generate_initial_track_data(Track * trk)
 {
+	this->initial_track_data.invalidate();
+
 	if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		this->initial_track_data = trk->make_track_data_altitude_over_distance(trk->get_tp_count());
+		this->initial_track_data.make_track_data_altitude_over_distance(trk, trk->get_tp_count());
 
 	} else if (this->graph_2d->y_domain == GisViewportDomain::Gradient && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		this->initial_track_data = trk->make_track_data_gradient_over_distance(trk->get_tp_count());
+		this->initial_track_data.make_track_data_gradient_over_distance(trk, trk->get_tp_count());
 
 	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		this->initial_track_data = trk->make_track_data_speed_over_time();
+		this->initial_track_data.make_track_data_speed_over_time(trk);
 
 	} else if (this->graph_2d->y_domain == GisViewportDomain::Distance && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		this->initial_track_data = trk->make_track_data_distance_over_time();
+		this->initial_track_data.make_track_data_distance_over_time(trk);
 
 	} else if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		this->initial_track_data = trk->make_track_data_altitude_over_time();
+		this->initial_track_data.make_track_data_altitude_over_time(trk);
 
 	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		this->initial_track_data = trk->make_track_data_speed_over_distance();
+		this->initial_track_data.make_track_data_speed_over_distance(trk);
 
 	} else {
 		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->graph_2d->x_domain << (int) this->graph_2d->y_domain;

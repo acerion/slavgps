@@ -49,6 +49,7 @@
 
 #include "viewport_pixmap.h"
 #include "layer_trw_track_internal.h"
+#include "layer_trw_track_data.h"
 #include "measurements.h"
 
 

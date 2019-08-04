@@ -42,7 +42,6 @@
 #include "bbox.h"
 #include "tree_view.h"
 #include "layer_trw_track.h"
-#include "layer_trw_track_data.h"
 #include "dialog.h"
 #include "measurements.h"
 
@@ -59,6 +58,7 @@ namespace SlavGPS {
 	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
 
 
+	class TrackData;
 	class TrackPropertiesDialog;
 	class TrackProfileDialog;
 	class Graph2D;
@@ -254,13 +254,6 @@ namespace SlavGPS {
 
 		bool get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const;
 
-		TrackData make_track_data_altitude_over_distance(int compressed_n_points) const;
-		TrackData make_track_data_gradient_over_distance(int compressed_n_points) const;
-		TrackData make_track_data_speed_over_time(void) const;
-		TrackData make_track_data_distance_over_time(void) const;
-		TrackData make_track_data_altitude_over_time(void) const;
-		TrackData make_track_data_speed_over_distance(void) const;
-
 		void marshall(Pickle & pickle);
 		static Track * unmarshall(Pickle & pickle);
 
@@ -389,8 +382,6 @@ namespace SlavGPS {
 	private:
 		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, const Altitude & elev1, const Altitude & elev2, unsigned int points);
 		void recalculate_bbox_last_tp();
-		TrackData make_values_distance_over_time_helper(void) const;
-		TrackData make_values_altitude_over_time_helper(void) const;
 
 		/* This method is private to make sure that only this
 		   track can pass a trackpoint iter. This gives us
