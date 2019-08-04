@@ -1074,6 +1074,14 @@ bool SlavGPS::operator>=(const Altitude & lhs, const Altitude & rhs)
 
 
 
+QDebug SlavGPS::operator<<(QDebug debug, const Altitude & altitude)
+{
+	debug << altitude.to_string();
+}
+
+
+
+
 int Altitude::floor(void) const
 {
 	if (!this->valid) {

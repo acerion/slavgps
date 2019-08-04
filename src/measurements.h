@@ -356,6 +356,7 @@ namespace SlavGPS {
 	bool operator<=(const Altitude & lhs, const Altitude & rhs);
 	bool operator>=(const Altitude & lhs, const Altitude & rhs);
 	double operator/(const Altitude & rhs, const Altitude & lhs);
+	QDebug operator<<(QDebug debug, const Altitude & altitude);
 
 
 
