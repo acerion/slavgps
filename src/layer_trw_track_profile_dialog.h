@@ -269,7 +269,7 @@ namespace SlavGPS {
 		*/
 		Crosshair2D get_position_of_tp(Track * trk, tp_idx tp_idx);
 
-		sg_ret regenerate_data(Track * trk);
+		sg_ret generate_initial_track_data(Track * trk);
 
 		sg_ret draw_graph_without_crosshairs(Track * trk);
 		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
@@ -321,9 +321,25 @@ namespace SlavGPS {
 		double y_visible_range_uu = 0.0;
 
 
+		/*
+		  Track data collected from track at the beginning,
+		  and then used to create a processed/compressed copy
+		  (track_data_to_draw) that will be drawn to graph.
 
-		TrackData track_data;     /* Compressed. */
-		TrackData track_data_raw; /* Raw = uncompressed. */
+		  This variable is a cache variable, so that we don't
+		  have to collect data from track every time user
+		  resizes the graph.
+		*/
+		TrackData initial_track_data;
+
+		/*
+		  Data structure with data from initial_track_data,
+		  but processed and prepared for painting
+		  (e.g. compressed).
+		*/
+		TrackData track_data_to_draw;
+
+
 
 		TrackProfileDialog * dialog = NULL;
 
@@ -344,7 +360,12 @@ namespace SlavGPS {
 		QVBoxLayout * controls_vbox = NULL;
 
 	private:
-		sg_ret regenerate_data_from_scratch(Track * trk);
+		/*
+		  Use ::initial_track_data to generate a new version
+		  of ::track_data_to_draw, e.g. after resizing Profile
+		  View window.
+		*/
+		sg_ret regenerate_track_data_to_draw(Track * trk);
 		QString title;
 	};
 

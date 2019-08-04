@@ -133,42 +133,32 @@ TrackProfileDialog::~TrackProfileDialog()
 
 
 
-sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
+sg_ret ProfileView::regenerate_track_data_to_draw(Track * trk)
 {
-	/* First create track data using appropriate Track method. */
+	this->track_data_to_draw.invalidate();
 
+	/*
+	  ::initial_track_data has been generated once, when the
+	  dialog has been opened. Now compress it to limit number of
+	  drawn points.
+	*/
 	const int compressed_n_points = this->get_central_n_columns();
+	this->track_data_to_draw = this->initial_track_data.compress(compressed_n_points);
 
-	if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		this->track_data = trk->make_track_data_altitude_over_distance(compressed_n_points);
+	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title()
+		 << ", valid =" << (this->initial_track_data.valid ? "true" : "false")
+		 << ", x_min =" << this->initial_track_data.x_min
+		 << ", x_max =" << this->initial_track_data.x_max
+		 << ", y_min =" << this->initial_track_data.y_min
+		 << ", y_max =" << this->initial_track_data.y_max;
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Gradient && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		this->track_data = trk->make_track_data_gradient_over_distance(compressed_n_points);
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		this->track_data_raw = trk->make_track_data_speed_over_time();
-		this->track_data = this->track_data_raw.compress(compressed_n_points);
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Distance && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		this->track_data_raw = trk->make_track_data_distance_over_time();
-		this->track_data = this->track_data_raw.compress(compressed_n_points);
-
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Time) {
-		this->track_data_raw = trk->make_track_data_altitude_over_time();
-		this->track_data = this->track_data_raw.compress(compressed_n_points);
-
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Distance) {
-		this->track_data_raw = trk->make_track_data_speed_over_distance();
-		this->track_data = this->track_data_raw.compress(compressed_n_points);
-	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->graph_2d->x_domain << (int) this->graph_2d->y_domain;
-	}
-
-	if (!this->track_data.valid) {
-		qDebug() << SG_PREFIX_E << "Value vector for" << this->get_title() << "is invalid";
+	if (!this->track_data_to_draw.valid) {
+		qDebug() << SG_PREFIX_E << "Failed to generate valid compressed track data for" << this->get_title();
 		return sg_ret::err;
 	}
-	qDebug() << SG_PREFIX_I << "Generated value vector for" << this->get_title() << ", will now adjust y values";
+	qDebug() << SG_PREFIX_I << "Generated valid compressed track data for" << this->get_title();
 
 
 	/* Do necessary adjustments to y values. */
@@ -177,13 +167,13 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 	case GisViewportDomain::Speed:
 		/* Convert into appropriate units. */
 		for (int i = 0; i < compressed_n_points; i++) {
-			this->track_data.y[i] = Speed::convert_mps_to(this->track_data.y[i], this->graph_2d->speed_unit);
+			this->track_data_to_draw.y[i] = Speed::convert_mps_to(this->track_data_to_draw.y[i], this->graph_2d->speed_unit);
 		}
 
 		qDebug() << SG_PREFIX_D << "Calculating min/max y speed for" << this->get_title();
-		this->track_data.calculate_min_max();
-		if (this->track_data.y_min < 0.0) {
-			this->track_data.y_min = 0; /* Splines sometimes give negative speeds. */
+		this->track_data_to_draw.calculate_min_max();
+		if (this->track_data_to_draw.y_min < 0.0) {
+			this->track_data_to_draw.y_min = 0; /* Splines sometimes give negative speeds. */
 		}
 		break;
 	case GisViewportDomain::Elevation:
@@ -191,29 +181,29 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		if (this->graph_2d->height_unit == HeightUnit::Feet) {
 			/* Convert altitudes into feet units. */
 			for (int i = 0; i < compressed_n_points; i++) {
-				this->track_data.y[i] = VIK_METERS_TO_FEET(this->track_data.y[i]);
+				this->track_data_to_draw.y[i] = VIK_METERS_TO_FEET(this->track_data_to_draw.y[i]);
 			}
 		}
 		/* Otherwise leave in metres. */
 
-		this->track_data.calculate_min_max();
+		this->track_data_to_draw.calculate_min_max();
 		break;
 	case GisViewportDomain::Distance:
 		/* Convert into appropriate units. */
 		for (int i = 0; i < compressed_n_points; i++) {
-			this->track_data.y[i] = Distance::convert_meters_to(this->track_data.y[i], this->graph_2d->distance_unit);
+			this->track_data_to_draw.y[i] = Distance::convert_meters_to(this->track_data_to_draw.y[i], this->graph_2d->distance_unit);
 		}
 
 #ifdef K_FIXME_RESTORE
-		this->track_data.y_min = 0;
-		this->track_data.y_max = Distance::convert_meters_to(trk->get_length_value_including_gaps(), this->graph_2d->distance_unit);
+		this->track_data_to_draw.y_min = 0;
+		this->track_data_to_draw.y_max = Distance::convert_meters_to(trk->get_length_value_including_gaps(), this->graph_2d->distance_unit);
 #endif
 
-		this->track_data.calculate_min_max();
+		this->track_data_to_draw.calculate_min_max();
 		break;
 	case GisViewportDomain::Gradient:
 		/* No unit conversion needed. */
-		this->track_data.calculate_min_max();
+		this->track_data_to_draw.calculate_min_max();
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
@@ -221,19 +211,24 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 	};
 
 
-	qDebug() << SG_PREFIX_I << "Generated raw track data" << this->get_title()
-		 << ", valid =" << (this->track_data_raw.valid ? "true" : "false")
-		 << ", x_min =" << this->track_data_raw.x_min
-		 << ", x_max =" << this->track_data_raw.x_max
-		 << ", y_min =" << this->track_data_raw.y_min
-		 << ", y_max =" << this->track_data_raw.y_max;
+	/*
+	  I'm repeating this debug about initial track data here so
+	  that debug information about initial track data and track
+	  data to draw were displayed next to each other.
+	*/
+	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title()
+		 << ", valid =" << (this->initial_track_data.valid ? "true" : "false")
+		 << ", x_min =" << this->initial_track_data.x_min
+		 << ", x_max =" << this->initial_track_data.x_max
+		 << ", y_min =" << this->initial_track_data.y_min
+		 << ", y_max =" << this->initial_track_data.y_max;
 
-	qDebug() << SG_PREFIX_I << "Generated compressed track data" << this->get_title()
-		 << ", valid =" << (this->track_data.valid ? "true" : "false")
-		 << ", x_min =" << this->track_data.x_min
-		 << ", x_max =" << this->track_data.x_max
-		 << ", y_min =" << this->track_data.y_min
-		 << ", y_max =" << this->track_data.y_max;
+	qDebug() << SG_PREFIX_I << "Track data to draw" << this->get_title()
+		 << ", valid =" << (this->track_data_to_draw.valid ? "true" : "false")
+		 << ", x_min =" << this->track_data_to_draw.x_min
+		 << ", x_max =" << this->track_data_to_draw.x_max
+		 << ", y_min =" << this->track_data_to_draw.y_min
+		 << ", y_max =" << this->track_data_to_draw.y_max;
 
 
 
@@ -263,7 +258,7 @@ sg_ret ProfileView::regenerate_data_from_scratch(Track * trk)
 		return result;
 	}
 
-	if (!this->track_data.valid || NULL == this->track_data.x || NULL == this->track_data.y) {
+	if (!this->track_data_to_draw.valid || NULL == this->track_data_to_draw.x || NULL == this->track_data_to_draw.y) {
 		qDebug() << SG_PREFIX_E << "Final test of track data: failure";
 		return sg_ret::err;
 	} else {
@@ -280,8 +275,8 @@ sg_ret ProfileView::set_initial_visible_range_x_distance(void)
 	/* We won't display any x values outside of
 	   track_data.x_min/max. We will never be able to zoom out to
 	   show e.g. negative distances. */
-	const Distance x_min = Distance(this->track_data.x_min);
-	const Distance x_max = Distance(this->track_data.x_max);
+	const Distance x_min = Distance(this->track_data_to_draw.x_min);
+	const Distance x_max = Distance(this->track_data_to_draw.x_max);
 	this->x_min_visible_d = x_min.convert_to_unit(this->graph_2d->distance_unit);
 	this->x_max_visible_d = x_max.convert_to_unit(this->graph_2d->distance_unit);
 
@@ -317,16 +312,16 @@ sg_ret ProfileView::set_initial_visible_range_x_time(void)
 	   in timestamps, where in the middle of a track, in a row of
 	   correctly incrementing timestamps there was suddenly one
 	   smaller timestamp from a long time ago. */
-	this->x_min_visible_t = this->track_data.x_min;
-	this->x_max_visible_t = this->track_data.x_max;
+	this->x_min_visible_t = this->track_data_to_draw.x_min;
+	this->x_max_visible_t = this->track_data_to_draw.x_max;
 #else
 	/* Instead of x_min/x_max use first and last timestamp.
 
 	   FIXME: this is still not perfect solution: the glitch in
 	   timestamp may occur in first or last trackpoint. Find a
 	   good way to find a correct first/last timestamp. */
-	this->x_min_visible_t = this->track_data.x[0];
-	this->x_max_visible_t = this->track_data.x[this->track_data.n_points - 1];
+	this->x_min_visible_t = this->track_data_to_draw.x[0];
+	this->x_max_visible_t = this->track_data_to_draw.x[this->track_data_to_draw.n_points - 1];
 #endif
 
 	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
@@ -361,7 +356,7 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 
 	/* This is not exactly the same range as this->y_visible_range_uu
 	   calculated below. */
-	const double y_data_range = std::fabs(this->track_data.y_max - this->track_data.y_min);
+	const double y_data_range = std::fabs(this->track_data_to_draw.y_max - this->track_data_to_draw.y_min);
 
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
@@ -369,17 +364,17 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 		/* Some graphs better start at zero, e.g. speed graph
 		   or distance graph. Showing negative speed values on
 		   a graph wouldn't make sense. */
-		this->y_visible_min = this->track_data.y_min;
+		this->y_visible_min = this->track_data_to_draw.y_min;
 		break;
 	case GisViewportDomain::Elevation:
 	case GisViewportDomain::Gradient:
-		this->y_visible_min = this->track_data.y_min - y_data_range * y_margin;
+		this->y_visible_min = this->track_data_to_draw.y_min - y_data_range * y_margin;
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
 		return sg_ret::err;
 	}
-	this->y_visible_max = this->track_data.y_max + y_data_range * y_margin;
+	this->y_visible_max = this->track_data_to_draw.y_max + y_data_range * y_margin;
 	this->y_visible_range_uu = std::fabs(this->y_visible_max - this->y_visible_min);
 
 
@@ -585,7 +580,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 			continue;
 		}
 
-		if (!view_iter->track_data.valid) {
+		if (!view_iter->track_data_to_draw.valid) {
 			/* We didn't visit that tab yet, so track data
 			   hasn't been generated for current graph
 			   width. */
@@ -651,7 +646,7 @@ sg_ret ProfileView::cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y)
 	}
 
 
-	cbl_y = n_rows * (this->track_data.y[cbl_x] - this->y_visible_min) / this->y_visible_range_uu;
+	cbl_y = n_rows * (this->track_data_to_draw.y[cbl_x] - this->y_visible_min) / this->y_visible_range_uu;
 
 	return sg_ret::ok;
 }
@@ -728,7 +723,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 	ProfileView * view = this->get_current_view();
 	assert (view->graph_2d == graph_2d);
 
-	if (!view->track_data.valid) {
+	if (!view->track_data_to_draw.valid) {
 		qDebug() << SG_PREFIX_E << "Not handling cursor move, track data invalid";
 		return;
 	}
@@ -791,7 +786,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 	};
 
 
-	double y = view->track_data.y[cursor_pos.central_cbl_x]; /* FIXME: use proper value for array index. */
+	double y = view->track_data_to_draw.y[cursor_pos.central_cbl_x]; /* FIXME: use proper value for array index. */
 	switch (view->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
 		if (view->labels.y_value) {
@@ -917,22 +912,15 @@ sg_ret ProfileView::draw_function_values(Track * trk)
 		qDebug() << SG_PREFIX_I
 			 << "kamil will call draw_function_over_time() to draw graph" << this->graph_2d->debug
 			 << "into n columns =" << n_columns << this->get_central_n_columns();
-#if 0
-		trk->draw_function_over_time(this->graph_2d,
-					     this->get_central_n_columns(),
-					     this->get_central_n_rows(),
-					     this->track_data_raw);
-#else
 
-
-		const size_t n_values = this->track_data_raw.n_points;
+		const size_t n_values = this->track_data_to_draw.n_points;
 		if (0 == n_values) {
 			qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
 			return sg_ret::err;
 		}
 
 		const double margin = 0.05;
-		const double visible_values_range_uu = this->track_data_raw.y_max - this->track_data_raw.y_min;
+		const double visible_values_range_uu = this->track_data_to_draw.y_min - this->track_data_to_draw.y_min;
 
 		qDebug() << "__ kamil kamil __" << this->y_visible_range_uu << visible_values_range_uu;
 
@@ -949,20 +937,18 @@ sg_ret ProfileView::draw_function_values(Track * trk)
 
 		double col = leftmost_px;
 		for (size_t i = 0; i < n_values; i++) {
-			const double current_value_uu = this->track_data_raw.y[i];
+			const double current_value_uu = this->track_data_to_draw.y[i];
 
 			cur_pos.rx() = col;
-			cur_pos.ry() = bottommost_px - n_rows * (current_value_uu - this->track_data_raw.y_min) / visible_values_range_uu;
+			cur_pos.ry() = bottommost_px - n_rows * (current_value_uu - this->track_data_to_draw.y_min) / this->y_visible_range_uu;
 
 			graph_2d->draw_line(pen, last_pos, cur_pos);
 
 			last_pos = cur_pos;
 			col = col + (1 / x_scale);
 		}
-
-#endif
 	} else {
-		const TrackData & trk_data = this->track_data;
+		const TrackData & trk_data = this->track_data_to_draw;
 
 		const size_t n_values = trk_data.n_points;
 		assert (n_values == (size_t) n_columns);
@@ -1042,7 +1028,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 		const QColor color = this->gps_speed_pen.color();
 		for (int i = 0; i < n_columns; i++) {
 
-			const double current_function_value = this->track_data.y[i];
+			const double current_function_value = this->track_data_to_draw.y[i];
 
 			const int x = i;
 			const int y = 0 - n_rows * current_function_value / max_function_value;
@@ -1182,7 +1168,7 @@ void ProfileViewDT::draw_additional_indicators(Track * trk)
 		/* This is just an indicator - no actual values can be inferred by user. */
 		for (int i = 0; i < n_columns; i++) {
 
-			const double current_function_value = this->track_data.y[i];
+			const double current_function_value = this->track_data_to_draw.y[i];
 
 			const int x = i;
 			const int y = 0 - n_rows * current_function_value / max_function_value;
@@ -1259,7 +1245,7 @@ sg_ret ProfileView::draw_graph_without_crosshairs(Track * trk)
 		}
 	}
 
-	if (sg_ret::ok != this->regenerate_data(trk)) {
+	if (sg_ret::ok != this->regenerate_track_data_to_draw(trk)) {
 		qDebug() << SG_PREFIX_E << "return 2";
 		return sg_ret::err;
 	}
@@ -1450,10 +1436,6 @@ sg_ret TrackProfileDialog::handle_graph_resize_cb(ViewportPixmap * pixmap)
 		qDebug() << SG_PREFIX_E << "Can't find view";
 		return sg_ret::err;
 	}
-
-
-	//const int n_columns = ;
-	//const int n_rows = ;
 
 
 	view->graph_2d->cached_central_n_columns = view->graph_2d->central_get_n_columns();
@@ -1732,6 +1714,17 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 
 	vbox->addWidget(this->tabs);
 	vbox->addWidget(this->button_box);
+
+	int i = 0;
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
+		i++;
+		ProfileView * view = *iter;
+		if (!view) {
+			qDebug() << SG_PREFIX_E << "Can't find profile" << i << "in loop";
+			continue;
+		}
+		view->generate_initial_track_data(trk);
+	}
 }
 
 
@@ -2013,13 +2006,39 @@ ProfileView::~ProfileView()
 
 
 
-sg_ret ProfileView::regenerate_data(Track * trk)
+/* Create initial track data using appropriate Track method. */
+sg_ret ProfileView::generate_initial_track_data(Track * trk)
 {
-	this->track_data.invalidate();
+	if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Distance) {
+		this->initial_track_data = trk->make_track_data_altitude_over_distance(trk->get_tp_count());
 
-	/* Ask a track to generate a vector of values representing some parameter
-	   of a track as a function of either time or distance. */
-	return this->regenerate_data_from_scratch(trk);
+	} else if (this->graph_2d->y_domain == GisViewportDomain::Gradient && this->graph_2d->x_domain == GisViewportDomain::Distance) {
+		this->initial_track_data = trk->make_track_data_gradient_over_distance(trk->get_tp_count());
+
+	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Time) {
+		this->initial_track_data = trk->make_track_data_speed_over_time();
+
+	} else if (this->graph_2d->y_domain == GisViewportDomain::Distance && this->graph_2d->x_domain == GisViewportDomain::Time) {
+		this->initial_track_data = trk->make_track_data_distance_over_time();
+
+	} else if (this->graph_2d->y_domain == GisViewportDomain::Elevation && this->graph_2d->x_domain == GisViewportDomain::Time) {
+		this->initial_track_data = trk->make_track_data_altitude_over_time();
+
+	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed && this->graph_2d->x_domain == GisViewportDomain::Distance) {
+		this->initial_track_data = trk->make_track_data_speed_over_distance();
+
+	} else {
+		qDebug() << SG_PREFIX_E << "Unhandled x/y domain" << (int) this->graph_2d->x_domain << (int) this->graph_2d->y_domain;
+	}
+
+
+	if (!this->initial_track_data.valid) {
+		qDebug() << SG_PREFIX_E << "Failed to generate valid initial track data for" << this->get_title();
+		return sg_ret::err;
+	}
+
+	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
+	return sg_ret::ok;
 }
 
 
