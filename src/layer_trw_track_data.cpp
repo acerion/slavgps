@@ -47,18 +47,18 @@ using namespace SlavGPS;
 
 
 #define TRW_TRACK_DATA_CALCULATE_MIN_MAX(_track_data_, _i_, _y_valid_)	\
-	if (_track_data_.x[_i_] > _track_data_.x_max) {			\
-		_track_data_.x_max = _track_data_.x[_i_];		\
+	if (_track_data_->x[_i_] > _track_data_->x_max) {		\
+		_track_data_->x_max = _track_data_->x[_i_];		\
 	}								\
-	if (_track_data_.x[_i_] < _track_data_.x_min) {			\
-		_track_data_.x_min = _track_data_.x[_i_];		\
+	if (_track_data_->x[_i_] < _track_data_->x_min) {		\
+		_track_data_->x_min = _track_data_->x[_i_];		\
 	}								\
 	if (_y_valid_) {						\
-		if (_track_data_.y[_i_] > _track_data_.y_max) {		\
-			_track_data_.y_max = _track_data_.y[_i_];	\
+		if (_track_data_->y[_i_] > _track_data_->y_max) {	\
+			_track_data_->y_max = _track_data_->y[_i_];	\
 		}							\
-		if (_track_data_.y[_i_] < _track_data_.y_min) {		\
-			_track_data_.y_min = _track_data_.y[_i_];	\
+		if (_track_data_->y[_i_] < _track_data_->y_min) {	\
+			_track_data_->y_min = _track_data_->y[_i_];	\
 		}							\
 	}								\
 
@@ -400,107 +400,83 @@ QDebug SlavGPS::operator<<(QDebug debug, const TrackData & track_data)
 
 /**
    Simple method for copying "distance over time" information from Track to TrackData.
+   Make a distance/time map, heavily based on the Track::make_track_data_speed_over_time() method.
 
    @reviewed-on tbd
 */
-TrackData TrackData::make_values_distance_over_time_helper(Track * trk)
+sg_ret TrackData::make_track_data_distance_over_time(Track * trk)
 {
 	/* No special handling of segments ATM... */
 
-	TrackData result;
+
+	const Time duration = trk->get_duration();
+	if (!duration.is_valid() || duration.get_value() < 0) {
+		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
+		return sg_ret::err;
+	}
 
 
 	const int tp_count = trk->get_tp_count();
 	if (tp_count < 1) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
-		return result;
+		return sg_ret::err;
 	}
-	result.allocate_vector(tp_count);
+	this->allocate_vector(tp_count);
 
 
 	int i = 0;
 	auto iter = trk->trackpoints.begin();
-	result.x[i] = (*iter)->timestamp.get_value();
-	result.y[i] = 0;
-	TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, (!std::isnan(result.y[i])));
+	this->x[i] = (*iter)->timestamp.get_value();
+	this->y[i] = 0;
+	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 	i++;
 	iter++;
 
 	while (iter != trk->trackpoints.end()) {
 
-		result.x[i] = (*iter)->timestamp.get_value();
-		result.y[i] = result.y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
+		this->x[i] = (*iter)->timestamp.get_value();
+		this->y[i] = this->y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 
-		TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, (!std::isnan(result.y[i])));
+		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 
-		if (result.x[i] <= result.x[i - 1]) {
-			qDebug() << SG_PREFIX_W << "Inconsistent time data at index" << i << ":" << result.x[i] << result.x[i - 1];
+		if (this->x[i] <= this->x[i - 1]) {
+			qDebug() << SG_PREFIX_W << "Inconsistent time data at index" << i << ":" << this->x[i] << this->x[i - 1];
 		}
 		i++;
 		iter++;
+
+#if 0
+		if (data_dt.x[i] <= data_dt.x[i - 1]) {
+			/* Handle glitch in values of consecutive time stamps.
+			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
+			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
+			this->x[i] = data_dt.x[i - 1];
+			this->y[i] = NAN;
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, false);
+		} else {
+			this->x[i] = data_dt.x[i];
+			this->y[i] = data_dt.y[i - 1];
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
+		}
+#endif
 	}
 
 	assert (i == tp_count);
+	qDebug() << SG_PREFIX_D << "Collected" << i << "track data values";
 
-#if 1 /* Debug. */
+#if 0 /* Debug. */
 	for (int j = 0; j < tp_count; j++) {
-		qDebug() << SG_PREFIX_I << "Distance over time: i =" << j << ", t = " << result.x[j] << ", d =" << result.y[j];
+		qDebug() << SG_PREFIX_I << "Distance over time: i =" << j << ", t = " << this->x[j] << ", d =" << this->y[j];
 	}
 #endif
 
-	result.valid = true;
-	result.x_domain = GisViewportDomain::Time;
-	result.y_domain = GisViewportDomain::Distance;
-	result.y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
-	snprintf(result.debug, sizeof (result.debug), "Distance over Time");
+	this->valid = true;
+	this->x_domain = GisViewportDomain::Time;
+	this->y_domain = GisViewportDomain::Distance;
+	this->y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
+	snprintf(this->debug, sizeof (this->debug), "Distance over Time");
 
-	return result;
-}
-
-
-
-
-/**
-   Simple method for copying "altitude over time" information from Track to TrackData.
-
-   @reviewed-on tbd
-*/
-TrackData TrackData::make_values_altitude_over_time_helper(Track * trk)
-{
-	TrackData result;
-
-
-	const int tp_count = trk->get_tp_count();
-	if (tp_count < 1) {
-		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
-		return result;
-	}
-	result.allocate_vector(tp_count);
-
-
-	int i = 0;
-	auto iter = trk->trackpoints.begin();
-	do {
-		const bool y_valid = (*iter)->altitude.is_valid();
-
-		result.x[i] = (*iter)->timestamp.get_value();
-		result.y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
-		TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, y_valid);
-
-		i++;
-		iter++;
-	} while (iter != trk->trackpoints.end());
-
-
-	assert (i == tp_count);
-	result.valid = true;
-	result.x_domain = GisViewportDomain::Time;
-	result.y_domain = GisViewportDomain::Elevation;
-	snprintf(result.debug, sizeof (result.debug), "Altitude over Time");
-
-	qDebug() << SG_PREFIX_D << "Collected" << i << "track data values";
-
-	return result;
+	return sg_ret::ok;
 }
 
 
@@ -512,17 +488,15 @@ TrackData TrackData::make_values_altitude_over_time_helper(Track * trk)
 
    @reviewed-on tbd
 */
-TrackData TrackData::make_track_data_altitude_over_distance(Track * trk, int compressed_n_points)
+sg_ret TrackData::make_track_data_altitude_over_distance(Track * trk, int compressed_n_points)
 {
-	assert (compressed_n_points < 16000); /* TODO: why this limitation? */
-
 	TrackData result;
 
 
 	const int tp_count = trk->get_tp_count();
-	if (tp_count < 2) {
+	if (tp_count < 1) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with size" << tp_count;
-		return result;
+		return sg_ret::err;
 	}
 
 
@@ -543,19 +517,19 @@ TrackData TrackData::make_track_data_altitude_over_distance(Track * trk, int com
 			}
 		}
 		if (!correct) {
-			return result;
+			return sg_ret::err;
 		}
 	}
 
-	double total_length = trk->get_length_value_including_gaps();
+	const double total_length = trk->get_length_value_including_gaps();
 	const double delta_d = total_length / (compressed_n_points - 1);
 
 	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash */
 	if (delta_d <= 0) {
-		return result;
+		return sg_ret::err;
 	}
 
-	result.allocate_vector(compressed_n_points);
+	this->allocate_vector(compressed_n_points);
 
 	double current_dist = 0.0;
 	double current_area_under_curve = 0;
@@ -587,16 +561,16 @@ TrackData TrackData::make_track_data_altitude_over_distance(Track * trk, int com
 
 			if (ignore_it) {
 				/* Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero). */
-				result.y[current_chunk] = altitude1;
+				this->y[current_chunk] = altitude1;
 				if (current_chunk > 0) {
 					/* TODO_LATER: verify this. */
-					result.x[current_chunk] = result.x[current_chunk - 1] + delta_d;
+					this->x[current_chunk] = this->x[current_chunk - 1] + delta_d;
 				}
 			} else {
-				result.y[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (delta_d / 2)) / current_seg_length);
+				this->y[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (delta_d / 2)) / current_seg_length);
 				if (current_chunk > 0) {
 					/* TODO_LATER: verify this. */
-					result.x[current_chunk] = result.x[current_chunk - 1] + delta_d;
+					this->x[current_chunk] = this->x[current_chunk - 1] + delta_d;
 				}
 			}
 
@@ -635,27 +609,27 @@ TrackData TrackData::make_track_data_altitude_over_distance(Track * trk, int com
 			    || (iter != trk->trackpoints.end()
 				&& std::next(iter) == trk->trackpoints.end())) {
 
-				result.y[current_chunk] = current_area_under_curve / current_dist;
+				this->y[current_chunk] = current_area_under_curve / current_dist;
 				if (current_chunk > 0) {
 					/* TODO_LATER: verify this. */
-					result.x[current_chunk] = result.x[current_chunk - 1] + delta_d;
+					this->x[current_chunk] = this->x[current_chunk - 1] + delta_d;
 				}
 				if (std::next(iter) == trk->trackpoints.end()) {
 					for (int i = current_chunk + 1; i < compressed_n_points; i++) {
-						result.y[i] = result.y[current_chunk];
+						this->y[i] = this->y[current_chunk];
 						if (current_chunk > 0) {
 							/* TODO_LATER: verify this. */
-							result.x[i] = result.x[current_chunk - 1] + delta_d;
+							this->x[i] = this->x[current_chunk - 1] + delta_d;
 						}
 					}
 					break;
 				}
 			} else {
 				current_area_under_curve += dist_along_seg * (altitude1 + (altitude2 - altitude1) * dist_along_seg / current_seg_length);
-				result.y[current_chunk] = current_area_under_curve / delta_d;
+				this->y[current_chunk] = current_area_under_curve / delta_d;
 				if (current_chunk > 0) {
 					/* TODO_LATER: verify this. */
-					result.x[current_chunk] = result.x[current_chunk - 1] + delta_d;
+					this->x[current_chunk] = this->x[current_chunk - 1] + delta_d;
 				}
 			}
 
@@ -668,12 +642,12 @@ TrackData TrackData::make_track_data_altitude_over_distance(Track * trk, int com
 	assert(current_chunk == compressed_n_points);
 #endif
 
-	result.valid = true;
-	result.x_domain = GisViewportDomain::Distance;
-	result.y_domain = GisViewportDomain::Elevation;
-	snprintf(result.debug, sizeof (result.debug), "Altitude over Distance");
+	this->valid = true;
+	this->x_domain = GisViewportDomain::Distance;
+	this->y_domain = GisViewportDomain::Elevation;
+	snprintf(this->debug, sizeof (this->debug), "Altitude over Distance");
 
-	return result;
+	return sg_ret::ok;
 }
 
 
@@ -682,20 +656,16 @@ TrackData TrackData::make_track_data_altitude_over_distance(Track * trk, int com
 /**
    @reviewed-on tbd
 */
-TrackData TrackData::make_track_data_gradient_over_distance(Track * trk, int compressed_n_points)
+sg_ret TrackData::make_track_data_gradient_over_distance(Track * trk, int compressed_n_points)
 {
-	assert (compressed_n_points < 16000); /* TODO: why this limitation? */
-
-
 	TrackData result;
+
 
 	const int tp_count = trk->get_tp_count();
 	if (tp_count < 2) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with size" << tp_count;
-		return result;
+		return sg_ret::err;
 	}
-
-
 
 
 	const double total_length = trk->get_length_value_including_gaps();
@@ -703,16 +673,16 @@ TrackData TrackData::make_track_data_gradient_over_distance(Track * trk, int com
 
 	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash. */
 	if (delta_d <= 0) {
-		return result;
+		return sg_ret::err;
 	}
 
 	TrackData compressed_ad;
 	compressed_ad.make_track_data_altitude_over_distance(trk, compressed_n_points);
 	if (!compressed_ad.valid) {
-		return result;
+		return sg_ret::err;
 	}
 
-	result.allocate_vector(compressed_n_points);
+	this->allocate_vector(compressed_n_points);
 
 	int i = 0;
 	double current_gradient = 0.0;
@@ -722,23 +692,23 @@ TrackData TrackData::make_track_data_gradient_over_distance(Track * trk, int com
 		current_gradient = 100.0 * (altitude2 - altitude1) / delta_d;
 
 		if (i > 0) {
-			result.x[i] = result.x[i - 1] + delta_d;
+			this->x[i] = this->x[i - 1] + delta_d;
 		}
-		result.y[i] = current_gradient;
+		this->y[i] = current_gradient;
 
 	}
-	result.x[i] = result.x[i - 1] + delta_d;
-	result.y[i] = current_gradient;
+	this->x[i] = this->x[i - 1] + delta_d;
+	this->y[i] = current_gradient;
 
 	assert (i + 1 == compressed_n_points);
 
-	result.valid = true;
-	result.x_domain = GisViewportDomain::Distance;
-	result.y_domain = GisViewportDomain::Gradient;
-	snprintf(result.debug, sizeof (result.debug), "Gradient over Distance");
+	this->valid = true;
+	this->x_domain = GisViewportDomain::Distance;
+	this->y_domain = GisViewportDomain::Gradient;
+	snprintf(this->debug, sizeof (this->debug), "Gradient over Distance");
 
 
-	return result;
+	return sg_ret::ok;
 }
 
 
@@ -749,27 +719,39 @@ TrackData TrackData::make_track_data_gradient_over_distance(Track * trk, int com
 
    @reviewed-on tbd
 */
-TrackData TrackData::make_track_data_speed_over_time(Track * trk)
+sg_ret TrackData::make_track_data_speed_over_time(Track * trk)
 {
 	TrackData result;
 
 	const Time duration = trk->get_duration();
 	if (!duration.is_valid() || duration.get_value() < 0) {
-		return result;
+		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
+		return sg_ret::err;
 	}
 
-	const int tp_count = trk->get_tp_count();
-	TrackData data_dt;
-	data_dt.make_values_distance_over_time_helper(trk);
-	assert (data_dt.n_points == (int) trk->get_tp_count());
 
-	result.allocate_vector(tp_count);
+	const int tp_count = trk->get_tp_count();
+	if (tp_count < 1) {
+		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
+		return sg_ret::err;
+	}
+	TrackData data_dt;
+	data_dt.make_track_data_distance_over_time(trk);
+
+
+	if (data_dt.n_points != tp_count) {
+		qDebug() << SG_PREFIX_E << "Mismatch of data: data points in 'distance over time' =" << data_dt.n_points << ", trackpoints count =" << tp_count;
+	}
+	assert (data_dt.n_points == tp_count);
+
+
+	this->allocate_vector(tp_count);
 
 
 	int i = 0;
-	result.x[i] = data_dt.x[0];
-	result.y[i] = 0.0;
-	TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, (!std::isnan(result.y[i])));
+	this->x[i] = data_dt.x[0];
+	this->y[i] = 0.0;
+	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 	i++;
 
 	for (; i < tp_count; i++) {
@@ -779,96 +761,37 @@ TrackData TrackData::make_track_data_speed_over_time(Track * trk)
 			/* Handle glitch in values of consecutive time stamps.
 			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps:" << i << data_dt.x[i] << data_dt.x[i - 1];
-			result.x[i] = data_dt.x[i - 1];
-			result.y[i] = 0;
+			this->x[i] = data_dt.x[i - 1];
+			this->y[i] = 0;
 
-			TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, false);
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, false);
 
 		} else {
 			const double delta_t = (data_dt.x[i] - data_dt.x[i - 1]);
 			const double delta_d = (data_dt.y[i] - data_dt.y[i - 1]);
 
-			result.x[i] = data_dt.x[i];
-			result.y[i] = delta_d / delta_t;
+			this->x[i] = data_dt.x[i];
+			this->y[i] = delta_d / delta_t;
 
-			TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, true);
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
 		}
 	}
 
-	result.valid = true;
-	result.x_domain = GisViewportDomain::Time;
-	result.y_domain = GisViewportDomain::Speed;
-	result.y_speed_unit = SpeedUnit::MetresPerSecond;
-	snprintf(result.debug, sizeof (result.debug), "Speed over Time");
+	this->valid = true;
+	this->x_domain = GisViewportDomain::Time;
+	this->y_domain = GisViewportDomain::Speed;
+	this->y_speed_unit = SpeedUnit::MetresPerSecond;
+	snprintf(this->debug, sizeof (this->debug), "Speed over Time");
 
-	return result;
+	return sg_ret::ok;
 }
 
 
 
 
 /**
-   Make a distance/time map, heavily based on the Track::make_track_data_speed_over_time() method.
+   Simple method for copying "altitude over time" information from Track to TrackData.
 
-   @reviewed-on tbd
-*/
-TrackData TrackData::make_track_data_distance_over_time(Track * trk)
-{
-	TrackData result;
-
-	const Time duration = trk->get_duration();
-	if (!duration.is_valid() || duration.get_value() < 0) {
-		qDebug() << SG_PREFIX_E << "Track duration is either invalid or negative";
-		return result;
-	}
-
-	const int tp_count = trk->get_tp_count();
-	TrackData data_dt;
-	data_dt.make_values_distance_over_time_helper(trk);
-
-	/* TODO: why do we need to generate 'result', if we already have 'data_dt'? */
-
-	assert (data_dt.n_points == tp_count);
-
-	result.allocate_vector(tp_count);
-
-	int i = 0;
-	result.x[i] = data_dt.x[i];
-	result.y[i] = result.y[i];
-	TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, (!std::isnan(result.y[i])));
-	i++;
-
-	for (; i < data_dt.n_points; i++) {
-		if (data_dt.x[i] <= data_dt.x[i - 1]) {
-			/* Handle glitch in values of consecutive time stamps.
-			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
-			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
-			result.x[i] = data_dt.x[i - 1];
-			result.y[i] = NAN;
-			TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, false);
-		} else {
-			result.x[i] = data_dt.x[i];
-			result.y[i] = data_dt.y[i - 1];
-			TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, true);
-		}
-	}
-
-	assert (i == tp_count);
-	qDebug() << SG_PREFIX_D << "Filled" << i << "cells with altitudes";
-
-	result.valid = true;
-	result.x_domain = GisViewportDomain::Time;
-	result.y_domain = GisViewportDomain::Distance;
-	result.y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
-	snprintf(result.debug, sizeof (result.debug), "Distance over Time");
-
-	return result;
-}
-
-
-
-
-/**
    This uses the 'time' based method to make the graph, (which is a simpler compared to the elevation/distance).
    This results in a slightly blocky graph when it does not have many trackpoints: <60.
    NB Somehow the elevation/distance applies some kind of smoothing algorithm,
@@ -876,36 +799,57 @@ TrackData TrackData::make_track_data_distance_over_time(Track * trk)
 
    @reviewed-on tbd
 */
-TrackData TrackData::make_track_data_altitude_over_time(Track * trk)
+sg_ret TrackData::make_track_data_altitude_over_time(Track * trk)
 {
 	TrackData result;
 
+
 	const Time duration = trk->get_duration();
 	if (!duration.is_valid() || duration.get_value() < 0) {
-		return result;
+		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
+		return sg_ret::err;
 	}
 
-	if (trk->trackpoints.size() < 2) {
-		return result;
-	}
 
-	/* Test if there's anything worth calculating. */
-	bool okay = false;
-	for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-		if ((*iter)->altitude.is_valid()) {
-			okay = true;
-			break;
+	const int tp_count = trk->get_tp_count();
+	if (tp_count < 1) {
+		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
+		return sg_ret::err;
+	}
+	this->allocate_vector(tp_count);
+
+
+	int i = 0;
+	auto iter = trk->trackpoints.begin();
+	do {
+		const bool y_valid = (*iter)->altitude.is_valid();
+
+		this->x[i] = (*iter)->timestamp.get_value();
+		if (i > 0 && this->x[i] <= this->x[i - 1]) {
+			/* TODO: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
+			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->x[i] << this->x[i - 1];
+			this->x[i] = this->x[i - 1];
 		}
-	}
-	if (!okay) {
-		return result;
-	}
 
-	result.make_values_altitude_over_time_helper(trk);
+		this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
+		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, y_valid);
 
-	assert (result.n_points == (int) trk->get_tp_count());
+		i++;
+		iter++;
+	} while (iter != trk->trackpoints.end());
 
-	return result;
+
+	assert (i == tp_count);
+	qDebug() << SG_PREFIX_D << "Collected" << i << "track data values";
+
+
+	this->valid = true;
+	this->x_domain = GisViewportDomain::Time;
+	this->y_domain = GisViewportDomain::Elevation;
+	snprintf(this->debug, sizeof (this->debug), "Altitude over Time");
+
+
+	return sg_ret::ok;
 }
 
 
@@ -916,25 +860,26 @@ TrackData TrackData::make_track_data_altitude_over_time(Track * trk)
 
    @reviewed-on tbd
 */
-TrackData TrackData::make_track_data_speed_over_distance(Track * trk)
+sg_ret TrackData::make_track_data_speed_over_distance(Track * trk)
 {
 	TrackData result;
 
-	double total_length = trk->get_length_value_including_gaps();
+	const double total_length = trk->get_length_value_including_gaps();
 	if (total_length <= 0) {
-		return result;
+		return sg_ret::err;
 	}
 
 	const int tp_count = trk->get_tp_count();
 	TrackData data_dt;
-	data_dt.make_values_distance_over_time_helper(trk);
+	data_dt.make_track_data_distance_over_time(trk);
 
-	result.allocate_vector(tp_count);
+	this->allocate_vector(tp_count);
+
 
 	int i = 0;
-	result.x[i] = 0;
-	result.y[i] = 0;
-	TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, (!std::isnan(result.y[i])));
+	this->x[i] = 0;
+	this->y[i] = 0;
+	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 	i++;
 
 	for (; i < tp_count; i++) {
@@ -942,8 +887,8 @@ TrackData TrackData::make_track_data_speed_over_distance(Track * trk)
 			/* Handle glitch in values of consecutive time stamps.
 			   TODO_LATER: improve code that calculates pseudo-values of result when a glitch has been found. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << data_dt.x[i] << data_dt.x[i - 1];
-			result.x[i] = result.x[i - 1]; /* TODO_LATER: This won't work for a two or more invalid timestamps in a row. */
-			result.y[i] = 0;
+			this->x[i] = this->x[i - 1]; /* TODO_LATER: This won't work for a two or more invalid timestamps in a row. */
+			this->y[i] = 0;
 		} else {
 			/* Iterate over 'n + 1 + n' points of a track to get
 			   an average speed for that part.  This will
@@ -960,18 +905,18 @@ TrackData TrackData::make_track_data_speed_over_distance(Track * trk)
 				}
 			}
 
-			result.y[i] = delta_d / delta_t;
-			result.x[i] = result.x[i - 1] + (delta_d / (n + 1 + n)); /* Accumulate the distance. */
-			TRW_TRACK_DATA_CALCULATE_MIN_MAX(result, i, true);
+			this->y[i] = delta_d / delta_t;
+			this->x[i] = this->x[i - 1] + (delta_d / (n + 1 + n)); /* Accumulate the distance. */
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
 		}
 	}
 
 	assert(i == tp_count);
 
-	result.valid = true;
-	result.x_domain = GisViewportDomain::Distance;
-	result.y_domain = GisViewportDomain::Speed;
-	snprintf(result.debug, sizeof (result.debug), "Speed over Distance");
+	this->valid = true;
+	this->x_domain = GisViewportDomain::Distance;
+	this->y_domain = GisViewportDomain::Speed;
+	snprintf(this->debug, sizeof (this->debug), "Speed over Distance");
 
-	return result;
+	return sg_ret::ok;
 }

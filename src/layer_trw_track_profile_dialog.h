@@ -323,6 +323,13 @@ namespace SlavGPS {
 
 
 		/*
+		  Difference between maximal and minimal value of x
+		  parameter.
+		*/
+		double x_visible_range_uu = 0.0;
+
+
+		/*
 		  Track data collected from track at the beginning,
 		  and then used to create a processed/compressed copy
 		  (track_data_to_draw) that will be drawn to graph.

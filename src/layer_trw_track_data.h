@@ -74,12 +74,12 @@ namespace SlavGPS {
 		sg_ret y_distance_convert_units(DistanceUnit distance_unit);
 		sg_ret y_speed_convert_units(SpeedUnit speed_unit);
 
-		TrackData make_track_data_altitude_over_distance(Track * trk, int compressed_n_points);
-		TrackData make_track_data_gradient_over_distance(Track * trk, int compressed_n_points);
-		TrackData make_track_data_speed_over_time(Track * trk);
-		TrackData make_track_data_distance_over_time(Track * trk);
-		TrackData make_track_data_altitude_over_time(Track * trk);
-		TrackData make_track_data_speed_over_distance(Track * trk);
+		sg_ret make_track_data_altitude_over_distance(Track * trk, int compressed_n_points);
+		sg_ret make_track_data_gradient_over_distance(Track * trk, int compressed_n_points);
+		sg_ret make_track_data_speed_over_time(Track * trk);
+		sg_ret make_track_data_distance_over_time(Track * trk);
+		sg_ret make_track_data_altitude_over_time(Track * trk);
+		sg_ret make_track_data_speed_over_distance(Track * trk);
 
 
 
@@ -106,9 +106,6 @@ namespace SlavGPS {
 
 	private:
 		sg_ret do_compress(TrackData & compressed_data) const;
-
-		TrackData make_values_distance_over_time_helper(Track * trk);
-		TrackData make_values_altitude_over_time_helper(Track * trk);
 	};
 	QDebug operator<<(QDebug debug, const TrackData & track_data);
 

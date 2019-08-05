@@ -360,6 +360,8 @@ sg_ret ProfileView::set_initial_visible_range_y(void)
 	this->y_visible_range_uu = std::fabs(this->y_visible_max - this->y_visible_min);
 
 
+	this->x_visible_range_uu = std::fabs(this->track_data_to_draw.x_max - this->track_data_to_draw.x_min);
+
 
 	/* Now, given the n_intervals value, find a suitable interval
 	   index and value that will nicely cover visible range of
@@ -888,77 +890,85 @@ sg_ret ProfileView::draw_function_values(Track * trk)
 	err_pen.setColor(trk->color == "red" ? "black" : "red");
 	err_pen.setWidth(1);
 
+	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
+	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
+	qDebug() << SG_PREFIX_I << "kamil kamil x pixels per unit =" << x_pixels_per_unit << ", n columns =" << n_columns << ", x visible range =" << this->x_visible_range_uu << this->get_title();
 
-	if (GisViewportDomain::Time == this->graph_2d->x_domain) {
+	ScreenPos cur_pos;
+	ScreenPos last_pos(leftmost_px, bottommost_px);
 
-		qDebug() << SG_PREFIX_I
-			 << "kamil will call draw_function_over_time() to draw graph" << this->graph_2d->debug
-			 << "into n columns =" << n_columns << this->get_central_n_columns();
-
-		const size_t n_values = this->track_data_to_draw.n_points;
-		if (0 == n_values) {
-			qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
-			return sg_ret::err;
-		}
-
-		const double margin = 0.05;
-		const double visible_values_range_uu = this->track_data_to_draw.y_min - this->track_data_to_draw.y_min;
-
-		qDebug() << "__ kamil kamil __" << this->y_visible_range_uu << visible_values_range_uu;
-
-		const double x_scale = 1.0 * n_values / n_columns;
-
-		ScreenPos cur_pos;
-		ScreenPos last_pos(leftmost_px, bottommost_px);
-
-		QPen pen;
-		pen.setColor(trk->has_color ? trk->color : "blue");
-		pen.setWidth(1);
-
-		qDebug() << SG_PREFIX_I << "kamil will draw graph'" << graph_2d->debug << "'with n data points =" << n_values << "into graph with n columns =" << n_columns;
-
-		double col = leftmost_px;
-		for (size_t i = 0; i < n_values; i++) {
-			const double current_value_uu = this->track_data_to_draw.y[i];
-
-			cur_pos.rx() = col;
-			cur_pos.ry() = bottommost_px - n_rows * (current_value_uu - this->track_data_to_draw.y_min) / this->y_visible_range_uu;
-
-			graph_2d->draw_line(pen, last_pos, cur_pos);
-
-			last_pos = cur_pos;
-			col = col + (1 / x_scale);
-		}
-	} else {
-		const TrackData & trk_data = this->track_data_to_draw;
-
-		const size_t n_values = trk_data.n_points;
-		assert (n_values == (size_t) n_columns);
-		if (0 == n_values) {
-			qDebug() << SG_PREFIX_N << "There were zero values in" << this->graph_2d->debug;
-			return sg_ret::err;
-		}
-
-		ScreenPos cur_pos;
-		ScreenPos last_pos(leftmost_px, bottommost_px);
-
-		double col = leftmost_px;
-		for (size_t i = 0; i < n_values; i++) {
-			const bool value_valid = trk_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
-
-			const double current_value_uu = value_valid
-				? trk_data.y[i]
-				: this->y_visible_min + (this->y_visible_range_uu / 2); /* I hope that this will result in a point in the center between top border and bottom border. */
-
-			cur_pos.rx() = col;
-			cur_pos.ry() = bottommost_px - n_rows * (current_value_uu - trk_data.y_min) / this->y_visible_range_uu;
-
-			this->graph_2d->draw_line(value_valid ? valid_pen : err_pen, last_pos, cur_pos);
-
-			last_pos = cur_pos;
-			col = col + 1;
-		}
+	const TrackData & trk_data = this->track_data_to_draw;
+	const size_t n_values = trk_data.n_points;
+	if (0 == n_values) {
+		qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
+		return sg_ret::err;
 	}
+
+	qDebug() << SG_PREFIX_I
+		 << "kamil will drawi graph" << this->graph_2d->debug
+		 << "with n values =" << n_values
+		 << "into n columns =" << n_columns;
+
+
+	switch (this->graph_2d->x_domain) {
+	case GisViewportDomain::Time:
+		{
+			const double x_scale = 1.0 * n_values / n_columns;
+
+			double col = leftmost_px;
+			for (size_t i = 0; i < n_values; i++) {
+
+				const double x_current_value_uu = trk_data.x[i];
+
+				const bool y_value_valid = trk_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
+				const double y_current_value_uu = y_value_valid
+					? trk_data.y[i]
+					: this->y_visible_min + (this->y_visible_range_uu / 2); /* I hope that this will result in a point in the center between top border and bottom border. */
+
+				const int j = x_pixels_per_unit * (x_current_value_uu - trk_data.x_min);
+				qDebug() << qSetRealNumberPrecision(15) << trk_data.debug << i << j << x_pixels_per_unit << x_current_value_uu << trk_data.x_min;
+
+				cur_pos.rx() = leftmost_px + i;
+				cur_pos.ry() = bottommost_px - y_pixels_per_unit * (y_current_value_uu - trk_data.y_min);
+
+
+				graph_2d->draw_line(y_value_valid ? valid_pen : err_pen, last_pos, cur_pos);
+
+				last_pos = cur_pos;
+				col = col + (1 / x_scale);
+			}
+		}
+		break;
+
+	case GisViewportDomain::Distance:
+		{
+			for (size_t i = 0; i < n_values; i++) {
+
+				const double x_current_value_uu = trk_data.x[i];
+
+				const bool y_value_valid = trk_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
+				const double y_current_value_uu = y_value_valid
+					? trk_data.y[i]
+					: this->y_visible_min + (this->y_visible_range_uu / 2); /* I hope that this will result in a point in the center between top border and bottom border. */
+
+				cur_pos.rx() = leftmost_px + x_pixels_per_unit * (x_current_value_uu - trk_data.x_min);
+				cur_pos.ry() = bottommost_px - y_pixels_per_unit * (y_current_value_uu - trk_data.y_min);
+
+				const int j = x_pixels_per_unit * (x_current_value_uu - trk_data.x_min);
+				qDebug() << qSetRealNumberPrecision(15) << trk_data.debug << i << j << x_pixels_per_unit << x_current_value_uu << trk_data.x_min;
+
+				this->graph_2d->draw_line(y_value_valid ? valid_pen : err_pen, last_pos, cur_pos);
+
+				last_pos = cur_pos;
+			}
+		}
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected x domain" << (int) this->graph_2d->x_domain;
+		break;
+	}
+
 
 	return sg_ret::ok;
 }
