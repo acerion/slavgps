@@ -435,13 +435,16 @@ sg_ret TrackData::make_track_data_distance_over_time(Track * trk)
 	while (iter != trk->trackpoints.end()) {
 
 		this->x[i] = (*iter)->timestamp.get_value();
+		if (i > 0 && this->x[i] <= this->x[i - 1]) {
+			/* TODO: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
+			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->x[i] << this->x[i - 1];
+			this->x[i] = this->x[i - 1];
+		}
+
 		this->y[i] = this->y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 
 		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 
-		if (this->x[i] <= this->x[i - 1]) {
-			qDebug() << SG_PREFIX_W << "Inconsistent time data at index" << i << ":" << this->x[i] << this->x[i - 1];
-		}
 		i++;
 		iter++;
 
@@ -822,8 +825,6 @@ sg_ret TrackData::make_track_data_altitude_over_time(Track * trk)
 	int i = 0;
 	auto iter = trk->trackpoints.begin();
 	do {
-		const bool y_valid = (*iter)->altitude.is_valid();
-
 		this->x[i] = (*iter)->timestamp.get_value();
 		if (i > 0 && this->x[i] <= this->x[i - 1]) {
 			/* TODO: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
@@ -831,6 +832,7 @@ sg_ret TrackData::make_track_data_altitude_over_time(Track * trk)
 			this->x[i] = this->x[i - 1];
 		}
 
+		const bool y_valid = (*iter)->altitude.is_valid();
 		this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
 		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, y_valid);
 
