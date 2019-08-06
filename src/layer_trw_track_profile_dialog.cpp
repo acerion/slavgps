@@ -875,6 +875,21 @@ void ProfileView::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_spee
 */
 sg_ret ProfileView::draw_function_values(Track * trk)
 {
+	const TrackData & trk_data = this->track_data_to_draw;
+	const size_t n_values = trk_data.n_points;
+	if (0 == n_values) {
+		qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
+		return sg_ret::err;
+	}
+	/*
+	  It would be tempting to add "assert (n_columns ==
+	  n_values)", but this assertion would fail most of the
+	  time. We may have uncompressed track data set, we may have
+	  zoomed in to the point where there will be only few track
+	  data points (trackpoints) visible.
+	*/
+
+
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
 
@@ -882,93 +897,66 @@ sg_ret ProfileView::draw_function_values(Track * trk)
 	const int rightmost_px = this->graph_2d->central_get_rightmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
+
 	QPen valid_pen;
 	valid_pen.setColor(trk->has_color ? trk->color : "blue");
 	valid_pen.setWidth(1);
 
-	QPen err_pen;
-	err_pen.setColor(trk->color == "red" ? "black" : "red");
-	err_pen.setWidth(1);
+	QPen invalid_pen;
+	invalid_pen.setColor(trk->color == "red" ? "black" : "red");
+	invalid_pen.setWidth(1);
 
-	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
-	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
-	qDebug() << SG_PREFIX_I << "kamil kamil x pixels per unit =" << x_pixels_per_unit << ", n columns =" << n_columns << ", x visible range =" << this->x_visible_range_uu << this->get_title();
-
-	ScreenPos cur_pos;
-	ScreenPos last_pos(leftmost_px, bottommost_px);
-
-	const TrackData & trk_data = this->track_data_to_draw;
-	const size_t n_values = trk_data.n_points;
-	if (0 == n_values) {
-		qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
-		return sg_ret::err;
-	}
 
 	qDebug() << SG_PREFIX_I
-		 << "kamil will drawi graph" << this->graph_2d->debug
+		 << "Will draw graph" << this->graph_2d->debug
 		 << "with n values =" << n_values
 		 << "into n columns =" << n_columns;
 
+	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
+	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
 
-	switch (this->graph_2d->x_domain) {
-	case GisViewportDomain::Time:
-		{
-			const double x_scale = 1.0 * n_values / n_columns;
+	ScreenPos cur_valid_pos;
+	ScreenPos last_valid_pos(leftmost_px, bottommost_px);
 
-			double col = leftmost_px;
-			for (size_t i = 0; i < n_values; i++) {
+	for (size_t i = 0; i < n_values; i++) {
 
-				const double x_current_value_uu = trk_data.x[i];
+		const double x_current_value_uu = trk_data.x[i];
+		/*
+		  This line creates x coordinate that is
+		  proportionally as far from left border, as
+		  trk_data.x[i] is from trk_data.x_min.
 
-				const bool y_value_valid = trk_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
-				const double y_current_value_uu = y_value_valid
-					? trk_data.y[i]
-					: this->y_visible_min + (this->y_visible_range_uu / 2); /* I hope that this will result in a point in the center between top border and bottom border. */
+		  It works equally well for x vectors with constant
+		  intervals (e.g. the same time interval == 1s between
+		  consecutive measurements of y), as for x vector with
+		  varying intervals (e.g. different values of
+		  distances between consecutive measurements of y).
+		*/
+		const int x = leftmost_px + x_pixels_per_unit * (x_current_value_uu - trk_data.x_min);
 
-				const int j = x_pixels_per_unit * (x_current_value_uu - trk_data.x_min);
-				qDebug() << qSetRealNumberPrecision(15) << trk_data.debug << i << j << x_pixels_per_unit << x_current_value_uu << trk_data.x_min;
+		const bool y_value_valid = !std::isnan(trk_data.y[i]);
 
-				cur_pos.rx() = leftmost_px + i;
-				cur_pos.ry() = bottommost_px - y_pixels_per_unit * (y_current_value_uu - trk_data.y_min);
+		if (y_value_valid) {
+			const double y_current_value_uu = trk_data.y[i];
 
+			cur_valid_pos.rx() = x;
+			cur_valid_pos.ry() = bottommost_px - y_pixels_per_unit * (y_current_value_uu - trk_data.y_min);
 
-				graph_2d->draw_line(y_value_valid ? valid_pen : err_pen, last_pos, cur_pos);
+			graph_2d->draw_line(valid_pen, last_valid_pos, cur_valid_pos);
 
-				last_pos = cur_pos;
-				col = col + (1 / x_scale);
-			}
+			last_valid_pos = cur_valid_pos;
+		} else {
+			/*
+			  Draw vertical line from bottom of graph to
+			  top to indicate invalid y value.
+			*/
+
+			const int begin_y = bottommost_px;
+			const int end_y = bottommost_px - n_rows;
+
+			graph_2d->draw_line(invalid_pen, x, begin_y, x, end_y);
 		}
-		break;
-
-	case GisViewportDomain::Distance:
-		{
-			for (size_t i = 0; i < n_values; i++) {
-
-				const double x_current_value_uu = trk_data.x[i];
-
-				const bool y_value_valid = trk_data.y[i] != NAN; /* TODO: verify that this comparison against NAN works as expected. */
-				const double y_current_value_uu = y_value_valid
-					? trk_data.y[i]
-					: this->y_visible_min + (this->y_visible_range_uu / 2); /* I hope that this will result in a point in the center between top border and bottom border. */
-
-				cur_pos.rx() = leftmost_px + x_pixels_per_unit * (x_current_value_uu - trk_data.x_min);
-				cur_pos.ry() = bottommost_px - y_pixels_per_unit * (y_current_value_uu - trk_data.y_min);
-
-				const int j = x_pixels_per_unit * (x_current_value_uu - trk_data.x_min);
-				qDebug() << qSetRealNumberPrecision(15) << trk_data.debug << i << j << x_pixels_per_unit << x_current_value_uu << trk_data.x_min;
-
-				this->graph_2d->draw_line(y_value_valid ? valid_pen : err_pen, last_pos, cur_pos);
-
-				last_pos = cur_pos;
-			}
-		}
-		break;
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected x domain" << (int) this->graph_2d->x_domain;
-		break;
 	}
-
 
 	return sg_ret::ok;
 }
