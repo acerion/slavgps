@@ -2817,50 +2817,6 @@ void Track::draw_tree_item(GisViewport * gisview, bool highlight_selected, bool 
 
 
 
-sg_ret Track::draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_rows, const TrackData & track_data)
-{
-	const size_t n_values = track_data.n_points;
-	if (0 == n_values) {
-		qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
-		return sg_ret::err;
-	}
-
-	const double margin = 0.05;
-	const double visible_values_range_uu = track_data.y_max - track_data.y_min;
-
-	const int bottommost_pixel = graph_2d->central_get_bottommost_pixel();
-	const int leftmost_pixel = graph_2d->central_get_leftmost_pixel();
-
-	const double x_scale = 1.0 * n_values / n_columns;
-
-	ScreenPos cur_pos;
-	ScreenPos last_pos(leftmost_pixel, bottommost_pixel);
-
-	QPen pen;
-	pen.setColor(this->has_color ? this->color : "blue");
-	pen.setWidth(1);
-
-	qDebug() << SG_PREFIX_I << "kamil will draw graph'" << graph_2d->debug << "'with n data points =" << n_values << "into graph with n columns =" << n_columns;
-
-	double col = leftmost_pixel;
-	for (size_t i = 0; i < n_values; i++) {
-		const double current_value_uu = track_data.y[i];
-
-		cur_pos.rx() = col;
-		cur_pos.ry() = bottommost_pixel - n_rows * (current_value_uu - track_data.y_min) / visible_values_range_uu;
-
-		graph_2d->draw_line(pen, last_pos, cur_pos);
-
-		last_pos = cur_pos;
-		col = col + (1 / x_scale);
-	}
-
-	return sg_ret::ok;
-}
-
-
-
-
 void Track::upload_to_gps_cb(void)
 {
 	((LayerTRW *) this->owning_layer)->upload_to_gps(this);

@@ -330,12 +330,6 @@ namespace SlavGPS {
 
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 
-		/*
-		  @param n_columns indicates for how many x values in 2D graph an y = f(x) value should be drawn.
-		  @param n_rows indicates how many pixels are available to draw a range of y = f(x) function.
-		*/
-		sg_ret draw_function_over_time(Graph2D * graph_2d, int n_columns, int n_rows, const TrackData & track_data);
-
 		QString sublayer_rename_request(const QString & new_name);
 
 		std::list<Rect *> get_map_rectangles(const VikingScale & viking_scale);
