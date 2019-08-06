@@ -76,7 +76,9 @@ ViewportPixmap::ViewportPixmap(int left, int right, int top, int bottom, QWidget
 	this->highlight_pen.setWidth(1);
 	this->set_highlight_color(QString(DEFAULT_HIGHLIGHT_COLOR));
 
-	this->central_outside_boundary_rect_pen.setColor("red");
+
+	/* Use non-alarming color. Red color should be reserved for error indications. */
+	this->central_outside_boundary_rect_pen.setColor("gray");
 	this->central_outside_boundary_rect_pen.setWidth(1);
 
 	/* A valid (non-null) initial pixmap for painter, otherwise
