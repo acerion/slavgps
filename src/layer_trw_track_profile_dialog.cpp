@@ -144,72 +144,19 @@ sg_ret ProfileView::regenerate_track_data_to_draw(Track * trk)
 	*/
 	const int compressed_n_points = this->get_central_n_columns();
 	this->track_data_to_draw = this->initial_track_data.compress(compressed_n_points);
-
-	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title() << this->initial_track_data;
-
+	this->track_data_to_draw.apply_unit_conversions(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
 
 	if (!this->track_data_to_draw.valid) {
-		qDebug() << SG_PREFIX_E << "Failed to generate valid compressed track data for" << this->get_title();
+		qDebug() << SG_PREFIX_E << "Failed to regenerate valid compressed track data for" << this->get_title();
 		return sg_ret::err;
 	}
-	qDebug() << SG_PREFIX_I << "Generated valid compressed track data for" << this->get_title();
+	qDebug() << SG_PREFIX_I << "Regenerated valid compressed track data for" << this->get_title();
 
 
 	/* Do necessary adjustments to y values. */
 
-	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::Speed:
-		/* Convert into appropriate units. */
-		for (int i = 0; i < compressed_n_points; i++) {
-			this->track_data_to_draw.y[i] = Speed::convert_mps_to(this->track_data_to_draw.y[i], this->graph_2d->speed_unit);
-		}
-
-		qDebug() << SG_PREFIX_D << "Calculating min/max y speed for" << this->get_title();
-		this->track_data_to_draw.calculate_min_max();
-		if (this->track_data_to_draw.y_min < 0.0) {
-			this->track_data_to_draw.y_min = 0; /* Splines sometimes give negative speeds. */
-		}
-		break;
-	case GisViewportDomain::Elevation:
-		/* Convert into appropriate units. */
-		if (this->graph_2d->height_unit == HeightUnit::Feet) {
-			/* Convert altitudes into feet units. */
-			for (int i = 0; i < compressed_n_points; i++) {
-				this->track_data_to_draw.y[i] = VIK_METERS_TO_FEET(this->track_data_to_draw.y[i]);
-			}
-		}
-		/* Otherwise leave in metres. */
-
-		this->track_data_to_draw.calculate_min_max();
-		break;
-	case GisViewportDomain::Distance:
-		/* Convert into appropriate units. */
-		for (int i = 0; i < compressed_n_points; i++) {
-			this->track_data_to_draw.y[i] = Distance::convert_meters_to(this->track_data_to_draw.y[i], this->graph_2d->distance_unit);
-		}
-
-#ifdef K_FIXME_RESTORE
-		this->track_data_to_draw.y_min = 0;
-		this->track_data_to_draw.y_max = Distance::convert_meters_to(trk->get_length_value_including_gaps(), this->graph_2d->distance_unit);
-#endif
-
-		this->track_data_to_draw.calculate_min_max();
-		break;
-	case GisViewportDomain::Gradient:
-		/* No unit conversion needed. */
-		this->track_data_to_draw.calculate_min_max();
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-		return sg_ret::err;
-	};
 
 
-	/*
-	  I'm repeating this debug about initial track data here so
-	  that debug information about initial track data and track
-	  data to draw were displayed next to each other.
-	*/
 	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title() << this->initial_track_data;
 	qDebug() << SG_PREFIX_I << "Track data to draw" << this->get_title() << this->track_data_to_draw;
 

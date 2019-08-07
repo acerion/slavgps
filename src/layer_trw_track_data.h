@@ -82,6 +82,8 @@ namespace SlavGPS {
 		sg_ret make_track_data_speed_over_distance(Track * trk);
 
 
+		sg_ret apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit);
+
 
 		char debug[100] = { 0 };
 
@@ -105,7 +107,7 @@ namespace SlavGPS {
 		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
 
 	private:
-		sg_ret do_compress(TrackData & compressed_data) const;
+		sg_ret compress_into(TrackData & compressed_data) const;
 	};
 	QDebug operator<<(QDebug debug, const TrackData & track_data);
 

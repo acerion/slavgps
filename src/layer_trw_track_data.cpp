@@ -78,20 +78,27 @@ TrackData::TrackData()
 /**
    @reviewed-on tbd
 */
-sg_ret TrackData::do_compress(TrackData & compressed_data) const
+sg_ret TrackData::compress_into(TrackData & compressed) const
 {
-	const double tps_per_data_point = 1.0 * this->n_points / compressed_data.n_points;
+	compressed.valid = false;
+
+	if (NULL == compressed.x || NULL == compressed.y) {
+		qDebug() << SG_PREFIX_E << "x or y vector is NULL:" << (quintptr) compressed.x << (quintptr) compressed.y;
+		return sg_ret::err;
+	}
+
+	const double tps_per_data_point = 1.0 * this->n_points / compressed.n_points;
 	const int floor_ = floor(tps_per_data_point);
 	const int ceil_ = ceil(tps_per_data_point);
 	int n_tps_compressed = 0;
 
-	//qDebug() << "-----------------------" << floor_ << tps_per_data_point << ceil_ << this->n_points << compressed_data.n_points;
+	//qDebug() << "-----------------------" << floor_ << tps_per_data_point << ceil_ << this->n_points << compressed.n_points;
 
 	/* In the following computation, we iterate through periods of time of duration delta_t.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
 	int tp_index = 0; /* index of the current trackpoint. */
 	int i = 0;
-	for (i = 0; i < compressed_data.n_points; i++) {
+	for (i = 0; i < compressed.n_points; i++) {
 
 		int sampling_size;
 		if ((i + 1) * tps_per_data_point > n_tps_compressed + floor_) {
@@ -118,15 +125,17 @@ sg_ret TrackData::do_compress(TrackData & compressed_data) const
 			tp_index++;
 		}
 
-		//qDebug() << "------- i =" << i << "/" << compressed_data.n_points << "sampling_size =" << sampling_size << "n_tps_compressed =" << n_tps_compressed << "n_tps_compressed + sampling_size =" << n_tps_compressed + sampling_size << acc_y << acc_y / sampling_size;
+		//qDebug() << "------- i =" << i << "/" << compressed.n_points << "sampling_size =" << sampling_size << "n_tps_compressed =" << n_tps_compressed << "n_tps_compressed + sampling_size =" << n_tps_compressed + sampling_size << acc_y << acc_y / sampling_size;
 
-		compressed_data.x[i] = acc_x / sampling_size;
-		compressed_data.y[i] = acc_y / sampling_size;
+		compressed.x[i] = acc_x / sampling_size;
+		compressed.y[i] = acc_y / sampling_size;
 
 		n_tps_compressed += sampling_size;
 	}
 
-	assert(i == compressed_data.n_points);
+	assert(i == compressed.n_points);
+
+	compressed.valid = true;
 
 	return sg_ret::ok;
 }
@@ -141,10 +150,11 @@ TrackData TrackData::compress(int compressed_n_points) const
 {
 	TrackData compressed(compressed_n_points);
 
-	this->do_compress(compressed);
+	this->compress_into(compressed);
 
-	compressed.n_points = compressed_n_points;
+	compressed.calculate_min_max(); /* TODO: rethink how we calculate min/max of compressed. */
 	compressed.valid = true;
+	snprintf(compressed.debug, sizeof (compressed.debug), "Compressed %s", this->debug);
 
 	return compressed;
 }
@@ -181,29 +191,35 @@ void TrackData::calculate_min_max(void)
 {
 	this->x_min = this->x[0];
 	this->x_max = this->x[0];
-	for (int i = 0; i < this->n_points; i++) {
-		if (this->x[i] > this->x_max) {
-			this->x_max = this->x[i];
-		}
+	for (int i = 1; i < this->n_points; i++) {
+		if (this->x[i] >= this->x[i - 1]) { /* Non-decreasing x. */
+			if (this->x[i] > this->x_max) {
+				this->x_max = this->x[i];
+			}
 
-		if (this->x[i] < this->x_min) {
-			this->x_min = this->x[i];
+			if (this->x[i] < this->x_min) {
+				this->x_min = this->x[i];
+			}
+			qDebug() << this->debug << " x[" << i << "] =" << qSetRealNumberPrecision(10)
+				 << this->x[i] << ", x_min =" << this->x_min << ", x_max =" << this->x_max;
 		}
-		qDebug() << "i =" << i << ", x =" << this->x[i] << ", x_min =" << this->x_min << ", x_max =" << this->x_max;
 	}
 
 
 	this->y_min = this->y[0];
 	this->y_max = this->y[0];
-	for (int i = 0; i < this->n_points; i++) {
-		if (this->y[i] > this->y_max) {
-			this->y_max = this->y[i];
-		}
+	for (int i = 1; i < this->n_points; i++) {
+		if (!std::isnan(this->y[i])) {
+			if (this->y[i] > this->y_max) {
+				this->y_max = this->y[i];
+			}
 
-		if (this->y[i] < this->y_min) {
-			this->y_min = this->y[i];
+			if (this->y[i] < this->y_min) {
+				this->y_min = this->y[i];
+			}
+			qDebug() << this->debug << "y[" << i << "] =" << qSetRealNumberPrecision(10)
+				 << this->y[i] << ", y_min =" << this->y_min << ", y_max =" << this->y_max;
 		}
-		qDebug() << "i =" << i << ", x =" << this->y[i] << ", y_min =" << this->y_min << ", y_max =" << this->y_max;
 	}
 }
 
@@ -384,6 +400,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const TrackData & track_data)
 {
 	if (track_data.valid) {
 		debug << "TrackData" << track_data.debug << "is valid"
+		      << qSetRealNumberPrecision(10)
 		      << ", x_min =" << track_data.x_min
 		      << ", x_max =" << track_data.x_max
 		      << ", y_min =" << track_data.y_min
@@ -478,6 +495,8 @@ sg_ret TrackData::make_track_data_distance_over_time(Track * trk)
 	this->y_domain = GisViewportDomain::Distance;
 	this->y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
 	snprintf(this->debug, sizeof (this->debug), "Distance over Time");
+
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
 	return sg_ret::ok;
 }
@@ -576,7 +595,7 @@ sg_ret TrackData::make_track_data_altitude_over_distance(Track * trk, int compre
 					this->x[current_chunk] = this->x[current_chunk - 1] + delta_d;
 				}
 			}
-
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, current_chunk, true);
 			current_chunk++;
 		} else {
 			/* Finish current seg. */
@@ -636,6 +655,8 @@ sg_ret TrackData::make_track_data_altitude_over_distance(Track * trk, int compre
 				}
 			}
 
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, current_chunk, true);
+
 			current_dist = 0;
 			current_chunk++;
 		}
@@ -649,6 +670,8 @@ sg_ret TrackData::make_track_data_altitude_over_distance(Track * trk, int compre
 	this->x_domain = GisViewportDomain::Distance;
 	this->y_domain = GisViewportDomain::Elevation;
 	snprintf(this->debug, sizeof (this->debug), "Altitude over Distance");
+
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
 	return sg_ret::ok;
 }
@@ -699,9 +722,12 @@ sg_ret TrackData::make_track_data_gradient_over_distance(Track * trk, int compre
 		}
 		this->y[i] = current_gradient;
 
+		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
+
 	}
 	this->x[i] = this->x[i - 1] + delta_d;
 	this->y[i] = current_gradient;
+	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
 
 	assert (i + 1 == compressed_n_points);
 
@@ -710,6 +736,7 @@ sg_ret TrackData::make_track_data_gradient_over_distance(Track * trk, int compre
 	this->y_domain = GisViewportDomain::Gradient;
 	snprintf(this->debug, sizeof (this->debug), "Gradient over Distance");
 
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
 	return sg_ret::ok;
 }
@@ -786,6 +813,8 @@ sg_ret TrackData::make_track_data_speed_over_time(Track * trk)
 	this->y_speed_unit = SpeedUnit::MetresPerSecond;
 	snprintf(this->debug, sizeof (this->debug), "Speed over Time");
 
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
+
 	return sg_ret::ok;
 }
 
@@ -850,6 +879,7 @@ sg_ret TrackData::make_track_data_altitude_over_time(Track * trk)
 	this->y_domain = GisViewportDomain::Elevation;
 	snprintf(this->debug, sizeof (this->debug), "Altitude over Time");
 
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
 	return sg_ret::ok;
 }
@@ -919,6 +949,82 @@ sg_ret TrackData::make_track_data_speed_over_distance(Track * trk)
 	this->x_domain = GisViewportDomain::Distance;
 	this->y_domain = GisViewportDomain::Speed;
 	snprintf(this->debug, sizeof (this->debug), "Speed over Distance");
+
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TrackData::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	/*
+	  Convert 'y' values into appropriate units.
+	  TODO: what about 'x' values?
+	*/
+
+	switch (this->y_domain) {
+	case GisViewportDomain::Speed:
+		/*
+		  Basic internal units related to speed are meters
+		  (for distance) and seconds (for time), so primary
+		  unit for speed is meters per second.
+
+		  Do conversion only if target unit is other than
+		  meters per second.
+		*/
+		if (SpeedUnit::MetresPerSecond != speed_unit) {
+			for (int i = 0; i < this->n_points; i++) {
+				this->y[i] = Speed::convert_mps_to(this->y[i], speed_unit);
+			}
+			this->y_min = Speed::convert_mps_to(this->y_min, speed_unit);
+			this->y_max = Speed::convert_mps_to(this->y_max, speed_unit);
+		}
+		break;
+
+	case GisViewportDomain::Elevation:
+		/*
+		  Internal unit for elevation is meters, so only apply
+		  conversion if target elevation unit is other than
+		  meters.
+		*/
+		if (HeightUnit::Metres != height_unit) {
+			for (int i = 0; i < this->n_points; i++) {
+				this->y[i] = VIK_METERS_TO_FEET(this->y[i]);
+			}
+			this->y_min = VIK_METERS_TO_FEET(this->y_min);
+			this->y_max = VIK_METERS_TO_FEET(this->y_max);
+		}
+		break;
+
+	case GisViewportDomain::Distance:
+		/*
+		  Internal unit for distance is meters, so only apply
+		  conversion if target distance unit is other than
+		  meters.
+		*/
+#if 0 /* TODO: enable this. */
+		if (DistanceUnit::Metres != distance_unit) {
+#endif
+			for (int i = 0; i < this->n_points; i++) {
+				this->y[i] = Distance::convert_meters_to(this->y[i], distance_unit);
+			}
+			this->y_min = Distance::convert_meters_to(this->y_min, distance_unit);
+			this->y_max = Distance::convert_meters_to(this->y_max, distance_unit);
+#if 0
+		}
+#endif
+
+		break;
+	case GisViewportDomain::Gradient:
+		/* No unit conversion needed. */
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->y_domain;
+		return sg_ret::err;
+	}
 
 	return sg_ret::ok;
 }
