@@ -1336,7 +1336,7 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, fpixel * pos_x, 
 		coord.recalculate_to_mode(this->coord_mode);
 	}
 
-	qDebug() << SG_PREFIX_I << this->coord_mode << this->draw_mode;
+	//qDebug() << SG_PREFIX_I << this->coord_mode << this->draw_mode;
 
 	switch (this->coord_mode) {
 	case CoordMode::UTM:
