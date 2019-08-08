@@ -2011,7 +2011,7 @@ Time & Time::operator/=(double rhs)
 double SlavGPS::operator/(const Time & lhs, const Time & rhs)
 {
 	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
-		return lhs.value / rhs.value;
+		return (1.0 * lhs.value) / rhs.value;
 	} else {
 		return NAN;
 	}
