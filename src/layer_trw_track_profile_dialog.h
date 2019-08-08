@@ -294,13 +294,13 @@ namespace SlavGPS {
 
 		/* For distance-based graphs. */
 		Distance x_interval_d = { 0.0 };
-		Distance x_min_visible_d = { 0.0 };
-		Distance x_max_visible_d = { 0.0 };
+		Distance x_visible_min_d = { 0.0 };
+		Distance x_visible_max_d = { 0.0 };
 
 		/* For time-based graphs. */
 		Time x_interval_t = { 0 };
-		Time x_min_visible_t = { 0 };
-		Time x_max_visible_t = { 0 };
+		Time x_visible_min_t = { 0 };
+		Time x_visible_max_t = { 0 };
 
 
 

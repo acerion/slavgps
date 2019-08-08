@@ -206,12 +206,12 @@ sg_ret ProfileView::set_initial_visible_range_x_distance(void)
 	   show e.g. negative distances. */
 	const Distance x_min = Distance(this->track_data_to_draw.x_min);
 	const Distance x_max = Distance(this->track_data_to_draw.x_max);
-	this->x_min_visible_d = x_min.convert_to_unit(this->graph_2d->distance_unit);
-	this->x_max_visible_d = x_max.convert_to_unit(this->graph_2d->distance_unit);
+	this->x_visible_min_d = x_min.convert_to_unit(this->graph_2d->distance_unit);
+	this->x_visible_max_d = x_max.convert_to_unit(this->graph_2d->distance_unit);
 
-	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
+	const Distance visible_range = this->x_visible_max_d - this->x_visible_min_d;
 	if (visible_range.is_zero()) {
-		qDebug() << SG_PREFIX_E << "Zero distance span: min/max = " << this->x_min_visible_d << this->x_max_visible_d;
+		qDebug() << SG_PREFIX_E << "Zero distance span: min/max = " << this->x_visible_min_d << this->x_visible_max_d;
 		return sg_ret::err;
 	}
 
@@ -221,7 +221,7 @@ sg_ret ProfileView::set_initial_visible_range_x_distance(void)
 
 	const int n_intervals = GRAPH_X_INTERVALS;
 
-	int interval_index = distance_intervals.intervals.get_interval_index(this->x_min_visible_d, this->x_max_visible_d, n_intervals);
+	int interval_index = distance_intervals.intervals.get_interval_index(this->x_visible_min_d, this->x_visible_max_d, n_intervals);
 	this->x_interval_d = distance_intervals.intervals.values[interval_index];
 
 	return sg_ret::ok;
@@ -241,21 +241,21 @@ sg_ret ProfileView::set_initial_visible_range_x_time(void)
 	   in timestamps, where in the middle of a track, in a row of
 	   correctly incrementing timestamps there was suddenly one
 	   smaller timestamp from a long time ago. */
-	this->x_min_visible_t = this->track_data_to_draw.x_min;
-	this->x_max_visible_t = this->track_data_to_draw.x_max;
+	this->x_visible_min_t = this->track_data_to_draw.x_min;
+	this->x_visible_max_t = this->track_data_to_draw.x_max;
 #else
 	/* Instead of x_min/x_max use first and last timestamp.
 
 	   FIXME: this is still not perfect solution: the glitch in
 	   timestamp may occur in first or last trackpoint. Find a
 	   good way to find a correct first/last timestamp. */
-	this->x_min_visible_t = this->track_data_to_draw.x[0];
-	this->x_max_visible_t = this->track_data_to_draw.x[this->track_data_to_draw.n_points - 1];
+	this->x_visible_min_t = this->track_data_to_draw.x[0];
+	this->x_visible_max_t = this->track_data_to_draw.x[this->track_data_to_draw.n_points - 1];
 #endif
 
-	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
+	const Time visible_range = this->x_visible_max_t - this->x_visible_min_t;
 	if (visible_range.is_zero()) {
-		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_min_visible_t << this->x_max_visible_t << this->get_title();
+		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_visible_min_t << this->x_visible_max_t << this->get_title();
 		return sg_ret::err;
 	}
 
@@ -265,7 +265,7 @@ sg_ret ProfileView::set_initial_visible_range_x_time(void)
 
 	const int n_intervals = GRAPH_X_INTERVALS;
 
-	int interval_index = time_intervals.intervals.get_interval_index(this->x_min_visible_t, this->x_max_visible_t, n_intervals);
+	int interval_index = time_intervals.intervals.get_interval_index(this->x_visible_min_t, this->x_visible_max_t, n_intervals);
 	this->x_interval_t = time_intervals.intervals.values[interval_index];
 
 	return sg_ret::ok;
@@ -2092,21 +2092,26 @@ void ProfileView::draw_y_grid(void)
 
 
 	if (this->y_visible_range_uu < 0.0000001) {
-		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_visible_min_t << this->x_visible_max_t;
 		return;
 	}
+	const double y_pixels_per_unit = 1.0 * n_rows / this->y_visible_range_uu;
 
 	double first_multiple = 0;
 	double last_multiple = 0;
 	find_multiples_of_interval(this->y_visible_min, this->y_visible_max, this->y_interval, first_multiple, last_multiple);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing y grid for graph" << this->get_title() << ", n rows =" << n_rows;
-	qDebug() << "      min/max y visible:" << this->y_visible_min << this->y_visible_max;
-	qDebug() << "      interval =" << this->y_interval << ", first_multiple/last_multiple =" << first_multiple << last_multiple;
+	qDebug() << SG_PREFIX_D << "      graph:" << this->get_title();
+	qDebug() << SG_PREFIX_D << "      visible range =" << this->y_visible_range_uu;
+	qDebug() << SG_PREFIX_D << "      n rows =" << n_rows << ", n cols =" << n_columns;
+	qDebug() << SG_PREFIX_D << "      leftmost px =" << leftmost_px << ", bottommost px =" << bottommost_px;
+	qDebug() << SG_PREFIX_D << "      y visible min =" << this->y_visible_min << ", y visible max =" << this->y_visible_max;
+	qDebug() << SG_PREFIX_D << "      interval =" << this->y_interval << ", first_multiple =" << first_multiple << ", last_multiple = " << last_multiple;
+	qDebug() << SG_PREFIX_D << "      y pixels per unit =" << y_pixels_per_unit;
 #endif
 
-	const double y_pixels_per_unit = 1.0 * n_rows / this->y_visible_range_uu;
+
 
 	/* Be sure to keep type of value_uu as floating-point
 	   compatible, otherwise for intervals smaller than 1.0 you
@@ -2148,29 +2153,34 @@ void ProfileView::draw_x_grid_d_domain(void)
 	const int topmost_px     = this->graph_2d->central_get_topmost_pixel();
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
-	const Distance visible_range = this->x_max_visible_d - this->x_min_visible_d;
+	const Distance visible_range = this->x_visible_max_d - this->x_visible_min_d;
 	if (visible_range.is_zero()) {
-		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_d << this->x_max_visible_d;
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_visible_min_d << this->x_visible_max_d;
 		return;
 	}
+	const double x_pixels_per_unit = 1.0 * n_columns / visible_range;
 
 	Distance first_multiple = 0;
 	Distance last_multiple = 0;
-	find_multiples_of_interval(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_multiple, last_multiple);
+	find_multiples_of_interval(this->x_visible_min_d, this->x_visible_max_d, this->x_interval_d, first_multiple, last_multiple);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", n cols =" << n_columns;
-	qDebug() << "      min/max x visible:" << this->x_min_visible_d << this->x_max_visible_d;
-	qDebug() << "      interval =" << this->x_interval_d << ", first_multiple/last_multiple =" << first_multiple << last_multiple;
+	qDebug() << SG_PREFIX_D << "      graph:" << this->get_title();
+	qDebug() << SG_PREFIX_D << "      visible range =" << visible_range;
+	qDebug() << SG_PREFIX_D << "      n rows =" << n_rows << ", n cols =" << n_columns;
+	qDebug() << SG_PREFIX_D << "      leftmost px =" << leftmost_px << ", bottommost px =" << bottommost_px;
+	qDebug() << SG_PREFIX_D << "      x visible min =" << this->x_visible_min_d << ", x visible max =" << this->x_visible_max_d;
+	qDebug() << SG_PREFIX_D << "      interval =" << this->x_interval_d << ", first_multiple =" << first_multiple << ", last_multiple = " << last_multiple;
+	qDebug() << SG_PREFIX_D << "      x pixels per unit =" << x_pixels_per_unit;
 #endif
 
-	const double x_pixels_per_unit = 1.0 * n_columns / visible_range;
+
 
 
 
 
 	for (Distance value_uu = first_multiple; value_uu <= last_multiple; value_uu += this->x_interval_d.value) {
-		const Distance value_from_edge_uu = value_uu - this->x_min_visible_d;
+		const Distance value_from_edge_uu = value_uu - this->x_visible_min_d;
 		/* 'col' is in "beginning in top-left corner" coordinate system. */
 		const int col = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
 
@@ -2206,29 +2216,34 @@ void ProfileView::draw_x_grid_t_domain(void)
 	const int topmost_px     = this->graph_2d->central_get_topmost_pixel();
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
-	const Time visible_range = this->x_max_visible_t - this->x_min_visible_t;
+	const Time visible_range = this->x_visible_max_t - this->x_visible_min_t;
 	if (visible_range.is_zero()) {
-		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_visible_min_t << this->x_visible_max_t;
 		return;
 	}
+	const double x_pixels_per_unit = (1.0 * n_columns) / visible_range;
 
 	Time first_multiple = 0;
 	Time last_multiple = 0;
-	find_multiples_of_interval(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_multiple, last_multiple);
+	find_multiples_of_interval(this->x_visible_min_t, this->x_visible_max_t, this->x_interval_t, first_multiple, last_multiple);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", n cols =" << n_columns;
-	qDebug() << "      min/max x visible:" << this->x_min_visible_t << this->x_max_visible_t;
-	qDebug() << "      interval =" << this->x_interval_t << ", first_multiple/last_multiple =" << first_multiple << last_multiple;
+	qDebug() << SG_PREFIX_D << "      graph:" << this->get_title();
+	qDebug() << SG_PREFIX_D << "      visible range =" << visible_range;
+	qDebug() << SG_PREFIX_D << "      n rows =" << n_rows << ", n cols =" << n_columns;
+	qDebug() << SG_PREFIX_D << "      leftmost px =" << leftmost_px << ", bottommost px =" << bottommost_px;
+	qDebug() << SG_PREFIX_D << "      x visible min =" << this->x_visible_min_t << ", x visible max =" << this->x_visible_max_t;
+	qDebug() << SG_PREFIX_D << "      interval =" << this->y_interval << ", first_multiple =" << first_multiple << ", last_multiple = " << last_multiple;
+	qDebug() << SG_PREFIX_D << "      x pixels per unit =" << x_pixels_per_unit;
 #endif
 
-	const double x_pixels_per_unit = 1.0 * n_columns / visible_range;
+
 
 
 
 
 	for (Time value_uu = first_multiple.value; value_uu <= last_multiple.value; value_uu += this->x_interval_t.value) {
-		const Time value_from_edge_uu = value_uu - this->x_min_visible_t;
+		const Time value_from_edge_uu = value_uu - this->x_visible_min_t;
 		/* 'col' is in "beginning in top-left corner" coordinate system. */
 		const int col = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
 
