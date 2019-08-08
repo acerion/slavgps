@@ -143,19 +143,19 @@ sg_ret ProfileView::regenerate_track_data_to_draw(Track * trk)
 	  drawn points.
 	*/
 	const int compressed_n_points = this->get_central_n_columns();
-	this->track_data_to_draw = this->initial_track_data.compress(compressed_n_points);
-	this->track_data_to_draw.apply_unit_conversions(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
+
+	const bool precise_drawing = true;
+	if (precise_drawing) {
+		this->track_data_to_draw = this->initial_track_data;
+	} else {
+		this->initial_track_data.compress_into(this->track_data_to_draw, compressed_n_points);
+	}
 
 	if (!this->track_data_to_draw.valid) {
 		qDebug() << SG_PREFIX_E << "Failed to regenerate valid compressed track data for" << this->get_title();
 		return sg_ret::err;
 	}
 	qDebug() << SG_PREFIX_I << "Regenerated valid compressed track data for" << this->get_title();
-
-
-	/* Do necessary adjustments to y values. */
-
-
 
 	qDebug() << SG_PREFIX_I << "Initial track data" << this->get_title() << this->initial_track_data;
 	qDebug() << SG_PREFIX_I << "Track data to draw" << this->get_title() << this->track_data_to_draw;
@@ -1163,6 +1163,8 @@ void ProfileViewDT::save_values(void)
 sg_ret ProfileView::draw_graph_without_crosshairs(Track * trk)
 {
 	qDebug() << SG_PREFIX_I;
+	QTime draw_time;
+	draw_time.start();
 
 	if (this->graph_2d->x_domain == GisViewportDomain::Time) {
 		const Time duration = trk->get_duration(true);
@@ -1194,7 +1196,8 @@ sg_ret ProfileView::draw_graph_without_crosshairs(Track * trk)
 	this->graph_2d->update();
 
 	/* The pixmap = margin + graph area. */
-	qDebug() << SG_PREFIX_I << "Saving graph" << this->graph_2d->debug;
+	qDebug() << SG_PREFIX_I << "before saving pixmap:" << QTime::currentTime();
+	qDebug() << SG_PREFIX_I << "Saving graph" << this->graph_2d->debug << "took" << draw_time.elapsed() << "ms";
 	this->graph_2d->saved_pixmap = this->graph_2d->get_pixmap();
 	this->graph_2d->saved_pixmap_valid = true;
 
@@ -1966,6 +1969,18 @@ sg_ret ProfileView::generate_initial_track_data(Track * trk)
 		return sg_ret::err;
 	}
 
+	/*
+	  It may be time consuming to convert units on whole long,
+	  uncompressed ::initial_track_data. We could decide to do
+	  this on compressed (and thus much smaller)
+	  ::track_data_to_draw.
+
+	  But in this place we do it only once, when a dialog is being
+	  opened. Once it is done, we don't have to re-do it on every
+	  resizing of dialog window.
+	*/
+	this->initial_track_data.apply_unit_conversions(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
+
 	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
 	return sg_ret::ok;
 }
@@ -1990,29 +2005,70 @@ sg_ret ProfileView::generate_initial_track_data(Track * trk)
    will fall within graph's main area).
 */
 template <typename T>
-void find_grid_line_indices(const T & min_visible, const T & max_visible, const T & interval, int & first_mark, int & last_mark)
+void find_multiples_of_interval(const T & min_visible, const T & max_visible, const T & interval, T & first_multiple, T & last_multiple)
 {
-	/* 'first_mark * y_interval' will be below y_visible_min. */
+	int n = 0;
+
+	n = floor(min_visible / interval);
+	first_multiple = interval * (n - 1);
+
+	n = ceil(max_visible / interval);
+	last_multiple = interval * (n + 1);
+
+	qDebug() << SG_PREFIX_I
+		 << "min_visible =" << min_visible
+		 << ", max_visible =" << max_visible
+		 << ", interval =" << interval
+		 << ", first multiple =" << first_multiple
+		 << ", last multiple =" << last_multiple;
+
+#if 0
+
+	int k = 0;
+	qDebug() << SG_PREFIX_I << "min_visible =" << min_visible << ", max_visible =" << max_visible << QTime::currentTime();
+	/* 'first_multiple * y_interval' will be below y_visible_min. */
 	if (min_visible <= 0) {
-		while (interval * first_mark > min_visible) {
-			first_mark--;
+
+		qDebug() << SG_PREFIX_I << "Before first loop:" << QTime::currentTime();
+		while (interval * first_multiple > min_visible) {
+			first_multiple--;
+			k++;
 		}
+		qDebug() << SG_PREFIX_I << "After first loop:" << QTime::currentTime() << "total iterations =" << k;
 	} else {
-		while (interval * first_mark + interval < min_visible) {
-			first_mark++;
+		qDebug() << SG_PREFIX_I << "Before second loop:" << QTime::currentTime();
+		while (interval * first_multiple + interval < min_visible) {
+			first_multiple++;
+			k++;
 		}
+		qDebug() << SG_PREFIX_I << "After second loop:" << QTime::currentTime() << "total iterations =" << k;
 	}
 
-	/* 'last_mark * y_interval' will be above y_visible_max. */
+	/* 'last_multiple * y_interval' will be above y_visible_max. */
 	if (max_visible <= 0) {
-		while (interval * last_mark - interval > max_visible) {
-			last_mark--;
+		qDebug() << SG_PREFIX_I << "Before third loop:" << QTime::currentTime();
+		while (interval * last_multiple - interval > max_visible) {
+			last_multiple--;
+			k++;
 		}
+		qDebug() << SG_PREFIX_I << "After third loop:" << QTime::currentTime() << "total iterations =" << k;
 	} else {
-		while (interval * last_mark < max_visible) {
-			last_mark++;
+		qDebug() << SG_PREFIX_I << "Before fourth loop:" << QTime::currentTime();
+		while (interval * last_multiple < max_visible) {
+			last_multiple++;
+			k++;
 		}
+		qDebug() << SG_PREFIX_I << "After fourth loop:" << QTime::currentTime() << "total iterations =" << k;
 	}
+
+	if (k > 30) {
+		/* I've encountered a problem where this function has
+		   been executing for 3 seconds and one of while loops
+		   was making 25034897 iterations. It should be only a
+		   few of iterations. */
+		qDebug() SG_PREFIX_E << "Problems with calculating grid line indices, k =" << k;
+	}
+#endif
 }
 
 
@@ -2025,52 +2081,55 @@ void ProfileView::draw_y_grid(void)
 		return;
 	}
 
-	const int central_n_columns = this->get_central_n_columns();
-	const int central_n_rows = this->get_central_n_rows();
-	const int left_width = this->graph_2d->left_get_width();
-	const int left_height = this->graph_2d->left_get_height();
+	const int n_columns      = this->get_central_n_columns();
+	const int n_rows         = this->get_central_n_rows();
+	const int left_width     = this->graph_2d->left_get_width();
+	const int left_height    = this->graph_2d->left_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
 	const int rightmost_px   = this->graph_2d->central_get_rightmost_pixel();
 	const int topmost_px     = this->graph_2d->central_get_topmost_pixel();
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
-	int first_mark = 0;
-	int last_mark = 0;
-	find_grid_line_indices(this->y_visible_min, this->y_visible_max, this->y_interval, first_mark, last_mark);
 
-#if 0   /* Debug. */
-	qDebug() << "===== drawing y grid for graph" << this->get_title() << ", central height =" << central_height;
+	if (this->y_visible_range_uu < 0.0000001) {
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_min_visible_t << this->x_max_visible_t;
+		return;
+	}
+
+	double first_multiple = 0;
+	double last_multiple = 0;
+	find_multiples_of_interval(this->y_visible_min, this->y_visible_max, this->y_interval, first_multiple, last_multiple);
+
+#if 1   /* Debug. */
+	qDebug() << "===== drawing y grid for graph" << this->get_title() << ", n rows =" << n_rows;
 	qDebug() << "      min/max y visible:" << this->y_visible_min << this->y_visible_max;
-	qDebug() << "      interval =" << this->y_interval << ", first_mark/last_mark =" << first_mark << last_mark;
+	qDebug() << "      interval =" << this->y_interval << ", first_multiple/last_multiple =" << first_multiple << last_multiple;
 #endif
 
-	for (int i = first_mark; i <= last_mark; i++) {
-		const double axis_mark_uu = this->y_interval * i;
+	const double y_pixels_per_unit = 1.0 * n_rows / this->y_visible_range_uu;
 
-		/* Value in 'coordinate system with beginning in
-		   bottom-left corner'. */
-		/* Purposefully use "1.0 *" to enforce conversion to
-		   float, to avoid losing data during integer division. */
-		const int cbl_x_value = (axis_mark_uu - this->y_visible_min) * central_n_rows / this->y_visible_range_uu;
-		/* Conversion to viewport pixmap's 'coordinate system
-		   with beginning in top-left corner' */
-		const int row = bottommost_px - cbl_x_value;
+	/* Be sure to keep type of value_uu as floating-point
+	   compatible, otherwise for intervals smaller than 1.0 you
+	   will get forever loop. */
+	for (double value_uu = first_multiple; value_uu <= last_multiple; value_uu += this->y_interval) {
+		const double value_from_edge_uu = value_uu - this->y_visible_min;
+		/* 'row' is in "beginning in top-left corner" coordinate system. */
+		const int row = bottommost_px - y_pixels_per_unit * value_from_edge_uu;
 
-
-		/* Graph line. From bottom of central area to top of central area. */
 		if (row >= topmost_px && row <= bottommost_px) {
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", row =" << row;
+
 			/* Graph line. From left edge of central area to right edge of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
-							  leftmost_px,                     row,
-							  leftmost_px + central_n_columns, row);
+							  leftmost_px,             row,
+							  leftmost_px + n_columns, row);
 
 			/* Text label in left margin. */
-			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", left_row =" << left_row;
 			const QRectF bounding_rect = QRectF(2, row, left_width - 4, left_height);
-			const QString label = this->get_y_grid_label(axis_mark_uu);
+			const QString label = this->get_y_grid_label(value_uu);
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, TextOffset::Up);
 		} else {
-			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", row =" << row;
+			qDebug() << SG_PREFIX_D << "      value (outside) =" << value_uu << ", row =" << row;
 		}
 	}
 }
@@ -2080,8 +2139,8 @@ void ProfileView::draw_y_grid(void)
 
 void ProfileView::draw_x_grid_d_domain(void)
 {
-	const int central_n_columns  = this->get_central_n_columns();
-	const int central_n_rows = this->get_central_n_rows();
+	const int n_columns      = this->get_central_n_columns();
+	const int n_rows         = this->get_central_n_rows();
 	const int bottom_width   = this->graph_2d->bottom_get_width();
 	const int bottom_height  = this->graph_2d->bottom_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
@@ -2095,45 +2154,40 @@ void ProfileView::draw_x_grid_d_domain(void)
 		return;
 	}
 
-	int first_mark = 0;
-	int last_mark = 0;
-	find_grid_line_indices(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_mark, last_mark);
+	Distance first_multiple = 0;
+	Distance last_multiple = 0;
+	find_multiples_of_interval(this->x_min_visible_d, this->x_max_visible_d, this->x_interval_d, first_multiple, last_multiple);
 
 #if 1   /* Debug. */
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", central n cols =" << central_n_columns;
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", bottom width =" << bottom_width;
-	qDebug() << "      min/max d on x axis visible:" << this->x_min_visible_d << this->x_max_visible_d;
-	qDebug() << "      interval =" << this->x_interval_d << ", first_mark/last_mark =" << first_mark << last_mark;
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", n cols =" << n_columns;
+	qDebug() << "      min/max x visible:" << this->x_min_visible_d << this->x_max_visible_d;
+	qDebug() << "      interval =" << this->x_interval_d << ", first_multiple/last_multiple =" << first_multiple << last_multiple;
 #endif
 
-	for (int i = first_mark; i <= last_mark; i++) {
-		const Distance axis_mark_uu = this->x_interval_d * i;
+	const double x_pixels_per_unit = 1.0 * n_columns / visible_range;
 
 
-		/* Value in 'coordinate system with beginning in
-		   bottom-left corner'. */
-		/* Purposefully use "1.0 *" to enforce conversion to
-		   float, to avoid losing data during integer division. */
-		const int cbl_x_value = (axis_mark_uu - this->x_min_visible_d) * central_n_columns / (visible_range * 1.0);
-		/* Conversion to viewport pixmap's 'coordinate system
-		   with beginning in top-left corner' */
-		const int col = leftmost_px + cbl_x_value;
+
+
+	for (Distance value_uu = first_multiple; value_uu <= last_multiple; value_uu += this->x_interval_d.value) {
+		const Distance value_from_edge_uu = value_uu - this->x_min_visible_d;
+		/* 'col' is in "beginning in top-left corner" coordinate system. */
+		const int col = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
 
 		if (col >= leftmost_px && col <= rightmost_px) {
-			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", col =" << col;
 
 			/* Graph line. From bottom of central area to top of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
 							  col, topmost_px,
-							  col, topmost_px + central_n_rows);
+							  col, topmost_px + n_rows);
 
 			/* Text label in bottom margin. */
 			const QRectF bounding_rect = QRectF(col, bottommost_px + 1, bottom_width - 3, bottom_height - 3);
-			const QString label = axis_mark_uu.to_nice_string();
+			const QString label = value_uu.to_nice_string();
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, TextOffset::Left);
-
 		} else {
-			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (outside) =" << value_uu << ", col =" << col;
 		}
 	}
 }
@@ -2143,8 +2197,8 @@ void ProfileView::draw_x_grid_d_domain(void)
 
 void ProfileView::draw_x_grid_t_domain(void)
 {
-	const int central_n_columns  = this->get_central_n_columns();
-	const int central_n_rows = this->get_central_n_rows();
+	const int n_columns      = this->get_central_n_columns();
+	const int n_rows         = this->get_central_n_rows();
 	const int bottom_width   = this->graph_2d->bottom_get_width();
 	const int bottom_height  = this->graph_2d->bottom_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
@@ -2158,42 +2212,40 @@ void ProfileView::draw_x_grid_t_domain(void)
 		return;
 	}
 
-	int first_mark = 0;
-	int last_mark = 0;
-	find_grid_line_indices(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_mark, last_mark);
+	Time first_multiple = 0;
+	Time last_multiple = 0;
+	find_multiples_of_interval(this->x_min_visible_t, this->x_max_visible_t, this->x_interval_t, first_multiple, last_multiple);
 
-#if 1
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", central width =" << central_n_columns;
-	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", bottom width =" << bottom_width;
-	qDebug() << "      min/max t on x axis visible:" << this->x_min_visible_t << this->x_max_visible_t;
-	qDebug() << "      interval =" << this->x_interval_t.get_value() << ", first_mark/last_mark =" << first_mark << last_mark;
+#if 1   /* Debug. */
+	qDebug() << "===== drawing x grid for graph" << this->get_title() << ", n cols =" << n_columns;
+	qDebug() << "      min/max x visible:" << this->x_min_visible_t << this->x_max_visible_t;
+	qDebug() << "      interval =" << this->x_interval_t << ", first_multiple/last_multiple =" << first_multiple << last_multiple;
 #endif
 
-	for (int i = first_mark; i <= last_mark; i++) {
-		const Time axis_mark_uu = this->x_interval_t * i;
+	const double x_pixels_per_unit = 1.0 * n_columns / visible_range;
 
-		/* 'col' is in "beginning in bottom-left corner" coordinate system. */
-		/* Purposefully use "1.0 *" to enforce conversion to
-		   float, to avoid losing data during integer division. */
-		const int col = leftmost_px
-			+ (axis_mark_uu - this->x_min_visible_t) * 1.0 * central_n_columns / (visible_range * 1.0);
+
+
+
+	for (Time value_uu = first_multiple.value; value_uu <= last_multiple.value; value_uu += this->x_interval_t.value) {
+		const Time value_from_edge_uu = value_uu - this->x_min_visible_t;
+		/* 'col' is in "beginning in top-left corner" coordinate system. */
+		const int col = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
 
 		if (col >= leftmost_px && col <= rightmost_px) {
-			//qDebug() << SG_PREFIX_D << "      value (inside) =" << axis_mark_uu << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", col =" << col;
 
 			/* Graph line. From bottom of central area to top of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
 							  col, topmost_px,
-							  col, topmost_px + central_n_rows);
-
+							  col, topmost_px + n_rows);
 
 			/* Text label in bottom margin. */
 			const QRectF bounding_rect = QRectF(col, bottommost_px + 1, bottom_width - 3, bottom_height - 3);
-			const QString label = get_time_grid_label(this->x_interval_t, axis_mark_uu);
+			const QString label = get_time_grid_label(this->x_interval_t, value_uu);
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, TextOffset::Left);
-
 		} else {
-			//qDebug() << SG_PREFIX_D << "      value (outside) =" << axis_mark_uu << ", col =" << col;
+			qDebug() << SG_PREFIX_D << "      value (outside) =" << value_uu << ", col =" << col;
 		}
 	}
 }

@@ -67,12 +67,9 @@ namespace SlavGPS {
 
 		void invalidate(void);
 		void calculate_min_max(void);
-		void allocate_vector(int n_data_points);
+		sg_ret allocate_vector(int n_data_points);
 
-		TrackData compress(int compressed_size) const;
-
-		sg_ret y_distance_convert_units(DistanceUnit distance_unit);
-		sg_ret y_speed_convert_units(SpeedUnit speed_unit);
+		sg_ret compress_into(TrackData & target, int compressed_n_points) const;
 
 		sg_ret make_track_data_altitude_over_distance(Track * trk, int compressed_n_points);
 		sg_ret make_track_data_gradient_over_distance(Track * trk, int compressed_n_points);
@@ -80,7 +77,6 @@ namespace SlavGPS {
 		sg_ret make_track_data_distance_over_time(Track * trk);
 		sg_ret make_track_data_altitude_over_time(Track * trk);
 		sg_ret make_track_data_speed_over_distance(Track * trk);
-
 
 		sg_ret apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit);
 
@@ -90,9 +86,26 @@ namespace SlavGPS {
 		double * x = NULL;
 		double * y = NULL;
 
+		/*
+		  It is not that obvious how x_min/x_max should be
+		  initialized before we start calculating these values
+		  for whole graph.
+
+		  Should x_min for time-based graph be initialized
+		  with:
+		   - zero? that won't work for tracks that start at non-zero timestamp;
+		   - timestamp of first trackpoint? that won't work for tracks where first timestamp has invalid timestamp or invalid 'y' value.
+		  Similar considerations should be done for
+		  y_min/y_max.
+
+		  Therefore initialization of these four fields is
+		  left to code that calculates min/max values. The
+		  boolean flag is set the moment the code find some
+		  sane and valid initial values.
+		*/
+		bool extremes_initialized = false;
 		double x_min = 0.0;
 		double x_max = 0.0;
-
 		double y_min = 0.0;
 		double y_max = 0.0;
 
@@ -102,12 +115,10 @@ namespace SlavGPS {
 		GisViewportDomain x_domain = GisViewportDomain::Max;
 		GisViewportDomain y_domain = GisViewportDomain::Max;
 
+	private:
 		DistanceUnit y_distance_unit = DistanceUnit::Kilometres;
 		SupplementaryDistanceUnit y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
 		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
-
-	private:
-		sg_ret compress_into(TrackData & compressed_data) const;
 	};
 	QDebug operator<<(QDebug debug, const TrackData & track_data);
 

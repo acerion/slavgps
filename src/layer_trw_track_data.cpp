@@ -46,19 +46,30 @@ using namespace SlavGPS;
 
 
 
-#define TRW_TRACK_DATA_CALCULATE_MIN_MAX(_track_data_, _i_, _y_valid_)	\
-	if (_track_data_->x[_i_] > _track_data_->x_max) {		\
-		_track_data_->x_max = _track_data_->x[_i_];		\
-	}								\
-	if (_track_data_->x[_i_] < _track_data_->x_min) {		\
-		_track_data_->x_min = _track_data_->x[_i_];		\
-	}								\
-	if (_y_valid_) {						\
-		if (_track_data_->y[_i_] > _track_data_->y_max) {	\
+/*
+  See comment in class declaration for explanation of why we
+  initialize min/max the way we do it here.
+*/
+#define TRW_TRACK_DATA_CALCULATE_MIN_MAX(_track_data_, _i_, _point_valid_) \
+	if ((_point_valid_)) {						\
+		if (!_track_data_->extremes_initialized) {		\
+			_track_data_->x_min = _track_data_->x[_i_];	\
+			_track_data_->x_max = _track_data_->x[_i_];	\
+			_track_data_->y_min = _track_data_->y[_i_];	\
 			_track_data_->y_max = _track_data_->y[_i_];	\
+			_track_data_->extremes_initialized = true;	\
 		}							\
+									\
+		if (_track_data_->x[_i_] < _track_data_->x_min) {	\
+			_track_data_->x_min = _track_data_->x[_i_];	\
+		} else if (_track_data_->x[_i_] > _track_data_->x_max) { \
+			_track_data_->x_max = _track_data_->x[_i_];	\
+		}							\
+									\
 		if (_track_data_->y[_i_] < _track_data_->y_min) {	\
 			_track_data_->y_min = _track_data_->y[_i_];	\
+		} else if (_track_data_->y[_i_] > _track_data_->y_max) { \
+			_track_data_->y_max = _track_data_->y[_i_];	\
 		}							\
 	}								\
 
@@ -78,27 +89,27 @@ TrackData::TrackData()
 /**
    @reviewed-on tbd
 */
-sg_ret TrackData::compress_into(TrackData & compressed) const
+sg_ret TrackData::compress_into(TrackData & target, int compressed_n_points) const
 {
-	compressed.valid = false;
-
-	if (NULL == compressed.x || NULL == compressed.y) {
-		qDebug() << SG_PREFIX_E << "x or y vector is NULL:" << (quintptr) compressed.x << (quintptr) compressed.y;
+	target.invalidate();
+	if (sg_ret::ok != target.allocate_vector(compressed_n_points)) {
+		qDebug() << SG_PREFIX_E << "Failed to allocate vector for compressed track data";
 		return sg_ret::err;
 	}
 
-	const double tps_per_data_point = 1.0 * this->n_points / compressed.n_points;
+
+	const double tps_per_data_point = 1.0 * this->n_points / target.n_points;
 	const int floor_ = floor(tps_per_data_point);
 	const int ceil_ = ceil(tps_per_data_point);
 	int n_tps_compressed = 0;
 
-	//qDebug() << "-----------------------" << floor_ << tps_per_data_point << ceil_ << this->n_points << compressed.n_points;
+	//qDebug() << "-----------------------" << floor_ << tps_per_data_point << ceil_ << this->n_points << target.n_points;
 
 	/* In the following computation, we iterate through periods of time of duration delta_t.
 	   The first period begins at the beginning of the track.  The last period ends at the end of the track. */
 	int tp_index = 0; /* index of the current trackpoint. */
 	int i = 0;
-	for (i = 0; i < compressed.n_points; i++) {
+	for (i = 0; i < target.n_points; i++) {
 
 		int sampling_size;
 		if ((i + 1) * tps_per_data_point > n_tps_compressed + floor_) {
@@ -125,38 +136,21 @@ sg_ret TrackData::compress_into(TrackData & compressed) const
 			tp_index++;
 		}
 
-		//qDebug() << "------- i =" << i << "/" << compressed.n_points << "sampling_size =" << sampling_size << "n_tps_compressed =" << n_tps_compressed << "n_tps_compressed + sampling_size =" << n_tps_compressed + sampling_size << acc_y << acc_y / sampling_size;
+		//qDebug() << "------- i =" << i << "/" << target.n_points << "sampling_size =" << sampling_size << "n_tps_compressed =" << n_tps_compressed << "n_tps_compressed + sampling_size =" << n_tps_compressed + sampling_size << acc_y << acc_y / sampling_size;
 
-		compressed.x[i] = acc_x / sampling_size;
-		compressed.y[i] = acc_y / sampling_size;
+		target.x[i] = acc_x / sampling_size;
+		target.y[i] = acc_y / sampling_size;
 
 		n_tps_compressed += sampling_size;
 	}
 
-	assert(i == compressed.n_points);
+	assert(i == target.n_points);
 
-	compressed.valid = true;
+	target.valid = true;
+	target.calculate_min_max(); /* TODO: rethink how we calculate min/max of compressed. */
+	snprintf(target.debug, sizeof (target.debug), "Compressed %s", this->debug);
 
 	return sg_ret::ok;
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-TrackData TrackData::compress(int compressed_n_points) const
-{
-	TrackData compressed(compressed_n_points);
-
-	this->compress_into(compressed);
-
-	compressed.calculate_min_max(); /* TODO: rethink how we calculate min/max of compressed. */
-	compressed.valid = true;
-	snprintf(compressed.debug, sizeof (compressed.debug), "Compressed %s", this->debug);
-
-	return compressed;
 }
 
 
@@ -229,7 +223,7 @@ void TrackData::calculate_min_max(void)
 /**
    @reviewed-on tbd
 */
-void TrackData::allocate_vector(int n_data_points)
+sg_ret TrackData::allocate_vector(int n_data_points)
 {
 	if (this->x) {
 		if (this->n_points) {
@@ -252,12 +246,26 @@ void TrackData::allocate_vector(int n_data_points)
 	}
 
 	this->x = (double *) malloc(sizeof (double) * n_data_points);
+	if (NULL == this->x) {
+		qDebug() << SG_PREFIX_E << "Failed to allocate 'x' vector";
+		return sg_ret::err;
+	}
+
 	this->y = (double *) malloc(sizeof (double) * n_data_points);
+	if (NULL == this->y) {
+		free(this->x);
+		this->x = NULL;
+		qDebug() << SG_PREFIX_E << "Failed to allocate 'y' vector";
+		return sg_ret::err;
+	}
 
 	memset(this->x, 0, sizeof (double) * n_data_points);
 	memset(this->y, 0, sizeof (double) * n_data_points);
 
+	/* There are n cells in vectors, but the data in the vectors is trash. */
 	this->n_points = n_data_points;
+
+	return sg_ret::ok;
 }
 
 
@@ -332,62 +340,17 @@ TrackData & TrackData::operator=(const TrackData & other)
 	this->valid = other.valid;
 	this->n_points = other.n_points;
 
+	snprintf(this->debug, sizeof (this->debug), "%s", other.debug);
+
+	this->x_domain = other.x_domain;
+	this->y_domain = other.y_domain;
+
+	this->y_distance_unit = other.y_distance_unit;
+	this->y_supplementary_distance_unit = other.y_supplementary_distance_unit;
+	this->y_speed_unit = other.y_speed_unit;
+
+
 	return *this;
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-sg_ret TrackData::y_distance_convert_units(DistanceUnit new_distance_unit)
-{
-	if (this->y_supplementary_distance_unit != SupplementaryDistanceUnit::Meters) {
-		qDebug() << SG_PREFIX_E << "Unexpected y supplementary distance unit" << (int) this->y_supplementary_distance_unit << "in" << this->debug;
-		return sg_ret::err;
-	}
-
-	for (int i = 0; i < this->n_points; i++) {
-		this->y[i] = Distance::convert_meters_to(this->y[i], new_distance_unit);
-	}
-
-	this->y_min = Distance::convert_meters_to(this->y_min, new_distance_unit);
-	this->y_max = Distance::convert_meters_to(this->y_max, new_distance_unit);
-
-	this->y_supplementary_distance_unit = (SupplementaryDistanceUnit) -1;
-	this->y_distance_unit = new_distance_unit;
-
-	return sg_ret::ok;
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-sg_ret TrackData::y_speed_convert_units(SpeedUnit new_speed_unit)
-{
-	if (this->y_speed_unit != SpeedUnit::MetresPerSecond) {
-		qDebug() << SG_PREFIX_E << "Unexpected speed unit" << (int) this->y_speed_unit << "in" << this->debug;
-		return sg_ret::err;
-	}
-
-	for (int i = 0; i < this->n_points; i++) {
-		this->y[i] = Speed::convert_mps_to(this->y[i], new_speed_unit);
-	}
-
-	this->y_min = Speed::convert_mps_to(this->y_min, new_speed_unit);
-	this->y_max = Speed::convert_mps_to(this->y_max, new_speed_unit);
-
-	if (this->y_min < 0.0) {
-		this->y_min = 0; /* TODO: old comment, to be verified: "Splines sometimes give negative speeds". */
-	}
-
-	this->y_speed_unit = new_speed_unit;
-
-	return sg_ret::ok;
 }
 
 
@@ -486,7 +449,7 @@ sg_ret TrackData::make_track_data_distance_over_time(Track * trk)
 
 #if 0 /* Debug. */
 	for (int j = 0; j < tp_count; j++) {
-		qDebug() << SG_PREFIX_I << "Distance over time: i =" << j << ", t = " << this->x[j] << ", d =" << this->y[j];
+		qDebug() << SG_PREFIX_I << "Distance over time: t[" << j << "] = " << this->x[j] << ", d[" << j << "] =" << this->y[j];
 	}
 #endif
 
@@ -964,6 +927,11 @@ sg_ret TrackData::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit dist
 	  Convert 'y' values into appropriate units.
 	  TODO: what about 'x' values?
 	*/
+
+	if (NULL == this->y) {
+		qDebug() << SG_PREFIX_E << "Can't apply unit conversion: 'y' vector is NULL";
+		return sg_ret::err;
+	}
 
 	switch (this->y_domain) {
 	case GisViewportDomain::Speed:
