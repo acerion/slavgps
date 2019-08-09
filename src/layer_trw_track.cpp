@@ -98,7 +98,7 @@ static QUrl last_directory_url;
 #define VIK_SETTINGS_TRACK_NUM_DIST_LABELS "track_number_dist_labels"
 
 
-void do_compress(TrackData & compressed_data, const TrackData & raw_data);
+
 
 
 /**
@@ -3362,7 +3362,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 		case TreeItemPropertyID::MaximumHeight:
 			{
 				Altitude max_alt(0.0, HeightUnit::Metres);
-				TrackData altitudes;
+				TrackData<Distance> altitudes;
 				altitudes.make_track_data_altitude_over_distance(this, 500); /* TODO_LATER: magic number. */
 				if (altitudes.valid) {
 					altitudes.calculate_min_max();

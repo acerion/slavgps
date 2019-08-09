@@ -53,17 +53,17 @@ using namespace SlavGPS;
 #define TRW_TRACK_DATA_CALCULATE_MIN_MAX(_track_data_, _i_, _point_valid_) \
 	if ((_point_valid_)) {						\
 		if (!_track_data_->extremes_initialized) {		\
-			_track_data_->x_min = _track_data_->x[_i_];	\
-			_track_data_->x_max = _track_data_->x[_i_];	\
+			_track_data_->x_min_double = _track_data_->x[_i_]; \
+			_track_data_->x_max_double = _track_data_->x[_i_]; \
 			_track_data_->y_min = _track_data_->y[_i_];	\
 			_track_data_->y_max = _track_data_->y[_i_];	\
 			_track_data_->extremes_initialized = true;	\
 		}							\
 									\
-		if (_track_data_->x[_i_] < _track_data_->x_min) {	\
-			_track_data_->x_min = _track_data_->x[_i_];	\
-		} else if (_track_data_->x[_i_] > _track_data_->x_max) { \
-			_track_data_->x_max = _track_data_->x[_i_];	\
+		if (_track_data_->x[_i_] < _track_data_->x_min_double) { \
+			_track_data_->x_min_double = _track_data_->x[_i_]; \
+		} else if (_track_data_->x[_i_] > _track_data_->x_max_double) { \
+			_track_data_->x_max_double = _track_data_->x[_i_]; \
 		}							\
 									\
 		if (_track_data_->y[_i_] < _track_data_->y_min) {	\
@@ -79,7 +79,7 @@ using namespace SlavGPS;
 /**
    @reviewed-on tbd
 */
-TrackData::TrackData()
+TrackDataBase::TrackDataBase()
 {
 }
 
@@ -89,7 +89,8 @@ TrackData::TrackData()
 /**
    @reviewed-on tbd
 */
-sg_ret TrackData::compress_into(TrackData & target, int compressed_n_points) const
+template <class X>
+sg_ret TrackData<X>::compress_into(TrackData & target, int compressed_n_points) const
 {
 	target.invalidate();
 	if (sg_ret::ok != target.allocate_vector(compressed_n_points)) {
@@ -159,7 +160,7 @@ sg_ret TrackData::compress_into(TrackData & target, int compressed_n_points) con
 /**
    @reviewed-on tbd
 */
-void TrackData::invalidate(void)
+void TrackDataBase::invalidate(void)
 {
 	this->valid = false;
 	this->n_points = 0;
@@ -181,49 +182,7 @@ void TrackData::invalidate(void)
 /**
    @reviewed-on tbd
 */
-void TrackData::calculate_min_max(void)
-{
-	this->x_min = this->x[0];
-	this->x_max = this->x[0];
-	for (int i = 1; i < this->n_points; i++) {
-		if (this->x[i] >= this->x[i - 1]) { /* Non-decreasing x. */
-			if (this->x[i] > this->x_max) {
-				this->x_max = this->x[i];
-			}
-
-			if (this->x[i] < this->x_min) {
-				this->x_min = this->x[i];
-			}
-			qDebug() << this->debug << " x[" << i << "] =" << qSetRealNumberPrecision(10)
-				 << this->x[i] << ", x_min =" << this->x_min << ", x_max =" << this->x_max;
-		}
-	}
-
-
-	this->y_min = this->y[0];
-	this->y_max = this->y[0];
-	for (int i = 1; i < this->n_points; i++) {
-		if (!std::isnan(this->y[i])) {
-			if (this->y[i] > this->y_max) {
-				this->y_max = this->y[i];
-			}
-
-			if (this->y[i] < this->y_min) {
-				this->y_min = this->y[i];
-			}
-			qDebug() << this->debug << "y[" << i << "] =" << qSetRealNumberPrecision(10)
-				 << this->y[i] << ", y_min =" << this->y_min << ", y_max =" << this->y_max;
-		}
-	}
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-sg_ret TrackData::allocate_vector(int n_data_points)
+sg_ret TrackDataBase::allocate_vector(int n_data_points)
 {
 	if (this->x) {
 		if (this->n_points) {
@@ -274,7 +233,7 @@ sg_ret TrackData::allocate_vector(int n_data_points)
 /**
    @reviewed-on tbd
 */
-TrackData::TrackData(int n_data_points)
+TrackDataBase::TrackDataBase(int n_data_points)
 {
 	this->allocate_vector(n_data_points);
 }
@@ -285,7 +244,7 @@ TrackData::TrackData(int n_data_points)
 /**
    @reviewed-on tbd
 */
-TrackData::~TrackData()
+TrackDataBase::~TrackDataBase()
 {
 	if (this->x) {
 		free(this->x);
@@ -301,79 +260,7 @@ TrackData::~TrackData()
 
 
 
-/**
-   @reviewed-on tbd
-*/
-TrackData & TrackData::operator=(const TrackData & other)
-{
-	if (&other == this) {
-		return *this;
-	}
-
-	/* TODO_LATER: compare size of vectors in both objects to see if
-	   reallocation is necessary? */
-
-	if (other.x) {
-		if (this->x) {
-			free(this->x);
-			this->x = NULL;
-		}
-		this->x = (double *) malloc(sizeof (double) * other.n_points);
-		memcpy(this->x, other.x, sizeof (double) * other.n_points);
-	}
-
-	if (other.y) {
-		if (this->y) {
-			free(this->y);
-			this->y = NULL;
-		}
-		this->y = (double *) malloc(sizeof (double) * other.n_points);
-		memcpy(this->y, other.y, sizeof (double) * other.n_points);
-	}
-
-	this->x_min = other.x_min;
-	this->x_max = other.x_max;
-
-	this->y_min = other.y_min;
-	this->y_max = other.y_max;
-
-	this->valid = other.valid;
-	this->n_points = other.n_points;
-
-	snprintf(this->debug, sizeof (this->debug), "%s", other.debug);
-
-	this->x_domain = other.x_domain;
-	this->y_domain = other.y_domain;
-
-	this->y_distance_unit = other.y_distance_unit;
-	this->y_supplementary_distance_unit = other.y_supplementary_distance_unit;
-	this->y_speed_unit = other.y_speed_unit;
-
-
-	return *this;
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-QDebug SlavGPS::operator<<(QDebug debug, const TrackData & track_data)
-{
-	if (track_data.valid) {
-		debug << "TrackData" << track_data.debug << "is valid"
-		      << qSetRealNumberPrecision(10)
-		      << ", x_min =" << track_data.x_min
-		      << ", x_max =" << track_data.x_max
-		      << ", y_min =" << track_data.y_min
-		      << ", y_max =" << track_data.y_max;
-	} else {
-		debug << "TrackData" << track_data.debug << "is invalid";
-	}
-
-	return debug;
-}
+namespace SlavGPS { /* Template specializations need to be put inside a namespace. */
 
 
 
@@ -384,7 +271,8 @@ QDebug SlavGPS::operator<<(QDebug debug, const TrackData & track_data)
 
    @reviewed-on tbd
 */
-sg_ret TrackData::make_track_data_distance_over_time(Track * trk)
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<Time>::make_track_data_distance_over_time(Track * trk)
 {
 	/* No special handling of segments ATM... */
 
@@ -458,6 +346,9 @@ sg_ret TrackData::make_track_data_distance_over_time(Track * trk)
 	this->y_domain = GisViewportDomain::Distance;
 	this->y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
 	snprintf(this->debug, sizeof (this->debug), "Distance over Time");
+	/* x_min and x_max will be in internal units. */
+	this->x_min = Time(this->x_min_double);
+	this->x_max = Time(this->x_max_double);
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -473,7 +364,8 @@ sg_ret TrackData::make_track_data_distance_over_time(Track * trk)
 
    @reviewed-on tbd
 */
-sg_ret TrackData::make_track_data_altitude_over_distance(Track * trk, int compressed_n_points)
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<SlavGPS::Distance>::make_track_data_altitude_over_distance(Track * trk, int compressed_n_points)
 {
 	TrackData result;
 
@@ -633,6 +525,9 @@ sg_ret TrackData::make_track_data_altitude_over_distance(Track * trk, int compre
 	this->x_domain = GisViewportDomain::Distance;
 	this->y_domain = GisViewportDomain::Elevation;
 	snprintf(this->debug, sizeof (this->debug), "Altitude over Distance");
+	/* x_min and x_max will be in internal units. */
+	this->x_min = Distance(this->x_min_double);
+	this->x_max = Distance(this->x_max_double);
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -645,7 +540,8 @@ sg_ret TrackData::make_track_data_altitude_over_distance(Track * trk, int compre
 /**
    @reviewed-on tbd
 */
-sg_ret TrackData::make_track_data_gradient_over_distance(Track * trk, int compressed_n_points)
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<Distance>::make_track_data_gradient_over_distance(Track * trk, int compressed_n_points)
 {
 	TrackData result;
 
@@ -698,6 +594,9 @@ sg_ret TrackData::make_track_data_gradient_over_distance(Track * trk, int compre
 	this->x_domain = GisViewportDomain::Distance;
 	this->y_domain = GisViewportDomain::Gradient;
 	snprintf(this->debug, sizeof (this->debug), "Gradient over Distance");
+	/* x_min and x_max will be in internal units. */
+	this->x_min = Distance(this->x_min_double);
+	this->x_max = Distance(this->x_max_double);
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -712,7 +611,8 @@ sg_ret TrackData::make_track_data_gradient_over_distance(Track * trk, int compre
 
    @reviewed-on tbd
 */
-sg_ret TrackData::make_track_data_speed_over_time(Track * trk)
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<Time>::make_track_data_speed_over_time(Track * trk)
 {
 	TrackData result;
 
@@ -728,7 +628,7 @@ sg_ret TrackData::make_track_data_speed_over_time(Track * trk)
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from empty track";
 		return sg_ret::err;
 	}
-	TrackData data_dt;
+	TrackData<Time> data_dt;
 	data_dt.make_track_data_distance_over_time(trk);
 
 
@@ -775,6 +675,9 @@ sg_ret TrackData::make_track_data_speed_over_time(Track * trk)
 	this->y_domain = GisViewportDomain::Speed;
 	this->y_speed_unit = SpeedUnit::MetresPerSecond;
 	snprintf(this->debug, sizeof (this->debug), "Speed over Time");
+	/* x_min and x_max will be in internal units. */
+	this->x_min = Time(this->x_min_double);
+	this->x_max = Time(this->x_max_double);
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -794,7 +697,8 @@ sg_ret TrackData::make_track_data_speed_over_time(Track * trk)
 
    @reviewed-on tbd
 */
-sg_ret TrackData::make_track_data_altitude_over_time(Track * trk)
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<Time>::make_track_data_altitude_over_time(Track * trk)
 {
 	TrackData result;
 
@@ -841,6 +745,9 @@ sg_ret TrackData::make_track_data_altitude_over_time(Track * trk)
 	this->x_domain = GisViewportDomain::Time;
 	this->y_domain = GisViewportDomain::Elevation;
 	snprintf(this->debug, sizeof (this->debug), "Altitude over Time");
+	/* x_min and x_max will be in internal units. */
+	this->x_min = Time(this->x_min_double);
+	this->x_max = Time(this->x_max_double);
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -855,7 +762,8 @@ sg_ret TrackData::make_track_data_altitude_over_time(Track * trk)
 
    @reviewed-on tbd
 */
-sg_ret TrackData::make_track_data_speed_over_distance(Track * trk)
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<Distance>::make_track_data_speed_over_distance(Track * trk)
 {
 	TrackData result;
 
@@ -865,7 +773,7 @@ sg_ret TrackData::make_track_data_speed_over_distance(Track * trk)
 	}
 
 	const int tp_count = trk->get_tp_count();
-	TrackData data_dt;
+	TrackData<Time> data_dt;
 	data_dt.make_track_data_distance_over_time(trk);
 
 	this->allocate_vector(tp_count);
@@ -912,6 +820,9 @@ sg_ret TrackData::make_track_data_speed_over_distance(Track * trk)
 	this->x_domain = GisViewportDomain::Distance;
 	this->y_domain = GisViewportDomain::Speed;
 	snprintf(this->debug, sizeof (this->debug), "Speed over Distance");
+	/* x_min and x_max will be in internal units. */
+	this->x_min = Distance(this->x_min_double);
+	this->x_max = Distance(this->x_max_double);
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -921,17 +832,28 @@ sg_ret TrackData::make_track_data_speed_over_distance(Track * trk)
 
 
 
-sg_ret TrackData::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+template <>
+sg_ret TrackData<Distance>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
 {
 	/*
 	  Convert 'y' values into appropriate units.
 	  TODO: what about 'x' values?
 	*/
 
+	if (NULL == this->x) {
+		qDebug() << SG_PREFIX_E << "Can't apply unit conversion: 'x' vector is NULL";
+		return sg_ret::err;
+	}
 	if (NULL == this->y) {
 		qDebug() << SG_PREFIX_E << "Can't apply unit conversion: 'y' vector is NULL";
 		return sg_ret::err;
 	}
+
+	Distance tmp;
+	tmp = this->x_min.convert_to_unit(distance_unit);
+	this->x_min = tmp;
+	tmp = this->x_max.convert_to_unit(distance_unit);
+	this->x_max = tmp;
 
 	switch (this->y_domain) {
 	case GisViewportDomain::Speed:
@@ -995,4 +917,96 @@ sg_ret TrackData::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit dist
 	}
 
 	return sg_ret::ok;
+}
+
+
+
+
+template <>
+sg_ret TrackData<Time>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	/*
+	  Convert 'y' values into appropriate units.
+	  TODO: what about 'x' values?
+	*/
+
+	if (NULL == this->x) {
+		qDebug() << SG_PREFIX_E << "Can't apply unit conversion: 'x' vector is NULL";
+		return sg_ret::err;
+	}
+	if (NULL == this->y) {
+		qDebug() << SG_PREFIX_E << "Can't apply unit conversion: 'y' vector is NULL";
+		return sg_ret::err;
+	}
+
+	/* Nothing to do for x_min/x_main in Time x-domain. */
+	/*
+	  this->x_min = ;
+	  this->x_max = ;
+	*/
+
+	switch (this->y_domain) {
+	case GisViewportDomain::Speed:
+		/*
+		  Basic internal units related to speed are meters
+		  (for distance) and seconds (for time), so primary
+		  unit for speed is meters per second.
+
+		  Do conversion only if target unit is other than
+		  meters per second.
+		*/
+		if (SpeedUnit::MetresPerSecond != speed_unit) {
+			for (int i = 0; i < this->n_points; i++) {
+				this->y[i] = Speed::convert_mps_to(this->y[i], speed_unit);
+			}
+			this->y_min = Speed::convert_mps_to(this->y_min, speed_unit);
+			this->y_max = Speed::convert_mps_to(this->y_max, speed_unit);
+		}
+		break;
+
+	case GisViewportDomain::Elevation:
+		/*
+		  Internal unit for elevation is meters, so only apply
+		  conversion if target elevation unit is other than
+		  meters.
+		*/
+		if (HeightUnit::Metres != height_unit) {
+			for (int i = 0; i < this->n_points; i++) {
+				this->y[i] = VIK_METERS_TO_FEET(this->y[i]);
+			}
+			this->y_min = VIK_METERS_TO_FEET(this->y_min);
+			this->y_max = VIK_METERS_TO_FEET(this->y_max);
+		}
+		break;
+
+	case GisViewportDomain::Distance:
+		/*
+		  Internal unit for distance is meters, so only apply
+		  conversion if target distance unit is other than
+		  meters.
+		*/
+#if 0 /* TODO: enable this. */
+		if (DistanceUnit::Metres != distance_unit) {
+#endif
+			for (int i = 0; i < this->n_points; i++) {
+				this->y[i] = Distance::convert_meters_to(this->y[i], distance_unit);
+			}
+			this->y_min = Distance::convert_meters_to(this->y_min, distance_unit);
+			this->y_max = Distance::convert_meters_to(this->y_max, distance_unit);
+#if 0
+		}
+#endif
+
+		break;
+	case GisViewportDomain::Gradient:
+		/* No unit conversion needed. */
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->y_domain;
+		return sg_ret::err;
+	}
+
+	return sg_ret::ok;
+}
+
 }

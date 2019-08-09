@@ -261,7 +261,7 @@ namespace SlavGPS {
 
 		sg_ret set_initial_visible_range_x_distance(void);
 		sg_ret set_initial_visible_range_x_time(void);
-		sg_ret set_initial_visible_range_y(void);
+		sg_ret set_initial_visible_range_y(const TrackDataBase & track_data);
 
 		/**
 		   Calculate y position for crosshair on y=f(x) graph.
@@ -275,7 +275,7 @@ namespace SlavGPS {
 		sg_ret draw_graph_without_crosshairs(Track * trk);
 		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
 
-		sg_ret draw_function_values(Track * trk);
+		sg_ret draw_function_values(Track * trk, const TrackDataBase & trk_data);
 
 		void draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed);
 		void draw_speed_dist(Track * trk);
@@ -329,6 +329,10 @@ namespace SlavGPS {
 		double x_visible_range_uu = 0.0;
 
 
+		Distance x_visible_range_d_uu;
+		Time x_visible_range_t_uu;
+
+
 		/*
 		  Track data collected from track at the beginning,
 		  and then used to create a processed/compressed copy
@@ -338,14 +342,16 @@ namespace SlavGPS {
 		  have to collect data from track every time user
 		  resizes the graph.
 		*/
-		TrackData initial_track_data;
+		TrackData<Time> initial_track_data_t;
+		TrackData<Distance> initial_track_data_d;
 
 		/*
 		  Data structure with data from initial_track_data,
 		  but processed and prepared for painting
 		  (e.g. compressed).
 		*/
-		TrackData track_data_to_draw;
+		TrackData<Time> track_data_to_draw_t;
+		TrackData<Distance> track_data_to_draw_d;
 
 
 
@@ -373,7 +379,7 @@ namespace SlavGPS {
 		  of ::track_data_to_draw, e.g. after resizing Profile
 		  View window.
 		*/
-		sg_ret regenerate_track_data_to_draw(Track * trk);
+		sg_ret regenerate_track_data_to_draw(Track * trk, TrackDataBase & track_data_to_draw);
 		QString title;
 	};
 

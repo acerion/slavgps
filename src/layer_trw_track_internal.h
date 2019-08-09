@@ -58,7 +58,6 @@ namespace SlavGPS {
 	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
 
 
-	class TrackData;
 	class TrackPropertiesDialog;
 	class TrackProfileDialog;
 	class Graph2D;

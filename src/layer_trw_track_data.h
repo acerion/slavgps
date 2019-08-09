@@ -41,6 +41,7 @@ namespace SlavGPS {
 
 
 
+
 	class Track;
 
 
@@ -57,17 +58,43 @@ namespace SlavGPS {
 	  during two separate iterations over trackpoint list. This
 	  would take twice as much time.
 	*/
-	class TrackData {
+
+	class TrackDataBase {
 	public:
-		TrackData();
-		TrackData(int n_data_points);
-		~TrackData();
+		TrackDataBase();
+		TrackDataBase(int n_data_points);
+		~TrackDataBase();
+
+		sg_ret allocate_vector(int n_data_points);
+		void invalidate(void);
+
+		char debug[100] = { 0 };
+
+		bool valid = false;
+		int n_points = 0;
+
+		double * x = NULL;
+		double * y = NULL;
+
+		double y_min = 0.0;
+		double y_max = 0.0;
+	};
+
+
+
+
+	template <class X>
+	class TrackData : public TrackDataBase {
+	public:
+		TrackData() : TrackDataBase() {};
+		TrackData(int n_data_points) : TrackDataBase(n_data_points) {};
+
 
 		TrackData & operator=(const TrackData & other);
 
-		void invalidate(void);
+
 		void calculate_min_max(void);
-		sg_ret allocate_vector(int n_data_points);
+
 
 		sg_ret compress_into(TrackData & target, int compressed_n_points) const;
 
@@ -81,10 +108,6 @@ namespace SlavGPS {
 		sg_ret apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit);
 
 
-		char debug[100] = { 0 };
-
-		double * x = NULL;
-		double * y = NULL;
 
 		/*
 		  It is not that obvious how x_min/x_max should be
@@ -104,13 +127,9 @@ namespace SlavGPS {
 		  sane and valid initial values.
 		*/
 		bool extremes_initialized = false;
-		double x_min = 0.0;
-		double x_max = 0.0;
-		double y_min = 0.0;
-		double y_max = 0.0;
 
-		bool valid = false;
-		int n_points = 0;
+		X x_min;
+		X x_max;
 
 		GisViewportDomain x_domain = GisViewportDomain::Max;
 		GisViewportDomain y_domain = GisViewportDomain::Max;
@@ -119,8 +138,136 @@ namespace SlavGPS {
 		DistanceUnit y_distance_unit = DistanceUnit::Kilometres;
 		SupplementaryDistanceUnit y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
 		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
+
+		double x_min_double = 0.0;
+		double x_max_double = 0.0;
 	};
-	QDebug operator<<(QDebug debug, const TrackData & track_data);
+	template <class X>
+	QDebug operator<<(QDebug debug, const TrackData<X> & track_data);
+
+
+
+	/**
+	   @reviewed-on tbd
+	*/
+	template <class X>
+	void TrackData<X>::calculate_min_max(void)
+	{
+		this->x_min_double = this->x[0];
+		this->x_max_double = this->x[0];
+		for (int i = 1; i < this->n_points; i++) {
+			if (this->x[i] >= this->x[i - 1]) { /* Non-decreasing x. */
+				if (this->x[i] > this->x_max_double) {
+					this->x_max_double = this->x[i];
+				}
+
+				if (this->x[i] < this->x_min_double) {
+					this->x_min_double = this->x[i];
+				}
+				qDebug() << this->debug << " x[" << i << "] =" << qSetRealNumberPrecision(10)
+					 << this->x[i] << ", x_min =" << this->x_min_double << ", x_max =" << this->x_max_double;
+			}
+		}
+
+
+		this->y_min = this->y[0];
+		this->y_max = this->y[0];
+		for (int i = 1; i < this->n_points; i++) {
+			if (!std::isnan(this->y[i])) {
+				if (this->y[i] > this->y_max) {
+					this->y_max = this->y[i];
+				}
+
+				if (this->y[i] < this->y_min) {
+					this->y_min = this->y[i];
+				}
+				qDebug() << this->debug << "y[" << i << "] =" << qSetRealNumberPrecision(10)
+					 << this->y[i] << ", y_min =" << this->y_min << ", y_max =" << this->y_max;
+			}
+		}
+
+		/* Results will be in internal units. */
+		this->x_min = X(this->x_min_double);
+		this->x_max = X(this->x_max_double);
+	}
+
+
+
+	/**
+	   @reviewed-on tbd
+	*/
+	template <class X>
+	TrackData<X> & TrackData<X>::operator=(const TrackData<X> & other)
+	{
+		if (&other == this) {
+			return *this;
+		}
+
+		/* TODO_LATER: compare size of vectors in both objects to see if
+		   reallocation is necessary? */
+
+		if (other.x) {
+			if (this->x) {
+				free(this->x);
+				this->x = NULL;
+			}
+			this->x = (double *) malloc(sizeof (double) * other.n_points);
+			memcpy(this->x, other.x, sizeof (double) * other.n_points);
+		}
+
+		if (other.y) {
+			if (this->y) {
+				free(this->y);
+				this->y = NULL;
+			}
+			this->y = (double *) malloc(sizeof (double) * other.n_points);
+			memcpy(this->y, other.y, sizeof (double) * other.n_points);
+		}
+
+		this->x_min = other.x_min;
+		this->x_max = other.x_max;
+
+		this->y_min = other.y_min;
+		this->y_max = other.y_max;
+
+		this->valid = other.valid;
+		this->n_points = other.n_points;
+
+		snprintf(this->debug, sizeof (this->debug), "%s", other.debug);
+
+		this->x_domain = other.x_domain;
+		this->y_domain = other.y_domain;
+
+		this->y_distance_unit = other.y_distance_unit;
+		this->y_supplementary_distance_unit = other.y_supplementary_distance_unit;
+		this->y_speed_unit = other.y_speed_unit;
+
+
+		return *this;
+	}
+
+
+
+
+	/**
+	   @reviewed-on tbd
+	*/
+	template <class X>
+	QDebug operator<<(QDebug debug, const TrackData<X> & track_data)
+	{
+		if (track_data.valid) {
+			debug << "TrackData" << track_data.debug << "is valid"
+			      << qSetRealNumberPrecision(10)
+			      << ", x_min =" << track_data.x_min
+			      << ", x_max =" << track_data.x_max
+			      << ", y_min =" << track_data.y_min
+			      << ", y_max =" << track_data.y_max;
+		} else {
+			debug << "TrackData" << track_data.debug << "is invalid";
+		}
+
+		return debug;
+	}
 
 
 
