@@ -65,7 +65,7 @@ namespace SlavGPS {
 	class LayerTRW;
 	class Track;
 	class Trackpoint;
-	class ProfileView;
+	class ProfileViewBase;
 	class ScreenPos;
 
 
@@ -169,15 +169,15 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		ProfileView * find_view(Graph2D * graph_2d) const;
-		ProfileView * get_current_view(void) const;
+		ProfileViewBase * find_view(Graph2D * graph_2d) const;
+		ProfileViewBase * get_current_view(void) const;
 
 
 		LayerTRW * trw = NULL;
 		GisViewport * main_gisview = NULL;
 		Track * trk = NULL;
 
-		std::vector<ProfileView *> views;
+		std::vector<ProfileViewBase *> views;
 
 	private slots:
 		void checkbutton_toggle_cb(void);
@@ -211,29 +211,44 @@ namespace SlavGPS {
 
 
 
-	class ProfileView : public QWidget {
-		Q_OBJECT
+	class ProfileViewBase {
 	public:
-		ProfileView(GisViewportDomain x_domain, GisViewportDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
-		virtual ~ProfileView();
-
-		virtual void draw_additional_indicators(Track * trk) {};
-		virtual void configure_controls(void) {};
-		virtual void save_values(void) {};
-
+		ProfileViewBase(GisViewportDomain x_domain, GisViewportDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
+		virtual ~ProfileViewBase();
 
 		int get_central_n_columns(void) const;
 		int get_central_n_rows(void) const;
 
-
 		sg_ret draw_track_and_crosshairs(Track * trk);
+		virtual sg_ret draw_graph_without_crosshairs(Track * trk) = 0;
+		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
 
-		void create_graph_2d(void);
+		virtual sg_ret generate_initial_track_data(Track * trk) = 0;
+
+		virtual void configure_controls(void) = 0;
+
+
+		virtual void save_values(void) {};
+
 		void configure_labels(void);
 		void create_widgets_layout(void);
 
+
+		/* Check whether given combination of x/y domains is supported by ProfileView. */
+		static bool domains_are_supported(GisViewportDomain x_domain, GisViewportDomain y_domain);
+
 		void configure_title(void);
 		const QString & get_title(void) const;
+
+		void create_graph_2d(void);
+
+		/**
+		   Calculate y position for crosshair on y=f(x) graph.
+		   The position will be in "beginning of coordinates system is in bottom-left corner".
+		   cbl = coordinate-bottom-left.
+		*/
+		Crosshair2D get_position_of_tp(Track * trk, tp_idx tp_idx);
+
 
 		/**
 		   Find y position of argument that matches x position of argument.
@@ -244,7 +259,7 @@ namespace SlavGPS {
 		   corner".
 		   cbl = coordinate-bottom-left.
 		*/
-		sg_ret cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y);
+		virtual sg_ret cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y) = 0;
 
 		/**
 		   Get position of cursor on a 2d graph. 'x'
@@ -259,48 +274,89 @@ namespace SlavGPS {
 		*/
 		Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev);
 
-		sg_ret set_initial_visible_range_x_distance(void);
-		sg_ret set_initial_visible_range_x_time(void);
+
+		virtual bool track_data_is_valid(void) const = 0;
+
+		virtual sg_ret on_cursor_move(Track * trk, const Crosshair2D & cursor_pos, const Crosshair2D & selected_tp) = 0;
+
+
+		QPen main_pen;
+		QPen gps_speed_pen;
+		QPen dem_alt_pen;
+		QPen no_alt_info_pen;
+
+		GisViewportDomain x_domain = GisViewportDomain::Max;
+		GisViewportDomain y_domain = GisViewportDomain::Max;
+
+		Graph2D * graph_2d = NULL;
+		TrackViewLabels labels;
+
+		TrackProfileDialog * dialog = NULL;
+		QWidget * widget = NULL;
+		QGridLayout * labels_grid = NULL;
+		QVBoxLayout * main_vbox = NULL;
+		QVBoxLayout * controls_vbox = NULL;
+
+	private:
+
+		QString title;
+	};
+
+
+
+	template <class Tx>
+	class ProfileView : public ProfileViewBase {
+	public:
+		ProfileView(GisViewportDomain new_x_domain, GisViewportDomain new_y_domain, TrackProfileDialog * new_dialog, QWidget * parent = NULL)
+			: ProfileViewBase(new_x_domain, new_y_domain, new_dialog, parent) {};
+		virtual ~ProfileView();
+
+		virtual void draw_additional_indicators(Track * trk) {};
+		void configure_controls(void) override {};
+
+
+		sg_ret draw_graph_without_crosshairs(Track * trk) override;
+
+
+		bool track_data_is_valid(void) const override;
+
+
+		sg_ret set_initial_visible_range_x(void);
 		sg_ret set_initial_visible_range_y(const TrackDataBase & track_data);
 
-		/**
-		   Calculate y position for crosshair on y=f(x) graph.
-		   The position will be in "beginning of coordinates system is in bottom-left corner".
-		   cbl = coordinate-bottom-left.
-		*/
-		Crosshair2D get_position_of_tp(Track * trk, tp_idx tp_idx);
 
-		sg_ret generate_initial_track_data(Track * trk);
+		sg_ret cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y) override;
 
-		sg_ret draw_graph_without_crosshairs(Track * trk);
-		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
+		sg_ret on_cursor_move(Track * trk, const Crosshair2D & cursor_pos, const Crosshair2D & selected_tp) override;
 
-		sg_ret draw_function_values(Track * trk, const TrackDataBase & trk_data);
+
+		sg_ret generate_initial_track_data(Track * trk) override;
+
+
+		sg_ret draw_function_values(Track * trk);
 
 		void draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed);
 		void draw_speed_dist(Track * trk);
 
-		/* Check whether given combination of x/y domains is supported by ProfileView. */
-		static bool supported_domains(GisViewportDomain x_domain, GisViewportDomain y_domain);
 
-		void draw_x_grid(const Track * trk);
+
+		void draw_x_grid(void);
 		void draw_y_grid(void);
 
-		void draw_x_grid_d_domain(void);
-		void draw_x_grid_t_domain(void);
 
-		QString get_y_grid_label(float value);
+		/* There can be two x-domains: Time or Distance. They
+		   are chosen by Tx (type of x-domain) template
+		   parameter. */
+		Tx x_interval = { 0 };
+		Tx x_visible_min = { 0 };
+		Tx x_visible_max = { 0 };
 
 
-		/* For distance-based graphs. */
-		Distance x_interval_d = { 0.0 };
-		Distance x_visible_min_d = { 0.0 };
-		Distance x_visible_max_d = { 0.0 };
-
-		/* For time-based graphs. */
-		Time x_interval_t = { 0 };
-		Time x_visible_min_t = { 0 };
-		Time x_visible_max_t = { 0 };
+		/*
+		  Difference between maximal and minimal value of x
+		  parameter.
+		*/
+		Tx x_visible_range_uu;
 
 
 
@@ -322,16 +378,6 @@ namespace SlavGPS {
 		double y_visible_range_uu = 0.0;
 
 
-		/*
-		  Difference between maximal and minimal value of x
-		  parameter.
-		*/
-		double x_visible_range_uu = 0.0;
-
-
-		Distance x_visible_range_d_uu;
-		Time x_visible_range_t_uu;
-
 
 		/*
 		  Track data collected from track at the beginning,
@@ -342,36 +388,14 @@ namespace SlavGPS {
 		  have to collect data from track every time user
 		  resizes the graph.
 		*/
-		TrackData<Time> initial_track_data_t;
-		TrackData<Distance> initial_track_data_d;
+		TrackData<Tx> initial_track_data;
 
 		/*
 		  Data structure with data from initial_track_data,
 		  but processed and prepared for painting
 		  (e.g. compressed).
 		*/
-		TrackData<Time> track_data_to_draw_t;
-		TrackData<Distance> track_data_to_draw_d;
-
-
-
-		TrackProfileDialog * dialog = NULL;
-
-
-		QPen main_pen;
-		QPen gps_speed_pen;
-		QPen dem_alt_pen;
-		QPen no_alt_info_pen;
-
-		GisViewportDomain x_domain = GisViewportDomain::Max;
-		GisViewportDomain y_domain = GisViewportDomain::Max;
-
-		Graph2D * graph_2d = NULL;
-		TrackViewLabels labels;
-
-		QGridLayout * labels_grid = NULL;
-		QVBoxLayout * main_vbox = NULL;
-		QVBoxLayout * controls_vbox = NULL;
+		TrackData<Tx> track_data_to_draw;
 
 	private:
 		/*
@@ -379,15 +403,17 @@ namespace SlavGPS {
 		  of ::track_data_to_draw, e.g. after resizing Profile
 		  View window.
 		*/
-		sg_ret regenerate_track_data_to_draw(Track * trk, TrackDataBase & track_data_to_draw);
-		QString title;
+		sg_ret regenerate_track_data_to_draw(Track * trk);
+
+		QString get_y_grid_label(float value);
+		QString get_x_grid_label(const Tx & value_uu);
 	};
 
 
 
 
 	/* ET = elevation as a function of time. */
-	class ProfileViewET : public ProfileView {
+	class ProfileViewET : public ProfileView<Time> {
 	public:
 		ProfileViewET(TrackProfileDialog * dialog);
 		~ProfileViewET() {};
@@ -402,7 +428,7 @@ namespace SlavGPS {
 
 
 	/* SD = speed as a function of distance. */
-	class ProfileViewSD : public ProfileView {
+	class ProfileViewSD : public ProfileView<Distance> {
 	public:
 		ProfileViewSD(TrackProfileDialog * dialog);
 		~ProfileViewSD() {};
@@ -416,7 +442,7 @@ namespace SlavGPS {
 
 
 	/* ED = elevation as a function of distance. */
-	class ProfileViewED : public ProfileView {
+	class ProfileViewED : public ProfileView<Distance> {
 	public:
 		ProfileViewED(TrackProfileDialog * dialog);
 		~ProfileViewED() {};
@@ -431,7 +457,7 @@ namespace SlavGPS {
 
 
 	/* GD = gradient as a function of distance. */
-	class ProfileViewGD : public ProfileView {
+	class ProfileViewGD : public ProfileView<Distance> {
 	public:
 		ProfileViewGD(TrackProfileDialog * dialog);
 		~ProfileViewGD() {};
@@ -445,7 +471,7 @@ namespace SlavGPS {
 
 
 	/* ST = speed as a function of time. */
-	class ProfileViewST : public ProfileView {
+	class ProfileViewST : public ProfileView<Time> {
 	public:
 		ProfileViewST(TrackProfileDialog * dialog);
 		~ProfileViewST() {};
@@ -459,7 +485,7 @@ namespace SlavGPS {
 
 
 	/* DT = distance as a function of time. */
-	class ProfileViewDT : public ProfileView {
+	class ProfileViewDT : public ProfileView<Time> {
 	public:
 		ProfileViewDT(TrackProfileDialog * dialog);
 		~ProfileViewDT() {};
