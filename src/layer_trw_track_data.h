@@ -83,7 +83,14 @@ namespace SlavGPS {
 
 
 
-	template <class X>
+	/* Low-level types for x-domain types. */
+	typedef time_t Time_ll;
+	typedef double Distance_ll;
+
+
+
+
+	template <typename Tx, typename Tx_ll>
 	class TrackData : public TrackDataBase {
 	public:
 		TrackData() : TrackDataBase() {};
@@ -128,8 +135,8 @@ namespace SlavGPS {
 		*/
 		bool extremes_initialized = false;
 
-		X x_min;
-		X x_max;
+		Tx x_min;
+		Tx x_max;
 
 		GisViewportDomain x_domain = GisViewportDomain::Max;
 		GisViewportDomain y_domain = GisViewportDomain::Max;
@@ -139,33 +146,33 @@ namespace SlavGPS {
 		SupplementaryDistanceUnit y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
 		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
 
-		double x_min_double = 0.0;
-		double x_max_double = 0.0;
+		Tx_ll x_min_ll = 0;
+	        Tx_ll x_max_ll = 0;
 	};
-	template <class X>
-	QDebug operator<<(QDebug debug, const TrackData<X> & track_data);
+	template <typename Tx, typename Tx_ll>
+	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll> & track_data);
 
 
 
 	/**
 	   @reviewed-on tbd
 	*/
-	template <class X>
-	void TrackData<X>::calculate_min_max(void)
+	template <typename Tx, typename Tx_ll>
+	void TrackData<Tx, Tx_ll>::calculate_min_max(void)
 	{
-		this->x_min_double = this->x[0];
-		this->x_max_double = this->x[0];
+		this->x_min_ll = this->x[0];
+		this->x_max_ll = this->x[0];
 		for (int i = 1; i < this->n_points; i++) {
 			if (this->x[i] >= this->x[i - 1]) { /* Non-decreasing x. */
-				if (this->x[i] > this->x_max_double) {
-					this->x_max_double = this->x[i];
+				if (this->x[i] > this->x_max_ll) {
+					this->x_max_ll = this->x[i];
 				}
 
-				if (this->x[i] < this->x_min_double) {
-					this->x_min_double = this->x[i];
+				if (this->x[i] < this->x_min_ll) {
+					this->x_min_ll = this->x[i];
 				}
 				qDebug() << this->debug << " x[" << i << "] =" << qSetRealNumberPrecision(10)
-					 << this->x[i] << ", x_min =" << this->x_min_double << ", x_max =" << this->x_max_double;
+					 << this->x[i] << ", x_min =" << this->x_min_ll << ", x_max =" << this->x_max_ll;
 			}
 		}
 
@@ -187,8 +194,8 @@ namespace SlavGPS {
 		}
 
 		/* Results will be in internal units. */
-		this->x_min = X(this->x_min_double);
-		this->x_max = X(this->x_max_double);
+		this->x_min = Tx(this->x_min_ll);
+		this->x_max = Tx(this->x_max_ll);
 	}
 
 
@@ -196,8 +203,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <class X>
-	TrackData<X> & TrackData<X>::operator=(const TrackData<X> & other)
+	template <typename Tx, typename Tx_ll>
+	TrackData<Tx, Tx_ll> & TrackData<Tx, Tx_ll>::operator=(const TrackData<Tx, Tx_ll> & other)
 	{
 		if (&other == this) {
 			return *this;
@@ -252,8 +259,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <class X>
-	QDebug operator<<(QDebug debug, const TrackData<X> & track_data)
+	template <typename Tx, typename Tx_ll>
+	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll> & track_data)
 	{
 		if (track_data.valid) {
 			debug << "TrackData" << track_data.debug << "is valid"

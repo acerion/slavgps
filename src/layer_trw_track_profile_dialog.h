@@ -304,7 +304,7 @@ namespace SlavGPS {
 
 
 
-	template <class Tx>
+	template <typename Tx, typename Tx_ll>
 	class ProfileView : public ProfileViewBase {
 	public:
 		ProfileView(GisViewportDomain new_x_domain, GisViewportDomain new_y_domain, TrackProfileDialog * new_dialog, QWidget * parent = NULL)
@@ -388,14 +388,14 @@ namespace SlavGPS {
 		  have to collect data from track every time user
 		  resizes the graph.
 		*/
-		TrackData<Tx> initial_track_data;
+		TrackData<Tx, Tx_ll> initial_track_data;
 
 		/*
 		  Data structure with data from initial_track_data,
 		  but processed and prepared for painting
 		  (e.g. compressed).
 		*/
-		TrackData<Tx> track_data_to_draw;
+		TrackData<Tx, Tx_ll> track_data_to_draw;
 
 	private:
 		/*
@@ -413,7 +413,7 @@ namespace SlavGPS {
 
 
 	/* ET = elevation as a function of time. */
-	class ProfileViewET : public ProfileView<Time> {
+	class ProfileViewET : public ProfileView<Time, Time_ll> {
 	public:
 		ProfileViewET(TrackProfileDialog * dialog);
 		~ProfileViewET() {};
@@ -428,7 +428,7 @@ namespace SlavGPS {
 
 
 	/* SD = speed as a function of distance. */
-	class ProfileViewSD : public ProfileView<Distance> {
+	class ProfileViewSD : public ProfileView<Distance, Distance_ll> {
 	public:
 		ProfileViewSD(TrackProfileDialog * dialog);
 		~ProfileViewSD() {};
@@ -442,7 +442,7 @@ namespace SlavGPS {
 
 
 	/* ED = elevation as a function of distance. */
-	class ProfileViewED : public ProfileView<Distance> {
+	class ProfileViewED : public ProfileView<Distance, Distance_ll> {
 	public:
 		ProfileViewED(TrackProfileDialog * dialog);
 		~ProfileViewED() {};
@@ -457,7 +457,7 @@ namespace SlavGPS {
 
 
 	/* GD = gradient as a function of distance. */
-	class ProfileViewGD : public ProfileView<Distance> {
+	class ProfileViewGD : public ProfileView<Distance, Distance_ll> {
 	public:
 		ProfileViewGD(TrackProfileDialog * dialog);
 		~ProfileViewGD() {};
@@ -471,7 +471,7 @@ namespace SlavGPS {
 
 
 	/* ST = speed as a function of time. */
-	class ProfileViewST : public ProfileView<Time> {
+	class ProfileViewST : public ProfileView<Time, Time_ll> {
 	public:
 		ProfileViewST(TrackProfileDialog * dialog);
 		~ProfileViewST() {};
@@ -485,7 +485,7 @@ namespace SlavGPS {
 
 
 	/* DT = distance as a function of time. */
-	class ProfileViewDT : public ProfileView<Time> {
+	class ProfileViewDT : public ProfileView<Time, Time_ll> {
 	public:
 		ProfileViewDT(TrackProfileDialog * dialog);
 		~ProfileViewDT() {};

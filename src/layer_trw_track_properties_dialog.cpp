@@ -268,7 +268,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 
 	int elev_points = 100; /* this->trk->size()? */
-	TrackData<Distance> altitudes;
+	TrackData<Distance, Distance_ll> altitudes;
 	altitudes.make_track_data_altitude_over_distance(this->trk, elev_points);
 	if (!altitudes.valid) {
 		altitudes.y_min = NAN;
