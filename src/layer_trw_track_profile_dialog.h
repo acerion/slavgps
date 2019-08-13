@@ -258,8 +258,12 @@ namespace SlavGPS {
 		   coordinate system (position 0,0) is in bottom-left
 		   corner".
 		   cbl = coordinate-bottom-left.
+
+		   Arguments are x/y coordinates in central area of
+		   graph. They are equal to 0/0 in bottom-left corner
+		   of central area of graph.
 		*/
-		virtual sg_ret cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y) = 0;
+		virtual sg_ret cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y) = 0;
 
 		/**
 		   Get position of cursor on a 2d graph. 'x'
@@ -272,7 +276,7 @@ namespace SlavGPS {
 		   corner".
 		   cbl = coordinate-bottom-left.
 		*/
-		Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev);
+		virtual Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev) = 0;
 
 
 		virtual bool track_data_is_valid(void) const = 0;
@@ -325,7 +329,8 @@ namespace SlavGPS {
 		sg_ret set_initial_visible_range_y(const TrackDataBase & track_data);
 
 
-		sg_ret cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y) override;
+		sg_ret cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y) override;
+		Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev) override;
 
 		sg_ret on_cursor_move(Track * trk, const Crosshair2D & cursor_pos, const Crosshair2D & selected_tp) override;
 

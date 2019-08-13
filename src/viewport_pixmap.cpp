@@ -1038,7 +1038,7 @@ QRect ViewportPixmap::central_get_rect(void) const
 */
 void ViewportPixmap::paintEvent(QPaintEvent * ev)
 {
-	qDebug() << SG_PREFIX_I;
+	//qDebug() << SG_PREFIX_I;
 
 	QPainter event_painter(this);
 	event_painter.drawPixmap(0, 0, this->vpixmap);

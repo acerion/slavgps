@@ -66,7 +66,7 @@ using namespace SlavGPS;
 
 #define SG_MODULE "Track Profile Dialog"
 
-
+#define MY_WIDGET_PROPERTY "ProfileViewBase"
 
 
 #define VIK_SETTINGS_TRACK_PROFILE_WIDTH "track_profile_display_width"
@@ -443,7 +443,7 @@ sg_ret ProfileViewBase::draw_crosshairs(const Crosshair2D & selected_tp, const C
 ProfileViewBase * TrackProfileDialog::get_current_view(void) const
 {
 	const int tab_idx = this->tabs->currentIndex();
-	ProfileViewBase * profile_view = (ProfileViewBase *) this->tabs->widget(tab_idx);
+	ProfileViewBase * profile_view = (ProfileViewBase *) this->tabs->widget(tab_idx)->property(MY_WIDGET_PROPERTY).toULongLong();
 	return profile_view;
 }
 
@@ -529,39 +529,30 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 
 template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::cbl_find_y_on_graph_line(const int cbl_x, int & cbl_y)
+sg_ret ProfileView<Tx, Tx_ll>::cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y)
 {
 	const int n_rows = this->graph_2d->central_get_n_rows();
 	const int n_cols = this->graph_2d->central_get_n_columns();
 
-	/*
-	  Ensure x is inside of graph.
-
-	  Here we call functions that return pixels in "beginning in
-	  upper-left corner" coordinate system.  Since here we verify
-	  position of 'x' that is also inn "beginning in lower-left
-	  corner" coordinate system, this should be safe, because in
-	  both coordinate systems beginning is on the left.
-	*/
-	const int leftmost_pixel = this->graph_2d->central_get_leftmost_pixel();
-	const int rightmost_pixel = this->graph_2d->central_get_rightmost_pixel();
-	if (cbl_x < leftmost_pixel) {
-		qDebug() << SG_PREFIX_E << "x too far to left:" << cbl_x << leftmost_pixel;
+	if (central_cbl_x < 0) {
+		qDebug() << SG_PREFIX_E << "x too far to left: x =" << central_cbl_x << ", left border px =" << 0;
 		return sg_ret::err;
 	}
-	if (cbl_x > rightmost_pixel) {
-		qDebug() << SG_PREFIX_E << "x too far to right:" << cbl_x << rightmost_pixel;
+	if (central_cbl_x > n_cols) {
+		qDebug() << SG_PREFIX_E << "x too far to right: x =" << central_cbl_x << ", right border px =" << n_cols;
 		return sg_ret::err;
 	}
 
 
-	if (cbl_x > n_cols) {
-		qDebug() << SG_PREFIX_E << "cbl x too large:" << cbl_x << n_cols;
-		assert (cbl_x <= n_cols);
+	if (central_cbl_x > n_cols) {
+		qDebug() << SG_PREFIX_E << "cbl x too large:" << central_cbl_x << n_cols;
+		assert (central_cbl_x <= n_cols);
 	}
 
+	const double y_current_value_uu = this->track_data_to_draw.y[central_cbl_x];
+	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
 
-	cbl_y = n_rows * (this->track_data_to_draw.y[cbl_x] - this->y_visible_min) / this->y_visible_range_uu;
+	central_cbl_y = y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
 
 	return sg_ret::ok;
 }
@@ -569,27 +560,100 @@ sg_ret ProfileView<Tx, Tx_ll>::cbl_find_y_on_graph_line(const int cbl_x, int & c
 
 
 
-Crosshair2D ProfileViewBase::get_cursor_pos_on_line(QMouseEvent * ev)
+/*
+  If x values in track data were always separated by the same amount,
+  this function could have been a simple array indexing code based on
+  'x' coordinate of mouse event.
+
+  But since sometimes there can be gaps in graphs where x-domain is
+  Time, and especially because distance values (in graphs where
+  x-domain is Distance) can greatly vary, things are more
+  complicated.
+
+  The fact that there can be fewer values in track data than there are
+  columns in pixmap (i.e. distance between each drawn trackpoints can
+  be two or more pixels) also doesn't help.
+
+  We have to use more sophisticated algorithm for
+  conversion of 'x' coordinate of mouse event to position of crosshair.
+
+  We have to try to find a trackpoint in track data arrays that is
+  drawn the closest to 'x' coordinate of mouse event.
+*/
+template <typename Tx, typename Tx_ll>
+Crosshair2D ProfileView<Tx, Tx_ll>::get_cursor_pos_on_line(QMouseEvent * ev)
 {
 	Crosshair2D crosshair;
 
-	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+	const size_t n_values = this->track_data_to_draw.n_points;
+	if (0 == n_values) {
+		qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
+		return crosshair;
+	}
 
-	crosshair.central_cbl_x = ev->x() - leftmost_px;
+	const int n_columns = this->graph_2d->central_get_n_columns();
+	const int n_rows = this->graph_2d->central_get_n_rows();
+	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
+
+	const int event_x = ev->x();
+
+	int found_x_px = -1;
+	int found_y_px = -1;
+	size_t found_i = (size_t) -1; /* Index of trackpoint in "track data" data structure that is the closest to mouse event. */
+
+	int x_px_diff = n_columns; /* We will be minimizing this value and stop when x_px_diff is the smallest. TODO: type of the variable: int or double? */
+
+	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
+	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
+
+	for (size_t i = 0; i < n_values; i++) {
+
+		const double y_current_value_uu = this->track_data_to_draw.y[i];
+		const bool y_value_valid = !std::isnan(y_current_value_uu);
+		if (!y_value_valid) {
+			continue;
+		}
+
+		const Tx_ll x_current_value_uu = this->track_data_to_draw.x[i];
+		const int x = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->track_data_to_draw.x_min.value);
+
+		/* See if x coordinate of this trackpoint on a pixmap
+		   is closer to cursor than the previous x
+		   coordinate. */
+		int x_px_diff_current = std::abs(x - event_x);
+		if (x_px_diff_current < x_px_diff) {
+			/* Found a trackpoint painted at position 'x' that is closer to cursor event position on x axis. */
+			x_px_diff = x_px_diff_current;
+
+			const int y = bottommost_px - y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
+
+			found_x_px = x;
+			found_y_px = y;
+			found_i = i;
+
+			// qDebug() << SG_PREFIX_I << "Found new position closer to cursor event at index" << found_i << ":" << found_x_px << found_y_px;
+		}
+	}
+
+	if (found_i != (size_t) -1) {
+		crosshair.central_cbl_x = found_x_px - leftmost_px;
+		crosshair.central_cbl_y = bottommost_px - found_y_px;
+
+		/*
+		  Use coordinates of point that is
+		  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
+		  b) is in 'beginning in bottom-left' coordinate system (cbl)
+		  to calculate global, 'beginning in top-left' coordinates.
+		*/
+		crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
+		crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
+
+		crosshair.valid = true;
+	}
 
 	/* Find 'y' position that lays on a graph line. */
-	this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y);
-
-	/*
-	  Use coordinates of point that is
-	  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
-	  b) is in 'beginning in bottom-left' coordinate system (cbl)
-	  to calculate global, 'beginning in top-left' coordinates.
-	*/
-	crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
-	crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
-
-	crosshair.valid = true;
+	//this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y);
 
 	return crosshair;
 }
@@ -837,7 +901,6 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_function_values(Track * trk)
 	const int n_rows = this->graph_2d->central_get_n_rows();
 
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
-	const int rightmost_px = this->graph_2d->central_get_rightmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
 
@@ -1910,6 +1973,7 @@ QString get_time_grid_label(const Time & interval_value, const Time & value)
 ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDomain new_y_domain, TrackProfileDialog * new_dialog, QWidget * parent)
 {
 	this->widget = new QWidget(parent);
+	this->widget->setProperty(MY_WIDGET_PROPERTY, QVariant::fromValue((qulonglong) this));
 	this->dialog = new_dialog;
 
 	if (!ProfileViewBase::domains_are_supported(new_x_domain, new_y_domain)) {
@@ -2143,7 +2207,6 @@ void ProfileView<Tx, Tx_ll>::draw_y_grid(void)
 	const int left_width     = this->graph_2d->left_get_width();
 	const int left_height    = this->graph_2d->left_get_height();
 	const int leftmost_px    = this->graph_2d->central_get_leftmost_pixel();
-	const int rightmost_px   = this->graph_2d->central_get_rightmost_pixel();
 	const int topmost_px     = this->graph_2d->central_get_topmost_pixel();
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
@@ -2358,6 +2421,8 @@ Graph2D::Graph2D(int left, int right, int top, int bottom, QWidget * parent) : V
 	this->height_unit = Preferences::get_unit_height();
 	this->distance_unit = Preferences::get_unit_distance();
 	this->speed_unit = Preferences::get_unit_speed();
+
+	this->setMouseTracking(true); /* Without this the ::mouseMoveEvent() method won't be called. */
 }
 
 
@@ -2478,7 +2543,7 @@ void Graph2D::central_draw_simple_crosshair(const Crosshair2D & crosshair)
 		return;
 	}
 
-	qDebug() << SG_PREFIX_I << "Crosshair" << crosshair.debug << "at coord" << crosshair.x << crosshair.y << "(central cbl =" << crosshair.central_cbl_x << crosshair.central_cbl_y << ")";
+	//qDebug() << SG_PREFIX_I << "Crosshair" << crosshair.debug << "at coord" << crosshair.x << crosshair.y << "(central cbl =" << crosshair.central_cbl_x << crosshair.central_cbl_y << ")";
 
 	if (crosshair.x > rigthmost_pixel || crosshair.x < leftmost_pixel) {
 		qDebug() << SG_PREFIX_E << "Crosshair has bad x";
