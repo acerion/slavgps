@@ -116,7 +116,6 @@ static GraphIntervalsSpeed    speed_intervals;
 
 
 static void time_label_update(QLabel * label, time_t seconds_from_start);
-static void real_time_label_update(ProfileViewBase * view, const Trackpoint * tp);
 
 static QString get_time_grid_label(const Time & interval_value, const Time & value);
 
@@ -494,7 +493,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 			continue;
 		}
 
-		view_iter->m_selection_ch = view_iter->get_cursor_pos_on_line(ev);
+		view_iter->m_selection_ch = view_iter->get_crosshair_under_cursor(ev);
 		view_iter->m_selection_ch.debug = "selection crosshair in " + view_iter->get_title();
 		if (!view_iter->m_selection_ch.valid) {
 			qDebug() << SG_PREFIX_N << "Not drawing crosshairs in" << view_iter->get_title() << ": failed to get selection crosshair";
@@ -513,14 +512,14 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 
 	sg_ret tp_lookup = sg_ret::err;
-	TPInfo info = view->get_tp_info_under_cursor(ev);
-	if (info.valid) {
-		if (NULL != info.found_tp) {
-			tp_lookup = this->trk->select_tp(info.found_tp);
+	const TPInfo tp_info = view->get_tp_info_under_cursor(ev);
+	if (tp_info.valid) {
+		if (NULL != tp_info.found_tp) {
+			tp_lookup = this->trk->select_tp(tp_info.found_tp);
 			if (sg_ret::ok != tp_lookup) {
 				qDebug() << SG_PREFIX_E << "Failed to select tp in track";
 			} else {
-				this->main_gisview->set_center_coord(info.found_tp->coord);
+				this->main_gisview->set_center_coord(tp_info.found_tp->coord);
 				this->trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
 			}
 		} else {
@@ -676,11 +675,11 @@ TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev)
 
 			result.found_x_px = x;
 			result.found_y_px = y;
-			result.found_i = i;
+			result.found_tp_idx = i;
 			result.found_tp = this->track_data_to_draw.tps[i];
 			result.valid = true;
 
-			// qDebug() << SG_PREFIX_I << "Found new position closer to cursor event at index" << found_i << ":" << found_x_px << found_y_px;
+			// qDebug() << SG_PREFIX_I << "Found new position closer to cursor event at index" << found_tp_idx << ":" << found_x_px << found_y_px;
 		}
 	}
 
@@ -711,35 +710,17 @@ TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev)
   drawn the closest to 'x' coordinate of mouse event.
 */
 template <typename Tx, typename Tx_ll>
-Crosshair2D ProfileView<Tx, Tx_ll>::get_cursor_pos_on_line(QMouseEvent * ev)
+Crosshair2D ProfileView<Tx, Tx_ll>::get_crosshair_under_cursor(QMouseEvent * ev)
 {
 	Crosshair2D crosshair;
 
-	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
-	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
-
-
-	TPInfo info = this->get_tp_info_under_cursor(ev);
-	if (!info.valid) {
+	const TPInfo tp_info = this->get_tp_info_under_cursor(ev);
+	if (!tp_info.valid) {
 		qDebug() << SG_PREFIX_N << "Could not find valid tp info in" << this->get_title();
 		return crosshair;
 	}
 
-
-	crosshair.central_cbl_x = info.found_x_px - leftmost_px;
-	crosshair.central_cbl_y = bottommost_px - info.found_y_px;
-
-	/*
-	  Use coordinates of point that is
-	  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
-	  b) is in 'beginning in bottom-left' coordinate system (cbl)
-	  to calculate global, 'beginning in top-left' coordinates.
-	*/
-	crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
-	crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
-
-	crosshair.valid = true;
-
+	crosshair = this->tpinfo_to_crosshair(tp_info);
 
 	/* Find 'y' position that lays on a graph line. */
 	//this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y);
@@ -750,35 +731,42 @@ Crosshair2D ProfileView<Tx, Tx_ll>::get_cursor_pos_on_line(QMouseEvent * ev)
 
 
 
-void time_label_update(QLabel * label, time_t seconds_from_start)
+Crosshair2D ProfileViewBase::tpinfo_to_crosshair(const TPInfo & tp_info)
 {
-	unsigned int h = seconds_from_start/3600;
-	unsigned int m = (seconds_from_start - h*3600)/60;
-	unsigned int s = seconds_from_start - (3600*h) - (60*m);
+	Crosshair2D crosshair;
 
-	const QString tmp_buf = QObject::tr("%1:%2:%3").arg(h, 2, 10, (QChar) '0').arg(m, 2, 10, (QChar) '0').arg(s, 2, 10, (QChar) '0');
-	label->setText(tmp_buf);
+	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
-	return;
+	crosshair.central_cbl_x = tp_info.found_x_px - leftmost_px;
+	crosshair.central_cbl_y = bottommost_px - tp_info.found_y_px;
+
+	/*
+	  Use coordinates of point that is
+	  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
+	  b) is in 'beginning in bottom-left' coordinate system (cbl)
+	  to calculate global, 'beginning in top-left' coordinates.
+	*/
+	crosshair.x = crosshair.central_cbl_x + leftmost_px;
+	crosshair.y = bottommost_px - crosshair.central_cbl_y;
+
+	crosshair.valid = true;
+
+	return crosshair;
 }
 
 
 
 
-void real_time_label_update(ProfileViewBase * view, Track * trk)
+
+void time_label_update(QLabel * label, time_t seconds)
 {
-	if (NULL == view->labels.t_value) {
-		/* This function shouldn't be called for views that don't have the T label. */
-		qDebug() << SG_PREFIX_W << "Called the function, but label is NULL";
-		return;
-	}
+	unsigned int h = seconds / 3600;
+	unsigned int m = (seconds - h * 3600) / 60;
+	unsigned int s = seconds - (3600 * h) - (60 * m);
 
-	const Trackpoint * tp = trk->get_hovered_tp();
-	if (NULL == tp) {
-		return;
-	}
-
-	view->labels.t_value->setText(tp->timestamp.to_timestamp_string(Qt::LocalTime));
+	const QString tmp_buf = QObject::tr("%1:%2:%3").arg(h, 2, 10, (QChar) '0').arg(m, 2, 10, (QChar) '0').arg(s, 2, 10, (QChar) '0');
+	label->setText(tmp_buf);
 
 	return;
 }
@@ -797,16 +785,7 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 		return;
 	}
 
-
-	/* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
-	Crosshair2D hover_ch = view->get_cursor_pos_on_line(ev);
-	hover_ch.debug = "hover crosshair for " + view->get_title();
-	if (!hover_ch.valid) {
-		qDebug() << SG_PREFIX_E << "Failed to get hover crosshair for" << view->get_title();
-		return;
-	}
-
-	view->on_cursor_move(trk, view->m_selection_ch, hover_ch);
+	view->on_cursor_move(trk, ev);
 
 	return;
 }
@@ -815,72 +794,91 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 
 template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, const Crosshair2D & selection_ch, const Crosshair2D & hover_ch)
+sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, QMouseEvent * ev)
 {
-	double meters_from_start = 0.0;
+	const TPInfo tp_info = this->get_tp_info_under_cursor(ev);
+	if (!tp_info.valid || NULL == tp_info.found_tp) {
+		qDebug() << SG_PREFIX_N << "Could not find valid tp info for" << this->get_title();
+		return sg_ret::err;
+	}
+
+	Crosshair2D hover_ch = this->tpinfo_to_crosshair(tp_info);
+	hover_ch.debug = "hover crosshair for " + this->get_title();
+	if (!hover_ch.valid) {
+		qDebug() << SG_PREFIX_E << "Failed to get hover crosshair for" << this->get_title();
+		return sg_ret::err;
+	}
+
+	this->draw_crosshairs(this->m_selection_ch, hover_ch);
+
 
 	switch (this->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
-		trk->select_tp_by_percentage_dist((double) hover_ch.central_cbl_x / this->get_central_n_columns(), &meters_from_start, HOVERED);
-		this->draw_crosshairs(selection_ch, hover_ch);
-
 		if (this->labels.x_value) {
-			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
-			this->labels.x_value->setText(distance.convert_to_unit(Preferences::get_unit_distance()).to_string());
+			/* Values in x[] are already re-calculated to user units. */
+			const Distance_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
+			const Distance x_uu = Distance(x_ll_uu, Preferences::get_unit_distance()); /* TODO: distance unit or supplementary distance unit? */
+			this->labels.x_value->setText(x_uu.to_string());
 		}
 		break;
 
 	case GisViewportDomain::Time:
-		trk->select_tp_by_percentage_time((double) hover_ch.central_cbl_x / this->get_central_n_columns(), HOVERED);
-		this->draw_crosshairs(selection_ch, hover_ch);
-
 		if (this->labels.x_value) {
-			time_t seconds_from_start = 0;
-			trk->get_tp_relative_timestamp(seconds_from_start, HOVERED);
-			time_label_update(this->labels.x_value, seconds_from_start);
+			/* Values in x[] are already re-calculated to user units. */
+			const Time_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
+			const Time x_uu = Time(x_ll_uu);
+
+			/*
+			  TODO: get timestamp relative to beginning of track?
+			  const Time_ll seconds_from_start = x_ll_uu;
+			  trk->get_tp_relative_timestamp(seconds_from_start, HOVERED);
+			*/
+			//time_label_update(
+			this->labels.x_value->setText(x_uu.to_duration_string());
 		}
 
-		real_time_label_update(this, trk);
+		if (this->labels.t_value) {
+			this->labels.t_value->setText(tp_info.found_tp->timestamp.to_timestamp_string(Qt::LocalTime));
+		}
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->graph_2d->x_domain;
-		break;
-	};
+		return sg_ret::err;
+	}
 
 
 
-	const double y = this->track_data_to_draw.y[hover_ch.central_cbl_x]; /* FIXME: use proper value for array index. */
+
+	/* Values in y[] are already re-calculated to user units. */
+	const double y_uu = this->track_data_to_draw.y[tp_info.found_tp_idx];
+
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
 		if (this->labels.y_value) {
-			/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
-			   No conversions needed as already in appropriate units. */
-			this->labels.y_value->setText(Speed::to_string(y));
+			this->labels.y_value->setText(Speed::to_string(y_uu));
 		}
 		break;
 	case GisViewportDomain::Elevation:
-		if (this->labels.y_value && NULL != trk->get_hovered_tp()) {
-			/* Recalculate value into target unit. */
-			this->labels.y_value->setText(trk->get_hovered_tp()->altitude
-						      .convert_to_unit(Preferences::get_unit_height())
-						      .to_string());
+		if (this->labels.y_value) {
+			const Altitude alti = Altitude(y_uu, Preferences::get_unit_height());
+			this->labels.y_value->setText(alti.to_string());
 		}
 		break;
 	case GisViewportDomain::Distance:
 		if (this->labels.y_value) {
-			const Distance distance_uu(y, Preferences::get_unit_distance()); /* 'y' is already recalculated to user unit, so this constructor must use user unit as well. */
+			const Distance distance_uu(y_uu, Preferences::get_unit_distance());
 			this->labels.y_value->setText(distance_uu.to_string());
 		}
 		break;
 	case GisViewportDomain::Gradient:
 		if (this->labels.y_value) {
-			const Gradient gradient_uu(y);
+			const Gradient gradient_uu(y_uu);
 			this->labels.y_value->setText(gradient_uu.to_string());
 		}
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-		break;
+		return sg_ret::err;
 	}
 
 	return sg_ret::ok;

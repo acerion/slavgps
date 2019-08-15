@@ -215,7 +215,7 @@ namespace SlavGPS {
 	public:
 		int found_x_px = -1;
 		int found_y_px = -1;
-		size_t found_i = (size_t) -1; /* Index of trackpoint in "track data" data structure that is the closest to mouse event. */
+		size_t found_tp_idx = (size_t) -1; /* Index of trackpoint in "track data" data structure that is the closest to mouse event. */
 		bool valid = false;
 		Trackpoint * found_tp = NULL;
 	};
@@ -278,24 +278,22 @@ namespace SlavGPS {
 		virtual sg_ret cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y) = 0;
 
 		/**
-		   Get position of cursor on a 2d graph. 'x'
-		   coordinate will match current 'x' position of
-		   cursor, and 'y' coordinate will be on a 2d graph
-		   line that corresponds with the 'x' position.
-
-		   Returned cursor position is in "beginning of
-		   coordinate system (position 0,0) is in bottom-left
-		   corner".
-		   cbl = coordinate-bottom-left.
+		   Get a crosshair that is "sticky" to drawn track
+		   profile line: its 'x' pixel coordinate will match
+		   'x' pixel coordinate of mouse event, and its 'y'
+		   pixel coordinate will be calculated so that
+		   crosshair is positioned on track profile line drawn
+		   in track profile view.
 		*/
-		virtual Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev) = 0;
+		virtual Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) = 0;
 
+		virtual TPInfo get_tp_info_under_cursor(QMouseEvent * ev) = 0;
 
 		virtual bool track_data_is_valid(void) const = 0;
 
-		virtual sg_ret on_cursor_move(Track * trk, const Crosshair2D & selection_ch, const Crosshair2D & hover_ch) = 0;
+		virtual sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) = 0;
 
-		virtual TPInfo get_tp_info_under_cursor(QMouseEvent * ev) = 0;
+		Crosshair2D tpinfo_to_crosshair(const TPInfo & tp_info);
 
 		QPen main_pen;
 		QPen gps_speed_pen;
@@ -355,9 +353,9 @@ namespace SlavGPS {
 
 
 		sg_ret cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y) override;
-		Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev) override;
+		Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) override;
 
-		sg_ret on_cursor_move(Track * trk, const Crosshair2D & selection_ch, const Crosshair2D & hover_ch) override;
+		sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) override;
 
 
 		sg_ret generate_initial_track_data(Track * trk) override;
