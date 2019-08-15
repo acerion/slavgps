@@ -221,7 +221,7 @@ namespace SlavGPS {
 
 		sg_ret draw_track_and_crosshairs(Track * trk);
 		virtual sg_ret draw_graph_without_crosshairs(Track * trk) = 0;
-		sg_ret draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos);
+		sg_ret draw_crosshairs(const Crosshair2D & selection_ch, const Crosshair2D & hover_ch);
 
 		virtual sg_ret generate_initial_track_data(Track * trk) = 0;
 
@@ -281,7 +281,7 @@ namespace SlavGPS {
 
 		virtual bool track_data_is_valid(void) const = 0;
 
-		virtual sg_ret on_cursor_move(Track * trk, const Crosshair2D & cursor_pos, const Crosshair2D & selected_tp) = 0;
+		virtual sg_ret on_cursor_move(Track * trk, const Crosshair2D & selection_ch, const Crosshair2D & hover_ch) = 0;
 
 
 		QPen main_pen;
@@ -300,6 +300,16 @@ namespace SlavGPS {
 		QGridLayout * labels_grid = NULL;
 		QVBoxLayout * main_vbox = NULL;
 		QVBoxLayout * controls_vbox = NULL;
+
+		/*
+		  Place where selection crosshair should be drawn in
+		  given graph.
+
+		  This class doesn't have ::hover_ch member because
+		  the hover crosshair is more volatile and temporary
+		  so it shouldn't be semi-permanently stored.
+		*/
+		Crosshair2D m_selection_ch;
 
 	private:
 
@@ -332,7 +342,7 @@ namespace SlavGPS {
 		sg_ret cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y) override;
 		Crosshair2D get_cursor_pos_on_line(QMouseEvent * ev) override;
 
-		sg_ret on_cursor_move(Track * trk, const Crosshair2D & cursor_pos, const Crosshair2D & selected_tp) override;
+		sg_ret on_cursor_move(Track * trk, const Crosshair2D & selection_ch, const Crosshair2D & hover_ch) override;
 
 
 		sg_ret generate_initial_track_data(Track * trk) override;

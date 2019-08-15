@@ -335,6 +335,8 @@ sg_ret ProfileView<Tx, Tx_ll>::set_initial_visible_range_y(const TrackDataBase &
 */
 sg_ret TrackProfileDialog::set_center_at_selected_tp(QMouseEvent * ev, const Graph2D * graph_2d, int graph_2d_central_n_columns)
 {
+	return sg_ret::ok;
+
 	const int graph_2d_leftmost_pixel = graph_2d->central_get_leftmost_pixel();
 	const int graph_2d_rightmost_pixel = graph_2d->central_get_rightmost_pixel();
 
@@ -392,12 +394,13 @@ sg_ret TrackProfileDialog::set_center_at_selected_tp(QMouseEvent * ev, const Gra
 
    Both "pos" arguments should indicate position in graph's coordinate system.
 */
-sg_ret ProfileViewBase::draw_crosshairs(const Crosshair2D & selected_tp, const Crosshair2D & cursor_pos)
+sg_ret ProfileViewBase::draw_crosshairs(const Crosshair2D & selection_ch, const Crosshair2D & hover_ch)
 {
-	if (!selected_tp.valid && !cursor_pos.valid) {
+	if (!selection_ch.valid && !hover_ch.valid) {
 		/* Perhaps this should be an error, maybe we shouldn't
 		   call the function when both positions are
 		   invalid. */
+		qDebug() << SG_PREFIX_N << "Not drawing crosshairs: both crosshairs are invalid";
 		return sg_ret::ok;
 	}
 
@@ -417,11 +420,13 @@ sg_ret ProfileViewBase::draw_crosshairs(const Crosshair2D & selected_tp, const C
 	/*
 	  Now draw crosshairs on this fresh (restored from saved) image.
 	*/
-	if (selected_tp.valid) {
-		this->graph_2d->central_draw_simple_crosshair(selected_tp);
+	if (selection_ch.valid) {
+		// qDebug() << SG_PREFIX_I << "Will now draw 'selection' crosshair in" << this->get_title();
+		this->graph_2d->central_draw_simple_crosshair(selection_ch);
 	}
-	if (cursor_pos.valid) {
-		this->graph_2d->central_draw_simple_crosshair(cursor_pos);
+	if (hover_ch.valid) {
+		// qDebug() << SG_PREFIX_D << "Will now draw 'hover' crosshair in" << this->get_title();
+		this->graph_2d->central_draw_simple_crosshair(hover_ch);
 	}
 
 
@@ -462,12 +467,52 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 	ProfileViewBase * view = this->get_current_view();
 	assert (view->graph_2d == graph_2d);
 
-
-
 	qDebug() << SG_PREFIX_I << "Crosshair. Mouse event at" << ev->x() << ev->y() << "(cbl ="
 		 << ev->x() - graph_2d->central_get_leftmost_pixel()
 		 << graph_2d->central_get_bottommost_pixel() - ev->y() << ")";
 
+	/* Noninitialized == invalid. Don't draw hover crosshair on
+	   clicks, it's not necessary: the two crosshairs (hover and
+	   selection crosshair) would be drawn in the same
+	   position. */
+	const Crosshair2D hover_ch;
+
+	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
+		ProfileViewBase * view_iter = *iter;
+		if (!view_iter->graph_2d) {
+			qDebug() << SG_PREFIX_N << "Not drawing crosshairs in" << view_iter->get_title() << ": no graph";
+			continue;
+		}
+
+		if (!view_iter->track_data_is_valid()) {
+			qDebug() << SG_PREFIX_N << "Not drawing crosshairs in" << view_iter->get_title() << ": track data invalid";
+			/* We didn't visit that tab yet, so track data
+			   hasn't been generated for current graph
+			   width. */
+			/* FIXME: generate the track data so that we
+			   can set a crosshair over there. */
+			continue;
+		}
+
+		view_iter->m_selection_ch = view_iter->get_cursor_pos_on_line(ev);
+		view_iter->m_selection_ch.debug = "selection crosshair in " + view_iter->get_title();
+		if (!view_iter->m_selection_ch.valid) {
+			qDebug() << SG_PREFIX_N << "Not drawing crosshairs in" << view_iter->get_title() << ": failed to get selection crosshair";
+			continue;
+		}
+
+		/*
+		  Positions passed to draw_crosshairs() are in 2D
+		  graph's coordinate system (beginning in bottom left
+		  corner), not Qt's coordinate system (beginning in
+		  upper left corner).
+		*/
+		qDebug() << SG_PREFIX_I << "Will now draw crosshairs in" << view_iter->get_title();
+		view_iter->draw_crosshairs(view_iter->m_selection_ch, hover_ch);
+	}
+
+#if 0
+	//
 
 
 	const sg_ret tp_lookup = this->set_center_at_selected_tp(ev,
@@ -488,7 +533,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 	   This is done on all graphs because we want to have 'mouse
 	   release' event reflected in all graphs. */
-	Crosshair2D cursor_pos; /* Noninitialized == invalid. Don't draw cursor position on clicks. */
+	Crosshair2D hover_ch; /* Noninitialized == invalid. Don't draw cursor position on clicks. */
 	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
 		ProfileViewBase * view_iter = *iter;
 		if (!view_iter->graph_2d) {
@@ -516,12 +561,12 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 		  corner), not Qt's coordinate system (beginning in
 		  upper left corner).
 		*/
-		view_iter->draw_crosshairs(selected_tp, cursor_pos);
+		view_iter->draw_crosshairs(selected_tp, hover_ch);
 	}
 
 
 	this->button_split_at_marker->setEnabled(is_selected_tp_crosshair);
-
+#endif
 	return;
 }
 
@@ -709,31 +754,14 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 
 	/* Crosshair laying on a graph, with 'x' position matching current 'x' position of cursor. */
-	Crosshair2D cursor_pos = view->get_cursor_pos_on_line(ev);
-	if (!cursor_pos.valid) {
-		qDebug() << SG_PREFIX_E << "Failed to get cursor position on line";
+	Crosshair2D hover_ch = view->get_cursor_pos_on_line(ev);
+	hover_ch.debug = "hover crosshair for " + view->get_title();
+	if (!hover_ch.valid) {
+		qDebug() << SG_PREFIX_E << "Failed to get hover crosshair for" << view->get_title();
 		return;
 	}
 
-
-	/*
-	  Crosshair laying on a graph where currently selected tp is
-	  located.
-
-	  At the beginning there will be no selected tp, so this
-	  function will return !ok. This is fine, ignore the !ok
-	  status and continue to drawing current position.
-
-	  TODO_OPTIMIZATION: there is no need to find a selected
-	  trackpoint every time a cursor moves. Only current
-	  trackpoint (trackpoint under moving cursor mouse) is
-	  changing. The trackpoint selected by previous cursor click
-	  is does not change.
-	*/
-	Crosshair2D selected_tp = view->get_position_of_tp(this->trk, SELECTED);
-	selected_tp.debug = "selected tp 1";
-
-	view->on_cursor_move(trk, cursor_pos, selected_tp);
+	view->on_cursor_move(trk, view->m_selection_ch, hover_ch);
 
 	return;
 }
@@ -742,14 +770,14 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 
 template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, const Crosshair2D & cursor_pos, const Crosshair2D & selected_tp)
+sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, const Crosshair2D & selection_ch, const Crosshair2D & hover_ch)
 {
 	double meters_from_start = 0.0;
 
 	switch (this->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
-		trk->select_tp_by_percentage_dist((double) cursor_pos.central_cbl_x / this->get_central_n_columns(), &meters_from_start, HOVERED);
-		this->draw_crosshairs(selected_tp, cursor_pos);
+		trk->select_tp_by_percentage_dist((double) hover_ch.central_cbl_x / this->get_central_n_columns(), &meters_from_start, HOVERED);
+		this->draw_crosshairs(selection_ch, hover_ch);
 
 		if (this->labels.x_value) {
 			const Distance distance(meters_from_start, SupplementaryDistanceUnit::Meters);
@@ -758,8 +786,8 @@ sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, const Crosshair2D & c
 		break;
 
 	case GisViewportDomain::Time:
-		trk->select_tp_by_percentage_time((double) cursor_pos.central_cbl_x / this->get_central_n_columns(), HOVERED);
-		this->draw_crosshairs(selected_tp, cursor_pos);
+		trk->select_tp_by_percentage_time((double) hover_ch.central_cbl_x / this->get_central_n_columns(), HOVERED);
+		this->draw_crosshairs(selection_ch, hover_ch);
 
 		if (this->labels.x_value) {
 			time_t seconds_from_start = 0;
@@ -776,7 +804,7 @@ sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, const Crosshair2D & c
 
 
 
-	const double y = this->track_data_to_draw.y[cursor_pos.central_cbl_x]; /* FIXME: use proper value for array index. */
+	const double y = this->track_data_to_draw.y[hover_ch.central_cbl_x]; /* FIXME: use proper value for array index. */
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
 		if (this->labels.y_value) {
@@ -1413,12 +1441,11 @@ sg_ret ProfileViewBase::draw_track_and_crosshairs(Track * trk)
 
 	/* Draw crosshairs. */
 	if (1) {
-		Crosshair2D cursor_pos = this->get_position_of_tp(trk, HOVERED);
-		cursor_pos.debug = "cursor pos";
-		Crosshair2D selected_tp = this->get_position_of_tp(trk, SELECTED);
-		selected_tp.debug = "selected tp 2";
+		Crosshair2D hover_ch; /* Invalid. */ //this->get_position_of_tp(trk, HOVERED);
+		hover_ch.debug = "cursor pos";
+		//Crosshair2D selected_tp = this->get_position_of_tp(trk, SELECTED);
 
-		ret = this->draw_crosshairs(selected_tp, cursor_pos);
+		ret = this->draw_crosshairs(this->m_selection_ch, hover_ch);
 		if (sg_ret::ok != ret) {
 			qDebug() << SG_PREFIX_E << "Failed to draw crosshairs";
 		}
@@ -1442,6 +1469,16 @@ sg_ret TrackProfileDialog::handle_graph_resize_cb(ViewportPixmap * pixmap)
 		return sg_ret::err;
 	}
 
+	/*
+	  Invalidate. Old crosshair would be invalid in graph with new
+	  sizes.
+
+	  TODO: selection of tp should survive resizing of
+	  graphs. Maybe we should save not only crosshair position,
+	  but also Distance or Time on x axis, and then, based on that
+	  value we should re-calculate ::m_selection_ch.
+	*/
+	view->m_selection_ch = Crosshair2D();
 
 	view->graph_2d->cached_central_n_columns = view->graph_2d->central_get_n_columns();
 	view->graph_2d->cached_central_n_rows = view->graph_2d->central_get_n_rows();
