@@ -73,13 +73,15 @@ namespace SlavGPS {
 
 	class TrackViewLabels {
 	public:
-		QLabel * x_value = NULL;
-		QLabel * y_value = NULL;
-		QLabel * t_value = NULL; /* Actual clock time, only for time-based graphs. */
-
 		QLabel * x_label = NULL;
+		QLabel * x_value = NULL;
+
 		QLabel * y_label = NULL;
-		QLabel * t_label = NULL;
+		QLabel * y_value = NULL;
+
+		/* Actual timestamp read directly from trackpoint. */
+		QLabel * tp_timestamp_label = NULL;
+		QLabel * tp_timestamp_value = NULL;
 	};
 
 
@@ -323,6 +325,8 @@ namespace SlavGPS {
 		Crosshair2D m_selection_ch;
 
 	private:
+		virtual sg_ret update_x_labels(const TPInfo & tp_info) = 0;
+		virtual sg_ret update_y_labels(const TPInfo & tp_info) = 0;
 
 		QString title;
 	};
@@ -356,7 +360,6 @@ namespace SlavGPS {
 		Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) override;
 
 		sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) override;
-
 
 		sg_ret generate_initial_track_data(Track * trk) override;
 
@@ -433,7 +436,10 @@ namespace SlavGPS {
 		*/
 		sg_ret regenerate_track_data_to_draw(Track * trk);
 
-		QString get_y_grid_label(float value);
+		sg_ret update_x_labels(const TPInfo & tp_info) override;
+		sg_ret update_y_labels(const TPInfo & tp_info) override;
+
+		QString get_y_grid_label(double value);
 		QString get_x_grid_label(const Tx & value_uu);
 	};
 

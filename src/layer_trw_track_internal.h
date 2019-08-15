@@ -243,8 +243,6 @@ namespace SlavGPS {
 		bool select_tp_by_percentage_time(double reldist, int tp_index);
 		sg_ret select_tp(const Trackpoint * tp);
 
-		sg_ret get_tp_relative_timestamp(time_t & seconds_from_start, tp_idx tp_idx);
-
 		Trackpoint * get_tp_by_max_speed() const;
 		Trackpoint * get_tp_by_max_alt() const;
 		Trackpoint * get_tp_by_min_alt() const;

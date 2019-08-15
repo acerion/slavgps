@@ -115,8 +115,6 @@ static GraphIntervalsSpeed    speed_intervals;
 
 
 
-static void time_label_update(QLabel * label, time_t seconds_from_start);
-
 static QString get_time_grid_label(const Time & interval_value, const Time & value);
 
 
@@ -253,7 +251,11 @@ sg_ret ProfileView<Time, Time_ll>::set_initial_visible_range_x(void)
 }
 
 
+
+
 }
+
+
 
 
 template <typename Tx, typename Tx_ll>
@@ -759,21 +761,6 @@ Crosshair2D ProfileViewBase::tpinfo_to_crosshair(const TPInfo & tp_info)
 
 
 
-void time_label_update(QLabel * label, time_t seconds)
-{
-	unsigned int h = seconds / 3600;
-	unsigned int m = (seconds - h * 3600) / 60;
-	unsigned int s = seconds - (3600 * h) - (60 * m);
-
-	const QString tmp_buf = QObject::tr("%1:%2:%3").arg(h, 2, 10, (QChar) '0').arg(m, 2, 10, (QChar) '0').arg(s, 2, 10, (QChar) '0');
-	label->setText(tmp_buf);
-
-	return;
-}
-
-
-
-
 void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseEvent * ev)
 {
 	Graph2D * graph_2d = (Graph2D *) vpixmap;
@@ -811,43 +798,101 @@ sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, QMouseEvent * ev)
 
 	this->draw_crosshairs(this->m_selection_ch, hover_ch);
 
-
-	switch (this->graph_2d->x_domain) {
-	case GisViewportDomain::Distance:
-		if (this->labels.x_value) {
-			/* Values in x[] are already re-calculated to user units. */
-			const Distance_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
-			const Distance x_uu = Distance(x_ll_uu, Preferences::get_unit_distance()); /* TODO: distance unit or supplementary distance unit? */
-			this->labels.x_value->setText(x_uu.to_string());
-		}
-		break;
-
-	case GisViewportDomain::Time:
-		if (this->labels.x_value) {
-			/* Values in x[] are already re-calculated to user units. */
-			const Time_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
-			const Time x_uu = Time(x_ll_uu);
-
-			/*
-			  TODO: get timestamp relative to beginning of track?
-			  const Time_ll seconds_from_start = x_ll_uu;
-			  trk->get_tp_relative_timestamp(seconds_from_start, HOVERED);
-			*/
-			//time_label_update(
-			this->labels.x_value->setText(x_uu.to_duration_string());
-		}
-
-		if (this->labels.t_value) {
-			this->labels.t_value->setText(tp_info.found_tp->timestamp.to_timestamp_string(Qt::LocalTime));
-		}
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->graph_2d->x_domain;
+	if (sg_ret::ok != this->update_x_labels(tp_info)) {
+		qDebug() << SG_PREFIX_E << "Failed to update x labels in view" << this->get_title();
 		return sg_ret::err;
 	}
 
+	if (sg_ret::ok != this->update_y_labels(tp_info)) {
+		qDebug() << SG_PREFIX_E << "Failed to update y labels in view" << this->get_title();
+		return sg_ret::err;
+	}
+
+	return sg_ret::ok;
+}
 
 
+
+
+namespace SlavGPS {
+
+
+
+
+template <>
+sg_ret ProfileView<Distance, Distance_ll>::update_x_labels(const TPInfo & tp_info)
+{
+	/* This is a private method, so we assume that tp_info, and in
+	   particular tp_info.found_tp are valid. */
+	assert(tp_info.valid);
+	assert(NULL != tp_info.found_tp);
+
+
+	if (this->labels.x_value) {
+		/* Values in x[] are already re-calculated to user units. */
+		const Distance_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
+		const Distance x_uu = Distance(x_ll_uu, Preferences::get_unit_distance()); /* TODO: distance unit or supplementary distance unit? */
+		this->labels.x_value->setText(x_uu.to_string());
+	}
+
+	/*
+	  Absolute timestamp.
+
+	  Thanks to TrackData::tps[] we now have access to trackpoints
+	  and their timestamps. Having the timestamp even in
+	  Distance-based graphs may be useful.
+	*/
+	this->labels.tp_timestamp_value->setText(tp_info.found_tp->timestamp.to_timestamp_string(Qt::LocalTime));
+
+	return sg_ret::ok;
+}
+
+
+
+
+template <>
+sg_ret ProfileView<Time, Time_ll>::update_x_labels(const TPInfo & tp_info)
+{
+	/* This is a private method, so we assume that tp_info, and in
+	   particular tp_info.found_tp are valid. */
+	assert(tp_info.valid);
+	assert(NULL != tp_info.found_tp);
+
+	/* Relative time from start of track. */
+	if (this->labels.x_value) {
+		/* Values in x[] are already re-calculated to user units. */
+		const Time_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
+		const Time x_uu = Time(x_ll_uu);
+
+		/* TODO: we should use timestamp of first valid
+		   tp. Make sure that x_min is a timestamp of first
+		   valid tp. */
+		const Time x_uu_from_start = x_uu - this->track_data_to_draw.x_min;
+
+		this->labels.x_value->setText(x_uu_from_start.to_duration_string());
+	}
+
+	/* Absolute time stamp. */
+	this->labels.tp_timestamp_value->setText(tp_info.found_tp->timestamp.to_timestamp_string(Qt::LocalTime));
+
+	return sg_ret::ok;
+}
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+template <typename Tx, typename Tx_ll>
+sg_ret ProfileView<Tx, Tx_ll>::update_y_labels(const TPInfo & tp_info)
+{
+	/* This is a private method, so we assume that tp_info, and in
+	   particular tp_info.found_tp are valid. */
+	assert(tp_info.valid);
+	assert(NULL != tp_info.found_tp);
 
 	/* Values in y[] are already re-calculated to user units. */
 	const double y_uu = this->track_data_to_draw.y[tp_info.found_tp_idx];
@@ -1819,8 +1864,12 @@ void ProfileViewBase::configure_labels(void)
 {
 	switch (this->graph_2d->x_domain) {
 	case GisViewportDomain::Distance:
-		this->labels.x_label = new QLabel(QObject::tr("Track Distance:"));
+		this->labels.x_label = new QLabel(QObject::tr("Distance From Start:"));
 		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+
+		/* Additional absolute timestamp to provide more information in UI. */
+		this->labels.tp_timestamp_label = new QLabel(QObject::tr("Trackpoint timestamp:"));
+		this->labels.tp_timestamp_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
@@ -1828,9 +1877,9 @@ void ProfileViewBase::configure_labels(void)
 		this->labels.x_label = new QLabel(QObject::tr("Time From Start:"));
 		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
-		/* Additional timestamp to provide more information in UI. */
-		this->labels.t_label = new QLabel(QObject::tr("Time/Date:"));
-		this->labels.t_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
+		/* Additional absolute timestamp to provide more information in UI. */
+		this->labels.tp_timestamp_label = new QLabel(QObject::tr("Trackpoint timestamp:"));
+		this->labels.tp_timestamp_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 	default:
@@ -1859,7 +1908,7 @@ void ProfileViewBase::configure_labels(void)
 		break;
 
 	case GisViewportDomain::Distance:
-		this->labels.y_label = new QLabel(QObject::tr("Track Distance:"));
+		this->labels.y_label = new QLabel(QObject::tr("Distance From Start:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
@@ -1884,12 +1933,10 @@ void ProfileViewBase::configure_labels(void)
 	this->labels_grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum), row, 3);
 	row++;
 
-	if (this->labels.t_value) {
-		this->labels_grid->addWidget(this->labels.t_label, row, 0, Qt::AlignLeft);
-		this->labels_grid->addWidget(this->labels.t_value, row, 1, Qt::AlignRight);
-		this->labels_grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum), row, 3);
-		row++;
-	}
+	this->labels_grid->addWidget(this->labels.tp_timestamp_label, row, 0, Qt::AlignLeft);
+	this->labels_grid->addWidget(this->labels.tp_timestamp_value, row, 1, Qt::AlignRight);
+	this->labels_grid->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum), row, 3);
+	row++;
 
 	return;
 }
@@ -2426,7 +2473,7 @@ void ProfileView<Tx, Tx_ll>::draw_x_grid(void)
 
 
 template <typename Tx, typename Tx_ll>
-QString ProfileView<Tx, Tx_ll>::get_y_grid_label(float value_uu)
+QString ProfileView<Tx, Tx_ll>::get_y_grid_label(double value_uu)
 {
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Elevation:

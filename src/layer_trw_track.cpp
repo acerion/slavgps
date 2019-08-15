@@ -1218,21 +1218,6 @@ sg_ret Track::select_tp(const Trackpoint * tp)
 
 
 
-sg_ret Track::get_tp_relative_timestamp(time_t & seconds_from_start, tp_idx tp_index)
-{
-	Trackpoint * tp = this->get_tp(tp_index);
-	if (NULL == tp) {
-		return sg_ret::err;
-	}
-
-	seconds_from_start = tp->timestamp.get_value() - (*this->trackpoints.begin())->timestamp.get_value();
-
-	return sg_ret::ok;
-}
-
-
-
-
 Trackpoint * Track::get_tp_by_max_speed() const
 {
 	if (this->trackpoints.empty()) {
