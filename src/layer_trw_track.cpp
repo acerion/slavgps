@@ -1192,6 +1192,32 @@ bool Track::select_tp_by_percentage_time(double reltime, int tp_index)
 
 
 
+/**
+   TODO: selecting a trackpoint just on basis of pointer address is weak. Maybe also add some unique-per-tp id?
+*/
+sg_ret Track::select_tp(const Trackpoint * tp)
+{
+	this->iterators[SELECTED].iter_valid = false;
+
+	if (this->trackpoints.empty()) {
+		return sg_ret::err;
+	}
+
+	auto iter = std::next(this->trackpoints.begin());
+	for (; iter != this->trackpoints.end(); iter++) {
+		if (tp == *iter) {
+			this->iterators[SELECTED].iter_valid = true;
+			this->iterators[SELECTED].iter = iter;
+			return sg_ret::ok;
+		}
+	}
+
+	return sg_ret::err;
+}
+
+
+
+
 sg_ret Track::get_tp_relative_timestamp(time_t & seconds_from_start, tp_idx tp_index)
 {
 	Trackpoint * tp = this->get_tp(tp_index);

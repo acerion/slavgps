@@ -511,6 +511,31 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 		view_iter->draw_crosshairs(view_iter->m_selection_ch, hover_ch);
 	}
 
+
+	sg_ret tp_lookup = sg_ret::err;
+	TPInfo info = view->get_tp_info_under_cursor(ev);
+	if (info.valid) {
+		if (NULL != info.found_tp) {
+			tp_lookup = this->trk->select_tp(info.found_tp);
+			if (sg_ret::ok != tp_lookup) {
+				qDebug() << SG_PREFIX_E << "Failed to select tp in track";
+			} else {
+				this->main_gisview->set_center_coord(info.found_tp->coord);
+				this->trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
+			}
+		} else {
+			qDebug() << SG_PREFIX_N << "NULL 'found tp' for view" << view->get_title();
+		}
+	} else {
+		qDebug() << SG_PREFIX_N << "Failed to find tp info for view" << view->get_title();
+	}
+
+	if (sg_ret::ok != tp_lookup) {
+		/* Unable to get the point so give up. */
+		this->button_split_at_marker->setEnabled(false);
+		return;
+	}
+
 #if 0
 	//
 
@@ -605,35 +630,15 @@ sg_ret ProfileView<Tx, Tx_ll>::cbl_find_y_on_graph_line(const int central_cbl_x,
 
 
 
-/*
-  If x values in track data were always separated by the same amount,
-  this function could have been a simple array indexing code based on
-  'x' coordinate of mouse event.
-
-  But since sometimes there can be gaps in graphs where x-domain is
-  Time, and especially because distance values (in graphs where
-  x-domain is Distance) can greatly vary, things are more
-  complicated.
-
-  The fact that there can be fewer values in track data than there are
-  columns in pixmap (i.e. distance between each drawn trackpoints can
-  be two or more pixels) also doesn't help.
-
-  We have to use more sophisticated algorithm for
-  conversion of 'x' coordinate of mouse event to position of crosshair.
-
-  We have to try to find a trackpoint in track data arrays that is
-  drawn the closest to 'x' coordinate of mouse event.
-*/
 template <typename Tx, typename Tx_ll>
-Crosshair2D ProfileView<Tx, Tx_ll>::get_cursor_pos_on_line(QMouseEvent * ev)
+TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev)
 {
-	Crosshair2D crosshair;
+	TPInfo result;
 
 	const size_t n_values = this->track_data_to_draw.n_points;
 	if (0 == n_values) {
 		qDebug() << SG_PREFIX_N << "There were zero values in" << graph_2d->debug;
-		return crosshair;
+		return result;
 	}
 
 	const int n_columns = this->graph_2d->central_get_n_columns();
@@ -642,10 +647,6 @@ Crosshair2D ProfileView<Tx, Tx_ll>::get_cursor_pos_on_line(QMouseEvent * ev)
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
 	const int event_x = ev->x();
-
-	int found_x_px = -1;
-	int found_y_px = -1;
-	size_t found_i = (size_t) -1; /* Index of trackpoint in "track data" data structure that is the closest to mouse event. */
 
 	int x_px_diff = n_columns; /* We will be minimizing this value and stop when x_px_diff is the smallest. TODO: type of the variable: int or double? */
 
@@ -673,35 +674,79 @@ Crosshair2D ProfileView<Tx, Tx_ll>::get_cursor_pos_on_line(QMouseEvent * ev)
 
 			const int y = bottommost_px - y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
 
-			found_x_px = x;
-			found_y_px = y;
-			found_i = i;
+			result.found_x_px = x;
+			result.found_y_px = y;
+			result.found_i = i;
+			result.found_tp = this->track_data_to_draw.tps[i];
+			result.valid = true;
 
 			// qDebug() << SG_PREFIX_I << "Found new position closer to cursor event at index" << found_i << ":" << found_x_px << found_y_px;
 		}
 	}
 
-	if (found_i != (size_t) -1) {
-		crosshair.central_cbl_x = found_x_px - leftmost_px;
-		crosshair.central_cbl_y = bottommost_px - found_y_px;
+	return result;
+}
 
-		/*
-		  Use coordinates of point that is
-		  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
-		  b) is in 'beginning in bottom-left' coordinate system (cbl)
-		  to calculate global, 'beginning in top-left' coordinates.
-		*/
-		crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
-		crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
 
-		crosshair.valid = true;
+
+
+/*
+  If x values in track data were always separated by the same amount,
+  this function could have been a simple array indexing code based on
+  'x' coordinate of mouse event.
+
+  But since sometimes there can be gaps in graphs where x-domain is
+  Time, and especially because distance values (in graphs where
+  x-domain is Distance) can greatly vary, things are more
+  complicated.
+
+  The fact that there can be fewer values in track data than there are
+  columns in pixmap (i.e. distance between each drawn trackpoints can
+  be two or more pixels) also doesn't help.
+
+  We have to use more sophisticated algorithm for
+  conversion of 'x' coordinate of mouse event to position of crosshair.
+
+  We have to try to find a trackpoint in track data arrays that is
+  drawn the closest to 'x' coordinate of mouse event.
+*/
+template <typename Tx, typename Tx_ll>
+Crosshair2D ProfileView<Tx, Tx_ll>::get_cursor_pos_on_line(QMouseEvent * ev)
+{
+	Crosshair2D crosshair;
+
+	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
+
+
+	TPInfo info = this->get_tp_info_under_cursor(ev);
+	if (!info.valid) {
+		qDebug() << SG_PREFIX_N << "Could not find valid tp info in" << this->get_title();
+		return crosshair;
 	}
+
+
+	crosshair.central_cbl_x = info.found_x_px - leftmost_px;
+	crosshair.central_cbl_y = bottommost_px - info.found_y_px;
+
+	/*
+	  Use coordinates of point that is
+	  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
+	  b) is in 'beginning in bottom-left' coordinate system (cbl)
+	  to calculate global, 'beginning in top-left' coordinates.
+	*/
+	crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
+	crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
+
+	crosshair.valid = true;
+
 
 	/* Find 'y' position that lays on a graph line. */
 	//this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y);
 
 	return crosshair;
 }
+
 
 
 

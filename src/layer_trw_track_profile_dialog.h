@@ -211,6 +211,18 @@ namespace SlavGPS {
 
 
 
+	class TPInfo {
+	public:
+		int found_x_px = -1;
+		int found_y_px = -1;
+		size_t found_i = (size_t) -1; /* Index of trackpoint in "track data" data structure that is the closest to mouse event. */
+		bool valid = false;
+		Trackpoint * found_tp = NULL;
+	};
+
+
+
+
 	class ProfileViewBase {
 	public:
 		ProfileViewBase(GisViewportDomain x_domain, GisViewportDomain y_domain, TrackProfileDialog * dialog, QWidget * parent = NULL);
@@ -283,6 +295,7 @@ namespace SlavGPS {
 
 		virtual sg_ret on_cursor_move(Track * trk, const Crosshair2D & selection_ch, const Crosshair2D & hover_ch) = 0;
 
+		virtual TPInfo get_tp_info_under_cursor(QMouseEvent * ev) = 0;
 
 		QPen main_pen;
 		QPen gps_speed_pen;
@@ -330,6 +343,8 @@ namespace SlavGPS {
 
 
 		sg_ret draw_graph_without_crosshairs(Track * trk) override;
+
+		TPInfo get_tp_info_under_cursor(QMouseEvent * ev) override;
 
 
 		bool track_data_is_valid(void) const override;

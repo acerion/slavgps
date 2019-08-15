@@ -31,6 +31,7 @@
 #include "globals.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_data.h"
+
 #include "measurements.h"
 
 
@@ -141,6 +142,7 @@ sg_ret TrackData<Tx, Tx_ll>::compress_into(TrackData & target, int compressed_n_
 
 		target.x[i] = acc_x / sampling_size;
 		target.y[i] = acc_y / sampling_size;
+		target.tps[i] = this->tps[n_tps_compressed];
 
 		n_tps_compressed += sampling_size;
 	}
@@ -174,6 +176,11 @@ void TrackDataBase::invalidate(void)
 		free(this->y);
 		this->y = NULL;
 	}
+
+	if (this->tps) {
+		free(this->tps);
+		this->tps = NULL;
+	}
 }
 
 
@@ -204,6 +211,16 @@ sg_ret TrackDataBase::allocate_vector(int n_data_points)
 		this->y = NULL;
 	}
 
+	if (this->tps) {
+		if (this->n_points) {
+			qDebug() << SG_PREFIX_E << "Called the function for already allocated vector tps";
+		} else {
+			qDebug() << SG_PREFIX_W << "Called the function for already allocated vector tps";
+		}
+		free(this->tps);
+		this->tps = NULL;
+	}
+
 	this->x = (double *) malloc(sizeof (double) * n_data_points);
 	if (NULL == this->x) {
 		qDebug() << SG_PREFIX_E << "Failed to allocate 'x' vector";
@@ -218,8 +235,19 @@ sg_ret TrackDataBase::allocate_vector(int n_data_points)
 		return sg_ret::err;
 	}
 
+	this->tps = (Trackpoint **) malloc(sizeof (Trackpoint *) * n_data_points);
+	if (NULL == this->tps) {
+		free(this->x);
+		this->x = NULL;
+		free(this->y);
+		this->y = NULL;
+		qDebug() << SG_PREFIX_E << "Failed to allocate 'tps' vector";
+		return sg_ret::err;
+	}
+
 	memset(this->x, 0, sizeof (double) * n_data_points);
 	memset(this->y, 0, sizeof (double) * n_data_points);
+	memset(this->tps, 0, sizeof (Trackpoint *) * n_data_points);
 
 	/* There are n cells in vectors, but the data in the vectors is trash. */
 	this->n_points = n_data_points;
@@ -246,15 +274,7 @@ TrackDataBase::TrackDataBase(int n_data_points)
 */
 TrackDataBase::~TrackDataBase()
 {
-	if (this->x) {
-		free(this->x);
-		this->x = NULL;
-	}
-
-	if (this->y) {
-		free(this->y);
-		this->y = NULL;
-	}
+	this->invalidate();
 }
 
 
@@ -296,6 +316,7 @@ sg_ret TrackData<Time, Time_ll>::make_track_data_distance_over_time(Track * trk)
 	auto iter = trk->trackpoints.begin();
 	this->x[i] = (*iter)->timestamp.get_value();
 	this->y[i] = 0;
+	this->tps[i] = (*iter);
 	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 	i++;
 	iter++;
@@ -310,6 +331,8 @@ sg_ret TrackData<Time, Time_ll>::make_track_data_distance_over_time(Track * trk)
 		}
 
 		this->y[i] = this->y[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
+
+		this->tps[i] = (*iter);
 
 		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 
@@ -368,6 +391,8 @@ template <> /* Template specialisation for specific type. */
 sg_ret TrackData<Distance, Distance_ll>::make_track_data_altitude_over_distance(Track * trk, int compressed_n_points)
 {
 	TrackData result;
+
+	/* TODO: this function does not set this->tps[]. */
 
 
 	const int tp_count = trk->get_tp_count();
@@ -545,6 +570,7 @@ sg_ret TrackData<Distance, Distance_ll>::make_track_data_gradient_over_distance(
 {
 	TrackData result;
 
+	/* TODO: this function does not set this->tps[] = (*iter). */
 
 	const int tp_count = trk->get_tp_count();
 	if (tp_count < 2) {
@@ -642,8 +668,9 @@ sg_ret TrackData<Time, Time_ll>::make_track_data_speed_over_time(Track * trk)
 
 
 	int i = 0;
-	this->x[i] = data_dt.x[0];
+	this->x[i] = data_dt.x[i];
 	this->y[i] = 0.0;
+	this->tps[i] = data_dt.tps[i];
 	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 	i++;
 
@@ -668,6 +695,7 @@ sg_ret TrackData<Time, Time_ll>::make_track_data_speed_over_time(Track * trk)
 
 			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
 		}
+		this->tps[i] = data_dt.tps[i];
 	}
 
 	this->valid = true;
@@ -732,6 +760,8 @@ sg_ret TrackData<Time, Time_ll>::make_track_data_altitude_over_time(Track * trk)
 		this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
 		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, y_valid);
 
+		this->tps[i] = (*iter);
+
 		i++;
 		iter++;
 	} while (iter != trk->trackpoints.end());
@@ -782,6 +812,7 @@ sg_ret TrackData<Distance, Distance_ll>::make_track_data_speed_over_distance(Tra
 	int i = 0;
 	this->x[i] = 0;
 	this->y[i] = 0;
+	this->tps[i] = data_dt.tps[i];
 	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
 	i++;
 
@@ -812,6 +843,7 @@ sg_ret TrackData<Distance, Distance_ll>::make_track_data_speed_over_distance(Tra
 			this->x[i] = this->x[i - 1] + (delta_d / (n + 1 + n)); /* Accumulate the distance. */
 			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
 		}
+		this->tps[i] = data_dt.tps[i];
 	}
 
 	assert(i == tp_count);

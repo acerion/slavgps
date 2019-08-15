@@ -43,6 +43,7 @@ namespace SlavGPS {
 
 
 	class Track;
+	class Trackpoint;
 
 
 
@@ -78,6 +79,8 @@ namespace SlavGPS {
 
 		double y_min = 0.0;
 		double y_max = 0.0;
+
+		Trackpoint ** tps = NULL;
 	};
 
 
@@ -229,6 +232,15 @@ namespace SlavGPS {
 			}
 			this->y = (double *) malloc(sizeof (double) * other.n_points);
 			memcpy(this->y, other.y, sizeof (double) * other.n_points);
+		}
+
+		if (other.tps) {
+			if (this->tps) {
+				free(this->tps);
+				this->tps = NULL;
+			}
+			this->tps = (Trackpoint **) malloc(sizeof (Trackpoint *) * other.n_points);
+			memcpy(this->tps, other.tps, sizeof (double) * other.n_points);
 		}
 
 		this->x_min = other.x_min;
