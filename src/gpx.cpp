@@ -485,7 +485,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_speed:
-		importer->tp->speed = SGUtils::c_to_double(importer->cdata.toUtf8().constData());
+		importer->tp->gps_speed = SGUtils::c_to_double(importer->cdata.toUtf8().constData());
 		importer->cdata.clear();
 		break;
 
@@ -952,8 +952,8 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 	if (tp->course.is_valid()) {
 		fprintf(file, "    <course>%s</course>\n", tp->course.value_to_c_string().toUtf8().constData());
 	}
-	if (!std::isnan(tp->speed)) {
-		fprintf(file, "    <speed>%s</speed>\n", SGUtils::double_to_c(tp->speed).toUtf8().constData());
+	if (!std::isnan(tp->gps_speed)) {
+		fprintf(file, "    <speed>%s</speed>\n", SGUtils::double_to_c(tp->gps_speed).toUtf8().constData());
 	}
 	if (tp->fix_mode == GPSFixMode::Fix2D) {
 		fprintf(file, "    <fix>2d</fix>\n");

@@ -138,7 +138,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			double speed_value = 0.0;
 			QString speed_type;
 
-			if (std::isnan(tp->speed) && tp_prev) {
+			if (std::isnan(tp->gps_speed) && tp_prev) {
 				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
 					if (tp->timestamp != tp_prev->timestamp) {
 
@@ -152,7 +152,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					speed_type = "**";
 				}
 			} else {
-				speed_value = tp->speed;
+				speed_value = tp->gps_speed;
 				speed_type = "";
 			}
 			const Speed speed(speed_value, SpeedUnit::MetresPerSecond);

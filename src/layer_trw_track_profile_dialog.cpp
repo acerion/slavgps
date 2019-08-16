@@ -69,17 +69,17 @@ using namespace SlavGPS;
 #define MY_WIDGET_PROPERTY "ProfileViewBase"
 
 
-#define VIK_SETTINGS_TRACK_PROFILE_WIDTH "track_profile_display_width"
+#define VIK_SETTINGS_TRACK_PROFILE_WIDTH  "track_profile_display_width"
 #define VIK_SETTINGS_TRACK_PROFILE_HEIGHT "track_profile_display_height"
 
-#define VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM        "track_profile_et_show_dem"
-#define VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_SPEED      "track_profile_et_show_speed"
-#define VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED  "track_profile_sd_show_gps_speed"
-#define VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM        "track_profile_ed_show_dem"
-#define VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED  "track_profile_ed_show_gps_speed"
-#define VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED  "track_profile_gd_show_gps_speed"
-#define VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED  "track_profile_st_show_gps_speed"
-#define VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_SPEED      "track_profile_dt_show_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM_ELEVATION    "track_profile_et_show_dem_elevation"
+#define VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_GPS_SPEED        "track_profile_et_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED        "track_profile_sd_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM_ELEVATION    "track_profile_ed_show_dem_elevation"
+#define VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED        "track_profile_ed_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED        "track_profile_gd_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED        "track_profile_st_show_gps_speed"
+#define VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_GPS_SPEED        "track_profile_dt_show_gps_speed"
 
 
 
@@ -824,57 +824,45 @@ sg_ret ProfileView<Tx, Tx_ll>::update_y_labels(const TPInfo & tp_info)
  * (which is the elevations graph).
  */
 template <typename Tx, typename Tx_ll>
-void ProfileView<Tx, Tx_ll>::draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed)
+sg_ret ProfileView<Tx, Tx_ll>::draw_dem_elevation(Track * trk)
 {
 	double max_function_arg = trk->get_length_value_including_gaps();
 	double max_function_value_speed = 0;
 
-	/* Calculate the max speed factor. */
-	if (do_speed) {
-		max_function_value_speed = trk->get_max_speed().get_value() * 110 / 100;
-	}
+	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
+
 
 	double current_function_arg = 0.0;
 	const double max_function_value_dem = this->y_visible_max;
 
 	const QColor dem_color = this->dem_alt_pen.color();
-	const QColor speed_color = this->gps_speed_pen.color();
+
+
 
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
+	const size_t n_values = this->track_data_to_draw.n_points;
 
 	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
 
 		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		if (do_dem) {
-			const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
-			if (!elev.is_valid()) {
-				continue;
-			}
-
-			const double elev_value_uu = elev.convert_to_unit(this->graph_2d->height_unit).get_value();
-
-			/* offset is in current height units. */
-			const double current_function_value_uu = elev_value_uu - this->y_visible_min;
-
-			const int x = n_columns * current_function_arg / max_function_arg;
-			const int y = 0 - n_rows * current_function_value_uu / max_function_value_dem;
-			this->graph_2d->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
+		const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
+		if (!elev.is_valid()) {
+			continue;
 		}
 
-		if (do_speed) {
-			if (std::isnan((*iter)->speed)) {
-				continue;
-			}
+		const double elev_value_uu = elev.convert_to_unit(this->graph_2d->height_unit).get_value();
 
-			const double current_function_value = (*iter)->speed;
+		/* offset is in current height units. */
+		const double current_function_value_uu = elev_value_uu - this->y_visible_min;
 
-			/* This is just a speed indicator - no actual values can be inferred by user. */
-			const int x = n_columns * current_function_arg / max_function_arg;
-			const int y = 0 - n_rows * current_function_value / max_function_value_speed;
-			this->graph_2d->fill_rectangle(speed_color, x - 2, y - 2, 4, 4);
-		}
+		const int x = n_columns * current_function_arg / max_function_arg;
+		const int y = 0 - n_rows * current_function_value_uu / max_function_value_dem;
+		this->graph_2d->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
 	}
+
+	return sg_ret::ok;
 }
 
 
@@ -983,7 +971,8 @@ bool ProfileView<Tx, Tx_ll>::track_data_is_valid(void) const
 
 
 
-void ProfileViewET::draw_additional_indicators(Track * trk)
+template <typename Tx, typename Tx_ll>
+sg_ret ProfileView<Tx, Tx_ll>::draw_additional_indicators(Track * trk)
 {
 	const int n_rows = this->graph_2d->central_get_n_rows();
 	const size_t n_values = this->track_data_to_draw.n_points;
@@ -1017,177 +1006,87 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 	}
 
 
-	/* Show speeds. */
-	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
-		/* This is just an indicator - no actual values can be inferred by user. */
-
-		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
-
-		const QColor color = this->gps_speed_pen.color();
-		for (size_t i = 0; i < n_values; i++) {
-
-			const double current_function_value = this->track_data_to_draw.y[i];
-
-			const int x = i;
-			const int y = 0 - n_rows * current_function_value / max_function_value;
-			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
-		}
+	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
+		this->draw_dem_elevation(trk);
 	}
 
-	return;
-}
 
-
-
-
-void ProfileViewSD::draw_additional_indicators(Track * trk)
-{
+	/* Show GPS speed indicators. */
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
-
-		const int n_columns = this->graph_2d->central_get_n_columns();
-		const int n_rows = this->graph_2d->central_get_n_rows();
-
-		const double max_function_arg = trk->get_length_value_including_gaps();
-		const double max_function_value = this->y_visible_max;
-		double current_function_arg = 0.0;
-		double current_function_value = 0.0;
-
-		const QColor color = this->gps_speed_pen.color();
-		for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
-			double gps_speed = (*iter)->speed;
-			if (std::isnan(gps_speed)) {
-				continue;
-			}
-
-			gps_speed = Speed::convert_mps_to(gps_speed, this->graph_2d->speed_unit);
-
-			current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-			current_function_value = gps_speed - this->y_visible_min;
-
-			const int x = n_columns * current_function_arg / max_function_arg;
-			const int y = 0 - n_rows * current_function_value / max_function_value;
-			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
-		}
-	}
-}
-
-
-
-
-void ProfileViewED::draw_additional_indicators(Track * trk)
-{
-	const bool do_show_dem = this->show_dem_cb && this->show_dem_cb->checkState();
-	const bool do_show_gps_speed = this->show_gps_speed_cb && this->show_gps_speed_cb->checkState();
-
-	if (do_show_dem || do_show_gps_speed) {
-
-		/* Ensure somekind of max speed when not set. */
-		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_value() < 0.01) {
-			trk->calculate_max_speed();
-		}
-
-		this->draw_dem_alt_speed_dist(trk, do_show_dem, do_show_gps_speed);
-	}
-}
-
-
-
-
-void ProfileViewGD::draw_additional_indicators(Track * trk)
-{
-	const bool do_show_gps_speed = this->show_gps_speed_cb && this->show_gps_speed_cb->checkState();
-	if (do_show_gps_speed) {
 		/* Ensure some kind of max speed when not set. */
 		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_value() < 0.01) {
 			trk->calculate_max_speed();
 		}
 
-		this->draw_speed_dist(trk);
+		this->draw_gps_speeds(trk);
 	}
+
+	return sg_ret::ok;
 }
 
 
 
 
-void ProfileViewST::draw_additional_indicators(Track * trk)
+template <typename Tx, typename Tx_ll>
+sg_ret ProfileView<Tx, Tx_ll>::draw_gps_speeds(Track * trk)
 {
-	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
+	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
+	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
+	const int n_columns = this->graph_2d->central_get_n_columns();
+	const int n_rows = this->graph_2d->central_get_n_rows();
 
-		const int n_columns = this->graph_2d->central_get_n_columns();
-		const int n_rows = this->graph_2d->central_get_n_rows();
+	const size_t n_values = this->track_data_to_draw.n_points;
 
-		Time ts_begin;
-		Time ts_end;
-		if (sg_ret::ok == trk->get_timestamps(ts_begin, ts_end)) {
+	const QColor & speed_color = this->gps_speed_pen.color();
 
-			const time_t time_begin = ts_begin.get_value();
-			const time_t time_end = ts_end.get_value();
+	const Speed max_speed = trk->get_max_speed();
+	qDebug() << SG_PREFIX_I << "Max speed is" << max_speed.get_value();
 
-			const time_t max_function_arg = time_end - time_begin;
-			const double max_function_value = this->y_visible_max;
+	const double speed_max = 1.1 * max_speed.get_value();
 
-			const QColor color = this->gps_speed_pen.color();
+	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
+	const double y_pixels_per_unit = n_rows / 110; /* "110" means 110%. Zero percent at the bottom of graph, 110% (since we used 1.1 above) on top of graph. */
 
-			for (auto iter = trk->trackpoints.begin(); iter != trk->trackpoints.end(); iter++) {
-				double gps_speed = (*iter)->speed;
-				if (std::isnan(gps_speed)) {
-					continue;
-				}
+	for (size_t i = 0; i < n_values; i++) {
 
-				gps_speed = Speed::convert_mps_to(gps_speed, this->graph_2d->speed_unit);
-
-				const time_t current_function_arg = (*iter)->timestamp.get_value() - time_begin;
-				const double current_function_value = gps_speed - this->y_visible_min;
-
-				const int x = n_columns * current_function_arg / max_function_arg;
-				const int y = 0 - n_rows * current_function_value / max_function_value;
-				this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
-			}
-		} else {
-			qDebug() << SG_PREFIX_W << "Not drawing additional indicators: can't get timestamps";
+		const Trackpoint * tp = this->track_data_to_draw.tps[i];
+		if (NULL == tp) {
+			qDebug() << SG_PREFIX_N << "NULL trackpoint when drawing GPS speed for" << this->get_title();
+			continue;
 		}
-	}
-}
 
-
-
-
-void ProfileViewDT::draw_additional_indicators(Track * trk)
-{
-	/* Show speed indicator. */
-	if (this->show_speed_cb && this->show_speed_cb->checkState()) {
-
-		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
-
-		const size_t n_values = this->track_data_to_draw.n_points;
-		const int n_rows = this->graph_2d->central_get_n_rows();
-
-		const QColor color = this->gps_speed_pen.color();
-		/* This is just an indicator - no actual values can be inferred by user. */
-		for (size_t i = 0; i < n_values; i++) {
-
-			const double current_function_value = this->track_data_to_draw.y[i];
-
-			const int x = i;
-			const int y = 0 - n_rows * current_function_value / max_function_value;
-			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
+		const double gps_speed = tp->gps_speed;
+		if (std::isnan(gps_speed)) {
+			qDebug() << SG_PREFIX_N << "NAN GPS speed for trackpoint when drawing GPS speed for" << this->get_title();
+			continue;
 		}
+
+		const double x_value = this->track_data_to_draw.x[i];
+		const double y_value = 100 * gps_speed / speed_max; /* Percentage of maximum speed. */
+
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_value - this->track_data_to_draw.x_min.value);
+		const int y_px = bottommost_px - y_pixels_per_unit * y_value;
+
+		/* This is just a speed indicator - no actual values can be inferred by user. */
+		this->graph_2d->fill_rectangle(speed_color, x_px - 1, y_px - 1, 2, 2);
 	}
+
+	return sg_ret::ok;
 }
 
 
 
 
-void ProfileViewET::save_values(void)
+void ProfileViewET::save_settings(void)
 {
-	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM, this->show_dem_cb->checkState());
-	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_SPEED, this->show_speed_cb->checkState());
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM_ELEVATION, this->show_dem_cb->checkState());
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
 }
 
 
 
 
-void ProfileViewSD::save_values(void)
+void ProfileViewSD::save_settings(void)
 {
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
 }
@@ -1195,16 +1094,16 @@ void ProfileViewSD::save_values(void)
 
 
 
-void ProfileViewED::save_values(void)
+void ProfileViewED::save_settings(void)
 {
-	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM, this->show_dem_cb->checkState());
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM_ELEVATION, this->show_dem_cb->checkState());
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
 }
 
 
 
 
-void ProfileViewGD::save_values(void)
+void ProfileViewGD::save_settings(void)
 {
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
 }
@@ -1212,7 +1111,7 @@ void ProfileViewGD::save_values(void)
 
 
 
-void ProfileViewST::save_values(void)
+void ProfileViewST::save_settings(void)
 {
 	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
 }
@@ -1220,9 +1119,9 @@ void ProfileViewST::save_values(void)
 
 
 
-void ProfileViewDT::save_values(void)
+void ProfileViewDT::save_settings(void)
 {
-	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_SPEED, this->show_speed_cb->checkState());
+	ApplicationState::set_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_GPS_SPEED, this->show_gps_speed_cb->checkState());
 }
 
 
@@ -1278,40 +1177,6 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_graph_without_crosshairs(Track * trk)
 	this->graph_2d->saved_pixmap_valid = true;
 
 	return sg_ret::ok;
-}
-
-
-
-
-/**
-   Draws representative speed on a graph
-   (which is the gradients graph).
-*/
-template <typename Tx, typename Tx_ll>
-void ProfileView<Tx, Tx_ll>::draw_speed_dist(Track * trk)
-{
-	const double max_function_value = trk->get_max_speed().get_value() * 110 / 100; /* Calculate the max speed factor. */
-	const double max_function_arg = trk->get_length_value_including_gaps();
-
-	const int n_columns = this->get_central_n_columns();
-	const int n_rows = this->get_central_n_rows();
-
-	const QColor color = this->gps_speed_pen.color();
-	double current_function_arg = 0.0;
-	double current_function_value = 0.0;
-	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
-		if (std::isnan((*iter)->speed)) {
-			continue;
-		}
-
-		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		current_function_value = (*iter)->speed;
-
-		/* This is just a speed indicator - no actual values can be inferred by user. */
-		const int x = n_columns * current_function_arg / max_function_arg;
-		const int y = 0 - n_rows * current_function_value / max_function_value;
-		this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
-	}
 }
 
 
@@ -1441,7 +1306,7 @@ void ProfileViewBase::create_graph_2d(void)
 
 
 
-void TrackProfileDialog::save_values(void)
+void TrackProfileDialog::save_settings(void)
 {
 	/* Session settings. */
 	ApplicationState::set_integer(VIK_SETTINGS_TRACK_PROFILE_WIDTH, this->profile_width);
@@ -1449,7 +1314,7 @@ void TrackProfileDialog::save_values(void)
 
 	/* Just for this session. */
 	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
-		(*iter)->save_values();
+		(*iter)->save_settings();
 	}
 }
 
@@ -1458,7 +1323,7 @@ void TrackProfileDialog::save_values(void)
 
 void TrackProfileDialog::destroy_cb(void) /* Slot. */
 {
-	this->save_values();
+	this->save_settings();
 }
 
 
@@ -1788,18 +1653,18 @@ void ProfileViewET::configure_controls(void)
 
 
 	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), this->dialog);
-	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM, &value)) {
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM_ELEVATION, &value)) {
 		this->show_dem_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_dem_cb);
 	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 
-	this->show_speed_cb = new QCheckBox(QObject::tr("Show Speed"), dialog);
-	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_SPEED, &value)) {
-		this->show_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_GPS_SPEED, &value)) {
+		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
-	this->controls_vbox->addWidget(this->show_speed_cb);
-	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
+	this->controls_vbox->addWidget(this->show_gps_speed_cb);
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
@@ -1809,7 +1674,7 @@ void ProfileViewSD::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_SD_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
@@ -1825,13 +1690,13 @@ void ProfileViewED::configure_controls(void)
 	bool value;
 
 	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), this->dialog);
-	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM, &value)) {
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_DEM_ELEVATION, &value)) {
 		this->show_dem_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
 	this->controls_vbox->addWidget(this->show_dem_cb);
 	QObject::connect(this->show_dem_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ED_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
@@ -1846,7 +1711,7 @@ void ProfileViewGD::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_GD_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
@@ -1861,7 +1726,7 @@ void ProfileViewST::configure_controls(void)
 {
 	bool value;
 
-	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS S&peed"), this->dialog);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ST_SHOW_GPS_SPEED, &value)) {
 		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
@@ -1876,12 +1741,12 @@ void ProfileViewDT::configure_controls(void)
 {
 	bool value;
 
-	this->show_speed_cb = new QCheckBox(QObject::tr("Show S&peed"), this->dialog);
-	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_SPEED, &value)) {
-		this->show_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
+	this->show_gps_speed_cb = new QCheckBox(QObject::tr("Show GPS Speed (relative)"), this->dialog);
+	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_DT_SHOW_GPS_SPEED, &value)) {
+		this->show_gps_speed_cb->setCheckState(value ? Qt::Checked : Qt::Unchecked);
 	}
-	this->controls_vbox->addWidget(this->show_speed_cb);
-	QObject::connect(this->show_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
+	this->controls_vbox->addWidget(this->show_gps_speed_cb);
+	QObject::connect(this->show_gps_speed_cb, SIGNAL (stateChanged(int)), this->dialog, SLOT (checkbutton_toggle_cb()));
 }
 
 
@@ -1948,7 +1813,7 @@ ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDoma
 	this->main_pen.setColor("lightsteelblue");
 	this->main_pen.setWidth(1);
 
-	this->gps_speed_pen.setColor("red");
+	this->gps_speed_pen.setColor("orange");
 	this->dem_alt_pen.setColor("green");
 	this->no_alt_info_pen.setColor("yellow");
 

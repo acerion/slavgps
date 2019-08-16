@@ -494,7 +494,7 @@ Trackpoint * GPSPointParser::create_trackpoint(CoordMode coordinate_mode)
 
 	/* Trackpoint's extended attributes. */
 	if (this->line_extended) {
-		tp->speed = this->line_speed;
+		tp->gps_speed = this->line_speed;
 		tp->course = this->line_course;
 		tp->nsats = this->line_sat;
 		tp->fix_mode = (GPSFixMode) this->line_fix_mode;
@@ -848,10 +848,10 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 		fprintf(file, " newsegment=\"yes\"");
 	}
 
-	if (!std::isnan(tp->speed) || tp->course.is_valid() || tp->nsats > 0) {
+	if (!std::isnan(tp->gps_speed) || tp->course.is_valid() || tp->nsats > 0) {
 		fprintf(file, " extended=\"yes\"");
-		if (!std::isnan(tp->speed)) {
-			fprintf(file, " speed=\"%s\"", SGUtils::double_to_c(tp->speed).toUtf8().constData());
+		if (!std::isnan(tp->gps_speed)) {
+			fprintf(file, " speed=\"%s\"", SGUtils::double_to_c(tp->gps_speed).toUtf8().constData());
 		}
 		if (tp->course.is_valid()) {
 			fprintf(file, " course=\"%s\"", tp->course.value_to_c_string().toUtf8().constData());

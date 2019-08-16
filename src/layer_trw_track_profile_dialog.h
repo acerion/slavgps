@@ -169,7 +169,7 @@ namespace SlavGPS {
 
 		void draw_all_views(bool resized);
 
-		void save_values(void);
+		void save_settings(void);
 
 		ProfileViewBase * find_view(Graph2D * graph_2d) const;
 		ProfileViewBase * get_current_view(void) const;
@@ -242,7 +242,7 @@ namespace SlavGPS {
 		virtual void configure_controls(void) = 0;
 
 
-		virtual void save_values(void) {};
+		virtual void save_settings(void) {};
 
 		void configure_labels(void);
 		void create_widgets_layout(void);
@@ -271,6 +271,10 @@ namespace SlavGPS {
 		virtual bool track_data_is_valid(void) const = 0;
 
 		virtual sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) = 0;
+
+		virtual sg_ret draw_additional_indicators(Track * trk) = 0;
+		virtual sg_ret draw_gps_speeds(Track * trk) = 0;
+		virtual sg_ret draw_dem_elevation(Track * trk) = 0;
 
 		Crosshair2D tpinfo_to_crosshair(const TPInfo & tp_info) const;
 
@@ -301,6 +305,10 @@ namespace SlavGPS {
 		*/
 		Crosshair2D m_selection_ch;
 
+	protected:
+		QCheckBox * show_gps_speed_cb = NULL;
+		QCheckBox * show_dem_cb = NULL;
+
 	private:
 		virtual sg_ret update_x_labels(const TPInfo & tp_info) = 0;
 		virtual sg_ret update_y_labels(const TPInfo & tp_info) = 0;
@@ -317,7 +325,6 @@ namespace SlavGPS {
 			: ProfileViewBase(new_x_domain, new_y_domain, new_dialog, parent) {};
 		virtual ~ProfileView();
 
-		virtual void draw_additional_indicators(Track * trk) {};
 		void configure_controls(void) override {};
 
 
@@ -342,8 +349,11 @@ namespace SlavGPS {
 
 		sg_ret draw_function_values(Track * trk);
 
-		void draw_dem_alt_speed_dist(Track * trk, bool do_dem, bool do_speed);
-		void draw_speed_dist(Track * trk);
+
+
+		sg_ret draw_additional_indicators(Track * trk) override;
+		sg_ret draw_gps_speeds(Track * trk) override;
+		sg_ret draw_dem_elevation(Track * trk) override;
 
 
 
@@ -428,12 +438,9 @@ namespace SlavGPS {
 		ProfileViewET(TrackProfileDialog * dialog);
 		~ProfileViewET() {};
 
-		void draw_additional_indicators(Track * trk) override;
+
 		void configure_controls(void) override;
-		void save_values(void) override;
-	private:
-		QCheckBox * show_dem_cb = NULL;
-		QCheckBox * show_speed_cb = NULL;
+		void save_settings(void) override;
 	};
 
 
@@ -443,11 +450,9 @@ namespace SlavGPS {
 		ProfileViewSD(TrackProfileDialog * dialog);
 		~ProfileViewSD() {};
 
-		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(void) override;
-		void save_values(void) override;
-	private:
-		QCheckBox * show_gps_speed_cb = NULL;
+		void save_settings(void) override;
+
 	};
 
 
@@ -457,12 +462,10 @@ namespace SlavGPS {
 		ProfileViewED(TrackProfileDialog * dialog);
 		~ProfileViewED() {};
 
-		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(void) override;
-		void save_values(void) override;
+		void save_settings(void) override;
 	private:
-		QCheckBox * show_dem_cb = NULL;
-		QCheckBox * show_gps_speed_cb = NULL;
+
 	};
 
 
@@ -472,11 +475,8 @@ namespace SlavGPS {
 		ProfileViewGD(TrackProfileDialog * dialog);
 		~ProfileViewGD() {};
 
-		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(void) override;
-		void save_values(void) override;
-	private:
-		QCheckBox * show_gps_speed_cb = NULL;
+		void save_settings(void) override;
 	};
 
 
@@ -486,11 +486,8 @@ namespace SlavGPS {
 		ProfileViewST(TrackProfileDialog * dialog);
 		~ProfileViewST() {};
 
-		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(void) override;
-		void save_values(void) override;
-	private:
-		QCheckBox * show_gps_speed_cb = NULL;
+		void save_settings(void) override;
 	};
 
 
@@ -500,11 +497,8 @@ namespace SlavGPS {
 		ProfileViewDT(TrackProfileDialog * dialog);
 		~ProfileViewDT() {};
 
-		void draw_additional_indicators(Track * trk) override;
 		void configure_controls(void) override;
-		void save_values(void) override;
-	private:
-		QCheckBox * show_speed_cb = NULL;
+		void save_settings(void) override;
 	};
 
 

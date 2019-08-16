@@ -1544,7 +1544,7 @@ Trackpoint * LayerGPS::rt_create_trackpoint(bool record_every_tp)
 		new_tp->set_timestamp(this->current_rt_data.fix.time);
 		new_tp->altitude = alt;
 		/* Speed only available for 3D fix. Check for NAN when use this speed. */
-		new_tp->speed = this->current_rt_data.fix.speed;
+		new_tp->gps_speed = this->current_rt_data.fix.speed;
 		new_tp->course = this->current_rt_data.fix.track;
 		new_tp->nsats = this->current_rt_data.satellites_used;
 		new_tp->fix_mode = (GPSFixMode) this->current_rt_data.fix.mode;

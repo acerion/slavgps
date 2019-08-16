@@ -375,7 +375,7 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 	this->newsegment = tp.newsegment;
 	this->set_timestamp(tp.timestamp);
 	this->altitude = tp.altitude;
-	this->speed = tp.speed;
+	this->gps_speed = tp.gps_speed;
 	this->course = tp.course;
 	this->nsats = tp.nsats;
 
@@ -407,8 +407,8 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 		this->set_timestamp((tp_a.timestamp.get_value() / 2) + (tp_b.timestamp.get_value() / 2));
 	}
 
-	if (tp_a.speed != NAN && tp_b.speed != NAN) {
-		this->speed = (tp_a.speed + tp_b.speed) / 2;
+	if (tp_a.gps_speed != NAN && tp_b.gps_speed != NAN) { /* TODO: proper handling of NAN */
+		this->gps_speed = (tp_a.gps_speed + tp_b.gps_speed) / 2;
 	}
 
 	if (tp_a.course.is_valid() && tp_b.course.is_valid()) {
@@ -698,7 +698,7 @@ void Track::to_routepoints(void)
 		/* c.f. with vik_trackpoint_new(). */
 
 		(*iter)->timestamp.set_valid(false);
-		(*iter)->speed = NAN;
+		(*iter)->gps_speed = NAN;
 		(*iter)->course = NAN;
 		(*iter)->hdop = VIK_DEFAULT_DOP;
 		(*iter)->vdop = VIK_DEFAULT_DOP;
