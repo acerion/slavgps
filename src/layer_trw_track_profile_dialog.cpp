@@ -334,54 +334,33 @@ sg_ret ProfileView<Tx, Tx_ll>::set_initial_visible_range_y(const TrackDataBase &
    Change what is displayed in main GIS viewport in reaction to click
    event in one of Profile Dialog graphs.
 */
-sg_ret TrackProfileDialog::set_center_at_selected_tp(QMouseEvent * ev, const Graph2D * graph_2d, int graph_2d_central_n_columns)
+sg_ret TrackProfileDialog::set_center_at_selected_tp(const ProfileViewBase * view, QMouseEvent * ev)
 {
+	this->button_split_at_marker->setEnabled(false);
+
+	const TPInfo tp_info = view->get_tp_info_under_cursor(ev);
+	if (!tp_info.valid) {
+		qDebug() << SG_PREFIX_E << "No valid tp info found for view" << view->get_title();
+		return sg_ret::err;
+	}
+
+	if (NULL == tp_info.found_tp) {
+		qDebug() << SG_PREFIX_E << "NULL 'found tp' for view" << view->get_title();
+		return sg_ret::err;
+	}
+
+	if (sg_ret::ok != this->trk->select_tp(tp_info.found_tp)) {
+		qDebug() << SG_PREFIX_E << "Failed to select tp for view" << view->get_title();
+		return sg_ret::err;
+	}
+
+	this->main_gisview->set_center_coord(tp_info.found_tp->coord);
+	this->trw->emit_tree_item_changed("Clicking on trackpoint in profile view has brought this trackpoint to center of main GIS viewport");
+
+	/* There is a selected trackpoint, on which we can split the track. */
+	this->button_split_at_marker->setEnabled(true);
+
 	return sg_ret::ok;
-
-	const int graph_2d_leftmost_pixel = graph_2d->central_get_leftmost_pixel();
-	const int graph_2d_rightmost_pixel = graph_2d->central_get_rightmost_pixel();
-
-
-	const int event_x = ev->x();
-	if (event_x < graph_2d_leftmost_pixel) {
-		qDebug() << SG_PREFIX_E << "Event x =" << event_x << "is beyond left border =" << graph_2d_leftmost_pixel;
-		return sg_ret::err;
-	}
-	if (event_x > graph_2d_rightmost_pixel) {
-		qDebug() << SG_PREFIX_E << "Event x =" << event_x << "is beyond right border =" << graph_2d_rightmost_pixel;
-		return sg_ret::err;
-	}
-
-
-	/*
-	  Coordinate 'x' of event in central area of graph, where
-	  bottom-left corner of the center area is a beginning of
-	  coordinate system.
-	*/
-	const int center_cbl_x = event_x - graph_2d->central_get_leftmost_pixel();
-
-	bool found = false;
-	switch (graph_2d->x_domain) {
-	case GisViewportDomain::Time:
-		found = this->trk->select_tp_by_percentage_time((double) center_cbl_x / graph_2d_central_n_columns, SELECTED);
-		break;
-	case GisViewportDomain::Distance:
-		found = this->trk->select_tp_by_percentage_dist((double) center_cbl_x / graph_2d_central_n_columns, NULL, SELECTED);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) graph_2d->x_domain;
-		return sg_ret::err;
-	}
-
-
-	if (found) {
-		Trackpoint * tp = this->trk->get_selected_tp();
-		this->main_gisview->set_center_coord(tp->coord);
-		this->trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
-		return sg_ret::ok;
-	} else {
-		return sg_ret::err;
-	}
 }
 
 
@@ -512,87 +491,30 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 		view_iter->draw_crosshairs(view_iter->m_selection_ch, hover_ch);
 	}
 
+	this->button_split_at_marker->setEnabled(false);
 
-	sg_ret tp_lookup = sg_ret::err;
 	const TPInfo tp_info = view->get_tp_info_under_cursor(ev);
-	if (tp_info.valid) {
-		if (NULL != tp_info.found_tp) {
-			tp_lookup = this->trk->select_tp(tp_info.found_tp);
-			if (sg_ret::ok != tp_lookup) {
-				qDebug() << SG_PREFIX_E << "Failed to select tp in track";
-			} else {
-				this->main_gisview->set_center_coord(tp_info.found_tp->coord);
-				this->trw->emit_tree_item_changed("TRW - Track Profile Dialog - set center");
-			}
-		} else {
-			qDebug() << SG_PREFIX_N << "NULL 'found tp' for view" << view->get_title();
-		}
-	} else {
-		qDebug() << SG_PREFIX_N << "Failed to find tp info for view" << view->get_title();
-	}
-
-	if (sg_ret::ok != tp_lookup) {
-		/* Unable to get the point so give up. */
-		this->button_split_at_marker->setEnabled(false);
+	if (!tp_info.valid) {
+		qDebug() << SG_PREFIX_W << "No valid tp info found for view" << view->get_title();
 		return;
 	}
 
-#if 0
-	//
-
-
-	const sg_ret tp_lookup = this->set_center_at_selected_tp(ev,
-								 graph_2d,
-								 view->get_central_n_columns());
-	if (sg_ret::ok != tp_lookup) {
-		/* Unable to get the point so give up. */
-		this->button_split_at_marker->setEnabled(false);
+	if (NULL == tp_info.found_tp) {
+		qDebug() << SG_PREFIX_E << "NULL 'found tp' for view" << view->get_title();
 		return;
 	}
 
+	if (sg_ret::ok != this->trk->select_tp(tp_info.found_tp)) {
+		qDebug() << SG_PREFIX_E << "Failed to select tp for view" << view->get_title();
+		return;
+	}
+
+	this->main_gisview->set_center_coord(tp_info.found_tp->coord);
+	this->trw->emit_tree_item_changed("Clicking on trackpoint in profile view has brought this trackpoint to center of main GIS viewport");
+
+	/* There is a selected trackpoint, on which we can split the track. */
 	this->button_split_at_marker->setEnabled(true);
 
-	bool is_selected_tp_crosshair = false; /* TODO: calculate value of this flag based on 'selected_tp' being valid below. */
-
-	/* Attempt to redraw crosshair on all graphs. Notice that this
-	   does not redraw full graphs, just crosshairs.
-
-	   This is done on all graphs because we want to have 'mouse
-	   release' event reflected in all graphs. */
-	Crosshair2D hover_ch; /* Noninitialized == invalid. Don't draw cursor position on clicks. */
-	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
-		ProfileViewBase * view_iter = *iter;
-		if (!view_iter->graph_2d) {
-			continue;
-		}
-
-		if (!view_iter->track_data_is_valid()) {
-			/* We didn't visit that tab yet, so track data
-			   hasn't been generated for current graph
-			   width. */
-			/* FIXME: generate the track data so that we
-			   can set a crosshair over there. */
-			continue;
-		}
-
-	        Crosshair2D selected_tp = view_iter->get_position_of_tp(this->trk, SELECTED);
-		selected_tp.debug = "selected tp 3";
-		if (!selected_tp.valid) {
-			continue;
-		}
-
-		/*
-		  Positions passed to draw_crosshairs() are in 2D
-		  graph's coordinate system (beginning in bottom left
-		  corner), not Qt's coordinate system (beginning in
-		  upper left corner).
-		*/
-		view_iter->draw_crosshairs(selected_tp, hover_ch);
-	}
-
-
-	this->button_split_at_marker->setEnabled(is_selected_tp_crosshair);
-#endif
 	return;
 }
 
@@ -600,39 +522,7 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 
 template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y)
-{
-	const int n_rows = this->graph_2d->central_get_n_rows();
-	const int n_cols = this->graph_2d->central_get_n_columns();
-
-	if (central_cbl_x < 0) {
-		qDebug() << SG_PREFIX_E << "x too far to left: x =" << central_cbl_x << ", left border px =" << 0;
-		return sg_ret::err;
-	}
-	if (central_cbl_x > n_cols) {
-		qDebug() << SG_PREFIX_E << "x too far to right: x =" << central_cbl_x << ", right border px =" << n_cols;
-		return sg_ret::err;
-	}
-
-
-	if (central_cbl_x > n_cols) {
-		qDebug() << SG_PREFIX_E << "cbl x too large:" << central_cbl_x << n_cols;
-		assert (central_cbl_x <= n_cols);
-	}
-
-	const double y_current_value_uu = this->track_data_to_draw.y[central_cbl_x];
-	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
-
-	central_cbl_y = y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
-
-	return sg_ret::ok;
-}
-
-
-
-
-template <typename Tx, typename Tx_ll>
-TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev)
+TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev) const
 {
 	TPInfo result;
 
@@ -712,7 +602,7 @@ TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev)
   drawn the closest to 'x' coordinate of mouse event.
 */
 template <typename Tx, typename Tx_ll>
-Crosshair2D ProfileView<Tx, Tx_ll>::get_crosshair_under_cursor(QMouseEvent * ev)
+Crosshair2D ProfileView<Tx, Tx_ll>::get_crosshair_under_cursor(QMouseEvent * ev) const
 {
 	Crosshair2D crosshair;
 
@@ -724,16 +614,13 @@ Crosshair2D ProfileView<Tx, Tx_ll>::get_crosshair_under_cursor(QMouseEvent * ev)
 
 	crosshair = this->tpinfo_to_crosshair(tp_info);
 
-	/* Find 'y' position that lays on a graph line. */
-	//this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y);
-
 	return crosshair;
 }
 
 
 
 
-Crosshair2D ProfileViewBase::tpinfo_to_crosshair(const TPInfo & tp_info)
+Crosshair2D ProfileViewBase::tpinfo_to_crosshair(const TPInfo & tp_info) const
 {
 	Crosshair2D crosshair;
 
@@ -1098,22 +985,21 @@ bool ProfileView<Tx, Tx_ll>::track_data_is_valid(void) const
 
 void ProfileViewET::draw_additional_indicators(Track * trk)
 {
-	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
+	const size_t n_values = this->track_data_to_draw.n_points;
 
 	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
 		const double max_function_value = this->y_visible_max;
 
 		const QColor color = this->dem_alt_pen.color();
 
-		for (int i = 0; i < n_columns; i++) {
-			/* This could be slow doing this each time... */
-			const bool found_tp = trk->select_tp_by_percentage_time(((double) i / (double) n_columns), HOVERED);
-			if (!found_tp) {
+		for (size_t i = 0; i < n_values; i++) {
+			/* TODO: This could be slow doing this each time... */
+			const Trackpoint * tp = this->track_data_to_draw.tps[i];
+			if (NULL == tp) {
 				continue;
 			}
 
-			const Trackpoint * tp = trk->get_hovered_tp();
 			const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
 			if (!elev.is_valid()) {
 				continue;
@@ -1138,7 +1024,7 @@ void ProfileViewET::draw_additional_indicators(Track * trk)
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
 
 		const QColor color = this->gps_speed_pen.color();
-		for (int i = 0; i < n_columns; i++) {
+		for (size_t i = 0; i < n_values; i++) {
 
 			const double current_function_value = this->track_data_to_draw.y[i];
 
@@ -1273,12 +1159,12 @@ void ProfileViewDT::draw_additional_indicators(Track * trk)
 
 		const double max_function_value = trk->get_max_speed().get_value() * 110 / 100;
 
-		const int n_columns = this->graph_2d->central_get_n_columns();
+		const size_t n_values = this->track_data_to_draw.n_points;
 		const int n_rows = this->graph_2d->central_get_n_rows();
 
 		const QColor color = this->gps_speed_pen.color();
 		/* This is just an indicator - no actual values can be inferred by user. */
-		for (int i = 0; i < n_columns; i++) {
+		for (size_t i = 0; i < n_values; i++) {
 
 			const double current_function_value = this->track_data_to_draw.y[i];
 
@@ -1468,53 +1354,6 @@ void TrackProfileDialog::draw_all_views(bool resized)
 
 
 
-Crosshair2D ProfileViewBase::get_position_of_tp(Track * trk, tp_idx tp_idx)
-{
-	double pc = NAN;
-	Crosshair2D crosshair; /* Initially invalid. */
-
-	Trackpoint * tp = trk->get_tp(tp_idx);
-	if (NULL == tp) {
-		return crosshair;
-	}
-
-	switch (this->graph_2d->x_domain) {
-	case GisViewportDomain::Time:
-		pc = trk->get_tp_time_percent(tp_idx);
-		break;
-	case GisViewportDomain::Distance:
-		pc = trk->get_tp_distance_percent(tp_idx);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled x domain" << (int) this->graph_2d->x_domain;
-		/* pc = NAN */
-		break;
-	}
-
-	if (!std::isnan(pc)) {
-		crosshair.central_cbl_x = pc * this->get_central_n_columns();             /* Find x. */
-		this->cbl_find_y_on_graph_line(crosshair.central_cbl_x, crosshair.central_cbl_y); /* Find y. */
-
-		/*
-		  Use coordinates of point that is
-		  a) limited to central area of 2d graph (so as if margins outside of the central area didn't exist),
-		  b) is in 'beginning in bottom-left' coordinate system (cbl)
-		  to calculate global, 'beginning in top-left' coordinates.
-		*/
-		crosshair.x = crosshair.central_cbl_x + this->graph_2d->central_get_leftmost_pixel();
-		crosshair.y = this->graph_2d->central_get_bottommost_pixel() - crosshair.central_cbl_y;
-
-		crosshair.valid = true;
-	}
-
-	// qDebug() << SG_PREFIX_D << "returning pos of tp idx" << tp_idx;
-
-	return crosshair;
-}
-
-
-
-
 sg_ret ProfileViewBase::draw_track_and_crosshairs(Track * trk)
 {
 	sg_ret ret_trk;
@@ -1529,9 +1368,8 @@ sg_ret ProfileViewBase::draw_track_and_crosshairs(Track * trk)
 
 	/* Draw crosshairs. */
 	if (1) {
-		Crosshair2D hover_ch; /* Invalid. */ //this->get_position_of_tp(trk, HOVERED);
+		Crosshair2D hover_ch; /* Invalid, don't draw hover crosshair right after a view has been created or resized. */
 		hover_ch.debug = "cursor pos";
-		//Crosshair2D selected_tp = this->get_position_of_tp(trk, SELECTED);
 
 		ret = this->draw_crosshairs(this->m_selection_ch, hover_ch);
 		if (sg_ret::ok != ret) {

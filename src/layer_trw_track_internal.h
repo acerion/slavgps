@@ -239,8 +239,6 @@ namespace SlavGPS {
 		bool get_total_elevation_gain(Altitude & delta_up, Altitude & down) const;
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
 
-		bool select_tp_by_percentage_dist(double reldist, double *meters_from_start, tp_idx tp_idx);
-		bool select_tp_by_percentage_time(double reldist, int tp_index);
 		sg_ret select_tp(const Trackpoint * tp);
 
 		Trackpoint * get_tp_by_max_speed() const;
@@ -297,20 +295,6 @@ namespace SlavGPS {
 		void clear_profile_dialog();
 
 		void export_track(const QString & title, const QString & default_file_name, SGFileType file_type);
-
-
-		/**
-		   @brief Return the percentage of how far a trackpoint is a long a track by distance
-
-		   @return NAN on problems
-		*/
-		double get_tp_distance_percent(tp_idx tp_idx) const;
-		/**
-		   @brief Return the percentage of how far a current trackpoint is along a track by time
-
-		   @return NAN on problems
-		*/
-		double get_tp_time_percent(tp_idx tp_idx) const;
 
 
 		TrackPoints::iterator erase_trackpoint(TrackPoints::iterator iter);

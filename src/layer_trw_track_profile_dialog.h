@@ -191,7 +191,7 @@ namespace SlavGPS {
 		void handle_mouse_button_release_cb(ViewportPixmap * vpixmap, QMouseEvent * event);
 
 	private:
-		sg_ret set_center_at_selected_tp(QMouseEvent * ev, const Graph2D * graph_2d, int graph_2d_central_n_columns);
+		sg_ret set_center_at_selected_tp(const ProfileViewBase * view, QMouseEvent * ev);
 
 
 		/* Pen used to draw main parts of views (i.e. the values of functions y = f(x)). */
@@ -257,29 +257,6 @@ namespace SlavGPS {
 		void create_graph_2d(void);
 
 		/**
-		   Calculate y position for crosshair on y=f(x) graph.
-		   The position will be in "beginning of coordinates system is in bottom-left corner".
-		   cbl = coordinate-bottom-left.
-		*/
-		Crosshair2D get_position_of_tp(Track * trk, tp_idx tp_idx);
-
-
-		/**
-		   Find y position of argument that matches x position of argument.
-		   In other words: find y = f(x), where f() is current graph.
-
-		   Returned cursor position is in "beginning of
-		   coordinate system (position 0,0) is in bottom-left
-		   corner".
-		   cbl = coordinate-bottom-left.
-
-		   Arguments are x/y coordinates in central area of
-		   graph. They are equal to 0/0 in bottom-left corner
-		   of central area of graph.
-		*/
-		virtual sg_ret cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y) = 0;
-
-		/**
 		   Get a crosshair that is "sticky" to drawn track
 		   profile line: its 'x' pixel coordinate will match
 		   'x' pixel coordinate of mouse event, and its 'y'
@@ -287,15 +264,15 @@ namespace SlavGPS {
 		   crosshair is positioned on track profile line drawn
 		   in track profile view.
 		*/
-		virtual Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) = 0;
+		virtual Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) const = 0;
 
-		virtual TPInfo get_tp_info_under_cursor(QMouseEvent * ev) = 0;
+		virtual TPInfo get_tp_info_under_cursor(QMouseEvent * ev) const = 0;
 
 		virtual bool track_data_is_valid(void) const = 0;
 
 		virtual sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) = 0;
 
-		Crosshair2D tpinfo_to_crosshair(const TPInfo & tp_info);
+		Crosshair2D tpinfo_to_crosshair(const TPInfo & tp_info) const;
 
 		QPen main_pen;
 		QPen gps_speed_pen;
@@ -346,7 +323,7 @@ namespace SlavGPS {
 
 		sg_ret draw_graph_without_crosshairs(Track * trk) override;
 
-		TPInfo get_tp_info_under_cursor(QMouseEvent * ev) override;
+		TPInfo get_tp_info_under_cursor(QMouseEvent * ev) const override;
 
 
 		bool track_data_is_valid(void) const override;
@@ -356,8 +333,7 @@ namespace SlavGPS {
 		sg_ret set_initial_visible_range_y(const TrackDataBase & track_data);
 
 
-		sg_ret cbl_find_y_on_graph_line(const int central_cbl_x, int & central_cbl_y) override;
-		Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) override;
+		Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) const override;
 
 		sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) override;
 
