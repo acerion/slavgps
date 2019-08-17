@@ -820,46 +820,44 @@ sg_ret ProfileView<Tx, Tx_ll>::update_y_labels(const TPInfo & tp_info)
 
 
 /**
- * Draws DEM points and a respresentative speed on the supplied pixmap
- * (which is the elevations graph).
- */
+   Draws DEM points and a respresentative speed on the supplied pixmap
+   (which is the elevations graph).
+*/
 template <typename Tx, typename Tx_ll>
 sg_ret ProfileView<Tx, Tx_ll>::draw_dem_elevation(Track * trk)
 {
-	double max_function_arg = trk->get_length_value_including_gaps();
-	double max_function_value_speed = 0;
-
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
-
-
-	double current_function_arg = 0.0;
-	const double max_function_value_dem = this->y_visible_max;
-
-	const QColor dem_color = this->dem_alt_pen.color();
-
-
-
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
 	const size_t n_values = this->track_data_to_draw.n_points;
+	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
+	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
 
-	for (auto iter = std::next(trk->trackpoints.begin()); iter != trk->trackpoints.end(); iter++) {
+	const QColor & color = this->dem_alt_pen.color();
 
-		current_function_arg += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-		const Altitude elev = DEMCache::get_elev_by_coord((*iter)->coord, DemInterpolation::Best);
+	for (size_t i = 0; i < n_values; i++) {
+
+		const Trackpoint * tp = this->track_data_to_draw.tps[i];
+		if (NULL == tp) {
+			continue;
+		}
+
+		/* TODO: This could be slow doing this each time... */
+		const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
 		if (!elev.is_valid()) {
 			continue;
 		}
 
-		const double elev_value_uu = elev.convert_to_unit(this->graph_2d->height_unit).get_value();
+		const int x_value_uu = this->track_data_to_draw.x[i];
 
-		/* offset is in current height units. */
-		const double current_function_value_uu = elev_value_uu - this->y_visible_min;
+		const double elev_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
+		const double y_value_uu = elev_uu - this->y_visible_min;
 
-		const int x_px = n_columns * current_function_arg / max_function_arg;
-		const int y_px = 0 - n_rows * current_function_value_uu / max_function_value_dem;
-		this->graph_2d->fill_rectangle(dem_color, x_px - 2, y_px - 2, 4, 4);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_value_uu - this->track_data_to_draw.x_min.value);
+		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu - this->track_data_to_draw.y_min);
+
+		this->graph_2d->fill_rectangle(color, x_px - 2, y_px - 2, 4, 4);
 	}
 
 	return sg_ret::ok;
@@ -974,44 +972,11 @@ bool ProfileView<Tx, Tx_ll>::track_data_is_valid(void) const
 template <typename Tx, typename Tx_ll>
 sg_ret ProfileView<Tx, Tx_ll>::draw_additional_indicators(Track * trk)
 {
-	const int n_rows = this->graph_2d->central_get_n_rows();
-	const size_t n_values = this->track_data_to_draw.n_points;
-
-	if (this->show_dem_cb && this->show_dem_cb->checkState())  {
-		const double max_function_value = this->y_visible_max;
-
-		const QColor color = this->dem_alt_pen.color();
-
-		for (size_t i = 0; i < n_values; i++) {
-			/* TODO: This could be slow doing this each time... */
-			const Trackpoint * tp = this->track_data_to_draw.tps[i];
-			if (NULL == tp) {
-				continue;
-			}
-
-			const Altitude elev = DEMCache::get_elev_by_coord(tp->coord, DemInterpolation::Simple);
-			if (!elev.is_valid()) {
-				continue;
-			}
-
-			const double elev_value_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
-
-			/* offset is in current height units. */
-			const double current_function_value_uu = elev_value_uu - this->y_visible_min;
-
-			const int x_px = i;
-			const int y_px = 0 - n_rows * current_function_value_uu / max_function_value;
-			this->graph_2d->fill_rectangle(color, x_px - 2, y_px - 2, 4, 4);
-		}
-	}
-
-
 	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
 		this->draw_dem_elevation(trk);
 	}
 
 
-	/* Show GPS speed indicators. */
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 		/* Ensure some kind of max speed when not set. */
 		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_value() < 0.01) {
@@ -1650,7 +1615,6 @@ void ProfileViewBase::configure_labels(void)
 void ProfileViewET::configure_controls(void)
 {
 	bool value;
-
 
 	this->show_dem_cb = new QCheckBox(QObject::tr("Show DEM"), this->dialog);
 	if (ApplicationState::get_boolean(VIK_SETTINGS_TRACK_PROFILE_ET_SHOW_DEM_ELEVATION, &value)) {
