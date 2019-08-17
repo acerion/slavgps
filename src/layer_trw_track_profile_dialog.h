@@ -101,15 +101,15 @@ namespace SlavGPS {
 		  So if the two values are zero, they indicate
 		  bottom-left corner of central area of 2d graph.
 		*/
-		int central_cbl_x = 0;
-		int central_cbl_y = 0;
+		int central_cbl_x_px = 0;
+		int central_cbl_y_px = 0;
 
 		/*
 		  Global coordinates in Qt widget, following
 		  'beginning in top-left corner' convention.
 		*/
-		int x = 0;
-		int y = 0;
+		int x_px = 0;
+		int y_px = 0;
 
 		QString debug;
 
@@ -258,11 +258,11 @@ namespace SlavGPS {
 
 		/**
 		   Get a crosshair that is "sticky" to drawn track
-		   profile line: its 'x' pixel coordinate will match
-		   'x' pixel coordinate of mouse event, and its 'y'
-		   pixel coordinate will be calculated so that
-		   crosshair is positioned on track profile line drawn
-		   in track profile view.
+		   profile line: its 'x_px' pixel coordinate will
+		   match 'x_px' pixel coordinate of mouse event, and
+		   its 'y_px' pixel coordinate will be calculated so
+		   that crosshair is positioned on track profile line
+		   drawn in track profile view.
 		*/
 		virtual Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) const = 0;
 

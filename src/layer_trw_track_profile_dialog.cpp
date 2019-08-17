@@ -553,20 +553,20 @@ TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev) const
 		}
 
 		const Tx_ll x_current_value_uu = this->track_data_to_draw.x[i];
-		const int x = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->track_data_to_draw.x_min.value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->track_data_to_draw.x_min.value);
 
 		/* See if x coordinate of this trackpoint on a pixmap
 		   is closer to cursor than the previous x
 		   coordinate. */
-		int x_px_diff_current = std::abs(x - event_x);
+		int x_px_diff_current = std::abs(x_px - event_x);
 		if (x_px_diff_current < x_px_diff) {
 			/* Found a trackpoint painted at position 'x' that is closer to cursor event position on x axis. */
 			x_px_diff = x_px_diff_current;
 
-			const int y = bottommost_px - y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
+			const int y_px = bottommost_px - y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
 
-			result.found_x_px = x;
-			result.found_y_px = y;
+			result.found_x_px = x_px;
+			result.found_y_px = y_px;
 			result.found_tp_idx = i;
 			result.found_tp = this->track_data_to_draw.tps[i];
 			result.valid = true;
@@ -627,8 +627,8 @@ Crosshair2D ProfileViewBase::tpinfo_to_crosshair(const TPInfo & tp_info) const
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 
-	crosshair.central_cbl_x = tp_info.found_x_px - leftmost_px;
-	crosshair.central_cbl_y = bottommost_px - tp_info.found_y_px;
+	crosshair.central_cbl_x_px = tp_info.found_x_px - leftmost_px;
+	crosshair.central_cbl_y_px = bottommost_px - tp_info.found_y_px;
 
 	/*
 	  Use coordinates of point that is
@@ -636,8 +636,8 @@ Crosshair2D ProfileViewBase::tpinfo_to_crosshair(const TPInfo & tp_info) const
 	  b) is in 'beginning in bottom-left' coordinate system (cbl)
 	  to calculate global, 'beginning in top-left' coordinates.
 	*/
-	crosshair.x = crosshair.central_cbl_x + leftmost_px;
-	crosshair.y = bottommost_px - crosshair.central_cbl_y;
+	crosshair.x_px = crosshair.central_cbl_x_px + leftmost_px;
+	crosshair.y_px = bottommost_px - crosshair.central_cbl_y_px;
 
 	crosshair.valid = true;
 
@@ -857,9 +857,9 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_dem_elevation(Track * trk)
 		/* offset is in current height units. */
 		const double current_function_value_uu = elev_value_uu - this->y_visible_min;
 
-		const int x = n_columns * current_function_arg / max_function_arg;
-		const int y = 0 - n_rows * current_function_value_uu / max_function_value_dem;
-		this->graph_2d->fill_rectangle(dem_color, x - 2, y - 2, 4, 4);
+		const int x_px = n_columns * current_function_arg / max_function_arg;
+		const int y_px = 0 - n_rows * current_function_value_uu / max_function_value_dem;
+		this->graph_2d->fill_rectangle(dem_color, x_px - 2, y_px - 2, 4, 4);
 	}
 
 	return sg_ret::ok;
@@ -930,14 +930,14 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_function_values(Track * trk)
 		  varying intervals (e.g. different values of
 		  distances between consecutive measurements of y).
 		*/
-		const int x = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->track_data_to_draw.x_min.value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->track_data_to_draw.x_min.value);
 
 		const bool y_value_valid = !std::isnan(this->track_data_to_draw.y[i]);
 
 		if (y_value_valid) {
 			const double y_current_value_uu = this->track_data_to_draw.y[i];
 
-			cur_valid_pos.rx() = x;
+			cur_valid_pos.rx() = x_px;
 			cur_valid_pos.ry() = bottommost_px - y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
 
 			graph_2d->draw_line(valid_pen, last_valid_pos, cur_valid_pos);
@@ -949,10 +949,10 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_function_values(Track * trk)
 			  top to indicate invalid y value.
 			*/
 
-			const int begin_y = bottommost_px;
-			const int end_y = bottommost_px - n_rows;
+			const int begin_y_px = bottommost_px;
+			const int end_y_px = bottommost_px - n_rows;
 
-			graph_2d->draw_line(invalid_pen, x, begin_y, x, end_y);
+			graph_2d->draw_line(invalid_pen, x_px, begin_y_px, x_px, end_y_px);
 		}
 	}
 
@@ -999,9 +999,9 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_additional_indicators(Track * trk)
 			/* offset is in current height units. */
 			const double current_function_value_uu = elev_value_uu - this->y_visible_min;
 
-			const int x = i;
-			const int y = 0 - n_rows * current_function_value_uu / max_function_value;
-			this->graph_2d->fill_rectangle(color, x - 2, y - 2, 4, 4);
+			const int x_px = i;
+			const int y_px = 0 - n_rows * current_function_value_uu / max_function_value;
+			this->graph_2d->fill_rectangle(color, x_px - 2, y_px - 2, 4, 4);
 		}
 	}
 
@@ -2068,23 +2068,23 @@ void ProfileView<Tx, Tx_ll>::draw_y_grid(void)
 	   will get forever loop. */
 	for (double value_uu = first_multiple; value_uu <= last_multiple; value_uu += this->y_interval) {
 		const double value_from_edge_uu = value_uu - this->y_visible_min;
-		/* 'row' is in "beginning in top-left corner" coordinate system. */
-		const int row = bottommost_px - y_pixels_per_unit * value_from_edge_uu;
+		/* 'y_px' is in "beginning in top-left corner" coordinate system. */
+		const int y_px = bottommost_px - y_pixels_per_unit * value_from_edge_uu;
 
-		if (row >= topmost_px && row <= bottommost_px) {
-			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", row =" << row;
+		if (y_px >= topmost_px && y_px <= bottommost_px) {
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", y_px =" << y_px;
 
 			/* Graph line. From left edge of central area to right edge of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
-							  leftmost_px,             row,
-							  leftmost_px + n_columns, row);
+							  leftmost_px,             y_px,
+							  leftmost_px + n_columns, y_px);
 
 			/* Text label in left margin. */
-			const QRectF bounding_rect = QRectF(2, row, left_width - 4, left_height);
+			const QRectF bounding_rect = QRectF(2, y_px, left_width - 4, left_height);
 			const QString label = this->get_y_grid_label(value_uu);
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, TextOffset::Up);
 		} else {
-			qDebug() << SG_PREFIX_D << "      value (outside) =" << value_uu << ", row =" << row;
+			qDebug() << SG_PREFIX_N << "      value (outside) =" << value_uu << ", y_px =" << y_px;
 		}
 	}
 }
@@ -2151,23 +2151,23 @@ void ProfileView<Tx, Tx_ll>::draw_x_grid(void)
 
 	for (Tx value_uu = first_multiple; value_uu <= last_multiple; value_uu += this->x_interval.value) {
 		const Tx value_from_edge_uu = value_uu - this->x_visible_min;
-		/* 'col' is in "beginning in top-left corner" coordinate system. */
-		const int col = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
+		/* 'x_px' is in "beginning in top-left corner" coordinate system. */
+		const int x_px = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
 
-		if (col >= leftmost_px && col <= rightmost_px) {
-			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", col =" << col;
+		if (x_px >= leftmost_px && x_px <= rightmost_px) {
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", x_px =" << x_px;
 
 			/* Graph line. From bottom of central area to top of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
-							  col, topmost_px,
-							  col, topmost_px + n_rows);
+							  x_px, topmost_px,
+							  x_px, topmost_px + n_rows);
 
 			/* Text label in bottom margin. */
-			const QRectF bounding_rect = QRectF(col, bottommost_px + 1, bottom_width - 3, bottom_height - 3);
+			const QRectF bounding_rect = QRectF(x_px, bottommost_px + 1, bottom_width - 3, bottom_height - 3);
 			const QString label = this->get_x_grid_label(value_uu);
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, TextOffset::Left);
 		} else {
-			qDebug() << SG_PREFIX_D << "      value (outside) =" << value_uu << ", col =" << col;
+			qDebug() << SG_PREFIX_N << "      value (outside) =" << value_uu << ", x_px =" << x_px;
 		}
 	}
 }
@@ -2263,10 +2263,10 @@ Graph2D::Graph2D(int left, int right, int top, int bottom, QWidget * parent) : V
 */
 sg_ret Graph2D::cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) const
 {
-	const int leftmost   = this->central_get_leftmost_pixel();
-	const int rightmost  = this->central_get_rightmost_pixel();
-	const int topmost    = this->central_get_topmost_pixel();
-	const int bottommost = this->central_get_bottommost_pixel();
+	const int leftmost_px   = this->central_get_leftmost_pixel();
+	const int rightmost_px  = this->central_get_rightmost_pixel();
+	const int topmost_px    = this->central_get_topmost_pixel();
+	const int bottommost_px = this->central_get_bottommost_pixel();
 
 	const QPoint position = this->mapFromGlobal(QCursor::pos());
 
@@ -2275,30 +2275,30 @@ sg_ret Graph2D::cbl_get_cursor_pos(QMouseEvent * ev, ScreenPos & screen_pos) con
 #endif
 
 #if 0
-	const int x = position.x();
-	const int y = position.y();
+	const int x_px = position.x();
+	const int y_px = position.y();
 #else
-	const int x = ev->x();
-	const int y = ev->y();
+	const int x_px = ev->x();
+	const int y_px = ev->y();
 #endif
 
 	/* Cursor outside of chart area. */
-	if (x > rightmost) {
+	if (x_px > rightmost_px) {
 		return sg_ret::err;
 	}
-	if (y > bottommost) {
+	if (y_px > bottommost_px) {
 		return sg_ret::err;
 	}
-	if (x < leftmost) {
+	if (x_px < leftmost_px) {
 		return sg_ret::err;
 	}
-	if (y < topmost) {
+	if (y_px < topmost_px) {
 		return sg_ret::err;
 	}
 
 	/* Converting from Qt's "beginning is in upper-left" into "beginning is in bottom-left" coordinate system. */
-	screen_pos.rx() = x;
-	screen_pos.ry() = bottommost - y;
+	screen_pos.rx() = x_px;
+	screen_pos.ry() = bottommost_px - y_px;
 
 	return sg_ret::ok;
 }
@@ -2362,10 +2362,10 @@ int Graph2D::central_get_n_rows(void) const
 
 void Graph2D::central_draw_simple_crosshair(const Crosshair2D & crosshair)
 {
-	const int leftmost_pixel = this->central_get_leftmost_pixel();
-	const int rigthmost_pixel = this->central_get_rightmost_pixel();
-	const int topmost_pixel = this->central_get_topmost_pixel();
-	const int bottommost_pixel = this->central_get_bottommost_pixel();
+	const int leftmost_px = this->central_get_leftmost_pixel();
+	const int rigthmost_px = this->central_get_rightmost_pixel();
+	const int topmost_px = this->central_get_topmost_pixel();
+	const int bottommost_px = this->central_get_bottommost_pixel();
 
 	if (!crosshair.valid) {
 		qDebug() << SG_PREFIX_E << "Crosshair" << crosshair.debug << "is invalid";
@@ -2373,14 +2373,14 @@ void Graph2D::central_draw_simple_crosshair(const Crosshair2D & crosshair)
 		return;
 	}
 
-	//qDebug() << SG_PREFIX_I << "Crosshair" << crosshair.debug << "at coord" << crosshair.x << crosshair.y << "(central cbl =" << crosshair.central_cbl_x << crosshair.central_cbl_y << ")";
+	//qDebug() << SG_PREFIX_I << "Crosshair" << crosshair.debug << "at coord" << crosshair.x_px << crosshair.y_px << "(central cbl =" << crosshair.central_cbl_x_px << crosshair.central_cbl_y_px << ")";
 
-	if (crosshair.x > rigthmost_pixel || crosshair.x < leftmost_pixel) {
+	if (crosshair.x_px > rigthmost_px || crosshair.x_px < leftmost_px) {
 		qDebug() << SG_PREFIX_E << "Crosshair has bad x";
 		/* Position outside of graph area. */
 		return;
 	}
-	if (crosshair.y > bottommost_pixel || crosshair.y < topmost_pixel) {
+	if (crosshair.y_px > bottommost_px || crosshair.y_px < topmost_px) {
 		qDebug() << SG_PREFIX_E << "Crosshair has bad y";
 		/* Position outside of graph area. */
 		return;
@@ -2392,6 +2392,6 @@ void Graph2D::central_draw_simple_crosshair(const Crosshair2D & crosshair)
 	/* Small optimization: use QT's drawing primitives directly.
 	   Remember that (0,0) screen position is in upper-left corner of viewport. */
 
-	this->painter.drawLine(leftmost_pixel, crosshair.y, rigthmost_pixel, crosshair.y); /* Horizontal line. */
-	this->painter.drawLine(crosshair.x, topmost_pixel, crosshair.x, bottommost_pixel); /* Vertical line. */
+	this->painter.drawLine(leftmost_px, crosshair.y_px, rigthmost_px, crosshair.y_px); /* Horizontal line. */
+	this->painter.drawLine(crosshair.x_px, topmost_px, crosshair.x_px, bottommost_px); /* Vertical line. */
 }
