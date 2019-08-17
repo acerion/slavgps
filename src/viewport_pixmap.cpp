@@ -299,14 +299,14 @@ void ViewportPixmap::draw_text_debug(const QRectF & text_rect)
 */
 void ViewportPixmap::offset_text_bounding_rect(QRectF & text_rect, TextOffset text_offset) const
 {
-	if ((unsigned int) text_offset & (unsigned int) TextOffset::Up) {
-		/* Move box a bit up. */
+	if ((uint8_t) text_offset & (uint8_t) TextOffset::Up) {
+		/* Move box up. */
 		const fpixel new_top = text_rect.top() - (text_rect.height() / 2);
 		text_rect.moveTop(new_top);
 	}
 
-	if ((unsigned int) text_offset & (unsigned int) TextOffset::Left) {
-		/* Move box a bit to the left. */
+	if ((uint8_t) text_offset & (uint8_t) TextOffset::Left) {
+		/* Move box to the left. */
 		const fpixel new_left = text_rect.left() - (text_rect.width() / 2);
 		text_rect.moveLeft(new_left);
 	}
