@@ -80,6 +80,14 @@ QString Measurements::get_file_size_string(size_t file_size)
 
 
 
+DistanceUnit Distance::get_user_unit(void)
+{
+	return Preferences::get_unit_distance();
+}
+
+
+
+
 Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
 {
 	Distance result;
@@ -643,12 +651,12 @@ QDebug SlavGPS::operator<<(QDebug debug, const Distance & distance)
 bool Distance::operator==(const Distance & rhs) const
 {
 	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
 		return false;
 	}
 
 	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
 		return false;
 	}
 
@@ -727,6 +735,14 @@ Altitude::Altitude(double new_value, HeightUnit height_unit)
 	this->value = new_value;
 	this->valid = !std::isnan(new_value);
 	this->unit = height_unit;
+}
+
+
+
+
+HeightUnit Altitude::get_user_unit(void)
+{
+	return Preferences::get_unit_height();
 }
 
 
@@ -1030,6 +1046,32 @@ Altitude & Altitude::operator/=(double rhs)
 
 
 
+bool Altitude::operator==(const Altitude & rhs) const
+{
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
+		return false;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
+		return false;
+	}
+
+	return this->value == rhs.value;
+}
+
+
+
+
+bool Altitude::operator!=(const Altitude & rhs) const
+{
+	return !(*this == rhs);
+}
+
+
+
+
 double SlavGPS::operator/(const Altitude & lhs, const Altitude & rhs)
 {
 	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
@@ -1077,6 +1119,7 @@ bool SlavGPS::operator>=(const Altitude & lhs, const Altitude & rhs)
 QDebug SlavGPS::operator<<(QDebug debug, const Altitude & altitude)
 {
 	debug << altitude.to_string();
+	return debug;
 }
 
 
@@ -1146,6 +1189,14 @@ Speed::Speed(double new_value, SpeedUnit speed_unit)
 	this->value = new_value;
 	this->valid = !std::isnan(new_value); /* We don't test if value is less than zero, because in some contexts the speed can be negative. */
 	this->unit = speed_unit;
+}
+
+
+
+
+SpeedUnit Speed::get_user_unit(void)
+{
+	return Preferences::get_unit_speed();
 }
 
 
@@ -1447,6 +1498,32 @@ double SlavGPS::operator/(const Speed & lhs, const Speed & rhs)
 
 
 
+bool Speed::operator==(const Speed & rhs) const
+{
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
+		return false;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
+		return false;
+	}
+
+	return this->value == rhs.value;
+}
+
+
+
+
+bool Speed::operator!=(const Speed & rhs) const
+{
+	return !(*this == rhs);
+}
+
+
+
+
 #if 0
 QString Speed::get_unit_full_string(SpeedUnit speed_unit)
 {
@@ -1468,6 +1545,7 @@ QString Speed::get_unit_full_string(SpeedUnit speed_unit)
 	return result;
 }
 #endif
+
 
 
 
@@ -1825,10 +1903,26 @@ Time::Time()
 
 
 
-Time::Time(time_t new_value)
+Time::Time(time_t new_value, TimeUnit time_unit __attribute__((unused)))
 {
 	this->value = new_value;
 	this->valid = !std::isnan(this->value);
+}
+
+
+
+
+TimeUnit Time::get_user_unit(void)
+{
+	return TimeUnit::Seconds; /* TODO: get this from Preferences? */
+}
+
+
+
+
+TimeUnit Time::get_internal_unit(void)
+{
+	return TimeUnit::Seconds;
 }
 
 
@@ -1939,12 +2033,12 @@ QDebug SlavGPS::operator<<(QDebug debug, const Time & timestamp)
 bool Time::operator==(const Time & rhs) const
 {
 	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
 		return false;
 	}
 
 	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid timestamp";
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
 		return false;
 	}
 
@@ -2080,6 +2174,14 @@ QString Time::to_duration_string(void) const
 	const int hours   = (this->value / (60 * 60)) % 60;
 
 	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
+}
+
+
+
+
+QString Time::to_string(void) const
+{
+	return this->to_duration_string();
 }
 
 
@@ -2282,10 +2384,18 @@ bool Time::is_zero(void) const
 
 
 
-Gradient::Gradient(double new_value)
+Gradient::Gradient(double new_value, GradientUnit gradient_unit)
 {
 	this->value = new_value;
 	this->valid = !std::isnan(new_value);
+}
+
+
+
+
+GradientUnit Gradient::get_user_unit(void)
+{
+	return GradientUnit::Degrees; /* TODO: get this from Preferences. */
 }
 
 
@@ -2374,4 +2484,142 @@ bool Gradient::is_zero(void) const
 		return true;
 	}
 	return std::abs(this->value) < epsilon;
+}
+
+
+
+
+Gradient & Gradient::operator+=(const Gradient & rhs)
+{
+	if (!rhs.valid) {
+		return *this;
+	}
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Invalid operands";
+		return *this;
+	}
+
+	this->value += rhs.value;
+	this->valid = !std::isnan(this->value) && this->value >= 0.0;
+	return *this;
+}
+
+
+
+
+Gradient & Gradient::operator-=(const Gradient & rhs)
+{
+	if (!rhs.valid) {
+		return *this;
+	}
+
+	if (!this->valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Invalid operands";
+		return *this;
+	}
+
+	this->value -= rhs.value;
+	this->valid = !std::isnan(this->value);
+	return *this;
+}
+
+
+
+
+Gradient & Gradient::operator+=(double rhs)
+{
+	if (this->valid) {
+		this->value += rhs;
+		this->valid = !std::isnan(this->value);
+	} else {
+		this->value = rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	}
+
+	return *this;
+}
+
+
+
+
+Gradient & Gradient::operator-=(double rhs)
+{
+	if (this->valid) {
+		this->value -= rhs;
+		this->valid = !std::isnan(this->value);
+	} else {
+		this->value = rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	}
+
+	return *this;
+}
+
+
+
+
+Gradient & Gradient::operator*=(double rhs)
+{
+	if (this->valid) {
+		this->value *= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
+	}
+}
+
+
+
+
+Gradient & Gradient::operator/=(double rhs)
+{
+	if (this->valid) {
+		this->value /= rhs;
+		this->valid = !std::isnan(this->value);
+		return *this;
+	} else {
+		return *this;
+	}
+}
+
+
+
+
+double SlavGPS::operator/(const Gradient & rhs, const Gradient & lhs)
+{
+	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
+		return lhs.value / rhs.value;
+	} else {
+		return NAN;
+	}
+}
+
+
+
+
+bool Gradient::operator==(const Gradient & rhs) const
+{
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
+		return false;
+	}
+
+	if (!rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Comparing invalid value";
+		return false;
+	}
+
+	return this->value == rhs.value;
+}
+
+
+
+
+bool Gradient::operator!=(const Gradient & rhs) const
+{
+	return !(*this == rhs);
 }

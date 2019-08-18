@@ -77,23 +77,13 @@ namespace SlavGPS {
 		double * x = NULL;
 		double * y = NULL;
 
-		double y_min = 0.0;
-		double y_max = 0.0;
-
 		Trackpoint ** tps = NULL;
 	};
 
 
 
 
-	/* Low-level types for x-domain types. */
-	typedef time_t Time_ll;
-	typedef double Distance_ll;
-
-
-
-
-	template <typename Tx, typename Tx_ll>
+	template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
 	class TrackData : public TrackDataBase {
 	public:
 		TrackData() : TrackDataBase() {};
@@ -115,7 +105,8 @@ namespace SlavGPS {
 		sg_ret make_track_data_altitude_over_time(Track * trk);
 		sg_ret make_track_data_speed_over_distance(Track * trk);
 
-		sg_ret apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit);
+		sg_ret apply_unit_conversions_x(DistanceUnit distance_unit);
+		sg_ret apply_unit_conversions_y(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit);
 
 
 
@@ -140,6 +131,8 @@ namespace SlavGPS {
 
 		Tx x_min;
 		Tx x_max;
+		Ty y_min;
+		Ty y_max;
 
 		GisViewportDomain x_domain = GisViewportDomain::Max;
 		GisViewportDomain y_domain = GisViewportDomain::Max;
@@ -151,17 +144,19 @@ namespace SlavGPS {
 
 		Tx_ll x_min_ll = 0;
 	        Tx_ll x_max_ll = 0;
+		Ty_ll y_min_ll = 0;
+	        Ty_ll y_max_ll = 0;
 	};
-	template <typename Tx, typename Tx_ll>
-	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll> & track_data);
+	template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll, Ty, Ty_ll> & track_data);
 
 
 
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll>
-	void TrackData<Tx, Tx_ll>::calculate_min_max(void)
+	template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+	void TrackData<Tx, Tx_ll, Ty, Ty_ll>::calculate_min_max(void)
 	{
 		this->x_min_ll = this->x[0];
 		this->x_max_ll = this->x[0];
@@ -180,25 +175,27 @@ namespace SlavGPS {
 		}
 
 
-		this->y_min = this->y[0];
-		this->y_max = this->y[0];
+		this->y_min_ll = this->y[0];
+		this->y_max_ll = this->y[0];
 		for (int i = 1; i < this->n_points; i++) {
 			if (!std::isnan(this->y[i])) {
-				if (this->y[i] > this->y_max) {
-					this->y_max = this->y[i];
+				if (this->y[i] > this->y_max_ll) {
+					this->y_max_ll = this->y[i];
 				}
 
-				if (this->y[i] < this->y_min) {
-					this->y_min = this->y[i];
+				if (this->y[i] < this->y_min_ll) {
+					this->y_min_ll = this->y[i];
 				}
 				qDebug() << this->debug << "y[" << i << "] =" << qSetRealNumberPrecision(10)
-					 << this->y[i] << ", y_min =" << this->y_min << ", y_max =" << this->y_max;
+					 << this->y[i] << ", y_min =" << this->y_min_ll << ", y_max =" << this->y_max_ll;
 			}
 		}
 
 		/* Results will be in internal units. */
 		this->x_min = Tx(this->x_min_ll);
 		this->x_max = Tx(this->x_max_ll);
+		this->y_min = Ty(this->y_min_ll, Ty::get_internal_unit());
+		this->y_max = Ty(this->y_max_ll, Ty::get_internal_unit());
 	}
 
 
@@ -206,8 +203,8 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll>
-	TrackData<Tx, Tx_ll> & TrackData<Tx, Tx_ll>::operator=(const TrackData<Tx, Tx_ll> & other)
+	template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+	TrackData<Tx, Tx_ll, Ty, Ty_ll> & TrackData<Tx, Tx_ll, Ty, Ty_ll>::operator=(const TrackData<Tx, Tx_ll, Ty, Ty_ll> & other)
 	{
 		if (&other == this) {
 			return *this;
@@ -271,16 +268,16 @@ namespace SlavGPS {
 	/**
 	   @reviewed-on tbd
 	*/
-	template <typename Tx, typename Tx_ll>
-	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll> & track_data)
+	template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+	QDebug operator<<(QDebug debug, const TrackData<Tx, Tx_ll, Ty, Ty_ll> & track_data)
 	{
 		if (track_data.valid) {
 			debug << "TrackData" << track_data.debug << "is valid"
 			      << qSetRealNumberPrecision(10)
-			      << ", x_min =" << track_data.x_min
-			      << ", x_max =" << track_data.x_max
-			      << ", y_min =" << track_data.y_min
-			      << ", y_max =" << track_data.y_max;
+			      << ", x_min =" << track_data.x_min.value
+			      << ", x_max =" << track_data.x_max.value
+			      << ", y_min =" << track_data.y_min.value
+			      << ", y_max =" << track_data.y_max.value;
 		} else {
 			debug << "TrackData" << track_data.debug << "is invalid";
 		}

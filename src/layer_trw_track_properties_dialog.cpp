@@ -268,25 +268,25 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 
 	int elev_points = 100; /* this->trk->size()? */
-	TrackData<Distance, Distance_ll> altitudes;
-	altitudes.make_track_data_altitude_over_distance(this->trk, elev_points);
-	if (!altitudes.valid) {
-		altitudes.y_min = NAN;
-		altitudes.y_max = NAN;
+	TrackData<Distance, Distance_ll, Altitude, Altitude_ll> altitudes_ii;
+	altitudes_ii.make_track_data_altitude_over_distance(this->trk, elev_points);
+	if (!altitudes_ii.valid) {
+		altitudes_ii.y_min = NAN;
+		altitudes_ii.y_max = NAN;
 	} else {
-		altitudes.calculate_min_max();
+		altitudes_ii.calculate_min_max();
 	}
 
 	QString result;
 	const HeightUnit height_unit = Preferences::get_unit_height();
-	if (altitudes.y_min == NAN) {
+	if (!altitudes_ii.y_min.is_valid()) {
 		result = tr("No Data");
 	} else {
-		Altitude alti_min = Altitude(altitudes.y_min, HeightUnit::Metres);
-		Altitude alti_max = Altitude(altitudes.y_max, HeightUnit::Metres);
+		const Altitude alti_min_ii = altitudes_ii.y_min;
+		const Altitude alti_max_ii = altitudes_ii.y_max;
 		result = tr("%1 - %2")
-			.arg(alti_min.convert_to_unit(height_unit).to_string())
-			.arg(alti_max.convert_to_unit(height_unit).to_string());
+			.arg(alti_min_ii.convert_to_unit(height_unit).to_string())
+			.arg(alti_max_ii.convert_to_unit(height_unit).to_string());
 	}
 	this->w_elev_range = ui_label_new_selectable(result, this);
 	this->grid->addWidget(new QLabel(tr("Elevation Range:")), row, 0);
@@ -301,8 +301,8 @@ void TrackStatisticsDialog::create_statistics_page(void)
 		/* true == function collected some data. */
 
 		/* TODO_LATER: are these two lines valid? Don't we overwrite valid range values with deltas? */
-		altitudes.y_max = delta_up.get_value();
-		altitudes.y_min = delta_down.get_value();
+		altitudes_ii.y_max = delta_up;
+		altitudes_ii.y_min = delta_down;
 
 		result = tr("%1 / %2")
 			.arg(delta_up.convert_to_unit(height_unit).to_string())

@@ -51,6 +51,7 @@
 #include "layer_trw_track_internal.h"
 #include "layer_trw_track_data.h"
 #include "measurements.h"
+#include "graph_intervals.h"
 
 
 
@@ -237,7 +238,7 @@ namespace SlavGPS {
 		virtual sg_ret draw_graph_without_crosshairs(Track * trk) = 0;
 		sg_ret draw_crosshairs(const Crosshair2D & selection_ch, const Crosshair2D & hover_ch);
 
-		virtual sg_ret generate_initial_track_data(Track * trk) = 0;
+		virtual sg_ret generate_initial_track_data_wrapper(Track * trk) = 0;
 
 		virtual void configure_controls(void) = 0;
 
@@ -310,6 +311,8 @@ namespace SlavGPS {
 		QCheckBox * show_dem_cb = NULL;
 
 	private:
+		virtual sg_ret generate_initial_track_data(Track * trk) = 0;
+
 		virtual sg_ret update_x_labels(const TPInfo & tp_info) = 0;
 		virtual sg_ret update_y_labels(const TPInfo & tp_info) = 0;
 
@@ -318,7 +321,8 @@ namespace SlavGPS {
 
 
 
-	template <typename Tx, typename Tx_ll>
+
+	template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
 	class ProfileView : public ProfileViewBase {
 	public:
 		ProfileView(GisViewportDomain new_x_domain, GisViewportDomain new_y_domain, TrackProfileDialog * new_dialog, QWidget * parent = NULL)
@@ -337,14 +341,15 @@ namespace SlavGPS {
 
 
 		sg_ret set_initial_visible_range_x(void);
-		sg_ret set_initial_visible_range_y(const TrackDataBase & track_data);
+		sg_ret set_initial_visible_range_y(void);
+		sg_ret set_grid_intervals(void);
 
 
 		Crosshair2D get_crosshair_under_cursor(QMouseEvent * ev) const override;
 
 		sg_ret on_cursor_move(Track * trk, QMouseEvent * ev) override;
 
-		sg_ret generate_initial_track_data(Track * trk) override;
+		sg_ret generate_initial_track_data_wrapper(Track * trk) override;
 
 
 		sg_ret draw_function_values(Track * trk);
@@ -376,8 +381,11 @@ namespace SlavGPS {
 		Tx x_visible_range_uu;
 
 
+		GraphIntervals2<Tx> x_intervals_calculator;
+		GraphIntervals2<Ty> y_intervals_calculator;
 
-		double y_interval = 0.0;
+
+		Ty y_interval;
 		/*
 		  For some graphs these values will be "padded" with
 		  some margin so that there is some space between
@@ -386,13 +394,13 @@ namespace SlavGPS {
 		  That way the graph won't touch top/bottom border
 		  lines.
 		*/
-		double y_visible_min = 0.0;
-		double y_visible_max = 0.0;
+		Ty y_visible_min;
+		Ty y_visible_max;
 		/*
 		  Difference between max and min (with margins
 		  mentioned above). Calculated once, used many times.
 		*/
-		double y_visible_range_uu = 0.0;
+		Ty y_visible_range_uu;
 
 
 
@@ -405,14 +413,14 @@ namespace SlavGPS {
 		  have to collect data from track every time user
 		  resizes the graph.
 		*/
-		TrackData<Tx, Tx_ll> initial_track_data;
+		TrackData<Tx, Tx_ll, Ty, Ty_ll> initial_track_data;
 
 		/*
 		  Data structure with data from initial_track_data,
 		  but processed and prepared for painting
 		  (e.g. compressed).
 		*/
-		TrackData<Tx, Tx_ll> track_data_to_draw;
+		TrackData<Tx, Tx_ll, Ty, Ty_ll> track_data_to_draw;
 
 	private:
 		/*
@@ -421,6 +429,8 @@ namespace SlavGPS {
 		  View window.
 		*/
 		sg_ret regenerate_track_data_to_draw(Track * trk);
+
+		sg_ret generate_initial_track_data(Track * trk) override;
 
 		sg_ret update_x_labels(const TPInfo & tp_info) override;
 		sg_ret update_y_labels(const TPInfo & tp_info) override;
@@ -433,7 +443,7 @@ namespace SlavGPS {
 
 
 	/* ET = elevation as a function of time. */
-	class ProfileViewET : public ProfileView<Time, Time_ll> {
+	class ProfileViewET : public ProfileView<Time, Time_ll, Altitude, Altitude_ll> {
 	public:
 		ProfileViewET(TrackProfileDialog * dialog);
 		~ProfileViewET() {};
@@ -445,7 +455,7 @@ namespace SlavGPS {
 
 
 	/* SD = speed as a function of distance. */
-	class ProfileViewSD : public ProfileView<Distance, Distance_ll> {
+	class ProfileViewSD : public ProfileView<Distance, Distance_ll, Speed, Speed_ll> {
 	public:
 		ProfileViewSD(TrackProfileDialog * dialog);
 		~ProfileViewSD() {};
@@ -457,7 +467,7 @@ namespace SlavGPS {
 
 
 	/* ED = elevation as a function of distance. */
-	class ProfileViewED : public ProfileView<Distance, Distance_ll> {
+	class ProfileViewED : public ProfileView<Distance, Distance_ll, Altitude, Altitude_ll> {
 	public:
 		ProfileViewED(TrackProfileDialog * dialog);
 		~ProfileViewED() {};
@@ -470,7 +480,7 @@ namespace SlavGPS {
 
 
 	/* GD = gradient as a function of distance. */
-	class ProfileViewGD : public ProfileView<Distance, Distance_ll> {
+	class ProfileViewGD : public ProfileView<Distance, Distance_ll, Gradient, Gradient_ll> {
 	public:
 		ProfileViewGD(TrackProfileDialog * dialog);
 		~ProfileViewGD() {};
@@ -481,7 +491,7 @@ namespace SlavGPS {
 
 
 	/* ST = speed as a function of time. */
-	class ProfileViewST : public ProfileView<Time, Time_ll> {
+	class ProfileViewST : public ProfileView<Time, Time_ll, Speed, Speed_ll> {
 	public:
 		ProfileViewST(TrackProfileDialog * dialog);
 		~ProfileViewST() {};
@@ -492,7 +502,7 @@ namespace SlavGPS {
 
 
 	/* DT = distance as a function of time. */
-	class ProfileViewDT : public ProfileView<Time, Time_ll> {
+	class ProfileViewDT : public ProfileView<Time, Time_ll, Distance, Distance_ll> {
 	public:
 		ProfileViewDT(TrackProfileDialog * dialog);
 		~ProfileViewDT() {};

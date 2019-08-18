@@ -106,7 +106,6 @@ enum {
 
 
 
-static GraphIntervalsTime     time_intervals;
 static GraphIntervalsDistance distance_intervals;
 static GraphIntervalsAltitude altitude_intervals;
 static GraphIntervalsGradient gradient_intervals;
@@ -130,8 +129,8 @@ TrackProfileDialog::~TrackProfileDialog()
 
 
 
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::regenerate_track_data_to_draw(Track * trk)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::regenerate_track_data_to_draw(Track * trk)
 {
 	this->track_data_to_draw.invalidate();
 
@@ -159,21 +158,17 @@ sg_ret ProfileView<Tx, Tx_ll>::regenerate_track_data_to_draw(Track * trk)
 	qDebug() << SG_PREFIX_I << "Track data to draw" << this->get_title() << this->track_data_to_draw;
 
 
-	/* Do necessary adjustments to x values. */
-	sg_ret result = sg_ret::err;
-	result = this->set_initial_visible_range_x();
-	if (sg_ret::ok != result) {
+	if (sg_ret::ok != this->set_initial_visible_range_x()) {
 		qDebug() << SG_PREFIX_E << "Failed to set initial visible x range";
-		return result;
+		return sg_ret::err;
 	}
-	result = this->set_initial_visible_range_y(this->track_data_to_draw);
-	if (sg_ret::ok != result) {
+	if (sg_ret::ok != this->set_initial_visible_range_y()) {
 		qDebug() << SG_PREFIX_E << "Failed to set initial visible y range";
-		return result;
+		return sg_ret::err;
 	}
-	if (sg_ret::ok != result) {
-		qDebug() << SG_PREFIX_E << "Failed to set initial visible x range";
-		return result;
+	if (sg_ret::ok != this->set_grid_intervals()) {
+		qDebug() << SG_PREFIX_E << "Failed to set grid intervals";
+		return sg_ret::err;
 	}
 
 
@@ -188,33 +183,23 @@ sg_ret ProfileView<Tx, Tx_ll>::regenerate_track_data_to_draw(Track * trk)
 }
 
 
-namespace SlavGPS {
 
 
-template <>
-sg_ret ProfileView<Distance, Distance_ll>::set_initial_visible_range_x(void)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_initial_visible_range_x(void)
 {
 	/* We won't display any x values outside of
 	   track_data.x_min/max. We will never be able to zoom out to
-	   show e.g. negative distances. */
+	   show e.g. negative values of 'x'. */
 	this->x_visible_min = this->track_data_to_draw.x_min;
 	this->x_visible_max = this->track_data_to_draw.x_max;
 
 
 	this->x_visible_range_uu = this->x_visible_max - this->x_visible_min;
 	if (this->x_visible_range_uu.is_zero()) {
-		qDebug() << SG_PREFIX_E << "Zero distance span: min/max = " << this->x_visible_min << this->x_visible_max;
+		qDebug() << SG_PREFIX_E << "Zero span of 'x': min/max x = " << this->x_visible_min << this->x_visible_max << this->get_title();
 		return sg_ret::err;
 	}
-
-	/* Now, given the n_intervals value, find a suitable interval
-	   index and value that will nicely cover visible range of
-	   data. */
-
-	const int n_intervals = GRAPH_X_INTERVALS;
-
-	int interval_index = distance_intervals.intervals.get_interval_index(this->x_visible_min, this->x_visible_max, n_intervals);
-	this->x_interval = distance_intervals.intervals.values[interval_index];
 
 	return sg_ret::ok;
 }
@@ -222,44 +207,8 @@ sg_ret ProfileView<Distance, Distance_ll>::set_initial_visible_range_x(void)
 
 
 
-template <>
-sg_ret ProfileView<Time, Time_ll>::set_initial_visible_range_x(void)
-{
-	/* We won't display any x values outside of
-	   track_data.x_min/max. We will never be able to zoom out to
-	   show e.g. negative times. */
-	this->x_visible_min = this->track_data_to_draw.x_min;
-	this->x_visible_max = this->track_data_to_draw.x_max;
-
-
-	this->x_visible_range_uu = this->x_visible_max - this->x_visible_min;
-	if (this->x_visible_range_uu.is_zero()) {
-		qDebug() << SG_PREFIX_E << "Zero time span: min/max x = " << this->x_visible_min << this->x_visible_max << this->get_title();
-		return sg_ret::err;
-	}
-
-	/* Now, given the n_intervals value, find a suitable interval
-	   index and value that will nicely cover visible range of
-	   data. */
-
-	const int n_intervals = GRAPH_X_INTERVALS;
-
-	int interval_index = time_intervals.intervals.get_interval_index(this->x_visible_min, this->x_visible_max, n_intervals);
-	this->x_interval = time_intervals.intervals.values[interval_index];
-
-	return sg_ret::ok;
-}
-
-
-
-
-}
-
-
-
-
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::set_initial_visible_range_y(const TrackDataBase & track_data)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_initial_visible_range_y(void)
 {
 	/* When user will be zooming in and out, and (in particular)
 	   moving graph up and down, the y_min/max_visible values will
@@ -269,8 +218,8 @@ sg_ret ProfileView<Tx, Tx_ll>::set_initial_visible_range_y(const TrackDataBase &
 	const double y_margin = 0.05; /* There is no deep reasoning behind this particular value. */
 
 	/* This is not exactly the same range as this->y_visible_range_uu
-	   calculated below. */
-	const double y_data_range = std::fabs(track_data.y_max - track_data.y_min);
+	   calculated below. TODO: ensure that y_min and y_max are valid. */
+	const Ty y_data_range = this->track_data_to_draw.y_max - this->track_data_to_draw.y_min;
 
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Speed:
@@ -278,51 +227,44 @@ sg_ret ProfileView<Tx, Tx_ll>::set_initial_visible_range_y(const TrackDataBase &
 		/* Some graphs better start at zero, e.g. speed graph
 		   or distance graph. Showing negative speed values on
 		   a graph wouldn't make sense. */
-		this->y_visible_min = track_data.y_min;
+		this->y_visible_min = this->track_data_to_draw.y_min;
 		break;
 	case GisViewportDomain::Elevation:
 	case GisViewportDomain::Gradient:
-		this->y_visible_min = track_data.y_min - y_data_range * y_margin;
+		this->y_visible_min = this->track_data_to_draw.y_min - y_data_range * y_margin;
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
 		return sg_ret::err;
 	}
-	this->y_visible_max = track_data.y_max + y_data_range * y_margin;
-	this->y_visible_range_uu = std::fabs(this->y_visible_max - this->y_visible_min);
+	this->y_visible_max = this->track_data_to_draw.y_max + y_data_range * y_margin;
+	this->y_visible_range_uu = this->y_visible_max - this->y_visible_min;
+
+	return sg_ret::ok;
+}
 
 
 
 
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_grid_intervals(void)
+{
+	/* Find a suitable interval index and value for graph grid
+	   lines (x grid and y grid) that will nicely cover visible
+	   range of data. */
 
-	/* Now, given the n_intervals value, find a suitable interval
-	   index and value that will nicely cover visible range of
-	   data. */
-	const int n_intervals = GRAPH_Y_INTERVALS;
-	int interval_index = 0;
+	{
+		const int x_n_intervals = GRAPH_X_INTERVALS;
+		const int x_interval_index = this->x_intervals_calculator.get_interval_index(this->x_visible_min, this->x_visible_max, x_n_intervals);
+		this->x_interval = this->x_intervals_calculator.values[x_interval_index];
+	}
 
-	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::Speed:
-		interval_index = speed_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
-		this->y_interval = speed_intervals.intervals.values[interval_index];
-		break;
-	case GisViewportDomain::Elevation:
-		interval_index = altitude_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
-		this->y_interval = altitude_intervals.intervals.values[interval_index];
-		break;
-	case GisViewportDomain::Distance:
-		interval_index = distance_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
-		this->y_interval = distance_intervals.intervals.values[interval_index].value;
-		break;
-	case GisViewportDomain::Gradient:
-		interval_index = gradient_intervals.intervals.get_interval_index(this->y_visible_min, this->y_visible_max, n_intervals);
-		this->y_interval = gradient_intervals.intervals.values[interval_index];
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-		return sg_ret::err;
-	};
 
+	{
+		const int y_n_intervals = GRAPH_Y_INTERVALS;
+		const int y_interval_index = this->y_intervals_calculator.get_interval_index(this->y_visible_min, this->y_visible_max, y_n_intervals);
+		this->y_interval = this->y_intervals_calculator.values[y_interval_index];
+	}
 
 	return sg_ret::ok;
 }
@@ -521,8 +463,8 @@ void TrackProfileDialog::handle_mouse_button_release_cb(ViewportPixmap * vpixmap
 
 
 
-template <typename Tx, typename Tx_ll>
-TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev) const
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+TPInfo ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_tp_info_under_cursor(QMouseEvent * ev) const
 {
 	TPInfo result;
 
@@ -541,8 +483,8 @@ TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev) const
 
 	int x_px_diff = n_columns; /* We will be minimizing this value and stop when x_px_diff is the smallest. TODO: type of the variable: int or double? */
 
-	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
-	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
+	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.value;
+	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.value;
 
 	for (size_t i = 0; i < n_values; i++) {
 
@@ -563,7 +505,7 @@ TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev) const
 			/* Found a trackpoint painted at position 'x' that is closer to cursor event position on x axis. */
 			x_px_diff = x_px_diff_current;
 
-			const int y_px = bottommost_px - y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
+			const int y_px = bottommost_px - (y_current_value_uu - this->track_data_to_draw.y_min.value) * y_pixels_per_unit;
 
 			result.found_x_px = x_px;
 			result.found_y_px = y_px;
@@ -601,8 +543,8 @@ TPInfo ProfileView<Tx, Tx_ll>::get_tp_info_under_cursor(QMouseEvent * ev) const
   We have to try to find a trackpoint in track data arrays that is
   drawn the closest to 'x' coordinate of mouse event.
 */
-template <typename Tx, typename Tx_ll>
-Crosshair2D ProfileView<Tx, Tx_ll>::get_crosshair_under_cursor(QMouseEvent * ev) const
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+Crosshair2D ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_crosshair_under_cursor(QMouseEvent * ev) const
 {
 	Crosshair2D crosshair;
 
@@ -667,8 +609,8 @@ void TrackProfileDialog::handle_cursor_move_cb(ViewportPixmap * vpixmap, QMouseE
 
 
 
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, QMouseEvent * ev)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::on_cursor_move(Track * trk, QMouseEvent * ev)
 {
 	const TPInfo tp_info = this->get_tp_info_under_cursor(ev);
 	if (!tp_info.valid || NULL == tp_info.found_tp) {
@@ -701,44 +643,8 @@ sg_ret ProfileView<Tx, Tx_ll>::on_cursor_move(Track * trk, QMouseEvent * ev)
 
 
 
-namespace SlavGPS {
-
-
-
-
-template <>
-sg_ret ProfileView<Distance, Distance_ll>::update_x_labels(const TPInfo & tp_info)
-{
-	/* This is a private method, so we assume that tp_info, and in
-	   particular tp_info.found_tp are valid. */
-	assert(tp_info.valid);
-	assert(NULL != tp_info.found_tp);
-
-
-	if (this->labels.x_value) {
-		/* Values in x[] are already re-calculated to user units. */
-		const Distance_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
-		const Distance x_uu = Distance(x_ll_uu, Preferences::get_unit_distance()); /* TODO: distance unit or supplementary distance unit? */
-		this->labels.x_value->setText(x_uu.to_string());
-	}
-
-	/*
-	  Absolute timestamp.
-
-	  Thanks to TrackData::tps[] we now have access to trackpoints
-	  and their timestamps. Having the timestamp even in
-	  Distance-based graphs may be useful.
-	*/
-	this->labels.tp_timestamp_value->setText(tp_info.found_tp->timestamp.to_timestamp_string(Qt::LocalTime));
-
-	return sg_ret::ok;
-}
-
-
-
-
-template <>
-sg_ret ProfileView<Time, Time_ll>::update_x_labels(const TPInfo & tp_info)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::update_x_labels(const TPInfo & tp_info)
 {
 	/* This is a private method, so we assume that tp_info, and in
 	   particular tp_info.found_tp are valid. */
@@ -748,15 +654,14 @@ sg_ret ProfileView<Time, Time_ll>::update_x_labels(const TPInfo & tp_info)
 	/* Relative time from start of track. */
 	if (this->labels.x_value) {
 		/* Values in x[] are already re-calculated to user units. */
-		const Time_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
-		const Time x_uu = Time(x_ll_uu);
+		const Tx_ll x_ll_uu = this->track_data_to_draw.x[tp_info.found_tp_idx];
+		const Tx x_uu = Tx(x_ll_uu, Tx::get_user_unit());
 
-		/* TODO: we should use timestamp of first valid
-		   tp. Make sure that x_min is a timestamp of first
-		   valid tp. */
-		const Time x_uu_from_start = x_uu - this->track_data_to_draw.x_min;
+		/* TODO: we should use x-value of first valid tp. Make
+		   sure that x_min is an x-value of first valid tp. */
+		const Tx x_uu_from_start = x_uu - this->track_data_to_draw.x_min;
 
-		this->labels.x_value->setText(x_uu_from_start.to_duration_string());
+		this->labels.x_value->setText(x_uu_from_start.to_string()); /* TODO: for Time data type this should be .to_duration_string() */
 	}
 
 	/* Absolute time stamp. */
@@ -768,13 +673,8 @@ sg_ret ProfileView<Time, Time_ll>::update_x_labels(const TPInfo & tp_info)
 
 
 
-} /* namespace SlavGPS */
-
-
-
-
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::update_y_labels(const TPInfo & tp_info)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::update_y_labels(const TPInfo & tp_info)
 {
 	/* This is a private method, so we assume that tp_info, and in
 	   particular tp_info.found_tp are valid. */
@@ -823,16 +723,16 @@ sg_ret ProfileView<Tx, Tx_ll>::update_y_labels(const TPInfo & tp_info)
    Draws DEM points and a respresentative speed on the supplied pixmap
    (which is the elevations graph).
 */
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::draw_dem_elevation(Track * trk)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_dem_elevation(Track * trk)
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
 	const int n_columns = this->graph_2d->central_get_n_columns();
 	const int n_rows = this->graph_2d->central_get_n_rows();
 	const size_t n_values = this->track_data_to_draw.n_points;
-	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
-	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
+	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.value;
+	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.value;
 
 	const QColor & color = this->dem_alt_pen.color();
 
@@ -851,11 +751,11 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_dem_elevation(Track * trk)
 
 		const int x_value_uu = this->track_data_to_draw.x[i];
 
-		const double elev_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
-		const double y_value_uu = elev_uu - this->y_visible_min;
+		const Altitude_ll elev_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
+		const Altitude_ll y_value_uu = elev_uu - this->y_visible_min.value;
 
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_value_uu - this->track_data_to_draw.x_min.value);
-		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu - this->track_data_to_draw.y_min);
+		const int x_px = leftmost_px + (x_value_uu - this->track_data_to_draw.x_min.value) * x_pixels_per_unit;
+		const int y_px = bottommost_px - (y_value_uu - this->track_data_to_draw.y_min.value) * y_pixels_per_unit;
 
 		this->graph_2d->fill_rectangle(color, x_px - 2, y_px - 2, 4, 4);
 	}
@@ -869,8 +769,8 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_dem_elevation(Track * trk)
 /**
    @reviewed-on tbd
 */
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::draw_function_values(Track * trk)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_function_values(Track * trk)
 {
 	const size_t n_values = this->track_data_to_draw.n_points;
 	if (0 == n_values) {
@@ -907,8 +807,8 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_function_values(Track * trk)
 		 << "with n values =" << n_values
 		 << "into n columns =" << n_columns;
 
-	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
-	const double y_pixels_per_unit = n_rows / this->y_visible_range_uu;
+	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.value;
+	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.value;
 
 
 	ScreenPos cur_valid_pos;
@@ -936,7 +836,7 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_function_values(Track * trk)
 			const double y_current_value_uu = this->track_data_to_draw.y[i];
 
 			cur_valid_pos.rx() = x_px;
-			cur_valid_pos.ry() = bottommost_px - y_pixels_per_unit * (y_current_value_uu - this->track_data_to_draw.y_min);
+			cur_valid_pos.ry() = bottommost_px - (y_current_value_uu - this->track_data_to_draw.y_min.value) * y_pixels_per_unit;
 
 			graph_2d->draw_line(valid_pen, last_valid_pos, cur_valid_pos);
 
@@ -960,8 +860,8 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_function_values(Track * trk)
 
 
 
-template <typename Tx, typename Tx_ll>
-bool ProfileView<Tx, Tx_ll>::track_data_is_valid(void) const
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+bool ProfileView<Tx, Tx_ll, Ty, Ty_ll>::track_data_is_valid(void) const
 {
 	return this->track_data_to_draw.valid;
 }
@@ -969,8 +869,8 @@ bool ProfileView<Tx, Tx_ll>::track_data_is_valid(void) const
 
 
 
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::draw_additional_indicators(Track * trk)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_additional_indicators(Track * trk)
 {
 	if (this->show_dem_cb && this->show_dem_cb->checkState()) {
 		this->draw_dem_elevation(trk);
@@ -992,8 +892,8 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_additional_indicators(Track * trk)
 
 
 
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::draw_gps_speeds(Track * trk)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_gps_speeds(Track * trk)
 {
 	const int leftmost_px = this->graph_2d->central_get_leftmost_pixel();
 	const int bottommost_px = this->graph_2d->central_get_bottommost_pixel();
@@ -1009,8 +909,8 @@ sg_ret ProfileView<Tx, Tx_ll>::draw_gps_speeds(Track * trk)
 
 	const double speed_max = 1.1 * max_speed.get_value();
 
-	const double x_pixels_per_unit = n_columns / this->x_visible_range_uu;
-	const double y_pixels_per_unit = n_rows / 110; /* "110" means 110%. Zero percent at the bottom of graph, 110% (since we used 1.1 above) on top of graph. */
+	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.value;
+	const double y_pixels_per_unit = (1.0 * n_rows) / 110; /* "110" means 110%. Zero percent at the bottom of graph, 110% (since we used 1.1 above) on top of graph. */
 
 	for (size_t i = 0; i < n_values; i++) {
 
@@ -1095,8 +995,8 @@ void ProfileViewDT::save_settings(void)
 /**
    \brief Draw the y = f(x) graph
 */
-template <typename Tx, typename Tx_ll>
-sg_ret ProfileView<Tx, Tx_ll>::draw_graph_without_crosshairs(Track * trk)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_graph_without_crosshairs(Track * trk)
 {
 	qDebug() << SG_PREFIX_I;
 	QTime draw_time;
@@ -1521,7 +1421,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 			qDebug() << SG_PREFIX_E << "Can't find profile" << i << "in loop";
 			continue;
 		}
-		view->generate_initial_track_data(trk);
+		view->generate_initial_track_data_wrapper(trk);
 	}
 }
 
@@ -1796,110 +1696,116 @@ ProfileViewBase::~ProfileViewBase()
 
 
 
-ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll>(GisViewportDomain::Time,     GisViewportDomain::Elevation, new_dialog) {}
-ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll>(GisViewportDomain::Distance, GisViewportDomain::Speed,     new_dialog) {}
-ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll>(GisViewportDomain::Distance, GisViewportDomain::Elevation, new_dialog) {}
-ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll>(GisViewportDomain::Distance, GisViewportDomain::Gradient,  new_dialog) {}
-ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll>(GisViewportDomain::Time,     GisViewportDomain::Speed,     new_dialog) {}
-ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll>(GisViewportDomain::Time,     GisViewportDomain::Distance,  new_dialog) {}
+ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Altitude, Altitude_ll>(GisViewportDomain::Time, GisViewportDomain::Elevation, new_dialog) {}
+ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Speed, Speed_ll>(GisViewportDomain::Time,    GisViewportDomain::Speed,     new_dialog) {}
+ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Distance, Distance_ll>(GisViewportDomain::Time, GisViewportDomain::Distance,  new_dialog) {}
+ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Speed, Speed_ll>(GisViewportDomain::Distance,    GisViewportDomain::Speed,     new_dialog) {}
+ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>(GisViewportDomain::Distance, GisViewportDomain::Elevation, new_dialog) {}
+ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>(GisViewportDomain::Distance, GisViewportDomain::Gradient,  new_dialog) {}
 
 
 
-template <typename Tx, typename Tx_ll>
-ProfileView<Tx, Tx_ll>::~ProfileView()
+
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+ProfileView<Tx, Tx_ll, Ty, Ty_ll>::~ProfileView()
 {
 	delete this->graph_2d;
 }
 
 
 
+
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::generate_initial_track_data_wrapper(Track * trk)
+{
+	this->initial_track_data.invalidate();
+
+	/*
+	  It may be time consuming to convert units on whole long,
+	  uncompressed ::initial_track_data. We could decide to do
+	  this on compressed (and thus much smaller)
+	  ::track_data_to_draw.
+
+	  But in this place we do it only once, when a dialog is being
+	  opened. Once it is done, we don't have to re-do it on every
+	  resizing of dialog window.
+	*/
+
+	if (sg_ret::ok != this->generate_initial_track_data(trk)) {
+		qDebug() << SG_PREFIX_E << "Failed to generate valid initial track data for" << this->get_title();
+		return sg_ret::err;
+	}
+
+
+	this->initial_track_data.apply_unit_conversions_x(this->graph_2d->distance_unit);
+	this->initial_track_data.apply_unit_conversions_y(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
+
+	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
+	return sg_ret::ok;
+}
+
+
+
+
 namespace SlavGPS {
 
 
-/* Create initial track data using appropriate Track method. */
+
+
 template <>
-sg_ret ProfileView<Distance, Distance_ll>::generate_initial_track_data(Track * trk)
+sg_ret ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>::generate_initial_track_data(Track * trk)
 {
-	this->initial_track_data.invalidate();
+	return this->initial_track_data.make_track_data_altitude_over_distance(trk, trk->get_tp_count());
+}
 
-	/*
-	  It may be time consuming to convert units on whole long,
-	  uncompressed ::initial_track_data. We could decide to do
-	  this on compressed (and thus much smaller)
-	  ::track_data_to_draw.
 
-	  But in this place we do it only once, when a dialog is being
-	  opened. Once it is done, we don't have to re-do it on every
-	  resizing of dialog window.
-	*/
 
-	if (this->graph_2d->y_domain == GisViewportDomain::Elevation) {
-		this->initial_track_data.make_track_data_altitude_over_distance(trk, trk->get_tp_count());
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Gradient) {
-		this->initial_track_data.make_track_data_gradient_over_distance(trk, trk->get_tp_count());
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Speed) {
-		this->initial_track_data.make_track_data_speed_over_distance(trk);
-	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-	}
+template <>
+sg_ret ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>::generate_initial_track_data(Track * trk)
+{
+	return this->initial_track_data.make_track_data_gradient_over_distance(trk, trk->get_tp_count());
+}
 
-	if (!this->initial_track_data.valid) {
-		qDebug() << SG_PREFIX_E << "Failed to generate valid initial track data for" << this->get_title();
-		return sg_ret::err;
-	}
 
-	this->initial_track_data.apply_unit_conversions(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
 
-	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
-	return sg_ret::ok;
+template <>
+sg_ret ProfileView<Distance, Distance_ll, Speed, Speed_ll>::generate_initial_track_data(Track * trk)
+{
+	return this->initial_track_data.make_track_data_speed_over_distance(trk);
 }
 
 
 
 
 template <>
-sg_ret ProfileView<Time, Time_ll>::generate_initial_track_data(Track * trk)
+sg_ret ProfileView<Time, Time_ll, Speed, Speed_ll>::generate_initial_track_data(Track * trk)
 {
-	this->initial_track_data.invalidate();
+	return this->initial_track_data.make_track_data_speed_over_time(trk);
+}
 
-	/*
-	  It may be time consuming to convert units on whole long,
-	  uncompressed ::initial_track_data. We could decide to do
-	  this on compressed (and thus much smaller)
-	  ::track_data_to_draw.
 
-	  But in this place we do it only once, when a dialog is being
-	  opened. Once it is done, we don't have to re-do it on every
-	  resizing of dialog window.
-	*/
 
-	if (this->graph_2d->y_domain == GisViewportDomain::Speed) {
-		this->initial_track_data.make_track_data_speed_over_time(trk);
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Distance) {
-		this->initial_track_data.make_track_data_distance_over_time(trk);
+template <>
+sg_ret ProfileView<Time, Time_ll, Distance, Distance_ll>::generate_initial_track_data(Track * trk)
+{
+	return this->initial_track_data.make_track_data_distance_over_time(trk);
+}
 
-	} else if (this->graph_2d->y_domain == GisViewportDomain::Elevation) {
-		this->initial_track_data.make_track_data_altitude_over_time(trk);
-	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-	}
 
-	if (!this->initial_track_data.valid) {
-		qDebug() << SG_PREFIX_E << "Failed to generate valid initial track data for" << this->get_title();
-		return sg_ret::err;
-	}
 
-	this->initial_track_data.apply_unit_conversions(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
-
-	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
-	return sg_ret::ok;
+template <>
+sg_ret ProfileView<Time, Time_ll, Altitude, Altitude_ll>::generate_initial_track_data(Track * trk)
+{
+	return this->initial_track_data.make_track_data_altitude_over_time(trk);
 }
 
 
 }
+
+
 
 
 /**
@@ -1930,11 +1836,11 @@ void find_multiples_of_interval(const T & min_visible, const T & max_visible, co
 	last_multiple = interval * (n + 1);
 
 	qDebug() << SG_PREFIX_I
-		 << "min_visible =" << min_visible
-		 << ", max_visible =" << max_visible
-		 << ", interval =" << interval
-		 << ", first multiple =" << first_multiple
-		 << ", last multiple =" << last_multiple;
+		 << "min_visible =" << min_visible.value
+		 << ", max_visible =" << max_visible.value
+		 << ", interval =" << interval.value
+		 << ", first multiple =" << first_multiple.value
+		 << ", last multiple =" << last_multiple.value;
 
 #if 0
 
@@ -1988,11 +1894,11 @@ void find_multiples_of_interval(const T & min_visible, const T & max_visible, co
 
 
 
-template <typename Tx, typename Tx_ll>
-void ProfileView<Tx, Tx_ll>::draw_y_grid(void)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 {
-	if (this->y_visible_range_uu < 0.000001) {
-		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_visible_range_uu;
+	if (this->y_visible_range_uu.value < 0.000001) {
+		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->y_visible_range_uu.value;
 		return;
 	}
 
@@ -2005,23 +1911,23 @@ void ProfileView<Tx, Tx_ll>::draw_y_grid(void)
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
 
-	if (this->y_visible_range_uu < 0.0000001) {
+	if (this->y_visible_range_uu.value < 0.0000001) {
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_visible_min << this->x_visible_max;
 		return;
 	}
-	const double y_pixels_per_unit = 1.0 * n_rows / this->y_visible_range_uu;
+	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.value;
 
-	double first_multiple = 0;
-	double last_multiple = 0;
-	find_multiples_of_interval(this->y_visible_min, this->y_visible_max, this->y_interval, first_multiple, last_multiple);
+	Ty first_multiple_uu(0.0, Ty::get_user_unit());
+	Ty last_multiple_uu(0.0, Ty::get_user_unit());
+	find_multiples_of_interval(this->y_visible_min, this->y_visible_max, this->y_interval, first_multiple_uu, last_multiple_uu);
 
 #if 1   /* Debug. */
 	qDebug() << SG_PREFIX_D << "      graph:" << this->get_title();
-	qDebug() << SG_PREFIX_D << "      visible range =" << this->y_visible_range_uu;
+	qDebug() << SG_PREFIX_D << "      visible range =" << this->y_visible_range_uu.value;
 	qDebug() << SG_PREFIX_D << "      n rows =" << n_rows << ", n cols =" << n_columns;
 	qDebug() << SG_PREFIX_D << "      leftmost px =" << leftmost_px << ", bottommost px =" << bottommost_px;
-	qDebug() << SG_PREFIX_D << "      y visible min =" << this->y_visible_min << ", y visible max =" << this->y_visible_max;
-	qDebug() << SG_PREFIX_D << "      interval =" << this->y_interval << ", first_multiple =" << first_multiple << ", last_multiple = " << last_multiple;
+	qDebug() << SG_PREFIX_D << "      y visible min =" << this->y_visible_min.value << ", y visible max =" << this->y_visible_max.value;
+	qDebug() << SG_PREFIX_D << "      interval =" << this->y_interval.value << ", first_multiple_uu =" << first_multiple_uu.value << ", last_multiple_uu = " << last_multiple_uu.value;
 	qDebug() << SG_PREFIX_D << "      y pixels per unit =" << y_pixels_per_unit;
 #endif
 
@@ -2030,8 +1936,8 @@ void ProfileView<Tx, Tx_ll>::draw_y_grid(void)
 	/* Be sure to keep type of value_uu as floating-point
 	   compatible, otherwise for intervals smaller than 1.0 you
 	   will get forever loop. */
-	for (double value_uu = first_multiple; value_uu <= last_multiple; value_uu += this->y_interval) {
-		const double value_from_edge_uu = value_uu - this->y_visible_min;
+	for (double value_uu = first_multiple_uu.value; value_uu <= last_multiple_uu.value; value_uu += this->y_interval.value) {
+		const double value_from_edge_uu = value_uu - this->y_visible_min.value;
 		/* 'y_px' is in "beginning in top-left corner" coordinate system. */
 		const int y_px = bottommost_px - y_pixels_per_unit * value_from_edge_uu;
 
@@ -2056,33 +1962,73 @@ void ProfileView<Tx, Tx_ll>::draw_y_grid(void)
 
 
 
-
 namespace SlavGPS {
 
 
+
+
 template <>
-QString ProfileView<Time, Time_ll>::get_x_grid_label(const Time & value_uu)
+QString ProfileView<Time, Time_ll, Altitude, Altitude_ll>::get_x_grid_label(const Time & value_uu)
 {
 	return get_time_grid_label(this->x_interval, value_uu);
 }
 
 
 
+
 template <>
-QString ProfileView<Distance, Distance_ll>::get_x_grid_label(const Distance & value_uu)
+QString ProfileView<Time, Time_ll, Speed, Speed_ll>::get_x_grid_label(const Time & value_uu)
+{
+	return get_time_grid_label(this->x_interval, value_uu);
+}
+
+
+
+
+template <>
+QString ProfileView<Time, Time_ll, Distance, Distance_ll>::get_x_grid_label(const Time & value_uu)
+{
+	return get_time_grid_label(this->x_interval, value_uu);
+}
+
+
+
+
+template <>
+QString ProfileView<Distance, Distance_ll, Speed, Speed_ll>::get_x_grid_label(const Distance & value_uu)
 {
 	return value_uu.to_nice_string();
 }
 
 
+
+
+template <>
+QString ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>::get_x_grid_label(const Distance & value_uu)
+{
+	return value_uu.to_nice_string();
+}
+
+
+
+
+template <>
+QString ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>::get_x_grid_label(const Distance & value_uu)
+{
+	return value_uu.to_nice_string();
+}
+
+
+
+
 }
 
 
 
 
 
-template <typename Tx, typename Tx_ll>
-void ProfileView<Tx, Tx_ll>::draw_x_grid(void)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_x_grid(void)
 {
 	const int n_columns      = this->get_central_n_columns();
 	const int n_rows         = this->get_central_n_rows();
@@ -2099,9 +2045,9 @@ void ProfileView<Tx, Tx_ll>::draw_x_grid(void)
 	}
 	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu;
 
-	Tx first_multiple = 0;
-	Tx last_multiple = 0;
-	find_multiples_of_interval(this->x_visible_min, this->x_visible_max, this->x_interval, first_multiple, last_multiple);
+	Tx first_multiple_uu(0, Tx::get_user_unit());
+	Tx last_multiple_uu(0, Tx::get_user_unit());
+	find_multiples_of_interval(this->x_visible_min, this->x_visible_max, this->x_interval, first_multiple_uu, last_multiple_uu);
 
 #if 1   /* Debug. */
 	qDebug() << SG_PREFIX_D << "      graph:" << this->get_title();
@@ -2109,11 +2055,11 @@ void ProfileView<Tx, Tx_ll>::draw_x_grid(void)
 	qDebug() << SG_PREFIX_D << "      n rows =" << n_rows << ", n cols =" << n_columns;
 	qDebug() << SG_PREFIX_D << "      leftmost px =" << leftmost_px << ", bottommost px =" << bottommost_px;
 	qDebug() << SG_PREFIX_D << "      x visible min =" << this->x_visible_min << ", x visible max =" << this->x_visible_max;
-	qDebug() << SG_PREFIX_D << "      x interval =" << this->x_interval << ", first_multiple =" << first_multiple << ", last_multiple = " << last_multiple;
+	qDebug() << SG_PREFIX_D << "      x interval =" << this->x_interval << ", first_multiple_uu =" << first_multiple_uu << ", last_multiple_uu = " << last_multiple_uu;
 	qDebug() << SG_PREFIX_D << "      x pixels per unit =" << x_pixels_per_unit;
 #endif
 
-	for (Tx value_uu = first_multiple; value_uu <= last_multiple; value_uu += this->x_interval.value) {
+	for (Tx value_uu = first_multiple_uu; value_uu <= last_multiple_uu; value_uu += this->x_interval.value) {
 		const Tx value_from_edge_uu = value_uu - this->x_visible_min;
 		/* 'x_px' is in "beginning in top-left corner" coordinate system. */
 		const int x_px = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
@@ -2139,8 +2085,8 @@ void ProfileView<Tx, Tx_ll>::draw_x_grid(void)
 
 
 
-template <typename Tx, typename Tx_ll>
-QString ProfileView<Tx, Tx_ll>::get_y_grid_label(double value_uu)
+template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
+QString ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_y_grid_label(double value_uu)
 {
 	switch (this->graph_2d->y_domain) {
 	case GisViewportDomain::Elevation:

@@ -150,6 +150,34 @@ namespace SlavGPS {
 		Metres,
 		Feet,
 	};
+#define SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT HeightUnit::Metres
+
+
+
+
+	enum class TimeUnit {
+		Seconds, /* Default, internal unit. */
+	};
+#define SG_MEASUREMENT_INTERNAL_UNIT_TIME TimeUnit::Seconds
+
+
+
+
+	enum class GradientUnit {
+		Degrees, /* Default, internal unit. TODO: verify. */
+	};
+#define SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT GradientUnit::Degrees
+
+
+
+
+	/* Low-level types corresponding to measurement classes. */
+	typedef time_t Time_ll;
+	typedef double Distance_ll;
+	typedef double Angle_ll;
+	typedef double Altitude_ll;
+	typedef double Speed_ll;
+	typedef double Gradient_ll;
 
 
 
@@ -195,6 +223,8 @@ namespace SlavGPS {
 		Distance(double new_value = 0.0, SupplementaryDistanceUnit new_supplementary_distance_unit = SupplementaryDistanceUnit::Meters);
 		Distance(double value, DistanceUnit distance_unit);
 
+		static DistanceUnit get_user_unit(void);
+		static DistanceUnit get_internal_unit(void) { return DistanceUnit::Kilometres; } /* FIXME: this should be metres */
 
 		Distance convert_to_unit(DistanceUnit distance_unit) const;
 		Distance convert_to_unit(SupplementaryDistanceUnit supplementary_distance_unit) const;
@@ -221,8 +251,8 @@ namespace SlavGPS {
 
 		Distance & operator*=(double rhs);
 		Distance & operator/=(double rhs);
-		Distance operator*(double rhs) const { Distance result = *this; result *= rhs; return result; }
-		Distance operator/(double rhs) const { Distance result = *this; result /= rhs; return result; }
+		friend Distance operator*(Distance lhs, double rhs) { lhs *= rhs; return lhs; }
+		friend Distance operator/(Distance lhs, double rhs) { lhs /= rhs; return lhs; }
 
 		/* For calculating proportion of values. */
 		friend double operator/(const Distance & rhs, const Distance & lhs);
@@ -271,7 +301,10 @@ namespace SlavGPS {
 	class Altitude {
 	public:
 		Altitude() {};
-		Altitude(double value, HeightUnit height_unit);
+		Altitude(double value, HeightUnit height_unit = SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT);
+
+		static HeightUnit get_user_unit(void);
+		static HeightUnit get_internal_unit(void) { return SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT; }
 
 		void set_value(double value); /* Set value, don't change unit. */
 		double get_value(void) const;
@@ -326,6 +359,9 @@ namespace SlavGPS {
 		Altitude operator*(double rhs) const { Altitude result = *this; result *= rhs; return result; }
 		Altitude operator/(double rhs) const { Altitude result = *this; result /= rhs; return result; }
 
+		bool operator==(const Altitude & rhs) const;
+		bool operator!=(const Altitude & rhs) const;
+
 		/* For calculating proportion of values. */
 		friend double operator/(const Altitude & rhs, const Altitude & lhs);
 
@@ -346,8 +382,10 @@ namespace SlavGPS {
 		/* Is this measurement so small that it can be treated as zero? */
 		bool is_zero(void) const;
 
+		Altitude_ll value = NAN;
+
 	private:
-		double value = NAN;
+
 		bool valid = false;
 		HeightUnit unit;
 	};
@@ -365,6 +403,9 @@ namespace SlavGPS {
 	public:
 		Speed() {};
 		Speed(double value, SpeedUnit speed_unit);
+
+		static SpeedUnit get_user_unit(void);
+		static SpeedUnit get_internal_unit(void) { return SpeedUnit::MetresPerSecond; }
 
 		void set_value(double value); /* Set value, don't change unit. */
 		double get_value(void) const;
@@ -402,13 +443,13 @@ namespace SlavGPS {
 
 		Speed & operator+=(const Speed & rhs);
 		Speed & operator-=(const Speed & rhs);
-	        friend Speed operator+(Speed & lhs, const Speed & rhs) { lhs += rhs; return lhs; }
-		friend Speed operator-(Speed & lhs, const Speed & rhs) { lhs -= rhs; return lhs; }
+	        friend Speed operator+(Speed lhs, const Speed & rhs) { lhs += rhs; return lhs; }
+		friend Speed operator-(Speed lhs, const Speed & rhs) { lhs -= rhs; return lhs; }
 
 		Speed & operator/=(double rhs);
 		Speed & operator*=(double rhs);
-	        friend Speed operator*(Speed & lhs, double rhs) { lhs *= rhs; return lhs; }
-		friend Speed operator/(Speed & lhs, double rhs) { lhs /= rhs; return lhs; }
+	        friend Speed operator*(Speed lhs, double rhs) { lhs *= rhs; return lhs; }
+		friend Speed operator/(Speed lhs, double rhs) { lhs /= rhs; return lhs; }
 
 		friend bool operator<(const Speed & lhs, const Speed & rhs);
 		friend bool operator>(const Speed & lhs, const Speed & rhs);
@@ -417,6 +458,9 @@ namespace SlavGPS {
 
 		/* For calculating proportion of values. */
 		friend double operator/(const Speed & rhs, const Speed & lhs);
+
+		bool operator==(const Speed & rhs) const;
+		bool operator!=(const Speed & rhs) const;
 
 		/* Return "meters" or "feet" string.
 		   This is a full string, not "m" or "ft". */
@@ -440,10 +484,11 @@ namespace SlavGPS {
 		/* Is this measurement so small that it can be treated as zero? */
 		bool is_zero(void) const;
 
+		Speed_ll value = NAN;
+
 	private:
 		static bool operator_args_valid(const Speed & lhs, const Speed & rhs);
 
-		double value = NAN;
 		bool valid = false;
 		SpeedUnit unit;
 	};
@@ -459,11 +504,17 @@ namespace SlavGPS {
 	class Time {
 	public:
 		Time();
-		Time(time_t value);
+		Time(time_t value, TimeUnit time_unit = TimeUnit::Seconds);
+
+		static TimeUnit get_user_unit(void);
+		static TimeUnit get_internal_unit(void);
 
 		time_t get_value(void) const;
 
+		Time convert_to_unit(TimeUnit time_unit) const { return *this; }
+
 		QString to_duration_string(void) const;
+		QString to_string(void) const;
 		QString to_timestamp_string(Qt::TimeSpec time_spec = Qt::LocalTime) const;
 		QString get_time_string(Qt::DateFormat format) const;
 		QString get_time_string(Qt::DateFormat format, const Coord & coord) const;
@@ -527,7 +578,10 @@ namespace SlavGPS {
 	class Gradient {
 	public:
 		Gradient() {};
-		Gradient(double value);
+		Gradient(double value, GradientUnit gradient_unit = SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT);
+
+		static GradientUnit get_user_unit(void);
+		static GradientUnit get_internal_unit(void) { return SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT; }
 
 		void set_value(double value); /* Set value, don't change unit. */
 		double get_value(void) const;
@@ -572,10 +626,31 @@ namespace SlavGPS {
 		/* Is this measurement so small that it can be treated as zero? */
 		bool is_zero(void) const;
 
+
+		Gradient & operator+=(const Gradient & rhs);
+		Gradient & operator-=(const Gradient & rhs);
+		Gradient & operator+=(double rhs);
+		Gradient & operator-=(double rhs);
+		friend Gradient operator+(Gradient lhs, const Gradient & rhs) { lhs += rhs; return lhs; }
+		friend Gradient operator-(Gradient lhs, const Gradient & rhs) { lhs -= rhs; return lhs; }
+
+		Gradient & operator*=(double rhs);
+		Gradient & operator/=(double rhs);
+		friend Gradient operator*(Gradient lhs, double rhs) { lhs *= rhs; return lhs; }
+		friend Gradient operator/(Gradient lhs, double rhs) { lhs /= rhs; return lhs; }
+
+		friend double operator/(const Gradient & rhs, const Gradient & lhs); /* For getting proportion of two values. */
+
+		bool operator==(const Gradient & rhs) const;
+		bool operator!=(const Gradient & rhs) const;
+
+		Gradient_ll value = NAN;
+
 	private:
-		double value = NAN;
 		bool valid = false;
 	};
+	double operator/(const Gradient & rhs, const Gradient & lhs);
+
 
 
 

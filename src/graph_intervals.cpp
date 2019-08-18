@@ -114,6 +114,99 @@ static const Time interval_values_time[] = {
 
 
 
+/* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
+static const Altitude interval_values_altitude2[] = {
+	Altitude(1.0),
+	Altitude(2.0),
+	Altitude(4.0),
+	Altitude(5.0),
+	Altitude(10.0),
+	Altitude(15.0),
+	Altitude(20.0),
+	Altitude(25.0),
+	Altitude(40.0),
+	Altitude(50.0),
+	Altitude(75.0),
+	Altitude(100.0),
+	Altitude(150.0),
+	Altitude(200.0),
+	Altitude(250.0),
+	Altitude(375.0),
+	Altitude(500.0),
+	Altitude(750.0),
+	Altitude(1000.0),
+	Altitude(2000.0),
+	Altitude(5000.0),
+	Altitude(10000.0),
+	Altitude(100000.0)
+};
+
+
+
+/* (Hopefully!) Human friendly gradient grid sizes - note no fixed 'ratio' just numbers that look nice... */
+static const Gradient interval_values_gradient2[] = {
+	Gradient(1.0),
+	Gradient(2.0),
+	Gradient(3.0),
+	Gradient(4.0),
+	Gradient(5.0),
+	Gradient(8.0),
+	Gradient(10.0),
+	Gradient(12.0),
+	Gradient(15.0),
+	Gradient(20.0),
+	Gradient(25.0),
+	Gradient(30.0),
+	Gradient(35.0),
+	Gradient(40.0),
+	Gradient(45.0),
+	Gradient(50.0),
+	Gradient(75.0),
+	Gradient(100.0),
+	Gradient(150.0),
+	Gradient(200.0),
+	Gradient(250.0),
+	Gradient(375.0),
+	Gradient(500.0),
+	Gradient(750.0),
+	Gradient(1000.0),
+	Gradient(10000.0),
+	Gradient(100000.0)
+};
+
+/* Normally gradients should range up to couple hundred precent at most,
+   however there are possibilities of having points with no altitude after a point with a big altitude
+  (such as places with invalid DEM values in otherwise mountainous regions) - thus giving huge negative gradients. */
+
+/* (Hopefully!) Human friendly grid sizes - note no fixed 'ratio' just numbers that look nice... */
+/* As need to cover walking speeds - have many low numbers (but also may go up to airplane speeds!). */
+static const SpeedUnit internal_unit_speed = SpeedUnit::MetresPerSecond;
+static const Speed interval_values_speed2[] = {
+	Speed(1.0, internal_unit_speed),
+	Speed(2.0, internal_unit_speed),
+	Speed(3.0, internal_unit_speed),
+	Speed(4.0, internal_unit_speed),
+	Speed(5.0, internal_unit_speed),
+	Speed(8.0, internal_unit_speed),
+	Speed(10.0, internal_unit_speed),
+	Speed(15.0, internal_unit_speed),
+	Speed(20.0, internal_unit_speed),
+	Speed(25.0, internal_unit_speed),
+	Speed(40.0, internal_unit_speed),
+	Speed(50.0, internal_unit_speed),
+	Speed(75.0, internal_unit_speed),
+	Speed(100.0, internal_unit_speed),
+	Speed(150.0, internal_unit_speed),
+	Speed(200.0, internal_unit_speed),
+	Speed(250.0, internal_unit_speed),
+	Speed(375.0, internal_unit_speed),
+	Speed(500.0, internal_unit_speed),
+	Speed(750.0, internal_unit_speed),
+	Speed(1000.0, internal_unit_speed),
+	Speed(10000.0, internal_unit_speed)
+};
+
+
 
 GraphIntervalsTime::GraphIntervalsTime()
 {
@@ -138,4 +231,72 @@ GraphIntervalsGradient::GraphIntervalsGradient()
 GraphIntervalsSpeed::GraphIntervalsSpeed()
 {
 	this->intervals = GraphIntervalsTyped<double>(interval_values_speed, sizeof (interval_values_speed) / sizeof (interval_values_speed[0]));
+}
+
+
+
+
+template <class T>
+T GraphIntervals2<T>::get_interval_value(int index)
+{
+	return this->values[index];
+}
+
+
+
+namespace SlavGPS {
+
+
+
+
+template <>
+GraphIntervals2<Distance>::GraphIntervals2()
+{
+	this->values = interval_values_distance;
+	this->n_values = sizeof (interval_values_distance) / sizeof (interval_values_distance[0]);
+}
+
+
+
+
+template <>
+GraphIntervals2<Time>::GraphIntervals2()
+{
+	this->values = interval_values_time;
+	this->n_values = sizeof (interval_values_time) / sizeof (interval_values_time[0]);
+}
+
+
+
+
+template <>
+GraphIntervals2<Altitude>::GraphIntervals2()
+{
+	this->values = interval_values_altitude2;
+	this->n_values = sizeof (interval_values_altitude2) / sizeof (interval_values_altitude2[0]);
+}
+
+
+
+
+template <>
+GraphIntervals2<Gradient>::GraphIntervals2()
+{
+	this->values = interval_values_gradient2;
+	this->n_values = sizeof (interval_values_gradient2) / sizeof (interval_values_gradient2[0]);
+}
+
+
+
+
+template <>
+GraphIntervals2<Speed>::GraphIntervals2()
+{
+	this->values = interval_values_speed2;
+	this->n_values = sizeof (interval_values_speed2) / sizeof (interval_values_speed2[0]);
+}
+
+
+
+
 }
