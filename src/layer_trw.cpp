@@ -1432,7 +1432,7 @@ QString LayerTRW::get_tooltip(void) const
 			const QString distance_string = ttd.length.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
 
 			/* Use timing information if available. */
-			if (ttd.duration > 0) {
+			if (!ttd.duration.is_zero()) {
 				tracks_info = QObject::tr("\n%1Total Length %2 in %3 %4")
 					.arg(duration_string)
 					.arg(distance_string)
@@ -3369,7 +3369,7 @@ Time LayerTRW::get_timestamp(void) const
 		if (this->metadata && this->metadata->iso8601_timestamp.isValid()) {
 
 			/* TODO_MAYBE: use toSecsSinceEpoch() when new version of QT library becomes more available. */
-			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC);
+			return Time(this->metadata->iso8601_timestamp.toMSecsSinceEpoch() / MSECS_PER_SEC, Time::get_internal_unit());
 		}
 	}
 	if (timestamp_tracks.is_valid() && !timestamp_waypoints.is_valid()) {

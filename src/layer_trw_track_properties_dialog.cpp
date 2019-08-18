@@ -271,8 +271,8 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	TrackData<Distance, Distance_ll, Altitude, Altitude_ll> altitudes_ii;
 	altitudes_ii.make_track_data_altitude_over_distance(this->trk, elev_points);
 	if (!altitudes_ii.valid) {
-		altitudes_ii.y_min = NAN;
-		altitudes_ii.y_max = NAN;
+		altitudes_ii.y_min.invalidate();
+		altitudes_ii.y_max.invalidate();
 	} else {
 		altitudes_ii.calculate_min_max();
 	}

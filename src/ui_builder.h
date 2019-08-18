@@ -88,7 +88,7 @@ namespace SlavGPS {
 
 		Latitude,
 		Longitude,
-		Altitude,
+		AltitudeWidget,
 	};
 
 	QString widget_type_get_label(WidgetType type_id);

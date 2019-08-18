@@ -634,7 +634,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 			    && do_draw_trackpoints
 			    && !do_highlight
 			    && std::next(iter) != trk->trackpoints.end()
-			    && (*std::next(iter))->timestamp - (*iter)->timestamp > this->track_min_stop_length) {
+			    && (*std::next(iter))->timestamp.value - (*iter)->timestamp.value > this->track_min_stop_length) {
 
 				const int stop_radius = (6 * tp_size) / 2;
 				this->gisview->fill_ellipse(this->track_pens[(int) LayerTRWTrackGraphics::StopPen].color(),

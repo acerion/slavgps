@@ -125,7 +125,7 @@ void TpPropertiesDialog::sync_timestamp_entry_to_current_tp_cb(time_t timestamp_
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp_value;
 
-	this->set_timestamp_of_current_tp(Time(timestamp_value));
+	this->set_timestamp_of_current_tp(Time(timestamp_value, Time::get_internal_unit()));
 }
 
 

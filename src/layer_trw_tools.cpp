@@ -976,7 +976,7 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 	trw->get_nearby_snap_coordinates_tp(tp->coord, ev, gisview);
 
 	tp->newsegment = false;
-	tp->timestamp.set_valid(false);
+	tp->timestamp.invalidate();
 
 	track->add_trackpoint(tp, true); /* Ensure bounds is updated. */
 	/* Auto attempt to get elevation from DEM data (if it's available). */

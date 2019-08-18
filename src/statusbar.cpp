@@ -158,7 +158,7 @@ StatusBar::StatusBar(QWidget * parent_widget) : QStatusBar(parent_widget)
 
 	MeasurementDisplayWidget * altitude_display = new MeasurementDisplayWidget();
 	altitude_display->set_tooltip(QObject::tr("DEM Altitude"));
-	this->fields[(int) StatusBarField::Altitude] = altitude_display;
+	this->fields[(int) StatusBarField::AltitudeField] = altitude_display;
 	this->addPermanentWidget(altitude_display);
 
 	label = new QLabel("info");
@@ -198,7 +198,7 @@ void StatusBar::set_message(StatusBarField field, QString const & message)
 		qDebug() << SG_PREFIX_E << "'position' field should be set with ::set_coord()";
 		break;
 
-	case StatusBarField::Altitude:
+	case StatusBarField::AltitudeField:
 		qDebug() << SG_PREFIX_E << "'altitude' field should be set with ::set_altitude()";
 		break;
 
@@ -221,7 +221,7 @@ void StatusBar::set_coord(const Coord & coord)
 
 void StatusBar::set_altitude_uu(const Altitude & altitude)
 {
-	((MeasurementDisplayWidget *) this->fields[(int) StatusBarField::Altitude])->set_value_uu(altitude);
+	((MeasurementDisplayWidget *) this->fields[(int) StatusBarField::AltitudeField])->set_value_uu(altitude);
 }
 
 

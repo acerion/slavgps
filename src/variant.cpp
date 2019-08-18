@@ -89,7 +89,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
-		this->val_timestamp.set_from_unix_timestamp(str);
+		this->val_timestamp.set_value_from_string(str);
 		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);
@@ -97,7 +97,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 	case SGVariantType::Longitude:
 		this->lon = Longitude(str);
 		break;
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		this->altitude = Altitude(strtod(str, NULL), HeightUnit::Metres);
 		break;
 	default:
@@ -136,7 +136,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
-		this->val_timestamp.set_from_unix_timestamp(str);
+		this->val_timestamp.set_value_from_string(str);
 		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);
@@ -144,7 +144,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 	case SGVariantType::Longitude:
 		this->lon = Longitude(str);
 		break;
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		this->altitude = Altitude(str.toDouble(), HeightUnit::Metres);
 		break;
 	default:
@@ -170,7 +170,7 @@ SGVariant::SGVariant(double d, SGVariantType type_id_)
 	case SGVariantType::Longitude:
 		this->lon.set_value(d);
 		break;
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		this->altitude = Altitude(d, HeightUnit::Metres);
 		break;
 	default:
@@ -274,7 +274,7 @@ SGVariant::SGVariant(const Longitude & new_lon, SGVariantType type_id_)
 
 SGVariant::SGVariant(const Altitude & a, SGVariantType type_id_)
 {
-	assert (type_id_ == SGVariantType::Altitude);
+	assert (type_id_ == SGVariantType::AltitudeType);
 	this->type_id = type_id_;
 	this->altitude = a;
 }
@@ -357,7 +357,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariant & value)
 		/* This is for debug, so we don't apply any format specifiers. */
 		debug << value.get_longitude().to_string();
 		break;
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		/* This is for debug, so we don't apply any format specifiers. */
 		debug << value.get_altitude().to_string();
 		break;
@@ -411,7 +411,7 @@ QDebug SlavGPS::operator<<(QDebug debug, const SGVariantType type_id)
 	case SGVariantType::Longitude:
 		debug << "Longitude";
 		break;
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		debug << "Altitude";
 		break;
 	default:
@@ -469,7 +469,7 @@ SGVariant & SGVariant::operator=(const SGVariant & other)
 	case SGVariantType::Longitude:
 		this->lon = other.lon;
 		break;
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		this->altitude = other.altitude;
 		break;
 	default:
@@ -511,7 +511,7 @@ Longitude SGVariant::get_longitude(void) const
 
 Altitude SGVariant::get_altitude(void) const
 {
-	assert (this->type_id == SGVariantType::Altitude);
+	assert (this->type_id == SGVariantType::AltitudeType);
 	return this->altitude;
 }
 
@@ -557,7 +557,7 @@ QString SGVariant::to_string() const
 	case SGVariantType::Longitude:
 		return this->lon.to_string();
 
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		return this->altitude.to_string();
 
 	default:
@@ -754,7 +754,7 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 			fprintf(file, "%s\n", this->lon.value_to_string_for_file().toUtf8().constData());
 			break;
 
-		case SGVariantType::Altitude:
+		case SGVariantType::AltitudeType:
 			fprintf(file, "%s\n", this->altitude.value_to_string_for_file().toUtf8().constData());
 			break;
 

@@ -226,7 +226,7 @@ void Track::split_by_timestamp_cb(void)
 
 			/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
 			if (ts < prev_ts) {
-				const Time tstamp(ts);
+				const Time tstamp(ts, Time::get_internal_unit());
 				if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(tstamp.strftime_local("%c"))), dialog_parent) {
 					parent_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), (*iter)->coord);
 				}

@@ -98,7 +98,7 @@ MeasurementEntryWidget::MeasurementEntryWidget(const SGVariant & value_iu, const
 void MeasurementEntryWidget::set_value_iu(const SGVariant & value_iu)
 {
 	switch (value_iu.type_id) {
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		{
 			const Altitude altitude_iu = value_iu.get_altitude();
 			if (altitude_iu.is_valid()) {
@@ -129,7 +129,7 @@ SGVariant MeasurementEntryWidget::get_value_iu(void) const
 	SGVariant result_iu;
 
 	switch (this->type_id) {
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		{
 			/* Since the value in the widget was presented
 			   to user, it must have been in user

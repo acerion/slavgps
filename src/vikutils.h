@@ -163,7 +163,13 @@ namespace SlavGPS {
 		/* Generate an integer suitable for comparison of version numbers. */
 		static int version_to_number(const QString & version);
 	};
+	/* Convert contents of QString representing a double value in C locale into double.
+	   Return std::nan on errors.
 
+	   Copy of SGUtils::c_to_double(), kept outside of class to
+	   avoid header dependency problems.
+	*/
+	double c_to_double(const QString & string);
 
 
 

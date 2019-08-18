@@ -683,7 +683,7 @@ std::list<TreeItem *> Layer::get_items_by_date(const QDate & search_date) const
 
 Time Layer::get_timestamp(void) const
 {
-	return Time(0);
+	return Time(0, Time::get_internal_unit());
 }
 
 

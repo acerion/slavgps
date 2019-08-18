@@ -389,12 +389,12 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		break;
 
 	case tt_wpt_ele:
-		importer->wp->altitude.set_from_string(importer->cdata);
+		importer->wp->altitude.set_value_from_string(importer->cdata);
 		importer->cdata.clear();
 		break;
 
 	case tt_trk_trkseg_trkpt_ele:
-		importer->tp->altitude.set_from_string(importer->cdata);
+		importer->tp->altitude.set_value_from_string(importer->cdata);
 		importer->cdata.clear();
 		break;
 
@@ -1152,7 +1152,7 @@ SaveStatus GPX::write_layer_to_file(FILE * file, LayerTRW * trw, GPXWriteOptions
 
 		if (track_values.size()) {
 			switch (Preferences::get_gpx_export_trk_sort()) {
-			case GPXExportTrackSort::Time:
+			case GPXExportTrackSort::ByTime:
 				track_values.sort(Track::compare_timestamp);
 				break;
 			case GPXExportTrackSort::Alpha:

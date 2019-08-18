@@ -58,23 +58,733 @@ static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZon
 
 
 
-QString Measurements::get_file_size_string(size_t file_size)
+namespace SlavGPS {
+
+
+
+
+/**
+   @timestamp - The time of which the string is wanted
+   @format - The format of the time string
+   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
+
+   @return a string of the time according to the time display property
+*/
+template<>
+QString Time::get_time_string(Qt::DateFormat format, const Coord & coord) const
 {
-	float size = (float) file_size;
+	QString result;
 
-	static const QStringList suffixes = { QObject::tr("B"), QObject::tr("KB"), QObject::tr("MB"), QObject::tr("GB"), QObject::tr("TB") };
-
-	QStringListIterator iter(suffixes);
-	QString unit = iter.next(); /* Initially B/Bytes. */
-	bool show_fractional = false; /* Show (or don't show) fractional part when displaying number of bytes. */
-
-	while (size >= 1024.0 && iter.hasNext()) {
-		unit = iter.next();
-		size /= 1024.0;
-		show_fractional = true;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
 	}
 
-	return QObject::tr("%1%2").arg(size, 0, 'f', show_fractional * 2).arg(unit);
+	const QTimeZone * tz_from_location = NULL;
+
+	const SGTimeReference ref = Preferences::get_time_ref_frame();
+	switch (ref) {
+	case SGTimeReference::UTC:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::utc()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << this->value << "-> time string" << result;
+		break;
+	case SGTimeReference::World:
+		/* No timezone specified so work it out. */
+		tz_from_location = TZLookup::get_tz_at_location(coord);
+		if (tz_from_location) {
+			result = time_string_tz(this->value, format, *tz_from_location);
+			qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << this->value << "-> time string" << result;
+		} else {
+			/* No results (e.g. could be in the middle of a sea).
+			   Fallback to simplistic method that doesn't take into account Timezones of countries. */
+			const LatLon lat_lon = coord.get_lat_lon();
+			result = time_string_adjusted(this->value, round (lat_lon.lon / 15.0) * 3600);
+			qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
+		}
+		break;
+	case SGTimeReference::Locale:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::systemTimeZone()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << this->value << "-> time string" << result;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+/**
+   @timestamp - The time of which the string is wanted
+   @format - The format of the time string
+   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
+   @tz - TimeZone string - maybe NULL (only applicable for SGTimeReference::World). Useful to pass in the cached value from TZLookup::get_tz_at_location() to save looking it up again for the same position.
+
+   @return a string of the time according to the time display property
+*/
+template<>
+QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const
+{
+	QString result;
+
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	const SGTimeReference ref = Preferences::get_time_ref_frame();
+	switch (ref) {
+	case SGTimeReference::UTC:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::utc()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << this->value << "-> time string" << result;
+		break;
+	case SGTimeReference::World:
+		if (tz) {
+			/* Use specified timezone. */
+			result = time_string_tz(this->value, format, *tz);
+			qDebug() << SG_PREFIX_D << "World (from timezone): timestamp =" << this->value << "-> time string" << result;
+		} else {
+			/* No timezone specified so work it out. */
+			QTimeZone const * tz_from_location = TZLookup::get_tz_at_location(coord);
+			if (tz_from_location) {
+				result = time_string_tz(this->value, format, *tz_from_location);
+				qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << this->value << "-> time string" << result;
+			} else {
+				/* No results (e.g. could be in the middle of a sea).
+				   Fallback to simplistic method that doesn't take into account Timezones of countries. */
+				const LatLon lat_lon = coord.get_lat_lon();
+				result = time_string_adjusted(this->value, round (lat_lon.lon / 15.0) * 3600);
+				qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
+			}
+		}
+		break;
+	case SGTimeReference::Locale:
+		result = QDateTime::fromTime_t(this->value, QTimeZone::systemTimeZone()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << this->value << "-> time string" << result;
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+TimeUnit Time::get_user_unit(void)
+{
+	return TimeUnit::Seconds; /* TODO: get this from Preferences? */
+}
+
+
+
+
+template<>
+QString Time::to_duration_string(void) const
+{
+	QString result;
+
+	const int seconds = this->value % 60;
+	const int minutes = (this->value / 60) % 60;
+	const int hours   = (this->value / (60 * 60)) % 60;
+
+	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
+}
+
+
+
+
+template<>
+QString Time::to_string(void) const
+{
+	return this->to_duration_string();
+}
+
+
+
+
+template<>
+bool Time::is_zero(void) const
+{
+	if (!this->valid) {
+		return true;
+	}
+	return this->value == 0;
+}
+
+
+
+
+template<>
+TimeUnit Time::get_internal_unit(void)
+{
+	return SG_MEASUREMENT_INTERNAL_UNIT_TIME;
+}
+
+
+
+
+template<>
+sg_ret Time::set_value_from_string(const QString & str)
+{
+	this->value = (time_t) str.toULong(&this->valid);
+
+	if (!this->valid) {
+		qDebug() << SG_PREFIX_W << "Setting invalid value of timestamp from string" << str;
+	}
+
+	return this->valid ? sg_ret::ok : sg_ret::err;
+}
+
+
+
+template<>
+sg_ret Time::set_value_from_char_string(const char * str)
+{
+	if (NULL == str) {
+		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of timestamp from NULL string";
+		this->valid = false;
+		return sg_ret::err_arg;
+	} else {
+		return this->set_value_from_string(QString(str));
+	}
+}
+
+
+
+
+template<>
+void Time::set_value(Time_ll new_value)
+{
+	this->value = new_value;
+	this->valid = !std::isnan(new_value); /* TODO: improve for Time_ll data type. */
+	/* Don't change unit. */
+}
+
+
+
+
+template<>
+bool Time::ll_value_is_valid(Time_ll new_value)
+{
+	return !std::isnan(new_value); /* TODO: improve for Time_ll data type. */
+}
+
+
+
+
+
+
+
+template<>
+GradientUnit Gradient::get_user_unit(void)
+{
+	return GradientUnit::Degrees; /* TODO: get this from Preferences. */
+}
+
+
+
+template<>
+QString Gradient::to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+	} else {
+		result = QObject::tr("%1%").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
+	}
+	return result;
+}
+
+
+
+
+template<>
+GradientUnit Measurement<GradientUnit, Gradient_ll>::get_internal_unit(void)
+{
+	return SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT;
+}
+
+
+
+
+
+
+
+
+template<>
+SpeedUnit Speed::get_internal_unit(void)
+{
+	return SG_MEASUREMENT_INTERNAL_UNIT_SPEED;
+}
+
+
+
+
+template<>
+SpeedUnit Speed::get_user_unit(void)
+{
+	return Preferences::get_unit_speed();
+}
+
+
+
+
+template<>
+QString Speed::to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	switch (this->unit) {
+	case SpeedUnit::KilometresPerHour:
+		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (this->value), 0, 'f', SG_PRECISION_SPEED);
+		break;
+	case SpeedUnit::MilesPerHour:
+		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (this->value), 0, 'f', SG_PRECISION_SPEED);
+		break;
+	case SpeedUnit::MetresPerSecond:
+		result = QObject::tr("%1 m/s").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
+		break;
+	case SpeedUnit::Knots:
+		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (this->value), 0, 'f', SG_PRECISION_SPEED);
+		break;
+	default:
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+QString Speed::to_string(Speed_ll value)
+{
+	int precision = SG_PRECISION_SPEED; /* TODO: make it an argument with default value. */
+
+	if (std::isnan(value)) {
+		return SG_MEASUREMENT_INVALID_VALUE_STRING;
+	}
+
+	const SpeedUnit speed_unit = Preferences::get_unit_speed();
+
+	QString buffer;
+
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
+		buffer = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::MilesPerHour:
+		buffer = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::MetresPerSecond:
+		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
+		break;
+	case SpeedUnit::Knots:
+		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
+		break;
+	default:
+		buffer = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
+		break;
+	}
+
+	return buffer;
+}
+
+
+
+
+template<>
+Speed Speed::convert_to_unit(SpeedUnit target_unit) const
+{
+	Speed output;
+	output.unit = target_unit;
+
+	 /* TODO_LATER: implement missing calculations. */
+
+	switch (this->unit) {
+	case SpeedUnit::KilometresPerHour:
+		qDebug() << SG_PREFIX_E << "Unhandled case";
+		break;
+	case SpeedUnit::MilesPerHour:
+		qDebug() << SG_PREFIX_E << "Unhandled case";
+		break;
+	case SpeedUnit::MetresPerSecond:
+		switch (target_unit) {
+		case SpeedUnit::KilometresPerHour:
+			output.value = VIK_MPS_TO_KPH(this->value);
+			break;
+		case SpeedUnit::MilesPerHour:
+			output.value = VIK_MPS_TO_MPH(this->value);
+			break;
+		case SpeedUnit::MetresPerSecond:
+			output.value = this->value;
+			break;
+		case SpeedUnit::Knots:
+			output.value = VIK_MPS_TO_KNOTS(this->value);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target speed unit" << (int) target_unit;
+			break;
+		}
+
+	case SpeedUnit::Knots:
+		qDebug() << SG_PREFIX_E << "Unhandled case";
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
+		break;
+	}
+
+	output.valid = !std::isnan(this->value);
+
+	return output;
+
+}
+
+
+
+
+template<>
+Speed_ll Speed::convert_to_unit(Speed_ll value, SpeedUnit from, SpeedUnit to)
+{
+	assert (SpeedUnit::MetresPerSecond == from);
+
+	switch (to) {
+	case SpeedUnit::KilometresPerHour:
+		value = VIK_MPS_TO_KPH(value);
+		break;
+	case SpeedUnit::MilesPerHour:
+		value = VIK_MPS_TO_MPH(value);
+		break;
+	case SpeedUnit::MetresPerSecond:
+		/* Already in m/s so nothing to do. */
+		break;
+	case SpeedUnit::Knots:
+		value = VIK_MPS_TO_KNOTS(value);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid 'to' unit" << (int) to;
+		break;
+	}
+
+	return value;
+}
+
+
+
+
+template<>
+QString Speed::get_unit_string(SpeedUnit speed_unit)
+{
+	QString result;
+
+	switch (speed_unit) {
+	case SpeedUnit::KilometresPerHour:
+		result = QObject::tr("km/h");
+		break;
+	case SpeedUnit::MilesPerHour:
+		result = QObject::tr("mph");
+		break;
+	case SpeedUnit::MetresPerSecond:
+		result = QObject::tr("m/s");
+		break;
+	case SpeedUnit::Knots:
+		result = QObject::tr("knots");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+
+
+
+
+template<>
+HeightUnit Altitude::get_internal_unit(void)
+{
+	return SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT;
+}
+
+
+
+
+template<>
+HeightUnit Altitude::get_user_unit(void)
+{
+	return Preferences::get_unit_height();
+}
+
+
+
+
+template<>
+QString Altitude::to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	switch (this->unit) {
+	case HeightUnit::Metres:
+		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	case HeightUnit::Feet:
+		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+template<>
+QString Altitude::to_string(Altitude_ll value)
+{
+	/* TODO */
+	QString result;
+	return result;
+}
+
+
+
+
+template<>
+Altitude Altitude::convert_to_unit(HeightUnit target_unit) const
+{
+	Altitude output;
+	output.unit = target_unit;
+
+	switch (this->unit) {
+	case HeightUnit::Metres:
+		switch (target_unit) {
+		case HeightUnit::Metres: /* No need to convert. */
+			output.value = this->value;
+			break;
+		case HeightUnit::Feet:
+			output.value = VIK_METERS_TO_FEET(this->value);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_unit;
+			output.value = NAN;
+			break;
+		}
+		break;
+	case HeightUnit::Feet:
+		switch (target_unit) {
+		case HeightUnit::Metres:
+			output.value = VIK_FEET_TO_METERS(this->value);
+			break;
+		case HeightUnit::Feet:
+			/* No need to convert. */
+			output.value = this->value;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_unit;
+			output.value = NAN;
+			break;
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid source altitude unit" << (int) this->unit;
+		output.value = NAN;
+		break;
+	}
+
+	output.valid = !std::isnan(output.value);
+
+	return output;
+
+}
+
+
+
+
+template<>
+Altitude_ll Altitude::convert_to_unit(Altitude_ll value, HeightUnit from, HeightUnit to)
+{
+	/* TODO: implement. */
+	Altitude_ll val = 0;
+	return val;
+}
+
+
+
+
+#if 0
+template<>
+sg_ret Altitude::set_from_string(const char * str)
+{
+	if (NULL == str) {
+		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of altitude from NULL string";
+		this->valid = false;
+		return sg_ret::err_arg;
+	} else {
+		return this->set_from_string(QString(str));
+	}
+}
+
+
+
+
+template<>
+sg_ret Altitude::set_from_string(const QString & str)
+{
+	this->value = SGUtils::c_to_double(str);
+	this->valid = !std::isnan(this->value);
+	this->unit = HeightUnit::Metres;
+
+	return this->valid ? sg_ret::ok : sg_ret::err;
+}
+#endif
+
+
+
+
+template<>
+QString Altitude::get_unit_full_string(HeightUnit height_unit)
+{
+	QString result;
+
+	switch (height_unit) {
+	case HeightUnit::Metres:
+		result = QObject::tr("meters");
+		break;
+	case HeightUnit::Feet:
+		result = QObject::tr("feet");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
+		result = SG_MEASUREMENT_INVALID_UNIT_STRING;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+int Altitude::floor(void) const
+{
+	if (!this->valid) {
+		return INT_MIN;
+	}
+	return std::floor(this->value);
+}
+
+
+
+
+template<>
+QString Altitude::to_nice_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	/* TODO_LATER: implement magnitude-dependent recalculations. */
+
+	switch (this->unit) {
+	case HeightUnit::Metres:
+		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	case HeightUnit::Feet:
+		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+const QString Altitude::value_to_string_for_file(void) const
+{
+	return SGUtils::double_to_c(this->value);
+}
+
+
+
+
+template<>
+const QString Altitude::value_to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+	} else {
+		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+	}
+
+	return result;
+}
+
+
+
+
+}
+
+
+
+
+static QString time_string_adjusted(time_t time, int offset_s)
+{
+	time_t mytime = time + offset_s;
+	char * str = (char *) malloc(64);
+	struct tm tm;
+	/* Append asterisks to indicate use of simplistic model (i.e. no TZ). */
+	strftime(str, 64, "%a %X %x **", gmtime_r(&mytime, &tm));
+
+	QString result(str);
+	free(str);
+	return result;
+}
+
+
+
+
+static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz)
+{
+	QDateTime utc = QDateTime::fromTime_t(time, Qt::OffsetFromUTC, 0);  /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+	QDateTime local = utc.toTimeZone(tz);
+
+	return local.toString(format);
 }
 
 
@@ -142,6 +852,26 @@ Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
 	return result;
 }
 
+
+
+QString Measurements::get_file_size_string(size_t file_size)
+{
+	float size = (float) file_size;
+
+	static const QStringList suffixes = { QObject::tr("B"), QObject::tr("KB"), QObject::tr("MB"), QObject::tr("GB"), QObject::tr("TB") };
+
+	QStringListIterator iter(suffixes);
+	QString unit = iter.next(); /* Initially B/Bytes. */
+	bool show_fractional = false; /* Show (or don't show) fractional part when displaying number of bytes. */
+
+	while (size >= 1024.0 && iter.hasNext()) {
+		unit = iter.next();
+		size /= 1024.0;
+		show_fractional = true;
+	}
+
+	return QObject::tr("%1%2").arg(size, 0, 'f', show_fractional * 2).arg(unit);
+}
 
 
 
@@ -718,6 +1448,7 @@ double Distance::convert_meters_to(double distance, DistanceUnit distance_unit)
 
 
 
+/* The same implementation as in Measurement. */
 bool Distance::is_zero(void) const
 {
 	const double epsilon = 0.0000001;
@@ -729,505 +1460,14 @@ bool Distance::is_zero(void) const
 
 
 
-
-Altitude::Altitude(double new_value, HeightUnit height_unit)
-{
-	this->value = new_value;
-	this->valid = !std::isnan(new_value);
-	this->unit = height_unit;
-}
-
-
-
-
-HeightUnit Altitude::get_user_unit(void)
-{
-	return Preferences::get_unit_height();
-}
-
-
-
-
-bool Altitude::is_valid(void) const
-{
-	return this->valid;
-}
-
-
-
-
-void Altitude::set_valid(bool new_valid)
-{
-	this->valid = new_valid;
-	if (!this->valid) {
-		this->value = NAN;
-	}
-}
-
-
-
-
-bool Altitude::is_zero(void) const
-{
-	const double epsilon = 0.0000001;
-	if (!this->valid) {
-		return true;
-	}
-	return std::abs(this->value) < epsilon;
-}
-
-
-
-const QString Altitude::value_to_string_for_file(void) const
-{
-	return SGUtils::double_to_c(this->value);
-}
-
-
-
-
-const QString Altitude::value_to_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-	} else {
-		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-	}
-
-	return result;
-}
-
-
-
-
-QString Altitude::to_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		return result;
-	}
-
-	switch (this->unit) {
-	case HeightUnit::Metres:
-		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	case HeightUnit::Feet:
-		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-QString Altitude::to_nice_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		return result;
-	}
-
-	/* TODO_LATER: implement magnitude-dependent recalculations. */
-
-	switch (this->unit) {
-	case HeightUnit::Metres:
-		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	case HeightUnit::Feet:
-		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-double Altitude::get_value(void) const
-{
-	return this->value;
-}
-
-
-
-
-void Altitude::set_value(double new_value)
-{
-	this->value = new_value;
-	this->valid = !std::isnan(new_value);
-	/* Don't change unit. */
-}
-
-
-
-
-Altitude Altitude::convert_to_unit(HeightUnit target_height_unit) const
-{
-	Altitude output;
-	output.unit = target_height_unit;
-
-	switch (this->unit) {
-	case HeightUnit::Metres:
-		switch (target_height_unit) {
-		case HeightUnit::Metres: /* No need to convert. */
-			output.value = this->value;
-			break;
-		case HeightUnit::Feet:
-			output.value = VIK_METERS_TO_FEET(this->value);
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_height_unit;
-			output.value = NAN;
-			break;
-		}
-		break;
-	case HeightUnit::Feet:
-		switch (target_height_unit) {
-		case HeightUnit::Metres:
-			output.value = VIK_FEET_TO_METERS(this->value);
-			break;
-		case HeightUnit::Feet:
-			/* No need to convert. */
-			output.value = this->value;
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_height_unit;
-			output.value = NAN;
-			break;
-		}
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid source altitude unit" << (int) this->unit;
-		output.value = NAN;
-		break;
-	}
-
-	output.valid = !std::isnan(output.value);
-
-	return output;
-}
-
-
-
-Altitude & Altitude::operator=(const Altitude & rhs)
-{
-	if (this == &rhs) {
-		return *this;
-	}
-
-	this->value = rhs.value;
-	this->valid = rhs.valid;
-	this->unit = rhs.unit;
-
-	return *this;
-}
-
-
-
-Altitude & Altitude::operator+=(double rhs)
-{
-	if (this->valid) {
-		this->value += rhs;
-		this->valid = !std::isnan(this->value);
-	} else {
-		this->value = rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	}
-
-	return *this;
-}
-
-
-
-
-Altitude & Altitude::operator+=(const Altitude & rhs)
-{
-	if (!rhs.valid) {
-		return *this;
-	}
-
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Invalid operands";
-		return *this;
-	}
-	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return *this;
-	}
-
-	this->value += rhs.value;
-	this->valid = !std::isnan(this->value) && this->value >= 0.0;
-	return *this;
-}
-
-
-
-
-Altitude & Altitude::operator-=(double rhs)
-{
-	if (this->valid) {
-		this->value -= rhs;
-		this->valid = !std::isnan(this->value);
-	} else {
-		this->value = rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	}
-
-	return *this;
-}
-
-
-
-
-Altitude & Altitude::operator-=(const Altitude & rhs)
-{
-	if (!rhs.valid) {
-		return *this;
-	}
-
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Invalid operands";
-		return *this;
-	}
-	if (this->unit != rhs.unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return *this;
-	}
-
-	this->value += rhs.value;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-Altitude & Altitude::operator*=(double rhs)
-{
-	if (this->valid) {
-		this->value *= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-Altitude & Altitude::operator/=(double rhs)
-{
-	if (this->valid) {
-		this->value /= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-bool Altitude::operator==(const Altitude & rhs) const
-{
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	return this->value == rhs.value;
-}
-
-
-
-
-bool Altitude::operator!=(const Altitude & rhs) const
-{
-	return !(*this == rhs);
-}
-
-
-
-
-double SlavGPS::operator/(const Altitude & lhs, const Altitude & rhs)
-{
-	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
-		return lhs.value / rhs.value;
-	} else {
-		return NAN;
-	}
-}
-
-
-
-
-bool SlavGPS::operator<(const Altitude & lhs, const Altitude & rhs)
-{
-	return lhs.value < rhs.value;
-}
-
-
-
-
-bool SlavGPS::operator>(const Altitude & lhs, const Altitude & rhs)
-{
-	return rhs < lhs;
-}
-
-
-
-
-bool SlavGPS::operator<=(const Altitude & lhs, const Altitude & rhs)
-{
-	return !(lhs > rhs);
-}
-
-
-
-
-bool SlavGPS::operator>=(const Altitude & lhs, const Altitude & rhs)
-{
-	return !(lhs < rhs);
-}
-
-
-
-
-QDebug SlavGPS::operator<<(QDebug debug, const Altitude & altitude)
-{
-	debug << altitude.to_string();
-	return debug;
-}
-
-
-
-
-int Altitude::floor(void) const
-{
-	if (!this->valid) {
-		return INT_MIN;
-	}
-	return std::floor(this->value);
-}
-
-
-
-
-QString Altitude::get_unit_full_string(HeightUnit height_unit)
-{
-	QString result;
-
-	switch (height_unit) {
-	case HeightUnit::Metres:
-		result = QObject::tr("meters");
-		break;
-	case HeightUnit::Feet:
-		result = QObject::tr("feet");
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid height unit" << (int) height_unit;
-		result = SG_MEASUREMENT_INVALID_UNIT_STRING;
-		break;
-	}
-
-	return result;
-}
-
-
-
-sg_ret Altitude::set_from_string(const char * str)
-{
-	if (NULL == str) {
-		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of altitude from NULL string";
-		this->valid = false;
-		return sg_ret::err_arg;
-	} else {
-		return this->set_from_string(QString(str));
-	}
-}
-
-
-
-
-sg_ret Altitude::set_from_string(const QString & str)
-{
-	this->value = SGUtils::c_to_double(str);
-	this->valid = !std::isnan(this->value);
-	this->unit = HeightUnit::Metres;
-
-	return this->valid ? sg_ret::ok : sg_ret::err;
-}
-
-
-
-
-Speed::Speed(double new_value, SpeedUnit speed_unit)
-{
-	this->value = new_value;
-	this->valid = !std::isnan(new_value); /* We don't test if value is less than zero, because in some contexts the speed can be negative. */
-	this->unit = speed_unit;
-}
-
-
-
-
-SpeedUnit Speed::get_user_unit(void)
-{
-	return Preferences::get_unit_speed();
-}
-
-
-
-
-bool Speed::is_valid(void) const
-{
-	return this->valid;
-}
-
-
-
-
-bool Speed::is_zero(void) const
-{
-	const double epsilon = 0.0000001;
-	if (!this->valid) {
-		return true;
-	}
-	return std::abs(this->value) < epsilon;
-}
-
-
-
-
 #if 0
+
+
+
 const QString Speed::value_to_string_for_file(void) const
 {
 	return SGUtils::double_to_c(this->value);
 }
-#endif
 
 
 
@@ -1244,38 +1484,6 @@ const QString Speed::value_to_string(void) const
 	return result;
 }
 
-
-
-
-QString Speed::to_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		return result;
-	}
-
-	switch (this->unit) {
-	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (this->value), 0, 'f', SG_PRECISION_SPEED);
-		break;
-	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (this->value), 0, 'f', SG_PRECISION_SPEED);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		result = QObject::tr("%1 m/s").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
-		break;
-	case SpeedUnit::Knots:
-		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (this->value), 0, 'f', SG_PRECISION_SPEED);
-		break;
-	default:
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
-		break;
-	}
-
-	return result;
-}
 
 
 
@@ -1309,107 +1517,6 @@ QString Speed::to_nice_string(void) const
 
 
 
-QString Speed::to_string(double value, int precision)
-{
-	if (std::isnan(value)) {
-		return SG_MEASUREMENT_INVALID_VALUE_STRING;
-	}
-
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-
-	QString buffer;
-
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		buffer = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::MilesPerHour:
-		buffer = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
-		break;
-	case SpeedUnit::Knots:
-		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
-		break;
-	default:
-		buffer = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return buffer;
-}
-
-
-
-
-double Speed::get_value(void) const
-{
-	return this->value;
-}
-
-
-
-
-void Speed::set_value(double new_value)
-{
-	this->value = new_value;
-	this->valid = !std::isnan(new_value);
-	/* Don't change unit. */
-}
-
-
-
-
-Speed Speed::convert_to_unit(SpeedUnit target_speed_unit) const
-{
-	Speed output;
-	output.unit = target_speed_unit;
-
-	 /* TODO_LATER: implement missing calculations. */
-
-	switch (this->unit) {
-	case SpeedUnit::KilometresPerHour:
-		qDebug() << SG_PREFIX_E << "Unhandled case";
-		break;
-	case SpeedUnit::MilesPerHour:
-		qDebug() << SG_PREFIX_E << "Unhandled case";
-		break;
-	case SpeedUnit::MetresPerSecond:
-		switch (target_speed_unit) {
-		case SpeedUnit::KilometresPerHour:
-			output.value = VIK_MPS_TO_KPH(this->value);
-			break;
-		case SpeedUnit::MilesPerHour:
-			output.value = VIK_MPS_TO_MPH(this->value);
-			break;
-		case SpeedUnit::MetresPerSecond:
-			output.value = this->value;
-			break;
-		case SpeedUnit::Knots:
-			output.value = VIK_MPS_TO_KNOTS(this->value);
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid target speed unit" << (int) target_speed_unit;
-			break;
-		}
-
-	case SpeedUnit::Knots:
-		qDebug() << SG_PREFIX_E << "Unhandled case";
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
-		break;
-	}
-
-	output.valid = !std::isnan(this->value);
-
-	return output;
-}
-
-
-
 bool Speed::operator_args_valid(const Speed & lhs, const Speed & rhs)
 {
 	if (!lhs.valid || !rhs.valid) {
@@ -1428,103 +1535,6 @@ bool Speed::operator_args_valid(const Speed & lhs, const Speed & rhs)
 
 
 
-Speed & Speed::operator+=(const Speed & rhs)
-{
-	if (!Speed::operator_args_valid(*this, rhs)) {
-		return *this;
-	}
-
-	this->value += rhs.value;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-Speed & Speed::operator-=(const Speed & rhs)
-{
-	if (!Speed::operator_args_valid(*this, rhs)) {
-		return *this;
-	}
-
-	this->value -= rhs.value;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-Speed & Speed::operator*=(double x)
-{
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_E << "Operation on invalid arg";
-		return *this;
-	}
-
-	this->value *= x;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-Speed & Speed::operator/=(double x)
-{
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_E << "Operation on invalid arg";
-		return *this;
-	}
-
-	this->value /= x;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-double SlavGPS::operator/(const Speed & lhs, const Speed & rhs)
-{
-	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
-		return lhs.value / rhs.value;
-	} else {
-		return NAN;
-	}
-}
-
-
-
-
-bool Speed::operator==(const Speed & rhs) const
-{
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	return this->value == rhs.value;
-}
-
-
-
-
-bool Speed::operator!=(const Speed & rhs) const
-{
-	return !(*this == rhs);
-}
-
-
-
-
-#if 0
 QString Speed::get_unit_full_string(SpeedUnit speed_unit)
 {
 	QString result;
@@ -1544,61 +1554,11 @@ QString Speed::get_unit_full_string(SpeedUnit speed_unit)
 
 	return result;
 }
+
+
+
+
 #endif
-
-
-
-
-QString Speed::get_unit_string(SpeedUnit speed_unit)
-{
-	QString result;
-
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("km/h");
-		break;
-	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("mph");
-		break;
-	case SpeedUnit::MetresPerSecond:
-		result = QObject::tr("m/s");
-		break;
-	case SpeedUnit::Knots:
-		result = QObject::tr("knots");
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-double Speed::convert_mps_to(double speed, SpeedUnit speed_unit)
-{
-	switch (speed_unit) {
-	case SpeedUnit::KilometresPerHour:
-		speed = VIK_MPS_TO_KPH(speed);
-		break;
-	case SpeedUnit::MilesPerHour:
-		speed = VIK_MPS_TO_MPH(speed);
-		break;
-	case SpeedUnit::MetresPerSecond:
-		/* Already in m/s so nothing to do. */
-		break;
-	case SpeedUnit::Knots:
-		speed = VIK_MPS_TO_KNOTS(speed);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
-		break;
-	}
-
-	return speed;
-}
 
 
 
@@ -1895,96 +1855,7 @@ static QString distance_string(double distance)
 
 
 
-
-Time::Time()
-{
-}
-
-
-
-
-Time::Time(time_t new_value, TimeUnit time_unit __attribute__((unused)))
-{
-	this->value = new_value;
-	this->valid = !std::isnan(this->value);
-}
-
-
-
-
-TimeUnit Time::get_user_unit(void)
-{
-	return TimeUnit::Seconds; /* TODO: get this from Preferences? */
-}
-
-
-
-
-TimeUnit Time::get_internal_unit(void)
-{
-	return TimeUnit::Seconds;
-}
-
-
-
-
-bool Time::is_valid(void) const
-{
-	return this->valid;
-}
-
-
-
-
-time_t Time::get_value(void) const
-{
-	return this->value;
-}
-
-
-
-
-Time SlavGPS::operator+(const Time & lhs, const Time & rhs)
-{
-	Time result;
-
-	if (!lhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
-		return result;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
-		return result;
-	}
-
-	result.value = lhs.value + rhs.value;
-	result.valid = result.value >= 0;
-
-	return result;
-}
-
-
-
-
-Time SlavGPS::operator-(const Time & lhs, const Time & rhs)
-{
-	Time result;
-
-	if (!lhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
-		return result;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
-		return result;
-	}
-
-	result.value = lhs.value - rhs.value;
-	result.valid = result.value >= 0;
-	return result;
-}
+#if 0
 
 
 
@@ -1993,134 +1864,6 @@ bool SlavGPS::operator<(const Time & lhs, const Time & rhs)
 {
 	/* TODO: shouldn't this be difftime()? */
 	return lhs.value < rhs.value;
-}
-
-
-
-
-bool SlavGPS::operator>(const Time & lhs, const Time & rhs)
-{
-	return rhs < lhs;
-}
-
-
-
-bool SlavGPS::operator<=(const Time & lhs, const Time & rhs)
-{
-	return !(lhs > rhs);
-}
-
-
-
-
-bool SlavGPS::operator>=(const Time & lhs, const Time & rhs)
-{
-	return !(lhs < rhs);
-}
-
-
-
-
-QDebug SlavGPS::operator<<(QDebug debug, const Time & timestamp)
-{
-	debug << "Time:" << timestamp.value;
-	return debug;
-}
-
-
-
-
-bool Time::operator==(const Time & rhs) const
-{
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	return this->value == rhs.value;
-}
-
-
-
-
-bool Time::operator!=(const Time & rhs) const
-{
-	return !(*this == rhs);
-}
-
-
-
-
-Time & Time::operator+=(const Time & rhs)
-{
-	if (!rhs.valid) {
-		return *this;
-	}
-
-	if (!this->valid) {
-		return *this;
-	}
-
-	this->value += rhs.value;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-Time & Time::operator*=(double rhs)
-{
-	if (this->valid) {
-		this->value *= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-Time & Time::operator/=(double rhs)
-{
-	if (this->valid) {
-		this->value /= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-double SlavGPS::operator/(const Time & lhs, const Time & rhs)
-{
-	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
-		return (1.0 * lhs.value) / rhs.value;
-	} else {
-		return NAN;
-	}
-}
-
-
-
-
-Time Time::get_abs_diff(const Time & t1, const Time & t2)
-{
-	Time result;
-	result.value = std::abs(t1.value - t2.value);
-	result.valid = true;
-
-	return result;
 }
 
 
@@ -2165,31 +1908,9 @@ QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
 
 
 
-QString Time::to_duration_string(void) const
-{
-	QString result;
-
-	const int seconds = this->value % 60;
-	const int minutes = (this->value / 60) % 60;
-	const int hours   = (this->value / (60 * 60)) % 60;
-
-	return QObject::tr("%1 h %2 m %3 s").arg(hours).arg(minutes, 2, 10, (QChar) '0').arg(seconds, 2, 10, (QChar) '0');
-}
-
-
-
-
 QString Time::to_string(void) const
 {
 	return this->to_duration_string();
-}
-
-
-
-
-void Time::set_valid(bool new_value)
-{
-	this->valid = new_value;
 }
 
 
@@ -2202,225 +1923,6 @@ QString Time::get_time_string(Qt::DateFormat format) const
 	const QString result = date_time.toString(format);
 
 	return result;
-}
-
-
-
-
-/**
-   @timestamp - The time of which the string is wanted
-   @format - The format of the time string
-   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
-
-   @return a string of the time according to the time display property
-*/
-QString Time::get_time_string(Qt::DateFormat format, const Coord & coord) const
-{
-	QString result;
-
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		return result;
-	}
-
-	const QTimeZone * tz_from_location = NULL;
-
-	const SGTimeReference ref = Preferences::get_time_ref_frame();
-	switch (ref) {
-	case SGTimeReference::UTC:
-		result = QDateTime::fromTime_t(this->value, QTimeZone::utc()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << this->value << "-> time string" << result;
-		break;
-	case SGTimeReference::World:
-		/* No timezone specified so work it out. */
-		tz_from_location = TZLookup::get_tz_at_location(coord);
-		if (tz_from_location) {
-			result = time_string_tz(this->value, format, *tz_from_location);
-			qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << this->value << "-> time string" << result;
-		} else {
-			/* No results (e.g. could be in the middle of a sea).
-			   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-			const LatLon lat_lon = coord.get_lat_lon();
-			result = time_string_adjusted(this->value, round (lat_lon.lon / 15.0) * 3600);
-			qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
-		}
-		break;
-	case SGTimeReference::Locale:
-		result = QDateTime::fromTime_t(this->value, QTimeZone::systemTimeZone()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << this->value << "-> time string" << result;
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-/**
-   @timestamp - The time of which the string is wanted
-   @format - The format of the time string
-   @coord - Position of object for the time output (only applicable for format == SGTimeReference::World)
-   @tz - TimeZone string - maybe NULL (only applicable for SGTimeReference::World). Useful to pass in the cached value from TZLookup::get_tz_at_location() to save looking it up again for the same position.
-
-   @return a string of the time according to the time display property
-*/
-QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const
-{
-	QString result;
-
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		return result;
-	}
-
-	const SGTimeReference ref = Preferences::get_time_ref_frame();
-	switch (ref) {
-	case SGTimeReference::UTC:
-		result = QDateTime::fromTime_t(this->value, QTimeZone::utc()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		qDebug() << SG_PREFIX_D << "UTC: timestamp =" << this->value << "-> time string" << result;
-		break;
-	case SGTimeReference::World:
-		if (tz) {
-			/* Use specified timezone. */
-			result = time_string_tz(this->value, format, *tz);
-			qDebug() << SG_PREFIX_D << "World (from timezone): timestamp =" << this->value << "-> time string" << result;
-		} else {
-			/* No timezone specified so work it out. */
-			QTimeZone const * tz_from_location = TZLookup::get_tz_at_location(coord);
-			if (tz_from_location) {
-			        result = time_string_tz(this->value, format, *tz_from_location);
-				qDebug() << SG_PREFIX_D << "World (from location): timestamp =" << this->value << "-> time string" << result;
-			} else {
-				/* No results (e.g. could be in the middle of a sea).
-				   Fallback to simplistic method that doesn't take into account Timezones of countries. */
-				const LatLon lat_lon = coord.get_lat_lon();
-			        result = time_string_adjusted(this->value, round (lat_lon.lon / 15.0) * 3600);
-				qDebug() << SG_PREFIX_D << "World (fallback): timestamp =" << this->value << "-> time string" << result;
-			}
-		}
-		break;
-	case SGTimeReference::Locale:
-		result = QDateTime::fromTime_t(this->value, QTimeZone::systemTimeZone()).toString(format); /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		qDebug() << SG_PREFIX_D << "Locale: timestamp =" << this->value << "-> time string" << result;
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected SGTimeReference value" << (int) ref;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-static QString time_string_adjusted(time_t time, int offset_s)
-{
-	time_t mytime = time + offset_s;
-	char * str = (char *) malloc(64);
-	struct tm tm;
-	/* Append asterisks to indicate use of simplistic model (i.e. no TZ). */
-	strftime(str, 64, "%a %X %x **", gmtime_r(&mytime, &tm));
-
-	QString result(str);
-	free(str);
-	return result;
-}
-
-
-
-
-static QString time_string_tz(time_t time, Qt::DateFormat format, const QTimeZone & tz)
-{
-	QDateTime utc = QDateTime::fromTime_t(time, Qt::OffsetFromUTC, 0);  /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-	QDateTime local = utc.toTimeZone(tz);
-
-	return local.toString(format);
-}
-
-
-
-
-sg_ret Time::set_from_unix_timestamp(const char * str)
-{
-	if (NULL == str) {
-		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of timestamp from NULL string";
-		this->valid = false;
-		return sg_ret::err_arg;
-	} else {
-		return this->set_from_unix_timestamp(QString(str));
-	}
-}
-
-
-
-
-sg_ret Time::set_from_unix_timestamp(const QString & str)
-{
-	this->value = (time_t) str.toULong(&this->valid);
-
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Setting invalid value of timestamp from string" << str;
-	}
-
-	return this->valid ? sg_ret::ok : sg_ret::err;
-}
-
-
-
-
-bool Time::is_zero(void) const
-{
-	if (!this->valid) {
-		return true;
-	}
-	return this->value == 0;
-}
-
-
-
-
-Gradient::Gradient(double new_value, GradientUnit gradient_unit)
-{
-	this->value = new_value;
-	this->valid = !std::isnan(new_value);
-}
-
-
-
-
-GradientUnit Gradient::get_user_unit(void)
-{
-	return GradientUnit::Degrees; /* TODO: get this from Preferences. */
-}
-
-
-
-
-void Gradient::set_value(double new_value)
-{
-	this->value = new_value;
-	this->valid = !std::isnan(new_value);
-}
-
-
-
-
-double Gradient::get_value(void) const
-{
-	return this->value;
-}
-
-
-
-
-bool Gradient::is_valid(void) const
-{
-	return this->valid;
 }
 
 
@@ -2477,149 +1979,4 @@ QString Gradient::to_string(double value, int precision)
 
 
 
-bool Gradient::is_zero(void) const
-{
-	const double epsilon = 0.0000001;
-	if (!this->valid) {
-		return true;
-	}
-	return std::abs(this->value) < epsilon;
-}
-
-
-
-
-Gradient & Gradient::operator+=(const Gradient & rhs)
-{
-	if (!rhs.valid) {
-		return *this;
-	}
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Invalid operands";
-		return *this;
-	}
-
-	this->value += rhs.value;
-	this->valid = !std::isnan(this->value) && this->value >= 0.0;
-	return *this;
-}
-
-
-
-
-Gradient & Gradient::operator-=(const Gradient & rhs)
-{
-	if (!rhs.valid) {
-		return *this;
-	}
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Invalid operands";
-		return *this;
-	}
-
-	this->value -= rhs.value;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-Gradient & Gradient::operator+=(double rhs)
-{
-	if (this->valid) {
-		this->value += rhs;
-		this->valid = !std::isnan(this->value);
-	} else {
-		this->value = rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	}
-
-	return *this;
-}
-
-
-
-
-Gradient & Gradient::operator-=(double rhs)
-{
-	if (this->valid) {
-		this->value -= rhs;
-		this->valid = !std::isnan(this->value);
-	} else {
-		this->value = rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	}
-
-	return *this;
-}
-
-
-
-
-Gradient & Gradient::operator*=(double rhs)
-{
-	if (this->valid) {
-		this->value *= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-Gradient & Gradient::operator/=(double rhs)
-{
-	if (this->valid) {
-		this->value /= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-double SlavGPS::operator/(const Gradient & rhs, const Gradient & lhs)
-{
-	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
-		return lhs.value / rhs.value;
-	} else {
-		return NAN;
-	}
-}
-
-
-
-
-bool Gradient::operator==(const Gradient & rhs) const
-{
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	return this->value == rhs.value;
-}
-
-
-
-
-bool Gradient::operator!=(const Gradient & rhs) const
-{
-	return !(*this == rhs);
-}
+#endif

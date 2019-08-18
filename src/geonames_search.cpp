@@ -300,7 +300,7 @@ static std::list<Geoname *> get_entries_from_file(QTemporaryFile & file)
 
 		value = get_unquoted_value(entries[i], GEONAMES_ELEVATION_PATTERN);
 		if (!value.isEmpty()) {
-			geoname->elevation.set_from_string(value);
+			geoname->elevation.set_value_from_string(value);
 		}
 
 		value = get_quoted_value(entries[i], GEONAMES_NAME_PATTERN);

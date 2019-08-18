@@ -55,7 +55,7 @@ static ParameterSpecification wp_param_specs[] = {
 	{ SG_WP_PARAM_LAT,      "trw_wp_prop_lat",      SGVariantType::Latitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::Entry,         NULL, NULL, "" },
 	{ SG_WP_PARAM_LON,      "trw_wp_prop_lon",      SGVariantType::Longitude,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::Entry,         NULL, NULL, "" },
 	{ SG_WP_PARAM_TIME,     "trw_wp_prop_time",     SGVariantType::Timestamp,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),         WidgetType::DateTime,      NULL, NULL, "" },
-	{ SG_WP_PARAM_ALT,      "trw_wp_prop_alt",      SGVariantType::Altitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::Altitude,      NULL, NULL, "" },
+	{ SG_WP_PARAM_ALT,      "trw_wp_prop_alt",      SGVariantType::AltitudeType,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::AltitudeWidget,      NULL, NULL, "" },
 	{ SG_WP_PARAM_COMMENT,  "trw_wp_prop_comment",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::Entry,         NULL, NULL, "" },
 	{ SG_WP_PARAM_DESC,     "trw_wp_prop_desc",     SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::Entry,         NULL, NULL, "" },
 	{ SG_WP_PARAM_IMAGE,    "trw_wp_prop_image",    SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FileSelector,  NULL, NULL, "" },
@@ -269,7 +269,7 @@ PropertiesDialogWaypoint::PropertiesDialogWaypoint(Waypoint * wp_, QString const
 
 void PropertiesDialogWaypoint::set_timestamp_cb(time_t timestamp)
 {
-	this->date_time_button->set_label(timestamp, this->wp->coord);
+	this->date_time_button->set_label(Time(timestamp, Time::get_internal_unit()), this->wp->coord);
 }
 
 

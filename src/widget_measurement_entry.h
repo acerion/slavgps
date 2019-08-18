@@ -46,7 +46,7 @@ namespace SlavGPS {
 
 
 
-	class Altitude;
+	//typedef class Measurement<HeightUnit, Altitude_ll> Altitude;
 
 
 

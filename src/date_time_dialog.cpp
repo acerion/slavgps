@@ -121,7 +121,7 @@ Time SGDateTimeDialog::get_timestamp(void) const
 	}
 	qDebug() << SG_PREFIX_D << "Extracted combined timestamp:" << date_time << date_time.toTime_t();
 
-	return Time(date_time.toTime_t());
+	return Time(date_time.toTime_t(), Time::get_internal_unit());
 }
 
 
@@ -168,7 +168,7 @@ SGDateTimeButton::SGDateTimeButton(const Time & date_time, QWidget * parent_widg
 	if (date_time.is_valid()) {
 		this->timestamp = date_time;
 	} else {
-		this->timestamp = Time(0); /* Initialize with default, valid value. */
+		this->timestamp = Time(0, Time::get_internal_unit()); /* Initialize with default, valid value. */
 
 		this->setIcon(QIcon::fromTheme("list-add"));
 		this->setText("");
@@ -208,7 +208,7 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 		emit this->value_is_set(this->timestamp.get_value());
 	} else {
 		qDebug() << SG_PREFIX_I << "Returning zero timestamp";
-		this->timestamp = 0;
+		this->timestamp = Time(0, Time::get_internal_unit());
 	}
 }
 

@@ -95,83 +95,86 @@ static const Distance interval_values_distance[] = {
 	Distance(10000.0) };
 
 /* Time intervals in seconds. */
+static const TimeUnit internal_unit_time = Time::get_internal_unit();
 static const Time interval_values_time[] = {
-	Time(60),     /* 1 minute. */
-	Time(120),    /* 2 minutes. */
-	Time(300),    /* 5 minutes. */
-	Time(900),    /* 15 minutes. */
-	Time(1800),   /* half hour. */
-	Time(3600),   /* 1 hour. */
-	Time(10800),  /* 3 hours. */
-	Time(21600),  /* 6 hours. */
-	Time(43200),  /* 12 hours. */
-	Time(86400),  /* 1 day. */
-	Time(172800), /* 2 days. */
-	Time(604800), /* 1 week. */
-	Time(1209600),/* 2 weeks. */
-	Time(2419200),/* 4 weeks. */
+	Time(60, internal_unit_time),     /* 1 minute. */
+	Time(120, internal_unit_time),    /* 2 minutes. */
+	Time(300, internal_unit_time),    /* 5 minutes. */
+	Time(900, internal_unit_time),    /* 15 minutes. */
+	Time(1800, internal_unit_time),   /* half hour. */
+	Time(3600, internal_unit_time),   /* 1 hour. */
+	Time(10800, internal_unit_time),  /* 3 hours. */
+	Time(21600, internal_unit_time),  /* 6 hours. */
+	Time(43200, internal_unit_time),  /* 12 hours. */
+	Time(86400, internal_unit_time),  /* 1 day. */
+	Time(172800, internal_unit_time), /* 2 days. */
+	Time(604800, internal_unit_time), /* 1 week. */
+	Time(1209600, internal_unit_time),/* 2 weeks. */
+	Time(2419200, internal_unit_time),/* 4 weeks. */
 };
 
 
 
 /* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
+static const HeightUnit internal_unit_altitude = Altitude::get_internal_unit();
 static const Altitude interval_values_altitude2[] = {
-	Altitude(1.0),
-	Altitude(2.0),
-	Altitude(4.0),
-	Altitude(5.0),
-	Altitude(10.0),
-	Altitude(15.0),
-	Altitude(20.0),
-	Altitude(25.0),
-	Altitude(40.0),
-	Altitude(50.0),
-	Altitude(75.0),
-	Altitude(100.0),
-	Altitude(150.0),
-	Altitude(200.0),
-	Altitude(250.0),
-	Altitude(375.0),
-	Altitude(500.0),
-	Altitude(750.0),
-	Altitude(1000.0),
-	Altitude(2000.0),
-	Altitude(5000.0),
-	Altitude(10000.0),
-	Altitude(100000.0)
+	Altitude(1.0, internal_unit_altitude),
+	Altitude(2.0, internal_unit_altitude),
+	Altitude(4.0, internal_unit_altitude),
+	Altitude(5.0, internal_unit_altitude),
+	Altitude(10.0, internal_unit_altitude),
+	Altitude(15.0, internal_unit_altitude),
+	Altitude(20.0, internal_unit_altitude),
+	Altitude(25.0, internal_unit_altitude),
+	Altitude(40.0, internal_unit_altitude),
+	Altitude(50.0, internal_unit_altitude),
+	Altitude(75.0, internal_unit_altitude),
+	Altitude(100.0, internal_unit_altitude),
+	Altitude(150.0, internal_unit_altitude),
+	Altitude(200.0, internal_unit_altitude),
+	Altitude(250.0, internal_unit_altitude),
+	Altitude(375.0, internal_unit_altitude),
+	Altitude(500.0, internal_unit_altitude),
+	Altitude(750.0, internal_unit_altitude),
+	Altitude(1000.0, internal_unit_altitude),
+	Altitude(2000.0, internal_unit_altitude),
+	Altitude(5000.0, internal_unit_altitude),
+	Altitude(10000.0, internal_unit_altitude),
+	Altitude(100000.0, internal_unit_altitude)
 };
 
 
 
 /* (Hopefully!) Human friendly gradient grid sizes - note no fixed 'ratio' just numbers that look nice... */
+static const GradientUnit internal_unit_gradient = Gradient::get_internal_unit();
 static const Gradient interval_values_gradient2[] = {
-	Gradient(1.0),
-	Gradient(2.0),
-	Gradient(3.0),
-	Gradient(4.0),
-	Gradient(5.0),
-	Gradient(8.0),
-	Gradient(10.0),
-	Gradient(12.0),
-	Gradient(15.0),
-	Gradient(20.0),
-	Gradient(25.0),
-	Gradient(30.0),
-	Gradient(35.0),
-	Gradient(40.0),
-	Gradient(45.0),
-	Gradient(50.0),
-	Gradient(75.0),
-	Gradient(100.0),
-	Gradient(150.0),
-	Gradient(200.0),
-	Gradient(250.0),
-	Gradient(375.0),
-	Gradient(500.0),
-	Gradient(750.0),
-	Gradient(1000.0),
-	Gradient(10000.0),
-	Gradient(100000.0)
+	Gradient(1.0, internal_unit_gradient),
+	Gradient(2.0, internal_unit_gradient),
+	Gradient(3.0, internal_unit_gradient),
+	Gradient(4.0, internal_unit_gradient),
+	Gradient(5.0, internal_unit_gradient),
+	Gradient(8.0, internal_unit_gradient),
+	Gradient(10.0, internal_unit_gradient),
+	Gradient(12.0, internal_unit_gradient),
+	Gradient(15.0, internal_unit_gradient),
+	Gradient(20.0, internal_unit_gradient),
+	Gradient(25.0, internal_unit_gradient),
+	Gradient(30.0, internal_unit_gradient),
+	Gradient(35.0, internal_unit_gradient),
+	Gradient(40.0, internal_unit_gradient),
+	Gradient(45.0, internal_unit_gradient),
+	Gradient(50.0, internal_unit_gradient),
+	Gradient(75.0, internal_unit_gradient),
+	Gradient(100.0, internal_unit_gradient),
+	Gradient(150.0, internal_unit_gradient),
+	Gradient(200.0, internal_unit_gradient),
+	Gradient(250.0, internal_unit_gradient),
+	Gradient(375.0, internal_unit_gradient),
+	Gradient(500.0, internal_unit_gradient),
+	Gradient(750.0, internal_unit_gradient),
+	Gradient(1000.0, internal_unit_gradient),
+	Gradient(10000.0, internal_unit_gradient),
+	Gradient(100000.0, internal_unit_gradient)
 };
 
 /* Normally gradients should range up to couple hundred precent at most,

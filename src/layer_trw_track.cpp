@@ -697,7 +697,7 @@ void Track::to_routepoints(void)
 
 		/* c.f. with vik_trackpoint_new(). */
 
-		(*iter)->timestamp.set_valid(false);
+		(*iter)->timestamp.invalidate();
 		(*iter)->gps_speed = NAN;
 		(*iter)->course = NAN;
 		(*iter)->hdop = VIK_DEFAULT_DOP;
@@ -800,7 +800,7 @@ void Track::reverse(void)
  */
 Time Track::get_duration(bool segment_gaps) const
 {
-	Time result(0);
+	Time result(0, Time::get_internal_unit());
 
 	if (this->trackpoints.empty()) {
 		return result;
@@ -837,7 +837,7 @@ Time Track::get_duration(bool segment_gaps) const
 /* Code extracted from make_track_data_speed_over_time() and similar functions. */
 Time Track::get_duration(void) const
 {
-	Time result(0);
+	Time result(0, Time::get_internal_unit());
 
 	Time ts_begin;
 	Time ts_end;
@@ -873,7 +873,7 @@ Speed Track::get_average_speed(void) const
 	}
 
 	double len = 0.0;
-	Time duration(0);
+	Time duration(0, Time::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 
@@ -915,7 +915,7 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 	}
 
 	double len = 0.0;
-	Time duration(0);
+	Time duration(0, Time::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
@@ -1000,8 +1000,8 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 	auto iter = this->trackpoints.begin();
 
 	if (!(*iter)->altitude.is_valid()) {
-		delta_up.set_valid(false);
-		delta_down.set_valid(false);
+		delta_up.invalidate();
+		delta_down.invalidate();
 		return false;
 	} else {
 		delta_up.set_value(0);
@@ -1469,8 +1469,7 @@ void Track::interpolate_times()
 				iter++;
 				cur_dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
-				(*iter)->timestamp.value = (cur_dist / tr_dist) * tsdiff + tsfirst;
-				(*iter)->timestamp.set_valid(true);
+				(*iter)->timestamp.set_value((cur_dist / tr_dist) * tsdiff + tsfirst);
 			}
 			/* Some points may now have the same time so remove them. */
 			this->remove_same_time_points();
@@ -3361,7 +3360,7 @@ void Trackpoint::set_timestamp(const Time & value)
 
 void Trackpoint::set_timestamp(time_t value)
 {
-	this->timestamp = Time(value);
+	this->timestamp = Time(value, Time::get_internal_unit());
 }
 
 

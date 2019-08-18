@@ -120,7 +120,7 @@ SGVariant LayerDefaults::get_parameter_value(LayerType layer_type, const QString
 		value = SGVariant(variant.toDouble(), SGVariantType::Longitude);
 		break;
 
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		/* Meters, because that's program's internal/default unit. */
 		value = SGVariant(Altitude(variant.toDouble(), HeightUnit::Metres));
 		break;
@@ -169,7 +169,7 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 	case SGVariantType::Longitude:
 		variant = QVariant(value.get_longitude().get_value());
 		break;
-	case SGVariantType::Altitude:
+	case SGVariantType::AltitudeType:
 		variant = QVariant(value.get_altitude().get_value());
 		break;
 	default:

@@ -574,7 +574,7 @@ void Preferences::register_default_values()
 	i = 0;
 	Preferences::register_parameter_instance(io_prefs[i], SGVariant((int32_t) KMLExportUnits::Metric, io_prefs[i].type_id));
 	i++;
-	Preferences::register_parameter_instance(io_prefs[i], SGVariant((int32_t) GPXExportTrackSort::Time, io_prefs[i].type_id));
+	Preferences::register_parameter_instance(io_prefs[i], SGVariant((int32_t) GPXExportTrackSort::ByTime, io_prefs[i].type_id));
 	i++;
 	Preferences::register_parameter_instance(io_prefs[i], SGVariant((int32_t) GPXExportWptSymName::Titlecase, io_prefs[i].type_id));
 	i++;

@@ -831,6 +831,21 @@ double SGUtils::c_to_double(const QString & string)
 
 
 
+double SlavGPS::c_to_double(const QString & string)
+{
+	static QLocale c_locale = QLocale::c();
+	bool ok = false;
+	double result = c_locale.toDouble(string, &ok);
+	if (!ok) {
+		result = NAN;
+	}
+
+	return result;
+}
+
+
+
+
 /**
    \brief Convert a double to a string in C locale
 

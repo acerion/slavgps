@@ -145,7 +145,7 @@ QString SlavGPS::widget_type_get_label(WidgetType type_id)
 	case WidgetType::Longitude:
 		result = "Longitude";
 		break;
-	case WidgetType::Altitude:
+	case WidgetType::AltitudeWidget:
 		result = "Altitude";
 		break;
 	case WidgetType::None:
@@ -548,9 +548,9 @@ QWidget * PropertiesDialog::make_widget(const ParameterSpecification & param_spe
 		}
 		break;
 
-	case WidgetType::Altitude:
-		assert (param_spec.type_id == SGVariantType::Altitude);
-		if (param_spec.type_id == SGVariantType::Altitude) {
+	case WidgetType::AltitudeWidget:
+		assert (param_spec.type_id == SGVariantType::AltitudeType);
+		if (param_spec.type_id == SGVariantType::AltitudeType) {
 			const ParameterScale<double> * scale = (ParameterScale<double> *) param_spec.widget_data; /* May be NULL. */
 			MeasurementEntryWidget * widget_ = new MeasurementEntryWidget(param_value, scale, this);
 			qDebug() << SG_PREFIX_I << "New MeasurementEntryWidget with initial value" << param_value.get_altitude();
@@ -725,8 +725,8 @@ SGVariant PropertiesDialog::get_param_value_from_widget(QWidget * widget, const 
 		rv = SGVariant(((LonEntryWidget *) widget)->value(), SGVariantType::Longitude);
 		break;
 
-	case WidgetType::Altitude:
-		assert (param_spec.type_id == SGVariantType::Altitude);
+	case WidgetType::AltitudeWidget:
+		assert (param_spec.type_id == SGVariantType::AltitudeType);
 		rv = ((MeasurementEntryWidget *) widget)->get_value_iu();
 		break;
 
@@ -751,7 +751,7 @@ SGVariant ParameterSpecification::get_hardcoded_value(void) const
 
 	switch (this->widget_type) {
 	case WidgetType::SpinBoxDouble:
-	case WidgetType::Altitude:
+	case WidgetType::AltitudeWidget:
 		if (this->widget_data) {
 			const ParameterScale<double> * scale = (ParameterScale<double> *) this->widget_data;
 			param_value = scale->initial;

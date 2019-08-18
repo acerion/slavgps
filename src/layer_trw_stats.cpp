@@ -175,7 +175,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Avg. Speed */
-	const bool valid = stats.duration.is_valid() && stats.duration > 0;
+	const bool valid = stats.duration.is_valid() && !stats.duration.is_zero();
 	const Speed avg_speed = Speed(valid ? stats.length.value / stats.duration.get_value() : NAN, SpeedUnit::MetresPerSecond); /* Constructing speed value from values in basic units, therefore MetersPerSecond. */
 	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(avg_speed.convert_to_unit(speed_unit).to_string());
 

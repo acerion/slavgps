@@ -35,13 +35,18 @@
 
 
 
+#include "measurements.h"
+
+
+
+
 namespace SlavGPS {
 
 
 
 
 	class Coord;
-	class Altitude;
+	//class Altitude;
 
 
 
@@ -52,7 +57,7 @@ namespace SlavGPS {
 		Zoom,
 		Info,
 		Position,
-		Altitude,
+		AltitudeField,
 		Max
 	};
 

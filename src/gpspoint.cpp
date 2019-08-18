@@ -263,8 +263,8 @@ void GPSPointParser::reset()
 	this->line_visible = true;
 
 	this->line_newsegment = false;
-	this->line_timestamp.set_valid(false);
-	this->line_altitude.set_valid(false);
+	this->line_timestamp.invalidate();
+	this->line_altitude.invalidate();
 
 	this->line_symbol = NULL;
 
@@ -690,10 +690,10 @@ void GPSPointParser::process_key_and_value(const char * key, int key_len, const 
 			this->line_latlon.lat = SGUtils::c_to_double(value);
 
 		} else if (0 == strncasecmp(key, "altitude", key_len)) {
-			this->line_altitude.set_from_string(value);
+			this->line_altitude.set_value_from_char_string(value);
 
 		} else if (0 == strncasecmp(key, "unixtime", key_len)) {
-			this->line_timestamp.set_from_unix_timestamp(value);
+			this->line_timestamp.set_value_from_char_string(value);
 
 		} else if (0 == strncasecmp(key, "extended", key_len)) { /* Trackpoint's extended attribute. */
 			this->line_extended = true;

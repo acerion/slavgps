@@ -150,8 +150,8 @@ static ParameterSpecification dem_layer_param_specs[] = {
 	{ PARAM_SOURCE,     "source",   SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Download Source:"), WidgetType::Enumeration,     &dem_source_enum,    dem_source_default,  QObject::tr("Source of DEM data") },
 	{ PARAM_COLOR,      "color",    SGVariantType::Color,       PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev Color:"),  WidgetType::Color,           NULL,                color_default,       "" },
 	{ PARAM_TYPE,       "type",     SGVariantType::Enumeration, PARAMETER_GROUP_GENERIC, QObject::tr("Type:"),            WidgetType::Enumeration,     &dem_type_enum,      dem_type_default,    "" },
-	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::Altitude,        &scale_min_elev_iu,  NULL,                "" },
-	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::Altitude,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::Altitude,        &scale_max_elev_iu,  NULL,                "" },
+	{ PARAM_MIN_ELEV,   "min_elev", SGVariantType::AltitudeType,    PARAMETER_GROUP_GENERIC, QObject::tr("Min Elev:"),        WidgetType::AltitudeWidget,        &scale_min_elev_iu,  NULL,                "" },
+	{ PARAM_MAX_ELEV,   "max_elev", SGVariantType::AltitudeType,    PARAMETER_GROUP_GENERIC, QObject::tr("Max Elev:"),        WidgetType::AltitudeWidget,        &scale_max_elev_iu,  NULL,                "" },
 	{ NUM_PARAMS,       "",         SGVariantType::Empty,       PARAMETER_GROUP_GENERIC, "",                              WidgetType::None,            NULL,                NULL,                "" }, /* Guard. */
 };
 
@@ -1442,7 +1442,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 		/* Get some timestamp information of the file. */
 		struct stat stat_buf;
 		if (stat(cache_file_path.toUtf8().constData(), &stat_buf) == 0) {
-			const Time ts(stat_buf.st_mtime);
+			const Time ts(stat_buf.st_mtime, Time::get_internal_unit());
 			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(remote_location).arg(cache_file_path).arg(ts.strftime_utc("%c"));
 		} else {
 			message = tr("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(cache_file_path);

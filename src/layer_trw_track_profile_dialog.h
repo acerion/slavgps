@@ -369,9 +369,9 @@ namespace SlavGPS {
 		/* There can be two x-domains: Time or Distance. They
 		   are chosen by Tx (type of x-domain) template
 		   parameter. */
-		Tx x_interval = { 0 };
-		Tx x_visible_min = { 0 };
-		Tx x_visible_max = { 0 };
+		Tx x_interval;
+		Tx x_visible_min;
+		Tx x_visible_max;
 
 
 		/*

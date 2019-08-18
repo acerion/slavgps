@@ -222,7 +222,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_initial_visible_range_y(void)
 	const Ty y_data_range = this->track_data_to_draw.y_max - this->track_data_to_draw.y_min;
 
 	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::Speed:
+	case GisViewportDomain::SpeedDomain:
 	case GisViewportDomain::Distance:
 		/* Some graphs better start at zero, e.g. speed graph
 		   or distance graph. Showing negative speed values on
@@ -230,7 +230,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_initial_visible_range_y(void)
 		this->y_visible_min = this->track_data_to_draw.y_min;
 		break;
 	case GisViewportDomain::Elevation:
-	case GisViewportDomain::Gradient:
+	case GisViewportDomain::GradientDomain:
 		this->y_visible_min = this->track_data_to_draw.y_min - y_data_range * y_margin;
 		break;
 	default:
@@ -685,7 +685,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::update_y_labels(const TPInfo & tp_info
 	const double y_uu = this->track_data_to_draw.y[tp_info.found_tp_idx];
 
 	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::Speed:
+	case GisViewportDomain::SpeedDomain:
 		if (this->labels.y_value) {
 			this->labels.y_value->setText(Speed::to_string(y_uu));
 		}
@@ -702,9 +702,9 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::update_y_labels(const TPInfo & tp_info
 			this->labels.y_value->setText(distance_uu.to_string());
 		}
 		break;
-	case GisViewportDomain::Gradient:
+	case GisViewportDomain::GradientDomain:
 		if (this->labels.y_value) {
-			const Gradient gradient_uu(y_uu);
+			const Gradient gradient_uu(y_uu, Gradient::get_user_unit());
 			this->labels.y_value->setText(gradient_uu.to_string());
 		}
 		break;
@@ -1002,7 +1002,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_graph_without_crosshairs(Track * 
 	QTime draw_time;
 	draw_time.start();
 
-	if (this->graph_2d->x_domain == GisViewportDomain::Time) {
+	if (this->graph_2d->x_domain == GisViewportDomain::TimeDomain) {
 		const Time duration = trk->get_duration(true);
 		if (!duration.is_valid() || duration.get_value() <= 0) {
 			qDebug() << SG_PREFIX_E << "return 1";
@@ -1299,19 +1299,19 @@ void ProfileViewBase::configure_title(void)
 	if (this->y_domain == GisViewportDomain::Elevation && this->x_domain == GisViewportDomain::Distance) {
 		this->title = QObject::tr("Elevation over distance");
 
-	} else if (this->y_domain == GisViewportDomain::Gradient && this->x_domain == GisViewportDomain::Distance) {
+	} else if (this->y_domain == GisViewportDomain::GradientDomain && this->x_domain == GisViewportDomain::Distance) {
 		this->title = QObject::tr("Gradient over distance");
 
-	} else if (this->y_domain == GisViewportDomain::Speed && this->x_domain == GisViewportDomain::Time) {
+	} else if (this->y_domain == GisViewportDomain::SpeedDomain && this->x_domain == GisViewportDomain::TimeDomain) {
 		this->title = QObject::tr("Speed over time");
 
-	} else if (this->y_domain == GisViewportDomain::Distance && this->x_domain == GisViewportDomain::Time) {
+	} else if (this->y_domain == GisViewportDomain::Distance && this->x_domain == GisViewportDomain::TimeDomain) {
 		this->title = QObject::tr("Distance over time");
 
-	} else if (this->y_domain == GisViewportDomain::Elevation && this->x_domain == GisViewportDomain::Time) {
+	} else if (this->y_domain == GisViewportDomain::Elevation && this->x_domain == GisViewportDomain::TimeDomain) {
 		this->title = QObject::tr("Elevation over time");
 
-	} else if (this->y_domain == GisViewportDomain::Speed && this->x_domain == GisViewportDomain::Distance) {
+	} else if (this->y_domain == GisViewportDomain::SpeedDomain && this->x_domain == GisViewportDomain::Distance) {
 		this->title = QObject::tr("Speed over distance");
 
 	} else {
@@ -1441,7 +1441,7 @@ void ProfileViewBase::configure_labels(void)
 
 		break;
 
-	case GisViewportDomain::Time:
+	case GisViewportDomain::TimeDomain:
 		this->labels.x_label = new QLabel(QObject::tr("Time From Start:"));
 		this->labels.x_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
@@ -1463,13 +1463,13 @@ void ProfileViewBase::configure_labels(void)
 
 		break;
 
-	case GisViewportDomain::Gradient:
+	case GisViewportDomain::GradientDomain:
 		this->labels.y_label = new QLabel(QObject::tr("Track Gradient:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
 		break;
 
-	case GisViewportDomain::Speed:
+	case GisViewportDomain::SpeedDomain:
 		this->labels.y_label = new QLabel(QObject::tr("Track Speed:"));
 		this->labels.y_value = ui_label_new_selectable(QObject::tr("No Data"), NULL);
 
@@ -1696,12 +1696,12 @@ ProfileViewBase::~ProfileViewBase()
 
 
 
-ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Altitude, Altitude_ll>(GisViewportDomain::Time, GisViewportDomain::Elevation, new_dialog) {}
-ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Speed, Speed_ll>(GisViewportDomain::Time,    GisViewportDomain::Speed,     new_dialog) {}
-ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Distance, Distance_ll>(GisViewportDomain::Time, GisViewportDomain::Distance,  new_dialog) {}
-ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Speed, Speed_ll>(GisViewportDomain::Distance,    GisViewportDomain::Speed,     new_dialog) {}
+ProfileViewET::ProfileViewET(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Altitude, Altitude_ll>(GisViewportDomain::TimeDomain, GisViewportDomain::Elevation, new_dialog) {}
+ProfileViewST::ProfileViewST(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Speed, Speed_ll>(GisViewportDomain::TimeDomain,    GisViewportDomain::SpeedDomain,     new_dialog) {}
+ProfileViewDT::ProfileViewDT(TrackProfileDialog * new_dialog) : ProfileView<Time, Time_ll, Distance, Distance_ll>(GisViewportDomain::TimeDomain, GisViewportDomain::Distance,  new_dialog) {}
+ProfileViewSD::ProfileViewSD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Speed, Speed_ll>(GisViewportDomain::Distance,    GisViewportDomain::SpeedDomain,     new_dialog) {}
 ProfileViewED::ProfileViewED(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>(GisViewportDomain::Distance, GisViewportDomain::Elevation, new_dialog) {}
-ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>(GisViewportDomain::Distance, GisViewportDomain::Gradient,  new_dialog) {}
+ProfileViewGD::ProfileViewGD(TrackProfileDialog * new_dialog) : ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>(GisViewportDomain::Distance, GisViewportDomain::GradientDomain,  new_dialog) {}
 
 
 
@@ -2043,7 +2043,7 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_x_grid(void)
 		qDebug() << SG_PREFIX_E << "Zero visible range:" << this->x_visible_min << this->x_visible_max;
 		return;
 	}
-	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu;
+	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.value;
 
 	Tx first_multiple_uu(0, Tx::get_user_unit());
 	Tx last_multiple_uu(0, Tx::get_user_unit());
@@ -2095,11 +2095,11 @@ QString ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_y_grid_label(double value_uu)
 	case GisViewportDomain::Distance:
 		return Distance(value_uu, this->graph_2d->distance_unit).to_string();
 
-	case GisViewportDomain::Speed:
+	case GisViewportDomain::SpeedDomain:
 		return Speed(value_uu, this->graph_2d->speed_unit).to_string();
 
-	case GisViewportDomain::Gradient:
-		return Gradient(value_uu).to_string();
+	case GisViewportDomain::GradientDomain:
+		return Gradient(value_uu, Gradient::get_user_unit()).to_string();
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
@@ -2116,15 +2116,15 @@ bool ProfileViewBase::domains_are_supported(GisViewportDomain x_domain, GisViewp
 	case GisViewportDomain::Distance:
 		switch (y_domain) {
 		case GisViewportDomain::Elevation:
-		case GisViewportDomain::Gradient:
-		case GisViewportDomain::Speed:
+		case GisViewportDomain::GradientDomain:
+		case GisViewportDomain::SpeedDomain:
 			return true;
 		default:
 			return false;
 		}
-	case GisViewportDomain::Time:
+	case GisViewportDomain::TimeDomain:
 		switch (y_domain) {
-		case GisViewportDomain::Speed:
+		case GisViewportDomain::SpeedDomain:
 		case GisViewportDomain::Distance:
 		case GisViewportDomain::Elevation:
 			return true;

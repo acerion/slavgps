@@ -365,14 +365,14 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 #endif
 
 	this->valid = true;
-	this->x_domain = GisViewportDomain::Time;
+	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::Distance;
 	this->y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
 	snprintf(this->debug, sizeof (this->debug), "Distance over Time");
 
 	/* These will be in internal units. */
-	this->x_min = Time(this->x_min_ll);
-	this->x_max = Time(this->x_max_ll);
+	this->x_min = Time(this->x_min_ll, Time::get_internal_unit());
+	this->x_max = Time(this->x_max_ll, Time::get_internal_unit());
 	this->y_min = Distance(this->y_min_ll);
 	this->y_max = Distance(this->y_max_ll);
 
@@ -557,8 +557,8 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 	/* These will be in internal units. */
 	this->x_min = Distance(this->x_min_ll);
 	this->x_max = Distance(this->x_max_ll);
-	this->y_min = Altitude(this->y_min_ll);
-	this->y_max = Altitude(this->y_max_ll);
+	this->y_min = Altitude(this->y_min_ll, Altitude::get_internal_unit());
+	this->y_max = Altitude(this->y_max_ll, Altitude::get_internal_unit());
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -624,14 +624,14 @@ sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::make_track_data_
 
 	this->valid = true;
 	this->x_domain = GisViewportDomain::Distance;
-	this->y_domain = GisViewportDomain::Gradient;
+	this->y_domain = GisViewportDomain::GradientDomain;
 	snprintf(this->debug, sizeof (this->debug), "Gradient over Distance");
 
 	/* These will be in internal units. */
 	this->x_min = Distance(this->x_min_ll);
 	this->x_max = Distance(this->x_max_ll);
-	this->y_min = Gradient(this->y_min_ll);
-	this->y_max = Gradient(this->y_max_ll);
+	this->y_min = Gradient(this->y_min_ll, Gradient::get_internal_unit());
+	this->y_max = Gradient(this->y_max_ll, Gradient::get_internal_unit());
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -708,14 +708,14 @@ sg_ret TrackData<Time, Time_ll, Speed, Speed_ll>::make_track_data_speed_over_tim
 	}
 
 	this->valid = true;
-	this->x_domain = GisViewportDomain::Time;
-	this->y_domain = GisViewportDomain::Speed;
+	this->x_domain = GisViewportDomain::TimeDomain;
+	this->y_domain = GisViewportDomain::SpeedDomain;
 	this->y_speed_unit = SpeedUnit::MetresPerSecond;
 	snprintf(this->debug, sizeof (this->debug), "Speed over Time");
 
 	/* These will be in internal units. */
-	this->x_min = Time(this->x_min_ll);
-	this->x_max = Time(this->x_max_ll);
+	this->x_min = Time(this->x_min_ll, Time::get_internal_unit());
+	this->x_max = Time(this->x_max_ll, Time::get_internal_unit());
 	this->y_min = Speed(this->y_min_ll, Speed::get_internal_unit());
 	this->y_max = Speed(this->y_max_ll, Speed::get_internal_unit());
 
@@ -784,15 +784,15 @@ sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::make_track_data_altitude
 
 
 	this->valid = true;
-	this->x_domain = GisViewportDomain::Time;
+	this->x_domain = GisViewportDomain::TimeDomain;
 	this->y_domain = GisViewportDomain::Elevation;
 	snprintf(this->debug, sizeof (this->debug), "Altitude over Time");
 
 	/* These will be in internal units. */
-	this->x_min = Time(this->x_min_ll);
-	this->x_max = Time(this->x_max_ll);
-	this->y_min = Altitude(this->y_min_ll);
-	this->y_max = Altitude(this->y_max_ll);
+	this->x_min = Time(this->x_min_ll, Time::get_internal_unit());
+	this->x_max = Time(this->x_max_ll, Time::get_internal_unit());
+	this->y_min = Altitude(this->y_min_ll, Altitude::get_internal_unit());
+	this->y_max = Altitude(this->y_max_ll, Altitude::get_internal_unit());
 
 	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
 
@@ -865,7 +865,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 
 	this->valid = true;
 	this->x_domain = GisViewportDomain::Distance;
-	this->y_domain = GisViewportDomain::Speed;
+	this->y_domain = GisViewportDomain::SpeedDomain;
 	snprintf(this->debug, sizeof (this->debug), "Speed over Distance");
 
 	/* These will be in internal units. */
@@ -1031,7 +1031,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 		*/
 		if (SpeedUnit::MetresPerSecond != speed_unit) {
 			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = Speed::convert_mps_to(this->y[i], speed_unit);
+				this->y[i] = Speed::convert_to_unit(this->y[i], SpeedUnit::MetresPerSecond, speed_unit);
 			}
 			Speed tmp;
 			tmp = this->y_min.convert_to_unit(speed_unit);
@@ -1085,7 +1085,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 		*/
 		if (SpeedUnit::MetresPerSecond != speed_unit) {
 			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = Speed::convert_mps_to(this->y[i], speed_unit);
+				this->y[i] = Speed::convert_to_unit(this->y[i], SpeedUnit::MetresPerSecond, speed_unit);
 			}
 			Speed tmp;
 			tmp = this->y_min.convert_to_unit(speed_unit);

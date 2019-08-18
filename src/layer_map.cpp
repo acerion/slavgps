@@ -1447,7 +1447,7 @@ void SlavGPS::tile_info_add_file_info_strings(QStringList & items, const QString
 		/* Get timestamp information about the tile. */
 		struct stat stat_buf;
 		if (0 == stat(tile_file_full_path.toUtf8().constData(), &stat_buf)) {
-			const Time timestamp(stat_buf.st_mtime);
+			const Time timestamp(stat_buf.st_mtime, Time::get_internal_unit());
 			timestamp_info = QObject::tr("Tile File Timestamp: %1").arg(timestamp.strftime_utc("%c"));
 		} else {
 			timestamp_info = QObject::tr("Tile File Timestamp: Not Available");

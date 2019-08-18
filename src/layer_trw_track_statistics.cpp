@@ -45,7 +45,7 @@ using namespace SlavGPS;
 
 TrackStatistics::TrackStatistics()
 {
-	this->duration = Time(0); /* Set some valid initial value. */
+	this->duration = Time(0, Time::get_internal_unit()); /* Set some valid initial value. */
 }
 
 

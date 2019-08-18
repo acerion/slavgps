@@ -113,7 +113,7 @@ namespace SlavGPS {
 
 	enum class GPXExportTrackSort {
 		Alpha,
-		Time,
+		ByTime,
 		Creation
 	};
 

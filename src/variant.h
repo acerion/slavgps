@@ -69,7 +69,7 @@ namespace SlavGPS {
 		Timestamp,
 		Latitude,
 		Longitude,
-		Altitude
+		AltitudeType
 	};
 
 	QDebug operator<<(QDebug debug, const SGVariantType type_id);
@@ -116,7 +116,7 @@ namespace SlavGPS {
 		SGVariant(const QStringList & sl,     SGVariantType type_id = SGVariantType::StringList);
 		SGVariant(const Latitude & lat,       SGVariantType type_id = SGVariantType::Latitude);
 		SGVariant(const Longitude & lon,      SGVariantType type_id = SGVariantType::Longitude);
-		SGVariant(const Altitude & a,         SGVariantType type_id = SGVariantType::Altitude);
+		SGVariant(const Altitude & a,         SGVariantType type_id = SGVariantType::AltitudeType);
 		SGVariant(const Time & timestamp,     SGVariantType type_id = SGVariantType::Timestamp);
 
 		~SGVariant();

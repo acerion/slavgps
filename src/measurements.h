@@ -142,6 +142,7 @@ namespace SlavGPS {
 		MetresPerSecond,
 		Knots
 	};
+#define SG_MEASUREMENT_INTERNAL_UNIT_SPEED SpeedUnit::MetresPerSecond
 
 
 
@@ -178,6 +179,453 @@ namespace SlavGPS {
 	typedef double Altitude_ll;
 	typedef double Speed_ll;
 	typedef double Gradient_ll;
+
+
+
+	double c_to_double(const QString & string);
+
+
+
+	template <typename Tu, typename Tll>
+	class Measurement {
+	public:
+		Measurement() {}
+		Measurement(Tll new_value, Tu new_unit) : Measurement()
+		{
+			this->value = new_value;
+			this->valid = Measurement::ll_value_is_valid(new_value);
+			this->unit = new_unit;
+		}
+
+		static Tu get_user_unit(void);
+		static Tu get_internal_unit(void);
+
+		static bool ll_value_is_valid(Tll value);
+		bool is_valid(void) const { return this->valid; }
+		void invalidate(void)
+		{
+			this->valid = false;
+			this->value = 0;
+		}
+
+		void set_value(Tll value);
+		Tll get_value(void) const { return this->value; } /* TODO: what to do when this method is called on invalid value? Return zero? */
+
+
+		static Measurement get_abs_diff(const Measurement & m1, const Measurement & m2)
+		{
+			/* TODO: check units. */
+			Measurement result;
+			result.value = std::abs(m1.value - m2.value);
+			result.valid = true; /* TODO: validate. */
+			result.unit = m1.unit;
+
+			return result;
+		}
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   saving the value in gpx or vik file. */
+		const QString value_to_string_for_file(void) const;
+
+		/* Generate string containing only value, without unit
+		   and without magnitude-dependent conversions of value.
+
+		   Locale of the value in string is suitable for
+		   presentation to user. */
+		const QString value_to_string(void) const;
+
+		Measurement convert_to_unit(Tu new_unit) const;
+
+		static Tll convert_to_unit(Tll value, Tu from, Tu to);
+
+		/* Get string representing speed unit in abbreviated
+		   form, e.g. "km/h". */
+		static QString get_unit_string(Tu unit);
+
+		/* Return "kilometers" or "miles" string.
+		   This is a full string, not "km" or "mi". */
+		static QString get_unit_full_string(Tu unit);
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance may be used to decide how
+		   the string will look like. E.g. "0.1 km" may be
+		   presented as "100 m". */
+		QString to_nice_string(void) const;
+
+		/* Get current unit of measurement. */
+		Tu get_unit(void) const { return this->unit; }
+
+		/*
+		  Set value from a string that contains value only
+		  (does not contain any token representing unit).
+		  Assign default internal value to to measurement.
+		*/
+		sg_ret set_value_from_char_string(const char * str)
+		{
+			if (NULL == str) {
+				qDebug() << "EE    " << __FUNCTION__ << "Attempting to set invalid value of altitude from NULL string";
+				this->valid = false;
+				return sg_ret::err_arg;
+			} else {
+				return this->set_value_from_string(QString(str));
+			}
+		}
+		sg_ret set_value_from_string(const QString & str)
+		{
+			this->value = c_to_double(str);
+			this->valid = !std::isnan(this->value);
+			this->unit = Measurement<Tu, Tll>::get_internal_unit();
+
+			return this->valid ? sg_ret::ok : sg_ret::err;
+		}
+
+
+
+		/* Will return INT_MIN if value is invalid. */
+		int floor(void) const;
+
+		/* Specific to Time. Keeping it in Measurement class is problematic. */
+		QString to_timestamp_string(Qt::TimeSpec time_spec = Qt::LocalTime) const;
+		QString strftime_local(const char * format) const;
+		QString strftime_utc(const char * format) const;
+		QString to_duration_string(void) const;
+		QString get_time_string(Qt::DateFormat format) const;
+		QString get_time_string(Qt::DateFormat format, const Coord & coord) const;
+		QString get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const;
+
+
+		/* Generate string with value and unit. Value
+		   (magnitude) of distance does not influence units
+		   used to present the value. E.g. "0.01" km/h will
+		   always be presented as "0.01 km/h", never as "10
+		   m/h". */
+		QString to_string(void) const;
+
+		static QString to_string(Tll value);
+
+		/* Is this measurement so small that it can be treated as zero? */
+		bool is_zero(void) const
+		{
+			const double epsilon = 0.0000001;
+			if (!this->valid) {
+				return true;
+			}
+			return std::abs(this->value) < epsilon;
+		}
+
+
+
+
+		Measurement & operator=(const Measurement & rhs)
+		{
+			if (this == &rhs) {
+				return *this;
+			}
+
+			this->value = rhs.value;
+			this->valid = rhs.valid;
+			this->unit = rhs.unit;
+
+			return *this;
+		}
+
+		Measurement operator+(double rhs) const { Measurement result = *this; result += rhs; return result; }
+		Measurement operator-(double rhs) const { Measurement result = *this; result -= rhs; return result; }
+
+		Measurement operator+(const Measurement & rhs) const
+		{
+			Measurement result;
+			if (!this->valid) {
+				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid lhs";
+				return result;
+			}
+			if (!rhs.valid) {
+				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid rhs";
+				return result;
+			}
+
+			result = *this;
+			result += rhs;
+			return result;
+		}
+		Measurement operator-(const Measurement & rhs) const
+		{
+			Measurement result;
+			if (!this->valid) {
+				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid lhs";
+				return result;
+			}
+			if (!rhs.valid) {
+				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid rhs";
+				return result;
+			}
+
+			result = *this;
+			result -= rhs;
+			return result;
+		}
+
+
+		Measurement & operator+=(const Measurement & rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+			if (!rhs.valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+			if (this->unit != rhs.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch"; /* TODO: use this in more operators. */
+				return *this;
+			}
+
+			this->value += rhs.value;
+			this->valid = !std::isnan(this->value) && this->value >= 0.0;
+			return *this;
+		}
+
+		Measurement & operator-=(const Measurement & rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+			if (!rhs.valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+			if (this->unit != rhs.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch"; /* TODO: use this in more operators. */
+				return *this;
+			}
+
+			this->value -= rhs.value;
+			this->valid = !std::isnan(this->value) && this->value >= 0.0;
+			return *this;
+		}
+
+		Measurement & operator+=(double rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+
+			if (std::isnan(rhs)) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+
+			this->value += rhs;
+			this->valid = !std::isnan(this->value);
+			return *this;
+		}
+
+		Measurement & operator-=(double rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+
+			if (std::isnan(rhs)) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+
+			this->value -= rhs;
+			this->valid = !std::isnan(this->value);
+			return *this;
+		}
+
+		//friend Measurement operator+(Measurement lhs, const Measurement & rhs) { lhs += rhs; return lhs; }
+		//friend Measurement operator-(Measurement lhs, const Measurement & rhs) { lhs -= rhs; return lhs; }
+
+		Measurement & operator*=(double rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+
+			if (std::isnan(rhs)) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+
+			this->value *= rhs;
+			this->valid = !std::isnan(this->value);
+			return *this;
+		}
+
+		Measurement & operator/=(double rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+
+			if (std::isnan(rhs)) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+
+			this->value /= rhs;
+			this->valid = !std::isnan(this->value);
+			return *this;
+		}
+
+		friend Measurement operator*(Measurement lhs, double rhs) { lhs *= rhs; return lhs; }
+		friend Measurement operator/(Measurement lhs, double rhs) { lhs /= rhs; return lhs; }
+
+		friend bool operator<(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
+		{
+			return lhs.value < rhs.value;
+		}
+		friend bool operator>(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
+		{
+			return rhs < lhs;
+		}
+		friend bool operator<=(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
+		{
+			return !(lhs > rhs);
+		}
+		friend bool operator>=(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
+		{
+			return !(lhs < rhs);
+		}
+		friend QDebug operator<<(QDebug debug, const Measurement<Tu, Tll> & meas)
+		{
+			debug << meas.to_string();
+			return debug;
+		}
+
+		/*
+		  For getting proportion of two values.
+		  Implemented in class declaration because of this: https://stackoverflow.com/a/10787730
+		*/
+		friend double operator/(const Measurement<Tu, Tll> & rhs, const Measurement<Tu, Tll> & lhs)
+		{
+			if (!lhs.valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'lhs' operand";
+				return NAN;
+			}
+			if (!rhs.valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return NAN;
+			}
+			if (rhs.is_zero()) { /* TODO: introduce more checks of zero in division operators. */
+				qDebug() << "WW    " << __FUNCTION__ << "rhs is zero";
+				return NAN;
+			}
+
+			return (1.0 * rhs.value) / lhs.value;
+		}
+
+		bool operator==(const Measurement & rhs) const
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Comparing invalid value";
+				return false;
+			}
+
+			if (!rhs.valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Comparing invalid value";
+				return false;
+			}
+
+			return this->value == rhs.value;
+		}
+
+		bool operator!=(const Measurement & rhs) const
+		{
+			return !(*this == rhs);
+		}
+
+
+		Tll value = 0;
+		Tu unit = (Tu) 0;
+		bool valid = false;
+	};
+	template<typename Tu, typename Tll>
+	double operator/(const Measurement<Tu, Tll> & rhs, const Measurement<Tu, Tll> & lhs); /* For getting proportion of two values. */
+
+	template<typename Tu, typename Tll>
+	bool Measurement<Tu, Tll>::ll_value_is_valid(Tll new_value)
+	{
+		return !std::isnan(new_value);
+	}
+
+	template<typename Tu, typename Tll>
+	void Measurement<Tu, Tll>::set_value(Tll new_value)
+	{
+		this->value = new_value;
+		this->valid = !std::isnan(new_value);
+		/* Don't change unit. */
+	}
+
+	template<typename Tu, typename Tll>
+	QString Measurement<Tu, Tll>::to_timestamp_string(Qt::TimeSpec time_spec) const
+	{
+		QString result;
+		return result;
+	}
+
+	template<typename Tu, typename Tll>
+	QString Measurement<Tu, Tll>::strftime_local(const char * format) const
+	{
+		QString result;
+		return result;
+	}
+
+	template<typename Tu, typename Tll>
+	QString Measurement<Tu, Tll>::strftime_utc(const char * format) const
+	{
+		QString result;
+		return result;
+	}
+
+	template<typename Tu, typename Tll>
+	QString Measurement<Tu, Tll>::to_duration_string(void) const
+	{
+		QString result;
+		return result;
+	}
+
+	template<typename Tu, typename Tll>
+	QString Measurement<Tu, Tll>::get_time_string(Qt::DateFormat format) const
+	{
+		QString result;
+		return result;
+	}
+
+	template<typename Tu, typename Tll>
+	QString Measurement<Tu, Tll>::get_time_string(Qt::DateFormat format, const Coord & coord) const
+	{
+		QString result;
+		return result;
+	}
+
+	template<typename Tu, typename Tll>
+	QString Measurement<Tu, Tll>::get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const
+	{
+		QString result;
+		return result;
+	}
+
+
+
+
+	typedef Measurement<HeightUnit, Altitude_ll> Altitude;
+	typedef Measurement<SpeedUnit, Speed_ll> Speed;
+	typedef Measurement<GradientUnit, Gradient_ll> Gradient;
+	typedef Measurement<TimeUnit, Time_ll> Time;
+
 
 
 
@@ -297,7 +745,7 @@ namespace SlavGPS {
 
 
 
-
+#if 0
 	class Altitude {
 	public:
 		Altitude() {};
@@ -343,7 +791,7 @@ namespace SlavGPS {
 		/* Will return INT_MIN if altitude is invalid. */
 		int floor(void) const;
 
-		Altitude & operator=(const Altitude & rhs);
+		Altitude & operator=(const Altitude & rhs)
 
 		Altitude & operator+=(double rhs);
 		Altitude & operator-=(double rhs);
@@ -650,7 +1098,7 @@ namespace SlavGPS {
 		bool valid = false;
 	};
 	double operator/(const Gradient & rhs, const Gradient & lhs);
-
+#endif
 
 
 
