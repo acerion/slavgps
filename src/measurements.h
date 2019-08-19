@@ -385,7 +385,7 @@ namespace SlavGPS {
 			}
 
 			this->value += rhs.value;
-			this->valid = !std::isnan(this->value) && this->value >= 0.0;
+			this->valid = !std::isnan(this->value);
 			return *this;
 		}
 
@@ -405,7 +405,7 @@ namespace SlavGPS {
 			}
 
 			this->value -= rhs.value;
-			this->valid = !std::isnan(this->value) && this->value >= 0.0;
+			this->valid = !std::isnan(this->value);
 			return *this;
 		}
 
@@ -509,7 +509,7 @@ namespace SlavGPS {
 		  For getting proportion of two values.
 		  Implemented in class declaration because of this: https://stackoverflow.com/a/10787730
 		*/
-		friend double operator/(const Measurement<Tu, Tll> & rhs, const Measurement<Tu, Tll> & lhs)
+		friend double operator/(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
 		{
 			if (!lhs.valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'lhs' operand";
@@ -524,7 +524,7 @@ namespace SlavGPS {
 				return NAN;
 			}
 
-			return (1.0 * rhs.value) / lhs.value;
+			return (1.0 * lhs.value) / rhs.value;
 		}
 
 		bool operator==(const Measurement & rhs) const
@@ -553,7 +553,7 @@ namespace SlavGPS {
 		bool valid = false;
 	};
 	template<typename Tu, typename Tll>
-	double operator/(const Measurement<Tu, Tll> & rhs, const Measurement<Tu, Tll> & lhs); /* For getting proportion of two values. */
+	double operator/(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs); /* For getting proportion of two values. */
 
 	template<typename Tu, typename Tll>
 	bool Measurement<Tu, Tll>::ll_value_is_valid(Tll new_value)
