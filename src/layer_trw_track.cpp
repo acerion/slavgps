@@ -509,7 +509,7 @@ double Track::get_length_value_to_trackpoint(const Trackpoint * tp) const
 
 Distance Track::get_length_to_trackpoint(const Trackpoint * tp) const
 {
-	return Distance(this->get_length_value_to_trackpoint(tp), SupplementaryDistanceUnit::Meters);
+	return Distance(this->get_length_value_to_trackpoint(tp), DistanceUnit::Meters);
 }
 
 
@@ -536,7 +536,7 @@ double Track::get_length_value(void) const
 
 Distance Track::get_length(void) const
 {
-	return Distance(this->get_length_value(), SupplementaryDistanceUnit::Meters);
+	return Distance(this->get_length_value(), DistanceUnit::Meters);
 }
 
 
@@ -560,7 +560,7 @@ double Track::get_length_value_including_gaps(void) const
 
 Distance Track::get_length_including_gaps(void) const
 {
-	return Distance(this->get_length_value_including_gaps(), SupplementaryDistanceUnit::Meters);
+	return Distance(this->get_length_value_including_gaps(), DistanceUnit::Meters);
 }
 
 

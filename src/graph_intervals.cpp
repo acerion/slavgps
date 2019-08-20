@@ -67,32 +67,34 @@ static const double interval_values_speed[] = {1.0, 2.0, 3.0, 4.0, 5.0, 8.0, 10.
 					       750.0, 1000.0, 10000.0};
 
 /* (Hopefully!) Human friendly distance grid sizes - note no fixed 'ratio' just numbers that look nice... */
+static const DistanceUnit internal_unit_distance = Distance::get_internal_unit();
 static const Distance interval_values_distance[] = {
-	Distance(0.1),
-	Distance(0.2),
-	Distance(0.5),
-	Distance(1.0),
-	Distance(2.0),
-	Distance(3.0),
-	Distance(4.0),
-	Distance(5.0),
-	Distance(8.0),
-	Distance(10.0),
-	Distance(15.0),
-	Distance(20.0),
-	Distance(25.0),
-	Distance(40.0),
-	Distance(50.0),
-	Distance(75.0),
-	Distance(100.0),
-	Distance(150.0),
-	Distance(200.0),
-	Distance(250.0),
-	Distance(375.0),
-	Distance(500.0),
-	Distance(750.0),
-	Distance(1000.0),
-	Distance(10000.0) };
+	Distance(0.1, internal_unit_distance),
+	Distance(0.2, internal_unit_distance),
+	Distance(0.5, internal_unit_distance),
+	Distance(1.0, internal_unit_distance),
+	Distance(2.0, internal_unit_distance),
+	Distance(3.0, internal_unit_distance),
+	Distance(4.0, internal_unit_distance),
+	Distance(5.0, internal_unit_distance),
+	Distance(8.0, internal_unit_distance),
+	Distance(10.0, internal_unit_distance),
+	Distance(15.0, internal_unit_distance),
+	Distance(20.0, internal_unit_distance),
+	Distance(25.0, internal_unit_distance),
+	Distance(40.0, internal_unit_distance),
+	Distance(50.0, internal_unit_distance),
+	Distance(75.0, internal_unit_distance),
+	Distance(100.0, internal_unit_distance),
+	Distance(150.0, internal_unit_distance),
+	Distance(200.0, internal_unit_distance),
+	Distance(250.0, internal_unit_distance),
+	Distance(375.0, internal_unit_distance),
+	Distance(500.0, internal_unit_distance),
+	Distance(750.0, internal_unit_distance),
+	Distance(1000.0, internal_unit_distance),
+	Distance(10000.0, internal_unit_distance)
+};
 
 /* Time intervals in seconds. */
 static const TimeUnit internal_unit_time = Time::get_internal_unit();
@@ -236,14 +238,6 @@ GraphIntervalsSpeed::GraphIntervalsSpeed()
 	this->intervals = GraphIntervalsTyped<double>(interval_values_speed, sizeof (interval_values_speed) / sizeof (interval_values_speed[0]));
 }
 
-
-
-
-template <class T>
-T GraphIntervals2<T>::get_interval_value(int index)
-{
-	return this->values[index];
-}
 
 
 

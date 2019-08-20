@@ -149,7 +149,7 @@ namespace SlavGPS {
 		GraphIntervals2(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
 
 		int get_interval_index(T min, T max, int n_intervals);
-		T get_interval_value(int index);
+		T get_interval_value(int index) { return this->values[index]; }
 
 		const T * values = NULL;
 		int n_values = 0;

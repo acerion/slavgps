@@ -127,15 +127,14 @@ namespace SlavGPS {
 		Kilometres,
 		Miles,
 		NauticalMiles,
-	};
 
-
-
-
-	enum class SupplementaryDistanceUnit {
+		/* TODO: numerical values of these two enums should be
+		   somehow synchronized with Viking project. */
 		Meters,
 		Yards,
 	};
+#define SG_MEASUREMENT_INTERNAL_UNIT_DISTANCE DistanceUnit::Meters
+
 
 
 
@@ -662,17 +661,13 @@ namespace SlavGPS {
 
 	class Distance {
 	public:
-		Distance(double new_value = 0.0, SupplementaryDistanceUnit new_supplementary_distance_unit = SupplementaryDistanceUnit::Meters);
-		Distance(double value, DistanceUnit distance_unit);
+		Distance() {}
+		Distance(double, DistanceUnit distance_unit);
 
 		static DistanceUnit get_user_unit(void);
-		static DistanceUnit get_internal_unit(void) { return DistanceUnit::Kilometres; } /* FIXME: this should be metres */
+		static DistanceUnit get_internal_unit(void) { return DistanceUnit::Meters; }
 
 		Distance convert_to_unit(DistanceUnit distance_unit) const;
-		Distance convert_to_unit(SupplementaryDistanceUnit supplementary_distance_unit) const;
-		/* Recalculate to supplementary distance unit. Choose
-		   the supplementary distance unit based on @distance_unit. */
-		Distance convert_to_supplementary_unit(DistanceUnit distance_unit) const;
 
 		/* Generate string with value and unit. Value
 		   (magnitude) of distance does not influence units
@@ -687,6 +682,41 @@ namespace SlavGPS {
 		QString to_nice_string(void) const;
 
 		Distance & operator+=(const Distance & rhs);
+
+		Distance & operator+=(double rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+
+			if (std::isnan(rhs)) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+
+			this->value += rhs;
+			this->valid = !std::isnan(this->value);
+			return *this;
+		}
+
+		Distance & operator-=(double rhs)
+		{
+			if (!this->valid) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
+				return *this;
+			}
+
+			if (std::isnan(rhs)) {
+				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+
+			this->value -= rhs;
+			this->valid = !std::isnan(this->value);
+			return *this;
+		}
+
 
 		friend Distance operator+(const Distance & lhs, const Distance & rhs);
 		friend Distance operator-(const Distance & lhs, const Distance & rhs);
@@ -725,8 +755,6 @@ namespace SlavGPS {
 		bool valid = false;
 
 		DistanceUnit distance_unit;
-		SupplementaryDistanceUnit supplementary_distance_unit;
-		bool use_supplementary_distance_unit = false;
 	};
 	QDebug operator<<(QDebug debug, const Distance & distance);
 	bool operator<(const Distance & lhs, const Distance & rhs);

@@ -302,8 +302,8 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->course->setText(tp->course.to_string());
 	this->speed->setText(Speed(tp->gps_speed, SpeedUnit::MetresPerSecond).convert_to_unit(speed_unit).to_string());
-	this->hdop->setText(Distance(tp->hdop, SupplementaryDistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
-	this->pdop->setText(Distance(tp->pdop, SupplementaryDistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->hdop->setText(Distance(tp->hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->pdop->setText(Distance(tp->pdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
 	this->vdop->setText(Altitude(tp->vdop, HeightUnit::Metres).convert_to_unit(height_unit).to_nice_string());
 	this->sat->setText(tr("%1 / %2").arg(tp->nsats).arg((int) tp->fix_mode));
 

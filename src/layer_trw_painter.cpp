@@ -240,19 +240,20 @@ void LayerTRWPainter::draw_track_label(const QString & text, const QColor & fg_c
 void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 {
 	const DistanceUnit user_distance_unit = Preferences::get_unit_distance();
+	const Distance start_distance(0.0, user_distance_unit);
 	const Distance track_length = trk->get_length_including_gaps().convert_to_unit(user_distance_unit);
 
 	const int n_intervals_max = trk->max_number_dist_labels;
-	GraphIntervalsDistance intervals;
-	const int interval_idx = intervals.intervals.get_interval_index(0, track_length.value, n_intervals_max);
+	GraphIntervals2<Distance> intervals;
+	const int interval_idx = intervals.get_interval_index(start_distance, track_length, n_intervals_max);
 
-	const Distance interval = intervals.intervals.get_interval_value(interval_idx);
+	const Distance interval = intervals.get_interval_value(interval_idx);
 
 	for (int i = 1; i <= n_intervals_max; i++) {
 		const Distance axis_mark_uu = interval * i;
 
 		/* Convert distance into metres for use in finding a trackpoint. */
-		const Distance axis_mark_iu = axis_mark_uu.convert_to_unit(SupplementaryDistanceUnit::Meters);
+		const Distance axis_mark_iu = axis_mark_uu.convert_to_unit(DistanceUnit::Meters);
 		if (!axis_mark_iu.is_valid()) {
 			qDebug() << SG_PREFIX_E << "Conversion to meters failed";
 			break;

@@ -200,8 +200,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 				const Distance diff = Coord::distance_2(tp->coord, tp_prev->coord);
 				values[i] = QObject::tr("%1Distance diff %2")
 					.arg(separator)
-					/* Supplementary unit (meters or yards) will be chosen based on selection of main distance units. */
-					.arg(diff.convert_to_supplementary_unit(Preferences::get_unit_distance()).to_string());
+					.arg(diff.convert_to_unit(Preferences::get_unit_distance()).to_string());
 			}
 			break;
 

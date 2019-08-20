@@ -1023,62 +1023,6 @@ DistanceUnit Distance::get_user_unit(void)
 
 
 
-Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
-{
-	Distance result;
-	result.distance_unit = target_distance_unit;
-	result.use_supplementary_distance_unit = false;
-	result.valid = false;
-
-	if (this->use_supplementary_distance_unit) {
-		switch (this->supplementary_distance_unit) {
-		case SupplementaryDistanceUnit::Meters:
-			switch (target_distance_unit) {
-			case DistanceUnit::Kilometres:
-				result.value = this->value / 1000.0;
-				break;
-			case DistanceUnit::Miles:
-				result.value = VIK_METERS_TO_MILES(this->value);
-				break;
-			case DistanceUnit::NauticalMiles:
-				result.value = VIK_METERS_TO_NAUTICAL_MILES(this->value);
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
-				break;
-			}
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->supplementary_distance_unit;
-			break;
-		}
-	} else {
-		qDebug() << SG_PREFIX_E << "Unhandled situation" << (int) this->distance_unit << this->value; /* TODO_LATER: implement */
-#if 0
-		switch (this->distance_unit) {
-		case DistanceUnit::Kilometres:
-			result.value = ;
-			break;
-		case DistanceUnit::Miles:
-			result.value = ;
-			break;
-		case DistanceUnit::NauticalMiles:
-			result.value = ;
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			break;
-		}
-#endif
-	}
-
-	result.valid = (!std::isnan(result.value)) && result.value >= 0.0;
-
-	return result;
-}
-
-
-
 QString Measurements::get_file_size_string(size_t file_size)
 {
 	float size = (float) file_size;
@@ -1101,48 +1045,9 @@ QString Measurements::get_file_size_string(size_t file_size)
 
 
 
-Distance Distance::convert_to_supplementary_unit(DistanceUnit target_distance_unit) const
-{
-	Distance result;
-
-	switch (target_distance_unit) {
-	case DistanceUnit::Kilometres:
-		result = this->convert_to_unit(SupplementaryDistanceUnit::Meters);
-		break;
-	case DistanceUnit::Miles:
-	case DistanceUnit::NauticalMiles:
-		result = this->convert_to_unit(SupplementaryDistanceUnit::Yards);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) target_distance_unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-Distance::Distance(double new_value, SupplementaryDistanceUnit new_supplementary_distance_unit)
-{
-	this->supplementary_distance_unit = new_supplementary_distance_unit;
-	this->use_supplementary_distance_unit = true;
-
-	this->value = new_value;
-
-	if (!std::isnan(this->value) && this->value >= 0.0) {
-		this->valid = true;
-	}
-}
-
-
-
-
 Distance::Distance(double new_value, DistanceUnit new_distance_unit)
 {
 	this->distance_unit = new_distance_unit;
-	this->use_supplementary_distance_unit = false;
 
 	this->value = new_value;
 
@@ -1154,100 +1059,109 @@ Distance::Distance(double new_value, DistanceUnit new_distance_unit)
 
 
 
-Distance Distance::convert_to_unit(SupplementaryDistanceUnit target_supplementary_distance_unit) const
+Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
 {
 	Distance output;
-	output.use_supplementary_distance_unit = true; /* Because we are converting to supplementary unit. */
-	output.supplementary_distance_unit = target_supplementary_distance_unit;
+	output.distance_unit = target_distance_unit;
 	output.valid = false;
 
 	if (!this->valid) {
 		return output;
 	}
 
+	switch (this->distance_unit) {
+	case DistanceUnit::Kilometres:
+		switch (target_distance_unit) {
+		case DistanceUnit::Meters:
+			/* Kilometers to meters. */
+			output.value = this->value * 1000.0;
+			break;
+		case DistanceUnit::Yards:
+			/* Kilometers to yards. */
+			output.value = this->value * 1000 * 1.0936133;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unhandled target distance unit" << (int) target_distance_unit;
+			break;
+		}
+		break;
 
-	if (this->use_supplementary_distance_unit) { /* This variable is in meters or yards, to be converted into yards or meters. */
-		switch (this->supplementary_distance_unit) {
-		case SupplementaryDistanceUnit::Meters:
-			switch (target_supplementary_distance_unit) {
-			case SupplementaryDistanceUnit::Meters:
-				/* Meters to meters. */
-				output.value = this->value;
-				break;
-			case SupplementaryDistanceUnit::Yards:
-				/* Meters to yards. */
-				output.value = this->value * 1.0936133;
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
-				break;
-			}
-		case SupplementaryDistanceUnit::Yards:
-			switch (target_supplementary_distance_unit) {
-			case SupplementaryDistanceUnit::Meters:
-				/* Yards to meters. */
-				output.value = this->value * 0.9144;
-				break;
-			case SupplementaryDistanceUnit::Yards:
-				/* Yards to yards. */
-				output.value = this->value;
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
-				break;
-			}
+	case DistanceUnit::Miles:
+		switch (target_distance_unit) {
+		case DistanceUnit::Meters:
+			/* Miles to meters. */
+			output.value = VIK_MILES_TO_METERS(this->value);
+			break;
+		case DistanceUnit::Yards:
+			/* Miles to yards. */
+			output.value = this->value * 1760;
+			break;
 		default:
-			qDebug() << SG_PREFIX_E << "Invalid supplementary distance unit" << (int) this->supplementary_distance_unit;
+			qDebug() << SG_PREFIX_E << "Unhandled target distance unit" << (int) target_distance_unit;
 			break;
 		}
-	} else {
-		switch (this->distance_unit) {
+		break;
+
+	case DistanceUnit::NauticalMiles:
+		switch (target_distance_unit) {
+		case DistanceUnit::Meters:
+			/* Nautical Miles to meters. */
+			output.value = VIK_NAUTICAL_MILES_TO_METERS(this->value);
+			break;
+		case DistanceUnit::Yards:
+			/* Nautical Miles to yards. */
+			output.value = this->value * 2025.37183;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unhandled target distance unit" << (int) target_distance_unit;
+			break;
+		}
+		break;
+
+	case DistanceUnit::Meters:
+		switch (target_distance_unit) {
 		case DistanceUnit::Kilometres:
-			switch (target_supplementary_distance_unit) {
-			case SupplementaryDistanceUnit::Meters:
-				/* Kilometers to meters. */
-				output.value = this->value * 1000.0;
-				break;
-			case SupplementaryDistanceUnit::Yards:
-				/* Kilometers to yards. */
-				output.value = this->value * 1000 * 1.0936133;
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
-				break;
-			}
+			output.value = this->value / 1000.0;
+			break;
 		case DistanceUnit::Miles:
-			switch (target_supplementary_distance_unit) {
-			case SupplementaryDistanceUnit::Meters:
-				/* Miles to meters. */
-				output.value = VIK_MILES_TO_METERS(this->value);
-				break;
-			case SupplementaryDistanceUnit::Yards:
-				/* Miles to yards. */
-				output.value = this->value * 1760;
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
-				break;
-			}
+			output.value = VIK_METERS_TO_MILES(this->value);
+			break;
 		case DistanceUnit::NauticalMiles:
-			switch (target_supplementary_distance_unit) {
-			case SupplementaryDistanceUnit::Meters:
-				/* Nautical Miles to meters. */
-				output.value = VIK_NAUTICAL_MILES_TO_METERS(this->value);
-				break;
-			case SupplementaryDistanceUnit::Yards:
-				/* Nautical Miles to yards. */
-				output.value = this->value * 2025.37183;
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target supplementary distance unit" << (int) target_supplementary_distance_unit;
-				break;
-			}
+			output.value = VIK_METERS_TO_NAUTICAL_MILES(this->value);
+			break;
+		case DistanceUnit::Meters:
+			/* Meters to meters. */
+			output.value = this->value;
+			break;
+		case DistanceUnit::Yards:
+			/* Meters to yards. */
+			output.value = this->value * 1.0936133;
+			break;
 		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+			qDebug() << SG_PREFIX_E << "Unhandled target distance unit" << (int) target_distance_unit;
 			break;
 		}
+		break;
+
+	case DistanceUnit::Yards:
+		switch (target_distance_unit) {
+		case DistanceUnit::Meters:
+			/* Yards to meters. */
+			output.value = this->value * 0.9144;
+			break;
+		case DistanceUnit::Yards:
+			/* Yards to yards. */
+			output.value = this->value;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Unhandled target distance unit" << (int) target_distance_unit;
+			break;
+		}
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << (int) this->distance_unit;
+		break;
 	}
 
 	output.valid = !std::isnan(output.value) && output.value >= 0.0;
@@ -1267,32 +1181,26 @@ QString Distance::to_string(void) const
 		return result;
 	}
 
-	if (this->use_supplementary_distance_unit) {
-		switch (this->supplementary_distance_unit) {
-		case SupplementaryDistanceUnit::Meters:
-			result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-			break;
-		}
-	} else {
-		switch (this->distance_unit) {
-		case DistanceUnit::Kilometres:
-			result = QObject::tr("%1 km").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			break;
-		case DistanceUnit::Miles:
-			result = QObject::tr("%1 miles").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			break;
-		case DistanceUnit::NauticalMiles:
-			result = QObject::tr("%1 NM").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-			break;
-		}
+	switch (this->distance_unit) {
+	case DistanceUnit::Kilometres:
+		result = QObject::tr("%1 km").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::Miles:
+		result = QObject::tr("%1 miles").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::NauticalMiles:
+		result = QObject::tr("%1 NM").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::Meters:
+		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::Yards:
+		result = QObject::tr("%1 yd").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		break;
 	}
 
 	return result;
@@ -1310,41 +1218,39 @@ QString Distance::to_nice_string(void) const
 		return result;
 	}
 
-	if (this->use_supplementary_distance_unit) {
-		switch (this->supplementary_distance_unit) {
-		case SupplementaryDistanceUnit::Meters:
-			if (this->value <= 1000.0) {
-				result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			} else {
-				result = QObject::tr("%1 km").arg(this->value / 1000.0, 0, 'f', SG_PRECISION_DISTANCE);
-			}
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-			break;
+	/*
+	  TODO_LATER: Since the result should be "nice"
+	  string, we should check if this->value is above or
+	  below some threshold and either leave the value and
+	  unit string, or convert the value (e.g. multiply by
+	  1000.0) and use sub-unit string (e.g. meters).
+	*/
+	switch (this->distance_unit) {
+	case DistanceUnit::Kilometres:
+		result = QObject::tr("%1 km").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+
+	case DistanceUnit::Miles:
+		result = QObject::tr("%1 miles").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+
+	case DistanceUnit::NauticalMiles:
+		result = QObject::tr("%1 NM").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+
+	case DistanceUnit::Meters:
+		if (this->value <= 1000.0) {
+			result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
+		} else {
+			result = QObject::tr("%1 km").arg(this->value / 1000.0, 0, 'f', SG_PRECISION_DISTANCE);
 		}
-	} else {
-		/* TODO_LATER: Since the result should be "nice"
-		   string, we should check if this->value is above or
-		   below some threshold and either leave the value and
-		   unit string, or convert the value (e.g. multiply by
-		   1000.0) and use sub-unit string (e.g. meters). */
-		switch (this->distance_unit) {
-		case DistanceUnit::Kilometres:
-			result = QObject::tr("%1 km").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			break;
-		case DistanceUnit::Miles:
-			result = QObject::tr("%1 miles").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			break;
-		case DistanceUnit::NauticalMiles:
-			result = QObject::tr("%1 NM").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
-			result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-			break;
-		}
+		break;
+		/* TODO: yards. */
+
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->distance_unit;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		break;
 	}
 
 	return result;
@@ -1372,25 +1278,14 @@ Distance & Distance::operator+=(const Distance & rhs)
 		qDebug() << SG_PREFIX_W << "Operands invalid";
 		return *this;
 	}
-	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
+	if (this->distance_unit != rhs.distance_unit) {
 		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return *this;
-	}
-	if (this->use_supplementary_distance_unit) {
-		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
-			qDebug() << SG_PREFIX_E << "Unit mismatch";
-			return *this;
-		}
-	} else {
-		if (this->distance_unit != rhs.distance_unit) {
-			qDebug() << SG_PREFIX_E << "Unit mismatch";
-			return *this;
-		}
 	}
 
 
 	this->value += rhs.value;
-	this->valid = !std::isnan(this->value) && this->value >= 0.0;
+	this->valid = !std::isnan(this->value);
 	return *this;
 }
 
@@ -1407,29 +1302,16 @@ Distance Distance::operator+(const Distance & rhs)
 		qDebug() << SG_PREFIX_W << "Operands invalid";
 		return result;
 	}
-	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
+	if (this->distance_unit != rhs.distance_unit) {
 		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
-	if (this->use_supplementary_distance_unit) {
-		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
-			qDebug() << SG_PREFIX_E << "Unit mismatch";
-			return result;
-		}
-	} else {
-		if (this->distance_unit != rhs.distance_unit) {
-			qDebug() << SG_PREFIX_E << "Unit mismatch";
-			return result;
-		}
-	}
 
 
-	result.use_supplementary_distance_unit = this->use_supplementary_distance_unit;
-	result.supplementary_distance_unit = this->supplementary_distance_unit;
 	result.distance_unit = this->distance_unit;
 
 	result.value = this->value + rhs.value;
-	result.valid = !std::isnan(result.value) && result.value >= 0.0;
+	result.valid = !std::isnan(result.value);
 
 	return result;
 }
@@ -1493,25 +1375,11 @@ Distance Distance::operator-(const Distance & rhs)
 		qDebug() << SG_PREFIX_E << "Operands invalid";
 		return result;
 	}
-	if (this->use_supplementary_distance_unit != rhs.use_supplementary_distance_unit) {
+	if (this->distance_unit != rhs.distance_unit) {
 		qDebug() << SG_PREFIX_E << "Unit mismatch";
 		return result;
 	}
-	if (this->use_supplementary_distance_unit) {
-		if (this->supplementary_distance_unit != rhs.supplementary_distance_unit) {
-			qDebug() << SG_PREFIX_E << "Unit mismatch";
-			return result;
-		}
-	} else {
-		if (this->distance_unit != rhs.distance_unit) {
-			qDebug() << SG_PREFIX_E << "Unit mismatch";
-			return result;
-		}
-	}
 
-
-	result.use_supplementary_distance_unit = this->use_supplementary_distance_unit;
-	result.supplementary_distance_unit = this->supplementary_distance_unit;
 	result.distance_unit = this->distance_unit;
 
 	result.value = this->value - rhs.value;

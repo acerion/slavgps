@@ -138,8 +138,7 @@ namespace SlavGPS {
 		GisViewportDomain y_domain = GisViewportDomain::Max;
 
 	private:
-		DistanceUnit y_distance_unit = DistanceUnit::Kilometres;
-		SupplementaryDistanceUnit y_supplementary_distance_unit = SupplementaryDistanceUnit::Meters;
+		DistanceUnit y_distance_unit = DistanceUnit::Meters;
 		SpeedUnit y_speed_unit = SpeedUnit::MetresPerSecond;
 
 		Tx_ll x_min_ll = 0;
@@ -191,9 +190,8 @@ namespace SlavGPS {
 			}
 		}
 
-		/* Results will be in internal units. */
-		this->x_min = Tx(this->x_min_ll);
-		this->x_max = Tx(this->x_max_ll);
+		this->x_min = Tx(this->x_min_ll, Tx::get_internal_unit());
+		this->x_max = Tx(this->x_max_ll, Tx::get_internal_unit());
 		this->y_min = Ty(this->y_min_ll, Ty::get_internal_unit());
 		this->y_max = Ty(this->y_max_ll, Ty::get_internal_unit());
 	}
@@ -255,7 +253,6 @@ namespace SlavGPS {
 		this->y_domain = other.y_domain;
 
 		this->y_distance_unit = other.y_distance_unit;
-		this->y_supplementary_distance_unit = other.y_supplementary_distance_unit;
 		this->y_speed_unit = other.y_speed_unit;
 
 

@@ -103,7 +103,7 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 {
 	/* Re-implementing Coord::distance() to have better control over Distance::valid. */
-	const SupplementaryDistanceUnit distance_unit = SupplementaryDistanceUnit::Meters; /* Using meters - the most basic and common unit. */
+	const DistanceUnit distance_unit = DistanceUnit::Meters; /* Using meters - the most basic and common unit. */
 	Distance result;
 
 	if (coord1.mode == coord2.mode) {
