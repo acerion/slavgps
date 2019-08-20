@@ -495,7 +495,7 @@ Trackpoint * GPSPointParser::create_trackpoint(CoordMode coordinate_mode)
 	/* Trackpoint's extended attributes. */
 	if (this->line_extended) {
 		tp->gps_speed = this->line_speed;
-		tp->course = this->line_course;
+		tp->course = Angle(this->line_course, AngleUnit::Degrees);  /* TODO: verify unit read from file. */
 		tp->nsats = this->line_sat;
 		tp->fix_mode = (GPSFixMode) this->line_fix_mode;
 		tp->hdop = this->line_hdop;
@@ -762,7 +762,7 @@ static void a_gpspoint_write_waypoints(FILE * file, const std::list<Waypoint *> 
 		free(tmp_name);
 
 		if (wp->altitude.is_valid()) {
-			fprintf(file, " altitude=\"%s\"", wp->altitude.value_to_string_for_file().toUtf8().constData());
+			fprintf(file, " altitude=\"%s\"", wp->altitude.value_to_string_for_file(SG_MEASUREMENT_PRECISION_MAX).toUtf8().constData());
 		}
 		if (wp->get_timestamp().is_valid()) {
 			fprintf(file, " unixtime=\"%ld\"", wp->get_timestamp().get_value());
@@ -839,7 +839,7 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 	}
 
 	if (tp->altitude.is_valid()) {
-		fprintf(file, " altitude=\"%s\"", tp->altitude.value_to_string_for_file().toUtf8().constData());
+		fprintf(file, " altitude=\"%s\"", tp->altitude.value_to_string_for_file(SG_MEASUREMENT_PRECISION_MAX).toUtf8().constData());
 	}
 	if (tp->timestamp.is_valid()) {
 		fprintf(file, " unixtime=\"%ld\"", tp->timestamp.get_value());
@@ -854,7 +854,7 @@ static void a_gpspoint_write_trackpoint(FILE * file, const Trackpoint * tp, bool
 			fprintf(file, " speed=\"%s\"", SGUtils::double_to_c(tp->gps_speed).toUtf8().constData());
 		}
 		if (tp->course.is_valid()) {
-			fprintf(file, " course=\"%s\"", tp->course.value_to_c_string().toUtf8().constData());
+			fprintf(file, " course=\"%s\"", tp->course.value_to_string_for_file(SG_PRECISION_COURSE).toUtf8().constData());
 		}
 		if (tp->nsats > 0) {
 			fprintf(file, " sat=\"%d\"", tp->nsats);

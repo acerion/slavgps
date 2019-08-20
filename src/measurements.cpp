@@ -260,21 +260,22 @@ sg_ret Time::set_value_from_char_string(const char * str)
 
 
 template<>
-void Time::set_value(Time_ll new_value)
+bool Time::ll_value_is_valid(Time_ll value)
 {
-	this->value = new_value;
-	this->valid = !std::isnan(new_value); /* TODO: improve for Time_ll data type. */
-	/* Don't change unit. */
+	return !std::isnan(value); /* TODO: improve for Time_ll data type. */
 }
 
 
 
 
 template<>
-bool Time::ll_value_is_valid(Time_ll new_value)
+const QString Time::value_to_string_for_file(int precision) const
 {
-	return !std::isnan(new_value); /* TODO: improve for Time_ll data type. */
+	QString result;
+	/* TODO: implement. */
+	return result;
 }
+
 
 
 
@@ -285,8 +286,9 @@ bool Time::ll_value_is_valid(Time_ll new_value)
 template<>
 GradientUnit Gradient::get_user_unit(void)
 {
-	return GradientUnit::Degrees; /* TODO: get this from Preferences. */
+	return GradientUnit::Percents; /* TODO: get this from Preferences. */
 }
+
 
 
 
@@ -306,10 +308,67 @@ QString Gradient::to_string(void) const
 
 
 template<>
-GradientUnit Measurement<GradientUnit, Gradient_ll>::get_internal_unit(void)
+GradientUnit Gradient::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT;
 }
+
+
+
+
+template<>
+QString Gradient::get_unit_string(GradientUnit unit)
+{
+	QString result;
+
+	switch (unit) {
+	case GradientUnit::Percents:
+		result = QString("%");
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected gradient unit" << (int) unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+const QString Gradient::value_to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+	} else {
+		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+const QString Gradient::value_to_string_for_file(int precision) const
+{
+	return double_to_c(this->value);
+}
+
+
+
+
+template<>
+bool Gradient::ll_value_is_valid(Gradient_ll value)
+{
+	return !std::isnan(value);
+}
+
+
+
 
 
 
@@ -512,6 +571,40 @@ QString Speed::get_unit_string(SpeedUnit speed_unit)
 	}
 
 	return result;
+}
+
+
+
+
+template<>
+const QString Speed::value_to_string(void) const
+{
+	QString result;
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+	} else {
+		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+const QString Speed::value_to_string_for_file(int precision) const
+{
+	return double_to_c(this->value);
+}
+
+
+
+
+template<>
+bool Speed::ll_value_is_valid(Speed_ll value)
+{
+	return !std::isnan(value);
 }
 
 
@@ -734,15 +827,6 @@ QString Altitude::to_nice_string(void) const
 
 
 template<>
-const QString Altitude::value_to_string_for_file(void) const
-{
-	return SGUtils::double_to_c(this->value);
-}
-
-
-
-
-template<>
 const QString Altitude::value_to_string(void) const
 {
 	QString result;
@@ -753,6 +837,147 @@ const QString Altitude::value_to_string(void) const
 	}
 
 	return result;
+}
+
+
+
+
+template<>
+const QString Altitude::value_to_string_for_file(int precision) const
+{
+	return double_to_c(this->value);
+}
+
+
+
+
+template<>
+bool Altitude::ll_value_is_valid(Altitude_ll value)
+{
+	return !std::isnan(value);
+}
+
+
+
+
+
+
+
+
+template<>
+QString Angle::to_string(int precision) const
+{
+	if (this->is_valid()) {
+		return QObject::tr("%1%2").arg(RAD2DEG(this->value), 5, 'f', precision, '0').arg(DEGREE_SYMBOL);
+	} else {
+		return SG_MEASUREMENT_INVALID_VALUE_STRING;
+	}
+}
+
+
+
+
+template<>
+Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
+{
+	/*
+	  TODO_MAYBE: there is still some room for improvement in this
+	  function:
+	  - can't we do it any easier way?
+	  - is the epsilon value in if() correct?
+	  - when do we accept returning 0, and when 2*pi?
+	*/
+
+	double angle = 0.0;
+
+	/* TODO: verify that angle units of both arguments are the same. */
+
+	const double angle_min = std::min(angle1.value, angle2.value);
+	const double angle_max = std::max(angle1.value, angle2.value);
+
+	const double diff = angle_max - angle_min;
+	if (std::abs(M_PI - diff) > 0.000000000001) { /* Check for two angles that are 180 degrees apart. */
+		const double x1 = cos(angle1.value);
+		const double y1 = sin(angle1.value);
+
+		const double x2 = cos(angle2.value);
+		const double y2 = sin(angle2.value);
+
+		const double x = x1 + x2;
+		const double y = y1 + y2;
+
+		angle = x == 0.0 ? 0.0 : atan2(y, x);
+		angle = angle < 0 ? ((2 * M_PI) + angle) : angle;
+	}
+
+	return Angle(angle, angle1.unit);
+}
+
+
+
+
+template<>
+void Angle::normalize(void)
+{
+	if (!this->is_valid()) {
+		return;
+	}
+
+	if (this->value < 0) {
+		this->value += 2 * M_PI;
+	}
+	if (this->value > 2 * M_PI) {
+		this->value -= 2 * M_PI;
+	}
+
+	return;
+}
+
+
+
+
+template<>
+QString Angle::to_string(void) const
+{
+	QString result;
+
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	switch (this->unit) {
+	case AngleUnit::Radians:
+		result = QObject::tr("%1 rad").arg(this->value, 0, 'f', SG_PRECISION_COURSE);
+		break;
+	case AngleUnit::Degrees:
+		result = QObject::tr("%1%2").arg(this->value, 0, 'f', SG_PRECISION_COURSE).arg(DEGREE_SYMBOL);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected angle unit" << (int) unit;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+bool Angle::ll_value_is_valid(Angle_ll value)
+{
+	return !std::isnan(value);
+}
+
+
+
+
+template<>
+const QString Angle::value_to_string_for_file(int precision) const
+{
+	return double_to_c(this->value);
 }
 
 
@@ -1464,25 +1689,6 @@ bool Distance::is_zero(void) const
 
 
 
-const QString Speed::value_to_string_for_file(void) const
-{
-	return SGUtils::double_to_c(this->value);
-}
-
-
-
-
-const QString Speed::value_to_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-	} else {
-		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-	}
-
-	return result;
-}
 
 
 
@@ -1563,124 +1769,13 @@ QString Speed::get_unit_full_string(SpeedUnit speed_unit)
 
 
 
-QString Angle::to_string(int precision) const
-{
-	if (this->is_valid()) {
-		return QObject::tr("%1%2").arg(RAD2DEG(this->value), 5, 'f', precision, '0').arg(DEGREE_SYMBOL);
-	} else {
-		return SG_MEASUREMENT_INVALID_VALUE_STRING;
-	}
-}
-
-
-
-
-QString Angle::value_to_c_string(int precision) const
-{
-	return SGUtils::double_to_c(this->value);
-}
-
-
-
-
-double Angle::get_value(void) const
-{
-	return this->value;
-}
-
-
-
-
-bool Angle::set_value(double new_value)
-{
-	this->value = new_value;
-	this->valid = !std::isnan(this->value);
-
-	return this->valid;
-}
-
-
-
-
-bool Angle::is_valid(void) const
-{
-	return this->valid;
-}
-
-
-
-
-void Angle::invalidate(void)
-{
-	this->value = NAN;
-	this->valid = false;
-}
-
-
-
-
-Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
-{
-	/*
-	  TODO_MAYBE: there is still some room for improvement in this
-	  function:
-	  - can't we do it any easier way?
-	  - is the epsilon value in if() correct?
-	  - when do we accept returning 0, and when 2*pi?
-	*/
-
-	double angle = 0.0;
-
-	const double angle_min = std::min(angle1.value, angle2.value);
-	const double angle_max = std::max(angle1.value, angle2.value);
-
-	const double diff = angle_max - angle_min;
-	if (std::abs(M_PI - diff) > 0.000000000001) { /* Check for two angles that are 180 degrees apart. */
-		const double x1 = cos(angle1.value);
-		const double y1 = sin(angle1.value);
-
-		const double x2 = cos(angle2.value);
-		const double y2 = sin(angle2.value);
-
-		const double x = x1 + x2;
-		const double y = y1 + y2;
-
-		angle = x == 0.0 ? 0.0 : atan2(y, x);
-		angle = angle < 0 ? ((2 * M_PI) + angle) : angle;
-	}
-
-	return Angle(angle);
-}
-
-
-
-
-void Angle::normalize(void)
-{
-	if (!this->is_valid()) {
-		return;
-	}
-
-	if (this->value < 0) {
-		this->value += 2 * M_PI;
-	}
-	if (this->value > 2 * M_PI) {
-		this->value -= 2 * M_PI;
-	}
-
-	return;
-}
-
-
-
-
 bool Measurements::unit_tests(void)
 {
 	const double epsilon = 0.0001;
 
 	{
-		const Angle a1(DEG2RAD(0.0));
-		const Angle a2(DEG2RAD(0.0));
+		const Angle a1(DEG2RAD(0.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(0.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(0.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1688,8 +1783,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(360.0));
-		const Angle a2(DEG2RAD(360.0));
+		const Angle a1(DEG2RAD(360.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(360.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(360.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1697,8 +1792,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(70.0));
-		const Angle a2(DEG2RAD(70.0));
+		const Angle a1(DEG2RAD(70.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(70.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(70.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1706,8 +1801,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(184.0));
-		const Angle a2(DEG2RAD(186.0));
+		const Angle a1(DEG2RAD(184.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(186.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(185.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1715,8 +1810,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(185.0));
-		const Angle a2(DEG2RAD(185.0));
+		const Angle a1(DEG2RAD(185.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(185.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(185.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1724,8 +1819,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(350.0));
-		const Angle a2(DEG2RAD(20.0));
+		const Angle a1(DEG2RAD(350.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(20.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(5.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1733,8 +1828,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(0.0));
-		const Angle a2(DEG2RAD(180.0));
+		const Angle a1(DEG2RAD(0.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(180.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(0.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1742,8 +1837,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(-180.0));
-		const Angle a2(DEG2RAD(+180.0));
+		const Angle a1(DEG2RAD(-180.0), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(+180.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(180.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1751,8 +1846,8 @@ bool Measurements::unit_tests(void)
 		assert (epsilon > std::fabs(result.get_value() - expected));
 	}
 	{
-		const Angle a1(DEG2RAD(90));
-		const Angle a2(DEG2RAD(270.0));
+		const Angle a1(DEG2RAD(90), AngleUnit::Radians);
+		const Angle a2(DEG2RAD(270.0), AngleUnit::Radians);
 		const double expected = DEG2RAD(0.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
@@ -1923,43 +2018,6 @@ QString Time::get_time_string(Qt::DateFormat format) const
 	const QString result = date_time.toString(format);
 
 	return result;
-}
-
-
-
-
-const QString Gradient::value_to_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-	} else {
-		result = QObject::tr("%1").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
-	}
-
-	return result;
-}
-
-
-
-
-QString Gradient::to_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-	} else {
-		result = QObject::tr("%1%").arg(this->value, 0, 'f', SG_PRECISION_GRADIENT);
-	}
-	return result;
-}
-
-
-
-
-QString Gradient::get_unit_string(void)
-{
-	return QString("%");
 }
 
 

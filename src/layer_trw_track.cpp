@@ -699,7 +699,7 @@ void Track::to_routepoints(void)
 
 		(*iter)->timestamp.invalidate();
 		(*iter)->gps_speed = NAN;
-		(*iter)->course = NAN;
+		(*iter)->course.invalidate();
 		(*iter)->hdop = VIK_DEFAULT_DOP;
 		(*iter)->vdop = VIK_DEFAULT_DOP;
 		(*iter)->pdop = VIK_DEFAULT_DOP;

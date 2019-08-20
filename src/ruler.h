@@ -83,8 +83,8 @@ namespace SlavGPS {
 		ArrowSymbol begin_arrow;
 		ArrowSymbol end_arrow;
 
-		Angle angle = { 0.0 };
-		Angle base_angle = { 0.0 };
+		Angle angle;
+		Angle base_angle;
 
 		DistanceUnit distance_unit;
 		Distance line_distance;

@@ -755,7 +755,7 @@ void SGVariant::write(FILE * file, const QString & param_name) const
 			break;
 
 		case SGVariantType::AltitudeType:
-			fprintf(file, "%s\n", this->altitude.value_to_string_for_file().toUtf8().constData());
+			fprintf(file, "%s\n", this->altitude.value_to_string_for_file(SG_MEASUREMENT_PRECISION_MAX).toUtf8().constData());
 			break;
 
 		default:

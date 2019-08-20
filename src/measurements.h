@@ -51,6 +51,9 @@ namespace SlavGPS {
 #define SG_ALTITUDE_RANGE_MIN       -5000 /* [meters] */   /* See also VIK_VAL_MIN_ALT */
 #define SG_ALTITUDE_RANGE_MAX       25000 /* [meters] */   /* See also VIK_VAL_MAX_ALT */
 
+/* TODO: review usage of this define. */
+#define SG_MEASUREMENT_PRECISION_MAX   16
+
 
 #define SG_PRECISION_DISTANCE   2
 #define SG_PRECISION_SPEED      2
@@ -165,9 +168,18 @@ namespace SlavGPS {
 
 
 	enum class GradientUnit {
-		Degrees, /* Default, internal unit. TODO: verify. */
+		Percents, /* Default, internal unit. TODO: verify. */
 	};
-#define SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT GradientUnit::Degrees
+#define SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT GradientUnit::Percents
+
+
+
+
+	enum class AngleUnit {
+		Radians, /* Default, internal unit. TODO: verify. */
+		Degrees
+	};
+#define SG_MEASUREMENT_INTERNAL_UNIT_ANGLE AngleUnit::Radians
 
 
 
@@ -183,6 +195,7 @@ namespace SlavGPS {
 
 
 	double c_to_double(const QString & string);
+	QString double_to_c(double d, int precision);
 
 
 
@@ -228,7 +241,7 @@ namespace SlavGPS {
 
 		   Locale of the value in string is suitable for
 		   saving the value in gpx or vik file. */
-		const QString value_to_string_for_file(void) const;
+		const QString value_to_string_for_file(int precision) const;
 
 		/* Generate string containing only value, without unit
 		   and without magnitude-dependent conversions of value.
@@ -262,6 +275,9 @@ namespace SlavGPS {
 		  Set value from a string that contains value only
 		  (does not contain any token representing unit).
 		  Assign default internal value to to measurement.
+
+		  TODO: create separate variant for Time - it should
+		  use separate string-to-ll function.
 		*/
 		sg_ret set_value_from_char_string(const char * str)
 		{
@@ -297,16 +313,26 @@ namespace SlavGPS {
 		QString get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const;
 
 
+
+		/* Specific to Angle. */
+		static Measurement get_vector_sum(const Measurement & meas1, const Measurement & meas2);
+		/* Ensure that value is in range of 0-2pi (if the
+		   value is valid). */
+		void normalize(void);
+
+
 		/* Generate string with value and unit. Value
 		   (magnitude) of distance does not influence units
 		   used to present the value. E.g. "0.01" km/h will
 		   always be presented as "0.01 km/h", never as "10
 		   m/h". */
 		QString to_string(void) const;
+		QString to_string(int precision) const;
 
 		static QString to_string(Tll value);
 
-		/* Is this measurement so small that it can be treated as zero? */
+		/* Is this measurement so small that it can be treated as zero?
+		   TODO: separate implementation for Time class. */
 		bool is_zero(void) const
 		{
 			const double epsilon = 0.0000001;
@@ -555,17 +581,12 @@ namespace SlavGPS {
 	template<typename Tu, typename Tll>
 	double operator/(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs); /* For getting proportion of two values. */
 
-	template<typename Tu, typename Tll>
-	bool Measurement<Tu, Tll>::ll_value_is_valid(Tll new_value)
-	{
-		return !std::isnan(new_value);
-	}
 
 	template<typename Tu, typename Tll>
 	void Measurement<Tu, Tll>::set_value(Tll new_value)
 	{
 		this->value = new_value;
-		this->valid = !std::isnan(new_value);
+		this->valid = Measurement<Tu, Tll>::ll_value_is_valid(new_value);
 		/* Don't change unit. */
 	}
 
@@ -625,34 +646,7 @@ namespace SlavGPS {
 	typedef Measurement<SpeedUnit, Speed_ll> Speed;
 	typedef Measurement<GradientUnit, Gradient_ll> Gradient;
 	typedef Measurement<TimeUnit, Time_ll> Time;
-
-
-
-
-
-	class Angle {
-	public:
-		Angle(double new_value = NAN) { this->set_value(new_value); }
-
-		QString to_string(int precision = SG_PRECISION_COURSE) const;
-		QString value_to_c_string(int precision = SG_PRECISION_COURSE) const;
-
-		double get_value(void) const;
-		bool set_value(double value);
-
-		bool is_valid(void) const;
-		void invalidate(void);
-
-		/* Ensure that value is in range of 0-2pi (if the
-		   value is valid). */
-		void normalize(void);
-
-		static Angle get_vector_sum(const Angle & angle1, const Angle & angle2);
-
-	private:
-		double value = NAN;
-		bool valid = false;
-	};
+	typedef Measurement<AngleUnit, Angle_ll> Angle;
 
 
 

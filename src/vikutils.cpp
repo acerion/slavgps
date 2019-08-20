@@ -869,6 +869,20 @@ QString SGUtils::double_to_c(double d, int precision)
 	return result;
 }
 
+QString SlavGPS::double_to_c(double d, int precision)
+{
+	static QLocale c_locale = QLocale::c();
+	QString result;
+
+	if (d == NAN) {
+		return result;
+	} else {
+		result = c_locale.toString(d, 'f', precision);
+	}
+
+	return result;
+}
+
 
 
 
