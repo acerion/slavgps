@@ -141,8 +141,8 @@ namespace SlavGPS {
 		void mouseMoveEvent(QMouseEvent * event);
 		void mouseReleaseEvent(QMouseEvent * event);
 
-		GisViewportDomain x_domain = GisViewportDomain::Max;
-		GisViewportDomain y_domain = GisViewportDomain::Max;
+		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
+		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
 
 		HeightUnit height_unit;
 		DistanceUnit distance_unit;
@@ -284,8 +284,8 @@ namespace SlavGPS {
 		QPen dem_alt_pen;
 		QPen no_alt_info_pen;
 
-		GisViewportDomain x_domain = GisViewportDomain::Max;
-		GisViewportDomain y_domain = GisViewportDomain::Max;
+		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
+		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
 
 		Graph2D * graph_2d = NULL;
 		TrackViewLabels labels;

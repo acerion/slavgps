@@ -134,8 +134,8 @@ namespace SlavGPS {
 		Ty y_min;
 		Ty y_max;
 
-		GisViewportDomain x_domain = GisViewportDomain::Max;
-		GisViewportDomain y_domain = GisViewportDomain::Max;
+		GisViewportDomain x_domain = GisViewportDomain::MaxDomain;
+		GisViewportDomain y_domain = GisViewportDomain::MaxDomain;
 
 	private:
 		DistanceUnit y_distance_unit = DistanceUnit::Meters;

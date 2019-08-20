@@ -366,7 +366,7 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 
 	this->valid = true;
 	this->x_domain = GisViewportDomain::TimeDomain;
-	this->y_domain = GisViewportDomain::Distance;
+	this->y_domain = GisViewportDomain::DistanceDomain;
 	this->y_distance_unit = DistanceUnit::Meters;
 	snprintf(this->debug, sizeof (this->debug), "Distance over Time");
 
@@ -549,8 +549,8 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 #endif
 
 	this->valid = true;
-	this->x_domain = GisViewportDomain::Distance;
-	this->y_domain = GisViewportDomain::Elevation;
+	this->x_domain = GisViewportDomain::DistanceDomain;
+	this->y_domain = GisViewportDomain::ElevationDomain;
 	snprintf(this->debug, sizeof (this->debug), "Altitude over Distance");
 
 	this->x_min = Distance(this->x_min_ll, Distance::get_internal_unit());
@@ -621,7 +621,7 @@ sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::make_track_data_
 	assert (i + 1 == compressed_n_points);
 
 	this->valid = true;
-	this->x_domain = GisViewportDomain::Distance;
+	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::GradientDomain;
 	snprintf(this->debug, sizeof (this->debug), "Gradient over Distance");
 
@@ -781,7 +781,7 @@ sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::make_track_data_altitude
 
 	this->valid = true;
 	this->x_domain = GisViewportDomain::TimeDomain;
-	this->y_domain = GisViewportDomain::Elevation;
+	this->y_domain = GisViewportDomain::ElevationDomain;
 	snprintf(this->debug, sizeof (this->debug), "Altitude over Time");
 
 	this->x_min = Time(this->x_min_ll, Time::get_internal_unit());
@@ -859,7 +859,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 	assert(i == tp_count);
 
 	this->valid = true;
-	this->x_domain = GisViewportDomain::Distance;
+	this->x_domain = GisViewportDomain::DistanceDomain;
 	this->y_domain = GisViewportDomain::SpeedDomain;
 	snprintf(this->debug, sizeof (this->debug), "Speed over Distance");
 
@@ -890,7 +890,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 		if (DistanceUnit::Meters != distance_unit) {
 #endif
 			for (int i = 0; i < this->n_points; i++) {
-				this->x[i] = Distance::convert_meters_to(this->x[i], distance_unit);
+				this->x[i] = Distance::convert_to_unit(this->x[i], DistanceUnit::Meters, distance_unit);
 			}
 
 			Distance tmp;
@@ -916,7 +916,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 		if (DistanceUnit::Meters != distance_unit) {
 #endif
 			for (int i = 0; i < this->n_points; i++) {
-				this->x[i] = Distance::convert_meters_to(this->x[i], distance_unit);
+				this->x[i] = Distance::convert_to_unit(this->x[i], DistanceUnit::Meters, distance_unit);
 			}
 
 			Distance tmp;
@@ -942,7 +942,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 		if (DistanceUnit::Meters != distance_unit) {
 #endif
 			for (int i = 0; i < this->n_points; i++) {
-				this->x[i] = Distance::convert_meters_to(this->x[i], distance_unit);
+				this->x[i] = Distance::convert_to_unit(this->x[i], DistanceUnit::Meters, distance_unit);
 			}
 
 			Distance tmp;
@@ -1129,7 +1129,7 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 		if (DistanceUnit::Meters != distance_unit) {
 #endif
 			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = Distance::convert_meters_to(this->y[i], distance_unit);
+				this->y[i] = Distance::convert_to_unit(this->y[i], DistanceUnit::Meters, distance_unit);
 			}
 
 			Distance tmp;

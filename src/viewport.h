@@ -61,11 +61,11 @@ namespace SlavGPS {
 
 	enum class GisViewportDomain {
 		TimeDomain = 0,
-		Elevation,
-		Distance,
+		ElevationDomain,
+		DistanceDomain,
 		SpeedDomain,
 		GradientDomain,
-		Max
+		MaxDomain
 	};
 
 

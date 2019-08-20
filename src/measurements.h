@@ -646,6 +646,7 @@ namespace SlavGPS {
 	typedef Measurement<GradientUnit, Gradient_ll> Gradient;
 	typedef Measurement<TimeUnit, Time_ll> Time;
 	typedef Measurement<AngleUnit, Angle_ll> Angle;
+	typedef Measurement<DistanceUnit, Distance_ll> Distance;
 
 
 
@@ -659,6 +660,7 @@ namespace SlavGPS {
 
 
 
+#if 0
 	class Distance {
 	public:
 		Distance() {}
@@ -764,7 +766,7 @@ namespace SlavGPS {
 	Distance operator+(const Distance & lhs, const Distance & rhs);
 	Distance operator-(const Distance & lhs, const Distance & rhs);
 	double operator/(const Distance & rhs, const Distance & lhs);
-
+#endif
 
 
 #if 0
