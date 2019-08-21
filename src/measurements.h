@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -220,7 +221,15 @@ namespace SlavGPS {
 			this->value = 0;
 		}
 
-		void set_value(Tll value);
+
+		/* Set value, don't change unit. */
+		void set_value(Tll new_value)
+		{
+			this->value = new_value;
+			this->valid = Measurement<Tu, Tll>::ll_value_is_valid(new_value);
+			/* this->unit = ; ... Don't change unit. */
+		}
+
 		Tll get_value(void) const { return this->value; } /* TODO: what to do when this method is called on invalid value? Return zero? */
 
 
@@ -273,10 +282,9 @@ namespace SlavGPS {
 		/*
 		  Set value from a string that contains value only
 		  (does not contain any token representing unit).
-		  Assign default internal value to to measurement.
+		  Assign default internal unit to to measurement.
 
-		  TODO: create separate variant for Time - it should
-		  use separate string-to-ll function.
+		  Use these two methods for non-Time classes.
 		*/
 		sg_ret set_value_from_char_string(const char * str)
 		{
@@ -298,9 +306,20 @@ namespace SlavGPS {
 		}
 
 
+		/*
+		  Set value from a string that contains value only
+		  (does not contain any token representing unit).
+		  Assign default internal value to to measurement.
 
-		/* Will return INT_MIN if value is invalid. */
-		int floor(void) const;
+		  To be used only with Time class.
+		*/
+		sg_ret set_timestamp_from_char_string(const char * str);
+		sg_ret set_timestamp_from_string(const QString & str);
+
+
+
+		/* Will return INT_MIN or NAN if value is invalid. */
+		Tll floor(void) const;
 
 		/* Specific to Time. Keeping it in Measurement class is problematic. */
 		QString to_timestamp_string(Qt::TimeSpec time_spec = Qt::LocalTime) const;
@@ -331,15 +350,11 @@ namespace SlavGPS {
 		static QString to_string(Tll value);
 
 		/* Is this measurement so small that it can be treated as zero?
-		   TODO: separate implementation for Time class. */
-		bool is_zero(void) const
-		{
-			const double epsilon = 0.0000001;
-			if (!this->valid) {
-				return true;
-			}
-			return std::abs(this->value) < epsilon;
-		}
+
+		   For Time class using this method has sense only if
+		   value of type Time represents duration.  There is
+		   no much sense to see whether a date is zero. */
+		bool is_zero(void) const;
 
 
 
@@ -581,64 +596,6 @@ namespace SlavGPS {
 	double operator/(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs); /* For getting proportion of two values. */
 
 
-	template<typename Tu, typename Tll>
-	void Measurement<Tu, Tll>::set_value(Tll new_value)
-	{
-		this->value = new_value;
-		this->valid = Measurement<Tu, Tll>::ll_value_is_valid(new_value);
-		/* Don't change unit. */
-	}
-
-	template<typename Tu, typename Tll>
-	QString Measurement<Tu, Tll>::to_timestamp_string(Qt::TimeSpec time_spec) const
-	{
-		QString result;
-		return result;
-	}
-
-	template<typename Tu, typename Tll>
-	QString Measurement<Tu, Tll>::strftime_local(const char * format) const
-	{
-		QString result;
-		return result;
-	}
-
-	template<typename Tu, typename Tll>
-	QString Measurement<Tu, Tll>::strftime_utc(const char * format) const
-	{
-		QString result;
-		return result;
-	}
-
-	template<typename Tu, typename Tll>
-	QString Measurement<Tu, Tll>::to_duration_string(void) const
-	{
-		QString result;
-		return result;
-	}
-
-	template<typename Tu, typename Tll>
-	QString Measurement<Tu, Tll>::get_time_string(Qt::DateFormat format) const
-	{
-		QString result;
-		return result;
-	}
-
-	template<typename Tu, typename Tll>
-	QString Measurement<Tu, Tll>::get_time_string(Qt::DateFormat format, const Coord & coord) const
-	{
-		QString result;
-		return result;
-	}
-
-	template<typename Tu, typename Tll>
-	QString Measurement<Tu, Tll>::get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const
-	{
-		QString result;
-		return result;
-	}
-
-
 
 
 	typedef Measurement<HeightUnit, Altitude_ll> Altitude;
@@ -657,472 +614,6 @@ namespace SlavGPS {
 		static bool unit_tests(void);
 	};
 
-
-
-
-#if 0
-	class Distance {
-	public:
-		Distance() {}
-		Distance(double, DistanceUnit distance_unit);
-
-		static DistanceUnit get_user_unit(void);
-		static DistanceUnit get_internal_unit(void) { return DistanceUnit::Meters; }
-
-		Distance convert_to_unit(DistanceUnit distance_unit) const;
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance does not influence units
-		   used to present the value. E.g. "0.01" km will
-		   always be presented as "0.01 km", never as "10 m". */
-		QString to_string(void) const;
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance may be used to decide how
-		   the string will look like. E.g. "0.1 km" may be
-		   presented as "100 m". */
-		QString to_nice_string(void) const;
-
-		Distance & operator+=(const Distance & rhs);
-
-		Distance & operator+=(double rhs)
-		{
-			if (!this->valid) {
-				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
-				return *this;
-			}
-
-			if (std::isnan(rhs)) {
-				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
-				return *this;
-			}
-
-			this->value += rhs;
-			this->valid = !std::isnan(this->value);
-			return *this;
-		}
-
-		Distance & operator-=(double rhs)
-		{
-			if (!this->valid) {
-				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
-				return *this;
-			}
-
-			if (std::isnan(rhs)) {
-				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
-				return *this;
-			}
-
-			this->value -= rhs;
-			this->valid = !std::isnan(this->value);
-			return *this;
-		}
-
-
-		friend Distance operator+(const Distance & lhs, const Distance & rhs);
-		friend Distance operator-(const Distance & lhs, const Distance & rhs);
-
-		Distance & operator*=(double rhs);
-		Distance & operator/=(double rhs);
-		friend Distance operator*(Distance lhs, double rhs) { lhs *= rhs; return lhs; }
-		friend Distance operator/(Distance lhs, double rhs) { lhs /= rhs; return lhs; }
-
-		/* For calculating proportion of values. */
-		friend double operator/(const Distance & rhs, const Distance & lhs);
-
-		bool operator==(const Distance & rhs) const;
-		bool operator!=(const Distance & rhs) const;
-
-		friend bool operator<(const Distance & lhs, const Distance & rhs);
-		friend bool operator>(const Distance & lhs, const Distance & rhs);
-		friend bool operator<=(const Distance & lhs, const Distance & rhs);
-		friend bool operator>=(const Distance & lhs, const Distance & rhs);
-
-		/* Return "kilometers" or "miles" string.
-		   This is a full string, not "km" or "mi". */
-		static QString get_unit_full_string(DistanceUnit distance_unit);
-
-		static double convert_meters_to(double distance, DistanceUnit distance_unit);
-
-		bool is_valid(void) const;
-
-		/* Is this measurement so small that it can be treated as zero? */
-		bool is_zero(void) const;
-
-		friend QDebug operator<<(QDebug debug, const Distance & distance);
-
-		double value = 0.0;
-	private:
-		bool valid = false;
-
-		DistanceUnit distance_unit;
-	};
-	QDebug operator<<(QDebug debug, const Distance & distance);
-	bool operator<(const Distance & lhs, const Distance & rhs);
-	bool operator>(const Distance & lhs, const Distance & rhs);
-	bool operator<=(const Distance & lhs, const Distance & rhs);
-	bool operator>=(const Distance & lhs, const Distance & rhs);
-	Distance operator+(const Distance & lhs, const Distance & rhs);
-	Distance operator-(const Distance & lhs, const Distance & rhs);
-	double operator/(const Distance & rhs, const Distance & lhs);
-#endif
-
-
-#if 0
-	class Altitude {
-	public:
-		Altitude() {};
-		Altitude(double value, HeightUnit height_unit = SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT);
-
-		static HeightUnit get_user_unit(void);
-		static HeightUnit get_internal_unit(void) { return SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT; }
-
-		void set_value(double value); /* Set value, don't change unit. */
-		double get_value(void) const;
-
-		bool is_valid(void) const;
-		void set_valid(bool valid);
-
-		/* Generate string containing only value, without unit
-		   and without magnitude-dependent conversions of value.
-
-		   Locale of the value in string is suitable for
-		   saving the value in gpx or vik file. */
-		const QString value_to_string_for_file(void) const;
-
-		/* Generate string containing only value, without unit
-		   and without magnitude-dependent conversions of value.
-
-		   Locale of the value in string is suitable for
-		   presentation to user. */
-		const QString value_to_string(void) const;
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance does not influence units
-		   used to present the value. E.g. "0.01" km will
-		   always be presented as "0.01 km", never as "10 m". */
-		QString to_string(void) const;
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance may be used to decide how
-		   the string will look like. E.g. "0.1 km" may be
-		   presented as "100 m". */
-		QString to_nice_string(void) const;
-
-		Altitude convert_to_unit(HeightUnit height_unit) const;
-
-		/* Will return INT_MIN if altitude is invalid. */
-		int floor(void) const;
-
-		Altitude & operator=(const Altitude & rhs)
-
-		Altitude & operator+=(double rhs);
-		Altitude & operator-=(double rhs);
-		Altitude & operator+=(const Altitude & rhs);
-		Altitude & operator-=(const Altitude & rhs);
-		Altitude operator+(double rhs) const { Altitude result = *this; result += rhs; return result; }
-		Altitude operator-(double rhs) const { Altitude result = *this; result -= rhs; return result; }
-		Altitude operator+(const Altitude & rhs) const { Altitude result = *this; result += rhs; return result; }
-		Altitude operator-(const Altitude & rhs) const { Altitude result = *this; result -= rhs; return result; }
-
-		Altitude & operator*=(double rhs);
-		Altitude & operator/=(double rhs);
-		Altitude operator*(double rhs) const { Altitude result = *this; result *= rhs; return result; }
-		Altitude operator/(double rhs) const { Altitude result = *this; result /= rhs; return result; }
-
-		bool operator==(const Altitude & rhs) const;
-		bool operator!=(const Altitude & rhs) const;
-
-		/* For calculating proportion of values. */
-		friend double operator/(const Altitude & rhs, const Altitude & lhs);
-
-		friend bool operator<(const Altitude & lhs, const Altitude & rhs);
-		friend bool operator>(const Altitude & lhs, const Altitude & rhs);
-		friend bool operator<=(const Altitude & lhs, const Altitude & rhs);
-		friend bool operator>=(const Altitude & lhs, const Altitude & rhs);
-
-		HeightUnit get_unit(void) const { return this->unit; };
-
-		/* Return "meters" or "feet" string.
-		   This is a full string, not "m" or "ft". */
-		static QString get_unit_full_string(HeightUnit height_unit);
-
-		sg_ret set_from_string(const char * str);
-		sg_ret set_from_string(const QString & str);
-
-		/* Is this measurement so small that it can be treated as zero? */
-		bool is_zero(void) const;
-
-		Altitude_ll value = NAN;
-
-	private:
-
-		bool valid = false;
-		HeightUnit unit;
-	};
-	bool operator<(const Altitude & lhs, const Altitude & rhs);
-	bool operator>(const Altitude & lhs, const Altitude & rhs);
-	bool operator<=(const Altitude & lhs, const Altitude & rhs);
-	bool operator>=(const Altitude & lhs, const Altitude & rhs);
-	double operator/(const Altitude & rhs, const Altitude & lhs);
-	QDebug operator<<(QDebug debug, const Altitude & altitude);
-
-
-
-
-	class Speed {
-	public:
-		Speed() {};
-		Speed(double value, SpeedUnit speed_unit);
-
-		static SpeedUnit get_user_unit(void);
-		static SpeedUnit get_internal_unit(void) { return SpeedUnit::MetresPerSecond; }
-
-		void set_value(double value); /* Set value, don't change unit. */
-		double get_value(void) const;
-
-		bool is_valid(void) const;
-
-		/* Generate string containing only value, without unit
-		   and without magnitude-dependent conversions of value.
-
-		   Locale of the value in string is suitable for
-		   saving the value in gpx or vik file. */
-		//const QString value_to_string_for_file(void) const;
-
-		/* Generate string containing only value, without unit
-		   and without magnitude-dependent conversions of value.
-
-		   Locale of the value in string is suitable for
-		   presentation to user. */
-		const QString value_to_string(void) const;
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance does not influence units
-		   used to present the value. E.g. "0.01" km/h will
-		   always be presented as "0.01 km/h", never as "10
-		   m/h". */
-		QString to_string(void) const;
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance may be used to decide how
-		   the string will look like. E.g. "0.1 km/h" may be
-		   presented as "100 m/h". */
-		//QString to_nice_string(void) const;
-
-		Speed convert_to_unit(SpeedUnit speed_unit) const;
-
-		Speed & operator+=(const Speed & rhs);
-		Speed & operator-=(const Speed & rhs);
-	        friend Speed operator+(Speed lhs, const Speed & rhs) { lhs += rhs; return lhs; }
-		friend Speed operator-(Speed lhs, const Speed & rhs) { lhs -= rhs; return lhs; }
-
-		Speed & operator/=(double rhs);
-		Speed & operator*=(double rhs);
-	        friend Speed operator*(Speed lhs, double rhs) { lhs *= rhs; return lhs; }
-		friend Speed operator/(Speed lhs, double rhs) { lhs /= rhs; return lhs; }
-
-		friend bool operator<(const Speed & lhs, const Speed & rhs);
-		friend bool operator>(const Speed & lhs, const Speed & rhs);
-		friend bool operator<=(const Speed & lhs, const Speed & rhs);
-		friend bool operator>=(const Speed & lhs, const Speed & rhs);
-
-		/* For calculating proportion of values. */
-		friend double operator/(const Speed & rhs, const Speed & lhs);
-
-		bool operator==(const Speed & rhs) const;
-		bool operator!=(const Speed & rhs) const;
-
-		/* Return "meters" or "feet" string.
-		   This is a full string, not "m" or "ft". */
-		//static QString get_unit_full_string(SpeedUnit speed_unit);
-
-		/* Get string representing speed unit in abbreviated
-		   form, e.g. "km/h". */
-		static QString get_unit_string(SpeedUnit speed_unit);
-		static double convert_mps_to(double speed_value, SpeedUnit speed_units);
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance does not influence units
-		   used to present the value. E.g. "0.01" km/h will
-		   always be presented as "0.01 km/h", never as "10
-		   m/h".
-
-		   Unit is taken from global preferences. There is no
-		   conversion of value from one unit to another. */
-		static QString to_string(double value, int precision = SG_PRECISION_SPEED);
-
-		/* Is this measurement so small that it can be treated as zero? */
-		bool is_zero(void) const;
-
-		Speed_ll value = NAN;
-
-	private:
-		static bool operator_args_valid(const Speed & lhs, const Speed & rhs);
-
-		bool valid = false;
-		SpeedUnit unit;
-	};
-	double operator/(const Speed & rhs, const Speed & lhs);
-	bool operator<(const Speed & lhs, const Speed & rhs);
-	bool operator>(const Speed & lhs, const Speed & rhs);
-	bool operator<=(const Speed & lhs, const Speed & rhs);
-	bool operator>=(const Speed & lhs, const Speed & rhs);
-
-
-
-
-	class Time {
-	public:
-		Time();
-		Time(time_t value, TimeUnit time_unit = TimeUnit::Seconds);
-
-		static TimeUnit get_user_unit(void);
-		static TimeUnit get_internal_unit(void);
-
-		time_t get_value(void) const;
-
-		Time convert_to_unit(TimeUnit time_unit) const { return *this; }
-
-		QString to_duration_string(void) const;
-		QString to_string(void) const;
-		QString to_timestamp_string(Qt::TimeSpec time_spec = Qt::LocalTime) const;
-		QString get_time_string(Qt::DateFormat format) const;
-		QString get_time_string(Qt::DateFormat format, const Coord & coord) const;
-		QString get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const;
-
-		bool is_valid(void) const;
-		void invalidate(void);
-		void set_valid(bool value);
-		sg_ret set_from_unix_timestamp(const char * str);
-		sg_ret set_from_unix_timestamp(const QString & str);
-
-
-		static Time get_abs_diff(const Time & t1, const Time & t2);
-
-		QString strftime_local(const char * format) const;
-		QString strftime_utc(const char * format) const;
-
-		/* Is this measurement so small that it can be treated as zero?
-		   For Time class using this method has sense only if value of type Time represents duration.
-		   There is no much sense to see whether a date is zero. */
-		bool is_zero(void) const;
-
-		time_t value = 0;
-
-		friend Time operator+(const Time & lhs, const Time & rhs);
-		friend Time operator-(const Time & lhs, const Time & rhs);
-		friend bool operator<(const Time & lhs, const Time & rhs);
-		friend bool operator>(const Time & lhs, const Time & rhs);
-		friend bool operator<=(const Time & lhs, const Time & rhs);
-		friend bool operator>=(const Time & lhs, const Time & rhs);
-		friend QDebug operator<<(QDebug debug, const Time & timestamp);
-
-		bool operator==(const Time & timestamp) const;
-		bool operator!=(const Time & timestamp) const;
-
-		Time & operator*=(double rhs);
-		Time & operator/=(double rhs);
-		Time operator*(double rhs) const { Time result = *this; result *= rhs; return result; }
-		Time operator/(double rhs) const { Time result = *this; result /= rhs; return result; }
-
-		/* For calculating proportion of values. */
-		friend double operator/(const Time & rhs, const Time & lhs);
-
-		Time & operator+=(const Time & rhs);
-
-	private:
-		bool valid = false;
-	};
-	Time operator+(const Time & lhs, const Time & rhs);
-	Time operator-(const Time & lhs, const Time & rhs);
-	bool operator<(const Time & lhs, const Time & rhs);
-	bool operator>(const Time & lhs, const Time & rhs);
-	bool operator<=(const Time & lhs, const Time & rhs);
-	bool operator>=(const Time & lhs, const Time & rhs);
-	QDebug operator<<(QDebug debug, const Time & timestamp);
-	double operator/(const Time & rhs, const Time & lhs);
-
-
-
-
-	class Gradient {
-	public:
-		Gradient() {};
-		Gradient(double value, GradientUnit gradient_unit = SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT);
-
-		static GradientUnit get_user_unit(void);
-		static GradientUnit get_internal_unit(void) { return SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT; }
-
-		void set_value(double value); /* Set value, don't change unit. */
-		double get_value(void) const;
-
-		bool is_valid(void) const;
-
-		/* Generate string containing only value, without unit
-		   and without magnitude-dependent conversions of value.
-
-		   Locale of the value in string is suitable for
-		   saving the value in gpx or vik file. */
-		//const QString value_to_string_for_file(void) const;
-
-		/* Generate string containing only value, without unit
-		   and without magnitude-dependent conversions of value.
-
-		   Locale of the value in string is suitable for
-		   presentation to user. */
-		const QString value_to_string(void) const;
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance does not influence units
-		   used to present the value. E.g. "0.01" km/h will
-		   always be presented as "0.01 km/h", never as "10
-		   m/h". */
-		QString to_string(void) const;
-
-		/* Get string representing speed unit in abbreviated
-		   form. */
-		static QString get_unit_string(void);
-
-		/* Generate string with value and unit. Value
-		   (magnitude) of distance does not influence units
-		   used to present the value. E.g. "0.01" km/h will
-		   always be presented as "0.01 km/h", never as "10
-		   m/h".
-
-		   Unit is taken from global preferences. There is no
-		   conversion of value from one unit to another. */
-		static QString to_string(double value, int precision = SG_PRECISION_GRADIENT);
-
-		/* Is this measurement so small that it can be treated as zero? */
-		bool is_zero(void) const;
-
-
-		Gradient & operator+=(const Gradient & rhs);
-		Gradient & operator-=(const Gradient & rhs);
-		Gradient & operator+=(double rhs);
-		Gradient & operator-=(double rhs);
-		friend Gradient operator+(Gradient lhs, const Gradient & rhs) { lhs += rhs; return lhs; }
-		friend Gradient operator-(Gradient lhs, const Gradient & rhs) { lhs -= rhs; return lhs; }
-
-		Gradient & operator*=(double rhs);
-		Gradient & operator/=(double rhs);
-		friend Gradient operator*(Gradient lhs, double rhs) { lhs *= rhs; return lhs; }
-		friend Gradient operator/(Gradient lhs, double rhs) { lhs /= rhs; return lhs; }
-
-		friend double operator/(const Gradient & rhs, const Gradient & lhs); /* For getting proportion of two values. */
-
-		bool operator==(const Gradient & rhs) const;
-		bool operator!=(const Gradient & rhs) const;
-
-		Gradient_ll value = NAN;
-
-	private:
-		bool valid = false;
-	};
-	double operator/(const Gradient & rhs, const Gradient & lhs);
-#endif
 
 
 

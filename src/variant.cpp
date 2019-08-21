@@ -89,7 +89,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const char * str)
 		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
-		this->val_timestamp.set_value_from_string(str);
+		this->val_timestamp.set_timestamp_from_string(str);
 		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);
@@ -136,7 +136,7 @@ SGVariant::SGVariant(SGVariantType type_id_, const QString & str)
 		this->val_string = str; /* TODO_LATER: improve this assignment of string list. */
 		break;
 	case SGVariantType::Timestamp:
-		this->val_timestamp.set_value_from_string(str);
+		this->val_timestamp.set_timestamp_from_string(str);
 		break;
 	case SGVariantType::Latitude:
 		this->lat = Latitude(str);

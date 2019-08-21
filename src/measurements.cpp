@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
  * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -231,7 +232,7 @@ TimeUnit Time::get_internal_unit(void)
 
 
 template<>
-sg_ret Time::set_value_from_string(const QString & str)
+sg_ret Time::set_timestamp_from_string(const QString & str)
 {
 	this->value = (time_t) str.toULong(&this->valid);
 
@@ -245,7 +246,7 @@ sg_ret Time::set_value_from_string(const QString & str)
 
 
 template<>
-sg_ret Time::set_value_from_char_string(const char * str)
+sg_ret Time::set_timestamp_from_char_string(const char * str)
 {
 	if (NULL == str) {
 		qDebug() << SG_PREFIX_E << "Attempting to set invalid value of timestamp from NULL string";
@@ -272,6 +273,7 @@ template<>
 const QString Time::value_to_string_for_file(int precision) const
 {
 	QString result;
+	qDebug() << SG_PREFIX_E << "Not implemented yet";
 	/* TODO: implement. */
 	return result;
 }
@@ -279,6 +281,88 @@ const QString Time::value_to_string_for_file(int precision) const
 
 
 
+#if 0
+bool SlavGPS::operator<(const Time & lhs, const Time & rhs)
+{
+	/* TODO: shouldn't this be difftime()? */
+	return lhs.value < rhs.value;
+}
+#endif
+
+
+
+
+template<>
+QString Time::strftime_utc(const char * format) const
+{
+	char timestamp_string[32] = { 0 };
+	struct tm tm;
+	std::strftime(timestamp_string, sizeof (timestamp_string), format, gmtime_r(&this->value, &tm));
+
+	return QString(timestamp_string);
+}
+
+
+
+
+template<>
+QString Time::strftime_local(const char * format) const
+{
+	char timestamp_string[32] = { 0 };
+	struct tm tm;
+	std::strftime(timestamp_string, sizeof (timestamp_string), format, localtime_r(&this->value, &tm));
+
+	return QString(timestamp_string);
+}
+
+
+
+
+template<>
+QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
+{
+	QString result;
+	if (this->is_valid()) {
+		 /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
+		result = QDateTime::fromTime_t(this->get_value(), time_spec).toString(Qt::ISODate);
+	} else {
+		result = QObject::tr("No Data");
+	}
+	return result;
+}
+
+
+
+
+template<>
+QString Time::get_time_string(Qt::DateFormat format) const
+{
+	QDateTime date_time;
+	date_time.setTime_t(this->value);
+	const QString result = date_time.toString(format);
+
+	return result;
+}
+
+
+
+
+
+
+
+
+#if 0
+QString Gradient::to_string(double value, int precision)
+{
+	QString result;
+	if (std::isnan(value)) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+	} else {
+		result = QObject::tr("%1%").arg(value, 0, 'f', SG_PRECISION_GRADIENT);
+	}
+	return result;
+}
+#endif
 
 
 
@@ -369,6 +453,15 @@ bool Gradient::ll_value_is_valid(Gradient_ll value)
 
 
 
+template<>
+bool Gradient::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
+}
 
 
 
@@ -462,6 +555,18 @@ QString Speed::to_string(Speed_ll value)
 	}
 
 	return buffer;
+}
+
+
+
+
+template<>
+QString Speed::to_nice_string(void) const
+{
+	QString result;
+	qDebug() << SG_PREFIX_E << "Not implemented yet";
+	/* TODO: implement. */
+	return result;
 }
 
 
@@ -577,6 +682,18 @@ QString Speed::get_unit_string(SpeedUnit speed_unit)
 
 
 template<>
+QString Speed::get_unit_full_string(SpeedUnit speed_unit)
+{
+	QString result;
+	qDebug() << SG_PREFIX_E << "Not implemented yet";
+	/* TODO: implement. */
+	return result;
+}
+
+
+
+
+template<>
 const QString Speed::value_to_string(void) const
 {
 	QString result;
@@ -605,6 +722,19 @@ template<>
 bool Speed::ll_value_is_valid(Speed_ll value)
 {
 	return !std::isnan(value);
+}
+
+
+
+
+template<>
+bool Speed::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
 }
 
 
@@ -655,6 +785,7 @@ QString Altitude::to_string(void) const
 
 	return result;
 }
+
 
 
 
@@ -723,6 +854,7 @@ Altitude Altitude::convert_to_unit(HeightUnit target_unit) const
 template<>
 Altitude_ll Altitude::convert_to_unit(Altitude_ll value, HeightUnit from, HeightUnit to)
 {
+	qDebug() << SG_PREFIX_E << "Not implemented yet";
 	/* TODO: implement. */
 	Altitude_ll val = 0;
 	return val;
@@ -786,7 +918,7 @@ QString Altitude::get_unit_full_string(HeightUnit height_unit)
 
 
 template<>
-int Altitude::floor(void) const
+Altitude_ll Altitude::floor(void) const
 {
 	if (!this->valid) {
 		return INT_MIN;
@@ -855,6 +987,19 @@ template<>
 bool Altitude::ll_value_is_valid(Altitude_ll value)
 {
 	return !std::isnan(value);
+}
+
+
+
+
+template<>
+bool Altitude::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
 }
 
 
@@ -979,6 +1124,23 @@ const QString Angle::value_to_string_for_file(int precision) const
 {
 	return double_to_c(this->value);
 }
+
+
+
+
+template<>
+bool Angle::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
+}
+
+
+
+
 
 
 
@@ -1245,6 +1407,100 @@ QString Distance::get_unit_full_string(DistanceUnit distance_unit)
 
 
 
+template<>
+bool Distance::is_zero(void) const
+{
+	const double epsilon = 0.0000001;
+	if (!this->valid) {
+		return true;
+	}
+	return std::abs(this->value) < epsilon;
+}
+
+
+
+
+#if 0
+	case DistanceUnit::Kilometres:
+	if (distance >= 1000 && distance < 100000) {
+		distance_label = QObject::tr("%1 km").arg(distance/1000.0, 0, 'f', 2);
+	} else if (distance < 1000) {
+		distance_label = QObject::tr("%1 m").arg((int) distance);
+	} else {
+		distance_label = QObject::tr("%1 km").arg((int) distance/1000);
+	}
+	break;
+	case DistanceUnit::Miles:
+	if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
+		distance_label = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 0, 'f', 2);
+	} else if (distance < VIK_MILES_TO_METERS(1)) {
+		distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+	} else {
+		distance_label = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
+	}
+	break;
+	case DistanceUnit::NauticalMiles:
+	if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
+		distance_label = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 0, 'f', 2);
+	} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
+		distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+	} else {
+		distance_label = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
+	}
+	break;
+	default:
+	qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
+	break;
+
+
+
+
+static QString distance_string(double distance)
+{
+	QString result;
+	char str[128];
+
+	/* Draw label with distance. */
+	const DistanceUnit distance_unit = Preferences::get_unit_distance();
+	switch (distance_unit) {
+	case DistanceUnit::Kilometres:
+		if (distance >= 1000 && distance < 100000) {
+			result = QObject::tr("%1 km").arg(distance/1000.0, 6, 'f', 2); /* ""%3.2f" */
+		} else if (distance < 1000) {
+			result = QObject::tr("%1 m").arg((int) distance);
+		} else {
+			result = QObject::tr("%1 km").arg((int) distance/1000);
+		}
+		break;
+	case DistanceUnit::Miles:
+		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
+			result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 6, 'f', 2); /* "%3.2f" */
+		} else if (distance < 1609.4) {
+			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+		} else {
+			result = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
+		}
+		break;
+	case DistanceUnit::NauticalMiles:
+		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
+			result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 6, 'f', 2); /* "%3.2f" */
+		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
+			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
+		} else {
+			result = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
+		break;
+	}
+	return result;
+}
+#endif
+
+
+
+
 }
 
 
@@ -1295,312 +1551,6 @@ QString Measurements::get_file_size_string(size_t file_size)
 
 	return QObject::tr("%1%2").arg(size, 0, 'f', show_fractional * 2).arg(unit);
 }
-
-
-
-
-#if 0
-
-
-
-
-Distance & Distance::operator+=(const Distance & rhs)
-{
-	if (!rhs.valid) {
-		return *this;
-	}
-
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operands invalid";
-		return *this;
-	}
-	if (this->distance_unit != rhs.distance_unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return *this;
-	}
-
-
-	this->value += rhs.value;
-	this->valid = !std::isnan(this->value);
-	return *this;
-}
-
-
-
-
-Distance Distance::operator+(const Distance & rhs)
-{
-	/* TODO_LATER: make operator work for arguments with different units. */
-	Distance result;
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operands invalid";
-		return result;
-	}
-	if (this->distance_unit != rhs.distance_unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return result;
-	}
-
-
-	result.distance_unit = this->distance_unit;
-
-	result.value = this->value + rhs.value;
-	result.valid = !std::isnan(result.value);
-
-	return result;
-}
-
-
-
-
-Distance SlavGPS::operator+(const Distance & lhs, const Distance & rhs)
-{
-	Distance result;
-
-	if (!lhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
-		return result;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
-		return result;
-	}
-
-	result.value = lhs.value + rhs.value;
-	result.valid = result.value >= 0;
-
-	return result;
-}
-
-
-
-
-Distance SlavGPS::operator-(const Distance & lhs, const Distance & rhs)
-{
-	Distance result;
-
-	if (!lhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid lhs";
-		return result;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operating on invalid rhs";
-		return result;
-	}
-
-	result.value = lhs.value - rhs.value;
-	result.valid = result.value >= 0;
-	return result;
-}
-
-
-
-
-Distance Distance::operator-(const Distance & rhs)
-{
-	/* TODO_LATER: make operator work for arguments with different units. */
-	Distance result;
-
-	if (!this->valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_E << "Operands invalid";
-		return result;
-	}
-	if (this->distance_unit != rhs.distance_unit) {
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return result;
-	}
-
-	result.distance_unit = this->distance_unit;
-
-	result.value = this->value - rhs.value;
-	result.valid = !std::isnan(result.value) && result.value >= 0.0;
-
-	return result;
-}
-
-
-
-
-Distance & Distance::operator*=(double rhs)
-{
-	if (this->valid) {
-		this->value *= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-Distance & Distance::operator/=(double rhs)
-{
-	if (this->valid) {
-		this->value /= rhs;
-		this->valid = !std::isnan(this->value);
-		return *this;
-	} else {
-		return *this;
-	}
-}
-
-
-
-
-double SlavGPS::operator/(const Distance & lhs, const Distance & rhs)
-{
-	if (lhs.valid && rhs.valid && !rhs.is_zero()) {
-		return lhs.value / rhs.value;
-	} else {
-		return NAN;
-	}
-}
-
-
-
-
-bool SlavGPS::operator<(const Distance & lhs, const Distance & rhs)
-{
-	return lhs.value < rhs.value;
-}
-
-
-
-
-bool SlavGPS::operator>(const Distance & lhs, const Distance & rhs)
-{
-	return rhs < lhs;
-}
-
-
-
-
-bool SlavGPS::operator<=(const Distance & lhs, const Distance & rhs)
-{
-	return !(lhs > rhs);
-}
-
-
-
-
-bool SlavGPS::operator>=(const Distance & lhs, const Distance & rhs)
-{
-	return !(lhs < rhs);
-}
-
-
-
-
-QDebug SlavGPS::operator<<(QDebug debug, const Distance & distance)
-{
-	debug << "Distance:" << distance.value;
-	return debug;
-}
-
-
-
-bool Distance::operator==(const Distance & rhs) const
-{
-	if (!this->valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	if (!rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Comparing invalid value";
-		return false;
-	}
-
-	return this->value == rhs.value;
-}
-
-
-
-
-bool Distance::operator!=(const Distance & rhs) const
-{
-	return !(*this == rhs);
-}
-
-
-
-
-QString Speed::to_nice_string(void) const
-{
-	QString result;
-	if (!this->valid) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		return result;
-	}
-
-	/* TODO_LATER: implement magnitude-dependent recalculations. */
-
-	switch (this->unit) {
-	case SpeedUnit::Metres:
-		result = QObject::tr("%1 m").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	case SpeedUnit::Feet:
-		result = QObject::tr("%1 ft").arg(this->value, 0, 'f', SG_PRECISION_ALTITUDE);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) this->unit;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-bool Speed::operator_args_valid(const Speed & lhs, const Speed & rhs)
-{
-	if (!lhs.valid || !rhs.valid) {
-		qDebug() << SG_PREFIX_W << "Operands invalid";
-		return false;
-	}
-	if (lhs.unit != rhs.unit) {
-		/* TODO_LATER: make operator work for arguments with different units. */
-		qDebug() << SG_PREFIX_E << "Unit mismatch";
-		return false;
-	}
-
-	return true;
-}
-
-
-
-
-QString Speed::get_unit_full_string(SpeedUnit speed_unit)
-{
-	QString result;
-
-	switch (speed_unit) {
-	case SpeedUnit::Metres:
-		result = QObject::tr("meters");
-		break;
-	case SpeedUnit::Feet:
-		result = QObject::tr("feet");
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
-		result = SG_MEASUREMENT_INVALID_UNIT_STRING;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
-#endif
 
 
 
@@ -1698,168 +1648,22 @@ bool Measurements::unit_tests(void)
 
 
 #if 0
-			case DistanceUnit::Kilometres:
-				if (distance >= 1000 && distance < 100000) {
-					distance_label = QObject::tr("%1 km").arg(distance/1000.0, 0, 'f', 2);
-				} else if (distance < 1000) {
-					distance_label = QObject::tr("%1 m").arg((int) distance);
-				} else {
-					distance_label = QObject::tr("%1 km").arg((int) distance/1000);
-				}
-				break;
-			case DistanceUnit::Miles:
-				if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
-					distance_label = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 0, 'f', 2);
-				} else if (distance < VIK_MILES_TO_METERS(1)) {
-					distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-				} else {
-					distance_label = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
-				}
-				break;
-			case DistanceUnit::NauticalMiles:
-				if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
-					distance_label = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 0, 'f', 2);
-				} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
-					distance_label = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-				} else {
-					distance_label = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
-				}
-				break;
-			default:
-				qDebug() << SG_PREFIX_E << "Invalid target distance unit" << (int) target_distance_unit;
-				break;
-			}
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Unhandled situation"; /* TODO_LATER: implement */
-			break;
 
 
 
 
-static QString distance_string(double distance)
+bool Measurement::operator_args_valid(const Measurement & lhs, const Measurement & rhs)
 {
-	QString result;
-	char str[128];
-
-	/* Draw label with distance. */
-	const DistanceUnit distance_unit = Preferences::get_unit_distance();
-	switch (distance_unit) {
-	case DistanceUnit::Kilometres:
-		if (distance >= 1000 && distance < 100000) {
-			result = QObject::tr("%1 km").arg(distance/1000.0, 6, 'f', 2); /* ""%3.2f" */
-		} else if (distance < 1000) {
-			result = QObject::tr("%1 m").arg((int) distance);
-		} else {
-			result = QObject::tr("%1 km").arg((int) distance/1000);
-		}
-		break;
-	case DistanceUnit::Miles:
-		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
-			result = QObject::tr("%1 miles").arg(VIK_METERS_TO_MILES(distance), 6, 'f', 2); /* "%3.2f" */
-		} else if (distance < 1609.4) {
-			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-		} else {
-			result = QObject::tr("%1 miles").arg((int) VIK_METERS_TO_MILES(distance));
-		}
-		break;
-	case DistanceUnit::NauticalMiles:
-		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
-			result = QObject::tr("%1 NM").arg(VIK_METERS_TO_NAUTICAL_MILES(distance), 6, 'f', 2); /* "%3.2f" */
-		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
-			result = QObject::tr("%1 yards").arg((int) (distance * 1.0936133));
-		} else {
-			result = QObject::tr("%1 NM").arg((int) VIK_METERS_TO_NAUTICAL_MILES(distance));
-		}
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;
-		break;
+	if (!lhs.valid || !rhs.valid) {
+		qDebug() << SG_PREFIX_W << "Operands invalid";
+		return false;
 	}
-	return result;
-}
-
-
-
-
-
-bool SlavGPS::operator<(const Time & lhs, const Time & rhs)
-{
-	/* TODO: shouldn't this be difftime()? */
-	return lhs.value < rhs.value;
-}
-
-
-
-
-QString Time::strftime_utc(const char * format) const
-{
-	char timestamp_string[32] = { 0 };
-	struct tm tm;
-	std::strftime(timestamp_string, sizeof (timestamp_string), format, gmtime_r(&this->value, &tm));
-
-	return QString(timestamp_string);
-}
-
-
-
-
-QString Time::strftime_local(const char * format) const
-{
-	char timestamp_string[32] = { 0 };
-	struct tm tm;
-	std::strftime(timestamp_string, sizeof (timestamp_string), format, localtime_r(&this->value, &tm));
-
-	return QString(timestamp_string);
-}
-
-
-
-
-QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
-{
-	QString result;
-	if (this->is_valid()) {
-		 /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		result = QDateTime::fromTime_t(this->get_value(), time_spec).toString(Qt::ISODate);
-	} else {
-		result = QObject::tr("No Data");
+	if (lhs.unit != rhs.unit) {
+		qDebug() << SG_PREFIX_E << "Unit mismatch";
+		return false;
 	}
-	return result;
-}
 
-
-
-
-QString Time::to_string(void) const
-{
-	return this->to_duration_string();
-}
-
-
-
-
-QString Time::get_time_string(Qt::DateFormat format) const
-{
-	QDateTime date_time;
-	date_time.setTime_t(this->value);
-	const QString result = date_time.toString(format);
-
-	return result;
-}
-
-
-
-
-QString Gradient::to_string(double value, int precision)
-{
-	QString result;
-	if (std::isnan(value)) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-	} else {
-		result = QObject::tr("%1%").arg(value, 0, 'f', SG_PRECISION_GRADIENT);
-	}
-	return result;
+	return true;
 }
 
 
