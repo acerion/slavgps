@@ -723,7 +723,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 
 		this->add_track(trk);
 
-		trk->convert(this->coord_mode);
+		trk->change_coord_mode(this->coord_mode);
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->is_visible() && this->tracks.is_visible() && trk->is_visible()) {
@@ -738,7 +738,7 @@ bool LayerTRW::paste_sublayer(TreeItem * item, Pickle & pickle)
 		trk->set_name(uniq_name);
 
 		this->add_route(trk);
-		trk->convert(this->coord_mode);
+		trk->change_coord_mode(this->coord_mode);
 
 		/* Consider if redraw necessary for the new item. */
 		if (this->is_visible() && this->routes.is_visible() && trk->is_visible()) {
@@ -1195,7 +1195,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets track name, so we don't have to do it here. */
 				trw->add_track(trk);
-				trk->convert(trw->coord_mode);
+				trk->change_coord_mode(trw->coord_mode);
 			} else if (type_id == "sg.trw.waypoint") {
 				Waypoint * wp = Waypoint::unmarshall(pickle);
 				/* Unmarshalling already sets waypoint name, so we don't have to do it here. */
@@ -1205,7 +1205,7 @@ Layer * LayerTRWInterface::unmarshall(Pickle & pickle, GisViewport * gisview)
 				Track * trk = Track::unmarshall(pickle);
 				/* Unmarshalling already sets route name, so we don't have to do it here. */
 				trw->add_route(trk);
-				trk->convert(trw->coord_mode);
+				trk->change_coord_mode(trw->coord_mode);
 			} else {
 				qDebug() << SG_PREFIX_E << "Invalid sublayer type id" << type_id;
 			}

@@ -407,7 +407,7 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 		this->set_timestamp((tp_a.timestamp.get_value() / 2) + (tp_b.timestamp.get_value() / 2));
 	}
 
-	if (tp_a.gps_speed != NAN && tp_b.gps_speed != NAN) { /* TODO: proper handling of NAN */
+	if (!std::isnan(tp_a.gps_speed) && !std::isnan(tp_b.gps_speed)) {
 		this->gps_speed = (tp_a.gps_speed + tp_b.gps_speed) / 2;
 	}
 
@@ -980,8 +980,7 @@ const Speed & Track::get_max_speed(void) const
 
 
 
-/* TODO: rename to "change_coord_mode" */
-void Track::convert(CoordMode dest_mode)
+void Track::change_coord_mode(CoordMode dest_mode)
 {
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
 		(*iter)->coord.recalculate_to_mode(dest_mode);

@@ -225,7 +225,7 @@ namespace SlavGPS {
 		Speed get_average_speed(void) const;
 		Speed get_average_speed_moving(int track_min_stop_length_seconds) const;
 
-		void convert(CoordMode dest_mode);
+		void change_coord_mode(CoordMode dest_mode);
 
 		/**
 		   @brief Get timestamps of first and last trackpoint

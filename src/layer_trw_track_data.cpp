@@ -80,16 +80,6 @@ using namespace SlavGPS;
 /**
    @reviewed-on tbd
 */
-TrackDataBase::TrackDataBase()
-{
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
 template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
 sg_ret TrackData<Tx, Tx_ll, Ty, Ty_ll>::compress_into(TrackData & target, int compressed_n_points) const
 {
@@ -162,108 +152,9 @@ sg_ret TrackData<Tx, Tx_ll, Ty, Ty_ll>::compress_into(TrackData & target, int co
 /**
    @reviewed-on tbd
 */
-void TrackDataBase::invalidate(void)
+TrackDataBase::TrackDataBase()
 {
-	this->valid = false;
-	this->n_points = 0;
 
-	if (this->x) {
-		free(this->x);
-		this->x = NULL;
-	}
-
-	if (this->y) {
-		free(this->y);
-		this->y = NULL;
-	}
-
-	if (this->tps) {
-		free(this->tps);
-		this->tps = NULL;
-	}
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-sg_ret TrackDataBase::allocate_vector(int n_data_points)
-{
-	if (this->x) {
-		if (this->n_points) {
-			qDebug() << SG_PREFIX_E << "Called the function for already allocated vector x";
-		} else {
-			qDebug() << SG_PREFIX_W << "Called the function for already allocated vector x";
-		}
-		free(this->x);
-		this->x = NULL;
-	}
-
-	if (this->y) {
-		if (this->n_points) {
-			qDebug() << SG_PREFIX_E << "Called the function for already allocated vector y";
-		} else {
-			qDebug() << SG_PREFIX_W << "Called the function for already allocated vector y";
-		}
-		free(this->y);
-		this->y = NULL;
-	}
-
-	if (this->tps) {
-		if (this->n_points) {
-			qDebug() << SG_PREFIX_E << "Called the function for already allocated vector tps";
-		} else {
-			qDebug() << SG_PREFIX_W << "Called the function for already allocated vector tps";
-		}
-		free(this->tps);
-		this->tps = NULL;
-	}
-
-	this->x = (double *) malloc(sizeof (double) * n_data_points);
-	if (NULL == this->x) {
-		qDebug() << SG_PREFIX_E << "Failed to allocate 'x' vector";
-		return sg_ret::err;
-	}
-
-	this->y = (double *) malloc(sizeof (double) * n_data_points);
-	if (NULL == this->y) {
-		free(this->x);
-		this->x = NULL;
-		qDebug() << SG_PREFIX_E << "Failed to allocate 'y' vector";
-		return sg_ret::err;
-	}
-
-	this->tps = (Trackpoint **) malloc(sizeof (Trackpoint *) * n_data_points);
-	if (NULL == this->tps) {
-		free(this->x);
-		this->x = NULL;
-		free(this->y);
-		this->y = NULL;
-		qDebug() << SG_PREFIX_E << "Failed to allocate 'tps' vector";
-		return sg_ret::err;
-	}
-
-	memset(this->x, 0, sizeof (double) * n_data_points);
-	memset(this->y, 0, sizeof (double) * n_data_points);
-	memset(this->tps, 0, sizeof (Trackpoint *) * n_data_points);
-
-	/* There are n cells in vectors, but the data in the vectors is trash. */
-	this->n_points = n_data_points;
-
-	return sg_ret::ok;
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
-TrackDataBase::TrackDataBase(int n_data_points)
-{
-	this->allocate_vector(n_data_points);
 }
 
 
@@ -274,7 +165,7 @@ TrackDataBase::TrackDataBase(int n_data_points)
 */
 TrackDataBase::~TrackDataBase()
 {
-	this->invalidate();
+
 }
 
 
@@ -943,274 +834,211 @@ sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::make_track_data_speed_
 
 
 
+template <>
+sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	if (sg_ret::ok != this->apply_unit_conversion_distance(this->x, this->x_min, this->x_max, distance_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply distance unit conversion to x vector";
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != this->apply_unit_conversion_speed(this->y, this->y_min, this->y_max, speed_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply speed unit conversion to y vector";
+		return sg_ret::err;
+	}
+	return sg_ret::ok;
+}
 
 
-	template <>
-	sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::apply_unit_conversions_x(DistanceUnit distance_unit)
-	{
-		if (NULL == this->x) {
-			qDebug() << "EE    TrackData: Can't apply unit conversion: 'x' vector is NULL";
-			return sg_ret::err;
-		}
 
-#if 0 /* TODO: enable this. */
-		if (DistanceUnit::Meters != distance_unit) {
-#endif
-			for (int i = 0; i < this->n_points; i++) {
-				this->x[i] = Distance::convert_to_unit(this->x[i], DistanceUnit::Meters, distance_unit);
-			}
 
-			Distance tmp;
-			tmp = this->x_min.convert_to_unit(distance_unit);
-			this->x_min = tmp;
-			tmp = this->x_max.convert_to_unit(distance_unit);
-			this->x_max = tmp;
-#if 0
-		}
-#endif
-		return sg_ret::ok;
+template <>
+sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	if (sg_ret::ok != this->apply_unit_conversion_distance(this->x, this->x_min, this->x_max, distance_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply distance unit conversion to x vector";
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != this->apply_unit_conversion_height(this->y, this->y_min, this->y_max, height_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply height unit conversion to y vector";
+		return sg_ret::err;
+	}
+	return sg_ret::ok;
+}
+
+
+
+
+template <>
+sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	if (sg_ret::ok != this->apply_unit_conversion_distance(this->x, this->x_min, this->x_max, distance_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply distance unit conversion to x vector";
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != this->apply_unit_conversion_gradient(this->y, this->y_min, this->y_max, GradientUnit::Percents)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply time unit conversion to y vector";
+		return sg_ret::err;
+	}
+	return sg_ret::ok;
+}
+
+
+
+
+template <>
+sg_ret TrackData<Time, Time_ll, Speed, Speed_ll>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	if (sg_ret::ok != this->apply_unit_conversion_time(this->x, this->x_min, this->x_max, TimeUnit::Seconds)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply time unit conversion to x";
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != this->apply_unit_conversion_speed(this->y, this->y_min, this->y_max, speed_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply speed unit conversion to y vector";
+		return sg_ret::err;
 	}
 
-	template <>
-	sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::apply_unit_conversions_x(DistanceUnit distance_unit)
-	{
-		if (NULL == this->x) {
-			qDebug() << "EE    TrackData: Can't apply unit conversion: 'x' vector is NULL";
-			return sg_ret::err;
-		}
+	return sg_ret::ok;
+}
 
-#if 0 /* TODO: enable this. */
-		if (DistanceUnit::Meters != distance_unit) {
-#endif
-			for (int i = 0; i < this->n_points; i++) {
-				this->x[i] = Distance::convert_to_unit(this->x[i], DistanceUnit::Meters, distance_unit);
-			}
 
-			Distance tmp;
-			tmp = this->x_min.convert_to_unit(distance_unit);
-			this->x_min = tmp;
-			tmp = this->x_max.convert_to_unit(distance_unit);
-			this->x_max = tmp;
-#if 0
-		}
-#endif
-		return sg_ret::ok;
+
+
+template <>
+sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	if (sg_ret::ok != this->apply_unit_conversion_time(this->x, this->x_min, this->x_max, TimeUnit::Seconds)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply time unit conversion to x";
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != this->apply_unit_conversion_distance(this->y, this->y_min, this->y_max, distance_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply distance unit conversion to y vector";
+		return sg_ret::err;
+	}
+	return sg_ret::ok;
+}
+
+
+
+
+template <>
+sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::apply_unit_conversions(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
+{
+	if (sg_ret::ok != this->apply_unit_conversion_time(this->x, this->x_min, this->x_max, TimeUnit::Seconds)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply time unit conversion to x";
+		return sg_ret::err;
+	}
+	if (sg_ret::ok != this->apply_unit_conversion_height(this->y, this->y_min, this->y_max, height_unit)) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Failed to apply height unit conversion to y vector";
+		return sg_ret::err;
 	}
 
-	template <>
-	sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::apply_unit_conversions_x(DistanceUnit distance_unit)
-	{
-		if (NULL == this->x) {
-			qDebug() << "EE    TrackData: Can't apply unit conversion: 'x' vector is NULL";
-			return sg_ret::err;
-		}
+	return sg_ret::ok;
+}
 
-#if 0 /* TODO: enable this. */
-		if (DistanceUnit::Meters != distance_unit) {
-#endif
-			for (int i = 0; i < this->n_points; i++) {
-				this->x[i] = Distance::convert_to_unit(this->x[i], DistanceUnit::Meters, distance_unit);
-			}
 
-			Distance tmp;
-			tmp = this->x_min.convert_to_unit(distance_unit);
-			this->x_min = tmp;
-			tmp = this->x_max.convert_to_unit(distance_unit);
-			this->x_max = tmp;
-#if 0
-		}
-#endif
-		return sg_ret::ok;
+
+
+} /* namespace SlavGPS */
+
+
+
+
+sg_ret TrackDataBase::apply_unit_conversion_distance(Distance_ll * values, Distance & min, Distance & max, DistanceUnit to_unit)
+{
+	if (NULL == values) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Can't apply distance unit conversion, values vector is NULL";
+		return sg_ret::err;
 	}
 
-
-
-	template <>
-	sg_ret TrackData<Time, Time_ll, Speed, Speed_ll>::apply_unit_conversions_x(DistanceUnit distance_unit)
-	{
-		if (NULL == this->x) {
-			qDebug() << "EE    TrackData: Can't apply unit conversion: 'x' vector is NULL";
-			return sg_ret::err;
+	const DistanceUnit from_unit = min.unit;
+	if (from_unit != to_unit) {
+		for (int i = 0; i < this->n_points; i++) {
+			values[i] = Distance::convert_to_unit(values[i], from_unit, to_unit);
 		}
 
-		/* Nothing to do for x_min/x_main in Time x-domain. */
-		/*
-		  this->x_min = ;
-		  this->x_max = ;
-		*/
-
-		return sg_ret::ok;
-	}
-	template <>
-	sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::apply_unit_conversions_x(DistanceUnit distance_unit)
-	{
-		if (NULL == this->x) {
-			qDebug() << "EE    TrackData: Can't apply unit conversion: 'x' vector is NULL";
-			return sg_ret::err;
-		}
-
-		/* Nothing to do for x_min/x_main in Time x-domain. */
-		/*
-		  this->x_min = ;
-		  this->x_max = ;
-		*/
-
-		return sg_ret::ok;
-	}
-	template <>
-	sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::apply_unit_conversions_x(DistanceUnit distance_unit)
-	{
-		if (NULL == this->x) {
-			qDebug() << "EE    TrackData: Can't apply unit conversion: 'x' vector is NULL";
-			return sg_ret::err;
-		}
-		/* Nothing to do for x_min/x_main in Time x-domain. */
-		/*
-		  this->x_min = ;
-		  this->x_max = ;
-		*/
-
-		return sg_ret::ok;
+		min.convert_to_unit_in_place(to_unit);
+		max.convert_to_unit_in_place(to_unit);
 	}
 
+	return sg_ret::ok;
+}
 
 
-	template <>
-	sg_ret TrackData<Distance, Distance_ll, Speed, Speed_ll>::apply_unit_conversions_y(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
-	{
-		if (NULL == this->y) {
-			qDebug() << "EE   TrackData: Can't apply unit conversion: 'y' vector is NULL";
-			return sg_ret::err;
+
+
+sg_ret TrackDataBase::apply_unit_conversion_speed(Speed_ll * values, Speed & min, Speed & max, SpeedUnit to_unit)
+{
+	if (NULL == values) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Can't apply speed unit conversion, values vector is NULL";
+		return sg_ret::err;
+	}
+	const SpeedUnit from_unit = min.unit;
+	if (from_unit != to_unit) {
+		for (int i = 0; i < this->n_points; i++) {
+			values[i] = Speed::convert_to_unit(values[i], from_unit, to_unit);
 		}
-		/*
-		  Basic internal units related to speed are meters
-		  (for distance) and seconds (for time), so primary
-		  unit for speed is meters per second.
-
-		  Do conversion only if target unit is other than
-		  meters per second.
-		*/
-		if (SpeedUnit::MetresPerSecond != speed_unit) {
-			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = Speed::convert_to_unit(this->y[i], SpeedUnit::MetresPerSecond, speed_unit);
-			}
-			Speed tmp;
-			tmp = this->y_min.convert_to_unit(speed_unit);
-			this->y_min = tmp;
-			tmp = this->y_max.convert_to_unit(speed_unit);
-			this->y_max = tmp;
-		}
-
-		return sg_ret::ok;
+		min.convert_to_unit_in_place(to_unit);
+		max.convert_to_unit_in_place(to_unit);
 	}
 
-	template <>
-	sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::apply_unit_conversions_y(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
-	{
-		/*
-		  Internal unit for elevation is meters, so only apply
-		  conversion if target elevation unit is other than
-		  meters.
-		*/
-		if (HeightUnit::Metres != height_unit) {
-			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = VIK_METERS_TO_FEET(this->y[i]);
-			}
-			this->y_min = VIK_METERS_TO_FEET(this->y_min);
-				this->y_max = VIK_METERS_TO_FEET(this->y_max);
-		}
-		return sg_ret::ok;
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TrackDataBase::apply_unit_conversion_height(Altitude_ll * values, Altitude & min, Altitude & max, HeightUnit to_unit)
+{
+	if (NULL == values) {
+		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Can't apply height unit conversion, values vector is NULL";
+		return sg_ret::err;
 	}
 
-	template <>
-	sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::apply_unit_conversions_y(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
-	{
-		return sg_ret::ok;
+	const HeightUnit from_unit = min.unit;
+	if (from_unit != to_unit) {
+		for (int i = 0; i < this->n_points; i++) {
+			values[i] = Altitude::convert_to_unit(values[i], from_unit, to_unit);
+		}
+		min.convert_to_unit_in_place(to_unit);
+		max.convert_to_unit_in_place(to_unit);
 	}
 
+	return sg_ret::ok;
+}
 
-	template <>
-	sg_ret TrackData<Time, Time_ll, Speed, Speed_ll>::apply_unit_conversions_y(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
-	{
-		if (NULL == this->y) {
-			qDebug() << "EE   TrackData: Can't apply unit conversion: 'y' vector is NULL";
-			return sg_ret::err;
-		}
-		/*
-		  Basic internal units related to speed are meters
-		  (for distance) and seconds (for time), so primary
-		  unit for speed is meters per second.
 
-		  Do conversion only if target unit is other than
-		  meters per second.
-		*/
-		if (SpeedUnit::MetresPerSecond != speed_unit) {
-			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = Speed::convert_to_unit(this->y[i], SpeedUnit::MetresPerSecond, speed_unit);
-			}
-			Speed tmp;
-			tmp = this->y_min.convert_to_unit(speed_unit);
-			this->y_min = tmp;
-			tmp = this->y_max.convert_to_unit(speed_unit);
-			this->y_max = tmp;
-		}
 
-		return sg_ret::ok;
+
+sg_ret TrackDataBase::apply_unit_conversion_time(Time_ll * values, Time & min, Time & max, TimeUnit to_unit)
+{
+	if (NULL == values) {
+		qDebug() << "EE    " << __func__ << __LINE__ << "TrackData: Can't apply time unit conversion: values vector is NULL";
+		return sg_ret::err;
 	}
 
-	template <>
-	sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::apply_unit_conversions_y(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
-	{
-		if (NULL == this->y) {
-			qDebug() << "EE   TrackData: Can't apply unit conversion: 'y' vector is NULL";
-			return sg_ret::err;
-		}
-		/*
-		  Internal unit for elevation is meters, so only apply
-		  conversion if target elevation unit is other than
-		  meters.
-		*/
-		if (HeightUnit::Metres != height_unit) {
-			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = VIK_METERS_TO_FEET(this->y[i]);
-			}
-			this->y_min = VIK_METERS_TO_FEET(this->y_min);
-			this->y_max = VIK_METERS_TO_FEET(this->y_max);
-		}
-		return sg_ret::ok;
+	/* There is only one unit for time, so there is no need to
+	   convert anything to different unit.
+
+	   TODO: check in future that this is still true.
+	*/
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret TrackDataBase::apply_unit_conversion_gradient(Gradient_ll * values, Gradient & min, Gradient & max, GradientUnit to_unit)
+{
+	if (NULL == values) {
+		qDebug() << "EE    " << __func__ << __LINE__ << "TrackData: Can't apply gradient unit conversion: values vector is NULL";
+		return sg_ret::err;
 	}
 
-	template <>
-	sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::apply_unit_conversions_y(SpeedUnit speed_unit, DistanceUnit distance_unit, HeightUnit height_unit)
-	{
-		if (NULL == this->y) {
-			qDebug() << "EE   TrackData: Can't apply unit conversion: 'y' vector is NULL";
-			return sg_ret::err;
-		}
-		/*
-		  Internal unit for distance is meters, so only apply
-		  conversion if target distance unit is other than
-		  meters.
-		*/
-#if 0 /* TODO: enable this. */
-		if (DistanceUnit::Meters != distance_unit) {
-#endif
-			for (int i = 0; i < this->n_points; i++) {
-				this->y[i] = Distance::convert_to_unit(this->y[i], DistanceUnit::Meters, distance_unit);
-			}
+	/* There is only one unit for gradient, so there is no need to
+	   convert anything to different unit.
 
-			Distance tmp;
-			tmp = this->y_min.convert_to_unit(distance_unit);
-			this->y_min = tmp;
-			tmp = this->y_max.convert_to_unit(distance_unit);
-			this->y_max = tmp;
-#if 0
-		}
-#endif
-		return sg_ret::ok;
-	}
+	   TODO: check in future that this is still true. */
 
-
-
-
+	return sg_ret::ok;
 }

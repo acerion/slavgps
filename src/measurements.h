@@ -269,6 +269,14 @@ namespace SlavGPS {
 
 		static Tll convert_to_unit(Tll value, Tu from, Tu to);
 
+		sg_ret convert_to_unit_in_place(Tu new_unit)
+		{
+			this->value = Measurement::convert_to_unit(this->value, this->unit, new_unit);
+			this->valid = Measurement::ll_value_is_valid(this->value);
+			this->unit = new_unit;
+			return this->valid ? sg_ret::ok : sg_ret::err;
+		}
+
 		/* Get string representing speed unit in abbreviated
 		   form, e.g. "km/h". */
 		static QString get_unit_string(Tu unit);

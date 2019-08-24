@@ -449,7 +449,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search)
 void LayerTRWTracks::change_coord_mode(CoordMode dest_mode)
 {
 	for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
-		(*iter)->convert(dest_mode);
+		(*iter)->change_coord_mode(dest_mode);
 	}
 }
 

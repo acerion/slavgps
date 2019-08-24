@@ -1737,9 +1737,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::generate_initial_track_data_wrapper(Tr
 		return sg_ret::err;
 	}
 
-
-	this->initial_track_data.apply_unit_conversions_x(this->graph_2d->distance_unit);
-	this->initial_track_data.apply_unit_conversions_y(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
+	this->initial_track_data.apply_unit_conversions(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
 
 	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
 	return sg_ret::ok;
