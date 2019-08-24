@@ -234,7 +234,7 @@ TimeUnit Time::get_internal_unit(void)
 template<>
 sg_ret Time::set_timestamp_from_string(const QString & str)
 {
-	this->value = (time_t) str.toULong(&this->valid);
+	this->value = (Time_ll) str.toULong(&this->valid);
 
 	if (!this->valid) {
 		qDebug() << SG_PREFIX_W << "Setting invalid value of timestamp from string" << str;
@@ -263,7 +263,7 @@ sg_ret Time::set_timestamp_from_char_string(const char * str)
 template<>
 bool Time::ll_value_is_valid(Time_ll value)
 {
-	return !std::isnan(value); /* TODO: improve for Time_ll data type. */
+	return true; /* TODO: improve for Time_ll data type. */
 }
 
 
@@ -273,8 +273,9 @@ template<>
 const QString Time::value_to_string_for_file(int precision) const
 {
 	QString result;
-	qDebug() << SG_PREFIX_E << "Not implemented yet";
-	/* TODO: implement. */
+	if (this->valid) {
+		result.setNum(this->value);
+	}
 	return result;
 }
 
@@ -439,7 +440,11 @@ const QString Gradient::value_to_string(void) const
 template<>
 const QString Gradient::value_to_string_for_file(int precision) const
 {
-	return double_to_c(this->value);
+	QString result;
+	if (this->valid) {
+		result = SGUtils::double_to_c(this->value, precision);
+	}
+	return result;
 }
 
 
@@ -712,7 +717,11 @@ const QString Speed::value_to_string(void) const
 template<>
 const QString Speed::value_to_string_for_file(int precision) const
 {
-	return double_to_c(this->value);
+	QString result;
+	if (this->valid) {
+		result = SGUtils::double_to_c(this->value, precision);
+	}
+	return result;
 }
 
 
@@ -977,7 +986,11 @@ const QString Altitude::value_to_string(void) const
 template<>
 const QString Altitude::value_to_string_for_file(int precision) const
 {
-	return double_to_c(this->value);
+	QString result;
+	if (this->valid) {
+		result = SGUtils::double_to_c(this->value, precision);
+	}
+	return result;
 }
 
 
@@ -1034,8 +1047,16 @@ Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
 	*/
 
 	double angle = 0.0;
+	Angle result;
 
-	/* TODO: verify that angle units of both arguments are the same. */
+	if (angle1.unit != angle2.unit) {
+		qDebug() << SG_PREFIX_E << "Unit mismatch:" << (int) angle1.unit << (int) angle2.unit;
+		return result;
+	}
+	if (!angle1.valid || !angle2.valid) {
+		qDebug() << SG_PREFIX_E << "One of arguments is invalid:" << angle1.valid << angle2.valid;
+		return result;
+	}
 
 	const double angle_min = std::min(angle1.value, angle2.value);
 	const double angle_max = std::max(angle1.value, angle2.value);
@@ -1055,7 +1076,10 @@ Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
 		angle = angle < 0 ? ((2 * M_PI) + angle) : angle;
 	}
 
-	return Angle(angle, angle1.unit);
+	result.set_value(angle); /* This will also validate the value. */
+	result.unit = angle1.unit;
+
+	return result;
 }
 
 
@@ -1122,7 +1146,11 @@ bool Angle::ll_value_is_valid(Angle_ll value)
 template<>
 const QString Angle::value_to_string_for_file(int precision) const
 {
-	return double_to_c(this->value);
+	QString result;
+	if (this->valid) {
+		result = SGUtils::double_to_c(this->value, precision);
+	}
+	return result;
 }
 
 
@@ -1328,7 +1356,11 @@ QString Distance::to_nice_string(void) const
 			result = QObject::tr("%1 km").arg(this->value / 1000.0, 0, 'f', SG_PRECISION_DISTANCE);
 		}
 		break;
-		/* TODO: yards. */
+
+	case DistanceUnit::Yards:
+		/* TODO: implement. */
+		qDebug() << SG_PREFIX_E << "Conversion to yards not implemented yet";
+		break;
 
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->unit;

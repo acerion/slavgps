@@ -52,8 +52,7 @@ namespace SlavGPS {
 #define SG_ALTITUDE_RANGE_MIN       -5000 /* [meters] */   /* See also VIK_VAL_MIN_ALT */
 #define SG_ALTITUDE_RANGE_MAX       25000 /* [meters] */   /* See also VIK_VAL_MAX_ALT */
 
-/* TODO: review usage of this define. */
-#define SG_MEASUREMENT_PRECISION_MAX   16
+#define SG_MEASUREMENT_PRECISION_FOR_FILE_MAX   16
 
 
 #define SG_PRECISION_DISTANCE   2
@@ -195,7 +194,6 @@ namespace SlavGPS {
 
 
 	double c_to_double(const QString & string);
-	QString double_to_c(double d, int precision);
 
 
 
@@ -235,21 +233,30 @@ namespace SlavGPS {
 
 		static Measurement get_abs_diff(const Measurement & m1, const Measurement & m2)
 		{
-			/* TODO: check units. */
 			Measurement result;
-			result.value = std::abs(m1.value - m2.value);
-			result.valid = true; /* TODO: validate. */
-			result.unit = m1.unit;
-
+			if (m1.unit != m2.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Arguments have different units:" << (int) m1.unit << (int) m2.unit;
+			} else {
+				result.value = std::abs(m1.value - m2.value);
+				result.valid = Measurement::ll_value_is_valid(result.value);
+				result.unit = m1.unit;
+			}
 			return result;
 		}
 
-		/* Generate string containing only value, without unit
-		   and without magnitude-dependent conversions of value.
+		/*
+		  Generate string containing only value, without unit
+		  and without magnitude-dependent conversions of
+		  value.
 
-		   Locale of the value in string is suitable for
-		   saving the value in gpx or vik file. */
-		const QString value_to_string_for_file(int precision) const;
+		  Locale of the value in string is suitable for saving
+		  the value in gpx or vik file.
+
+		  Default precision is very large to make sure that we
+		  don't lose too much information when saving value to
+		  file.
+		*/
+		const QString value_to_string_for_file(int precision = SG_MEASUREMENT_PRECISION_FOR_FILE_MAX) const;
 
 		/* Generate string containing only value, without unit
 		   and without magnitude-dependent conversions of value.
@@ -372,8 +379,10 @@ namespace SlavGPS {
 			return *this;
 		}
 
+
 		Measurement operator+(double rhs) const { Measurement result = *this; result += rhs; return result; }
 		Measurement operator-(double rhs) const { Measurement result = *this; result -= rhs; return result; }
+
 
 		Measurement operator+(const Measurement & rhs) const
 		{
@@ -386,11 +395,17 @@ namespace SlavGPS {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid rhs";
 				return result;
 			}
+			if (this->unit != rhs.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
+				return result;
+			}
 
 			result = *this;
 			result += rhs;
 			return result;
 		}
+
+
 		Measurement operator-(const Measurement & rhs) const
 		{
 			Measurement result;
@@ -400,6 +415,10 @@ namespace SlavGPS {
 			}
 			if (!rhs.valid) {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid rhs";
+				return result;
+			}
+			if (this->unit != rhs.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
 				return result;
 			}
 
@@ -420,7 +439,7 @@ namespace SlavGPS {
 				return *this;
 			}
 			if (this->unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch"; /* TODO: use this in more operators. */
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
 				return *this;
 			}
 
@@ -428,6 +447,7 @@ namespace SlavGPS {
 			this->valid = !std::isnan(this->value);
 			return *this;
 		}
+
 
 		Measurement & operator-=(const Measurement & rhs)
 		{
@@ -440,7 +460,7 @@ namespace SlavGPS {
 				return *this;
 			}
 			if (this->unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch"; /* TODO: use this in more operators. */
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
 				return *this;
 			}
 
@@ -455,7 +475,6 @@ namespace SlavGPS {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
-
 			if (std::isnan(rhs)) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 				return *this;
@@ -472,7 +491,6 @@ namespace SlavGPS {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
-
 			if (std::isnan(rhs)) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 				return *this;
@@ -492,7 +510,6 @@ namespace SlavGPS {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
-
 			if (std::isnan(rhs)) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 				return *this;
@@ -509,9 +526,12 @@ namespace SlavGPS {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
-
 			if (std::isnan(rhs)) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
+				return *this;
+			}
+			if (0.0 == rhs) {
+				qDebug() << "WW    " << __FUNCTION__ << "rhs is zero";
 				return *this;
 			}
 
@@ -525,6 +545,10 @@ namespace SlavGPS {
 
 		friend bool operator<(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
 		{
+			if (lhs.unit != rhs.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.unit << (int) rhs.unit;
+				return false;
+			}
 			return lhs.value < rhs.value;
 		}
 		friend bool operator>(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
@@ -559,7 +583,11 @@ namespace SlavGPS {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 				return NAN;
 			}
-			if (rhs.is_zero()) { /* TODO: introduce more checks of zero in division operators. */
+			if (lhs.unit != rhs.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.unit << (int) rhs.unit;
+				return NAN;
+			}
+			if (rhs.is_zero()) {
 				qDebug() << "WW    " << __FUNCTION__ << "rhs is zero";
 				return NAN;
 			}
@@ -573,9 +601,12 @@ namespace SlavGPS {
 				qDebug() << "WW    " << __FUNCTION__ << "Comparing invalid value";
 				return false;
 			}
-
 			if (!rhs.valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Comparing invalid value";
+				return false;
+			}
+			if (this->unit != rhs.unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
 				return false;
 			}
 

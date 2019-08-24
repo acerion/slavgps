@@ -151,7 +151,7 @@ namespace SlavGPS {
 		int get_interval_index(T min, T max, int n_intervals);
 		T get_interval_value(int index) { return this->values[index]; }
 
-		const T * values = NULL;
+		T * values = NULL;
 		int n_values = 0;
 	};
 
@@ -166,17 +166,17 @@ namespace SlavGPS {
 	int GraphIntervals2<T>::get_interval_index(T min, T max, int n_intervals)
 	{
 		const T interval_upper_limit = (max - min) / n_intervals;
-		qDebug() << "II min/max/n_intervals/interval upper limit:" << min.value << max.value << n_intervals << interval_upper_limit.value;
+		qDebug() << "II min/max/n_intervals/interval upper limit:" << min << max << n_intervals << interval_upper_limit;
 
 		/* Search for index of nearest interval. */
 		int index = 0;
 		for (index = 0; index < this->n_values; index++) {
 			if (interval_upper_limit == this->values[index]) {
-				qDebug() << "II Found exact interval value" << this->values[index].value;
+				qDebug() << "II Found exact interval value" << this->values[index];
 				break;
-			} else if (interval_upper_limit.value < this->values[index].value && index > 0) { /* TODO: implement '<' operator. */
+			} else if (interval_upper_limit < this->values[index] && index > 0) {
 				index--;
-				qDebug() << "II Found smaller interval value" << this->values[index].value;
+				qDebug() << "II Found smaller interval value" << this->values[index];
 				break;
 			} else {
 				; /* Keep looking. */
@@ -185,7 +185,7 @@ namespace SlavGPS {
 
 		if (index == this->n_values) {
 			index--;
-			qDebug() << "II Interval value not found, returning last interval value" << this->values[index].value;
+			qDebug() << "II Interval value not found, returning last interval value" << this->values[index];
 		}
 
 		return index;

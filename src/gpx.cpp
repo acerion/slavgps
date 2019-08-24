@@ -849,7 +849,7 @@ static void gpx_write_waypoint(Waypoint * wp, GPXWriteContext * context)
 	}
 
 	if (wp->altitude.is_valid()) {
-		fprintf(file, "  <ele>%s</ele>\n", wp->altitude.value_to_string_for_file(SG_MEASUREMENT_PRECISION_MAX).toUtf8().constData());
+		fprintf(file, "  <ele>%s</ele>\n", wp->altitude.value_to_string_for_file().toUtf8().constData());
 	}
 
 	if (wp->get_timestamp().is_valid()) {
@@ -922,9 +922,9 @@ static void gpx_write_trackpoint(Trackpoint * tp, GPXWriteContext * context)
 
 	QString s_alt;
 	if (tp->altitude.is_valid()) {
-		s_alt = tp->altitude.value_to_string_for_file(SG_MEASUREMENT_PRECISION_MAX);
+		s_alt = tp->altitude.value_to_string_for_file();
 	} else if (context->options != NULL && context->options->force_ele) {
-		s_alt = Altitude(0.0, HeightUnit::Metres).value_to_string_for_file(SG_MEASUREMENT_PRECISION_MAX);
+		s_alt = Altitude(0.0, HeightUnit::Metres).value_to_string_for_file();
 	}
 	if (!s_alt.isEmpty()) {
 		fprintf(file, "    <ele>%s</ele>\n", s_alt.toUtf8().constData());

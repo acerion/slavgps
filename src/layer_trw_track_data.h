@@ -98,8 +98,9 @@ namespace SlavGPS {
 
 		sg_ret compress_into(TrackData & target, int compressed_n_points) const;
 
-		sg_ret make_track_data_altitude_over_distance(Track * trk, int compressed_n_points);
-		sg_ret make_track_data_gradient_over_distance(Track * trk, int compressed_n_points);
+		sg_ret make_track_data_altitude_over_distance(Track * trk, int compressed_n_points); /* Unused. */
+		sg_ret make_track_data_altitude_over_distance(Track * trk);
+		sg_ret make_track_data_gradient_over_distance(Track * trk);
 		sg_ret make_track_data_speed_over_time(Track * trk);
 		sg_ret make_track_data_distance_over_time(Track * trk);
 		sg_ret make_track_data_altitude_over_time(Track * trk);

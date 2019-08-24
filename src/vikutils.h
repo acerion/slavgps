@@ -172,21 +172,6 @@ namespace SlavGPS {
 	double c_to_double(const QString & string);
 
 
-	/*
-	  Convert double value into a string representation in C
-	  locale.  Returns empty string if double value is std::nan or
-	  if conversion fails.
-
-	  In some context using dot as a decimal separator is
-	  essential.  E.g in GPX specifications, decimal values are
-	  xsd:decimal, so they must use the period separator, not the
-	  localized one.
-
-	  Copy of SGUtils::double_to_c(), kept outside of class to
-	  avoid header dependency problems.
-	*/
-	QString double_to_c(double d, int precision = 6);
-
 
 
 	/* Comparison class for std::maps with QString as a key. */

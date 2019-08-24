@@ -267,28 +267,20 @@ void TrackStatisticsDialog::create_statistics_page(void)
 	row++;
 
 
-	int elev_points = 100; /* this->trk->size()? */
-	TrackData<Distance, Distance_ll, Altitude, Altitude_ll> altitudes_ii;
-	altitudes_ii.make_track_data_altitude_over_distance(this->trk, elev_points);
-	if (!altitudes_ii.valid) {
-		altitudes_ii.y_min.invalidate();
-		altitudes_ii.y_max.invalidate();
-	} else {
-		altitudes_ii.calculate_min_max();
-	}
 
-	QString result;
-	const HeightUnit height_unit = Preferences::get_unit_height();
-	if (!altitudes_ii.y_min.is_valid()) {
-		result = tr("No Data");
+	QString elevation_range;
+	TrackData<Distance, Distance_ll, Altitude, Altitude_ll> altitudes_ii;
+	altitudes_ii.make_track_data_altitude_over_distance(this->trk);
+	if (altitudes_ii.y_min.is_valid()) {
+		const HeightUnit height_unit = Preferences::get_unit_height();
+		elevation_range = tr("%1 - %2")
+			.arg(altitudes_ii.y_min.convert_to_unit(height_unit).to_string())
+			.arg(altitudes_ii.y_max.convert_to_unit(height_unit).to_string());
+
 	} else {
-		const Altitude alti_min_ii = altitudes_ii.y_min;
-		const Altitude alti_max_ii = altitudes_ii.y_max;
-		result = tr("%1 - %2")
-			.arg(alti_min_ii.convert_to_unit(height_unit).to_string())
-			.arg(alti_max_ii.convert_to_unit(height_unit).to_string());
+		elevation_range = tr("No Data");
 	}
-	this->w_elev_range = ui_label_new_selectable(result, this);
+	this->w_elev_range = ui_label_new_selectable(elevation_range, this);
 	this->grid->addWidget(new QLabel(tr("Elevation Range:")), row, 0);
 	this->grid->addWidget(this->w_elev_range, row, 1);
 	row++;
@@ -297,21 +289,18 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 	Altitude delta_up;
 	Altitude delta_down;
+	QString elevation_gain;
 	if (this->trk->get_total_elevation_gain(delta_up, delta_down)) {
 		/* true == function collected some data. */
-
-		/* TODO_LATER: are these two lines valid? Don't we overwrite valid range values with deltas? */
-		altitudes_ii.y_max = delta_up;
-		altitudes_ii.y_min = delta_down;
-
-		result = tr("%1 / %2")
+		const HeightUnit height_unit = Preferences::get_unit_height();
+		elevation_gain = tr("%1 / %2")
 			.arg(delta_up.convert_to_unit(height_unit).to_string())
 			.arg(delta_down.convert_to_unit(height_unit).to_string());
 	} else {
 		/* false == function collected no data. */
-		result = tr("No Data");
+		elevation_gain = tr("No Data");
 	}
-	this->w_elev_gain = ui_label_new_selectable(result, this);
+	this->w_elev_gain = ui_label_new_selectable(elevation_gain, this);
 	this->grid->addWidget(new QLabel(tr("Total Elevation Gain/Loss:")), row, 0);
 	this->grid->addWidget(this->w_elev_gain, row, 1);
 	row++;
@@ -345,7 +334,7 @@ void TrackStatisticsDialog::create_statistics_page(void)
 
 		const Time total_duration_s = (ts2 - ts1);
 		const Time segments_duration_s = this->trk->get_duration(false);
-		result = tr("%1 total - %2 in segments")
+		QString result = tr("%1 total - %2 in segments")
 			.arg(total_duration_s.to_duration_string())
 			.arg(segments_duration_s.to_duration_string());
 		this->w_time_dur = ui_label_new_selectable(result, this);

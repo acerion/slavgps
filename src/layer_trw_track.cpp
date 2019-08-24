@@ -3260,9 +3260,8 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 			{
 				Altitude max_alt(0.0, HeightUnit::Metres);
 				TrackData<Distance, Distance_ll, Altitude, Altitude_ll> altitudes;
-				altitudes.make_track_data_altitude_over_distance(this, 500); /* TODO_LATER: magic number. */
+				altitudes.make_track_data_altitude_over_distance(this);
 				if (altitudes.valid) {
-					altitudes.calculate_min_max();
 					max_alt = altitudes.y_max;
 				}
 

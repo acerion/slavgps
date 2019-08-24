@@ -383,6 +383,76 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 
 
 
+template <> /* Template specialisation for specific type. */
+sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_altitude_over_distance(Track * trk)
+{
+	TrackData result;
+
+	const double total_length = trk->get_length_value_including_gaps();
+	if (total_length <= 0) {
+		return sg_ret::err;
+	}
+
+	const int tp_count = trk->get_tp_count();
+	this->allocate_vector(tp_count);
+
+
+	int i = 0;
+	bool y_valid = false;
+
+	auto iter = trk->trackpoints.begin();
+	/* Initial step. */
+	{
+		this->x[i] = 0; /* Distance at the beginning is zero. */
+
+		y_valid = (*iter)->altitude.is_valid();
+		this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
+		this->y[i] = (*iter)->altitude.get_value();
+
+		this->tps[i] = (*iter);
+		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
+		i++;
+		iter++;
+	}
+
+
+	while (iter != trk->trackpoints.end()) {
+
+		/* Iterative step. */
+		{
+			/* Accumulate distance. */
+			this->x[i] = this->x[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
+
+			y_valid = (*iter)->altitude.is_valid();
+			this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
+			this->y[i] = (*iter)->altitude.get_value();
+
+			this->tps[i] = (*iter);
+			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
+			i++;
+			iter++;
+		}
+	}
+
+	assert(i == tp_count);
+
+	this->valid = true;
+	this->x_domain = GisViewportDomain::DistanceDomain;
+	this->y_domain = GisViewportDomain::ElevationDomain;
+	snprintf(this->debug, sizeof (this->debug), "Altitude over Distance");
+
+	this->x_min = Distance(this->x_min_ll, Distance::get_internal_unit());
+	this->x_max = Distance(this->x_max_ll, Distance::get_internal_unit());
+	this->y_min = Altitude(this->y_min_ll, Altitude::get_internal_unit());
+	this->y_max = Altitude(this->y_max_ll, Altitude::get_internal_unit());
+
+	qDebug() << SG_PREFIX_I << "TrackData ready:" << *this;
+
+	return sg_ret::ok;
+}
+
+
+
 /**
    I understood this when I wrote it ... maybe ... Basically it eats up the
    proper amounts of length on the track and averages elevation over that.
@@ -570,11 +640,9 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
    @reviewed-on tbd
 */
 template <> /* Template specialisation for specific type. */
-sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::make_track_data_gradient_over_distance(Track * trk, int compressed_n_points)
+sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::make_track_data_gradient_over_distance(Track * trk)
 {
 	TrackData result;
-
-	/* TODO: this function does not set this->tps[] = (*iter). */
 
 	const int tp_count = trk->get_tp_count();
 	if (tp_count < 2) {
@@ -583,42 +651,41 @@ sg_ret TrackData<Distance, Distance_ll, Gradient, Gradient_ll>::make_track_data_
 	}
 
 
-	const double total_length = trk->get_length_value_including_gaps();
-	const double delta_d = total_length / (compressed_n_points - 1);
-
-	/* Zero delta_d (eg, track of 2 tp with the same loc) will cause crash. */
-	if (delta_d <= 0) {
+	TrackData<Distance, Distance_ll, Altitude, Altitude_ll> data_ad;
+	data_ad.make_track_data_altitude_over_distance(trk);
+	if (!data_ad.valid) {
+		qDebug() << SG_PREFIX_I << "Failed to collect 'altitude over distance' track data";
 		return sg_ret::err;
 	}
 
-	TrackData<Distance, Distance_ll, Altitude, Altitude_ll> compressed_ad;
-	compressed_ad.make_track_data_altitude_over_distance(trk, compressed_n_points);
-	if (!compressed_ad.valid) {
-		return sg_ret::err;
-	}
-
-	this->allocate_vector(compressed_n_points);
+	this->allocate_vector(tp_count);
 
 	int i = 0;
-	double current_gradient = 0.0;
-	for (i = 0; i < (compressed_n_points - 1); i++) {
-		const double altitude1 = compressed_ad.y[i];
-		const double altitude2 = compressed_ad.y[i + 1];
-		current_gradient = 100.0 * (altitude2 - altitude1) / delta_d;
+	Gradient_ll gradient;
+	for (i = 0; i < (tp_count - 1); i++) {
 
-		if (i > 0) {
-			this->x[i] = this->x[i - 1] + delta_d;
+		this->x[i] = data_ad.x[i];
+
+		const Distance_ll delta_distance = data_ad.x[i + 1] - data_ad.x[i];
+
+		if (delta_distance <= 0.0) { /* e.g. two trackpoints in the same location. */
+			this->y[i] = 0;
+		} else {
+			const Altitude_ll delta_altitude = data_ad.y[i + 1] - data_ad.y[i];
+			gradient = 100.0 * delta_altitude / delta_distance;
+			this->y[i] = gradient;
 		}
-		this->y[i] = current_gradient;
+		this->tps[i] = data_ad.tps[i];
 
 		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
 
 	}
-	this->x[i] = this->x[i - 1] + delta_d;
-	this->y[i] = current_gradient;
+	this->x[i] = data_ad.x[i];
+	this->y[i] = gradient;
+	this->tps[i] = data_ad.tps[i];
 	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, true);
 
-	assert (i + 1 == compressed_n_points);
+	assert (i + 1 == tp_count);
 
 	this->valid = true;
 	this->x_domain = GisViewportDomain::DistanceDomain;

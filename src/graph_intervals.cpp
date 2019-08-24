@@ -249,8 +249,11 @@ namespace SlavGPS {
 template <>
 GraphIntervals2<Distance>::GraphIntervals2()
 {
-	this->values = interval_values_distance;
 	this->n_values = sizeof (interval_values_distance) / sizeof (interval_values_distance[0]);
+
+	const int size = this->n_values * sizeof (Distance);
+	this->values = (Distance *) malloc(size);
+	memcpy(this->values, interval_values_distance, size);
 }
 
 
@@ -259,8 +262,11 @@ GraphIntervals2<Distance>::GraphIntervals2()
 template <>
 GraphIntervals2<Time>::GraphIntervals2()
 {
-	this->values = interval_values_time;
 	this->n_values = sizeof (interval_values_time) / sizeof (interval_values_time[0]);
+
+	const int size = this->n_values * sizeof (Time);
+	this->values = (Time *) malloc(size);
+	memcpy(this->values, interval_values_time, size);
 }
 
 
@@ -269,8 +275,11 @@ GraphIntervals2<Time>::GraphIntervals2()
 template <>
 GraphIntervals2<Altitude>::GraphIntervals2()
 {
-	this->values = interval_values_altitude2;
 	this->n_values = sizeof (interval_values_altitude2) / sizeof (interval_values_altitude2[0]);
+
+	const int size = this->n_values * sizeof (Altitude);
+	this->values = (Altitude *) malloc(size); /* TODO: this must be deallocated. */
+	memcpy(this->values, interval_values_altitude2, size);
 }
 
 
@@ -279,8 +288,11 @@ GraphIntervals2<Altitude>::GraphIntervals2()
 template <>
 GraphIntervals2<Gradient>::GraphIntervals2()
 {
-	this->values = interval_values_gradient2;
 	this->n_values = sizeof (interval_values_gradient2) / sizeof (interval_values_gradient2[0]);
+
+	const int size = this->n_values * sizeof (Gradient);
+	this->values = (Gradient *) malloc(size);
+	memcpy(this->values, interval_values_gradient2, size);
 }
 
 
@@ -289,8 +301,11 @@ GraphIntervals2<Gradient>::GraphIntervals2()
 template <>
 GraphIntervals2<Speed>::GraphIntervals2()
 {
-	this->values = interval_values_speed2;
 	this->n_values = sizeof (interval_values_speed2) / sizeof (interval_values_speed2[0]);
+
+	const int size = this->n_values * sizeof (Speed);
+	this->values = (Speed *) malloc(size);
+	memcpy(this->values, interval_values_speed2, size);
 }
 
 

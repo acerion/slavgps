@@ -222,13 +222,18 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_initial_visible_range_y(void)
 	const Ty y_data_range = this->track_data_to_draw.y_max - this->track_data_to_draw.y_min;
 
 	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::SpeedDomain:
+
 	case GisViewportDomain::DistanceDomain:
-		/* Some graphs better start at zero, e.g. speed graph
-		   or distance graph. Showing negative speed values on
-		   a graph wouldn't make sense. */
+		/* Distance will be always non-negative, and it will
+		   be zero only at one point in the beginning. So it's
+		   ok to configure this value as below. */
 		this->y_visible_min = this->track_data_to_draw.y_min;
 		break;
+
+	case GisViewportDomain::SpeedDomain: /* Speed will never be negative, but since it can drop
+						to zero many many times, visually it will be better
+						if there will be some margin between bottom of
+						graph area and zero values of speed. */
 	case GisViewportDomain::ElevationDomain:
 	case GisViewportDomain::GradientDomain:
 		this->y_visible_min = this->track_data_to_draw.y_min - y_data_range * y_margin;
@@ -481,7 +486,13 @@ TPInfo ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_tp_info_under_cursor(QMouseEvent *
 
 	const int event_x = ev->x();
 
-	int x_px_diff = n_columns; /* We will be minimizing this value and stop when x_px_diff is the smallest. TODO: type of the variable: int or double? */
+	/*
+	  We will be minimizing this value and stop when x_px_diff is
+	  the smallest.
+	  It's integer, because event_x is integer. Making it double
+	  wouldn't give us anything.
+	*/
+	int x_px_diff = n_columns;
 
 	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.value;
 	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.value;
@@ -495,7 +506,7 @@ TPInfo ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_tp_info_under_cursor(QMouseEvent *
 		}
 
 		const Tx_ll x_current_value_uu = this->track_data_to_draw.x[i];
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->track_data_to_draw.x_min.value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.value);
 
 		/* See if x coordinate of this trackpoint on a pixmap
 		   is closer to cursor than the previous x
@@ -505,7 +516,7 @@ TPInfo ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_tp_info_under_cursor(QMouseEvent *
 			/* Found a trackpoint painted at position 'x' that is closer to cursor event position on x axis. */
 			x_px_diff = x_px_diff_current;
 
-			const int y_px = bottommost_px - (y_current_value_uu - this->track_data_to_draw.y_min.value) * y_pixels_per_unit;
+			const int y_px = bottommost_px - (y_current_value_uu - this->y_visible_min.value) * y_pixels_per_unit;
 
 			result.found_x_px = x_px;
 			result.found_y_px = y_px;
@@ -659,7 +670,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::update_x_labels(const TPInfo & tp_info
 
 		/* TODO: we should use x-value of first valid tp. Make
 		   sure that x_min is an x-value of first valid tp. */
-		const Tx x_uu_from_start = x_uu - this->track_data_to_draw.x_min;
+		const Tx x_uu_from_start = x_uu - this->x_visible_min;
 
 		this->labels.x_value->setText(x_uu_from_start.to_string()); /* TODO: for Time data type this should be .to_duration_string() */
 	}
@@ -754,8 +765,8 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_dem_elevation(Track * trk)
 		const Altitude_ll elev_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
 		const Altitude_ll y_value_uu = elev_uu - this->y_visible_min.value;
 
-		const int x_px = leftmost_px + (x_value_uu - this->track_data_to_draw.x_min.value) * x_pixels_per_unit;
-		const int y_px = bottommost_px - (y_value_uu - this->track_data_to_draw.y_min.value) * y_pixels_per_unit;
+		const int x_px = leftmost_px + (x_value_uu - this->x_visible_min.value) * x_pixels_per_unit;
+		const int y_px = bottommost_px - (y_value_uu - this->y_visible_min.value) * y_pixels_per_unit;
 
 		this->graph_2d->fill_rectangle(color, x_px - 2, y_px - 2, 4, 4);
 	}
@@ -828,15 +839,15 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_function_values(Track * trk)
 		  varying intervals (e.g. different values of
 		  distances between consecutive measurements of y).
 		*/
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->track_data_to_draw.x_min.value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_current_value_uu - this->x_visible_min.value);
 
 		const bool y_value_valid = !std::isnan(this->track_data_to_draw.y[i]);
 
 		if (y_value_valid) {
-			const double y_current_value_uu = this->track_data_to_draw.y[i];
+			const double y_value_uu = this->track_data_to_draw.y[i];
 
 			cur_valid_pos.rx() = x_px;
-			cur_valid_pos.ry() = bottommost_px - (y_current_value_uu - this->track_data_to_draw.y_min.value) * y_pixels_per_unit;
+			cur_valid_pos.ry() = bottommost_px - (y_value_uu - this->y_visible_min.value) * y_pixels_per_unit;
 
 			graph_2d->draw_line(valid_pen, last_valid_pos, cur_valid_pos);
 
@@ -929,7 +940,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_gps_speeds(Track * trk)
 		const double x_value = this->track_data_to_draw.x[i];
 		const double y_value = 100 * gps_speed / speed_max; /* Percentage of maximum speed. */
 
-		const int x_px = leftmost_px + x_pixels_per_unit * (x_value - this->track_data_to_draw.x_min.value);
+		const int x_px = leftmost_px + x_pixels_per_unit * (x_value - this->x_visible_min.value);
 		const int y_px = bottommost_px - y_pixels_per_unit * y_value;
 
 		/* This is just a speed indicator - no actual values can be inferred by user. */
@@ -1012,9 +1023,6 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_graph_without_crosshairs(Track * 
 
 	/* Clear before redrawing. */
 	this->graph_2d->clear();
-
-
-
 
 
 	if (sg_ret::ok != this->regenerate_track_data_to_draw(trk)) {
@@ -1740,6 +1748,13 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::generate_initial_track_data_wrapper(Tr
 	this->initial_track_data.apply_unit_conversions_x(this->graph_2d->distance_unit);
 	this->initial_track_data.apply_unit_conversions_y(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
 
+	for (int i = 0; i < this->x_intervals_calculator.n_values; i++) {
+		this->x_intervals_calculator.values[i].unit = this->initial_track_data.x_min.unit;
+	}
+	for (int i = 0; i < this->y_intervals_calculator.n_values; i++) {
+		this->y_intervals_calculator.values[i].unit = this->initial_track_data.y_min.unit;
+	}
+
 	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
 	return sg_ret::ok;
 }
@@ -1755,7 +1770,7 @@ namespace SlavGPS {
 template <>
 sg_ret ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>::generate_initial_track_data(Track * trk)
 {
-	return this->initial_track_data.make_track_data_altitude_over_distance(trk, trk->get_tp_count());
+	return this->initial_track_data.make_track_data_altitude_over_distance(trk);
 }
 
 
@@ -1765,7 +1780,7 @@ sg_ret ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>::generate_initi
 template <>
 sg_ret ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>::generate_initial_track_data(Track * trk)
 {
-	return this->initial_track_data.make_track_data_gradient_over_distance(trk, trk->get_tp_count());
+	return this->initial_track_data.make_track_data_gradient_over_distance(trk);
 }
 
 
@@ -1933,16 +1948,15 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 
 
 
-	/* Be sure to keep type of value_uu as floating-point
+	/* Be sure to keep type of y_value_uu as floating-point
 	   compatible, otherwise for intervals smaller than 1.0 you
 	   will get forever loop. */
-	for (double value_uu = first_multiple_uu.value; value_uu <= last_multiple_uu.value; value_uu += this->y_interval.value) {
-		const double value_from_edge_uu = value_uu - this->y_visible_min.value;
+	for (double y_value_uu = first_multiple_uu.value; y_value_uu <= last_multiple_uu.value; y_value_uu += this->y_interval.value) {
 		/* 'y_px' is in "beginning in top-left corner" coordinate system. */
-		const int y_px = bottommost_px - y_pixels_per_unit * value_from_edge_uu;
+		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu - this->y_visible_min.value);
 
 		if (y_px >= topmost_px && y_px <= bottommost_px) {
-			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", y_px =" << y_px;
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << y_value_uu << ", y_px =" << y_px;
 
 			/* Graph line. From left edge of central area to right edge of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
@@ -1951,10 +1965,10 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 
 			/* Text label in left margin. */
 			const QRectF bounding_rect = QRectF(2, y_px, left_width - 4, left_height);
-			const QString label = this->get_y_grid_label(value_uu);
+			const QString label = this->get_y_grid_label(y_value_uu);
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, TextOffset::Up);
 		} else {
-			qDebug() << SG_PREFIX_N << "      value (outside) =" << value_uu << ", y_px =" << y_px;
+			qDebug() << SG_PREFIX_N << "      value (outside) =" << y_value_uu << ", y_px =" << y_px;
 		}
 	}
 }
@@ -2059,13 +2073,12 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_x_grid(void)
 	qDebug() << SG_PREFIX_D << "      x pixels per unit =" << x_pixels_per_unit;
 #endif
 
-	for (Tx value_uu = first_multiple_uu; value_uu <= last_multiple_uu; value_uu += this->x_interval.value) {
-		const Tx value_from_edge_uu = value_uu - this->x_visible_min;
+	for (Tx x_value_uu = first_multiple_uu; x_value_uu <= last_multiple_uu; x_value_uu += this->x_interval.value) {
 		/* 'x_px' is in "beginning in top-left corner" coordinate system. */
-		const int x_px = leftmost_px + x_pixels_per_unit * value_from_edge_uu.value;
+		const int x_px = leftmost_px + (x_value_uu.value - this->x_visible_min.value) * x_pixels_per_unit;
 
 		if (x_px >= leftmost_px && x_px <= rightmost_px) {
-			qDebug() << SG_PREFIX_D << "      value (inside) =" << value_uu << ", x_px =" << x_px;
+			qDebug() << SG_PREFIX_D << "      value (inside) =" << x_value_uu << ", x_px =" << x_px;
 
 			/* Graph line. From bottom of central area to top of central area. */
 			this->graph_2d->central_draw_line(this->graph_2d->grid_pen,
@@ -2074,10 +2087,10 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_x_grid(void)
 
 			/* Text label in bottom margin. */
 			const QRectF bounding_rect = QRectF(x_px, bottommost_px + 1, bottom_width - 3, bottom_height - 3);
-			const QString label = this->get_x_grid_label(value_uu);
+			const QString label = this->get_x_grid_label(x_value_uu);
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, TextOffset::Left);
 		} else {
-			qDebug() << SG_PREFIX_N << "      value (outside) =" << value_uu << ", x_px =" << x_px;
+			qDebug() << SG_PREFIX_N << "      value (outside) =" << x_value_uu << ", x_px =" << x_px;
 		}
 	}
 }
