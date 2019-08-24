@@ -381,8 +381,8 @@ namespace SlavGPS {
 		Tx x_visible_range_uu;
 
 
-		GraphIntervals2<Tx> x_intervals_calculator;
-		GraphIntervals2<Ty> y_intervals_calculator;
+		GraphIntervals<Tx> x_intervals_calculator;
+		GraphIntervals<Ty> y_intervals_calculator;
 
 
 		Ty y_interval;

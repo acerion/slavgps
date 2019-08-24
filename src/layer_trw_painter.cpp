@@ -244,10 +244,8 @@ void LayerTRWPainter::draw_track_dist_labels(Track * trk, bool do_highlight)
 	const Distance track_length = trk->get_length_including_gaps().convert_to_unit(user_distance_unit);
 
 	const int n_intervals_max = trk->max_number_dist_labels;
-	GraphIntervals2<Distance> intervals;
-	const int interval_idx = intervals.get_interval_index(start_distance, track_length, n_intervals_max);
-
-	const Distance interval = intervals.get_interval_value(interval_idx);
+	GraphIntervals<Distance> intervals;
+	const Distance interval = intervals.get_interval(start_distance, track_length, n_intervals_max);
 
 	for (int i = 1; i <= n_intervals_max; i++) {
 		const Distance axis_mark_uu = interval * i;

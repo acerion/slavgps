@@ -34,166 +34,65 @@ namespace SlavGPS {
 
 
 
+	template <class T>
 	class GraphIntervals {
-	};
-
-
-	template <class T>
-	class GraphIntervalsTyped : public GraphIntervals {
 	public:
-		GraphIntervalsTyped() {};
-		GraphIntervalsTyped(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
+		GraphIntervals() {};
 
-		int get_interval_index(T min, T max, int n_intervals);
-		T get_interval_value(int index);
+		const T & get_interval(const T & min, const T & max, int n_intervals);
 
-		const T * values = NULL;
-		int n_values = 0;
+	private:
+		std::vector<T> values;
 	};
 
 
 
 
-	/* This method is used for purposes of determining how large a
-	   distance - an interval of values - will be if we split min-max
-	   range into n_intervals. Then there will be n_interval grid lines
-	   drawn on a graph, each spaced at interval. */
+	/*
+	  This method is used for purposes of determining how large a
+	  distance - an interval of values - will be if we split
+	  min-max range into n_intervals. Then there will be
+	  n_interval grid lines drawn on a graph, each spaced at
+	  interval.
+
+	  @reviewed-on: 2019-08-24
+	*/
 	template <class T>
-	int GraphIntervalsTyped<T>::get_interval_index(T min, T max, int n_intervals)
+	const T & GraphIntervals<T>::get_interval(const T & min, const T & max, int n_intervals)
 	{
 		const T interval_upper_limit = (max - min) / n_intervals;
-		qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "min/max/n_intervals/interval upper limit:" << min << max << n_intervals << interval_upper_limit;
+		qDebug() << "II  " << __func__ << "min/max/n_intervals/interval upper limit:" << min << max << n_intervals << interval_upper_limit;
+
+		/* Range (min, max) for which we want to calculate
+		   interval, may have different units. Let's fix
+		   this. */
+		for (auto iter = this->values.begin(); iter != this->values.end(); iter++) {
+			iter->unit = min.unit;
+		}
 
 		/* Search for index of nearest interval. */
-		int index = 0;
-		for (index = 0; index < this->n_values; index++) {
+		const auto n_values = this->values.size();
+		auto index = n_values;
+		for (index = 0; index < n_values; index++) {
 			if (interval_upper_limit == this->values[index]) {
-				qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "found exact interval value" << this->values[index];
+				qDebug() << "II  " << __func__ << "Found exact interval value" << this->values[index];
 				break;
 			} else if (interval_upper_limit < this->values[index] && index > 0) {
 				index--;
-				qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "found smaller interval value" << this->values[index];
+				qDebug() << "II  " << __func__ << "Found smaller interval value" << this->values[index];
 				break;
 			} else {
 				; /* Keep looking. */
 			}
 		}
 
-		if (index == this->n_values) {
+		if (index == n_values) {
 			index--;
-			qDebug() << "II: Intervals:" << __FUNCTION__ << __LINE__ << "interval value not found, returning last interval value" << this->values[index];
+			qDebug() << "NN  " << __func__ << "Interval value not found, returning last interval value" << this->values[index];
 		}
 
-		return index;
-	}
-
-
-
-
-	template <class T>
-	T GraphIntervalsTyped<T>::get_interval_value(int index)
-	{
 		return this->values[index];
 	}
-
-
-
-
-	class GraphIntervalsTime {
-	public:
-		GraphIntervalsTime();
-		GraphIntervalsTyped<Time> intervals;
-	};
-
-	class GraphIntervalsDistance {
-	public:
-		GraphIntervalsDistance();
-		GraphIntervalsTyped<Distance> intervals;
-	};
-
-	class GraphIntervalsAltitude {
-	public:
-		GraphIntervalsAltitude();
-		GraphIntervalsTyped <double> intervals;
-	};
-
-	class GraphIntervalsGradient {
-	public:
-		GraphIntervalsGradient();
-		GraphIntervalsTyped <double> intervals;
-	};
-
-	class GraphIntervalsSpeed {
-	public:
-		GraphIntervalsSpeed();
-		GraphIntervalsTyped <double> intervals;
-	};
-
-
-
-
-
-
-
-
-	class GraphIntervalsBase {
-	};
-
-
-
-
-	template <class T>
-	class GraphIntervals2 : public GraphIntervalsBase {
-	public:
-		GraphIntervals2() {};
-		GraphIntervals2(const T * interval_values, int n_interval_values) : values(interval_values), n_values(n_interval_values) {};
-
-		int get_interval_index(T min, T max, int n_intervals);
-		T get_interval_value(int index) { return this->values[index]; }
-
-		T * values = NULL;
-		int n_values = 0;
-	};
-
-
-
-
-	/* This method is used for purposes of determining how large a
-	   distance - an interval of values - will be if we split min-max
-	   range into n_intervals. Then there will be n_interval grid lines
-	   drawn on a graph, each spaced at interval. */
-	template <class T>
-	int GraphIntervals2<T>::get_interval_index(T min, T max, int n_intervals)
-	{
-		const T interval_upper_limit = (max - min) / n_intervals;
-		qDebug() << "II min/max/n_intervals/interval upper limit:" << min << max << n_intervals << interval_upper_limit;
-
-		/* Search for index of nearest interval. */
-		int index = 0;
-		for (index = 0; index < this->n_values; index++) {
-			if (interval_upper_limit == this->values[index]) {
-				qDebug() << "II Found exact interval value" << this->values[index];
-				break;
-			} else if (interval_upper_limit < this->values[index] && index > 0) {
-				index--;
-				qDebug() << "II Found smaller interval value" << this->values[index];
-				break;
-			} else {
-				; /* Keep looking. */
-			}
-		}
-
-		if (index == this->n_values) {
-			index--;
-			qDebug() << "II Interval value not found, returning last interval value" << this->values[index];
-		}
-
-		return index;
-	}
-
-
-
-
 
 
 

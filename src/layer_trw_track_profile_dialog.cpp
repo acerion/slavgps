@@ -106,14 +106,6 @@ enum {
 
 
 
-static GraphIntervalsDistance distance_intervals;
-static GraphIntervalsAltitude altitude_intervals;
-static GraphIntervalsGradient gradient_intervals;
-static GraphIntervalsSpeed    speed_intervals;
-
-
-
-
 static QString get_time_grid_label(const Time & interval_value, const Time & value);
 
 
@@ -251,6 +243,9 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_initial_visible_range_y(void)
 
 
 
+/**
+   @reviewed-on: 2019-08-24
+*/
 template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
 sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_grid_intervals(void)
 {
@@ -260,15 +255,13 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::set_grid_intervals(void)
 
 	{
 		const int x_n_intervals = GRAPH_X_INTERVALS;
-		const int x_interval_index = this->x_intervals_calculator.get_interval_index(this->x_visible_min, this->x_visible_max, x_n_intervals);
-		this->x_interval = this->x_intervals_calculator.values[x_interval_index];
+		this->x_interval = this->x_intervals_calculator.get_interval(this->x_visible_min, this->x_visible_max, x_n_intervals);
 	}
 
 
 	{
 		const int y_n_intervals = GRAPH_Y_INTERVALS;
-		const int y_interval_index = this->y_intervals_calculator.get_interval_index(this->y_visible_min, this->y_visible_max, y_n_intervals);
-		this->y_interval = this->y_intervals_calculator.values[y_interval_index];
+		this->y_interval = this->y_intervals_calculator.get_interval(this->y_visible_min, this->y_visible_max, y_n_intervals);
 	}
 
 	return sg_ret::ok;
@@ -1747,13 +1740,6 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::generate_initial_track_data_wrapper(Tr
 
 	this->initial_track_data.apply_unit_conversions_x(this->graph_2d->distance_unit);
 	this->initial_track_data.apply_unit_conversions_y(this->graph_2d->speed_unit, this->graph_2d->distance_unit, this->graph_2d->height_unit);
-
-	for (int i = 0; i < this->x_intervals_calculator.n_values; i++) {
-		this->x_intervals_calculator.values[i].unit = this->initial_track_data.x_min.unit;
-	}
-	for (int i = 0; i < this->y_intervals_calculator.n_values; i++) {
-		this->y_intervals_calculator.values[i].unit = this->initial_track_data.y_min.unit;
-	}
 
 	qDebug() << SG_PREFIX_I << "Generated valid initial track data for" << this->get_title();
 	return sg_ret::ok;
