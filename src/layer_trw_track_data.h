@@ -75,7 +75,6 @@ namespace SlavGPS {
 
 		bool valid = false;
 		int n_points = 0;
-
 	};
 
 
@@ -216,37 +215,31 @@ namespace SlavGPS {
 			return *this;
 		}
 
-		/* TODO_LATER: compare size of vectors in both objects to see if
-		   reallocation is necessary? */
-
 		if (other.x) {
-			if (this->x) {
-				free(this->x);
-				this->x = NULL;
-			}
 			const size_t size = sizeof (Tx_ll) * other.n_points;
-			this->x = (Tx_ll *) malloc(size);
+			this->x = (Tx_ll *) realloc(this->x, size);
 			memcpy(this->x, other.x, size);
+		} else {
+			free(this->x);
+			this->x = NULL;
 		}
 
 		if (other.y) {
-			if (this->y) {
-				free(this->y);
-				this->y = NULL;
-			}
 			const size_t size = sizeof (Ty_ll) * other.n_points;
-			this->y = (Ty_ll *) malloc(size);
+			this->y = (Ty_ll *) realloc(this->y, size);
 			memcpy(this->y, other.y, size);
+		} else {
+			free(this->y);
+			this->y = NULL;
 		}
 
 		if (other.tps) {
-			if (this->tps) {
-				free(this->tps);
-				this->tps = NULL;
-			}
 			const size_t size = sizeof (Trackpoint *) * other.n_points;
-			this->tps = (Trackpoint **) malloc(size);
+			this->tps = (Trackpoint **) realloc(this->tps, size);
 			memcpy(this->tps, other.tps, size);
+		} else {
+			free(this->tps);
+			this->tps = NULL;
 		}
 
 		this->x_min = other.x_min;
