@@ -143,7 +143,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					if (tp->timestamp != tp_prev->timestamp) {
 
 						/* Work out from previous trackpoint location and time difference. */
-						const Distance distance = Distance(Coord::distance(tp->coord, tp_prev->coord), DistanceUnit::Meters);
+						const Distance distance = Coord::distance_2(tp->coord, tp_prev->coord);
 						const Time time = Time::get_abs_diff(tp->timestamp, tp_prev->timestamp);
 						const Speed speed;
 						if (sg_ret::ok == speed_value.make_speed(distance, time)) {

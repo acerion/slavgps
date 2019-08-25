@@ -1067,6 +1067,15 @@ bool Altitude::is_zero(void) const
 
 
 template<>
+bool Angle::ll_value_is_valid(Angle_ll value)
+{
+	return !std::isnan(value);
+}
+
+
+
+
+template<>
 QString Angle::to_string(int precision) const
 {
 	if (this->is_valid()) {
@@ -1120,8 +1129,9 @@ Angle Angle::get_vector_sum(const Angle & angle1, const Angle & angle2)
 		angle = angle < 0 ? ((2 * M_PI) + angle) : angle;
 	}
 
-	result.set_value(angle); /* This will also validate the value. */
+	result.value = angle;
 	result.unit = angle1.unit;
+	result.valid = Angle::ll_value_is_valid(result.value);
 
 	return result;
 }
@@ -1173,15 +1183,6 @@ QString Angle::to_string(void) const
 	}
 
 	return result;
-}
-
-
-
-
-template<>
-bool Angle::ll_value_is_valid(Angle_ll value)
-{
-	return !std::isnan(value);
 }
 
 

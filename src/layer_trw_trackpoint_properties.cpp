@@ -289,7 +289,7 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 			if (tp->timestamp == this->current_tp->timestamp) {
 				this->diff_speed->setText("--");
 			} else {
-				const Distance dist = Distance(Coord::distance(tp->coord, this->current_tp->coord), DistanceUnit::Meters);
+				const Distance dist = Coord::distance_2(tp->coord, this->current_tp->coord);
 				const Time duration = Time::get_abs_diff(tp->timestamp, this->current_tp->timestamp);
 				Speed speed_diff;
 				speed_diff.make_speed(dist, duration);

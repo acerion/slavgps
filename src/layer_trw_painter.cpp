@@ -188,11 +188,13 @@ LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoin
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
 
+	const Distance distance = Coord::distance_2(tp1->coord, tp2->coord);
 	const Time time_diff = tp1->timestamp - tp2->timestamp;
-	const double speed = (Coord::distance(tp1->coord, tp2->coord) / time_diff.get_ll_value());
-	if (speed < low_speed.get_ll_value()) {
+	Speed speed;
+	speed.make_speed(distance, time_diff);
+	if (speed < low_speed) {
 		return LayerTRWTrackGraphics::Speed1;
-	} else if (speed > high_speed.get_ll_value()) {
+	} else if (speed > high_speed) {
 		return LayerTRWTrackGraphics::Speed3;
 	} else {
 		return LayerTRWTrackGraphics::Speed2;

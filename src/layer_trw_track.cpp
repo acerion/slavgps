@@ -872,7 +872,7 @@ Speed Track::get_average_speed(void) const
 		return result;
 	}
 
-	double len = 0.0;
+	Distance distance(0, Distance::get_internal_unit());
 	Time duration(0, Time::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
@@ -881,13 +881,13 @@ Speed Track::get_average_speed(void) const
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
+			distance += Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
 			duration += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
 		}
 	}
 
 	if (duration.is_valid() && duration.get_ll_value() > 0) {
-		result.set_value(std::abs(len / duration.get_ll_value()));
+		result.make_speed(distance, duration);
 	}
 
 	return result;
@@ -908,13 +908,13 @@ Speed Track::get_average_speed(void) const
  */
 Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 {
-	Speed result(NAN, SpeedUnit::MetresPerSecond); /* Invalid by default. */
+	Speed result; /* Invalid by default. */
 
 	if (this->trackpoints.empty()) {
 		return result;
 	}
 
-	double len = 0.0;
+	Distance distance(0, Distance::get_internal_unit());
 	Time duration(0, Time::get_internal_unit());
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
@@ -922,16 +922,16 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			if (((*iter)->timestamp.get_ll_value() - (*std::prev(iter))->timestamp.get_ll_value()) < track_min_stop_length_seconds) {
-				len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
-
+			const Time time_diff = (*iter)->timestamp - (*std::prev(iter))->timestamp;
+			if (time_diff.get_ll_value() < track_min_stop_length_seconds) {
+				distance += Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
 				duration += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
 			}
 		}
 	}
 
 	if (duration.is_valid() && duration.is_positive()) {
-		result.set_value(std::abs(len / duration.get_ll_value()));
+		result.make_speed(distance, duration);
 	}
 
 	return result;
@@ -942,29 +942,31 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 
 sg_ret Track::calculate_max_speed(void)
 {
-	this->max_speed = Speed(NAN, SpeedUnit::MetresPerSecond); /* Initially invalid. */
+	this->max_speed = Speed(NAN, SpeedUnit::MetresPerSecond); /* Invalidate. */
 
 	if (this->trackpoints.empty()) {
 		return sg_ret::ok;
 	}
 
-	double maxspeed = 0.0;
+	Speed maxspeed(0.0, SpeedUnit::MetresPerSecond); /* Initialized as valid, but zero. */
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			const double speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
-				/ Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp).get_ll_value();
+			const Distance distance = Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
+			const Time time = Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
+			Speed speed;
+			speed.make_speed(distance, time);
 
-			if (speed > maxspeed) {
+			if (speed.is_valid() && speed > maxspeed) {
 				maxspeed = speed;
 			}
 		}
 	}
 
-	this->max_speed.set_value(maxspeed); /* Set the value even if detected max speed is zero. */
+	this->max_speed = maxspeed; /* Set the value even if detected max speed is zero. */
 
 	return sg_ret::ok;
 }
@@ -1003,8 +1005,8 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 		delta_down.invalidate();
 		return false;
 	} else {
-		delta_up.set_value(0);
-		delta_down.set_value(0);
+		delta_up.set_ll_value(0);
+		delta_down.set_ll_value(0);
 
 		iter++;
 
@@ -1120,7 +1122,7 @@ Trackpoint * Track::get_tp_by_max_speed() const
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			const Distance distance = Distance(Coord::distance((*iter)->coord, (*std::prev(iter))->coord), DistanceUnit::Meters);
+			const Distance distance = Coord::distance_2((*iter)->coord, (*std::prev(iter))->coord);
 			const Time time = Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
 
 			if (sg_ret::ok != speed.make_speed(distance, time)) {

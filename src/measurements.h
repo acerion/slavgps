@@ -227,7 +227,7 @@ namespace SlavGPS {
 
 
 		/* Set value, don't change unit. */
-		void set_value(Tll new_value)
+		void set_ll_value(Tll new_value)
 		{
 			this->value = new_value;
 			this->valid = Measurement<Tu, Tll>::ll_value_is_valid(new_value);
@@ -664,9 +664,10 @@ namespace SlavGPS {
 			return !(*this == rhs);
 		}
 
-
 		Tll value = 0;
-		Tu unit = (Tu) 0;
+		Tu unit = (Tu) 565; /* Invalid unit. */
+
+	private:
 		bool valid = false;
 	};
 	template<typename Tu, typename Tll>

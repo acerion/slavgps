@@ -494,10 +494,13 @@ void GeotagJob::geotag_image(const QString & file_full_path)
 		return;
 	}
 
-	this->photo_time.value = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, this->values.TimeZoneHours, this->values.TimeZoneMins);
+	time_t time_value = ConvertToUnixTime(datetime.toUtf8().data(), (char *) EXIF_DATE_FORMAT, this->values.TimeZoneHours, this->values.TimeZoneMins);
 
 	/* Apply any offset. */
-	this->photo_time.value += this->values.time_offset;
+	time_value += this->values.time_offset;
+
+	this->photo_time.set_ll_value(time_value);
+
 
 	this->found_match = false;
 

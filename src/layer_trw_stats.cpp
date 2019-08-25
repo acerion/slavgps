@@ -164,7 +164,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 	/* Average Length of all tracks. */
 	Distance avg_distance = stats.length.convert_to_unit(distance_unit);
-	avg_distance.value /= stats.count; /* Average of all tracks. */
+	avg_distance /= stats.count; /* Average of all tracks. */
 	this->stats_table->get_value_label(TRWStatsRow::AverageLength)->setText(avg_distance.to_nice_string());
 
 

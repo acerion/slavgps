@@ -96,7 +96,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 	  angle: bearing in Radian
 	  base_angle: UTM base angle in Radian
 	*/
-	this->angle.set_value(atan2(this->dy, this->dx) + M_PI_2);
+	this->angle.set_ll_value(atan2(this->dy, this->dx) + M_PI_2);
 	if (this->gisview->get_draw_mode() == GisViewportDrawMode::UTM) {
 		Coord test = this->gisview->screen_pos_to_coord(this->begin_x, this->begin_y);
 		LatLon lat_lon = test.get_lat_lon();
@@ -108,7 +108,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 		ScreenPos test_pos;
 		this->gisview->coord_to_screen_pos(test, test_pos);
 
-		this->base_angle.set_value(M_PI - atan2(test_pos.x() - this->begin_x, test_pos.y() - this->begin_y));
+		this->base_angle.set_ll_value(M_PI - atan2(test_pos.x() - this->begin_x, test_pos.y() - this->begin_y));
 		this->angle -= this->base_angle;
 	}
 	this->angle.normalize();
