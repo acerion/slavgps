@@ -774,36 +774,10 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::update_y_labels(const TPInfo & tp_info
 	assert(tp_info.valid);
 	assert(NULL != tp_info.found_tp);
 
-	/* Values in y[] are already re-calculated to user units. */
-	const double y_uu = this->track_data_to_draw.y[tp_info.found_tp_idx];
-
-	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::SpeedDomain:
-		if (this->labels.y_value) {
-			this->labels.y_value->setText(Speed::to_string(y_uu));
-		}
-		break;
-	case GisViewportDomain::ElevationDomain:
-		if (this->labels.y_value) {
-			const Altitude alti = Altitude(y_uu, Preferences::get_unit_height());
-			this->labels.y_value->setText(alti.to_string());
-		}
-		break;
-	case GisViewportDomain::DistanceDomain:
-		if (this->labels.y_value) {
-			const Distance distance_uu(y_uu, Preferences::get_unit_distance());
-			this->labels.y_value->setText(distance_uu.to_string());
-		}
-		break;
-	case GisViewportDomain::GradientDomain:
-		if (this->labels.y_value) {
-			const Gradient gradient_uu(y_uu, Gradient::get_user_unit());
-			this->labels.y_value->setText(gradient_uu.to_string());
-		}
-		break;
-	default:
-		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-		return sg_ret::err;
+	if (this->labels.y_value) {
+		/* Values in y[] are already re-calculated to user units. */
+		const Ty_ll y_uu = this->track_data_to_draw.y[tp_info.found_tp_idx];
+		this->labels.y_value->setText(Ty::ll_value_to_string(y_uu, Ty::get_user_unit()));
 	}
 
 	return sg_ret::ok;
