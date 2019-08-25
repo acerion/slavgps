@@ -174,7 +174,7 @@ SGDateTimeButton::SGDateTimeButton(const Time & date_time, QWidget * parent_widg
 		this->setText("");
 	}
 
-	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(this->timestamp.get_value()), true, parent_widget);
+	this->dialog = new SGDateTimeDialog(QDateTime::fromTime_t(this->timestamp.get_ll_value()), true, parent_widget);
 	this->dialog->setWindowTitle(tr("Edit Date/Time"));
 
 	connect(this, SIGNAL (released(void)), this, SLOT (open_dialog_cb(void)));
@@ -197,7 +197,7 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 
 	/* Make sure that the dialog shows the correct date/time - the
 	   value that was last retrieved from the date time dialog. */
-	dialog->set_date_time(QDateTime::fromTime_t(this->timestamp.get_value()));
+	dialog->set_date_time(QDateTime::fromTime_t(this->timestamp.get_ll_value()));
 
 	if (QDialog::Accepted == dialog->exec()) {
 		this->timestamp = this->dialog->get_timestamp();
@@ -205,7 +205,7 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 		qDebug() << SG_PREFIX_I << "Timestamp selected in dialog =" << this->timestamp;
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'value_is_set' signal for timestamp =" << this->timestamp;
-		emit this->value_is_set(this->timestamp.get_value());
+		emit this->value_is_set(this->timestamp.get_ll_value());
 	} else {
 		qDebug() << SG_PREFIX_I << "Returning zero timestamp";
 		this->timestamp = Time(0, Time::get_internal_unit());

@@ -180,7 +180,7 @@ QString Time::get_time_string(Qt::DateFormat format, const Coord & coord, const 
 template<>
 TimeUnit Time::get_user_unit(void)
 {
-	return TimeUnit::Seconds; /* TODO: get this from Preferences? */
+	return TimeUnit::Seconds;
 }
 
 
@@ -325,7 +325,7 @@ QString Time::to_timestamp_string(Qt::TimeSpec time_spec) const
 	QString result;
 	if (this->is_valid()) {
 		 /* TODO_MAYBE: use fromSecsSinceEpoch() after migrating to Qt 5.8 or later. */
-		result = QDateTime::fromTime_t(this->get_value(), time_spec).toString(Qt::ISODate);
+		result = QDateTime::fromTime_t(this->get_ll_value(), time_spec).toString(Qt::ISODate);
 	} else {
 		result = QObject::tr("No Data");
 	}
@@ -744,6 +744,50 @@ bool Speed::is_zero(void) const
 		return true;
 	}
 	return std::abs(this->value) < epsilon;
+}
+
+
+
+
+template<>
+sg_ret Speed::make_speed(const Measurement<DistanceUnit, Distance_ll> & distance, const Measurement<TimeUnit, Time_ll> & time)
+{
+	if (distance.unit != DistanceUnit::Meters) {
+		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << (int) distance.unit;
+		return sg_ret::err;
+	}
+	if (time.unit != TimeUnit::Seconds) {
+		qDebug() << SG_PREFIX_E << "Unhandled time unit" << (int) time.unit;
+		return sg_ret::err;
+	}
+
+	this->value = distance.get_ll_value() / time.get_ll_value();
+	this->unit = SpeedUnit::MetresPerSecond;
+	this->valid = Speed::ll_value_is_valid(this->value);
+
+	return this->valid ? sg_ret::ok : sg_ret::err;
+}
+
+
+
+
+template<>
+sg_ret Speed::make_speed(const Measurement<HeightUnit, Altitude_ll> & altitude, const Measurement<TimeUnit, Time_ll> & time)
+{
+	if (altitude.unit != HeightUnit::Metres) {
+		qDebug() << SG_PREFIX_E << "Unhandled altitude unit" << (int) altitude.unit;
+		return sg_ret::err;
+	}
+	if (time.unit != TimeUnit::Seconds) {
+		qDebug() << SG_PREFIX_E << "Unhandled time unit" << (int) time.unit;
+		return sg_ret::err;
+	}
+
+	this->value = altitude.get_ll_value() / time.get_ll_value();
+	this->unit = SpeedUnit::MetresPerSecond;
+	this->valid = Speed::ll_value_is_valid(this->value);
+
+	return this->valid ? sg_ret::ok : sg_ret::err;
 }
 
 
@@ -1597,8 +1641,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(0.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(360.0), AngleUnit::Radians);
@@ -1606,8 +1650,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(360.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(70.0), AngleUnit::Radians);
@@ -1615,8 +1659,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(70.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(184.0), AngleUnit::Radians);
@@ -1624,8 +1668,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(185.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(185.0), AngleUnit::Radians);
@@ -1633,8 +1677,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(185.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(350.0), AngleUnit::Radians);
@@ -1642,8 +1686,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(5.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(0.0), AngleUnit::Radians);
@@ -1651,8 +1695,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(0.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(-180.0), AngleUnit::Radians);
@@ -1660,8 +1704,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(180.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 	{
 		const Angle a1(DEG2RAD(90), AngleUnit::Radians);
@@ -1669,8 +1713,8 @@ bool Measurements::unit_tests(void)
 		const double expected = DEG2RAD(0.0);
 
 		const Angle result = Angle::get_vector_sum(a1, a2);
-		qDebug() << SG_PREFIX_D << a1.get_value() << a2.get_value() << "-->" << result.get_value() << "(expected =" << expected << ")";
-		assert (epsilon > std::fabs(result.get_value() - expected));
+		qDebug() << SG_PREFIX_D << a1 << a2 << "-->" << result << "(expected =" << expected << ")";
+		assert (epsilon > std::fabs(result.get_ll_value() - expected));
 	}
 
 	return true;
@@ -1696,6 +1740,54 @@ bool Measurement::operator_args_valid(const Measurement & lhs, const Measurement
 	}
 
 	return true;
+}
+
+
+
+
+QString get_time_grid_label(const Time & interval_value, const Time & value)
+{
+	QString result;
+
+	const time_t val = value.get_value();
+	const time_t interval = interval_value.get_value();
+
+	switch (interval) {
+	case 60:
+	case 120:
+	case 300:
+	case 900:
+		/* Minutes. */
+		result = QObject::tr("%1 m").arg((int) (val / 60));
+		break;
+	case 1800:
+	case 3600:
+	case 10800:
+	case 21600:
+		/* Hours. */
+		result = QObject::tr("%1 h").arg(((double) (val / (60 * 60))), 0, 'f', 1);
+		break;
+	case 43200:
+	case 86400:
+	case 172800:
+		/* Days. */
+		result = QObject::tr("%1 d").arg(((double) val / (60 *60 * 24)), 0, 'f', 1);
+		break;
+	case 604800:
+	case 1209600:
+		/* Weeks. */
+		result = QObject::tr("%1 w").arg(((double) val / (60 * 60 * 24 * 7)), 0, 'f', 1);
+		break;
+	case 2419200:
+		/* Months. */
+		result = QObject::tr("%1 M").arg(((double) val / (60 * 60 * 24 * 28)), 0, 'f', 1);
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unhandled time interval value" << val;
+		break;
+	}
+
+	return result;
 }
 
 

@@ -379,7 +379,7 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 			   0.5 would be half way. */
 			const Time up = this->photo_time - tp->timestamp;
 			const Time down = tp_next->timestamp - tp->timestamp;
-			const double scale = up.get_value() / (1.0 * down.get_value());
+			const double scale = up / down; /* TODO: operator '/' of Measurement class handles zero denominator, but what do we do here with invalid result of such division? */
 
 			/* Interpolate coordinate. */
 			const LatLon interpolated = LatLon::get_interpolated(tp->coord.get_lat_lon(), tp_next->coord.get_lat_lon(), scale);

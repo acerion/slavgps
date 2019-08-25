@@ -47,24 +47,21 @@ namespace SlavGPS {
 		void add_track_maybe(Track * trk, bool layer_is_visible, bool tracks_are_visible, bool routes_are_visible, bool include_invisible);
 		void add_track(Track * trk);
 
-		/* Units of each item are in SI Units (as returned by
-		   the appropriate internal Track functions). */
+		Altitude min_alt;
+		Altitude max_alt;
 
-		Altitude min_alt = Altitude(VIK_VAL_MIN_ALT, HeightUnit::Metres);
-		Altitude max_alt = Altitude(VIK_VAL_MAX_ALT, HeightUnit::Metres);
-
-		Altitude elev_gain = Altitude(0, HeightUnit::Metres);
-		Altitude elev_loss = Altitude(0, HeightUnit::Metres);
+		Altitude elev_gain;
+		Altitude elev_loss;
 
 		Distance length;
 		Distance length_with_gaps;
-		Speed max_speed = Speed(0.0, SpeedUnit::MetresPerSecond);
+		Speed max_speed;
 		unsigned long trackpoints = 0;
-		unsigned int segments     = 0;
+		unsigned int segments = 0;
 		Time duration;
 		Time start_time;
 		Time end_time;
-		int count                 = 0;
+		int count = 0;
 	};
 
 

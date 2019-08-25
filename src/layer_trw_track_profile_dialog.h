@@ -434,9 +434,6 @@ namespace SlavGPS {
 
 		sg_ret update_x_labels(const TPInfo & tp_info) override;
 		sg_ret update_y_labels(const TPInfo & tp_info) override;
-
-		QString get_y_grid_label(double value);
-		QString get_x_grid_label(const Tx & value_uu);
 	};
 
 

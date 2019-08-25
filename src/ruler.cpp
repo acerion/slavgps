@@ -109,7 +109,7 @@ void Ruler::set_end(int end_x_, int end_y_)
 		this->gisview->coord_to_screen_pos(test, test_pos);
 
 		this->base_angle.set_value(M_PI - atan2(test_pos.x() - this->begin_x, test_pos.y() - this->begin_y));
-		this->angle.set_value(this->angle.get_value() - this->base_angle.get_value());
+		this->angle -= this->base_angle;
 	}
 	this->angle.normalize();
 
@@ -161,8 +161,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 	/* Fill between middle and innermost circle. */
 	if (1) {
-		const float start_angle = (90 - RAD2DEG(this->base_angle.get_value())) * 16;
-		const float span_angle = -RAD2DEG(this->angle.get_value()) * 16;
+		const float start_angle = (90 - RAD2DEG(this->base_angle.get_ll_value())) * 16;
+		const float span_angle = -RAD2DEG(this->angle.get_ll_value()) * 16;
 
 		painter.setPen(this->arc_pen);
 
@@ -184,8 +184,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		int ticksize = 2 * radius_delta;
 		for (int i = 0; i < 180; i += 5) {
-			cosine_factor = cos(DEG2RAD(i) * 2 + this->base_angle.get_value());
-			sine_factor = sin(DEG2RAD(i) * 2 + this->base_angle.get_value());
+			cosine_factor = cos(DEG2RAD(i) * 2 + this->base_angle.get_ll_value());
+			sine_factor = sin(DEG2RAD(i) * 2 + this->base_angle.get_ll_value());
 			painter.drawLine(this->begin_x + (radius-radius_delta) * cosine_factor,
 					 this->begin_y + (radius-radius_delta) * sine_factor, this->begin_x + (radius+ticksize) * cosine_factor,
 					 this->begin_y + (radius+ticksize) * sine_factor);
@@ -257,8 +257,8 @@ void Ruler::paint_ruler(QPainter & painter, bool paint_tooltips)
 
 		QRectF label2_rect = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignBottom | Qt::AlignLeft, bearing_label);
 
-		const int label2_x = this->begin_x - radius * cos(this->angle.get_value() - M_PI_2) / 2;
-		const int label2_y = this->begin_y - radius * sin(this->angle.get_value() - M_PI_2) / 2;
+		const int label2_x = this->begin_x - radius * cos(this->angle.get_ll_value() - M_PI_2) / 2;
+		const int label2_y = this->begin_y - radius * sin(this->angle.get_ll_value() - M_PI_2) / 2;
 
 		label2_rect.moveTo(label2_x - label2_rect.width() / 2, label2_y - label2_rect.height() / 2);
 		label2_rect.adjust(-margin, -margin, margin, margin);

@@ -549,7 +549,7 @@ void Waypoint::open_astro_cb(void)
 		const LatLon lat_lon = this->coord.get_lat_lon();
 		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
 		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
-		const QString alt_str = QString("%1").arg((int) round(this->altitude.get_value()));
+		const QString alt_str = QString("%1").arg((int) round(this->altitude.get_ll_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
 		Dialog::info(tr("This waypoint has no date information."), ThisApp::get_main_window());

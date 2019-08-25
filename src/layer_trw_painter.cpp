@@ -184,15 +184,15 @@ LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoin
 	if (!tp1->timestamp.is_valid() || !tp2->timestamp.is_valid()) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
-	if (average_speed.get_value() <= 0) {
+	if (average_speed.get_ll_value() <= 0) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
 
 	const Time time_diff = tp1->timestamp - tp2->timestamp;
-	const double speed = (Coord::distance(tp1->coord, tp2->coord) / time_diff.get_value());
-	if (speed < low_speed.get_value()) {
+	const double speed = (Coord::distance(tp1->coord, tp2->coord) / time_diff.get_ll_value());
+	if (speed < low_speed.get_ll_value()) {
 		return LayerTRWTrackGraphics::Speed1;
-	} else if (speed > high_speed.get_value()) {
+	} else if (speed > high_speed.get_ll_value()) {
 		return LayerTRWTrackGraphics::Speed3;
 	} else {
 		return LayerTRWTrackGraphics::Speed2;
@@ -442,10 +442,10 @@ void LayerTRWPainter::draw_track_draw_midarrow(const ScreenPos & begin, const Sc
 
 
 
-void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, const Altitude & min_alt, double alt_diff)
+void LayerTRWPainter::draw_track_draw_something(const ScreenPos & begin, const ScreenPos & end, QPen & pen, Trackpoint * tp, Trackpoint * tp_next, const Altitude & min_alt, const Altitude & alt_diff)
 {
 #define FIXALTITUDE(m_tp) \
-	((m_tp->altitude.get_value() - min_alt.get_value()) / alt_diff * DRAW_ELEVATION_FACTOR * this->track_elevation_factor / this->vp_xmpp)
+	((m_tp->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * this->track_elevation_factor / this->vp_xmpp)
 
 
 	ScreenPos points[4];
@@ -518,11 +518,11 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 {
 	Altitude min_alt;
 	Altitude max_alt;
-	double alt_diff = 0;
+	Altitude alt_diff;
 	if (this->draw_track_elevation) {
 		/* Assume if it has elevation at the beginning, it has it throughout. not ness a true good assumption. */
 		if (trk->get_minmax_alt(min_alt, max_alt)) {
-			alt_diff = max_alt.get_value() - min_alt.get_value();
+			alt_diff = max_alt - min_alt;
 		}
 	}
 
@@ -681,7 +681,8 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 
 				if (this->draw_track_elevation
 				    && std::next(iter) != trk->trackpoints.end()
-				    && (*std::next(iter))->altitude.is_valid()) {
+				    && (*std::next(iter))->altitude.is_valid()
+				    && alt_diff.is_valid()) {
 
 					this->draw_track_draw_something(prev_pos, curr_pos, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
 				}

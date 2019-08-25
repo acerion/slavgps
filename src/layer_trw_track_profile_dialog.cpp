@@ -106,11 +106,6 @@ enum {
 
 
 
-static QString get_time_grid_label(const Time & interval_value, const Time & value);
-
-
-
-
 TrackProfileDialog::~TrackProfileDialog()
 {
 	for (auto iter = this->views.begin(); iter != this->views.end(); iter++) {
@@ -665,7 +660,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::update_x_labels(const TPInfo & tp_info
 		   sure that x_min is an x-value of first valid tp. */
 		const Tx x_uu_from_start = x_uu - this->x_visible_min;
 
-		this->labels.x_value->setText(x_uu_from_start.to_string()); /* TODO: for Time data type this should be .to_duration_string() */
+		this->labels.x_value->setText(x_uu_from_start.to_string());
 	}
 
 	/* Absolute time stamp. */
@@ -755,7 +750,10 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_dem_elevation(Track * trk)
 
 		const int x_value_uu = this->track_data_to_draw.x[i];
 
-		const Altitude_ll elev_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_value();
+		/* FIXME: try to change this section to use Altitude
+		   instead of Altitude_ll and see what compilation
+		   errors you will get. */
+		const Altitude_ll elev_uu = elev.convert_to_unit(Preferences::get_unit_height()).get_ll_value();
 		const Altitude_ll y_value_uu = elev_uu - this->y_visible_min.value;
 
 		const int x_px = leftmost_px + (x_value_uu - this->x_visible_min.value) * x_pixels_per_unit;
@@ -883,7 +881,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_additional_indicators(Track * trk
 
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 		/* Ensure some kind of max speed when not set. */
-		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_value() < 0.01) {
+		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_ll_value() < 0.01) {
 			trk->calculate_max_speed();
 		}
 
@@ -909,9 +907,9 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_gps_speeds(Track * trk)
 	const QColor & speed_color = this->gps_speed_pen.color();
 
 	const Speed max_speed = trk->get_max_speed();
-	qDebug() << SG_PREFIX_I << "Max speed is" << max_speed.get_value();
+	qDebug() << SG_PREFIX_I << "Max speed is" << max_speed.get_ll_value();
 
-	const double speed_max = 1.1 * max_speed.get_value();
+	const double speed_max = 1.1 * max_speed.get_ll_value();
 
 	const double x_pixels_per_unit = (1.0 * n_columns) / this->x_visible_range_uu.value;
 	const double y_pixels_per_unit = (1.0 * n_rows) / 110; /* "110" means 110%. Zero percent at the bottom of graph, 110% (since we used 1.1 above) on top of graph. */
@@ -1008,7 +1006,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_graph_without_crosshairs(Track * 
 
 	if (this->graph_2d->x_domain == GisViewportDomain::TimeDomain) {
 		const Time duration = trk->get_duration(true);
-		if (!duration.is_valid() || duration.get_value() <= 0) {
+		if (!duration.is_valid() || duration.get_ll_value() <= 0) {
 			qDebug() << SG_PREFIX_E << "return 1";
 			return sg_ret::err;
 		}
@@ -1617,54 +1615,6 @@ void ProfileViewDT::configure_controls(void)
 
 
 
-QString get_time_grid_label(const Time & interval_value, const Time & value)
-{
-	QString result;
-
-	const time_t val = value.get_value();
-	const time_t interval = interval_value.get_value();
-
-	switch (interval) {
-	case 60:
-	case 120:
-	case 300:
-	case 900:
-		/* Minutes. */
-		result = QObject::tr("%1 m").arg((int) (val / 60));
-		break;
-	case 1800:
-	case 3600:
-	case 10800:
-	case 21600:
-		/* Hours. */
-		result = QObject::tr("%1 h").arg(((double) (val / (60 * 60))), 0, 'f', 1);
-		break;
-	case 43200:
-	case 86400:
-	case 172800:
-		/* Days. */
-		result = QObject::tr("%1 d").arg(((double) val / (60 *60 * 24)), 0, 'f', 1);
-		break;
-	case 604800:
-	case 1209600:
-		/* Weeks. */
-		result = QObject::tr("%1 w").arg(((double) val / (60 * 60 * 24 * 7)), 0, 'f', 1);
-		break;
-	case 2419200:
-		/* Months. */
-		result = QObject::tr("%1 M").arg(((double) val / (60 * 60 * 24 * 28)), 0, 'f', 1);
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled time interval value" << val;
-		break;
-	}
-
-	return result;
-}
-
-
-
-
 ProfileViewBase::ProfileViewBase(GisViewportDomain new_x_domain, GisViewportDomain new_y_domain, TrackProfileDialog * new_dialog, QWidget * parent)
 {
 	this->widget = new QWidget(parent);
@@ -1935,9 +1885,9 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 	/* Be sure to keep type of y_value_uu as floating-point
 	   compatible, otherwise for intervals smaller than 1.0 you
 	   will get forever loop. */
-	for (double y_value_uu = first_multiple_uu.value; y_value_uu <= last_multiple_uu.value; y_value_uu += this->y_interval.value) {
+	for (Ty y_value_uu = first_multiple_uu; y_value_uu <= last_multiple_uu; y_value_uu += this->y_interval) {
 		/* 'y_px' is in "beginning in top-left corner" coordinate system. */
-		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu - this->y_visible_min.value);
+		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu.value - this->y_visible_min.value);
 
 		if (y_px >= topmost_px && y_px <= bottommost_px) {
 			qDebug() << SG_PREFIX_D << "      value (inside) =" << y_value_uu << ", y_px =" << y_px;
@@ -1949,78 +1899,17 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 
 			/* Text label in left margin. */
 			const QRectF bounding_rect = QRectF(2, y_px, left_width - 4, left_height);
-			const QString label = this->get_y_grid_label(y_value_uu);
-			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, label, TextOffset::Up);
+			this->graph_2d->draw_text(this->graph_2d->labels_font,
+						  this->graph_2d->labels_pen,
+						  bounding_rect,
+						  Qt::AlignRight | Qt::AlignTop,
+						  y_value_uu.to_string(),
+						  TextOffset::Up);
 		} else {
 			qDebug() << SG_PREFIX_N << "      value (outside) =" << y_value_uu << ", y_px =" << y_px;
 		}
 	}
 }
-
-
-
-
-namespace SlavGPS {
-
-
-
-
-template <>
-QString ProfileView<Time, Time_ll, Altitude, Altitude_ll>::get_x_grid_label(const Time & value_uu)
-{
-	return get_time_grid_label(this->x_interval, value_uu);
-}
-
-
-
-
-template <>
-QString ProfileView<Time, Time_ll, Speed, Speed_ll>::get_x_grid_label(const Time & value_uu)
-{
-	return get_time_grid_label(this->x_interval, value_uu);
-}
-
-
-
-
-template <>
-QString ProfileView<Time, Time_ll, Distance, Distance_ll>::get_x_grid_label(const Time & value_uu)
-{
-	return get_time_grid_label(this->x_interval, value_uu);
-}
-
-
-
-
-template <>
-QString ProfileView<Distance, Distance_ll, Speed, Speed_ll>::get_x_grid_label(const Distance & value_uu)
-{
-	return value_uu.to_nice_string();
-}
-
-
-
-
-template <>
-QString ProfileView<Distance, Distance_ll, Altitude, Altitude_ll>::get_x_grid_label(const Distance & value_uu)
-{
-	return value_uu.to_nice_string();
-}
-
-
-
-
-template <>
-QString ProfileView<Distance, Distance_ll, Gradient, Gradient_ll>::get_x_grid_label(const Distance & value_uu)
-{
-	return value_uu.to_nice_string();
-}
-
-
-
-
-}
-
 
 
 
@@ -2071,36 +1960,11 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_x_grid(void)
 
 			/* Text label in bottom margin. */
 			const QRectF bounding_rect = QRectF(x_px, bottommost_px + 1, bottom_width - 3, bottom_height - 3);
-			const QString label = this->get_x_grid_label(x_value_uu);
+			const QString label = x_value_uu.to_string();
 			this->graph_2d->draw_text(this->graph_2d->labels_font, this->graph_2d->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, label, TextOffset::Left);
 		} else {
 			qDebug() << SG_PREFIX_N << "      value (outside) =" << x_value_uu << ", x_px =" << x_px;
 		}
-	}
-}
-
-
-
-
-template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
-QString ProfileView<Tx, Tx_ll, Ty, Ty_ll>::get_y_grid_label(double value_uu)
-{
-	switch (this->graph_2d->y_domain) {
-	case GisViewportDomain::ElevationDomain:
-		return Altitude(value_uu, this->graph_2d->height_unit).to_string();
-
-	case GisViewportDomain::DistanceDomain:
-		return Distance(value_uu, this->graph_2d->distance_unit).to_string();
-
-	case GisViewportDomain::SpeedDomain:
-		return Speed(value_uu, this->graph_2d->speed_unit).to_string();
-
-	case GisViewportDomain::GradientDomain:
-		return Gradient(value_uu, Gradient::get_user_unit()).to_string();
-
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled y domain" << (int) this->graph_2d->y_domain;
-		return "";
 	}
 }
 

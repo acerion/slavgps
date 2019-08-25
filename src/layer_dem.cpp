@@ -509,7 +509,7 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 			   Code saving value in file only knows how to
 			   save a double, so pass a variant/double to
 			   the code. */
-			rv = SGVariant(this->min_elev.get_value(), SGVariantType::Double);
+			rv = SGVariant(this->min_elev.get_ll_value(), SGVariantType::Double);
 		} else {
 			/* Keep in internal units until the last moment before presenting to user. */
 			rv = this->min_elev;
@@ -526,7 +526,7 @@ SGVariant LayerDEM::get_param_value(param_id_t param_id, bool is_file_operation)
 			   Code saving value in file only knows how to
 			   save a double, so pass a variant/double to
 			   the code. */
-			rv = SGVariant(this->max_elev.get_value(), SGVariantType::Double);
+			rv = SGVariant(this->max_elev.get_ll_value(), SGVariantType::Double);
 		} else {
 			/* Build value for presentation in user
 			   interface - convert from internal unit
@@ -640,8 +640,8 @@ void LayerDEM::draw_dem_ll(GisViewport * gisview, DEM * dem)
 	if (this->max_elev <= this->min_elev) {
 		this->max_elev = this->min_elev + 1;
 	}
-	const double min_elevation = this->min_elev.get_value();
-	const double max_elevation = this->max_elev.get_value();
+	const double min_elevation = this->min_elev.get_ll_value();
+	const double max_elevation = this->max_elev.get_ll_value();
 
 	Coord tmp; /* TODO_2_LATER: don't use Coord(ll, mode), especially if in latlon drawing mode. */
 	const CoordMode viewport_coord_mode = gisview->get_coord_mode();
@@ -847,8 +847,8 @@ void LayerDEM::draw_dem_utm(GisViewport * gisview, DEM * dem)
 	   sure contain valid band letter. */
 	UTM counter(NAN, NAN, dem->utm.get_zone(), dem->utm.get_band_letter());
 
-	const double min_elevation = this->min_elev.get_value();
-	const double max_elevation = this->max_elev.get_value();
+	const double min_elevation = this->min_elev.get_ll_value();
+	const double max_elevation = this->max_elev.get_ll_value();
 
 	int32_t x;
 	for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {

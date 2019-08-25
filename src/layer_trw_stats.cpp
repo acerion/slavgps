@@ -176,13 +176,13 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 	/* Avg. Speed */
 	const bool valid = stats.duration.is_valid() && !stats.duration.is_zero();
-	const Speed avg_speed = Speed(valid ? stats.length.value / stats.duration.get_value() : NAN, SpeedUnit::MetresPerSecond); /* Constructing speed value from values in basic units, therefore MetersPerSecond. */
+	const Speed avg_speed = Speed(valid ? stats.length.get_ll_value() / stats.duration.get_ll_value() : NAN, SpeedUnit::MetresPerSecond); /* Constructing speed value from values in basic units, therefore MetersPerSecond. */
 	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(avg_speed.convert_to_unit(speed_unit).to_string());
 
 
 
 	/* Minimum Altitude */
-	if (stats.min_alt.get_value() != VIK_VAL_MIN_ALT) {
+	if (stats.min_alt.is_valid()) {
 		tmp_string = stats.min_alt.convert_to_unit(height_unit).to_string();
 	} else {
 		tmp_string = NONE_TEXT;
@@ -192,7 +192,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 	/* Maximum Altitude */
-	if (stats.max_alt.get_value() != VIK_VAL_MAX_ALT) {
+	if (stats.max_alt.is_valid()) {
 		tmp_string = stats.max_alt.convert_to_unit(height_unit).to_string();
 	} else {
 		tmp_string = NONE_TEXT;
@@ -219,17 +219,17 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 
-	/* Total Duration. */
-	int days    = (int) (stats.duration.get_value() / (60 * 60 * 24));
-	int hours   = (int) floor((stats.duration.get_value() - (days * 60 * 60 * 24)) / (60 * 60));
-	int minutes = (int) ((stats.duration.get_value() - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
+	/* Total Duration. TODO: use proper method from Measurement class. */
+	int days    = (int) (stats.duration.get_ll_value() / (60 * 60 * 24));
+	int hours   = (int) floor((stats.duration.get_ll_value() - (days * 60 * 60 * 24)) / (60 * 60));
+	int minutes = (int) ((stats.duration.get_ll_value() - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
 	tmp_string = tr("%1:%2:%3 days:hrs:mins").arg(days).arg(hours, 2, 10, (QChar) '0').arg(minutes, 2, 10, (QChar) '0');
 	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(tmp_string);
 
 
 
-	/* Average Duration. */
-	int avg_dur = stats.duration.get_value() / stats.count;
+	/* Average Duration.TODO: use proper method from Measurement class. */
+	int avg_dur = stats.duration.get_ll_value() / stats.count;
 	hours   = (int) floor(avg_dur / (60 * 60));
 	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
 	tmp_string = tr("%1:%2 hrs:mins").arg(hours).arg(minutes, 2, 10, (QChar) '0');

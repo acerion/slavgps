@@ -189,7 +189,7 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 
 
 	const Time duration = trk->get_duration();
-	if (!duration.is_valid() || duration.get_value() < 0) {
+	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
 	}
@@ -205,7 +205,7 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 
 	int i = 0;
 	auto iter = trk->trackpoints.begin();
-	this->x[i] = (*iter)->timestamp.get_value();
+	this->x[i] = (*iter)->timestamp.get_ll_value();
 	this->y[i] = 0;
 	this->tps[i] = (*iter);
 	TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
@@ -214,7 +214,7 @@ sg_ret TrackData<Time, Time_ll, Distance, Distance_ll>::make_track_data_distance
 
 	while (iter != trk->trackpoints.end()) {
 
-		this->x[i] = (*iter)->timestamp.get_value();
+		this->x[i] = (*iter)->timestamp.get_ll_value();
 		if (i > 0 && this->x[i] <= this->x[i - 1]) {
 			/* TODO: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->x[i] << this->x[i - 1];
@@ -297,8 +297,8 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 		this->x[i] = 0; /* Distance at the beginning is zero. */
 
 		y_valid = (*iter)->altitude.is_valid();
-		this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
-		this->y[i] = (*iter)->altitude.get_value();
+		this->y[i] = y_valid ? (*iter)->altitude.get_ll_value() : NAN;
+		this->y[i] = (*iter)->altitude.get_ll_value();
 
 		this->tps[i] = (*iter);
 		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
@@ -315,8 +315,8 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 			this->x[i] = this->x[i - 1] + Coord::distance((*std::prev(iter))->coord, (*iter)->coord);
 
 			y_valid = (*iter)->altitude.is_valid();
-			this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
-			this->y[i] = (*iter)->altitude.get_value();
+			this->y[i] = y_valid ? (*iter)->altitude.get_ll_value() : NAN;
+			this->y[i] = (*iter)->altitude.get_ll_value();
 
 			this->tps[i] = (*iter);
 			TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, (!std::isnan(this->y[i])));
@@ -374,7 +374,7 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 			   This can happen when a track (with no elevations) is uploaded to a GPS device and then redownloaded (e.g. using a Garmin Legend EtrexHCx).
 			   Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception) */
 
-			if ((*iter)->altitude.get_value() > SG_ALTITUDE_RANGE_MAX) {
+			if ((*iter)->altitude.get_ll_value() > SG_ALTITUDE_RANGE_MAX) {
 				/* TODO_LATER: clamp the invalid values, but still generate vector? */
 				qDebug() << SG_PREFIX_W << "Track altitude" << (*iter)->altitude << "out of range; not generating vector";
 				correct = false;
@@ -403,8 +403,8 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 	auto iter = trk->trackpoints.begin();
 	double current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
 
-	double altitude1 = (*iter)->altitude.get_value();
-	double altitude2 = (*std::next(iter))->altitude.get_value();
+	double altitude1 = (*iter)->altitude.get_ll_value();
+	double altitude2 = (*std::next(iter))->altitude.get_ll_value();
 	double dist_along_seg = 0;
 
 	bool ignore_it = false;
@@ -455,8 +455,8 @@ sg_ret TrackData<Distance, Distance_ll, Altitude, Altitude_ll>::make_track_data_
 			       && std::next(iter) != trk->trackpoints.end()) {
 
 				current_seg_length = Coord::distance((*iter)->coord, (*std::next(iter))->coord);
-				altitude1 = (*iter)->altitude.get_value();
-				altitude2 = (*std::next(iter))->altitude.get_value();
+				altitude1 = (*iter)->altitude.get_ll_value();
+				altitude2 = (*std::next(iter))->altitude.get_ll_value();
 				ignore_it = (*std::next(iter))->newsegment;
 
 				if (delta_d - current_dist >= current_seg_length) {
@@ -607,7 +607,7 @@ sg_ret TrackData<Time, Time_ll, Speed, Speed_ll>::make_track_data_speed_over_tim
 	TrackData result;
 
 	const Time duration = trk->get_duration();
-	if (!duration.is_valid() || duration.get_value() < 0) {
+	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
 	}
@@ -698,7 +698,7 @@ sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::make_track_data_altitude
 
 
 	const Time duration = trk->get_duration();
-	if (!duration.is_valid() || duration.get_value() < 0) {
+	if (!duration.is_valid() || duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Trying to calculate track data from track with incorrect duration" << duration;
 		return sg_ret::err;
 	}
@@ -715,7 +715,7 @@ sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::make_track_data_altitude
 	int i = 0;
 	auto iter = trk->trackpoints.begin();
 	do {
-		this->x[i] = (*iter)->timestamp.get_value();
+		this->x[i] = (*iter)->timestamp.get_ll_value();
 		if (i > 0 && this->x[i] <= this->x[i - 1]) {
 			/* TODO: this doesn't solve problem in any way if glitch is at the beginning of dataset. */
 			qDebug() << SG_PREFIX_W << "Glitch in timestamps" << i << this->x[i] << this->x[i - 1];
@@ -723,7 +723,7 @@ sg_ret TrackData<Time, Time_ll, Altitude, Altitude_ll>::make_track_data_altitude
 		}
 
 		const bool y_valid = (*iter)->altitude.is_valid();
-		this->y[i] = y_valid ? (*iter)->altitude.get_value() : NAN;
+		this->y[i] = y_valid ? (*iter)->altitude.get_ll_value() : NAN;
 		TRW_TRACK_DATA_CALCULATE_MIN_MAX(this, i, y_valid);
 
 		this->tps[i] = (*iter);

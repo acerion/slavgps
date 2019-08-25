@@ -196,7 +196,7 @@ void Track::split_by_timestamp_cb(void)
 
 	/* Configuration dialog. */
 	{
-		if (!a_dialog_time_threshold(tr("Split Threshold..."),
+		if (!a_dialog_time_threshold(tr("Split Threshold..."), /* TODO: the dialog should accept Time variables and convert them to user units. */
 					     tr("Split when time between trackpoints exceeds:"),
 					     &threshold,
 					     dialog_parent)) {
@@ -208,12 +208,14 @@ void Track::split_by_timestamp_cb(void)
 		}
 	}
 
+	const Time threshold_seconds = Time(60 * threshold, Time::get_internal_unit());
+
 
 	/* Process of determining ranges of trackpoints for new tracks. */
 	std::list<TrackPoints::iterator> split_iters;
 	{
 		int n = 0;
-		time_t prev_ts = (*this->trackpoints.begin())->timestamp.get_value();
+		Time prev_timestamp = (*this->trackpoints.begin())->timestamp;
 
 		auto iter = this->trackpoints.begin();
 		split_iters.push_back(TrackPoints::iterator(iter)); /* First iterator on the list is always trackpoints.begin(); */
@@ -222,19 +224,20 @@ void Track::split_by_timestamp_cb(void)
 
 
 		for (; iter != this->trackpoints.end(); iter++) {
-			const time_t ts = (*iter)->timestamp.get_value();
+			const Time this_timestamp = (*iter)->timestamp;
+			const Time timestamp_delta = this_timestamp - prev_timestamp;
 
 			/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
-			if (ts < prev_ts) {
-				const Time tstamp(ts, Time::get_internal_unit());
-				if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(tstamp.strftime_local("%c"))), dialog_parent) {
+
+			if (timestamp_delta.is_negative()) {
+				if (Dialog::yes_or_no(tr("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(this_timestamp.strftime_local("%c"))), dialog_parent) {
 					parent_layer->request_new_viewport_center(ThisApp::get_main_gis_view(), (*iter)->coord);
 				}
 				return;
 			}
 
-			if (ts - prev_ts > threshold * 60) {
-				prev_ts = ts;
+			if (timestamp_delta > threshold_seconds) {
+				prev_timestamp = this_timestamp;
 				split_iters.push_back(TrackPoints::iterator(iter));
 				n++;
 				qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n << "=" << (*iter)->timestamp;

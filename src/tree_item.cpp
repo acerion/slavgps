@@ -297,7 +297,7 @@ QList<QStandardItem *> TreeItem::get_list_representation(const TreeItemViewForma
 			   validity. Invalid value passed to
 			   QStandardItem() may crash the program. */
 			if (this->timestamp.is_valid()) {
-				item = new QStandardItem(this->timestamp.get_value());
+				item = new QStandardItem(this->timestamp.get_ll_value());
 			} else {
 				item = new QStandardItem(0);
 			}

@@ -135,7 +135,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			break;
 
 		case 'S': {
-			double speed_value = 0.0;
+			Speed speed_value;
 			QString speed_type;
 
 			if (std::isnan(tp->gps_speed) && tp_prev) {
@@ -143,8 +143,15 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					if (tp->timestamp != tp_prev->timestamp) {
 
 						/* Work out from previous trackpoint location and time difference. */
-						speed_value = Coord::distance(tp->coord, tp_prev->coord) / Time::get_abs_diff(tp->timestamp, tp_prev->timestamp).get_value();
-						speed_type = "*"; // Interpolated
+						const Distance distance = Distance(Coord::distance(tp->coord, tp_prev->coord), DistanceUnit::Meters);
+						const Time time = Time::get_abs_diff(tp->timestamp, tp_prev->timestamp);
+						const Speed speed;
+						if (sg_ret::ok == speed_value.make_speed(distance, time)) {
+							speed_type = "*"; // Interpolated
+						} else {
+							/* TODO: now what? */
+						}
+
 					} else {
 						speed_type = "**";
 					}
@@ -152,25 +159,29 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					speed_type = "**";
 				}
 			} else {
-				speed_value = tp->gps_speed;
+				speed_value = Speed(tp->gps_speed, SpeedUnit::MetresPerSecond);
 				speed_type = "";
 			}
-			const Speed speed(speed_value, SpeedUnit::MetresPerSecond);
 
-			values[i] = QObject::tr("%1Speed%2 %3").arg(separator).arg(speed_type).arg(speed.convert_to_unit(speed_unit).to_string());
+			values[i] = QObject::tr("%1Speed%2 %3").arg(separator).arg(speed_type).arg(speed_value.convert_to_unit(speed_unit).to_string());
 			break;
 		}
 
 		case 'B': {
-			double speed_value = 0.0;
+			Speed speed_value;
 			QString speed_type;
 			if (std::isnan(climb) && tp_prev) {
 				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
 					if (tp->timestamp != tp_prev->timestamp) {
 						/* Work out from previous trackpoint altitudes and time difference.
 						   'speed' can be negative if going downhill. */
-						speed_value = (tp->altitude - tp_prev->altitude).get_value() / Time::get_abs_diff(tp->timestamp, tp_prev->timestamp).get_value();
-						speed_type = "*"; // Interpolated
+						const Altitude altitude = (tp->altitude - tp_prev->altitude);
+						const Time time = Time::get_abs_diff(tp->timestamp, tp_prev->timestamp);
+						if (sg_ret::ok == speed_value.make_speed(altitude, time)) {
+							speed_type = "*"; // Interpolated
+						} else {
+							/* TODO: now what? */
+						}
 					} else {
 						speed_type = "**"; // Unavailable
 					}
@@ -178,12 +189,10 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 					speed_type = "**";
 				}
 			} else {
-				speed_value = climb;
+				speed_value = Speed(climb, SpeedUnit::MetresPerSecond);
 				speed_type = "";
 			}
-			const Speed speed(speed_value, SpeedUnit::MetresPerSecond);
-
-			values[i] = QObject::tr("%1Climb%2 %3").arg(separator).arg(speed.convert_to_unit(speed_unit).to_string());
+			values[i] = QObject::tr("%1Climb%2 %3").arg(separator).arg(speed_value.convert_to_unit(speed_unit).to_string());
 			break;
 		}
 
@@ -215,7 +224,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			if (tp_prev) {
 				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
 					const Time t_diff = tp->timestamp - tp_prev->timestamp;
-					values[i] = QObject::tr("%1Time diff %2s").arg(separator).arg((long) t_diff.get_value());
+					values[i] = QObject::tr("%1Time diff %2s").arg(separator).arg((long) t_diff.get_ll_value());
 				}
 			}
 			break;

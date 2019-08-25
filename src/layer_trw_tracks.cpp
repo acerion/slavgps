@@ -308,8 +308,8 @@ std::list<Track *> LayerTRWTracks::find_nearby_tracks_by_time(Track * main_trk, 
 		const Time diff1 = main_ts_begin - ts_end;
 		const Time diff2 = ts_begin - main_ts_end;
 
-		if (!(std::labs(diff1.get_value()) < threshold          /* ts_begin ts_end                 main_ts_begin main_ts_end */
-		      || std::labs(diff2.get_value()) < threshold)) {   /* main_ts_begin main_ts_end       ts_begin ts_end */
+		if (!(std::labs(diff1.get_ll_value()) < threshold          /* ts_begin ts_end                 main_ts_begin main_ts_end */
+		      || std::labs(diff2.get_ll_value()) < threshold)) {   /* main_ts_begin main_ts_end       ts_begin ts_end */
 			continue;
 		}
 

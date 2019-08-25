@@ -1420,10 +1420,10 @@ QString LayerTRW::get_tooltip(void) const
 		TracksTooltipData ttd = this->get_tracks_tooltip_data();
 
 		QDateTime date_start;
-		date_start.setTime_t(ttd.start_time.get_value());
+		date_start.setTime_t(ttd.start_time.get_ll_value());
 
 		QDateTime date_end;
-		date_end.setTime_t(ttd.end_time.get_value());
+		date_end.setTime_t(ttd.end_time.get_ll_value());
 
 		const QString duration_string = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
 
@@ -1433,11 +1433,12 @@ QString LayerTRW::get_tooltip(void) const
 
 			/* Use timing information if available. */
 			if (!ttd.duration.is_zero()) {
+				/* TODO: improve presentation of duration, don't use these calculations. */
 				tracks_info = QObject::tr("\n%1Total Length %2 in %3 %4")
 					.arg(duration_string)
 					.arg(distance_string)
-					.arg((int)(ttd.duration.get_value()/3600))
-					.arg((int) round(ttd.duration.get_value() / 60.0) % 60, 2, 10, (QChar) '0');
+					.arg((int)(ttd.duration.get_ll_value()/3600))
+					.arg((int) round(ttd.duration.get_ll_value() / 60.0) % 60, 2, 10, (QChar) '0');
 			} else {
 				tracks_info = QObject::tr("\n%1Total Length %2")
 					.arg(duration_string)
@@ -2872,7 +2873,7 @@ void LayerTRW::append_other_cb(void)
 	if (source_track->is_track()) {
 		const Speed avg = source_track->get_average_speed();
 		if (source_track->get_segment_count() > 1
-		    || (avg.is_valid() && avg.get_value() > 0.0)) {
+		    || (avg.is_valid() && avg.is_positive())) {
 
 			if (Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), this->get_window())) {
 				source_track->merge_segments();
@@ -3412,7 +3413,7 @@ void LayerTRW::post_read(GisViewport * gisview, bool from_file)
 	if (this->metadata && !this->metadata->iso8601_timestamp.isValid()) {
 		const Time local_timestamp = this->get_timestamp();
 		if (local_timestamp.is_valid()) {
-			this->metadata->iso8601_timestamp.setMSecsSinceEpoch(local_timestamp.get_value() * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
+			this->metadata->iso8601_timestamp.setMSecsSinceEpoch(local_timestamp.get_ll_value() * MSECS_PER_SEC); /* TODO_MAYBE: replace with setSecsSinceEpoch() in future. */
 		} else {
 			/* No time found - so use 'now' for the metadata time. */
 			this->metadata->iso8601_timestamp = QDateTime::currentDateTime(); /* The method returns time in local time zone. */

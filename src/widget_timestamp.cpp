@@ -84,7 +84,7 @@ void TimestampWidget::set_timestamp(const Time & timestamp, const Coord & new_co
 		return;
 	}
 
-	this->timestamp_entry->setValue(timestamp.get_value());
+	this->timestamp_entry->setValue(timestamp.get_ll_value());
 	this->timestamp_button->set_label(timestamp, new_coord);
 }
 
@@ -126,7 +126,7 @@ void TimestampWidget::on_timestamp_button_value_set_cb(void)
 {
 	const Time new_value = this->timestamp_button->get_value();
 	qDebug() << SG_PREFIX_SLOT << "New value =" << new_value;
-	this->timestamp_entry->setValue(new_value.get_value());
+	this->timestamp_entry->setValue(new_value.get_ll_value());
 }
 
 

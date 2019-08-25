@@ -68,17 +68,17 @@ void TrackStatistics::add_track(Track * trk)
 	this->length_with_gaps += trk->get_length_including_gaps();
 
 	const Speed incoming_track_max_speed = trk->get_max_speed();
-	if (incoming_track_max_speed.get_value() > this->max_speed.get_value()) {
+	if (incoming_track_max_speed.is_valid() && incoming_track_max_speed > this->max_speed) {
 		this->max_speed = incoming_track_max_speed;
 	}
 
 	Altitude min_altitude;
 	Altitude max_altitude;
 	if (trk->get_minmax_alt(min_altitude, max_altitude)) {
-		if (min_altitude.get_value() < this->min_alt.get_value()) {
+		if (min_altitude < this->min_alt) {
 			this->min_alt = min_altitude;
 		}
-		if (max_altitude.get_value() > this->max_alt.get_value()) {
+		if (max_altitude > this->max_alt) {
 			this->max_alt = max_altitude;
 		}
 	}

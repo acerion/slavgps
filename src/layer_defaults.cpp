@@ -170,7 +170,7 @@ void LayerDefaults::save_parameter_value(const SGVariant & value, LayerType laye
 		variant = QVariant(value.get_longitude().get_value());
 		break;
 	case SGVariantType::AltitudeType:
-		variant = QVariant(value.get_altitude().get_value());
+		variant = QVariant(value.get_altitude().get_ll_value());
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Unhandled parameter type" << (int) type_id;

@@ -284,14 +284,16 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 		this->diff_dist->setText(diff.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 
 		if (tp->timestamp.is_valid() && this->current_tp->timestamp.is_valid()) {
-			this->diff_time->setText(tr("%1 s").arg((long) (tp->timestamp.get_value() - this->current_tp->timestamp.get_value())));
+			const Time timestamp_diff = tp->timestamp - this->current_tp->timestamp;
+			this->diff_time->setText(tr("%1 s").arg((long) timestamp_diff.get_ll_value()));
 			if (tp->timestamp == this->current_tp->timestamp) {
 				this->diff_speed->setText("--");
 			} else {
-				const double dist = Coord::distance(tp->coord, this->current_tp->coord);
+				const Distance dist = Distance(Coord::distance(tp->coord, this->current_tp->coord), DistanceUnit::Meters);
 				const Time duration = Time::get_abs_diff(tp->timestamp, this->current_tp->timestamp);
-				const Speed tmp_speed(dist / duration.get_value(), SpeedUnit::MetresPerSecond);
-				this->diff_speed->setText(tmp_speed.to_string());
+				Speed speed_diff;
+				speed_diff.make_speed(dist, duration);
+				this->diff_speed->setText(speed_diff.to_string());
 			}
 		} else {
 			this->diff_time->setText("");
@@ -402,7 +404,7 @@ TpPropertiesDialog::TpPropertiesDialog(QWidget * parent_widget) : QDialog(parent
 	connect(this->lon_entry, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_current_tp_cb(void)));
 
 
-	ParameterScale<double> scale_alti(SG_ALTITUDE_RANGE_MIN, SG_ALTITUDE_RANGE_MAX, SGVariant(0.0), 1, SG_ALTITUDE_PRECISION);
+	ParameterScale<double> scale_alti(SG_ALTITUDE_RANGE_MIN, SG_ALTITUDE_RANGE_MAX, SGVariant(0.0), 1, SG_ALTITUDE_PRECISION); /* TODO: use Measurement<Altitude>, not double. */
 	this->alt = new MeasurementEntryWidget(this->alt, &scale_alti, this);
 	this->grid->addWidget(new QLabel(tr("Altitude:")), 3, 0);
 	this->grid->addWidget(this->alt, 3, 1);

@@ -242,8 +242,8 @@ namespace SlavGPS {
 		sg_ret select_tp(const Trackpoint * tp);
 
 		Trackpoint * get_tp_by_max_speed() const;
-		Trackpoint * get_tp_by_max_alt() const;
-		Trackpoint * get_tp_by_min_alt() const;
+		Trackpoint * get_tp_with_highest_altitude(void) const;
+		Trackpoint * get_tp_with_lowest_altitude(void) const;
 		Trackpoint * get_tp_first() const;
 		Trackpoint * get_tp_last() const;
 		Trackpoint * get_tp_prev(Trackpoint * tp) const;

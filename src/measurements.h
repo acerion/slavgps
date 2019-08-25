@@ -49,8 +49,8 @@ namespace SlavGPS {
 #define SG_PRECISION_ALTITUDE           2
 #define SG_PRECISION_ALTITUDE_WIDE      5
 #define SG_ALTITUDE_PRECISION           2
-#define SG_ALTITUDE_RANGE_MIN       -5000 /* [meters] */   /* See also VIK_VAL_MIN_ALT */
-#define SG_ALTITUDE_RANGE_MAX       25000 /* [meters] */   /* See also VIK_VAL_MAX_ALT */
+#define SG_ALTITUDE_RANGE_MIN       -5000 /* [meters] */
+#define SG_ALTITUDE_RANGE_MAX       25000 /* [meters] */
 
 #define SG_MEASUREMENT_PRECISION_FOR_FILE_MAX   16
 
@@ -158,6 +158,9 @@ namespace SlavGPS {
 
 
 
+	/* TODO: if you ever add another time unit, you will have to
+	   review all places where a time unit is used and update them
+	   accordingly. */
 	enum class TimeUnit {
 		Seconds, /* Default, internal unit. */
 	};
@@ -166,8 +169,11 @@ namespace SlavGPS {
 
 
 
+	/* TODO: if you ever add another gradient unit, you will have
+	   to review all places where a gradient unit is used and
+	   update them accordingly. */
 	enum class GradientUnit {
-		Percents, /* Default, internal unit. TODO: verify. */
+		Percents, /* Default, internal unit. */
 	};
 #define SG_MEASUREMENT_INTERNAL_UNIT_GRADIENT GradientUnit::Percents
 
@@ -228,7 +234,13 @@ namespace SlavGPS {
 			/* this->unit = ; ... Don't change unit. */
 		}
 
-		Tll get_value(void) const { return this->value; } /* TODO: what to do when this method is called on invalid value? Return zero? */
+		/*
+		  This function always returns verbatim value. It may
+		  be invalid. It's up to caller to check if
+		  measurement is invalid before calling this
+		  getter.
+		*/
+		Tll get_ll_value(void) const { return this->value; }
 
 
 		static Measurement get_abs_diff(const Measurement & m1, const Measurement & m2)
@@ -346,6 +358,10 @@ namespace SlavGPS {
 		QString get_time_string(Qt::DateFormat format, const Coord & coord, const QTimeZone * tz) const;
 
 
+		/* Specific to Speed. */
+		sg_ret make_speed(const Measurement<DistanceUnit, Distance_ll> & distance, const Measurement<TimeUnit, Time_ll> & time);
+		sg_ret make_speed(const Measurement<HeightUnit, Altitude_ll> & distance, const Measurement<TimeUnit, Time_ll> & time);
+
 
 		/* Specific to Angle. */
 		static Measurement get_vector_sum(const Measurement & meas1, const Measurement & meas2);
@@ -371,8 +387,30 @@ namespace SlavGPS {
 		   no much sense to see whether a date is zero. */
 		bool is_zero(void) const;
 
-
-
+		/*
+		  I don't want to create '<' '<=' and similar
+		  operators with 'double' argument because comparing
+		  Measurement and double makes sense in very few
+		  cases. One of them is comparing against zero, and
+		  for those limited cases we have three methods:
+		  is_zero(), is_positive() and is_negative().
+		*/
+		bool is_negative(void) const
+		{
+			if (this->valid) {
+				return this->value < 0;
+			} else {
+				return false;
+			}
+		}
+		bool is_positive(void) const
+		{
+			if (this->valid) {
+				return this->value > 0;
+			} else {
+				return false;
+			}
+		}
 
 		Measurement & operator=(const Measurement & rhs)
 		{

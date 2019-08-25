@@ -404,7 +404,7 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 		/* Note here the division is applied to each part, then added
 		   This is to avoid potential overflow issues with a 32 time_t for
 		   dates after midpoint of this Unix time on 2004/01/04. */
-		this->set_timestamp((tp_a.timestamp.get_value() / 2) + (tp_b.timestamp.get_value() / 2));
+		this->set_timestamp((tp_a.timestamp.get_ll_value() / 2) + (tp_b.timestamp.get_ll_value() / 2));
 	}
 
 	if (!std::isnan(tp_a.gps_speed) && !std::isnan(tp_b.gps_speed)) {
@@ -852,7 +852,7 @@ Time Track::get_duration(void) const
 		return result;
 	}
 
-	if (duration.get_value() < 0) {
+	if (duration.is_negative()) {
 		qDebug() << SG_PREFIX_W << "Negative duration: unsorted trackpoint timestamps?";
 		return result;
 	}
@@ -886,8 +886,8 @@ Speed Track::get_average_speed(void) const
 		}
 	}
 
-	if (duration.is_valid() && duration.get_value() > 0) {
-		result.set_value(std::abs(len / duration.get_value()));
+	if (duration.is_valid() && duration.get_ll_value() > 0) {
+		result.set_value(std::abs(len / duration.get_ll_value()));
 	}
 
 	return result;
@@ -922,7 +922,7 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			if (((*iter)->timestamp.get_value() - (*std::prev(iter))->timestamp.get_value()) < track_min_stop_length_seconds) {
+			if (((*iter)->timestamp.get_ll_value() - (*std::prev(iter))->timestamp.get_ll_value()) < track_min_stop_length_seconds) {
 				len += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
 				duration += Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
@@ -930,8 +930,8 @@ Speed Track::get_average_speed_moving(int track_min_stop_length_seconds) const
 		}
 	}
 
-	if (duration.is_valid() && duration.get_value() > 0) {
-		result.set_value(std::abs(len / duration.get_value()));
+	if (duration.is_valid() && duration.is_positive()) {
+		result.set_value(std::abs(len / duration.get_ll_value()));
 	}
 
 	return result;
@@ -956,7 +956,7 @@ sg_ret Track::calculate_max_speed(void)
 		    && !(*iter)->newsegment) {
 
 			const double speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
-				/ Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp).get_value();
+				/ Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp).get_ll_value();
 
 			if (speed > maxspeed) {
 				maxspeed = speed;
@@ -1010,7 +1010,7 @@ bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down)
 
 		for (; iter != this->trackpoints.end(); iter++) {
 			const Altitude diff = (*iter)->altitude - (*std::prev(iter))->altitude;
-			if (diff.get_value() > 0.0) {
+			if (diff.is_positive()) {
 				delta_up += diff;
 			} else {
 				delta_down += diff;
@@ -1110,82 +1110,102 @@ Trackpoint * Track::get_tp_by_max_speed() const
 		return NULL;
 	}
 
-	Trackpoint * max_speed_tp = NULL;
-	double maxspeed = 0.0;
-	double speed = 0.0;
+	Trackpoint * speed_max_tp = NULL;
+	Speed speed_max;
+	Speed speed;
+	bool initialized = false;
 
 	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
 		if ((*iter)->timestamp.is_valid()
 		    && (*std::prev(iter))->timestamp.is_valid()
 		    && !(*iter)->newsegment) {
 
-			speed = Coord::distance((*iter)->coord, (*std::prev(iter))->coord)
-				/ Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp).get_value();
+			const Distance distance = Distance(Coord::distance((*iter)->coord, (*std::prev(iter))->coord), DistanceUnit::Meters);
+			const Time time = Time::get_abs_diff((*iter)->timestamp, (*std::prev(iter))->timestamp);
 
-			if (speed > maxspeed) {
-				maxspeed = speed;
-				max_speed_tp = *iter;
+			if (sg_ret::ok != speed.make_speed(distance, time)) {
+				continue;
+			}
+
+			if (!initialized) {
+				speed_max = speed;
+				initialized = true;
+			} else {
+				if (speed > speed_max) {
+					speed_max = speed;
+					speed_max_tp = *iter;
+				}
 			}
 		}
 	}
 
-	if (!max_speed_tp) {
+	if (!speed_max_tp) {
 		return NULL;
 	}
 
-	return max_speed_tp;
+	return speed_max_tp;
 }
 
 
 
 
-Trackpoint * Track::get_tp_by_max_alt() const
+Trackpoint * Track::get_tp_with_highest_altitude(void) const
 {
 	if (this->trackpoints.empty()) {
 		return NULL;
 	}
 
 	Trackpoint * max_alt_tp = NULL;
-	Altitude max_alt(VIK_VAL_MAX_ALT, HeightUnit::Metres);
+	Altitude max_alt; /* Initially invalid. */
+	bool initialized = false;
 
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
-		if ((*iter)->altitude > max_alt) {
+		if (!(*iter)->altitude.is_valid()) {
+			continue;
+		}
+		if (!initialized) {
 			max_alt = (*iter)->altitude;
-			max_alt_tp = *iter;
+			initialized = true;
+		} else {
+			if ((*iter)->altitude > max_alt) {
+				max_alt = (*iter)->altitude;
+				max_alt_tp = *iter;
+			}
 		}
 	}
 
-	if (!max_alt_tp) {
-		return NULL;
-	}
-
-	return max_alt_tp;
+	return max_alt_tp; /* May be NULL. */
 }
 
 
 
 
-Trackpoint * Track::get_tp_by_min_alt() const
+Trackpoint * Track::get_tp_with_lowest_altitude(void) const
 {
 	if (this->trackpoints.empty()) {
 		return NULL;
 	}
 
 	Trackpoint * min_alt_tp = NULL;
-	Altitude min_alt(VIK_VAL_MIN_ALT, HeightUnit::Metres);
+	Altitude min_alt; /* Initially invalid. */
+	bool initialized = false;
 
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
-		if ((*iter)->altitude < min_alt) {
+		if (!(*iter)->altitude.is_valid()) {
+			continue;
+		}
+		if (!initialized) {
 			min_alt = (*iter)->altitude;
-			min_alt_tp = *iter;
+			initialized = true;
+		} else {
+			if ((*iter)->altitude < min_alt) {
+				min_alt = (*iter)->altitude;
+				min_alt_tp = *iter;
+			}
 		}
 	}
 
-	if (!min_alt_tp) {
-		return NULL;
-	}
-
-	return min_alt_tp;
+	return min_alt_tp; /* May be NULL. */
 }
 
 
@@ -1242,27 +1262,32 @@ bool Track::get_minmax_alt(Altitude & min_alt, Altitude & max_alt) const
 		return false;
 	}
 
-	auto iter = this->trackpoints.begin();
-	if (!(*iter)->altitude.is_valid()) {
-		return false;
-	}
-	iter++;
 
+	/* Initialize as invalid. */
+	min_alt = Altitude();
+	max_alt = Altitude();
+	bool initialized = false;
 
-	min_alt = Altitude(VIK_VAL_MIN_ALT, HeightUnit::Metres);
-	max_alt = Altitude(VIK_VAL_MAX_ALT, HeightUnit::Metres);
-
-	for (; iter != this->trackpoints.end(); iter++) {
-		const Altitude & tmp_alt = (*iter)->altitude;
-		if (tmp_alt > max_alt) {
-			max_alt = tmp_alt;
+	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
+		if (!(*iter)->altitude.is_valid()) {
+			continue;
 		}
 
-		if (tmp_alt < min_alt) {
-			min_alt = tmp_alt;
+		if (!initialized) {
+			min_alt = (*iter)->altitude;
+			max_alt = (*iter)->altitude;
+			initialized = true;
+		} else {
+			const Altitude & tmp_alt = (*iter)->altitude;
+			if (tmp_alt > max_alt) {
+				max_alt = tmp_alt;
+			}
+			if (tmp_alt < min_alt) {
+				min_alt = tmp_alt;
+			}
 		}
 	}
-	return true;
+	return initialized;
 }
 
 
@@ -1404,8 +1429,7 @@ sg_ret Track::anonymize_times(void)
 		return sg_ret::err_algo;
 	}
 	/* This will be a negative value */
-	qint64 century_secs = century.toMSecsSinceEpoch() / MSECS_PER_SEC; /* TODO_MAYBE: use toSecsSinceEpoch() when new version of QT library becomes more available. */
-
+	const qint64 century_secs = century.toMSecsSinceEpoch() / MSECS_PER_SEC; /* TODO_MAYBE: use toSecsSinceEpoch() when new version of QT library becomes more available. */
 
 	time_t offset = 0;
 	for (auto iter = this->trackpoints.begin(); iter != this->trackpoints.end(); iter++) {
@@ -1413,7 +1437,7 @@ sg_ret Track::anonymize_times(void)
 		if (tp->timestamp.is_valid()) {
 			/* Calculate an offset in time using the first available timestamp. */
 			if (offset == 0) {
-				offset = tp->timestamp.get_value() - century_secs;
+				offset = tp->timestamp.get_ll_value() - century_secs;
 			}
 
 			/* Apply this offset to shift all timestamps towards 1901 & hence anonymising the time.
@@ -1447,28 +1471,30 @@ void Track::interpolate_times()
 		return;
 	}
 
-	time_t tsfirst = tp->timestamp.get_value();
+	const Time first_timestamp = tp->timestamp;
 
 	/* Find the end of the track and the last timestamp. */
 	iter = prev(this->trackpoints.end());
 
 	tp = *iter;
 	if (tp->timestamp.is_valid()) {
-		time_t tsdiff = tp->timestamp.get_value() - tsfirst;
+		const Time timestamp_diff = tp->timestamp - first_timestamp;
 
-		double tr_dist = this->get_length_value_including_gaps();
-		double cur_dist = 0.0;
+		double full_track_length = this->get_length_value_including_gaps();
+		double current_distance = 0.0;
 
-		if (tr_dist > 0) {
+		if (full_track_length > 0) {
 			iter = this->trackpoints.begin();
 			/* Apply the calculated timestamp to all trackpoints except the first and last ones. */
 			while (std::next(iter) != this->trackpoints.end()
 			       && std::next(std::next(iter)) != this->trackpoints.end()) {
 
 				iter++;
-				cur_dist += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
+				current_distance += Coord::distance((*iter)->coord, (*std::prev(iter))->coord);
 
-				(*iter)->timestamp.set_value((cur_dist / tr_dist) * tsdiff + tsfirst);
+				const double relative = current_distance / full_track_length;
+
+				(*iter)->timestamp = first_timestamp + timestamp_diff * relative;
 			}
 			/* Some points may now have the same time so remove them. */
 			this->remove_same_time_points();
@@ -1535,7 +1561,7 @@ void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, co
 {
 	/* If was really clever could try and weigh interpolation according to the distance between trackpoints somehow.
 	   Instead a simple average interpolation for the number of points given. */
-	double change = (elev2 - elev1).get_value() / (points + 1);
+	double change = (elev2 - elev1).get_ll_value() / (points + 1);
 	int count = 1;
 	auto iter = start;
 	while (iter != stop) {
@@ -2289,7 +2315,7 @@ void Track::goto_max_speed_cb()
 
 void Track::goto_max_alt_cb(void)
 {
-	Trackpoint * tp = this->get_tp_by_max_alt();
+	Trackpoint * tp = this->get_tp_with_highest_altitude();
 	if (!tp) {
 		return;
 	}
@@ -2302,7 +2328,7 @@ void Track::goto_max_alt_cb(void)
 
 void Track::goto_min_alt_cb(void)
 {
-	Trackpoint * tp = this->get_tp_by_min_alt();
+	Trackpoint * tp = this->get_tp_with_lowest_altitude();
 	if (!tp) {
 		return;
 	}
@@ -2440,7 +2466,7 @@ QString Track::get_tooltip(void) const
 		/* %x     The preferred date representation for the current locale without the time. */
 		timestamp_string = this->get_tp_first()->timestamp.strftime_utc("%x: ");
 		const Time duration = this->get_duration(true);
-		if (duration.is_valid() && duration.get_value() > 0) {
+		if (duration.is_valid() && duration.is_positive()) {
 			duration_string = QObject::tr("- %1").arg(duration.to_duration_string());
 		}
 	}
@@ -2581,7 +2607,7 @@ void Track::open_astro_cb(void)
 		const LatLon lat_lon = tp->coord.get_lat_lon();
 		const QString lat_str = Astro::convert_to_dms(lat_lon.lat);
 		const QString lon_str = Astro::convert_to_dms(lat_lon.lon);
-		const QString alt_str = QString("%1").arg((int)round(tp->altitude.get_value()));
+		const QString alt_str = QString("%1").arg((int)round(tp->altitude.get_ll_value()));
 		Astro::open(date_buf, time_buf, lat_str, lon_str, alt_str, parent_layer->get_window());
 	} else {
 		Dialog::info(tr("This track has no date information."), ThisApp::get_main_window());
@@ -2737,7 +2763,7 @@ void Track::convert_track_route_cb(void)
 
 		const Speed avg = this->get_average_speed();
 		if (this->get_segment_count() > 1
-		    || (avg.is_valid() && avg.get_value() > 0.0)) {
+		    || (avg.is_valid() && avg.is_positive())) {
 
 			if (!Dialog::yes_or_no(tr("Converting a track to a route removes extra track data such as segments, timestamps, etc...\n"
 						  "Do you want to continue?"), ThisApp::get_main_window())) {
@@ -3230,7 +3256,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 				const Time trk_duration = this->get_duration();
 				item = new QStandardItem();
 				item->setToolTip(tooltip);
-				variant = QVariant::fromValue(trk_duration.get_value());
+				variant = QVariant::fromValue(trk_duration.get_ll_value());
 				item->setData(variant, Qt::DisplayRole);
 				item->setEditable(false); /* This dialog is not a good place to edit track duration. */
 				items << item;
