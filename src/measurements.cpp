@@ -352,18 +352,11 @@ QString Time::get_time_string(Qt::DateFormat format) const
 
 
 
-#if 0
-QString Gradient::to_string(double value, int precision)
+template<>
+bool Gradient::ll_value_is_valid(Gradient_ll value)
 {
-	QString result;
-	if (std::isnan(value)) {
-		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
-	} else {
-		result = QObject::tr("%1%").arg(value, 0, 'f', SG_PRECISION_GRADIENT);
-	}
-	return result;
+	return !std::isnan(value);
 }
-#endif
 
 
 
@@ -371,7 +364,33 @@ QString Gradient::to_string(double value, int precision)
 template<>
 GradientUnit Gradient::get_user_unit(void)
 {
-	return GradientUnit::Percents; /* TODO: get this from Preferences. */
+	return GradientUnit::Percents;
+}
+
+
+
+
+template<>
+QString Gradient::ll_value_to_string(Gradient_ll value, GradientUnit unit)
+{
+	QString result;
+	if (!Gradient::ll_value_is_valid(value)) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	const int precision = SG_PRECISION_GRADIENT;
+	switch (unit) {
+	case GradientUnit::Percents:
+		result = QObject::tr("%1%").arg(value, 0, 'f', precision);
+		break;
+	default:
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid gradient unit" << (int) unit;
+		break;
+	}
+
+	return result;
 }
 
 
@@ -451,14 +470,6 @@ const QString Gradient::value_to_string_for_file(int precision) const
 
 
 template<>
-bool Gradient::ll_value_is_valid(Gradient_ll value)
-{
-	return !std::isnan(value);
-}
-
-
-
-template<>
 bool Gradient::is_zero(void) const
 {
 	const double epsilon = 0.0000001;
@@ -471,6 +482,15 @@ bool Gradient::is_zero(void) const
 
 
 
+
+
+
+
+template<>
+bool Speed::ll_value_is_valid(Speed_ll value)
+{
+	return !std::isnan(value);
+}
 
 
 
@@ -528,38 +548,35 @@ QString Speed::to_string(void) const
 
 
 template<>
-QString Speed::to_string(Speed_ll value)
+QString Speed::ll_value_to_string(Speed_ll value, SpeedUnit unit)
 {
-	int precision = SG_PRECISION_SPEED; /* TODO: make it an argument with default value. */
-
-	if (std::isnan(value)) {
-		return SG_MEASUREMENT_INVALID_VALUE_STRING;
+	QString result;
+	if (!Speed::ll_value_is_valid(value)) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
 	}
 
-	const SpeedUnit speed_unit = Preferences::get_unit_speed();
-
-	QString buffer;
-
-	switch (speed_unit) {
+	const int precision = SG_PRECISION_SPEED;
+	switch (unit) {
 	case SpeedUnit::KilometresPerHour:
-		buffer = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
+		result = QObject::tr("%1 km/h").arg(value, 0, 'f', precision);
 		break;
 	case SpeedUnit::MilesPerHour:
-		buffer = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
+		result = QObject::tr("%1 mph").arg(value, 0, 'f', precision);
 		break;
 	case SpeedUnit::MetresPerSecond:
-		buffer = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
+		result = QObject::tr("%1 m/s").arg(value, 0, 'f', precision);
 		break;
 	case SpeedUnit::Knots:
-		buffer = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
+		result = QObject::tr("%1 knots").arg(value, 0, 'f', precision);
 		break;
 	default:
-		buffer = SG_MEASUREMENT_INVALID_VALUE_STRING;
-		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) speed_unit;
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) unit;
 		break;
 	}
 
-	return buffer;
+	return result;
 }
 
 
@@ -569,60 +586,34 @@ template<>
 QString Speed::to_nice_string(void) const
 {
 	QString result;
-	qDebug() << SG_PREFIX_E << "Not implemented yet";
-	/* TODO: implement. */
-	return result;
-}
+	if (!this->valid) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
 
-
-
-
-template<>
-Speed Speed::convert_to_unit(SpeedUnit target_unit) const
-{
-	Speed output;
-	output.unit = target_unit;
-
-	 /* TODO_LATER: implement missing calculations. */
+	/* TODO_LATER: implement magnitude-dependent calculations for
+	   the values to be "nice". */
 
 	switch (this->unit) {
 	case SpeedUnit::KilometresPerHour:
-		qDebug() << SG_PREFIX_E << "Unhandled case";
+		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (this->value), 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MilesPerHour:
-		qDebug() << SG_PREFIX_E << "Unhandled case";
+		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (this->value), 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MetresPerSecond:
-		switch (target_unit) {
-		case SpeedUnit::KilometresPerHour:
-			output.value = VIK_MPS_TO_KPH(this->value);
-			break;
-		case SpeedUnit::MilesPerHour:
-			output.value = VIK_MPS_TO_MPH(this->value);
-			break;
-		case SpeedUnit::MetresPerSecond:
-			output.value = this->value;
-			break;
-		case SpeedUnit::Knots:
-			output.value = VIK_MPS_TO_KNOTS(this->value);
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid target speed unit" << (int) target_unit;
-			break;
-		}
-
+		result = QObject::tr("%1 m/s").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
+		break;
 	case SpeedUnit::Knots:
-		qDebug() << SG_PREFIX_E << "Unhandled case";
+		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (this->value), 0, 'f', SG_PRECISION_SPEED);
 		break;
 	default:
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) this->unit;
 		break;
 	}
 
-	output.valid = !std::isnan(this->value);
-
-	return output;
-
+	return result;
 }
 
 
@@ -631,27 +622,57 @@ Speed Speed::convert_to_unit(SpeedUnit target_unit) const
 template<>
 Speed_ll Speed::convert_to_unit(Speed_ll value, SpeedUnit from, SpeedUnit to)
 {
-	assert (SpeedUnit::MetresPerSecond == from);
+	Speed_ll result = NAN;
 
-	switch (to) {
+	switch (from) {
 	case SpeedUnit::KilometresPerHour:
-		value = VIK_MPS_TO_KPH(value);
+		qDebug() << SG_PREFIX_E << "Unhandled case";
 		break;
 	case SpeedUnit::MilesPerHour:
-		value = VIK_MPS_TO_MPH(value);
+		qDebug() << SG_PREFIX_E << "Unhandled case";
 		break;
 	case SpeedUnit::MetresPerSecond:
-		/* Already in m/s so nothing to do. */
+		switch (to) {
+		case SpeedUnit::KilometresPerHour:
+			result = VIK_MPS_TO_KPH(value);
+			break;
+		case SpeedUnit::MilesPerHour:
+			result = VIK_MPS_TO_MPH(value);
+			break;
+		case SpeedUnit::MetresPerSecond:
+			result = value;
+			break;
+		case SpeedUnit::Knots:
+			result = VIK_MPS_TO_KNOTS(value);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target speed unit" << (int) to;
+			break;
+		}
 		break;
 	case SpeedUnit::Knots:
-		value = VIK_MPS_TO_KNOTS(value);
+		qDebug() << SG_PREFIX_E << "Unhandled case";
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Invalid 'to' unit" << (int) to;
+		qDebug() << SG_PREFIX_E << "Invalid source speed unit" << (int) from;
 		break;
 	}
 
 	return value;
+}
+
+
+
+
+
+template<>
+Speed Speed::convert_to_unit(SpeedUnit target_unit) const
+{
+	Speed result;
+	result.value = Speed::convert_to_unit(this->value, this->unit, target_unit);
+	result.unit = target_unit;
+	result.valid = Speed::ll_value_is_valid(result.value);
+	return result;
 }
 
 
@@ -687,11 +708,29 @@ QString Speed::get_unit_string(SpeedUnit speed_unit)
 
 
 template<>
-QString Speed::get_unit_full_string(SpeedUnit speed_unit)
+QString Speed::get_unit_full_string(SpeedUnit unit)
 {
 	QString result;
-	qDebug() << SG_PREFIX_E << "Not implemented yet";
-	/* TODO: implement. */
+
+	switch (unit) {
+	case SpeedUnit::KilometresPerHour:
+		result = QObject::tr("kilometers per hour");
+		break;
+	case SpeedUnit::MilesPerHour:
+		result = QObject::tr("miles per hour");
+		break;
+	case SpeedUnit::MetresPerSecond:
+		result = QObject::tr("meters per second");
+		break;
+	case SpeedUnit::Knots:
+		result = QObject::tr("knots");
+		break;
+	default:
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid speed unit" << (int) unit;
+		break;
+	}
+
 	return result;
 }
 
@@ -722,15 +761,6 @@ const QString Speed::value_to_string_for_file(int precision) const
 		result = SGUtils::double_to_c(this->value, precision);
 	}
 	return result;
-}
-
-
-
-
-template<>
-bool Speed::ll_value_is_valid(Speed_ll value)
-{
-	return !std::isnan(value);
 }
 
 
@@ -798,6 +828,15 @@ sg_ret Speed::make_speed(const Measurement<HeightUnit, Altitude_ll> & altitude, 
 
 
 template<>
+bool Altitude::ll_value_is_valid(Altitude_ll value)
+{
+	return !std::isnan(value);
+}
+
+
+
+
+template<>
 HeightUnit Altitude::get_internal_unit(void)
 {
 	return SG_MEASUREMENT_INTERNAL_UNIT_HEIGHT;
@@ -843,10 +882,75 @@ QString Altitude::to_string(void) const
 
 
 template<>
-QString Altitude::to_string(Altitude_ll value)
+QString Altitude::ll_value_to_string(Altitude_ll value, HeightUnit unit)
 {
-	/* TODO */
 	QString result;
+	if (!Altitude::ll_value_is_valid(value)) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	const int precision = SG_PRECISION_ALTITUDE;
+	switch (unit) {
+	case HeightUnit::Metres:
+		result = QObject::tr("%1 m").arg(value, 0, 'f', precision);
+		break;
+	case HeightUnit::Feet:
+		result = QObject::tr("%1 ft").arg(value, 0, 'f', precision);
+		break;
+	default:
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid altitude unit" << (int) unit;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+Altitude_ll Altitude::convert_to_unit(Altitude_ll value, HeightUnit from, HeightUnit to)
+{
+	Altitude_ll result = NAN;
+
+	switch (from) {
+	case HeightUnit::Metres:
+		switch (to) {
+		case HeightUnit::Metres: /* No need to convert. */
+			result = value;
+			break;
+		case HeightUnit::Feet:
+			result = VIK_METERS_TO_FEET(value);
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) to;
+			result = NAN;
+			break;
+		}
+		break;
+	case HeightUnit::Feet:
+		switch (to) {
+		case HeightUnit::Metres:
+			result = VIK_FEET_TO_METERS(value);
+			break;
+		case HeightUnit::Feet:
+			/* No need to convert. */
+			result = value;
+			break;
+		default:
+			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) to;
+			result = NAN;
+			break;
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Invalid source altitude unit" << (int) from;
+		result = NAN;
+		break;
+	}
+
 	return result;
 }
 
@@ -856,61 +960,11 @@ QString Altitude::to_string(Altitude_ll value)
 template<>
 Altitude Altitude::convert_to_unit(HeightUnit target_unit) const
 {
-	Altitude output;
-	output.unit = target_unit;
-
-	switch (this->unit) {
-	case HeightUnit::Metres:
-		switch (target_unit) {
-		case HeightUnit::Metres: /* No need to convert. */
-			output.value = this->value;
-			break;
-		case HeightUnit::Feet:
-			output.value = VIK_METERS_TO_FEET(this->value);
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_unit;
-			output.value = NAN;
-			break;
-		}
-		break;
-	case HeightUnit::Feet:
-		switch (target_unit) {
-		case HeightUnit::Metres:
-			output.value = VIK_FEET_TO_METERS(this->value);
-			break;
-		case HeightUnit::Feet:
-			/* No need to convert. */
-			output.value = this->value;
-			break;
-		default:
-			qDebug() << SG_PREFIX_E << "Invalid target altitude unit" << (int) target_unit;
-			output.value = NAN;
-			break;
-		}
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Invalid source altitude unit" << (int) this->unit;
-		output.value = NAN;
-		break;
-	}
-
-	output.valid = !std::isnan(output.value);
-
-	return output;
-
-}
-
-
-
-
-template<>
-Altitude_ll Altitude::convert_to_unit(Altitude_ll value, HeightUnit from, HeightUnit to)
-{
-	qDebug() << SG_PREFIX_E << "Not implemented yet";
-	/* TODO: implement. */
-	Altitude_ll val = 0;
-	return val;
+	Altitude result;
+	result.value = Altitude::convert_to_unit(this->value, this->unit, target_unit);
+	result.unit = target_unit;
+	result.valid = Altitude::ll_value_is_valid(result.value);
+	return result;
 }
 
 
@@ -991,7 +1045,8 @@ QString Altitude::to_nice_string(void) const
 		return result;
 	}
 
-	/* TODO_LATER: implement magnitude-dependent recalculations. */
+	/* TODO_LATER: implement magnitude-dependent calculations for
+	   the values to be "nice". */
 
 	switch (this->unit) {
 	case HeightUnit::Metres:
@@ -1035,15 +1090,6 @@ const QString Altitude::value_to_string_for_file(int precision) const
 		result = SGUtils::double_to_c(this->value, precision);
 	}
 	return result;
-}
-
-
-
-
-template<>
-bool Altitude::ll_value_is_valid(Altitude_ll value)
-{
-	return !std::isnan(value);
 }
 
 
@@ -1341,7 +1387,7 @@ Distance_ll Distance::convert_to_unit(Distance_ll input, DistanceUnit from, Dist
 		break;
 
 	default:
-		qDebug() << SG_PREFIX_E << "Unhandled distance unit" << (int) from;
+		qDebug() << SG_PREFIX_E << "Unhandled source distance unit" << (int) from;
 		break;
 	}
 
@@ -1357,7 +1403,7 @@ Distance Distance::convert_to_unit(DistanceUnit target_distance_unit) const
 	Distance result;
 	result.value = Distance::convert_to_unit(this->value, this->unit, target_distance_unit);
 	result.unit = target_distance_unit;
-	result.valid = Distance::ll_value_is_valid(result.value) && result.value >= 0.0;
+	result.valid = Distance::ll_value_is_valid(result.value);
 	return result;
 }
 
@@ -1368,19 +1414,14 @@ template<>
 QString Distance::to_nice_string(void) const
 {
 	QString result;
-
 	if (!this->valid) {
 		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
 		return result;
 	}
 
-	/*
-	  TODO_LATER: Since the result should be "nice"
-	  string, we should check if this->value is above or
-	  below some threshold and either leave the value and
-	  unit string, or convert the value (e.g. multiply by
-	  1000.0) and use sub-unit string (e.g. meters).
-	*/
+	/* TODO_LATER: implement magnitude-dependent calculations for
+	   the values to be "nice". */
+
 	switch (this->unit) {
 	case DistanceUnit::Kilometres:
 		result = QObject::tr("%1 km").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
@@ -1403,13 +1444,49 @@ QString Distance::to_nice_string(void) const
 		break;
 
 	case DistanceUnit::Yards:
-		/* TODO: implement. */
-		qDebug() << SG_PREFIX_E << "Conversion to yards not implemented yet";
+		result = QObject::tr("%1 yd").arg(this->value, 0, 'f', SG_PRECISION_DISTANCE);
 		break;
 
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) this->unit;
 		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		break;
+	}
+
+	return result;
+}
+
+
+
+
+template<>
+QString Distance::ll_value_to_string(Distance_ll value, DistanceUnit unit)
+{
+	QString result;
+	if (std::isnan(value)) {
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		return result;
+	}
+
+	switch (unit) {
+	case DistanceUnit::Kilometres:
+		result = QObject::tr("%1 km").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::Miles:
+		result = QObject::tr("%1 miles").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::NauticalMiles:
+		result = QObject::tr("%1 NM").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::Meters:
+		result = QObject::tr("%1 m").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	case DistanceUnit::Yards:
+		result = QObject::tr("%1 yd").arg(value, 0, 'f', SG_PRECISION_DISTANCE);
+		break;
+	default:
+		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
+		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) unit;
 		break;
 	}
 
@@ -1467,10 +1544,10 @@ QString Distance::get_unit_full_string(DistanceUnit distance_unit)
 		result = QObject::tr("kilometers");
 		break;
 	case DistanceUnit::Miles:
-		result = QObject::tr("miles)");
+		result = QObject::tr("miles");
 		break;
 	case DistanceUnit::NauticalMiles:
-		result = QObject::tr("nautical miles)");
+		result = QObject::tr("nautical miles");
 		break;
 	default:
 		qDebug() << SG_PREFIX_E << "Invalid distance unit" << (int) distance_unit;

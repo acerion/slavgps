@@ -378,7 +378,7 @@ namespace SlavGPS {
 		QString to_string(void) const;
 		QString to_string(int precision) const;
 
-		static QString to_string(Tll value);
+		static QString ll_value_to_string(Tll value, Tu unit);
 
 		/* Is this measurement so small that it can be treated as zero?
 
