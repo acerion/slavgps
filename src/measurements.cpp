@@ -524,16 +524,16 @@ QString Speed::to_string(void) const
 
 	switch (this->unit) {
 	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (this->value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 km/h").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (this->value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 mph").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MetresPerSecond:
 		result = QObject::tr("%1 m/s").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::Knots:
-		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (this->value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 knots").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	default:
 		result = SG_MEASUREMENT_INVALID_VALUE_STRING;
@@ -596,16 +596,16 @@ QString Speed::to_nice_string(void) const
 
 	switch (this->unit) {
 	case SpeedUnit::KilometresPerHour:
-		result = QObject::tr("%1 km/h").arg(VIK_MPS_TO_KPH (this->value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 km/h").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MilesPerHour:
-		result = QObject::tr("%1 mph").arg(VIK_MPS_TO_MPH (this->value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 mph").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::MetresPerSecond:
 		result = QObject::tr("%1 m/s").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	case SpeedUnit::Knots:
-		result = QObject::tr("%1 knots").arg(VIK_MPS_TO_KNOTS (this->value), 0, 'f', SG_PRECISION_SPEED);
+		result = QObject::tr("%1 knots").arg(this->value, 0, 'f', SG_PRECISION_SPEED);
 		break;
 	default:
 		result = SG_MEASUREMENT_INVALID_VALUE_STRING;

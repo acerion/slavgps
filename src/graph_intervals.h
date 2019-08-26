@@ -69,7 +69,9 @@ namespace SlavGPS {
 		   interval, may have different units. Let's fix
 		   this. */
 		for (auto iter = this->values.begin(); iter != this->values.end(); iter++) {
+			qDebug() << "II  " << __func__ << __LINE__ << (*iter);
 			iter->unit = min.unit;
+			qDebug() << "II  " << __func__ << __LINE__ << (*iter);
 		}
 
 		/* Search for index of nearest interval. */
@@ -93,6 +95,7 @@ namespace SlavGPS {
 			qDebug() << "NN  " << __func__ << "Interval value not found, returning last interval value" << this->values[index];
 		}
 
+		qDebug() << "II  " << __func__ << __LINE__ << "Returning interval" << this->values[index];
 		return this->values[index];
 	}
 
@@ -126,11 +129,11 @@ namespace SlavGPS {
 		last_multiple = interval * (n + 1);
 
 		qDebug() << "II   ProfileView" << __func__ << __LINE__
-			 << "min_visible =" << min_visible.value
-			 << ", max_visible =" << max_visible.value
-			 << ", interval =" << interval.value
-			 << ", first multiple =" << first_multiple.value
-			 << ", last multiple =" << last_multiple.value;
+			 << "min visible =" << min_visible
+			 << ", max visible =" << max_visible
+			 << ", interval =" << interval
+			 << ", first multiple =" << first_multiple
+			 << ", last multiple =" << last_multiple;
 
 #if 0
 

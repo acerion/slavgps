@@ -564,6 +564,15 @@ namespace SlavGPS {
 		this->y_visible_max = this->track_data_to_draw.y_max + y_data_range * y_margin;
 		this->y_visible_range_uu = this->y_visible_max - this->y_visible_min;
 
+		qDebug() << "II   ProfileView" << __func__ << __LINE__ << this->get_title()
+			 << "y min =" << this->track_data_to_draw.y_min
+			 << "y max =" << this->track_data_to_draw.y_max
+			 << "y data range =" << y_data_range
+			 << "y data range * y_margin =" << (y_data_range * y_margin)
+			 << "y visible min =" << this->y_visible_min
+			 << "y visible max =" << this->y_visible_max
+			 << "y visible range uu =" << this->y_visible_range_uu;
+
 		return sg_ret::ok;
 	}
 
@@ -1106,8 +1115,8 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::generate_initial_track_data_wrapper(Tr
 template <typename Tx, typename Tx_ll, typename Ty, typename Ty_ll>
 void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 {
-	if (this->y_visible_range_uu.value < 0.000001) {
-		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Zero visible range:" << this->y_visible_range_uu.value;
+	if (this->y_visible_range_uu.is_zero()) {
+		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Zero visible range:" << this->y_visible_range_uu;
 		return;
 	}
 
@@ -1120,11 +1129,7 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 	const int bottommost_px  = this->graph_2d->central_get_bottommost_pixel();
 
 
-	if (this->y_visible_range_uu.value < 0.0000001) {
-		qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Zero visible range:" << this->x_visible_min << this->x_visible_max;
-		return;
-	}
-	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.value;
+	const double y_pixels_per_unit = (1.0 * n_rows) / this->y_visible_range_uu.get_ll_value();
 
 	Ty first_multiple_uu(0.0, Ty::get_user_unit());
 	Ty last_multiple_uu(0.0, Ty::get_user_unit());
@@ -1132,11 +1137,11 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 
 #if 1   /* Debug. */
 	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      graph:" << this->get_title();
-	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      visible range =" << this->y_visible_range_uu.value;
+	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      visible range =" << this->y_visible_range_uu;
 	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      n rows =" << n_rows << ", n cols =" << n_columns;
 	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      leftmost px =" << leftmost_px << ", bottommost px =" << bottommost_px;
-	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      y visible min =" << this->y_visible_min.value << ", y visible max =" << this->y_visible_max.value;
-	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      interval =" << this->y_interval.value << ", first_multiple_uu =" << first_multiple_uu.value << ", last_multiple_uu = " << last_multiple_uu.value;
+	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      y visible min =" << this->y_visible_min << ", y visible max =" << this->y_visible_max;
+	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      interval =" << this->y_interval << ", first_multiple_uu =" << first_multiple_uu << ", last_multiple_uu = " << last_multiple_uu;
 	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      y pixels per unit =" << y_pixels_per_unit;
 #endif
 
@@ -1147,7 +1152,7 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_y_grid(void)
 	   will get forever loop. */
 	for (Ty y_value_uu = first_multiple_uu; y_value_uu <= last_multiple_uu; y_value_uu += this->y_interval) {
 		/* 'y_px' is in "beginning in top-left corner" coordinate system. */
-		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu.value - this->y_visible_min.value);
+		const int y_px = bottommost_px - y_pixels_per_unit * (y_value_uu - this->y_visible_min).get_ll_value();
 
 		if (y_px >= topmost_px && y_px <= bottommost_px) {
 			qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      value (inside) =" << y_value_uu << ", y_px =" << y_px;
@@ -1206,7 +1211,7 @@ void ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_x_grid(void)
 	qDebug() << "DD   ProfileView" << __func__ << __LINE__ << "      x pixels per unit =" << x_pixels_per_unit;
 #endif
 
-	for (Tx x_value_uu = first_multiple_uu; x_value_uu <= last_multiple_uu; x_value_uu += this->x_interval.value) {
+	for (Tx x_value_uu = first_multiple_uu; x_value_uu <= last_multiple_uu; x_value_uu += this->x_interval) {
 		/* 'x_px' is in "beginning in top-left corner" coordinate system. */
 		const int x_px = leftmost_px + (x_value_uu.value - this->x_visible_min.value) * x_pixels_per_unit;
 
