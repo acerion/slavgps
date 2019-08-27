@@ -214,6 +214,13 @@ namespace SlavGPS {
 			this->unit = new_unit;
 		}
 
+		Measurement(const Measurement & other)
+		{
+			this->value = other.value;
+			this->unit  = other.unit;
+			this->valid = other.valid;
+		}
+
 		static Tu get_user_unit(void);
 		static Tu get_internal_unit(void);
 

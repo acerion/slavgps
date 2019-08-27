@@ -121,11 +121,11 @@ void TpPropertiesDialog::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 
 
 /* Set timestamp of current trackpoint. */
-void TpPropertiesDialog::sync_timestamp_entry_to_current_tp_cb(time_t timestamp_value)
+void TpPropertiesDialog::sync_timestamp_entry_to_current_tp_cb(const Time & timestamp)
 {
-	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp_value;
+	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp;
 
-	this->set_timestamp_of_current_tp(Time(timestamp_value, Time::get_internal_unit()));
+	this->set_timestamp_of_current_tp(timestamp);
 }
 
 
@@ -419,7 +419,7 @@ TpPropertiesDialog::TpPropertiesDialog(QWidget * parent_widget) : QDialog(parent
 
 	this->timestamp_widget = new TimestampWidget();
 	this->grid->addWidget(this->timestamp_widget, 5, 0, 2, 2);
-	connect(this->timestamp_widget, SIGNAL (value_is_set(time_t)), this, SLOT (sync_timestamp_entry_to_current_tp_cb(time_t)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_tp_cb(const Time &)));
 	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_tp_cb(void)));
 
 

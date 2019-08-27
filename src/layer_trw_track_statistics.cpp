@@ -45,7 +45,22 @@ using namespace SlavGPS;
 
 TrackStatistics::TrackStatistics()
 {
-	this->duration = Time(0, Time::get_internal_unit()); /* Set some valid initial value. */
+	 /* Set some valid initial value. */
+
+	this->min_alt = Altitude(0, Altitude::get_internal_unit());
+	this->max_alt = Altitude(0, Altitude::get_internal_unit());
+
+	this->elev_gain = Altitude(0, Altitude::get_internal_unit());;
+	this->elev_loss = Altitude(0, Altitude::get_internal_unit());
+
+	this->length = Distance(0, Distance::get_internal_unit());
+	this->length_with_gaps = Distance(0, Distance::get_internal_unit());
+
+	this->max_speed = Speed(0, Speed::get_internal_unit());
+
+	this->duration = Time(0, Time::get_internal_unit());
+	this->start_time = Time(0, Time::get_internal_unit());
+	this->end_time = Time(0, Time::get_internal_unit());
 }
 
 
@@ -67,6 +82,7 @@ void TrackStatistics::add_track(Track * trk)
 	this->length      += trk->get_length();
 	this->length_with_gaps += trk->get_length_including_gaps();
 
+	trk->calculate_max_speed(); /* First calculate the speed, then get it. */
 	const Speed incoming_track_max_speed = trk->get_max_speed();
 	if (incoming_track_max_speed.is_valid() && incoming_track_max_speed > this->max_speed) {
 		this->max_speed = incoming_track_max_speed;

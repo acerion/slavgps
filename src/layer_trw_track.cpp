@@ -401,10 +401,10 @@ Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, CoordMode
 	this->altitude = (tp_a.altitude + tp_b.altitude) / 2;
 
 	if (tp_a.timestamp.is_valid() && tp_b.timestamp.is_valid()) {
-		/* Note here the division is applied to each part, then added
+		/* Note here the division is applied to each part, then added.
 		   This is to avoid potential overflow issues with a 32 time_t for
 		   dates after midpoint of this Unix time on 2004/01/04. */
-		this->set_timestamp((tp_a.timestamp.get_ll_value() / 2) + (tp_b.timestamp.get_ll_value() / 2));
+		this->set_timestamp((tp_a.timestamp / 2) + (tp_b.timestamp / 2));
 	}
 
 	if (!std::isnan(tp_a.gps_speed) && !std::isnan(tp_b.gps_speed)) {
@@ -886,7 +886,7 @@ Speed Track::get_average_speed(void) const
 		}
 	}
 
-	if (duration.is_valid() && duration.get_ll_value() > 0) {
+	if (duration.is_valid() && duration.is_positive()) {
 		result.make_speed(distance, duration);
 	}
 
@@ -994,30 +994,40 @@ void Track::change_coord_mode(CoordMode dest_mode)
 
 bool Track::get_total_elevation_gain(Altitude & delta_up, Altitude & delta_down) const
 {
-	if (this->trackpoints.empty()) {
+	auto size = this->trackpoints.size();
+	if (size <= 1) {
+		/* Checking for more existence of more than one
+		   trackpoint, because the loop below will start from
+		   a second element of ::trackpoints. */
+		qDebug() << SG_PREFIX_N << "Can't get elevation gain for track of size" << size;
 		return false;
 	}
 
-	auto iter = this->trackpoints.begin();
+	delta_up = Altitude(0, Altitude::get_internal_unit());
+	delta_down = Altitude(0, Altitude::get_internal_unit());
 
-	if (!(*iter)->altitude.is_valid()) {
+	size_t n = 0;
+	for (auto iter = std::next(this->trackpoints.begin()); iter != this->trackpoints.end(); iter++) {
+
+		if (!(*iter)->altitude.is_valid() || !(*std::prev(iter))->altitude.is_valid()) {
+			continue;
+		}
+
+		const Altitude diff = (*iter)->altitude - (*std::prev(iter))->altitude;
+		if (diff.is_positive()) {
+			delta_up += diff;
+		} else {
+			delta_down += diff;
+		}
+		n++;
+	}
+
+	if (0 == n) {
+		qDebug() << SG_PREFIX_N << "Zero valid elevation gains";
 		delta_up.invalidate();
 		delta_down.invalidate();
 		return false;
 	} else {
-		delta_up.set_ll_value(0);
-		delta_down.set_ll_value(0);
-
-		iter++;
-
-		for (; iter != this->trackpoints.end(); iter++) {
-			const Altitude diff = (*iter)->altitude - (*std::prev(iter))->altitude;
-			if (diff.is_positive()) {
-				delta_up += diff;
-			} else {
-				delta_down += diff;
-			}
-		}
 		return true;
 	}
 }

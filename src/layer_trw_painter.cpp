@@ -184,7 +184,7 @@ LayerTRWTrackGraphics SpeedColoring::get(const Trackpoint * tp1, const Trackpoin
 	if (!tp1->timestamp.is_valid() || !tp2->timestamp.is_valid()) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
-	if (average_speed.get_ll_value() <= 0) {
+	if (!average_speed.is_positive()) {
 		return LayerTRWTrackGraphics::NeutralPen;
 	}
 

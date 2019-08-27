@@ -176,7 +176,8 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 	/* Avg. Speed */
 	const bool valid = stats.duration.is_valid() && !stats.duration.is_zero();
-	const Speed avg_speed = Speed(valid ? stats.length.get_ll_value() / stats.duration.get_ll_value() : NAN, SpeedUnit::MetresPerSecond); /* Constructing speed value from values in basic units, therefore MetersPerSecond. */
+	Speed avg_speed;
+	avg_speed.make_speed(stats.length, stats.duration);
 	this->stats_table->get_value_label(TRWStatsRow::AverageSpeed)->setText(avg_speed.convert_to_unit(speed_unit).to_string());
 
 
@@ -209,7 +210,7 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 
 
 
-	/* Average. Elevation Gain/Loss */
+	/* Average Elevation Gain/Loss */
 	const Altitude avg_gain = stats.elev_gain / stats.count;
 	const Altitude avg_loss = stats.elev_loss / stats.count;
 	tmp_string = tr("%1 / %2")
@@ -218,22 +219,13 @@ void TRWStatsDialog::display_stats(TrackStatistics & stats)
 	this->stats_table->get_value_label(TRWStatsRow::AverageElevationDelta)->setText(tmp_string);
 
 
-
-	/* Total Duration. TODO: use proper method from Measurement class. */
-	int days    = (int) (stats.duration.get_ll_value() / (60 * 60 * 24));
-	int hours   = (int) floor((stats.duration.get_ll_value() - (days * 60 * 60 * 24)) / (60 * 60));
-	int minutes = (int) ((stats.duration.get_ll_value() - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
-	tmp_string = tr("%1:%2:%3 days:hrs:mins").arg(days).arg(hours, 2, 10, (QChar) '0').arg(minutes, 2, 10, (QChar) '0');
-	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(tmp_string);
+	/* Total Duration. */
+	this->stats_table->get_value_label(TRWStatsRow::TotalDuration)->setText(stats.duration.to_duration_string());
 
 
-
-	/* Average Duration.TODO: use proper method from Measurement class. */
-	int avg_dur = stats.duration.get_ll_value() / stats.count;
-	hours   = (int) floor(avg_dur / (60 * 60));
-	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
-	tmp_string = tr("%1:%2 hrs:mins").arg(hours).arg(minutes, 2, 10, (QChar) '0');
-	this->stats_table->get_value_label(TRWStatsRow::AverageDuration)->setText(tmp_string);
+	/* Average Duration. */
+	const Time average_duration = stats.duration / stats.count;
+	this->stats_table->get_value_label(TRWStatsRow::AverageDuration)->setText(average_duration.to_duration_string());
 }
 
 

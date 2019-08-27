@@ -89,7 +89,7 @@ namespace SlavGPS {
 	private slots:
 		void sync_latlon_entry_to_current_tp_cb(void);
 		void sync_altitude_entry_to_current_tp_cb(void);
-		void sync_timestamp_entry_to_current_tp_cb(time_t new_timestamp);
+		void sync_timestamp_entry_to_current_tp_cb(const Time & timestamp);
 		void sync_empty_timestamp_entry_to_current_tp_cb(void);
 		bool sync_name_entry_to_current_tp_cb(const QString & new_name);
 

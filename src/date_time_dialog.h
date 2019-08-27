@@ -109,7 +109,7 @@ namespace SlavGPS {
 		Qt::DateFormat date_time_format = Qt::ISODate;
 
 	signals:
-		void value_is_set(time_t timestamp);
+		void value_is_set(const Time & timestamp);
 		void value_is_reset();
 	};
 

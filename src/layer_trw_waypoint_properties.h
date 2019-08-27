@@ -88,7 +88,7 @@ namespace SlavGPS {
 		QComboBox * symbol_combo = NULL; /* Reference. */
 
 	public slots:
-		void set_timestamp_cb(time_t timestamp);
+		void set_timestamp_cb(const Time & timestamp);
 		void clear_timestamp_cb(void);
 		void symbol_entry_changed_cb(int index);
 	};

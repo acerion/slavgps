@@ -56,7 +56,7 @@ namespace SlavGPS {
 		void clear(void);
 
 	signals:
-		void value_is_set(time_t new_value);
+		void value_is_set(const Time & timestamp);
 		void value_is_reset(void);
 
 	private slots:

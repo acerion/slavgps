@@ -205,7 +205,7 @@ void SGDateTimeButton::open_dialog_cb(void) /* Slot. */
 		qDebug() << SG_PREFIX_I << "Timestamp selected in dialog =" << this->timestamp;
 
 		qDebug() << SG_PREFIX_SIGNAL << "Will emit 'value_is_set' signal for timestamp =" << this->timestamp;
-		emit this->value_is_set(this->timestamp.get_ll_value());
+		emit this->value_is_set(this->timestamp);
 	} else {
 		qDebug() << SG_PREFIX_I << "Returning zero timestamp";
 		this->timestamp = Time(0, Time::get_internal_unit());

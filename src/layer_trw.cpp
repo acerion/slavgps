@@ -1372,8 +1372,6 @@ Distance LayerTRW::get_routes_tooltip_data(void) const
 
 /*
   Get information about layer's tracks
-
-  TODO: merge with ::get_routes_tooltip_data(). Simply skip checking timestamps for routes.
 */
 LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 {

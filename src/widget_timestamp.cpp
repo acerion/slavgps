@@ -70,7 +70,7 @@ TimestampWidget::TimestampWidget(QWidget * parent)
 	this->timestamp_button = new SGDateTimeButton(this);
 	this->grid->addWidget(new QLabel(tr("Formatted Time:")), 1, 0);
 	this->grid->addWidget(this->timestamp_button, 1, 1);
-	connect(this->timestamp_button, SIGNAL (value_is_set(time_t)), this, SLOT (on_timestamp_button_value_set_cb(void)));
+	connect(this->timestamp_button, SIGNAL (value_is_set(const Time &)), this, SLOT (on_timestamp_button_value_set_cb(void)));
 	connect(this->timestamp_button, SIGNAL (value_is_reset(void)), this, SLOT (on_timestamp_button_value_reset_cb(void)));
 }
 
@@ -111,12 +111,13 @@ Time TimestampWidget::get_timestamp(void) const
 void TimestampWidget::on_timestamp_entry_value_set_cb(void)
 {
 	const time_t new_value = (time_t) this->timestamp_entry->value();
-	qDebug() << SG_PREFIX_SLOT << "New value of timestamp =" << new_value;
+	const Time new_timestamp = Time(new_value, Time::get_internal_unit());
+	qDebug() << SG_PREFIX_SLOT << "New value of timestamp =" << new_timestamp;
 
 	qDebug() << SG_PREFIX_SIGNAL << "Timestamp value in entry field changed to" << new_value << ", emitting signal 'TimestampWidget::value_is_set()";
-	emit this->value_is_set(new_value);
+	emit this->value_is_set(new_timestamp);
 
-	this->timestamp_button->set_label(Time(new_value, Time::get_internal_unit()), this->coord);
+	this->timestamp_button->set_label(new_timestamp, this->coord);
 }
 
 

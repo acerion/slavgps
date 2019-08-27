@@ -150,7 +150,7 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 		   use the time zone to generate the label. */
 		dialog.date_time_button->set_coord(wp->coord);
 	}
-	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(time_t)), &dialog, SLOT (set_timestamp_cb(time_t)));
+	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(const Time &)), &dialog, SLOT (set_timestamp_cb(const Time &)));
 	QObject::connect(dialog.date_time_button, SIGNAL (value_is_reset(void)), &dialog, SLOT (clear_timestamp_cb(void)));
 
 	dialog.symbol_combo = (QComboBox *) dialog.get_widget(wp_param_specs[SG_WP_PARAM_SYMBOL]);
@@ -267,9 +267,9 @@ PropertiesDialogWaypoint::PropertiesDialogWaypoint(Waypoint * wp_, QString const
 
 
 
-void PropertiesDialogWaypoint::set_timestamp_cb(time_t timestamp)
+void PropertiesDialogWaypoint::set_timestamp_cb(const Time & timestamp)
 {
-	this->date_time_button->set_label(Time(timestamp, Time::get_internal_unit()), this->wp->coord);
+	this->date_time_button->set_label(timestamp, this->wp->coord);
 }
 
 
