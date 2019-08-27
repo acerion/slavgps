@@ -958,7 +958,7 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_additional_indicators(Track * trk
 
 	if (this->show_gps_speed_cb && this->show_gps_speed_cb->checkState()) {
 		/* Ensure some kind of max speed when not set. */
-		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().get_ll_value() < 0.01) {
+		if (!trk->get_max_speed().is_valid() || trk->get_max_speed().is_zero()) {
 			trk->calculate_max_speed();
 		}
 
@@ -984,7 +984,12 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_gps_speeds(Track * trk)
 	const QColor & speed_color = this->gps_speed_pen.color();
 
 	const Speed max_speed = trk->get_max_speed();
-	qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Max speed is" << max_speed.get_ll_value();
+	qDebug() << "II   ProfileView" << __func__ << __LINE__ << "Max speed is" << max_speed;
+
+	if (max_speed.is_zero()) {
+		qDebug() << "NN   ProfileView" << __func__ << __LINE__ << "Not drawing gps speeds because reference speed is zero";
+		return sg_ret::ok;
+	}
 
 	const double speed_max = 1.1 * max_speed.get_ll_value();
 
@@ -1033,8 +1038,12 @@ sg_ret ProfileView<Tx, Tx_ll, Ty, Ty_ll>::draw_graph_without_crosshairs(Track * 
 
 	if (this->graph_2d->x_domain == GisViewportDomain::TimeDomain) {
 		const Time duration = trk->get_duration(true);
-		if (!duration.is_valid() || duration.get_ll_value() <= 0) {
-			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "return 1";
+		if (!duration.is_valid()) {
+			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Invalid duration";
+			return sg_ret::err;
+		}
+		if (!duration.is_positive()) {
+			qDebug() << "EE   ProfileView" << __func__ << __LINE__ << "Duration zero or negative:" << duration;
 			return sg_ret::err;
 		}
 	}

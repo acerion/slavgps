@@ -486,6 +486,8 @@ namespace SlavGPS {
 		/* Structure to hold multiple track information for a layer. */
 		class TracksTooltipData {
 		public:
+			TracksTooltipData();
+
 			Distance length;
 			Time start_time;
 			Time end_time;

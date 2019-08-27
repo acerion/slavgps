@@ -147,6 +147,7 @@ void TreeView::apply_tree_item_timestamp(const TreeItem * tree_item)
 
 void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 {
+	qDebug() << SG_PREFIX_I << "Called for tree item" << tree_item->name;
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
 		/* "tree_item->index" points at the top tree item. */
@@ -155,7 +156,9 @@ void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 	}
 	/* TODO: apply the tooltip to all visible columns? */
 	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
-	ch->setToolTip(tree_item->get_tooltip());
+	const QString tooltip = tree_item->get_tooltip();
+	qDebug() << SG_PREFIX_I << "Generated tooltip" << tooltip << "for tree item" << tree_item->name;
+	ch->setToolTip(tooltip);
 }
 
 

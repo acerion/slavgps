@@ -1372,6 +1372,8 @@ Distance LayerTRW::get_routes_tooltip_data(void) const
 
 /*
   Get information about layer's tracks
+
+  TODO: merge with ::get_routes_tooltip_data(). Simply skip checking timestamps for routes.
 */
 LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 {
@@ -1400,7 +1402,7 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 			/* Keep track of total time.
 			   There maybe gaps within a track (eg segments)
 			   but this should be generally good enough for a simple indicator. */
-			result.duration = result.duration + (ts_last - ts_first);
+			result.duration += (ts_last - ts_first);
 		}
 	}
 
@@ -1415,6 +1417,13 @@ LayerTRW::TracksTooltipData LayerTRW::get_tracks_tooltip_data(void) const
 */
 QString LayerTRW::get_tooltip(void) const
 {
+	QString result = QObject::tr("Number of tracks: %1\n"
+				     "Number of waypoints: %2\n"
+				     "Number of routes: %3")
+		.arg(this->tracks.size())
+		.arg(this->waypoints.size())
+		.arg(this->routes.size());
+
 	QString tracks_info;
 	if (!this->tracks.empty()) {
 		TracksTooltipData ttd = this->get_tracks_tooltip_data();
@@ -1425,25 +1434,16 @@ QString LayerTRW::get_tooltip(void) const
 		QDateTime date_end;
 		date_end.setTime_t(ttd.end_time.get_ll_value());
 
-		const QString duration_string = QObject::tr("%1 to %2\n").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
+		result += QObject::tr("\n\n"
+				      "Tracks time span: %1 to %2").arg(date_start.toString(Qt::SystemLocaleLongDate)).arg(date_end.toString(Qt::SystemLocaleLongDate));
 
-		if (ttd.length.is_valid()) {
-			/* Prepare info string dependent on distance units. */
-			const QString distance_string = ttd.length.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
-
-			/* Use timing information if available. */
-			if (!ttd.duration.is_zero()) {
-				/* TODO: improve presentation of duration, don't use these calculations. */
-				tracks_info = QObject::tr("\n%1Total Length %2 in %3 %4")
-					.arg(duration_string)
-					.arg(distance_string)
-					.arg((int)(ttd.duration.get_ll_value()/3600))
-					.arg((int) round(ttd.duration.get_ll_value() / 60.0) % 60, 2, 10, (QChar) '0');
-			} else {
-				tracks_info = QObject::tr("\n%1Total Length %2")
-					.arg(duration_string)
-					.arg(distance_string);
-			}
+		if (ttd.duration.is_valid() && !ttd.duration.is_zero()) {
+			result += QObject::tr("\n"
+					      "Tracks total duration: %1").arg(ttd.duration.to_duration_string());
+		}
+		if (ttd.length.is_valid() && !ttd.length.is_zero()) {
+			result += QObject::tr("\n"
+					      "Tracks total length: %1").arg(ttd.length.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 		}
 	}
 
@@ -1454,20 +1454,10 @@ QString LayerTRW::get_tooltip(void) const
 		if (rlength.is_valid()) {
 			/* Prepare track info dependent on distance units. */
 			const QString distance_string = rlength.convert_to_unit(Preferences::get_unit_distance()).to_nice_string();
-			routes_info = QObject::tr("\nTotal route length %1").arg(distance_string);
+			result += QObject::tr("\n\n"
+					      "Routes total length: %1").arg(distance_string);
 		}
 	}
-
-
-	/* Put together all the elements to form compact tooltip text. */
-	const QString result = QObject::tr("Tracks: %1 - Waypoints: %2 - Routes: %3"
-					   "%4"
-					   "%5")
-		.arg(this->tracks.size())
-		.arg(this->waypoints.size())
-		.arg(this->routes.size())
-		.arg(tracks_info)
-		.arg(routes_info);
 
 	return result;
 }
@@ -4056,4 +4046,15 @@ void LayerTRW::child_tree_item_changed_cb(const QString & child_tree_item_name) 
 		qDebug() << SG_PREFIX_SIGNAL << "Layer" << this->name << "emits 'changed' signal";
 		emit this->tree_item_changed(this->get_name());
 	}
+}
+
+
+
+
+LayerTRW::TracksTooltipData::TracksTooltipData()
+{
+	/* Track uses internal distance and time units, so this also uses internal unit. */
+	this->length = Distance(0, Distance::get_internal_unit());
+	this->duration = Time(0, Time::get_internal_unit());
+
 }
