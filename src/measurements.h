@@ -209,36 +209,40 @@ namespace SlavGPS {
 		Measurement() {}
 		Measurement(Tll new_value, Tu new_unit) : Measurement()
 		{
-			this->value = new_value;
-			this->valid = Measurement::ll_value_is_valid(new_value);
-			this->unit = new_unit;
+			this->m_ll_value = new_value;
+			this->m_valid = Measurement::ll_value_is_valid(new_value);
+			this->m_unit = new_unit;
 		}
 
 		Measurement(const Measurement & other)
 		{
-			this->value = other.value;
-			this->unit  = other.unit;
-			this->valid = other.valid;
+			this->m_ll_value = other.m_ll_value;
+			this->m_unit  = other.m_unit;
+			this->m_valid = other.m_valid;
 		}
 
 		static Tu get_user_unit(void);
 		static Tu get_internal_unit(void);
 
+		/* Get/set current unit of measurement. */
+		Tu get_unit(void) const { return this->m_unit; }
+		void set_unit(Tu unit) { this->m_unit = unit; }
+
 		static bool ll_value_is_valid(Tll value);
-		bool is_valid(void) const { return this->valid; }
+		bool is_valid(void) const { return this->m_valid; }
 		void invalidate(void)
 		{
-			this->valid = false;
-			this->value = 0;
+			this->m_valid = false;
+			this->m_ll_value = 0;
 		}
 
 
 		/* Set value, don't change unit. */
 		void set_ll_value(Tll new_value)
 		{
-			this->value = new_value;
-			this->valid = Measurement<Tu, Tll>::ll_value_is_valid(new_value);
-			/* this->unit = ; ... Don't change unit. */
+			this->m_ll_value = new_value;
+			this->m_valid = Measurement<Tu, Tll>::ll_value_is_valid(new_value);
+			/* this->m_unit = ; ... Don't change unit. */
 		}
 
 		/*
@@ -247,18 +251,18 @@ namespace SlavGPS {
 		  measurement is invalid before calling this
 		  getter.
 		*/
-		Tll get_ll_value(void) const { return this->value; }
+		Tll get_ll_value(void) const { return this->m_ll_value; }
 
 
 		static Measurement get_abs_diff(const Measurement & m1, const Measurement & m2)
 		{
 			Measurement result;
-			if (m1.unit != m2.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Arguments have different units:" << (int) m1.unit << (int) m2.unit;
+			if (m1.m_unit != m2.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Arguments have different units:" << (int) m1.m_unit << (int) m2.m_unit;
 			} else {
-				result.value = std::abs(m1.value - m2.value);
-				result.valid = Measurement::ll_value_is_valid(result.value);
-				result.unit = m1.unit;
+				result.m_ll_value = std::abs(m1.m_ll_value - m2.m_ll_value);
+				result.m_valid = Measurement::ll_value_is_valid(result.m_ll_value);
+				result.m_unit = m1.m_unit;
 			}
 			return result;
 		}
@@ -290,10 +294,10 @@ namespace SlavGPS {
 
 		sg_ret convert_to_unit_in_place(Tu new_unit)
 		{
-			this->value = Measurement::convert_to_unit(this->value, this->unit, new_unit);
-			this->valid = Measurement::ll_value_is_valid(this->value);
-			this->unit = new_unit;
-			return this->valid ? sg_ret::ok : sg_ret::err;
+			this->m_ll_value = Measurement::convert_to_unit(this->m_ll_value, this->m_unit, new_unit);
+			this->m_valid = Measurement::ll_value_is_valid(this->m_ll_value);
+			this->m_unit = new_unit;
+			return this->m_valid ? sg_ret::ok : sg_ret::err;
 		}
 
 		/* Get string representing speed unit in abbreviated
@@ -310,9 +314,6 @@ namespace SlavGPS {
 		   presented as "100 m". */
 		QString to_nice_string(void) const;
 
-		/* Get current unit of measurement. */
-		Tu get_unit(void) const { return this->unit; }
-
 		/*
 		  Set value from a string that contains value only
 		  (does not contain any token representing unit).
@@ -324,7 +325,7 @@ namespace SlavGPS {
 		{
 			if (NULL == str) {
 				qDebug() << "EE    " << __FUNCTION__ << "Attempting to set invalid value of altitude from NULL string";
-				this->valid = false;
+				this->m_valid = false;
 				return sg_ret::err_arg;
 			} else {
 				return this->set_value_from_string(QString(str));
@@ -332,11 +333,11 @@ namespace SlavGPS {
 		}
 		sg_ret set_value_from_string(const QString & str)
 		{
-			this->value = c_to_double(str);
-			this->valid = !std::isnan(this->value);
-			this->unit = Measurement<Tu, Tll>::get_internal_unit();
+			this->m_ll_value = c_to_double(str);
+			this->m_valid = !std::isnan(this->m_ll_value);
+			this->m_unit = Measurement<Tu, Tll>::get_internal_unit();
 
-			return this->valid ? sg_ret::ok : sg_ret::err;
+			return this->m_valid ? sg_ret::ok : sg_ret::err;
 		}
 
 
@@ -404,16 +405,16 @@ namespace SlavGPS {
 		*/
 		bool is_negative(void) const
 		{
-			if (this->valid) {
-				return this->value < 0;
+			if (this->m_valid) {
+				return this->m_ll_value < 0;
 			} else {
 				return false;
 			}
 		}
 		bool is_positive(void) const
 		{
-			if (this->valid) {
-				return this->value > 0;
+			if (this->m_valid) {
+				return this->m_ll_value > 0;
 			} else {
 				return false;
 			}
@@ -425,9 +426,9 @@ namespace SlavGPS {
 				return *this;
 			}
 
-			this->value = rhs.value;
-			this->valid = rhs.valid;
-			this->unit = rhs.unit;
+			this->m_ll_value = rhs.m_ll_value;
+			this->m_valid = rhs.m_valid;
+			this->m_unit = rhs.m_unit;
 
 			return *this;
 		}
@@ -440,16 +441,16 @@ namespace SlavGPS {
 		Measurement operator+(const Measurement & rhs) const
 		{
 			Measurement result;
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid lhs";
 				return result;
 			}
-			if (!rhs.valid) {
+			if (!rhs.m_valid) {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid rhs";
 				return result;
 			}
-			if (this->unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
+			if (this->m_unit != rhs.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
 				return result;
 			}
 
@@ -462,16 +463,16 @@ namespace SlavGPS {
 		Measurement operator-(const Measurement & rhs) const
 		{
 			Measurement result;
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid lhs";
 				return result;
 			}
-			if (!rhs.valid) {
+			if (!rhs.m_valid) {
 				qDebug() << "WW     " << __FUNCTION__ << "Operating on invalid rhs";
 				return result;
 			}
-			if (this->unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
+			if (this->m_unit != rhs.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
 				return result;
 			}
 
@@ -483,48 +484,48 @@ namespace SlavGPS {
 
 		Measurement & operator+=(const Measurement & rhs)
 		{
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
-			if (!rhs.valid) {
+			if (!rhs.m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 				return *this;
 			}
-			if (this->unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
+			if (this->m_unit != rhs.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
 				return *this;
 			}
 
-			this->value += rhs.value;
-			this->valid = !std::isnan(this->value);
+			this->m_ll_value += rhs.m_ll_value;
+			this->m_valid = !std::isnan(this->m_ll_value);
 			return *this;
 		}
 
 
 		Measurement & operator-=(const Measurement & rhs)
 		{
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
-			if (!rhs.valid) {
+			if (!rhs.m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 				return *this;
 			}
-			if (this->unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
+			if (this->m_unit != rhs.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
 				return *this;
 			}
 
-			this->value -= rhs.value;
-			this->valid = !std::isnan(this->value);
+			this->m_ll_value -= rhs.m_ll_value;
+			this->m_valid = !std::isnan(this->m_ll_value);
 			return *this;
 		}
 
 		Measurement & operator+=(double rhs)
 		{
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
@@ -533,14 +534,14 @@ namespace SlavGPS {
 				return *this;
 			}
 
-			this->value += rhs;
-			this->valid = !std::isnan(this->value);
+			this->m_ll_value += rhs;
+			this->m_valid = !std::isnan(this->m_ll_value);
 			return *this;
 		}
 
 		Measurement & operator-=(double rhs)
 		{
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
@@ -549,8 +550,8 @@ namespace SlavGPS {
 				return *this;
 			}
 
-			this->value -= rhs;
-			this->valid = !std::isnan(this->value);
+			this->m_ll_value -= rhs;
+			this->m_valid = !std::isnan(this->m_ll_value);
 			return *this;
 		}
 
@@ -559,7 +560,7 @@ namespace SlavGPS {
 
 		Measurement & operator*=(double rhs)
 		{
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
@@ -568,14 +569,14 @@ namespace SlavGPS {
 				return *this;
 			}
 
-			this->value *= rhs;
-			this->valid = !std::isnan(this->value);
+			this->m_ll_value *= rhs;
+			this->m_valid = !std::isnan(this->m_ll_value);
 			return *this;
 		}
 
 		Measurement & operator/=(double rhs)
 		{
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'this' operand";
 				return *this;
 			}
@@ -588,8 +589,8 @@ namespace SlavGPS {
 				return *this;
 			}
 
-			this->value /= rhs;
-			this->valid = !std::isnan(this->value);
+			this->m_ll_value /= rhs;
+			this->m_valid = !std::isnan(this->m_ll_value);
 			return *this;
 		}
 
@@ -598,11 +599,11 @@ namespace SlavGPS {
 
 		friend bool operator<(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
 		{
-			if (lhs.unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.unit << (int) rhs.unit;
+			if (lhs.m_unit != rhs.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.m_unit << (int) rhs.m_unit;
 				return false;
 			}
-			return lhs.value < rhs.value;
+			return lhs.m_ll_value < rhs.m_ll_value;
 		}
 		friend bool operator>(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
 		{
@@ -628,16 +629,16 @@ namespace SlavGPS {
 		*/
 		friend double operator/(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs)
 		{
-			if (!lhs.valid) {
+			if (!lhs.m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'lhs' operand";
 				return NAN;
 			}
-			if (!rhs.valid) {
+			if (!rhs.m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Invalid 'rhs' operand";
 				return NAN;
 			}
-			if (lhs.unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.unit << (int) rhs.unit;
+			if (lhs.m_unit != rhs.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) lhs.m_unit << (int) rhs.m_unit;
 				return NAN;
 			}
 			if (rhs.is_zero()) {
@@ -645,25 +646,25 @@ namespace SlavGPS {
 				return NAN;
 			}
 
-			return (1.0 * lhs.value) / rhs.value;
+			return (1.0 * lhs.m_ll_value) / rhs.m_ll_value;
 		}
 
 		bool operator==(const Measurement & rhs) const
 		{
-			if (!this->valid) {
+			if (!this->m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Comparing invalid value";
 				return false;
 			}
-			if (!rhs.valid) {
+			if (!rhs.m_valid) {
 				qDebug() << "WW    " << __FUNCTION__ << "Comparing invalid value";
 				return false;
 			}
-			if (this->unit != rhs.unit) {
-				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->unit << (int) rhs.unit;
+			if (this->m_unit != rhs.m_unit) {
+				qDebug() << "EE    " << __FUNCTION__ << "Unit mismatch:" << (int) this->m_unit << (int) rhs.m_unit;
 				return false;
 			}
 
-			return this->value == rhs.value;
+			return this->m_ll_value == rhs.m_ll_value;
 		}
 
 		bool operator!=(const Measurement & rhs) const
@@ -671,11 +672,11 @@ namespace SlavGPS {
 			return !(*this == rhs);
 		}
 
-		Tll value = 0;
-		Tu unit = (Tu) 565; /* Invalid unit. */
+		Tll m_ll_value = 0;
 
 	private:
-		bool valid = false;
+		Tu m_unit = (Tu) 565; /* Invalid unit. */
+		bool m_valid = false;
 	};
 	template<typename Tu, typename Tll>
 	double operator/(const Measurement<Tu, Tll> & lhs, const Measurement<Tu, Tll> & rhs); /* For getting proportion of two values. */

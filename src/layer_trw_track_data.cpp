@@ -950,7 +950,7 @@ sg_ret TrackDataBase::apply_unit_conversion_distance(Distance_ll * values, Dista
 		return sg_ret::err;
 	}
 
-	const DistanceUnit from_unit = min.unit;
+	const DistanceUnit from_unit = min.get_unit();
 	if (from_unit != to_unit) {
 		for (int i = 0; i < this->n_points; i++) {
 			values[i] = Distance::convert_to_unit(values[i], from_unit, to_unit);
@@ -972,7 +972,7 @@ sg_ret TrackDataBase::apply_unit_conversion_speed(Speed_ll * values, Speed & min
 		qDebug() << "EE   " << __func__ << __LINE__ << "TrackData: Can't apply speed unit conversion, values vector is NULL";
 		return sg_ret::err;
 	}
-	const SpeedUnit from_unit = min.unit;
+	const SpeedUnit from_unit = min.get_unit();
 	if (from_unit != to_unit) {
 		for (int i = 0; i < this->n_points; i++) {
 			values[i] = Speed::convert_to_unit(values[i], from_unit, to_unit);
@@ -994,7 +994,7 @@ sg_ret TrackDataBase::apply_unit_conversion_height(Altitude_ll * values, Altitud
 		return sg_ret::err;
 	}
 
-	const HeightUnit from_unit = min.unit;
+	const HeightUnit from_unit = min.get_unit();
 	if (from_unit != to_unit) {
 		for (int i = 0; i < this->n_points; i++) {
 			values[i] = Altitude::convert_to_unit(values[i], from_unit, to_unit);

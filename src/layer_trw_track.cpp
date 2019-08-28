@@ -1454,7 +1454,7 @@ sg_ret Track::anonymize_times(void)
 
 			/* Apply this offset to shift all timestamps towards 1901 & hence anonymising the time.
 			   Note that the relative difference between timestamps is kept - thus calculating speeds will still work. */
-			tp->timestamp.value -= offset;
+			tp->timestamp.m_ll_value -= offset;
 		}
 	}
 
@@ -3256,7 +3256,7 @@ QList<QStandardItem *> Track::get_list_representation(const TreeItemViewFormat &
 				const Distance trk_dist = this->get_length().convert_to_unit(distance_unit);
 				item = new QStandardItem();
 				item->setToolTip(tooltip);
-				variant = QVariant::fromValue(trk_dist.value);
+				variant = QVariant::fromValue(trk_dist.get_ll_value());
 				item->setData(variant, Qt::DisplayRole);
 				item->setEditable(false); /* This dialog is not a good place to edit track length. */
 				items << item;

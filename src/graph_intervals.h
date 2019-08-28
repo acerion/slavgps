@@ -70,7 +70,7 @@ namespace SlavGPS {
 		   this. */
 		for (auto iter = this->values.begin(); iter != this->values.end(); iter++) {
 			qDebug() << "II  " << __func__ << __LINE__ << (*iter);
-			iter->unit = min.unit;
+			iter->set_unit(min.get_unit());
 			qDebug() << "II  " << __func__ << __LINE__ << (*iter);
 		}
 

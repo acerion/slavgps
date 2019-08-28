@@ -275,10 +275,10 @@ namespace SlavGPS {
 		if (track_data.valid) {
 			debug << "TrackData" << track_data.debug << "is valid"
 			      << qSetRealNumberPrecision(10)
-			      << ", x_min =" << track_data.x_min.value
-			      << ", x_max =" << track_data.x_max.value
-			      << ", y_min =" << track_data.y_min.value
-			      << ", y_max =" << track_data.y_max.value;
+			      << ", x_min =" << track_data.x_min
+			      << ", x_max =" << track_data.x_max
+			      << ", y_min =" << track_data.y_min
+			      << ", y_max =" << track_data.y_max;
 		} else {
 			debug << "TrackData" << track_data.debug << "is invalid";
 		}
