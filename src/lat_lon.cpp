@@ -45,12 +45,79 @@ using namespace SlavGPS;
 
 #define SG_MODULE "LatLon"
 
+#define SG_MEASUREMENT_DEGREE_CHAR      '\u00B0' /* "Degree" */
+#define SG_MEASUREMENT_DEGREE_STRING    "\u00B0" /* "Degree" */
+#define SG_MEASUREMENT_ARCMINUTE_CHAR   '\u2032' /* "Prime" */
+#define SG_MEASUREMENT_ARCMINUTE_STRING "\u2032" /* "Prime" */
+#define SG_MEASUREMENT_ARCSECOND_CHAR   '\u2033' /* "Double prime" */
+#define SG_MEASUREMENT_ARCSECOND_STRING "\u2033" /* "Double prime" */
+
+
+
+/*
+  N79.01234567890123456789°'
+
+  Length of "01234567890123456789" part is arbitrarily large, much
+  larger than SG_LATITUDE_PRECISION.
+*/
+#define DDD_LAT_STRING_REPRESENTATION_LENGTH				\
+	(sizeof ("N79.01234567890123456789") - 1) +			\
+	(sizeof (SG_MEASUREMENT_DEGREE_STRING) - 1)
+
+
+
+/*
+  E111.01234567890123456789°'
+
+  Length of "01234567890123456789" part is arbitrarily large, much
+  larger than SG_LONGITUDE_PRECISION.
+*/
+#define DDD_LON_STRING_REPRESENTATION_LENGTH				\
+	(sizeof ("E111.01234567890123456789") - 1) +			\
+	(sizeof (SG_MEASUREMENT_DEGREE_STRING) - 1)
+
+
+
+/*
+  N79° 31.01234567890123456789'
+
+  Length of "01234567890123456789" part is arbitrarily large, much
+  larger than SG_LATITUDE_PRECISION.
+
+  Notice a space that may be put after degrees for readability.
+*/
+#define DMM_LAT_STRING_REPRESENTATION_LENGTH				\
+	(sizeof ("N79") - 1) +						\
+	(sizeof (SG_MEASUREMENT_DEGREE_STRING) - 1) +			\
+	(sizeof (" ") - 1) +						\
+	(sizeof ("31.01234567890123456789") - 1) +			\
+	(sizeof (SG_MEASUREMENT_ARCMINUTE_STRING) - 1)
+
+
+
+/*
+  E111° 19.01234567890123456789'
+
+  Length of "01234567890123456789" part is arbitrarily large, much
+  larger than SG_LONGITUDE_PRECISION.
+
+  Notice a space that may be put after degrees for readability.
+*/
+#define DMM_LON_STRING_REPRESENTATION_LENGTH				\
+	(sizeof ("E111") - 1) +						\
+	(sizeof (SG_MEASUREMENT_DEGREE_STRING) - 1) +			\
+	(sizeof (" ") - 1) +						\
+	(sizeof ("19.01234567890123456789") - 1) +			\
+	(sizeof (SG_MEASUREMENT_ARCMINUTE_STRING) - 1)
+
+
 
 
 
 static void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char pos_c, char neg_c);
 static void convert_dec_to_dmm(char * str, size_t size, double dec, char pos_c, char neg_c);
 static void convert_dec_to_dms(char * str, size_t size, double dec, char pos_c, char neg_c);
+
 
 
 
@@ -75,7 +142,9 @@ void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char
 	const double val_d = std::fabs(dec);
 
 	/* Format. */
-	snprintf(str, size, "%c%.*f" DEGREE_SYMBOL, sign_c, precision, val_d);
+	snprintf(str, size, "%c%.*f%s", sign_c,
+		 precision,
+		 val_d, SG_MEASUREMENT_DEGREE_STRING);
 }
 
 
@@ -83,10 +152,9 @@ void convert_dec_to_ddd(char * str, size_t size, int precision, double dec, char
 
 void SlavGPS::convert_lat_dec_to_ddd(QString & lat_string, double lat)
 {
-	/* 1 sign character + 2 digits + 1 dot + N fractional digits + terminating NUL. */
-	char c_str[1 + 2 + 1 + SG_LATITUDE_PRECISION + 1] = { 0 };
-
+	char c_str[DDD_LAT_STRING_REPRESENTATION_LENGTH + 1] = { 0 };
 	convert_dec_to_ddd(c_str, sizeof (c_str), SG_LATITUDE_PRECISION, lat, 'N', 'S');
+	fprintf(stderr, "kamil '%s'\n", c_str);
 	lat_string = QString(c_str);
 }
 
@@ -95,9 +163,9 @@ void SlavGPS::convert_lat_dec_to_ddd(QString & lat_string, double lat)
 
 void SlavGPS::convert_lon_dec_to_ddd(QString & lon_string, double lon)
 {
-	/* 1 sign character + 3 digits + 1 dot + N fractional digits + terminating NUL. */
-	char c_str[1 + 3 + 1 + SG_LONGITUDE_PRECISION + 1] = { 0 };
+	char c_str[DDD_LON_STRING_REPRESENTATION_LENGTH + 1] = { 0 };
 	convert_dec_to_ddd(c_str, sizeof (c_str), SG_LONGITUDE_PRECISION, lon, 'E', 'W');
+	fprintf(stderr, "kamil '%s'\n", c_str);
 	lon_string = QString(c_str);
 }
 
@@ -128,7 +196,9 @@ void convert_dec_to_dmm(char * str, size_t size, double dec, char pos_c, char ne
 	double val_m = (tmp - val_d) * 60;
 
 	/* Format. */
-	snprintf(str, size, "%c%d" DEGREE_SYMBOL "%f'", sign_c, val_d, val_m);
+	snprintf(str, size, "%c%d%s"  "%f%s",
+		 sign_c, val_d, SG_MEASUREMENT_DEGREE_STRING,
+		 val_m, SG_MEASUREMENT_ARCMINUTE_STRING);
 }
 
 
@@ -136,7 +206,7 @@ void convert_dec_to_dmm(char * str, size_t size, double dec, char pos_c, char ne
 
 void SlavGPS::convert_lat_dec_to_dmm(QString & lat_string, double lat)
 {
-	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
+	char c_str[DMM_LAT_STRING_REPRESENTATION_LENGTH + 1] = { 0 };
 
 	convert_dec_to_dmm(c_str, sizeof (c_str), lat, 'N', 'S');
 	lat_string = QString(c_str);
@@ -147,7 +217,7 @@ void SlavGPS::convert_lat_dec_to_dmm(QString & lat_string, double lat)
 
 void SlavGPS::convert_lon_dec_to_dmm(QString & lon_string, double lon)
 {
-	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
+	char c_str[DMM_LON_STRING_REPRESENTATION_LENGTH] = { 0 };
 
 	convert_dec_to_dmm(c_str, sizeof (c_str), lon, 'E', 'W');
 	lon_string = QString(c_str);
@@ -184,7 +254,10 @@ static void convert_dec_to_dms(char * str, size_t size, double dec, char pos_c, 
 	double val_s = (tmp - val_m) * 60;
 
 	/* Format. */
-	snprintf(str, size, "%c%d" DEGREE_SYMBOL "%d'%.4f\"", sign_c, val_d, val_m, val_s);
+	snprintf(str, size, "%c%d%s"  "%d%s"  "%.4f%s",
+		 sign_c, val_d, SG_MEASUREMENT_DEGREE_STRING,
+		 val_m, SG_MEASUREMENT_ARCMINUTE_STRING,
+		 val_s, SG_MEASUREMENT_ARCSECOND_STRING);
 }
 
 
@@ -192,7 +265,7 @@ static void convert_dec_to_dms(char * str, size_t size, double dec, char pos_c, 
 
 void SlavGPS::convert_lat_dec_to_dms(QString & lat_string, double lat)
 {
-	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
+	char c_str[DMM_LAT_STRING_REPRESENTATION_LENGTH + 1] = { 0 };
 
 	convert_dec_to_dms(c_str, sizeof (c_str), lat, 'N', 'S');
 	lat_string = QString(c_str);
@@ -203,7 +276,7 @@ void SlavGPS::convert_lat_dec_to_dms(QString & lat_string, double lat)
 
 void SlavGPS::convert_lon_dec_to_dms(QString & lon_string, double lon)
 {
-	char c_str[64] = { 0 }; /* TODO_LATER: calculate the size of buffer in some reasonable way. */
+	char c_str[DMM_LON_STRING_REPRESENTATION_LENGTH + 1] = { 0 };
 
 	convert_dec_to_dms(c_str, sizeof (c_str), lon, 'E', 'W');
 	lon_string = QString(c_str);
