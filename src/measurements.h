@@ -114,9 +114,9 @@ namespace SlavGPS {
 
 	/* Coord display format. */
 	enum class DegreeFormat {
-		DDD,
-		DMM,
-		DMS,
+		DDD, /* "Decimal degrees", degrees as float: 74.244534 */
+		DMM, /* "Degrees and decimal minutes", degrees, followed by minutes as float: 19°33.2435' */
+		DMS, /* "Degrees, minutes and seconds", degrees, followed by minutes, followed by seconds as float: 30°17'44.3545' */
 		Raw,
 	};
 
