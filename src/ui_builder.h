@@ -159,6 +159,26 @@ namespace SlavGPS {
 
 
 
+	template <class T>
+	class MeasurementScale {
+	public:
+		MeasurementScale(const T & min, const T & max, const T & initial, const T & step, int n_digits) :
+			m_min(min), m_max(max), m_initial(initial), m_step(step), m_n_digits(n_digits) {};
+
+		bool is_in_range(const T & value) const { return (value >= this->m_min && value <= this->m_max); };
+
+		T m_min;
+		T m_max;
+
+		T m_initial;
+		T m_step;
+
+		int m_n_digits;
+	};
+
+
+
+
 	class SGLabelID {
 	public:
 		SGLabelID(const QString & label_, int id_) : label(label_), id(id_) {};

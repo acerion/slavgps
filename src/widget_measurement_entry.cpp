@@ -161,6 +161,32 @@ void MeasurementEntryWidget::set_tooltip(const QString & tooltip)
 
 
 
+MeasurementEntryWidget_2::MeasurementEntryWidget_2(QWidget * parent)
+{
+	this->setFrameStyle(QFrame::NoFrame);
+
+	this->hbox = new QHBoxLayout();;
+	this->hbox->setContentsMargins(0, 0, 0, 0);
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->hbox);
+
+
+	this->spin = new QDoubleSpinBox();
+
+
+	this->hbox->addWidget(this->spin);
+
+	/* Ensure the entry field has focus so we can start typing
+	   straight away.  User of this widget has to call
+	   ::setFocus() after putting the widget in layout. */
+	this->setFocusProxy(this->spin);
+}
+
+
+
+
 MeasurementDisplayWidget::MeasurementDisplayWidget(QWidget * parent)
 {
 	this->setFrameStyle(QFrame::StyledPanel | QFrame::Plain);

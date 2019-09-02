@@ -114,7 +114,7 @@ void TpPropertiesDialog::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 	/* Always store internally in metres. */
-	this->current_tp->altitude = this->alt->get_value_iu().get_altitude();
+	this->current_tp->altitude = this->altitude_entry->get_value_iu();
 }
 
 
@@ -196,7 +196,7 @@ void TpPropertiesDialog::reset_dialog_data(void)
 
 	this->lat_entry->setEnabled(false);
 	this->lon_entry->setEnabled(false);
-	this->alt->setEnabled(false);
+	this->altitude_entry->me_widget->setEnabled(false);
 	this->timestamp_widget->setEnabled(false);
 
 	/* Only keep Close button enabled. */
@@ -253,7 +253,7 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->lat_entry->setEnabled(true);
 	this->lon_entry->setEnabled(true);
-	this->alt->setEnabled(true);
+	this->altitude_entry->me_widget->setEnabled(true);
 	this->timestamp_widget->setEnabled(tp->timestamp.is_valid());
 
 	this->set_dialog_title(track->name);
@@ -271,7 +271,7 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 	this->lon_entry->setValue(lat_lon.lon);
 
 
-	this->alt->set_value_iu(tp->altitude);
+	this->altitude_entry->set_value_iu(tp->altitude);
 
 
 	this->update_timestamp_widget(tp);
@@ -404,11 +404,16 @@ TpPropertiesDialog::TpPropertiesDialog(QWidget * parent_widget) : QDialog(parent
 	connect(this->lon_entry, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_current_tp_cb(void)));
 
 
-	ParameterScale<double> scale_alti(SG_ALTITUDE_RANGE_MIN, SG_ALTITUDE_RANGE_MAX, SGVariant(0.0), 1, SG_ALTITUDE_PRECISION); /* TODO: use Measurement<Altitude>, not double. */
-	this->alt = new MeasurementEntryWidget(this->alt, &scale_alti, this);
+	const HeightUnit height_unit = Altitude::get_internal_unit();
+	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
+					      Altitude(SG_ALTITUDE_RANGE_MAX, height_unit),
+					      Altitude(0.0, height_unit),
+					      Altitude(1, height_unit),
+					      SG_ALTITUDE_PRECISION);
+	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(0, height_unit), &scale_alti, this);
 	this->grid->addWidget(new QLabel(tr("Altitude:")), 3, 0);
-	this->grid->addWidget(this->alt, 3, 1);
-	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_tp_cb(void)));
+	this->grid->addWidget(this->altitude_entry->me_widget, 3, 1);
+	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_tp_cb(void)));
 
 
 	this->course = new QLabel("", this);

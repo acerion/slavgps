@@ -124,7 +124,7 @@ namespace SlavGPS {
 		QLineEdit * trkpt_name = NULL;
 		LatEntryWidget * lat_entry = NULL;
 		LonEntryWidget * lon_entry = NULL;
-		MeasurementEntryWidget * alt = NULL;
+		MeasurementEntry_2<Altitude, HeightUnit> * altitude_entry = NULL;
 		QLabel * course = NULL;
 
 		TimestampWidget * timestamp_widget = NULL;
