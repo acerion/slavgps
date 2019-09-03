@@ -3230,9 +3230,11 @@ void LayerTRW::tpwin_update_dialog_data(Track * track)
 void LayerTRW::trackpoint_properties_show()
 {
 	if (!this->tpwin) {
-		this->tpwin = new TpPropertiesDialog(this->get_window());
+		this->tpwin = new TpPropertiesDialog(this->get_coord_mode(), this->get_window());
 		connect(this->tpwin, SIGNAL (accepted()), this, SLOT (on_tpwin_closed_cb())); /* "Close" button clicked in dialog. */
 		connect(this->tpwin, SIGNAL (trackpoint_coordinates_changed()), this, SLOT (on_tpwin_tp_coordinates_changed_cb()));
+	} else {
+		/* TODO: pass current coord mode to a dialog window that is not being created from scratch. */
 	}
 	this->tpwin->show();
 

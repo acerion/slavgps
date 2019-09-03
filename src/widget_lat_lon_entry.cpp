@@ -80,10 +80,22 @@ LatLonEntryWidget::LatLonEntryWidget(QWidget * parent)
 
 
 
-void LatLonEntryWidget::set_value(const LatLon & lat_lon)
+sg_ret LatLonEntryWidget::set_value(const LatLon & lat_lon, bool block_signal)
 {
+	if (block_signal) {
+		this->lat_entry->blockSignals(true);
+		this->lon_entry->blockSignals(true);
+	}
+
 	this->lat_entry->setValue(lat_lon.lat);
 	this->lon_entry->setValue(lat_lon.lon);
+
+	if (block_signal) {
+		this->lat_entry->blockSignals(false);
+		this->lon_entry->blockSignals(false);
+	}
+
+	return sg_ret::ok;
 }
 
 

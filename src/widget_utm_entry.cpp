@@ -107,14 +107,30 @@ UTMEntryWidget::UTMEntryWidget(QWidget * parent)
 
 
 
-void UTMEntryWidget::set_value(const UTM & utm)
+sg_ret UTMEntryWidget::set_value(const UTM & utm, bool block_signal)
 {
 	assert (UTM::is_band_letter(utm.get_band_letter()));
+
+	if (block_signal) {
+		this->easting_spin->blockSignals(true);
+		this->northing_spin->blockSignals(true);
+		this->zone_spin->blockSignals(true);
+		this->band_letter_combo->blockSignals(true);
+	}
 
 	this->easting_spin->setValue(utm.easting);
 	this->northing_spin->setValue(utm.northing);
 	this->zone_spin->setValue(utm.get_zone());
 	this->band_letter_combo->setCurrentText(QString(utm.get_band_as_letter()));
+
+	if (block_signal) {
+		this->easting_spin->blockSignals(false);
+		this->northing_spin->blockSignals(false);
+		this->zone_spin->blockSignals(false);
+		this->band_letter_combo->blockSignals(false);
+	}
+
+	return sg_ret::ok;
 }
 
 

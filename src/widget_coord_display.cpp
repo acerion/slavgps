@@ -67,3 +67,99 @@ void CoordDisplayWidget::set_value(const Coord & coord)
 	this->lat_lon_label->setText(coord.get_lat_lon().to_string());
 	this->utm_label->setText(coord.get_utm().to_string());
 }
+
+
+
+
+CoordEntryWidget::CoordEntryWidget(CoordMode coord_mode, QWidget * parent)
+{
+	this->vbox = new QVBoxLayout();
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+
+	switch (coord_mode) {
+	case CoordMode::LatLon:
+		this->lat_lon_entry = new LatLonEntryWidget(parent);
+		break;
+	case CoordMode::UTM:
+		this->utm_entry = new UTMEntryWidget(parent);
+		break;
+	default:
+		/* Let's handle this safely by using LatLon as fallback. */
+		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) coord_mode;
+		this->lat_lon_entry = new LatLonEntryWidget(parent);
+		break;
+	}
+
+	if (this->lat_lon_entry) {
+		this->vbox->addWidget(this->lat_lon_entry);
+		connect(this->lat_lon_entry, SIGNAL (value_changed(void)), this, SLOT (value_changed_cb(void)));
+	} else if (this->utm_entry) {
+		this->vbox->addWidget(this->utm_entry);
+		connect(this->utm_entry, SIGNAL (value_changed(void)), this, SLOT (value_changed_cb(void)));
+	} else {
+		qDebug() << SG_PREFIX_E << "Both widgets are NULL";
+	}
+
+	this->vbox->setContentsMargins(0, 0, 0, 0);
+}
+
+
+
+
+sg_ret CoordEntryWidget::set_value(const Coord & coord, bool block_signal)
+{
+	switch (coord.get_coord_mode()) {
+	case CoordMode::LatLon:
+		if (this->lat_lon_entry) {
+			return this->lat_lon_entry->set_value(coord.get_lat_lon(), block_signal);
+		} else {
+			qDebug() << SG_PREFIX_E << "LatLon entry widget is NULL";
+			return sg_ret::err;
+		}
+		break;
+	case CoordMode::UTM:
+		if (this->utm_entry) {
+			return this->utm_entry->set_value(coord.get_utm(), block_signal);
+		} else {
+			qDebug() << SG_PREFIX_E << "UTM entry widget is NULL";
+			return sg_ret::err;
+		}
+		break;
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) coord.get_coord_mode();
+		return sg_ret::err;
+	}
+}
+
+
+
+
+Coord CoordEntryWidget::get_value(void) const
+{
+	Coord result;
+
+	if (this->lat_lon_entry) {
+		result = Coord(this->lat_lon_entry->get_value(), CoordMode::LatLon);
+		qDebug() << SG_PREFIX_I << "Returning value from LatLon entry:" << result;
+	} else if (this->utm_entry) {
+		result = Coord(this->utm_entry->get_value(), CoordMode::UTM);
+		qDebug() << SG_PREFIX_I << "Returning value from UTM entry:" << result;
+	} else {
+		qDebug() << SG_PREFIX_E << "Both widgets are NULL";
+	}
+
+	return result;
+}
+
+
+
+
+void CoordEntryWidget::value_changed_cb(void)
+{
+	qDebug() << SG_PREFIX_SIGNAL << "Will now emit 'value changed' signal after change in LatLon or UTM entry widget";
+	emit this->value_changed();
+}

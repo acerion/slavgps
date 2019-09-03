@@ -46,7 +46,7 @@
 
 #include "widget_timestamp.h"
 #include "widget_measurement_entry.h"
-#include "widget_lat_lon_entry.h"
+#include "widget_coord_display.h"
 #include "layer_trw_track.h"
 
 
@@ -66,7 +66,7 @@ namespace SlavGPS {
 	class TpPropertiesDialog : public QDialog {
 		Q_OBJECT
 	public:
-		TpPropertiesDialog(QWidget * parent = NULL);
+		TpPropertiesDialog(CoordMode coord_mode, QWidget * parent = NULL);
 		~TpPropertiesDialog();
 
 		void set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route);
@@ -87,7 +87,7 @@ namespace SlavGPS {
 		void clicked_cb(int response);
 
 	private slots:
-		void sync_latlon_entry_to_current_tp_cb(void);
+		void sync_coord_entry_to_current_tp_cb(void);
 		void sync_altitude_entry_to_current_tp_cb(void);
 		void sync_timestamp_entry_to_current_tp_cb(const Time & timestamp);
 		void sync_empty_timestamp_entry_to_current_tp_cb(void);
@@ -122,8 +122,7 @@ namespace SlavGPS {
 		QVBoxLayout * vbox = NULL;
 
 		QLineEdit * trkpt_name = NULL;
-		LatEntryWidget * lat_entry = NULL;
-		LonEntryWidget * lon_entry = NULL;
+		CoordEntryWidget * coord_entry = NULL;
 		MeasurementEntry_2<Altitude, HeightUnit> * altitude_entry = NULL;
 		QLabel * course = NULL;
 

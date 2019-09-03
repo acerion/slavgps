@@ -80,6 +80,8 @@ Waypoint::Waypoint()
 	this->type_id = "sg.trw.waypoint";
 
 	this->has_properties_dialog = true;
+
+	this->menu_operation_ids = (MenuOperation) (MenuOperationCut | MenuOperationCopy | MenuOperationDelete);
 }
 
 

@@ -69,7 +69,16 @@ namespace SlavGPS {
 	public:
 		LatLonEntryWidget(QWidget * parent = NULL);
 
-		void set_value(const LatLon & lat_lon);
+		/**
+		   @param block_signal: in normal conditions the
+		   underlying widget will emit signal when a value is
+		   set. This parameter set to true may block emitting
+		   the signal when value is set. E.g. when widget is
+		   shown first time and its initial value is set, we
+		   don't want to emit signal.
+		*/
+		sg_ret set_value(const LatLon & lat_lon, bool block_signal = false);
+
 		LatLon get_value(void) const;
 
 		void set_text(const QString & latitude_label, const QString & latitude_tooltip, const QString & longitude_label, const QString & longitude_tooltip);

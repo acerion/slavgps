@@ -72,7 +72,7 @@ void TpPropertiesDialog::update_timestamp_widget(Trackpoint * tp)
 
 
 
-void TpPropertiesDialog::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
+void TpPropertiesDialog::sync_coord_entry_to_current_tp_cb(void) /* Slot. */
 {
 	if (!this->current_tp) {
 		return;
@@ -81,10 +81,9 @@ void TpPropertiesDialog::sync_latlon_entry_to_current_tp_cb(void) /* Slot. */
 		return;
 	}
 
+	//// this->current_tp->coord.get_coord_mode()
 
-	const Coord new_coord(LatLon(this->lat_entry->value(), this->lon_entry->value()), this->current_tp->coord.get_coord_mode());
-
-
+	const Coord new_coord = this->coord_entry->get_value();
 	const bool redraw_track = Coord::distance(this->current_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
 	this->current_tp->coord = new_coord;
 
@@ -194,8 +193,7 @@ void TpPropertiesDialog::reset_dialog_data(void)
 
 	this->course->setText("");
 
-	this->lat_entry->setEnabled(false);
-	this->lon_entry->setEnabled(false);
+	this->coord_entry->setEnabled(false);
 	this->altitude_entry->me_widget->setEnabled(false);
 	this->timestamp_widget->setEnabled(false);
 
@@ -251,8 +249,7 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 	this->button_go_back->setEnabled(current_tp_iter != track->begin());
 
 
-	this->lat_entry->setEnabled(true);
-	this->lon_entry->setEnabled(true);
+	this->coord_entry->setEnabled(true);
 	this->altitude_entry->me_widget->setEnabled(true);
 	this->timestamp_widget->setEnabled(tp->timestamp.is_valid());
 
@@ -266,11 +263,7 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->sync_to_current_tp_block = true; /* Don't update while setting data. */
 
-	const LatLon lat_lon = tp->coord.get_lat_lon();
-	this->lat_entry->setValue(lat_lon.lat);
-	this->lon_entry->setValue(lat_lon.lon);
-
-
+	this->coord_entry->set_value(tp->coord, true); /* true: block signals when setting initial value of widget. */
 	this->altitude_entry->set_value_iu(tp->altitude);
 
 
@@ -325,7 +318,7 @@ void TpPropertiesDialog::set_dialog_title(const QString & track_name)
 
 
 
-TpPropertiesDialog::TpPropertiesDialog(QWidget * parent_widget) : QDialog(parent_widget)
+TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget) : QDialog(parent_widget)
 {
 	this->setWindowTitle(tr("Trackpoint"));
 
@@ -392,16 +385,9 @@ TpPropertiesDialog::TpPropertiesDialog(QWidget * parent_widget) : QDialog(parent
 
 
 
-	this->lat_entry = new LatEntryWidget(SGVariant(0.0, SGVariantType::Latitude));
-	this->grid->addWidget(new QLabel(tr("Latitude:")), 1, 0);
-	this->grid->addWidget(this->lat_entry, 1, 1);
-	connect(this->lat_entry, SIGNAL (valueChanged(double)), this, SLOT (sync_latlon_entry_to_current_tp_cb(void)));
-
-
-	this->lon_entry = new LonEntryWidget(SGVariant(0.0, SGVariantType::Longitude));
-	this->grid->addWidget(new QLabel(tr("Longitude:")), 2, 0);
-	this->grid->addWidget(this->lon_entry, 2, 1);
-	connect(this->lon_entry, SIGNAL (valueChanged(double)), this, SLOT (sync_llatlon_entry_to_current_tp_cb(void)));
+	this->coord_entry = new CoordEntryWidget(coord_mode);
+	this->grid->addWidget(this->coord_entry, 1, 0, 2, 2);
+	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_tp_cb(void)));
 
 
 	const HeightUnit height_unit = Altitude::get_internal_unit();
