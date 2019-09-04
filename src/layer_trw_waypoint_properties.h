@@ -37,6 +37,7 @@
 
 #include "coord.h"
 #include "ui_builder.h"
+#include "widget_measurement_entry.h"
 
 
 
@@ -48,22 +49,9 @@ namespace SlavGPS {
 
 	class Waypoint;
 	class SGDateTimeButton;
-
-
-
-
-	enum {
-		SG_WP_PARAM_NAME,
-		SG_WP_PARAM_LAT,
-		SG_WP_PARAM_LON,
-		SG_WP_PARAM_TIME,
-		SG_WP_PARAM_ALT,
-		SG_WP_PARAM_COMMENT,
-		SG_WP_PARAM_DESC,
-		SG_WP_PARAM_IMAGE,
-		SG_WP_PARAM_SYMBOL,
-		SG_WP_PARAM_MAX
-	};
+	class CoordEntryWidget;
+	class TimestampWidget;
+	class FileSelectorWidget;
 
 
 
@@ -73,25 +61,70 @@ namespace SlavGPS {
 		SG_WP_DIALOG_NAME = 1
 	};
 
-	std::tuple<bool, bool> waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, QWidget * parent = NULL);
+	std::tuple<bool, bool> waypoint_properties_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent = NULL);
 
 
 
 
-	class PropertiesDialogWaypoint : public PropertiesDialog {
+	class WpPropertiesDialog : public QDialog {
 		Q_OBJECT
 	public:
-		PropertiesDialogWaypoint(Waypoint * wp, QString const & title = "Properties", QWidget * parent = NULL);
+		WpPropertiesDialog(Waypoint * wp, QWidget * parent = NULL);
+		~WpPropertiesDialog();
 
-		Waypoint * wp = NULL; /* Reference. */
-		SGDateTimeButton * date_time_button = NULL; /* Reference. */
-		QComboBox * symbol_combo = NULL; /* Reference. */
+		void set_dialog_data(Waypoint * wp);
+		void reset_dialog_data(void);
+		void set_title(const QString & title);
+
+		QLineEdit * name_entry = NULL;
 
 	public slots:
 		void set_timestamp_cb(const Time & timestamp);
 		void clear_timestamp_cb(void);
-		void symbol_entry_changed_cb(int index);
+
+
+	private slots:
+		bool sync_name_entry_to_current_object_cb(const QString &);
+		void sync_coord_entry_to_current_object_cb(void);
+		void sync_empty_timestamp_entry_to_current_object_cb(void);
+		void sync_timestamp_entry_to_current_object_cb(const Time & timestamp);
+		void sync_altitude_entry_to_current_object_cb(void);
+		void sync_comment_entry_to_current_object_cb(const QString &);
+		void sync_description_entry_to_current_object_cb(const QString &);
+		void sync_file_selector_to_current_object_cb(void);
+		void symbol_entry_changed_cb(int);
+
+	signals:
+		/* Coordinates of edited object have changed. */
+		void object_coordinates_changed(void);
+
+	public:
+		void update_timestamp_widget(const Waypoint * wp);
+
+		bool set_timestamp_of_current_object(const Time & timestamp);
+
+		void save_from_dialog(Waypoint * saved_object);
+
+	private:
+		Waypoint * current_object = NULL;
+		bool sync_to_current_object_block = false;
+
+		QDialogButtonBox * button_box = NULL;
+		QGridLayout * grid = NULL;
+		QVBoxLayout * vbox = NULL;
+
+
+		CoordEntryWidget * coord_entry = NULL;
+		TimestampWidget * timestamp_widget = NULL;
+		MeasurementEntry_2<Altitude, HeightUnit> * altitude_entry = NULL;
+		QLineEdit * comment_entry = NULL;
+		QLineEdit * description_entry = NULL;
+		FileSelectorWidget * file_selector = NULL;
+		QComboBox * symbol_combo = NULL;
+
+		SGDateTimeButton * date_time_button = NULL;
 	};
+
 
 
 

@@ -36,6 +36,9 @@
 #include "preferences.h"
 #include "thumbnails.h"
 #include "garmin_symbols.h"
+#include "widget_coord_display.h"
+#include "widget_file_entry.h"
+#include "widget_timestamp.h"
 
 
 
@@ -50,25 +53,8 @@ using namespace SlavGPS;
 
 
 
-static ParameterSpecification wp_param_specs[] = {
-	{ SG_WP_PARAM_NAME,     "trw_wp_prop_name",     SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Name"),         WidgetType::Entry,         NULL, NULL, "" },
-	{ SG_WP_PARAM_LAT,      "trw_wp_prop_lat",      SGVariantType::Latitude,   PARAMETER_GROUP_GENERIC,  QObject::tr("Latitude"),     WidgetType::Entry,         NULL, NULL, "" },
-	{ SG_WP_PARAM_LON,      "trw_wp_prop_lon",      SGVariantType::Longitude,  PARAMETER_GROUP_GENERIC,  QObject::tr("Longitude"),    WidgetType::Entry,         NULL, NULL, "" },
-	{ SG_WP_PARAM_TIME,     "trw_wp_prop_time",     SGVariantType::Timestamp,  PARAMETER_GROUP_GENERIC,  QObject::tr("Time"),         WidgetType::DateTime,      NULL, NULL, "" },
-	{ SG_WP_PARAM_ALT,      "trw_wp_prop_alt",      SGVariantType::AltitudeType,   PARAMETER_GROUP_GENERIC,  QObject::tr("Altitude"),     WidgetType::AltitudeWidget,      NULL, NULL, "" },
-	{ SG_WP_PARAM_COMMENT,  "trw_wp_prop_comment",  SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Comment"),      WidgetType::Entry,         NULL, NULL, "" },
-	{ SG_WP_PARAM_DESC,     "trw_wp_prop_desc",     SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Description"),  WidgetType::Entry,         NULL, NULL, "" },
-	{ SG_WP_PARAM_IMAGE,    "trw_wp_prop_image",    SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Image"),        WidgetType::FileSelector,  NULL, NULL, "" },
-	{ SG_WP_PARAM_SYMBOL,   "trw_wp_prop_symbol",   SGVariantType::String,     PARAMETER_GROUP_GENERIC,  QObject::tr("Symbol"),       WidgetType::ComboBox,      NULL, NULL, "" },
-
-	{ SG_WP_PARAM_MAX,      "",                     SGVariantType::Empty,      PARAMETER_GROUP_GENERIC,  "",                          WidgetType::Entry,         NULL, NULL, "" },
-};
-
-
-
-
 /**
-   Dialog displays \p default_name as name of waypoint.
+   Dialog displays \p default_wp_name as name of waypoint.
    For existing waypoints you should pass wp->name as value of this argument.
    For new waypoints you should pass some auto-generated name as value of this argument.
 
@@ -80,7 +66,7 @@ static ParameterSpecification wp_param_specs[] = {
    SG_WP_DIALOG_OK: Dialog returns OK, values were correctly set/edited.
    SG_WP_DIALOG_NAME: Waypoint's name has been edited and/or is different than @default_name
 */
-std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & default_name, CoordMode coord_mode, QWidget * parent)
+std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent)
 {
 	/* This function may be called on existing waypoint with
 	   existing name.  In that case @default_name argument refers
@@ -88,74 +74,15 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	   compare value of default name with waypoint's name, so the
 	   two variables can't refer to the same thing. We need to
 	   make a copy here. */
-	const QString default_wp_name = default_name;
+	const QString default_wp_name_copy = default_wp_name;
 
+
+	WpPropertiesDialog dialog(wp, parent);;
 	std::tuple<bool, bool> result(false, false);
 
-	std::map<param_id_t, ParameterSpecification *> param_specs;
-	for (param_id_t param_id = 0; param_id < SG_WP_PARAM_MAX; param_id++) {
-		param_specs.insert(std::pair<param_id_t, ParameterSpecification *>(param_id, &wp_param_specs[param_id]));
-	}
-
-
-	std::map<param_id_t, SGVariant> values;
-	{
-		const LatLon lat_lon = wp->coord.get_lat_lon();
-
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_NAME, SGVariant(default_wp_name))); /* TODO_LATER: This should be somehow taken from param_specs->default */
-
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_LAT, SGVariant(lat_lon.lat, SGVariantType::Latitude)));
-
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_LON, SGVariant(lat_lon.lon, SGVariantType::Longitude)));
-
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_TIME, SGVariant(wp->get_timestamp())));
-#ifdef K_FIXME_RESTORE
-		QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
+#if 0
+	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
 #endif
-
-		QString alt;
-		const HeightUnit user_height_unit = Preferences::get_unit_height();
-		Altitude alti_uu; /* Uninitialized/invalid until a value from waypoint is assigned. */
-		if (wp->altitude.is_valid()) {
-			/* Waypoint stores altitude in meters; for presentation in dialog recalculate to user units (uu). */
-			alti_uu = wp->altitude.convert_to_unit(user_height_unit);
-		}
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_ALT, SGVariant(alti_uu)));
-
-		/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_COMMENT, SGVariant(wp->comment)));
-
-		/* TODO_MAYBE: description may contain URL. Make the label or input field clickable. */
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_DESC, SGVariant(wp->description)));
-
-		/* TODO_MAYBE: perhaps add file filter for image files? */
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_IMAGE, SGVariant(wp->image_full_path)));
-
-		values.insert(std::pair<param_id_t, SGVariant>(SG_WP_PARAM_SYMBOL, SGVariant(wp->symbol_name)));
-	}
-
-
-
-	PropertiesDialogWaypoint dialog(wp, QObject::tr("Waypoint Properties"), parent);
-	const std::vector<SGLabelID> empty_parameter_groups; /* No parameter groups -> dialog class will create only one tab with default label. */
-	dialog.fill(param_specs, values, empty_parameter_groups);
-
-	dialog.date_time_button = (SGDateTimeButton *) dialog.get_widget(wp_param_specs[SG_WP_PARAM_TIME]);
-	if (wp->get_timestamp().is_valid()) {
-		/* This should force drawing time label on date/time
-		   button.  The label represents timestamp in specific
-		   time reference system.  If the time reference
-		   system (read from preferences) is World, the widget
-		   will infer time zone from waypoint's coordinate and
-		   use the time zone to generate the label. */
-		dialog.date_time_button->set_coord(wp->coord);
-	}
-	QObject::connect(dialog.date_time_button, SIGNAL (value_is_set(const Time &)), &dialog, SLOT (set_timestamp_cb(const Time &)));
-	QObject::connect(dialog.date_time_button, SIGNAL (value_is_reset(void)), &dialog, SLOT (clear_timestamp_cb(void)));
-
-	dialog.symbol_combo = (QComboBox *) dialog.get_widget(wp_param_specs[SG_WP_PARAM_SYMBOL]);
-	QObject::connect(dialog.symbol_combo, SIGNAL (currentIndexChanged(int)), &dialog, SLOT (symbol_entry_changed_cb(int)));
-	GarminSymbols::populate_symbols_list(dialog.symbol_combo, wp->symbol_name);
 
 
 	/*
@@ -178,76 +105,16 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	*/
 
 	while (QDialog::Accepted == dialog.exec()) {
-
-		SGVariant param_value;
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_NAME]);
-		const QString entered_name = param_value.val_string;
-
+		const QString entered_name = dialog.name_entry->text();
 		if (entered_name.isEmpty()) { /* TODO_MAYBE: other checks (isalpha or whatever). */
 			Dialog::info(QObject::tr("Please enter a name for the waypoint."), parent);
 			continue;
 		}
 
-		/* We don't check for unique names: this allows generation of waypoints with the same name. */
-		wp->set_name(entered_name);
-
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_LAT]);
-		const Latitude lat = param_value.get_latitude();
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_LON]);
-		const Longitude lon = param_value.get_longitude();
-		wp->coord = Coord(LatLon(lat, lon), coord_mode);
-
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_TIME]);
-		wp->set_timestamp(param_value.get_timestamp());
-
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_ALT]);
-		const Altitude alti_uu = param_value.get_altitude(); /* Value read back from dialog window. For presentation to user in the dialog window, the altitude must have been in User Units (uu). */
-		/* Always store Altitude in wp in in metres:
-		   recalculate altitude from user units (as presented
-		   in dialog) to altitude unit that is used by
-		   waypoint class by default. */
-		wp->altitude = alti_uu.convert_to_unit(HeightUnit::Metres);
-
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_COMMENT]);
-		wp->set_comment(param_value.val_string);
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_DESC]);
-		wp->set_description(param_value.val_string);
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_IMAGE]);
-		wp->set_image_full_path(param_value.val_string);
-		if (!wp->image_full_path.isEmpty()) {
-			Thumbnails::generate_thumbnail_if_missing(wp->image_full_path);
-		}
-
-
-		if (!wp->image_full_path.isEmpty()) {
-			QImage image = QImage(wp->image_full_path);
-		}
-
-		param_value = dialog.get_param_value(wp_param_specs[SG_WP_PARAM_SYMBOL]);
-		if (GarminSymbols::is_none_symbol_name(param_value.val_string)) {
-			wp->set_symbol(""); /* Save empty string instead of actual "none" string. */
-		} else {
-			wp->set_symbol(param_value.val_string);
-		}
-
-#ifdef TODO_LATER
-		if (wp->source != sourceentry->text()) {
-			wp->set_source(sourceentry->text());
-		}
-		if (wp->type != typeentry->text()) {
-			wp->set_type(typeentry->text());
-		}
-#endif
+		dialog.save_from_dialog(wp);
 
 		std::get<SG_WP_DIALOG_OK>(result) = true;
-		std::get<SG_WP_DIALOG_NAME>(result) = default_wp_name != wp->name;
+		std::get<SG_WP_DIALOG_NAME>(result) = default_wp_name_copy != wp->name;
 
 
 		return result;
@@ -259,23 +126,65 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 
 
-PropertiesDialogWaypoint::PropertiesDialogWaypoint(Waypoint * wp_, QString const & title, QWidget * parent) : PropertiesDialog(title, parent)
+void WpPropertiesDialog::save_from_dialog(Waypoint * saved_object)
 {
-	this->wp = wp_;
+	/* We don't check for unique names: this allows generation of
+	   objects with the same name. */
+	saved_object->set_name(this->name_entry->text());
+
+	saved_object->coord = this->coord_entry->get_value();
+
+	saved_object->set_timestamp(this->timestamp_widget->get_timestamp());
+
+	/* Always store Altitude in wp in in internal units. */
+	saved_object->altitude = this->altitude_entry->get_value_iu();
+
+	saved_object->set_comment(this->comment_entry->text());
+
+	saved_object->set_description(this->description_entry->text());
+
+
+	const QString path = this->file_selector->get_selected_file_full_path();
+	saved_object->set_image_full_path(path);
+	if (!saved_object->image_full_path.isEmpty()) {
+		Thumbnails::generate_thumbnail_if_missing(saved_object->image_full_path);
+	}
+	if (!saved_object->image_full_path.isEmpty()) {
+#if K_TODO
+		saved_object->image = QImage(saved_object->image_full_path);
+#endif
+	}
+
+
+	const QString symbol_name = this->symbol_combo->currentText();
+	if (GarminSymbols::is_none_symbol_name(symbol_name)) {
+		saved_object->set_symbol(""); /* Save empty string instead of actual "none" string. */
+	} else {
+		saved_object->set_symbol(symbol_name);
+	}
+
+
+#ifdef TODO_LATER
+	if (saved_object->source != sourceentry->text()) {
+		saved_object->set_source(sourceentry->text());
+	}
+	if (saved_object->type != typeentry->text()) {
+		saved_object->set_type(typeentry->text());
+	}
+#endif
+}
+
+
+
+void WpPropertiesDialog::set_timestamp_cb(const Time & timestamp)
+{
+	this->date_time_button->set_label(timestamp, this->current_object->coord);
 }
 
 
 
 
-void PropertiesDialogWaypoint::set_timestamp_cb(const Time & timestamp)
-{
-	this->date_time_button->set_label(timestamp, this->wp->coord);
-}
-
-
-
-
-void PropertiesDialogWaypoint::clear_timestamp_cb(void)
+void WpPropertiesDialog::clear_timestamp_cb(void)
 {
 	this->date_time_button->clear_label();
 }
@@ -283,7 +192,139 @@ void PropertiesDialogWaypoint::clear_timestamp_cb(void)
 
 
 
-void PropertiesDialogWaypoint::symbol_entry_changed_cb(int index)
+
+WpPropertiesDialog::WpPropertiesDialog(Waypoint * wp, QWidget * parent_widget) : QDialog(parent_widget)
+{
+	this->current_object = wp;
+ 	this->setWindowTitle(tr("Waypoint Properties"));
+
+	this->button_box = new QDialogButtonBox();
+	this->button_box->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
+	this->button_box->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
+
+
+	 /* Without this connection the dialog wouldn't close.  Button
+	    box is sending accepted() signal thanks to AcceptRole of
+	    "Close" button, configured above. */
+	connect(this->button_box, SIGNAL (accepted()), this, SLOT (accept()));
+
+	this->vbox = new QVBoxLayout;
+	this->grid = new QGridLayout();
+	this->vbox->addLayout(this->grid);
+	this->vbox->addWidget(this->button_box);
+
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+	int row = 0;
+	const int left_col = 0;
+	const int right_col = 1;
+
+
+	QString name = wp->name;
+	if (name.isEmpty()) {
+		name = tr("New Waypoint");
+	}
+	this->name_entry = new QLineEdit(name, this);
+	this->grid->addWidget(new QLabel(tr("Name:")), row, left_col);
+	this->grid->addWidget(this->name_entry, row, right_col);
+	connect(this->name_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_object_cb(const QString &)));
+
+	row++;
+
+	this->coord_entry = new CoordEntryWidget(wp->coord.get_coord_mode());
+	this->coord_entry->set_value(wp->coord);
+	this->grid->addWidget(this->coord_entry, row, left_col, 1, 2);
+	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_object_cb(void)));
+
+	row++;
+
+	this->timestamp_widget = new TimestampWidget(parent_widget);
+	this->timestamp_widget->set_timestamp(wp->get_timestamp(), wp->coord);
+	this->grid->addWidget(this->timestamp_widget, row, left_col, 1, 2);
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_object_cb(const Time &)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_object_cb(void)));
+
+	row++;
+
+	this->date_time_button = new SGDateTimeButton(wp->get_timestamp(), this);
+	if (wp->get_timestamp().is_valid()) {
+		/* This should force drawing time label on date/time
+		   button.  The label represents timestamp in specific
+		   time reference system.  If the time reference
+		   system (read from preferences) is World, the widget
+		   will infer time zone from waypoint's coordinate and
+		   use the time zone to generate the label. */
+		this->date_time_button->set_coord(wp->coord);
+	}
+	this->grid->addWidget(new QLabel(tr("Second date time button:")), row, left_col);
+	this->grid->addWidget(this->date_time_button, row, right_col);
+	QObject::connect(this->date_time_button, SIGNAL (value_is_set(const Time &)), this, SLOT (set_timestamp_cb(const Time &)));
+	QObject::connect(this->date_time_button, SIGNAL (value_is_reset(void)), this, SLOT (clear_timestamp_cb(void)));
+
+	row++;
+
+	/* At this level every altitude info should be in internal units. */
+	const HeightUnit height_unit = Altitude::get_internal_unit();
+	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
+					      Altitude(SG_ALTITUDE_RANGE_MAX, height_unit),
+					      Altitude(0.0, height_unit),
+					      Altitude(1, height_unit),
+					      SG_ALTITUDE_PRECISION);
+	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(wp->altitude, &scale_alti, this);
+	this->grid->addWidget(new QLabel(tr("Altitude:")), row, left_col);
+	this->grid->addWidget(this->altitude_entry->me_widget, row, right_col);
+	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_object_cb(void)));
+
+	row++;
+
+	/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
+	this->comment_entry = new QLineEdit(wp->comment, this);
+	this->grid->addWidget(new QLabel(tr("Comment:")), row, left_col);
+	this->grid->addWidget(this->comment_entry, row, right_col);
+	connect(this->comment_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_comment_entry_to_current_object_cb(const QString &)));
+
+	row++;
+
+	/* TODO_MAYBE: description may contain URL. Make the label or input field clickable. */
+	this->description_entry = new QLineEdit(wp->description, this);
+	this->grid->addWidget(new QLabel(tr("Description:")), row, left_col);
+	this->grid->addWidget(this->description_entry, row, right_col);
+	connect(this->description_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_description_entry_to_current_object_cb(const QString &)));
+
+	row++;
+
+	/* TODO_MAYBE: perhaps add file filter for image files? */
+	this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), this);
+	this->file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Any);
+	if (!wp->image_full_path.isEmpty()) {
+		this->file_selector->preselect_file_full_path(wp->image_full_path);
+	}
+	this->grid->addWidget(new QLabel(tr("Image:")), row, left_col);
+	this->grid->addWidget(this->file_selector, row, right_col);
+	connect(this->file_selector, SIGNAL (textEdited(const QString &)), this, SLOT (sync_file_selector_to_current_object_cb(void)));
+
+	row++;
+
+	this->symbol_combo = new QComboBox(this);
+	GarminSymbols::populate_symbols_list(this->symbol_combo, wp->symbol_name);
+	this->grid->addWidget(new QLabel(tr("Symbol:")), row, left_col);
+	this->grid->addWidget(this->symbol_combo, row, right_col);
+	QObject::connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (symbol_entry_changed_cb(int)));
+}
+
+
+
+
+WpPropertiesDialog::~WpPropertiesDialog()
+{
+}
+
+
+
+void WpPropertiesDialog::symbol_entry_changed_cb(int index)
 {
 #if 0
 	GtkTreeIter iter;
@@ -298,6 +339,146 @@ void PropertiesDialogWaypoint::symbol_entry_changed_cb(int index)
 	g_free(sym);
 #endif
 }
+
+
+
+
+void WpPropertiesDialog::set_title(const QString & title)
+{
+	this->setWindowTitle(title);
+}
+
+
+
+void WpPropertiesDialog::sync_coord_entry_to_current_object_cb(void) /* Slot. */
+{
+	if (!this->current_object) {
+		return;
+	}
+	if (this->sync_to_current_object_block) {
+		return;
+	}
+
+	//// this->current_object->coord.get_coord_mode()
+
+	const Coord new_coord = this->coord_entry->get_value();
+	const bool redraw = Coord::distance(this->current_object->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
+	this->current_object->coord = new_coord;
+
+
+	this->timestamp_widget->set_coord(new_coord);
+
+
+	/* Don't redraw unless we really have to. */
+	if (redraw) {
+		/* Tell parent code that a edited object has changed
+		   its coordinates. */
+		emit this->object_coordinates_changed();
+	}
+}
+
+
+
+
+void WpPropertiesDialog::sync_altitude_entry_to_current_object_cb(void) /* Slot. */
+{
+	if (!this->current_object) {
+		return;
+	}
+	if (this->sync_to_current_object_block) {
+		return;
+	}
+
+	/* Always store internally in metres. */
+	this->current_object->altitude = this->altitude_entry->get_value_iu();
+}
+
+
+
+
+/* Set timestamp of current waypoint. */
+void WpPropertiesDialog::sync_timestamp_entry_to_current_object_cb(const Time & timestamp)
+{
+	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp;
+
+	this->set_timestamp_of_current_object(timestamp);
+}
+
+
+
+
+/* Clear timestamp of current waypoint. */
+void WpPropertiesDialog::sync_empty_timestamp_entry_to_current_object_cb(void)
+{
+	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
+
+	this->set_timestamp_of_current_object(Time()); /* Invalid value - this should indicate that timestamp is cleared from the tp. */
+}
+
+
+
+
+void WpPropertiesDialog::sync_comment_entry_to_current_object_cb(const QString & comment)
+{
+	/* TODO: implement. */
+}
+
+
+
+
+void WpPropertiesDialog::sync_description_entry_to_current_object_cb(const QString & description)
+{
+	/* TODO: implement. */
+}
+
+
+
+
+void WpPropertiesDialog::sync_file_selector_to_current_object_cb(void)
+{
+	/* TODO: implement. */
+}
+
+
+
+
+bool WpPropertiesDialog::set_timestamp_of_current_object(const Time & timestamp)
+{
+	if (!this->current_object) {
+		return false;
+	}
+	if (this->sync_to_current_object_block) {
+		/* TODO_LATER: indicate to user that operation has failed. */
+		return false;
+	}
+
+	/* TODO_LATER: we are changing a timestamp of tp somewhere in
+	   the middle of a track, so the timestamps may now not have
+	   consecutive values.  Should we now warn user about unsorted
+	   timestamps in consecutive trackpoints? */
+
+	this->current_object->set_timestamp(timestamp);
+
+	return true;
+}
+
+
+
+
+bool WpPropertiesDialog::sync_name_entry_to_current_object_cb(const QString & new_name) /* Slot. */
+{
+	if (!this->current_object) {
+		return false;
+	}
+	if (this->sync_to_current_object_block) {
+		return false;
+	}
+
+	this->current_object->set_name(new_name);
+
+	return true;
+}
+
 
 
 
