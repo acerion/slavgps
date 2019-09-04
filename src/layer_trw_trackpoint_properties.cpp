@@ -23,18 +23,11 @@
 
 
 
-#include <cstdlib>
-#include <ctime>
-
-
-
-
 #include <QDebug>
 
 
 
 
-#include "ui_builder.h"
 #include "layer_trw.h"
 #include "layer_trw_trackpoint_properties.h"
 #include "layer_trw_track_internal.h"
@@ -60,7 +53,7 @@ using namespace SlavGPS;
 /**
    Update contents of timestamp widget
 */
-void TpPropertiesDialog::update_timestamp_widget(Trackpoint * tp)
+void TpPropertiesDialog::update_timestamp_widget(const Trackpoint * tp)
 {
 	if (tp->timestamp.is_valid()) {
 		this->timestamp_widget->set_timestamp(tp->timestamp, tp->coord);
@@ -322,26 +315,26 @@ TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_wi
 {
 	this->setWindowTitle(tr("Trackpoint"));
 
-	this->button_box = new QDialogButtonBox();
+	this->button_box_upper = new QDialogButtonBox();
+	this->button_box_lower = new QDialogButtonBox();
 
-
-	this->button_close_dialog = this->button_box->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
-
-	this->button_insert_tp_after = this->button_box->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
+	this->button_insert_tp_after = this->button_box_upper->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
 	this->button_insert_tp_after->setIcon(QIcon::fromTheme("list-add"));
-	this->button_delete_current_tp = this->button_box->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
+	this->button_delete_current_tp = this->button_box_upper->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
 	this->button_delete_current_tp->setIcon(QIcon::fromTheme("list-delete"));
-	this->button_split_track = this->button_box->addButton(tr("Split Here"), QDialogButtonBox::ActionRole);
-	this->button_go_back = this->button_box->addButton(tr("&Back"), QDialogButtonBox::ActionRole);
+	this->button_split_track = this->button_box_upper->addButton(tr("Split Here"), QDialogButtonBox::ActionRole);
+
+	this->button_go_back = this->button_box_lower->addButton(tr("&Back"), QDialogButtonBox::ActionRole);
 	this->button_go_back->setIcon(QIcon::fromTheme("go-previous"));
-	this->button_go_forward = this->button_box->addButton(tr("&Forward"), QDialogButtonBox::ActionRole);
+	this->button_go_forward = this->button_box_lower->addButton(tr("&Forward"), QDialogButtonBox::ActionRole);
 	this->button_go_forward->setIcon(QIcon::fromTheme("go-next"));
+	this->button_close_dialog = this->button_box_lower->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
 
 
 	 /* Without this connection the dialog wouldn't close.  Button
 	    box is sending accepted() signal thanks to AcceptRole of
 	    "Close" button, configured above. */
-	connect(this->button_box, SIGNAL (accepted()), this, SLOT (accept()));
+	connect(this->button_box_lower, SIGNAL (accepted()), this, SLOT (accept()));
 
 
 	/* Use signal mapper only for buttons that do some action
@@ -366,29 +359,37 @@ TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_wi
 
 
 	this->vbox = new QVBoxLayout;
-
-
 	this->grid = new QGridLayout();
 	this->vbox->addLayout(this->grid);
-	this->vbox->addWidget(this->button_box);
+	this->vbox->addWidget(this->button_box_upper);
+	this->vbox->addWidget(this->button_box_lower);
 
 
 	QLayout * old = this->layout();
 	delete old;
 	this->setLayout(this->vbox);
 
+	int row = 0;
+	const int left_col = 0;
+	const int right_col = 1;
+
+	/* Properties of text labels that display non-editable
+	   trackpoint properties. */
+	const Qt::TextInteractionFlags value_display_label_flags = Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard;
+
 
 	this->trkpt_name = new QLineEdit("", this);
-	this->grid->addWidget(new QLabel(tr("Name:")), 0, 0);
-	this->grid->addWidget(this->trkpt_name, 0, 1);
+	this->grid->addWidget(new QLabel(tr("Name:")), row, left_col);
+	this->grid->addWidget(this->trkpt_name, row, right_col);
 	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_tp_cb(const QString &)));
 
-
+	row++;
 
 	this->coord_entry = new CoordEntryWidget(coord_mode);
-	this->grid->addWidget(this->coord_entry, 1, 0, 2, 2);
+	this->grid->addWidget(this->coord_entry, row, left_col, 1, 2);
 	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_tp_cb(void)));
 
+	row++;
 
 	const HeightUnit height_unit = Altitude::get_internal_unit();
 	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
@@ -397,75 +398,79 @@ TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_wi
 					      Altitude(1, height_unit),
 					      SG_ALTITUDE_PRECISION);
 	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(0, height_unit), &scale_alti, this);
-	this->grid->addWidget(new QLabel(tr("Altitude:")), 3, 0);
-	this->grid->addWidget(this->altitude_entry->me_widget, 3, 1);
+	this->grid->addWidget(new QLabel(tr("Altitude:")), row, left_col);
+	this->grid->addWidget(this->altitude_entry->me_widget, row, right_col);
 	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_tp_cb(void)));
 
+	row++;
 
 	this->course = new QLabel("", this);
-	this->course->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("Course:")), 4, 0);
-	this->grid->addWidget(this->course, 4, 1);
+	this->course->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Course:")), row, left_col);
+	this->grid->addWidget(this->course, row, right_col);
 
+	row++;
 
 	this->timestamp_widget = new TimestampWidget();
-	this->grid->addWidget(this->timestamp_widget, 5, 0, 2, 2);
+	this->grid->addWidget(this->timestamp_widget, row, left_col, 1, 2);
 	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_tp_cb(const Time &)));
 	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_tp_cb(void)));
 
-
-
-
+	row++;
 
 	this->diff_dist = new QLabel("", this);
-	this->diff_dist->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("Distance Difference:")), 0, 3);
-	this->grid->addWidget(this->diff_dist, 0, 4);
+	this->diff_dist->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Distance Difference:")), row, left_col);
+	this->grid->addWidget(this->diff_dist, row, right_col);
 
+	row++;
 
 	this->diff_time = new QLabel("", this);
-	this->diff_time->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("Time Difference:")), 1, 3);
-	this->grid->addWidget(this->diff_time, 1, 4);
+	this->diff_time->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Time Difference:")), row, left_col);
+	this->grid->addWidget(this->diff_time, row, right_col);
 
+	row++;
 
 	this->diff_speed = new QLabel("", this);
-	this->diff_speed->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("\"Speed\" Between:")), 2, 3);
-	this->grid->addWidget(this->diff_speed, 2, 4);
+	this->diff_speed->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("\"Speed\" Between:")), row, left_col);
+	this->grid->addWidget(this->diff_speed, row, right_col);
 
+	row++;
 
 	this->speed = new QLabel("", this);
-	this->speed->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("Speed:")), 3, 3);
-	this->grid->addWidget(this->speed, 3, 4);
+	this->speed->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Speed:")), row, left_col);
+	this->grid->addWidget(this->speed, row, right_col);
 
+	row++;
 
 	this->vdop = new QLabel("", this);
-	this->vdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("VDOP:")), 4, 3);
-	this->grid->addWidget(this->vdop, 4, 4);
+	this->vdop->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("VDOP:")), row, left_col);
+	this->grid->addWidget(this->vdop, row, right_col);
 
+	row++;
 
 	this->hdop = new QLabel("", this);
-	this->hdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("HDOP:")), 5, 3);
-	this->grid->addWidget(this->hdop, 5, 4);
+	this->hdop->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("HDOP:")), row, left_col);
+	this->grid->addWidget(this->hdop, row, right_col);
 
+	row++;
 
 	this->pdop = new QLabel("", this);
-	this->pdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("PDOP:")), 6, 3);
-	this->grid->addWidget(this->pdop, 6, 4);
+	this->pdop->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("PDOP:")), row, left_col);
+	this->grid->addWidget(this->pdop, row, right_col);
 
+	row++;
 
 	this->sat = new QLabel("", this);
-	this->sat->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
-	this->grid->addWidget(new QLabel(tr("SAT/FIX:")), 7, 3);
-	this->grid->addWidget(this->sat, 7, 4);
-
-
-	this->grid->addWidget(new QLabel("  "), 0, 2); /* Spacer item. */
+	this->sat->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("SAT/FIX:")), row, left_col);
+	this->grid->addWidget(this->sat, row, right_col);
 }
 
 
@@ -542,5 +547,6 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected dialog action" << action;
+		break;
 	}
 }

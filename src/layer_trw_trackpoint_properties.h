@@ -98,7 +98,7 @@ namespace SlavGPS {
 		void trackpoint_coordinates_changed(void);
 
 	private:
-		void update_timestamp_widget(Trackpoint * tp);
+		void update_timestamp_widget(const Trackpoint * tp);
 
 		bool set_timestamp_of_current_tp(const Time & timestamp);
 
@@ -109,7 +109,9 @@ namespace SlavGPS {
 
 		QSignalMapper * signal_mapper = NULL;
 
-		QDialogButtonBox * button_box = NULL;
+		/* Buttons will be in two rows. */
+		QDialogButtonBox * button_box_upper = NULL;
+		QDialogButtonBox * button_box_lower = NULL;
 
 		QPushButton * button_close_dialog = NULL;
 		QPushButton * button_insert_tp_after = NULL;
