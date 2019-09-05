@@ -63,7 +63,7 @@ static std::unordered_map<QString, int, MyQStringKeyHashInsensitive, MyQStringKe
 static std::unordered_map<QString, int, MyQStringKeyHashInsensitive, MyQStringKeyEqualInsensitive> old_symbol_names;
 
 /* First item on list of symbols, meaning "no symbol selected. */
-static const QString none_symbol_name(QObject::tr("(none)"));
+const QString GarminSymbols::none_symbol_name(QObject::tr("(none)"));
 
 
 

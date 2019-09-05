@@ -78,6 +78,12 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 
 	WpPropertiesDialog dialog(wp, parent);;
+	QString name = wp->name;
+	if (name.isEmpty()) {
+		name = QObject::tr("New Waypoint");
+	}
+	dialog.set_dialog_data(wp, name);
+
 	std::tuple<bool, bool> result(false, false);
 
 #if 0
@@ -121,6 +127,157 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 	}
 
 	return result;
+}
+
+
+
+
+WpPropertiesDialog::WpPropertiesDialog(Waypoint * wp, QWidget * parent_widget) : QDialog(parent_widget)
+{
+	this->current_object = wp;
+ 	this->setWindowTitle(tr("Waypoint Properties"));
+
+	this->button_box = new QDialogButtonBox();
+	this->button_box->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
+	this->button_box->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
+
+
+	 /* Without this connection the dialog wouldn't close.  Button
+	    box is sending accepted() signal thanks to AcceptRole of
+	    "Close" button, configured above. */
+	connect(this->button_box, SIGNAL (accepted()), this, SLOT (accept()));
+
+	this->vbox = new QVBoxLayout;
+	this->grid = new QGridLayout();
+	this->vbox->addLayout(this->grid);
+	this->vbox->addWidget(this->button_box);
+
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+
+	this->build_widgets(this);
+}
+
+
+
+
+WpPropertiesDialog::~WpPropertiesDialog()
+{
+}
+
+
+
+
+sg_ret WpPropertiesDialog::build_widgets(QWidget * parent_widget)
+{
+	int row = 0;
+	const int left_col = 0;
+	const int right_col = 1;
+
+
+	this->name_entry = new QLineEdit("", this);
+	this->grid->addWidget(new QLabel(tr("Name:")), row, left_col);
+	this->grid->addWidget(this->name_entry, row, right_col);
+	connect(this->name_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_object_cb(const QString &)));
+
+	row++;
+
+	this->coord_entry = new CoordEntryWidget(CoordMode::LatLon); /* TODO: argument to constructor must be somehow calculated. */
+	this->grid->addWidget(this->coord_entry, row, left_col, 1, 2);
+	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_object_cb(void)));
+
+	row++;
+
+	this->timestamp_widget = new TimestampWidget(parent_widget);
+	this->grid->addWidget(this->timestamp_widget, row, left_col, 1, 2);
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_object_cb(const Time &)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_object_cb(void)));
+
+	row++;
+
+	/* At this level every altitude info should be in internal units. */
+	const HeightUnit height_unit = Altitude::get_internal_unit();
+	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
+					      Altitude(SG_ALTITUDE_RANGE_MAX, height_unit),
+					      Altitude(0.0, height_unit),
+					      Altitude(1, height_unit),
+					      SG_ALTITUDE_PRECISION);
+	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(), &scale_alti, this);
+	this->grid->addWidget(new QLabel(tr("Altitude:")), row, left_col);
+	this->grid->addWidget(this->altitude_entry->me_widget, row, right_col);
+	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_object_cb(void)));
+
+	row++;
+
+	/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
+	this->comment_entry = new QLineEdit("", this);
+	this->grid->addWidget(new QLabel(tr("Comment:")), row, left_col);
+	this->grid->addWidget(this->comment_entry, row, right_col);
+	connect(this->comment_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_comment_entry_to_current_object_cb(const QString &)));
+
+	row++;
+
+	/* TODO_MAYBE: description may contain URL. Make the label or input field clickable. */
+	this->description_entry = new QLineEdit("", this);
+	this->grid->addWidget(new QLabel(tr("Description:")), row, left_col);
+	this->grid->addWidget(this->description_entry, row, right_col);
+	connect(this->description_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_description_entry_to_current_object_cb(const QString &)));
+
+	row++;
+
+	/* TODO_MAYBE: perhaps add file filter for image files? */
+	this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), this);
+	this->file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Any);
+	this->grid->addWidget(new QLabel(tr("Image:")), row, left_col);
+	this->grid->addWidget(this->file_selector, row, right_col);
+	connect(this->file_selector, SIGNAL (textEdited(const QString &)), this, SLOT (sync_file_selector_to_current_object_cb(void)));
+
+	row++;
+
+	this->symbol_combo = new QComboBox(this);
+	GarminSymbols::populate_symbols_list(this->symbol_combo, GarminSymbols::none_symbol_name);
+	this->grid->addWidget(new QLabel(tr("Symbol:")), row, left_col);
+	this->grid->addWidget(this->symbol_combo, row, right_col);
+	QObject::connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (symbol_entry_changed_cb(int)));
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object, const QString & name)
+{
+	this->name_entry->setText(name);
+	this->coord_entry->set_value(object->coord); /* TODO: ::set_value() should re-build the widget according to mode of object->coord or according to global setting of coord mode? */
+	this->timestamp_widget->set_timestamp(object->get_timestamp(), object->coord);
+	this->altitude_entry->set_value_iu(object->altitude);
+	this->comment_entry->setText(object->comment);
+	this->description_entry->setText(object->description);
+	this->file_selector->preselect_file_full_path(object->image_full_path);
+
+	const QString & symbol_name = object->symbol_name.isEmpty() ? GarminSymbols::none_symbol_name : object->symbol_name;
+	const int selected_idx = this->symbol_combo->findText(object->symbol_name);
+	if (selected_idx == -1) {
+		qDebug() << SG_PREFIX_E << "Waypoint symbol not found in combo:" << symbol_name;
+		this->symbol_combo->setCurrentIndex(0); /* Index of first added item, which should be "none" symbol. */
+	} else {
+		this->symbol_combo->setCurrentIndex(selected_idx);
+	}
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret WpPropertiesDialog::reset_dialog_data(void)
+{
+	Waypoint wp; /* Invalid, empty object. */
+	return this->set_dialog_data(&wp, wp.name);
 }
 
 
@@ -175,152 +332,6 @@ void WpPropertiesDialog::save_from_dialog(Waypoint * saved_object)
 }
 
 
-
-void WpPropertiesDialog::set_timestamp_cb(const Time & timestamp)
-{
-	this->date_time_button->set_label(timestamp, this->current_object->coord);
-}
-
-
-
-
-void WpPropertiesDialog::clear_timestamp_cb(void)
-{
-	this->date_time_button->clear_label();
-}
-
-
-
-
-
-WpPropertiesDialog::WpPropertiesDialog(Waypoint * wp, QWidget * parent_widget) : QDialog(parent_widget)
-{
-	this->current_object = wp;
- 	this->setWindowTitle(tr("Waypoint Properties"));
-
-	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
-	this->button_box->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-
-
-	 /* Without this connection the dialog wouldn't close.  Button
-	    box is sending accepted() signal thanks to AcceptRole of
-	    "Close" button, configured above. */
-	connect(this->button_box, SIGNAL (accepted()), this, SLOT (accept()));
-
-	this->vbox = new QVBoxLayout;
-	this->grid = new QGridLayout();
-	this->vbox->addLayout(this->grid);
-	this->vbox->addWidget(this->button_box);
-
-
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
-
-	int row = 0;
-	const int left_col = 0;
-	const int right_col = 1;
-
-
-	QString name = wp->name;
-	if (name.isEmpty()) {
-		name = tr("New Waypoint");
-	}
-	this->name_entry = new QLineEdit(name, this);
-	this->grid->addWidget(new QLabel(tr("Name:")), row, left_col);
-	this->grid->addWidget(this->name_entry, row, right_col);
-	connect(this->name_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_object_cb(const QString &)));
-
-	row++;
-
-	this->coord_entry = new CoordEntryWidget(wp->coord.get_coord_mode());
-	this->coord_entry->set_value(wp->coord);
-	this->grid->addWidget(this->coord_entry, row, left_col, 1, 2);
-	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_object_cb(void)));
-
-	row++;
-
-	this->timestamp_widget = new TimestampWidget(parent_widget);
-	this->timestamp_widget->set_timestamp(wp->get_timestamp(), wp->coord);
-	this->grid->addWidget(this->timestamp_widget, row, left_col, 1, 2);
-	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_object_cb(const Time &)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_object_cb(void)));
-
-	row++;
-
-	this->date_time_button = new SGDateTimeButton(wp->get_timestamp(), this);
-	if (wp->get_timestamp().is_valid()) {
-		/* This should force drawing time label on date/time
-		   button.  The label represents timestamp in specific
-		   time reference system.  If the time reference
-		   system (read from preferences) is World, the widget
-		   will infer time zone from waypoint's coordinate and
-		   use the time zone to generate the label. */
-		this->date_time_button->set_coord(wp->coord);
-	}
-	this->grid->addWidget(new QLabel(tr("Second date time button:")), row, left_col);
-	this->grid->addWidget(this->date_time_button, row, right_col);
-	QObject::connect(this->date_time_button, SIGNAL (value_is_set(const Time &)), this, SLOT (set_timestamp_cb(const Time &)));
-	QObject::connect(this->date_time_button, SIGNAL (value_is_reset(void)), this, SLOT (clear_timestamp_cb(void)));
-
-	row++;
-
-	/* At this level every altitude info should be in internal units. */
-	const HeightUnit height_unit = Altitude::get_internal_unit();
-	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
-					      Altitude(SG_ALTITUDE_RANGE_MAX, height_unit),
-					      Altitude(0.0, height_unit),
-					      Altitude(1, height_unit),
-					      SG_ALTITUDE_PRECISION);
-	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(wp->altitude, &scale_alti, this);
-	this->grid->addWidget(new QLabel(tr("Altitude:")), row, left_col);
-	this->grid->addWidget(this->altitude_entry->me_widget, row, right_col);
-	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_object_cb(void)));
-
-	row++;
-
-	/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
-	this->comment_entry = new QLineEdit(wp->comment, this);
-	this->grid->addWidget(new QLabel(tr("Comment:")), row, left_col);
-	this->grid->addWidget(this->comment_entry, row, right_col);
-	connect(this->comment_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_comment_entry_to_current_object_cb(const QString &)));
-
-	row++;
-
-	/* TODO_MAYBE: description may contain URL. Make the label or input field clickable. */
-	this->description_entry = new QLineEdit(wp->description, this);
-	this->grid->addWidget(new QLabel(tr("Description:")), row, left_col);
-	this->grid->addWidget(this->description_entry, row, right_col);
-	connect(this->description_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_description_entry_to_current_object_cb(const QString &)));
-
-	row++;
-
-	/* TODO_MAYBE: perhaps add file filter for image files? */
-	this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), this);
-	this->file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Any);
-	if (!wp->image_full_path.isEmpty()) {
-		this->file_selector->preselect_file_full_path(wp->image_full_path);
-	}
-	this->grid->addWidget(new QLabel(tr("Image:")), row, left_col);
-	this->grid->addWidget(this->file_selector, row, right_col);
-	connect(this->file_selector, SIGNAL (textEdited(const QString &)), this, SLOT (sync_file_selector_to_current_object_cb(void)));
-
-	row++;
-
-	this->symbol_combo = new QComboBox(this);
-	GarminSymbols::populate_symbols_list(this->symbol_combo, wp->symbol_name);
-	this->grid->addWidget(new QLabel(tr("Symbol:")), row, left_col);
-	this->grid->addWidget(this->symbol_combo, row, right_col);
-	QObject::connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (symbol_entry_changed_cb(int)));
-}
-
-
-
-
-WpPropertiesDialog::~WpPropertiesDialog()
-{
-}
 
 
 

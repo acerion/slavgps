@@ -110,6 +110,7 @@ CoordEntryWidget::CoordEntryWidget(CoordMode coord_mode, QWidget * parent)
 
 
 
+/* TODO: what should take precedence: coord mode of @param coord, or global selection of coord mode? */
 sg_ret CoordEntryWidget::set_value(const Coord & coord, bool block_signal)
 {
 	switch (coord.get_coord_mode()) {

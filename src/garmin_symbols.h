@@ -47,6 +47,8 @@ namespace SlavGPS {
 
 		/* Use when preferences have changed to reload icons. */
 		static void clear_symbols(void);
+
+		static const QString none_symbol_name;
 	};
 
 

@@ -72,15 +72,12 @@ namespace SlavGPS {
 		WpPropertiesDialog(Waypoint * wp, QWidget * parent = NULL);
 		~WpPropertiesDialog();
 
-		void set_dialog_data(Waypoint * wp);
-		void reset_dialog_data(void);
+		sg_ret set_dialog_data(Waypoint * wp, const QString & name);
+		sg_ret reset_dialog_data(void);
 		void set_title(const QString & title);
 
-		QLineEdit * name_entry = NULL;
 
-	public slots:
-		void set_timestamp_cb(const Time & timestamp);
-		void clear_timestamp_cb(void);
+		QLineEdit * name_entry = NULL;
 
 
 	private slots:
@@ -106,6 +103,8 @@ namespace SlavGPS {
 		void save_from_dialog(Waypoint * saved_object);
 
 	private:
+		sg_ret build_widgets(QWidget * parent_widget);
+
 		Waypoint * current_object = NULL;
 		bool sync_to_current_object_block = false;
 
@@ -121,8 +120,6 @@ namespace SlavGPS {
 		QLineEdit * description_entry = NULL;
 		FileSelectorWidget * file_selector = NULL;
 		QComboBox * symbol_combo = NULL;
-
-		SGDateTimeButton * date_time_button = NULL;
 	};
 
 
