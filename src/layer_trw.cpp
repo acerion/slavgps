@@ -1764,8 +1764,8 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
 
-	const std::tuple<bool, bool> result = waypoint_properties_dialog(wp, default_name, this->coord_mode, parent_window);
-	if (std::get<SG_WP_DIALOG_OK>(result)) {
+	const bool accepted = waypoint_new_dialog(wp, default_name, this->coord_mode, parent_window);
+	if (accepted) {
 		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
 		this->add_waypoint(wp);
 		visible_with_parents = wp->is_visible_with_parents();

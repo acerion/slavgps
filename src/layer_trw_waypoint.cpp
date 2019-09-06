@@ -454,12 +454,12 @@ void Waypoint::properties_dialog_cb(void)
 
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	const std::tuple<bool, bool> result = waypoint_properties_dialog(this, this->name, parent_layer->coord_mode, ThisApp::get_main_window());
+	const QString old_name = this->name;
+	const bool changed = waypoint_edit_dialog(this, parent_layer->coord_mode, ThisApp::get_main_window());
+	if (changed) {
+		/* Something has changed in waypoint's properties. */
 
-	if (std::get<SG_WP_DIALOG_OK>(result)) {
-		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
-
-		if (std::get<SG_WP_DIALOG_NAME>(result)) {
+		if (old_name != this->name) {
 			/* Waypoint's name has been changed. */
 			this->propagate_new_waypoint_name();
 		}

@@ -53,62 +53,78 @@ using namespace SlavGPS;
 
 
 
-/**
-   Dialog displays \p default_wp_name as name of waypoint.
-   For existing waypoints you should pass wp->name as value of this argument.
-   For new waypoints you should pass some auto-generated name as value of this argument.
 
-   Final name of the waypoint (accepted in the dialog) is returned. If
-   user rejected the dialog (e.g by pressing Cancel button), the
-   returned string is empty.
+/*
+  TODO_LATER: changes to coordinates of waypoint need to be translated
+  "in real time" (without the need to close the dialog window) to
+  position of waypoint on viewport.
 
-   Return tuple:
-   SG_WP_DIALOG_OK: Dialog returns OK, values were correctly set/edited.
-   SG_WP_DIALOG_NAME: Waypoint's name has been edited and/or is different than @default_name
+  See how this is done for Trackpoint in Trackpoint properties dialog.
 */
-std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent)
+
+/*
+  TODO_LATER: changes in coordinates of waypoint need to be passed to
+  datetime button, because in some cases (in World time reference
+  system) the value of button label depends on coordinates of
+  waypoint.
+
+  So each change to the coordinates must result in call to
+  SGDateTimeButton::set_coord().
+*/
+
+
+
+
+/**
+   Dialog displays \p default_wp_name as name of waypoint. Caller
+   should pass some auto-generated name as value of this argument.
+
+   @return true if parameters of new waypoint have been accepted
+   @return false otherwise (caller should cancel creating new waypoint)
+*/
+bool SlavGPS::waypoint_new_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent)
 {
-	/* This function may be called on existing waypoint with
-	   existing name.  In that case @default_name argument refers
-	   to waypoint's member.  At the end of this function we
-	   compare value of default name with waypoint's name, so the
-	   two variables can't refer to the same thing. We need to
-	   make a copy here. */
-	const QString default_wp_name_copy = default_wp_name;
+	WpPropertiesDialog dialog(wp, parent);
 
-
-	WpPropertiesDialog dialog(wp, parent);;
-	QString name = wp->name;
+	QString name = default_wp_name;
 	if (name.isEmpty()) {
 		name = QObject::tr("New Waypoint");
 	}
 	dialog.set_dialog_data(wp, name);
 
-	std::tuple<bool, bool> result(false, false);
 
-#if 0
-	QObject::connect(timevaluebutton, SIGNAL("button-release-event"), edit_wp, SLOT (time_edit_click));
-#endif
+	while (QDialog::Accepted == dialog.exec()) {
+		const QString entered_name = dialog.name_entry->text();
+		if (entered_name.isEmpty()) { /* TODO_MAYBE: other checks (isalpha or whatever). */
+			Dialog::info(QObject::tr("Please enter a name for the waypoint."), parent);
+			continue;
+		}
+
+		dialog.save_from_dialog(wp);
+		return true;
+	}
+
+	return false;
+}
 
 
-	/*
-	  TODO_LATER: changes to coordinates of waypoint need to be
-	  translated "in real time" (without the need to close the
-	  dialog window) to position of waypoint on viewport.
 
-	  See how this is done for Trackpoint in Trackpoint properties
-	  dialog.
-	*/
+/**
+   @param return true if something has been changed in the waypoint (TODO: implement detecting changes in waypoint)
+   @param return false otherwise
+*/
+bool SlavGPS::waypoint_edit_dialog(Waypoint * wp, CoordMode coord_mode, QWidget * parent)
+{
+	WpPropertiesDialog dialog(wp, parent);
 
-	/*
-	  TODO_LATER: changes in coordinates of waypoint need to be passed
-	  to datetime button, because in some cases (in World time
-	  reference system) the value of button label depends on
-	  coordinates of waypoint.
+	QString name = wp->name;
+	if (name.isEmpty()) {
+		qDebug() << SG_PREFIX_W << "Name of existing waypoint is empty, using default name";
+		name = QObject::tr("Waypoint");
+	}
+	dialog.set_dialog_data(wp, name);
 
-	  So each change to the coordinates must result in call to
-	  SGDateTimeButton::set_coord().
-	*/
+
 
 	while (QDialog::Accepted == dialog.exec()) {
 		const QString entered_name = dialog.name_entry->text();
@@ -119,14 +135,10 @@ std::tuple<bool, bool> SlavGPS::waypoint_properties_dialog(Waypoint * wp, const 
 
 		dialog.save_from_dialog(wp);
 
-		std::get<SG_WP_DIALOG_OK>(result) = true;
-		std::get<SG_WP_DIALOG_NAME>(result) = default_wp_name_copy != wp->name;
-
-
-		return result;
+		return true;
 	}
 
-	return result;
+	return false;
 }
 
 

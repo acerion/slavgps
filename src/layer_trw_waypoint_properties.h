@@ -24,11 +24,6 @@
 
 
 
-#include <tuple>
-
-
-
-
 #include <QWidget>
 #include <QComboBox>
 
@@ -56,13 +51,11 @@ namespace SlavGPS {
 
 
 
-	enum {
-		SG_WP_DIALOG_OK   = 0,
-		SG_WP_DIALOG_NAME = 1
-	};
+	/* Edit properties of new waypoint (waypoint that is being created). */
+	bool waypoint_new_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent = NULL);
 
-	std::tuple<bool, bool> waypoint_properties_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent = NULL);
-
+	/* Edit properties of existing waypoint. */
+	bool waypoint_edit_dialog(Waypoint * wp, CoordMode coord_mode, QWidget * parent = NULL);
 
 
 
