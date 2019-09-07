@@ -27,6 +27,7 @@
 
 
 
+#include "layer_trw.h"
 #include "layer_trw_waypoint_properties.h"
 #include "layer_trw_waypoint.h"
 #include "dialog.h"
@@ -75,101 +76,10 @@ using namespace SlavGPS;
 
 
 
-/**
-   Dialog displays \p default_wp_name as name of waypoint. Caller
-   should pass some auto-generated name as value of this argument.
-
-   @return true if parameters of new waypoint have been accepted
-   @return false otherwise (caller should cancel creating new waypoint)
-*/
-bool SlavGPS::waypoint_new_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent)
+WpPropertiesDialog::WpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget) : WpPropertiesWidget(parent_widget)
 {
-	WpPropertiesDialog dialog(wp, parent);
-
-	QString name = default_wp_name;
-	if (name.isEmpty()) {
-		name = QObject::tr("New Waypoint");
-	}
-	dialog.set_dialog_data(wp, name);
-
-
-	while (QDialog::Accepted == dialog.exec()) {
-		const QString entered_name = dialog.name_entry->text();
-		if (entered_name.isEmpty()) { /* TODO_MAYBE: other checks (isalpha or whatever). */
-			Dialog::info(QObject::tr("Please enter a name for the waypoint."), parent);
-			continue;
-		}
-
-		dialog.save_from_dialog(wp);
-		return true;
-	}
-
-	return false;
-}
-
-
-
-/**
-   @param return true if something has been changed in the waypoint (TODO: implement detecting changes in waypoint)
-   @param return false otherwise
-*/
-bool SlavGPS::waypoint_edit_dialog(Waypoint * wp, CoordMode coord_mode, QWidget * parent)
-{
-	WpPropertiesDialog dialog(wp, parent);
-
-	QString name = wp->name;
-	if (name.isEmpty()) {
-		qDebug() << SG_PREFIX_W << "Name of existing waypoint is empty, using default name";
-		name = QObject::tr("Waypoint");
-	}
-	dialog.set_dialog_data(wp, name);
-
-
-
-	while (QDialog::Accepted == dialog.exec()) {
-		const QString entered_name = dialog.name_entry->text();
-		if (entered_name.isEmpty()) { /* TODO_MAYBE: other checks (isalpha or whatever). */
-			Dialog::info(QObject::tr("Please enter a name for the waypoint."), parent);
-			continue;
-		}
-
-		dialog.save_from_dialog(wp);
-
-		return true;
-	}
-
-	return false;
-}
-
-
-
-
-WpPropertiesDialog::WpPropertiesDialog(Waypoint * wp, QWidget * parent_widget) : QDialog(parent_widget)
-{
-	this->current_object = wp;
- 	this->setWindowTitle(tr("Waypoint Properties"));
-
-	this->button_box = new QDialogButtonBox();
-	this->button_box->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
-	this->button_box->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-
-
-	 /* Without this connection the dialog wouldn't close.  Button
-	    box is sending accepted() signal thanks to AcceptRole of
-	    "Close" button, configured above. */
-	connect(this->button_box, SIGNAL (accepted()), this, SLOT (accept()));
-
-	this->vbox = new QVBoxLayout;
-	this->grid = new QGridLayout();
-	this->vbox->addLayout(this->grid);
-	this->vbox->addWidget(this->button_box);
-
-
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
-
-
+	this->setWindowTitle(tr("Waypoint"));
+	this->build_buttons(this);
 	this->build_widgets(this);
 }
 
@@ -183,77 +93,47 @@ WpPropertiesDialog::~WpPropertiesDialog()
 
 
 
-sg_ret WpPropertiesDialog::build_widgets(QWidget * parent_widget)
+sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 {
-	int row = 0;
+	this->widgets_row = 0;
+
 	const int left_col = 0;
 	const int right_col = 1;
 
-
-	this->name_entry = new QLineEdit("", this);
-	this->grid->addWidget(new QLabel(tr("Name:")), row, left_col);
-	this->grid->addWidget(this->name_entry, row, right_col);
-	connect(this->name_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_object_cb(const QString &)));
-
-	row++;
-
-	this->coord_entry = new CoordEntryWidget(CoordMode::LatLon); /* TODO: argument to constructor must be somehow calculated. */
-	this->grid->addWidget(this->coord_entry, row, left_col, 1, 2);
-	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_object_cb(void)));
-
-	row++;
-
-	this->timestamp_widget = new TimestampWidget(parent_widget);
-	this->grid->addWidget(this->timestamp_widget, row, left_col, 1, 2);
-	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_object_cb(const Time &)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_object_cb(void)));
-
-	row++;
-
-	/* At this level every altitude info should be in internal units. */
-	const HeightUnit height_unit = Altitude::get_internal_unit();
-	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
-					      Altitude(SG_ALTITUDE_RANGE_MAX, height_unit),
-					      Altitude(0.0, height_unit),
-					      Altitude(1, height_unit),
-					      SG_ALTITUDE_PRECISION);
-	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(), &scale_alti, this);
-	this->grid->addWidget(new QLabel(tr("Altitude:")), row, left_col);
-	this->grid->addWidget(this->altitude_entry->me_widget, row, right_col);
-	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_object_cb(void)));
-
-	row++;
+	this->PointPropertiesWidget::build_widgets(parent_widget);
 
 	/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
 	this->comment_entry = new QLineEdit("", this);
-	this->grid->addWidget(new QLabel(tr("Comment:")), row, left_col);
-	this->grid->addWidget(this->comment_entry, row, right_col);
+	this->grid->addWidget(new QLabel(tr("Comment:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->comment_entry, this->widgets_row, right_col);
 	connect(this->comment_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_comment_entry_to_current_object_cb(const QString &)));
 
-	row++;
+	this->widgets_row++;
 
 	/* TODO_MAYBE: description may contain URL. Make the label or input field clickable. */
 	this->description_entry = new QLineEdit("", this);
-	this->grid->addWidget(new QLabel(tr("Description:")), row, left_col);
-	this->grid->addWidget(this->description_entry, row, right_col);
+	this->grid->addWidget(new QLabel(tr("Description:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->description_entry, this->widgets_row, right_col);
 	connect(this->description_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_description_entry_to_current_object_cb(const QString &)));
 
-	row++;
+	this->widgets_row++;
 
 	/* TODO_MAYBE: perhaps add file filter for image files? */
 	this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), this);
 	this->file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Any);
-	this->grid->addWidget(new QLabel(tr("Image:")), row, left_col);
-	this->grid->addWidget(this->file_selector, row, right_col);
+	this->grid->addWidget(new QLabel(tr("Image:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->file_selector, this->widgets_row, right_col);
 	connect(this->file_selector, SIGNAL (textEdited(const QString &)), this, SLOT (sync_file_selector_to_current_object_cb(void)));
 
-	row++;
+	this->widgets_row++;
 
 	this->symbol_combo = new QComboBox(this);
 	GarminSymbols::populate_symbols_list(this->symbol_combo, GarminSymbols::none_symbol_name);
-	this->grid->addWidget(new QLabel(tr("Symbol:")), row, left_col);
-	this->grid->addWidget(this->symbol_combo, row, right_col);
+	this->grid->addWidget(new QLabel(tr("Symbol:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->symbol_combo, this->widgets_row, right_col);
 	QObject::connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (symbol_entry_changed_cb(int)));
+
+	this->widgets_row++;
 
 	return sg_ret::ok;
 }
@@ -261,12 +141,59 @@ sg_ret WpPropertiesDialog::build_widgets(QWidget * parent_widget)
 
 
 
-sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object, const QString & name)
+sg_ret WpPropertiesWidget::build_buttons(QWidget * parent_widget)
 {
-	this->name_entry->setText(name);
-	this->coord_entry->set_value(object->coord); /* TODO: ::set_value() should re-build the widget according to mode of object->coord or according to global setting of coord mode? */
+	this->button_delete_current_point = this->button_box_upper->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
+	this->button_delete_current_point->setIcon(QIcon::fromTheme("list-delete"));
+
+	/*
+	  Use "Previous" and "Next" labels for consistency with
+	  similar labels in "trackpoint properties" dialog.
+	*/
+	this->button_previous_point = this->button_box_lower->addButton(tr("&Previous"), QDialogButtonBox::ActionRole);
+	this->button_previous_point->setIcon(QIcon::fromTheme("go-previous"));
+	this->button_next_point = this->button_box_lower->addButton(tr("&Next"), QDialogButtonBox::ActionRole);
+	this->button_next_point->setIcon(QIcon::fromTheme("go-next"));
+	this->button_close_dialog = this->button_box_lower->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
+
+
+	 /* Without this connection the dialog wouldn't close.  Button
+	    box is sending accepted() signal thanks to AcceptRole of
+	    "Close" button, configured above. */
+	connect(this->button_box_lower, SIGNAL (accepted()), this, SLOT (accept()));
+
+
+	/* Use signal mapper only for buttons that do some action
+	   related to track/trackpoint.  Previously I've used the
+	   signal mapper also for "Close" button, but that led to some
+	   crash of app (probably signal going back and forth between
+	   the dialog and trw layer), so I removed it. */
+	this->signal_mapper = new QSignalMapper(this);
+	connect(this->button_delete_current_point, SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_previous_point,       SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_next_point,           SIGNAL (released()), signal_mapper, SLOT (map()));
+
+	this->signal_mapper->setMapping(this->button_delete_current_point, (int) WpPropertiesDialog::Action::DeleteSelectedPoint);
+	this->signal_mapper->setMapping(this->button_previous_point,       (int) WpPropertiesDialog::Action::PreviousPoint);
+	this->signal_mapper->setMapping(this->button_next_point,           (int) WpPropertiesDialog::Action::NextPoint);
+
+	connect(this->signal_mapper, SIGNAL (mapped(int)), this, SLOT (clicked_cb(int)));
+
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object)
+{
+	this->current_object = object;
+ 	this->setWindowTitle(tr("Waypoint Properties"));
+
+	this->name_entry->setText(object->name);
+	this->coord_widget->set_value(object->coord); /* TODO: ::set_value() should re-build the widget according to mode of object->coord or according to global setting of coord mode? */
 	this->timestamp_widget->set_timestamp(object->get_timestamp(), object->coord);
-	this->altitude_entry->set_value_iu(object->altitude);
+	this->altitude_widget->set_value_iu(object->altitude);
 	this->comment_entry->setText(object->comment);
 	this->description_entry->setText(object->description);
 	this->file_selector->preselect_file_full_path(object->image_full_path);
@@ -289,60 +216,8 @@ sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object, const QString & na
 sg_ret WpPropertiesDialog::reset_dialog_data(void)
 {
 	Waypoint wp; /* Invalid, empty object. */
-	return this->set_dialog_data(&wp, wp.name);
+	return this->set_dialog_data(&wp);
 }
-
-
-
-
-void WpPropertiesDialog::save_from_dialog(Waypoint * saved_object)
-{
-	/* We don't check for unique names: this allows generation of
-	   objects with the same name. */
-	saved_object->set_name(this->name_entry->text());
-
-	saved_object->coord = this->coord_entry->get_value();
-
-	saved_object->set_timestamp(this->timestamp_widget->get_timestamp());
-
-	/* Always store Altitude in wp in in internal units. */
-	saved_object->altitude = this->altitude_entry->get_value_iu();
-
-	saved_object->set_comment(this->comment_entry->text());
-
-	saved_object->set_description(this->description_entry->text());
-
-
-	const QString path = this->file_selector->get_selected_file_full_path();
-	saved_object->set_image_full_path(path);
-	if (!saved_object->image_full_path.isEmpty()) {
-		Thumbnails::generate_thumbnail_if_missing(saved_object->image_full_path);
-	}
-	if (!saved_object->image_full_path.isEmpty()) {
-#if K_TODO
-		saved_object->image = QImage(saved_object->image_full_path);
-#endif
-	}
-
-
-	const QString symbol_name = this->symbol_combo->currentText();
-	if (GarminSymbols::is_none_symbol_name(symbol_name)) {
-		saved_object->set_symbol(""); /* Save empty string instead of actual "none" string. */
-	} else {
-		saved_object->set_symbol(symbol_name);
-	}
-
-
-#ifdef TODO_LATER
-	if (saved_object->source != sourceentry->text()) {
-		saved_object->set_source(sourceentry->text());
-	}
-	if (saved_object->type != typeentry->text()) {
-		saved_object->set_type(typeentry->text());
-	}
-#endif
-}
-
 
 
 
@@ -373,7 +248,7 @@ void WpPropertiesDialog::set_title(const QString & title)
 
 
 
-void WpPropertiesDialog::sync_coord_entry_to_current_object_cb(void) /* Slot. */
+void WpPropertiesDialog::sync_coord_widget_to_current_object_cb(void) /* Slot. */
 {
 	if (!this->current_object) {
 		return;
@@ -384,7 +259,7 @@ void WpPropertiesDialog::sync_coord_entry_to_current_object_cb(void) /* Slot. */
 
 	//// this->current_object->coord.get_coord_mode()
 
-	const Coord new_coord = this->coord_entry->get_value();
+	const Coord new_coord = this->coord_widget->get_value();
 	const bool redraw = Coord::distance(this->current_object->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
 	this->current_object->coord = new_coord;
 
@@ -403,7 +278,7 @@ void WpPropertiesDialog::sync_coord_entry_to_current_object_cb(void) /* Slot. */
 
 
 
-void WpPropertiesDialog::sync_altitude_entry_to_current_object_cb(void) /* Slot. */
+void WpPropertiesDialog::sync_altitude_widget_to_current_object_cb(void) /* Slot. */
 {
 	if (!this->current_object) {
 		return;
@@ -413,29 +288,37 @@ void WpPropertiesDialog::sync_altitude_entry_to_current_object_cb(void) /* Slot.
 	}
 
 	/* Always store internally in metres. */
-	this->current_object->altitude = this->altitude_entry->get_value_iu();
+	this->current_object->altitude = this->altitude_widget->get_value_iu();
 }
 
 
 
 
 /* Set timestamp of current waypoint. */
-void WpPropertiesDialog::sync_timestamp_entry_to_current_object_cb(const Time & timestamp)
+void WpPropertiesDialog::sync_timestamp_widget_to_current_object_cb(const Time & timestamp)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp;
 
 	this->set_timestamp_of_current_object(timestamp);
+
+	if (this->current_object->is_visible()) {
+		this->current_object->emit_tree_item_changed("Timestamp of waypoint changed in 'waypoint properties' dialog");
+	}
 }
 
 
 
 
 /* Clear timestamp of current waypoint. */
-void WpPropertiesDialog::sync_empty_timestamp_entry_to_current_object_cb(void)
+void WpPropertiesDialog::sync_empty_timestamp_widget_to_current_object_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
 
 	this->set_timestamp_of_current_object(Time()); /* Invalid value - this should indicate that timestamp is cleared from the tp. */
+
+	if (this->current_object->is_visible()) {
+		this->current_object->emit_tree_item_changed("Timestamp of waypoint changed in 'waypoint properties' dialog");
+	}
 }
 
 
@@ -459,7 +342,9 @@ void WpPropertiesDialog::sync_description_entry_to_current_object_cb(const QStri
 
 void WpPropertiesDialog::sync_file_selector_to_current_object_cb(void)
 {
-	/* TODO: implement. */
+	/* TODO: implement.
+	   this->set_new_waypoint_icon();
+	 */
 }
 
 
@@ -499,9 +384,80 @@ bool WpPropertiesDialog::sync_name_entry_to_current_object_cb(const QString & ne
 
 	this->current_object->set_name(new_name);
 
+	this->current_object->propagate_new_waypoint_name();
+
 	return true;
 }
 
+
+
+
+void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
+{
+	qDebug() << SG_PREFIX_I << "Handling dialog action" << action;
+
+	Waypoint * wp = this->current_object;
+	if (!wp) {
+		qDebug() << SG_PREFIX_N << "Not handling action, no current wp";
+		return;
+	}
+	LayerTRW * trw = (LayerTRW *) wp->get_owning_layer();
+	if (!trw) {
+		qDebug() << SG_PREFIX_N << "Not handling action, no current trw layer";
+		return;
+	}
+
+
+	switch ((WpPropertiesDialog::Action) action) {
+	case WpPropertiesDialog::Action::DeleteSelectedPoint:
+		/* TODO: implement.
+		trw->delete_selected_wp(wp);
+		*/
+		trw->emit_tree_item_changed("Indicating deletion of waypoint");
+		break;
+
+	case WpPropertiesDialog::Action::NextPoint:
+		/* TODO: implement
+		if (sg_ret::ok != track->move_selected_tp_forward()) {
+			break;
+		}
+
+		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		track->emit_tree_item_changed("Indicating selecting next trackpoint in track");
+		*/
+		break;
+
+	case WpPropertiesDialog::Action::PreviousPoint:
+		/* TODO: implement
+		if (sg_ret::ok != track->move_selected_tp_back()) {
+			break;
+		}
+
+		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		track->emit_tree_item_changed("Indicating selecting previous trackpoint in track");
+		*/
+		break;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected dialog action" << action;
+		break;
+	}
+}
+
+
+
+
+void WpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
+{
+	/* TODO: implement. */
+}
+
+
+
+
+WpPropertiesWidget::WpPropertiesWidget(QWidget * parent_widget) : PointPropertiesWidget(parent_widget)
+{
+}
 
 
 

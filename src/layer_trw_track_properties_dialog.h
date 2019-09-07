@@ -114,7 +114,7 @@ namespace SlavGPS {
 
 
 
-	void track_properties_dialog(Track * trk, Window * parent = NULL);
+	bool track_properties_dialog(Track * trk, Window * parent = NULL);
 	void track_statistics_dialog(Track * trk, Window * parent = NULL);
 
 

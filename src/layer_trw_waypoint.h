@@ -112,7 +112,7 @@ namespace SlavGPS {
 		sg_ret propagate_new_waypoint_name(void);
 
 
-		bool properties_dialog();
+		bool show_properties_dialog(void);
 
 		LayerTRW * get_parent_layer_trw() const;
 
@@ -146,7 +146,7 @@ namespace SlavGPS {
 
 
 	public slots:
-		void properties_dialog_cb(void);
+		bool show_properties_dialog_cb(void);
 		void apply_dem_data_all_cb(void);
 		void apply_dem_data_only_missing_cb(void);
 

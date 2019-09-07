@@ -1155,7 +1155,7 @@ bool TreeView::tree_item_properties_cb(void) /* Slot. */
 		return true;
 	}
 
-	bool result = selected_item->properties_dialog();
+	bool result = selected_item->show_properties_dialog();
 	if (result) {
 		selected_item->emit_tree_item_changed("Tree View - Item Properties");
 		return true;

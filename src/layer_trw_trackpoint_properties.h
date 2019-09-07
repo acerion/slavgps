@@ -115,7 +115,7 @@ namespace SlavGPS {
 		/* Dialog action codes. */
 		enum class Action {
 			InsertTpAfter,
-			DeleteSelectedTp,
+			DeleteSelectedPoint,
 			SplitAtSelectedTp,
 			PreviousPoint,
 			NextPoint,
@@ -125,15 +125,15 @@ namespace SlavGPS {
 		void clicked_cb(int response);
 
 	private slots:
-		void sync_coord_entry_to_current_tp_cb(void);
-		void sync_altitude_entry_to_current_tp_cb(void);
-		void sync_timestamp_entry_to_current_tp_cb(const Time & timestamp);
-		void sync_empty_timestamp_entry_to_current_tp_cb(void);
+		void sync_coord_widget_to_current_tp_cb(void);
+		void sync_altitude_widget_to_current_tp_cb(void);
+		void sync_timestamp_widget_to_current_tp_cb(const Time & timestamp);
+		void sync_empty_timestamp_widget_to_current_tp_cb(void);
 		bool sync_name_entry_to_current_tp_cb(const QString & new_name);
 
 	signals:
 		/* Coordinates of one of track's trackpoints has changed its coordinates. */
-		void trackpoint_coordinates_changed(void);
+		void point_coordinates_changed(void);
 
 	private:
 		void update_timestamp_widget(const Trackpoint * tp);

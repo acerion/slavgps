@@ -329,7 +329,7 @@ namespace SlavGPS {
 		bool is_track(void) const;
 		bool is_route(void) const;
 
-		bool properties_dialog();
+		bool show_properties_dialog(void) override;
 
 		LayerTRW * get_parent_layer_trw() const;
 
@@ -407,7 +407,7 @@ namespace SlavGPS {
 		void anonymize_times_cb(void);
 		void interpolate_times_cb(void);
 
-		void properties_dialog_cb(void);
+		bool show_properties_dialog_cb(void);
 		void statistics_dialog_cb(void);
 		void profile_dialog_cb(void);
 

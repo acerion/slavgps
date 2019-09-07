@@ -38,10 +38,12 @@
 #include "layer_trw_geotag.h"
 #include "layer_trw_waypoint.h"
 #include "layer_trw_waypoint_properties.h"
+#include "layer_trw_tools.h"
 #include "garmin_symbols.h"
 #include "dem_cache.h"
 #include "util.h"
 #include "window.h"
+#include "toolbox.h"
 #include "tree_item_list.h"
 #include "tree_view_internal.h"
 #include "layers_panel.h"
@@ -364,7 +366,7 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
 	qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Properties"));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_dialog_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_properties_dialog_cb()));
 
 
 	/* Common "Edit" items. */
@@ -437,41 +439,43 @@ bool Waypoint::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 
-bool Waypoint::properties_dialog()
+bool Waypoint::show_properties_dialog(void)
 {
-	this->properties_dialog_cb();
-	return true;
+	return this->show_properties_dialog_cb();
 }
 
 
 
 
-void Waypoint::properties_dialog_cb(void)
+bool Waypoint::show_properties_dialog_cb(void)
 {
-	if (this->name.isEmpty()) {
-		return;
-	}
-
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 
-	const QString old_name = this->name;
-	const bool changed = waypoint_edit_dialog(this, parent_layer->coord_mode, ThisApp::get_main_window());
-	if (changed) {
-		/* Something has changed in waypoint's properties. */
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	tool->wp_properties_dialog->set_coord_mode(parent_layer->get_coord_mode());
 
-		if (old_name != this->name) {
-			/* Waypoint's name has been changed. */
-			this->propagate_new_waypoint_name();
-		}
+	/* Disconnect all old connections that may have been made from
+	   this global dialog to other TRW layer. */
+	/* TODO: also disconnect the signals in dialog code when the dialog is closed? */
+	tool->wp_properties_dialog->disconnect();
 
-		this->set_new_waypoint_icon();
+	/* Make new connections to current TRW layer. */
+	connect(tool->wp_properties_dialog, SIGNAL (accepted()), this, SLOT (on_tp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
+	connect(tool->wp_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
 
-		if (parent_layer->is_visible()) {
-			parent_layer->emit_tree_item_changed("TRW - Waypoint - properties");
-		}
+	parent_layer->get_window()->get_tools_dock()->setWidget(tool->wp_properties_dialog);
+
+	tool->wp_properties_dialog->set_dialog_data(this);
+
+	Waypoint * wp = parent_layer->get_edited_wp();
+	if (!wp) {
+		qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' waypoint set";
+		tool->wp_properties_dialog->reset_dialog_data();
+		return true;
+	} else {
+		return false;
 	}
 }
-
 
 
 

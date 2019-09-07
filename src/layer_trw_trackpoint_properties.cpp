@@ -65,7 +65,7 @@ void TpPropertiesDialog::update_timestamp_widget(const Trackpoint * tp)
 
 
 
-void TpPropertiesDialog::sync_coord_entry_to_current_tp_cb(void) /* Slot. */
+void TpPropertiesDialog::sync_coord_widget_to_current_tp_cb(void) /* Slot. */
 {
 	if (!this->current_tp) {
 		return;
@@ -76,7 +76,7 @@ void TpPropertiesDialog::sync_coord_entry_to_current_tp_cb(void) /* Slot. */
 
 	//// this->current_tp->coord.get_coord_mode()
 
-	const Coord new_coord = this->coord_entry->get_value();
+	const Coord new_coord = this->coord_widget->get_value();
 	const bool redraw_track = Coord::distance(this->current_tp->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
 	this->current_tp->coord = new_coord;
 
@@ -86,17 +86,16 @@ void TpPropertiesDialog::sync_coord_entry_to_current_tp_cb(void) /* Slot. */
 
 	/* Don't redraw unless we really have to. */
 	if (redraw_track) {
-		/* Tell parent code that a track has changed its
-		   coordinates (one of track's trackpoints has changed
-		   its coordinates). */
-		emit this->trackpoint_coordinates_changed();
+		/* One of track's trackpoints has changed
+		   its coordinates. */
+		emit this->point_coordinates_changed();
 	}
 }
 
 
 
 
-void TpPropertiesDialog::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
+void TpPropertiesDialog::sync_altitude_widget_to_current_tp_cb(void) /* Slot. */
 {
 	if (!this->current_tp) {
 		return;
@@ -106,14 +105,14 @@ void TpPropertiesDialog::sync_altitude_entry_to_current_tp_cb(void) /* Slot. */
 	}
 
 	/* Always store internally in metres. */
-	this->current_tp->altitude = this->altitude_entry->get_value_iu();
+	this->current_tp->altitude = this->altitude_widget->get_value_iu();
 }
 
 
 
 
 /* Set timestamp of current trackpoint. */
-void TpPropertiesDialog::sync_timestamp_entry_to_current_tp_cb(const Time & timestamp)
+void TpPropertiesDialog::sync_timestamp_widget_to_current_tp_cb(const Time & timestamp)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp;
 
@@ -124,7 +123,7 @@ void TpPropertiesDialog::sync_timestamp_entry_to_current_tp_cb(const Time & time
 
 
 /* Clear timestamp of current trackpoint. */
-void TpPropertiesDialog::sync_empty_timestamp_entry_to_current_tp_cb(void)
+void TpPropertiesDialog::sync_empty_timestamp_widget_to_current_tp_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
 
@@ -203,8 +202,8 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 
 	Trackpoint * tp = *current_tp_iter;
 
-	this->trkpt_name->setEnabled(true);
-	this->trkpt_name->setText(tp->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
+	this->name_entry->setEnabled(true);
+	this->name_entry->setText(tp->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
 
 
 
@@ -221,8 +220,8 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 
 
 
-	this->coord_entry->setEnabled(true);
-	this->altitude_entry->me_widget->setEnabled(true);
+	this->coord_widget->setEnabled(true);
+	this->altitude_widget->me_widget->setEnabled(true);
 	this->timestamp_widget->setEnabled(tp->timestamp.is_valid());
 
 	this->set_dialog_title(track->name);
@@ -235,8 +234,8 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 
 	this->sync_to_current_tp_block = true; /* Don't update while setting data. */
 
-	this->coord_entry->set_value(tp->coord, true); /* true: block signals when setting initial value of widget. */
-	this->altitude_entry->set_value_iu(tp->altitude);
+	this->coord_widget->set_value(tp->coord, true); /* true: block signals when setting initial value of widget. */
+	this->altitude_widget->set_value_iu(tp->altitude);
 
 
 	this->update_timestamp_widget(tp);
@@ -331,7 +330,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
 		break;
 
-	case TpPropertiesDialog::Action::DeleteSelectedTp:
+	case TpPropertiesDialog::Action::DeleteSelectedPoint:
 		if (!track->has_selected_tp()) {
 			return;
 		}
@@ -545,7 +544,7 @@ void TpPropertiesWidget::build_buttons(QWidget * parent_widget)
 
 	this->signal_mapper->setMapping(this->button_insert_tp_after,      (int) TpPropertiesDialog::Action::InsertTpAfter);
 	this->signal_mapper->setMapping(this->button_split_track,          (int) TpPropertiesDialog::Action::SplitAtSelectedTp);
-	this->signal_mapper->setMapping(this->button_delete_current_point, (int) TpPropertiesDialog::Action::DeleteSelectedTp);
+	this->signal_mapper->setMapping(this->button_delete_current_point, (int) TpPropertiesDialog::Action::DeleteSelectedPoint);
 	this->signal_mapper->setMapping(this->button_previous_point,       (int) TpPropertiesDialog::Action::PreviousPoint);
 	this->signal_mapper->setMapping(this->button_next_point,           (int) TpPropertiesDialog::Action::NextPoint);
 

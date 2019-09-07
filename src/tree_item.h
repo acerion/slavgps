@@ -219,7 +219,7 @@ namespace SlavGPS {
 
 		virtual void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected) { return; };
 
-		virtual bool properties_dialog() { return false; };
+		virtual bool show_properties_dialog(void) { return false; };
 
 		/* Is given tree item a member of a tree? */
 		bool is_in_tree(void) const;

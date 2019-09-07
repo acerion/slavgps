@@ -33,13 +33,13 @@
 
 #include <QWidget>
 #include <QDialog>
-#include <QFormLayout>
+//#include <QFormLayout>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QSignalMapper>
+//#include <QSignalMapper>
 #include <QGridLayout>
 
 
@@ -48,18 +48,11 @@
 #include "widget_timestamp.h"
 #include "widget_measurement_entry.h"
 #include "widget_coord_display.h"
-#include "layer_trw_track.h"
 
 
 
 
 namespace SlavGPS {
-
-
-
-
-	class Track;
-	class Trackpoint;
 
 
 
@@ -72,20 +65,23 @@ namespace SlavGPS {
 		sg_ret build_widgets(QWidget * parent_widget);
 		void reset_widgets(void);
 
-		QGridLayout * grid = NULL;
-		QVBoxLayout * vbox = NULL;
+		QLineEdit * name_entry = NULL;
 
-		QLineEdit * trkpt_name = NULL;
-		CoordEntryWidget * coord_entry = NULL;
-		MeasurementEntry_2<Altitude, HeightUnit> * altitude_entry = NULL;
+	protected:
+		int widgets_row = 0;
+
+		CoordEntryWidget * coord_widget = NULL;
+		MeasurementEntry_2<Altitude, HeightUnit> * altitude_widget = NULL;
 		TimestampWidget * timestamp_widget = NULL;
+
 
 		/* Buttons will be in two rows. */
 		QDialogButtonBox * button_box_upper = NULL;
 		QDialogButtonBox * button_box_lower = NULL;
 
-	protected:
-		int widgets_row = 0;
+
+		QGridLayout * grid = NULL;
+		QVBoxLayout * vbox = NULL;
 	};
 
 

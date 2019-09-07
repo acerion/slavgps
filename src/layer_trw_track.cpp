@@ -2175,7 +2175,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 		   Don't give possibility to open a duplicate properties dialog window. */
 		qa->setEnabled(false);
 	}
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_dialog_cb()));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_properties_dialog_cb()));
 
 
 
@@ -2374,22 +2374,17 @@ void Track::interpolate_times_cb(void)
 
 
 
-bool Track::properties_dialog(void)
+bool Track::show_properties_dialog(void)
 {
-	this->properties_dialog_cb();
-	return true;
+	return this->show_properties_dialog_cb();
 }
 
 
 
 
-void Track::properties_dialog_cb(void)
+bool Track::show_properties_dialog_cb(void)
 {
-	if (this->name.isEmpty()) {
-		return;
-	}
-
-	track_properties_dialog(this, ThisApp::get_main_window());
+	return track_properties_dialog(this, ThisApp::get_main_window());
 }
 
 

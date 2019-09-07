@@ -26,6 +26,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QSignalMapper>
 
 
 
@@ -33,6 +34,7 @@
 #include "coord.h"
 #include "ui_builder.h"
 #include "widget_measurement_entry.h"
+#include "layer_trw_point_properties.h"
 
 
 
@@ -51,14 +53,85 @@ namespace SlavGPS {
 
 
 
-	/* Edit properties of new waypoint (waypoint that is being created). */
-	bool waypoint_new_dialog(Waypoint * wp, const QString & default_wp_name, CoordMode coord_mode, QWidget * parent = NULL);
+	class WpPropertiesWidget : public PointPropertiesWidget {
+		Q_OBJECT
+	public:
+		WpPropertiesWidget(QWidget * parent = NULL);
 
-	/* Edit properties of existing waypoint. */
-	bool waypoint_edit_dialog(Waypoint * wp, CoordMode coord_mode, QWidget * parent = NULL);
+		sg_ret build_widgets(QWidget * parent_widget);
+		void reset_widgets(void);
+		sg_ret build_buttons(QWidget * parent_widget);
+
+
+		QLineEdit * comment_entry = NULL;
+		QLineEdit * description_entry = NULL;
+		FileSelectorWidget * file_selector = NULL;
+		QComboBox * symbol_combo = NULL;
+
+		QSignalMapper * signal_mapper = NULL;
+
+		QPushButton * button_delete_current_point = NULL;
+		QPushButton * button_previous_point = NULL;
+		QPushButton * button_next_point = NULL;
+		QPushButton * button_close_dialog = NULL;
+	};
 
 
 
+
+	class WpPropertiesDialog : public WpPropertiesWidget {
+		Q_OBJECT
+	public:
+		WpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget);
+		~WpPropertiesDialog();
+
+		sg_ret set_dialog_data(Waypoint * wp);
+		sg_ret reset_dialog_data(void);
+		void set_title(const QString & title);
+
+		void set_coord_mode(CoordMode coord_mode);
+
+		/* Dialog action codes. */
+		enum class Action {
+			DeleteSelectedPoint,
+			PreviousPoint,
+			NextPoint,
+		};
+
+	public slots:
+		void clicked_cb(int response);
+
+
+	private slots:
+		bool sync_name_entry_to_current_object_cb(const QString &);
+		void sync_coord_widget_to_current_object_cb(void);
+		void sync_empty_timestamp_widget_to_current_object_cb(void);
+		void sync_timestamp_widget_to_current_object_cb(const Time & timestamp);
+		void sync_altitude_widget_to_current_object_cb(void);
+		void sync_comment_entry_to_current_object_cb(const QString &);
+		void sync_description_entry_to_current_object_cb(const QString &);
+		void sync_file_selector_to_current_object_cb(void);
+		void symbol_entry_changed_cb(int);
+
+	signals:
+		/* Coordinates of edited object have changed. */
+		void object_coordinates_changed(void);
+
+	public:
+		void update_timestamp_widget(const Waypoint * wp);
+
+		bool set_timestamp_of_current_object(const Time & timestamp);
+
+
+	private:
+		Waypoint * current_object = NULL;
+		bool sync_to_current_object_block = false;
+	};
+
+
+
+
+#if 0
 	class WpPropertiesDialog : public QDialog {
 		Q_OBJECT
 	public:
@@ -75,10 +148,10 @@ namespace SlavGPS {
 
 	private slots:
 		bool sync_name_entry_to_current_object_cb(const QString &);
-		void sync_coord_entry_to_current_object_cb(void);
-		void sync_empty_timestamp_entry_to_current_object_cb(void);
-		void sync_timestamp_entry_to_current_object_cb(const Time & timestamp);
-		void sync_altitude_entry_to_current_object_cb(void);
+		void sync_coord_widget_to_current_object_cb(void);
+		void sync_empty_timestamp_widget_to_current_object_cb(void);
+		void sync_timestamp_widget_to_current_object_cb(const Time & timestamp);
+		void sync_altitude_widget_to_current_object_cb(void);
 		void sync_comment_entry_to_current_object_cb(const QString &);
 		void sync_description_entry_to_current_object_cb(const QString &);
 		void sync_file_selector_to_current_object_cb(void);
@@ -96,8 +169,6 @@ namespace SlavGPS {
 		void save_from_dialog(Waypoint * saved_object);
 
 	private:
-		sg_ret build_widgets(QWidget * parent_widget);
-
 		Waypoint * current_object = NULL;
 		bool sync_to_current_object_block = false;
 
@@ -106,15 +177,16 @@ namespace SlavGPS {
 		QVBoxLayout * vbox = NULL;
 
 
-		CoordEntryWidget * coord_entry = NULL;
+		CoordEntryWidget * coord_widget = NULL;
 		TimestampWidget * timestamp_widget = NULL;
-		MeasurementEntry_2<Altitude, HeightUnit> * altitude_entry = NULL;
+		MeasurementEntry_2<Altitude, HeightUnit> * altitude_widget = NULL;
+
 		QLineEdit * comment_entry = NULL;
 		QLineEdit * description_entry = NULL;
 		FileSelectorWidget * file_selector = NULL;
 		QComboBox * symbol_combo = NULL;
 	};
-
+#endif
 
 
 

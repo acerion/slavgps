@@ -46,6 +46,7 @@ namespace SlavGPS {
 	class GisViewport;
 	class Ruler;
 	class TpPropertiesDialog;
+	class WpPropertiesDialog;
 
 
 
@@ -107,6 +108,9 @@ namespace SlavGPS {
 	class LayerToolTRWEditWaypoint : public LayerTool {
 	public:
 		LayerToolTRWEditWaypoint(Window * window, GisViewport * gisview);
+		~LayerToolTRWEditWaypoint();
+
+		WpPropertiesDialog * wp_properties_dialog = NULL;
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;

@@ -141,7 +141,7 @@ namespace SlavGPS {
 		void draw_tree_item(GisViewport * gisview, bool highlight_selected, bool parent_is_selected);
 		QString get_tooltip(void) const;
 		void add_menu_items(QMenu & menu);
-		bool properties_dialog(GisViewport * gisview);
+		bool show_properties_dialog(GisViewport * gisview);
 		bool set_param_value(param_id_t param_id, const SGVariant & param_value, bool is_file_operation);
 		SGVariant get_param_value(param_id_t param_id, bool is_file_operation) const override;
 

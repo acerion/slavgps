@@ -270,7 +270,7 @@ namespace SlavGPS {
 		void get_tracks_list(std::list<Track *> & list, const QString & type_id_string) const;
 
 
-		void trackpoint_properties_show();
+		void tp_show_properties_dialog();
 
 
 
@@ -476,6 +476,8 @@ namespace SlavGPS {
 
 		void on_tp_properties_dialog_closed_cb(void);
 		void on_tp_properties_dialog_tp_coordinates_changed_cb(void);
+
+		void on_wp_properties_dialog_wp_coordinates_changed_cb(void);
 
 
 	private:

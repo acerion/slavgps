@@ -64,13 +64,15 @@ using namespace SlavGPS;
 
 
 
-void SlavGPS::track_properties_dialog(Track * trk, Window * parent)
+bool SlavGPS::track_properties_dialog(Track * trk, Window * parent)
 {
 	TrackPropertiesDialog dialog(QObject::tr("Track Properties"), trk, parent);
 	dialog.create_properties_page();
 	trk->set_properties_dialog(&dialog);
 	dialog.exec();
 	trk->clear_properties_dialog();
+
+	return true;
 }
 
 

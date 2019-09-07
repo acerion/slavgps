@@ -48,6 +48,7 @@
 #include "layer_trw_dialogs.h"
 #include "layer_trw_track_internal.h"
 #include "layer_trw_trackpoint_properties.h"
+#include "layer_trw_waypoint_properties.h"
 #include "tree_view_internal.h"
 #include "viewport_internal.h"
 #include "dialog.h"
@@ -194,7 +195,10 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 			track->recalculate_bbox();
 
 			this->tp_properties_dialog_set(track);
+		} else {
+			this->tp_properties_dialog_reset();
 		}
+
 	} else {
 		assert(0);
 	}
@@ -309,6 +313,10 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	this->reset_edited_wp();
 	this->reset_edited_track();
 	this->cancel_current_tp();
+	this->tp_properties_dialog_reset();
+	/* TODO
+	this->wp_properties_dialog_reset();
+	*/
 
 	/* Blank info. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
@@ -476,6 +484,17 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport
 
 	this->cursor_click = QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
 	this->cursor_release = QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
+
+	/* One Waypoint Properties Dialog for all layers. */
+	this->wp_properties_dialog = new WpPropertiesDialog(gisview_->get_coord_mode(), window_);
+}
+
+
+
+
+LayerToolTRWEditWaypoint::~LayerToolTRWEditWaypoint()
+{
+	delete this->wp_properties_dialog;
 }
 
 
@@ -1249,7 +1268,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);
 			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
 
-			trw->trackpoint_properties_show();
+			trw->tp_show_properties_dialog();
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
 			trw->emit_tree_item_changed("TRW - edit waypoint - tracks closest");
 			return ToolStatus::Ack;
@@ -1263,7 +1282,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);
 			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
 
-			trw->trackpoint_properties_show();
+			trw->tp_show_properties_dialog();
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
 			trw->emit_tree_item_changed("TRW - edit waypoint - routes closest");
 			return ToolStatus::Ack;

@@ -1764,17 +1764,10 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 	/* Attempt to auto set height if DEM data is available. */
 	wp->apply_dem_data(true);
 
-	const bool accepted = waypoint_new_dialog(wp, default_name, this->coord_mode, parent_window);
-	if (accepted) {
-		/* "OK" pressed in dialog, waypoint's parameters entered in the dialog are valid. */
-		this->add_waypoint(wp);
-		visible_with_parents = wp->is_visible_with_parents();
-		return true;
-	} else {
-		qDebug() << SG_PREFIX_I << "Failed to create new waypoint in dialog, rejecting";
-		delete wp;
-		return false;
-	}
+	this->add_waypoint(wp);
+	visible_with_parents = wp->is_visible_with_parents();
+
+	return wp->show_properties_dialog();
 }
 
 
@@ -2671,7 +2664,7 @@ void LayerTRW::wp_changed_message(int n_changed)
 
 void LayerTRW::edit_trackpoint_cb(void)
 {
-	this->trackpoint_properties_show();
+	this->tp_show_properties_dialog();
 }
 
 
@@ -3194,6 +3187,14 @@ void LayerTRW::on_tp_properties_dialog_tp_coordinates_changed_cb(void)
 
 
 
+void LayerTRW::on_wp_properties_dialog_wp_coordinates_changed_cb(void)
+{
+	this->emit_tree_item_changed("Indicating change of edited waypoint's coordinates");
+}
+
+
+
+
 void LayerTRW::cancel_current_tp(void)
 {
 	this->tp_properties_dialog_reset();
@@ -3241,7 +3242,7 @@ sg_ret LayerTRW::tp_properties_dialog_reset(void)
 
 
 
-void LayerTRW::trackpoint_properties_show()
+void LayerTRW::tp_show_properties_dialog()
 {
 	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
 	tool->tp_properties_dialog->set_coord_mode(this->get_coord_mode());
@@ -3253,7 +3254,7 @@ void LayerTRW::trackpoint_properties_show()
 
 	/* Make new connections to current TRW layer. */
 	connect(tool->tp_properties_dialog, SIGNAL (accepted()), this, SLOT (on_tp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
-	connect(tool->tp_properties_dialog, SIGNAL (trackpoint_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
+	connect(tool->tp_properties_dialog, SIGNAL (point_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
 
 	this->get_window()->get_tools_dock()->setWidget(tool->tp_properties_dialog);
 
@@ -3261,6 +3262,9 @@ void LayerTRW::trackpoint_properties_show()
 	if (track && track->has_selected_tp()) {
 		/* Set layer name and trackpoint data. */
 		this->tp_properties_dialog_set(track);
+	} else {
+		qDebug() << SG_PREFIX_W << "No track, or track doesn't have selected tp:" << (bool) track << (bool) track->has_selected_tp();
+		this->tp_properties_dialog_reset();
 	}
 }
 

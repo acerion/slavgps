@@ -459,7 +459,7 @@ LayerGeoref::~LayerGeoref()
 
 
 
-bool LayerGeoref::properties_dialog(GisViewport * gisview)
+bool LayerGeoref::show_properties_dialog(GisViewport * gisview)
 {
 	return this->run_dialog(gisview, this->get_window());
 }

@@ -284,7 +284,7 @@ Layer * Layer::construct_layer(LayerType layer_type, GisViewport * gisview, bool
 
 
 	if (interactive && layer->has_properties_dialog) {
-		if (!layer->properties_dialog()) {
+		if (!layer->show_properties_dialog()) {
 			delete layer;
 			return NULL;
 		}
@@ -388,16 +388,16 @@ QIcon Layer::get_icon(void)
 
 
 /* Returns true if OK was pressed. */
-bool Layer::properties_dialog()
+bool Layer::show_properties_dialog(void)
 {
-	return this->properties_dialog(ThisApp::get_main_gis_view());
+	return this->show_properties_dialog(ThisApp::get_main_gis_view());
 }
 
 
 
 
 /* Returns true if OK was pressed. */
-bool Layer::properties_dialog(GisViewport * gisview)
+bool Layer::show_properties_dialog(GisViewport * gisview)
 {
 	qDebug() << SG_PREFIX_I << "Opening properties dialog for layer" << this->get_type_ui_label();
 
