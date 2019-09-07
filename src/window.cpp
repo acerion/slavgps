@@ -275,20 +275,20 @@ Window::Window()
 			   setGeometry() doesn't work, or something
 			   overwrites panel's size. */
 
-			QRect geometry = this->panel_dock->geometry();
-			const Qt::DockWidgetArea area = this->dockWidgetArea(this->panel_dock);
+			QRect geometry = this->layers_panel_dock->geometry();
+			const Qt::DockWidgetArea area = this->dockWidgetArea(this->layers_panel_dock);
 			switch (area) {
 			case Qt::LeftDockWidgetArea:
 			case Qt::RightDockWidgetArea:
 				geometry.setWidth(size);
 				qDebug() << SG_PREFIX_I << "Restoring window panel width" << size;
-				this->panel_dock->setGeometry(geometry);
+				this->layers_panel_dock->setGeometry(geometry);
 				break;
 			case Qt::TopDockWidgetArea:
 			case Qt::BottomDockWidgetArea:
 				geometry.setHeight(size);
 				qDebug() << SG_PREFIX_I << "Restoring window panel height" << size;
-				this->panel_dock->setGeometry(geometry);
+				this->layers_panel_dock->setGeometry(geometry);
 				break;
 			default:
 				break;
@@ -308,7 +308,7 @@ Window::Window()
 	this->setWindowIcon(QIcon(":/icons/application.png"));
 
 
-	qDebug() << SG_PREFIX_I << "final panel geometry" << this->panel_dock->geometry();
+	qDebug() << SG_PREFIX_I << "final panel geometry" << this->layers_panel_dock->geometry();
 }
 
 
@@ -337,13 +337,18 @@ void Window::create_layout()
 	this->setCentralWidget(this->main_gis_vp);
 
 
-	this->panel_dock = new QDockWidget(tr("Layers"), this);
-	this->panel_dock->setAllowedAreas(Qt::TopDockWidgetArea);
+	this->layers_panel_dock = new QDockWidget(tr("Layers"), this);
+	this->layers_panel_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 
-	this->items_tree = new LayersPanel(this->panel_dock, this);
+	this->items_tree = new LayersPanel(this->layers_panel_dock, this);
 
-	this->panel_dock->setWidget(this->items_tree);
-	this->addDockWidget(Qt::LeftDockWidgetArea, this->panel_dock);
+	this->layers_panel_dock->setWidget(this->items_tree);
+	this->addDockWidget(Qt::LeftDockWidgetArea, this->layers_panel_dock);
+
+
+	this->tools_dock = new QDockWidget(tr("Tools"), this);
+	this->tools_dock->setAllowedAreas(Qt::AllDockWidgetAreas);
+	this->addDockWidget(Qt::RightDockWidgetArea, this->tools_dock);
 
 
 	setStyleSheet("QMainWindow::separator { image: url(src/icons/handle_indicator.png); width: 8}");
@@ -758,11 +763,11 @@ void Window::create_actions(void)
 		connect(this->qa_view_highlight_usage, SIGNAL (triggered(bool)), this, SLOT (set_highlight_usage_cb(bool)));
 
 
-		qa = this->panel_dock->toggleViewAction(); /* Existing action! */
+		qa = this->layers_panel_dock->toggleViewAction(); /* Existing action! */
 		qa->setText(tr("Show Side &Panel"));
 		qa->setShortcut(Qt::Key_F9);
 		qa->setCheckable(true);
-		qa->setChecked(this->panel_dock->isVisible());
+		qa->setChecked(this->layers_panel_dock->isVisible());
 		qa->setToolTip(tr("Show Side Panel"));
 		show_submenu->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_side_panel_visibility_cb(bool)));
@@ -1096,6 +1101,14 @@ Toolbox * Window::get_toolbox(void)
 StatusBar * Window::get_statusbar()
 {
 	return this->status_bar;
+}
+
+
+
+
+QDockWidget * Window::get_tools_dock(void) const
+{
+	return this->tools_dock;
 }
 
 
@@ -1608,7 +1621,7 @@ void Window::closeEvent(QCloseEvent * ev)
 			bool state_fullscreen = states.testFlag(Qt::WindowFullScreen);
 			ApplicationState::set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
 
-			ApplicationState::set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->panel_dock->isVisible());
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->layers_panel_dock->isVisible());
 			ApplicationState::set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->status_bar->isVisible());
 			ApplicationState::set_boolean(VIK_SETTINGS_WIN_TOOLBAR,   this->toolbar->isVisible());
 
@@ -1619,9 +1632,9 @@ void Window::closeEvent(QCloseEvent * ev)
 				ApplicationState::set_integer(VIK_SETTINGS_WIN_HEIGHT, this->height());
 			}
 
-			const QRect geometry = this->panel_dock->geometry();
+			const QRect geometry = this->layers_panel_dock->geometry();
 			int size = 0;
-			const Qt::DockWidgetArea area = this->dockWidgetArea(this->panel_dock);
+			const Qt::DockWidgetArea area = this->dockWidgetArea(this->layers_panel_dock);
 			switch (area) {
 			case Qt::LeftDockWidgetArea:
 			case Qt::RightDockWidgetArea:
@@ -1783,14 +1796,14 @@ void Window::set_highlight_usage_cb(bool new_state)
 
 void Window::set_side_panel_visibility_cb(bool new_state)
 {
-	if (this->panel_dock->isVisible() != new_state) {
+	if (this->layers_panel_dock->isVisible() != new_state) {
 		qDebug() << SG_PREFIX_I << "Setting side panel visibility to" << new_state;
 
-		this->panel_dock->setVisible(new_state);
+		this->layers_panel_dock->setVisible(new_state);
 
 		/* We need to set the qaction because this slot function
 		   may be called like a regular function too. */
-		this->panel_dock->toggleViewAction()->setChecked(new_state);
+		this->layers_panel_dock->toggleViewAction()->setChecked(new_state);
 	}
 }
 
@@ -1799,7 +1812,7 @@ void Window::set_side_panel_visibility_cb(bool new_state)
 
 bool Window::get_side_panel_visibility(void) const
 {
-	return this->panel_dock->isVisible();
+	return this->layers_panel_dock->isVisible();
 }
 
 

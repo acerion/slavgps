@@ -294,7 +294,8 @@ namespace SlavGPS {
 
 		bool uniquify(void);
 
-		void tpwin_update_dialog_data(Track * trk);
+		sg_ret tp_properties_dialog_set(Track * trk);
+		sg_ret tp_properties_dialog_reset(void);
 
 
 		int get_track_thickness();
@@ -311,7 +312,6 @@ namespace SlavGPS {
 
 		/* This should be private. */
 		void cancel_current_tp(void);
-		void tpwin_response(int response);
 		void update_statusbar();
 
 
@@ -355,8 +355,6 @@ namespace SlavGPS {
 		void reset_route_creation_in_progress();
 
 		bool moving_wp = false;
-
-		TpPropertiesDialog * tpwin = NULL;
 
 		/* Track editing tool -- more specifically, moving tps. */
 		bool moving_tp = false;
@@ -476,8 +474,8 @@ namespace SlavGPS {
 
 		void wp_image_cache_add(const CachedPixmap & cached_pixmap);
 
-		void on_tpwin_closed_cb(void);
-		void on_tpwin_tp_coordinates_changed_cb(void);
+		void on_tp_properties_dialog_closed_cb(void);
+		void on_tp_properties_dialog_tp_coordinates_changed_cb(void);
 
 
 	private:

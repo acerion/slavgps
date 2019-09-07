@@ -47,6 +47,11 @@ using namespace SlavGPS;
 
 
 
+#define SG_MODULE "Layer Tool"
+
+
+
+
 LayerTool::LayerTool(Window * new_window, GisViewport * new_gisview, LayerType new_layer_type)
 {
 	this->window = new_window;
@@ -198,3 +203,16 @@ ToolStatus LayerTool::handle_key_press(Layer * layer, QKeyEvent * event)
 {
 	return this->internal_handle_key_press(layer, event);
 }
+
+
+
+
+bool LayerTool::is_activated(void) const
+{
+	if (!this->qa) {
+		qDebug() << SG_PREFIX_E << "QAction for" << this->id_string << "tool is NULL";
+		return false;
+	}
+	return this->qa->isChecked();
+}
+

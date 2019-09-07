@@ -179,33 +179,8 @@ void TpPropertiesDialog::reset_dialog_data(void)
 	this->current_tp = NULL;
 	this->current_track = NULL;
 
-	this->trkpt_name->insert("");
-	this->trkpt_name->setEnabled(false);
+	this->reset_widgets();
 
-	this->timestamp_widget->reset_timestamp();
-
-	this->course->setText("");
-
-	this->coord_entry->setEnabled(false);
-	this->altitude_entry->me_widget->setEnabled(false);
-	this->timestamp_widget->setEnabled(false);
-
-	/* Only keep Close button enabled. */
-	this->button_insert_tp_after->setEnabled(false);
-	this->button_split_track->setEnabled(false);
-	this->button_delete_current_tp->setEnabled(false);
-	this->button_go_back->setEnabled(false);
-	this->button_go_forward->setEnabled(false);
-
-
-	this->diff_dist->setText("");
-	this->diff_time->setText("");
-	this->diff_speed->setText("");
-	this->speed->setText("");
-	this->vdop->setText("");
-	this->hdop->setText("");
-	this->pdop->setText("");
-	this->sat->setText("");
 
 	this->setWindowTitle(tr("Trackpoint"));
 }
@@ -231,15 +206,19 @@ void TpPropertiesDialog::set_dialog_data(Track * track, const TrackPoints::itera
 	this->trkpt_name->setEnabled(true);
 	this->trkpt_name->setText(tp->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
 
+
+
 	/* User can insert only if not at the end of track (otherwise use extend track). */
 	this->button_insert_tp_after->setEnabled(std::next(current_tp_iter) != track->end());
-	this->button_delete_current_tp->setEnabled(true);
 
 	/* We can only split up a track if it's not an endpoint. */
 	this->button_split_track->setEnabled(std::next(current_tp_iter) != track->end() && current_tp_iter != track->begin());
 
-	this->button_go_forward->setEnabled(std::next(current_tp_iter) != track->end());
-	this->button_go_back->setEnabled(current_tp_iter != track->begin());
+	this->button_delete_current_point->setEnabled(true);
+
+	this->button_next_point->setEnabled(std::next(current_tp_iter) != track->end());
+	this->button_previous_point->setEnabled(current_tp_iter != track->begin());
+
 
 
 	this->coord_entry->setEnabled(true);
@@ -311,166 +290,11 @@ void TpPropertiesDialog::set_dialog_title(const QString & track_name)
 
 
 
-TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget) : QDialog(parent_widget)
+TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget) : TpPropertiesWidget(parent_widget)
 {
 	this->setWindowTitle(tr("Trackpoint"));
-
-	this->button_box_upper = new QDialogButtonBox();
-	this->button_box_lower = new QDialogButtonBox();
-
-	this->button_insert_tp_after = this->button_box_upper->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
-	this->button_insert_tp_after->setIcon(QIcon::fromTheme("list-add"));
-	this->button_delete_current_tp = this->button_box_upper->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
-	this->button_delete_current_tp->setIcon(QIcon::fromTheme("list-delete"));
-	this->button_split_track = this->button_box_upper->addButton(tr("Split Here"), QDialogButtonBox::ActionRole);
-
-	this->button_go_back = this->button_box_lower->addButton(tr("&Back"), QDialogButtonBox::ActionRole);
-	this->button_go_back->setIcon(QIcon::fromTheme("go-previous"));
-	this->button_go_forward = this->button_box_lower->addButton(tr("&Forward"), QDialogButtonBox::ActionRole);
-	this->button_go_forward->setIcon(QIcon::fromTheme("go-next"));
-	this->button_close_dialog = this->button_box_lower->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
-
-
-	 /* Without this connection the dialog wouldn't close.  Button
-	    box is sending accepted() signal thanks to AcceptRole of
-	    "Close" button, configured above. */
-	connect(this->button_box_lower, SIGNAL (accepted()), this, SLOT (accept()));
-
-
-	/* Use signal mapper only for buttons that do some action
-	   related to track/trackpoint.  Previously I've used the
-	   signal mapper also for "Close" button, but that led to some
-	   crash of app (probably signal going back and forth between
-	   the dialog and trw layer), so I removed it. */
-	this->signal_mapper = new QSignalMapper(this);
-	connect(this->button_insert_tp_after,   SIGNAL (released()), signal_mapper, SLOT (map()));
-	connect(this->button_delete_current_tp, SIGNAL (released()), signal_mapper, SLOT (map()));
-	connect(this->button_split_track,       SIGNAL (released()), signal_mapper, SLOT (map()));
-	connect(this->button_go_back,           SIGNAL (released()), signal_mapper, SLOT (map()));
-	connect(this->button_go_forward,        SIGNAL (released()), signal_mapper, SLOT (map()));
-
-	this->signal_mapper->setMapping(this->button_insert_tp_after,   (int) TpPropertiesDialog::Action::InsertTpAfter);
-	this->signal_mapper->setMapping(this->button_delete_current_tp, (int) TpPropertiesDialog::Action::DeleteSelectedTp);
-	this->signal_mapper->setMapping(this->button_split_track,       (int) TpPropertiesDialog::Action::SplitAtSelectedTp);
-	this->signal_mapper->setMapping(this->button_go_back,           (int) TpPropertiesDialog::Action::GoBack);
-	this->signal_mapper->setMapping(this->button_go_forward,        (int) TpPropertiesDialog::Action::GoForward);
-
-	connect(this->signal_mapper, SIGNAL (mapped(int)), this, SLOT (clicked_cb(int)));
-
-
-	this->vbox = new QVBoxLayout;
-	this->grid = new QGridLayout();
-	this->vbox->addLayout(this->grid);
-	this->vbox->addWidget(this->button_box_upper);
-	this->vbox->addWidget(this->button_box_lower);
-
-
-	QLayout * old = this->layout();
-	delete old;
-	this->setLayout(this->vbox);
-
-	int row = 0;
-	const int left_col = 0;
-	const int right_col = 1;
-
-	/* Properties of text labels that display non-editable
-	   trackpoint properties. */
-	const Qt::TextInteractionFlags value_display_label_flags = Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard;
-
-
-	this->trkpt_name = new QLineEdit("", this);
-	this->grid->addWidget(new QLabel(tr("Name:")), row, left_col);
-	this->grid->addWidget(this->trkpt_name, row, right_col);
-	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_tp_cb(const QString &)));
-
-	row++;
-
-	this->coord_entry = new CoordEntryWidget(coord_mode);
-	this->grid->addWidget(this->coord_entry, row, left_col, 1, 2);
-	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_tp_cb(void)));
-
-	row++;
-
-	const HeightUnit height_unit = Altitude::get_internal_unit();
-	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
-					      Altitude(SG_ALTITUDE_RANGE_MAX, height_unit),
-					      Altitude(0.0, height_unit),
-					      Altitude(1, height_unit),
-					      SG_ALTITUDE_PRECISION);
-	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(0, height_unit), &scale_alti, this);
-	this->grid->addWidget(new QLabel(tr("Altitude:")), row, left_col);
-	this->grid->addWidget(this->altitude_entry->me_widget, row, right_col);
-	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_tp_cb(void)));
-
-	row++;
-
-	this->course = new QLabel("", this);
-	this->course->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("Course:")), row, left_col);
-	this->grid->addWidget(this->course, row, right_col);
-
-	row++;
-
-	this->timestamp_widget = new TimestampWidget();
-	this->grid->addWidget(this->timestamp_widget, row, left_col, 1, 2);
-	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_tp_cb(const Time &)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_tp_cb(void)));
-
-	row++;
-
-	this->diff_dist = new QLabel("", this);
-	this->diff_dist->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("Distance Difference:")), row, left_col);
-	this->grid->addWidget(this->diff_dist, row, right_col);
-
-	row++;
-
-	this->diff_time = new QLabel("", this);
-	this->diff_time->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("Time Difference:")), row, left_col);
-	this->grid->addWidget(this->diff_time, row, right_col);
-
-	row++;
-
-	this->diff_speed = new QLabel("", this);
-	this->diff_speed->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("\"Speed\" Between:")), row, left_col);
-	this->grid->addWidget(this->diff_speed, row, right_col);
-
-	row++;
-
-	this->speed = new QLabel("", this);
-	this->speed->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("Speed:")), row, left_col);
-	this->grid->addWidget(this->speed, row, right_col);
-
-	row++;
-
-	this->vdop = new QLabel("", this);
-	this->vdop->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("VDOP:")), row, left_col);
-	this->grid->addWidget(this->vdop, row, right_col);
-
-	row++;
-
-	this->hdop = new QLabel("", this);
-	this->hdop->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("HDOP:")), row, left_col);
-	this->grid->addWidget(this->hdop, row, right_col);
-
-	row++;
-
-	this->pdop = new QLabel("", this);
-	this->pdop->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("PDOP:")), row, left_col);
-	this->grid->addWidget(this->pdop, row, right_col);
-
-	row++;
-
-	this->sat = new QLabel("", this);
-	this->sat->setTextInteractionFlags(value_display_label_flags);
-	this->grid->addWidget(new QLabel(tr("SAT/FIX:")), row, left_col);
-	this->grid->addWidget(this->sat, row, right_col);
+	this->build_buttons(this);
+	this->build_widgets(this);
 }
 
 
@@ -521,22 +345,22 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		track->emit_tree_item_changed("Indicating deletion of trackpoint");
 		break;
 
-	case TpPropertiesDialog::Action::GoForward:
+	case TpPropertiesDialog::Action::NextPoint:
 		if (sg_ret::ok != track->move_selected_tp_forward()) {
 			break;
 		}
 
 		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
-		track->emit_tree_item_changed("Indicating going forward in track");
+		track->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		break;
 
-	case TpPropertiesDialog::Action::GoBack:
+	case TpPropertiesDialog::Action::PreviousPoint:
 		if (sg_ret::ok != track->move_selected_tp_back()) {
 			break;
 		}
 
 		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
-		track->emit_tree_item_changed("TRW - trackpoint properties - go back");
+		track->emit_tree_item_changed("Indicating selecting previous trackpoint in track");
 		break;
 
 	case TpPropertiesDialog::Action::InsertTpAfter:
@@ -549,4 +373,181 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		qDebug() << SG_PREFIX_E << "Unexpected dialog action" << action;
 		break;
 	}
+}
+
+
+
+
+void TpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
+{
+	/* TODO: implement. */
+}
+
+
+
+
+TpPropertiesWidget::TpPropertiesWidget(QWidget * parent_widget) : PointPropertiesWidget(parent_widget)
+{
+}
+
+
+
+
+sg_ret TpPropertiesWidget::build_widgets(QWidget * parent_widget)
+{
+	/* Properties of text labels that display non-editable
+	   trackpoint properties. */
+	const Qt::TextInteractionFlags value_display_label_flags = Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard;
+
+	const int left_col = 0;
+	const int right_col = 1;
+
+	this->widgets_row = 0;
+
+	this->PointPropertiesWidget::build_widgets(parent_widget);
+
+	this->course = new QLabel("");
+	this->course->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Course:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->course, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->diff_dist = new QLabel("");
+	this->diff_dist->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Distance Difference:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->diff_dist, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->diff_time = new QLabel("");
+	this->diff_time->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Time Difference:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->diff_time, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->diff_speed = new QLabel("");
+	this->diff_speed->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("\"Speed\" Between:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->diff_speed, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->speed = new QLabel("");
+	this->speed->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("Speed:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->speed, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->vdop = new QLabel("");
+	this->vdop->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("VDOP:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->vdop, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->hdop = new QLabel("");
+	this->hdop->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("HDOP:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->hdop, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->pdop = new QLabel("");
+	this->pdop->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("PDOP:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->pdop, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	this->sat = new QLabel("");
+	this->sat->setTextInteractionFlags(value_display_label_flags);
+	this->grid->addWidget(new QLabel(tr("SAT/FIX:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->sat, this->widgets_row, right_col);
+
+	this->widgets_row++;
+
+	return sg_ret::ok;
+}
+
+
+
+
+void TpPropertiesWidget::reset_widgets(void)
+{
+	this->PointPropertiesWidget::reset_widgets();
+
+	this->course->setText("");
+	this->diff_dist->setText("");
+	this->diff_time->setText("");
+	this->diff_speed->setText("");
+	this->speed->setText("");
+	this->vdop->setText("");
+	this->hdop->setText("");
+	this->pdop->setText("");
+	this->sat->setText("");
+
+	/* Only keep Close button enabled. */
+	this->button_insert_tp_after->setEnabled(false);
+	this->button_split_track->setEnabled(false);
+	this->button_delete_current_point->setEnabled(false);
+	this->button_previous_point->setEnabled(false);
+	this->button_next_point->setEnabled(false);
+}
+
+
+
+
+void TpPropertiesWidget::build_buttons(QWidget * parent_widget)
+{
+	this->button_insert_tp_after = this->button_box_upper->addButton(tr("&Insert After"), QDialogButtonBox::ActionRole);
+	this->button_insert_tp_after->setIcon(QIcon::fromTheme("list-add"));
+	this->button_split_track = this->button_box_upper->addButton(tr("Split &Here"), QDialogButtonBox::ActionRole);
+	this->button_delete_current_point = this->button_box_upper->addButton(tr("&Delete"), QDialogButtonBox::ActionRole);
+	this->button_delete_current_point->setIcon(QIcon::fromTheme("list-delete"));
+
+	/*
+	  Use "Previous" and "Next" labels because in Waypoint
+	  Properties we would like to add similar buttons (for
+	  selecting previous/next waypoint within current TRW
+	  layer). In context of waypoints the "Back"/"Forward" labels
+	  wouldn't make much sense.
+
+	  So for consistency reasons we will use "Previous" and "Next"
+	  in both dialogs.
+	*/
+	this->button_previous_point = this->button_box_lower->addButton(tr("&Previous"), QDialogButtonBox::ActionRole);
+	this->button_previous_point->setIcon(QIcon::fromTheme("go-previous"));
+	this->button_next_point = this->button_box_lower->addButton(tr("&Next"), QDialogButtonBox::ActionRole);
+	this->button_next_point->setIcon(QIcon::fromTheme("go-next"));
+	this->button_close_dialog = this->button_box_lower->addButton(tr("&Close"), QDialogButtonBox::AcceptRole);
+
+
+	 /* Without this connection the dialog wouldn't close.  Button
+	    box is sending accepted() signal thanks to AcceptRole of
+	    "Close" button, configured above. */
+	connect(this->button_box_lower, SIGNAL (accepted()), this, SLOT (accept()));
+
+
+	/* Use signal mapper only for buttons that do some action
+	   related to track/trackpoint.  Previously I've used the
+	   signal mapper also for "Close" button, but that led to some
+	   crash of app (probably signal going back and forth between
+	   the dialog and trw layer), so I removed it. */
+	this->signal_mapper = new QSignalMapper(this);
+	connect(this->button_insert_tp_after,      SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_split_track,          SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_delete_current_point, SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_previous_point,       SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_next_point,           SIGNAL (released()), signal_mapper, SLOT (map()));
+
+	this->signal_mapper->setMapping(this->button_insert_tp_after,      (int) TpPropertiesDialog::Action::InsertTpAfter);
+	this->signal_mapper->setMapping(this->button_split_track,          (int) TpPropertiesDialog::Action::SplitAtSelectedTp);
+	this->signal_mapper->setMapping(this->button_delete_current_point, (int) TpPropertiesDialog::Action::DeleteSelectedTp);
+	this->signal_mapper->setMapping(this->button_previous_point,       (int) TpPropertiesDialog::Action::PreviousPoint);
+	this->signal_mapper->setMapping(this->button_next_point,           (int) TpPropertiesDialog::Action::NextPoint);
+
+	connect(this->signal_mapper, SIGNAL (mapped(int)), this, SLOT (clicked_cb(int)));
 }

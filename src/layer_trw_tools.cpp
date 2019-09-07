@@ -47,6 +47,7 @@
 #include "layer_trw_tools.h"
 #include "layer_trw_dialogs.h"
 #include "layer_trw_track_internal.h"
+#include "layer_trw_trackpoint_properties.h"
 #include "tree_view_internal.h"
 #include "viewport_internal.h"
 #include "dialog.h"
@@ -192,9 +193,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 
 			track->recalculate_bbox();
 
-			if (this->tpwin) {
-				this->tpwin_update_dialog_data(track);
-			}
+			this->tp_properties_dialog_set(track);
 		}
 	} else {
 		assert(0);
@@ -276,9 +275,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 			this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
 
-			if (this->tpwin) {
-				this->tpwin_update_dialog_data(tp_search.closest_track);
-			}
+			this->tp_properties_dialog_set(tp_search.closest_track);
 
 			this->emit_tree_item_changed("Track has been selected with select tool click");
 			return true;
@@ -300,9 +297,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 			this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
 
-			if (this->tpwin) {
-				this->tpwin_update_dialog_data(tp_search.closest_track);
-			}
+			this->tp_properties_dialog_set(tp_search.closest_track);
 
 			this->emit_tree_item_changed("Route has been selected with select tool click");
 			return true;
@@ -1189,6 +1184,17 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisView
 
 	this->cursor_click = QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
 	this->cursor_release = QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
+
+	/* One Trackpoint Properties Dialog for all layers. */
+	this->tp_properties_dialog = new TpPropertiesDialog(gisview_->get_coord_mode(), window_);
+}
+
+
+
+
+LayerToolTRWEditTrackpoint::~LayerToolTRWEditTrackpoint()
+{
+	delete this->tp_properties_dialog;
 }
 
 
@@ -1341,9 +1347,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 	this->perform_release();
 
 	/* Diff dist is diff from orig. */
-	if (trw->tpwin) {
-		trw->tpwin_update_dialog_data(track);
-	}
+	trw->tp_properties_dialog_set(track);
 
 	trw->emit_tree_item_changed("TRW - edit trackpoint - handle mouse release");
 

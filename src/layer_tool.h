@@ -110,6 +110,9 @@ namespace SlavGPS {
 		*/
 		bool perform_release(void);
 
+		/* Is the tool activated? / Is the button related to the tool pressed? */
+		bool is_activated(void) const;
+
 
 		QString action_icon_path;
 		QString action_label;

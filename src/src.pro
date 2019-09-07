@@ -115,6 +115,7 @@ SOURCES += main.cpp \
     layer_trw_track_data.cpp \
     layer_trw_track_split.cpp \
     layer_trw_track_properties_dialog.cpp \
+    layer_trw_point_properties.cpp \
     layer_trw_trackpoint_properties.cpp \
     layer_trw_waypoint.cpp \
     layer_trw_waypoint_properties.cpp \
@@ -265,6 +266,7 @@ HEADERS += window.h \
     layer_trw_track_internal.h \
     layer_trw_track_properties_dialog.h \
     layer_trw_track_profile_dialog.h \
+    layer_trw_point_properties.h \
     layer_trw_trackpoint_properties.h \
     layer_trw_waypoint.h \
     layer_trw_waypoint_properties.h \

@@ -48,6 +48,7 @@
 #include "widget_measurement_entry.h"
 #include "widget_coord_display.h"
 #include "layer_trw_track.h"
+#include "layer_trw_point_properties.h"
 
 
 
@@ -63,7 +64,43 @@ namespace SlavGPS {
 
 
 
-	class TpPropertiesDialog : public QDialog {
+	class TpPropertiesWidget : public PointPropertiesWidget {
+		Q_OBJECT
+	public:
+		TpPropertiesWidget(QWidget * parent = NULL);
+
+		sg_ret build_widgets(QWidget * parent_widget);
+		void reset_widgets(void);
+		void build_buttons(QWidget * parent_widget);
+
+
+		QLabel * course = NULL;
+		QLabel * diff_dist = NULL;
+		QLabel * diff_time = NULL;
+		QLabel * diff_speed = NULL;
+		QLabel * speed = NULL;
+		QLabel * vdop = NULL;
+		QLabel * hdop = NULL;
+		QLabel * pdop = NULL;
+		QLabel * sat = NULL;
+
+
+		QSignalMapper * signal_mapper = NULL;
+
+
+		QPushButton * button_insert_tp_after = NULL;
+		QPushButton * button_split_track = NULL;
+		QPushButton * button_delete_current_point = NULL;
+
+		QPushButton * button_previous_point = NULL;
+		QPushButton * button_next_point = NULL;
+		QPushButton * button_close_dialog = NULL;
+	};
+
+
+
+
+	class TpPropertiesDialog : public TpPropertiesWidget {
 		Q_OBJECT
 	public:
 		TpPropertiesDialog(CoordMode coord_mode, QWidget * parent = NULL);
@@ -73,14 +110,15 @@ namespace SlavGPS {
 		void reset_dialog_data(void);
 		void set_dialog_title(const QString & track_name);
 
+		void set_coord_mode(CoordMode coord_mode);
 
 		/* Dialog action codes. */
 		enum class Action {
 			InsertTpAfter,
 			DeleteSelectedTp,
 			SplitAtSelectedTp,
-			GoBack,
-			GoForward,
+			PreviousPoint,
+			NextPoint,
 		};
 
 	public slots:
@@ -99,45 +137,12 @@ namespace SlavGPS {
 
 	private:
 		void update_timestamp_widget(const Trackpoint * tp);
-
 		bool set_timestamp_of_current_tp(const Time & timestamp);
 
 		Trackpoint * current_tp = NULL;
 		Track * current_track = NULL;
 
 		bool sync_to_current_tp_block = false;
-
-		QSignalMapper * signal_mapper = NULL;
-
-		/* Buttons will be in two rows. */
-		QDialogButtonBox * button_box_upper = NULL;
-		QDialogButtonBox * button_box_lower = NULL;
-
-		QPushButton * button_close_dialog = NULL;
-		QPushButton * button_insert_tp_after = NULL;
-		QPushButton * button_delete_current_tp = NULL;
-		QPushButton * button_split_track = NULL;
-		QPushButton * button_go_back = NULL;
-		QPushButton * button_go_forward = NULL;
-
-		QGridLayout * grid = NULL;
-		QVBoxLayout * vbox = NULL;
-
-		QLineEdit * trkpt_name = NULL;
-		CoordEntryWidget * coord_entry = NULL;
-		MeasurementEntry_2<Altitude, HeightUnit> * altitude_entry = NULL;
-		QLabel * course = NULL;
-
-		TimestampWidget * timestamp_widget = NULL;
-
-		QLabel * diff_dist = NULL;
-		QLabel * diff_time = NULL;
-		QLabel * diff_speed = NULL;
-		QLabel * speed = NULL;
-		QLabel * vdop = NULL;
-		QLabel * hdop = NULL;
-		QLabel * pdop = NULL;
-		QLabel * sat = NULL;
 	};
 
 

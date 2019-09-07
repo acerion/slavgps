@@ -1,0 +1,99 @@
+/*
+ * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
+ *
+ * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifndef _SG_LAYER_TRW_POINT_PROPERTIES_H_
+#define _SG_LAYER_TRW_POINT_PROPERTIES_H_
+
+
+
+
+#include <list>
+#include <cstdint>
+
+
+
+
+#include <QWidget>
+#include <QDialog>
+#include <QFormLayout>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QDialogButtonBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QSignalMapper>
+#include <QGridLayout>
+
+
+
+
+#include "widget_timestamp.h"
+#include "widget_measurement_entry.h"
+#include "widget_coord_display.h"
+#include "layer_trw_track.h"
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+	class Track;
+	class Trackpoint;
+
+
+
+
+	class PointPropertiesWidget : public QWidget {
+		Q_OBJECT
+	public:
+		PointPropertiesWidget(QWidget * parent = NULL);
+
+		sg_ret build_widgets(QWidget * parent_widget);
+		void reset_widgets(void);
+
+		QGridLayout * grid = NULL;
+		QVBoxLayout * vbox = NULL;
+
+		QLineEdit * trkpt_name = NULL;
+		CoordEntryWidget * coord_entry = NULL;
+		MeasurementEntry_2<Altitude, HeightUnit> * altitude_entry = NULL;
+		TimestampWidget * timestamp_widget = NULL;
+
+		/* Buttons will be in two rows. */
+		QDialogButtonBox * button_box_upper = NULL;
+		QDialogButtonBox * button_box_lower = NULL;
+
+	protected:
+		int widgets_row = 0;
+	};
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_LAYER_TRW_POINT_PROPERTIES_H_ */

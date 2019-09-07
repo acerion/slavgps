@@ -33,6 +33,7 @@
 #include <QCloseEvent>
 #include <QUrl>
 #include <QComboBox>
+#include <QDockWidget>
 
 
 
@@ -105,6 +106,7 @@ namespace SlavGPS {
 		QMenu * new_layers_submenu_add_actions(QMenu * menu);
 		Toolbox * get_toolbox(void);
 		StatusBar * get_statusbar(void);
+		QDockWidget * get_tools_dock(void) const;
 
 		LayersPanel * items_tree = NULL;
 
@@ -341,10 +343,12 @@ namespace SlavGPS {
 
 		QMenuBar * menu_bar = NULL;
 		QToolBar * toolbar = NULL;
-		QDockWidget * panel_dock = NULL;
 		StatusBar * status_bar = NULL;
 		Toolbox * toolbox = NULL;
 		GisViewport * main_gis_vp = NULL;
+
+		QDockWidget * layers_panel_dock = NULL;
+		QDockWidget * tools_dock = NULL;
 
 		QMenu * menu_file = NULL;
 		QMenu * menu_edit = NULL;

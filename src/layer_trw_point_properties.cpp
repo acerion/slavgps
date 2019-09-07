@@ -1,0 +1,129 @@
+/*
+ * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
+ *
+ * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright (C) 2015, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (C) 2016-2019, Kamil Ignacak <acerion@wp.pl>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
+
+
+#include <QDebug>
+
+
+
+
+//#include "layer_trw.h"
+#include "layer_trw_point_properties.h"
+//#include "layer_trw_track_internal.h"
+//#include "vikutils.h"
+//#include "date_time_dialog.h"
+//#include "util.h"
+//#include "measurements.h"
+//#include "preferences.h"
+
+
+
+
+using namespace SlavGPS;
+
+
+
+
+#define SG_MODULE "Point Properties"
+
+
+
+
+PointPropertiesWidget::PointPropertiesWidget(QWidget * parent) : QWidget(parent)
+{
+	this->button_box_upper = new QDialogButtonBox();
+	this->button_box_lower = new QDialogButtonBox();
+
+	this->vbox = new QVBoxLayout;
+	this->grid = new QGridLayout();
+	this->vbox->addLayout(this->grid);
+	this->vbox->addWidget(this->button_box_upper);
+	this->vbox->addWidget(this->button_box_lower);
+
+	/* -1: insert at the end; +1: give more "priority" to the
+            stretch than to other widgets in vbox. */
+	this->vbox->insertStretch(-1, +1);
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+}
+
+
+
+
+sg_ret PointPropertiesWidget::build_widgets(QWidget * parent_widget)
+{
+	const int left_col = 0;
+	const int right_col = 1;
+
+
+	this->trkpt_name = new QLineEdit("");
+	this->grid->addWidget(new QLabel(tr("Name:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->trkpt_name, this->widgets_row, right_col);
+	connect(this->trkpt_name, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_tp_cb(const QString &)));
+
+	this->widgets_row++;
+
+	this->coord_entry = new CoordEntryWidget(CoordMode::LatLon); /* TODO: get this value from somewhere. */
+	this->grid->addWidget(this->coord_entry, this->widgets_row, left_col, 1, 2);
+	connect(this->coord_entry, SIGNAL (value_changed(void)), this, SLOT (sync_coord_entry_to_current_tp_cb(void)));
+
+	this->widgets_row++;
+
+	const HeightUnit height_unit = Altitude::get_internal_unit();
+	MeasurementScale<Altitude> scale_alti(Altitude(SG_ALTITUDE_RANGE_MIN, height_unit),
+					      Altitude(SG_ALTITUDE_RANGE_MAX, height_unit),
+					      Altitude(0.0, height_unit),
+					      Altitude(1, height_unit),
+					      SG_ALTITUDE_PRECISION);
+	this->altitude_entry = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(0, height_unit), &scale_alti, this);
+	this->grid->addWidget(new QLabel(tr("Altitude:")), this->widgets_row, left_col);
+	this->grid->addWidget(this->altitude_entry->me_widget, this->widgets_row, right_col);
+	connect(this->altitude_entry->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_entry_to_current_tp_cb(void)));
+
+	this->widgets_row++;
+
+	this->timestamp_widget = new TimestampWidget();
+	this->grid->addWidget(this->timestamp_widget, this->widgets_row, left_col, 1, 2);
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_entry_to_current_tp_cb(const Time &)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_entry_to_current_tp_cb(void)));
+
+	this->widgets_row++;
+
+	return sg_ret::ok;
+}
+
+
+
+
+void PointPropertiesWidget::reset_widgets(void)
+{
+	this->trkpt_name->insert("");
+	this->trkpt_name->setEnabled(false);
+	this->coord_entry->setEnabled(false);
+	this->altitude_entry->me_widget->setEnabled(false);
+	this->timestamp_widget->setEnabled(false);
+	this->timestamp_widget->reset_timestamp();
+}

@@ -2677,15 +2677,6 @@ QString Track::sublayer_rename_request(const QString & new_name)
 	this->set_name(new_name);
 
 
-
-
-	/* Update any subwindows/dialogs that could be displaying this track which has changed name.
-	   Currently only one additional window may display a track: Track Edit Dialog. */
-	if (parent_layer->tpwin) {
-		parent_layer->tpwin->set_dialog_title(new_name);
-	}
-
-
 	/* Update the dialog windows if any of them is visible. */
 	this->update_properties_dialog();
 	this->update_profile_dialog();

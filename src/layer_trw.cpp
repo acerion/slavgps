@@ -3178,19 +3178,15 @@ bool SlavGPS::is_valid_geocache_name(const char * str)
 
 
 
-void LayerTRW::on_tpwin_closed_cb(void)
+void LayerTRW::on_tp_properties_dialog_closed_cb(void)
 {
-	if (this->tpwin) {
-		this->tpwin = NULL;
-	}
-
 	this->cancel_current_tp();
 }
 
 
 
 
-void LayerTRW::on_tpwin_tp_coordinates_changed_cb(void)
+void LayerTRW::on_tp_properties_dialog_tp_coordinates_changed_cb(void)
 {
 	this->emit_tree_item_changed("Indicating change of edited trackpoint's coordinates");
 }
@@ -3200,9 +3196,7 @@ void LayerTRW::on_tpwin_tp_coordinates_changed_cb(void)
 
 void LayerTRW::cancel_current_tp(void)
 {
-	if (this->tpwin) {
-		this->tpwin->reset_dialog_data();
-	}
+	this->tp_properties_dialog_reset();
 
 	Track * track = this->get_edited_track();
 	if (track && track->has_selected_tp()) {
@@ -3216,12 +3210,32 @@ void LayerTRW::cancel_current_tp(void)
 
 
 
-void LayerTRW::tpwin_update_dialog_data(Track * track)
+sg_ret LayerTRW::tp_properties_dialog_set(Track * track)
 {
-	if (track) {
-		/* Notional center of a track is simply an average of its bounding box extremities. */
-		this->tpwin->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+	if (!track) {
+		qDebug() << SG_PREFIX_E << "Function argument is NULL";
+		return sg_ret::err;
 	}
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	if (!tool->is_activated()) {
+		return sg_ret::ok;;
+	}
+
+	tool->tp_properties_dialog->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret LayerTRW::tp_properties_dialog_reset(void)
+{
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	if (!tool->is_activated()) {
+		return sg_ret::ok;;
+	}
+	tool->tp_properties_dialog->reset_dialog_data();
+	return sg_ret::ok;
 }
 
 
@@ -3229,28 +3243,25 @@ void LayerTRW::tpwin_update_dialog_data(Track * track)
 
 void LayerTRW::trackpoint_properties_show()
 {
-	if (!this->tpwin) {
-		this->tpwin = new TpPropertiesDialog(this->get_coord_mode(), this->get_window());
-		connect(this->tpwin, SIGNAL (accepted()), this, SLOT (on_tpwin_closed_cb())); /* "Close" button clicked in dialog. */
-		connect(this->tpwin, SIGNAL (trackpoint_coordinates_changed()), this, SLOT (on_tpwin_tp_coordinates_changed_cb()));
-	} else {
-		/* TODO: pass current coord mode to a dialog window that is not being created from scratch. */
-	}
-	this->tpwin->show();
+	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+	tool->tp_properties_dialog->set_coord_mode(this->get_coord_mode());
 
+	/* Disconnect all old connections that may have been made from
+	   this global dialog to other TRW layer. */
+	/* TODO: also disconnect the signals in dialog code when the dialog is closed? */
+	tool->tp_properties_dialog->disconnect();
+
+	/* Make new connections to current TRW layer. */
+	connect(tool->tp_properties_dialog, SIGNAL (accepted()), this, SLOT (on_tp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
+	connect(tool->tp_properties_dialog, SIGNAL (trackpoint_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
+
+	this->get_window()->get_tools_dock()->setWidget(tool->tp_properties_dialog);
 
 	Track * track = this->get_edited_track();
 	if (track && track->has_selected_tp()) {
-		/* Get tp pixel position. */
-		const Trackpoint * tp = track->get_selected_tp();
-
-		/* Shift up/down to try not to obscure the trackpoint. */
-		const ScreenPos point_to_expose = SGUtils::coord_to_point(tp->coord, ThisApp::get_main_gis_view());
-		Dialog::move_dialog(this->tpwin, point_to_expose, true);
-
-		this->tpwin_update_dialog_data(track);
+		/* Set layer name and trackpoint data. */
+		this->tp_properties_dialog_set(track);
 	}
-	/* Set layer name and TP data. */
 }
 
 
@@ -3636,8 +3647,6 @@ LayerTRW::LayerTRW() : Layer()
 
 LayerTRW::~LayerTRW()
 {
-	delete this->tpwin;
-
 	delete this->painter;
 }
 
