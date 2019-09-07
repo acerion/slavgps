@@ -106,7 +106,6 @@ sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->comment_entry = new QLineEdit("", this);
 	this->grid->addWidget(new QLabel(tr("Comment:")), this->widgets_row, left_col);
 	this->grid->addWidget(this->comment_entry, this->widgets_row, right_col);
-	connect(this->comment_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_comment_entry_to_current_object_cb(const QString &)));
 
 	this->widgets_row++;
 
@@ -114,7 +113,6 @@ sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->description_entry = new QLineEdit("", this);
 	this->grid->addWidget(new QLabel(tr("Description:")), this->widgets_row, left_col);
 	this->grid->addWidget(this->description_entry, this->widgets_row, right_col);
-	connect(this->description_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_description_entry_to_current_object_cb(const QString &)));
 
 	this->widgets_row++;
 
@@ -123,7 +121,6 @@ sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Any);
 	this->grid->addWidget(new QLabel(tr("Image:")), this->widgets_row, left_col);
 	this->grid->addWidget(this->file_selector, this->widgets_row, right_col);
-	connect(this->file_selector, SIGNAL (textEdited(const QString &)), this, SLOT (sync_file_selector_to_current_object_cb(void)));
 
 	this->widgets_row++;
 
@@ -131,9 +128,21 @@ sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	GarminSymbols::populate_symbols_list(this->symbol_combo, GarminSymbols::none_symbol_name);
 	this->grid->addWidget(new QLabel(tr("Symbol:")), this->widgets_row, left_col);
 	this->grid->addWidget(this->symbol_combo, this->widgets_row, right_col);
-	QObject::connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)), this, SLOT (symbol_entry_changed_cb(int)));
 
 	this->widgets_row++;
+
+
+	connect(this->name_entry, SIGNAL (textEdited(const QString &)),                this, SLOT (sync_name_entry_to_current_point_cb(const QString &)));
+	connect(this->coord_widget, SIGNAL (value_changed(void)),                      this, SLOT (sync_coord_widget_to_current_point_cb(void)));
+	connect(this->altitude_widget->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_widget_to_current_point_cb(void)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)),           this, SLOT (sync_timestamp_widget_to_current_point_cb(const Time &)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()),                     this, SLOT (sync_empty_timestamp_widget_to_current_point_cb(void)));
+
+	connect(this->comment_entry, SIGNAL (textEdited(const QString &)),             this, SLOT (sync_comment_entry_to_current_point_cb(const QString &)));
+	connect(this->description_entry, SIGNAL (textEdited(const QString &)),         this, SLOT (sync_description_entry_to_current_point_cb(const QString &)));
+	connect(this->file_selector, SIGNAL (textEdited(const QString &)),             this, SLOT (sync_file_selector_to_current_point_cb(void)));
+	connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)),                 this, SLOT (sync_symbol_combo_to_current_point_cb(int)));
+
 
 	return sg_ret::ok;
 }
@@ -187,7 +196,8 @@ sg_ret WpPropertiesWidget::build_buttons(QWidget * parent_widget)
 
 sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object)
 {
-	this->current_object = object;
+	this->current_point = object;
+	qDebug() << SG_PREFIX_I << "kamil current point coord:" << this->current_point->coord;
  	this->setWindowTitle(tr("Waypoint Properties"));
 
 	this->name_entry->setText(object->name);
@@ -207,6 +217,7 @@ sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object)
 		this->symbol_combo->setCurrentIndex(selected_idx);
 	}
 
+
 	return sg_ret::ok;
 }
 
@@ -216,26 +227,23 @@ sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object)
 sg_ret WpPropertiesDialog::reset_dialog_data(void)
 {
 	Waypoint wp; /* Invalid, empty object. */
-	return this->set_dialog_data(&wp);
+	qDebug() << SG_PREFIX_I << "kamil Resetting dialog data";
+	const sg_ret result = this->set_dialog_data(&wp);
+
+	this->current_point = NULL;
+
+	return result;
 }
 
 
 
 
-void WpPropertiesDialog::symbol_entry_changed_cb(int index)
+void WpPropertiesDialog::sync_symbol_combo_to_current_point_cb(int index_in_combo)
 {
-#if 0
-	GtkTreeIter iter;
-	gchar *sym;
-
-	if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combo), &iter))
-		return;
-
-	gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1 );
-	/* Note: symm is NULL when "(none)" is select (first cell is empty) */
-	gtk_widget_set_tooltip_text(combo, sym);
-	g_free(sym);
-#endif
+	/* TODO
+	   TODO: This must also include name of symbol in tooltip in tree view.
+	this->current_point->set_new_waypoint_icon();
+	*/
 }
 
 
@@ -248,124 +256,74 @@ void WpPropertiesDialog::set_title(const QString & title)
 
 
 
-void WpPropertiesDialog::sync_coord_widget_to_current_object_cb(void) /* Slot. */
+void WpPropertiesDialog::sync_coord_widget_to_current_point_cb(void) /* Slot. */
 {
-	if (!this->current_object) {
+	if (NULL == this->current_point) {
+		qDebug() << SG_PREFIX_I << "=========== return because no current point";
 		return;
 	}
-	if (this->sync_to_current_object_block) {
+	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_I << "=========== return because current point block";
 		return;
 	}
 
-	//// this->current_object->coord.get_coord_mode()
 
+	const Coord old_coord = this->current_point->coord;
+	qDebug() << SG_PREFIX_I << "kamil current point coord 1:" << this->current_point->coord;
 	const Coord new_coord = this->coord_widget->get_value();
-	const bool redraw = Coord::distance(this->current_object->coord, new_coord) > 0.05; /* May not be exact due to rounding. */
-	this->current_object->coord = new_coord;
+	qDebug() << SG_PREFIX_I << "kamil Old coord:" << old_coord << ", new coord:" << new_coord;
 
 
+	this->current_point->coord = new_coord;
+	qDebug() << SG_PREFIX_I << "kamil current point coord:" << this->current_point->coord;
 	this->timestamp_widget->set_coord(new_coord);
 
 
 	/* Don't redraw unless we really have to. */
+	const Distance distance = Coord::distance_2(old_coord, new_coord); /* May not be exact due to rounding. */
+	const bool redraw = distance.is_valid() && distance.get_ll_value() > 0.05;
 	if (redraw) {
 		/* Tell parent code that a edited object has changed
 		   its coordinates. */
-		emit this->object_coordinates_changed();
+		qDebug() << SG_PREFIX_I << "=========== ask for redraw";
+		emit this->point_coordinates_changed();
+	} else {
+		qDebug() << SG_PREFIX_I << "=========== don't ask for redraw" << distance;
 	}
 }
 
 
 
 
-void WpPropertiesDialog::sync_altitude_widget_to_current_object_cb(void) /* Slot. */
+void WpPropertiesDialog::sync_altitude_widget_to_current_point_cb(void) /* Slot. */
 {
-	if (!this->current_object) {
+	if (NULL == this->current_point) {
 		return;
 	}
-	if (this->sync_to_current_object_block) {
+	if (this->skip_syncing_to_current_point) {
 		return;
 	}
 
 	/* Always store internally in metres. */
-	this->current_object->altitude = this->altitude_widget->get_value_iu();
+	this->current_point->altitude = this->altitude_widget->get_value_iu();
 }
 
 
 
 
 /* Set timestamp of current waypoint. */
-void WpPropertiesDialog::sync_timestamp_widget_to_current_object_cb(const Time & timestamp)
+bool WpPropertiesDialog::sync_timestamp_widget_to_current_point_cb(const Time & timestamp)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp;
 
-	this->set_timestamp_of_current_object(timestamp);
-
-	if (this->current_object->is_visible()) {
-		this->current_object->emit_tree_item_changed("Timestamp of waypoint changed in 'waypoint properties' dialog");
-	}
-}
-
-
-
-
-/* Clear timestamp of current waypoint. */
-void WpPropertiesDialog::sync_empty_timestamp_widget_to_current_object_cb(void)
-{
-	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
-
-	this->set_timestamp_of_current_object(Time()); /* Invalid value - this should indicate that timestamp is cleared from the tp. */
-
-	if (this->current_object->is_visible()) {
-		this->current_object->emit_tree_item_changed("Timestamp of waypoint changed in 'waypoint properties' dialog");
-	}
-}
-
-
-
-
-void WpPropertiesDialog::sync_comment_entry_to_current_object_cb(const QString & comment)
-{
-	/* TODO: implement. */
-}
-
-
-
-
-void WpPropertiesDialog::sync_description_entry_to_current_object_cb(const QString & description)
-{
-	/* TODO: implement. */
-}
-
-
-
-
-void WpPropertiesDialog::sync_file_selector_to_current_object_cb(void)
-{
-	/* TODO: implement.
-	   this->set_new_waypoint_icon();
-	 */
-}
-
-
-
-
-bool WpPropertiesDialog::set_timestamp_of_current_object(const Time & timestamp)
-{
-	if (!this->current_object) {
+	if (NULL == this->current_point) {
 		return false;
 	}
-	if (this->sync_to_current_object_block) {
-		/* TODO_LATER: indicate to user that operation has failed. */
+	if (this->skip_syncing_to_current_point) {
 		return false;
 	}
 
-	/* TODO_LATER: we are changing a timestamp of tp somewhere in
-	   the middle of a track, so the timestamps may now not have
-	   consecutive values.  Should we now warn user about unsorted
-	   timestamps in consecutive trackpoints? */
-
-	this->current_object->set_timestamp(timestamp);
+	this->current_point->set_timestamp(timestamp);
 
 	return true;
 }
@@ -373,18 +331,62 @@ bool WpPropertiesDialog::set_timestamp_of_current_object(const Time & timestamp)
 
 
 
-bool WpPropertiesDialog::sync_name_entry_to_current_object_cb(const QString & new_name) /* Slot. */
+/* Clear timestamp of current waypoint. */
+bool WpPropertiesDialog::sync_empty_timestamp_widget_to_current_point_cb(void)
 {
-	if (!this->current_object) {
+	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
+
+	if (NULL == this->current_point) {
 		return false;
 	}
-	if (this->sync_to_current_object_block) {
+	if (this->skip_syncing_to_current_point) {
 		return false;
 	}
 
-	this->current_object->set_name(new_name);
+	this->current_point->set_timestamp(Time()); /* Invalid value - this should indicate that timestamp is cleared from the tp. */
 
-	this->current_object->propagate_new_waypoint_name();
+	return true;
+}
+
+
+
+
+void WpPropertiesDialog::sync_comment_entry_to_current_point_cb(const QString & comment)
+{
+	/* TODO: implement. */
+}
+
+
+
+
+void WpPropertiesDialog::sync_description_entry_to_current_point_cb(const QString & description)
+{
+	/* TODO: implement. */
+}
+
+
+
+
+void WpPropertiesDialog::sync_file_selector_to_current_point_cb(void)
+{
+	/* TODO: implement.
+	 */
+}
+
+
+
+
+bool WpPropertiesDialog::sync_name_entry_to_current_point_cb(const QString & new_name) /* Slot. */
+{
+	if (NULL == this->current_point) {
+		return false;
+	}
+	if (this->skip_syncing_to_current_point) {
+		return false;
+	}
+
+	this->current_point->set_name(new_name);
+	this->current_point->propagate_new_waypoint_name();
 
 	return true;
 }
@@ -396,7 +398,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 {
 	qDebug() << SG_PREFIX_I << "Handling dialog action" << action;
 
-	Waypoint * wp = this->current_object;
+	Waypoint * wp = this->current_point;
 	if (!wp) {
 		qDebug() << SG_PREFIX_N << "Not handling action, no current wp";
 		return;
@@ -481,11 +483,6 @@ char * a_dialog_waypoint(Window * parent, char * default_name, Waypoint * wp, Co
 		store = gtk_list_store_new(3, G_TYPE_STRING, GDK_TYPE_PIXBUF, G_TYPE_STRING);
 		symbolentry = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
 		gtk_combo_box_set_wrap_width(GTK_COMBO_BOX(symbolentry), 6);
-
-		QObject::connect(symbolentry, SIGNAL("changed"), store, SLOT (symbol_entry_changed_cb));
-		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 0, NULL, 1, NULL, 2, QObject::tr("(none)"), -1);
-		GarminSymbols::populate_symbols_list(store);
 
 		r = gtk_cell_renderer_pixbuf_new();
 		gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (symbolentry), r, false);

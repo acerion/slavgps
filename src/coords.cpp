@@ -527,8 +527,8 @@ QString LatLon::to_string(void) const
 		LatLon::lon_to_string_raw(lon_string, *this);
 		break;
 	default:
-		qDebug() << SG_PREFIX_E << "Unknown degree format %d" << (int) format;
-		break;
+		qDebug() << SG_PREFIX_E << "Unknown degree format" << (int) format;
+		break; /* TODO: you should return here. */
 	}
 
 	QString result = QString("%1 %2").arg(lat_string, lon_string);

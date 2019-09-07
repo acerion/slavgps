@@ -1179,6 +1179,7 @@ ToolStatus LayerToolTRWNewWaypoint::internal_handle_mouse_click(Layer * layer, Q
 
 	bool visible_with_parents = false;
 	const Coord coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
+	qDebug() << SG_PREFIX_I << "Will create new waypoint with coordinates" << coord;
 	if (trw->new_waypoint(coord, visible_with_parents, trw->get_window())) {
 		trw->get_waypoints_node().recalculate_bbox();
 		if (visible_with_parents) {

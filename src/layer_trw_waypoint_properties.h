@@ -103,29 +103,38 @@ namespace SlavGPS {
 
 
 	private slots:
-		bool sync_name_entry_to_current_object_cb(const QString &);
-		void sync_coord_widget_to_current_object_cb(void);
-		void sync_empty_timestamp_widget_to_current_object_cb(void);
-		void sync_timestamp_widget_to_current_object_cb(const Time & timestamp);
-		void sync_altitude_widget_to_current_object_cb(void);
-		void sync_comment_entry_to_current_object_cb(const QString &);
-		void sync_description_entry_to_current_object_cb(const QString &);
-		void sync_file_selector_to_current_object_cb(void);
-		void symbol_entry_changed_cb(int);
+		bool sync_name_entry_to_current_point_cb(const QString & name);
+		void sync_coord_widget_to_current_point_cb(void);
+		void sync_altitude_widget_to_current_point_cb(void);
+		bool sync_timestamp_widget_to_current_point_cb(const Time & timestamp);
+		bool sync_empty_timestamp_widget_to_current_point_cb(void);
+
+
+		void sync_comment_entry_to_current_point_cb(const QString &);
+		void sync_description_entry_to_current_point_cb(const QString &);
+		void sync_file_selector_to_current_point_cb(void);
+		void sync_symbol_combo_to_current_point_cb(int index_in_combo);
 
 	signals:
 		/* Coordinates of edited object have changed. */
 		void object_coordinates_changed(void);
 
+		/* Coordinates of one of track's trackpoints has changed its coordinates. */
+		void point_coordinates_changed(void);
+
+
 	public:
 		void update_timestamp_widget(const Waypoint * wp);
 
-		bool set_timestamp_of_current_object(const Time & timestamp);
-
 
 	private:
-		Waypoint * current_object = NULL;
-		bool sync_to_current_object_block = false;
+		Waypoint * current_point = NULL;
+
+		/* Don't pass values currently set/entered in widgets
+		   to currently edited point, because the entering is
+		   being done as part of initializing properties
+		   dialog. */
+		bool skip_syncing_to_current_point = false;
 	};
 
 
@@ -135,51 +144,24 @@ namespace SlavGPS {
 	class WpPropertiesDialog : public QDialog {
 		Q_OBJECT
 	public:
-		WpPropertiesDialog(Waypoint * wp, QWidget * parent = NULL);
-		~WpPropertiesDialog();
 
 		sg_ret set_dialog_data(Waypoint * wp, const QString & name);
 		sg_ret reset_dialog_data(void);
 		void set_title(const QString & title);
 
 
-		QLineEdit * name_entry = NULL;
 
 
 	private slots:
-		bool sync_name_entry_to_current_object_cb(const QString &);
-		void sync_coord_widget_to_current_object_cb(void);
-		void sync_empty_timestamp_widget_to_current_object_cb(void);
-		void sync_timestamp_widget_to_current_object_cb(const Time & timestamp);
-		void sync_altitude_widget_to_current_object_cb(void);
-		void sync_comment_entry_to_current_object_cb(const QString &);
-		void sync_description_entry_to_current_object_cb(const QString &);
-		void sync_file_selector_to_current_object_cb(void);
 		void symbol_entry_changed_cb(int);
-
-	signals:
-		/* Coordinates of edited object have changed. */
-		void object_coordinates_changed(void);
 
 	public:
 		void update_timestamp_widget(const Waypoint * wp);
 
-		bool set_timestamp_of_current_object(const Time & timestamp);
 
 		void save_from_dialog(Waypoint * saved_object);
 
 	private:
-		Waypoint * current_object = NULL;
-		bool sync_to_current_object_block = false;
-
-		QDialogButtonBox * button_box = NULL;
-		QGridLayout * grid = NULL;
-		QVBoxLayout * vbox = NULL;
-
-
-		CoordEntryWidget * coord_widget = NULL;
-		TimestampWidget * timestamp_widget = NULL;
-		MeasurementEntry_2<Altitude, HeightUnit> * altitude_widget = NULL;
 
 		QLineEdit * comment_entry = NULL;
 		QLineEdit * description_entry = NULL;

@@ -454,17 +454,24 @@ bool Waypoint::show_properties_dialog_cb(void)
 	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
 	tool->wp_properties_dialog->set_coord_mode(parent_layer->get_coord_mode());
 
-	/* Disconnect all old connections that may have been made from
-	   this global dialog to other TRW layer. */
-	/* TODO: also disconnect the signals in dialog code when the dialog is closed? */
-	tool->wp_properties_dialog->disconnect();
+	{
+		/* Disconnect all old connections that may have been made from
+		   this global dialog to other TRW layer. */
+		/* TODO: also disconnect these signals in dialog code when the dialog is closed? */
+		if (disconnect(tool->wp_properties_dialog, SIGNAL (point_coordinates_changed()), NULL, NULL)) {
+			qDebug() << SG_PREFIX_E << "Failed to disconnect 'point_coordinates_changed' signal";
+		}
 
-	/* Make new connections to current TRW layer. */
-	connect(tool->wp_properties_dialog, SIGNAL (accepted()), this, SLOT (on_tp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
-	connect(tool->wp_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
+		/* Make new connections to current TRW layer. */
+#if K_TODO
+		connect(tool->wp_properties_dialog, SIGNAL (accepted()), parent_layer, SLOT (on_wp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
+#endif
+		connect(tool->wp_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
+	}
 
 	parent_layer->get_window()->get_tools_dock()->setWidget(tool->wp_properties_dialog);
 
+	qDebug() << SG_PREFIX_I << "Will set data from this waypoint with coord" << this->coord;
 	tool->wp_properties_dialog->set_dialog_data(this);
 
 	Waypoint * wp = parent_layer->get_edited_wp();

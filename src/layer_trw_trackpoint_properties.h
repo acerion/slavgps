@@ -70,7 +70,7 @@ namespace SlavGPS {
 		TpPropertiesWidget(QWidget * parent = NULL);
 
 		sg_ret build_widgets(QWidget * parent_widget);
-		void reset_widgets(void);
+		void disable_widgets(void);
 		void build_buttons(QWidget * parent_widget);
 
 
@@ -106,7 +106,7 @@ namespace SlavGPS {
 		TpPropertiesDialog(CoordMode coord_mode, QWidget * parent = NULL);
 		~TpPropertiesDialog();
 
-		void set_dialog_data(Track * track, const TrackPoints::iterator & current_tp_iter, bool is_route);
+		void set_dialog_data(Track * track, Trackpoint * trackpoint);
 		void reset_dialog_data(void);
 		void set_dialog_title(const QString & track_name);
 
@@ -125,11 +125,11 @@ namespace SlavGPS {
 		void clicked_cb(int response);
 
 	private slots:
-		void sync_coord_widget_to_current_tp_cb(void);
-		void sync_altitude_widget_to_current_tp_cb(void);
-		void sync_timestamp_widget_to_current_tp_cb(const Time & timestamp);
-		void sync_empty_timestamp_widget_to_current_tp_cb(void);
-		bool sync_name_entry_to_current_tp_cb(const QString & new_name);
+		bool sync_name_entry_to_current_point_cb(const QString & name);
+		void sync_coord_widget_to_current_point_cb(void);
+		void sync_altitude_widget_to_current_point_cb(void);
+		bool sync_timestamp_widget_to_current_point_cb(const Time & timestamp);
+		bool sync_empty_timestamp_widget_to_current_point_cb(void);
 
 	signals:
 		/* Coordinates of one of track's trackpoints has changed its coordinates. */
@@ -137,12 +137,15 @@ namespace SlavGPS {
 
 	private:
 		void update_timestamp_widget(const Trackpoint * tp);
-		bool set_timestamp_of_current_tp(const Time & timestamp);
 
-		Trackpoint * current_tp = NULL;
+		Trackpoint * current_point = NULL;
 		Track * current_track = NULL;
 
-		bool sync_to_current_tp_block = false;
+		/* Don't pass values currently set/entered in widgets
+		   to currently edited point, because the entering is
+		   being done as part of initializing properties
+		   dialog. */
+		bool skip_syncing_to_current_point = false;
 	};
 
 

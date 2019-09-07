@@ -1767,6 +1767,7 @@ bool LayerTRW::new_waypoint(const Coord & default_coord, bool & visible_with_par
 	this->add_waypoint(wp);
 	visible_with_parents = wp->is_visible_with_parents();
 
+	qDebug() << SG_PREFIX_I << "Will show properties dialog for wp with coord" << wp->coord;
 	return wp->show_properties_dialog();
 }
 
@@ -3222,7 +3223,7 @@ sg_ret LayerTRW::tp_properties_dialog_set(Track * track)
 		return sg_ret::ok;;
 	}
 
-	tool->tp_properties_dialog->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+	tool->tp_properties_dialog->set_dialog_data(track, *track->iterators[SELECTED].iter);
 	return sg_ret::ok;
 }
 

@@ -80,17 +80,20 @@ static double distance_safe(const Coord & coord1, const Coord & coord2)
 
 double Coord::distance(const Coord & coord1, const Coord & coord2)
 {
-	if (coord1.mode == coord2.mode) {
-		return distance_safe(coord1, coord2);
+	if (coord1.mode != CoordMode::LatLon && coord1.mode != CoordMode::UTM) {
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in first argument" << (int) coord1.mode;
+		return 0.0;
+	}
+	if (coord2.mode != CoordMode::LatLon && coord2.mode != CoordMode::UTM) {
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in second argument" << (int) coord2.mode;
+		return 0.0;
 	}
 
 	switch (coord1.mode) {
 	case CoordMode::UTM:
 		return UTM::get_distance(coord1.utm, coord2.utm);
-
 	case CoordMode::LatLon:
 		return LatLon::get_distance(coord1.lat_lon, coord2.lat_lon);
-
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) coord1.mode;
 		return 0.0;
@@ -103,23 +106,31 @@ double Coord::distance(const Coord & coord1, const Coord & coord2)
 Distance Coord::distance_2(const Coord & coord1, const Coord & coord2)
 {
 	/* Re-implementing Coord::distance() to have better control over Distance::valid. */
+
 	const DistanceUnit distance_unit = DistanceUnit::Meters; /* Using meters - the most basic and common unit. */
 	Distance result;
 
-	if (coord1.mode == coord2.mode) {
-		result = Distance(distance_safe(coord1, coord2), distance_unit);
+	if (coord1.mode != CoordMode::LatLon && coord1.mode != CoordMode::UTM) {
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in first argument" << (int) coord1.mode;
 		return result;
 	}
+	if (coord2.mode != CoordMode::LatLon && coord2.mode != CoordMode::UTM) {
+		qDebug() << SG_PREFIX_E << "Unexpected CoordMode in second argument" << (int) coord2.mode;
+		return result;
+	}
+	if (coord1.mode != coord2.mode) {
+		qDebug() << SG_PREFIX_E << "CoordMode mismatch:" << (int) coord1.mode << (int) coord2.mode;
+		return result;
+	}
+
 
 	switch (coord1.mode) {
 	case CoordMode::UTM:
 		result = Distance(UTM::get_distance(coord1.utm, coord2.utm), distance_unit);
 		return result;
-
 	case CoordMode::LatLon:
 		result = Distance(LatLon::get_distance(coord1.lat_lon, coord2.lat_lon), distance_unit);
 		return result;
-
 	default:
 		qDebug() << SG_PREFIX_E << "Unexpected CoordMode" << (int) coord1.mode;
 		return result;

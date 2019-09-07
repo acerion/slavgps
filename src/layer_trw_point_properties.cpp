@@ -82,13 +82,11 @@ sg_ret PointPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->name_entry = new QLineEdit("");
 	this->grid->addWidget(new QLabel(tr("Name:")), this->widgets_row, left_col);
 	this->grid->addWidget(this->name_entry, this->widgets_row, right_col);
-	connect(this->name_entry, SIGNAL (textEdited(const QString &)), this, SLOT (sync_name_entry_to_current_tp_cb(const QString &))); /* TODO: move all connects to subclass. */
 
 	this->widgets_row++;
 
 	this->coord_widget = new CoordEntryWidget(CoordMode::LatLon); /* TODO: get this value from somewhere. */
 	this->grid->addWidget(this->coord_widget, this->widgets_row, left_col, 1, 2);
-	connect(this->coord_widget, SIGNAL (value_changed(void)), this, SLOT (sync_coord_widget_to_current_tp_cb(void)));
 
 	this->widgets_row++;
 
@@ -101,14 +99,11 @@ sg_ret PointPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->altitude_widget = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(0, height_unit), &scale_alti, this);
 	this->grid->addWidget(new QLabel(tr("Altitude:")), this->widgets_row, left_col);
 	this->grid->addWidget(this->altitude_widget->me_widget, this->widgets_row, right_col);
-	connect(this->altitude_widget->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_widget_to_current_tp_cb(void)));
 
 	this->widgets_row++;
 
 	this->timestamp_widget = new TimestampWidget();
 	this->grid->addWidget(this->timestamp_widget, this->widgets_row, left_col, 1, 2);
-	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)), this, SLOT (sync_timestamp_widget_to_current_tp_cb(const Time &)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()), this, SLOT (sync_empty_timestamp_widget_to_current_tp_cb(void)));
 
 	this->widgets_row++;
 
@@ -118,12 +113,13 @@ sg_ret PointPropertiesWidget::build_widgets(QWidget * parent_widget)
 
 
 
-void PointPropertiesWidget::reset_widgets(void)
+void PointPropertiesWidget::disable_widgets(void)
 {
 	this->name_entry->insert("");
+	this->timestamp_widget->reset_timestamp();
+
 	this->name_entry->setEnabled(false);
 	this->coord_widget->setEnabled(false);
 	this->altitude_widget->me_widget->setEnabled(false);
 	this->timestamp_widget->setEnabled(false);
-	this->timestamp_widget->reset_timestamp();
 }

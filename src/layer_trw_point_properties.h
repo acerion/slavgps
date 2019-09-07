@@ -63,13 +63,13 @@ namespace SlavGPS {
 		PointPropertiesWidget(QWidget * parent = NULL);
 
 		sg_ret build_widgets(QWidget * parent_widget);
-		void reset_widgets(void);
+		void disable_widgets(void);
 
-		QLineEdit * name_entry = NULL;
 
 	protected:
 		int widgets_row = 0;
 
+		QLineEdit * name_entry = NULL;
 		CoordEntryWidget * coord_widget = NULL;
 		MeasurementEntry_2<Altitude, HeightUnit> * altitude_widget = NULL;
 		TimestampWidget * timestamp_widget = NULL;
