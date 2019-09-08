@@ -63,7 +63,7 @@ namespace SlavGPS {
 		PointPropertiesWidget(QWidget * parent = NULL);
 
 		sg_ret build_widgets(QWidget * parent_widget);
-		void disable_widgets(void);
+		void clear_and_disable_widgets(void);
 
 
 	protected:

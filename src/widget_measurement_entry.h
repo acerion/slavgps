@@ -88,7 +88,14 @@ namespace SlavGPS {
 		MeasurementEntryWidget_2(QWidget * parent = NULL);
 
 		QHBoxLayout * hbox = NULL;
+		QLabel * label = NULL;
 		QDoubleSpinBox * spin = NULL;
+
+	public slots:
+		void value_changed_cb(double) { emit this->value_changed(); }
+
+	signals:
+		void value_changed(void);
 	};
 
 
@@ -103,7 +110,9 @@ namespace SlavGPS {
 	public:
 		MeasurementEntry_2(const Tm & value_iu, const MeasurementScale<Tm> * scale, QWidget * parent = NULL)
 		{
-			this->me_widget = new MeasurementEntryWidget_2(parent);
+			this->meas_widget = new MeasurementEntryWidget_2(parent);
+
+			QObject::connect(this->meas_widget->spin, SIGNAL (valueChanged(double)), this->meas_widget, SLOT (value_changed_cb(double)));
 
 			if (value_iu.is_valid()) {
 				qDebug() << "II    Measurement Entry 2: Using initial value from function argument";
@@ -119,10 +128,10 @@ namespace SlavGPS {
 			if (scale) {
 				/* Order of calls is important. Use setDecimals() before using setValue(). */
 				qDebug() << "II    Measurement Entry 2: Setting scale: min =" << scale->m_min << "max =" << scale->m_max << "step =" << scale->m_step << "n_digits =" << scale->m_n_digits;
-				this->me_widget->spin->setDecimals(scale->m_n_digits);
-				this->me_widget->spin->setMinimum(scale->m_min.get_ll_value());
-				this->me_widget->spin->setMaximum(scale->m_max.get_ll_value());
-				this->me_widget->spin->setSingleStep(scale->m_step.get_ll_value());
+				this->meas_widget->spin->setDecimals(scale->m_n_digits);
+				this->meas_widget->spin->setMinimum(scale->m_min.get_ll_value());
+				this->meas_widget->spin->setMaximum(scale->m_max.get_ll_value());
+				this->meas_widget->spin->setSingleStep(scale->m_step.get_ll_value());
 			} else {
 				qDebug() << "II    Measurement Entry 2: Not setting scale";
 			}
@@ -141,12 +150,12 @@ namespace SlavGPS {
 
 				qDebug() << "II    Measurement Entry 2: Setting value of measurement iu" << value_iu << ", in user units:" << value_uu;
 
-				this->me_widget->spin->setValue(value_uu.get_ll_value());
-				this->me_widget->spin->setSuffix(QString(" %1").arg(Tm::get_unit_full_string(user_unit)));
+				this->meas_widget->spin->setValue(value_uu.get_ll_value());
+				this->meas_widget->spin->setSuffix(QString(" %1").arg(Tm::get_unit_full_string(user_unit)));
 			} else {
 				qDebug() << "NN    Measurement Entry 2: Value passed as argument is invalid, clearing value of measurement";
-				this->me_widget->spin->clear();
-				this->me_widget->spin->setSuffix("");
+				this->meas_widget->spin->clear();
+				this->meas_widget->spin->setSuffix("");
 			}
 		}
 
@@ -160,7 +169,7 @@ namespace SlavGPS {
 			/* Since the value in the widget was presented
 			   to user, it must have been in user
 			   units. Now convert to internal unit. */
-			const Tm value_uu(this->me_widget->spin->value(), Tm::get_user_unit());
+			const Tm value_uu(this->meas_widget->spin->value(), Tm::get_user_unit());
 			Tm result_iu = value_uu.convert_to_unit(Tm::get_internal_unit());
 
 			return result_iu;
@@ -171,11 +180,20 @@ namespace SlavGPS {
 
 		void set_tooltip(const QString & tooltip)
 		{
-			this->me_widget->spin->setToolTip(tooltip);
+			this->meas_widget->spin->setToolTip(tooltip);
 		}
 
 
-		MeasurementEntryWidget_2 * me_widget = NULL;
+
+
+		void clear_widget(void)
+		{
+			this->meas_widget->spin->clear();
+			this->meas_widget->spin->setSuffix("");
+		}
+
+
+		MeasurementEntryWidget_2 * meas_widget = NULL;
 	};
 
 

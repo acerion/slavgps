@@ -1271,12 +1271,12 @@ Coord GisViewport::screen_pos_to_coord(fpixel pos_x, fpixel pos_y) const
 				if (coord.lat_lon.lat != test_coord.lat_lon.lat) {
 					qDebug() << SG_PREFIX_E << "Mercator: Latitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				} else {
-					qDebug() << SG_PREFIX_I << "Mercator: OK Latitude" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
+					//qDebug() << SG_PREFIX_I << "Mercator: OK Latitude" << coord << test_coord << (coord.lat_lon.lat - test_coord.lat_lon.lat);
 				}
 				if (coord.lat_lon.lon != test_coord.lat_lon.lon) {
 					qDebug() << SG_PREFIX_E << "Mercator: Longitude calculation mismatch" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				} else {
-					qDebug() << SG_PREFIX_I << "Mercator: OK Longitude" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
+					//qDebug() << SG_PREFIX_I << "Mercator: OK Longitude" << coord << test_coord << (coord.lat_lon.lon - test_coord.lat_lon.lon);
 				}
 			}
 			break;

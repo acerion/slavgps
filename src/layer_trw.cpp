@@ -3196,6 +3196,46 @@ void LayerTRW::on_wp_properties_dialog_wp_coordinates_changed_cb(void)
 
 
 
+sg_ret LayerTRW::wp_properties_dialog_set(Waypoint * wp)
+{
+	if (!wp) {
+		qDebug() << SG_PREFIX_E << "Function argument is NULL";
+		return sg_ret::err;
+	}
+	LayerToolTRWEditWaypoint * wp_tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	if (!wp_tool->is_activated()) {
+		/* Someone is asking to fill dialog data with waypoint
+		   when WP edit tool is not active. This is ok, maybe
+		   generic select tool is active and has been used to
+		   select a waypoint? */
+
+		LayerToolSelect * select_tool = (LayerToolSelect *) ThisApp::get_main_window()->get_toolbox()->get_tool("sg.tool.generic.select");
+		if (!select_tool->is_activated()) {
+			qDebug() << SG_PREFIX_E << "Trying to fill 'wp properties' dialog when neither 'wp edit' tool nor 'generic select' tool are active";
+			return sg_ret::err;
+		}
+	}
+
+	wp_tool->wp_properties_dialog->dialog_data_set(wp);
+	return sg_ret::ok;
+}
+
+
+
+
+sg_ret LayerTRW::wp_properties_dialog_reset(void)
+{
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	if (!tool->is_activated()) {
+		return sg_ret::ok;
+	}
+	tool->wp_properties_dialog->dialog_data_reset();
+	return sg_ret::ok;
+}
+
+
+
+
 void LayerTRW::cancel_current_tp(void)
 {
 	this->tp_properties_dialog_reset();
@@ -3220,10 +3260,18 @@ sg_ret LayerTRW::tp_properties_dialog_set(Track * track)
 	}
 	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
 	if (!tool->is_activated()) {
-		return sg_ret::ok;;
+		/* Someone is asking to fill dialog data with
+		   trackpoint when TP edit tool is not active. This is
+		   ok, maybe generic select tool is active and has
+		   been used to select a trackpoint? */
+		LayerToolSelect * select_tool = (LayerToolSelect *) ThisApp::get_main_window()->get_toolbox()->get_tool("sg.tool.generic.select");
+		if (!select_tool->is_activated()) {
+			qDebug() << SG_PREFIX_E << "Trying to fill 'tp properties' dialog when neither 'tp edit' tool nor 'generic select' tool are active";
+			return sg_ret::err;
+		}
 	}
 
-	tool->tp_properties_dialog->set_dialog_data(track, *track->iterators[SELECTED].iter);
+	tool->tp_properties_dialog->dialog_data_set(track, *track->iterators[SELECTED].iter);
 	return sg_ret::ok;
 }
 
@@ -3234,9 +3282,9 @@ sg_ret LayerTRW::tp_properties_dialog_reset(void)
 {
 	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
 	if (!tool->is_activated()) {
-		return sg_ret::ok;;
+		return sg_ret::ok;
 	}
-	tool->tp_properties_dialog->reset_dialog_data();
+	tool->tp_properties_dialog->dialog_data_reset();
 	return sg_ret::ok;
 }
 

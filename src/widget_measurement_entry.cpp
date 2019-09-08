@@ -172,10 +172,11 @@ MeasurementEntryWidget_2::MeasurementEntryWidget_2(QWidget * parent)
 	delete old;
 	this->setLayout(this->hbox);
 
-
 	this->spin = new QDoubleSpinBox();
+	this->label = new QLabel();
+	this->label->setBuddy(this->spin);
 
-
+	this->hbox->addWidget(this->label);
 	this->hbox->addWidget(this->spin);
 
 	/* Ensure the entry field has focus so we can start typing

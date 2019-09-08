@@ -50,6 +50,8 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		LatEntryWidget(const SGVariant & value, QWidget * parent = NULL);
+
+		void clear_widget(void);
 	};
 
 
@@ -59,6 +61,8 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		LonEntryWidget(const SGVariant & value, QWidget * parent = NULL);
+
+		void clear_widget(void);
 	};
 
 
@@ -82,6 +86,8 @@ namespace SlavGPS {
 		LatLon get_value(void) const;
 
 		void set_text(const QString & latitude_label, const QString & latitude_tooltip, const QString & longitude_label, const QString & longitude_tooltip);
+
+		void clear_widget(void);
 
 	signals:
 		void value_changed(void);

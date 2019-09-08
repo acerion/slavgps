@@ -62,6 +62,9 @@ namespace SlavGPS {
 		FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent = NULL);
 		~FileSelectorWidget();
 
+		void clear_widget(void);
+		void set_enabled(bool enabled);
+
 		void preselect_file_full_path(const QString & file_path);
 		QString get_selected_file_full_path(void) const;
 		QStringList get_selected_files_full_paths(void) const;
@@ -91,7 +94,7 @@ namespace SlavGPS {
 	private:
 		QFileDialog * file_dialog = NULL;
 		QLineEdit * line = NULL;
-		QPushButton * browse = NULL;
+		QPushButton * browse_button = NULL;
 		QHBoxLayout * hbox = NULL;
 
 		FileTypeFilter file_type_filter = FileTypeFilter::Any;

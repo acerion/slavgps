@@ -93,22 +93,25 @@ namespace SlavGPS {
 		virtual bool deactivate_tool(void);
 
 
+
 		/* Start holding a layer's item at point x/y.
 		   You want to call this method in response to click event of a tool, when some item of a layer has been selected.
 		   The generic Layer Tool itself doesn't actually select any selections
 		   inside of a layer, but it still does some useful, generic stuff. */
-		void remember_selection(const ScreenPos & screen_pos);
+		void start_holding_object(const ScreenPos & screen_pos);
 
 		/* Selected item belonging to a layer is being moved to new position x/y.
 		   Call this method only when there is an item (in a layer) that is selected. */
-		void perform_move(const ScreenPos & new_screen_pos);
+		void move_object(const ScreenPos & screen_pos);
 
 		/* Selected item belonging to a layer has been released.
 		   Call this method only when there was an item that was being selected.
 
 		   Return information about whether there was something to be released.
 		*/
-		bool perform_release(void);
+		bool stop_holding_object(void);
+
+
 
 		/* Is the tool activated? / Is the button related to the tool pressed? */
 		bool is_activated(void) const;
@@ -138,8 +141,8 @@ namespace SlavGPS {
 		  To be more precise: to moving points constituting TRW's sublayers: waypoints or trackpoint.
 		  The points can be selected by either TRW-specific edit tools, or by generic select tool.
 		*/
-		bool layer_edit_moving = false;
-		bool layer_edit_holding = false;
+		bool tool_is_moving_object = false;
+		bool tool_is_holding_object = false;
 
 
 		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */

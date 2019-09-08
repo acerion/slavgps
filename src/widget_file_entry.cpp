@@ -61,12 +61,12 @@ FileSelectorWidget::FileSelectorWidget(enum QFileDialog::Option options, enum QF
 #endif
 
 	this->line = new QLineEdit(this);
-	this->browse = new QPushButton(tr("Browse"), this);
+	this->browse_button = new QPushButton(tr("Browse"), this);
 
 
 	this->hbox = new QHBoxLayout;
 	this->hbox->addWidget(this->line);
-	this->hbox->addWidget(this->browse);
+	this->hbox->addWidget(this->browse_button);
 	this->hbox->setContentsMargins(0, 0, 0, 0);
 
 
@@ -74,7 +74,7 @@ FileSelectorWidget::FileSelectorWidget(enum QFileDialog::Option options, enum QF
 	delete old;
 	this->setLayout(this->hbox);
 
-	connect(this->browse, SIGNAL(clicked()), this, SLOT(open_browser_cb()));
+	connect(this->browse_button, SIGNAL(clicked()), this, SLOT(open_browser_cb()));
 	connect(this->line, SIGNAL (textEdited(const QString&)), this, SLOT (handle_user_edit_in_input_line_cb(void))); /* textEdited() - text edited only manually, not programmatically. */
 
 	/* Input line should be primary "focus receiver" because cursor
@@ -272,4 +272,22 @@ QString FileSelectorWidget::get_selected_name_filter(void) const
 void FileSelectorWidget::set_accept_mode(QFileDialog::AcceptMode accept_mode)
 {
 	this->file_dialog->setAcceptMode(accept_mode);
+}
+
+
+
+
+void FileSelectorWidget::clear_widget(void)
+{
+	this->line->setText("");
+
+}
+
+
+
+
+void FileSelectorWidget::set_enabled(bool enabled)
+{
+	this->line->setEnabled(enabled);
+	this->browse_button->setEnabled(enabled);
 }

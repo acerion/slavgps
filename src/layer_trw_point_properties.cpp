@@ -97,8 +97,8 @@ sg_ret PointPropertiesWidget::build_widgets(QWidget * parent_widget)
 					      Altitude(1, height_unit),
 					      SG_ALTITUDE_PRECISION);
 	this->altitude_widget = new MeasurementEntry_2<Altitude, HeightUnit>(Altitude(0, height_unit), &scale_alti, this);
-	this->grid->addWidget(new QLabel(tr("Altitude:")), this->widgets_row, left_col);
-	this->grid->addWidget(this->altitude_widget->me_widget, this->widgets_row, right_col);
+	this->altitude_widget->meas_widget->label->setText(tr("Altitude:"));
+	this->grid->addWidget(this->altitude_widget->meas_widget, this->widgets_row, left_col, 1, 2);
 
 	this->widgets_row++;
 
@@ -113,13 +113,15 @@ sg_ret PointPropertiesWidget::build_widgets(QWidget * parent_widget)
 
 
 
-void PointPropertiesWidget::disable_widgets(void)
+void PointPropertiesWidget::clear_and_disable_widgets(void)
 {
-	this->name_entry->insert("");
-	this->timestamp_widget->reset_timestamp();
+	this->name_entry->setText("");
+	this->coord_widget->clear_widget();
+	this->altitude_widget->clear_widget();
+	this->timestamp_widget->clear_widget();
 
 	this->name_entry->setEnabled(false);
 	this->coord_widget->setEnabled(false);
-	this->altitude_widget->me_widget->setEnabled(false);
+	this->altitude_widget->meas_widget->setEnabled(false);
 	this->timestamp_widget->setEnabled(false);
 }

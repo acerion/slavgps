@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _SG_LAYER_TRW_TPWIN_H_
-#define _SG_LAYER_TRW_TPWIN_H_
+#ifndef _SG_LAYER_TRW_TRACKPOINT_PROPERTIES_H_
+#define _SG_LAYER_TRW_TRACKPOINT_PROPERTIES_H_
 
 
 
@@ -70,7 +70,7 @@ namespace SlavGPS {
 		TpPropertiesWidget(QWidget * parent = NULL);
 
 		sg_ret build_widgets(QWidget * parent_widget);
-		void disable_widgets(void);
+		void clear_and_disable_widgets(void);
 		void build_buttons(QWidget * parent_widget);
 
 
@@ -106,8 +106,8 @@ namespace SlavGPS {
 		TpPropertiesDialog(CoordMode coord_mode, QWidget * parent = NULL);
 		~TpPropertiesDialog();
 
-		void set_dialog_data(Track * track, Trackpoint * trackpoint);
-		void reset_dialog_data(void);
+		void dialog_data_set(Track * track, Trackpoint * trackpoint);
+		void dialog_data_reset(void);
 		void set_dialog_title(const QString & track_name);
 
 		void set_coord_mode(CoordMode coord_mode);
@@ -156,4 +156,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_LAYER_TRW_TPWIN_H_ */
+#endif /* #ifndef _SG_LAYER_TRW_TRACKPOINT_PROPERTIES_H_ */

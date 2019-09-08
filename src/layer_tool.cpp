@@ -95,23 +95,30 @@ static bool tool_sync_done = true; /* TODO_LATER: get rid of this global variabl
 
 
 
-void LayerTool::remember_selection(const ScreenPos & screen_pos)
+void LayerTool::start_holding_object(const ScreenPos & screen_pos)
 {
 	/* We have clicked on an item, and we are holding it.
 	   We will hold it during move, until we release it. */
-	this->layer_edit_holding = true;
+	this->tool_is_holding_object = true;
 
 	/* We have just clicked the item, we aren't moving the cursor yet. */
-	this->layer_edit_moving = false;
+	this->tool_is_moving_object = false;
 }
 
 
 
 
-void LayerTool::perform_move(const ScreenPos & new_pos)
+void LayerTool::move_object(const ScreenPos & new_pos)
 {
-	/* We are in the process of moving the pressed cursor. */
-	this->layer_edit_moving = true;
+	if (!this->tool_is_holding_object) {
+		qDebug() << SG_PREFIX_E << "Can't perform move: no object held by tool" << this->id_string;
+		return;
+	}
+
+	/* We are in the process of moving mouse cursor that is
+	   pressed. An object that is being held is moving with this
+	   cursor. */
+	this->tool_is_moving_object = true;
 
 	if (tool_sync_done) {
 		this->gisview->render_to_screen();
@@ -122,15 +129,14 @@ void LayerTool::perform_move(const ScreenPos & new_pos)
 
 
 
-bool LayerTool::perform_release(void)
+bool LayerTool::stop_holding_object(void)
 {
-	/* Did we perform release of cursor after holding cursor down or moving pressed down cursor? */
-	const bool something_released = this->layer_edit_holding || this->layer_edit_moving;
+	const bool some_object_released = this->tool_is_holding_object;
 
-	this->layer_edit_holding = false;
-	this->layer_edit_moving = false;
+	this->tool_is_holding_object = false;
+	this->tool_is_moving_object = false;
 
-	return something_released;
+	return some_object_released;
 }
 
 
@@ -215,4 +221,3 @@ bool LayerTool::is_activated(void) const
 	}
 	return this->qa->isChecked();
 }
-

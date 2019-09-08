@@ -166,3 +166,11 @@ void UTMEntryWidget::set_text(const QString & east_label, const QString & east_t
 	this->northing_spin->setToolTip(north_tooltip);
 	this->northing_label->setText(north_label);
 }
+
+
+
+
+void UTMEntryWidget::clear_widget(void)
+{
+	/* TODO: implement. */
+}

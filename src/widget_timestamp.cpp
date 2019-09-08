@@ -70,6 +70,11 @@ TimestampWidget::TimestampWidget(QWidget * parent)
 	this->timestamp_button = new SGDateTimeButton(this);
 	this->grid->addWidget(new QLabel(tr("Formatted Time:")), 1, 0);
 	this->grid->addWidget(this->timestamp_button, 1, 1);
+
+
+	this->grid->setContentsMargins(0, 0, 0, 0);
+
+
 	connect(this->timestamp_button, SIGNAL (value_is_set(const Time &)), this, SLOT (on_timestamp_button_value_set_cb(void)));
 	connect(this->timestamp_button, SIGNAL (value_is_reset(void)), this, SLOT (on_timestamp_button_value_reset_cb(void)));
 }
@@ -91,7 +96,7 @@ void TimestampWidget::set_timestamp(const Time & timestamp, const Coord & new_co
 
 
 
-void TimestampWidget::reset_timestamp(void)
+void TimestampWidget::clear_widget(void)
 {
 	this->timestamp_entry->setValue(0);
 	this->timestamp_button->clear_label();

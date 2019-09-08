@@ -164,3 +164,17 @@ void CoordEntryWidget::value_changed_cb(void)
 	qDebug() << SG_PREFIX_SIGNAL << "Will now emit 'value changed' signal after change in LatLon or UTM entry widget";
 	emit this->value_changed();
 }
+
+
+
+
+void CoordEntryWidget::clear_widget(void)
+{
+	if (this->lat_lon_entry) {
+		this->lat_lon_entry->clear_widget();
+	} else if (this->utm_entry) {
+		this->utm_entry->clear_widget();
+	} else {
+		qDebug() << SG_PREFIX_E << "Both widgets are NULL";
+	}
+}

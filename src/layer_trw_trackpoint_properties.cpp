@@ -58,7 +58,7 @@ void TpPropertiesDialog::update_timestamp_widget(const Trackpoint * tp)
 	if (tp->timestamp.is_valid()) {
 		this->timestamp_widget->set_timestamp(tp->timestamp, tp->coord);
 	} else {
-		this->timestamp_widget->reset_timestamp();
+		this->timestamp_widget->clear_widget();
 	}
 }
 
@@ -184,7 +184,7 @@ bool TpPropertiesDialog::sync_name_entry_to_current_point_cb(const QString & new
  *
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  */
-void TpPropertiesDialog::set_dialog_data(Track * track, Trackpoint * trackpoint)
+void TpPropertiesDialog::dialog_data_set(Track * track, Trackpoint * trackpoint)
 {
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
@@ -216,7 +216,7 @@ void TpPropertiesDialog::set_dialog_data(Track * track, Trackpoint * trackpoint)
 
 
 	this->coord_widget->setEnabled(true);
-	this->altitude_widget->me_widget->setEnabled(true);
+	this->altitude_widget->meas_widget->setEnabled(true);
 	this->timestamp_widget->setEnabled(point.timestamp.is_valid());
 
 	this->set_dialog_title(track->name);
@@ -274,19 +274,14 @@ void TpPropertiesDialog::set_dialog_data(Track * track, Trackpoint * trackpoint)
 
 
 
-void TpPropertiesDialog::reset_dialog_data(void)
+void TpPropertiesDialog::dialog_data_reset(void)
 {
-	if (this->current_track) {
-		Trackpoint tp; /* Invalid, empty object. */
-		this->set_dialog_data(this->current_track, &tp);
-		return;
-	}
-
 	this->current_point = NULL;
 	this->current_track = NULL;
 
-	this->disable_widgets();
+	this->clear_and_disable_widgets();
 
+	/* Set a title that is not specific to any track. */
 	this->setWindowTitle(tr("Trackpoint"));
 }
 
@@ -341,7 +336,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		if (sg_ret::ok != this->current_track->split_at_selected_trackpoint_cb()) {
 			break;
 		}
-		this->set_dialog_data(this->current_track, this->current_point);
+		this->dialog_data_set(this->current_track, this->current_point);
 		break;
 
 	case TpPropertiesDialog::Action::DeleteSelectedPoint:
@@ -352,7 +347,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 		if (this->current_track->has_selected_tp()) {
 			/* Update Trackpoint Properties with the available adjacent trackpoint. */
-			this->set_dialog_data(this->current_track, this->current_point);
+			this->dialog_data_set(this->current_track, this->current_point);
 		}
 
 		this->current_track->emit_tree_item_changed("Indicating deletion of trackpoint");
@@ -363,7 +358,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->set_dialog_data(this->current_track, this->current_point);
+		this->dialog_data_set(this->current_track, this->current_point);
 		this->current_track->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		break;
 
@@ -372,7 +367,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->set_dialog_data(this->current_track, this->current_point);
+		this->dialog_data_set(this->current_track, this->current_point);
 		this->current_track->emit_tree_item_changed("Indicating selecting previous trackpoint in track");
 		break;
 
@@ -483,11 +478,11 @@ sg_ret TpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->widgets_row++;
 
 
-	connect(this->name_entry, SIGNAL (textEdited(const QString &)),                this, SLOT (sync_name_entry_to_current_point_cb(const QString &)));
-	connect(this->coord_widget, SIGNAL (value_changed(void)),                      this, SLOT (sync_coord_widget_to_current_point_cb(void)));
-	connect(this->altitude_widget->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_widget_to_current_point_cb(void)));
-	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)),           this, SLOT (sync_timestamp_widget_to_current_point_cb(const Time &)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()),                     this, SLOT (sync_empty_timestamp_widget_to_current_point_cb(void)));
+	connect(this->name_entry, SIGNAL (textEdited(const QString &)),       this, SLOT (sync_name_entry_to_current_point_cb(const QString &)));
+	connect(this->coord_widget, SIGNAL (value_changed(void)),             this, SLOT (sync_coord_widget_to_current_point_cb(void)));
+	connect(this->altitude_widget->meas_widget, SIGNAL (value_changed()), this, SLOT (sync_altitude_widget_to_current_point_cb(void)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)),  this, SLOT (sync_timestamp_widget_to_current_point_cb(const Time &)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()),            this, SLOT (sync_empty_timestamp_widget_to_current_point_cb(void)));
 
 
 	return sg_ret::ok;
@@ -496,9 +491,22 @@ sg_ret TpPropertiesWidget::build_widgets(QWidget * parent_widget)
 
 
 
-void TpPropertiesWidget::disable_widgets(void)
+void TpPropertiesWidget::clear_and_disable_widgets(void)
 {
-	this->PointPropertiesWidget::disable_widgets();
+	this->PointPropertiesWidget::clear_and_disable_widgets();
+
+
+	/* Clear trackpoint-specific values. */
+	this->course->setText("");
+	this->diff_dist->setText("");
+	this->diff_time->setText("");
+	this->diff_speed->setText("");
+	this->speed->setText("");
+	this->vdop->setText("");
+	this->hdop->setText("");
+	this->pdop->setText("");
+	this->sat->setText("");
+
 
 	/* Only keep Close button enabled. */
 	this->button_insert_tp_after->setEnabled(false);

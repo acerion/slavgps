@@ -72,6 +72,7 @@ LatLonEntryWidget::LatLonEntryWidget(QWidget * parent)
 	   layout. */
 	this->setFocusProxy(this->lat_entry);
 
+	this->grid->setContentsMargins(0, 0, 0, 0);
 
 	QObject::connect(this->lat_entry, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
 	QObject::connect(this->lon_entry, SIGNAL (valueChanged(double)), this, SLOT (value_changed_cb()));
@@ -134,6 +135,15 @@ void LatLonEntryWidget::value_changed_cb(void) /* Slot. */
 
 
 
+void LatLonEntryWidget::clear_widget(void)
+{
+	this->lat_entry->clear_widget();
+	this->lon_entry->clear_widget();
+}
+
+
+
+
 LatEntryWidget::LatEntryWidget(const SGVariant & value, QWidget * parent) : QDoubleSpinBox(parent)
 {
 	this->setDecimals(SG_LATITUDE_PRECISION);
@@ -147,6 +157,14 @@ LatEntryWidget::LatEntryWidget(const SGVariant & value, QWidget * parent) : QDou
 
 
 
+void LatEntryWidget::clear_widget(void)
+{
+	/* TODO: implement. */
+}
+
+
+
+
 LonEntryWidget::LonEntryWidget(const SGVariant & value, QWidget * parent) : QDoubleSpinBox(parent)
 {
 	this->setDecimals(SG_LONGITUDE_PRECISION);
@@ -155,4 +173,12 @@ LonEntryWidget::LonEntryWidget(const SGVariant & value, QWidget * parent) : QDou
 	this->setSingleStep(0.05);
 	this->setValue(value.get_longitude().get_value());
 	this->setToolTip(QObject::tr("Coordinate: longitude")); /* Default tooltip. */
+}
+
+
+
+
+void LonEntryWidget::clear_widget(void)
+{
+	/* TODO: implement. */
 }

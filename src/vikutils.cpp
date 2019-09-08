@@ -163,7 +163,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 				speed_type = "";
 			}
 
-			values[i] = QObject::tr("%1Speed%2 %3").arg(separator).arg(speed_type).arg(speed_value.convert_to_unit(speed_unit).to_string());
+			values[i] = QObject::tr("%1Speed%2: %3").arg(separator).arg(speed_type).arg(speed_value.convert_to_unit(speed_unit).to_string());
 			break;
 		}
 
@@ -192,22 +192,22 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 				speed_value = Speed(climb, SpeedUnit::MetresPerSecond);
 				speed_type = "";
 			}
-			values[i] = QObject::tr("%1Climb%2 %3").arg(separator).arg(speed_value.convert_to_unit(speed_unit).to_string());
+			values[i] = QObject::tr("%1Climb: %2").arg(separator).arg(speed_value.convert_to_unit(speed_unit).to_string());
 			break;
 		}
 
 		case 'A':
-			values[i] = QObject::tr("%1Altitude %2").arg(separator).arg(tp->altitude.convert_to_unit(Preferences::get_unit_height()).to_string());
+			values[i] = QObject::tr("%1Altitude: %2").arg(separator).arg(tp->altitude.convert_to_unit(Preferences::get_unit_height()).to_string());
 			break;
 
 		case 'C':
-			values[i] = QObject::tr("%1Course %2").arg(separator).arg(tp->course.to_string());
+			values[i] = QObject::tr("%1Course: %2").arg(separator).arg(tp->course.to_string());
 			break;
 
 		case 'P':
 			if (tp_prev) {
 				const Distance diff = Coord::distance_2(tp->coord, tp_prev->coord);
-				values[i] = QObject::tr("%1Distance diff %2")
+				values[i] = QObject::tr("%1Distance diff: %2")
 					.arg(separator)
 					.arg(diff.convert_to_unit(Preferences::get_unit_distance()).to_string());
 			}
@@ -216,7 +216,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 		case 'T': {
 			/* Compact date time format. */
 			const QString time_string = tp->timestamp.get_time_string(Qt::TextDate, tp->coord, NULL);
-			values[i] = QObject::tr("%1Time %2").arg(separator).arg(time_string);
+			values[i] = QObject::tr("%1Time: %2").arg(separator).arg(time_string);
 			break;
 		}
 
@@ -224,13 +224,13 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			if (tp_prev) {
 				if (tp->timestamp.is_valid() && tp_prev->timestamp.is_valid()) {
 					const Time t_diff = tp->timestamp - tp_prev->timestamp;
-					values[i] = QObject::tr("%1Time diff %2s").arg(separator).arg((long) t_diff.get_ll_value());
+					values[i] = QObject::tr("%1Time diff: %2s").arg(separator).arg((long) t_diff.get_ll_value());
 				}
 			}
 			break;
 
 		case 'X':
-			values[i] = QObject::tr("%1No. of Sats %2").arg(separator).arg(tp->nsats);
+			values[i] = QObject::tr("%1No. of Sats: %2").arg(separator).arg(tp->nsats);
 			break;
 
 		case 'F': /* Distance from tp to the end 'Finish' (along the track). */
@@ -239,7 +239,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 				Distance total = trk->get_length_including_gaps();
 				Distance tp_to_end = total - begin_to_tp;
 
-				values[i] = QObject::tr("%1To End %2")
+				values[i] = QObject::tr("%1To End: %2")
 					.arg(separator)
 					.arg(tp_to_end.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 			}
@@ -249,7 +249,7 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 			if (trk) {
 				const Distance begin_to_tp = trk->get_length_to_trackpoint(tp);
 
-				values[i] = QObject::tr("%1Distance along %2")
+				values[i] = QObject::tr("%1From start: %2")
 					.arg(separator)
 					.arg(begin_to_tp.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
 			}
@@ -265,13 +265,13 @@ QString SlavGPS::vu_trackpoint_formatted_message(const QString & format_code, Tr
 
 		case 'N': /* Name of track. */
 			if (trk) {
-				values[i] = QObject::tr("%1Track: %2").arg(separator).arg(trk->name);
+				values[i] = QObject::tr("%1Name: %2").arg(separator).arg(trk->name);
 			}
 			break;
 
 		case 'E': /* Name of trackpoint if available. */
 			if (!tp->name.isEmpty()) {
-				values[i] = QObject::tr("%1%2").arg(separator).arg(tp->name);
+				values[i] = QObject::tr("%1Tp: %2").arg(separator).arg(tp->name);
 			} else {
 				values[i] = "";
 			}

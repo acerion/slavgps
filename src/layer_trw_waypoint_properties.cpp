@@ -132,16 +132,16 @@ sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->widgets_row++;
 
 
-	connect(this->name_entry, SIGNAL (textEdited(const QString &)),                this, SLOT (sync_name_entry_to_current_point_cb(const QString &)));
-	connect(this->coord_widget, SIGNAL (value_changed(void)),                      this, SLOT (sync_coord_widget_to_current_point_cb(void)));
-	connect(this->altitude_widget->me_widget->spin, SIGNAL (valueChanged(double)), this, SLOT (sync_altitude_widget_to_current_point_cb(void)));
-	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)),           this, SLOT (sync_timestamp_widget_to_current_point_cb(const Time &)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()),                     this, SLOT (sync_empty_timestamp_widget_to_current_point_cb(void)));
+	connect(this->name_entry, SIGNAL (textEdited(const QString &)),         this, SLOT (sync_name_entry_to_current_point_cb(const QString &)));
+	connect(this->coord_widget, SIGNAL (value_changed(void)),               this, SLOT (sync_coord_widget_to_current_point_cb(void)));
+	connect(this->altitude_widget->meas_widget, SIGNAL (value_changed()),   this, SLOT (sync_altitude_widget_to_current_point_cb(void)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)),    this, SLOT (sync_timestamp_widget_to_current_point_cb(const Time &)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()),              this, SLOT (sync_empty_timestamp_widget_to_current_point_cb(void)));
 
-	connect(this->comment_entry, SIGNAL (textEdited(const QString &)),             this, SLOT (sync_comment_entry_to_current_point_cb(const QString &)));
-	connect(this->description_entry, SIGNAL (textEdited(const QString &)),         this, SLOT (sync_description_entry_to_current_point_cb(const QString &)));
-	connect(this->file_selector, SIGNAL (textEdited(const QString &)),             this, SLOT (sync_file_selector_to_current_point_cb(void)));
-	connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)),                 this, SLOT (sync_symbol_combo_to_current_point_cb(int)));
+	connect(this->comment_entry, SIGNAL (textEdited(const QString &)),      this, SLOT (sync_comment_entry_to_current_point_cb(const QString &)));
+	connect(this->description_entry, SIGNAL (textEdited(const QString &)),  this, SLOT (sync_description_entry_to_current_point_cb(const QString &)));
+	connect(this->file_selector, SIGNAL (textEdited(const QString &)),      this, SLOT (sync_file_selector_to_current_point_cb(void)));
+	connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)),          this, SLOT (sync_symbol_combo_to_current_point_cb(int)));
 
 
 	return sg_ret::ok;
@@ -194,7 +194,7 @@ sg_ret WpPropertiesWidget::build_buttons(QWidget * parent_widget)
 
 
 
-sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object)
+sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * object)
 {
 	this->current_point = object;
 	qDebug() << SG_PREFIX_I << "kamil current point coord:" << this->current_point->coord;
@@ -223,16 +223,39 @@ sg_ret WpPropertiesDialog::set_dialog_data(Waypoint * object)
 
 
 
-
-sg_ret WpPropertiesDialog::reset_dialog_data(void)
+void WpPropertiesWidget::clear_and_disable_widgets(void)
 {
-	Waypoint wp; /* Invalid, empty object. */
-	qDebug() << SG_PREFIX_I << "kamil Resetting dialog data";
-	const sg_ret result = this->set_dialog_data(&wp);
+	this->PointPropertiesWidget::clear_and_disable_widgets();
 
+
+	/* Clear waypoint-specific values. */
+	this->comment_entry->setText("");
+	this->comment_entry->setEnabled(false);
+	this->description_entry->setText("");
+	this->description_entry->setEnabled(false);
+	this->file_selector->clear_widget();
+	this->file_selector->set_enabled(false);
+	this->symbol_combo->setCurrentIndex(0); /* Index of first added item, which should be "none" symbol. */
+	this->symbol_combo->setEnabled(false);
+
+
+	/* Only keep Close button enabled. */
+	this->button_delete_current_point->setEnabled(false);
+	this->button_previous_point->setEnabled(false);
+	this->button_next_point->setEnabled(false);
+
+}
+
+
+
+void WpPropertiesDialog::dialog_data_reset(void)
+{
 	this->current_point = NULL;
 
-	return result;
+	this->clear_and_disable_widgets();
+
+	/* Set a title that is not specific to any track. */
+	this->setWindowTitle(tr("Waypoint"));
 }
 
 
@@ -424,7 +447,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		this->dialog_data_set(track, track->iterators[SELECTED].iter, track->is_route());
 		track->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		*/
 		break;
@@ -435,7 +458,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->set_dialog_data(track, track->iterators[SELECTED].iter, track->is_route());
+		this->dialog_data_set(track, track->iterators[SELECTED].iter, track->is_route());
 		track->emit_tree_item_changed("Indicating selecting previous trackpoint in track");
 		*/
 		break;

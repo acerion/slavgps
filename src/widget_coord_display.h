@@ -84,6 +84,8 @@ namespace SlavGPS {
 		sg_ret set_value(const Coord & coord, bool block_signal = false);
 		Coord get_value(void) const;
 
+		void clear_widget(void);
+
 	signals:
 		void value_changed(void);
 

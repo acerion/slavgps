@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifndef _SG_WAYPOINT_PARAMETERS_H_
-#define _SG_WAYPOINT_PARAMETERS_H_
+#ifndef _SG_LAYER_TRW_WAYPOINT_PROPERTIES_H_
+#define _SG_LAYER_TRW_WAYPOINT_PROPERTIES_H_
 
 
 
@@ -59,7 +58,7 @@ namespace SlavGPS {
 		WpPropertiesWidget(QWidget * parent = NULL);
 
 		sg_ret build_widgets(QWidget * parent_widget);
-		void reset_widgets(void);
+		void clear_and_disable_widgets(void);
 		sg_ret build_buttons(QWidget * parent_widget);
 
 
@@ -85,8 +84,8 @@ namespace SlavGPS {
 		WpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget);
 		~WpPropertiesDialog();
 
-		sg_ret set_dialog_data(Waypoint * wp);
-		sg_ret reset_dialog_data(void);
+		sg_ret dialog_data_set(Waypoint * wp);
+		void dialog_data_reset(void);
 		void set_title(const QString & title);
 
 		void set_coord_mode(CoordMode coord_mode);
@@ -143,14 +142,6 @@ namespace SlavGPS {
 #if 0
 	class WpPropertiesDialog : public QDialog {
 		Q_OBJECT
-	public:
-
-		sg_ret set_dialog_data(Waypoint * wp, const QString & name);
-		sg_ret reset_dialog_data(void);
-		void set_title(const QString & title);
-
-
-
 
 	private slots:
 		void symbol_entry_changed_cb(int);
@@ -178,4 +169,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_WAYPOINT_PARAMETERS_H_ */
+#endif /* #ifndef _SG_LAYER_TRW_WAYPOINT_PROPERTIES_H_ */

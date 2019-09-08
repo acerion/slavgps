@@ -125,7 +125,10 @@ Waypoint * LayerTRW::search_nearby_wp(GisViewport * gisview, int x, int y)
 */
 bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
-	if (!select_tool->layer_edit_holding) {
+	if (!select_tool->tool_is_holding_object) {
+		/* The tool wasn't holding any item, so there is
+		   nothing to move. */
+		qDebug() << SG_PREFIX_E << "No object to move by tool" << select_tool->id_string;
 		return false;
 	}
 
@@ -141,7 +144,7 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 	/* The selected item is being moved to new position. */
 	ScreenPos new_coord_pos;
 	gisview->coord_to_screen_pos(new_coord, new_coord_pos);
-	select_tool->perform_move(new_coord_pos);
+	select_tool->move_object(new_coord_pos);
 
 	return true;
 }
@@ -155,8 +158,9 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 */
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
-	if (!select_tool->layer_edit_holding) {
-		/* The tool wasn't holding any item, so there is nothing to do on mouse release. */
+	if (!select_tool->tool_is_holding_object) {
+		/* The tool wasn't holding any item, so there is
+		   nothing to do on mouse release. */
 		return false;
 	}
 
@@ -167,7 +171,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 
 	/* Prevent accidental (small) shifts when specific movement has not been requested
 	   (as the click release has occurred within the click object detection area). */
-	if (!select_tool->layer_edit_moving
+	if (!select_tool->tool_is_moving_object
 	    || select_tool->selected_tree_item_type_id == "") {
 		return false;
 	}
@@ -177,7 +181,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 	/* See if the coordinates of the new "release" position should be snapped to existing nearby Trackpoint or Waypoint. */
 	this->get_nearby_snap_coordinates(new_coord, ev, gisview);
 
-	select_tool->perform_release();
+	select_tool->stop_holding_object();
 
 	/* Update information about new position of Waypoint/Trackpoint. */
 	if (select_tool->selected_tree_item_type_id == "sg.trw.waypoint") {
@@ -237,41 +241,39 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
-	if (this->waypoints.is_visible() && BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox)) {
-		qDebug() << SG_PREFIX_I << "Waypoints present in viewport, trying to catch waypoint";
+	const bool waypoints_visible = this->waypoints.is_visible();
+	const bool waypoints_inside = BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox);
+	qDebug() << SG_PREFIX_I << "Waypoints are" << (waypoints_visible ? "visible" : "invisible") << "and" << (waypoints_inside ? "inside" : "outside") << "of viewport";
+	if (waypoints_visible && waypoints_inside) {
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
 		this->waypoints.search_closest_wp(wp_search);
-
 		if (wp_search.closest_wp) {
-
 			qDebug() << SG_PREFIX_I << "Selection process found waypoint" << wp_search.closest_wp->name;
 
 			/* We have found a Waypoint. */
 			select_tool->selected_tree_item_type_id = wp_search.closest_wp->type_id;
+			this->tree_view->select_and_expose_tree_item(wp_search.closest_wp);
+			wp_search.closest_wp->handle_selection_in_tree(); /* TODO: isn't this redundant? Didn't select_and_expose_tree_item() called above lead to expected action? */
 
-			if (ev->type() == QEvent::MouseButtonDblClick
-			    /* flags() & Qt::MouseEventCreatedDoubleClick */) {
-				qDebug() << SG_PREFIX_D << "Selected waypoint through double click";
-				this->handle_select_tool_double_click_do_waypoint_selection(ev, select_tool, wp_search.closest_wp);
-			} else {
-				qDebug() << SG_PREFIX_D << "Selected waypoint through single click";
-				this->handle_select_tool_click_do_waypoint_selection(ev, select_tool, wp_search.closest_wp);
-			}
+			this->handle_select_tool_click_do_waypoint_selection(ev, select_tool, wp_search.closest_wp);
+			this->wp_properties_dialog_set(wp_search.closest_wp);
 
 			this->emit_tree_item_changed("Waypoint has been selected with select tool click");
 			return true;
+		} else {
+			qDebug() << SG_PREFIX_I << "Selection process not found waypoint";
 		}
 	}
-	qDebug() << SG_PREFIX_D << "No waypoint found, will look for tracks";
 
-	/* Used for both track and route lists. */
-	TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
 
-	if (this->tracks.is_visible() && BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox)) {
-		qDebug() << SG_PREFIX_I << "Tracks present in viewport, trying to catch track";
+
+	const bool tracks_visible = this->tracks.is_visible();
+	const bool tracks_inside = BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox);
+	qDebug() << SG_PREFIX_I << "Tracks are" << (tracks_visible ? "visible" : "invisible") << "and" << (tracks_inside ? "inside" : "outside") << "of viewport";
+	if (tracks_visible && tracks_inside) {
+		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
 		this->tracks.track_search_closest_tp(tp_search);
 		if (tp_search.closest_tp) {
-
 			qDebug() << SG_PREFIX_I << "Selection process found track" << tp_search.closest_track->name;
 
 			/* We have found a Trackpoint. */
@@ -283,17 +285,20 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 			this->emit_tree_item_changed("Track has been selected with select tool click");
 			return true;
+		} else {
+			qDebug() << SG_PREFIX_I << "Selection process not found track";
 		}
 	}
-	qDebug() << SG_PREFIX_D << "No track found, will look for routes";
 
 
 	/* Try again for routes. */
-	if (this->routes.is_visible() && BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox)) {
-		qDebug() << SG_PREFIX_I << "Routes present in viewport, trying to catch route";
+	const bool routes_visible = this->routes.is_visible();
+	const bool routes_inside = BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox);
+	qDebug() << SG_PREFIX_I << "Routes are" << (routes_visible ? "visible" : "invisible") << "and" << (routes_inside ? "inside" : "outside") << "of viewport";
+	if (routes_visible && routes_inside) {
+		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
 		this->routes.track_search_closest_tp(tp_search);
 		if (tp_search.closest_tp) {
-
 			qDebug() << SG_PREFIX_I << "Selection process found route" << tp_search.closest_track->name;
 
 			/* We have found a Trackpoint. */
@@ -305,8 +310,11 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 			this->emit_tree_item_changed("Route has been selected with select tool click");
 			return true;
+		} else {
+			qDebug() << SG_PREFIX_I << "Selection process not found route" << tp_search.closest_track->name;
 		}
 	}
+
 
 	/* Mouse click didn't happen anywhere near a Trackpoint or Waypoint from this layer.
 	   So unmark/deselect all "current"/"edited" elements of this layer. */
@@ -314,9 +322,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	this->reset_edited_track();
 	this->cancel_current_tp();
 	this->tp_properties_dialog_reset();
-	/* TODO
 	this->wp_properties_dialog_reset();
-	*/
 
 	/* Blank info. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
@@ -360,7 +366,7 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 	    || (track->is_selected() && track->get_selected_tp() == *tp_iter)) {
 
 		/* Remember position at which selection occurred. */
-		select_tool->remember_selection(ScreenPos(ev->x(), ev->y()));
+		select_tool->start_holding_object(ScreenPos(ev->x(), ev->y()));
 	}
 
 	this->set_edited_track(track, tp_iter);
@@ -379,45 +385,23 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 */
 void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp)
 {
-	/* Select. */
-	this->tree_view->select_and_expose_tree_item(wp);
-
 	/* Too easy to move it so must be holding shift to start immediately moving it
 	   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
 	if (ev->modifiers() & Qt::ShiftModifier
 	    || (this->get_edited_wp() == wp && this->get_edited_wp()->image_full_path.isEmpty())) {
 
 		/* Remember position at which selection occurred. */
-		select_tool->remember_selection(ScreenPos(ev->x(), ev->y()));
+		select_tool->start_holding_object(ScreenPos(ev->x(), ev->y()));
 	}
 
-	if (wp) {
-		wp->handle_selection_in_tree();
+	if (ev->type() == QEvent::MouseButtonDblClick
+	    /* flags() & Qt::MouseEventCreatedDoubleClick */) {
+		qDebug() << SG_PREFIX_D << "Selected waypoint through double click";
+
+		if (!wp->image_full_path.isEmpty()) {
+			this->show_wp_picture_cb();
+		}
 	}
-}
-
-
-
-/**
-   Given @param wp has been selected by clicking with mouse cursor.
-   Propagate the information about selection to all important places.
-*/
-void LayerTRW::handle_select_tool_double_click_do_waypoint_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp)
-{
-	/* Even if we don't show image, the waypoint still needs to be selected. */
-	this->handle_select_tool_click_do_waypoint_selection(ev, select_tool, wp);
-
-	if (!wp) {
-		return;
-	}
-
-	if (wp->image_full_path.isEmpty()) {
-		qDebug() << SG_PREFIX_D << "Waypoint named" << wp->name << "has empty image path, ignoring double click";
-		return;
-	}
-
-	qDebug() << SG_PREFIX_D << "Will call 'show wp picture' callback";
-	this->show_wp_picture_cb();
 }
 
 
@@ -507,8 +491,8 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 	if (trw->type != LayerType::TRW) {
 		return ToolStatus::Ignored;
 	}
-	if (this->layer_edit_holding) {
-		return ToolStatus::Ack;
+	if (this->tool_is_holding_object) {
+		return ToolStatus::Ignored;
 	}
 	if (!trw->is_visible() || !trw->waypoints.is_visible()) {
 		return ToolStatus::Ignored;
@@ -540,7 +524,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 			/* A waypoint has been selected in some way
 			   (e.g. by selecting it in items tree), and
 			   now it is also selected by this tool. */
-			this->remember_selection(event_pos);
+			this->start_holding_object(event_pos);
 
 			/* Global "edited waypoint" now became tool's edited waypoint. */
 			our_waypoint = current_wp;
@@ -571,7 +555,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 			/* Could make it so don't update if old WP is off screen and new is null but oh well. */
 			trw->emit_tree_item_changed("TRW - edit waypoint - click");
 
-			this->remember_selection(ScreenPos(ev->x(), ev->y()));
+			this->start_holding_object(ScreenPos(ev->x(), ev->y()));
 
 		        our_waypoint = wp_search.closest_wp;
 		}
@@ -586,9 +570,9 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		   no waypoint is drawn as selected. */
 
 		const bool wp_was_edited = trw->reset_edited_wp();
-		const bool something_was_released = this->perform_release();
+		const bool some_object_was_released = this->stop_holding_object();
 
-		if (wp_was_edited || something_was_released) {
+		if (wp_was_edited || some_object_was_released) {
 			trw->emit_tree_item_changed("Waypoint has been deselected after mouse click on area of layer without waypoints");
 		}
 
@@ -627,7 +611,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 		return ToolStatus::Ignored;
 	}
 
-	if (!this->layer_edit_holding) {
+	if (!this->tool_is_holding_object) {
 		return ToolStatus::Ignored;
 	}
 
@@ -639,7 +623,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, Q
 	/* Selected item is being moved to new position. */
 	ScreenPos new_coord_pos;
 	this->gisview->coord_to_screen_pos(new_coord, new_coord_pos);
-	this->perform_move(new_coord_pos);
+	this->move_object(new_coord_pos);
 
 	return ToolStatus::Ack;
 }
@@ -655,7 +639,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 		return ToolStatus::Ignored;
 	}
 
-	if (!this->layer_edit_holding) {
+	if (!this->tool_is_holding_object) {
 		/* ::handle_mouse_press() probably never happened. */
 		return ToolStatus::Ignored;
 	}
@@ -668,7 +652,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 		/* See if the coordinates of the release position should be snapped to existing nearby Trackpoint or Waypoint. */
 		trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview);
 
-		this->perform_release();
+		this->stop_holding_object();
 
 		trw->get_edited_wp()->coord = new_coord;
 
@@ -679,7 +663,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 
 	case Qt::RightButton:
 	default:
-		this->perform_release();
+		this->stop_holding_object();
 		return ToolStatus::Ignored;
 	}
 }
@@ -1256,7 +1240,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
 		if (track->is_visible() && ScreenPos::are_closer_than(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
-			this->remember_selection(event_pos);
+			this->start_holding_object(event_pos);
 			return ToolStatus::Ack;
 		}
 
@@ -1305,7 +1289,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 		return ToolStatus::Ignored;
 	}
 
-	if (!this->layer_edit_holding) {
+	if (!this->tool_is_holding_object) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1319,7 +1303,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 	/* Selected item is being moved to new position. */
 	ScreenPos new_coord_pos;
 	this->gisview->coord_to_screen_pos(new_coord, new_coord_pos);
-	this->perform_move(new_coord_pos);
+	this->move_object(new_coord_pos);
 
 	return ToolStatus::Ack;
 }
@@ -1341,7 +1325,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 		return ToolStatus::Ignored;
 	}
 
-	if (!this->layer_edit_holding) {
+	if (!this->tool_is_holding_object) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1364,7 +1348,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 	track->get_selected_tp()->coord = new_coord;
 	track->recalculate_bbox();
 
-	this->perform_release();
+	this->stop_holding_object();
 
 	/* Diff dist is diff from orig. */
 	trw->tp_properties_dialog_set(track);

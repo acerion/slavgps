@@ -472,12 +472,12 @@ bool Waypoint::show_properties_dialog_cb(void)
 	parent_layer->get_window()->get_tools_dock()->setWidget(tool->wp_properties_dialog);
 
 	qDebug() << SG_PREFIX_I << "Will set data from this waypoint with coord" << this->coord;
-	tool->wp_properties_dialog->set_dialog_data(this);
+	tool->wp_properties_dialog->dialog_data_set(this);
 
 	Waypoint * wp = parent_layer->get_edited_wp();
 	if (!wp) {
 		qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' waypoint set";
-		tool->wp_properties_dialog->reset_dialog_data();
+		tool->wp_properties_dialog->dialog_data_reset();
 		return true;
 	} else {
 		return false;

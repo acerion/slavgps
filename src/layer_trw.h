@@ -127,7 +127,6 @@ namespace SlavGPS {
 
 		void handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter);
 		void handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp);
-		void handle_select_tool_double_click_do_waypoint_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp);
 
 		void marshall(Pickle & pickle);
 
@@ -294,8 +293,14 @@ namespace SlavGPS {
 
 		bool uniquify(void);
 
+
+
 		sg_ret tp_properties_dialog_set(Track * trk);
 		sg_ret tp_properties_dialog_reset(void);
+
+		sg_ret wp_properties_dialog_set(Waypoint * wp);
+		sg_ret wp_properties_dialog_reset(void);
+
 
 
 		int get_track_thickness();
