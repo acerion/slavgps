@@ -40,6 +40,9 @@
 #include "widget_coord_display.h"
 #include "widget_file_entry.h"
 #include "widget_timestamp.h"
+#include "window.h"
+#include "layers_panel.h"
+#include "tree_view_internal.h"
 
 
 
@@ -78,7 +81,7 @@ using namespace SlavGPS;
 
 WpPropertiesDialog::WpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget) : WpPropertiesWidget(parent_widget)
 {
-	this->setWindowTitle(tr("Waypoint"));
+	this->set_dialog_title(tr("Waypoint Properties"));
 	this->build_buttons(this);
 	this->build_widgets(this);
 }
@@ -194,24 +197,39 @@ sg_ret WpPropertiesWidget::build_buttons(QWidget * parent_widget)
 
 
 
-sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * object)
+sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 {
-	this->current_point = object;
-	qDebug() << SG_PREFIX_I << "kamil current point coord:" << this->current_point->coord;
- 	this->setWindowTitle(tr("Waypoint Properties"));
+	if (NULL == wp) {
+		qDebug() << SG_PREFIX_E << "NULL argument";
+		return sg_ret::err;
+	}
 
-	this->name_entry->setText(object->name);
-	this->coord_widget->set_value(object->coord); /* TODO: ::set_value() should re-build the widget according to mode of object->coord or according to global setting of coord mode? */
-	this->timestamp_widget->set_timestamp(object->get_timestamp(), object->coord);
-	this->altitude_widget->set_value_iu(object->altitude);
-	this->comment_entry->setText(object->comment);
-	this->description_entry->setText(object->description);
-	this->file_selector->preselect_file_full_path(object->image_full_path);
+	this->current_point = wp;
 
-	const QString & symbol_name = object->symbol_name.isEmpty() ? GarminSymbols::none_symbol_name : object->symbol_name;
-	const int selected_idx = this->symbol_combo->findText(object->symbol_name);
+	if (this->current_point->name.isEmpty()) {
+		this->set_dialog_title(tr("Waypoint Properties"));
+	} else {
+		this->set_dialog_title(tr("%1 Properties").arg(this->current_point->name));
+	}
+
+	this->setEnabled(true); /* The widget may have been disabled in ::dialog_data_reset(), so we need to undo that. */
+
+
+	this->name_entry->setText(this->current_point->name);
+	this->coord_widget->set_value(this->current_point->coord); /* TODO: ::set_value() should re-build the widget according to mode of this->current_point->coord or according to global setting of coord mode? */
+	this->timestamp_widget->set_timestamp(this->current_point->get_timestamp(), this->current_point->coord);
+	this->altitude_widget->set_value_iu(this->current_point->altitude);
+	this->comment_entry->setText(this->current_point->comment);
+	this->description_entry->setText(this->current_point->description);
+	this->file_selector->preselect_file_full_path(this->current_point->image_full_path);
+
+	const QString & symbol_name = this->current_point->symbol_name.isEmpty() ? GarminSymbols::none_symbol_name : this->current_point->symbol_name;
+	const int selected_idx = this->symbol_combo->findText(symbol_name);
 	if (selected_idx == -1) {
 		qDebug() << SG_PREFIX_E << "Waypoint symbol not found in combo:" << symbol_name;
+		for (int i = 0; i < this->symbol_combo->count(); ++i) {
+			qDebug() << SG_PREFIX_E << i << ":" << this->symbol_combo->itemText(i);
+		}
 		this->symbol_combo->setCurrentIndex(0); /* Index of first added item, which should be "none" symbol. */
 	} else {
 		this->symbol_combo->setCurrentIndex(selected_idx);
@@ -223,20 +241,16 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * object)
 
 
 
-void WpPropertiesWidget::clear_and_disable_widgets(void)
+void WpPropertiesWidget::clear_widgets(void)
 {
-	this->PointPropertiesWidget::clear_and_disable_widgets();
+	this->setEnabled(false);
 
 
 	/* Clear waypoint-specific values. */
 	this->comment_entry->setText("");
-	this->comment_entry->setEnabled(false);
 	this->description_entry->setText("");
-	this->description_entry->setEnabled(false);
 	this->file_selector->clear_widget();
-	this->file_selector->set_enabled(false);
 	this->symbol_combo->setCurrentIndex(0); /* Index of first added item, which should be "none" symbol. */
-	this->symbol_combo->setEnabled(false);
 
 
 	/* Only keep Close button enabled. */
@@ -252,10 +266,10 @@ void WpPropertiesDialog::dialog_data_reset(void)
 {
 	this->current_point = NULL;
 
-	this->clear_and_disable_widgets();
+	this->clear_widgets();
 
 	/* Set a title that is not specific to any track. */
-	this->setWindowTitle(tr("Waypoint"));
+	this->set_dialog_title(tr("Waypoint Properties"));
 }
 
 
@@ -272,9 +286,9 @@ void WpPropertiesDialog::sync_symbol_combo_to_current_point_cb(int index_in_comb
 
 
 
-void WpPropertiesDialog::set_title(const QString & title)
+void WpPropertiesDialog::set_dialog_title(const QString & title)
 {
-	this->setWindowTitle(title);
+	ThisApp::get_main_window()->get_tools_dock()->setWindowTitle(title);
 }
 
 
@@ -304,14 +318,13 @@ void WpPropertiesDialog::sync_coord_widget_to_current_point_cb(void) /* Slot. */
 
 	/* Don't redraw unless we really have to. */
 	const Distance distance = Coord::distance_2(old_coord, new_coord); /* May not be exact due to rounding. */
-	const bool redraw = distance.is_valid() && distance.get_ll_value() > 0.05;
+	const bool redraw = distance.is_valid() && !distance.is_zero();
 	if (redraw) {
 		/* Tell parent code that a edited object has changed
 		   its coordinates. */
-		qDebug() << SG_PREFIX_I << "=========== ask for redraw";
 		emit this->point_coordinates_changed();
 	} else {
-		qDebug() << SG_PREFIX_I << "=========== don't ask for redraw" << distance;
+		qDebug() << SG_PREFIX_I << "Not redrawing item, move distance is zero or invalid:" << distance;
 	}
 }
 
@@ -447,7 +460,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->dialog_data_set(track, track->iterators[SELECTED].iter, track->is_route());
+		this->dialog_data_set(wp);
 		track->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		*/
 		break;
@@ -458,7 +471,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->dialog_data_set(track, track->iterators[SELECTED].iter, track->is_route());
+		this->dialog_data_set(wp);
 		track->emit_tree_item_changed("Indicating selecting previous trackpoint in track");
 		*/
 		break;
@@ -475,6 +488,27 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 void WpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
 {
 	/* TODO: implement. */
+}
+
+
+
+
+void WpPropertiesDialog::tree_view_selection_changed_cb(void)
+{
+	TreeView * tree_view = ThisApp::get_layers_panel()->get_tree_view();
+	const QAbstractItemView::SelectionMode selection_mode = tree_view->selectionMode();
+	if (QAbstractItemView::SingleSelection != selection_mode) {
+		qDebug() << SG_PREFIX_E << "Unsupported selection mode" << (int) selection_mode;
+		return;
+	}
+
+	TreeItem * tree_item = tree_view->get_selected_tree_item();
+	qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name;
+	if (tree_item->type_id == "sg.trw.waypoint") {
+		this->dialog_data_set((Waypoint *) tree_item);
+	} else {
+		this->dialog_data_reset();
+	}
 }
 
 

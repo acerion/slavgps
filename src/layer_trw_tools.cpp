@@ -50,6 +50,7 @@
 #include "layer_trw_trackpoint_properties.h"
 #include "layer_trw_waypoint_properties.h"
 #include "tree_view_internal.h"
+#include "layers_panel.h"
 #include "viewport_internal.h"
 #include "dialog.h"
 #include "dem_cache.h"
@@ -146,6 +147,8 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 	gisview->coord_to_screen_pos(new_coord, new_coord_pos);
 	select_tool->move_object(new_coord_pos);
 
+	this->on_object_move_by_tool(select_tool->selected_tree_item_type_id, new_coord, false);
+
 	return true;
 }
 
@@ -183,23 +186,56 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 
 	select_tool->stop_holding_object();
 
-	/* Update information about new position of Waypoint/Trackpoint. */
-	if (select_tool->selected_tree_item_type_id == "sg.trw.waypoint") {
-		this->get_edited_wp()->coord = new_coord;
-		this->waypoints.recalculate_bbox();
-		this->reset_edited_wp();
+	this->on_object_move_by_tool(select_tool->selected_tree_item_type_id, new_coord, true);
 
-	} else if (select_tool->selected_tree_item_type_id == "sg.trw.track" || select_tool->selected_tree_item_type_id == "sg.trw.route") {
+	this->emit_tree_item_changed("TRW - handle select tool release");
+	return true;
+}
+
+
+
+
+/* Update information about new position of Waypoint/Trackpoint. */
+bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox)
+{
+	if (object_type_id == "sg.trw.waypoint") {
+
+		if (do_recalculate_bbox) {
+			this->waypoints.recalculate_bbox();
+		}
+
+		Waypoint * wp = this->get_edited_wp();
+		if (wp) {
+			wp->coord = new_coord;
+
+			/* Update properties dialog with the most
+			   recent coordinates of released waypoint. */
+			this->wp_properties_dialog_set(wp); /* TODO_OPTIMIZATION: optimize only by changing coordinates in the dialog. */
+		} else {
+			qDebug() << SG_PREFIX_E << "No waypoint";
+			this->wp_properties_dialog_reset();
+		}
+
+	} else if (object_type_id == "sg.trw.track" || object_type_id == "sg.trw.route") {
+
+		if (do_recalculate_bbox) {
+			if (object_type_id == "sg.trw.track") {
+				this->tracks.recalculate_bbox();
+			} else {
+				this->routes.recalculate_bbox();
+			}
+		}
 
 		Track * track = this->get_edited_track();
 		if (track && track->has_selected_tp()) {
-			/* Don't reset the selected trackpoint, thus ensuring it's still presented in Trackpoint Properties window. */
 			track->get_selected_tp()->coord = new_coord;
 
-			track->recalculate_bbox();
-
-			this->tp_properties_dialog_set(track);
+			/* Update properties dialog with the most
+			   recent coordinates of released
+			   trackpoint. */
+			this->tp_properties_dialog_set(track); /* TODO_OPTIMIZATION: optimize only by changing coordinates in the dialog. */
 		} else {
+			qDebug() << SG_PREFIX_E << "No track or trackpoint";
 			this->tp_properties_dialog_reset();
 		}
 
@@ -207,10 +243,8 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 		assert(0);
 	}
 
-	this->emit_tree_item_changed("TRW - handle select tool release");
 	return true;
 }
-
 
 
 
@@ -252,11 +286,9 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 			/* We have found a Waypoint. */
 			select_tool->selected_tree_item_type_id = wp_search.closest_wp->type_id;
-			this->tree_view->select_and_expose_tree_item(wp_search.closest_wp);
-			wp_search.closest_wp->handle_selection_in_tree(); /* TODO: isn't this redundant? Didn't select_and_expose_tree_item() called above lead to expected action? */
+			wp_search.closest_wp->select_in_tree();
 
 			this->handle_select_tool_click_do_waypoint_selection(ev, select_tool, wp_search.closest_wp);
-			this->wp_properties_dialog_set(wp_search.closest_wp);
 
 			this->emit_tree_item_changed("Waypoint has been selected with select tool click");
 			return true;
@@ -278,10 +310,11 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 			/* We have found a Trackpoint. */
 			select_tool->selected_tree_item_type_id = tp_search.closest_track->type_id;
+			tp_search.closest_track->set_selected_tp(tp_search.closest_tp_iter);
+			tp_search.closest_track->select_in_tree();
 
-			this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
-
-			this->tp_properties_dialog_set(tp_search.closest_track);
+			//this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
+			//this->tp_properties_dialog_set(tp_search.closest_track);
 
 			this->emit_tree_item_changed("Track has been selected with select tool click");
 			return true;
@@ -471,6 +504,11 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport
 
 	/* One Waypoint Properties Dialog for all layers. */
 	this->wp_properties_dialog = new WpPropertiesDialog(gisview_->get_coord_mode(), window_);
+	assert (window_->get_items_tree());
+	assert (window_->get_items_tree()->get_tree_view());
+	assert (window_->get_items_tree()->get_tree_view()->selectionModel());
+	QObject::connect(window_->get_items_tree()->get_tree_view()->selectionModel(), SIGNAL (selectionChanged(const QItemSelection &, const QItemSelection &)),
+			 this->wp_properties_dialog, SLOT (tree_view_selection_changed_cb(void)));
 }
 
 
@@ -489,18 +527,20 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
+		qDebug() << SG_PREFIX_D << "Not TRW layer";
 		return ToolStatus::Ignored;
 	}
 	if (this->tool_is_holding_object) {
+		qDebug() << SG_PREFIX_D << "Already holding an object";
 		return ToolStatus::Ignored;
 	}
 	if (!trw->is_visible() || !trw->waypoints.is_visible()) {
+		qDebug() << SG_PREFIX_D << "Not visible";
 		return ToolStatus::Ignored;
 	}
 
 	/* Does this tool have a waypoint, on which it can operate? */
-	Waypoint * our_waypoint = NULL;
-
+	Waypoint * newly_selected_wp = NULL;
 	Waypoint * current_wp = trw->get_edited_wp();
 
 	if (current_wp && current_wp->is_visible()) {
@@ -527,41 +567,41 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 			this->start_holding_object(event_pos);
 
 			/* Global "edited waypoint" now became tool's edited waypoint. */
-			our_waypoint = current_wp;
+			newly_selected_wp = current_wp;
+			qDebug() << SG_PREFIX_D << "Setting our waypoint";
 		}
 	}
 
-	if (!our_waypoint) {
-		/* Either there is no globally selected waypoint, or it
-		   was too far from click. Either way the tool doesn't
-		   have any waypoint to operate on - yet. Try to find
-		   one close to click coordinates. */
+	if (!newly_selected_wp) {
+		/* Either there is no globally selected waypoint, or
+		   it was too far from click. Either way the tool
+		   doesn't have any waypoint to operate on - yet. Try
+		   to find one close to click position. */
 
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
 		trw->get_waypoints_node().search_closest_wp(wp_search);
 
 		if (wp_search.closest_wp) {
 
-			/* We have right-clicked a waypoint. Make it
+			/* We have clicked a waypoint. Make it
 			   globally-selected waypoint, and waypoint
 			   selected by this tool.
 
 			   TODO_LATER: do we need to verify that
 			   wp_search.closest_wp != current_wp? */
 
-			trw->tree_view->select_and_expose_tree_item(wp_search.closest_wp);
-			trw->set_edited_wp(wp_search.closest_wp);
-
-			/* Could make it so don't update if old WP is off screen and new is null but oh well. */
+			wp_search.closest_wp->select_in_tree();
+#if 0
 			trw->emit_tree_item_changed("TRW - edit waypoint - click");
+#endif
 
 			this->start_holding_object(ScreenPos(ev->x(), ev->y()));
 
-		        our_waypoint = wp_search.closest_wp;
+		        newly_selected_wp = wp_search.closest_wp;
 		}
 	}
 
-	if (!our_waypoint) {
+	if (!newly_selected_wp) {
 		/* No luck. No waypoint to operate on.
 
 		   We have clicked on some empty space, so make sure
@@ -583,7 +623,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 	switch (ev->button()) {
 	case Qt::RightButton: {
 		QMenu menu;
-		our_waypoint->add_context_menu_items(menu, false);
+		newly_selected_wp->add_context_menu_items(menu, false);
 		menu.exec(QCursor::pos());
 		}
 		break;
@@ -1191,6 +1231,11 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisView
 
 	/* One Trackpoint Properties Dialog for all layers. */
 	this->tp_properties_dialog = new TpPropertiesDialog(gisview_->get_coord_mode(), window_);
+	assert (window_->get_items_tree());
+	assert (window_->get_items_tree()->get_tree_view());
+	assert (window_->get_items_tree()->get_tree_view()->selectionModel());
+	QObject::connect(window_->get_items_tree()->get_tree_view()->selectionModel(), SIGNAL (selectionChanged(const QItemSelection &, const QItemSelection &)),
+			 this->tp_properties_dialog, SLOT (tree_view_selection_changed_cb(void)));
 }
 
 

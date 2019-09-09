@@ -58,7 +58,11 @@ namespace SlavGPS {
 		WpPropertiesWidget(QWidget * parent = NULL);
 
 		sg_ret build_widgets(QWidget * parent_widget);
-		void clear_and_disable_widgets(void);
+
+		/* Erase all contents from widgets, as if nothing was
+		   presented by the widgets. */
+		void clear_widgets(void);
+
 		sg_ret build_buttons(QWidget * parent_widget);
 
 
@@ -86,7 +90,7 @@ namespace SlavGPS {
 
 		sg_ret dialog_data_set(Waypoint * wp);
 		void dialog_data_reset(void);
-		void set_title(const QString & title);
+		void set_dialog_title(const QString & title);
 
 		void set_coord_mode(CoordMode coord_mode);
 
@@ -100,6 +104,9 @@ namespace SlavGPS {
 	public slots:
 		void clicked_cb(int response);
 
+		/* Called to inform the dialog that a change of
+		   selection in main tree view has been made. */
+		void tree_view_selection_changed_cb(void);
 
 	private slots:
 		bool sync_name_entry_to_current_point_cb(const QString & name);

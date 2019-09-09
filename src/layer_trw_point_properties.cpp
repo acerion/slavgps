@@ -113,15 +113,10 @@ sg_ret PointPropertiesWidget::build_widgets(QWidget * parent_widget)
 
 
 
-void PointPropertiesWidget::clear_and_disable_widgets(void)
+void PointPropertiesWidget::clear_widgets(void)
 {
 	this->name_entry->setText("");
 	this->coord_widget->clear_widget();
 	this->altitude_widget->clear_widget();
 	this->timestamp_widget->clear_widget();
-
-	this->name_entry->setEnabled(false);
-	this->coord_widget->setEnabled(false);
-	this->altitude_widget->meas_widget->setEnabled(false);
-	this->timestamp_widget->setEnabled(false);
 }

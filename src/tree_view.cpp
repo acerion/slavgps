@@ -166,6 +166,8 @@ void TreeView::apply_tree_item_tooltip(const TreeItem * tree_item)
 
 void TreeView::tree_item_selected_cb(void) /* Slot. */
 {
+	qDebug() << SG_PREFIX_SLOT << "Handling signal";
+
 	TreeItem * selected_item = this->get_selected_tree_item();
 	if (!selected_item) {
 		return;

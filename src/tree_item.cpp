@@ -413,3 +413,22 @@ void TreeItem::emit_tree_item_changed_although_invisible(const QString & where)
 	qDebug() << SG_PREFIX_SIGNAL << "TreeItem" << this->name << "emits 'changed' signal @" << where;
 	emit this->tree_item_changed(this->name);
 }
+
+
+
+
+sg_ret TreeItem::select_in_tree(void)
+{
+	QStandardItem * item = this->tree_view->get_tree_model()->itemFromIndex(this->index);
+	if (NULL == item) {
+		qDebug() << SG_PREFIX_E << "Failed to get qstandarditem for" << this->name;
+		return sg_ret::err;
+	}
+
+	this->tree_view->select_and_expose_tree_item(this);
+
+	/* This signal will be handled by tree view's callback. */
+	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'clicked' signal for tree item" << this->name;
+	emit this->tree_view->clicked(item->index());
+	return sg_ret::ok;
+}

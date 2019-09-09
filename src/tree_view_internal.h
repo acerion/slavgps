@@ -122,6 +122,8 @@ namespace SlavGPS {
 		/* Get position of given tree item among its siblings. */
 		sg_ret get_position(const TreeItem & item, bool & is_first, bool & is_last);
 
+		TreeModel * get_tree_model(void) const { return this->tree_model; }
+
 	private slots:
 		void tree_item_selected_cb(void);
 		void data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right);

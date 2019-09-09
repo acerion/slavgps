@@ -502,6 +502,8 @@ namespace SlavGPS {
 		TracksTooltipData get_tracks_tooltip_data(void) const;
 		Distance get_routes_tooltip_data(void) const;
 
+		bool on_object_move_by_tool(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox);
+
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */
 		Track * current_track_ = NULL;

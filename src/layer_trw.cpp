@@ -3271,7 +3271,7 @@ sg_ret LayerTRW::tp_properties_dialog_set(Track * track)
 		}
 	}
 
-	tool->tp_properties_dialog->dialog_data_set(track, *track->iterators[SELECTED].iter);
+	tool->tp_properties_dialog->dialog_data_set(track);
 	return sg_ret::ok;
 }
 

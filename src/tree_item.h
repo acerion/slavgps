@@ -210,6 +210,11 @@ namespace SlavGPS {
 		virtual sg_ret update_tree_item_properties(void) { return sg_ret::ok; };
 
 		/**
+		   \brief Equivalent of selecting the tree item by clicking it with mouse cursor in tree
+		*/
+		virtual sg_ret select_in_tree(void);
+
+		/**
 		   \brief The item has been selected in items tree. Do something about it.
 
 		   @return false if the event of being selected was not handled

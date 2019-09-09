@@ -36,6 +36,9 @@
 #include "util.h"
 #include "measurements.h"
 #include "preferences.h"
+#include "window.h"
+#include "layers_panel.h"
+#include "tree_view_internal.h"
 
 
 
@@ -178,48 +181,53 @@ bool TpPropertiesDialog::sync_name_entry_to_current_point_cb(const QString & new
 
 
 /**
- * @track:      A Track
- * @iter:       Iterator to given Track
- * @is_route:   Is the track of the trackpoint actually a route?
- *
- * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
- */
-void TpPropertiesDialog::dialog_data_set(Track * track, Trackpoint * trackpoint)
+   @brief Set the Trackpoint Properties dialog to the values of the current trackpoint given in @param track
+
+   @param track: track to use when filling fields of properties dialog.
+*/
+sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 {
+	if (NULL == trk) {
+		qDebug() << SG_PREFIX_E << "NULL argument";
+		return sg_ret::err;
+	}
+	if (false == trk->iterators[SELECTED].iter_valid) {
+		qDebug() << SG_PREFIX_E << "Invalid iterator of selected tp";
+		return sg_ret::err;
+	}
+
+	this->current_point = *trk->iterators[SELECTED].iter;
+	this->current_track = trk;
+
+	if (this->current_point->name.isEmpty()) {
+		this->set_dialog_title(QObject::tr("%1: Trackpoint Properties").arg(this->current_track->name));
+	} else {
+		this->set_dialog_title(QObject::tr("%1: Properties").arg(this->current_point->name));
+	}
+
+	this->setEnabled(true); /* The widget may have been disabled in ::dialog_data_reset(), so we need to undo that. */
+
+
 	const HeightUnit height_unit = Preferences::get_unit_height();
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
-	Trackpoint point;
-	if (trackpoint) {
-		point = *trackpoint;
-	}
-	const TrackPoints::iterator & current_point_iter = track->iterators[SELECTED].iter;
-	const bool is_route = track ? track->is_route() : false;
+	const TrackPoints::iterator & current_point_iter = this->current_track->iterators[SELECTED].iter;
+	const bool is_route = this->current_track->is_route();
 
-	this->name_entry->setEnabled(true);
-	this->name_entry->setText(point.name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
-
-
+	this->name_entry->setText(this->current_point->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
 
 	/* User can insert only if not at the end of track (otherwise use extend track). */
-	this->button_insert_tp_after->setEnabled(std::next(current_point_iter) != track->end());
+	this->button_insert_tp_after->setEnabled(std::next(current_point_iter) != this->current_track->end());
 
 	/* We can only split up a track if it's not an endpoint. */
-	this->button_split_track->setEnabled(std::next(current_point_iter) != track->end() && current_point_iter != track->begin());
-
-	this->button_delete_current_point->setEnabled(true);
-
-	this->button_next_point->setEnabled(std::next(current_point_iter) != track->end());
-	this->button_previous_point->setEnabled(current_point_iter != track->begin());
+	this->button_split_track->setEnabled(std::next(current_point_iter) != this->current_track->end() && current_point_iter != this->current_track->begin());
 
 
+	this->button_next_point->setEnabled(std::next(current_point_iter) != this->current_track->end());
+	this->button_previous_point->setEnabled(current_point_iter != this->current_track->begin());
 
-	this->coord_widget->setEnabled(true);
-	this->altitude_widget->meas_widget->setEnabled(true);
-	this->timestamp_widget->setEnabled(point.timestamp.is_valid());
 
-	this->set_dialog_title(track->name);
 
 	this->timestamp_widget->setEnabled(!is_route);
 	if (is_route) {
@@ -229,46 +237,49 @@ void TpPropertiesDialog::dialog_data_set(Track * track, Trackpoint * trackpoint)
 
 	this->skip_syncing_to_current_point = true; /* Don't update while setting data. */
 
-	this->coord_widget->set_value(point.coord, true); /* true: block signals when setting initial value of widget. */
-	this->altitude_widget->set_value_iu(point.altitude);
-	this->update_timestamp_widget(&point);
+	this->coord_widget->set_value(this->current_point->coord, true); /* true: block signals when setting initial value of widget. */
+	this->altitude_widget->set_value_iu(this->current_point->altitude);
+	this->update_timestamp_widget(this->current_point);
 
 	this->skip_syncing_to_current_point = false; /* Can now update after setting data. */
 
 
-	if (this->current_point) {
-		const Distance diff = Coord::distance_2(point.coord, this->current_point->coord);
-		this->diff_dist->setText(diff.convert_to_unit(Preferences::get_unit_distance()).to_nice_string());
+	if (current_point_iter != this->current_track->begin()) {
+		Trackpoint * prev_point = *std::prev(current_point_iter);
 
-		if (point.timestamp.is_valid() && this->current_point->timestamp.is_valid()) {
-			const Time timestamp_diff = point.timestamp - this->current_point->timestamp;
-			this->diff_time->setText(tr("%1 s").arg((long) timestamp_diff.get_ll_value()));
-			if (point.timestamp == this->current_point->timestamp) {
+		const Distance diff = Coord::distance_2(prev_point->coord, this->current_point->coord);
+		this->diff_dist->setText(diff.convert_to_unit(distance_unit).to_nice_string());
+
+		if (prev_point->timestamp.is_valid() && this->current_point->timestamp.is_valid()) {
+			const Time timestamp_diff = prev_point->timestamp - this->current_point->timestamp;
+			this->diff_time->setText(tr("%1 s").arg((long) timestamp_diff.get_ll_value())); /* TODO: should we really use simple text label instead of time widget? */
+			if (prev_point->timestamp == this->current_point->timestamp) {
 				this->diff_speed->setText("--");
 			} else {
-				const Distance dist = Coord::distance_2(point.coord, this->current_point->coord);
-				const Time duration = Time::get_abs_diff(point.timestamp, this->current_point->timestamp);
+				const Distance dist = Coord::distance_2(prev_point->coord, this->current_point->coord);
+				const Time duration = Time::get_abs_diff(prev_point->timestamp, this->current_point->timestamp);
 				Speed speed_diff;
 				speed_diff.make_speed(dist, duration);
-				this->diff_speed->setText(speed_diff.to_string());
+				this->diff_speed->setText(speed_diff.convert_to_unit(speed_unit).to_string());
 			}
 		} else {
-			this->diff_time->setText("");
-			this->diff_speed->setText("");
+			this->diff_time->setText("--");
+			this->diff_speed->setText("--");
 		}
+	} else {
+		this->diff_dist->setText("--");
 	}
 
 
-	this->course->setText(point.course.to_string());
-	this->speed->setText(Speed(point.gps_speed, SpeedUnit::MetresPerSecond).convert_to_unit(speed_unit).to_string());
-	this->hdop->setText(Distance(point.hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
-	this->pdop->setText(Distance(point.pdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
-	this->vdop->setText(Altitude(point.vdop, HeightUnit::Metres).convert_to_unit(height_unit).to_nice_string());
-	this->sat->setText(tr("%1 / %2").arg(point.nsats).arg((int) point.fix_mode));
 
+	this->course->setText(this->current_point->course.to_string());
+	this->speed->setText(Speed(this->current_point->gps_speed, SpeedUnit::MetresPerSecond).convert_to_unit(speed_unit).to_string());
+	this->hdop->setText(Distance(this->current_point->hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->pdop->setText(Distance(this->current_point->pdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string());
+	this->vdop->setText(Altitude(this->current_point->vdop, HeightUnit::Metres).convert_to_unit(height_unit).to_nice_string());
+	this->sat->setText(tr("%1 / %2").arg(this->current_point->nsats).arg((int) this->current_point->fix_mode));
 
-	this->current_point = trackpoint;
-	this->current_track = track;
+	return sg_ret::ok;
 }
 
 
@@ -279,10 +290,10 @@ void TpPropertiesDialog::dialog_data_reset(void)
 	this->current_point = NULL;
 	this->current_track = NULL;
 
-	this->clear_and_disable_widgets();
+	this->clear_widgets();
 
 	/* Set a title that is not specific to any track. */
-	this->setWindowTitle(tr("Trackpoint"));
+	this->set_dialog_title(tr("Trackpoint Properties"));
 }
 
 
@@ -291,9 +302,9 @@ void TpPropertiesDialog::dialog_data_reset(void)
 
 
 
-void TpPropertiesDialog::set_dialog_title(const QString & track_name)
+void TpPropertiesDialog::set_dialog_title(const QString & title)
 {
-	this->setWindowTitle(QObject::tr("%1: Trackpoint").arg(track_name));
+	ThisApp::get_main_window()->get_tools_dock()->setWindowTitle(title);
 }
 
 
@@ -301,7 +312,7 @@ void TpPropertiesDialog::set_dialog_title(const QString & track_name)
 
 TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_widget) : TpPropertiesWidget(parent_widget)
 {
-	this->setWindowTitle(tr("Trackpoint"));
+	this->set_dialog_title(tr("Trackpoint Properties"));
 	this->build_buttons(this);
 	this->build_widgets(this);
 }
@@ -336,7 +347,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		if (sg_ret::ok != this->current_track->split_at_selected_trackpoint_cb()) {
 			break;
 		}
-		this->dialog_data_set(this->current_track, this->current_point);
+		this->dialog_data_set(this->current_track);
 		break;
 
 	case TpPropertiesDialog::Action::DeleteSelectedPoint:
@@ -347,7 +358,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 		if (this->current_track->has_selected_tp()) {
 			/* Update Trackpoint Properties with the available adjacent trackpoint. */
-			this->dialog_data_set(this->current_track, this->current_point);
+			this->dialog_data_set(this->current_track);
 		}
 
 		this->current_track->emit_tree_item_changed("Indicating deletion of trackpoint");
@@ -358,7 +369,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->dialog_data_set(this->current_track, this->current_point);
+		this->dialog_data_set(this->current_track);
 		this->current_track->emit_tree_item_changed("Indicating selecting next trackpoint in track");
 		break;
 
@@ -367,7 +378,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 			break;
 		}
 
-		this->dialog_data_set(this->current_track, this->current_point);
+		this->dialog_data_set(this->current_track);
 		this->current_track->emit_tree_item_changed("Indicating selecting previous trackpoint in track");
 		break;
 
@@ -389,6 +400,27 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 void TpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
 {
 	/* TODO: implement. */
+}
+
+
+
+
+void TpPropertiesDialog::tree_view_selection_changed_cb(void)
+{
+	TreeView * tree_view = ThisApp::get_layers_panel()->get_tree_view();
+	const QAbstractItemView::SelectionMode selection_mode = tree_view->selectionMode();
+	if (QAbstractItemView::SingleSelection != selection_mode) {
+		qDebug() << SG_PREFIX_E << "Unsupported selection mode" << (int) selection_mode;
+		return;
+	}
+
+	TreeItem * tree_item = tree_view->get_selected_tree_item();
+	qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name;
+	if (tree_item->type_id == "sg.trw.track" || tree_item->type_id == "sg.trw.route") {
+		this->dialog_data_set((Track *) tree_item);
+	} else {
+		this->dialog_data_reset();
+	}
 }
 
 
@@ -491,9 +523,9 @@ sg_ret TpPropertiesWidget::build_widgets(QWidget * parent_widget)
 
 
 
-void TpPropertiesWidget::clear_and_disable_widgets(void)
+void TpPropertiesWidget::clear_widgets(void)
 {
-	this->PointPropertiesWidget::clear_and_disable_widgets();
+	this->PointPropertiesWidget::clear_widgets();
 
 
 	/* Clear trackpoint-specific values. */
@@ -507,13 +539,7 @@ void TpPropertiesWidget::clear_and_disable_widgets(void)
 	this->pdop->setText("");
 	this->sat->setText("");
 
-
-	/* Only keep Close button enabled. */
-	this->button_insert_tp_after->setEnabled(false);
-	this->button_split_track->setEnabled(false);
-	this->button_delete_current_point->setEnabled(false);
-	this->button_previous_point->setEnabled(false);
-	this->button_next_point->setEnabled(false);
+	this->setEnabled(false);
 }
 
 
