@@ -1078,18 +1078,6 @@ void ViewportPixmap::set_pixmap(const QPixmap & new_pixmap)
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::render_to_screen(void)
-{
-	qDebug() << SG_PREFIX_I << "called, will call ->render()";
-	this->render(&this->vpixmap);
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
 void ViewportPixmap::pan_sync(int x_off, int y_off)
 {
 	qDebug() << SG_PREFIX_I;
