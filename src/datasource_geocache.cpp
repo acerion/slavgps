@@ -170,10 +170,6 @@ void DataSourceGeoCacheDialog::draw_circle_cb(void)
 	} else {
 		this->circle_onscreen = false;
 	}
-
-	/* TODO_2_LATER: See if onscreen. */
-	/* Okay. */
-	this->gisview->render_to_screen();
 }
 
 
@@ -298,7 +294,6 @@ DataSourceGeoCacheDialog::~DataSourceGeoCacheDialog()
 		this->gisview->draw_ellipse(this->circle_pen,
 					    this->circle_pos,
 					    this->circle_radius, this->circle_radius);
-		this->gisview->render_to_screen();
 	}
 }
 

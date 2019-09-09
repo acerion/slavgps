@@ -121,7 +121,6 @@ void LayerTool::move_object(const ScreenPos & new_pos)
 	this->tool_is_moving_object = true;
 
 	if (tool_sync_done) {
-		this->gisview->render_to_screen();
 		tool_sync_done = true;
 	}
 }
