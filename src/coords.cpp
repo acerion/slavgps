@@ -399,7 +399,7 @@ UTM LatLon::to_utm(const LatLon & lat_lon)
 	if (latitude >= 56.0 && latitude < 64.0 && longitude >= 3.0 && longitude < 12.0) {
 		zone = 32;
 	}
-	qDebug() << "---- Converting longitude to zone:" << longitude << zone;
+	//qDebug() << "---- Converting longitude to zone:" << longitude << zone;
 
 	/* Special zones for Svalbard. */
 	if (latitude >= 72.0 && latitude < 84.0) {
