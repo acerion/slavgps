@@ -73,10 +73,24 @@ namespace SlavGPS {
 
 
 
-	class TrackpointIter {
+	class TrackpointReference {
 	public:
-		bool iter_valid = false;
-		TrackPoints::iterator iter;
+		TrackpointReference() {};
+		TrackpointReference(TrackPoints::iterator & iter, bool iter_valid)
+		{
+			this->m_iter = iter;
+			this->m_iter_valid = iter_valid;
+		}
+
+		/*
+		  TODO: semi-persistent storage of iterator will lead
+		  to problems for tracks that can be edited.
+
+		  Come up with different way to reference specific
+		  trackpoints.
+		*/
+		TrackPoints::iterator m_iter;
+		bool m_iter_valid = false;
 	};
 
 

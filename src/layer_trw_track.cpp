@@ -1095,7 +1095,7 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 */
 sg_ret Track::select_tp(const Trackpoint * tp)
 {
-	this->iterators[SELECTED].iter_valid = false;
+	this->tp_references[SELECTED].m_iter_valid = false;
 
 	if (this->trackpoints.empty()) {
 		return sg_ret::err;
@@ -1104,8 +1104,8 @@ sg_ret Track::select_tp(const Trackpoint * tp)
 	auto iter = std::next(this->trackpoints.begin());
 	for (; iter != this->trackpoints.end(); iter++) {
 		if (tp == *iter) {
-			this->iterators[SELECTED].iter_valid = true;
-			this->iterators[SELECTED].iter = iter;
+			this->tp_references[SELECTED].m_iter_valid = true;
+			this->tp_references[SELECTED].m_iter = iter;
 			return sg_ret::ok;
 		}
 	}
@@ -2697,7 +2697,7 @@ bool Track::handle_selection_in_tree(void)
 	parent_layer->set_statusbar_msg_info_trk(this);
 #endif
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
-	parent_layer->selected_track_set(this, this->iterators[SELECTED]); /* But this tree item is selected (and maybe its trackpoint too). */
+	parent_layer->selected_track_set(this, this->tp_references[SELECTED]); /* But this tree item is selected (and maybe its trackpoint too). */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -3045,32 +3045,32 @@ void Track::refine_route_cb(void)
 
 sg_ret Track::create_tp_next_to_selected_tp(bool before)
 {
-	return this->create_tp_next_to_specified_tp(this->iterators[SELECTED], before);
+	return this->create_tp_next_to_specified_tp(this->tp_references[SELECTED], before);
 }
 
 
 
 
 /**
-   \brief Create a new trackpoint and insert it next to given @param reference_tp.
+   \brief Create a new trackpoint and insert it next to given @param other_tp.
 
    Since this method is private, we have pretty good control over
-   @reference_tp and can be rather certain that it belongs to the
+   @other_tp and can be rather certain that it belongs to the
    track.
 
-   Insert it before or after @param reference_tp, depending on value of @param before.
+   Insert it before or after @param other_tp, depending on value of @param before.
 
    The new trackpoint is created at center position between @param
-   reference_tp and one of its neighbours: next tp or previous tp.
+   other_tp and one of its neighbours: next tp or previous tp.
 */
-sg_ret Track::create_tp_next_to_specified_tp(const TrackpointIter & reference_tp, bool before)
+sg_ret Track::create_tp_next_to_specified_tp(const TrackpointReference & other_tp_ref, bool before)
 {
-	if (!reference_tp.iter_valid) {
+	if (!other_tp_ref.m_iter_valid) {
 		return sg_ret::err;
 	}
 
 #if 1   /* Debug code. */
-	auto iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), *(reference_tp.iter));
+	auto iter = std::find(this->trackpoints.begin(), this->trackpoints.end(), *(other_tp_ref.m_iter));
 	qDebug() << "Will check assertion for track" << this->name;
 	assert (iter != this->trackpoints.end());
 #endif
@@ -3079,27 +3079,27 @@ sg_ret Track::create_tp_next_to_specified_tp(const TrackpointIter & reference_tp
 
 	if (before) {
 		qDebug() << "------ insert trackpoint before.";
-		if (reference_tp.iter == this->begin()) {
+		if (other_tp_ref.m_iter == this->begin()) {
 			return sg_ret::err;
 		}
-		other_tp = *std::prev(reference_tp.iter);
+		other_tp = *std::prev(other_tp_ref.m_iter);
 	} else {
 		qDebug() << "------ insert trackpoint after.";
-		if (std::next(reference_tp.iter) == this->end()) {
+		if (std::next(other_tp_ref.m_iter) == this->end()) {
 			return sg_ret::err;
 		}
-		other_tp = *std::next(reference_tp.iter);
+		other_tp = *std::next(other_tp_ref.m_iter);
 	}
 
 	/* Use current and other trackpoints to form a new
 	   trackpoint which is inserted into the tracklist. */
 	if (other_tp) {
 
-		Trackpoint * new_tp = new Trackpoint(**reference_tp.iter, *other_tp, ((LayerTRW *) this->owning_layer)->coord_mode);
+		Trackpoint * new_tp = new Trackpoint(**other_tp_ref.m_iter, *other_tp, ((LayerTRW *) this->owning_layer)->coord_mode);
 		/* Insert new point into the appropriate trackpoint list,
 		   either before or after the current trackpoint as directed. */
 
-		this->insert(*reference_tp.iter, new_tp, before);
+		this->insert(*other_tp_ref.m_iter, new_tp, before);
 	}
 
 	this->emit_tree_item_changed(before
@@ -3351,8 +3351,8 @@ Trackpoint * Track::get_tp(tp_idx tp_idx) const
 
 Trackpoint * Track::get_selected_tp(void) const
 {
-	if (this->iterators[SELECTED].iter_valid) {
-		return *this->iterators[SELECTED].iter;
+	if (this->tp_references[SELECTED].m_iter_valid) {
+		return *this->tp_references[SELECTED].m_iter;
 	} else {
 		return NULL;
 	}
@@ -3363,8 +3363,8 @@ Trackpoint * Track::get_selected_tp(void) const
 
 Trackpoint * Track::get_hovered_tp(void) const
 {
-	if (this->iterators[HOVERED].iter_valid) {
-		return *this->iterators[HOVERED].iter;
+	if (this->tp_references[HOVERED].m_iter_valid) {
+		return *this->tp_references[HOVERED].m_iter;
 	} else {
 		return NULL;
 	}
@@ -3412,7 +3412,7 @@ sg_ret Track::get_timestamps(Time & ts_first, Time & ts_last) const
 */
 void Track::insert_point_after_cb(void)
 {
-	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->iterators[SELECTED], false)) {
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->tp_references[SELECTED], false)) {
 		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint after selected trackpoint";
 	} else {
 		this->emit_tree_item_changed("Track changed after inserting trackpoint 'after'");
@@ -3427,7 +3427,7 @@ void Track::insert_point_after_cb(void)
 */
 void Track::insert_point_before_cb(void)
 {
-	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->iterators[SELECTED], true)) {
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->tp_references[SELECTED], true)) {
 		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint before selected trackpoint";
 	} else {
 		this->emit_tree_item_changed("Track changed after inserting trackpoint 'before'");
@@ -3442,7 +3442,7 @@ void Track::insert_point_before_cb(void)
 */
 sg_ret Track::split_at_selected_trackpoint_cb(void)
 {
-	sg_ret ret = this->split_at_trackpoint(this->iterators[SELECTED]);
+	sg_ret ret = this->split_at_trackpoint(this->tp_references[SELECTED]);
 	if (sg_ret::ok != ret) {
 		qDebug() << SG_PREFIX_W << "Failed to split track" << this->name << "at selected trackpoint";
 		return ret;
@@ -3462,14 +3462,11 @@ sg_ret Track::split_at_selected_trackpoint_cb(void)
 
 void LayerTRW::delete_selected_tp(Track * track)
 {
-	TrackPoints::iterator new_tp_iter = track->delete_trackpoint(track->iterators[SELECTED].iter);
+	TrackPoints::iterator new_tp_iter = track->delete_trackpoint(track->tp_references[SELECTED].m_iter);
 
 	if (new_tp_iter != track->end()) {
 		/* Set to current to the available adjacent trackpoint. */
-		TrackpointIter tp_iter;
-		tp_iter.iter = new_tp_iter;
-		tp_iter.iter_valid = true;
-		track->selected_tp_set(tp_iter);
+		track->selected_tp_set(TrackpointReference(new_tp_iter, true));
 		track->recalculate_bbox();
 	} else {
 		this->cancel_current_tp();
@@ -3597,12 +3594,12 @@ sg_ret Track::move_selected_tp_forward(void)
 	if (!this->has_selected_tp()) {
 		return sg_ret::err_cond;
 	}
-	if (std::next(this->iterators[SELECTED].iter) == this->end()) {
+	if (std::next(this->tp_references[SELECTED].m_iter) == this->end()) {
 		/* Can't go forward if we are already at the end. */
 		return sg_ret::err_cond;
 	}
 
-	this->iterators[SELECTED].iter++;
+	this->tp_references[SELECTED].m_iter++;
 
 	return sg_ret::ok;
 }
@@ -3615,12 +3612,12 @@ sg_ret Track::move_selected_tp_back(void)
 	if (!this->has_selected_tp()) {
 		return sg_ret::err_cond;
 	}
-	if (this->iterators[SELECTED].iter == this->begin()) {
+	if (this->tp_references[SELECTED].m_iter == this->begin()) {
 		/* Can't go back if we are already at the beginning. */
 		return sg_ret::err_cond;
 	}
 
-	this->iterators[SELECTED].iter--;
+	this->tp_references[SELECTED].m_iter--;
 
 	return sg_ret::ok;
 }
@@ -3630,16 +3627,16 @@ sg_ret Track::move_selected_tp_back(void)
 
 bool Track::has_selected_tp(void) const
 {
-	return this->iterators[SELECTED].iter_valid;
+	return this->tp_references[SELECTED].m_iter_valid;
 }
 
 
 
 
-void Track::selected_tp_set(const TrackpointIter & tp_iter)
+void Track::selected_tp_set(const TrackpointReference & tp_ref)
 {
 	qDebug() << SG_PREFIX_E << "zzzzz - set";
-	this->iterators[SELECTED] = tp_iter;
+	this->tp_references[SELECTED] = tp_ref;
 }
 
 
@@ -3648,7 +3645,7 @@ void Track::selected_tp_set(const TrackpointIter & tp_iter)
 void Track::selected_tp_reset(void)
 {
 	qDebug() << SG_PREFIX_E << "zzzzz - reset";
-	this->iterators[SELECTED].iter_valid = false;
+	this->tp_references[SELECTED].m_iter_valid = false;
 }
 
 

@@ -53,25 +53,25 @@ using namespace SlavGPS;
 
    @return sg_ret status
 */
-sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
+sg_ret Track::split_at_trackpoint(const TrackpointReference & tp_ref)
 {
 	if (this->empty()) {
 		qDebug() << SG_PREFIX_N << "Can't split: track is empty";
 		return sg_ret::err_cond;
 	}
 
-	if (!tp.iter_valid) {
+	if (!tp_ref.m_iter_valid) {
 		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is invalid";
 		return sg_ret::err_cond;
 	}
 
-	if (tp.iter == this->begin()) {
+	if (tp_ref.m_iter == this->begin()) {
 		/* First TP in track. Don't split. This function shouldn't be called at all. */
 		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is first trackpoint";
 		return sg_ret::err_cond;
 	}
 
-	if (tp.iter == std::prev(this->end())) {
+	if (tp_ref.m_iter == std::prev(this->end())) {
 		/* Last TP in track. Don't split. This function shouldn't be called at all. */
 		qDebug() << SG_PREFIX_N << "Can't split: split trackpoint is last trackpoint";
 		return sg_ret::err_cond;
@@ -101,7 +101,7 @@ sg_ret Track::split_at_trackpoint(const TrackpointIter & tp)
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints::begin() iter" << n << "=" << (*iter)->timestamp;
 
 
-		iter = tp.iter;
+		iter = tp_ref.m_iter;
 		split_iters.push_back(TrackPoints::iterator(iter));
 		n++;
 		qDebug() << SG_PREFIX_I << "Pushed trackpoints iter" << n << "=" << (*iter)->timestamp;

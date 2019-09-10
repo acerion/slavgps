@@ -3749,7 +3749,7 @@ Track * LayerTRW::selected_track_get()
 
 
 
-void LayerTRW::selected_track_set(Track * track, const TrackpointIter & tp_iter)
+void LayerTRW::selected_track_set(Track * track, const TrackpointReference & tp_ref)
 {
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "NULL track";
@@ -3757,7 +3757,7 @@ void LayerTRW::selected_track_set(Track * track, const TrackpointIter & tp_iter)
 	}
 
 	this->current_track_ = track;
-	this->current_track_->selected_tp_set(tp_iter);
+	this->current_track_->selected_tp_set(tp_ref);
 }
 
 

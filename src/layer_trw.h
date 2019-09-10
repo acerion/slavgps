@@ -324,7 +324,7 @@ namespace SlavGPS {
 
 
 		Track * selected_track_get(void);
-		void selected_track_set(Track * track, const TrackpointIter & tp_iter);
+		void selected_track_set(Track * track, const TrackpointReference & tp_ref);
 		void selected_track_set(Track * track);
 		void selected_track_reset(void);
 

@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 
 
-	class TrackpointIter;
+	class TrackpointReference;
 	class Trackpoint;
 	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
 
@@ -194,7 +194,7 @@ namespace SlavGPS {
 
 
 		bool has_selected_tp(void) const;
-		void selected_tp_set(const TrackpointIter & tp_iter);
+		void selected_tp_set(const TrackpointReference & tp_ref);
 		void selected_tp_reset(void);
 		Trackpoint * get_tp(tp_idx tp_idx) const;
 		Trackpoint * get_selected_tp(void) const;
@@ -333,7 +333,7 @@ namespace SlavGPS {
 
 		LayerTRW * get_parent_layer_trw() const;
 
-		TrackpointIter iterators[2];
+		TrackpointReference tp_references[2];
 
 		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;
@@ -363,21 +363,21 @@ namespace SlavGPS {
 		   track can pass a trackpoint iter. This gives us
 		   more certainty that given iter belongs to the
 		   track. */
-		sg_ret create_tp_next_to_specified_tp(const TrackpointIter & reference_tp, bool before);
+		sg_ret create_tp_next_to_specified_tp(const TrackpointReference & other_tp_ref, bool before);
 
 		void copy_properties(const Track & from);
 
 
 
 		/**
-		   @brief Split track at given trackpoint iter
+		   @brief Split track at given trackpoint
 
-		   @param tp - trackpoint iter
+		   @param tp_ref - trackpoint reference
 
 		   @return sg_ret::ok if split has been performed
 		   @return other value on errors or if split can't be performed
 		*/
-		sg_ret split_at_trackpoint(const TrackpointIter & tp);
+		sg_ret split_at_trackpoint(const TrackpointReference & tp_ref);
 
 		/* Split track at iterators. @iterators contains list
 		   of iterators to track's trackpoints container. Each

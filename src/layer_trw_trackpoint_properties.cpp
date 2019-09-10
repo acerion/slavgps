@@ -191,12 +191,12 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 		qDebug() << SG_PREFIX_E << "NULL argument";
 		return sg_ret::err;
 	}
-	if (false == trk->iterators[SELECTED].iter_valid) {
+	if (false == trk->tp_references[SELECTED].m_iter_valid) {
 		qDebug() << SG_PREFIX_E << "Invalid iterator of selected tp";
 		return sg_ret::err;
 	}
 
-	this->current_point = *trk->iterators[SELECTED].iter;
+	this->current_point = *trk->tp_references[SELECTED].m_iter;
 	this->current_track = trk;
 
 	if (this->current_point->name.isEmpty()) {
@@ -213,7 +213,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
-	const TrackPoints::iterator & current_point_iter = this->current_track->iterators[SELECTED].iter;
+	const TrackPoints::iterator & current_point_iter = this->current_track->tp_references[SELECTED].m_iter;
 	const bool is_route = this->current_track->is_route();
 
 	this->name_entry->setText(this->current_point->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
@@ -425,7 +425,7 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 	if (tree_item->type_id == "sg.trw.track" || tree_item->type_id == "sg.trw.route") {
 		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "matches supported type";
 		Track * trk = (Track *) tree_item;
-		if (trk->iterators[SELECTED].iter_valid) {
+		if (trk->tp_references[SELECTED].m_iter_valid) {
 			qDebug() << SG_PREFIX_I << "Will now set trackpoint dialog data, track has selected trackpoint";
 		} else {
 			qDebug() << SG_PREFIX_I << "Will now set trackpoint dialog data, track doesn't have selected trackpoint";

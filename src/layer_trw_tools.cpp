@@ -368,10 +368,7 @@ bool LayerTRW::try_clicking_trackpoint(TrackpointSearch & tp_search, LayerTRWTra
 
 		{
 			LayerTRW * trw = (LayerTRW *) tp_search.closest_track->get_owning_layer();
-			TrackpointIter tp_iter; /* TODO: rename the type so that the variables have name other than tp_iter; more like TrackpointReference. */
-			tp_iter.iter = tp_search.closest_tp_iter; /* TODO: move this to search function. */
-			tp_iter.iter_valid = true;
-			trw->selected_track_set(tp_search.closest_track, tp_iter);
+			trw->selected_track_set(tp_search.closest_track, TrackpointReference(tp_search.closest_tp_iter, true));
 			tp_search.closest_track->click_in_tree();
 		}
 
@@ -763,7 +760,7 @@ bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent *
 	bool snapped = false;
 	if (ev->modifiers() & Qt::ControlModifier) {
 		const Trackpoint * tp = this->search_nearby_tp(gisview, ev->x(), ev->y());
-		const Track * trk = this->selected_track_getk();
+		const Track * trk = this->selected_track_get();
 		if (tp && trk && trk->has_selected_tp() && tp != trk->get_selected_tp()) {
 			point_coord = tp->coord;
 			snapped = true;
