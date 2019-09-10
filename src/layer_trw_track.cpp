@@ -1936,7 +1936,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 {
 	QAction * qa = NULL;
 
-	Track * track = parent_layer_->get_edited_track();
+	Track * track = parent_layer_->selected_track_get();
 
 	if (parent_layer_->get_track_creation_in_progress()) {
 		qa = menu.addAction(tr("&Finish Track"));
@@ -2697,7 +2697,7 @@ bool Track::handle_selection_in_tree(void)
 	parent_layer->set_statusbar_msg_info_trk(this);
 #endif
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
-	parent_layer->set_edited_track(this, this->iterators[SELECTED]); /* But this tree item is selected (and maybe its trackpoint too). */
+	parent_layer->selected_track_set(this, this->iterators[SELECTED]); /* But this tree item is selected (and maybe its trackpoint too). */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -3469,7 +3469,7 @@ void LayerTRW::delete_selected_tp(Track * track)
 		TrackpointIter tp_iter;
 		tp_iter.iter = new_tp_iter;
 		tp_iter.iter_valid = true;
-		track->set_selected_tp(tp_iter);
+		track->selected_tp_set(tp_iter);
 		track->recalculate_bbox();
 	} else {
 		this->cancel_current_tp();
@@ -3636,7 +3636,7 @@ bool Track::has_selected_tp(void) const
 
 
 
-void Track::set_selected_tp(const TrackpointIter & tp_iter)
+void Track::selected_tp_set(const TrackpointIter & tp_iter)
 {
 	qDebug() << SG_PREFIX_E << "zzzzz - set";
 	this->iterators[SELECTED] = tp_iter;
@@ -3645,7 +3645,7 @@ void Track::set_selected_tp(const TrackpointIter & tp_iter)
 
 
 
-void Track::reset_selected_tp(void)
+void Track::selected_tp_reset(void)
 {
 	qDebug() << SG_PREFIX_E << "zzzzz - reset";
 	this->iterators[SELECTED].iter_valid = false;
@@ -3657,7 +3657,7 @@ void Track::reset_selected_tp(void)
 bool Track::is_selected(void) const
 {
 	LayerTRW * trw = this->get_parent_layer_trw();
-	return trw->get_edited_track() == this;
+	return trw->selected_track_get() == this;
 }
 
 

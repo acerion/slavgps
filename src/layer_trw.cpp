@@ -1520,8 +1520,8 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 
 void LayerTRW::reset_internal_selections(void)
 {
-	this->reset_edited_track();
-	this->reset_edited_wp();
+	this->selected_track_reset();
+	this->selected_wp_reset();
 	this->cancel_current_tp();
 }
 
@@ -2014,7 +2014,7 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 	track->has_color = true;
 	track->set_name(new_name);
 
-	this->set_edited_track(track);
+	this->selected_track_set(track);
 
 	this->add_track(track);
 
@@ -2026,7 +2026,7 @@ Track * LayerTRW::new_track_create_common(const QString & new_name)
 
 void LayerTRW::new_track_cb() /* Slot. */
 {
-	if (!this->get_edited_track()) {
+	if (!this->selected_track_get()) {
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
@@ -2051,7 +2051,7 @@ Track * LayerTRW::new_route_create_common(const QString & new_name)
 
 	route->set_name(new_name);
 
-	this->set_edited_track(route);
+	this->selected_track_set(route);
 
 	this->add_route(route);
 
@@ -2063,7 +2063,7 @@ Track * LayerTRW::new_route_create_common(const QString & new_name)
 
 void LayerTRW::new_route_cb(void) /* Slot. */
 {
-	if (!this->get_edited_track()) {
+	if (!this->selected_track_get()) {
 
 		/* This QAction for this slot shouldn't even be active when a track/route is already being created. */
 
@@ -2081,7 +2081,7 @@ void LayerTRW::new_route_cb(void) /* Slot. */
 void LayerTRW::finish_track_cb(void) /* Slot. */
 {
 	this->reset_track_creation_in_progress();
-	this->reset_edited_track();
+	this->selected_track_reset();
 	this->route_finder_started = false;
 	this->emit_tree_item_changed("TRW - finish track");
 }
@@ -2092,7 +2092,7 @@ void LayerTRW::finish_track_cb(void) /* Slot. */
 void LayerTRW::finish_route_cb(void) /* Slot. */
 {
 	this->reset_route_creation_in_progress();
-	this->reset_edited_track();
+	this->selected_track_reset();
 	this->route_finder_started = false;
 	this->emit_tree_item_changed("TRW - finish route");
 }
@@ -2250,7 +2250,7 @@ sg_ret LayerTRW::add_route(Track * trk)
 /* to be called whenever a track has been deleted or may have been changed. */
 void LayerTRW::deselect_current_trackpoint(Track * trk)
 {
-	if (this->get_edited_track() == trk) {
+	if (this->selected_track_get() == trk) {
 		this->cancel_current_tp();
 	}
 }
@@ -2312,7 +2312,7 @@ void LayerTRW::add_waypoint_from_file(Waypoint * wp)
 
 void LayerTRW::add_track_from_file(Track * trk)
 {
-	Track * curr_track = this->get_edited_track();
+	Track * curr_track = this->selected_track_get();
 
 	if (this->route_finder_append && curr_track) {
 		trk->remove_dup_points(); /* Make "double point" track work to undo. */
@@ -2522,9 +2522,9 @@ sg_ret LayerTRW::detach_from_tree(TreeItem * tree_item)
 void LayerTRW::delete_all_routes()
 {
 	this->route_finder_added_track = NULL;
-	if (this->get_edited_track()) {
+	if (this->selected_track_get()) {
 		this->cancel_current_tp();
-		this->reset_edited_track();
+		this->selected_track_reset();
 	}
 
 	for (auto iter = this->routes.children_list.begin(); iter != this->routes.children_list.end(); iter++) {
@@ -2550,9 +2550,9 @@ void LayerTRW::delete_all_routes()
 void LayerTRW::delete_all_tracks()
 {
 	this->route_finder_added_track = NULL;
-	if (this->get_edited_track()) {
+	if (this->selected_track_get()) {
 		this->cancel_current_tp();
-		this->reset_edited_track();
+		this->selected_track_reset();
 	}
 
 	for (auto iter = this->tracks.children_list.begin(); iter != this->tracks.children_list.end(); iter++) {
@@ -2577,7 +2577,7 @@ void LayerTRW::delete_all_tracks()
 
 void LayerTRW::delete_all_waypoints()
 {
-	this->reset_edited_wp();
+	this->selected_wp_reset();
 	this->moving_wp = false;
 
 	this->waypoints.name_generator.reset();
@@ -2693,7 +2693,7 @@ void LayerTRW::edit_trackpoint_cb(void)
  */
 void LayerTRW::merge_with_other_cb(void)
 {
-	Track * track = this->get_edited_track();
+	Track * track = this->selected_track_get();
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
@@ -2757,7 +2757,7 @@ void LayerTRW::merge_with_other_cb(void)
  */
 void LayerTRW::append_track_cb(void)
 {
-	Track * track = this->get_edited_track();
+	Track * track = this->selected_track_get();
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function";
 		return;
@@ -2816,7 +2816,7 @@ void LayerTRW::append_track_cb(void)
  */
 void LayerTRW::append_other_cb(void)
 {
-	Track * track = this->get_edited_track();
+	Track * track = this->selected_track_get();
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
@@ -2887,7 +2887,7 @@ void LayerTRW::append_other_cb(void)
 /* Merge by segments. */
 void LayerTRW::merge_by_segment_cb(void)
 {
-	Track * track = this->get_edited_track();
+	Track * track = this->selected_track_get();
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
@@ -2906,7 +2906,7 @@ void LayerTRW::merge_by_segment_cb(void)
 /* merge by time routine */
 void LayerTRW::merge_by_timestamp_cb(void)
 {
-	Track * orig_track = this->get_edited_track();
+	Track * orig_track = this->selected_track_get();
 	if (!orig_track) {
 		qDebug() << SG_PREFIX_E << "Can't get edited track in track-related function" << __FUNCTION__;
 		return;
@@ -3240,10 +3240,10 @@ void LayerTRW::cancel_current_tp(void)
 {
 	this->tp_properties_dialog_reset();
 
-	Track * track = this->get_edited_track();
+	Track * track = this->selected_track_get();
 	if (track && track->has_selected_tp()) {
-		track->reset_selected_tp();
-		this->reset_edited_track();
+		track->selected_tp_reset();
+		this->selected_track_reset();
 
 		this->emit_tree_item_changed("TRW - cancel current tp");
 	}
@@ -3307,7 +3307,7 @@ void LayerTRW::tp_show_properties_dialog()
 
 	this->get_window()->get_tools_dock()->setWidget(tool->tp_properties_dialog);
 
-	Track * track = this->get_edited_track();
+	Track * track = this->selected_track_get();
 	if (track && track->has_selected_tp()) {
 		/* Set layer name and trackpoint data. */
 		this->tp_properties_dialog_set(track);
@@ -3561,7 +3561,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	LayersPanel * panel = ThisApp::get_layers_panel();
 	const GisViewport * gisview = ThisApp::get_main_gis_view();
 
-	Track * track = this->get_edited_track();
+	Track * track = this->selected_track_get();
 	if (!track) {
 		return;
 	}
@@ -3741,7 +3741,7 @@ bool LayerTRW::handle_selection_in_tree(void)
    Returns track or route selected in this layer (if any track or route is selected in this layer)
    Returns NULL otherwise.
 */
-Track * LayerTRW::get_edited_track()
+Track * LayerTRW::selected_track_get()
 {
 	return this->current_track_;
 }
@@ -3749,7 +3749,7 @@ Track * LayerTRW::get_edited_track()
 
 
 
-void LayerTRW::set_edited_track(Track * track, const TrackpointIter & tp_iter)
+void LayerTRW::selected_track_set(Track * track, const TrackpointIter & tp_iter)
 {
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "NULL track";
@@ -3757,14 +3757,14 @@ void LayerTRW::set_edited_track(Track * track, const TrackpointIter & tp_iter)
 	}
 
 	this->current_track_ = track;
-	this->current_track_->set_selected_tp(tp_iter);
+	this->current_track_->selected_tp_set(tp_iter);
 }
 
 
 
 
 
-void LayerTRW::set_edited_track(Track * track)
+void LayerTRW::selected_track_set(Track * track)
 {
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "NULL track";
@@ -3772,14 +3772,14 @@ void LayerTRW::set_edited_track(Track * track)
 	}
 
 	this->current_track_ = track;
-	this->current_track_->reset_selected_tp();
+	this->current_track_->selected_tp_reset();
 }
 
 
 
 
 
-void LayerTRW::reset_edited_track(void)
+void LayerTRW::selected_track_reset(void)
 {
 	this->current_track_ = NULL;
 }
@@ -3793,7 +3793,7 @@ void LayerTRW::reset_edited_track(void)
    Returns waypoint selected in this layer (if any waypoint is selected in this layer)
    Returns NULL otherwise.
 */
-Waypoint * LayerTRW::get_edited_wp()
+Waypoint * LayerTRW::selected_wp_get()
 {
 	return this->current_wp_;
 }
@@ -3801,7 +3801,7 @@ Waypoint * LayerTRW::get_edited_wp()
 
 
 
-void LayerTRW::set_edited_wp(Waypoint * wp)
+void LayerTRW::selected_wp_set(Waypoint * wp)
 {
 	if (!wp) {
 		qDebug() << SG_PREFIX_E << "NULL waypoint";
@@ -3814,7 +3814,7 @@ void LayerTRW::set_edited_wp(Waypoint * wp)
 
 
 
-bool LayerTRW::reset_edited_wp(void)
+bool LayerTRW::selected_wp_reset(void)
 {
 	const bool was_selected = NULL != this->current_wp_;
 
@@ -3884,14 +3884,14 @@ void LayerTRW::reset_route_creation_in_progress()
 
 void LayerTRW::show_wp_picture_cb(void) /* Slot. */
 {
-	Waypoint * wp = this->get_edited_wp();
+	Waypoint * wp = this->selected_wp_get();
 	if (!wp) {
 		qDebug() << SG_PREFIX_E << "No waypoint in waypoint-related callback" << __FUNCTION__;
 		return;
 	}
 
 	const QString program = Preferences::get_image_viewer();
-	const QString image_full_path = this->get_edited_wp()->image_full_path;
+	const QString image_full_path = this->selected_wp_get()->image_full_path;
 	const QString quoted_image_full_path = Util::shell_quote(image_full_path);
 
 	QStringList args;

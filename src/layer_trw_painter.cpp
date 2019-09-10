@@ -382,7 +382,7 @@ void LayerTRWPainter::draw_track_name_labels(Track * trk, bool do_highlight)
 			this->draw_track_label(name_start, fg_color, bg_color, begin_coord);
 		}
 		/* Don't draw end label if this is the one being created. */
-		if (trk != this->trw->get_edited_track()) {
+		if (trk != this->trw->selected_track_get()) {
 			if (trk->draw_name_mode == TrackDrawNameMode::End
 			    || trk->draw_name_mode == TrackDrawNameMode::StartEnd
 			    || trk->draw_name_mode == TrackDrawNameMode::StartCentreEnd) {
@@ -851,7 +851,7 @@ void LayerTRWPainter::draw_track(Track * trk, GisViewport * a_gisview, bool do_h
 		return;
 	}
 
-	if (trk != this->trw->get_edited_track()) { /* Don't draw background of a track that is currently being created. */
+	if (trk != this->trw->selected_track_get()) { /* Don't draw background of a track that is currently being created. */
 		this->draw_track_bg_sub(trk, do_highlight);
 	}
 	this->draw_track_fg_sub(trk, do_highlight);

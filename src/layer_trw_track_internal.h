@@ -194,8 +194,8 @@ namespace SlavGPS {
 
 
 		bool has_selected_tp(void) const;
-		void set_selected_tp(const TrackpointIter & tp_iter);
-		void reset_selected_tp(void);
+		void selected_tp_set(const TrackpointIter & tp_iter);
+		void selected_tp_reset(void);
 		Trackpoint * get_tp(tp_idx tp_idx) const;
 		Trackpoint * get_selected_tp(void) const;
 		Trackpoint * get_hovered_tp(void) const;

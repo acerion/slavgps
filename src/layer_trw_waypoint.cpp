@@ -474,7 +474,7 @@ bool Waypoint::show_properties_dialog_cb(void)
 	qDebug() << SG_PREFIX_I << "Will set data from this waypoint with coord" << this->coord;
 	tool->wp_properties_dialog->dialog_data_set(this);
 
-	Waypoint * wp = parent_layer->get_edited_wp();
+	Waypoint * wp = parent_layer->selected_wp_get();
 	if (!wp) {
 		qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' waypoint set";
 		tool->wp_properties_dialog->dialog_data_reset();
@@ -642,7 +642,7 @@ bool Waypoint::handle_selection_in_tree(void)
 	parent_layer->set_statusbar_msg_info_wpt(this);
 
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
-	parent_layer->set_edited_wp(this); /* But this tree item is selected. */
+	parent_layer->selected_wp_set(this); /* But this tree item is selected. */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
 	g_selected.add_to_set(this);

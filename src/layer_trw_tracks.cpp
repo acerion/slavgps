@@ -1048,7 +1048,7 @@ sg_ret LayerTRWTracks::detach_from_container(Track * trk, bool * was_visible)
 	}
 
 	if (trk->is_selected()) {
-		parent_layer->reset_edited_track();
+		parent_layer->selected_track_reset();
 		parent_layer->moving_tp = false;
 		parent_layer->route_finder_started = false;
 	}

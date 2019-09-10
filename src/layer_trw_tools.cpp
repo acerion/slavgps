@@ -204,7 +204,7 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 			this->waypoints.recalculate_bbox();
 		}
 
-		Waypoint * wp = this->get_edited_wp();
+		Waypoint * wp = this->selected_wp_get();
 		if (wp) {
 			wp->coord = new_coord;
 
@@ -226,7 +226,7 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 			}
 		}
 
-		Track * track = this->get_edited_track();
+		Track * track = this->selected_track_get();
 		if (track && track->has_selected_tp()) {
 			track->get_selected_tp()->coord = new_coord;
 
@@ -318,8 +318,8 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 	/* Mouse click didn't happen anywhere near a Trackpoint or Waypoint from this layer.
 	   So unmark/deselect all "current"/"edited" elements of this layer. */
-	this->reset_edited_wp();
-	this->reset_edited_track();
+	this->selected_wp_reset();
+	this->selected_track_reset();
 	this->cancel_current_tp();
 	this->tp_properties_dialog_reset();
 	this->wp_properties_dialog_reset();
@@ -341,7 +341,7 @@ bool LayerTRW::try_clicking_waypoint(WaypointSearch & wp_search)
 
 		{
 			LayerTRW * trw = (LayerTRW *) wp_search.closest_wp->get_owning_layer();
-			trw->set_edited_wp(wp_search.closest_wp);
+			trw->selected_wp_set(wp_search.closest_wp);
 			wp_search.closest_wp->click_in_tree();
 		}
 
@@ -371,7 +371,7 @@ bool LayerTRW::try_clicking_trackpoint(TrackpointSearch & tp_search, LayerTRWTra
 			TrackpointIter tp_iter; /* TODO: rename the type so that the variables have name other than tp_iter; more like TrackpointReference. */
 			tp_iter.iter = tp_search.closest_tp_iter; /* TODO: move this to search function. */
 			tp_iter.iter_valid = true;
-			trw->set_edited_track(tp_search.closest_track, tp_iter);
+			trw->selected_track_set(tp_search.closest_track, tp_iter);
 			tp_search.closest_track->click_in_tree();
 		}
 
@@ -412,7 +412,7 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 {
 	/* Always select + highlight the track. */
 	//this->tree_view->select_and_expose_tree_item(track);
-	//const Track * current_selected_track = this->get_edited_track();
+	//const Track * current_selected_track = this->selected_track_get();
 
 	/* Select the Trackpoint.
 	   Can move it immediately when control held or it's the previously selected tp. */
@@ -424,7 +424,7 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 	}
 	select_tool->start_holding_object(ScreenPos(ev->x(), ev->y()));
 
-	//this->set_edited_track(track, tp_iter);
+	//this->selected_track_set(track, tp_iter);
 	//if (track) {
 	//	track->handle_selection_in_tree();
 	//}
@@ -443,7 +443,7 @@ void LayerTRW::handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, 
 	/* Too easy to move it so must be holding shift to start immediately moving it
 	   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
 	if (ev->modifiers() & Qt::ShiftModifier
-	    || (this->get_edited_wp() == wp && this->get_edited_wp()->image_full_path.isEmpty())) {
+	    || (this->selected_wp_get() == wp && this->selected_wp_get()->image_full_path.isEmpty())) {
 
 		/* Remember position at which selection occurred. */
 		select_tool->start_holding_object(ScreenPos(ev->x(), ev->y()));
@@ -482,7 +482,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 		return false;
 	}
 
-	Track * track = this->get_edited_track(); /* Track or route that is currently being selected/edited. */
+	Track * track = this->selected_track_get(); /* Track or route that is currently being selected/edited. */
 	if (track && track->is_visible()) { /* Track or Route. */
 		if (!track->name.isEmpty()) {
 
@@ -494,7 +494,7 @@ bool LayerTRW::handle_select_tool_context_menu(QMouseEvent * ev, GisViewport * g
 		}
 	}
 
-	Waypoint * wp = this->get_edited_wp(); /* Waypoint that is currently being selected/edited. */
+	Waypoint * wp = this->selected_wp_get(); /* Waypoint that is currently being selected/edited. */
 	if (wp && wp->is_visible()) {
 		if (!wp->name.isEmpty()) {
 			QMenu menu(gisview);
@@ -563,7 +563,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 
 	/* Does this tool have a waypoint, on which it can operate? */
 	Waypoint * newly_selected_wp = NULL;
-	Waypoint * current_wp = trw->get_edited_wp();
+	Waypoint * current_wp = trw->selected_wp_get();
 
 	if (current_wp && current_wp->is_visible()) {
 		/* Some waypoint has already been activated before the
@@ -620,7 +620,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		   selected, no waypoint is selected by this tool, and
 		   no waypoint is drawn as selected. */
 
-		const bool wp_was_edited = trw->reset_edited_wp();
+		const bool wp_was_edited = trw->selected_wp_reset();
 		const bool some_object_was_released = this->stop_holding_object();
 
 		if (wp_was_edited || some_object_was_released) {
@@ -705,7 +705,7 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 
 		this->stop_holding_object();
 
-		trw->get_edited_wp()->coord = new_coord;
+		trw->selected_wp_get()->coord = new_coord;
 
 		trw->get_waypoints_node().recalculate_bbox();
 		trw->emit_tree_item_changed("TRW - edit waypoint - mouse release");
@@ -740,7 +740,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 	/* Snap to waypoint. */
 	if (ev->modifiers() & Qt::ShiftModifier) {
 		const Waypoint * wp = this->search_nearby_wp(gisview, ev->x(), ev->y());
-		if (wp && wp != this->get_edited_wp()) {
+		if (wp && wp != this->selected_wp_get()) {
 			point_coord = wp->coord;
 			snapped = true;
 		}
@@ -763,7 +763,7 @@ bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent *
 	bool snapped = false;
 	if (ev->modifiers() & Qt::ControlModifier) {
 		const Trackpoint * tp = this->search_nearby_tp(gisview, ev->x(), ev->y());
-		const Track * trk = this->get_edited_track();
+		const Track * trk = this->selected_track_getk();
 		if (tp && trk && trk->has_selected_tp() && tp != trk->get_selected_tp()) {
 			point_coord = tp->coord;
 			snapped = true;
@@ -869,10 +869,10 @@ void LayerTRW::update_statusbar()
 	/* Get elevation data. */
 	Altitude elev_gain;
 	Altitude elev_loss;
-	this->get_edited_track()->get_total_elevation_gain(elev_gain, elev_loss);
+	this->selected_track_get()->get_total_elevation_gain(elev_gain, elev_loss);
 
 	/* Find out actual distance of current track. */
-	const Distance total_distance = this->get_edited_track()->get_length();
+	const Distance total_distance = this->selected_track_get()->get_length();
 
 	statusbar_write(total_distance, Distance(), elev_gain, elev_loss, Angle(), this);
 }
@@ -888,7 +888,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_move(Layer * layer, QMous
 	}
 
 	LayerTRW * trw = (LayerTRW *) layer;
-	Track * track = trw->get_edited_track();
+	Track * track = trw->selected_track_get();
 
 	/* If we haven't sync'ed yet, we don't have time to do more. */
 	if (/* trw->draw_sync_done && */ track && !track->empty()) {
@@ -963,7 +963,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEv
 	}
 
 	LayerTRW * trw = (LayerTRW *) layer;
-	Track * track = trw->get_edited_track();
+	Track * track = trw->selected_track_get();
 
 	/* Check of consistency between LayerTRW and the tool. */
 	if (true && !track) {
@@ -982,7 +982,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_key_press(Layer * layer, QKeyEv
 			delete track;
 		}
 
-		trw->reset_edited_track();
+		trw->selected_track_reset();
 		trw->emit_tree_item_changed("TRW - new track - handle key escape");
 		return ToolStatus::Ack;
 
@@ -1055,7 +1055,7 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 		return ToolStatus::Ignored;
 
 	} else if (ev->button() == Qt::RightButton) {
-		Track * track = trw->get_edited_track();
+		Track * track = trw->selected_track_get();
 		if (track) {
 			track->remove_last_trackpoint();
 			trw->update_statusbar();
@@ -1086,14 +1086,14 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_click(Layer * layer, QMou
 	Track * track = NULL;
 	if (this->creation_in_progress) {
 		/* Check of consistency between LayerTRW and the tool. */
-		if (true && !trw->get_edited_track()) {
+		if (true && !trw->selected_track_get()) {
 			qDebug() << SG_PREFIX_E << "mismatch A";
 		}
 
-		track = trw->get_edited_track();
+		track = trw->selected_track_get();
 	} else {
 		/* Check of consistency between LayerTRW and the tool. */
-		if (true && trw->get_edited_track()) {
+		if (true && trw->selected_track_get()) {
 			qDebug() << SG_PREFIX_E << "mismatch B";
 		}
 
@@ -1145,17 +1145,17 @@ ToolStatus LayerToolTRWNewTrack::internal_handle_mouse_double_click(Layer * laye
 	/* End the process of creating a track. */
 	if (this->creation_in_progress) {
 		/* Check of consistency between LayerTRW and the tool. */
-		if (true && !trw->get_edited_track()) {
+		if (true && !trw->selected_track_get()) {
 			qDebug() << SG_PREFIX_E << "inconsistency A";
 		}
 
-		if (!trw->get_edited_track()->empty()) {
-			trw->reset_edited_track();
+		if (!trw->selected_track_get()->empty()) {
+			trw->selected_track_reset();
 			this->creation_in_progress = NULL;
 		}
 	} else {
 		/* Check of consistency between LayerTRW and the tool. */
-		if (true && trw->get_edited_track()) {
+		if (true && trw->selected_track_get()) {
 			qDebug() << SG_PREFIX_E << "inconsistency B";
 		}
 	}
@@ -1283,7 +1283,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 		return ToolStatus::Ignored;
 	}
 
-	Track * track = trw->get_edited_track();
+	Track * track = trw->selected_track_get();
 
 	if (track && track->has_selected_tp()) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
@@ -1373,7 +1373,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 		return ToolStatus::Ignored;
 	}
 
-	Track * track = trw->get_edited_track(); /* This is the track, to which belongs the edited trackpoint. TODO: how can we be sure that a trackpoint is selected? */
+	Track * track = trw->selected_track_get(); /* This is the track, to which belongs the edited trackpoint. TODO: how can we be sure that a trackpoint is selected? */
 	if (!track) {
 		/* Well, there was no track that was edited, so nothing to do here. */
 		return ToolStatus::Ignored;
@@ -1479,7 +1479,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	Track * track = trw->get_edited_track();
+	Track * track = trw->selected_track_get();
 
 	Coord tmp = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 	if (ev->button() == Qt::RightButton && track) {
@@ -1535,7 +1535,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 
 		trw->emit_tree_item_changed("TRW - extended route finder - handle mouse click - route");
 	} else {
-		trw->reset_edited_track();
+		trw->selected_track_reset();
 
 		LayerTool * new_route_tool = trw->get_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_CREATE_ROUTE);
 		if (NULL == new_route_tool) {
@@ -1561,7 +1561,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * la
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	Track * track = trw->get_edited_track();
+	Track * track = trw->selected_track_get();
 	if (!track) {
 		return ToolStatus::Ignored;
 	}
@@ -1569,7 +1569,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_key_press(Layer * la
 	switch (ev->key()) {
 	case  Qt::Key_Escape:
 		trw->route_finder_started = false;
-		trw->reset_edited_track();
+		trw->selected_track_reset();
 		trw->emit_tree_item_changed("TRW - extender route finder - handle key escape");
 		return ToolStatus::Ack;
 

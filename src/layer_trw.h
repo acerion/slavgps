@@ -323,15 +323,15 @@ namespace SlavGPS {
 		void update_statusbar();
 
 
-		Track * get_edited_track(void);
-		void set_edited_track(Track * track, const TrackpointIter & tp_iter);
-		void set_edited_track(Track * track);
-		void reset_edited_track(void);
+		Track * selected_track_get(void);
+		void selected_track_set(Track * track, const TrackpointIter & tp_iter);
+		void selected_track_set(Track * track);
+		void selected_track_reset(void);
 
-		Waypoint * get_edited_wp(void);
-		void set_edited_wp(Waypoint * wp);
+		Waypoint * selected_wp_get(void);
+		void selected_wp_set(Waypoint * wp);
 		/* Returns true if there was some waypoint that was selected/edited. */
-		bool reset_edited_wp(void);
+		bool selected_wp_reset(void);
 
 
 		void delete_sublayer_common(TreeItem * item, bool confirm);

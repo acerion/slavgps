@@ -904,8 +904,8 @@ sg_ret LayerTRWWaypoints::detach_from_container(Waypoint * wp, bool * was_visibl
 		qDebug() << SG_PREFIX_W << "Waypoint with empty name, deleting anyway";
 	}
 
-	if (wp == parent_layer->get_edited_wp()) {
-		parent_layer->reset_edited_wp();
+	if (wp == parent_layer->selected_wp_get()) {
+		parent_layer->selected_wp_reset();
 		parent_layer->moving_wp = false;
 	}
 

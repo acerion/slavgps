@@ -302,7 +302,7 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 
 	/* Try adding submenu items with external tools pre-configured
 	   for selected Trackpoint. */
-	const Track * track = parent_layer->get_edited_track();
+	const Track * track = parent_layer->selected_track_get();
 	if (track && track->has_selected_tp()) {
 		const Coord coord = track->get_selected_tp()->coord;
 		ExternalTools::add_menu_items(external_submenu, gisview, &coord);
@@ -314,7 +314,7 @@ void SlavGPS::layer_trw_sublayer_menu_all_add_external_tools(LayerTRW * parent_l
 	   which we can get coordinates). Try adding submenu items
 	   with external tools pre-configured for selected
 	   Waypoint. */
-	const Waypoint * wp = parent_layer->get_edited_wp();
+	const Waypoint * wp = parent_layer->selected_wp_get();
 	if (wp) {
 		const Coord * coord = &wp->coord;
 		ExternalTools::add_menu_items(external_submenu, gisview, coord);
