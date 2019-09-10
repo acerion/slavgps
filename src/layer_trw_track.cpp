@@ -2697,7 +2697,7 @@ bool Track::handle_selection_in_tree(void)
 	parent_layer->set_statusbar_msg_info_trk(this);
 #endif
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
-	parent_layer->set_edited_track(this); /* But this tree item is selected. */
+	parent_layer->set_edited_track(this, this->iterators[SELECTED]); /* But this tree item is selected (and maybe its trackpoint too). */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -3466,7 +3466,10 @@ void LayerTRW::delete_selected_tp(Track * track)
 
 	if (new_tp_iter != track->end()) {
 		/* Set to current to the available adjacent trackpoint. */
-		track->set_selected_tp(new_tp_iter);
+		TrackpointIter tp_iter;
+		tp_iter.iter = new_tp_iter;
+		tp_iter.iter_valid = true;
+		track->set_selected_tp(tp_iter);
 		track->recalculate_bbox();
 	} else {
 		this->cancel_current_tp();
@@ -3633,10 +3636,10 @@ bool Track::has_selected_tp(void) const
 
 
 
-void Track::set_selected_tp(const TrackPoints::iterator & tp_iter)
+void Track::set_selected_tp(const TrackpointIter & tp_iter)
 {
-	this->iterators[SELECTED].iter = tp_iter;
-	this->iterators[SELECTED].iter_valid = true; /* TODO: calculate value of this field instead of assuming that the iter is always correct. */
+	qDebug() << SG_PREFIX_E << "zzzzz - set";
+	this->iterators[SELECTED] = tp_iter;
 }
 
 
@@ -3644,6 +3647,7 @@ void Track::set_selected_tp(const TrackPoints::iterator & tp_iter)
 
 void Track::reset_selected_tp(void)
 {
+	qDebug() << SG_PREFIX_E << "zzzzz - reset";
 	this->iterators[SELECTED].iter_valid = false;
 }
 

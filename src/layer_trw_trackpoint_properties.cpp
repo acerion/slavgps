@@ -206,6 +206,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	}
 
 	this->setEnabled(true); /* The widget may have been disabled in ::dialog_data_reset(), so we need to undo that. */
+	ThisApp::get_main_window()->get_tools_dock()->setWidget(this); /* Either set a widget in docker that didn't have it yet, or replace existing dialog for other tool type. */
 
 
 	const HeightUnit height_unit = Preferences::get_unit_height();
@@ -292,8 +293,12 @@ void TpPropertiesDialog::dialog_data_reset(void)
 
 	this->clear_widgets();
 
-	/* Set a title that is not specific to any track. */
-	this->set_dialog_title(tr("Trackpoint Properties"));
+	if (this == ThisApp::get_main_window()->get_tools_dock()->widget()) {
+	       	/* Set a title that is not specific to any track, but
+		   only when we are sure that the dock still contains
+		   'trackpoint properties' dialog. */
+		this->set_dialog_title(tr("Trackpoint Properties"));
+	}
 }
 
 
@@ -407,6 +412,8 @@ void TpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
 
 void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 {
+	qDebug() << SG_PREFIX_SLOT;
+
 	TreeView * tree_view = ThisApp::get_layers_panel()->get_tree_view();
 	const QAbstractItemView::SelectionMode selection_mode = tree_view->selectionMode();
 	if (QAbstractItemView::SingleSelection != selection_mode) {
@@ -415,10 +422,17 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 	}
 
 	TreeItem * tree_item = tree_view->get_selected_tree_item();
-	qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name;
 	if (tree_item->type_id == "sg.trw.track" || tree_item->type_id == "sg.trw.route") {
-		this->dialog_data_set((Track *) tree_item);
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "matches supported type";
+		Track * trk = (Track *) tree_item;
+		if (trk->iterators[SELECTED].iter_valid) {
+			qDebug() << SG_PREFIX_I << "Will now set trackpoint dialog data, track has selected trackpoint";
+		} else {
+			qDebug() << SG_PREFIX_I << "Will now set trackpoint dialog data, track doesn't have selected trackpoint";
+		}
+		this->dialog_data_set(trk);
 	} else {
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "doesn't match supported type, will now reset trackpoint dialog data";
 		this->dialog_data_reset();
 	}
 }

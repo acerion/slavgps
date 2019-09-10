@@ -3749,7 +3749,7 @@ Track * LayerTRW::get_edited_track()
 
 
 
-void LayerTRW::set_edited_track(Track * track, const TrackPoints::iterator & tp_iter)
+void LayerTRW::set_edited_track(Track * track, const TrackpointIter & tp_iter)
 {
 	if (!track) {
 		qDebug() << SG_PREFIX_E << "NULL track";

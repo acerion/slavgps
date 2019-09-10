@@ -213,6 +213,7 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 	}
 
 	this->setEnabled(true); /* The widget may have been disabled in ::dialog_data_reset(), so we need to undo that. */
+	ThisApp::get_main_window()->get_tools_dock()->setWidget(this); /* Either set a widget in docker that didn't have it yet, or replace existing dialog for other tool type. */
 
 
 	this->name_entry->setText(this->current_point->name);
@@ -268,8 +269,12 @@ void WpPropertiesDialog::dialog_data_reset(void)
 
 	this->clear_widgets();
 
-	/* Set a title that is not specific to any track. */
-	this->set_dialog_title(tr("Waypoint Properties"));
+	if (this == ThisApp::get_main_window()->get_tools_dock()->widget()) {
+		/* Set a title that is not specific to any waypoint,
+		   but only when we are sure that the dock still
+		   contains 'waypoint properties' dialog. */
+		this->set_dialog_title(tr("Waypoint Properties"));
+	}
 }
 
 
@@ -495,6 +500,8 @@ void WpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
 
 void WpPropertiesDialog::tree_view_selection_changed_cb(void)
 {
+	qDebug() << SG_PREFIX_SLOT;
+
 	TreeView * tree_view = ThisApp::get_layers_panel()->get_tree_view();
 	const QAbstractItemView::SelectionMode selection_mode = tree_view->selectionMode();
 	if (QAbstractItemView::SingleSelection != selection_mode) {
@@ -503,10 +510,11 @@ void WpPropertiesDialog::tree_view_selection_changed_cb(void)
 	}
 
 	TreeItem * tree_item = tree_view->get_selected_tree_item();
-	qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name;
 	if (tree_item->type_id == "sg.trw.waypoint") {
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "matches supported type";
 		this->dialog_data_set((Waypoint *) tree_item);
 	} else {
+		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "doesn't match supported type, will now reset trackpoint dialog data";
 		this->dialog_data_reset();
 	}
 }

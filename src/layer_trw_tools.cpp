@@ -235,7 +235,7 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 			   trackpoint. */
 			this->tp_properties_dialog_set(track); /* TODO_OPTIMIZATION: optimize only by changing coordinates in the dialog. */
 		} else {
-			qDebug() << SG_PREFIX_E << "No track or trackpoint";
+			qDebug() << SG_PREFIX_E << "No track (" << (NULL == track) << ") or no trackpoint (" << !track->has_selected_tp() << ")";
 			this->tp_properties_dialog_reset();
 		}
 
@@ -280,20 +280,10 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	qDebug() << SG_PREFIX_I << "Waypoints are" << (waypoints_visible ? "visible" : "invisible") << "and" << (waypoints_inside ? "inside" : "outside") << "of viewport";
 	if (waypoints_visible && waypoints_inside) {
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
-		this->waypoints.search_closest_wp(wp_search);
-		if (wp_search.closest_wp) {
-			qDebug() << SG_PREFIX_I << "Selection process found waypoint" << wp_search.closest_wp->name;
-
-			/* We have found a Waypoint. */
+		if (true == this->try_clicking_waypoint(wp_search)) {
 			select_tool->selected_tree_item_type_id = wp_search.closest_wp->type_id;
-			wp_search.closest_wp->select_in_tree();
-
 			this->handle_select_tool_click_do_waypoint_selection(ev, select_tool, wp_search.closest_wp);
-
-			this->emit_tree_item_changed("Waypoint has been selected with select tool click");
 			return true;
-		} else {
-			qDebug() << SG_PREFIX_I << "Selection process not found waypoint";
 		}
 	}
 
@@ -304,22 +294,10 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	qDebug() << SG_PREFIX_I << "Tracks are" << (tracks_visible ? "visible" : "invisible") << "and" << (tracks_inside ? "inside" : "outside") << "of viewport";
 	if (tracks_visible && tracks_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
-		this->tracks.track_search_closest_tp(tp_search);
-		if (tp_search.closest_tp) {
-			qDebug() << SG_PREFIX_I << "Selection process found track" << tp_search.closest_track->name;
-
-			/* We have found a Trackpoint. */
+		if (true == this->try_clicking_trackpoint(tp_search, this->tracks)) {
 			select_tool->selected_tree_item_type_id = tp_search.closest_track->type_id;
-			tp_search.closest_track->set_selected_tp(tp_search.closest_tp_iter);
-			tp_search.closest_track->select_in_tree();
-
-			//this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
-			//this->tp_properties_dialog_set(tp_search.closest_track);
-
-			this->emit_tree_item_changed("Track has been selected with select tool click");
+			this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
 			return true;
-		} else {
-			qDebug() << SG_PREFIX_I << "Selection process not found track";
 		}
 	}
 
@@ -330,21 +308,10 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	qDebug() << SG_PREFIX_I << "Routes are" << (routes_visible ? "visible" : "invisible") << "and" << (routes_inside ? "inside" : "outside") << "of viewport";
 	if (routes_visible && routes_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
-		this->routes.track_search_closest_tp(tp_search);
-		if (tp_search.closest_tp) {
-			qDebug() << SG_PREFIX_I << "Selection process found route" << tp_search.closest_track->name;
-
-			/* We have found a Trackpoint. */
+		if (true == this->try_clicking_trackpoint(tp_search, this->routes)) {
 			select_tool->selected_tree_item_type_id = tp_search.closest_track->type_id;
-
 			this->handle_select_tool_click_do_track_selection(ev, select_tool, tp_search.closest_track, tp_search.closest_tp_iter);
-
-			this->tp_properties_dialog_set(tp_search.closest_track);
-
-			this->emit_tree_item_changed("Route has been selected with select tool click");
 			return true;
-		} else {
-			qDebug() << SG_PREFIX_I << "Selection process not found route" << tp_search.closest_track->name;
 		}
 	}
 
@@ -362,6 +329,60 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 
 	return false;
 }
+
+
+
+
+bool LayerTRW::try_clicking_waypoint(WaypointSearch & wp_search)
+{
+	this->waypoints.search_closest_wp(wp_search);
+	if (wp_search.closest_wp) {
+		qDebug() << SG_PREFIX_I << wp_search.closest_wp->name << "waypoint clicked";
+
+		{
+			LayerTRW * trw = (LayerTRW *) wp_search.closest_wp->get_owning_layer();
+			trw->set_edited_wp(wp_search.closest_wp);
+			wp_search.closest_wp->click_in_tree();
+		}
+
+		//this->emit_tree_item_changed("Waypoint has been selected with select tool click");
+		return true;
+	} else {
+		qDebug() << SG_PREFIX_I << "No waypoint clicked";
+		return false;
+	}
+}
+
+
+
+
+bool LayerTRW::try_clicking_trackpoint(TrackpointSearch & tp_search, LayerTRWTracks & tracks_or_routes)
+{
+	tracks_or_routes.track_search_closest_tp(tp_search);
+	if (tp_search.closest_tp) {
+		if (&this->tracks == &tracks_or_routes) {
+			qDebug() << SG_PREFIX_I << "Trackpoint in track" << tp_search.closest_track->name << "clicked";
+		} else {
+			qDebug() << SG_PREFIX_I << "Trackpoint in route" << tp_search.closest_track->name << "clicked";
+		}
+
+		{
+			LayerTRW * trw = (LayerTRW *) tp_search.closest_track->get_owning_layer();
+			TrackpointIter tp_iter; /* TODO: rename the type so that the variables have name other than tp_iter; more like TrackpointReference. */
+			tp_iter.iter = tp_search.closest_tp_iter; /* TODO: move this to search function. */
+			tp_iter.iter_valid = true;
+			trw->set_edited_track(tp_search.closest_track, tp_iter);
+			tp_search.closest_track->click_in_tree();
+		}
+
+		//this->emit_tree_item_changed("Track has been selected with select tool click");
+		return true;
+	} else {
+		qDebug() << SG_PREFIX_I << "No trackpoint clicked";
+		return false;
+	}
+}
+
 
 
 
@@ -390,8 +411,8 @@ bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, GisViewport * g
 void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter)
 {
 	/* Always select + highlight the track. */
-	this->tree_view->select_and_expose_tree_item(track);
-	const Track * current_selected_track = this->get_edited_track();
+	//this->tree_view->select_and_expose_tree_item(track);
+	//const Track * current_selected_track = this->get_edited_track();
 
 	/* Select the Trackpoint.
 	   Can move it immediately when control held or it's the previously selected tp. */
@@ -401,11 +422,12 @@ void LayerTRW::handle_select_tool_click_do_track_selection(QMouseEvent * ev, Lay
 		/* Remember position at which selection occurred. */
 		select_tool->start_holding_object(ScreenPos(ev->x(), ev->y()));
 	}
+	select_tool->start_holding_object(ScreenPos(ev->x(), ev->y()));
 
-	this->set_edited_track(track, tp_iter);
-	if (track) {
-		track->handle_selection_in_tree();
-	}
+	//this->set_edited_track(track, tp_iter);
+	//if (track) {
+	//	track->handle_selection_in_tree();
+	//}
 
 	this->set_statusbar_msg_info_tp(tp_iter, track);
 }
@@ -579,24 +601,13 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 		   to find one close to click position. */
 
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
-		trw->get_waypoints_node().search_closest_wp(wp_search);
-
-		if (wp_search.closest_wp) {
-
-			/* We have clicked a waypoint. Make it
-			   globally-selected waypoint, and waypoint
-			   selected by this tool.
-
-			   TODO_LATER: do we need to verify that
+		if (true == trw->try_clicking_waypoint(wp_search)) {
+			/* TODO_LATER: do we need to verify that
 			   wp_search.closest_wp != current_wp? */
-
-			wp_search.closest_wp->select_in_tree();
 #if 0
 			trw->emit_tree_item_changed("TRW - edit waypoint - click");
 #endif
-
 			this->start_holding_object(ScreenPos(ev->x(), ev->y()));
-
 		        newly_selected_wp = wp_search.closest_wp;
 		}
 	}
@@ -1260,8 +1271,6 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
-	TrackpointSearch tp_search(ev->x(), ev->y(), this->gisview);
-
 	if (ev->button() != Qt::LeftButton) {
 		return ToolStatus::Ignored;
 	}
@@ -1292,29 +1301,19 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 	}
 
 	if (trw->get_tracks_node().is_visible()) {
-		trw->get_tracks_node().track_search_closest_tp(tp_search);
-
-		if (tp_search.closest_tp) {
-			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);
-			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
-
-			trw->tp_show_properties_dialog();
+		TrackpointSearch tp_search(ev->x(), ev->y(), this->gisview);
+		if (trw->try_clicking_trackpoint(tp_search, trw->get_tracks_node())) {
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
-			trw->emit_tree_item_changed("TRW - edit waypoint - tracks closest");
+			//trw->emit_tree_item_changed("TRW - edit waypoint - tracks closest");
 			return ToolStatus::Ack;
 		}
 	}
 
 	if (trw->get_routes_node().is_visible()) {
-		trw->get_routes_node().track_search_closest_tp(tp_search);
-
-		if (tp_search.closest_tp) {
-			trw->tree_view->select_and_expose_tree_item(tp_search.closest_track);
-			trw->set_edited_track(tp_search.closest_track, tp_search.closest_tp_iter);
-
-			trw->tp_show_properties_dialog();
+		TrackpointSearch tp_search(ev->x(), ev->y(), this->gisview);
+		if (trw->try_clicking_trackpoint(tp_search, trw->get_routes_node())) {
 			trw->set_statusbar_msg_info_tp(tp_search.closest_tp_iter, tp_search.closest_track);
-			trw->emit_tree_item_changed("TRW - edit waypoint - routes closest");
+			//trw->emit_tree_item_changed("TRW - edit waypoint - tracks closest");
 			return ToolStatus::Ack;
 		}
 	}

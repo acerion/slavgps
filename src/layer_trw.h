@@ -202,6 +202,9 @@ namespace SlavGPS {
 		void set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
 
+		bool try_clicking_waypoint(WaypointSearch & wp_search);
+		bool try_clicking_trackpoint(TrackpointSearch & tp_search, LayerTRWTracks & tracks_or_routes);
+
 		bool move_viewport_to_show_all(GisViewport * gisview);
 
 		/**
@@ -321,13 +324,12 @@ namespace SlavGPS {
 
 
 		Track * get_edited_track(void);
-		void set_edited_track(Track * track, const TrackPoints::iterator & tp_iter);
+		void set_edited_track(Track * track, const TrackpointIter & tp_iter);
 		void set_edited_track(Track * track);
 		void reset_edited_track(void);
 
 		Waypoint * get_edited_wp(void);
 		void set_edited_wp(Waypoint * wp);
-
 		/* Returns true if there was some waypoint that was selected/edited. */
 		bool reset_edited_wp(void);
 

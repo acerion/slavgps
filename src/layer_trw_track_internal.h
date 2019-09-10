@@ -194,7 +194,7 @@ namespace SlavGPS {
 
 
 		bool has_selected_tp(void) const;
-		void set_selected_tp(const TrackPoints::iterator & tp_iter);
+		void set_selected_tp(const TrackpointIter & tp_iter);
 		void reset_selected_tp(void);
 		Trackpoint * get_tp(tp_idx tp_idx) const;
 		Trackpoint * get_selected_tp(void) const;

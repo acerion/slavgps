@@ -417,7 +417,7 @@ void TreeItem::emit_tree_item_changed_although_invisible(const QString & where)
 
 
 
-sg_ret TreeItem::select_in_tree(void)
+sg_ret TreeItem::click_in_tree(void)
 {
 	QStandardItem * item = this->tree_view->get_tree_model()->itemFromIndex(this->index);
 	if (NULL == item) {
@@ -429,6 +429,11 @@ sg_ret TreeItem::select_in_tree(void)
 
 	/* This signal will be handled by tree view's callback. */
 	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'clicked' signal for tree item" << this->name;
+
+	/* Call to ::select() is necessary if we want to click two or
+	   more times in a row the same item.  Without the ::select()
+	   the second click would not occur. */
+	this->tree_view->selectionModel()->select(item->index(), QItemSelectionModel::SelectCurrent);
 	emit this->tree_view->clicked(item->index());
 	return sg_ret::ok;
 }
