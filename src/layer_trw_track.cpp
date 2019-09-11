@@ -3637,6 +3637,11 @@ void Track::selected_tp_set(const TrackpointReference & tp_ref)
 {
 	qDebug() << SG_PREFIX_E << "zzzzz - set";
 	this->tp_references[SELECTED] = tp_ref;
+
+	LayerTRW * trw = this->get_parent_layer_trw();
+	trw->tp_properties_dialog_set(this);
+
+	trw->set_statusbar_msg_info_tp(this->tp_references[SELECTED], this);
 }
 
 
@@ -3646,6 +3651,9 @@ void Track::selected_tp_reset(void)
 {
 	qDebug() << SG_PREFIX_E << "zzzzz - reset";
 	this->tp_references[SELECTED].m_iter_valid = false;
+
+	LayerTRW * trw = this->get_parent_layer_trw();
+	trw->tp_properties_dialog_reset();
 }
 
 

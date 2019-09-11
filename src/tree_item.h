@@ -212,7 +212,7 @@ namespace SlavGPS {
 		/**
 		   \brief Equivalent of selecting the tree item by clicking it with mouse cursor in tree
 		*/
-		virtual sg_ret click_in_tree(void);
+		virtual sg_ret click_in_tree(const QString & debug);
 
 		/**
 		   \brief The item has been selected in items tree. Do something about it.

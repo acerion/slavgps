@@ -136,10 +136,10 @@ namespace SlavGPS {
 
 		double track_draw_speed_factor;
 		QColor track_color_common; /* Used when layer's properties indicate that all tracks are drawn with the same color. */
-		QPen current_track_pen;
+		QPen m_selected_track_pen;
 		/* Separate pen for a track's potential new point as drawn via separate method
 		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
-		QPen current_track_new_point_pen;
+		QPen m_selected_track_new_point_pen;
 
 		QPen track_bg_pen;
 		QColor track_bg_color;

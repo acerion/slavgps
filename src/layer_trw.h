@@ -125,8 +125,8 @@ namespace SlavGPS {
 		bool handle_select_tool_release(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
 		bool handle_select_tool_context_menu(QMouseEvent * event, GisViewport * gisview);
 
-		void handle_select_tool_click_do_track_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter);
-		void handle_select_tool_click_do_waypoint_selection(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp);
+		void select_tool_maybe_start_holding_tp(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter);
+		void select_tool_maybe_start_holding_wp(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp);
 
 		void marshall(Pickle & pickle);
 
@@ -199,7 +199,7 @@ namespace SlavGPS {
 
 		bool find_center(Coord * dest);
 
-		void set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track);
+		void set_statusbar_msg_info_tp(const TrackpointReference & tp_ref, Track * track);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
 
 		bool try_clicking_waypoint(WaypointSearch & wp_search);
@@ -508,11 +508,11 @@ namespace SlavGPS {
 
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */
-		Track * current_track_ = NULL;
+		Track * m_selected_track = NULL;
 
 		/* Waypoint that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::waypoints. */
-		Waypoint * current_wp_ = NULL;
+		Waypoint * m_selected_wp = NULL;
 
 		/* Mutex that prevents removing items from TRW layer. */
 		std::mutex remove_mutex;

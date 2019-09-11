@@ -205,6 +205,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 		this->set_dialog_title(QObject::tr("%1: Properties").arg(this->current_point->name));
 	}
 
+	qDebug() << SG_PREFIX_I << "Enabling whole widget";
 	this->setEnabled(true); /* The widget may have been disabled in ::dialog_data_reset(), so we need to undo that. */
 	ThisApp::get_main_window()->get_tools_dock()->setWidget(this); /* Either set a widget in docker that didn't have it yet, or replace existing dialog for other tool type. */
 
@@ -272,6 +273,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	}
 
 
+	qDebug() << SG_PREFIX_I << "Setting values of non-editable fields, e.g. hdop:" << Distance(this->current_point->hdop, DistanceUnit::Meters).convert_to_unit(distance_unit).to_nice_string();
 
 	this->course->setText(this->current_point->course.to_string());
 	this->speed->setText(Speed(this->current_point->gps_speed, SpeedUnit::MetresPerSecond).convert_to_unit(speed_unit).to_string());
@@ -427,12 +429,13 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 		Track * trk = (Track *) tree_item;
 		if (trk->tp_references[SELECTED].m_iter_valid) {
 			qDebug() << SG_PREFIX_I << "Will now set trackpoint dialog data, track has selected trackpoint";
+			this->dialog_data_set(trk);
 		} else {
-			qDebug() << SG_PREFIX_I << "Will now set trackpoint dialog data, track doesn't have selected trackpoint";
+			qDebug() << SG_PREFIX_E << "Will reset trackpoint dialog data, track doesn't have selected trackpoint";
+			this->dialog_data_reset();
 		}
-		this->dialog_data_set(trk);
 	} else {
-		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "doesn't match supported type, will now reset trackpoint dialog data";
+		qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data, selected tree item" << tree_item->type_id << tree_item->name << "doesn't match supported type";
 		this->dialog_data_reset();
 	}
 }
@@ -553,6 +556,7 @@ void TpPropertiesWidget::clear_widgets(void)
 	this->pdop->setText("");
 	this->sat->setText("");
 
+	qDebug() << SG_PREFIX_I << "Disabling whole widget";
 	this->setEnabled(false);
 }
 

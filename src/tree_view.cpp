@@ -719,9 +719,7 @@ TreeView::TreeView(TreeItem * top_level_layer, QWidget * parent_widget) : QTreeV
 	this->header()->setSectionHidden(this->property_id_to_column_idx(TreeItemPropertyID::Timestamp), true);
 
 
-	//connect(this, SIGNAL (activated(const QModelIndex &)), this, SLOT (tree_item_selected_cb(void)));
 	connect(this, SIGNAL (clicked(const QModelIndex &)), this, SLOT (tree_item_selected_cb(void)));
-	//connect(this, SIGNAL (pressed(const QModelIndex &)), this, SLOT (tree_item_selected_cb(void)));
 	connect(this->tree_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(data_changed_cb(const QModelIndex&, const QModelIndex&)));
 
 

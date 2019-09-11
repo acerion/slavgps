@@ -1469,8 +1469,13 @@ QString LayerTRW::get_tooltip(void) const
    Function to show track point information on the statusbar.
    Items displayed is controlled by the settings format code.
 */
-void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track * track)
+void LayerTRW::set_statusbar_msg_info_tp(const TrackpointReference & tp_ref, Track * track)
 {
+	if (!tp_ref.m_iter_valid) {
+		qDebug() << SG_PREFIX_W << "Trying to set info about invalid tp";
+		return;
+	}
+
 	Trackpoint * tp_prev = NULL;
 
 	QString statusbar_format_code;
@@ -1479,11 +1484,11 @@ void LayerTRW::set_statusbar_msg_info_tp(TrackPoints::iterator & tp_iter, Track 
 		statusbar_format_code = "KEATDN";
 	} else {
 		/* Format code may want to show speed - so may need previous trkpt to work it out. */
-		auto iter = std::prev(tp_iter);
+		auto iter = std::prev(tp_ref.m_iter);
 		tp_prev = iter == track->end() ? NULL : *iter;
 	}
 
-	Trackpoint * tp = tp_iter == track->end() ? NULL : *tp_iter;
+	Trackpoint * tp = tp_ref.m_iter == track->end() ? NULL : *tp_ref.m_iter;
 	const QString msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, track, NAN);
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, msg);
 }
@@ -1520,6 +1525,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 
 void LayerTRW::reset_internal_selections(void)
 {
+	qDebug() << SG_PREFIX_I << "Will reset in-layer selection info";
 	this->selected_track_reset();
 	this->selected_wp_reset();
 	this->cancel_current_tp();
@@ -2251,6 +2257,7 @@ sg_ret LayerTRW::add_route(Track * trk)
 void LayerTRW::deselect_current_trackpoint(Track * trk)
 {
 	if (this->selected_track_get() == trk) {
+		qDebug() << SG_PREFIX_I << "Will cancel current trackpoint";
 		this->cancel_current_tp();
 	}
 }
@@ -3174,6 +3181,7 @@ bool SlavGPS::is_valid_geocache_name(const char * str)
 
 void LayerTRW::on_tp_properties_dialog_closed_cb(void)
 {
+	qDebug() << SG_PREFIX_SLOT;
 	this->cancel_current_tp();
 }
 
@@ -3238,6 +3246,7 @@ sg_ret LayerTRW::wp_properties_dialog_reset(void)
 
 void LayerTRW::cancel_current_tp(void)
 {
+	qDebug() << SG_PREFIX_I << "Will reset trackpoint properties dialog data";
 	this->tp_properties_dialog_reset();
 
 	Track * track = this->selected_track_get();
@@ -3284,6 +3293,7 @@ sg_ret LayerTRW::tp_properties_dialog_reset(void)
 	if (!tool->is_activated()) {
 		return sg_ret::ok;
 	}
+	qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data";
 	tool->tp_properties_dialog->dialog_data_reset();
 	return sg_ret::ok;
 }
@@ -3312,7 +3322,7 @@ void LayerTRW::tp_show_properties_dialog()
 		/* Set layer name and trackpoint data. */
 		this->tp_properties_dialog_set(track);
 	} else {
-		qDebug() << SG_PREFIX_W << "No track, or track doesn't have selected tp:" << (bool) track << (bool) track->has_selected_tp();
+		qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data, no track, or track doesn't have selected tp:" << (bool) track << (bool) track->has_selected_tp();
 		this->tp_properties_dialog_reset();
 	}
 }
@@ -3743,7 +3753,7 @@ bool LayerTRW::handle_selection_in_tree(void)
 */
 Track * LayerTRW::selected_track_get()
 {
-	return this->current_track_;
+	return this->m_selected_track;
 }
 
 
@@ -3756,8 +3766,8 @@ void LayerTRW::selected_track_set(Track * track, const TrackpointReference & tp_
 		return;
 	}
 
-	this->current_track_ = track;
-	this->current_track_->selected_tp_set(tp_ref);
+	this->m_selected_track = track;
+	this->m_selected_track->selected_tp_set(tp_ref);
 }
 
 
@@ -3771,8 +3781,8 @@ void LayerTRW::selected_track_set(Track * track)
 		return;
 	}
 
-	this->current_track_ = track;
-	this->current_track_->selected_tp_reset();
+	this->m_selected_track = track;
+	this->m_selected_track->selected_tp_reset();
 }
 
 
@@ -3781,7 +3791,7 @@ void LayerTRW::selected_track_set(Track * track)
 
 void LayerTRW::selected_track_reset(void)
 {
-	this->current_track_ = NULL;
+	this->m_selected_track = NULL;
 }
 
 
@@ -3795,7 +3805,7 @@ void LayerTRW::selected_track_reset(void)
 */
 Waypoint * LayerTRW::selected_wp_get()
 {
-	return this->current_wp_;
+	return this->m_selected_wp;
 }
 
 
@@ -3808,7 +3818,9 @@ void LayerTRW::selected_wp_set(Waypoint * wp)
 		return;
 	}
 
-	this->current_wp_ = wp;
+	this->m_selected_wp = wp;
+
+	this->wp_properties_dialog_set(this->m_selected_wp);
 }
 
 
@@ -3816,9 +3828,11 @@ void LayerTRW::selected_wp_set(Waypoint * wp)
 
 bool LayerTRW::selected_wp_reset(void)
 {
-	const bool was_selected = NULL != this->current_wp_;
+	const bool was_selected = NULL != this->m_selected_wp;
 
-	this->current_wp_ = NULL;
+	this->m_selected_wp = NULL;
+
+	this->wp_properties_dialog_reset();
 
 	return was_selected;
 }

@@ -482,7 +482,7 @@ QPen LayerTRWPainter::get_track_fg_pen(Track * trk, bool do_highlight)
 
 	if (trk->is_selected()) {
 		/* The track is highlighted/selected user, it gets a special pen. */
-		result = this->current_track_pen;
+		result = this->m_selected_track_pen;
 	} else if (do_highlight) {
 		/* Draw all tracks of the layer in 'highlight' color.
 		   This supersedes the this->track_drawing_mode. */
@@ -1179,18 +1179,18 @@ void LayerTRWPainter::make_track_pens(void)
 	/* Ensure new track drawing heeds line thickness setting,
 	   however always have a minium of 2, as 1 pixel is really narrow. */
 	int new_track_width = (this->track_thickness < 2) ? 2 : this->track_thickness;
-	this->current_track_pen = QPen(QColor("#FF0000"));
-	this->current_track_pen.setWidth(new_track_width);
-	this->current_track_pen.setCapStyle(Qt::RoundCap);
-	this->current_track_pen.setJoinStyle(Qt::RoundJoin);
-	this->current_track_pen.setStyle(Qt::DashLine);
+	this->m_selected_track_pen = QPen(QColor("#FF0000"));
+	this->m_selected_track_pen.setWidth(new_track_width);
+	this->m_selected_track_pen.setCapStyle(Qt::RoundCap);
+	this->m_selected_track_pen.setJoinStyle(Qt::RoundJoin);
+	this->m_selected_track_pen.setStyle(Qt::DashLine);
 
 	/* 'new_point' pen is exactly the same as the current track pen. */
-	this->current_track_new_point_pen = QPen(QColor("#FF0000"));
-	this->current_track_new_point_pen.setWidth(new_track_width);
-	this->current_track_new_point_pen.setCapStyle(Qt::RoundCap);
-	this->current_track_new_point_pen.setJoinStyle(Qt::RoundJoin);
-	this->current_track_new_point_pen.setStyle(Qt::DashLine);
+	this->m_selected_track_new_point_pen = QPen(QColor("#FF0000"));
+	this->m_selected_track_new_point_pen.setWidth(new_track_width);
+	this->m_selected_track_new_point_pen.setCapStyle(Qt::RoundCap);
+	this->m_selected_track_new_point_pen.setJoinStyle(Qt::RoundJoin);
+	this->m_selected_track_new_point_pen.setStyle(Qt::DashLine);
 
 	this->track_pens.clear();
 	this->track_pens.resize((int) LayerTRWTrackGraphics::Max);
