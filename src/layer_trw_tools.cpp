@@ -66,19 +66,20 @@
 
 
 
-/* This is how it knows when you click if you are clicking close to a trackpoint. */
-#define TRACKPOINT_SIZE_APPROX 5
-#define WAYPOINT_SIZE_APPROX 5
-
-
-
-
 using namespace SlavGPS;
 
 
 
 
 #define SG_MODULE "Layer TRW Tools"
+
+#define WAYPOINT_MODIFIER_KEY     Qt::ShiftModifier
+#define TRACKPOINT_MODIFIER_KEY   Qt::ControlModifier
+
+/* This is how it knows when you click if you are clicking close to a
+   trackpoint or waypoint. */
+#define TRACKPOINT_SIZE_APPROX 5
+#define WAYPOINT_SIZE_APPROX 5
 
 
 
@@ -210,7 +211,7 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 
 			/* Update properties dialog with the most
 			   recent coordinates of released waypoint. */
-			this->wp_properties_dialog_set(wp); /* TODO_OPTIMIZATION: optimize only by changing coordinates in the dialog. */
+			this->wp_properties_dialog_set(wp); /* TODO_OPTIMIZATION: optimize only by changing coordinates and altitude in the dialog. */
 		} else {
 			qDebug() << SG_PREFIX_E << "No waypoint";
 			this->wp_properties_dialog_reset();
@@ -233,7 +234,7 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 			/* Update properties dialog with the most
 			   recent coordinates of released
 			   trackpoint. */
-			this->tp_properties_dialog_set(track); /* TODO_OPTIMIZATION: optimize only by changing coordinates in the dialog. */
+			this->tp_properties_dialog_set(track); /* TODO_OPTIMIZATION: optimize only by changing coordinates and altitude in the dialog. */
 		} else {
 			qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track (" << (NULL == track) << ") or no trackpoint (" << !track->has_selected_tp() << ")";
 			this->tp_properties_dialog_reset();
@@ -409,7 +410,7 @@ bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, GisViewport * g
 void LayerTRW::select_tool_maybe_start_holding_tp(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter)
 {
 	/* Can move the trackpoint immediately when control held or it's the previously selected tp. */
-	if (ev->modifiers() & Qt::ControlModifier /* TODO: why the modifier is different than in ::select_tool_maybe_start_holding_wp? */
+	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY
 	    || (track->is_selected() && track->get_selected_tp() == *tp_iter)) {
 
 		/* Remember position at which selection occurred. */
@@ -424,7 +425,7 @@ void LayerTRW::select_tool_maybe_start_holding_wp(QMouseEvent * ev, LayerToolSel
 {
 	/* Too easy to move it so must be holding shift to start immediately moving it
 	   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
-	if (ev->modifiers() & Qt::ShiftModifier /* TODO: why the modifier is different than in ::select_tool_maybe_start_holding_tp? */
+	if (ev->modifiers() & WAYPOINT_MODIFIER_KEY
 	    || (this->selected_wp_get() == wp && wp->image_full_path.isEmpty())) {
 
 		/* Remember position at which selection occurred. */
@@ -706,7 +707,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 	}
 
 	/* Snap to waypoint. */
-	if (ev->modifiers() & Qt::ShiftModifier) {
+	if (ev->modifiers() & WAYPOINT_MODIFIER_KEY) {
 		const Waypoint * wp = this->search_nearby_wp(gisview, ev->x(), ev->y());
 		if (wp && wp != this->selected_wp_get()) {
 			point_coord = wp->coord;
@@ -729,7 +730,7 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview)
 {
 	bool snapped = false;
-	if (ev->modifiers() & Qt::ControlModifier) {
+	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY) {
 		const Trackpoint * tp = this->search_nearby_tp(gisview, ev->x(), ev->y());
 		const Track * trk = this->selected_track_get();
 		if (tp && trk && trk->has_selected_tp() && tp != trk->get_selected_tp()) {
@@ -1316,8 +1317,6 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 
 ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	/* TODO: is this method called at all? */
-
 	LayerTRW * trw = (LayerTRW *) layer;
 
 	if (trw->type != LayerType::TRW) {
@@ -1341,7 +1340,7 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
 
 	/* Snap to trackpoint */
-	if (ev->modifiers() & Qt::ControlModifier) {
+	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY) {
 		Trackpoint * tp = trw->search_nearby_tp(this->gisview, ev->x(), ev->y());
 		if (tp && tp != track->get_selected_tp()) {
 			new_coord = tp->coord;
@@ -1353,7 +1352,6 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 
 	this->stop_holding_object();
 
-	/* Diff dist is diff from orig. */
 	trw->tp_properties_dialog_set(track);
 
 	trw->emit_tree_item_changed("TRW - edit trackpoint - handle mouse release");
@@ -1453,7 +1451,7 @@ ToolStatus LayerToolTRWExtendedRouteFinder::internal_handle_mouse_click(Layer * 
 		return create_new_trackpoint_route_finder(trw, track, ev, this->gisview);
 
 	} else if ((track && track->is_route())
-		   || ((ev->modifiers() & Qt::ControlModifier) && track)) {
+		   || ((ev->modifiers() & TRACKPOINT_MODIFIER_KEY) && track)) {
 
 		Trackpoint * tp_start = track->get_tp_last();
 		const LatLon start = tp_start->coord.get_lat_lon();
