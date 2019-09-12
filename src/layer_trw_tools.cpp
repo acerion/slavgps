@@ -76,8 +76,9 @@ using namespace SlavGPS;
 #define WAYPOINT_MODIFIER_KEY     Qt::ShiftModifier
 #define TRACKPOINT_MODIFIER_KEY   Qt::ControlModifier
 
-/* This is how it knows when you click if you are clicking close to a
-   trackpoint or waypoint. */
+/* This is how a tool knows if a click happened in vicinity of
+   trackpoint or waypoint, i.e. if it happened close enough to the
+   point to be treated as clicking the point itself. */
 #define TRACKPOINT_SIZE_APPROX 5
 #define WAYPOINT_SIZE_APPROX 5
 
@@ -211,7 +212,14 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 
 			/* Update properties dialog with the most
 			   recent coordinates of released waypoint. */
-			this->wp_properties_dialog_set(wp); /* TODO_OPTIMIZATION: optimize only by changing coordinates and altitude in the dialog. */
+			/* TODO_OPTIMIZATION: optimize by changing
+			   only coordinates in the dialog. This is the
+			   only parameter that will change when a
+			   point is moved in x/y plane. We may
+			   consider also updating an alternative
+			   altitude indicator, if the altitude is
+			   retrieved from DEM info. */
+			this->wp_properties_dialog_set(wp);
 		} else {
 			qDebug() << SG_PREFIX_E << "No waypoint";
 			this->wp_properties_dialog_reset();
@@ -234,7 +242,14 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 			/* Update properties dialog with the most
 			   recent coordinates of released
 			   trackpoint. */
-			this->tp_properties_dialog_set(track); /* TODO_OPTIMIZATION: optimize only by changing coordinates and altitude in the dialog. */
+			/* TODO_OPTIMIZATION: optimize by changing
+			   only coordinates in the dialog. This is the
+			   only parameter that will change when a
+			   point is moved in x/y plane.  We may
+			   consider also updating an alternative
+			   altitude indicator, if the altitude is
+			   retrieved from DEM info. */
+			this->tp_properties_dialog_set(track);
 		} else {
 			qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track (" << (NULL == track) << ") or no trackpoint (" << !track->has_selected_tp() << ")";
 			this->tp_properties_dialog_reset();
