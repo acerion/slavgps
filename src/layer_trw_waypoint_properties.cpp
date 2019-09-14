@@ -461,7 +461,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 	case WpPropertiesDialog::Action::NextPoint:
 		/* TODO: implement
-		if (sg_ret::ok != track->move_selected_tp_forward()) {
+		if (sg_ret::ok != track->move_selection_to_next_tp()) {
 			break;
 		}
 
@@ -472,7 +472,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 	case WpPropertiesDialog::Action::PreviousPoint:
 		/* TODO: implement
-		if (sg_ret::ok != track->move_selected_tp_back()) {
+		if (sg_ret::ok != track->move_selection_to_previous_tp()) {
 			break;
 		}
 

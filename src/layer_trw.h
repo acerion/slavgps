@@ -261,9 +261,6 @@ namespace SlavGPS {
 		void wp_changed_message(int changed);
 
 
-
-		void delete_selected_tp(Track * trk);
-
 		void diary_open(const QString & date_str);
 
 
@@ -313,18 +310,24 @@ namespace SlavGPS {
 
 
 		/* This should be private. */
-		void cancel_current_tp(void);
 		void update_statusbar();
 
 
 		Track * selected_track_get(void);
 		void selected_track_set(Track * track, const TrackpointReference & tp_ref);
 		void selected_track_set(Track * track);
-		void selected_track_reset(void);
+		/**
+		   @return true if a selected track was set before this function call
+		   @return false otherwise
+		*/
+		bool selected_track_reset(void);
 
 		Waypoint * selected_wp_get(void);
 		void selected_wp_set(Waypoint * wp);
-		/* Returns true if there was some waypoint that was selected/edited. */
+		/**
+		   @return true if a selected waypoint was set before this function call
+		   @return false otherwise
+		*/
 		bool selected_wp_reset(void);
 
 
@@ -475,7 +478,6 @@ namespace SlavGPS {
 
 		void wp_image_cache_add(const CachedPixmap & cached_pixmap);
 
-		void on_tp_properties_dialog_closed_cb(void);
 		void on_tp_properties_dialog_tp_coordinates_changed_cb(void);
 
 		void on_wp_properties_dialog_wp_coordinates_changed_cb(void);

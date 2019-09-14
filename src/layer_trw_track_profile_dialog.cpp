@@ -751,7 +751,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, Track * new_trk, G
 	this->button_split_at_marker = this->button_box->addButton(tr("Split at &Marker"), QDialogButtonBox::ActionRole);
 	this->button_ok = this->button_box->addButton(tr("&OK"), QDialogButtonBox::AcceptRole);
 
-	this->button_split_at_marker->setEnabled(this->trk->has_selected_tp()); /* Initially no trackpoint is selected. */
+	this->button_split_at_marker->setEnabled(1 == this->trk->get_selected_children().get_count()); /* Initially no trackpoint is selected. */
 
 	this->signal_mapper = new QSignalMapper(this);
 	connect(this->button_cancel,          SIGNAL (released()), signal_mapper, SLOT (map()));

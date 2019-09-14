@@ -193,8 +193,8 @@ bool LayerTRW::set_new_object_position(const QString & object_type_id, const Coo
 		}
 
 		Track * track = this->selected_track_get();
-		if (track && track->has_selected_tp()) {
-			track->get_selected_tp()->coord = new_coord;
+		if (track && 1 == track->get_selected_children().get_count()) {
+			track->single_selected_tp_set_coord(new_coord);
 
 			/* Update properties dialog with the most
 			   recent coordinates of released
@@ -209,7 +209,7 @@ bool LayerTRW::set_new_object_position(const QString & object_type_id, const Coo
 			this->tp_properties_dialog_set(track);
 			//this->emit_tree_item_changed("Track point or route point has new position");
 		} else {
-			qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track (" << (NULL == track) << ") or no trackpoint (" << !track->has_selected_tp() << ")";
+			qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track (" << (NULL == track) << ") or wrong selected tp count (" << track->get_selected_children().get_count() << ")";
 			this->tp_properties_dialog_reset();
 		}
 
@@ -303,11 +303,11 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	/* Mouse click didn't happen anywhere near a Trackpoint or Waypoint from this layer.
 	   So unmark/deselect all "current"/"edited" elements of this layer. */
 	qDebug() << SG_PREFIX_I << "Mouse click for Select tool didn't click any data, resetting info";
+	/* At this abstraction layer we only have to call these two
+	   methods. Everything else below this abstraction layer will
+	   be handled by the two methods. */
 	this->selected_wp_reset();
 	this->selected_track_reset();
-	this->cancel_current_tp();
-	this->tp_properties_dialog_reset();
-	this->wp_properties_dialog_reset();
 
 	/* Blank info. */
 	this->get_window()->get_statusbar()->set_message(StatusBarField::Info, "");
@@ -382,10 +382,12 @@ bool LayerTRW::handle_select_tool_double_click(QMouseEvent * ev, GisViewport * g
 
 void LayerTRW::select_tool_maybe_start_holding_tp(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter)
 {
-	/* Can move the trackpoint immediately when control held or it's the previously selected tp. */
-	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY
-	    || (track->is_selected() && track->get_selected_tp() == *tp_iter)) {
+	const bool tp_is_already_selected = track->is_selected()
+		&& 1 == track->get_selected_children().get_count()
+		&& track->get_selected_children().is_member(*tp_iter);
 
+	/* Can move the trackpoint immediately when control held or it's the previously selected tp. */
+	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY || tp_is_already_selected) {
 		/* Remember position at which selection occurred. */
 		select_tool->start_holding_object(ScreenPos(ev->x(), ev->y()));
 	}
@@ -1194,20 +1196,23 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 	}
 
 	Track * track = trw->selected_track_get();
-
-	if (track && track->has_selected_tp()) {
+	if (track && 1 == track->get_selected_children().get_count()) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 
-		const Trackpoint * tp = track->get_selected_tp();
-		ScreenPos tp_pos;
-		this->gisview->coord_to_screen_pos(tp->coord, tp_pos);
-		const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
+		const TrackpointReference & tp_ref = track->get_selected_children().front();
+		if (tp_ref.m_iter_valid) {
+			const Trackpoint * tp = *tp_ref.m_iter;
+			ScreenPos tp_pos;
+			this->gisview->coord_to_screen_pos(tp->coord, tp_pos);
+			const ScreenPos event_pos = ScreenPos(ev->x(), ev->y());
 
-		if (track->is_visible() && ScreenPos::are_closer_than(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
-			this->start_holding_object(event_pos);
-			return ToolStatus::Ack;
+			if (track->is_visible() && ScreenPos::are_closer_than(tp_pos, event_pos, TRACKPOINT_SIZE_APPROX)) {
+				this->start_holding_object(event_pos);
+				return ToolStatus::Ack;
+			}
+		} else {
+			qDebug() << SG_PREFIX_E << "Invalid tp reference";
 		}
-
 	}
 
 	if (trw->get_tracks_node().is_visible()) {

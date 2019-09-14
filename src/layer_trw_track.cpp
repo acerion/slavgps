@@ -1095,7 +1095,7 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 */
 sg_ret Track::select_tp(const Trackpoint * tp)
 {
-	this->tp_references[SELECTED].m_iter_valid = false;
+	this->selected_children.references.front().m_iter_valid = false;
 
 	if (this->trackpoints.empty()) {
 		return sg_ret::err;
@@ -1104,8 +1104,8 @@ sg_ret Track::select_tp(const Trackpoint * tp)
 	auto iter = std::next(this->trackpoints.begin());
 	for (; iter != this->trackpoints.end(); iter++) {
 		if (tp == *iter) {
-			this->tp_references[SELECTED].m_iter_valid = true;
-			this->tp_references[SELECTED].m_iter = iter;
+			this->selected_children.references.front().m_iter_valid = true;
+			this->selected_children.references.front().m_iter = iter;
 			return sg_ret::ok;
 		}
 	}
@@ -2048,7 +2048,7 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = split_submenu->addAction(tr("Split at Selected &Trackpoint"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_at_selected_trackpoint_cb()));
 		/* Make it available only when a trackpoint is selected. */
-		qa->setEnabled(track && track->has_selected_tp());
+		qa->setEnabled(track && 1 == track->selected_children.get_count());
 	}
 
 
@@ -2059,22 +2059,23 @@ void Track::sublayer_menu_track_route_misc(LayerTRW * parent_layer_, QMenu & men
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &Before Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_before_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->has_selected_tp());
+		qa->setEnabled(track && 1 == track->selected_children.get_count());
 
 		qa = insert_submenu->addAction(QIcon::fromTheme(""), tr("Insert Point &After Selected Point"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_after_cb()));
 		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && this->has_selected_tp());
+		qa->setEnabled(track && 1 == this->selected_children.get_count());
 	}
 
 
 	{
 		QMenu * delete_submenu = menu.addMenu(QIcon::fromTheme("list-delete"), tr("Delete Poi&nts"));
 
-		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), tr("Delete &Selected Point"));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_point_selected_cb()));
-		/* Make it available only when a point is selected. */
-		qa->setEnabled(track && track->has_selected_tp());
+		const size_t tp_count = track->selected_children.get_count();
+		qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"),
+					       tp_count <= 1 ? tr("Delete &Selected Point") : tr("Delete &Selected Points"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_all_selected_tp_cb()));
+		qa->setEnabled(track && 0 != tp_count);
 
 		qa = delete_submenu->addAction(tr("Delete Points With The Same &Position"));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_points_same_position_cb()));
@@ -2261,7 +2262,7 @@ bool Track::add_context_menu_items(QMenu & menu, bool tree_view_context_menu)
 
 
 	/* Only show in viewport context menu, and only when a trackpoint is selected. */
-	if (!tree_view_context_menu && this->has_selected_tp()) {
+	if (!tree_view_context_menu && 1 == this->selected_children.get_count()) {
 		menu.addSeparator();
 
 		qa = menu.addAction(QIcon::fromTheme("document-properties"), tr("&Edit Trackpoint"));
@@ -2592,10 +2593,13 @@ void Track::open_diary_cb(void)
 */
 void Track::open_astro_cb(void)
 {
-	Trackpoint * tp = NULL;
-	if (this->has_selected_tp()) {
+	const Trackpoint * tp = NULL;
+	if (1 == this->get_selected_children().get_count()) {
 		/* Current trackpoint. */
-		tp = this->get_selected_tp();
+		const TrackpointReference tp_ref = this->get_selected_children().front();
+		if (tp_ref.m_iter_valid) {
+			tp = *tp_ref.m_iter;
+		}
 
 	} else if (!this->empty()) {
 		/* Otherwise first trackpoint. */
@@ -2697,7 +2701,7 @@ bool Track::handle_selection_in_tree(void)
 	parent_layer->set_statusbar_msg_info_trk(this);
 #endif
 	parent_layer->reset_internal_selections(); /* No other tree item (that is a sublayer of this layer) is selected... */
-	parent_layer->selected_track_set(this, this->tp_references[SELECTED]); /* But this tree item is selected (and maybe its trackpoint too). */
+	parent_layer->selected_track_set(this, this->selected_children.references.front()); /* But this tree item is selected (and maybe its trackpoint too). */
 
 	qDebug() << SG_PREFIX_I << "Tree item" << this->name << "becomes selected tree item";
 	g_selected.add_to_set(this);
@@ -3045,7 +3049,7 @@ void Track::refine_route_cb(void)
 
 sg_ret Track::create_tp_next_to_selected_tp(bool before)
 {
-	return this->create_tp_next_to_specified_tp(this->tp_references[SELECTED], before);
+	return this->create_tp_next_to_specified_tp(this->selected_children.references.front(), before);
 }
 
 
@@ -3333,41 +3337,39 @@ sg_ret Track::update_tree_item_properties(void)
 
 
 
-Trackpoint * Track::get_tp(tp_idx tp_idx) const
+bool TrackSelectedChildren::is_member(const Trackpoint * tp) const
 {
-	switch (tp_idx) {
-	case SELECTED:
-		return this->get_selected_tp();
-	case HOVERED:
-		return this->get_hovered_tp();
-	default:
-		qDebug() << SG_PREFIX_E << "Unexpected tp index" << tp_idx;
-		return NULL;
+	const bool any_tp_selected = 0 != this->get_count();
+	if (!any_tp_selected) {
+		return false;
 	}
+
+	for (auto iter = this->references.begin(); iter != this->references.end(); iter++) {
+		const TrackpointReference & tp_ref = *iter;
+		if (tp_ref.m_iter_valid && tp == *tp_ref.m_iter) {
+			return true;
+		}
+	}
+	return false;
 }
 
 
 
 
-Trackpoint * Track::get_selected_tp(void) const
+TrackpointReference TrackSelectedChildren::front(void) const
 {
-	if (this->tp_references[SELECTED].m_iter_valid) {
-		return *this->tp_references[SELECTED].m_iter;
-	} else {
-		return NULL;
-	}
+	/* Since we add one reference to the container in constructor,
+	   then here we will always return *some* reference (which may
+	   be not valid). */
+	return this->references.front();
 }
 
 
 
 
-Trackpoint * Track::get_hovered_tp(void) const
+const TrackSelectedChildren & Track::get_selected_children(void) const
 {
-	if (this->tp_references[HOVERED].m_iter_valid) {
-		return *this->tp_references[HOVERED].m_iter;
-	} else {
-		return NULL;
-	}
+	return this->selected_children;
 }
 
 
@@ -3412,7 +3414,7 @@ sg_ret Track::get_timestamps(Time & ts_first, Time & ts_last) const
 */
 void Track::insert_point_after_cb(void)
 {
-	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->tp_references[SELECTED], false)) {
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->selected_children.references.front(), false)) {
 		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint after selected trackpoint";
 	} else {
 		this->emit_tree_item_changed("Track changed after inserting trackpoint 'after'");
@@ -3427,7 +3429,7 @@ void Track::insert_point_after_cb(void)
 */
 void Track::insert_point_before_cb(void)
 {
-	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->tp_references[SELECTED], true)) {
+	if (sg_ret::ok != this->create_tp_next_to_specified_tp(this->selected_children.references.front(), true)) {
 		qDebug() << SG_PREFIX_E << "Failed to insert trackpoint before selected trackpoint";
 	} else {
 		this->emit_tree_item_changed("Track changed after inserting trackpoint 'before'");
@@ -3442,7 +3444,7 @@ void Track::insert_point_before_cb(void)
 */
 sg_ret Track::split_at_selected_trackpoint_cb(void)
 {
-	sg_ret ret = this->split_at_trackpoint(this->tp_references[SELECTED]);
+	sg_ret ret = this->split_at_trackpoint(this->selected_children.references.front());
 	if (sg_ret::ok != ret) {
 		qDebug() << SG_PREFIX_W << "Failed to split track" << this->name << "at selected trackpoint";
 		return ret;
@@ -3456,38 +3458,41 @@ sg_ret Track::split_at_selected_trackpoint_cb(void)
 
 
 
-
-
-
-
-void LayerTRW::delete_selected_tp(Track * track)
+sg_ret Track::delete_all_selected_tp(void)
 {
-	TrackPoints::iterator new_tp_iter = track->delete_trackpoint(track->tp_references[SELECTED].m_iter);
+	TrackPoints::iterator new_tp_iter = this->delete_trackpoint(this->selected_children.references.front().m_iter);
 
-	if (new_tp_iter != track->end()) {
+	if (new_tp_iter != this->end()) {
 		/* Set to current to the available adjacent trackpoint. */
-		track->selected_tp_set(TrackpointReference(new_tp_iter, true));
-		track->recalculate_bbox();
+		this->selected_tp_set(TrackpointReference(new_tp_iter, true));
+		this->recalculate_bbox();
 	} else {
-		this->cancel_current_tp();
+		qDebug() << SG_PREFIX_I << "Will reset trackpoint properties dialog data";
+		this->selected_tp_reset();
 	}
+
+	/* Notice that we may delete all selected trackpoints, and
+	   there will be no trackpoins that are selected, but the
+	   parent layer still sees this track as selected. */
+
+	return sg_ret::ok;
 }
 
 
 
 
 /**
-   Delete the selected trackpoint
+   Delete all selected trackpoint(s)
 */
-void Track::delete_point_selected_cb(void)
+void Track::delete_all_selected_tp_cb(void)
 {
-	if (!this->has_selected_tp()) {
+	if (0 == this->selected_children.get_count()) {
 		return;
 	}
 
 	LayerTRW * parent_layer = this->get_parent_layer_trw();
 
-	parent_layer->delete_selected_tp(this);
+	this->delete_all_selected_tp();
 	parent_layer->deselect_current_trackpoint(this);
 
 	this->emit_tree_item_changed("Deleted selected trackpoint");
@@ -3589,17 +3594,17 @@ bool Track::is_track(void) const
 
 
 
-sg_ret Track::move_selected_tp_forward(void)
+sg_ret Track::move_selection_to_next_tp(void)
 {
-	if (!this->has_selected_tp()) {
+	if (1 != this->selected_children.get_count()) {
 		return sg_ret::err_cond;
 	}
-	if (std::next(this->tp_references[SELECTED].m_iter) == this->end()) {
+	if (std::next(this->selected_children.references.front().m_iter) == this->end()) {
 		/* Can't go forward if we are already at the end. */
 		return sg_ret::err_cond;
 	}
 
-	this->tp_references[SELECTED].m_iter++;
+	this->selected_children.references.front().m_iter++;
 
 	return sg_ret::ok;
 }
@@ -3607,17 +3612,17 @@ sg_ret Track::move_selected_tp_forward(void)
 
 
 
-sg_ret Track::move_selected_tp_back(void)
+sg_ret Track::move_selection_to_previous_tp(void)
 {
-	if (!this->has_selected_tp()) {
+	if (1 != this->selected_children.get_count()) {
 		return sg_ret::err_cond;
 	}
-	if (this->tp_references[SELECTED].m_iter == this->begin()) {
+	if (this->selected_children.references.front().m_iter == this->begin()) {
 		/* Can't go back if we are already at the beginning. */
 		return sg_ret::err_cond;
 	}
 
-	this->tp_references[SELECTED].m_iter--;
+	this->selected_children.references.front().m_iter--;
 
 	return sg_ret::ok;
 }
@@ -3625,9 +3630,10 @@ sg_ret Track::move_selected_tp_back(void)
 
 
 
-bool Track::has_selected_tp(void) const
+size_t TrackSelectedChildren::get_count(void) const
 {
-	return this->tp_references[SELECTED].m_iter_valid;
+	/* For now we can select at most one trackpoint. */
+	return this->references.front().m_iter_valid ? 1 : 0;
 }
 
 
@@ -3635,25 +3641,35 @@ bool Track::has_selected_tp(void) const
 
 void Track::selected_tp_set(const TrackpointReference & tp_ref)
 {
-	qDebug() << SG_PREFIX_E << "zzzzz - set";
-	this->tp_references[SELECTED] = tp_ref;
+	if (tp_ref.m_iter_valid) {
+		qDebug() << SG_PREFIX_I << "zzzzz - setting valid tp reference";
+	} else {
+		qDebug() << SG_PREFIX_E << "zzzzz - setting invalid tp reference";
+	}
+	this->selected_children.references.front() = tp_ref;
 
 	LayerTRW * trw = this->get_parent_layer_trw();
 	trw->tp_properties_dialog_set(this);
 
-	trw->set_statusbar_msg_info_tp(this->tp_references[SELECTED], this);
+	trw->set_statusbar_msg_info_tp(this->selected_children.references.front(), this);
 }
 
 
 
 
-void Track::selected_tp_reset(void)
+bool Track::selected_tp_reset(void)
 {
-	qDebug() << SG_PREFIX_E << "zzzzz - reset";
-	this->tp_references[SELECTED].m_iter_valid = false;
+	const bool was_set = this->selected_children.references.front().m_iter_valid;
 
+	if (was_set) {
+		qDebug() << SG_PREFIX_E << "zzzzz - reset";
+		this->selected_children.references.front().m_iter_valid = false;
+	}
+	/* Do this regardless of value of 'was_set' - just in case. */
 	LayerTRW * trw = this->get_parent_layer_trw();
 	trw->tp_properties_dialog_reset();
+
+	return was_set;
 }
 
 
@@ -3722,4 +3738,36 @@ void Track::list_dialog(QString const & title, Layer * layer, const QString & ty
 void Track::prepare_for_profile(void)
 {
 	this->track_length_including_gaps = this->get_length_value_including_gaps();
+}
+
+
+
+
+TrackSelectedChildren::TrackSelectedChildren()
+{
+	this->references.push_back(TrackpointReference());
+}
+
+
+
+
+sg_ret Track::single_selected_tp_set_coord(const Coord & coord)
+{
+	const size_t count = this->selected_children.get_count();
+	if (1 != count) {
+		qDebug() << SG_PREFIX_E << "Can't set coordinates of tp: wrong count:" << count;
+		return sg_ret::err;
+	}
+
+	if (!this->selected_children.references.front().m_iter_valid) {
+		/* That's a double error: function was called for
+		   invalid tp, and the tp is invalid while
+		   selected_children.get_count() returned 1. */
+		qDebug() << SG_PREFIX_E << "Can't set coordinates of tp: iter invalid:" << count;
+		qDebug() << SG_PREFIX_E << "Count of selected TPs is" << count << "but iter of selected TP is invalid";
+		return sg_ret::err;
+	}
+
+	(*this->selected_children.references.front().m_iter)->coord = coord;
+	return sg_ret::ok;
 }

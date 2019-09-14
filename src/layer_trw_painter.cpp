@@ -508,14 +508,6 @@ QPen LayerTRWPainter::get_track_fg_pen(Track * trk, bool do_highlight)
 
 
 
-static bool tp_is_selected(const Track * trk, const Trackpoint * tp)
-{
-	return trk->has_selected_tp() && tp == trk->get_selected_tp();
-}
-
-
-
-
 void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 {
 	Altitude min_alt;
@@ -549,7 +541,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 	Trackpoint * tp = *iter;
 
 	const bool trk_is_selected = trk->is_selected();
-	int tp_size = (trk_is_selected && tp_is_selected(trk, tp)) ? tp_size_cur : tp_size_reg;
+	int tp_size = (trk_is_selected && trk->get_selected_children().is_member(tp)) ? tp_size_cur : tp_size_reg;
 
 	ScreenPos curr_pos;
 	this->gisview->coord_to_screen_pos((*iter)->coord, curr_pos);
@@ -587,7 +579,7 @@ void LayerTRWPainter::draw_track_fg_sub(Track * trk, bool do_highlight)
 		tp = *iter;
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 
-		tp_size = (trk_is_selected && tp_is_selected(trk, tp)) ? tp_size_cur : tp_size_reg;
+		tp_size = (trk_is_selected && trk->get_selected_children().is_member(tp)) ? tp_size_cur : tp_size_reg;
 
 
 		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).

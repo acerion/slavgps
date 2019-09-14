@@ -53,6 +53,7 @@ namespace SlavGPS {
 
 
 
+	class Track;
 	class TrackpointReference;
 	class Trackpoint;
 	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
@@ -66,14 +67,6 @@ namespace SlavGPS {
 	enum class GisViewportDomain;
 
 	class LayerTRW;
-
-
-
-
-	enum tp_idx {
-		SELECTED = 0, /* Trackpoint which has been selected by clicking in 'track profile' widget. */
-		HOVERED = 1,  /* Trackpoint, over which a cursor is hovering (but not clicked) in 'track profile' widget. */
-	};
 
 
 
@@ -110,6 +103,36 @@ namespace SlavGPS {
 		double pdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
 	};
 
+
+
+
+	class TrackSelectedChildren {
+		friend class Track;
+	public:
+		TrackSelectedChildren();
+
+		/**
+		   @return number of trackpoints in the track/route that are selected (may be zero)
+		*/
+		size_t get_count(void) const;
+
+		/**
+		   Is this @param tp selected (possibly as one of many
+		   other trackpoints belonging to this track)?
+
+		   @return false if number of selected children (trackpoints) is zero
+		   @return true if the number is non-zero, and given @param tp is among selected items.
+		*/
+		bool is_member(const Trackpoint * tp) const;
+
+		TrackpointReference front(void) const;
+
+	private:
+		/* For now it's only single-item container. There will
+		   always be one item, but the item may be invalid if
+		   no selections are made. */
+		std::list<TrackpointReference> references;
+	};
 
 
 
@@ -193,17 +216,37 @@ namespace SlavGPS {
 		unsigned int get_segment_count() const;
 
 
-		bool has_selected_tp(void) const;
+
+
+
+		/* For now we only support no more than one selected
+		   tp, so these two methods set or reset a single
+		   trackpoint. */
 		void selected_tp_set(const TrackpointReference & tp_ref);
-		void selected_tp_reset(void);
-		Trackpoint * get_tp(tp_idx tp_idx) const;
-		Trackpoint * get_selected_tp(void) const;
-		Trackpoint * get_hovered_tp(void) const;
+		/**
+		   @return true if a selected trackpoint was set before this function call
+		   @return false otherwise
+		*/
+		bool selected_tp_reset(void);
+
+
+		/**
+		   @return sg_ret::ok if there is one and only one selected tp, and its coordinate has been set
+		   @return sg_ret::err otherwise
+		*/
+		sg_ret single_selected_tp_set_coord(const Coord & coord);
+
+		sg_ret move_selection_to_next_tp(void);
+		sg_ret move_selection_to_previous_tp(void);
+
+		sg_ret delete_all_selected_tp(void);
+
+		const TrackSelectedChildren & get_selected_children(void) const;
+
+
+
 
 		bool is_selected(void) const;
-
-		sg_ret move_selected_tp_forward(void);
-		sg_ret move_selected_tp_back(void);
 
 		void smooth_it(bool flat);
 
@@ -333,7 +376,6 @@ namespace SlavGPS {
 
 		LayerTRW * get_parent_layer_trw() const;
 
-		TrackpointReference tp_references[2];
 
 		/* QString name; */ /* Inherited from TreeItem. */
 		QString comment;
@@ -396,6 +438,8 @@ namespace SlavGPS {
 
 		Speed max_speed;
 
+		TrackSelectedChildren selected_children;
+
 	public slots:
 		void goto_startpoint_cb(void);
 		void goto_center_cb(void);
@@ -456,7 +500,7 @@ namespace SlavGPS {
 		void insert_point_after_cb(void);
 		void insert_point_before_cb(void);
 
-		void delete_point_selected_cb(void);
+		void delete_all_selected_tp_cb(void);
 		void delete_points_same_position_cb(void);
 		void delete_points_same_time_cb(void);
 

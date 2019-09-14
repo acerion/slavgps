@@ -193,12 +193,18 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 		qDebug() << SG_PREFIX_E << "NULL argument";
 		return sg_ret::err;
 	}
-	if (false == trk->tp_references[SELECTED].m_iter_valid) {
-		qDebug() << SG_PREFIX_E << "Invalid iterator of selected tp";
+	const size_t sel_tp_count = trk->get_selected_children().get_count();
+	if (1 != sel_tp_count) {
+		qDebug() << SG_PREFIX_E << "Wrong number of selected children in track" << trk->name << ":" << sel_tp_count;
+		return sg_ret::err;
+	}
+	const TrackpointReference & tp_ref = trk->get_selected_children().front();
+	if (!tp_ref.m_iter_valid) {
+		qDebug() << SG_PREFIX_E << "Reference to current tp is invalid";
 		return sg_ret::err;
 	}
 
-	this->current_point = *trk->tp_references[SELECTED].m_iter;
+	this->current_point = *tp_ref.m_iter;
 	this->current_track = trk;
 
 	if (this->current_point->name.isEmpty()) {
@@ -216,7 +222,7 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	const DistanceUnit distance_unit = Preferences::get_unit_distance();
 	const SpeedUnit speed_unit = Preferences::get_unit_speed();
 
-	const TrackPoints::iterator & current_point_iter = this->current_track->tp_references[SELECTED].m_iter;
+	const TrackPoints::iterator & current_point_iter = this->current_track->get_selected_children().front().m_iter; /* TODO: where do we check if it's valid? */
 	const bool is_route = this->current_track->is_route();
 
 	this->name_entry->setText(this->current_point->name); /* The name may be empty, but we have to do this anyway (e.g. to overwrite non-empty name of previous trackpoint). */
@@ -344,11 +350,6 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		qDebug() << SG_PREFIX_N << "Not handling action, no current track";
 		return;
 	}
-	LayerTRW * trw = (LayerTRW *) this->current_track->get_owning_layer();
-	if (!trw) {
-		qDebug() << SG_PREFIX_N << "Not handling action, no current trw layer";
-		return;
-	}
 
 
 	switch ((TpPropertiesDialog::Action) action) {
@@ -360,21 +361,26 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		break;
 
 	case TpPropertiesDialog::Action::DeleteSelectedPoint:
-		if (!this->current_track->has_selected_tp()) {
+		if (1 != this->current_track->get_selected_children().get_count()) {
+			/* In this dialog we only delete single point, not a group of points.
+			   If there are more than one selected points, this dialog would be inactive anyway. */
+			qDebug() << SG_PREFIX_E << "For some reason this dialog is active when number of selected TPs is" << this->current_track->get_selected_children().get_count();
 			return;
 		}
-		trw->delete_selected_tp(this->current_track);
+		this->current_track->delete_all_selected_tp();
 
-		if (this->current_track->has_selected_tp()) {
+		if (1 == this->current_track->get_selected_children().get_count()) {
 			/* Update Trackpoint Properties with the available adjacent trackpoint. */
 			this->dialog_data_set(this->current_track);
+		} else {
+			this->dialog_data_reset();
 		}
 
 		this->current_track->emit_tree_item_changed("Indicating deletion of trackpoint");
 		break;
 
 	case TpPropertiesDialog::Action::NextPoint:
-		if (sg_ret::ok != this->current_track->move_selected_tp_forward()) {
+		if (sg_ret::ok != this->current_track->move_selection_to_next_tp()) {
 			break;
 		}
 
@@ -383,7 +389,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 		break;
 
 	case TpPropertiesDialog::Action::PreviousPoint:
-		if (sg_ret::ok != this->current_track->move_selected_tp_back()) {
+		if (sg_ret::ok != this->current_track->move_selection_to_previous_tp()) {
 			break;
 		}
 
@@ -429,11 +435,12 @@ void TpPropertiesDialog::tree_view_selection_changed_cb(void)
 	if (tree_item->type_id == "sg.trw.track" || tree_item->type_id == "sg.trw.route") {
 		qDebug() << SG_PREFIX_I << "Selected tree item" << tree_item->type_id << tree_item->name << "matches supported type";
 		Track * trk = (Track *) tree_item;
-		if (trk->tp_references[SELECTED].m_iter_valid) {
+		const size_t sel_tp_count = trk->get_selected_children().get_count();
+		if (1 == sel_tp_count) {
 			qDebug() << SG_PREFIX_I << "Will now set trackpoint dialog data, track has selected trackpoint";
 			this->dialog_data_set(trk);
 		} else {
-			qDebug() << SG_PREFIX_E << "Will reset trackpoint dialog data, track doesn't have selected trackpoint";
+			qDebug() << SG_PREFIX_E << "Will reset trackpoint dialog data, wrong count of selected trackpoints" << sel_tp_count;
 			this->dialog_data_reset();
 		}
 	} else {

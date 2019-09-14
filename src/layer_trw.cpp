@@ -1526,9 +1526,16 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 void LayerTRW::reset_internal_selections(void)
 {
 	qDebug() << SG_PREFIX_I << "Will reset in-layer selection info";
-	this->selected_track_reset();
-	this->selected_wp_reset();
-	this->cancel_current_tp();
+
+	bool changed = false;
+
+	changed = changed || this->selected_track_reset();
+	changed = changed || this->selected_wp_reset();
+
+	if (changed) {
+		this->emit_tree_item_changed("Selections changed when resetting TRW layer's internal selections");
+	}
+
 }
 
 
@@ -2253,14 +2260,29 @@ sg_ret LayerTRW::add_route(Track * trk)
 
 
 
-/* to be called whenever a track has been deleted or may have been changed. */
+/*
+  To be called whenever a track has been deleted or may have been changed.
+  Deselect current trackpoint on given track, but don't deselect the track itself.
+*/
 void LayerTRW::deselect_current_trackpoint(Track * trk)
 {
-	if (this->selected_track_get() == trk) {
-		qDebug() << SG_PREFIX_I << "Will cancel current trackpoint";
-		this->cancel_current_tp();
+	Track * selected_track = this->selected_track_get();
+	if (NULL == selected_track) {
+		return;
 	}
+
+	if (selected_track != trk) {
+		return;
+	}
+
+	const bool was_set = selected_track->selected_tp_reset();
+	if (was_set) {
+		this->emit_tree_item_changed("TRW layer has changed after deselecting a trackpoint");
+	}
+
+	return;
 }
+
 
 
 
@@ -2529,8 +2551,9 @@ sg_ret LayerTRW::detach_from_tree(TreeItem * tree_item)
 void LayerTRW::delete_all_routes()
 {
 	this->route_finder_added_track = NULL;
-	if (this->selected_track_get()) {
-		this->cancel_current_tp();
+
+	Track * track = this->selected_track_get();
+	if (NULL != track && track->is_route()) { /* Be careful not to reset current track. */
 		this->selected_track_reset();
 	}
 
@@ -2557,8 +2580,9 @@ void LayerTRW::delete_all_routes()
 void LayerTRW::delete_all_tracks()
 {
 	this->route_finder_added_track = NULL;
-	if (this->selected_track_get()) {
-		this->cancel_current_tp();
+
+	Track * track = this->selected_track_get();
+	if (NULL != track && track->is_track()) { /* Be careful not to reset current route. */
 		this->selected_track_reset();
 	}
 
@@ -3179,15 +3203,6 @@ bool SlavGPS::is_valid_geocache_name(const char * str)
 
 
 
-void LayerTRW::on_tp_properties_dialog_closed_cb(void)
-{
-	qDebug() << SG_PREFIX_SLOT;
-	this->cancel_current_tp();
-}
-
-
-
-
 void LayerTRW::on_tp_properties_dialog_tp_coordinates_changed_cb(void)
 {
 	this->emit_tree_item_changed("Indicating change of edited trackpoint's coordinates");
@@ -3244,23 +3259,6 @@ sg_ret LayerTRW::wp_properties_dialog_reset(void)
 
 
 
-void LayerTRW::cancel_current_tp(void)
-{
-	qDebug() << SG_PREFIX_I << "Will reset trackpoint properties dialog data";
-	this->tp_properties_dialog_reset();
-
-	Track * track = this->selected_track_get();
-	if (track && track->has_selected_tp()) {
-		track->selected_tp_reset();
-		this->selected_track_reset();
-
-		this->emit_tree_item_changed("TRW - cancel current tp");
-	}
-}
-
-
-
-
 sg_ret LayerTRW::tp_properties_dialog_set(Track * track)
 {
 	if (!track) {
@@ -3312,19 +3310,25 @@ void LayerTRW::tp_show_properties_dialog()
 	tool->tp_properties_dialog->disconnect();
 
 	/* Make new connections to current TRW layer. */
-	connect(tool->tp_properties_dialog, SIGNAL (accepted()), this, SLOT (on_tp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
 	connect(tool->tp_properties_dialog, SIGNAL (point_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
 
 	this->get_window()->get_tools_dock()->setWidget(tool->tp_properties_dialog);
 
 	Track * track = this->selected_track_get();
-	if (track && track->has_selected_tp()) {
-		/* Set layer name and trackpoint data. */
-		this->tp_properties_dialog_set(track);
-	} else {
-		qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data, no track, or track doesn't have selected tp:" << (bool) track << (bool) track->has_selected_tp();
+	if (NULL == track) {
+		qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data: no track";
 		this->tp_properties_dialog_reset();
+		return;
 	}
+	const size_t sel_tp_count = track->get_selected_children().get_count();
+	if (1 != sel_tp_count) {
+		qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data: selected tp count is not 1:" << sel_tp_count;
+		this->tp_properties_dialog_reset();
+		return;
+	}
+
+	this->tp_properties_dialog_set(track);
+	return;
 }
 
 
@@ -3789,9 +3793,21 @@ void LayerTRW::selected_track_set(Track * track)
 
 
 
-void LayerTRW::selected_track_reset(void)
+bool LayerTRW::selected_track_reset(void)
 {
-	this->m_selected_track = NULL;
+	const bool was_set = NULL != this->m_selected_track;
+
+	if (was_set) {
+		qDebug() << SG_PREFIX_I << "Will reset trackpoint properties dialog data";
+
+		if (0 != this->m_selected_track->get_selected_children().get_count()) {
+			this->m_selected_track->selected_tp_reset();
+		}
+
+		this->m_selected_track = NULL;
+	}
+
+	return was_set;
 }
 
 
