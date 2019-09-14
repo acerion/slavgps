@@ -125,8 +125,8 @@ namespace SlavGPS {
 		bool handle_select_tool_release(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
 		bool handle_select_tool_context_menu(QMouseEvent * event, GisViewport * gisview);
 
-		void select_tool_maybe_start_holding_tp(QMouseEvent * ev, LayerToolSelect * select_tool, Track * track, TrackPoints::iterator & tp_iter);
-		void select_tool_maybe_start_holding_wp(QMouseEvent * ev, LayerToolSelect * select_tool, Waypoint * wp);
+		void layer_tool_maybe_start_holding_tp(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter);
+		void layer_tool_maybe_start_holding_wp(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
 
 		void marshall(Pickle & pickle);
 
@@ -482,8 +482,9 @@ namespace SlavGPS {
 
 		void on_wp_properties_dialog_wp_coordinates_changed_cb(void);
 
-		bool set_new_object_position(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox);
-
+		sg_ret set_selected_object_position(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox);
+		sg_ret set_selected_waypoint_position(const Coord & new_coord, bool do_recalculate_bbox);
+		sg_ret set_selected_trackpoint_position(const Coord & new_coord, bool do_recalculate_bbox);
 
 	private:
 		void wp_image_cache_flush(void);
@@ -501,8 +502,6 @@ namespace SlavGPS {
 
 		TracksTooltipData get_tracks_tooltip_data(void) const;
 		Distance get_routes_tooltip_data(void) const;
-
-
 
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */

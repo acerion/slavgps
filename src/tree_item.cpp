@@ -431,8 +431,10 @@ sg_ret TreeItem::click_in_tree(const QString & debug)
 	this->tree_view->selectionModel()->select(item->index(), QItemSelectionModel::ClearAndSelect);
 #endif
 
+#if 0
 	qDebug() << SG_PREFIX_SIGNAL << "Will emit 'clicked' signal for tree item" << this->name << ":" << debug;
 	emit this->tree_view->clicked(item->index());
+#endif
 
 	return sg_ret::ok;
 }

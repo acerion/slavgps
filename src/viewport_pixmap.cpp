@@ -125,7 +125,7 @@ void ViewportPixmap::draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y,
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;
 	if (this->line_is_outside(begin_x, begin_y, end_x, end_y)) {
-		qDebug() << SG_PREFIX_I << "Line" << begin_x << begin_y << end_x << end_y << "is outside of viewport";
+		//qDebug() << SG_PREFIX_I << "Line" << begin_x << begin_y << end_x << end_y << "is outside of viewport";
 		return;
 	}
 
