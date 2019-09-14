@@ -67,6 +67,7 @@ namespace SlavGPS {
 		AckRedrawAll,
 		AckRedrawIfVisible,
 		AckGrabFocus, /* Only for move. */
+		Error
 	};
 
 
@@ -100,9 +101,10 @@ namespace SlavGPS {
 		   inside of a layer, but it still does some useful, generic stuff. */
 		void start_holding_object(const ScreenPos & screen_pos);
 
-		/* Selected item belonging to a layer is being moved to new position x/y.
-		   Call this method only when there is an item (in a layer) that is selected. */
-		void move_object(const ScreenPos & screen_pos);
+		/* Selected item belonging to a layer is being moved
+		   to new position x/y.  Call this method only when
+		   there is an item (in a layer) that is selected. */
+		sg_ret remember_object_moving(void);
 
 		/* Selected item belonging to a layer has been released.
 		   Call this method only when there was an item that was being selected.

@@ -93,6 +93,8 @@ void TpPropertiesDialog::sync_coord_widget_to_current_point_cb(void) /* Slot. */
 		/* One of track's trackpoints has changed
 		   its coordinates. */
 		emit this->point_coordinates_changed();
+	} else {
+		qDebug() << SG_PREFIX_I << "Not redrawing item, move distance is zero or invalid:" << distance;
 	}
 }
 

@@ -95,62 +95,20 @@ static ToolStatus create_new_trackpoint_route_finder(LayerTRW * trw, Track * tra
 
 
 /*
-  ATM: Leave this as 'Track' only.
-  Not overly bothered about having a snap to route trackpoint capability.
-*/
-Trackpoint * LayerTRW::search_nearby_tp(GisViewport * gisview, int x, int y)
-{
-	TrackpointSearch search(x, y, gisview);
-
-	this->tracks.track_search_closest_tp(search);
-
-	return search.closest_tp;
-}
-
-
-
-
-Waypoint * LayerTRW::search_nearby_wp(GisViewport * gisview, int x, int y)
-{
-	WaypointSearch search(x, y, gisview);
-
-	this->waypoints.search_closest_wp(search);
-
-	return search.closest_wp;
-}
-
-
-
-
-/*
   This method is for handling "move" event coming from generic Select tool.
   The generic Select tool doesn't know how to implement layer-specific movement, so the layer has to implement the behaviour itself.
 */
-bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
+bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool) /// kamil
 {
-	if (!select_tool->tool_is_holding_object) {
-		/* The tool wasn't holding any item, so there is
-		   nothing to move. */
-		qDebug() << SG_PREFIX_E << "No object to move by tool" << select_tool->id_string;
+	/* Recognize that an object is moving. */
+	if (sg_ret::ok != select_tool->remember_object_moving()) {
+		qDebug() << SG_PREFIX_E << "Not moving";
 		return false;
 	}
 
 	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
-
-	/* Here always allow snapping back to the original location.
-	   This is useful when one decides not to move the thing after all.
-	   If one wants to move the item only a little bit then don't hold down the 'snap' key! */
-
-	/* See if the coordinates of the new "move" position should be snapped to existing nearby Trackpoint or Waypoint. */
 	this->get_nearby_snap_coordinates(new_coord, ev, gisview);
-
-	/* The selected item is being moved to new position. */
-	ScreenPos new_coord_pos;
-	gisview->coord_to_screen_pos(new_coord, new_coord_pos);
-	select_tool->move_object(new_coord_pos);
-
-	this->on_object_move_by_tool(select_tool->selected_tree_item_type_id, new_coord, false);
-
+	this->set_new_object_position(select_tool->selected_tree_item_type_id, new_coord, false);
 	return true;
 }
 
@@ -163,34 +121,32 @@ bool LayerTRW::handle_select_tool_move(QMouseEvent * ev, GisViewport * gisview, 
 */
 bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisview, LayerToolSelect * select_tool)
 {
-	if (!select_tool->tool_is_holding_object) {
-		/* The tool wasn't holding any item, so there is
-		   nothing to do on mouse release. */
-		return false;
-	}
-
 	if (ev->button() != Qt::LeftButton) {
 		/* If we are still holding something, but we didn't release this with left button, then we aren't interested. */
 		return false;
 	}
 
-	/* Prevent accidental (small) shifts when specific movement has not been requested
-	   (as the click release has occurred within the click object detection area). */
-	if (!select_tool->tool_is_moving_object
-	    || select_tool->selected_tree_item_type_id == "") {
+	/* Prevent accidental (small) shifts when specific movement
+	   has not been requested (as the click release has occurred
+	   within the click object detection area). */
+	if (select_tool->selected_tree_item_type_id == "") {
+		return false;
+	}
+
+	/* Recognize that an object is being moved. */
+	if (sg_ret::ok != select_tool->remember_object_moving()) {
+		qDebug() << SG_PREFIX_E << "Not moving";
 		return false;
 	}
 
 	Coord new_coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
-
-	/* See if the coordinates of the new "release" position should be snapped to existing nearby Trackpoint or Waypoint. */
 	this->get_nearby_snap_coordinates(new_coord, ev, gisview);
+	this->set_new_object_position(select_tool->selected_tree_item_type_id, new_coord, true);
 
 	select_tool->stop_holding_object();
 
-	this->on_object_move_by_tool(select_tool->selected_tree_item_type_id, new_coord, true);
+	//this->emit_tree_item_changed("TRW - handle select tool release");
 
-	this->emit_tree_item_changed("TRW - handle select tool release");
 	return true;
 }
 
@@ -198,7 +154,7 @@ bool LayerTRW::handle_select_tool_release(QMouseEvent * ev, GisViewport * gisvie
 
 
 /* Update information about new position of Waypoint/Trackpoint. */
-bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox)
+bool LayerTRW::set_new_object_position(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox)
 {
 	if (object_type_id == "sg.trw.waypoint") {
 
@@ -220,6 +176,7 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 			   altitude indicator, if the altitude is
 			   retrieved from DEM info. */
 			this->wp_properties_dialog_set(wp);
+			//this->emit_tree_item_changed("Waypoint has new position");
 		} else {
 			qDebug() << SG_PREFIX_E << "No waypoint";
 			this->wp_properties_dialog_reset();
@@ -250,6 +207,7 @@ bool LayerTRW::on_object_move_by_tool(const QString & object_type_id, const Coor
 			   altitude indicator, if the altitude is
 			   retrieved from DEM info. */
 			this->tp_properties_dialog_set(track);
+			//this->emit_tree_item_changed("Track point or route point has new position");
 		} else {
 			qDebug() << SG_PREFIX_E << "Will reset trackpoint properties dialog data, no track (" << (NULL == track) << ") or no trackpoint (" << !track->has_selected_tp() << ")";
 			this->tp_properties_dialog_reset();
@@ -641,25 +599,19 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_click(Layer * layer, 
 ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
-
 	if (trw->type != LayerType::TRW) {
 		return ToolStatus::Ignored;
 	}
 
-	if (!this->tool_is_holding_object) {
-		return ToolStatus::Ignored;
+	/* Recognize that an object is being moved. */
+	if (sg_ret::ok != this->remember_object_moving()) {
+		qDebug() << SG_PREFIX_E << "Not moving";
+		return ToolStatus::Error;
 	}
 
 	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-
-	/* See if the coordinates of the new "move" position should be snapped to existing nearby Trackpoint or Waypoint. */
 	trw->get_nearby_snap_coordinates(new_coord, ev, gisview);
-
-	/* Selected item is being moved to new position. */
-	ScreenPos new_coord_pos;
-	this->gisview->coord_to_screen_pos(new_coord, new_coord_pos);
-	this->move_object(new_coord_pos);
-
+	trw->set_new_object_position("sg.trw.waypoint", new_coord, false);
 	return ToolStatus::Ack;
 }
 
@@ -679,20 +631,15 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 		return ToolStatus::Ignored;
 	}
 
-
 	switch (ev->button()) {
 	case Qt::LeftButton: {
 		Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-
-		/* See if the coordinates of the release position should be snapped to existing nearby Trackpoint or Waypoint. */
 		trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview);
+		trw->set_new_object_position("sg.trw.waypoint", new_coord, true);
 
 		this->stop_holding_object();
 
-		trw->selected_wp_get()->coord = new_coord;
-
-		trw->get_waypoints_node().recalculate_bbox();
-		trw->emit_tree_item_changed("TRW - edit waypoint - mouse release");
+		//trw->emit_tree_item_changed("TRW - edit waypoint - mouse release");
 		return ToolStatus::Ack;
 		}
 
@@ -711,50 +658,34 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
   Waypoint and if keyboard modifier specific for Trackpoint or
   Waypoint was used. If both conditions are true, put coordinates of
   such Trackpoint or Waypoint in @param point_coord.
+
+  @reviewed-on: 2019-09-14
 */
 bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview)
 {
-	bool snapped = false;
-
-	/* Snap to Trackpoint. */
-	if (this->get_nearby_snap_coordinates_tp(point_coord, ev, gisview)) {
-		snapped = true;
-	}
-
-	/* Snap to waypoint. */
-	if (ev->modifiers() & WAYPOINT_MODIFIER_KEY) {
-		const Waypoint * wp = this->search_nearby_wp(gisview, ev->x(), ev->y());
-		if (wp && wp != this->selected_wp_get()) {
-			point_coord = wp->coord;
-			snapped = true;
-		}
-	}
-
-	return snapped;
-}
-
-
-
-
-/*
-  See if mouse event @param ev happened close to a Trackpoint and if
-  keyboard modifier specific for a Trackpoint was used. If both
-  conditions are true, put coordinates of such Trackpoint in @param
-  point_coord.
-*/
-bool LayerTRW::get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview)
-{
-	bool snapped = false;
+	/* Search close trackpoint. */
 	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY) {
-		const Trackpoint * tp = this->search_nearby_tp(gisview, ev->x(), ev->y());
-		const Track * trk = this->selected_track_get();
-		if (tp && trk && trk->has_selected_tp() && tp != trk->get_selected_tp()) {
-			point_coord = tp->coord;
-			snapped = true;
+		TrackpointSearch search(ev->x(), ev->y(), gisview);
+		this->tracks.track_search_closest_tp(search); /* TODO: what about routes? Don't we want to snap to trackpoints in routes? */
+
+		if (NULL != search.closest_tp) {
+			point_coord = search.closest_tp->coord;
+			return true;
 		}
 	}
 
-	return snapped;
+	/* Search close waypoint. */
+	if (ev->modifiers() & WAYPOINT_MODIFIER_KEY) {
+		WaypointSearch search(ev->x(), ev->y(), gisview);
+		this->waypoints.search_closest_wp(search);
+
+		if (NULL != search.closest_wp) {
+			point_coord = search.closest_wp->coord;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 
@@ -1005,8 +936,8 @@ ToolStatus create_new_trackpoint(LayerTRW * trw, Track * track, QMouseEvent * ev
 	Trackpoint * tp = new Trackpoint();
 	tp->coord = gisview->screen_pos_to_coord(ev->x(), ev->y());
 
-	/* Snap to other Trackpoint. */
-	trw->get_nearby_snap_coordinates_tp(tp->coord, ev, gisview);
+	/* Maybe snap to other Trackpoint. */
+	trw->get_nearby_snap_coordinates(tp->coord, ev, gisview);
 
 	tp->newsegment = false;
 	tp->timestamp.invalidate();
@@ -1300,30 +1231,22 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 
 
 
-ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev)
+ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer, QMouseEvent * ev) /// kamil
 {
 	LayerTRW * trw = (LayerTRW *) layer;
-
 	if (trw->type != LayerType::TRW) {
 		return ToolStatus::Ignored;
 	}
 
-	if (!this->tool_is_holding_object) {
-		return ToolStatus::Ignored;
+	/* Recognize that an object is being moved. */
+	if (sg_ret::ok != this->remember_object_moving()) {
+		qDebug() << SG_PREFIX_E << "Not moving";
+		return ToolStatus::Error;
 	}
 
 	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-
-	/* Snap to Trackpoint */
-	trw->get_nearby_snap_coordinates_tp(new_coord, ev, this->gisview);
-
-	// trw->get_selected_tp()->coord = new_coord;
-
-	/* Selected item is being moved to new position. */
-	ScreenPos new_coord_pos;
-	this->gisview->coord_to_screen_pos(new_coord, new_coord_pos);
-	this->move_object(new_coord_pos);
-
+	trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview);
+	trw->set_new_object_position("sg.trw.track", new_coord, false);
 	return ToolStatus::Ack;
 }
 
@@ -1332,17 +1255,12 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_move(Layer * layer,
 
 ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * layer, QMouseEvent * ev)
 {
-	LayerTRW * trw = (LayerTRW *) layer;
-
-	if (trw->type != LayerType::TRW) {
-		return ToolStatus::Ignored;
-	}
-
 	if (ev->button() != Qt::LeftButton) {
 		return ToolStatus::Ignored;
 	}
 
-	if (!this->tool_is_holding_object) {
+	LayerTRW * trw = (LayerTRW *) layer;
+	if (trw->type != LayerType::TRW) {
 		return ToolStatus::Ignored;
 	}
 
@@ -1352,24 +1270,17 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 		return ToolStatus::Ignored;
 	}
 
-	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
-
-	/* Snap to trackpoint */
-	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY) {
-		Trackpoint * tp = trw->search_nearby_tp(this->gisview, ev->x(), ev->y());
-		if (tp && tp != track->get_selected_tp()) {
-			new_coord = tp->coord;
-		}
+	/* Recognize that an object is being moved. */
+	if (sg_ret::ok != this->remember_object_moving()) {
+		qDebug() << SG_PREFIX_E << "Not moving";
+		return ToolStatus::Error;
 	}
 
-	track->get_selected_tp()->coord = new_coord;
-	track->recalculate_bbox();
+	Coord new_coord = this->gisview->screen_pos_to_coord(ev->x(), ev->y());
+	trw->get_nearby_snap_coordinates(new_coord, ev, this->gisview);
+	trw->set_new_object_position("sg.trw.track", new_coord, true);
 
 	this->stop_holding_object();
-
-	trw->tp_properties_dialog_set(track);
-
-	trw->emit_tree_item_changed("TRW - edit trackpoint - handle mouse release");
 
 	return ToolStatus::Ack;
 }

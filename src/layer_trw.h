@@ -274,13 +274,7 @@ namespace SlavGPS {
 
 		void tp_show_properties_dialog();
 
-
-
-		Trackpoint * search_nearby_tp(GisViewport * gisview, int x, int y);
-		Waypoint * search_nearby_wp(GisViewport * gisview, int x, int y);
-
 		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview);
-		bool get_nearby_snap_coordinates_tp(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview);
 
 
 		void sort_all();
@@ -486,6 +480,8 @@ namespace SlavGPS {
 
 		void on_wp_properties_dialog_wp_coordinates_changed_cb(void);
 
+		bool set_new_object_position(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox);
+
 
 	private:
 		void wp_image_cache_flush(void);
@@ -504,7 +500,7 @@ namespace SlavGPS {
 		TracksTooltipData get_tracks_tooltip_data(void) const;
 		Distance get_routes_tooltip_data(void) const;
 
-		bool on_object_move_by_tool(const QString & object_type_id, const Coord & new_coord, bool do_recalculate_bbox);
+
 
 		/* Track or Route that user currently operates on (creates or modifies).
 		   Reference to an object already existing in ::tracks or ::routes. */

@@ -108,11 +108,11 @@ void LayerTool::start_holding_object(const ScreenPos & screen_pos)
 
 
 
-void LayerTool::move_object(const ScreenPos & new_pos)
+sg_ret LayerTool::remember_object_moving(void)
 {
 	if (!this->tool_is_holding_object) {
 		qDebug() << SG_PREFIX_E << "Can't perform move: no object held by tool" << this->id_string;
-		return;
+		return sg_ret::err;
 	}
 
 	/* We are in the process of moving mouse cursor that is
@@ -123,6 +123,8 @@ void LayerTool::move_object(const ScreenPos & new_pos)
 	if (tool_sync_done) {
 		tool_sync_done = true;
 	}
+
+	return sg_ret::ok;
 }
 
 
