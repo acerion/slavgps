@@ -89,60 +89,6 @@ QString LayerTool::get_description() const
 
 
 
-/* Background drawing hook, to be passed the viewport. */
-static bool tool_sync_done = true; /* TODO_LATER: get rid of this global variable. */
-
-
-
-
-void LayerTool::start_holding_object(const ScreenPos & screen_pos)
-{
-	/* We have clicked on an item, and we are holding it.
-	   We will hold it during move, until we release it. */
-	this->tool_is_holding_object = true;
-
-	/* We have just clicked the item, we aren't moving the cursor yet. */
-	this->tool_is_moving_object = false;
-}
-
-
-
-
-sg_ret LayerTool::remember_object_moving(void)
-{
-	if (!this->tool_is_holding_object) {
-		qDebug() << SG_PREFIX_E << "Can't perform move: no object held by tool" << this->id_string;
-		return sg_ret::err;
-	}
-
-	/* We are in the process of moving mouse cursor that is
-	   pressed. An object that is being held is moving with this
-	   cursor. */
-	this->tool_is_moving_object = true;
-
-	if (tool_sync_done) {
-		tool_sync_done = true;
-	}
-
-	return sg_ret::ok;
-}
-
-
-
-
-bool LayerTool::stop_holding_object(void)
-{
-	const bool some_object_released = this->tool_is_holding_object;
-
-	this->tool_is_holding_object = false;
-	this->tool_is_moving_object = false;
-
-	return some_object_released;
-}
-
-
-
-
 bool LayerTool::activate_tool(void)
 {
 	if (this->layer_type == LayerType::Max) {

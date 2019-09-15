@@ -34,6 +34,7 @@
 #include "window.h"
 #include "coord.h"
 #include "viewport.h"
+#include "generic_tools.h"
 
 
 
@@ -71,7 +72,7 @@ namespace SlavGPS {
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
 
-	class LayerToolTRWEditTrackpoint : public LayerTool {
+	class LayerToolTRWEditTrackpoint : public LayerToolSelect {
 	public:
 		LayerToolTRWEditTrackpoint(Window * window, GisViewport * gisview);
 		~LayerToolTRWEditTrackpoint();
@@ -105,7 +106,7 @@ namespace SlavGPS {
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
 	};
 
-	class LayerToolTRWEditWaypoint : public LayerTool {
+	class LayerToolTRWEditWaypoint : public LayerToolSelect {
 	public:
 		LayerToolTRWEditWaypoint(Window * window, GisViewport * gisview);
 		~LayerToolTRWEditWaypoint();

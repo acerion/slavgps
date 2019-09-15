@@ -125,8 +125,10 @@ namespace SlavGPS {
 		bool handle_select_tool_release(QMouseEvent * event, GisViewport * gisview, LayerToolSelect * select_tool);
 		bool handle_select_tool_context_menu(QMouseEvent * event, GisViewport * gisview);
 
-		void layer_tool_maybe_start_holding_tp(QMouseEvent * ev, LayerTool * tool, Track * track, TrackPoints::iterator & tp_iter);
-		void layer_tool_maybe_start_holding_wp(QMouseEvent * ev, LayerTool * tool, Waypoint * wp);
+		bool can_start_moving_tp_on_click(QMouseEvent * ev, Track * track, TrackPoints::iterator & tp_iter);
+		bool can_start_moving_wp_on_click(QMouseEvent * ev, Waypoint * wp);
+
+
 
 		void marshall(Pickle & pickle);
 
@@ -202,8 +204,8 @@ namespace SlavGPS {
 		void set_statusbar_msg_info_tp(const TrackpointReference & tp_ref, Track * track);
 		void set_statusbar_msg_info_wpt(Waypoint * wp);
 
-		bool try_clicking_waypoint(WaypointSearch & wp_search);
-		bool try_clicking_trackpoint(TrackpointSearch & tp_search, LayerTRWTracks & tracks_or_routes);
+		bool try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_search, LayerToolSelect * tool);
+		bool try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_search, LayerTRWTracks & tracks_or_routes, LayerToolSelect * tool);
 
 		bool move_viewport_to_show_all(GisViewport * gisview);
 

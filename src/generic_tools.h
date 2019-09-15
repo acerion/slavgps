@@ -113,9 +113,25 @@ namespace SlavGPS {
 	class LayerToolSelect : public LayerTool {
 	public:
 		LayerToolSelect(Window * window, GisViewport * gisview);
+
+		/* Just for passing arguments from derived class
+		   constructor to (grand)parent class constructor. */
+		LayerToolSelect(Window * window, GisViewport * gisview, LayerType layer_type);
+
 		~LayerToolSelect();
 
+		enum class ObjectState {
+			None,
+			Selected,
+			Held,
+		};
+
+		bool can_tool_move_object(void);
+
 		QString selected_tree_item_type_id;
+
+		ObjectState edited_object_state = ObjectState::None;
+
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;
