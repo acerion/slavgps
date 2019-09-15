@@ -96,6 +96,10 @@ namespace SlavGPS {
 		int y = 0;
 		GisViewport * gisview = NULL;
 		LatLonBBox bbox;
+		/* A trackpoint that we want to ignore during
+		   search. Used by code searching for snap coordinates
+		   to avoid snapping to ourselves. */
+		Trackpoint * skip_tp = NULL;
 
 		/* Output. */
 		ScreenPos closest_pos;
@@ -158,7 +162,7 @@ namespace SlavGPS {
 		void toggle_items_visibility();
 
 		void get_tracks_list(std::list<Track *> & list) const;
-		void track_search_closest_tp(TrackpointSearch & search);
+		void track_search_closest_tp(TrackpointSearch & search) const;
 
  		void change_coord_mode(CoordMode dest_mode);
 

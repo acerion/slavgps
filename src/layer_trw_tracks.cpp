@@ -405,7 +405,7 @@ void LayerTRWTracks::get_tracks_list(std::list<Track *> & list) const
 
 
 
-void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search)
+void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search) const
 {
 	for (auto track_iter = this->children_list.begin(); track_iter != this->children_list.end(); track_iter++) {
 
@@ -428,6 +428,10 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search)
 			const int dist_x = std::fabs(tp_pos.x() - search.x);
 			const int dist_y = std::fabs(tp_pos.y() - search.y);
 
+			if (NULL != search.skip_tp && search.skip_tp == *iter) {
+				continue;
+			}
+
 			if (dist_x <= TRACKPOINT_SIZE_APPROX && dist_y <= TRACKPOINT_SIZE_APPROX
 			    && ((!search.closest_tp)
 				/* Was the old trackpoint we already found closer than this one? */
@@ -438,7 +442,6 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search)
 				search.closest_tp_iter = iter;
 				search.closest_pos = tp_pos;
 			}
-
 		}
 	}
 }

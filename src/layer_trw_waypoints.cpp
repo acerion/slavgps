@@ -250,6 +250,10 @@ void LayerTRWWaypoints::search_closest_wp(WaypointSearch & search)
 			continue;
 		}
 
+		if (NULL != search.skip_wp && wp == search.skip_wp) {
+			continue;
+		}
+
 		ScreenPos wp_pos;
 		search.gisview->coord_to_screen_pos(wp->coord, wp_pos);
 

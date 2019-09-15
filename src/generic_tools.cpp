@@ -740,16 +740,20 @@ ToolStatus LayerToolSelect::internal_handle_mouse_release(Layer * layer, QMouseE
 bool LayerToolSelect::can_tool_move_object(void)
 {
 	switch (this->edited_object_state) {
-	case ObjectState::None:
-		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'None' state, tool =" << this->id_string;
+	case ObjectState::NotSelected:
+		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'NotSelected' state, tool =" << this->id_string;
 		return false;
 
-	case ObjectState::Selected:
+	case ObjectState::IsSelected:
 		/* We didn't actually clicked-and-held an object. */
-		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'Selected' state, tool =" << this->id_string;
+		qDebug() << SG_PREFIX_E << "Can't perform move: object in 'IsSelected' state, tool =" << this->id_string;
 		return false;
 
-	case ObjectState::Held:
+	case ObjectState::IsHeld:
 		return true;
+
+	default:
+		qDebug() << SG_PREFIX_E << "Unexpected object state" << (int) this->edited_object_state;
+		return false;
 	}
 }

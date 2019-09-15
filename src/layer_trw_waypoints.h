@@ -119,6 +119,10 @@ namespace SlavGPS {
 		int x = 0;
 		int y = 0;
 		GisViewport * gisview = NULL;
+		/* A waypoint that we want to ignore during
+		   search. Used by code searching for snap coordinates
+		   to avoid snapping to ourselves. */
+		Waypoint * skip_wp = NULL;
 
 		/* Output. */
 		ScreenPos closest_pos;

@@ -121,17 +121,49 @@ namespace SlavGPS {
 		~LayerToolSelect();
 
 		enum class ObjectState {
-			None,
-			Selected,
-			Held,
+			/* Object is not selected. Tool can't interact
+			   with it.
+
+			   The object probably is displayed in the
+			   same way as any other object of its class,
+			   but that is something that the tool doesn't
+			   care about. */
+			NotSelected,
+
+			/* Object is selected by the tool. Tool can
+			   interact with the object, but doesn't do it
+			   just yet.
+
+			   The object probably is displayed
+			   differently than other (non-selected)
+			   objects of its class. */
+			IsSelected,
+
+			/* Object is held. Tool is interacting with
+			   the object right now, most probably tool is
+			   dragging the object during mouse move.
+
+			   The object probably is displayed
+			   differently than other (non-selected
+			   objects of its class, and additionally it
+			   is drawn in new positions as it is moved
+			   around. */
+			IsHeld,
 		};
 
+		/**
+		   Does the object state, remembered by the tool,
+		   indicate that the object can be moved?
+
+		   The tool surely can't move an object that is
+		   NotSelected, and it surely can't move object that
+		   only IsSelected. The object must be in state IsHeld
+		   to be moved.
+		*/
 		bool can_tool_move_object(void);
 
 		QString selected_tree_item_type_id;
-
-		ObjectState edited_object_state = ObjectState::None;
-
+		ObjectState edited_object_state = ObjectState::NotSelected;
 
 	private:
 		virtual ToolStatus internal_handle_mouse_click(Layer * layer, QMouseEvent * event) override;

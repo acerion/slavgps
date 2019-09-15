@@ -273,7 +273,7 @@ namespace SlavGPS {
 
 		void tp_show_properties_dialog();
 
-		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview);
+		bool get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview, const QString & object_type_id);
 
 
 		void sort_all();
