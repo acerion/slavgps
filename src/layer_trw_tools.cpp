@@ -763,11 +763,12 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 */
 bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev, GisViewport * gisview, const QString & selected_object_type_id)
 {
-	/* Search close trackpoint. */
+	/* Search close trackpoint in tracks AND routes. */
 	if (ev->modifiers() & TRACKPOINT_MODIFIER_KEY) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
 
-		if (selected_object_type_id == "sg.trw.track") {
+		if (selected_object_type_id == "sg.trw.track"
+		    || selected_object_type_id == "sg.trw.route") {
 			/* We are searching for snap coordinates for
 			   trackpoint. Tell search tool to ignore
 			   coordinates of currently selected
@@ -788,12 +789,18 @@ bool LayerTRW::get_nearby_snap_coordinates(Coord & point_coord, QMouseEvent * ev
 				}
 			}
 		}
-		this->tracks.track_search_closest_tp(tp_search); /* TODO: what about routes? Don't we want to snap to trackpoints in routes? */
 
+		this->tracks.track_search_closest_tp(tp_search);
 		if (NULL != tp_search.closest_tp) {
 			point_coord = tp_search.closest_tp->coord;
 			return true;
 		}
+		this->routes.track_search_closest_tp(tp_search);
+		if (NULL != tp_search.closest_tp) {
+			point_coord = tp_search.closest_tp->coord;
+			return true;
+		}
+		/* Else go to searching for waypoint to snap to. */
 	}
 
 	/* Search close waypoint. */
