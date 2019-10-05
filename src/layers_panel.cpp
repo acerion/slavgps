@@ -608,24 +608,6 @@ Layer * LayersPanel::get_selected_layer()
 
 
 
-#ifdef K_TODO_MAYBE
-bool LayersPanel::tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * ev, GisViewport * gisview)
-{
-	Layer * layer = this->get_selected_layer();
-	if (layer && layer->type == layer_type) {
-		tool_func(layer, ev, gisview);
-		return true;
-	} else if (this->toplayer->visible &&
-		   this->toplayer->layer_tool(layer_type, tool_func, ev, gisview) != 1) { /* either accepted or rejected, but a layer was found */
-		return true;
-	}
-	return false;
-}
-#endif
-
-
-
-
 Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 {
 	Layer * layer = this->get_selected_layer();

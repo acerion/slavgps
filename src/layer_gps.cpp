@@ -221,9 +221,10 @@ enum {
 
 
 static ParameterSpecification gps_layer_param_specs[] = {
-	/* NB gps_layer_inst_init() is performed after parameter registeration
-	   thus to give the protocols some potential values use the old static list. */
-	/* TODO_LATER: find another way to use gps_layer_inst_init()? */
+	/* LayerGPS::init() is performed after registration of
+	   gps_layer_param_specs thus to give the protocols list some
+	   initial values use a list with all items:
+	   gps_protocols_enum. */
 	{ PARAM_PROTOCOL,                   "gps_protocol",              SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("GPS Protocol:"),                     WidgetType::ComboBox,      &gps_protocols_enum,      gps_protocol_default,        "" }, // List reassigned at runtime
 	{ PARAM_PORT,                       "gps_port",                  SGVariantType::String,       PARAMETER_GROUP_DATA_MODE,     QObject::tr("Serial Port:"),                      WidgetType::ComboBox,      &params_ports,            gps_port_default,            "" },
 	{ PARAM_DOWNLOAD_TRACKS,            "gps_download_tracks",       SGVariantType::Boolean,      PARAMETER_GROUP_DATA_MODE,     QObject::tr("Download Tracks:"),                  WidgetType::CheckButton,   NULL,                     sg_variant_true,             "" },
@@ -666,11 +667,6 @@ LayerGPS::~LayerGPS()
 
 sg_ret LayerGPS::attach_children_to_tree(void)
 {
-	/* TODO_LATER set to garmin by default.
-	   if (Babel::devices)
-	           device = ((BabelDevice*)g_list_nth_data(Babel::devices, last_active))->name;
-	   Need to access uibuild widgets somehow.... */
-
 	if (!this->is_in_tree()) {
 		qDebug() << SG_PREFIX_E << "GPS Layer" << this->name << "is not connected to tree";
 		return sg_ret::err;
@@ -1407,8 +1403,12 @@ void LayerGPS::rt_tracking_draw(GisViewport * gisview, const RTData & rt_data)
 		return;
 	}
 
-	/* TODO: what do these values mean? */
-	const LatLonBBox bbox = gisview->get_bbox(-20, -20, 20, 20);
+
+	/* Get a bbox that is a bit larger (by a margin) than the
+	   viewport, so that points that are close to viewport border
+	   are drawn nicely. */
+	const int margin = 20;
+	const LatLonBBox bbox = gisview->get_bbox(-margin, -margin, margin, margin);
 	if (!bbox.contains_point(rt_data.lat_lon)) {
 		qDebug() << SG_PREFIX_N << "Skipping drawing - point outside of viewport";
 		return;
@@ -1545,7 +1545,7 @@ Trackpoint * LayerGPS::rt_create_trackpoint(bool record_every_tp)
 		new_tp->altitude = alt;
 		/* Speed only available for 3D fix. Check for NAN when use this speed. */
 		new_tp->gps_speed = this->current_rt_data.fix.speed;
-		new_tp->course = Angle(this->current_rt_data.fix.track, AngleUnit::Degrees); /* TODO: verify unit. */
+		new_tp->course = Angle(this->current_rt_data.fix.track, AngleUnit::Degrees); /* From the lecture of code of gpsd package, it seems that 'track' is in degrees (e.g. "Course over ground, degrees from true north."). */
 		new_tp->nsats = this->current_rt_data.satellites_used;
 		new_tp->fix_mode = (GPSFixMode) this->current_rt_data.fix.mode;
 

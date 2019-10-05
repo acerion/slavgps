@@ -371,15 +371,23 @@ sg_ret GeotagJob::geotag_image_from_track(Track * trk2)
 		/* Is is between this and the next point? */
 		if ((this->photo_time > tp->timestamp) && (this->photo_time < tp_next->timestamp)) {
 			this->found_match = true;
-			/* Interpolate. */
-			/* Calculate the "scale": a decimal giving the
-			   relative distance in time between the two
-			   points. Ie, a number between 0 and 1 - 0 is
-			   the first point, 1 is the next point, and
-			   0.5 would be half way. */
-			const Time up = this->photo_time - tp->timestamp;
-			const Time down = tp_next->timestamp - tp->timestamp;
-			const double scale = up / down; /* TODO: operator '/' of Measurement class handles zero denominator, but what do we do here with invalid result of such division? */
+			/*
+			  Interpolate coordinate and altitude using
+			  timestamps as a base for interpolation.
+
+			  Calculate the "scale": a value giving the
+			  relative distance in time from tp->timestamp
+			  to time of taking a photo.
+
+			  The condition in this 'if' ensures that
+			  tp_next->timestamp > tp->timestamp, so
+			  denominator is non-zero and positive,
+			  therefore division is safe.
+			*/
+			const Time numerator = this->photo_time - tp->timestamp;
+			const Time denominator = tp_next->timestamp - tp->timestamp;
+
+			const double scale = numerator / denominator;
 
 			/* Interpolate coordinate. */
 			const LatLon interpolated = LatLon::get_interpolated(tp->coord.get_lat_lon(), tp_next->coord.get_lat_lon(), scale);
