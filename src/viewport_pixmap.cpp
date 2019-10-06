@@ -786,60 +786,6 @@ bool ViewportPixmap::line_is_outside(fpixel begin_x, fpixel begin_y, fpixel end_
 /**
    @reviewed-on tbd
 */
-void ViewportPixmap::margin_draw_text(ViewportPixmap::MarginPosition pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset)
-{
-#ifdef K_TODO_RESTORE
-	qDebug() << SG_PREFIX_I << "Will draw label" << text;
-	ViewportPixmap * vpixmap = NULL;
-
-	switch (pos) {
-	case ViewportPixmap::MarginPosition::Left:
-		vpixmap = this->left;
-		break;
-	case ViewportPixmap::MarginPosition::Right:
-		vpixmap = this->right;
-		break;
-	case ViewportPixmap::MarginPosition::Top:
-		vpixmap = this->top;
-		break;
-	case ViewportPixmap::MarginPosition::Bottom:
-		vpixmap = this->bottom;
-		break;
-	default:
-		qDebug() << SG_PREFIX_E << "Unhandled margin position";
-		break;
-	}
-
-	if (!vpixmap) {
-		qDebug() << SG_PREFIX_E << "No margin vpixmap selected";
-		return;
-	}
-
-
-	vpixmap->painter.setFont(text_font);
-
-	/* "Normalize" bounding rectangles that have negative width or height.
-	   Otherwise the text will be outside of the bounding rectangle. */
-	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
-
-	/* Get bounding rect of text drawn with font set above with .setFont(). */
-	QRectF text_rect = this->painter.boundingRect(final_bounding_rect, flags, text);
-	if (TextOffset::None != text_offset) {
-		this->offset_text_bounding_rect(text_rect, text_offset);
-	}
-
-	if (1) { /* Debug. */
-		this->draw_text_debug(text_rect);
-	}
-#endif
-}
-
-
-
-
-/**
-   @reviewed-on tbd
-*/
 void ViewportPixmap::central_draw_line(const QPen & pen, fpixel begin_x, fpixel begin_y, fpixel end_x, fpixel end_y)
 {
 	//qDebug() << SG_PREFIX_I << "Attempt to draw line between points" << begin_x << begin_y << "and" << end_x << end_y;

@@ -165,8 +165,6 @@ namespace SlavGPS {
 		void draw_pixmap(const QPixmap & pixmap, const QRect & viewport_rect, const QRect & pixmap_rect);
 
 
-		void margin_draw_text(ViewportPixmap::MarginPosition pos, const QFont & text_font, const QPen & pen, const QRectF & bounding_rect, int flags, const QString & text, TextOffset text_offset);
-
 		/* Draw a line in central part of viewport.  x/y
 		   coordinates should be in "beginning is in
 		   bottom-left corner" coordinates system. */
