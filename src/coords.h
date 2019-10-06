@@ -127,11 +127,14 @@ namespace SlavGPS {
 		F = 'F',
 		G = 'G',
 		H = 'H',
+
 		J = 'J',
 		K = 'K',
 		L = 'L',
 		M = 'M',
+
 		N = 'N',
+
 		P = 'P',
 		Q = 'Q',
 		R = 'R',
@@ -144,7 +147,7 @@ namespace SlavGPS {
 		Y = 'Y',
 		Z = 'Z',
 
-		None
+		None = '-',
 	};
 
 

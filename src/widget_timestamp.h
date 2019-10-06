@@ -47,7 +47,11 @@ namespace SlavGPS {
 	public:
 		TimestampWidget(QWidget * parent = NULL);
 		void set_timestamp(const Time & timestamp, const Coord & coord);
+
+		/* Erase all contents from widget, as if nothing was
+		   presented by the widget. */
 		void clear_widget(void);
+
 		Time get_timestamp(void) const;
 
 		/* Set coordinate of an object, for which a timestamp is being displayed. */

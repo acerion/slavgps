@@ -64,6 +64,8 @@ namespace SlavGPS {
 
 		void set_text(const QString & east_label, const QString & east_tooltip, const QString & north_label, const QString & north_tooltip);
 
+		/* Erase all contents from widget, as if nothing was
+		   presented by the widget. */
 		void clear_widget(void);
 
 	signals:

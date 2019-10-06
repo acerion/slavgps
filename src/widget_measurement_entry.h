@@ -185,7 +185,8 @@ namespace SlavGPS {
 
 
 
-
+		/* Erase all contents from widget, as if nothing was
+		   presented by the widget. */
 		void clear_widget(void)
 		{
 			this->meas_widget->spin->clear();

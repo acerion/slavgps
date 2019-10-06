@@ -62,7 +62,10 @@ namespace SlavGPS {
 		FileSelectorWidget(enum QFileDialog::Option options, enum QFileDialog::FileMode mode, const QString & title, QWidget * parent = NULL);
 		~FileSelectorWidget();
 
+		/* Erase all contents from widget, as if nothing was
+		   presented by the widget. */
 		void clear_widget(void);
+
 		void set_enabled(bool enabled);
 
 		void preselect_file_full_path(const QString & file_path);

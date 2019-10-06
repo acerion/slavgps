@@ -159,7 +159,7 @@ LatEntryWidget::LatEntryWidget(const SGVariant & value, QWidget * parent) : QDou
 
 void LatEntryWidget::clear_widget(void)
 {
-	/* TODO: implement. */
+	this->clear();
 }
 
 
@@ -180,5 +180,5 @@ LonEntryWidget::LonEntryWidget(const SGVariant & value, QWidget * parent) : QDou
 
 void LonEntryWidget::clear_widget(void)
 {
-	/* TODO: implement. */
+	this->clear();
 }

@@ -172,5 +172,8 @@ void UTMEntryWidget::set_text(const QString & east_label, const QString & east_t
 
 void UTMEntryWidget::clear_widget(void)
 {
-	/* TODO: implement. */
+	this->easting_spin->clear();
+	this->northing_spin->clear();
+	this->zone_spin->clear();
+	this->band_letter_combo->setCurrentText(QString(QChar((char) UTMLetter::None)));
 }

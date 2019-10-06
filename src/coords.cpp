@@ -75,7 +75,7 @@ using namespace SlavGPS;
 
 static const char * utm_letters = "ABCDEFGH" "JKLM"  "N" "PQRSTUVWXYZ";
 /* UTM "none band" symbol shall be a single letter, just like symbols for valid UTM bands. */
-static const char utm_none_band_symbol = '-';
+static const char utm_none_band_symbol = '-'; /* The same as UTMLetter::None. */
 
 
 
@@ -648,6 +648,16 @@ bool Coords::unit_tests(void)
 
 		//N = , Z = 33, L = S"
 	}
+
+	/* Print some UTMLetters letters, just to verify that I know how to
+	   convert UTMLetter enum to string. */
+	{
+		qDebug() << SG_PREFIX_I << "UTM letter A" << (int) UTMLetter::A << QString(QChar((char) UTMLetter::A));
+		qDebug() << SG_PREFIX_I << "UTM letter B" << (int) UTMLetter::B << QString(QChar((char) UTMLetter::B));
+		qDebug() << SG_PREFIX_I << "UTM letter C" << (int) UTMLetter::C << QString(QChar((char) UTMLetter::C));
+		qDebug() << SG_PREFIX_I << "UTM letter None" << (int) UTMLetter::None << QString(QChar((char) UTMLetter::None));
+	}
+
 
 
 	return true;

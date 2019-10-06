@@ -51,6 +51,8 @@ namespace SlavGPS {
 	public:
 		LatEntryWidget(const SGVariant & value, QWidget * parent = NULL);
 
+		/* Erase all contents from widget, as if nothing was
+		   presented by the widget. */
 		void clear_widget(void);
 	};
 
@@ -62,6 +64,8 @@ namespace SlavGPS {
 	public:
 		LonEntryWidget(const SGVariant & value, QWidget * parent = NULL);
 
+		/* Erase all contents from widget, as if nothing was
+		   presented by the widget. */
 		void clear_widget(void);
 	};
 
@@ -87,6 +91,8 @@ namespace SlavGPS {
 
 		void set_text(const QString & latitude_label, const QString & latitude_tooltip, const QString & longitude_label, const QString & longitude_tooltip);
 
+		/* Erase all contents from widget, as if nothing was
+		   presented by the widget. */
 		void clear_widget(void);
 
 	signals:
