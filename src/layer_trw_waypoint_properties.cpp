@@ -111,10 +111,10 @@ sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->widgets_row++;
 
 	/* TODO_MAYBE: perhaps add file filter for image files? */
-	this->file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), this);
-	this->file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Any);
+	this->image_file_selector = new FileSelectorWidget(QFileDialog::Option(0), QFileDialog::ExistingFile, tr("Select file"), this);
+	this->image_file_selector->set_file_type_filter(FileSelectorWidget::FileTypeFilter::Any);
 	this->grid->addWidget(new QLabel(tr("Image:")), this->widgets_row, left_col);
-	this->grid->addWidget(this->file_selector, this->widgets_row, right_col);
+	this->grid->addWidget(this->image_file_selector, this->widgets_row, right_col);
 
 	this->widgets_row++;
 
@@ -126,16 +126,16 @@ sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
 	this->widgets_row++;
 
 
-	connect(this->name_entry, SIGNAL (textEdited(const QString &)),         this, SLOT (sync_name_entry_to_current_point_cb(const QString &)));
-	connect(this->coord_widget, SIGNAL (value_changed(void)),               this, SLOT (sync_coord_widget_to_current_point_cb(void)));
-	connect(this->altitude_widget->meas_widget, SIGNAL (value_changed()),   this, SLOT (sync_altitude_widget_to_current_point_cb(void)));
-	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)),    this, SLOT (sync_timestamp_widget_to_current_point_cb(const Time &)));
-	connect(this->timestamp_widget, SIGNAL (value_is_reset()),              this, SLOT (sync_empty_timestamp_widget_to_current_point_cb(void)));
+	connect(this->name_entry, SIGNAL (editingFinished()),                    this, SLOT (sync_name_entry_to_current_point_cb()));
+	connect(this->coord_widget, SIGNAL (value_changed(void)),                this, SLOT (sync_coord_widget_to_current_point_cb(void)));
+	connect(this->altitude_widget->meas_widget, SIGNAL (value_changed()),    this, SLOT (sync_altitude_widget_to_current_point_cb(void)));
+	connect(this->timestamp_widget, SIGNAL (value_is_set(const Time &)),     this, SLOT (sync_timestamp_widget_to_current_point_cb(const Time &)));
+	connect(this->timestamp_widget, SIGNAL (value_is_reset()),               this, SLOT (sync_empty_timestamp_widget_to_current_point_cb(void)));
 
-	connect(this->comment_entry, SIGNAL (textEdited(const QString &)),      this, SLOT (sync_comment_entry_to_current_point_cb(const QString &)));
-	connect(this->description_entry, SIGNAL (textEdited(const QString &)),  this, SLOT (sync_description_entry_to_current_point_cb(const QString &)));
-	connect(this->file_selector, SIGNAL (textEdited(const QString &)),      this, SLOT (sync_file_selector_to_current_point_cb(void)));
-	connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)),          this, SLOT (sync_symbol_combo_to_current_point_cb(int)));
+	connect(this->comment_entry, SIGNAL (editingFinished()),            this, SLOT (sync_comment_entry_to_current_point_cb()));
+	connect(this->description_entry, SIGNAL (editingFinished()),        this, SLOT (sync_description_entry_to_current_point_cb()));
+	connect(this->image_file_selector, SIGNAL (selection_is_made()),    this, SLOT (sync_image_file_selector_to_current_point_cb(void)));
+	connect(this->symbol_combo, SIGNAL (currentIndexChanged(int)),      this, SLOT (sync_symbol_combo_to_current_point_cb(int)));
 
 
 	return sg_ret::ok;
@@ -213,7 +213,7 @@ sg_ret WpPropertiesDialog::dialog_data_set(Waypoint * wp)
 	this->altitude_widget->set_value_iu(this->current_point->altitude);
 	this->comment_entry->setText(this->current_point->comment);
 	this->description_entry->setText(this->current_point->description);
-	this->file_selector->preselect_file_full_path(this->current_point->image_full_path);
+	this->image_file_selector->preselect_file_full_path(this->current_point->image_full_path);
 
 	const QString & symbol_name = this->current_point->symbol_name.isEmpty() ? GarminSymbols::none_symbol_name : this->current_point->symbol_name;
 	const int selected_idx = this->symbol_combo->findText(symbol_name);
@@ -241,7 +241,7 @@ void WpPropertiesWidget::clear_widgets(void)
 	/* Clear waypoint-specific values. */
 	this->comment_entry->setText("");
 	this->description_entry->setText("");
-	this->file_selector->clear_widget();
+	this->image_file_selector->clear_widget();
 	this->symbol_combo->setCurrentIndex(0); /* Index of first added item, which should be "none" symbol. */
 
 
@@ -271,15 +271,25 @@ void WpPropertiesDialog::dialog_data_reset(void)
 
 
 
+/**
+   @reviewed-on 2019-11-10
+*/
 void WpPropertiesDialog::sync_symbol_combo_to_current_point_cb(int index_in_combo)
 {
+	qDebug() << SG_PREFIX_SLOT << "Index combo =" << index_in_combo << ", symbol name =" << this->symbol_combo->itemText(index_in_combo);
+
 	if (nullptr == this->current_point) {
 		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
 		return;
 	}
+	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
+		return;
+	}
+
 	this->current_point->set_symbol_name(this->symbol_combo->itemText(index_in_combo));
 	this->current_point->set_new_waypoint_icon();
-	this->current_point->emit_tree_item_changed("Updating wp icon (" + QString(index_in_combo) + "/" + this->symbol_combo->itemText(index_in_combo) + ") in wp propertied dialog");
+	this->current_point->emit_tree_item_changed("Updating wp icon from wp propertied dialog");
 }
 
 
@@ -294,15 +304,14 @@ void WpPropertiesDialog::set_dialog_title(const QString & title)
 
 void WpPropertiesDialog::sync_coord_widget_to_current_point_cb(void) /* Slot. */
 {
-	if (NULL == this->current_point) {
-		qDebug() << SG_PREFIX_I << "=========== return because no current point";
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
 		return;
 	}
 	if (this->skip_syncing_to_current_point) {
-		qDebug() << SG_PREFIX_I << "=========== return because current point block";
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
 		return;
 	}
-
 
 	const Coord old_coord = this->current_point->coord;
 	qDebug() << SG_PREFIX_I << "kamil current point coord 1:" << this->current_point->coord;
@@ -330,12 +339,17 @@ void WpPropertiesDialog::sync_coord_widget_to_current_point_cb(void) /* Slot. */
 
 
 
+/**
+   @reviewed-on 2019-11-10
+*/
 void WpPropertiesDialog::sync_altitude_widget_to_current_point_cb(void) /* Slot. */
 {
-	if (NULL == this->current_point) {
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
 		return;
 	}
 	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
 		return;
 	}
 
@@ -346,15 +360,21 @@ void WpPropertiesDialog::sync_altitude_widget_to_current_point_cb(void) /* Slot.
 
 
 
-/* Set timestamp of current waypoint. */
+/**
+   Set timestamp of current waypoint. 
+
+   @reviewed-on 2019-11-10
+*/
 bool WpPropertiesDialog::sync_timestamp_widget_to_current_point_cb(const Time & timestamp)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received new timestamp" << timestamp;
 
-	if (NULL == this->current_point) {
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
 		return false;
 	}
 	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
 		return false;
 	}
 
@@ -366,15 +386,21 @@ bool WpPropertiesDialog::sync_timestamp_widget_to_current_point_cb(const Time & 
 
 
 
-/* Clear timestamp of current waypoint. */
+/**
+   Clear timestamp of current waypoint.
+
+   @reviewed-on 2019-11-10
+*/
 bool WpPropertiesDialog::sync_empty_timestamp_widget_to_current_point_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT << "Slot received zero timestamp";
 
-	if (NULL == this->current_point) {
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
 		return false;
 	}
 	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
 		return false;
 	}
 
@@ -386,42 +412,96 @@ bool WpPropertiesDialog::sync_empty_timestamp_widget_to_current_point_cb(void)
 
 
 
-void WpPropertiesDialog::sync_comment_entry_to_current_point_cb(const QString & comment)
+/**
+   @reviewed-on 2019-11-10
+*/
+void WpPropertiesDialog::sync_comment_entry_to_current_point_cb(void)
 {
-	/* TODO: implement. */
+	const QString comment = this->comment_entry->text();
+	qDebug() << SG_PREFIX_SLOT << "Slot received new comment" << comment;
+
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
+		return;
+	}
+	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
+		return;
+	}
+
+	this->current_point->set_comment(comment);
 }
 
 
 
 
-void WpPropertiesDialog::sync_description_entry_to_current_point_cb(const QString & description)
+/**
+   @reviewed-on 2019-11-10
+*/
+void WpPropertiesDialog::sync_description_entry_to_current_point_cb(void)
 {
-	/* TODO: implement. */
+	const QString description = this->description_entry->text();
+	qDebug() << SG_PREFIX_SLOT << "Slot received new description" << description;
+
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
+		return;
+	}
+	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
+		return;
+	}
+
+	this->current_point->set_description(description);
 }
 
 
 
 
-void WpPropertiesDialog::sync_file_selector_to_current_point_cb(void)
+/**
+   @reviewed-on 2019-11-10
+*/
+void WpPropertiesDialog::sync_image_file_selector_to_current_point_cb(void)
 {
-	/* TODO: implement.
-	 */
+	const QString path = this->image_file_selector->get_selected_file_full_path();
+	qDebug() << SG_PREFIX_SLOT << "Image file path =" << path;
+
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
+		return;
+	}
+	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
+		return;
+	}
+
+	this->current_point->set_image_full_path(path);
+	this->current_point->emit_tree_item_changed("Updating wp image from wp propertied dialog");
 }
 
 
 
 
-bool WpPropertiesDialog::sync_name_entry_to_current_point_cb(const QString & new_name) /* Slot. */
+/**
+   @reviewed-on 2019-11-10
+*/
+bool WpPropertiesDialog::sync_name_entry_to_current_point_cb(void) /* Slot. */
 {
-	if (NULL == this->current_point) {
+	const QString new_name = this->name_entry->text();
+	qDebug() << SG_PREFIX_SLOT << "Slot received new name" << new_name;
+
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
 		return false;
 	}
 	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
 		return false;
 	}
 
 	this->current_point->set_name(new_name);
 	this->current_point->propagate_new_waypoint_name();
+	this->current_point->emit_tree_item_changed("Updating wp name from wp propertied dialog");
 
 	return true;
 }
@@ -431,7 +511,7 @@ bool WpPropertiesDialog::sync_name_entry_to_current_point_cb(const QString & new
 
 void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 {
-	qDebug() << SG_PREFIX_I << "Handling dialog action" << action;
+	qDebug() << SG_PREFIX_SLOT << "Handling dialog action" << action;
 
 	Waypoint * wp = this->current_point;
 	if (!wp) {
@@ -486,6 +566,14 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 void WpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
 {
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
+		return;
+	}
+	if (this->skip_syncing_to_current_point) {
+		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
+		return;
+	}
 	/* TODO: implement. */
 }
 

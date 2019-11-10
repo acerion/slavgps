@@ -68,7 +68,7 @@ namespace SlavGPS {
 
 		QLineEdit * comment_entry = NULL;
 		QLineEdit * description_entry = NULL;
-		FileSelectorWidget * file_selector = NULL;
+		FileSelectorWidget * image_file_selector = NULL;
 		QComboBox * symbol_combo = NULL;
 
 		QSignalMapper * signal_mapper = NULL;
@@ -109,16 +109,16 @@ namespace SlavGPS {
 		void tree_view_selection_changed_cb(void);
 
 	private slots:
-		bool sync_name_entry_to_current_point_cb(const QString & name);
+		bool sync_name_entry_to_current_point_cb(void);
 		void sync_coord_widget_to_current_point_cb(void);
 		void sync_altitude_widget_to_current_point_cb(void);
 		bool sync_timestamp_widget_to_current_point_cb(const Time & timestamp);
 		bool sync_empty_timestamp_widget_to_current_point_cb(void);
 
 
-		void sync_comment_entry_to_current_point_cb(const QString &);
-		void sync_description_entry_to_current_point_cb(const QString &);
-		void sync_file_selector_to_current_point_cb(void);
+		void sync_comment_entry_to_current_point_cb(void);
+		void sync_description_entry_to_current_point_cb(void);
+		void sync_image_file_selector_to_current_point_cb(void);
 		void sync_symbol_combo_to_current_point_cb(int index_in_combo);
 
 	signals:
@@ -163,7 +163,7 @@ namespace SlavGPS {
 
 		QLineEdit * comment_entry = NULL;
 		QLineEdit * description_entry = NULL;
-		FileSelectorWidget * file_selector = NULL;
+		FileSelectorWidget * image_file_selector = NULL;
 		QComboBox * symbol_combo = NULL;
 	};
 #endif
