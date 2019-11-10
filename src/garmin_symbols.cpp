@@ -80,7 +80,7 @@ static struct {
 	/* "symbol_name" are in 'Title Case' like in gpsbabel. This is needed for
 	   devices like Garmin Oregon 450. Old exports with lower case
 	   identifiers will be automatically converted to the version defined
-	   inside the table by vikwaypoint.c:vik_waypoint_set_symbol().
+	   inside the table by waypoint.cpp:set_symbol_name().
 	   The hash itself tries to keep all operations case independent
 	   using str_equal_casefold() and str_hash_casefold(). This is
 	   necessary to allow GarminSymbol::get_normalized_symbol_name() to match the lower case

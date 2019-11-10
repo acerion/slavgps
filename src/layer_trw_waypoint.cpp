@@ -104,7 +104,7 @@ Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
 	this->set_type(wp.type);
 	this->set_url(wp.url);
 	this->set_image_full_path(wp.image_full_path);
-	this->set_symbol(wp.symbol_name);
+	this->set_symbol_name(wp.symbol_name);
 
 	this->drawn_image_rect = wp.drawn_image_rect;
 }
@@ -177,7 +177,7 @@ void Waypoint::set_image_full_path(const QString & new_image_full_path)
 
 
 /* Sets both symbol name and symbol pixmap. The pixmap is fetched from GarminSymbols. */
-void Waypoint::set_symbol(const QString & new_symbol_name)
+void Waypoint::set_symbol_name(const QString & new_symbol_name)
 {
 	/* this->symbol_pixmap is just a reference, so no need to free it. */
 
@@ -486,13 +486,22 @@ bool Waypoint::show_properties_dialog_cb(void)
 
 
 
+
 QString Waypoint::get_tooltip(void) const
 {
-	if (!this->comment.isEmpty()) {
-		return this->comment;
-	} else {
-		return this->description;
+	QString result;
+	if (!GarminSymbols::is_none_symbol_name(this->symbol_name)) {
+		/* TODO: test that symbol name is visible in tooltip. */
+		result += this->symbol_name + "\n";
 	}
+
+	if (!this->comment.isEmpty()) {
+		result += this->comment;
+	} else {
+		result += this->description;
+	}
+
+	return result;
 }
 
 

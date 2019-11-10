@@ -73,7 +73,7 @@ namespace SlavGPS {
 		void set_type(const QString & new_type);
 		void set_url(const QString & new_url);
 		void set_image_full_path(const QString & new_image_full_path);
-		void set_symbol(const QString & new_symbol_name);
+		void set_symbol_name(const QString & new_symbol_name);
 
 		bool apply_dem_data(bool skip_existing_elevations);
 		void apply_dem_data_common(bool skip_existing_elevations);

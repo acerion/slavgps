@@ -428,7 +428,7 @@ Waypoint * GPSPointParser::create_waypoint(CoordMode coordinate_mode, const QStr
 	}
 
 	if (this->line_symbol) {
-		wp->set_symbol(this->line_symbol);
+		wp->set_symbol_name(this->line_symbol);
 	}
 
 	return wp;

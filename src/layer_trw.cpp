@@ -2302,7 +2302,7 @@ void LayerTRW::reset_waypoints()
 		   from GarminSymbols, with current "waypoint's symbol
 		   size" setting.  The symbol is shown in viewport */
 		const QString tmp_symbol_name = wp->symbol_name;
-		wp->set_symbol(tmp_symbol_name);
+		wp->set_symbol_name(tmp_symbol_name);
 	}
 }
 

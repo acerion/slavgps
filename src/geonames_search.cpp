@@ -104,15 +104,15 @@ Waypoint * Geoname::create_waypoint(CoordMode coord_mode) const
 	   Only a few values supported as only a few symbols make sense. */
 	if (!this->feature.isEmpty()) {
 		if (this->feature == "city") {
-			wp->set_symbol("city (medium)");
+			wp->set_symbol_name("city (medium)");
 		} else if (this->feature == "edu") {
-			wp->set_symbol("school");
+			wp->set_symbol_name("school");
 		} else if (this->feature == "airport") {
-			wp->set_symbol("airport");
+			wp->set_symbol_name("airport");
 		} else if (this->feature == "mountain") {
-			wp->set_symbol("summit");
+			wp->set_symbol_name("summit");
 		} else if (this->feature == "forest") {
-			wp->set_symbol("forest");
+			wp->set_symbol_name("forest");
 		} else {
 			; /* Pass. Feature type for which we can't find suitable symbol. */
 		}

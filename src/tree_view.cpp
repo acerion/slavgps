@@ -282,22 +282,16 @@ void TreeView::detach_children(TreeItem * parent_tree_item)
 
 
 
+/**
+   @reviewed-on: 2019-10-10
+*/
 void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 {
 	if (!tree_item->index.isValid()) {
 		qDebug() << SG_PREFIX_E << "Invalid item index";
 		return;
 	}
-
-	const QIcon & icon = tree_item->icon;
-
-	if (icon.isNull()) {
-		/* Not an error. Perhaps there is no resource defined for an icon. */
-		return;
-	}
-
-	qDebug() << SG_PREFIX_I;
-	/* Icon is a property of TreeItemPropertyID::TheItem column. */
+	qDebug() << SG_PREFIX_I << "Setting icon for tree item" << tree_item->name;
 
 	QStandardItem * parent_item = this->tree_model->itemFromIndex(tree_item->index.parent());
 	if (!parent_item) {
@@ -305,11 +299,12 @@ void TreeView::apply_tree_item_icon(const TreeItem * tree_item)
 		qDebug() << SG_PREFIX_I << "Querying Top Level Item for item" << tree_item->index.row() << tree_item->index.column();
 		parent_item = this->tree_model->invisibleRootItem();
 	}
-	qDebug() << SG_PREFIX_I;
-	QStandardItem * ch = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
-	ch->setIcon(icon);
 
-	qDebug() << SG_PREFIX_I;
+	/* Icon is a property of TreeItemPropertyID::TheItem column. */
+	QStandardItem * child_item = parent_item->child(tree_item->index.row(), this->property_id_to_column_idx(TreeItemPropertyID::TheItem));
+	/* Sometimes the icon may be null (QIcon::isNull()) - this can
+	   happen e.g. when user selects "none" icon for waypoint. */
+	child_item->setIcon(tree_item->icon);
 }
 
 

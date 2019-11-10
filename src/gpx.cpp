@@ -430,7 +430,7 @@ static void gpx_end(GPXImporter * importer, char const * el)
 		break;
 
 	case tt_wpt_sym:
-		importer->wp->set_symbol(importer->cdata);
+		importer->wp->set_symbol_name(importer->cdata);
 		importer->cdata.clear();
 		break;
 

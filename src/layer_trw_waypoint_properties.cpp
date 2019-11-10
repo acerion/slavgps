@@ -273,10 +273,13 @@ void WpPropertiesDialog::dialog_data_reset(void)
 
 void WpPropertiesDialog::sync_symbol_combo_to_current_point_cb(int index_in_combo)
 {
-	/* TODO
-	   TODO: This must also include name of symbol in tooltip in tree view.
+	if (nullptr == this->current_point) {
+		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
+		return;
+	}
+	this->current_point->set_symbol_name(this->symbol_combo->itemText(index_in_combo));
 	this->current_point->set_new_waypoint_icon();
-	*/
+	this->current_point->emit_tree_item_changed("Updating wp icon (" + QString(index_in_combo) + "/" + this->symbol_combo->itemText(index_in_combo) + ") in wp propertied dialog");
 }
 
 
