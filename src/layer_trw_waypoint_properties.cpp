@@ -57,15 +57,6 @@ using namespace SlavGPS;
 
 
 
-
-/*
-  TODO_LATER: changes to coordinates of waypoint need to be translated
-  "in real time" (without the need to close the dialog window) to
-  position of waypoint on viewport.
-
-  See how this is done for Trackpoint in Trackpoint properties dialog.
-*/
-
 /*
   TODO_LATER: changes in coordinates of waypoint need to be passed to
   datetime button, because in some cases (in World time reference
