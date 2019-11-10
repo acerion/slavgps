@@ -206,6 +206,7 @@ namespace SlavGPS {
 
 		bool try_clicking_waypoint(QMouseEvent * ev, WaypointSearch & wp_search, LayerToolSelect * tool);
 		bool try_clicking_trackpoint(QMouseEvent * ev, TrackpointSearch & tp_search, LayerTRWTracks & tracks_or_routes, LayerToolSelect * tool);
+		bool try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const LatLonBBox & viewport_bbox, GisViewport * gisview, LayerToolSelect * select_tool);
 
 		bool move_viewport_to_show_all(GisViewport * gisview);
 

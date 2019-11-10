@@ -140,28 +140,8 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 		}
 	}
 
-	const bool tracks_visible = this->tracks.is_visible();
-	const bool tracks_inside = BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox);
-	qDebug() << SG_PREFIX_I << "Tracks are" << (tracks_visible ? "visible" : "invisible") << "and" << (tracks_inside ? "inside" : "outside") << "of viewport";
-	if (tracks_visible && tracks_inside) {
-		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
-		if (true == this->try_clicking_trackpoint(ev, tp_search, this->get_tracks_node(), select_tool)) {
-			this->emit_tree_item_changed("TRW layer changed after selecting tp in track with 'click'");
-			return true;
-		}
-	}
-
-
-	/* Try again for routes. */
-	const bool routes_visible = this->routes.is_visible();
-	const bool routes_inside = BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox);
-	qDebug() << SG_PREFIX_I << "Routes are" << (routes_visible ? "visible" : "invisible") << "and" << (routes_inside ? "inside" : "outside") << "of viewport";
-	if (routes_visible && routes_inside) {
-		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
-		if (true == this->try_clicking_trackpoint(ev, tp_search, this->get_routes_node(), select_tool)) {
-			this->emit_tree_item_changed("TRW layer changed after selecting tp in route with 'click'");
-			return true;
-		}
+	if (true == this->try_clicking_track_or_route_trackpoint(ev, viewport_bbox, gisview, select_tool)) {
+		return true;
 	}
 
 
@@ -188,6 +168,40 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 		   deselected. */
 		this->emit_tree_item_changed("TRW layer changed after no object was hit with 'click'");
 	}
+
+	return false;
+}
+
+
+
+
+bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const LatLonBBox & viewport_bbox, GisViewport * gisview, LayerToolSelect * select_tool)
+{
+	/* First try for tracks. */
+	const bool tracks_visible = this->get_tracks_node().is_visible();
+	const bool tracks_inside = BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox);
+	qDebug() << SG_PREFIX_I << "Tracks are" << (tracks_visible ? "visible" : "invisible") << "and" << (tracks_inside ? "inside" : "outside") << "of viewport";
+	if (tracks_visible && tracks_inside) {
+		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
+		if (true == this->try_clicking_trackpoint(ev, tp_search, this->get_tracks_node(), select_tool)) {
+			this->emit_tree_item_changed("TRW layer changed after selecting tp in track with 'click'");
+			return true;
+		}
+	}
+
+
+	/* Try again for routes. */
+	const bool routes_visible = this->routes.is_visible();
+	const bool routes_inside = BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox);
+	qDebug() << SG_PREFIX_I << "Routes are" << (routes_visible ? "visible" : "invisible") << "and" << (routes_inside ? "inside" : "outside") << "of viewport";
+	if (routes_visible && routes_inside) {
+		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
+		if (true == this->try_clicking_trackpoint(ev, tp_search, this->get_routes_node(), select_tool)) {
+			this->emit_tree_item_changed("TRW layer changed after selecting tp in route with 'click'");
+			return true;
+		}
+	}
+
 
 	return false;
 }
@@ -1315,7 +1329,9 @@ LayerToolTRWEditTrackpoint::~LayerToolTRWEditTrackpoint()
 
 
 /**
- * On 'initial' click: search for the nearest trackpoint or routepoint and store it as the current trackpoint.
+   On 'initial' click: search for the nearest trackpoint or routepoint
+   and store it as the current trackpoint.
+
  * Then update the viewport, statusbar and edit dialog to draw the point as being selected and it's information.
  * On subsequent clicks: (as the current trackpoint is defined) and the click is very near the same point
  * then initiate the move operation to drag the point to a new destination.
@@ -1361,19 +1377,11 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_click(Layer * layer
 		}
 	}
 
-	if (trw->get_tracks_node().is_visible()) {
-		TrackpointSearch tp_search(ev->x(), ev->y(), this->gisview);
-		if (trw->try_clicking_trackpoint(ev, tp_search, trw->get_tracks_node(), this)) {
-			return ToolStatus::Ack;
-		}
+
+	if (true == trw->try_clicking_track_or_route_trackpoint(ev, gisview->get_bbox(), this->gisview, this)) {
+		return ToolStatus::Ack;
 	}
 
-	if (trw->get_routes_node().is_visible()) {
-		TrackpointSearch tp_search(ev->x(), ev->y(), this->gisview);
-		if (trw->try_clicking_trackpoint(ev, tp_search, trw->get_routes_node(), this)) {
-			return ToolStatus::Ack;
-		}
-	}
 
 	/* The mouse click wasn't near enough any Trackpoint that belongs to any tracks/routes in this layer. */
 	return ToolStatus::Ignored;
