@@ -793,7 +793,7 @@ void LayerTRWWaypoints::draw_tree_item(GisViewport * gisview, bool highlight_sel
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 	const LatLonBBox viewport_bbox = gisview->get_bbox();
 
-	if (BBOX_INTERSECT (this->bbox, viewport_bbox)) {
+	if (this->bbox.intersects_with(viewport_bbox)) {
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 			qDebug() << SG_PREFIX_I << "Will now draw tree item" << (*iter)->type_id << (*iter)->name;
 			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);

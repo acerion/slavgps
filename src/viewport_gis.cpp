@@ -1415,7 +1415,7 @@ sg_ret GisViewport::coord_to_screen_pos(const Coord & coord_in, ScreenPos & resu
 */
 void GisViewport::draw_bbox(const LatLonBBox & bbox, const QPen & pen)
 {
-	if (!BBOX_INTERSECT(bbox, this->get_bbox())) {
+	if (!bbox.intersects_with(this->get_bbox())) {
 		qDebug() << SG_PREFIX_I << "Not drawing bbox" << bbox << ", does not intersects with viewport bbox" << this->get_bbox();
 		return;
 	}

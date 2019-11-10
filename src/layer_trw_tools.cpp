@@ -122,7 +122,7 @@ bool LayerTRW::handle_select_tool_click(QMouseEvent * ev, GisViewport * gisview,
 	/* Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track. */
 
 	const bool waypoints_visible = this->waypoints.is_visible();
-	const bool waypoints_inside = BBOX_INTERSECT (this->waypoints.get_bbox(), viewport_bbox);
+	const bool waypoints_inside = this->waypoints.get_bbox().intersects_with(viewport_bbox);
 	qDebug() << SG_PREFIX_I << "Waypoints are" << (waypoints_visible ? "visible" : "invisible") << "and" << (waypoints_inside ? "inside" : "outside") << "of viewport";
 	if (waypoints_visible && waypoints_inside) {
 		WaypointSearch wp_search(ev->x(), ev->y(), gisview);
@@ -179,7 +179,7 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 {
 	/* First try for tracks. */
 	const bool tracks_visible = this->get_tracks_node().is_visible();
-	const bool tracks_inside = BBOX_INTERSECT (this->tracks.get_bbox(), viewport_bbox);
+	const bool tracks_inside = this->tracks.get_bbox().intersects_with(viewport_bbox);
 	qDebug() << SG_PREFIX_I << "Tracks are" << (tracks_visible ? "visible" : "invisible") << "and" << (tracks_inside ? "inside" : "outside") << "of viewport";
 	if (tracks_visible && tracks_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);
@@ -192,7 +192,7 @@ bool LayerTRW::try_clicking_track_or_route_trackpoint(QMouseEvent * ev, const La
 
 	/* Try again for routes. */
 	const bool routes_visible = this->routes.is_visible();
-	const bool routes_inside = BBOX_INTERSECT (this->routes.get_bbox(), viewport_bbox);
+	const bool routes_inside = this->routes.get_bbox().intersects_with(viewport_bbox);
 	qDebug() << SG_PREFIX_I << "Routes are" << (routes_visible ? "visible" : "invisible") << "and" << (routes_inside ? "inside" : "outside") << "of viewport";
 	if (routes_visible && routes_inside) {
 		TrackpointSearch tp_search(ev->x(), ev->y(), gisview);

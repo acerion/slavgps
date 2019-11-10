@@ -415,7 +415,7 @@ void LayerTRWTracks::track_search_closest_tp(TrackpointSearch & search) const
 			continue;
 		}
 
-		if (!BBOX_INTERSECT (trk->bbox, search.bbox)) {
+		if (!trk->bbox.intersects_with(search.bbox)) {
 			continue;
 		}
 
@@ -919,7 +919,7 @@ void LayerTRWTracks::draw_tree_item(GisViewport * gisview, bool highlight_select
 	const bool item_is_selected = parent_is_selected || g_selected.is_in_set(this);
 
 #ifdef K_TODO_MAYBE
-	if (BBOX_INTERSECT (this->bbox, viewport->get_bbox())) {
+	if (this->bbox.intersects_with(viewport->get_bbox())) {
 #endif
 		for (auto iter = this->children_list.begin(); iter != this->children_list.end(); iter++) {
 			(*iter)->draw_tree_item(gisview, highlight_selected, item_is_selected);

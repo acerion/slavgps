@@ -375,7 +375,7 @@ void LayerGeoref::draw_tree_item(GisViewport * gisview, bool highlight_selected,
 	qDebug() << SG_PREFIX_I << "GisViewport bbox" << viewport_bbox;
 	qDebug() << SG_PREFIX_I << "Image bbox   " << image_bbox;
 
-	if (!BBOX_INTERSECT (viewport_bbox, image_bbox)) {
+	if (!viewport_bbox.intersects_with(image_bbox)) {
 		qDebug() << SG_PREFIX_I << "BBoxes don't intersect";
 		return;
 	}

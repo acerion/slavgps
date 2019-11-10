@@ -818,7 +818,7 @@ bool DEM::intersect(const LatLonBBox & other_bbox)
 	bbox.west = dem_southwest.lon;
 	bbox.validate();
 
-	const bool result = BBOX_INTERSECT(bbox, other_bbox);
+	const bool result = bbox.intersects_with(other_bbox);
 
 	qDebug() << SG_PREFIX_I << "DEM's bbox:" << bbox;
 	qDebug() << SG_PREFIX_I << "Other bbox:" << other_bbox;

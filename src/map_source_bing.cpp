@@ -212,7 +212,7 @@ void MapSourceBing::add_copyright(GisViewport * gisview, const LatLonBBox & bbox
 	for (auto iter = this->providers.begin(); iter != this->providers.end(); iter++) {
 		const BingImageryProvider * current = *iter;
 		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bbox.south, current->bbox.north, current->bbox.east, current->bbox.west, current->zoom_min, current->zoom_max); */
-		if (BBOX_INTERSECT(bbox, current->bbox) &&
+		if (bbox.intersects_with(current->bbox) &&
 		    (tile_scale.get_tile_zoom_level()) > current->zoom_min &&
 		    (tile_scale.get_tile_zoom_level()) < current->zoom_max) {
 

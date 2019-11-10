@@ -827,7 +827,7 @@ void LayerTRWPainter::draw_track_bg_sub(Track * trk, bool do_highlight)
 
 void LayerTRWPainter::draw_track(Track * trk, GisViewport * a_gisview, bool do_highlight)
 {
-	if (!BBOX_INTERSECT (trk->bbox, a_gisview->get_bbox())) {
+	if (!trk->bbox.intersects_with(a_gisview->get_bbox())) {
 #if 0
 		qDebug() << SG_PREFIX_D << "Track bbox:" << trk->bbox;
 		qDebug() << SG_PREFIX_D << "GisViewport bbox:" << a_gisview->get_bbox();
@@ -1109,7 +1109,7 @@ void LayerTRWPainter::draw_waypoint(Waypoint * wp, GisViewport * a_gisview, bool
 		return;
 	}
 
-	if (BBOX_INTERSECT (this->trw->get_waypoints_node().get_bbox(), a_gisview->get_bbox())) {
+	if (this->trw->get_waypoints_node().get_bbox().intersects_with(a_gisview->get_bbox())) {
 		this->draw_waypoint_sub(wp, do_highlight);
 	}
 }

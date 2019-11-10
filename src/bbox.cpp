@@ -186,6 +186,17 @@ bool LatLonBBox::contains_bbox(const LatLonBBox & bbox) const
 
 
 
+bool LatLonBBox::intersects_with(const LatLonBBox & bbox) const
+{
+	return this->south.get_value() < bbox.north.get_value()
+		&& this->north.get_value() > bbox.south.get_value()
+		&& this->east.get_value() > bbox.west.get_value()
+		&& this->west.get_value() < bbox.east.get_value();
+}
+
+
+
+
 sg_ret LatLonBBox::expand_with_lat_lon(const LatLon & lat_lon)
 {
 	if (!lat_lon.is_valid()) {

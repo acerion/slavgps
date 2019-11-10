@@ -107,6 +107,17 @@ namespace SlavGPS {
 		*/
 		bool contains_bbox(const LatLonBBox & bbox) const;
 
+		/**
+		 * +--------+
+		 * |this    |
+		 * |     +--+----+
+		 * |     |  |    |
+		 * +-----+--+    |
+		 *       |   bbox|
+		 *       +-------+
+		 */
+		bool intersects_with(const LatLonBBox & bbox) const;
+
 		/* Make the given LatLonBBox larger by expanding it to include given LatLon. */
 		sg_ret expand_with_lat_lon(const LatLon & lat_lon);
 
@@ -136,20 +147,6 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
-
-
-
-
-/**
- * +--------+
- * |a       |
- * |     +--+----+
- * |     |  |    |
- * +-----+--+    |
- *       |      b|
- *       +-------+
- */
-#define BBOX_INTERSECT(a,b) ((a).south.get_value() < (b).north.get_value() && (a).north.get_value() > (b).south.get_value() && (a).east.get_value() > (b).west.get_value() && (a).west.get_value() < (b).east.get_value())
 
 
 
