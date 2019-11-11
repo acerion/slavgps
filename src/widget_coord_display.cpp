@@ -79,20 +79,43 @@ CoordEntryWidget::CoordEntryWidget(CoordMode coord_mode, QWidget * parent)
 	delete old;
 	this->setLayout(this->vbox);
 
+	this->set_coord_mode(coord_mode);
+
+	this->vbox->setContentsMargins(0, 0, 0, 0);
+}
+
+
+
+
+sg_ret CoordEntryWidget::set_coord_mode(CoordMode coord_mode)
+{
+	if (this->lat_lon_entry) {
+		this->vbox->removeWidget(this->lat_lon_entry);
+		delete this->lat_lon_entry;
+		this->lat_lon_entry = nullptr;
+	} else if (this->utm_entry) {
+		this->vbox->removeWidget(this->utm_entry);
+		delete this->utm_entry;
+		this->utm_entry = nullptr;
+	} else {
+		qDebug() << SG_PREFIX_N << "None of coord entries was set";
+	}
+
 
 	switch (coord_mode) {
 	case CoordMode::LatLon:
-		this->lat_lon_entry = new LatLonEntryWidget(parent);
+		this->lat_lon_entry = new LatLonEntryWidget();
 		break;
 	case CoordMode::UTM:
-		this->utm_entry = new UTMEntryWidget(parent);
+		this->utm_entry = new UTMEntryWidget();
 		break;
 	default:
 		/* Let's handle this safely by using LatLon as fallback. */
 		qDebug() << SG_PREFIX_E << "Unexpected coord mode" << (int) coord_mode;
-		this->lat_lon_entry = new LatLonEntryWidget(parent);
+		this->lat_lon_entry = new LatLonEntryWidget();
 		break;
 	}
+
 
 	if (this->lat_lon_entry) {
 		this->vbox->addWidget(this->lat_lon_entry);
@@ -102,9 +125,11 @@ CoordEntryWidget::CoordEntryWidget(CoordMode coord_mode, QWidget * parent)
 		connect(this->utm_entry, SIGNAL (value_changed(void)), this, SLOT (value_changed_cb(void)));
 	} else {
 		qDebug() << SG_PREFIX_E << "Both widgets are NULL";
+		return sg_ret::err;
 	}
 
-	this->vbox->setContentsMargins(0, 0, 0, 0);
+
+	return sg_ret::ok;
 }
 
 

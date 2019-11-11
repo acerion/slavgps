@@ -74,7 +74,7 @@ WpPropertiesDialog::WpPropertiesDialog(CoordMode coord_mode, QWidget * parent_wi
 {
 	this->set_dialog_title(tr("Waypoint Properties"));
 	this->build_buttons(this);
-	this->build_widgets(this);
+	this->build_widgets(coord_mode, this);
 }
 
 
@@ -87,14 +87,14 @@ WpPropertiesDialog::~WpPropertiesDialog()
 
 
 
-sg_ret WpPropertiesWidget::build_widgets(QWidget * parent_widget)
+sg_ret WpPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * parent_widget)
 {
 	this->widgets_row = 0;
 
 	const int left_col = 0;
 	const int right_col = 1;
 
-	this->PointPropertiesWidget::build_widgets(parent_widget);
+	this->PointPropertiesWidget::build_widgets(coord_mode, parent_widget);
 
 	/* TODO_MAYBE: comment may contain URL. Make the label or input field clickable. */
 	this->comment_entry = new QLineEdit("", this);
@@ -361,7 +361,7 @@ void WpPropertiesDialog::sync_altitude_widget_to_current_point_cb(void) /* Slot.
 
 
 /**
-   Set timestamp of current waypoint. 
+   Set timestamp of current waypoint.
 
    @reviewed-on 2019-11-10
 */
@@ -566,15 +566,7 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 void WpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
 {
-	if (nullptr == this->current_point) {
-		qDebug() << SG_PREFIX_E << "Current point is NULL\n";
-		return;
-	}
-	if (this->skip_syncing_to_current_point) {
-		qDebug() << SG_PREFIX_N << "'skip syncing to current point' flag is set";
-		return;
-	}
-	/* TODO: implement. */
+	this->coord_widget->set_coord_mode(coord_mode);
 }
 
 

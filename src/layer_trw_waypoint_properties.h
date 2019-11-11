@@ -57,7 +57,7 @@ namespace SlavGPS {
 	public:
 		WpPropertiesWidget(QWidget * parent = NULL);
 
-		sg_ret build_widgets(QWidget * parent_widget);
+		sg_ret build_widgets(CoordMode coord_mode, QWidget * parent_widget);
 
 		/* Erase all contents from widgets, as if nothing was
 		   presented by the widgets. */

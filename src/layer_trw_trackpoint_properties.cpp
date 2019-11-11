@@ -254,30 +254,32 @@ sg_ret TpPropertiesDialog::dialog_data_set(Track * trk)
 	this->skip_syncing_to_current_point = false; /* Can now update after setting data. */
 
 
+	/* TODO_MAYBE: here we use regular text fields for
+	   representing speed/time/distance. Do we want to use regular
+	   text fields or should we use measurement widgets? */
 	if (current_point_iter != this->current_track->begin()) {
 		Trackpoint * prev_point = *std::prev(current_point_iter);
 
-		const Distance diff = Coord::distance_2(prev_point->coord, this->current_point->coord);
-		this->diff_dist->setText(diff.convert_to_unit(distance_unit).to_nice_string());
+		const Distance distance_diff = Coord::distance_2(prev_point->coord, this->current_point->coord);
+		this->diff_dist->setText(distance_diff.convert_to_unit(distance_unit).to_nice_string());
 
 		if (prev_point->timestamp.is_valid() && this->current_point->timestamp.is_valid()) {
 			const Time timestamp_diff = prev_point->timestamp - this->current_point->timestamp;
-			this->diff_time->setText(tr("%1 s").arg((long) timestamp_diff.get_ll_value())); /* TODO: should we really use simple text label instead of time widget? */
+			this->diff_time->setText(tr("%1 s").arg((long) timestamp_diff.get_ll_value()));
 			if (prev_point->timestamp == this->current_point->timestamp) {
-				this->diff_speed->setText("--");
+				this->diff_speed->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
 			} else {
-				const Distance dist = Coord::distance_2(prev_point->coord, this->current_point->coord);
 				const Time duration = Time::get_abs_diff(prev_point->timestamp, this->current_point->timestamp);
 				Speed speed_diff;
-				speed_diff.make_speed(dist, duration);
+				speed_diff.make_speed(distance_diff, duration);
 				this->diff_speed->setText(speed_diff.convert_to_unit(speed_unit).to_string());
 			}
 		} else {
-			this->diff_time->setText("--");
-			this->diff_speed->setText("--");
+			this->diff_time->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
+			this->diff_speed->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
 		}
 	} else {
-		this->diff_dist->setText("--");
+		this->diff_dist->setText(SG_MEASUREMENT_INVALID_VALUE_STRING);
 	}
 
 
@@ -329,7 +331,7 @@ TpPropertiesDialog::TpPropertiesDialog(CoordMode coord_mode, QWidget * parent_wi
 {
 	this->set_dialog_title(tr("Trackpoint Properties"));
 	this->build_buttons(this);
-	this->build_widgets(this);
+	this->build_widgets(coord_mode, this);
 }
 
 
@@ -414,7 +416,7 @@ void TpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 void TpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
 {
-	/* TODO: implement. */
+	this->coord_widget->set_coord_mode(coord_mode);
 }
 
 
@@ -459,7 +461,7 @@ TpPropertiesWidget::TpPropertiesWidget(QWidget * parent_widget) : PointPropertie
 
 
 
-sg_ret TpPropertiesWidget::build_widgets(QWidget * parent_widget)
+sg_ret TpPropertiesWidget::build_widgets(CoordMode coord_mode, QWidget * parent_widget)
 {
 	/* Properties of text labels that display non-editable
 	   trackpoint properties. */
@@ -470,7 +472,7 @@ sg_ret TpPropertiesWidget::build_widgets(QWidget * parent_widget)
 
 	this->widgets_row = 0;
 
-	this->PointPropertiesWidget::build_widgets(parent_widget);
+	this->PointPropertiesWidget::build_widgets(coord_mode, parent_widget);
 
 	this->course = new QLabel("");
 	this->course->setTextInteractionFlags(value_display_label_flags);

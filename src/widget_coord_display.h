@@ -88,6 +88,8 @@ namespace SlavGPS {
 		   presented by the widget. */
 		void clear_widget(void);
 
+		sg_ret set_coord_mode(CoordMode coord_mode);
+
 	signals:
 		void value_changed(void);
 
