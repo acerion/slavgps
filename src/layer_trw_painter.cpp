@@ -124,11 +124,13 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 
 	if (this->vp_coord_mode == CoordMode::UTM && this->vp_is_one_utm_zone) {
 
+		/* Leniency -- for tracks. Obviously for waypoints
+		   this SHOULD be a lot smaller. */
 		const int outside_margin = 1600; /* TODO_LATER: magic number. */
 
 		const int width = this->vp_xmpp * (this->vp_rect.width() / 2) + outside_margin / this->vp_xmpp;
 		const int height = this->vp_ympp * (this->vp_rect.height() / 2) + outside_margin / this->vp_ympp;
-		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
+
 
 		this->coord_leftmost = this->vp_center.utm.get_easting() - width;
 		this->coord_rightmost = this->vp_center.utm.get_easting() + width;
@@ -140,6 +142,8 @@ void LayerTRWPainter::set_viewport(GisViewport * new_gisview)
 		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
 		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
 
+		/* Leniency -- for tracks. Obviously for waypoints
+		   this SHOULD be a lot smaller. */
 		const int outside_margin = 500; /* TODO_LATER: magic number. */
 
 		const Coord upperleft = this->gisview->screen_pos_to_coord(-outside_margin, -outside_margin);
