@@ -137,9 +137,10 @@ enum WindowPan {
 
 
 
-#define VIK_SETTINGS_WIN_SIDEPANEL "window_sidepanel"
-#define VIK_SETTINGS_WIN_STATUSBAR "window_statusbar"
-#define VIK_SETTINGS_WIN_TOOLBAR "window_toolbar"
+#define VIK_SETTINGS_WIN_SIDEPANEL  "window_sidepanel"
+#define VIK_SETTINGS_WIN_TOOLS_DOCK "window_tools_dock"
+#define VIK_SETTINGS_WIN_STATUSBAR  "window_statusbar"
+#define VIK_SETTINGS_WIN_TOOLBAR    "window_toolbar"
 /* Menubar setting to off is never auto saved in case it's accidentally turned off.
    It's not so obvious so to recover the menu visibility.
    Thus this value is for setting manually via editting the settings file directly. */
@@ -771,6 +772,16 @@ void Window::create_actions(void)
 		qa->setToolTip(tr("Show Side Panel"));
 		show_submenu->addAction(qa);
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_side_panel_visibility_cb(bool)));
+
+
+		qa = this->tools_dock->toggleViewAction(); /* Existing action! */
+		qa->setText(tr("Show Tools Panel"));
+		//qa->setShortcut(Qt::Key_F9);
+		qa->setCheckable(true);
+		qa->setChecked(this->tools_dock->isVisible());
+		qa->setToolTip(tr("Show Tools Panel"));
+		show_submenu->addAction(qa);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (set_tools_dock_visibility_cb(bool)));
 
 
 		qa = this->status_bar->toggleViewAction();
@@ -1621,9 +1632,10 @@ void Window::closeEvent(QCloseEvent * ev)
 			bool state_fullscreen = states.testFlag(Qt::WindowFullScreen);
 			ApplicationState::set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
 
-			ApplicationState::set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, this->layers_panel_dock->isVisible());
-			ApplicationState::set_boolean(VIK_SETTINGS_WIN_STATUSBAR, this->status_bar->isVisible());
-			ApplicationState::set_boolean(VIK_SETTINGS_WIN_TOOLBAR,   this->toolbar->isVisible());
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_SIDEPANEL,  this->layers_panel_dock->isVisible());
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_TOOLS_DOCK, this->tools_dock->isVisible());
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_STATUSBAR,  this->status_bar->isVisible());
+			ApplicationState::set_boolean(VIK_SETTINGS_WIN_TOOLBAR,    this->toolbar->isVisible());
 
 			/* If supersized - no need to save the enlarged width+height values. */
 			if (!(state_fullscreen || state_max)) {
@@ -1794,10 +1806,14 @@ void Window::set_highlight_usage_cb(bool new_state)
 
 
 
+
+/**
+   @reviewed on 2019-11-11
+*/
 void Window::set_side_panel_visibility_cb(bool new_state)
 {
 	if (this->layers_panel_dock->isVisible() != new_state) {
-		qDebug() << SG_PREFIX_I << "Setting side panel visibility to" << new_state;
+		qDebug() << SG_PREFIX_I << "Setting layers panel visibility to" << new_state;
 
 		this->layers_panel_dock->setVisible(new_state);
 
@@ -1810,9 +1826,36 @@ void Window::set_side_panel_visibility_cb(bool new_state)
 
 
 
+/**
+   @reviewed on 2019-11-11
+*/
+void Window::set_tools_dock_visibility_cb(bool new_state)
+{
+	if (this->tools_dock->isVisible() != new_state) {
+		qDebug() << SG_PREFIX_I << "Setting tools dock visibility to" << new_state;
+
+		this->tools_dock->setVisible(new_state);
+
+		/* We need to set the qaction because this slot function
+		   may be called like a regular function too. */
+		this->tools_dock->toggleViewAction()->setChecked(new_state);
+	}
+}
+
+
+
+
 bool Window::get_side_panel_visibility(void) const
 {
 	return this->layers_panel_dock->isVisible();
+}
+
+
+
+
+bool Window::get_tools_dock_visibility(void) const
+{
+	return this->tools_dock->isVisible();
 }
 
 
@@ -3279,6 +3322,10 @@ Window * Window::new_window()
 
 		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &visibility)) {
 			window->set_side_panel_visibility_cb(visibility);
+		}
+
+		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_TOOLS_DOCK, &visibility)) {
+			window->set_tools_dock_visibility_cb(visibility);
 		}
 
 		if (ApplicationState::get_boolean(VIK_SETTINGS_WIN_STATUSBAR, &visibility)) {

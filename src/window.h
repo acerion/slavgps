@@ -166,6 +166,7 @@ namespace SlavGPS {
 		void apply_new_preferences(void);
 
 		bool get_side_panel_visibility(void) const;
+		bool get_tools_dock_visibility(void) const;
 
 		QAction * qa_tree_item_properties = NULL;
 
@@ -201,6 +202,7 @@ namespace SlavGPS {
 		void set_full_screen_state_cb(bool new_state);
 
 		void set_side_panel_visibility_cb(bool new_state);
+		void set_tools_dock_visibility_cb(bool new_state);
 		void set_status_bar_visibility_cb(bool new_state);
 		void set_main_menu_visibility_cb(bool new_state);
 
