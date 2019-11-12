@@ -583,7 +583,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport
 	this->cursor_release = QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
 
 	/* One Waypoint Properties Dialog for all layers. */
-	this->wp_properties_dialog = new WpPropertiesDialog(gisview_->get_coord_mode(), window_);
+	this->point_properties_dialog = new WpPropertiesDialog(gisview_->get_coord_mode(), window_);
 }
 
 
@@ -591,7 +591,7 @@ LayerToolTRWEditWaypoint::LayerToolTRWEditWaypoint(Window * window_, GisViewport
 
 LayerToolTRWEditWaypoint::~LayerToolTRWEditWaypoint()
 {
-	delete this->wp_properties_dialog;
+	delete this->point_properties_dialog;
 }
 
 
@@ -762,6 +762,29 @@ ToolStatus LayerToolTRWEditWaypoint::internal_handle_mouse_release(Layer * layer
 	default:
 		return ToolStatus::Ignored;
 	}
+}
+
+
+
+
+/**
+   @brief Set coordinates mode of a "waypoint properties" dialog
+
+   The dialog contains coordinates widget, displaying coordinates of a
+   waypoint. Depending on coordinates mode selected in main window,
+   the widget should change its appearance (to display Lat/Lon or UTM
+   coordinates).
+
+   @reviewed on 2019-11-11
+*/
+sg_ret LayerToolTRWEditWaypoint::change_coord_mode(CoordMode coord_mode)
+{
+	if (nullptr == this->point_properties_dialog) {
+		qDebug() << SG_PREFIX_W << "Waypoint properties dialog widget not constructed yet";
+		return sg_ret::err_null_ptr;
+	}
+
+	return this->point_properties_dialog->set_coord_mode(coord_mode);
 }
 
 
@@ -1314,7 +1337,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisView
 	this->cursor_release = QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
 
 	/* One Trackpoint Properties Dialog for all layers. */
-	this->tp_properties_dialog = new TpPropertiesDialog(gisview_->get_coord_mode(), window_);
+	this->point_properties_dialog = new TpPropertiesDialog(gisview_->get_coord_mode(), window_);
 }
 
 
@@ -1322,7 +1345,7 @@ LayerToolTRWEditTrackpoint::LayerToolTRWEditTrackpoint(Window * window_, GisView
 
 LayerToolTRWEditTrackpoint::~LayerToolTRWEditTrackpoint()
 {
-	delete this->tp_properties_dialog;
+	delete this->point_properties_dialog;
 }
 
 
@@ -1452,6 +1475,29 @@ ToolStatus LayerToolTRWEditTrackpoint::internal_handle_mouse_release(Layer * lay
 	*/
 
 	return ToolStatus::Ack;
+}
+
+
+
+
+/**
+   @brief Set coordinates mode of a "waypoint properties" dialog
+
+   The dialog contains coordinates widget, displaying coordinates of a
+   waypoint. Depending on coordinates mode selected in main window,
+   the widget should change its appearance (to display Lat/Lon or UTM
+   coordinates).
+
+   @reviewed on 2019-11-11
+*/
+sg_ret LayerToolTRWEditTrackpoint::change_coord_mode(CoordMode coord_mode)
+{
+	if (nullptr == this->point_properties_dialog) {
+		qDebug() << SG_PREFIX_W << "Trackpoint properties dialog widget not constructed yet";
+		return sg_ret::err_null_ptr;
+	}
+
+	return this->point_properties_dialog->set_coord_mode(coord_mode);
 }
 
 

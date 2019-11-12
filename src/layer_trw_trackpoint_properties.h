@@ -114,8 +114,6 @@ namespace SlavGPS {
 		void dialog_data_reset(void);
 		void set_dialog_title(const QString & title);
 
-		void set_coord_mode(CoordMode coord_mode);
-
 		/* Dialog action codes. */
 		enum class Action {
 			InsertTpAfter,

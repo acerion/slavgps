@@ -87,8 +87,16 @@ CoordEntryWidget::CoordEntryWidget(CoordMode coord_mode, QWidget * parent)
 
 
 
-sg_ret CoordEntryWidget::set_coord_mode(CoordMode coord_mode)
+/**
+   @reviewed-on 2019-11-11
+*/
+sg_ret CoordEntryWidget::set_coord_mode(const CoordMode coord_mode)
 {
+	if (coord_mode == this->m_coord_mode) {
+		return sg_ret::ok;
+	}
+
+
 	if (this->lat_lon_entry) {
 		this->vbox->removeWidget(this->lat_lon_entry);
 		delete this->lat_lon_entry;
@@ -125,10 +133,11 @@ sg_ret CoordEntryWidget::set_coord_mode(CoordMode coord_mode)
 		connect(this->utm_entry, SIGNAL (value_changed(void)), this, SLOT (value_changed_cb(void)));
 	} else {
 		qDebug() << SG_PREFIX_E << "Both widgets are NULL";
-		return sg_ret::err;
+		return sg_ret::err_null_ptr;
 	}
 
 
+	this->m_coord_mode = coord_mode;
 	return sg_ret::ok;
 }
 

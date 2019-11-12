@@ -88,7 +88,17 @@ namespace SlavGPS {
 		   presented by the widget. */
 		void clear_widget(void);
 
-		sg_ret set_coord_mode(CoordMode coord_mode);
+		/**
+		   @brief (Re)build the widget so that its sub-widgets
+		   can be used to display coordinates in given @param
+		   coord_mode
+
+		   If the widget already is in specified @param
+		   coord_mode, nothing happens.
+		*/
+		sg_ret set_coord_mode(const CoordMode coord_mode);
+
+		CoordMode get_coord_mode(void) const { return this->m_coord_mode; }
 
 	signals:
 		void value_changed(void);
@@ -100,6 +110,8 @@ namespace SlavGPS {
 		LatLonEntryWidget * lat_lon_entry = NULL;
 		UTMEntryWidget * utm_entry = NULL;
 		QVBoxLayout * vbox = NULL;
+
+		CoordMode m_coord_mode = CoordMode::Invalid; /* Initial value is invalid - widgets aren't constructed yet. */
 	};
 
 

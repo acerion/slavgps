@@ -46,6 +46,7 @@ namespace SlavGPS {
 		err_cond,  /* Conditions necessary to perform operation were not met. */
 		err_algo,  /* Function algorithm error. */
 		err_arg,   /* Function arguments error. */
+		err_null_ptr, /* Some pointer variable should be non-null, but is null (is not constructed properly (yet)). */
 		err,       /* General error. */
 		ok = 0,    /* Function completed without errors. */
 	};

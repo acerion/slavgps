@@ -2869,10 +2869,11 @@ void Window::change_coord_mode_cb(QAction * qa)
 	const GisViewportDrawMode old_drawmode = this->main_gis_vp->get_draw_mode();
 	qDebug() << SG_PREFIX_D << "Coordinate mode changed from" << (int) old_drawmode << "to" << qa->text() << (int) drawmode;
 
-
+#if 0
 	if (this->only_updating_coord_mode_ui) {
 		return;
 	}
+#endif
 	if (old_drawmode == drawmode) {
 		return;
 	}

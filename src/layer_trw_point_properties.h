@@ -68,6 +68,7 @@ namespace SlavGPS {
 		   presented by the widgets. */
 		void clear_widgets(void);
 
+		sg_ret set_coord_mode(const CoordMode coord_mode);
 
 	protected:
 		int widgets_row = 0;

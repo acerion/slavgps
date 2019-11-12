@@ -450,15 +450,20 @@ bool Waypoint::show_properties_dialog(void)
 bool Waypoint::show_properties_dialog_cb(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
+	Window * window = ThisApp::get_main_window();
 
-	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
-	tool->wp_properties_dialog->set_coord_mode(parent_layer->get_coord_mode());
+	window->set_tools_dock_visibility_cb(true);
+
+	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+	const CoordMode coord_mode = parent_layer->get_coord_mode();
+	qDebug() << SG_PREFIX_I << "KAAMIL coord mode =" << coord_mode;
+	tool->point_properties_dialog->set_coord_mode(coord_mode);
 
 	{
 		/* Disconnect all old connections that may have been made from
 		   this global dialog to other TRW layer. */
 		/* TODO: also disconnect these signals in dialog code when the dialog is closed? */
-		if (disconnect(tool->wp_properties_dialog, SIGNAL (point_coordinates_changed()), NULL, NULL)) {
+		if (disconnect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), NULL, NULL)) {
 			qDebug() << SG_PREFIX_E << "Failed to disconnect 'point_coordinates_changed' signal";
 		}
 
@@ -466,18 +471,18 @@ bool Waypoint::show_properties_dialog_cb(void)
 #if K_TODO
 		connect(tool->wp_properties_dialog, SIGNAL (accepted()), parent_layer, SLOT (on_wp_properties_dialog_closed_cb())); /* "Close" button clicked in dialog. */ /* TODO: review this signal: it should be emitted when tool widget (either floating or docked) is closed. */
 #endif
-		connect(tool->wp_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
+		connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
 	}
 
-	parent_layer->get_window()->get_tools_dock()->setWidget(tool->wp_properties_dialog);
+	parent_layer->get_window()->get_tools_dock()->setWidget(tool->point_properties_dialog);
 
 	qDebug() << SG_PREFIX_I << "Will set data from this waypoint with coord" << this->coord;
-	tool->wp_properties_dialog->dialog_data_set(this);
+	tool->point_properties_dialog->dialog_data_set(this);
 
 	Waypoint * wp = parent_layer->selected_wp_get();
 	if (!wp) {
 		qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' waypoint set";
-		tool->wp_properties_dialog->dialog_data_reset();
+		tool->point_properties_dialog->dialog_data_reset();
 		return true;
 	} else {
 		return false;

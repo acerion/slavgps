@@ -564,14 +564,6 @@ void WpPropertiesDialog::clicked_cb(int action) /* Slot. */
 
 
 
-void WpPropertiesDialog::set_coord_mode(CoordMode coord_mode)
-{
-	this->coord_widget->set_coord_mode(coord_mode);
-}
-
-
-
-
 void WpPropertiesDialog::tree_view_selection_changed_cb(void)
 {
 	qDebug() << SG_PREFIX_SLOT;

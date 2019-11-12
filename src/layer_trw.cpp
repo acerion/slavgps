@@ -3239,7 +3239,7 @@ sg_ret LayerTRW::wp_properties_dialog_set(Waypoint * wp)
 		}
 	}
 
-	wp_tool->wp_properties_dialog->dialog_data_set(wp);
+	wp_tool->point_properties_dialog->dialog_data_set(wp);
 	return sg_ret::ok;
 }
 
@@ -3252,7 +3252,7 @@ sg_ret LayerTRW::wp_properties_dialog_reset(void)
 	if (!tool->is_activated()) {
 		return sg_ret::ok;
 	}
-	tool->wp_properties_dialog->dialog_data_reset();
+	tool->point_properties_dialog->dialog_data_reset();
 	return sg_ret::ok;
 }
 
@@ -3278,7 +3278,7 @@ sg_ret LayerTRW::tp_properties_dialog_set(Track * track)
 		}
 	}
 
-	tool->tp_properties_dialog->dialog_data_set(track);
+	tool->point_properties_dialog->dialog_data_set(track);
 	return sg_ret::ok;
 }
 
@@ -3292,7 +3292,7 @@ sg_ret LayerTRW::tp_properties_dialog_reset(void)
 		return sg_ret::ok;
 	}
 	qDebug() << SG_PREFIX_I << "Will reset trackpoint dialog data";
-	tool->tp_properties_dialog->dialog_data_reset();
+	tool->point_properties_dialog->dialog_data_reset();
 	return sg_ret::ok;
 }
 
@@ -3302,17 +3302,17 @@ sg_ret LayerTRW::tp_properties_dialog_reset(void)
 void LayerTRW::tp_show_properties_dialog()
 {
 	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
-	tool->tp_properties_dialog->set_coord_mode(this->get_coord_mode());
+	tool->point_properties_dialog->set_coord_mode(this->get_coord_mode());
 
 	/* Disconnect all old connections that may have been made from
 	   this global dialog to other TRW layer. */
 	/* TODO: also disconnect the signals in dialog code when the dialog is closed? */
-	tool->tp_properties_dialog->disconnect();
+	tool->point_properties_dialog->disconnect();
 
 	/* Make new connections to current TRW layer. */
-	connect(tool->tp_properties_dialog, SIGNAL (point_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
+	connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
 
-	this->get_window()->get_tools_dock()->setWidget(tool->tp_properties_dialog);
+	this->get_window()->get_tools_dock()->setWidget(tool->point_properties_dialog);
 
 	Track * track = this->selected_track_get();
 	if (NULL == track) {
@@ -3527,6 +3527,21 @@ void LayerTRW::change_coord_mode(CoordMode dest_mode)
 		this->waypoints.change_coord_mode(dest_mode);
 		this->tracks.change_coord_mode(dest_mode);
 		this->routes.change_coord_mode(dest_mode);
+	}
+
+
+	Window * window = this->get_window();
+	/* Some properties dialogs need to change their "coordinates"
+	   widgets. Implementation of code changing the mode ensures
+	   that the mode is changed only when current mode is
+	   different than expected. */
+	{
+		LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
+		tool->change_coord_mode(dest_mode);
+	}
+	{
+		LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
+		tool->change_coord_mode(dest_mode);
 	}
 }
 

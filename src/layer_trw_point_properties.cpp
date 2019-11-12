@@ -28,14 +28,7 @@
 
 
 
-//#include "layer_trw.h"
 #include "layer_trw_point_properties.h"
-//#include "layer_trw_track_internal.h"
-//#include "vikutils.h"
-//#include "date_time_dialog.h"
-//#include "util.h"
-//#include "measurements.h"
-//#include "preferences.h"
 
 
 
@@ -119,4 +112,21 @@ void PointPropertiesWidget::clear_widgets(void)
 	this->coord_widget->clear_widget();
 	this->altitude_widget->clear_widget();
 	this->timestamp_widget->clear_widget();
+}
+
+
+
+
+/**
+   @brief Change coordinate mode of "coordinates" widget used by this
+   class
+
+   Rebuild the "coordinates" widget so that it can be used to display
+   either Lat/Lon or UTM coordinates.
+
+   @reviewed-on 2019-11-11
+*/
+sg_ret PointPropertiesWidget::set_coord_mode(const CoordMode coord_mode)
+{
+	return this->coord_widget->set_coord_mode(coord_mode);
 }
