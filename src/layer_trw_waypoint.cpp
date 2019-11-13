@@ -451,21 +451,15 @@ bool Waypoint::show_properties_dialog_cb(void)
 {
 	LayerTRW * parent_layer = (LayerTRW *) this->owning_layer;
 	Window * window = ThisApp::get_main_window();
-
-	window->set_tools_dock_visibility_cb(true);
-
 	LayerToolTRWEditWaypoint * tool = (LayerToolTRWEditWaypoint *) window->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_WAYPOINT);
-	const CoordMode coord_mode = parent_layer->get_coord_mode();
-	qDebug() << SG_PREFIX_I << "KAAMIL coord mode =" << coord_mode;
-	tool->point_properties_dialog->set_coord_mode(coord_mode);
 
+
+	/* Signals. */
 	{
 		/* Disconnect all old connections that may have been made from
 		   this global dialog to other TRW layer. */
 		/* TODO: also disconnect these signals in dialog code when the dialog is closed? */
-		if (disconnect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), NULL, NULL)) {
-			qDebug() << SG_PREFIX_E << "Failed to disconnect 'point_coordinates_changed' signal";
-		}
+		tool->point_properties_dialog->disconnect();
 
 		/* Make new connections to current TRW layer. */
 #if K_TODO
@@ -474,18 +468,32 @@ bool Waypoint::show_properties_dialog_cb(void)
 		connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), parent_layer, SLOT (on_wp_properties_dialog_wp_coordinates_changed_cb()));
 	}
 
-	parent_layer->get_window()->get_tools_dock()->setWidget(tool->point_properties_dialog);
 
-	qDebug() << SG_PREFIX_I << "Will set data from this waypoint with coord" << this->coord;
-	tool->point_properties_dialog->dialog_data_set(this);
+	/* Show properties dialog. */
+	{
+		const CoordMode coord_mode = parent_layer->get_coord_mode();
+		tool->point_properties_dialog->set_coord_mode(coord_mode);
+		window->get_tools_dock()->setWidget(tool->point_properties_dialog);
+		window->set_tools_dock_visibility_cb(true);
+	}
 
-	Waypoint * wp = parent_layer->selected_wp_get();
-	if (!wp) {
-		qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' waypoint set";
-		tool->point_properties_dialog->dialog_data_reset();
-		return true;
-	} else {
-		return false;
+
+	/* Fill properties dialog with current point. */
+	{
+		const Waypoint * wp = parent_layer->selected_wp_get();
+		if (nullptr == wp) {
+			qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' waypoint set";
+			tool->point_properties_dialog->dialog_data_reset();
+			return false;
+		} else if (wp->get_uid() != this->get_uid()) {
+			qDebug() << SG_PREFIX_W << "Tree item uid mismatch";
+			tool->point_properties_dialog->dialog_data_reset();
+			return false;
+		} else {
+			qDebug() << SG_PREFIX_I << "Will fill properties dialog with waypoint" << this->name;
+			tool->point_properties_dialog->dialog_data_set(this);
+			return true;
+		}
 	}
 }
 

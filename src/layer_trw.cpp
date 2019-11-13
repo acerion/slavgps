@@ -3302,33 +3302,46 @@ sg_ret LayerTRW::tp_properties_dialog_reset(void)
 void LayerTRW::tp_show_properties_dialog()
 {
 	LayerToolTRWEditTrackpoint * tool = (LayerToolTRWEditTrackpoint *) ThisApp::get_main_window()->get_toolbox()->get_tool(LAYER_TRW_TOOL_EDIT_TRACKPOINT);
-	tool->point_properties_dialog->set_coord_mode(this->get_coord_mode());
+	Window * window = ThisApp::get_main_window();
 
-	/* Disconnect all old connections that may have been made from
-	   this global dialog to other TRW layer. */
-	/* TODO: also disconnect the signals in dialog code when the dialog is closed? */
-	tool->point_properties_dialog->disconnect();
+	/* Signals. */
+	{
+		/* Disconnect all old connections that may have been
+		   made from this global dialog to other TRW layer. */
+		/* TODO: also disconnect the signals in dialog code when the dialog is closed? */
+		tool->point_properties_dialog->disconnect();
 
-	/* Make new connections to current TRW layer. */
-	connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
-
-	this->get_window()->get_tools_dock()->setWidget(tool->point_properties_dialog);
-
-	Track * track = this->selected_track_get();
-	if (NULL == track) {
-		qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data: no track";
-		this->tp_properties_dialog_reset();
-		return;
-	}
-	const size_t sel_tp_count = track->get_selected_children().get_count();
-	if (1 != sel_tp_count) {
-		qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data: selected tp count is not 1:" << sel_tp_count;
-		this->tp_properties_dialog_reset();
-		return;
+		/* Make new connections to current TRW layer. */
+		connect(tool->point_properties_dialog, SIGNAL (point_coordinates_changed()), this, SLOT (on_tp_properties_dialog_tp_coordinates_changed_cb()));
 	}
 
-	this->tp_properties_dialog_set(track);
-	return;
+
+	/* Show properties dialog. */
+	{
+		const CoordMode coord_mode = this->get_coord_mode();
+		tool->point_properties_dialog->set_coord_mode(coord_mode);
+		window->get_tools_dock()->setWidget(tool->point_properties_dialog);
+		window->set_tools_dock_visibility_cb(true);
+	}
+
+
+	/* Fill properties dialog with current point. */
+	{
+		const Track * track = this->selected_track_get();
+		if (nullptr == track) {
+			qDebug() << SG_PREFIX_W << "Parent layer doesn't have any 'edited' track set";
+			this->tp_properties_dialog_reset();
+			return;
+		}
+		const size_t sel_tp_count = track->get_selected_children().get_count();
+		if (1 != sel_tp_count) {
+			qDebug() << SG_PREFIX_W << "Will reset trackpoint dialog data: selected tp count is not 1:" << sel_tp_count;
+			this->tp_properties_dialog_reset();
+			return;
+		}
+		this->tp_properties_dialog_set(track);
+		return;
+	}
 }
 
 
